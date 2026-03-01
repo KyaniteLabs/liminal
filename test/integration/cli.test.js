@@ -142,7 +142,7 @@ describe('CLI Integration Tests', () => {
       // Check for expected output files (HTML, JS, archive)
       const htmlFile = outputFiles.find(f => f.includes('.html'));
       const jsFile = outputFiles.find(f => f.includes('.js') && !f.includes('.html'));
-      const archiveFile = outputFiles.find(f => f.includes('.txt'));
+      const archiveFile = outputFiles.find(f => f.includes('.zip'));
 
       expect(htmlFile).toBeDefined();
       expect(jsFile).toBeDefined();

@@ -22,12 +22,12 @@
  * - Uses Gallery for iteration persistence
  */
 
-import { PromptStore } from './PromptStore';
-import { ContextAccumulation } from './ContextAccumulation';
-import { CreativeEvaluator } from './CreativeEvaluator';
-import { PromiseDetector } from './PromiseDetector';
-import { P5Generator } from '../generators/p5/P5Generator';
-import { Gallery } from '../gallery/Gallery';
+import { PromptStore } from './PromptStore.js';
+import { ContextAccumulation } from './ContextAccumulation.js';
+import { CreativeEvaluator } from './CreativeEvaluator.js';
+import { PromiseDetector } from './PromiseDetector.js';
+import { P5Generator } from '../generators/p5/P5Generator.js';
+import { Gallery } from '../gallery/Gallery.js';
 
 interface LoopOptions {
   maxIterations?: number;

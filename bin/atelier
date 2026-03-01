@@ -7,7 +7,7 @@
  * with internal Ralph-Wiggum Loop for generative art creation.
  */
 
-import { run } from '../src/index.js';
+import { run } from '../dist/index.js';
 import fs from 'fs/promises';
 
 /**

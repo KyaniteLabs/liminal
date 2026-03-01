@@ -256,6 +256,18 @@ describe('RalphLoop Integration Tests', () => {
       expect(result).toBeDefined();
       expect(result.iterations).toBe(1);
     });
+
+    test('should throw error when gallery save fails and tolerateErrors is false', async () => {
+      const prompt = 'Throw on save failure';
+
+      // Use invalid gallery directory to trigger save error and expect error to be thrown
+      await expect(RalphLoop.run(prompt, {
+        maxIterations: 1,
+        galleryDir: '/invalid/path/that/cannot/be/created',
+        tolerateErrors: false,
+        project: 'test-project'
+      })).rejects.toThrow();
+    });
   });
 
   describe('Quality Evaluation', () => {

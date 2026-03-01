@@ -326,15 +326,88 @@ After Kai builds, I verify:
 }
 ```
 
-### 8.2 OpenClaw Integration
+### 8.2 Deployment Model (Standalone)
 
-Atelier runs as an **OpenClaw agent** with specific tools:
+**Atelier is a standalone Node.js tool.** It does NOT run as an OpenClaw agent. It has zero dependencies on OpenClaw-specific tools.
 
-- `file_write` — Save generated code
-- `file_read` — Read previous iterations
-- `exec` — Run p5.js sketches (node/preview server)
-- `browser` — Screenshot preview, verify output
-- `web_search` — Research techniques (if needed)
+Think of it like **BrainLoop** — a separate tool that agents (or humans, or scripts) can invoke.
+
+#### Architecture
+
+```
+┌─────────────┐     API/CLI      ┌─────────────────────────────┐
+│   OpenClaw  │ ────────────────▶│        ATELIER              │
+│    Agent    │   (HTTP/stdio)   │  ┌─────────────────────┐    │
+│  (optional) │                  │  │  Ralph-Wiggum Loop  │    │
+└─────────────┘                  │  │  ├─ fs (Node.js)    │    │
+                                 │  │  ├─ child_process   │    │
+┌─────────────┐     API/CLI      │  │  ├─ http server     │    │
+│     CLI     │ ────────────────▶│  │  └─ preview server  │    │
+│   (human)   │                  │  └─────────────────────┘    │
+└─────────────┘                  └─────────────────────────────┘
+```
+
+#### Standard Node.js APIs Only
+
+| Function | Implementation | NOT |
+|----------|---------------|-----|
+| File I/O | `fs.promises` | OpenClaw `file_write` |
+| Execute code | `child_process.spawn` | OpenClaw `exec` |
+| Preview server | Express + Puppeteer | OpenClaw `browser` |
+| Web requests | `fetch` / `axios` | OpenClaw `web_search` |
+
+#### Interface
+
+**Programmatic (Node.js):**
+```javascript
+const atelier = require('atelier');
+
+const result = await atelier.run({
+  prompt: "Make something that feels like Kid A",
+  maxIterations: 20,
+  framework: 'p5.js'
+});
+
+// Returns: { code, iterations, galleryPath, qualityScore }
+```
+
+**CLI:**
+```bash
+atelier --prompt "Kid A vibes" --max-iterations 20
+```
+
+**HTTP API (optional):**
+```bash
+POST /api/generate
+{ "prompt": "Kid A vibes", "maxIterations": 20 }
+```
+
+#### Integration with OpenClaw
+
+OpenClaw agents invoke Atelier like any other tool:
+
+```javascript
+// Inside an OpenClaw agent
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
+
+// Invoke Atelier via CLI
+const { stdout } = await execAsync(
+  `atelier --prompt "${prompt}" --max-iterations 20 --output ./output`
+);
+
+const result = JSON.parse(stdout);
+// result.code, result.galleryPath, etc.
+```
+
+**Key point:** Atelier is completely independent. It can run:
+- As a CLI tool
+- As a Node.js library
+- As an HTTP service
+- Invoked by OpenClaw, Cursor, humans, scripts, etc.
+
+No OpenClaw-specific tools. No agent runtime. Just Node.js.
 
 ---
 

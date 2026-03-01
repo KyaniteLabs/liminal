@@ -5,9 +5,25 @@
  * for generating emergent generative art.
  */
 
+// Core Ralph-Wiggum Loop components
 import { RalphLoop } from './core/RalphLoop.js';
+import { CreativeEvaluator } from './core/CreativeEvaluator.js';
+import { PromiseDetector } from './core/PromiseDetector.js';
+import { PromptStore } from './core/PromptStore.js';
+import { ContextAccumulation } from './core/ContextAccumulation.js';
+
+// Generators
+import { P5Generator } from './generators/p5/P5Generator.js';
+import { ParticleSystem } from './generators/p5/ParticleSystem.js';
+import { CellularAutomata } from './generators/p5/CellularAutomata.js';
+
+// Rendering and export
+import { Renderer } from './render/Renderer.js';
+import { PreviewServer } from './render/PreviewServer.js';
 import { Exporter, Project } from './export/Exporter.js';
-import { Gallery } from './gallery/Gallery.js';
+import { Gallery, Iteration } from './gallery/Gallery.js';
+import { SeedArchive, SeedMetadata } from './gallery/SeedArchive.js';
+
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -248,4 +264,73 @@ export class Atelier {
   }
 }
 
-export default { run, runFromArgs, Atelier, ATELIER_VERSION, defaultConfig };
+// ============================================================================
+// CORE COMPONENT EXPORTS - Programmatic Access
+// ============================================================================
+
+// Core Ralph-Wiggum Loop Engine
+export { RalphLoop };
+
+// Creative Evaluation and Quality Control
+export { CreativeEvaluator };
+
+// Promise Detection for Loop Termination
+export { PromiseDetector };
+
+// Prompt Management
+export { PromptStore };
+
+// Context and State Management
+export { ContextAccumulation };
+
+// p5.js Generators
+export { P5Generator };
+export { ParticleSystem };
+export { CellularAutomata };
+
+// Rendering and Preview
+export { Renderer };
+export { PreviewServer };
+
+// Export and Persistence
+export { Exporter, Project };
+
+// Gallery and Seed Management
+export { Gallery, Iteration };
+export { SeedArchive, SeedMetadata };
+
+// ============================================================================
+// DEFAULT EXPORT
+// ============================================================================
+
+export default {
+  // Main functions
+  run,
+  runFromArgs,
+
+  // Main class
+  Atelier,
+
+  // Core components
+  RalphLoop,
+  CreativeEvaluator,
+  PromiseDetector,
+  PromptStore,
+  ContextAccumulation,
+
+  // Generators
+  P5Generator,
+  ParticleSystem,
+  CellularAutomata,
+
+  // Rendering and export
+  Renderer,
+  PreviewServer,
+  Exporter,
+  Gallery,
+  SeedArchive,
+
+  // Configuration
+  ATELIER_VERSION,
+  defaultConfig
+};

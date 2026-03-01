@@ -1,182 +1,55 @@
 #!/usr/bin/env node
+import { P5GeneratorLLM as P5Generator, PreviewServer } from '../dist/index.js';
+import fs from 'fs';
+import path from 'path';
 
-/**
- * Atelier CLI - Creative Coding Agent
- *
- * Command-line interface for the Atelier creative coding agent
- * with internal Ralph-Wiggum Loop for generative art creation.
- */
+const cmd = process.argv[2];
+const arg = process.argv[3];
 
-import { run } from '../dist/index.js';
-import fs from 'fs/promises';
-
-/**
- * Parse command line arguments
- */
-function parseArgs(args) {
-  const parsed = {
-    prompt: null,
-    maxIterations: 20,
-    output: './output',
-    help: false,
-    version: false
-  };
-
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i];
-    const nextArg = args[i + 1];
-
-    switch (arg) {
-      case '--prompt':
-      case '-p':
-        if (nextArg && !nextArg.startsWith('--')) {
-          parsed.prompt = nextArg;
-          i++; // Skip next arg
-        }
-        break;
-      case '--max-iterations':
-      case '-m':
-        if (nextArg && !nextArg.startsWith('--')) {
-          const max = parseInt(nextArg, 10);
-          if (!isNaN(max) && max > 0) {
-            parsed.maxIterations = max;
-          }
-          i++; // Skip next arg
-        }
-        break;
-      case '--output':
-      case '-o':
-        if (nextArg && !nextArg.startsWith('--')) {
-          parsed.output = nextArg;
-          i++; // Skip next arg
-        }
-        break;
-      case '--help':
-      case '-h':
-        parsed.help = true;
-        break;
-      case '--version':
-      case '-v':
-        parsed.version = true;
-        break;
-    }
-  }
-
-  return parsed;
-}
-
-/**
- * Show help message
- */
-function showHelp() {
-  console.log(`
-Atelier - Creative Coding Agent v1.0.0
-
-USAGE:
-  atelier --prompt "<your creative prompt>" [options]
-
-OPTIONS:
-  -p, --prompt <prompt>       Creative prompt for generative art (required)
-  -m, --max-iterations <num>  Maximum iterations (default: 20)
-  -o, --output <path>         Output directory (default: ./output)
-  -h, --help                  Show this help message
-  -v, --version               Show version
-
-EXAMPLES:
-  atelier --prompt "Make something that feels like Kid A"
-  atelier -p "Create a particle system with 100+ particles" -m 10
-  atelier --prompt "Glitch effect" --output ./my-art --max-iterations 15
-
-DESCRIPTION:
-  Atelier generates emergent generative art through self-recursive iteration.
-  The same prompt runs repeatedly, but the "world" (files, context, history)
-  changes each time, creating a self-referential feedback loop.
-
-  For more information, see: https://github.com/anthropics/atelier
-`);
-}
-
-/**
- * Show version
- */
-function showVersion() {
-  console.log('Atelier v1.0.0');
-}
-
-/**
- * Main CLI function
- */
-async function main() {
-  const args = process.argv.slice(2);
-  const options = parseArgs(args);
-
-  // Handle help flag
-  if (options.help) {
-    showHelp();
-    process.exit(0);
-  }
-
-  // Handle version flag
-  if (options.version) {
-    showVersion();
-    process.exit(0);
-  }
-
-  // Validate required prompt argument
-  if (!options.prompt) {
-    console.error('Error: --prompt is required\n');
-    showHelp();
+if (cmd === 'generate' || cmd === 'gen' || cmd === 'g') {
+  const prompt = arg || process.argv.slice(3).join(' ');
+  if (!prompt) {
+    console.log('Usage: atelier generate "your prompt"');
     process.exit(1);
   }
-
-  try {
-    console.log(`🎨 Atelier: Creative Coding Agent`);
-    console.log(`📝 Prompt: "${options.prompt}"`);
-    console.log(`🔄 Max iterations: ${options.maxIterations}`);
-    console.log(`📁 Output: ${options.output}`);
-    console.log('');
-
-    // Generate a project name from the prompt
-    const project = options.prompt
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, '')
-      .trim()
-      .replace(/\s+/g, '-')
-      .substring(0, 30);
-
-    // Run Atelier
-    const result = await run(options.prompt, {
-      maxIterations: options.maxIterations,
-      output: options.output,
-      project: project
-    });
-
-    // Output results
-    console.log('');
-    console.log(`✅ Generation complete!`);
-    console.log(`📊 Iterations: ${result.iterations}`);
-    console.log(`⏱️  Duration: ${(result.duration / 1000).toFixed(2)}s`);
-    console.log(`🎯 Reason: ${result.reason}`);
-    console.log(`⭐ Quality score: ${result.finalScore.toFixed(2)}`);
-    console.log('');
-    console.log(`📦 Output files:`);
-    console.log(`   HTML: ${result.htmlPath}`);
-    console.log(`   JS: ${result.jsPath}`);
-    console.log(`   ZIP: ${result.zipPath}`);
-    console.log(`   Gallery: ${result.outputDir}`);
-
-    // Exit with success
-    process.exit(0);
-
-  } catch (error) {
-    console.error('');
-    console.error(`❌ Error: ${error.message}`);
-    process.exit(1);
+  console.log('Generating:', prompt);
+  const code = P5Generator.generate(prompt, {});
+  const outDir = path.join(process.env.HOME, '.atelier', 'output');
+  fs.mkdirSync(outDir, { recursive: true });
+  const file = path.join(outDir, 'sketch-' + Date.now() + '.js');
+  fs.writeFileSync(file, code);
+  console.log('✅ Saved:', file);
+  console.log('\nPreview:');
+  console.log(code.substring(0, 300) + '...');
+} 
+else if (cmd === 'serve' || cmd === 's') {
+  const port = arg || 3456;
+  const server = new PreviewServer();
+  server.start(port).then(() => {
+    console.log('✅ Server running on http://localhost:' + port);
+  });
+}
+else if (cmd === 'list' || cmd === 'ls') {
+  const outDir = path.join(process.env.HOME, '.atelier', 'output');
+  console.log('📁 Sketches:');
+  if (fs.existsSync(outDir)) {
+    fs.readdirSync(outDir).filter(f => f.endsWith('.js')).forEach(f => console.log('  ' + f));
+  } else {
+    console.log('  (none yet)');
   }
 }
-
-// Run the CLI
-main().catch((error) => {
-  console.error('Unexpected error:', error);
-  process.exit(1);
-});
+else {
+  console.log('');
+  console.log('🎨 Atelier - Creative Coding Agent');
+  console.log('');
+  console.log('Commands:');
+  console.log('  atelier generate "prompt"   Create p5.js art from prompt');
+  console.log('  atelier serve [port]        Start preview server (default: 3456)');
+  console.log('  atelier list                Show saved sketches');
+  console.log('');
+  console.log('Examples:');
+  console.log('  atelier generate "blue particles"');
+  console.log('  atelier serve');
+  console.log('  atelier list');
+  console.log('');
+}

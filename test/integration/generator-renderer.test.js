@@ -18,6 +18,19 @@ import { existsSync } from 'fs';
 // Increase timeout for integration tests involving browser automation and generation
 const GENERATION_RENDER_TIMEOUT = 60000; // 60 seconds
 
+// Helper function to safely start preview server
+async function safeStartServer(server, port) {
+  try {
+    await server.start(port);
+  } catch (error) {
+    if (error.message.includes('already running') || error.message.includes('already in use')) {
+      // Server already running, continue with test
+      return;
+    }
+    throw error;
+  }
+}
+
 describe('Generator-Renderer Integration Tests', () => {
   let previewServer;
   let renderer;
@@ -46,10 +59,23 @@ describe('Generator-Renderer Integration Tests', () => {
     }
   });
 
-  afterEach(async () => {
-    // Stop preview server after each test
+  beforeEach(async () => {
+    // Ensure server is stopped before starting it
     try {
       await previewServer.stop();
+      // Add small delay to ensure port is released
+      await new Promise(resolve => setTimeout(resolve, 100));
+    } catch (error) {
+      // Ignore if server wasn't running
+    }
+  });
+
+  afterEach(async () => {
+    // Stop preview server after each test with proper cleanup
+    try {
+      await previewServer.stop();
+      // Add delay to ensure port is fully released before next test
+      await new Promise(resolve => setTimeout(resolve, 100));
     } catch (error) {
       // Ignore if server not started
     }
@@ -67,8 +93,8 @@ describe('Generator-Renderer Integration Tests', () => {
       expect(generatedCode).toContain('function setup');
       expect(generatedCode).toContain('createCanvas');
 
-      // Start PreviewServer
-      await previewServer.start(TEST_PORT);
+      // Start PreviewServer with error handling
+      await safeStartServer(previewServer, TEST_PORT);
 
       // Serve the generated sketch
       previewServer.serveSketch(generatedCode);

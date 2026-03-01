@@ -710,7 +710,10 @@ Output: <promise>COMPLETE</promise> only when all requirements met.
 - [ ] GLSL shaders
 - [ ] Neural CA
 - [ ] Self-modifying code (sandboxed)
+- [ ] Live Music Coding (Strudel, Hydra, Sonic Pi)
 - [ ] Music-to-visual (FFT reactive)
+- [ ] Hardware MIDI/OSC integration
+- [ ] Collaborative live coding (multi-user)
 
 ---
 

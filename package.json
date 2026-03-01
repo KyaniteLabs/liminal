@@ -12,7 +12,8 @@
     "test:coverage": "NODE_OPTIONS='--experimental-vm-modules' jest --coverage",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
-    "docs": "typedoc --out docs src/"
+    "docs": "typedoc --out docs src/",
+    "benchmark": "node scripts/benchmark.js"
   },
   "keywords": [
     "generative-art",

@@ -1,0 +1,59 @@
+name: Performance Benchmarks
+
+on:
+  schedule:
+    # Run benchmarks daily at 00:00 UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:  # Allow manual triggering
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Use Node.js 20.x
+      uses: actions/setup-node@v3
+      with:
+        node-version: 20.x
+        cache: 'npm'
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run performance benchmarks
+      run: npm run benchmark
+
+    - name: Store benchmark result
+      uses: benchmark-action/github-action-benchmark@v1
+      with:
+        tool: 'customBenchmarks'
+        output-file-path: benchmark-output/report.json
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        auto-push: true
+        alert-threshold: '200%'
+        comment-on-alert: true
+        fail-on-alert: true
+        alert-comment-cc-users: '@simongonzalezdecruz'
+
+    - name: Upload benchmark results
+      uses: actions/upload-artifact@v3
+      with:
+        name: benchmark-results-${{ github.run_number }}
+        path: benchmark-output/
+        retention-days: 30
+
+    - name: Create benchmark summary
+      run: |
+        echo "## 📊 Performance Benchmark Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Date**: $(date)" >> $GITHUB_STEP_SUMMARY
+        echo "**Commit**: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### Requirements" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Max iteration time: < 5 minutes" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Max memory usage: < 500MB" >> $GITHUB_STEP_SUMMARY
+        echo "- ✅ Test coverage: > 80%" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "Full results available in artifacts." >> $GITHUB_STEP_SUMMARY

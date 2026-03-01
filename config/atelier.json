@@ -1,0 +1,31 @@
+{
+  "name": "atelier",
+  "version": "1.0.0",
+  "loop": {
+    "maxIterations": 20,
+    "timeoutMinutes": 30,
+    "completionPromise": "COMPLETE"
+  },
+  "llm": {
+    "provider": "inception",
+    "apiKey": "${INCEPTION_API_KEY}",
+    "baseUrl": "https://api.inceptionlabs.ai/v1",
+    "model": "inception-001",
+    "temperature": 0.7,
+    "maxTokens": 4096,
+    "localFallback": true
+  },
+  "creative": {
+    "defaultFramework": "p5.js",
+    "evaluationCriteria": ["aesthetic", "technical", "novelty"],
+    "minQualityScore": 0.7
+  },
+  "gallery": {
+    "autoSave": true,
+    "maxHistoryPerProject": 50
+  },
+  "renderer": {
+    "port": 3456,
+    "screenshotOnIteration": true
+  }
+}

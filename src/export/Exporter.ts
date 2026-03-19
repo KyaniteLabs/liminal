@@ -183,17 +183,30 @@ export class Exporter {
 
   /**
    * Generate standalone HTML with p5.js CDN and embedded code
+   * When code uses Web Audio (AudioContext, createOscillator) or p5.sound,
+   * includes p5.sound script if needed and a comment about user gesture.
    * @param code - p5.js code to embed
    * @returns Complete HTML string
    */
   private generateHTML(code: string): string {
+    const usesSound = this.codeUsesWebAudioOrP5Sound(code);
+    const usesP5Sound = /p5\.sound/i.test(code);
+    const p5Version = '1.9.0';
+    const p5Script = `https://cdnjs.cloudflare.com/ajax/libs/p5.js/${p5Version}/p5.min.js`;
+    const p5SoundScript = usesP5Sound
+      ? `\n    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/${p5Version}/p5.sound.min.js"></script>`
+      : '';
+    const soundComment = usesSound
+      ? '\n    <!-- Sound may require user click to start (browser policy). -->'
+      : '';
+
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>p5.js Sketch</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <script src="${p5Script}"></script>${p5SoundScript}
     <style>
         body {
             margin: 0;
@@ -209,7 +222,7 @@ export class Exporter {
         }
     </style>
 </head>
-<body>
+<body>${soundComment}
     <main>
         <script>
 ${code}
@@ -217,6 +230,17 @@ ${code}
     </main>
 </body>
 </html>`;
+  }
+
+  /**
+   * Detect if code uses Web Audio API or p5.sound (requires user gesture note / scripts).
+   */
+  private codeUsesWebAudioOrP5Sound(code: string): boolean {
+    return (
+      /AudioContext/i.test(code) ||
+      /createOscillator/i.test(code) ||
+      /p5\.sound/i.test(code)
+    );
   }
 
   /**

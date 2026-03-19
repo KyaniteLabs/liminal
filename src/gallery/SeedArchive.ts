@@ -13,6 +13,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import { randomBytes } from 'crypto';
+import { assertSafeSegment } from '../utils/normalizePath.js';
 
 export interface SeedMetadata {
   [key: string]: any;
@@ -54,6 +55,7 @@ export class SeedArchive {
     if (!seed || typeof seed !== 'string' || seed.trim() === '') {
       throw new Error('Seed is required and must be a non-empty string');
     }
+    assertSafeSegment(seed, 'Seed');
 
     if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
       throw new Error('Metadata is required and must be an object');
@@ -90,6 +92,7 @@ export class SeedArchive {
     if (!seed || typeof seed !== 'string' || seed.trim() === '') {
       throw new Error('Seed is required and must be a non-empty string');
     }
+    assertSafeSegment(seed, 'Seed');
 
     const filename = `${seed}.json`;
     const filepath = path.join(this.archiveDir, filename);

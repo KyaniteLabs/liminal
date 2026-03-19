@@ -10,12 +10,48 @@
  */
 
 import fs from 'fs/promises';
-import path from 'path';
+import { normalizePath, assertSafeSegment } from '../utils/normalizePath.js';
 
 export interface Iteration {
   version: number;
   code: string;
   timestamp: string;
+}
+
+/** Organism iteration: music + visual code (Strudel + Hydra). */
+export interface OrganismIteration {
+  version: number;
+  type: 'organism';
+  musicCode: string;
+  visualCode: string;
+  timestamp: string;
+}
+
+/** Union: p5 (code) or organism (musicCode + visualCode). */
+export type GalleryIteration = Iteration | OrganismIteration;
+
+/**
+ * Parse raw file content: if valid JSON with type 'organism', return OrganismIteration; else p5 Iteration.
+ */
+function parseVersionContent(raw: string, version: number, timestamp: string): GalleryIteration | null {
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  try {
+    const data = JSON.parse(trimmed);
+    if (data && typeof data === 'object' && data.type === 'organism' &&
+        data.musicCode != null && data.visualCode != null) {
+      return {
+        version,
+        type: 'organism',
+        musicCode: String(data.musicCode),
+        visualCode: String(data.visualCode),
+        timestamp,
+      };
+    }
+  } catch {
+    // Not JSON or invalid — treat as p5 code
+  }
+  return { version, code: raw, timestamp };
 }
 
 export class Gallery {
@@ -37,6 +73,7 @@ export class Gallery {
     if (!project || typeof project !== 'string' || project.trim() === '') {
       throw new Error('Project name is required and must be a non-empty string');
     }
+    assertSafeSegment(project.trim(), 'Project name');
 
     // Validate version
     if (!version || typeof version !== 'number' || version <= 0 || !Number.isInteger(version)) {
@@ -51,8 +88,8 @@ export class Gallery {
     // Create date-based directory name
     const date = new Date();
     const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-    const projectDirName = `${dateStr}--${project}`;
-    const projectDir = path.join(this.galleryDir, projectDirName);
+    const projectDirName = `${dateStr}--${project.trim()}`;
+    const projectDir = normalizePath(this.galleryDir, projectDirName);
 
     // Create directory if it doesn't exist
     try {
@@ -63,7 +100,7 @@ export class Gallery {
 
     // Save code to version file
     const filename = `v${version}.js`;
-    const filepath = path.join(projectDir, filename);
+    const filepath = normalizePath(projectDir, filename);
 
     try {
       await fs.writeFile(filepath, code, 'utf-8');
@@ -73,23 +110,68 @@ export class Gallery {
   }
 
   /**
+   * Save an organism iteration (musicCode + visualCode) as JSON in vN.js.
+   * @param project - Project name (must be non-empty string)
+   * @param version - Version number (must be positive integer)
+   * @param musicCode - Strudel/music code
+   * @param visualCode - Hydra/visual code
+   */
+  async saveOrganism(project: string, version: number, musicCode: string, visualCode: string): Promise<void> {
+    if (!project || typeof project !== 'string' || project.trim() === '') {
+      throw new Error('Project name is required and must be a non-empty string');
+    }
+    assertSafeSegment(project.trim(), 'Project name');
+    if (!version || typeof version !== 'number' || version <= 0 || !Number.isInteger(version)) {
+      throw new Error('Version must be a positive integer');
+    }
+    if (!musicCode || typeof musicCode !== 'string') {
+      throw new Error('musicCode is required and must be a string');
+    }
+    if (!visualCode || typeof visualCode !== 'string') {
+      throw new Error('visualCode is required and must be a string');
+    }
+
+    const projectDir = await this.ensureProjectDir(project);
+    const payload = {
+      type: 'organism',
+      musicCode: musicCode.trim() || musicCode,
+      visualCode: visualCode.trim() || visualCode,
+    };
+    const filepath = normalizePath(projectDir, `v${version}.js`);
+    await fs.writeFile(filepath, JSON.stringify(payload), 'utf-8');
+  }
+
+  /**
+   * Get or create project directory path (date-based). Creates directory if needed.
+   */
+  private async ensureProjectDir(project: string): Promise<string> {
+    const date = new Date();
+    const dateStr = date.toISOString().split('T')[0];
+    const projectDirName = `${dateStr}--${project.trim()}`;
+    const projectDir = normalizePath(this.galleryDir, projectDirName);
+    await fs.mkdir(projectDir, { recursive: true });
+    return projectDir;
+  }
+
+  /**
    * Load iteration history for a project
    * @param project - Project name (must be non-empty string)
-   * @returns Array of iterations sorted by version number
+   * @returns Array of iterations (p5 or organism) sorted by version number
    * @throws Error if validation fails
    */
-  async loadHistory(project: string): Promise<Iteration[]> {
+  async loadHistory(project: string): Promise<GalleryIteration[]> {
     // Validate project name
     if (!project || typeof project !== 'string' || project.trim() === '') {
       throw new Error('Project name is required and must be a non-empty string');
     }
+    assertSafeSegment(project.trim(), 'Project name');
 
     // Try to find the project directory
     // We need to find the most recent date-based directory for this project
     const date = new Date();
     const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-    const projectDirName = `${dateStr}--${project}`;
-    const projectDir = path.join(this.galleryDir, projectDirName);
+    const projectDirName = `${dateStr}--${project.trim()}`;
+    const projectDir = normalizePath(this.galleryDir, projectDirName);
 
     try {
       // Check if directory exists
@@ -104,7 +186,7 @@ export class Gallery {
       const files = await fs.readdir(projectDir);
 
       // Filter and parse version files
-      const iterations: Iteration[] = [];
+      const iterations: GalleryIteration[] = [];
 
       for (const file of files) {
         // Match version files (v1.js, v2.js, etc.)
@@ -115,17 +197,15 @@ export class Gallery {
 
         try {
           // Read file content
-          const filepath = path.join(projectDir, file);
-          const code = await fs.readFile(filepath, 'utf-8');
+          const filepath = normalizePath(projectDir, file);
+          const raw = await fs.readFile(filepath, 'utf-8');
 
           // Skip empty files
-          if (!code || code.trim() === '') continue;
+          if (!raw || raw.trim() === '') continue;
 
-          iterations.push({
-            version,
-            code,
-            timestamp: date.toISOString()
-          });
+          const timestamp = date.toISOString();
+          const iter = parseVersionContent(raw, version, timestamp);
+          if (iter) iterations.push(iter);
         } catch (error) {
           // Skip files that can't be read
           continue;
@@ -148,9 +228,10 @@ export class Gallery {
    * @returns Full path to the project directory
    */
   getProjectPath(project: string): string {
+    assertSafeSegment(project.trim(), 'Project name');
     const date = new Date();
     const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-    return path.join(this.galleryDir, `${dateStr}--${project}`);
+    return normalizePath(this.galleryDir, `${dateStr}--${project.trim()}`);
   }
 
   /**
@@ -174,5 +255,69 @@ export class Gallery {
       return 0;
     }
     return Math.max(...history.map(iter => iter.version));
+  }
+
+  /**
+   * List project directory names in the gallery (e.g. "YYYY-MM-DD--projectName").
+   * Used by API and GUI to list projects without relying on today's date.
+   * @returns Sorted list of project dir names (newest first by name)
+   */
+  async listProjectDirs(): Promise<string[]> {
+    try {
+      const entries = await fs.readdir(this.galleryDir, { withFileTypes: true });
+      const dirs = entries
+        .filter(e => e.isDirectory())
+        .map(e => e.name)
+        .filter(name => /^\d{4}-\d{2}-\d{2}--.+/.test(name));
+      return dirs.sort((a, b) => b.localeCompare(a));
+    } catch {
+      return [];
+    }
+  }
+
+  /**
+   * Load iteration history from a project directory by its full name (e.g. "2026-03-07--my-project").
+   * @param projectDirName - Full directory name under galleryDir
+   * @returns Array of iterations (p5 or organism) sorted by version number
+   */
+  async loadHistoryFromDir(projectDirName: string): Promise<GalleryIteration[]> {
+    if (!projectDirName || typeof projectDirName !== 'string' || projectDirName.trim() === '') {
+      return [];
+    }
+    let projectDir: string;
+    try {
+      projectDir = normalizePath(this.galleryDir, projectDirName.trim());
+    } catch {
+      return [];
+    }
+    try {
+      await fs.access(projectDir);
+    } catch {
+      return [];
+    }
+    try {
+      const files = await fs.readdir(projectDir);
+      const iterations: GalleryIteration[] = [];
+      for (const file of files) {
+        const match = file.match(/^v(\d+)\.js$/);
+        if (!match) continue;
+        const version = parseInt(match[1], 10);
+        try {
+          const filepath = normalizePath(projectDir, file);
+          const raw = await fs.readFile(filepath, 'utf-8');
+          if (!raw || raw.trim() === '') continue;
+          const stat = await fs.stat(filepath);
+          const timestamp = stat.mtime?.toISOString() ?? new Date().toISOString();
+          const iter = parseVersionContent(raw, version, timestamp);
+          if (iter) iterations.push(iter);
+        } catch {
+          continue;
+        }
+      }
+      iterations.sort((a, b) => a.version - b.version);
+      return iterations;
+    } catch {
+      return [];
+    }
   }
 }

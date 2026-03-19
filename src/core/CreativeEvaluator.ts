@@ -93,6 +93,16 @@ export class CreativeEvaluator {
       };
     }
 
+    // Shader-specific evaluation
+    if (this.detectsShaderUsage(output)) {
+      return this.assessShader(output);
+    }
+
+    // Three.js-specific evaluation
+    if (this.detectsThreeUsage(output)) {
+      return this.assessThree(output);
+    }
+
     // Calculate metrics
     const metrics = this.analyzeMetrics(output);
 
@@ -158,14 +168,15 @@ export class CreativeEvaluator {
   private static calculateTechnicalScore(code: string, metrics: CodeMetrics): number {
     let score = 0;
 
-    // Basic structure checks (max 0.4 points)
-    if (metrics.hasSetup) score += 0.2;
-    if (metrics.hasDraw) score += 0.2;
+    // Basic structure checks (max 0.3 points)
+    if (metrics.hasSetup) score += 0.15;
+    if (metrics.hasDraw) score += 0.15;
 
-    // Code completeness (max 0.4 points)
+    // Code completeness (max 0.3 points)
     if (metrics.hasSetup && metrics.hasDraw) {
-      score += 0.2; // Has both setup and draw
       if (this.checkBasicSyntax(code)) score += 0.2;
+      // Bonus for non-trivial draw() body
+      if (this.hasNonTrivialDrawBody(code)) score += 0.1;
     }
 
     // Error detection (max 0.2 points) - be more lenient
@@ -177,7 +188,43 @@ export class CreativeEvaluator {
       score -= Math.min(errorCount * 0.1, 0.2);
     }
 
+    // Code length bonus (max 0.2 points) - reward substantive code
+    if (metrics.codeLength > 100) score += 0.1;
+    if (metrics.codeLength > 300) score += 0.1;
+
     return Math.max(0, Math.min(1, score));
+  }
+
+  /**
+   * Check if draw() function has non-trivial body (not just background + single shape)
+   */
+  private static hasNonTrivialDrawBody(code: string): boolean {
+    // Extract draw function body
+    const drawMatch = code.match(/function\s+draw\s*\([^)]*\)\s*\{/s);
+    if (!drawMatch) return false;
+
+    const startIdx = drawMatch.index! + drawMatch[0].length;
+    let braceCount = 1;
+    let endIdx = startIdx;
+    for (let i = startIdx; i < code.length; i++) {
+      if (code[i] === '{') braceCount++;
+      else if (code[i] === '}') {
+        braceCount--;
+        if (braceCount === 0) { endIdx = i; break; }
+      }
+    }
+
+    const drawBody = code.substring(startIdx, endIdx).trim();
+
+    // Count distinct p5 API calls in draw body
+    const apiCalls = drawBody.match(/\b(background|fill|stroke|noFill|noStroke|ellipse|rect|line|triangle|quad|arc|circle|square|point|beginShape|endShape|vertex|curveVertex|text|textSize|textAlign|image|push|pop|translate|rotate|scale|shearX|shearY|noise|random|map|constrain|lerp|dist|color|lerpColor|colorMode|blendMode|filter|tint|clear|cursor)\b/g);
+    const distinctCalls = new Set(apiCalls || []);
+
+    // Require at least 1 distinct API call or a loop/conditional
+    const hasLoop = /\b(for|while)\b/.test(drawBody);
+    const hasConditional = /\bif\s*\(/.test(drawBody);
+
+    return distinctCalls.size >= 1 || hasLoop || hasConditional;
   }
 
   /**
@@ -242,19 +289,27 @@ export class CreativeEvaluator {
    * Check basic syntax validity
    */
   private static checkBasicSyntax(code: string): boolean {
+    // Strip strings and comments before counting brackets
+    const stripped = code
+      .replace(/\/\/.*$/gm, '')           // Remove single-line comments
+      .replace(/\/\*[\s\S]*?\*\//g, '')    // Remove multi-line comments
+      .replace(/'(?:[^'\\]|\\.)*'/g, '""') // Replace single-quoted strings
+      .replace(/"(?:[^"\\]|\\.)*"/g, '""') // Replace double-quoted strings
+      .replace(/`(?:[^`\\]|\\.)*`/g, '""'); // Replace template literals
+
     // Check for balanced braces
-    const openBraces = (code.match(/\{/g) || []).length;
-    const closeBraces = (code.match(/\}/g) || []).length;
+    const openBraces = (stripped.match(/\{/g) || []).length;
+    const closeBraces = (stripped.match(/\}/g) || []).length;
     if (openBraces !== closeBraces) return false;
 
     // Check for balanced parentheses
-    const openParens = (code.match(/\(/g) || []).length;
-    const closeParens = (code.match(/\)/g) || []).length;
+    const openParens = (stripped.match(/\(/g) || []).length;
+    const closeParens = (stripped.match(/\)/g) || []).length;
     if (openParens !== closeParens) return false;
 
     // Check for balanced brackets
-    const openBrackets = (code.match(/\[/g) || []).length;
-    const closeBrackets = (code.match(/\]/g) || []).length;
+    const openBrackets = (stripped.match(/\[/g) || []).length;
+    const closeBrackets = (stripped.match(/\]/g) || []).length;
     if (openBrackets !== closeBrackets) return false;
 
     return true;
@@ -266,18 +321,24 @@ export class CreativeEvaluator {
   private static detectErrors(code: string): number {
     let errorCount = 0;
 
-    // Check for undefined function references (common error patterns)
-    const undefinedPattern = /\b(undefinedFunction|nonExistent|notDefined)\b\(/;
-    if (undefinedPattern.test(code)) errorCount++;
-
-    // Check for incomplete function definitions (at end of code)
+    // Check for incomplete function definitions (unclosed brace at end)
     const trimmedCode = code.trim();
-    const incompleteFunction = /function\s+\w+\s*\([^)]*\)\s*\{[^}]*$/;
-    if (incompleteFunction.test(trimmedCode)) {
-      // Only count if it's truly incomplete (missing closing brace)
-      const openBraces = (trimmedCode.match(/\{/g) || []).length;
-      const closeBraces = (trimmedCode.match(/\}/g) || []).length;
-      if (openBraces > closeBraces) errorCount++;
+    const openBraces = (trimmedCode.match(/\{/g) || []).length;
+    const closeBraces = (trimmedCode.match(/\}/g) || []).length;
+    if (openBraces > closeBraces) {
+      const incompleteFunction = /function\s+\w+\s*\([^)]*\)\s*\{[^}]*$/;
+      if (incompleteFunction.test(trimmedCode)) errorCount++;
+    }
+
+    // Check for common p5.js API misspellings
+    const commonMisspellings = [
+      /\bcreatCanvas\s*\(/,
+      /\bbackgound\s*\(/,
+      /\bfil\s*\(/,
+      /\bstrok\s*\(/,
+    ];
+    for (const pattern of commonMisspellings) {
+      if (pattern.test(code)) errorCount++;
     }
 
     return errorCount;
@@ -418,5 +479,97 @@ export class CreativeEvaluator {
     const hasSound = soundPatterns.some(p => p.test(code));
     if (!hasSound) return 0;
     return this.checkBasicSyntax(code) ? 0.5 : 0;
+  }
+
+  /**
+   * Detect GLSL shader code
+   */
+  static detectsShaderUsage(code: string): boolean {
+    return /void\s+main\s*\(/.test(code) && /gl_FragColor|out\s+vec4/.test(code);
+  }
+
+  /**
+   * Detect Three.js code
+   */
+  static detectsThreeUsage(code: string): boolean {
+    return /import.*from\s+['"]three['"]/.test(code) || /\bTHREE\.(Scene|PerspectiveCamera|WebGLRenderer|Mesh|BoxGeometry|MeshStandardMaterial)\b/.test(code);
+  }
+
+  /**
+   * Assess GLSL shader code quality
+   */
+  private static assessShader(output: string): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    // Technical checks
+    if (/precision\s+highp\s+float/.test(output)) technicalScore += 0.15;
+    if (/uniform\s+vec2\s+u_resolution/.test(output)) technicalScore += 0.1;
+    if (/uniform\s+float\s+u_time/.test(output)) technicalScore += 0.1;
+    if (/gl_FragColor|out\s+vec4/.test(output)) technicalScore += 0.15;
+    if (this.checkBasicSyntax(output)) technicalScore += 0.2;
+    if (output.length > 200) technicalScore += 0.1;
+    if (output.length > 500) technicalScore += 0.1;
+
+    // Creative checks
+    if (/sin|cos|atan/.test(output)) creativeScore += 0.15;
+    if (/noise|random|fract/.test(output)) creativeScore += 0.15;
+    if (/ray\s*march|sdf|sdSphere|sdBox|length\(/.test(output)) creativeScore += 0.2;
+    if (/vec3.*col|mix|smoothstep/.test(output)) creativeScore += 0.15;
+    if (/for\s*\(/.test(output)) creativeScore += 0.15;
+    if (/u_time/.test(output)) creativeScore += 0.1;
+
+    if (output.length < 100) issues.push('Shader code too short');
+    if (!/uniform\s+float\s+u_time/.test(output)) issues.push('Missing u_time uniform');
+
+    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+    };
+  }
+
+  /**
+   * Assess Three.js code quality
+   */
+  private static assessThree(output: string): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    // Technical checks
+    if (/Scene|scene/.test(output)) technicalScore += 0.15;
+    if (/Camera|camera/.test(output)) technicalScore += 0.15;
+    if (/WebGLRenderer|renderer/.test(output)) technicalScore += 0.15;
+    if (/Mesh|mesh/.test(output)) technicalScore += 0.1;
+    if (/Geometry|geometry|BufferGeometry/.test(output)) technicalScore += 0.1;
+    if (/Material|material/.test(output)) technicalScore += 0.1;
+    if (this.checkBasicSyntax(output)) technicalScore += 0.15;
+    if (output.length > 500) technicalScore += 0.1;
+
+    // Creative checks
+    if (/Light|AmbientLight|DirectionalLight|PointLight/.test(output)) creativeScore += 0.15;
+    if (/animate|requestAnimationFrame/.test(output)) creativeScore += 0.2;
+    if (/Color|color\(/.test(output)) creativeScore += 0.15;
+    if (/rotation|position\.|scale/.test(output)) creativeScore += 0.15;
+    if (/for\s*\(/.test(output)) creativeScore += 0.15;
+    if (/import/.test(output)) creativeScore += 0.1;
+
+    if (output.length < 200) issues.push('Three.js code too short');
+
+    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+    };
   }
 }

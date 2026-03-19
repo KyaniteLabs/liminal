@@ -6,7 +6,7 @@
  * - with audioInput: code references fft or bpm
  */
 
-import { generateVisuals } from '../../dist/index.js';
+import { generateVisuals } from '../../src/generateVisuals.js';
 
 describe('generateVisuals', () => {
   it('returns object with code string', async () => {
@@ -73,5 +73,15 @@ describe('generateVisuals', () => {
     expect(result.code).toBeDefined();
     expect(result.code.length).toBeGreaterThan(0);
     expect(result.code).toMatch(/reactive|osc|out/i);
+  });
+
+  it('falls back to template when LLM is not configured', async () => {
+    const result = await generateVisuals({ prompt: 'glitch', platform: 'hydra' });
+    expect(result.code).toContain('.out()');
+  });
+
+  it('template fallback works for p5 platform', async () => {
+    const result = await generateVisuals({ prompt: 'particles', platform: 'p5' });
+    expect(result.code).toMatch(/setup|draw/);
   });
 });

@@ -28,6 +28,35 @@ export class LLMClient {
     };
   }
 
+  /**
+   * Generic LLM generation method.
+   * Routes to the configured provider (inception, ollama, openai, anthropic).
+   * Used by generateP5Sketch, improveP5Sketch, and domain-specific generators.
+   */
+  async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<LLMResponse> {
+    try {
+      if (this.config.provider === 'inception') {
+        return await this.callInception(systemPrompt, userPrompt, signal);
+      } else if (this.config.provider === 'ollama') {
+        return await this.callOllama(systemPrompt, userPrompt, signal);
+      } else if (this.config.provider === 'openai') {
+        return await this.callOpenAI(systemPrompt, userPrompt, signal);
+      } else if (this.config.provider === 'anthropic') {
+        return await this.callAnthropic(systemPrompt, userPrompt, signal);
+      } else {
+        return { code: '', success: false, error: 'Unknown provider: ' + this.config.provider };
+      }
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.error('LLMClient.generate failed:', errMsg);
+      return {
+        code: `// LLM generation failed: ${errMsg}`,
+        success: false,
+        error: errMsg,
+      };
+    }
+  }
+
   async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal): Promise<LLMResponse> {
     const systemPrompt = `You are an expert creative coding assistant specializing in p5.js.
 Generate valid, creative p5.js sketch code based on the user's description.
@@ -54,25 +83,7 @@ function draw() {
     const userPrompt = `Create a p5.js sketch: ${prompt}
 ${context ? `\nContext: ${context}` : ''}`;
 
-    try {
-      if (this.config.provider === 'inception') {
-        return await this.callInception(systemPrompt, userPrompt, signal);
-      } else if (this.config.provider === 'ollama') {
-        return await this.callOllama(systemPrompt, userPrompt, signal);
-      } else if (this.config.provider === 'openai') {
-        return await this.callOpenAI(systemPrompt, userPrompt, signal);
-      } else if (this.config.provider === 'anthropic') {
-        return await this.callAnthropic(systemPrompt, userPrompt, signal);
-      } else {
-        return { code: '', success: false, error: 'Unknown provider: ' + this.config.provider };
-      }
-    } catch (error) {
-      return {
-        code: '',
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
+    return this.generate(systemPrompt, userPrompt, signal);
   }
 
   /**
@@ -92,25 +103,7 @@ Rules:
 
     const userPrompt = `Improve this p5.js sketch. Current code:\n\n${currentCode}`;
 
-    try {
-      if (this.config.provider === 'inception') {
-        return await this.callInception(systemPrompt, userPrompt);
-      } else if (this.config.provider === 'ollama') {
-        return await this.callOllama(systemPrompt, userPrompt);
-      } else if (this.config.provider === 'openai') {
-        return await this.callOpenAI(systemPrompt, userPrompt);
-      } else if (this.config.provider === 'anthropic') {
-        return await this.callAnthropic(systemPrompt, userPrompt);
-      } else {
-        return { code: '', success: false, error: 'Unknown provider: ' + this.config.provider };
-      }
-    } catch (error) {
-      return {
-        code: '',
-        success: false,
-        error: error instanceof Error ? error.message : 'Unknown error',
-      };
-    }
+    return this.generate(systemPrompt, userPrompt);
   }
 
   private async callInception(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
@@ -147,7 +140,7 @@ Rules:
     return this.parseChatCompletionResponse(data);
   }
 
-  private parseChatCompletionResponse(data: any): LLMResponse {
+  private parseChatCompletionResponse(data: { choices?: Array<{ message?: { content?: string } }> }): LLMResponse {
     const code = data.choices?.[0]?.message?.content || '';
     const codeMatch = code.match(/```(?:javascript|js)?\n?([\s\S]*?)```/);
     const cleanCode = codeMatch ? codeMatch[1].trim() : code.trim();

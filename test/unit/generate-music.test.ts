@@ -6,7 +6,7 @@
  * - platform 'p5-webaudio' -> p5.js code with createOscillator / Web Audio
  */
 
-import { generateMusic } from '../../dist/index.js';
+import { generateMusic } from '../../src/music/generateMusic.js';
 
 describe('generateMusic', () => {
   it('returns object with code string', async () => {
@@ -50,5 +50,16 @@ describe('generateMusic', () => {
     expect(result.code).toBeDefined();
     expect(result.code.length).toBeGreaterThan(0);
     expect(result.code).toMatch(/reactive|setcps|strudel/i);
+  });
+
+  it('falls back to template when LLM is not configured', async () => {
+    // Without ATELIER_LLM_API_KEY, should use template fallback
+    const result = await generateMusic({ prompt: 'ambient chill', platform: 'strudel' });
+    expect(result.code).toContain('setcps');
+  });
+
+  it('template fallback works for p5-webaudio platform', async () => {
+    const result = await generateMusic({ prompt: 'beeps', platform: 'p5-webaudio' });
+    expect(result.code).toContain('createOscillator');
   });
 });

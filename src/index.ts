@@ -17,8 +17,16 @@ import { promptToGeneratorParams } from './utils/promptToGeneratorParams.js';
 import { P5Generator } from './generators/p5/P5Generator.js';
 import { ParticleSystem } from './generators/p5/ParticleSystem.js';
 import { CellularAutomata } from './generators/p5/CellularAutomata.js';
+import { FlowField } from './generators/p5/FlowField.js';
+import { noise2D, noise3D, noiseSeed, flowField } from './generators/p5/Noise.js';
 
 import { P5GeneratorLLM } from './generators/p5/P5GeneratorLLM.js';
+
+// GLSL Generator
+import { ShaderGenerator } from './generators/glsl/ShaderGenerator.js';
+
+// Three.js Generator
+import { ThreeGenerator } from './generators/three/ThreeGenerator.js';
 
 // Rendering and export
 import { Renderer } from './render/Renderer.js';
@@ -139,7 +147,6 @@ export async function run(prompt: string, options: {
   } = options;
 
   const evaluationCriteria = creativeOptions?.evaluationCriteria ?? defaultConfig.creative.evaluationCriteria;
-  void evaluationCriteria; // reserved for future use by RalphLoop/CreativeEvaluator
 
   try {
     // Validate input
@@ -165,6 +172,7 @@ export async function run(prompt: string, options: {
       minQualityScore,
       seedCode,
       seedTemplate,
+      evaluationCriteria,
       onProgress,
       signal
     });
@@ -339,7 +347,11 @@ export { ContextAccumulation };
 export { P5Generator };
 export { ParticleSystem };
 export { CellularAutomata };
+export { FlowField };
 export { promptToGeneratorParams };
+
+// Noise utilities
+export { noise2D, noise3D, noiseSeed, flowField };
 
 // Rendering and Preview
 export { Renderer };
@@ -396,7 +408,14 @@ export default {
   P5Generator,
   ParticleSystem,
   CellularAutomata,
+  FlowField,
   promptToGeneratorParams,
+
+  // Noise
+  noise2D,
+  noise3D,
+  noiseSeed,
+  flowField,
 
   // Rendering and export
   Renderer,
@@ -423,3 +442,9 @@ export default {
 
 // LLM Generator
 export { P5GeneratorLLM };
+
+// GLSL Generator
+export { ShaderGenerator };
+
+// Three.js Generator
+export { ThreeGenerator };

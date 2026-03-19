@@ -29,9 +29,13 @@ import { PromiseDetector } from './PromiseDetector.js';
 import { P5GeneratorLLM } from '../generators/p5/P5GeneratorLLM.js';
 import { ParticleSystem } from '../generators/p5/ParticleSystem.js';
 import { CellularAutomata } from '../generators/p5/CellularAutomata.js';
+import { FlowField } from '../generators/p5/FlowField.js';
+import { ShaderGenerator } from '../generators/glsl/ShaderGenerator.js';
+import { ThreeGenerator } from '../generators/three/ThreeGenerator.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { promptToGeneratorParams } from '../utils/promptToGeneratorParams.js';
 import { generateMusicToVisual } from '../musicToVisual/generateMusicToVisual.js';
+import { mergeSketchCode } from '../utils/mergeSketchCode.js';
 
 interface LoopOptions {
   maxIterations?: number;
@@ -144,6 +148,14 @@ export class RalphLoop {
           currentCode = ParticleSystem.generate(generatorParams);
         } else if (generatorKind === 'cellular') {
           currentCode = CellularAutomata.generate(generatorParams);
+        } else if (generatorKind === 'flowfield') {
+          currentCode = FlowField.generate(generatorParams);
+        } else if (generatorKind === 'shader') {
+          const shaderGen = new ShaderGenerator();
+          currentCode = await shaderGen.generate(loadedPrompt);
+        } else if (generatorKind === 'three') {
+          const threeGen = new ThreeGenerator();
+          currentCode = await threeGen.generate(loadedPrompt);
         } else {
           const generator = new P5GeneratorLLM();
           currentCode = await generator.generate(usedPrompt);
@@ -190,7 +202,7 @@ export class RalphLoop {
           const lastTwo = history.slice(-2) as IterationContext[];
           const codeA = lastTwo[0].code;
           const codeB = lastTwo[1].code;
-          const proposed = codeA + '\n// merged with next\n' + codeB;
+          const proposed = mergeSketchCode(codeA, codeB);
           normalizedOptions.onMergeStep?.({ codeA, codeB, proposed });
           if (normalizedOptions.project) {
             try {
@@ -268,7 +280,7 @@ export class RalphLoop {
   /**
    * Normalize options with defaults
    */
-  private static normalizeOptions(options: LoopOptions | null): Required<Omit<LoopOptions, 'seedCode' | 'seedTemplate' | 'maxContextLength' | 'lastKIterations' | 'evaluationCriteria' | 'onProgress' | 'signal' | 'mode' | 'traits' | 'mergeEveryN' | 'onMergeStep'>> & Pick<LoopOptions, 'seedCode' | 'seedTemplate' | 'maxContextLength' | 'lastKIterations' | 'evaluationCriteria' | 'onProgress' | 'signal' | 'mode' | 'traits' | 'mergeEveryN' | 'onMergeStep'> {
+  private static normalizeOptions(options: LoopOptions | null): LoopOptions & { maxIterations: number; timeoutMinutes: number; galleryDir: string; project: string; tolerateErrors: boolean; minQualityScore: number } {
     return {
       maxIterations: options?.maxIterations || RalphLoop.DEFAULT_MAX_ITERATIONS,
       timeoutMinutes: options?.timeoutMinutes || RalphLoop.DEFAULT_TIMEOUT_MINUTES,
@@ -415,9 +427,21 @@ export class RalphLoop {
    */
   private static chooseGenerator(
     prompt: string
-  ): { generatorKind: 'particle' | 'cellular' | 'llm'; generatorParams: Record<string, unknown> } {
+  ): { generatorKind: 'particle' | 'cellular' | 'flowfield' | 'shader' | 'three' | 'llm'; generatorParams: Record<string, unknown> } {
     const lower = prompt.toLowerCase();
     const derived = promptToGeneratorParams(prompt);
+    if (/3d|three\.js|\bthree\b|webgl\s*3d|3d\s*scene|3d\s*particle/.test(lower)) {
+      return { generatorKind: 'three', generatorParams: {} };
+    }
+    if (/shader|glsl|ray\s*march|sdf|fragment/.test(lower)) {
+      return { generatorKind: 'shader', generatorParams: {} };
+    }
+    if (/flow\s*field|flow\s*particle|particles?\s+flow/.test(lower)) {
+      const params: Record<string, unknown> = { ...derived };
+      if (/blue/.test(lower)) params.palette = 'cool';
+      if (/warm|red|orange/.test(lower)) params.palette = 'warm';
+      return { generatorKind: 'flowfield', generatorParams: params };
+    }
     if (/particle|galaxy/.test(lower)) {
       const params: Record<string, unknown> = { ...derived };
       if (/blue/.test(lower)) params.palette = 'cool';

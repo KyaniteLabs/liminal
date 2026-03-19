@@ -28,6 +28,13 @@ export function promptToGeneratorParams(prompt: string): Record<string, unknown>
     params.timeStep = 0.2;
   }
 
+  // Flow field specific params
+  if (/\b(flow\s*field|particles?\s+flow)\b/.test(p)) {
+    params.particleCount = 500;
+    params.scale = 0.005;
+    params.trailAlpha = 10;
+  }
+
   // Ensure we always return at least one key so callers can rely on it
   if (Object.keys(params).length === 0) {
     params.palette = 'default';

@@ -43,6 +43,7 @@ export const XRayPanel: React.FC<XRayPanelProps> = ({
   // Auto-scroll when streaming
   useEffect(() => {
     if (isStreaming && containerRef.current) {
+      void 0; // placeholder for scroll-into-view when needed
     }
   }, [isStreaming]);
 

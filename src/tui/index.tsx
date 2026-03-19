@@ -16,6 +16,7 @@ const PROJECT_ROOT = path.resolve(__dirname, "../..");
 import { PlayerPiano } from "./components/PlayerPiano";
 import { XRayPanel } from "./components/XRayPanel";
 import { VoiceInputUI } from "./components/VoiceInput";
+import { IterationTimeline } from "./components/IterationTimeline";
 
 interface GalleryEntry {
   projectName: string;
@@ -141,7 +142,9 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
   const { rows } = useTerminalSize();
   const contentHeight = Math.max(20, rows - 10);
   const [prompt, setPrompt] = useState("");
+  const [seedCode, _setSeedCode] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
   const [logs, setLogs] = useState<LogEntry[]>([
     { type: "system", message: "Atelier TUI v2.0 initialized", timestamp: Date.now() },
     { type: "info", message: `Loaded ${initialGallery.length} projects`, timestamp: Date.now() },
@@ -161,36 +164,95 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
 
   const handleGenerate = async () => {
     if (!prompt.trim() || isGenerating) return;
+    abortControllerRef.current = new AbortController();
+    const signal = abortControllerRef.current.signal;
     setIsGenerating(true);
+    setCurrentIterations([]);
+    setPlayerPianoIndex(0);
     addLog("info", `Starting: "${prompt.slice(0, 30)}..."`);
     addLog("llm", "→ LLM Request: inception/inception-001");
     addLog("llm", `  Prompt: ~${prompt.length + 2000} chars`);
-    
+
     const projectName = `project-${Date.now()}`;
+    const runOptions = {
+      maxIterations: 10,
+      timeoutMinutes: 5,
+      galleryDir: "gallery",
+      project: projectName,
+      seedCode: seedCode.trim() || undefined,
+      signal,
+      onProgress: (data: { iteration: number; score: number; promiseDetected: boolean; code: string; timestamp: string }) => {
+        const ts = new Date(data.timestamp).getTime();
+        setCurrentIterations((prev) => [
+          ...prev,
+          {
+            id: data.iteration,
+            code: data.code,
+            timestamp: ts,
+            score: data.score,
+            promiseDetected: data.promiseDetected,
+          },
+        ]);
+        setPlayerPianoIndex(data.iteration - 1);
+        addLog("iteration", `v${data.iteration} score=${data.score.toFixed(2)} quality:${data.score >= 0.7 ? "pass" : "fail"} ${data.promiseDetected ? "promise:yes" : "promise:no"}`);
+      },
+    };
+
     try {
       const { run } = await import(path.join(PROJECT_ROOT, "dist/index.js"));
       const startTime = Date.now();
-      const result = await run(prompt, { maxIterations: 10, timeoutMinutes: 5, galleryDir: "gallery", project: projectName });
+      const result = await run(prompt, runOptions);
       const duration = Date.now() - startTime;
-      
+
       addLog("llm", `← LLM Response: ${result.code.length} chars`);
       addLog("llm", `  Time: ${duration}ms`);
-      addLog("success", `Complete: ${result.iterations} iters`);
-      
-      const iterations: Iteration[] = Array.from({ length: result.iterations }, (_, i) => ({
-        id: i + 1,
-        code: result.code,
-        timestamp: Date.now() - (result.iterations - i) * 1000,
-      }));
-      setCurrentIterations(iterations);
-      setPlayerPianoIndex(iterations.length - 1);
-      
+      if (result.reason?.toLowerCase().includes("aborted")) {
+        addLog("info", "Run stopped by user");
+      } else {
+        addLog("success", `Complete: ${result.iterations} iters`);
+      }
+      setPlayerPianoIndex(Math.max(0, result.iterations - 1));
+
       const newGallery = await loadGallery();
       setGallery(newGallery);
     } catch (err: any) {
-      addLog("error", `Failed: ${err.message}`);
+      if (err?.name === "AbortError" || signal?.aborted) {
+        addLog("info", "Run stopped by user");
+      } else {
+        addLog("error", `Failed: ${err.message}`);
+      }
     } finally {
       setIsGenerating(false);
+      abortControllerRef.current = null;
+    }
+  };
+
+  const handleStop = () => {
+    if (isGenerating && abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+  };
+
+  const handleExport = async () => {
+    const code = currentIterations.length
+      ? currentIterations[playerPianoIndex]?.code ?? currentIterations[currentIterations.length - 1].code
+      : "";
+    if (!code.trim()) {
+      addLog("error", "No iteration to export. Run a prompt or open a gallery project.");
+      return;
+    }
+    try {
+      const outDir = path.join(PROJECT_ROOT, "output");
+      await fs.mkdir(outDir, { recursive: true });
+      const { Exporter } = await import(path.join(PROJECT_ROOT, "dist/export/Exporter.js"));
+      const exporter = new Exporter();
+      const htmlPath = path.join(outDir, "tui-export.html");
+      const jsPath = path.join(outDir, "tui-export.js");
+      await exporter.exportHTML(code, htmlPath);
+      await exporter.exportJS(code, jsPath);
+      addLog("success", `Exported to ${htmlPath} and ${jsPath}`);
+    } catch (e: any) {
+      addLog("error", `Export failed: ${e?.message || "unknown"}`);
     }
   };
 
@@ -199,21 +261,51 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
     const project = gallery[index];
     if (project) {
       addLog("info", `Selected: ${project.projectName}`);
+      try {
+        const iters: Iteration[] = [];
+        for (const f of project.iterations) {
+          const match = f.match(/^v(\d+)\.js$/);
+          if (!match) continue;
+          const version = parseInt(match[1], 10);
+          const fullPath = path.join(project.path, f);
+          const code = await fs.readFile(fullPath, "utf-8");
+          iters.push({ id: version, code, timestamp: Date.now() - (project.iterations.length - iters.length) * 1000 });
+        }
+        iters.sort((a, b) => a.id - b.id);
+        setCurrentIterations(iters);
+        setPlayerPianoIndex(0);
+        if (iters.length) addLog("info", `Loaded ${iters.length} iterations into timeline`);
+      } catch (e: any) {
+        addLog("error", `Failed to load project: ${e?.message || "unknown"}`);
+      }
     }
   };
 
-  useInput((input: string) => {
+  useInput((input: string, key: any) => {
     if (input === "q") process.exit(0);
     if (input === "1") setIsPlayerPianoPlaying(prev => !prev);
     if (input === "v") setShowVoiceInput(prev => !prev);
+    if (input === "e" || input === "E") handleExport();
+    if (isGenerating && (input === "s" || key.escape)) handleStop();
   });
 
   return (
     <Box flexDirection="column" padding={1}>
       <Banner />
       <PromptBar value={prompt} onChange={setPrompt} onSubmit={handleGenerate} disabled={isGenerating} />
+      <Box marginBottom={1}>
+        <Text color={COLORS.muted}>Seed (optional): </Text>
+        <Text color="white">{seedCode || "(none)"}</Text>
+        <Text color={COLORS.muted}> — type in prompt bar then [Enter] to Run</Text>
+      </Box>
       <Box flexDirection="row" gap={1}>
         <LogsPanel logs={logs} height={contentHeight} />
+        <IterationTimeline
+          iterations={currentIterations}
+          selectedIndex={playerPianoIndex}
+          onSelectIndex={(idx) => setPlayerPianoIndex(Math.max(0, Math.min(idx, currentIterations.length - 1)))}
+          height={contentHeight}
+        />
         <PlayerPiano
           iterations={currentIterations}
           currentIndex={playerPianoIndex}
@@ -236,7 +328,7 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
         <GalleryPanel projects={gallery} currentIndex={galleryIndex} onSelect={handleGallerySelect} height={contentHeight} />
       </Box>
       <Box borderStyle="single" borderColor={COLORS.border} paddingX={1} marginTop={1}>
-        <Text color={COLORS.muted}>Status: {isGenerating ? "Generating..." : "Ready"} | [1] PlayerPiano | [V]oice | [Q]uit</Text>
+        <Text color={COLORS.muted}>Status: {isGenerating ? "Generating... [Esc/S] Stop" : "Ready"} | [Enter] Run | [E] Export | [1] PlayerPiano | [V]oice | [Q]uit</Text>
       </Box>
     </Box>
   );

@@ -1,7 +1,32 @@
 # Gaps, Blind Spots, and Research-Aligned Improvements
 
 **Date:** 2026-03-07  
-**Context:** Comparison of PRD + preliminary research (docs/PRELIMINARY_RESEARCH.md and linked reports) to the current codebase. The code is a bare MVP and was never successful. This document lists every identified gap, blind spot, missed opportunity, and research-aligned improvement.
+**Context:** Comparison of PRD + preliminary research (docs/PRELIMINARY_RESEARCH.md and linked reports) to the current codebase. This document lists every identified gap, blind spot, missed opportunity, and research-aligned improvement.
+
+---
+
+## Remediation status (2026-03-07)
+
+After the **Full Remediation to Launch** (Waves 0–7), the following items from this document were **addressed**:
+
+| § | Gap | Remediation |
+|---|-----|-------------|
+| **1.1** | Context never reaches the LLM | RalphLoop now **always** injects context: if the prompt has no `{{context}}` placeholder, context is **appended** so the generator always sees previous iterations. |
+| **1.2** | Quality score not used as backpressure | **Quality gate** in RalphLoop: when `evaluation.score < minQualityScore`, loop breaks with reason "quality threshold not met". |
+| **3.1** | Rich generators not in the loop | **Generator routing**: prompts containing "particle"/"galaxy" → ParticleSystem; "cellular"/"automata"/"lenia" → CellularAutomata; else P5GeneratorLLM. `promptToGeneratorParams` derives palette/speed from prompt. |
+| **4.1** | CreativeEvaluator as fitness | **getFitness(code, options)** added; IGA **generateFiveVariations()** uses it. |
+| **5.3** | tolerateErrors not in run() | **tolerateErrors** added to run() and Atelier.run() options; passed through to RalphLoop. |
+| **Path traversal (audit)** | output, project, gallery, SeedArchive, export path | **normalizePath(baseDir, subPath)** and **assertSafeSegment(name)** in `src/utils/normalizePath.ts`; used in run(), Gallery, SeedArchive, POST /api/export. |
+| **ESLint / coverage (audit)** | No project ESLint; coverage from dist | **.eslintrc.cjs** added; **collectCoverageFrom** switched to **src/**; **test/unit/lint.test.ts** asserts lint runs. |
+| **Live Music (5.2)** | generateMusic/generateVisuals documented but not implemented | **Implemented**: generateMusic, generateVisuals, generateMusicToVisual; CLI **--mode live-music**; config **live** (midiOutput, oscHost, etc.). |
+
+**Still open (or partially open):**
+
+- **5.1** config/atelier.json: ConfigLoader has `loadProjectConfig()`; project config path may not be passed from bin/atelier in all code paths. Document when it is used.
+- **1.3** Truncation strategy for context bloat: context is bounded (last iteration + trend) but not explicitly documented or configurable (e.g. last K iterations).
+- **2.2** Evaluation criteria configurable: PRD lists evaluationCriteria; CreativeEvaluator may not read it from config.
+- **3.3, 4.1** GA phase: IGA generateFiveVariations exists; full "5 variations → user selects → mutate/crossover" UI or flow may be partial.
+- **Integration test failures:** 8 tests in full-loop and ralph-loop fail when LLM/template does not output promise or varied code; one GUI test expects different /gui content. See IMPACT_ANALYSIS.md.
 
 ---
 

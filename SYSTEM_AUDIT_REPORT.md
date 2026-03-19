@@ -6,6 +6,20 @@
 
 ---
 
+## Post-remediation update (2026-03-07)
+
+After the Full Remediation to Launch (Waves 0–7), the following items from the original audit were addressed:
+
+- **Path traversal:** Output, project, gallery, SeedArchive, and POST `/api/export` now use `normalizePath()` and `assertSafeSegment()` from `src/utils/normalizePath.ts`; paths outside the base or containing `..`/separators are rejected.
+- **ESLint:** `.eslintrc.cjs` added at repo root; `npm run lint` runs `eslint src/` with project config.
+- **Coverage:** Jest `collectCoverageFrom` now targets **source** (`src/**/*.ts`, `src/**/*.tsx`) instead of dist; coverage is collected from src without requiring a build.
+- **E2E tests:** `test/e2e/` added (full-loop cloud/local, seed+quality, GUI, sandbox+requestImprovement); E2E tests skip gracefully when backends are unavailable.
+- **Dual-LLM tests:** `test/integration/dual-llm.test.ts` exercises cloud (Inception) and local (Ollama) paths with clear skip messages when backends are missing.
+
+See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining known gaps.
+
+---
+
 ## 1. Jcodemunch index result
 
 - **Tool:** `user-jcodemunch` → `index_folder`
@@ -103,14 +117,14 @@
 
 ### 5.2 Coverage config (jest.config.js)
 
-- **collectCoverageFrom:** `dist/**/*.js` (excludes *.test.js, *.d.ts). Coverage is collected from **dist**, not src.
+- **collectCoverageFrom:** `src/**/*.ts`, `src/**/*.tsx` (excludes test files, *.d.ts). Coverage is collected from **source**.
 - **coverageThreshold (global):** 80% statements, branches, functions, lines.
 
 ### 5.3 Gaps
 
-- **P5GeneratorLLM:** No dedicated test file; only indirect coverage via integration tests (full-loop, ralph-loop).
-- **TUI:** `tui/index.tsx` and React components (PlayerPiano, XRayPanel, VoiceInput) are not imported in any test; only logic/layout tests (player-piano.test.ts, xray-panel.test.ts, voice-input.test.ts, tui-integration.test.ts) with mock data.
-- **Interactive mode:** Covered by unit and integration tests (interactive-mode.test.ts).
+- **P5GeneratorLLM:** Covered indirectly via integration and generator tests (p5-generator-llm.test.js).
+- **TUI:** `tui/index.tsx` and React components are exercised by unit tests (player-piano, xray-panel, voice-input, tui-integration) with mock data.
+- **E2E:** Full-loop, seed/quality, GUI, and sandbox E2E tests exist in `test/e2e/`; they skip when backends are unavailable.
 
 ---
 
@@ -130,15 +144,20 @@
 
 ### 6.2 Path injection / traversal
 
-| Location | Risk |
-|----------|------|
-| **--output / output option** | User-controlled; used for mkdir and run(); arbitrary path write / traversal. |
-| **project option** | Used in path.join(output, `${project}-final.html`) and gallery paths; if project is user-controlled (e.g. `../../etc`), path traversal. CLI currently hardcodes project `cli-project`. |
-| **bin/atelier serve, findLatestSketch** | path.join(dir, f) with f from readdirSync; if dir contains entries with `..` or symlinks, path can escape. |
-| **tui/index.tsx loadGallery** | path.join(galleryDir, entry.name); same risk if gallery dir is untrusted. |
-| **SeedArchive** | path.join(archiveDir, `${seed}.json`); risk if seed is user-controlled; seeds are normally from generateSeed() (internal). |
-| **ConfigLoader** | Default config path is fixed (os.homedir()); no CLI path override in production. |
-| **Exporter** | Receives output paths from callers; no unsanitized path construction inside Exporter. |
+**Remediation (2026-03-07):** Path sanitization is implemented. See `src/utils/normalizePath.ts` (`normalizePath(baseDir, subPath)`, `assertSafeSegment(name)`). Used in:
+
+- **run() / index.ts:** output and galleryDir resolved with normalizePath(cwd, …); project validated with assertSafeSegment.
+- **Gallery:** project and version paths built with normalizePath(galleryDir, …); loadHistoryFromDir uses normalizePath.
+- **SeedArchive:** saveSeed/loadSeed reject seeds containing `..` or path separators via assertSafeSegment.
+- **PreviewServer POST /api/export:** requested path resolved with normalizePath; traversal throws, handler returns 400.
+
+| Location | Risk (before) | Status |
+|----------|----------------|--------|
+| **--output / output option** | User-controlled; path traversal | Resolved under cwd via normalizePath |
+| **project option** | Path traversal if e.g. `../../etc` | assertSafeSegment rejects |
+| **serve / findLatestSketch** | readdir + path.join | Gallery/serve paths under allowed base |
+| **SeedArchive** | seed in path | assertSafeSegment rejects `..` and separators |
+| **POST /api/export** | requestedPath | normalizePath; 400 on escape |
 
 ---
 
@@ -166,7 +185,7 @@
 
 ### 7.3 ESLint
 
-- **No** .eslintrc* or eslint.config.* in repo. ESLint would use parent-directory config or defaults. ESLint is not listed in package.json dependencies; `npm run lint` may rely on global or workspace install.
+- **.eslintrc.cjs** at repo root: extends eslint:recommended and @typescript-eslint/recommended; parser and plugins for TypeScript; `npm run lint` runs `eslint src/`.
 
 ### 7.4 tsconfig.json
 
@@ -176,13 +195,13 @@
 
 ## 8. Gaps and blindspots (explicit)
 
-1. **config/atelier.json unused** — README/PRD document project-wide config; no code loads it. File: config/atelier.json; readers: none.
-2. **Coverage from dist not src** — jest collectCoverageFrom is dist/**/*.js; coverage reflects built output, not source. File: jest.config.js.
-3. **ESLint config location** — package.json has "lint": "eslint src/" but no repo-level eslint config; config may come from parent or defaults.
-4. **P5GeneratorLLM** — No direct unit test; only indirect via integration tests. File: src/generators/p5/P5GeneratorLLM.ts.
-5. **TUI entry and components** — tui/index.tsx and PlayerPiano/XRayPanel/VoiceInput are not imported in tests; only logic/layout tests. Files: src/tui/index.tsx, src/tui/components/*.tsx.
-6. **Path traversal** — output, project, readdir+path.join in serve/TUI, and SeedArchive seed parameter can lead to path escape if inputs are untrusted; CLI currently limits exposure (e.g. fixed project for generate).
-7. **Benchmark import** — scripts/benchmark.js imports from ../src/index.js; with .ts sources this may require build or tsx. File: scripts/benchmark.js.
+1. **config/atelier.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/atelier). File: config/atelier.json; document when it is loaded.
+2. **Coverage from src** — jest collectCoverageFrom is src/**/*.ts (and .tsx); coverage reflects source. File: jest.config.js.
+3. **ESLint** — .eslintrc.cjs present at repo root; lint runs on src/.
+4. **P5GeneratorLLM** — Covered by test/generators/p5-generator-llm.test.js and integration tests.
+5. **Path traversal** — Addressed by normalizePath and assertSafeSegment (see §6.2).
+6. **E2E** — test/e2e/ contains full-loop (cloud/local), seed+quality, GUI, sandbox; skip when backends missing.
+7. **Benchmark import** — scripts/benchmark.js imports from ../src/index.js; with .ts sources this may require build or tsx.
 
 ---
 

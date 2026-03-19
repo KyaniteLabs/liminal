@@ -23,3 +23,7 @@ The loop is a sandbox for self-improving, recursive behavior: the same prompt ov
 ## Cloud and local LLMs
 
 Atelier supports both cloud and local LLM backends. Users can use a hosted API (e.g. Inception) for speed and quality or run fully local (e.g. Ollama) for privacy and offline use; the loop and substrate are backend-agnostic.
+
+## Path safety and sandbox
+
+Output, project name, gallery paths, and seed identifiers are validated so paths cannot escape the intended base directory (`normalizePath`, `assertSafeSegment`). User-controlled paths (e.g. `--output`, project name, export path) are resolved against the current working directory or gallery base and rejected if they would escape. Sandbox execution (Puppeteer) runs generated code with timeout and network restrictions; self-improvement has depth and rate limits.

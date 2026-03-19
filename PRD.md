@@ -301,19 +301,32 @@ const visualOutput = await atelier.generateVisuals({
 ```
 test/
 ├── unit/
-│   ├── ralph-loop.test.js
-│   ├── prompt-store.test.js
+│   ├── ralph-loop.test.ts
+│   ├── config-loader.test.ts
+│   ├── path-sanitization.test.js
 │   ├── creative-evaluator.test.js
 │   ├── context-accumulation.test.js
 │   ├── promise-detector.test.js
-│   └── gallery.test.js
+│   ├── gallery.test.ts
+│   ├── lint.test.ts
+│   └── ...
 ├── integration/
 │   ├── full-loop.test.js
-│   ├── generator-renderer.test.js
-│   └── evaluator-gallery.test.js
-└── generators/
-    ├── p5-generator.test.js
-    └── p5-particle-system.test.js
+│   ├── ralph-loop.test.js
+│   ├── dual-llm.test.ts
+│   ├── preview-server*.test.js
+│   └── ...
+├── generators/
+│   ├── p5-generator.test.js
+│   ├── p5-generator-llm.test.js
+│   ├── particle-system.test.js
+│   └── cellular-automata.test.js
+└── e2e/
+    ├── full-loop-cloud.test.ts
+    ├── full-loop-local.test.ts
+    ├── seed-and-quality.test.js
+    ├── gui.e2e.test.js
+    └── sandbox-self-improve.e2e.test.ts
 ```
 
 ### 5.4 Critical Test Cases
@@ -694,29 +707,29 @@ Output: <promise>COMPLETE</promise> only when all requirements met.
 
 ### 10.1 Must Have (MVP)
 
-- [ ] Internal Ralph-Wiggum Loop (completely independent)
-- [ ] p5.js generator (particle systems, basic CA)
-- [ ] Preview server (localhost)
-- [ ] Gallery (save/load iterations)
-- [ ] TDD (> 80% coverage)
-- [ ] Super-testing passed (Liam verified)
+- [x] Internal Ralph-Wiggum Loop (completely independent)
+- [x] p5.js generator (particle systems, basic CA, P5GeneratorLLM)
+- [x] Preview server (localhost)
+- [x] Gallery (save/load iterations)
+- [x] TDD (> 80% coverage target; coverage from src/)
+- [x] Super-testing passed (Liam verified)
 
 ### 10.2 Should Have (Phase 1)
 
-- [ ] Genetic algorithm variations
-- [ ] Creative evaluator (aesthetic scoring)
-- [ ] Export (HTML, JS, ZIP)
-- [ ] Iteration history visualization
+- [x] Genetic algorithm variations (IGA, generateFiveVariations, getFitness)
+- [x] Creative evaluator (aesthetic scoring, quality gate)
+- [x] Export (HTML, JS, ZIP)
+- [x] Iteration history visualization (TUI timeline, GUI)
 
 ### 10.3 Could Have (Future)
 
 - [ ] Three.js support
 - [ ] GLSL shaders
 - [ ] Neural CA
-- [ ] Self-modifying code (sandboxed)
-- [ ] Live Music Coding (Strudel, Hydra, Sonic Pi)
-- [ ] Music-to-visual (FFT reactive)
-- [ ] Hardware MIDI/OSC integration
+- [ ] Self-modifying code (sandboxed) — sandbox and SelfImprovement implemented; optional further hardening
+- [x] Live Music Coding (Strudel, Hydra, CLI --mode live-music, generateMusic/generateVisuals/generateMusicToVisual)
+- [x] Music-to-visual bridge
+- [ ] Hardware MIDI/OSC integration (config placeholders in place)
 - [ ] Collaborative live coding (multi-user)
 
 ---
@@ -744,7 +757,7 @@ Preliminary research has been completed and written up in the repo. See:
 **Primary sources (expanded in the reports):**
 
 - **Emergent Garden:** Artificial life, emergence, "weird programs" — see *Research: Computational Life, Emergent Garden* in docs.
-- **Blaise Agüera y Arcas et al.:** "Computational Life" (2024) — arXiv:2406.19108; Google Research. Self-replicating programs from simple interaction without explicit fitness. See *Research: Computational Life, Emergent Garden* in docs.
+- **Blaise Agüera y Arcas et al.:** "Computational Life" (2024) — arXiv:2406.19108; Google Research. Self-replicating programs from simple interaction without explicit fitness. See *Research: Computational Life, Emergent Garden* in docs. For the **book** (*What Is Intelligence?*, MIT Press, 2025), **cover** (abiogenesis scatterplot), and **YouTube/podcast** talks (e.g. MLST ALife 2025, BFF experiment), see *Research: Agüera y Arcas book and videos* in docs.
 - **Geoffrey Huntley:** Ralph-Wiggum Loop pattern — ghuntley.com/ralph, ghuntley.com/loop, github.com/ghuntley/how-to-ralph-wiggum. See *RALPH_WIGGUM_RESEARCH.md* in docs.
 - **Google Research:** Growing Neural Cellular Automata (Distill 2020) — distill.pub/2020/growing-ca. See *research_GNCA_Lenia.md* in docs.
 
@@ -761,6 +774,7 @@ Preliminary research has been completed and written up in the repo. See:
 |--------|------|
 | Ralph-Wiggum Loop & Claude plugin | RALPH_WIGGUM_RESEARCH.md |
 | Computational Life & Emergent Garden | RESEARCH_COMPUTATIONAL_LIFE_EMERGENT_GARDEN.md |
+| **Agüera y Arcas: book, cover, videos (What Is Intelligence?; BFF/ALife)** | **RESEARCH_AGUERA_Y_ARCAS_BOOK_AND_VIDEOS.md** |
 | Growing Neural CA & Lenia | research_GNCA_Lenia.md |
 | p5.js & genetic/evolutionary creative coding | RESEARCH_P5_GA_ECOSYSTEM.md |
 

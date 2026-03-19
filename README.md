@@ -130,13 +130,62 @@ Create `config/atelier.json` for project-wide settings:
 }
 ```
 
+### Using cloud vs local LLM
+
+Atelier can use a **cloud** LLM (e.g. Inception) or a **local** LLM (e.g. Ollama). Configuration is driven by environment variables and optional config files.
+
+**Cloud (e.g. Inception)**  
+Set the provider and credentials via env (or in `~/.atelier/config.json` / project `config/atelier.json`):
+
+- `ATELIER_LLM_PROVIDER=inception` — use the Inception-compatible API (default).
+- `ATELIER_LLM_BASE_URL` — API base URL (e.g. `https://api.inceptionlabs.ai/v1`). Omit to use the default Inception URL.
+- `ATELIER_LLM_MODEL` — model name (e.g. `inception-001`).
+- `ATELIER_LLM_API_KEY` or `INCEPTION_API_KEY` — API key for auth.
+
+Example:
+
+```bash
+export ATELIER_LLM_PROVIDER=inception
+export ATELIER_LLM_BASE_URL=https://api.inceptionlabs.ai/v1
+export ATELIER_LLM_MODEL=inception-001
+export ATELIER_LLM_API_KEY=your-api-key
+atelier --prompt "Create a particle system"
+```
+
+**Local (Ollama)**  
+Run [Ollama](https://ollama.ai) locally, then point Atelier at it:
+
+- `ATELIER_LLM_PROVIDER=ollama` — use the Ollama API.
+- `ATELIER_LLM_BASE_URL` — Ollama base URL (default `http://localhost:11434`).
+- `ATELIER_LLM_MODEL` — model name (e.g. `llama3.2`). No API key needed.
+
+Example:
+
+```bash
+# Start Ollama and pull a model (e.g. llama3.2)
+ollama serve
+ollama pull llama3.2
+
+export ATELIER_LLM_PROVIDER=ollama
+export ATELIER_LLM_MODEL=llama3.2
+atelier --prompt "Create a particle system"
+```
+
+Integration tests for the dual-LLM path (`test/integration/dual-llm.test.ts`) run against the configured backend when available and skip with a clear message when the backend is unreachable or not configured (e.g. no API key, Ollama not running).
+
 ## 🧪 Testing
 
 ```bash
 # Run all tests
 npm test
 
-# Run with coverage
+# Run integration tests only
+npm run test:integration
+
+# Run E2E tests (full loop, seed/quality, GUI, sandbox; skip when backends unavailable)
+npm run test:e2e
+
+# Run with coverage (from source: src/)
 npm run test:coverage
 
 # Watch mode
@@ -145,23 +194,38 @@ npm run test:watch
 # Type checking
 npm run typecheck
 
+# Lint (project ESLint config)
+npm run lint
+
 # Performance benchmarks
 npm run benchmark
 ```
 
-### Test Coverage
+**E2E with real LLM (Ollama):** Required E2E tests use Ollama at `http://localhost:11434`. Start Ollama and run `ollama pull mistral` (or `ollama pull llama3.2`) before running E2E. Cloud E2E (Inception/OpenAI) is optional and skips when the API key is unset.
 
-- **Overall**: 92.4% (exceeds 80% requirement)
-- **PromiseDetector**: 100%
-- **CreativeEvaluator**: 99.12%
-- **RalphLoop**: 96.29%
-- **All modules**: Meet or exceed coverage requirements
+### Test structure
+
+- **Unit** (`test/unit/`): RalphLoop, ConfigLoader, path sanitization, CreativeEvaluator, gallery, exporter, TUI, sandbox, etc.
+- **Integration** (`test/integration/`): full-loop, ralph-loop, dual-LLM, CLI, preview-server, GUI config API.
+- **Generators** (`test/generators/`): p5-generator, particle-system, cellular-automata, p5-generator-llm, prompt-to-generator-params.
+- **E2E** (`test/e2e/`): full-loop with cloud LLM, full-loop with local Ollama, seed + quality gate, GUI config/gallery, sandbox + requestImprovement. E2E tests skip with a clear message when the required backend (API key, Ollama, Chrome) is unavailable.
+
+### Test results (current)
+
+- **Total:** 53 suites, 753 tests.
+- **Passing:** 745 tests (50 suites).
+- **Known failures:** 8 tests in 3 integration suites — promise-detection and “different code each iteration” (depend on LLM/template output) and one GUI test (expects different `/gui` content). See `IMPACT_ANALYSIS.md` for details.
+- **E2E:** 5 suites, 9 tests; all pass or skip when backends are missing.
+
+### Coverage
+
+- Coverage is collected from **source** (`src/**/*.ts`, `src/**/*.tsx`); no build required. Thresholds (e.g. 80%) are configured in `jest.config.js` and enforced by `npm run test:coverage`.
 
 ## 🎵 Live Music Coding
 
-**Planned / Roadmap (not yet implemented):** Atelier supports live music coding for performative, real-time generative art:
+Atelier supports **live music coding** for performative, real-time generative art:
 
-### Supported Platforms
+### Supported platforms
 
 - **Strudel**: Web-based TidalCycles (browser-native)
 - **Hydra**: Audio-reactive visuals (WebGL + Web Audio)
@@ -169,7 +233,7 @@ npm run benchmark
 - **FoxDot**: Python-based (OSC)
 - **p5.js + Web Audio**: Browser-native DSP
 
-### Example Usage
+### CLI
 
 ```bash
 atelier --prompt "ambient glitch set, 20 min" \
@@ -177,34 +241,27 @@ atelier --prompt "ambient glitch set, 20 min" \
   --output ./set
 ```
 
-### Music-to-Visual Bridge
+This writes `strudel.js` and `hydra.js` to the output directory. Optional project config `config/atelier.json` can include `live` (e.g. `midiOutput`, `oscHost`, `oscPort`, `syncMode`).
 
-Generate synchronized audio and visual outputs:
+### Programmatic API
 
 ```javascript
-const musicOutput = await atelier.generateMusic({
-  prompt: "anxious post-rock build",
-  bpm: 120,
-  duration: "4m",
-  platform: "strudel"
-});
+import { generateMusic, generateVisuals, generateMusicToVisual } from 'atelier';
 
-const visualOutput = await atelier.generateVisuals({
-  prompt: "same mood, audio reactive",
-  audioInput: musicOutput.analyze(),
-  platform: "hydra"
-});
+const musicOutput = await generateMusic("anxious post-rock build", { musicPlatform: 'strudel' });
+const visualOutput = await generateVisuals({ prompt: "same mood, audio reactive", platform: 'hydra' });
+
+// Music-to-visual bridge (BPM/FFT derived from music, passed to visuals)
+const bridge = await generateMusicToVisual("ambient glitch", { musicPlatform: 'strudel', visualPlatform: 'hydra' });
 ```
 
 ## 📊 Performance
 
 ### Benchmarks
 
-All performance requirements met:
-
-- **Iteration speed**: < 5 minutes per iteration ✅
-- **Memory usage**: < 500MB per iteration ✅
-- **Test execution**: 590 tests pass consistently ✅
+- **Iteration speed**: Target &lt; 5 minutes per iteration  
+- **Memory usage**: Target &lt; 500MB per iteration  
+- **Test execution**: 753 tests (745 passing; 8 known integration failures). E2E skips when backends unavailable.
 
 Run benchmarks:
 
@@ -219,15 +276,28 @@ npm run benchmark
 ```
 atelier-workspace/
 ├── src/
-│   ├── core/              # Core modules (RalphLoop, Evaluator, etc.)
-│   ├── generators/        # Code generators (p5.js)
-│   ├── render/           # Preview server and renderer
-│   ├── gallery/          # Gallery and archive management
-│   └── export/           # Export functionality
-├── test/                 # Test suites (unit, integration, generators)
-├── config/              # Configuration files
-├── gallery/             # Saved iterations
-└── output/              # Exported files
+│   ├── core/              # RalphLoop, Evaluator, PromiseDetector, PromptStore, ContextAccumulation
+│   ├── generators/        # P5GeneratorLLM, ParticleSystem, CellularAutomata
+│   ├── render/            # PreviewServer, Renderer
+│   ├── gallery/           # Gallery, SeedArchive
+│   ├── export/            # Exporter
+│   ├── config/            # ConfigLoader, PromptHistory
+│   ├── llm/               # LLMClient
+│   ├── sandbox/           # SandboxRunner
+│   ├── improvement/       # requestImprovement, SelfImprovement
+│   ├── music/             # generateMusic
+│   ├── musicToVisual/     # generateMusicToVisual
+│   ├── tui/               # TUI (Run/Stop, timeline, gallery)
+│   └── utils/             # normalizePath, promptToGeneratorParams
+├── gui/                   # Full GUI (Vite + React + Express)
+├── test/
+│   ├── unit/
+│   ├── integration/
+│   ├── generators/
+│   └── e2e/
+├── config/                # atelier.json (project config)
+├── gallery/               # Saved iterations
+└── output/                # Exported files
 ```
 
 ### Build Commands
@@ -282,10 +352,9 @@ MIT License - see LICENSE file for details
 
 ---
 
-Built with TDD — 3,095+ lines of TypeScript, production-ready, thoroughly tested.
+Built with TDD. See **IMPACT_ANALYSIS.md** for full impact analysis, test summary, and documentation index.
 
-**Status**: ✅ Ready for Production
-**Version**: 1.0.0
-**Test Coverage**: 92.4%
-**Super-Testing**: ✅ All checks passed
+**Status**: ✅ Production-ready (8 known integration test failures; see IMPACT_ANALYSIS.md)  
+**Version**: 1.0.0  
+**Tests**: 745 passing, 8 known failures (integration; LLM/GUI-dependent)
 

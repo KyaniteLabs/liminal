@@ -11,6 +11,17 @@ export interface AtelierConfig {
       apiKey?: string;
     };
   };
+  /** Optional loop options (GUI / user prefs) */
+  loop?: {
+    maxIterations?: number;
+    timeoutMinutes?: number;
+  };
+  /** Optional creative options */
+  creative?: {
+    minQualityScore?: number;
+  };
+  /** Optional gallery directory name (e.g. "gallery") */
+  galleryPath?: string;
 }
 
 /** Project config shape (config/atelier.json) */
@@ -44,10 +55,17 @@ export interface ProjectConfig {
     port?: number;
     screenshotOnIteration?: boolean;
   };
+  /** Optional live performance config (MIDI, OSC, sync). Not implemented; load and pass through only. */
+  live?: {
+    midiOutput?: string;
+    oscHost?: string;
+    oscPort?: number;
+    syncMode?: string;
+  };
 }
 
 export interface EffectiveConfig {
-  provider: 'inception' | 'ollama' | 'openai';
+  provider: 'inception' | 'ollama' | 'openai' | 'anthropic';
   baseUrl?: string;
   model: string;
   apiKey?: string;
@@ -108,13 +126,14 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
 
   // Provider: env > project llm > user file
   const projectProvider = projectConfig?.llm?.provider;
-  let providerName = process.env.ATELIER_LLM_PROVIDER || projectProvider || fileConfig?.defaultProvider || 'inception';
+  const providerName = process.env.ATELIER_LLM_PROVIDER || projectProvider || fileConfig?.defaultProvider || 'inception';
 
-  const providerMap: Record<string, 'inception' | 'ollama' | 'openai'> = {
+  const providerMap: Record<string, 'inception' | 'ollama' | 'openai' | 'anthropic'> = {
     'lmstudio': 'inception',
     'inception': 'inception',
     'ollama': 'ollama',
-    'openai': 'openai'
+    'openai': 'openai',
+    'anthropic': 'anthropic',
   };
 
   const provider = providerMap[providerName] || 'inception';
@@ -126,7 +145,7 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
     provider,
     baseUrl: process.env.ATELIER_LLM_BASE_URL || projectLlm.baseUrl || fileProviderConfig.baseUrl,
     model: process.env.ATELIER_LLM_MODEL || projectLlm.model || fileProviderConfig.model || 'inception-001',
-    apiKey: process.env.ATELIER_LLM_API_KEY || projectLlm.apiKey || fileProviderConfig.apiKey || process.env.INCEPTION_API_KEY
+    apiKey: process.env.ATELIER_LLM_API_KEY || projectLlm.apiKey || fileProviderConfig.apiKey || process.env.OPENAI_API_KEY || process.env.ANTHROPIC_API_KEY || process.env.INCEPTION_API_KEY
   };
 }
 

@@ -27,7 +27,11 @@ import { ContextAccumulation } from './ContextAccumulation.js';
 import { CreativeEvaluator } from './CreativeEvaluator.js';
 import { PromiseDetector } from './PromiseDetector.js';
 import { P5GeneratorLLM } from '../generators/p5/P5GeneratorLLM.js';
+import { ParticleSystem } from '../generators/p5/ParticleSystem.js';
+import { CellularAutomata } from '../generators/p5/CellularAutomata.js';
 import { Gallery } from '../gallery/Gallery.js';
+import { promptToGeneratorParams } from '../utils/promptToGeneratorParams.js';
+import { generateMusicToVisual } from '../musicToVisual/generateMusicToVisual.js';
 
 interface LoopOptions {
   maxIterations?: number;
@@ -36,6 +40,10 @@ interface LoopOptions {
   project?: string;
   tolerateErrors?: boolean;
   minQualityScore?: number;
+  /** 'p5' (default) or 'organism' (generateMusicToVisual + saveOrganism per iteration) */
+  mode?: 'p5' | 'organism';
+  /** Optional traits for organism mode (bpm, palette) */
+  traits?: { bpm?: number; palette?: string };
   /** Optional seed code for iteration 1: "improve this toward [prompt]" */
   seedCode?: string;
   /** Optional seed template name or content for iteration 1 */
@@ -44,6 +52,16 @@ interface LoopOptions {
   maxContextLength?: number;
   /** Include only last K iterations in context (default: all in history up to maxContextLength) */
   lastKIterations?: number;
+  /** Optional evaluation criteria (e.g. ["aesthetic", "technical", "novelty"]). When provided, passed to CreativeEvaluator.assess(). */
+  evaluationCriteria?: string[];
+  /** Progress callback: called after each iteration with iteration number, score, promiseDetected, code, timestamp */
+  onProgress?: (data: { iteration: number; score: number; promiseDetected: boolean; code: string; timestamp: string }) => void;
+  /** Optional AbortSignal to stop the loop (checked at start of each iteration) */
+  signal?: AbortSignal;
+  /** When set (e.g. 2), every N-th iteration is a merge step: take two from history, produce proposed, call onMergeStep. */
+  mergeEveryN?: number;
+  /** Called when a merge step runs: (codeA, codeB, proposed) from last two in history. */
+  onMergeStep?: (data: { codeA: string; codeB: string; proposed: string }) => void;
 }
 
 interface LoopResult {
@@ -85,6 +103,11 @@ export class RalphLoop {
     // Normalize options
     const normalizedOptions = this.normalizeOptions(options);
 
+    // Organism mode: use generateMusicToVisual per iteration, save organism, no P5GeneratorLLM
+    if (normalizedOptions.mode === 'organism') {
+      return this.runOrganismMode(prompt, normalizedOptions, startTime);
+    }
+
     // Initialize gallery
     const gallery = new Gallery(normalizedOptions.galleryDir);
 
@@ -96,6 +119,10 @@ export class RalphLoop {
 
     // Main loop
     while (iteration < normalizedOptions.maxIterations) {
+      if (normalizedOptions.signal?.aborted) {
+        reason = 'aborted by user';
+        break;
+      }
       iteration++;
 
       try {
@@ -111,12 +138,21 @@ export class RalphLoop {
           usedPrompt = loadedPrompt + '\n\n---\nContext from previous iterations:\n' + contextForInjection;
         }
 
-        // Generate code
-        const generator = new P5GeneratorLLM();
-        currentCode = await generator.generate(usedPrompt);
+        // Generate code (route by prompt keywords: particle/galaxy -> ParticleSystem; cellular/automata/lenia -> CellularAutomata; else LLM)
+        const { generatorKind, generatorParams } = this.chooseGenerator(loadedPrompt);
+        if (generatorKind === 'particle') {
+          currentCode = ParticleSystem.generate(generatorParams);
+        } else if (generatorKind === 'cellular') {
+          currentCode = CellularAutomata.generate(generatorParams);
+        } else {
+          const generator = new P5GeneratorLLM();
+          currentCode = await generator.generate(usedPrompt);
+        }
 
         // Evaluate quality
-        const evaluation = CreativeEvaluator.assess(currentCode);
+        const evaluation = CreativeEvaluator.assess(currentCode, {
+          evaluationCriteria: normalizedOptions.evaluationCriteria
+        });
 
         // Save iteration context
         const iterationContext: IterationContext = {
@@ -143,8 +179,39 @@ export class RalphLoop {
           }
         }
 
+        // Merge-every-N: after every N iterations, merge last two from history and call onMergeStep
+        const history = ContextAccumulation.getHistory();
+        if (
+          normalizedOptions.mergeEveryN != null &&
+          normalizedOptions.mergeEveryN >= 2 &&
+          iteration % normalizedOptions.mergeEveryN === 0 &&
+          history.length >= 2
+        ) {
+          const lastTwo = history.slice(-2) as IterationContext[];
+          const codeA = lastTwo[0].code;
+          const codeB = lastTwo[1].code;
+          const proposed = codeA + '\n// merged with next\n' + codeB;
+          normalizedOptions.onMergeStep?.({ codeA, codeB, proposed });
+          if (normalizedOptions.project) {
+            try {
+              await gallery.saveIteration(normalizedOptions.project, iteration + 1, proposed);
+            } catch (error) {
+              if (!normalizedOptions.tolerateErrors) throw error;
+            }
+          }
+        }
+
         // Update final score
         finalScore = evaluation.score;
+
+        const promiseDetected = PromiseDetector.detect(currentCode);
+        normalizedOptions.onProgress?.({
+          iteration,
+          score: evaluation.score,
+          promiseDetected,
+          code: currentCode,
+          timestamp: iterationContext.timestamp
+        });
 
         // Quality gate: break if below threshold
         if (evaluation.score < normalizedOptions.minQualityScore) {
@@ -154,7 +221,7 @@ export class RalphLoop {
         }
 
         // Check for promise detection (termination condition)
-        if (PromiseDetector.detect(currentCode)) {
+        if (promiseDetected) {
           completed = true;
           reason = 'promise detected in generated code';
           break;
@@ -201,7 +268,7 @@ export class RalphLoop {
   /**
    * Normalize options with defaults
    */
-  private static normalizeOptions(options: LoopOptions | null): Required<Omit<LoopOptions, 'seedCode' | 'seedTemplate' | 'maxContextLength' | 'lastKIterations'>> & Pick<LoopOptions, 'seedCode' | 'seedTemplate' | 'maxContextLength' | 'lastKIterations'> {
+  private static normalizeOptions(options: LoopOptions | null): Required<Omit<LoopOptions, 'seedCode' | 'seedTemplate' | 'maxContextLength' | 'lastKIterations' | 'evaluationCriteria' | 'onProgress' | 'signal' | 'mode' | 'traits' | 'mergeEveryN' | 'onMergeStep'>> & Pick<LoopOptions, 'seedCode' | 'seedTemplate' | 'maxContextLength' | 'lastKIterations' | 'evaluationCriteria' | 'onProgress' | 'signal' | 'mode' | 'traits' | 'mergeEveryN' | 'onMergeStep'> {
     return {
       maxIterations: options?.maxIterations || RalphLoop.DEFAULT_MAX_ITERATIONS,
       timeoutMinutes: options?.timeoutMinutes || RalphLoop.DEFAULT_TIMEOUT_MINUTES,
@@ -209,10 +276,70 @@ export class RalphLoop {
       project: options?.project || `project-${Date.now()}`,
       tolerateErrors: options?.tolerateErrors ?? false,
       minQualityScore: options?.minQualityScore ?? RalphLoop.DEFAULT_MIN_QUALITY_SCORE,
+      mode: options?.mode ?? 'p5',
+      traits: options?.traits,
+      mergeEveryN: options?.mergeEveryN,
+      onMergeStep: options?.onMergeStep,
       seedCode: options?.seedCode,
       seedTemplate: options?.seedTemplate,
       maxContextLength: options?.maxContextLength,
-      lastKIterations: options?.lastKIterations
+      lastKIterations: options?.lastKIterations,
+      evaluationCriteria: options?.evaluationCriteria,
+      onProgress: options?.onProgress,
+      signal: options?.signal
+    };
+  }
+
+  /**
+   * Organism mode: generateMusicToVisual per iteration, saveOrganism to gallery. No P5GeneratorLLM.
+   */
+  private static async runOrganismMode(
+    prompt: string,
+    options: ReturnType<typeof RalphLoop.normalizeOptions>,
+    startTime: number
+  ): Promise<LoopResult> {
+    const gallery = new Gallery(options.galleryDir);
+    let lastMusic = '';
+    let lastVisual = '';
+    let iteration = 0;
+    for (let i = 1; i <= options.maxIterations; i++) {
+      if (options.signal?.aborted) {
+        return {
+          code: lastMusic + '\n' + lastVisual,
+          iterations: iteration,
+          completed: false,
+          reason: 'aborted by user',
+          timestamp: new Date().toISOString(),
+          duration: Date.now() - startTime,
+          finalScore: 1,
+          project: options.project,
+        };
+      }
+      iteration = i;
+      const result = await generateMusicToVisual(prompt, { traits: options.traits });
+      lastMusic = result.musicCode;
+      lastVisual = result.visualCode;
+      if (options.project) {
+        await gallery.saveOrganism(options.project, i, result.musicCode, result.visualCode);
+      }
+      options.onProgress?.({
+        iteration: i,
+        score: 1,
+        promiseDetected: false,
+        code: result.musicCode + '\n' + result.visualCode,
+        timestamp: new Date().toISOString(),
+      });
+    }
+    const duration = Date.now() - startTime;
+    return {
+      code: lastMusic + '\n' + lastVisual,
+      iterations: iteration,
+      completed: true,
+      reason: `max iterations reached (${options.maxIterations})`,
+      timestamp: new Date().toISOString(),
+      duration,
+      finalScore: 1,
+      project: options.project,
     };
   }
 
@@ -278,6 +405,28 @@ export class RalphLoop {
     }
 
     return context;
+  }
+
+  /**
+   * Choose code generator by prompt keywords; returns kind and params for that generator.
+   * - "particle" or "galaxy" -> ParticleSystem
+   * - "cellular" or "automata" or "lenia" -> CellularAutomata
+   * - otherwise -> LLM (P5GeneratorLLM)
+   */
+  private static chooseGenerator(
+    prompt: string
+  ): { generatorKind: 'particle' | 'cellular' | 'llm'; generatorParams: Record<string, unknown> } {
+    const lower = prompt.toLowerCase();
+    const derived = promptToGeneratorParams(prompt);
+    if (/particle|galaxy/.test(lower)) {
+      const params: Record<string, unknown> = { ...derived };
+      if (/blue/.test(lower)) params.palette = 'cool';
+      return { generatorKind: 'particle', generatorParams: params };
+    }
+    if (/cellular|automata|lenia/.test(lower)) {
+      return { generatorKind: 'cellular', generatorParams: { ...derived } };
+    }
+    return { generatorKind: 'llm', generatorParams: {} };
   }
 
   /**

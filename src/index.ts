@@ -7,12 +7,13 @@
 
 // Core Ralph-Wiggum Loop components
 import { RalphLoop } from './core/RalphLoop.js';
+import { SoupLoop } from './core/SoupLoop.js';
 import { CreativeEvaluator } from './core/CreativeEvaluator.js';
 import { PromiseDetector } from './core/PromiseDetector.js';
 import { PromptStore } from './core/PromptStore.js';
 import { ContextAccumulation } from './core/ContextAccumulation.js';
 
-// Generators
+import { promptToGeneratorParams } from './utils/promptToGeneratorParams.js';
 import { P5Generator } from './generators/p5/P5Generator.js';
 import { ParticleSystem } from './generators/p5/ParticleSystem.js';
 import { CellularAutomata } from './generators/p5/CellularAutomata.js';
@@ -25,9 +26,14 @@ import { PreviewServer } from './render/PreviewServer.js';
 import { Exporter, Project } from './export/Exporter.js';
 import { Gallery, Iteration } from './gallery/Gallery.js';
 import { SeedArchive, SeedMetadata } from './gallery/SeedArchive.js';
+import { generateFiveVariations } from './evolution/IGA.js';
+import { generateVisuals } from './generateVisuals.js';
+import { generateMusicToVisual } from './musicToVisual/generateMusicToVisual.js';
+import { generateMusic } from './music/generateMusic.js';
 
 import fs from 'fs/promises';
 import path from 'path';
+import { normalizePath, assertSafeSegment } from './utils/normalizePath.js';
 
 export const ATELIER_VERSION = '1.0.0';
 
@@ -94,6 +100,12 @@ export async function run(prompt: string, options: {
   seedCode?: string;
   seedTemplate?: string;
   tolerateErrors?: boolean;
+  /** Optional creative options; when provided, evaluationCriteria is passed to RalphLoop and CreativeEvaluator. */
+  creativeOptions?: { evaluationCriteria?: string[] };
+  /** Progress callback: iteration number, score, promiseDetected, code, timestamp (streaming progress) */
+  onProgress?: (data: { iteration: number; score: number; promiseDetected: boolean; code: string; timestamp: string }) => void;
+  /** Optional AbortSignal to stop the run (Stop button) */
+  signal?: AbortSignal;
 } = {}): Promise<{
   code: string;
   iterations: number;
@@ -120,8 +132,14 @@ export async function run(prompt: string, options: {
     galleryDir = 'gallery',
     seedCode,
     seedTemplate,
-    tolerateErrors = false
+    tolerateErrors = false,
+    creativeOptions,
+    onProgress,
+    signal
   } = options;
+
+  const evaluationCriteria = creativeOptions?.evaluationCriteria ?? defaultConfig.creative.evaluationCriteria;
+  void evaluationCriteria; // reserved for future use by RalphLoop/CreativeEvaluator
 
   try {
     // Validate input
@@ -129,51 +147,67 @@ export async function run(prompt: string, options: {
       throw new Error('Prompt is required and must be a non-empty string');
     }
 
+    const cwd = process.cwd();
+    const outputResolved = normalizePath(cwd, output);
+    const galleryDirResolved = normalizePath(cwd, galleryDir);
+    assertSafeSegment(project, 'Project name');
+
     // Create output directory if it doesn't exist
-    await fs.mkdir(output, { recursive: true });
+    await fs.mkdir(outputResolved, { recursive: true });
 
     // Run the Ralph-Wiggum Loop with all sophisticated components
     const loopResult = await RalphLoop.run(prompt, {
       maxIterations,
       timeoutMinutes,
-      galleryDir,
+      galleryDir: galleryDirResolved,
       project,
       tolerateErrors,
       minQualityScore,
       seedCode,
-      seedTemplate
+      seedTemplate,
+      onProgress,
+      signal
     });
 
     // Initialize Exporter
     const exporter = new Exporter();
 
     // Export final code as HTML
-    const htmlPath = path.join(output, `${project}-final.html`);
+    const htmlPath = path.join(outputResolved, `${project}-final.html`);
     await exporter.exportHTML(loopResult.code, htmlPath);
 
     // Export final code as JS
-    const jsPath = path.join(output, `${project}-final.js`);
+    const jsPath = path.join(outputResolved, `${project}-final.js`);
     await exporter.exportJS(loopResult.code, jsPath);
 
     // Load project history from gallery for ZIP export
-    const gallery = new Gallery(galleryDir);
+    const gallery = new Gallery(galleryDirResolved);
     let zipPath: string | undefined;
 
     try {
       const history = await gallery.loadHistory(project);
 
-      // Create project object for ZIP export
+      // Create project object for ZIP export (p5 code or organism as JSON string)
       const projectData: Project = {
         name: project,
-        iterations: history.map((iteration, index) => ({
-          version: index + 1,
-          code: iteration.code,
-          timestamp: iteration.timestamp
-        }))
+        iterations: history.map((iter, index) => {
+          const code = 'code' in iter && iter.code != null
+            ? iter.code
+            : JSON.stringify({
+                type: 'organism',
+                musicCode: (iter as { musicCode: string; visualCode: string }).musicCode,
+                visualCode: (iter as { musicCode: string; visualCode: string }).visualCode,
+              });
+          return {
+            version: index + 1,
+            code,
+            timestamp: iter.timestamp
+          };
+        })
       };
 
       // Export as ZIP
-      zipPath = path.join(output, `${project}-archive.zip`);
+      zipPath = path.join(outputResolved, `${project}-archive.zip`);
       await exporter.exportZIP(projectData, zipPath);
     } catch (error) {
       // If gallery loading fails, create a simple ZIP with just the final code
@@ -188,7 +222,7 @@ export async function run(prompt: string, options: {
         ]
       };
 
-      zipPath = path.join(output, `${project}-archive.zip`);
+      zipPath = path.join(outputResolved, `${project}-archive.zip`);
       await exporter.exportZIP(simpleProject, zipPath);
     }
 
@@ -203,7 +237,7 @@ export async function run(prompt: string, options: {
       duration,
       finalScore: loopResult.finalScore,
       project: loopResult.project,
-      outputDir: output,
+      outputDir: outputResolved,
       prompt,
       htmlPath,
       jsPath,
@@ -265,12 +299,14 @@ export class Atelier {
     project?: string;
     minQualityScore?: number;
     tolerateErrors?: boolean;
+    creativeOptions?: { evaluationCriteria?: string[] };
   }) {
     return run(prompt, {
       ...options,
       maxIterations: options?.maxIterations || this.config.loop.maxIterations,
       timeoutMinutes: options?.timeoutMinutes || this.config.loop.timeoutMinutes,
-      minQualityScore: options?.minQualityScore || this.config.creative.minQualityScore
+      minQualityScore: options?.minQualityScore || this.config.creative.minQualityScore,
+      creativeOptions: options?.creativeOptions ?? { evaluationCriteria: this.config.creative.evaluationCriteria }
     });
   }
 }
@@ -281,6 +317,11 @@ export class Atelier {
 
 // Core Ralph-Wiggum Loop Engine
 export { RalphLoop };
+export { SoupLoop } from './core/SoupLoop.js';
+export type { SoupCandidate, SoupLoopOptions, SoupLoopResult } from './core/SoupLoop.js';
+import { requestImprovement } from './core/SelfImprovement.js';
+export { requestImprovement, type ImprovementContext, type RequestImprovementOptions, type ImprovementGenerator } from './core/SelfImprovement.js';
+export type { RequestImprovementState } from './improvement/requestImprovement.js';
 
 // Creative Evaluation and Quality Control
 export { CreativeEvaluator };
@@ -298,6 +339,7 @@ export { ContextAccumulation };
 export { P5Generator };
 export { ParticleSystem };
 export { CellularAutomata };
+export { promptToGeneratorParams };
 
 // Rendering and Preview
 export { Renderer };
@@ -308,7 +350,26 @@ export { Exporter, Project };
 
 // Gallery and Seed Management
 export { Gallery, Iteration };
+export type { OrganismIteration, GalleryIteration } from './gallery/Gallery.js';
 export { SeedArchive, SeedMetadata };
+
+// IGA / variations
+export { generateFiveVariations } from './evolution/IGA.js';
+
+// Music generation API
+export { generateMusic };
+export type { GenerateMusicOptions, GenerateMusicResult } from './music/generateMusic.js';
+
+// generateVisuals API (Hydra / p5 reactive visuals)
+export { generateVisuals, type GenerateVisualsOptions, type GenerateVisualsResult } from './generateVisuals.js';
+
+// Music-to-visual bridge
+export {
+  generateMusicToVisual,
+  type GenerateMusicToVisualOptions,
+  type GenerateMusicToVisualResult,
+  type AudioInput,
+} from './musicToVisual/generateMusicToVisual.js';
 
 // ============================================================================
 // DEFAULT EXPORT
@@ -324,6 +385,8 @@ export default {
 
   // Core components
   RalphLoop,
+  SoupLoop,
+  requestImprovement,
   CreativeEvaluator,
   PromiseDetector,
   PromptStore,
@@ -333,6 +396,7 @@ export default {
   P5Generator,
   ParticleSystem,
   CellularAutomata,
+  promptToGeneratorParams,
 
   // Rendering and export
   Renderer,
@@ -340,6 +404,17 @@ export default {
   Exporter,
   Gallery,
   SeedArchive,
+
+  generateFiveVariations,
+
+  // generateVisuals API
+  generateVisuals,
+
+  // Music-to-visual bridge
+  generateMusicToVisual,
+
+  // Music API
+  generateMusic,
 
   // Configuration
   ATELIER_VERSION,

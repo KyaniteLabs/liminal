@@ -1,5 +1,5 @@
 export interface LLMConfig {
-  provider: 'inception' | 'ollama' | 'openai';
+  provider: 'inception' | 'ollama' | 'openai' | 'anthropic';
   apiKey?: string;
   baseUrl?: string;
   model: string;
@@ -20,7 +20,7 @@ export class LLMClient {
   constructor(config?: Partial<LLMConfig>) {
     this.config = {
       provider: config?.provider || (process.env.ATELIER_LLM_PROVIDER as LLMConfig['provider']) || 'inception',
-      apiKey: config?.apiKey || process.env.INCEPTION_API_KEY || process.env.ATELIER_LLM_API_KEY,
+      apiKey: config?.apiKey ?? process.env.OPENAI_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? process.env.INCEPTION_API_KEY ?? process.env.ATELIER_LLM_API_KEY,
       baseUrl: config?.baseUrl || process.env.ATELIER_LLM_BASE_URL,
       model: config?.model || process.env.ATELIER_LLM_MODEL || 'inception-001',
       temperature: config?.temperature ?? 0.7,
@@ -28,7 +28,7 @@ export class LLMClient {
     };
   }
 
-  async generateP5Sketch(prompt: string, context?: string): Promise<LLMResponse> {
+  async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal): Promise<LLMResponse> {
     const systemPrompt = `You are an expert creative coding assistant specializing in p5.js.
 Generate valid, creative p5.js sketch code based on the user's description.
 
@@ -56,9 +56,13 @@ ${context ? `\nContext: ${context}` : ''}`;
 
     try {
       if (this.config.provider === 'inception') {
-        return await this.callInception(systemPrompt, userPrompt);
+        return await this.callInception(systemPrompt, userPrompt, signal);
       } else if (this.config.provider === 'ollama') {
-        return await this.callOllama(systemPrompt, userPrompt);
+        return await this.callOllama(systemPrompt, userPrompt, signal);
+      } else if (this.config.provider === 'openai') {
+        return await this.callOpenAI(systemPrompt, userPrompt, signal);
+      } else if (this.config.provider === 'anthropic') {
+        return await this.callAnthropic(systemPrompt, userPrompt, signal);
       } else {
         return { code: '', success: false, error: 'Unknown provider: ' + this.config.provider };
       }
@@ -71,7 +75,45 @@ ${context ? `\nContext: ${context}` : ''}`;
     }
   }
 
-  private async callInception(system: string, user: string): Promise<LLMResponse> {
+  /**
+   * Ask the LLM to improve existing p5.js sketch code.
+   * Uses same backend as generateP5Sketch (callInception/callOllama).
+   */
+  async improveP5Sketch(currentCode: string): Promise<LLMResponse> {
+    const systemPrompt = `You are an expert creative coding assistant specializing in p5.js.
+Improve the following p5.js sketch. Keep it valid and runnable.
+
+Rules:
+1. Return ONLY valid JavaScript code for p5.js (no markdown, no explanations)
+2. Preserve or add setup() and draw() as needed
+3. Improve aesthetics, performance, or structure without changing the core idea
+4. Ensure code is self-contained and runnable
+5. Canvas size: use createCanvas(800, 600) or appropriate size`;
+
+    const userPrompt = `Improve this p5.js sketch. Current code:\n\n${currentCode}`;
+
+    try {
+      if (this.config.provider === 'inception') {
+        return await this.callInception(systemPrompt, userPrompt);
+      } else if (this.config.provider === 'ollama') {
+        return await this.callOllama(systemPrompt, userPrompt);
+      } else if (this.config.provider === 'openai') {
+        return await this.callOpenAI(systemPrompt, userPrompt);
+      } else if (this.config.provider === 'anthropic') {
+        return await this.callAnthropic(systemPrompt, userPrompt);
+      } else {
+        return { code: '', success: false, error: 'Unknown provider: ' + this.config.provider };
+      }
+    } catch (error) {
+      return {
+        code: '',
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  private async callInception(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
     const baseUrl = this.config.baseUrl || 'https://api.inceptionlabs.ai/v1';
 
     // Build headers - Authorization only if API key is provided (for LM Studio compatibility)
@@ -94,6 +136,7 @@ ${context ? `\nContext: ${context}` : ''}`;
         temperature: this.config.temperature,
         max_tokens: this.config.maxTokens,
       }),
+      signal,
     });
 
     if (!response.ok) {
@@ -101,12 +144,13 @@ ${context ? `\nContext: ${context}` : ''}`;
     }
 
     const data = await response.json();
+    return this.parseChatCompletionResponse(data);
+  }
+
+  private parseChatCompletionResponse(data: any): LLMResponse {
     const code = data.choices?.[0]?.message?.content || '';
-    
-    // Extract code from markdown if present
     const codeMatch = code.match(/```(?:javascript|js)?\n?([\s\S]*?)```/);
     const cleanCode = codeMatch ? codeMatch[1].trim() : code.trim();
-
     return {
       code: cleanCode,
       explanation: data.choices?.[0]?.message?.content,
@@ -114,7 +158,70 @@ ${context ? `\nContext: ${context}` : ''}`;
     };
   }
 
-  private async callOllama(system: string, user: string): Promise<LLMResponse> {
+  private async callOpenAI(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
+    const baseUrl = this.config.baseUrl || 'https://api.openai.com/v1';
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.config.apiKey) {
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+    }
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens,
+      }),
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`OpenAI API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return this.parseChatCompletionResponse(data);
+  }
+
+  private async callAnthropic(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
+    const baseUrl = this.config.baseUrl || 'https://api.anthropic.com/v1';
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'x-api-key': this.config.apiKey || '',
+      'anthropic-version': '2023-06-01',
+    };
+
+    const response = await fetch(`${baseUrl}/messages`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: this.config.model,
+        max_tokens: this.config.maxTokens ?? 2000,
+        system,
+        messages: [{ role: 'user', content: user }],
+      }),
+      signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`Anthropic API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    const text = data.content?.[0]?.text ?? '';
+    const codeMatch = text.match(/```(?:javascript|js)?\n?([\s\S]*?)```/);
+    const code = codeMatch ? codeMatch[1].trim() : text.trim();
+    return { code, success: true };
+  }
+
+  private async callOllama(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
     const baseUrl = this.config.baseUrl || 'http://localhost:11434';
     
     const response = await fetch(`${baseUrl}/api/generate`, {
@@ -125,6 +232,7 @@ ${context ? `\nContext: ${context}` : ''}`;
         prompt: `${system}\n\nUser: ${user}\n\nAssistant:`,
         stream: false,
       }),
+      signal,
     });
 
     if (!response.ok) {
@@ -141,6 +249,12 @@ ${context ? `\nContext: ${context}` : ''}`;
   }
 
   static isConfigured(): boolean {
-    return !!(process.env.INCEPTION_API_KEY || process.env.ATELIER_LLM_API_KEY || process.env.ATELIER_LLM_BASE_URL);
+    return !!(
+      process.env.OPENAI_API_KEY ||
+      process.env.ANTHROPIC_API_KEY ||
+      process.env.INCEPTION_API_KEY ||
+      process.env.ATELIER_LLM_API_KEY ||
+      process.env.ATELIER_LLM_BASE_URL
+    );
   }
 }

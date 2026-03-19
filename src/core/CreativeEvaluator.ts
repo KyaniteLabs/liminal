@@ -4,8 +4,14 @@
  * Evaluates creative output (p5.js sketches, generative art) on:
  * - Technical validity (syntax, structure, completeness)
  * - Creative quality (complexity, techniques, aesthetics)
+ * - Aesthetic = visual (creative) + sound (when sound APIs present)
  * - Returns score 0-1, with minimum threshold of 0.7 to pass
  */
+
+export interface AssessOptions {
+  /** When provided, overall score is the average of scores for these dimensions. Known dimensions: "technical", "aesthetic", "novelty". Aesthetic combines visual (creative) and sound. */
+  evaluationCriteria?: string[];
+}
 
 interface AssessmentResult {
   passed: boolean;
@@ -33,11 +39,35 @@ const MIN_QUALITY_THRESHOLD = 0.7;
 
 export class CreativeEvaluator {
   /**
-   * Assess creative output quality
+   * Get fitness score and issues for code (same as assess score/issues).
+   * @param code - The code to evaluate
+   * @param options - Optional evaluation criteria (reserved; not used by assess)
+   * @returns { score, issues } matching assess(code)
+   */
+  static getFitness(
+    code: string,
+    _options?: { evaluationCriteria?: string[] }
+  ): { score: number; issues: string[] } {
+    const result = this.assess(code);
+    return { score: result.score, issues: result.issues };
+  }
+
+  /**
+   * Assess creative output quality.
+   *
+   * When `options.evaluationCriteria` is provided (e.g. ["aesthetic", "technical", "novelty"]),
+   * the overall score is the **average** of the present dimension scores:
+   * - **technical**: structure, syntax, completeness (0–1).
+   * - **aesthetic**: visual quality (creative score) + sound; aesthetic = (creativeScore + soundScore) / 2, with soundScore = 0.5 if code uses p5.sound / AudioContext / createOscillator / Web Audio and looks valid, else 0.
+   * - **novelty**: proxied by creative score (complexity, techniques).
+   *
+   * When `evaluationCriteria` is not provided, score = technicalScore * 0.6 + creativeScore * 0.4 (legacy behavior).
+   *
    * @param output - The code to evaluate
+   * @param options - Optional: evaluationCriteria array to compute score from selected dimensions
    * @returns Assessment result with score, issues, and metrics
    */
-  static assess(output: any): AssessmentResult {
+  static assess(output: any, options?: AssessOptions): AssessmentResult {
     // Validate input type
     if (typeof output !== 'string') {
       return {
@@ -69,9 +99,22 @@ export class CreativeEvaluator {
     // Calculate scores
     const technicalScore = this.calculateTechnicalScore(output, metrics);
     const creativeScore = this.calculateCreativeScore(output, metrics);
+    const soundScore = this.getSoundScore(output);
 
-    // Calculate overall score (weighted average)
-    const overallScore = technicalScore * 0.6 + creativeScore * 0.4;
+    let overallScore: number;
+    if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
+      const dimensionScores: number[] = [];
+      for (const criterion of options.evaluationCriteria) {
+        if (criterion === 'technical') dimensionScores.push(technicalScore);
+        // Aesthetic = visual + sound for launch (creativeScore + getSoundScore).
+        else if (criterion === 'aesthetic') dimensionScores.push((creativeScore + soundScore) / 2);
+        else if (criterion === 'novelty') dimensionScores.push(creativeScore);
+        else dimensionScores.push(creativeScore);
+      }
+      overallScore = dimensionScores.reduce((a, b) => a + b, 0) / dimensionScores.length;
+    } else {
+      overallScore = technicalScore * 0.6 + creativeScore * 0.4;
+    }
 
     // Identify issues
     const issues = this.identifyIssues(output, metrics, technicalScore, creativeScore);
@@ -358,5 +401,22 @@ export class CreativeEvaluator {
       usesArrays: false,
       usesComments: false,
     };
+  }
+
+  /**
+   * Sound-aware scoring: 0.5 if code uses sound APIs (p5.sound, p5.Oscillator, AudioContext, createOscillator, Web Audio)
+   * and looks valid (basic syntax), else 0. Used in aesthetic dimension (aesthetic = visual + sound).
+   */
+  private static getSoundScore(code: string): number {
+    const soundPatterns = [
+      /\bp5\.sound\b/,
+      /\bp5\.Oscillator\b/,
+      /\bAudioContext\b/,
+      /\bcreateOscillator\b/,
+      /\bWeb Audio\b/i
+    ];
+    const hasSound = soundPatterns.some(p => p.test(code));
+    if (!hasSound) return 0;
+    return this.checkBasicSyntax(code) ? 0.5 : 0;
   }
 }

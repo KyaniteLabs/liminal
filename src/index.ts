@@ -35,6 +35,13 @@ import { Exporter, Project } from './export/Exporter.js';
 import { Gallery, Iteration } from './gallery/Gallery.js';
 import { SeedArchive, SeedMetadata } from './gallery/SeedArchive.js';
 import { generateFiveVariations } from './evolution/IGA.js';
+import { MapElites } from './evolution/MapElites.js';
+import { NoveltyArchive } from './evolution/NoveltyArchive.js';
+import { extractBehavior, detectDomain } from './evolution/BehaviorVectors.js';
+import { AestheticModel } from './evolution/AestheticModel.js';
+import { MetaMode } from './evolution/MetaMode.js';
+import { SafetyGuardrails } from './core/SafetyGuardrails.js';
+import { FeedbackQueue } from './gallery/FeedbackQueue.js';
 import { generateVisuals } from './generateVisuals.js';
 import { generateMusicToVisual } from './musicToVisual/generateMusicToVisual.js';
 import { generateMusic } from './music/generateMusic.js';
@@ -368,6 +375,25 @@ export { SeedArchive, SeedMetadata };
 // IGA / variations
 export { generateFiveVariations } from './evolution/IGA.js';
 
+// Evolution: MAP-Elites, Novelty, Behavior Vectors, Aesthetic Model, Meta Mode
+export { MapElites } from './evolution/MapElites.js';
+export type { MapElitesCell } from './evolution/MapElites.js';
+export { NoveltyArchive } from './evolution/NoveltyArchive.js';
+export { extractBehavior, detectDomain } from './evolution/BehaviorVectors.js';
+export type { Domain } from './evolution/BehaviorVectors.js';
+export { AestheticModel } from './evolution/AestheticModel.js';
+export type { AestheticDataPoint } from './evolution/AestheticModel.js';
+export { MetaMode } from './evolution/MetaMode.js';
+export type { Experiment } from './evolution/MetaMode.js';
+
+// Safety Guardrails
+export { SafetyGuardrails } from './core/SafetyGuardrails.js';
+export type { SafetyConfig } from './core/SafetyGuardrails.js';
+
+// Feedback Queue
+export { FeedbackQueue } from './gallery/FeedbackQueue.js';
+export type { Feedback } from './gallery/FeedbackQueue.js';
+
 // Music generation API
 export { generateMusic };
 export type { GenerateMusicOptions, GenerateMusicResult } from './music/generateMusic.js';
@@ -426,6 +452,16 @@ export default {
 
   generateFiveVariations,
 
+  // Evolution
+  MapElites,
+  NoveltyArchive,
+  extractBehavior,
+  detectDomain,
+  AestheticModel,
+  MetaMode,
+  SafetyGuardrails,
+  FeedbackQueue,
+
   // generateVisuals API
   generateVisuals,
 
@@ -442,6 +478,13 @@ export default {
 
 // LLM Generator
 export { P5GeneratorLLM };
+export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './llm/LLMClient.js';
+export type { LLMConfig, LLMResponse } from './llm/LLMClient.js';
+
+// Fitness Calculator
+export { FitnessCalculator } from './core/FitnessCalculator.js';
+export type { FitnessWeights, DimensionScores } from './core/FitnessCalculator.js';
+export type { PersistedLoopState } from './core/ContextAccumulation.js';
 
 // GLSL Generator
 export { ShaderGenerator };

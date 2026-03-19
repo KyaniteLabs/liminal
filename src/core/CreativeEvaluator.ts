@@ -8,9 +8,21 @@
  * - Returns score 0-1, with minimum threshold of 0.7 to pass
  */
 
+import { extractBehavior } from '../evolution/BehaviorVectors.js';
+import type { NoveltyArchive } from '../evolution/NoveltyArchive.js';
+import type { AestheticModel } from '../evolution/AestheticModel.js';
+
 export interface AssessOptions {
   /** When provided, overall score is the average of scores for these dimensions. Known dimensions: "technical", "aesthetic", "novelty". Aesthetic combines visual (creative) and sound. */
   evaluationCriteria?: string[];
+  /** Optional novelty archive for computing novelty scores */
+  noveltyArchive?: NoveltyArchive;
+  /** Optional aesthetic model for predicting aesthetic quality */
+  aestheticModel?: AestheticModel;
+  /** Behavior vector for novelty/aesthetic computation (auto-extracted if not provided) */
+  behaviorVector?: number[];
+  /** Domain hint for behavior extraction */
+  domain?: string;
 }
 
 interface AssessmentResult {
@@ -20,6 +32,8 @@ interface AssessmentResult {
   technicalScore: number;
   creativeScore: number;
   metrics: CodeMetrics;
+  noveltyScore?: number;
+  aestheticScore?: number;
 }
 
 interface CodeMetrics {
@@ -111,14 +125,27 @@ export class CreativeEvaluator {
     const creativeScore = this.calculateCreativeScore(output, metrics);
     const soundScore = this.getSoundScore(output);
 
+    // Novelty and aesthetic scoring (when archives/models provided)
+    let noveltyScore: number | undefined;
+    let aestheticScore: number | undefined;
+    if (options?.noveltyArchive || options?.aestheticModel) {
+      const behavior = options?.behaviorVector ?? extractBehavior(output, (options?.domain as 'p5' | 'glsl' | 'three' | 'music') || undefined);
+      if (options?.noveltyArchive) {
+        noveltyScore = options.noveltyArchive.noveltyScore(behavior);
+      }
+      if (options?.aestheticModel) {
+        aestheticScore = options.aestheticModel.predict(behavior, { domain: options?.domain || 'p5' });
+      }
+    }
+
     let overallScore: number;
     if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
       const dimensionScores: number[] = [];
       for (const criterion of options.evaluationCriteria) {
         if (criterion === 'technical') dimensionScores.push(technicalScore);
         // Aesthetic = visual + sound for launch (creativeScore + getSoundScore).
-        else if (criterion === 'aesthetic') dimensionScores.push((creativeScore + soundScore) / 2);
-        else if (criterion === 'novelty') dimensionScores.push(creativeScore);
+        else if (criterion === 'aesthetic') dimensionScores.push(aestheticScore ?? (creativeScore + soundScore) / 2);
+        else if (criterion === 'novelty') dimensionScores.push(noveltyScore ?? creativeScore);
         else dimensionScores.push(creativeScore);
       }
       overallScore = dimensionScores.reduce((a, b) => a + b, 0) / dimensionScores.length;
@@ -139,6 +166,8 @@ export class CreativeEvaluator {
       technicalScore,
       creativeScore,
       metrics,
+      noveltyScore,
+      aestheticScore,
     };
   }
 

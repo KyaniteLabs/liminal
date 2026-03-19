@@ -31,6 +31,10 @@ import { registerAllGenerators } from '../generators/registerGenerators.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { generateMusicToVisual } from '../musicToVisual/generateMusicToVisual.js';
 import { mergeSketchCode } from '../utils/mergeSketchCode.js';
+import { MapElites } from '../evolution/MapElites.js';
+import { NoveltyArchive } from '../evolution/NoveltyArchive.js';
+import { extractBehavior } from '../evolution/BehaviorVectors.js';
+import { SafetyGuardrails } from './SafetyGuardrails.js';
 
 interface LoopOptions {
   maxIterations?: number;
@@ -61,6 +65,14 @@ interface LoopOptions {
   mergeEveryN?: number;
   /** Called when a merge step runs: (codeA, codeB, proposed) from last two in history. */
   onMergeStep?: (data: { codeA: string; codeB: string; proposed: string }) => void;
+  /** Enable MAP-Elites quality-diversity optimization */
+  useMapElites?: boolean;
+  /** MAP-Elites grid dimensions (default [10, 10]) */
+  mapElitesDims?: [number, number];
+  /** Safety guardrails configuration */
+  safetyConfig?: import('./SafetyGuardrails.js').SafetyConfig;
+  /** Break loop if no fitness improvement for this many iterations (default 7, 0 = disabled) */
+  stagnationThreshold?: number;
 }
 
 interface LoopResult {
@@ -115,6 +127,8 @@ export class RalphLoop {
     let reason = '';
     let currentCode = '';
     let finalScore = 0;
+    let bestScore = 0;
+    let iterationsSinceLastImprovement = 0;
 
     // Main loop
     while (iteration < normalizedOptions.maxIterations) {
@@ -122,6 +136,17 @@ export class RalphLoop {
         reason = 'aborted by user';
         break;
       }
+
+      // Safety guardrails check
+      if (normalizedOptions.safetyConfig) {
+        const guardrails = new SafetyGuardrails(normalizedOptions.safetyConfig);
+        if (!guardrails.checkAll(finalScore)) {
+          reason = 'safety guardrails triggered';
+          break;
+        }
+        guardrails.recordApiCall();
+      }
+
       iteration++;
 
       try {
@@ -155,6 +180,24 @@ export class RalphLoop {
         const evaluation = CreativeEvaluator.assess(currentCode, {
           evaluationCriteria: normalizedOptions.evaluationCriteria
         });
+
+        // MAP-Elites integration
+        if (normalizedOptions.useMapElites) {
+          const mapElites = normalizedOptions._mapElites as MapElites | undefined;
+          const archive = normalizedOptions._noveltyArchive as NoveltyArchive | undefined;
+
+          const behavior = extractBehavior(currentCode);
+          // Compute novelty for potential future use; archive always records
+          if (archive) archive.noveltyScore(behavior);
+
+          if (mapElites) {
+            mapElites.insert(
+              `iteration-${iteration}`,
+              behavior,
+              evaluation.score
+            );
+          }
+        }
 
         // Save iteration context
         const iterationContext: IterationContext = {
@@ -205,6 +248,22 @@ export class RalphLoop {
 
         // Update final score
         finalScore = evaluation.score;
+
+        // Stagnation detection
+        if (evaluation.score > bestScore) {
+          bestScore = evaluation.score;
+          iterationsSinceLastImprovement = 0;
+        } else {
+          iterationsSinceLastImprovement++;
+          if (
+            normalizedOptions.stagnationThreshold != null &&
+            normalizedOptions.stagnationThreshold > 0 &&
+            iterationsSinceLastImprovement >= normalizedOptions.stagnationThreshold
+          ) {
+            reason = `stagnation detected (${iterationsSinceLastImprovement} iterations without improvement)`;
+            break;
+          }
+        }
 
         const promiseDetected = PromiseDetector.detect(currentCode);
         normalizedOptions.onProgress?.({
@@ -270,7 +329,7 @@ export class RalphLoop {
   /**
    * Normalize options with defaults
    */
-  private static normalizeOptions(options: LoopOptions | null): LoopOptions & { maxIterations: number; timeoutMinutes: number; galleryDir: string; project: string; tolerateErrors: boolean; minQualityScore: number } {
+  private static normalizeOptions(options: LoopOptions | null): LoopOptions & { maxIterations: number; timeoutMinutes: number; galleryDir: string; project: string; tolerateErrors: boolean; minQualityScore: number; useMapElites: boolean; mapElitesDims: [number, number]; safetyConfig: import('./SafetyGuardrails.js').SafetyConfig | undefined; _mapElites: any; _noveltyArchive: any } {
     return {
       maxIterations: options?.maxIterations || RalphLoop.DEFAULT_MAX_ITERATIONS,
       timeoutMinutes: options?.timeoutMinutes || RalphLoop.DEFAULT_TIMEOUT_MINUTES,
@@ -288,7 +347,13 @@ export class RalphLoop {
       lastKIterations: options?.lastKIterations,
       evaluationCriteria: options?.evaluationCriteria,
       onProgress: options?.onProgress,
-      signal: options?.signal
+      signal: options?.signal,
+      useMapElites: options?.useMapElites ?? false,
+      mapElitesDims: options?.mapElitesDims ?? [10, 10],
+      safetyConfig: options?.safetyConfig,
+      stagnationThreshold: options?.stagnationThreshold ?? 7,
+      _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
+      _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
     };
   }
 

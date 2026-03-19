@@ -24,6 +24,16 @@ export interface IterationContext {
 
 export type State = IterationContext;
 
+import fs from 'fs';
+
+export interface PersistedLoopState {
+  bestFitness: number;
+  iterationsSinceLastImprovement: number;
+  budgetUsed: number;
+  totalIterations: number;
+  savedAt: string;
+}
+
 export class ContextAccumulation {
   private history: State[] = [];
   private static readonly MAX_HISTORY_SIZE = 50;
@@ -72,6 +82,30 @@ export class ContextAccumulation {
    */
   clear(): void {
     this.history = [];
+  }
+
+  /**
+   * Persist loop state to a JSON file.
+   * Useful for resuming sessions across restarts.
+   */
+  saveState(filePath: string, state: PersistedLoopState): void {
+    const data = JSON.stringify(state, null, 2);
+    fs.writeFileSync(filePath, data, 'utf-8');
+  }
+
+  /**
+   * Load previously persisted loop state from a JSON file.
+   * Returns null if the file doesn't exist or can't be parsed.
+   */
+  loadState(filePath: string): PersistedLoopState | null {
+    try {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      const parsed = JSON.parse(raw) as PersistedLoopState;
+      if (typeof parsed.bestFitness !== 'number') return null;
+      return parsed;
+    } catch {
+      return null;
+    }
   }
 
   // ---- Static backward-compat wrappers (delegate to default instance) ----

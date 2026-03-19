@@ -5,6 +5,7 @@ import {
   switchToLiveOrganismView,
   setSandboxRunResult,
 } from './gui/liveOrganismState';
+import { CuratorMode } from './components/CuratorMode';
 
 // State types
 interface MergeProposal {
@@ -499,6 +500,13 @@ export default function App() {
         >
           Live Music
         </button>
+        <button
+          type="button"
+          style={tabStyle(activeTab === 'curator')}
+          onClick={() => dispatchLive(switchToLiveOrganismView('curator'))}
+        >
+          Curator
+        </button>
       </div>
 
       {activeTab === 'config' && (
@@ -820,6 +828,14 @@ export default function App() {
             </div>
           )}
         </div>
+      )}
+
+      {activeTab === 'curator' && (
+        <CuratorMode apiBase={API} onEvolve={(candidateId) => {
+          // Navigate to Create tab with the selected candidate as context
+          setSelectedProject(candidateId);
+          dispatchLive(switchToLiveOrganismView('live'));
+        }} />
       )}
 
       {activeTab === 'live' && (

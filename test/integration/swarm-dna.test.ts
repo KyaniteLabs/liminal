@@ -3,7 +3,7 @@
  * Tests that DNA from scavenger enriches swarm prompts correctly.
  */
 
-import { TokenMillOrchestrator } from '../../src/swarm/TokenMillOrchestrator.js';
+import { SwarmOrchestrator } from '../../src/swarm/SwarmOrchestrator.js';
 import { MiningEngine } from '../../src/swarm/MiningEngine.js';
 import { DNAExtractor } from '../../src/scavenger/DNAExtractor.js';
 import { generatorRegistry } from '../../src/generators/GeneratorRegistry.js';
@@ -79,7 +79,7 @@ describe('Swarm + DNA integration', () => {
       'Max': 'function setup() { createCanvas(800, 600); }',
     });
 
-    const orchestrator = new TokenMillOrchestrator(
+    const orchestrator = new SwarmOrchestrator(
       {
         personas: MINI_PERSONAS,
         maxRounds: 1,
@@ -106,7 +106,7 @@ describe('Swarm + DNA integration', () => {
     });
 
     let minedFragments: MinedFragment[] = [];
-    const orchestrator = new TokenMillOrchestrator(
+    const orchestrator = new SwarmOrchestrator(
       {
         personas: MINI_PERSONAS,
         maxRounds: 1,
@@ -132,7 +132,7 @@ describe('Swarm + DNA integration', () => {
       'Max': 'Simple technical output.',
     });
 
-    const orchestrator = new TokenMillOrchestrator(
+    const orchestrator = new SwarmOrchestrator(
       {
         personas: MINI_PERSONAS,
         maxRounds: 1,

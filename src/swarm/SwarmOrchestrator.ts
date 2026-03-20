@@ -9,7 +9,7 @@ import { SERVICE_DEFAULTS } from '../constants.js';
 import fs from 'fs/promises';
 import path from 'path';
 
-export interface TokenMillOrchestratorOptions {
+export interface SwarmOrchestratorOptions {
   callOllama?: (model: string, prompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
   onProgress?: (data: { round: number; totalRounds: number; winnerId: string | null; converged: boolean }) => void;
   onFragmentsMined?: (fragments: MinedFragment[]) => void;
@@ -24,7 +24,7 @@ export interface TokenMillOrchestratorOptions {
  * multi-model diversity (different personas calling different models) requires
  * Ollama.
  */
-export class TokenMillOrchestrator {
+export class SwarmOrchestrator {
   private config: SwarmConfig;
   private personas: SwarmPersona[];
   private callOllama: (model: string, prompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
@@ -37,7 +37,7 @@ export class TokenMillOrchestrator {
     this.dna = dna;
   }
 
-  constructor(config?: Partial<SwarmConfig>, options?: TokenMillOrchestratorOptions) {
+  constructor(config?: Partial<SwarmConfig>, options?: SwarmOrchestratorOptions) {
     this.config = {
       ollamaHost: config?.ollamaHost ?? SERVICE_DEFAULTS.OLLAMA_URL,
       ollamaTimeout: config?.ollamaTimeout ?? 60,

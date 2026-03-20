@@ -10,6 +10,6 @@ export type {
 } from './types.js';
 
 export { DEFAULT_PERSONAS, DEFAULT_REFINEMENT_CONSTRAINTS } from './personas.js';
-export { TokenMillOrchestrator } from './TokenMillOrchestrator.js';
+export { SwarmOrchestrator } from './SwarmOrchestrator.js';
 export { VotingEngine } from './VotingEngine.js';
 export { MiningEngine } from './MiningEngine.js';

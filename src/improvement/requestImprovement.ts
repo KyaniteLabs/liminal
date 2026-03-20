@@ -8,7 +8,7 @@ import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { LLMClient } from '../llm/LLMClient.js';
 
 export interface RequestImprovementState {
-  /** Optional project directory or path to config/atelier.json for project LLM config */
+  /** Optional project directory or path to config/liminal.json for project LLM config */
   projectConfigPath?: string;
 }
 

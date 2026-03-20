@@ -8,7 +8,7 @@ describe('Completions', () => {
     it('should generate zsh completions', () => {
       const script = generateCompletions('zsh');
       
-      expect(script).toContain('atelier');
+      expect(script).toContain('liminal');
       expect(script).toContain('--prompt');
       expect(script).toContain('--recent');
       expect(script).toContain('--favorites');
@@ -17,8 +17,8 @@ describe('Completions', () => {
 
     it('should generate bash completions', () => {
       const script = generateCompletions('bash');
-      
-      expect(script).toContain('atelier');
+
+      expect(script).toContain('liminal');
       expect(script).toContain('--prompt');
       expect(script).toContain('--recent');
     });

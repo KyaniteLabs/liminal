@@ -206,7 +206,7 @@
     <div class="text-xs text-slate-400 mt-1">Dead Code Modules</div>
   </div>
   <div class="stat-card">
-    <div class="text-2xl font-bold text-amber-400">3</div>
+    <div class="text-2xl font-bold text-amber-400">2</div>
     <div class="text-xs text-slate-400 mt-1">Scoring Systems</div>
   </div>
   <div class="stat-card">
@@ -322,7 +322,7 @@
 
           <!-- SWARM BRANCH -->
           <rect x="20" y="180" width="200" height="50" rx="6" fill="#1a2e1a" stroke="#f59e0b" stroke-width="2"/>
-          <text x="120" y="202" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600">TokenMillOrchestrator</text>
+          <text x="120" y="202" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600">SwarmOrchestrator</text>
           <text x="120" y="218" text-anchor="middle" fill="#94a3b8" font-size="10">7-persona swarm generation</text>
 
           <line x1="550" y1="70" x2="120" y2="180" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" marker-end="url(#arrow)"/>
@@ -467,8 +467,8 @@
 
           <!-- SCORING SECTION label -->
           <rect x="20" y="530" width="1160" height="40" rx="5" fill="rgba(139,92,246,0.05)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
-          <text x="600" y="548" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="600">SCORING SYSTEMS (4 independent implementations — see Findings tab)</text>
-          <text x="600" y="563" text-anchor="middle" fill="#64748b" font-size="10">CreativeEvaluator · HeuristicScorer · Scoring.ts (quickScore) · CollaborativeClient (inline LLM scoring)</text>
+          <text x="600" y="548" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="600">SCORING SYSTEMS (3 independent implementations — see Findings tab)</text>
+          <text x="600" y="563" text-anchor="middle" fill="#64748b" font-size="10">CreativeEvaluator · HeuristicScorer · Scoring.ts (quickScore)</text>
 
           <!-- Module count -->
           <text x="600" y="610" text-anchor="middle" fill="#64748b" font-size="11">90+ source modules across 20 directories · Click any module for details below</text>
@@ -658,7 +658,7 @@
           <div class="flex items-center gap-3">
             <span class="badge origin-tokenmill">2</span>
             <div>
-              <div class="font-semibold mono text-sm">src/swarm/TokenMillOrchestrator.ts : run() (line 94)</div>
+              <div class="font-semibold mono text-sm">src/swarm/SwarmOrchestrator.ts : run() (line 94)</div>
               <div class="text-xs text-slate-400">Main swarm loop — parallel/ring generation rounds</div>
             </div>
           </div>
@@ -668,7 +668,7 @@
           <div class="flex items-center gap-3">
             <span class="badge origin-tokenmill">3</span>
             <div>
-              <div class="font-semibold mono text-sm">src/swarm/TokenMillOrchestrator.ts : generateParallel() (line 250)</div>
+              <div class="font-semibold mono text-sm">src/swarm/SwarmOrchestrator.ts : generateParallel() (line 250)</div>
               <div class="text-xs text-slate-400">All 7 personas generate simultaneously</div>
             </div>
           </div>
@@ -986,20 +986,17 @@
 
           <div class="finding-card" data-severity="high">
             <div class="flex items-center justify-between mb-2">
-              <span class="font-semibold">4 Independent Scoring Implementations</span>
-              <span class="badge severity-high">HIGH</span>
+              <span class="font-semibold line-through">4 Independent Scoring Implementations</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">CONSOLIDATED</span>
             </div>
             <div class="text-sm text-slate-300 space-y-2">
               <p><strong>1. CreativeEvaluator</strong> <code class="text-blue-400">src/core/CreativeEvaluator.ts</code> — 7-dim LLM-based evaluation. Used by RalphLoop (17 consumers).</p>
-              <p><strong>2. HeuristicScorer</strong> <code class="text-amber-400">src/swarm/HeuristicScorer.ts</code> — 5-dim heuristic (constraint, novelty, length, vocabulary, codeStructure). Used by TokenMillOrchestrator.</p>
+              <p><strong>2. HeuristicScorer</strong> <code class="text-amber-400">src/swarm/HeuristicScorer.ts</code> — 5-dim heuristic (constraint, novelty, length, vocabulary, codeStructure). Used by SwarmOrchestrator.</p>
               <p><strong>3. Scoring.ts</strong> <code class="text-emerald-400">src/collab/Scoring.ts</code> — <code>quickScore()</code> lightweight heuristic. Used by CollaborativeClient, DeepCollaboration, EvaluationFramework.</p>
-              <p><strong>4. CollaborativeClient inline</strong> <code class="text-emerald-400">src/collab/CollaborativeClient.ts:435</code> — Private <code>scoreOutputs()</code> using LLM-based rating. 7 call sites.</p>
+              <p class="text-slate-500"><s>4. CollaborativeClient inline — removed, now delegates to Scoring.ts quickScore()</s></p>
             </div>
             <div class="mt-2 text-xs">
-              <strong>Impact:</strong> Changes to scoring logic must be replicated across 4 systems. Different systems may produce inconsistent results.
-            </div>
-            <div class="mt-2 text-xs">
-              <strong>Recommendation:</strong> <span class="text-amber-400">Consolidate into EvaluationFramework facade.</span> Keep HeuristicScorer for swarm (different domain), unify collab scoring into Scoring.ts, remove inline scoring from CollaborativeClient.
+              <strong>Resolution:</strong> Inline LLM scoring in CollaborativeClient.scoreOutputs() replaced with quickScore() from Scoring.ts. 3 scoring systems remain.
             </div>
           </div>
         </div>
@@ -1060,7 +1057,7 @@
               <span class="font-semibold">"Token Mill" / TokenMill — 16 references</span>
               <span class="badge severity-medium">MEDIUM</span>
             </div>
-            <p class="text-sm text-slate-300">TokenMillOrchestrator class name, TokenMillOrchestratorOptions type, comments in RalphLoop and index.ts. Consider renaming to SwarmOrchestrator.</p>
+            <p class="text-sm text-slate-300">Renamed TokenMillOrchestrator → SwarmOrchestrator (file, class, options type, all imports).</p>
           </div>
         </div>
 
@@ -1254,7 +1251,7 @@
               <td class="py-2 pr-4"><code class="text-amber-400">TokenMill</code></td>
               <td class="py-2 pr-4">16</td>
               <td class="py-2 pr-4"><code class="text-purple-400">Swarm</code></td>
-              <td class="py-2 text-xs text-slate-400">TokenMillOrchestrator → SwarmOrchestrator</td>
+              <td class="py-2 text-xs text-slate-400"><span style="text-decoration: line-through;">TokenMillOrchestrator → SwarmOrchestrator</span> <span class="text-emerald-400">DONE</span></td>
             </tr>
           </tbody>
         </table>
@@ -1346,7 +1343,7 @@
               <span class="badge effort-M">M</span>
             </div>
           </div>
-          <p class="text-sm text-slate-400 mb-2">Renamed Atelier → Liminal (class + config), cleaned "Ported from Hydra" comments (5 files), updated Token Mill → Swarm in comments. hydra-synth platform refs preserved. Note: TokenMillOrchestrator file/class name kept (larger refactor scope).</p>
+          <p class="text-sm text-slate-400 mb-2">Renamed Atelier → Liminal (class + config), cleaned "Ported from Hydra" comments (5 files), updated Token Mill → Swarm in comments. TokenMillOrchestrator → SwarmOrchestrator (file, class, all imports). hydraBaseUrl → reasoningBaseUrl.</p>
           <p class="text-xs text-slate-500"><strong>Commit:</strong> 5664eae</p>
         </div>
 
@@ -1367,53 +1364,55 @@
         </div>
 
         <!-- Rec 7 -->
-        <div class="finding-card">
+        <div class="finding-card" style="opacity: 0.6;">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
-              <span class="text-lg font-bold text-blue-400">#7</span>
+              <span class="text-lg font-bold text-slate-400">#7</span>
               <span class="font-semibold">Add CI/CD pipeline</span>
+              <span class="badge" style="background: rgba(100,116,139,0.2); color: #94a3b8; border: 1px solid rgba(100,116,139,0.4);">REMAINING</span>
             </div>
             <div class="flex gap-2">
               <span class="badge severity-high">HIGH</span>
               <span class="badge effort-M">M</span>
             </div>
           </div>
-          <p class="text-sm text-slate-300 mb-2">Create .github/workflows/ with at minimum: test on push, lint check. Consider adding build verification after test imports are fixed.</p>
+          <p class="text-sm text-slate-400 mb-2">Create .github/workflows/ with at minimum: test on push, lint check. Consider adding build verification after test imports are fixed.</p>
           <p class="text-xs text-slate-500"><strong>Files:</strong> .github/workflows/ci.yml (new)</p>
-          <p class="text-xs text-slate-500"><strong>Depends on:</strong> Nothing (test imports now fixed)</p>
+          <p class="text-xs text-slate-500"><strong>Status:</strong> Not in scope for current cleanup phase</p>
         </div>
 
         <!-- Rec 8 -->
-        <div class="finding-card">
+        <div class="finding-card" style="opacity: 0.6;">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
-              <span class="text-lg font-bold text-blue-400">#8</span>
-              <span class="font-semibold">Audit exported-but-unwired modules</span>
+              <span class="text-lg font-bold text-emerald-400">#8</span>
+              <span class="font-semibold line-through">Audit exported-but-unwired modules</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
             </div>
             <div class="flex gap-2">
               <span class="badge severity-medium">MEDIUM</span>
               <span class="badge effort-M">M</span>
             </div>
           </div>
-          <p class="text-sm text-slate-300 mb-2">7 modules exported from index.ts but not used by RalphLoop: SoupLoop, DNAExtractor, ArchiveLearning, QualityArchive, AestheticModel, MetaMode, SmartRouter. Decide: wire into flows, mark as library API, or remove exports.</p>
-          <p class="text-xs text-slate-500"><strong>Depends on:</strong> Architecture decision on which modules are library API vs internal</p>
+          <p class="text-sm text-slate-400 mb-2">Marked 7 exported-but-unwired modules (SoupLoop, DNAExtractor, ArchiveLearning, QualityArchive, AestheticModel, MetaMode, SmartRouter) with <code>@library</code> JSDoc annotations in index.ts. These are public API modules not wired into RalphLoop.</p>
+          <p class="text-xs text-slate-500"><strong>Files:</strong> src/index.ts</p>
         </div>
 
         <!-- Rec 9 -->
-        <div class="finding-card">
+        <div class="finding-card" style="opacity: 0.6;">
           <div class="flex items-center justify-between mb-2">
             <div class="flex items-center gap-2">
               <span class="text-lg font-bold text-emerald-400">#9</span>
-              <span class="font-semibold">Enable LLM cache by default (optional)</span>
+              <span class="font-semibold line-through">Enable LLM cache by default (optional)</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
             </div>
             <div class="flex gap-2">
               <span class="badge severity-low">LOW</span>
               <span class="badge effort-S">S</span>
             </div>
           </div>
-          <p class="text-sm text-slate-300 mb-2">LLMClient creates CacheManager with <code>enabled: false</code>. Consider enabling for swarm/collab flows where repeated prompts occur. Keep disabled for single-shot CLI use.</p>
+          <p class="text-sm text-slate-400 mb-2">LLMClient CacheManager enabled by default (<code>enabled: true</code>). CacheManager was already implemented but disabled. Now active for swarm/collab flows where repeated prompts occur.</p>
           <p class="text-xs text-slate-500"><strong>Files:</strong> src/llm/LLMClient.ts:73</p>
-          <p class="text-xs text-slate-500"><strong>Depends on:</strong> Performance testing</p>
         </div>
 
       </div>
@@ -1426,7 +1425,7 @@
 <div class="max-w-7xl mx-auto mt-8 pb-8 text-center text-xs text-slate-500">
   <p>Liminal Post-Merge Architecture Audit &middot; Generated 2026-03-20 &middot; Updated 2026-03-20 &middot; All findings verified against source code via grep and file reads</p>
   <p class="mt-1">Three codebases merged: Liminal (core creative loop) + Hydra (collaborative intelligence) + Token Mill (swarm generation)</p>
-  <p class="mt-1">6 of 9 recommendations completed. Remaining: #7 (CI/CD), #8 (exported-but-unwired audit), #9 (LLM cache).</p>
+  <p class="mt-1">8 of 9 recommendations completed. Remaining: #7 (CI/CD — not in scope).</p>
 </div>
 
 <script>
@@ -1515,11 +1514,11 @@ const modules = [
   { path: 'src/collab/critics/TechnicalCritic.ts', origin: 'hydra', status: 'active', consumers: 'DeepCollaboration' },
   { path: 'src/collab/critics/DomainExpert.ts', origin: 'hydra', status: 'active', consumers: 'DeepCollaboration' },
   // Swarm (Token Mill)
-  { path: 'src/swarm/TokenMillOrchestrator.ts', origin: 'tokenmill', status: 'active', consumers: 'RalphLoop (useSwarm)' },
-  { path: 'src/swarm/VotingEngine.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator' },
-  { path: 'src/swarm/HeuristicScorer.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator, EvaluationFramework' },
-  { path: 'src/swarm/MiningEngine.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator' },
-  { path: 'src/swarm/personas.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator' },
+  { path: 'src/swarm/SwarmOrchestrator.ts', origin: 'tokenmill', status: 'active', consumers: 'RalphLoop (useSwarm)' },
+  { path: 'src/swarm/VotingEngine.ts', origin: 'tokenmill', status: 'active', consumers: 'SwarmOrchestrator' },
+  { path: 'src/swarm/HeuristicScorer.ts', origin: 'tokenmill', status: 'active', consumers: 'SwarmOrchestrator, EvaluationFramework' },
+  { path: 'src/swarm/MiningEngine.ts', origin: 'tokenmill', status: 'active', consumers: 'SwarmOrchestrator' },
+  { path: 'src/swarm/personas.ts', origin: 'tokenmill', status: 'active', consumers: 'SwarmOrchestrator' },
   // Generators
   { path: 'src/generators/GeneratorRegistry.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
   { path: 'src/generators/registerGenerators.ts', origin: 'atelier', status: 'active', consumers: 'index.ts' },

@@ -53,7 +53,7 @@ export interface LLMConfig {
   /** When true, call the reasoning service /reason endpoint to enhance prompts before generation */
   useReasoningTransfer?: boolean;
   /** Base URL for reasoning service (default http://localhost:8000) */
-  hydraBaseUrl?: string;
+  reasoningBaseUrl?: string;
 }
 
 export interface LLMResponse {
@@ -70,7 +70,7 @@ function env(key: string): string | undefined {
 
 export class LLMClient {
   private config: LLMConfig;
-  private cache = new CacheManager({ enabled: false }); // Disabled by default for single-shot
+  private cache = new CacheManager({ enabled: true });
 
   private static readonly COST_ESTIMATES: Record<string, { input: number; output: number }> = {
     openai: { input: 0.00001, output: 0.00003 },
@@ -93,7 +93,7 @@ export class LLMClient {
       temperature: config?.temperature ?? 0.7,
       maxTokens: config?.maxTokens ?? 2000,
       useReasoningTransfer: config?.useReasoningTransfer ?? false,
-      hydraBaseUrl: config?.hydraBaseUrl || env('HYDRA_URL') || SERVICE_DEFAULTS.HYDRA_URL,
+      reasoningBaseUrl: config?.reasoningBaseUrl || env('REASONING_URL') || SERVICE_DEFAULTS.REASONING_URL,
     };
   }
 
@@ -288,7 +288,7 @@ export class LLMClient {
    */
   private async enhanceWithReasoning(prompt: string, systemPrompt: string): Promise<string> {
     try {
-      const response = await fetch(`${this.config.hydraBaseUrl}/reason`, {
+      const response = await fetch(`${this.config.reasoningBaseUrl}/reason`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

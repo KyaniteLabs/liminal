@@ -1,8 +1,8 @@
 /**
- * TokenMillOrchestrator tests
+ * SwarmOrchestrator tests
  */
 
-import { TokenMillOrchestrator } from '../../src/swarm/TokenMillOrchestrator.js';
+import { SwarmOrchestrator } from '../../src/swarm/SwarmOrchestrator.js';
 import { SwarmMode } from '../../src/swarm/types.js';
 import type { SwarmConfig } from '../../src/swarm/types.js';
 
@@ -19,10 +19,10 @@ const createMockOllama = (): (model: string, prompt: string, options?: { tempera
   };
 };
 
-describe('TokenMillOrchestrator', () => {
+describe('SwarmOrchestrator', () => {
   describe('constructor', () => {
     it('should create with default config', () => {
-      const orchestrator = new TokenMillOrchestrator();
+      const orchestrator = new SwarmOrchestrator();
       expect(orchestrator).toBeDefined();
     });
 
@@ -34,14 +34,14 @@ describe('TokenMillOrchestrator', () => {
         musicalChairs: false,
       };
 
-      const orchestrator = new TokenMillOrchestrator(config);
+      const orchestrator = new SwarmOrchestrator(config);
       expect(orchestrator).toBeDefined();
     });
   });
 
   describe('run', () => {
     it('should run a full swarm evolution with mock Ollama', async () => {
-      const orchestrator = new TokenMillOrchestrator(
+      const orchestrator = new SwarmOrchestrator(
         { maxRounds: 2, musicalChairs: false, streamDir: './test-stream' },
         { callOllama: createMockOllama() }
       );
@@ -56,7 +56,7 @@ describe('TokenMillOrchestrator', () => {
     }, 10000);
 
     it('should run in competitive mode', async () => {
-      const orchestrator = new TokenMillOrchestrator(
+      const orchestrator = new SwarmOrchestrator(
         { maxRounds: 2, musicalChairs: false, streamDir: './test-stream' },
         { callOllama: createMockOllama() }
       );
@@ -68,7 +68,7 @@ describe('TokenMillOrchestrator', () => {
     }, 10000);
 
     it('should run in ring mode', async () => {
-      const orchestrator = new TokenMillOrchestrator(
+      const orchestrator = new SwarmOrchestrator(
         { maxRounds: 1, musicalChairs: false, streamDir: './test-stream' },
         { callOllama: createMockOllama() }
       );
@@ -81,7 +81,7 @@ describe('TokenMillOrchestrator', () => {
 
     it('should call progress callback', async () => {
       const progressCalls: Array<{ round: number; winnerId: string | null }> = [];
-      const orchestrator = new TokenMillOrchestrator(
+      const orchestrator = new SwarmOrchestrator(
         { maxRounds: 1, musicalChairs: false, streamDir: './test-stream' },
         {
           callOllama: createMockOllama(),
@@ -144,7 +144,7 @@ describe('TokenMillOrchestrator', () => {
         return '1st choice: A\n2nd choice: B\nAlpha is better.';
       };
 
-      const orchestrator = new TokenMillOrchestrator(
+      const orchestrator = new SwarmOrchestrator(
         {
           maxRounds: 6,
           convergenceThreshold: 3,
@@ -171,7 +171,7 @@ describe('TokenMillOrchestrator', () => {
         { roundNum: 3, seed: '', outputs: new Map(), votes: new Map(), scores: new Map(), winnerId: 'sam', winnerContent: '', constraint: '' },
       ];
 
-      expect(TokenMillOrchestrator.checkConvergence(rounds, 3)).toBe(true);
+      expect(SwarmOrchestrator.checkConvergence(rounds, 3)).toBe(true);
     });
 
     it('should not detect convergence with different winners', () => {
@@ -181,7 +181,7 @@ describe('TokenMillOrchestrator', () => {
         { roundNum: 3, seed: '', outputs: new Map(), votes: new Map(), scores: new Map(), winnerId: 'sam', winnerContent: '', constraint: '' },
       ];
 
-      expect(TokenMillOrchestrator.checkConvergence(rounds, 3)).toBe(false);
+      expect(SwarmOrchestrator.checkConvergence(rounds, 3)).toBe(false);
     });
 
     it('should not detect convergence with insufficient rounds', () => {
@@ -189,7 +189,7 @@ describe('TokenMillOrchestrator', () => {
         { roundNum: 1, seed: '', outputs: new Map(), votes: new Map(), scores: new Map(), winnerId: 'sam', winnerContent: '', constraint: '' },
       ];
 
-      expect(TokenMillOrchestrator.checkConvergence(rounds, 3)).toBe(false);
+      expect(SwarmOrchestrator.checkConvergence(rounds, 3)).toBe(false);
     });
 
     it('should handle null winner IDs', () => {
@@ -199,7 +199,7 @@ describe('TokenMillOrchestrator', () => {
         { roundNum: 3, seed: '', outputs: new Map(), votes: new Map(), scores: new Map(), winnerId: null, winnerContent: '', constraint: '' },
       ];
 
-      expect(TokenMillOrchestrator.checkConvergence(rounds, 3)).toBe(true);
+      expect(SwarmOrchestrator.checkConvergence(rounds, 3)).toBe(true);
     });
   });
 });

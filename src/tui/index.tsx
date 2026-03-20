@@ -77,7 +77,7 @@ function useTerminalSize() {
 
 const Banner = () => (
   <Box borderStyle="double" borderColor={COLORS.primary} paddingX={1} marginBottom={1}>
-    <Text bold color={COLORS.primary}>ATELIER TUI v2.0</Text>
+    <Text bold color={COLORS.primary}>LIMINAL TUI v2.0</Text>
     <Spacer />
     <Text color={COLORS.muted}>Creative Coding Agent</Text>
   </Box>

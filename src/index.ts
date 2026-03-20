@@ -342,6 +342,7 @@ export class Liminal {
 
 // Core Ralph-Wiggum Loop Engine
 export { RalphLoop };
+/** @library Public API — not wired into RalphLoop */
 export { SoupLoop } from './core/SoupLoop.js';
 export type { SoupCandidate, SoupLoopOptions, SoupLoopResult } from './core/SoupLoop.js';
 import { requestImprovement } from './core/SelfImprovement.js';
@@ -393,8 +394,10 @@ export type { MapElitesCell } from './evolution/MapElites.js';
 export { NoveltyArchive } from './evolution/NoveltyArchive.js';
 export { extractBehavior, detectDomain } from './evolution/BehaviorVectors.js';
 export type { Domain } from './evolution/BehaviorVectors.js';
+/** @library Public API — not wired into RalphLoop */
 export { AestheticModel } from './evolution/AestheticModel.js';
 export type { AestheticDataPoint } from './evolution/AestheticModel.js';
+/** @library Public API — not wired into RalphLoop */
 export { MetaMode } from './evolution/MetaMode.js';
 export type { Experiment } from './evolution/MetaMode.js';
 
@@ -505,19 +508,21 @@ export { ShaderGenerator };
 export { ThreeGenerator };
 
 // Swarm
-export { TokenMillOrchestrator } from './swarm/TokenMillOrchestrator.js';
+export { SwarmOrchestrator } from './swarm/SwarmOrchestrator.js';
 export { VotingEngine } from './swarm/VotingEngine.js';
 export { MiningEngine } from './swarm/MiningEngine.js';
 export { DEFAULT_PERSONAS, DEFAULT_REFINEMENT_CONSTRAINTS } from './swarm/personas.js';
 export { SwarmMode } from './swarm/types.js';
 export type { SwarmPersona, SwarmConfig, SwarmOutput, Vote, RoundResult, SwarmResult, MinedFragment } from './swarm/types.js';
-export type { TokenMillOrchestratorOptions } from './swarm/TokenMillOrchestrator.js';
+export type { SwarmOrchestratorOptions } from './swarm/SwarmOrchestrator.js';
 
 // Scavenger
+/** @library Public API — not wired into RalphLoop */
 export { DNAExtractor } from './scavenger/DNAExtractor.js';
 export type { ProjectDNA, ScavengerConfig } from './scavenger/types.js';
 
 // Routing
+/** @library Public API — not wired into RalphLoop */
 export {
   SmartRouter,
   defaultRouter,
@@ -538,6 +543,7 @@ export type {
 } from './routing/index.js';
 
 // Learning
+/** @library Public API — not wired into RalphLoop */
 export { ArchiveLearning } from './learning/index.js';
 export { QualityArchive } from './learning/index.js';
 export type {

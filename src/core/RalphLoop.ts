@@ -38,7 +38,7 @@ import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { DeepCollaboration } from '../collab/DeepCollaboration.js';
 import { CollaborativeClient } from '../collab/CollaborativeClient.js';
 import type { DeepCollaborationConfig, CollaborativeConfig, DomainType } from '../collab/types.js';
-import { TokenMillOrchestrator } from '../swarm/TokenMillOrchestrator.js';
+import { SwarmOrchestrator } from '../swarm/SwarmOrchestrator.js';
 import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
 
 interface LoopOptions {
@@ -491,7 +491,7 @@ export class RalphLoop {
     prompt: string,
     options: ReturnType<typeof RalphLoop.normalizeOptions>
   ): Promise<string> {
-    const orchestrator = new TokenMillOrchestrator(options.swarmConfig, {
+    const orchestrator = new SwarmOrchestrator(options.swarmConfig, {
       onProgress: (data) => {
         options.onProgress?.({
           iteration: data.round,

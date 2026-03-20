@@ -12,7 +12,7 @@ export const SERVICE_DEFAULTS = {
   /** Ollama API base URL */
   OLLAMA_URL: 'http://localhost:11434',
   /** Reasoning service base URL */
-  HYDRA_URL: 'http://localhost:8000',
+  REASONING_URL: 'http://localhost:8000',
   /** MiniMax M2.7 cloud API base URL */
   MINIMAX_URL: 'https://api.minimax.io/v1',
 } as const;

@@ -128,9 +128,9 @@ export default function App() {
   const hydraContainerRef = useRef<HTMLDivElement>(null);
 
   // Form state: effective + loop + creative + galleryPath; on save we build userConfig
-  const [provider, setProvider] = useState<string>('inception');
+  const [provider, setProvider] = useState<string>('lmstudio');
   const [baseUrl, setBaseUrl] = useState<string>('');
-  const [model, setModel] = useState<string>('inception-001');
+  const [model, setModel] = useState<string>('local-model');
   const [apiKey, setApiKey] = useState<string>('');
   const [maxIterations, setMaxIterations] = useState<number>(20);
   const [timeoutMinutes, setTimeoutMinutes] = useState<number>(30);
@@ -146,9 +146,9 @@ export default function App() {
         const data = await res.json();
         if (cancelled) return;
         setConfig(data);
-        setProvider(data.effective?.provider ?? 'inception');
+        setProvider(data.effective?.provider ?? 'lmstudio');
         setBaseUrl(data.effective?.baseUrl ?? '');
-        setModel(data.effective?.model ?? 'inception-001');
+        setModel(data.effective?.model ?? 'local-model');
         setApiKey(data.effective?.apiKey ?? '');
         setMaxIterations(data.loop?.maxIterations ?? 20);
         setTimeoutMinutes(data.loop?.timeoutMinutes ?? 30);
@@ -430,7 +430,7 @@ export default function App() {
     setError(null);
     setMessage(null);
     try {
-      const providerName = provider === 'inception' ? 'inception' : provider;
+      const providerName = provider;
       const payload = {
         defaultProvider: providerName,
         providers: {
@@ -451,7 +451,7 @@ export default function App() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || res.statusText);
-      setMessage('Config saved to ~/.atelier/config.json');
+      setMessage('Config saved to ~/.liminal/config.json');
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -528,11 +528,11 @@ export default function App() {
               onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setProvider(e.target.value)}
               className="atelier-select"
             >
-              <option value="inception">inception</option>
+              <option value="lmstudio">lmstudio</option>
+              <option value="minimax">minimax</option>
               <option value="ollama">ollama</option>
               <option value="openai">openai</option>
-              <option value="anthropic">anthropic</option>
-              <option value="lmstudio">lmstudio</option>
+              <option value="hybrid">hybrid</option>
             </select>
           </label>
           <label>

@@ -51,7 +51,9 @@ import path from 'path';
 import { normalizePath, assertSafeSegment } from './utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from './constants.js';
 
-export const ATELIER_VERSION = '1.0.0';
+export const LIMINAL_VERSION = '1.0.0';
+/** @deprecated Use LIMINAL_VERSION */
+export const ATELIER_VERSION = LIMINAL_VERSION;
 
 export interface AtelierConfig {
   name: string;
@@ -77,8 +79,8 @@ export interface AtelierConfig {
 }
 
 export const defaultConfig: AtelierConfig = {
-  name: 'atelier',
-  version: ATELIER_VERSION,
+  name: 'liminal',
+  version: LIMINAL_VERSION,
   loop: {
     maxIterations: 20,
     timeoutMinutes: 30,
@@ -482,7 +484,7 @@ export default {
   generateMusic,
 
   // Configuration
-  ATELIER_VERSION,
+  LIMINAL_VERSION,
   defaultConfig
 };
 

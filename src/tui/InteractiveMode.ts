@@ -23,7 +23,7 @@ export class InteractiveMode {
    * Get list of available providers
    */
   getProviders(): string[] {
-    return ['lmstudio', 'inception', 'ollama'];
+    return ['lmstudio', 'minimax', 'ollama', 'openai', 'hybrid'];
   }
 
   /**

@@ -192,7 +192,7 @@ if (flags.interactive) {
     const { prompt: interactivePrompt, options } = await mode.run();
     flags.prompt = interactivePrompt;
     if (options.provider) {
-      process.env.LIMINAL_LLM_PROVIDER = options.provider === 'lmstudio' ? 'inception' : options.provider;
+      process.env.LIMINAL_LLM_PROVIDER = options.provider;
     }
   } catch (err) {
     console.error('Interactive mode cancelled');

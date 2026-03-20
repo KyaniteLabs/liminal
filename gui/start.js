@@ -1,7 +1,7 @@
 /**
  * Start GUI backend (and optionally serve Vite dev or static build).
  * Usage: node gui/start.js
- * Env: PORT=5174 (default), ATELIER_CONFIG_PATH optional.
+ * Env: PORT=5174 (default), LIMINAL_CONFIG_PATH optional.
  */
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -18,7 +18,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 const server = app.listen(PORT, () => {
-  console.log(`Atelier GUI backend: http://localhost:${PORT}`);
+  console.log(`Liminal GUI backend: http://localhost:${PORT}`);
   console.log(`  GET  /api/config`);
   console.log(`  POST /api/config`);
   console.log(`  GET  /api/gallery`);

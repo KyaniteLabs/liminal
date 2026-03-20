@@ -175,7 +175,7 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
     setCurrentIterations([]);
     setPlayerPianoIndex(0);
     addLog("info", `Starting: "${prompt.slice(0, 30)}..."`);
-    addLog("llm", "→ LLM Request: inception/inception-001");
+    addLog("llm", "→ LLM Request: lmstudio/local-model");
     addLog("llm", `  Prompt: ~${prompt.length + 2000} chars`);
 
     const projectName = `project-${Date.now()}`;

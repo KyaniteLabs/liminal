@@ -32,7 +32,7 @@ export function createApp(configPath, port = 5174) {
   app.use(express.json());
 
   const getConfigPath = () =>
-    configPath || process.env.ATELIER_CONFIG_PATH || path.join(process.env.HOME || '', '.atelier', 'config.json');
+    configPath || process.env.LIMINAL_CONFIG_PATH || process.env.ATELIER_CONFIG_PATH || path.join(process.env.HOME || '', '.liminal', 'config.json');
 
   const backendOrigin = `http://localhost:${port}`;
 
@@ -106,7 +106,7 @@ export function createApp(configPath, port = 5174) {
       const body = req.body || {};
       const existing = await loadConfig(cfgPath);
 
-      const defaultProvider = body.defaultProvider ?? existing?.defaultProvider ?? 'inception';
+      const defaultProvider = body.defaultProvider ?? existing?.defaultProvider ?? 'lmstudio';
       const providers = { ...(existing?.providers || {}), ...(body.providers || {}) };
 
       const config = {

@@ -1,5 +1,5 @@
 {
-  "name": "atelier",
+  "name": "liminal",
   "version": "1.0.0",
   "loop": {
     "maxIterations": 20,
@@ -7,10 +7,9 @@
     "completionPromise": "COMPLETE"
   },
   "llm": {
-    "provider": "inception",
-    "apiKey": "${INCEPTION_API_KEY}",
-    "baseUrl": "https://api.inceptionlabs.ai/v1",
-    "model": "inception-001",
+    "provider": "lmstudio",
+    "baseUrl": "http://localhost:1234/v1",
+    "model": "local-model",
     "temperature": 0.7,
     "maxTokens": 4096,
     "localFallback": true

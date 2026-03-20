@@ -19,7 +19,7 @@ const projectName = `live-organism-${Date.now()}`;
 
 async function main() {
   const cwd = root;
-  const configPath = process.env.ATELIER_CONFIG_PATH || path.join(process.env.HOME || '', '.atelier', 'config.json');
+  const configPath = process.env.LIMINAL_CONFIG_PATH || process.env.ATELIER_CONFIG_PATH || path.join(process.env.HOME || '', '.liminal', 'config.json');
   const userConfig = await loadConfig(configPath).catch(() => null);
   const projectConfig = await loadProjectConfig(cwd).catch(() => null);
   const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? 'gallery';

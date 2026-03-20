@@ -40,7 +40,7 @@ export class LLMAuthError extends LLMError {
 import { SERVICE_DEFAULTS } from '../constants.js';
 
 export interface LLMConfig {
-  provider: 'inception' | 'ollama' | 'openai' | 'anthropic' | 'minimax' | 'lmstudio' | 'hybrid';
+  provider: 'ollama' | 'openai' | 'minimax' | 'lmstudio' | 'hybrid';
   apiKey?: string;
   baseUrl?: string;
   model: string;
@@ -61,13 +61,16 @@ export interface LLMResponse {
   error?: string;
 }
 
+/** Read env var with ATELIER_* fallback for backward compatibility. */
+function env(key: string): string | undefined {
+  return process.env[`LIMINAL_${key}`] ?? process.env[`ATELIER_${key}`];
+}
+
 export class LLMClient {
   private config: LLMConfig;
 
   private static readonly COST_ESTIMATES: Record<string, { input: number; output: number }> = {
-    inception: { input: 0.000008, output: 0.000024 },
     openai: { input: 0.00001, output: 0.00003 },
-    anthropic: { input: 0.000003, output: 0.000015 },
     ollama: { input: 0, output: 0 },
     minimax: { input: 0.000001, output: 0.000002 },
     lmstudio: { input: 0, output: 0 },
@@ -80,20 +83,20 @@ export class LLMClient {
 
   constructor(config?: Partial<LLMConfig>) {
     this.config = {
-      provider: config?.provider || (process.env.ATELIER_LLM_PROVIDER as LLMConfig['provider']) || 'inception',
-      apiKey: config?.apiKey ?? process.env.MINIMAX_API_KEY ?? process.env.ATELIER_LLM_API_KEY ?? process.env.OPENAI_API_KEY ?? process.env.ANTHROPIC_API_KEY ?? process.env.INCEPTION_API_KEY,
-      baseUrl: config?.baseUrl || process.env.ATELIER_LLM_BASE_URL,
-      model: config?.model || process.env.ATELIER_LLM_MODEL || 'inception-001',
+      provider: config?.provider || (env('LLM_PROVIDER') as LLMConfig['provider']) || 'lmstudio',
+      apiKey: config?.apiKey ?? process.env.MINIMAX_API_KEY ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY,
+      baseUrl: config?.baseUrl || env('LLM_BASE_URL'),
+      model: config?.model || env('LLM_MODEL') || 'local-model',
       temperature: config?.temperature ?? 0.7,
       maxTokens: config?.maxTokens ?? 2000,
       useReasoningTransfer: config?.useReasoningTransfer ?? false,
-      hydraBaseUrl: config?.hydraBaseUrl || process.env.ATELIER_HYDRA_URL || SERVICE_DEFAULTS.HYDRA_URL,
+      hydraBaseUrl: config?.hydraBaseUrl || env('HYDRA_URL') || SERVICE_DEFAULTS.HYDRA_URL,
     };
   }
 
   /**
    * Generic LLM generation method.
-   * Routes to the configured provider (inception, ollama, openai, anthropic).
+   * Routes to the configured provider (lmstudio, ollama, openai, minimax, hybrid).
    * Used by generateP5Sketch, improveP5Sketch, and domain-specific generators.
    */
   async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<LLMResponse> {
@@ -104,14 +107,10 @@ export class LLMClient {
         enhancedUserPrompt = await this.enhanceWithHydraReasoning(userPrompt, systemPrompt);
       }
 
-      if (this.config.provider === 'inception') {
-        return await this.callInception(systemPrompt, enhancedUserPrompt, signal);
-      } else if (this.config.provider === 'ollama') {
+      if (this.config.provider === 'ollama') {
         return await this.callOllama(systemPrompt, enhancedUserPrompt, signal);
       } else if (this.config.provider === 'openai') {
         return await this.callOpenAI(systemPrompt, enhancedUserPrompt, signal);
-      } else if (this.config.provider === 'anthropic') {
-        return await this.callAnthropic(systemPrompt, enhancedUserPrompt, signal);
       } else if (this.config.provider === 'minimax') {
         return await this.callMinimax(systemPrompt, enhancedUserPrompt, signal);
       } else if (this.config.provider === 'lmstudio') {
@@ -164,7 +163,6 @@ ${context ? `\nContext: ${context}` : ''}`;
 
   /**
    * Ask the LLM to improve existing p5.js sketch code.
-   * Uses same backend as generateP5Sketch (callInception/callOllama).
    */
   async improveP5Sketch(currentCode: string): Promise<LLMResponse> {
     const systemPrompt = `You are an expert creative coding assistant specializing in p5.js.
@@ -180,48 +178,6 @@ Rules:
     const userPrompt = `Improve this p5.js sketch. Current code:\n\n${currentCode}`;
 
     return this.generate(systemPrompt, userPrompt);
-  }
-
-  private async callInception(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
-    const baseUrl = this.config.baseUrl || 'https://api.inceptionlabs.ai/v1';
-
-    // Build headers - Authorization only if API key is provided (for LM Studio compatibility)
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (this.config.apiKey) {
-      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-    }
-
-    let response: Response;
-    try {
-      response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: this.config.model,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user },
-          ],
-          temperature: this.config.temperature,
-          max_tokens: this.config.maxTokens,
-        }),
-        signal,
-      });
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        throw new LLMTimeoutError('inception');
-      }
-      throw new LLMError(`Inception API request failed: ${err instanceof Error ? err.message : err}`, 'inception', undefined, false);
-    }
-
-    if (!response.ok) {
-      throw this.classifyHttpError('inception', response.status, response.statusText);
-    }
-
-    const data = await response.json();
-    return this.parseChatCompletionResponse(data);
   }
 
   private parseChatCompletionResponse(data: { choices?: Array<{ message?: { content?: string; reasoning_content?: string } }> }): LLMResponse {
@@ -276,45 +232,6 @@ Rules:
 
     const data = await response.json();
     return this.parseChatCompletionResponse(data);
-  }
-
-  private async callAnthropic(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
-    const baseUrl = this.config.baseUrl || 'https://api.anthropic.com/v1';
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-      'x-api-key': this.config.apiKey || '',
-      'anthropic-version': '2023-06-01',
-    };
-
-    let response: Response;
-    try {
-      response = await fetch(`${baseUrl}/messages`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: this.config.model,
-          max_tokens: this.config.maxTokens ?? 2000,
-          system,
-          messages: [{ role: 'user', content: user }],
-        }),
-        signal,
-      });
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        throw new LLMTimeoutError('anthropic');
-      }
-      throw new LLMError(`Anthropic API request failed: ${err instanceof Error ? err.message : err}`, 'anthropic', undefined, false);
-    }
-
-    if (!response.ok) {
-      throw this.classifyHttpError('anthropic', response.status, response.statusText);
-    }
-
-    const data = await response.json();
-    const text = data.content?.[0]?.text ?? '';
-    const codeMatch = text.match(/```(?:javascript|js)?\n?([\s\S]*?)```/);
-    const code = codeMatch ? codeMatch[1].trim() : text.trim();
-    return { code, success: true };
   }
 
   private async callMinimax(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
@@ -409,7 +326,7 @@ Rules:
 
   private async callOllama(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
     const baseUrl = this.config.baseUrl || SERVICE_DEFAULTS.OLLAMA_URL;
-    
+
     const response = await fetch(`${baseUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -477,16 +394,14 @@ Rules:
   }
 
   static isConfigured(): boolean {
-    const provider = (process.env.ATELIER_LLM_PROVIDER || '').toLowerCase();
+    const provider = (env('LLM_PROVIDER') || '').toLowerCase();
     // Ollama and LM Studio don't require API keys — they're local
     if (provider === 'ollama' || provider === 'lmstudio') return true;
     return !!(
       process.env.OPENAI_API_KEY ||
-      process.env.ANTHROPIC_API_KEY ||
-      process.env.INCEPTION_API_KEY ||
-      process.env.ATELIER_LLM_API_KEY ||
+      env('LLM_API_KEY') ||
       process.env.MINIMAX_API_KEY ||
-      process.env.ATELIER_LLM_BASE_URL
+      env('LLM_BASE_URL')
     );
   }
 }

@@ -52,9 +52,14 @@ describe('TransparencyPanel', () => {
     });
 
     test('should handle one char over limit', () => {
-      const result = truncateContent('TooLong', 7);
-      expect(result.length).toBe(7);
+      const result = truncateContent('TooLong', 6);
+      expect(result.length).toBe(6);
       expect(result).toContain('...');
+    });
+
+    test('should not truncate exact length content', () => {
+      const result = truncateContent('TooLong', 7);
+      expect(result).toBe('TooLong');
     });
   });
 

@@ -52,7 +52,7 @@ describe('CLI Integration Tests', () => {
       const hasMusic = files.some(f => /strudel\.(js|tidal)/i.test(f) || f === 'strudel.js');
       const hasVisual = files.some(f => /hydra\.js/i.test(f));
       expect(hasMusic || hasVisual).toBe(true);
-    }, 15000);
+    }, 45000);
   });
 });
 

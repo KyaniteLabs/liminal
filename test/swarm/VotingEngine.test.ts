@@ -6,6 +6,8 @@ import { VotingEngine } from '../../src/swarm/VotingEngine.js';
 import { DEFAULT_PERSONAS } from '../../src/swarm/personas.js';
 import type { SwarmOutput, SwarmConfig } from '../../src/swarm/types.js';
 import { SwarmMode } from '../../src/swarm/types.js';
+import path from 'path';
+import os from 'os';
 
 describe('VotingEngine', () => {
   const mockConfig: SwarmConfig = {
@@ -17,7 +19,7 @@ describe('VotingEngine', () => {
     mode: SwarmMode.COMPETITIVE,
     personas: DEFAULT_PERSONAS,
     refinementConstraints: ['constraint1'],
-    streamDir: './test-stream',
+    streamDir: path.join(os.tmpdir(), 'liminal-test-stream'),
   };
 
   describe('parseVote', () => {

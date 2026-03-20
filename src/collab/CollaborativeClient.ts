@@ -1,8 +1,6 @@
 /**
  * Collaborative LLM client - Maximum quality through model teamwork
  *
- * Ported from Hydra's llm/collaborative_client.py
- *
  * Models work together iteratively:
  * 1. Both models generate initial versions
  * 2. Each model analyzes the other's work
@@ -435,34 +433,12 @@ Create an improved version that addresses this feedback while maintaining your s
   private async scoreOutputs(
     outputs: string[],
     _prompt: string,
-    _domain: DomainType
+    domain: DomainType
   ): Promise<Record<number, number>> {
     const scores: Record<number, number> = {};
-
     for (let i = 0; i < outputs.length; i++) {
-      const scorePrompt = `Rate this output on a scale of 0.0 to 1.0.
-
-Output:
-${outputs[i]}
-
-Consider: creativity, technical execution, how well it meets the request, and overall aesthetic quality.
-
-Return ONLY a number between 0.0 and 1.0 (e.g., 0.75).`;
-
-      try {
-        const response = await this.config.callLLM(scorePrompt);
-        // Extract number from response
-        const numbers = response.match(/0?\.\d+|1.0|0|1/g);
-        if (numbers && numbers.length > 0) {
-          scores[i] = parseFloat(numbers[0]);
-        } else {
-          scores[i] = 0.5;
-        }
-      } catch {
-        scores[i] = 0.5;
-      }
+      scores[i] = quickScore(outputs[i], domain);
     }
-
     return scores;
   }
 

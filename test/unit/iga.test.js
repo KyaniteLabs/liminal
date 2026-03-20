@@ -1,4 +1,4 @@
-import { generateFiveVariations } from '../../dist/evolution/IGA.js';
+import { generateFiveVariations } from '../../src/evolution/IGA.js';
 
 describe('generateFiveVariations', () => {
   const validP5 = `function setup() { createCanvas(400, 400); }

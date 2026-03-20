@@ -132,22 +132,22 @@ Create `config/liminal.json` for project-wide settings:
 
 ### Using cloud vs local LLM
 
-Liminal can use a **cloud** LLM (e.g. Inception) or a **local** LLM (e.g. Ollama). Configuration is driven by environment variables and optional config files.
+Liminal can use a **cloud** LLM (e.g., LM Studio, OpenAI-compatible) or a **local** LLM (e.g. Ollama). Configuration is driven by environment variables and optional config files.
 
-**Cloud (e.g. Inception)**
+**Cloud (e.g., LM Studio, OpenAI-compatible)**
 Set the provider and credentials via env (or in `~/.liminal/config.json` / project `config/liminal.json`):
 
-- `LIMINAL_LLM_PROVIDER=inception` — use the Inception-compatible API (default).
-- `LIMINAL_LLM_BASE_URL` — API base URL (e.g. `https://api.inceptionlabs.ai/v1`). Omit to use the default Inception URL.
-- `LIMINAL_LLM_MODEL` — model name (e.g. `inception-001`).
-- `LIMINAL_LLM_API_KEY` or `INCEPTION_API_KEY` — API key for auth.
+- `LIMINAL_LLM_PROVIDER=openai-compatible` — use an OpenAI-compatible API (default).
+- `LIMINAL_LLM_BASE_URL` — API base URL (e.g., `http://localhost:1234/v1` for LM Studio, or your cloud provider's URL).
+- `LIMINAL_LLM_MODEL` — model name (e.g., `gpt-4`, `llama-3.1-8b`).
+- `LIMINAL_LLM_API_KEY` — API key for auth (if required by your provider).
 
 Example:
 
 ```bash
-export LIMINAL_LLM_PROVIDER=inception
-export LIMINAL_LLM_BASE_URL=https://api.inceptionlabs.ai/v1
-export LIMINAL_LLM_MODEL=inception-001
+export LIMINAL_LLM_PROVIDER=openai-compatible
+export LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
+export LIMINAL_LLM_MODEL=llama-3.1-8b
 export LIMINAL_LLM_API_KEY=your-api-key
 liminal --prompt "Create a particle system"
 ```
@@ -201,7 +201,7 @@ npm run lint
 npm run benchmark
 ```
 
-**E2E with real LLM (Ollama):** Required E2E tests use Ollama at `http://localhost:11434`. Start Ollama and run `ollama pull mistral` (or `ollama pull llama3.2`) before running E2E. Cloud E2E (Inception/OpenAI) is optional and skips when the API key is unset.
+**E2E with real LLM (Ollama):** Required E2E tests use Ollama at `http://localhost:11434`. Start Ollama and run `ollama pull mistral` (or `ollama pull llama3.2`) before running E2E. Cloud E2E (OpenAI-compatible providers) is optional and skips when the API key is unset.
 
 ### Test structure
 

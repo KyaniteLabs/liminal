@@ -1,7 +1,5 @@
 /**
  * Shared types for collaboration layer
- *
- * Ported from Hydra's deep_collaboration.py and collaborative_client.py
  */
 
 /**

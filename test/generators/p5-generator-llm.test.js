@@ -2,7 +2,7 @@
  * P5GeneratorLLM tests. When LLM is not configured, generate() uses template path.
  * Build before running: npm run build
  */
-import { P5GeneratorLLM } from '../../dist/generators/p5/P5GeneratorLLM.js';
+import { P5GeneratorLLM } from '../../src/generators/p5/P5GeneratorLLM.js';
 
 describe('P5GeneratorLLM', () => {
   describe('generate()', () => {

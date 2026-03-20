@@ -7,7 +7,7 @@ import {
   INITIAL_LIVE_ORGANISM_STATE,
   switchToLiveOrganismView,
   setSandboxRunResult,
-} from '../../dist/gui/liveOrganismState.js';
+} from '../../src/gui/liveOrganismState.js';
 
 describe('GUI live organism state', () => {
   it('initial state has activeTab config and no sandboxUrl', () => {

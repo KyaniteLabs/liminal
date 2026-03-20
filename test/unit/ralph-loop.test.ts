@@ -2,8 +2,8 @@
  * RalphLoop tests - Loop start + context (seed, no-placeholder fallback)
  * Uses ContextAccumulation.getHistory() to assert on usedPrompt (no jest mocks).
  */
-import { RalphLoop } from '../../dist/core/RalphLoop.js';
-import { ContextAccumulation } from '../../dist/core/ContextAccumulation.js';
+import { RalphLoop } from '../../src/core/RalphLoop.js';
+import { ContextAccumulation } from '../../src/core/ContextAccumulation.js';
 import path from 'path';
 import os from 'os';
 

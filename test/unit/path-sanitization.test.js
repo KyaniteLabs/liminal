@@ -7,10 +7,10 @@ import path from 'path';
 import fs from 'fs/promises';
 import fsSync from 'fs';
 import os from 'os';
-import { normalizePath, assertSafeSegment } from '../../dist/utils/normalizePath.js';
-import { run, runFromArgs } from '../../dist/index.js';
-import { Gallery } from '../../dist/gallery/Gallery.js';
-import { SeedArchive } from '../../dist/gallery/SeedArchive.js';
+import { normalizePath, assertSafeSegment } from '../../src/utils/normalizePath.js';
+import { run, runFromArgs } from '../../src/index.js';
+import { Gallery } from '../../src/gallery/Gallery.js';
+import { SeedArchive } from '../../src/gallery/SeedArchive.js';
 
 describe('normalizePath', () => {
   const base = path.join(os.tmpdir(), 'atelier-path-test-' + Date.now());

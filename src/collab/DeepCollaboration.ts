@@ -1,8 +1,6 @@
 /**
  * Deep Collaboration - Maximum quality through specialized model teamwork
  *
- * Ported from Hydra's llm/deep_collaboration.py
- *
  * Models take on specialized roles and collaborate through structured phases:
  *
  * PHASE 1: DIVERGENCE

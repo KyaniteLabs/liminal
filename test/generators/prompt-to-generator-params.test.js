@@ -2,8 +2,8 @@
  * prompt-to-generator-params.test.js
  * TDD: when run with "calm blue particles", params or generated code include something derived from "blue" or "calm".
  */
-import { promptToGeneratorParams } from '../../dist/utils/promptToGeneratorParams.js';
-import { ParticleSystem } from '../../dist/generators/p5/ParticleSystem.js';
+import { promptToGeneratorParams } from '../../src/utils/promptToGeneratorParams.js';
+import { ParticleSystem } from '../../src/generators/p5/ParticleSystem.js';
 
 describe('promptToGeneratorParams', () => {
   it('returns an object with at least one key that ParticleSystem accepts', () => {

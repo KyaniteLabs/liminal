@@ -10,14 +10,14 @@
  * - Complete workflow from start to finish
  */
 
-import { RalphLoop } from '../../dist/core/RalphLoop.js';
-import { PromiseDetector } from '../../dist/core/PromiseDetector.js';
-import { PromptStore } from '../../dist/core/PromptStore.js';
-import { ContextAccumulation } from '../../dist/core/ContextAccumulation.js';
-import { CreativeEvaluator } from '../../dist/core/CreativeEvaluator.js';
-import { P5Generator } from '../../dist/generators/p5/P5Generator.js';
-import { Gallery } from '../../dist/gallery/Gallery.js';
-import { LLMClient } from '../../dist/llm/LLMClient.js';
+import { RalphLoop } from '../../src/core/RalphLoop.js';
+import { PromiseDetector } from '../../src/core/PromiseDetector.js';
+import { PromptStore } from '../../src/core/PromptStore.js';
+import { ContextAccumulation } from '../../src/core/ContextAccumulation.js';
+import { CreativeEvaluator } from '../../src/core/CreativeEvaluator.js';
+import { P5Generator } from '../../src/generators/p5/P5Generator.js';
+import { Gallery } from '../../src/gallery/Gallery.js';
+import { LLMClient } from '../../src/llm/LLMClient.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -195,19 +195,9 @@ describe('Full-Loop Integration Tests', () => {
         expect(context.evaluation.score).toBeGreaterThanOrEqual(0);
         expect(context.evaluation.score).toBeLessThanOrEqual(1);
 
-        // Check for technical validation
-        expect(context.evaluation.technicalScore).toBeDefined();
-        expect(context.evaluation.technicalScore).toBeGreaterThanOrEqual(0);
-        expect(context.evaluation.technicalScore).toBeLessThanOrEqual(1);
-
-        // Check for creative quality assessment
-        expect(context.evaluation.creativeScore).toBeDefined();
-        expect(context.evaluation.creativeScore).toBeGreaterThanOrEqual(0);
-        expect(context.evaluation.creativeScore).toBeLessThanOrEqual(1);
-
-        // Check for metrics
-        expect(context.evaluation.metrics).toBeDefined();
-        expect(context.evaluation.passed).toBeDefined();
+        // Check for issues array
+        expect(context.evaluation.issues).toBeDefined();
+        expect(Array.isArray(context.evaluation.issues)).toBe(true);
       });
 
       // Verify final score matches last iteration

@@ -2,7 +2,7 @@
  * GUI preview state - selection change updates preview URL and code content (unit test state).
  */
 
-import { getPreviewState } from '../../dist/gui/previewState.js';
+import { getPreviewState } from '../../src/gui/previewState.js';
 
 describe('GUI preview state', () => {
   const baseUrl = 'http://localhost:3456/preview';

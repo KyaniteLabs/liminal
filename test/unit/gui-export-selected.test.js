@@ -4,8 +4,8 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { exportSelectedIterationAsHTML } from '../../dist/gui/exportSelected.js';
-import { Exporter } from '../../dist/export/Exporter.js';
+import { exportSelectedIterationAsHTML } from '../../src/gui/exportSelected.js';
+import { Exporter } from '../../src/export/Exporter.js';
 
 const TEST_EXPORT_DIR = 'test-export-selected-temp';
 

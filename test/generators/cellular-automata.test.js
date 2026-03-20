@@ -1,4 +1,4 @@
-import { CellularAutomata } from '../../dist/generators/p5/CellularAutomata.js';
+import { CellularAutomata } from '../../src/generators/p5/CellularAutomata.js';
 
 describe('CellularAutomata', () => {
   describe('generate()', () => {

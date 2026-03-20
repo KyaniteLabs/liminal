@@ -9,9 +9,9 @@
  * - Test real-world creative coding scenarios
  */
 
-import { CreativeEvaluator } from '../../dist/core/CreativeEvaluator.js';
-import { Gallery } from '../../dist/gallery/Gallery.js';
-import { P5Generator } from '../../dist/generators/p5/P5Generator.js';
+import { CreativeEvaluator } from '../../src/core/CreativeEvaluator.js';
+import { Gallery } from '../../src/gallery/Gallery.js';
+import { P5Generator } from '../../src/generators/p5/P5Generator.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';

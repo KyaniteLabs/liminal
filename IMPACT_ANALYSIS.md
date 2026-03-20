@@ -1,4 +1,4 @@
-# Atelier — Full Impact Analysis (Post–Remediation)
+# Liminal — Full Impact Analysis (Post–Remediation)
 
 **Date:** 2026-03-07  
 **Scope:** All phases (Waves 0–7) completed; full test run; documentation and impact summary.  
@@ -49,7 +49,7 @@ The **Full Remediation to Launch** plan was executed across **eight waves** (0�
 
 | Suite | Failing tests | Root cause |
 |-------|----------------|------------|
-| **test/integration/preview-server-versioned.test.js** | 1 | Expects `/gui` HTML to contain "preview" and "Code"; server serves Config app (title "Atelier — Config"); **GUI structure/expectation mismatch**. |
+| **test/integration/preview-server-versioned.test.js** | 1 | Expects `/gui` HTML to contain "preview" and "Code"; server serves Config app (title "Liminal — Config"); **GUI structure/expectation mismatch**. |
 | **test/integration/full-loop.test.js** | 4 | (1) Promise termination: LLM does not emit `<promise>COMPLETE</promise>`, so `completed` stays false. (2) "Different code each iteration": template/LLM returns same code. (3)–(4) Same promise-related expectations. **LLM/template behavior**, not logic bug. |
 | **test/integration/ralph-loop.test.js** | 3 | (1)–(2) Promise detection: same as above. (3) "Include previous code in context": code identical across iterations when template/LLM repeats. **LLM/template behavior**. |
 
@@ -111,12 +111,12 @@ test/
 | Control | Implementation |
 |---------|----------------|
 | **Path traversal** | Output, project, gallery, SeedArchive, and POST `/api/export` use `normalizePath()` or `assertSafeSegment()`; paths outside base or with `..`/separators rejected. |
-| **Secrets** | API keys from env or ~/.atelier/config.json; not logged; CLI `--configure` does not write apiKey. |
+| **Secrets** | API keys from env or ~/.liminal/config.json; not logged; CLI `--configure` does not write apiKey. |
 | **Sandbox** | Puppeteer run with timeout and network blocked; SelfImprovement has maxDepth and rate limits. |
 
 ### 4.4 Breaking Changes and Compatibility
 
-- **run()** and **Atelier.run()** now require **output/project/galleryDir** to resolve under `process.cwd()` (path safety). Invalid or escaping paths throw.
+- **run()** and **Liminal.run()** now require **output/project/galleryDir** to resolve under `process.cwd()` (path safety). Invalid or escaping paths throw.
 - **Project names** must not contain `..` or path separators; **seed** identifiers in SeedArchive same.
 - **GUI** `/gui` serves the Config app; tests that expected a different page content need updating (see Known Failures).
 - **Coverage** is collected from **src/** (not dist); `coverageThreshold` may need adjustment if current coverage is below 80%.
@@ -147,7 +147,7 @@ The following docs were updated to reflect the current system:
 
 ### 6.2 Config and Behavior
 
-- **config/atelier.json**: Documented in README/PRD for project-wide settings; ConfigLoader supports `loadProjectConfig`/projectConfigPath, but bin/atelier and some entry points may not pass project config path. Verify project config is used where intended.
+- **config/liminal.json**: Documented in README/PRD for project-wide settings; ConfigLoader supports `loadProjectConfig`/projectConfigPath, but bin/liminal and some entry points may not pass project config path. Verify project config is used where intended.
 - **Two config systems** (LLM from file+env vs loop/creative/gallery from defaults/options) remain as in SYSTEM_AUDIT_REPORT; no single merged project file for all keys.
 
 ### 6.3 Operational
@@ -161,9 +161,9 @@ The following docs were updated to reflect the current system:
 
 1. **CI:** Run `npm run build && npm test`; optionally `npm run test:e2e` with skips acceptable. Run `npm run lint` and `npm run typecheck`.
 2. **Failing integration tests:** Either add conditional skip when LLM is not configured, or convert promise/context tests to use a mocked generator so they are deterministic.
-3. **GUI test:** Align expectation with current `/gui` content (e.g. "Atelier" and "Config") or target a dedicated preview route if one exists.
+3. **GUI test:** Align expectation with current `/gui` content (e.g. "Liminal" and "Config") or target a dedicated preview route if one exists.
 4. **Coverage:** If `test:coverage` fails on thresholds, either improve coverage or lower thresholds in jest.config.js and document in README.
-5. **Project config:** Confirm how `config/atelier.json` is loaded (e.g. from cwd) and document in README/PRD.
+5. **Project config:** Confirm how `config/liminal.json` is loaded (e.g. from cwd) and document in README/PRD.
 
 ---
 

@@ -5,7 +5,7 @@
  * using mock LLM callers to verify the loop still iterates correctly with collaboration.
  */
 
-import { RalphLoop } from '../../dist/core/RalphLoop.js';
+import { RalphLoop } from '../../src/core/RalphLoop.js';
 import path from 'path';
 import os from 'os';
 

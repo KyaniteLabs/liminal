@@ -29,11 +29,12 @@ function backupEnv(keys: string[]): Record<string, string | undefined> {
 
 describe('E2E full loop (cloud LLM)', () => {
   const envKeys = [
-    'ATELIER_LLM_PROVIDER',
-    'ATELIER_LLM_BASE_URL',
-    'ATELIER_LLM_MODEL',
-    'ATELIER_LLM_API_KEY',
+    'LIMINAL_LLM_PROVIDER',
+    'LIMINAL_LLM_BASE_URL',
+    'LIMINAL_LLM_MODEL',
     'LIMINAL_LLM_API_KEY',
+    'OPENAI_API_KEY',
+    'MINIMAX_API_KEY',
   ];
   let envBackup: Record<string, string | undefined>;
 
@@ -52,9 +53,9 @@ describe('E2E full loop (cloud LLM)', () => {
       return;
     }
 
-    process.env.ATELIER_LLM_PROVIDER = 'lmstudio';
-    process.env.ATELIER_LLM_BASE_URL = process.env.ATELIER_LLM_BASE_URL || 'http://localhost:1234/v1';
-    process.env.ATELIER_LLM_MODEL = process.env.ATELIER_LLM_MODEL || 'local-model';
+    process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';
+    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';
+    process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'local-model';
 
     const stamp = Date.now();
     const projectName = `e2e-cloud-${stamp}`;

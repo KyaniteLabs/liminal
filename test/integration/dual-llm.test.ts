@@ -29,11 +29,12 @@ function backupEnv(keys: string[]): Record<string, string | undefined> {
 
 describe('Dual LLM (cloud vs local)', () => {
   const envKeys = [
-    'ATELIER_LLM_PROVIDER',
-    'ATELIER_LLM_BASE_URL',
-    'ATELIER_LLM_MODEL',
-    'ATELIER_LLM_API_KEY',
+    'LIMINAL_LLM_PROVIDER',
+    'LIMINAL_LLM_BASE_URL',
+    'LIMINAL_LLM_MODEL',
     'LIMINAL_LLM_API_KEY',
+    'OPENAI_API_KEY',
+    'MINIMAX_API_KEY',
   ];
   let envBackup: Record<string, string | undefined>;
 
@@ -46,10 +47,10 @@ describe('Dual LLM (cloud vs local)', () => {
   });
 
   test('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
-    process.env.ATELIER_LLM_PROVIDER = 'lmstudio';
-    process.env.ATELIER_LLM_BASE_URL = process.env.ATELIER_LLM_BASE_URL || 'http://localhost:1234/v1';
-    process.env.ATELIER_LLM_MODEL = process.env.ATELIER_LLM_MODEL || 'local-model';
-    // ATELIER_LLM_API_KEY / LIMINAL_LLM_API_KEY left from env if set
+    process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';
+    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';
+    process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'local-model';
+    // LIMINAL_LLM_API_KEY left from env if set
 
     const config = await getEffectiveConfig();
     expect(config.provider).toBe('lmstudio');
@@ -98,11 +99,11 @@ describe('Dual LLM (cloud vs local)', () => {
   }, LLM_REQUEST_TIMEOUT_MS + 2000);
 
   test('getEffectiveConfig + LLMClient path with local (ollama) backend', async () => {
-    process.env.ATELIER_LLM_PROVIDER = 'ollama';
-    process.env.ATELIER_LLM_BASE_URL = process.env.ATELIER_LLM_BASE_URL || 'http://localhost:11434';
-    process.env.ATELIER_LLM_MODEL = process.env.ATELIER_LLM_MODEL || 'llama3.2';
-    delete process.env.ATELIER_LLM_API_KEY;
+    process.env.LIMINAL_LLM_PROVIDER = 'ollama';
+    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434';
+    process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'llama3.2';
     delete process.env.LIMINAL_LLM_API_KEY;
+    delete process.env.OPENAI_API_KEY;
 
     const config = await getEffectiveConfig();
     expect(config.provider).toBe('ollama');

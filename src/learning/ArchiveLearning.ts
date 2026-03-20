@@ -3,8 +3,6 @@
  *
  * Stores high-quality past outputs organized by domain and retrieves
  * relevant examples as few-shot context for new prompts.
- *
- * Ported from Hydra's `learning/archive.py`.
  */
 
 import { QualityArchive } from './QualityArchive.js';

@@ -5,7 +5,7 @@
  *      runInSandbox('while(true){}') times out.
  */
 
-import { runInSandbox } from '../../dist/sandbox/index.js';
+import { runInSandbox } from '../../src/sandbox/index.js';
 
 const VALID_P5_CODE = `
 function setup() {

@@ -16,7 +16,7 @@ export interface TokenMillOrchestratorOptions {
 }
 
 /**
- * TokenMill Swarm orchestrator — multi-model collaborative generation.
+ * Swarm orchestrator — multi-model collaborative generation.
  *
  * Designed for Ollama's multi-model concurrent API (`/api/generate` format).
  * The default `callOllama` callback uses Ollama's native format. LM Studio can

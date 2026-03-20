@@ -88,9 +88,9 @@ interface LoopOptions {
   collabConfig?: Partial<DeepCollaborationConfig & CollaborativeConfig>;
   /** Domain for collaboration quality assessment (default: 'p5') */
   collabDomain?: DomainType;
-  /** Enable Token Mill swarm generation (7-persona Ollama swarm) */
+  /** Enable swarm generation (7-persona Ollama swarm) */
   useSwarm?: boolean;
-  /** Configuration for the Token Mill swarm */
+  /** Configuration for the swarm */
   swarmConfig?: Partial<SwarmConfig>;
   /** Swarm generative mode (default: 'hybrid') */
   swarmMode?: SwarmMode;
@@ -187,7 +187,7 @@ export class RalphLoop {
         registerAllGenerators();
         const dispatched = generatorRegistry.dispatch(loadedPrompt);
 
-        // Check if we should use Token Mill swarm for this iteration
+        // Check if we should use swarm for this iteration
         if (normalizedOptions.useSwarm) {
           currentCode = await this.generateWithSwarm(usedPrompt, normalizedOptions);
         } else if (normalizedOptions.useDeepCollab || normalizedOptions.useCollab) {
@@ -481,7 +481,7 @@ export class RalphLoop {
   }
 
   /**
-   * Generate using Token Mill swarm (7-persona Ollama swarm)
+   * Generate using swarm (7-persona Ollama swarm)
    *
    * @param prompt - The prompt to generate from
    * @param options - Normalized loop options

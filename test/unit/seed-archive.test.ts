@@ -7,7 +7,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { SeedArchive, SeedData } from '../../dist/gallery/SeedArchive.js';
+import { SeedArchive, SeedData } from '../../src/gallery/SeedArchive.js';
 
 describe('SeedArchive', () => {
   const TEST_ARCHIVE_DIR = 'test-seed-archive-temp';

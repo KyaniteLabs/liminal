@@ -1,4 +1,4 @@
-import { PromptStore } from '../../dist/core/PromptStore.js';
+import { PromptStore } from '../../src/core/PromptStore.js';
 
 describe('PromptStore', () => {
   describe('load()', () => {

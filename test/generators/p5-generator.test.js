@@ -1,4 +1,4 @@
-import { P5Generator } from '../../dist/generators/p5/P5Generator.js';
+import { P5Generator } from '../../src/generators/p5/P5Generator.js';
 
 describe('P5Generator', () => {
   describe('generate()', () => {

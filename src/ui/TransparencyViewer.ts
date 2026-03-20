@@ -6,8 +6,6 @@
  *
  * This is a data layer only — no terminal UI rendering. The existing TUI
  * handles rendering.
- *
- * Ported from Hydra's `chat/dashboard.py`.
  */
 
 /**

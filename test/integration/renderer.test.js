@@ -4,7 +4,7 @@
  * Tests screenshot capture functionality with headless browser
  */
 
-import { Renderer } from '../../dist/render/Renderer.js';
+import { Renderer } from '../../src/render/Renderer.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';

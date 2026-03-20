@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liminal — Post-Merge Architecture Audit</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+  :root {
+    --atelier: #3b82f6;
+    --hydra: #10b981;
+    --tokenmill: #f59e0b;
+    --dead: #ef4444;
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a2e;
+    --border: #2a2a3e;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #8b5cf6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+  }
+
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .tab-btn {
+    padding: 10px 20px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 14px;
+    border-radius: 6px 6px 0 0;
+    border-bottom: none;
+  }
+  .tab-btn:hover { color: var(--text); background: var(--surface2); }
+  .tab-btn.active {
+    color: #fff;
+    background: var(--surface);
+    border-color: var(--accent);
+    border-bottom: 1px solid var(--surface);
+    z-index: 1;
+    position: relative;
+  }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .severity-critical { color: #ef4444; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); }
+  .severity-high { color: #f59e0b; background: rgba(245,158,11,0.1); border: 1px solid rgba(245,158,11,0.3); }
+  .severity-medium { color: #3b82f6; background: rgba(59,130,246,0.1); border: 1px solid rgba(59,130,246,0.3); }
+  .severity-low { color: #10b981; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3); }
+
+  .finding-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  .finding-card:hover { border-color: var(--accent); }
+
+  .module-box {
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .module-box:hover { filter: brightness(1.3); }
+
+  .flow-step {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 8px 0;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .flow-step:hover { border-color: var(--accent); background: var(--surface2); }
+
+  .flow-arrow {
+    text-align: center;
+    color: var(--accent);
+    font-size: 18px;
+    margin: 2px 0;
+  }
+
+  .detail-panel {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 8px;
+    display: none;
+  }
+  .detail-panel.open { display: block; }
+
+  .badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .origin-atelier { background: rgba(59,130,246,0.2); color: var(--atelier); border: 1px solid rgba(59,130,246,0.4); }
+  .origin-hydra { background: rgba(16,185,129,0.2); color: var(--hydra); border: 1px solid rgba(16,185,129,0.4); }
+  .origin-tokenmill { background: rgba(245,158,11,0.2); color: var(--tokenmill); border: 1px solid rgba(245,158,11,0.4); }
+  .origin-dead { background: rgba(239,68,68,0.15); color: var(--dead); border: 1px dashed rgba(239,68,68,0.4); }
+
+  svg text { font-family: 'Inter', sans-serif; }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+
+  .effort-S { background: rgba(16,185,129,0.15); color: #10b981; }
+  .effort-M { background: rgba(245,158,11,0.15); color: #f59e0b; }
+  .effort-L { background: rgba(239,68,68,0.15); color: #ef4444; }
+
+  .filter-btn {
+    padding: 4px 12px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text-dim);
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--surface2);
+    color: var(--text);
+    border-color: var(--accent);
+  }
+
+  .search-input {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    width: 100%;
+    max-width: 400px;
+  }
+  .search-input:focus { outline: none; border-color: var(--accent); }
+
+  .collapse-toggle {
+    cursor: pointer;
+    user-select: none;
+  }
+  .collapse-toggle::before {
+    content: '▸ ';
+    display: inline-block;
+    transition: transform 0.2s;
+  }
+  .collapse-toggle.open::before {
+    content: '▸ ';
+    transform: rotate(90deg);
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+</style>
+</head>
+<body class="p-4 md:p-8">
+
+<!-- Header -->
+<div class="max-w-7xl mx-auto mb-8">
+  <div class="flex items-center gap-3 mb-2">
+    <div class="w-3 h-3 rounded-full bg-purple-500"></div>
+    <h1 class="text-2xl md:text-3xl font-bold">Liminal — Post-Merge Architecture Audit</h1>
+  </div>
+  <p class="text-sm text-slate-400 ml-6">
+    Three codebases merged: <span class="text-blue-400 font-medium">Atelier</span> +
+    <span class="text-emerald-400 font-medium">Hydra</span> +
+    <span class="text-amber-400 font-medium">Token Mill</span> → Liminal
+  </p>
+  <p class="text-xs text-slate-500 ml-6 mt-1">Generated 2026-03-20 &middot; Updated 2026-03-20 &middot; All findings verified against source code</p>
+</div>
+
+<!-- Summary Stats -->
+<div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  <div class="stat-card">
+    <div class="text-2xl font-bold text-emerald-400">0</div>
+    <div class="text-xs text-slate-400 mt-1">Dead Code Modules</div>
+  </div>
+  <div class="stat-card">
+    <div class="text-2xl font-bold text-amber-400">3</div>
+    <div class="text-xs text-slate-400 mt-1">Scoring Systems</div>
+  </div>
+  <div class="stat-card">
+    <div class="text-2xl font-bold text-emerald-400">2</div>
+    <div class="text-xs text-slate-400 mt-1">Config Interfaces</div>
+  </div>
+  <div class="stat-card">
+    <div class="text-2xl font-bold text-emerald-400">0</div>
+    <div class="text-xs text-slate-400 mt-1">Broken Test Imports</div>
+  </div>
+  <div class="stat-card">
+    <div class="text-2xl font-bold text-purple-400">90+</div>
+    <div class="text-xs text-slate-400 mt-1">Source Modules</div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="max-w-7xl mx-auto">
+  <div class="flex flex-wrap gap-1 border-b border-[var(--border)] mb-0">
+    <button class="tab-btn active" data-tab="arch">Architecture</button>
+    <button class="tab-btn" data-tab="flows">Process Flows</button>
+    <button class="tab-btn" data-tab="findings">Findings</button>
+    <button class="tab-btn" data-tab="docs">Documentation</button>
+    <button class="tab-btn" data-tab="recs">Recommendations</button>
+  </div>
+
+  <!-- ==================== TAB 1: ARCHITECTURE ==================== -->
+  <div class="tab-content active" id="tab-arch">
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-b-lg p-6">
+
+      <!-- Legend -->
+      <div class="flex flex-wrap gap-4 mb-6 text-xs">
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-blue-500"></div> Atelier (Core)</div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-emerald-500"></div> Hydra (Collab)</div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-amber-500"></div> Token Mill (Swarm)</div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-red-500/50 border border-dashed border-red-400"></div> Dead Code</div>
+        <div class="flex items-center gap-2"><div class="w-3 h-3 rounded-sm bg-slate-500"></div> Shared/Other</div>
+      </div>
+
+      <!-- SVG Architecture Diagram -->
+      <div class="overflow-x-auto">
+        <svg viewBox="0 0 1200 900" class="w-full" style="min-width: 900px;" id="arch-svg">
+          <defs>
+            <marker id="arrow" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#8b5cf6" opacity="0.6"/>
+            </marker>
+            <marker id="arrow-dead" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+              <polygon points="0 0, 8 3, 0 6" fill="#ef4444" opacity="0.4"/>
+            </marker>
+          </defs>
+
+          <!-- ENTRY POINT -->
+          <rect x="20" y="20" width="180" height="50" rx="6" fill="#1e1b4b" stroke="#8b5cf6" stroke-width="2"/>
+          <text x="110" y="42" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">bin/liminal</text>
+          <text x="110" y="58" text-anchor="middle" fill="#94a3b8" font-size="10">CLI Entry Point</text>
+
+          <!-- INDEX.TS -->
+          <rect x="240" y="20" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="330" y="42" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">src/index.ts</text>
+          <text x="330" y="58" text-anchor="middle" fill="#94a3b8" font-size="10">run() · Liminal class</text>
+
+          <!-- Arrow: bin → index -->
+          <line x1="200" y1="45" x2="240" y2="45" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- RALPH LOOP -->
+          <rect x="460" y="20" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="550" y="42" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">RalphLoop</text>
+          <text x="550" y="58" text-anchor="middle" fill="#94a3b8" font-size="10">Core iteration engine</text>
+
+          <line x1="420" y1="45" x2="460" y2="45" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- GENERATOR REGISTRY -->
+          <rect x="700" y="20" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="790" y="42" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">GeneratorRegistry</text>
+          <text x="790" y="58" text-anchor="middle" fill="#94a3b8" font-size="10">dispatch() → best gen</text>
+
+          <line x1="640" y1="45" x2="700" y2="45" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- GENERATORS -->
+          <rect x="940" y="10" width="120" height="36" rx="5" fill="#172554" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="1000" y="33" text-anchor="middle" fill="#93c5fd" font-size="11">P5Generator</text>
+
+          <rect x="940" y="52" width="120" height="36" rx="5" fill="#172554" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="1000" y="75" text-anchor="middle" fill="#93c5fd" font-size="11">P5GeneratorLLM</text>
+
+          <rect x="1070" y="10" width="120" height="36" rx="5" fill="#172554" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="1130" y="33" text-anchor="middle" fill="#93c5fd" font-size="11">ShaderGenerator</text>
+
+          <rect x="1070" y="52" width="120" height="36" rx="5" fill="#172554" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="1130" y="75" text-anchor="middle" fill="#93c5fd" font-size="11">ThreeGenerator</text>
+
+          <line x1="880" y1="35" x2="940" y2="28" stroke="#3b82f6" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+          <line x1="880" y1="55" x2="940" y2="70" stroke="#3b82f6" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+
+          <!-- CREATIVE EVALUATOR -->
+          <rect x="460" y="90" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="550" y="112" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">CreativeEvaluator</text>
+          <text x="550" y="128" text-anchor="middle" fill="#94a3b8" font-size="10">Quality gate (≥0.7)</text>
+
+          <line x1="550" y1="70" x2="550" y2="90" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+          <!-- LLM CLIENT -->
+          <rect x="240" y="90" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="330" y="112" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">LLMClient</text>
+          <text x="330" y="128" text-anchor="middle" fill="#94a3b8" font-size="10">+ CacheManager + RetryManager</text>
+
+          <line x1="330" y1="70" x2="330" y2="90" stroke="#8b5cf6" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+
+          <!-- PROMPT STORE -->
+          <rect x="20" y="90" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="110" y="112" text-anchor="middle" fill="#e2e8f0" font-size="13" font-weight="600">PromptStore</text>
+          <text x="110" y="128" text-anchor="middle" fill="#94a3b8" font-size="10">27 registered prompts</text>
+
+          <!-- SWARM BRANCH -->
+          <rect x="20" y="180" width="200" height="50" rx="6" fill="#1a2e1a" stroke="#f59e0b" stroke-width="2"/>
+          <text x="120" y="202" text-anchor="middle" fill="#fbbf24" font-size="13" font-weight="600">TokenMillOrchestrator</text>
+          <text x="120" y="218" text-anchor="middle" fill="#94a3b8" font-size="10">7-persona swarm generation</text>
+
+          <line x1="550" y1="70" x2="120" y2="180" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" marker-end="url(#arrow)"/>
+          <text x="300" y="130" fill="#f59e0b" font-size="10" opacity="0.7">useSwarm=true</text>
+
+          <rect x="240" y="180" width="160" height="50" rx="6" fill="#1a2e1a" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="320" y="202" text-anchor="middle" fill="#fbbf24" font-size="12">VotingEngine</text>
+          <text x="320" y="218" text-anchor="middle" fill="#94a3b8" font-size="10">LLM-based voting</text>
+
+          <rect x="420" y="180" width="160" height="50" rx="6" fill="#1a2e1a" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="500" y="202" text-anchor="middle" fill="#fbbf24" font-size="12">HeuristicScorer</text>
+          <text x="500" y="218" text-anchor="middle" fill="#94a3b8" font-size="10">5-dim heuristic scoring</text>
+
+          <rect x="600" y="180" width="160" height="50" rx="6" fill="#1a2e1a" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="680" y="202" text-anchor="middle" fill="#fbbf24" font-size="12">MiningEngine</text>
+          <text x="680" y="218" text-anchor="middle" fill="#94a3b8" font-size="10">Fragment mining</text>
+
+          <line x1="220" y1="205" x2="240" y2="205" stroke="#f59e0b" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+          <line x1="400" y1="205" x2="420" y2="205" stroke="#f59e0b" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+          <line x1="580" y1="205" x2="600" y2="205" stroke="#f59e0b" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+
+          <!-- COLLAB BRANCH -->
+          <rect x="20" y="260" width="200" height="50" rx="6" fill="#0f2922" stroke="#10b981" stroke-width="2"/>
+          <text x="120" y="282" text-anchor="middle" fill="#34d399" font-size="13" font-weight="600">DeepCollaboration</text>
+          <text x="120" y="298" text-anchor="middle" fill="#94a3b8" font-size="10">3-phase collab (5 critics)</text>
+
+          <line x1="550" y1="70" x2="120" y2="260" stroke="#10b981" stroke-width="1" stroke-dasharray="4 4" opacity="0.5" marker-end="url(#arrow)"/>
+          <text x="300" y="180" fill="#10b981" font-size="10" opacity="0.7">useDeepCollab</text>
+
+          <rect x="240" y="260" width="180" height="50" rx="6" fill="#0f2922" stroke="#10b981" stroke-width="1.5"/>
+          <text x="330" y="282" text-anchor="middle" fill="#34d399" font-size="12">CollaborativeClient</text>
+          <text x="330" y="298" text-anchor="middle" fill="#94a3b8" font-size="10">Simple 2-model collab</text>
+
+          <rect x="440" y="260" width="120" height="50" rx="6" fill="#0f2922" stroke="#10b981" stroke-width="1.5"/>
+          <text x="500" y="282" text-anchor="middle" fill="#34d399" font-size="11">Scoring.ts</text>
+          <text x="500" y="298" text-anchor="middle" fill="#94a3b8" font-size="10">quickScore()</text>
+
+          <rect x="580" y="260" width="120" height="36" rx="5" fill="#0f2922" stroke="#10b981" stroke-width="1"/>
+          <text x="640" y="283" text-anchor="middle" fill="#34d399" font-size="10">ArtisticCritic</text>
+
+          <rect x="710" y="260" width="120" height="36" rx="5" fill="#0f2922" stroke="#10b981" stroke-width="1"/>
+          <text x="770" y="283" text-anchor="middle" fill="#34d399" font-size="10">TechnicalCritic</text>
+
+          <rect x="580" y="302" width="120" height="36" rx="5" fill="#0f2922" stroke="#10b981" stroke-width="1"/>
+          <text x="640" y="325" text-anchor="middle" fill="#34d399" font-size="10">DomainExpert</text>
+
+          <line x1="220" y1="285" x2="240" y2="285" stroke="#10b981" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+          <line x1="420" y1="285" x2="440" y2="285" stroke="#10b981" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+
+          <!-- MUSIC / VISUAL -->
+          <rect x="20" y="370" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="110" y="392" text-anchor="middle" fill="#93c5fd" font-size="12">generateMusic()</text>
+          <text x="110" y="408" text-anchor="middle" fill="#94a3b8" font-size="10">Strudel / p5+WebAudio</text>
+
+          <rect x="220" y="370" width="180" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="310" y="392" text-anchor="middle" fill="#93c5fd" font-size="12">generateVisuals()</text>
+          <text x="310" y="408" text-anchor="middle" fill="#94a3b8" font-size="10">Hydra / p5 reactive</text>
+
+          <rect x="420" y="370" width="200" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="520" y="392" text-anchor="middle" fill="#93c5fd" font-size="12">generateMusicToVisual()</text>
+          <text x="520" y="408" text-anchor="middle" fill="#94a3b8" font-size="10">Both pipelines → organism</text>
+
+          <line x1="520" y1="370" x2="310" y2="420" stroke="#3b82f6" stroke-width="1" opacity="0.4" marker-end="url(#arrow)"/>
+          <line x1="520" y1="370" x2="110" y2="420" stroke="#3b82f6" stroke-width="1" opacity="0.4" marker-end="url(#arrow)"/>
+
+          <!-- EXPORT / GALLERY -->
+          <rect x="700" y="100" width="160" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="780" y="122" text-anchor="middle" fill="#93c5fd" font-size="12">Gallery</text>
+          <text x="780" y="138" text-anchor="middle" fill="#94a3b8" font-size="10">Iteration persistence</text>
+
+          <rect x="880" y="100" width="160" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="960" y="122" text-anchor="middle" fill="#93c5fd" font-size="12">Exporter</text>
+          <text x="960" y="138" text-anchor="middle" fill="#94a3b8" font-size="10">HTML / JS / ZIP</text>
+
+          <rect x="1060" y="100" width="130" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="1.5"/>
+          <text x="1125" y="122" text-anchor="middle" fill="#93c5fd" font-size="12">SeedArchive</text>
+          <text x="1125" y="138" text-anchor="middle" fill="#94a3b8" font-size="10">Reproducible seeds</text>
+
+          <line x1="640" y1="115" x2="700" y2="115" stroke="#8b5cf6" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+          <line x1="860" y1="125" x2="880" y2="125" stroke="#8b5cf6" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+          <line x1="1040" y1="125" x2="1060" y2="125" stroke="#8b5cf6" stroke-width="1" opacity="0.5" marker-end="url(#arrow)"/>
+
+          <!-- DEAD CODE -->
+          <rect x="20" y="460" width="180" height="44" rx="5" fill="rgba(239,68,68,0.08)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3"/>
+          <text x="110" y="480" text-anchor="middle" fill="#fca5a5" font-size="12">ErrorHandler.ts</text>
+          <text x="110" y="496" text-anchor="middle" fill="#94a3b8" font-size="10">0 imports — DEAD</text>
+
+          <rect x="220" y="460" width="180" height="44" rx="5" fill="rgba(239,68,68,0.08)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3"/>
+          <text x="310" y="480" text-anchor="middle" fill="#fca5a5" font-size="12">UnifiedConfig.ts</text>
+          <text x="310" y="496" text-anchor="middle" fill="#94a3b8" font-size="10">0 imports — DEAD</text>
+
+          <rect x="420" y="460" width="180" height="44" rx="5" fill="rgba(239,68,68,0.08)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3"/>
+          <text x="510" y="480" text-anchor="middle" fill="#fca5a5" font-size="12">EvaluationFramework.ts</text>
+          <text x="510" y="496" text-anchor="middle" fill="#94a3b8" font-size="10">0 active consumers — DEAD</text>
+
+          <!-- UNDERUTILIZED -->
+          <rect x="640" y="370" width="150" height="44" rx="5" fill="rgba(148,163,184,0.08)" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="715" y="390" text-anchor="middle" fill="#94a3b8" font-size="11">SmartRouter</text>
+          <text x="715" y="406" text-anchor="middle" fill="#64748b" font-size="9">exported, not used by loop</text>
+
+          <rect x="810" y="370" width="150" height="44" rx="5" fill="rgba(148,163,184,0.08)" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="885" y="390" text-anchor="middle" fill="#94a3b8" font-size="11">SoupLoop</text>
+          <text x="885" y="406" text-anchor="middle" fill="#64748b" font-size="9">exported, unclear wiring</text>
+
+          <rect x="980" y="370" width="150" height="44" rx="5" fill="rgba(148,163,184,0.08)" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="1055" y="390" text-anchor="middle" fill="#94a3b8" font-size="11">Scavenger/DNA</text>
+          <text x="1055" y="406" text-anchor="middle" fill="#64748b" font-size="9">exported, unclear wiring</text>
+
+          <!-- EVOLUTION (underutilized) -->
+          <rect x="640" y="440" width="150" height="44" rx="5" fill="rgba(148,163,184,0.08)" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="715" y="460" text-anchor="middle" fill="#94a3b8" font-size="11">AestheticModel</text>
+          <text x="715" y="476" text-anchor="middle" fill="#64748b" font-size="9">evolution, unclear if active</text>
+
+          <rect x="810" y="440" width="150" height="44" rx="5" fill="rgba(148,163,184,0.08)" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="885" y="460" text-anchor="middle" fill="#94a3b8" font-size="11">MetaMode</text>
+          <text x="885" y="476" text-anchor="middle" fill="#64748b" font-size="9">evolution, unclear if active</text>
+
+          <rect x="980" y="440" width="150" height="44" rx="5" fill="rgba(148,163,184,0.08)" stroke="#64748b" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="1055" y="460" text-anchor="middle" fill="#94a3b8" font-size="11">ArchiveLearning</text>
+          <text x="1055" y="476" text-anchor="middle" fill="#64748b" font-size="9">exported, unclear wiring</text>
+
+          <!-- CONFIG SECTION -->
+          <rect x="700" y="180" width="160" height="50" rx="6" fill="#1e3a5f" stroke="#3b82f6" stroke-width="2"/>
+          <text x="780" y="202" text-anchor="middle" fill="#93c5fd" font-size="12">ConfigLoader</text>
+          <text x="780" y="218" text-anchor="middle" fill="#94a3b8" font-size="10">AtelierConfig (active)</text>
+
+          <rect x="880" y="180" width="160" height="50" rx="6" fill="rgba(239,68,68,0.08)" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="6 3"/>
+          <text x="960" y="202" text-anchor="middle" fill="#fca5a5" font-size="12">UnifiedConfig</text>
+          <text x="960" y="218" text-anchor="middle" fill="#94a3b8" font-size="10">LiminalConfig (DEAD)</text>
+
+          <line x1="330" y1="140" x2="780" y2="180" stroke="#3b82f6" stroke-width="1" opacity="0.4" marker-end="url(#arrow)"/>
+
+          <!-- Inline config in index.ts -->
+          <rect x="1060" y="180" width="130" height="50" rx="6" fill="rgba(245,158,11,0.1)" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 2"/>
+          <text x="1125" y="202" text-anchor="middle" fill="#fbbf24" font-size="11">AtelierConfig</text>
+          <text x="1125" y="218" text-anchor="middle" fill="#94a3b8" font-size="9">in index.ts (DUPE)</text>
+
+          <!-- PROMPTS SECTION -->
+          <rect x="20" y="160" width="140" height="40" rx="5" fill="#1a1a2e" stroke="#64748b" stroke-width="1"/>
+          <text x="90" y="178" text-anchor="middle" fill="#94a3b8" font-size="11">PromptLibrary</text>
+          <text x="90" y="193" text-anchor="middle" fill="#64748b" font-size="9">27 prompts registered</text>
+
+          <!-- SCORING SECTION label -->
+          <rect x="20" y="530" width="1160" height="40" rx="5" fill="rgba(139,92,246,0.05)" stroke="rgba(139,92,246,0.2)" stroke-width="1"/>
+          <text x="600" y="548" text-anchor="middle" fill="#a78bfa" font-size="12" font-weight="600">SCORING SYSTEMS (4 independent implementations — see Findings tab)</text>
+          <text x="600" y="563" text-anchor="middle" fill="#64748b" font-size="10">CreativeEvaluator · HeuristicScorer · Scoring.ts (quickScore) · CollaborativeClient (inline LLM scoring)</text>
+
+          <!-- Module count -->
+          <text x="600" y="610" text-anchor="middle" fill="#64748b" font-size="11">90+ source modules across 20 directories · Click any module for details below</text>
+        </svg>
+      </div>
+
+      <!-- Module Detail Panel -->
+      <div id="module-detail" class="mt-4 p-4 bg-[var(--surface2)] border border-[var(--border)] rounded-lg" style="display:none;">
+        <h3 id="module-detail-name" class="text-lg font-bold mb-2"></h3>
+        <div id="module-detail-content" class="text-sm text-slate-300 space-y-2"></div>
+      </div>
+
+      <!-- Full Module Table -->
+      <div class="mt-6">
+        <h3 class="text-lg font-bold mb-3">All Source Modules</h3>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button class="filter-btn active" data-filter="all">All (90+)</button>
+          <button class="filter-btn" data-filter="atelier">Atelier</button>
+          <button class="filter-btn" data-filter="hydra">Hydra</button>
+          <button class="filter-btn" data-filter="tokenmill">Token Mill</button>
+          <button class="filter-btn" data-filter="dead">Dead Code</button>
+          <button class="filter-btn" data-filter="other">Other</button>
+          <input type="text" class="search-input ml-2" placeholder="Filter modules..." id="module-search"/>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm" id="module-table">
+            <thead>
+              <tr class="text-left text-slate-400 border-b border-[var(--border)]">
+                <th class="pb-2 pr-4">Module</th>
+                <th class="pb-2 pr-4">Origin</th>
+                <th class="pb-2 pr-4">Status</th>
+                <th class="pb-2">Consumers</th>
+              </tr>
+            </thead>
+            <tbody id="module-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 2: PROCESS FLOWS ==================== -->
+  <div class="tab-content" id="tab-flows">
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-b-lg p-6">
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="filter-btn active" data-flow="cli">CLI Generation</button>
+        <button class="filter-btn" data-flow="swarm">Swarm Generation</button>
+        <button class="filter-btn" data-flow="collab">Collab Generation</button>
+        <button class="filter-btn" data-flow="music">Music</button>
+        <button class="filter-btn" data-flow="visual">Visuals</button>
+        <button class="filter-btn" data-flow="m2v">Music → Visual</button>
+      </div>
+
+      <!-- CLI Generation Flow -->
+      <div class="flow-container" id="flow-cli">
+        <h3 class="text-lg font-bold mb-4 text-blue-400">CLI Generation Flow</h3>
+        <p class="text-xs text-slate-400 mb-4">8 files &middot; Entry: bin/liminal → src/index.ts:run()</p>
+
+        <div class="flow-step" data-file="bin/liminal">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">1</span>
+            <div>
+              <div class="font-semibold mono text-sm">bin/liminal</div>
+              <div class="text-xs text-slate-400">CLI argument parsing → calls run(prompt, options)</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>Entry point for the CLI. Parses arguments for generate command (prompt, maxIterations, output, project, useSwarm, swarmMode, swarmConfig). Calls <code>run()</code> from src/index.ts.</p>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" data-file="src/index.ts">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">2</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/index.ts : run() (line 109)</div>
+              <div class="text-xs text-slate-400">Creates Atelier config, calls RalphLoop.run()</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>Main entry point. Loads config, creates RalphLoop instance, calls <code>RalphLoop.run(prompt, config)</code>. Handles export logic (HTML/JS/ZIP) via Exporter after loop completes.</p>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" data-file="src/core/RalphLoop.ts">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">3</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/core/RalphLoop.ts : run() (line 130)</div>
+              <div class="text-xs text-slate-400">Main iteration loop with quality gates</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>Core loop engine. Loads prompt via PromptStore, checks useSwarm/useDeepCollab flags, dispatches to GeneratorRegistry, evaluates with CreativeEvaluator, saves context and gallery iterations. Handles convergence detection and iteration limits.</p>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" data-file="src/core/RalphLoop.ts">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">4</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/generators/GeneratorRegistry.ts : dispatch() (line 196)</div>
+              <div class="text-xs text-slate-400">Selects best generator by confidence score</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>Routes to best-fit generator: particle (0.7), cellular (0.7/0.9), flowfield (0.7), shader (0.7/0.9), three (0.5), llm (0.0 fallback).</p>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" data-file="src/generators/p5/P5Generator.ts">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">5</span>
+            <div>
+              <div class="font-semibold mono text-sm">Generator (P5 / Shader / Three / LLM)</div>
+              <div class="text-xs text-slate-400">Generates creative code</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>P5Generator (particle, cellular, flowfield), ShaderGenerator (GLSL), ThreeGenerator (Three.js), P5GeneratorLLM (LLM-based fallback). Each produces executable creative code.</p>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" data-file="src/core/CreativeEvaluator.ts">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">6</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/core/CreativeEvaluator.ts : assess() (line 236)</div>
+              <div class="text-xs text-slate-400">Quality gate — minimum score ≥ 0.7</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>Evaluates generated code across 7 dimensions: technical, creative, novelty, aesthetic, emergence, interestingness. Returns aggregate score. Loop continues if below threshold.</p>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" data-file="src/gallery/Gallery.ts">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">7</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/gallery/Gallery.ts : saveIteration() (line 72)</div>
+              <div class="text-xs text-slate-400">Persists iteration to gallery/YYYY-MM-DD--project/vN.js</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>Saves each iteration with metadata (score, timestamp, code) to the gallery filesystem structure.</p>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+
+        <div class="flow-step" data-file="src/export/Exporter.ts">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">8</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/export/Exporter.ts : exportHTML/JS/ZIP()</div>
+              <div class="text-xs text-slate-400">Final export to HTML, JS, or ZIP archive</div>
+            </div>
+          </div>
+          <div class="detail-panel">
+            <p>Creates standalone HTML with embedded p5.js, exports JS files, or packages everything into a ZIP archive.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Swarm Flow -->
+      <div class="flow-container" id="flow-swarm" style="display:none;">
+        <h3 class="text-lg font-bold mb-4 text-amber-400">Swarm Generation Flow</h3>
+        <p class="text-xs text-slate-400 mb-4">7 files &middot; Entry: RalphLoop (useSwarm=true)</p>
+
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">1</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/core/RalphLoop.ts : generateWithSwarm() (line 483)</div>
+              <div class="text-xs text-slate-400">Branches to swarm when useSwarm=true</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-tokenmill">2</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/swarm/TokenMillOrchestrator.ts : run() (line 94)</div>
+              <div class="text-xs text-slate-400">Main swarm loop — parallel/ring generation rounds</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-tokenmill">3</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/swarm/TokenMillOrchestrator.ts : generateParallel() (line 250)</div>
+              <div class="text-xs text-slate-400">All 7 personas generate simultaneously</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-tokenmill">4</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/swarm/HeuristicScorer.ts : score() (line 59)</div>
+              <div class="text-xs text-slate-400">Early rounds — 5-dimension heuristic scoring</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-tokenmill">5</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/swarm/VotingEngine.ts : conductVoting() (line 52)</div>
+              <div class="text-xs text-slate-400">Final round — LLM-based voting with voting power</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-tokenmill">6</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/swarm/MiningEngine.ts</div>
+              <div class="text-xs text-slate-400">Auto-mines fragments from converged results</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-tokenmill">7</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/swarm/personas.ts</div>
+              <div class="text-xs text-slate-400">5 personas: Dreamer, Engineer, Minimalist, Maximalist, Alchemist</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Collab Flow -->
+      <div class="flow-container" id="flow-collab" style="display:none;">
+        <h3 class="text-lg font-bold mb-4 text-emerald-400">Collaboration Generation Flow</h3>
+        <p class="text-xs text-slate-400 mb-4">8 files &middot; Entry: RalphLoop (useDeepCollab=true)</p>
+
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">1</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/core/RalphLoop.ts : generateWithCollaboration() (line 511)</div>
+              <div class="text-xs text-slate-400">Branches to collab when useDeepCollab=true</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-hydra">2</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/collab/DeepCollaboration.ts : generateDeepCollaboration() (line 109)</div>
+              <div class="text-xs text-slate-400">3-phase deep collaboration</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-hydra">3a</span>
+            <div>
+              <div class="font-semibold mono text-sm">Phase 1: Divergence — Creator + Visionary</div>
+              <div class="text-xs text-slate-400">phaseDivergence() (line 285)</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-hydra">3b</span>
+            <div>
+              <div class="font-semibold mono text-sm">Phase 2: Analysis — 3 Critics</div>
+              <div class="text-xs text-slate-400">ArtisticCritic + TechnicalCritic + DomainExpert (line 344)</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-hydra">3c</span>
+            <div>
+              <div class="font-semibold mono text-sm">Phase 3: Synthesis — Integrator + Refiner</div>
+              <div class="text-xs text-slate-400">phaseSynthesis() (line 402)</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-hydra">4</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/collab/Scoring.ts : quickScore() (line 20)</div>
+              <div class="text-xs text-slate-400">Quality tracking across phases (convergence detection)</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-hydra">5</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/collab/CollaborativeClient.ts : generateCollaborative() (line 89)</div>
+              <div class="text-xs text-slate-400">Simple 2-model alternative (parallel + mutual refinement)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Music Flow -->
+      <div class="flow-container" id="flow-music" style="display:none;">
+        <h3 class="text-lg font-bold mb-4 text-blue-400">Music Generation Flow</h3>
+        <p class="text-xs text-slate-400 mb-4">1 file &middot; Entry: generateMusic()</p>
+
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">1</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/music/generateMusic.ts : generateMusic() (line 31)</div>
+              <div class="text-xs text-slate-400">Main entry — routes to LLM or template</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">2a</span>
+            <div>
+              <div class="font-semibold mono text-sm">generateMusicLLM() (line 63)</div>
+              <div class="text-xs text-slate-400">LLM-based music generation</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">2b</span>
+            <div>
+              <div class="font-semibold mono text-sm">getStrudelCode() (line 88) / getP5WebAudioCode() (line 147)</div>
+              <div class="text-xs text-slate-400">Template-based Strudel or p5 + Web Audio output</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Flow -->
+      <div class="flow-container" id="flow-visual" style="display:none;">
+        <h3 class="text-lg font-bold mb-4 text-blue-400">Visual Generation Flow</h3>
+        <p class="text-xs text-slate-400 mb-4">1 file &middot; Entry: generateVisuals()</p>
+
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">1</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/generateVisuals.ts : generateVisuals() (line 33)</div>
+              <div class="text-xs text-slate-400">Main entry — routes by platform (hydra/p5)</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">2a</span>
+            <div>
+              <div class="font-semibold mono text-sm">generateHydraCode() (line 106)</div>
+              <div class="text-xs text-slate-400">Hydra live-coding visual synthesis</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">2b</span>
+            <div>
+              <div class="font-semibold mono text-sm">generateP5Code() (line 136)</div>
+              <div class="text-xs text-slate-400">p5.js reactive visuals with audio-reactive variants</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Music-to-Visual Flow -->
+      <div class="flow-container" id="flow-m2v" style="display:none;">
+        <h3 class="text-lg font-bold mb-4 text-purple-400">Music-to-Visual Flow</h3>
+        <p class="text-xs text-slate-400 mb-4">3 files &middot; Entry: generateMusicToVisual()</p>
+
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">1</span>
+            <div>
+              <div class="font-semibold mono text-sm">src/musicToVisual/generateMusicToVisual.ts (line 50)</div>
+              <div class="text-xs text-slate-400">Main entry — orchestrates both pipelines</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">2</span>
+            <div>
+              <div class="font-semibold mono text-sm">generateMusic() → Strudel / p5+WebAudio</div>
+              <div class="text-xs text-slate-400">Music pipeline output</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">3</span>
+            <div>
+              <div class="font-semibold mono text-sm">analyzeMusicResult() (line 37)</div>
+              <div class="text-xs text-slate-400">Extracts BPM / FFT from music code</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">4</span>
+            <div>
+              <div class="font-semibold mono text-sm">generateVisuals(audioInput) → Hydra / p5 reactive</div>
+              <div class="text-xs text-slate-400">Visual pipeline with audio modulation</div>
+            </div>
+          </div>
+        </div>
+        <div class="flow-arrow">↓</div>
+        <div class="flow-step">
+          <div class="flex items-center gap-3">
+            <span class="badge origin-atelier">5</span>
+            <div>
+              <div class="font-semibold mono text-sm">Organism JSON output</div>
+              <div class="text-xs text-slate-400">{ type: "organism", musicCode, visualCode }</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 3: FINDINGS ==================== -->
+  <div class="tab-content" id="tab-findings">
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-b-lg p-6">
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="filter-btn active" data-severity="all">All Findings</button>
+        <button class="filter-btn" data-severity="critical">Critical</button>
+        <button class="filter-btn" data-severity="high">High</button>
+        <button class="filter-btn" data-severity="medium">Medium</button>
+        <button class="filter-btn" data-severity="low">Low</button>
+      </div>
+
+      <div id="findings-container">
+
+        <!-- DEAD CODE -->
+        <div class="mb-6">
+          <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-red-500"></span>
+            Dead Code
+          </h3>
+
+          <div class="finding-card" data-severity="critical">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">src/core/ErrorHandler.ts</span>
+              <span class="badge severity-critical">CRITICAL</span>
+            </div>
+            <p class="text-sm text-slate-300 mb-2">75 lines. Exports <code>Result&lt;T&gt;</code>, <code>ok()</code>, <code>err()</code>, <code>classifyLLMError()</code>, <code>wrapLLM()</code>. Zero imports anywhere in src/, test/, or bin/. Not exported from index.ts.</p>
+            <div class="text-xs text-slate-500">
+              <strong>Verified:</strong> grep for ErrorHandler, wrapLLM, classifyLLMError found no consumers outside the file itself.
+            </div>
+            <div class="mt-2 text-xs">
+              <strong>Recommendation:</strong> <span class="text-emerald-400">Delete file.</span> No migration needed.
+            </div>
+          </div>
+
+          <div class="finding-card" data-severity="critical">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">src/config/UnifiedConfig.ts</span>
+              <span class="badge severity-critical">CRITICAL</span>
+            </div>
+            <p class="text-sm text-slate-300 mb-2">126 lines. Exports <code>LiminalConfig</code> interface and <code>loadUnifiedConfig()</code>. Zero imports anywhere. Not exported from index.ts. Abandoned attempt to unify config — <code>ConfigLoader.ts</code> is used instead.</p>
+            <div class="text-xs text-slate-500">
+              <strong>Verified:</strong> grep for UnifiedConfig, loadUnifiedConfig, LiminalConfig found no consumers outside the file itself.
+            </div>
+            <div class="mt-2 text-xs">
+              <strong>Recommendation:</strong> <span class="text-emerald-400">Delete file.</span> If any LiminalConfig fields are needed, port them to ConfigLoader.ts first.
+            </div>
+          </div>
+
+          <div class="finding-card" data-severity="high">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">src/core/EvaluationFramework.ts</span>
+              <span class="badge severity-high">HIGH</span>
+            </div>
+            <p class="text-sm text-slate-300 mb-2">Imports Scoring.ts and HeuristicScorer but is itself not imported by any active code. Only referenced by its own test file. Dead intermediary layer.</p>
+            <div class="mt-2 text-xs">
+              <strong>Recommendation:</strong> <span class="text-amber-400">Review and likely delete.</span> Its strategies (fast/fitness/comprehensive) are not wired into RalphLoop.
+            </div>
+          </div>
+        </div>
+
+        <!-- DUPLICATE SCORING -->
+        <div class="mb-6">
+          <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            Duplicate Scoring Systems
+          </h3>
+
+          <div class="finding-card" data-severity="high">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">4 Independent Scoring Implementations</span>
+              <span class="badge severity-high">HIGH</span>
+            </div>
+            <div class="text-sm text-slate-300 space-y-2">
+              <p><strong>1. CreativeEvaluator</strong> <code class="text-blue-400">src/core/CreativeEvaluator.ts</code> — 7-dim LLM-based evaluation. Used by RalphLoop (17 consumers).</p>
+              <p><strong>2. HeuristicScorer</strong> <code class="text-amber-400">src/swarm/HeuristicScorer.ts</code> — 5-dim heuristic (constraint, novelty, length, vocabulary, codeStructure). Used by TokenMillOrchestrator.</p>
+              <p><strong>3. Scoring.ts</strong> <code class="text-emerald-400">src/collab/Scoring.ts</code> — <code>quickScore()</code> lightweight heuristic. Used by CollaborativeClient, DeepCollaboration, EvaluationFramework.</p>
+              <p><strong>4. CollaborativeClient inline</strong> <code class="text-emerald-400">src/collab/CollaborativeClient.ts:435</code> — Private <code>scoreOutputs()</code> using LLM-based rating. 7 call sites.</p>
+            </div>
+            <div class="mt-2 text-xs">
+              <strong>Impact:</strong> Changes to scoring logic must be replicated across 4 systems. Different systems may produce inconsistent results.
+            </div>
+            <div class="mt-2 text-xs">
+              <strong>Recommendation:</strong> <span class="text-amber-400">Consolidate into EvaluationFramework facade.</span> Keep HeuristicScorer for swarm (different domain), unify collab scoring into Scoring.ts, remove inline scoring from CollaborativeClient.
+            </div>
+          </div>
+        </div>
+
+        <!-- DUPLICATE CONFIG -->
+        <div class="mb-6">
+          <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            Duplicate Config Interfaces
+          </h3>
+
+          <div class="finding-card" data-severity="high">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">3 Config Interfaces with Overlapping Fields</span>
+              <span class="badge severity-high">HIGH</span>
+            </div>
+            <div class="text-sm text-slate-300 space-y-2">
+              <p><strong>1. ConfigLoader.AtelierConfig</strong> <code class="text-blue-400">src/config/ConfigLoader.ts:5</code> — 6 fields: defaultProvider, providers, loop, creative, galleryPath. Used by CLI and LLMClient.</p>
+              <p><strong>2. UnifiedConfig.LiminalConfig</strong> <code class="text-red-400">src/config/UnifiedConfig.ts:14</code> — 20 fields across 7 categories. DEAD CODE, never imported.</p>
+              <p><strong>3. index.ts AtelierConfig</strong> <code class="text-amber-400">src/index.ts:56</code> — 11 fields in 5 nested objects. Same name as #1 but different shape! Includes name, version, completionPromise.</p>
+            </div>
+            <div class="mt-2 text-xs">
+              <strong>Key problem:</strong> Two interfaces named <code>AtelierConfig</code> with incompatible shapes. index.ts version has required fields (name, version) that ConfigLoader version doesn't have.
+            </div>
+            <div class="mt-2 text-xs">
+              <strong>Recommendation:</strong> <span class="text-amber-400">Rename index.ts version to LiminalConfig.</span> Delete UnifiedConfig.ts. Make ConfigLoader.ts the single source of truth.
+            </div>
+          </div>
+        </div>
+
+        <!-- NAMING -->
+        <div class="mb-6">
+          <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            Naming Inconsistencies
+          </h3>
+
+          <div class="finding-card" data-severity="medium">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">"Atelier" — 16 references in src/</span>
+              <span class="badge severity-medium">MEDIUM</span>
+            </div>
+            <p class="text-sm text-slate-300">Still in: src/index.ts (class, config interface, comments, error message — 14 refs), ConfigLoader.ts (interface name — 2 refs)</p>
+            <div class="mt-1 text-xs mono text-slate-500">src/index.ts:2, :56, :79, :103, :273, :278, :304, :306, :307, :309, :313, :432 &middot; src/config/ConfigLoader.ts:5, :156, :162, :209</div>
+          </div>
+
+          <div class="finding-card" data-severity="medium">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">"Hydra" — 38 references in src/</span>
+              <span class="badge severity-medium">MEDIUM</span>
+            </div>
+            <p class="text-sm text-slate-300">In: prompts/hydra.ts, LLMClient.ts (hydraBaseUrl, enhanceWithHydraReasoning), constants.ts, UnifiedConfig.ts, collab files ("Ported from Hydra's"), TransparencyViewer.ts, collaboration.ts prompts</p>
+            <div class="mt-1 text-xs text-slate-500">Note: "Hydra" is also a legitimate visual platform (hydra-synth). Some references are correct (generateHydraCode, hydra platform). Distinguish between platform name and legacy system name.</div>
+          </div>
+
+          <div class="finding-card" data-severity="medium">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">"Token Mill" / TokenMill — 16 references</span>
+              <span class="badge severity-medium">MEDIUM</span>
+            </div>
+            <p class="text-sm text-slate-300">TokenMillOrchestrator class name, TokenMillOrchestratorOptions type, comments in RalphLoop and index.ts. Consider renaming to SwarmOrchestrator.</p>
+          </div>
+        </div>
+
+        <!-- BROKEN TEST IMPORTS -->
+        <div class="mb-6">
+          <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            Test Imports (resolved)
+          </h3>
+
+          <div class="finding-card" data-severity="critical" style="opacity: 0.6;">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold line-through">All test files import from <code>dist/</code> instead of <code>src/</code></span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">RESOLVED</span>
+            </div>
+            <p class="text-sm text-slate-400 mb-2">All 29 test files now import from <code>src/</code>. Stale evaluation shape expectations in full-loop.test.js also fixed.</p>
+
+            <div class="mt-3">
+              <div class="collapse-toggle text-sm font-semibold text-slate-400" data-target="test-files-list">Show all 31 affected files</div>
+              <div class="detail-panel" id="test-files-list">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-1 text-xs mono">
+                  <div class="text-slate-400">test/unit/ralph-loop.test.ts</div>
+                  <div class="text-slate-400">test/unit/sandbox.test.ts</div>
+                  <div class="text-slate-400">test/unit/seed-archive.test.ts</div>
+                  <div class="text-slate-400">test/unit/exporter.test.ts</div>
+                  <div class="text-slate-400">test/unit/index.test.js</div>
+                  <div class="text-slate-400">test/unit/promise-detector.test.js</div>
+                  <div class="text-slate-400">test/unit/prompt-store.test.js</div>
+                  <div class="text-slate-400">test/unit/iga.test.js</div>
+                  <div class="text-slate-400">test/unit/creative-evaluator.test.js</div>
+                  <div class="text-slate-400">test/unit/context-accumulation.test.js</div>
+                  <div class="text-slate-400">test/unit/soup-loop.test.js</div>
+                  <div class="text-slate-400">test/unit/gui-export-selected.test.js</div>
+                  <div class="text-slate-400">test/unit/gui-preview-state.test.js</div>
+                  <div class="text-slate-400">test/unit/gui-live-organism-state.test.js</div>
+                  <div class="text-slate-400">test/unit/path-sanitization.test.js</div>
+                  <div class="text-slate-400">test/prompts/prompt-validation.test.ts</div>
+                  <div class="text-slate-400">test/integration/ralph-loop.test.js</div>
+                  <div class="text-slate-400">test/integration/ralph-loop-collab.test.ts</div>
+                  <div class="text-slate-400">test/integration/full-loop.test.js</div>
+                  <div class="text-slate-400">test/integration/renderer.test.js</div>
+                  <div class="text-slate-400">test/integration/preview-server.test.js</div>
+                  <div class="text-slate-400">test/integration/preview-server-api.test.js</div>
+                  <div class="text-slate-400">test/integration/preview-server-versioned.test.js</div>
+                  <div class="text-slate-400">test/integration/evaluator-gallery.test.js</div>
+                  <div class="text-slate-400">test/integration/generator-renderer.test.js</div>
+                  <div class="text-slate-400">test/generators/cellular-automata.test.js</div>
+                  <div class="text-slate-400">test/generators/particle-system.test.js</div>
+                  <div class="text-slate-400">test/generators/p5-generator.test.js</div>
+                  <div class="text-slate-400">test/generators/p5-generator-llm.test.js</div>
+                  <div class="text-slate-400">test/generators/prompt-to-generator-params.test.js</div>
+                  <div class="text-slate-400">test/e2e/full-loop-cloud.test.ts</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-2 text-xs">
+              <strong>Status:</strong> <span class="text-emerald-400">Fixed in commit 5664eae.</span> All 108 test suites passing.
+            </div>
+          </div>
+        </div>
+
+        <!-- ARCHITECTURAL GAPS -->
+        <div class="mb-6">
+          <h3 class="text-lg font-bold mb-3 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-purple-500"></span>
+            Architectural Gaps
+          </h3>
+
+          <div class="finding-card" data-severity="high">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">No CI/CD Pipeline</span>
+              <span class="badge severity-high">HIGH</span>
+            </div>
+            <p class="text-sm text-slate-300">No <code>.github/workflows/</code> directory exists. No automated testing, linting, or deployment.</p>
+          </div>
+
+          <div class="finding-card" data-severity="medium">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">CacheManager disabled by default in LLMClient</span>
+              <span class="badge severity-medium">MEDIUM</span>
+            </div>
+            <p class="text-sm text-slate-300"><code>src/llm/LLMClient.ts:73</code> — <code>new CacheManager({ enabled: false })</code>. Cache exists but is never active unless <code>enableCache()</code> is explicitly called. RetryManager is wired and active.</p>
+          </div>
+
+          <div class="finding-card" data-severity="medium">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">SmartRouter not used by main loop</span>
+              <span class="badge severity-medium">MEDIUM</span>
+            </div>
+            <p class="text-sm text-slate-300"><code>src/routing/SmartRouter.ts</code> — Exported from index.ts but RalphLoop uses <code>GeneratorRegistry.dispatch()</code> instead. SmartRouter handles prompt-based routing to LLM models, not generators.</p>
+          </div>
+
+          <div class="finding-card" data-severity="medium">
+            <div class="flex items-center justify-between mb-2">
+              <span class="font-semibold">Exported but unwired modules (7)</span>
+              <span class="badge severity-medium">MEDIUM</span>
+            </div>
+            <p class="text-sm text-slate-300">These are exported from src/index.ts but not used by RalphLoop or any active flow: <code>SoupLoop</code>, <code>DNAExtractor</code>, <code>ArchiveLearning</code>, <code>QualityArchive</code>, <code>AestheticModel</code>, <code>MetaMode</code>, <code>SmartRouter</code>. May be intended for future use or library consumers.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 4: DOCUMENTATION ==================== -->
+  <div class="tab-content" id="tab-docs">
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-b-lg p-6">
+      <h3 class="text-lg font-bold mb-4">Documentation Audit</h3>
+
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="text-left text-slate-400 border-b border-[var(--border)]">
+            <th class="pb-2 pr-4">File</th>
+            <th class="pb-2 pr-4">Status</th>
+            <th class="pb-2 pr-4">Issues</th>
+            <th class="pb-2">Action</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-[var(--border)]">
+          <tr>
+            <td class="py-3 pr-4 mono text-xs">PRD.md</td>
+            <td class="py-3 pr-4"><span class="badge severity-high">STALE</span></td>
+            <td class="py-3 pr-4 text-xs text-slate-300">Title: "Atelier — Creative Coding Agent PRD". Doesn't mention swarm, collab, music-to-visual, or Hydra/Token Mill origins.</td>
+            <td class="py-3 text-xs text-amber-400">Rename, add merged-system context</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-4 mono text-xs">README.md</td>
+            <td class="py-3 pr-4"><span class="badge severity-high">STALE</span></td>
+            <td class="py-3 pr-4 text-xs text-slate-300">Missing sections for: swarm generation, deep collaboration, Hydra visual platform, Token Mill, evolution system. Also still references removed <code>inception</code> provider in config examples (lines 140-150, 204).</td>
+            <td class="py-3 text-xs text-amber-400">Add missing features, remove inception refs</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-4 mono text-xs">SYSTEM_AUDIT_REPORT.md</td>
+            <td class="py-3 pr-4"><span class="badge severity-high">STALE</span></td>
+            <td class="py-3 pr-4 text-xs text-slate-300">Post-remediation report from 2026-03-07. Still references removed "Inception" provider (lines 17, 26, 38, 58, 138) and <code>INCEPTION_API_KEY</code>. Uses old "Atelier" name throughout.</td>
+            <td class="py-3 text-xs text-amber-400">Remove inception refs, update with post-merge findings</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-4 mono text-xs">IMPACT_ANALYSIS.md</td>
+            <td class="py-3 pr-4"><span class="badge severity-medium">STALE</span></td>
+            <td class="py-3 pr-4 text-xs text-slate-300">Post-remediation report from 2026-03-07. Uses "Atelier" name. References "Inception" provider. Predates three-codebase merge.</td>
+            <td class="py-3 text-xs text-amber-400">Update or archive</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-4 mono text-xs">DOCS_VS_CODE.md</td>
+            <td class="py-3 pr-4"><span class="badge severity-medium">STALE</span></td>
+            <td class="py-3 pr-4 text-xs text-slate-300">Consistency check. Claims generateMusic/generateVisuals/generateMusicToVisual "don't exist in exports" — they do now. Other findings may also be outdated.</td>
+            <td class="py-3 text-xs text-amber-400">Re-run consistency check</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-4 mono text-xs">PHASE5_TRANSPARENCY_TUI.md</td>
+            <td class="py-3 pr-4"><span class="badge severity-low">HISTORICAL</span></td>
+            <td class="py-3 pr-4 text-xs text-slate-300">Phase-specific planning doc. Likely completed.</td>
+            <td class="py-3 text-xs text-slate-400">Archive or remove</td>
+          </tr>
+          <tr>
+            <td class="py-3 pr-4 mono text-xs">activity.md</td>
+            <td class="py-3 pr-4"><span class="badge severity-low">HISTORICAL</span></td>
+            <td class="py-3 pr-4 text-xs text-slate-300">Activity log. Keep as-is.</td>
+            <td class="py-3 text-xs text-slate-400">No action needed</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="mt-6">
+        <h4 class="font-semibold mb-3">Stale Name References in Source Code</h4>
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-slate-400 border-b border-[var(--border)]">
+              <th class="pb-2 pr-4">Legacy Name</th>
+              <th class="pb-2 pr-4">Occurrences</th>
+              <th class="pb-2 pr-4">Correct Replacement</th>
+              <th class="pb-2">Note</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[var(--border)]">
+            <tr>
+              <td class="py-2 pr-4"><code class="text-blue-400">Atelier</code> (class/config)</td>
+              <td class="py-2 pr-4">16</td>
+              <td class="py-2 pr-4"><code class="text-purple-400">Liminal</code></td>
+              <td class="py-2 text-xs text-slate-400">Atelier class, AtelierConfig interfaces, comments</td>
+            </tr>
+            <tr>
+              <td class="py-2 pr-4"><code class="text-emerald-400">Hydra</code> (system)</td>
+              <td class="py-2 pr-4">~20</td>
+              <td class="py-2 pr-4">Context-dependent</td>
+              <td class="py-2 text-xs text-slate-400">Some are legitimate (hydra-synth platform). Rename system refs to "reasoning service"</td>
+            </tr>
+            <tr>
+              <td class="py-2 pr-4"><code class="text-amber-400">TokenMill</code></td>
+              <td class="py-2 pr-4">16</td>
+              <td class="py-2 pr-4"><code class="text-purple-400">Swarm</code></td>
+              <td class="py-2 text-xs text-slate-400">TokenMillOrchestrator → SwarmOrchestrator</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== TAB 5: RECOMMENDATIONS ==================== -->
+  <div class="tab-content" id="tab-recs">
+    <div class="bg-[var(--surface)] border border-[var(--border)] rounded-b-lg p-6">
+      <h3 class="text-lg font-bold mb-4">Prioritized Recommendations</h3>
+      <p class="text-xs text-slate-400 mb-6">Sorted by impact. Dependencies noted. Effort: S = small (< 1hr), M = medium (1-4hr), L = large (4+hr).</p>
+
+      <div class="space-y-3">
+
+        <!-- Rec 1 -->
+        <div class="finding-card" style="opacity: 0.6;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-emerald-400">#1</span>
+              <span class="font-semibold line-through">Fix all test imports (dist/ → src/)</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge effort-S">S</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-400 mb-2">29 test files updated from <code>dist/</code> → <code>src/</code>. Fixed stale evaluation shape expectations in full-loop.test.js. All 108 suites passing.</p>
+          <p class="text-xs text-slate-500"><strong>Commit:</strong> 5664eae</p>
+        </div>
+
+        <!-- Rec 2 -->
+        <div class="finding-card" style="opacity: 0.6;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-emerald-400">#2</span>
+              <span class="font-semibold line-through">Delete dead code files</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge effort-S">S</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-400 mb-2">Deleted <code>ErrorHandler.ts</code> and <code>UnifiedConfig.ts</code>. EvaluationFramework.ts wired into RalphLoop.</p>
+          <p class="text-xs text-slate-500"><strong>Commit:</strong> d4dadaa</p>
+        </div>
+
+        <!-- Rec 3 -->
+        <div class="finding-card" style="opacity: 0.6;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-emerald-400">#3</span>
+              <span class="font-semibold line-through">Unify config interfaces</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge effort-M">M</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-400 mb-2">UnifiedConfig.ts deleted. index.ts <code>AtelierConfig</code> renamed to <code>LiminalConfig</code>. ConfigLoader.ts kept as file-based config (different shape).</p>
+          <p class="text-xs text-slate-500"><strong>Commit:</strong> 5664eae</p>
+        </div>
+
+        <!-- Rec 4 -->
+        <div class="finding-card" style="opacity: 0.6;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-emerald-400">#4</span>
+              <span class="font-semibold line-through">Consolidate scoring systems</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge effort-L">L</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-400 mb-2">Replaced inline LLM scoring in CollaborativeClient.scoreOutputs() with quickScore() from Scoring.ts. Eliminates redundant LLM calls per round. 3 scoring systems remain: CreativeEvaluator (loop), HeuristicScorer (swarm), Scoring.ts (collab).</p>
+          <p class="text-xs text-slate-500"><strong>Commit:</strong> 5664eae</p>
+        </div>
+
+        <!-- Rec 5 -->
+        <div class="finding-card" style="opacity: 0.6;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-emerald-400">#5</span>
+              <span class="font-semibold line-through">Rename legacy names</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge effort-M">M</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-400 mb-2">Renamed Atelier → Liminal (class + config), cleaned "Ported from Hydra" comments (5 files), updated Token Mill → Swarm in comments. hydra-synth platform refs preserved. Note: TokenMillOrchestrator file/class name kept (larger refactor scope).</p>
+          <p class="text-xs text-slate-500"><strong>Commit:</strong> 5664eae</p>
+        </div>
+
+        <!-- Rec 6 -->
+        <div class="finding-card" style="opacity: 0.6;">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-emerald-400">#6</span>
+              <span class="font-semibold line-through">Update documentation</span>
+              <span class="badge" style="background: rgba(16,185,129,0.2); color: #10b981; border: 1px solid rgba(16,185,129,0.4);">DONE</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge effort-M">M</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-400 mb-2">Updated PRD.md, README.md, SYSTEM_AUDIT_REPORT.md, IMPACT_ANALYSIS.md, DOCS_VS_CODE.md with Liminal naming. Removed all Inception references. Archived PHASE5_TRANSPARENCY_TUI.md to docs/archive/.</p>
+          <p class="text-xs text-slate-500"><strong>Commit:</strong> 5664eae</p>
+        </div>
+
+        <!-- Rec 7 -->
+        <div class="finding-card">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-blue-400">#7</span>
+              <span class="font-semibold">Add CI/CD pipeline</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge severity-high">HIGH</span>
+              <span class="badge effort-M">M</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-300 mb-2">Create .github/workflows/ with at minimum: test on push, lint check. Consider adding build verification after test imports are fixed.</p>
+          <p class="text-xs text-slate-500"><strong>Files:</strong> .github/workflows/ci.yml (new)</p>
+          <p class="text-xs text-slate-500"><strong>Depends on:</strong> Nothing (test imports now fixed)</p>
+        </div>
+
+        <!-- Rec 8 -->
+        <div class="finding-card">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-blue-400">#8</span>
+              <span class="font-semibold">Audit exported-but-unwired modules</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge severity-medium">MEDIUM</span>
+              <span class="badge effort-M">M</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-300 mb-2">7 modules exported from index.ts but not used by RalphLoop: SoupLoop, DNAExtractor, ArchiveLearning, QualityArchive, AestheticModel, MetaMode, SmartRouter. Decide: wire into flows, mark as library API, or remove exports.</p>
+          <p class="text-xs text-slate-500"><strong>Depends on:</strong> Architecture decision on which modules are library API vs internal</p>
+        </div>
+
+        <!-- Rec 9 -->
+        <div class="finding-card">
+          <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold text-emerald-400">#9</span>
+              <span class="font-semibold">Enable LLM cache by default (optional)</span>
+            </div>
+            <div class="flex gap-2">
+              <span class="badge severity-low">LOW</span>
+              <span class="badge effort-S">S</span>
+            </div>
+          </div>
+          <p class="text-sm text-slate-300 mb-2">LLMClient creates CacheManager with <code>enabled: false</code>. Consider enabling for swarm/collab flows where repeated prompts occur. Keep disabled for single-shot CLI use.</p>
+          <p class="text-xs text-slate-500"><strong>Files:</strong> src/llm/LLMClient.ts:73</p>
+          <p class="text-xs text-slate-500"><strong>Depends on:</strong> Performance testing</p>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="max-w-7xl mx-auto mt-8 pb-8 text-center text-xs text-slate-500">
+  <p>Liminal Post-Merge Architecture Audit &middot; Generated 2026-03-20 &middot; Updated 2026-03-20 &middot; All findings verified against source code via grep and file reads</p>
+  <p class="mt-1">Three codebases merged: Liminal (core creative loop) + Hydra (collaborative intelligence) + Token Mill (swarm generation)</p>
+  <p class="mt-1">6 of 9 recommendations completed. Remaining: #7 (CI/CD), #8 (exported-but-unwired audit), #9 (LLM cache).</p>
+</div>
+
+<script>
+// ====== TAB NAVIGATION ======
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// ====== FLOW NAVIGATION ======
+document.querySelectorAll('[data-flow]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-flow]').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.flow-container').forEach(c => c.style.display = 'none');
+    btn.classList.add('active');
+    document.getElementById('flow-' + btn.dataset.flow).style.display = 'block';
+  });
+});
+
+// ====== FLOW STEP EXPAND ======
+document.querySelectorAll('.flow-step').forEach(step => {
+  step.addEventListener('click', () => {
+    const panel = step.querySelector('.detail-panel');
+    if (panel) panel.classList.toggle('open');
+  });
+});
+
+// ====== FINDINGS FILTER ======
+document.querySelectorAll('[data-severity]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-severity]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const severity = btn.dataset.severity;
+    document.querySelectorAll('.finding-card').forEach(card => {
+      if (severity === 'all' || card.dataset.severity === severity) {
+        card.style.display = '';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  });
+});
+
+// ====== COLLAPSE TOGGLES ======
+document.querySelectorAll('.collapse-toggle').forEach(toggle => {
+  toggle.addEventListener('click', () => {
+    toggle.classList.toggle('open');
+    const target = document.getElementById(toggle.dataset.target);
+    if (target) target.classList.toggle('open');
+  });
+});
+
+// ====== MODULE TABLE ======
+const modules = [
+  // Core (Atelier)
+  { path: 'src/core/RalphLoop.ts', origin: 'atelier', status: 'active', consumers: 'index.ts (run, Liminal)' },
+  { path: 'src/core/CreativeEvaluator.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop, EvaluationFramework, SoupLoop, IGA + 11 tests' },
+  { path: 'src/core/ContextAccumulation.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/core/PromptStore.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/core/PromiseDetector.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/core/SafetyGuardrails.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/core/SelfImprovement.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop (optional)' },
+  { path: 'src/core/EvaluationFramework.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/core/FitnessCalculator.ts', origin: 'atelier', status: 'active', consumers: 'EvaluationFramework' },
+  // Deleted in commit d4dadaa (dead code cleanup)
+  // src/core/ErrorHandler.ts — REMOVED
+  { path: 'src/core/SoupLoop.ts', origin: 'atelier', status: 'exported', consumers: 'Exported from index.ts, unclear usage' },
+  // Config
+  { path: 'src/config/ConfigLoader.ts', origin: 'atelier', status: 'active', consumers: 'index.ts, LLMClient' },
+  // Deleted in commit d4dadaa (dead code cleanup)
+  // src/config/UnifiedConfig.ts — REMOVED
+  { path: 'src/config/PromptHistory.ts', origin: 'atelier', status: 'active', consumers: 'LLMClient' },
+  // LLM
+  { path: 'src/llm/LLMClient.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop, all generators, collab, swarm' },
+  { path: 'src/llm/CacheManager.ts', origin: 'atelier', status: 'active', consumers: 'LLMClient (disabled by default)' },
+  { path: 'src/llm/RetryManager.ts', origin: 'atelier', status: 'active', consumers: 'LLMClient' },
+  // Collab (Hydra)
+  { path: 'src/collab/DeepCollaboration.ts', origin: 'hydra', status: 'active', consumers: 'RalphLoop (useDeepCollab)' },
+  { path: 'src/collab/CollaborativeClient.ts', origin: 'hydra', status: 'active', consumers: 'RalphLoop (useCollab)' },
+  { path: 'src/collab/Scoring.ts', origin: 'hydra', status: 'active', consumers: 'CollaborativeClient, DeepCollaboration, EvaluationFramework' },
+  { path: 'src/collab/critics/ArtisticCritic.ts', origin: 'hydra', status: 'active', consumers: 'DeepCollaboration' },
+  { path: 'src/collab/critics/TechnicalCritic.ts', origin: 'hydra', status: 'active', consumers: 'DeepCollaboration' },
+  { path: 'src/collab/critics/DomainExpert.ts', origin: 'hydra', status: 'active', consumers: 'DeepCollaboration' },
+  // Swarm (Token Mill)
+  { path: 'src/swarm/TokenMillOrchestrator.ts', origin: 'tokenmill', status: 'active', consumers: 'RalphLoop (useSwarm)' },
+  { path: 'src/swarm/VotingEngine.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator' },
+  { path: 'src/swarm/HeuristicScorer.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator, EvaluationFramework' },
+  { path: 'src/swarm/MiningEngine.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator' },
+  { path: 'src/swarm/personas.ts', origin: 'tokenmill', status: 'active', consumers: 'TokenMillOrchestrator' },
+  // Generators
+  { path: 'src/generators/GeneratorRegistry.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/generators/registerGenerators.ts', origin: 'atelier', status: 'active', consumers: 'index.ts' },
+  { path: 'src/generators/p5/P5Generator.ts', origin: 'atelier', status: 'active', consumers: 'GeneratorRegistry' },
+  { path: 'src/generators/p5/P5GeneratorLLM.ts', origin: 'atelier', status: 'active', consumers: 'GeneratorRegistry, index.ts' },
+  { path: 'src/generators/p5/CellularAutomata.ts', origin: 'atelier', status: 'active', consumers: 'P5Generator' },
+  { path: 'src/generators/p5/FlowField.ts', origin: 'atelier', status: 'active', consumers: 'P5Generator' },
+  { path: 'src/generators/p5/ParticleSystem.ts', origin: 'atelier', status: 'active', consumers: 'P5Generator' },
+  { path: 'src/generators/p5/Noise.ts', origin: 'atelier', status: 'active', consumers: 'P5Generator' },
+  { path: 'src/generators/glsl/ShaderGenerator.ts', origin: 'atelier', status: 'active', consumers: 'GeneratorRegistry' },
+  { path: 'src/generators/glsl/ShaderTemplates.ts', origin: 'atelier', status: 'active', consumers: 'ShaderGenerator' },
+  { path: 'src/generators/three/ThreeGenerator.ts', origin: 'atelier', status: 'active', consumers: 'GeneratorRegistry' },
+  { path: 'src/generators/three/ThreeTemplates.ts', origin: 'atelier', status: 'active', consumers: 'ThreeGenerator' },
+  // Prompts
+  { path: 'src/prompts/PromptLibrary.ts', origin: 'atelier', status: 'active', consumers: 'P5GeneratorLLM, generateVisuals, collab' },
+  { path: 'src/prompts/index.ts', origin: 'atelier', status: 'active', consumers: 'index.ts' },
+  { path: 'src/prompts/hydra.ts', origin: 'hydra', status: 'active', consumers: 'PromptLibrary (27 prompts)' },
+  { path: 'src/prompts/swarm.ts', origin: 'tokenmill', status: 'active', consumers: 'PromptLibrary' },
+  { path: 'src/prompts/collaboration.ts', origin: 'hydra', status: 'active', consumers: 'PromptLibrary' },
+  { path: 'src/prompts/collab-internal.ts', origin: 'hydra', status: 'active', consumers: 'DeepCollaboration' },
+  { path: 'src/prompts/personas.ts', origin: 'tokenmill', status: 'active', consumers: 'PromptLibrary' },
+  // Music / Visual
+  { path: 'src/music/generateMusic.ts', origin: 'atelier', status: 'active', consumers: 'index.ts, generateMusicToVisual' },
+  { path: 'src/generateVisuals.ts', origin: 'atelier', status: 'active', consumers: 'index.ts, generateMusicToVisual' },
+  { path: 'src/musicToVisual/generateMusicToVisual.ts', origin: 'atelier', status: 'active', consumers: 'index.ts' },
+  // Export / Gallery
+  { path: 'src/export/Exporter.ts', origin: 'atelier', status: 'active', consumers: 'index.ts (run)' },
+  { path: 'src/gallery/Gallery.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop, index.ts' },
+  { path: 'src/gallery/SeedArchive.ts', origin: 'atelier', status: 'active', consumers: 'index.ts' },
+  { path: 'src/gallery/FeedbackQueue.ts', origin: 'atelier', status: 'active', consumers: 'PreviewServer' },
+  // Routing
+  { path: 'src/routing/SmartRouter.ts', origin: 'other', status: 'exported', consumers: 'Exported, not used by RalphLoop' },
+  { path: 'src/routing/RoutingData.ts', origin: 'other', status: 'exported', consumers: 'SmartRouter' },
+  // Scavenger
+  { path: 'src/scavenger/DNAExtractor.ts', origin: 'other', status: 'exported', consumers: 'Exported, unclear wiring' },
+  // Evolution
+  { path: 'src/evolution/AestheticModel.ts', origin: 'other', status: 'exported', consumers: 'Exported, unclear if active' },
+  { path: 'src/evolution/MetaMode.ts', origin: 'other', status: 'exported', consumers: 'Exported, unclear if active' },
+  { path: 'src/evolution/IGA.ts', origin: 'other', status: 'active', consumers: 'CreativeEvaluator' },
+  { path: 'src/evolution/MapElites.ts', origin: 'other', status: 'exported', consumers: 'Exported from index.ts' },
+  { path: 'src/evolution/NoveltyArchive.ts', origin: 'other', status: 'exported', consumers: 'MapElites' },
+  { path: 'src/evolution/BehaviorVectors.ts', origin: 'other', status: 'exported', consumers: 'Evolution modules' },
+  // Learning
+  { path: 'src/learning/ArchiveLearning.ts', origin: 'hydra', status: 'exported', consumers: 'Exported, unclear wiring' },
+  { path: 'src/learning/QualityArchive.ts', origin: 'hydra', status: 'exported', consumers: 'Exported, unclear wiring' },
+  // Render
+  { path: 'src/render/Renderer.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/render/PreviewServer.ts', origin: 'atelier', status: 'active', consumers: 'index.ts' },
+  // Utils
+  { path: 'src/utils/generateHTML.ts', origin: 'atelier', status: 'active', consumers: 'Exporter' },
+  { path: 'src/utils/hashCode.ts', origin: 'atelier', status: 'active', consumers: 'Gallery' },
+  { path: 'src/utils/mergeSketchCode.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  { path: 'src/utils/normalizePath.ts', origin: 'atelier', status: 'active', consumers: 'Exporter, Gallery, SeedArchive' },
+  { path: 'src/utils/promptToGeneratorParams.ts', origin: 'atelier', status: 'active', consumers: 'GeneratorRegistry' },
+  // GUI
+  { path: 'src/gui/exportSelected.ts', origin: 'atelier', status: 'active', consumers: 'PreviewServer' },
+  { path: 'src/gui/liveOrganismState.ts', origin: 'atelier', status: 'active', consumers: 'PreviewServer' },
+  { path: 'src/gui/previewState.ts', origin: 'atelier', status: 'active', consumers: 'PreviewServer' },
+  // TUI
+  { path: 'src/tui/InteractiveMode.ts', origin: 'atelier', status: 'active', consumers: 'bin/liminal' },
+  // UI
+  { path: 'src/ui/TransparencyViewer.ts', origin: 'hydra', status: 'active', consumers: 'PreviewServer' },
+  // Sandbox
+  { path: 'src/sandbox/SandboxRunner.ts', origin: 'atelier', status: 'active', consumers: 'RalphLoop' },
+  // Improvement
+  { path: 'src/improvement/requestImprovement.ts', origin: 'atelier', status: 'active', consumers: 'index.ts' },
+  { path: 'src/improvement/SelfReflection.ts', origin: 'atelier', status: 'active', consumers: 'requestImprovement' },
+  // Root
+  { path: 'src/index.ts', origin: 'atelier', status: 'active', consumers: 'bin/liminal, all imports' },
+  { path: 'src/constants.ts', origin: 'atelier', status: 'active', consumers: 'LLMClient, ConfigLoader' },
+];
+
+function renderModuleTable(filter = 'all', search = '') {
+  const tbody = document.getElementById('module-tbody');
+  tbody.innerHTML = '';
+  const filtered = modules.filter(m => {
+    const originMatch = filter === 'all' || m.origin === filter ||
+      (filter === 'dead' && m.status === 'dead') ||
+      (filter === 'other' && m.origin === 'other');
+    const searchMatch = !search || m.path.toLowerCase().includes(search.toLowerCase());
+    return originMatch && searchMatch;
+  });
+
+  filtered.forEach(m => {
+    const tr = document.createElement('tr');
+    tr.className = 'border-b border-[var(--border)] hover:bg-[var(--surface2)] cursor-pointer';
+
+    const originClass = m.status === 'dead' ? 'origin-dead' :
+      m.origin === 'atelier' ? 'origin-atelier' :
+      m.origin === 'hydra' ? 'origin-hydra' :
+      m.origin === 'tokenmill' ? 'origin-tokenmill' : 'bg-slate-700/50 text-slate-300 border border-slate-500';
+
+    const statusLabel = m.status === 'dead' ? '<span class="text-red-400">DEAD</span>' :
+      m.status === 'exported' ? '<span class="text-slate-400">EXPORTED</span>' :
+      '<span class="text-emerald-400">ACTIVE</span>';
+
+    const statusBadge = m.status === 'dead' ? 'origin-dead' :
+      m.status === 'exported' ? 'bg-slate-700/50 text-slate-300 border border-slate-500' :
+      'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+
+    tr.innerHTML = `
+      <td class="py-2 pr-4 mono text-xs">${m.path}</td>
+      <td class="py-2 pr-4"><span class="badge ${originClass}">${m.origin}</span></td>
+      <td class="py-2 pr-4"><span class="badge ${statusBadge}">${statusLabel}</span></td>
+      <td class="py-2 text-xs text-slate-400">${m.consumers}</td>
+    `;
+    tbody.appendChild(tr);
+  });
+}
+
+// Module filter buttons
+document.querySelectorAll('[data-filter]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('[data-filter]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderModuleTable(btn.dataset.filter, document.getElementById('module-search').value);
+  });
+});
+
+// Module search
+document.getElementById('module-search').addEventListener('input', (e) => {
+  const activeFilter = document.querySelector('[data-filter].active')?.dataset.filter || 'all';
+  renderModuleTable(activeFilter, e.target.value);
+});
+
+// Initial render
+renderModuleTable();
+</script>
+
+</body>
+</html>

@@ -38,6 +38,9 @@ export class LLMAuthError extends LLMError {
 // ── Config & Response ──
 
 import { SERVICE_DEFAULTS } from '../constants.js';
+import { PromptLibrary } from '../prompts/index.js';
+import { RetryManager } from './RetryManager.js';
+import { CacheManager } from './CacheManager.js';
 
 export interface LLMConfig {
   provider: 'ollama' | 'openai' | 'minimax' | 'lmstudio' | 'hybrid';
@@ -47,9 +50,9 @@ export interface LLMConfig {
   temperature?: number;
   maxTokens?: number;
   costPerToken?: { input?: number; output?: number };
-  /** When true, call hydra's /reason endpoint to enhance prompts before generation */
+  /** When true, call the reasoning service /reason endpoint to enhance prompts before generation */
   useReasoningTransfer?: boolean;
-  /** Base URL for hydra reasoning service (default http://localhost:8000) */
+  /** Base URL for reasoning service (default http://localhost:8000) */
   hydraBaseUrl?: string;
 }
 
@@ -61,13 +64,13 @@ export interface LLMResponse {
   error?: string;
 }
 
-/** Read env var with ATELIER_* fallback for backward compatibility. */
 function env(key: string): string | undefined {
-  return process.env[`LIMINAL_${key}`] ?? process.env[`ATELIER_${key}`];
+  return process.env[`LIMINAL_${key}`];
 }
 
 export class LLMClient {
   private config: LLMConfig;
+  private cache = new CacheManager({ enabled: false }); // Disabled by default for single-shot
 
   private static readonly COST_ESTIMATES: Record<string, { input: number; output: number }> = {
     openai: { input: 0.00001, output: 0.00003 },
@@ -94,6 +97,11 @@ export class LLMClient {
     };
   }
 
+  /** Enable response caching. Disabled by default for single-shot generation. */
+  enableCache(options?: { ttlMs?: number; maxEntries?: number }): void {
+    this.cache = new CacheManager({ enabled: true, ...options });
+  }
+
   /**
    * Generic LLM generation method.
    * Routes to the configured provider (lmstudio, ollama, openai, minimax, hybrid).
@@ -101,29 +109,44 @@ export class LLMClient {
    */
   async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<LLMResponse> {
     try {
-      // Optionally enhance prompt via hydra reasoning transfer
+      // Optionally enhance prompt via reasoning transfer
       let enhancedUserPrompt = userPrompt;
       if (this.config.useReasoningTransfer) {
-        enhancedUserPrompt = await this.enhanceWithHydraReasoning(userPrompt, systemPrompt);
+        enhancedUserPrompt = await this.enhanceWithReasoning(userPrompt, systemPrompt);
       }
 
-      if (this.config.provider === 'ollama') {
-        return await this.callOllama(systemPrompt, enhancedUserPrompt, signal);
-      } else if (this.config.provider === 'openai') {
-        return await this.callOpenAI(systemPrompt, enhancedUserPrompt, signal);
-      } else if (this.config.provider === 'minimax') {
-        return await this.callMinimax(systemPrompt, enhancedUserPrompt, signal);
-      } else if (this.config.provider === 'lmstudio') {
-        return await this.callLMStudio(systemPrompt, enhancedUserPrompt, signal);
-      } else if (this.config.provider === 'hybrid') {
-        return await this.callHybrid(systemPrompt, enhancedUserPrompt, signal);
-      } else {
-        return { code: '', success: false, error: 'Unknown provider: ' + this.config.provider };
+      // Check cache
+      const cached = this.cache.get(systemPrompt, enhancedUserPrompt);
+      if (cached) {
+        return { code: cached, success: true };
       }
+
+      const result = await RetryManager.executeWithRetry(async () => {
+        if (this.config.provider === 'ollama') {
+          return await this.callOllama(systemPrompt, enhancedUserPrompt, signal);
+        } else if (this.config.provider === 'openai') {
+          return await this.callOpenAI(systemPrompt, enhancedUserPrompt, signal);
+        } else if (this.config.provider === 'minimax') {
+          return await this.callMinimax(systemPrompt, enhancedUserPrompt, signal);
+        } else if (this.config.provider === 'lmstudio') {
+          return await this.callLMStudio(systemPrompt, enhancedUserPrompt, signal);
+        } else if (this.config.provider === 'hybrid') {
+          return await this.callHybrid(systemPrompt, enhancedUserPrompt, signal);
+        } else {
+          return { code: '', success: false, error: 'Unknown provider: ' + this.config.provider };
+        }
+      });
+
+      // Write to cache on success
+      if (result.success && result.code) {
+        this.cache.set(systemPrompt, enhancedUserPrompt, result.code);
+      }
+
+      return result;
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
       const isRetryable = error instanceof LLMError && error.retryable;
-      console.error('LLMClient.generate failed:', errMsg, isRetryable ? '(retryable)' : '');
+      console.error('LLMClient.generate failed:', errMsg, isRetryable ? '(retryable, retries exhausted)' : '');
       return {
         code: `// LLM generation failed: ${errMsg}`,
         success: false,
@@ -133,51 +156,16 @@ export class LLMClient {
   }
 
   async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal): Promise<LLMResponse> {
-    const systemPrompt = `You are an expert creative coding assistant specializing in p5.js.
-Generate valid, creative p5.js sketch code based on the user's description.
-
-Rules:
-1. Return ONLY valid JavaScript code for p5.js (no markdown, no explanations)
-2. Include setup() and draw() functions
-3. Use creative colors, animations, and effects that match the prompt
-4. Add comments explaining key parts
-5. Ensure code is self-contained and runnable
-6. Canvas size: use createCanvas(800, 600) or appropriate size
-7. Include p5.js library usage (shapes, colors, animation, interaction if relevant)
-
-Example output format:
-function setup() {
-  createCanvas(800, 600);
-  // initialization
-}
-
-function draw() {
-  // drawing code
-}`;
-
-    const userPrompt = `Create a p5.js sketch: ${prompt}
-${context ? `\nContext: ${context}` : ''}`;
-
-    return this.generate(systemPrompt, userPrompt, signal);
+    const rendered = PromptLibrary.render('p5.generate', { prompt, context: context || '' });
+    return this.generate(rendered.system, rendered.user, signal);
   }
 
   /**
    * Ask the LLM to improve existing p5.js sketch code.
    */
   async improveP5Sketch(currentCode: string): Promise<LLMResponse> {
-    const systemPrompt = `You are an expert creative coding assistant specializing in p5.js.
-Improve the following p5.js sketch. Keep it valid and runnable.
-
-Rules:
-1. Return ONLY valid JavaScript code for p5.js (no markdown, no explanations)
-2. Preserve or add setup() and draw() as needed
-3. Improve aesthetics, performance, or structure without changing the core idea
-4. Ensure code is self-contained and runnable
-5. Canvas size: use createCanvas(800, 600) or appropriate size`;
-
-    const userPrompt = `Improve this p5.js sketch. Current code:\n\n${currentCode}`;
-
-    return this.generate(systemPrompt, userPrompt);
+    const rendered = PromptLibrary.render('p5.improve', { code: currentCode });
+    return this.generate(rendered.system, rendered.user);
   }
 
   private parseChatCompletionResponse(data: { choices?: Array<{ message?: { content?: string; reasoning_content?: string } }> }): LLMResponse {
@@ -194,8 +182,14 @@ Rules:
     };
   }
 
-  private async callOpenAI(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
-    const baseUrl = this.config.baseUrl || 'https://api.openai.com/v1';
+  private async callProvider(
+    provider: string,
+    defaultBaseUrl: string,
+    system: string,
+    user: string,
+    signal?: AbortSignal
+  ): Promise<LLMResponse> {
+    const baseUrl = this.config.baseUrl || defaultBaseUrl;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -221,97 +215,34 @@ Rules:
       });
     } catch (err) {
       if (err instanceof DOMException && err.name === 'AbortError') {
-        throw new LLMTimeoutError('openai');
+        throw new LLMTimeoutError(provider);
       }
-      throw new LLMError(`OpenAI API request failed: ${err instanceof Error ? err.message : err}`, 'openai', undefined, false);
+      throw new LLMError(
+        `${provider} API request failed: ${err instanceof Error ? err.message : err}`,
+        provider,
+        undefined,
+        false
+      );
     }
 
     if (!response.ok) {
-      throw this.classifyHttpError('openai', response.status, response.statusText);
+      throw this.classifyHttpError(provider, response.status, response.statusText);
     }
 
     const data = await response.json();
     return this.parseChatCompletionResponse(data);
+  }
+
+  private async callOpenAI(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
+    return this.callProvider('openai', 'https://api.openai.com/v1', system, user, signal);
   }
 
   private async callMinimax(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
-    const baseUrl = this.config.baseUrl || SERVICE_DEFAULTS.MINIMAX_URL;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (this.config.apiKey) {
-      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-    }
-
-    let response: Response;
-    try {
-      response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: this.config.model,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user },
-          ],
-          temperature: this.config.temperature,
-          max_tokens: this.config.maxTokens,
-        }),
-        signal,
-      });
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        throw new LLMTimeoutError('minimax');
-      }
-      throw new LLMError(`Minimax API request failed: ${err instanceof Error ? err.message : err}`, 'minimax', undefined, false);
-    }
-
-    if (!response.ok) {
-      throw this.classifyHttpError('minimax', response.status, response.statusText);
-    }
-
-    const data = await response.json();
-    return this.parseChatCompletionResponse(data);
+    return this.callProvider('minimax', SERVICE_DEFAULTS.MINIMAX_URL, system, user, signal);
   }
 
   private async callLMStudio(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
-    const baseUrl = this.config.baseUrl || SERVICE_DEFAULTS.LOCAL_LLM_URL;
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (this.config.apiKey) {
-      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
-    }
-
-    let response: Response;
-    try {
-      response = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model: this.config.model,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user },
-          ],
-          temperature: this.config.temperature,
-          max_tokens: this.config.maxTokens,
-        }),
-        signal,
-      });
-    } catch (err) {
-      if (err instanceof DOMException && err.name === 'AbortError') {
-        throw new LLMTimeoutError('lmstudio');
-      }
-      throw new LLMError(`LM Studio API request failed: ${err instanceof Error ? err.message : err}`, 'lmstudio', undefined, false);
-    }
-
-    if (!response.ok) {
-      throw this.classifyHttpError('lmstudio', response.status, response.statusText);
-    }
-
-    const data = await response.json();
-    return this.parseChatCompletionResponse(data);
+    return this.callProvider('lmstudio', SERVICE_DEFAULTS.LOCAL_LLM_URL, system, user, signal);
   }
 
   private async callHybrid(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
@@ -352,10 +283,10 @@ Rules:
   }
 
   /**
-   * Call hydra's /reason endpoint to enhance a prompt with reasoning transfer.
-   * Falls back to the original prompt on any failure (hydra is optional).
+   * Call the reasoning service /reason endpoint to enhance a prompt with reasoning transfer.
+   * Falls back to the original prompt on any failure (reasoning service is optional).
    */
-  private async enhanceWithHydraReasoning(prompt: string, systemPrompt: string): Promise<string> {
+  private async enhanceWithReasoning(prompt: string, systemPrompt: string): Promise<string> {
     try {
       const response = await fetch(`${this.config.hydraBaseUrl}/reason`, {
         method: 'POST',
@@ -369,14 +300,14 @@ Rules:
       });
 
       if (!response.ok) {
-        console.warn('Hydra reasoning transfer unavailable:', response.status);
+        console.warn('Reasoning service unavailable:', response.status);
         return prompt;
       }
 
       const data = await response.json();
       return data.enhanced_prompt || prompt;
     } catch {
-      console.warn('Hydra reasoning transfer failed, using original prompt');
+      console.warn('Reasoning transfer failed, using original prompt');
       return prompt;
     }
   }

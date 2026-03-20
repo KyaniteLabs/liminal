@@ -6,7 +6,7 @@
 
 import fs from 'fs/promises';
 import path from 'path';
-import { PreviewServer } from '../../dist/render/PreviewServer.js';
+import { PreviewServer } from '../../src/render/PreviewServer.js';
 
 describe('PreviewServer API', () => {
   let server;

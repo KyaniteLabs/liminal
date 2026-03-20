@@ -1,5 +1,5 @@
 /**
- * Atelier - Creative Coding Agent
+ * Liminal - Creative Coding Agent
  *
  * Main entry point for the creative coding agent with internal Ralph-Wiggum Loop
  * for generating emergent generative art.
@@ -53,7 +53,7 @@ import { SERVICE_DEFAULTS } from './constants.js';
 
 export const LIMINAL_VERSION = '1.0.0';
 
-export interface AtelierConfig {
+export interface LiminalConfig {
   name: string;
   version: string;
   loop: {
@@ -76,7 +76,7 @@ export interface AtelierConfig {
   };
 }
 
-export const defaultConfig: AtelierConfig = {
+export const defaultConfig: LiminalConfig = {
   name: 'liminal',
   version: LIMINAL_VERSION,
   loop: {
@@ -100,7 +100,7 @@ export const defaultConfig: AtelierConfig = {
 };
 
 /**
- * Main run function for Atelier
+ * Main run function for Liminal
  *
  * @param prompt - The creative prompt to generate from
  * @param options - Configuration options
@@ -122,7 +122,7 @@ export async function run(prompt: string, options: {
   onProgress?: (data: { iteration: number; score: number; promiseDetected: boolean; code: string; timestamp: string }) => void;
   /** Optional AbortSignal to stop the run (Stop button) */
   signal?: AbortSignal;
-  /** Enable Token Mill swarm generation */
+  /** Enable swarm generation */
   useSwarm?: boolean;
   /** Swarm generative mode */
   swarmMode?: string;
@@ -270,12 +270,12 @@ export async function run(prompt: string, options: {
     };
 
   } catch (error) {
-    throw new Error(`Atelier run failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Liminal run failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
 /**
- * Convenience function to run Atelier with CLI-style arguments
+ * Convenience function to run Liminal with CLI-style arguments
  *
  * @param args - Command line arguments
  * @returns Result object
@@ -301,16 +301,16 @@ export async function runFromArgs(args: {
 }
 
 /**
- * Main Atelier class - entry point for the creative coding agent
+ * Main Liminal class - entry point for the creative coding agent
  */
-export class Atelier {
-  private config: AtelierConfig;
+export class Liminal {
+  private config: LiminalConfig;
 
-  constructor(config: Partial<AtelierConfig> = {}) {
+  constructor(config: Partial<LiminalConfig> = {}) {
     this.config = { ...defaultConfig, ...config };
   }
 
-  getConfig(): AtelierConfig {
+  getConfig(): LiminalConfig {
     return this.config;
   }
 
@@ -410,7 +410,7 @@ export type { Feedback } from './gallery/FeedbackQueue.js';
 export { generateMusic };
 export type { GenerateMusicOptions, GenerateMusicResult } from './music/generateMusic.js';
 
-// generateVisuals API (Hydra / p5 reactive visuals)
+// generateVisuals API (hydra-synth / p5 reactive visuals)
 export { generateVisuals, type GenerateVisualsOptions, type GenerateVisualsResult } from './generateVisuals.js';
 
 // Music-to-visual bridge
@@ -431,7 +431,7 @@ export default {
   runFromArgs,
 
   // Main class
-  Atelier,
+  Liminal,
 
   // Core components
   RalphLoop,
@@ -504,7 +504,7 @@ export { ShaderGenerator };
 // Three.js Generator
 export { ThreeGenerator };
 
-// Token Mill Swarm
+// Swarm
 export { TokenMillOrchestrator } from './swarm/TokenMillOrchestrator.js';
 export { VotingEngine } from './swarm/VotingEngine.js';
 export { MiningEngine } from './swarm/MiningEngine.js';

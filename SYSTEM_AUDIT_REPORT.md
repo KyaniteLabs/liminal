@@ -1,4 +1,4 @@
-# Atelier Workspace — Full System Audit Report
+# Liminal Workspace — Full System Audit Report
 
 **Date:** 2026-03-07  
 **Scope:** Index with jcodemunch + full system audit (no gaps, no blindspots)  
@@ -14,7 +14,7 @@ After the Full Remediation to Launch (Waves 0–7), the following items from the
 - **ESLint:** `.eslintrc.cjs` added at repo root; `npm run lint` runs `eslint src/` with project config.
 - **Coverage:** Jest `collectCoverageFrom` now targets **source** (`src/**/*.ts`, `src/**/*.tsx`) instead of dist; coverage is collected from src without requiring a build.
 - **E2E tests:** `test/e2e/` added (full-loop cloud/local, seed+quality, GUI, sandbox+requestImprovement); E2E tests skip gracefully when backends are unavailable.
-- **Dual-LLM tests:** `test/integration/dual-llm.test.ts` exercises cloud (Inception) and local (Ollama) paths with clear skip messages when backends are missing.
+- **Dual-LLM tests:** `test/integration/dual-llm.test.ts` exercises cloud LLM and local (Ollama) paths with clear skip messages when backends are missing.
 
 See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining known gaps.
 
@@ -23,9 +23,9 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 ## 1. Jcodemunch index result
 
 - **Tool:** `user-jcodemunch` → `index_folder`
-- **Path:** `/Users/simongonzalezdecruz/atelier-workspace`
+- **Path:** `/Users/simongonzalezdecruz/liminal`
 - **Options:** `extra_ignore_patterns`: gallery, node_modules, dist, test-output, benchmark-output; `use_ai_summaries`: false; `incremental`: false
-- **Result:** Success. Repo id: `local/atelier-workspace`. Indexed **39 files**, **249 symbols**, **38 file summaries**. Languages: JS 11, TS 24, TSX 4.
+- **Result:** Success. Repo id: `local/liminal`. Indexed **39 files**, **249 symbols**, **38 file summaries**. Languages: JS 11, TS 24, TSX 4.
 - **Discovery skip counts:** skip_pattern 17263, gitignore 87, extra_ignore 1306, wrong_extension 31; no path_traversal/symlink/secret issues.
 - **No-symbols files (23):** All under `test/` (unit + integration + generators) plus `jest.config.js` — test files are not parsed for symbols by design.
 
@@ -35,8 +35,8 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 | Entry point | File | Invocation | Config source | Call graph |
 |-------------|------|------------|---------------|------------|
-| **CLI** | `bin/atelier` | `atelier` (npm bin) or `node bin/atelier` | ConfigLoader → `~/.atelier/config.json` + env; bin sets `process.env.ATELIER_LLM_*`; flags override | dotenv → initializeConfig → getEffectiveConfig → set env; generate → `run(prompt, opts)`; serve → PreviewServer; list → read ~/.atelier/output; configure → saveConfig; interactive → InteractiveMode.run() → run(); completions → generateCompletions(shell) |
-| **run / Atelier** | `src/index.ts` | Programmatic only | In-code `defaultConfig` + options; no ConfigLoader; LLM from process.env when LLMClient is created | run() → RalphLoop.run() → P5GeneratorLLM → LLMClient(env); run() → Exporter (HTML/JS/ZIP), Gallery.loadHistory(); Atelier.run() → same run() with merged config |
+| **CLI** | `bin/liminal` | `liminal` (npm bin) or `node bin/liminal` | ConfigLoader → `~/.liminal/config.json` + env; bin sets `process.env.LIMINAL_LLM_*`; flags override | dotenv → initializeConfig → getEffectiveConfig → set env; generate → `run(prompt, opts)`; serve → PreviewServer; list → read ~/.liminal/output; configure → saveConfig; interactive → InteractiveMode.run() → run(); completions → generateCompletions(shell) |
+| **run / Liminal** | `src/index.ts` | Programmatic only | In-code `defaultConfig` + options; no ConfigLoader; LLM from process.env when LLMClient is created | run() → RalphLoop.run() → P5GeneratorLLM → LLMClient(env); run() → Exporter (HTML/JS/ZIP), Gallery.loadHistory(); Liminal.run() → same run() with merged config |
 | **TUI** | `src/tui/index.tsx` | `npm run tui` → `node --import tsx src/tui/index.tsx` | Env only (dotenv); no ConfigLoader; run options hardcoded in handleGenerate | main() → loadGallery() → render(App); handleGenerate → import(dist/index.js) → run(prompt, { maxIterations: 10, ... }) |
 | **Benchmark** | `scripts/benchmark.js` | `npm run benchmark` → `node scripts/benchmark.js` | Env only; no dotenv, no ConfigLoader | runBenchmarks() → benchmarkIteration(prompt) → run(prompt, { output: './benchmark-output', project: benchmark-${Date.now()} }) |
 
@@ -50,27 +50,27 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 | Config source | Read by (file : function) |
 |---------------|---------------------------|
-| `~/.atelier/config.json` | `src/config/ConfigLoader.ts` : loadConfig(), getEffectiveConfig() |
-| Env: ATELIER_LLM_PROVIDER | ConfigLoader.getEffectiveConfig(); LLMClient constructor |
-| Env: ATELIER_LLM_BASE_URL | ConfigLoader.getEffectiveConfig(); LLMClient constructor, isConfigured() |
-| Env: ATELIER_LLM_MODEL | ConfigLoader.getEffectiveConfig(); LLMClient constructor |
-| Env: ATELIER_LLM_API_KEY | ConfigLoader.getEffectiveConfig(); LLMClient constructor, isConfigured() |
-| Env: INCEPTION_API_KEY | ConfigLoader.getEffectiveConfig() (apiKey fallback); LLMClient constructor, isConfigured() |
-| Env: HOME | bin/atelier (output dir, serve search dirs, list) — fallback `/tmp` |
+| `~/.liminal/config.json` | `src/config/ConfigLoader.ts` : loadConfig(), getEffectiveConfig() |
+| Env: LIMINAL_LLM_PROVIDER | ConfigLoader.getEffectiveConfig(); LLMClient constructor |
+| Env: LIMINAL_LLM_BASE_URL | ConfigLoader.getEffectiveConfig(); LLMClient constructor, isConfigured() |
+| Env: LIMINAL_LLM_MODEL | ConfigLoader.getEffectiveConfig(); LLMClient constructor |
+| Env: LIMINAL_LLM_API_KEY | ConfigLoader.getEffectiveConfig(); LLMClient constructor, isConfigured() |
+| Env: CLOUD_LLM_API_KEY | ConfigLoader.getEffectiveConfig() (apiKey fallback); LLMClient constructor, isConfigured() |
+| Env: HOME | bin/liminal (output dir, serve search dirs, list) — fallback `/tmp` |
 
-### 3.2 Is `config/atelier.json` loaded?
+### 3.2 Is `config/liminal.json` loaded?
 
-**No.** The repo file `config/atelier.json` is **never loaded**.
+**No.** The repo file `config/liminal.json` is **never loaded**.
 
-- README (and PRD) say to create `config/atelier.json` for project-wide settings.
-- ConfigLoader only uses `DEFAULT_CONFIG_PATH` = `path.join(os.homedir(), '.atelier', 'config.json')`.
-- bin/atelier calls getEffectiveConfig() with no arguments → only user config is used.
-- **Gap:** Documentation describes project-wide config (loop, creative, gallery, renderer, llm), but the app uses in-memory defaults in `src/index.ts` (defaultConfig) and user config from `~/.atelier/config.json`. ConfigLoader’s shape (defaultProvider, providers) differs from the project config shape.
+- README (and PRD) say to create `config/liminal.json` for project-wide settings.
+- ConfigLoader only uses `DEFAULT_CONFIG_PATH` = `path.join(os.homedir(), '.liminal', 'config.json')`.
+- bin/liminal calls getEffectiveConfig() with no arguments → only user config is used.
+- **Gap:** Documentation describes project-wide config (loop, creative, gallery, renderer, llm), but the app uses in-memory defaults in `src/index.ts` (defaultConfig) and user config from `~/.liminal/config.json`. ConfigLoader’s shape (defaultProvider, providers) differs from the project config shape.
 
 ### 3.3 Two config systems
 
-1. **LLM config:** ~/.atelier/config.json + env (ConfigLoader). Used only by **bin/atelier**; it merges and sets process.env so LLMClient sees it. TUI and benchmark do not call ConfigLoader — they rely on env (and TUI on dotenv).
-2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Atelier. No file or env for these keys.
+1. **LLM config:** ~/.liminal/config.json + env (ConfigLoader). Used only by **bin/liminal**; it merges and sets process.env so LLMClient sees it. TUI and benchmark do not call ConfigLoader — they rely on env (and TUI on dotenv).
+2. **Loop/creative/gallery/renderer:** In-code defaults in `src/index.ts` (defaultConfig) + options passed to run() / Liminal. No file or env for these keys.
 
 ---
 
@@ -93,7 +93,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 ### 4.2 Public API (src/index.ts)
 
-- **Defined in index.ts:** ATELIER_VERSION, AtelierConfig, defaultConfig, run, runFromArgs, Atelier, default export.
+- **Defined in index.ts:** LIMINAL_VERSION, LiminalConfig, defaultConfig, run, runFromArgs, Liminal, default export.
 - **Re-exports:** RalphLoop, CreativeEvaluator, PromiseDetector, PromptStore, ContextAccumulation; P5Generator, ParticleSystem, CellularAutomata, P5GeneratorLLM; Renderer, PreviewServer; Exporter, Project; Gallery, Iteration; SeedArchive, SeedMetadata.
 
 ### 4.3 Internal dependency graph (high level)
@@ -134,13 +134,13 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 | Variable / location | Read/Write | Source |
 |---------------------|------------|--------|
-| ATELIER_LLM_API_KEY (env) | Set by bin from config; read by ConfigLoader, LLMClient | ~/.atelier/config.json or env |
-| INCEPTION_API_KEY (env) | Read only | User-set env |
-| ATELIER_LLM_BASE_URL, ATELIER_LLM_MODEL | Set by bin; read by ConfigLoader, LLMClient | File + env |
-| config.apiKey / config.baseUrl (file) | Read via getEffectiveConfig; bin copies to env | ~/.atelier/config.json |
+| LIMINAL_LLM_API_KEY (env) | Set by bin from config; read by ConfigLoader, LLMClient | ~/.liminal/config.json or env |
+| CLOUD_LLM_API_KEY (env) | Read only | User-set env |
+| LIMINAL_LLM_BASE_URL, LIMINAL_LLM_MODEL | Set by bin; read by ConfigLoader, LLMClient | File + env |
+| config.apiKey / config.baseUrl (file) | Read via getEffectiveConfig; bin copies to env | ~/.liminal/config.json |
 | LLMClient Authorization header | Read apiKey from config/env | Bearer token |
 
-- **Persistence:** saveConfig() can write full AtelierConfig (including providers[*].apiKey/baseUrl) to ~/.atelier/config.json. CLI `--configure` writes only baseUrl and model (no apiKey). So apiKey is not written by the CLI but could be in a user-edited config file.
+- **Persistence:** saveConfig() can write full LiminalConfig (including providers[*].apiKey/baseUrl) to ~/.liminal/config.json. CLI `--configure` writes only baseUrl and model (no apiKey). So apiKey is not written by the CLI but could be in a user-edited config file.
 
 ### 6.2 Path injection / traversal
 
@@ -195,7 +195,7 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 
 ## 8. Gaps and blindspots (explicit)
 
-1. **config/atelier.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/atelier). File: config/atelier.json; document when it is loaded.
+1. **config/liminal.json** — ConfigLoader has loadProjectConfig(); project config path may not be passed from all entry points (e.g. bin/liminal). File: config/liminal.json; document when it is loaded.
 2. **Coverage from src** — jest collectCoverageFrom is src/**/*.ts (and .tsx); coverage reflects source. File: jest.config.js.
 3. **ESLint** — .eslintrc.cjs present at repo root; lint runs on src/.
 4. **P5GeneratorLLM** — Covered by test/generators/p5-generator-llm.test.js and integration tests.
@@ -208,11 +208,11 @@ See **IMPACT_ANALYSIS.md** for full impact summary, test counts, and remaining k
 ## 9. Summary
 
 - **Index:** Workspace indexed with jcodemunch (39 files, 249 symbols); optional future runs can use incremental: true.
-- **Entry points:** Four (bin/atelier, src/index.ts, src/tui/index.tsx, scripts/benchmark.js); config flow differs (only CLI uses ConfigLoader).
-- **Config:** Two systems (LLM from file+env; loop/creative/gallery/renderer from in-code defaults); config/atelier.json is documented but never loaded.
+- **Entry points:** Four (bin/liminal, src/index.ts, src/tui/index.tsx, scripts/benchmark.js); config flow differs (only CLI uses ConfigLoader).
+- **Config:** Two systems (LLM from file+env; loop/creative/gallery/renderer from in-code defaults); config/liminal.json is documented but never loaded.
 - **Source:** Clear src tree and public API; dependency graph centered on index.ts and RalphLoop → P5GeneratorLLM → LLMClient, plus TUI branch.
 - **Tests:** 28 files; coverage from dist at 80% thresholds; P5GeneratorLLM and TUI entry/components lack direct or component-level tests.
-- **Security:** Secrets from env and ~/.atelier/config.json; apiKey not written by CLI; path traversal risks on output, project, and readdir-based paths when inputs are untrusted.
+- **Security:** Secrets from env and ~/.liminal/config.json; apiKey not written by CLI; path traversal risks on output, project, and readdir-based paths when inputs are untrusted.
 - **Tooling:** Benchmark, lint, typecheck, docs, tui scripts documented; eslint config absent in repo.
 
 End of report.

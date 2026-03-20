@@ -9,14 +9,14 @@
  * - Integration with all core components
  */
 
-import { RalphLoop } from '../../dist/core/RalphLoop.js';
-import { PromiseDetector } from '../../dist/core/PromiseDetector.js';
-import { PromptStore } from '../../dist/core/PromptStore.js';
-import { ContextAccumulation } from '../../dist/core/ContextAccumulation.js';
-import { CreativeEvaluator } from '../../dist/core/CreativeEvaluator.js';
-import { P5Generator } from '../../dist/generators/p5/P5Generator.js';
-import { Gallery } from '../../dist/gallery/Gallery.js';
-import { LLMClient } from '../../dist/llm/LLMClient.js';
+import { RalphLoop } from '../../src/core/RalphLoop.js';
+import { PromiseDetector } from '../../src/core/PromiseDetector.js';
+import { PromptStore } from '../../src/core/PromptStore.js';
+import { ContextAccumulation } from '../../src/core/ContextAccumulation.js';
+import { CreativeEvaluator } from '../../src/core/CreativeEvaluator.js';
+import { P5Generator } from '../../src/generators/p5/P5Generator.js';
+import { Gallery } from '../../src/gallery/Gallery.js';
+import { LLMClient } from '../../src/llm/LLMClient.js';
 import fs from 'fs/promises';
 import path from 'path';
 

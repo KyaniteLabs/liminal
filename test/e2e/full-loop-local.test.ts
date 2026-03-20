@@ -61,21 +61,22 @@ async function isOllamaReachable(): Promise<boolean> {
 
 describe('E2E full loop (local Ollama)', () => {
   const envKeys = [
-    'ATELIER_LLM_PROVIDER',
-    'ATELIER_LLM_BASE_URL',
-    'ATELIER_LLM_MODEL',
-    'ATELIER_LLM_API_KEY',
+    'LIMINAL_LLM_PROVIDER',
+    'LIMINAL_LLM_BASE_URL',
+    'LIMINAL_LLM_MODEL',
     'LIMINAL_LLM_API_KEY',
+    'OPENAI_API_KEY',
+    'MINIMAX_API_KEY',
   ];
   let envBackup: Record<string, string | undefined>;
 
   beforeEach(() => {
     envBackup = backupEnv(envKeys);
-    process.env.ATELIER_LLM_PROVIDER = 'ollama';
-    process.env.ATELIER_LLM_BASE_URL = process.env.ATELIER_LLM_BASE_URL || 'http://localhost:11434';
-    process.env.ATELIER_LLM_MODEL = process.env.ATELIER_LLM_MODEL || 'llama3.2';
-    delete process.env.ATELIER_LLM_API_KEY;
+    process.env.LIMINAL_LLM_PROVIDER = 'ollama';
+    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434';
+    process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'llama3.2';
     delete process.env.LIMINAL_LLM_API_KEY;
+    delete process.env.OPENAI_API_KEY;
   });
 
   afterEach(() => {

@@ -3,7 +3,7 @@
  * Tests the run() and runFromArgs() functions
  */
 
-import { run, runFromArgs } from '../../dist/index.js';
+import { run, runFromArgs } from '../../src/index.js';
 import fs from 'fs/promises';
 import path from 'path';
 

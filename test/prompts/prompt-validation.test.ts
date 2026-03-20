@@ -2,7 +2,7 @@
  * Prompt validation tests — verify all 24 prompts are properly registered
  * and meet quality standards.
  */
-import { PromptLibrary } from '../../dist/prompts/index.js';
+import { PromptLibrary } from '../../src/prompts/index.js';
 
 // Expected prompt IDs across all categories
 const EXPECTED_IDS = [

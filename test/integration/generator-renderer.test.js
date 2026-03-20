@@ -8,9 +8,9 @@
  * - Validate output images and functionality
  */
 
-import { P5Generator } from '../../dist/generators/p5/P5Generator.js';
-import { PreviewServer } from '../../dist/render/PreviewServer.js';
-import { Renderer } from '../../dist/render/Renderer.js';
+import { P5Generator } from '../../src/generators/p5/P5Generator.js';
+import { PreviewServer } from '../../src/render/PreviewServer.js';
+import { Renderer } from '../../src/render/Renderer.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';

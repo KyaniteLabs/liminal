@@ -5,8 +5,8 @@
 import { DEFAULT_PERSONAS, DEFAULT_REFINEMENT_CONSTRAINTS } from '../../src/swarm/personas.js';
 
 describe('Default Personas', () => {
-  it('should have exactly 7 personas', () => {
-    expect(DEFAULT_PERSONAS).toHaveLength(7);
+  it('should have exactly 5 personas', () => {
+    expect(DEFAULT_PERSONAS).toHaveLength(5);
   });
 
   it('should have all expected persona IDs', () => {
@@ -15,9 +15,7 @@ describe('Default Personas', () => {
     expect(ids).toContain('rex');
     expect(ids).toContain('sam');
     expect(ids).toContain('kai');
-    expect(ids).toContain('eve');
-    expect(ids).toContain('joy');
-    expect(ids).toContain('ben');
+    expect(ids).toContain('nova');
   });
 
   it('should have unique IDs', () => {
@@ -28,6 +26,11 @@ describe('Default Personas', () => {
   it('should have valid voting powers', () => {
     const powers = DEFAULT_PERSONAS.map(p => p.votingPower);
     expect(powers.every(p => p >= 1 && p <= 5)).toBe(true);
+  });
+
+  it('should have balanced voting power (all equal to 2)', () => {
+    const powers = DEFAULT_PERSONAS.map(p => p.votingPower);
+    expect(powers.every(p => p === 2)).toBe(true);
   });
 
   it('should have valid temperatures (0-2)', () => {
@@ -50,18 +53,27 @@ describe('Default Personas', () => {
     }
   });
 
-  it('should have Eve as Oracle with highest voting power', () => {
-    const eve = DEFAULT_PERSONAS.find(p => p.id === 'eve');
-    expect(eve).toBeDefined();
-    expect(eve!.displayName).toBe('The Oracle');
-    expect(eve!.votingPower).toBe(4);
+  it('should have Nova as Synthesizer', () => {
+    const nova = DEFAULT_PERSONAS.find(p => p.id === 'nova');
+    expect(nova).toBeDefined();
+    expect(nova!.displayName).toBe('The Synthesizer');
+    expect(nova!.model).toBe('gemma2:2b');
   });
 
-  it('should have Max as Minimalist with lowest temperature', () => {
+  it('should have Max as Distiller with lowest temperature', () => {
     const max = DEFAULT_PERSONAS.find(p => p.id === 'max');
     expect(max).toBeDefined();
-    expect(max!.displayName).toBe('The Minimalist');
+    expect(max!.displayName).toBe('The Distiller');
     expect(max!.temperature).toBeLessThan(0.5);
+  });
+
+  it('should cover all creative dimensions without overlap', () => {
+    const roles = DEFAULT_PERSONAS.map(p => p.displayName);
+    expect(roles).toContain('The Architect');
+    expect(roles).toContain('The Synthesizer');
+    expect(roles).toContain('The Explorer');
+    expect(roles).toContain('The Muse');
+    expect(roles).toContain('The Distiller');
   });
 });
 

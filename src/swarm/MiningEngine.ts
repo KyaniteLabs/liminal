@@ -15,10 +15,11 @@ interface SessionData {
 }
 
 const PERSONA_BONUSES: Record<string, number> = {
-  eve: 2,
   kai: 1,
+  nova: 1,
   rex: 1,
-  ben: 1,
+  sam: 2,
+  max: 1,
 };
 
 const SENSORY_WORDS = [

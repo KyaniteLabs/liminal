@@ -160,29 +160,29 @@ describe('VotingEngine', () => {
     });
 
     it('should apply weighted scoring correctly', async () => {
-      // Eve has votingPower 4, Max has 1 — both are voters AND candidates
-      const eve = DEFAULT_PERSONAS.find(p => p.id === 'eve')!;
+      // Nova has votingPower 2, Max has 2 — both are voters AND candidates
+      const nova = DEFAULT_PERSONAS.find(p => p.id === 'nova')!;
       const max = DEFAULT_PERSONAS.find(p => p.id === 'max')!;
-      const voters = [eve, max];
+      const voters = [nova, max];
 
       const mockOllama = async (_model: string, _prompt: string): Promise<string> => {
         return '1st choice: A\n2nd choice: B\nGood choice.';
       };
 
-      // A = eve, B = max (voters are also in outputs)
+      // A = nova, B = max (voters are also in outputs)
       const outputs = makeOutputs({
-        eve: 'Paradox of memory.',
+        nova: 'Bridging worlds together.',
         max: 'Brief.',
       });
 
       const result = await VotingEngine.conductVoting(outputs, voters, 1, mockConfig, mockOllama);
 
-      // Eve (power 4) votes A (eve): 4*2=8, B (max): 4*1=4
-      // Max (power 1) votes A (eve): 1*2=2, B (max): 1*1=1
-      // eve total: 10, max total: 5
-      expect(result.scores.get('eve')).toBe(10);
-      expect(result.scores.get('max')).toBe(5);
-      expect(result.winnerId).toBe('eve');
+      // Nova (power 2) votes A (nova): 2*2=4, B (max): 2*1=2
+      // Max (power 2) votes A (nova): 2*2=4, B (max): 2*1=2
+      // nova total: 8, max total: 4
+      expect(result.scores.get('nova')).toBe(8);
+      expect(result.scores.get('max')).toBe(4);
+      expect(result.winnerId).toBe('nova');
     });
 
     it('should handle Ollama errors gracefully', async () => {
@@ -191,8 +191,8 @@ describe('VotingEngine', () => {
       };
 
       const outputs = makeOutputs({
-        max: 'Brief.',
-        rex: 'Contrarian.',
+        kai: 'Systems connect.',
+        nova: 'Bridging worlds.',
       });
 
       const result = await VotingEngine.conductVoting(

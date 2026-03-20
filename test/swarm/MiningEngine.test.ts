@@ -55,25 +55,25 @@ describe('MiningEngine', () => {
 
       const fragments = MiningEngine.mineSession(sensorySession, 5, 'hybrid');
       expect(fragments.length).toBe(1);
-      expect(fragments[0].score).toBeGreaterThanOrEqual(10); // Base 5 + sam 3 + hybrid 1 + sensory words + length
+      expect(fragments[0].score).toBeGreaterThanOrEqual(10); // Base 5 + sam 2 + hybrid 1 + sensory words + length
     });
 
-    it('should give bonus to Eve (Oracle persona)', () => {
-      const eveSession = {
-        session_id: 'eve_test',
+    it('should give bonus to Sam (Muse persona)', () => {
+      const samSession = {
+        session_id: 'sam_test',
         rounds: [
           {
             round_num: 1,
-            winner_id: 'eve',
-            winner_content: 'A riddle wrapped in shadow.',
+            winner_id: 'sam',
+            winner_content: 'A riddle wrapped in shadow and warm light.',
             seed: 'Test',
           },
         ],
       };
 
-      const fragments = MiningEngine.mineSession(eveSession, 5, 'competitive');
+      const fragments = MiningEngine.mineSession(samSession, 5, 'competitive');
       expect(fragments.length).toBe(1);
-      expect(fragments[0].score).toBeGreaterThanOrEqual(7); // Base 5 + eve 2
+      expect(fragments[0].score).toBeGreaterThanOrEqual(7); // Base 5 + sam 2
     });
 
     it('should give length bonus for 50-300 char content', () => {
@@ -91,7 +91,7 @@ describe('MiningEngine', () => {
 
       const fragments = MiningEngine.mineSession(mediumSession, 5, 'hybrid');
       expect(fragments.length).toBe(1);
-      expect(fragments[0].score).toBeGreaterThanOrEqual(9); // Base 5 + sam 3 + hybrid 1 + sensory + length
+      expect(fragments[0].score).toBeGreaterThanOrEqual(9); // Base 5 + sam 2 + hybrid 1 + sensory + length
     });
 
     it('should filter fragments below threshold', () => {

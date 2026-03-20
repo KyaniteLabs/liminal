@@ -1,8 +1,9 @@
-import type { SwarmConfig, SwarmMode, SwarmOutput, SwarmResult, RoundResult, SwarmPersona } from './types.js';
+import type { SwarmConfig, SwarmMode, SwarmOutput, SwarmResult, RoundResult, SwarmPersona, Vote } from './types.js';
 import type { ProjectDNA } from '../scavenger/types.js';
 import type { MinedFragment } from './types.js';
 import { DEFAULT_PERSONAS, DEFAULT_REFINEMENT_CONSTRAINTS } from './personas.js';
 import { VotingEngine } from './VotingEngine.js';
+import { HeuristicScorer } from './HeuristicScorer.js';
 import { MiningEngine } from './MiningEngine.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import fs from 'fs/promises';
@@ -95,6 +96,7 @@ export class TokenMillOrchestrator {
     const effectiveMode = mode ?? this.config.mode;
     let currentSeed = prompt;
     const rounds: RoundResult[] = [];
+    const prevWinnerOutputs: string[] = [];
     let consecutiveWins = 0;
     let lastWinner: string | null = null;
     let converged = false;
@@ -117,8 +119,14 @@ export class TokenMillOrchestrator {
       ];
 
       // Run round
-      const result = await this.runRound(currentSeed, roundNum, effectiveMode, constraint);
+      const isFinalRound = roundNum === this.config.maxRounds;
+      const result = await this.runRound(currentSeed, roundNum, effectiveMode, constraint, isFinalRound, prevWinnerOutputs);
       rounds.push(result);
+
+      // Track winner output for novelty scoring in future rounds
+      if (result.winnerContent) {
+        prevWinnerOutputs.push(result.winnerContent);
+      }
 
       // Check convergence (competitive and hybrid modes only)
       if (effectiveMode === 'competitive' || effectiveMode === 'hybrid') {
@@ -181,12 +189,15 @@ export class TokenMillOrchestrator {
 
   /**
    * Run a single round: generate from all personas, conduct voting.
+   * Uses HeuristicScorer for non-final rounds, VotingEngine for final round only.
    */
   async runRound(
     seed: string,
     roundNum: number,
     mode: SwarmMode,
-    constraint: string
+    constraint: string,
+    isFinalRound: boolean,
+    prevWinnerOutputs: string[]
   ): Promise<RoundResult> {
     const effectiveSeed = `${seed}\n\nConstraint: ${constraint}`;
 
@@ -199,14 +210,25 @@ export class TokenMillOrchestrator {
       outputs = await this.generateParallel(effectiveSeed, roundNum);
     }
 
-    // Conduct voting
-    const votingResult = await VotingEngine.conductVoting(
-      outputs,
-      this.personas,
-      roundNum,
-      this.config,
-      this.callOllama
-    );
+    // Conduct voting: heuristic for early rounds, LLM for final round only
+    let votingResult: { scores: Map<string, number>; winnerId: string; votes: Map<string, Vote> };
+
+    if (isFinalRound) {
+      votingResult = await VotingEngine.conductVoting(
+        outputs,
+        this.personas,
+        roundNum,
+        this.config,
+        this.callOllama
+      );
+    } else {
+      votingResult = HeuristicScorer.score(
+        outputs,
+        this.personas,
+        constraint,
+        prevWinnerOutputs
+      );
+    }
 
     const winnerOutput = outputs.get(votingResult.winnerId);
 

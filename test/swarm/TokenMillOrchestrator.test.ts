@@ -13,9 +13,7 @@ const createMockOllama = (): (model: string, prompt: string, options?: { tempera
     if (prompt.includes('You are Rex')) return 'This is wrong. Challenge it.';
     if (prompt.includes('You are Sam')) return 'The warm light touched her face as she remembered.';
     if (prompt.includes('You are Kai')) return 'The system connects flows through hidden networks.';
-    if (prompt.includes('You are Eve')) return 'Truth folds into paradox. What is cannot be.';
-    if (prompt.includes('You are Joy')) return 'Golden light! Warm texture! Beautiful shimmer!';
-    if (prompt.includes('You are Ben')) return 'This observation aligns with precedent in structural analysis.';
+    if (prompt.includes('You are Nova')) return 'Two worlds bridge into one unified vision.';
     if (prompt.includes('1st choice') || prompt.includes('2nd choice')) return '1st choice: C\n2nd choice: A\nSam had the most emotion.';
     return 'Default response.';
   };
@@ -98,28 +96,70 @@ describe('TokenMillOrchestrator', () => {
     }, 10000);
 
     it('should detect convergence', async () => {
-      // Mock that always votes for 'sam'
+      // Use a custom 2-persona set where alpha always scores higher on heuristic dimensions.
+      // Alpha produces richer output → higher vocabulary, better length, etc.
+      const convergingPersonas = [
+        {
+          id: 'alpha',
+          name: 'Alpha',
+          displayName: 'Alpha',
+          model: 'test-model',
+          temperature: 0.5,
+          maxTokens: 80,
+          systemPrompt: 'You are Alpha. Write rich, varied vocabulary.',
+          voice: 'Rich.',
+          thinkingStyle: 'Linear.',
+          votingBias: 'Votes for A.',
+          constraints: ['Be rich in vocabulary and varied in word choice'],
+          votingPower: 2,
+        },
+        {
+          id: 'beta',
+          name: 'Beta',
+          displayName: 'Beta',
+          model: 'test-model',
+          temperature: 0.5,
+          maxTokens: 80,
+          systemPrompt: 'You are Beta.',
+          voice: 'Flat.',
+          thinkingStyle: 'Linear.',
+          votingBias: 'Votes for B.',
+          constraints: ['Be brief'],
+          votingPower: 2,
+        },
+      ];
+
+      let callCount = 0;
       const convergingMock = async (_model: string, prompt: string): Promise<string> => {
-        if (prompt.includes('You are Max')) return 'Brief.';
-        if (prompt.includes('You are Rex')) return 'Challenge.';
-        if (prompt.includes('You are Sam')) return 'Story time with golden light.';
-        if (prompt.includes('You are Kai')) return 'Systems connect.';
-        if (prompt.includes('You are Eve')) return 'Paradox.';
-        if (prompt.includes('You are Joy')) return 'Beautiful!';
-        if (prompt.includes('You are Ben')) return 'Precedent.';
-        // All voters pick C (sam)
-        return '1st choice: C\n2nd choice: A\nSam is best.';
+        callCount++;
+        // Alpha: rich vocabulary, good length → higher heuristic score
+        if (prompt.includes('You are Alpha')) {
+          return 'Spectral luminance cascades through crystalline corridors, weaving ephemeral tapestries of shimmering resonance across vast undulating landscapes.';
+        }
+        // Beta: minimal output → lower scores on vocabulary and length
+        if (prompt.includes('You are Beta')) {
+          return 'Short.';
+        }
+        // LLM voting (final round only): vote for alpha
+        return '1st choice: A\n2nd choice: B\nAlpha is better.';
       };
 
       const orchestrator = new TokenMillOrchestrator(
-        { maxRounds: 10, convergenceThreshold: 3, musicalChairs: false, streamDir: './test-stream' },
+        {
+          maxRounds: 6,
+          convergenceThreshold: 3,
+          musicalChairs: false,
+          personas: convergingPersonas,
+          streamDir: './test-stream',
+        },
         { callOllama: convergingMock }
       );
 
       const result = await orchestrator.run('Test');
 
+      // Alpha should consistently win on heuristic dimensions (richer vocab, better length)
       expect(result.converged).toBe(true);
-      expect(result.convergenceRound).toBeLessThanOrEqual(5);
+      expect(result.convergenceRound).toBeLessThanOrEqual(6);
     }, 30000);
   });
 

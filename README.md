@@ -36,6 +36,19 @@ while iterations < max:
 
 Safety mechanisms: max-iterations limit, timeout protection, quality gates, graceful error handling.
 
+## Architecture
+
+Liminal uses a unified architecture with three key consolidation points:
+
+- **GeneratorRegistry** — Single dispatch point for all generators, with smart model routing (local/cloud/hybrid) merged from SmartRouter. Detects domain from prompt keywords and routes to the optimal model based on A/B test data.
+- **CollaborationEngine** — Unified collaboration with configurable strategies: `swarm` (7-persona parallel), `phases` (specialist pipeline), `simple` (2-model ping-pong).
+- **Compost Mill** — Living digestion pipeline: heap → extract → shred → collide → score → promote → seed bank → inject into generation loop.
+
+Key integrations:
+- **DNA feedback**: CompostMill extracts ProjectDNA from promoted seeds and registers it with GeneratorRegistry for improved routing.
+- **Archive learning**: RalphLoop uses ArchiveLearning to inject high-quality examples from past runs into generation prompts.
+- **Aesthetic model**: Predicts quality based on behavior vectors when MAP-Elites is enabled.
+
 ## Features
 
 ### Generation Modes
@@ -45,7 +58,7 @@ Safety mechanisms: max-iterations limit, timeout protection, quality gates, grac
 | **Single LLM** | default | One model generates, evaluates, iterates |
 | **Swarm** | `--use-swarm` | 7 Ollama personas generate in parallel, vote on best |
 | **Deep Collab** | `useDeepCollab` option | 3-phase: Diverge (2 models) → Analyze (3 critics) → Synthesize |
-| **Collab** | `useCollab` option | Simpler 2-model collaboration with feedback loop |
+| **Collab Engine** | `collabMode` option | Unified engine: swarm / phases / simple strategies |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code, write to disk |
 | **Organism** | `mode: 'organism'` option | Music-to-visual pipeline per iteration |
 
@@ -82,8 +95,20 @@ A living digestion system for creative material. Feed it files, directories, or 
 Key concepts:
 - **Heap**: staging area for material awaiting digestion
 - **Fragments**: extracted pieces with multi-dimensional scores (novelty, density, cross-domain)
-- **Seed Bank**: persistent store of high-scoring promoted fragments
+- **Seed Bank**: persistent store of high-scoring promoted fragments — seeds are injected into every generation loop iteration
 - **Soup**: continuous evolutionary loop — merge random fragments, score offspring, replace worst
+
+### Smart Model Routing
+
+GeneratorRegistry includes unified model routing based on A/B test data per domain:
+
+```javascript
+const registry = generatorRegistry;
+const decision = registry.routeByPrompt("create a particle system");
+// → { model: 'local', reason: '...', confidence: 0.85, ... }
+```
+
+Routes between local models (Qwen 3.5-4B), cloud models (Minimax), and hybrid mode based on domain fitness scores.
 
 ### Live Music Coding
 
@@ -103,7 +128,12 @@ liminal --prompt "Create a particle system"              # Basic generation
 liminal -p "sketch" -m 10 -o ./output                    # Short flags
 liminal --prompt "idea" --use-swarm --swarm-mode hybrid   # Swarm mode
 liminal --prompt "music" --mode live-music                # Live music
-liminal serve 3456                                         # Preview server
+liminal compost add <path>                                # Add material to compost heap
+liminal compost digest                                   # Run digestion pipeline
+liminal compost soup start                                # Start evolutionary soup loop
+liminal compost seeds list                                # List promoted seeds
+liminal compost status                                    # Heap/seed/soup overview
+liminal serve 3456                                        # Preview server
 liminal list                                               # List saved sketches
 liminal --recent 10                                        # Recent prompts
 liminal --interactive                                      # TUI mode
@@ -114,7 +144,7 @@ liminal --favorites                                        # List favorites
 ### Programmatic API
 
 ```javascript
-import { run } from './dist/index.js';
+import { run, generatorRegistry } from './dist/index.js';
 
 // Basic
 const result = await run('Create a particle system', {
@@ -130,12 +160,24 @@ const result = await run('Evolving organism', {
   swarmConfig: { maxRounds: 10 }
 });
 
-// With deep collaboration
+// With collaboration engine
 const result = await run('Complex scene', {
   maxIterations: 5,
-  useDeepCollab: true,
-  collabConfig: { maxPhases: 4 }
+  collabMode: 'phases',
+  collabConfig: { maxRounds: 4 }
 });
+
+// Dynamic domain registration
+generatorRegistry.registerDomain({
+  name: 'lyrics',
+  keywords: ['lyrics', 'poem', 'verse'],
+  confidence: 0.8,
+  generate: async (prompt) => `Generated lyrics for: ${prompt}`,
+});
+
+// Smart model routing
+const decision = generatorRegistry.routeByPrompt('create a shader');
+// → { model: 'cloud', reason: 'GLSL domain — Cloud Minimax superior ...', ... }
 
 // Music + Visuals
 import { generateMusic, generateVisuals, generateMusicToVisual } from './dist/index.js';
@@ -169,13 +211,14 @@ User config at `~/.liminal/config.json`. LLM settings via environment variables:
 ```
 liminal/
 ├── src/
-│   ├── core/              # RalphLoop, CreativeEvaluator, PromiseDetector, PromptStore, ContextAccumulation
-│   ├── generators/        # P5GeneratorLLM, ParticleSystem, CellularAutomata, FlowField, Noise
+│   ├── core/              # RalphLoop, EvaluationFramework, CreativeEvaluator, PromptStore, ContextAccumulation
+│   ├── generators/        # GeneratorRegistry (unified dispatch + routing), P5, Shader, Three generators
 │   ├── swarm/             # SwarmOrchestrator, VotingEngine, MiningEngine, HeuristicScorer, personas
-│   ├── collab/            # DeepCollaboration, CollaborativeClient, Scoring
+│   ├── collab/            # CollaborationEngine, DeepCollaboration, CollaborativeClient, Scoring
 │   ├── compost/           # CompostMill, CompostHeap, CompostShredder, CompostSoup, SeedBank, FragmentScorer
 │   ├── scavenger/         # DNAExtractor, FragmentArchive
-│   ├── evolution/         # IGA, MapElites, AestheticModel, NoveltyArchive
+│   ├── evolution/         # MapElites, AestheticModel, NoveltyArchive, MetaMode
+│   ├── learning/          # ArchiveLearning, QualityArchive
 │   ├── music/             # generateMusic (Strudel, p5-webaudio)
 │   ├── musicToVisual/     # generateMusicToVisual (organism mode)
 │   ├── generateVisuals.ts # generateVisuals (Hydra, p5)
@@ -185,15 +228,18 @@ liminal/
 │   ├── export/            # Exporter (HTML, JS, ZIP)
 │   ├── render/            # PreviewServer, Renderer
 │   ├── sandbox/           # SandboxRunner
-│   ├── improvement/       # SelfImprovement
+│   ├── improvement/       # SelfReflection, requestImprovement
 │   ├── tui/               # Interactive TUI
 │   ├── gui/               # GUI state management
-│   ├── prompts/           # Prompt templates
+│   ├── prompts/           # Prompt templates (34 registered prompts)
+│   ├── routing/           # RoutingData, SmartRouter (backward-compatible wrapper)
 │   └── utils/             # Shared utilities
 ├── test/
 │   ├── unit/              # ~50 suites
 │   ├── integration/       # full-loop, ralph-loop, dual-llm, renderer, GUI
-│   ├── generators/        # p5, particle-system, cellular-automata
+│   ├── generators/        # p5, particle-system, cellular-automata, registry
+│   ├── collab/            # DeepCollaboration, CollaborationEngine
+│   ├── compost/           # full compost pipeline tests
 │   └── e2e/               # full-loop (cloud + local), seed/quality, GUI, sandbox
 ├── gui/                   # Full GUI (Vite + React + Express)
 ├── compost/               # Compost Mill runtime data
@@ -204,7 +250,7 @@ liminal/
 ## Testing
 
 ```bash
-npm test                    # All 1,548 tests
+npm test                    # All 1,589 tests
 npm run test:integration    # Integration suites only
 npm run test:e2e            # E2E (skips when backends unavailable)
 npm run test:coverage       # Coverage from src/
@@ -212,7 +258,7 @@ npm run typecheck           # TypeScript strict check
 npm run lint                # ESLint
 ```
 
-**125 suites, 1,548 tests, all passing.** Integration tests skip gracefully when no LLM is configured. E2E tests skip when Ollama/cloud backend is unavailable.
+**130 suites, 1,589 tests, all passing.** Integration tests skip gracefully when no LLM is configured. E2E tests skip when Ollama/cloud backend is unavailable.
 
 ## Development
 

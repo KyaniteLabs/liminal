@@ -2,359 +2,243 @@
 
 > "The code evolves. You curate."
 
-A generative art system with an internal Ralph-Wiggum Loop for self-recursive iteration and improvement.
+A generative art system with an internal Ralph-Wiggum Loop for self-recursive iteration and improvement. Supports p5.js visuals, live music coding (Strudel/Hydra), multi-model swarm generation, deep collaboration, and a living Compost Mill for digesting creative material.
 
-## 🚀 Quick Start
+## Quick Start
 
 ```bash
-# Install dependencies
 npm install
 
-# Run tests
-npm test
+# Configure an LLM backend (required for generation)
+liminal --configure          # Sets up LM Studio at localhost:1234
 
-# Generate your first creative work
+# Or set env vars directly
+export LIMINAL_LLM_PROVIDER=ollama
+export LIMINAL_LLM_MODEL=llama3.2
+
+# Generate
 liminal --prompt "Create a calming blue particle system"
 ```
 
-## 📖 What is Liminal?
+## What is Liminal?
 
-Liminal is a creative coding agent that generates emergent generative art through self-recursive iteration. The same prompt runs repeatedly, but the "world" (files, context, history) changes each time, creating a feedback loop where the agent critiques and improves its own previous output.
+Liminal generates emergent generative art through self-recursive iteration. The same prompt runs repeatedly, but the "world" (files, context, history) changes each time, creating a feedback loop where the agent critiques and improves its own previous output.
 
-### Key Features
+### Core Loop
 
-- **Internal Ralph-Wiggum Loop**: Self-recursive iteration with automatic termination
-- **Quality Gates**: Creative evaluation with minimum score threshold (≥0.7)
-- **Multiple Generators**: p5.js sketches (particle systems, cellular automata)
-- **Live Preview**: Built-in preview server for real-time visualization
-- **Gallery System**: Save/load iterations with full history tracking
-- **Export Options**: HTML, JavaScript, and ZIP archive exports
-- **Live Music Coding**: Support for Strudel, Hydra, Sonic Pi, and p5.js + Web Audio
+```
+while iterations < max:
+  generate(prompt, context)    # LLM creates code
+  evaluate(output)             # Quality gate (aesthetic + technical)
+  accumulate(state)            # Save iteration, build context
+  if promise detected: break   # <promise>COMPLETE</promise>
+```
 
-## 🏗️ Architecture
+Safety mechanisms: max-iterations limit, timeout protection, quality gates, graceful error handling.
 
-### Core Components
+## Features
 
-- **RalphLoop**: Iteration engine with safety mechanisms (max-iterations, timeout protection)
-- **PromptStore**: Consistent prompt management with context injection
-- **ContextAccumulation**: State management and iteration history
-- **CreativeEvaluator**: Quality gates for creative and technical assessment
-- **PromiseDetector**: Exact string matching for termination detection
-- **P5Generator**: p5.js sketch generation (particle systems, cellular automata)
-- **PreviewServer**: Live preview server (localhost:3456)
-- **Renderer**: Screenshot capture with Puppeteer
-- **Gallery**: Iteration persistence and archive management
-- **Exporter**: Multi-format export (HTML, JS, ZIP)
+### Generation Modes
 
-### Safety Mechanisms
+| Mode | Flag | Description |
+|------|------|-------------|
+| **Single LLM** | default | One model generates, evaluates, iterates |
+| **Swarm** | `--use-swarm` | 7 Ollama personas generate in parallel, vote on best |
+| **Deep Collab** | `useDeepCollab` option | 3-phase: Diverge (2 models) → Analyze (3 critics) → Synthesize |
+| **Collab** | `useCollab` option | Simpler 2-model collaboration with feedback loop |
+| **Live Music** | `--mode live-music` | Generate Strudel + Hydra code, write to disk |
+| **Organism** | `mode: 'organism'` option | Music-to-visual pipeline per iteration |
 
-- **Max-iterations limit**: 20 iterations by default
-- **Timeout protection**: 30 minutes per iteration
-- **Quality gates**: Minimum score of 0.7 required
-- **Error tolerance**: Graceful error handling with configurable strictness
+### Swarm Generation
 
-## 💻 Usage
+7 creative personas run via Ollama in parallel, each with a distinct voice:
 
-### Command Line Interface
+| Persona | Role | Default Model |
+|---------|------|---------------|
+| Kai (Architect) | Structural, analytical | `llama3.2:1b` |
+| Nova (Synthesizer) | Connective, integrative | `gemma2:2b` |
+| Rex (Explorer) | Provocative, boundary-pushing | `phi3:mini` |
+| Sam (Muse) | Sensory, evocative | `qwen2.5:3b` |
+| Max (Distiller) | Precise, compressed | `qwen2.5:0.5b` |
+
+Modes: `competitive` (winner seeds next round), `hybrid` (top 2 combined, default), `ring` (sequential pass), `mesh` (all woven together).
+
+### Deep Collaboration
+
+Multi-model collaboration with specialized roles across local and cloud models:
+
+1. **Divergence**: Creator (local) + Visionary (cloud) generate alternatives
+2. **Analysis**: Technical Critic + Artistic Critic + Domain Expert evaluate
+3. **Synthesis**: Integrator (cloud) + Refiner (local) combine best elements
+
+Repeats until convergence (threshold 0.90) or max phases (default 4). Supports domains: `p5`, `glsl`, `three`, `ascii`, `music`, `code`.
+
+### Compost Mill
+
+A living digestion system for creative material. Feed it files, directories, or previous Liminal outputs — it extracts, shreds, scores, and evolves fragments into reusable seeds.
+
+**Pipeline:** Feed → Extract (3 layers) → Shred → Mix (cross-domain collisions) → Mine (score + promote) → Digest → Prune
+
+Key concepts:
+- **Heap**: staging area for material awaiting digestion
+- **Fragments**: extracted pieces with multi-dimensional scores (novelty, density, cross-domain)
+- **Seed Bank**: persistent store of high-scoring promoted fragments
+- **Soup**: continuous evolutionary loop — merge random fragments, score offspring, replace worst
+
+### Live Music Coding
+
+Generate live code for Strudel (TidalCycles), Hydra (audio-reactive visuals), and more.
 
 ```bash
-# Basic usage
-liminal --prompt "Create a particle system"
-
-# With custom options
-liminal --prompt "Generate cellular automata" \
-  --max-iterations 10 \
-  --output ./my-art \
-  --project my-experiment
-
-# Short flags
-liminal -p "Interactive sketch" -m 5 -o ./output
+liminal --prompt "ambient glitch set" --mode live-music --output ./set
+# Writes: ./set/strudel.js, ./set/hydra.js
 ```
 
-#### CLI Options
+Music-to-visual bridge: `generateMusicToVisual()` extracts BPM/FFT from music output and passes it to visual generation.
 
-- `--prompt, -p`: Creative prompt (required)
-- `--max-iterations, -m`: Maximum iterations (default: 20)
-- `--output, -o`: Output directory (default: ./output)
-- `--project, -j`: Project name for gallery (default: auto-generated)
-
-### Programmatic Usage
-
-```javascript
-import { run } from 'liminal-ai';
-
-// Basic usage
-const result = await run('Create a calming particle system');
-
-// With options
-const result = await run('Generate cellular automata', {
-  maxIterations: 10,
-  output: './my-art',
-  project: 'my-experiment',
-  tolerateErrors: true,
-  minQualityScore: 0.8
-});
-
-console.log(`Generated ${result.iterations} iterations`);
-console.log(`Final score: ${result.finalScore}`);
-console.log(`Completed: ${result.completed}`);
-console.log(`Reason: ${result.reason}`);
-```
-
-### Configuration
-
-Create `config/liminal.json` for project-wide settings:
-
-```json
-{
-  "name": "liminal",
-  "version": "1.0.0",
-  "loop": {
-    "maxIterations": 20,
-    "timeoutMinutes": 30,
-    "completionPromise": "COMPLETE"
-  },
-  "creative": {
-    "defaultFramework": "p5.js",
-    "evaluationCriteria": ["aesthetic", "technical", "novelty"],
-    "minQualityScore": 0.7
-  },
-  "gallery": {
-    "autoSave": true,
-    "maxHistoryPerProject": 50
-  },
-  "renderer": {
-    "port": 3456,
-    "screenshotOnIteration": true
-  }
-}
-```
-
-### Using cloud vs local LLM
-
-Liminal can use a **cloud** LLM (e.g., LM Studio, OpenAI-compatible) or a **local** LLM (e.g. Ollama). Configuration is driven by environment variables and optional config files.
-
-**Cloud (e.g., LM Studio, OpenAI-compatible)**
-Set the provider and credentials via env (or in `~/.liminal/config.json` / project `config/liminal.json`):
-
-- `LIMINAL_LLM_PROVIDER=openai-compatible` — use an OpenAI-compatible API (default).
-- `LIMINAL_LLM_BASE_URL` — API base URL (e.g., `http://localhost:1234/v1` for LM Studio, or your cloud provider's URL).
-- `LIMINAL_LLM_MODEL` — model name (e.g., `gpt-4`, `llama-3.1-8b`).
-- `LIMINAL_LLM_API_KEY` — API key for auth (if required by your provider).
-
-Example:
+## CLI
 
 ```bash
-export LIMINAL_LLM_PROVIDER=openai-compatible
-export LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
-export LIMINAL_LLM_MODEL=llama-3.1-8b
-export LIMINAL_LLM_API_KEY=your-api-key
-liminal --prompt "Create a particle system"
+liminal --prompt "Create a particle system"              # Basic generation
+liminal -p "sketch" -m 10 -o ./output                    # Short flags
+liminal --prompt "idea" --use-swarm --swarm-mode hybrid   # Swarm mode
+liminal --prompt "music" --mode live-music                # Live music
+liminal serve 3456                                         # Preview server
+liminal list                                               # List saved sketches
+liminal --recent 10                                        # Recent prompts
+liminal --interactive                                      # TUI mode
+liminal --configure                                        # Setup config
+liminal --favorites                                        # List favorites
 ```
-
-**Local (Ollama)**
-Run [Ollama](https://ollama.ai) locally, then point Liminal at it:
-
-- `LIMINAL_LLM_PROVIDER=ollama` — use the Ollama API.
-- `LIMINAL_LLM_BASE_URL` — Ollama base URL (default `http://localhost:11434`).
-- `LIMINAL_LLM_MODEL` — model name (e.g. `llama3.2`). No API key needed.
-
-Example:
-
-```bash
-# Start Ollama and pull a model (e.g. llama3.2)
-ollama serve
-ollama pull llama3.2
-
-export LIMINAL_LLM_PROVIDER=ollama
-export LIMINAL_LLM_MODEL=llama3.2
-liminal --prompt "Create a particle system"
-```
-
-Integration tests for the dual-LLM path (`test/integration/dual-llm.test.ts`) run against the configured backend when available and skip with a clear message when the backend is unreachable or not configured (e.g. no API key, Ollama not running).
-
-## 🧪 Testing
-
-```bash
-# Run all tests
-npm test
-
-# Run integration tests only
-npm run test:integration
-
-# Run E2E tests (full loop, seed/quality, GUI, sandbox; skip when backends unavailable)
-npm run test:e2e
-
-# Run with coverage (from source: src/)
-npm run test:coverage
-
-# Watch mode
-npm run test:watch
-
-# Type checking
-npm run typecheck
-
-# Lint (project ESLint config)
-npm run lint
-
-# Performance benchmarks
-npm run benchmark
-```
-
-**E2E with real LLM (Ollama):** Required E2E tests use Ollama at `http://localhost:11434`. Start Ollama and run `ollama pull mistral` (or `ollama pull llama3.2`) before running E2E. Cloud E2E (OpenAI-compatible providers) is optional and skips when the API key is unset.
-
-### Test structure
-
-- **Unit** (`test/unit/`): RalphLoop, ConfigLoader, path sanitization, CreativeEvaluator, gallery, exporter, TUI, sandbox, etc.
-- **Integration** (`test/integration/`): full-loop, ralph-loop, dual-LLM, CLI, preview-server, GUI config API.
-- **Generators** (`test/generators/`): p5-generator, particle-system, cellular-automata, p5-generator-llm, prompt-to-generator-params.
-- **E2E** (`test/e2e/`): full-loop with cloud LLM, full-loop with local Ollama, seed + quality gate, GUI config/gallery, sandbox + requestImprovement. E2E tests skip with a clear message when the required backend (API key, Ollama, Chrome) is unavailable.
-
-### Test results (current)
-
-- **Total:** 53 suites, 753 tests.
-- **Passing:** 745 tests (50 suites).
-- **Known failures:** 8 tests in 3 integration suites — promise-detection and “different code each iteration” (depend on LLM/template output) and one GUI test (expects different `/gui` content). See `IMPACT_ANALYSIS.md` for details.
-- **E2E:** 5 suites, 9 tests; all pass or skip when backends are missing.
-
-### Coverage
-
-- Coverage is collected from **source** (`src/**/*.ts`, `src/**/*.tsx`); no build required. Thresholds (e.g. 80%) are configured in `jest.config.js` and enforced by `npm run test:coverage`.
-
-## 🎵 Live Music Coding
-
-Liminal supports **live music coding** for performative, real-time generative art:
-
-### Supported platforms
-
-- **Strudel**: Web-based TidalCycles (browser-native)
-- **Hydra**: Audio-reactive visuals (WebGL + Web Audio)
-- **Sonic Pi**: Ruby-based (OSC + MIDI)
-- **FoxDot**: Python-based (OSC)
-- **p5.js + Web Audio**: Browser-native DSP
-
-### CLI
-
-```bash
-liminal --prompt "ambient glitch set, 20 min" \
-  --mode live-music \
-  --output ./set
-```
-
-This writes `strudel.js` and `hydra.js` to the output directory. Optional project config `config/liminal.json` can include `live` (e.g. `midiOutput`, `oscHost`, `oscPort`, `syncMode`).
 
 ### Programmatic API
 
 ```javascript
-import { generateMusic, generateVisuals, generateMusicToVisual } from 'liminal-ai';
+import { run } from './dist/index.js';
 
-const musicOutput = await generateMusic("anxious post-rock build", { musicPlatform: 'strudel' });
-const visualOutput = await generateVisuals({ prompt: "same mood, audio reactive", platform: 'hydra' });
+// Basic
+const result = await run('Create a particle system', {
+  maxIterations: 10,
+  output: './output'
+});
 
-// Music-to-visual bridge (BPM/FFT derived from music, passed to visuals)
-const bridge = await generateMusicToVisual("ambient glitch", { musicPlatform: 'strudel', visualPlatform: 'hydra' });
+// With swarm
+const result = await run('Evolving organism', {
+  maxIterations: 5,
+  useSwarm: true,
+  swarmMode: 'hybrid',
+  swarmConfig: { maxRounds: 10 }
+});
+
+// With deep collaboration
+const result = await run('Complex scene', {
+  maxIterations: 5,
+  useDeepCollab: true,
+  collabConfig: { maxPhases: 4 }
+});
+
+// Music + Visuals
+import { generateMusic, generateVisuals, generateMusicToVisual } from './dist/index.js';
+const music = await generateMusic('anxious post-rock', { musicPlatform: 'strudel' });
+const visual = await generateVisuals({ prompt: 'same mood', platform: 'hydra' });
+const bridge = await generateMusicToVisual('ambient glitch');
 ```
 
-## 📊 Performance
+## Configuration
 
-### Benchmarks
+Project config at `config/liminal.json`:
 
-- **Iteration speed**: Target &lt; 5 minutes per iteration  
-- **Memory usage**: Target &lt; 500MB per iteration  
-- **Test execution**: 753 tests (745 passing; 8 known integration failures). E2E skips when backends unavailable.
-
-Run benchmarks:
-
-```bash
-npm run benchmark
+```json
+{
+  "loop": { "maxIterations": 20, "timeoutMinutes": 30 },
+  "creative": { "minQualityScore": 0.7 },
+  "gallery": { "autoSave": true, "maxHistoryPerProject": 50 },
+  "renderer": { "port": 3456 }
+}
 ```
 
-## 🔧 Development
+User config at `~/.liminal/config.json`. LLM settings via environment variables:
 
-### Project Structure
+- `LIMINAL_LLM_PROVIDER` — `openai-compatible` (default), `ollama`
+- `LIMINAL_LLM_BASE_URL` — API base URL
+- `LIMINAL_LLM_MODEL` — model name
+- `LIMINAL_LLM_API_KEY` — API key (if required)
+
+## Project Structure
 
 ```
-liminal-workspace/
+liminal/
 ├── src/
-│   ├── core/              # RalphLoop, Evaluator, PromiseDetector, PromptStore, ContextAccumulation
-│   ├── generators/        # P5GeneratorLLM, ParticleSystem, CellularAutomata
-│   ├── render/            # PreviewServer, Renderer
-│   ├── gallery/           # Gallery, SeedArchive
-│   ├── export/            # Exporter
+│   ├── core/              # RalphLoop, CreativeEvaluator, PromiseDetector, PromptStore, ContextAccumulation
+│   ├── generators/        # P5GeneratorLLM, ParticleSystem, CellularAutomata, FlowField, Noise
+│   ├── swarm/             # SwarmOrchestrator, VotingEngine, MiningEngine, HeuristicScorer, personas
+│   ├── collab/            # DeepCollaboration, CollaborativeClient, Scoring
+│   ├── compost/           # CompostMill, CompostHeap, CompostShredder, CompostSoup, SeedBank, FragmentScorer
+│   ├── scavenger/         # DNAExtractor, FragmentArchive
+│   ├── evolution/         # IGA, MapElites, AestheticModel, NoveltyArchive
+│   ├── music/             # generateMusic (Strudel, p5-webaudio)
+│   ├── musicToVisual/     # generateMusicToVisual (organism mode)
+│   ├── generateVisuals.ts # generateVisuals (Hydra, p5)
+│   ├── llm/               # LLMClient, CacheManager, RetryManager
 │   ├── config/            # ConfigLoader, PromptHistory
-│   ├── llm/               # LLMClient
+│   ├── gallery/           # Gallery, SeedArchive
+│   ├── export/            # Exporter (HTML, JS, ZIP)
+│   ├── render/            # PreviewServer, Renderer
 │   ├── sandbox/           # SandboxRunner
-│   ├── improvement/       # requestImprovement, SelfImprovement
-│   ├── music/             # generateMusic
-│   ├── musicToVisual/     # generateMusicToVisual
-│   ├── tui/               # TUI (Run/Stop, timeline, gallery)
-│   └── utils/             # normalizePath, promptToGeneratorParams
-├── gui/                   # Full GUI (Vite + React + Express)
+│   ├── improvement/       # SelfImprovement
+│   ├── tui/               # Interactive TUI
+│   ├── gui/               # GUI state management
+│   ├── prompts/           # Prompt templates
+│   └── utils/             # Shared utilities
 ├── test/
-│   ├── unit/
-│   ├── integration/
-│   ├── generators/
-│   └── e2e/
-├── config/                # liminal.json (project config)
-├── gallery/               # Saved iterations
-└── output/                # Exported files
+│   ├── unit/              # ~50 suites
+│   ├── integration/       # full-loop, ralph-loop, dual-llm, renderer, GUI
+│   ├── generators/        # p5, particle-system, cellular-automata
+│   └── e2e/               # full-loop (cloud + local), seed/quality, GUI, sandbox
+├── gui/                   # Full GUI (Vite + React + Express)
+├── compost/               # Compost Mill runtime data
+├── docs/                  # Documentation + archive
+└── config/                # liminal.json (project config)
 ```
 
-### Build Commands
+## Testing
 
 ```bash
-# TypeScript compilation
-npm run build
-
-# Generate documentation
-npm run docs
-
-# Run linting
-npm run lint
+npm test                    # All 1,548 tests
+npm run test:integration    # Integration suites only
+npm run test:e2e            # E2E (skips when backends unavailable)
+npm run test:coverage       # Coverage from src/
+npm run typecheck           # TypeScript strict check
+npm run lint                # ESLint
 ```
 
-## 🤝 Contributing
+**125 suites, 1,548 tests, all passing.** Integration tests skip gracefully when no LLM is configured. E2E tests skip when Ollama/cloud backend is unavailable.
 
-### Development Workflow
+## Development
 
-1. **Fork and clone** the repository
-2. **Install dependencies**: `npm install`
-3. **Create feature branch**: `git checkout -b feature/my-feature`
-4. **Make changes** with TDD approach:
-   - Write failing test first
-   - Implement minimum to pass
-   - Refactor and improve
-5. **Run tests**: `npm test`
-6. **Check coverage**: `npm run test:coverage`
-7. **Type check**: `npm run typecheck`
-8. **Commit changes** with conventional commits
-9. **Push and create** pull request
+```bash
+npm run build               # TypeScript compilation
+npm run gui                 # Start GUI + backend
+npm run gui:dev             # GUI dev mode (Vite)
+npm run tui                 # Interactive TUI
+npm run benchmark           # Performance benchmarks
+npm run docs                # Generate TypeDoc
+```
 
-### Code Quality Standards
+### TDD Approach
 
-- **Test coverage**: Must exceed 80%
-- **TypeScript**: Strict type checking required
-- **TDD approach**: Red-Green-Refactor cycle
-- **Documentation**: Comment complex logic
-- **Error handling**: Graceful degradation
+All features follow strict Red-Green-Refactor. Tests first, implementation second.
 
-## 📝 License
+## License
 
-MIT License - see LICENSE file for details
+MIT
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
 - **Ralph-Wiggum Loop pattern**: Geoffrey Huntley
 - **Emergent Garden**: Artificial life and emergence inspiration
 - **Blaise Agüera y Arcas**: "Computational Life" research
 - **p5.js**: Generative art framework
 - **Lenia**: Continuous cellular automata
-
----
-
-Built with TDD. See **IMPACT_ANALYSIS.md** for full impact analysis, test summary, and documentation index.
-
-**Status**: ✅ Production-ready (8 known integration test failures; see IMPACT_ANALYSIS.md)  
-**Version**: 1.0.0  
-**Tests**: 745 passing, 8 known failures (integration; LLM/GUI-dependent)
-
+- **Hydra**: Live coding visual synth
+- **Strudel**: TidalCycles in the browser

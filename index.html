@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liminal — Creative Coding Agent</title>
+<meta name="description" content="Generative art system with self-recursive iteration. The code evolves, you curate.">
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23d4a054'/><text x='50' y='68' font-family='serif' font-size='55' font-weight='700' fill='%230d0c0f' text-anchor='middle'>L</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a2e;
+    --border: #2a2a3e;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #d4a054;
+    --accent2: #8b5cf6;
+    --green: #10b981;
+    --lime: #84cc16;
+    --blue: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* Animated gradient background for hero */
+  .hero-bg {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(212,160,84,0.12) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 0%, rgba(139,92,246,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 50% at 20% 100%, rgba(16,185,129,0.06) 0%, transparent 50%);
+    animation: heroShift 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes heroShift {
+    0% { background-position: 0% 0%, 100% 0%, 50% 100%; }
+    100% { background-position: 100% 100%, 0% 50%, 80% 0%; }
+  }
+
+  /* Feature cards */
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 24px;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .feature-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+
+  /* Code blocks */
+  .code-block {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 20px;
+    overflow-x: auto;
+    position: relative;
+  }
+  .code-block code {
+    font-size: 13px;
+    line-height: 1.7;
+    color: #cbd5e1;
+  }
+  .code-block .prompt { color: var(--accent); }
+  .code-block .comment { color: #4a5568; }
+  .code-block .flag { color: var(--accent2); }
+
+  /* Copy button */
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text-dim);
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .code-block:hover .copy-btn { opacity: 1; }
+  .copy-btn:hover { border-color: var(--accent); color: var(--text); }
+
+  /* Flow step connector */
+  .flow-connector {
+    width: 48px;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent2), var(--accent));
+    opacity: 0.4;
+  }
+
+  /* Gallery card */
+  .gallery-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.3s;
+  }
+  .gallery-card:hover {
+    border-color: var(--accent2);
+    transform: translateY(-2px);
+  }
+  .gallery-preview {
+    height: 180px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* Pulse dot */
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 2s ease-in-out infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.5; transform: scale(1.5); }
+  }
+</style>
+</head>
+<body>
+
+<!-- Hero -->
+<section class="hero-bg min-h-screen flex items-center justify-center relative px-6">
+  <div class="max-w-3xl text-center">
+    <div class="inline-flex items-center gap-2 mb-6 px-4 py-1.5 rounded-full border border-[var(--border)] bg-[var(--surface)]">
+      <div class="pulse-dot"></div>
+      <span class="text-xs text-[var(--text-dim)] mono tracking-wider">SELF-RECURSIVE GENERATIVE ART</span>
+    </div>
+
+    <h1 class="text-7xl md:text-8xl font-extrabold mb-4 tracking-tight" style="color: var(--text);">
+      Liminal
+    </h1>
+
+    <p class="text-xl md:text-2xl font-light mb-6" style="color: var(--accent);">
+      "The code evolves. You curate."
+    </p>
+
+    <p class="text-base text-[var(--text-dim)] max-w-xl mx-auto mb-10 leading-relaxed">
+      A generative art system that iterates on its own output. The same prompt runs repeatedly,
+      but the context changes each time — creating a feedback loop of emergence, critique, and improvement.
+    </p>
+
+    <div class="flex items-center justify-center gap-4 flex-wrap">
+      <a href="#quickstart" class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-sm transition-all hover:scale-105"
+         style="background: var(--accent); color: var(--bg);">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1-8"/><path d="M16 2l4 4-4 4"/><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/></svg>
+        Get Started
+      </a>
+      <a href="https://github.com/Pastorsimon1798/liminal" target="_blank"
+         class="inline-flex items-center gap-2 px-6 py-3 rounded-lg font-medium text-sm border transition-all hover:scale-105"
+         style="border-color: var(--border); color: var(--text-dim);">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.113.83.025.83-.545v-2.66c0-1.09-.035-1.79-.075-2.175C16.245 18.78 17.78 19.07 19.5 19.5c3.09.585 5.5.075 5.5 3.575 0 1-.075.405-.075 1.25v5.815c0 .495.375.945.83.945h2.025c.495 0 .93-.38.93-.83V22.68c0-1.49-.565-2.095-1.08-2.095H8.255c-.515 0-.96.6-1.08 2.095v5.815c0 .495.435.945.93.945h2.025c.455 0 .83-.45.83-.945V10.375c0-3.575 2.41-5.575 5.5-3.575.72.17 1.255.27 1.775.27 4.5 0 8.075-3.035 8.075-8.075S18.63 0 12 0z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Live Demo -->
+<section class="px-6 py-24 max-w-5xl mx-auto" id="demo">
+  <div class="text-center mb-12">
+    <span class="text-xs mono tracking-widest" style="color: var(--accent);">LIVE OUTPUT</span>
+    <h2 class="text-3xl md:text-4xl font-bold mt-2">Generated by Liminal's Loop</h2>
+    <p class="text-sm text-[var(--text-dim)] mt-3 max-w-md mx-auto">
+      This p5.js sketch was created through recursive self-improvement. Each iteration builds on the last.
+    </p>
+  </div>
+
+  <div class="rounded-xl overflow-hidden border" style="border-color: var(--border); background: #050508;">
+    <div class="flex items-center gap-2 px-4 py-2 border-b" style="border-color: var(--border); background: var(--surface);">
+      <div class="flex gap-1.5">
+        <div class="w-3 h-3 rounded-full" style="background: #ef4444;"></div>
+        <div class="w-3 h-3 rounded-full" style="background: #f59e0b;"></div>
+        <div class="w-3 h-3 rounded-full" style="background: #22c55e;"></div>
+      </div>
+      <span class="text-xs text-[var(--text-dim)] mono ml-2">liminal — iteration 12 — score: 0.87</span>
+    </div>
+    <div id="demo-canvas" style="height: 400px;"></div>
+  </div>
+</section>
+
+<!-- How It Works -->
+<section class="px-6 py-24 max-w-5xl mx-auto" id="how-it-works">
+  <div class="text-center mb-16">
+    <span class="text-xs mono tracking-widest" style="color: var(--accent2);">PROCESS</span>
+    <h2 class="text-3xl md:text-4xl font-bold mt-2">How It Works</h2>
+    <p class="text-sm text-[var(--text-dim)] mt-3 max-w-lg mx-auto">
+      The Ralph-Wiggum Loop: same prompt, changing world, self-critique, emergent quality.
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-8">
+    <!-- Step 1 -->
+    <div class="text-center">
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style="background: linear-gradient(135deg, rgba(212,160,84,0.15), rgba(212,160,84,0.05)); border: 1px solid rgba(212,160,84,0.3);">
+        <svg width="28" height="28" fill="none" stroke="#d4a054" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Prompt</h3>
+      <p class="text-sm text-[var(--text-dim)]">Same prompt every iteration. You set the creative direction — Liminal handles the rest.</p>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="text-center">
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style="background: linear-gradient(135deg, rgba(139,92,246,0.15), rgba(139,92,246,0.05)); border: 1px solid rgba(139,92,246,0.3);">
+        <svg width="28" height="28" fill="none" stroke="#8b5cf6" stroke-width="1.5" viewBox="0 0 24 24"><path d="M1 4v6h6"/><path d="M3.5 15.5a6 6 0 017 0V12"/><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.78 7.78 5.5 5.5 0 017.78-7.78"/></svg>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Iterate</h3>
+      <p class="text-sm text-[var(--text-dim)]">Context changes each round — previous work, scores, compost seeds. The world evolves.</p>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="text-center">
+      <div class="w-16 h-16 rounded-2xl mx-auto mb-5 flex items-center justify-center" style="background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05)); border: 1px solid rgba(16,185,129,0.3);">
+        <svg width="28" height="28" fill="none" stroke="#10b981" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+      </div>
+      <h3 class="text-lg font-semibold mb-2">Curate</h3>
+      <p class="text-sm text-[var(--text-dim)]">Quality gates filter the best. Gallery saves iterations. You pick what's worth keeping.</p>
+    </div>
+  </div>
+
+  <!-- Loop visualization -->
+  <div class="mt-16 p-6 rounded-xl border" style="background: var(--surface); border-color: var(--border);">
+    <div class="code-block" style="border: none; padding: 0; background: transparent;">
+      <code>
+<span class="comment">// The core loop — deceptively simple</span>
+<span class="prompt">while</span> iterations < max:
+  code = <span class="prompt">generate</span>(prompt, context)      <span class="comment">// LLM creates</span>
+  score = <span class="prompt">evaluate</span>(code)                 <span class="comment">// quality gate ≥ 0.7</span>
+  context.<span class="prompt">accumulate</span>(code, score)      <span class="comment">// world changes</span>
+  <span class="prompt">if</span> promise_detected: <span class="prompt">break</span>          <span class="comment">// done improving</span>
+      </code>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section class="px-6 py-24 max-w-5xl mx-auto" id="features">
+  <div class="text-center mb-16">
+    <span class="text-xs mono tracking-widest" style="color: var(--lime);">CAPABILITIES</span>
+    <h2 class="text-3xl md:text-4xl font-bold mt-2">Beyond One-Shot Generation</h2>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="feature-card">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(139,92,246,0.15); border: 1px solid rgba(139,92,246,0.3);">
+          <svg width="20" height="20" fill="none" stroke="#8b5cf6" stroke-width="1.5" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        </div>
+        <h3 class="font-semibold">Swarm Generation</h3>
+      </div>
+      <p class="text-sm text-[var(--text-dim)] leading-relaxed">
+        7 creative personas run in parallel via Ollama — Architect, Synthesizer, Explorer, Muse, Distiller.
+        Competitive, hybrid, ring, and mesh modes with LLM-powered voting on the final round.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(16,185,129,0.15); border: 1px solid rgba(16,185,129,0.3);">
+          <svg width="20" height="20" fill="none" stroke="#10b981" stroke-width="1.5" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        </div>
+        <h3 class="font-semibold">Deep Collaboration</h3>
+      </div>
+      <p class="text-sm text-[var(--text-dim)] leading-relaxed">
+        Multi-model specialist pipeline: Creator + Visionary diverge, 3 critics analyze, Integrator + Refiner synthesize.
+        Converges automatically across local and cloud models.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(132,204,22,0.15); border: 1px solid rgba(132,204,22,0.3);">
+          <svg width="20" height="20" fill="none" stroke="#84cc16" stroke-width="1.5" viewBox="0 0 24 24"><path d="M4 14a1 1 0 01-.78-1.63l9.9-10.2a.5.5 0 00.86.46l-9.9 10.2a1 1 0 01-.08 1.17z"/><path d="M7 20h10"/><path d="M9.5 9.5l5 5L19 10"/></svg>
+        </div>
+        <h3 class="font-semibold">Compost Mill</h3>
+      </div>
+      <p class="text-sm text-[var(--text-dim)] leading-relaxed">
+        Feed it files, directories, or previous outputs. Extracts, shreds, collides fragments across domains,
+        scores quality, and evolves seeds into the generation loop.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: rgba(212,160,84,0.15); border: 1px solid rgba(212,160,84,0.3);">
+          <svg width="20" height="20" fill="none" stroke="#d4a054" stroke-width="1.5" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="6" r="3"/></svg>
+        </div>
+        <h3 class="font-semibold">Live Music Coding</h3>
+      </div>
+      <p class="text-sm text-[var(--text-dim)] leading-relaxed">
+        Generate Strudel (TidalCycles) and Hydra (audio-reactive visuals) code. Music-to-visual bridge
+        extracts BPM and FFT to drive visual generation.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- Gallery -->
+<section class="px-6 py-24 max-w-5xl mx-auto" id="gallery">
+  <div class="text-center mb-16">
+    <span class="text-xs mono tracking-widest" style="color: var(--accent2);">OUTPUTS</span>
+    <h2 class="text-3xl md:text-4xl font-bold mt-2">Gallery</h2>
+    <p class="text-sm text-[var(--text-dim)] mt-3">
+      273+ projects generated across p5.js, GLSL shaders, Three.js, and live music.
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-2 gap-6">
+    <div class="gallery-card">
+      <div class="gallery-preview" style="background: linear-gradient(135deg, #0f0a2e 0%, #1a0a3e 50%, #0a1628 100%);">
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 30% 40%, rgba(139,92,246,0.3) 0%, transparent 60%);"></div>
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 70% 60%, rgba(212,160,84,0.2) 0%, transparent 50%);"></div>
+        <div class="absolute bottom-3 left-3 right-3">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.6); color: var(--text-dim);">p5.js — Particle Flow</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">Emergent Particle System</span>
+          <span class="text-xs mono" style="color: var(--green);">score: 0.92</span>
+        </div>
+        <p class="text-xs text-[var(--text-dim)] mt-1">8 iterations · swarm: hybrid mode · depth &amp; flow field</p>
+      </div>
+    </div>
+
+    <div class="gallery-card">
+      <div class="gallery-preview" style="background: linear-gradient(135deg, #0a1628 0%, #0f1a2e 50%, #0a0f1e 100%);">
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 50% 50%, rgba(59,130,246,0.2) 0%, transparent 70%);"></div>
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 20% 70%, rgba(16,185,129,0.15) 0%, transparent 50%);"></div>
+        <div class="absolute bottom-3 left-3 right-3">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.6); color: var(--text-dim);">GLSL — Shader</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">Abstract Shader Composition</span>
+          <span class="text-xs mono" style="color: var(--green);">score: 0.88</span>
+        </div>
+        <p class="text-xs text-[var(--text-dim)] mt-1">5 iterations · single LLM · noise-based displacement</p>
+      </div>
+    </div>
+
+    <div class="gallery-card">
+      <div class="gallery-preview" style="background: linear-gradient(135deg, #1a0a0a 0%, #2e0a1a 50%, #0a0a1e 100%);">
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 60% 30%, rgba(244,63,94,0.15) 0%, transparent 60%);"></div>
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 40% 80%, rgba(132,204,22,0.1) 0%, transparent 50%);"></div>
+        <div class="absolute bottom-3 left-3 right-3">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.6); color: var(--text-dim);">Strudel + Hydra</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">Live Music Set</span>
+          <span class="text-xs mono" style="color: var(--accent);">organism mode</span>
+        </div>
+        <p class="text-xs text-[var(--text-dim)] mt-1">3 iterations · organism mode · music-to-visual bridge</p>
+      </div>
+    </div>
+
+    <div class="gallery-card">
+      <div class="gallery-preview" style="background: linear-gradient(135deg, #0a0f1e 0%, #1a0a2e 50%, #0a1628 100%);">
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 70% 30%, rgba(212,160,84,0.25) 0%, transparent 60%);"></div>
+        <div style="position:absolute; inset:0; background: radial-gradient(circle at 30% 70%, rgba(139,92,246,0.15) 0%, transparent 50%);"></div>
+        <div class="absolute bottom-3 left-3 right-3">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.6); color: var(--text-dim);">Three.js — 3D</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">3D Scene</span>
+          <span class="text-xs mono" style="color: var(--green);">score: 0.85</span>
+        </div>
+        <p class="text-xs text-[var(--text-dim)] mt-1">12 iterations · deep collab · lighting &amp; geometry</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Quick Start -->
+<section class="px-6 py-24 max-w-3xl mx-auto" id="quickstart">
+  <div class="text-center mb-16">
+    <span class="text-xs mono tracking-widest" style="color: var(--green);">QUICK START</span>
+    <h2 class="text-3xl md:text-4xl font-bold mt-2">Up and Running in 60 Seconds</h2>
+  </div>
+
+  <div class="space-y-4">
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <code>
+<span class="comment"># Install</span>
+npm install<br><br>
+<span class="comment"># Configure an LLM backend</span>
+liminal --configure<br><br>
+<span class="comment"># Generate</span>
+liminal --prompt <span class="prompt">"A calming blue particle system"</span>
+      </code>
+    </div>
+
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <code>
+<span class="comment"># Or use Ollama locally</span>
+export LIMINAL_LLM_PROVIDER=ollama<br>
+export LIMINAL_LLM_MODEL=llama3.2<br>
+liminal --prompt <span class="prompt">"Fractal growth pattern"</span> --use-swarm
+      </code>
+    </div>
+
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      <code>
+<span class="comment"># Feed creative material into the compost mill</span>
+liminal compost add ./my-sketches/<br>
+liminal compost digest<br>
+<span class="comment"># Seeds now cross-pollinate into every generation</span>
+      </code>
+    </div>
+  </div>
+
+  <div class="mt-8 text-center">
+    <a href="https://github.com/Pastorsimon1798/liminal" target="_blank"
+       class="inline-flex items-center gap-2 text-sm font-medium transition-colors hover:opacity-80"
+       style="color: var(--text-dim);">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.113.83.025.83-.545v-2.66c0-1.09-.035-1.79-.075-2.175C16.245 18.78 17.78 19.07 19.5 19.5c3.09.585 5.5.075 5.5 3.575 0 1-.075.405-.075 1.25v5.815c0 .495.375.945.83.945h2.025c.495 0 .93-.38.93-.83V22.68c0-1.49-.565-2.095-1.08-2.095H8.255c-.515 0-.96.6-1.08 2.095v5.815c0 .495.435.945.93.945h2.025c.455 0 .83-.45.83-.945V10.375c0-3.575 2.41-5.575 5.5-3.575.72.17 1.255.27 1.775.27 4.5 0 8.075-3.035 8.075-8.075S18.63 0 12 0z"/></svg>
+      View full documentation on GitHub &rarr;
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="px-6 py-12 border-t" style="border-color: var(--border);">
+  <div class="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-[var(--text-dim)]">
+    <div class="flex items-center gap-3">
+      <svg width="20" height="20" viewBox="0 0 100 100"><rect width="100" height="100" rx="15" fill="#d4a054"/><text x="50" y="68" font-family="serif" font-size="55" font-weight="700" fill="#0d0c0f" text-anchor="middle">L</text></svg>
+      <span>Liminal &middot; MIT License</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span>Built with</span>
+      <span class="font-medium" style="color: var(--accent);">p5.js</span>
+      <span>&middot;</span>
+      <span class="font-medium" style="color: var(--accent2);">Strudel</span>
+      <span>&middot;</span>
+      <span class="font-medium" style="color: var(--green);">Hydra</span>
+    </div>
+  </div>
+</footer>
+
+<!-- Live p5.js Demo -->
+<script src="https://cdn.jsdelivr.net/npm/p5@1.9.0/lib/p5.min.js"></script>
+<script>
+function copyCode(btn) {
+  const code = btn.parentElement.querySelector('code');
+  navigator.clipboard.writeText(code.innerText).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+
+// Embedded p5.js sketch — generative particle flow
+new p5(function(p) {
+  const particles = [];
+  const NUM = 120;
+
+  p.setup = function() {
+    const canvas = document.getElementById('demo-canvas');
+    const c = p.createCanvas(canvas.offsetWidth, canvas.offsetHeight);
+    c.parent(canvas);
+    p.background(5, 5, 8);
+    for (let i = 0; i < NUM; i++) {
+      particles.push({
+        x: p.random(c.width),
+        y: p.random(c.height),
+        vx: p.random(-0.5, 0.5),
+        vy: p.random(-0.3, 0.3),
+        size: p.random(1.5, 4),
+        hue: p.random(20, 50),
+        life: p.random(100, 255),
+        maxLife: 255,
+      });
+    }
+    p.noStroke();
+  };
+
+  p.draw = function() {
+    p.background(5, 5, 8, 15);
+
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const pt = particles[i];
+
+      // Flow field influence
+      const angle = p.noise(pt.x * 0.003, pt.y * 0.003, p.frameCount * 0.002) * p.TWO_PI * 3;
+      pt.vx += Math.cos(angle) * 0.08;
+      pt.vy += Math.sin(angle) * 0.08;
+      pt.vx *= 0.98;
+      pt.vy *= 0.98;
+      pt.x += pt.vx;
+      pt.y += pt.vy;
+
+      // Fade
+      pt.life -= 0.3;
+
+      // Reset if dead or out of bounds
+      if (pt.life <= 0 || pt.x < -10 || pt.x > c.width + 10 || pt.y < -10 || pt.y > c.height + 10) {
+        pt.x = p.random(c.width);
+        pt.y = p.random(c.height);
+        pt.vx = p.random(-0.5, 0.5);
+        pt.vy = p.random(-0.3, 0.3);
+        pt.hue = p.random(20, 50);
+        pt.life = pt.maxLife;
+      }
+
+      const alpha = p.map(pt.life, 0, pt.maxLife, 0, 120);
+      p.fill(212, 160, 84, alpha);
+      p.noStroke();
+      p.ellipse(pt.x, pt.y, pt.size);
+    }
+
+    // Subtle connection lines between nearby particles
+    p.stroke(139, 92, 246, 15);
+    p.strokeWeight(0.5);
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const d = p.dist(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+        if (d < 60) {
+          const a = p.map(d, 60, 0, 15, 0);
+          p.stroke(139, 92, 246, a);
+          p.line(particles[i].x, particles[i].y, particles[j].x, particles[j].y);
+        }
+      }
+    }
+  };
+
+  p.windowResized = function() {
+    const canvas = document.getElementById('demo-canvas');
+    p.resizeCanvas(canvas.offsetWidth, canvas.offsetHeight);
+  };
+});
+</script>
+
+</body>
+</html>

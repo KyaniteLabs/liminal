@@ -1,0 +1,237 @@
+/**
+ * EventBus — central event bus for all Liminal processes.
+ *
+ * Every long-running process (RalphLoop, CompostMill, CompostSoup, SwarmOrchestrator,
+ * LLMClient, Renderer) emits typed events here. PreviewServer streams these to the
+ * GUI via SSE for real-time visualization.
+ */
+
+import { EventEmitter } from 'node:events';
+
+// ── Event schema ──
+
+export interface BusEvent {
+  type: string;
+  source: string;
+  data: Record<string, unknown>;
+  timestamp: string;
+}
+
+// ── Typed event payloads ──
+
+export interface ProcessStartData {
+  process: string;
+  stage?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface ProcessEndData {
+  process: string;
+  success: boolean;
+  durationMs?: number;
+  reason?: string;
+  iterations?: number;
+  finalScore?: number;
+}
+
+export interface ProcessProgressData {
+  process: string;
+  current: number;
+  total: number;
+  stage: string;
+  message?: string;
+}
+
+export interface LLMRequestData {
+  provider: string;
+  model: string;
+  promptPreview?: string;
+}
+
+export interface LLMResponseData {
+  provider: string;
+  model: string;
+  success: boolean;
+  latencyMs: number;
+  error?: string;
+  cached?: boolean;
+}
+
+export interface CompostStageData {
+  stage: string;
+  message: string;
+}
+
+export interface CompostCollisionData {
+  fragmentA: string;
+  fragmentB: string;
+  strategy: string;
+  domains: string[];
+}
+
+export interface CompostScoreData {
+  fragmentId: string;
+  domain: string;
+  total: number;
+  dimensions?: Record<string, number>;
+}
+
+export interface CompostSeedData {
+  seedId: string;
+  score: number;
+  source: string;
+  domains: string[];
+}
+
+export interface LoopIterationData {
+  iteration: number;
+  maxIterations?: number;
+  score: number;
+  promiseDetected: boolean;
+  durationMs?: number;
+}
+
+export interface LoopEvaluationData {
+  iteration: number;
+  overallScore: number;
+  technicalScore?: number;
+  aestheticScore?: number;
+  noveltyScore?: number;
+}
+
+export interface SwarmRoundData {
+  round: number;
+  totalRounds: number;
+  winnerId: string | null;
+  converged: boolean;
+}
+
+// ── Event types ──
+
+export const EventTypes = {
+  PROCESS_START: 'process:start',
+  PROCESS_END: 'process:end',
+  PROCESS_PROGRESS: 'process:progress',
+  LLM_REQUEST: 'llm:request',
+  LLM_RESPONSE: 'llm:response',
+  COMPOST_STAGE: 'compost:stage',
+  COMPOST_COLLISION: 'compost:collision',
+  COMPOST_SCORE: 'compost:score',
+  COMPOST_SEED: 'compost:seed',
+  LOOP_ITERATION: 'loop:iteration',
+  LOOP_EVALUATION: 'loop:evaluation',
+  SWARM_ROUND: 'swarm:round',
+  RENDER_SCREENSHOT: 'render:screenshot',
+  EXPORT_PROGRESS: 'export:progress',
+} as const;
+
+// ── Singleton EventBus ──
+
+class Bus extends EventEmitter {
+  private static MAX_LISTENERS = 100;
+
+  constructor() {
+    super();
+    this.setMaxListeners(Bus.MAX_LISTENERS);
+  }
+
+  /** Emit a typed event to all listeners (and log to console). */
+  emit(eventType: string, source: string, data: Record<string, unknown>): boolean;
+  emit(event: BusEvent): boolean;
+  emit(arg1: string | BusEvent, arg2?: string, arg3?: Record<string, unknown>): boolean {
+    let event: BusEvent;
+    if (typeof arg1 === 'string') {
+      event = {
+        type: arg1,
+        source: arg2 ?? 'unknown',
+        data: arg3 ?? {},
+        timestamp: new Date().toISOString(),
+      };
+    } else {
+      event = arg1;
+    }
+
+    // Log to console (replaces scattered console.log calls)
+    this.logToConsole(event);
+
+    return super.emit('event', event);
+  }
+
+  /** Subscribe to all events. */
+  onEvent(listener: (event: BusEvent) => void): this {
+    return super.on('event', listener);
+  }
+
+  /** Remove event listener. */
+  offEvent(listener: (event: BusEvent) => void): this {
+    return super.off('event', listener);
+  }
+
+  /** Get recent events (ring buffer for late SSE clients). */
+  private recentEvents: BusEvent[] = [];
+  private static readonly MAX_RECENT = 200;
+
+  addRecentEvent(event: BusEvent): void {
+    this.recentEvents.push(event);
+    if (this.recentEvents.length > Bus.MAX_RECENT) {
+      this.recentEvents.shift();
+    }
+  }
+
+  getRecentEvents(): BusEvent[] {
+    return [...this.recentEvents];
+  }
+
+  private logToConsole(event: BusEvent): void {
+    // Store for recent buffer
+    this.addRecentEvent(event);
+
+    const ts = event.timestamp.split('T')[1]?.slice(0, 12) ?? event.timestamp;
+    const src = event.source.padEnd(12);
+    const type = event.type.padEnd(20);
+
+    // Suppress noisy events from console output
+    if (event.type === EventTypes.COMPOST_SCORE) return;
+
+    const colorCode = this.getColorForType(event.type);
+    const msg = `\x1b[${colorCode}m[${ts}]\x1b[0m \x1b[2m${src}\x1b[0m ${type}`;
+
+    if (event.type === EventTypes.PROCESS_PROGRESS) {
+      const d = event.data as unknown as ProcessProgressData;
+      const bar = this.progressBar(d.current, d.total, 20);
+      process.stdout.write(`${msg} ${bar} ${d.current}/${d.total} ${d.stage}\x1b[0K\r\n`);
+    } else if (event.type === EventTypes.LLM_RESPONSE) {
+      const d = event.data as unknown as LLMResponseData;
+      const status = d.success ? 'ok' : `err: ${d.error}`;
+      process.stdout.write(`${msg} ${d.provider}/${d.model} ${d.latencyMs}ms ${status}\x1b[0K\r\n`);
+    } else if (event.type === EventTypes.LOOP_ITERATION) {
+      const d = event.data as unknown as LoopIterationData;
+      process.stdout.write(`${msg} iter=${d.iteration} score=${d.score.toFixed(2)}${d.promiseDetected ? ' PROMISE' : ''}\x1b[0K\r\n`);
+    } else {
+      // Generic: show a summary message from data
+      const summary = (event.data as Record<string, unknown>).message ?? '';
+      if (summary) {
+        process.stdout.write(`${msg} ${String(summary)}\x1b[0K\r\n`);
+      }
+    }
+  }
+
+  private getColorForType(type: string): string {
+    if (type.startsWith('process:')) return '36'; // cyan
+    if (type.startsWith('llm:')) return '33';     // yellow
+    if (type.startsWith('compost:')) return '32';  // green
+    if (type.startsWith('loop:')) return '34';     // blue
+    if (type.startsWith('swarm:')) return '35';    // magenta
+    return '37'; // white
+  }
+
+  private progressBar(current: number, total: number, width: number): string {
+    const pct = total > 0 ? current / total : 0;
+    const filled = Math.round(pct * width);
+    return `[${'█'.repeat(filled)}${'░'.repeat(width - filled)}]`;
+  }
+}
+
+/** Singleton EventBus instance. Import and use across the codebase. */
+export const eventBus = new Bus();
+export default eventBus;

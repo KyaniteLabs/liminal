@@ -4,6 +4,7 @@
  */
 
 import type { CompostConfig, CompostFragment, CollisionPair, CollisionResult } from './types.js';
+import { RetryManager } from '../llm/RetryManager.js';
 
 export class CollisionEngine {
   private config: CompostConfig;
@@ -164,6 +165,44 @@ export class CollisionEngine {
     return pairs;
   }
 
+  /** Pair fragments from the same domain but different layers (e.g. semantic vs structured). */
+  findSameDomainCollisions(fragments: CompostFragment[]): CollisionPair[] {
+    const pairs: CollisionPair[] = [];
+    const byDomain = new Map<string, CompostFragment[]>();
+
+    for (const frag of fragments) {
+      if (!byDomain.has(frag.domain)) byDomain.set(frag.domain, []);
+      byDomain.get(frag.domain)!.push(frag);
+    }
+
+    for (const [, frags] of byDomain) {
+      const byLayer = new Map<string, CompostFragment[]>();
+      for (const frag of frags) {
+        if (!byLayer.has(frag.layer)) byLayer.set(frag.layer, []);
+        byLayer.get(frag.layer)!.push(frag);
+      }
+
+      const layers = [...byLayer.keys()];
+      for (let i = 0; i < layers.length; i++) {
+        for (let j = i + 1; j < layers.length; j++) {
+          const fragsA = byLayer.get(layers[i])!;
+          const fragsB = byLayer.get(layers[j])!;
+          let count = 0;
+          for (const a of fragsA) {
+            if (count >= 50) break;
+            for (const b of fragsB) {
+              if (count >= 50) break;
+              if (a.id === b.id) continue;
+              pairs.push({ a, b, strategy: 'same-domain-layer' });
+              count++;
+            }
+          }
+        }
+      }
+    }
+    return pairs;
+  }
+
   /** Stochastic sampling of cross-domain pairs without building full O(n^2) array. */
   findRandomCollisions(fragments: CompostFragment[]): CollisionPair[] {
     const pairs: CollisionPair[] = [];
@@ -202,6 +241,7 @@ export class CollisionEngine {
   /** Run all collision strategies and merge pairs. */
   async runAll(fragments: CompostFragment[]): Promise<CollisionResult[]> {
     const allPairs = [
+      ...this.findSameDomainCollisions(fragments),
       ...this.findTimestampCollisions(fragments),
       ...this.findSizeCollisions(fragments),
       ...this.findMetadataCollisions(fragments),
@@ -224,8 +264,10 @@ export class CollisionEngine {
     const maxCollisions = this.config.maxSeedsPerDigest * 5;
     const pairsToProcess = uniquePairs.slice(0, maxCollisions);
 
-    const merged = await Promise.allSettled(
-      pairsToProcess.map(p => this.mergePair(p.a, p.b))
+    const merged = await RetryManager.mapSettled(
+      pairsToProcess,
+      p => this.mergePair(p.a, p.b),
+      3, // max 3 concurrent collision merges
     );
 
     for (let i = 0; i < merged.length; i++) {

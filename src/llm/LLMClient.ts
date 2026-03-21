@@ -41,6 +41,7 @@ import { SERVICE_DEFAULTS } from '../constants.js';
 import { PromptLibrary } from '../prompts/index.js';
 import { RetryManager } from './RetryManager.js';
 import { CacheManager } from './CacheManager.js';
+import { eventBus, EventTypes } from '../core/EventBus.js';
 
 export interface LLMConfig {
   provider: 'ollama' | 'openai' | 'minimax' | 'lmstudio' | 'hybrid';
@@ -108,7 +109,9 @@ export class LLMClient {
    * Used by generateP5Sketch, improveP5Sketch, and domain-specific generators.
    */
   async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<LLMResponse> {
+    const llmStartTime = Date.now();
     try {
+
       // Optionally enhance prompt via reasoning transfer
       let enhancedUserPrompt = userPrompt;
       if (this.config.useReasoningTransfer) {
@@ -120,6 +123,8 @@ export class LLMClient {
       if (cached) {
         return { code: cached, success: true };
       }
+
+      eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', { provider: this.config.provider, model: this.config.model, promptPreview: enhancedUserPrompt.slice(0, 100) });
 
       const result = await RetryManager.executeWithRetry(async () => {
         if (this.config.provider === 'ollama') {
@@ -142,11 +147,14 @@ export class LLMClient {
         this.cache.set(systemPrompt, enhancedUserPrompt, result.code);
       }
 
+      eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', { provider: this.config.provider, model: this.config.model, success: true, latencyMs: Date.now() - llmStartTime });
+
       return result;
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
       const isRetryable = error instanceof LLMError && error.retryable;
       console.error('LLMClient.generate failed:', errMsg, isRetryable ? '(retryable, retries exhausted)' : '');
+      eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', { provider: this.config.provider, model: this.config.model, success: false, latencyMs: Date.now() - llmStartTime, error: errMsg });
       return {
         code: `// LLM generation failed: ${errMsg}`,
         success: false,

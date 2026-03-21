@@ -8,6 +8,7 @@ import type { CompostConfig, CompostFragment, SoupState } from './types.js';
 import { SoupStateManager } from './SoupStateManager.js';
 import { SeedBank } from './SeedBank.js';
 import { FragmentScorer } from './FragmentScorer.js';
+import { eventBus, EventTypes } from '../core/EventBus.js';
 
 export class CompostSoup {
   private config: CompostConfig;
@@ -29,6 +30,7 @@ export class CompostSoup {
   /** Run a single soup cycle. */
   async cycle(fragments: CompostFragment[]): Promise<SoupState> {
     let state = await this.stateManager.load();
+    eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostSoup', { stage: 'soup-cycle', message: `Soup cycle: ${fragments.length} fragments, ${[...new Set(fragments.map(f => f.domain))].length} domains` });
 
     // Need at least 2 fragments from different domains
     const domains = [...new Set(fragments.map(f => f.domain))];
@@ -72,6 +74,7 @@ export class CompostSoup {
     // Score offspring
     const score = await this.scorer.score(offspring);
     offspring.score = score.total;
+    eventBus.emit(EventTypes.COMPOST_SCORE, 'CompostSoup', { fragmentId: offspring.id, domain: 'cross-domain', total: score.total });
 
     // Update generation
     state = this.stateManager.updateGeneration(state);
@@ -97,6 +100,7 @@ export class CompostSoup {
         usedBy: [],
         useCount: 0,
       });
+      eventBus.emit(EventTypes.COMPOST_SEED, 'CompostSoup', { seedId: offspring.id, score: score.total, source: `soup:${fragA.id}+${fragB.id}`, domains: [domainA, domainB] });
       state = this.stateManager.recordPromotion(state, offspring);
     }
 
@@ -107,6 +111,7 @@ export class CompostSoup {
   /** Run continuous soup loop with AbortSignal support. */
   async run(fragments: CompostFragment[], signal?: AbortSignal): Promise<void> {
     this.abortController = new AbortController();
+    eventBus.emit(EventTypes.PROCESS_START, 'CompostSoup', { process: 'compost-soup' });
     const controller = this.abortController;
 
     // Listen for external abort
@@ -130,6 +135,7 @@ export class CompostSoup {
         }, { once: true });
       }).catch(() => { /* aborted */ });
     }
+    eventBus.emit(EventTypes.PROCESS_END, 'CompostSoup', { process: 'compost-soup', success: true });
   }
 
   /** Stop the soup loop. */

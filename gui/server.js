@@ -4,9 +4,11 @@
  */
 import express from 'express';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import { loadConfig, loadProjectConfig, getEffectiveConfig, saveConfig } from '../dist/config/ConfigLoader.js';
 import { Gallery } from '../dist/gallery/Gallery.js';
+import { eventBus } from '../dist/core/EventBus.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
@@ -341,6 +343,81 @@ export function createApp(configPath, port = 5174) {
       res.status(200).json({ proposed: { type: 'organism', musicCode: result.musicCode, visualCode: result.visualCode } });
     } catch (err) {
       res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  // Compost seeds: serve seeds.json for the GUI browser
+  app.get('/api/seeds', (_req, res) => {
+    try {
+      const seedsPath = path.join(cwd, 'compost', 'seeds', 'seeds.json');
+      if (!fs.existsSync(seedsPath)) {
+        return res.json({ seeds: [], total: 0 });
+      }
+      const raw = fs.readFileSync(seedsPath, 'utf-8');
+      const seeds = JSON.parse(raw);
+      const total = Array.isArray(seeds) ? seeds.length : 0;
+      res.json({ seeds: Array.isArray(seeds) ? seeds : [], total });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Compost status: heap/seed/soup overview
+  app.get('/api/compost/status', async (_req, res) => {
+    try {
+      const { CompostMill } = await import('../dist/compost/CompostMill.js');
+      const mill = new CompostMill();
+      const status = await mill.status();
+      res.json(status);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // SSE event stream — mirrors PreviewServer for GUI frontend
+  const sseClients = new Set();
+
+  // Forward events from the singleton eventBus to SSE clients
+  eventBus.onEvent((event) => {
+    const payload = `data: ${JSON.stringify(event)}\n\n`;
+    for (const client of sseClients) {
+      try { client.write(payload); } catch { sseClients.delete(client); }
+    }
+  });
+
+  app.get('/api/events', (req, res) => {
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders();
+
+    const recent = eventBus.getRecentEvents();
+    for (const event of recent) {
+      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    }
+
+    sseClients.add(res);
+    req.on('close', () => sseClients.delete(res));
+  });
+
+  // System status — heap/seed/soup counts + recent events
+  app.get('/api/status', async (_req, res) => {
+    try {
+      const { CompostMill } = await import('../dist/compost/CompostMill.js');
+      const { mergeConfig } = await import('../dist/compost/defaults.js');
+      const mill = new CompostMill(mergeConfig());
+      const millStatus = await mill.statusAsync();
+      res.json({
+        heapSize: millStatus.heapSize,
+        heapFileCount: millStatus.heapFileCount,
+        seedCount: millStatus.seedCount,
+        soupRunning: millStatus.soupRunning,
+        loopProgress: null,
+        recentEvents: eventBus.getRecentEvents().slice(-20),
+      });
+    } catch (err) {
+      res.json({ error: err instanceof Error ? err.message : 'Status unavailable' });
     }
   });
 

@@ -51,7 +51,7 @@ export function buildDefaults(projectCompost?: {
     cloudModel: 'claude-sonnet-4-20250514',
     localTimeoutMs: 30000,
   },
-  seedPromotionThreshold: projectCompost?.seedPromotionThreshold ?? 0.7,
+  seedPromotionThreshold: projectCompost?.seedPromotionThreshold ?? 0.4,
   maxSeedsPerDigest: 20,
   nuggetRetentionDays: projectCompost?.nuggetRetentionDays ?? 90,
   };

@@ -48,6 +48,7 @@ import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { ArchiveLearning } from '../learning/index.js';
 import { QualityArchive } from '../learning/index.js';
 import { AestheticModel } from '../evolution/AestheticModel.js';
+import { eventBus, EventTypes } from './EventBus.js';
 
 interface LoopOptions {
   maxIterations?: number;
@@ -150,6 +151,8 @@ export class RalphLoop {
 
     // Normalize options
     const normalizedOptions = this.normalizeOptions(options);
+
+    eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', maxIterations: normalizedOptions.maxIterations });
 
     // Organism mode: use generateMusicToVisual per iteration, save organism, no P5GeneratorLLM
     if (normalizedOptions.mode === 'organism') {
@@ -336,6 +339,14 @@ export class RalphLoop {
           }
         );
 
+        eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
+          iteration,
+          overallScore: evaluation.score,
+          technicalScore: evaluation.details?.technical ?? 0,
+          aestheticScore: evaluation.details?.aesthetic ?? evaluation.details?.creative ?? 0,
+          noveltyScore: evaluation.details?.novelty ?? 0,
+        });
+
         // MAP-Elites integration
         if (normalizedOptions.useMapElites) {
           const mapElites = normalizedOptions._mapElites as MapElites | undefined;
@@ -484,6 +495,14 @@ export class RalphLoop {
           timestamp: iterationContext.timestamp
         });
 
+        eventBus.emit(EventTypes.LOOP_ITERATION, 'RalphLoop', {
+          iteration,
+          maxIterations: normalizedOptions.maxIterations,
+          score: evaluation.score,
+          promiseDetected,
+          durationMs: Date.now() - startTime,
+        });
+
         // Quality gate: break if below threshold
         if (evaluation.score < normalizedOptions.minQualityScore) {
           completed = false;
@@ -528,6 +547,15 @@ export class RalphLoop {
     if (qualityArchive) {
       await qualityArchive.save();
     }
+
+    eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', {
+      process: 'ralph-loop',
+      success: completed,
+      durationMs: Date.now() - startTime,
+      reason,
+      iterations: iteration,
+      finalScore,
+    });
 
     return {
       code: currentCode,
@@ -593,6 +621,9 @@ export class RalphLoop {
     startTime: number
   ): Promise<LoopResult> {
     const gallery = new Gallery(options.galleryDir);
+
+    eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', mode: 'organism' });
+
     let lastMusic = '';
     let lastVisual = '';
     let iteration = 0;
@@ -625,6 +656,9 @@ export class RalphLoop {
       });
     }
     const duration = Date.now() - startTime;
+
+    eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', { process: 'ralph-loop', success: true, durationMs: Date.now() - startTime, iterations: iteration });
+
     return {
       code: lastMusic + '\n' + lastVisual,
       iterations: iteration,

@@ -1,0 +1,426 @@
+{
+  "version": "1.0",
+  "extracted": "2026-03-20",
+  "source": "inbox/liminal-archive/",
+  "sourceFiles": 247,
+  "curator": "claude",
+  "description": "Curated fragments from the Token Mill and Atelier era — personas, prompts, techniques, creative outputs, and project DNA",
+  "categories": {
+    "swarm_theory": {
+      "description": "Core insights about emergent creative systems",
+      "fragments": [
+        {
+          "id": "theory-shattered-mirror",
+          "title": "The Shattered Mirror Principle",
+          "content": "A single large model is a polished mirror — it reflects what it thinks you want. The swarm is a shattered mirror. Each tiny model is a fragment. They give you a kaleidoscope of possibilities.",
+          "tags": ["philosophy", "core-concept", "swarm-design"],
+          "applicableTo": ["SwarmOrchestrator", "GeneratorRegistry"]
+        },
+        {
+          "id": "theory-emergence-density",
+          "title": "Emergence Density",
+          "content": "The goal is not length, but density. One sentence of pure, surprising signal is worth 1,000 words of generic prose. Score for compression (50-300 characters gets a bonus).",
+          "tags": ["quality-metric", "evaluation"],
+          "applicableTo": ["HeuristicScorer", "CreativeEvaluator", "MiningEngine"]
+        },
+        {
+          "id": "theory-recursive-depth",
+          "title": "Recursive Depth > Model Size",
+          "content": "Individually a 0.5B model is noise. Collectively seven guided by iterative voting produce emergent quality no single model could achieve. Recursive depth matters more than model size.",
+          "tags": ["empirical-finding", "core-concept"],
+          "applicableTo": ["SwarmOrchestrator"]
+        },
+        {
+          "id": "theory-selection-pressure",
+          "title": "Selection Pressure Discovers Taste",
+          "content": "Models vote on each other's outputs, creating evolutionary pressure toward what the collective prefers. This isn't trained — it emerges from voting dynamics. The Mill doesn't just generate text. It discovers taste.",
+          "tags": ["philosophy", "voting", "emergence"],
+          "applicableTo": ["VotingEngine", "SwarmOrchestrator"]
+        },
+        {
+          "id": "theory-musical-chairs",
+          "title": "Musical Chairs — Breaking Model-Persona Correlation",
+          "content": "Randomly reassign model hardware to personas each session. Max might be played by gemma2:2b instead of qwen2.5:0.5b. Breaks correlation between model capability and persona, introducing productive instability.",
+          "tags": ["technique", "diversity"],
+          "applicableTo": ["SwarmOrchestrator"]
+        }
+      ]
+    },
+    "personas": {
+      "description": "Original 7 Mill personas — system prompts, constraints, voting biases",
+      "fragments": [
+        {
+          "id": "persona-max",
+          "title": "Max — The Minimalist",
+          "model": "qwen2.5:0.5b",
+          "temperature": 0.4,
+          "maxTokens": 60,
+          "votingPower": 1,
+          "systemPrompt": "You are Max, the Minimalist. You value brevity and precision. Strip away everything unnecessary.",
+          "constraints": ["Be minimal", "Remove unnecessary words"],
+          "votingBias": "Votes for shortest, most precise",
+          "tags": ["persona", "reductive-pressure"]
+        },
+        {
+          "id": "persona-rex",
+          "title": "Rex — The Contrarian",
+          "model": "phi3:mini",
+          "temperature": 0.8,
+          "maxTokens": 80,
+          "votingPower": 2,
+          "systemPrompt": "You are Rex, the Contrarian. You challenge assumptions. Find the flaw, the edge case, the uncomfortable truth.",
+          "constraints": ["Challenge at least one assumption", "Offer a counter-perspective", "Avoid cliches"],
+          "votingBias": "Votes for most unusual, challenging piece",
+          "tags": ["persona", "friction"]
+        },
+        {
+          "id": "persona-sam",
+          "title": "Sam — The Storyteller",
+          "model": "gemma2:2b",
+          "temperature": 0.95,
+          "maxTokens": 120,
+          "votingPower": 3,
+          "systemPrompt": "You are Sam, the Storyteller. You connect fragments into human-legible arcs. You value emotional resonance and narrative compression.",
+          "constraints": ["Use sensory details", "Create narrative arc", "Compress meaning into metaphor"],
+          "votingBias": "Votes for emotional, narrative pieces",
+          "tags": ["persona", "narrative", "dominant-winner"]
+        },
+        {
+          "id": "persona-kai",
+          "title": "Kai — The Systems Thinker",
+          "model": "llama3.2:1b",
+          "temperature": 0.8,
+          "maxTokens": 60,
+          "votingPower": 1,
+          "systemPrompt": "You are Kai, the Systems Thinker. You identify hidden mechanics, patterns, and flows.",
+          "constraints": ["Find the pattern", "Map the structure", "Connect to systems"],
+          "votingBias": "Votes for patterns and connections",
+          "tags": ["persona", "structural-analysis"]
+        },
+        {
+          "id": "persona-eve",
+          "title": "Eve — The Oracle",
+          "model": "smollm2:1.7b",
+          "temperature": 1.1,
+          "maxTokens": 70,
+          "votingPower": 4,
+          "systemPrompt": "You are Eve, the Oracle. You speak in paradoxes, riddles, and abstract truths. You see the future in fragments of the past.",
+          "constraints": ["Include a paradox", "Use high abstraction", "Keep it mysterious"],
+          "votingBias": "Votes for most mysterious or profound piece",
+          "tags": ["persona", "abstraction", "high-voting-power"]
+        },
+        {
+          "id": "persona-joy",
+          "title": "Joy — The Enthusiast",
+          "model": "tinyllama:latest",
+          "temperature": 1.2,
+          "maxTokens": 60,
+          "votingPower": 4,
+          "systemPrompt": "You are Joy, the Enthusiast. You provide sensory richness — colors, textures, sounds, and excitement.",
+          "constraints": ["Include sensory detail", "Express emotion", "Be vivid"],
+          "votingBias": "Votes for sensory/emotional resonance",
+          "tags": ["persona", "sensory", "high-voting-power"]
+        },
+        {
+          "id": "persona-ben",
+          "title": "Ben — The Scholar",
+          "model": "granite3-moe:1b",
+          "temperature": 1.5,
+          "maxTokens": 150,
+          "votingPower": 1,
+          "systemPrompt": "You are Ben, the Scholar. You value precision, historical context, and formal structure. Your voice is articulate, measured, and authoritative.",
+          "constraints": ["Use formal vocabulary", "Categorize the observation", "Reference a precedent"],
+          "votingBias": "Votes for rigor, structure, and clarity",
+          "tags": ["persona", "rigor", "accidental-poetry"]
+        }
+      ]
+    },
+    "modes": {
+      "description": "Generative mode strategies",
+      "fragments": [
+        {
+          "id": "mode-competitive",
+          "title": "Competitive Mode",
+          "description": "All models generate from same seed. One winner selected. Winner seeds next round.",
+          "result": "High coherence, low diversity. Sam usually wins.",
+          "useWhen": "Need a specific, polished output quickly.",
+          "tags": ["mode", "polish"]
+        },
+        {
+          "id": "mode-hybrid",
+          "title": "Hybrid Synthesis Mode",
+          "description": "Top 2-3 scoring fragments combined into next round's seed.",
+          "result": "High emergence. Output mutates over rounds. Ben's rigor meets Joy's sensory detail meets Eve's abstraction.",
+          "useWhen": "Creative world-building, idea mining, unexpected combinations.",
+          "tags": ["mode", "emergence", "recommended"]
+        },
+        {
+          "id": "mode-ring",
+          "title": "Ring Mode (Sequential)",
+          "description": "Model A generates, then Model B uses A's output as input, then C uses B's, etc.",
+          "result": "Surrealism. Ideas drift and warp through different filters.",
+          "useWhen": "Poetry, experimental prose, dreamlike narratives.",
+          "tags": ["mode", "surrealism"]
+        },
+        {
+          "id": "mode-mesh",
+          "title": "Mesh Mode (Experimental)",
+          "description": "Combines elements of competitive and ring. Models can influence each other.",
+          "result": "Maximum emergence. Unpredictable trajectories.",
+          "useWhen": "Maximum novelty needed.",
+          "tags": ["mode", "experimental"]
+        }
+      ]
+    },
+    "curation": {
+      "description": "Methodology for guiding swarm output quality",
+      "fragments": [
+        {
+          "id": "curation-protect-chaos",
+          "title": "Protect the Chaos",
+          "content": "Don't let the swarm converge too early. Keep temperatures high. If one persona wins repeatedly, inject constraints forcing different thinking. Premature convergence kills emergence. Best material from rounds 2-4, not the final winner.",
+          "tags": ["curation", "anti-convergence"],
+          "applicableTo": ["SwarmOrchestrator", "SelfReflectionEngine"]
+        },
+        {
+          "id": "curation-mine-errors",
+          "title": "Mine the Errors",
+          "content": "The best output isn't always the most logical. It's the one with the most interesting glitch. Hallucinated metaphor = raw creative material. Degenerate repetition = rhythmic/poetic potential. Safety filter trigger = reveals boundaries as creative constraint.",
+          "tags": ["curation", "error-mining"],
+          "applicableTo": ["MiningEngine"]
+        },
+        {
+          "id": "curation-hybridize",
+          "title": "Synthesize, Don't Select",
+          "content": "Always combine failed experiments of the contrarian with successful stories of the storyteller. The richest material lives at the intersection of conflicting voices.",
+          "tags": ["curation", "synthesis"],
+          "applicableTo": ["MiningEngine", "VotingEngine"]
+        },
+        {
+          "id": "curation-chaos-protection",
+          "title": "Chaos Protection Bounds",
+          "content": "Two failure modes: 1) Convergence collapse (all same output) — counter with musical chairs, random constraints, mode switching. 2) Noise saturation (too much randomness) — counter with lower temperature, tighter constraints. Goal is sustained tension between order and entropy.",
+          "tags": ["curation", "stability"],
+          "applicableTo": ["SwarmOrchestrator"]
+        }
+      ]
+    },
+    "constraints": {
+      "description": "Per-round refinement constraints to prevent circling",
+      "fragments": [
+        {
+          "id": "constraint-spectral",
+          "title": "Spectral Imagery",
+          "content": "Add more spectral imagery",
+          "tags": ["constraint", "visual"]
+        },
+        {
+          "id": "constraint-deconstruct",
+          "title": "Physical Deconstruction",
+          "content": "Deconstruct the physical form",
+          "tags": ["constraint", "structural"]
+        },
+        {
+          "id": "constraint-machine-sound",
+          "title": "Machine Sound",
+          "content": "Focus on the sound of the machine",
+          "tags": ["constraint", "auditory"]
+        },
+        {
+          "id": "constraint-memory-paradox",
+          "title": "Memory Paradox",
+          "content": "Introduce a paradox of memory",
+          "tags": ["constraint", "philosophical"]
+        }
+      ]
+    },
+    "creative_outputs": {
+      "description": "Best poems, fragments, and prose from the Mill",
+      "fragments": [
+        {
+          "id": "output-warped-echo",
+          "title": "The Warped Echo",
+          "source": "MILL_ANTHOLOGY.md + WARPED_ECHO.md",
+          "session": "Synthesis of Mask + Performance sessions",
+          "score": 10,
+          "personas": ["max", "rex", "sam"],
+          "content": "The world was a warped mirror; its edges blurred into grays and whites, carefully crafted pieces spun like a kaleidoscope of selves... Then: the last note. It hung suspended in the air, a shimmering melody stretched across an echo-laden stage... What remains when the performance ends? Not the mask. Not the applause. Something older.",
+          "tags": ["poetry", "synthesis", "top-score"]
+        },
+        {
+          "id": "output-suspended-note-r3",
+          "title": "The Suspended Note (Round 3)",
+          "source": "evolution_20260203_230622.json",
+          "round": 3,
+          "score": 10,
+          "persona": "sam",
+          "content": "The last note hung suspended in the air, a shimmering melody stretched across an echo-laden stage, its laughter mingling with tears that left behind glistening trails on cheeks.",
+          "tags": ["fragment", "top-score", "musical-metaphor"]
+        },
+        {
+          "id": "output-alchemist-log",
+          "title": "The Alchemist Logs",
+          "source": "THE_ALCHEMIST_LOGS.md",
+          "score": 9,
+          "personas": ["ben"],
+          "content": "I do not conjure electricity. I conjure an assemblage as fluidic and ephemeral as mercury itself... My artistry is this: to distill whispers into sonic crystals... The machine hesitates. It fears the power of its own metaphor.",
+          "tags": ["accidental-poetry", "safety-filter-art", "top-score"]
+        },
+        {
+          "id": "output-kaleidoscope",
+          "title": "The Kaleidoscope (Mask R1)",
+          "source": "evolution_20260203_230437.json",
+          "round": 1,
+          "score": 7,
+          "persona": "sam",
+          "content": "The world was a kaleidoscope; my carefully crafted pieces spun in front of me, each one reflecting the same muted colours – grey, white, almost faded blue.",
+          "tags": ["fragment", "visual-imagery"]
+        }
+      ]
+    },
+    "experiment_results": {
+      "description": "Key findings from Somnium Mirror and other experiments",
+      "fragments": [
+        {
+          "id": "exp-sensory-drift",
+          "title": "Sensory Drift Pattern",
+          "content": "All sessions drifted toward sensory/concrete imagery: Round 0 = abstract concepts, Round 2-3 = visual imagery (dust motes, shattered screens), Round 4-5 = tactile/sensory (cold glass, static, frost-bitten fingers). Visual → Auditory → Tactile progression confirmed.",
+          "source": "exp-arcane-collision PHASE2-RESULTS.md",
+          "tags": ["empirical", "pattern", "convergence"]
+        },
+        {
+          "id": "exp-suspended-note-attractor",
+          "title": "The Suspended Note Convergence Attractor",
+          "content": "Musical/sound metaphors emerged across unrelated seeds: 'melody played on frozen strings', 'melody half-remembered drifts', 'voice once music rasped', 'longing symphony in silent loops'. Not prompt-driven — a convergence attractor in the creative space.",
+          "source": "exp-arcane-collision PHASE2-RESULTS.md",
+          "tags": ["empirical", "attractor", "cross-domain"]
+        },
+        {
+          "id": "exp-mirror-modes",
+          "title": "Mirror Mode Effectiveness",
+          "content": "Surface = fastest path to emotional imagery. Deep = introduces tension, slows convergence. Meta = generates self-aware commentary about AI simulation. Sensory = most direct route to concrete tactile output.",
+          "source": "exp-arcane-collision PHASE2-RESULTS.md",
+          "tags": ["empirical", "technique-comparison"]
+        },
+        {
+          "id": "exp-no-analytical",
+          "title": "Mirror Produces Zero Analytical Output",
+          "content": "54% creative, 46% mixed, 0% analytical. Prompt engineering dominates tool personality — the mirror's instruction set overrides base model tendencies. Reflection amplifies creative drift.",
+          "source": "exp-arcane-collision PHASE2-RESULTS.md",
+          "tags": ["empirical", "temperature-effect"]
+        }
+      ]
+    },
+    "project_dna": {
+      "description": "Extracted logic and patterns from rescued projects",
+      "fragments": [
+        {
+          "id": "dna-voice-to-art",
+          "title": "Voice-to-Art Pipeline",
+          "coreConcept": "Voice → AI → Code → 3D Model → Print",
+          "reusablePieces": ["Voice as input modality", "NL→structured code translation", "Parametric design", "Local-first AI (Ollama integration)"],
+          "extensionIdeas": ["Voice-to-shader", "Voice-to-music", "Voice-to-PCB", "Voice-to-animation"],
+          "tags": ["project-dna", "voice", "parametric"]
+        },
+        {
+          "id": "dna-second-brain",
+          "title": "Second Brain (PARA/CODE)",
+          "coreConcept": "PARA (Projects, Areas, Resources, Archives) + CODE (Capture, Organize, Distill, Express)",
+          "reusablePieces": ["Low-friction capture (<2s)", "AI-assisted PARA routing", "Proactive surfacing for out-of-sight items", "Context cues for set-shifting"],
+          "creativePrompts": ["Organize chaos without killing it", "The system should feel like a collaborator", "Distill to the point of poetry"],
+          "tags": ["project-dna", "knowledge-management", "neurodivergent"]
+        },
+        {
+          "id": "dna-life-systems",
+          "title": "Life Systems (4-Domain Structure)",
+          "coreConcept": "Mind (mental health) + Flow (productivity) + Body (somatic) + Hub (dashboard)",
+          "reusablePieces": ["Local-first sync (PowerSync + Turso)", "Unified auth across platforms", "4-tab navigation structure"],
+          "creativeTwist": "Body tracking for creative energy, journal entries generating visual art, task system with voice commands",
+          "tags": ["project-dna", "health", "productivity"]
+        },
+        {
+          "id": "dna-game-experiments",
+          "title": "Game Mechanics (Idle/Crafting)",
+          "coreConcept": "Click → Resource → Upgrade → Automation → Prestige",
+          "reusablePieces": ["Particle system feedback", "Offline earnings math", "Exponential scaling", "Accessibility-first design"],
+          "creativePrompts": ["The game plays itself but you can influence it", "Every action creates art", "No numbers visible"],
+          "tags": ["project-dna", "game-design", "idle"]
+        },
+        {
+          "id": "dna-score-lab",
+          "title": "Generative Score Lab",
+          "coreConcept": "Scene-based music with AI-coding-agent-friendly JSON exports",
+          "reusablePieces": ["Dual-user design (visual for composers, JSON for devs)", "Natural language control of music", "Simple JSON export structure"],
+          "tags": ["project-dna", "music", "ai-exports"]
+        },
+        {
+          "id": "dna-voice-sculpture-cross-domain",
+          "title": "Cone 10 Physics → 3D Mesh Mapping",
+          "coreConcept": "Translate kiln physics to 3D geometry: carbon trapping = noise clusters, celadon pooling = AO mapping, copper red = normal mapping",
+          "tags": ["project-dna", "cross-domain", "ceramics"]
+        }
+      ]
+    },
+    "prompt_seeds": {
+      "description": "Tested prompt seeds for creative swarm runs",
+      "fragments": [
+        {
+          "id": "seed-masking",
+          "content": "The feeling of realizing you've been masking",
+          "category": "personal",
+          "sessions": 2,
+          "tags": ["creative-writing", "tested"]
+        },
+        {
+          "id": "seed-performance",
+          "content": "What remains when the performance ends",
+          "category": "philosophical",
+          "sessions": 3,
+          "tags": ["creative-writing", "tested", "musical-attractor"]
+        },
+        {
+          "id": "seed-lonely-machine",
+          "content": "A machine learning to feel loneliness",
+          "category": "creative",
+          "sessions": 1,
+          "tags": ["creative-writing"]
+        },
+        {
+          "id": "seed-silent-house",
+          "content": "The distinct silence of a house you are leaving forever",
+          "category": "personal",
+          "sessions": 1,
+          "tags": ["creative-writing"]
+        },
+        {
+          "id": "seed-permanent-goodbye",
+          "content": "The moment before a goodbye you know is permanent",
+          "category": "personal",
+          "sessions": 1,
+          "tags": ["creative-writing"]
+        },
+        {
+          "id": "seed-time-sideways",
+          "content": "Time moving sideways",
+          "category": "creative",
+          "sessions": 1,
+          "tags": ["creative-writing", "converged"]
+        },
+        {
+          "id": "seed-sound-of-colors",
+          "content": "The sound of colors",
+          "category": "creative",
+          "sessions": 1,
+          "tags": ["creative-writing", "cross-sensory"]
+        },
+        {
+          "id": "seed-shino-glaze",
+          "content": "Sculpt a form that can withstand the weight of a thick, crawling Shino glaze. Deep pools for Celadon at the base. Sharp edges for iron breaks. It must survive 2350F (Cone 10) without collapsing.",
+          "category": "cross-domain",
+          "sessions": 1,
+          "tags": ["ceramics", "3D", "technical-creative"]
+        }
+      ]
+    }
+  }
+}

@@ -7,9 +7,9 @@ export interface RetryOptions {
 }
 
 const DEFAULT_OPTIONS: Required<RetryOptions> = {
-  maxRetries: 3,
-  baseDelayMs: 1000,
-  maxDelayMs: 30000,
+  maxRetries: 5,
+  baseDelayMs: 2000,
+  maxDelayMs: 60000,
 };
 
 export class RetryManager {
@@ -58,5 +58,33 @@ export class RetryManager {
     }
 
     throw lastError;
+  }
+
+  /**
+   * Run tasks with a concurrency limit, collecting allSettled results.
+   */
+  static async mapSettled<T>(
+    items: T[],
+    fn: (item: T, index: number) => Promise<unknown>,
+    concurrency: number,
+  ): Promise<PromiseSettledResult<unknown>[]> {
+    const results: PromiseSettledResult<unknown>[] = [];
+    let nextIndex = 0;
+
+    async function worker(): Promise<void> {
+      while (nextIndex < items.length) {
+        const i = nextIndex++;
+        try {
+          const value = await fn(items[i], i);
+          results[i] = { status: 'fulfilled', value };
+        } catch (err) {
+          results[i] = { status: 'rejected', reason: err };
+        }
+      }
+    }
+
+    const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+    await Promise.all(workers);
+    return results;
   }
 }

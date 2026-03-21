@@ -95,10 +95,14 @@ export class FragmentScorer {
     return Math.min(1, words / (fragment.content.length / 5));
   }
 
-  /** Cross-domain: count distinct source domains in tags. */
+  /** Cross-domain: count distinct source domains in tags, with partial credit for single-domain. */
   private scoreCrossDomain(fragment: CompostFragment): number {
     const domainTags = fragment.tags.filter(t => !['semantic', 'structured', 'raw'].includes(t));
-    return Math.min(1, domainTags.length / 5);
+    if (domainTags.length >= 2) return Math.min(1, domainTags.length / 5);
+    // Single domain: give partial credit for rich tags or non-semantic layers
+    if (domainTags.length === 1 && fragment.tags.length > 3) return 0.3;
+    if (fragment.layer === 'structured' || fragment.layer === 'raw') return 0.2;
+    return 0;
   }
 
   /** Metadata rarity: unusual metadata values score higher. */
@@ -114,13 +118,15 @@ export class FragmentScorer {
     return Math.min(1, rarity);
   }
 
-  /** Connection strength: cross-domain links score higher. */
+  /** Connection strength: cross-domain links score higher; partial credit for rich non-standard tags. */
   private scoreConnectionStrength(fragment: CompostFragment): number {
-    const domainTags = fragment.tags.filter(t =>
+    const nonStandardTags = fragment.tags.filter(t =>
       !['semantic', 'structured', 'raw', 'metadata', 'code', 'text', 'image', 'audio', 'video', 'unknown'].includes(t)
     );
-    if (domainTags.length >= 2) return 1;
-    if (domainTags.length === 1) return 0.5;
+    if (nonStandardTags.length >= 2) return 1;
+    if (nonStandardTags.length === 1) return 0.5;
+    // Partial credit for any fragment with multiple tags from different categories
+    if (fragment.tags.length >= 4) return 0.3;
     return 0;
   }
 }

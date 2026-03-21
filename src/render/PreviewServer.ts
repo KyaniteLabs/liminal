@@ -1,6 +1,7 @@
 /**
  * PreviewServer - Express server for live p5.js sketch preview
  * Optional API: GET /api/gallery, GET /api/gallery/:project, POST /api/export
+ * Activity: SSE /api/events, GET /api/status, GET /api/compost/seeds
  */
 
 import express, { Express } from 'express';
@@ -10,6 +11,8 @@ import { Gallery } from '../gallery/Gallery.js';
 import { Exporter } from '../export/Exporter.js';
 import { normalizePath } from '../utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
+import { eventBus } from '../core/EventBus.js';
+import type { BusEvent } from '../core/EventBus.js';
 
 export interface PreviewServerOptions {
   galleryDir?: string;
@@ -28,12 +31,28 @@ export class PreviewServer {
   private versionedSketches: Map<number, string> = new Map();
   private readonly DEFAULT_PORT = SERVICE_DEFAULTS.PREVIEW_PORT;
   private readonly galleryDir: string | null;
+  private sseClients: Set<import('express').Response> = new Set();
 
   constructor(options: PreviewServerOptions | string | null = null) {
     this.app = express();
     const opts = typeof options === 'string' ? { galleryDir: options } : (options || {});
     this.galleryDir = opts.galleryDir ?? null;
     this.setupRoutes();
+    this.setupEventBus();
+  }
+
+  /** Subscribe EventBus to forward events to SSE clients. */
+  private setupEventBus(): void {
+    eventBus.onEvent((event: BusEvent) => {
+      const data = `data: ${JSON.stringify(event)}\n\n`;
+      for (const client of this.sseClients) {
+        try {
+          client.write(data);
+        } catch {
+          this.sseClients.delete(client);
+        }
+      }
+    });
   }
 
   private setupRoutes(): void {
@@ -113,6 +132,61 @@ export class PreviewServer {
     this.app.use('/gui', express.static(guiDir, { index: 'index.html' }));
     this.app.get('/gui', (_req, res) => {
       res.sendFile(path.join(guiDir, 'index.html'));
+    });
+
+    // ── Activity endpoints ──
+
+    this.app.get('/api/events', (req, res) => {
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.flushHeaders();
+
+      // Send recent events so new clients get caught up
+      const recent = eventBus.getRecentEvents();
+      for (const event of recent) {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+
+      this.sseClients.add(res);
+      req.on('close', () => {
+        this.sseClients.delete(res);
+      });
+    });
+
+    this.app.get('/api/status', async (_req, res) => {
+      try {
+        const { CompostMill } = await import('../compost/CompostMill.js');
+        const { mergeConfig } = await import('../compost/defaults.js');
+        const mill = new CompostMill(mergeConfig());
+        const millStatus = await mill.statusAsync();
+
+        const loopProgress = await import('../core/RalphLoop.js').then(m => m.RalphLoop.getProgress());
+
+        res.json({
+          heapSize: millStatus.heapSize,
+          heapFileCount: millStatus.heapFileCount,
+          seedCount: millStatus.seedCount,
+          soupRunning: millStatus.soupRunning,
+          loopProgress,
+          recentEvents: eventBus.getRecentEvents().slice(-20),
+        });
+      } catch (err) {
+        res.json({ error: err instanceof Error ? err.message : 'Status unavailable' });
+      }
+    });
+
+    this.app.get('/api/compost/seeds', async (_req, res) => {
+      try {
+        const { CompostMill } = await import('../compost/CompostMill.js');
+        const { mergeConfig } = await import('../compost/defaults.js');
+        const mill = new CompostMill(mergeConfig());
+        const seeds = await mill.listSeeds();
+        res.json({ seeds: seeds.slice(0, 50), total: seeds.length });
+      } catch (err) {
+        res.json({ error: err instanceof Error ? err.message : 'Seed query failed' });
+      }
     });
 
     this.app.post('/api/export', async (req, res) => {

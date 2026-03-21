@@ -6,6 +6,9 @@ import {
   setSandboxRunResult,
 } from './gui/liveOrganismState';
 import { CuratorMode } from './components/CuratorMode';
+import { ActivityDashboard } from './components/ActivityDashboard';
+import { CompostVisualizer } from './components/CompostVisualizer';
+import { useEventStream } from './components/activity/hooks';
 
 // State types
 interface MergeProposal {
@@ -91,6 +94,7 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
 export default function App() {
   const [liveState, dispatchLive] = useReducer(liveOrganismReducer, INITIAL_LIVE_ORGANISM_STATE);
   const { activeTab, sandboxUrl, runError } = liveState;
+  const { events: compostEvents, connected: compostConnected } = useEventStream();
 
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -507,6 +511,20 @@ export default function App() {
         >
           Curator
         </button>
+        <button
+          type="button"
+          style={tabStyle(activeTab === 'activity')}
+          onClick={() => dispatchLive(switchToLiveOrganismView('activity'))}
+        >
+          Activity
+        </button>
+        <button
+          type="button"
+          style={tabStyle(activeTab === 'compost')}
+          onClick={() => dispatchLive(switchToLiveOrganismView('compost'))}
+        >
+          Compost
+        </button>
       </div>
 
       {activeTab === 'config' && (
@@ -836,6 +854,14 @@ export default function App() {
           setSelectedProject(candidateId);
           dispatchLive(switchToLiveOrganismView('live'));
         }} />
+      )}
+
+      {activeTab === 'activity' && (
+        <ActivityDashboard />
+      )}
+
+      {activeTab === 'compost' && (
+        <CompostVisualizer events={compostEvents} connected={compostConnected} />
       )}
 
       {activeTab === 'live' && (

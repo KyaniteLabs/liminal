@@ -14,7 +14,7 @@ import path from 'path';
 
 // Load config and set env vars for LLMClient to pick up
 async function initializeConfig() {
-  const config = await getEffectiveConfig();
+  const config = await getEffectiveConfig(undefined, process.cwd());
   
   // Set env vars so LLMClient picks them up
   process.env.LIMINAL_LLM_PROVIDER = config.provider;

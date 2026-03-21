@@ -3,6 +3,9 @@
  * Pure data structure, no external dependencies.
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
 export interface MapElitesCell {
   creationId: string;
   fitness: number;
@@ -72,5 +75,27 @@ export class MapElites {
   /** Get all cells as array */
   getAllCells(): MapElitesCell[] {
     return Array.from(this.grid.values());
+  }
+
+  /** Persist grid to JSON file */
+  async save(filePath: string): Promise<void> {
+    const data = {
+      dims: this.dims,
+      cells: Array.from(this.grid.entries()),
+    };
+    await fs.mkdir(path.dirname(filePath), { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(data), 'utf-8');
+  }
+
+  /** Load grid from JSON file */
+  async load(filePath: string): Promise<void> {
+    try {
+      const raw = await fs.readFile(filePath, 'utf-8');
+      const data = JSON.parse(raw);
+      this.dims = data.dims ?? [10, 10];
+      this.grid = new Map(data.cells ?? []);
+    } catch {
+      // File doesn't exist or is invalid — start fresh
+    }
   }
 }

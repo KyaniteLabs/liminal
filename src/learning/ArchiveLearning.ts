@@ -172,7 +172,9 @@ export class ArchiveLearning {
   }
 
   /**
-   * Build an enhanced prompt with few-shot examples.
+   * Build an enhanced prompt with semantically matched few-shot examples.
+   * Matches current prompt against archived prompts using keyword overlap,
+   * injecting only the most relevant examples.
    * @param prompt - The original prompt
    * @param domain - Domain identifier
    * @returns Enhanced prompt with examples prepended
@@ -182,12 +184,49 @@ export class ArchiveLearning {
       return prompt;
     }
 
-    const fewshot = this.getFewshotPrompt(domain);
-    if (!fewshot) {
+    const examples = this.getExamples(domain);
+    if (examples.length === 0) {
       return prompt;
     }
 
-    return `${fewshot}\nNow, create your own:\n\n${prompt}`;
+    // Score each example by keyword overlap with the current prompt
+    const promptWords = new Set(prompt.toLowerCase().split(/\W+/).filter(w => w.length > 2));
+    const scored = examples.map(ex => {
+      const exWords = new Set((ex.prompt ?? '').toLowerCase().split(/\W+/).filter(w => w.length > 2));
+      let overlap = 0;
+      for (const w of promptWords) {
+        if (exWords.has(w)) overlap++;
+      }
+      const score = promptWords.size > 0 ? overlap / promptWords.size : 0;
+      return { example: ex, score };
+    });
+
+    // Sort by relevance (highest overlap first)
+    scored.sort((a, b) => b.score - a.score);
+
+    // Take top N examples, budget to 2000 chars total
+    const maxChars = 2000;
+    const n = this.config.examplesPerGeneration;
+    const selected = scored.slice(0, n);
+    const parts: string[] = [];
+    let charBudget = maxChars;
+
+    for (let i = 0; i < selected.length; i++) {
+      const ex = selected[i].example;
+      // Truncate output to key snippet (setup + draw functions, or first 50 lines)
+      const lines = ex.output.split('\n');
+      const truncated = lines.slice(0, 50).join('\n');
+      const snippet = truncated.length > 500 ? truncated.slice(0, 500) + '\n...' : truncated;
+      const entry = `Example ${i + 1} (Quality: ${ex.qualityScore.toFixed(2)}, Relevance: ${selected[i].score.toFixed(2)}):\n` +
+        `Prompt: ${ex.prompt}\nOutput:\n${snippet}\n`;
+      if (entry.length > charBudget) break;
+      parts.push(entry);
+      charBudget -= entry.length;
+      this.archive.recordUsage(ex.id);
+    }
+
+    if (parts.length === 0) return prompt;
+    return `${parts.join('\n')}Now, create your own:\n\n${prompt}`;
   }
 
   /**

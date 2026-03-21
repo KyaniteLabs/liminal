@@ -32,6 +32,8 @@ export class CompostMill {
   private seedBank: SeedBank;
   private digestGenerator: DigestGenerator;
   private soup: CompostSoup | null = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private llm: any;
 
   constructor(
     overrides?: Partial<CompostConfig> & { soupStatePath?: string },
@@ -40,6 +42,7 @@ export class CompostMill {
   ) {
     const config = mergeConfig(overrides as Partial<CompostConfig>);
     this.config = config;
+    this.llm = llm;
 
     this.heap = new CompostHeap(config);
     this.semanticExtractor = new SemanticExtractor(config, llm ?? { generate: async () => ({ success: true, code: '' }) });
@@ -144,21 +147,54 @@ export class CompostMill {
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'promote', message: `Promoted ${promotedSeeds.length} seeds from scoring` });
     console.log(`[digest] Promoted ${promotedSeeds.length} seeds from scoring`);
 
-    // Promote collision results too
-    for (const collision of collisionResults) {
-      promotedSeeds.push({
-        id: `collision-${collision.fragmentA.id}-${collision.fragmentB.id}`,
-        content: collision.mergedContent,
-        score: 7, // Default score for collision results
-        source: {
-          fragments: [collision.fragmentA.id, collision.fragmentB.id],
-          collisionType: collision.strategy,
-          domains: [collision.fragmentA.domain, collision.fragmentB.domain],
-        },
-        promotedAt: new Date().toISOString(),
-        usedBy: [],
-        useCount: 0,
-      });
+    // Promote collision results too (score them first)
+    const collisionFragments: CompostFragment[] = collisionResults.map(collision => ({
+      id: `collision-${collision.fragmentA.id}-${collision.fragmentB.id}`,
+      source: `collision:${collision.fragmentA.id}+${collision.fragmentB.id}`,
+      domain: 'cross-domain',
+      layer: 'semantic' as const,
+      content: collision.mergedContent,
+      score: 0,
+      metadata: {
+        fileType: 'collision',
+        timestamp: new Date().toISOString(),
+        hash: '',
+        size: collision.mergedContent.length,
+        extractedAt: new Date().toISOString(),
+      },
+      tags: [collision.fragmentA.domain, collision.fragmentB.domain, `collision:${collision.strategy}`],
+    }));
+
+    const scoredCollisions = await RetryManager.mapSettled(
+      collisionFragments,
+      async (frag) => {
+        const score = await this.fragmentScorer.score(frag);
+        frag.score = score.total;
+        const promote = await this.fragmentScorer.shouldPromote(frag);
+        return promote ? frag : null;
+      },
+      5,
+    );
+    for (const entry of scoredCollisions) {
+      if (entry.status === 'fulfilled' && entry.value) {
+        const frag = entry.value as CompostFragment;
+        const collision = collisionResults.find(
+          c => `collision-${c.fragmentA.id}-${c.fragmentB.id}` === frag.id
+        );
+        promotedSeeds.push({
+          id: frag.id,
+          content: frag.content,
+          score: frag.score ?? 0,
+          source: {
+            fragments: collision ? [collision.fragmentA.id, collision.fragmentB.id] : [],
+            collisionType: collision?.strategy ?? 'unknown',
+            domains: collision ? [collision.fragmentA.domain, collision.fragmentB.domain] : ['unknown'],
+          },
+          promotedAt: new Date().toISOString(),
+          usedBy: [],
+          useCount: 0,
+        });
+      }
     }
 
     // Save promoted seeds
@@ -237,7 +273,7 @@ export class CompostMill {
   /** Start the soup loop, feeding it seeds from the seed bank as fragments. */
   async startSoup(): Promise<void> {
     if (!this.soup) {
-      this.soup = new CompostSoup(this.config);
+      this.soup = new CompostSoup(this.config, this.llm);
     }
     // Load seeds from the seed bank and convert to fragments for the soup
     const seeds = await this.seedBank.getAll();

@@ -36,6 +36,27 @@ while iterations < max:
 
 Safety mechanisms: max-iterations limit, timeout protection, quality gates, graceful error handling.
 
+### Self-Improvement Loop
+
+The system now has a complete self-improvement feedback cycle:
+
+```
+Generate → Evaluate → Store (archive + compost + MAP-Elites + novelty)
+                ↓
+    Retrieve (semantically matched examples, diverse elites, novel behavior,
+              DNA from compost, aesthetic predictions)
+                ↓
+    Enhance Context → Generate Better → Repeat
+```
+
+Key components:
+- **ArchiveLearning**: Semantic few-shot learning from high-quality past outputs
+- **MAP-Elites**: Performance-based archive with diverse coverage tracking
+- **NoveltyArchive**: Tracks novel behaviors for exploration
+- **Compost Mill**: Extracts reusable DNA from quality outputs
+- **AestheticModel**: Predicts quality from behavior vectors
+- **Dynamic Routing**: Updates model selection based on actual outcomes
+
 ## Architecture
 
 Liminal uses a unified architecture with three key consolidation points:
@@ -46,8 +67,10 @@ Liminal uses a unified architecture with three key consolidation points:
 
 Key integrations:
 - **DNA feedback**: CompostMill extracts ProjectDNA from promoted seeds and registers it with GeneratorRegistry for improved routing.
-- **Archive learning**: RalphLoop uses ArchiveLearning to inject high-quality examples from past runs into generation prompts.
-- **Aesthetic model**: Predicts quality based on behavior vectors when MAP-Elites is enabled.
+- **Archive learning**: RalphLoop uses ArchiveLearning to inject semantically matched high-quality examples from past runs into generation prompts (keyword overlap ranking, 2000-char budget).
+- **Aesthetic model**: Predicts quality based on behavior vectors when MAP-Elites is enabled, persisting across runs.
+- **MAP-Elites**: Performance-based archive with diverse coverage tracking, now persists across runs and injects diversity hints when coverage is low.
+- **Dynamic routing**: Routing data updates from actual generation outcomes via `recordRoutingOutcome()` and `getRollingPerformance()`.
 
 ## Features
 
@@ -60,7 +83,7 @@ Key integrations:
 | **Deep Collab** | `useDeepCollab` option | 3-phase: Diverge (2 models) → Analyze (3 critics) → Synthesize |
 | **Collab Engine** | `collabMode` option | Unified engine: swarm / phases / simple strategies |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code, write to disk |
-| **Organism** | `mode: 'organism'` option | Music-to-visual pipeline per iteration |
+| **Organism** | `mode: 'organism'` option | Music-to-visual pipeline with context accumulation, compost seed injection, quality evaluation, and stagnation detection |
 
 ### Swarm Generation
 
@@ -97,6 +120,7 @@ Key concepts:
 - **Fragments**: extracted pieces with multi-dimensional scores (novelty, density, cross-domain)
 - **Seed Bank**: persistent store of high-scoring promoted fragments — seeds are injected into every generation loop iteration
 - **Soup**: continuous evolutionary loop — merge random fragments, score offspring, replace worst
+- **DNA Extraction**: ProjectDNA (domain, style patterns, techniques) extracted from promoted seeds and registered with GeneratorRegistry for improved routing
 
 ### Smart Model Routing
 
@@ -110,6 +134,8 @@ const decision = registry.routeByPrompt("create a particle system");
 
 Routes between local models (Qwen 3.5-4B), cloud models (Minimax), and hybrid mode based on domain fitness scores.
 
+**Dynamic Routing Updates**: Routing data now updates from actual generation outcomes via `recordRoutingOutcome()` and `getRollingPerformance()`. The system learns which models perform best for specific domains over time.
+
 ### Live Music Coding
 
 Generate live code for Strudel (TidalCycles), Hydra (audio-reactive visuals), and more.
@@ -121,6 +147,27 @@ liminal --prompt "ambient glitch set" --mode live-music --output ./set
 
 Music-to-visual bridge: `generateMusicToVisual()` extracts BPM/FFT from music output and passes it to visual generation.
 
+### GUI Enhancements
+
+The web GUI has been enhanced with full support for all self-improvement features:
+
+- **`/api/run`** — Now accepts all LoopOptions including swarm, collab, MAP-Elites, archive learning, aesthetic model, and auto-compost
+- **`/api/compost/dashboard`** — Full compost statistics with top seeds displayed
+- **`/api/compost/add`** — Feed gallery outputs directly to compost heap from the GUI
+- **Archive Integration** — Gallery projects can be automatically fed to compost for continuous improvement
+- **Real-time Updates** — SSE event streaming for live progress updates
+
+### Gallery Management
+
+The Gallery now includes automatic cleanup:
+
+```javascript
+// Automatically archive old projects
+cleanupOldProjects(maxProjects, maxAgeDays)
+```
+
+Projects are archived to `gallery/archive/` when they exceed the configured age or count limits, ensuring the gallery remains performant while preserving all historical work.
+
 ## CLI
 
 ```bash
@@ -131,7 +178,10 @@ liminal --prompt "music" --mode live-music                # Live music
 liminal compost add <path>                                # Add material to compost heap
 liminal compost digest                                   # Run digestion pipeline
 liminal compost soup start                                # Start evolutionary soup loop
+liminal compost soup stop                                 # Stop soup loop
+liminal compost soup status                               # Check soup status
 liminal compost seeds list                                # List promoted seeds
+liminal compost seeds show <id>                           # Show full seed details
 liminal compost status                                    # Heap/seed/soup overview
 liminal serve 3456                                        # Preview server
 liminal list                                               # List saved sketches
@@ -165,6 +215,17 @@ const result = await run('Complex scene', {
   maxIterations: 5,
   collabMode: 'phases',
   collabConfig: { maxRounds: 4 }
+});
+
+// With self-improvement features
+const result = await run('Evolving artwork', {
+  maxIterations: 10,
+  autoCompost: true,              // Auto-feed quality outputs to compost heap
+  useAestheticModel: true,        // Persist aesthetic model across runs, use predictions
+  useMapElites: true,             // Persist MAP-Elites across runs, inject diversity hints
+  useArchiveLearning: true,       // Semantic few-shot from archive
+  collabMode: 'swarm',            // Combine with collaboration
+  swarmConfig: { maxRounds: 5 }
 });
 
 // Dynamic domain registration
@@ -218,13 +279,13 @@ liminal/
 │   ├── compost/           # CompostMill, CompostHeap, CompostShredder, CompostSoup, SeedBank, FragmentScorer
 │   ├── scavenger/         # DNAExtractor, FragmentArchive
 │   ├── evolution/         # MapElites, AestheticModel, NoveltyArchive, MetaMode
-│   ├── learning/          # ArchiveLearning, QualityArchive
+│   ├── learning/          # ArchiveLearning (semantic few-shot), QualityArchive
 │   ├── music/             # generateMusic (Strudel, p5-webaudio)
 │   ├── musicToVisual/     # generateMusicToVisual (organism mode)
 │   ├── generateVisuals.ts # generateVisuals (Hydra, p5)
 │   ├── llm/               # LLMClient, CacheManager, RetryManager
 │   ├── config/            # ConfigLoader, PromptHistory
-│   ├── gallery/           # Gallery, SeedArchive
+│   ├── gallery/           # Gallery, SeedArchive, cleanupOldProjects
 │   ├── export/            # Exporter (HTML, JS, ZIP)
 │   ├── render/            # PreviewServer, Renderer
 │   ├── sandbox/           # SandboxRunner

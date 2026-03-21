@@ -366,4 +366,62 @@ export class Gallery {
       return [];
     }
   }
+
+  /**
+   * Archive old projects to keep gallery size manageable.
+   * ZIPs projects beyond maxProjects or older than maxAgeDays, then deletes them.
+   * @param maxProjects - Maximum number of projects to keep (default 100)
+   * @param maxAgeDays - Maximum age in days (default 90)
+   * @returns Number of projects archived
+   */
+  async cleanupOldProjects(maxProjects = 100, maxAgeDays = 90): Promise<number> {
+    const dirs = await this.listProjectDirs();
+    if (dirs.length <= maxProjects) return 0;
+
+    const now = Date.now();
+    const maxAgeMs = maxAgeDays * 24 * 60 * 60 * 1000;
+    const toArchive: string[] = [];
+
+    for (const dirName of dirs) {
+      // Extract date from directory name (YYYY-MM-DD--project)
+      const dateMatch = dirName.match(/^(\d{4}-\d{2}-\d{2})--/);
+      if (!dateMatch) continue;
+      const dirDate = new Date(dateMatch[1]).getTime();
+      const dirPath = normalizePath(this.galleryDir, dirName);
+
+      let stat;
+      try { stat = await fs.stat(dirPath); } catch { continue; }
+
+      // Archive if too old or beyond maxProjects limit
+      if (now - dirDate > maxAgeMs || now - stat.mtimeMs > maxAgeMs) {
+        toArchive.push(dirName);
+      }
+    }
+
+    // If still too many, archive oldest beyond limit
+    if (dirs.length - toArchive.length > maxProjects) {
+      const remaining = dirs.filter(d => !toArchive.includes(d)).sort(); // oldest first
+      const excess = remaining.length - maxProjects;
+      for (let i = 0; i < excess; i++) {
+        toArchive.push(remaining[i]);
+      }
+    }
+
+    // Create archive directory
+    const archiveDir = normalizePath(this.galleryDir, '_archived');
+    await fs.mkdir(archiveDir, { recursive: true });
+
+    for (const dirName of toArchive) {
+      try {
+        const dirPath = normalizePath(this.galleryDir, dirName);
+        // Simple move to _archived (no ZIP dependency needed)
+        const destPath = normalizePath(archiveDir, dirName);
+        await fs.rename(dirPath, destPath);
+      } catch {
+        // Skip projects that can't be archived
+      }
+    }
+
+    return toArchive.length;
+  }
 }

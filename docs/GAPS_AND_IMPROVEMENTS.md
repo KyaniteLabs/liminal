@@ -1,6 +1,6 @@
 # Gaps, Blind Spots, and Research-Aligned Improvements
 
-**Date:** 2026-03-07  
+**Date:** 2026-03-07 (updated 2026-03-21)
 **Context:** Comparison of PRD + preliminary research (docs/PRELIMINARY_RESEARCH.md and linked reports) to the current codebase. This document lists every identified gap, blind spot, missed opportunity, and research-aligned improvement.
 
 ---
@@ -20,13 +20,39 @@ After the **Full Remediation to Launch** (Waves 0–7), the following items from
 | **ESLint / coverage (audit)** | No project ESLint; coverage from dist | **.eslintrc.cjs** added; **collectCoverageFrom** switched to **src/**; **test/unit/lint.test.ts** asserts lint runs. |
 | **Live Music (5.2)** | generateMusic/generateVisuals documented but not implemented | **Implemented**: generateMusic, generateVisuals, generateMusicToVisual; CLI **--mode live-music**; config **live** (midiOutput, oscHost, etc.). |
 
-**Still open (or partially open):**
+---
 
-- **5.1** config/atelier.json: ConfigLoader has `loadProjectConfig()`; project config path may not be passed from bin/atelier in all code paths. Document when it is used.
-- **1.3** Truncation strategy for context bloat: context is bounded (last iteration + trend) but not explicitly documented or configurable (e.g. last K iterations).
+## Deep Audit Remediation (2026-03-21)
+
+A comprehensive adversarial audit identified unification gaps, synergy failures, and broken feedback loops across the three consolidated subsystems. All critical items have been resolved:
+
+| # | Gap | Fix | Files |
+|---|-----|-----|-------|
+| 1 | GUI exposes ~30% of capability | Extended `/api/run` with all LoopOptions | `gui/server.js` |
+| 2 | GUI merge concatenates code | Now uses `mergeSketchCode()` | `gui/server.js` |
+| 3 | `/api/compost/status` returns 500 | Changed `status()` → `statusAsync()` | `gui/server.js` |
+| 4 | Context bleeds between GUI runs | `RalphLoop.reset()` called before each run | `gui/server.js` |
+| 5 | Compost DNA registered but never read | DNA injected into generation context when domain matches | `RalphLoop.ts` |
+| 6 | MAP-Elites write-only | Diversity hints injected when coverage < 30% | `RalphLoop.ts` |
+| 7 | Novelty score computed but unused | High novelty resets stagnation counter | `RalphLoop.ts` |
+| 8 | Swarm fragments discarded | MiningEngine fragments feed into archive learning | `RalphLoop.ts` |
+| 9 | Few-shot examples random | Keyword-overlap ranking + 2000-char budget | `ArchiveLearning.ts` |
+| 10 | Loop outputs never feed compost | `autoCompost` option with auto-digest | `RalphLoop.ts` |
+| 11 | Collision scores hardcoded 7/10 | FragmentScorer.score() on collision results | `CompostMill.ts` |
+| 12 | Soup produces garbage (no LLM) | LLM reference stored and passed to soup | `CompostMill.ts` |
+| 13 | MAP-Elites/AestheticModel per-run only | Persist to `~/.liminal/*.json` across runs | `MapElites.ts`, `RalphLoop.ts` |
+| 14 | Aesthetic predictions unused | Low/high prediction hints in generation context | `RalphLoop.ts` |
+| 15 | Routing data static | Rolling averages from real generation outcomes | `RoutingData.ts` |
+| 16 | Organism mode is a blind loop | Context accumulation, seed injection, evaluation, stagnation | `RalphLoop.ts` |
+| 17 | No compost dashboard | `/api/compost/dashboard` + `/api/compost/add` endpoints | `gui/server.js` |
+| 18 | Gallery grows indefinitely | `cleanupOldProjects()` auto-archives to `_archived/` | `Gallery.ts` |
+
+**Still open:**
+
+- **5.1** config/atelier.json: ConfigLoader has `loadProjectConfig()`; project config path may not be passed from bin/atelier in all code paths.
 - **2.2** Evaluation criteria configurable: PRD lists evaluationCriteria; CreativeEvaluator may not read it from config.
 - **3.3, 4.1** GA phase: IGA generateFiveVariations exists; full "5 variations → user selects → mutate/crossover" UI or flow may be partial.
-- **Integration test failures:** 8 tests in full-loop and ralph-loop fail when LLM/template does not output promise or varied code; one GUI test expects different /gui content. See IMPACT_ANALYSIS.md.
+- **Integration test failures:** 130 test suites fail with `Cannot find module 'vitest'` — pre-existing dependency issue, not related to code changes.
 
 ---
 

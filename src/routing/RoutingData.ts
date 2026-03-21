@@ -12,6 +12,87 @@
  * @module routing/RoutingData
  */
 
+import fs from 'node:fs/promises';
+import path from 'node:path';
+
+/**
+ * Record of a generation outcome for dynamic routing.
+ */
+export interface RoutingRecord {
+  domain: DomainType;
+  model: ModelChoice;
+  qualityScore: number;
+  timestamp: string;
+}
+
+/**
+ * Rolling performance data per domain and model.
+ */
+export interface RollingPerformance {
+  local: { total: number; count: number };
+  cloud: { total: number; count: number };
+}
+
+const PERFORMANCE_WINDOW = 50; // Keep last 50 records per domain
+const PERF_DIR = `${process.env.HOME}/.liminal/routing`;
+
+/**
+ * Record a generation outcome for dynamic routing.
+ */
+export async function recordRoutingOutcome(record: RoutingRecord): Promise<void> {
+  try {
+    const records = await loadRoutingRecords(record.domain);
+    records.push(record);
+    // Keep only the last PERFORMANCE_WINDOW records
+    if (records.length > PERFORMANCE_WINDOW) {
+      records.splice(0, records.length - PERFORMANCE_WINDOW);
+    }
+    const filePath = path.join(PERF_DIR, `${record.domain}.json`);
+    await fs.mkdir(PERF_DIR, { recursive: true });
+    await fs.writeFile(filePath, JSON.stringify(records), 'utf-8');
+  } catch {
+    // Best-effort recording
+  }
+}
+
+/**
+ * Load routing records for a domain.
+ */
+async function loadRoutingRecords(domain: DomainType): Promise<RoutingRecord[]> {
+  try {
+    const filePath = path.join(PERF_DIR, `${domain}.json`);
+    const raw = await fs.readFile(filePath, 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Get rolling performance averages for a domain based on actual generation outcomes.
+ * Falls back to static AB_TEST_RESULTS if no dynamic data exists.
+ */
+export async function getRollingPerformance(domain: DomainType): Promise<RollingPerformance | null> {
+  const records = await loadRoutingRecords(domain);
+  if (records.length < 5) return null; // Not enough data
+
+  const local: { total: number; count: number } = { total: 0, count: 0 };
+  const cloud: { total: number; count: number } = { total: 0, count: 0 };
+
+  for (const record of records) {
+    if (record.model === 'local' || record.model === 'hybrid') {
+      local.total += record.qualityScore;
+      local.count++;
+    }
+    if (record.model === 'cloud' || record.model === 'hybrid') {
+      cloud.total += record.qualityScore;
+      cloud.count++;
+    }
+  }
+
+  return { local, cloud };
+}
+
 /**
  * Domain types supported by the smart router.
  */

@@ -197,13 +197,35 @@ export function createApp(configPath, port = 5174) {
         });
       }
 
-      const { run } = await import('../dist/index.js');
-      const result = await run(prompt, {
+      const { run, RalphLoop } = await import('../dist/index.js');
+      RalphLoop.reset();
+
+      // Build LoopOptions from request body
+      const loopOptions = {
         maxIterations,
         output: outputDir,
         galleryDir: resolvedGallery,
         project: projectName,
-      });
+        minQualityScore: req.body?.minQualityScore ?? undefined,
+        evaluationStrategy: req.body?.evaluationStrategy ?? undefined,
+        stagnationThreshold: req.body?.stagnationThreshold ?? undefined,
+        mergeEveryN: req.body?.mergeEveryN ?? undefined,
+        useMapElites: req.body?.useMapElites === true,
+        mapElitesDims: req.body?.mapElitesDims ?? undefined,
+        useDeepCollab: req.body?.useDeepCollab === true,
+        useCollab: req.body?.useCollab === true,
+        collabMode: req.body?.collabMode ?? undefined,
+        collabDomain: req.body?.collabDomain ?? undefined,
+        useSwarm: req.body?.useSwarm === true,
+        swarmMode: req.body?.swarmMode ?? undefined,
+        useArchiveLearning: req.body?.useArchiveLearning === true,
+        useAestheticModel: req.body?.useAestheticModel === true,
+        autoCompost: req.body?.autoCompost === true,
+        tolerateErrors: req.body?.tolerateErrors === true,
+        maxContextLength: req.body?.maxContextLength ?? undefined,
+      };
+
+      const result = await run(prompt, loopOptions);
       res.status(200).json({
         ok: true,
         result: {
@@ -268,7 +290,9 @@ export function createApp(configPath, port = 5174) {
       const codeA = 'code' in iterA ? iterA.code : null;
       const codeB = 'code' in iterB ? iterB.code : null;
       if (codeA != null && codeB != null) {
-        return res.status(200).json({ proposed: { type: 'p5', code: codeA + '\n\n// merged with v' + versionB + '\n' + codeB } });
+        const { mergeSketchCode } = await import('../dist/utils/mergeSketchCode.js');
+        const merged = mergeSketchCode(codeA, codeB);
+        return res.status(200).json({ proposed: { type: 'p5', code: merged } });
       }
       const musicA = iterA.type === 'organism' ? iterA.musicCode : '';
       const visualA = iterA.type === 'organism' ? iterA.visualCode : '';
@@ -367,7 +391,7 @@ export function createApp(configPath, port = 5174) {
     try {
       const { CompostMill } = await import('../dist/compost/CompostMill.js');
       const mill = new CompostMill();
-      const status = await mill.status();
+      const status = await mill.statusAsync();
       res.json(status);
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -418,6 +442,63 @@ export function createApp(configPath, port = 5174) {
       });
     } catch (err) {
       res.json({ error: err instanceof Error ? err.message : 'Status unavailable' });
+    }
+  });
+
+  // Compost dashboard — full heap/seed/soup stats with top seeds
+  app.get('/api/compost/dashboard', async (_req, res) => {
+    try {
+      const { CompostMill } = await import('../dist/compost/CompostMill.js');
+      const { mergeConfig } = await import('../dist/compost/defaults.js');
+      const mill = new CompostMill(mergeConfig());
+      const [millStatus, topSeeds, seedCount] = await Promise.all([
+        mill.statusAsync(),
+        mill.getTopSeeds(10),
+        mill.getSeedCount(),
+      ]);
+      res.json({
+        heap: { size: millStatus.heapSize, fileCount: millStatus.heapFileCount },
+        seeds: { count: seedCount, top: topSeeds.map(s => ({ id: s.id, score: s.score, domain: s.source?.domains?.[0] ?? 'unknown', preview: s.content.slice(0, 100) })) },
+        soup: { running: millStatus.soupRunning },
+        shouldAutoDigest: await mill.shouldAutoDigest(),
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  });
+
+  // Feed gallery output to compost heap
+  app.post('/api/compost/add', async (req, res) => {
+    try {
+      const dirName = req.body?.dirName;
+      const version = parseInt(req.body?.version, 10);
+      if (!dirName || !Number.isInteger(version) || version < 1) {
+        return res.status(400).json({ error: 'dirName and version (positive integer) are required' });
+      }
+      const cfgPath = getConfigPath();
+      const userConfig = await loadConfig(cfgPath);
+      const projectConfig = await loadProjectConfig(cwd);
+      const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
+      const resolvedGallery = path.isAbsolute(galleryPath) ? galleryPath : path.join(cwd, galleryPath);
+      const gallery = new Gallery(resolvedGallery);
+      const history = await gallery.loadHistoryFromDir(dirName);
+      const iter = history.find((i) => i.version === version);
+      if (!iter) return res.status(400).json({ error: 'Version not found' });
+
+      const { CompostMill } = await import('../dist/compost/CompostMill.js');
+      const { mergeConfig } = await import('../dist/compost/defaults.js');
+      const mill = new CompostMill(mergeConfig());
+      const code = 'code' in iter ? iter.code : (iter.musicCode + '\n' + iter.visualCode);
+      // Write to temp file and add to heap
+      const fs = await import('fs/promises');
+      const tmpDir = path.join(cwd, 'compost', 'heap', '_gui');
+      await fs.mkdir(tmpDir, { recursive: true });
+      const tmpFile = path.join(tmpDir, `gui-${dirName}-v${version}.js`);
+      await fs.writeFile(tmpFile, code, 'utf-8');
+      await mill.add([tmpFile]);
+      res.json({ ok: true, message: 'Added to compost heap' });
+    } catch (err) {
+      res.status(500).json({ error: err.message || String(err) });
     }
   });
 

@@ -23,6 +23,7 @@
  */
 
 import { PromptStore } from './PromptStore.js';
+import path from 'node:path';
 import { ContextAccumulation } from './ContextAccumulation.js';
 import { EvaluationFramework, type EvaluationStrategy } from './EvaluationFramework.js';
 import { PromiseDetector } from './PromiseDetector.js';
@@ -41,13 +42,17 @@ import { CollaborationEngine } from '../collab/CollaborationEngine.js';
 import type { CollaborationMode } from '../collab/CollaborationEngine.js';
 import type { DeepCollaborationConfig, CollaborativeConfig, DomainType } from '../collab/types.js';
 import { SwarmOrchestrator } from '../swarm/SwarmOrchestrator.js';
+import { MiningEngine } from '../swarm/MiningEngine.js';
 import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
 import { SelfReflectionEngine } from '../improvement/SelfReflection.js';
 import { SeedBank } from '../compost/SeedBank.js';
+import { CompostMill } from '../compost/CompostMill.js';
+import { CompostHeap } from '../compost/CompostHeap.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { ArchiveLearning } from '../learning/index.js';
 import { QualityArchive } from '../learning/index.js';
 import { AestheticModel } from '../evolution/AestheticModel.js';
+import { recordRoutingOutcome } from '../routing/RoutingData.js';
 import { eventBus, EventTypes } from './EventBus.js';
 
 interface LoopOptions {
@@ -111,6 +116,8 @@ interface LoopOptions {
   archivePath?: string;
   /** Enable aesthetic model — predict quality based on behavior vectors */
   useAestheticModel?: boolean;
+  /** Auto-feed quality outputs to compost heap and trigger digest when full */
+  autoCompost?: boolean;
 }
 
 interface LoopResult {
@@ -186,6 +193,17 @@ export class RalphLoop {
 
     if (normalizedOptions.useAestheticModel) {
       aestheticModel = new AestheticModel();
+      const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
+      await aestheticModel.load(aestheticPath).catch(() => {});
+    }
+
+    // Load persisted MAP-Elites if enabled
+    if (normalizedOptions.useMapElites) {
+      const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
+      const mapElites = normalizedOptions._mapElites as MapElites | undefined;
+      if (mapElites) {
+        await mapElites.load(mapElitesPath).catch(() => {});
+      }
     }
 
     // Main loop
@@ -235,6 +253,36 @@ export class RalphLoop {
           // No compost seeds available — continue without
         }
 
+        // Inject compost DNA if available for the detected domain
+        try {
+          const allDNA = generatorRegistry.getAllDNA();
+          if (allDNA.size > 0) {
+            const dispatchedDNA = generatorRegistry.dispatch(loadedPrompt);
+            const matchedDomain = dispatchedDNA?.entry?.name;
+            if (matchedDomain) {
+              const dna = generatorRegistry.getDNA(matchedDomain);
+              if (dna && dna.coreLogic) {
+                usedPrompt += '\n\n---\nDomain knowledge from compost DNA:\n' +
+                  `Core pattern: ${dna.coreLogic}\n` +
+                  (dna.prompts?.length > 0 ? `Example prompt: ${dna.prompts[0]}\n` : '');
+              }
+            }
+            // Also inject from all DNA entries if domain match is weak
+            if (!dispatchedDNA || dispatchedDNA.confidence < 0.7) {
+              for (const [domain, dna] of allDNA) {
+                const promptLower = loadedPrompt.toLowerCase();
+                if (promptLower.includes(domain.toLowerCase()) && dna.coreLogic) {
+                  usedPrompt += '\n\n---\nCompost DNA for "' + domain + '":\n' +
+                    `Core pattern: ${dna.coreLogic}\n`;
+                  break; // Only inject one fallback DNA
+                }
+              }
+            }
+          }
+        } catch {
+          // DNA injection failed — continue without
+        }
+
         // Inject archived high-quality examples from past runs
         if (archiveLearning) {
           try {
@@ -250,7 +298,20 @@ export class RalphLoop {
 
         // Check if we should use swarm for this iteration
         if (normalizedOptions.useSwarm) {
-          currentCode = await this.generateWithSwarm(usedPrompt, normalizedOptions, gallery);
+          const swarmResult = await this.generateWithSwarm(usedPrompt, normalizedOptions, gallery);
+          currentCode = swarmResult.finalOutput;
+
+          // Mine swarm fragments and feed into archive learning
+          if (archiveLearning) {
+            try {
+              const mined = MiningEngine.mineResult(swarmResult);
+              for (const fragment of mined) {
+                archiveLearning.addFragment(fragment, normalizedOptions.collabDomain || 'p5');
+              }
+            } catch {
+              // Mining failed — continue without
+            }
+          }
         } else if (normalizedOptions.useDeepCollab || normalizedOptions.useCollab) {
           // Use CollaborationEngine when collabMode is set, otherwise legacy path
           if (normalizedOptions.collabMode) {
@@ -348,13 +409,16 @@ export class RalphLoop {
         });
 
         // MAP-Elites integration
+        let noveltyScore = 0;
         if (normalizedOptions.useMapElites) {
           const mapElites = normalizedOptions._mapElites as MapElites | undefined;
           const archive = normalizedOptions._noveltyArchive as NoveltyArchive | undefined;
 
           const behavior = extractBehavior(currentCode);
-          // Compute novelty for potential future use; archive always records
-          if (archive) archive.noveltyScore(behavior);
+          // Compute novelty score and use it as bonus dimension
+          if (archive) {
+            noveltyScore = archive.noveltyScore(behavior);
+          }
 
           if (mapElites) {
             mapElites.insert(
@@ -362,12 +426,41 @@ export class RalphLoop {
               behavior,
               evaluation.score
             );
+
+            // Inject diverse elites into next iteration's context when coverage is low
+            const coverage = mapElites.coverage();
+            if (coverage < 0.3 && iteration > 1) {
+              const elites = mapElites.getElites(3);
+              if (elites.length > 0) {
+                ContextAccumulation.save({
+                  iteration: iteration + 0.1,
+                  prompt,
+                  usedPrompt: '',
+                  code: '',
+                  evaluation: {
+                    score: 0,
+                    issues: [],
+                    mapElitesCoverage: coverage,
+                    mapElitesDiversityHint: `Low MAP-Elites coverage (${(coverage * 100).toFixed(0)}%). Consider exploring diverse behaviors.`,
+                  },
+                  timestamp: new Date().toISOString(),
+                  maxIterations: normalizedOptions.maxIterations,
+                });
+              }
+            }
           }
 
           // Feed behavior + score into aesthetic model for prediction
           if (aestheticModel) {
-            aestheticModel.predict(behavior, { domain: normalizedOptions.collabDomain || 'p5' });
+            const predictedQuality = aestheticModel.predict(behavior, { domain: normalizedOptions.collabDomain || 'p5' });
             aestheticModel.update([{ behavior, rating: evaluation.score * 5, domain: normalizedOptions.collabDomain || 'p5' }]);
+
+            // Use prediction to add context hint for next iteration
+            if (predictedQuality < 0.3 && iteration > 1) {
+              usedPrompt += '\n\n---\nAesthetic model hint: This behavior region has produced low-quality outputs in the past. Try a significantly different approach.';
+            } else if (predictedQuality > 0.7) {
+              usedPrompt += '\n\n---\nAesthetic model hint: This behavior region tends to produce high-quality outputs. Lean into this direction.';
+            }
           }
         }
 
@@ -381,6 +474,44 @@ export class RalphLoop {
             { iteration, domain: normalizedOptions.collabDomain || 'p5' }
           );
         }
+
+        // Auto-compost: feed quality outputs to compost heap
+        if (normalizedOptions.autoCompost && evaluation.score >= 0.7 && normalizedOptions.project) {
+          try {
+            const compostConfig = mergeCompostConfig();
+            const heap = new CompostHeap(compostConfig);
+            const tempDir = path.join(normalizedOptions.galleryDir, normalizedOptions.project);
+            const codePath = path.join(tempDir, `v${iteration}.js`);
+            // Write code to a temp file for heap ingestion
+            const fs = await import('node:fs/promises');
+            await fs.mkdir(tempDir, { recursive: true });
+            await fs.writeFile(codePath, currentCode, 'utf-8');
+            await heap.addFile(codePath);
+            eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
+              stage: 'auto-compost',
+              message: `Auto-fed iteration ${iteration} (score: ${evaluation.score.toFixed(2)}) to compost heap`,
+            });
+            // Auto-digest when heap is at capacity
+            if (await heap.isOverCapacity()) {
+              const mill = new CompostMill(compostConfig);
+              await mill.digest();
+              eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
+                stage: 'auto-digest',
+                message: 'Heap at capacity — triggered auto-digest',
+              });
+            }
+          } catch {
+            // Auto-compost failed — continue without
+          }
+        }
+
+        // Record routing outcome for dynamic routing
+        recordRoutingOutcome({
+          domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual',
+          model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
+          qualityScore: evaluation.score,
+          timestamp: new Date().toISOString(),
+        }).catch(() => {});
 
         // Save iteration context
         const iterationContext: IterationContext = {
@@ -444,6 +575,10 @@ export class RalphLoop {
         });
 
         // Stagnation detection with self-reflection improvement
+        // High novelty resets stagnation — the system is exploring even if quality plateaus
+        if (noveltyScore > 0.5) {
+          iterationsSinceLastImprovement = Math.max(0, iterationsSinceLastImprovement - 1);
+        }
         if (evaluation.score > bestScore) {
           bestScore = evaluation.score;
           iterationsSinceLastImprovement = 0;
@@ -548,6 +683,19 @@ export class RalphLoop {
       await qualityArchive.save();
     }
 
+    // Persist MAP-Elites and AestheticModel across runs
+    if (normalizedOptions.useMapElites) {
+      const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
+      const mapElites = normalizedOptions._mapElites as MapElites | undefined;
+      if (mapElites) {
+        await mapElites.save(mapElitesPath).catch(() => {});
+      }
+    }
+    if (aestheticModel) {
+      const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
+      await aestheticModel.save(aestheticPath).catch(() => {});
+    }
+
     eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', {
       process: 'ralph-loop',
       success: completed,
@@ -607,13 +755,15 @@ export class RalphLoop {
       useArchiveLearning: options?.useArchiveLearning ?? false,
       archivePath: options?.archivePath,
       useAestheticModel: options?.useAestheticModel ?? false,
+      autoCompost: options?.autoCompost ?? false,
       _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
       _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
     };
   }
 
   /**
-   * Organism mode: generateMusicToVisual per iteration, saveOrganism to gallery. No P5GeneratorLLM.
+   * Organism mode: generateMusicToVisual per iteration, saveOrganism to gallery.
+   * Uses context accumulation, compost seed injection, and quality evaluation.
    */
   private static async runOrganismMode(
     prompt: string,
@@ -627,6 +777,9 @@ export class RalphLoop {
     let lastMusic = '';
     let lastVisual = '';
     let iteration = 0;
+    let bestScore = 0;
+    let iterationsSinceLastImprovement = 0;
+
     for (let i = 1; i <= options.maxIterations; i++) {
       if (options.signal?.aborted) {
         return {
@@ -636,20 +789,76 @@ export class RalphLoop {
           reason: 'aborted by user',
           timestamp: new Date().toISOString(),
           duration: Date.now() - startTime,
-          finalScore: 1,
+          finalScore: bestScore,
           project: options.project,
         };
       }
       iteration = i;
-      const result = await generateMusicToVisual(prompt, { traits: options.traits });
+
+      // Build context from previous iterations
+      const history = ContextAccumulation.getHistory();
+      let enhancedPrompt = prompt;
+      if (history.length > 0) {
+        const lastIter = history[history.length - 1];
+        enhancedPrompt += `\n\nPrevious iteration produced code of length ${lastIter.code.length}. Score: ${lastIter.evaluation?.score?.toFixed(2) ?? 'N/A'}.`;
+        if (lastIter.evaluation?.issues?.length > 0) {
+          enhancedPrompt += ` Issues: ${lastIter.evaluation.issues.join(', ')}.`;
+        }
+      }
+
+      // Inject a random compost seed for creative cross-pollination
+      try {
+        const compostConfig = mergeCompostConfig();
+        const seedBank = new SeedBank(compostConfig);
+        const seedContent = await seedBank.getRandomContent();
+        if (seedContent) {
+          enhancedPrompt += '\n\nCreative seed from compost:\n' + seedContent;
+        }
+      } catch {
+        // No compost seeds available — continue without
+      }
+
+      const result = await generateMusicToVisual(enhancedPrompt, { traits: options.traits });
       lastMusic = result.musicCode;
       lastVisual = result.visualCode;
+
+      // Heuristic quality evaluation for organism mode
+      const musicLen = result.musicCode.length;
+      const visualLen = result.visualCode.length;
+      const qualityScore = Math.min(1, (musicLen + visualLen) / 500);
+
+      // Context accumulation
+      ContextAccumulation.save({
+        iteration: i,
+        prompt: enhancedPrompt,
+        usedPrompt: enhancedPrompt,
+        code: result.musicCode + '\n' + result.visualCode,
+        evaluation: { score: qualityScore, issues: [] },
+        timestamp: new Date().toISOString(),
+        maxIterations: options.maxIterations,
+      });
+
+      // Stagnation detection
+      if (qualityScore > bestScore) {
+        bestScore = qualityScore;
+        iterationsSinceLastImprovement = 0;
+      } else {
+        iterationsSinceLastImprovement++;
+        if (
+          options.stagnationThreshold != null &&
+          options.stagnationThreshold > 0 &&
+          iterationsSinceLastImprovement >= options.stagnationThreshold
+        ) {
+          break;
+        }
+      }
+
       if (options.project) {
         await gallery.saveOrganism(options.project, i, result.musicCode, result.visualCode);
       }
       options.onProgress?.({
         iteration: i,
-        score: 1,
+        score: qualityScore,
         promiseDetected: false,
         code: result.musicCode + '\n' + result.visualCode,
         timestamp: new Date().toISOString(),
@@ -666,7 +875,7 @@ export class RalphLoop {
       reason: `max iterations reached (${options.maxIterations})`,
       timestamp: new Date().toISOString(),
       duration,
-      finalScore: 1,
+      finalScore: bestScore,
       project: options.project,
     };
   }
@@ -682,7 +891,7 @@ export class RalphLoop {
     prompt: string,
     options: ReturnType<typeof RalphLoop.normalizeOptions>,
     gallery: Gallery
-  ): Promise<string> {
+  ): Promise<import('../swarm/types.js').SwarmResult> {
     const orchestrator = new SwarmOrchestrator(options.swarmConfig, {
       onProgress: (data) => {
         options.onProgress?.({
@@ -706,7 +915,7 @@ export class RalphLoop {
       }
     }
 
-    return result.finalOutput;
+    return result;
   }
 
   /**

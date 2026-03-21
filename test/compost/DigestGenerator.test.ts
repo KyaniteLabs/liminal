@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for DigestGenerator — weekly digest markdown generation.
  */
@@ -5,7 +6,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { jest } from '@jest/globals';
 import { DigestGenerator } from '../../src/compost/DigestGenerator.js';
 import { mergeConfig } from '../../src/compost/defaults.js';
 import type { DigestStats, Seed } from '../../src/compost/types.js';
@@ -19,7 +19,7 @@ describe('DigestGenerator', () => {
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'digest-test-'));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockFn: any = jest.fn();
+    const mockFn: any = vi.fn();
     mockFn.mockResolvedValue({ success: true, code: 'Weekly synthesis narrative.' });
     mockLLM = { generate: mockFn };
     const config = mergeConfig({ digestDir: path.join(tmpDir, 'digest') });

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * prompt-to-generator-params.test.js
  * TDD: when run with "calm blue particles", params or generated code include something derived from "blue" or "calm".

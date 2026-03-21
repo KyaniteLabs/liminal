@@ -7,7 +7,6 @@
 
 // Core Ralph-Wiggum Loop components
 import { RalphLoop } from './core/RalphLoop.js';
-import { SoupLoop } from './core/SoupLoop.js';
 import { CreativeEvaluator } from './core/CreativeEvaluator.js';
 import { PromiseDetector } from './core/PromiseDetector.js';
 import { PromptStore } from './core/PromptStore.js';
@@ -44,7 +43,6 @@ import { PreviewServer } from './render/PreviewServer.js';
 import { Exporter, type Project } from './export/Exporter.js';
 import { Gallery, type Iteration } from './gallery/Gallery.js';
 import { SeedArchive, type SeedMetadata } from './gallery/SeedArchive.js';
-import { generateFiveVariations } from './evolution/IGA.js';
 import { MapElites } from './evolution/MapElites.js';
 import { NoveltyArchive } from './evolution/NoveltyArchive.js';
 import { extractBehavior, detectDomain } from './evolution/BehaviorVectors.js';
@@ -352,9 +350,6 @@ export class Liminal {
 
 // Core Ralph-Wiggum Loop Engine
 export { RalphLoop };
-/** @library Public API — not wired into RalphLoop */
-export { SoupLoop } from './core/SoupLoop.js';
-export type { SoupCandidate, SoupLoopOptions, SoupLoopResult } from './core/SoupLoop.js';
 import { requestImprovement } from './core/SelfImprovement.js';
 export { requestImprovement, type ImprovementContext, type RequestImprovementOptions, type ImprovementGenerator } from './core/SelfImprovement.js';
 export type { RequestImprovementState } from './improvement/requestImprovement.js';
@@ -401,8 +396,6 @@ export { Gallery, type Iteration };
 export type { OrganismIteration, GalleryIteration } from './gallery/Gallery.js';
 export { SeedArchive, type SeedMetadata };
 
-// IGA / variations
-export { generateFiveVariations } from './evolution/IGA.js';
 
 // Evolution: MAP-Elites, Novelty, Behavior Vectors, Aesthetic Model, Meta Mode
 export { MapElites } from './evolution/MapElites.js';
@@ -454,7 +447,6 @@ export default {
 
   // Core components
   RalphLoop,
-  SoupLoop,
   requestImprovement,
   CreativeEvaluator,
   PromiseDetector,
@@ -485,8 +477,6 @@ export default {
   Exporter,
   Gallery,
   SeedArchive,
-
-  generateFiveVariations,
 
   // Evolution
   MapElites,

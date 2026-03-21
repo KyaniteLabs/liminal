@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * P5GeneratorLLM tests. When LLM is not configured, generate() throws.
  */

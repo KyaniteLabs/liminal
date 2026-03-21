@@ -1,3 +1,4 @@
+import { describe, it, expect, afterEach, test } from 'vitest';
 /**
  * LLMClient tests - OpenAI-compatible API support
  *

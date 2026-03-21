@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { SoupLoop } from '../../src/core/SoupLoop.js';
 
 describe('SoupLoop Novelty Selection', () => {

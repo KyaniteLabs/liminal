@@ -1,3 +1,4 @@
+import { describe, it, expect, test } from 'vitest';
 /**
  * Tests for MiniMax, LM Studio, Ollama, OpenAI, and Hybrid provider support in LLMClient.
  * Only tests configuration and cost estimation -- no network calls.

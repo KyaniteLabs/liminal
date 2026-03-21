@@ -1,18 +1,52 @@
 /**
- * GeneratorRegistry - Unified dispatch for code generators.
+ * GeneratorRegistry - Unified dispatch for code generators and model routing.
  *
  * Each generator declares what it can handle via canHandle(prompt) -> confidence (0-1).
  * The registry picks the highest-confidence generator, with LLM as fallback.
+ *
+ * Also provides smart model routing (local/cloud/hybrid) based on A/B test data,
+ * merged from the former SmartRouter module.
  *
  * Supports dynamic domain registration at runtime.
  */
 
 import type { ProjectDNA } from '../scavenger/types.js';
+import {
+  AB_TEST_RESULTS,
+  DOMAIN_ROUTING_DATA,
+  DOMAIN_KEYWORDS,
+  OVERALL_FITNESS,
+} from '../routing/RoutingData.js';
+import type {
+  DomainType,
+  ModelChoice,
+} from '../routing/RoutingData.js';
 
 export interface GeneratorEntry {
   name: string;
   canHandle: (prompt: string) => number; // 0 = can't handle, higher = more confident
   generate: (prompt: string, params?: Record<string, unknown>) => string | Promise<string>;
+}
+
+/**
+ * Result of a model routing decision.
+ */
+export interface RoutingDecision {
+  model: ModelChoice;
+  reason: string;
+  confidence: number;
+  localFitness: number;
+  cloudFitness: number;
+  domain?: DomainType;
+}
+
+/**
+ * Configuration options for smart model routing.
+ */
+export interface RoutingConfig {
+  preferLocal?: boolean;
+  fallbackToHybrid?: boolean;
+  minConfidence?: number;
 }
 
 /**
@@ -39,6 +73,8 @@ class GeneratorRegistryClass {
   private dynamicKeywords: Map<string, string[]> = new Map();
   /** Global DNA registry: domain -> ProjectDNA */
   private dnaRegistry: Map<string, ProjectDNA> = new Map();
+  /** Smart routing configuration */
+  private routingConfig: RoutingConfig = { preferLocal: true, fallbackToHybrid: false, minConfidence: 0.5 };
 
   /**
    * Register DNA from the scavenger module.
@@ -202,6 +238,157 @@ class GeneratorRegistryClass {
       }
     }
     return best;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Smart model routing (merged from SmartRouter)
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Configure smart routing behavior.
+   */
+  setRoutingConfig(config: RoutingConfig): void {
+    this.routingConfig = { ...this.routingConfig, ...config };
+  }
+
+  /**
+   * Route a request to the optimal model (local/cloud/hybrid) based on domain.
+   */
+  route(
+    domain: DomainType,
+    complexity?: 'simple' | 'medium' | 'complex',
+  ): RoutingDecision {
+    const { preferLocal, fallbackToHybrid, minConfidence } = this.routingConfig;
+    const routingData = DOMAIN_ROUTING_DATA[domain];
+    const abResults = AB_TEST_RESULTS[domain];
+
+    if (!routingData || !abResults) {
+      return {
+        model: preferLocal ? 'local' : 'cloud',
+        reason: `Dynamic domain '${domain}' - using ${preferLocal ? 'local' : 'cloud'} model (no A/B test data)`,
+        confidence: 0.6,
+        localFitness: OVERALL_FITNESS.local,
+        cloudFitness: OVERALL_FITNESS.cloud,
+        domain,
+      };
+    }
+
+    const { local, cloud } = abResults;
+    const maxFitness = Math.max(local, cloud);
+    const pctDiff = maxFitness > 0 ? Math.abs(local - cloud) / maxFitness : 0;
+
+    let optimalModel: ModelChoice = routingData.optimalModel;
+    let confidence = routingData.confidence;
+
+    if (preferLocal && pctDiff < 0.05 && optimalModel === 'cloud') {
+      optimalModel = 'local';
+      confidence = Math.max(0.6, confidence - 0.15);
+    }
+
+    if (fallbackToHybrid && complexity === 'complex' && confidence < (minConfidence ?? 0.5)) {
+      optimalModel = 'hybrid';
+      confidence = 0.65;
+    }
+
+    const modelNames: Record<ModelChoice, string> = {
+      local: 'Local Qwen 3.5-4B',
+      cloud: 'Cloud Minimax',
+      hybrid: 'Hybrid (Local + Cloud)',
+    };
+
+    const domainDisplayName = domain === 'ascii' ? 'ASCII' : domain.charAt(0).toUpperCase() + domain.slice(1);
+    const domainName = `${domainDisplayName} domain`;
+    let reason: string;
+    if (optimalModel === 'local') {
+      reason = `${domainName} - ${modelNames.local} wins (${local.toFixed(3)} vs ${cloud.toFixed(3)}, ${routingData.advantage})`;
+    } else if (optimalModel === 'cloud') {
+      reason = `${domainName} - ${modelNames.cloud} superior (${cloud.toFixed(3)} vs ${local.toFixed(3)}, ${routingData.advantage})`;
+    } else {
+      reason = `${domainName} - ${modelNames.hybrid} for complex task`;
+    }
+
+    return { model: optimalModel, reason, confidence, localFitness: local, cloudFitness: cloud, domain };
+  }
+
+  /**
+   * Route a request based on prompt content analysis.
+   * Detects domain from keywords and routes accordingly.
+   */
+  routeByPrompt(prompt: string): RoutingDecision {
+    const detectedDomain = this.detectDomain(prompt);
+    if (detectedDomain) {
+      return this.route(detectedDomain);
+    }
+
+    const { preferLocal } = this.routingConfig;
+    return {
+      model: preferLocal ? 'local' : 'cloud',
+      reason: `Unknown domain - defaulting to ${preferLocal ? 'local' : 'cloud'} (preferLocal=${preferLocal})`,
+      confidence: 0.3,
+      localFitness: OVERALL_FITNESS.local,
+      cloudFitness: OVERALL_FITNESS.cloud,
+    };
+  }
+
+  /**
+   * Detect domain from prompt keywords.
+   */
+  detectDomain(prompt: string): DomainType | undefined {
+    const promptLower = prompt.toLowerCase();
+
+    for (const [domain, keywords] of Object.entries(DOMAIN_KEYWORDS)) {
+      for (const keyword of keywords) {
+        if (promptLower.includes(keyword)) {
+          return domain as DomainType;
+        }
+      }
+    }
+
+    for (const [domain, keywords] of this.dynamicKeywords) {
+      for (const keyword of keywords) {
+        if (promptLower.includes(keyword)) {
+          return domain as DomainType;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  /**
+   * Get all domain keywords (built-in + dynamic).
+   */
+  getAllDomainKeywords(): Record<string, string[]> {
+    return { ...DOMAIN_KEYWORDS, ...Object.fromEntries(this.dynamicKeywords) };
+  }
+
+  /**
+   * Check if a domain is supported (built-in or dynamic).
+   */
+  isDomainSupported(domain: string): boolean {
+    return domain in DOMAIN_ROUTING_DATA || this.dynamicKeywords.has(domain);
+  }
+
+  /**
+   * Get routing statistics.
+   */
+  getRoutingStats(): {
+    abTestResults: typeof AB_TEST_RESULTS;
+    overallLocalFitness: number;
+    overallCloudFitness: number;
+    domains: Record<string, { winner: ModelChoice; advantage: string; confidence: number }>;
+  } {
+    return {
+      abTestResults: AB_TEST_RESULTS,
+      overallLocalFitness: OVERALL_FITNESS.local,
+      overallCloudFitness: OVERALL_FITNESS.cloud,
+      domains: Object.fromEntries(
+        Object.entries(DOMAIN_ROUTING_DATA).map(([domain, config]) => [
+          domain,
+          { winner: config.optimalModel, advantage: config.advantage, confidence: config.confidence },
+        ]),
+      ),
+    };
   }
 
   getAll(): readonly GeneratorEntry[] {

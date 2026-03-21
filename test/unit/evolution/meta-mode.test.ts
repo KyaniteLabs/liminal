@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, test } from 'vitest';
 import { MetaMode } from '../../../src/evolution/MetaMode.js';
 
 describe('MetaMode', () => {

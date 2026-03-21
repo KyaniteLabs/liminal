@@ -1,3 +1,4 @@
+import { describe, it, expect, afterEach } from 'vitest';
 /**
  * Integration test: Swarm + DNA injection
  * Tests that DNA from scavenger enriches swarm prompts correctly.

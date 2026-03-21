@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for CompostHeap — file management and capacity tracking.
  */

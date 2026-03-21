@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * Tests for CompostShredder — fragment creation from extracted data.
  */

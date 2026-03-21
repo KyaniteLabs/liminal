@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * Negative tests: invalid inputs, edge cases, error handling
  * Tests for swarm, voting, mining, and scavenger modules.

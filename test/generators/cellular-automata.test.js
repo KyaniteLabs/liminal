@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { CellularAutomata } from '../../src/generators/p5/CellularAutomata.js';
 
 describe('CellularAutomata', () => {

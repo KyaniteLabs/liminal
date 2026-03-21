@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * GUI preview state - selection change updates preview URL and code content (unit test state).
  */

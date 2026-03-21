@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll } from 'vitest';
 /**
  * Gallery tests - Save/load iteration functionality
  *

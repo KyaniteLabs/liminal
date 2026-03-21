@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * SeedArchive tests - Seed generation and storage functionality
  *

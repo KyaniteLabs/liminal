@@ -1,3 +1,4 @@
+import { describe, it, expect, afterEach, test } from 'vitest';
 /**
  * requestImprovement API tests.
  * When LLM is unconfigured, API returns template fallback; no sandbox or safety limits (other subagents).

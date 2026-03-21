@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PreviewServer } from '../../src/render/PreviewServer.js';
 import http from 'http';
 

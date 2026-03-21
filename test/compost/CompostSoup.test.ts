@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for CompostSoup — continuous evolutionary loop.
  */
@@ -5,7 +6,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { jest } from '@jest/globals';
 import { CompostSoup } from '../../src/compost/CompostSoup.js';
 import { mergeConfig } from '../../src/compost/defaults.js';
 import type { CompostFragment } from '../../src/compost/types.js';
@@ -39,7 +39,7 @@ describe('CompostSoup', () => {
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'soup-test-'));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockFn: any = jest.fn();
+    const mockFn: any = vi.fn();
     mockFn.mockResolvedValue({ success: true, code: 'Merged offspring content' });
     mockLLM = { generate: mockFn };
     const config = mergeConfig({

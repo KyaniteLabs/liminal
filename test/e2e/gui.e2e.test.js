@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 /**
  * E2E GUI: start GUI server (Express from gui/start.js), wait for listen,
  * assert GET /api/config (200 + body shape) and GET /api/gallery (200).

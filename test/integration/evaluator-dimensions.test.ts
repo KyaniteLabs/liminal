@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * Integration test: CreativeEvaluator with all evaluation dimensions
  * Tests emergence, interestingness, aesthetic, novelty scoring together.

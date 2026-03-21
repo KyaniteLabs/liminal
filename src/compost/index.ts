@@ -54,6 +54,4 @@ export type { CLIAction } from './cli.js';
 
 // Integration bridges
 export { FragmentArchiveBridge } from './integration/FragmentArchiveBridge.js';
-export { PromptLibraryBridge } from './integration/PromptLibraryBridge.js';
-export type { PromptTemplate } from './integration/PromptLibraryBridge.js';
 export { SwarmBridge } from './integration/SwarmBridge.js';

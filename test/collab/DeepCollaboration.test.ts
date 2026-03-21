@@ -1,9 +1,11 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * DeepCollaboration tests
  */
 
 import { DeepCollaboration } from '../../src/collab/DeepCollaboration.js';
 import type { PhaseUpdate } from '../../src/collab/types.js';
+import '../../src/prompts/compost.js'; // Register compost prompt templates
 
 // Mock LLM caller
 const mockCallLLM = async (llmPrompt: string, _systemPrompt?: string): Promise<string> => {

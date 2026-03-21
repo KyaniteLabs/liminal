@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * Tests for Liminal main entry point
  * Tests the run() and runFromArgs() functions

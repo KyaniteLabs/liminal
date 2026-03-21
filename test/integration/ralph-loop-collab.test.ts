@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * Integration tests for RalphLoop with Deep Collaboration
  *

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { RalphLoop } from '../../src/core/RalphLoop.js';
 import { MapElites } from '../../src/evolution/MapElites.js';
 import { SafetyGuardrails } from '../../src/core/SafetyGuardrails.js';

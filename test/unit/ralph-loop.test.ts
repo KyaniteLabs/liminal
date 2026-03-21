@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * RalphLoop tests - Loop start + context (seed, no-placeholder fallback)
  * Uses ContextAccumulation.getHistory() to assert on usedPrompt (no jest mocks).

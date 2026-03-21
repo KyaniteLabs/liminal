@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterEach, test } from 'vitest';
 import { spawn } from 'child_process';
 import fs from 'fs/promises';
 import path from 'path';

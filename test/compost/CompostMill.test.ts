@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for CompostMill — main orchestrator.
  */
@@ -5,7 +6,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { jest } from '@jest/globals';
 import { CompostMill } from '../../src/compost/CompostMill.js';
 
 describe('CompostMill', () => {
@@ -21,7 +21,7 @@ describe('CompostMill', () => {
     const seedDir = path.join(tmpDir, 'seeds');
     const soupStatePath = path.join(tmpDir, 'soup-state.json');
 
-    const mockFn: any = jest.fn();
+    const mockFn: any = vi.fn();
     mockFn.mockResolvedValue({ success: true, code: 'Generated content' });
     mockLLM = { generate: mockFn };
 

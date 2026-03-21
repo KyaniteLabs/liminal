@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * GUI live organism state - switch to "Live organism" view and sandbox run updates display (unit tests).
  */

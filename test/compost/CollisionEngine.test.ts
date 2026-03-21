@@ -1,8 +1,8 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 /**
  * Tests for CollisionEngine — cross-domain collision pairing.
  */
 
-import { jest } from '@jest/globals';
 import { CollisionEngine } from '../../src/compost/CollisionEngine.js';
 import { mergeConfig } from '../../src/compost/defaults.js';
 import type { CompostFragment } from '../../src/compost/types.js';
@@ -33,7 +33,7 @@ describe('CollisionEngine', () => {
 
   beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockFn: any = jest.fn();
+    const mockFn: any = vi.fn();
     mockFn.mockResolvedValue({ success: true, code: 'Merged idea' });
     mockLLM = { generate: mockFn };
     engine = new CollisionEngine(mergeConfig(), mockLLM);

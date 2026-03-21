@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterEach, afterAll, test } from 'vitest';
 /**
  * Evaluator-Gallery Integration Tests
  *

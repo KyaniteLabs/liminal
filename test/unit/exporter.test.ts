@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * Exporter tests - Export functionality for HTML, JS, and ZIP files
  *

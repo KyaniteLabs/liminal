@@ -1,8 +1,8 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for CLI commands — liminal compost subcommand parsing.
  */
 
-import { jest } from '@jest/globals';
 import { parseArgs, execute } from '../../src/compost/cli.js';
 
 describe('CLI parseArgs', () => {
@@ -58,11 +58,11 @@ describe('CLI parseArgs', () => {
 });
 
 describe('CLI execute', () => {
-  let consoleSpy: jest.SpiedFunction<any>;
+  let consoleSpy: vi.SpiedFunction<any>;
 
   beforeEach(() => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    consoleSpy = jest.spyOn(console, 'log').mockImplementation(() => {});
+    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
   });
 
   afterEach(() => {
@@ -71,7 +71,7 @@ describe('CLI execute', () => {
 
   it('dispatches digest to mill.digest()', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const digestFn: any = jest.fn();
+    const digestFn: any = vi.fn();
     digestFn.mockResolvedValue({
       stats: { filesProcessed: 1, fragmentCount: 5, collisionCount: 2, seedsPromoted: 1, soupCycles: 10, durationMs: 1000, totalBytes: 500, domains: ['a'] },
       seeds: [],
@@ -80,11 +80,11 @@ describe('CLI execute', () => {
 
     const mockMill = {
       digest: digestFn,
-      add: jest.fn(),
-      status: jest.fn().mockReturnValue({ heapSize: 0, heapFileCount: 0, seedCount: 0, soupRunning: false, soupGeneration: 0, lastDigestAt: null }),
-      stopSoup: jest.fn(),
-      startSoup: jest.fn(),
-      shouldAutoDigest: jest.fn(),
+      add: vi.fn(),
+      status: vi.fn().mockReturnValue({ heapSize: 0, heapFileCount: 0, seedCount: 0, soupRunning: false, soupGeneration: 0, lastDigestAt: null }),
+      stopSoup: vi.fn(),
+      startSoup: vi.fn(),
+      shouldAutoDigest: vi.fn(),
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (mockMill.shouldAutoDigest as any).mockResolvedValue(false);
@@ -95,18 +95,18 @@ describe('CLI execute', () => {
 
   it('dispatches status to mill.statusAsync()', async () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const statusFn: any = jest.fn();
+    const statusFn: any = vi.fn();
     statusFn.mockReturnValue({ heapSize: 0, heapFileCount: 0, seedCount: 0, soupRunning: false, soupGeneration: 0, lastDigestAt: null });
 
     const mockMill: Record<string, unknown> = {
-      digest: jest.fn(),
-      add: jest.fn(),
-      statusAsync: jest.fn<() => Promise<unknown>>().mockResolvedValue(statusFn()),
-      stopSoup: jest.fn(),
-      startSoup: jest.fn(),
-      shouldAutoDigest: jest.fn(),
-      listSeeds: jest.fn<() => Promise<unknown>>().mockResolvedValue([]),
-      getTopSeeds: jest.fn<() => Promise<unknown>>().mockResolvedValue([]),
+      digest: vi.fn(),
+      add: vi.fn(),
+      statusAsync: vi.fn<() => Promise<unknown>>().mockResolvedValue(statusFn()),
+      stopSoup: vi.fn(),
+      startSoup: vi.fn(),
+      shouldAutoDigest: vi.fn(),
+      listSeeds: vi.fn<() => Promise<unknown>>().mockResolvedValue([]),
+      getTopSeeds: vi.fn<() => Promise<unknown>>().mockResolvedValue([]),
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (mockMill.shouldAutoDigest as any).mockResolvedValue(false);

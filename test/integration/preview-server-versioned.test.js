@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * PreviewServer versioned preview tests - GET /preview?version=N
  * Selection change updates preview URL / content (server side).

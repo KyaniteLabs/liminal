@@ -1,3 +1,4 @@
+import { describe, it, expect, test } from 'vitest';
 /**
  * TUI Integration tests - v2.0 layout with PlayerPiano + X-Ray
  *

@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
 /**
  * SafetyGuardrails unit tests
  */

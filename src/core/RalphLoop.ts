@@ -231,6 +231,18 @@ export class RalphLoop {
         } catch {
           // No compost seeds available — continue without
         }
+
+        // Inject archived high-quality examples from past runs
+        if (archiveLearning) {
+          try {
+            const enhanced = archiveLearning.buildEnhancedPrompt(usedPrompt, normalizedOptions.collabDomain || 'p5');
+            if (enhanced !== usedPrompt) {
+              usedPrompt = enhanced;
+            }
+          } catch {
+            // Archive lookup failed — continue without
+          }
+        }
         const dispatched = generatorRegistry.dispatch(loadedPrompt);
 
         // Check if we should use swarm for this iteration

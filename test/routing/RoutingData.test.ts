@@ -1,8 +1,8 @@
+import { describe, it, expect } from 'vitest';
 /**
  * Tests for RoutingData - A/B test results and domain routing data.
  */
 
-import { describe, it, expect } from '@jest/globals';
 import {
   AB_TEST_RESULTS,
   DOMAIN_ROUTING_DATA,

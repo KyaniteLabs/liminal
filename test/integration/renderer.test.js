@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterEach, afterAll } from 'vitest';
 /**
  * Integration tests for Renderer
  *

@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * SoupLoop tests (W1-S) - population of K candidates; pick two, merge, evaluate, replace one.
  * TDD: red → green → refactor.

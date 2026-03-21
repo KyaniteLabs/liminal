@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * generateMusicToVisual tests - Music-to-visual bridge API
  *

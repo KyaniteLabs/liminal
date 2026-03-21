@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 /**
  * Dual LLM integration tests: critical path getEffectiveConfig + LLMClient
  * with cloud (lmstudio) and local (ollama) backends.

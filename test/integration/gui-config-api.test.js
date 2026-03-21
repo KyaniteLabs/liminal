@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 /**
  * Integration tests for GUI backend config API.
  * GET /api/config returns effective + loop + creative + galleryPath + userConfig.

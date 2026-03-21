@@ -1,5 +1,6 @@
+import { describe, it, expect } from 'vitest';
 /**
- * Prompt validation tests — verify all 24 prompts are properly registered
+ * Prompt validation tests — verify all 34 prompts are properly registered
  * and meet quality standards.
  */
 import { PromptLibrary } from '../../src/prompts/index.js';
@@ -44,11 +45,20 @@ const EXPECTED_IDS = [
   'swarm.persona.rex',
   'swarm.persona.sam',
   'swarm.persona.max',
+
+  // Compost prompts (7)
+  'compost.extract-code',
+  'compost.extract-image',
+  'compost.collision-merge',
+  'compost.offspring-scoring',
+  'compost.digest-narrative',
+  'compost.seed-extraction',
+  'compost.synthesis',
 ];
 
 describe('Prompt Library Validation', () => {
   describe('registration completeness', () => {
-    it('should have exactly 27 prompts registered', () => {
+    it('should have exactly 34 prompts registered', () => {
       const all = PromptLibrary.list();
       expect(all.length).toBe(EXPECTED_IDS.length);
     });

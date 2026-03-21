@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 /**
  * E2E full loop with local LLM (Ollama).
  * Runs run() with ATELIER_LLM_PROVIDER=ollama; skips with clear message when Ollama

@@ -1,3 +1,4 @@
+import { describe, it, expect, test } from 'vitest';
 /**
  * TUI Run / Stop and iteration timeline tests (Wave 3 Subagent B)
  *

@@ -18,6 +18,8 @@ import { SeedBank } from './SeedBank.js';
 import { DigestGenerator } from './DigestGenerator.js';
 import { CompostSoup } from './CompostSoup.js';
 import type { Seed } from './types.js';
+import { generatorRegistry } from '../generators/GeneratorRegistry.js';
+import type { ProjectDNA } from '../scavenger/types.js';
 
 export class CompostMill {
   private config: CompostConfig;
@@ -136,6 +138,23 @@ export class CompostMill {
     // Save promoted seeds
     for (const seed of promotedSeeds) {
       await this.seedBank.add(seed);
+    }
+
+    // Feed seed domains into GeneratorRegistry as DNA for improved routing
+    for (const seed of promotedSeeds) {
+      if (seed.source.domains.length > 0 && !generatorRegistry.getDNA(seed.source.domains[0])) {
+        const dna: ProjectDNA = {
+          name: `compost-seed-${seed.id}`,
+          domain: seed.source.domains[0],
+          coreLogic: seed.content.slice(0, 500),
+          constraints: [],
+          patterns: seed.source.domains,
+          prompts: [seed.content.slice(0, 200)],
+          extractedAt: seed.promotedAt,
+          sourcePath: 'compost',
+        };
+        generatorRegistry.registerDNA(dna);
+      }
     }
 
     // Collect stats

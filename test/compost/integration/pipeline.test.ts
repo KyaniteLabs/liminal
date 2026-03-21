@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 /**
  * Pipeline integration test — full end-to-end digestion.
  */
@@ -5,7 +6,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { jest } from '@jest/globals';
 import { CompostMill } from '../../../src/compost/CompostMill.js';
 
 describe('Pipeline Integration', () => {
@@ -15,7 +15,7 @@ describe('Pipeline Integration', () => {
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'pipeline-test-'));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const mockFn: any = jest.fn();
+    const mockFn: any = vi.fn();
     mockFn.mockResolvedValue({ success: true, code: 'Generated content' });
 
     mill = new CompostMill({

@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 /**
  * Integration tests for Run (organism mode), Merge, Approve, and Propose-mutate APIs.
  * Wave 1: POST /api/run with mode=organism; POST /api/merge; POST /api/approve; POST /api/propose-mutate.

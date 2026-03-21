@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterEach, test } from 'vitest';
 /**
  * Integration tests for RalphLoop iteration engine
  *

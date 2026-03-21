@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 /**
  * Tests for SemanticExtractor — LLM-based semantic content extraction.
  */
@@ -5,9 +6,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { jest } from '@jest/globals';
 import { SemanticExtractor } from '../../src/compost/SemanticExtractor.js';
 import { mergeConfig } from '../../src/compost/defaults.js';
+import '../../src/prompts/compost.js'; // Register compost prompt templates
 
 describe('SemanticExtractor', () => {
   let tmpDir: string;
@@ -17,7 +18,7 @@ describe('SemanticExtractor', () => {
 
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'semantic-test-'));
-    mockGenerate = jest.fn();
+    mockGenerate = vi.fn();
     const config = mergeConfig();
     extractor = new SemanticExtractor(config, { generate: mockGenerate } as any);
   });

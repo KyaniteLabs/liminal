@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * Self-improvement safety limits - TDD tests.
  * (1) When depth exceeds maxDepth, requestImprovement throws without calling LLM.

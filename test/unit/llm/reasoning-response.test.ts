@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * Tests for LLM reasoning field parsing in responses.
  */

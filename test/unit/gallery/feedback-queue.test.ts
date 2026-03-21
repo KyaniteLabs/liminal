@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * FeedbackQueue tests - JSONL-based human rating storage
  */

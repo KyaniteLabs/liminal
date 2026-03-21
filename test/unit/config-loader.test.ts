@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { loadConfig, loadProjectConfig, getEffectiveConfig } from '../../src/config/ConfigLoader.js';
 import fs from 'fs/promises';
 import path from 'path';

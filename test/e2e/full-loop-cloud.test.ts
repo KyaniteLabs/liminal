@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 /**
  * E2E full loop with cloud LLM: run() from built package (dist/index.js)
  * with ATELIER_LLM_PROVIDER=lmstudio. Skips with clear message when cloud

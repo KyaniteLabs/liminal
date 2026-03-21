@@ -1,8 +1,8 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * ArchiveLearning tests
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { ArchiveLearning } from '../../src/learning/ArchiveLearning.js';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';

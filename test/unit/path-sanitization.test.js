@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 /**
  * Path sanitization tests - path traversal prevention
  * Malicious project name or output path with ".." is rejected or resolved inside base.

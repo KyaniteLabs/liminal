@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { InteractiveMode } from "../../src/tui/InteractiveMode.js";
 import { PromptHistory } from "../../src/config/PromptHistory.js";
 import fs from "fs/promises";

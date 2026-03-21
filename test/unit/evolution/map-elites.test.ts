@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * MAP-Elites tests
  */

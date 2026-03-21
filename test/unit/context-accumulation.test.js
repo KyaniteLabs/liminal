@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ContextAccumulation } from '../../src/core/ContextAccumulation.js';
 
 describe('ContextAccumulation', () => {

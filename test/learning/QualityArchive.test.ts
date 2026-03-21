@@ -1,8 +1,8 @@
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 /**
  * QualityArchive tests
  */
 
-import { describe, it, expect, beforeEach, afterEach } from '@jest/globals';
 import { QualityArchive, ArchiveEntry } from '../../src/learning/QualityArchive.js';
 import { promises as fs } from 'fs';
 import { tmpdir } from 'os';

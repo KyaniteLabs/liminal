@@ -1,8 +1,8 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * SelfReflection tests
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
 import { SelfReflectionEngine, type QualityTrend, type ImprovementSuggestion } from '../../src/improvement/SelfReflection.js';
 
 describe('SelfReflectionEngine', () => {

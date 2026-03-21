@@ -1,8 +1,8 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 /**
  * Tests for FragmentScorer — multi-dimensional fragment scoring.
  */
 
-import { jest } from '@jest/globals';
 import { FragmentScorer } from '../../src/compost/FragmentScorer.js';
 import { mergeConfig } from '../../src/compost/defaults.js';
 import type { CompostFragment } from '../../src/compost/types.js';
@@ -32,7 +32,7 @@ describe('FragmentScorer', () => {
   let scorer: FragmentScorer;
 
   beforeEach(() => {
-    mockLLM = { generate: jest.fn() };
+    mockLLM = { generate: vi.fn() };
     scorer = new FragmentScorer(mergeConfig(), mockLLM);
   });
 

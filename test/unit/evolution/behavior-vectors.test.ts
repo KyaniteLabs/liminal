@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { detectDomain, extractBehavior } from '../../../src/evolution/BehaviorVectors.js';
 
 // ── Sample code snippets for testing ──

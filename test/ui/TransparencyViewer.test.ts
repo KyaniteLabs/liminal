@@ -1,8 +1,8 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * TransparencyViewer tests
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
 import { TransparencyViewer, EventType } from '../../src/ui/TransparencyViewer.js';
 
 describe('TransparencyViewer', () => {

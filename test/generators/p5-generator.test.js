@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { P5Generator } from '../../src/generators/p5/P5Generator.js';
 
 describe('P5Generator', () => {

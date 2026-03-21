@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll } from 'vitest';
 /**
  * TDD: API tests for GET /api/gallery, GET /api/gallery/:project, POST /api/export
  * - Gallery load returns list of project dir names

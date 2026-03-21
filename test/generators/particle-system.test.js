@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { ParticleSystem } from '../../src/generators/p5/ParticleSystem.js';
 
 describe('ParticleSystem', () => {

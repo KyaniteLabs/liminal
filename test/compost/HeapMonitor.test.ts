@@ -1,15 +1,15 @@
+import { describe, it, expect, vi } from 'vitest';
 /**
  * Tests for HeapMonitor — monitors heap size and auto-triggers digestion.
  */
 
-import { jest } from '@jest/globals';
 import { HeapMonitor } from '../../src/compost/HeapMonitor.js';
 
 describe('HeapMonitor', () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function makeMockMill(overrides: any = {}): any {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fn: any = jest.fn();
+    const fn: any = vi.fn();
     return {
       shouldAutoDigest: fn.mockResolvedValue(false),
       digest: fn.mockResolvedValue({ stats: {}, seeds: [], digestPath: '' }),

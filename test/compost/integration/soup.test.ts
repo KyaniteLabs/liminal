@@ -1,3 +1,4 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 /**
  * Soup integration test — multi-cycle evolution verification.
  */
@@ -5,7 +6,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { jest } from '@jest/globals';
 import { CompostSoup } from '../../../src/compost/CompostSoup.js';
 import { mergeConfig } from '../../../src/compost/defaults.js';
 import type { CompostFragment } from '../../../src/compost/types.js';
@@ -38,7 +38,7 @@ describe('Soup Integration', () => {
 
   beforeEach(async () => {
     tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'soup-int-test-'));
-    const mockFn: any = jest.fn();
+    const mockFn: any = vi.fn();
     mockFn.mockResolvedValue({ success: true, code: 'Evolved offspring: ' + Math.random().toString(36) });
     mockLLM = { generate: mockFn };
 

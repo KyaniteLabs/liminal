@@ -1,3 +1,4 @@
+import { describe, it, expect, test } from 'vitest';
 /**
  * VoiceInput tests - Audio capture and musical interpretation
  *

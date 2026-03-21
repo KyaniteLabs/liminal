@@ -1,3 +1,4 @@
+import { describe, it, expect, beforeAll, afterEach, afterAll, test } from 'vitest';
 /**
  * E2E: seed and quality gate via public run() API.
  * - Seed: run() with seedCode (minimal p5 sketch), assert result reflects seed.

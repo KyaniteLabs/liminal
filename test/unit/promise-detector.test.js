@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { PromiseDetector } from '../../src/core/PromiseDetector.js';
 
 describe('PromiseDetector', () => {

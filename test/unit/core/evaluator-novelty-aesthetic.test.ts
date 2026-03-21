@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { CreativeEvaluator } from '../../../src/core/CreativeEvaluator.js';
 import { NoveltyArchive } from '../../../src/evolution/NoveltyArchive.js';
 import { AestheticModel } from '../../../src/evolution/AestheticModel.js';

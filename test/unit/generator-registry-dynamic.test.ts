@@ -1,9 +1,9 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * Tests for dynamic domain registration in GeneratorRegistry
  */
 
 import { generatorRegistry, GeneratorEntry, DynamicDomainConfig } from '../../src/generators/GeneratorRegistry.js';
-import { SmartRouter } from '../../src/routing/SmartRouter.js';
 
 describe('GeneratorRegistry - Dynamic Domain Registration', () => {
   beforeEach(() => {
@@ -250,51 +250,66 @@ describe('GeneratorRegistry - Dynamic Domain Registration', () => {
     });
   });
 
-  describe('Integration with SmartRouter', () => {
-    it('should work with SmartRouter.registerDynamicDomain()', () => {
-      const router = new SmartRouter();
+  describe('Smart routing integration', () => {
+    it('should route to dynamic domain based on keywords', () => {
+      generatorRegistry.registerDomain({
+        name: 'lyrics',
+        keywords: ['lyrics', 'poem', 'verse'],
+        confidence: 0.8,
+        generate: async (_prompt: string) => 'lyrics output',
+      });
 
-      router.registerDynamicDomain('lyrics', ['lyrics', 'poem', 'verse'], 'local', 0.8);
-
-      const decision = router.routeByPrompt('write some lyrics');
+      const decision = generatorRegistry.routeByPrompt('write some lyrics');
       expect(decision.domain).toBe('lyrics');
-      expect(decision.model).toBe('local');
-      expect(decision.reason).toContain('lyrics');
     });
 
-    it('should route to dynamic domain based on keywords', () => {
-      const router = new SmartRouter();
+    it('should detect dynamic domains in routeByPrompt()', () => {
+      generatorRegistry.registerDomain({
+        name: 'jokes',
+        keywords: ['joke', 'funny', 'humor'],
+        confidence: 0.7,
+        generate: async (_prompt: string) => 'joke output',
+      });
 
-      router.registerDynamicDomain('jokes', ['joke', 'funny', 'humor'], 'cloud', 0.7);
-
-      const decision1 = router.routeByPrompt('tell me a joke');
+      const decision1 = generatorRegistry.routeByPrompt('tell me a joke');
       expect(decision1.domain).toBe('jokes');
 
-      const decision2 = router.routeByPrompt('something funny');
+      const decision2 = generatorRegistry.routeByPrompt('something funny');
       expect(decision2.domain).toBe('jokes');
     });
 
-    it('should unregister dynamic domain from SmartRouter', () => {
-      const router = new SmartRouter();
+    it('should unregister dynamic domain', () => {
+      generatorRegistry.registerDomain({
+        name: 'temp',
+        keywords: ['temp'],
+        confidence: 0.5,
+        generate: async (_prompt: string) => 'temp output',
+      });
 
-      router.registerDynamicDomain('temp', ['temp'], 'local', 0.5);
-
-      let decision = router.routeByPrompt('temp keyword');
+      let decision = generatorRegistry.routeByPrompt('temp keyword');
       expect(decision.domain).toBe('temp');
 
-      router.unregisterDynamicDomain('temp');
+      generatorRegistry.unregisterDomain('temp');
 
-      decision = router.routeByPrompt('temp keyword');
+      decision = generatorRegistry.routeByPrompt('temp keyword');
       expect(decision.domain).toBeUndefined();
     });
 
     it('should return all domain keywords including dynamic', () => {
-      const router = new SmartRouter();
+      generatorRegistry.registerDomain({
+        name: 'custom1',
+        keywords: ['kw1', 'kw2'],
+        confidence: 0.5,
+        generate: async (_prompt: string) => 'custom1',
+      });
+      generatorRegistry.registerDomain({
+        name: 'custom2',
+        keywords: ['kw3'],
+        confidence: 0.5,
+        generate: async (_prompt: string) => 'custom2',
+      });
 
-      router.registerDynamicDomain('custom1', ['kw1', 'kw2'], 'local');
-      router.registerDynamicDomain('custom2', ['kw3'], 'cloud');
-
-      const allKeywords = router.getAllDomainKeywords();
+      const allKeywords = generatorRegistry.getAllDomainKeywords();
 
       expect(allKeywords.custom1).toEqual(['kw1', 'kw2']);
       expect(allKeywords.custom2).toEqual(['kw3']);
@@ -302,14 +317,17 @@ describe('GeneratorRegistry - Dynamic Domain Registration', () => {
     });
 
     it('should recognize dynamic domains in isDomainSupported()', () => {
-      const router = new SmartRouter();
+      expect(generatorRegistry.isDomainSupported('music')).toBe(true); // Built-in
+      expect(generatorRegistry.isDomainSupported('custom')).toBe(false); // Not registered yet
 
-      expect(router.isDomainSupported('music')).toBe(true); // Built-in
-      expect(router.isDomainSupported('custom')).toBe(false); // Not registered yet
+      generatorRegistry.registerDomain({
+        name: 'custom',
+        keywords: ['custom'],
+        confidence: 0.5,
+        generate: async (_prompt: string) => 'custom',
+      });
 
-      router.registerDynamicDomain('custom', ['custom'], 'local');
-
-      expect(router.isDomainSupported('custom')).toBe(true);
+      expect(generatorRegistry.isDomainSupported('custom')).toBe(true);
     });
   });
 

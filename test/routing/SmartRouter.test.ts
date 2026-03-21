@@ -1,8 +1,8 @@
+import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * Tests for SmartRouter - domain-aware routing with A/B test data.
  */
 
-import { describe, it, expect, beforeEach } from '@jest/globals';
 import {
   SmartRouter,
   route,

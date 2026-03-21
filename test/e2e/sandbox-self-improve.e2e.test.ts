@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * E2E sandbox self-improve (optional).
  * - Sandbox: runInSandbox(minimal p5) completes without timeout/crash; skip if Puppeteer/Chrome unavailable.

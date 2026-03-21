@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 /**
  * Sandbox tests - Safe execution of p5.js code in isolated environment
  *

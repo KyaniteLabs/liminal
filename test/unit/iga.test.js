@@ -1,3 +1,4 @@
+import { describe, it, expect } from 'vitest';
 import { generateFiveVariations } from '../../src/evolution/IGA.js';
 
 describe('generateFiveVariations', () => {

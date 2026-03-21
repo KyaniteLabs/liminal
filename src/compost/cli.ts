@@ -3,6 +3,7 @@
  */
 
 import type { Seed } from './types.js';
+import type { CompostMill } from './CompostMill.js';
 
 export type CLIAction =
   | { command: 'add'; paths: string[] }
@@ -36,11 +37,8 @@ export function parseArgs(args: string[]): CLIAction {
   return { command: 'status' };
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type MillLike = any;
-
 /** Execute a CLI action against the CompostMill. */
-export async function execute(action: CLIAction, mill: MillLike): Promise<void> {
+export async function execute(action: CLIAction, mill: CompostMill): Promise<void> {
   switch (action.command) {
     case 'add':
       if (action.paths.length > 0) {

@@ -12,7 +12,7 @@ After the Full Remediation to Launch (Waves 0–7), the following items from the
 
 - **Path traversal:** Output, project, gallery, SeedArchive, and POST `/api/export` now use `normalizePath()` and `assertSafeSegment()` from `src/utils/normalizePath.ts`; paths outside the base or containing `..`/separators are rejected.
 - **ESLint:** `.eslintrc.cjs` added at repo root; `npm run lint` runs `eslint src/` with project config.
-- **Coverage:** Jest `collectCoverageFrom` now targets **source** (`src/**/*.ts`, `src/**/*.tsx`) instead of dist; coverage is collected from src without requiring a build.
+- **Coverage:** Vitest with V8 provider now targets **source** (`src/**/*.ts`, `src/**/*.tsx`) instead of dist; coverage is collected from src without requiring a build.
 - **E2E tests:** `test/e2e/` added (full-loop cloud/local, seed+quality, GUI, sandbox+requestImprovement); E2E tests skip gracefully when backends are unavailable.
 - **Dual-LLM tests:** `test/integration/dual-llm.test.ts` exercises cloud LLM and local (Ollama) paths with clear skip messages when backends are missing.
 

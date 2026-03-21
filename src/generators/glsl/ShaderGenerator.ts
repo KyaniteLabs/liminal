@@ -9,8 +9,8 @@ export interface ShaderGeneratorOptions {
 export class ShaderGenerator {
   private llm: LLMClient;
 
-  constructor(llmConfig?: Partial<LLMConfig>) {
-    this.llm = new LLMClient(llmConfig);
+  constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>) {
+    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
   }
 
   async generate(prompt: string, options?: ShaderGeneratorOptions): Promise<string> {

@@ -108,7 +108,7 @@ interface CompostConfig {
   llm: {
     provider: 'local' | 'cloud' | 'auto';  // default: 'auto'
     // Local (LM Studio)
-    localBaseUrl: string;            // default: 'http://localhost:1234/v1'
+    localBaseUrl: string;            // default: 'http://100.66.225.85:1234/v1'
     localModel: string;              // default: 'auto' (use whatever is loaded)
     // Cloud
     cloudProvider: string;           // default: 'anthropic' (or 'openrouter', 'openai')
@@ -538,7 +538,7 @@ type LLMProvider = 'local' | 'cloud' | 'auto';
 {
   "llm": {
     "provider": "auto",
-    "localBaseUrl": "http://localhost:1234/v1",
+    "localBaseUrl": "http://100.66.225.85:1234/v1",
     "localModel": "auto",
     "localTimeoutMs": 30000
   }
@@ -683,7 +683,7 @@ liminal compost seeds show <seed-id>
 
 # Configuration
 liminal compost config [--heap-size <MB>] [--schedule <daily|weekly>]
-liminal compost config --llm local --base-url http://localhost:1234/v1
+liminal compost config --llm local --base-url http://100.66.225.85:1234/v1
 liminal compost config --llm cloud --provider anthropic
 
 # Status

@@ -25,6 +25,7 @@ export interface IterationContext {
 export type State = IterationContext;
 
 import fs from 'fs';
+import path from 'path';
 
 export interface PersistedLoopState {
   bestFitness: number;
@@ -90,6 +91,7 @@ export class ContextAccumulation {
    */
   saveState(filePath: string, state: PersistedLoopState): void {
     const data = JSON.stringify(state, null, 2);
+    fs.mkdirSync(path.dirname(filePath), { recursive: true });
     fs.writeFileSync(filePath, data, 'utf-8');
   }
 
@@ -98,12 +100,14 @@ export class ContextAccumulation {
    * Returns null if the file doesn't exist or can't be parsed.
    */
   loadState(filePath: string): PersistedLoopState | null {
+    if (!fs.existsSync(filePath)) return null;
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
       const parsed = JSON.parse(raw) as PersistedLoopState;
       if (typeof parsed.bestFitness !== 'number') return null;
       return parsed;
-    } catch {
+    } catch (err) {
+      console.warn('Failed to load loop state:', err);
       return null;
     }
   }

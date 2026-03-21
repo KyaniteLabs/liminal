@@ -5,6 +5,8 @@
  * Selected by prompt keywords in ThreeGenerator.
  */
 
+import { THREE_CDN, THREE_ADDONS_CDN } from '../../constants.js';
+
 export type ThreeTemplateType = 'particle-galaxy' | 'procedural-geometry' | 'instanced-mesh' | 'wireframe-terrain';
 
 const templates: Record<ThreeTemplateType, string> = {
@@ -18,8 +20,8 @@ const templates: Record<ThreeTemplateType, string> = {
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "${THREE_CDN}",
+      "three/addons/": "${THREE_ADDONS_CDN}"
     }
   }
   </script>
@@ -106,8 +108,8 @@ const templates: Record<ThreeTemplateType, string> = {
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "${THREE_CDN}",
+      "three/addons/": "${THREE_ADDONS_CDN}"
     }
   }
   </script>
@@ -189,8 +191,8 @@ const templates: Record<ThreeTemplateType, string> = {
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "${THREE_CDN}",
+      "three/addons/": "${THREE_ADDONS_CDN}"
     }
   }
   </script>
@@ -272,8 +274,8 @@ const templates: Record<ThreeTemplateType, string> = {
   <script type="importmap">
   {
     "imports": {
-      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-      "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      "three": "${THREE_CDN}",
+      "three/addons/": "${THREE_ADDONS_CDN}"
     }
   }
   </script>

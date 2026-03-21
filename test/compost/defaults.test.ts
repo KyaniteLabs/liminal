@@ -33,14 +33,14 @@ describe('DEFAULT_CONFIG', () => {
     expect(DEFAULT_CONFIG.soupPopulationSize).toBe(20);
     expect(DEFAULT_CONFIG.soupSeedPromotionThreshold).toBe(0.7);
     expect(DEFAULT_CONFIG.soupCycleIntervalMs).toBe(60000);
-    expect(DEFAULT_CONFIG.seedPromotionThreshold).toBe(0.7);
+    expect(DEFAULT_CONFIG.seedPromotionThreshold).toBe(0.4);
     expect(DEFAULT_CONFIG.maxSeedsPerDigest).toBe(20);
     expect(DEFAULT_CONFIG.nuggetRetentionDays).toBe(90);
   });
 
   it('has correct LLM defaults', () => {
     expect(DEFAULT_CONFIG.llm.provider).toBe('auto');
-    expect(DEFAULT_CONFIG.llm.localBaseUrl).toBe('http://localhost:1234/v1');
+    expect(DEFAULT_CONFIG.llm.localBaseUrl).toBe('http://100.66.225.85:1234/v1');
     expect(DEFAULT_CONFIG.llm.localModel).toBe('auto');
     expect(DEFAULT_CONFIG.llm.cloudProvider).toBe('anthropic');
     expect(DEFAULT_CONFIG.llm.cloudApiKeyEnvVar).toBe('ANTHROPIC_API_KEY');

@@ -10,7 +10,8 @@ import { Server } from 'http';
 import { Gallery } from '../gallery/Gallery.js';
 import { Exporter } from '../export/Exporter.js';
 import { normalizePath } from '../utils/normalizePath.js';
-import { SERVICE_DEFAULTS } from '../constants.js';
+import { SERVICE_DEFAULTS, P5_CDN, P5_SOUND_CDN } from '../constants.js';
+import { LLMClient } from '../llm/LLMClient.js';
 import { eventBus } from '../core/EventBus.js';
 import type { BusEvent } from '../core/EventBus.js';
 
@@ -159,7 +160,8 @@ export class PreviewServer {
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');
         const { mergeConfig } = await import('../compost/defaults.js');
-        const mill = new CompostMill(mergeConfig());
+        const llm = new LLMClient();
+        const mill = new CompostMill(llm, mergeConfig());
         const millStatus = await mill.statusAsync();
 
         const loopProgress = await import('../core/RalphLoop.js').then(m => m.RalphLoop.getProgress());
@@ -181,7 +183,8 @@ export class PreviewServer {
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');
         const { mergeConfig } = await import('../compost/defaults.js');
-        const mill = new CompostMill(mergeConfig());
+        const llm = new LLMClient();
+        const mill = new CompostMill(llm, mergeConfig());
         const seeds = await mill.listSeeds();
         res.json({ seeds: seeds.slice(0, 50), total: seeds.length });
       } catch (err) {
@@ -257,9 +260,8 @@ export class PreviewServer {
     // but keep other code intact for execution
     const safeCode = code.replace(/\u003c\/script\u003e/gi, '<\\/script>');
     const usesP5Sound = /p5\.sound/i.test(code);
-    const p5Version = '1.9.0';
     const p5SoundScript = usesP5Sound
-      ? `\n  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/${p5Version}/p5.sound.min.js"></script>`
+      ? `\n  <script src="${P5_SOUND_CDN}"></script>`
       : '';
     const usesWebAudio = /AudioContext|createOscillator|p5\.sound/i.test(code);
     const soundComment = usesWebAudio
@@ -278,7 +280,7 @@ export class PreviewServer {
   </style>
 </head>
 <body>${soundComment}
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/${p5Version}/p5.min.js"></script>${p5SoundScript}
+  <script src="${P5_CDN}"></script>${p5SoundScript}
   <script>
     ${safeCode}
   </script>

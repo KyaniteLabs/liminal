@@ -91,13 +91,6 @@ export interface ProjectConfig {
     stagnationThreshold?: number;
     useArchiveLearning?: boolean;
   };
-  /** Optional live performance config (MIDI, OSC, sync). Not implemented; load and pass through only. */
-  live?: {
-    midiOutput?: string;
-    oscHost?: string;
-    oscPort?: number;
-    syncMode?: string;
-  };
 }
 
 export interface EffectiveConfig {

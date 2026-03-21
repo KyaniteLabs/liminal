@@ -10,6 +10,7 @@ import puppeteer from 'puppeteer';
 import type { Browser, Page } from 'puppeteer';
 import fs from 'fs/promises';
 import path from 'path';
+import { P5_CDN } from '../constants.js';
 
 export class Renderer {
   private readonly RENDER_TIMEOUT = 30000;
@@ -136,7 +137,7 @@ export class Renderer {
     body { margin: 0; padding: 0; overflow: hidden; background: #000; }
     canvas { display: block; }
   </style>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <script src="${P5_CDN}"></script>
 </head>
 <body>
   <script>${code.replace(/<\/script>/gi, '<\\/script>')}</script>

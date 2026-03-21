@@ -11,6 +11,7 @@ import {
   scavengerToFragment,
   isFromOrigin,
   type CreativeFragment,
+  type FragmentOrigin,
 } from '../../../src/core/types.js';
 import { ScoringEngine } from '../../../src/core/ScoringEngine.js';
 import type { ScoringInput } from '../../../src/core/ScoringEngine.js';
@@ -98,7 +99,7 @@ describe('unified pipeline integration', () => {
 
     for (const { frag, origin } of fragments) {
       expect(frag.origin).toBe(origin);
-      expect(isFromOrigin(frag, origin)).toBe(true);
+      expect(isFromOrigin(frag, origin as FragmentOrigin)).toBe(true);
 
       // Score it — origin should not affect scoring
       const result = await engine.score({ output: frag.content }, 'comprehensive');

@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 
-const E2E_TIMEOUT_MS = 90000; // 2 iterations + LLM calls
+const E2E_TIMEOUT_MS = 120000; // 2 iterations + LLM calls over network
 
 function restoreEnv(backup: Record<string, string | undefined>) {
   for (const key of Object.keys(backup)) {
@@ -55,7 +55,7 @@ describe('E2E full loop (cloud LLM)', () => {
     }
 
     process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';
-    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';
+    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://100.66.225.85:1234/v1';
     process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'local-model';
 
     const stamp = Date.now();
@@ -101,5 +101,5 @@ describe('E2E full loop (cloud LLM)', () => {
     expect(result.jsPath).toBeDefined();
     expect(fs.existsSync(result.htmlPath!)).toBe(true);
     expect(fs.existsSync(result.jsPath!)).toBe(true);
-  }, E2E_TIMEOUT_MS + 2000);
+  }, E2E_TIMEOUT_MS + 5000);
 });

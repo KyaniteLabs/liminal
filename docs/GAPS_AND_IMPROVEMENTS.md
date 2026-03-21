@@ -52,7 +52,7 @@ A comprehensive adversarial audit identified unification gaps, synergy failures,
 - **5.1** config/atelier.json: ConfigLoader has `loadProjectConfig()`; project config path may not be passed from bin/atelier in all code paths.
 - **2.2** Evaluation criteria configurable: PRD lists evaluationCriteria; CreativeEvaluator may not read it from config.
 - **3.3, 4.1** GA phase: IGA generateFiveVariations exists; full "5 variations → user selects → mutate/crossover" UI or flow may be partial.
-- **Integration test failures:** 130 test suites fail with `Cannot find module 'vitest'` — pre-existing dependency issue, not related to code changes.
+- **Integration test failures:** RESOLVED — Migrated from Jest to Vitest. `vitest` installed, `vitest.config.ts` created, Jest artifacts removed. 129/130 suites passing (1 requires running LM Studio server).
 
 ---
 

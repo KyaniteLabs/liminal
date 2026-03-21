@@ -11,6 +11,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import archiver from 'archiver';
 import { createWriteStream } from 'fs';
+import { P5_CDN, P5_SOUND_CDN } from '../constants.js';
 
 export interface ProjectIteration {
   version: number;
@@ -191,10 +192,8 @@ export class Exporter {
   private generateHTML(code: string): string {
     const usesSound = this.codeUsesWebAudioOrP5Sound(code);
     const usesP5Sound = /p5\.sound/i.test(code);
-    const p5Version = '1.9.0';
-    const p5Script = `https://cdnjs.cloudflare.com/ajax/libs/p5.js/${p5Version}/p5.min.js`;
     const p5SoundScript = usesP5Sound
-      ? `\n    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/${p5Version}/p5.sound.min.js"></script>`
+      ? `\n    <script src="${P5_SOUND_CDN}"></script>`
       : '';
     const soundComment = usesSound
       ? '\n    <!-- Sound may require user click to start (browser policy). -->'
@@ -206,7 +205,7 @@ export class Exporter {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>p5.js Sketch</title>
-    <script src="${p5Script}"></script>${p5SoundScript}
+    <script src="${P5_CDN}"></script>${p5SoundScript}
     <style>
         body {
             margin: 0;

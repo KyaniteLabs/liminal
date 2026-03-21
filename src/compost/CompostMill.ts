@@ -22,6 +22,7 @@ import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import type { ProjectDNA } from '../scavenger/types.js';
 import { RetryManager } from '../llm/RetryManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
+import type { LLMClientLike } from './SemanticExtractor.js';
 
 export class CompostMill {
   private config: CompostConfig;
@@ -32,20 +33,18 @@ export class CompostMill {
   private seedBank: SeedBank;
   private digestGenerator: DigestGenerator;
   private soup: CompostSoup | null = null;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private llm: any;
+  private llm: LLMClientLike;
 
   constructor(
+    llm: LLMClientLike,
     overrides?: Partial<CompostConfig> & { soupStatePath?: string },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    llm?: any,
   ) {
     const config = mergeConfig(overrides as Partial<CompostConfig>);
     this.config = config;
     this.llm = llm;
 
     this.heap = new CompostHeap(config);
-    this.semanticExtractor = new SemanticExtractor(config, llm ?? { generate: async () => ({ success: true, code: '' }) });
+    this.semanticExtractor = new SemanticExtractor(config, llm);
     this.collisionEngine = new CollisionEngine(config, llm);
     this.fragmentScorer = new FragmentScorer(config, llm);
     this.seedBank = new SeedBank(config);

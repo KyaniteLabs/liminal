@@ -16,6 +16,7 @@ export interface GenerateVisualsOptions {
   };
   platform?: 'hydra' | 'p5';
   signal?: AbortSignal;
+  llm?: LLMClient;
 }
 
 export interface GenerateVisualsResult {
@@ -33,7 +34,7 @@ export interface GenerateVisualsResult {
 export async function generateVisuals(
   options: GenerateVisualsOptions
 ): Promise<GenerateVisualsResult> {
-  const { prompt, audioInput, platform = 'hydra', signal } = options;
+  const { prompt, audioInput, platform = 'hydra', signal, llm } = options;
 
   if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
     throw new Error('prompt is required and must be a non-empty string');
@@ -44,7 +45,7 @@ export async function generateVisuals(
   // Try LLM generation first
   if (LLMClient.isConfigured()) {
     try {
-      const code = await generateVisualsLLM(prompt, platform, audioInput, signal);
+      const code = await generateVisualsLLM(prompt, platform, audioInput, signal, llm);
       if (code) return { code };
     } catch {
       // Fall through to template
@@ -70,9 +71,10 @@ async function generateVisualsLLM(
   prompt: string,
   platform: string,
   audioInput?: GenerateVisualsOptions['audioInput'],
-  signal?: AbortSignal
+  signal?: AbortSignal,
+  llm?: LLMClient
 ): Promise<string> {
-  const llm = new LLMClient();
+  const client = llm ?? new LLMClient();
 
   let systemPrompt: string;
   let userPrompt: string;
@@ -94,7 +96,7 @@ async function generateVisualsLLM(
     userPrompt = rendered.user;
   }
 
-  const response = await llm.generate(systemPrompt, userPrompt, signal);
+  const response = await client.generate(systemPrompt, userPrompt, signal);
 
   if (!response.success || !response.code || response.code.trim().length === 0) {
     return '';

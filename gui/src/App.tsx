@@ -212,7 +212,7 @@ export default function App() {
         if (cancelled) return;
         setIterations(data.iterations || []);
         setSelectedIterationIndex(0);
-      } catch (_) {}
+      } catch (err) { console.warn('Failed to load iterations:', err); }
     })();
     return () => { cancelled = true; };
   }, [activeTab, selectedProject]);
@@ -786,7 +786,7 @@ export default function App() {
                     try {
                       const ac = new (window.AudioContext || (window as any).webkitAudioContext)();
                       if (ac.state !== 'running') ac.resume();
-                    } catch (_) {}
+                    } catch (err) { console.warn('AudioContext resume failed:', err); }
                   }}
                 >
                   Play

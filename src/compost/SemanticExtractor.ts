@@ -77,12 +77,16 @@ export class SemanticExtractor {
     }
   }
 
-  /** Extract semantic info from audio files (stub). */
+  /** Extract semantic info from audio files.
+   *  @todo Implement using Whisper API or similar for transcription + LLM summarization.
+   */
   async extractAudio(filePath: string): Promise<string> {
     return `[Audio file: ${path.basename(filePath)} — transcription/summary not yet implemented]`;
   }
 
-  /** Extract semantic info from video files (stub). */
+  /** Extract semantic info from video files.
+   *  @todo Implement using frame sampling + vision model for scene description.
+   */
   async extractVideo(filePath: string): Promise<string> {
     return `[Video file: ${path.basename(filePath)} — frame description not yet implemented]`;
   }

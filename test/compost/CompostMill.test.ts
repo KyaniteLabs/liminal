@@ -25,14 +25,14 @@ describe('CompostMill', () => {
     mockFn.mockResolvedValue({ success: true, code: 'Generated content' });
     mockLLM = { generate: mockFn };
 
-    mill = new CompostMill({
+    mill = new CompostMill(mockLLM, {
       heapDir,
       digestDir,
       seedDir,
       soupStatePath,
       maxHeapSizeBytes: 1024 * 1024,
       soupEnabled: false,
-    }, mockLLM);
+    });
   });
 
   afterEach(async () => {

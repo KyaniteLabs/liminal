@@ -9,17 +9,17 @@ import { SoupStateManager } from './SoupStateManager.js';
 import { SeedBank } from './SeedBank.js';
 import { FragmentScorer } from './FragmentScorer.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
+import type { LLMClientLike } from './SemanticExtractor.js';
 
 export class CompostSoup {
   private config: CompostConfig;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private llm: any;
+  private llm: LLMClientLike;
   private stateManager: SoupStateManager;
   private seedBank: SeedBank;
   private scorer: FragmentScorer;
   private abortController: AbortController | null = null;
 
-  constructor(config: CompostConfig, llm?: any) {
+  constructor(config: CompostConfig, llm: LLMClientLike) {
     this.config = config;
     this.llm = llm;
     this.stateManager = new SoupStateManager(config);

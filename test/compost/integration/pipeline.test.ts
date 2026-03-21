@@ -18,13 +18,13 @@ describe('Pipeline Integration', () => {
     const mockFn: any = vi.fn();
     mockFn.mockResolvedValue({ success: true, code: 'Generated content' });
 
-    mill = new CompostMill({
+    mill = new CompostMill({ generate: mockFn }, {
       heapDir: path.join(tmpDir, 'heap'),
       digestDir: path.join(tmpDir, 'digest'),
       seedDir: path.join(tmpDir, 'seeds'),
       soupStatePath: path.join(tmpDir, 'soup-state.json'),
       soupEnabled: false,
-    }, { generate: mockFn });
+    });
   });
 
   afterEach(async () => {

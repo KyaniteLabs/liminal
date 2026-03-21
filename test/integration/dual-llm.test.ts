@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 import { getEffectiveConfig } from '../../src/config/ConfigLoader.js';
 import { LLMClient } from '../../src/llm/LLMClient.js';
 
-const LLM_REQUEST_TIMEOUT_MS = 20000;
+const LLM_REQUEST_TIMEOUT_MS = 45000;
 
 function restoreEnv(backup: Record<string, string | undefined>) {
   for (const key of Object.keys(backup)) {
@@ -49,7 +49,7 @@ describe('Dual LLM (cloud vs local)', () => {
 
   test('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
     process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';
-    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';
+    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://100.66.225.85:1234/v1';
     process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'local-model';
     // LIMINAL_LLM_API_KEY left from env if set
 
@@ -97,7 +97,7 @@ describe('Dual LLM (cloud vs local)', () => {
     expect(typeof response.code).toBe('string');
     expect(response.code).toMatch(/function\s+setup\s*\(/);
     expect(response.code).toMatch(/function\s+draw\s*\(/);
-  }, LLM_REQUEST_TIMEOUT_MS + 2000);
+  }, LLM_REQUEST_TIMEOUT_MS + 5000);
 
   test('getEffectiveConfig + LLMClient path with local (ollama) backend', async () => {
     process.env.LIMINAL_LLM_PROVIDER = 'ollama';
@@ -151,5 +151,5 @@ describe('Dual LLM (cloud vs local)', () => {
     expect(typeof response.code).toBe('string');
     expect(response.code).toMatch(/function\s+setup\s*\(/);
     expect(response.code).toMatch(/function\s+draw\s*\(/);
-  }, LLM_REQUEST_TIMEOUT_MS + 2000);
+  }, LLM_REQUEST_TIMEOUT_MS + 5000);
 });

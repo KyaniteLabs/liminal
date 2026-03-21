@@ -54,6 +54,7 @@ import { QualityArchive } from '../learning/index.js';
 import { AestheticModel } from '../evolution/AestheticModel.js';
 import { recordRoutingOutcome } from '../routing/RoutingData.js';
 import { eventBus, EventTypes } from './EventBus.js';
+import { LLMClient } from '../llm/LLMClient.js';
 
 interface LoopOptions {
   maxIterations?: number;
@@ -194,7 +195,7 @@ export class RalphLoop {
     if (normalizedOptions.useAestheticModel) {
       aestheticModel = new AestheticModel();
       const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
-      await aestheticModel.load(aestheticPath).catch(() => {});
+      await aestheticModel.load(aestheticPath).catch((err) => { console.warn('Failed to load aesthetic model:', err); });
     }
 
     // Load persisted MAP-Elites if enabled
@@ -202,7 +203,7 @@ export class RalphLoop {
       const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
       const mapElites = normalizedOptions._mapElites as MapElites | undefined;
       if (mapElites) {
-        await mapElites.load(mapElitesPath).catch(() => {});
+        await mapElites.load(mapElitesPath).catch((err) => { console.warn('Failed to load MAP-Elites archive:', err); });
       }
     }
 
@@ -493,7 +494,7 @@ export class RalphLoop {
             });
             // Auto-digest when heap is at capacity
             if (await heap.isOverCapacity()) {
-              const mill = new CompostMill(compostConfig);
+              const mill = new CompostMill(new LLMClient(), compostConfig);
               await mill.digest();
               eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
                 stage: 'auto-digest',

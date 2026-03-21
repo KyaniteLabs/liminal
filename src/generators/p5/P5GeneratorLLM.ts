@@ -10,8 +10,8 @@ export interface P5GeneratorOptions {
 export class P5GeneratorLLM {
   private llm: LLMClient;
 
-  constructor(llmConfig?: Partial<LLMConfig>, _options?: P5GeneratorOptions) {
-    this.llm = new LLMClient(llmConfig);
+  constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>, _options?: P5GeneratorOptions) {
+    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
   }
 
   async generate(prompt: string, options?: P5GeneratorOptions): Promise<string> {

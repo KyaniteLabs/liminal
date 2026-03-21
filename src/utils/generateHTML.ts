@@ -1,5 +1,4 @@
-const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
-const P5_SOUND_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.sound.min.js';
+import { P5_CDN, P5_SOUND_CDN } from '../constants.js';
 
 export interface GenerateHTMLOptions {
   code: string;

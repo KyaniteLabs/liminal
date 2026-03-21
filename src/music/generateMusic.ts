@@ -14,6 +14,7 @@ export interface GenerateMusicOptions {
   duration?: string;
   platform?: GenerateMusicPlatform;
   signal?: AbortSignal;
+  llm?: LLMClient;
 }
 
 export interface GenerateMusicResult {
@@ -29,13 +30,13 @@ export interface GenerateMusicResult {
  * Uses LLM when configured, falls back to template-based generation.
  */
 export async function generateMusic(options: GenerateMusicOptions): Promise<GenerateMusicResult> {
-  const { prompt, bpm = 120, platform = 'strudel', signal } = options;
+  const { prompt, bpm = 120, platform = 'strudel', signal, llm } = options;
   const p = (prompt || '').trim().toLowerCase();
 
   // Try LLM generation first
   if (LLMClient.isConfigured()) {
     try {
-      const code = await generateMusicLLM(prompt, bpm, platform, signal);
+      const code = await generateMusicLLM(prompt, bpm, platform, signal, llm);
       if (code) return { code };
     } catch {
       // Fall through to template
@@ -60,8 +61,8 @@ export async function generateMusic(options: GenerateMusicOptions): Promise<Gene
 /**
  * Generate music code via LLM. Returns empty string on failure.
  */
-async function generateMusicLLM(prompt: string, bpm: number, platform: GenerateMusicPlatform, signal?: AbortSignal): Promise<string> {
-  const llm = new LLMClient();
+async function generateMusicLLM(prompt: string, bpm: number, platform: GenerateMusicPlatform, signal?: AbortSignal, llm?: LLMClient): Promise<string> {
+  const client = llm ?? new LLMClient();
 
   let systemPrompt: string;
   let userPrompt: string;
@@ -76,7 +77,7 @@ async function generateMusicLLM(prompt: string, bpm: number, platform: GenerateM
     userPrompt = rendered.user;
   }
 
-  const response = await llm.generate(systemPrompt, userPrompt, signal);
+  const response = await client.generate(systemPrompt, userPrompt, signal);
 
   if (!response.success || !response.code || response.code.trim().length === 0) {
     return '';

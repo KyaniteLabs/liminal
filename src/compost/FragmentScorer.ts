@@ -4,6 +4,7 @@
  */
 
 import type { CompostConfig, CompostFragment, FragmentScore } from './types.js';
+import type { LLMClientLike } from './SemanticExtractor.js';
 
 /** Weights for each scoring dimension. */
 const WEIGHTS = {
@@ -16,10 +17,9 @@ const WEIGHTS = {
 
 export class FragmentScorer {
   private config: CompostConfig;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private llm: any;
+  private llm: LLMClientLike;
 
-  constructor(config: CompostConfig, llm?: any) {
+  constructor(config: CompostConfig, llm: LLMClientLike) {
     this.config = config;
     this.llm = llm;
   }

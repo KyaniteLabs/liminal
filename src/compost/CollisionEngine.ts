@@ -5,13 +5,13 @@
 
 import type { CompostConfig, CompostFragment, CollisionPair, CollisionResult } from './types.js';
 import { RetryManager } from '../llm/RetryManager.js';
+import type { LLMClientLike } from './SemanticExtractor.js';
 
 export class CollisionEngine {
   private config: CompostConfig;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  private llm: any;
+  private llm: LLMClientLike;
 
-  constructor(config: CompostConfig, llm?: any) {
+  constructor(config: CompostConfig, llm: LLMClientLike) {
     this.config = config;
     this.llm = llm;
   }

@@ -119,7 +119,7 @@ describe('GUI config API', () => {
       const payload = {
         defaultProvider: 'lmstudio',
         providers: {
-          lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model', apiKey: 'key' },
+          lmstudio: { baseUrl: 'http://100.66.225.85:1234/v1', model: 'local-model', apiKey: 'key' },
         },
         loop: { maxIterations: 15, timeoutMinutes: 20 },
         creative: { minQualityScore: 0.6 },

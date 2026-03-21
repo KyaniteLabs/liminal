@@ -10,6 +10,8 @@ import { LLMClient } from '../llm/LLMClient.js';
 export interface RequestImprovementState {
   /** Optional project directory or path to config/liminal.json for project LLM config */
   projectConfigPath?: string;
+  /** Optional pre-configured LLMClient instance for dependency injection */
+  llm?: LLMClient;
 }
 
 /**
@@ -26,14 +28,19 @@ export async function requestImprovement(
   state?: RequestImprovementState
 ): Promise<{ code: string; improved: boolean; error?: string }> {
   const projectPath = state?.projectConfigPath;
-  const effectiveConfig = await getEffectiveConfig(undefined, projectPath);
 
-  const llm = new LLMClient({
-    provider: effectiveConfig.provider,
-    baseUrl: effectiveConfig.baseUrl,
-    model: effectiveConfig.model,
-    apiKey: effectiveConfig.apiKey,
-  });
+  let llm: LLMClient;
+  if (state?.llm) {
+    llm = state.llm;
+  } else {
+    const effectiveConfig = await getEffectiveConfig(undefined, projectPath);
+    llm = new LLMClient({
+      provider: effectiveConfig.provider,
+      baseUrl: effectiveConfig.baseUrl,
+      model: effectiveConfig.model,
+      apiKey: effectiveConfig.apiKey,
+    });
+  }
 
   if (!LLMClient.isConfigured()) {
     return { code: templateFallback(currentCode), improved: false, error: 'LLM not configured' };

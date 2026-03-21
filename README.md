@@ -7,10 +7,10 @@ A generative art system with an internal Ralph-Wiggum Loop for self-recursive it
 ## Quick Start
 
 ```bash
-npm install
+pnpm install
 
 # Configure an LLM backend (required for generation)
-liminal --configure          # Sets up LM Studio at localhost:1234
+liminal --configure          # Sets up LM Studio at 100.66.225.85:1234
 
 # Or set env vars directly
 export LIMINAL_LLM_PROVIDER=ollama
@@ -311,15 +311,18 @@ liminal/
 ## Testing
 
 ```bash
-npm test                    # All 1,589 tests
-npm run test:integration    # Integration suites only
-npm run test:e2e            # E2E (skips when backends unavailable)
-npm run test:coverage       # Coverage from src/
-npm run typecheck           # TypeScript strict check
-npm run lint                # ESLint
+pnpm test                    # All 1,589 tests (Vitest)
+pnpm run test:integration    # Integration suites only
+pnpm run test:e2e            # E2E (skips when backends unavailable)
+pnpm run test:coverage       # Coverage from src/ (V8 provider)
+pnpm run test:watch          # Watch mode
+pnpm run typecheck           # TypeScript strict check
+pnpm run lint                # ESLint
 ```
 
-**130 suites, 1,589 tests, all passing.** Integration tests skip gracefully when no LLM is configured. E2E tests skip when Ollama/cloud backend is unavailable.
+**130 suites, 1,589 tests, 129 passing.** One infrastructure-dependent test (`dual-llm`) requires a running LM Studio server. Integration tests skip gracefully when no LLM is configured. E2E tests skip when Ollama/cloud backend is unavailable.
+
+Test framework: **Vitest** with V8 coverage provider. CDN URLs (p5.js, Three.js) centralized in `src/constants.ts`. All LLM-dependent modules accept `LLMClient` via dependency injection.
 
 ## Development
 

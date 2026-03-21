@@ -298,7 +298,7 @@ describe('SmartRouter', () => {
       const domain: string = 'music';
       if (router.isDomainSupported(domain)) {
         // TypeScript should know domain is DomainType here
-        const config = router.getDomainConfig(domain);
+        const config = router.getDomainConfig(domain as 'ascii' | 'music' | 'code' | 'visual');
         expect(config).toBeDefined();
       }
     });

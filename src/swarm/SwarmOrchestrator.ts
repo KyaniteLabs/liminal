@@ -430,8 +430,9 @@ export class SwarmOrchestrator {
 
       const filePath = path.join(this.config.streamDir, `evolution_${sessionId}.json`);
       await fs.writeFile(filePath, JSON.stringify(sessionData, null, 2));
-    } catch {
+    } catch (err) {
       // Session saving is best-effort
+      console.warn('Failed to save swarm session:', err);
     }
   }
 

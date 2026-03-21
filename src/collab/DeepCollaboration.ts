@@ -21,6 +21,7 @@
  */
 
 import { SERVICE_DEFAULTS } from '../constants.js';
+import { PromptLibrary } from '../prompts/PromptLibrary.js';
 import {
   DOMAIN_GUIDANCE,
   CREATOR_ROLE_PROMPT,
@@ -303,24 +304,14 @@ export class DeepCollaboration {
       this.config.callLLM(visionaryPrompt, systemPrompt),
     ]);
 
-    // Initial synthesis
-    const synthesisPrompt = `Synthesize the best elements from these two outputs:
+    // Initial synthesis using PromptLibrary template
+    const { system: synthSystem, user: synthUser } = PromptLibrary.render('compost.synthesis', {
+      creatorOutput,
+      visionaryOutput,
+      prompt,
+    });
 
-CREATOR (Practical, technical):
-${creatorOutput}
-
-VISIONARY (Creative, artistic):
-${visionaryOutput}
-
-Original request: ${prompt}
-
-Create a synthesis that combines:
-- The technical soundness and practicality of the Creator
-- The creativity and artistry of the Visionary
-
-The synthesis should be better than either alone.`;
-
-    const synthesisOutput = await this.config.callLLM(synthesisPrompt, systemPrompt);
+    const synthesisOutput = await this.config.callLLM(synthSystem + '\n\n' + synthUser, systemPrompt);
 
     return {
       phaseName: 'Divergence',

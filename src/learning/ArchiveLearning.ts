@@ -7,6 +7,7 @@
 
 import { QualityArchive } from './QualityArchive.js';
 import { createHash } from 'crypto';
+import type { CreativeFragment } from '../core/types.js';
 import type { MinedFragment } from '../swarm/types.js';
 
 /**
@@ -272,6 +273,29 @@ export class ArchiveLearning {
         persona: fragment.persona,
         round: fragment.round,
         tags: fragment.tags,
+      }
+    );
+  }
+
+  /**
+   * Add a CreativeFragment (from any subsystem) to the archive.
+   * @param fragment - The unified creative fragment
+   * @param domain - Domain identifier (falls back to first domain in fragment.domains)
+   * @returns ArchivedItem if added, null if quality too low
+   */
+  addCreativeFragment(fragment: CreativeFragment, domain?: string): ArchivedItem | null {
+    const effectiveDomain = domain ?? fragment.domains[0] ?? 'unknown';
+    return this.addOutput(
+      fragment.content.slice(0, 100),
+      fragment.content,
+      effectiveDomain,
+      fragment.score,
+      {
+        fragmentId: fragment.id,
+        origin: fragment.origin,
+        source: fragment.source,
+        tags: fragment.tags,
+        domains: fragment.domains,
       }
     );
   }

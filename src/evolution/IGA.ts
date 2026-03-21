@@ -5,7 +5,7 @@
 import { CreativeEvaluator } from '../core/CreativeEvaluator.js';
 
 /**
- * Generate 5 code variations from a prompt, score each with CreativeEvaluator.getFitness.
+ * Generate 5 code variations from a prompt, score each with CreativeEvaluator.assess.
  * @param prompt - The creative prompt
  * @param generator - Async function that generates code from a prompt
  * @returns Array of { code, fitness } of length 5
@@ -22,7 +22,7 @@ export async function generateFiveVariations(
     generator(prompt + ' — variation 5'),
   ]);
   return codes.map((code) => {
-    const { score } = CreativeEvaluator.getFitness(code);
-    return { code, fitness: score };
+    const result = CreativeEvaluator.assess(code);
+    return { code, fitness: result.score };
   });
 }

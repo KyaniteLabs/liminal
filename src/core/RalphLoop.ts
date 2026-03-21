@@ -37,12 +37,17 @@ import { extractBehavior } from '../evolution/BehaviorVectors.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { DeepCollaboration } from '../collab/DeepCollaboration.js';
 import { CollaborativeClient } from '../collab/CollaborativeClient.js';
+import { CollaborationEngine } from '../collab/CollaborationEngine.js';
+import type { CollaborationMode } from '../collab/CollaborationEngine.js';
 import type { DeepCollaborationConfig, CollaborativeConfig, DomainType } from '../collab/types.js';
 import { SwarmOrchestrator } from '../swarm/SwarmOrchestrator.js';
 import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
 import { SelfReflectionEngine } from '../improvement/SelfReflection.js';
 import { SeedBank } from '../compost/SeedBank.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
+import { ArchiveLearning } from '../learning/index.js';
+import { QualityArchive } from '../learning/index.js';
+import { AestheticModel } from '../evolution/AestheticModel.js';
 
 interface LoopOptions {
   maxIterations?: number;
@@ -87,6 +92,8 @@ interface LoopOptions {
   useDeepCollab?: boolean;
   /** Enable simple 2-model collaboration */
   useCollab?: boolean;
+  /** Use CollaborationEngine instead of raw DeepCollaboration/CollaborativeClient */
+  collabMode?: CollaborationMode;
   /** Configuration for collaboration (merged with defaults) */
   collabConfig?: Partial<DeepCollaborationConfig & CollaborativeConfig>;
   /** Domain for collaboration quality assessment (default: 'p5') */
@@ -97,6 +104,12 @@ interface LoopOptions {
   swarmConfig?: Partial<SwarmConfig>;
   /** Swarm generative mode (default: 'hybrid') */
   swarmMode?: SwarmMode;
+  /** Enable archive learning — store high-quality outputs for few-shot improvement */
+  useArchiveLearning?: boolean;
+  /** Path for quality archive JSON (default: ~/.liminal/archive/quality_archive.json) */
+  archivePath?: string;
+  /** Enable aesthetic model — predict quality based on behavior vectors */
+  useAestheticModel?: boolean;
 }
 
 interface LoopResult {
@@ -155,6 +168,23 @@ export class RalphLoop {
     let iterationsSinceLastImprovement = 0;
     const selfReflection = new SelfReflectionEngine();
 
+    // Initialize archive learning and aesthetic model
+    let archiveLearning: ArchiveLearning | null = null;
+    let qualityArchive: QualityArchive | null = null;
+    let aestheticModel: AestheticModel | null = null;
+
+    if (normalizedOptions.useArchiveLearning) {
+      archiveLearning = new ArchiveLearning({
+        archivePath: normalizedOptions.archivePath,
+      });
+      qualityArchive = archiveLearning.getArchive();
+      await qualityArchive.load();
+    }
+
+    if (normalizedOptions.useAestheticModel) {
+      aestheticModel = new AestheticModel();
+    }
+
     // Main loop
     while (iteration < normalizedOptions.maxIterations) {
       if (normalizedOptions.signal?.aborted) {
@@ -207,37 +237,72 @@ export class RalphLoop {
         if (normalizedOptions.useSwarm) {
           currentCode = await this.generateWithSwarm(usedPrompt, normalizedOptions, gallery);
         } else if (normalizedOptions.useDeepCollab || normalizedOptions.useCollab) {
-          // Use collaboration for LLM generation
-          const shouldUseCollab = !dispatched || dispatched.entry.name === 'llm';
-
-          if (shouldUseCollab) {
-            // Create a wrapper that adapts the generator signature to collaboration signature
+          // Use CollaborationEngine when collabMode is set, otherwise legacy path
+          if (normalizedOptions.collabMode) {
             const collabLLMCaller = async (prompt: string, _systemPrompt?: string): Promise<string> => {
-              // Use the provided callLLM from collabConfig if available
               if (normalizedOptions.collabConfig?.callLLM) {
                 return normalizedOptions.collabConfig.callLLM(prompt, _systemPrompt);
               }
-              // Otherwise use the dispatched LLM generator if available
               if (dispatched?.entry.name === 'llm') {
                 const result = dispatched.entry.generate(prompt, {});
                 return typeof result === 'string' ? result : await result;
               }
-              // Fallback to importing fresh LLM generator
               const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
               const generator = new P5GeneratorLLM();
               const result = generator.generate(prompt);
               return typeof result === 'string' ? result : await result;
             };
 
-            currentCode = await this.generateWithCollaboration(
-              usedPrompt,
-              normalizedOptions,
-              collabLLMCaller
-            );
-          } else if (dispatched) {
-            // Collab enabled but non-LLM generator matched — use it directly
-            const genPrompt = dispatched.entry.name === 'llm' ? usedPrompt : loadedPrompt;
-            currentCode = await dispatched.entry.generate(genPrompt);
+            const engine = new CollaborationEngine({
+              mode: normalizedOptions.collabMode,
+              domain: normalizedOptions.collabDomain || 'p5',
+              systemPrompt: '',
+              callLLM: collabLLMCaller,
+              convergenceThreshold: normalizedOptions.collabConfig?.convergenceThreshold,
+              maxRounds: normalizedOptions.collabConfig?.maxRounds ?? normalizedOptions.collabConfig?.maxPhases,
+              onProgress: (update) => {
+                options?.onProgress?.({
+                  iteration: 0,
+                  score: update.quality || 0,
+                  promiseDetected: false,
+                  code: update.output || '',
+                  timestamp: new Date().toISOString(),
+                });
+              },
+            });
+
+            const collabResult = await engine.run(usedPrompt);
+            currentCode = collabResult.output;
+          } else {
+            // Use collaboration for LLM generation
+            const shouldUseCollab = !dispatched || dispatched.entry.name === 'llm';
+
+            if (shouldUseCollab) {
+              // Create a wrapper that adapts the generator signature to collaboration signature
+              const collabLLMCaller = async (prompt: string, _systemPrompt?: string): Promise<string> => {
+                if (normalizedOptions.collabConfig?.callLLM) {
+                  return normalizedOptions.collabConfig.callLLM(prompt, _systemPrompt);
+                }
+                if (dispatched?.entry.name === 'llm') {
+                  const result = dispatched.entry.generate(prompt, {});
+                  return typeof result === 'string' ? result : await result;
+                }
+                const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
+                const generator = new P5GeneratorLLM();
+                const result = generator.generate(prompt);
+                return typeof result === 'string' ? result : await result;
+              };
+
+              currentCode = await this.generateWithCollaboration(
+                usedPrompt,
+                normalizedOptions,
+                collabLLMCaller
+              );
+            } else if (dispatched) {
+              // Collab enabled but non-LLM generator matched — use it directly
+              const genPrompt = dispatched.entry.name === 'llm' ? usedPrompt : loadedPrompt;
+              currentCode = await dispatched.entry.generate(genPrompt);
+            }
           }
         } else if (dispatched) {
           const genPrompt = dispatched.entry.name === 'llm' ? usedPrompt : loadedPrompt;
@@ -275,6 +340,23 @@ export class RalphLoop {
               evaluation.score
             );
           }
+
+          // Feed behavior + score into aesthetic model for prediction
+          if (aestheticModel) {
+            aestheticModel.predict(behavior, { domain: normalizedOptions.collabDomain || 'p5' });
+            aestheticModel.update([{ behavior, rating: evaluation.score * 5, domain: normalizedOptions.collabDomain || 'p5' }]);
+          }
+        }
+
+        // Archive learning: store high-quality outputs
+        if (archiveLearning && evaluation.score >= 0.65) {
+          archiveLearning.addOutput(
+            loadedPrompt,
+            currentCode,
+            normalizedOptions.collabDomain || 'p5',
+            evaluation.score,
+            { iteration, domain: normalizedOptions.collabDomain || 'p5' }
+          );
         }
 
         // Save iteration context
@@ -430,6 +512,11 @@ export class RalphLoop {
 
     const duration = Date.now() - startTime;
 
+    // Persist archive learning data
+    if (qualityArchive) {
+      await qualityArchive.save();
+    }
+
     return {
       code: currentCode,
       iterations: iteration,
@@ -472,10 +559,14 @@ export class RalphLoop {
       useDeepCollab: options?.useDeepCollab ?? false,
       useCollab: options?.useCollab ?? false,
       collabConfig: options?.collabConfig || {},
+      collabMode: options?.collabMode,
       collabDomain: options?.collabDomain || 'p5',
       useSwarm: options?.useSwarm ?? false,
       swarmConfig: options?.swarmConfig || {},
       swarmMode: options?.swarmMode ?? ('hybrid' as SwarmMode),
+      useArchiveLearning: options?.useArchiveLearning ?? false,
+      archivePath: options?.archivePath,
+      useAestheticModel: options?.useAestheticModel ?? false,
       _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
       _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
     };

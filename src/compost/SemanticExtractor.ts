@@ -5,6 +5,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { PromptLibrary } from '../prompts/PromptLibrary.js';
 import type { CompostConfig } from './types.js';
 
 /** Minimal LLM client interface. */
@@ -37,10 +38,12 @@ export class SemanticExtractor {
     const ext = path.extname(filePath).replace('.', '');
 
     try {
-      const result = await this.llm.generate(
-        'You are a code analyst. Summarize what this code does in 1-2 sentences. Focus on core logic, patterns, and creative concepts.',
-        `File: ${path.basename(filePath)} (${ext})\n\n${content.slice(0, 5000)}`
-      );
+      const { system, user } = PromptLibrary.render('compost.extract-code', {
+        filename: path.basename(filePath),
+        extension: ext,
+        content: content.slice(0, 5000),
+      });
+      const result = await this.llm.generate(system, user);
 
       const summary = result.success ? result.code : `[Code file: ${ext}]`;
       this.cache.set(cacheKey, summary);
@@ -59,10 +62,10 @@ export class SemanticExtractor {
     if (cached) return cached;
 
     try {
-      const result = await this.llm.generate(
-        'Describe what is in this image. Extract any ideas, techniques, patterns, or creative concepts visible.',
-        `[Image file: ${path.basename(filePath)}]`
-      );
+      const { system, user } = PromptLibrary.render('compost.extract-image', {
+        filename: path.basename(filePath),
+      });
+      const result = await this.llm.generate(system, user);
 
       const description = result.success ? result.code : `[Image: ${path.basename(filePath)}]`;
       this.cache.set(cacheKey, description);

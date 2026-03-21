@@ -66,6 +66,31 @@ export interface ProjectConfig {
     outputDir?: string;
     autoRegister?: boolean;
   };
+  compost?: {
+    heapDir?: string;
+    maxHeapSizeBytes?: number;
+    digestDir?: string;
+    seedDir?: string;
+    digestSchedule?: 'manual' | 'daily' | 'weekly';
+    soupEnabled?: boolean;
+    soupPopulationSize?: number;
+    soupMaxStepsPerCycle?: number;
+    seedPromotionThreshold?: number;
+    nuggetRetentionDays?: number;
+  };
+  collab?: {
+    mode?: 'swarm' | 'phases' | 'simple';
+    maxRounds?: number;
+    convergenceThreshold?: number;
+    domain?: string;
+  };
+  evolution?: {
+    useMapElites?: boolean;
+    mapElitesDims?: [number, number];
+    useAestheticModel?: boolean;
+    stagnationThreshold?: number;
+    useArchiveLearning?: boolean;
+  };
   /** Optional live performance config (MIDI, OSC, sync). Not implemented; load and pass through only. */
   live?: {
     midiOutput?: string;

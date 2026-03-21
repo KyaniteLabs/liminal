@@ -13,6 +13,16 @@ import { PromiseDetector } from './core/PromiseDetector.js';
 import { PromptStore } from './core/PromptStore.js';
 import { ContextAccumulation } from './core/ContextAccumulation.js';
 
+// Core shared types
+import type { CreativeFragment, FragmentOrigin } from './core/types.js';
+import {
+  seedToFragment,
+  compostFragmentToFragment,
+  minedFragmentToFragment,
+  scavengerToFragment,
+  isFromOrigin,
+} from './core/types.js';
+
 import { promptToGeneratorParams } from './utils/promptToGeneratorParams.js';
 import { P5Generator } from './generators/p5/P5Generator.js';
 import { ParticleSystem } from './generators/p5/ParticleSystem.js';
@@ -353,6 +363,8 @@ export type { RequestImprovementState } from './improvement/requestImprovement.j
 export { CreativeEvaluator };
 export { EvaluationFramework } from './core/EvaluationFramework.js';
 export type { EvaluationResult, EvaluationStrategy, EvaluationContext } from './core/EvaluationFramework.js';
+export { ScoringEngine } from './core/ScoringEngine.js';
+export type { ScoringResult, ScoringInput, ScoringStrategy, ScoreDimension } from './core/ScoringEngine.js';
 
 // Promise Detection for Loop Termination
 export { PromiseDetector };
@@ -362,6 +374,10 @@ export { PromptStore };
 
 // Context and State Management
 export { ContextAccumulation };
+
+// Core shared types and conversions
+export type { CreativeFragment, FragmentOrigin };
+export { seedToFragment, compostFragmentToFragment, minedFragmentToFragment, scavengerToFragment, isFromOrigin };
 
 // p5.js Generators
 export { P5Generator };
@@ -444,6 +460,11 @@ export default {
   PromiseDetector,
   PromptStore,
   ContextAccumulation,
+  seedToFragment,
+  compostFragmentToFragment,
+  minedFragmentToFragment,
+  scavengerToFragment,
+  isFromOrigin,
 
   // Generators
   P5Generator,
@@ -531,6 +552,10 @@ export {
   OVERALL_FITNESS,
   DOMAIN_KEYWORDS,
 } from './routing/index.js';
+
+// Collaboration
+export { CollaborationEngine } from './collab/CollaborationEngine.js';
+export type { CollaborationMode, CollaborationEngineResult, CollaborationEngineConfig } from './collab/CollaborationEngine.js';
 export type {
   RoutingDecision,
   RoutingConfig,

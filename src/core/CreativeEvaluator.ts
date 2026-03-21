@@ -56,6 +56,7 @@ const MIN_QUALITY_THRESHOLD = 0.7;
 export class CreativeEvaluator {
   /**
    * Get fitness score and issues for code (same as assess score/issues).
+   * @deprecated Use assess() directly — this is an alias.
    * @param code - The code to evaluate
    * @param options - Optional evaluation criteria (reserved; not used by assess)
    * @returns { score, issues } matching assess(code)

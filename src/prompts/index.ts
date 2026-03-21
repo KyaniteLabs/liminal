@@ -11,3 +11,4 @@ import './glsl.js';
 import './music.js';
 import './hydra.js';
 import './swarm.js';
+import './compost.js';

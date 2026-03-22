@@ -38,3 +38,7 @@ test-stream/
 
 # Claude Code
 .claude/
+
+# Git worktrees (isolated workspaces)
+.worktrees/
+worktrees/

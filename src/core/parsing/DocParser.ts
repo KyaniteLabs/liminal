@@ -140,7 +140,7 @@ export class DocParser {
     };
 
     // Walk the tree
-    const visit = (node: Content) => {
+    const visit = (node: Root | Content) => {
       if (node.type === 'heading') {
         const heading = node as Heading;
         const text = this.extractText(heading);

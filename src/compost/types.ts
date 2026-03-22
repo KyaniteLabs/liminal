@@ -146,8 +146,8 @@ export interface ExtractionResult {
   semantic: string | null;
   metadata: FragmentMetadata;
   rawBytes: RawByteData;
-  /** Optional LIR token extracted from the file. */
-  lir?: LIRToken;
+  /** Optional LIR tokens extracted from the file. */
+  lir?: LIRToken[];
 }
 
 /** Digest statistics for a single digestion run. */

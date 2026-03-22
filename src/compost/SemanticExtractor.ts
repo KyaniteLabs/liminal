@@ -7,7 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { PromptLibrary } from '../prompts/PromptLibrary.js';
 import { CompostParser } from '../core/parsing/CompostParser.js';
-import { lirToString } from '../core/lir/CompatibilityAdapter.js';
+import { lirArrayToString } from '../core/lir/CompatibilityAdapter.js';
 import { LIRParseError } from '../core/lir/errors.js';
 import type { CompostConfig } from './types.js';
 import type { LIRToken } from '../core/lir/types.js';
@@ -105,7 +105,7 @@ export class SemanticExtractor {
    * @param filePath - Path to the file to extract LIR from
    * @returns LIRToken if parsing succeeds, null if LIR is disabled or parsing fails
    */
-  async extractLIR(filePath: string): Promise<LIRToken | null> {
+  async extractLIR(filePath: string): Promise<LIRToken[] | null> {
     // If LIR is disabled, return null immediately
     if (!this.config.lirEnabled) {
       return null;
@@ -121,8 +121,8 @@ export class SemanticExtractor {
       // Try to parse the file using CompostParser
       const tokens = await this.parser.parseFile(filePath);
 
-      // Return the first token of any type
-      return tokens[0] ?? null;
+      // Return all parsed tokens
+      return tokens.length > 0 ? tokens : null;
     } catch (error) {
       // Log warning and return null on parse failure
       if (error instanceof LIRParseError) {
@@ -149,10 +149,10 @@ export class SemanticExtractor {
 
     // If LIR is enabled and this is a code file, try LIR extraction first
     if (this.config.lirEnabled && codeExts.includes(ext)) {
-      const lirToken = await this.extractLIR(filePath);
-      if (lirToken) {
-        // Convert LIR token to string for backward compatibility
-        return lirToString(lirToken);
+      const lirTokens = await this.extractLIR(filePath);
+      if (lirTokens && lirTokens.length > 0) {
+        // Convert LIR tokens to string for backward compatibility
+        return lirArrayToString(lirTokens);
       }
       // Fall through to legacy extraction if LIR fails
     }

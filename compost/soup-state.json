@@ -1,0 +1,40 @@
+{
+  "population": [
+    {
+      "id": "offspring-6a70707e127f",
+      "source": "soup:m1+c1",
+      "domain": "cross-domain",
+      "layer": "semantic",
+      "content": "Merged offspring content",
+      "metadata": {
+        "fileType": "soup",
+        "timestamp": "2026-03-21T00:17:48.880Z",
+        "hash": "04c61f4686cf7d717a1b89d914773d01dda0075b79110093fee1e647b99b3e52",
+        "size": 24,
+        "extractedAt": "2026-03-21T00:17:48.880Z"
+      },
+      "tags": [
+        "music",
+        "ceramics",
+        "offspring"
+      ],
+      "score": 6.170000000000001
+    }
+  ],
+  "generation": 807,
+  "bestSeed": null,
+  "totalSeedsPromoted": 0,
+  "domainHeatmap": {
+    "ceramics-music": 6.170000000000001,
+    "a-b": 6.170000000000001,
+    "code-music": 6.170000000000001,
+    "ceramics-code": 6.170000000000001,
+    "code-image": 5.400645161290322,
+    "b-c": 6.000645161290323,
+    "a-c": 6.000645161290323,
+    "x-y": 6.02,
+    "ceramics-image": 6.000645161290323,
+    "image-music": 6.000645161290323
+  },
+  "lastCycleAt": "2026-03-22T05:56:58.919Z"
+}

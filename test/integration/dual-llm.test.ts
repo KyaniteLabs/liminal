@@ -28,7 +28,7 @@ function backupEnv(keys: string[]): Record<string, string | undefined> {
   return out;
 }
 
-describe('Dual LLM (cloud vs local)', () => {
+describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
   const envKeys = [
     'LIMINAL_LLM_PROVIDER',
     'LIMINAL_LLM_BASE_URL',

@@ -8,7 +8,7 @@ import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 import { getEffectiveConfig } from '../../src/config/ConfigLoader.js';
 import { LLMClient } from '../../src/llm/LLMClient.js';
 
-const LLM_REQUEST_TIMEOUT_MS = 45000;
+const LLM_REQUEST_TIMEOUT_MS = 10000;
 
 function restoreEnv(backup: Record<string, string | undefined>) {
   for (const key of Object.keys(backup)) {
@@ -47,7 +47,7 @@ describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
     restoreEnv(envBackup);
   });
 
-  test.skipIf(process.env.CI)('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
+  test.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
     process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';
     process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://100.66.225.85:1234/v1';
     process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'local-model';

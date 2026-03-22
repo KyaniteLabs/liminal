@@ -2,6 +2,8 @@
  * Compost Mill type definitions.
  */
 
+import type { LIRToken } from '../core/lir/types.js';
+
 /** Digest schedule mode. */
 export type DigestSchedule = 'manual' | 'daily' | 'weekly';
 
@@ -105,6 +107,8 @@ export interface Seed {
   promotedAt: string;
   usedBy: string[];
   useCount: number;
+  /** Optional LIR token associated with this seed. */
+  lir?: LIRToken;
 }
 
 /** Persistent soup loop state. */
@@ -142,6 +146,8 @@ export interface ExtractionResult {
   semantic: string | null;
   metadata: FragmentMetadata;
   rawBytes: RawByteData;
+  /** Optional LIR token extracted from the file. */
+  lir?: LIRToken;
 }
 
 /** Digest statistics for a single digestion run. */

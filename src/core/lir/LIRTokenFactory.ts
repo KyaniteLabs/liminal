@@ -47,7 +47,7 @@ function generateId(...parts: (string | number | object)[]): string {
 /**
  * Count lines of code (excluding empty lines and comments)
  */
-function countLOC(source: string, language: string): number {
+function countLOC(source: string, _language: string): number {
   const lines = source.split('\n');
   let count = 0;
 

@@ -5,6 +5,7 @@
 
 import crypto from 'node:crypto';
 import type { CompostFragment, ExtractionResult, FragmentMetadata, RawByteData } from './types.js';
+import type { LIRToken, LIRCodeToken, LIRDocToken, LIRTextToken } from '../core/lir/types.js';
 
 /** Minimum file size in bytes for multi-fragment splitting. */
 const SMALL_FILE_THRESHOLD = 1024;
@@ -163,8 +164,116 @@ export class CompostShredder {
     }));
   }
 
+  /** Build a base metadata object for LIR-derived fragments. */
+  private static lirMeta(source: string, extra?: Record<string, unknown>): FragmentMetadata {
+    return {
+      fileType: source.split('.').pop() ?? '',
+      timestamp: new Date().toISOString(),
+      hash: '',
+      size: 0,
+      extractedAt: new Date().toISOString(),
+      ...extra,
+    };
+  }
+
+  /** Shred an LIR code token into one fragment per symbol. */
+  private static shredCodeToken(token: LIRCodeToken, source: string): CompostFragment[] {
+    const domain = 'code';
+    const content = [
+      `// Symbol: ${token.kind} ${token.name}`,
+      token.signature,
+      '',
+      token.summary,
+      '',
+      token.source,
+    ].join('\n');
+
+    return [{
+      id: this.fragmentId(source, content, 0),
+      source,
+      domain,
+      layer: 'structured',
+      content,
+      metadata: this.lirMeta(source, {
+        language: token.language,
+        symbolKind: token.kind,
+        loc: token.metrics.loc,
+        cyclomaticComplexity: token.metrics.cyclomaticComplexity,
+        startLine: token.location.startLine,
+        endLine: token.location.endLine,
+      }),
+      tags: [domain, token.kind, 'structured'],
+    }];
+  }
+
+  /** Shred an LIR doc token into one fragment per section. */
+  private static shredDocToken(token: LIRDocToken, source: string): CompostFragment[] {
+    const domain = 'doc';
+    const content = [
+      `# ${token.heading}`,
+      '',
+      token.content,
+    ].join('\n');
+
+    return [{
+      id: this.fragmentId(source, content, 0),
+      source,
+      domain,
+      layer: 'structured',
+      content,
+      metadata: this.lirMeta(source, {
+        heading: token.heading,
+        level: token.level,
+        wordCount: token.metrics.wordCount,
+        depth: token.metrics.depth,
+      }),
+      tags: [domain, `h${token.level}`, 'structured'],
+    }];
+  }
+
+  /** Shred an LIR text token into one fragment per paragraph/heading. */
+  private static shredTextToken(token: LIRTextToken, source: string): CompostFragment[] {
+    const domain = 'text';
+    const fragments: CompostFragment[] = [];
+    const sections = token.content.split(/\n\s*\n+/).filter(s => s.trim());
+
+    for (let i = 0; i < sections.length; i++) {
+      const content = sections[i].trim();
+      if (!content) continue;
+      fragments.push({
+        id: this.fragmentId(source, content, i),
+        source,
+        domain,
+        layer: 'structured',
+        content,
+        metadata: this.lirMeta(source, {
+          wordCount: content.split(/\s+/).filter(Boolean).length,
+        }),
+        tags: [domain, 'structured'],
+      });
+    }
+    return fragments;
+  }
+
+  /** Shred an LIR token into structured fragments based on token type. */
+  static shredLIR(lir: LIRToken, source: string): CompostFragment[] {
+    switch (lir.type) {
+      case 'code':
+        return this.shredCodeToken(lir, source);
+      case 'doc':
+        return this.shredDocToken(lir, source);
+      case 'text':
+        return this.shredTextToken(lir, source);
+    }
+  }
+
   /** Auto-detect layer and shred an extraction result. */
   static shredFile(result: ExtractionResult): CompostFragment[] {
+    // If LIR token is available, use LIR-aware shredding
+    if (result.lir) {
+      return this.shredLIR(result.lir, result.filePath);
+    }
+
     const fragments: CompostFragment[] = [];
     const domain = this.detectDomain(result.filePath, result.semantic ?? '');
 

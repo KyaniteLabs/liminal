@@ -114,7 +114,18 @@ export class SeedBank {
     return this.seeds.length;
   }
 
-  /** Get a random seed's content for swarm/prompt use. */
+  /** Get a random full Seed object (with lir if available). */
+  async getRandomSeed(): Promise<Seed | undefined> {
+    await this.ensureLoaded();
+    if (this.seeds.length === 0) return undefined;
+    const idx = Math.floor(Math.random() * this.seeds.length);
+    return this.seeds[idx];
+  }
+
+  /**
+   * Get a random seed's content for swarm/prompt use.
+   * @deprecated Use getRandomSeed() + formatSeedForPrompt() for LIR-aware formatting.
+   */
   async getRandomContent(): Promise<string | undefined> {
     await this.ensureLoaded();
     if (this.seeds.length === 0) return undefined;

@@ -14,6 +14,7 @@ import { SeedBank } from '../compost/SeedBank.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { eventBus, EventTypes } from './EventBus.js';
 import type { LoopResult, NormalizedLoopOptions } from './LoopConfig.js';
+import { formatSeedForPrompt } from './lir/LIRPromptFormatter.js';
 
 /**
  * Run the Ralph-Wiggum Loop in organism mode.
@@ -65,9 +66,9 @@ export async function runOrganismMode(
     try {
       const compostConfig = mergeCompostConfig();
       const seedBank = new SeedBank(compostConfig);
-      const seedContent = await seedBank.getRandomContent();
-      if (seedContent) {
-        enhancedPrompt += '\n\nCreative seed from compost:\n' + seedContent;
+      const seed = await seedBank.getRandomSeed();
+      if (seed) {
+        enhancedPrompt += '\n\nCreative seed from compost:\n' + formatSeedForPrompt(seed, 500);
       }
     } catch (err) {
       console.warn('Organism compost seed injection failed:', err);

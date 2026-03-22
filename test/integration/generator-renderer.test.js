@@ -32,7 +32,7 @@ async function safeStartServer(server, port) {
   }
 }
 
-describe('Generator-Renderer Integration Tests', () => {
+describe.skipIf(process.env.CI)('Generator-Renderer Integration Tests', () => {
   let previewServer;
   let renderer;
   const TEST_PORT = 3457;

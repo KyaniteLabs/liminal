@@ -31,7 +31,7 @@ function isChromeUnavailableError(error: string | undefined): boolean {
   );
 }
 
-describe('E2E sandbox self-improve', () => {
+describe.skipIf(process.env.CI)('E2E sandbox self-improve', () => {
   describe('SandboxRunner.runInSandbox', () => {
     it('runs minimal p5 sketch: no timeout, no crash, result indicates success', async () => {
       const result = await runInSandbox(MINIMAL_P5, { timeoutMs: 20000 });

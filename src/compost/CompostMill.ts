@@ -51,7 +51,9 @@ export class CompostMill {
     this.fastLLM = overrides?.fastLLM ?? llm;
 
     this.heap = new CompostHeap(config);
-    this.semanticExtractor = new SemanticExtractor(config, this.fastLLM, overrides?.parser);
+    // Auto-create CompostParser when LIR is enabled and no parser was provided
+    const parser = overrides?.parser ?? (config.lirEnabled ? new CompostParser(config.digestDir) : undefined);
+    this.semanticExtractor = new SemanticExtractor(config, this.fastLLM, parser);
     this.collisionEngine = new CollisionEngine(config, llm);
     this.fragmentScorer = new FragmentScorer(config, this.fastLLM);
     this.seedBank = new SeedBank(config);
@@ -112,10 +114,10 @@ export class CompostMill {
     Logger.info('CompostMill', `Extracted ${extractionResults.length}/${fullPaths.length} files`);
 
     // Stage 3: Shred
-    // Build LIR lookup map (filePath → LIRToken) for seed attachment
-    const lirMap = new Map<string, LIRToken>();
+    // Build LIR lookup map (filePath → LIRToken[]) for seed attachment
+    const lirMap = new Map<string, LIRToken[]>();
     for (const result of extractionResults) {
-      if (result.lir) {
+      if (result.lir && result.lir.length > 0) {
         lirMap.set(result.filePath, result.lir);
       }
     }
@@ -159,7 +161,7 @@ export class CompostMill {
           promotedAt: new Date().toISOString(),
           usedBy: [],
           useCount: 0,
-          lir: lirMap.get(frag.source),
+          lir: lirMap.get(frag.source)?.[0],
         });
       }
     }
@@ -192,7 +194,7 @@ export class CompostMill {
         const promote = await this.fragmentScorer.shouldPromote(frag);
         return promote ? frag : null;
       },
-      10, // collision scoring concurrency (local LLM)
+      5, // collision scoring concurrency (primary LLM, longer creative prompts)
     );
     for (const entry of scoredCollisions) {
       if (entry.status === 'fulfilled' && entry.value) {

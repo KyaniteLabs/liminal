@@ -336,3 +336,21 @@ export function lirToString(token: LIRToken): string {
   // Fallback (should never reach here with proper typing)
   return String(token);
 }
+
+/**
+ * Convert an array of LIR tokens to a string representation.
+ * Joins multiple tokens with separator lines.
+ *
+ * @param tokens - Array of LIR tokens to convert
+ * @returns String representation of all tokens joined together
+ */
+export function lirArrayToString(tokens: LIRToken[]): string {
+  if (tokens.length === 0) {
+    return '';
+  }
+  if (tokens.length === 1) {
+    return lirToString(tokens[0]);
+  }
+  // Join multiple tokens with a separator
+  return tokens.map(lirToString).join('\n\n---\n\n');
+}

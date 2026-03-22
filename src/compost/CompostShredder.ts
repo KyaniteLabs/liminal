@@ -269,9 +269,9 @@ export class CompostShredder {
 
   /** Auto-detect layer and shred an extraction result. */
   static shredFile(result: ExtractionResult): CompostFragment[] {
-    // If LIR token is available, use LIR-aware shredding
-    if (result.lir) {
-      return this.shredLIR(result.lir, result.filePath);
+    // If LIR tokens are available, use LIR-aware shredding
+    if (result.lir && result.lir.length > 0) {
+      return result.lir.flatMap(token => this.shredLIR(token, result.filePath));
     }
 
     const fragments: CompostFragment[] = [];

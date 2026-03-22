@@ -90,7 +90,8 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
             let preview: string;
             if (seed.lir?.type === 'code') {
               const t = seed.lir;
-              preview = `${t.kind} ${t.name}(${t.signature.split('(').slice(1).join('(')}`;
+              // Use the full signature directly — it already includes name + params
+              preview = `${t.kind} ${t.signature}`;
               preview = preview.length > 60 ? preview.slice(0, 57) + '...' : preview;
             } else if (seed.lir?.type === 'doc') {
               const t = seed.lir;

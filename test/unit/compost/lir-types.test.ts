@@ -151,12 +151,12 @@ describe('Compost LIR Type Extensions', () => {
           hexChunks: ['0x12', '0x34'],
           base64: null,
         },
-        lir: mockLIRToken,
+        lir: [mockLIRToken],
       };
 
       expect(extractionResult.lir).toBeDefined();
-      expect(extractionResult.lir?.type).toBe('code');
-      expect(extractionResult.lir?.name).toBe('extractData');
+      expect(extractionResult.lir?.[0]?.type).toBe('code');
+      expect(extractionResult.lir?.[0]?.name).toBe('extractData');
     });
 
     it('should work without lir field (backward compatibility)', () => {
@@ -315,7 +315,7 @@ describe('Compost LIR Type Extensions', () => {
           hexChunks: ['0xaa', '0xbb'],
           base64: null,
         },
-        lir: mockLIRToken,
+        lir: [mockLIRToken],
       };
 
       // Serialize to JSON
@@ -324,10 +324,10 @@ describe('Compost LIR Type Extensions', () => {
       const parsedResult = JSON.parse(json) as ExtractionResult;
 
       expect(parsedResult.lir).toBeDefined();
-      expect(parsedResult.lir?.id).toBe('json-extraction-token');
-      expect(parsedResult.lir?.type).toBe('code');
-      expect(parsedResult.lir?.name).toBe('processExtraction');
-      expect(parsedResult.lir?.signature).toBe('processExtraction(data: unknown): Result');
+      expect(parsedResult.lir?.[0]?.id).toBe('json-extraction-token');
+      expect(parsedResult.lir?.[0]?.type).toBe('code');
+      expect(parsedResult.lir?.[0]?.name).toBe('processExtraction');
+      expect(parsedResult.lir?.[0]?.signature).toBe('processExtraction(data: unknown): Result');
     });
   });
 });

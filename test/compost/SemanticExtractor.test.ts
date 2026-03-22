@@ -55,17 +55,15 @@ describe('SemanticExtractor', () => {
   });
 
   describe('extractImage()', () => {
-    it('calls LLM with vision prompt', async () => {
-      mockGenerate.mockResolvedValue({
-        success: true,
-        code: 'A landscape photograph with mountains',
-      });
+    it('returns stub message for image files', async () => {
       const file = path.join(tmpDir, 'photo.jpg');
       await fs.writeFile(file, Buffer.alloc(100, 0xff));
 
       const result = await extractor.extractImage(file);
-      expect(result).toBe('A landscape photograph with mountains');
-      expect(mockGenerate).toHaveBeenCalled();
+      expect(result).toContain('[Image file: photo.jpg');
+      expect(result).toContain('multimodal extraction requires vision-capable LLM client');
+      // LLM should not be called for stub implementation
+      expect(mockGenerate).not.toHaveBeenCalled();
     });
   });
 

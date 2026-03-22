@@ -47,7 +47,7 @@ describe('Dual LLM (cloud vs local)', () => {
     restoreEnv(envBackup);
   });
 
-  test('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
+  test.skipIf(process.env.CI)('getEffectiveConfig + LLMClient path with cloud (lmstudio) backend', async () => {
     process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';
     process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://100.66.225.85:1234/v1';
     process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'local-model';

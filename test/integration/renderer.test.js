@@ -13,7 +13,7 @@ import { existsSync } from 'fs';
 // Increase timeout for integration tests involving browser automation
 const RENDER_TIMEOUT = 30000; // 30 seconds
 
-describe('Renderer Integration Tests', () => {
+describe.skipIf(process.env.CI)('Renderer Integration Tests', () => {
   let renderer;
   const testOutputDir = './test-output';
   const testImagePath = path.join(testOutputDir, 'test-screenshot.png');

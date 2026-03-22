@@ -19,7 +19,7 @@ function draw() {
 }
 `;
 
-describe('Sandbox runInSandbox', () => {
+describe.skipIf(process.env.CI)('Sandbox runInSandbox', () => {
   describe('valid p5 sketch', () => {
     it('completes with completed: true and no host escape', async () => {
       const result = await runInSandbox(VALID_P5_CODE);

@@ -4,6 +4,7 @@
 
 import type { Seed } from './types.js';
 import type { CompostMill } from './CompostMill.js';
+import { formatSeedForDisplay } from '../core/lir/LIRPromptFormatter.js';
 
 export type CLIAction =
   | { command: 'add'; paths: string[] }
@@ -85,8 +86,23 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
         } else {
           console.log('Seeds (' + seeds.length + '):');
           for (const seed of seeds) {
-            const preview = seed.content.length > 80 ? seed.content.slice(0, 77) + '...' : seed.content;
-            console.log('  [' + seed.score.toFixed(1) + '] ' + seed.id + ' — ' + preview.replace(/\n/g, ' '));
+            const badge = seed.lir ? '[' + seed.lir.type + '] ' : '';
+            let preview: string;
+            if (seed.lir?.type === 'code') {
+              const t = seed.lir;
+              preview = `${t.kind} ${t.name}(${t.signature.split('(').slice(1).join('(')}`;
+              preview = preview.length > 60 ? preview.slice(0, 57) + '...' : preview;
+            } else if (seed.lir?.type === 'doc') {
+              const t = seed.lir;
+              preview = `# ${t.heading} | words: ${t.metrics.wordCount}`;
+            } else if (seed.lir?.type === 'text') {
+              const t = seed.lir;
+              const headings = t.structure.headings.map(h => h.text).join(', ') || 'text';
+              preview = `${headings} | words: ${t.metrics.wordCount}`;
+            } else {
+              preview = seed.content.length > 60 ? seed.content.slice(0, 57) + '...' : seed.content;
+            }
+            console.log('  [' + seed.score.toFixed(1) + '] ' + badge + seed.id + ' — ' + preview.replace(/\n/g, ' '));
           }
         }
       } else if (action.subcommand === 'show') {
@@ -106,8 +122,13 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
             console.log('Collision: ' + match.source.collisionType);
             console.log('Promoted: ' + match.promotedAt);
             console.log('Used by: ' + (match.usedBy.length > 0 ? match.usedBy.join(', ') : '(none)'));
-            console.log('');
-            console.log(match.content);
+            if (match.lir) {
+              console.log('');
+              console.log(formatSeedForDisplay(match));
+            } else {
+              console.log('');
+              console.log(match.content);
+            }
           }
         }
       }

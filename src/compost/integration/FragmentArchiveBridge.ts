@@ -4,6 +4,7 @@
 
 import type { Seed, CompostFragment } from '../types.js';
 import { SeedBank } from '../SeedBank.js';
+import { formatSeedForPrompt } from '../../core/lir/LIRPromptFormatter.js';
 
 export class FragmentArchiveBridge {
   /** Convert seeds to fragment format for FragmentArchive. */
@@ -28,7 +29,8 @@ export class FragmentArchiveBridge {
 
   /** Get a random seed's content for swarm/prompt use. */
   async getRandomSeedAsPromptSeed(seedBank: SeedBank): Promise<string | undefined> {
-    return seedBank.getRandomContent();
+    const seed = await seedBank.getRandomSeed();
+    return seed ? formatSeedForPrompt(seed, 500) : undefined;
   }
 
   /** Sync seeds from seed bank into a fragment archive (data only). */

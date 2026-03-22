@@ -14,6 +14,7 @@ import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import { ArchiveLearning } from '../learning/index.js';
 import { Logger } from '../utils/Logger.js';
+import { formatSeedForPrompt } from './lir/LIRPromptFormatter.js';
 import type { NormalizedLoopOptions } from './LoopConfig.js';
 
 /**
@@ -33,9 +34,9 @@ export async function enhancePrompt(
   try {
     const compostConfig = mergeCompostConfig();
     const seedBank = new SeedBank(compostConfig);
-    const seedContent = await seedBank.getRandomContent();
-    if (seedContent) {
-      enhanced += '\n\n---\nCreative seed from compost:\n' + seedContent;
+    const seed = await seedBank.getRandomSeed();
+    if (seed) {
+      enhanced += '\n\n---\nCreative seed from compost:\n' + formatSeedForPrompt(seed, 500);
     }
   } catch (err) {
     Logger.warn('RalphLoop', 'Compost seed injection failed:', err);

@@ -6,7 +6,11 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { PromptLibrary } from '../prompts/PromptLibrary.js';
+import { CompostParser } from '../core/parsing/CompostParser.js';
+import { lirToString } from '../core/lir/CompatibilityAdapter.js';
+import { LIRParseError } from '../core/lir/errors.js';
 import type { CompostConfig } from './types.js';
+import type { LIRToken } from '../core/lir/types.js';
 
 /** Minimal LLM client interface. */
 export interface LLMClientLike {
@@ -15,10 +19,22 @@ export interface LLMClientLike {
 
 export class SemanticExtractor {
   private llm: LLMClientLike;
+  private config: CompostConfig;
   private cache = new Map<string, string>();
+  private parser?: CompostParser;
 
-  constructor(_config: CompostConfig, llm: LLMClientLike) {
+  constructor(config: CompostConfig, llm: LLMClientLike, parser?: CompostParser) {
     this.llm = llm;
+    this.config = config;
+    this.parser = parser;
+  }
+
+  /**
+   * Set the CompostParser instance for LIR extraction
+   * This allows dependency injection for testing
+   */
+  setParser(parser: CompostParser): void {
+    this.parser = parser;
   }
 
   /** Extract semantic content from text/markdown files. Direct extraction, no LLM. */
@@ -80,6 +96,48 @@ export class SemanticExtractor {
     return `[Video file: ${path.basename(filePath)} — frame description not yet implemented]`;
   }
 
+  /**
+   * Extract LIR (Liminal Intermediate Representation) from a file
+   *
+   * When config.lirEnabled is true, attempts to parse the file using CompostParser
+   * to extract structured LIR tokens. Falls back to null on parse failure.
+   *
+   * @param filePath - Path to the file to extract LIR from
+   * @returns LIRToken if parsing succeeds, null if LIR is disabled or parsing fails
+   */
+  async extractLIR(filePath: string): Promise<LIRToken | null> {
+    // If LIR is disabled, return null immediately
+    if (!this.config.lirEnabled) {
+      return null;
+    }
+
+    // If no parser is available, return null
+    if (!this.parser) {
+      console.warn('[SemanticExtractor] LIR enabled but no CompostParser provided');
+      return null;
+    }
+
+    try {
+      // Try to parse the file using CompostParser
+      const tokens = await this.parser.parseFile(filePath);
+
+      // Return the first token of any type
+      return tokens[0] ?? null;
+    } catch (error) {
+      // Log warning and return null on parse failure
+      if (error instanceof LIRParseError) {
+        console.warn(
+          `[SemanticExtractor] LIR parsing failed for ${filePath}: ${error.message}`,
+        );
+      } else if (error instanceof Error) {
+        console.warn(
+          `[SemanticExtractor] Unexpected error during LIR extraction for ${filePath}: ${error.message}`,
+        );
+      }
+      return null;
+    }
+  }
+
   /** Auto-detect file type and extract semantic content. */
   async extract(filePath: string): Promise<string | null> {
     const ext = path.extname(filePath).toLowerCase().replace('.', '');
@@ -88,6 +146,16 @@ export class SemanticExtractor {
     const imageExts = ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'tiff'];
     const audioExts = ['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'];
     const videoExts = ['mp4', 'mov', 'avi', 'mkv', 'webm'];
+
+    // If LIR is enabled and this is a code file, try LIR extraction first
+    if (this.config.lirEnabled && codeExts.includes(ext)) {
+      const lirToken = await this.extractLIR(filePath);
+      if (lirToken) {
+        // Convert LIR token to string for backward compatibility
+        return lirToString(lirToken);
+      }
+      // Fall through to legacy extraction if LIR fails
+    }
 
     if (textExts.includes(ext)) {
       const content = await fs.readFile(filePath, 'utf-8').catch(() => '');

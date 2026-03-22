@@ -9,6 +9,7 @@ import * as ts from 'typescript';
 import crypto from 'node:crypto';
 import type { LIRCodeToken, SymbolKind } from '../lir/types.js';
 import { LIRParseError } from '../lir/errors.js';
+import { RelationshipExtractor } from './RelationshipExtractor.js';
 
 /**
  * Configuration for CodeParser
@@ -71,9 +72,9 @@ export class CodeParser {
     const language = this.detectLanguage(filePath);
     const sourceFile = this.createSourceFile(content, filePath);
 
-    // Collect all imports first
-    const imports = this.extractImports(sourceFile);
-    const importGraph = this.buildImportGraph(sourceFile);
+    // Collect all imports first using RelationshipExtractor
+    const importGraph = RelationshipExtractor.extractImports(sourceFile);
+    const imports = importGraph.map(ig => ig.module);
 
     // Extract symbols with metrics
     const symbols = this.extractSymbols(sourceFile, language, filePath, imports, importGraph);
@@ -124,78 +125,6 @@ export class CodeParser {
     }
 
     return sourceFile;
-  }
-
-  /**
-   * Extract import statements from source file
-   */
-  private extractImports(sourceFile: ts.SourceFile): string[] {
-    const imports: string[] = [];
-
-    const visit = (node: ts.Node) => {
-      if (ts.isImportDeclaration(node)) {
-        const modulePath = (node.moduleSpecifier as ts.StringLiteral).text;
-        imports.push(modulePath);
-      }
-      ts.forEachChild(node, visit);
-    };
-
-    visit(sourceFile);
-    return imports;
-  }
-
-  /**
-   * Build Tier 1 import graph with callee-to-module mapping
-   */
-  private buildImportGraph(sourceFile: ts.SourceFile): Array<{ callee: string; module: string }> {
-    const importGraph: Array<{ callee: string; module: string }> = [];
-
-    const visit = (node: ts.Node) => {
-      if (ts.isImportDeclaration(node)) {
-        const modulePath = (node.moduleSpecifier as ts.StringLiteral).text;
-        const importClause = node.importClause;
-
-        if (importClause) {
-          // Handle named imports: import { a, b } from 'module'
-          if (importClause.namedBindings && ts.isNamedImports(importClause.namedBindings)) {
-            for (const element of importClause.namedBindings.elements) {
-              importGraph.push({
-                callee: element.name.text,
-                module: modulePath,
-              });
-            }
-          }
-
-          // Handle namespace imports: import * as name from 'module'
-          if (importClause.namedBindings && ts.isNamespaceImport(importClause.namedBindings)) {
-            importGraph.push({
-              callee: importClause.namedBindings.name.text,
-              module: modulePath,
-            });
-          }
-
-          // Handle default imports: import name from 'module'
-          if (importClause.name) {
-            importGraph.push({
-              callee: importClause.name.text,
-              module: modulePath,
-            });
-          }
-        }
-
-        // Handle bare import: import 'module'
-        if (!importClause) {
-          importGraph.push({
-            callee: modulePath,
-            module: modulePath,
-          });
-        }
-      }
-      ts.forEachChild(node, visit);
-    };
-
-    visit(sourceFile);
-    return importGraph;
   }
 
   /**
@@ -394,7 +323,7 @@ export class CodeParser {
     const { start, end } = this.getNodeRange(node, sourceFile);
 
     const metrics = this.computeFunctionMetrics(node, sourceFile);
-    const calls = this.extractCalls(node);
+    const calls = RelationshipExtractor.extractCallNames(node);
 
     const isExported = this.hasExportModifier(node);
     const isDefault = this.hasDefaultModifier(node);
@@ -436,7 +365,7 @@ export class CodeParser {
     const { start, end } = this.getNodeRange(declaration, sourceFile);
 
     const metrics = this.computeFunctionMetrics(arrowFunction, sourceFile);
-    const calls = this.extractCalls(arrowFunction);
+    const calls = RelationshipExtractor.extractCallNames(arrowFunction);
 
     // Check for export on the variable statement or variable declaration list
     const varStatement = declaration.parent.parent;
@@ -481,7 +410,7 @@ export class CodeParser {
     const { start, end } = this.getNodeRange(node, sourceFile);
 
     const metrics = this.computeClassMetrics(node, sourceFile, classHierarchy);
-    const calls = this.extractCalls(node);
+    const calls = RelationshipExtractor.extractCallNames(node);
 
     const isExported = this.hasExportModifier(node);
     const isDefault = this.hasDefaultModifier(node);
@@ -533,7 +462,7 @@ export class CodeParser {
     const { start, end } = this.getNodeRange(node, sourceFile);
 
     const metrics = this.computeFunctionMetrics(node, sourceFile);
-    const calls = this.extractCalls(node);
+    const calls = RelationshipExtractor.extractCallNames(node);
 
     const isExported = false; // Methods inherit export from class
     const isDefault = false;
@@ -778,7 +707,7 @@ export class CodeParser {
     const cyclomaticComplexity = this.computeCyclomaticComplexity(body);
     const paramCount = node.parameters.length;
     const nestingDepth = this.computeNestingDepth(body);
-    const callCount = this.extractCalls(body).length;
+    const callCount = RelationshipExtractor.extractCallNames(body).length;
 
     return {
       loc,
@@ -819,7 +748,7 @@ export class CodeParser {
     const cyclomaticComplexity = 1; // Base complexity for class
     const paramCount = 0;
     const nestingDepth = 0;
-    const callCount = this.extractCalls(node).length;
+    const callCount = RelationshipExtractor.extractCallNames(node).length;
     const classDepth = classHierarchy.get(node.name.text) ?? 0;
 
     return {
@@ -934,32 +863,6 @@ export class CodeParser {
 
     visit(node, 0);
     return maxDepth;
-  }
-
-  /**
-   * Extract function calls from node (Tier 2: local call graph)
-   */
-  private extractCalls(node: ts.Node): string[] {
-    const calls: string[] = [];
-
-    const visit = (n: ts.Node) => {
-      if (ts.isCallExpression(n)) {
-        const expression = n.expression;
-        if (ts.isIdentifier(expression)) {
-          calls.push(expression.text);
-        } else if (ts.isPropertyAccessExpression(expression)) {
-          // Handle method calls like obj.method()
-          const methodName = this.getTypeName(expression);
-          if (methodName) {
-            calls.push(methodName);
-          }
-        }
-      }
-      ts.forEachChild(n, visit);
-    };
-
-    visit(node);
-    return calls;
   }
 
   /**

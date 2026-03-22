@@ -24,6 +24,9 @@ import type { ProjectDNA } from '../scavenger/types.js';
 import { RetryManager } from '../llm/RetryManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
+import { CompostParser } from '../core/parsing/CompostParser.js';
+import type { LIRToken } from '../core/lir/types.js';
+import { formatSeedForPrompt } from '../core/lir/LIRPromptFormatter.js';
 
 export class CompostMill {
   private config: CompostConfig;
@@ -40,7 +43,7 @@ export class CompostMill {
 
   constructor(
     llm: LLMClientLike,
-    overrides?: Partial<CompostConfig> & { soupStatePath?: string; fastLLM?: LLMClientLike },
+    overrides?: Partial<CompostConfig> & { soupStatePath?: string; fastLLM?: LLMClientLike; parser?: CompostParser },
   ) {
     const config = mergeConfig(overrides as Partial<CompostConfig>);
     this.config = config;
@@ -48,7 +51,7 @@ export class CompostMill {
     this.fastLLM = overrides?.fastLLM ?? llm;
 
     this.heap = new CompostHeap(config);
-    this.semanticExtractor = new SemanticExtractor(config, this.fastLLM);
+    this.semanticExtractor = new SemanticExtractor(config, this.fastLLM, overrides?.parser);
     this.collisionEngine = new CollisionEngine(config, llm);
     this.fragmentScorer = new FragmentScorer(config, this.fastLLM);
     this.seedBank = new SeedBank(config);
@@ -57,6 +60,11 @@ export class CompostMill {
     if (config.soupEnabled) {
       this.soup = new CompostSoup(config, llm);
     }
+  }
+
+  /** Set the CompostParser for LIR extraction (allows post-construction injection). */
+  setParser(parser: CompostParser): void {
+    this.semanticExtractor.setParser(parser);
   }
 
   /** Add files or directories to the heap. */
@@ -104,6 +112,13 @@ export class CompostMill {
     Logger.info('CompostMill', `Extracted ${extractionResults.length}/${fullPaths.length} files`);
 
     // Stage 3: Shred
+    // Build LIR lookup map (filePath → LIRToken) for seed attachment
+    const lirMap = new Map<string, LIRToken>();
+    for (const result of extractionResults) {
+      if (result.lir) {
+        lirMap.set(result.filePath, result.lir);
+      }
+    }
     const allFragments = CompostShredder.shredAll(extractionResults);
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'shred', message: `Shredded into ${allFragments.length} fragments` });
     Logger.info('CompostMill', `Shredded into ${allFragments.length} fragments`);
@@ -144,6 +159,7 @@ export class CompostMill {
           promotedAt: new Date().toISOString(),
           usedBy: [],
           useCount: 0,
+          lir: lirMap.get(frag.source),
         });
       }
     }
@@ -208,13 +224,14 @@ export class CompostMill {
     // Feed seed domains into GeneratorRegistry as DNA for improved routing
     for (const seed of promotedSeeds) {
       if (seed.source.domains.length > 0 && !generatorRegistry.getDNA(seed.source.domains[0])) {
+        const seedDescription = formatSeedForPrompt(seed, 500);
         const dna: ProjectDNA = {
           name: `compost-seed-${seed.id}`,
           domain: seed.source.domains[0],
-          coreLogic: seed.content.slice(0, 500),
+          coreLogic: seedDescription,
           constraints: [],
           patterns: seed.source.domains,
-          prompts: [seed.content.slice(0, 200)],
+          prompts: [formatSeedForPrompt(seed, 200)],
           extractedAt: seed.promotedAt,
           sourcePath: 'compost',
         };
@@ -260,7 +277,8 @@ export class CompostMill {
         const metadata = await MetadataExtractor.extract(filePath);
         const rawBytes = await RawByteProcessor.process(filePath);
         const semantic = await this.semanticExtractor.extract(filePath);
-        return { filePath, semantic, metadata, rawBytes };
+        const lir = await this.semanticExtractor.extractLIR(filePath);
+        return { filePath, semantic, metadata, rawBytes, lir: lir ?? undefined };
       },
       8, // max 8 concurrent extractions (local LLM sweet spot for 9B model)
     );

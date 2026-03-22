@@ -55,6 +55,7 @@ import { AestheticModel } from '../evolution/AestheticModel.js';
 import { recordRoutingOutcome } from '../routing/RoutingData.js';
 import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
+import { Logger } from '../utils/Logger.js';
 
 interface LoopOptions {
   maxIterations?: number;
@@ -137,15 +138,59 @@ interface IterationContext {
   prompt: string;
   usedPrompt: string;
   code: string;
-  evaluation: any;
+  evaluation: { score: number; issues: string[]; [key: string]: unknown };
   timestamp: string;
   maxIterations?: number;
+}
+
+interface NormalizedLoopOptions extends LoopOptions {
+  maxIterations: number;
+  timeoutMinutes: number;
+  galleryDir: string;
+  project: string;
+  tolerateErrors: boolean;
+  minQualityScore: number;
+  useMapElites: boolean;
+  mapElitesDims: [number, number];
+  safetyConfig: import('./SafetyGuardrails.js').SafetyConfig | undefined;
+  _mapElites?: MapElites;
+  _noveltyArchive?: NoveltyArchive;
+  useDeepCollab: boolean;
+  useCollab: boolean;
+  collabConfig: Partial<DeepCollaborationConfig & CollaborativeConfig>;
+  collabDomain: DomainType;
+  useSwarm: boolean;
+  swarmConfig: Partial<SwarmConfig>;
+  swarmMode: SwarmMode;
 }
 
 export class RalphLoop {
   private static readonly DEFAULT_MAX_ITERATIONS = 20;
   private static readonly DEFAULT_TIMEOUT_MINUTES = 30;
   private static readonly DEFAULT_MIN_QUALITY_SCORE = 0.7;
+
+  /**
+   * LLM caller wrapper for collaboration modes
+   * Handles custom LLM callbacks, dispatched generators, and fallback to P5GeneratorLLM
+   */
+  private static async collabLLMCaller(
+    prompt: string,
+    _systemPrompt: string | undefined,
+    normalizedOptions: NormalizedLoopOptions,
+    dispatched: { entry: { name: string; generate(prompt: string, options: Record<string, unknown>): string | Promise<string> } } | null | undefined
+  ): Promise<string> {
+    if (normalizedOptions.collabConfig?.callLLM) {
+      return normalizedOptions.collabConfig.callLLM(prompt, _systemPrompt);
+    }
+    if (dispatched?.entry.name === 'llm') {
+      const result = dispatched.entry.generate(prompt, {});
+      return typeof result === 'string' ? result : await result;
+    }
+    const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
+    const generator = new P5GeneratorLLM();
+    const result = generator.generate(prompt);
+    return typeof result === 'string' ? result : await result;
+  }
 
   /**
    * Run the Ralph-Wiggum Loop
@@ -195,7 +240,7 @@ export class RalphLoop {
     if (normalizedOptions.useAestheticModel) {
       aestheticModel = new AestheticModel();
       const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
-      await aestheticModel.load(aestheticPath).catch((err) => { console.warn('Failed to load aesthetic model:', err); });
+      await aestheticModel.load(aestheticPath).catch((err) => { Logger.warn('RalphLoop', 'Failed to load aesthetic model:', err); });
     }
 
     // Load persisted MAP-Elites if enabled
@@ -203,7 +248,7 @@ export class RalphLoop {
       const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
       const mapElites = normalizedOptions._mapElites as MapElites | undefined;
       if (mapElites) {
-        await mapElites.load(mapElitesPath).catch((err) => { console.warn('Failed to load MAP-Elites archive:', err); });
+        await mapElites.load(mapElitesPath).catch((err) => { Logger.warn('RalphLoop', 'Failed to load MAP-Elites archive:', err); });
       }
     }
 
@@ -250,8 +295,9 @@ export class RalphLoop {
           if (seedContent) {
             usedPrompt += '\n\n---\nCreative seed from compost:\n' + seedContent;
           }
-        } catch {
+        } catch (err) {
           // No compost seeds available — continue without
+          Logger.warn('RalphLoop', 'Compost seed injection failed:', err);
         }
 
         // Inject compost DNA if available for the detected domain
@@ -280,8 +326,9 @@ export class RalphLoop {
               }
             }
           }
-        } catch {
+        } catch (err) {
           // DNA injection failed — continue without
+          Logger.warn('RalphLoop', 'Compost DNA injection failed:', err);
         }
 
         // Inject archived high-quality examples from past runs
@@ -291,8 +338,9 @@ export class RalphLoop {
             if (enhanced !== usedPrompt) {
               usedPrompt = enhanced;
             }
-          } catch {
+          } catch (err) {
             // Archive lookup failed — continue without
+            Logger.warn('RalphLoop', 'Archive learning injection failed:', err);
           }
         }
         const dispatched = generatorRegistry.dispatch(loadedPrompt);
@@ -309,26 +357,15 @@ export class RalphLoop {
               for (const fragment of mined) {
                 archiveLearning.addFragment(fragment, normalizedOptions.collabDomain || 'p5');
               }
-            } catch {
+            } catch (err) {
               // Mining failed — continue without
+              Logger.warn('RalphLoop', 'Swarm mining failed:', err);
             }
           }
         } else if (normalizedOptions.useDeepCollab || normalizedOptions.useCollab) {
           // Use CollaborationEngine when collabMode is set, otherwise legacy path
           if (normalizedOptions.collabMode) {
-            const collabLLMCaller = async (prompt: string, _systemPrompt?: string): Promise<string> => {
-              if (normalizedOptions.collabConfig?.callLLM) {
-                return normalizedOptions.collabConfig.callLLM(prompt, _systemPrompt);
-              }
-              if (dispatched?.entry.name === 'llm') {
-                const result = dispatched.entry.generate(prompt, {});
-                return typeof result === 'string' ? result : await result;
-              }
-              const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
-              const generator = new P5GeneratorLLM();
-              const result = generator.generate(prompt);
-              return typeof result === 'string' ? result : await result;
-            };
+            const collabLLMCaller = (prompt: string, _systemPrompt?: string) => this.collabLLMCaller(prompt, _systemPrompt, normalizedOptions, dispatched);
 
             const engine = new CollaborationEngine({
               mode: normalizedOptions.collabMode,
@@ -356,19 +393,7 @@ export class RalphLoop {
 
             if (shouldUseCollab) {
               // Create a wrapper that adapts the generator signature to collaboration signature
-              const collabLLMCaller = async (prompt: string, _systemPrompt?: string): Promise<string> => {
-                if (normalizedOptions.collabConfig?.callLLM) {
-                  return normalizedOptions.collabConfig.callLLM(prompt, _systemPrompt);
-                }
-                if (dispatched?.entry.name === 'llm') {
-                  const result = dispatched.entry.generate(prompt, {});
-                  return typeof result === 'string' ? result : await result;
-                }
-                const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
-                const generator = new P5GeneratorLLM();
-                const result = generator.generate(prompt);
-                return typeof result === 'string' ? result : await result;
-              };
+              const collabLLMCaller = (prompt: string, _systemPrompt?: string) => this.collabLLMCaller(prompt, _systemPrompt, normalizedOptions, dispatched);
 
               currentCode = await this.generateWithCollaboration(
                 usedPrompt,
@@ -501,8 +526,9 @@ export class RalphLoop {
                 message: 'Heap at capacity — triggered auto-digest',
               });
             }
-          } catch {
+          } catch (err) {
             // Auto-compost failed — continue without
+            console.warn('Auto-compost failed:', err);
           }
         }
 
@@ -520,7 +546,7 @@ export class RalphLoop {
           prompt: loadedPrompt,
           usedPrompt,
           code: currentCode,
-          evaluation,
+          evaluation: { score: evaluation.score, issues: evaluation.issues ?? [] },
           timestamp: new Date().toISOString(),
           maxIterations: normalizedOptions.maxIterations
         };
@@ -721,7 +747,7 @@ export class RalphLoop {
   /**
    * Normalize options with defaults
    */
-  private static normalizeOptions(options: LoopOptions | null): LoopOptions & { maxIterations: number; timeoutMinutes: number; galleryDir: string; project: string; tolerateErrors: boolean; minQualityScore: number; useMapElites: boolean; mapElitesDims: [number, number]; safetyConfig: import('./SafetyGuardrails.js').SafetyConfig | undefined; _mapElites: any; _noveltyArchive: any; useDeepCollab: boolean; useCollab: boolean; collabConfig: any; collabDomain: DomainType; useSwarm: boolean; swarmConfig: Partial<SwarmConfig>; swarmMode: SwarmMode } {
+  private static normalizeOptions(options: LoopOptions | null): NormalizedLoopOptions {
     return {
       maxIterations: options?.maxIterations || RalphLoop.DEFAULT_MAX_ITERATIONS,
       timeoutMinutes: options?.timeoutMinutes || RalphLoop.DEFAULT_TIMEOUT_MINUTES,
@@ -815,8 +841,9 @@ export class RalphLoop {
         if (seedContent) {
           enhancedPrompt += '\n\nCreative seed from compost:\n' + seedContent;
         }
-      } catch {
+      } catch (err) {
         // No compost seeds available — continue without
+        console.warn('Organism compost seed injection failed:', err);
       }
 
       const result = await generateMusicToVisual(enhancedPrompt, { traits: options.traits });
@@ -824,9 +851,7 @@ export class RalphLoop {
       lastVisual = result.visualCode;
 
       // Heuristic quality evaluation for organism mode
-      const musicLen = result.musicCode.length;
-      const visualLen = result.visualCode.length;
-      const qualityScore = Math.min(1, (musicLen + visualLen) / 500);
+      const qualityScore = this.assessOrganismQuality(result.musicCode, result.visualCode);
 
       // Context accumulation
       ContextAccumulation.save({
@@ -882,6 +907,63 @@ export class RalphLoop {
   }
 
   /**
+   * Assess organism quality using syntax-aware heuristics
+   * Evaluates Strudel (music) and Hydra (visual) code patterns
+   */
+  private static assessOrganismQuality(musicCode: string, visualCode: string): number {
+    let score = 0;
+
+    // Strudel syntax patterns (valid music code signals)
+    const strudelPatterns = [
+      /\$\d/,           // mini notation $0, $1
+      /s\d/,            // stack references s0, s1
+      /~/,              // repeat
+      /:seq\(/,         // sequence
+      /:percol\(/,      // percolate
+      /:chord\(/,       // chord
+      /\.\w+\s*\(.*\)/, // method calls (generic pattern matching)
+      /"/,              // string literals
+      /'/,              // string literals
+    ];
+
+    // Hydra syntax patterns (valid visual code signals)
+    const hydraPatterns = [
+      /osc\(/,          // oscillator
+      /shape\(/,        // shape
+      /src\(/,          // source
+      /solid\(/,        // solid
+      /color\(/,        // color
+      /rotate\(/,       // rotate
+      /scale\(/,        // scale
+      /blend\(/,        // blend
+      /modulate\(/,     // modulate
+      /pixelate\(/,     // pixelate
+    ];
+
+    // Check Strudel patterns in music code
+    let musicSyntaxScore = 0;
+    for (const pattern of strudelPatterns) {
+      if (pattern.test(musicCode)) musicSyntaxScore++;
+    }
+    score += Math.min(0.4, (musicSyntaxScore / strudelPatterns.length) * 0.4);
+
+    // Check Hydra patterns in visual code
+    let visualSyntaxScore = 0;
+    for (const pattern of hydraPatterns) {
+      if (pattern.test(visualCode)) visualSyntaxScore++;
+    }
+    score += Math.min(0.3, (visualSyntaxScore / hydraPatterns.length) * 0.3);
+
+    // Complexity: non-trivial content length (not just whitespace/comments)
+    const strippedMusic = musicCode.replace(/\/\/.*$/gm, '').trim();
+    const strippedVisual = visualCode.replace(/\/\/.*$/gm, '').trim();
+    const contentLength = strippedMusic.length + strippedVisual.length;
+    score += Math.min(0.3, contentLength / 400 * 0.3);
+
+    return Math.max(0, Math.min(1, score));
+  }
+
+  /**
    * Generate using swarm (7-persona Ollama swarm)
    *
    * @param prompt - The prompt to generate from
@@ -911,8 +993,9 @@ export class RalphLoop {
     if (options.project) {
       try {
         await gallery.saveSwarmSession(options.project, result);
-      } catch {
+      } catch (err) {
         // Best-effort — don't fail the loop
+        console.warn('Swarm session save failed:', err);
       }
     }
 
@@ -1021,7 +1104,7 @@ export class RalphLoop {
       }
 
       if (history.length > 1) {
-        const scores = history.map((h: any) => h.evaluation.score);
+        const scores = history.map((h: IterationContext) => h.evaluation.score);
         const avgScore = scores.reduce((a: number, b: number) => a + b, 0) / scores.length;
         const improving = scores[scores.length - 1] > scores[0];
         contextParts.push(`\nQuality trend:`);
@@ -1050,7 +1133,7 @@ export class RalphLoop {
    *
    * @returns Current iteration count and history
    */
-  static getState(): { iteration: number; history: any[] } {
+  static getState(): { iteration: number; history: IterationContext[] } {
     const history = ContextAccumulation.getHistory();
     return {
       iteration: history.length,

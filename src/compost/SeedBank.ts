@@ -32,7 +32,8 @@ export class SeedBank {
     try {
       const raw = await fs.readFile(this.seedsPath, 'utf-8');
       this.seeds = JSON.parse(raw) as Seed[];
-    } catch {
+    } catch (err) {
+      console.warn('[SeedBank] failed to load seeds, starting empty:', err);
       this.seeds = [];
     }
   }

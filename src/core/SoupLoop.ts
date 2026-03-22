@@ -11,6 +11,7 @@ import { mergeSketchCode } from '../utils/mergeSketchCode.js';
 import { NoveltyArchive } from '../evolution/NoveltyArchive.js';
 import { extractBehavior } from '../evolution/BehaviorVectors.js';
 import { MapElites } from '../evolution/MapElites.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface SoupCandidate {
   code: string;
@@ -114,7 +115,7 @@ export class SoupLoop {
       if (project && gallery && merged) {
         const version = steps;
         await gallery.saveIteration(project, version, population[worstIdx].code).catch((err) => {
-          console.error('SoupLoop: gallery save failed:', err instanceof Error ? err.message : err);
+          Logger.error('SoupLoop', `Gallery save failed: ${err instanceof Error ? err.message : err}`);
         });
       }
     }

@@ -314,8 +314,8 @@ export class LLMClient {
 
       const data = await response.json();
       return data.enhanced_prompt || prompt;
-    } catch {
-      console.warn('Reasoning transfer failed, using original prompt');
+    } catch (err) {
+      console.warn('[LLMClient] Reasoning transfer failed, using original prompt:', err);
       return prompt;
     }
   }

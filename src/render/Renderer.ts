@@ -11,6 +11,7 @@ import type { Browser, Page } from 'puppeteer';
 import fs from 'fs/promises';
 import path from 'path';
 import { P5_CDN } from '../constants.js';
+import { Logger } from '../utils/Logger.js';
 
 export class Renderer {
   private readonly RENDER_TIMEOUT = 30000;
@@ -45,7 +46,9 @@ export class Renderer {
    */
   static async closeBrowser(): Promise<void> {
     if (Renderer.browser) {
-      await Renderer.browser.close().catch(() => {});
+      await Renderer.browser.close().catch((err) => {
+        Logger.warn('Renderer', `Failed to close browser: ${err instanceof Error ? err.message : err}`);
+      });
       Renderer.browser = null;
     }
     Renderer.browserLaunching = null;
@@ -69,7 +72,7 @@ export class Renderer {
     const outputDir = path.dirname(outputPath);
     try {
       await fs.access(outputDir);
-    } catch {
+    } catch (accessError) {
       throw new Error(`Output directory does not exist: ${outputDir}`);
     }
 
@@ -115,7 +118,9 @@ export class Renderer {
       throw new Error('Failed to render sketch: Unknown error');
     } finally {
       if (page) {
-        await page.close().catch(() => {});
+        await page.close().catch((err) => {
+          Logger.warn('Renderer', `Failed to close page: ${err instanceof Error ? err.message : err}`);
+        });
       }
     }
   }
@@ -148,7 +153,7 @@ export class Renderer {
   private async waitForP5Initialization(page: Page): Promise<void> {
     try {
       await page.waitForSelector('canvas', { timeout: 10000 });
-    } catch {
+    } catch (waitError) {
       await this.delay(500);
     }
   }

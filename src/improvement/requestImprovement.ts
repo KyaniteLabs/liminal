@@ -6,6 +6,7 @@
 
 import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { LLMClient } from '../llm/LLMClient.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface RequestImprovementState {
   /** Optional project directory or path to config/liminal.json for project LLM config */
@@ -55,7 +56,7 @@ export async function requestImprovement(
     return { code: fallback, improved: false, error: response.error || 'LLM returned empty code' };
   } catch (err) {
     const msg = err instanceof Error ? err.message : 'Unknown error';
-    console.error('requestImprovement failed:', msg);
+    Logger.error('requestImprovement', `Failed: ${msg}`);
     return { code: templateFallback(currentCode), improved: false, error: msg };
   }
 }

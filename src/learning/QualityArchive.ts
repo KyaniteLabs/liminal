@@ -9,6 +9,7 @@
 
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Query options for archive searches.
@@ -121,13 +122,13 @@ export class QualityArchive {
       }
 
       const total = Array.from(this.cache.values()).reduce((sum, arr) => sum + arr.length, 0);
-      console.log(`✓ Loaded ${total} archived outputs from ${this.path}`);
+      Logger.info('QualityArchive', `Loaded ${total} archived outputs from ${this.path}`);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         // File doesn't exist yet - that's fine
-        console.log('Archive file not found, starting fresh');
+        Logger.info('QualityArchive', 'Archive file not found, starting fresh');
       } else {
-        console.warn(`Warning: Could not load archive: ${(error as Error).message}`);
+        Logger.warn('QualityArchive', `Could not load archive: ${(error as Error).message}`);
       }
     }
   }
@@ -147,7 +148,7 @@ export class QualityArchive {
 
       await fs.writeFile(this.path, JSON.stringify(data, null, 2), 'utf-8');
     } catch (error) {
-      console.error(`Error saving archive: ${(error as Error).message}`);
+      Logger.error('QualityArchive', `Error saving archive: ${(error as Error).message}`);
       throw error;
     }
   }

@@ -37,14 +37,18 @@ export class MetadataExtractor {
       metadata.loc = await this.countLines(filePath);
     }
 
-    // Image metadata stubs (would use sharp/image-size in production)
+    // Image metadata stubs
+    // @todo Extract actual dimensions when sharp or image-size is available as a dependency
     if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'tiff'].includes(ext)) {
       metadata.format = ext.toUpperCase();
+      metadata.dimensions = { width: 0, height: 0 };
     }
 
     // Audio metadata stubs
+    // @todo Extract actual duration when a media parsing library is available
     if (['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'].includes(ext)) {
       metadata.format = ext.toUpperCase();
+      metadata.duration = 0;
     }
 
     return metadata;

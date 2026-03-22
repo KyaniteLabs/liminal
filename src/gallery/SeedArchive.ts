@@ -16,7 +16,7 @@ import { randomBytes } from 'crypto';
 import { assertSafeSegment } from '../utils/normalizePath.js';
 
 export interface SeedMetadata {
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface SeedData extends SeedMetadata {
@@ -111,7 +111,7 @@ export class SeedArchive {
 
     try {
       await fs.access(filepath);
-    } catch {
+    } catch (accessError) {
       return null;
     }
 
@@ -119,7 +119,7 @@ export class SeedArchive {
       const content = await fs.readFile(filepath, 'utf-8');
       const data = JSON.parse(content) as SeedData;
       return data;
-    } catch {
+    } catch (readError) {
       return null;
     }
   }

@@ -21,7 +21,7 @@ export function normalizePath(baseDir: string, subPath: string): string {
   let baseReal: string;
   try {
     baseReal = fs.realpathSync(baseAbs);
-  } catch {
+  } catch (realpathError) {
     baseReal = baseAbs;
   }
   const full = path.resolve(baseReal, subPath);

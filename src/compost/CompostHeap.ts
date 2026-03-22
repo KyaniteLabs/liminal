@@ -86,7 +86,8 @@ export class CompostHeap {
     let entries: Dirent[];
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
-    } catch {
+    } catch (err) {
+      console.warn('[CompostHeap] walkDir failed:', err);
       return;
     }
 

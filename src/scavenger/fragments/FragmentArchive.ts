@@ -16,8 +16,18 @@ import fs from 'fs/promises';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type Fragment = Record<string, any>;
+interface Fragment {
+  id: string;
+  content: string;
+  source: string;
+  domain?: string;
+  score?: number;
+  tags?: string[];
+  title?: string;
+  description?: string;
+  category?: string;
+  [key: string]: unknown;
+}
 
 interface ArchiveData {
   version: string;

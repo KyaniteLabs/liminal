@@ -37,7 +37,8 @@ export class SoupStateManager {
         domainHeatmap: parsed.domainHeatmap ?? {},
         lastCycleAt: parsed.lastCycleAt ?? '',
       };
-    } catch {
+    } catch (err) {
+      console.warn('[SoupStateManager] failed to load state, using default:', err);
       return { ...DEFAULT_STATE };
     }
   }

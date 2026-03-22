@@ -49,7 +49,7 @@ function parseVersionContent(raw: string, version: number, timestamp: string): G
         timestamp,
       };
     }
-  } catch {
+  } catch (parseError) {
     // Not JSON or invalid — treat as p5 code
   }
   return { version, code: raw, timestamp };
@@ -321,12 +321,12 @@ export class Gallery {
     let projectDir: string;
     try {
       projectDir = normalizePath(this.galleryDir, projectDirName.trim());
-    } catch {
+    } catch (normalizeError) {
       return [];
     }
     try {
       await fs.access(projectDir);
-    } catch {
+    } catch (accessError) {
       return [];
     }
     try {
@@ -390,7 +390,7 @@ export class Gallery {
       const dirPath = normalizePath(this.galleryDir, dirName);
 
       let stat;
-      try { stat = await fs.stat(dirPath); } catch { continue; }
+      try { stat = await fs.stat(dirPath); } catch (statError) { continue; }
 
       // Archive if too old or beyond maxProjects limit
       if (now - dirDate > maxAgeMs || now - stat.mtimeMs > maxAgeMs) {
@@ -417,7 +417,7 @@ export class Gallery {
         // Simple move to _archived (no ZIP dependency needed)
         const destPath = normalizePath(archiveDir, dirName);
         await fs.rename(dirPath, destPath);
-      } catch {
+      } catch (archiveError) {
         // Skip projects that can't be archived
       }
     }

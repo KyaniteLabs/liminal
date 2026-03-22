@@ -29,7 +29,8 @@ export class PromptHistory {
     try {
       const content = await fs.readFile(this.filePath, 'utf-8');
       return JSON.parse(content) as HistoryData;
-    } catch {
+    } catch (err) {
+      console.warn('[PromptHistory] Failed to load history, using defaults:', err);
       return { recent: [], favorites: [] };
     }
   }

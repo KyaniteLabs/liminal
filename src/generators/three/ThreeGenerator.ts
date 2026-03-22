@@ -1,6 +1,7 @@
 import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
 import { PromptLibrary } from '../../prompts/index.js';
 import { selectThreeTemplate } from './ThreeTemplates.js';
+import { Logger } from '../../utils/Logger.js';
 
 export interface ThreeGeneratorOptions {
   signal?: AbortSignal;
@@ -31,7 +32,7 @@ export class ThreeGenerator {
 
       return response.code;
     } catch (error) {
-      console.error('ThreeGenerator.generate: LLM call failed, using template fallback:', error instanceof Error ? error.message : error);
+      Logger.error('ThreeGenerator', `LLM call failed, using template fallback: ${error instanceof Error ? error.message : error}`);
       return selectThreeTemplate(prompt);
     }
   }

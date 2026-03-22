@@ -9,6 +9,7 @@ import { MiningEngine } from './MiningEngine.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import fs from 'fs/promises';
 import path from 'path';
+import { Logger } from '../utils/Logger.js';
 
 export interface SwarmOrchestratorOptions {
   callOllama?: (model: string, prompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
@@ -432,7 +433,7 @@ export class SwarmOrchestrator {
       await fs.writeFile(filePath, JSON.stringify(sessionData, null, 2));
     } catch (err) {
       // Session saving is best-effort
-      console.warn('Failed to save swarm session:', err);
+      Logger.warn('SwarmOrchestrator', `Failed to save swarm session: ${err instanceof Error ? err.message : err}`);
     }
   }
 

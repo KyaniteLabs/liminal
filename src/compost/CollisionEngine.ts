@@ -233,7 +233,8 @@ export class CollisionEngine {
         `[Fragment A — domain: ${a.domain}, layer: ${a.layer}]\n${a.content}\n\n[Fragment B — domain: ${b.domain}, layer: ${b.layer}]\n${b.content}\n\nWhat ideas emerge from this intersection?`
       );
       return result.success ? result.code : `[${a.domain} + ${b.domain}] collision`;
-    } catch {
+    } catch (err) {
+      console.warn('[CollisionEngine] mergePair failed:', err);
       return `[${a.domain} + ${b.domain}] collision`;
     }
   }

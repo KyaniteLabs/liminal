@@ -1,6 +1,7 @@
 import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
 import { PromptLibrary } from '../../prompts/index.js';
 import { selectShaderTemplate } from './ShaderTemplates.js';
+import { Logger } from '../../utils/Logger.js';
 
 export interface ShaderGeneratorOptions {
   signal?: AbortSignal;
@@ -30,7 +31,7 @@ export class ShaderGenerator {
 
       return response.code;
     } catch (error) {
-      console.error('ShaderGenerator.generate: LLM call failed, using template fallback:', error instanceof Error ? error.message : error);
+      Logger.error('ShaderGenerator', `LLM call failed, using template fallback: ${error instanceof Error ? error.message : error}`);
       return selectShaderTemplate(prompt);
     }
   }

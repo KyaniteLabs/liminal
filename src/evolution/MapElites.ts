@@ -94,7 +94,7 @@ export class MapElites {
       const data = JSON.parse(raw);
       this.dims = data.dims ?? [10, 10];
       this.grid = new Map(data.cells ?? []);
-    } catch {
+    } catch (loadError) {
       // File doesn't exist or is invalid — start fresh
     }
   }

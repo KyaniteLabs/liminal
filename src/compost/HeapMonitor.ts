@@ -2,6 +2,8 @@
  * HeapMonitor — monitors heap size and auto-triggers digestion.
  */
 
+import { CompostMill } from './CompostMill.js';
+
 export class HeapMonitor {
   private intervalMs: number;
   private timer: ReturnType<typeof setInterval> | null = null;
@@ -11,8 +13,7 @@ export class HeapMonitor {
     this.intervalMs = intervalMs;
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  start(mill: any): void {
+  start(mill: CompostMill): void {
     if (this.timer) return;
 
     this.timer = setInterval(async () => {
@@ -25,8 +26,8 @@ export class HeapMonitor {
           await mill.digest();
           this.digesting = false;
         }
-      } catch {
-        // Digest failure doesn't crash the monitor
+      } catch (err) {
+        console.warn('[HeapMonitor] auto-digest failed:', err);
         this.digesting = false;
       }
     }, this.intervalMs);

@@ -38,8 +38,9 @@ export async function generateMusic(options: GenerateMusicOptions): Promise<Gene
     try {
       const code = await generateMusicLLM(prompt, bpm, platform, signal, llm);
       if (code) return { code };
-    } catch {
+    } catch (err) {
       // Fall through to template
+      console.warn('[generateMusic] LLM generation failed, falling back to template:', err);
     }
   }
 

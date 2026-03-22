@@ -86,7 +86,7 @@ export class CreativeEvaluator {
    * @param options - Optional: evaluationCriteria array to compute score from selected dimensions
    * @returns Assessment result with score, issues, and metrics
    */
-  static assess(output: any, options?: AssessOptions): AssessmentResult {
+  static assess(output: string, options?: AssessOptions): AssessmentResult {
     // Validate input type
     if (typeof output !== 'string') {
       return {

@@ -198,8 +198,8 @@ export async function run(prompt: string, options: {
       onProgress,
       signal,
       useSwarm: options.useSwarm,
-      swarmMode: options.swarmMode as any,
-      swarmConfig: options.swarmConfig as any,
+      swarmMode: options.swarmMode as import('./swarm/types.js').SwarmMode,
+      swarmConfig: options.swarmConfig as Partial<import('./swarm/types.js').SwarmConfig>,
     });
 
     // Initialize Exporter

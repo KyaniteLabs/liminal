@@ -123,13 +123,14 @@ async function migrateLegacyConfig(): Promise<void> {
     try {
       await fs.access(newPath);
       // New config already exists, skip migration
-    } catch {
+    } catch (accessError) {
       // New config doesn't exist — copy legacy
       await fs.mkdir(path.dirname(newPath), { recursive: true });
       await fs.copyFile(legacyPath, newPath);
     }
-  } catch {
+  } catch (err) {
     // No legacy config — nothing to do
+    console.warn('[ConfigLoader] Legacy config migration skipped:', err);
   }
 }
 
@@ -154,13 +155,14 @@ export async function loadProjectConfig(configDirOrPath?: string): Promise<Proje
   try {
     const content = await fs.readFile(projectConfigPath, 'utf-8');
     return JSON.parse(content) as ProjectConfig;
-  } catch {
+  } catch (readError) {
     // Fallback: try legacy atelier.json filename
     const legacyPath = projectConfigPath.replace(/liminal\.json$/, 'atelier.json');
     try {
       const content = await fs.readFile(legacyPath, 'utf-8');
       return JSON.parse(content) as ProjectConfig;
-    } catch {
+    } catch (err) {
+      console.warn('[ConfigLoader] Failed to load legacy config:', err);
       return null;
     }
   }
@@ -179,7 +181,8 @@ export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Prom
     const content = await fs.readFile(configPath, 'utf-8');
     const config = JSON.parse(content) as UserConfig;
     return config;
-  } catch {
+  } catch (err) {
+    console.warn('[ConfigLoader] Failed to load config:', err);
     return null;
   }
 }

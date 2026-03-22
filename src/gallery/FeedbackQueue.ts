@@ -67,7 +67,7 @@ export class FeedbackQueue {
         .split('\n')
         .filter(line => line.trim() !== '')
         .map(line => JSON.parse(line) as Feedback);
-    } catch {
+    } catch (loadError) {
       this.feedbacks = [];
     }
   }

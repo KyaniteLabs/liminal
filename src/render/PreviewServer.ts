@@ -49,7 +49,8 @@ export class PreviewServer {
       for (const client of this.sseClients) {
         try {
           client.write(data);
-        } catch {
+        } catch (err) {
+          console.warn('[PreviewServer] Failed to write to SSE client, removing:', err);
           this.sseClients.delete(client);
         }
       }
@@ -105,7 +106,7 @@ export class PreviewServer {
 
     this.app.post('/api/preview/versions', (req, res) => {
       const iterations = Array.isArray(req.body?.iterations) ? req.body.iterations : [];
-      this.setAllVersions(iterations.map((it: any) => ({
+      this.setAllVersions(iterations.map((it: { version?: number; code?: string; timestamp?: string }) => ({
         version: typeof it.version === 'number' ? it.version : parseInt(String(it.version), 10) || 1,
         code: typeof it.code === 'string' ? it.code : '',
         timestamp: typeof it.timestamp === 'string' ? it.timestamp : undefined
@@ -210,7 +211,7 @@ export class PreviewServer {
           const project = {
             name: projectName || 'project',
             iterations: Array.isArray(reqIterations)
-              ? reqIterations.map((it: any) => ({
+              ? reqIterations.map((it: { version?: number; code?: string; timestamp?: string }) => ({
                   version: typeof it.version === 'number' ? it.version : parseInt(String(it.version), 10) || 1,
                   code: typeof it.code === 'string' ? it.code : '',
                   timestamp: typeof it.timestamp === 'string' ? it.timestamp : new Date().toISOString()
@@ -381,7 +382,7 @@ export class PreviewServer {
 
     return new Promise((resolve, reject) => {
       this.server = this.app.listen(port)
-        .on('error', (error: any) => {
+        .on('error', (error: Error & { code?: string }) => {
           this.server = null;
           if (error.code === 'EADDRINUSE') {
             reject(new Error(`Port ${port} is already in use`));

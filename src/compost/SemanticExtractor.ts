@@ -48,37 +48,25 @@ export class SemanticExtractor {
       const summary = result.success ? result.code : `[Code file: ${ext}]`;
       this.cache.set(cacheKey, summary);
       return summary;
-    } catch {
+    } catch (err) {
+      console.warn('[SemanticExtractor] extractCode failed:', err);
       const fallback = `[Code file: ${path.basename(filePath)}]`;
       this.cache.set(cacheKey, fallback);
       return fallback;
     }
   }
 
-  /** Extract semantic info from images using vision model. */
+  /** Extract semantic info from images using vision model.
+   *  @todo Implement when LLM client supports multimodal (image) inputs.
+   *  Currently returns a stub since the LLMClientLike interface does not support image data.
+   */
   async extractImage(filePath: string): Promise<string> {
-    const cacheKey = `image:${filePath}`;
-    const cached = this.cache.get(cacheKey);
-    if (cached) return cached;
-
-    try {
-      const { system, user } = PromptLibrary.render('compost.extract-image', {
-        filename: path.basename(filePath),
-      });
-      const result = await this.llm.generate(system, user);
-
-      const description = result.success ? result.code : `[Image: ${path.basename(filePath)}]`;
-      this.cache.set(cacheKey, description);
-      return description;
-    } catch {
-      const fallback = `[Image: ${path.basename(filePath)}]`;
-      this.cache.set(cacheKey, fallback);
-      return fallback;
-    }
+    return `[Image file: ${path.basename(filePath)} — multimodal extraction requires vision-capable LLM client]`;
   }
 
   /** Extract semantic info from audio files.
    *  @todo Implement using Whisper API or similar for transcription + LLM summarization.
+   *  @deprecated Stub — returns placeholder text, not real transcription.
    */
   async extractAudio(filePath: string): Promise<string> {
     return `[Audio file: ${path.basename(filePath)} — transcription/summary not yet implemented]`;
@@ -86,6 +74,7 @@ export class SemanticExtractor {
 
   /** Extract semantic info from video files.
    *  @todo Implement using frame sampling + vision model for scene description.
+   *  @deprecated Stub — returns placeholder text, not real scene descriptions.
    */
   async extractVideo(filePath: string): Promise<string> {
     return `[Video file: ${path.basename(filePath)} — frame description not yet implemented]`;

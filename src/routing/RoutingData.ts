@@ -50,8 +50,9 @@ export async function recordRoutingOutcome(record: RoutingRecord): Promise<void>
     const filePath = path.join(PERF_DIR, `${record.domain}.json`);
     await fs.mkdir(PERF_DIR, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(records), 'utf-8');
-  } catch {
+  } catch (err) {
     // Best-effort recording
+    console.warn('[RoutingData] Failed to record routing outcome:', err);
   }
 }
 
@@ -63,7 +64,8 @@ async function loadRoutingRecords(domain: DomainType): Promise<RoutingRecord[]> 
     const filePath = path.join(PERF_DIR, `${domain}.json`);
     const raw = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(raw);
-  } catch {
+  } catch (err) {
+    console.warn('[RoutingData] Failed to load routing records:', err);
     return [];
   }
 }

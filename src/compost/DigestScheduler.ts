@@ -2,11 +2,12 @@
  * DigestScheduler — schedules periodic digestion runs.
  */
 
+import { CompostMill } from './CompostMill.js';
+
 export class DigestScheduler {
   private timer: ReturnType<typeof setTimeout> | null = null;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  schedule(mill: any, mode: 'manual' | 'daily' | 'weekly'): void {
+  schedule(mill: CompostMill, mode: 'manual' | 'daily' | 'weekly'): void {
     if (mode === 'manual') return;
 
     const ms = mode === 'daily'
@@ -16,8 +17,8 @@ export class DigestScheduler {
     const run = async () => {
       try {
         await mill.digest();
-      } catch {
-        // Schedule failure doesn't crash
+      } catch (err) {
+        console.warn('[DigestScheduler] scheduled digest failed:', err);
       }
       // Reschedule
       this.timer = setTimeout(run, ms);

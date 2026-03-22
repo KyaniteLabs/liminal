@@ -142,8 +142,8 @@ if (flags.configure) {
     defaultProvider: 'lmstudio',
     providers: {
       lmstudio: {
-        baseUrl: 'http://100.66.225.85:1234/v1',
-        model: 'qwen3-coder-next-reap-40b-a3b-i1'
+        baseUrl: 'http://localhost:1234/v1',
+        model: 'local-model'
       }
     }
   };
@@ -161,7 +161,6 @@ if (flags.configure) {
   });
   
   // Don't exit yet - wait for saveConfig
-  await new Promise(() => {});
 }
 
 // Override config with CLI flags
@@ -283,7 +282,7 @@ if (isLiveMusic) {
 }
 
 if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
-  prompt = flags.prompt || args[0];
+  prompt = flags.prompt || cmdArgs[0];
   if (!prompt) {
     console.error('Error: --prompt is required');
     process.exit(1);
@@ -382,7 +381,6 @@ else if (cmd === 'serve' || cmd === 's') {
   });
 }
 else if (cmd === 'compost') {
-  await initializeConfig();
   const llm = new LLMClient();
   const action = parseArgs(process.argv.slice(2));
   const mill = new CompostMill(llm, { soupEnabled: true });

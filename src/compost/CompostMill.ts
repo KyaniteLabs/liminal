@@ -14,6 +14,7 @@ import { SemanticExtractor } from './SemanticExtractor.js';
 import { CompostShredder } from './CompostShredder.js';
 import { CollisionEngine } from './CollisionEngine.js';
 import { FragmentScorer } from './FragmentScorer.js';
+import { Logger } from '../utils/Logger.js';
 import { SeedBank } from './SeedBank.js';
 import { DigestGenerator } from './DigestGenerator.js';
 import { CompostSoup } from './CompostSoup.js';
@@ -94,26 +95,26 @@ export class CompostMill {
     // Stage 2: Extract
     const fullPaths = heapFiles.map(f => path.join(this.config.heapDir, f));
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'extract', message: `Extracting ${fullPaths.length} files...` });
-    console.log(`[digest] Extracting ${fullPaths.length} files...`);
+    Logger.info('CompostMill', `Extracting ${fullPaths.length} files...`);
     const extractionResults = await this.extractAll(fullPaths);
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'extract-done', message: `Extracted ${extractionResults.length}/${fullPaths.length} files` });
-    console.log(`[digest] Extracted ${extractionResults.length}/${fullPaths.length} files`);
+    Logger.info('CompostMill', `Extracted ${extractionResults.length}/${fullPaths.length} files`);
 
     // Stage 3: Shred
     const allFragments = CompostShredder.shredAll(extractionResults);
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'shred', message: `Shredded into ${allFragments.length} fragments` });
-    console.log(`[digest] Shredded into ${allFragments.length} fragments`);
+    Logger.info('CompostMill', `Shredded into ${allFragments.length} fragments`);
 
     // Stage 4: Mix (Collisions)
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'collide', message: 'Running collisions...' });
-    console.log(`[digest] Running collisions...`);
+    Logger.info('CompostMill', 'Running collisions...');
     const collisionResults = await this.collisionEngine.runAll(allFragments);
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'collide-done', message: `${collisionResults.length} collisions merged` });
-    console.log(`[digest] ${collisionResults.length} collisions merged`);
+    Logger.info('CompostMill', `${collisionResults.length} collisions merged`);
 
     // Stage 5: Mine (Score + Promote) — parallel with concurrency limit
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'score', message: `Scoring ${allFragments.length} fragments...` });
-    console.log(`[digest] Scoring ${allFragments.length} fragments...`);
+    Logger.info('CompostMill', `Scoring ${allFragments.length} fragments...`);
     const promotedSeeds: Seed[] = [];
     const scored = await RetryManager.mapSettled(
       allFragments,
@@ -144,7 +145,7 @@ export class CompostMill {
       }
     }
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'promote', message: `Promoted ${promotedSeeds.length} seeds from scoring` });
-    console.log(`[digest] Promoted ${promotedSeeds.length} seeds from scoring`);
+    Logger.info('CompostMill', `Promoted ${promotedSeeds.length} seeds from scoring`);
 
     // Promote collision results too (score them first)
     const collisionFragments: CompostFragment[] = collisionResults.map(collision => ({

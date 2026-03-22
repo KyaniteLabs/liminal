@@ -122,8 +122,8 @@ export class CompostSoup {
     while (!controller.signal.aborted) {
       try {
         await this.cycle(fragments);
-      } catch {
-        // Continue on cycle errors
+      } catch (err) {
+        console.warn('[CompostSoup] cycle failed, continuing:', err);
       }
 
       // Wait before next cycle
@@ -161,7 +161,8 @@ export class CompostSoup {
         `[Parent A — domain: ${a.domain}]\n${a.content.slice(0, 1000)}\n\n[Parent B — domain: ${b.domain}]\n${b.content.slice(0, 1000)}\n\nCreate a novel offspring idea:`
       );
       return result.success ? result.code : `${a.content.slice(0, 50)} + ${b.content.slice(0, 50)}`;
-    } catch {
+    } catch (err) {
+      console.warn('[CompostSoup] mergeViaLLM failed, using fallback:', err);
       return `${a.content.slice(0, 50)} + ${b.content.slice(0, 50)}`;
     }
   }

@@ -58,7 +58,8 @@ export class FragmentScorer {
         if (match) return Math.min(10, Math.max(0, parseFloat(match[1])));
       }
       return 5;
-    } catch {
+    } catch (err) {
+      console.warn('[FragmentScorer] LLM scoring failed, using neutral score:', err);
       return 5;
     }
   }

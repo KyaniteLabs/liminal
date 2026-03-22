@@ -47,8 +47,9 @@ export async function generateVisuals(
     try {
       const code = await generateVisualsLLM(prompt, platform, audioInput, signal, llm);
       if (code) return { code };
-    } catch {
+    } catch (err) {
       // Fall through to template
+      console.warn('[generateVisuals] LLM generation failed, falling back to template:', err);
     }
   }
 

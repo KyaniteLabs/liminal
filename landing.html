@@ -98,55 +98,60 @@
             font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s ease;
             text-decoration: none;
-            border: none;
+            transition: all 0.3s ease;
         }
 
         .btn-primary {
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
             color: white;
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+            border: none;
         }
 
         .btn-primary:hover {
-            transform: translateY(-3px);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
         }
 
         .btn-secondary {
-            background: var(--bg-card);
+            background: transparent;
             color: var(--text-primary);
             border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            background: var(--bg-card);
+            border-color: var(--accent-purple);
         }
 
         /* Stats Bar */
         .stats-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-            padding: 3rem 0;
-            border-top: 1px solid var(--border-color);
-            border-bottom: 1px solid var(--border-color);
+            gap: 1.5rem;
+            margin: 4rem 0;
         }
 
         .stat-card {
-            text-align: center;
-            padding: 2rem;
             background: var(--bg-card);
-            border-radius: 16px;
             border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            text-align: center;
         }
 
         .stat-number {
-            font-size: 3rem;
+            font-size: 2.5rem;
             font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .stat-label {
             color: var(--text-secondary);
+            font-size: 0.875rem;
             margin-top: 0.5rem;
         }
 
@@ -156,70 +161,107 @@
         }
 
         .section-title {
-            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-size: clamp(2rem, 5vw, 3rem);
             font-weight: 700;
-            margin-bottom: 1rem;
             text-align: center;
+            margin-bottom: 1rem;
         }
 
         .section-subtitle {
             text-align: center;
             color: var(--text-secondary);
-            font-size: 1.25rem;
-            margin-bottom: 4rem;
+            font-size: 1.125rem;
+            max-width: 700px;
+            margin: 0 auto 3rem;
         }
 
-        /* Interactive Demo Section */
+        /* Demo Grid */
         .demo-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
             gap: 2rem;
             margin-top: 3rem;
         }
 
         .demo-card {
             background: var(--bg-card);
-            border-radius: 20px;
             border: 1px solid var(--border-color);
+            border-radius: 16px;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            transition: transform 0.3s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-4px);
         }
 
         .demo-header {
-            padding: 1.5rem 2rem;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+            padding: 1.5rem;
             border-bottom: 1px solid var(--border-color);
         }
 
         .demo-tag {
             display: inline-block;
             padding: 0.25rem 0.75rem;
-            border-radius: 20px;
+            border-radius: 6px;
             font-size: 0.75rem;
             font-weight: 600;
-            margin-bottom: 0.5rem;
+            margin-bottom: 0.75rem;
         }
 
-        .demo-tag.p5 { background: var(--accent-pink); }
-        .demo-tag.shader { background: var(--accent-cyan); }
-        .demo-tag.three { background: var(--accent-green); color: #000; }
-        .demo-tag.music { background: var(--accent-blue); }
-        .demo-tag.hydra { background: var(--accent-purple); }
+        .demo-tag.p5 {
+            background: rgba(237, 100, 166, 0.2);
+            color: #ed64a6;
+        }
+
+        .demo-tag.shader {
+            background: rgba(6, 182, 212, 0.2);
+            color: #06b6d4;
+        }
+
+        .demo-tag.three {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
 
         .demo-title {
             font-size: 1.25rem;
             font-weight: 700;
-            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
         }
 
         .demo-prompt {
             color: var(--text-secondary);
+            font-size: 0.875rem;
             font-style: italic;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-meta {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            font-size: 0.75rem;
             margin-top: 0.5rem;
         }
 
-        /* Interactive Demo Container */
+        .demo-meta-item {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            color: var(--accent-purple);
+        }
+
+        .demo-meta-item.cloud {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .demo-meta-item.local {
+            background: rgba(34, 197, 94, 0.1);
+            color: #22c55e;
+        }
+
         .demo-interactive {
             position: relative;
             width: 100%;
@@ -234,155 +276,135 @@
         }
 
         .demo-controls {
-            padding: 1rem 2rem;
-            background: #0a0a0f;
+            padding: 1rem 1.5rem;
+            background: rgba(0, 0, 0, 0.3);
             border-top: 1px solid var(--border-color);
-            display: flex;
-            gap: 1rem;
-            align-items: center;
-        }
-
-        .demo-controls button {
-            padding: 0.5rem 1rem;
-            background: var(--accent-purple);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            cursor: pointer;
-            font-size: 0.875rem;
-        }
-
-        .demo-controls button:hover {
-            background: var(--accent-blue);
         }
 
         .demo-info {
-            color: var(--text-secondary);
             font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
-        /* Audio Player */
-        .audio-demo {
+        /* Model Badge */
+        .model-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .model-badge.cloud {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .model-badge.local {
+            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(6, 182, 212, 0.2));
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.3);
+        }
+
+        /* Quality Badge */
+        .quality-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .quality-badge.high {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+
+        .quality-badge.medium {
+            background: rgba(234, 179, 8, 0.2);
+            color: #eab308;
+        }
+
+        .quality-badge.low {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+
+        /* Showcase Section */
+        .showcase-section {
+            background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.05), transparent);
+        }
+
+        .showcase-card {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-purple);
+            border-radius: 20px;
+            overflow: hidden;
+            margin-top: 3rem;
+        }
+
+        .showcase-header {
             padding: 2rem;
             background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
         }
 
-        .audio-demo h4 {
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-        }
-
-        .audio-player audio {
-            width: 100%;
-        }
-
-        .audio-description {
-            margin-top: 1rem;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        /* Code Display */
-        .code-display {
-            padding: 1.5rem 2rem;
-            background: #0a0a0f;
-            border-top: 1px solid var(--border-color);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .code-display pre {
-            margin: 0;
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.75rem;
-            line-height: 1.6;
-            color: #a0a0b0;
-        }
-
-        /* Footer */
-        footer {
-            padding: 3rem 0;
-            border-top: 1px solid var(--border-color);
-            text-align: center;
-            color: var(--text-secondary);
-        }
-
-        footer a {
-            color: var(--accent-purple);
-            text-decoration: none;
-        }
-
-        /* Features Grid */
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .feature-card {
-            background: var(--bg-card);
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            padding: 2rem;
-            text-align: center;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
-        }
-
-        .feature-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-        }
-
-        .feature-title {
-            font-size: 1.25rem;
+        .showcase-title {
+            font-size: 1.5rem;
             font-weight: 700;
-            margin-bottom: 0.75rem;
-            color: var(--text-primary);
+            margin-bottom: 0.5rem;
         }
 
-        .feature-desc {
-            color: var(--text-secondary);
-            line-height: 1.6;
+        .showcase-iframe {
+            width: 100%;
+            height: 500px;
+            border: none;
+            background: #000;
         }
 
-        /* Code Example */
-        .code-example {
+        /* Info Box */
+        .info-box {
             background: var(--bg-card);
             border-radius: 12px;
-            border: 1px solid var(--border-color);
             padding: 1.5rem;
+            margin-top: 2rem;
+            border-left: 4px solid var(--accent-purple);
         }
 
-        .code-example h4 {
+        .info-box h4 {
             margin: 0 0 1rem 0;
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-weight: 600;
+            font-size: 1.125rem;
         }
 
-        .code-example pre {
+        .info-box p {
             margin: 0;
-            background: #0a0a0f;
-            padding: 1rem;
-            border-radius: 8px;
-            overflow-x: auto;
+            color: var(--text-secondary);
+            line-height: 1.7;
         }
 
-        .code-example code {
-            font-family: 'Monaco', 'Menlo', monospace;
-            font-size: 0.875rem;
-            color: #a0a0b0;
+        .info-box.success {
+            border-color: #22c55e;
+        }
+
+        .info-box.warning {
+            border-color: #eab308;
         }
 
         @media (max-width: 768px) {
             .demo-grid {
                 grid-template-columns: 1fr;
+            }
+
+            .demo-interactive {
+                height: 300px;
+            }
+
+            .showcase-iframe {
+                height: 350px;
             }
         }
     </style>
@@ -392,14 +414,14 @@
 
     <!-- Hero Section -->
     <section class="hero">
-        <div class="hero-badge">✨ LIVE INTERACTIVE DEMOS</div>
+        <div class="hero-badge">✨ REAL AI-GENERATED CREATIVE CODE</div>
         <h1>LIMINAL</h1>
         <p class="hero-subtitle">
-            The AI-powered creative coding agent. See what it actually creates—
-            real animations, real code, real outputs.
+            An AI-powered creative coding agent that generates p5.js, GLSL shaders, and Three.js code.
+            <strong>See what it actually creates—real examples, real quality scores, honest results.</strong>
         </p>
         <div class="hero-cta">
-            <a href="#demos" class="btn btn-primary">Try Interactive Demos</a>
+            <a href="#examples" class="btn btn-primary">View Generated Examples</a>
             <a href="https://github.com/Pastorsimon1798/liminal" class="btn btn-secondary">View on GitHub</a>
         </div>
     </section>
@@ -408,416 +430,275 @@
     <div class="container">
         <div class="stats-bar">
             <div class="stat-card">
-                <div class="stat-number">2220</div>
+                <div class="stat-number">2240</div>
                 <div class="stat-label">Passing Tests</div>
             </div>
             <div class="stat-card">
-                <div class="stat-number">100+</div>
-                <div class="stat-label">Techniques</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">12+</div>
-                <div class="stat-label">Style Categories</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">5</div>
+                <div class="stat-number">6</div>
                 <div class="stat-label">Creative Domains</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">2</div>
+                <div class="stat-label">Model Providers</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8000</div>
+                <div class="stat-label">Max Tokens</div>
             </div>
         </div>
     </div>
 
-    <!-- Interactive Demos Section -->
-    <section id="demos">
+    <!-- Examples Section -->
+    <section id="examples">
         <div class="container">
-            <h2 class="section-title">🎮 Interactive Live Demos</h2>
+            <h2 class="section-title">🎨 Real Generated Examples</h2>
             <p class="section-subtitle">
-                These are <strong>actually running in your browser</strong>—not screenshots.
-                They animate, they respond, they're real.
+                All examples below were <strong>actually generated by Liminal</strong> using the Ralph Loop iterative improvement system.
+                Each shows the model used, iterations, quality score, and whether the code works.
             </p>
 
             <div class="demo-grid">
-                <!-- P5.js Geometric (ACTUAL LIMINAL OUTPUT - Quality: 0.62) -->
-                <div class="demo-card" style="border-color: rgba(34, 197, 94, 0.5);">
+                <!-- p5.js Jellyfish - Cloud Model -->
+                <div class="demo-card">
                     <div class="demo-header">
-                        <span class="demo-tag p5" style="background: rgba(34, 197, 94, 0.2); color: #22c55e;">p5.js ✓</span>
-                        <h3 class="demo-title">Colorful Geometric Shapes</h3>
-                        <p class="demo-prompt">"colorful geometric shapes"</p>
-                        <p style="font-size: 0.75rem; color: #22c55e; margin-top: 0.5rem;">✓ Actual Liminal output - Working!</p>
+                        <span class="demo-tag p5">p5.js</span>
+                        <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
+                        <h3 class="demo-title">Bioluminescent Jellyfish</h3>
+                        <p class="demo-prompt">"p5.js generative art featuring bioluminescent jellyfish with tentacles that flow organically using noise"</p>
+                        <div class="demo-meta">
+                            <span class="demo-meta-item cloud">3 iterations</span>
+                            <span class="quality-badge high">★ 0.76 final score</span>
+                        </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/liminal-geometric.html" loading="lazy"></iframe>
+                        <iframe src="landing-assets/showcase-p5-jellyfish-cloud-1774291019/cli-project-final.html" loading="lazy"></iframe>
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✓ Complete p5.js code</div>
+                        <div class="demo-info">✓ Complete code • Quality improved from 0.69 to 0.76</div>
                     </div>
                 </div>
 
-                <!-- Shader Circles (ACTUAL LIMINAL OUTPUT - Quality: 0.90) -->
-                <div class="demo-card" style="border-color: rgba(234, 179, 8, 0.5);">
+                <!-- p5.js Hexagons - Local Model -->
+                <div class="demo-card">
                     <div class="demo-header">
-                        <span class="demo-tag shader" style="background: rgba(234, 179, 8, 0.2); color: #eab308;">GLSL ⚠️</span>
-                        <h3 class="demo-title">Animated Concentric Circles</h3>
-                        <p class="demo-prompt">"shader with circles"</p>
-                        <p style="font-size: 0.75rem; color: #eab308; margin-top: 0.5rem;">⚠️ Good shader code, wrong HTML wrapper</p>
+                        <span class="demo-tag p5">p5.js</span>
+                        <div class="model-badge local">🏠 Local: lmstudio/MiniMax-M2.7</div>
+                        <h3 class="demo-title">Rotating Hexagons</h3>
+                        <p class="demo-prompt">"p5.js geometric art with rotating hexagons and color gradients using hsb mode"</p>
+                        <div class="demo-meta">
+                            <span class="demo-meta-item local">3 iterations</span>
+                            <span class="quality-badge medium">★ 0.68 final score</span>
+                        </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/liminal-shader-circles.html" loading="lazy"></iframe>
+                        <iframe src="landing-assets/showcase-p5-hex-local-1774291107/cli-project-final.html" loading="lazy"></iframe>
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">⚠️ Shader in p5 wrapper (broken display)</div>
+                        <div class="demo-info">✓ Complete code • Consistent quality across iterations</div>
                     </div>
                 </div>
 
-                <!-- P5.js Particles (ACTUAL LIMINAL OUTPUT - BROKEN) -->
-                <div class="demo-card" style="border-color: rgba(239, 68, 68, 0.5);">
+                <!-- GLSL Shader Rings - Cloud Model -->
+                <div class="demo-card">
                     <div class="demo-header">
-                        <span class="demo-tag p5" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">p5.js ✗</span>
-                        <h3 class="demo-title">Flowing Particles</h3>
-                        <p class="demo-prompt">"particles flowing like water"</p>
-                        <p style="font-size: 0.75rem; color: #ef4444; margin-top: 0.5rem;">✗ Malformed - "glsl" text + incomplete code</p>
+                        <span class="demo-tag shader">GLSL Shader</span>
+                        <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
+                        <h3 class="demo-title">Pulsing Concentric Rings</h3>
+                        <p class="demo-prompt">"GLSL shader with pulsing concentric rings and chromatic aberration"</p>
+                        <div class="demo-meta">
+                            <span class="demo-meta-item cloud">3 iterations</span>
+                            <span class="quality-badge high">★ 0.82 final score (0.75→0.82)</span>
+                        </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/liminal-p5-particles.html" loading="lazy"></iframe>
+                        <iframe src="landing-assets/showcase-shader-rings-cloud-1774291169/cli-project-final.html" loading="lazy"></iframe>
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✗ Completely broken</div>
+                        <div class="demo-info">✓ Complete shader • Quality improved each iteration</div>
                     </div>
                 </div>
 
-                <!-- Incomplete Shader (ACTUAL LIMINAL OUTPUT) -->
-                <div class="demo-card" style="border-color: rgba(239, 68, 68, 0.5);">
+                <!-- GLSL Shader Noise - Local Model -->
+                <div class="demo-card">
                     <div class="demo-header">
-                        <span class="demo-tag shader" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">GLSL ✗</span>
-                        <h3 class="demo-title">Shader Dreamscape</h3>
-                        <p class="demo-prompt">"shader dreamscape"</p>
-                        <p style="font-size: 0.75rem; color: #ef4444; margin-top: 0.5rem;">✗ Cuts off mid-function</p>
+                        <span class="demo-tag shader">GLSL Shader</span>
+                        <div class="model-badge local">🏠 Local: lmstudio/MiniMax-M2.7</div>
+                        <h3 class="demo-title">Warping Noise Patterns</h3>
+                        <p class="demo-prompt">"GLSL shader with warping noise patterns and color cycling"</p>
+                        <div class="demo-meta">
+                            <span class="demo-meta-item local">3 iterations</span>
+                            <span class="quality-badge high">★ 0.90 final score</span>
+                        </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/liminal-shader-incomplete.html" loading="lazy"></iframe>
+                        <iframe src="landing-assets/showcase-shader-noise-local-1774291238/cli-project-final.html" loading="lazy"></iframe>
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✗ Incomplete code</div>
+                        <div class="demo-info">✓ Complete shader • Excellent quality achieved</div>
                     </div>
                 </div>
 
-                <!-- Three.js (ACTUAL LIMINAL OUTPUT - BROKEN) -->
-                <div class="demo-card" style="border-color: rgba(239, 68, 68, 0.5);">
+                <!-- Three.js - Cloud Model -->
+                <div class="demo-card">
                     <div class="demo-header">
-                        <span class="demo-tag three" style="background: rgba(239, 68, 68, 0.2); color: #ef4444;">Three.js ✗</span>
-                        <h3 class="demo-title">3D Geometry</h3>
-                        <p class="demo-prompt">"three.js 3D geometry"</p>
-                        <p style="font-size: 0.75rem; color: #ef4444; margin-top: 0.5rem;">✗ Duplicate HTML structure</p>
+                        <span class="demo-tag three">Three.js</span>
+                        <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
+                        <h3 class="demo-title">3D Rotating Shapes</h3>
+                        <p class="demo-prompt">"Three.js 3D scene with rotating geometric shapes and dynamic lighting"</p>
+                        <div class="demo-meta">
+                            <span class="demo-meta-item cloud">3 iterations</span>
+                            <span class="quality-badge high">★ 0.85 final score (0.70→0.77→0.85)</span>
+                        </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/liminal-three-geometry.html" loading="lazy"></iframe>
+                        <iframe src="landing-assets/showcase-three-shapes-cloud-1774291292/cli-project-final.html" loading="lazy"></iframe>
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✗ Malformed HTML</div>
+                        <div class="demo-info">✓ Complete code • Quality improved steadily</div>
                     </div>
                 </div>
             </div>
 
-            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(239, 68, 68, 0.1); border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.3);">
-                <h4 style="margin: 0 0 1rem 0; font-size: 1.25rem; color: #ef4444;">⚠️ Liminal Output Quality Test - Actual Results</h4>
-                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9375rem; line-height: 1.7;">
-                    <strong style="color: #fff;">This is what Liminal's <code>generate</code> command actually produces.</strong><br><br>
-                    <strong>Test Summary:</strong> 5 generations using MiniMax-M2.7 model with 3-5 max iterations<br>
-                    • <strong style="color: #22c55e;">1 working (20%)</strong> - Geometric shapes, quality score 0.62<br>
-                    • <strong style="color: #eab308;">1 good code, wrong wrapper (20%)</strong> - Shader circles, quality 0.90 (needs shader-compatible HTML, not p5 wrapper)<br>
-                    • <strong style="color: #ef4444;">3 completely broken (60%)</strong> - Malformed structures, incomplete code, duplicate HTML<br><br>
-                    <strong>Issues identified:</strong><br>
-                    1. Code often cuts off mid-function (token limits or generation stopping)<br>
-                    2. Wrong HTML wrappers for shader code (uses p5.js template instead of shader-ready HTML)<br>
-                    3. Malformed output with random text ("glsl") appearing in code<br>
-                    4. Duplicate HTML structures (wrapper inside wrapper)<br>
-                    5. Quality scores inconsistent (0.62-0.90) but don't predict functionality<br><br>
-                    <em>This is honest data about Liminal's current generation quality. These issues need to be addressed in the codebase.</em>
+            <!-- Quality Analysis -->
+            <div class="info-box success">
+                <h4>✅ Ralph Loop Quality Improvement System</h4>
+                <p>
+                    <strong>After Fix:</strong> The Ralph Loop now correctly iterates until quality improves or max iterations is reached.
+                    Examples show real quality progression: Three.js went from 0.70 → 0.77 → 0.85 across 3 iterations.
+                    The loop continues when quality is low (allowing improvement) rather than stopping early.
+                </p>
+            </div>
+
+            <div class="info-box warning">
+                <h4>⚠️ Known Limitations</h4>
+                <p>
+                    <strong>Cache Behavior:</strong> Similar prompts may return cached results (0.0s generation time).
+                    Use unique prompts to force actual LLM calls.
+                    <strong>Quality Variance:</strong> Scores can vary significantly (0.18 to 0.90) depending on prompt complexity and domain.
+                    Shader domain generally achieves higher quality than p5.js for complex visual effects.
                 </p>
             </div>
         </div>
     </section>
 
     <!-- Master Showcase Section -->
-    <section>
+    <section class="showcase-section">
         <div class="container">
-            <h2 class="section-title">🌌 Liminal's Designed Capabilities</h2>
+            <h2 class="section-title">🌌 Final Showcase: Unified Creative Vision</h2>
             <p class="section-subtitle">
-                Domains Liminal's knowledge base supports — but generation quality needs improvement
+                A complex multi-iteration example demonstrating Liminal's capability with challenging prompts.
+                <strong>5 iterations, local model, honest quality score.</strong>
             </p>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
-                <!-- p5.js -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5rem; opacity: 0.7;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎨</div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">p5.js</h3>
-                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">2D generative art, flow fields, particles</p>
-                    <div style="font-size: 0.75rem; color: #eab308;">⚠️ 20% success rate in testing</div>
+            <div class="showcase-card">
+                <div class="showcase-header">
+                    <div class="model-badge local" style="margin-bottom: 1rem;">🏠 Local: lmstudio/MiniMax-M2.7</div>
+                    <h3 class="showcase-title">Immersive Underwater Scene</h3>
+                    <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                        "GLSL shader creating an immersive underwater scene with light rays caustics bubbles rising and aquatic plant life swaying"
+                    </p>
+                    <div class="demo-meta">
+                        <span class="demo-meta-item local">5 iterations (max reached)</span>
+                        <span class="quality-badge low">★ 0.18 final score</span>
+                        <span style="color: var(--text-secondary);">⏱️ 164.5s total generation time</span>
+                    </div>
                 </div>
-
-                <!-- GLSL Shaders -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5rem; opacity: 0.7;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">⚡</div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">GLSL Shaders</h3>
-                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">WebGL fragment shaders, raymarching</p>
-                    <div style="font-size: 0.75rem; color: #ef4444;">✗ Wrong HTML wrapper issue</div>
-                </div>
-
-                <!-- Three.js -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5rem; opacity: 0.7;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎲</div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">Three.js</h3>
-                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">3D graphics, geometry, particles</p>
-                    <div style="font-size: 0.75rem; color: #ef4444;">✗ Malformed HTML structures</div>
-                </div>
-
-                <!-- Tone.js -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5rem; opacity: 0.5;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎹</div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">Tone.js</h3>
-                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">Web Audio synthesis, effects, sequencing</p>
-                    <div style="font-size: 0.75rem; color: #94a3b8;">○ Not tested yet</div>
-                </div>
-
-                <!-- Strudel -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5rem; opacity: 0.5;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">🎵</div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">Strudel</h3>
-                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">Pattern-based live coding for music</p>
-                    <div style="font-size: 0.75rem; color: #94a3b8;">○ Not tested yet</div>
-                </div>
-
-                <!-- Hydra -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 1.5rem; opacity: 0.5;">
-                    <div style="font-size: 2.5rem; margin-bottom: 1rem;">📺</div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">Hydra</h3>
-                    <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">Video synthesis, feedback loops</p>
-                    <div style="font-size: 0.75rem; color: #94a3b8;">○ Not tested yet</div>
-                </div>
+                <iframe class="showcase-iframe" src="landing-assets/showcase-underwater-1774291385/cli-project-final.html" loading="lazy"></iframe>
             </div>
 
-            <div style="margin-top: 3rem; padding: 1.5rem; background: rgba(139, 92, 246, 0.1); border-radius: 12px; border: 1px solid rgba(139, 92, 246, 0.3);">
-                <h4 style="margin: 0 0 1rem 0; font-size: 1.125rem; color: var(--accent-purple);">🧠 ArtKnowledgeGraph Exists (100+ techniques)</h4>
-                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9375rem;">
-                    Liminal's knowledge graph contains artistic techniques across all domains — techniques, movements, principles, color theory, composition.
-                    <strong>However, the generation system doesn't consistently leverage this knowledge effectively.</strong>
-                </p>
-            </div>
-
-            <div style="margin-top: 2rem; padding: 1.5rem; background: rgba(59, 130, 246, 0.1); border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.3);">
-                <h4 style="margin: 0 0 1rem 0; font-size: 1.125rem; color: var(--accent-blue);">🔄 Compost Mill & Semantic Memory Implemented</h4>
-                <p style="margin: 0; color: var(--text-secondary); font-size: 0.9375rem;">
-                    The infrastructure exists — Compost Mill can extract techniques, score quality, and build a seed bank.
-                    <strong>But it needs working generations to learn from.</strong> Garbage in, garbage out.
+            <div class="info-box warning">
+                <h4>Honest Assessment: This Example Didn't Succeed</h4>
+                <p>
+                    <strong>What happened:</strong> Liminal ran all 5 iterations but couldn't improve quality beyond 0.18.
+                    This demonstrates that <strong>not all prompts will succeed</strong> - complex multi-element scenes
+                    (underwater + caustics + bubbles + swaying plants) may be too ambitious for single-prompt generation.
+                    <br><br>
+                    <strong>What this means:</strong> Liminal works best with focused, specific prompts.
+                    The Ralph Loop correctly iterated 5 times (the fix is working!), but quality didn't improve.
+                    This is honest data about the system's current limitations.
                 </p>
             </div>
         </div>
     </section>
 
-    <!-- Comparison Section -->
+    <!-- Model Comparison Section -->
     <section>
         <div class="container">
-            <h2 class="section-title">🆚 Why Liminal Is Different</h2>
+            <h2 class="section-title">⚖️ Cloud vs Local Model Comparison</h2>
             <p class="section-subtitle">
-                Same prompt, wildly different results. See what happens with <strong>"calming blue particles flowing like water"</strong>
+                Real performance data from actual Liminal generations
             </p>
 
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; margin-top: 3rem;">
-                <!-- Claude Code -->
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem;">
+                <!-- Cloud Model -->
                 <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 2rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #6b7280, #9ca3af); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🤖</div>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.25rem;">Claude Code</h3>
-                            <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Default Coding Model</p>
+                    <div class="model-badge cloud" style="margin-bottom: 1rem;">☁️ Cloud Model</div>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">hybrid/MiniMax-M2.7</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
+                        Cloud API with automatic fallback
+                    </p>
+                    <div style="margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">p5.js jellyfish</span>
+                            <span style="color: #22c55e; font-weight: 600;">0.76</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">shader rings</span>
+                            <span style="color: #22c55e; font-weight: 600;">0.82</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">three.js shapes</span>
+                            <span style="color: #22c55e; font-weight: 600;">0.85</span>
+                        </div>
+                        <div style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Average</span>
+                                <span style="color: var(--accent-purple); font-weight: 700;">0.81</span>
+                            </div>
                         </div>
                     </div>
-                    <div style="background: #0a0a0f; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                        <code style="font-size: 0.75rem; color: #a0a0b0;">
-// Basic particle system<br>
-const particles = [];<br>
-for (let i = 0; i < 100; i++) {<br>
-  particles.push({<br>
-    x: Math.random() * canvas.width,<br>
-    y: Math.random() * canvas.height,<br>
-    vx: Math.random() * 2 - 1,<br>
-    vy: Math.random() * 2 - 1<br>
-  });<br>
-}<br>
-// Simple update loop...
-                        </code>
-                    </div>
-                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.8;">
-                        <li>✗ Generic random movement</li>
-                        <li>✗ Basic blue circles</li>
-                        <li>✗ No flow or organic feel</li>
-                        <li>✗ One-shot output, no iteration</li>
-                    </ul>
                 </div>
 
-                <!-- Liminal -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 2px solid var(--accent-purple); padding: 2rem; position: relative;">
-                    <div style="position: absolute; top: -10px; right: 20px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); color: white; padding: 0.25rem 1rem; border-radius: 20px; font-size: 0.75rem; font-weight: 600;">LIMINAL</div>
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue)); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">✨</div>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.25rem;">Liminal</h3>
-                            <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Creative Coding Agent</p>
-                        </div>
-                    </div>
-                    <div style="background: #0a0a0f; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                        <code style="font-size: 0.75rem; color: #a0a0b0;">
-// Perlin noise flow field<br>
-flowField[index] = p5.Vector.fromAngle(<br>
-  noise(xoff, yoff, zoff) * TWO_PI * 2<br>
-);<br>
-// Particle follows field<br>
-p.vx += force.x * 0.2;<br>
-p.vy += force.y * 0.2;<br>
-// Blue gradient based on speed<br>
-fill(50, 150,<br>
-  map(speed, 0, 2, 150, 255),<br>
-  alpha<br>);
-                        </code>
-                    </div>
-                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.8;">
-                        <li>✓ Perlin noise flow field</li>
-                        <li>✓ Speed-based color gradients</li>
-                        <li>✓ Organic water-like movement</li>
-                        <li>✓ Self-critiques & iterates</li>
-                        <li>✓ Swarm: 7 artistic personas vote</li>
-                    </ul>
-                </div>
-
-                <!-- Specialized Agent -->
+                <!-- Local Model -->
                 <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 2rem;">
-                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #ec4899, #f97316); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">🎨</div>
-                        <div>
-                            <h3 style="margin: 0; font-size: 1.25rem;">Specialized Agent</h3>
-                            <p style="margin: 0; color: var(--text-secondary); font-size: 0.875rem;">Single-Domain Tool</p>
+                    <div class="model-badge local" style="margin-bottom: 1rem;">🏠 Local Model</div>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">lmstudio/MiniMax-M2.7</h3>
+                    <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
+                        Running locally via LM Studio
+                    </p>
+                    <div style="margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">p5.js hexagons</span>
+                            <span style="color: #eab308; font-weight: 600;">0.68</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">shader noise</span>
+                            <span style="color: #22c55e; font-weight: 600;">0.90</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">underwater scene</span>
+                            <span style="color: #ef4444; font-weight: 600;">0.18</span>
+                        </div>
+                        <div style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">Average</span>
+                                <span style="color: var(--accent-cyan); font-weight: 700;">0.59</span>
+                            </div>
                         </div>
                     </div>
-                    <div style="background: #0a0a0f; border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
-                        <code style="font-size: 0.75rem; color: #a0a0b0;">
-// WebGL shader version<br>
-#ifdef GL_ES<br>
-precision mediump float;<br>
-#endif<br>
-uniform float u_time;<br>
-// Complex GLSL shader<br>
-// for GPU particles...
-                        </code>
-                    </div>
-                    <ul style="margin: 0; padding-left: 1.5rem; color: var(--text-secondary); font-size: 0.875rem; line-height: 1.8;">
-                        <li>✓ Highly optimized</li>
-                        <li>✗ Only p5.js or only shaders</li>
-                        <li>✗ No cross-domain creativity</li>
-                        <li>✗ No swarm intelligence</li>
-                    </ul>
-                </div>
-            </div>
-
-            <p style="text-align: center; color: var(--text-secondary); margin-top: 2rem; font-size: 0.875rem;">
-                Liminal combines <strong>artistic technique knowledge</strong>, <strong>swarm intelligence</strong>, and <strong>self-critique</strong> to create work that's actually inspiring.
-            </p>
-        </div>
-    </section>
-
-    <!-- Features Section -->
-    <section>
-        <div class="container">
-            <h2 class="section-title">⚡ Why Liminal Is Different</h2>
-
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🧠</div>
-                    <h3 class="feature-title">Self-Recursive Learning</h3>
-                    <p class="feature-desc">
-                        Liminal critiques its own output and iteratively improves. Each generation gets better as it learns what works.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🎭</div>
-                    <h3 class="feature-title">Swarm Generation</h3>
-                    <p class="feature-desc">
-                        7 specialized AI personas generate in parallel, then vote on the best result. Get diverse, creative outputs.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🌱</div>
-                    <h3 class="feature-title">Compost Mill Memory</h3>
-                    <p class="feature-desc">
-                        Your past work is digested into reusable seeds. The system learns from your preferences and builds on successes.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">💬</div>
-                    <h3 class="feature-title">Conversational Chat Mode</h3>
-                    <p class="feature-desc">
-                        Interview-style creative sessions. Liminal asks the right questions to understand your vision.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">📚</div>
-                    <h3 class="feature-title">100+ Artistic Techniques</h3>
-                    <p class="feature-desc">
-                        Perlin noise, flow fields, cellular automata, L-systems, raymarching, and many more built-in techniques.
-                    </p>
-                </div>
-
-                <div class="feature-card">
-                    <div class="feature-icon">🔄</div>
-                    <h3 class="feature-title">Evolutionary Optimization</h3>
-                    <p class="feature-desc">
-                        MAP-ides diversity maintenance ensures exploration of the entire creative space, not just local optima.
-                    </p>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- CLI Section -->
-    <section>
-        <div class="container">
-            <h2 class="section-title">💻 Get Started</h2>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1.5rem; margin-top: 3rem;">
-                <div class="code-example">
-                    <h4>Generate p5.js art:</h4>
-                    <pre><code>liminal generate "blue particles flowing like water"</code></pre>
-                </div>
-                <div class="code-example">
-                    <h4>Start chat mode:</h4>
-                    <pre><code>liminal chat</code></pre>
-                </div>
-                <div class="code-example">
-                    <h4>Use swarm generation:</h4>
-                    <pre><code>liminal generate "abstract art" --use-swarm</code></pre>
-                </div>
-                <div class="code-example">
-                    <h4>Preview your art:</h4>
-                    <pre><code>liminal serve</code></pre>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer>
-        <div class="container">
-            <p style="font-size: 1.125rem; margin-bottom: 1rem;">
-                <strong>LIMINAL</strong> — AI-Powered Creative Coding Agent
+    <footer style="border-top: 1px solid var(--border-color); padding: 3rem 0; margin-top: 4rem;">
+        <div class="container" style="text-align: center; color: var(--text-secondary);">
+            <p style="margin: 0;">
+                Generated by <strong>Liminal AI</strong> • All examples are actual outputs from the system
             </p>
-            <p style="margin-bottom: 1rem;">
-                <a href="https://github.com/Pastorsimon1798/liminal">GitHub</a> •
-                <a href="https://github.com/Pastorsimon1798/liminal/issues">Issues</a> •
-                <a href="https://github.com/Pastorsimon1798/liminal/blob/main/README.md">Documentation</a>
-            </p>
-            <p style="font-size: 0.875rem; color: var(--text-secondary);">
-                2220 tests passing • Built with ❤️ for creative coders
+            <p style="margin: 0.5rem 0 0; font-size: 0.875rem;">
+                <a href="https://github.com/Pastorsimon1798/liminal" style="color: var(--accent-purple); text-decoration: none;">View on GitHub</a>
             </p>
         </div>
     </footer>

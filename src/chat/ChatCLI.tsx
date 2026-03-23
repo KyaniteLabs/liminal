@@ -250,29 +250,13 @@ export class ChatCLI {
     this.parameterValues.set(param, value);
   }
 
-  /**
-   * Get current parameter values
-   */
-  getParameterValues(): Map<string, any> {
-    return new Map(this.parameterValues);
-  }
-
-  /**
-   * Clean up resources
-   */
-  cleanup(): void {
-    if (this.inkInstance) {
-      this.inkInstance.unmount();
-      this.inkInstance = null;
-    }
-  }
 }
 
 /**
  * React components for the ChatCLI UI
  */
 
-export const ChatPanelComponent: React.FC<{
+export const ChatPanel: React.FC<{
   messages: Array<{ role: string; content: string; id: string }>;
 }> = ({ messages }) => {
   return (
@@ -309,7 +293,7 @@ export const ChatPanelComponent: React.FC<{
   );
 };
 
-export const PreviewPanelComponent: React.FC<{
+export const PreviewPanel: React.FC<{
   previewState: PreviewState | null;
 }> = ({ previewState }) => {
   return (
@@ -359,7 +343,7 @@ export const PreviewPanelComponent: React.FC<{
   );
 };
 
-export const ParameterControlsComponent: React.FC<{
+export const ParameterControls: React.FC<{
   params: Parameter[];
 }> = ({ params }) => {
   return (
@@ -385,7 +369,7 @@ export const ParameterControlsComponent: React.FC<{
   );
 };
 
-export const IterationHistoryComponent: React.FC<{
+export const IterationHistory: React.FC<{
   iterations: Array<{ version: number; timestamp: Date; score?: number }>;
 }> = ({ iterations }) => {
   return (
@@ -410,7 +394,7 @@ export const IterationHistoryComponent: React.FC<{
   );
 };
 
-export const ActionButtonsComponent: React.FC = () => {
+export const ActionButtons: React.FC = () => {
   return (
     <Box flexDirection="column" paddingX={1}>
       <Text bold color="yellow">ACTIONS</Text>

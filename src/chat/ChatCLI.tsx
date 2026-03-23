@@ -1,11 +1,12 @@
 /**
  * ChatCLI - Split-view terminal UI for Liminal Chat
- * Phase 1: Foundation - Basic structure with Ink
+ * Phase 2: Chat Integration - User Input Handling
  */
 
 import { render, Box, Text, Spacer } from 'ink';
 import React, { useState, useEffect } from 'react';
 import type { ReactElement } from 'react';
+import { createInterface } from 'readline';
 import { ConversationManager } from './ConversationManager.js';
 import type { Parameter, Domain } from './types.js';
 
@@ -35,6 +36,8 @@ export class ChatCLI {
   private previewState: PreviewState | null = null;
   private parameterValues: Map<string, number | string | boolean> = new Map();
   private inkInstance: unknown = null;
+  private readlineInterface: ReturnType<typeof createInterface> | null = null;
+  private isInputActive: boolean = false;
 
   constructor(conversation: ConversationManager) {
     this.conversation = conversation;
@@ -199,6 +202,102 @@ export class ChatCLI {
     }
 
     await this.conversation.processUserMessage(input);
+
+    // Trigger UI update by forcing a re-render
+    // In a real implementation, this would update React state
+    // For now, the messages are stored in the conversation manager
+    // and will be displayed on next render cycle
+  }
+
+  /**
+   * Start the interactive input loop
+   * This sets up readline to capture user input
+   */
+  startInputLoop(): void {
+    if (this.isInputActive) {
+      return; // Already running
+    }
+
+    this.isInputActive = true;
+    this.readlineInterface = createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    // Set up the prompt
+    this.readlineInterface.on('line', async (input: string) => {
+      // Trim and skip empty input
+      const trimmed = input.trim();
+      if (trimmed.length === 0) {
+        this.showPrompt();
+        return;
+      }
+
+      // Handle exit commands
+      if (trimmed.toLowerCase() === 'exit' || trimmed.toLowerCase() === 'quit') {
+        this.stopInputLoop();
+        return;
+      }
+
+      // Process the input
+      try {
+        await this.handleUserInput(trimmed);
+
+        // Show the response
+        const session = this.conversation.sessionHistory[0];
+        if (session && session.messages.length > 0) {
+          const lastMessage = session.messages[session.messages.length - 1];
+          if (lastMessage.role === 'assistant') {
+            console.log(`\nAgent: ${lastMessage.content}\n`);
+          }
+        }
+      } catch (error) {
+        console.error('Error processing input:', error);
+      }
+
+      // Show prompt again
+      this.showPrompt();
+    });
+
+    // Handle Ctrl+C
+    this.readlineInterface.on('SIGINT', () => {
+      this.stopInputLoop();
+      process.exit(0);
+    });
+
+    // Show initial prompt
+    this.showPrompt();
+  }
+
+  /**
+   * Stop the input loop
+   */
+  stopInputLoop(): void {
+    if (this.readlineInterface) {
+      this.readlineInterface.close();
+      this.readlineInterface = null;
+    }
+    this.isInputActive = false;
+  }
+
+  /**
+   * Show the input prompt
+   */
+  private showPrompt(): void {
+    if (this.readlineInterface) {
+      const phase = this.conversation.interviewPhase;
+      const phaseLabel = phase.charAt(0).toUpperCase() + phase.slice(1);
+      this.readlineInterface.setPrompt(`[${phaseLabel}] You: `);
+      this.readlineInterface.prompt();
+    }
+  }
+
+  /**
+   * Get the current interview question
+   */
+  getCurrentQuestion(): string | null {
+    const question = this.conversation.getInterviewQuestion();
+    return question ? question.question : null;
   }
 
   /**

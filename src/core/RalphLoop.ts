@@ -234,7 +234,9 @@ export class RalphLoop {
           model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
           qualityScore: evaluation.score,
           timestamp: new Date().toISOString(),
-        }).catch(() => {});
+        }).catch((err) => {
+          Logger.warn('RalphLoop', 'Failed to record routing outcome:', err instanceof Error ? err.message : err);
+        });
 
         // Save iteration context
         const iterationContext: IterationContext = {
@@ -331,12 +333,16 @@ export class RalphLoop {
       const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
       const mapElites = normalizedOptions._mapElites;
       if (mapElites) {
-        await mapElites.save(mapElitesPath).catch(() => {});
+        await mapElites.save(mapElitesPath).catch((err) => {
+          Logger.warn('RalphLoop', 'Failed to save MAP-Elites:', err instanceof Error ? err.message : err);
+        });
       }
     }
     if (aestheticModel) {
       const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
-      await aestheticModel.save(aestheticPath).catch(() => {});
+      await aestheticModel.save(aestheticPath).catch((err) => {
+        Logger.warn('RalphLoop', 'Failed to save aesthetic model:', err instanceof Error ? err.message : err);
+      });
     }
 
     eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', {

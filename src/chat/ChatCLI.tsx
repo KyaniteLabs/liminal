@@ -274,7 +274,7 @@ export class ChatCLI {
           }
         }
       } catch (error) {
-        console.error('Error processing input:', error);
+        console.error('Error processing input:', error instanceof Error ? error.message : error);
       }
 
       // Show prompt again

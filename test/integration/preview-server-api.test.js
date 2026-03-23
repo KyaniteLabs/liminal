@@ -33,8 +33,17 @@ describe('PreviewServer API', () => {
 
   beforeEach(async () => {
     server = new PreviewServer({ galleryDir: testGalleryDir });
-    testPort = getTestPort();
-    await server.start(testPort);
+    // Retry with different ports to avoid EADDRINUSE flakiness
+    for (let attempt = 0; attempt < 10; attempt++) {
+      testPort = getTestPort();
+      try {
+        await server.start(testPort);
+        return;
+      } catch {
+        // Port in use, try another
+      }
+    }
+    throw new Error('Could not start test server after 10 attempts');
   });
 
   afterEach(async () => {

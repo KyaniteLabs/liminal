@@ -132,6 +132,12 @@ export class RalphLoop {
       iteration++;
 
       try {
+        // Emit thoughts during generation for chat display
+        if (normalizedOptions.chatMode) {
+          normalizedOptions.onThought?.(`Starting iteration ${iteration}...`);
+          normalizedOptions.onThought?.('Loading prompt...');
+        }
+
         // Load prompt (same every time)
         const loadedPrompt = PromptStore.load(prompt);
 
@@ -142,14 +148,26 @@ export class RalphLoop {
           usedPrompt = loadedPrompt + '\n\n---\nContext from previous iterations:\n' + contextForInjection;
         }
 
+        if (normalizedOptions.chatMode) {
+          normalizedOptions.onThought?.('Enhancing prompt with context and compost...');
+        }
+
         // Enhance with compost seed, DNA, and archive examples
         usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning);
+
+        if (normalizedOptions.chatMode) {
+          normalizedOptions.onThought?.('Generating code...');
+        }
 
         // Generate code
         const { code } = await generator.generate(usedPrompt, loadedPrompt);
         currentCode = code;
 
         // Evaluate quality
+        if (normalizedOptions.chatMode) {
+          normalizedOptions.onThought?.('Evaluating code quality...');
+        }
+
         const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
         const evaluation = await scoringEngine.score(
           { output: currentCode, criteria: normalizedOptions.evaluationCriteria },
@@ -229,6 +247,9 @@ export class RalphLoop {
           maxIterations: normalizedOptions.maxIterations,
         };
         ContextAccumulation.save(iterationContext);
+
+        // Call onIteration callback for chat mode
+        normalizedOptions.onIteration?.(iterationContext);
 
         // Persist to gallery
         await persistence.saveIteration(iteration, currentCode);

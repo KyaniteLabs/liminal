@@ -21,22 +21,22 @@ const TECHNIQUE_DEFINITIONS: Omit<Technique, 'domain'>[] = [
   {
     name: 'Particle Systems',
     description: 'Systems of particles that move and interact',
-    keywords: ['particle', 'particles', 'spark', 'emitter']
+    keywords: ['particle']
   },
   {
     name: 'Flow Fields',
     description: 'Vector fields that guide movement',
-    keywords: ['flow', 'field', 'vector field']
+    keywords: ['flow']
   },
   {
     name: 'Perlin Noise',
     description: 'Gradient noise for organic textures',
-    keywords: ['noise', 'perlin', 'gradient']
+    keywords: ['noise']
   },
   {
     name: 'Cellular Automata',
     description: 'Grid-based computational systems',
-    keywords: ['cellular', 'automata', 'game of life', 'automaton']
+    keywords: ['cellular', 'automata']
   }
 ];
 

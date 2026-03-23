@@ -80,6 +80,14 @@ export interface LoopOptions {
   useAestheticModel?: boolean;
   /** Auto-feed quality outputs to compost heap and trigger digest when full */
   autoCompost?: boolean;
+  /** Enable chat mode - provides callbacks for real-time UI updates */
+  chatMode?: boolean;
+  /** Callback called after each iteration with full iteration context */
+  onIteration?: (iteration: IterationContext) => void;
+  /** Callback called with thought strings during generation for chat display */
+  onThought?: (thought: string) => void;
+  /** Callback called with suggestions during generation */
+  onSuggestion?: (suggestion: any) => void;
 }
 
 export interface LoopResult {
@@ -122,6 +130,10 @@ export interface NormalizedLoopOptions extends LoopOptions {
   useSwarm: boolean;
   swarmConfig: Partial<SwarmConfig>;
   swarmMode: SwarmMode;
+  chatMode: boolean;
+  onIteration?: (iteration: IterationContext) => void;
+  onThought?: (thought: string) => void;
+  onSuggestion?: (suggestion: any) => void;
 }
 
 /**
@@ -163,6 +175,10 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     archivePath: options?.archivePath,
     useAestheticModel: options?.useAestheticModel ?? false,
     autoCompost: options?.autoCompost ?? false,
+    chatMode: options?.chatMode ?? false,
+    onIteration: options?.onIteration,
+    onThought: options?.onThought,
+    onSuggestion: options?.onSuggestion,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
   };

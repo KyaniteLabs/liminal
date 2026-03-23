@@ -33,8 +33,8 @@ export class ChatCLI {
 
   // Internal state for UI
   private previewState: PreviewState | null = null;
-  private parameterValues: Map<string, any> = new Map();
-  private inkInstance: any = null;
+  private parameterValues: Map<string, number | string | boolean> = new Map();
+  private inkInstance: unknown = null;
 
   constructor(conversation: ConversationManager) {
     this.conversation = conversation;
@@ -246,7 +246,7 @@ export class ChatCLI {
   /**
    * Handle parameter value changes
    */
-  handleParameterChange(param: string, value: any): void {
+  handleParameterChange(param: string, value: number | string | boolean): void {
     this.parameterValues.set(param, value);
   }
 
@@ -254,6 +254,12 @@ export class ChatCLI {
 
 /**
  * React components for the ChatCLI UI
+ *
+ * NOTE: These exported components duplicate some functionality from the class methods above.
+ * This is intentional for Phase 1 to provide flexibility in how components can be used.
+ * The class methods (renderChatPanel, renderPreviewPanel, etc.) are used internally by
+ * ChatCLI.render(), while these exported components can be used standalone or composed
+ * differently. In Phase 2, we may refactor to eliminate duplication.
  */
 
 export const ChatPanel: React.FC<{

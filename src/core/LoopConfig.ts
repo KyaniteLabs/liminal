@@ -88,6 +88,8 @@ export interface LoopOptions {
   onThought?: (thought: string) => void;
   /** Callback called with suggestions during generation */
   onSuggestion?: (suggestion: any) => void;
+  /** Guidance engine for proactive suggestions during generation */
+  guidanceEngine?: any;
 }
 
 export interface LoopResult {
@@ -134,6 +136,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   onIteration?: (iteration: IterationContext) => void;
   onThought?: (thought: string) => void;
   onSuggestion?: (suggestion: any) => void;
+  guidanceEngine?: any;
 }
 
 /**
@@ -179,6 +182,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     onIteration: options?.onIteration,
     onThought: options?.onThought,
     onSuggestion: options?.onSuggestion,
+    guidanceEngine: options?.guidanceEngine,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
   };

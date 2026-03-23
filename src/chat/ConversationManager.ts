@@ -4,21 +4,18 @@ import type {
   ConversationMessage,
   InterviewQuestion,
   CreativeBrief,
-  Iteration
+  Iteration,
+  Suggestion
 } from './types.js';
 import { buildCreativeBrief, type InterviewAnswers } from './CreativeBrief.js';
 import { getNextQuestion } from './InterviewPhase.js';
 import { RalphLoop } from '../core/RalphLoop.js';
 import type { IterationContext } from '../core/LoopConfig.js';
+import { SemanticArtMemory } from '../brain/SemanticArtMemory.js';
+import { GuidanceEngine } from './GuidanceEngine.js';
 
 // Interview phase type
 type InterviewPhase = 'greeting' | 'discovery' | 'confirm' | 'generating';
-
-/**
- * Stub interface for Art Brain integration
- * Will be replaced with SemanticArtMemory in Phase 2
- */
-interface ArtBrainStub {}
 
 /**
  * Response from the agent to a user message
@@ -41,11 +38,14 @@ export class ConversationManager {
   interviewPhase: InterviewPhase = 'greeting';
   interviewAnswers: Map<string, any> = new Map();
 
-  // Art Brain integration (stub for Phase 1)
-  artBrain: ArtBrainStub | null = null; // Will be SemanticArtMemory in Phase 2
+  // Art Brain integration (Phase 2: SemanticArtMemory)
+  artBrain: SemanticArtMemory;
+  guidance: GuidanceEngine;
 
-  constructor() {
+  constructor(artBrain?: SemanticArtMemory) {
     // Initialize with default state
+    this.artBrain = artBrain || new SemanticArtMemory();
+    this.guidance = new GuidanceEngine(this.artBrain);
   }
 
   /**
@@ -208,6 +208,11 @@ export class ConversationManager {
           this.currentSession.iterations.push(iteration);
         }
       },
+      onSuggestion: (suggestion: Suggestion) => {
+        // Record suggestion as system message for history
+        this.recordMessage('system', `[Suggestion] ${suggestion.title}: ${suggestion.description}`);
+      },
+      guidanceEngine: this.guidance,
 
       // Domain and collaboration
       collabDomain: brief.domain as any,

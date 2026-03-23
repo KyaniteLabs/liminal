@@ -147,11 +147,12 @@ export class SemanticArtMemory {
     const techniqueConcepts = this.knowledgeGraph.query({ type: 'technique' });
     for (const technique of techniqueConcepts) {
       if (this.isTechniqueRelevant(technique, context)) {
+        const relevance = this.calculateTechniqueRelevance(technique, context);
         inspirations.push({
           type: 'technique-suggestion',
           title: technique.name,
           description: technique.metadata?.description as string || `Technique for creating ${technique.name.toLowerCase()} effects`,
-          relevance: this.calculateTechniqueRelevance(technique, context)
+          relevance
         });
       }
     }
@@ -364,16 +365,25 @@ export class SemanticArtMemory {
    */
   private isTechniqueRelevant(technique: Concept, context: CreativeContext): boolean {
     const techniqueLower = technique.name.toLowerCase();
+    const descriptionLower = (technique.description || '').toLowerCase();
+    const keywords = (technique.keywords || []) as string[];
+    const keywordsLower = keywords.map(k => k.toLowerCase());
 
-    // Check if technique matches context concepts
-    const matchesConcept = context.concepts.some(cc =>
-      techniqueLower.includes(cc.toLowerCase()) ||
-      cc.toLowerCase().includes(techniqueLower)
-    );
+    // Check if technique matches context concepts (name, description, or keywords)
+    const matchesConcept = context.concepts.some(cc => {
+      const ccLower = cc.toLowerCase();
+      return techniqueLower.includes(ccLower) ||
+             ccLower.includes(techniqueLower) ||
+             descriptionLower.includes(ccLower) ||
+             keywordsLower.some(k => k.includes(ccLower) || ccLower.includes(k));
+    });
 
-    // Check if technique matches intent
-    const matchesIntent = techniqueLower.includes(context.intent.toLowerCase()) ||
-                          context.intent.toLowerCase().includes(techniqueLower);
+    // Check if technique matches intent (name, description, or keywords)
+    const intentLower = context.intent.toLowerCase();
+    const matchesIntent = techniqueLower.includes(intentLower) ||
+                          intentLower.includes(techniqueLower) ||
+                          descriptionLower.includes(intentLower) ||
+                          keywordsLower.some(k => intentLower.includes(k) || k.includes(intentLower));
 
     // Check related concepts
     const related = this.knowledgeGraph.findRelated(technique.id, 1);
@@ -390,22 +400,44 @@ export class SemanticArtMemory {
    * Calculate technique relevance to context
    */
   private calculateTechniqueRelevance(technique: Concept, context: CreativeContext): number {
-    let relevance = 0.2; // Base relevance
+    let relevance = 0.3; // Base relevance (increased from 0.2)
 
     const techniqueLower = technique.name.toLowerCase();
+    const descriptionLower = (technique.description || '').toLowerCase();
+    const keywords = (technique.keywords || []) as string[];
+    const keywordsLower = keywords.map(k => k.toLowerCase());
 
-    // Concept match bonus
-    if (context.concepts.some(cc =>
-      techniqueLower.includes(cc.toLowerCase()) ||
-      cc.toLowerCase().includes(techniqueLower)
-    )) {
-      relevance += 0.4;
+    // Concept match bonus (including keywords and description)
+    const conceptMatch = context.concepts.some(cc => {
+      const ccLower = cc.toLowerCase();
+      return techniqueLower.includes(ccLower) ||
+             ccLower.includes(techniqueLower) ||
+             descriptionLower.includes(ccLower) ||
+             keywordsLower.some(k => k.includes(ccLower) || ccLower.includes(k));
+    });
+    if (conceptMatch) {
+      relevance += 0.35;
     }
 
-    // Intent match bonus
-    if (techniqueLower.includes(context.intent.toLowerCase()) ||
-        context.intent.toLowerCase().includes(techniqueLower)) {
-      relevance += 0.3;
+    // Intent match bonus (including keywords and description)
+    const intentLower = context.intent.toLowerCase();
+    const intentMatch = techniqueLower.includes(intentLower) ||
+                        intentLower.includes(techniqueLower) ||
+                        descriptionLower.includes(intentLower) ||
+                        keywordsLower.some(k => intentLower.includes(k) || k.includes(intentLower));
+    if (intentMatch) {
+      relevance += 0.25;
+    }
+
+    // Related concepts bonus
+    const related = this.knowledgeGraph.findRelated(technique.id, 1);
+    const relatedMatch = related.some(r =>
+      context.concepts.some(cc =>
+        r.name.toLowerCase().includes(cc.toLowerCase())
+      )
+    );
+    if (relatedMatch) {
+      relevance += 0.1;
     }
 
     return Math.min(relevance, 1);

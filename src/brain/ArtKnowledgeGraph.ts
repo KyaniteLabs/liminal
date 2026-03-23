@@ -21,7 +21,7 @@ export interface Concept {
   description?: string;
   keywords?: string[];
   metadata?: Record<string, unknown>;
-  related: Map<string, Relation>; // relation name -> target concept id
+  related: Map<string, Relation[]>; // relation name -> array of relations
 }
 
 export interface Relation {
@@ -78,9 +78,19 @@ export class ArtKnowledgeGraph {
       return;
     }
 
-    // Create bidirectional relationship
-    fromConcept.related.set(relation, { to: toId, relation, weight });
-    toConcept.related.set(relation, { to: fromId, relation, weight });
+    // Create bidirectional relationship (store as arrays)
+    const fromRelation = { to: toId, relation, weight };
+    const toRelation = { to: fromId, relation, weight };
+
+    if (!fromConcept.related.has(relation)) {
+      fromConcept.related.set(relation, []);
+    }
+    if (!toConcept.related.has(relation)) {
+      toConcept.related.set(relation, []);
+    }
+
+    fromConcept.related.get(relation)!.push(fromRelation);
+    toConcept.related.get(relation)!.push(toRelation);
   }
 
   getConcept(idOrName: string): Concept | null {
@@ -115,13 +125,15 @@ export class ArtKnowledgeGraph {
         return;
       }
 
-      // Add all related concepts at this level
-      for (const relation of concept.related.values()) {
-        if (!visited.has(relation.to) && relation.to !== conceptId) {
-          const relatedConcept = this.concepts.get(relation.to);
-          if (relatedConcept && !result.includes(relatedConcept)) {
-            result.push(relatedConcept);
-            traverse(relation.to, currentDepth + 1);
+      // Add all related concepts at this level (related is now Map<string, Relation[]>)
+      for (const relations of concept.related.values()) {
+        for (const relation of relations) {
+          if (!visited.has(relation.to) && relation.to !== conceptId) {
+            const relatedConcept = this.concepts.get(relation.to);
+            if (relatedConcept && !result.includes(relatedConcept)) {
+              result.push(relatedConcept);
+              traverse(relation.to, currentDepth + 1);
+            }
           }
         }
       }
@@ -158,8 +170,10 @@ export class ArtKnowledgeGraph {
 
     if (filter.hasRelation) {
       results = results.filter(c => {
-        for (const rel of c.related.values()) {
-          if (rel.relation === filter.hasRelation) return true;
+        for (const relations of c.related.values()) {
+          for (const rel of relations) {
+            if (rel.relation === filter.hasRelation) return true;
+          }
         }
         return false;
       });

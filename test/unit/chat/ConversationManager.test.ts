@@ -1,7 +1,15 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { ConversationManager } from '../../../dist/chat/ConversationManager.js';
-import type { CreativeSession, Session, ConversationMessage, InterviewPhase } from '../../../dist/chat/types.js';
-import type { AgentResponse } from '../../../dist/chat/ConversationManager.js';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { ConversationManager } from '../../../src/chat/ConversationManager.js';
+import type { CreativeSession, Session, ConversationMessage, InterviewPhase } from '../../../src/chat/types.js';
+import type { AgentResponse } from '../../../src/chat/ConversationManager.js';
+import { RalphLoop } from '../../../src/core/RalphLoop.js';
+
+// Mock RalphLoop to avoid "No LLM configured" errors in tests that trigger generation
+vi.mock('../../../src/core/RalphLoop.js', () => ({
+  RalphLoop: {
+    run: vi.fn()
+  }
+}));
 
 describe('ConversationManager', () => {
   let manager: ConversationManager;
@@ -108,6 +116,20 @@ describe('ConversationManager', () => {
   describe('processUserMessage', () => {
     beforeEach(() => {
       manager.startNewSession();
+      // Set up RalphLoop mock for tests that may trigger generation
+      vi.mocked(RalphLoop.run).mockResolvedValue({
+        code: '// mock code',
+        iterations: 1,
+        completed: true,
+        reason: 'done',
+        timestamp: new Date().toISOString(),
+        duration: 1000,
+        finalScore: 0.7
+      });
+    });
+
+    afterEach(() => {
+      vi.clearAllMocks();
     });
 
     it('should record user message in session history', async () => {
@@ -189,11 +211,11 @@ describe('ConversationManager', () => {
       expect(response.message).toBeDefined();
     });
 
-    it('should return agent response with info type for confirmation', async () => {
+    it('should return agent response with generating type for confirmation', async () => {
       manager.interviewPhase = 'confirm';
       const response = await manager.processUserMessage('Yes, generate!');
 
-      expect(response.type).toBe('info');
+      expect(response.type).toBe('generating');
     });
   });
 

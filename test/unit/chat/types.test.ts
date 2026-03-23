@@ -236,10 +236,10 @@ describe('Chat Type Definitions', () => {
 
   describe('Reference', () => {
     it('accepts all valid reference types', () => {
-      const types: Array<'past-work' | 'external' | 'artist' | 'technique'> = [
+      const types: Array<'past-work' | 'external' | 'movement' | 'technique'> = [
         'past-work',
         'external',
-        'artist',
+        'movement',
         'technique',
       ];
 
@@ -354,9 +354,9 @@ describe('Chat Type Definitions', () => {
         constraints: ['max 100 lines', 'no external assets'],
         references: [
           {
-            type: 'artist',
+            type: 'movement',
             id: 'ref-1',
-            description: 'Inspired by Vera Molnar',
+            description: 'Inspired by generative art approaches',
           },
         ],
       };
@@ -442,9 +442,9 @@ describe('Chat Type Definitions', () => {
         constraints: ['mouse interaction only', 'max 200 lines'],
         references: [
           {
-            type: 'artist',
+            type: 'movement',
             id: 'ref-1',
-            description: 'Inspired by John Maeda',
+            description: 'Inspired by interactive art styles',
           },
         ],
         domain: 'p5',

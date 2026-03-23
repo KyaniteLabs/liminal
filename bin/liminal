@@ -10,6 +10,7 @@ import { CompostMill } from '../dist/compost/CompostMill.js';
 import { parseArgs, execute } from '../dist/compost/cli.js';
 import { LLMClient } from '../dist/llm/LLMClient.js';
 import { ModelRouter } from '../dist/compost/ModelRouter.js';
+import { chatCommand } from '../dist/chat/commands/chat.js';
 import fs from 'fs';
 import path from 'path';
 
@@ -86,6 +87,8 @@ for (let i = 0; i < args.length; i++) {
     flags.routingMode = args[++i];
   } else if (arg === '--confidence-threshold') {
     flags.confidenceThreshold = parseFloat(args[++i]);
+  } else if (arg === '--verbose' || arg === '-v') {
+    flags.verbose = true;
   } else if (!arg.startsWith('-')) {
     if (cmd === null) { cmd = arg; } else { cmdArgs.push(arg); }
   }
@@ -104,6 +107,7 @@ if (flags.help) {
   console.log('  serve, s [port]             Start preview server (default: 3456)');
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
+  console.log('  chat                        Start conversational creative coding mode');
   console.log('');
   console.log('OPTIONS:');
   console.log('  --prompt, -p <text>         Prompt for generation');
@@ -124,6 +128,7 @@ if (flags.help) {
   console.log('  --powerful-model <name>     Secondary/powerful model (e.g., qwen3:30b-a3b)');
   console.log('  --routing-mode <mode>       Dual-model routing: cascade, speculative, ensemble, specialized');
   console.log('  --confidence-threshold <n>  Cascade escalation threshold (0-1, default: 0.8)');
+  console.log('  --verbose, -v               Verbose output');
   console.log('  --help, -h                  Show this help message');
   console.log('  --version                   Show version');
   console.log('');
@@ -476,6 +481,13 @@ else if (cmd === 'list' || cmd === 'ls') {
   } else {
     console.log('  (none yet)');
   }
+}
+else if (cmd === 'chat') {
+  // Chat command - conversational creative coding mode
+  chatCommand({ verbose: flags.verbose || false }).catch(err => {
+    console.error('Chat error:', err.message);
+    process.exit(1);
+  });
 }
 else {
   console.error('Error: --prompt is required');

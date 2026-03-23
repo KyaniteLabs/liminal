@@ -3,8 +3,24 @@
  * Phase 2: Chat Integration - User Input Handling
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConversationManager } from '../../src/chat/ConversationManager.js';
+import { RalphLoop } from '../../src/core/RalphLoop.js';
+
+// Mock RalphLoop to avoid requiring LLM configuration in tests
+vi.mock('../../src/core/RalphLoop.js', () => ({
+  RalphLoop: {
+    run: vi.fn().mockResolvedValue({
+      code: '// mock code',
+      iterations: 1,
+      completed: true,
+      reason: 'test',
+      timestamp: new Date().toISOString(),
+      duration: 100,
+      finalScore: 0.7
+    })
+  }
+}));
 
 describe('ConversationManager - Input Handling', () => {
   let manager: ConversationManager;
@@ -91,7 +107,7 @@ describe('ConversationManager - Input Handling', () => {
       const response = await manager.processUserMessage('Yes, generate!');
 
       expect(manager.interviewPhase).toBe('generating');
-      expect(response.type).toBe('info');
+      expect(response.type).toBe('generating');
     });
 
     it('should ask context question in discovery phase', async () => {
@@ -167,7 +183,7 @@ describe('ConversationManager - Input Handling', () => {
       await manager.processUserMessage('None');
       const response = await manager.processUserMessage('Yes, generate!');
 
-      expect(response.type).toBe('info');
+      expect(response.type).toBe('generating');
       expect(response.nextPhase).toBe('generating');
     });
 

@@ -3,9 +3,25 @@
  * Phase 2: Chat Integration - End-to-End Input Flow
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ConversationManager } from '../../src/chat/ConversationManager.js';
 import { ChatCLI } from '../../src/chat/ChatCLI.js';
+import { RalphLoop } from '../../src/core/RalphLoop.js';
+
+// Mock RalphLoop to avoid requiring LLM configuration in tests
+vi.mock('../../src/core/RalphLoop.js', () => ({
+  RalphLoop: {
+    run: vi.fn().mockResolvedValue({
+      code: '// mock code',
+      iterations: 1,
+      completed: true,
+      reason: 'test',
+      timestamp: new Date().toISOString(),
+      duration: 100,
+      finalScore: 0.7
+    })
+  }
+}));
 
 describe('Chat Input Integration', () => {
   describe('End-to-end interview flow', () => {
@@ -39,11 +55,11 @@ describe('Chat Input Integration', () => {
       // Confirm phase
       response = await manager.processUserMessage('Yes, generate!');
       expect(response.nextPhase).toBe('generating');
-      expect(response.type).toBe('info');
+      expect(response.type).toBe('generating');
 
       // Verify all messages were stored
       const session = manager.sessionHistory[0];
-      expect(session.messages).toHaveLength(12); // 6 user + 6 assistant
+      expect(session.messages).toHaveLength(13); // 6 user + 6 assistant + 1 system (generation complete)
 
       // Verify interview phase
       expect(manager.interviewPhase).toBe('generating');

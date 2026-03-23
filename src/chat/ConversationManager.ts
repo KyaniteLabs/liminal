@@ -3,10 +3,13 @@ import type {
   Session,
   ConversationMessage,
   InterviewQuestion,
-  CreativeBrief
+  CreativeBrief,
+  Iteration
 } from './types.js';
 import { buildCreativeBrief, type InterviewAnswers } from './CreativeBrief.js';
 import { getNextQuestion } from './InterviewPhase.js';
+import { RalphLoop } from '../core/RalphLoop.js';
+import type { IterationContext } from '../core/LoopConfig.js';
 
 // Interview phase type
 type InterviewPhase = 'greeting' | 'discovery' | 'confirm' | 'generating';
@@ -113,7 +116,7 @@ export class ConversationManager {
     const nextQuestion = getNextQuestion(this.interviewPhase, this.interviewAnswers);
 
     // Advance phase if current phase is complete
-    const response = this.advancePhase(nextQuestion);
+    const response = await this.advancePhase(nextQuestion);
 
     // Record assistant response
     this.recordMessage('assistant', response.message);
@@ -139,6 +142,87 @@ export class ConversationManager {
     return buildCreativeBrief(
       Object.fromEntries(this.interviewAnswers) as InterviewAnswers
     );
+  }
+
+  /**
+   * Generate creative work from a brief using RalphLoop
+   *
+   * @param brief - The creative brief with intent, domain, techniques
+   * @returns Promise that resolves when generation completes
+   */
+  async generateFromBrief(brief: CreativeBrief): Promise<void> {
+    if (!this.currentSession) {
+      throw new Error('Cannot generate: no active session');
+    }
+
+    // Build prompt from brief
+    let prompt = `Intent: ${brief.intent}\n`;
+    if (brief.context) {
+      prompt += `Context: ${brief.context}\n`;
+    }
+    if (brief.mood) {
+      prompt += `Mood: ${brief.mood}\n`;
+    }
+    if (brief.constraints.length > 0) {
+      const constraintsStr = Array.isArray(brief.constraints)
+        ? brief.constraints.join(', ')
+        : String(brief.constraints);
+      prompt += `Constraints: ${constraintsStr}\n`;
+    }
+
+    // Add techniques to prompt
+    if (brief.techniques.length > 0) {
+      prompt += `\nTechniques to use:\n`;
+      for (const technique of brief.techniques) {
+        prompt += `- ${technique.name}: ${technique.description}\n`;
+      }
+    }
+
+    // Determine max iterations based on complexity
+    const maxIterations = brief.complexity === 'simple' ? 5 :
+                         brief.complexity === 'medium' ? 10 : 15;
+
+    // Track thoughts for progress display
+    const thoughts: string[] = [];
+
+    // Run RalphLoop with chat mode enabled
+    const result = await RalphLoop.run(prompt, {
+      // Chat mode options
+      chatMode: true,
+      onThought: (thought: string) => {
+        thoughts.push(thought);
+        // Record thought as system message for history
+        this.recordMessage('system', `[Generation] ${thought}`);
+      },
+      onIteration: (iterationContext: IterationContext) => {
+        // Convert to Iteration and add to session
+        const iteration: Iteration = {
+          version: iterationContext.iteration,
+          code: iterationContext.code,
+          domain: brief.domain,
+          score: iterationContext.evaluation.score,
+          timestamp: new Date(iterationContext.timestamp)
+        };
+
+        if (this.currentSession) {
+          this.currentSession.iterations.push(iteration);
+        }
+      },
+
+      // Domain and collaboration
+      collabDomain: brief.domain as any,
+
+      // Iteration settings
+      maxIterations,
+      timeoutMinutes: 10,
+
+      // Project settings
+      project: this.currentSession.id,
+      galleryDir: 'gallery'
+    });
+
+    // Record final result
+    this.recordMessage('system', `Generation complete: ${result.reason} (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)})`);
   }
 
   /**
@@ -203,7 +287,7 @@ export class ConversationManager {
   /**
    * Advance to next phase if current phase is complete
    */
-  private advancePhase(nextQuestion: InterviewQuestion | null): AgentResponse {
+  private async advancePhase(nextQuestion: InterviewQuestion | null): Promise<AgentResponse> {
     const phaseOrder: InterviewPhase[] = ['greeting', 'discovery', 'confirm', 'generating'];
     const currentIndex = phaseOrder.indexOf(this.interviewPhase);
 
@@ -227,9 +311,13 @@ export class ConversationManager {
 
         // If no more questions, we're at generating phase
         if (nextPhase === 'generating') {
+          // Trigger generation
+          const brief = this.buildCreativeBrief();
+          await this.generateFromBrief(brief);
+
           return {
             message: 'Generating your creation...',
-            type: 'info',  // Use 'info' instead of 'generating' for confirmation
+            type: 'generating',
             nextPhase
           };
         }
@@ -246,11 +334,15 @@ export class ConversationManager {
       const nextPhase = nextQuestion.phase;
       this.interviewPhase = nextPhase;
 
-      // If advancing to generating phase, return info type
+      // If advancing to generating phase, trigger generation
       if (nextPhase === 'generating') {
+        // Trigger generation
+        const brief = this.buildCreativeBrief();
+        await this.generateFromBrief(brief);
+
         return {
           message: nextQuestion.question,
-          type: 'info',
+          type: 'generating',
           nextPhase
         };
       }

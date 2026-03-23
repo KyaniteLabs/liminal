@@ -9,7 +9,7 @@
  */
 
 import type { LLMClientLike } from './SemanticExtractor.js';
-import type { RoutingMode, MultiModelConfig } from '../config/ConfigLoader.js';
+import type { MultiModelConfig } from '../config/ConfigLoader.js';
 
 /** Task classification for routing decisions */
 export type TaskType =
@@ -246,7 +246,7 @@ export class ModelRouter implements LLMClientLike {
       return {
         code: result.code,
         success: result.success,
-        error: result.error,
+        error: undefined,
       };
     } catch (error) {
       return {

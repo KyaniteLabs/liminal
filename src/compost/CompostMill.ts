@@ -24,7 +24,7 @@ import type { ProjectDNA } from '../scavenger/types.js';
 import { RetryManager } from '../llm/RetryManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
-import { ModelRouter, type TaskType } from './ModelRouter.js';
+import { ModelRouter } from './ModelRouter.js';
 import { CompostParser } from '../core/parsing/CompostParser.js';
 import type { LIRToken } from '../core/lir/types.js';
 import { formatSeedForPrompt } from '../core/lir/LIRPromptFormatter.js';

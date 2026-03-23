@@ -395,9 +395,9 @@ else if (cmd === 'serve' || cmd === 's') {
 }
 else if (cmd === 'compost') {
   // Check for dual-model configuration
-  let llm: LLMClient | ModelRouter;
-  let fastLLM: LLMClient;
-  let modelRouter: ModelRouter | undefined;
+  let llm;
+  let fastLLM;
+  let modelRouter;
 
   // Check if dual-model flags are provided
   const hasDualModelFlags = flags.fastModel || flags.powerfulModel || flags.routingMode;
@@ -445,7 +445,7 @@ else if (cmd === 'compost') {
         maxTokens: 2000,
       },
       routing: {
-        mode: routingMode as any,
+        mode: routingMode,
         confidenceThreshold,
         primaryConcurrency: 8,
         secondaryConcurrency: 4,

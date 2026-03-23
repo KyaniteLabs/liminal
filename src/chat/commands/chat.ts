@@ -1,4 +1,6 @@
 import { ConversationManager } from '../ConversationManager.js';
+import { ChatCLI } from '../ChatCLI.js';
+import { RalphLoop } from '../../core/RalphLoop.js';
 
 export interface ChatOptions {
   verbose?: boolean;
@@ -11,10 +13,11 @@ export async function chatCommand(options: ChatOptions = {}): Promise<void> {
   // Start new session
   conversation.startNewSession();
 
-  if (options.verbose) {
-    console.log('Started new conversation session');
-  }
+  // Initialize ChatCLI and render the UI
+  const cli = new ChatCLI(conversation);
+  cli.render();
 
-  // TODO: Phase 2 - wire up actual input handling and generation
-  // For now, we'll just initialize the components
+  // RalphLoop is available for Phase 2 integration
+  void RalphLoop;
+  void options;
 }

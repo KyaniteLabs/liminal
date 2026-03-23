@@ -228,6 +228,26 @@ export class RalphLoop {
           }
         }
 
+        // Guidance: check for proactive suggestions
+        if (normalizedOptions.guidanceEngine && normalizedOptions.chatMode) {
+          const guidance = normalizedOptions.guidanceEngine as any;
+          // Update iteration tracking for guidance
+          if (guidance.updateIteration) {
+            guidance.updateIteration(iteration, evaluation.score);
+          }
+          // Get and emit suggestions
+          const suggestions = guidance.suggestNextAction({
+            prompt: loadedPrompt,
+            domain: normalizedOptions.collabDomain || 'p5',
+            techniques: [],
+            constraints: [],
+            references: [],
+          });
+          for (const suggestion of suggestions) {
+            normalizedOptions.onSuggestion?.(suggestion);
+          }
+        }
+
         // Record routing outcome for dynamic routing
         recordRoutingOutcome({
           domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual',

@@ -90,7 +90,7 @@ export class LLMClient {
       provider: config?.provider || (env('LLM_PROVIDER') as LLMConfig['provider']) || 'lmstudio',
       apiKey: config?.apiKey ?? process.env.MINIMAX_API_KEY ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY,
       baseUrl: config?.baseUrl || env('LLM_BASE_URL'),
-      model: config?.model || env('LLM_MODEL') || 'local-model',
+      model: config?.model || env('LLM_MODEL') || 'qwen2.5-coder-7b-instruct',
       temperature: config?.temperature ?? 0.7,
       maxTokens: config?.maxTokens ?? 2000,
       useReasoningTransfer: config?.useReasoningTransfer ?? false,

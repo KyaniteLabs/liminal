@@ -276,7 +276,7 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
   return {
     provider,
     baseUrl: env('LLM_BASE_URL') || projectLlm.baseUrl || fileProviderConfig.baseUrl,
-    model: env('LLM_MODEL') || projectLlm.model || fileProviderConfig.model || 'local-model',
+    model: env('LLM_MODEL') || projectLlm.model || fileProviderConfig.model || 'qwen2.5-coder-7b-instruct',
     apiKey: env('LLM_API_KEY') || projectLlm.apiKey || fileProviderConfig.apiKey || process.env.OPENAI_API_KEY || process.env.MINIMAX_API_KEY,
   };
 }
@@ -303,7 +303,7 @@ export async function getMultiModelConfig(projectConfigPath?: string): Promise<M
     return {
       provider: (partial?.provider || env(`LLM_PROVIDER${suffix}`) || 'ollama') as ModelConfig['provider'],
       baseUrl: partial?.baseUrl || env(`LLM_BASE_URL${suffix}`),
-      model: partial?.model || env(`LLM_MODEL${suffix}`) || 'local-model',
+      model: partial?.model || env(`LLM_MODEL${suffix}`) || 'qwen2.5-coder-7b-instruct',
       apiKey: env(`LLM_API_KEY${suffix}`) || process.env.OPENAI_API_KEY || process.env.MINIMAX_API_KEY,
       temperature: partial?.temperature ?? 0.7,
       maxTokens: partial?.maxTokens ?? 2000,

@@ -23,6 +23,8 @@ interface PreviewState {
   code: string;
   domain: Domain;
   timestamp: Date;
+  iteration?: number;
+  score?: number;
 }
 
 /**
@@ -159,10 +161,30 @@ export class ChatCLI {
           <Box flexDirection="column" marginBottom={1}>
             <Text bold color="yellow">LIVE PREVIEW</Text>
             {this.previewState ? (
-              <Box>
-                <Text color="gray">{this.previewState.domain}</Text>
-                <Text> - </Text>
-                <Text color="green">{this.previewState.code.slice(0, 50)}...</Text>
+              <Box flexDirection="column">
+                <Box>
+                  <Text color="gray">{this.previewState.domain}</Text>
+                  {this.previewState.iteration !== undefined && (
+                    <>
+                      <Text> - </Text>
+                      <Text color="cyan">v{this.previewState.iteration}</Text>
+                    </>
+                  )}
+                  {this.previewState.score !== undefined && (
+                    <>
+                      <Text> - </Text>
+                      <Text color={this.previewState.score >= 0.7 ? 'green' : 'red'}>
+                        ({this.previewState.score.toFixed(2)})
+                      </Text>
+                    </>
+                  )}
+                </Box>
+                <Box marginTop={1}>
+                  <Text color="green" dimColor>{this.previewState.code.slice(0, 60)}...</Text>
+                </Box>
+                <Box marginTop={1}>
+                  <Text color="gray" dimColor>URL: {this.getPreviewUrl()}</Text>
+                </Box>
               </Box>
             ) : (
               <Text color="gray">No preview available (Phase 1)</Text>
@@ -301,14 +323,68 @@ export class ChatCLI {
   }
 
   /**
+   * Render a preview of the given code and domain
+   * This updates the preview state and optionally serves it via PreviewServer
+   */
+  renderPreview(code: string, domain: Domain, iteration?: number, score?: number): void {
+    // Escape code for safe display (prevent XSS)
+    const safeCode = this.escapeCode(code);
+
+    this.previewState = {
+      code: safeCode,
+      domain,
+      timestamp: new Date(),
+      iteration,
+      score
+    };
+  }
+
+  /**
+   * Escape code for safe display in the preview
+   * Prevents script injection while preserving code functionality
+   */
+  private escapeCode(code: string): string {
+    // Escape </script> to prevent breaking out of script tags
+    // but keep other code intact for execution
+    return code.replace(/\u003c\/script\u003e/gi, '<\\/script>');
+  }
+
+  /**
+   * Get the current preview state
+   */
+  getPreviewState(): PreviewState | null {
+    return this.previewState;
+  }
+
+  /**
+   * Get the current iteration number
+   */
+  getCurrentIteration(): number | undefined {
+    return this.previewState?.iteration;
+  }
+
+  /**
+   * Get the current iteration score
+   */
+  getCurrentScore(): number | undefined {
+    return this.previewState?.score;
+  }
+
+  /**
+   * Get the preview URL for the current preview
+   * Returns a localhost URL pointing to the preview server
+   */
+  getPreviewUrl(): string {
+    const port = 3000; // Default preview server port
+    return `http://localhost:${port}/preview`;
+  }
+
+  /**
    * Update the preview state with new code and domain
+   * @deprecated Use renderPreview instead
    */
   updatePreview(code: string, domain: Domain): void {
-    this.previewState = {
-      code,
-      domain,
-      timestamp: new Date()
-    };
+    this.renderPreview(code, domain);
   }
 
   /**
@@ -417,10 +493,27 @@ export const PreviewPanel: React.FC<{
       <Box flexDirection="column" marginBottom={1}>
         <Text bold color="yellow">LIVE PREVIEW</Text>
         {previewState ? (
-          <Box>
-            <Text color="gray">{previewState.domain}</Text>
-            <Text> - </Text>
-            <Text color="green">{previewState.code.slice(0, 50)}...</Text>
+          <Box flexDirection="column">
+            <Box>
+              <Text color="gray">{previewState.domain}</Text>
+              {previewState.iteration !== undefined && (
+                <>
+                  <Text> - </Text>
+                  <Text color="cyan">v{previewState.iteration}</Text>
+                </>
+              )}
+              {previewState.score !== undefined && (
+                <>
+                  <Text> - </Text>
+                  <Text color={previewState.score >= 0.7 ? 'green' : 'red'}>
+                    ({previewState.score.toFixed(2)})
+                  </Text>
+                </>
+              )}
+            </Box>
+            <Box marginTop={1}>
+              <Text color="green" dimColor>{previewState.code.slice(0, 60)}...</Text>
+            </Box>
           </Box>
         ) : (
           <Text color="gray">No preview available (Phase 1)</Text>

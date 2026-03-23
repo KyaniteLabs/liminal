@@ -77,7 +77,9 @@ export async function runInSandbox(
     return { completed: false, error: message };
   } finally {
     if (browser) {
-      await browser.close().catch(() => {});
+      await browser.close().catch((err) => {
+        console.warn('[SandboxRunner] Failed to close browser:', err instanceof Error ? err.message : err);
+      });
     }
   }
 }

@@ -82,7 +82,7 @@ function makeExtractionResult(filePath: string, lir?: LIRCodeToken | LIRDocToken
       extractedAt: new Date().toISOString(),
     },
     rawBytes: { headerHex: '', tailHex: '', sha256: 'abc', size: 100, hexChunks: [], base64: null },
-    lir,
+    lir: lir ? [lir] : undefined,
   };
 }
 

@@ -92,7 +92,10 @@ export class CompostMill {
   /** Add files or directories to the heap. */
   async add(inputPaths: string[]): Promise<void> {
     for (const inputPath of inputPaths) {
-      const stat = await fs.stat(inputPath).catch(() => null);
+      const stat = await fs.stat(inputPath).catch((err) => {
+        console.warn(`[CompostMill] Cannot access ${inputPath}:`, err instanceof Error ? err.message : err);
+        return null;
+      });
       if (!stat) continue;
 
       if (stat.isDirectory()) {

@@ -222,7 +222,10 @@ export class DNAExtractor {
     // Check for test files
     try {
       const testDir = path.join(projectPath, 'test');
-      const entries = await fs.readdir(testDir).catch(() => []);
+      const entries = await fs.readdir(testDir).catch((err) => {
+        console.warn(`[DNAExtractor] Cannot read test directory:`, err instanceof Error ? err.message : err);
+        return [];
+      });
       if (entries.length > 0) patterns.push('has-test-suite');
     } catch (err) {
       console.warn('DNAExtractor.extractPatterns (test directory) failed:', err);
@@ -243,7 +246,10 @@ export class DNAExtractor {
 
     // Check source structure
     try {
-      const srcFiles: string[] = await fs.readdir(path.join(projectPath, 'src')).catch((): string[] => []);
+      const srcFiles: string[] = await fs.readdir(path.join(projectPath, 'src')).catch((err) => {
+        console.warn('[DNAExtractor] Cannot read src directory:', err instanceof Error ? err.message : err);
+        return [] as string[];
+      });
       if (srcFiles.includes('core')) patterns.push('has-core-module');
       if (srcFiles.includes('utils')) patterns.push('has-utils-module');
     } catch (err) {
@@ -259,7 +265,10 @@ export class DNAExtractor {
 
     // Look for prompt-related files
     const promptPatterns = ['prompt', 'PROMPT', 'template'];
-    for (const entry of await fs.readdir(projectPath).catch(() => [])) {
+    for (const entry of await fs.readdir(projectPath).catch((err) => {
+      console.warn(`[DNAExtractor] Cannot read project directory ${projectPath}:`, err instanceof Error ? err.message : err);
+      return [];
+    })) {
       if (promptPatterns.some(p => entry.toLowerCase().includes(p.toLowerCase())) && entry.endsWith('.md')) {
         try {
           const content = await fs.readFile(path.join(projectPath, entry), 'utf-8');

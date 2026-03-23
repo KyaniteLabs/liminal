@@ -158,7 +158,10 @@ export class SemanticExtractor {
     }
 
     if (textExts.includes(ext)) {
-      const content = await fs.readFile(filePath, 'utf-8').catch(() => '');
+      const content = await fs.readFile(filePath, 'utf-8').catch((err) => {
+        console.warn(`[SemanticExtractor] Failed to read ${filePath}:`, err instanceof Error ? err.message : err);
+        return '';
+      });
       return this.extractText(content, filePath);
     }
     if (codeExts.includes(ext)) {

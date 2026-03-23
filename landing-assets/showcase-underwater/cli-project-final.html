@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>p5.js Sketch</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+        }
+        main {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <script>
+<think>
+The user wants an underwater scene with light rays, caustics (light patterns on surfaces underwater), and bubbles. Based on the previous iterations, I need to create a p5.js sketch that includes:
+
+1. Bubbles rising
+2. Light rays coming from above (like sunlight filtering through water)
+3. Caustic patterns (the dancing light patterns you see underwater)
+4. A nice underwater gradient background
+
+I'll use Perlin noise for the organic movement of rays and caustics. Let me create a complete, self-contained sketch.
+
+Key elements to include:
+- Gradient blue/teal underwater background
+- Multiple light rays from the top with swaying motion
+- Caustic patterns on the bottom
+- Bubbles with varying sizes rising with slight wobble
+- Possibly some particle effects for depth
+
+Let me write this out without any markdown or explanation, just the raw code.
+</think>
+
+let bubbles = [];
+let rays = [];
+let causticPoints = [];
+let numBubbles = 60;
+let numRays = 8;
+let time = 0;
+let causticTime = 0;
+
+class Bubble {
+  constructor() {
+    this.reset();
+  }
+  
+  reset() {
+    this.x = random(width);
+    this.y = random(height, height + 200);
+    this.size = random(3, 15);
+    this.speed = map(this.size, 3, 15, 0.5, 2);
+    this.wobbleSpeed = random(0.02, 0.05);
+    this.wobbleAmount = random(10, 30);
+    this.noiseOffset = random(1000);
+    this.alpha = random(100, 200);
+  }
+  
+  update() {
+    this.y -= this.speed;
+    this.x += sin(frameCount * this.wobbleSpeed + this.noiseOffset) * 0.5;
+    
+    if (this.y < -this.size) {
+      this.reset();
+    }
+  }
+  
+  draw() {
+    noStroke();
+    fill(255, 255, 255, this.alpha * 0.3);
+    ellipse(this.x, this.y, this.size * 2);
+    fill(255, 255, 255, this.alpha * 0.5);
+    ellipse(this.x - this.size * 0.3, this.y - this.size * 0.3, this.size * 0.5);
+  }
+}
+
+function setup() {
+  createCanvas(800, 600);
+  pixelDensity(1);
+  
+  for (let i = 0; i < numBubbles; i++) {
+    bubbles.push(new Bubble());
+  }
+  
+  for (let i = 0; i < numRays; i++) {
+    rays.push({
+      baseX: map(i, 0, numRays, 80, width - 80),
+      width: random(40, 100),
+      noiseOffset: random(1000),
+      speed: random(0.3, 0.8)
+    });
+  }
+  
+  for (let i = 0; i < 150; i++) {
+    causticPoints.push({
+      x: random(width),
+      y: random(height * 0.5, height),
+      size: random(20, 80),
+      noiseOffsetX: random(1000),
+      noiseOffsetY: random(2000),
+      speed: random(0.5, 1.5)
+    });
+  }
+}
+
+function draw() {
+  time += 0.008;
+  causticTime += 0.02;
+  
+  drawBackground();
+  drawCaustics();
+  drawLightRays();
+  drawParticles();
+  drawBubbles();
+}
+
+function drawBackground() {
+  for (let y = 0; y < height; y++) {
+    let inter = map(y, 0, height, 0, 1);
+    let c = lerpColor(color(10, 40, 80), color(30, 100, 140), inter * 0.5);
+    stroke(c);
+    line(0, y, width, y);
+  }
+  
+  noStroke();
+  fill(20, 60, 100, 30);
+  rect(0, height * 0.6, width, height * 0.4);
+}
+
+function drawLightRays() {
+  for (let ray of rays) {
+    let swayOffset = noise(time * ray.speed + ray.noiseOffset) * 60 - 30;
+    let rayX = ray.baseX + swayOffset;
+    
+    let gradient = drawingContext.createLinearGradient(rayX - ray.width/2, 0, rayX + ray.width/2, 0);
+    gradient.addColorStop(0, 'rgba(150, 220, 255, 0)');
+    gradient.addColorStop(0.3, 'rgba(180, 240, 255, 0.08)');
+    gradient.addColorStop(0.5, 'rgba(200, 250, 255, 0.15)');
+    gradient.addColorStop(0.7, 'rgba(180, 240, 255, 0.08)');
+    gradient.addColorStop(1, 'rgba(150, 220, 255, 0)');
+    
+    drawingContext.fillStyle = gradient;
+    
+    beginShape();
+    vertex(rayX - ray.width/2, 0);
+    vertex(rayX + ray.width/2, 0);
+    
+    let swayBottom = noise(time * ray.speed + ray.noiseOffset + 500) * 80 - 40;
+    let bottomX1 = rayX - ray.width/2 - 100 + swayBottom;
+    let bottomX2 = rayX + ray.width/2 + 100 + swayBottom;
+    
+    vertex(bottomX2, height);
+    vertex(bottomX1, height);
+    endShape(CLOSE);
+  }
+}
+
+function drawCaustics() {
+  for (let point of causticPoints) {
+    let noiseX = noise(causticTime * point.speed + point.noiseOffsetX);
+    let noiseY = noise(causticTime * point.speed + point.noiseOffsetY);
+    
+    let cx = point.x + (noiseX - 0.5) * 100;
+    let cy = point.y + (noiseY - 0.5) * 50;
+    
+    let sizeVar = point.size + (noiseX - 0.5) * 40;
+    
+    let brightness = noise(causticTime * 0.5 + point.noiseOffsetX);
+    let alpha = map(brightness, 0.3, 0.7, 5, 20);
+    
+    noStroke();
+    fill(200, 255, 255, alpha);
+    
+    beginShape();
+    for (let i = 0; i < 6; i++) {
+      let angle = TWO_PI / 6 * i;
+      let r = sizeVar * (0.5 + noise(angle * 2 + causticTime) * 0.5);
+      vertex(cx + cos(angle) * r, cy + sin(angle) * r);
+    }
+    endShape(CLOSE);
+  }
+}
+
+function drawParticles() {
+  for (let i = 0; i < 80; i++) {
+    let x = noise(i * 0.1, time * 0.3) * width;
+    let y = noise(i * 0.1 + 500, time * 0.3) * height;
+    let size = noise(i * 0.1 + 1000) * 3;
+    
+    fill(200, 230, 255, 50);
+    noStroke();
+    ellipse(x, y, size);
+  }
+}
+
+function drawBubbles() {
+  for (let bubble of bubbles) {
+    bubble.update();
+    bubble.draw();
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+        </script>
+    </main>
+</body>
+</html>

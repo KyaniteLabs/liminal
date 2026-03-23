@@ -9,8 +9,9 @@ PromptLibrary.register({
 Generate a creative fragment shader based on the user's description.
 
 CONSTRAINTS:
-- DO NOT wrap code in markdown fences or code blocks
-- DO NOT add explanatory text before or after the code
+- CRITICAL: Output ONLY the raw GLSL code - NO markdown fences, NO code blocks
+- CRITICAL: DO NOT include any explanatory text, reasoning, or commentary
+- CRITICAL: Start directly with precision highp float; or uniform declarations
 - DO NOT use texture lookups without providing a fallback color/value
 - DO NOT use loops with unbounded iteration counts — always set a maximum
 - DO NOT use deprecated GLSL features (gl_FragColor is acceptable for WebGL 1 compatibility)

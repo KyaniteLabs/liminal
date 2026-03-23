@@ -159,9 +159,15 @@ export class RalphLoop {
           normalizedOptions.onThought?.('Generating code...');
         }
 
-        // Generate code
-        const { code } = await generator.generate(usedPrompt, loadedPrompt);
+        // Generate code (bypass cache to ensure fresh generation each iteration)
+        // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
+        const { code } = await generator.generate(usedPrompt, loadedPrompt, true);
         currentCode = code;
+
+        // Diagnostic: Log that we got fresh code (not from cache)
+        if (normalizedOptions.chatMode) {
+          normalizedOptions.onThought?.(`Generated ${code.length} characters of code (iteration ${iteration})`);
+        }
 
         // Evaluate quality
         if (normalizedOptions.chatMode) {
@@ -181,6 +187,13 @@ export class RalphLoop {
           aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
           noveltyScore: evaluation.dimensions?.novelty ?? 0,
         });
+
+        // Quality gate: break if score below minimum threshold (after giving it a chance)
+        // Only apply quality gate after at least 2 iterations to allow initial attempts
+        if (iteration >= 2 && evaluation.score < normalizedOptions.minQualityScore) {
+          reason = `quality threshold not met (score ${evaluation.score.toFixed(2)} < ${normalizedOptions.minQualityScore})`;
+          break;
+        }
 
         // Update evolution subsystems
         const { noveltyScore, hints } = await evolution.update(iteration, currentCode, evaluation.score, prompt);

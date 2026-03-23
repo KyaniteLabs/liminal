@@ -18,8 +18,9 @@ PromptLibrary.register({
 Generate a complete, self-contained p5.js sketch based on the user's description.
 
 CONSTRAINTS:
-- DO NOT wrap code in markdown fences or code blocks
-- DO NOT add explanatory text before or after the code
+- CRITICAL: Output ONLY the raw JavaScript code - NO markdown fences, NO code blocks
+- CRITICAL: DO NOT include any explanatory text, reasoning, or commentary
+- CRITICAL: Start directly with variable declarations, setup(), or other code
 - DO NOT use external assets, APIs, or libraries beyond p5.js
 - DO NOT use deprecated p5.js methods (e.g., drawingContext for simple shapes)
 - DO NOT use createP() or any DOM-manipulation functions unless explicitly requested
@@ -58,8 +59,9 @@ PromptLibrary.register({
 Improve the provided p5.js sketch across three dimensions: visual quality, code structure, and performance.
 
 CONSTRAINTS:
-- DO NOT wrap code in markdown fences or code blocks
-- DO NOT add explanatory text before or after the code
+- CRITICAL: Output ONLY the raw JavaScript code - NO markdown fences, NO code blocks
+- CRITICAL: DO NOT include any explanatory text, reasoning, or commentary
+- CRITICAL: Start directly with variable declarations, setup(), or other code
 - DO NOT replace the entire creative approach — preserve the core concept
 - DO NOT add external dependencies or libraries beyond p5.js
 - DO NOT remove features present in the original unless they cause errors

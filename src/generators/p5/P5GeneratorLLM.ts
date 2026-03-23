@@ -5,6 +5,8 @@ export interface P5GeneratorOptions {
   temperature?: number;
   /** Optional AbortSignal for request timeout/cancellation */
   signal?: AbortSignal;
+  /** Bypass LLM cache for this generation */
+  bypassCache?: boolean;
 }
 
 export class P5GeneratorLLM {
@@ -27,7 +29,7 @@ export class P5GeneratorLLM {
       ? '\nNote: The user wants sound/audio. Include Web Audio API (AudioContext, createOscillator) or p5.sound.'
       : '';
     const context = soundContext || undefined;
-    const llmResponse = await this.llm.generateP5Sketch(prompt, context, options?.signal);
+    const llmResponse = await this.llm.generateP5Sketch(prompt, context, options?.signal, options?.bypassCache);
 
     if (!llmResponse.code || llmResponse.code.trim() === '') {
       throw new Error('P5GeneratorLLM: LLM returned empty code for prompt: ' + prompt.slice(0, 100));

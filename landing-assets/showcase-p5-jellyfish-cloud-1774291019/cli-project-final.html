@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>p5.js Sketch</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: #f0f0f0;
+        }
+        main {
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <script>
+<think>
+The user wants me to create a p5.js sketch featuring bioluminescent jellyfish with tentacles that flow organically using noise. Based on the previous iteration feedback, I need to improve upon the declining quality score by adding animation and interactivity.
+
+Let me create a new version that:
+1. Features animated bioluminescent jellyfish
+2. Has tentacles that flow organically using Perlin noise
+3. Includes interactivity (mouse interaction)
+4. Has good visual quality with smooth animations
+5. Uses proper p5.js syntax without deprecated methods
+
+I'll create a sketch with:
+- Multiple jellyfish with pulsing bodies
+- Tentacles using noise for organic movement
+- Glowing effects using alpha blending
+- Particle systems for ambient atmosphere
+- Mouse interaction for jellyfish movement or tentacle reaction
+- Smooth color gradients and bioluminescent colors
+
+Let me write the complete code:
+</think>
+
+let jellyfish = [];
+let particles = [];
+let numJellyfish = 6;
+let numParticles = 150;
+let t = 0;
+
+class Jellyfish {
+  constructor(x, y, size) {
+    this.x = x;
+    this.y = y;
+    this.baseX = x;
+    this.baseY = y;
+    this.size = size;
+    this.tentacles = [];
+    this.numTentacles = floor(random(6, 12));
+    this.pulsePhase = random(TWO_PI);
+    this.hue = random(180, 280);
+    this.noiseOffsetX = random(1000);
+    this.noiseOffsetY = random(1000);
+    this.phaseOffset = random(1000);
+    
+    for (let i = 0; i < this.numTentacles; i++) {
+      this.tentacles.push({
+        angle: map(i, 0, this.numTentacles, -PI/3, PI/3),
+        length: size * random(2, 4),
+        segments: floor(random(12, 20)),
+        noiseOffset: random(1000)
+      });
+    }
+  }
+  
+  update(mouseX, mouseY) {
+    let targetX = this.baseX;
+    let targetY = this.baseY;
+    
+    let d = dist(mouseX, mouseY, this.x, this.y);
+    if (d < 200) {
+      let angle = atan2(this.y - mouseY, this.x - mouseX);
+      let force = map(d, 0, 200, 50, 0);
+      targetX += cos(angle) * force;
+      targetY += sin(angle) * force;
+    }
+    
+    this.x += (targetX - this.x) * 0.02;
+    this.y += (targetY - this.y) * 0.02;
+    
+    this.baseY += sin(t * 0.5 + this.pulsePhase) * 0.3;
+    this.x += noise(this.noiseOffsetX + t * 0.01) * 2 - 1;
+  }
+  
+  draw() {
+    push();
+    translate(this.x, this.y);
+    
+    let pulse = sin(t * 2 + this.pulsePhase) * 0.2 + 1;
+    let currentSize = this.size * pulse;
+    
+    for (let glow = 3; glow >= 0; glow--) {
+      noStroke();
+      let alpha = map(glow, 3, 0, 10, 60);
+      let glowSize = currentSize * (1 + glow * 0.5);
+      
+      fill(this.hue, 100, 80, alpha);
+      ellipse(0, 0, glowSize, glowSize * 0.7);
+    }
+    
+    noStroke();
+    fill(this.hue, 80, 100, 200);
+    ellipse(0, 0, currentSize, currentSize * 0.7);
+    
+    fill(this.hue, 60, 100, 150);
+    ellipse(-currentSize * 0.2, -currentSize * 0.1, currentSize * 0.3, currentSize * 0.2);
+    
+    for (let tentacle of this.tentacles) {
+      this.drawTentacle(tentacle, currentSize);
+    }
+    
+    pop();
+  }
+  
+  drawTentacle(tentacle, headSize) {
+    let baseX = sin(tentacle.angle) * headSize * 0.4;
+    let baseY = headSize * 0.3;
+    
+    beginShape();
+    noFill();
+    stroke(this.hue, 70, 90, 150);
+    strokeWeight(2);
+    
+    let prevX = baseX;
+    let prevY = baseY;
+    
+    for (let i = 0; i <= tentacle.segments; i++) {
+      let progress = i / tentacle.segments;
+      let segX = baseX + tentacle.length * sin(tentacle.angle) * progress;
+      let segY = baseY + tentacle.length * progress;
+      
+      let noiseVal = noise(
+        tentacle.noiseOffset + t * 0.8 + progress * 3,
+        this.phaseOffset
+      );
+      
+      segX += (noiseVal - 0.5) * 40 * progress;
+      
+      let gravity = progress * progress * 20;
+      segY += gravity;
+      
+      if (i > 0) {
+        let alpha = map(progress, 0, 1, 180, 30);
+        stroke(this.hue, 80, 100, alpha);
+        strokeWeight(map(progress, 0, 1, 3, 0.5));
+        line(prevX, prevY, segX, segY);
+      }
+      
+      prevX = segX;
+      prevY = segY;
+    }
+    
+    endShape();
+  }
+}
+
+class Particle {
+  constructor() {
+    this.reset();
+  }
+  
+  reset() {
+    this.x = random(width);
+    this.y = random(height);
+    this.size = random(1, 4);
+    this.alpha = random(30, 100);
+    this.hue = random(160, 300);
+    this.noiseOffsetX = random(1000);
+    this.noiseOffsetY = random(1000);
+    this.speed = random(0.2, 0.8);
+  }
+  
+  update() {
+    let angle = noise(this.noiseOffsetX + t * 0.1, this.noiseOffsetY) * TWO_PI * 2;
+    this.x += cos(angle) * this.speed;
+    this.y += sin(angle) * this.speed * 0.5 - 0.2;
+    
+    if (this.y < -10 || this.x < -10 || this.x > width + 10) {
+      this.reset();
+      this.y = height + 10;
+    }
+  }
+  
+  draw() {
+    noStroke();
+    fill(this.hue, 60, 100, this.alpha);
+    
+    for (let i = 2; i >= 0; i--) {
+      fill(this.hue, 60, 100, this.alpha * (1 - i * 0.3));
+      ellipse(this.x, this.y, this.size + i * 2, this.size + i * 2);
+    }
+  }
+}
+
+function setup() {
+  createCanvas(800, 600);
+  pixelDensity(1);
+  noiseSeed(random(10000));
+  colorMode(HSB, 360, 100, 100, 255);
+  
+  for (let i = 0; i < numJellyfish; i++) {
+    jellyfish.push(new Jellyfish(
+      random(width * 0.2, width * 0.8),
+      random(height * 0.15, height * 0.65),
+      random(35, 70)
+    ));
+  }
+  
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  background(240, 30, 8, 40);
+  
+  blendMode(ADD);
+  
+  for (let particle of particles) {
+    particle.update();
+    particle.draw();
+  }
+  
+  for (let jelly of jellyfish) {
+    jelly.update(mouseX, mouseY);
+    jelly.draw();
+  }
+  
+  blendMode(BLEND);
+  
+  t += 0.016;
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function mousePressed() {
+  noiseSeed(random(10000));
+  for (let jelly of jellyfish) {
+    jelly.noiseOffsetX = random(1000);
+    jelly.noiseOffsetY = random(1000);
+    jelly.hue = random(180, 280);
+  }
+}
+        </script>
+    </main>
+</body>
+</html>

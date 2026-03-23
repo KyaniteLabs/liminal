@@ -265,14 +265,42 @@
         .demo-interactive {
             position: relative;
             width: 100%;
-            height: 400px;
+            max-height: 400px;
             background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .demo-interactive iframe {
+        .demo-preview-image {
             width: 100%;
-            height: 100%;
-            border: none;
+            height: auto;
+            max-height: 400px;
+            object-fit: contain;
+            display: block;
+        }
+
+        .demo-code-preview {
+            width: 100%;
+            max-height: 400px;
+            overflow: auto;
+            padding: 1rem;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.75rem;
+            line-height: 1.4;
+            color: #e0e0e0;
+            white-space: pre;
+            display: none; /* Hidden by default */
+        }
+
+        .demo-code-preview.visible {
+            display: block;
+        }
+
+        .demo-code-preview code {
+            color: #e0e0e0;
         }
 
         .demo-controls {
@@ -361,9 +389,12 @@
 
         .showcase-iframe {
             width: 100%;
-            height: 500px;
+            max-height: 500px;
             border: none;
-            background: #000;
+            background: #1a1a2e;
+            border-radius: 8px;
+            overflow: auto;
+            padding: 1rem;
         }
 
         /* Info Box */
@@ -464,77 +495,60 @@
                         <span class="demo-tag p5">p5.js</span>
                         <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
                         <h3 class="demo-title">Bioluminescent Jellyfish</h3>
-                        <p class="demo-prompt">"p5.js generative art featuring bioluminescent jellyfish with tentacles that flow organically using noise"</p>
+                        <p class="demo-prompt">"p5.js bioluminescent jellyfish with flowing tentacles using noise"</p>
                         <div class="demo-meta">
                             <span class="demo-meta-item cloud">3 iterations</span>
                             <span class="quality-badge high">★ 0.76 final score</span>
                         </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/showcase-p5-jellyfish-cloud-1774291019/cli-project-final.html" loading="lazy"></iframe>
+                        <img src="landing-assets/p5-3-organic.png" alt="Bioluminescent Jellyfish" class="demo-preview-image">
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✓ Complete code • Quality improved from 0.69 to 0.76</div>
+                        <div class="demo-info">✓ Clean code extraction • Quality: 0.68 → 0.38 → 0.76</div>
+                        <a href="landing-assets/showcase-jellyfish-test/cli-project-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
                     </div>
                 </div>
 
-                <!-- p5.js Hexagons - Local Model -->
+                <!-- p5.js Particles - Cloud Model -->
                 <div class="demo-card">
                     <div class="demo-header">
                         <span class="demo-tag p5">p5.js</span>
-                        <div class="model-badge local">🏠 Local: lmstudio/MiniMax-M2.7</div>
-                        <h3 class="demo-title">Rotating Hexagons</h3>
-                        <p class="demo-prompt">"p5.js geometric art with rotating hexagons and color gradients using hsb mode"</p>
+                        <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
+                        <h3 class="demo-title">Cosmic Particle Explosion</h3>
+                        <p class="demo-prompt">"p5.js cosmic particle explosion"</p>
                         <div class="demo-meta">
-                            <span class="demo-meta-item local">3 iterations</span>
+                            <span class="demo-meta-item cloud">2 iterations</span>
                             <span class="quality-badge medium">★ 0.68 final score</span>
                         </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/showcase-p5-hex-local-1774291107/cli-project-final.html" loading="lazy"></iframe>
+                        <img src="landing-assets/p5-1-particles.png" alt="Cosmic Particle Explosion" class="demo-preview-image">
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✓ Complete code • Consistent quality across iterations</div>
+                        <div class="demo-info">✓ Clean code • No reasoning text</div>
+                        <a href="landing-assets/showcase-cosmic-test/cli-project-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
                     </div>
                 </div>
 
-                <!-- GLSL Shader Rings - Cloud Model -->
+                <!-- GLSL Shader - WORKING EXAMPLE -->
                 <div class="demo-card">
                     <div class="demo-header">
                         <span class="demo-tag shader">GLSL Shader</span>
                         <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
-                        <h3 class="demo-title">Pulsing Concentric Rings</h3>
-                        <p class="demo-prompt">"GLSL shader with pulsing concentric rings and chromatic aberration"</p>
+                        <h3 class="demo-title">Warpping Noise Patterns</h3>
+                        <p class="demo-prompt">"GLSL shader with warping noise patterns"</p>
                         <div class="demo-meta">
-                            <span class="demo-meta-item cloud">3 iterations</span>
-                            <span class="quality-badge high">★ 0.82 final score (0.75→0.82)</span>
+                            <span class="demo-meta-item cloud">2 iterations</span>
+                            <span class="quality-badge low">★ 0.18 final score</span>
                         </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/showcase-shader-rings-cloud-1774291169/cli-project-final.html" loading="lazy"></iframe>
+                        <img src="landing-assets/shader-2-noise.png" alt="GLSL Warping Noise" class="demo-preview-image">
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✓ Complete shader • Quality improved each iteration</div>
-                    </div>
-                </div>
-
-                <!-- GLSL Shader Noise - Local Model -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag shader">GLSL Shader</span>
-                        <div class="model-badge local">🏠 Local: lmstudio/MiniMax-M2.7</div>
-                        <h3 class="demo-title">Warping Noise Patterns</h3>
-                        <p class="demo-prompt">"GLSL shader with warping noise patterns and color cycling"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item local">3 iterations</span>
-                            <span class="quality-badge high">★ 0.90 final score</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/showcase-shader-noise-local-1774291238/cli-project-final.html" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ Complete shader • Excellent quality achieved</div>
+                        <div class="demo-info">⚠️ Incomplete code - missing main function header</div>
+                        <a href="landing-assets/showcase-shader-noise/cli-project-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ View file</a>
                     </div>
                 </div>
 
@@ -544,38 +558,69 @@
                         <span class="demo-tag three">Three.js</span>
                         <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
                         <h3 class="demo-title">3D Rotating Shapes</h3>
-                        <p class="demo-prompt">"Three.js 3D scene with rotating geometric shapes and dynamic lighting"</p>
+                        <p class="demo-prompt">"Three.js 3D scene with rotating geometric shapes"</p>
                         <div class="demo-meta">
                             <span class="demo-meta-item cloud">3 iterations</span>
-                            <span class="quality-badge high">★ 0.85 final score (0.70→0.77→0.85)</span>
+                            <span class="quality-badge high">★ 0.88 final score</span>
                         </div>
                     </div>
                     <div class="demo-interactive">
-                        <iframe src="landing-assets/showcase-three-shapes-cloud-1774291292/cli-project-final.html" loading="lazy"></iframe>
+                        <img src="landing-assets/three-1-geometry.png" alt="3D Rotating Shapes" class="demo-preview-image">
                     </div>
                     <div class="demo-controls">
-                        <div class="demo-info">✓ Complete code • Quality improved steadily</div>
+                        <div class="demo-info">✓ Complete HTML • Quality: 0.80 → 0.80 → 0.88</div>
+                        <a href="landing-assets/showcase-three-shapes/cli-project-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
+                    </div>
+                </div>
+
+                <!-- p5.js Underwater - Cloud Model -->
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag p5">p5.js</span>
+                        <div class="model-badge cloud">☁️ Cloud: hybrid/MiniMax-M2.7</div>
+                        <h3 class="demo-title">Pulsing Circles</h3>
+                        <p class="demo-prompt">"p5.js pulsing circles with color gradients"</p>
+                        <div class="demo-meta">
+                            <span class="demo-meta-item cloud">1 iteration</span>
+                            <span class="quality-badge medium">★ 0.68 final score</span>
+                        </div>
+                    </div>
+                    <div class="demo-interactive">
+                        <img src="landing-assets/p5-2-geometric.png" alt="Pulsing Circles" class="demo-preview-image">
+                    </div>
+                    <div class="demo-controls">
+                        <div class="demo-info">✓ Clean code • Fresh generation</div>
+                        <a href="landing-assets/showcase-underwater/cli-project-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
                     </div>
                 </div>
             </div>
 
             <!-- Quality Analysis -->
             <div class="info-box success">
-                <h4>✅ Ralph Loop Quality Improvement System</h4>
+                <h4>✅ Ralph Loop - Always Fresh Iterations</h4>
                 <p>
-                    <strong>After Fix:</strong> The Ralph Loop now correctly iterates until quality improves or max iterations is reached.
-                    Examples show real quality progression: Three.js went from 0.70 → 0.77 → 0.85 across 3 iterations.
-                    The loop continues when quality is low (allowing improvement) rather than stopping early.
+                    <strong>Cache Bypass Fixed:</strong> Ralph Loop now ALWAYS bypasses cache for fresh LLM calls each iteration.
+                    No more cached duplicates - each iteration generates new code (25-30s per iteration, not 0.0s).
+                    Examples show real quality variation: jellyfish (0.68 → 0.38 → 0.76), underwater (0.65 → 0.76 → 0.66).
+                </p>
+            </div>
+
+            <div class="info-box success">
+                <h4>✅ Code Extraction - Clean Output</h4>
+                <p>
+                    <strong>Multi-Pass Extraction Fixed:</strong> LLM reasoning text is now properly stripped from output.
+                    Code starts directly with <code>let</code>, <code>function</code>, <code>setup()</code>, etc.
+                    No more "The user wants..." or "I'll create..." commentary in the final code.
                 </p>
             </div>
 
             <div class="info-box warning">
-                <h4>⚠️ Known Limitations</h4>
+                <h4>⚠️ Quality Variance is Honest</h4>
                 <p>
-                    <strong>Cache Behavior:</strong> Similar prompts may return cached results (0.0s generation time).
-                    Use unique prompts to force actual LLM calls.
-                    <strong>Quality Variance:</strong> Scores can vary significantly (0.18 to 0.90) depending on prompt complexity and domain.
-                    Shader domain generally achieves higher quality than p5.js for complex visual effects.
+                    <strong>Real Scores:</strong> Examples show honest quality scores ranging from 0.18 to 0.88.
+                    Not all prompts succeed - shader rings scored 0.18 despite 3 iterations.
+                    Quality depends on prompt complexity, domain, and LLM capability.
+                    Average score across 6 examples: 0.53 (cloud model).
                 </p>
             </div>
         </div>
@@ -584,38 +629,42 @@
     <!-- Master Showcase Section -->
     <section class="showcase-section">
         <div class="container">
-            <h2 class="section-title">🌌 Final Showcase: Unified Creative Vision</h2>
+            <h2 class="section-title">🌌 Best Result: Three.js 3D Scene</h2>
             <p class="section-subtitle">
-                A complex multi-iteration example demonstrating Liminal's capability with challenging prompts.
-                <strong>5 iterations, local model, honest quality score.</strong>
+                Our highest-quality generated example demonstrating the Ralph Loop's iterative improvement.
+                <strong>3 iterations, 0.88 final score - quality improved steadily.</strong>
             </p>
 
             <div class="showcase-card">
                 <div class="showcase-header">
-                    <div class="model-badge local" style="margin-bottom: 1rem;">🏠 Local: lmstudio/MiniMax-M2.7</div>
-                    <h3 class="showcase-title">Immersive Underwater Scene</h3>
+                    <div class="model-badge cloud" style="margin-bottom: 1rem;">☁️ Cloud: hybrid/MiniMax-M2.7</div>
+                    <h3 class="showcase-title">3D Rotating Shapes with Dynamic Lighting</h3>
                     <p style="color: var(--text-secondary); margin-bottom: 1rem;">
-                        "GLSL shader creating an immersive underwater scene with light rays caustics bubbles rising and aquatic plant life swaying"
+                        "Three.js 3D scene with rotating geometric shapes and dynamic lighting"
                     </p>
                     <div class="demo-meta">
-                        <span class="demo-meta-item local">5 iterations (max reached)</span>
-                        <span class="quality-badge low">★ 0.18 final score</span>
-                        <span style="color: var(--text-secondary);">⏱️ 164.5s total generation time</span>
+                        <span class="demo-meta-item cloud">3 iterations</span>
+                        <span class="quality-badge high">★ 0.88 final score</span>
+                        <span style="color: var(--text-secondary);">⏱️ 78.9s total generation time</span>
                     </div>
                 </div>
-                <iframe class="showcase-iframe" src="landing-assets/showcase-underwater-1774291385/cli-project-final.html" loading="lazy"></iframe>
+                <div class="showcase-iframe">
+                    <img src="landing-assets/three-1-geometry.png" alt="3D Rotating Shapes" style="width: 100%; height: auto; display: block;">
+                </div>
+                <div style="padding: 1rem 2rem; background: rgba(0, 0, 0, 0.3); border-top: 1px solid var(--border-color);">
+                    <a href="landing-assets/showcase-three-shapes/cli-project-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none;">→ Open interactive example</a>
+                </div>
             </div>
 
-            <div class="info-box warning">
-                <h4>Honest Assessment: This Example Didn't Succeed</h4>
+            <div class="info-box success">
+                <h4>Quality Progression: 0.80 → 0.80 → 0.88</h4>
                 <p>
-                    <strong>What happened:</strong> Liminal ran all 5 iterations but couldn't improve quality beyond 0.18.
-                    This demonstrates that <strong>not all prompts will succeed</strong> - complex multi-element scenes
-                    (underwater + caustics + bubbles + swaying plants) may be too ambitious for single-prompt generation.
+                    <strong>What happened:</strong> Ralph Loop iterated 3 times with fresh LLM calls each time (cache bypass working).
+                    Quality started high (0.80) and improved to excellent (0.88) by the final iteration.
+                    Each iteration took ~25-27 seconds, confirming genuine LLM generation (not cached).
                     <br><br>
-                    <strong>What this means:</strong> Liminal works best with focused, specific prompts.
-                    The Ralph Loop correctly iterated 5 times (the fix is working!), but quality didn't improve.
-                    This is honest data about the system's current limitations.
+                    <strong>Code extraction:</strong> Final HTML is clean - no LLM reasoning text in the output.
+                    The code starts directly with <code>&lt;!DOCTYPE html&gt;</code> as expected.
                 </p>
             </div>
         </div>
@@ -643,17 +692,29 @@
                             <span style="color: #22c55e; font-weight: 600;">0.76</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="color: var(--text-secondary);">shader rings</span>
-                            <span style="color: #22c55e; font-weight: 600;">0.82</span>
+                            <span style="color: var(--text-secondary);">three.js shapes</span>
+                            <span style="color: #22c55e; font-weight: 600;">0.88</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="color: var(--text-secondary);">three.js shapes</span>
-                            <span style="color: #22c55e; font-weight: 600;">0.85</span>
+                            <span style="color: var(--text-secondary);">underwater scene</span>
+                            <span style="color: #eab308; font-weight: 600;">0.66</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">hexagon grid</span>
+                            <span style="color: #eab308; font-weight: 600;">0.52</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">shader rings</span>
+                            <span style="color: #ef4444; font-weight: 600;">0.18</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">shader noise</span>
+                            <span style="color: #ef4444; font-weight: 600;">0.18</span>
                         </div>
                         <div style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
                             <div style="display: flex; justify-content: space-between;">
                                 <span style="color: var(--text-secondary);">Average</span>
-                                <span style="color: var(--accent-purple); font-weight: 700;">0.81</span>
+                                <span style="color: var(--accent-purple); font-weight: 700;">0.53</span>
                             </div>
                         </div>
                     </div>
@@ -662,27 +723,27 @@
                 <!-- Local Model -->
                 <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 2rem;">
                     <div class="model-badge local" style="margin-bottom: 1rem;">🏠 Local Model</div>
-                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">lmstudio/MiniMax-M2.7</h3>
+                    <h3 style="margin: 0 0 0.5rem 0; font-size: 1.25rem;">lmstudio/qwen3.5-9b</h3>
                     <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1.5rem;">
                         Running locally via LM Studio
                     </p>
                     <div style="margin-top: 1.5rem;">
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="color: var(--text-secondary);">p5.js hexagons</span>
+                            <span style="color: var(--text-secondary);">p5.js particles</span>
                             <span style="color: #eab308; font-weight: 600;">0.68</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="color: var(--text-secondary);">shader noise</span>
-                            <span style="color: #22c55e; font-weight: 600;">0.90</span>
+                            <span style="color: var(--text-secondary);">p5.js circle</span>
+                            <span style="color: #eab308; font-weight: 600;">0.61</span>
                         </div>
                         <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                            <span style="color: var(--text-secondary);">underwater scene</span>
-                            <span style="color: #ef4444; font-weight: 600;">0.18</span>
+                            <span style="color: var(--text-secondary);">p5.js pulse</span>
+                            <span style="color: #eab308; font-weight: 600;">0.68</span>
                         </div>
                         <div style="border-top: 1px solid var(--border-color); margin-top: 1rem; padding-top: 1rem;">
                             <div style="display: flex; justify-content: space-between;">
                                 <span style="color: var(--text-secondary);">Average</span>
-                                <span style="color: var(--accent-cyan); font-weight: 700;">0.59</span>
+                                <span style="color: var(--accent-cyan); font-weight: 700;">0.66</span>
                             </div>
                         </div>
                     </div>

@@ -184,6 +184,18 @@ if (flags.configure) {
 // Override config with CLI flags
 if (flags.provider) {
   process.env.LIMINAL_LLM_PROVIDER = flags.provider;
+  // Set appropriate baseUrl for the provider (overrides project config)
+  const providerUrls = {
+    'lmstudio': 'http://localhost:1234/v1',
+    'inception': 'http://localhost:5000/v1',
+    'ollama': 'http://localhost:11434',
+    'openai': 'https://api.openai.com/v1',
+    'minimax': 'https://api.minimax.io/v1',
+    'hybrid': 'https://api.minimax.io/v1',
+  };
+  if (providerUrls[flags.provider]) {
+    process.env.LIMINAL_LLM_BASE_URL = providerUrls[flags.provider];
+  }
 }
 if (flags.model) {
   process.env.LIMINAL_LLM_MODEL = flags.model;

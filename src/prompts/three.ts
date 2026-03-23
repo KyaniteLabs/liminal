@@ -9,7 +9,9 @@ PromptLibrary.register({
 Generate a complete, self-contained HTML file with an interactive 3D scene based on the user's description.
 
 CONSTRAINTS:
-- DO NOT wrap code in markdown fences or code blocks
+- CRITICAL: Output ONLY the HTML file - NO markdown fences, NO code blocks
+- CRITICAL: DO NOT include any explanatory text, reasoning, or commentary before or within the code
+- CRITICAL: Start the HTML directly with <!DOCTYPE html>
 - DO NOT use THREE.Geometry (deprecated since r125) — use BufferGeometry
 - DO NOT mix import styles (use ES module imports exclusively)
 - DO NOT use MeshBasicMaterial for main objects — use MeshStandardMaterial or MeshPhysicalMaterial

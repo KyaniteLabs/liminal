@@ -68,7 +68,8 @@ export class GenerationOrchestrator {
    */
   async generate(
     usedPrompt: string,
-    loadedPrompt: string
+    loadedPrompt: string,
+    bypassCache?: boolean
   ): Promise<GenerationResult> {
     registerAllGenerators();
     const dispatched = generatorRegistry.dispatch(loadedPrompt);
@@ -81,7 +82,7 @@ export class GenerationOrchestrator {
       if (this.options.collabMode) {
         return this.generateWithCollabEngine(usedPrompt, dispatched);
       }
-      return this.generateWithCollaboration(usedPrompt, dispatched);
+      return this.generateWithCollaboration(usedPrompt, dispatched, bypassCache);
     }
 
     if (dispatched) {
@@ -91,8 +92,8 @@ export class GenerationOrchestrator {
     }
 
     const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
-    const generator = new P5GeneratorLLM();
-    const code = await generator.generate(usedPrompt);
+    const generator = new P5GeneratorLLM(undefined, { bypassCache });
+    const code = await generator.generate(usedPrompt, { bypassCache });
     return { code };
   }
 
@@ -159,7 +160,7 @@ export class GenerationOrchestrator {
     return { code: collabResult.output };
   }
 
-  private async generateWithCollaboration(usedPrompt: string, dispatched: DispatchResult): Promise<GenerationResult> {
+  private async generateWithCollaboration(usedPrompt: string, dispatched: DispatchResult, bypassCache?: boolean): Promise<GenerationResult> {
     const shouldUseCollab = !dispatched || dispatched.entry.name === 'llm';
 
     if (shouldUseCollab) {
@@ -173,8 +174,8 @@ export class GenerationOrchestrator {
     }
 
     const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
-    const generator = new P5GeneratorLLM();
-    const code = await generator.generate(usedPrompt);
+    const generator = new P5GeneratorLLM(undefined, { bypassCache });
+    const code = await generator.generate(usedPrompt, { bypassCache });
     return { code };
   }
 

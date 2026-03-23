@@ -63,6 +63,7 @@ export interface LLMResponse {
   reasoning?: string;
   success: boolean;
   error?: string;
+  fromCache?: boolean;  // Track if response was from cache
 }
 
 function env(key: string): string | undefined {
@@ -104,11 +105,37 @@ export class LLMClient {
   }
 
   /**
+   * Clear the LLM response cache.
+   * Useful for forcing fresh generation in iterative contexts like Ralph Loop.
+   */
+  clearCache(): void {
+    this.cache = new CacheManager({ enabled: false });
+    this.enableCache();
+  }
+
+  /**
+   * Disable caching entirely for this LLMClient instance.
+   */
+  disableCache(): void {
+    this.cache = new CacheManager({ enabled: false });
+  }
+
+  /**
+   * Get cache statistics for debugging.
+   */
+  getCacheStats(): { size: number; enabled: boolean } {
+    return {
+      size: (this.cache as any).cache?.size ?? 0,
+      enabled: (this.cache as any).options?.enabled ?? true
+    };
+  }
+
+  /**
    * Generic LLM generation method.
    * Routes to the configured provider (lmstudio, ollama, openai, minimax, hybrid).
    * Used by generateP5Sketch, improveP5Sketch, and domain-specific generators.
    */
-  async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<LLMResponse> {
+  async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {
     const llmStartTime = Date.now();
     try {
 
@@ -118,10 +145,10 @@ export class LLMClient {
         enhancedUserPrompt = await this.enhanceWithReasoning(userPrompt, systemPrompt);
       }
 
-      // Check cache
-      const cached = this.cache.get(systemPrompt, enhancedUserPrompt);
+      // Check cache (only if not bypassing)
+      const cached = bypassCache ? null : this.cache.get(systemPrompt, enhancedUserPrompt);
       if (cached) {
-        return { code: cached, success: true };
+        return { code: cached, success: true, fromCache: true };
       }
 
       eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', { provider: this.config.provider, model: this.config.model, promptPreview: enhancedUserPrompt.slice(0, 100) });
@@ -142,8 +169,8 @@ export class LLMClient {
         }
       });
 
-      // Write to cache on success
-      if (result.success && result.code) {
+      // Write to cache on success (only if not bypassed)
+      if (result.success && result.code && !bypassCache) {
         this.cache.set(systemPrompt, enhancedUserPrompt, result.code);
       }
 
@@ -163,9 +190,9 @@ export class LLMClient {
     }
   }
 
-  async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal): Promise<LLMResponse> {
+  async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {
     const rendered = PromptLibrary.render('p5.generate', { prompt, context: context || '' });
-    return this.generate(rendered.system, rendered.user, signal);
+    return this.generate(rendered.system, rendered.user, signal, bypassCache);
   }
 
   /**
@@ -180,10 +207,97 @@ export class LLMClient {
     const message = data.choices?.[0]?.message;
     const content = message?.content || '';
     const reasoning = message?.reasoning_content || undefined;
-    const codeMatch = content.match(/```(?:javascript|js)?\n?([\s\S]*?)```/);
-    const cleanCode = codeMatch ? codeMatch[1].trim() : content.trim();
+
+    // Multi-pass code extraction strategy
+    let cleanCode = '';
+
+    // Pass 1: Try to extract code from markdown fences (javascript, js, or no language tag)
+    const markdownCodeMatch = content.match(/```(?:javascript|js)?\n([\s\S]*?)```/);
+    if (markdownCodeMatch) {
+      cleanCode = markdownCodeMatch[1].trim();
+    } else {
+      // Pass 2: Look for code between any markdown fences
+      const anyFenceMatch = content.match(/```\n?([\s\S]*?)```/);
+      if (anyFenceMatch) {
+        cleanCode = anyFenceMatch[1].trim();
+      } else {
+        // Pass 3: Find first actual code line by looking for code keywords
+        const lines = content.split('\n');
+        let codeStartIndex = -1;
+
+        // Patterns that indicate actual code (not reasoning)
+        const codePatterns = [
+          /^(let|const|var|function|class|if|for|while|setup|draw|import|export|return)\b/,
+          /^(precision|void|vec[234]|float|int|bool|uniform|attribute|varying)\b/,
+          /^<!DOCTYPE html>/i,
+          /^<html/i,
+          /^<head/i,
+          /^<body/i,
+          /^<script/i,
+        ];
+
+        // Patterns that indicate reasoning/commentary to skip
+        const skipPatterns = [
+          /^(\/\/\s*)?(The user wants?|I need to|I'll create|I will create|Let me create|Based on|Here's a|This sketch|Creating a|Generating a|I'm going to|The previous|Looking at|To improve|For this|Key elements|I'll write)/i,
+          /^[\d\.\-\s]+/, // Numbered list items like "1. ", "2. ", "- ", etc.
+          /^(Has|Uses|Responds|I'll|I'll create|Maybe|Let me|I should|The code|This will)/i, // Common reasoning phrases
+        ];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          // Check if this line matches code patterns
+          const isCode = codePatterns.some(pattern => pattern.test(line));
+          if (isCode) {
+            codeStartIndex = i;
+            break;
+          }
+
+          // Skip lines that match reasoning patterns
+          const isSkip = skipPatterns.some(pattern => pattern.test(line));
+          if (!isSkip) {
+            // This might be code - include it
+            codeStartIndex = i;
+            break;
+          }
+        }
+
+        if (codeStartIndex >= 0) {
+          cleanCode = lines.slice(codeStartIndex).join('\n').trim();
+        } else {
+          // Fallback: use entire content
+          cleanCode = content.trim();
+        }
+      }
+    }
+
+    // Final cleanup: Remove any remaining leading non-code lines
+    const finalLines = cleanCode.split('\n');
+    let finalCodeStart = 0;
+    const finalCodePatterns = [
+      /^(let|const|var|function|class|if|for|while|setup|draw|import|export|return)\b/,
+      /^(precision|void|vec[234]|float|int|bool|uniform|attribute|varying)\b/,
+      /^<!DOCTYPE html>/i,
+      /^<html/i,
+      /^<head/i,
+      /^<body/i,
+      /^<script/i,
+    ];
+
+    for (let i = 0; i < Math.min(20, finalLines.length); i++) {
+      const line = finalLines[i].trim();
+      if (finalCodePatterns.some(pattern => pattern.test(line))) {
+        finalCodeStart = i;
+        break;
+      }
+    }
+    const finalCode = finalCodeStart > 0
+      ? finalLines.slice(finalCodeStart).join('\n')
+      : cleanCode;
+
     return {
-      code: cleanCode,
+      code: finalCode,
       explanation: content,
       reasoning,
       success: true,
@@ -207,18 +321,28 @@ export class LLMClient {
 
     let response: Response;
     try {
+      const requestBody = {
+        model: this.config.model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens,
+      };
+
+      // Debug: Log request details for LM Studio
+      if (provider === 'lmstudio') {
+        console.error('[LM Studio Debug] Request URL:', `${baseUrl}/chat/completions`);
+        console.error('[LM Studio Debug] Model:', this.config.model);
+        console.error('[LM Studio Debug] System prompt length:', system.length);
+        console.error('[LM Studio Debug] User prompt length:', user.length);
+      }
+
       response = await fetch(`${baseUrl}/chat/completions`, {
         method: 'POST',
         headers,
-        body: JSON.stringify({
-          model: this.config.model,
-          messages: [
-            { role: 'system', content: system },
-            { role: 'user', content: user },
-          ],
-          temperature: this.config.temperature,
-          max_tokens: this.config.maxTokens,
-        }),
+        body: JSON.stringify(requestBody),
         signal,
       });
     } catch (err) {
@@ -234,6 +358,20 @@ export class LLMClient {
     }
 
     if (!response.ok) {
+      // Try to get error details from response body
+      let errorBody = '';
+      try {
+        const errorData = await response.json();
+        errorBody = JSON.stringify(errorData);
+      } catch {
+        // If response isn't JSON, try text
+        try {
+          errorBody = await response.text();
+        } catch {
+          errorBody = response.statusText;
+        }
+      }
+      console.error(`${provider} API error details:`, errorBody);
       throw this.classifyHttpError(provider, response.status, response.statusText);
     }
 

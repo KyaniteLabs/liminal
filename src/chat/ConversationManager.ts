@@ -1,7 +1,9 @@
 import type {
   CreativeSession,
   Session,
-  ConversationMessage
+  ConversationMessage,
+  InterviewQuestion,
+  CreativeBrief
 } from './types.js';
 import { buildCreativeBrief } from './CreativeBrief.js';
 import { getNextQuestion } from './InterviewPhase.js';
@@ -31,7 +33,7 @@ export class ConversationManager {
   interviewAnswers: Map<string, any> = new Map();
 
   // Art Brain integration (stub for Phase 1)
-  artBrain: any; // Will be SemanticArtMemory in Phase 2
+  artBrain: any = null; // Will be SemanticArtMemory in Phase 2
 
   constructor() {
     // Initialize with default state
@@ -116,7 +118,7 @@ export class ConversationManager {
   /**
    * Get the current interview question
    */
-  getInterviewQuestion() {
+  getInterviewQuestion(): InterviewQuestion | null {
     // Return null if we're in generating phase
     if (this.interviewPhase === 'generating') {
       return null;
@@ -127,7 +129,7 @@ export class ConversationManager {
   /**
    * Build a creative brief from interview answers
    */
-  buildCreativeBrief() {
+  buildCreativeBrief(): CreativeBrief {
     return buildCreativeBrief(
       Object.fromEntries(this.interviewAnswers) as any
     );

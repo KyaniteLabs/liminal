@@ -5,11 +5,17 @@ import type {
   InterviewQuestion,
   CreativeBrief
 } from './types.js';
-import { buildCreativeBrief } from './CreativeBrief.js';
+import { buildCreativeBrief, type InterviewAnswers } from './CreativeBrief.js';
 import { getNextQuestion } from './InterviewPhase.js';
 
 // Interview phase type
 type InterviewPhase = 'greeting' | 'discovery' | 'confirm' | 'generating';
+
+/**
+ * Stub interface for Art Brain integration
+ * Will be replaced with SemanticArtMemory in Phase 2
+ */
+interface ArtBrainStub {}
 
 /**
  * Response from the agent to a user message
@@ -33,7 +39,7 @@ export class ConversationManager {
   interviewAnswers: Map<string, any> = new Map();
 
   // Art Brain integration (stub for Phase 1)
-  artBrain: any = null; // Will be SemanticArtMemory in Phase 2
+  artBrain: ArtBrainStub | null = null; // Will be SemanticArtMemory in Phase 2
 
   constructor() {
     // Initialize with default state
@@ -131,7 +137,7 @@ export class ConversationManager {
    */
   buildCreativeBrief(): CreativeBrief {
     return buildCreativeBrief(
-      Object.fromEntries(this.interviewAnswers) as any
+      Object.fromEntries(this.interviewAnswers) as InterviewAnswers
     );
   }
 
@@ -139,7 +145,7 @@ export class ConversationManager {
    * Generate a unique session ID
    */
   private generateUniqueId(): string {
-    return `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    return `session-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
@@ -157,8 +163,11 @@ export class ConversationManager {
     let session = this.sessionHistory.find(s => s.sessionId === this.currentSession?.id);
 
     if (!session) {
+      if (!this.currentSession) {
+        throw new Error('Cannot record message: no active session');
+      }
       session = {
-        sessionId: this.currentSession!.id,
+        sessionId: this.currentSession.id,
         createdAt: new Date(),
         messages: []
       };
@@ -194,7 +203,7 @@ export class ConversationManager {
   /**
    * Advance to next phase if current phase is complete
    */
-  private advancePhase(nextQuestion: any): AgentResponse {
+  private advancePhase(nextQuestion: InterviewQuestion | null): AgentResponse {
     const phaseOrder: InterviewPhase[] = ['greeting', 'discovery', 'confirm', 'generating'];
     const currentIndex = phaseOrder.indexOf(this.interviewPhase);
 

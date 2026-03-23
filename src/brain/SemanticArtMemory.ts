@@ -244,7 +244,7 @@ export class SemanticArtMemory {
 
     // Ensure concepts exist in knowledge graph
     for (const concept of concepts) {
-      let graphConcept = this.knowledgeGraph.getConcept(concept);
+      const graphConcept = this.knowledgeGraph.getConcept(concept);
       if (!graphConcept) {
         // Add concept if it doesn't exist
         this.knowledgeGraph.addConcept(concept, 'technique');

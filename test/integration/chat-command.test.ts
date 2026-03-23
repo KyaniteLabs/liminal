@@ -1,23 +1,24 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { chatCommand, type ChatOptions } from '../../src/chat/commands/chat.js';
 import { ConversationManager } from '../../src/chat/ConversationManager.js';
+import { ChatCLI } from '../../src/chat/ChatCLI.js';
 
 /**
  * Tests for liminal chat CLI command
  */
 
 describe('chat command', () => {
-  let consoleSpy: vi.SpiedFunction<any>;
   let conversationManagerSpy: any;
+  let chatCLIRenderSpy: any;
 
   beforeEach(() => {
-    consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
     conversationManagerSpy = vi.spyOn(ConversationManager.prototype, 'startNewSession').mockImplementation(() => {});
+    chatCLIRenderSpy = vi.spyOn(ChatCLI.prototype, 'render').mockImplementation(() => {});
   });
 
   afterEach(() => {
-    consoleSpy.mockRestore();
     conversationManagerSpy.mockRestore();
+    chatCLIRenderSpy.mockRestore();
   });
 
   it('can be invoked without error', async () => {
@@ -46,6 +47,11 @@ describe('chat command', () => {
   it('handles verbose flag', async () => {
     const options: ChatOptions = { verbose: true };
     await expect(chatCommand(options)).resolves.not.toThrow();
+  });
+
+  it('calls ChatCLI.render()', async () => {
+    await chatCommand();
+    expect(chatCLIRenderSpy).toHaveBeenCalledTimes(1);
   });
 });
 

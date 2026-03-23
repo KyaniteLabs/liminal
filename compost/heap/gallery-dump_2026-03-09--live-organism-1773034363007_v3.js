@@ -1,1 +1,0 @@
-{"type":"organism","musicCode":"// Strudel - ambient (paste at strudel.repl.co)\nsetcps(1.7166666666666666)\nstack(\n  s(\"~ [c3 e3 g3] [e3 g3 c4]\").slow(2),\n  s(\"~ [g2 c3 e3]\").slow(4)\n).slow(0.5)","visualCode":"// fft modulation\nosc(0.32375000000000004).out();\n// bpm=103\nosc(0.17166666666666666).out();"}

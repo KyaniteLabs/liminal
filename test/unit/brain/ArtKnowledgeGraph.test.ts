@@ -30,17 +30,17 @@ describe('ArtKnowledgeGraph', () => {
     });
 
     it('stores metadata with concept', () => {
-      const id = graph.addConcept('Sol LeWitt', 'artist', {
-        born: 1928,
-        died: 2007,
-        nationality: 'American'
+      const id = graph.addConcept('Test Movement', 'movement', {
+        period: '2020s',
+        region: 'Global',
+        significance: 'High'
       });
 
       const concept = graph.getConcept(id);
       expect(concept?.metadata).toEqual({
-        born: 1928,
-        died: 2007,
-        nationality: 'American'
+        period: '2020s',
+        region: 'Global',
+        significance: 'High'
       });
     });
 
@@ -200,7 +200,7 @@ describe('ArtKnowledgeGraph', () => {
       // Setup test data
       graph.addConcept('Generative Art', 'movement');
       graph.addConcept('Perlin Noise', 'technique');
-      graph.addConcept('Sol LeWitt', 'artist');
+      graph.addConcept('Procedural Generation', 'movement');
       graph.addConcept('Balance', 'principle');
       graph.addConcept('Minimalism', 'movement');
       graph.addConcept('Cellular Automata', 'technique');
@@ -221,7 +221,7 @@ describe('ArtKnowledgeGraph', () => {
       const movements = graph.query({ type: 'movement' });
       const techniques = graph.query({ type: 'technique' });
 
-      expect(movements).toHaveLength(2);
+      expect(movements).toHaveLength(3);
       expect(movements.every(c => c.type === 'movement')).toBe(true);
 
       expect(techniques).toHaveLength(2);
@@ -278,10 +278,10 @@ describe('ArtKnowledgeGraph', () => {
       expect(perlinNoise).toBeDefined();
       expect(perlinNoise?.type).toBe('technique');
 
-      // Check for specific artists
-      const solLewitt = graph.getConcept('Sol LeWitt');
-      expect(solLewitt).toBeDefined();
-      expect(solLewitt?.type).toBe('artist');
+      // Check for specific movements
+      const minimalism = graph.getConcept('Minimalism');
+      expect(minimalism).toBeDefined();
+      expect(minimalism?.type).toBe('movement');
 
       // Check for specific principles
       const balance = graph.getConcept('Balance');

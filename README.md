@@ -55,7 +55,7 @@ Base Prompt
 ┌──────────────────────────────────────────────────────┐
 │              ARTISTIC KNOWLEDGE BASE                │
 │  • 100+ techniques across p5, shader, three, music    │
-│  • 30+ notable artists with their contributions       │
+│  • 12+ artistic style categories and approaches       │
 │  • Art movements, design principles, color theory      │
 │  • Domain-specific vocabulary and terminology          │
 └──────────────────────────────────────────────────────┘
@@ -137,7 +137,7 @@ Liminal uses a sophisticated multi-layered architecture:
 ┌─────────────────────────────────────────────────────────────────────┐
 │                    ARTISTIC KNOWLEDGE BASE                            │
 │  • 100+ techniques: p5 (25), shader (20), three (25), strudel (18), hydra (20) │
-│  • 30+ notable artists with domains and contributions                                   │
+│  • 12+ artistic style categories by domain                                           │
 │  • Art movements: Generative, Algorithmic, Op Art, Minimalism, etc.                     │
 │  • Design principles: Balance, Contrast, Emphasis, Movement, etc.                          │
 │  • Color theory: Complementary, Analogous, Triadic, Warm/Cool, etc.                      │
@@ -336,35 +336,38 @@ liminal chat
 - Audio Reactivity (a.show, fft[])
 - Glitch and Distortion effects
 
-### Notable Artists
+### Artistic Style Categories
 
-**P5.js/Creative Coding:**
-- Casey Reas, Ben Fry (Processing co-founders)
-- Daniel Shiffet (Coding Train)
-- Tyler Hobbs (Quil, generative art educator)
-- Golan Levin, Zach Lieberman (interactive art)
-- Vera Molnar, Manfred Mohr (generative art pioneers)
+**P5.js/Creative Coding Styles:**
+- Generative and algorithmic art approaches
+- Interactive installation and responsive systems
+- Data visualization and information aesthetics
+- Educational and exploratory coding practices
 
-**Shader/WebGL:**
-- Inigo Quilez (raymarching, SDFs, Shadertoy)
-- Simon Green, Patricio Gonzalez Vivo (The Book of Shaders)
-- Martijn Steinrucken (shader techniques)
+**Shader/WebGL Styles:**
+- Raymarching and SDF-based rendering
+- Procedural texture generation
+- Physically-based rendering techniques
+- GLSL optimization patterns
 
-**Three.js/3D:**
-- Ricardo Cabello (Three.js creator)
-- Bruno Simon, Joshua Koo (creative coding educators)
+**Three.js/3D Styles:**
+- Interactive 3D environments
+- WebGL-based creative coding
+- Shader integration techniques
+- Performance optimization strategies
 
-**Music/Live Coding:**
-- Timothy Heckmann (Strudel creator)
-- Alex McLean (TidalCycles)
-- Ellen Band, Mikael Jazuli, Claude Heiland-Allen
+**Music/Live Coding Styles:**
+- Pattern-based algorithmic composition
+- Real-time improvisational coding
+- Networked collaborative performance
+- Visual music and audio-reactivity
 
-**Generative Art Pioneers:**
-- Sol LeWitt (minimalism, conceptual art)
-- Bridget Riley (Op Art, perception)
-- M.C. Escher (tessellations, impossible geometry)
-- John Whitney Sr., Lillian Schwartz (computer art pioneers)
-- Refik Anadol, TeamLab (contemporary digital art)
+**Historical Art Styles:**
+- Minimalist conceptual approaches
+- Optical pattern and perception-based art
+- Mathematical and geometric art
+- Early computer and plotter-based art
+- Contemporary ML-generated and immersive styles
 
 ### Design Principles
 
@@ -553,7 +556,7 @@ const result = await run(enhanced.prompt, {
 
 ### 🧠 Think Like An Artist
 - **100+ techniques** across all creative domains
-- **30+ artists** with their signature approaches
+- **12+ artistic style categories** representing diverse approaches
 - **Design principles** automatically applied (balance, contrast, emphasis, movement, unity, variety)
 - **Color theory** integration (complementary, analogous, triadic palettes)
 - **Composition rules** (golden ratio, rule of thirds, leading lines, symmetry)
@@ -607,7 +610,7 @@ const result = await run(enhanced.prompt, {
 **Not just another AI art tool:**
 
 1. **Self-Recursive**: The system critiques its own output and improves iteratively
-2. **Knowledge-Rich**: 100+ techniques, 30+ artists, design principles, color theory embedded
+2. **Knowledge-Rich**: 100+ techniques, 12+ style categories, design principles, color theory embedded
 3. **Context-Aware**: Understands mood, intent, domain, and adjusts accordingly
 4. **Guidance-Driven**: Proactively suggests next actions based on current state
 5. **Memory-Enhanced**: Learns from your past work via Compost Mill
@@ -630,7 +633,7 @@ Most AI art tools generate once. Liminal generates, evaluates, critiques, learns
 - Multi-model routing and performance tracking
 
 **Phase 2: Brain & Memory** — SemanticArtMemory, EpisodicMemory, ArtKnowledgeGraph
-- Semantic search across artworks, techniques, artists
+- Semantic search across artworks, techniques, styles
 - Episodic memory for learning from user preferences
 - Rich knowledge graph with relationships between concepts
 - Compost Mill for digesting creative material
@@ -642,7 +645,7 @@ Most AI art tools generate once. Liminal generates, evaluates, critiques, learns
 - Live preview rendering during generation
 - Session history and memory
 
-**Phase 4: Creative Knowledge** — 100+ techniques, 30+ artists, comprehensive artistic taxonomies
+**Phase 4: Creative Knowledge** — 100+ techniques, 12+ style categories, comprehensive artistic taxonomies
 - Comprehensive artistic knowledge base
 - Prompt enhancement with domain-specific vocabulary
 - Mood-based artistic context injection
@@ -662,7 +665,7 @@ Most AI art tools generate once. Liminal generates, evaluates, critiques, learns
 - Additional creative domains (TouchDesigner, Max/MSP, SuperCollider)
 - Collaborative sessions (multi-user)
 - Gallery and portfolio management
-- Plugin system for custom techniques and artists
+- Plugin system for custom techniques and styles
 
 ## Contributing
 

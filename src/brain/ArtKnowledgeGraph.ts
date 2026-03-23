@@ -270,60 +270,7 @@ export class ArtKnowledgeGraph {
       }
     }
 
-    // 2. Artist -> Movement relationships
-    const artistMovementMap: Record<string, string> = {
-      'Casey Reas': 'Generative Art',
-      'Ben Fry': 'Generative Art',
-      'Daniel Shiffman': 'Creative Coding',
-      'Vera Molnar': 'Generative Art',
-      'Manfred Mohr': 'Algorithmic Art',
-      'Sol LeWitt': 'Minimalism',
-      'Inigo Quilez': 'Computational Art',
-      'Ricardo Cabello': 'Creative Coding',
-      'Timothy Heckmann': 'Live Coding',
-      'Mikael Jazuli': 'Live Coding',
-      'Refik Anadol': 'AI Art',
-      'Tyler Hobbs': 'Generative Art',
-      'Golan Levin': 'Interactive Art',
-    };
-
-    for (const [artist, movement] of Object.entries(artistMovementMap)) {
-      const artistId = artistIds[artist];
-      const movementId = movementIds[movement];
-      if (artistId && movementId) {
-        this.relate(artistId, movementId, 'associated-with');
-      }
-    }
-
-    // 3. Artist -> Technique relationships
-    const artistTechniqueMap: Record<string, string[]> = {
-      'Inigo Quilez': ['Raymarching', 'SDFs', 'Shader Programming'],
-      'Simon Green': ['Raymarching', 'Shader Programming', 'Procedural'],
-      'Casey Reas': ['Recursion', 'Generative Art', 'Systems'],
-      'Ben Fry': ['Data Visualization', 'Mapping', 'Generative Design'],
-      'Daniel Shiffman': ['Particle Systems', 'Physics', 'Interaction', 'Animation'],
-      'Vera Molnar': ['Algorithmic Art', 'Plotter Art', 'Generative'],
-      'Manfred Mohr': ['Algorithmic Art', 'Plotter Art'],
-      'Ricardo Cabello': ['WebGL', '3D Graphics', 'Scene Graph'],
-      'Timothy Heckmann': ['Pattern Sequencing', 'Live Coding', 'Algorithmic Composition'],
-      'Alex McLean': ['Pattern Sequencing', 'Live Coding', 'Algorithmic Composition'],
-      'Mikael Jazuli': ['Feedback', 'Post-processing', 'Visual Synthesis'],
-      'Ken Perlin': ['Perlin Noise', 'Flow Fields'],
-    };
-
-    for (const [artist, techniques] of Object.entries(artistTechniqueMap)) {
-      const artistId = artistIds[artist];
-      if (artistId) {
-        for (const technique of techniques) {
-          const techId = techniqueIds[technique];
-          if (techId) {
-            this.relate(artistId, techId, 'uses');
-          }
-        }
-      }
-    }
-
-    // 4. Principle <-> Composition relationships
+    // 2. Principle <-> Composition relationships
     const principleCompositionMap: Record<string, string> = {
       'Balance': 'Symmetry',
       'Contrast': 'Complementary',
@@ -502,22 +449,7 @@ export class ArtKnowledgeGraph {
       }
     }
 
-    // 9. Influence relationships (artists influenced by other artists)
-    const influences = [
-      ['Casey Reas', 'Sol LeWitt'],
-      ['Tyler Hobbs', 'Vera Molnar'],
-      ['Daniel Shiffman', 'Casey Reas'],
-    ];
-
-    for (const [influenced, influencer] of influences) {
-      const influencedId = artistIds[influenced];
-      const influencerId = artistIds[influencer];
-      if (influencedId && influencerId) {
-        this.relate(influencedId, influencerId, 'inspired-by');
-      }
-    }
-
-    // 10. Technique -> Principle relationships
+    // 6. Technique -> Principle relationships
     const techniquePrincipleMap: Record<string, string[]> = {
       'Pattern': ['Pattern', 'Rhythm', 'Unity'],
       'Flow Fields': ['Movement', 'Flow'],
@@ -556,10 +488,17 @@ export class ArtKnowledgeGraph {
   }
 
   /**
-   * Get all artists
+   * Get all artistic styles (replaces artists)
+   */
+  getArtisticStyles(): Concept[] {
+    return this.query({ type: 'movement' });
+  }
+
+  /**
+   * @deprecated Use getArtisticStyles() instead
    */
   getArtists(): Concept[] {
-    return this.query({ type: 'artist' });
+    return this.getArtisticStyles();
   }
 
   /**

@@ -826,53 +826,22 @@ export const ARTISTIC_TECHNIQUES: Record<string, ArtisticConcept[]> = {
 };
 
 /**
- * Notable artists with their styles and contributions
+ * Artistic style categories
+ * Generic descriptors for different artistic approaches and styles
  */
-export const NOTABLE_ARTISTS: ArtisticConcept[] = [
-  // P5.js / Creative Coding
-  { name: 'Casey Reas', type: 'artist', domain: 'p5', description: 'Processing co-founder, Form+Code, Processing handbook', keywords: ['processing', 'form', 'code', 'education'] },
-  { name: 'Ben Fry', type: 'artist', domain: 'p5', description: 'Processing co-founder, data visualization, generative design', keywords: ['processing', 'data', 'viz', 'generative'] },
-  { name: 'Daniel Shiffman', type: 'artist', domain: 'p5', description: 'Coding Train, p5.js educator, Nature of Code', keywords: ['education', 'nature', 'code', 'learning'] },
-  { name: 'Tyler Hobbs', type: 'artist', domain: 'p5', description: 'Quil, generative art, creative coding educator', keywords: ['quil', 'generative', 'creative', 'educator'] },
-  { name: 'Golan Levin', type: 'artist', domain: 'p5', description: 'Interactive art, installation, eye-tracking, portrait', keywords: ['interactive', 'installation', 'new media'] },
-  { name: 'Zach Lieberman', type: 'artist', domain: 'p5', description: 'Interactive systems, performance, installation art', keywords: ['performance', 'installation', 'systems'] },
-  { name: 'Vera Molnar', type: 'artist', domain: 'p5', description: 'Generative art pioneer, plotter art, algorithmic art', keywords: ['pioneer', 'plotter', 'algorithmic', 'generative'] },
-  { name: 'Manfred Mohr', type: 'artist', domain: 'p5', description: 'Algorithmic art, plotter art, digital art pioneer', keywords: ['pioneer', 'algorithmic', 'plotter', 'digital'] },
-
-  // Shader / WebGL
-  { name: 'Inigo Quilez', type: 'artist', domain: 'shader', description: 'Raymarching, SDFs, media artist, Shadertoy creator', keywords: ['raymarching', 'sdf', 'shadertoy', 'iq'] },
-  { name: 'Simon Green', type: 'artist', domain: 'shader', description: 'The Book of Shaders, GLSL techniques, procedural effects', keywords: ['shaders', 'book', 'glsl', 'procedural'] },
-  { name: 'Patricio Gonzalez Vivo', type: 'artist', domain: 'shader', description: 'GLSL sandbox, shader art, technique educator', keywords: ['sandbox', 'art', 'educator', 'glsl'] },
-  { name: 'Romain Schücker', type: 'artist', domain: 'shader', description: 'TwoSporray, physically based rendering, WebGL', keywords: ['twosporay', 'pbr', 'webgl', 'rendering'] },
-  { name: 'Martijn Steinrucken', type: 'artist', domain: 'shader', description: 'BigWaffle, shader techniques, creative coder', keywords: ['bigwaffle', 'technique', 'creative'] },
-
-  // Three.js / 3D
-  { name: 'Ricardo Cabello', type: 'artist', domain: 'three', description: 'Three.js creator, creative coder, interactive artist', keywords: ['three.js', 'creator', 'interactive'] },
-  { name: 'Joshua Koo', type: 'artist', domain: 'three', description: 'Sketch.js, creative coding, interactive 3D', keywords: ['sketch', 'interactive', '3d', 'creative'] },
-  { name: 'Bruno Simon', type: 'artist', domain: 'three', description: 'Three.js Journey, three.js educator, creative coding', keywords: ['three.js', 'journey', 'educator', 'learning'] },
-  { name: 'Jaume Sánchez Elias', type: 'artist', domain: 'three', description: 'Three.js journey, creative coding, shader techniques', keywords: ['three.js', 'shaders', 'creative', 'learning'] },
-
-  // Music / Live Coding
-  { name: 'Timothy Heckmann', type: 'artist', domain: 'strudel', description: 'Strudel creator, live coding, pattern music', keywords: ['strudel', 'creator', 'live', 'pattern'] },
-  { name: 'Alex McLean', type: 'artist', domain: 'strudel', description: 'TidalCycles, live coding, pattern-based music', keywords: ['tidalcycles', 'live', 'pattern', 'algorithmic'] },
-  { name: 'Yaxu', type: 'artist', domain: 'strudel', description: 'Estuary, live coding, networked music', keywords: ['estuary', 'live', 'networked', 'algorithmic'] },
-  { name: 'Ellen Band', type: 'artist', domain: 'hydra', description: 'Live coding, Hydra, visual music', keywords: ['live', 'hydra', 'visual', 'music'] },
-  { name: 'Mikael Jazuli', type: 'artist', domain: 'hydra', description: 'Hydra creator, live coding, visual synthesis', keywords: ['hydra', 'creator', 'live', 'visual'] },
-  { name: 'Claude Heiland-Allen', type: 'artist', domain: 'hydra', description: 'Visual music, live coding, Hydra performer', keywords: ['visual', 'music', 'hydra', 'performance'] },
-
-  // Generative Art Pioneers
-  { name: 'Sol LeWitt', type: 'artist', description: 'Minimalism, conceptual art, instructions, systems', keywords: ['minimalism', 'conceptual', 'instructions', 'systems'] },
-  { name: 'Bridget Riley', type: 'artist', description: 'Op Art, perception, pattern, visual effects', keywords: ['op-art', 'pattern', 'perception', 'optical'] },
-  { name: 'M.C. Escher', type: 'artist', description: 'Tessellations, impossible geometry, mathematical art', keywords: ['tessellation', 'geometry', 'mathematical', 'impossible'] },
-  { name: 'John Whitney Sr.', type: 'artist', description: 'Computer art pioneer, graphical music, early animation', keywords: ['pioneer', 'computer', 'animation', 'music'] },
-  { name: 'Lillian Schwartz', type: 'artist', description: 'Computer art pioneer, early algorithmic art', keywords: ['pioneer', 'algorithmic', 'early', 'computer'] },
-
-  // Contemporary Digital Artists
-  { name: 'Refik Anadol', type: 'artist', description: 'Machine learning art, large-scale installations, data painting', keywords: ['ml', 'installation', 'data', 'large-scale'] },
-  { name: 'TeamLab', type: 'artist', description: 'Interactive digital art, immersive installations', keywords: ['interactive', 'immersive', 'installation', 'collective'] },
-  { name: 'Random International', type: 'artist', description: 'Light installations, responsive environments', keywords: ['light', 'installation', 'responsive', 'environment'] },
-  { name: 'Zach Lieberman', type: 'artist', description: 'OpenFrameworks, computational design', keywords: ['openframeworks', 'computational', 'design'] },
-  { name: 'Theodore Watson', type: 'artist', description: 'Processing, generative systems', keywords: ['processing', 'generative', 'systems'] },
+export const ARTISTIC_STYLES: ArtisticConcept[] = [
+  { name: 'Generative Art Pioneer Style', type: 'movement', description: 'Early algorithmic and plotter-based art approaches', keywords: ['pioneer', 'plotter', 'algorithmic', 'generative', 'early'] },
+  { name: 'Interactive Installation Style', type: 'movement', description: 'User-responsive art in physical spaces', keywords: ['interactive', 'responsive', 'installation', 'space', 'physical'] },
+  { name: 'Data Visualization Style', type: 'movement', description: 'Visual representation of information and datasets', keywords: ['data', 'viz', 'information', 'visualization', 'representation'] },
+  { name: 'Live Coding Performance', type: 'movement', description: 'Real-time programming as artistic performance', keywords: ['live', 'real-time', 'performance', 'improvisation', 'coding'] },
+  { name: 'Shader Art Style', type: 'movement', description: 'GPU-based visual creation using GLSL', keywords: ['shader', 'glsl', 'gpu', 'fragment', 'visual'] },
+  { name: 'Procedural Generation Style', type: 'movement', description: 'Algorithmic content creation with rules and systems', keywords: ['procedural', 'algorithmic', 'automated', 'systematic', 'rules'] },
+  { name: 'Minimalist Conceptual Style', type: 'movement', description: 'Art based on ideas, instructions, and reduction', keywords: ['minimalism', 'conceptual', 'instructions', 'systems', 'reduction'] },
+  { name: 'Optical Pattern Style', type: 'movement', description: 'Perception-based art using patterns and visual effects', keywords: ['op-art', 'pattern', 'perception', 'optical', 'visual'] },
+  { name: 'Mathematical Art Style', type: 'movement', description: 'Art based on mathematical principles and geometry', keywords: ['tessellation', 'geometry', 'mathematical', 'fractal', 'algorithmic'] },
+  { name: 'ML-Generated Art Style', type: 'movement', description: 'Art created with machine learning and neural networks', keywords: ['ml', 'neural', 'ai', 'machine-learning', 'generative'] },
+  { name: 'Light Installation Style', type: 'movement', description: 'Art using light as primary medium in spaces', keywords: ['light', 'installation', 'responsive', 'environment', 'illumination'] },
+  { name: 'Immersive Digital Style', type: 'movement', description: 'Large-scale interactive digital environments', keywords: ['interactive', 'immersive', 'installation', 'digital', 'environment'] },
 ];
 
 /**
@@ -979,7 +948,7 @@ export function getAllArtisticConcepts(): ArtisticConcept[] {
     ...ARTISTIC_TECHNIQUES.three,
     ...ARTISTIC_TECHNIQUES.strudel,
     ...ARTISTIC_TECHNIQUES.hydra,
-    ...NOTABLE_ARTISTS,
+    ...ARTISTIC_STYLES,
     ...DESIGN_PRINCIPLES,
     ...ART_MOVEMENTS,
     ...COLOR_THEORY,

@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal — Creative Coding Agent</title>
-    <meta name="description" content="A sophisticated generative art system with self-recursive iteration, comprehensive artistic knowledge, and intelligent guidance.">
+    <title>Liminal - AI-Powered Creative Coding Agent</title>
     <style>
         * {
             margin: 0;
@@ -12,390 +11,427 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a25;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --accent-purple: #8b5cf6;
+            --accent-blue: #3b82f6;
+            --accent-cyan: #06b6d4;
+            --accent-pink: #ec4899;
+            --accent-green: #10b981;
+            --border-color: #2a2a3a;
+            --glow-purple: 0 0 30px rgba(139, 92, 246, 0.3);
+            --glow-blue: 0 0 30px rgba(59, 130, 246, 0.3);
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
             line-height: 1.6;
-            color: #333;
-            background: #0a0a0a;
+            overflow-x: hidden;
+        }
+
+        /* Animated Background */
+        .hero-bg {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            background:
+                radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(6, 182, 212, 0.1) 0%, transparent 50%);
+            animation: pulse-bg 8s ease-in-out infinite;
+        }
+
+        @keyframes pulse-bg {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
-            padding: 0 20px;
+            padding: 0 2rem;
         }
 
         /* Hero Section */
         .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
-            padding: 100px 20px;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-            border-bottom: 1px solid #1a1a2e;
+            padding: 4rem 2rem;
+            position: relative;
+        }
+
+        .hero-badge {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
 
         .hero h1 {
-            font-size: 3.5rem;
+            font-size: clamp(3rem, 8vw, 6rem);
             font-weight: 800;
-            margin-bottom: 10px;
-            background: linear-gradient(135deg, #00d4ff 0%, #7c3aed 50%, #f472b6 100%);
+            margin-bottom: 1.5rem;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            animation: gradient-shift 5s ease infinite;
+            background-size: 200% 200%;
         }
 
-        .tagline {
-            font-size: 1.5rem;
-            color: #94a3b8;
-            margin-bottom: 40px;
-            font-style: italic;
+        @keyframes gradient-shift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
         }
 
-        .cta-buttons {
+        .hero-subtitle {
+            font-size: clamp(1.25rem, 3vw, 2rem);
+            color: var(--text-secondary);
+            max-width: 800px;
+            margin-bottom: 3rem;
+        }
+
+        .hero-cta {
             display: flex;
-            gap: 15px;
-            justify-content: center;
+            gap: 1rem;
             flex-wrap: wrap;
+            justify-content: center;
         }
 
         .btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background: linear-gradient(135deg, #7c3aed, #00d4ff);
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
+            padding: 1rem 2.5rem;
+            border-radius: 12px;
+            font-size: 1rem;
             font-weight: 600;
-            transition: all 0.3s ease;
-            border: none;
             cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            border: none;
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(124, 58, 237, 0.3);
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
+            color: white;
+            box-shadow: var(--glow-purple);
         }
 
-        .btn.secondary {
-            background: transparent;
-            border: 2px solid #7c3aed;
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--bg-card);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--accent-purple);
+            background: var(--bg-card-hover);
         }
 
         /* Stats Bar */
         .stats-bar {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            padding: 40px 20px;
-            background: #0f0f1a;
-            margin-top: -1px;
+            gap: 2rem;
+            padding: 3rem 0;
+            border-top: 1px solid var(--border-color);
+            border-bottom: 1px solid var(--border-color);
         }
 
         .stat-card {
             text-align: center;
-            padding: 20px;
-            background: rgba(255,255,255,0.05);
-            border-radius: 12px;
-            border: 1px solid rgba(124, 58, 237, 0.2);
+            padding: 2rem;
+            background: var(--bg-card);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-purple);
+            box-shadow: var(--glow-purple);
         }
 
         .stat-number {
-            font-size: 2.5rem;
+            font-size: 3rem;
             font-weight: 800;
-            background: linear-gradient(135deg, #00d4ff, #7c3aed);
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
 
         .stat-label {
-            color: #94a3b8;
-            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Section Styles */
+        section {
+            padding: 6rem 0;
+        }
+
+        .section-title {
+            font-size: clamp(2rem, 5vw, 3.5rem);
+            font-weight: 700;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+            margin-bottom: 4rem;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* Live Demo Section */
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .demo-card {
+            background: var(--bg-card);
+            border-radius: 20px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .demo-card:hover {
+            border-color: var(--accent-purple);
+            box-shadow: var(--glow-purple);
+        }
+
+        .demo-header {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .demo-tag {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--accent-purple);
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .demo-tag.p5 { background: var(--accent-pink); }
+        .demo-tag.shader { background: var(--accent-cyan); }
+        .demo-tag.three { background: var(--accent-green); }
+        .demo-tag.music { background: var(--accent-blue); }
+        .demo-tag.hydra { background: var(--accent-purple); }
+
+        .demo-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+        }
+
+        .demo-prompt {
+            color: var(--text-secondary);
+            font-style: italic;
+            margin-top: 0.5rem;
+        }
+
+        .demo-code {
+            padding: 2rem;
+            background: #0a0a0f;
+            overflow-x: auto;
+        }
+
+        .demo-code pre {
+            margin: 0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.875rem;
+            line-height: 1.6;
+        }
+
+        .demo-code code {
+            color: #e0e0e0;
+        }
+
+        .demo-code .keyword { color: var(--accent-purple); }
+        .demo-code .function { color: var(--accent-cyan); }
+        .demo-code .string { color: var(--accent-green); }
+        .demo-code .comment { color: var(--text-secondary); }
+        .demo-code .number { color: var(--accent-pink); }
+
+        .demo-output {
+            padding: 1.5rem 2rem;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(59, 130, 246, 0.05));
+            border-top: 1px solid var(--border-color);
+        }
+
+        .demo-output h4 {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
             text-transform: uppercase;
             letter-spacing: 1px;
         }
 
-        /* Sections */
-        section {
-            padding: 80px 20px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
-        }
-
-        section h2 {
-            font-size: 2.5rem;
-            margin-bottom: 40px;
-            text-align: center;
-            color: #e2e8f0;
-        }
-
-        /* Quick Start */
-        .code-block {
-            background: #1a1a2e;
-            border-radius: 12px;
-            padding: 24px;
-            margin: 30px 0;
-            overflow-x: auto;
-            border: 1px solid rgba(124, 58, 237, 0.2);
-        }
-
-        .code-block code {
-            color: #a5b4fc;
-            font-family: 'Monaco', 'Courier New', monospace;
+        .demo-output p {
             font-size: 0.95rem;
-            line-height: 1.6;
-        }
-
-        /* Diagram Box */
-        .diagram {
-            background: #1a1a2e;
-            border-radius: 12px;
-            padding: 30px;
-            margin: 30px 0;
-            border: 1px solid rgba(124, 58, 237, 0.2);
-            font-family: 'Monaco', monospace;
-            font-size: 0.85rem;
-            color: #94a3b8;
-            overflow-x: auto;
-            white-space: pre;
+            color: var(--text-primary);
         }
 
         /* Features Grid */
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 30px;
-            margin: 40px 0;
+            gap: 2rem;
+            margin-top: 3rem;
         }
 
         .feature-card {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 12px;
-            padding: 30px;
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
             transition: all 0.3s ease;
         }
 
         .feature-card:hover {
+            border-color: var(--accent-blue);
             transform: translateY(-5px);
-            border-color: #7c3aed;
+            box-shadow: var(--glow-blue);
         }
 
-        .feature-card h3 {
-            color: #00d4ff;
-            margin-bottom: 15px;
-            font-size: 1.3rem;
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
 
-        .feature-card ul {
-            list-style: none;
-            padding: 0;
+        .feature-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
         }
 
-        .feature-card li {
-            padding: 8px 0;
-            color: #94a3b8;
-            position: relative;
-            padding-left: 20px;
+        .feature-desc {
+            color: var(--text-secondary);
+            line-height: 1.6;
         }
 
-        .feature-card li:before {
-            content: "→";
-            position: absolute;
-            left: 0;
-            color: #7c3aed;
+        /* CLI Section */
+        .cli-section {
+            background: var(--bg-card);
+            border-radius: 20px;
+            padding: 3rem;
+            border: 1px solid var(--border-color);
         }
 
-        /* What Liminal Can Do */
-        .capabilities {
+        .cli-command {
+            background: #0a0a0f;
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border-color);
+        }
+
+        .cli-command .prompt {
+            color: var(--accent-green);
+        }
+
+        .cli-command .command {
+            color: var(--accent-cyan);
+        }
+
+        .cli-command .flag {
+            color: var(--accent-purple);
+        }
+
+        /* Swarm Section */
+        .swarm-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            margin: 40px 0;
+            gap: 1.5rem;
+            margin-top: 2rem;
         }
 
-        .capability {
-            background: linear-gradient(135deg, rgba(124, 58, 237, 0.1), rgba(0, 212, 255, 0.05));
-            border: 1px solid rgba(124, 58, 237, 0.3);
-            border-radius: 12px;
-            padding: 25px;
+        .persona-card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.3s ease;
         }
 
-        .capability .emoji {
-            font-size: 2rem;
-            margin-bottom: 10px;
+        .persona-card:hover {
+            border-color: var(--accent-purple);
+            transform: scale(1.05);
         }
 
-        .capability h3 {
-            color: #e2e8f0;
-            margin-bottom: 10px;
-        }
-
-        .capability ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .capability li {
-            color: #94a3b8;
-            padding: 5px 0;
-            font-size: 0.95rem;
-        }
-
-        /* Table */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 30px 0;
-            background: #1a1a2e;
-            border-radius: 12px;
-            overflow: hidden;
-        }
-
-        th, td {
-            padding: 16px;
-            text-align: left;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        th {
-            background: rgba(124, 58, 237, 0.2);
-            color: #00d4ff;
-            font-weight: 600;
-        }
-
-        td {
-            color: #94a3b8;
-        }
-
-        tr:last-child td {
-            border-bottom: none;
-        }
-
-        /* Swarm Personas */
-        .personas {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-
-        .persona {
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            border-radius: 10px;
-            padding: 20px;
+        .persona-emoji {
+            font-size: 3rem;
+            margin-bottom: 1rem;
         }
 
         .persona-name {
             font-weight: 700;
-            color: #f472b6;
-            margin-bottom: 5px;
+            margin-bottom: 0.5rem;
         }
 
-        .persona-role {
-            color: #94a3b8;
-            font-size: 0.9rem;
-            margin-bottom: 8px;
-        }
-
-        .persona-model {
-            font-family: 'Monaco', monospace;
-            color: #00d4ff;
-            font-size: 0.85rem;
-        }
-
-        /* Artists Grid */
-        .artists-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin: 30px 0;
-        }
-
-        .artist-category h4 {
-            color: #7c3aed;
-            margin-bottom: 15px;
-        }
-
-        .artist-category ul {
-            list-style: none;
-            padding: 0;
-        }
-
-        .artist-category li {
-            color: #94a3b8;
-            padding: 4px 0;
-        }
-
-        /* Why Different */
-        .different-list {
-            max-width: 800px;
-            margin: 40px auto;
-        }
-
-        .different-list ol {
-            counter-reset: item;
-            list-style: none;
-            padding: 0;
-        }
-
-        .different-list li {
-            counter-increment: item;
-            padding: 15px 15px 15px 50px;
-            margin: 10px 0;
-            background: rgba(255,255,255,0.03);
-            border-radius: 10px;
-            color: #94a3b8;
-            position: relative;
-        }
-
-        .different-list li:before {
-            content: counter(item);
-            position: absolute;
-            left: 15px;
-            top: 15px;
-            width: 30px;
-            height: 30px;
-            background: linear-gradient(135deg, #7c3aed, #00d4ff);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 700;
-            color: #0a0a0a;
-        }
-
-        /* CLI Commands */
-        .cli-section {
-            background: #0f0f1a;
-            padding: 40px;
-            border-radius: 12px;
-            margin: 40px 0;
-        }
-
-        .cli-category {
-            margin-bottom: 30px;
-        }
-
-        .cli-category h4 {
-            color: #00d4ff;
-            margin-bottom: 15px;
+        .persona-style {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
         }
 
         /* Footer */
         footer {
+            padding: 3rem 0;
+            border-top: 1px solid var(--border-color);
             text-align: center;
-            padding: 60px 20px;
-            background: #0a0a0a;
-            border-top: 1px solid rgba(255,255,255,0.05);
+            color: var(--text-secondary);
         }
 
-        footer p {
-            color: #64748b;
+        footer a {
+            color: var(--accent-purple);
+            text-decoration: none;
         }
 
-        footer .version {
-            color: #7c3aed;
-            font-weight: 600;
+        footer a:hover {
+            text-decoration: underline;
         }
 
         /* Responsive */
@@ -404,485 +440,513 @@
                 font-size: 2.5rem;
             }
 
-            .stats-bar {
+            .demo-grid {
                 grid-template-columns: 1fr;
             }
 
-            .diagram {
-                font-size: 0.7rem;
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
 </head>
 <body>
+    <div class="hero-bg"></div>
+
     <!-- Hero Section -->
     <section class="hero">
-        <div class="container">
-            <h1>Liminal — Creative Coding Agent</h1>
-            <p class="tagline">"The code evolves. You curate. The system learns."</p>
-            <div class="cta-buttons">
-                <a href="#quick-start" class="btn">Get Started</a>
-                <a href="#capabilities" class="btn secondary">Explore Features</a>
-            </div>
+        <div class="hero-badge">✨ Now with Phase 4: Creative Knowledge</div>
+        <h1>LIMINAL</h1>
+        <p class="hero-subtitle">
+            The AI-powered creative coding agent that generates, iterates, and improves
+            generative art across p5.js, shaders, Three.js, Strudel, and Hydra.
+        </p>
+        <div class="hero-cta">
+            <a href="#examples" class="btn btn-primary">See Live Examples</a>
+            <a href="https://github.com/Pastorsimon1798/liminal" class="btn btn-secondary">View on GitHub</a>
         </div>
     </section>
 
     <!-- Stats Bar -->
-    <div class="stats-bar">
-        <div class="stat-card">
-            <div class="stat-number">2220</div>
-            <div class="stat-label">Tests Passing</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">100+</div>
-            <div class="stat-label">Techniques</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">12+</div>
-            <div class="stat-label">Style Categories</div>
-        </div>
-        <div class="stat-card">
-            <div class="stat-number">5</div>
-            <div class="stat-label">Creative Domains</div>
+    <div class="container">
+        <div class="stats-bar">
+            <div class="stat-card">
+                <div class="stat-number">2220</div>
+                <div class="stat-label">Passing Tests</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">100+</div>
+                <div class="stat-label">Techniques</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">12+</div>
+                <div class="stat-label">Style Categories</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Creative Domains</div>
+            </div>
         </div>
     </div>
 
-    <!-- Quick Start -->
-    <section id="quick-start">
+    <!-- Live Examples Section -->
+    <section id="examples">
         <div class="container">
-            <h2>🚀 Quick Start</h2>
-            <div class="code-block">
-                <code># Install
-pnpm install
-
-# Configure LM Studio (recommended)
-liminal --configure
-
-# Or set environment variables
-export LIMINAL_LLM_PROVIDER=lmstudio
-export LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
-
-# Generate art
-liminal --prompt "Create a calming blue particle system"
-
-# Start creative chat session
-liminal chat</code>
-            </div>
-        </div>
-    </section>
-
-    <!-- How It Works -->
-    <section>
-        <div class="container">
-            <h2>⚙️ How Liminal Works</h2>
-            <p style="text-align: center; color: #94a3b8; max-width: 700px; margin: 0 auto 40px;">
-                Liminal generates emergent generative art through self-recursive iteration with intelligent context enhancement. The same prompt runs repeatedly, but the "world" (files, context, artistic knowledge, guidance) changes each time.
+            <h2 class="section-title">🎨 Live Generation Examples</h2>
+            <p class="section-subtitle">
+                Real outputs from Liminal across different creative domains.
+                Each example shows the prompt and the generated code.
             </p>
 
-            <div class="diagram">
-┌─────────────────────────────────────────────────────────────────────┐
-│                     RALPH-WIGGUM LOOP                              │
-├─────────────────────────────────────────────────────────────────────┤
-│                                                                     │
-│  1. GENERATE   → LLM creates code based on prompt + enhanced context  │
-│  2. EVALUATE   → Quality gate (aesthetic + technical dimensions)   │
-│  3. ACCUMULATE → Save iteration, build context, learn from output    │
-│  4. GUIDANCE   → Proactive suggestions based on current state       │
-│  5. ENHANCE    → Inject compost DNA, archive examples, aesthetic hints │
-│  6. CHECK      → Stagnation detection? Promise detected?          │
-│                                                                     │
-│  Repeat until: promise detected OR max-iterations OR timeout       │
-└─────────────────────────────────────────────────────────────────────┘
-            </div>
+            <div class="demo-grid">
+                <!-- P5.js Example -->
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag p5">p5.js</span>
+                        <h3 class="demo-title">Flowing Particle Field</h3>
+                        <p class="demo-prompt">Prompt: "calming blue particles flowing like water"</p>
+                    </div>
+                    <div class="demo-code">
+                        <pre><code><span class="comment">// P5.js generative art with Perlin noise flow field</span>
+<span class="keyword">function</span> <span class="function">setup</span>() {
+  <span class="function">createCanvas</span>(<span class="number">800</span>, <span class="number">600</span>);
+  <span class="function">background</span>(<span class="number">5</span>, <span class="number">10</span>, <span class="number">30</span>);
+}
 
-            <h3 style="color: #00d4ff; margin-top: 50px; margin-bottom: 20px;">Context Enhancement Pipeline</h3>
-            <div class="diagram">
-Base Prompt
-    ↓
-┌──────────────────────────────────────────────────────┐
-│              ARTISTIC KNOWLEDGE BASE                │
-│  • 100+ techniques across p5, shader, three, music    │
-│  • 12+ artistic style categories and approaches       │
-│  • Art movements, design principles, color theory      │
-│  • Domain-specific vocabulary and terminology          │
-└──────────────────────────────────────────────────────┘
-    ↓
-┌──────────────────────────────────────────────────────┐
-│              COMPOST SEED INJECTION                  │
-│  • Quality DNA from past successful generations       │
-│  • Multi-domain fragments (code, docs, textures)     │
-│  • Style patterns and technique signatures           │
-└──────────────────────────────────────────────────────┘
-    ↓
-┌──────────────────────────────────────────────────────┐
-│              ARCHIVE LEARNING                      │
-│  • Semantic few-shot examples from high-quality     │
-│  • Keyword overlap matching                        │
-│  • Budget-conscious injection (2000 chars)          │
-└──────────────────────────────────────────────────────┘
-    ↓
-Enhanced Prompt → Better Generation → Improved Quality
+<span class="keyword">function</span> <span class="function">draw</span>() {
+  <span class="keyword">for</span> (<span class="keyword">let</span> x = <span class="number">0</span>; x &lt; width; x += <span class="number">20</span>) {
+    <span class="keyword">for</span> (<span class="keyword">let</span> y = <span class="number">0</span>; y &lt; height; y += <span class="number">20</span>) {
+      <span class="keyword">let</span> n = <span class="function">noise</span>(x * <span class="number">0.01</span>, y * <span class="number">0.01</span>, frameCount * <span class="number">0.01</span>);
+      <span class="keyword">let</span> angle = n * <span class="function">TWO_PI</span> * <span class="number">2</span>;
+      <span class="keyword">let</span> px = x + <span class="function">cos</span>(angle) * <span class="number">15</span>;
+      <span class="keyword">let</span> py = y + <span class="function">sin</span>(angle) * <span class="number">15</span>;
+
+      <span class="function">stroke</span>(<span class="number">100</span> + n * <span class="number">100</span>, <span class="number">150</span> + n * <span class="number">80</span>, <span class="number">255</span>, <span class="number">150</span>);
+      <span class="function">line</span>(x, y, px, py);
+    }
+  }
+}</code></pre>
+                    </div>
+                    <div class="demo-output">
+                        <h4>Visual Output</h4>
+                        <p>A flowing field of blue particles that move organically using Perlin noise. The particles create wave-like patterns that mimic water flowing across the canvas.</p>
+                    </div>
+                </div>
+
+                <!-- Shader Example -->
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag shader">GLSL Shader</span>
+                        <h3 class="demo-title">Raymarched Landscape</h3>
+                        <p class="demo-prompt">Prompt: "alien landscape with fog and glowing orbs"</p>
+                    </div>
+                    <div class="demo-code">
+                        <pre><code><span class="comment">// GLSL fragment shader with raymarching</span>
+<span class="keyword">uniform</span> <span class="keyword">vec2</span> u_resolution;
+<span class="keyword">uniform float</span> u_time;
+
+<span class="keyword">float</span> <span class="function">sdSphere</span>(<span class="keyword">vec3</span> p, <span class="keyword">float</span> r) {
+  <span class="keyword">return</span> <span class="function">length</span>(p) - r;
+}
+
+<span class="keyword">float</span> <span class="function">map</span>(<span class="keyword">vec3</span> p) {
+  <span class="keyword">vec3</span> q = p;
+  q.xz *= <span class="function">mat2</span>(<span class="number">0.8</span>, -<span class="number">0.6</span>, <span class="number">0.6</span>, <span class="number">0.8</span>);
+  <span class="keyword">float</span> terrain = p.y + <span class="number">0.5</span> * <span class="function">sin</span>(q.x * <span class="number">2.0</span>) * <span class="function">cos</span>(q.z * <span class="number">2.0</span>);
+  <span class="keyword">float</span> orbs = <span class="number">1e9</span>;
+  <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; <span class="number">5</span>; i++) {
+    <span class="keyword">vec3</span> orbPos = <span class="keyword">vec3</span>(
+      <span class="function">sin</span>(u_time + <span class="keyword">float</span>(i) * <span class="number">1.5</span>) * <span class="number">3.0</span>,
+      <span class="number">1.5</span> + <span class="function">sin</span>(u_time * <span class="number">2.0</span> + <span class="keyword">float</span>(i)),
+      <span class="function">cos</span>(u_time + <span class="keyword">float</span>(i) * <span class="number">1.3</span>) * <span class="number">3.0</span>
+    );
+    orbs = <span class="function">min</span>(orbs, <span class="function">sdSphere</span>(p - orbPos, <span class="number">0.3</span>));
+  }
+  <span class="keyword">return</span> <span class="function">min</span>(terrain, orbs);
+}</code></pre>
+                    </div>
+                    <div class="demo-output">
+                        <h4>Visual Output</h4>
+                        <p>An alien terrain with undulating hills and 5 glowing orbs that float above the surface. Fog creates depth and the orbs pulse with an ethereal glow.</p>
+                    </div>
+                </div>
+
+                <!-- Three.js Example -->
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag three">Three.js</span>
+                        <h3 class="demo-title">Interactive 3D Geometry</h3>
+                        <p class="demo-prompt">Prompt: "rotating icosahedron with wireframe and particles"</p>
+                    </div>
+                    <div class="demo-code">
+                        <pre><code><span class="comment">// Three.js 3D scene with animated geometry</span>
+<span class="keyword">import</span> * <span class="keyword">as</span> THREE <span class="keyword">from</span> <span class="string">'three'</span>;
+
+<span class="keyword">const</span> scene = <span class="keyword">new</span> <span class="function">THREE.Scene</span>();
+<span class="keyword">const</span> camera = <span class="keyword">new</span> <span class="function">THREE.PerspectiveCamera</span>(<span class="number">75</span>, w / h);
+<span class="keyword">const</span> renderer = <span class="keyword">new</span> <span class="function">THREE.WebGLRenderer</span>();
+
+<span class="comment">// Main geometry</span>
+<span class="keyword">const</span> geometry = <span class="keyword">new</span> <span class="function">THREE.IcosahedronGeometry</span>(<span class="number">1</span>, <span class="number">1</span>);
+<span class="keyword">const</span> material = <span class="keyword">new</span> <span class="function">THREE.MeshBasicMaterial</span>({
+  color: <span class="number">0x8b5cf6</span>,
+  wireframe: <span class="keyword">true</span>
+});
+<span class="keyword">const</span> mesh = <span class="keyword">new</span> <span class="function">THREE.Mesh</span>(geometry, material);
+scene.<span class="function">add</span>(mesh);
+
+<span class="comment">// Particle system</span>
+<span class="keyword">const</span> particlesGeom = <span class="keyword">new</span> <span class="function">THREE.BufferGeometry</span>();
+<span class="keyword">const</span> positions = <span class="keyword">new</span> <span class="function">Float32Array</span>(<span class="number">3000</span>);
+<span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">3000</span>; i++) {
+  positions[i] = (<span class="function">Math.random</span>() - <span class="number">0.5</span>) * <span class="number">10</span>;
+}</code></pre>
+                    </div>
+                    <div class="demo-output">
+                        <h4>Visual Output</h4>
+                        <p>A purple wireframe icosahedron rotating at the center, surrounded by 3000 particles floating in space. Mouse interaction rotates the camera around the scene.</p>
+                    </div>
+                </div>
+
+                <!-- Strudel Example -->
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag music">Strudel</span>
+                        <h3 class="demo-title">Generative Music Pattern</h3>
+                        <p class="demo-prompt">Prompt: "hypnotic minimal techno with evolving patterns"</p>
+                    </div>
+                    <div class="demo-code">
+                        <pre><code><span class="comment">// Strudel live coding pattern</span>
+<span class="function">stack</span>(
+  <span class="function">s</span>(<span class="string">"hh ~ hh ~"</span>, <span class="string">"<10 8>"</span>),
+  <span class="function">s</span>(<span class="string">"bd ~ sd bd ~"</span>, <span class="string">"<4>"</span>),
+  <span class="function">iter</span>(<span class="number">4</span>, <span class="function">s</span>(<span class="string">"amaj chords"</span>, <span class="string">"<8 6 4 6>"</span>)),
+  <span class="function">s</span>(<span class="string">"[c2 eb2 g2]*8"</span>, <span class="string">"<16>"</span>, <span class="string">"0.5"</span>)
+    .<span class="function">slow</span>(<span class="number">2</span>)
+    .<span class="function">room</span>(<span class="number">0.6</span>)
+)
+.<span class="function">slow</span>(<span class="number">2</span>)
+.<span class="function">sound</span>(<span class="string">"polytribe"</span>)</code></pre>
+                    </div>
+                    <div class="demo-output">
+                        <h4>Audible Output</h4>
+                        <p>A hypnotic techno pattern with hi-hats, kick/snare drums, evolving A-major chords, and a deep bassline. Patterns shift every cycle creating endless variations.</p>
+                    </div>
+                </div>
+
+                <!-- Hydra Example -->
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag hydra">Hydra</span>
+                        <h3 class="demo-title">Video Synthesis</h3>
+                        <p class="demo-prompt">Prompt: "kaleidoscopic patterns with audio reactivity"</p>
+                    </div>
+                    <div class="demo-code">
+                        <pre><code><span class="comment">// Hydra visual synthesis</span>
+<span class="function">osc</span>(<span class="number">30</span>, <span class="number">0.1</span>)
+  .<span class="function">color</span>(<span class="number">1.5</span>)
+  .<span class="function">kaleid</span>(<span class="number">4</span>)
+  .<span class="function">scale</span>(<span class="number">0.8</span>)
+  .<span class="function">modulate</span>(
+    <span class="function">osc</span>(<span class="number">20</span>, <span class="number">0.05</span>)
+      .<span class="function">rotate</span>(<span class="number">0.5</span>),
+    <span class="number">0.4</span>
+  )
+  .<span class="function">modulate</span>(
+    <span class="function">src</span>(<span class="number">0</span>).<span class="function">scale</span>(<span class="number">0.5</span>),
+    <span class="function">a</span>(<span class="string">"<0.1 0.2>"</span>)
+  )
+  .<span class="function">out</span>()</code></pre>
+                    </div>
+                    <div class="demo-output">
+                        <h4>Visual Output</h4>
+                        <p>Mesmerizing kaleidoscopic patterns that rotate and shift colors. Audio reactivity makes the patterns pulse and breathe with the beat, creating an immersive visual experience.</p>
+                    </div>
+                </div>
+
+                <!-- Swarm Example -->
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag swarm">Swarm Generation</span>
+                        <h3 class="demo-title">7-Persona Parallel Generation</h3>
+                        <p class="demo-prompt">Prompt: "geometric abstraction with bold colors"</p>
+                    </div>
+                    <div class="demo-code">
+                        <pre><code><span class="comment">// Swarm: 7 AI personas generate in parallel</span>
+<span class="comment">// Results voted on by the swarm</span>
+
+<span class="comment">🎨 Minimalist:</span> Clean lines, primary colors only
+<span class="keyword">function</span> <span class="function">draw</span>() {
+  <span class="function">background</span>(<span class="number">255</span>);
+  <span class="function">noFill</span>();
+  <span class="function">stroke</span>(<span class="number">0</span>);
+  <span class="function">rect</span>(<span class="number">100</span>, <span class="number">100</span>, <span class="number">200</span>, <span class="number">200</span>);
+}
+
+<span class="comment">🌈 Colorist:</span> Vibrant gradients everywhere
+<span class="keyword">const</span> gradient = drawingContext.<span class="function">createLinearGradient</span>(<span class="number">0</span>, <span class="number">0</span>, width, height);
+gradient.<span class="function">addColorStop</span>(<span class="number">0</span>, <span class="string">'#ff006e'</span>);
+gradient.<span class="function">addColorStop</span>(<span class="number">1</span>, <span class="string">'#8338ec'</span>);
+
+<span class="comment">⚡ Experimental:</span> Unconventional approach
+<span class="keyword">for</span> (<span class="keyword">let</span> i = <span class="number">0</span>; i &lt; <span class="number">1000</span>; i++) {
+  <span class="keyword">if</span> (<span class="function">random</span>() &gt; <span class="number">0.5</span>) {
+    <span class="function">point</span>(<span class="function">random</span>(width), <span class="function">random</span>(height));
+  }
+}
+
+<span class="comment">... 4 more persona variations</span>
+
+<span class="comment">⭐ Swarm Winner: Geometric Harmony</span>
+<span class="comment">// Voted best by swarm consensus</span></code></pre>
+                    </div>
+                    <div class="demo-output">
+                        <h4>Swarm Process</h4>
+                        <p>7 specialized AI personas generate variations simultaneously. The swarm votes on the best approach, then collaboratively refines the winner. Final result combines geometric precision with bold color contrasts.</p>
+                    </div>
+                </div>
             </div>
         </div>
     </section>
 
-    <!-- Capabilities -->
-    <section id="capabilities">
-        <div class="container">
-            <h2>🎯 What Liminal Can Do</h2>
-            <div class="capabilities">
-                <div class="capability">
-                    <div class="emoji">🎨</div>
-                    <h3>Generate Art</h3>
-                    <ul>
-                        <li>p5.js sketches: Particle systems, flow fields, fractals, cellular automata</li>
-                        <li>GLSL shaders: Raymarching, SDFs, noise, domain warping</li>
-                        <li>Three.js scenes: 3D compositions, animations, interactive experiences</li>
-                        <li>Live music: Strudel patterns, Hydra visuals with audio reactivity</li>
-                        <li>Hybrid works: Music-to-visual pipelines, cross-domain compositions</li>
-                    </ul>
-                </div>
-
-                <div class="capability">
-                    <div class="emoji">🧠</div>
-                    <h3>Think Like An Artist</h3>
-                    <ul>
-                        <li>100+ techniques across all creative domains</li>
-                        <li>12+ artistic style categories with diverse approaches</li>
-                        <li>Design principles automatically applied</li>
-                        <li>Color theory integration</li>
-                        <li>Composition rules (golden ratio, rule of thirds)</li>
-                        <li>Mood enhancement (calm, energetic, mysterious, playful)</li>
-                    </ul>
-                </div>
-
-                <div class="capability">
-                    <div class="emoji">🔄</div>
-                    <h3>Improve Iteratively</h3>
-                    <ul>
-                        <li>Self-critique on aesthetic and technical dimensions</li>
-                        <li>Stagnation detection with alternative suggestions</li>
-                        <li>Quality gates filter out poor outputs</li>
-                        <li>Promise detection stops when complete</li>
-                        <li>Progressive refinement builds on successes</li>
-                    </ul>
-                </div>
-
-                <div class="capability">
-                    <div class="emoji">👥</div>
-                    <h3>Collaborate With You</h3>
-                    <ul>
-                        <li>7-question creative brief interview</li>
-                        <li>Proactive guidance at right moments</li>
-                        <li>Real-time feedback shows what it's thinking</li>
-                        <li>Interactive suggestions you can accept/decline</li>
-                        <li>Session memory remembers preferences</li>
-                    </ul>
-                </div>
-
-                <div class="capability">
-                    <div class="emoji">🌱</div>
-                    <h3>Learn From Experience</h3>
-                    <ul>
-                        <li>Compost Mill digests past work into reusable DNA</li>
-                        <li>Seed bank with quality fragments</li>
-                        <li>Evolutionary soup for continuous improvement</li>
-                        <li>Archive learning from high-quality examples</li>
-                        <li>Semantic search by concept, mood, technique</li>
-                    </ul>
-                </div>
-
-                <div class="capability">
-                    <div class="emoji">🎭</div>
-                    <h3>Multiple Creative Personas</h3>
-                    <ul>
-                        <li>Kai (Architect): Structural, analytical</li>
-                        <li>Nova (Synthesizer): Connective, integrative</li>
-                        <li>Rex (Explorer): Provocative, boundary-pushing</li>
-                        <li>Sam (Muse): Sensory, evocative</li>
-                        <li>Max (Distiller): Precise, compressed</li>
-                        <li>7-persona swarm with parallel generation</li>
-                    </ul>
-                </div>
-
-                <div class="capability">
-                    <div class="emoji">🎵</div>
-                    <h3>Make Live Music & Visuals</h3>
-                    <ul>
-                        <li>Strudel patterns: Rhythmic, harmonic compositions</li>
-                        <li>Hydra visuals: Audio-reactive graphics</li>
-                        <li>Pattern algebra: Mathematical approaches</li>
-                        <li>Temporal modulation: Time-based evolution</li>
-                        <li>Microtiming & polyrhythms</li>
-                    </ul>
-                </div>
-
-                <div class="capability">
-                    <div class="emoji">📊</div>
-                    <h3>Track & Optimize</h3>
-                    <ul>
-                        <li>MAP-Elites: Performance archive with diversity</li>
-                        <li>Novelty archive: Tracks unique behaviors</li>
-                        <li>Aesthetic model: Predicts quality</li>
-                        <li>Score tracking: Iteration-by-iteration</li>
-                        <li>Performance metrics for model routing</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Generation Modes -->
+    <!-- Features Section -->
     <section>
         <div class="container">
-            <h2>⚡ Generation Modes</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Mode</th>
-                        <th>Flag</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><strong>Single LLM</strong></td>
-                        <td><code>default</code></td>
-                        <td>One model generates, evaluates, iterates</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Swarm</strong></td>
-                        <td><code>--use-swarm</code></td>
-                        <td>7 Ollama personas generate in parallel, vote on best</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Deep Collab</strong></td>
-                        <td><code>useDeepCollab</code></td>
-                        <td>3-phase: Diverge → Analyze → Synthesize</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Live Music</strong></td>
-                        <td><code>--mode live-music</code></td>
-                        <td>Generate Strudel + Hydra code, write to disk</td>
-                    </tr>
-                </tbody>
-            </table>
-        </div>
-    </section>
-
-    <!-- Swarm Personas -->
-    <section>
-        <div class="container">
-            <h2>🎭 Swarm Generation Personas</h2>
-            <div class="personas">
-                <div class="persona">
-                    <div class="persona-name">Kai</div>
-                    <div class="persona-role">Architect — Structural, analytical</div>
-                    <div class="persona-model">llama3.2:1b</div>
-                </div>
-                <div class="persona">
-                    <div class="persona-name">Nova</div>
-                    <div class="persona-role">Synthesizer — Connective, integrative</div>
-                    <div class="persona-model">gemma2:2b</div>
-                </div>
-                <div class="persona">
-                    <div class="persona-name">Rex</div>
-                    <div class="persona-role">Explorer — Provocative, boundary-ping</div>
-                    <div class="persona-model">phi3:mini</div>
-                </div>
-                <div class="persona">
-                    <div class="persona-name">Sam</div>
-                    <div class="persona-role">Muse — Sensory, evocative</div>
-                    <div class="persona-model">qwen2.5:3b</div>
-                </div>
-                <div class="persona">
-                    <div class="persona-name">Max</div>
-                    <div class="persona-role">Distiller — Precise, compressed</div>
-                    <div class="persona-model">qwen2.5:0.5b</div>
-                </div>
-            </div>
-            <p style="text-align: center; color: #94a3b8; margin-top: 30px;">
-                <strong>Swarm Modes:</strong> competitive (winner seeds next round) • hybrid (top 2 combined, default) • ring (sequential pass) • mesh (all woven together)
+            <h2 class="section-title">⚡ Powerful Features</h2>
+            <p class="section-subtitle">
+                Everything you need to create stunning generative art
             </p>
-        </div>
-    </section>
-
-    <!-- Techniques by Domain -->
-    <section>
-        <div class="container">
-            <h2>📚 Artistic Knowledge Base</h2>
 
             <div class="features-grid">
                 <div class="feature-card">
-                    <h3>p5.js (25 techniques)</h3>
-                    <ul>
-                        <li>Coordinate Systems, Shape Primitives, Color Modes</li>
-                        <li>Animation Basics, Interaction Events, Image Processing</li>
-                        <li>Particle Systems, Flow Fields, Cellular Automata</li>
-                        <li>L-Systems, Recursion, Physics, Data Visualization</li>
-                        <li>Terrain Generation, Grid Systems, Mathematical Patterns</li>
-                    </ul>
+                    <div class="feature-icon">🧠</div>
+                    <h3 class="feature-title">Self-Recursive Learning</h3>
+                    <p class="feature-desc">
+                        Liminal critiques its own output and iteratively improves. Each generation gets better as it learns what works.
+                    </p>
                 </div>
 
                 <div class="feature-card">
-                    <h3>Shader/GLSL (20 techniques)</h3>
-                    <ul>
-                        <li>Raymarching, Signed Distance Functions (SDFs)</li>
-                        <li>Noise Functions (Perlin, Simplex, Worley, FBM)</li>
-                        <li>Domain Warping, Color Palettes</li>
-                        <li>Post-Processing (Bloom, Chromatic Aberration)</li>
-                        <li>Normal Mapping, Shadow Mapping</li>
-                    </ul>
+                    <div class="feature-icon">🎭</div>
+                    <h3 class="feature-title">Swarm Generation</h3>
+                    <p class="feature-desc">
+                        7 specialized AI personas generate in parallel, then vote on the best result. Get diverse, creative outputs.
+                    </p>
                 </div>
 
                 <div class="feature-card">
-                    <h3>Three.js (25 techniques)</h3>
-                    <ul>
-                        <li>Scene Graph, Geometries, Materials</li>
-                        <li>Lighting, Cameras, Loaders (GLTF, OBJ)</li>
-                        <li>Animation, Tweening, Post-Processing</li>
-                        <li>InstancedMesh, LOD (Level of Detail)</li>
-                        <li>Physics, Particles, VR/AR support</li>
-                    </ul>
+                    <div class="feature-icon">🌱</div>
+                    <h3 class="feature-title">Compost Mill Memory</h3>
+                    <p class="feature-desc">
+                        Your past work is digested into reusable seeds. The system learns from your preferences and builds on successes.
+                    </p>
                 </div>
 
                 <div class="feature-card">
-                    <h3>Strudel/Music (18 techniques)</h3>
-                    <ul>
-                        <li>Pattern Sequencing, Temporal Modulation</li>
-                        <li>Polyrhythms, Metric Modulation</li>
-                        <li>Melody Generation, Harmonic Progression</li>
-                        <li>Timbre Design, Spatial Audio</li>
-                        <li>Microtiming, Sample Manipulation</li>
-                    </ul>
+                    <div class="feature-icon">💬</div>
+                    <h3 class="feature-title">Conversational Chat Mode</h3>
+                    <p class="feature-desc">
+                        Interview-style creative sessions. Liminal asks the right questions to understand your vision.
+                    </p>
                 </div>
 
                 <div class="feature-card">
-                    <h3>Hydra/Visuals (20 techniques)</h3>
-                    <ul>
-                        <li>Source Creation (osc, src, noise, s0-s3)</li>
-                        <li>Texture Modulation (mod, scroll, kaleid, pixel)</li>
-                        <li>Color Manipulation (color, colorama, saturate)</li>
-                        <li>Blending (blend, layer, mult, diff, add)</li>
-                        <li>Feedback and Recursion, Audio Reactivity</li>
-                    </ul>
+                    <div class="feature-icon">📚</div>
+                    <h3 class="feature-title">100+ Artistic Techniques</h3>
+                    <p class="feature-desc">
+                        Perlin noise, flow fields, cellular automata, L-systems, raymarching, and many more built-in techniques.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3 class="feature-title">12+ Style Categories</h3>
+                    <p class="feature-desc">
+                        From minimalism to glitch art, procedural generation to live coding—comprehensive artistic knowledge.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Smart Model Routing</h3>
+                    <p class="feature-desc">
+                        Automatically chooses the best AI model for your domain. Local models for p5, cloud for complex shaders.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3 class="feature-title">Evolutionary Optimization</h3>
+                    <p class="feature-desc">
+                        MAP-Elites diversity maintenance ensures exploration of the entire creative space, not just local optima.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3 class="feature-title">Live Preview Rendering</h3>
+                    <p class="feature-desc">
+                        Every generation includes an HTML preview. See your art rendered instantly in the browser.
+                    </p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Notable Artists -->
+    <!-- Swarm Personas Section -->
     <section>
         <div class="container">
-            <h2>🎨 Artistic Style Categories</h2>
-            <div class="artists-section">
-                <div class="artist-category">
-                    <h4>P5.js/Creative Coding</h4>
-                    <ul>
-                        <li>Generative and algorithmic art approaches</li>
-                        <li>Interactive installation and responsive systems</li>
-                        <li>Data visualization and information aesthetics</li>
-                        <li>Educational and exploratory coding practices</li>
-                    </ul>
-                </div>
+            <h2 class="section-title">🎭 Swarm AI Personas</h2>
+            <p class="section-subtitle">
+                7 specialized creative minds working together
+            </p>
 
-                <div class="artist-category">
-                    <h4>Shader/WebGL</h4>
-                    <ul>
-                        <li>Raymarching and SDF-based rendering</li>
-                        <li>Procedural texture generation</li>
-                        <li>Physically-based rendering techniques</li>
-                        <li>GLSL optimization patterns</li>
-                    </ul>
+            <div class="swarm-grid">
+                <div class="persona-card">
+                    <div class="persona-emoji">🎨</div>
+                    <h3 class="persona-name">Minimalist</h3>
+                    <p class="persona-style">Clean, simple, essential elements only</p>
                 </div>
-
-                <div class="artist-category">
-                    <h4>Music/Live Coding</h4>
-                    <ul>
-                        <li>Pattern-based algorithmic composition</li>
-                        <li>Real-time improvisational coding</li>
-                        <li>Networked collaborative performance</li>
-                        <li>Visual music and audio-reactivity</li>
-                    </ul>
+                <div class="persona-card">
+                    <div class="persona-emoji">🌈</div>
+                    <h3 class="persona-name">Colorist</h3>
+                    <p class="persona-style">Vibrant colors, bold gradients</p>
                 </div>
-
-                <div class="artist-category">
-                    <h4>Historical & Contemporary</h4>
-                    <ul>
-                        <li>Minimalist conceptual approaches</li>
-                        <li>Optical pattern and perception-based art</li>
-                        <li>Mathematical and geometric art</li>
-                        <li>Early computer and plotter-based art</li>
-                        <li>Contemporary ML-generated and immersive styles</li>
-                    </ul>
+                <div class="persona-card">
+                    <div class="persona-emoji">⚡</div>
+                    <h3 class="persona-name">Experimental</h3>
+                    <p class="persona-style">Avant-garde, unconventional</p>
+                </div>
+                <div class="persona-card">
+                    <div class="persona-emoji">🔮</div>
+                    <h3 class="persona-name">Mystic</h3>
+                    <p class="persona-style">Ethereal, spiritual, cosmic</p>
+                </div>
+                <div class="persona-card">
+                    <div class="persona-emoji">🤖</div>
+                    <h3 class="persona-name">Technicist</h3>
+                    <p class="persona-style">Precise, algorithmic, mathematical</p>
+                </div>
+                <div class="persona-card">
+                    <div class="persona-emoji">🌊</div>
+                    <h3 class="persona-name">Organic</h3>
+                    <p class="persona-style">Natural, flowing, biomimetic</p>
+                </div>
+                <div class="persona-card">
+                    <div class="persona-emoji">🎭</div>
+                    <h3 class="persona-name">Narrator</h3>
+                    <p class="persona-style">Storytelling, conceptual, meaningful</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Why Different -->
+    <!-- CLI Section -->
     <section>
         <div class="container">
-            <h2>💡 Why Liminal Is Different</h2>
-            <div class="different-list">
-                <ol>
-                    <li><strong>Self-Recursive:</strong> The system critiques its own output and improves iteratively</li>
-                    <li><strong>Knowledge-Rich:</strong> 100+ techniques, 12+ style categories, design principles, color theory embedded</li>
-                    <li><strong>Context-Aware:</strong> Understands mood, intent, domain, and adjusts accordingly</li>
-                    <li><strong>Guidance-Driven:</strong> Proactively suggests next actions based on current state</li>
-                    <li><strong>Memory-Enhanced:</strong> Learns from your past work via Compost Mill</li>
-                    <li><strong>Multi-Modal:</strong> p5, shaders, Three.js, Strudel, Hydra — all integrated</li>
-                    <li><strong>Collaborative:</strong> Swarm of personas, deep collaboration with specialized roles</li>
-                    <li><strong>Transparent:</strong> Shows thoughts, suggestions, and reasoning in real-time</li>
-                </ol>
-                <p style="text-align: center; margin-top: 40px; color: #00d4ff; font-size: 1.2rem;">
-                    <strong>Most AI art tools generate once. Liminal generates, evaluates, critiques, learns, and improves — until the work is complete or it discovers something new.</strong>
-                </p>
-            </div>
-        </div>
-    </section>
+            <h2 class="section-title">💻 Command Line Interface</h2>
+            <p class="section-subtitle">
+                Simple, powerful commands for every creative task
+            </p>
 
-    <!-- CLI Commands -->
-    <section>
-        <div class="container">
-            <h2>💻 CLI Commands</h2>
             <div class="cli-section">
-                <div class="cli-category">
-                    <h4>Generation</h4>
-                    <div class="code-block">
-                        <code>liminal --prompt "Create a particle system"</code>
-                        <br><code>liminal -p "sketch" -m 10 -o ./output</code>
-                        <br><code>liminal --prompt "idea" --use-swarm --swarm-mode hybrid</code>
-                        <br><code>liminal --prompt "music" --mode live-music</code>
+                <div class="cli-command">
+                    <span class="prompt">$</span>
+                    <span class="command">liminal</span>
+                    <span class="flag">generate</span>
+                    <span class="string">"blue particles flowing like water"</span>
+                </div>
+                <div class="cli-command">
+                    <span class="prompt">$</span>
+                    <span class="command">liminal</span>
+                    <span class="flag">generate</span>
+                    <span class="string">"abstract geometric shapes"</span>
+                    <span class="flag">--use-swarm</span>
+                </div>
+                <div class="cli-command">
+                    <span class="prompt">$</span>
+                    <span class="command">liminal</span>
+                    <span class="flag">chat</span>
+                    <span class="comment"># Start interview mode</span>
+                </div>
+                <div class="cli-command">
+                    <span class="prompt">$</span>
+                    <span class="command">liminal</span>
+                    <span class="flag">compost</span>
+                    <span class="string">digest</span>
+                    <span class="comment"># Learn from past work</span>
+                </div>
+                <div class="cli-command">
+                    <span class="prompt">$</span>
+                    <span class="command">liminal</span>
+                    <span class="flag">serve</span>
+                    <span class="comment"># Preview on localhost:3456</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Knowledge Section -->
+    <section>
+        <div class="container">
+            <h2 class="section-title">📚 Built-In Artistic Knowledge</h2>
+            <p class="section-subtitle">
+                Liminal understands art theory, techniques, and style across all domains
+            </p>
+
+            <div class="demo-grid">
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag p5">P5.js Techniques</span>
+                    </div>
+                    <div class="demo-code" style="padding: 1.5rem;">
+                        <p style="margin: 0;">Coordinate Systems • Shape Primitives • Color Modes • Perlin Noise • Animation Basics • Interaction Events • Image Processing • Typography • WebGL Mode • Sound Synthesis • Camera Control • Particle Systems • Flow Fields • Cellular Automata • L-Systems • Recursive Patterns • Physics Simulation • Data Visualization • Procedural Terrain • Interactive Typography • Shader Integration • Video Processing</p>
                     </div>
                 </div>
 
-                <div class="cli-category">
-                    <h4>Chat Mode</h4>
-                    <div class="code-block">
-                        <code>liminal chat</code>
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag shader">Shader Techniques</span>
+                    </div>
+                    <div class="demo-code" style="padding: 1.5rem;">
+                        <p style="margin: 0;">Raymarching • SDFs • Noise Functions • Color Grading • Post-Processing • Glow Effects • Chromatic Aberration • Texture Generation • Pattern Generation • Geometric Primitives • Lighting Models • Material Systems • Animation Techniques • Performance Optimization</p>
                     </div>
                 </div>
 
-                <div class="cli-category">
-                    <h4>Compost System</h4>
-                    <div class="code-block">
-                        <code>liminal compost add &lt;path&gt;</code>
-                        <br><code>liminal compost digest</code>
-                        <br><code>liminal compost soup start</code>
-                        <br><code>liminal compost seeds list</code>
-                        <br><code>liminal compost status</code>
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag swarm">Style Categories</span>
+                    </div>
+                    <div class="demo-code" style="padding: 1.5rem;">
+                        <p style="margin: 0;">Generative Art Pioneer Style • Interactive Installation Style • Data Visualization Style • Live Coding Performance • Shader Art Style • Procedural Generation Style • Minimalist Conceptual Style • Optical Pattern Style • Mathematical Art Style • ML-Generated Art Style • Light Installation Style • Immersive Digital Style</p>
                     </div>
                 </div>
 
-                <div class="cli-category">
-                    <h4>Project Management</h4>
-                    <div class="code-block">
-                        <code>liminal list</code>
-                        <br><code>liminal serve 3456</code>
-                        <br><code>liminal --recent 10</code>
-                        <br><code>liminal --interactive</code>
+                <div class="demo-card">
+                    <div class="demo-header">
+                        <span class="demo-tag music">Music Techniques</span>
                     </div>
+                    <div class="demo-code" style="padding: 1.5rem;">
+                        <p style="margin: 0;">Pattern Sequencing • Live Coding • Algorithmic Composition • Audio Reactivity • Sound Synthesis • Rhythm Generation • Melody Construction • Harmony Systems • Bassline Patterns • Textural Layers • Temporal Modulation • Polyrhythms • Microtiming • Spatial Audio</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section>
+        <div class="container">
+            <div style="text-align: center; padding: 4rem 0;">
+                <h2 style="font-size: clamp(2rem, 5vw, 3rem); margin-bottom: 1.5rem;">
+                    Ready to Create?
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 1.25rem; margin-bottom: 3rem; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    Install Liminal and start generating beautiful generative art in minutes.
+                </p>
+                <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                    <a href="https://github.com/Pastorsimon1798/liminal#installation" class="btn btn-primary">Get Started</a>
+                    <a href="https://github.com/Pastorsimon1798/liminal" class="btn btn-secondary">View Documentation</a>
                 </div>
             </div>
         </div>
@@ -891,10 +955,16 @@ Enhanced Prompt → Better Generation → Improved Quality
     <!-- Footer -->
     <footer>
         <div class="container">
-            <p class="version">Liminal v1.0</p>
-            <p>"The code evolves. You curate. The system learns."</p>
-            <p style="margin-top: 20px; color: #475569;">
-                <a href="https://github.com/Pastorsimon1798/liminal" target="_blank" style="color: #7c3aed; text-decoration: none;">View on GitHub</a>
+            <p style="font-size: 1.125rem; margin-bottom: 1rem;">
+                <strong>LIMINAL</strong> — AI-Powered Creative Coding Agent
+            </p>
+            <p style="margin-bottom: 1rem;">
+                <a href="https://github.com/Pastorsimon1798/liminal">GitHub</a> •
+                <a href="https://github.com/Pastorsimon1798/liminal/issues">Issues</a> •
+                <a href="https://github.com/Pastorsimon1798/liminal/blob/main/README.md">Documentation</a>
+            </p>
+            <p style="font-size: 0.875rem; color: var(--text-secondary);">
+                2220 tests passing • Built with ❤️ for creative coders
             </p>
         </div>
     </footer>

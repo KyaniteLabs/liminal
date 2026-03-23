@@ -266,19 +266,28 @@ liminal chat
 
 **During Generation:**
 - Real-time thought emission shows what's happening
+  - "Starting iteration 1..."
+  - "Loading enhanced prompt with artistic context..."
+  - "Generating code with local model..."
+  - "Evaluating output..."
+  - "Saving to gallery..."
 - Proactive suggestions appear for:
-  - **Swarm**: "I can explore 7 artistic approaches"
-  - **Compost**: "I have quality seeds from your past work"
-  - **Evolution**: "Scores plateauing - enable MAP-Elites"
-  - **Technique**: "Try Flow Fields for organic movement"
-  - **Archive**: "Use high-quality examples for few-shot learning"
+  - **Swarm**: "I can explore 7 artistic approaches - want me to?"
+  - **Compost**: "I have 15 quality seeds from your past work. Want me to inject them?"
+  - **Evolution**: "Scores are plateauing. MAP-Elites can help break through."
+  - **Technique**: "Try Flow Fields technique for organic movement"
+  - **Archive**: "I have 8 high-quality examples - use archive learning?"
 - Live preview renders each iteration
+  - Automatic HTML rendering with live preview
+  - Shows iteration number, score, and completion reason
+  - Progress updates during generation
 - Progress shows iteration count, score, completion reason
 
 **Session Memory:**
 - Conversation history preserved
 - Artwork snapshots saved per iteration
 - Learned preferences influence future sessions
+- Continuous learning from your creative choices
 
 ## Artistic Knowledge Base
 
@@ -390,11 +399,36 @@ const decision = registry.routeByPrompt("create a particle system");
 ```
 
 Routes between:
-- **Local models**: Qwen 3.5-4B (LM Studio)
-- **Cloud models**: Minimax, Inference, etc.
+- **Local models**: LM Studio (Qwen 2.5-Coder-7B-Instruct, etc.)
+- **Cloud models**: Minimax, OpenAI, Anthropic, etc.
 - **Hybrid mode**: Combines multiple models for optimal results
 
 **Dynamic Learning**: Routing updates from actual generation outcomes via `recordRoutingOutcome()` and `getRollingPerformance()`.
+
+**Dual-Model Router**: Intelligently chooses between models based on:
+- Domain detection (p5 → local, GLSL → local, music → cloud, etc.)
+- Performance history (success rates, average scores)
+- Cost considerations (local vs cloud pricing)
+- Latency requirements (real-time vs batch)
+
+## Preview Rendering
+
+Every generation includes live HTML preview rendering:
+
+```javascript
+// Automatic preview during generation
+{
+  previewHtml: `<html>...</html>`,  // Full HTML document
+  previewUrl: `file:///path/to/preview.html`
+}
+```
+
+**Features:**
+- Auto-generated HTML with embedded p5.js/sketch.js
+- Live reload in browser
+- Shows iteration number and score
+- Clean shutdown on completion or error
+- Works with all generation modes (single, swarm, collab, live-music)
 
 ## Live Music Coding
 
@@ -502,29 +536,133 @@ const result = await run(enhanced.prompt, {
 
 ## Testing
 
-- **2218 tests passing** (Vitest)
-- **Test coverage**: Core systems, brain modules, chat system, compost pipeline
+- **2220 tests passing** (Vitest) — Full coverage across all systems
+- **Test coverage**: Core systems, brain modules, chat system, compost pipeline, LIR system
 - **Integration tests**: End-to-end flows verified
 - **Unit tests**: Individual component testing with mocks
+- **Test suites**: 168 test files covering every subsystem
+
+## What Liminal Can Do
+
+### 🎨 Generate Art
+- **p5.js sketches**: Particle systems, flow fields, fractals, cellular automata, terrain generation
+- **GLSL shaders**: Raymarching, SDFs, noise, domain warping, post-processing effects
+- **Three.js scenes**: 3D compositions, animations, interactive experiences
+- **Live music**: Strudel patterns, Hydra visuals with audio reactivity
+- **Hybrid works**: Music-to-visual pipelines, cross-domain compositions
+
+### 🧠 Think Like An Artist
+- **100+ techniques** across all creative domains
+- **30+ artists** with their signature approaches
+- **Design principles** automatically applied (balance, contrast, emphasis, movement, unity, variety)
+- **Color theory** integration (complementary, analogous, triadic palettes)
+- **Composition rules** (golden ratio, rule of thirds, leading lines, symmetry)
+- **Mood enhancement** (calm, energetic, mysterious, playful, melancholic, abstract)
+
+### 🔄 Improve Iteratively
+- **Self-critique**: Each iteration evaluated on aesthetic and technical dimensions
+- **Stagnation detection**: Recognizes when stuck and suggests alternatives
+- **Quality gates**: Poor outputs filtered out automatically
+- **Promise detection**: Stops when code signals completion
+- **Progressive refinement**: Each build builds on previous successes
+
+### 👥 Collaborate With You
+- **Interview mode**: 7-question creative brief to understand your vision
+- **Proactive guidance**: Suggests techniques, compost seeds, swarm exploration at right moments
+- **Real-time feedback**: Shows what it's thinking, why it's making choices
+- **Interactive suggestions**: Accept or decline guidance during generation
+- **Session memory**: Remembers your preferences across sessions
+
+### 🌱 Learn From Experience
+- **Compost Mill**: Digests your past work into reusable creative DNA
+- **Seed bank**: Quality fragments automatically injected into future generations
+- **Evolutionary soup**: Continuous improvement of seed population
+- **Archive learning**: Few-shot learning from high-quality examples
+- **Semantic search**: Find relevant past work by concept, mood, technique
+
+### 🎭 Multiple Creative Personas
+- **Kai (Architect)**: Structural, analytical approach
+- **Nova (Synthesizer)**: Connective, integrative thinking
+- **Rex (Explorer)**: Provocative, boundary-pushing ideas
+- **Sam (Muse)**: Sensory, evocative descriptions
+- **Max (Distiller)**: Precise, compressed solutions
+- **7-persona swarm**: Parallel generation with voting or hybrid synthesis
+
+### 🎵 Make Live Music & Visuals
+- **Strudel patterns**: Rhythmic, harmonic, textural compositions
+- **Hydra visuals**: Audio-reactive graphics in real-time
+- **Pattern algebra**: Mathematical approaches to music
+- **Temporal modulation**: Time-based evolution
+- **Microtiming & polyrhythms**: Advanced rhythmic techniques
+
+### 📊 Track & Optimize
+- **MAP-Elites**: Performance archive with behavioral diversity
+- **Novelty archive**: Tracks unique behaviors for exploration
+- **Aesthetic model**: Predicts quality before generation
+- **Score tracking**: Iteration-by-iteration progress
+- **Performance metrics**: Model routing optimization
+
+## Why Liminal Is Different
+
+**Not just another AI art tool:**
+
+1. **Self-Recursive**: The system critiques its own output and improves iteratively
+2. **Knowledge-Rich**: 100+ techniques, 30+ artists, design principles, color theory embedded
+3. **Context-Aware**: Understands mood, intent, domain, and adjusts accordingly
+4. **Guidance-Driven**: Proactively suggests next actions based on current state
+5. **Memory-Enhanced**: Learns from your past work via Compost Mill
+6. **Multi-Modal**: p5, shaders, Three.js, Strudel, Hydra — all integrated
+7. **Collaborative**: Swarm of personas, deep collaboration with specialized roles
+8. **Transparent**: Shows thoughts, suggestions, and reasoning in real-time
+
+**The difference:**
+
+Most AI art tools generate once. Liminal generates, evaluates, critiques, learns, and improves — until the work is complete or it discovers something new.
 
 ## Development Status
 
 ### ✅ Implemented (Phases 1-4)
 
-**Phase 1: Core Loop** - Ralph-Wiggum iteration engine
-**Phase 2: Brain & Memory** - SemanticArtMemory, EpisodicMemory, ArtKnowledgeGraph
-**Phase 3: Chat & Guidance** - Interview flow, proactive suggestions, real-time updates
-**Phase 4: Creative Knowledge** - 100+ techniques, 30+ artists, comprehensive artistic taxonomies
+**Phase 1: Core Loop** — Ralph-Wiggum iteration engine
+- Generate → Evaluate → Accumulate → Enhance → Check
+- Quality gates, stagnation detection, promise detection
+- Swarm mode, deep collaboration, live music mode
+- Multi-model routing and performance tracking
+
+**Phase 2: Brain & Memory** — SemanticArtMemory, EpisodicMemory, ArtKnowledgeGraph
+- Semantic search across artworks, techniques, artists
+- Episodic memory for learning from user preferences
+- Rich knowledge graph with relationships between concepts
+- Compost Mill for digesting creative material
+
+**Phase 3: Chat & Guidance** — Interview flow, proactive suggestions, real-time updates
+- 7-question creative brief interview
+- Proactive suggestions (swarm, compost, techniques, evolution, archive)
+- Real-time thought emission and progress updates
+- Live preview rendering during generation
+- Session history and memory
+
+**Phase 4: Creative Knowledge** — 100+ techniques, 30+ artists, comprehensive artistic taxonomies
+- Comprehensive artistic knowledge base
+- Prompt enhancement with domain-specific vocabulary
+- Mood-based artistic context injection
+- Intent-based technique suggestions
+- Artist reference recommendations
 
 ### 🚧 In Progress
 
 **Phase 5**: Advanced features and integrations
+- Expanded interview questions (7 → 11)
+- Enhanced persistent memory across sessions
+- GUI improvements and additional features
 
 ### 📋 Planned
 
-- Additional interview questions (expand from 7 to 11)
-- Enhanced persistent memory across sessions
-- GUI improvements and additional features
+- Web-based GUI with real-time visualization
+- Additional creative domains (TouchDesigner, Max/MSP, SuperCollider)
+- Collaborative sessions (multi-user)
+- Gallery and portfolio management
+- Plugin system for custom techniques and artists
 
 ## Contributing
 

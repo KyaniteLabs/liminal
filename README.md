@@ -1,8 +1,8 @@
 # Liminal — Creative Coding Agent
 
-> "The code evolves. You curate."
+> "The code evolves. You curate. The system learns."
 
-A generative art system with an internal Ralph-Wiggum Loop for self-recursive iteration and improvement. Supports p5.js visuals, live music coding (Strudel/Hydra), multi-model swarm generation, deep collaboration, and a living Compost Mill for digesting creative material.
+A sophisticated generative art system with an internal Ralph-Wiggum Loop for self-recursive iteration, comprehensive artistic knowledge, and intelligent guidance. Supports p5.js visuals, live music coding (Strudel/Hydra), multi-model swarm generation, deep collaboration, chat-based creative sessions, and a living Compost Mill for digesting creative material.
 
 ## Quick Start
 
@@ -13,95 +13,197 @@ pnpm install
 liminal --configure          # Sets up LM Studio at 100.66.225.85:1234
 
 # Or set env vars directly
-export LIMINAL_LLM_PROVIDER=ollama
-export LIMINAL_LLM_MODEL=llama3.2
+export LIMINAL_LLM_PROVIDER=lmstudio
+export LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
 
-# Generate
+# Generate art
 liminal --prompt "Create a calming blue particle system"
+
+# Start creative chat session
+liminal chat
 ```
 
-## What is Liminal?
+## How Liminal Works
 
-Liminal generates emergent generative art through self-recursive iteration. The same prompt runs repeatedly, but the "world" (files, context, history) changes each time, creating a feedback loop where the agent critiques and improves its own previous output.
+Liminal generates emergent generative art through self-recursive iteration with intelligent context enhancement. The same prompt runs repeatedly, but the "world" (files, context, artistic knowledge, guidance) changes each time, creating a sophisticated feedback loop where the agent critiques and improves its own output.
 
-### Core Loop
-
-```
-while iterations < max:
-  generate(prompt, context)    # LLM creates code
-  evaluate(output)             # Quality gate (aesthetic + technical)
-  accumulate(state)            # Save iteration, build context
-  if promise detected: break   # <promise>COMPLETE</promise>
-```
-
-Safety mechanisms: max-iterations limit, timeout protection, quality gates, graceful error handling.
-
-### Self-Improvement Loop
-
-The system now has a complete self-improvement feedback cycle:
+### The Creative Loop
 
 ```
-Generate → Evaluate → Store (archive + compost + MAP-Elites + novelty)
-                ↓
-    Retrieve (semantically matched examples, diverse elites, novel behavior,
-              DNA from compost, aesthetic predictions)
-                ↓
-    Enhance Context → Generate Better → Repeat
+┌─────────────────────────────────────────────────────────────────────┐
+│                     RALPH-WIGGUM LOOP                              │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                     │
+│  1. GENERATE   → LLM creates code based on prompt + enhanced context  │
+│  2. EVALUATE   → Quality gate (aesthetic + technical dimensions)   │
+│  3. ACCUMULATE → Save iteration, build context, learn from output    │
+│  4. GUIDANCE   → Proactive suggestions based on current state       │
+│  5. ENHANCE    → Inject compost DNA, archive examples, aesthetic hints │
+│  6. CHECK      → Stagnation detection? Promise detected?          │
+│                                                                     │
+│  Repeat until: promise detected OR max-iterations OR timeout       │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-Key components:
-- **ArchiveLearning**: Semantic few-shot learning from high-quality past outputs
-- **MAP-Elites**: Performance-based archive with diverse coverage tracking
-- **NoveltyArchive**: Tracks novel behaviors for exploration
-- **Compost Mill**: Extracts reusable DNA from quality outputs
-- **AestheticModel**: Predicts quality from behavior vectors
-- **Dynamic Routing**: Updates model selection based on actual outcomes
+### Context Enhancement Pipeline
 
-## Architecture
+Every generation is enhanced with multiple layers of intelligence:
 
-Liminal uses a unified architecture with three key consolidation points:
+```
+Base Prompt
+    ↓
+┌──────────────────────────────────────────────────────┐
+│              ARTISTIC KNOWLEDGE BASE                │
+│  • 100+ techniques across p5, shader, three, music    │
+│  • 30+ notable artists with their contributions       │
+│  • Art movements, design principles, color theory      │
+│  • Domain-specific vocabulary and terminology          │
+└──────────────────────────────────────────────────────┘
+    ↓
+┌──────────────────────────────────────────────────────┐
+│              COMPOST SEED INJECTION                  │
+│  • Quality DNA from past successful generations       │
+│  • Multi-domain fragments (code, docs, textures)     │
+│  • Style patterns and technique signatures           │
+└──────────────────────────────────────────────────────┘
+    ↓
+┌──────────────────────────────────────────────────────┐
+│              ARCHIVE LEARNING                      │
+│  • Semantic few-shot examples from high-quality     │
+│  • Keyword overlap matching                        │
+│  • Budget-conscious injection (2000 chars)          │
+└──────────────────────────────────────────────────────┘
+    ↓
+┌──────────────────────────────────────────────────────┐
+│              EVOLUTION SUBSYSTEMS                   │
+│  • MAP-Elites: Performance archive with diversity    │
+│  • Novelty Archive: Tracks novel behaviors            │
+│  • AestheticModel: Quality prediction              │
+└──────────────────────────────────────────────────────┘
+    ↓
+Enhanced Prompt → Better Generation → Improved Quality
+```
 
-- **GeneratorRegistry** — Single dispatch point for all generators, with smart model routing (local/cloud/hybrid) merged from SmartRouter. Detects domain from prompt keywords and routes to the optimal model based on A/B test data.
-- **CollaborationEngine** — Unified collaboration with configurable strategies: `swarm` (7-persona parallel), `phases` (specialist pipeline), `simple` (2-model ping-pong).
-- **Compost Mill** — Living digestion pipeline: heap → extract → shred → collide → score → promote → seed bank → inject into generation loop.
+### Chat Mode with Intelligent Guidance
 
-Key integrations:
-- **DNA feedback**: CompostMill extracts ProjectDNA from promoted seeds and registers it with GeneratorRegistry for improved routing.
-- **Archive learning**: RalphLoop uses ArchiveLearning to inject semantically matched high-quality examples from past runs into generation prompts (keyword overlap ranking, 2000-char budget).
-- **Aesthetic model**: Predicts quality based on behavior vectors when MAP-Elites is enabled, persisting across runs.
-- **MAP-Elites**: Performance-based archive with diverse coverage tracking, now persists across runs and injects diversity hints when coverage is low.
-- **Dynamic routing**: Routing data updates from actual generation outcomes via `recordRoutingOutcome()` and `getRollingPerformance()`.
+The chat mode (`liminal chat`) provides an interview-driven creative session:
 
-## Features
+1. **Interview Phase** (7 questions)
+   - What do you want to create?
+   - What's the context or inspiration?
+   - What mood should it have?
+   - Any references or inspirations?
+   - Any constraints or requirements?
+   - Confirmation of creative brief
+   - Generation begins
 
-### Generation Modes
+2. **Real-time Guidance**
+   - **Thought Emission**: "Starting iteration 1...", "Loading prompt...", "Generating code..."
+   - **Proactive Suggestions**:
+     - "I can explore 7 artistic approaches - want me to?" (swarm)
+     - "I have 15 quality seeds from your past work. Want me to inject them?" (compost)
+     - "Scores are plateauing. MAP-Elites can help break through." (evolution)
+     - "Try Flow Fields technique for organic movement" (technique)
+     - "I have 8 high-quality examples - use archive learning?" (archive)
+   - **Progress Updates**: Iteration progress, scores, promise detection
+   - **Live Preview**: Render output in real-time during generation
+
+3. **Session Memory**
+   - Full conversation history
+   - Artwork snapshots per iteration
+   - Learned preferences for future sessions
+
+## Architecture Overview
+
+Liminal uses a sophisticated multi-layered architecture:
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                          CHAT INTERFACE                              │
+│  • Interview phase with 7-question creative brief                             │
+│  • Real-time guidance with proactive suggestions                                   │
+│  • Live preview rendering                                                               │
+│  • Session history and memory                                                               │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                      GUIDANCE ENGINE                                   │
+│  • Context-aware suggestion system                                                      │
+│  • Analyzes: iteration count, score trends, stagnation detection                        │
+│  • Suggests: swarm, compost, techniques, evolution, archive                           │
+│  • Priority ordering: high → medium → low                                               │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                    ARTISTIC KNOWLEDGE BASE                            │
+│  • 100+ techniques: p5 (25), shader (20), three (25), strudel (18), hydra (20) │
+│  • 30+ notable artists with domains and contributions                                   │
+│  • Art movements: Generative, Algorithmic, Op Art, Minimalism, etc.                     │
+│  • Design principles: Balance, Contrast, Emphasis, Movement, etc.                          │
+│  • Color theory: Complementary, Analogous, Triadic, Warm/Cool, etc.                      │
+│  • Composition: Golden Ratio, Rule of Thirds, Symmetry, Leading Lines, etc.                │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                    PROMPT ENHANCER                                    │
+│  • Domain-specific vocabulary injection                                                   │
+│  • Mood-based enhancements (calm → Balance, Unity, Harmony)                              │
+│  • Intent-based technique suggestions (flow → Flow Fields, Perlin Noise)                   │
+│  • Artist reference suggestions based on domain/context                                   │
+│  • Artistic terminology and modifiers                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                      RALPH-WIGGUM LOOP                                  │
+│  • Generation orchestrator (swarm/collab/generator)                                    │
+│  • Scoring engine (detailed/strategic evaluation)                                         │
+│  • Evolution integration (MAP-Elites, Novelty, AestheticModel)                             │
+│  • Persistence (gallery save, merge-every-N)                                                 │
+│  • Stagnation detection with self-reflection                                              │
+└─────────────────────────────────────────────────────────────────────┘
+                                    ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                    SUBSYSTEMS                                        │
+│  • GeneratorRegistry (smart routing by domain)                                           │
+│  • CollabEngine (swarm/phases/simple strategies)                                         │
+│  • CompostMill (heap → extract → shred → collide → score → promote → digest)                  │
+│  • ArchiveLearning (few-shot learning from quality outputs)                                │
+│  • SafetyGuardrails (quality thresholds, API limits)                                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+## Generation Modes
 
 | Mode | Flag | Description |
 |------|------|-------------|
 | **Single LLM** | default | One model generates, evaluates, iterates |
 | **Swarm** | `--use-swarm` | 7 Ollama personas generate in parallel, vote on best |
-| **Deep Collab** | `useDeepCollab` option | 3-phase: Diverge (2 models) → Analyze (3 critics) → Synthesize |
-| **Collab Engine** | `collabMode` option | Unified engine: swarm / phases / simple strategies |
+| **Deep Collab** | `useDeepCollab` option | 3-phase: Diverge → Analyze → Synthesize |
+| **Collab Engine** | `collabMode` option | Unified: swarm / phases / simple strategies |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code, write to disk |
-| **Organism** | `mode: 'organism'` option | Music-to-visual pipeline with context accumulation, compost seed injection, quality evaluation, and stagnation detection |
+| **Organism** | `mode: 'organism'` option | Music-to-visual pipeline with context accumulation |
 
-### Swarm Generation
+## Swarm Generation
 
 7 creative personas run via Ollama in parallel, each with a distinct voice:
 
-| Persona | Role | Default Model |
-|---------|------|---------------|
+| Persona | Role | Model |
+|---------|------|-------|
 | Kai (Architect) | Structural, analytical | `llama3.2:1b` |
 | Nova (Synthesizer) | Connective, integrative | `gemma2:2b` |
-| Rex (Explorer) | Provocative, boundary-pushing | `phi3:mini` |
+| Rex (Explorer) | Provocative, boundary-ping | `phi3:mini` |
 | Sam (Muse) | Sensory, evocative | `qwen2.5:3b` |
 | Max (Distiller) | Precise, compressed | `qwen2.5:0.5b` |
 
-Modes: `competitive` (winner seeds next round), `hybrid` (top 2 combined, default), `ring` (sequential pass), `mesh` (all woven together).
+**Modes:**
+- `competitive` (winner seeds next round)
+- `hybrid` (top 2 combined, default)
+- `ring` (sequential pass)
+- `mesh` (all woven together)
 
-### Deep Collaboration
+## Deep Collaboration
 
-Multi-model collaboration with specialized roles across local and cloud models:
+Multi-model collaboration with specialized roles:
 
 1. **Divergence**: Creator (local) + Visionary (cloud) generate alternatives
 2. **Analysis**: Technical Critic + Artistic Critic + Domain Expert evaluate
@@ -109,34 +211,192 @@ Multi-model collaboration with specialized roles across local and cloud models:
 
 Repeats until convergence (threshold 0.90) or max phases (default 4). Supports domains: `p5`, `glsl`, `three`, `ascii`, `music`, `code`.
 
-### Compost Mill
+## Compost Mill
 
 A living digestion system for creative material. Feed it files, directories, or previous Liminal outputs — it extracts, shreds, scores, and evolves fragments into reusable seeds.
 
 **Pipeline:** Feed → Extract (3 layers) → Shred → Mix (cross-domain collisions) → Mine (score + promote) → Digest → Prune
 
-Key concepts:
+### Key Concepts
+
 - **Heap**: staging area for material awaiting digestion
 - **Fragments**: extracted pieces with multi-dimensional scores (novelty, density, cross-domain)
-- **Seed Bank**: persistent store of high-scoring promoted fragments — seeds are injected into every generation loop iteration
+- **Seed Bank**: persistent store of high-scoring promoted fragments — seeds are injected into every generation loop
 - **Soup**: continuous evolutionary loop — merge random fragments, score offspring, replace worst
-- **DNA Extraction**: ProjectDNA (domain, style patterns, techniques) extracted from promoted seeds and registered with GeneratorRegistry for improved routing
+- **DNA Extraction**: ProjectDNA (domain, style patterns, techniques) extracted from promoted seeds
 
-### Smart Model Routing
+### LIR (Liminal Intermediate Representation)
 
-GeneratorRegistry includes unified model routing based on A/B test data per domain:
+Structured metadata for all seeds:
+- `[code]` badges for code fragments
+- `[doc]` badges for documentation
+- `[text]` badges for raw text
+- Signatures, metrics, headings
+- Type-safe conversion between string and structured formats
+
+### Compost CLI
+
+```bash
+liminal compost add <path>        # Add material to heap
+liminal compost digest             # Run digestion pipeline
+liminal compost soup start         # Start evolutionary soup loop
+liminal compost soup stop          # Stop soup loop
+liminal compost soup status        # Check soup status
+liminal compost seeds list         # List promoted seeds (with LIR badges)
+liminal compost seeds show <id>    # Show full seed details (with LIR structure)
+liminal compost status             # Heap/seed/soup overview
+```
+
+## Chat Mode Commands
+
+### Interactive Session
+
+```bash
+liminal chat
+```
+
+**Interview Questions:**
+1. What do you want to create? (intent)
+2. What's the context or inspiration? (context)
+3. What mood should it have? (mood)
+4. Any references or inspirations? (references)
+5. Any constraints or requirements? (constraints)
+6. Confirm creative brief? (confirmation)
+7. Generation begins automatically
+
+**During Generation:**
+- Real-time thought emission shows what's happening
+- Proactive suggestions appear for:
+  - **Swarm**: "I can explore 7 artistic approaches"
+  - **Compost**: "I have quality seeds from your past work"
+  - **Evolution**: "Scores plateauing - enable MAP-Elites"
+  - **Technique**: "Try Flow Fields for organic movement"
+  - **Archive**: "Use high-quality examples for few-shot learning"
+- Live preview renders each iteration
+- Progress shows iteration count, score, completion reason
+
+**Session Memory:**
+- Conversation history preserved
+- Artwork snapshots saved per iteration
+- Learned preferences influence future sessions
+
+## Artistic Knowledge Base
+
+### Comprehensive Techniques by Domain
+
+**p5.js (25 techniques):**
+- Coordinate Systems, Shape Primitives, Color Modes
+- Animation Basics, Interaction Events, Image Processing
+- Typography, WebGL, Sound, Camera
+- Particle Systems, Flow Fields, Cellular Automata
+- L-Systems, Recursion, Physics, Data Visualization
+- Terrain Generation, Grid Systems, Mathematical Patterns
+
+**Shader/GLSL (20 techniques):**
+- Raymarching, Signed Distance Functions (SDFs)
+- Noise Functions (Perlin, Simplex, Worley, FBM)
+- Domain Warping, Color Palettes
+- Post-Processing (Bloom, Chromatic Aberration)
+- Normal Mapping, Shadow Mapping
+- Procedural Textures, Math Functions
+
+**Three.js (25 techniques):**
+- Scene Graph, Geometries, Materials
+- Lighting, Cameras, Loaders (GLTF, OBJ)
+- Animation, Tweening, Post-Processing
+- InstancedMesh, LOD (Level of Detail)
+- Physics, Particles, VR/AR support
+- Custom Shaders, Video Textures
+- Audio Integration
+
+**Strudel/Music (18 techniques):**
+- Pattern Sequencing, Temporal Modulation
+- Polyrhythms, Metric Modulation
+- Melody Generation, Harmonic Progression
+- Timbre Design, Spatial Audio
+- Microtiming, Sample Manipulation
+- Probability and Chance, State Machines
+- Pattern Algebra, Iterative Processes
+
+**Hydra/Visuals (20 techniques):**
+- Source Creation (osc, src, noise, s0-s3)
+- Texture Modulation (mod, scroll, kaleid, pixel)
+- Color Manipulation (color, colorama, saturate)
+- Blending (blend, layer, mult, diff, add)
+- Feedback and Recursion
+- Audio Reactivity (a.show, fft[])
+- Glitch and Distortion effects
+
+### Notable Artists
+
+**P5.js/Creative Coding:**
+- Casey Reas, Ben Fry (Processing co-founders)
+- Daniel Shiffet (Coding Train)
+- Tyler Hobbs (Quil, generative art educator)
+- Golan Levin, Zach Lieberman (interactive art)
+- Vera Molnar, Manfred Mohr (generative art pioneers)
+
+**Shader/WebGL:**
+- Inigo Quilez (raymarching, SDFs, Shadertoy)
+- Simon Green, Patricio Gonzalez Vivo (The Book of Shaders)
+- Martijn Steinrucken (shader techniques)
+
+**Three.js/3D:**
+- Ricardo Cabello (Three.js creator)
+- Bruno Simon, Joshua Koo (creative coding educators)
+
+**Music/Live Coding:**
+- Timothy Heckmann (Strudel creator)
+- Alex McLean (TidalCycles)
+- Ellen Band, Mikael Jazuli, Claude Heiland-Allen
+
+**Generative Art Pioneers:**
+- Sol LeWitt (minimalism, conceptual art)
+- Bridget Riley (Op Art, perception)
+- M.C. Escher (tessellations, impossible geometry)
+- John Whitney Sr., Lillian Schwartz (computer art pioneers)
+- Refik Anadol, TeamLab (contemporary digital art)
+
+### Design Principles
+
+**Fundamental:**
+- Balance, Contrast, Emphasis, Movement, Pattern, Rhythm, Unity, Variety
+
+**Advanced:**
+- Negative Space, Golden Ratio, Rule of Thirds
+- Symmetry, Asymmetry, Depth, Scale, Proximity
+- Closure, Continuity, Figure-Ground, Gestalt
+
+### Art Movements
+
+Generative Art, Algorithmic Art, Computational Art, Op Art, Minimalism, Abstract Expressionism, Kinetic Art, Digital Art, Interactive Art, Installation Art, Sound Art, Data Art, Glitch Art, AI Art, Creative Coding, Live Coding, Procedural Generation
+
+### Color Theory
+
+Complementary, Analogous, Triadic, Split-Complementary, Tetradic, Warm/Cool Colors, Saturation, Value, Hue, HSB/HSL, CMYK, Grayscale, Gradient, Palettes
+
+### Composition
+
+Golden Ratio, Rule of Thirds, Symmetry, Asymmetry, Leading Lines, Framing, Perspective, Depth, Scale, Point of View, Cropping, Negative Space, Visual Hierarchy, Focal Point
+
+## Smart Model Routing
+
+GeneratorRegistry includes intelligent routing based on domain detection and performance data:
 
 ```javascript
 const registry = generatorRegistry;
 const decision = registry.routeByPrompt("create a particle system");
-// → { model: 'local', reason: '...', confidence: 0.85, ... }
+// → { model: 'local', reason: 'p5 domain with particle techniques', confidence: 0.92 }
 ```
 
-Routes between local models (Qwen 3.5-4B), cloud models (Minimax), and hybrid mode based on domain fitness scores.
+Routes between:
+- **Local models**: Qwen 3.5-4B (LM Studio)
+- **Cloud models**: Minimax, Inference, etc.
+- **Hybrid mode**: Combines multiple models for optimal results
 
-**Dynamic Routing Updates**: Routing data now updates from actual generation outcomes via `recordRoutingOutcome()` and `getRollingPerformance()`. The system learns which models perform best for specific domains over time.
+**Dynamic Learning**: Routing updates from actual generation outcomes via `recordRoutingOutcome()` and `getRollingPerformance()`.
 
-### Live Music Coding
+## Live Music Coding
 
 Generate live code for Strudel (TidalCycles), Hydra (audio-reactive visuals), and more.
 
@@ -147,208 +407,133 @@ liminal --prompt "ambient glitch set" --mode live-music --output ./set
 
 Music-to-visual bridge: `generateMusicToVisual()` extracts BPM/FFT from music output and passes it to visual generation.
 
-### GUI Enhancements
+## GUI & Web Interface
 
-The web GUI has been enhanced with full support for all self-improvement features:
+The web GUI has full support for all features:
 
-- **`/api/run`** — Now accepts all LoopOptions including swarm, collab, MAP-Elites, archive learning, aesthetic model, and auto-compost
-- **`/api/compost/dashboard`** — Full compost statistics with top seeds displayed
-- **`/api/compost/add`** — Feed gallery outputs directly to compost heap from the GUI
-- **Archive Integration** — Gallery projects can be automatically fed to compost for continuous improvement
-- **Real-time Updates** — SSE event streaming for live progress updates
+- **`/api/run`** — All LoopOptions including swarm, collab, MAP-Elites, archive learning, aesthetic model, auto-compost
+- **`/api/compost/dashboard`** — Compost statistics with top seeds displayed
+- **`/api/compost/add`** — Feed gallery outputs to compost heap
+- **Archive Integration** — Gallery projects auto-fed to compost
+- **Real-time Updates** — SSE event streaming for live progress
+- **Chat Mode** — Full interview-driven creative sessions with guidance
 
-### Gallery Management
-
-The Gallery now includes automatic cleanup:
-
-```javascript
-// Automatically archive old projects
-cleanupOldProjects(maxProjects, maxAgeDays)
-```
-
-Projects are archived to `gallery/archive/` when they exceed the configured age or count limits, ensuring the gallery remains performant while preserving all historical work.
-
-## CLI
+## CLI Commands
 
 ```bash
+# Generation
 liminal --prompt "Create a particle system"              # Basic generation
 liminal -p "sketch" -m 10 -o ./output                    # Short flags
 liminal --prompt "idea" --use-swarm --swarm-mode hybrid   # Swarm mode
 liminal --prompt "music" --mode live-music                # Live music
-liminal compost add <path>                                # Add material to compost heap
+
+# Chat Mode
+liminal chat                                            # Interview-driven creative session
+
+# Compost System
+liminal compost add <path>                                # Add material to heap
 liminal compost digest                                   # Run digestion pipeline
 liminal compost soup start                                # Start evolutionary soup loop
 liminal compost soup stop                                 # Stop soup loop
 liminal compost soup status                               # Check soup status
-liminal compost seeds list                                # List promoted seeds
-liminal compost seeds show <id>                           # Show full seed details
+liminal compost seeds list                                # List promoted seeds (with LIR badges)
+liminal compost seeds show <id>                           # Show seed details
 liminal compost status                                    # Heap/seed/soup overview
-liminal serve 3456                                        # Preview server
+
+# Project Management
 liminal list                                               # List saved sketches
+liminal serve 3456                                        # Preview server
 liminal --recent 10                                        # Recent prompts
 liminal --interactive                                      # TUI mode
 liminal --configure                                        # Setup config
 liminal --favorites                                        # List favorites
 ```
 
-### Programmatic API
+## Programmatic API
 
 ```javascript
 import { run, generatorRegistry } from './dist/index.js';
+import { SemanticArtMemory } from './dist/brain/SemanticMemory.js';
+import { PromptEnhancer } from './dist/brain/PromptEnhancer.js';
 
-// Basic
-const result = await run('Create a particle system', {
+// Basic generation
+const result = await run("Create a particle system", {
   maxIterations: 10,
-  output: './output'
+  timeoutMinutes: 5,
+  project: 'particle-test',
+  galleryDir: 'gallery'
 });
 
-// With swarm
-const result = await run('Evolving organism', {
-  maxIterations: 5,
-  useSwarm: true,
-  swarmMode: 'hybrid',
-  swarmConfig: { maxRounds: 10 }
+// With art brain and prompt enhancement
+const artMemory = new SemanticArtMemory();
+const enhancer = new PromptEnhancer(artMemory);
+
+const enhanced = enhancer.enhancePrompt("Create organic flow patterns", {
+  domain: 'p5',
+  intent: 'flow',
+  mood: 'calm',
+  complexity: 'medium'
 });
 
-// With collaboration engine
-const result = await run('Complex scene', {
-  maxIterations: 5,
-  collabMode: 'phases',
-  collabConfig: { maxRounds: 4 }
+// Run with enhanced prompt
+const result = await run(enhanced.prompt, {
+  chatMode: true,
+  onThought: (thought) => console.log(`[Thought] ${thought}`),
+  onIteration: (ctx) => console.log(`[${ctx.iteration}] Score: ${ctx.evaluation.score}`),
+  onSuggestion: (sugg) => console.log(`[Suggestion] ${sugg.title}: ${sugg.description}`)
 });
-
-// With self-improvement features
-const result = await run('Evolving artwork', {
-  maxIterations: 10,
-  autoCompost: true,              // Auto-feed quality outputs to compost heap
-  useAestheticModel: true,        // Persist aesthetic model across runs, use predictions
-  useMapElites: true,             // Persist MAP-Elites across runs, inject diversity hints
-  useArchiveLearning: true,       // Semantic few-shot from archive
-  collabMode: 'swarm',            // Combine with collaboration
-  swarmConfig: { maxRounds: 5 }
-});
-
-// Dynamic domain registration
-generatorRegistry.registerDomain({
-  name: 'lyrics',
-  keywords: ['lyrics', 'poem', 'verse'],
-  confidence: 0.8,
-  generate: async (prompt) => `Generated lyrics for: ${prompt}`,
-});
-
-// Smart model routing
-const decision = generatorRegistry.routeByPrompt('create a shader');
-// → { model: 'cloud', reason: 'GLSL domain — Cloud Minimax superior ...', ... }
-
-// Music + Visuals
-import { generateMusic, generateVisuals, generateMusicToVisual } from './dist/index.js';
-const music = await generateMusic('anxious post-rock', { musicPlatform: 'strudel' });
-const visual = await generateVisuals({ prompt: 'same mood', platform: 'hydra' });
-const bridge = await generateMusicToVisual('ambient glitch');
 ```
 
-## Configuration
+## Safety & Quality
 
-Project config at `config/liminal.json`:
+- **Quality Gates**: Minimum quality thresholds prevent poor outputs from continuing
+- **Safety Guardrails**: API call limits, resource constraints
+- **Stagnation Detection**: Prevents infinite loops with score trend analysis
+- **Promise Detection`: Terminates when `<promise>COMPLETE</promise>` found in code
+- **Timeout Protection**: Configurable time limits per generation
+- **Graceful Degradation**: Tolerant of failures when enabled
 
-```json
-{
-  "loop": { "maxIterations": 20, "timeoutMinutes": 30 },
-  "creative": { "minQualityScore": 0.7 },
-  "gallery": { "autoSave": true, "maxHistoryPerProject": 50 },
-  "renderer": { "port": 3456 }
-}
-```
+## Performance Features
 
-User config at `~/.liminal/config.json`. LLM settings via environment variables:
-
-- `LIMINAL_LLM_PROVIDER` — `openai-compatible` (default), `ollama`
-- `LIMINAL_LLM_BASE_URL` — API base URL
-- `LIMINAL_LLM_MODEL` — model name
-- `LIMINAL_LLM_API_KEY` — API key (if required)
-
-## Project Structure
-
-```
-liminal/
-├── src/
-│   ├── core/              # RalphLoop, EvaluationFramework, CreativeEvaluator, PromptStore, ContextAccumulation
-│   ├── generators/        # GeneratorRegistry (unified dispatch + routing), P5, Shader, Three generators
-│   ├── swarm/             # SwarmOrchestrator, VotingEngine, MiningEngine, HeuristicScorer, personas
-│   ├── collab/            # CollaborationEngine, DeepCollaboration, CollaborativeClient, Scoring
-│   ├── compost/           # CompostMill, CompostHeap, CompostShredder, CompostSoup, SeedBank, FragmentScorer
-│   ├── scavenger/         # DNAExtractor, FragmentArchive
-│   ├── evolution/         # MapElites, AestheticModel, NoveltyArchive, MetaMode
-│   ├── learning/          # ArchiveLearning (semantic few-shot), QualityArchive
-│   ├── music/             # generateMusic (Strudel, p5-webaudio)
-│   ├── musicToVisual/     # generateMusicToVisual (organism mode)
-│   ├── generateVisuals.ts # generateVisuals (Hydra, p5)
-│   ├── llm/               # LLMClient, CacheManager, RetryManager
-│   ├── config/            # ConfigLoader, PromptHistory
-│   ├── gallery/           # Gallery, SeedArchive, cleanupOldProjects
-│   ├── export/            # Exporter (HTML, JS, ZIP)
-│   ├── render/            # PreviewServer, Renderer
-│   ├── sandbox/           # SandboxRunner
-│   ├── improvement/       # SelfReflection, requestImprovement
-│   ├── tui/               # Interactive TUI
-│   ├── gui/               # GUI state management
-│   ├── prompts/           # Prompt templates (34 registered prompts)
-│   ├── routing/           # RoutingData, SmartRouter (backward-compatible wrapper)
-│   └── utils/             # Shared utilities
-├── test/
-│   ├── unit/              # ~50 suites
-│   ├── integration/       # full-loop, ralph-loop, dual-llm, renderer, GUI
-│   ├── generators/        # p5, particle-system, cellular-automata, registry
-│   ├── collab/            # DeepCollaboration, CollaborationEngine
-│   ├── compost/           # full compost pipeline tests
-│   └── e2e/               # full-loop (cloud + local), seed/quality, GUI, sandbox
-├── gui/                   # Full GUI (Vite + React + Express)
-├── compost/               # Compost Mill runtime data
-├── docs/                  # Documentation + archive
-└── config/                # liminal.json (project config)
-```
+- **Concurrent Processing**: Parallel model execution in swarm and collab modes
+- **Caching**: Compost parsing cached, semantic search results cached
+- **Lazy Loading**: Knowledge base loaded on first use
+- **Batch Processing**: Efficient handling of multiple generations
 
 ## Testing
 
-```bash
-pnpm test                    # All 1,589 tests (Vitest)
-pnpm run test:integration    # Integration suites only
-pnpm run test:e2e            # E2E (skips when backends unavailable)
-pnpm run test:coverage       # Coverage from src/ (V8 provider)
-pnpm run test:watch          # Watch mode
-pnpm run typecheck           # TypeScript strict check
-pnpm run lint                # ESLint
-```
+- **2218 tests passing** (Vitest)
+- **Test coverage**: Core systems, brain modules, chat system, compost pipeline
+- **Integration tests**: End-to-end flows verified
+- **Unit tests**: Individual component testing with mocks
 
-**130 suites, 1,589 tests, 129 passing.** One infrastructure-dependent test (`dual-llm`) requires a running LM Studio server. Integration tests skip gracefully when no LLM is configured. E2E tests skip when Ollama/cloud backend is unavailable.
+## Development Status
 
-Test framework: **Vitest** with V8 coverage provider. CDN URLs (p5.js, Three.js) centralized in `src/constants.ts`. All LLM-dependent modules accept `LLMClient` via dependency injection.
+### ✅ Implemented (Phases 1-4)
 
-## Development
+**Phase 1: Core Loop** - Ralph-Wiggum iteration engine
+**Phase 2: Brain & Memory** - SemanticArtMemory, EpisodicMemory, ArtKnowledgeGraph
+**Phase 3: Chat & Guidance** - Interview flow, proactive suggestions, real-time updates
+**Phase 4: Creative Knowledge** - 100+ techniques, 30+ artists, comprehensive artistic taxonomies
 
-```bash
-npm run build               # TypeScript compilation
-npm run gui                 # Start GUI + backend
-npm run gui:dev             # GUI dev mode (Vite)
-npm run tui                 # Interactive TUI
-npm run benchmark           # Performance benchmarks
-npm run docs                # Generate TypeDoc
-```
+### 🚧 In Progress
 
-### TDD Approach
+**Phase 5**: Advanced features and integrations
 
-All features follow strict Red-Green-Refactor. Tests first, implementation second.
+### 📋 Planned
+
+- Additional interview questions (expand from 7 to 11)
+- Enhanced persistent memory across sessions
+- GUI improvements and additional features
+
+## Contributing
+
+This is an active creative coding project. See `/docs` for architecture details and development roadmap.
 
 ## License
 
 MIT
 
-## Acknowledgments
+---
 
-- **Ralph-Wiggum Loop pattern**: Geoffrey Huntley
-- **Emergent Garden**: Artificial life and emergence inspiration
-- **Blaise Agüera y Arcas**: "Computational Life" research
-- **p5.js**: Generative art framework
-- **Lenia**: Continuous cellular automata
-- **Hydra**: Live coding visual synth
-- **Strudel**: TidalCycles in the browser
+**Liminal v1.0** — "The code evolves. You curate. The system learns."

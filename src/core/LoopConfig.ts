@@ -24,6 +24,8 @@ export interface LoopOptions {
   project?: string;
   tolerateErrors?: boolean;
   minQualityScore?: number;
+  /** Domain-specific minimum quality scores - override minQualityScore for specific domains */
+  domainQualityThresholds?: Record<string, number>;
   /** 'p5' (default) or 'organism' (generateMusicToVisual + saveOrganism per iteration) */
   mode?: 'p5' | 'organism';
   /** Optional traits for organism mode (bpm, palette) */
@@ -120,6 +122,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   project: string;
   tolerateErrors: boolean;
   minQualityScore: number;
+  domainQualityThresholds: Record<string, number>;
   useMapElites: boolean;
   mapElitesDims: [number, number];
   safetyConfig: SafetyConfig | undefined;
@@ -150,6 +153,11 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     project: options?.project || `project-${Date.now()}`,
     tolerateErrors: options?.tolerateErrors ?? false,
     minQualityScore: options?.minQualityScore ?? DEFAULT_MIN_QUALITY_SCORE,
+    domainQualityThresholds: options?.domainQualityThresholds ?? {
+      'ascii': 0.5,    // ASCII art has different quality criteria
+      'music': 0.5,    // Music generation is more subjective
+      'visual': 0.6,   // Visual art (Hydra) slightly lower threshold
+    },
     mode: options?.mode ?? 'p5',
     traits: options?.traits,
     mergeEveryN: options?.mergeEveryN,

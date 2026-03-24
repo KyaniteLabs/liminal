@@ -187,13 +187,13 @@ Liminal uses a sophisticated multi-layered architecture:
 
 7 creative personas run via Ollama in parallel, each with a distinct voice:
 
-| Persona | Role | Model |
-|---------|------|-------|
-| Kai (Architect) | Structural, analytical | `llama3.2:1b` |
-| Nova (Synthesizer) | Connective, integrative | `gemma2:2b` |
-| Rex (Explorer) | Provocative, boundary-ping | `phi3:mini` |
-| Sam (Muse) | Sensory, evocative | `qwen2.5:3b` |
-| Max (Distiller) | Precise, compressed | `qwen2.5:0.5b` |
+| Persona | Role | Model | Family |
+|---------|------|-------|--------|
+| Kai (Architect) | Structural, analytical | `lfm2.5-thinking:1.2b` | LFM |
+| Nova (Synthesizer) | Connective, integrative | `gemma3:4b` | Gemma |
+| Rex (Explorer) | Provocative, boundary-ping | `phi4-mini` | Phi |
+| Sam (Muse) | Sensory, evocative | `qwen3.5:2b` | Qwen |
+| Max (Distiller) | Precise, compressed | `granite4:350m` | Granite |
 
 **Modes:**
 - `competitive` (winner seeds next round)

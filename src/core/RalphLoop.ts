@@ -53,6 +53,11 @@ import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
 import { runOrganismMode } from './OrganismLoop.js';
 
+// Helper to access environment variables
+function env(key: string): string | undefined {
+  return process.env[`LIMINAL_${key}`];
+}
+
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
 
 export class RalphLoop {
@@ -68,6 +73,14 @@ export class RalphLoop {
     const normalizedOptions = normalizeOptions(options);
 
     eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', maxIterations: normalizedOptions.maxIterations });
+
+    // Warn if swarm mode is used with non-Ollama provider
+    if (normalizedOptions.useSwarm) {
+      const provider = env('LLM_PROVIDER') || 'lmstudio';
+      if (provider !== 'ollama') {
+        Logger.warn('RalphLoop', `Swarm mode is designed for Ollama. Current provider is "${provider}". Swarm may not work correctly.`);
+      }
+    }
 
     // Organism mode: delegate entirely to OrganismLoop
     if (normalizedOptions.mode === 'organism') {
@@ -190,8 +203,26 @@ export class RalphLoop {
 
         // Quality gate: break if score below minimum threshold (after giving it a chance)
         // Only apply quality gate after at least 2 iterations to allow initial attempts
-        if (iteration >= 2 && evaluation.score < normalizedOptions.minQualityScore) {
-          reason = `quality threshold not met (score ${evaluation.score.toFixed(2)} < ${normalizedOptions.minQualityScore})`;
+        // Use domain-specific threshold if available, otherwise use default minQualityScore
+        // Detect domain from prompt keywords if collabDomain is the default 'p5'
+        let domain = normalizedOptions.collabDomain || 'p5';
+        if (domain === 'p5') {
+          const promptLower = prompt.toLowerCase();
+          if (promptLower.includes('ascii') || promptLower.includes('text art')) domain = 'ascii';
+          else if (promptLower.includes('music') || promptLower.includes('strudel') || promptLower.includes('hydra')) domain = 'music';
+          // Keep 'p5' for visual/shader/three since they're handled by the same generator
+        }
+        const qualityThreshold = normalizedOptions.domainQualityThresholds?.[domain] ?? normalizedOptions.minQualityScore;
+        if (iteration >= 2 && evaluation.score < qualityThreshold) {
+          reason = `quality threshold not met (score ${evaluation.score.toFixed(2)} < ${qualityThreshold} for domain: ${domain})`;
+          break;
+        }
+
+        // Success gate: break if score exceeds excellent threshold (0.90)
+        // Stop iterating when we've achieved excellent quality to avoid regression
+        if (evaluation.score >= 0.90) {
+          completed = true;
+          reason = `excellent quality achieved (score ${evaluation.score.toFixed(2)} >= 0.90)`;
           break;
         }
 

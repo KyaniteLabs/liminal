@@ -61,6 +61,103 @@ export class SwarmOrchestrator {
     this._onFragmentsMined = options?.onFragmentsMined;
   }
 
+  /**
+   * Multi-pass code extraction from Ollama responses.
+   * Ollama returns verbose responses with markdown fences, explanations, and a "thinking" field.
+   * This method extracts only the actual code, similar to LLMClient.parseChatCompletionResponse().
+   */
+  private extractCodeFromResponse(rawResponse: string): string {
+    const content = rawResponse.trim();
+    let cleanCode = '';
+
+    // Pass 1: Try to extract code from markdown fences (javascript, js, or no language tag)
+    const markdownCodeMatch = content.match(/```(?:javascript|js)?\n([\s\S]*?)```/);
+    if (markdownCodeMatch) {
+      cleanCode = markdownCodeMatch[1].trim();
+    } else {
+      // Pass 2: Look for code between any markdown fences
+      const anyFenceMatch = content.match(/```\n?([\s\S]*?)```/);
+      if (anyFenceMatch) {
+        cleanCode = anyFenceMatch[1].trim();
+      } else {
+        // Pass 3: Find first actual code line by looking for code keywords
+        const lines = content.split('\n');
+        let codeStartIndex = -1;
+
+        // Patterns that indicate actual code (not reasoning)
+        const codePatterns = [
+          /^(let|const|var|function|class|if|for|while|setup|draw|import|export|return)\b/,
+          /^(precision|void|vec[234]|float|int|bool|uniform|attribute|varying)\b/,
+          /^<!DOCTYPE html>/i,
+          /^<html/i,
+          /^<head/i,
+          /^<body/i,
+          /^<script/i,
+        ];
+
+        // Patterns that indicate reasoning/commentary to skip
+        const skipPatterns = [
+          /^(\/\/\s*)?(The user wants?|I need to|I'll create|I will create|Let me create|Based on|Here's a|This sketch|Creating a|Generating a|I'm going to|The previous|Looking at|To improve|For this|Key elements|I'll write)/i,
+          /^[\d\.\-\s]+/, // Numbered list items like "1. ", "2. ", "- ", etc.
+          /^(Has|Uses|Responds|I'll|I'll create|Maybe|Let me|I should|The code|This will)/i, // Common reasoning phrases
+        ];
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i].trim();
+          if (!line) continue;
+
+          // Check if this line matches code patterns
+          const isCode = codePatterns.some(pattern => pattern.test(line));
+          if (isCode) {
+            codeStartIndex = i;
+            break;
+          }
+
+          // Skip lines that match reasoning patterns
+          const isSkip = skipPatterns.some(pattern => pattern.test(line));
+          if (!isSkip) {
+            // This might be code - include it
+            codeStartIndex = i;
+            break;
+          }
+        }
+
+        if (codeStartIndex >= 0) {
+          cleanCode = lines.slice(codeStartIndex).join('\n').trim();
+        } else {
+          // Fallback: use entire content
+          cleanCode = content;
+        }
+      }
+    }
+
+    // Final cleanup: Remove any remaining leading non-code lines
+    const finalLines = cleanCode.split('\n');
+    let finalCodeStart = 0;
+    const finalCodePatterns = [
+      /^(let|const|var|function|class|if|for|while|setup|draw|import|export|return)\b/,
+      /^(precision|void|vec[234]|float|int|bool|uniform|attribute|varying)\b/,
+      /^<!DOCTYPE html>/i,
+      /^<html/i,
+      /^<head/i,
+      /^<body/i,
+      /^<script/i,
+    ];
+
+    for (let i = 0; i < Math.min(20, finalLines.length); i++) {
+      const line = finalLines[i].trim();
+      if (finalCodePatterns.some(pattern => pattern.test(line))) {
+        finalCodeStart = i;
+        break;
+      }
+    }
+    const finalCode = finalCodeStart > 0
+      ? finalLines.slice(finalCodeStart).join('\n')
+      : cleanCode;
+
+    return finalCode;
+  }
+
   private async defaultOllamaCaller(
     model: string,
     prompt: string,
@@ -87,7 +184,10 @@ export class SwarmOrchestrator {
     }
 
     const data = await response.json() as { response?: string };
-    return data.response ?? '';
+    const rawResponse = data.response ?? '';
+
+    // Extract clean code from Ollama's verbose response format
+    return this.extractCodeFromResponse(rawResponse);
   }
 
   /**

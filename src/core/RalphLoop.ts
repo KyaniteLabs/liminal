@@ -45,6 +45,8 @@ import {
   type IterationContext,
   type NormalizedLoopOptions,
 } from './LoopConfig.js';
+import { GeneratedCodeParser } from './lir/GeneratedCodeParser.js';
+import type { LIREvaluationContext } from '../aesthetic/types.js';
 import { buildContextForInjection } from './ContextBuilder.js';
 import { enhancePrompt } from './PromptEnhancer.js';
 import { GenerationOrchestrator } from './GenerationOrchestrator.js';
@@ -187,9 +189,31 @@ export class RalphLoop {
           normalizedOptions.onThought?.('Evaluating code quality...');
         }
 
+        // LIR: Parse generated code into structured tokens if enabled
+        let lirContext: LIREvaluationContext | undefined;
+        if (normalizedOptions.lirEnabled) {
+          try {
+            const genParser = new GeneratedCodeParser();
+            const lirTokens = genParser.parse(currentCode);
+            if (lirTokens.length > 0) {
+              lirContext = {
+                lirTokens,
+                visualIntent: normalizedOptions.visualMappingParams as any,
+                lirEnabled: true,
+              };
+            }
+          } catch {
+            // LIR parsing failed — regex fallback will be used
+          }
+        }
+
         const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
         const evaluation = await scoringEngine.score(
-          { output: currentCode, criteria: normalizedOptions.evaluationCriteria },
+          {
+            output: currentCode,
+            criteria: normalizedOptions.evaluationCriteria,
+            lirContext,
+          },
           normalizedOptions.evaluationStrategy ?? 'detailed',
         );
 
@@ -198,7 +222,11 @@ export class RalphLoop {
           try {
             const { AestheticCritic } = await import('../aesthetic/index.js');
             const critic = new AestheticCritic();
-            const aestheticReport = critic.critique(currentCode, normalizedOptions.aestheticConfig as any);
+            const aestheticReport = critic.critique(
+              currentCode,
+              normalizedOptions.aestheticConfig as any,
+              lirContext,  // Pass LIR context for structured evaluation
+            );
 
             // Apply penalty if violations detected
             if (!aestheticReport.passed) {

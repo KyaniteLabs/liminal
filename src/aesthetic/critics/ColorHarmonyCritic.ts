@@ -8,6 +8,8 @@ import type {
   ColorConstraints,
   DesignConstraints,
 } from '../types.js';
+import type { LIRCodeToken } from '../../core/lir/types.js';
+import type { VisualMappingParams } from '../../audio/types.js';
 
 // ---------------------------------------------------------------------------
 // Named colour → hue mapping (simplified HSL hue values)
@@ -240,6 +242,114 @@ export function analyzeColorHarmony(
   if (totalColorCount > maxColors) {
     const overRatio = (totalColorCount - maxColors) / maxColors;
     score -= overRatio * 0.2;
+  }
+
+  score = Math.max(0, Math.min(1, score));
+
+  const passed = violations.every(v => v.severity !== 'error') && score >= constraints.general.minAestheticScore;
+
+  return {
+    score: Math.round(score * 1000) / 1000,
+    violations,
+    passed,
+    timestamp: Date.now(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// LIR-aware color harmony analysis
+// ---------------------------------------------------------------------------
+
+/** Color-related API calls we look for in LIR token relationships */
+const COLOR_APIS = ['fill', 'stroke', 'background', 'tint', 'color', 'strokeWeight'];
+
+/**
+ * Analyze color harmony using LIR tokens instead of regex.
+ *
+ * Walks token relationships.calls to find color API usage, then extracts
+ * color literals from token source with precise location info.
+ * When visualIntent is provided, compares extracted hues against the
+ * intended palette for a coherence score.
+ */
+export function analyzeColorHarmonyLIR(
+  tokens: LIRCodeToken[],
+  constraints: DesignConstraints,
+  visualIntent?: VisualMappingParams,
+): AestheticReport {
+  const violations: AestheticViolation[] = [];
+  const colorConstraints: ColorConstraints = constraints.color;
+
+  // 1. Find tokens that call color APIs
+  const colorTokens = tokens.filter(t =>
+    t.relationships.calls.some(c => COLOR_APIS.includes(c)),
+  );
+
+  // 2. Extract colors from token sources (reuse regex helpers on per-token source)
+  const allHues: number[] = [];
+  for (const token of colorTokens) {
+    const hexColors = extractHexColors(token.source);
+    const rgbColors = extractRgbColors(token.source);
+    const hslHues = extractHslHues(token.source);
+    const namedHues = extractNamedColorHues(token.source);
+
+    allHues.push(
+      ...hexColors.map(hexToHue),
+      ...rgbColors.map(rgbStringToHue),
+      ...hslHues,
+      ...namedHues,
+    );
+  }
+
+  // 3. No colors found → neutral
+  if (allHues.length === 0) {
+    return {
+      score: 0.5,
+      violations: [],
+      passed: true,
+      timestamp: Date.now(),
+    };
+  }
+
+  // 4. Count unique hues (within 15-degree tolerance)
+  const uniqueHues: number[] = [];
+  for (const hue of allHues) {
+    if (hue < 0) continue;
+    const isDupe = uniqueHues.some(existing => huesMatch(existing, hue, 15));
+    if (!isDupe) uniqueHues.push(hue);
+  }
+
+  // 5. Check max-colour constraint
+  if (uniqueHues.length > colorConstraints.maxColors) {
+    violations.push({
+      rule: 'max-colors',
+      severity: 'warning',
+      message: `Found ${uniqueHues.length} distinct hues, exceeding max of ${colorConstraints.maxColors}`,
+    });
+  }
+
+  // 6. Harmony analysis (reuse existing helper)
+  const { harmonyScore } = assessHarmony(allHues);
+
+  // 7. Compute base score
+  let score = harmonyScore;
+  if (uniqueHues.length > colorConstraints.maxColors) {
+    const overRatio = (uniqueHues.length - colorConstraints.maxColors) / colorConstraints.maxColors;
+    score -= overRatio * 0.2;
+  }
+
+  // 8. Coherence bonus: compare against visual intent palette
+  if (visualIntent?.palette?.hues && visualIntent.palette.hues.length > 0) {
+    // Convert visual intent hues (0-1 range) to degree range (0-360)
+    const intentHuesDeg = visualIntent.palette.hues.map(h => h * 360);
+    let matchingHues = 0;
+    for (const actualHue of uniqueHues) {
+      if (intentHuesDeg.some(intent => hueDistance(actualHue, intent) < 30)) {
+        matchingHues++;
+      }
+    }
+    const coherenceRatio = uniqueHues.length > 0 ? matchingHues / uniqueHues.length : 0;
+    // Small bonus for coherence (don't penalize non-matching heavily)
+    score += coherenceRatio * 0.1;
   }
 
   score = Math.max(0, Math.min(1, score));

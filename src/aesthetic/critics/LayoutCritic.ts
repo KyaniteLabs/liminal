@@ -8,6 +8,8 @@ import type {
   DesignConstraints,
   LayoutConstraints,
 } from '../types.js';
+import type { LIRCodeToken } from '../../core/lir/types.js';
+import type { VisualMappingParams } from '../../audio/types.js';
 
 // ---------------------------------------------------------------------------
 // Canvas dimension extraction
@@ -168,6 +170,110 @@ export function analyzeLayout(
       const offsetY = Math.abs(avgY - centerY) / dims.height;
       const balanceScore = 1 - (offsetX + offsetY) / 2;
       score += balanceScore * 0.1;
+    }
+  }
+
+  score = Math.max(0, Math.min(1, score));
+
+  const passed =
+    violations.every(v => v.severity !== 'error') &&
+    score >= constraints.general.minAestheticScore;
+
+  return {
+    score: Math.round(score * 1000) / 1000,
+    violations,
+    passed,
+    timestamp: Date.now(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// LIR-aware layout analysis
+// ---------------------------------------------------------------------------
+
+/**
+ * Analyze layout using LIR tokens instead of regex.
+ *
+ * Finds setup/draw tokens to extract canvas dimensions and positioning calls.
+ * Uses metrics.nestingDepth as layout complexity proxy.
+ */
+export function analyzeLayoutLIR(
+  tokens: LIRCodeToken[],
+  constraints: DesignConstraints,
+  visualIntent?: VisualMappingParams,
+): AestheticReport {
+  const violations: AestheticViolation[] = [];
+
+  // 1. Find setup token → extract canvas dimensions
+  const setupToken = tokens.find(t => t.name === 'setup');
+  let dims: CanvasDimensions | null = null;
+  if (setupToken) {
+    dims = extractCanvasDimensions(setupToken.source);
+  }
+  // Fallback: search all tokens for createCanvas
+  if (!dims) {
+    for (const token of tokens) {
+      dims = extractCanvasDimensions(token.source);
+      if (dims) break;
+    }
+  }
+
+  if (!dims) {
+    return {
+      score: 0.5,
+      violations: [],
+      passed: true,
+      timestamp: Date.now(),
+    };
+  }
+
+  let score = 0.5; // neutral baseline
+
+  // 2. Find draw token → extract positioning calls
+  const drawToken = tokens.find(t => t.name === 'draw');
+  const analysisSource = drawToken?.source ?? tokens.map(t => t.source).join('\n');
+  const positions = extractPositions(analysisSource, dims);
+
+  // 3. Check for out-of-bounds positions
+  const outOfBounds = positions.filter(p => p.x > dims!.width || p.y > dims!.height);
+  if (outOfBounds.length > 0) {
+    violations.push({
+      rule: 'out-of-bounds',
+      severity: 'warning',
+      message: `${outOfBounds.length} position(s) exceed canvas bounds (${dims!.width}x${dims!.height})`,
+    });
+    score -= 0.15 * Math.min(outOfBounds.length, 3);
+  }
+
+  // 4. Bonus for centered positioning patterns
+  if (hasCenteredPositioning(analysisSource, dims)) {
+    score += 0.15;
+  }
+  if (hasCenteredAlignment(analysisSource)) {
+    score += 0.15;
+  }
+
+  // 5. LIR bonus: use nesting depth as layout complexity signal
+  const maxNesting = Math.max(...tokens.map(t => t.metrics.nestingDepth));
+  if (maxNesting >= 2 && maxNesting <= 5) {
+    score += 0.05; // moderate complexity is good
+  } else if (maxNesting > 8) {
+    score -= 0.05; // excessive nesting
+  }
+
+  // 6. Coherence with visual intent balance
+  if (visualIntent?.composition?.balance !== undefined) {
+    if (positions.length > 1) {
+      const inBounds = positions.filter(p => p.x <= dims!.width && p.y <= dims!.height);
+      if (inBounds.length > 0) {
+        const avgX = inBounds.reduce((s, p) => s + p.x, 0) / inBounds.length;
+        const centerX = dims!.width / 2;
+        const normalizedBalance = avgX / dims!.width;
+        const balanceDiff = Math.abs(normalizedBalance - visualIntent.composition.balance);
+        if (balanceDiff < 0.2) {
+          score += 0.05; // good alignment with intent
+        }
+      }
     }
   }
 

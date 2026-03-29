@@ -8,6 +8,7 @@ import type {
   DesignConstraints,
   SoundConstraints,
 } from '../types.js';
+import type { LIRCodeToken } from '../../core/lir/types.js';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -188,6 +189,105 @@ export function analyzeSoundHarmony(
   if (gains.some(g => g > GAIN_WARNING_THRESHOLD)) {
     score -= 0.15;
   }
+
+  score = Math.max(0, Math.min(1, score));
+
+  const passed =
+    violations.every(v => v.severity !== 'error') &&
+    score >= constraints.general.minAestheticScore;
+
+  return {
+    score: Math.round(score * 1000) / 1000,
+    violations,
+    passed,
+    timestamp: Date.now(),
+  };
+}
+
+// ---------------------------------------------------------------------------
+// LIR-aware sound harmony analysis
+// ---------------------------------------------------------------------------
+
+/** Audio-related API patterns to look for in LIR token relationships */
+const AUDIO_API_PATTERNS = ['OscillatorNode', 'AudioContext', 'createOscillator', 'createGain'];
+
+/**
+ * Analyze sound harmony using LIR tokens instead of regex.
+ *
+ * Uses relationships.imports and relationships.calls to detect audio API usage,
+ * then extracts frequency/gain values from token source for harmony analysis.
+ */
+export function analyzeSoundHarmonyLIR(
+  tokens: LIRCodeToken[],
+  constraints: DesignConstraints,
+): AestheticReport {
+  const violations: AestheticViolation[] = [];
+  const soundConstraints: SoundConstraints = constraints.sound;
+
+  // 1. Check for audio content via LIR relationships
+  const audioTokens = tokens.filter(t => {
+    const hasAudioCalls = t.relationships.calls.some(c =>
+      AUDIO_API_PATTERNS.some(p => c.includes(p)),
+    );
+    const hasAudioImports = t.relationships.imports.some(imp =>
+      /audio|sound|oscillator|tone/i.test(imp),
+    );
+    const hasFreqInSource = /\.frequency/.test(t.source) || /\.gain/.test(t.source);
+    return hasAudioCalls || hasAudioImports || hasFreqInSource;
+  });
+
+  if (audioTokens.length === 0) {
+    return {
+      score: 0.5,
+      violations: [],
+      passed: true,
+      timestamp: Date.now(),
+    };
+  }
+
+  // 2. Extract frequencies from audio token sources
+  const combinedSource = audioTokens.map(t => t.source).join('\n');
+  const frequencies = extractFrequencies(combinedSource);
+  const { consonantRatio, dissonantIntervals } = analyzeHarmony(frequencies);
+
+  // 3. Check dissonance
+  if (dissonantIntervals.length > 0 && consonantRatio < (1 - soundConstraints.maxDissonance)) {
+    violations.push({
+      rule: 'dissonance',
+      severity: 'warning',
+      message: `Dissonant interval(s) detected: ${dissonantIntervals.map(i => `${i} semitones`).join(', ')}`,
+    });
+  }
+
+  // 4. Check gain levels
+  const gains = extractGainValues(combinedSource);
+  for (const gain of gains) {
+    if (gain > GAIN_WARNING_THRESHOLD) {
+      violations.push({
+        rule: 'excessive-gain',
+        severity: 'warning',
+        message: `Gain value ${gain} exceeds safe threshold of ${GAIN_WARNING_THRESHOLD}`,
+      });
+    }
+  }
+
+  // 5. Compute score
+  let score = 0.5;
+  if (frequencies.length >= 2) {
+    score = consonantRatio;
+  } else if (frequencies.length === 1) {
+    score = 0.8;
+  }
+
+  // LIR bonus: use importGraph to verify audio chain completeness
+  const audioChainComplete = audioTokens.some(t =>
+    t.relationships.importGraph.some(ig =>
+      /audio|sound|oscillator/i.test(ig.module),
+    ),
+  );
+  if (audioChainComplete) score += 0.05;
+
+  if (gains.some(g => g > GAIN_WARNING_THRESHOLD)) score -= 0.15;
 
   score = Math.max(0, Math.min(1, score));
 

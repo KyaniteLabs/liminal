@@ -14,5 +14,7 @@ export type {
   TemperatureBalance,
   CompositionGuide,
   FontStyle,
+  LIREvaluationContext,
+  LIRAwareAestheticReport,
 } from './types.js';
 export { DEFAULT_DESIGN_CONSTRAINTS, PRESET_PROFILES } from './types.js';

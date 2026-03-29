@@ -98,6 +98,8 @@ export interface LoopOptions {
   aestheticConfig?: { preset?: string; strictness?: 'lenient' | 'moderate' | 'strict'; constraints?: Record<string, unknown> };
   /** Audio-derived visual parameters for prompt injection */
   visualMappingParams?: Record<string, unknown>;
+  /** Enable LIR-based evaluation — parses generated code into structured tokens for critics and evaluator */
+  lirEnabled?: boolean;
 }
 
 export interface LoopResult {
@@ -149,6 +151,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   useAestheticGuardrails: boolean;
   aestheticConfig: Record<string, unknown>;
   visualMappingParams?: Record<string, unknown>;
+  lirEnabled: boolean;
 }
 
 /**
@@ -203,6 +206,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     useAestheticGuardrails: options?.useAestheticGuardrails ?? false,
     aestheticConfig: (options?.aestheticConfig ?? {}) as Record<string, unknown>,
     visualMappingParams: options?.visualMappingParams,
+    lirEnabled: options?.lirEnabled ?? false,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
   };

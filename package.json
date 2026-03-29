@@ -38,6 +38,7 @@
     "@types/express": "^5.0.6",
     "@types/node": "^20.11.0",
     "@types/react": "^18.3.28",
+    "@types/react-dom": "^18.3.7",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
     "concurrently": "^9.1.0",
@@ -46,6 +47,9 @@
     "vitest": "^4.1.0"
   },
   "dependencies": {
+    "@remotion/bundler": "^4.0.441",
+    "@remotion/cli": "^4.0.441",
+    "@remotion/renderer": "^4.0.441",
     "archiver": "^7.0.1",
     "dotenv": "^17.3.1",
     "express": "^5.2.1",
@@ -53,8 +57,10 @@
     "p5": "^1.9.0",
     "puppeteer": "^24.40.0",
     "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "remark": "^15.0.1",
     "remark-parse": "^11.0.0",
+    "remotion": "^4.0.441",
     "tsx": "^4.21.0",
     "unified": "^11.0.5"
   },

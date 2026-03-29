@@ -58,6 +58,10 @@ const EXPECTED_IDS = [
   // Remotion prompts (2)
   'remotion.generate',
   'remotion.improve',
+
+  // Audio + Aesthetic (2)
+  'audio.voice-to-visual',
+  'aesthetic.constraints',
 ];
 
 describe('Prompt Library Validation', () => {

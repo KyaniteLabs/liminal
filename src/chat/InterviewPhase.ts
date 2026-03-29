@@ -46,6 +46,22 @@ const QUESTIONS_BY_PHASE: Record<InterviewPhase, InterviewQuestion[]> = {
       question: "Any constraints or requirements? (e.g., performance, browser support, file size)",
       type: 'text',
       required: false
+    },
+    {
+      id: 'audioPreference',
+      phase: 'discovery',
+      question: "Would you like to use voice or singing to influence the visuals?",
+      type: 'choice',
+      options: ['No, text only', 'Yes, voice input', 'Yes, upload audio file'],
+      required: false
+    },
+    {
+      id: 'aestheticPreset',
+      phase: 'discovery',
+      question: "Any aesthetic preferences?",
+      type: 'choice',
+      options: ['Minimalist', 'Vibrant', 'Cinematic', 'Playful', 'Surprise me'],
+      required: false
     }
   ],
 

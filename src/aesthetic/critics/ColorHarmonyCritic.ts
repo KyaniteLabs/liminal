@@ -57,7 +57,7 @@ function extractHslHues(code: string): number[] {
 
 /** Extract named colours (as whole words used in colour contexts) */
 function extractNamedColorHues(code: string): number[] {
-  const colorContexts = /\b(?:fill|stroke|background|tint|color)\s*\(/gi;
+  const _colorContexts = /\b(?:fill|stroke|background|tint|color)\s*\(/gi;
   const hues: number[] = [];
   const namedPattern = new RegExp(
     `\b(${Object.keys(NAMED_COLOR_HUES).join('|')})\b`,
@@ -231,7 +231,7 @@ export function analyzeColorHarmony(
   }
 
   // 6. Harmony analysis
-  const { harmonyScore, isComplementary } = assessHarmony(allHues);
+  const { harmonyScore, isComplementary: _isComplementary } = assessHarmony(allHues);
 
   // 7. Compute final score
   let score = harmonyScore;

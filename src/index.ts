@@ -543,6 +543,16 @@ export {
   DOMAIN_KEYWORDS,
 } from './routing/index.js';
 
+// Audio pipeline
+export { AudioAnalyzer } from './audio/index.js';
+export type { AudioFeatures, PitchData, TimbreData, AudioAnalysisResult, VisualMappingParams } from './audio/types.js';
+
+// Aesthetic guardrails
+export { AestheticCritic } from './aesthetic/index.js';
+export { AestheticStrategy } from './aesthetic/index.js';
+export type { DesignConstraints, AestheticViolation, AestheticReport, CriticConfig, AestheticPreset } from './aesthetic/types.js';
+export { DEFAULT_DESIGN_CONSTRAINTS, PRESET_PROFILES } from './aesthetic/types.js';
+
 // Collaboration
 export { CollaborationEngine } from './collab/CollaborationEngine.js';
 export type { CollaborationMode, CollaborationEngineResult, CollaborationEngineConfig } from './collab/CollaborationEngine.js';

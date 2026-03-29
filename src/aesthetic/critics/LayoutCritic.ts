@@ -40,7 +40,7 @@ interface Position {
   context: string;
 }
 
-function extractPositions(code: string, dims: CanvasDimensions): Position[] {
+function extractPositions(code: string, _dims: CanvasDimensions): Position[] {
   const positions: Position[] = [];
 
   // rect(x, y, ...), ellipse(x, y, ...), circle(x, y, ...)
@@ -112,7 +112,7 @@ export function analyzeLayout(
   constraints: DesignConstraints,
 ): AestheticReport {
   const violations: AestheticViolation[] = [];
-  const layoutConstraints: LayoutConstraints = constraints.layout;
+  const _layoutConstraints: LayoutConstraints = constraints.layout;
 
   // 1. Extract canvas dimensions
   const dims = extractCanvasDimensions(code);

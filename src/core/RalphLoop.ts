@@ -193,13 +193,48 @@ export class RalphLoop {
           normalizedOptions.evaluationStrategy ?? 'detailed',
         );
 
-        eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
-          iteration,
-          overallScore: evaluation.score,
-          technicalScore: evaluation.dimensions?.technical ?? 0,
-          aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
-          noveltyScore: evaluation.dimensions?.novelty ?? 0,
-        });
+        // Aesthetic guardrails: run AestheticCritic if enabled
+        if (normalizedOptions.useAestheticGuardrails) {
+          try {
+            const { AestheticCritic } = await import('../aesthetic/index.js');
+            const critic = new AestheticCritic();
+            const aestheticReport = critic.critique(currentCode, normalizedOptions.aestheticConfig as any);
+
+            // Apply penalty if violations detected
+            if (!aestheticReport.passed) {
+              const penalty = aestheticReport.score;
+              evaluation.score = evaluation.score * penalty;
+
+              // Append violations to issues for next iteration feedback
+              const aestheticIssues = aestheticReport.violations
+                .filter(v => v.severity === 'error' || v.severity === 'warning')
+                .map(v => `[aesthetic] ${v.rule}: ${v.message}`);
+              if (evaluation.issues) {
+                evaluation.issues = [...evaluation.issues, ...aestheticIssues];
+              }
+            }
+
+            // Emit aesthetic score in evaluation event
+            eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
+              iteration,
+              overallScore: evaluation.score,
+              technicalScore: evaluation.dimensions?.technical ?? 0,
+              aestheticScore: aestheticReport.score,
+              noveltyScore: evaluation.dimensions?.novelty ?? 0,
+            });
+          } catch (e) {
+            // Aesthetic analysis failed gracefully — don't block generation
+            normalizedOptions.onThought?.(`Aesthetic analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
+          }
+        } else {
+          eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
+            iteration,
+            overallScore: evaluation.score,
+            technicalScore: evaluation.dimensions?.technical ?? 0,
+            aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
+            noveltyScore: evaluation.dimensions?.novelty ?? 0,
+          });
+        }
 
         // Quality gate: break if score below minimum threshold (after giving it a chance)
         // Only apply quality gate after at least 2 iterations to allow initial attempts

@@ -101,9 +101,8 @@ describe('ConversationManager - Input Handling', () => {
       await manager.processUserMessage('Web');
       await manager.processUserMessage('Dreamy');
       await manager.processUserMessage('None');
-      await manager.processUserMessage('None');
-
-      // Confirm
+      await manager.processUserMessage('No, text only');
+      await manager.processUserMessage('Surprise me');      // Confirm
       const response = await manager.processUserMessage('Yes, generate!');
 
       expect(manager.interviewPhase).toBe('generating');

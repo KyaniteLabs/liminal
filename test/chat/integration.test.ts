@@ -75,9 +75,8 @@ describe('Chat Input Integration', () => {
       await manager.processUserMessage('Create shader art');
       await manager.processUserMessage('Installation piece');
       await manager.processUserMessage('Dreamy');
-      await manager.processUserMessage(''); // Skip references
-      await manager.processUserMessage(''); // Skip constraints
-
+      await manager.processUserMessage('No, text only');
+      await manager.processUserMessage('Surprise me');
       // Should still reach confirm phase
       expect(manager.interviewPhase).toBe('confirm');
     });
@@ -94,6 +93,13 @@ describe('Chat Input Integration', () => {
       await manager.processUserMessage('Energetic and dynamic');
       await manager.processUserMessage('TeamLab, Refik Anadol');
       await manager.processUserMessage('Must support mobile devices');
+      await manager.processUserMessage('No, text only');
+      await manager.processUserMessage('Surprise me');
+
+      // Answer audioPreference
+      await manager.processUserMessage('No, text only');
+      // Answer aestheticPreset
+      await manager.processUserMessage('Surprise me');
 
       // Build brief
       const brief = manager.buildCreativeBrief();

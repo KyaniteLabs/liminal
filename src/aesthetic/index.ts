@@ -3,6 +3,7 @@
 // ---------------------------------------------------------------------------
 
 export { AestheticCritic } from './AestheticCritic.js';
+export { AestheticStrategy } from './AestheticStrategy.js';
 export type {
   DesignConstraints,
   AestheticViolation,

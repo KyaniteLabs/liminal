@@ -29,10 +29,10 @@ export class RemotionGenerator {
     try {
       const { system: systemPrompt, user: userPrompt } = PromptLibrary.render('remotion.generate', {
         prompt,
-        fps: 30,
-        duration: 150,
-        width: 1920,
-        height: 1080,
+        fps: '30',
+        duration: '150',
+        width: '1920',
+        height: '1080',
       });
       const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
 

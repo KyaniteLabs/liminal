@@ -12,11 +12,9 @@ export interface VideoExporterOptions {
 
 export class VideoExporter {
   private ffmpegPath: string;
-  private ffprobePath: string;
 
   constructor(options: VideoExporterOptions = {}) {
     this.ffmpegPath = options.ffmpegPath ?? 'ffmpeg';
-    this.ffprobePath = options.ffprobePath ?? 'ffprobe';
   }
 
   async convert(input: string, output: string, format: 'mp4' | 'webm' | 'gif'): Promise<void> {

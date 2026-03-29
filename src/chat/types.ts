@@ -94,7 +94,7 @@ export interface Suggestion {
 }
 
 // Domain & Technique (types)
-export type Domain = 'p5' | 'shader' | 'three' | 'music' | 'hydra' | 'strudel';
+export type Domain = 'p5' | 'shader' | 'three' | 'music' | 'hydra' | 'strudel' | 'remotion';
 
 export interface Technique {
   name: string;

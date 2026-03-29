@@ -3,7 +3,7 @@
  * Prevents double-wrapping and ensures correct templates per domain
  */
 
-export type Domain = 'p5' | 'shader' | 'three';
+export type Domain = 'p5' | 'shader' | 'three' | 'remotion';
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
 const P5_SOUND_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js';

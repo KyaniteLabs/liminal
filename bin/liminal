@@ -87,6 +87,8 @@ for (let i = 0; i < args.length; i++) {
     flags.routingMode = args[++i];
   } else if (arg === '--confidence-threshold') {
     flags.confidenceThreshold = parseFloat(args[++i]);
+  } else if (arg === '--spec') {
+    flags.spec = args[++i];
   } else if (arg === '--verbose' || arg === '-v') {
     flags.verbose = true;
   } else if (!arg.startsWith('-')) {
@@ -107,6 +109,7 @@ if (flags.help) {
   console.log('  serve, s [port]             Start preview server (default: 3456)');
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
+  console.log('  composite                   Compose video layers from a JSON spec');
   console.log('  chat                        Start conversational creative coding mode');
   console.log('');
   console.log('OPTIONS:');
@@ -492,6 +495,41 @@ else if (cmd === 'list' || cmd === 'ls') {
     fs.readdirSync(outDir).filter(f => f.endsWith('.js')).forEach(f => console.log('  ' + f));
   } else {
     console.log('  (none yet)');
+  }
+}
+else if (cmd === 'composite') {
+  const specPath = flags.spec;
+  const outputPath = flags.output;
+
+  if (!specPath) {
+    console.error('Error: --spec is required (path to composition JSON file)');
+    process.exit(1);
+  }
+  if (!outputPath) {
+    console.error('Error: --output is required (output video path)');
+    process.exit(1);
+  }
+
+  const { Compositor } = await import('../dist/composite/Compositor.js');
+
+  try {
+    const specJson = fs.readFileSync(specPath, 'utf-8');
+    const spec = JSON.parse(specJson);
+
+    const compositor = new Compositor();
+    compositor.validateSpec(spec);
+
+    console.log('🎬 Compositing video...');
+    console.log(`  Layers: ${spec.layers.length}`);
+    console.log(`  Resolution: ${spec.width}x${spec.height}`);
+    console.log(`  Duration: ${spec.duration}s @ ${spec.fps}fps`);
+
+    await compositor.composite(spec, outputPath);
+
+    console.log('✅ Composited video saved to: ' + outputPath);
+  } catch (err) {
+    console.error('❌ Compositing failed:', err.message);
+    process.exit(1);
   }
 }
 else if (cmd === 'chat') {

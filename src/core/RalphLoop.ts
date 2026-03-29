@@ -54,6 +54,7 @@ import { EvolutionIntegration } from './EvolutionIntegration.js';
 import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
 import { runOrganismMode } from './OrganismLoop.js';
+import { AmbiguityDetector } from './AmbiguityDetector.js';
 
 // Helper to access environment variables
 function env(key: string): string | undefined {
@@ -75,6 +76,18 @@ export class RalphLoop {
     const normalizedOptions = normalizeOptions(options);
 
     eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', maxIterations: normalizedOptions.maxIterations });
+
+    // Ambiguity pre-check: warn if prompt has unresolved ambiguities
+    const ambiguityIssues = new AmbiguityDetector().detect(prompt);
+    if (ambiguityIssues.length > 0) {
+      const highPriority = ambiguityIssues.filter(i => i.severity === 'high');
+      if (highPriority.length > 0) {
+        Logger.warn('RalphLoop', `Prompt has ${highPriority.length} high-priority ambiguity issues:`);
+        for (const issue of highPriority) {
+          Logger.warn('RalphLoop', `  [${issue.type}] ${issue.description}`);
+        }
+      }
+    }
 
     // Warn if swarm mode is used with non-Ollama provider
     if (normalizedOptions.useSwarm) {

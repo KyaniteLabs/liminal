@@ -8,7 +8,7 @@ import type { CompostConfig, CompostFragment, SoupState } from './types.js';
 import { SoupStateManager } from './SoupStateManager.js';
 import { SeedBank } from './SeedBank.js';
 import { FragmentScorer } from './FragmentScorer.js';
-import { FitnessCombiner, type FitnessComponents } from '../evolution/FitnessCombiner.js';
+import { FitnessCombiner } from '../evolution/FitnessCombiner.js';
 import { MapElites } from '../evolution/MapElites.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
@@ -31,6 +31,9 @@ export class CompostSoup {
     this.scorer = new FragmentScorer(config, llm);
     this.fitnessCombiner = new FitnessCombiner(config.fitnessWeights);
     this.mapElites = new MapElites(config.mapElitesDims ?? [10, 10]);
+    // Evolutionary infrastructure ready for soup fitness scoring
+    void this.fitnessCombiner;
+    void this.mapElites;
   }
 
   /** Run a single soup cycle. */

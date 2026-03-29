@@ -29,14 +29,16 @@ describe('AudioToVisualMapper', () => {
     expect(result.composition).toBeDefined();
   });
 
-  it('high pitch maps to cool hues (blue/violet ~0.6-0.8)', () => {
-    const result = mapToVisualParams(makeFeatures(), makePitch({ frequency: 880, midi: 81 }));
-    expect(result.palette.hues[0]).toBeGreaterThan(0.5);
+  it('pitch maps to chromatic-circle hues via pitch class', () => {
+    // 440Hz = A4 → pitch class 9 → hue 270° → normalized 0.75
+    const result = mapToVisualParams(makeFeatures(), makePitch({ frequency: 440, midi: 69 }));
+    expect(result.palette.hues[0]).toBeCloseTo(270 / 360, 1);
   });
 
-  it('low pitch maps to warm hues (red/orange ~0.0-0.1)', () => {
-    const result = mapToVisualParams(makeFeatures(), makePitch({ frequency: 110, midi: 45 }));
-    expect(result.palette.hues[0]).toBeLessThan(0.15);
+  it('low C maps to red hue (pitch class 0 → 0°)', () => {
+    // 130Hz ≈ C3 → pitch class 0 → hue 0°
+    const result = mapToVisualParams(makeFeatures(), makePitch({ frequency: 130, midi: 48 }));
+    expect(result.palette.hues[0]).toBeCloseTo(0, 1);
   });
 
   it('high energy maps to high dynamics.energy', () => {

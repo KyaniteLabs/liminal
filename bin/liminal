@@ -89,6 +89,14 @@ for (let i = 0; i < args.length; i++) {
     flags.confidenceThreshold = parseFloat(args[++i]);
   } else if (arg === '--spec') {
     flags.spec = args[++i];
+  } else if (arg === '--voice') {
+    flags.voice = true;
+  } else if (arg === '--voice-file') {
+    flags.voiceFile = args[++i];
+  } else if (arg === '--aesthetic') {
+    flags.aesthetic = args[++i];
+  } else if (arg === '--aesthetic-config') {
+    flags.aestheticConfig = args[++i];
   } else if (arg === '--verbose' || arg === '-v') {
     flags.verbose = true;
   } else if (!arg.startsWith('-')) {
@@ -342,6 +350,8 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     useSwarm: flags.useSwarm,
     swarmMode: flags.swarmMode,
     swarmConfig: flags.swarmRounds ? { maxRounds: flags.swarmRounds } : undefined,
+    useAestheticGuardrails: !!(flags.aesthetic || flags.aestheticConfig),
+    aestheticConfig: flags.aesthetic ? { preset: flags.aesthetic } : undefined,
   }).then(async (result) => {
     console.log('');
     console.log('✅ Generation complete!');

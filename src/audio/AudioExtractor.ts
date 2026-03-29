@@ -6,7 +6,7 @@ import type { AudioFeatures } from './types.js';
  */
 let MeydaModule: any = null;
 
-async function loadMeyda(): Promise<any> {
+async function _loadMeyda(): Promise<any> {
   if (!MeydaModule) {
     const mod = await import('meyda');
     MeydaModule = mod.default || mod;
@@ -30,6 +30,7 @@ function getMeydaSync(): any {
   if (meydaLoaded) return MeydaSync;
   try {
     // Dynamic require via createRequire for ESM compatibility
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { createRequire } = require('module') as any;
     const req = createRequire(import.meta.url);
     const mod = req('meyda');

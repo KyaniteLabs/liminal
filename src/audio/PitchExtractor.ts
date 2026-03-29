@@ -12,6 +12,7 @@ function getYinDetector(
 ): (buffer: Float32Array) => number | null {
   if (yinDetector && lastSampleRate === sampleRate) return yinDetector;
 
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { createRequire } = require('module') as any;
   const req = createRequire(import.meta.url);
   const pitchfinder = req('pitchfinder');

@@ -729,4 +729,94 @@ export class CreativeEvaluator {
       interestingnessScore: 0,
     };
   }
+
+  // -----------------------------------------------------------------------
+  // LIR-aware assessment — overlays structured token metrics on regex baseline
+  // -----------------------------------------------------------------------
+
+  /**
+   * Assess creative output using LIR tokens for more precise evaluation.
+   *
+   * Runs the existing regex-based `assess()` as baseline, then overlays
+   * LIR-derived metrics when tokens are available:
+   * - technicalScore: uses metrics.loc, cyclomaticComplexity, nestingDepth
+   * - creativeScore: uses relationships.calls for distinct API usage
+   * - emergenceScore: uses relationships.calls for pattern detection
+   * - interestingnessScore: uses importCount + callCount as richness proxy
+   */
+  static assessWithLIR(
+    output: string,
+    lirTokens: import('../core/lir/types.js').LIRCodeToken[],
+    options?: AssessOptions,
+  ): AssessmentResult {
+    // Start with the regex baseline
+    const baseline = this.assess(output, options);
+
+    // If no LIR tokens, return baseline unchanged
+    if (!lirTokens || lirTokens.length === 0) {
+      return baseline;
+    }
+
+    // Overlay LIR-derived metrics
+    const totalLoc = lirTokens.reduce((s, t) => s + t.metrics.loc, 0);
+    const maxComplexity = Math.max(...lirTokens.map(t => t.metrics.cyclomaticComplexity));
+    const avgNesting = lirTokens.reduce((s, t) => s + t.metrics.nestingDepth, 0) / lirTokens.length;
+    const allCalls = new Set(lirTokens.flatMap(t => t.relationships.calls));
+    const totalImportCount = lirTokens.reduce((s, t) => s + t.metrics.importCount, 0);
+    const totalCallCount = lirTokens.reduce((s, t) => s + t.metrics.callCount, 0);
+
+    // Technical score boost from LIR: code with reasonable complexity is better
+    let technicalScore = baseline.technicalScore;
+    if (totalLoc >= 10 && totalLoc <= 500) technicalScore = Math.min(1, technicalScore + 0.05);
+    if (maxComplexity <= 15) technicalScore = Math.min(1, technicalScore + 0.05);
+    if (avgNesting <= 4) technicalScore = Math.min(1, technicalScore + 0.03);
+
+    // Creative score boost: more distinct API calls = richer creative output
+    let creativeScore = baseline.creativeScore;
+    const apiRichness = Math.min(allCalls.size / 8, 1); // 8+ distinct calls = full score
+    creativeScore = Math.min(1, creativeScore * 0.7 + apiRichness * 0.3);
+
+    // Emergence score: detect emergent patterns by call names
+    let emergenceScore = baseline.emergenceScore ?? 0;
+    const emergentPatterns = ['particle', 'noise', 'flock', 'boid', 'cellular', 'automata', 'reaction', 'diffusion', 'feedback'];
+    const hasEmergence = allCalls.size > 0 && [...allCalls].some(c =>
+      emergentPatterns.some(p => c.toLowerCase().includes(p)),
+    );
+    if (hasEmergence) emergenceScore = Math.min(1, emergenceScore + 0.2);
+
+    // Interestingness: richness from imports + calls
+    let interestingnessScore = baseline.interestingnessScore ?? 0;
+    const richness = Math.min((totalImportCount + totalCallCount) / 15, 1);
+    interestingnessScore = Math.min(1, interestingnessScore * 0.6 + richness * 0.4);
+
+    // Recalculate overall score
+    let overallScore: number;
+    if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
+      const dimensionScores: number[] = [];
+      for (const criterion of options.evaluationCriteria) {
+        if (criterion === 'technical') dimensionScores.push(technicalScore);
+        else if (criterion === 'aesthetic') dimensionScores.push(baseline.aestheticScore ?? (creativeScore + 0.5) / 2);
+        else if (criterion === 'novelty') dimensionScores.push(baseline.noveltyScore ?? creativeScore);
+        else if (criterion === 'emergence') dimensionScores.push(emergenceScore);
+        else if (criterion === 'interestingness') dimensionScores.push(interestingnessScore);
+        else dimensionScores.push(creativeScore);
+      }
+      overallScore = dimensionScores.reduce((a, b) => a + b, 0) / dimensionScores.length;
+    } else {
+      overallScore = technicalScore * 0.6 + creativeScore * 0.4;
+    }
+
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues: baseline.issues,
+      technicalScore,
+      creativeScore,
+      metrics: baseline.metrics,
+      noveltyScore: baseline.noveltyScore,
+      aestheticScore: baseline.aestheticScore,
+      emergenceScore,
+      interestingnessScore,
+    };
+  }
 }

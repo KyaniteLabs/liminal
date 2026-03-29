@@ -2,6 +2,9 @@
 // Aesthetic types – design constraints, presets, critic config
 // ---------------------------------------------------------------------------
 
+import type { LIRCodeToken } from '../core/lir/types.js';
+import type { VisualMappingParams } from '../audio/types.js';
+
 /** Color harmony strategy */
 export type HarmonyMode =
   | 'analogous'
@@ -270,3 +273,32 @@ export const PRESET_PROFILES: Record<string, Partial<DesignConstraints>> = {
 
   free: {},
 };
+
+// ---------------------------------------------------------------------------
+// LIR evaluation context – structured data for LIR-aware critics
+// ---------------------------------------------------------------------------
+
+/** Context passed to LIR-aware aesthetic evaluation. */
+export interface LIREvaluationContext {
+  /** Parsed LIR tokens from the generated code. */
+  lirTokens: LIRCodeToken[];
+  /** Audio-derived visual parameters (the "intent"). */
+  visualIntent?: VisualMappingParams;
+  /** Whether LIR evaluation is active. */
+  lirEnabled: boolean;
+}
+
+/** Extended report with LIR-specific details. */
+export interface LIRAwareAestheticReport extends AestheticReport {
+  /** Whether LIR tokens were used (vs regex fallback). */
+  usedLIR: boolean;
+  /** Coherence score: how well code matches visual intent (0-1). */
+  coherenceScore?: number;
+  /** LIR-based structural metrics summary. */
+  structuralMetrics?: {
+    totalSymbols: number;
+    maxComplexity: number;
+    avgNesting: number;
+    callGraphSize: number;
+  };
+}

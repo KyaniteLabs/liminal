@@ -10,7 +10,12 @@ export class AestheticStrategy implements ScoringStrategy {
   private critic = new AestheticCritic();
 
   score(input: ScoringInput): ScoringResult {
-    const report = this.critic.critique(input.output);
+    // Thread LIR context through if available on the input
+    const report = this.critic.critique(
+      input.output,
+      undefined,
+      input.lirContext,
+    );
 
     return {
       score: report.score,

@@ -11,7 +11,7 @@ import { PromptLibrary } from './PromptLibrary.js';
  */
 PromptLibrary.register({
   id: 'remotion.generate',
-  version: '1.0.0',
+  version: '2.0.0',
   category: 'generator',
   systemPrompt: `You are a senior Remotion developer specializing in programmatic video and motion graphics.
 
@@ -63,7 +63,7 @@ export const MyComposition: React.FC = () => {
  */
 PromptLibrary.register({
   id: 'remotion.improve',
-  version: '1.0.0',
+  version: '2.0.0',
   category: 'generator',
   systemPrompt: `You are improving an existing Remotion composition. The user wants changes while keeping the overall structure.
 

@@ -7,6 +7,7 @@
 
 import puppeteer, { Browser } from 'puppeteer';
 import { generateHTML } from '../utils/generateHTML.js';
+import { getChromeArgs } from '../security/SandboxConfig.js';
 
 export interface SandboxResult {
   stdout?: string;
@@ -16,6 +17,8 @@ export interface SandboxResult {
 
 export interface SandboxOptions {
   timeoutMs?: number;
+  /** Only works if LIMINAL_DISABLE_SANDBOX=true */
+  disableSandbox?: boolean;
 }
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -29,18 +32,13 @@ export async function runInSandbox(
   options?: SandboxOptions
 ): Promise<SandboxResult> {
   const timeoutMs = options?.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  const disableSandbox = options?.disableSandbox ?? false;
   let browser: Browser | null = null;
 
   try {
     browser = await puppeteer.launch({
       headless: true,
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--no-first-run',
-        '--no-zygote',
-      ],
+      args: getChromeArgs({ forceDisableSandbox: disableSandbox }),
     });
 
     const page = await browser.newPage();

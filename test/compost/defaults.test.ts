@@ -40,7 +40,7 @@ describe('DEFAULT_CONFIG', () => {
 
   it('has correct LLM defaults', () => {
     expect(DEFAULT_CONFIG.llm.provider).toBe('auto');
-    expect(DEFAULT_CONFIG.llm.localBaseUrl).toBe('http://100.66.225.85:1234/v1');
+    expect(DEFAULT_CONFIG.llm.localBaseUrl).toBe('http://localhost:1234/v1');
     expect(DEFAULT_CONFIG.llm.localModel).toBe('auto');
     expect(DEFAULT_CONFIG.llm.cloudProvider).toBe('anthropic');
     expect(DEFAULT_CONFIG.llm.cloudApiKeyEnvVar).toBe('ANTHROPIC_API_KEY');

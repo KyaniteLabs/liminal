@@ -1,5 +1,9 @@
 import { execFile } from 'child_process';
 import { promisify } from 'util';
+import { 
+  validateFilePath, 
+  PathSanitizationError 
+} from '../security/PathSanitizer.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -201,11 +205,22 @@ ${layers.join('\n')}
    */
   async composite(spec: CompositionSpec, outputPath: string): Promise<string> {
     this.validateSpec(spec);
-    const args = this.buildCompositeArgs(spec, outputPath);
+    
+    // Sanitize output path
+    const sanitizedOutput = validateFilePath(outputPath, process.cwd());
+    
+    // Sanitize all layer source paths
+    for (const layer of spec.layers) {
+      if (layer.source) {
+        validateFilePath(layer.source, process.cwd());
+      }
+    }
+    
+    const args = this.buildCompositeArgs(spec, sanitizedOutput);
 
     try {
       await execFileAsync('ffmpeg', args, { timeout: 300000 });
-      return outputPath;
+      return sanitizedOutput;
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
       if (err.code === 'ENOENT') {
@@ -215,3 +230,5 @@ ${layers.join('\n')}
     }
   }
 }
+
+export { PathSanitizationError };

@@ -42,6 +42,7 @@ import { PromptLibrary } from '../prompts/index.js';
 import { RetryManager } from './RetryManager.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
+import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 
 export interface LLMConfig {
   provider: 'ollama' | 'openai' | 'minimax' | 'lmstudio' | 'hybrid';
@@ -352,6 +353,21 @@ export class LLMClient {
     signal?: AbortSignal
   ): Promise<LLMResponse> {
     const baseUrl = this.config.baseUrl || defaultBaseUrl;
+
+    // SSRF Protection - validate baseUrl
+    const allowLocalhost = process.env.LIMINAL_ALLOW_LOCALHOST_LLM !== 'false';
+    const allowPrivateIPs = process.env.LIMINAL_ALLOW_PRIVATE_IP_LLM === 'true';
+    const allowedHosts = getAllowedHostsFromEnv();
+
+    try {
+      validateUrl(baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
+    } catch (err) {
+      if (err instanceof SSRFError) {
+        throw new LLMError(`SSRF Protection: ${err.message}`, provider, undefined, false);
+      }
+      throw err;
+    }
+
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -443,6 +459,20 @@ export class LLMClient {
 
   private async callOllama(system: string, user: string, signal?: AbortSignal): Promise<LLMResponse> {
     const baseUrl = this.config.baseUrl || SERVICE_DEFAULTS.OLLAMA_URL;
+
+    // SSRF Protection - validate baseUrl
+    const allowLocalhost = process.env.LIMINAL_ALLOW_LOCALHOST_LLM !== 'false';
+    const allowPrivateIPs = process.env.LIMINAL_ALLOW_PRIVATE_IP_LLM === 'true';
+    const allowedHosts = getAllowedHostsFromEnv();
+
+    try {
+      validateUrl(baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
+    } catch (err) {
+      if (err instanceof SSRFError) {
+        throw new LLMError(`SSRF Protection: ${err.message}`, 'ollama', undefined, false);
+      }
+      throw err;
+    }
 
     const response = await fetch(`${baseUrl}/api/generate`, {
       method: 'POST',

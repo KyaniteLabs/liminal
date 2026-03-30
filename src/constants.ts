@@ -8,7 +8,7 @@ export const SERVICE_DEFAULTS = {
   /** Preview server port for live sketch viewing */
   PREVIEW_PORT: 3456,
   /** LM Studio / local LLM API base URL */
-  LOCAL_LLM_URL: 'http://100.66.225.85:1234/v1',
+  LOCAL_LLM_URL: 'http://localhost:1234/v1',
   /** Ollama API base URL */
   OLLAMA_URL: 'http://localhost:11434',
   /** Reasoning service base URL */

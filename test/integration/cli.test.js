@@ -1,3 +1,7 @@
+/**
+ * SECURITY NOTICE: All API keys in this file are FAKE test values.
+ */
+
 import { describe, it, expect, beforeAll, afterEach, test } from 'vitest';
 import { spawn } from 'child_process';
 import fs from 'fs/promises';
@@ -63,7 +67,7 @@ async function runCLI(args) {
       env: {
         ...process.env,
         ATELIER_LLM_PROVIDER: 'lmstudio',
-        ATELIER_LLM_BASE_URL: 'http://100.66.225.85:1234/v1',
+        ATELIER_LLM_BASE_URL: 'http://localhost:1234/v1',
         ATELIER_LLM_MODEL: 'local-model'
       }
     });

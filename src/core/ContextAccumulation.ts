@@ -26,6 +26,7 @@ export type State = IterationContext;
 
 import fs from 'fs';
 import path from 'path';
+import { safeJsonParse, PersistedLoopStateSchema } from '../security/JsonSchemas.js';
 
 export interface PersistedLoopState {
   bestFitness: number;
@@ -103,9 +104,7 @@ export class ContextAccumulation {
     if (!fs.existsSync(filePath)) return null;
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
-      const parsed = JSON.parse(raw) as PersistedLoopState;
-      if (typeof parsed.bestFitness !== 'number') return null;
-      return parsed;
+      return safeJsonParse(raw, PersistedLoopStateSchema, 'ContextAccumulation');
     } catch (err) {
       console.warn('Failed to load loop state:', err);
       return null;

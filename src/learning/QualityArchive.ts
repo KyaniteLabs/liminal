@@ -10,6 +10,7 @@
 import { promises as fs } from 'fs';
 import { dirname } from 'path';
 import { Logger } from '../utils/Logger.js';
+import { safeJsonParse, ArchiveDataSchema } from '../security/JsonSchemas.js';
 
 /**
  * Query options for archive searches.
@@ -114,7 +115,12 @@ export class QualityArchive {
   async load(): Promise<void> {
     try {
       const data = await fs.readFile(this.path, 'utf-8');
-      const archiveData: ArchiveData = JSON.parse(data);
+      const archiveData = safeJsonParse(data, ArchiveDataSchema, 'QualityArchive');
+
+      if (!archiveData) {
+        Logger.warn('QualityArchive', 'Archive data failed validation, starting fresh');
+        return;
+      }
 
       // Populate cache from loaded data
       for (const [domain, entries] of Object.entries(archiveData.archives)) {

@@ -1,3 +1,5 @@
+// SECURITY NOTICE: All API keys in this file are FAKE test values.
+
 import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * DeepCollaboration tests
@@ -61,7 +63,7 @@ describe('DeepCollaboration', () => {
 
     it('should create instance with full config', () => {
       const collab = new DeepCollaboration({
-        localBaseUrl: 'http://100.66.225.85:1234/v1',
+        localBaseUrl: 'http://localhost:1234/v1',
         localModel: 'qwen3.5:4b',
         cloudApiKey: 'test-key',
         cloudModel: 'MiniMax-M2.7',

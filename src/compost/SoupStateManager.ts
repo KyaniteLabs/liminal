@@ -5,6 +5,7 @@
 
 import fs from 'node:fs/promises';
 import type { CompostConfig, SoupState, CompostFragment } from './types.js';
+import { safeJsonParse, SoupStateSchema } from '../security/JsonSchemas.js';
 
 /** Default empty soup state. */
 const DEFAULT_STATE: SoupState = {
@@ -27,16 +28,11 @@ export class SoupStateManager {
   async load(): Promise<SoupState> {
     try {
       const raw = await fs.readFile(this.statePath, 'utf-8');
-      const parsed = JSON.parse(raw) as SoupState;
-      // Validate required fields
-      return {
-        population: Array.isArray(parsed.population) ? parsed.population : [],
-        generation: typeof parsed.generation === 'number' ? parsed.generation : 0,
-        bestSeed: parsed.bestSeed ?? null,
-        totalSeedsPromoted: typeof parsed.totalSeedsPromoted === 'number' ? parsed.totalSeedsPromoted : 0,
-        domainHeatmap: parsed.domainHeatmap ?? {},
-        lastCycleAt: parsed.lastCycleAt ?? '',
-      };
+      const parsed = safeJsonParse(raw, SoupStateSchema, 'SoupStateManager');
+      if (!parsed) {
+        return { ...DEFAULT_STATE };
+      }
+      return parsed;
     } catch (err) {
       console.warn('[SoupStateManager] failed to load state, using default:', err);
       return { ...DEFAULT_STATE };

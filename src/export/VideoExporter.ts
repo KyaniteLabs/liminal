@@ -2,6 +2,11 @@ import { execFile } from 'child_process';
 import { promisify } from 'util';
 import path from 'path';
 import fs from 'fs/promises';
+import { 
+  sanitizeFilename, 
+  validateFilePath, 
+  PathSanitizationError 
+} from '../security/PathSanitizer.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -18,28 +23,41 @@ export class VideoExporter {
   }
 
   async convert(input: string, output: string, format: 'mp4' | 'webm' | 'gif'): Promise<void> {
-    const args = this.buildConvertArgs(input, output, format);
+    const sanitizedInput = validateFilePath(input, process.cwd());
+    const sanitizedOutput = validateFilePath(output, process.cwd());
+    const args = this.buildConvertArgs(sanitizedInput, sanitizedOutput, format);
     await this.execFFmpeg(args);
   }
 
   async resize(input: string, output: string, width: number, height: number): Promise<void> {
-    const args = this.buildResizeArgs(input, output, width, height);
+    const sanitizedInput = validateFilePath(input, process.cwd());
+    const sanitizedOutput = validateFilePath(output, process.cwd());
+    const args = this.buildResizeArgs(sanitizedInput, sanitizedOutput, width, height);
     await this.execFFmpeg(args);
   }
 
   async addAudio(video: string, audio: string, output: string): Promise<void> {
-    const args = this.buildAddAudioArgs(video, audio, output);
+    const sanitizedVideo = validateFilePath(video, process.cwd());
+    const sanitizedAudio = validateFilePath(audio, process.cwd());
+    const sanitizedOutput = validateFilePath(output, process.cwd());
+    const args = this.buildAddAudioArgs(sanitizedVideo, sanitizedAudio, sanitizedOutput);
     await this.execFFmpeg(args);
   }
 
   async extractFrames(input: string, outputDir: string, fps: number = 24): Promise<void> {
+    const sanitizedInput = validateFilePath(input, process.cwd());
+    // For outputDir, validate that the directory name itself is safe
+    sanitizeFilename(path.basename(outputDir));
     await fs.mkdir(outputDir, { recursive: true });
-    const args = this.buildExtractFramesArgs(input, outputDir, fps);
+    const args = this.buildExtractFramesArgs(sanitizedInput, outputDir, fps);
     await this.execFFmpeg(args);
   }
 
   async framesToVideo(framesDir: string, output: string, fps: number): Promise<void> {
-    const args = this.buildFramesToVideoArgs(framesDir, output, fps);
+    // For framesDir, validate that the directory name itself is safe
+    sanitizeFilename(path.basename(framesDir));
+    const sanitizedOutput = validateFilePath(output, process.cwd());
+    const args = this.buildFramesToVideoArgs(framesDir, sanitizedOutput, fps);
     await this.execFFmpeg(args);
   }
 
@@ -116,3 +134,5 @@ export class VideoExporter {
     }
   }
 }
+
+export { PathSanitizationError };

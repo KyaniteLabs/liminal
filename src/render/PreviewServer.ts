@@ -7,6 +7,9 @@
 import express, { Express } from 'express';
 import path from 'path';
 import { Server } from 'http';
+import helmet from 'helmet';
+import csurf from 'csurf';
+import cookieParser from 'cookie-parser';
 import { Gallery } from '../gallery/Gallery.js';
 import { Exporter } from '../export/Exporter.js';
 import { normalizePath } from '../utils/normalizePath.js';
@@ -15,6 +18,11 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { eventBus } from '../core/EventBus.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import type { BusEvent } from '../core/EventBus.js';
+import {
+  standardLimiter,
+  exportLimiter,
+  sandboxLimiter,
+} from '../security/RateLimiter.js';
 
 export interface PreviewServerOptions {
   galleryDir?: string;
@@ -59,6 +67,86 @@ export class PreviewServer {
   }
 
   private setupRoutes(): void {
+    // Security headers middleware
+    this.app.use(helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          scriptSrc: [
+            "'self'",
+            "'unsafe-inline'",  // Required for inline p5.js sketches
+            "https://cdnjs.cloudflare.com",  // p5.js CDN
+            "https://cdn.jsdelivr.net",      // Three.js CDN
+          ],
+          styleSrc: [
+            "'self'",
+            "'unsafe-inline'",  // Required for inline styles
+          ],
+          imgSrc: [
+            "'self'",
+            "data:",
+            "blob:",
+          ],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'"],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+          upgradeInsecureRequests: [],
+        },
+      },
+      crossOriginEmbedderPolicy: false,  // Allow CDN resources
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      dnsPrefetchControl: { allow: false },
+      frameguard: { action: 'deny' },  // X-Frame-Options: DENY
+      hidePoweredBy: true,  // Remove X-Powered-By header
+      hsts: {
+        maxAge: 31536000,  // 1 year
+        includeSubDomains: true,
+        preload: true,
+      },
+      ieNoOpen: true,  // X-Download-Options
+      noSniff: true,  // X-Content-Type-Options: nosniff
+      originAgentCluster: true,
+      permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      xssFilter: true,  // X-XSS-Protection (legacy)
+    }));
+
+    // CSP report endpoint
+    this.app.post('/api/csp-report', express.json({ type: 'application/csp-report' }), (req, res) => {
+      console.warn('[CSP Violation]', req.body);
+      res.status(204).send();
+    });
+
+    // Cookie parser required for CSRF
+    this.app.use(cookieParser());
+
+    // CSRF Protection
+    const csrfProtection = csurf({
+      cookie: {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+      },
+      value: (req) => req.headers['x-csrf-token'] as string,
+    });
+
+    // Apply CSRF to state-changing routes only
+    this.app.use('/api/preview/versions', csrfProtection);
+    this.app.use('/api/sandbox/run', csrfProtection);
+    this.app.use('/api/export', csrfProtection);
+
+    // Add CSRF token endpoint
+    this.app.get('/api/csrf-token', csrfProtection, (req, res) => {
+      res.json({ csrfToken: req.csrfToken() });
+    });
+
+    // Apply rate limiting to API routes (must be before route handlers)
+    this.app.use('/api/', standardLimiter);
+    this.app.use('/api/export', exportLimiter); // Stricter limit for exports
+    this.app.use('/api/sandbox', sandboxLimiter); // Medium limit for sandbox
+
     this.app.get('/', (_req, res) => {
       const html = this.generateHTML(this.currentSketch);
       res.setHeader('Content-Type', 'text/html');

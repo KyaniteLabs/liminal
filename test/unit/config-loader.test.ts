@@ -1,3 +1,5 @@
+// SECURITY NOTICE: All API keys in this file are FAKE test values.
+
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { loadConfig, loadProjectConfig, getEffectiveConfig } from '../../src/config/ConfigLoader.js';
 import fs from 'fs/promises';
@@ -24,7 +26,7 @@ describe('ConfigLoader', () => {
         defaultProvider: 'lmstudio',
         providers: {
           lmstudio: {
-            baseUrl: 'http://100.66.225.85:1234/v1',
+            baseUrl: 'http://localhost:1234/v1',
             model: 'qwen3-coder-next-reap-40b-a3b-i1'
           }
         }
@@ -35,7 +37,7 @@ describe('ConfigLoader', () => {
 
       expect(loaded).not.toBeNull();
       expect(loaded!.defaultProvider).toBe('lmstudio');
-      expect(loaded!.providers.lmstudio.baseUrl).toBe('http://100.66.225.85:1234/v1');
+      expect(loaded!.providers.lmstudio.baseUrl).toBe('http://localhost:1234/v1');
     });
 
     it('should return null if config file does not exist', async () => {

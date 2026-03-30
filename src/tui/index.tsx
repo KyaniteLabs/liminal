@@ -18,6 +18,7 @@ import { XRayPanel } from "./components/XRayPanel";
 import { IterationTimeline } from "./components/IterationTimeline";
 import { TransparencyPanel } from "./components/TransparencyPanel";
 import { TransparencyViewer, type ProcessEvent } from "../ui/TransparencyViewer.js";
+import { validateImportPath } from '../security/ImportValidator.js';
 
 interface GalleryEntry {
   projectName: string;
@@ -234,7 +235,11 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
     };
 
     try {
-      const { run } = await import(path.join(PROJECT_ROOT, "dist/index.js"));
+      const runPath = validateImportPath(
+        path.join(PROJECT_ROOT, "dist/index.js"),
+        PROJECT_ROOT
+      );
+      const { run } = await import(runPath);
       const startTime = Date.now();
       const result = await run(prompt, runOptions);
       const duration = Date.now() - startTime;
@@ -279,7 +284,11 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
     try {
       const outDir = path.join(PROJECT_ROOT, "output");
       await fs.mkdir(outDir, { recursive: true });
-      const { Exporter } = await import(path.join(PROJECT_ROOT, "dist/export/Exporter.js"));
+      const exporterPath = validateImportPath(
+        path.join(PROJECT_ROOT, "dist/export/Exporter.js"),
+        PROJECT_ROOT
+      );
+      const { Exporter } = await import(exporterPath);
       const exporter = new Exporter();
       const htmlPath = path.join(outDir, "tui-export.html");
       const jsPath = path.join(outDir, "tui-export.js");

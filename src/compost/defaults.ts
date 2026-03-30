@@ -44,7 +44,7 @@ export function buildDefaults(projectCompost?: {
   soupCycleIntervalMs: 60000, // 1 minute
   llm: {
     provider: 'auto',
-    localBaseUrl: 'http://100.66.225.85:1234/v1',
+    localBaseUrl: 'http://localhost:1234/v1',
     localModel: 'auto',
     cloudProvider: 'anthropic',
     cloudApiKeyEnvVar: 'ANTHROPIC_API_KEY',

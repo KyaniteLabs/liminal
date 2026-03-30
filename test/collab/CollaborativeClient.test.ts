@@ -1,3 +1,5 @@
+// SECURITY NOTICE: All API keys in this file are FAKE test values.
+
 import { describe, it, expect, beforeEach } from 'vitest';
 /**
  * CollaborativeClient tests

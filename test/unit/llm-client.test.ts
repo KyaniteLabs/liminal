@@ -1,3 +1,11 @@
+// ============================================================================
+// SECURITY NOTICE
+// ============================================================================
+// All API keys in this file are FAKE test values used for unit testing only.
+// They are intentionally invalid and pose no security risk.
+// Do NOT use these values in production or with real APIs.
+// ============================================================================
+
 import { describe, it, expect, afterEach, test } from 'vitest';
 /**
  * LLMClient tests - OpenAI-compatible API support
@@ -31,7 +39,7 @@ describe('LLMClient Configuration', () => {
   test('should create client with LM Studio config (no API key)', () => {
     const client = new LLMClient({
       provider: 'lmstudio',
-      baseUrl: 'http://100.66.225.85:1234/v1',
+      baseUrl: 'http://localhost:1234/v1',
       model: 'local-model',
       // apiKey intentionally omitted for LM Studio
     });
@@ -45,14 +53,14 @@ describe('LLMClient Configuration', () => {
       provider: 'ollama',
       baseUrl: 'https://api.ollama.com/v1',
       model: 'llama3.2',
-      apiKey: 'ollama-cloud-key-123',
+      apiKey: 'test-ollama-key',
     });
 
     expect(client).toBeDefined();
   });
 
   test('isConfigured returns true when LIMINAL_LLM_API_KEY is set', () => {
-    process.env.LIMINAL_LLM_API_KEY = 'sk-test-key';
+    process.env.LIMINAL_LLM_API_KEY = 'test-sk-key';
     expect(LLMClient.isConfigured()).toBe(true);
   });
 
@@ -80,7 +88,7 @@ describe('LLMClient OpenAI (W0-L)', () => {
 
     const client = new LLMClient({
       provider: 'openai',
-      apiKey: 'sk-test-key',
+      apiKey: 'test-sk-key',
       model: 'gpt-4o-mini',
     });
 
@@ -91,7 +99,7 @@ describe('LLMClient OpenAI (W0-L)', () => {
     expect(getLastUrl()).toMatch(/openai\.com.*chat\/completions|.*\/v1\/chat\/completions/);
     const opts = getLastOpts();
     expect(opts?.method).toBe('POST');
-    expect((opts?.headers as Record<string, string>)?.['Authorization']).toBe('Bearer sk-test-key');
+    expect((opts?.headers as Record<string, string>)?.['Authorization']).toBe('Bearer test-sk-key');
     expect((opts?.headers as Record<string, string>)?.['Content-Type']).toBe('application/json');
     const body = JSON.parse((opts?.body as string) ?? '{}');
     expect(body.model).toBe('gpt-4o-mini');

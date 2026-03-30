@@ -23,27 +23,6 @@ liminal --prompt "Create a calming blue particle system"
 liminal chat
 ```
 
-## Security Configuration
-
-Liminal uses environment variables for sensitive configuration. Copy `.env.example` to `.env` and customize:
-
-```bash
-cp .env.example .env
-```
-
-**Important Security Notes:**
-- Never expose internal IP addresses or credentials in source code
-- Only configure LLM base URLs pointing to trusted endpoints
-- Keep your `.env` file out of version control (it's already in `.gitignore`)
-- For production deployments, use proper secret management systems
-
-📖 **Full Security Guide**: See [`docs/SECURITY.md`](docs/SECURITY.md) for comprehensive security documentation including:
-- Production deployment checklist
-- SSRF protection details
-- Rate limiting configuration
-- Sandbox security guidelines
-- Incident response process
-
 ## How Liminal Works
 
 Liminal generates emergent generative art through self-recursive iteration with intelligent context enhancement. The same prompt runs repeatedly, but the "world" (files, context, artistic knowledge, guidance) changes each time, creating a sophisticated feedback loop where the agent critiques and improves its own output.

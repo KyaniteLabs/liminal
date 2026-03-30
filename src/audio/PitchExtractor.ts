@@ -18,7 +18,7 @@ function getYinDetector(
   const pitchfinder = req('pitchfinder');
   yinDetector = pitchfinder.YIN({ sampleRate, threshold: 0.2 });
   lastSampleRate = sampleRate;
-  return yinDetector;
+  return yinDetector!;
 }
 
 /**

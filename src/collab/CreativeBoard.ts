@@ -306,7 +306,7 @@ export class CreativeBoard {
     evaluationScores?: Record<string, number>,
   ): BoardStance {
     const keyPoints: string[] = [];
-    let confidence = 0.55;
+    const confidence = 0.55;
     let scoreAdjustment = 0;
 
     // Count distinct API calls / identifiers

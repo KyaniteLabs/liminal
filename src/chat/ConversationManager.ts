@@ -273,7 +273,7 @@ export class ConversationManager {
     // Map questions to answer IDs
     const phaseQuestions: Record<InterviewPhase, string[]> = {
       greeting: ['intent'],
-      discovery: ['context', 'mood', 'references', 'constraints'],
+      discovery: ['context', 'mood', 'references', 'constraints', 'audioPreference', 'aestheticPreset'],
       confirm: ['confirmed'],
       generating: []
     };

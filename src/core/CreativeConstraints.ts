@@ -110,7 +110,7 @@ export function validateAgainstConstraints(
     }
   } else {
     // Animated target — check for explicit FPS overrides that exceed the target.
-    const fpsPattern = /(?:frameRate|fps)\s*[\(:=]\s*(\d+)/g;
+    const fpsPattern = /(?:frameRate|fps)\s*[(:=]\s*(\d+)/g;
     while ((match = fpsPattern.exec(code)) !== null) {
       const fps = parseInt(match[1], 10);
       if (fps > constraints.targetFPS) {

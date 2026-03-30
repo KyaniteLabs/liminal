@@ -50,6 +50,14 @@ describe('Chat Input Integration', () => {
 
       // Discovery phase - constraints
       response = await manager.processUserMessage('Must run at 60fps, keep file size under 100KB');
+      expect(response.message).toContain('voice');
+
+      // Discovery phase - audio preference
+      response = await manager.processUserMessage('No audio needed');
+      expect(response.message).toContain('aesthetic');
+
+      // Discovery phase - aesthetic preset
+      response = await manager.processUserMessage('Cinematic');
       expect(response.nextPhase).toBe('confirm');
 
       // Confirm phase
@@ -59,7 +67,7 @@ describe('Chat Input Integration', () => {
 
       // Verify all messages were stored
       const session = manager.sessionHistory[0];
-      expect(session.messages).toHaveLength(13); // 6 user + 6 assistant + 1 system (generation complete)
+      expect(session.messages).toHaveLength(17); // 8 user + 8 assistant + 1 system (generation complete)
 
       // Verify interview phase
       expect(manager.interviewPhase).toBe('generating');
@@ -77,6 +85,8 @@ describe('Chat Input Integration', () => {
       await manager.processUserMessage('Dreamy');
       await manager.processUserMessage('No, text only');
       await manager.processUserMessage('Surprise me');
+      await manager.processUserMessage('No audio');
+      await manager.processUserMessage('Vibrant');
       // Should still reach confirm phase
       expect(manager.interviewPhase).toBe('confirm');
     });

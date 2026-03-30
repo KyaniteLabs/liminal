@@ -1,20 +1,6 @@
 import type { AudioFeatures } from './types.js';
 
 /**
- * Meyda module — loaded lazily via dynamic import to avoid
- * top-level side-effects during module resolution in ESM.
- */
-let MeydaModule: any = null;
-
-async function _loadMeyda(): Promise<any> {
-  if (!MeydaModule) {
-    const mod = await import('meyda');
-    MeydaModule = mod.default || mod;
-  }
-  return MeydaModule;
-}
-
-/**
  * Synchronous Meyda access. On first call this performs a dynamic
  * import and caches the result. Subsequent calls are synchronous
  * because the module is already cached by Node's module system.

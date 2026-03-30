@@ -6,7 +6,6 @@ import type {
   AestheticReport,
   AestheticViolation,
   DesignConstraints,
-  LayoutConstraints,
 } from '../types.js';
 import type { LIRCodeToken } from '../../core/lir/types.js';
 import type { VisualMappingParams } from '../../audio/types.js';
@@ -114,7 +113,6 @@ export function analyzeLayout(
   constraints: DesignConstraints,
 ): AestheticReport {
   const violations: AestheticViolation[] = [];
-  const _layoutConstraints: LayoutConstraints = constraints.layout;
 
   // 1. Extract canvas dimensions
   const dims = extractCanvasDimensions(code);
@@ -267,7 +265,6 @@ export function analyzeLayoutLIR(
       const inBounds = positions.filter(p => p.x <= dims!.width && p.y <= dims!.height);
       if (inBounds.length > 0) {
         const avgX = inBounds.reduce((s, p) => s + p.x, 0) / inBounds.length;
-        const centerX = dims!.width / 2;
         const normalizedBalance = avgX / dims!.width;
         const balanceDiff = Math.abs(normalizedBalance - visualIntent.composition.balance);
         if (balanceDiff < 0.2) {

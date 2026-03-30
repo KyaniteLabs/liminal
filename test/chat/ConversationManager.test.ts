@@ -89,6 +89,8 @@ describe('ConversationManager - Input Handling', () => {
       await manager.processUserMessage('Meditative');
       await manager.processUserMessage('None');
       await manager.processUserMessage('No constraints');
+      await manager.processUserMessage('No audio needed');
+      await manager.processUserMessage('Vibrant');
 
       expect(manager.interviewPhase).toBe('confirm');
     });
@@ -102,9 +104,11 @@ describe('ConversationManager - Input Handling', () => {
       await manager.processUserMessage('Dreamy');
       await manager.processUserMessage('None');
       await manager.processUserMessage('No, text only');
-      await manager.processUserMessage('Surprise me');      // Confirm
+      await manager.processUserMessage('No audio');
+      await manager.processUserMessage('Minimalist');
       const response = await manager.processUserMessage('Yes, generate!');
 
+      // Phase advances to generating when confirm answer is given
       expect(manager.interviewPhase).toBe('generating');
       expect(response.type).toBe('generating');
     });
@@ -174,13 +178,15 @@ describe('ConversationManager - Input Handling', () => {
     it('should return info type when generating', async () => {
       manager.startNewSession();
 
-      // Complete interview
-      await manager.processUserMessage('Create art');
-      await manager.processUserMessage('Web');
-      await manager.processUserMessage('Calm');
-      await manager.processUserMessage('None');
-      await manager.processUserMessage('None');
-      const response = await manager.processUserMessage('Yes, generate!');
+      // Complete interview: greeting + 6 discovery + confirm
+      await manager.processUserMessage('Create art');       // greeting → discovery
+      await manager.processUserMessage('Web');              // context
+      await manager.processUserMessage('Calm');             // mood
+      await manager.processUserMessage('None');             // references
+      await manager.processUserMessage('None');             // constraints
+      await manager.processUserMessage('No audio');         // audioPreference
+      await manager.processUserMessage('Surprise me');      // aestheticPreset → confirm
+      const response = await manager.processUserMessage('Yes, generate!'); // confirm → generating
 
       expect(response.type).toBe('generating');
       expect(response.nextPhase).toBe('generating');

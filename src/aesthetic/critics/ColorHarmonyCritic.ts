@@ -59,7 +59,6 @@ function extractHslHues(code: string): number[] {
 
 /** Extract named colours (as whole words used in colour contexts) */
 function extractNamedColorHues(code: string): number[] {
-  const _colorContexts = /\b(?:fill|stroke|background|tint|color)\s*\(/gi;
   const hues: number[] = [];
   const namedPattern = new RegExp(
     `\b(${Object.keys(NAMED_COLOR_HUES).join('|')})\b`,

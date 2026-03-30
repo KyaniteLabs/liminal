@@ -26,6 +26,7 @@ import { PromiseDetector } from './PromiseDetector.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
+import { CodeValidator } from './CodeValidator.js';
 import { CompostMill } from '../compost/CompostMill.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { ArchiveLearning } from '../learning/index.js';
@@ -190,7 +191,16 @@ export class RalphLoop {
         // Generate code (bypass cache to ensure fresh generation each iteration)
         // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
         const { code } = await generator.generate(usedPrompt, loadedPrompt, true);
-        currentCode = code;
+
+        // Validate generated code before accepting it
+        const validation = CodeValidator.validate(code);
+        if (!validation.valid) {
+          Logger.warn('RalphLoop', `Code validation failed: ${validation.errors.join('; ')}`);
+          // Force score to 0 so quality gate rejects this iteration
+          currentCode = validation.cleanedCode || '// Validation failed — empty code';
+        } else {
+          currentCode = validation.cleanedCode;
+        }
 
         // Diagnostic: Log that we got fresh code (not from cache)
         if (normalizedOptions.chatMode) {

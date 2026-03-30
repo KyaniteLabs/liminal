@@ -47,6 +47,11 @@ export class HTMLWrapper {
       return 'shader';
     }
 
+    // Remotion detection
+    if (this.isRemotionCode(code)) {
+      return 'remotion';
+    }
+
     // p5.js detection (default)
     return 'p5';
   }
@@ -72,6 +77,10 @@ export class HTMLWrapper {
       .filter(Boolean).length;
 
     return glslIndicators >= 2 && !code.includes('function setup()') && !code.includes('function draw()');
+  }
+
+  private static isRemotionCode(code: string): boolean {
+    return /useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code);
   }
 
   /**
@@ -105,6 +114,8 @@ export class HTMLWrapper {
         return this.wrapShader(code);
       case 'three':
         return code; // Three.js templates already complete
+      case 'remotion':
+        return this.wrapRemotion(code);
       case 'p5':
       default:
         return this.wrapP5(code, includeP5Sound, title);
@@ -234,6 +245,33 @@ ${safeCode}
         }
         render();
     </script>
+</body>
+</html>`;
+  }
+
+  /**
+   * Wrap Remotion React/TSX code in a minimal HTML preview.
+   * Remotion normally needs a bundler, but we can show the code with syntax highlighting.
+   */
+  private static wrapRemotion(code: string): string {
+    const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remotion Composition</title>
+    <style>
+        body { margin: 0; padding: 2rem; background: #0a0a0f; color: #e0e0e0; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; font-size: 0.8rem; margin-bottom: 1rem; }
+        .note { color: #a0a0b0; font-size: 0.8rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="badge">Remotion</div>
+    <p class="note">Remotion requires a bundler to render. This is the generated composition code:</p>
+    <pre><code>${escaped}</code></pre>
 </body>
 </html>`;
   }

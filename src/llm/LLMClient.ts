@@ -241,6 +241,12 @@ export class LLMClient {
           /^(\/\/\s*)?(The user wants?|I need to|I'll create|I will create|Let me create|Based on|Here's a|This sketch|Creating a|Generating a|I'm going to|The previous|Looking at|To improve|For this|Key elements|I'll write)/i,
           /^[\d.\-\s]+/, // Numbered list items like "1. ", "2. ", "- ", etc.
           /^(Has|Uses|Responds|I'll|I'll create|Maybe|Let me|I should|The code|This will)/i, // Common reasoning phrases
+          /^(Sure!|Here is|Below is|This will|I've created|I have created)/i,
+          /^As an AI/i,
+          /^(Note:|Disclaimer:|Important:)/i,
+          /^(This code|This generates?|This creates?)/i,
+          /^(\*\*|__).*?(\*\*|__)\s*[:-]/, // bold headings like "**Approach:**"
+          /^#{1,3}\s/, // markdown headings
         ];
 
         for (let i = 0; i < lines.length; i++) {

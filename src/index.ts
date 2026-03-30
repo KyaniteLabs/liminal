@@ -7,6 +7,7 @@
 
 // Core Ralph-Wiggum Loop components
 import { RalphLoop } from './core/RalphLoop.js';
+import { CodeValidator } from './core/CodeValidator.js';
 import { CreativeEvaluator } from './core/CreativeEvaluator.js';
 import { PromiseDetector } from './core/PromiseDetector.js';
 import { PromptStore } from './core/PromptStore.js';
@@ -205,13 +206,20 @@ export async function run(prompt: string, options: {
     // Initialize Exporter
     const exporter = new Exporter();
 
+    // Final validation gate before saving
+    const finalValidation = CodeValidator.validate(loopResult.code);
+    if (!finalValidation.valid) {
+      throw new Error(`Generation failed validation: ${finalValidation.errors.join('; ')}. Reason: ${loopResult.reason}`);
+    }
+    const finalCode = finalValidation.cleanedCode;
+
     // Export final code as HTML
     const htmlPath = path.join(outputResolved, `${project}-final.html`);
-    await exporter.exportHTML(loopResult.code, htmlPath);
+    await exporter.exportHTML(finalCode, htmlPath);
 
     // Export final code as JS
     const jsPath = path.join(outputResolved, `${project}-final.js`);
-    await exporter.exportJS(loopResult.code, jsPath);
+    await exporter.exportJS(finalCode, jsPath);
 
     // Load project history from gallery for ZIP export
     const gallery = new Gallery(galleryDirResolved);

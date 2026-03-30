@@ -12,6 +12,7 @@ import path from 'path';
 import archiver from 'archiver';
 import { createWriteStream } from 'fs';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
+import { CodeValidator } from '../core/CodeValidator.js';
 import { RemotionRenderer } from '../render/RemotionRenderer.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
 
@@ -52,6 +53,13 @@ export class Exporter {
       throw new Error('Output path is required and must be a non-empty string');
     }
 
+    // Structural validation before wrapping
+    const validation = CodeValidator.validate(code);
+    if (!validation.valid) {
+      throw new Error(`Code validation failed: ${validation.errors.join('; ')}`);
+    }
+    code = validation.cleanedCode;
+
     // Generate standalone HTML with p5.js CDN and embedded code
     const html = this.generateHTML(code);
 
@@ -88,6 +96,13 @@ export class Exporter {
       throw new Error('Output path is required and must be a non-empty string');
     }
 
+    // Structural validation before saving
+    const validation = CodeValidator.validate(code);
+    if (!validation.valid) {
+      throw new Error(`Code validation failed: ${validation.errors.join('; ')}`);
+    }
+    code = validation.cleanedCode;
+
     // Create directory if it doesn't exist
     const dir = path.dirname(outputPath);
     try {
@@ -97,8 +112,25 @@ export class Exporter {
     }
 
     // Write JavaScript file
+    // If code is HTML-wrapped (e.g., Three.js), extract script content for .js file
+    let jsContent = code;
+    if (code.trim().startsWith('<!DOCTYPE') || code.trim().startsWith('<html')) {
+      // Extract content between <script> tags, excluding importmap and application/json
+      const scriptMatch = code.match(/<script[^>]*>([\s\S]*?)<\/script>/g);
+      if (scriptMatch) {
+        const scripts = scriptMatch
+          .filter(s => !/<script[^>]*type\s*=\s*["']importmap["']/.test(s.split('>')[0]))
+          .filter(s => !/<script[^>]*type\s*=\s*["']application\/json["']/.test(s.split('>')[0]))
+          .map(s => s.replace(/<script[^>]*>/, '').replace(/<\/script>/, ''))
+          .filter(s => s.trim().length > 0);
+        if (scripts.length > 0) {
+          jsContent = scripts.join('\n\n');
+        }
+      }
+    }
+
     try {
-      await fs.writeFile(outputPath, code, 'utf-8');
+      await fs.writeFile(outputPath, jsContent, 'utf-8');
     } catch (error) {
       throw new Error(`Failed to export JS: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }

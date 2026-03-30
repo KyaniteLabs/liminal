@@ -50,6 +50,51 @@ The loop is a sandbox for self-improving, recursive behavior: the same prompt ov
 
 Liminal supports both cloud and local LLM backends. Users can use a hosted API (e.g. Inception) for speed and quality or run fully local (e.g. Ollama) for privacy and offline use; the loop and substrate are backend-agnostic.
 
+## Voice and audio pipeline (added 2026-03-29)
+
+The audio pipeline transforms voice and audio signals into visual parameters that guide generation. The design philosophy is *perceptual mapping*: audio features that humans perceive (pitch height, loudness, brightness, rhythm) are mapped to visual parameters humans perceive (color hue, size, complexity, tempo).
+
+Key design decisions:
+- **Pitch-class color mapping** uses a chromatic circle (12 pitch classes → 30° steps) rather than linear frequency mapping, because human pitch perception is logarithmic and categorical.
+- **Formant-to-shape mapping** estimates F1/F2 from MFCCs rather than requiring phoneme labeling, keeping the pipeline language-agnostic.
+- **Cold fallback**: every audio module degrades gracefully — missing audio simply produces default visual parameters, never errors.
+
+## Music theory engine (added 2026-03-29)
+
+The music theory engine treats algorithmic composition as a constraint satisfaction problem: given a scale, rhythm, and structure template, generate melodies and progressions that are musically coherent. The design favors *generative* approaches (Euclidean rhythms, Markov chains) over *transformative* ones (variation, development) because generative methods produce novel output from minimal seeds.
+
+Key design decisions:
+- **Euclidean rhythms** distribute pulses as evenly as possible, producing maximally regular polyrhythms from just two integers (steps, pulses).
+- **Markov chain order** defaults to 2 (trigrams) — low enough to generalize from short seed melodies, high enough to capture musical phrases rather than random walks.
+- **Krumhansl-Schmuckler key detection** uses Pearson correlation against key profiles — a well-studied cognitive model that matches how humans perceive tonal centers.
+
+## Multi-agent creative critique (added 2026-03-29)
+
+The CreativeBoard embodies the architectural principle that *creative quality is inherently multi-perspectival*. No single metric captures whether a piece of generative art is good. Instead, three agents with opposing philosophies (simplicity, expressiveness, correctness) deliberate and their disagreements surface as tensions and consensus.
+
+Key design decisions:
+- **Heuristic-only (no LLM)**: Board deliberation runs synchronously in hot paths without API calls. Each agent's analysis is a set of regex-based heuristics that approximate their philosophical stance.
+- **60/40 blending**: Baseline heuristic evaluation carries 60% weight, board aggregate 40%. This prevents a stylistically enthusiastic board from overriding genuine technical problems.
+- **Unanimous-against veto**: Even if the aggregate score is above threshold, unanimous rejection overrides — a safety valve for critically broken code.
+
+## Creative intelligence (added 2026-03-29)
+
+Creative intelligence modules operate on *prompts and conversations* rather than generated code. Their role is to understand user intent before generation begins, improving the first-iteration quality ceiling.
+
+- **AmbiguityDetector** surfaces unclear prompts before generation, reducing wasted iterations on misunderstood intent.
+- **CreativePreferenceExtractor** learns user style preferences from natural language, building a profile that persists across sessions.
+- **CrossDomainCrossover** maps techniques between domains (e.g., "canon" in music → "iteration" in visual → "recursion" in code), enabling cross-pollination of creative ideas.
+- **SymbolicCreativeLanguage** develops an emergent vocabulary of effective creative moves, tracking which discovered techniques lead to high-quality output.
+
+## LIR-aware evaluation (added 2026-03-29)
+
+When LIR is enabled, generated code is parsed into structured tokens *before* evaluation, replacing regex-based extraction with AST-level analysis. This is the architectural bridge between the LIR foundation (Phases 1-3 of the blueprint) and the evaluation pipeline.
+
+Key design decisions:
+- **Cold fallback**: `lirTokens.length === 0` triggers the existing regex path unchanged. No score blending, no partial LIR — either you have structured tokens or you fall back entirely.
+- **Feature flag**: `lirEnabled` defaults to `false` everywhere. LIR is opt-in because generated code (especially p5.js global mode) may not parse cleanly.
+- **GeneratedCodeParser** is ephemeral — no caching, no persistence. It parses, returns tokens, and the tokens flow through evaluation. Parse errors produce empty arrays, triggering fallback.
+
 ## Path safety and sandbox
 
 Output, project name, gallery paths, and seed identifiers are validated so paths cannot escape the intended base directory (`normalizePath`, `assertSafeSegment`). User-controlled paths (e.g. `--output`, project name, export path) are resolved against the current working directory or gallery base and rejected if they would escape. Sandbox execution (Puppeteer) runs generated code with timeout and network restrictions; self-improvement has depth and rate limits.

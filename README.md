@@ -537,13 +537,218 @@ const result = await run(enhanced.prompt, {
 - **Lazy Loading**: Knowledge base loaded on first use
 - **Batch Processing**: Efficient handling of multiple generations
 
+## Voice & Audio Pipeline
+
+Voice and audio input drives visual parameter generation through signal processing:
+
+```
+Audio Input → AudioAnalyzer → Features (RMS, spectral, MFCC)
+                ↓
+         PitchDetector → F0 with autocorrelation + Hann window
+         TimbreExtractor → Spectral centroid, flatness, rolloff
+                ↓
+         AudioToVisualMapper → VisualMappingParams
+              ├── PitchColorMapper → 12 pitch classes → chromatic-circle hues
+              ├── FormantAnalyzer → MFCC F1/F2 → shape complexity
+              ├── BPMKeyDetector → tempo + musical key detection
+              └── VoiceToShapeMapper → energy→radius, pitch→height, onset→bump
+```
+
+**CLI flags**: `--voice` (microphone), `--voice-file <path>` (WAV/MP3), `--aesthetic <preset>`, `--aesthetic-config <path>`
+
+### Aesthetic Guardrails
+
+4 static critics evaluate generated code before it passes the quality gate:
+
+| Critic | What it checks |
+|--------|----------------|
+| **ColorHarmonyCritic** | Hex/RGB/HSL color extraction, palette harmony analysis |
+| **LayoutCritic** | Canvas dimensions, position validation, centering detection |
+| **TypographyCritic** | Font size bounds, unloaded font detection |
+| **SoundHarmonyCritic** | Frequency extraction, interval consonance, gain warnings |
+
+5 presets: `minimalist`, `vibrant`, `cinematic`, `playful`, `free`
+
+## Music Theory Engine
+
+Full music theory system for algorithmic composition:
+
+| Module | Purpose |
+|--------|---------|
+| **TheoryEngine** | 14 scales, 7 chord types, MIDI conversion, quantization |
+| **EuclideanRhythm** | Bjorklund's algorithm for polyrhythmic patterns |
+| **MarkovChain** | Order 1-4 transition matrix melody generation |
+| **Arpeggiator** | 5 modes (up/down/upDown/downUp/random) |
+| **RhymeEngine** | Vowel-group-based rhyme classification |
+| **SyllableCounter** | Syllable constraint validation for lyrics |
+| **StructureTemplates** | 5 song structures (pop/rap/ballad/punk/singer-songwriter) |
+
+```javascript
+import { MusicTheory } from './dist/music/generateMusic.js';
+
+// Generate a Euclidean rhythm pattern
+const pattern = MusicTheory.generateEuclideanPattern(8, 5); // [1,0,1,0,1,0,1,1]
+
+// Build a Markov chain from a seed melody and generate new melodies
+const chain = MusicTheory.buildTransitionMatrix([60, 64, 67, 72, 67, 64], 2);
+const melody = MusicTheory.generateMarkovMelody(chain, 16, 60);
+
+// Get scale notes and generate a chord progression
+const notes = MusicTheory.getScaleNotes('C', 'major');
+const progression = MusicTheory.generateProgression('C', 'major', 4);
+```
+
+## Creative Intelligence
+
+### Ambiguity Detection
+
+Before generation begins, prompts are analyzed for ambiguity:
+
+```javascript
+import { AmbiguityDetector } from './dist/core/AmbiguityDetector.js';
+
+const detector = new AmbiguityDetector();
+const issues = detector.detect("make something cool with particles");
+// → [{ type: 'vague_terms', severity: 'high', description: '..."cool" is vague' },
+//    { type: 'missing_context', severity: 'medium', description: 'No domain specified' }]
+```
+
+4 detection strategies: vague terms, missing context, contradictions, multiple approaches.
+
+### Creative Preference Extraction
+
+Automatically discovers user style preferences from prompts and conversations:
+
+```javascript
+import { CreativePreferenceExtractor } from './dist/brain/CreativePreferenceExtractor.js';
+
+const extractor = new CreativePreferenceExtractor();
+const profile = extractor.extractFromPrompt(
+  "I love dark moody glitch art with neon accents and organic flow"
+);
+// → { styles: ['glitch', 'dark', 'moody'], colors: ['neon'], confidence: 0.8 }
+```
+
+### Cross-Domain Crossover
+
+Bidirectional technique transfer between creative domains:
+
+```javascript
+import { CrossDomainCrossover } from './dist/evolution/CrossDomainCrossover.js';
+
+const crossover = new CrossDomainCrossover();
+const adapted = crossover.crossoverReasoning('visual', 'music', 'particle system');
+// → Maps visual particle concepts to musical grain-cloud techniques
+```
+
+### Symbolic Creative Language
+
+Emergent vocabulary that evolves based on creative effectiveness:
+
+```javascript
+import { SymbolicCreativeLanguage } from './dist/brain/SymbolicCreativeLanguage.js';
+
+const lang = new SymbolicCreativeLanguage();
+lang.discoverSymbols("Flowing particles with organic noise patterns");
+const composition = lang.composeFromSymbols(lang.getActiveSymbols());
+```
+
+## Multi-Agent Creative Critique
+
+The CreativeBoard runs 3 heuristic critics in deliberation:
+
+| Agent | Philosophy | Temperature |
+|-------|-----------|-------------|
+| **The Minimalist** | Simplicity, restraint, negative space | 0.3 |
+| **The Expressionist** | Surprise, bold choices, variety | 0.8 |
+| **The Technician** | Correctness, performance, standards | 0.2 |
+
+Each agent produces a stance (for/against/neutral), then the board synthesizes tensions, consensus, risks, and recommendations into a weighted aggregate score.
+
+```javascript
+import { CreativeBoard } from './dist/collab/CreativeBoard.js';
+
+const board = new CreativeBoard();
+const result = board.deliberate(code, 'p5', { technical: 0.8, creative: 0.7 });
+// → { stances, tensions, consensusPoints, risks, recommendedActions,
+//     overallVerdict: 'approve'|'revise'|'reject', aggregateScore: 0.0-1.0 }
+```
+
+Blended with baseline evaluation: `finalScore = baseline * 0.6 + boardScore * 0.4`
+
+## Smart Routing & Circuit Breaker
+
+### QualityPredictor
+
+Routes prompts to optimal models based on complexity and history:
+
+```javascript
+import { QualityPredictor } from './dist/routing/QualityPredictor.js';
+
+const predictor = new QualityPredictor();
+const recommendation = predictor.recommend('glsl', 'complex', { fast: true });
+// → { provider: 'local', confidence: 0.85, reasoning: '...' }
+```
+
+### CircuitBreaker
+
+Provider failover with state machine (closed → open → half-open):
+
+```javascript
+import { CircuitBreaker } from './dist/llm/CircuitBreaker.js';
+
+const breaker = new CircuitBreaker({ failureThreshold: 3, resetTimeoutMs: 30000 });
+if (breaker.canExecute()) {
+  try { await callLLM(); breaker.recordSuccess(); }
+  catch { breaker.recordFailure(); }
+}
+```
+
+## Color Theory & Design
+
+### ColorTheoryEngine
+
+7 harmony rules with hue offset generation:
+
+```javascript
+import { ColorTheoryEngine } from './dist/aesthetic/ColorTheoryEngine.js';
+
+const engine = new ColorTheoryEngine();
+const palette = engine.generateHarmony(0.6, 'triadic');
+// → { base: 0.6, hues: [0.6, 0.933, 0.267], rule: 'triadic' }
+```
+
+Supports: monochromatic, analogous, complementary, split-complementary, triadic, tetradic, square.
+
+### Progressive Design Tiers
+
+5-tier quality progression for iterative refinement:
+
+| Tier | Score Threshold | Description |
+|------|----------------|-------------|
+| Glitch | 0.0 | Raw output, may be broken |
+| Basic | 0.3 | Minimal viable visual |
+| Functional | 0.5 | Complete and interactive |
+| Refined | 0.7 | Polished with good aesthetics |
+| Perfect | 0.9 | Gallery-quality output |
+
+### Glitch Effects
+
+Code generation for p5.js glitch aesthetics:
+
+```javascript
+import { GlitchEffects } from './dist/generators/effects/GlitchEffects.js';
+
+const code = GlitchEffects.generate({ scanlines: true, chromaticAberration: true, distortion: 0.5 });
+```
+
 ## Testing
 
-- **2220 tests passing** (Vitest) — Full coverage across all systems
-- **Test coverage**: Core systems, brain modules, chat system, compost pipeline, LIR system
+- **2365 tests passing** (Vitest) — Full coverage across all systems
+- **Test coverage**: Core systems, brain modules, chat system, compost pipeline, LIR system, audio pipeline, music theory, aesthetic critics, multi-agent critique
 - **Integration tests**: End-to-end flows verified
 - **Unit tests**: Individual component testing with mocks
-- **Test suites**: 168 test files covering every subsystem
+- **Test suites**: 170+ test files covering every subsystem
 
 ## What Liminal Can Do
 
@@ -624,7 +829,7 @@ Most AI art tools generate once. Liminal generates, evaluates, critiques, learns
 
 ## Development Status
 
-### ✅ Implemented (Phases 1-4)
+### Implemented
 
 **Phase 1: Core Loop** — Ralph-Wiggum iteration engine
 - Generate → Evaluate → Accumulate → Enhance → Check
@@ -652,20 +857,48 @@ Most AI art tools generate once. Liminal generates, evaluates, critiques, learns
 - Intent-based technique suggestions
 - Artist reference recommendations
 
-### 🚧 In Progress
+**Phase 5: Voice & Audio Pipeline** — Signal processing to visual parameter mapping
+- AudioAnalyzer with Meyda + pitchfinder integration
+- Pitch-to-color mapping via chromatic circle (12 pitch classes)
+- Formant analysis for phoneme-to-geometry mapping
+- BPM and key detection for composition guidance
+- Voice-to-shape mapping (energy, pitch, onset)
+- Aesthetic guardrails with 4 static critics + 5 presets
 
-**Phase 5**: Advanced features and integrations
-- Expanded interview questions (7 → 11)
-- Enhanced persistent memory across sessions
-- GUI improvements and additional features
+**Phase 6: Music Theory Engine** — Algorithmic composition toolkit
+- 14 scales, 7 chord types, diatonic progressions
+- Euclidean rhythm generation (Bjorklund's algorithm)
+- Markov chain melody generation (order 1-4)
+- Arpeggiator with 5 modes
+- Rhyme classification and syllable counting
+- Song structure templates (5 genres)
 
-### 📋 Planned
+**Phase 7: Creative Intelligence** — Prompt analysis and preference learning
+- Ambiguity detection (4 strategies)
+- Creative preference extraction from prompts
+- Cross-domain technique crossover
+- Symbolic creative language with effectiveness tracking
+- Specialized prompt templates (evaluation, chat, design)
 
-- Web-based GUI with real-time visualization
-- Additional creative domains (TouchDesigner, Max/MSP, SuperCollider)
-- Collaborative sessions (multi-user)
-- Gallery and portfolio management
-- Plugin system for custom techniques and styles
+**Phase 8: Multi-Agent Critique** — Deliberative creative evaluation
+- 3-agent CreativeBoard (Minimalist/Expressionist/Technician)
+- Heuristic stance analysis with tension/consensus extraction
+- Evaluation memos with builder pattern
+- Board-blended scoring (60% baseline + 40% board)
+
+**Phase 9: Smart Infrastructure** — Routing, resilience, and creative tools
+- CircuitBreaker for provider failover
+- QualityPredictor for model routing
+- BatchProcessor for concurrent operations
+- ColorTheoryEngine with 7 harmony rules
+- GlitchEffects, ProgressiveDesignTiers, StyleBlender
+- CreativeConstraints and CreativeWorkflow
+
+**Phase 10: LIR Integration** — Structured code analysis in evaluation
+- GeneratedCodeParser for ephemeral LIR token extraction
+- Dual-path critics (LIR-aware when tokens available, regex fallback)
+- CreativeEvaluator.assessWithLIR() with metric overlay
+- Feature-flagged (lirEnabled) with cold fallback
 
 ## Contributing
 

@@ -198,7 +198,7 @@ Liminal uses a sophisticated multi-layered architecture:
 | Mode | Flag | Description |
 |------|------|-------------|
 | **Single LLM** | default | One model generates, evaluates, iterates |
-| **Swarm** | `--use-swarm` | 7 Ollama personas generate in parallel, vote on best |
+| **Swarm** | `--use-swarm` | 5 Ollama personas generate in parallel, vote on best |
 | **Deep Collab** | `useDeepCollab` option | 3-phase: Diverge → Analyze → Synthesize |
 | **Collab Engine** | `collabMode` option | Unified: swarm / phases / simple strategies |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code, write to disk |
@@ -206,7 +206,7 @@ Liminal uses a sophisticated multi-layered architecture:
 
 ## Swarm Generation
 
-7 creative personas run via Ollama in parallel, each with a distinct voice:
+5 creative personas run via Ollama in parallel, each with a distinct voice:
 
 | Persona | Role | Model | Family |
 |---------|------|-------|--------|
@@ -765,7 +765,7 @@ const code = GlitchEffects.generate({ scanlines: true, chromaticAberration: true
 
 ## Testing
 
-- **2365 tests passing** (Vitest) — Full coverage across all systems
+- **2500+ tests passing** (Vitest) — Full coverage across all systems
 - **Test coverage**: Core systems, brain modules, chat system, compost pipeline, LIR system, audio pipeline, music theory, aesthetic critics, multi-agent critique
 - **Integration tests**: End-to-end flows verified
 - **Unit tests**: Individual component testing with mocks

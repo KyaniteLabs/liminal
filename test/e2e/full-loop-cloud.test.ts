@@ -8,6 +8,16 @@ import { describe, it, expect, beforeEach, afterEach, test } from 'vitest';
 import fs from 'fs';
 import path from 'path';
 
+// Check if LM Studio is available (skips LLM-dependent tests if not)
+async function isLLMAvailable() {
+  try {
+    const res = await fetch('http://localhost:1234/v1/models', { signal: AbortSignal.timeout(1000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 const E2E_TIMEOUT_MS = 120000; // 2 iterations + LLM calls over network
 
 function restoreEnv(backup: Record<string, string | undefined>) {
@@ -51,6 +61,11 @@ describe('E2E full loop (cloud LLM)', () => {
     const distPath = path.join(process.cwd(), 'dist', 'index.js');
     if (!fs.existsSync(distPath)) {
       console.warn('Skipping E2E cloud test: dist/index.js not found (run npm run build first).');
+      return;
+    }
+
+    if (!await isLLMAvailable()) {
+      console.warn('Skipping E2E cloud test: No LLM available at localhost:1234');
       return;
     }
 

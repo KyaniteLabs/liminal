@@ -77,7 +77,7 @@ export interface Suggestion {
     action?: () => Promise<unknown>;
     priority: 'low' | 'medium' | 'high';
 }
-export type Domain = 'p5' | 'shader' | 'three' | 'music' | 'hydra' | 'strudel';
+export type Domain = 'p5' | 'shader' | 'three' | 'music' | 'hydra' | 'strudel' | 'remotion';
 export interface Technique {
     name: string;
     domain: Domain;

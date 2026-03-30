@@ -204,6 +204,10 @@ ${safeCode}
         const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
         const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
+        if (!vertexShader || !fragmentShader) {
+            console.error('Shader compilation failed — check fragment shader syntax');
+            document.body.innerHTML = '<div style="color:#f66;padding:2rem;font-family:monospace;">Shader compile error — see console for details</div>';
+        } else {
         const shaderProgram = gl.createProgram();
         gl.attachShader(shaderProgram, vertexShader);
         gl.attachShader(shaderProgram, fragmentShader);
@@ -211,8 +215,7 @@ ${safeCode}
 
         if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
             console.error('Program link error:', gl.getProgramInfoLog(shaderProgram));
-            return;
-        }
+        } else {
 
         const positions = new Float32Array([-1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0]);
         const positionBuffer = gl.createBuffer();
@@ -244,6 +247,8 @@ ${safeCode}
             requestAnimationFrame(render);
         }
         render();
+        } // linkProgram else
+        } // shader null check else
     </script>
 </body>
 </html>`;

@@ -1,0 +1,281 @@
+html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Rotating Geometric Shapes</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            overflow: hidden;
+            background: #0a0a0f;
+        }
+        canvas {
+            display: block;
+        }
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: rgba(255, 255, 255, 0.6);
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 14px;
+            text-align: center;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="info">Drag to orbit • Scroll to zoom</div>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+        import * as THREE from 'three';
+        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+
+        let scene, camera, renderer, controls, composer;
+        let shapes = [];
+        let time = 0;
+
+        function init() {
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x0a0a0f);
+            scene.fog = new THREE.FogExp2(0x0a0a0f, 0.02);
+
+            camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.set(0, 5, 15);
+
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.toneMapping = THREE.ACESFilmicToneMapping;
+            renderer.toneMappingExposure = 1.2;
+            document.body.appendChild(renderer.domElement);
+
+            controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxDistance = 50;
+            controls.minDistance = 5;
+
+            setupLighting();
+            createShapes();
+            setupPostProcessing();
+
+            window.addEventListener('resize', onWindowResize);
+            animate();
+        }
+
+        function setupLighting() {
+            const ambientLight = new THREE.AmbientLight(0x404060, 0.5);
+            scene.add(ambientLight);
+
+            const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+            mainLight.position.set(10, 20, 10);
+            mainLight.castShadow = true;
+            scene.add(mainLight);
+
+            const pointLight1 = new THREE.PointLight(0xff6b6b, 2, 30);
+            pointLight1.position.set(-8, 5, 5);
+            scene.add(pointLight1);
+
+            const pointLight2 = new THREE.PointLight(0x4ecdc4, 2, 30);
+            pointLight2.position.set(8, 5, -5);
+            scene.add(pointLight2);
+
+            const pointLight3 = new THREE.PointLight(0xf7d794, 2, 30);
+            pointLight3.position.set(0, 10, 8);
+            scene.add(pointLight3);
+        }
+
+        function createShapes() {
+            const materials = [
+                new THREE.MeshStandardMaterial({ 
+                    color: 0xff6b6b, 
+                    metalness: 0.7, 
+                    roughness: 0.2,
+                    emissive: 0xff6b6b,
+                    emissiveIntensity: 0.1
+                }),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0x4ecdc4, 
+                    metalness: 0.8, 
+                    roughness: 0.1,
+                    emissive: 0x4ecdc4,
+                    emissiveIntensity: 0.1
+                }),
+                new THREE.MeshStandardMaterial({ 
+                    color: 0xf7d794, 
+                    metalness: 0.6, 
+                    roughness: 0.3,
+                    emissive: 0xf7d794,
+                    emissiveIntensity: 0.1
+                }),
+                new THREE.MeshPhysicalMaterial({ 
+                    color: 0xa29bfe, 
+                    metalness: 0.9, 
+                    roughness: 0.1,
+                    transmission: 0.3,
+                    thickness: 0.5,
+                    emissive: 0xa29bfe,
+                    emissiveIntensity: 0.1
+                }),
+                new THREE.MeshPhysicalMaterial({ 
+                    color: 0xfd79a8, 
+                    metalness: 0.5, 
+                    roughness: 0.2,
+                    clearcoat: 1.0,
+                    clearcoatRoughness: 0.1,
+                    emissive: 0xfd79a8,
+                    emissiveIntensity: 0.1
+                })
+            ];
+
+            const torusGeometry = new THREE.TorusGeometry(2, 0.6, 32, 64);
+            const torus = new THREE.Mesh(torusGeometry, materials[0]);
+            torus.position.set(0, 0, 0);
+            torus.userData = { 
+                rotationSpeed: { x: 0.005, y: 0.01, z: 0.003 },
+                floatSpeed: 0.8,
+                floatAmount: 0.5
+            };
+            scene.add(torus);
+            shapes.push(torus);
+
+            const octahedronGeometry = new THREE.OctahedronGeometry(1.8, 0);
+            const octahedron = new THREE.Mesh(octahedronGeometry, materials[1]);
+            octahedron.position.set(-6, 2, -3);
+            octahedron.userData = { 
+                rotationSpeed: { x: 0.008, y: 0.012, z: 0.004 },
+                floatSpeed: 1.2,
+                floatAmount: 0.7
+            };
+            scene.add(octahedron);
+            shapes.push(octahedron);
+
+            const icosahedronGeometry = new THREE.IcosahedronGeometry(2, 0);
+            const icosahedron = new THREE.Mesh(icosahedronGeometry, materials[2]);
+            icosahedron.position.set(6, -1, -2);
+            icosahedron.userData = { 
+                rotationSpeed: { x: 0.006, y: 0.008, z: 0.01 },
+                floatSpeed: 0.6,
+                floatAmount: 0.6
+            };
+            scene.add(icosahedron);
+            shapes.push(icosahedron);
+
+            const dodecahedronGeometry = new THREE.DodecahedronGeometry(1.5, 0);
+            const dodecahedron = new THREE.Mesh(dodecahedronGeometry, materials[3]);
+            dodecahedron.position.set(-4, -2, 4);
+            dodecahedron.userData = { 
+                rotationSpeed: { x: 0.01, y: 0.006, z: 0.008 },
+                floatSpeed: 1.0,
+                floatAmount: 0.4
+            };
+            scene.add(dodecahedron);
+            shapes.push(dodecahedron);
+
+            const tetrahedronGeometry = new THREE.TetrahedronGeometry(2, 0);
+            const tetrahedron = new THREE.Mesh(tetrahedronGeometry, materials[4]);
+            tetrahedron.position.set(5, 3, 4);
+            tetrahedron.userData = { 
+                rotationSpeed: { x: 0.007, y: 0.009, z: 0.005 },
+                floatSpeed: 0.9,
+                floatAmount: 0.8
+            };
+            scene.add(tetrahedron);
+            shapes.push(tetrahedron);
+
+            const torusKnotGeometry = new THREE.TorusKnotGeometry(1.2, 0.4, 100, 16);
+            const torusKnot = new THREE.Mesh(torusKnotGeometry, materials[1]);
+            torusKnot.position.set(-7, 0, 2);
+            torusKnot.userData = { 
+                rotationSpeed: { x: 0.004, y: 0.007, z: 0.006 },
+                floatSpeed: 0.7,
+                floatAmount: 0.5
+            };
+            scene.add(torusKnot);
+            shapes.push(torusKnot);
+
+            const coneGeometry = new THREE.ConeGeometry(1.5, 3, 6);
+            const cone = new THREE.Mesh(coneGeometry, materials[0]);
+            cone.position.set(3, -3, -5);
+            cone.userData = { 
+                rotationSpeed: { x: 0.009, y: 0.005, z: 0.007 },
+                floatSpeed: 1.1,
+                floatAmount: 0.6
+            };
+            scene.add(cone);
+            shapes.push(cone);
+
+            const cylinderGeometry = new THREE.CylinderGeometry(1, 1, 3, 32);
+            const cylinder = new THREE.Mesh(cylinderGeometry, materials[2]);
+            cylinder.position.set(-3, 3, -6);
+            cylinder.userData = { 
+                rotationSpeed: { x: 0.003, y: 0.008, z: 0.004 },
+                floatSpeed: 0.5,
+                floatAmount: 0.4
+            };
+            scene.add(cylinder);
+            shapes.push(cylinder);
+        }
+
+        function setupPostProcessing() {
+            composer = new EffectComposer(renderer);
+            
+            const renderPass = new RenderPass(scene, camera);
+            composer.addPass(renderPass);
+
+            const bloomPass = new UnrealBloomPass(
+                new THREE.Vector2(window.innerWidth, window.innerHeight),
+                0.8,
+                0.4,
+                0.85
+            );
+            composer.addPass(bloomPass);
+        }
+
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            composer.setSize(window.innerWidth, window.innerHeight);
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            time += 0.016;
+
+            shapes.forEach((shape, index) => {
+                const speed = shape.userData.rotationSpeed;
+                shape.rotation.x += speed.x;
+                shape.rotation.y += speed.y;
+                shape.rotation.z += speed.z;
+
+                const floatY = Math.sin(time * shape.userData.floatSpeed + index) * shape.userData.floatAmount;
+                shape.position.y += floatY * 0.02;
+            });
+
+            controls.update();
+            composer.render();
+        }
+
+        init();
+    </script>
+</body>
+</html>

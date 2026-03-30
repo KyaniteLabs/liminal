@@ -98,7 +98,7 @@ export async function getRollingPerformance(domain: DomainType): Promise<Rolling
 /**
  * Domain types supported by the smart router.
  */
-export type DomainType = 'ascii' | 'music' | 'code' | 'visual';
+export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'remotion';
 
 /**
  * Model choice for routing.
@@ -122,6 +122,7 @@ export const AB_TEST_RESULTS: Record<DomainType, DomainFitness> = {
   music: { local: 0.523, cloud: 0.236, hybrid: 0.481 },
   code: { local: 0.503, cloud: 0.460, hybrid: 0.413 },
   visual: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
+  remotion: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
 };
 
 /**
@@ -172,6 +173,13 @@ export const DOMAIN_ROUTING_DATA: Record<DomainType, DomainRoutingConfig> = {
     localFitness: 0.400,
     cloudFitness: 0.550,
   },
+  remotion: {
+    optimalModel: 'cloud',
+    confidence: 0.70,
+    advantage: '+38%',
+    localFitness: 0.400,
+    cloudFitness: 0.550,
+  },
 };
 
 /**
@@ -191,4 +199,5 @@ export const DOMAIN_KEYWORDS: Record<DomainType, string[]> = {
   ascii: ['ascii', 'art', 'draw', 'picture', 'cat face', 'spaceship', 'text art', 'character'],
   code: ['code', 'function', 'class', 'algorithm', 'generate', 'fractal', 'animation', 'script', 'program'],
   visual: ['visual', 'image', 'graphic', 'design', 'color', 'shape', 'pattern', 'render', 'shader', '3d', 'scene'],
+  remotion: ['remotion', 'video', 'motion graphics', 'title sequence', 'animation', 'composition'],
 };

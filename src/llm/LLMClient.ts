@@ -93,7 +93,7 @@ export class LLMClient {
       baseUrl: config?.baseUrl || env('LLM_BASE_URL'),
       model: config?.model || env('LLM_MODEL') || 'qwen2.5-coder-7b-instruct',
       temperature: config?.temperature ?? 0.7,
-      maxTokens: config?.maxTokens ?? 2000,
+      maxTokens: config?.maxTokens ?? 8000,
       useReasoningTransfer: config?.useReasoningTransfer ?? false,
       reasoningBaseUrl: config?.reasoningBaseUrl || env('REASONING_URL') || SERVICE_DEFAULTS.REASONING_URL,
     };
@@ -239,8 +239,14 @@ export class LLMClient {
         // Patterns that indicate reasoning/commentary to skip
         const skipPatterns = [
           /^(\/\/\s*)?(The user wants?|I need to|I'll create|I will create|Let me create|Based on|Here's a|This sketch|Creating a|Generating a|I'm going to|The previous|Looking at|To improve|For this|Key elements|I'll write)/i,
-          /^[\d\.\-\s]+/, // Numbered list items like "1. ", "2. ", "- ", etc.
+          /^[\d.\-\s]+/, // Numbered list items like "1. ", "2. ", "- ", etc.
           /^(Has|Uses|Responds|I'll|I'll create|Maybe|Let me|I should|The code|This will)/i, // Common reasoning phrases
+          /^(Sure!|Here is|Below is|This will|I've created|I have created)/i,
+          /^As an AI/i,
+          /^(Note:|Disclaimer:|Important:)/i,
+          /^(This code|This generates?|This creates?)/i,
+          /^(\*\*|__).*?(\*\*|__)\s*[:-]/, // bold headings like "**Approach:**"
+          /^#{1,3}\s/, // markdown headings
         ];
 
         for (let i = 0; i < lines.length; i++) {
@@ -296,12 +302,46 @@ export class LLMClient {
       ? finalLines.slice(finalCodeStart).join('\n')
       : cleanCode;
 
+    // Validate code completeness
+    if (finalCode && !this.isCodeComplete(finalCode)) {
+      console.warn('[LLMClient] Generated code appears incomplete (cutoff mid-function)');
+    }
+
     return {
       code: finalCode,
       explanation: content,
       reasoning,
       success: true,
     };
+  }
+
+  /**
+   * Validate that code is complete (not cut off mid-function)
+   */
+  private isCodeComplete(code: string): boolean {
+    // Count opening and closing braces
+    const openBraces = (code.match(/\{/g) || []).length;
+    const closeBraces = (code.match(/\}/g) || []).length;
+
+    // Count opening and closing parentheses
+    const openParens = (code.match(/\(/g) || []).length;
+    const closeParens = (code.match(/\)/g) || []).length;
+
+    // Count opening and closing brackets
+    const openBrackets = (code.match(/\[/g) || []).length;
+    const closeBrackets = (code.match(/\]/g) || []).length;
+
+    // Check for common cutoff patterns
+    const hasCutoffPattern = /\n\s{0,4}$/m.test(code.slice(-100)); // Ends with whitespace only
+    const endsMidFunction = /function\s+\w+\s*\([^)]*\)\s*\{[^}]*$/.test(code.slice(-200));
+    const endsMidClass = /class\s+\w+.*\{[^}]*$/.test(code.slice(-200));
+
+    return openBraces === closeBraces &&
+           openParens === closeParens &&
+           openBrackets === closeBrackets &&
+           !hasCutoffPattern &&
+           !endsMidFunction &&
+           !endsMidClass;
   }
 
   private async callProvider(

@@ -16,6 +16,9 @@ import { P5Generator } from '../../src/generators/p5/P5Generator.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Increase timeout for integration tests
 const EVALUATOR_GALLERY_TIMEOUT = 60000; // 60 seconds
@@ -25,7 +28,7 @@ describe('Evaluator-Gallery Integration Tests', () => {
   let gallery;
 
   beforeAll(() => {
-    testGalleryDir = path.join(process.cwd(), 'test-evaluator-gallery');
+    testGalleryDir = path.resolve(__dirname, 'test-evaluator-gallery');
     gallery = new Gallery(testGalleryDir);
   });
 

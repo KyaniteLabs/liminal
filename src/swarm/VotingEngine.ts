@@ -54,7 +54,7 @@ export class VotingEngine {
     personas: SwarmPersona[],
     _roundNum: number,
     _config: SwarmConfig,
-    callOllama?: (model: string, prompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>
+    callOllama?: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>
   ): Promise<VotingResult> {
     // Build candidate map (A, B, C...)
     const candidateMap = new Map<string, string>();
@@ -98,13 +98,17 @@ export class VotingEngine {
           votingBias: voter.votingBias,
           candidates: candidatesStr,
         });
-        const votingPrompt = rendered.system + '\n\n' + rendered.user;
 
         try {
-          const voteText = await callOllama(voter.model, votingPrompt, {
-            temperature: voter.temperature,
-            num_predict: voter.maxTokens,
-          });
+          const voteText = await callOllama(
+            voter.model,
+            rendered.system,
+            rendered.user,
+            {
+              temperature: voter.temperature,
+              num_predict: voter.maxTokens,
+            }
+          );
 
           const parsed = this.parseVote(voteText, candidateMap);
 

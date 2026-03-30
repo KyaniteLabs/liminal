@@ -1,0 +1,232 @@
+<think>
+The user wants a GLSL fragment shader featuring noise patterns. I'll create an artistic shader that showcases different noise techniques including:
+
+1. Value noise
+2. Simplex-style gradient noise
+3. Layered/multi-octave noise (fBm)
+4. Some creative uses like displacement, swirling patterns
+
+I'll include:
+- u_resolution and u_time uniforms
+- u_mouse for interaction
+- Multiple noise functions
+- Smooth animation
+- Color gradients based on noise values
+- Creative visual effects
+
+Let me design something visually impressive with noise patterns.
+</think>
+
+precision highp float;
+
+#define PI 3.14159265359
+#define TAU 6.28318530718
+#define TIME u_time * 0.3
+#define RES u_resolution
+
+uniform vec2 u_mouse;
+
+float hash(vec2 p) {
+    p = fract(p * vec2(234.34, 435.345));
+    p += dot(p, p + 34.23);
+    return fract(p.x * p.y);
+}
+
+float hash1(float n) {
+    return fract(sin(n) * 43758.5453);
+}
+
+vec2 hash2(vec2 p) {
+    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+    return fract(sin(p) * 43758.5453);
+}
+
+float valueNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+float gradientNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    
+    return mix(mix(dot(hash2(i) * 2.0 - 1.0, f),
+                   dot(hash2(i + vec2(1.0, 0.0)) * 2.0 - 1.0, f - vec2(1.0, 0.0)), u.x),
+               mix(dot(hash2(i + vec2(0.0, 1.0)) * 2.0 - 1.0, f - vec2(0.0, 1.0)),
+                   dot(hash2(i + vec2(1.0, 1.0)) * 2.0 - 1.0, f - vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float simplexNoise(vec2 p) {
+    const float K1 = 0.366025404;
+    const float K2 = 0.211324865;
+    
+    vec2 i = floor(p + (p.x + p.y) * K1);
+    vec2 a = p - i + (i.x + i.y) * K2;
+    float m = step(a.y, a.x);
+    vec2 o = vec2(m, 1.0 - m);
+    vec2 b = a - o + K2;
+    vec2 c = a - 1.0 + 2.0 * K2;
+    
+    vec3 h = max(0.5 - vec3(dot(a, a), dot(b, b), dot(c, c)), 0.0);
+    vec3 n = h * h * h * h * vec3(dot(a, hash2(i) * 2.0 - 1.0),
+                                   dot(b, hash2(i + o) * 2.0 - 1.0),
+                                   dot(c, hash2(i + 1.0) * 2.0 - 1.0));
+    
+    return dot(vec3(70.0, 70.0, 70.0), n);
+}
+
+float fbm(vec2 p, int octaves) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    float frequency = 1.0;
+    float lacunarity = 2.0;
+    float persistence = 0.5;
+    
+    for(int i = 0; i < 6; i++) {
+        if(i >= octaves) break;
+        value += amplitude * simplexNoise(p * frequency);
+        frequency *= lacunarity;
+        amplitude *= persistence;
+    }
+    return value;
+}
+
+float turbulence(vec2 p, int octaves) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    float frequency = 1.0;
+    
+    for(int i = 0; i < 6; i++) {
+        if(i >= octaves) break;
+        value += amplitude * abs(gradientNoise(p * frequency));
+        frequency *= 2.0;
+        amplitude *= 0.5;
+    }
+    return value;
+}
+
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
+    return a + b * cos(TAU * (c * t + d));
+}
+
+vec2 rotate(vec2 p, float angle) {
+    float s = sin(angle);
+    float c = cos(angle);
+    return mat2(c, -s, s, c) * p;
+}
+
+float marblePattern(vec2 p) {
+    float n = p.x * 10.0 + fbm(p * 3.0, 4) * 8.0;
+    return sin(n) * 0.5 + 0.5;
+}
+
+float cellularNoise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    
+    float minDist = 1.0;
+    
+    for(int y = -1; y <= 1; y++) {
+        for(int x = -1; x <= 1; x++) {
+            vec2 neighbor = vec2(float(x), float(y));
+            vec2 point = hash2(i + neighbor);
+            vec2 diff = neighbor + point - f;
+            float dist = length(diff);
+            minDist = min(minDist, dist);
+        }
+    }
+    return minDist;
+}
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / RES.xy;
+    vec2 p = (gl_FragCoord.xy - 0.5 * RES.xy) / min(RES.x, RES.y);
+    
+    float mouseInfluence = u_mouse.y;
+    float time = TIME;
+    
+    vec2 distortedP = p;
+    distortedP += vec2(
+        gradientNoise(p * 3.0 + time * 0.5),
+        gradientNoise(p * 3.0 + vec2(100.0) + time * 0.5)
+    ) * 0.3;
+    
+    float n1 = valueNoise(p * 4.0 + time);
+    float n2 = gradientNoise(p * 4.0 + time * 1.5);
+    float n3 = simplexNoise(p * 3.0 + time * 0.8);
+    float n4 = fbm(p * 2.0 + time * 0.3, 5);
+    float n5 = turbulence(p * 2.0 + time * 0.4, 4);
+    float n6 = marblePattern(p + time * 0.2);
+    float n7 = cellularNoise(p * 5.0 + time * 0.6);
+    
+    vec2 swirlP = rotate(p - 0.2, length(p - 0.2) * 3.0 + time);
+    float swirl = simplexNoise(swirlP * 4.0 + time);
+    
+    float combined = n4 * 0.4 + n6 * 0.3 + swirl * 0.3;
+    
+    vec3 col = palette(combined + time * 0.2,
+        vec3(0.5, 0.5, 0.5),
+        vec3(0.5, 0.5, 0.5),
+        vec3(1.0, 1.0, 1.0),
+        vec3(0.0, 0.33, 0.67)
+    );
+    
+    vec3 col2 = palette(n2 * 0.5 + 0.5,
+        vec3(0.8, 0.5, 0.4),
+        vec3(0.2, 0.4, 0.2),
+        vec3(2.0, 1.0, 1.0),
+        vec3(0.0, 0.25, 0.5)
+    );
+    
+    vec3 col3 = palette(n7,
+        vec3(0.3, 0.5, 0.7),
+        vec3(0.6, 0.3, 0.4),
+        vec3(1.0, 0.7, 0.4),
+        vec3(0.5, 0.2, 0.25)
+    );
+    
+    float gridX = mod(gl_FragCoord.x, RES.x / 3.0);
+    float gridY = mod(gl_FragCoord.y, RES.y / 3.0);
+    float region = floor(gl_FragCoord.x / (RES.x / 3.0)) + 
+                   floor(gl_FragCoord.y / (RES.y / 3.0)) * 3.0;
+    
+    vec3 finalCol = vec3(0.0);
+    
+    if(region < 0.5) {
+        finalCol = col2 * n1;
+    } else if(region < 1.5) {
+        finalCol = col3 * n5;
+    } else if(region < 2.5) {
+        finalCol = vec3(n7) * 2.0;
+    } else if(region < 3.5) {
+        finalCol = col * n4;
+    } else if(region < 4.5) {
+        finalCol = col2 * n6;
+    } else if(region < 5.5) {
+        float wave = sin(n3 * TAU * 3.0 + time * 2.0) * 0.5 + 0.5;
+        finalCol = vec3(wave * 0.8, wave * 0.3, wave * 0.6);
+    } else if(region < 6.5) {
+        finalCol = mix(col3, col, swirl * 0.5 + 0.5);
+    } else {
+        float ripple = sin(length(p) * 15.0 - time * 3.0 + n3 * TAU) * 0.5 + 0.5;
+        finalCol = vec3(ripple) * col;
+    }
+    
+    float border = smoothstep(0.0, 0.002, abs(gridX)) * smoothstep(0.0, 0.002, abs(gridY));
+    finalCol *= border * 0.3 + 0.7;
+    
+    float vignette = 1.0 - length(uv - 0.5) * 0.8;
+    finalCol *= vignette;
+    
+    gl_FragColor = vec4(finalCol, 1.0);
+}

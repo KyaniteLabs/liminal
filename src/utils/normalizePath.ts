@@ -25,13 +25,7 @@ export function normalizePath(baseDir: string, subPath: string): string {
     baseReal = baseAbs;
   }
 
-  // If subPath is already absolute, use it directly (user has explicitly specified the path)
-  const subAbs = path.resolve(subPath);
-  if (path.isAbsolute(subPath)) {
-    return subAbs;
-  }
-
-  // Otherwise resolve relative to baseDir
+  // Resolve relative to baseDir
   const full = path.resolve(baseReal, subPath);
   const rel = path.relative(baseReal, full);
   if (rel.startsWith('..') || path.isAbsolute(rel)) {

@@ -14,6 +14,7 @@
 import { SemanticArtMemory } from './SemanticArtMemory.js';
 import type { Domain } from './SemanticArtMemory.js';
 import { ArtKnowledgeGraph } from './ArtKnowledgeGraph.js';
+import { CreativePreferenceExtractor } from './CreativePreferenceExtractor.js';
 
 export interface EnhancementContext {
   domain: Domain;
@@ -130,10 +131,12 @@ const INTENT_TECHNIQUES: Record<string, string[]> = {
 export class PromptEnhancer {
   private artMemory: SemanticArtMemory;
   private knowledgeGraph: ArtKnowledgeGraph;
+  private preferenceExtractor: CreativePreferenceExtractor;
 
   constructor(artMemory?: SemanticArtMemory) {
     this.artMemory = artMemory || new SemanticArtMemory();
     this.knowledgeGraph = this.artMemory.knowledgeGraph;
+    this.preferenceExtractor = new CreativePreferenceExtractor();
   }
 
   /**
@@ -201,14 +204,24 @@ export class PromptEnhancer {
     // Update artists array for return
     artists.push(...relevantArtists);
 
-    // 5. Add design principles based on complexity
+    // 5. Add user preference context from CreativePreferenceExtractor
+    const extractedPrefs = this.preferenceExtractor.extractFromPrompt(basePrompt);
+    if (extractedPrefs.length > 0) {
+      const prefSummary = extractedPrefs
+        .slice(0, 5)
+        .map(p => `${p.category}: ${p.value}`)
+        .join(', ');
+      enhancements.push(`User preferences detected: ${prefSummary}`);
+    }
+
+    // 6. Add design principles based on complexity
     if (context.complexity === 'simple') {
       principles.push('Simplicity', 'Clarity', 'Focus');
     } else if (context.complexity === 'complex') {
       principles.push('Depth', 'Layering', 'Complexity', 'Richness');
     }
 
-    // 6. Build enhanced prompt
+    // 7. Build enhanced prompt
     let enhancedPrompt = basePrompt;
 
     if (enhancements.length > 0 || principles.length > 0 || techniques.length > 0) {

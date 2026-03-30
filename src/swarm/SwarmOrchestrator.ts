@@ -12,7 +12,7 @@ import path from 'path';
 import { Logger } from '../utils/Logger.js';
 
 export interface SwarmOrchestratorOptions {
-  callOllama?: (model: string, prompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
+  callOllama?: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
   onProgress?: (data: { round: number; totalRounds: number; winnerId: string | null; converged: boolean }) => void;
   onFragmentsMined?: (fragments: MinedFragment[]) => void;
 }
@@ -29,7 +29,7 @@ export interface SwarmOrchestratorOptions {
 export class SwarmOrchestrator {
   private config: SwarmConfig;
   private personas: SwarmPersona[];
-  private callOllama: (model: string, prompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
+  private callOllama: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
   private dna: ProjectDNA | null = null;
 
   /**
@@ -42,10 +42,10 @@ export class SwarmOrchestrator {
   constructor(config?: Partial<SwarmConfig>, options?: SwarmOrchestratorOptions) {
     this.config = {
       ollamaHost: config?.ollamaHost ?? SERVICE_DEFAULTS.OLLAMA_URL,
-      ollamaTimeout: config?.ollamaTimeout ?? 60,
+      ollamaTimeout: config?.ollamaTimeout ?? 300,
       maxRounds: config?.maxRounds ?? 10,
       convergenceThreshold: config?.convergenceThreshold ?? 3,
-      musicalChairs: config?.musicalChairs ?? true,
+      musicalChairs: config?.musicalChairs ?? false,
       mode: config?.mode ?? 'hybrid' as SwarmMode,
       personas: config?.personas ?? DEFAULT_PERSONAS,
       refinementConstraints: config?.refinementConstraints ?? DEFAULT_REFINEMENT_CONSTRAINTS,
@@ -98,7 +98,7 @@ export class SwarmOrchestrator {
         // Patterns that indicate reasoning/commentary to skip
         const skipPatterns = [
           /^(\/\/\s*)?(The user wants?|I need to|I'll create|I will create|Let me create|Based on|Here's a|This sketch|Creating a|Generating a|I'm going to|The previous|Looking at|To improve|For this|Key elements|I'll write)/i,
-          /^[\d\.\-\s]+/, // Numbered list items like "1. ", "2. ", "- ", etc.
+          /^[\d.\-\s]+/, // Numbered list items like "1. ", "2. ", "- ", etc.
           /^(Has|Uses|Responds|I'll|I'll create|Maybe|Let me|I should|The code|This will)/i, // Common reasoning phrases
         ];
 
@@ -160,16 +160,20 @@ export class SwarmOrchestrator {
 
   private async defaultOllamaCaller(
     model: string,
-    prompt: string,
+    systemPrompt: string,
+    userPrompt: string,
     options?: { temperature?: number; num_predict?: number }
   ): Promise<string> {
-    const url = `${this.config.ollamaHost}/api/generate`;
+    const url = `${this.config.ollamaHost}/api/chat`;
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model,
-        prompt,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt }
+        ],
         stream: false,
         options: {
           temperature: options?.temperature ?? 0.7,
@@ -183,10 +187,10 @@ export class SwarmOrchestrator {
       throw new Error(`Ollama API error: ${response.status} ${response.statusText}`);
     }
 
-    const data = await response.json() as { response?: string };
-    const rawResponse = data.response ?? '';
+    const data = await response.json() as { message?: { content?: string } };
+    const rawResponse = data.message?.content ?? '';
 
-    // Extract clean code from Ollama's verbose response format
+    // Chat API returns cleaner output, but still extract code if present
     return this.extractCodeFromResponse(rawResponse);
   }
 
@@ -354,12 +358,17 @@ export class SwarmOrchestrator {
     const promises = this.personas.map(async (persona) => {
       const startTime = Date.now();
       try {
-        const fullPrompt = `${persona.systemPrompt}\n\nPrompt: ${seed}\n\n${persona.constraints.map(c => `Constraint: ${c}`).join('\n')}`;
+        const userPrompt = `Prompt: ${seed}\n\n${persona.constraints.map(c => `Constraint: ${c}`).join('\n')}`;
 
-        const content = await this.callOllama(persona.model, fullPrompt, {
-          temperature: persona.temperature,
-          num_predict: persona.maxTokens,
-        });
+        const content = await this.callOllama(
+          persona.model,
+          persona.systemPrompt,
+          userPrompt,
+          {
+            temperature: persona.temperature,
+            num_predict: persona.maxTokens,
+          }
+        );
 
         outputs.set(persona.id, {
           personaId: persona.id,
@@ -398,12 +407,17 @@ export class SwarmOrchestrator {
       const startTime = Date.now();
       try {
         const chainContext = currentChain.length > 300 ? currentChain.slice(-300) : currentChain;
-        const fullPrompt = `${persona.systemPrompt}\n\nContext from previous outputs:\n${chainContext}\n\n${persona.constraints.map(c => `Constraint: ${c}`).join('\n')}`;
+        const userPrompt = `Context from previous outputs:\n${chainContext}\n\n${persona.constraints.map(c => `Constraint: ${c}`).join('\n')}`;
 
-        const content = await this.callOllama(persona.model, fullPrompt, {
-          temperature: persona.temperature,
-          num_predict: persona.maxTokens,
-        });
+        const content = await this.callOllama(
+          persona.model,
+          persona.systemPrompt,
+          userPrompt,
+          {
+            temperature: persona.temperature,
+            num_predict: persona.maxTokens,
+          }
+        );
 
         outputs.set(persona.id, {
           personaId: persona.id,

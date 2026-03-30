@@ -173,7 +173,8 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
     setCurrentIterations([]);
     setPlayerPianoIndex(0);
     addLog("info", `Starting: "${prompt.slice(0, 30)}..."`);
-    addLog("llm", "→ LLM Request: lmstudio/local-model");
+    const model = process.env.LLM_MODEL || 'qwen2.5-coder-7b-instruct';
+    addLog("llm", `→ LLM Request: lmstudio/${model}`);
     addLog("llm", `  Prompt: ~${prompt.length + 2000} chars`);
 
     const projectName = `project-${Date.now()}`;

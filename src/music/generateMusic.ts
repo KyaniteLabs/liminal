@@ -1,10 +1,71 @@
 /**
  * generateMusic - Generate code for Strudel (TidalCycles) or p5.js Web Audio from a prompt.
  * LLM-powered when available, with template fallback.
+ *
+ * Integrates music theory engine: scales, chords, euclidean rhythms,
+ * arpeggiators, Markov chains, rhyme scoring, and structure templates.
  */
 
 import { LLMClient } from '../llm/LLMClient.js';
 import { PromptLibrary } from '../prompts/index.js';
+import { generateEuclideanPattern, rotatePattern } from './EuclideanRhythm.js';
+import { generateMarkovMelody } from './MarkovChain.js';
+import {
+  noteToMidi,
+  midiToNote,
+  getScaleNotes,
+  quantizeToScale,
+  generateProgression,
+  SCALE_INTERVALS,
+  NOTES,
+} from './TheoryEngine.js';
+import { generateArpeggio } from './Arpeggiator.js';
+import { classifyRhyme, getRhymeScore } from './RhymeEngine.js';
+import { countSyllables, countLineSyllables } from './SyllableCounter.js';
+import { listTemplates, buildStructureFromTemplate } from './StructureTemplates.js';
+
+/**
+ * MusicTheoryContext — exposes the music theory engine for use by callers.
+ * Consumers can import and use these directly without coupling to generateMusic internals.
+ */
+export const MusicTheory = {
+  generateEuclideanPattern,
+  rotatePattern,
+  generateMarkovMelody,
+  noteToMidi,
+  midiToNote,
+  getScaleNotes,
+  quantizeToScale,
+  generateProgression,
+  SCALE_INTERVALS,
+  NOTES,
+  generateArpeggio,
+  classifyRhyme,
+  getRhymeScore,
+  countSyllables,
+  countLineSyllables,
+  listTemplates,
+  buildStructureFromTemplate,
+} as const;
+
+// Suppress unused-import warnings — these are re-exported via MusicTheory
+void generateEuclideanPattern;
+void rotatePattern;
+void generateMarkovMelody;
+void noteToMidi;
+void midiToNote;
+void getScaleNotes;
+void quantizeToScale;
+void generateProgression;
+void SCALE_INTERVALS;
+void NOTES;
+void generateArpeggio;
+void classifyRhyme;
+void getRhymeScore;
+void countSyllables;
+void countLineSyllables;
+void listTemplates;
+void buildStructureFromTemplate;
 
 export type GenerateMusicPlatform = 'strudel' | 'p5-webaudio';
 

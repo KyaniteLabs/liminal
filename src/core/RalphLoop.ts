@@ -26,6 +26,7 @@ import { PromiseDetector } from './PromiseDetector.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
+import { CodeValidator } from './CodeValidator.js';
 import { CompostMill } from '../compost/CompostMill.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { ArchiveLearning } from '../learning/index.js';
@@ -45,6 +46,8 @@ import {
   type IterationContext,
   type NormalizedLoopOptions,
 } from './LoopConfig.js';
+import { GeneratedCodeParser } from './lir/GeneratedCodeParser.js';
+import type { LIREvaluationContext } from '../aesthetic/types.js';
 import { buildContextForInjection } from './ContextBuilder.js';
 import { enhancePrompt } from './PromptEnhancer.js';
 import { GenerationOrchestrator } from './GenerationOrchestrator.js';
@@ -52,6 +55,7 @@ import { EvolutionIntegration } from './EvolutionIntegration.js';
 import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
 import { runOrganismMode } from './OrganismLoop.js';
+import { AmbiguityDetector } from './AmbiguityDetector.js';
 
 // Helper to access environment variables
 function env(key: string): string | undefined {
@@ -73,6 +77,18 @@ export class RalphLoop {
     const normalizedOptions = normalizeOptions(options);
 
     eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', maxIterations: normalizedOptions.maxIterations });
+
+    // Ambiguity pre-check: warn if prompt has unresolved ambiguities
+    const ambiguityIssues = new AmbiguityDetector().detect(prompt);
+    if (ambiguityIssues.length > 0) {
+      const highPriority = ambiguityIssues.filter(i => i.severity === 'high');
+      if (highPriority.length > 0) {
+        Logger.warn('RalphLoop', `Prompt has ${highPriority.length} high-priority ambiguity issues:`);
+        for (const issue of highPriority) {
+          Logger.warn('RalphLoop', `  [${issue.type}] ${issue.description}`);
+        }
+      }
+    }
 
     // Warn if swarm mode is used with non-Ollama provider
     if (normalizedOptions.useSwarm) {
@@ -175,7 +191,16 @@ export class RalphLoop {
         // Generate code (bypass cache to ensure fresh generation each iteration)
         // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
         const { code } = await generator.generate(usedPrompt, loadedPrompt, true);
-        currentCode = code;
+
+        // Validate generated code before accepting it
+        const validation = CodeValidator.validate(code);
+        if (!validation.valid) {
+          Logger.warn('RalphLoop', `Code validation failed: ${validation.errors.join('; ')}`);
+          // Force score to 0 so quality gate rejects this iteration
+          currentCode = validation.cleanedCode || '// Validation failed — empty code';
+        } else {
+          currentCode = validation.cleanedCode;
+        }
 
         // Diagnostic: Log that we got fresh code (not from cache)
         if (normalizedOptions.chatMode) {
@@ -187,19 +212,80 @@ export class RalphLoop {
           normalizedOptions.onThought?.('Evaluating code quality...');
         }
 
+        // LIR: Parse generated code into structured tokens if enabled
+        let lirContext: LIREvaluationContext | undefined;
+        if (normalizedOptions.lirEnabled) {
+          try {
+            const genParser = new GeneratedCodeParser();
+            const lirTokens = genParser.parse(currentCode);
+            if (lirTokens.length > 0) {
+              lirContext = {
+                lirTokens,
+                visualIntent: normalizedOptions.visualMappingParams as any,
+                lirEnabled: true,
+              };
+            }
+          } catch {
+            // LIR parsing failed — regex fallback will be used
+          }
+        }
+
         const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
         const evaluation = await scoringEngine.score(
-          { output: currentCode, criteria: normalizedOptions.evaluationCriteria },
+          {
+            output: currentCode,
+            criteria: normalizedOptions.evaluationCriteria,
+            lirContext,
+          },
           normalizedOptions.evaluationStrategy ?? 'detailed',
         );
 
-        eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
-          iteration,
-          overallScore: evaluation.score,
-          technicalScore: evaluation.dimensions?.technical ?? 0,
-          aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
-          noveltyScore: evaluation.dimensions?.novelty ?? 0,
-        });
+        // Aesthetic guardrails: run AestheticCritic if enabled
+        if (normalizedOptions.useAestheticGuardrails) {
+          try {
+            const { AestheticCritic } = await import('../aesthetic/index.js');
+            const critic = new AestheticCritic();
+            const aestheticReport = critic.critique(
+              currentCode,
+              normalizedOptions.aestheticConfig as any,
+              lirContext,  // Pass LIR context for structured evaluation
+            );
+
+            // Apply penalty if violations detected
+            if (!aestheticReport.passed) {
+              const penalty = aestheticReport.score;
+              evaluation.score = evaluation.score * penalty;
+
+              // Append violations to issues for next iteration feedback
+              const aestheticIssues = aestheticReport.violations
+                .filter(v => v.severity === 'error' || v.severity === 'warning')
+                .map(v => `[aesthetic] ${v.rule}: ${v.message}`);
+              if (evaluation.issues) {
+                evaluation.issues = [...evaluation.issues, ...aestheticIssues];
+              }
+            }
+
+            // Emit aesthetic score in evaluation event
+            eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
+              iteration,
+              overallScore: evaluation.score,
+              technicalScore: evaluation.dimensions?.technical ?? 0,
+              aestheticScore: aestheticReport.score,
+              noveltyScore: evaluation.dimensions?.novelty ?? 0,
+            });
+          } catch (e) {
+            // Aesthetic analysis failed gracefully — don't block generation
+            normalizedOptions.onThought?.(`Aesthetic analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
+          }
+        } else {
+          eventBus.emit(EventTypes.LOOP_EVALUATION, 'RalphLoop', {
+            iteration,
+            overallScore: evaluation.score,
+            technicalScore: evaluation.dimensions?.technical ?? 0,
+            aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
+            noveltyScore: evaluation.dimensions?.novelty ?? 0,
+          });
+        }
 
         // Quality gate: break if score below minimum threshold (after giving it a chance)
         // Only apply quality gate after at least 2 iterations to allow initial attempts
@@ -210,6 +296,7 @@ export class RalphLoop {
           const promptLower = prompt.toLowerCase();
           if (promptLower.includes('ascii') || promptLower.includes('text art')) domain = 'ascii';
           else if (promptLower.includes('music') || promptLower.includes('strudel') || promptLower.includes('hydra')) domain = 'music';
+          else if (promptLower.includes('remotion') || promptLower.includes('video') || promptLower.includes('motion graphics') || promptLower.includes('title sequence')) domain = 'remotion';
           // Keep 'p5' for visual/shader/three since they're handled by the same generator
         }
         const qualityThreshold = normalizedOptions.domainQualityThresholds?.[domain] ?? normalizedOptions.minQualityScore;
@@ -294,7 +381,7 @@ export class RalphLoop {
 
         // Record routing outcome for dynamic routing
         recordRoutingOutcome({
-          domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual',
+          domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
           model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
           qualityScore: evaluation.score,
           timestamp: new Date().toISOString(),

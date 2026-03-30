@@ -175,7 +175,14 @@ async function migrateLegacyConfig(): Promise<void> {
   const newPath = DEFAULT_CONFIG_PATH;
 
   try {
-    await fs.access(legacyPath);
+    // Check if legacy config exists without throwing
+    try {
+      await fs.access(legacyPath);
+    } catch {
+      // No legacy config exists, skip migration silently
+      return;
+    }
+
     // Legacy config exists — check if new config already exists
     try {
       await fs.access(newPath);
@@ -186,8 +193,8 @@ async function migrateLegacyConfig(): Promise<void> {
       await fs.copyFile(legacyPath, newPath);
     }
   } catch (err) {
-    // No legacy config — nothing to do
-    console.warn('[ConfigLoader] Legacy config migration skipped:', err);
+    // Silently skip any errors during migration
+    // The error is likely ENOENT which is expected if no legacy config exists
   }
 }
 

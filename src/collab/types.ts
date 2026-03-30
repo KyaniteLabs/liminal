@@ -159,4 +159,4 @@ export interface PhaseUpdate {
 /**
  * Domain-specific configuration
  */
-export type DomainType = 'ascii' | 'music' | 'code' | 'p5' | 'glsl' | 'three' | '';
+export type DomainType = 'ascii' | 'music' | 'code' | 'p5' | 'glsl' | 'three' | 'remotion' | '';

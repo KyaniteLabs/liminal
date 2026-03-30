@@ -11,7 +11,10 @@ import fs from 'fs/promises';
 import path from 'path';
 import archiver from 'archiver';
 import { createWriteStream } from 'fs';
-import { P5_CDN, P5_SOUND_CDN } from '../constants.js';
+import { HTMLWrapper } from '../utils/htmlWrapper.js';
+import { CodeValidator } from '../core/CodeValidator.js';
+import { RemotionRenderer } from '../render/RemotionRenderer.js';
+import { CanvasRecorder } from '../render/CanvasRecorder.js';
 
 export interface ProjectIteration {
   version: number;
@@ -22,6 +25,14 @@ export interface ProjectIteration {
 export interface Project {
   name: string;
   iterations: ProjectIteration[];
+}
+
+export interface VideoExportOptions {
+  domain: string;
+  fps?: number;      // default 30
+  duration?: number; // default 10 (seconds)
+  width?: number;    // default 1920
+  height?: number;   // default 1080
 }
 
 export class Exporter {
@@ -41,6 +52,13 @@ export class Exporter {
     if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
       throw new Error('Output path is required and must be a non-empty string');
     }
+
+    // Structural validation before wrapping
+    const validation = CodeValidator.validate(code);
+    if (!validation.valid) {
+      throw new Error(`Code validation failed: ${validation.errors.join('; ')}`);
+    }
+    code = validation.cleanedCode;
 
     // Generate standalone HTML with p5.js CDN and embedded code
     const html = this.generateHTML(code);
@@ -78,6 +96,13 @@ export class Exporter {
       throw new Error('Output path is required and must be a non-empty string');
     }
 
+    // Structural validation before saving
+    const validation = CodeValidator.validate(code);
+    if (!validation.valid) {
+      throw new Error(`Code validation failed: ${validation.errors.join('; ')}`);
+    }
+    code = validation.cleanedCode;
+
     // Create directory if it doesn't exist
     const dir = path.dirname(outputPath);
     try {
@@ -87,8 +112,25 @@ export class Exporter {
     }
 
     // Write JavaScript file
+    // If code is HTML-wrapped (e.g., Three.js), extract script content for .js file
+    let jsContent = code;
+    if (code.trim().startsWith('<!DOCTYPE') || code.trim().startsWith('<html')) {
+      // Extract content between <script> tags, excluding importmap and application/json
+      const scriptMatch = code.match(/<script[^>]*>([\s\S]*?)<\/script>/g);
+      if (scriptMatch) {
+        const scripts = scriptMatch
+          .filter(s => !/<script[^>]*type\s*=\s*["']importmap["']/.test(s.split('>')[0]))
+          .filter(s => !/<script[^>]*type\s*=\s*["']application\/json["']/.test(s.split('>')[0]))
+          .map(s => s.replace(/<script[^>]*>/, '').replace(/<\/script>/, ''))
+          .filter(s => s.trim().length > 0);
+        if (scripts.length > 0) {
+          jsContent = scripts.join('\n\n');
+        }
+      }
+    }
+
     try {
-      await fs.writeFile(outputPath, code, 'utf-8');
+      await fs.writeFile(outputPath, jsContent, 'utf-8');
     } catch (error) {
       throw new Error(`Failed to export JS: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
@@ -183,6 +225,56 @@ export class Exporter {
   }
 
   /**
+   * Export creative code as a video file.
+   * Uses RemotionRenderer for the 'remotion' domain, CanvasRecorder for all others.
+   * @param code - Creative code to render (must be non-empty string)
+   * @param outputPath - Path where video file will be saved
+   * @param options - Video export options including domain, fps, duration, width, height
+   * @throws Error if validation fails or rendering fails
+   */
+  async exportVideo(code: string, outputPath: string, options: VideoExportOptions): Promise<void> {
+    // Validate code
+    if (!code || typeof code !== 'string' || code.trim() === '') {
+      throw new Error('Code is required');
+    }
+
+    // Validate output path
+    if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
+      throw new Error('Output path is required');
+    }
+
+    // Validate domain
+    if (!options?.domain) {
+      throw new Error('VideoExportOptions domain is required');
+    }
+
+    const {
+      domain,
+      fps = 30,
+      duration = 10,
+      width = 1920,
+      height = 1080,
+    } = options;
+
+    // Create output directory if it doesn't exist
+    const dir = path.dirname(outputPath);
+    try {
+      await fs.mkdir(dir, { recursive: true });
+    } catch (error) {
+      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+
+    if (domain === 'remotion') {
+      const renderer = new RemotionRenderer();
+      const projectDir = await renderer.writeEntryPoint(code);
+      await renderer.renderToVideo({ projectDir, outputPath, codec: 'h264' });
+    } else {
+      const recorder = new CanvasRecorder({ fps, duration, width, height });
+      await recorder.record(code, domain as any, outputPath);
+    }
+  }
+
+  /**
    * Generate standalone HTML with p5.js CDN and embedded code
    * When code uses Web Audio (AudioContext, createOscillator) or p5.sound,
    * includes p5.sound script if needed and a comment about user gesture.
@@ -190,56 +282,8 @@ export class Exporter {
    * @returns Complete HTML string
    */
   private generateHTML(code: string): string {
-    const usesSound = this.codeUsesWebAudioOrP5Sound(code);
     const usesP5Sound = /p5\.sound/i.test(code);
-    const p5SoundScript = usesP5Sound
-      ? `\n    <script src="${P5_SOUND_CDN}"></script>`
-      : '';
-    const soundComment = usesSound
-      ? '\n    <!-- Sound may require user click to start (browser policy). -->'
-      : '';
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>p5.js Sketch</title>
-    <script src="${P5_CDN}"></script>${p5SoundScript}
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #f0f0f0;
-        }
-        main {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
-    </style>
-</head>
-<body>${soundComment}
-    <main>
-        <script>
-${code.replace(/<\/script>/gi, '<\\/script>')}
-        </script>
-    </main>
-</body>
-</html>`;
-  }
-
-  /**
-   * Detect if code uses Web Audio API or p5.sound (requires user gesture note / scripts).
-   */
-  private codeUsesWebAudioOrP5Sound(code: string): boolean {
-    return (
-      /AudioContext/i.test(code) ||
-      /createOscillator/i.test(code) ||
-      /p5\.sound/i.test(code)
-    );
+    return HTMLWrapper.wrap(code, { includeP5Sound: usesP5Sound });
   }
 
   /**

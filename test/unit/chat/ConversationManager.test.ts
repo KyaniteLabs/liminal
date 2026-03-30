@@ -189,6 +189,8 @@ describe('ConversationManager', () => {
       manager.interviewAnswers.set('mood', 'test');
       manager.interviewAnswers.set('references', 'test');
       manager.interviewAnswers.set('constraints', 'test');
+      manager.interviewAnswers.set('audioPreference', 'test');
+      manager.interviewAnswers.set('aestheticPreset', 'test');
 
       const response = await manager.processUserMessage('Some answer');
 

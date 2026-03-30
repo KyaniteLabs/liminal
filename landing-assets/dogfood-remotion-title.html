@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>p5.js Sketch</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+    <main>
+        <script>
+import React from 'react';
+import {useCurrentFrame, interpolate, AbsoluteFill, spring, useVideoConfig} from 'remotion';
+
+export const CinematicTitle: React.FC = () => {
+  const frame = useCurrentFrame();
+  const {fps, width, height} = useVideoConfig();
+  
+  // Generate particles
+  const particles = Array.from({length: 100}, (_, i) => {
+    const seed = i * 1234;
+    return {
+      x: ((seed * 7919) % 10000) / 10000,
+      y: ((seed * 104729) % 10000) / 10000,
+      size: 2 + ((seed * 13) % 8),
+      delay: ((seed * 31) % 60),
+      duration: 30 + ((seed * 17) % 40),
+    };
+  });
+  
+  // Lens flare position
+  const flareX = interpolate(frame, [0, 150], [-200, width + 200]);
+  const flareOpacity = interpolate(frame, [0, 30, 120, 150], [0, 1, 1, 0]);
+  
+  // Title opacity
+  const titleOpacity = interpolate(frame, [20, 40], [0, 1], {extrapolateRight: 'clamp'});
+  const titleScale = interpolate(frame, [20, 40], [0.8, 1], {extrapolateRight: 'clamp'});
+  
+  return (
+    <AbsoluteFill style={{backgroundColor: '#0a0a0f', overflow: 'hidden'}}>
+      {/* Background gradient */}
+      <div style={{
+        position: 'absolute',
+        width: '100%',
+        height: '100%',
+        background: 'radial-gradient(ellipse at 30% 50%, #1a1a2e 0%, #0a0a0f 100%)'
+      }} />
+      
+      {/* Particle system */}
+      {particles.map((particle, i) => {
+        const particleFrame = frame - particle.delay;
+        const progress = particleFrame / particle.duration;
+        
+        if (progress < 0 || progress > 1) return null;
+        
+        const opacity = interpolate(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
+        const scale = interpolate(progress, [0, 0.5, 1], [0, 1, 0.5]);
+        
+        return (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: `${particle.x * width}px`,
+              top: `${particle.y * height}px`,
+              width: particle.size * scale,
+              height: particle.size * scale,
+              borderRadius: '50%',
+              backgroundColor: '#fff',
+              opacity,
+              transform: `translate(-50%, -50%)`,
+            }}
+          />
+        );
+      })}
+      
+      {/* Lens flare */}
+      <div style={{
+        position: 'absolute',
+        left: flareX,
+        top: height * 0.4,
+        width: 300,
+        height: 300,
+        background: 'radial-gradient(circle, rgba(255,200,100,0.4) 0%, transparent 70%)',
+        opacity: flareOpacity,
+        transform: 'translate(-50%, -50%)',
+      }} />
+      
+      {/* Lens flare streaks */}
+      <div style={{
+        position: 'absolute',
+        left: flareX,
+        top: height * 0.4,
+        width: 500,
+        height: 4,
+        background: 'linear-gradient(90deg, transparent, rgba(255,220,150,0.6), transparent)',
+        opacity: flareOpacity * 0.5,
+        transform: 'translate(-50%, -50%)',
+      }} />
+      
+      {/* Title */}
+      <div style={{
+        position: 'absolute',
+        top: height * 0.45,
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        color: '#fff',
+        fontSize: 72,
+        fontWeight: 700,
+        fontFamily: 'Arial, sans-serif',
+        opacity: titleOpacity,
+        transform: `scale(${titleScale})`,
+        textShadow: '0 0 40px rgba(255,200,100,0.5)',
+      }}>
+        CINEMATIC
+      </div>
+      
+      <div style={{
+        position: 'absolute',
+        top: height * 0.58,
+        left: 0,
+        right: 0,
+        textAlign: 'center',
+        color: '#888',
+        fontSize: 24,
+        fontFamily: 'Arial, sans-serif',
+        opacity: titleOpacity,
+        transform: `scale(${titleScale})`,
+        letterSpacing: 8,
+      }}>
+        PARTICLE DISSOLVE
+      </div>
+    </AbsoluteFill>
+  );
+};
+        </script>
+    </main>
+</body>
+</html>

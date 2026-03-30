@@ -10,9 +10,10 @@ import { Server } from 'http';
 import { Gallery } from '../gallery/Gallery.js';
 import { Exporter } from '../export/Exporter.js';
 import { normalizePath } from '../utils/normalizePath.js';
-import { SERVICE_DEFAULTS, P5_CDN, P5_SOUND_CDN } from '../constants.js';
+import { SERVICE_DEFAULTS } from '../constants.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { eventBus } from '../core/EventBus.js';
+import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import type { BusEvent } from '../core/EventBus.js';
 
 export interface PreviewServerOptions {
@@ -245,131 +246,7 @@ export class PreviewServer {
   }
 
   private generateHTML(sketchCode: string): string {
-    const code = sketchCode || '';
-
-    // Detect shader code (GLSL fragment shader)
-    if (this.isShaderCode(code)) {
-      return this.generateShaderHTML(code);
-    }
-
-    // Detect Three.js code (full HTML with importmap or three import)
-    if (this.isThreeJSCode(code)) {
-      return code; // Three.js sketches are already full HTML
-    }
-
-    // Escape </script> to prevent breaking out of the script tag
-    // but keep other code intact for execution
-    const safeCode = code.replace(/\u003c\/script\u003e/gi, '<\\/script>');
-    const usesP5Sound = /p5\.sound/i.test(code);
-    const p5SoundScript = usesP5Sound
-      ? `\n  <script src="${P5_SOUND_CDN}"></script>`
-      : '';
-    const usesWebAudio = /AudioContext|createOscillator|p5\.sound/i.test(code);
-    const soundComment = usesWebAudio
-      ? '\n  <!-- Sound may require user click to start (browser policy). -->'
-      : '';
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Liminal Preview</title>
-  <style>
-    body { margin: 0; padding: 0; overflow: hidden; background: #000; }
-    canvas { display: block; }
-  </style>
-</head>
-<body>${soundComment}
-  <script src="${P5_CDN}"></script>${p5SoundScript}
-  <script>
-    ${safeCode}
-  </script>
-</body>
-</html>`;
-  }
-
-  private isShaderCode(code: string): boolean {
-    return /void\s+main\s*\(/.test(code) && /gl_FragColor|out\s+vec4/.test(code);
-  }
-
-  private isThreeJSCode(code: string): boolean {
-    return /<script\s+type="importmap">/.test(code) || /import.*from\s+['"]three['"]/.test(code);
-  }
-
-  private generateShaderHTML(code: string): string {
-    const safeCode = code.replace(/\u003c\/script\u003e/gi, '<\\/script>');
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Liminal Shader Preview</title>
-  <style>
-    body { margin: 0; padding: 0; overflow: hidden; background: #000; }
-    canvas { display: block; width: 100vw; height: 100vh; }
-  </style>
-</head>
-<body>
-  <canvas id="gl"></canvas>
-  <script>
-    const canvas = document.getElementById('gl');
-    const gl = canvas.getContext('webgl2');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    gl.viewport(0, 0, canvas.width, canvas.height);
-
-    const vs = \`#version 300 es
-    in vec2 a_position;
-    void main() { gl_Position = vec4(a_position, 0.0, 1.0); }\`;
-
-    const fs = \`#version 300 es
-    precision highp float;
-    uniform vec2 u_resolution;
-    uniform float u_time;
-    uniform vec2 u_mouse;
-    out vec4 fragColor;
-
-    ${safeCode.replace(/^precision\s+highp\s+float;?\s*$/m, '').replace(/void\s+main\s*\(\s*void\s*\)/, 'void main()').replace(/gl_FragColor/g, 'fragColor')}
-    \`;
-
-    function createShader(type, source) {
-      const s = gl.createShader(type);
-      gl.shaderSource(s, source);
-      gl.compileShader(s);
-      return s;
-    }
-
-    const program = gl.createProgram();
-    gl.attachShader(program, createShader(gl.VERTEX_SHADER, vs));
-    gl.attachShader(program, createShader(gl.FRAGMENT_SHADER, fs));
-    gl.linkProgram(program);
-    gl.useProgram(program);
-
-    const buf = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buf);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, 1,1]), gl.STATIC_DRAW);
-    const pos = gl.getAttribLocation(program, 'a_position');
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
-
-    const uRes = gl.getUniformLocation(program, 'u_resolution');
-    const uTime = gl.getUniformLocation(program, 'u_time');
-    const uMouse = gl.getUniformLocation(program, 'u_mouse');
-    let mouseX = 0, mouseY = 0;
-    document.addEventListener('mousemove', e => { mouseX = e.clientX; mouseY = e.clientY; });
-
-    function frame(t) {
-      gl.uniform2f(uRes, canvas.width, canvas.height);
-      gl.uniform1f(uTime, t * 0.001);
-      gl.uniform2f(uMouse, mouseX, canvas.height - mouseY);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-      requestAnimationFrame(frame);
-    }
-    requestAnimationFrame(frame);
-  </script>
-</body>
-</html>`;
+    return HTMLWrapper.wrap(sketchCode || '');
   }
 
   async start(port: number = this.DEFAULT_PORT): Promise<boolean> {

@@ -62,6 +62,8 @@ export interface ScoringInput {
   persona?: SwarmPersona;
   /** Evaluation criteria dimensions. */
   criteria?: string[];
+  /** Optional LIR context for LIR-aware evaluation strategies. */
+  lirContext?: import('../aesthetic/types.js').LIREvaluationContext;
 }
 
 /** Result from any scoring strategy. */

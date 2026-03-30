@@ -18,6 +18,7 @@ import { CellularAutomata } from './p5/CellularAutomata.js';
 import { FlowField } from './p5/FlowField.js';
 import { ShaderGenerator } from './glsl/ShaderGenerator.js';
 import { ThreeGenerator } from './three/ThreeGenerator.js';
+import { RemotionGenerator } from './remotion/RemotionGenerator.js';
 import { P5GeneratorLLM } from './p5/P5GeneratorLLM.js';
 import { promptToGeneratorParams } from '../utils/promptToGeneratorParams.js';
 
@@ -117,6 +118,18 @@ const threeEntry: GeneratorEntry = {
   },
 };
 
+const remotionEntry: GeneratorEntry = {
+  name: 'remotion',
+  canHandle: (prompt: string) => {
+    const gen = new RemotionGenerator();
+    return gen.canHandle(prompt);
+  },
+  generate: async (prompt: string) => {
+    const gen = new RemotionGenerator();
+    return gen.generate(prompt);
+  },
+};
+
 const llmEntry: GeneratorEntry = {
   name: 'llm',
   canHandle: () => 0, // fallback: never wins, but always available
@@ -139,6 +152,7 @@ export function registerAllGenerators(): void {
   generatorRegistry.register(flowFieldEntry);
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
+  generatorRegistry.register(remotionEntry);
   generatorRegistry.register(llmEntry);
 }
 

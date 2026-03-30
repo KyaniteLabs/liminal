@@ -15,6 +15,9 @@ import { Renderer } from '../../src/render/Renderer.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Increase timeout for integration tests involving browser automation and generation
 const GENERATION_RENDER_TIMEOUT = 60000; // 60 seconds
@@ -36,7 +39,7 @@ describe.skipIf(process.env.CI)('Generator-Renderer Integration Tests', () => {
   let previewServer;
   let renderer;
   const TEST_PORT = 3457;
-  const testOutputDir = './test-generator-renderer-output';
+  const testOutputDir = path.resolve(__dirname, 'test-generator-renderer-output');
 
   beforeAll(async () => {
     // Create test output directory

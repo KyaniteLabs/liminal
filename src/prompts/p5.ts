@@ -25,6 +25,14 @@ CONSTRAINTS:
 - DO NOT use deprecated p5.js methods (e.g., drawingContext for simple shapes)
 - DO NOT use createP() or any DOM-manipulation functions unless explicitly requested
 
+CRITICAL CONSTRAINTS:
+- ONLY generate p5.js JavaScript code
+- DO NOT generate GLSL, HLSL, or any shader code
+- DO NOT include the word "glsl" in your output
+- DO NOT use shader-specific terms like "fragment", "vertex", "uniform"
+- Your code MUST use function setup() and function draw()
+- Your code MUST be wrapped in a markdown code block with language "javascript"
+
 OUTPUT FORMAT:
 - Output a single JavaScript code block containing setup() and draw() functions
 - The code MUST be self-contained and immediately runnable
@@ -65,6 +73,13 @@ CONSTRAINTS:
 - DO NOT replace the entire creative approach — preserve the core concept
 - DO NOT add external dependencies or libraries beyond p5.js
 - DO NOT remove features present in the original unless they cause errors
+
+CRITICAL CONSTRAINTS:
+- ONLY generate p5.js JavaScript code
+- DO NOT generate GLSL, HLSL, or any shader code
+- DO NOT include the word "glsl" in your output
+- DO NOT use shader-specific terms like "fragment", "vertex", "uniform"
+- Your code MUST use function setup() and function draw()
 
 IMPROVEMENT FOCUS:
 1. Visual quality — Enhance colors, composition, animation smoothness, aesthetic appeal

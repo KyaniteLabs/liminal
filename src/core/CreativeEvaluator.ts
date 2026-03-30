@@ -11,6 +11,8 @@
 import { extractBehavior } from '../evolution/BehaviorVectors.js';
 import type { NoveltyArchive } from '../evolution/NoveltyArchive.js';
 import type { AestheticModel } from '../evolution/AestheticModel.js';
+import { CreativeBoard } from '../collab/CreativeBoard.js';
+import type { BoardDeliberation } from '../collab/CreativeBoard.js';
 
 export interface AssessOptions {
   /** When provided, overall score is the average of scores for these dimensions. Known dimensions: "technical", "aesthetic", "novelty", "emergence", "interestingness". Aesthetic combines visual (creative) and sound. */
@@ -817,6 +819,41 @@ export class CreativeEvaluator {
       aestheticScore: baseline.aestheticScore,
       emergenceScore,
       interestingnessScore,
+    };
+  }
+
+  /**
+   * Evaluate creative output using the multi-agent CreativeBoard.
+   *
+   * The board runs 3 critics (Minimalist, Expressionist, Technician) in a
+   * deliberation that produces stances, tensions, consensus, and a verdict.
+   * The aggregate board score is blended with the baseline heuristic score.
+   *
+   * @param code - The creative code to evaluate
+   * @param domain - Domain hint (e.g. 'p5', 'three', 'shader')
+   * @param options - Standard assess options (criteria, novelty archive, etc.)
+   * @returns Board deliberation result plus the baseline assessment
+   */
+  static assessWithBoard(
+    code: string,
+    domain: string,
+    options?: AssessOptions,
+  ): AssessmentResult & { boardDeliberation: BoardDeliberation } {
+    const baseline = this.assess(code, options);
+    const board = new CreativeBoard();
+    const deliberation = board.deliberate(code, domain, {
+      technical: baseline.technicalScore,
+      creative: baseline.creativeScore,
+    });
+
+    // Blend: 60% baseline score, 40% board aggregate
+    const blendedScore = baseline.score * 0.6 + deliberation.aggregateScore * 0.4;
+
+    return {
+      ...baseline,
+      score: Math.max(0, Math.min(1, blendedScore)),
+      passed: blendedScore >= MIN_QUALITY_THRESHOLD,
+      boardDeliberation: deliberation,
     };
   }
 }

@@ -62,6 +62,9 @@ const EXPECTED_IDS = [
   // Audio + Aesthetic (2)
   'audio.voice-to-visual',
   'aesthetic.constraints',
+
+  // Specialized prompts (1)
+  'chat.assistant',
 ];
 
 describe('Prompt Library Validation', () => {

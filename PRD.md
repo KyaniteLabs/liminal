@@ -274,7 +274,7 @@ const visualOutput = await liminal.generateVisuals({
 
 Liminal can use **multiple local models simultaneously** via Ollama, each playing a creative persona. This produces richer, more diverse output than a single model.
 
-**The 7 Personas:**
+**The 5 Personas:**
 
 | Persona | Role | Default Model |
 |---------|------|---------------|

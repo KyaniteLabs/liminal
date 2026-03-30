@@ -9,6 +9,16 @@ import path from 'path';
 
 const cliPath = path.join(process.cwd(), 'bin/liminal');
 
+// Check if LM Studio is available (skips LLM-dependent tests if not)
+async function isLLMAvailable() {
+  try {
+    const res = await fetch('http://localhost:1234/v1/models', { signal: AbortSignal.timeout(1000) });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 describe('CLI Integration Tests', () => {
   let testOutputDir;
   const TEST_TIMEOUT = 45000;
@@ -35,6 +45,11 @@ describe('CLI Integration Tests', () => {
     }, 10000);
 
     test('should generate with fast LM Studio model', async () => {
+      // Skip if no LLM available
+      if (!await isLLMAvailable()) {
+        console.log('[SKIP] No LLM available at localhost:1234');
+        return;
+      }
       const result = await runCLI([
         '--prompt', 'simple blue circle',
         '--output', testOutputDir,
@@ -45,6 +60,11 @@ describe('CLI Integration Tests', () => {
     }, TEST_TIMEOUT);
 
     test('--mode live-music --prompt "ambient" --output <dir> produces files in output dir', async () => {
+      // Skip if no LLM available
+      if (!await isLLMAvailable()) {
+        console.log('[SKIP] No LLM available at localhost:1234');
+        return;
+      }
       const result = await runCLI([
         '--mode', 'live-music',
         '--prompt', 'ambient',
@@ -66,9 +86,9 @@ async function runCLI(args) {
     const cliProcess = spawn('node', [cliPath, ...args], {
       env: {
         ...process.env,
-        ATELIER_LLM_PROVIDER: 'lmstudio',
-        ATELIER_LLM_BASE_URL: 'http://localhost:1234/v1',
-        ATELIER_LLM_MODEL: 'local-model'
+        LIMINAL_LLM_PROVIDER: 'lmstudio',
+        LIMINAL_LLM_BASE_URL: 'http://localhost:1234/v1',
+        LIMINAL_LLM_MODEL: 'local-model'
       }
     });
     let stdout = '';

@@ -1,4 +1,5 @@
 import type { AudioFeatures } from './types.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Synchronous Meyda access. On first call this performs a dynamic
@@ -23,7 +24,8 @@ function getMeydaSync(): any {
     MeydaSync = mod.default || mod;
     meydaLoaded = true;
     return MeydaSync;
-  } catch {
+  } catch (err) {
+    Logger.warn('AudioExtractor', 'Meyda not available. Audio features will return defaults. Install with: npm install meyda');
     return null;
   }
 }

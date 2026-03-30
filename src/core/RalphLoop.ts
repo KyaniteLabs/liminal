@@ -442,13 +442,6 @@ export class RalphLoop {
           break;
         }
 
-        // Check for promise detection (termination condition)
-        if (promiseDetected) {
-          completed = true;
-          reason = 'promise detected in generated code';
-          break;
-        }
-
         // Check timeout
         const elapsed = (Date.now() - startTime) / 1000 / 60;
         if (elapsed > normalizedOptions.timeoutMinutes) {

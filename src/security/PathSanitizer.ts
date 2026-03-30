@@ -15,8 +15,10 @@ export class PathSanitizationError extends Error {
 // Characters that could be used for shell injection
 const DANGEROUS_CHARS = /[;|&$`\\<>{}[\]]/;
 
-// Control characters
-const CONTROL_CHARS = /[\x00-\x1f\x7f-\x9f]/;
+// Control characters (null bytes, control codes, DEL, high control codes)
+// Security: These characters can be used for injection attacks and must be filtered
+// eslint-disable-next-line no-control-regex
+const CONTROL_CHARS = /[\x00-\x1f\x7f-\x9f]/
 
 /**
  * Sanitize a filename to prevent command injection

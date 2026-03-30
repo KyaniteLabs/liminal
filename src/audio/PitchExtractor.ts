@@ -1,5 +1,6 @@
 import type { PitchData } from './types.js';
 import { frequencyToMidi, frequencyToNoteName, clampFrequency } from './PitchUtils.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * pitchfinder YIN detector — loaded lazily to avoid top-level side-effects.
@@ -50,7 +51,8 @@ export function detectPitch(
     const clarity = Math.min(1, rms * 3); // rough clarity estimate
 
     return { frequency: clampedFreq, clarity, midi, noteName };
-  } catch {
+  } catch (err) {
+    Logger.warn('PitchExtractor', 'pitchfinder not available. Pitch detection disabled. Install with: npm install pitchfinder');
     return null;
   }
 }

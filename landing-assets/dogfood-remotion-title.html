@@ -3,142 +3,90 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>p5.js Sketch</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <title>Remotion Composition</title>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
-        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        body { margin: 0; padding: 2rem; background: #0a0a0f; color: #e0e0e0; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; font-size: 0.8rem; margin-bottom: 1rem; }
+        .note { color: #a0a0b0; font-size: 0.8rem; margin-bottom: 1rem; }
     </style>
 </head>
 <body>
-    <main>
-        <script>
-import React from 'react';
-import {useCurrentFrame, interpolate, AbsoluteFill, spring, useVideoConfig} from 'remotion';
+    <div class="badge">Remotion</div>
+    <p class="note">Remotion requires a bundler to render. This is the generated composition code:</p>
+    <pre><code>const opacity = Math.max(0, Math.min(1, 1 - particleFrame / 100));
+            
+            return (
+              &lt;div
+                key={p.id}
+                style={{
+                  position: 'absolute',
+                  left: xOffset,
+                  top: yOffset,
+                  width: p.size,
+                  height: p.size,
+                  borderRadius: '50%',
+                  backgroundColor: `hsl(${p.hue}, 70%, 60%)`,
+                  opacity,
+                }}
+              /&gt;
+            );
+          })}
+        &lt;/div&gt;
+        
+        {/* Title Text */}
+        &lt;div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          textAlign: 'center',
+          zIndex: 10,
+        }}&gt;
+          &lt;div style={{
+            fontSize: 120,
+            fontFamily: 'Arial Black, sans-serif',
+            fontWeight: 900,
+            color: '#ffffff',
+            textShadow: '0 0 60px rgba(100, 200, 255, 0.8), 0 0 120px rgba(100, 200, 255, 0.4)',
+            letterSpacing: '0.1em',
+            opacity: titleOpacity,
+            transform: `scale(${titleScale})`,
+          }}&gt;
+            DISSOLVE
+          &lt;/div&gt;
+          &lt;div style={{
+            fontSize: 32,
+            fontFamily: 'Arial, sans-serif',
+            fontWeight: 300,
+            color: '#8a8a9a',
+            letterSpacing: '0.5em',
+            marginTop: 20,
+            opacity: titleOpacity,
+          }}&gt;
+            PARTICLE EFFECT
+          &lt;/div&gt;
+        &lt;/div&gt;
+        
+        {/* Glow overlay */}
+        &lt;div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'radial-gradient(ellipse at center, transparent 0%, rgba(10, 10, 18, 0.5) 100%)',
+          pointerEvents: 'none',
+        }} /&gt;
+      &lt;/AbsoluteFill&gt;
+    );
+  }
+}
 
-export const CinematicTitle: React.FC = () => {
-  const frame = useCurrentFrame();
-  const {fps, width, height} = useVideoConfig();
-  
-  // Generate particles
-  const particles = Array.from({length: 100}, (_, i) => {
-    const seed = i * 1234;
-    return {
-      x: ((seed * 7919) % 10000) / 10000,
-      y: ((seed * 104729) % 10000) / 10000,
-      size: 2 + ((seed * 13) % 8),
-      delay: ((seed * 31) % 60),
-      duration: 30 + ((seed * 17) % 40),
-    };
-  });
-  
-  // Lens flare position
-  const flareX = interpolate(frame, [0, 150], [-200, width + 200]);
-  const flareOpacity = interpolate(frame, [0, 30, 120, 150], [0, 1, 1, 0]);
-  
-  // Title opacity
-  const titleOpacity = interpolate(frame, [20, 40], [0, 1], {extrapolateRight: 'clamp'});
-  const titleScale = interpolate(frame, [20, 40], [0.8, 1], {extrapolateRight: 'clamp'});
-  
-  return (
-    <AbsoluteFill style={{backgroundColor: '#0a0a0f', overflow: 'hidden'}}>
-      {/* Background gradient */}
-      <div style={{
-        position: 'absolute',
-        width: '100%',
-        height: '100%',
-        background: 'radial-gradient(ellipse at 30% 50%, #1a1a2e 0%, #0a0a0f 100%)'
-      }} />
-      
-      {/* Particle system */}
-      {particles.map((particle, i) => {
-        const particleFrame = frame - particle.delay;
-        const progress = particleFrame / particle.duration;
-        
-        if (progress < 0 || progress > 1) return null;
-        
-        const opacity = interpolate(progress, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
-        const scale = interpolate(progress, [0, 0.5, 1], [0, 1, 0.5]);
-        
-        return (
-          <div
-            key={i}
-            style={{
-              position: 'absolute',
-              left: `${particle.x * width}px`,
-              top: `${particle.y * height}px`,
-              width: particle.size * scale,
-              height: particle.size * scale,
-              borderRadius: '50%',
-              backgroundColor: '#fff',
-              opacity,
-              transform: `translate(-50%, -50%)`,
-            }}
-          />
-        );
-      })}
-      
-      {/* Lens flare */}
-      <div style={{
-        position: 'absolute',
-        left: flareX,
-        top: height * 0.4,
-        width: 300,
-        height: 300,
-        background: 'radial-gradient(circle, rgba(255,200,100,0.4) 0%, transparent 70%)',
-        opacity: flareOpacity,
-        transform: 'translate(-50%, -50%)',
-      }} />
-      
-      {/* Lens flare streaks */}
-      <div style={{
-        position: 'absolute',
-        left: flareX,
-        top: height * 0.4,
-        width: 500,
-        height: 4,
-        background: 'linear-gradient(90deg, transparent, rgba(255,220,150,0.6), transparent)',
-        opacity: flareOpacity * 0.5,
-        transform: 'translate(-50%, -50%)',
-      }} />
-      
-      {/* Title */}
-      <div style={{
-        position: 'absolute',
-        top: height * 0.45,
-        left: 0,
-        right: 0,
-        textAlign: 'center',
-        color: '#fff',
-        fontSize: 72,
-        fontWeight: 700,
-        fontFamily: 'Arial, sans-serif',
-        opacity: titleOpacity,
-        transform: `scale(${titleScale})`,
-        textShadow: '0 0 40px rgba(255,200,100,0.5)',
-      }}>
-        CINEMATIC
-      </div>
-      
-      <div style={{
-        position: 'absolute',
-        top: height * 0.58,
-        left: 0,
-        right: 0,
-        textAlign: 'center',
-        color: '#888',
-        fontSize: 24,
-        fontFamily: 'Arial, sans-serif',
-        opacity: titleOpacity,
-        transform: `scale(${titleScale})`,
-        letterSpacing: 8,
-      }}>
-        PARTICLE DISSOLVE
-      </div>
-    </AbsoluteFill>
-  );
-};
-        </script>
-    </main>
+The animation reveals particles first, then the title text fades in with a subtle scale effect. After holding for a moment, both particles and text fade out together. A soft radial gradient overlay adds depth to the composition. , I need to reconsider the timing. The fade-in and fade-out should each span multiple frames for smoothness. Using an opacity interpolation from 0 to 1 over 30 frames works for the entrance, but I need to ensure the text remains fully visible during the middle section before fading out in the final 30 frames.
+
+The structure should be: opacity builds from 0 to 1 between frames 0-30, stays at 1 from 30-90, then decreases back to 0 between frames 90-150. This creates a complete fade-in and fade-out cycle while maintaining full visibility during the hold period.
+
+For the particle animation, I'll have them scatter outward from the center as the text fades out. I should also ensure proper TypeScript typing throughout. Here's the refined version:</code></pre>
 </body>
 </html>

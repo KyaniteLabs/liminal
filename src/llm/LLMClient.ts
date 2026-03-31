@@ -351,8 +351,9 @@ export class LLMClient {
       headers['Authorization'] = `Bearer ${this.config.apiKey}`;
     }
     
-    // Create timeout signal if none provided (120 second default)
-    const timeoutMs = 120000;
+    // Create timeout signal if none provided (300 second default for Ollama)
+    // Local models need more time than cloud APIs
+    const timeoutMs = 300000;
     const timeoutSignal = signal || AbortSignal.timeout(timeoutMs);
     
     const response = await fetch(`${baseUrl}/chat/completions`, {

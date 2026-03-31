@@ -510,7 +510,7 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
   // ============================================
   // HTML - Template fallback, all identical
   // ============================================
-  ...['minimax-m2.7', 'minimax-m2.5', 'qwen3.5-9b', 'qwen3-coder-40b', 'gemma3-4b', 'kimi-k2.5'].map((modelId, i) => ({
+  ...['minimax-m2.7', 'minimax-m2.5', 'qwen3.5-9b', 'qwen3-coder-40b', 'gemma3-4b', 'kimi-k2.5'].map((modelId) => ({
     id: `audit-html-${modelId}`,
     timestamp: new Date('2026-03-31'),
     domain: 'html',
@@ -527,7 +527,7 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
   // ============================================
   // ASCII - Template fallback, all identical
   // ============================================
-  ...['minimax-m2.7', 'minimax-m2.5', 'qwen3.5-9b', 'qwen3-coder-40b', 'gemma3-4b', 'kimi-k2.5'].map((modelId, i) => ({
+  ...['minimax-m2.7', 'minimax-m2.5', 'qwen3.5-9b', 'qwen3-coder-40b', 'gemma3-4b', 'kimi-k2.5'].map((modelId) => ({
     id: `audit-ascii-${modelId}`,
     timestamp: new Date('2026-03-31'),
     domain: 'ascii',

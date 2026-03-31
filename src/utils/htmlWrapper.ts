@@ -776,7 +776,7 @@ ${code}
 </html>`;
   }
 
-  private static wrapASCII(code: string, width: number): string {
+  private static wrapASCII(code: string, _width: number): string {
     const escaped = code
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')

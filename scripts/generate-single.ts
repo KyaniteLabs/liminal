@@ -43,6 +43,7 @@ const MODEL_CONFIGS: Record<string, { baseUrl: string; apiKeyEnv: string; modelI
   // Ollama Local Models
   'Granite4-1b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'granite4:1b' },
   'Granite4-350m': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'granite4:350m' },
+  'Qwen3.5-0.8b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'qwen3.5:0.8b' },
   'Qwen3.5-2b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'qwen3.5:2b' },
   'Phi4-Mini': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'phi4-mini:latest' },
   'Gemma3-4B-Ollama': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'gemma3:4b' },

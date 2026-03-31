@@ -27,7 +27,9 @@ const PROMPTS: Record<string, string> = {
   
   html: `Create a responsive landing page for a creative coding portfolio. Include a hero section with animated gradient background, project cards, and contact form.`,
   
-  ascii: `Create an ASCII art animation of a spaceship flying through space with trailing particles and twinkling stars.`
+  ascii: `Create an ASCII art animation of a spaceship flying through space with trailing particles and twinkling stars.`,
+  
+  tone: `Create a Tone.js synthesizer patch that plays an ambient drone with reverb and delay effects. Use multiple oscillators and LFOs for rich sound.`
 };
 
 // Removed MiniMax-M2.1 (consistently times out)
@@ -37,7 +39,14 @@ const MODEL_CONFIGS: Record<string, { baseUrl: string; apiKeyEnv: string; modelI
   'Qwen3.5-9B': { baseUrl: 'http://localhost:1234/v1', apiKeyEnv: 'LMSTUDIO_API_KEY', modelId: 'qwen3.5-9b' },
   'Qwen3-Coder-40B': { baseUrl: 'http://localhost:1234/v1', apiKeyEnv: 'LMSTUDIO_API_KEY', modelId: 'qwen3-coder-next-reap-40b-a3b-i1' },
   'Gemma3-4B': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'gemma3:4b' },
-  'Kimi-K2.5': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'kimi-k2.5:cloud' }
+  'Kimi-K2.5': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'kimi-k2.5:cloud' },
+  // Ollama Local Models
+  'Granite4-1b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'granite4:1b' },
+  'Granite4-350m': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'granite4:350m' },
+  'Qwen3.5-2b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'qwen3.5:2b' },
+  'Phi4-Mini': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'phi4-mini:latest' },
+  'Gemma3-4B-Ollama': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'gemma3:4b' },
+  'LFM2.5-Thinking': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'lfm2.5-thinking:1.2b' }
 };
 
 function sanitizeFilename(name: string): string {
@@ -86,15 +95,18 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
     }
     case 'html': {
       const { HTMLWebGenerator } = await import('../src/generators/html/HTMLWebGenerator.js');
-      const gen = new HTMLWebGenerator();
-      (gen as any).llm = llm;
+      const gen = new HTMLWebGenerator(llm);
       return gen.generate(prompt, { responsive: true, includeAnimations: true });
     }
     case 'ascii': {
       const { ASCIIArtGenerator } = await import('../src/generators/ascii/ASCIIArtGenerator.js');
-      const gen = new ASCIIArtGenerator();
-      (gen as any).llm = llm;
+      const gen = new ASCIIArtGenerator(llm);
       return gen.generate(prompt, { style: 'abstract', width: 60, height: 30 });
+    }
+    case 'tone': {
+      const { ToneGenerator } = await import('../src/generators/tone/ToneGenerator.js');
+      const gen = new ToneGenerator(llm);
+      return gen.generate(prompt);
     }
     default:
       throw new Error(`Unknown domain: ${domain}`);

@@ -65,6 +65,7 @@ export interface LLMResponse {
   success: boolean;
   error?: string;
   fromCache?: boolean;  // Track if response was from cache
+  isComplete?: boolean; // Whether code is structurally complete (not cut off)
 }
 
 function env(key: string): string | undefined {
@@ -304,7 +305,8 @@ export class LLMClient {
       : cleanCode;
 
     // Validate code completeness
-    if (finalCode && !this.isCodeComplete(finalCode)) {
+    const isComplete = finalCode ? this.isCodeComplete(finalCode) : true;
+    if (finalCode && !isComplete) {
       console.warn('[LLMClient] Generated code appears incomplete (cutoff mid-function)');
     }
 
@@ -313,6 +315,7 @@ export class LLMClient {
       explanation: content,
       reasoning,
       success: true,
+      isComplete,
     };
   }
 

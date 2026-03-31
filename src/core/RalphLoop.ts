@@ -201,6 +201,9 @@ export class RalphLoop {
         } else {
           currentCode = validation.cleanedCode;
         }
+        
+        // Check code completeness (structural - braces, parens balanced)
+        const isComplete = RalphLoop.isCodeComplete(currentCode);
 
         // Diagnostic: Log that we got fresh code (not from cache)
         if (normalizedOptions.chatMode) {
@@ -305,12 +308,19 @@ export class RalphLoop {
           break;
         }
 
-        // Success gate: break if score exceeds excellent threshold (0.90)
+        // Success gate: break if score exceeds excellent threshold (0.90) AND code is complete
         // Stop iterating when we've achieved excellent quality to avoid regression
-        if (evaluation.score >= 0.90) {
+        // BUT don't exit if code is incomplete - force another iteration to complete it
+        if (evaluation.score >= 0.90 && isComplete) {
           completed = true;
-          reason = `excellent quality achieved (score ${evaluation.score.toFixed(2)} >= 0.90)`;
+          reason = `excellent quality achieved (score ${evaluation.score.toFixed(2)} >= 0.90, code complete)`;
           break;
+        }
+        
+        // Force continuation if code is incomplete (even if quality is high)
+        if (!isComplete && iteration < normalizedOptions.maxIterations) {
+          Logger.info('RalphLoop', `Code incomplete after iteration ${iteration}, forcing another iteration`);
+          // Continue to next iteration without breaking
         }
 
         // Update evolution subsystems
@@ -544,5 +554,35 @@ export class RalphLoop {
     const maxIterations = mostRecentContext?.maxIterations || DEFAULT_MAX_ITERATIONS;
 
     return { iteration, maxIterations, progress: iteration / maxIterations };
+  }
+
+  /**
+   * Check if code is structurally complete (not cut off mid-function)
+   * Validates brace/paren/bracket balance and common cutoff patterns
+   */
+  static isCodeComplete(code: string): boolean {
+    // Count opening and closing braces
+    const openBraces = (code.match(/\{/g) || []).length;
+    const closeBraces = (code.match(/\}/g) || []).length;
+
+    // Count opening and closing parentheses
+    const openParens = (code.match(/\(/g) || []).length;
+    const closeParens = (code.match(/\)/g) || []).length;
+
+    // Count opening and closing brackets
+    const openBrackets = (code.match(/\[/g) || []).length;
+    const closeBrackets = (code.match(/\]/g) || []).length;
+
+    // Check for common cutoff patterns
+    const hasCutoffPattern = /\n\s{0,4}$/m.test(code.slice(-100)); // Ends with whitespace only
+    const endsMidFunction = /function\s+\w+\s*\([^)]*\)\s*\{[^}]*$/.test(code.slice(-200));
+    const endsMidClass = /class\s+\w+.*\{[^}]*$/.test(code.slice(-200));
+
+    return openBraces === closeBraces &&
+           openParens === closeParens &&
+           openBrackets === closeBrackets &&
+           !hasCutoffPattern &&
+           !endsMidFunction &&
+           !endsMidClass;
   }
 }

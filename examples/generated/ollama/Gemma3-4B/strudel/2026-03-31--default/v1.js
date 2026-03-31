@@ -1,0 +1,34 @@
+use synth.sine;
+use synth.square;
+use synth.pulse;
+use effect.gain;
+use effect.pan;
+
+set tempo 120;
+
+// Kick
+kick = s(0, 1, 0.5, 0.8, 0.2);
+
+// Snare
+snare = s(1, 0.5, 0.3, 0.7, 0.1);
+
+// Hi-Hat
+hihat = n(2, 0.25, 0.1, 0.9, 0.1);
+
+// Bassline
+bass = s(2, 1, 0.2, 0.9, 0.3);
+
+// Layer 1: Kick, Snare, Hi-Hat
+layer1 = [kick, snare, hihat];
+
+// Layer 2: Bassline
+layer2 = [bass];
+
+// Effects and layering
+pattern 4, [
+  [layer1, gain(0.8)],
+  [layer2, gain(0.6)],
+  [layer1, gain(0.9)],
+  [layer2, gain(0.7)],
+  [layer1, gain(0.8)]
+];

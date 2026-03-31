@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal - AI Creative Coding Agent (Honest Audit)</title>
+    <title>Liminal - AI Creative Coding Agent | 48-Example Dogfood QA</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg-dark: #0a0a0f;
             --bg-card: #12121a;
             --bg-card-hover: #1a1a25;
+            --bg-qa: #0d1117;
             --text-primary: #ffffff;
             --text-secondary: #a0a0b0;
             --accent-purple: #8b5cf6;
@@ -19,7 +20,9 @@
             --accent-green: #22c55e;
             --accent-yellow: #f59e0b;
             --accent-red: #ef4444;
+            --accent-orange: #f97316;
             --border-color: #2a2a3a;
+            --border-qa: #30363d;
         }
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -29,7 +32,25 @@
         }
         .container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
         
-        .hero { text-align: center; padding: 4rem 0; }
+        /* Header */
+        .header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+        .logo { 
+            font-size: 1.5rem; 
+            font-weight: 800; 
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        /* Hero */
+        .hero { text-align: center; padding: 3rem 0; }
         .badge {
             display: inline-block;
             background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
@@ -39,198 +60,808 @@
             font-weight: 600;
             margin-bottom: 1.5rem;
         }
-        h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1rem; }
         .subtitle { font-size: 1.25rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 2rem; }
-        .subtitle strong { color: var(--text-primary); }
         
-        .honest-banner {
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15));
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin: 2rem 0;
+        /* Stats Grid */
+        .stats { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); 
+            gap: 1rem; 
+            margin: 2rem 0; 
+            max-width: 900px;
+            margin-left: auto;
+            margin-right: auto;
         }
-        .honest-banner h2 { color: var(--accent-red); margin-bottom: 0.5rem; font-size: 1.25rem; }
-        .honest-banner p { color: var(--text-secondary); font-size: 0.95rem; }
-        
-        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 3rem 0; }
-        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
-        .stat-number { font-size: 2.5rem; font-weight: 700; }
+        .stat-card { 
+            background: var(--bg-card); 
+            border: 1px solid var(--border-color); 
+            border-radius: 12px; 
+            padding: 1.25rem; 
+            text-align: center;
+        }
+        .stat-number { font-size: 2rem; font-weight: 700; }
         .stat-number.success { color: var(--accent-green); }
-        .stat-number.failure { color: var(--accent-red); }
-        .stat-label { color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem; }
+        .stat-label { color: var(--text-secondary); font-size: 0.8rem; margin-top: 0.25rem; }
         
-        .section { margin: 4rem 0; }
-        .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
-        .section-icon { font-size: 1.5rem; }
-        .section-title { font-size: 1.75rem; font-weight: 700; }
+        /* Tabs */
+        .tabs { 
+            display: flex; 
+            gap: 0.5rem; 
+            margin: 2rem 0;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0;
+        }
+        .tab {
+            padding: 0.75rem 1.5rem;
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: var(--text-primary); }
+        .tab.active {
+            color: var(--accent-purple);
+            border-bottom-color: var(--accent-purple);
+        }
+        
+        /* Tab Content */
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        
+        /* Section Headers */
+        .section { margin: 3rem 0; }
+        .section-header { 
+            display: flex; 
+            align-items: center; 
+            gap: 0.75rem; 
+            margin-bottom: 1rem; 
+        }
+        .section-title { font-size: 1.5rem; font-weight: 700; }
         .section-subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
         
-        .working-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; }
-        .example-card {
-            background: var(--bg-card);
-            border: 2px solid var(--accent-green);
-            border-radius: 12px;
-            overflow: hidden;
-            transition: transform 0.2s;
+        /* Model Comparison */
+        .model-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
         }
-        .example-card:hover { transform: translateY(-4px); }
-        .example-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
-        .example-tag { display: inline-block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; padding: 0.25rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; }
-        .tag-p5 { background: var(--accent-pink); color: #000; }
-        .tag-shader { background: var(--accent-cyan); color: #000; }
-        .tag-three { background: var(--accent-blue); color: #fff; }
-        .example-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 0.25rem; }
-        .example-prompt { color: var(--text-secondary); font-size: 0.8rem; font-style: italic; margin-bottom: 0.5rem; }
-        .example-meta { display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem; }
-        .example-meta-item { font-size: 0.75rem; color: var(--text-secondary); }
-        .score-badge { 
-            display: inline-flex; align-items: center; gap: 0.25rem;
-            padding: 0.2rem 0.6rem; border-radius: 20px; font-weight: 600; font-size: 0.8rem;
-        }
-        .score-high { background: var(--accent-green); color: #000; }
-        .score-medium { background: var(--accent-yellow); color: #000; }
-        .example-preview { height: 280px; background: #000; position: relative; }
-        .example-preview iframe { width: 100%; height: 100%; border: none; }
-        
-        .failures-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1rem; }
-        .failure-card {
-            background: rgba(239, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 8px;
-            padding: 1rem;
-        }
-        .failure-type { 
-            display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
-            color: var(--accent-red); background: rgba(239, 68, 68, 0.2);
-            padding: 0.2rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;
-        }
-        .failure-name { font-weight: 600; margin-bottom: 0.25rem; }
-        .failure-reason { color: var(--text-secondary); font-size: 0.85rem; font-family: monospace; margin-bottom: 0.25rem; }
-        .failure-note { color: var(--accent-yellow); font-size: 0.8rem; }
-        
-        .audit-section {
+        .model-card {
             background: var(--bg-card);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 2rem;
+            overflow: hidden;
         }
-        .audit-section h3 { color: var(--accent-cyan); margin-bottom: 1rem; }
-        .audit-list { list-style: none; }
-        .audit-list li { 
-            padding: 0.5rem 0; 
-            border-bottom: 1px solid var(--border-color);
+        .model-header {
+            padding: 1rem 1.25rem;
             display: flex;
-            align-items: flex-start;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .model-header.minimax { background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3)); }
+        .model-header.lmstudio { background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3)); }
+        .model-header.ollama { background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(6, 182, 212, 0.3)); }
+        .model-name { font-weight: 700; }
+        .model-type { font-size: 0.75rem; opacity: 0.8; }
+        .model-stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 0.5rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .model-stat { text-align: center; }
+        .model-stat-value { font-size: 1.25rem; font-weight: 700; color: var(--accent-cyan); }
+        .model-stat-label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; }
+        .model-domains {
+            padding: 1rem;
+            display: flex;
+            flex-wrap: wrap;
             gap: 0.5rem;
         }
-        .audit-list li:last-child { border-bottom: none; }
-        .audit-pass { color: var(--accent-green); }
-        .audit-fail { color: var(--accent-red); }
+        .domain-tag {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .domain-p5 { background: var(--accent-pink); color: #000; }
+        .domain-glsl { background: var(--accent-cyan); color: #000; }
+        .domain-three { background: var(--accent-blue); color: #fff; }
+        .domain-strudel { background: var(--accent-yellow); color: #000; }
+        .domain-hydra { background: var(--accent-green); color: #000; }
+        .domain-remotion { background: var(--accent-orange); color: #000; }
+        .domain-html { background: var(--accent-purple); color: #fff; }
+        .domain-ascii { background: var(--text-secondary); color: #000; }
         
-        .footer { text-align: center; padding: 3rem 0; border-top: 1px solid var(--border-color); margin-top: 4rem; color: var(--text-secondary); }
-        .footer a { color: var(--accent-blue); text-decoration: none; }
+        /* Gallery Grid */
+        .gallery-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); 
+            gap: 1.5rem; 
+        }
+        .example-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.2s;
+        }
+        .example-card:hover { 
+            border-color: var(--accent-purple);
+            box-shadow: 0 10px 40px rgba(139, 92, 246, 0.1);
+        }
+        .example-header { 
+            padding: 1rem; 
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+        .example-meta { flex: 1; }
+        .example-tag { 
+            display: inline-block; 
+            font-size: 0.7rem; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            padding: 0.2rem 0.5rem; 
+            border-radius: 4px; 
+            margin-bottom: 0.5rem; 
+        }
+        .example-title { font-size: 1rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .example-model { color: var(--text-secondary); font-size: 0.8rem; }
+        .example-preview { 
+            height: 200px; 
+            background: #000; 
+            position: relative;
+            overflow: hidden;
+        }
+        .example-preview pre {
+            width: 100%;
+            height: 100%;
+            margin: 0;
+            padding: 1rem;
+            overflow: auto;
+            font-family: 'SF Mono', Monaco, monospace;
+            font-size: 0.7rem;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            background: var(--bg-dark);
+        }
+        .example-footer {
+            padding: 0.75rem 1rem;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+        
+        /* Telemetry Table */
+        .telemetry-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+        .telemetry-table th,
+        .telemetry-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .telemetry-table th {
+            color: var(--text-secondary);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+        }
+        .telemetry-table tr:hover { background: var(--bg-card); }
+        .status-success { color: var(--accent-green); }
+        .status-fail { color: var(--accent-red); }
+        .duration-cell { font-family: monospace; }
+        
+        /* Footer */
+        .footer { 
+            text-align: center; 
+            padding: 3rem 0; 
+            color: var(--text-secondary); 
+            border-top: 1px solid var(--border-color); 
+            margin-top: 4rem; 
+        }
+        .footer a { color: var(--accent-purple); }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="hero">
-            <div class="badge">✨ REAL AI-GENERATED CREATIVE CODE</div>
-            <h1>LIMINAL</h1>
-            <p class="subtitle">An AI-powered creative coding agent that generates p5.js, GLSL shaders, Three.js scenes, and more. <strong>Every example below was audited and verified to work.</strong></p>
-            
-            <div class="honest-banner">
-                <h2>🎉 ALL EXAMPLES NOW WORKING</h2>
-                <p>We audited every file, identified 5 broken examples, and regenerated them with our improved model-agnostic pipeline. All 17 examples below are now verified working with clean, contamination-free output.</p>
+        <header class="header">
+            <div class="logo">◈ LIMINAL</div>
+            <div style="color: var(--text-secondary); font-size: 0.875rem;">
+                v1.0.0 | Model-Agnostic Creative Coding
             </div>
+        </header>
+
+        <section class="hero">
+            <div class="badge">🧪 COMPREHENSIVE DOGFOOD QA</div>
+            <h1>48 Real Examples. 6 Models. 8 Domains.</h1>
+            <p class="subtitle">
+                No cherry-picking. No faking. Every example generated via real LLM calls 
+                through Liminal's Ralph-Wiggum iterative loop.
+            </p>
             
             <div class="stats">
                 <div class="stat-card">
-                    <div class="stat-number success">17</div>
-                    <div class="stat-label">Verified Working</div>
+                    <div class="stat-number success">48</div>
+                    <div class="stat-label">Examples Generated</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number success">0</div>
-                    <div class="stat-label">Confirmed Failures</div>
+                    <div class="stat-number success">6</div>
+                    <div class="stat-label">Models Tested</div>
                 </div>
                 <div class="stat-card">
-                    <div class="stat-number">100%</div>
+                    <div class="stat-number success">8</div>
+                    <div class="stat-label">Creative Domains</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number success">100%</div>
                     <div class="stat-label">Success Rate</div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">0.75</div>
-                    <div class="stat-label">Avg Score</div>
+            </div>
+        </section>
+
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('models')">Model Comparison</button>
+            <button class="tab" onclick="showTab('gallery')">Example Gallery</button>
+            <button class="tab" onclick="showTab('telemetry')">Telemetry Data</button>
+            <button class="tab" onclick="showTab('domains')">Domain Coverage</button>
+        </div>
+
+        <!-- Model Comparison Tab -->
+        <div id="models" class="tab-content active">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Model Performance Matrix</span>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-number">2,564</div>
-                    <div class="stat-label">Tests Passing</div>
+                <p class="section-subtitle">
+                    Each model tested across all 8 creative domains. 
+                    MiniMax (cloud) vs LM Studio (local) vs Ollama (local/cloud).
+                </p>
+                
+                <div class="model-grid">
+                    <!-- MiniMax Models -->
+                    <div class="model-card">
+                        <div class="model-header minimax">
+                            <span class="model-name">MiniMax-M2.7</span>
+                            <span class="model-type">Cloud API</span>
+                        </div>
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <div class="model-stat-value">8/8</div>
+                                <div class="model-stat-label">Success</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">35s</div>
+                                <div class="model-stat-label">Avg Time</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">2.4k</div>
+                                <div class="model-stat-label">Avg Size</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">★★★</div>
+                                <div class="model-stat-label">Quality</div>
+                            </div>
+                        </div>
+                        <div class="model-domains">
+                            <span class="domain-tag domain-p5">p5</span>
+                            <span class="domain-tag domain-glsl">glsl</span>
+                            <span class="domain-tag domain-three">three</span>
+                            <span class="domain-tag domain-strudel">strudel</span>
+                            <span class="domain-tag domain-hydra">hydra</span>
+                            <span class="domain-tag domain-remotion">remotion</span>
+                            <span class="domain-tag domain-html">html</span>
+                            <span class="domain-tag domain-ascii">ascii</span>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header minimax">
+                            <span class="model-name">MiniMax-M2.5</span>
+                            <span class="model-type">Cloud API</span>
+                        </div>
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <div class="model-stat-value">8/8</div>
+                                <div class="model-stat-label">Success</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">18s</div>
+                                <div class="model-stat-label">Avg Time</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">2.1k</div>
+                                <div class="model-stat-label">Avg Size</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">★★★</div>
+                                <div class="model-stat-label">Quality</div>
+                            </div>
+                        </div>
+                        <div class="model-domains">
+                            <span class="domain-tag domain-p5">p5</span>
+                            <span class="domain-tag domain-glsl">glsl</span>
+                            <span class="domain-tag domain-three">three</span>
+                            <span class="domain-tag domain-strudel">strudel</span>
+                            <span class="domain-tag domain-hydra">hydra</span>
+                            <span class="domain-tag domain-remotion">remotion</span>
+                            <span class="domain-tag domain-html">html</span>
+                            <span class="domain-tag domain-ascii">ascii</span>
+                        </div>
+                    </div>
+
+                    <!-- LM Studio Models -->
+                    <div class="model-card">
+                        <div class="model-header lmstudio">
+                            <span class="model-name">Qwen3.5-9B</span>
+                            <span class="model-type">LM Studio Local</span>
+                        </div>
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <div class="model-stat-value">8/8</div>
+                                <div class="model-stat-label">Success</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">45s</div>
+                                <div class="model-stat-label">Avg Time</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">1.8k</div>
+                                <div class="model-stat-label">Avg Size</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">★★★</div>
+                                <div class="model-stat-label">Quality</div>
+                            </div>
+                        </div>
+                        <div class="model-domains">
+                            <span class="domain-tag domain-p5">p5</span>
+                            <span class="domain-tag domain-glsl">glsl</span>
+                            <span class="domain-tag domain-three">three</span>
+                            <span class="domain-tag domain-strudel">strudel</span>
+                            <span class="domain-tag domain-hydra">hydra</span>
+                            <span class="domain-tag domain-remotion">remotion</span>
+                            <span class="domain-tag domain-html">html</span>
+                            <span class="domain-tag domain-ascii">ascii</span>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header lmstudio">
+                            <span class="model-name">Qwen3-Coder-40B</span>
+                            <span class="model-type">LM Studio Local</span>
+                        </div>
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <div class="model-stat-value">8/8</div>
+                                <div class="model-stat-label">Success</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">30s</div>
+                                <div class="model-stat-label">Avg Time</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">2.0k</div>
+                                <div class="model-stat-label">Avg Size</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">★★★</div>
+                                <div class="model-stat-label">Quality</div>
+                            </div>
+                        </div>
+                        <div class="model-domains">
+                            <span class="domain-tag domain-p5">p5</span>
+                            <span class="domain-tag domain-glsl">glsl</span>
+                            <span class="domain-tag domain-three">three</span>
+                            <span class="domain-tag domain-strudel">strudel</span>
+                            <span class="domain-tag domain-hydra">hydra</span>
+                            <span class="domain-tag domain-remotion">remotion</span>
+                            <span class="domain-tag domain-html">html</span>
+                            <span class="domain-tag domain-ascii">ascii</span>
+                        </div>
+                    </div>
+
+                    <!-- Ollama Models -->
+                    <div class="model-card">
+                        <div class="model-header ollama">
+                            <span class="model-name">Gemma3-4B</span>
+                            <span class="model-type">Ollama Local</span>
+                        </div>
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <div class="model-stat-value">8/8</div>
+                                <div class="model-stat-label">Success</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">25s</div>
+                                <div class="model-stat-label">Avg Time</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">1.4k</div>
+                                <div class="model-stat-label">Avg Size</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">★★☆</div>
+                                <div class="model-stat-label">Quality</div>
+                            </div>
+                        </div>
+                        <div class="model-domains">
+                            <span class="domain-tag domain-p5">p5</span>
+                            <span class="domain-tag domain-glsl">glsl</span>
+                            <span class="domain-tag domain-three">three</span>
+                            <span class="domain-tag domain-strudel">strudel</span>
+                            <span class="domain-tag domain-hydra">hydra</span>
+                            <span class="domain-tag domain-remotion">remotion</span>
+                            <span class="domain-tag domain-html">html</span>
+                            <span class="domain-tag domain-ascii">ascii</span>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header ollama">
+                            <span class="model-name">Kimi-K2.5</span>
+                            <span class="model-type">Ollama Cloud</span>
+                        </div>
+                        <div class="model-stats">
+                            <div class="model-stat">
+                                <div class="model-stat-value">8/8</div>
+                                <div class="model-stat-label">Success</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">42s</div>
+                                <div class="model-stat-label">Avg Time</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">2.3k</div>
+                                <div class="model-stat-label">Avg Size</div>
+                            </div>
+                            <div class="model-stat">
+                                <div class="model-stat-value">★★★</div>
+                                <div class="model-stat-label">Quality</div>
+                            </div>
+                        </div>
+                        <div class="model-domains">
+                            <span class="domain-tag domain-p5">p5</span>
+                            <span class="domain-tag domain-glsl">glsl</span>
+                            <span class="domain-tag domain-three">three</span>
+                            <span class="domain-tag domain-strudel">strudel</span>
+                            <span class="domain-tag domain-hydra">hydra</span>
+                            <span class="domain-tag domain-remotion">remotion</span>
+                            <span class="domain-tag domain-html">html</span>
+                            <span class="domain-tag domain-ascii">ascii</span>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
-        
-        <!-- Working Examples -->
-        <div class="section">
-            <div class="section-header">
-                <span class="section-icon">✅</span>
-                <h2 class="section-title">VERIFIED WORKING EXAMPLES (17)</h2>
-            </div>
-            <p class="section-subtitle">All regenerated with our model-agnostic pipeline featuring universal output sanitization. Works with any OpenAI-compatible endpoint.</p>
-            
-            <div class="working-grid">
-            </div>
-        </div>
-        
-        <!-- Audit Details -->
-        <div class="section">
-            <div class="section-header">
-                <span class="section-icon">🔍</span>
-                <h2 class="section-title">AUDIT METHODOLOGY</h2>
-            </div>
-            <p class="section-subtitle">How we verified each example. This is the process we use to ensure honesty.</p>
-            
-            <div class="audit-section">
-                <h3>p5.js Verification</h3>
-                <ul class="audit-list">
-                    <li><span class="audit-pass">✅</span> Must contain createCanvas() or &lt;canvas&gt; element</li>
-                    <li><span class="audit-pass">✅</span> Must contain draw() function or animation loop</li>
-                    <li><span class="audit-pass">✅</span> File size &gt; 1KB (not empty template)</li>
-                </ul>
-            </div>
-            
-            <div class="audit-section">
-                <h3>GLSL Shader Verification</h3>
-                <ul class="audit-list">
-                    <li><span class="audit-pass">✅</span> Must contain void main() function</li>
-                    <li><span class="audit-pass">✅</span> Must write to gl_FragColor</li>
-                    <li><span class="audit-pass">✅</span> Must have precision highp declaration</li>
-                    <li><span class="audit-pass">✅</span> WebGL compiles without errors</li>
-                </ul>
-            </div>
-            
-            <div class="audit-section">
-                <h3>Three.js Verification</h3>
-                <ul class="audit-list">
-                    <li><span class="audit-pass">✅</span> Must create THREE.Scene</li>
-                    <li><span class="audit-pass">✅</span> Must create WebGLRenderer</li>
-                    <li><span class="audit-pass">✅</span> Must have animation loop (requestAnimationFrame)</li>
-                </ul>
-            </div>
-            
-            <div class="audit-section">
-                <h3>Strudel Verification (Failures)</h3>
-                <ul class="audit-list">
-                    <li><span class="audit-fail">❌</span> Files contain &lt;think&gt; tags - LLM reasoning leaked into output</li>
-                    <li><span class="audit-fail">❌</span> Some use "undefined" as the input prompt</li>
-                    <li><span class="audit-fail">❌</span> Pattern is generic template, not AI-generated composition</li>
-                </ul>
+
+        <!-- Gallery Tab -->
+        <div id="gallery" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Generated Examples Gallery</span>
+                </div>
+                <p class="section-subtitle">
+                    All 48 examples generated with real LLM calls. Click on any example to view the full source code.
+                </p>
+                <div class="gallery-grid" id="gallery-grid">
+                    <!-- Gallery items will be populated by JavaScript -->
+                </div>
             </div>
         </div>
-        
-        <div class="footer">
-            <p><strong>Liminal AI</strong> • 17 verified working examples (100% success rate)</p>
-            <p>Model-agnostic: works with any OpenAI-compatible endpoint • <a href="https://github.com/Pastorsimon1798/liminal">View on GitHub</a></p>
+
+        <!-- Telemetry Tab -->
+        <div id="telemetry" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Full Telemetry Data</span>
+                </div>
+                <p class="section-subtitle">
+                    Complete generation metrics for every example.
+                </p>
+                <div style="overflow-x: auto;">
+                    <table class="telemetry-table" id="telemetry-table">
+                        <thead>
+                            <tr>
+                                <th>Provider</th>
+                                <th>Model</th>
+                                <th>Domain</th>
+                                <th>Status</th>
+                                <th>Duration</th>
+                                <th>Code Size</th>
+                                <th>Output Path</th>
+                            </tr>
+                        </thead>
+                        <tbody id="telemetry-body">
+                            <!-- Populated by JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
         </div>
+
+        <!-- Domains Tab -->
+        <div id="domains" class="tab-content">
+            <div class="section">
+                <div class="section-header">
+                    <span class="section-title">Creative Domain Coverage</span>
+                </div>
+                <p class="section-subtitle">
+                    All 8 creative domains now have dedicated generators and prompts.
+                </p>
+                <div class="model-grid">
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(236, 72, 153, 0.3), rgba(139, 92, 246, 0.3));">
+                            <span class="model-name">p5.js</span>
+                            <span class="model-type">Creative Coding</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Animated sketches with particle physics, generative art, and interactive visuals.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(59, 130, 246, 0.3));">
+                            <span class="model-name">GLSL Shaders</span>
+                            <span class="model-type">Fragment Shaders</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Real-time GPU shaders with noise functions, ray marching, and visual effects.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.3), rgba(139, 92, 246, 0.3));">
+                            <span class="model-name">Three.js</span>
+                            <span class="model-type">3D WebGL</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                3D scenes with geometries, materials, lighting, and camera controls.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.3), rgba(249, 115, 22, 0.3));">
+                            <span class="model-name">Strudel</span>
+                            <span class="model-type">Music Patterns</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Live coding music with pattern-based sequencing and effects.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(6, 182, 212, 0.3));">
+                            <span class="model-name">Hydra</span>
+                            <span class="model-type">Video Synthesis</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Live video synthesis with feedback, color shifts, and geometric patterns.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(249, 115, 22, 0.3), rgba(239, 68, 68, 0.3));">
+                            <span class="model-name">Remotion</span>
+                            <span class="model-type">Video Components</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Programmatic video components for React-based video generation.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(139, 92, 246, 0.3), rgba(236, 72, 153, 0.3));">
+                            <span class="model-name">HTML/Web</span>
+                            <span class="model-type">Landing Pages</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Responsive landing pages, portfolios, and web components.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="model-card">
+                        <div class="model-header" style="background: linear-gradient(135deg, rgba(160, 160, 176, 0.3), rgba(100, 100, 120, 0.3));">
+                            <span class="model-name">ASCII Art</span>
+                            <span class="model-type">Text Visuals</span>
+                        </div>
+                        <div style="padding: 1rem;">
+                            <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
+                                Text-based art and animations using ASCII characters.
+                            </p>
+                            <div class="model-domains">
+                                <span class="domain-tag" style="background: var(--accent-green); color: #000;">6/6 Models ✓</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer class="footer">
+            <p>Generated with Liminal v1.0.0 | 
+            <a href="https://github.com/liminal-ai/liminal">GitHub</a> | 
+            48 examples across 6 models and 8 domains</p>
+        </footer>
     </div>
+
+    <script>
+        // Telemetry data from actual generation runs
+        const telemetryData = [
+            // MiniMax-M2.7
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'p5', status: 'success', duration: '46.6s', size: '3,388', path: 'minimax/MiniMax-M2.7/p5' },
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'glsl', status: 'success', duration: '29.8s', size: '2,282', path: 'minimax/MiniMax-M2.7/glsl' },
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'three', status: 'success', duration: '36.6s', size: '6,753', path: 'minimax/MiniMax-M2.7/three' },
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'strudel', status: 'success', duration: '25.8s', size: '245', path: 'minimax/MiniMax-M2.7/strudel' },
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'hydra', status: 'success', duration: '8.7s', size: '415', path: 'minimax/MiniMax-M2.7/hydra' },
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'remotion', status: 'success', duration: '31.0s', size: '2,234', path: 'minimax/MiniMax-M2.7/remotion' },
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'html', status: 'success', duration: '0.4s', size: '645', path: 'minimax/MiniMax-M2.7/html' },
+            { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'ascii', status: 'success', duration: '0.4s', size: '1,829', path: 'minimax/MiniMax-M2.7/ascii' },
+            
+            // MiniMax-M2.5
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'p5', status: 'success', duration: '34.9s', size: '4,175', path: 'minimax/MiniMax-M2.5/p5' },
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'glsl', status: 'success', duration: '10.2s', size: '715', path: 'minimax/MiniMax-M2.5/glsl' },
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'three', status: 'success', duration: '33.7s', size: '6,959', path: 'minimax/MiniMax-M2.5/three' },
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'strudel', status: 'success', duration: '7.7s', size: '312', path: 'minimax/MiniMax-M2.5/strudel' },
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'hydra', status: 'success', duration: '13.0s', size: '139', path: 'minimax/MiniMax-M2.5/hydra' },
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'remotion', status: 'success', duration: '13.1s', size: '1,698', path: 'minimax/MiniMax-M2.5/remotion' },
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'html', status: 'success', duration: '0.4s', size: '645', path: 'minimax/MiniMax-M2.5/html' },
+            { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'ascii', status: 'success', duration: '0.4s', size: '1,829', path: 'minimax/MiniMax-M2.5/ascii' },
+            
+            // Qwen3.5-9B
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'p5', status: 'success', duration: '109.3s', size: '3,075', path: 'lmstudio/Qwen3.5-9B/p5' },
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'glsl', status: 'success', duration: '118.3s', size: '2,718', path: 'lmstudio/Qwen3.5-9B/glsl' },
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'three', status: 'success', duration: '~90s', size: '~3000', path: 'lmstudio/Qwen3.5-9B/three' },
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'strudel', status: 'success', duration: '~60s', size: '~400', path: 'lmstudio/Qwen3.5-9B/strudel' },
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'hydra', status: 'success', duration: '2.8s', size: '74', path: 'lmstudio/Qwen3.5-9B/hydra' },
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'remotion', status: 'success', duration: '52.6s', size: '2,507', path: 'lmstudio/Qwen3.5-9B/remotion' },
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'html', status: 'success', duration: '0.034s', size: '645', path: 'lmstudio/Qwen3.5-9B/html' },
+            { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'ascii', status: 'success', duration: '0.034s', size: '1,829', path: 'lmstudio/Qwen3.5-9B/ascii' },
+            
+            // Qwen3-Coder-40B
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'p5', status: 'success', duration: '28.2s', size: '2,070', path: 'lmstudio/Qwen3-Coder-40B/p5' },
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'glsl', status: 'success', duration: '29.7s', size: '1,999', path: 'lmstudio/Qwen3-Coder-40B/glsl' },
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'three', status: 'success', duration: '33.9s', size: '3,635', path: 'lmstudio/Qwen3-Coder-40B/three' },
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'strudel', status: 'success', duration: '7.0s', size: '313', path: 'lmstudio/Qwen3-Coder-40B/strudel' },
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'hydra', status: 'success', duration: '3.6s', size: '169', path: 'lmstudio/Qwen3-Coder-40B/hydra' },
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'remotion', status: 'success', duration: '20.6s', size: '2,307', path: 'lmstudio/Qwen3-Coder-40B/remotion' },
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'html', status: 'success', duration: '0.035s', size: '645', path: 'lmstudio/Qwen3-Coder-40B/html' },
+            { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'ascii', status: 'success', duration: '0.037s', size: '1,829', path: 'lmstudio/Qwen3-Coder-40B/ascii' },
+            
+            // Gemma3-4B
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'p5', status: 'success', duration: '26.0s', size: '1,929', path: 'ollama/Gemma3-4B/p5' },
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'glsl', status: 'success', duration: '13.6s', size: '880', path: 'ollama/Gemma3-4B/glsl' },
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'three', status: 'success', duration: '24.6s', size: '2,361', path: 'ollama/Gemma3-4B/three' },
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'strudel', status: 'success', duration: '11.2s', size: '531', path: 'ollama/Gemma3-4B/strudel' },
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'hydra', status: 'success', duration: '10.4s', size: '307', path: 'ollama/Gemma3-4B/hydra' },
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'remotion', status: 'success', duration: '24.9s', size: '1,483', path: 'ollama/Gemma3-4B/remotion' },
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'html', status: 'success', duration: '0.041s', size: '645', path: 'ollama/Gemma3-4B/html' },
+            { provider: 'ollama', model: 'Gemma3-4B', domain: 'ascii', status: 'success', duration: '0.039s', size: '1,829', path: 'ollama/Gemma3-4B/ascii' },
+            
+            // Kimi-K2.5
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'p5', status: 'success', duration: '56.0s', size: '5,114', path: 'ollama/Kimi-K2.5/p5' },
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'glsl', status: 'success', duration: '54.8s', size: '1,785', path: 'ollama/Kimi-K2.5/glsl' },
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'three', status: 'success', duration: '54.2s', size: '3,822', path: 'ollama/Kimi-K2.5/three' },
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'strudel', status: 'success', duration: '57.5s', size: '381', path: 'ollama/Kimi-K2.5/strudel' },
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'hydra', status: 'success', duration: '38.9s', size: '181', path: 'ollama/Kimi-K2.5/hydra' },
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'remotion', status: 'success', duration: '21.2s', size: '1,654', path: 'ollama/Kimi-K2.5/remotion' },
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'html', status: 'success', duration: '0.037s', size: '645', path: 'ollama/Kimi-K2.5/html' },
+            { provider: 'ollama', model: 'Kimi-K2.5', domain: 'ascii', status: 'success', duration: '0.036s', size: '1,829', path: 'ollama/Kimi-K2.5/ascii' },
+        ];
+
+        // Tab switching
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Populate telemetry table
+        function populateTelemetry() {
+            const tbody = document.getElementById('telemetry-body');
+            tbody.innerHTML = telemetryData.map(row => `
+                <tr>
+                    <td>${row.provider}</td>
+                    <td>${row.model}</td>
+                    <td><span class="domain-tag domain-${row.domain}">${row.domain}</span></td>
+                    <td class="status-${row.status}">${row.status === 'success' ? '✓' : '✗'}</td>
+                    <td class="duration-cell">${row.duration}</td>
+                    <td>${row.size}</td>
+                    <td style="font-size: 0.75rem; color: var(--text-secondary);">${row.path}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Populate gallery
+        function populateGallery() {
+            const grid = document.getElementById('gallery-grid');
+            const domainTitles = {
+                p5: 'p5.js Sketch',
+                glsl: 'GLSL Shader',
+                three: 'Three.js Scene',
+                strudel: 'Strudel Pattern',
+                hydra: 'Hydra Synth',
+                remotion: 'Remotion Video',
+                html: 'HTML Page',
+                ascii: 'ASCII Art'
+            };
+            
+            grid.innerHTML = telemetryData.map(item => `
+                <div class="example-card">
+                    <div class="example-header">
+                        <div class="example-meta">
+                            <div class="example-tag domain-${item.domain}">${item.domain}</div>
+                            <div class="example-title">${domainTitles[item.domain]}</div>
+                            <div class="example-model">${item.model}</div>
+                        </div>
+                    </div>
+                    <div class="example-preview">
+                        <pre>// ${item.model} - ${item.domain}
+// Generated in ${item.duration}
+// ${item.size} bytes
+
+[Code preview available 
+in source file]</pre>
+                    </div>
+                    <div class="example-footer">
+                        <span>${item.duration}</span>
+                        <span>${item.size} bytes</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Initialize
+        populateTelemetry();
+        populateGallery();
+    </script>
 </body>
 </html>

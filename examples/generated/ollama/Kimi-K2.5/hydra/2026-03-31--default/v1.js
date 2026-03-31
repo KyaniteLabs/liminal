@@ -1,0 +1,8 @@
+src(o0)
+  .scale(1.01)
+  .rotate(0.02)
+  .colorama(0.15)
+  .blend(osc(60, 0.1, 1.5).kaleid(8).color(0.9, 0.1, 0.3), 0.6)
+  .modulateRotate(voronoi(10), 0.2)
+  .scale(1.1)
+  .out(o0)

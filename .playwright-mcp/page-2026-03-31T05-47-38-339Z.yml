@@ -1,0 +1,48 @@
+- generic [ref=e2]:
+  - generic [ref=e3]:
+    - generic [ref=e4]: ◈ LIMINAL
+    - generic [ref=e5]:
+      - generic [ref=e6]: Gallery
+      - generic [ref=e8]: QA Inspector
+  - generic [ref=e9]:
+    - generic [ref=e10]: 🧪 MODEL ARENA — 5 MODELS TESTED
+    - heading "Ralph-Wiggum Loop" [level=1] [ref=e11]
+    - paragraph [ref=e12]:
+      - text: Same prompt, changing world. Iterative creative coding across MiniMax cloud and local Qwen models.
+      - strong [ref=e13]: Every example verified with full telemetry.
+    - generic [ref=e14]:
+      - generic [ref=e15]: ⚡ MiniMax-M2.7 (Cloud)
+      - generic [ref=e16]: ⚡ MiniMax-M2.5 (Cloud)
+      - generic [ref=e17]: ⚡ MiniMax-M2.1 (Cloud)
+      - generic [ref=e18]: 💻 Qwen-3.5-9B (Local)
+      - generic [ref=e19]: 💻 Qwen-3-Coder-40B (Local)
+    - generic [ref=e20]:
+      - generic [ref=e21]:
+        - generic [ref=e22]: "30"
+        - generic [ref=e23]: Tests Run
+      - generic [ref=e24]:
+        - generic [ref=e25]: "--"
+        - generic [ref=e26]: Passed
+      - generic [ref=e27]:
+        - generic [ref=e28]: "--%"
+        - generic [ref=e29]: Success Rate
+      - generic [ref=e30]:
+        - generic [ref=e31]: "--"
+        - generic [ref=e32]: Avg Duration
+      - generic [ref=e33]:
+        - generic [ref=e34]: "--"
+        - generic [ref=e35]: Avg Quality
+  - generic [ref=e36]:
+    - generic [ref=e38]:
+      - generic [ref=e39]: ✨
+      - heading "GENERATED EXAMPLES" [level=2] [ref=e40]
+    - paragraph [ref=e41]: Each example generated through the Ralph-Wiggum Loop with iterative refinement.
+    - generic [ref=e43]:
+      - generic [ref=e44]: 🧪
+      - heading "Tests Running..." [level=3] [ref=e45]
+      - paragraph [ref=e46]: 30 tests across 5 models • Check back soon for results
+  - generic [ref=e47]:
+    - paragraph [ref=e48]:
+      - strong [ref=e49]: Liminal AI
+      - text: • Ralph-Wiggum Loop • Model-Agnostic Creative Coding
+    - paragraph [ref=e50]: OpenAI-compatible endpoints • Self-recursive iteration • Emergent generative art

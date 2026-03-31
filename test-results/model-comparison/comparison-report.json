@@ -1,0 +1,314 @@
+{
+  "results": [
+    {
+      "model": "Qwen 3.5 9B",
+      "prompt": "simple blue circle with animation",
+      "domain": "p5.js",
+      "success": false,
+      "score": 0.18333333333333335,
+      "iterations": 2,
+      "duration": 170330,
+      "codeLength": 2280,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3.5 9B",
+      "prompt": "neon plasma effect with color cycling",
+      "domain": "shader",
+      "success": true,
+      "score": 0.7583333333333334,
+      "iterations": 2,
+      "duration": 103447,
+      "codeLength": 1438,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3.5 9B",
+      "prompt": "techno beat at 130 BPM",
+      "domain": "strudel",
+      "success": true,
+      "score": 0.7583333333333334,
+      "iterations": 3,
+      "duration": 231575,
+      "codeLength": 2729,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3 Coder 40B",
+      "prompt": "simple blue circle with animation",
+      "domain": "p5.js",
+      "success": false,
+      "score": 0.18333333333333335,
+      "iterations": 2,
+      "duration": 73457,
+      "codeLength": 1248,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3.5 9B",
+      "prompt": "geometric shapes with feedback trails",
+      "domain": "hydra",
+      "success": true,
+      "score": 0.7583333333333334,
+      "iterations": 6,
+      "duration": 438330,
+      "codeLength": 2282,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3 Coder 40B",
+      "prompt": "neon plasma effect with color cycling",
+      "domain": "shader",
+      "success": false,
+      "score": 0.6833333333333335,
+      "iterations": 2,
+      "duration": 83804,
+      "codeLength": 2327,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3 Coder 40B",
+      "prompt": "techno beat at 130 BPM",
+      "domain": "strudel",
+      "success": false,
+      "score": 0.6833333333333335,
+      "iterations": 2,
+      "duration": 82421,
+      "codeLength": 3801,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3 Coder 40B",
+      "prompt": "geometric shapes with feedback trails",
+      "domain": "hydra",
+      "success": false,
+      "score": 0.6833333333333335,
+      "iterations": 2,
+      "duration": 63305,
+      "codeLength": 2547,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.7",
+      "prompt": "simple blue circle with animation",
+      "domain": "p5.js",
+      "success": false,
+      "score": 0.18333333333333335,
+      "iterations": 2,
+      "duration": 28400,
+      "codeLength": 1692,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.7",
+      "prompt": "neon plasma effect with color cycling",
+      "domain": "shader",
+      "success": false,
+      "score": 0.6083333333333333,
+      "iterations": 2,
+      "duration": 59711,
+      "codeLength": 2119,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.7",
+      "prompt": "techno beat at 130 BPM",
+      "domain": "strudel",
+      "success": false,
+      "score": 0.6083333333333333,
+      "iterations": 2,
+      "duration": 80040,
+      "codeLength": 4602,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.7",
+      "prompt": "geometric shapes with feedback trails",
+      "domain": "hydra",
+      "success": true,
+      "score": 0.7583333333333334,
+      "iterations": 3,
+      "duration": 87352,
+      "codeLength": 3406,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.7-highspeed",
+      "prompt": "simple blue circle with animation",
+      "domain": "p5.js",
+      "success": false,
+      "score": 0,
+      "iterations": 0,
+      "duration": 301,
+      "codeLength": 0,
+      "hasThinkTags": false,
+      "isValid": false,
+      "errors": [
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
+      ]
+    },
+    {
+      "model": "MiniMax-M2.7-highspeed",
+      "prompt": "neon plasma effect with color cycling",
+      "domain": "shader",
+      "success": false,
+      "score": 0,
+      "iterations": 0,
+      "duration": 273,
+      "codeLength": 0,
+      "hasThinkTags": false,
+      "isValid": false,
+      "errors": [
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
+      ]
+    },
+    {
+      "model": "MiniMax-M2.7-highspeed",
+      "prompt": "techno beat at 130 BPM",
+      "domain": "strudel",
+      "success": false,
+      "score": 0,
+      "iterations": 0,
+      "duration": 291,
+      "codeLength": 0,
+      "hasThinkTags": false,
+      "isValid": false,
+      "errors": [
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
+      ]
+    },
+    {
+      "model": "MiniMax-M2.7-highspeed",
+      "prompt": "geometric shapes with feedback trails",
+      "domain": "hydra",
+      "success": false,
+      "score": 0,
+      "iterations": 0,
+      "duration": 406,
+      "codeLength": 0,
+      "hasThinkTags": false,
+      "isValid": false,
+      "errors": [
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
+      ]
+    },
+    {
+      "model": "MiniMax-M2.5",
+      "prompt": "simple blue circle with animation",
+      "domain": "p5.js",
+      "success": false,
+      "score": 0.18333333333333335,
+      "iterations": 2,
+      "duration": 7427,
+      "codeLength": 773,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.5",
+      "prompt": "neon plasma effect with color cycling",
+      "domain": "shader",
+      "success": false,
+      "score": 0.6083333333333333,
+      "iterations": 2,
+      "duration": 17650,
+      "codeLength": 1519,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.5",
+      "prompt": "techno beat at 130 BPM",
+      "domain": "strudel",
+      "success": false,
+      "score": 0.6083333333333333,
+      "iterations": 2,
+      "duration": 43079,
+      "codeLength": 4482,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "MiniMax-M2.5",
+      "prompt": "geometric shapes with feedback trails",
+      "domain": "hydra",
+      "success": false,
+      "score": 0.6083333333333333,
+      "iterations": 2,
+      "duration": 45609,
+      "codeLength": 2890,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    }
+  ],
+  "stats": {
+    "Qwen 3.5 9B": {
+      "attempts": 4,
+      "successes": 3,
+      "avgScore": 0.6145833333333334,
+      "avgTime": 235920.5,
+      "totalIterations": 13,
+      "contaminationCount": 0
+    },
+    "Qwen 3 Coder 40B": {
+      "attempts": 4,
+      "successes": 0,
+      "avgScore": 0.5583333333333335,
+      "avgTime": 75746.75,
+      "totalIterations": 8,
+      "contaminationCount": 0
+    },
+    "MiniMax-M2.7": {
+      "attempts": 4,
+      "successes": 1,
+      "avgScore": 0.5395833333333333,
+      "avgTime": 63875.75,
+      "totalIterations": 9,
+      "contaminationCount": 0
+    },
+    "MiniMax-M2.7-highspeed": {
+      "attempts": 4,
+      "successes": 0,
+      "avgScore": 0,
+      "avgTime": 317.75,
+      "totalIterations": 0,
+      "contaminationCount": 0
+    },
+    "MiniMax-M2.5": {
+      "attempts": 4,
+      "successes": 0,
+      "avgScore": 0.5020833333333333,
+      "avgTime": 28441.25,
+      "totalIterations": 8,
+      "contaminationCount": 0
+    }
+  }
+}

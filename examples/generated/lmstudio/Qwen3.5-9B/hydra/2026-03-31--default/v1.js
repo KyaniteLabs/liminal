@@ -1,0 +1,1 @@
+osc(128).shape(voronoi()).kaleid(4).scale(1.5).color([0, 255, 65]).out(o0)

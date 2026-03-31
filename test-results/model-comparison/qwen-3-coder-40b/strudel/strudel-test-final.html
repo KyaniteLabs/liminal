@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none';">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>p5.js Sketch</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+    <main>
+        <script>
+let particles = [];
+let bpm = 130;
+let beatInterval = (60 / bpm) * 1000;
+let lastBeatTime = 0;
+let beatStrength = 0;
+let hueOffset = 0;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+  colorMode(HSB);
+  
+  // Initialize particles in a circular formation
+  for (let i = 0; i < 300; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+function draw() {
+  let now = millis();
+  
+  // Beat detection and decay
+  if (now - lastBeatTime > beatInterval) {
+    beatStrength = 1.0;
+    lastBeatTime = now;
+    
+    // Trigger particle burst on beat
+    for (let p of particles) {
+      p.burst();
+    }
+  } else {
+    beatStrength *= 0.92; // Exponential decay
+  }
+  
+  // Background with beat-based alpha
+  fill(0, 0.15 + beatStrength * 0.2);
+  noStroke();
+  rect(0, 0, width, height);
+  
+  hueOffset += 0.5;
+  
+  // Update and draw particles
+  for (let p of particles) {
+    p.update();
+    p.display();
+  }
+}
+
+class Particle {
+  constructor() {
+    this.reset();
+  }
+  
+  reset() {
+    // Position in circular pattern
+    let angle = random(TWO_PI);
+    let radius = random(50, min(width, height) * 0.4);
+    
+    this.x = width / 2 + cos(angle) * radius;
+    this.y = height / 2 + sin(angle) * radius;
+    
+    // Velocity
+    this.vx = random(-1, 1);
+    this.vy = random(-1, 1);
+    
+    // Properties
+    this.size = random(3, 7);
+    this.baseSize = this.size;
+    this.hue = hueOffset + random(0, 60);
+    this.life = 1.0;
+    this.decayRate = random(0.005, 0.02);
+    
+    // Beat influence
+    this.beatInfluence = random(0.5, 2.0);
+  }
+  
+  burst() {
+    // Increase velocity and size on beat
+    let force = beatStrength * this.beatInfluence;
+    this.vx += random(-force, force) * 3;
+    this.vy += random(-force, force) * 3;
+    this.size = this.baseSize * (1 + beatStrength);
+    
+    // Reset life for visual effect
+    this.life = 1.0;
+  }
+  
+  update() {
+    // Apply noise-based movement
+    let noiseX = noise(this.x * 0.01, this.y * 0.01, millis() * 0.002) - 0.5;
+    let noiseY = noise(this.x * 0.01 + 1000, this.y * 0.01 + 1000, millis() * 0.002) - 0.5;
+    
+    this.vx += noiseX * 0.2;
+    this.vy += noiseY * 0.2;
+    
+    // Friction
+    this.vx *= 0.96;
+    this.vy *= 0.96;
+    
+    // Update position
+    this.x += this.vx;
+    this.y += this.vy;
+    
+    // Beat expansion effect
+    let beatFactor = beatStrength * this.beatInfluence;
+    this.size = this.baseSize + beatFactor * 3;
+    
+    // Fade out over time
+    if (this.life > 0) {
+      this.life -= this.decayRate;
+    }
+    
+    // Wrap around screen
+    if (this.x < -50) this.x = width + 50;
+    if (this.x > width + 50) this.x = -50;
+    if (this.y < -50) this.y = height + 50;
+    if (this.y > height + 50) this.y = -50;
+    
+    // Update hue for color cycling
+    this.hue += 0.3;
+  }
+  
+  display() {
+    // Calculate alpha based on life and beat strength
+    let alpha = map(this.life, 0, 1, 0.2, 1) * (0.5 + beatStrength * 0.5);
+    
+    stroke((this.hue + hueOffset) % 360, 80, 100, alpha);
+    fill((this.hue + hueOffset) % 360, 70, 90, alpha);
+    
+    // Draw particle
+    circle(this.x, this.y, this.size);
+    
+    // Draw connection lines when particles are close
+    for (let other of particles) {
+      if (other !== this) {
+        let dx = this.x - other.x;
+        let dy = this.y - other.y;
+        let distSq = dx * dx + dy * dy;
+        
+        if (distSq < 10000) { // 100px distance squared
+          let dist = sqrt(distSq);
+          let lineAlpha = map(dist, 0, 100, alpha * 0.8, 0);
+          
+          stroke((this.hue + hueOffset) % 360, 50, 80, lineAlpha);
+          strokeWeight(1 - dist / 100);
+          line(this.x, this.y, other.x, other.y);
+        }
+      }
+    }
+  }
+}
+        </script>
+    </main>
+</body>
+</html>

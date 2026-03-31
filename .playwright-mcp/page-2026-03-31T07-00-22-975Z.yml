@@ -1,0 +1,394 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]: Best viewed on a desktop browser. Interactive elements use mouse hover, and margin figures need a wide screen.
+  - banner [ref=e4]:
+    - 'heading "Meta-Harness: End-to-End Optimization of Model Harnesses" [level=1] [ref=e5]'
+    - generic [ref=e6]: Yoonho Lee, Roshen Nair, Qizheng Zhang, Kangwook Lee, Omar Khattab, Chelsea Finn
+    - generic [ref=e7]:
+      - link "Paper" [ref=e8] [cursor=pointer]:
+        - /url: https://arxiv.org/abs/2603.28052
+      - link "Code" [ref=e9] [cursor=pointer]:
+        - /url: https://github.com/stanford-iris-lab/meta-harness-tbench2-artifact
+  - generic [ref=e11]:
+    - 'heading "TerminalBench-2: Harness Evolution" [level=2] [ref=e12]'
+    - paragraph [ref=e13]:
+      - text: This is not the run that produced our final reported harness. It is an earlier, smaller search run that we find especially instructive for understanding what Meta-Harness does internally. We deliberately chose a
+      - strong [ref=e14]: hard 19-task subset
+      - text: where most agents struggle (note the low baseline scores), so that improvements from pure harness changes would be clearly visible. Starting from Terminus-KIRA (28.5%), the search reaches
+      - strong [ref=e15]: 46.5%
+      - text: by iteration 7.
+    - paragraph [ref=e16]:
+      - text: Step through the iterations to see the proposer's reasoning. It performs counterfactual diagnosis across execution traces, identifies specific failure modes by reading raw logs through the filesystem, and proposes targeted fixes. Each proposal is grounded in concrete evidence from prior runs. Full-benchmark results on all 89 tasks are in the
+      - link "Results" [ref=e17] [cursor=pointer]:
+        - /url: "#results"
+      - text: section below. Click any dot or use arrow keys to inspect code changes.
+    - generic [ref=e19]:
+      - generic [ref=e20]: Subset Baselines
+      - generic [ref=e21] [cursor=pointer]:
+        - generic [ref=e22]: Meta-Harness
+        - generic [ref=e23]: 46.5%
+      - generic [ref=e24] [cursor=pointer]:
+        - generic [ref=e25]: Judy
+        - generic [ref=e26]: 35.8%
+      - generic [ref=e27] [cursor=pointer]:
+        - generic [ref=e28]: Terminus-KIRA
+        - generic [ref=e29]: 28.5%
+      - generic [ref=e30] [cursor=pointer]:
+        - generic [ref=e31]: Letta Code
+        - generic [ref=e32]: 28.4%
+      - generic [ref=e33] [cursor=pointer]:
+        - generic [ref=e34]: Claude Code
+        - generic [ref=e35]: 28.0%
+      - generic [ref=e36] [cursor=pointer]:
+        - generic [ref=e37]: Factory Droid
+        - generic [ref=e38]: 27.4%
+      - generic [ref=e39] [cursor=pointer]:
+        - generic [ref=e40]: Terminus 2
+        - generic [ref=e41]: 26.0%
+      - generic [ref=e42] [cursor=pointer]:
+        - generic [ref=e43]: Goose
+        - generic [ref=e44]: 23.2%
+    - generic [ref=e47]:
+      - button "← Prev" [disabled]
+      - generic [ref=e48]: Baseline
+      - button "Next →" [ref=e49] [cursor=pointer]
+    - generic [ref=e50]:
+      - generic [ref=e52]: Baseline
+      - generic [ref=e53]:
+        - text: "The starting point:"
+        - link "Terminus-KIRA" [ref=e54] [cursor=pointer]:
+          - /url: https://github.com/krafton-ai/KIRA/blob/main/terminus_kira/terminus_kira.py
+        - text: by KRAFTON AI. A well-engineered agent harness with native tool calling, an image_read tool for multimedia, marker-based command polling, and a multi-perspective completion checklist. It scores 28.5% on this challenging 19-task subset where most agents struggle.
+      - generic [ref=e56]: terminus_kira (28.5%)
+  - generic [ref=e58]:
+    - generic [ref=e59]:
+      - img "Meta-Harness method overview." [ref=e60]
+      - generic [ref=e61]:
+        - strong [ref=e62]: Meta-Harness search loop.
+        - text: (1) An agent reads a filesystem containing all prior candidates' source code, execution traces, and scores, and proposes a new harness. (2) We evaluate the proposed harness on held-out tasks. (3) All logs are stored in the filesystem, and the loop repeats.
+    - generic [ref=e63]:
+      - heading "What Makes This Different" [level=2] [ref=e64]
+      - paragraph [ref=e65]: There are many methods for optimizing text and code with LLM feedback. The key difference is how much the optimizer gets to see. Most prior methods compress everything into a short summary, a scalar score, or a sliding window of recent candidates. That works for small problems, but harness engineering produces failures that are hard to diagnose without seeing the raw execution trace.
+      - paragraph [ref=e66]:
+        - text: "Meta-Harness takes a different approach: it gives the proposer a filesystem containing the full source code, scores, and execution traces of every prior candidate. The proposer is a coding agent (Claude Code) that reads what it needs via"
+        - code [ref=e67]: grep
+        - text: ","
+        - code [ref=e68]: cat
+        - text: ", and other standard tools. In practice, this means up to 10M tokens of diagnostic context per step, vs. at most 26K for all prior methods we surveyed. The result is that the proposer can trace a failure back to the specific harness decision that caused it, rather than guessing from a score. See"
+        - link "the paper" [ref=e69] [cursor=pointer]:
+          - /url: https://arxiv.org/abs/2603.28052
+        - text: for details.
+      - generic [ref=e71]:
+        - table [ref=e72]:
+          - rowgroup [ref=e73]:
+            - row "Method History Log content Mtok/iter ↑" [ref=e74]:
+              - columnheader "Method" [ref=e75]
+              - columnheader "History" [ref=e76]
+              - columnheader "Log content" [ref=e77]
+              - columnheader "Mtok/iter ↑" [ref=e78]
+          - rowgroup [ref=e79]:
+            - row "Self-Refine Last output + self-generated critique 0.001" [ref=e80]:
+              - cell "Self-Refine" [ref=e81]
+              - cell "Last" [ref=e82]
+              - cell "output + self-generated critique" [ref=e83]
+              - cell "0.001" [ref=e84]
+            - row "OPRO Window past (solution, score) pairs 0.002" [ref=e85]:
+              - cell "OPRO" [ref=e86]
+              - cell "Window" [ref=e87]
+              - cell "past (solution, score) pairs" [ref=e88]
+              - cell "0.002" [ref=e89]
+            - row "TextGrad Last LLM textual gradient 0.015" [ref=e90]:
+              - cell "TextGrad" [ref=e91]
+              - cell "Last" [ref=e92]
+              - cell "LLM textual gradient" [ref=e93]
+              - cell "0.015" [ref=e94]
+            - row "MIPRO Summary bootstrapped program traces 0.003" [ref=e95]:
+              - cell "MIPRO" [ref=e96]
+              - cell "Summary" [ref=e97]
+              - cell "bootstrapped program traces" [ref=e98]
+              - cell "0.003" [ref=e99]
+            - row "AlphaEvolve Window program database + eval. scores 0.022" [ref=e100]:
+              - cell "AlphaEvolve" [ref=e101]
+              - cell "Window" [ref=e102]
+              - cell "program database + eval. scores" [ref=e103]
+              - cell "0.022" [ref=e104]
+            - row "GEPA Summary rollout traces (reasoning + tools) 0.008" [ref=e105]:
+              - cell "GEPA" [ref=e106]
+              - cell "Summary" [ref=e107]
+              - cell "rollout traces (reasoning + tools)" [ref=e108]
+              - cell "0.008" [ref=e109]
+            - row "Feedback Descent Summary pairwise comparison + feedback 0.012" [ref=e110]:
+              - cell "Feedback Descent" [ref=e111]
+              - cell "Summary" [ref=e112]
+              - cell "pairwise comparison + feedback" [ref=e113]
+              - cell "0.012" [ref=e114]
+            - row "TTT-Discover Window prev. solution fragment 0.026" [ref=e115]:
+              - cell "TTT-Discover" [ref=e116]
+              - cell "Window" [ref=e117]
+              - cell "prev. solution fragment" [ref=e118]
+              - cell "0.026" [ref=e119]
+            - row "Meta-Harness Full all logs and scores 10.0" [ref=e120]:
+              - cell "Meta-Harness" [ref=e121]:
+                - strong [ref=e122]: Meta-Harness
+              - cell "Full" [ref=e123]:
+                - strong [ref=e124]: Full
+              - cell "all logs and scores" [ref=e125]:
+                - strong [ref=e126]: all logs and scores
+              - cell "10.0" [ref=e127]:
+                - strong [ref=e128]: "10.0"
+        - paragraph [ref=e129]: Context available per optimization step. Mtok/iter = estimated context per evaluation in each paper's largest setting. Hover a row for details.
+    - generic [ref=e130]:
+      - heading "Results" [level=2] [ref=e131]
+      - heading "Text Classification" [level=3] [ref=e132]
+      - paragraph [ref=e133]: "We follow the online text classification setup of ACE: an LLM receives labeled examples one at a time, updates its memory, and is evaluated on a held-out test set. We search over harnesses using three datasets — LawBench (215 classes), Symptom2Disease (22 classes), and USPTO-50k (180 classes) — with GPT-OSS-120B as the model. We ran 20 evolution iterations with two candidates per iteration, producing 40 candidate harnesses. All test sets are held out until the final evaluation."
+      - generic [ref=e134]:
+        - text: The best discovered harness (
+        - emphasis [ref=e135]: Label-Primed Query
+        - text: ) achieves
+        - strong [ref=e136]: 48.6%
+        - text: vs. ACE’s 40.9% — a
+        - strong [ref=e137]: 7.7-point improvement
+        - text: using
+        - strong [ref=e138]: 4× fewer context tokens
+        - text: ". Gains concentrate on tasks with large, confusable label spaces: LawBench (215 classes) sees +16 points, Symptom2Disease +9 points. None of the discovered harnesses require additional LLM calls beyond the main task-solving call."
+      - generic [ref=e140]:
+        - table [ref=e141]:
+          - rowgroup [ref=e142]:
+            - row "Harness USPTO ↑ S2D ↑ Law ↑ Acc ↑ Ctx (K) ↓" [ref=e143]:
+              - columnheader "Harness" [ref=e144]
+              - columnheader "USPTO ↑" [ref=e145]
+              - columnheader "S2D ↑" [ref=e146]
+              - columnheader "Law ↑" [ref=e147]
+              - columnheader "Acc ↑" [ref=e148]
+              - columnheader "Ctx (K) ↓" [ref=e149]
+          - rowgroup [ref=e150]:
+            - row "Zero-shot 12.0 63.2 7.0 27.4 0" [ref=e151]:
+              - cell "Zero-shot" [ref=e152]
+              - cell "12.0" [ref=e153]
+              - cell "63.2" [ref=e154]
+              - cell "7.0" [ref=e155]
+              - cell "27.4" [ref=e156]
+              - cell "0" [ref=e157]
+            - row "Few-shot (N=4) 11.0 68.4 18.0 32.5 4.0" [ref=e158]:
+              - cell "Few-shot (N=4)" [ref=e159]
+              - cell "11.0" [ref=e160]
+              - cell "68.4" [ref=e161]
+              - cell "18.0" [ref=e162]
+              - cell "32.5" [ref=e163]
+              - cell "4.0" [ref=e164]
+            - row "Few-shot (N=8) 14.0 67.9 21.0 34.3 8.0" [ref=e165]:
+              - cell "Few-shot (N=8)" [ref=e166]
+              - cell "14.0" [ref=e167]
+              - cell "67.9" [ref=e168]
+              - cell "21.0" [ref=e169]
+              - cell "34.3" [ref=e170]
+              - cell "8.0" [ref=e171]
+            - row "Few-shot (N=16) 15.0 67.0 20.0 34.0 15.4" [ref=e172]:
+              - cell "Few-shot (N=16)" [ref=e173]
+              - cell "15.0" [ref=e174]
+              - cell "67.0" [ref=e175]
+              - cell "20.0" [ref=e176]
+              - cell "34.0" [ref=e177]
+              - cell "15.4" [ref=e178]
+            - row "Few-shot (N=32) 13.0 72.2 21.0 35.4 31.5" [ref=e179]:
+              - cell "Few-shot (N=32)" [ref=e180]
+              - cell "13.0" [ref=e181]
+              - cell "72.2" [ref=e182]
+              - cell "21.0" [ref=e183]
+              - cell "35.4" [ref=e184]
+              - cell "31.5" [ref=e185]
+            - row "Few-shot (all) 15.0 78.3 29.0 40.8 49.3" [ref=e186]:
+              - cell "Few-shot (all)" [ref=e187]
+              - cell "15.0" [ref=e188]
+              - cell "78.3" [ref=e189]
+              - cell "29.0" [ref=e190]
+              - cell "40.8" [ref=e191]
+              - cell "49.3" [ref=e192]
+            - row "ACE 16.0 77.8 29.0 40.9 203.0" [ref=e193]:
+              - cell "ACE" [ref=e194]
+              - cell "16.0" [ref=e195]:
+                - strong [ref=e196]: "16.0"
+              - cell "77.8" [ref=e197]
+              - cell "29.0" [ref=e198]
+              - cell "40.9" [ref=e199]
+              - cell "203.0" [ref=e200]
+            - row "MCE 14.0 83.0 23.0 40.0 114.0" [ref=e201]:
+              - cell "MCE" [ref=e202]
+              - cell "14.0" [ref=e203]
+              - cell "83.0" [ref=e204]
+              - cell "23.0" [ref=e205]
+              - cell "40.0" [ref=e206]
+              - cell "114.0" [ref=e207]
+            - row "Meta-Harness (Ours) 14.0 86.8 45.0 48.6 45.5" [ref=e208]:
+              - cell "Meta-Harness (Ours)" [ref=e209]
+              - cell "14.0" [ref=e210]
+              - cell "86.8" [ref=e211]:
+                - strong [ref=e212]: "86.8"
+              - cell "45.0" [ref=e213]:
+                - strong [ref=e214]: "45.0"
+              - cell "48.6" [ref=e215]:
+                - strong [ref=e216]: "48.6"
+              - cell "45.5" [ref=e217]
+        - paragraph [ref=e218]: Test accuracy on three text classification benchmarks (GPT-OSS-120B). Ctx = average additional input context (thousands of characters).
+      - paragraph [ref=e221]:
+        - text: We also directly compare Meta-Harness against two representative program-search methods, OpenEvolve and TTT-Discover (with PUCT selection), giving each the same proposer and evaluation budget. Meta-Harness matches their final accuracy with
+        - strong [ref=e222]: 10× fewer evaluations
+        - text: ", and its final accuracy surpasses theirs by more than 10 points. We attribute this to the filesystem-based interface: both OpenEvolve and PUCT compress history into a fixed prompt format, discarding the execution traces that Meta-Harness uses for targeted diagnosis."
+      - generic [ref=e223]:
+        - img "Meta-Harness learning curves vs baselines"
+        - generic [ref=e224]:
+          - strong [ref=e225]: Search progress over ~60 proposals.
+          - text: Meta-Harness (red) outperforms all baselines and reaches the next-best optimizer’s final accuracy in just 4 iterations. TTT-Discover, Best-of-N, OpenEvolve, ACE, few-shot, and zero-shot shown for comparison.
+      - heading "Math Reasoning" [level=3] [ref=e226]
+      - paragraph [ref=e227]: "We study retrieval-augmented math solving: a language model is given retrieved examples from a large corpus before attempting each problem. Meta-Harness searches over retrieval programs that can implement arbitrary filtering, branching, and formatting logic using corpus metadata and BM25 scores. The corpus contains ≥500K problems drawn from eight open-source datasets. We evolve a single retrieval harness on a 250-problem search set, then evaluate it on 200 held-out IMO-level problems. The same harness is then tested on five models unseen during search, directly measuring transfer."
+      - generic [ref=e228]:
+        - text: A single discovered retrieval harness improves accuracy by
+        - strong [ref=e229]: +4.7 points
+        - text: on average (34.1% → 38.8%) across five held-out models. It matches or exceeds the strongest fixed baselines on average, outperforming BM25 retrieval by 1.3 points overall.
+      - generic [ref=e230]:
+        - table [ref=e231]:
+          - rowgroup [ref=e232]:
+            - row "Method GPT-5.4n ↑ GPT-5.4m ↑ Gem-3.1FL ↑ Gem-3F ↑ GPT-20B ↑ Avg ↑" [ref=e233]:
+              - columnheader "Method" [ref=e234]
+              - columnheader "GPT-5.4n ↑" [ref=e235]
+              - columnheader "GPT-5.4m ↑" [ref=e236]
+              - columnheader "Gem-3.1FL ↑" [ref=e237]
+              - columnheader "Gem-3F ↑" [ref=e238]
+              - columnheader "GPT-20B ↑" [ref=e239]
+              - columnheader "Avg ↑" [ref=e240]
+          - rowgroup [ref=e241]:
+            - row "No Retriever 23.0 28.8 28.6 42.6 47.6 34.1" [ref=e242]:
+              - cell "No Retriever" [ref=e243]
+              - cell "23.0" [ref=e244]
+              - cell "28.8" [ref=e245]
+              - cell "28.6" [ref=e246]
+              - cell "42.6" [ref=e247]
+              - cell "47.6" [ref=e248]
+              - cell "34.1" [ref=e249]
+            - row "Random Few-shot 23.1 (+0.1) 24.5 (-4.3) 31.0 (+2.4) 40.4 (-2.2) 41.8 (-5.8) 32.2 (-1.9)" [ref=e250]:
+              - cell "Random Few-shot" [ref=e251]
+              - cell "23.1 (+0.1)" [ref=e252]
+              - cell "24.5 (-4.3)" [ref=e253]
+              - cell "31.0 (+2.4)" [ref=e254]
+              - cell "40.4 (-2.2)" [ref=e255]
+              - cell "41.8 (-5.8)" [ref=e256]
+              - cell "32.2 (-1.9)" [ref=e257]
+            - row "BM25 Retrieval 30.2 (+7.2) 29.2 (+0.4) 32.8 (+4.2) 46.6 (+4.0) 48.9 (+1.3) 37.5 (+3.4)" [ref=e258]:
+              - cell "BM25 Retrieval" [ref=e259]
+              - cell "30.2 (+7.2)" [ref=e260]
+              - cell "29.2 (+0.4)" [ref=e261]
+              - cell "32.8 (+4.2)" [ref=e262]
+              - cell "46.6 (+4.0)" [ref=e263]
+              - cell "48.9 (+1.3)" [ref=e264]
+              - cell "37.5 (+3.4)" [ref=e265]
+            - row "Meta-Harness (Ours) 31.7 (+8.7) 30.4 (+1.6) 34.9 (+6.3) 46.3 (+3.7) 50.6 (+3.0) 38.8 (+4.7)" [ref=e266]:
+              - cell "Meta-Harness (Ours)" [ref=e267]
+              - cell "31.7 (+8.7)" [ref=e268]
+              - cell "30.4 (+1.6)" [ref=e269]
+              - cell "34.9 (+6.3)" [ref=e270]
+              - cell "46.3 (+3.7)" [ref=e271]
+              - cell "50.6 (+3.0)" [ref=e272]
+              - cell "38.8 (+4.7)" [ref=e273]:
+                - strong [ref=e274]: "38.8"
+                - text: (+4.7)
+        - paragraph [ref=e275]: Retrieval-augmented math reasoning on 200 IMO-level problems (pass@1, avg. over 3 samples). Absolute improvement over no retriever in parentheses. The discovered Meta-Harness retrieval strategy improves reasoning across all five held-out models, with a 4.7-point average gain.
+      - heading "Agentic Coding (TerminalBench-2)" [level=3] [ref=e276]
+      - paragraph [ref=e277]: TerminalBench-2 evaluates LLM agents on 89 Dockerized tasks spanning code translation, distributed ML setup, systems programming, bioinformatics, and cryptanalysis, with binary pass/fail grading and 5 independent trials per task. These tasks are difficult because they require long-horizon, fully autonomous execution under complex dependencies, truncated terminal outputs, and substantial domain knowledge.
+      - paragraph [ref=e278]: Meta-Harness evolves the full coding harness (system prompts, tool definitions, completion-checking logic, and context management). The proposer reads per-task execution traces (command logs, error messages, timeout behavior) to diagnose failure modes and propose targeted fixes. We initialize search from two strong open baselines, Terminus 2 and Terminus-KIRA.
+      - generic [ref=e279]:
+        - text: "On"
+        - strong [ref=e280]: Claude Opus 4.6
+        - text: ", Meta-Harness achieves"
+        - strong [ref=e281]: 76.4%
+        - text: pass rate, surpassing Terminus-KIRA (74.7%) and ranking
+        - strong [ref=e282]: "#2"
+        - text: among all Opus 4.6 agents. On
+        - strong [ref=e283]: Claude Haiku 4.5
+        - text: ", Meta-Harness achieves"
+        - strong [ref=e284]: 37.6%
+        - text: ", outperforming the next-best agent (Goose, 35.5%) and ranking"
+        - strong [ref=e285]: "#1"
+        - text: among all Haiku 4.5 agents.
+      - generic [ref=e286]:
+        - table [ref=e288]:
+          - rowgroup [ref=e289]:
+            - row "Claude Opus 4.6 Pass %" [ref=e290]:
+              - columnheader "Claude Opus 4.6" [ref=e291]
+              - columnheader "Pass %" [ref=e292]
+          - rowgroup [ref=e293]:
+            - row "Claude Code 58.0" [ref=e294]:
+              - cell "Claude Code" [ref=e295]
+              - cell "58.0" [ref=e296]
+            - row "Terminus 2 62.9" [ref=e297]:
+              - cell "Terminus 2" [ref=e298]
+              - cell "62.9" [ref=e299]
+            - row "Mux 66.5" [ref=e300]:
+              - cell "Mux" [ref=e301]
+              - cell "66.5" [ref=e302]
+            - row "Factory Droid 69.9" [ref=e303]:
+              - cell "Factory Droid" [ref=e304]
+              - cell "69.9" [ref=e305]
+            - row "TongAgents 71.9" [ref=e306]:
+              - cell "TongAgents" [ref=e307]
+              - cell "71.9" [ref=e308]
+            - row "MAYA-V2 72.1" [ref=e309]:
+              - cell "MAYA-V2" [ref=e310]
+              - cell "72.1" [ref=e311]
+            - row "Terminus-KIRA 74.7" [ref=e312]:
+              - cell "Terminus-KIRA" [ref=e313]
+              - cell "74.7" [ref=e314]
+            - row "Capy 75.3" [ref=e315]:
+              - cell "Capy" [ref=e316]
+              - cell "75.3" [ref=e317]
+            - row "Meta-Harness (Ours) 76.4" [ref=e318]:
+              - cell "Meta-Harness (Ours)" [ref=e319]
+              - cell "76.4" [ref=e320]
+            - row "ForgeCode 81.8" [ref=e321]:
+              - cell "ForgeCode" [ref=e322]
+              - cell "81.8" [ref=e323]:
+                - strong [ref=e324]: "81.8"
+        - table [ref=e326]:
+          - rowgroup [ref=e327]:
+            - row "Claude Haiku 4.5 Pass %" [ref=e328]:
+              - columnheader "Claude Haiku 4.5" [ref=e329]
+              - columnheader "Pass %" [ref=e330]
+          - rowgroup [ref=e331]:
+            - row "OpenHands 13.9" [ref=e332]:
+              - cell "OpenHands" [ref=e333]
+              - cell "13.9" [ref=e334]
+            - row "Claude Code 27.5" [ref=e335]:
+              - cell "Claude Code" [ref=e336]
+              - cell "27.5" [ref=e337]
+            - row "Terminus 2 28.3" [ref=e338]:
+              - cell "Terminus 2" [ref=e339]
+              - cell "28.3" [ref=e340]
+            - row "Mini-SWE-Agent 29.8" [ref=e341]:
+              - cell "Mini-SWE-Agent" [ref=e342]
+              - cell "29.8" [ref=e343]
+            - row "Terminus-KIRA 33.7" [ref=e344]:
+              - cell "Terminus-KIRA" [ref=e345]
+              - cell "33.7" [ref=e346]
+            - row "Goose 35.5" [ref=e347]:
+              - cell "Goose" [ref=e348]
+              - cell "35.5" [ref=e349]
+            - row "Meta-Harness (Ours) 37.6" [ref=e350]:
+              - cell "Meta-Harness (Ours)" [ref=e351]
+              - cell "37.6" [ref=e352]:
+                - strong [ref=e353]: "37.6"
+      - paragraph [ref=e354]:
+        - text: Pass rate on TerminalBench-2. Results for others are from the official leaderboard.
+        - strong [ref=e355]: "Meta-Harness ranks #2 among all Opus 4.6 agents and #1 among all Haiku 4.5 agents."
+    - separator [ref=e356]
+    - generic [ref=e357]:
+      - heading "BibTeX" [level=2] [ref=e358]
+      - generic [ref=e359]:
+        - button "Copy" [ref=e360] [cursor=pointer]
+        - code [ref=e362]: "@inproceedings{lee2026metaharness, title={Meta-Harness: End-to-End Optimization of Model Harnesses}, author={Lee, Yoonho and Nair, Roshen and Zhang, Qizheng and Lee, Kangwook and Khattab, Omar and Finn, Chelsea}, booktitle={Preprint}, year={2026} }"
+  - contentinfo [ref=e363]:
+    - generic [ref=e364]:
+      - text: Design inspired by
+      - link "Academic Project Page" [ref=e365] [cursor=pointer]:
+        - /url: https://github.com/eliahuhorwitz/Academic-project-page-template
+      - text: /
+      - link "Nerfies" [ref=e366] [cursor=pointer]:
+        - /url: https://nerfies.github.io
+      - text: ", heavily modified."

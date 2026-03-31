@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>Remotion Composition</title>
+    <style>
+        body { margin: 0; padding: 2rem; background: #0a0a0f; color: #e0e0e0; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; }
+        pre { white-space: pre-wrap; word-wrap: break-word; }
+        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; font-size: 0.8rem; margin-bottom: 1rem; }
+        .note { color: #a0a0b0; font-size: 0.8rem; margin-bottom: 1rem; }
+    </style>
+</head>
+<body>
+    <div class="badge">Remotion</div>
+    <p class="note">Remotion requires a bundler to render. This is the generated composition code:</p>
+    <pre><code>import React from 'react';
+import {useCurrentFrame, interpolate, spring, AbsoluteFill} from 'remotion';
+
+export const SimpleBlueCircle: React.FC = () =&gt; {
+  const frame = useCurrentFrame();
+  
+  // Calculate position using spring physics for a bouncing effect
+  const yPosition = spring({
+    frame,
+    fps: 30,
+    durationInFrames: 150,
+    mass: 1,
+    tension: 200,
+    friction: 40,
+    from: -200,
+    to: 0
+  });
+
+  // Scale animation with spring effect
+  const scale = spring({
+    frame,
+    fps: 30,
+    durationInFrames: 150,
+    mass: 1,
+    tension: 300,
+    friction: 30,
+    from: 0.2,
+    to: 1
+  });
+
+  // Rotation animation using linear interpolation
+  const rotation = interpolate(
+    frame,
+    [0, 150],
+    [0, 720]
+  );
+
+  return (
+    &lt;AbsoluteFill style={{backgroundColor: '#000'}}&gt;
+      &lt;div 
+        style={{
+          width: 300,
+          height: 300,
+          backgroundColor: '#0066cc',
+          borderRadius: '50%',
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: `translate(-50%, -50%) translateY(${yPosition}px) scale(${scale}) rotate(${rotation}deg)`,
+          boxShadow: '0 10px 40px rgba(0, 102, 204, 0.6)',
+        }}
+      /&gt;
+    &lt;/AbsoluteFill&gt;
+  );
+};</code></pre>
+</body>
+</html>

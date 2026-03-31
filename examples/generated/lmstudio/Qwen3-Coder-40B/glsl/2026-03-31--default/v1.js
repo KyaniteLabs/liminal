@@ -1,0 +1,78 @@
+precision highp float;
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec2 u_mouse;
+
+#define PI 3.14159265358979323846
+
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    float a = hash(i + vec2(0.0, 0.0));
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float v = 0.0;
+    float a = 1.0;
+    float f = 1.0;
+    for (int i = 0; i < 4; ++i) {
+        v += a * noise(p * f);
+        a *= 0.5;
+        f *= 2.0;
+    }
+    return v;
+}
+
+vec3 palette(float t) {
+    vec3 a = vec3(0.5, 0.5, 0.5);
+    vec3 b = vec3(0.5, 0.5, 0.5);
+    vec3 c = vec3(1.0, 1.0, 1.0);
+    vec3 d = vec3(0.263, 0.487, 0.691);
+    return a + b * cos(PI * (c * t + d));
+}
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    uv.x *= u_resolution.x / u_resolution.y;
+    
+    float mx = u_mouse.x * 2.0 - 1.0;
+    float my = 1.0 - u_mouse.y * 2.0;
+    vec2 mouse = vec2(mx, my);
+    
+    vec2 p = uv * 3.0;
+    float t = u_time * 0.5;
+    
+    float f = 0.0;
+    
+    // Create plasma effect with multiple wave interactions
+    f += sin(p.x * 1.5 + t * 0.8);
+    f += sin(p.y * 1.3 + t * 0.6);
+    f += sin((p.x + p.y) * 1.2 + t * 0.4);
+    f += cos(p.x * 0.9 + p.y * 1.1 + t * 0.3);
+    
+    // Add noise for texture
+    float n = fbm(vec2(f * 0.5, t * 0.2)) * 0.3;
+    f += n;
+    
+    // Apply palette with time-varying color shifts
+    vec3 color = palette(f + t * 0.1);
+    
+    // Add mouse influence for interactivity
+    float dist = length(p - mouse * 2.0);
+    float mouseEffect = exp(-dist * dist * 1.5) * sin(t * 2.0);
+    color += mouseEffect * vec3(0.4, 0.3, 0.6);
+    
+    // Apply smooth contrast enhancement
+    color = pow(color, vec3(1.3));
+    
+    gl_FragColor = vec4(color, 1.0);
+}

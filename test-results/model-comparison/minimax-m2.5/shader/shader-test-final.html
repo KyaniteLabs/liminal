@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none';">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>p5.js Sketch</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+    <main>
+        <script>
+let t = 0;
+
+function setup() {
+  createCanvas(800, 600);
+  colorMode(HSB, 360, 100, 100);
+  pixelDensity(1);
+  noStroke();
+}
+
+function draw() {
+  background(0);
+  
+  loadPixels();
+  
+  for (let x = 0; x < width; x++) {
+    for (let y = 0; y < height; y++) {
+      let nx = x * 0.006;
+      let ny = y * 0.006;
+      
+      let v1 = sin(noise(nx + t * 0.3, ny) * TWO_PI);
+      let v2 = sin(noise(nx - t * 0.2, ny + t * 0.4) * TWO_PI + 1);
+      let v3 = sin(noise(nx * 1.2 + t * 0.1, ny * 1.2 - t * 0.15) * TWO_PI + 2);
+      let v4 = sin(noise(nx * 0.8 - t * 0.25, ny * 0.8 + t * 0.2) * TWO_PI + 3);
+      
+      let plasma = (v1 + v2 + v3 + v4) * 0.25;
+      plasma = (plasma + 1) * 0.5;
+      
+      let colorShift = t * 15;
+      let hue = (plasma * 180 + colorShift) % 360;
+      
+      if (hue < 0) hue += 360;
+      
+      let brightness = pow(plasma, 0.7) * 100;
+      let saturation = 80 + plasma * 20;
+      
+      let idx = (x + y * width) * 4;
+      let r = brightness * cos((hue / 360) * TWO_PI) + brightness;
+      let g = brightness * cos((hue / 360 - 0.33) * TWO_PI) + brightness;
+      let b = brightness * cos((hue / 360 - 0.66) * TWO_PI) + brightness;
+      
+      pixels[idx] = constrain(r, 0, 255);
+      pixels[idx + 1] = constrain(g, 0, 255);
+      pixels[idx + 2] = constrain(b, 0, 255);
+      pixels[idx + 3] = 255;
+    }
+  }
+  
+  updatePixels();
+  
+  t += 0.015;
+  
+  if (frameCount % 60 === 0) {
+    console.log("Plasma cycling");
+  }
+}
+
+function windowResized() {
+  resizeCanvas(800, 600);
+}
+        </script>
+    </main>
+</body>
+</html>

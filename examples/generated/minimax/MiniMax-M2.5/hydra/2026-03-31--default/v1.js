@@ -1,0 +1,1 @@
+osc(12, 0.15, 1.5).rotate(time * 0.3).kaleid(6).scale(1.8).color(0.7, 0.4, 1.3).saturate(2.5).modulate(noise(3), 0.4).feedback(0.9).out(o0)

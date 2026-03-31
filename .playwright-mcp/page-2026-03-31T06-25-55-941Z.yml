@@ -1,0 +1,812 @@
+- generic [ref=e2]:
+  - region
+  - generic [ref=e3]:
+    - link "Skip to content" [ref=e4] [cursor=pointer]:
+      - /url: "#start-of-content"
+    - banner [ref=e6]:
+      - heading "Navigation Menu" [level=2] [ref=e7]
+      - generic [ref=e8]:
+        - link "Homepage" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img [ref=e11]
+        - generic [ref=e13]:
+          - navigation "Global" [ref=e16]:
+            - list [ref=e17]:
+              - listitem [ref=e18]:
+                - button "Platform" [ref=e20] [cursor=pointer]:
+                  - text: Platform
+                  - img [ref=e21]
+              - listitem [ref=e23]:
+                - button "Solutions" [ref=e25] [cursor=pointer]:
+                  - text: Solutions
+                  - img [ref=e26]
+              - listitem [ref=e28]:
+                - button "Resources" [ref=e30] [cursor=pointer]:
+                  - text: Resources
+                  - img [ref=e31]
+              - listitem [ref=e33]:
+                - button "Open Source" [ref=e35] [cursor=pointer]:
+                  - text: Open Source
+                  - img [ref=e36]
+              - listitem [ref=e38]:
+                - button "Enterprise" [ref=e40] [cursor=pointer]:
+                  - text: Enterprise
+                  - img [ref=e41]
+              - listitem [ref=e43]:
+                - link "Pricing" [ref=e44] [cursor=pointer]:
+                  - /url: https://github.com/pricing
+                  - generic [ref=e45]: Pricing
+          - generic [ref=e46]:
+            - button "Search or jump to…" [ref=e49] [cursor=pointer]:
+              - img [ref=e51]
+            - link "Sign in" [ref=e54] [cursor=pointer]:
+              - /url: /login?return_to=https%3A%2F%2Fgithub.com%2FChristopherKahler%2Fseed
+            - link "Sign up" [ref=e55] [cursor=pointer]:
+              - /url: /signup?ref_cta=Sign+up&ref_loc=header+logged+out&ref_page=%2F%3Cuser-name%3E%2F%3Crepo-name%3E&source=header-repo&source_repo=ChristopherKahler%2Fseed
+            - button "Appearance settings" [disabled] [ref=e58]:
+              - img
+  - main [ref=e62]:
+    - generic [ref=e63]:
+      - generic [ref=e64]:
+        - generic [ref=e66]:
+          - img [ref=e67]
+          - link "ChristopherKahler" [ref=e70] [cursor=pointer]:
+            - /url: /ChristopherKahler
+          - generic [ref=e71]: /
+          - strong [ref=e72]:
+            - link "seed" [ref=e73] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed
+          - generic [ref=e74]: Public
+        - generic [ref=e75]:
+          - list:
+            - listitem [ref=e76]:
+              - link "You must be signed in to change notification settings" [ref=e77] [cursor=pointer]:
+                - /url: /login?return_to=%2FChristopherKahler%2Fseed
+                - img [ref=e78]
+                - text: Notifications
+            - listitem [ref=e80]:
+              - link "Fork 17" [ref=e81] [cursor=pointer]:
+                - /url: /login?return_to=%2FChristopherKahler%2Fseed
+                - img [ref=e82]
+                - text: Fork
+                - generic "17" [ref=e84]
+            - listitem [ref=e85]:
+              - link "You must be signed in to star a repository" [ref=e87] [cursor=pointer]:
+                - /url: /login?return_to=%2FChristopherKahler%2Fseed
+                - img [ref=e88]
+                - text: Star
+                - generic "112 users starred this repository" [ref=e90]: "112"
+      - navigation "Repository" [ref=e91]:
+        - list [ref=e92]:
+          - listitem [ref=e93]:
+            - link "Code" [ref=e94] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed
+              - img [ref=e95]
+              - generic [ref=e97]: Code
+          - listitem [ref=e98]:
+            - link "Issues 1" [ref=e99] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/issues
+              - img [ref=e100]
+              - generic [ref=e103]: Issues
+              - generic "1" [ref=e104]
+          - listitem [ref=e105]:
+            - link "Pull requests 1" [ref=e106] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/pulls
+              - img [ref=e107]
+              - generic [ref=e109]: Pull requests
+              - generic "1" [ref=e110]
+          - listitem [ref=e111]:
+            - link "Actions" [ref=e112] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/actions
+              - img [ref=e113]
+              - generic [ref=e115]: Actions
+          - listitem [ref=e116]:
+            - link "Projects" [ref=e117] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/projects
+              - img [ref=e118]
+              - generic [ref=e120]: Projects
+          - listitem [ref=e121]:
+            - link "Security" [ref=e122] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/security
+              - img [ref=e123]
+              - generic [ref=e125]: Security
+          - listitem [ref=e126]:
+            - link "Insights" [ref=e127] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/pulse
+              - img [ref=e128]
+              - generic [ref=e130]: Insights
+    - generic [ref=e143]:
+      - heading "ChristopherKahler/seed" [level=1] [ref=e145]
+      - generic [ref=e146]:
+        - generic [ref=e149]:
+          - generic [ref=e150]:
+            - generic [ref=e151]:
+              - button "main branch" [ref=e153] [cursor=pointer]:
+                - generic [ref=e154]:
+                  - generic [ref=e156]:
+                    - img [ref=e158]
+                    - generic [ref=e161]: main
+                  - generic:
+                    - img
+              - generic [ref=e162]:
+                - link "1 Branch" [ref=e163] [cursor=pointer]:
+                  - /url: /ChristopherKahler/seed/branches
+                  - generic [ref=e164]:
+                    - generic:
+                      - img
+                    - generic [ref=e166]:
+                      - strong [ref=e167]: "1"
+                      - text: Branch
+                - link "0 Tags" [ref=e168] [cursor=pointer]:
+                  - /url: /ChristopherKahler/seed/tags
+                  - generic [ref=e169]:
+                    - generic:
+                      - img
+                    - generic [ref=e171]:
+                      - strong [ref=e172]: "0"
+                      - text: Tags
+            - generic [ref=e173]:
+              - generic [ref=e177]:
+                - img [ref=e179]
+                - combobox "Go to file" [ref=e181]
+              - button "Code" [ref=e182] [cursor=pointer]:
+                - generic [ref=e183]:
+                  - generic:
+                    - img
+                  - generic [ref=e184]: Code
+                  - generic:
+                    - img
+          - generic [ref=e185]:
+            - generic [ref=e186]:
+              - heading "Folders and files" [level=2] [ref=e187]
+              - table "Folders and files" [ref=e188]:
+                - rowgroup:
+                  - row "Name Last commit message Last commit date":
+                    - columnheader "Name"
+                    - columnheader "Last commit message":
+                      - generic "Last commit message"
+                    - columnheader "Last commit date":
+                      - generic "Last commit date"
+                - rowgroup [ref=e189]:
+                  - row "Latest commit History 7 Commits" [ref=e190]:
+                    - cell "Latest commit History 7 Commits" [ref=e191]:
+                      - generic [ref=e192]:
+                        - heading "Latest commit" [level=2] [ref=e193]
+                        - generic [ref=e196]:
+                          - heading "History" [level=2] [ref=e197]
+                          - link "7 Commits" [ref=e198] [cursor=pointer]:
+                            - /url: /ChristopherKahler/seed/commits/main/
+                            - generic [ref=e199]:
+                              - generic:
+                                - img
+                              - generic [ref=e200]: 7 Commits
+                  - row "bin, (Directory)" [ref=e201]:
+                    - cell "bin, (Directory)" [ref=e202]:
+                      - generic [ref=e203]:
+                        - img [ref=e204]
+                        - link "bin, (Directory)" [ref=e209] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/tree/main/bin
+                          - text: bin
+                    - cell [ref=e210]
+                    - cell [ref=e212]
+                  - row "checklists, (Directory)" [ref=e215]:
+                    - cell "checklists, (Directory)" [ref=e216]:
+                      - generic [ref=e217]:
+                        - img [ref=e218]
+                        - link "checklists, (Directory)" [ref=e223] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/tree/main/checklists
+                          - text: checklists
+                    - cell [ref=e224]
+                    - cell [ref=e226]
+                  - row "data, (Directory)" [ref=e229]:
+                    - cell "data, (Directory)" [ref=e230]:
+                      - generic [ref=e231]:
+                        - img [ref=e232]
+                        - link "data, (Directory)" [ref=e237] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/tree/main/data
+                          - text: data
+                    - cell [ref=e238]
+                    - cell [ref=e240]
+                  - row "tasks, (Directory)" [ref=e243]:
+                    - cell "tasks, (Directory)" [ref=e244]:
+                      - generic [ref=e245]:
+                        - img [ref=e246]
+                        - link "tasks, (Directory)" [ref=e251] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/tree/main/tasks
+                          - text: tasks
+                    - cell [ref=e252]
+                    - cell [ref=e254]
+                  - row "templates, (Directory)" [ref=e257]:
+                    - cell "templates, (Directory)" [ref=e258]:
+                      - generic [ref=e259]:
+                        - img [ref=e260]
+                        - link "templates, (Directory)" [ref=e265] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/tree/main/templates
+                          - text: templates
+                    - cell [ref=e266]
+                    - cell [ref=e268]
+                  - row ".gitignore, (File)" [ref=e271]:
+                    - cell ".gitignore, (File)" [ref=e272]:
+                      - generic [ref=e273]:
+                        - img [ref=e274]
+                        - link ".gitignore, (File)" [ref=e279] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/blob/main/.gitignore
+                          - text: .gitignore
+                    - cell [ref=e280]
+                    - cell [ref=e282]
+                  - row "README.md, (File)" [ref=e285]:
+                    - cell "README.md, (File)" [ref=e286]:
+                      - generic [ref=e287]:
+                        - img [ref=e288]
+                        - link "README.md, (File)" [ref=e293] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/blob/main/README.md
+                          - text: README.md
+                    - cell [ref=e294]
+                    - cell [ref=e296]
+                  - row "package.json, (File)" [ref=e299]:
+                    - cell "package.json, (File)" [ref=e300]:
+                      - generic [ref=e301]:
+                        - img [ref=e302]
+                        - link "package.json, (File)" [ref=e307] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/blob/main/package.json
+                          - text: package.json
+                    - cell [ref=e308]
+                    - cell [ref=e310]
+                  - row "seed.md, (File)" [ref=e313]:
+                    - cell "seed.md, (File)" [ref=e314]:
+                      - generic [ref=e315]:
+                        - img [ref=e316]
+                        - link "seed.md, (File)" [ref=e321] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/blob/main/seed.md
+                          - text: seed.md
+                    - cell [ref=e322]
+                    - cell [ref=e324]
+                  - row "terminal.svg, (File)" [ref=e327]:
+                    - cell "terminal.svg, (File)" [ref=e328]:
+                      - generic [ref=e329]:
+                        - img [ref=e330]
+                        - link "terminal.svg, (File)" [ref=e335] [cursor=pointer]:
+                          - /url: /ChristopherKahler/seed/blob/main/terminal.svg
+                          - text: terminal.svg
+                    - cell [ref=e336]
+                    - cell [ref=e338]
+            - generic [ref=e342]:
+              - generic [ref=e343]:
+                - heading "Repository files navigation" [level=2] [ref=e344]
+                - navigation "Repository files" [ref=e345]:
+                  - list [ref=e346]:
+                    - listitem [ref=e347]:
+                      - link "README" [ref=e348] [cursor=pointer]:
+                        - /url: "#"
+                        - img [ref=e350]
+                        - generic [ref=e352]: README
+                - button "Outline" [ref=e353] [cursor=pointer]:
+                  - img [ref=e354]
+              - article [ref=e357]:
+                - link "SEED terminal" [ref=e359] [cursor=pointer]:
+                  - /url: /ChristopherKahler/seed/blob/main/terminal.svg
+                  - img "SEED terminal" [ref=e360]
+                - generic [ref=e361]:
+                  - paragraph [ref=e362]:
+                    - link "Claude Code" [ref=e363] [cursor=pointer]:
+                      - /url: https://claude.ai/code
+                      - img "Claude Code" [ref=e364]
+                    - link "License" [ref=e365] [cursor=pointer]:
+                      - /url: /ChristopherKahler/seed/blob/main/LICENSE
+                      - img "License" [ref=e366]
+                  - paragraph [ref=e367]:
+                    - strong [ref=e368]: Your AI project incubator.
+                    - text: Take raw ideas through type-aware guided exploration and produce structured plans ready for building.
+                - separator [ref=e369]
+                - generic [ref=e370]:
+                  - heading "Contents" [level=2] [ref=e371]
+                  - 'link "Permalink: Contents" [ref=e372] [cursor=pointer]':
+                    - /url: "#contents"
+                    - img [ref=e373]
+                - list [ref=e375]:
+                  - listitem [ref=e376]:
+                    - link "What SEED Does" [ref=e377] [cursor=pointer]:
+                      - /url: "#what-seed-does"
+                  - listitem [ref=e378]:
+                    - link "Commands" [ref=e379] [cursor=pointer]:
+                      - /url: "#commands"
+                  - listitem [ref=e380]:
+                    - link "Project Types" [ref=e381] [cursor=pointer]:
+                      - /url: "#project-types"
+                  - listitem [ref=e382]:
+                    - link "How It Works" [ref=e383] [cursor=pointer]:
+                      - /url: "#how-it-works"
+                  - listitem [ref=e384]:
+                    - link "Architecture" [ref=e385] [cursor=pointer]:
+                      - /url: "#architecture"
+                  - listitem [ref=e386]:
+                    - link "The PAUL Connection" [ref=e387] [cursor=pointer]:
+                      - /url: "#the-paul-connection--ideation-to-managed-build"
+                  - listitem [ref=e388]:
+                    - link "Ecosystem" [ref=e389] [cursor=pointer]:
+                      - /url: "#ecosystem"
+                  - listitem [ref=e390]:
+                    - link "Install" [ref=e391] [cursor=pointer]:
+                      - /url: "#install"
+                - separator [ref=e392]
+                - generic [ref=e393]:
+                  - heading "Ecosystem" [level=2] [ref=e394]
+                  - 'link "Permalink: Ecosystem" [ref=e395] [cursor=pointer]':
+                    - /url: "#ecosystem"
+                    - img [ref=e396]
+                - paragraph [ref=e398]: "SEED is part of a broader Claude Code extension ecosystem:"
+                - table [ref=e400]:
+                  - rowgroup [ref=e401]:
+                    - row "System What It Does Link" [ref=e402]:
+                      - columnheader "System" [ref=e403]
+                      - columnheader "What It Does" [ref=e404]
+                      - columnheader "Link" [ref=e405]
+                  - rowgroup [ref=e406]:
+                    - row "AEGIS Multi-agent codebase auditing — diagnosis + controlled evolution GitHub" [ref=e407]:
+                      - cell "AEGIS" [ref=e408]:
+                        - strong [ref=e409]: AEGIS
+                      - cell "Multi-agent codebase auditing — diagnosis + controlled evolution" [ref=e410]
+                      - cell "GitHub" [ref=e411]:
+                        - link "GitHub" [ref=e412] [cursor=pointer]:
+                          - /url: https://github.com/ChristopherKahler/aegis
+                    - row "BASE Builder's Automated State Engine — workspace lifecycle, health tracking, drift prevention GitHub" [ref=e413]:
+                      - cell "BASE" [ref=e414]:
+                        - strong [ref=e415]: BASE
+                      - cell "Builder's Automated State Engine — workspace lifecycle, health tracking, drift prevention" [ref=e416]
+                      - cell "GitHub" [ref=e417]:
+                        - link "GitHub" [ref=e418] [cursor=pointer]:
+                          - /url: https://github.com/ChristopherKahler/base
+                    - row "CARL Context Augmentation & Reinforcement Layer — dynamic rules loaded JIT by intent GitHub" [ref=e419]:
+                      - cell "CARL" [ref=e420]:
+                        - strong [ref=e421]: CARL
+                      - cell "Context Augmentation & Reinforcement Layer — dynamic rules loaded JIT by intent" [ref=e422]
+                      - cell "GitHub" [ref=e423]:
+                        - link "GitHub" [ref=e424] [cursor=pointer]:
+                          - /url: https://github.com/ChristopherKahler/carl
+                    - row "PAUL Project orchestration — Plan, Apply, Unify Loop GitHub" [ref=e425]:
+                      - cell "PAUL" [ref=e426]:
+                        - strong [ref=e427]: PAUL
+                      - cell "Project orchestration — Plan, Apply, Unify Loop" [ref=e428]
+                      - cell "GitHub" [ref=e429]:
+                        - link "GitHub" [ref=e430] [cursor=pointer]:
+                          - /url: https://github.com/ChristopherKahler/paul
+                    - row "SEED Typed project incubator — guided ideation through graduation into buildable projects You are here" [ref=e431]:
+                      - cell "SEED" [ref=e432]:
+                        - strong [ref=e433]: SEED
+                      - cell "Typed project incubator — guided ideation through graduation into buildable projects" [ref=e434]
+                      - cell "You are here" [ref=e435]
+                    - row "Skillsmith Skill builder — standardized syntax specs + guided workflows for Claude Code skills GitHub" [ref=e436]:
+                      - cell "Skillsmith" [ref=e437]:
+                        - strong [ref=e438]: Skillsmith
+                      - cell "Skill builder — standardized syntax specs + guided workflows for Claude Code skills" [ref=e439]
+                      - cell "GitHub" [ref=e440]:
+                        - link "GitHub" [ref=e441] [cursor=pointer]:
+                          - /url: https://github.com/ChristopherKahler/skillsmith
+                    - row "CC Strategic AI Skool community — courses, community, live support Skool" [ref=e442]:
+                      - cell "CC Strategic AI" [ref=e443]:
+                        - strong [ref=e444]: CC Strategic AI
+                      - cell "Skool community — courses, community, live support" [ref=e445]
+                      - cell "Skool" [ref=e446]:
+                        - link "Skool" [ref=e447] [cursor=pointer]:
+                          - /url: https://skool.com/cc-strategic-ai
+                - separator [ref=e448]
+                - generic [ref=e449]:
+                  - heading "What SEED Does" [level=2] [ref=e450]
+                  - 'link "Permalink: What SEED Does" [ref=e451] [cursor=pointer]':
+                    - /url: "#what-seed-does"
+                    - img [ref=e452]
+                - paragraph [ref=e454]: You have an idea. Maybe it's an app, a workflow, a client site, a utility, or a content campaign. Before you start building, you need to answer the right questions — and the right questions depend on what type of project it is.
+                - paragraph [ref=e455]: SEED is a typed project incubator for Claude Code. It guides you through collaborative exploration shaped by your project type, produces a structured PLANNING.md, and graduates mature plans into buildable project directories. If you use PAUL, it can initialize a managed build from your plan without re-asking questions you already answered.
+                - paragraph [ref=e456]:
+                  - strong [ref=e457]: The coach, not the interrogator.
+                  - text: SEED brainstorms alongside you, offers suggestions when you're stuck, and pushes toward decisions when it's time. It doesn't fire questions at you — it thinks with you.
+                - separator [ref=e458]
+                - generic [ref=e459]:
+                  - heading "Commands" [level=2] [ref=e460]
+                  - 'link "Permalink: Commands" [ref=e461] [cursor=pointer]':
+                    - /url: "#commands"
+                    - img [ref=e462]
+                - table [ref=e465]:
+                  - rowgroup [ref=e466]:
+                    - row "Command What It Does" [ref=e467]:
+                      - columnheader "Command" [ref=e468]
+                      - columnheader "What It Does" [ref=e469]
+                  - rowgroup [ref=e470]:
+                    - row "/seed Start a guided ideation session (default)" [ref=e471]:
+                      - cell "/seed" [ref=e472]:
+                        - code [ref=e473]: /seed
+                      - cell "Start a guided ideation session (default)" [ref=e474]
+                    - row "/seed graduate Move completed ideation to apps/ with git repo and synthesized README" [ref=e475]:
+                      - cell "/seed graduate" [ref=e476]:
+                        - code [ref=e477]: /seed graduate
+                      - cell "Move completed ideation to apps/ with git repo and synthesized README" [ref=e478]:
+                        - text: Move completed ideation to
+                        - code [ref=e479]: apps/
+                        - text: with git repo and synthesized README
+                    - row "/seed launch Graduate + initialize PAUL for managed build (one command)" [ref=e480]:
+                      - cell "/seed launch" [ref=e481]:
+                        - code [ref=e482]: /seed launch
+                      - cell "Graduate + initialize PAUL for managed build (one command)" [ref=e483]
+                    - row "/seed status Show all projects in the ideation pipeline" [ref=e484]:
+                      - cell "/seed status" [ref=e485]:
+                        - code [ref=e486]: /seed status
+                      - cell "Show all projects in the ideation pipeline" [ref=e487]
+                    - row "/seed add-type Create a custom project type for SEED's data layer" [ref=e488]:
+                      - cell "/seed add-type" [ref=e489]:
+                        - code [ref=e490]: /seed add-type
+                      - cell "Create a custom project type for SEED's data layer" [ref=e491]
+                - separator [ref=e492]
+                - generic [ref=e493]:
+                  - heading "Project Types" [level=2] [ref=e494]
+                  - 'link "Permalink: Project Types" [ref=e495] [cursor=pointer]':
+                    - /url: "#project-types"
+                    - img [ref=e496]
+                - paragraph [ref=e498]: "SEED ships with 5 default types. Each type shapes the conversation differently:"
+                - table [ref=e500]:
+                  - rowgroup [ref=e501]:
+                    - row "Type Rigor Sections What It's For" [ref=e502]:
+                      - columnheader "Type" [ref=e503]
+                      - columnheader "Rigor" [ref=e504]
+                      - columnheader "Sections" [ref=e505]
+                      - columnheader "What It's For" [ref=e506]
+                  - rowgroup [ref=e507]:
+                    - row "Application Deep 10 Software with UI, data model, API, deployment" [ref=e508]:
+                      - cell "Application" [ref=e509]:
+                        - strong [ref=e510]: Application
+                      - cell "Deep" [ref=e511]
+                      - cell "10" [ref=e512]
+                      - cell "Software with UI, data model, API, deployment" [ref=e513]
+                    - row "Workflow Standard 8 Claude Code commands, hooks, CARL domains, skills" [ref=e514]:
+                      - cell "Workflow" [ref=e515]:
+                        - strong [ref=e516]: Workflow
+                      - cell "Standard" [ref=e517]
+                      - cell "8" [ref=e518]
+                      - cell "Claude Code commands, hooks, CARL domains, skills" [ref=e519]
+                    - row "Client Standard 7 Client websites — business context, conversion, content" [ref=e520]:
+                      - cell "Client" [ref=e521]:
+                        - strong [ref=e522]: Client
+                      - cell "Standard" [ref=e523]
+                      - cell "7" [ref=e524]
+                      - cell "Client websites — business context, conversion, content" [ref=e525]
+                    - row "Utility Tight 6 Small tools, scripts, single-purpose — resists expansion" [ref=e526]:
+                      - cell "Utility" [ref=e527]:
+                        - strong [ref=e528]: Utility
+                      - cell "Tight" [ref=e529]
+                      - cell "6" [ref=e530]
+                      - cell "Small tools, scripts, single-purpose — resists expansion" [ref=e531]
+                    - row "Campaign Creative 7 Content, marketing, launches — timeline-driven" [ref=e532]:
+                      - cell "Campaign" [ref=e533]:
+                        - strong [ref=e534]: Campaign
+                      - cell "Creative" [ref=e535]
+                      - cell "7" [ref=e536]
+                      - cell "Content, marketing, launches — timeline-driven" [ref=e537]
+                - paragraph [ref=e538]:
+                  - strong [ref=e539]: "Rigor adapts behavior:"
+                - list [ref=e540]:
+                  - listitem [ref=e541]:
+                    - strong [ref=e542]: Tight
+                    - text: — Move fast, resist scope creep, done in one session
+                  - listitem [ref=e543]:
+                    - strong [ref=e544]: Standard
+                    - text: — Balanced exploration with clear boundaries
+                  - listitem [ref=e545]:
+                    - strong [ref=e546]: Deep
+                    - text: — Thorough, architecture matters, don't rush
+                  - listitem [ref=e547]:
+                    - strong [ref=e548]: Creative
+                    - text: — Loose and generative, but always anchored to a measurable goal
+                - paragraph [ref=e549]:
+                  - text: Types are composable. Run
+                  - code [ref=e550]: /seed add-type
+                  - text: to create your own — just drop files in
+                  - code [ref=e551]: "data/{type}/"
+                  - text: and it works immediately. No code changes needed.
+                - separator [ref=e552]
+                - generic [ref=e553]:
+                  - heading "How It Works" [level=2] [ref=e554]
+                  - 'link "Permalink: How It Works" [ref=e555] [cursor=pointer]':
+                    - /url: "#how-it-works"
+                    - img [ref=e556]
+                - generic [ref=e558]:
+                  - code [ref=e560]: "/seed /seed graduate /seed launch │ │ │ ▼ ▼ ▼ Select type ──▶ Guided ──▶ PLANNING.md ──▶ apps/{name}/ ──▶ .paul/ init (or discover) ideation (populated) git + README (headless) │ │ ▼ ▼ Load data/ Coach persona {type}/ adapts rigor"
+                  - button "Copy" [ref=e562] [cursor=pointer]:
+                    - img [ref=e563]
+                - list [ref=e566]:
+                  - listitem [ref=e567]:
+                    - strong [ref=e568]: Type first.
+                    - text: SEED determines your project type before anything else. Type shapes everything downstream.
+                  - listitem [ref=e569]:
+                    - strong [ref=e570]: Guided exploration.
+                    - text: Conversation sections load from
+                    - code [ref=e571]: "data/{type}/guide.md"
+                    - text: . Each section has prompts (what to explore) and suggestions (what to offer when you're stuck).
+                  - listitem [ref=e572]:
+                    - strong [ref=e573]: PLANNING.md output.
+                    - text: When you're ready, SEED populates a type-specific template and writes it to
+                    - code [ref=e574]: "projects/{name}/"
+                    - text: .
+                  - listitem [ref=e575]:
+                    - strong [ref=e576]: Graduate.
+                    - text: Moves the project to
+                    - code [ref=e577]: "apps/{name}/"
+                    - text: with git init, a synthesized README, and workspace tracking updates.
+                  - listitem [ref=e578]:
+                    - strong [ref=e579]: Launch (optional).
+                    - text: Wraps graduation + headless PAUL init. Your PLANNING.md is rich enough that PAUL derives its structure without re-asking questions.
+                - separator [ref=e580]
+                - generic [ref=e581]:
+                  - heading "Architecture" [level=2] [ref=e582]
+                  - 'link "Permalink: Architecture" [ref=e583] [cursor=pointer]':
+                    - /url: "#architecture"
+                    - img [ref=e584]
+                - generic [ref=e586]:
+                  - code [ref=e588]: seed/ ├── seed.md Entry point (Skillsmith-compliant) ├── tasks/ │ ├── ideate.md Type-first guided ideation │ ├── graduate.md Project graduation to apps/ │ ├── launch.md Graduate + PAUL init wrapper │ ├── status.md Pipeline visibility │ └── add-type.md User-extensible type system ├── data/ Composable per-type data │ ├── application/ │ │ ├── guide.md Conversation sections (Explore + Suggest) │ │ ├── config.md Rigor, demeanor, required sections │ │ └── skill-loadout.md Ecosystem tool recommendations │ ├── workflow/ Same structure │ ├── client/ Same structure │ ├── utility/ Same structure │ └── campaign/ Same structure ├── templates/ │ ├── planning-application.md PLANNING.md output template │ ├── planning-workflow.md │ ├── planning-client.md │ ├── planning-utility.md │ └── planning-campaign.md ├── checklists/ │ └── planning-quality.md Quality gate for graduation ├── terminal.svg Hero image └── README.md You are here
+                  - button "Copy" [ref=e590] [cursor=pointer]:
+                    - img [ref=e591]
+                - paragraph [ref=e594]:
+                  - strong [ref=e595]: "The key design decision:"
+                  - text: Type-specific content lives in
+                  - code [ref=e596]: "data/{type}/"
+                  - text: "files, not hardcoded in task files. This means:"
+                - list [ref=e597]:
+                  - listitem [ref=e598]:
+                    - text: Adding a new type = dropping 3 files in a new
+                    - code [ref=e599]: data/
+                    - text: directory
+                  - listitem [ref=e600]: No task file modifications needed
+                  - listitem [ref=e601]: The ideate task loads type content dynamically after selection
+                - separator [ref=e602]
+                - generic [ref=e603]:
+                  - heading "The PAUL Connection — Ideation to Managed Build" [level=2] [ref=e604]
+                  - 'link "Permalink: The PAUL Connection — Ideation to Managed Build" [ref=e605] [cursor=pointer]':
+                    - /url: "#the-paul-connection--ideation-to-managed-build"
+                    - img [ref=e606]
+                - paragraph [ref=e608]:
+                  - text: This is where SEED pays off. The entire ideation flow is designed so that the PLANNING.md it produces contains everything
+                  - link "PAUL" [ref=e609] [cursor=pointer]:
+                    - /url: https://github.com/ChristopherKahler/paul
+                  - text: needs to set up a structured build — milestones, phases, tech stack, architecture decisions, phase breakdowns — without asking you anything twice.
+                - generic [ref=e610]:
+                  - heading "The Problem" [level=3] [ref=e611]
+                  - 'link "Permalink: The Problem" [ref=e612] [cursor=pointer]':
+                    - /url: "#the-problem"
+                    - img [ref=e613]
+                - paragraph [ref=e615]: "Starting a PAUL project from scratch means answering a series of setup questions: What's the project? What's the stack? What are the milestones? What are the phases? If you've already thought through all of this during ideation, repeating it during project setup is friction that kills momentum."
+                - generic [ref=e616]:
+                  - heading "How SEED Solves It" [level=3] [ref=e617]
+                  - 'link "Permalink: How SEED Solves It" [ref=e618] [cursor=pointer]':
+                    - /url: "#how-seed-solves-it"
+                    - img [ref=e619]
+                - paragraph [ref=e621]:
+                  - code [ref=e622]: /seed launch
+                  - text: runs the full graduation flow and then initializes PAUL with
+                  - strong [ref=e623]: headless context
+                  - text: ":"
+                - list [ref=e624]:
+                  - listitem [ref=e625]: SEED produces a rich PLANNING.md during ideation (type-aware, quality-gated)
+                  - listitem [ref=e626]:
+                    - code [ref=e627]: /seed launch
+                    - text: graduates the project to
+                    - code [ref=e628]: "apps/{name}/"
+                    - text: with git
+                  - listitem [ref=e629]: PAUL reads the PLANNING.md and derives its entire project structure from it
+                  - listitem [ref=e630]: PAUL proposes milestones, phases, and tech stack — you review and approve
+                  - listitem [ref=e631]:
+                    - text: You're immediately ready to run
+                    - code [ref=e632]: /paul:plan
+                    - text: for Phase 1
+                - paragraph [ref=e633]:
+                  - strong [ref=e634]: No re-asking.
+                  - text: PAUL doesn't ask "What's this project?" or "What's the tech stack?" — those answers are already in the PLANNING.md that SEED produced. The only interaction is approving the proposed structure.
+                - generic [ref=e635]:
+                  - heading "What Makes the PLANNING.md PAUL-Ready" [level=3] [ref=e636]
+                  - 'link "Permalink: What Makes the PLANNING.md PAUL-Ready" [ref=e637] [cursor=pointer]':
+                    - /url: "#what-makes-the-planningmd-paul-ready"
+                    - img [ref=e638]
+                - paragraph [ref=e640]:
+                  - text: SEED's quality gate (
+                  - code [ref=e641]: checklists/planning-quality.md
+                  - text: ") specifically checks for PAUL-readiness:"
+                - list [ref=e642]:
+                  - listitem [ref=e643]: Phase breakdown with independently shippable milestones
+                  - listitem [ref=e644]: Each phase has build/test/outcome defined
+                  - listitem [ref=e645]: Tech stack decisions resolved (not "TBD")
+                  - listitem [ref=e646]: Design decisions documented with rationale
+                  - listitem [ref=e647]: Enough detail that PAUL can derive structure without questions
+                - generic [ref=e648]:
+                  - heading "Without PAUL" [level=3] [ref=e649]
+                  - 'link "Permalink: Without PAUL" [ref=e650] [cursor=pointer]':
+                    - /url: "#without-paul"
+                    - img [ref=e651]
+                - paragraph [ref=e653]:
+                  - text: Don't use PAUL?
+                  - code [ref=e654]: /seed graduate
+                  - text: works standalone — you get a clean
+                  - code [ref=e655]: "apps/{name}/"
+                  - text: directory with git and a synthesized README. Build however you want. PAUL is additive, not required.
+                - separator [ref=e656]
+                - generic [ref=e657]:
+                  - heading "Ecosystem" [level=2] [ref=e658]
+                  - 'link "Permalink: Ecosystem" [ref=e659] [cursor=pointer]':
+                    - /url: "#ecosystem-1"
+                    - img [ref=e660]
+                - paragraph [ref=e662]: "SEED works standalone but integrates with the broader toolkit:"
+                - table [ref=e664]:
+                  - rowgroup [ref=e665]:
+                    - row "Tool How SEED Uses It" [ref=e666]:
+                      - columnheader "Tool" [ref=e667]
+                      - columnheader "How SEED Uses It" [ref=e668]
+                  - rowgroup [ref=e669]:
+                    - row "PAUL /seed launch initializes PAUL with headless context from PLANNING.md — zero-friction handoff from ideation to managed build" [ref=e670]:
+                      - cell "PAUL" [ref=e671]:
+                        - strong [ref=e672]: PAUL
+                      - cell "/seed launch initializes PAUL with headless context from PLANNING.md — zero-friction handoff from ideation to managed build" [ref=e673]:
+                        - code [ref=e674]: /seed launch
+                        - text: initializes PAUL with headless context from PLANNING.md — zero-friction handoff from ideation to managed build
+                    - row "BASE Graduate updates ACTIVE.md for workspace-level project tracking" [ref=e675]:
+                      - cell "BASE" [ref=e676]:
+                        - strong [ref=e677]: BASE
+                      - cell "Graduate updates ACTIVE.md for workspace-level project tracking" [ref=e678]
+                    - row "Skillsmith SEED was built with Skillsmith — compliant entry point + tasks" [ref=e679]:
+                      - cell "Skillsmith" [ref=e680]:
+                        - strong [ref=e681]: Skillsmith
+                      - cell "SEED was built with Skillsmith — compliant entry point + tasks" [ref=e682]
+                    - row "AEGIS Recommended post-build audit for application-type projects" [ref=e683]:
+                      - cell "AEGIS" [ref=e684]:
+                        - strong [ref=e685]: AEGIS
+                      - cell "Recommended post-build audit for application-type projects" [ref=e686]
+                - paragraph [ref=e687]: All integrations are additive. SEED works without any of them installed.
+                - separator [ref=e688]
+                - generic [ref=e689]:
+                  - heading "Install" [level=2] [ref=e690]
+                  - 'link "Permalink: Install" [ref=e691] [cursor=pointer]':
+                    - /url: "#install"
+                    - img [ref=e692]
+                - generic [ref=e694]:
+                  - generic [ref=e695]: npm i -g @chrisai/seed
+                  - button "Copy" [ref=e697] [cursor=pointer]:
+                    - img [ref=e698]
+                - paragraph [ref=e701]:
+                  - text: One command. Installs the skill to
+                  - code [ref=e702]: ~/.claude/commands/seed/
+                  - text: — available in every workspace.
+                - generic [ref=e703]:
+                  - generic [ref=e704]:
+                    - generic [ref=e705]: "# Global install (default) — available everywhere"
+                    - text: npm i -g @chrisai/seed
+                    - generic [ref=e706]: "# Install to current project only"
+                    - text: npm i -g @chrisai/seed -- --local
+                    - generic [ref=e707]: "# Custom Claude config directory"
+                    - text: npm i -g @chrisai/seed -- --config-dir /path/to/.claude
+                  - button "Copy" [ref=e709] [cursor=pointer]:
+                    - img [ref=e710]
+                - paragraph [ref=e713]:
+                  - text: Then open Claude Code and type
+                  - code [ref=e714]: /seed
+                  - text: to start.
+                - generic [ref=e715]:
+                  - heading "What Gets Installed" [level=3] [ref=e716]
+                  - 'link "Permalink: What Gets Installed" [ref=e717] [cursor=pointer]':
+                    - /url: "#what-gets-installed"
+                    - img [ref=e718]
+                - generic [ref=e720]:
+                  - code [ref=e722]: ~/.claude/commands/seed/ ├── seed.md Entry point (routing + persona) ├── tasks/ 5 task files ├── data/ 15 type-specific data files (5 types × 3 files) ├── templates/ 5 PLANNING.md output templates └── checklists/ Planning quality gate
+                  - button "Copy" [ref=e724] [cursor=pointer]:
+                    - img [ref=e725]
+                - paragraph [ref=e728]: No hooks, no MCP servers, no workspace data. SEED is pure markdown — zero runtime dependencies.
+                - generic [ref=e729]:
+                  - heading "Requirements" [level=3] [ref=e730]
+                  - 'link "Permalink: Requirements" [ref=e731] [cursor=pointer]':
+                    - /url: "#requirements"
+                    - img [ref=e732]
+                - list [ref=e734]:
+                  - listitem [ref=e735]:
+                    - link "Claude Code" [ref=e736] [cursor=pointer]:
+                      - /url: https://claude.ai/code
+                  - listitem [ref=e737]: Node.js >= 16 (for install script only — SEED itself has no runtime deps)
+                - separator [ref=e738]
+                - generic [ref=e739]:
+                  - heading "License" [level=2] [ref=e740]
+                  - 'link "Permalink: License" [ref=e741] [cursor=pointer]':
+                    - /url: "#license"
+                    - img [ref=e742]
+                - paragraph [ref=e744]:
+                  - text: MIT —
+                  - link "Chris Kahler" [ref=e745] [cursor=pointer]:
+                    - /url: https://github.com/ChristopherKahler
+        - generic [ref=e749]:
+          - generic [ref=e752]:
+            - heading "About" [level=2] [ref=e753]
+            - paragraph [ref=e754]: AI project incubator for Claude Code — type-aware guided exploration from raw idea to structured plan, ready for PAUL-managed builds
+            - heading "Resources" [level=3] [ref=e755]
+            - link "Readme" [ref=e757] [cursor=pointer]:
+              - /url: "#readme-ov-file"
+              - img [ref=e758]
+              - text: Readme
+            - link "Activity" [ref=e761] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/activity
+              - img [ref=e762]
+              - text: Activity
+            - heading "Stars" [level=3] [ref=e764]
+            - link "112 stars" [ref=e766] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/stargazers
+              - img [ref=e767]
+              - strong [ref=e769]: "112"
+              - text: stars
+            - heading "Watchers" [level=3] [ref=e770]
+            - link "0 watching" [ref=e772] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/watchers
+              - img [ref=e773]
+              - strong [ref=e775]: "0"
+              - text: watching
+            - heading "Forks" [level=3] [ref=e776]
+            - link "17 forks" [ref=e778] [cursor=pointer]:
+              - /url: /ChristopherKahler/seed/forks
+              - img [ref=e779]
+              - strong [ref=e781]: "17"
+              - text: forks
+            - link "Report repository" [ref=e783] [cursor=pointer]:
+              - /url: /contact/report-content?content_url=https%3A%2F%2Fgithub.com%2FChristopherKahler%2Fseed&report=ChristopherKahler+%28user%29
+          - generic [ref=e785]:
+            - heading "Releases" [level=2] [ref=e786]:
+              - link "Releases" [ref=e787] [cursor=pointer]:
+                - /url: /ChristopherKahler/seed/releases
+            - generic [ref=e788]: No releases published
+          - generic "Loading latest packages" [ref=e791]:
+            - heading "Packages" [level=2] [ref=e792]:
+              - link "Packages" [ref=e793] [cursor=pointer]:
+                - /url: /users/ChristopherKahler/packages?repo_name=seed
+          - generic "Loading contributors" [ref=e805]:
+            - generic:
+              - heading "Contributors" [level=2] [ref=e806]:
+                - link "Contributors" [ref=e807] [cursor=pointer]:
+                  - /url: /ChristopherKahler/seed/graphs/contributors
+              - list [ref=e808]:
+                - listitem [ref=e809]
+                - listitem [ref=e811]
+                - listitem [ref=e813]
+          - generic [ref=e816]:
+            - heading "Languages" [level=2] [ref=e817]
+            - list [ref=e821]:
+              - listitem [ref=e822]:
+                - link "JavaScript 100.0%" [ref=e823] [cursor=pointer]:
+                  - /url: /ChristopherKahler/seed/search?l=javascript
+                  - img [ref=e824]
+                  - generic [ref=e826]: JavaScript
+                  - generic [ref=e827]: 100.0%
+  - contentinfo [ref=e829]:
+    - heading "Footer" [level=2] [ref=e830]
+    - generic [ref=e831]:
+      - generic [ref=e832]:
+        - link "GitHub Homepage" [ref=e833] [cursor=pointer]:
+          - /url: https://github.com
+          - img [ref=e834]
+        - generic [ref=e836]: © 2026 GitHub, Inc.
+      - navigation "Footer" [ref=e837]:
+        - heading "Footer navigation" [level=3] [ref=e838]
+        - list "Footer navigation" [ref=e839]:
+          - listitem [ref=e840]:
+            - link "Terms" [ref=e841] [cursor=pointer]:
+              - /url: https://docs.github.com/site-policy/github-terms/github-terms-of-service
+          - listitem [ref=e842]:
+            - link "Privacy" [ref=e843] [cursor=pointer]:
+              - /url: https://docs.github.com/site-policy/privacy-policies/github-privacy-statement
+          - listitem [ref=e844]:
+            - link "Security" [ref=e845] [cursor=pointer]:
+              - /url: https://github.com/security
+          - listitem [ref=e846]:
+            - link "Status" [ref=e847] [cursor=pointer]:
+              - /url: https://www.githubstatus.com/
+          - listitem [ref=e848]:
+            - link "Community" [ref=e849] [cursor=pointer]:
+              - /url: https://github.community/
+          - listitem [ref=e850]:
+            - link "Docs" [ref=e851] [cursor=pointer]:
+              - /url: https://docs.github.com/
+          - listitem [ref=e852]:
+            - link "Contact" [ref=e853] [cursor=pointer]:
+              - /url: https://support.github.com?tags=dotcom-footer
+          - listitem [ref=e854]:
+            - button "Manage cookies" [ref=e856] [cursor=pointer]
+          - listitem [ref=e857]:
+            - button "Do not share my personal information" [ref=e859] [cursor=pointer]

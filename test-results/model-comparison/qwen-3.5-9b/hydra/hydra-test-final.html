@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none';">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>p5.js Sketch</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    </style>
+</head>
+<body>
+    <main>
+        <script>
+let particles = [];
+let hueOffset = 0;
+let trailFade = 25;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+  noiseSeed(48392);
+  
+  for (let i = 0; i < 300; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  background(5);
+}
+
+function draw() {
+  fill(10, trailFade);
+  noStroke();
+  rect(0, 0, width, height);
+  
+  hueOffset += 0.3;
+  
+  for (let p of particles) {
+    p.update();
+    p.draw();
+  }
+}
+
+class Particle {
+  constructor() {
+    this.pos = createVector(random(width), random(height));
+    this.vel = createVector(0, 0);
+    this.acc = createVector(0, 0);
+    this.maxSpeed = random(2, 4);
+    this.hue = random(360);
+    this.size = random(3, 8);
+    this.trailLength = Math.floor(random(5, 15));
+    this.history = [];
+    this.angleOffset = random(TWO_PI);
+    this.timeScale = random(0.002, 0.005);
+  }
+  
+  update() {
+    // Use noise to create organic movement
+    let angle = noise(this.pos.x * 0.01 + this.angleOffset, this.pos.y * 0.01 + hueOffset, frameCount * this.timeScale) * TWO_PI * 2;
+    let force = p5.Vector.fromAngle(angle);
+    force.mult(0.2);
+    
+    this.acc.add(force);
+    this.vel.add(this.acc);
+    this.vel.limit(this.maxSpeed);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+    
+    // Handle boundaries with wrapping
+    if (this.pos.x < 0) this.pos.x = width;
+    if (this.pos.x > width) this.pos.x = 0;
+    if (this.pos.y < 0) this.pos.y = height;
+    if (this.pos.y > height) this.pos.y = 0;
+    
+    // Update history for trail effect
+    this.history.push({x: this.pos.x, y: this.pos.y});
+    while (this.history.length > this.trailLength) {
+      this.history.shift();
+    }
+  }
+  
+  draw() {
+    let colorVal = (this.hue + hueOffset) % 360;
+    
+    // Draw trail
+    for (let i = 0; i < this.history.length; i++) {
+      let alpha = map(i, 0, this.history.length - 1, 0.2, 0);
+      let sizeRatio = map(i, 0, this.history.length - 1, 0.3, 1);
+      
+      stroke(colorVal, 80, alpha * 255);
+      strokeWeight(this.size * sizeRatio);
+      point(this.history[i].x, this.history[i].y);
+    }
+    
+    // Draw head
+    noStroke();
+    fill(colorVal, 90, 255);
+    ellipse(this.pos.x, this.pos.y, this.size, this.size);
+  }
+}
+        </script>
+    </main>
+</body>
+</html>

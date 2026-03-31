@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-03-31T07:30:03.913Z",
+  "totalTasks": 4,
+  "successful": 0,
+  "failed": 4,
+  "totalDuration": 1738,
+  "results": [
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "strudel",
+      "success": false,
+      "duration": 1476
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "glsl",
+      "success": false,
+      "duration": 1480
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "three",
+      "success": false,
+      "duration": 1736
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "p5",
+      "success": false,
+      "duration": 1738
+    }
+  ]
+}

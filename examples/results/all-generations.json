@@ -1,0 +1,816 @@
+{
+  "timestamp": "2026-03-31T14:47:43.724Z",
+  "totalTasks": 48,
+  "successful": 47,
+  "failed": 1,
+  "totalDuration": 1622342,
+  "results": [
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "p5",
+      "success": true,
+      "duration": 21949,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "p5",
+        "success": true,
+        "duration": 21556,
+        "codeLength": 3137,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/p5"
+      },
+      "error": "Generating p5 with MiniMax-M2.7...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "glsl",
+      "success": true,
+      "duration": 37152,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "glsl",
+        "success": true,
+        "duration": 36763,
+        "codeLength": 3089,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/glsl"
+      },
+      "error": "Generating glsl with MiniMax-M2.7...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "three",
+      "success": true,
+      "duration": 35167,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "three",
+        "success": true,
+        "duration": 34765,
+        "codeLength": 6249,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/three"
+      },
+      "error": "Generating three with MiniMax-M2.7...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "strudel",
+      "success": true,
+      "duration": 33372,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "strudel",
+        "success": true,
+        "duration": 32931,
+        "codeLength": 612,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/strudel"
+      },
+      "error": "Generating strudel with MiniMax-M2.7...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "hydra",
+      "success": true,
+      "duration": 44100,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "hydra",
+        "success": true,
+        "duration": 43522,
+        "codeLength": 429,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/hydra"
+      },
+      "error": "Generating hydra with MiniMax-M2.7...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "remotion",
+      "success": true,
+      "duration": 18082,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "remotion",
+        "success": true,
+        "duration": 17640,
+        "codeLength": 2373,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/remotion"
+      },
+      "error": "Generating remotion with MiniMax-M2.7...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "html",
+      "success": true,
+      "duration": 657,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "html",
+        "success": true,
+        "duration": 57,
+        "codeLength": 645,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/html"
+      },
+      "error": "Generating html with MiniMax-M2.7...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "ascii",
+      "success": true,
+      "duration": 686,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.7",
+        "domain": "ascii",
+        "success": true,
+        "duration": 57,
+        "codeLength": 1829,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.7/ascii"
+      },
+      "error": "Generating ascii with MiniMax-M2.7...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "p5",
+      "success": true,
+      "duration": 33361,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "p5",
+        "success": true,
+        "duration": 32764,
+        "codeLength": 4699,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/p5"
+      },
+      "error": "Generating p5 with MiniMax-M2.5...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "glsl",
+      "success": true,
+      "duration": 46885,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "glsl",
+        "success": true,
+        "duration": 46460,
+        "codeLength": 4759,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/glsl"
+      },
+      "error": "Generating glsl with MiniMax-M2.5...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "three",
+      "success": true,
+      "duration": 14098,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "three",
+        "success": true,
+        "duration": 13683,
+        "codeLength": 5477,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/three"
+      },
+      "error": "Generating three with MiniMax-M2.5...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "strudel",
+      "success": true,
+      "duration": 3485,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "strudel",
+        "success": true,
+        "duration": 3038,
+        "codeLength": 236,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/strudel"
+      },
+      "error": "Generating strudel with MiniMax-M2.5...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "hydra",
+      "success": true,
+      "duration": 10475,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "hydra",
+        "success": true,
+        "duration": 10074,
+        "codeLength": 637,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/hydra"
+      },
+      "error": "Generating hydra with MiniMax-M2.5...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "remotion",
+      "success": true,
+      "duration": 7827,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "remotion",
+        "success": true,
+        "duration": 7380,
+        "codeLength": 2537,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/remotion"
+      },
+      "error": "Generating remotion with MiniMax-M2.5...\n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "html",
+      "success": true,
+      "duration": 403,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "html",
+        "success": true,
+        "duration": 36,
+        "codeLength": 645,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/html"
+      },
+      "error": "Generating html with MiniMax-M2.5...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "minimax",
+      "model": "MiniMax-M2.5",
+      "domain": "ascii",
+      "success": true,
+      "duration": 404,
+      "result": {
+        "provider": "minimax",
+        "model": "MiniMax-M2.5",
+        "domain": "ascii",
+        "success": true,
+        "duration": 36,
+        "codeLength": 1829,
+        "outputDir": "examples/generated/minimax/MiniMax-M2.5/ascii"
+      },
+      "error": "Generating ascii with MiniMax-M2.5...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "p5",
+      "success": true,
+      "duration": 84490,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "p5",
+        "success": true,
+        "duration": 84119,
+        "codeLength": 4294,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/p5"
+      },
+      "error": "Generating p5 with Qwen3.5-9B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "glsl",
+      "success": true,
+      "duration": 113234,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "glsl",
+        "success": true,
+        "duration": 112863,
+        "codeLength": 2600,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/glsl"
+      },
+      "error": "Generating glsl with Qwen3.5-9B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "three",
+      "success": true,
+      "duration": 120524,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "three",
+        "success": true,
+        "duration": 120006,
+        "codeLength": 66,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/three"
+      },
+      "error": "Generating three with Qwen3.5-9B...\nLLMClient.generate failed: The operation was aborted due to timeout \n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "strudel",
+      "success": true,
+      "duration": 11955,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "strudel",
+        "success": true,
+        "duration": 11440,
+        "codeLength": 300,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/strudel"
+      },
+      "error": "Generating strudel with Qwen3.5-9B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "hydra",
+      "success": true,
+      "duration": 8436,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "hydra",
+        "success": true,
+        "duration": 8061,
+        "codeLength": 108,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/hydra"
+      },
+      "error": "Generating hydra with Qwen3.5-9B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "remotion",
+      "success": true,
+      "duration": 120399,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "remotion",
+        "success": true,
+        "duration": 120008,
+        "codeLength": 66,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/remotion"
+      },
+      "error": "Generating remotion with Qwen3.5-9B...\nLLMClient.generate failed: The operation was aborted due to timeout \n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "html",
+      "success": true,
+      "duration": 420,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "html",
+        "success": true,
+        "duration": 39,
+        "codeLength": 645,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/html"
+      },
+      "error": "Generating html with Qwen3.5-9B...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3.5-9B",
+      "domain": "ascii",
+      "success": true,
+      "duration": 419,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3.5-9B",
+        "domain": "ascii",
+        "success": true,
+        "duration": 37,
+        "codeLength": 1829,
+        "outputDir": "examples/generated/lmstudio/Qwen3.5-9B/ascii"
+      },
+      "error": "Generating ascii with Qwen3.5-9B...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "p5",
+      "success": true,
+      "duration": 51652,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "p5",
+        "success": true,
+        "duration": 51270,
+        "codeLength": 1598,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/p5"
+      },
+      "error": "Generating p5 with Qwen3-Coder-40B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "glsl",
+      "success": true,
+      "duration": 75374,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "glsl",
+        "success": true,
+        "duration": 75009,
+        "codeLength": 1898,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/glsl"
+      },
+      "error": "Generating glsl with Qwen3-Coder-40B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "three",
+      "success": true,
+      "duration": 95830,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "three",
+        "success": true,
+        "duration": 95436,
+        "codeLength": 5630,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/three"
+      },
+      "error": "Generating three with Qwen3-Coder-40B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "strudel",
+      "success": true,
+      "duration": 5776,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "strudel",
+        "success": true,
+        "duration": 5431,
+        "codeLength": 291,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/strudel"
+      },
+      "error": "Generating strudel with Qwen3-Coder-40B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "hydra",
+      "success": true,
+      "duration": 4789,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "hydra",
+        "success": true,
+        "duration": 4446,
+        "codeLength": 210,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/hydra"
+      },
+      "error": "Generating hydra with Qwen3-Coder-40B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "remotion",
+      "success": true,
+      "duration": 28043,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "remotion",
+        "success": true,
+        "duration": 27637,
+        "codeLength": 2452,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/remotion"
+      },
+      "error": "Generating remotion with Qwen3-Coder-40B...\n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "html",
+      "success": true,
+      "duration": 463,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "html",
+        "success": true,
+        "duration": 34,
+        "codeLength": 645,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/html"
+      },
+      "error": "Generating html with Qwen3-Coder-40B...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "lmstudio",
+      "model": "Qwen3-Coder-40B",
+      "domain": "ascii",
+      "success": true,
+      "duration": 357,
+      "result": {
+        "provider": "lmstudio",
+        "model": "Qwen3-Coder-40B",
+        "domain": "ascii",
+        "success": true,
+        "duration": 33,
+        "codeLength": 1829,
+        "outputDir": "examples/generated/lmstudio/Qwen3-Coder-40B/ascii"
+      },
+      "error": "Generating ascii with Qwen3-Coder-40B...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "p5",
+      "success": true,
+      "duration": 19953,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "p5",
+        "success": true,
+        "duration": 19595,
+        "codeLength": 1250,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/p5"
+      },
+      "error": "Generating p5 with Gemma3-4B...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "glsl",
+      "success": true,
+      "duration": 18706,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "glsl",
+        "success": true,
+        "duration": 18341,
+        "codeLength": 1314,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/glsl"
+      },
+      "error": "Generating glsl with Gemma3-4B...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "three",
+      "success": true,
+      "duration": 22050,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "three",
+        "success": true,
+        "duration": 21544,
+        "codeLength": 2386,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/three"
+      },
+      "error": "Generating three with Gemma3-4B...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "strudel",
+      "success": true,
+      "duration": 9084,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "strudel",
+        "success": true,
+        "duration": 8630,
+        "codeLength": 567,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/strudel"
+      },
+      "error": "Generating strudel with Gemma3-4B...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "hydra",
+      "success": true,
+      "duration": 11675,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "hydra",
+        "success": true,
+        "duration": 11258,
+        "codeLength": 481,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/hydra"
+      },
+      "error": "Generating hydra with Gemma3-4B...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "remotion",
+      "success": true,
+      "duration": 19040,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "remotion",
+        "success": true,
+        "duration": 18536,
+        "codeLength": 1882,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/remotion"
+      },
+      "error": "Generating remotion with Gemma3-4B...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "html",
+      "success": true,
+      "duration": 404,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "html",
+        "success": true,
+        "duration": 37,
+        "codeLength": 645,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/html"
+      },
+      "error": "Generating html with Gemma3-4B...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Gemma3-4B",
+      "domain": "ascii",
+      "success": true,
+      "duration": 420,
+      "result": {
+        "provider": "ollama",
+        "model": "Gemma3-4B",
+        "domain": "ascii",
+        "success": true,
+        "duration": 39,
+        "codeLength": 1829,
+        "outputDir": "examples/generated/ollama/Gemma3-4B/ascii"
+      },
+      "error": "Generating ascii with Gemma3-4B...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "p5",
+      "success": false,
+      "duration": 111949,
+      "error": "Generating p5 with Kimi-K2.5...\nRESULT: {\"provider\":\"ollama\",\"model\":\"Kimi-K2.5\",\"domain\":\"p5\",\"success\":false,\"error\":\"P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include par\"}\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "glsl",
+      "success": true,
+      "duration": 79684,
+      "result": {
+        "provider": "ollama",
+        "model": "Kimi-K2.5",
+        "domain": "glsl",
+        "success": true,
+        "duration": 78934,
+        "codeLength": 1915,
+        "outputDir": "examples/generated/ollama/Kimi-K2.5/glsl"
+      },
+      "error": "Generating glsl with Kimi-K2.5...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "three",
+      "success": true,
+      "duration": 115137,
+      "result": {
+        "provider": "ollama",
+        "model": "Kimi-K2.5",
+        "domain": "three",
+        "success": true,
+        "duration": 114656,
+        "codeLength": 4949,
+        "outputDir": "examples/generated/ollama/Kimi-K2.5/three"
+      },
+      "error": "Generating three with Kimi-K2.5...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "strudel",
+      "success": true,
+      "duration": 80162,
+      "result": {
+        "provider": "ollama",
+        "model": "Kimi-K2.5",
+        "domain": "strudel",
+        "success": true,
+        "duration": 79773,
+        "codeLength": 478,
+        "outputDir": "examples/generated/ollama/Kimi-K2.5/strudel"
+      },
+      "error": "Generating strudel with Kimi-K2.5...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "hydra",
+      "success": true,
+      "duration": 37808,
+      "result": {
+        "provider": "ollama",
+        "model": "Kimi-K2.5",
+        "domain": "hydra",
+        "success": true,
+        "duration": 37264,
+        "codeLength": 201,
+        "outputDir": "examples/generated/ollama/Kimi-K2.5/hydra"
+      },
+      "error": "Generating hydra with Kimi-K2.5...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "remotion",
+      "success": true,
+      "duration": 65230,
+      "result": {
+        "provider": "ollama",
+        "model": "Kimi-K2.5",
+        "domain": "remotion",
+        "success": true,
+        "duration": 64839,
+        "codeLength": 1631,
+        "outputDir": "examples/generated/ollama/Kimi-K2.5/remotion"
+      },
+      "error": "Generating remotion with Kimi-K2.5...\n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "html",
+      "success": true,
+      "duration": 396,
+      "result": {
+        "provider": "ollama",
+        "model": "Kimi-K2.5",
+        "domain": "html",
+        "success": true,
+        "duration": 37,
+        "codeLength": 645,
+        "outputDir": "examples/generated/ollama/Kimi-K2.5/html"
+      },
+      "error": "Generating html with Kimi-K2.5...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    },
+    {
+      "provider": "ollama",
+      "model": "Kimi-K2.5",
+      "domain": "ascii",
+      "success": true,
+      "duration": 380,
+      "result": {
+        "provider": "ollama",
+        "model": "Kimi-K2.5",
+        "domain": "ascii",
+        "success": true,
+        "duration": 34,
+        "codeLength": 1829,
+        "outputDir": "examples/generated/ollama/Kimi-K2.5/ascii"
+      },
+      "error": "Generating ascii with Kimi-K2.5...\nLLMClient.generate failed: LLM API error: 404 Not Found \n"
+    }
+  ]
+}

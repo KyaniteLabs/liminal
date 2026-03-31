@@ -20,6 +20,8 @@ import { ShaderGenerator } from './glsl/ShaderGenerator.js';
 import { ThreeGenerator } from './three/ThreeGenerator.js';
 import { RemotionGenerator } from './remotion/RemotionGenerator.js';
 import { P5GeneratorLLM } from './p5/P5GeneratorLLM.js';
+import { HTMLWebGenerator } from './html/HTMLWebGenerator.js';
+import { ASCIIArtGenerator } from './ascii/ASCIIArtGenerator.js';
 import { promptToGeneratorParams } from '../utils/promptToGeneratorParams.js';
 
 // --- Shared canHandle helpers ---
@@ -60,6 +62,24 @@ const shaderConfidence = (prompt: string): number => {
 const threeConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
   if (/3d|three\.js|\bthree\b|webgl\s*3d|3d\s*scene|3d\s*particle/.test(lower)) return 0.5;
+  return 0;
+};
+
+/** Confidence for HTML/web patterns */
+const htmlConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  // Portfolio, landing page, dashboard are specific -> higher confidence
+  if (/portfolio|landing\s*page|dashboard|web\s*app/.test(lower)) return 0.9;
+  if (/html|web\s*page|website|css\s*design/.test(lower)) return 0.7;
+  if (/web\s*dev|ui\s*component|form|spa/.test(lower)) return 0.6;
+  return 0;
+};
+
+/** Confidence for ASCII art patterns */
+const asciiConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  if (/ascii\s*art|\bascii\b/.test(lower)) return 0.9;
+  if (/text\s*art|character\s*art|\bart\b.*\btext\b/.test(lower)) return 0.6;
   return 0;
 };
 
@@ -130,6 +150,32 @@ const remotionEntry: GeneratorEntry = {
   },
 };
 
+const htmlEntry: GeneratorEntry = {
+  name: 'html',
+  canHandle: htmlConfidence,
+  generate: async (prompt: string) => {
+    const gen = new HTMLWebGenerator();
+    return gen.generate(prompt, {
+      responsive: true,
+      includeAnimations: true,
+      darkMode: true
+    });
+  },
+};
+
+const asciiEntry: GeneratorEntry = {
+  name: 'ascii',
+  canHandle: asciiConfidence,
+  generate: async (prompt: string) => {
+    const gen = new ASCIIArtGenerator();
+    return gen.generate(prompt, {
+      style: 'abstract',
+      width: 60,
+      height: 30
+    });
+  },
+};
+
 const llmEntry: GeneratorEntry = {
   name: 'llm',
   canHandle: () => 0, // fallback: never wins, but always available
@@ -153,6 +199,8 @@ export function registerAllGenerators(): void {
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
   generatorRegistry.register(remotionEntry);
+  generatorRegistry.register(htmlEntry);
+  generatorRegistry.register(asciiEntry);
   generatorRegistry.register(llmEntry);
 }
 
@@ -163,4 +211,6 @@ export {
   flowFieldConfidence,
   shaderConfidence,
   threeConfidence,
+  htmlConfidence,
+  asciiConfidence,
 };

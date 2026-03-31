@@ -172,6 +172,7 @@ describe('RalphLoop', () => {
         galleryDir: TEST_GALLERY_DIR,
         project: 'merge-every-n-test',
         mergeEveryN: 2,
+        _disableIterationExtension: true,
         onMergeStep: (data) => mergeSteps.push(data),
       });
       expect(mergeSteps.length).toBe(2);

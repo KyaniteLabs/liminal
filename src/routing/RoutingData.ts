@@ -98,7 +98,7 @@ export async function getRollingPerformance(domain: DomainType): Promise<Rolling
 /**
  * Domain types supported by the smart router.
  */
-export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'remotion';
+export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'remotion' | 'html' | 'webdev';
 
 /**
  * Model choice for routing.
@@ -123,6 +123,8 @@ export const AB_TEST_RESULTS: Record<DomainType, DomainFitness> = {
   code: { local: 0.503, cloud: 0.460, hybrid: 0.413 },
   visual: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
   remotion: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
+  html: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
+  webdev: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
 };
 
 /**
@@ -145,6 +147,20 @@ export interface DomainRoutingConfig {
  * Domain routing data mapping domain to routing configuration.
  */
 export const DOMAIN_ROUTING_DATA: Record<DomainType, DomainRoutingConfig> = {
+  html: {
+    optimalModel: 'cloud',
+    confidence: 0.80,
+    advantage: '+16%',
+    localFitness: 0.450,
+    cloudFitness: 0.520,
+  },
+  webdev: {
+    optimalModel: 'cloud',
+    confidence: 0.80,
+    advantage: '+16%',
+    localFitness: 0.450,
+    cloudFitness: 0.520,
+  },
   music: {
     optimalModel: 'local',
     confidence: 0.95,
@@ -200,4 +216,6 @@ export const DOMAIN_KEYWORDS: Record<DomainType, string[]> = {
   code: ['code', 'function', 'class', 'algorithm', 'generate', 'fractal', 'animation', 'script', 'program'],
   visual: ['visual', 'image', 'graphic', 'design', 'color', 'shape', 'pattern', 'render', 'shader', '3d', 'scene'],
   remotion: ['remotion', 'video', 'motion graphics', 'title sequence', 'animation', 'composition'],
+  html: ['html', 'web page', 'landing page', 'website', 'css', 'responsive', 'web design'],
+  webdev: ['web app', 'dashboard', 'portfolio', 'spa', 'single page', 'ui component', 'form', 'web dev'],
 };

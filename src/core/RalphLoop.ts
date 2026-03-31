@@ -348,7 +348,7 @@ export class RalphLoop {
         }
         
         // Iteration Extension: If at iteration 3 and still not working well, extend max iterations
-        if (iteration === 3) {
+        if (iteration === 3 && !normalizedOptions._disableIterationExtension) {
           const isWorkingWell = evaluation.score >= 0.70 && isComplete;
           if (!isWorkingWell) {
             const newMax = Math.min(normalizedOptions.maxIterations + 3, 20);

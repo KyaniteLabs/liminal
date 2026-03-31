@@ -671,7 +671,7 @@ export class CreativeEvaluator {
    * Detect Strudel music code
    */
   static detectsStrudelUsage(code: string): boolean {
-    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) && /\bstack|\$:|\#|\.s\(|\.n\(/.test(code);
+    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) && /\bstack|\$:|#|\.s\(|\.n\(/.test(code);
   }
 
   /**
@@ -821,7 +821,7 @@ export class CreativeEvaluator {
 
     // Creative checks
     if (/["'][^"']+["'].*\.s\(/.test(codeOnly)) creativeScore += 0.2; // Pattern mini-notation
-    if (/~|\*|\?|\!|\#/.test(codeOnly)) creativeScore += 0.2; // Rhythm modifiers
+    if (/~|\*|\?|!|#/.test(codeOnly)) creativeScore += 0.2; // Rhythm modifiers
     if (/\.delay|\.room|\.distort|\.cutoff/.test(codeOnly)) creativeScore += 0.2;
     if (/\.add|\.sub|\.mul/.test(codeOnly)) creativeScore += 0.15;
     if (codeOnly.split('\n').length > 5) creativeScore += 0.15;

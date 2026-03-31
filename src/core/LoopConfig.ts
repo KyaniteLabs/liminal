@@ -100,6 +100,8 @@ export interface LoopOptions {
   visualMappingParams?: Record<string, unknown>;
   /** Enable LIR-based evaluation — parses generated code into structured tokens for critics and evaluator */
   lirEnabled?: boolean;
+  /** Disable iteration extension (for testing). When true, maxIterations is strictly enforced. */
+  _disableIterationExtension?: boolean;
 }
 
 export interface LoopResult {
@@ -152,6 +154,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   aestheticConfig: Record<string, unknown>;
   visualMappingParams?: Record<string, unknown>;
   lirEnabled: boolean;
+  _disableIterationExtension: boolean;
 }
 
 /**
@@ -207,6 +210,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     aestheticConfig: (options?.aestheticConfig ?? {}) as Record<string, unknown>,
     visualMappingParams: options?.visualMappingParams,
     lirEnabled: options?.lirEnabled ?? false,
+    _disableIterationExtension: options?._disableIterationExtension ?? false,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
   };

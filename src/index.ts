@@ -38,6 +38,12 @@ import { ShaderGenerator } from './generators/glsl/ShaderGenerator.js';
 // Three.js Generator
 import { ThreeGenerator } from './generators/three/ThreeGenerator.js';
 
+// HTML Web Generator
+import { HTMLWebGenerator } from './generators/html/HTMLWebGenerator.js';
+
+// ASCII Art Generator
+import { ASCIIArtGenerator } from './generators/ascii/ASCIIArtGenerator.js';
+
 // Rendering and export
 import { Renderer } from './render/Renderer.js';
 import { PreviewServer } from './render/PreviewServer.js';
@@ -472,6 +478,8 @@ export default {
   CellularAutomata,
   FlowField,
   promptToGeneratorParams,
+  HTMLWebGenerator,
+  ASCIIArtGenerator,
 
   // Noise
   noise2D,
@@ -587,3 +595,11 @@ export type {
 
 // Constants
 export { SERVICE_DEFAULTS } from './constants.js';
+
+// HTML Web Generator
+export { HTMLWebGenerator };
+export type { HTMLGeneratorOptions } from './generators/html/HTMLWebGenerator.js';
+
+// ASCII Art Generator
+export { ASCIIArtGenerator };
+export type { ASCIIOptions, ASCIIStyle } from './generators/ascii/ASCIIArtGenerator.js';

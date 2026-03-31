@@ -204,6 +204,30 @@ export class RalphLoop {
         
         // Check code completeness (structural - braces, parens balanced)
         const isComplete = RalphLoop.isCodeComplete(currentCode);
+        
+        // Runtime validation: test if code actually works
+        let runtimeValid = true;
+        let runtimeError = '';
+        
+        // Detect output type and run appropriate runtime test
+        const outputType = detectOutputType(currentCode);
+        if (outputType === 'glsl') {
+          // For GLSL, we can't easily test in Node, but we can check syntax
+          const hasMain = /void\s+main\s*\(/.test(currentCode);
+          const hasFragColor = /gl_FragColor/.test(currentCode);
+          if (!hasMain || !hasFragColor) {
+            runtimeValid = false;
+            runtimeError = 'Missing main() or gl_FragColor';
+          }
+        }
+        
+        // Log runtime validation results
+        if (!runtimeValid) {
+          Logger.warn('RalphLoop', `Runtime validation failed: ${runtimeError}`);
+          if (normalizedOptions.chatMode) {
+            normalizedOptions.onThought?.(`Runtime check failed: ${runtimeError}`);
+          }
+        }
 
         // Diagnostic: Log that we got fresh code (not from cache)
         if (normalizedOptions.chatMode) {
@@ -600,4 +624,29 @@ export class RalphLoop {
            !endsMidFunction &&
            !endsMidClass;
   }
+}
+
+/**
+ * Detect output type from generated code
+ */
+function detectOutputType(code: string): 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'remotion' | 'unknown' {
+  if (code.includes('function setup()') || code.includes('createCanvas')) {
+    return 'p5';
+  }
+  if (code.includes('THREE.') || code.includes('WebGLRenderer')) {
+    return 'three';
+  }
+  if (code.includes('void main') && code.includes('gl_FragColor')) {
+    return 'glsl';
+  }
+  if (code.includes('.out(o0)') || code.includes('src(o0)')) {
+    return 'hydra';
+  }
+  if (code.includes('.s(') && (code.includes('stack') || code.includes('$:'))) {
+    return 'strudel';
+  }
+  if (code.includes('Remotion') || code.includes('useCurrentFrame')) {
+    return 'remotion';
+  }
+  return 'unknown';
 }

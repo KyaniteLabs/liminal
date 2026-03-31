@@ -1,100 +1,66 @@
 import React from 'react';
-import { AbsoluteFill, Img } from 'remotion';
-import { Text, useCurrentFrame, interpolate } from 'remotion';
+import { useCurrentFrame, interpolate } from 'remotion';
 
-export const TypingComposition: React.FC = () => {
+// Helper to create a blinking cursor effect
+const Cursor = ({ frame }: { frame: number }) => {
+  const opacity = interpolate(frame, [0, 1], [0, 1]);
+  return (
+    <div style={{ position: 'absolute', right: 0, top: 42, width: 3, height: 36, backgroundColor: '#fff', opacity }} />
+  );
+};
+
+// Helper for the subtitle fade-in
+const Subtitle = ({ frame }: { frame: number }) => {
+  const opacity = interpolate(frame, [150, 175], [0, 1]);
+  return (
+    <div style={{ 
+      position: 'absolute', bottom: 80, left: 0, right: 0, textAlign: 'center', color: '#ccc', fontSize: 24, fontWeight: 600, opacity, lineHeight: 1.4 
+    }}>
+      "The future belongs to those who believe in the beauty of their dreams."
+    </div>
+  );
+};
+
+export const TypingTextComposition: React.FC = () => {
   const frame = useCurrentFrame();
-
-  // Define text and timing constants
-  const mainText = "Hello World";
-  const subText = "Welcome to Remotion";
   
-  // Duration in frames (30fps)
-  const totalDuration = 150;
-  const typingSpeed = 2.5; // frames per character
-  const pauseAfterTyping = 20;
-  const fadeStartFrame = 60;
-  const fadeEndFrame = 90;
+  // Text parts to type out sequentially
+  const textParts = [
+    "Design is",
+    "the art of",
+    "solving problems.",
+    "Good design makes life better."
+  ];
 
-  // Calculate text length and cursor position
-  const textLength = mainText.length;
-  const currentCharIndex = Math.min(
-    Math.floor(frame / typingSpeed),
-    textLength - 1
-  );
-
-  // Cursor blink animation (5% duty cycle)
-  const cursorOpacity = interpolate(
-    frame % 20,
-    [0, 10],
-    [1, 0]
-  );
-
-  // Subtitle fade in/out logic
-  const subTextVisible = frame >= fadeStartFrame && frame <= fadeEndFrame;
+  // Calculate which part we should be typing based on frame count (approx 30 frames per word)
+  const currentPartIndex = Math.min(textParts.length - 1, Math.floor(frame / 30));
   
-  const subTextOpacity = interpolate(
-    frame - fadeStartFrame,
-    [0, 30],
-    [0, 1]
-  );
-
-  // Background color transition (dark blue to black)
-  const bgColorAlpha = interpolate(
-    frame / totalDuration,
-    [0.2, 0.5],
-    [0.9, 0]
-  );
+  // Get the text up to and including the current character of the current word
+  let displayText = "";
+  
+  if (currentPartIndex < textParts.length) {
+    const currentWord = textParts[currentPartIndex];
+    const charsToType = Math.min(currentWord.length, frame % 30);
+    displayText = currentWord.substring(0, charsToType);
+  }
 
   return (
-    <AbsoluteFill style={{ backgroundColor: `rgba(10, 30, 65, ${bgColorAlpha})` }}>
+    <AbsoluteFill style={{ backgroundColor: '#1a1a2e', position: 'relative' }}>
       {/* Main Typing Text */}
-      <Text
-        x={200}
-        y={400}
-        fontSize={72}
-        fontWeight="bold"
-        color="#FFFFFF"
-        lineHeight={1.2}
-        textOverflow="ellipsis"
-        style={{ whiteSpace: 'pre-wrap', fontFamily: 'Inter, sans-serif' }}
+      <div 
+        style={{ 
+          position: 'absolute', top: 480, left: '50%', transform: 'translateX(-50%)', textAlign: 'center', color: '#fff', fontSize: 64, fontWeight: 700, letterSpacing: -2, lineHeight: 1.2,
+          textShadow: '0 4px 12px rgba(0,0,0,0.3)'
+        }}
       >
-        {mainText.slice(0, currentCharIndex + 1)}
-        <span
-          style={{ display: 'inline-block', width: '2px', height: '80%', verticalAlign: 'bottom', marginLeft: '1px' }}
-          opacity={cursorOpacity}
-        />
-      </Text>
+        {displayText}
+      </div>
 
-      {/* Subtitle */}
-      {subTextVisible && (
-        <Text
-          x={200}
-          y={650}
-          fontSize={36}
-          color="#A0C4FF"
-          lineHeight={1.4}
-          style={{ whiteSpace: 'pre-wrap', fontFamily: 'Inter, sans-serif' }}
-        >
-          {subText}
-        </Text>
-      )}
+      {/* Cursor */}
+      <Cursor frame={frame} />
 
-      {/* Decorative elements */}
-      <Img 
-        src="https://placehold.co/20x1" 
-        x={50} 
-        y={950} 
-        height={3} 
-        style={{ opacity: 0.3 }} 
-      />
-      <Img 
-        src="https://placehold.co/20x1" 
-        x={1700} 
-        y={950} 
-        height={3} 
-        style={{ opacity: 0.3 }} 
-      />
+      {/* Subtitle Fade In */}
+      <Subtitle frame={frame} />
     </AbsoluteFill>
   );
 };

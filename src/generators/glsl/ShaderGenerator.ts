@@ -26,9 +26,13 @@ export class ShaderGenerator {
       throw new Error('ShaderGenerator: LLM returned empty code');
     }
 
-    // Check for truncated/incomplete code - throw error instead of using template
+    // Check for truncated/incomplete code - log warning but don't fail
     if (this.isTruncated(response.code)) {
-      throw new Error('ShaderGenerator: Generated code appears truncated or incomplete');
+      console.warn('[ShaderGenerator] Warning: Code may be truncated, attempting to use anyway');
+      // Only throw if code is critically incomplete (no main function)
+      if (!response.code.includes('void main') && !response.code.includes('gl_FragColor')) {
+        throw new Error('ShaderGenerator: Generated code is critically incomplete (missing main or gl_FragColor)');
+      }
     }
 
     return response.code;

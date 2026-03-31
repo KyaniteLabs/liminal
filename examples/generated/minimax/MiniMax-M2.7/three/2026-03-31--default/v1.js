@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Animated Wireframe Torus Knot</title>
+    <title>Wireframe Torus Knot Scene</title>
     <style>
         * {
             margin: 0;
@@ -12,7 +12,7 @@
         }
         body {
             overflow: hidden;
-            background-color: #000;
+            background: #000;
         }
         canvas {
             display: block;
@@ -20,164 +20,212 @@
     </style>
 </head>
 <body>
-    <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"></script>
+    <script>
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x0a0a1a, 0.015);
 
-        let scene, camera, renderer, controls, composer;
-        let torusKnot, wireframe;
-        let pointLight1, pointLight2, pointLight3;
-        let time = 0;
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 5, 15);
 
-        function init() {
-            scene = new THREE.Scene();
-            scene.background = new THREE.Color(0x0a0a0f);
-            scene.fog = new THREE.Fog(0x0a0a0f, 5, 25);
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.2;
+        document.body.appendChild(renderer.domElement);
 
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-            camera.position.set(0, 0, 8);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.maxDistance = 50;
+        controls.minDistance = 5;
 
-            renderer = new THREE.WebGLRenderer({ antialias: true });
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-            renderer.toneMapping = THREE.ACESFilmicToneMapping;
-            renderer.toneMappingExposure = 1.2;
-            document.body.appendChild(renderer.domElement);
+        const ambientLight = new THREE.AmbientLight(0x222233, 0.5);
+        scene.add(ambientLight);
 
-            controls = new OrbitControls(camera, renderer.domElement);
-            controls.enableDamping = true;
-            controls.dampingFactor = 0.05;
-            controls.minDistance = 3;
-            controls.maxDistance = 20;
+        const pointLight1 = new THREE.PointLight(0xff6b6b, 2, 50);
+        pointLight1.position.set(10, 10, 10);
+        scene.add(pointLight1);
 
-            const ambientLight = new THREE.AmbientLight(0x222233, 0.5);
-            scene.add(ambientLight);
+        const pointLight2 = new THREE.PointLight(0x4ecdc4, 2, 50);
+        pointLight2.position.set(-10, -5, -10);
+        scene.add(pointLight2);
 
-            pointLight1 = new THREE.PointLight(0xff00ff, 2, 20);
-            pointLight1.position.set(5, 3, 5);
-            scene.add(pointLight1);
+        const pointLight3 = new THREE.PointLight(0xf7dc6f, 2, 50);
+        pointLight3.position.set(0, 15, 0);
+        scene.add(pointLight3);
 
-            pointLight2 = new THREE.PointLight(0x00ffff, 2, 20);
-            pointLight2.position.set(-5, -3, 5);
-            scene.add(pointLight2);
+        const coreGeometry = new THREE.TorusKnotGeometry(3, 0.8, 128, 32, 2, 3);
+        const coreMaterial = new THREE.MeshStandardMaterial({
+            color: 0xffffff,
+            emissive: 0xff00ff,
+            emissiveIntensity: 0.3,
+            metalness: 0.9,
+            roughness: 0.1
+        });
+        const coreKnot = new THREE.Mesh(coreGeometry, coreMaterial);
+        scene.add(coreKnot);
 
-            pointLight3 = new THREE.PointLight(0xffff00, 2, 20);
-            pointLight3.position.set(0, 5, -5);
-            scene.add(pointLight3);
+        const wireframeGeometry = new THREE.TorusKnotGeometry(3.05, 0.82, 128, 32, 2, 3);
+        const wireframeMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ffff,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.8
+        });
+        const wireframeKnot = new THREE.Mesh(wireframeGeometry, wireframeMaterial);
+        scene.add(wireframeKnot);
 
-            const torusGeometry = new THREE.TorusKnotGeometry(2, 0.4, 128, 32);
+        const particlesGeometry = new THREE.BufferGeometry();
+        const particleCount = 2000;
+        const positions = new Float32Array(particleCount * 3);
+        const colors = new Float32Array(particleCount * 3);
+
+        for (let i = 0; i < particleCount; i++) {
+            const radius = 8 + Math.random() * 25;
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI * 2;
+            
+            positions[i * 3] = radius * Math.sin(theta) * Math.cos(phi);
+            positions[i * 3 + 1] = radius * Math.sin(theta) * Math.sin(phi);
+            positions[i * 3 + 2] = radius * Math.cos(theta);
+
+            const color = new THREE.Color();
+            color.setHSL(Math.random(), 0.8, 0.6);
+            colors[i * 3] = color.r;
+            colors[i * 3 + 1] = color.g;
+            colors[i * 3 + 2] = color.b;
+        }
+
+        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        particlesGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+        const particlesMaterial = new THREE.PointsMaterial({
+            size: 0.08,
+            vertexColors: true,
+            transparent: true,
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
+        });
+
+        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        scene.add(particles);
+
+        const floatingObjects = [];
+        const objectCount = 12;
+
+        for (let i = 0; i < objectCount; i++) {
+            const geometries = [
+                new THREE.IcosahedronGeometry(0.4, 0),
+                new THREE.OctahedronGeometry(0.5, 0),
+                new THREE.TetrahedronGeometry(0.5, 0),
+                new THREE.DodecahedronGeometry(0.35, 0)
+            ];
+            
+            const geometry = geometries[Math.floor(Math.random() * geometries.length)];
             const material = new THREE.MeshStandardMaterial({
-                color: 0xffffff,
-                emissive: 0x111111,
-                metalness: 0.9,
-                roughness: 0.1,
-                wireframe: true
+                color: new THREE.Color().setHSL(i / objectCount, 0.7, 0.5),
+                metalness: 0.8,
+                roughness: 0.2,
+                emissive: new THREE.Color().setHSL(i / objectCount, 0.9, 0.1)
             });
 
-            torusKnot = new THREE.Mesh(torusGeometry, material);
-            scene.add(torusKnot);
-
-            const wireGeometry = new THREE.TorusKnotGeometry(2.05, 0.45, 128, 32);
-            const wireMaterial = new THREE.MeshBasicMaterial({
-                color: 0xffffff,
-                wireframe: true,
-                transparent: true,
-                opacity: 0.3
-            });
-            wireframe = new THREE.Mesh(wireGeometry, wireMaterial);
-            scene.add(wireframe);
-
-            const particlesGeometry = new THREE.BufferGeometry();
-            const particleCount = 500;
-            const positions = new Float32Array(particleCount * 3);
-
-            for (let i = 0; i < particleCount * 3; i += 3) {
-                positions[i] = (Math.random() - 0.5) * 30;
-                positions[i + 1] = (Math.random() - 0.5) * 30;
-                positions[i + 2] = (Math.random() - 0.5) * 30;
-            }
-
-            particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-
-            const particlesMaterial = new THREE.PointsMaterial({
-                size: 0.05,
-                color: 0xffffff,
-                transparent: true,
-                opacity: 0.6,
-                sizeAttenuation: true
-            });
-
-            const particles = new THREE.Points(particlesGeometry, particlesMaterial);
-            scene.add(particles);
-
-            composer = new EffectComposer(renderer);
-            const renderPass = new RenderPass(scene, camera);
-            composer.addPass(renderPass);
-
-            const bloomPass = new UnrealBloomPass(
-                new THREE.Vector2(window.innerWidth, window.innerHeight),
-                1.5,
-                0.4,
-                0.85
+            const mesh = new THREE.Mesh(geometry, material);
+            
+            const angle = (i / objectCount) * Math.PI * 2;
+            const radius = 7 + Math.random() * 5;
+            mesh.position.set(
+                Math.cos(angle) * radius,
+                (Math.random() - 0.5) * 6,
+                Math.sin(angle) * radius
             );
-            composer.addPass(bloomPass);
 
-            window.addEventListener('resize', onWindowResize);
+            mesh.userData = {
+                initialY: mesh.position.y,
+                rotationSpeed: 0.5 + Math.random() * 1.5,
+                floatSpeed: 0.5 + Math.random() * 1,
+                floatOffset: Math.random() * Math.PI * 2
+            };
+
+            floatingObjects.push(mesh);
+            scene.add(mesh);
         }
 
-        function onWindowResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
+        const ringGeometry = new THREE.TorusGeometry(6, 0.05, 16, 100);
+        const rings = [];
+        for (let i = 0; i < 3; i++) {
+            const ringMaterial = new THREE.MeshBasicMaterial({
+                color: new THREE.Color().setHSL(0.5 + i * 0.15, 0.9, 0.6),
+                transparent: true,
+                opacity: 0.4
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.PI / 2 + (i - 1) * 0.3;
+            ring.rotation.z = i * 0.5;
+            rings.push(ring);
+            scene.add(ring);
         }
+
+        const clock = new THREE.Clock();
 
         function animate() {
             requestAnimationFrame(animate);
+            
+            const elapsed = clock.getElapsedTime();
+            const delta = clock.getDelta();
 
-            time += 0.01;
+            coreKnot.rotation.x += 0.003;
+            coreKnot.rotation.y += 0.005;
+            coreKnot.rotation.z += 0.002;
 
-            torusKnot.rotation.x += 0.003;
-            torusKnot.rotation.y += 0.005;
+            wireframeKnot.rotation.x = coreKnot.rotation.x;
+            wireframeKnot.rotation.y = coreKnot.rotation.y;
+            wireframeKnot.rotation.z = coreKnot.rotation.z;
 
-            wireframe.rotation.x += 0.003;
-            wireframe.rotation.y += 0.005;
+            const hue = (elapsed * 0.1) % 1;
+            wireframeMaterial.color.setHSL(hue, 1, 0.5);
+            coreMaterial.emissive.setHSL((hue + 0.5) % 1, 1, 0.3);
 
-            const hue = (time * 0.1) % 1;
-            const color = new THREE.Color().setHSL(hue, 1, 0.5);
+            pointLight1.position.x = Math.sin(elapsed * 0.7) * 15;
+            pointLight1.position.z = Math.cos(elapsed * 0.7) * 15;
+            pointLight1.position.y = Math.sin(elapsed * 0.5) * 10;
+            pointLight1.color.setHSL((elapsed * 0.15) % 1, 0.8, 0.5);
 
-            torusKnot.material.color.copy(color);
-            torusKnot.material.emissive.copy(color).multiplyScalar(0.2);
-            wireframe.material.color.copy(color);
+            pointLight2.position.x = Math.sin(elapsed * 0.5 + Math.PI) * 12;
+            pointLight2.position.z = Math.cos(elapsed * 0.5 + Math.PI) * 12;
+            pointLight2.color.setHSL((elapsed * 0.12 + 0.33) % 1, 0.8, 0.5);
 
-            pointLight1.position.x = Math.sin(time * 1.5) * 6;
-            pointLight1.position.y = Math.cos(time * 1.2) * 4;
-            pointLight1.position.z = Math.cos(time * 1.8) * 6;
-            pointLight1.color.copy(color);
+            pointLight3.position.x = Math.cos(elapsed * 0.3) * 8;
+            pointLight3.position.z = Math.sin(elapsed * 0.3) * 8;
+            pointLight3.color.setHSL((elapsed * 0.08 + 0.66) % 1, 0.8, 0.5);
 
-            pointLight2.position.x = Math.cos(time * 1.3) * 6;
-            pointLight2.position.y = Math.sin(time * 1.7) * 4;
-            pointLight2.position.z = Math.sin(time * 2) * 6;
+            particles.rotation.y += 0.0005;
+            particles.rotation.x += 0.0002;
 
-            const hue2 = (hue + 0.33) % 1;
-            pointLight2.color.setHSL(hue2, 1, 0.5);
+            floatingObjects.forEach((obj, index) => {
+                obj.rotation.x += 0.01 * obj.userData.rotationSpeed;
+                obj.rotation.y += 0.015 * obj.userData.rotationSpeed;
+                obj.position.y = obj.userData.initialY + 
+                    Math.sin(elapsed * obj.userData.floatSpeed + obj.userData.floatOffset) * 1.5;
+            });
 
-            pointLight3.position.x = Math.sin(time * 0.8) * 5;
-            pointLight3.position.y = Math.cos(time * 1.1) * 6;
-            pointLight3.position.z = Math.cos(time * 1.4) * 5;
-
-            const hue3 = (hue + 0.66) % 1;
-            pointLight3.color.setHSL(hue3, 1, 0.5);
+            rings.forEach((ring, index) => {
+                ring.rotation.z += 0.002 * (index + 1);
+                ring.material.opacity = 0.3 + Math.sin(elapsed * 2 + index) * 0.15;
+            });
 
             controls.update();
-            composer.render();
+            renderer.render(scene, camera);
         }
 
-        init();
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
         animate();
     </script>
 </body>

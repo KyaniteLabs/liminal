@@ -1,25 +1,35 @@
 import React from 'react';
 import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion';
 
-export const TypingTextComposition: React.FC = () => {
+interface Props {
+  fps: number;
+  durationInFrames: number;
+  width: number;
+  height: number;
+}
+
+export const TypewriterWithSubtitle: React.FC<Props> = ({fps, durationInFrames, width, height}) => {
   const frame = useCurrentFrame();
   
   const mainText = "Welcome to Remotion";
-  const subtitleText = "Programmatic video generation";
+  const subtitleText = "Create videos with React";
+  const typingSpeed = 3;
+  const typingEndFrame = mainText.length * typingSpeed;
   
-  const typingProgress = interpolate(frame, [0, 90], [0, mainText.length], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp'
-  });
-  const charactersToShow = Math.floor(typingProgress);
-  const displayedText = mainText.slice(0, charactersToShow);
+  const charIndex = Math.floor(frame / typingSpeed);
+  const displayedText = mainText.slice(0, Math.min(charIndex, mainText.length));
   
-  const cursorVisible = Math.floor(frame / 15) % 2 === 0;
+  const cursorVisible = Math.floor(frame / 10) % 2 === 0;
   
-  const subtitleOpacity = interpolate(frame, [90, 120], [0, 1], {
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp'
-  });
+  const subtitleStartFrame = typingEndFrame + 20;
+  const subtitleEndFrame = subtitleStartFrame + 30;
+  
+  const subtitleOpacity = interpolate(
+    frame,
+    [subtitleStartFrame, subtitleEndFrame],
+    [0, 1],
+    {extrapolateLeft: 'clamp', extrapolateRight: 'clamp'}
+  );
   
   return (
     <AbsoluteFill style={{
@@ -28,32 +38,28 @@ export const TypingTextComposition: React.FC = () => {
       flexDirection: 'column',
       alignItems: 'center',
       justifyContent: 'center',
-      fontFamily: 'monospace'
+      fontFamily: 'Consolas, Monaco, monospace'
     }}>
       <div style={{
-        fontSize: '64px',
+        fontSize: 72,
         color: '#ffffff',
         fontWeight: 'bold',
-        display: 'flex',
-        alignItems: 'center'
+        letterSpacing: '0.05em'
       }}>
-        <span>{displayedText}</span>
+        {displayedText}
         <span style={{
-          width: '3px',
-          height: '64px',
-          backgroundColor: '#4ade80',
-          marginLeft: '8px',
-          opacity: cursorVisible ? 1 : 0
-        }} />
+          opacity: cursorVisible ? 1 : 0,
+          color: '#00ff41',
+          marginLeft: 4
+        }}>|</span>
       </div>
-      
       <div style={{
-        fontSize: '32px',
-        color: '#a0a0a0',
-        marginTop: '40px',
+        fontSize: 36,
+        color: '#aaaaaa',
+        marginTop: 32,
         opacity: subtitleOpacity,
-        fontWeight: 'normal',
-        letterSpacing: '2px'
+        fontWeight: 300,
+        letterSpacing: '0.02em'
       }}>
         {subtitleText}
       </div>

@@ -4,63 +4,66 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rotating Torus Knot</title>
-    <script type="importmap">
-        {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}
-    </script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <script type="module">
-        import * as THREE from 'three';
-
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"></script>
+    <script>
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x000000);
-
-        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.z = 5;
-
-        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        const canvas = document.querySelector('canvas');
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas
+        });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-        const orbitControls = new THREE.OrbitControls(camera, renderer.domElement);
-        orbitControls.update();
+        const camera = new THREE.PerspectiveCamera(75, canvas.width / canvas.height, 0.1, 1000);
+        camera.position.z = 5;
+
+        const controls = new THREE.OrbitControls(camera, canvas);
+        controls.target.z = 0;
+        controls.update();
 
         // Torus Knot
-        const torus = new THREE.MeshStandardMaterial({ color: new THREE.Color(0xff0000), roughness: 0.5 });
-        const torusGeometry = new THREE.TorusGeometry(0.7, 0.2, 32, 32);
-        const torusMesh = new THREE.Mesh(torusGeometry, torus);
-        scene.add(torusMesh);
+        const torus = new THREE.Mesh(
+            new THREE.TorusKnotGeometry(0.8, 0.2, 32),
+            new THREE.MeshStandardMaterial({
+                color: new THREE.Color(0.8, 0.6, 0.4),
+                roughness: 0.7,
+                metalness: 0.3
+            })
+        );
+        torus.rotation.x.at(0.01);
+        scene.add(torus);
 
-        // Animation
-        let angle = 0;
-        const rotationSpeed = 0.02;
+        // Lights
+        const ambientLight = new THREE.AmbientLight(new THREE.Color(0.5, 0.5, 0.5));
+        scene.add(ambientLight);
 
+        const pointLight = new THREE.PointLight(new THREE.Color(1.0, 1.0, 1.0), 1.5);
+        pointLight.position.x = 5;
+        pointLight.position.y = 5;
+        pointLight.position.z = 10;
+        scene.add(pointLight);
+
+        // Animation Loop
         function animate() {
             requestAnimationFrame(animate);
 
-            angle += rotationSpeed;
-            torusMesh.rotation.y = angle;
+            torus.rotation.x.setFromAxisAngle(new THREE.Vector3(0, 1, 0), Math.PI * 0.1);
 
-            // Animated Lighting
-            const light = new THREE.PointLight(0xffffff, 1, 5);
-            light.position.x = Math.sin(angle * 2) * 3;
-            light.position.z = Math.cos(angle * 2) * 3;
-            light.intensity = 1;
-
-            scene.add(light);
-            scene.remove(light); // Remove and re-add to update position
-
-            // Color Change
-            const color = new THREE.Color(0xff0000);
-            color.setHex(Math.max(0, Math.round(color.getHex() / 0xffffff) * 0xffffff));
-            torus.color = color;
-
+            renderer.render(scene, camera);
         }
-
-        window.addEventListener('resize', () => {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
 
         animate();
     </script>

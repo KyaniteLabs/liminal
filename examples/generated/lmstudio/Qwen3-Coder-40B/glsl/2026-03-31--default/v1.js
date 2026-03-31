@@ -12,7 +12,7 @@ float hash(vec2 p) {
 float noise(vec2 p) {
     vec2 i = floor(p);
     vec2 f = fract(p);
-    float a = hash(i + vec2(0.0, 0.0));
+    float a = hash(i);
     float b = hash(i + vec2(1.0, 0.0));
     float c = hash(i + vec2(0.0, 1.0));
     float d = hash(i + vec2(1.0, 1.0));
@@ -22,57 +22,58 @@ float noise(vec2 p) {
 
 float fbm(vec2 p) {
     float v = 0.0;
-    float a = 1.0;
-    float f = 1.0;
-    for (int i = 0; i < 4; ++i) {
-        v += a * noise(p * f);
+    float a = 0.5;
+    for (int i = 0; i < 4; i++) {
+        v += a * noise(p);
+        p *= 2.0;
         a *= 0.5;
-        f *= 2.0;
     }
     return v;
 }
 
-vec3 palette(float t) {
-    vec3 a = vec3(0.5, 0.5, 0.5);
-    vec3 b = vec3(0.5, 0.5, 0.5);
-    vec3 c = vec3(1.0, 1.0, 1.0);
-    vec3 d = vec3(0.263, 0.487, 0.691);
+vec3 palette(float t, vec3 a, vec3 b, vec3 c, vec3 d) {
     return a + b * cos(PI * (c * t + d));
 }
 
 void main() {
-    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
-    uv.x *= u_resolution.x / u_resolution.y;
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / min(u_resolution.x, u_resolution.y);
+    vec2 mouseUV = u_mouse;
+    float mx = (mouseUV.x - 0.5) * 1.5;
+    float my = -(mouseUV.y - 0.5) * 1.5;
     
-    float mx = u_mouse.x * 2.0 - 1.0;
-    float my = 1.0 - u_mouse.y * 2.0;
-    vec2 mouse = vec2(mx, my);
+    vec3 color = vec3(0.0);
+    float t = u_time * 0.75;
     
-    vec2 p = uv * 3.0;
-    float t = u_time * 0.5;
+    vec2 centerOffset = uv - vec2(mx, my);
+    float dist = length(centerOffset);
     
-    float f = 0.0;
+    for (int i = 0; i < 4; i++) {
+        float phase1 = fbm(uv * 1.8 + t * 0.6) - 0.5;
+        float phase2 = fbm(uv * 1.3 - t * 0.4) - 0.5;
+        float wave1 = sin(dot(uv, vec2(1.0, 1.5)) + phase1 * 2.0 + t);
+        float wave2 = sin(dot(uv, vec2(-1.2, 0.8)) + phase2 * 2.0 - t * 0.7);
+        float wave3 = cos(dist * 2.5 - t * 1.2) * 0.6;
+        
+        uv.x += wave1 * 0.15;
+        uv.y += wave2 * 0.15;
+        
+        float mixVal = (wave1 + wave2 + wave3) / 3.0 + 0.5;
+        
+        vec3 colA = vec3(0.3, 0.6, 1.0);
+        vec3 colB = vec3(1.0, 0.2, 0.7);
+        vec3 colC = vec3(0.9, 0.8, 0.4);
+        vec3 colD = vec3(0.1, 0.5, 0.9);
+        
+        float p = mixVal;
+        color += palette(p, colA, colB, colC, colD) * (0.6 / float(i + 1));
+    }
     
-    // Create plasma effect with multiple wave interactions
-    f += sin(p.x * 1.5 + t * 0.8);
-    f += sin(p.y * 1.3 + t * 0.6);
-    f += sin((p.x + p.y) * 1.2 + t * 0.4);
-    f += cos(p.x * 0.9 + p.y * 1.1 + t * 0.3);
+    color /= 4.0;
     
-    // Add noise for texture
-    float n = fbm(vec2(f * 0.5, t * 0.2)) * 0.3;
-    f += n;
+    vec3 finalColor = clamp(color, 0.0, 1.0);
     
-    // Apply palette with time-varying color shifts
-    vec3 color = palette(f + t * 0.1);
+    finalColor.r += 0.05 * sin(u_time * 2.0 + uv.x * 5.0) * exp(-length(uv) * 1.5);
+    finalColor.g += 0.03 * cos(u_time * 1.7 - uv.y * 4.0) * exp(-length(uv) * 1.8);
     
-    // Add mouse influence for interactivity
-    float dist = length(p - mouse * 2.0);
-    float mouseEffect = exp(-dist * dist * 1.5) * sin(t * 2.0);
-    color += mouseEffect * vec3(0.4, 0.3, 0.6);
-    
-    // Apply smooth contrast enhancement
-    color = pow(color, vec3(1.3));
-    
-    gl_FragColor = vec4(color, 1.0);
+    gl_FragColor = vec4(finalColor, 1.0);
 }

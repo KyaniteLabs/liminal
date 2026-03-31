@@ -30,6 +30,8 @@ Type-first creative ideation, inspired by SEED.
 ### Audio Domains
 | Type | Domain | Rigor | Best For | Output |
 |------|--------|-------|----------|--------|
+| **Pattern** | Strudel | Standard | Live coding patterns, algorithmic music | `.txt` |
+| **Visuals** | Hydra | Tight | Video feedback, live performance | `.js` |
 | **Synth** | Tone.js | Standard | Web Audio synthesis, instruments | `.js` |
 | **Synesthesia** | p5 + Tone.js | Deep | Audio-reactive visuals, VJ tools | `.js` |
 

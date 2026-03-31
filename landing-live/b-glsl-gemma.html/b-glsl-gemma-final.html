@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLSL Shader</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+    </style>
+</head>
+<body>
+    <canvas id="glCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById('glCanvas');
+        const gl = canvas.getContext('webgl');
+
+        if (!gl) {
+            alert('WebGL not supported');
+            throw new Error('WebGL not supported');
+        }
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            gl.viewport(0, 0, canvas.width, canvas.height);
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        const vsSource = `attribute vec4 aVertexPosition; void main() { gl_Position = aVertexPosition; }`;
+        const fsSource = `precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec2 u_mouse;
+uniform vec2 u_center;
+
+#define MAX_ITERATIONS 256
+#define SCALE 100.0
+#define AMPLITUDE 0.5
+#define FREQUENCY 2.0
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    uv *= 2.0 - u_mouse.xy; // Distortion based on mouse
+
+    float timeFactor = u_time * FREQUENCY;
+    float dist = length(uv);
+    float noiseFactor = noise(uv * SCALE + timeFactor);
+    float fbmFactor = fbm(uv * SCALE + timeFactor) * AMPLITUDE;
+    float colorFactor = hash(uv * SCALE + timeFactor) * 0.8;
+    float warpFactor = fbm(uv * SCALE + timeFactor) * 0.4;
+
+    vec3 color = vec3(0.0);
+
+    for (int i = 0; i < MAX_ITERATIONS; i++) {
+        float term = noiseFactor * colorFactor;
+        color += term;
+        noiseFactor *= 0.7;
+        if (noiseFactor < 0.01) break;
+    }
+
+    color += fbmFactor;
+    color += warpFactor;
+
+    color = mix(vec3(0.1, 0.3, 0.6), vec3(0.6, 0.2, 0.1), colorFactor);
+
+    gl_FragColor = vec4(color, 1.0);
+}
+
+// Helper noise function (simplex noise adaptation)
+float noise(vec2 p) {
+    float x = floor(p.x);
+    float y = floor(p.y);
+    float x0 = x;
+    float y0 = y;
+
+    float x1 = x + 1.0;
+    float y1 = y + 1.0;
+
+    vec2 ixy = vec2(x, y);
+    vec2 ixy1 = vec2(x1, y);
+
+    vec2 uv = p - ixy;
+    vec2 uv1 = p - ixy1;
+
+    float a = dot(uv, vec2(1.0, 1.0));
+    float b = dot(uv, vec2(1.0, 0.0));
+    float c = dot(uv, vec2(0.0, 1.0));
+
+    float e1 = clamp(a, 0.0, 1.0);
+    float e2 = clamp(b, 0.0, 1.0);
+    float e3 = clamp(c, 0.0, 1.0);
+
+    float d = e1 + e2 + e3;
+    float d_inv = 1.0 / d;
+
+    vec3 h = vec3(d_inv, d_inv, d_inv);
+
+    float total = h.x + h.y + h.z;
+
+    return mix(mix(h.x, h.y, uv.x), mix(h.z, total, uv.y), uv.z);
+}
+
+// Hash function - adapted from various sources
+float hash(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    float total = 0.0;
+    for (int j = 0; j < 8; j++) {
+        vec2 ij = vec2(i.x + float(j), i.y + float(j));
+        float mix = mix(f.x, f.y, float(j));
+        total += dot(ij, vec2(mix, mix));
+    }
+    return total;
+}`;
+
+        function loadShader(gl, type, source) {
+            const shader = gl.createShader(type);
+            gl.shaderSource(shader, source);
+            gl.compileShader(shader);
+            if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+                gl.deleteShader(shader);
+                return null;
+            }
+            return shader;
+        }
+
+        const vertexShader = loadShader(gl, gl.VERTEX_SHADER, vsSource);
+        const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
+
+        if (!vertexShader || !fragmentShader) {
+            console.error('Shader compilation failed');
+            document.body.innerHTML = '<div style="color:#f66;padding:2rem;font-family:monospace;">Shader compile error — see console</div>';
+        } else {
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
+
+            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(shaderProgram));
+            } else {
+                const positions = new Float32Array([-1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0]);
+                const positionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+                const vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+                gl.enableVertexAttribArray(vertexPosition);
+                gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
+
+                const uResolution = gl.getUniformLocation(shaderProgram, 'u_resolution');
+                const uTime = gl.getUniformLocation(shaderProgram, 'u_time');
+                const uMouse = gl.getUniformLocation(shaderProgram, 'u_mouse');
+
+                let mouseX = 0, mouseY = 0;
+                canvas.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = canvas.height - e.clientY;
+                });
+
+                let startTime = Date.now();
+                function render() {
+                    const time = (Date.now() - startTime) / 1000;
+                    gl.useProgram(shaderProgram);
+                    gl.uniform2f(uResolution, canvas.width, canvas.height);
+                    gl.uniform1f(uTime, time);
+                    gl.uniform2f(uMouse, mouseX, mouseY);
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                    requestAnimationFrame(render);
+                }
+                render();
+            }
+        }
+    </script>
+</body>
+</html>

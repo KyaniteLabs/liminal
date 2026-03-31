@@ -1,136 +1,165 @@
+let fireworks = [];
 let particles = [];
-let stars = [];
+let hueBase = 0;
 
 function setup() {
-  createCanvas(800, 600);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
-  
-  // Create a field of static background stars using noise for organic positioning
-  let starCount = 300;
-  for (let i = 0; i < starCount; i++) {
-    stars.push({
-      x: random(width),
-      y: random(height),
-      size: random(1, 2)
-    });
-  }
-}
-
-function draw() {
-  // Create the fading trail effect by drawing a semi-transparent background over the previous frame
-  noStroke();
-  fill(0, 5); 
-  rect(0, 0, width, height);
-
-  // Update and display stars
-  for (let star of stars) {
-    drawStar(star.x, star.y, star.size);
-  }
-
-  // Launch fireworks at irregular intervals
-  if (frameCount % 15 === 0) {
-    launchFirework();
-  }
-
-  // Update and display particles
-  for (let i = particles.length - 1; i >= 0; i--) {
-    let p = particles[i];
-    
-    // Apply physics: gravity and friction
-    p.vy += 0.08; 
-    p.vx *= 0.95;
-    p.vy *= 0.95;
-    
-    p.x += p.vx;
-    p.y += p.vy;
-    
-    // Fade out the particle
-    p.alpha -= 0.02;
-    
-    drawParticle(p);
-    
-    // Remove dead particles
-    if (p.alpha <= 0) {
-      particles.splice(i, 1);
-    }
-  }
-}
-
-function launchFirework() {
-  let startX = random(width * 0.2, width * 0.8);
-  let startY = height;
-  
-  // Random explosion type based on noise seed for variety
-  let type = noise(frameCount * 0.1) > 0.5 ? 'burst' : 'ring';
-  
-  particles.push({
-    x: startX,
-    y: startY,
-    vx: random(-2, 2), // Slight initial horizontal spread before explosion
-    vy: -random(8, 15), // Upward velocity
-    alpha: 0.6,
-    type: 'rocket'
-  });
-}
-
-function drawStar(x, y, size) {
-  fill(255);
-  strokeWeight(0);
-  point(x, y);
-}
-
-function drawParticle(p) {
-  let r = noise(frameCount * 0.1 + p.x * 0.01) * 150;
-  let g = noise(frameCount * 0.2 - p.y * 0.01) * 150;
-  let b = noise(p.x * 0.05, frameCount * 0.3) * 150;
-  
-  noStroke();
-  fill(r, g, b, p.alpha);
-  
-  if (p.type === 'rocket') {
-    // Draw the rocket ascending
-    ellipse(p.x, p.y, size(4));
-  } else if (p.type === 'burst') {
-    // Explosion particles
-    let px = random(-20, 20);
-    let py = random(-20, 20);
-    
-    noiseSeed(p.x * 100 + frameCount);
-    
-    for (let i = 0; i < 8; i++) {
-      push();
-      translate(p.x, p.y);
-      
-      // Use polar coordinates for explosion spread based on noise angle
-      let angle = map(i, 0, 7, 0, TWO_PI * 4) + (frameCount * 0.1);
-      let dist = random(5, 25);
-      
-      rotate(angle);
-      translate(dist, 0);
-      
-      let colorHue = noise(p.x * 0.05 + i) * HUE;
-      fill(colorHue, saturation(sat), brightness(bri), p.alpha);
-      ellipse(0, 0, size(3));
-      
-      pop();
-    }
-    
-    // Reset noise seed for next iteration
-    noiseSeed(random() * 10000);
-  } else {
-    // Ring particles
-    let angle = frameCount * 0.2;
-    push();
-    translate(p.x, p.y);
-    rotate(angle);
-    
-    stroke(r, g, b, p.alpha * 50);
-    strokeWeight(1 + random());
-    line(-30, 0, 30, 0);
-    pop();
-  }
+  background(0);
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  background(0);
+}
+
+function draw() {
+  // Create a trail effect by drawing semi-transparent black rectangle instead of full clear
+  noStroke();
+  fill(0, 150); // Adjust this alpha for longer or shorter trails (lower = longer)
+  rect(0, 0, width, height);
+
+  // Launch fireworks randomly
+  if (frameCount % 4 === 0 || mouseIsPressed && mouseX > 0 && mouseY > 0 && mouseX < width && mouseY < height) {
+    fireworks.push(new Firework(mouseX, mouseY));
+  } else if (mouseX === 0 && mouseY === 0) {
+    // Wait until user moves mouse to stop auto-launching for a moment
+  }
+
+  for (let i = fireworks.length - 1; i >= 0; i--) {
+    fireworks[i].update();
+    fireworks[i].show();
+    
+    if (fireworks[i].isFinished()) {
+      particles.push(new Particle(fireworks[i].x, fireworks[i].y));
+      fireworks.splice(i, 1);
+    }
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].update();
+    particles[i].show();
+    
+    if (particles[i].isFinished()) {
+      particles.splice(i, 1);
+    }
+  }
+
+  // Cycle colors slowly over time for variety
+  hueBase = map(sin(frameCount * 0.05), -1, 1, 0, 360);
+}
+
+// Firework class representing the rocket going up
+class Firework {
+  constructor(targetX, targetY) {
+    this.x = width / 2;
+    this.y = height;
+    this.sx = random(-1, 1); // Starting X velocity (tiny random to prevent stacking)
+    this.sy = -random(8, 15); // Initial upward Y velocity
+    this.targetX = targetX;
+    this.targetY = targetY;
+    this.status = 'flying'; // flying or exploding
+    this.brightness = 0;
+  }
+
+  update() {
+    if (this.status === 'flying') {
+      let dx = this.targetX - this.x;
+      let dy = this.targetY - this.y;
+      let distance = sqrt(dx * dx + dy * dy);
+      
+      // Calculate velocity needed to cover remaining distance
+      let vx = dx / distance * this.sy;
+      let vy = dy / distance * this.sy;
+
+      this.x += vx;
+      this.y += vy;
+    }
+  }
+
+  show() {
+    stroke(255);
+    if (this.status === 'flying') {
+      // Draw a line from current position to previous position for the trail
+      // Or just draw at current position with varying brightness
+      let alpha = map(this.y, height - 100, 0, 0, 255); 
+      stroke(255, alpha);
+      circle(this.x, this.y, random(2, 4));
+      
+      // Draw line to previous position for trail effect (simple)
+      noStroke();
+    }
+  }
+
+  isFinished() {
+    return this.y <= this.targetY && this.status === 'flying';
+  }
+}
+
+// Particle class representing the explosion debris
+class Particle {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    
+    // Calculate angle to a random point on the circle
+    let a = random(TWO_PI);
+    // Radius of explosion (how wide it spreads)
+    let r = random(30, 60); 
+    let vx = cos(a) * r;
+    let vy = sin(a) * r;
+
+    this.vx = vx;
+    this.vy = vy;
+    
+    // Physics properties
+    this.gravity = 0.15;
+    this.friction = 0.96;
+    
+    // Color and Life
+    hueBase = map(sin(frameCount * 0.05), -1, 1, 0, 360);
+    let baseHue = (hueBase + random(-20, 20)) % 360;
+    this.hue = baseHue;
+    
+    // Randomize color slightly for variety within the explosion
+    if (baseHue < 15) this.hue += 40; // Add orange/red to some particles
+    else if (baseHue > 280) this.hue -= 30; // Add blue/purple
+    
+    this.alpha = random(1, 255);
+    
+    // Size varies by randomness and velocity magnitude
+    let speed = sqrt(vx*vx + vy*vy);
+    this.size = map(speed, 0, 100, 1.5, 4);
+    if (this.size < 1) this.size = 2;
+    this.maxSize = this.size;
+  }
+
+  update() {
+    // Physics simulation
+    this.vy += this.gravity;
+    this.vx *= this.friction;
+    this.vy *= this.friction;
+    
+    this.x += this.vx;
+    this.y += this.vy;
+    
+    // Fade out
+    this.alpha -= 2.5;
+    if (this.alpha < 0) {
+      this.alpha = 0;
+    }
+  }
+
+  show() {
+    noStroke();
+    fill(this.hue, 80, this.alpha);
+    
+    // Draw circle with slight gradient effect using ellipse size variation
+    let r = map(this.size / this.maxSize, 0, 1, this.size * 0.5, this.size * 1.5);
+    ellipse(this.x, this.y, r * 2);
+  }
+
+  isFinished() {
+    return this.alpha <= 0;
+  }
 }

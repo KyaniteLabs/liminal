@@ -1,0 +1,242 @@
+[
+  {
+    "domain": "p5",
+    "model": "granite-1b",
+    "status": "PASS",
+    "duration": 307,
+    "size": 2164
+  },
+  {
+    "domain": "glsl",
+    "model": "granite-1b",
+    "status": "TIMEOUT",
+    "duration": 120198,
+    "size": 0,
+    "error": "Liminal run failed: ShaderGenerator: Generated code appears truncated or incomplete"
+  },
+  {
+    "domain": "three",
+    "model": "granite-1b",
+    "status": "TIMEOUT",
+    "duration": 226238,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "strudel",
+    "model": "granite-1b",
+    "status": "TIMEOUT",
+    "duration": 187521,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "hydra",
+    "model": "granite-1b",
+    "status": "FAIL",
+    "duration": 107201,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: hydra code is too small (59b) - minimum is 150b. T"
+  },
+  {
+    "domain": "tone",
+    "model": "granite-1b",
+    "status": "TIMEOUT",
+    "duration": 138611,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "html",
+    "model": "granite-1b",
+    "status": "TIMEOUT",
+    "duration": 238012,
+    "size": 0,
+    "error": "Liminal run failed: HTMLWebGenerator: LLM output is not valid HTML"
+  },
+  {
+    "domain": "ascii",
+    "model": "granite-1b",
+    "status": "TIMEOUT",
+    "duration": 146612,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "remotion",
+    "model": "granite-1b",
+    "status": "TIMEOUT",
+    "duration": 217862,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "glsl",
+    "model": "granite-350m",
+    "status": "FAIL",
+    "duration": 44490,
+    "size": 0,
+    "error": "Liminal run failed: ShaderGenerator: Generated code appears truncated or incomplete"
+  },
+  {
+    "domain": "three",
+    "model": "granite-350m",
+    "status": "FAIL",
+    "duration": 45007,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "strudel",
+    "model": "granite-350m",
+    "status": "FAIL",
+    "duration": 18129,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: Music code must contain Strudel patterns ($: s(..."
+  },
+  {
+    "domain": "hydra",
+    "model": "granite-350m",
+    "status": "FAIL",
+    "duration": 4645,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: hydra code is too small (90b) - minimum is 150b. T"
+  },
+  {
+    "domain": "tone",
+    "model": "granite-350m",
+    "status": "FAIL",
+    "duration": 5143,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "html",
+    "model": "granite-350m",
+    "status": "FAIL",
+    "duration": 24525,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "ascii",
+    "model": "granite-350m",
+    "status": "FAIL",
+    "duration": 2713,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "remotion",
+    "model": "granite-350m",
+    "status": "PASS",
+    "duration": 8860,
+    "size": 3547
+  },
+  {
+    "domain": "p5",
+    "model": "gemma",
+    "status": "PASS",
+    "duration": 129,
+    "size": 2163
+  },
+  {
+    "domain": "glsl",
+    "model": "gemma",
+    "status": "PASS",
+    "duration": 324495,
+    "size": 6000
+  },
+  {
+    "domain": "three",
+    "model": "gemma",
+    "status": "TIMEOUT",
+    "duration": 240071,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "html",
+    "model": "gemma",
+    "status": "TIMEOUT",
+    "duration": 120048,
+    "size": 0,
+    "error": "Liminal run failed: HTMLWebGenerator: LLM output is not valid HTML"
+  },
+  {
+    "domain": "hydra",
+    "model": "gemma",
+    "status": "TIMEOUT",
+    "duration": 133712,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: hydra code is too small (69b) - minimum is 150b. T"
+  },
+  {
+    "domain": "tone",
+    "model": "gemma",
+    "status": "PASS",
+    "duration": 156564,
+    "size": 4287
+  },
+  {
+    "domain": "remotion",
+    "model": "gemma",
+    "status": "PASS",
+    "duration": 50477,
+    "size": 3560
+  },
+  {
+    "domain": "p5",
+    "model": "qwen35",
+    "status": "PASS",
+    "duration": 487,
+    "size": 2164
+  },
+  {
+    "domain": "glsl",
+    "model": "qwen35",
+    "status": "TIMEOUT",
+    "duration": 121514,
+    "size": 0,
+    "error": "Liminal run failed: ShaderGenerator: Generated code appears truncated or incomplete"
+  },
+  {
+    "domain": "three",
+    "model": "qwen35",
+    "status": "TIMEOUT",
+    "duration": 241728,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "strudel",
+    "model": "qwen35",
+    "status": "TIMEOUT",
+    "duration": 240549,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "html",
+    "model": "qwen35",
+    "status": "TIMEOUT",
+    "duration": 300186,
+    "size": 0,
+    "error": "Liminal run failed: HTMLWebGenerator: LLM output is not valid HTML"
+  },
+  {
+    "domain": "p5",
+    "model": "phi4",
+    "status": "PASS",
+    "duration": 138,
+    "size": 2163
+  },
+  {
+    "domain": "glsl",
+    "model": "phi4",
+    "status": "TIMEOUT",
+    "duration": 300348,
+    "size": 0,
+    "error": "Liminal run failed: ShaderGenerator: Generated code appears truncated or incomplete"
+  }
+]

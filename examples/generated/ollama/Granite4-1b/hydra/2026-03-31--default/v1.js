@@ -1,0 +1,1 @@
+shape().noise(0.5).color("random").rotate(15).scale(1.2).out(o0)

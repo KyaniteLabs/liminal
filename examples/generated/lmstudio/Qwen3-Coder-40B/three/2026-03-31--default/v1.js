@@ -2,128 +2,92 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Three.js Wireframe Torus Knot</title>
-    <style type="text/css">
-        body {
-            margin: 0;
-            overflow: hidden;
-            background-color: #000000;
-        }
-        canvas {
-            display: block;
-        }
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Torus Knot Scene</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #050505; }
+        canvas { display: block; }
     </style>
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-                "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-            }
-        }
-    </script>
 </head>
 <body>
-<script type="module">
-import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"></script>
 
-let scene, camera, renderer, controls;
-let torusKnot;
+<script>
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a15);
 
-function init() {
-    // Scene setup
-    scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x000000);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 8);
 
-    // Camera setup
-    camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 20);
-
-    // Renderer setup
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     document.body.appendChild(renderer.domElement);
 
-    // Controls setup
-    controls = new OrbitControls(camera, renderer.domElement);
+    // OrbitControls
+    const controls = new THREE.OrbitControls(camera, renderer.domElement);
     controls.enableDamping = true;
     controls.dampingFactor = 0.05;
 
-    // Create wireframe torus knot
-    const radius = 8;
-    const tube = 3;
-    const segmentsR = 48;
-    const segmentsT = 64;
-    const p = 2;
-    const q = 3;
+    // Create wireframe torus knot (p=3, q=2)
+    const torusGeometry = new THREE.TorusGeometry(2, 0.6, 16, 100);
     
-    torusKnot = new THREE.Mesh(
-        new THREE.TorusGeometry(radius, tube, segmentsR, segmentsT, p, q),
-        new THREE.MeshStandardMaterial({
-            color: 0x00ff00,
-            wireframe: true,
-            roughness: 0.5,
-            metalness: 0.5
-        })
-    );
-    
-    // Create a more visible wireframe version using EdgesGeometry
-    const edges = new THREE.EdgesGeometry(new THREE.TorusGeometry(radius, tube, segmentsR, segmentsT, p, q));
-    const material = new THREE.LineBasicMaterial({ color: 0x00ff00 });
-    torusKnot = new THREE.LineSegments(edges, material);
-    
+    // Wireframe material
+    const material = new THREE.MeshBasicMaterial({
+        color: 0x00a0ff,
+        wireframe: true
+    });
+
+    const torusKnot = new THREE.Mesh(torusGeometry, material);
     scene.add(torusKnot);
 
-    // Add light
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    // Animated lighting
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
     scene.add(ambientLight);
 
-    const pointLight = new THREE.PointLight(0xffffff, 1);
-    pointLight.position.set(10, 10, 10);
-    scene.add(pointLight);
+    const pointLight1 = new THREE.PointLight(0xff00ff, 2, 50);
+    pointLight1.position.set(5, 5, 5);
+    scene.add(pointLight1);
 
-    // Animation
-    animate();
-}
+    const pointLight2 = new THREE.PointLight(0x00ffff, 2, 50);
+    pointLight2.position.set(-5, -5, -5);
+    scene.add(pointLight2);
 
-function animate() {
-    requestAnimationFrame(animate);
+    // Color changing effect
+    let hue = 0;
 
-    // Rotate torus knot
-    torusKnot.rotation.x += 0.01;
-    torusKnot.rotation.y += 0.015;
+    function animate() {
+        requestAnimationFrame(animate);
 
-    // Change color
-    const time = Date.now() * 0.001;
-    const color = new THREE.Color().setHSL((time * 0.1) % 1, 1, 0.5);
-    
-    if (torusKnot.material.color) {
-        torusKnot.material.color.lerpTo(color, 0.1);
+        // Rotate torus knot
+        torusKnot.rotation.x += 0.01;
+        torusKnot.rotation.y += 0.015;
+
+        // Change color over time using HSL
+        hue = (hue + 0.005) % 1;
+        const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+        torusKnot.material.color.copy(color);
+
+        // Animate lights
+        const time = Date.now() * 0.001;
+        pointLight1.position.x = Math.sin(time) * 5;
+        pointLight1.position.z = Math.cos(time) * 5;
+        pointLight2.position.x = Math.cos(time * 1.3) * 5;
+        pointLight2.position.y = Math.sin(time * 1.3) * 5;
+
+        controls.update();
+        renderer.render(scene, camera);
     }
 
-    // Animate light
-    const lightRadius = 20;
-    const lightTime = Date.now() * 0.0005;
-    scene.children[1].position.x = Math.cos(lightTime) * lightRadius;
-    scene.children[1].position.y = Math.sin(lightTime * 0.7) * lightRadius;
-    scene.children[1].position.z = Math.sin(lightTime * 0.5) * lightRadius;
+    animate();
 
-    // Update controls
-    controls.update();
-
-    renderer.render(scene, camera);
-}
-
-// Handle window resize
-function onResize() {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-}
-window.addEventListener('resize', onResize);
-
-init();
+    // Handle window resize
+    window.addEventListener('resize', () => {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
 </script>
 </body>
 </html>

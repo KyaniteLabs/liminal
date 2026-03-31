@@ -1,38 +1,10 @@
-import { s, stack, n, fast, slow } from 'strudel';
-
 const tempo = 120;
-
-// Define drum sounds (synthesized for portability)
-const kick = s(0).gain(-48).speed(300).osc('sawtooth', [65, 50]);
-const snare = s(0.33).pan(-0.5).gain(-30).noise();
-const hihat = s(0.17).pan(0.5).gain(-40).noise().chop([0.02, 0.06]);
-
-// Define bassline notes (C# minor scale)
-const bassNotes = [247, 392, 311, 277]; // C#, E, D, B
-
-// Kick pattern: On every beat and off-beats for groove
-const kickPat = stack(
-  fast([0.5, 0.25, 0.25]).every('kick'),
-  slow([1, 3]).every('kick')
-);
-
-// Snare pattern: On beats 2 and 4
-const snarePat = n([0.5, 1.5], 'snare');
-
-// Hi-hat pattern: 8th notes with some syncopation
-const hihatPat = stack(
-  fast([0.25]).every('hihat'),
-  slow([3, 7]).every('hihat') // Add some ghost notes/sparseness
-);
-
-// Bassline pattern: Syncopated 16th note sequence
-const bassPat = n([0.75, 1.25, 1.5, 2], (i) => {
-  const noteIdx = i % bassNotes.length;
-  return s(0).gain(-35).speed(200).osc('sawtooth', [bassNotes[noteIdx], bassNotes[(noteIdx + 1) % bassNotes.length]]);
-});
-
-// Main sequencer combining all elements with room effect for depth
-const beat = stack(kickPat, snarePat, hihatPat).room(0.6, 2000);
-const bassLine = s(bassPat).speed(500); // Add subtle detune/speed variation
-
-s(tempo).every(slow([1]).stack(beat, bassLine));
+s4(t) => {
+  // Kick drum (low frequency sine wave with envelope)
+  t |-> kick(0, 'kick') |-> gain(0.8);
+  // Snare sound using noise burst with envelope
+  t |-> snare(3, 'snare') |-> gain(0.6);
+  // Hi-hat pattern (high frequency sine/triangle with fast decay)
+  s('hihat').fast(1).every(t / 8) |-> gain(0.4);
+  // Bassline: arpeggiated low frequencies with distortion and room reverb
+  s([25, 35, 49, 74]).every(t / 2).chop(0.1) |-> distort() |-> room('room');

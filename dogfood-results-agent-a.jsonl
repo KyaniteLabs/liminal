@@ -1,0 +1,36 @@
+{"domain": "p5", "model": "minimax-m27", "status": "\u2705", "duration": 95, "score": 0.68, "size": 160}
+{"domain": "p5", "model": "minimax-m25", "status": "\u2705", "duration": 137, "score": 0.68, "size": 160}
+{"domain": "p5", "model": "lm-coder-40b", "status": "\u2705", "duration": 98, "score": 0.68, "size": 2163}
+{"domain": "p5", "model": "lm-qwen-9b", "status": "\u2705", "duration": 74, "score": 0.68, "size": 2163}
+{"domain": "glsl", "model": "minimax-m27", "status": "\u274c", "duration": 23, "score": 0, "size": 0, "error": "ShaderGenerator: No LLM configured"}
+{"domain": "glsl", "model": "minimax-m25", "status": "\u274c", "duration": 24, "score": 0, "size": 0, "error": "ShaderGenerator: No LLM configured"}
+{"domain": "glsl", "model": "lm-coder-40b", "status": "\u274c", "duration": 321, "score": 0, "size": 0, "error": "Generated code appears truncated or incomplete"}
+{"domain": "glsl", "model": "lm-qwen-9b", "status": "\u274c", "duration": 68, "score": 0, "size": 0, "error": "Generated code appears truncated or incomplete"}
+{"domain": "three", "model": "minimax-m27", "status": "\u274c", "duration": 13, "score": 0, "size": 0, "error": "ThreeGenerator: No LLM configured"}
+{"domain": "three", "model": "minimax-m25", "status": "\u274c", "duration": 20, "score": 0, "size": 0, "error": "ThreeGenerator: No LLM configured"}
+{"domain": "three", "model": "lm-coder-40b", "status": "\u274c", "duration": 111, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "three", "model": "lm-qwen-9b", "status": "\u274c", "duration": 92, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "strudel", "model": "minimax-m27", "status": "\u274c", "duration": 16, "score": 0, "size": 0, "error": "StrudelGenerator: No LLM configured"}
+{"domain": "strudel", "model": "minimax-m25", "status": "\u274c", "duration": 18, "score": 0, "size": 0, "error": "StrudelGenerator: No LLM configured"}
+{"domain": "strudel", "model": "lm-coder-40b", "status": "\u274c", "duration": 92, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "strudel", "model": "lm-qwen-9b", "status": "\u274c", "duration": 87, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "hydra", "model": "minimax-m27", "status": "\u274c", "duration": 22, "score": 0, "size": 0, "error": "HydraGenerator: No LLM configured"}
+{"domain": "hydra", "model": "minimax-m25", "status": "\u274c", "duration": 20, "score": 0, "size": 0, "error": "HydraGenerator: No LLM configured"}
+{"domain": "hydra", "model": "lm-coder-40b", "status": "\u274c", "duration": 103, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "hydra", "model": "lm-qwen-9b", "status": "\u274c", "duration": 101, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "tone", "model": "minimax-m27", "status": "\u274c", "duration": 12, "score": 0, "size": 0, "error": "ToneGenerator: No LLM configured"}
+{"domain": "tone", "model": "minimax-m25", "status": "\u274c", "duration": 11, "score": 0, "size": 0, "error": "ToneGenerator: No LLM configured"}
+{"domain": "tone", "model": "lm-coder-40b", "status": "\u274c", "duration": 41, "score": 0, "size": 0, "error": "Generated code does not use Tone.js"}
+{"domain": "tone", "model": "lm-qwen-9b", "status": "\u274c", "duration": 87, "score": 0, "size": 0, "error": "Generated code does not use Tone.js"}
+{"domain": "html", "model": "minimax-m27", "status": "\u274c", "duration": 9, "score": 0, "size": 0, "error": "HTMLWebGenerator: No LLM configured"}
+{"domain": "html", "model": "minimax-m25", "status": "\u274c", "duration": 8, "score": 0, "size": 0, "error": "HTMLWebGenerator: No LLM configured"}
+{"domain": "html", "model": "lm-coder-40b", "status": "\u274c", "duration": 41, "score": 0, "size": 0, "error": "LLM output is not valid HTML"}
+{"domain": "html", "model": "lm-qwen-9b", "status": "\u274c", "duration": 36, "score": 0, "size": 0, "error": "LLM output is not valid HTML"}
+{"domain": "ascii", "model": "minimax-m27", "status": "\u274c", "duration": 10, "score": 0, "size": 0, "error": "ASCIIArtGenerator: No LLM configured"}
+{"domain": "ascii", "model": "minimax-m25", "status": "\u274c", "duration": 9, "score": 0, "size": 0, "error": "ASCIIArtGenerator: No LLM configured"}
+{"domain": "ascii", "model": "lm-coder-40b", "status": "\u274c", "duration": 59, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "ascii", "model": "lm-qwen-9b", "status": "\u274c", "duration": 64, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "remotion", "model": "minimax-m27", "status": "\u274c", "duration": 20, "score": 0, "size": 0, "error": "RemotionGenerator: No LLM configured"}
+{"domain": "remotion", "model": "minimax-m25", "status": "\u274c", "duration": 20, "score": 0, "size": 0, "error": "RemotionGenerator: No LLM configured"}
+{"domain": "remotion", "model": "lm-coder-40b", "status": "\u274c", "duration": 92, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}
+{"domain": "remotion", "model": "lm-qwen-9b", "status": "\u274c", "duration": 88, "score": 0, "size": 0, "error": "p5.js code validation failed - quality threshold not met"}

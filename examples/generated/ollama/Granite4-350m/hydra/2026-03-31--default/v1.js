@@ -1,0 +1,1 @@
+osc().wave(440, 1, 20).color([255, 0, 255]).rotate(90).kaleid('gradient').color([100, 50, 200]).out(o0).noise(10).shape('square').scale(1.5).fade(10).fade.in().fade.out().fade.out.out(out()).

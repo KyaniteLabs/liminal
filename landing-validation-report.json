@@ -1,0 +1,1670 @@
+{
+  "timestamp": "2026-03-31T16:25:35.913Z",
+  "totalFiles": 48,
+  "filesWithIssues": 14,
+  "cleanFiles": 34,
+  "domains": [
+    {
+      "domain": "ascii",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 6,
+      "empty": 0,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "examples": [
+        {
+          "file": "ascii-minimax-m27.html",
+          "domain": "ascii",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 2131,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasPreTag": true,
+            "hasMonospaceFont": true
+          },
+          "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+        },
+        {
+          "file": "ascii-minimax-m25.html",
+          "domain": "ascii",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 2131,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasPreTag": true,
+            "hasMonospaceFont": true
+          },
+          "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+        },
+        {
+          "file": "ascii-qwen35.html",
+          "domain": "ascii",
+          "model": "qwen35",
+          "exists": true,
+          "size": 2131,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasPreTag": true,
+            "hasMonospaceFont": true
+          },
+          "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+        },
+        {
+          "file": "ascii-qwen-coder.html",
+          "domain": "ascii",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 2131,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasPreTag": true,
+            "hasMonospaceFont": true
+          },
+          "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+        },
+        {
+          "file": "ascii-gemma.html",
+          "domain": "ascii",
+          "model": "gemma",
+          "exists": true,
+          "size": 2131,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasPreTag": true,
+            "hasMonospaceFont": true
+          },
+          "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+        },
+        {
+          "file": "ascii-kimi.html",
+          "domain": "ascii",
+          "model": "kimi",
+          "exists": true,
+          "size": 2131,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasPreTag": true,
+            "hasMonospaceFont": true
+          },
+          "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+        }
+      ]
+    },
+    {
+      "domain": "glsl",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 0,
+      "empty": 0,
+      "issues": [
+        "MISSING: hasFragmentShader"
+      ],
+      "examples": [
+        {
+          "file": "glsl-minimax-m27.html",
+          "domain": "glsl",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 4099,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasCanvas": true,
+            "hasWebGL": true,
+            "hasFragmentShader": true
+          },
+          "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define TAU 6.28318530718 float hash(vec2 "
+        },
+        {
+          "file": "glsl-minimax-m25.html",
+          "domain": "glsl",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 2532,
+          "issues": [
+            "MISSING: hasFragmentShader"
+          ],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasCanvas": true,
+            "hasWebGL": true,
+            "hasFragmentShader": false
+          },
+          "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define TWO_PI 6.28318530718 float random("
+        },
+        {
+          "file": "glsl-qwen35.html",
+          "domain": "glsl",
+          "model": "qwen35",
+          "exists": true,
+          "size": 4535,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasCanvas": true,
+            "hasWebGL": true,
+            "hasFragmentShader": true
+          },
+          "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define MAX_STEPS 80 #define STEP_SIZE 0.05 "
+        },
+        {
+          "file": "glsl-qwen-coder.html",
+          "domain": "glsl",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 3816,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasCanvas": true,
+            "hasWebGL": true,
+            "hasFragmentShader": true
+          },
+          "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265358979323846 float hash(vec2 p) { return fr"
+        },
+        {
+          "file": "glsl-gemma.html",
+          "domain": "glsl",
+          "model": "gemma",
+          "exists": true,
+          "size": 2697,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasCanvas": true,
+            "hasWebGL": true,
+            "hasFragmentShader": true
+          },
+          "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265358979323846 #define NOISE_SCALE 100.0 float "
+        },
+        {
+          "file": "glsl-kimi.html",
+          "domain": "glsl",
+          "model": "kimi",
+          "exists": true,
+          "size": 3602,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasCanvas": true,
+            "hasWebGL": true,
+            "hasFragmentShader": true
+          },
+          "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define TAU 6.28318530718 float hash(vec2 "
+        }
+      ]
+    },
+    {
+      "domain": "html",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 6,
+      "empty": 0,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found",
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "examples": [
+        {
+          "file": "html-minimax-m27.html",
+          "domain": "html",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 645,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHTMLStructure": true,
+            "hasContent": true
+          },
+          "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+        },
+        {
+          "file": "html-minimax-m25.html",
+          "domain": "html",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 645,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHTMLStructure": true,
+            "hasContent": true
+          },
+          "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+        },
+        {
+          "file": "html-qwen35.html",
+          "domain": "html",
+          "model": "qwen35",
+          "exists": true,
+          "size": 645,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHTMLStructure": true,
+            "hasContent": true
+          },
+          "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+        },
+        {
+          "file": "html-qwen-coder.html",
+          "domain": "html",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 645,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHTMLStructure": true,
+            "hasContent": true
+          },
+          "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+        },
+        {
+          "file": "html-gemma.html",
+          "domain": "html",
+          "model": "gemma",
+          "exists": true,
+          "size": 645,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHTMLStructure": true,
+            "hasContent": true
+          },
+          "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+        },
+        {
+          "file": "html-kimi.html",
+          "domain": "html",
+          "model": "kimi",
+          "exists": true,
+          "size": 645,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHTMLStructure": true,
+            "hasContent": true
+          },
+          "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+        }
+      ]
+    },
+    {
+      "domain": "hydra",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 0,
+      "empty": 0,
+      "issues": [],
+      "examples": [
+        {
+          "file": "hydra-minimax-m27.html",
+          "domain": "hydra",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 763,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHydraScript": true,
+            "hasCanvas": true,
+            "hasHydraCode": true
+          },
+          "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); src(s0).modulateScale(()=>src(s0).scroll(()=>Math.sin(time*0.02),()=>Math.cos(time*0.015)).kaleid(4)).colorShift().out(o0) src(s0).modulateRotate(noise(3)).kaleid([4,3,5].fast(0.5)).colorama([0.1,0.3,0.5].fast(0.2)).out(o1) src(o0).blend(src(o1).scale(1.5).rotate(()=>time*0.1)).out(o2) shape(4,0.5,0.1).rotate(()=>time*0.3).scale(()=>Math.sin(time*0.5)*0.5+0.8).color(1,0.5,0.2).m"
+        },
+        {
+          "file": "hydra-minimax-m25.html",
+          "domain": "hydra",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 487,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHydraScript": true,
+            "hasCanvas": true,
+            "hasHydraCode": true
+          },
+          "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(12, 0.15, 1.5).rotate(time * 0.3).kaleid(6).scale(1.8).color(0.7, 0.4, 1.3).saturate(2.5).modulate(noise(3), 0.4).feedback(0.9).out(o0) </script>"
+        },
+        {
+          "file": "hydra-qwen35.html",
+          "domain": "hydra",
+          "model": "qwen35",
+          "exists": true,
+          "size": 422,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHydraScript": true,
+            "hasCanvas": true,
+            "hasHydraCode": true
+          },
+          "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(128).shape(voronoi()).kaleid(4).scale(1.5).color([0, 255, 65]).out(o0) </script>"
+        },
+        {
+          "file": "hydra-qwen-coder.html",
+          "domain": "hydra",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 517,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHydraScript": true,
+            "hasCanvas": true,
+            "hasHydraCode": true
+          },
+          "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(640, 480, 25).rotate(sin(time * 0.5)).color(() => sin(time * 0.2), cos(time * 0.3), 1).scale(1.2).add(o0).rotate(time * 0.1).colorMod(() => time % 1, 0.8, 1).out(o0) </script>"
+        },
+        {
+          "file": "hydra-gemma.html",
+          "domain": "hydra",
+          "model": "gemma",
+          "exists": true,
+          "size": 655,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHydraScript": true,
+            "hasCanvas": true,
+            "hasHydraCode": true
+          },
+          "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(0, 0, 0).kaleid(0.5, 0.5, 0.5).shape(0.3, 0.7, 0.2).noise(0.1, 0.2, 0.3).color(0.8, 0.3, 0.1).rotate(0.01, 0.02, 0.03).scale(1.2, 1.4, 1.6).osc(0.5, 0.3, 0.2).kaleid(0.6, 0.4, 0.5).shape(0.4, 0.8, 0.3).noise(0.08, 0.18, 0.28).color(0.7, 0.4, 0.2).rotate(0.012, 0.022, 0.032).scale(1.3, 1.5, 1.7).out(o0) </script>"
+        },
+        {
+          "file": "hydra-kimi.html",
+          "domain": "hydra",
+          "model": "kimi",
+          "exists": true,
+          "size": 529,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasHydraScript": true,
+            "hasCanvas": true,
+            "hasHydraCode": true
+          },
+          "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); src(o0) .scale(1.01) .rotate(0.02) .colorama(0.15) .blend(osc(60, 0.1, 1.5).kaleid(8).color(0.9, 0.1, 0.3), 0.6) .modulateRotate(voronoi(10), 0.2) .scale(1.1) .out(o0) </script>"
+        }
+      ]
+    },
+    {
+      "domain": "p5",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 0,
+      "empty": 0,
+      "issues": [],
+      "examples": [
+        {
+          "file": "p5-minimax-m27.html",
+          "domain": "p5",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 3653,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasP5Script": true,
+            "hasSetupFunction": true,
+            "hasDrawOrCanvas": true
+          },
+          "rawPreview": "<script>let fireworks = []; let gravity; function setup() { createCanvas(800, 600); colorMode(HSB, 360, 100, 100, 1); pixelDensity(1); gravity = createVector(0, 0.15); } function draw() { background(0, 0, 5, 0.15); if (random() < 0.06) { fireworks.push(new Firework()); } for (let i = fireworks.length - 1; i >= 0; i--) { fireworks[i].update(); fireworks[i].display(); if (fireworks[i].done()) { fireworks.splice(i, 1); } } } class Particle { const"
+        },
+        {
+          "file": "p5-minimax-m25.html",
+          "domain": "p5",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 4440,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasP5Script": true,
+            "hasSetupFunction": true,
+            "hasDrawOrCanvas": true
+          },
+          "rawPreview": "<script>var fireworks = []; var stars = []; function setup() { createCanvas(windowWidth, windowHeight); pixelDensity(1); noiseSeed(99); for (let i = 0; i < 100; i++) { stars.push({ x: random(width), y: random(height * 0.7), size: random(0.5, 2), brightness: random(100, 255) }); } } function draw() { background(10, 10, 25, 50); for (let s of stars) { let twinkle = noise(s.x * 0.1, s.y * 0.1, frameCount * 0.02) * 100; fill(255, s.bright"
+        },
+        {
+          "file": "p5-qwen35.html",
+          "domain": "p5",
+          "model": "qwen35",
+          "exists": true,
+          "size": 3340,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasP5Script": true,
+            "hasSetupFunction": true,
+            "hasDrawOrCanvas": true
+          },
+          "rawPreview": "<script>let particles = []; let stars = []; function setup() { createCanvas(800, 600); pixelDensity(1); // Create a field of static background stars using noise for organic positioning let starCount = 300; for (let i = 0; i < starCount; i++) { stars.push({ x: random(width), y: random(height), size: random(1, 2) }); } } function draw() { // Create the fading trail effect by drawing a semi-transparent background over the previous frame noStroke(); f"
+        },
+        {
+          "file": "p5-qwen-coder.html",
+          "domain": "p5",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 2335,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasP5Script": true,
+            "hasSetupFunction": true,
+            "hasDrawOrCanvas": true
+          },
+          "rawPreview": "<script>let fireworks = []; const GRAVITY = 0.1; class Particle { constructor(x, y, color) { this.x = x; this.y = y; this.vx = random(-5, 5); this.vy = random(-5, 5); this.alpha = 255; this.color = color; } update() { this.vx *= 0.98; // air resistance this.vy *= 0.98; this.vy += GRAVITY; // gravity effect this.x += this.vx; this.y += this.vy; this.alpha -= random(3, 7); // fade out speed } show() { push(); noStroke(); "
+        },
+        {
+          "file": "p5-gemma.html",
+          "domain": "p5",
+          "model": "gemma",
+          "exists": true,
+          "size": 2194,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasP5Script": true,
+            "hasSetupFunction": true,
+            "hasDrawOrCanvas": true
+          },
+          "rawPreview": "<script>let fireworks = []; let numFireworks = 50; let gravity = 0.1; let fadeSpeed = 0.02; let noiseScale = 0.03; let noiseOffset = 0; function setup() { createCanvas(800, 600, WEBGL); pixelDensity(1); noiseSeed(12345); for (let i = 0; i < numFireworks; i++) { fireworks.push(new Firework()); } } function draw() { background(0); noiseOffset += 0.01; for (let i = 0; i < fireworks.length; i++) { fireworks[i].update(); fireworks[i].display(); } } class Firework { "
+        },
+        {
+          "file": "p5-kimi.html",
+          "domain": "p5",
+          "model": "kimi",
+          "exists": true,
+          "size": 5379,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasP5Script": true,
+            "hasSetupFunction": true,
+            "hasDrawOrCanvas": true
+          },
+          "rawPreview": "<script>let fireworks = []; let gravity; let windOffset = 0; function setup() { createCanvas(800, 600); pixelDensity(1); colorMode(HSB, 360, 100, 100, 100); noiseSeed(random(1000)); gravity = createVector(0, 0.15); strokeCap(ROUND); } function draw() { background(230, 80, 10, 25); // Organic wind variation using Perlin noise let windX = map(noise(windOffset), 0, 1, -0.05, 0.05); let wind = createVector(windX, 0); windOffset += 0.01; // Launch new fireworks randoml"
+        }
+      ]
+    },
+    {
+      "domain": "remotion",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 0,
+      "empty": 0,
+      "issues": [],
+      "examples": [
+        {
+          "file": "remotion-minimax-m27.html",
+          "domain": "remotion",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 2663,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasRemotionRef": true,
+            "hasCodeDisplay": true
+          },
+          "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion'; export const TypingTextComposition: React.FC&lt;{fps: number; durationInFrames: number; width: number; height: number}> = ({fps = 30, width = 1920, height = 1080}) => { const frame = useCurrentFrame(); const mainText = \"Hello, welcome to my video!\"; const subtitle = \"This is a subtitle that fades in smoothly after the typing effect.\"; const t"
+        },
+        {
+          "file": "remotion-minimax-m25.html",
+          "domain": "remotion",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 2130,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasRemotionRef": true,
+            "hasCodeDisplay": true
+          },
+          "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion'; export const TypingWithSubtitle: React.FC = () => { const frame = useCurrentFrame(); const mainText = \"Hello, World!\"; const subtitle = \"Welcome to Remotion\"; const typingEndFrame = 60; const subtitleStartFrame = 70; const visibleCharCount = interpolate( frame, [0, typingEndFrame], [0, mainText.length], {extrapolateLeft: 'c"
+        },
+        {
+          "file": "remotion-qwen35.html",
+          "domain": "remotion",
+          "model": "qwen35",
+          "exists": true,
+          "size": 2936,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasRemotionRef": true,
+            "hasCodeDisplay": true
+          },
+          "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import { AbsoluteFill, Img } from 'remotion'; import { Text, useCurrentFrame, interpolate } from 'remotion'; export const TypingComposition: React.FC = () => { const frame = useCurrentFrame(); // Define text and timing constants const mainText = \"Hello World\"; const subText = \"Welcome to Remotion\"; // Duration in frames (30fps) const totalDuration = 150; const typingSpeed = 2.5; // frames per character const"
+        },
+        {
+          "file": "remotion-qwen-coder.html",
+          "domain": "remotion",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 2736,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasRemotionRef": true,
+            "hasCodeDisplay": true
+          },
+          "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion'; export const TypingTextComposition: React.FC = () => { const frame = useCurrentFrame(); // Define timing parameters const typingDuration = 60; // frames for typing animation const pauseAfterTyping = 20; // frames before subtitle appears const fadeInStart = typingDuration + pauseAfterTyping; const fadeInDuration = 30; // frames for subtit"
+        },
+        {
+          "file": "remotion-gemma.html",
+          "domain": "remotion",
+          "model": "gemma",
+          "exists": true,
+          "size": 1897,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasRemotionRef": true,
+            "hasCodeDisplay": true
+          },
+          "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion'; export const TypingSubtitle = ({fps, durationInFrames, width, height}: {fps?: number, durationInFrames?: number, width?: number, height?: number}) => { const frame = useCurrentFrame(); const text = \"Hello, world! This is a typing animation with a subtitle.\"; const textSegments = text.split(\" \"); const typingSpeed = 0.03; const cursorBlinkInte"
+        },
+        {
+          "file": "remotion-kimi.html",
+          "domain": "remotion",
+          "model": "kimi",
+          "exists": true,
+          "size": 2080,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasRemotionRef": true,
+            "hasCodeDisplay": true
+          },
+          "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion'; export const TypingTextComposition: React.FC = () => { const frame = useCurrentFrame(); const mainText = \"Welcome to Remotion\"; const subtitleText = \"Programmatic video generation\"; const typingProgress = interpolate(frame, [0, 90], [0, mainText.length], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }); const charactersToShow "
+        }
+      ]
+    },
+    {
+      "domain": "strudel",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 0,
+      "empty": 0,
+      "issues": [],
+      "examples": [
+        {
+          "file": "strudel-minimax-m27.html",
+          "domain": "strudel",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 755,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasStrudelScript": true,
+            "hasPattern": true,
+            "hasPlayButton": true
+          },
+          "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `stack( s(\"bd:1\").gain(1.3).speed(\"1 2 1 2\"), s(\"sd:3\").gain(0.8).pan(\"0.3 -0.3\").every(2, \"fast 2\"), s(\"hh:2\").gain(0.4).fast(2).every(3, \"rev\"), s(\"sawtooth\").n(\"0 0 7 5 3 0 5 7\").gain(0.6).room(0.3).delay(0.4).delaytime(0.25) ).fast(2)`; document.getElementById('app').innerHTML = '<pre>' + code + '</pre><p>Click to play (audio)</p>'; </script>"
+        },
+        {
+          "file": "strudel-minimax-m25.html",
+          "domain": "strudel",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 822,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasStrudelScript": true,
+            "hasPattern": true,
+            "hasPlayButton": true
+          },
+          "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `sound(\"bd*4\") |> gain(1.2) |> shape(0.3), sound(\"sd*2\") |> struct(\"t(2,4)\") |> gain(0.8) |> shape(0.4), sound(\"hh\") |> fast(2) |> struct(\"t(0,2)\") |> gain(0.5) |> room(0.3), sound(\"bass:0\") |> struct(\"[0 1 2 3]*4\") |> speed(\"1 2 1.5 2\") |> shape(0.6) |> delay(0.25) |> gain(0.7) ) |> room(0.4) |> gain(0.9)`; document.getElementById('app').innerHTML = '<pre>'"
+        },
+        {
+          "file": "strudel-qwen35.html",
+          "domain": "strudel",
+          "model": "qwen35",
+          "exists": true,
+          "size": 1847,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasStrudelScript": true,
+            "hasPattern": true,
+            "hasPlayButton": true
+          },
+          "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `import { s, stack, n, fast, slow } from 'strudel'; const tempo = 120; // Define drum sounds (synthesized for portability) const kick = s(0).gain(-48).speed(300).osc('sawtooth', [65, 50]); const snare = s(0.33).pan(-0.5).gain(-30).noise(); const hihat = s(0.17).pan(0.5).gain(-40).noise().chop([0.02, 0.06]); // Define bassline notes (C# minor scale) const bassNotes "
+        },
+        {
+          "file": "strudel-qwen-coder.html",
+          "domain": "strudel",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 823,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasStrudelScript": true,
+            "hasPattern": true,
+            "hasPlayButton": true
+          },
+          "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `stack( s(\"kick\", every(4, n(0, 0.2, 0.1))), s(\"snare\", sometimes(n(1, 0.1), every(2, n(1, 0.15)))), s(\"hihat\", every(1, n(3, 0.08, 0.05))), s(\"bassline\", fast(rev(slow(stack( n(4, 0.3), n(6, 0.25), n(7, 0.2), n(5, 0.25) ))))) ).effects( gain(0.8), room(0.3), delay(0.1, 0.4, 0.3) )`; document.getElementById('app').innerHTML = '<pre>"
+        },
+        {
+          "file": "strudel-gemma.html",
+          "domain": "strudel",
+          "model": "gemma",
+          "exists": true,
+          "size": 1041,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasStrudelScript": true,
+            "hasPattern": true,
+            "hasPlayButton": true
+          },
+          "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `use synth.sine; use synth.square; use synth.pulse; use effect.gain; use effect.pan; set tempo 120; // Kick kick = s(0, 1, 0.5, 0.8, 0.2); // Snare snare = s(1, 0.5, 0.3, 0.7, 0.1); // Hi-Hat hihat = n(2, 0.25, 0.1, 0.9, 0.1); // Bassline bass = s(2, 1, 0.2, 0.9, 0.3); // Layer 1: Kick, Snare, Hi-Hat layer1 = [kick, snare, hihat]; // Layer 2: Bassline layer2 = "
+        },
+        {
+          "file": "strudel-kimi.html",
+          "domain": "strudel",
+          "model": "kimi",
+          "exists": true,
+          "size": 891,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasStrudelScript": true,
+            "hasPattern": true,
+            "hasPlayButton": true
+          },
+          "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `stack( s(\"bd*4\").gain(1.1).shape(0.3), s(\"~ sd ~ sd\").gain(0.9).room(0.3).shape(0.2), s(\"hh*16\").gain(\"[0.5 0.7]*8\").pan(sine.fast(2)).delay(0.5).delaytime(0.125).delayfeedback(0.4).sometimes(x => x.speed(2)), note(\"c2 [c2 ~] g1 [c2 ~]\") .s(\"sawtooth\") .cutoff(sine.slow(4).range(800, 2400)) .resonance(12) .gain(0.6) .every(3, rev) ) .every"
+        }
+      ]
+    },
+    {
+      "domain": "three",
+      "total": 6,
+      "exists": 6,
+      "hasLLMErrors": 1,
+      "empty": 0,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: The operation was aborted due to timeout",
+        "MISSING: hasScene",
+        "MISSING: hasRenderLoop"
+      ],
+      "examples": [
+        {
+          "file": "three-minimax-m27.html",
+          "domain": "three",
+          "model": "minimax-m27",
+          "exists": true,
+          "size": 7023,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasThreeImport": true,
+            "hasScene": true,
+            "hasRenderLoop": true
+          },
+          "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Animated Wireframe Torus Knot</title> <style> * { margin: 0; padding: 0; box-sizing: border-box; } body { overflow: hidden; background-color: #000; } canvas { display: block; } </style> </head> <body> <scrip"
+        },
+        {
+          "file": "three-minimax-m25.html",
+          "domain": "three",
+          "model": "minimax-m25",
+          "exists": true,
+          "size": 7229,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasThreeImport": true,
+            "hasScene": true,
+            "hasRenderLoop": true
+          },
+          "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Wireframe Torus Knot</title> <style> * { margin: 0; padding: 0; box-sizing: border-box; } body { overflow: hidden; background: #0a0a0f; } canvas { display: block; } </style> </head> <body> <script type=\"importmap\"> { \"imports\": { \"three\": \"https://cdn.jsdelivr.net/npm/three@0.16"
+        },
+        {
+          "file": "three-qwen35.html",
+          "domain": "three",
+          "model": "qwen35",
+          "exists": true,
+          "size": 336,
+          "issues": [
+            "LLM_ERROR: LLM generation failed: The operation was aborted due to timeout",
+            "MISSING: hasScene",
+            "MISSING: hasRenderLoop"
+          ],
+          "containsLLMError": true,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasThreeImport": true,
+            "hasScene": false,
+            "hasRenderLoop": false
+          },
+          "rawPreview": "<script>// LLM generation failed: The operation was aborted due to timeout</script>"
+        },
+        {
+          "file": "three-qwen-coder.html",
+          "domain": "three",
+          "model": "qwen-coder",
+          "exists": true,
+          "size": 3905,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasThreeImport": true,
+            "hasScene": true,
+            "hasRenderLoop": true
+          },
+          "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <title>Three.js Wireframe Torus Knot</title> <style type=\"text/css\"> body { margin: 0; overflow: hidden; background-color: #000000; } canvas { display: block; } </style> <script type=\"importmap\"> { \"imports\": { \"three\": \"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js\", "
+        },
+        {
+          "file": "three-gemma.html",
+          "domain": "three",
+          "model": "gemma",
+          "exists": true,
+          "size": 2631,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasThreeImport": true,
+            "hasScene": true,
+            "hasRenderLoop": true
+          },
+          "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Rotating Torus Knot</title> <script type=\"importmap\"> {\"imports\":{\"three\":\"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js\",\"three/addons/\":\"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/\"}} </script> </head> <body> <script type=\"module\"> import * as THREE from 'three'; cons"
+        },
+        {
+          "file": "three-kimi.html",
+          "domain": "three",
+          "model": "kimi",
+          "exists": true,
+          "size": 4092,
+          "issues": [],
+          "containsLLMError": false,
+          "isEmpty": false,
+          "hasRequiredElements": {
+            "hasThreeImport": true,
+            "hasScene": true,
+            "hasRenderLoop": true
+          },
+          "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Wireframe Torus Knot</title> <style> body { margin: 0; overflow: hidden; background: #000; } canvas { display: block; } </style> </head> <body> <script type=\"importmap\"> { \"imports\": { \"three\": \"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js\", \"three/addons"
+        }
+      ]
+    }
+  ],
+  "allResults": [
+    {
+      "file": "p5-minimax-m27.html",
+      "domain": "p5",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 3653,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasP5Script": true,
+        "hasSetupFunction": true,
+        "hasDrawOrCanvas": true
+      },
+      "rawPreview": "<script>let fireworks = []; let gravity; function setup() { createCanvas(800, 600); colorMode(HSB, 360, 100, 100, 1); pixelDensity(1); gravity = createVector(0, 0.15); } function draw() { background(0, 0, 5, 0.15); if (random() < 0.06) { fireworks.push(new Firework()); } for (let i = fireworks.length - 1; i >= 0; i--) { fireworks[i].update(); fireworks[i].display(); if (fireworks[i].done()) { fireworks.splice(i, 1); } } } class Particle { const"
+    },
+    {
+      "file": "glsl-minimax-m27.html",
+      "domain": "glsl",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 4099,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasCanvas": true,
+        "hasWebGL": true,
+        "hasFragmentShader": true
+      },
+      "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define TAU 6.28318530718 float hash(vec2 "
+    },
+    {
+      "file": "three-minimax-m27.html",
+      "domain": "three",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 7023,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasThreeImport": true,
+        "hasScene": true,
+        "hasRenderLoop": true
+      },
+      "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Animated Wireframe Torus Knot</title> <style> * { margin: 0; padding: 0; box-sizing: border-box; } body { overflow: hidden; background-color: #000; } canvas { display: block; } </style> </head> <body> <scrip"
+    },
+    {
+      "file": "strudel-minimax-m27.html",
+      "domain": "strudel",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 755,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasStrudelScript": true,
+        "hasPattern": true,
+        "hasPlayButton": true
+      },
+      "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `stack( s(\"bd:1\").gain(1.3).speed(\"1 2 1 2\"), s(\"sd:3\").gain(0.8).pan(\"0.3 -0.3\").every(2, \"fast 2\"), s(\"hh:2\").gain(0.4).fast(2).every(3, \"rev\"), s(\"sawtooth\").n(\"0 0 7 5 3 0 5 7\").gain(0.6).room(0.3).delay(0.4).delaytime(0.25) ).fast(2)`; document.getElementById('app').innerHTML = '<pre>' + code + '</pre><p>Click to play (audio)</p>'; </script>"
+    },
+    {
+      "file": "hydra-minimax-m27.html",
+      "domain": "hydra",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 763,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHydraScript": true,
+        "hasCanvas": true,
+        "hasHydraCode": true
+      },
+      "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); src(s0).modulateScale(()=>src(s0).scroll(()=>Math.sin(time*0.02),()=>Math.cos(time*0.015)).kaleid(4)).colorShift().out(o0) src(s0).modulateRotate(noise(3)).kaleid([4,3,5].fast(0.5)).colorama([0.1,0.3,0.5].fast(0.2)).out(o1) src(o0).blend(src(o1).scale(1.5).rotate(()=>time*0.1)).out(o2) shape(4,0.5,0.1).rotate(()=>time*0.3).scale(()=>Math.sin(time*0.5)*0.5+0.8).color(1,0.5,0.2).m"
+    },
+    {
+      "file": "remotion-minimax-m27.html",
+      "domain": "remotion",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 2663,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasRemotionRef": true,
+        "hasCodeDisplay": true
+      },
+      "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion'; export const TypingTextComposition: React.FC&lt;{fps: number; durationInFrames: number; width: number; height: number}> = ({fps = 30, width = 1920, height = 1080}) => { const frame = useCurrentFrame(); const mainText = \"Hello, welcome to my video!\"; const subtitle = \"This is a subtitle that fades in smoothly after the typing effect.\"; const t"
+    },
+    {
+      "file": "html-minimax-m27.html",
+      "domain": "html",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 645,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHTMLStructure": true,
+        "hasContent": true
+      },
+      "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+    },
+    {
+      "file": "ascii-minimax-m27.html",
+      "domain": "ascii",
+      "model": "minimax-m27",
+      "exists": true,
+      "size": 2131,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasPreTag": true,
+        "hasMonospaceFont": true
+      },
+      "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+    },
+    {
+      "file": "p5-minimax-m25.html",
+      "domain": "p5",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 4440,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasP5Script": true,
+        "hasSetupFunction": true,
+        "hasDrawOrCanvas": true
+      },
+      "rawPreview": "<script>var fireworks = []; var stars = []; function setup() { createCanvas(windowWidth, windowHeight); pixelDensity(1); noiseSeed(99); for (let i = 0; i < 100; i++) { stars.push({ x: random(width), y: random(height * 0.7), size: random(0.5, 2), brightness: random(100, 255) }); } } function draw() { background(10, 10, 25, 50); for (let s of stars) { let twinkle = noise(s.x * 0.1, s.y * 0.1, frameCount * 0.02) * 100; fill(255, s.bright"
+    },
+    {
+      "file": "glsl-minimax-m25.html",
+      "domain": "glsl",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 2532,
+      "issues": [
+        "MISSING: hasFragmentShader"
+      ],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasCanvas": true,
+        "hasWebGL": true,
+        "hasFragmentShader": false
+      },
+      "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define TWO_PI 6.28318530718 float random("
+    },
+    {
+      "file": "three-minimax-m25.html",
+      "domain": "three",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 7229,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasThreeImport": true,
+        "hasScene": true,
+        "hasRenderLoop": true
+      },
+      "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Wireframe Torus Knot</title> <style> * { margin: 0; padding: 0; box-sizing: border-box; } body { overflow: hidden; background: #0a0a0f; } canvas { display: block; } </style> </head> <body> <script type=\"importmap\"> { \"imports\": { \"three\": \"https://cdn.jsdelivr.net/npm/three@0.16"
+    },
+    {
+      "file": "strudel-minimax-m25.html",
+      "domain": "strudel",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 822,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasStrudelScript": true,
+        "hasPattern": true,
+        "hasPlayButton": true
+      },
+      "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `sound(\"bd*4\") |> gain(1.2) |> shape(0.3), sound(\"sd*2\") |> struct(\"t(2,4)\") |> gain(0.8) |> shape(0.4), sound(\"hh\") |> fast(2) |> struct(\"t(0,2)\") |> gain(0.5) |> room(0.3), sound(\"bass:0\") |> struct(\"[0 1 2 3]*4\") |> speed(\"1 2 1.5 2\") |> shape(0.6) |> delay(0.25) |> gain(0.7) ) |> room(0.4) |> gain(0.9)`; document.getElementById('app').innerHTML = '<pre>'"
+    },
+    {
+      "file": "hydra-minimax-m25.html",
+      "domain": "hydra",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 487,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHydraScript": true,
+        "hasCanvas": true,
+        "hasHydraCode": true
+      },
+      "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(12, 0.15, 1.5).rotate(time * 0.3).kaleid(6).scale(1.8).color(0.7, 0.4, 1.3).saturate(2.5).modulate(noise(3), 0.4).feedback(0.9).out(o0) </script>"
+    },
+    {
+      "file": "remotion-minimax-m25.html",
+      "domain": "remotion",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 2130,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasRemotionRef": true,
+        "hasCodeDisplay": true
+      },
+      "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion'; export const TypingWithSubtitle: React.FC = () => { const frame = useCurrentFrame(); const mainText = \"Hello, World!\"; const subtitle = \"Welcome to Remotion\"; const typingEndFrame = 60; const subtitleStartFrame = 70; const visibleCharCount = interpolate( frame, [0, typingEndFrame], [0, mainText.length], {extrapolateLeft: 'c"
+    },
+    {
+      "file": "html-minimax-m25.html",
+      "domain": "html",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 645,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHTMLStructure": true,
+        "hasContent": true
+      },
+      "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+    },
+    {
+      "file": "ascii-minimax-m25.html",
+      "domain": "ascii",
+      "model": "minimax-m25",
+      "exists": true,
+      "size": 2131,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasPreTag": true,
+        "hasMonospaceFont": true
+      },
+      "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+    },
+    {
+      "file": "p5-qwen35.html",
+      "domain": "p5",
+      "model": "qwen35",
+      "exists": true,
+      "size": 3340,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasP5Script": true,
+        "hasSetupFunction": true,
+        "hasDrawOrCanvas": true
+      },
+      "rawPreview": "<script>let particles = []; let stars = []; function setup() { createCanvas(800, 600); pixelDensity(1); // Create a field of static background stars using noise for organic positioning let starCount = 300; for (let i = 0; i < starCount; i++) { stars.push({ x: random(width), y: random(height), size: random(1, 2) }); } } function draw() { // Create the fading trail effect by drawing a semi-transparent background over the previous frame noStroke(); f"
+    },
+    {
+      "file": "glsl-qwen35.html",
+      "domain": "glsl",
+      "model": "qwen35",
+      "exists": true,
+      "size": 4535,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasCanvas": true,
+        "hasWebGL": true,
+        "hasFragmentShader": true
+      },
+      "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define MAX_STEPS 80 #define STEP_SIZE 0.05 "
+    },
+    {
+      "file": "three-qwen35.html",
+      "domain": "three",
+      "model": "qwen35",
+      "exists": true,
+      "size": 336,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: The operation was aborted due to timeout",
+        "MISSING: hasScene",
+        "MISSING: hasRenderLoop"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasThreeImport": true,
+        "hasScene": false,
+        "hasRenderLoop": false
+      },
+      "rawPreview": "<script>// LLM generation failed: The operation was aborted due to timeout</script>"
+    },
+    {
+      "file": "strudel-qwen35.html",
+      "domain": "strudel",
+      "model": "qwen35",
+      "exists": true,
+      "size": 1847,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasStrudelScript": true,
+        "hasPattern": true,
+        "hasPlayButton": true
+      },
+      "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `import { s, stack, n, fast, slow } from 'strudel'; const tempo = 120; // Define drum sounds (synthesized for portability) const kick = s(0).gain(-48).speed(300).osc('sawtooth', [65, 50]); const snare = s(0.33).pan(-0.5).gain(-30).noise(); const hihat = s(0.17).pan(0.5).gain(-40).noise().chop([0.02, 0.06]); // Define bassline notes (C# minor scale) const bassNotes "
+    },
+    {
+      "file": "hydra-qwen35.html",
+      "domain": "hydra",
+      "model": "qwen35",
+      "exists": true,
+      "size": 422,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHydraScript": true,
+        "hasCanvas": true,
+        "hasHydraCode": true
+      },
+      "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(128).shape(voronoi()).kaleid(4).scale(1.5).color([0, 255, 65]).out(o0) </script>"
+    },
+    {
+      "file": "remotion-qwen35.html",
+      "domain": "remotion",
+      "model": "qwen35",
+      "exists": true,
+      "size": 2936,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasRemotionRef": true,
+        "hasCodeDisplay": true
+      },
+      "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import { AbsoluteFill, Img } from 'remotion'; import { Text, useCurrentFrame, interpolate } from 'remotion'; export const TypingComposition: React.FC = () => { const frame = useCurrentFrame(); // Define text and timing constants const mainText = \"Hello World\"; const subText = \"Welcome to Remotion\"; // Duration in frames (30fps) const totalDuration = 150; const typingSpeed = 2.5; // frames per character const"
+    },
+    {
+      "file": "html-qwen35.html",
+      "domain": "html",
+      "model": "qwen35",
+      "exists": true,
+      "size": 645,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHTMLStructure": true,
+        "hasContent": true
+      },
+      "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+    },
+    {
+      "file": "ascii-qwen35.html",
+      "domain": "ascii",
+      "model": "qwen35",
+      "exists": true,
+      "size": 2131,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasPreTag": true,
+        "hasMonospaceFont": true
+      },
+      "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+    },
+    {
+      "file": "p5-qwen-coder.html",
+      "domain": "p5",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 2335,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasP5Script": true,
+        "hasSetupFunction": true,
+        "hasDrawOrCanvas": true
+      },
+      "rawPreview": "<script>let fireworks = []; const GRAVITY = 0.1; class Particle { constructor(x, y, color) { this.x = x; this.y = y; this.vx = random(-5, 5); this.vy = random(-5, 5); this.alpha = 255; this.color = color; } update() { this.vx *= 0.98; // air resistance this.vy *= 0.98; this.vy += GRAVITY; // gravity effect this.x += this.vx; this.y += this.vy; this.alpha -= random(3, 7); // fade out speed } show() { push(); noStroke(); "
+    },
+    {
+      "file": "glsl-qwen-coder.html",
+      "domain": "glsl",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 3816,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasCanvas": true,
+        "hasWebGL": true,
+        "hasFragmentShader": true
+      },
+      "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265358979323846 float hash(vec2 p) { return fr"
+    },
+    {
+      "file": "three-qwen-coder.html",
+      "domain": "three",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 3905,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasThreeImport": true,
+        "hasScene": true,
+        "hasRenderLoop": true
+      },
+      "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <title>Three.js Wireframe Torus Knot</title> <style type=\"text/css\"> body { margin: 0; overflow: hidden; background-color: #000000; } canvas { display: block; } </style> <script type=\"importmap\"> { \"imports\": { \"three\": \"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js\", "
+    },
+    {
+      "file": "strudel-qwen-coder.html",
+      "domain": "strudel",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 823,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasStrudelScript": true,
+        "hasPattern": true,
+        "hasPlayButton": true
+      },
+      "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `stack( s(\"kick\", every(4, n(0, 0.2, 0.1))), s(\"snare\", sometimes(n(1, 0.1), every(2, n(1, 0.15)))), s(\"hihat\", every(1, n(3, 0.08, 0.05))), s(\"bassline\", fast(rev(slow(stack( n(4, 0.3), n(6, 0.25), n(7, 0.2), n(5, 0.25) ))))) ).effects( gain(0.8), room(0.3), delay(0.1, 0.4, 0.3) )`; document.getElementById('app').innerHTML = '<pre>"
+    },
+    {
+      "file": "hydra-qwen-coder.html",
+      "domain": "hydra",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 517,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHydraScript": true,
+        "hasCanvas": true,
+        "hasHydraCode": true
+      },
+      "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(640, 480, 25).rotate(sin(time * 0.5)).color(() => sin(time * 0.2), cos(time * 0.3), 1).scale(1.2).add(o0).rotate(time * 0.1).colorMod(() => time % 1, 0.8, 1).out(o0) </script>"
+    },
+    {
+      "file": "remotion-qwen-coder.html",
+      "domain": "remotion",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 2736,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasRemotionRef": true,
+        "hasCodeDisplay": true
+      },
+      "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion'; export const TypingTextComposition: React.FC = () => { const frame = useCurrentFrame(); // Define timing parameters const typingDuration = 60; // frames for typing animation const pauseAfterTyping = 20; // frames before subtitle appears const fadeInStart = typingDuration + pauseAfterTyping; const fadeInDuration = 30; // frames for subtit"
+    },
+    {
+      "file": "html-qwen-coder.html",
+      "domain": "html",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 645,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHTMLStructure": true,
+        "hasContent": true
+      },
+      "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+    },
+    {
+      "file": "ascii-qwen-coder.html",
+      "domain": "ascii",
+      "model": "qwen-coder",
+      "exists": true,
+      "size": 2131,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasPreTag": true,
+        "hasMonospaceFont": true
+      },
+      "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+    },
+    {
+      "file": "p5-gemma.html",
+      "domain": "p5",
+      "model": "gemma",
+      "exists": true,
+      "size": 2194,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasP5Script": true,
+        "hasSetupFunction": true,
+        "hasDrawOrCanvas": true
+      },
+      "rawPreview": "<script>let fireworks = []; let numFireworks = 50; let gravity = 0.1; let fadeSpeed = 0.02; let noiseScale = 0.03; let noiseOffset = 0; function setup() { createCanvas(800, 600, WEBGL); pixelDensity(1); noiseSeed(12345); for (let i = 0; i < numFireworks; i++) { fireworks.push(new Firework()); } } function draw() { background(0); noiseOffset += 0.01; for (let i = 0; i < fireworks.length; i++) { fireworks[i].update(); fireworks[i].display(); } } class Firework { "
+    },
+    {
+      "file": "glsl-gemma.html",
+      "domain": "glsl",
+      "model": "gemma",
+      "exists": true,
+      "size": 2697,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasCanvas": true,
+        "hasWebGL": true,
+        "hasFragmentShader": true
+      },
+      "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265358979323846 #define NOISE_SCALE 100.0 float "
+    },
+    {
+      "file": "three-gemma.html",
+      "domain": "three",
+      "model": "gemma",
+      "exists": true,
+      "size": 2631,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasThreeImport": true,
+        "hasScene": true,
+        "hasRenderLoop": true
+      },
+      "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Rotating Torus Knot</title> <script type=\"importmap\"> {\"imports\":{\"three\":\"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js\",\"three/addons/\":\"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/\"}} </script> </head> <body> <script type=\"module\"> import * as THREE from 'three'; cons"
+    },
+    {
+      "file": "strudel-gemma.html",
+      "domain": "strudel",
+      "model": "gemma",
+      "exists": true,
+      "size": 1041,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasStrudelScript": true,
+        "hasPattern": true,
+        "hasPlayButton": true
+      },
+      "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `use synth.sine; use synth.square; use synth.pulse; use effect.gain; use effect.pan; set tempo 120; // Kick kick = s(0, 1, 0.5, 0.8, 0.2); // Snare snare = s(1, 0.5, 0.3, 0.7, 0.1); // Hi-Hat hihat = n(2, 0.25, 0.1, 0.9, 0.1); // Bassline bass = s(2, 1, 0.2, 0.9, 0.3); // Layer 1: Kick, Snare, Hi-Hat layer1 = [kick, snare, hihat]; // Layer 2: Bassline layer2 = "
+    },
+    {
+      "file": "hydra-gemma.html",
+      "domain": "hydra",
+      "model": "gemma",
+      "exists": true,
+      "size": 655,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHydraScript": true,
+        "hasCanvas": true,
+        "hasHydraCode": true
+      },
+      "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); osc(0, 0, 0).kaleid(0.5, 0.5, 0.5).shape(0.3, 0.7, 0.2).noise(0.1, 0.2, 0.3).color(0.8, 0.3, 0.1).rotate(0.01, 0.02, 0.03).scale(1.2, 1.4, 1.6).osc(0.5, 0.3, 0.2).kaleid(0.6, 0.4, 0.5).shape(0.4, 0.8, 0.3).noise(0.08, 0.18, 0.28).color(0.7, 0.4, 0.2).rotate(0.012, 0.022, 0.032).scale(1.3, 1.5, 1.7).out(o0) </script>"
+    },
+    {
+      "file": "remotion-gemma.html",
+      "domain": "remotion",
+      "model": "gemma",
+      "exists": true,
+      "size": 1897,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasRemotionRef": true,
+        "hasCodeDisplay": true
+      },
+      "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion'; export const TypingSubtitle = ({fps, durationInFrames, width, height}: {fps?: number, durationInFrames?: number, width?: number, height?: number}) => { const frame = useCurrentFrame(); const text = \"Hello, world! This is a typing animation with a subtitle.\"; const textSegments = text.split(\" \"); const typingSpeed = 0.03; const cursorBlinkInte"
+    },
+    {
+      "file": "html-gemma.html",
+      "domain": "html",
+      "model": "gemma",
+      "exists": true,
+      "size": 645,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHTMLStructure": true,
+        "hasContent": true
+      },
+      "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+    },
+    {
+      "file": "ascii-gemma.html",
+      "domain": "ascii",
+      "model": "gemma",
+      "exists": true,
+      "size": 2131,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasPreTag": true,
+        "hasMonospaceFont": true
+      },
+      "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+    },
+    {
+      "file": "p5-kimi.html",
+      "domain": "p5",
+      "model": "kimi",
+      "exists": true,
+      "size": 5379,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasP5Script": true,
+        "hasSetupFunction": true,
+        "hasDrawOrCanvas": true
+      },
+      "rawPreview": "<script>let fireworks = []; let gravity; let windOffset = 0; function setup() { createCanvas(800, 600); pixelDensity(1); colorMode(HSB, 360, 100, 100, 100); noiseSeed(random(1000)); gravity = createVector(0, 0.15); strokeCap(ROUND); } function draw() { background(230, 80, 10, 25); // Organic wind variation using Perlin noise let windX = map(noise(windOffset), 0, 1, -0.05, 0.05); let wind = createVector(windX, 0); windOffset += 0.01; // Launch new fireworks randoml"
+    },
+    {
+      "file": "glsl-kimi.html",
+      "domain": "glsl",
+      "model": "kimi",
+      "exists": true,
+      "size": 3602,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasCanvas": true,
+        "hasWebGL": true,
+        "hasFragmentShader": true
+      },
+      "rawPreview": "<canvas id=\"glcanvas\"></canvas> <script> const canvas = document.getElementById('glcanvas'); canvas.width = window.innerWidth; canvas.height = window.innerHeight; const gl = canvas.getContext('webgl'); const vsSource = `attribute vec4 position; void main() { gl_Position = position; }`; const fsSource = `precision highp float; uniform vec2 u_resolution; uniform float u_time; uniform vec2 u_mouse; #define PI 3.14159265359 #define TAU 6.28318530718 float hash(vec2 "
+    },
+    {
+      "file": "three-kimi.html",
+      "domain": "three",
+      "model": "kimi",
+      "exists": true,
+      "size": 4092,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasThreeImport": true,
+        "hasScene": true,
+        "hasRenderLoop": true
+      },
+      "rawPreview": "<script><!DOCTYPE html> <html lang=\"en\"> <head> <meta charset=\"UTF-8\"> <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\"> <title>Wireframe Torus Knot</title> <style> body { margin: 0; overflow: hidden; background: #000; } canvas { display: block; } </style> </head> <body> <script type=\"importmap\"> { \"imports\": { \"three\": \"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js\", \"three/addons"
+    },
+    {
+      "file": "strudel-kimi.html",
+      "domain": "strudel",
+      "model": "kimi",
+      "exists": true,
+      "size": 891,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasStrudelScript": true,
+        "hasPattern": true,
+        "hasPlayButton": true
+      },
+      "rawPreview": "<div id=\"app\"></div> <script type=\"module\"> import { repl } from 'https://unpkg.com/@strudel/repl@latest'; const code = `stack( s(\"bd*4\").gain(1.1).shape(0.3), s(\"~ sd ~ sd\").gain(0.9).room(0.3).shape(0.2), s(\"hh*16\").gain(\"[0.5 0.7]*8\").pan(sine.fast(2)).delay(0.5).delaytime(0.125).delayfeedback(0.4).sometimes(x => x.speed(2)), note(\"c2 [c2 ~] g1 [c2 ~]\") .s(\"sawtooth\") .cutoff(sine.slow(4).range(800, 2400)) .resonance(12) .gain(0.6) .every(3, rev) ) .every"
+    },
+    {
+      "file": "hydra-kimi.html",
+      "domain": "hydra",
+      "model": "kimi",
+      "exists": true,
+      "size": 529,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHydraScript": true,
+        "hasCanvas": true,
+        "hasHydraCode": true
+      },
+      "rawPreview": "<canvas id=\"hydra\"></canvas> <script> const hydra = new Hydra({ canvas: document.getElementById('hydra') }); src(o0) .scale(1.01) .rotate(0.02) .colorama(0.15) .blend(osc(60, 0.1, 1.5).kaleid(8).color(0.9, 0.1, 0.3), 0.6) .modulateRotate(voronoi(10), 0.2) .scale(1.1) .out(o0) </script>"
+    },
+    {
+      "file": "remotion-kimi.html",
+      "domain": "remotion",
+      "model": "kimi",
+      "exists": true,
+      "size": 2080,
+      "issues": [],
+      "containsLLMError": false,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasRemotionRef": true,
+        "hasCodeDisplay": true
+      },
+      "rawPreview": "<h3>Remotion Video Component</h3> <pre>import React from 'react'; import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion'; export const TypingTextComposition: React.FC = () => { const frame = useCurrentFrame(); const mainText = \"Welcome to Remotion\"; const subtitleText = \"Programmatic video generation\"; const typingProgress = interpolate(frame, [0, 90], [0, mainText.length], { extrapolateLeft: 'clamp', extrapolateRight: 'clamp' }); const charactersToShow "
+    },
+    {
+      "file": "html-kimi.html",
+      "domain": "html",
+      "model": "kimi",
+      "exists": true,
+      "size": 645,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasHTMLStructure": true,
+        "hasContent": true
+      },
+      "rawPreview": "<h1>Generated Page</h1> <p>// LLM generation failed: LLM API error: 404 Not Found</p>"
+    },
+    {
+      "file": "ascii-kimi.html",
+      "domain": "ascii",
+      "model": "kimi",
+      "exists": true,
+      "size": 2131,
+      "issues": [
+        "LLM_ERROR: LLM generation failed: LLM API error: 404 Not Found"
+      ],
+      "containsLLMError": true,
+      "isEmpty": false,
+      "hasRequiredElements": {
+        "hasPreTag": true,
+        "hasMonospaceFont": true
+      },
+      "rawPreview": "<pre>// LLM generation failed: LLM API error: 404 Not Found "
+    }
+  ]
+}

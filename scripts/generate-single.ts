@@ -27,7 +27,7 @@ const PROMPTS: Record<string, string> = {
   
   html: `Create a responsive landing page for a creative coding portfolio. Include a hero section with animated gradient background, project cards, and contact form.`,
   
-  ascii: `Create an ASCII art animation of a spaceship flying through space with trailing particles and twinkling stars.`,
+  ascii: `Create simple ASCII art of a mountain landscape. Use only basic characters like @ # % * + = - . and spaces.`
   
   tone: `Create a Tone.js synthesizer patch that plays an ambient drone with reverb and delay effects. Use multiple oscillators and LFOs for rich sound.`
 };

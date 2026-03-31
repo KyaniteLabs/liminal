@@ -8,6 +8,17 @@ import { run } from '../src/index.js';
 import fs from 'fs';
 import path from 'path';
 
+// Handle unhandled promise rejections from the Liminal library
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('⚠️  Unhandled Rejection at:', promise, 'reason:', reason);
+  // Continue execution instead of crashing
+});
+
+process.on('uncaughtException', (error) => {
+  console.error('⚠️  Uncaught Exception:', error);
+  // Continue execution instead of crashing
+});
+
 // Domain complexity rating affects timeout
 const DOMAINS = [
   { name: 'p5', prompt: 'Create a calming blue particle system with flowing movement', complexity: 'medium' },
@@ -29,8 +40,13 @@ const MODELS = [
   { name: 'phi4-mini:latest', tag: 'phi4', speed: 'medium', timeout: 120000 },
   { name: 'gemma3:4b', tag: 'gemma', speed: 'medium', timeout: 120000 },
   { name: 'lfm2.5-thinking:1.2b', tag: 'lfm', speed: 'slow', timeout: 180000 },
-  { name: 'kimi-k2.5:cloud', tag: 'kimi', speed: 'cloud', timeout: 180000 },
 ];
+
+// Cloud model (requires API key)
+const CLOUD_MODEL = { name: 'kimi-k2.5:cloud', tag: 'kimi', speed: 'cloud', timeout: 180000 };
+
+// Check if cloud API key is available
+const hasCloudApiKey = !!process.env.MOONSHOT_API_KEY || !!process.env.LIMINAL_CLOUD_API_KEY || !!process.env.LIMINAL_LLM_API_KEY;
 
 // Timeout multipliers for domain complexity
 const COMPLEXITY_MULTIPLIER: Record<string, number> = {
@@ -50,9 +66,10 @@ const RESULTS: Array<{
   wasSlow?: boolean;
 }> = [];
 
+const LOG_FILE = './dogfood-telemetry-agent-b.log';
 function log(line: string) {
   console.log(line);
-  fs.appendFileSync('./dogfood-telemetry.log', line + '\n');
+  fs.appendFileSync(LOG_FILE, line + '\n');
 }
 
 function timestamp() {
@@ -63,7 +80,7 @@ async function runWithTimeout<T>(
   fn: () => Promise<T>,
   timeoutMs: number,
   description: string
-): Promise<{ result?: T; timedOut: boolean; duration: number }> {
+): Promise<{ result?: T; timedOut: boolean; duration: number; error?: Error }> {
   const startTime = Date.now();
   
   return new Promise((resolve) => {
@@ -82,7 +99,7 @@ async function runWithTimeout<T>(
       .catch((err) => {
         clearTimeout(timer);
         const duration = Date.now() - startTime;
-        throw { error: err, duration };
+        resolve({ timedOut: false, duration, error: err instanceof Error ? err : new Error(String(err)) });
       });
   });
 }
@@ -98,12 +115,18 @@ async function runTest(domain: typeof DOMAINS[0], model: typeof MODELS[0]) {
   
   console.log(`  Timeout: ${(timeoutMs/1000).toFixed(0)}s (${model.speed} model × ${domain.complexity} domain)`);
   
-  // Set env for this test
-  process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';
+  // Set env for this test - kimi cloud uses different endpoint
+  if (model.name === 'kimi-k2.5:cloud') {
+    process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_CLOUD_BASE_URL || 'https://api.moonshot.cn/v1';
+    process.env.LIMINAL_LLM_API_KEY = process.env.MOONSHOT_API_KEY || process.env.LIMINAL_CLOUD_API_KEY;
+  } else {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';
+    delete process.env.LIMINAL_LLM_API_KEY;
+  }
   process.env.LIMINAL_LLM_MODEL = model.name;
   
   try {
-    const { result, timedOut, duration } = await runWithTimeout(
+    const { result, timedOut, duration, error } = await runWithTimeout(
       () => run(domain.prompt, {
         maxIterations: 3,  // Allow up to 3 iterations for quality improvement
         output: outputPath,
@@ -112,6 +135,11 @@ async function runTest(domain: typeof DOMAINS[0], model: typeof MODELS[0]) {
       timeoutMs,
       `${domain.name} × ${model.tag}`
     );
+    
+    // Handle error from runWithTimeout
+    if (error) {
+      throw error;
+    }
     
     if (timedOut) {
       // Check if partial output was created (genuine slow vs complete fail)
@@ -168,7 +196,7 @@ async function runTest(domain: typeof DOMAINS[0], model: typeof MODELS[0]) {
     });
     log(`[${timestamp()}] Domain: ${domain.name} | Model: ${model.tag} | Status: ✅ | Duration: ${duration}ms | Score: ${score.toFixed(2)} | Size: ${size}b`);
     
-  } catch (error) {
+  } catch (error: unknown) {
     const duration = Date.now() - startTime;
     const errorMsg = error instanceof Error ? error.message : 'Unknown error';
     
@@ -186,25 +214,36 @@ async function runTest(domain: typeof DOMAINS[0], model: typeof MODELS[0]) {
 }
 
 async function main() {
+  // Add cloud model if API key is available
+  const allModels = hasCloudApiKey ? [...MODELS, CLOUD_MODEL] : MODELS;
+  
   console.log('\n🎨 Agent B - Dogfood Test Runner (Smart Timeout)');
   console.log('================================================\n');
-  console.log(`Tests: ${DOMAINS.length} domains × ${MODELS.length} models = ${DOMAINS.length * MODELS.length} tests`);
+  console.log(`Tests: ${DOMAINS.length} domains × ${allModels.length} models = ${DOMAINS.length * allModels.length} tests`);
+  if (!hasCloudApiKey) {
+    console.log('⚠️  Cloud model (kimi-k2.5) skipped - no API key found');
+    console.log('   Set MOONSHOT_API_KEY to enable cloud testing');
+  }
   console.log('Timeout strategy: Model speed × Domain complexity');
   console.log('Output: ./landing-live/');
-  console.log('Log: ./dogfood-telemetry.log\n');
+  console.log('Log: ./dogfood-telemetry-agent-b.log\n');
   
-  // Clear old log
+  // Clear old log (use agent-b specific log)
+  const LOG_FILE = './dogfood-telemetry-agent-b.log';
+  if (fs.existsSync(LOG_FILE)) {
+    fs.unlinkSync(LOG_FILE);
+  }
   if (fs.existsSync('./dogfood-telemetry.log')) {
     fs.unlinkSync('./dogfood-telemetry.log');
   }
   
   let testNum = 0;
-  const totalTests = DOMAINS.length * MODELS.length;
+  const totalTests = DOMAINS.length * allModels.length;
   
   for (const domain of DOMAINS) {
     console.log(`\n📦 Domain: ${domain.name} (${domain.complexity} complexity)`);
     
-    for (const model of MODELS) {
+    for (const model of allModels) {
       testNum++;
       console.log(`\n[${testNum}/${totalTests}] ${domain.name} × ${model.tag} (${model.speed})`);
       
@@ -254,11 +293,11 @@ async function main() {
     }
   }
   
-  console.log('\n✨ Done! Check dogfood-telemetry.log for full details.\n');
+  console.log('\n✨ Done! Check dogfood-telemetry-agent-b.log for full details.\n');
   
   // Save JSON results for analysis
-  fs.writeFileSync('./dogfood-results.json', JSON.stringify(RESULTS, null, 2));
-  console.log('📄 Results saved to dogfood-results.json');
+  fs.writeFileSync('./dogfood-results-agent-b.json', JSON.stringify(RESULTS, null, 2));
+  console.log('📄 Results saved to dogfood-results-agent-b.json');
 }
 
 main().catch(err => {

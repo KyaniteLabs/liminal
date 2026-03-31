@@ -11,29 +11,16 @@
     </style>
 </head>
 <body>
-    <script type="importmap">
-    {
-        "imports": {
-            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
-            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
-        }
-    }
-    </script>
-    <script type="module">
-        import * as THREE from 'three';
-        import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
-        import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-        import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-        import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js"></script>
+    <script>
         // Scene setup
         const scene = new THREE.Scene();
-        scene.background = new THREE.Color(0x050510);
-        scene.fog = new THREE.FogExp2(0x050510, 0.02);
+        scene.fog = new THREE.FogExp2(0x0a0a0f, 0.015);
 
         // Camera
         const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(0, 0, 8);
+        camera.position.set(0, 5, 15);
 
         // Renderer
         const renderer = new THREE.WebGLRenderer({ antialias: true });
@@ -44,138 +31,158 @@
         document.body.appendChild(renderer.domElement);
 
         // Orbit Controls
-        const controls = new OrbitControls(camera, renderer.domElement);
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
-        controls.minDistance = 3;
-        controls.maxDistance = 20;
+        controls.autoRotate = false;
 
-        // Torus Knot Geometry
-        const torusKnotGeometry = new THREE.TorusKnotGeometry(1.5, 0.4, 128, 32, 2, 3);
-
-        // Wireframe Material with color animation
-        const torusKnotMaterial = new THREE.MeshStandardMaterial({
-            color: 0xff00ff,
+        // Torus Knot - Wireframe with custom geometry
+        const torusKnotGeom = new THREE.TorusKnotGeometry(3, 0.8, 128, 32, 2, 3);
+        const torusKnotMat = new THREE.MeshStandardMaterial({
+            color: 0xff3366,
             wireframe: true,
-            emissive: 0xff00ff,
+            emissive: 0xff3366,
             emissiveIntensity: 0.3,
-            metalness: 0.8,
-            roughness: 0.2
+            roughness: 0.2,
+            metalness: 0.8
         });
-
-        const torusKnot = new THREE.Mesh(torusKnotGeometry, torusKnotMaterial);
+        const torusKnot = new THREE.Mesh(torusKnotGeom, torusKnotMat);
         scene.add(torusKnot);
 
-        // Inner glow mesh
-        const innerMaterial = new THREE.MeshBasicMaterial({
-            color: 0x220033,
+        // Inner glow sphere
+        const innerSphereGeom = new THREE.SphereGeometry(1.5, 32, 32);
+        const innerSphereMat = new THREE.MeshStandardMaterial({
+            color: 0x222244,
+            emissive: 0x6644ff,
+            emissiveIntensity: 0.8,
+            roughness: 0.1,
+            metalness: 0.9,
             transparent: true,
-            opacity: 0.1,
-            side: THREE.DoubleSide
+            opacity: 0.6
         });
-        const innerKnot = new THREE.Mesh(torusKnotGeometry.clone(), innerMaterial);
-        innerKnot.scale.setScalar(0.85);
-        scene.add(innerKnot);
+        const innerSphere = new THREE.Mesh(innerSphereGeom, innerSphereMat);
+        scene.add(innerSphere);
 
-        // Animated lights
-        const lights = [];
-        const lightColors = [0xff00ff, 0x00ffff, 0xff6600, 0x00ff88];
-        const lightPositions = [
-            { x: 5, y: 3, z: 5 },
-            { x: -5, y: -3, z: 5 },
-            { x: 5, y: -3, z: -5 },
-            { x: -5, y: 3, z: -5 }
-        ];
-
-        lightPositions.forEach((pos, i) => {
-            const light = new THREE.PointLight(lightColors[i], 3, 20);
-            light.position.set(pos.x, pos.y, pos.z);
-            light.userData = {
-                originalPos: { ...pos },
-                angle: (Math.PI * 2 / lightPositions.length) * i,
-                speed: 0.3 + Math.random() * 0.2
-            };
-            lights.push(light);
-            scene.add(light);
-        });
-
-        // Ambient light
-        const ambientLight = new THREE.AmbientLight(0x111122, 0.5);
-        scene.add(ambientLight);
-
-        // Post-processing
-        const composer = new EffectComposer(renderer);
-        const renderPass = new RenderPass(scene, camera);
-        composer.addPass(renderPass);
-
-        const bloomPass = new UnrealBloomPass(
-            new THREE.Vector2(window.innerWidth, window.innerHeight),
-            0.8,
-            0.4,
-            0.85
-        );
-        composer.addPass(bloomPass);
-
-        // Particle system background
-        const particlesGeometry = new THREE.BufferGeometry();
+        // Particle system around the knot
         const particleCount = 500;
+        const particleGeom = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         
-        for (let i = 0; i < particleCount * 3; i += 3) {
-            positions[i] = (Math.random() - 0.5) * 30;
-            positions[i + 1] = (Math.random() - 0.5) * 30;
-            positions[i + 2] = (Math.random() - 0.5) * 30;
+        for (let i = 0; i < particleCount; i++) {
+            const theta = Math.random() * Math.PI * 2;
+            const phi = Math.random() * Math.PI;
+            const radius = 4 + Math.random() * 4;
+            positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+            positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+            positions[i * 3 + 2] = radius * Math.cos(phi);
         }
         
-        particlesGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        const particlesMaterial = new THREE.PointsMaterial({
-            color: 0x6644ff,
-            size: 0.05,
+        particleGeom.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+        
+        const particleMat = new THREE.PointsMaterial({
+            color: 0x44ffff,
+            size: 0.08,
             transparent: true,
-            opacity: 0.6,
-            sizeAttenuation: true
+            opacity: 0.8,
+            blending: THREE.AdditiveBlending
         });
-        const particles = new THREE.Points(particlesGeometry, particlesMaterial);
+        
+        const particles = new THREE.Points(particleGeom, particleMat);
         scene.add(particles);
 
+        // Orbiting spheres
+        const orbitCount = 6;
+        const orbs = [];
+        for (let i = 0; i < orbitCount; i++) {
+            const orbGeom = new THREE.SphereGeometry(0.3, 16, 16);
+            const orbMat = new THREE.MeshStandardMaterial({
+                color: new THREE.Color().setHSL(i / orbitCount, 1, 0.5),
+                emissive: new THREE.Color().setHSL(i / orbitCount, 1, 0.3),
+                emissiveIntensity: 0.5,
+                roughness: 0.3,
+                metalness: 0.7
+            });
+            const orb = new THREE.Mesh(orbGeom, orbMat);
+            orb.userData = {
+                angle: (i / orbitCount) * Math.PI * 2,
+                speed: 0.5 + Math.random() * 0.5,
+                radius: 5 + Math.random() * 2,
+                yOffset: (Math.random() - 0.5) * 3
+            };
+            orbs.push(orb);
+            scene.add(orb);
+        }
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0x222233, 0.5);
+        scene.add(ambientLight);
+
+        // Point lights
+        const pointLight1 = new THREE.PointLight(0xff3366, 2, 20);
+        pointLight1.position.set(5, 5, 5);
+        scene.add(pointLight1);
+
+        const pointLight2 = new THREE.PointLight(0x3366ff, 2, 20);
+        pointLight2.position.set(-5, -3, 5);
+        scene.add(pointLight2);
+
+        const pointLight3 = new THREE.PointLight(0x66ff66, 1.5, 15);
+        pointLight3.position.set(0, 8, -5);
+        scene.add(pointLight3);
+
+        // Directional light
+        const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        dirLight.position.set(10, 10, 10);
+        scene.add(dirLight);
+
         // Animation
-        const clock = new THREE.Clock();
+        let time = 0;
 
         function animate() {
             requestAnimationFrame(animate);
             
-            const elapsed = clock.getElapsedTime();
+            time += 0.016;
 
             // Rotate torus knot
-            torusKnot.rotation.x = elapsed * 0.3;
-            torusKnot.rotation.y = elapsed * 0.5;
-            innerKnot.rotation.x = elapsed * 0.3;
-            innerKnot.rotation.y = elapsed * 0.5;
+            torusKnot.rotation.x = time * 0.3;
+            torusKnot.rotation.y = time * 0.5;
 
-            // Color shifting
-            const hue = (elapsed * 0.1) % 1;
-            const color = new THREE.Color().setHSL(hue, 1, 0.5);
-            torusKnotMaterial.color.copy(color);
-            torusKnotMaterial.emissive.copy(color);
+            // Color cycling for torus knot
+            const hue = (Math.sin(time * 0.5) + 1) / 2;
+            const color = new THREE.Color().setHSL(hue, 0.8, 0.5);
+            torusKnotMat.color = color;
+            torusKnotMat.emissive = color;
 
-            // Animate lights
-            lights.forEach((light, i) => {
-                const userData = light.userData;
-                const radius = 6;
-                light.position.x = Math.cos(elapsed * userData.speed + userData.angle) * radius;
-                light.position.y = Math.sin(elapsed * userData.speed * 0.7 + userData.angle) * 3;
-                light.position.z = Math.sin(elapsed * userData.speed + userData.angle) * radius;
-                
-                // Pulse intensity
-                light.intensity = 2 + Math.sin(elapsed * 2 + i) * 1;
+            // Pulse inner sphere
+            const pulse = 1 + Math.sin(time * 3) * 0.1;
+            innerSphere.scale.setScalar(pulse);
+            innerSphereMat.emissiveIntensity = 0.5 + Math.sin(time * 2) * 0.3;
+
+            // Animate particles
+            particles.rotation.y = time * 0.1;
+            particles.rotation.x = Math.sin(time * 0.2) * 0.1;
+
+            // Animate orbiting spheres
+            orbs.forEach((orb, i) => {
+                const data = orb.userData;
+                data.angle += data.speed * 0.016;
+                orb.position.x = Math.cos(data.angle) * data.radius;
+                orb.position.z = Math.sin(data.angle) * data.radius;
+                orb.position.y = Math.sin(time * 2 + i) * 2 + data.yOffset;
             });
 
-            // Rotate particles slowly
-            particles.rotation.y = elapsed * 0.05;
-            particles.rotation.x = elapsed * 0.02;
+            // Animate point lights
+            pointLight1.position.x = Math.sin(time * 1.5) * 6;
+            pointLight1.position.z = Math.cos(time * 1.5) * 6;
+            
+            pointLight2.position.x = Math.cos(time * 1.2) * 5;
+            pointLight2.position.y = Math.sin(time * 1.2) * 4;
+            
+            pointLight3.position.y = 8 + Math.sin(time * 2) * 3;
+            pointLight3.intensity = 1.5 + Math.sin(time * 3) * 0.5;
 
             controls.update();
-            composer.render();
+            renderer.render(scene, camera);
         }
 
         // Handle resize
@@ -183,7 +190,6 @@
             camera.aspect = window.innerWidth / window.innerHeight;
             camera.updateProjectionMatrix();
             renderer.setSize(window.innerWidth, window.innerHeight);
-            composer.setSize(window.innerWidth, window.innerHeight);
         });
 
         animate();

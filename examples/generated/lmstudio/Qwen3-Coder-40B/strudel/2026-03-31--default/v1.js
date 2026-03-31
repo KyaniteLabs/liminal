@@ -1,15 +1,16 @@
+s(100)
 stack(
-  s("kick", every(4, n(0, 0.2, 0.1))),
-  s("snare", sometimes(n(1, 0.1), every(2, n(1, 0.15)))),
-  s("hihat", every(1, n(3, 0.08, 0.05))),
-  s("bassline", fast(rev(slow(stack(
-    n(4, 0.3),
-    n(6, 0.25),
-    n(7, 0.2),
-    n(5, 0.25)
+  s(n(200, 200), every(4, rev(chop(4))))
+,
+  gain(.5, s("kick"))
+,
+  gain(.4, n(400, every(8, rev(slow(stack(
+    s("snare"),
+    speed(.5, s("hihat"))
+  ))))))
+,
+  gain(.3, slow(n(120, every(3, stack(
+    s("bassline"),
+    distort(2, s("kick"))
   )))))
-).effects(
-  gain(0.8),
-  room(0.3),
-  delay(0.1, 0.4, 0.3)
 )

@@ -1,71 +1,86 @@
 import React from 'react';
-import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
+import { useCurrentFrame, interpolate, AbsoluteFill } from 'remotion';
 
-export const TypingTextComposition: React.FC<{fps: number; durationInFrames: number; width: number; height: number}> = ({fps = 30, width = 1920, height = 1080}) => {
+export const TypingText: React.FC = () => {
   const frame = useCurrentFrame();
 
-  const mainText = "Hello, welcome to my video!";
-  const subtitle = "This is a subtitle that fades in smoothly after the typing effect.";
+  const mainText = "Hello, World!";
+  const subtitleText = "Welcome to Remotion animations";
 
   const typingSpeed = 3;
-  const cursorBlinkSpeed = 12;
-  const totalTypingFrames = mainText.length * typingSpeed;
-  const subtitleFadeStart = totalTypingFrames + 20;
-  const subtitleFadeDuration = 25;
+  const typingDuration = mainText.length * typingSpeed;
+  const subtitleDelay = 45;
+  const subtitleStartFrame = typingDuration + subtitleDelay;
 
-  const charsToShow = Math.min(Math.floor(frame / typingSpeed), mainText.length);
-  const displayedText = mainText.slice(0, charsToShow);
+  const charsToShow = interpolate(frame, [0, typingDuration], [0, mainText.length], {
+    extrapolateRight: 'clamp',
+  });
 
-  const isTyping = frame < totalTypingFrames;
-  const isTypingComplete = frame >= totalTypingFrames;
-
-  const cursorBlink = interpolate(frame % cursorBlinkSpeed, [0, cursorBlinkSpeed / 2, cursorBlinkSpeed], [1, 0, 1]);
-  const cursorOpacity = isTypingComplete ? cursorBlink : (isTyping ? 1 : 0);
+  const displayedText = mainText.substring(0, charsToShow);
+  const cursorVisible = Math.floor(frame / 10) % 2 === 0;
 
   const subtitleOpacity = interpolate(
     frame,
-    [subtitleFadeStart, subtitleFadeStart + subtitleFadeDuration],
+    [subtitleStartFrame, subtitleStartFrame + 30],
     [0, 1],
-    {extrapolateRight: 'clamp'}
+    { extrapolateRight: 'clamp' }
+  );
+
+  const mainTextOpacity = interpolate(
+    frame,
+    [subtitleStartFrame - 15, subtitleStartFrame + 15],
+    [1, 0],
+    { extrapolateRight: 'clamp' }
   );
 
   return (
-    <AbsoluteFill style={{
-      backgroundColor: '#0f0f1a',
-      justifyContent: 'center',
-      alignItems: 'center',
-      flexDirection: 'column'
-    }}>
-      <div style={{
-        fontSize: '72px',
-        color: '#ffffff',
-        fontFamily: 'Courier New, monospace',
-        fontWeight: 'bold',
-        letterSpacing: '2px',
-        textShadow: '0 0 20px rgba(100, 200, 255, 0.3)'
-      }}>
-        {displayedText}
-        <span style={{
-          opacity: cursorOpacity,
-          color: '#00ffcc',
-          marginLeft: '2px',
-          fontWeight: 'normal'
-        }}>|</span>
+    <AbsoluteFill
+      style={{
+        backgroundColor: '#1a1a2e',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          opacity: mainTextOpacity,
+        }}
+      >
+        <span
+          style={{
+            fontSize: '96px',
+            fontFamily: 'monospace',
+            color: '#ffffff',
+            fontWeight: 'bold',
+          }}
+        >
+          {displayedText}
+        </span>
+        <span
+          style={{
+            fontSize: '96px',
+            fontFamily: 'monospace',
+            color: cursorVisible ? '#00ff88' : 'transparent',
+            transition: 'color 0.1s',
+          }}
+        >
+          |
+        </span>
       </div>
 
-      {isTypingComplete && (
-        <div style={{
-          fontSize: '28px',
-          color: '#8888aa',
+      <div
+        style={{
+          fontSize: '48px',
+          color: '#888888',
           marginTop: '40px',
-          fontFamily: 'Arial, sans-serif',
           opacity: subtitleOpacity,
-          textAlign: 'center',
-          paddingHorizontal: '40px'
-        }}>
-          {subtitle}
-        </div>
-      )}
+        }}
+      >
+        {subtitleText}
+      </div>
     </AbsoluteFill>
   );
 };

@@ -1,36 +1,30 @@
 let fireworks = [];
 let gravity;
-let windOffset = 0;
+let windNoiseOffset = 0;
 
 function setup() {
   createCanvas(800, 600);
   pixelDensity(1);
   colorMode(HSB, 360, 100, 100, 100);
-  noiseSeed(random(1000));
-  gravity = createVector(0, 0.15);
-  strokeCap(ROUND);
+  noiseSeed(millis());
+  gravity = createVector(0, 0.2);
 }
 
 function draw() {
-  background(230, 80, 10, 25);
+  background(220, 80, 5, 15);
   
-  // Organic wind variation using Perlin noise
-  let windX = map(noise(windOffset), 0, 1, -0.05, 0.05);
-  let wind = createVector(windX, 0);
-  windOffset += 0.01;
-  
-  // Launch new fireworks randomly
-  if (random(1) < 0.02) {
+  if (random(1) < 0.03) {
     fireworks.push(new Firework());
   }
   
-  // Update and display all fireworks
+  let windX = map(noise(windNoiseOffset), 0, 1, -0.03, 0.03);
+  let wind = createVector(windX, 0);
+  windNoiseOffset += 0.02;
+  
   for (let i = fireworks.length - 1; i >= 0; i--) {
-    fireworks[i].applyForce(gravity);
     fireworks[i].applyForce(wind);
     fireworks[i].update();
     fireworks[i].show();
-    
     if (fireworks[i].done()) {
       fireworks.splice(i, 1);
     }
@@ -41,102 +35,10 @@ function windowResized() {
   resizeCanvas(800, 600);
 }
 
-class Particle {
-  constructor(x, y, hue, isRocket) {
-    this.pos = createVector(x, y);
-    this.isRocket = isRocket;
-    this.hue = hue;
-    this.history = [];
-    this.maxHistory = isRocket ? 8 : 6;
-    
-    if (isRocket) {
-      this.vel = createVector(0, random(-11, -7));
-      this.acc = createVector(0, 0);
-      this.brightness = 100;
-    } else {
-      // Explosion particles with organic spread using noise
-      let angle = random(TWO_PI);
-      let speed = random(3, 10);
-      // Add slight noise-based variation to angle for organic feel
-      angle += map(noise(x * 0.01, y * 0.01), 0, 1, -0.5, 0.5);
-      this.vel = p5.Vector.fromAngle(angle).mult(speed);
-      this.acc = createVector(0, 0);
-      this.lifespan = random(60, 120);
-      this.decay = random(1.5, 3);
-      this.brightness = random(70, 100);
-    }
-  }
-  
-  applyForce(force) {
-    this.acc.add(force);
-  }
-  
-  update() {
-    // Add organic turbulence to explosion particles using noise
-    if (!this.isRocket) {
-      let turbulence = noise(this.pos.x * 0.02, this.pos.y * 0.02, frameCount * 0.05);
-      let turbForce = p5.Vector.fromAngle(turbulence * TWO_PI).mult(0.08);
-      this.applyForce(turbForce);
-    }
-    
-    this.vel.add(this.acc);
-    this.pos.add(this.vel);
-    this.acc.mult(0);
-    
-    // Store position history for trails
-    this.history.push(this.pos.copy());
-    if (this.history.length > this.maxHistory) {
-      this.history.shift();
-    }
-    
-    if (!this.isRocket) {
-      this.lifespan -= this.decay;
-      this.vel.mult(0.96); // air resistance
-    }
-  }
-  
-  show() {
-    if (this.isRocket) {
-      // Draw rocket trail
-      noFill();
-      for (let i = 0; i < this.history.length - 1; i++) {
-        let alpha = map(i, 0, this.history.length, 0, 100);
-        stroke(this.hue, 80, 100, alpha);
-        strokeWeight(map(i, 0, this.history.length, 1, 4));
-        line(this.history[i].x, this.history[i].y, this.history[i+1].x, this.history[i+1].y);
-      }
-    } else {
-      // Draw explosion particle with trail
-      let alpha = map(this.lifespan, 0, 100, 0, 100);
-      noFill();
-      
-      for (let i = 0; i < this.history.length - 1; i++) {
-        let trailAlpha = map(i, 0, this.history.length, 0, alpha * 0.6);
-        stroke(this.hue, 90, this.brightness, trailAlpha);
-        strokeWeight(map(i, 0, this.history.length, 0.5, 2));
-        line(this.history[i].x, this.history[i].y, this.history[i+1].x, this.history[i+1].y);
-      }
-      
-      // Bright center
-      stroke(this.hue, 50, 100, alpha);
-      strokeWeight(2);
-      point(this.pos.x, this.pos.y);
-    }
-  }
-  
-  done() {
-    if (this.isRocket) {
-      return this.vel.y >= 0;
-    } else {
-      return this.lifespan <= 0;
-    }
-  }
-}
-
 class Firework {
   constructor() {
-    this.hue = random(360);
-    this.firework = new Particle(random(width * 0.1, width * 0.9), height, this.hue, true);
+    this.hu = random(360);
+    this.firework = new Particle(random(width), height, this.hu, true);
     this.exploded = false;
     this.particles = [];
   }
@@ -144,37 +46,35 @@ class Firework {
   applyForce(force) {
     if (!this.exploded) {
       this.firework.applyForce(force);
-    } else {
-      for (let p of this.particles) {
-        p.applyForce(force);
-      }
+    }
+    for (let p of this.particles) {
+      p.applyForce(force);
     }
   }
   
   update() {
     if (!this.exploded) {
+      this.firework.applyForce(gravity);
       this.firework.update();
-      if (this.firework.done()) {
+      if (this.firework.vel.y >= 0) {
         this.explode();
       }
-    } else {
-      for (let i = this.particles.length - 1; i >= 0; i--) {
-        this.particles[i].update();
-        if (this.particles[i].done()) {
-          this.particles.splice(i, 1);
-        }
+    }
+    
+    for (let i = this.particles.length - 1; i >= 0; i--) {
+      this.particles[i].applyForce(gravity);
+      this.particles[i].update();
+      if (this.particles[i].done()) {
+        this.particles.splice(i, 1);
       }
     }
   }
   
   explode() {
     this.exploded = true;
-    // Create explosion particles with count based on noise for variety
-    let count = floor(map(noise(this.firework.pos.x * 0.01), 0, 1, 40, 100));
+    let count = int(random(60, 100));
     for (let i = 0; i < count; i++) {
-      // Slight color variation using noise
-      let hueShift = map(noise(i * 0.1), 0, 1, -20, 20);
-      let p = new Particle(this.firework.pos.x, this.firework.pos.y, (this.hue + hueShift + 360) % 360, false);
+      let p = new Particle(this.firework.pos.x, this.firework.pos.y, this.hu, false);
       this.particles.push(p);
     }
   }
@@ -182,10 +82,9 @@ class Firework {
   show() {
     if (!this.exploded) {
       this.firework.show();
-    } else {
-      for (let p of this.particles) {
-        p.show();
-      }
+    }
+    for (let p of this.particles) {
+      p.show();
     }
   }
   
@@ -193,3 +92,11 @@ class Firework {
     return this.exploded && this.particles.length === 0;
   }
 }
+
+class Particle {
+  constructor(x, y, hu, isFirework) {
+    this.pos = createVector(x, y);
+    this.isFirework = isFirework;
+    this.lifespan = 100;
+    this.hu = hu;
+    this.acc = create

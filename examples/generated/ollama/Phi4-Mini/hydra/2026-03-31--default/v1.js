@@ -1,0 +1,1 @@
+shape() noise().scale(5).rotateX(-90).kaleid(p=8,m=3,l=.1,out(o0)) .color([255]) .out(o0)

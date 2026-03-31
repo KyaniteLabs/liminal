@@ -1,0 +1,1 @@
+const mix = () => {const sound = new Audio('samples');return{layers: [sound(),'kick','snare','hi-hat'],gain:'gain',speed:'speed',effect:'room',delay:'delay',distortion:'distort',pan:'pan',speed:'speed'}

@@ -164,8 +164,7 @@ Liminal generates **live code for music** — not just visuals. Real-time, perfo
 |----------|------|-------------|----------|
 | **Strudel** | Web (TidalCycles) | Browser + REPL | Live coding patterns, browser-native |
 | **Hydra** | Visuals + Audio | WebGL + Web Audio | Audio-reactive visuals, synesthesia |
-| **Sonic Pi** | Ruby-based | OSC + MIDI | Hardware integration, live performance |
-| **FoxDot** | Python-based | OSC | Algorithmic composition |
+| **Tone.js** | Web Audio | Browser native | Synthesizers, effects, sequencing |
 | **p5.js + Web Audio** | Canvas + DSP | Browser native | Generative soundscapes |
 
 #### Strudel Integration (Primary)

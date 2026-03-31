@@ -43,3 +43,16 @@ test-stream/
 # Git worktrees (isolated workspaces)
 .worktrees/
 worktrees/
+
+# jdatamunch local indexes
+.jdatamunch/
+
+# Playwright MCP pages
+.playwright-mcp/
+
+# Dogfood temp artifacts
+dogfood-temp/
+
+# Landing screenshots
+landing-*.png
+live-p5-test.png

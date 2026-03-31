@@ -1,41 +1,60 @@
 let fireworks = [];
-let gravity;
+let particles = [];
 
 function setup() {
   createCanvas(800, 600);
-  colorMode(HSB, 360, 100, 100, 1);
   pixelDensity(1);
-  gravity = createVector(0, 0.15);
+  background(10, 10, 20);
 }
 
 function draw() {
-  background(0, 0, 5, 0.15);
+  background(10, 10, 20, 40);
 
-  if (random() < 0.06) {
-    fireworks.push(new Firework());
+  if (random() < 0.05) {
+    fireworks.push(new Firework(random(width), height));
   }
 
   for (let i = fireworks.length - 1; i >= 0; i--) {
     fireworks[i].update();
-    fireworks[i].display();
-
-    if (fireworks[i].done()) {
+    fireworks[i].draw();
+    if (fireworks[i].explode()) {
+      createExplosion(fireworks[i].x, fireworks[i].y);
       fireworks.splice(i, 1);
+    }
+  }
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    particles[i].applyForce(createVector(0, 0.15));
+    particles[i].update();
+    particles[i].draw();
+    if (particles[i].isDead()) {
+      particles.splice(i, 1);
     }
   }
 }
 
-class Particle {
-  constructor(x, y, hue, isRocket) {
-    this.pos = createVector(x, y);
-    this.vel = isRocket ? createVector(0, random(-15, -10)) : p5.Vector.random2D().mult(random(3, 9));
+function createExplosion(x, y) {
+  let hue = random(360);
+  let numParticles = 100 + floor(random(50));
+  
+  for (let i = 0; i < numParticles; i++) {
+    let angle = random(TWO_PI);
+    let speed = random(2, 10);
+    let vel = createVector(cos(angle) * speed, sin(angle) * speed);
+    let col = colorMode(HSB, 360, 100, 100, 100);
+    let c = color(hue + random(-30, 30), 80, 100, 100);
+    colorMode(RGB, 255, 255, 255, 255);
+    particles.push(new Particle(x, y, vel, c));
+  }
+}
+
+class Firework {
+  constructor(x, y) {
+    this.x = x;
+    this.y = y;
+    this.vel = createVector(0, random(-12, -8));
     this.acc = createVector(0, 0);
-    this.hue = hue;
-    this.alpha = 1;
-    this.lifespan = isRocket ? 80 : random(60, 120);
     this.trail = [];
-    this.isRocket = isRocket;
-    this.size = isRocket ? 4 : 3;
   }
 
   applyForce(force) {
@@ -43,107 +62,79 @@ class Particle {
   }
 
   update() {
-    this.trail.push(this.pos.copy());
-    if (this.trail.length > 12) {
-      this.trail.shift();
-    }
-
+    this.trail.push({x: this.x, y: this.y});
+    if (this.trail.length > 10) this.trail.shift();
+    
     this.vel.add(this.acc);
-    this.pos.add(this.vel);
+    this.y += this.vel.y;
     this.acc.mult(0);
-
-    if (!this.isRocket) {
-      this.vel.mult(0.98);
-    }
-
-    this.alpha -= 1 / this.lifespan;
-    this.lifespan--;
   }
 
-  display() {
-    noStroke();
-
+  draw() {
     for (let i = 0; i < this.trail.length; i++) {
-      let alpha = map(i, 0, this.trail.length, 0, this.alpha * 0.4);
-      let size = map(i, 0, this.trail.length, 0.5, this.size * 0.8);
-      fill(this.hue, 80, 100, alpha);
-      ellipse(this.trail[i].x, this.trail[i].y, size);
+      let alpha = map(i, 0, this.trail.length, 50, 200);
+      stroke(255, 255, 255, alpha);
+      noFill();
+      ellipse(this.trail[i].x, this.trail[i].y, 2);
     }
-
-    fill(this.hue, 80, 100, this.alpha);
-    ellipse(this.pos.x, this.pos.y, this.size);
-  }
-
-  done() {
-    return this.lifespan <= 0;
-  }
-}
-
-class Firework {
-  constructor() {
-    this.rocket = new Particle(random(100, width - 100), height, random(360), true);
-    this.particles = [];
-    this.hue = this.rocket.hue;
-    this.exploded = false;
+    fill(255);
+    noStroke();
+    ellipse(this.x, this.y, 4);
   }
 
   explode() {
-    let count = floor(random(80, 140));
-    let hueVariation = random(-30, 30);
+    return this.vel.y >= 0;
+  }
+}
 
-    for (let i = 0; i < count; i++) {
-      let particleHue = (this.hue + hueVariation + 360) % 360;
-      this.particles.push(new Particle(this.rocket.pos.x, this.rocket.pos.y, particleHue, false));
-    }
+class Particle {
+  constructor(x, y, vel, col) {
+    this.pos = createVector(x, y);
+    this.vel = vel;
+    this.acc = createVector(0, 0);
+    this.col = col;
+    this.lifespan = 255;
+    this.decay = random(1.5, 3.5);
+    this.trail = [];
+  }
 
-    for (let i = 0; i < count / 4; i++) {
-      let sparkleHue = (this.hue + random(-20, 20) + 360) % 360;
-      let sparkle = new Particle(this.rocket.pos.x, this.rocket.pos.y, sparkleHue, false);
-      sparkle.vel.mult(random(0.5, 1.5));
-      sparkle.lifespan = random(20, 40);
-      sparkle.size = 1.5;
-      this.particles.push(sparkle);
-    }
+  applyForce(force) {
+    this.acc.add(force);
   }
 
   update() {
-    if (!this.exploded) {
-      this.rocket.applyForce(gravity);
-      this.rocket.update();
-
-      if (this.rocket.vel.y >= 0) {
-        this.explode();
-        this.exploded = true;
-      }
-    }
-
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      this.particles[i].applyForce(gravity);
-      this.particles[i].update();
-
-      if (this.particles[i].done()) {
-        this.particles.splice(i, 1);
-      }
-    }
+    this.trail.push({x: this.pos.x, y: this.pos.y});
+    if (this.trail.length > 8) this.trail.shift();
+    
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+    this.vel.mult(0.98);
+    this.lifespan -= this.decay;
   }
 
-  display() {
-    if (!this.exploded) {
-      stroke(255);
-      strokeWeight(2);
-      point(this.rocket.pos.x, this.rocket.pos.y);
+  draw() {
+    for (let i = 0; i < this.trail.length; i++) {
+      let alpha = map(i, 0, this.trail.length, 0, this.lifespan * 0.5);
+      let sz = map(i, 0, this.trail.length, 1, 3);
+      let c = color(red(this.col), green(this.col), blue(this.col), alpha);
+      fill(c);
+      noStroke();
+      ellipse(this.trail[i].x, this.trail[i].y, sz);
     }
-
-    for (let particle of this.particles) {
-      particle.display();
-    }
+    
+    let c = color(red(this.col), green(this.col), blue(this.col), this.lifespan);
+    fill(c);
+    noStroke();
+    ellipse(this.pos.x, this.pos.y, 3);
   }
 
-  done() {
-    return this.exploded && this.particles.length === 0;
+  isDead() {
+    return this.lifespan <= 0;
   }
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
+  background(10, 10, 20);
 }

@@ -1,85 +1,84 @@
 import React from 'react';
-import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
+import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion';
 
 export const TypingTextComposition: React.FC = () => {
   const frame = useCurrentFrame();
   
-  // Define timing parameters
-  const typingDuration = 60; // frames for typing animation
-  const pauseAfterTyping = 20; // frames before subtitle appears
-  const fadeInStart = typingDuration + pauseAfterTyping;
-  const fadeInDuration = 30; // frames for subtitle fade-in
+  // Configuration
+  const fps = 30;
+  const durationInFrames = 150;
+  const width = 1920;
+  const height = 1080;
   
-  // Text content
-  const mainText = "Hello Remotion";
-  const subText = "A new way to create motion graphics";
-
-  // Calculate which characters should be visible (typing effect)
-  const getVisibleChars = () => {
-    const progress = Math.min(frame / typingDuration, 1);
-    const charCount = Math.floor(progress * mainText.length);
-    return mainText.substring(0, charCount);
-  };
-
-  // Cursor blinking animation
-  const cursorOpacity = interpolate(frame, [0, typingDuration], [1, 0], {
-    easing: 'easeIn',
-    extrapolateLeft: 'clamp',
-    extrapolateRight: 'clamp'
-  });
-
-  // Subtitle opacity (fade in after typing completes)
+  // Typing animation parameters
+  const typingStartFrame = 0;
+  const typingEndFrame = 60; // Typing finishes at frame 60
+  
+  // Calculate current text to show (typing effect)
+  const fullText = "The Remotion Composition";
+  const subtitleText = "Creating beautiful motion graphics with React";
+  
+  // Determine how many characters to show based on current frame
+  const visibleChars = Math.min(
+    fullText.length,
+    Math.floor((frame - typingStartFrame) / 2) // Typing speed: 2 frames per character
+  );
+  
+  const displayedText = fullText.substring(0, visibleChars);
+  
+  // Cursor blinking animation (visible when typing or just after)
+  const cursorVisible = 
+    frame < typingEndFrame || 
+    (frame >= typingEndFrame && frame < typingEndFrame + 15 && Math.floor(frame / 5) % 2 === 0);
+  
+  // Opacity for subtitle fade-in
+  // Start fading in at frame 70, complete by frame 100
   const subtitleOpacity = interpolate(
     frame,
-    [fadeInStart, fadeInStart + fadeInDuration],
-    [0, 1],
-    {
-      easing: 'easeOut',
-      extrapolateLeft: 'clamp',
-      extrapolateRight: 'clamp'
-    }
+    [70, 100],
+    [0, 1]
   );
-
+  
   return (
-    <AbsoluteFill style={{backgroundColor: '#0a0a12'}}>
+    <AbsoluteFill style={{ backgroundColor: '#0a0a0a' }}>
+      {/* Main text with typing animation */}
       <div 
         style={{
           position: 'absolute',
           top: '45%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          fontFamily: '"Courier New", monospace,
-font-family: "Courier New", monospace;',
-          fontSize: 96,
-          fontWeight: 'bold',
-          color: '#ffffff'
+          fontSize: '80px',
+          color: '#ffffff',
+          fontFamily: "'Courier New', monospace",
+          whiteSpace: 'nowrap'
         }}
       >
-        <span>
-          {getVisibleChars()}
-          <span 
-            style={{
-              opacity: cursorOpacity
-            }}
-          >
-            |
-          </span>
+        {displayedText}
+        <span style={{ 
+          opacity: cursorVisible ? 1 : 0,
+          marginLeft: '5px',
+          animation: 'blink 1s infinite' 
+        }}>
+          |
         </span>
       </div>
-
+      
+      {/* Subtitle with fade-in effect */}
       <div 
         style={{
           position: 'absolute',
           top: '60%',
           left: '50%',
-          transform: 'translate(-50%, -50%)',
-          fontFamily: '"Helvetica", sans-serif',
-          fontSize: 48,
-          color: '#e0e0f0',
-          opacity: subtitleOpacity
+          transform: `translate(-50%, -50%) translateY(${interpolate(frame, [70, 100], [20, 0])}px)`,
+          fontSize: '48px',
+          color: '#a0c9ff',
+          fontFamily: "'Segoe UI', sans-serif",
+          opacity: subtitleOpacity,
+          whiteSpace: 'nowrap'
         }}
       >
-        {subText}
+        {subtitleText}
       </div>
     </AbsoluteFill>
   );

@@ -1,97 +1,86 @@
-let fireworks = [];
-const GRAVITY = 0.1;
-
-class Particle {
-  constructor(x, y, color) {
-    this.x = x;
-    this.y = y;
-    this.vx = random(-5, 5);
-    this.vy = random(-5, 5);
-    this.alpha = 255;
-    this.color = color;
-  }
-
-  update() {
-    this.vx *= 0.98; // air resistance
-    this.vy *= 0.98;
-    this.vy += GRAVITY; // gravity effect
-    
-    this.x += this.vx;
-    this.y += this.vy;
-    this.alpha -= random(3, 7); // fade out speed
-  }
-
-  show() {
-    push();
-    noStroke();
-    fill(red(this.color), green(this.color), blue(this.color), this.alpha);
-    ellipse(this.x, this.y, 4, 4);
-    pop();
-  }
-}
-
-class Firework {
-  constructor(x, y) {
-    this.exploded = false;
-    this.particles = [];
-    const numParticles = random(80, 120);
-    const hue = random(0, 360);
-    
-    for (let i = 0; i < numParticles; i++) {
-      let color = color(hue + random(-30, 30), random(70, 100), random(80, 100));
-      this.particles.push(new Particle(x, y, color));
-    }
-  }
-
-  update() {
-    for (let i = this.particles.length - 1; i >= 0; i--) {
-      let p = this.particles[i];
-      p.update();
-      
-      if (p.alpha <= 5) {
-        this.particles.splice(i, 1);
-      }
-    }
-    
-    return this.particles.length > 0;
-  }
-
-  show() {
-    for (let p of this.particles) {
-      p.show();
-    }
-  }
-}
+let particles = [];
+const GRAVITY = 0.15;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
-  background(10);
-  randomSeed(millis());
+  background(0);
 }
 
 function draw() {
-  // Create fading trails
-  push();
-  fill(10, 30); // low alpha creates longer trails
+  // Create fading trails by drawing semi-transparent black over the canvas
+  fill(0, 20);
   noStroke();
   rect(0, 0, width, height);
-  pop();
-  
+
   // Add new fireworks periodically
   if (random() < 0.05) {
-    let x = random(width * 0.2, width * 0.8);
-    let y = random(height * 0.1, height * 0.6);
-    fireworks.push(new Firework(x, y));
+    createExplosion(random(width * 0.1, width * 0.9), random(height * 0.1, height * 0.6));
   }
-  
-  // Update and show fireworks
-  for (let i = fireworks.length - 1; i >= 0; i--) {
-    if (!fireworks[i].update()) {
-      fireworks.splice(i, 1);
-    } else {
-      fireworks[i].show();
+
+  // Update and draw particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.show();
+
+    if (p.isDead()) {
+      particles.splice(i, 1);
     }
+  }
+}
+
+function createExplosion(x, y) {
+  let particleCount = floor(random(80, 150));
+  
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle(x, y));
+  }
+}
+
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    let angle = random(TWO_PI);
+    let speed = random(2, 12);
+    this.vel = p5.Vector.fromAngle(angle);
+    this.vel.mult(speed);
+    
+    // Random bright color for each explosion
+    this.hue = random(0, 360);
+    this.color = color(
+      map(sin(this.hue * TWO_PI), -1, 1, 0, 255),
+      map(cos(this.hue * TWO_PI), -1, 1, 0, 255),
+      255,
+      random(150, 255)
+    );
+    
+    this.alpha = 255;
+    this.decayRate = random(1.5, 3);
+  }
+
+  update() {
+    // Apply gravity
+    this.vel.y += GRAVITY;
+    
+    // Update position
+    this.pos.add(this.vel);
+    
+    // Reduce alpha (fade out)
+    this.alpha -= this.decayRate;
+    
+    // Slight drag effect
+    this.vel.mult(0.98);
+  }
+
+  show() {
+    noStroke();
+    fill(red(this.color), green(this.color), blue(this.color), this.alpha);
+    circle(this.pos.x, this.pos.y, 4);
+  }
+
+  isDead() {
+    return this.alpha <= 0;
   }
 }
 

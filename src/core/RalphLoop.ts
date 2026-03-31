@@ -322,6 +322,21 @@ export class RalphLoop {
           Logger.info('RalphLoop', `Code incomplete after iteration ${iteration}, forcing another iteration`);
           // Continue to next iteration without breaking
         }
+        
+        // Iteration Extension: If at iteration 3 and still not working well, extend max iterations
+        if (iteration === 3) {
+          const isWorkingWell = evaluation.score >= 0.70 && isComplete;
+          if (!isWorkingWell) {
+            const newMax = Math.min(normalizedOptions.maxIterations + 3, 20);
+            if (newMax > normalizedOptions.maxIterations) {
+              normalizedOptions.maxIterations = newMax;
+              Logger.info('RalphLoop', `Extending max iterations to ${newMax} (score: ${evaluation.score.toFixed(2)}, complete: ${isComplete})`);
+              if (normalizedOptions.chatMode) {
+                normalizedOptions.onThought?.(`Extending to ${newMax} iterations to improve quality...`);
+              }
+            }
+          }
+        }
 
         // Update evolution subsystems
         const { noveltyScore, hints } = await evolution.update(iteration, currentCode, evaluation.score, prompt);

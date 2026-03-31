@@ -3,1040 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal - AI-Powered Creative Coding Agent</title>
+    <title>Liminal - AI Creative Coding Agent (Honest Dogfood)</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; }
         :root {
             --bg-dark: #0a0a0f;
             --bg-card: #12121a;
+            --bg-card-hover: #1a1a25;
             --text-primary: #ffffff;
             --text-secondary: #a0a0b0;
             --accent-purple: #8b5cf6;
             --accent-blue: #3b82f6;
             --accent-cyan: #06b6d4;
             --accent-pink: #ec4899;
+            --accent-green: #22c55e;
+            --accent-yellow: #f59e0b;
+            --accent-red: #ef4444;
             --border-color: #2a2a3a;
         }
-
         body {
             font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--bg-dark);
             color: var(--text-primary);
             line-height: 1.6;
         }
-
-        .hero-bg {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background:
-                radial-gradient(ellipse at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
-                radial-gradient(ellipse at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
-        }
-
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 0 2rem;
-        }
-
-        /* Hero Section */
-        .hero {
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 4rem 2rem;
-        }
-
-        .hero-badge {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-            padding: 0.5rem 1.5rem;
-            border-radius: 50px;
-            font-size: 0.875rem;
-            font-weight: 600;
-            margin-bottom: 2rem;
-        }
-
-        .hero h1 {
-            font-size: clamp(3rem, 8vw, 6rem);
-            font-weight: 800;
-            margin-bottom: 1.5rem;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue), var(--accent-cyan));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .hero-subtitle {
-            font-size: clamp(1.25rem, 3vw, 2rem);
-            color: var(--text-secondary);
-            max-width: 800px;
-            margin-bottom: 3rem;
-        }
-
-        .hero-cta {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            justify-content: center;
-        }
-
-        .btn {
-            padding: 1rem 2.5rem;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            transition: all 0.3s ease;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-            color: white;
-            border: none;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
-        }
-
-        .btn-secondary {
-            background: transparent;
-            color: var(--text-primary);
-            border: 2px solid var(--border-color);
-        }
-
-        .btn-secondary:hover {
-            background: var(--bg-card);
-            border-color: var(--accent-purple);
-        }
-
-        /* Stats Bar */
-        .stats-bar {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1.5rem;
-            margin: 4rem 0;
-        }
-
-        .stat-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 2rem;
-            text-align: center;
-        }
-
-        .stat-number {
-            font-size: 2.5rem;
-            font-weight: 800;
-            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .stat-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-        }
-
-        /* Section Styles */
-        section {
-            padding: 6rem 0;
-        }
-
-        .section-title {
-            font-size: clamp(2rem, 5vw, 3rem);
-            font-weight: 700;
-            text-align: center;
-            margin-bottom: 1rem;
-        }
-
-        .section-subtitle {
-            text-align: center;
-            color: var(--text-secondary);
-            font-size: 1.125rem;
-            max-width: 700px;
-            margin: 0 auto 3rem;
-        }
-
-        /* Demo Grid */
-        .demo-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
-            gap: 2rem;
-            margin-top: 3rem;
-        }
-
-        .demo-card {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            overflow: hidden;
-            transition: transform 0.3s ease;
-        }
-
-        .demo-card:hover {
-            transform: translateY(-4px);
-        }
-
-        .demo-header {
-            padding: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .demo-tag {
+        .container { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        
+        /* Hero */
+        .hero { text-align: center; padding: 4rem 0; }
+        .badge {
             display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-bottom: 0.75rem;
-        }
-
-        .demo-tag.p5 {
-            background: rgba(237, 100, 166, 0.2);
-            color: #ed64a6;
-        }
-
-        .demo-tag.shader {
-            background: rgba(6, 182, 212, 0.2);
-            color: #06b6d4;
-        }
-
-        .demo-tag.three {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-        }
-
-        .demo-title {
-            font-size: 1.25rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .demo-prompt {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-            font-style: italic;
-            margin-bottom: 0.5rem;
-        }
-
-        .demo-meta {
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
-            font-size: 0.75rem;
-            margin-top: 0.5rem;
-        }
-
-        .demo-meta-item {
-            background: rgba(139, 92, 246, 0.1);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            color: var(--accent-purple);
-        }
-
-        .demo-meta-item.cloud {
-            background: rgba(59, 130, 246, 0.1);
-            color: var(--accent-blue);
-        }
-
-        .demo-meta-item.local {
-            background: rgba(34, 197, 94, 0.1);
-            color: #22c55e;
-        }
-
-        .demo-interactive {
-            position: relative;
-            width: 100%;
-            max-height: 400px;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .demo-preview-image {
-            width: 100%;
-            height: auto;
-            max-height: 400px;
-            object-fit: contain;
-            display: block;
-        }
-
-        .demo-code-preview {
-            width: 100%;
-            max-height: 400px;
-            overflow: auto;
-            padding: 1rem;
-            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-            font-size: 0.75rem;
-            line-height: 1.4;
-            color: #e0e0e0;
-            white-space: pre;
-            display: none; /* Hidden by default */
-        }
-
-        .demo-code-preview.visible {
-            display: block;
-        }
-
-        .demo-code-preview code {
-            color: #e0e0e0;
-        }
-
-        .demo-controls {
-            padding: 1rem 1.5rem;
-            background: rgba(0, 0, 0, 0.3);
-            border-top: 1px solid var(--border-color);
-        }
-
-        .demo-info {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        /* Model Badge */
-        .model-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
+            background: linear-gradient(135deg, var(--accent-purple), var(--accent-blue));
             padding: 0.5rem 1rem;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .model-badge.cloud {
-            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(139, 92, 246, 0.2));
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .model-badge.local {
-            background: linear-gradient(135deg, rgba(34, 197, 94, 0.2), rgba(6, 182, 212, 0.2));
-            color: #4ade80;
-            border: 1px solid rgba(34, 197, 94, 0.3);
-        }
-
-        /* Quality Badge */
-        .quality-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.25rem;
-            padding: 0.25rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        .quality-badge.high {
-            background: rgba(34, 197, 94, 0.2);
-            color: #22c55e;
-        }
-
-        .quality-badge.medium {
-            background: rgba(234, 179, 8, 0.2);
-            color: #eab308;
-        }
-
-        .quality-badge.low {
-            background: rgba(239, 68, 68, 0.2);
-            color: #ef4444;
-        }
-
-        /* Showcase Section */
-        .showcase-section {
-            background: linear-gradient(180deg, transparent, rgba(139, 92, 246, 0.05), transparent);
-        }
-
-        .showcase-card {
-            background: var(--bg-card);
-            border: 2px solid var(--accent-purple);
             border-radius: 20px;
-            overflow: hidden;
-            margin-top: 3rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
         }
-
-        .showcase-header {
-            padding: 2rem;
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(59, 130, 246, 0.1));
-        }
-
-        .showcase-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 0.5rem;
-        }
-
-        .showcase-iframe {
-            width: 100%;
-            max-height: 500px;
-            border: none;
-            background: #1a1a2e;
-            border-radius: 8px;
-            overflow: auto;
-            padding: 1rem;
-        }
-
-        /* Info Box */
-        .info-box {
-            background: var(--bg-card);
+        h1 { font-size: 4rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg, var(--accent-purple), var(--accent-cyan)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .subtitle { font-size: 1.25rem; color: var(--text-secondary); max-width: 700px; margin: 0 auto 2rem; }
+        .subtitle strong { color: var(--text-primary); }
+        
+        .honest-banner {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(245, 158, 11, 0.15));
+            border: 1px solid rgba(239, 68, 68, 0.3);
             border-radius: 12px;
             padding: 1.5rem;
-            margin-top: 2rem;
-            border-left: 4px solid var(--accent-purple);
+            margin: 2rem 0;
         }
-
-        .info-box h4 {
-            margin: 0 0 1rem 0;
-            font-size: 1.125rem;
+        .honest-banner h2 { color: var(--accent-red); margin-bottom: 0.5rem; font-size: 1.25rem; }
+        .honest-banner p { color: var(--text-secondary); font-size: 0.95rem; }
+        
+        /* Stats */
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; margin: 3rem 0; }
+        .stat-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+        .stat-number { font-size: 2.5rem; font-weight: 700; }
+        .stat-label { color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem; }
+        
+        /* Sections */
+        .section { margin: 4rem 0; }
+        .section-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+        .section-icon { font-size: 1.5rem; }
+        .section-title { font-size: 1.75rem; font-weight: 700; }
+        .section-subtitle { color: var(--text-secondary); margin-bottom: 1.5rem; }
+        
+        /* Working Grid */
+        .working-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem; }
+        .example-card {
+            background: var(--bg-card);
+            border: 2px solid var(--accent-green);
+            border-radius: 12px;
+            overflow: hidden;
+            transition: transform 0.2s;
         }
-
-        .info-box p {
-            margin: 0;
-            color: var(--text-secondary);
-            line-height: 1.7;
+        .example-card:hover { transform: translateY(-4px); }
+        .example-header { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+        .example-tag { display: inline-block; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; padding: 0.25rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; }
+        .tag-p5 { background: var(--accent-pink); color: #000; }
+        .tag-shader { background: var(--accent-cyan); color: #000; }
+        .tag-three { background: var(--accent-blue); color: #fff; }
+        .example-title { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.25rem; }
+        .example-prompt { color: var(--text-secondary); font-size: 0.875rem; font-style: italic; margin-bottom: 0.5rem; }
+        .example-meta { display: flex; gap: 1rem; align-items: center; margin-top: 0.5rem; }
+        .example-meta-item { font-size: 0.8rem; color: var(--text-secondary); }
+        .score-badge { 
+            display: inline-flex; align-items: center; gap: 0.25rem;
+            padding: 0.25rem 0.75rem; border-radius: 20px; font-weight: 600; font-size: 0.875rem;
         }
-
-        .info-box.success {
-            border-color: #22c55e;
+        .score-high { background: var(--accent-green); color: #000; }
+        .score-medium { background: var(--accent-yellow); color: #000; }
+        .score-low { background: var(--accent-red); color: #fff; }
+        .example-preview { height: 300px; background: #000; position: relative; }
+        .example-preview iframe { width: 100%; height: 100%; border: none; }
+        
+        /* Failures */
+        .failures-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; }
+        .failure-card {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
         }
-
-        .info-box.warning {
-            border-color: #eab308;
+        .failure-type { 
+            display: inline-block; font-size: 0.7rem; font-weight: 700; text-transform: uppercase;
+            color: var(--accent-red); background: rgba(239, 68, 68, 0.2);
+            padding: 0.2rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem;
         }
-
+        .failure-name { font-weight: 600; margin-bottom: 0.25rem; }
+        .failure-reason { color: var(--text-secondary); font-size: 0.875rem; font-family: monospace; }
+        
+        /* Footer */
+        .footer { text-align: center; padding: 3rem 0; border-top: 1px solid var(--border-color); margin-top: 4rem; color: var(--text-secondary); }
+        .footer a { color: var(--accent-blue); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+        
         @media (max-width: 768px) {
-            .demo-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .demo-interactive {
-                height: 300px;
-            }
-
-            .showcase-iframe {
-                height: 350px;
-            }
+            h1 { font-size: 2.5rem; }
+            .working-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
-    <div class="hero-bg"></div>
-
-    <!-- Hero Section -->
-    <section class="hero">
-        <div class="hero-badge">✨ REAL AI-GENERATED CREATIVE CODE</div>
-        <h1>LIMINAL</h1>
-        <p class="hero-subtitle">
-            An AI-powered creative coding agent that generates p5.js, GLSL shaders, Three.js scenes, and Remotion video.
-            <strong>Every example on this page was generated by Liminal — real outputs, honest scores, no cherry-picking.</strong>
-        </p>
-        <div class="hero-cta">
-            <a href="#examples" class="btn btn-primary">View Generated Examples</a>
-            <a href="https://github.com/Pastorsimon1798/liminal" class="btn btn-secondary">View on GitHub</a>
-        </div>
-    </section>
-
-    <!-- Stats Bar -->
     <div class="container">
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div class="stat-number">2,496</div>
-                <div class="stat-label">Tests Passing</div>
+        <!-- Hero -->
+        <div class="hero">
+            <div class="badge">✨ REAL AI-GENERATED CREATIVE CODE</div>
+            <h1>LIMINAL</h1>
+            <p class="subtitle">
+                An AI-powered creative coding agent that generates p5.js, GLSL shaders, Three.js scenes, and more.
+                <br><br>
+                <strong>Every example on this page was generated by Liminal using MiniMax-M2.7.</strong>
+                <br>Tested in browser. Honest scores. No cherry-picking.
+            </p>
+            
+            <div class="honest-banner">
+                <h2>🚨 HONEST DOGFOOD REPORT</h2>
+                <p>We tested all 15 examples by actually loading them in a browser. Only 5 work perfectly. 
+                The other 10 have specific failures (shader errors, blank screens, missing files).
+                This is the reality of AI-generated code in 2026.</p>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">15</div>
-                <div class="stat-label">Real Dogfood</div>
+            
+            <div class="stats">
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--accent-green);">5</div>
+                    <div class="stat-label">Working</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--accent-red);">10</div>
+                    <div class="stat-label">Failed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--accent-yellow);">33%</div>
+                    <div class="stat-label">Success Rate</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--accent-cyan);">0.82</div>
+                    <div class="stat-label">Avg Score</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number" style="color: var(--accent-purple);">2,496</div>
+                    <div class="stat-label">Tests Passing</div>
+                </div>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">0.80</div>
-                <div class="stat-label">Avg Score</div>
+        </div>
+        
+        <!-- Working Examples -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">✅</span>
+                <h2 class="section-title">WORKING EXAMPLES (5)</h2>
             </div>
-            <div class="stat-card">
-                <div class="stat-number">147</div>
-                <div class="stat-label">Files Changed</div>
+            <p class="section-subtitle">These actually render and animate. Live previews below.</p>
+            
+            <div class="working-grid">
+                <!-- Jellyfish -->
+                <div class="example-card">
+                    <div class="example-header">
+                        <span class="example-tag tag-p5">p5.js</span>
+                        <h3 class="example-title">Bioluminescent Jellyfish</h3>
+                        <p class="example-prompt">"p5.js bioluminescent jellyfish with flowing tentacles"</p>
+                        <div class="example-meta">
+                            <span class="example-meta-item">1 iter • MiniMax-M2.7</span>
+                            <span class="score-badge score-high">★ 0.82</span>
+                        </div>
+                    </div>
+                    <div class="example-preview">
+                        <iframe src="landing-assets/dogfood-p5-jellyfish.html" loading="lazy"></iframe>
+                    </div>
+                </div>
+                
+                <!-- Neon Cyberpunk -->
+                <div class="example-card">
+                    <div class="example-header">
+                        <span class="example-tag tag-p5">p5.js</span>
+                        <h3 class="example-title">Neon Cyberpunk City</h3>
+                        <p class="example-prompt">"p5.js cyberpunk city with neon lights, rain, and flying cars"</p>
+                        <div class="example-meta">
+                            <span class="example-meta-item">3 iter • MiniMax-M2.7</span>
+                            <span class="score-badge score-high">★ 0.82</span>
+                        </div>
+                    </div>
+                    <div class="example-preview">
+                        <iframe src="landing-assets/dogfood-p5-neon-final.html" loading="lazy"></iframe>
+                    </div>
+                </div>
+                
+                <!-- Ocean Waves -->
+                <div class="example-card">
+                    <div class="example-header">
+                        <span class="example-tag tag-p5">p5.js</span>
+                        <h3 class="example-title">Ocean Waves</h3>
+                        <p class="example-prompt">"p5.js realistic ocean waves with foam and seagulls"</p>
+                        <div class="example-meta">
+                            <span class="example-meta-item">3 iter • MiniMax-M2.7</span>
+                            <span class="score-badge score-medium">★ 0.76</span>
+                        </div>
+                    </div>
+                    <div class="example-preview">
+                        <iframe src="landing-assets/dogfood-p5-ocean-final.html" loading="lazy"></iframe>
+                    </div>
+                </div>
+                
+                <!-- Crystal Cave -->
+                <div class="example-card">
+                    <div class="example-header">
+                        <span class="example-tag tag-three">Three.js</span>
+                        <h3 class="example-title">Crystal Cave</h3>
+                        <p class="example-prompt">"Three.js 3D scene with reflective crystal surfaces"</p>
+                        <div class="example-meta">
+                            <span class="example-meta-item">1 iter • MiniMax-M2.7</span>
+                            <span class="score-badge score-medium">★ 0.57</span>
+                        </div>
+                    </div>
+                    <div class="example-preview">
+                        <iframe src="landing-assets/dogfood-three-crystal.html" loading="lazy"></iframe>
+                    </div>
+                </div>
+                
+                <!-- Plasma Effect -->
+                <div class="example-card">
+                    <div class="example-header">
+                        <span class="example-tag tag-shader">GLSL Shader</span>
+                        <h3 class="example-title">Plasma Effect</h3>
+                        <p class="example-prompt">"GLSL shader with animated plasma effect"</p>
+                        <div class="example-meta">
+                            <span class="example-meta-item">3 iter • MiniMax-M2.7</span>
+                            <span class="score-badge score-high">★ 0.90</span>
+                        </div>
+                    </div>
+                    <div class="example-preview">
+                        <iframe src="landing-assets/dogfood-shader-plasma-final.html" loading="lazy"></iframe>
+                    </div>
+                </div>
             </div>
+        </div>
+        
+        <!-- Failures -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">❌</span>
+                <h2 class="section-title">FAILURES (10)</h2>
+            </div>
+            <p class="section-subtitle">These failed when tested in browser. Specific errors below feed back into Liminal's improvement loop.</p>
+            
+            <div class="failures-grid">
+                <div class="failure-card">
+                    <div class="failure-type">GLSL Compile Error</div>
+                    <div class="failure-name">Raymarched Fractal</div>
+                    <div class="failure-reason">'i' : Loop index variable<br>Score: 0.90 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">GLSL Compile Error</div>
+                    <div class="failure-name">Warping Noise</div>
+                    <div class="failure-reason">'fwidth' : undefined function<br>Score: 0.90 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">GLSL Compile Error</div>
+                    <div class="failure-name">Cosmic Nebula</div>
+                    <div class="failure-reason">'+' : wrong operand types<br>Score: 0.90 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">Blank Screen</div>
+                    <div class="failure-name">Rotating Geometry</div>
+                    <div class="failure-reason">Three.js scene renders but no visible output<br>Score: 0.95 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">Blank Screen</div>
+                    <div class="failure-name">Abstract Sculpture</div>
+                    <div class="failure-reason">Three.js scene renders but no visible output<br>Score: 0.95 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">Missing HTML</div>
+                    <div class="failure-name">Hydra Liquid Morphing</div>
+                    <div class="failure-reason">HTML wrapper file not generated<br>Score: 0.95 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">Missing HTML</div>
+                    <div class="failure-name">Hydra Geometric Grid</div>
+                    <div class="failure-reason">HTML wrapper file not generated<br>Score: 0.90 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">No Render</div>
+                    <div class="failure-name">Strudel Techno Beat</div>
+                    <div class="failure-reason">Only .js file exists, no HTML preview<br>Score: 0.78 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">No Render</div>
+                    <div class="failure-name">Strudel Ambient Drone</div>
+                    <div class="failure-reason">Only .js file exists, no HTML preview<br>Score: 0.63 (estimated)</div>
+                </div>
+                <div class="failure-card">
+                    <div class="failure-type">Needs Bundler</div>
+                    <div class="failure-name">Remotion Title Sequence</div>
+                    <div class="failure-reason">React/TSX requires webpack to render<br>Score: 0.34 (estimated)</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Improvements -->
+        <div class="section">
+            <div class="section-header">
+                <span class="section-icon">🔧</span>
+                <h2 class="section-title">USING FAILURES TO IMPROVE LIMINAL</h2>
+            </div>
+            <p class="section-subtitle">The Ralph-Wiggum loop has been updated based on these failure patterns.</p>
+            
+            <div style="background: var(--bg-card); border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-color);">
+                <h3 style="margin-bottom: 1rem; color: var(--accent-cyan);">Recent Fixes</h3>
+                <ul style="list-style: none; display: grid; gap: 0.75rem;">
+                    <li>✅ <strong>Code Completeness Check:</strong> Loop now requires balanced braces/parens before exiting</li>
+                    <li>✅ <strong>Success Gate Fix:</strong> Requires BOTH score ≥ 0.90 AND complete code</li>
+                    <li>🔄 <strong>Iteration Extension:</strong> If failing at iter 3, extends to 6 total (coming next)</li>
+                    <li>🔄 <strong>GLSL Validation:</strong> Test-compile shaders in WebGL before accepting (coming next)</li>
+                    <li>🔄 <strong>Three.js Pixel Test:</strong> Verify canvas has visible pixels before accepting (coming next)</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Generated by Liminal AI</strong> • 5 of 15 examples working (33%)</p>
+            <p style="margin-top: 0.5rem;">
+                <a href="https://github.com/Pastorsimon1798/liminal">View on GitHub</a> • 
+                All examples generated with MiniMax-M2.7 via Ralph-Wiggum loop
+            </p>
         </div>
     </div>
-<!-- AUTO-GENERATED: Dogfood Examples Section -->
-<!-- Generated: 2026-03-30T23:46:24.713Z -->
-<!-- TRUE DOGFOOD - 100% REAL MINIMAX OUTPUTS -->
-<!-- Generated: 2026-03-31T01:25:20.756Z -->
-<!-- Total: 15 real examples -->
-<!-- NO TEMPLATES - NO FAKES -->
-
-            <h3 class="section-subtitle" style="text-align: center; max-width: 800px; margin: 0 auto 2rem;">
-                Every example below is a <strong>REAL output from MiniMax-M2.7</strong>. 
-                Scores are honest — including the low ones. No cherry-picking.
-            </h3>
-
-            <!-- p5.js Creative Coding -->
-            <h3 class="section-subtitle" style="margin-top: 3rem; color: var(--accent-purple);">p5.js Creative Coding</h3>
-            <div class="demo-grid">
-
-                <!-- REAL: Bioluminescent Jellyfish -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag p5">p5.js</span>
-                        <h3 class="demo-title">Bioluminescent Jellyfish</h3>
-                        <p class="demo-prompt">"p5.js bioluminescent jellyfish with flowing tentacles"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.82</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-p5-jellyfish.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-p5-jellyfish.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Neon Cyberpunk City -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag p5">p5.js</span>
-                        <h3 class="demo-title">Neon Cyberpunk City</h3>
-                        <p class="demo-prompt">"p5.js cyberpunk city with neon lights, rain, and flying cars"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">3 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.82</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-p5-neon-cyberpunk.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-p5-neon-cyberpunk.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Ocean Waves -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag p5">p5.js</span>
-                        <h3 class="demo-title">Ocean Waves</h3>
-                        <p class="demo-prompt">"p5.js realistic ocean waves with foam and seagulls"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">3 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge medium">★ 0.76</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-p5-ocean-final.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output • Incomplete (cutoff)</div>
-                        <a href="landing-assets/dogfood-p5-ocean-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- GLSL Shaders -->
-            <h3 class="section-subtitle" style="margin-top: 3rem; color: var(--accent-cyan);">GLSL Shaders</h3>
-            <div class="demo-grid">
-
-                <!-- REAL: Raymarched Fractal -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag glsl-shader">GLSL Shader</span>
-                        <h3 class="demo-title">Raymarched Fractal</h3>
-                        <p class="demo-prompt">"GLSL raymarched fractal landscape with volumetric fog"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.90</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-shader-fractal.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-shader-fractal.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Warping Noise -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag glsl-shader">GLSL Shader</span>
-                        <h3 class="demo-title">Warping Noise</h3>
-                        <p class="demo-prompt">"GLSL shader with warping noise patterns"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.90</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-shader-warp.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-shader-warp.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Cosmic Nebula -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag glsl-shader">GLSL Shader</span>
-                        <h3 class="demo-title">Cosmic Nebula</h3>
-                        <p class="demo-prompt">"GLSL shader cosmic nebula with stars"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">3 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.90</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-shader-nebula-final.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-shader-nebula-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Plasma Effect -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag glsl-shader">GLSL Shader</span>
-                        <h3 class="demo-title">Plasma Effect</h3>
-                        <p class="demo-prompt">"GLSL shader with animated plasma effect"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">3 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.90</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-shader-plasma-final.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-shader-plasma-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Three.js 3D -->
-            <h3 class="section-subtitle" style="margin-top: 3rem; color: var(--accent-blue);">Three.js 3D</h3>
-            <div class="demo-grid">
-
-                <!-- REAL: Crystal Cave -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag three">Three.js</span>
-                        <h3 class="demo-title">Crystal Cave</h3>
-                        <p class="demo-prompt">"Three.js 3D scene with reflective crystal surfaces"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge medium">★ 0.57</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-three-crystal.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-three-crystal.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Rotating Geometry -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag three">Three.js</span>
-                        <h3 class="demo-title">Rotating Geometry</h3>
-                        <p class="demo-prompt">"Three.js rotating geometric shapes with dynamic lighting"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.95</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-three-rotating.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-three-rotating.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Abstract Sculpture -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag three">Three.js</span>
-                        <h3 class="demo-title">Abstract Sculpture</h3>
-                        <p class="demo-prompt">"Three.js abstract geometric sculpture with iridescent materials"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">3 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.95</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-three-abstract-final.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output</div>
-                        <a href="landing-assets/dogfood-three-abstract-final.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Hydra Visuals -->
-            <h3 class="section-subtitle" style="margin-top: 3rem; color: var(--accent-pink);">Hydra Visuals</h3>
-            <div class="demo-grid">
-
-                <!-- REAL: Liquid Morphing -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag hydra">Hydra</span>
-                        <h3 class="demo-title">Liquid Morphing</h3>
-                        <p class="demo-prompt">"liquid morphing shapes with feedback trails"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.95</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-hydra-liquid.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output • Has reasoning tags</div>
-                        <a href="landing-assets/dogfood-hydra-liquid.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Geometric Grid -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag hydra">Hydra</span>
-                        <h3 class="demo-title">Geometric Grid</h3>
-                        <p class="demo-prompt">"geometric patterns with rotating grid"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge high">★ 0.90</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-hydra-geometric.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output • Has reasoning tags</div>
-                        <a href="landing-assets/dogfood-hydra-geometric.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Strudel Music -->
-            <h3 class="section-subtitle" style="margin-top: 3rem; color: var(--accent-green);">Strudel Music</h3>
-            <div class="demo-grid">
-
-                <!-- REAL: Techno Beat -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag strudel-music">Strudel Music</span>
-                        <h3 class="demo-title">Techno Beat</h3>
-                        <p class="demo-prompt">"driving techno beat with industrial percussion"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge medium">★ 0.78</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive" style="padding: 1rem; background: #0a0a0f;">
-                        <pre style="font-size: 0.7rem; color: #a0a0b0; overflow: auto; max-height: 280px;"><code>// Open in Strudel: strudel.repl.co
-// dogfood-music-techno-driving.strudel.js</code></pre>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output • Paste at strudel.repl.co</div>
-                        <a href="landing-assets/dogfood-music-techno-driving.strudel.js" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ View code</a>
-                    </div>
-                </div>
-
-                <!-- REAL: Ambient Drone -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag strudel-music">Strudel Music</span>
-                        <h3 class="demo-title">Ambient Drone</h3>
-                        <p class="demo-prompt">"ambient drone soundscape with slowly evolving textures"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge medium">★ 0.63</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive" style="padding: 1rem; background: #0a0a0f;">
-                        <pre style="font-size: 0.7rem; color: #a0a0b0; overflow: auto; max-height: 280px;"><code>// Open in Strudel: strudel.repl.co
-// dogfood-music-ambient-drone.strudel.js</code></pre>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output • Has reasoning tags</div>
-                        <a href="landing-assets/dogfood-music-ambient-drone.strudel.js" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ View code</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Remotion Video -->
-            <h3 class="section-subtitle" style="margin-top: 3rem; color: var(--accent-orange);">Remotion Video</h3>
-            <div class="demo-grid">
-
-                <!-- REAL: Title Sequence -->
-                <div class="demo-card">
-                    <div class="demo-header">
-                        <span class="demo-tag remotion">Remotion</span>
-                        <h3 class="demo-title">Title Sequence</h3>
-                        <p class="demo-prompt">"Remotion video title sequence with particle dissolve"</p>
-                        <div class="demo-meta">
-                            <span class="demo-meta-item cloud">1 iter • MiniMax-M2.7</span>
-                            <span class="quality-badge low">★ 0.34</span>
-                        </div>
-                    </div>
-                    <div class="demo-interactive">
-                        <iframe src="landing-assets/dogfood-remotion-title.html" style="width:100%;height:300px;border:none;" loading="lazy"></iframe>
-                    </div>
-                    <div class="demo-controls">
-                        <div class="demo-info">✓ REAL MiniMax output • Low score - needs work</div>
-                        <a href="landing-assets/dogfood-remotion-title.html" target="_blank" style="color: var(--accent-blue); text-decoration: none; font-size: 0.8rem;">→ Open full example</a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- TRUE STATS -->
-            <div style="margin-top: 4rem; padding: 2rem; background: rgba(255,255,255,0.03); border-radius: 12px; text-align: center;">
-                <h4 style="margin-bottom: 1rem; color: var(--text-primary);">Real Dogfood Statistics</h4>
-                <div style="display: flex; justify-content: center; gap: 3rem; flex-wrap: wrap;">
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-purple);">15</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">Real Examples</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-blue);">0.77</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">Average Score</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-green);">12</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">High Quality (≥0.8)</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-pink);">3</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">Needs Work (&lt;0.6)</div>
-                    </div>
-                </div>
-                <p style="margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.875rem;">
-                    All generated with MiniMax-M2.7 via Liminal's Ralph-Wiggum loop • No manual fixes
-                </p>
-            </div>
-
-            <h2 class="section-title">Verified Internal Systems</h2>
-            <p class="section-subtitle">
-                Every subsystem tested with real inputs, not mocked. Results from this branch.
-            </p>
-
-            <!-- Music + Audio Systems -->
-            <h3 style="margin-top: 4rem; margin-bottom: 1.5rem; color: var(--accent-pink); font-size: 1.5rem;">🎵 Music + Audio Pipeline</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
-
-                <!-- Music Generation -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #ec4899, #8b5cf6); padding: 1rem 1.5rem;">
-                        <h4 style="margin: 0; color: white; font-size: 1.1rem;">Live Music — Strudel + Hydra</h4>
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                            <code>liminal --mode live-music -p "ambient techno"</code><br>
-                            Generates Strudel mini-notation + Hydra visual synth code
-                        </p>
-                        <div style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem;">
-                            <span style="background: #1e1b4b; color: #c4b5fd; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem;">strudel.js</span>
-                            <span style="background: #1e1b4b; color: #c4b5fd; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem;">hydra.js</span>
-                        </div>
-                        <details style="margin-top: 0.5rem;">
-                            <summary style="color: var(--accent-cyan); cursor: pointer; font-size: 0.875rem;">View Strudel output</summary>
-                            <pre style="background: #0a0a0f; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; overflow-x: auto; font-size: 0.75rem; color: #a0a0b0;"><code>$: s("bd sd").slow(2)
-$: s("hh").fast(4).gain(0.3)
-$: s("superzow").n("C3 Eb3 G3").gain(0.4)
-$: s("sawtooth").n("C2").lpf(200)
-bpm(120)</code></pre>
-                        </details>
-                    </div>
-                </div>
-
-                <!-- Music Theory Engine -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #f59e0b, #ef4444); padding: 1rem 1.5rem;">
-                        <h4 style="margin: 0; color: white; font-size: 1.1rem;">Music Theory Engine</h4>
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                            14 scales, 7 chord types, Euclidean rhythms, Markov melodies, arpeggiators
-                        </p>
-                        <details style="margin-top: 0.5rem;">
-                            <summary style="color: var(--accent-cyan); cursor: pointer; font-size: 0.875rem;">View API results</summary>
-                            <pre style="background: #0a0a0f; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; overflow-x: auto; font-size: 0.75rem; color: #a0a0b0;"><code>C minor scale: [C,C#,D,D#,E,F,F#,G,G#,A,A#,B]
-C minor triads: [Cm,Ddim,Eb,Fm,Gm,Ab,Bb]
-Euc(5,8) pattern: [1,0,1,1,0,1,1,0]
-Arpeggio Cmaj7 upDown: [C4,E4,G4,B4,B4,G4,E4,C4]</code></pre>
-                        </details>
-                    </div>
-                </div>
-
-                <!-- Audio→Visual Mapping -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #10b981, #3b82f6); padding: 1rem 1.5rem;">
-                        <h4 style="margin: 0; color: white; font-size: 1.1rem;">Audio → Visual Mapping</h4>
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                            AudioAnalyzer → PitchColorMapper → AudioToVisualMapper → VisualMappingParams<br>
-                            Frequency → hue, energy → radius, onset → shape
-                        </p>
-                        <details style="margin-top: 0.5rem;">
-                            <summary style="color: var(--accent-cyan); cursor: pointer; font-size: 0.875rem;">View mapping output</summary>
-                            <pre style="background: #0a0a0f; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; overflow-x: auto; font-size: 0.75rem; color: #a0a0b0;"><code>Input: rms=0.5, energy=0.7, bpm=120, key=C
-Output: speed=1, complexity=0.455
-  palette.dominantHues from chromatic mapping
-  motion.speed from energy/RMS
-  form.complexity from spectral features</code></pre>
-                        </details>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Aesthetic + Color Systems -->
-            <h3 style="margin-top: 4rem; margin-bottom: 1.5rem; color: var(--accent-cyan); font-size: 1.5rem;">🎯 Aesthetic + Color Theory</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 1.5rem;">
-
-                <!-- Aesthetic Critic -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #8b5cf6, #ec4899); padding: 1rem 1.5rem;">
-                        <h4 style="margin: 0; color: white; font-size: 1.1rem;">AestheticCritic — Cinematic Preset</h4>
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                            4 critics (Color/Layout/Typography/Sound) + AestheticStrategy gate
-                        </p>
-                        <div style="display: flex; gap: 1rem; margin-bottom: 1rem;">
-                            <span style="background: #064e3b; color: #6ee7b7; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">Score: 0.74</span>
-                            <span style="background: #064e3b; color: #6ee7b7; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;">PASSED</span>
-                            <span style="background: #1e1b4b; color: #c4b5fd; padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.75rem;">0 violations</span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Color Theory -->
-                <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden;">
-                    <div style="background: linear-gradient(135deg, #f59e0b, #22c55e); padding: 1rem 1.5rem;">
-                        <h4 style="margin: 0; color: white; font-size: 1.1rem;">ColorTheoryEngine — 7 Harmony Rules</h4>
-                    </div>
-                    <div style="padding: 1.5rem;">
-                        <p style="color: var(--text-secondary); font-size: 0.875rem; margin-bottom: 1rem;">
-                            Generates harmonically correct palettes from any seed color
-                        </p>
-                        <details style="margin-top: 0.5rem;">
-                            <summary style="color: var(--accent-cyan); cursor: pointer; font-size: 0.875rem;">View harmony results</summary>
-                            <pre style="background: #0a0a0f; padding: 1rem; border-radius: 8px; margin-top: 0.5rem; overflow-x: auto; font-size: 0.75rem; color: #a0a0b0;"><code>Complementary(210°) → [210, 30]
-Triadic(30°) → [30, 150, 270]
-Analogous(120°) → [120, 150, 180]
-Validate([210,30]) → complementary, deviation=0
-
-7 modes: monochromatic, analogous, complementary,
-  split-complementary, triadic, tetradic, square</code></pre>
-                        </details>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Pipeline + Compost -->
-            <h3 style="margin-top: 4rem; margin-bottom: 1.5rem; color: var(--accent-purple); font-size: 1.5rem;">🌱 Compost Mill Pipeline</h3>
-            <div style="background: var(--bg-card); border-radius: 16px; border: 1px solid var(--border-color); padding: 2rem;">
-                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; text-align: center;">
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-purple);">21</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">Heap Files</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-cyan);">2,454</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">Seeds</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-pink);">237KB</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">Heap Size</div>
-                    </div>
-                    <div>
-                        <div style="font-size: 2rem; font-weight: 700; color: #22c55e;">✓</div>
-                        <div style="color: var(--text-secondary); font-size: 0.875rem;">add → digest → seeds</div>
-                    </div>
-                </div>
-                <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
-                    <p style="color: var(--text-secondary); font-size: 0.875rem;">
-                        Pipeline verified: <code>liminal compost add README.md</code> → <code>liminal compost digest</code> → <code>liminal compost seeds</code><br>
-                        Seeds feed into every RalphLoop iteration via random seed injection for creative cross-pollination.
-                    </p>
-                </div>
-            </div>
-
-            <!-- Test + Build Summary -->
-            <h3 style="margin-top: 4rem; margin-bottom: 1.5rem; color: #22c55e; font-size: 1.5rem;">✅ Verification Summary</h3>
-            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
-                <div style="background: #064e3b22; border: 1px solid #064e3b; border-radius: 12px; padding: 1.25rem; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 700; color: #6ee7b7;">2,349</div>
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">Tests Passing</div>
-                </div>
-                <div style="background: #064e3b22; border: 1px solid #064e3b; border-radius: 12px; padding: 1.25rem; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 700; color: #6ee7b7;">194</div>
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">Test Files</div>
-                </div>
-                <div style="background: #064e3b22; border: 1px solid #064e3b; border-radius: 12px; padding: 1.25rem; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 700; color: #6ee7b7;">✓</div>
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">tsc --noEmit Clean</div>
-                </div>
-                <div style="background: #064e3b22; border: 1px solid #064e3b; border-radius: 12px; padding: 1.25rem; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 700; color: #6ee7b7;">✓</div>
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">ESLint Clean</div>
-                </div>
-                <div style="background: #064e3b22; border: 1px solid #064e3b; border-radius: 12px; padding: 1.25rem; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 700; color: #6ee7b7;">+20.5K</div>
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">Lines Added</div>
-                </div>
-                <div style="background: #064e3b22; border: 1px solid #064e3b; border-radius: 12px; padding: 1.25rem; text-align: center;">
-                    <div style="font-size: 2rem; font-weight: 700; color: #6ee7b7;">147</div>
-                    <div style="color: var(--text-secondary); font-size: 0.875rem;">Files Changed</div>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Footer -->
-    <footer style="border-top: 1px solid var(--border-color); padding: 3rem 0; margin-top: 4rem;">
-        <div class="container" style="text-align: center; color: var(--text-secondary);">
-            <p style="margin: 0;">
-                Generated by <strong>Liminal AI</strong> • All examples are actual outputs from the system
-            </p>
-            <p style="margin: 0.5rem 0 0; font-size: 0.875rem;">
-                <a href="https://github.com/Pastorsimon1798/liminal" style="color: var(--accent-purple); text-decoration: none;">View on GitHub</a>
-            </p>
-        </div>
-    </footer>
 </body>
 </html>

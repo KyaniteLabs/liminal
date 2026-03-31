@@ -225,18 +225,11 @@
     "error": "Liminal run failed: HTMLWebGenerator: LLM output is not valid HTML"
   },
   {
-    "domain": "p5",
-    "model": "phi4",
-    "status": "PASS",
-    "duration": 138,
-    "size": 2163
-  },
-  {
-    "domain": "glsl",
-    "model": "phi4",
+    "domain": "remotion",
+    "model": "qwen35",
     "status": "TIMEOUT",
-    "duration": 300348,
+    "duration": 601021,
     "size": 0,
-    "error": "Liminal run failed: ShaderGenerator: Generated code appears truncated or incomplete"
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
   }
 ]

@@ -1,7 +1,5 @@
 import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
 import { PromptLibrary } from '../../prompts/index.js';
-import { selectThreeTemplate } from './ThreeTemplates.js';
-import { Logger } from '../../utils/Logger.js';
 
 export interface ThreeGeneratorOptions {
   signal?: AbortSignal;
@@ -16,24 +14,19 @@ export class ThreeGenerator {
 
   async generate(prompt: string, options?: ThreeGeneratorOptions): Promise<string> {
     if (!LLMClient.isConfigured()) {
-      return selectThreeTemplate(prompt);
+      throw new Error('ThreeGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
     }
 
-    try {
-      const { system: systemPrompt, user: userPrompt } = PromptLibrary.render('three.generate', {
-        prompt,
-        threeVersion: '0.160.0',
-      });
-      const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
+    const { system: systemPrompt, user: userPrompt } = PromptLibrary.render('three.generate', {
+      prompt,
+      threeVersion: '0.160.0',
+    });
+    const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
 
-      if (!response.code || response.code.trim() === '') {
-        return selectThreeTemplate(prompt);
-      }
-
-      return response.code;
-    } catch (error) {
-      Logger.error('ThreeGenerator', `LLM call failed, using template fallback: ${error instanceof Error ? error.message : error}`);
-      return selectThreeTemplate(prompt);
+    if (!response.code || response.code.trim() === '') {
+      throw new Error('ThreeGenerator: LLM returned empty code');
     }
+
+    return response.code;
   }
 }

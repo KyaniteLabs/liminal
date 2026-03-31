@@ -6,6 +6,8 @@
  *   1. Strip LLM reasoning / preamble text
  *   2. Structural validation per domain (p5, shader, three, remotion, music)
  *   3. Self-contained check for already-wrapped HTML
+ *   4. SIZE VALIDATION - reject outputs that are too small (likely failed generation)
+ *   5. DOMAIN-SPECIFIC VALIDATION - catch common LLM errors per domain
  */
 
 export interface ValidationResult {
@@ -14,11 +16,26 @@ export interface ValidationResult {
   errors: string[];
 }
 
-type Domain = 'p5' | 'shader' | 'three' | 'remotion' | 'music' | 'unknown';
+type Domain = 'p5' | 'shader' | 'glsl' | 'three' | 'remotion' | 'music' | 'hydra' | 'strudel' | 'unknown';
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Size validation - from AUDIT: Qwen35 produced 66b and 74b "successes" that failed
+// -----------------------------------------------------------------------------
+const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
+  'p5': 500,        // p5 needs setup, draw, and some logic
+  'shader': 800,    // GLSL needs uniforms, main(), and shader logic
+  'glsl': 800,      // GLSL alias
+  'three': 800,     // Three.js needs scene setup, objects, animation
+  'remotion': 500,  // Remotion component needs imports and JSX
+  'music': 100,     // Music code can be compact
+  'hydra': 150,     // Hydra chains need multiple method calls
+  'strudel': 100,   // Strudel patterns can be compact
+  'unknown': 100,
+};
+
+// -----------------------------------------------------------------------------
 // Reasoning-text patterns (lines to strip from LLM output)
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 const REASONING_PATTERNS: RegExp[] = [
   /^(The user wants?|I'll create|I need to|Based on|Let me|Here's a|Here is a|Key elements|Creating a|Generating a|I'm going to|I will|I've created|I have created)/i,
   /^As an AI/i,
@@ -33,22 +50,28 @@ const REASONING_PATTERNS: RegExp[] = [
   /^I need to/i,
 ];
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // LLM contamination patterns (tags that wrap reasoning and must be stripped)
 // Found in audit: Strudel and Hydra files contained <think>...</think> tags
 // from models like Qwen/DeepSeek that output reasoning content
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 const CONTAMINATION_PATTERNS: RegExp[] = [
   /<think>[\s\S]*?<\/think>/gi,  // <think>...</think> tags with content
   /<thinking>[\s\S]*?<\/thinking>/gi,  // <thinking>...</thinking> variant
 ];
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Domain detection
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function detectDomain(code: string): Domain {
   if (isAlreadyWrapped(code)) {
-    if (code.includes('import * as THREE') || code.includes('from "three"') || code.includes('from \'three\'')) return 'three';
+    // Three.js: check for ES module imports or importmap containing three
+    if (code.includes('import * as THREE') || 
+        code.includes('from "three"') || 
+        code.includes('from \'three\'') ||
+        /<script\s+type="importmap"[^>]*>[\s\S]*?"three"[\s\S]*?<\/script>/.test(code)) {
+      return 'three';
+    }
     if (/getContext\(['"]webgl/.test(code)) return 'shader';
     return 'p5';
   }
@@ -68,7 +91,17 @@ function detectDomain(code: string): Domain {
   // Remotion
   if (/useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code)) return 'remotion';
 
-  // Music (Strudel / Hydra)
+  // Hydra specific
+  if (/osc\(|src\(|noise\(|shape\(|gradient\(|solid\(/.test(code) && /\.out\(/.test(code) && !/\$:/.test(code)) {
+    return 'hydra';
+  }
+  
+  // Strudel specific
+  if (/\$:\s*s\(|\.stack\(|\.slow\(|\.fast\(/.test(code) && !/osc\(|src\(/.test(code)) {
+    return 'strudel';
+  }
+
+  // Music (general - Strudel / Hydra)
   if (/\$:\s*s\(/.test(code) || /osc\(|src\(|render\(/.test(code) || /strudel|hydra/i.test(code)) return 'music';
 
   // Three.js (not HTML-wrapped, bare imports)
@@ -83,9 +116,9 @@ function isAlreadyWrapped(code: string): boolean {
   return trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html');
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Code-start patterns (lines that indicate actual code begins)
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 const CODE_START_PATTERNS: RegExp[] = [
   /^(let|const|var|function|class|if|for|while|switch|try|return|import|export|async|await|throw|new)\b/,
   /^(precision|void|vec[234]|float|int|bool|uniform|attribute|varying|in\s+|out\s+)\b/,
@@ -106,10 +139,10 @@ const CODE_START_PATTERNS: RegExp[] = [
   /^\/\*/,   // multi-line comments in code
 ];
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Pre-check: Strip LLM contamination tags (<think>, <thinking>)
 // These tags wrap model reasoning and must be removed entirely
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function stripContamination(code: string): string {
   let cleaned = code;
   for (const pattern of CONTAMINATION_PATTERNS) {
@@ -118,9 +151,9 @@ function stripContamination(code: string): string {
   return cleaned.trim();
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Check 1: Strip reasoning text
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function stripReasoningText(code: string): string {
   const lines = code.split('\n');
   const kept: string[] = [];
@@ -184,9 +217,9 @@ function stripReasoningText(code: string): string {
   return kept.join('\n').trim();
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Check 1.5: Detect contamination (warn if found)
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function detectContamination(code: string): string[] {
   const errors: string[] = [];
   // Check for unclosed or partial contamination tags
@@ -196,9 +229,9 @@ function detectContamination(code: string): string[] {
   return errors;
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Check 2: Structural validation per domain
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function validateStructure(code: string, domain: Domain): string[] {
   const errors: string[] = [];
   const trimmed = code.trim();
@@ -239,6 +272,51 @@ function validateStructure(code: string, domain: Domain): string[] {
       const hasTHREE = /THREE\.|import.*from\s+['"]three['"]|from\s+['"]three['"]/.test(trimmed);
       if (!hasTHREE) {
         errors.push('Three.js code must reference THREE object or import from "three"');
+      }
+      break;
+    }
+    case 'hydra': {
+      // Check for valid Hydra patterns
+      const hasOut = /\.out\(/.test(trimmed);
+      if (!hasOut) {
+        errors.push('Hydra code MUST end with .out() to render');
+      }
+      
+      // Check for common invalid methods (from AUDIT findings)
+      // These are literal method names/patterns that don't exist in Hydra
+      const invalidMethodPatterns = [
+        { pattern: /\.sin\(/, name: '.sin(' },   // Should be Math.sin or within osc()
+        { pattern: /\.cos\(/, name: '.cos(' },   // Should be Math.cos or within osc()
+        { pattern: /colorShift/, name: 'colorShift' },
+        { pattern: /feedback/, name: 'feedback' },
+      ];
+      for (const { pattern, name } of invalidMethodPatterns) {
+        if (pattern.test(trimmed)) {
+          errors.push(`Hydra code contains invalid method: ${name} — check API documentation`);
+        }
+      }
+      
+      // Check for valid source functions
+      const hasSource = /osc\(|src\(|noise\(|shape\(|gradient\(|solid\(/.test(trimmed);
+      if (!hasSource) {
+        errors.push('Hydra code should use a source function: osc(), src(), noise(), shape(), gradient(), or solid()');
+      }
+      break;
+    }
+    case 'strudel': {
+      // Check for valid Strudel patterns - be more permissive
+      // Accept: $: s(), .stack(), sound(), note(), plain s(), etc.
+      const hasPattern = /\$:\s*s\(/.test(trimmed) || 
+                         /\.stack\(/.test(trimmed) ||
+                         /sound\(/.test(trimmed) ||
+                         /note\(/.test(trimmed) ||
+                         /\bs\(["']/.test(trimmed);  // s("bd") pattern
+      if (!hasPattern) {
+        errors.push('Strudel code should contain pattern functions: s(), sound(), note(), or .stack()');
+      }
+      // Check for non-ASCII characters
+      if (/[\u4e00-\u9fff]/.test(trimmed)) {
+        errors.push('Strudel code contains non-ASCII characters (likely LLM contamination)');
       }
       break;
     }
@@ -292,9 +370,9 @@ function validateStructure(code: string, domain: Domain): string[] {
   return errors;
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 // Check 3: Self-contained HTML check
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 function validateSelfContained(code: string, domain: Domain): string[] {
   const errors: string[] = [];
   if (!isAlreadyWrapped(code)) return errors; // raw JS is fine — HTMLWrapper adds CDN
@@ -322,15 +400,71 @@ function validateSelfContained(code: string, domain: Domain): string[] {
   return errors;
 }
 
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
+// Check 4: Size validation - from AUDIT findings
+// Reject outputs that are too small (likely failed generations)
+// -----------------------------------------------------------------------------
+function validateSize(code: string, domain: Domain): string[] {
+  const errors: string[] = [];
+  const size = code.length;
+  const minSize = MIN_SIZE_REQUIREMENTS[domain] || MIN_SIZE_REQUIREMENTS['unknown'];
+  
+  if (size < minSize) {
+    errors.push(`${domain} code is too small (${size}b) - minimum is ${minSize}b. This likely indicates a failed generation.`);
+  }
+  
+  return errors;
+}
+
+// -----------------------------------------------------------------------------
+// Check 5: Domain-specific quality checks
+// -----------------------------------------------------------------------------
+function validateQuality(code: string, domain: Domain): string[] {
+  const errors: string[] = [];
+  
+  switch (domain) {
+    case 'glsl':
+    case 'shader': {
+      // Check for complexity - simple gradients are not enough
+      const hasNoise = /noise|hash|fbm|snoise|voronoi/.test(code);
+      const hasAnimation = /u_time|time/.test(code);
+      const hasMultipleColors = /vec3\([^)]+,[^)]+,[^)]+\)/.test(code);
+      
+      if (!hasNoise && !hasMultipleColors) {
+        errors.push('GLSL shader should use noise functions or multiple colors for complexity');
+      }
+      if (!hasAnimation) {
+        errors.push('GLSL shader should animate using u_time');
+      }
+      break;
+    }
+    case 'three': {
+      // Check for ES module issues (from AUDIT: CDNs use global, code uses imports)
+      const usesImportMap = /<script\s+type="importmap">/.test(code);
+      const usesGlobalTHREE = /new\s+THREE\./.test(code) && !/import.*three/.test(code);
+      
+      if (usesImportMap && usesGlobalTHREE) {
+        errors.push('Three.js code mixing importmap with global THREE - use one style consistently');
+      }
+      break;
+    }
+  }
+  
+  return errors;
+}
+
+// -----------------------------------------------------------------------------
 // Public API
-// ---------------------------------------------------------------------------
+// -----------------------------------------------------------------------------
 export class CodeValidator {
   /**
-   * Validate generated code in three passes:
+   * Validate generated code in multiple passes:
    *   1. Strip LLM reasoning text
-   *   2. Structural validation per domain
-   *   3. Self-contained HTML check
+   *   2. Strip contamination tags
+   *   3. Structural validation per domain
+   *   4. Self-contained HTML check
+   *   5. Size validation (reject tiny outputs)
+   *   6. Quality checks
    *
    * Returns { valid, cleanedCode, errors }.
    * If `valid` is false, `cleanedCode` may be empty or partial.
@@ -357,8 +491,14 @@ export class CodeValidator {
 
     // Check 3: Self-contained check
     const selfContainedErrors = validateSelfContained(cleaned, detectedDomain);
+    
+    // Check 4: Size validation (NEW from AUDIT)
+    const sizeErrors = validateSize(cleaned, detectedDomain);
+    
+    // Check 5: Quality checks (NEW from AUDIT)
+    const qualityErrors = validateQuality(cleaned, detectedDomain);
 
-    const allErrors = [...structuralErrors, ...selfContainedErrors];
+    const allErrors = [...structuralErrors, ...selfContainedErrors, ...sizeErrors, ...qualityErrors];
 
     return {
       valid: allErrors.length === 0,
@@ -370,5 +510,10 @@ export class CodeValidator {
   /** Expose domain detection for tests / callers */
   static detectDomain(code: string): string {
     return detectDomain(code);
+  }
+  
+  /** Get minimum size requirement for a domain */
+  static getMinSize(domain: Domain): number {
+    return MIN_SIZE_REQUIREMENTS[domain] || MIN_SIZE_REQUIREMENTS['unknown'];
   }
 }

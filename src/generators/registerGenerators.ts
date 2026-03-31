@@ -22,6 +22,9 @@ import { RemotionGenerator } from './remotion/RemotionGenerator.js';
 import { P5GeneratorLLM } from './p5/P5GeneratorLLM.js';
 import { HTMLWebGenerator } from './html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from './ascii/ASCIIArtGenerator.js';
+import { StrudelGenerator } from './strudel/StrudelGenerator.js';
+import { HydraGenerator } from './hydra/HydraGenerator.js';
+import { ToneGenerator } from './tone/ToneGenerator.js';
 import { promptToGeneratorParams } from '../utils/promptToGeneratorParams.js';
 
 // --- Shared canHandle helpers ---
@@ -61,7 +64,12 @@ const shaderConfidence = (prompt: string): number => {
 /** Confidence for 3D/Three.js patterns */
 const threeConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
-  if (/3d|three\.js|\bthree\b|webgl\s*3d|3d\s*scene|3d\s*particle/.test(lower)) return 0.5;
+  // High confidence for explicit three.js mentions
+  if (/three\.js|threejs|\bthree\b/.test(lower)) return 0.95;
+  // Strong confidence for 3D with specific keywords
+  if (/\b3d\b.*\b(scene|cube|sphere|model|mesh|geometry|import|webgl|camera|light|rotation)/.test(lower)) return 0.90;
+  // Moderate for generic 3D
+  if (/\b3d\b|webgl/.test(lower)) return 0.75;
   return 0;
 };
 
@@ -69,17 +77,58 @@ const threeConfidence = (prompt: string): number => {
 const htmlConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
   // Portfolio, landing page, dashboard are specific -> higher confidence
-  if (/portfolio|landing\s*page|dashboard|web\s*app/.test(lower)) return 0.9;
-  if (/html|web\s*page|website|css\s*design/.test(lower)) return 0.7;
-  if (/web\s*dev|ui\s*component|form|spa/.test(lower)) return 0.6;
+  if (/portfolio|landing\s*page|dashboard|web\s*app/.test(lower)) return 0.95;
+  // Explicit HTML/CSS mentions
+  if (/\bhtml\b|\bcss\b|\bweb\s+(component|page|widget)/.test(lower)) return 0.90;
+  if (/web\s*page|website|css\s*design/.test(lower)) return 0.75;
+  if (/web\s*dev|ui\s*component|form|spa/.test(lower)) return 0.65;
   return 0;
 };
 
 /** Confidence for ASCII art patterns */
 const asciiConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
-  if (/ascii\s*art|\bascii\b/.test(lower)) return 0.9;
-  if (/text\s*art|character\s*art|\bart\b.*\btext\b/.test(lower)) return 0.6;
+  // Explicit ASCII art mentions
+  if (/\bascii\s*art\b/.test(lower)) return 0.95;
+  if (/\bascii\b/.test(lower)) return 0.90;
+  // Character/text art patterns
+  if (/text\s*art|character\s*art|glyph|symbol.*art/.test(lower)) return 0.75;
+  if (/\bart\b.*\btext\b|\btext\b.*\bpattern/.test(lower)) return 0.65;
+  return 0;
+};
+
+/** Confidence for Strudel music patterns */
+const strudelConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  // Explicit Strudel/Tidal mentions
+  if (/\bstrudel\b|\btidal\b|live\s*coding\s*music/.test(lower)) return 0.95;
+  // Strong pattern-based music indicators
+  if (/\b(techno|drum|beat|rhythm|sequencer|pattern)\b.*\bmusic\b/.test(lower)) return 0.85;
+  if (/\bcycle\b|\bnote\b|\bchord\b|\bmelody\b.*\bsequence/.test(lower)) return 0.75;
+  // Moderate music pattern matches
+  if (/pattern|beat|drum|bass|synth.*sequence/.test(lower)) return 0.65;
+  return 0;
+};
+
+/** Confidence for Hydra video synth patterns */
+const hydraConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  if (/hydra|video\s*synth|visual\s*synthesis/.test(lower)) return 0.95;
+  if (/kaleid|oscillator|modulate.*video/.test(lower)) return 0.7;
+  return 0;
+};
+
+/** Confidence for Tone.js audio synthesis */
+const toneConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  // Explicit Tone.js mentions
+  if (/\btone\.?js\b|\btonejs\b|web\s*audio\s*api/.test(lower)) return 0.95;
+  // Strong synthesis indicators
+  if (/\bsynth\b|\bsynthesizer\b.*\bjs\b/.test(lower)) return 0.90;
+  // Audio effect indicators
+  if (/\bbass\b|\bdrone\b|\barp\b|\bsequencer\b|\bdelay\b|\breverb\b/.test(lower)) return 0.80;
+  // Generic synthesis
+  if (/synth|synthesizer/.test(lower)) return 0.70;
   return 0;
 };
 
@@ -176,6 +225,33 @@ const asciiEntry: GeneratorEntry = {
   },
 };
 
+const strudelEntry: GeneratorEntry = {
+  name: 'strudel',
+  canHandle: strudelConfidence,
+  generate: async (prompt: string) => {
+    const gen = new StrudelGenerator();
+    return gen.generate(prompt);
+  },
+};
+
+const hydraEntry: GeneratorEntry = {
+  name: 'hydra',
+  canHandle: hydraConfidence,
+  generate: async (prompt: string) => {
+    const gen = new HydraGenerator();
+    return gen.generate(prompt);
+  },
+};
+
+const toneEntry: GeneratorEntry = {
+  name: 'tone',
+  canHandle: toneConfidence,
+  generate: async (prompt: string) => {
+    const gen = new ToneGenerator();
+    return gen.generate(prompt);
+  },
+};
+
 const llmEntry: GeneratorEntry = {
   name: 'llm',
   canHandle: () => 0, // fallback: never wins, but always available
@@ -201,6 +277,9 @@ export function registerAllGenerators(): void {
   generatorRegistry.register(remotionEntry);
   generatorRegistry.register(htmlEntry);
   generatorRegistry.register(asciiEntry);
+  generatorRegistry.register(strudelEntry);
+  generatorRegistry.register(hydraEntry);
+  generatorRegistry.register(toneEntry);
   generatorRegistry.register(llmEntry);
 }
 
@@ -213,4 +292,7 @@ export {
   threeConfidence,
   htmlConfidence,
   asciiConfidence,
+  strudelConfidence,
+  hydraConfidence,
+  toneConfidence,
 };

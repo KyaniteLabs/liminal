@@ -120,7 +120,7 @@ export class LLMClient {
       apiKey: config?.apiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY,
       model: config?.model || env('LLM_MODEL') || 'qwen2.5-coder-7b-instruct',
       temperature: config?.temperature ?? 0.7,
-      maxTokens: config?.maxTokens ?? 8000,
+      maxTokens: config?.maxTokens ?? 4096,  // Default 4K for local models (prevents OOM on 8GB GPUs)
       apiStyle: config?.apiStyle || this.detectApiStyle(baseUrl),
       endpointPath: config?.endpointPath,
       headers: config?.headers,
@@ -400,6 +400,11 @@ export class LLMClient {
     const timeoutMs = 120000;
     const timeoutSignal = signal || AbortSignal.timeout(timeoutMs);
     
+    // Determine context window based on maxTokens
+    // num_ctx must be >= maxTokens + prompt length, so we add buffer
+    const maxTokens = this.config.maxTokens ?? 8000;
+    const numCtx = Math.min(maxTokens * 2, 32768); // Cap at 32K to avoid OOM on small GPUs
+    
     const response = await fetch(`${baseUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -407,6 +412,11 @@ export class LLMClient {
         model: this.config.model,
         prompt: `${system}\n\nUser: ${user}\n\nAssistant:`,
         stream: false,
+        options: {
+          num_predict: maxTokens,     // Max tokens to generate (prevents truncation)
+          num_ctx: numCtx,            // Context window size (prevents context overflow)
+          temperature: this.config.temperature,
+        },
       }),
       signal: timeoutSignal,
     });

@@ -1,6 +1,4 @@
 import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
-import { PromptLibrary } from '../../prompts/index.js';
-import { Logger } from '../../utils/Logger.js';
 
 export interface HydraGeneratorOptions {
   signal?: AbortSignal;
@@ -15,13 +13,10 @@ export class HydraGenerator {
 
   async generate(prompt: string, options?: HydraGeneratorOptions): Promise<string> {
     if (!LLMClient.isConfigured()) {
-      return this.getTemplate(prompt);
+      throw new Error('HydraGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
     }
 
-    try {
-      // Hydra uses the glsl.generate prompt as a reasonable approximation
-      // or we can use a custom system prompt
-      const systemPrompt = `You are an expert in Hydra video synthesizer (hydra-synth).
+    const systemPrompt = `You are an expert in Hydra video synthesizer (hydra-synth).
 
 Generate Hydra JavaScript code for live coding visual patterns.
 
@@ -36,60 +31,64 @@ OUTPUT FORMAT:
 - Single line or multi-line chain of Hydra methods
 - Must end with .out(o0)`;
 
-      const userPrompt = `Create Hydra video synth: ${prompt}`;
-      
-      const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
+    const userPrompt = `Create Hydra video synth: ${prompt}`;
+    
+    const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
 
-      if (!response.code || response.code.trim() === '') {
-        return this.getTemplate(prompt);
-      }
-
-      return this.sanitizeCode(response.code);
-    } catch (error) {
-      Logger.error('HydraGenerator', `LLM call failed, using template fallback: ${error instanceof Error ? error.message : error}`);
-      return this.getTemplate(prompt);
+    if (!response.code || response.code.trim() === '') {
+      throw new Error('HydraGenerator: LLM returned empty code');
     }
+
+    return this.sanitizeCode(response.code);
   }
 
   private sanitizeCode(code: string): string {
-    // Strip markdown fences
-    let clean = code.replace(/```(?:javascript|js)?\n/g, '').replace(/```/g, '');
+    let clean = code;
     
-    // Ensure it ends with .out()
-    if (!clean.includes('.out(')) {
+    // Strip <think> tags and their content (LLM reasoning contamination)
+    clean = clean.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    
+    // Strip markdown fences
+    clean = clean.replace(/```(?:javascript|js)?\n/g, '').replace(/```/g, '');
+    
+    // Remove HTML comments
+    clean = clean.replace(/<!--[\s\S]*?-->/g, '');
+    
+    // Split into lines and filter
+    const lines = clean.split('\n');
+    const codeLines: string[] = [];
+    
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      // Skip empty lines at start
+      if (trimmed === '' && codeLines.length === 0) continue;
+      
+      // Skip explanation lines (that don't look like code)
+      if (trimmed && !trimmed.startsWith('//') && !/[\(\)=.,;]/.test(trimmed)) {
+        // Might be an explanation - check if it has Hydra syntax
+        if (!/\b(osc|shape|noise|voronoi|src|render|out)\b/.test(trimmed)) {
+          continue;
+        }
+      }
+      
+      codeLines.push(line);
+    }
+    
+    clean = codeLines.join('\n');
+    
+    // Ensure it ends with .out() if no render
+    if (!clean.includes('.out(') && !clean.includes('render(')) {
       clean += '\n.out(o0)';
     }
     
+    // Ensure there's a render call if multiple outputs
+    if (clean.includes('.out(o1)') || clean.includes('.out(o2)') || clean.includes('.out(o3)')) {
+      if (!clean.includes('render(')) {
+        clean += '\nrender(o0)';
+      }
+    }
+    
     return clean.trim();
-  }
-
-  private getTemplate(prompt: string): string {
-    const lower = prompt.toLowerCase();
-    
-    if (lower.includes('feedback') || lower.includes('recursive')) {
-      return `// Feedback template
-src(o0)
-  .scale(1.01)
-  .color(1.01, 1.0, 1.0)
-  .layer(osc(20, 0.1).color(1, 0, 0).mask(shape(4)))
-  .out(o0)`;
-    }
-    
-    if (lower.includes('geometric') || lower.includes('shape')) {
-      return `// Geometric template
-shape(4)
-  .scale(() => Math.sin(time) * 0.5 + 1)
-  .rotate(() => time * 0.1)
-  .kaleid(6)
-  .color(0.5, 0.8, 1)
-  .out(o0)`;
-    }
-    
-    return `// Default Hydra pattern
-osc(20, 0.1)
-  .kaleid(4)
-  .color(1, 0.5, 0)
-  .rotate(() => time * 0.05)
-  .out(o0)`;
   }
 }

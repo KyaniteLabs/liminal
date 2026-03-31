@@ -1,12 +1,7 @@
 /**
- * ASCIIArtGenerator - Generates text-based ASCII art
+ * ASCIIArtGenerator - Generates text-based ASCII art via LLM
  * 
- * Creates ASCII art in various styles:
- * - Geometric patterns
- * - Character/figure art
- * - Landscape scenes
- * - Abstract compositions
- * - Typography
+ * NO TEMPLATES - Everything goes through the LLM
  */
 
 import { LLMClient } from '../../llm/LLMClient.js';
@@ -25,13 +20,14 @@ export class ASCIIArtGenerator {
   private llmClient: LLMClient;
 
   constructor(llmClient?: LLMClient) {
-    this.llmClient = llmClient || new LLMClient({
-      baseUrl: 'http://localhost:11434/v1',
-      model: 'qwen2.5-coder:7b',
-    });
+    this.llmClient = llmClient || new LLMClient();
   }
 
   async generate(prompt: string, options: ASCIIOptions = {}): Promise<string> {
+    if (!LLMClient.isConfigured()) {
+      throw new Error('ASCIIArtGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
+    }
+    
     const width = options.width || 60;
     const height = options.height || 30;
     const style = options.style || 'abstract';
@@ -53,202 +49,25 @@ Style: ${style}
 
 Output ONLY the ASCII art (no code blocks, no explanations):`;
 
-    try {
-      const response = await this.llmClient.generate(systemPrompt, userPrompt);
-      const code = typeof response === 'string' ? response : (response.code || '');
-      return this.formatASCII(code, width, height);
-    } catch (error) {
-      console.error('ASCII generation failed:', error);
-      return this.getFallbackArt(prompt, options);
+    const response = await this.llmClient.generate(systemPrompt, userPrompt);
+    const code = typeof response === 'string' ? response : (response.code || '');
+    
+    if (!code || code.trim() === '') {
+      throw new Error('ASCIIArtGenerator: LLM returned empty code');
     }
+    
+    return this.formatASCII(code, width, height);
   }
 
   private formatASCII(code: string, width: number, height: number): string {
-    // Remove markdown code blocks if present
-    const art = code.replace(/```[\s\S]*?```/g, '').trim();
+    const lines = code.split('\n').filter(line => line.trim() !== '');
     
-    // Split into lines
-    let lines = art.split('\n');
+    // Remove code block markers if present
+    const cleanLines = lines
+      .filter(line => !line.startsWith('```'))
+      .slice(0, height)
+      .map(line => line.slice(0, width));
     
-    // Trim or pad each line to width
-    lines = lines.map(line => {
-      if (line.length > width) return line.slice(0, width);
-      return line.padEnd(width, ' ');
-    });
-    
-    // Trim or pad to height
-    if (lines.length > height) {
-      lines = lines.slice(0, height);
-    } else {
-      while (lines.length < height) {
-        lines.push(' '.repeat(width));
-      }
-    }
-    
-    return lines.join('\n');
-  }
-
-  private getFallbackArt(_prompt: string, options: ASCIIOptions): string {
-    const style = options.style || 'abstract';
-    const fallbacks: Record<ASCIIStyle, string> = {
-      geometric: this.getGeometricArt(),
-      character: this.getCharacterArt(),
-      landscape: this.getLandscapeArt(),
-      abstract: this.getAbstractArt(),
-      typography: this.getTypographyArt(),
-      mandala: this.getMandalaArt(),
-    };
-    return fallbacks[style] || fallbacks.abstract;
-  }
-
-  /**
-   * Quick template-based generation
-   */
-  static generateQuick(style: ASCIIStyle): string {
-    const generator = new ASCIIArtGenerator();
-    return generator.getFallbackArt('', { style });
-  }
-
-  private getGeometricArt(): string {
-    return `
-        ██████╗ 
-       ██╔════╝ 
-       ██║  ███╗
-       ██║   ██║
-       ╚██████╔╝
-        ╚═════╝ 
-    `.trim();
-  }
-
-  private getCharacterArt(): string {
-    return `
-      O
-     /|\\
-      |
-     / \\
-    `.trim();
-  }
-
-  private getLandscapeArt(): string {
-    return `
-         ~-~-~-~-~-~-~-~
-      ~-~  /\\  /\\  ~-~
-    ~-~   /  \\/  \\   ~-~
-   ~-~___/____\\____\\___~-~
-  ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-    `.trim();
-  }
-
-  private getAbstractArt(): string {
-    return `
-    .-~~~-.
-   /       \\  .-~-.  
-  |  o   o  | /     \\ 
-  |    ~    |/  .-.  \\ 
-   \\  '-'  /  /   \\  |
-    '-...-'   '...'
-    `.trim();
-  }
-
-  private getTypographyArt(): string {
-    return `
- _    _      _ _         __          __        _     _ 
-| |  | |    | | |        \\ \\        / /       | |   | |
-| |__| | ___| | | ___     \\ \\  /\\  / /__  _ __| | __| |
-|  __  |/ _ \\ | |/ _ \\     \\ \\/  \\/ / _ \\| '__| |/ _\` |
-| |  | |  __/ | | (_) |     \\  /\\  / (_) | |  | | (_| |
-|_|  |_|\\___|_|_|\\___/       \\/  \\/ \\___/|_|  |_|\\__,_|
-    `.trim();
-  }
-
-  private getMandalaArt(): string {
-    return `
-         .-:-.
-        /     \\
-       |  .-.  |
-        \\|   |/
-    .-===:   :===-.
-   /     |   |     \\
-  |      |   |      |
-   \\     |   |     /
-    '-===:   :===-'
-        /|   |\\
-       |  '-'  |
-        \\     /
-         '-:-'
-    `.trim();
-  }
-
-  /**
-   * Generate animated ASCII (returns array of frames)
-   */
-  async generateAnimated(prompt: string, frames: number = 10, options: ASCIIOptions = {}): Promise<string[]> {
-    const baseArt = await this.generate(prompt, options);
-    const result: string[] = [baseArt];
-    
-    // Generate simple animation frames by rotating characters
-    const rotationChars = ['|', '/', '-', '\\\\'];
-    
-    for (let i = 1; i < frames; i++) {
-      const rotated = baseArt.split('').map((char) => {
-        if (rotationChars.includes(char)) {
-          const nextIdx = (rotationChars.indexOf(char) + 1) % rotationChars.length;
-          return rotationChars[nextIdx];
-        }
-        return char;
-      }).join('');
-      result.push(rotated);
-    }
-    
-    return result;
-  }
-
-  /**
-   * Create ASCII from pattern definition
-   */
-  static fromPattern(pattern: string[][]): string {
-    return pattern.map(row => row.join('')).join('\n');
-  }
-
-  /**
-   * Common ASCII patterns library
-   */
-  static getPatterns() {
-    return {
-      heart: [
-        '  **   **  ',
-        ' ***** ***** ',
-        '*************',
-        ' *********** ',
-        '  *********  ',
-        '   *******   ',
-        '    *****    ',
-        '     ***     ',
-        '      *      ',
-      ],
-      star: [
-        '      *      ',
-        '     ***     ',
-        '    *****    ',
-        '   *******   ',
-        '*************',
-        '   *******   ',
-        '  *********  ',
-        ' *********** ',
-        '*************',
-      ],
-      spiral: [
-        '    ######   ',
-        '  ##    ##   ',
-        ' ##  ####    ',
-        ' ## ##       ',
-        ' ##### ####  ',
-        '  ####    ## ',
-        '       ## ## ',
-        '    ####  ## ',
-        '   ##    ##  ',
-        '    ######   ',
-      ],
-    };
+    return cleanLines.join('\n');
   }
 }

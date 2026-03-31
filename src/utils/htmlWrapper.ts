@@ -1,27 +1,78 @@
 /**
  * Centralized HTML wrapping utility for Liminal outputs
  * Prevents double-wrapping and ensures correct templates per domain
+ * 
+ * Supported domains:
+ * - p5: p5.js sketches with canvas
+ * - shader: GLSL fragment shaders with WebGL context
+ * - three: Three.js 3D scenes
+ * - strudel: Strudel live music patterns with playable REPL
+ * - hydra: Hydra video synthesizer patterns
+ * - remotion: Remotion video compositions (code view or preview)
+ * - html: Complete HTML pages (pass-through)
+ * - ascii: ASCII art display
  */
 
-export type Domain = 'p5' | 'shader' | 'three' | 'remotion';
+export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'remotion' | 'html' | 'ascii';
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
 const P5_SOUND_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/addons/p5.sound.min.js';
+const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@latest';
+const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
+const THREE_CDN = 'https://unpkg.com/three@0.160.0/build/three.module.js';
+const TONE_CDN = 'https://unpkg.com/tone@14.8.49/build/Tone.js';
 
 export interface WrapOptions {
   domain?: Domain;
   title?: string;
   includeP5Sound?: boolean;
+  /** For Strudel: auto-start playback */
+  autoPlay?: boolean;
+  /** For Remotion: show code or try to render preview */
+  showPreview?: boolean;
+  /** For ASCII: use monospace styling */
+  asciiWidth?: number;
+  /** For Hydra: canvas resolution */
+  hydraResolution?: { width: number; height: number };
 }
 
 export class HTMLWrapper {
   /**
    * Detect if code is already wrapped in HTML
+   * Checks for complete, valid HTML document structure
    */
   static isAlreadyWrapped(code: string): boolean {
-    const trimmed = code.trim();
-    return trimmed.startsWith('<!DOCTYPE html>') ||
-           trimmed.startsWith('<html');
+    if (!code || typeof code !== 'string') return false;
+    
+    // Strip common LLM contaminants first
+    const cleaned = this.stripLLMContaminants(code).trim();
+    
+    // Check for HTML declaration (case-insensitive)
+    const hasDoctype = /^<!DOCTYPE\s+html/i.test(cleaned) ||
+                       /^<!doctype\s+html/i.test(cleaned);
+    const hasHtmlTag = /^<html/i.test(cleaned);
+    
+    // Must have both start and end for complete HTML
+    const hasHtmlEnd = /<\/html>\s*$/i.test(cleaned);
+    
+    // Check for complete HTML structure
+    return (hasDoctype || hasHtmlTag) && hasHtmlEnd;
+  }
+  
+  /**
+   * Strip common LLM output contaminants that break HTML detection
+   */
+  private static stripLLMContaminants(code: string): string {
+    return code
+      // Markdown code fences
+      .replace(/```\w*\n/g, '')
+      .replace(/```\s*$/g, '')
+      // BOM and zero-width characters
+      .replace(/^\uFEFF/, '')
+      .replace(/[\u200B-\u200D\uFEFF]/g, '')
+      // Common LLM prefixes
+      .replace(/^Here is (the|your|a) (code|HTML|sketch|shader|scene):?\s*/i, '')
+      .replace(/^\*\*[^*]+\*\*\s*/g, '');
   }
 
   /**
@@ -30,30 +81,102 @@ export class HTMLWrapper {
   static detectDomain(code: string): Domain {
     if (this.isAlreadyWrapped(code)) {
       // Already wrapped - try to detect from content
-      if (code.includes('import * as THREE') || code.includes('from "three"')) {
+      if (code.includes('@strudel/repl') || code.includes('strudel')) return 'strudel';
+      if (code.includes('hydra-synth') || code.includes('new Hydra(')) return 'hydra';
+      // Three.js: check for ES module imports OR importmap containing "three"
+      if (code.includes('import * as THREE') || 
+          code.includes('from "three"') || 
+          code.includes("from 'three'") ||
+          /<script\s+type="importmap"[^>]*>[\s\S]*?"three"[\s\S]*?<\/script>/i.test(code)) {
         return 'three';
       }
-      // Default to p5 for wrapped code
-      return 'p5';
+      if (code.includes('remotion') || code.includes('useCurrentFrame')) return 'remotion';
+      // Check for ASCII art display patterns
+      if (code.includes('font-family: monospace') && code.includes('<pre>') && !code.includes('createCanvas')) {
+        // Could be ASCII - check if content looks like art
+        const bodyMatch = code.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
+        if (bodyMatch && /[█▓▒░@#%]/.test(bodyMatch[1])) return 'ascii';
+      }
+      // p5.js: check for p5.js CDN
+      if (code.includes('p5.js') || code.includes('p5.min.js')) return 'p5';
+      // Default to html for unknown wrapped content
+      return 'html';
     }
+
+    // Strudel detection
+    if (this.isStrudelCode(code)) return 'strudel';
+
+    // Hydra detection  
+    if (this.isHydraCode(code)) return 'hydra';
+
+    // Tone.js detection
+    if (this.isToneJSCode(code)) return 'tone';
 
     // Three.js detection
-    if (this.isThreeJSCode(code)) {
-      return 'three';
-    }
+    if (this.isThreeJSCode(code)) return 'three';
 
     // Shader detection
-    if (this.isShaderCode(code)) {
-      return 'shader';
-    }
+    if (this.isShaderCode(code)) return 'shader';
 
     // Remotion detection
-    if (this.isRemotionCode(code)) {
-      return 'remotion';
-    }
+    if (this.isRemotionCode(code)) return 'remotion';
+
+    // HTML detection
+    if (this.isCompleteHTML(code)) return 'html';
+
+    // ASCII detection (multiline with special characters)
+    if (this.isASCIICode(code)) return 'ascii';
 
     // p5.js detection (default)
     return 'p5';
+  }
+
+  private static isStrudelCode(code: string): boolean {
+    const strudelPatterns = [
+      /\bstack\s*\(/,
+      /\bs\s*\(\s*["']/,  // s("bd")
+      /\bnote\s*\(/,
+      /\bsound\s*\(/,      // Strudel v2
+      /\|>/,               // Strudel v2 pipe operator
+      /\bstruct\s*\(/,     // Strudel v2
+      /\.cpm\s*\(/,
+      /\.fast\s*\(/,
+      /\.slow\s*\(/,
+    ];
+    return strudelPatterns.some(p => p.test(code)) && 
+           !code.includes('function setup()') &&
+           !code.includes('void main()');
+  }
+
+  private static isHydraCode(code: string): boolean {
+    const hydraPatterns = [
+      /\bosc\s*\(/,
+      /\bshape\s*\(/,
+      /\bnoise\s*\(/,
+      /\bvoronoi\s*\(/,
+      /\.kaleid\s*\(/,
+      /\.colorama\s*\(/,
+      /\.modulate\s*\(/,
+      /\.out\s*\(\s*o\d/,
+      /\brender\s*\(/,
+    ];
+    return hydraPatterns.filter(p => p.test(code)).length >= 2;
+  }
+
+  private static isToneJSCode(code: string): boolean {
+    const tonePatterns = [
+      /\bTone\./,
+      /\bSynth\b/,
+      /\bPolySynth\b/,
+      /\bMembraneSynth\b/,
+      /\bReverb\b/,
+      /\bDelay\b/,
+      /\bTransport\b/,
+      /\bSequence\b/,
+      /\bPattern\b/,
+      /\btriggerAttackRelease\b/,
+    ];
+    return tonePatterns.some(p => p.test(code));
   }
 
   private static isThreeJSCode(code: string): boolean {
@@ -61,8 +184,10 @@ export class HTMLWrapper {
     const hasHTMLTag = /<html[^>]*>/i.test(code);
     const hasThreeImport = /import.*\bfrom\s+['"]three['"]|from\s+['"]@three\/foundation['"]/.test(code);
     const hasImportMap = /<script\s+type="importmap">/.test(code);
+    const hasTHREE = /\bTHREE\./.test(code);
 
-    return hasDoctype && hasHTMLTag && (hasThreeImport || hasImportMap);
+    return (hasDoctype && hasHTMLTag && (hasThreeImport || hasImportMap)) ||
+           (hasTHREE && code.includes('Scene') && code.includes('Camera'));
   }
 
   private static isShaderCode(code: string): boolean {
@@ -83,6 +208,27 @@ export class HTMLWrapper {
     return /useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code);
   }
 
+  private static isCompleteHTML(code: string): boolean {
+    const hasDoctype = code.trim().startsWith('<!DOCTYPE html>');
+    const hasHTMLTag = /<html[^>]*>/i.test(code);
+    const hasBodyTag = /<body[^>]*>/i.test(code);
+    return hasDoctype || (hasHTMLTag && hasBodyTag);
+  }
+
+  private static isASCIICode(code: string): boolean {
+    // ASCII art typically has:
+    // - Multiple lines
+    // - Special characters (█, ▓, ▒, ░, @, #, etc.)
+    // - No JavaScript function definitions
+    const lines = code.split('\n');
+    const hasMultipleLines = lines.length > 5;
+    const hasSpecialChars = /[█▓▒░@#%*+=\-~^]/.test(code);
+    const noJSFunctions = !code.includes('function ') && !code.includes('const ') && !code.includes('let ');
+    const noHTMLTags = !/<[a-z][\s\S]*>/i.test(code);
+    
+    return hasMultipleLines && hasSpecialChars && noJSFunctions && noHTMLTags;
+  }
+
   /**
    * Wrap code in appropriate HTML template
    */
@@ -90,14 +236,22 @@ export class HTMLWrapper {
     // Support legacy call with just domain string
     let domain: Domain | undefined;
     let includeP5Sound = false;
-    let title = 'p5.js Sketch';
+    let title = 'Generated Output';
+    let autoPlay = false;
+    let showPreview = false;
+    let asciiWidth = 60;
+    let hydraResolution = { width: 1280, height: 720 };
 
     if (typeof options === 'string') {
       domain = options;
     } else if (options) {
       domain = options.domain;
       includeP5Sound = options.includeP5Sound ?? false;
-      title = options.title ?? 'p5.js Sketch';
+      title = options.title ?? 'Generated Output';
+      autoPlay = options.autoPlay ?? false;
+      showPreview = options.showPreview ?? false;
+      asciiWidth = options.asciiWidth ?? 60;
+      hydraResolution = options.hydraResolution ?? { width: 1280, height: 720 };
     }
 
     // Don't double-wrap
@@ -110,12 +264,22 @@ export class HTMLWrapper {
 
     // Use appropriate wrapper
     switch (detectedDomain) {
+      case 'strudel':
+        return this.wrapStrudel(code, autoPlay);
+      case 'hydra':
+        return this.wrapHydra(code, hydraResolution);
+      case 'tone':
+        return this.wrapToneJS(code);
       case 'shader':
         return this.wrapShader(code);
       case 'three':
-        return code; // Three.js templates already complete
+        return this.wrapThreeJS(code);
       case 'remotion':
-        return this.wrapRemotion(code);
+        return this.wrapRemotion(code, showPreview);
+      case 'ascii':
+        return this.wrapASCII(code, asciiWidth);
+      case 'html':
+        return code; // Already complete HTML
       case 'p5':
       default:
         return this.wrapP5(code, includeP5Sound, title);
@@ -137,10 +301,6 @@ export class HTMLWrapper {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none';">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <title>${title}</title>
     <script src="${P5_CDN}"></script>${p5SoundScript}
     <style>
@@ -158,6 +318,259 @@ ${safeCode}
 </html>`;
   }
 
+  private static wrapStrudel(code: string, autoPlay = false): string {
+    const safeCode = code.replace(/`/g, '\\`').replace(/\$/g, '\\$');
+    const playButton = autoPlay 
+      ? '<button id="playBtn" style="display:none">Play</button>'
+      : '<button id="playBtn" style="padding: 12px 24px; font-size: 16px; background: #ec4899; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">▶ Play Pattern</button>';
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strudel Pattern</title>
+    <script src="${STRUDEL_CDN}"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background: #1a1a2e; 
+            color: #fff; 
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+        #code-display {
+            background: #0a0a0f;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+            color: #a5b4fc;
+            border: 1px solid #312e81;
+        }
+        .keyword { color: #c084fc; }
+        .string { color: #86efac; }
+        .function { color: #60a5fa; }
+        .number { color: #fbbf24; }
+        #status {
+            margin-top: 12px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: inline-block;
+        }
+        #status.ready { background: #1e3a5f; color: #60a5fa; }
+        #status.playing { background: #064e3b; color: #34d399; }
+        #status.error { background: #450a0a; color: #f87171; }
+        .controls { margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h3 style="color: #ec4899; margin-bottom: 16px;">🎵 Strudel Live Coding Pattern</h3>
+        <div id="code-display"></div>
+        <div id="status" class="ready">Ready to play</div>
+        <div class="controls">
+            ${playButton}
+        </div>
+    </div>
+    <script type="module">
+        import { repl, controls } from '${STRUDEL_CDN}';
+        
+        const code = \`${safeCode}\`;
+        
+        // Syntax highlighting
+        const highlighted = code
+            .replace(/\b(stack|s|note|sound|cpm|fast|slow|gain|pan|room|delay|cutoff|resonance)\b/g, '<span class="keyword">$1</span>')
+            .replace(/("[^"]*"|'[^']*')/g, '<span class="string">$1</span>')
+            .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
+            .replace(/(\w+)\s*\(/g, '<span class="function">$1</span>(');
+        
+        document.getElementById('code-display').innerHTML = highlighted;
+        
+        const statusEl = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        let isPlaying = false;
+        
+        async function initStrudel() {
+            try {
+                // Initialize Strudel REPL
+                const app = await repl({
+                    code: code,
+                    onError: (err) => {
+                        console.error('Strudel error:', err);
+                        statusEl.className = 'error';
+                        statusEl.textContent = 'Error: ' + err.message;
+                    }
+                });
+                
+                return app;
+            } catch (err) {
+                console.error('Failed to init Strudel:', err);
+                statusEl.className = 'error';
+                statusEl.textContent = 'Failed to initialize';
+                return null;
+            }
+        }
+        
+        let strudelApp = null;
+        
+        async function startPlayback() {
+            if (!strudelApp) {
+                strudelApp = await initStrudel();
+            }
+            if (strudelApp) {
+                await controls.start();
+                isPlaying = true;
+                statusEl.className = 'playing';
+                statusEl.textContent = '🔊 Playing (click to stop)';
+                playBtn.textContent = '⏹ Stop';
+            }
+        }
+        
+        async function stopPlayback() {
+            await controls.stop();
+            isPlaying = false;
+            statusEl.className = 'ready';
+            statusEl.textContent = 'Ready to play';
+            playBtn.textContent = '▶ Play Pattern';
+        }
+        
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    stopPlayback();
+                } else {
+                    startPlayback();
+                }
+            });
+        }
+        
+        // Auto-start if requested
+        ${autoPlay ? 'setTimeout(startPlayback, 500);' : ''}
+        
+        // Click on status to toggle too
+        statusEl.style.cursor = 'pointer';
+        statusEl.addEventListener('click', () => {
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                startPlayback();
+            }
+        });
+    </script>
+</body>
+</html>`;
+  }
+
+  private static wrapHydra(code: string, resolution: { width: number; height: number }): string {
+    const safeCode = code.replace(/`/g, '\\`');
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydra Visual Synthesizer</title>
+    <script src="${HYDRA_CDN}"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background: #000; 
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        canvas {
+            max-width: 100vw;
+            max-height: 100vh;
+        }
+        #error {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #ff4444;
+            font-family: monospace;
+            background: rgba(0,0,0,0.9);
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            max-width: 80%;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="hydra-canvas"></canvas>
+    <div id="error"></div>
+    <script>
+        const canvas = document.getElementById('hydra-canvas');
+        const errorDiv = document.getElementById('error');
+        
+        try {
+            // Set canvas size
+            canvas.width = ${resolution.width};
+            canvas.height = ${resolution.height};
+            
+            // Initialize Hydra
+            const hydra = new Hydra({ 
+                canvas: canvas,
+                detectAudio: false,
+                enableStreamCapture: false
+            });
+            
+            // Execute the Hydra code
+            ${safeCode}
+            
+        } catch (err) {
+            console.error('Hydra error:', err);
+            errorDiv.style.display = 'block';
+            errorDiv.innerHTML = '<strong>Hydra Error:</strong><br>' + err.message;
+        }
+    </script>
+</body>
+</html>`;
+  }
+
+  private static wrapThreeJS(code: string): string {
+    // If it's already complete HTML, return as-is
+    if (code.includes('<!DOCTYPE html>') && code.includes('</html>')) {
+      return code;
+    }
+    
+    // Otherwise wrap it with proper Three.js setup
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Three.js Scene</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "${THREE_CDN}",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+    <script type="module">
+${code}
+    </script>
+</body>
+</html>`;
+  }
+
   private static wrapShader(code: string): string {
     const safeCode = code.replace(/\u003c\/script\u003e/gi, '<\\/script>');
     return `<!DOCTYPE html>
@@ -165,10 +578,6 @@ ${safeCode}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none';">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <title>GLSL Shader</title>
     <style>
         body { margin: 0; overflow: hidden; background: #000; }
@@ -213,83 +622,336 @@ ${safeCode}
         const fragmentShader = loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
 
         if (!vertexShader || !fragmentShader) {
-            console.error('Shader compilation failed — check fragment shader syntax');
-            document.body.innerHTML = '<div style="color:#f66;padding:2rem;font-family:monospace;">Shader compile error — see console for details</div>';
+            console.error('Shader compilation failed');
+            document.body.innerHTML = '<div style="color:#f66;padding:2rem;font-family:monospace;">Shader compile error — see console</div>';
         } else {
-        const shaderProgram = gl.createProgram();
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
+            const shaderProgram = gl.createProgram();
+            gl.attachShader(shaderProgram, vertexShader);
+            gl.attachShader(shaderProgram, fragmentShader);
+            gl.linkProgram(shaderProgram);
 
-        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            console.error('Program link error:', gl.getProgramInfoLog(shaderProgram));
-        } else {
+            if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
+                console.error('Program link error:', gl.getProgramInfoLog(shaderProgram));
+            } else {
+                const positions = new Float32Array([-1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0]);
+                const positionBuffer = gl.createBuffer();
+                gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+                gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
 
-        const positions = new Float32Array([-1.0, 1.0, 1.0, 1.0, -1.0, -1.0, 1.0, -1.0]);
-        const positionBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+                const vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
+                gl.enableVertexAttribArray(vertexPosition);
+                gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
 
-        const vertexPosition = gl.getAttribLocation(shaderProgram, 'aVertexPosition');
-        gl.enableVertexAttribArray(vertexPosition);
-        gl.vertexAttribPointer(vertexPosition, 2, gl.FLOAT, false, 0, 0);
+                const uResolution = gl.getUniformLocation(shaderProgram, 'u_resolution');
+                const uTime = gl.getUniformLocation(shaderProgram, 'u_time');
+                const uMouse = gl.getUniformLocation(shaderProgram, 'u_mouse');
 
-        const uResolution = gl.getUniformLocation(shaderProgram, 'u_resolution');
-        const uTime = gl.getUniformLocation(shaderProgram, 'u_time');
-        const uMouse = gl.getUniformLocation(shaderProgram, 'u_mouse');
+                let mouseX = 0, mouseY = 0;
+                canvas.addEventListener('mousemove', (e) => {
+                    mouseX = e.clientX;
+                    mouseY = canvas.height - e.clientY;
+                });
 
-        let mouseX = 0, mouseY = 0;
-        canvas.addEventListener('mousemove', (e) => {
-            mouseX = e.clientX;
-            mouseY = canvas.height - e.clientY;
-        });
-
-        let startTime = Date.now();
-        function render() {
-            const time = (Date.now() - startTime) / 1000;
-            gl.useProgram(shaderProgram);
-            gl.uniform2f(uResolution, canvas.width, canvas.height);
-            gl.uniform1f(uTime, time);
-            gl.uniform2f(uMouse, mouseX, mouseY);
-            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-            requestAnimationFrame(render);
+                let startTime = Date.now();
+                function render() {
+                    const time = (Date.now() - startTime) / 1000;
+                    gl.useProgram(shaderProgram);
+                    gl.uniform2f(uResolution, canvas.width, canvas.height);
+                    gl.uniform1f(uTime, time);
+                    gl.uniform2f(uMouse, mouseX, mouseY);
+                    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+                    requestAnimationFrame(render);
+                }
+                render();
+            }
         }
-        render();
-        } // linkProgram else
-        } // shader null check else
+    </script>
+</body>
+</html>`;
+  }
+
+  private static wrapRemotion(code: string, showPreview = false): string {
+    const escaped = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    // Try to extract key info for a visual preview
+    const durationMatch = code.match(/durationInFrames[=:]\s*(\d+)/);
+    const fpsMatch = code.match(/fps[=:]\s*(\d+)/);
+    const widthMatch = code.match(/width[=:]\s*(\d+)/);
+    const heightMatch = code.match(/height[=:]\s*(\d+)/);
+    
+    const duration = durationMatch ? parseInt(durationMatch[1]) : 150;
+    const fps = fpsMatch ? parseInt(fpsMatch[1]) : 30;
+    const width = widthMatch ? parseInt(widthMatch[1]) : 1920;
+    const height = heightMatch ? parseInt(heightMatch[1]) : 1080;
+    const durationSec = (duration / fps).toFixed(1);
+    
+    if (showPreview) {
+      // Future: Could try to render with Remotion's standalone renderer
+      // For now, show enhanced code view with metadata
+    }
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Remotion Composition</title>
+    <style>
+        body { 
+            margin: 0; 
+            padding: 2rem; 
+            background: #0a0a0f; 
+            color: #e0e0e0; 
+            font-family: 'Monaco', 'Menlo', monospace; 
+            font-size: 0.85rem; 
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .badge { 
+            display: inline-block; 
+            padding: 0.25rem 0.75rem; 
+            border-radius: 6px; 
+            background: rgba(139, 92, 246, 0.3); 
+            color: #a78bfa; 
+            font-size: 0.8rem; 
+            margin-right: 0.5rem;
+        }
+        .meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            color: #94a3b8;
+        }
+        .meta-value {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        pre { 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            background: #0f0f1a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            overflow-x: auto;
+        }
+        .note { 
+            color: #94a3b8; 
+            font-size: 0.8rem; 
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="badge">Remotion</span>
+        <span class="badge">React</span>
+        <div class="meta">
+            <div class="meta-item">Duration: <span class="meta-value">${durationSec}s</span> (${duration} frames @ ${fps}fps)</div>
+            <div class="meta-item">Resolution: <span class="meta-value">${width}×${height}</span></div>
+        </div>
+    </div>
+    <pre><code>${escaped}</code></pre>
+    <p class="note">
+        💡 <strong>Note:</strong> Remotion compositions require the Remotion CLI or bundler to render. 
+        Use <code>npx remotion render</code> to generate the video from this code.
+    </p>
+</body>
+</html>`;
+  }
+
+  private static wrapASCII(code: string, width: number): string {
+    const escaped = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ASCII Art</title>
+    <style>
+        body { 
+            margin: 0; 
+            background: #0a0a0f; 
+            color: #00ff00;
+            font-family: 'Courier New', 'Courier', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            text-align: center;
+        }
+        pre { 
+            font-size: 10px;
+            line-height: 1.2;
+            background: #000;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #1a1a2e;
+            display: inline-block;
+            text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
+        }
+        .label {
+            color: #6b7280;
+            font-size: 12px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="label">ASCII Art</div>
+        <pre>${escaped}</pre>
+    </div>
+</body>
+</html>`;
+  }
+
+  private static wrapToneJS(code: string): string {
+    const safeCode = code.replace(/`/g, '\\`');
+    
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone.js Audio Synthesizer</title>
+    <script src="${TONE_CDN}"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background: #0a0a0f; 
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h3 {
+            color: #f59e0b;
+            margin-bottom: 20px;
+        }
+        #controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        #playBtn {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+        }
+        #playBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        }
+        #stopBtn {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        #stopBtn:hover {
+            background: #475569;
+        }
+        #status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #status.ready { color: #94a3b8; }
+        #status.playing { color: #f59e0b; }
+        #visualizer {
+            width: 300px;
+            height: 100px;
+            background: #1e293b;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h3>🎹 Tone.js Audio Synthesizer</h3>
+    <div id="controls">
+        <button id="playBtn">▶ Play</button>
+        <button id="stopBtn">⏹ Stop</button>
+    </div>
+    <div id="status" class="ready">Ready to play (click Start Audio)</div>
+    <canvas id="visualizer"></canvas>
+    <script>
+        let isPlaying = false;
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusEl = document.getElementById('status');
+        
+        // Tone.js code
+        ${safeCode}
+        
+        playBtn.addEventListener('click', async () => {
+            await Tone.start();
+            isPlaying = true;
+            statusEl.className = 'playing';
+            statusEl.textContent = '🔊 Playing';
+            if (typeof play === 'function') play();
+        });
+        
+        stopBtn.addEventListener('click', () => {
+            isPlaying = false;
+            statusEl.className = 'ready';
+            statusEl.textContent = 'Stopped';
+            if (typeof stop === 'function') stop();
+        });
     </script>
 </body>
 </html>`;
   }
 
   /**
-   * Wrap Remotion React/TSX code in a minimal HTML preview.
-   * Remotion normally needs a bundler, but we can show the code with syntax highlighting.
+   * Get all supported domains
    */
-  private static wrapRemotion(code: string): string {
-    const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <title>Remotion Composition</title>
-    <style>
-        body { margin: 0; padding: 2rem; background: #0a0a0f; color: #e0e0e0; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; }
-        pre { white-space: pre-wrap; word-wrap: break-word; }
-        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; font-size: 0.8rem; margin-bottom: 1rem; }
-        .note { color: #a0a0b0; font-size: 0.8rem; margin-bottom: 1rem; }
-    </style>
-</head>
-<body>
-    <div class="badge">Remotion</div>
-    <p class="note">Remotion requires a bundler to render. This is the generated composition code:</p>
-    <pre><code>${escaped}</code></pre>
-</body>
-</html>`;
+  static getSupportedDomains(): Domain[] {
+    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'remotion', 'html', 'ascii'];
+  }
+
+  /**
+   * Validate if a domain is supported
+   */
+  static isValidDomain(domain: string): domain is Domain {
+    return this.getSupportedDomains().includes(domain as Domain);
   }
 }
+
+export default HTMLWrapper;

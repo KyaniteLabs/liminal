@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; background: #1a1a2e; color: #fff; font-family: monospace; padding: 20px; }
+    pre { background: #0a0a0f; padding: 15px; border-radius: 8px; overflow: auto; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h3>Remotion Video Component</h3>
+  <pre>import React from 'react';
+import { AbsoluteFill, Img } from 'remotion';
+import { Text, useCurrentFrame, interpolate } from 'remotion';
+
+export const TypingComposition: React.FC = () => {
+  const frame = useCurrentFrame();
+
+  // Define text and timing constants
+  const mainText = "Hello World";
+  const subText = "Welcome to Remotion";
+  
+  // Duration in frames (30fps)
+  const totalDuration = 150;
+  const typingSpeed = 2.5; // frames per character
+  const pauseAfterTyping = 20;
+  const fadeStartFrame = 60;
+  const fadeEndFrame = 90;
+
+  // Calculate text length and cursor position
+  const textLength = mainText.length;
+  const currentCharIndex = Math.min(
+    Math.floor(frame / typingSpeed),
+    textLength - 1
+  );
+
+  // Cursor blink animation (5% duty cycle)
+  const cursorOpacity = interpolate(
+    frame % 20,
+    [0, 10],
+    [1, 0]
+  );
+
+  // Subtitle fade in/out logic
+  const subTextVisible = frame >= fadeStartFrame && frame &lt;= fadeEndFrame;
+  
+  const subTextOpacity = interpolate(
+    frame - fadeStartFrame,
+    [0, 30],
+    [0, 1]
+  );
+
+  // Background color transition (dark blue to black)
+  const bgColorAlpha = interpolate(
+    frame / totalDuration,
+    [0.2, 0.5],
+    [0.9, 0]
+  );
+
+  return (
+    &lt;AbsoluteFill style={{ backgroundColor: `rgba(10, 30, 65, ${bgColorAlpha})` }}>
+      {/* Main Typing Text */}
+      &lt;Text
+        x={200}
+        y={400}
+        fontSize={72}
+        fontWeight="bold"
+        color="#FFFFFF"
+        lineHeight={1.2}
+        textOverflow="ellipsis"
+        style={{ whiteSpace: 'pre-wrap', fontFamily: 'Inter, sans-serif' }}
+      >
+        {mainText.slice(0, currentCharIndex + 1)}
+        &lt;span
+          style={{ display: 'inline-block', width: '2px', height: '80%', verticalAlign: 'bottom', marginLeft: '1px' }}
+          opacity={cursorOpacity}
+        />
+      &lt;/Text>
+
+      {/* Subtitle */}
+      {subTextVisible && (
+        &lt;Text
+          x={200}
+          y={650}
+          fontSize={36}
+          color="#A0C4FF"
+          lineHeight={1.4}
+          style={{ whiteSpace: 'pre-wrap', fontFamily: 'Inter, sans-serif' }}
+        >
+          {subText}
+        &lt;/Text>
+      )}
+
+      {/* Decorative elements */}
+      &lt;Img 
+        src="https://placehold.co/20x1" 
+        x={50} 
+        y={950} 
+        height={3} 
+        style={{ opacity: 0.3 }} 
+      />
+      &lt;Img 
+        src="https://placehold.co/20x1" 
+        x={1700} 
+        y={950} 
+        height={3} 
+        style={{ opacity: 0.3 }} 
+      />
+    &lt;/AbsoluteFill>
+  );
+};</pre>
+  <p style="color: #888;">Remotion requires build step to preview</p>
+</body>
+</html>

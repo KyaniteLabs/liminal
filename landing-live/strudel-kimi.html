@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://unpkg.com/@strudel/repl@latest"></script>
+  <style>body { margin: 0; background: #1a1a2e; color: #fff; font-family: monospace; padding: 20px; }</style>
+</head>
+<body>
+  <div id="app"></div>
+  <script type="module">
+    import { repl } from 'https://unpkg.com/@strudel/repl@latest';
+    const code = `stack(
+  s("bd*4").gain(1.1).shape(0.3),
+  s("~ sd ~ sd").gain(0.9).room(0.3).shape(0.2),
+  s("hh*16").gain("[0.5 0.7]*8").pan(sine.fast(2)).delay(0.5).delaytime(0.125).delayfeedback(0.4).sometimes(x => x.speed(2)),
+  note("c2 [c2 ~] g1 [c2 ~]")
+    .s("sawtooth")
+    .cutoff(sine.slow(4).range(800, 2400))
+    .resonance(12)
+    .gain(0.6)
+    .every(3, rev)
+)
+.every(8, fast(2))`;
+    document.getElementById('app').innerHTML = '<pre>' + code + '</pre><p>Click to play (audio)</p>';
+  </script>
+</body>
+</html>

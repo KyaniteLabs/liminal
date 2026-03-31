@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://unpkg.com/hydra-synth"></script>
+  <style>body { margin: 0; background: #000; overflow: hidden; }</style>
+</head>
+<body>
+  <canvas id="hydra"></canvas>
+  <script>
+    const hydra = new Hydra({ canvas: document.getElementById('hydra') });
+    osc(640, 480, 25).rotate(sin(time * 0.5)).color(() => sin(time * 0.2), cos(time * 0.3), 1).scale(1.2).add(o0).rotate(time * 0.1).colorMod(() => time % 1, 0.8, 1).out(o0)
+  </script>
+</body>
+</html>

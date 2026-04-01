@@ -248,6 +248,7 @@ function App() {
     // Process through natural interface with streaming for chat
     try {
       let streamingContent = '';
+      setStatusMsg('🤔 Thinking...');
       
       const result = await ni.processInput(userInput, (chunk) => {
         // Stream handler - updates UI incrementally
@@ -290,7 +291,9 @@ function App() {
       if (!result.shouldContinue) {
         setShouldExit(true);
       }
+      setStatusMsg('Ready');
     } catch (err) {
+      setStatusMsg('Error');
       setHistory(h => [...h, { 
         type: 'error', 
         content: err instanceof Error ? err.message : String(err) 

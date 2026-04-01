@@ -327,10 +327,10 @@ Respond naturally as your personality. If the user is asking you to modify code 
   }
 
   // Command handlers
-  private handleStatus(): NaturalInputResult {
-    const { metaHarness } = require('../harness/index.js');
+  private async handleStatus(): Promise<NaturalInputResult> {
+    const { metaHarness } = await import('../harness/index.js');
     const status = metaHarness.getStatus();
-    
+
     const response = [
       `Harness: ${status.initialized ? '🟢 Online' : '🔴 Offline'}`,
       `Provider: ${status.activeProvider}`,
@@ -379,7 +379,7 @@ Respond naturally as your personality. If the user is asking you to modify code 
     }
 
     // Route to preview system
-    const { browserLauncher } = require('./preview/BrowserLauncher.js');
+    const { browserLauncher } = await import('./preview/BrowserLauncher.js');
     const url = await browserLauncher.previewFile(filePath);
     
     return { 
@@ -426,5 +426,9 @@ Respond naturally as your personality. If the user is asking you to modify code 
 
   getSession(): ConversationSession {
     return this.session;
+  }
+
+  setTasks(tasks: AgentTask[]): void {
+    this.tasks = tasks;
   }
 }

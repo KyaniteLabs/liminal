@@ -197,16 +197,18 @@ export class RalphLoop {
         const validation = CodeValidator.validate(code);
         if (!validation.valid) {
           Logger.warn('RalphLoop', `Code validation failed: ${validation.errors.join('; ')}`);
-          // Report validation failure to Meta-Harness
-          await metaHarness.onGenerationComplete({
-            success: false,
-            model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-            domain: normalizedOptions.collabDomain || 'p5',
-            prompt: prompt,
-            code: code,
-            error: `Validation failed: ${validation.errors.join('; ')}`,
-            duration: Date.now() - startTime,
-          });
+          // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
+          if (process.env.NODE_ENV !== 'test') {
+            await metaHarness.onGenerationComplete({
+              success: false,
+              model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+              domain: normalizedOptions.collabDomain || 'p5',
+              prompt: prompt,
+              code: code,
+              error: `Validation failed: ${validation.errors.join('; ')}`,
+              duration: Date.now() - startTime,
+            });
+          }
           // Force score to 0 so quality gate rejects this iteration
           currentCode = validation.cleanedCode || '// Validation failed — empty code';
         } else {
@@ -510,15 +512,17 @@ export class RalphLoop {
         }
 
       } catch (error) {
-        // Report error to Meta-Harness
-        await metaHarness.onGenerationComplete({
-          success: false,
-          model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-          domain: normalizedOptions.collabDomain || 'p5',
-          prompt: prompt,
-          error: error instanceof Error ? error.message : String(error),
-          duration: Date.now() - startTime,
-        });
+        // Report error to Meta-Harness (skip during tests to avoid log pollution)
+        if (process.env.NODE_ENV !== 'test') {
+          await metaHarness.onGenerationComplete({
+            success: false,
+            model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+            domain: normalizedOptions.collabDomain || 'p5',
+            prompt: prompt,
+            error: error instanceof Error ? error.message : String(error),
+            duration: Date.now() - startTime,
+          });
+        }
         
         if (!normalizedOptions.tolerateErrors) {
           throw error;
@@ -537,16 +541,18 @@ export class RalphLoop {
 
     const duration = Date.now() - startTime;
 
-    // Report final result to Meta-Harness
-    await metaHarness.onGenerationComplete({
-      success: completed,
-      model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-      domain: normalizedOptions.collabDomain || 'p5',
-      prompt: prompt,
-      code: currentCode,
-      error: completed ? undefined : reason,
-      duration: duration,
-    });
+    // Report final result to Meta-Harness (skip during tests to avoid log pollution)
+    if (process.env.NODE_ENV !== 'test') {
+      await metaHarness.onGenerationComplete({
+        success: completed,
+        model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+        domain: normalizedOptions.collabDomain || 'p5',
+        prompt: prompt,
+        code: currentCode,
+        error: completed ? undefined : reason,
+        duration: duration,
+      });
+    }
 
     // Persist archive learning data
     if (qualityArchive) {

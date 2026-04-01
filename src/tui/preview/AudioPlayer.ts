@@ -84,16 +84,25 @@ export class AudioPlayer {
 
       // Spawn player process
       const args = [...player.args, filePath];
-      this.currentProcess = spawn(player.command, args, {
+      const proc = spawn(player.command, args, {
         detached: true,
         stdio: 'ignore',
       });
 
-      this.currentProcess.on('error', (err) => {
+      this.currentProcess = proc;
+
+      proc.on('error', (err) => {
         console.error('Audio playback error:', err);
       });
 
-      this.currentProcess.unref();
+      // Clear reference when process exits so isPlaying() stays accurate
+      proc.on('exit', () => {
+        if (this.currentProcess === proc) {
+          this.currentProcess = null;
+        }
+      });
+
+      proc.unref();
 
       return { success: true };
     } catch (error) {

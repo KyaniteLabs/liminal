@@ -9,6 +9,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 export type IntentType = 'chat' | 'agent' | 'command' | 'ambiguous';
 
@@ -146,14 +147,21 @@ export async function detectIntent(input: string): Promise<IntentResult> {
  * Load the SOUL.md personality file
  */
 export async function loadSoul(): Promise<string> {
-  try {
-    const soulPath = path.join(process.cwd(), 'SOUL.md');
-    const content = await fs.readFile(soulPath, 'utf-8');
-    return content;
-  } catch {
-    // Return default soul if file not found
-    return DEFAULT_SOUL;
+  const candidates = [
+    // 1. Project root (relative to this source file)
+    path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../SOUL.md'),
+    // 2. Current working directory
+    path.join(process.cwd(), 'SOUL.md'),
+  ];
+  for (const soulPath of candidates) {
+    try {
+      const content = await fs.readFile(soulPath, 'utf-8');
+      return content;
+    } catch {
+      continue;
+    }
   }
+  return DEFAULT_SOUL;
 }
 
 const DEFAULT_SOUL = `You are Liminal, a creative coding partner.

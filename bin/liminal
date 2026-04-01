@@ -117,6 +117,7 @@ if (flags.help) {
   console.log('');
   console.log('COMMANDS:');
   console.log('  generate, gen, g <prompt>   Create p5.js art from prompt');
+  console.log('  tui                         Launch natural language TUI (Meta-Harness)');
   console.log('  serve, s [port]             Start preview server (default: 3456)');
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
@@ -551,6 +552,16 @@ else if (cmd === 'chat') {
   // Chat command - conversational creative coding mode
   chatCommand({ verbose: flags.verbose || false }).catch(err => {
     console.error('Chat error:', err.message);
+    process.exit(1);
+  });
+}
+else if (cmd === 'tui') {
+  // Launch the Natural Language TUI (Meta-Harness + NaturalInterface)
+  import('../dist/tui/HarnessTUI.js').then(({ startHarnessTUI }) => {
+    startHarnessTUI();
+  }).catch(err => {
+    console.error('TUI error:', err.message);
+    console.error('Make sure to run `npm run build` first.');
     process.exit(1);
   });
 }

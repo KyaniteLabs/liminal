@@ -10,6 +10,7 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { render, Box, Text, useInput, Spacer } from 'ink';
+import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { 
@@ -178,7 +179,7 @@ function App() {
         loaded.push({ ...JSON.parse(content), approved: true });
       }
       // Update the interface's tasks
-      (ni as any).tasks = loaded;
+      ni.setTasks(loaded);
     } catch {
       // No tasks loaded
     }
@@ -250,6 +251,6 @@ export function startHarnessTUI() {
   render(<App />);
 }
 
-if (require.main === module) {
+if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   startHarnessTUI();
 }

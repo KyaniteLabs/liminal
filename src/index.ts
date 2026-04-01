@@ -293,15 +293,17 @@ export async function run(prompt: string, options: {
     };
 
   } catch (error) {
-    // Report error to Meta-Harness
-    await metaHarness.onGenerationComplete({
-      success: false,
-      model: 'local',
-      domain: 'unknown',
-      prompt: prompt,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      duration: Date.now() - startTime,
-    });
+    // Report error to Meta-Harness (skip during tests to avoid log pollution)
+    if (process.env.NODE_ENV !== 'test') {
+      await metaHarness.onGenerationComplete({
+        success: false,
+        model: 'local',
+        domain: 'unknown',
+        prompt: prompt,
+        error: error instanceof Error ? error.message : 'Unknown error',
+        duration: Date.now() - startTime,
+      });
+    }
     throw new Error(`Liminal run failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

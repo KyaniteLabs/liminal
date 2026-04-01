@@ -85,7 +85,8 @@
     "node": ">=18.0.0"
   },
   "bin": {
-    "liminal": "bin/liminal"
+    "liminal": "bin/liminal",
+    "lim": "bin/liminal"
   },
   "optionalDependencies": {
     "meyda": "^5.6.3",

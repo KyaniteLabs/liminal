@@ -1,21 +1,24 @@
 #!/usr/bin/env node
 /**
- * Harness TUI - Terminal UI with Hybrid Preview
+ * Harness TUI - Terminal UI with Natural Language Interface
  * 
- * Terminal for chat/commands + Browser for complex previews
+ * Claude Code style: No prefixes, just type naturally
+ * "Fix the validation" → Agent mode
+ * "What's the status?" → Command mode  
+ * "Tell me about p5.js" → Chat mode
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { render, Box, Text, useInput, Spacer } from 'ink';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { 
   metaHarness, 
-  createHarnessAgent, 
-  type AgentTask, 
-  type HarnessAgent 
+  createHarnessAgent,
+  createLLMModeAgent,
+  type AgentTask,
 } from '../harness/index.js';
-import { resolveCommand, type CommandContext } from './commands.js';
+import { NaturalInterface } from './NaturalInterface.js';
 import { audioPlayer } from './preview/index.js';
 
 const C = {
@@ -32,7 +35,7 @@ const Header = () => (
   <Box borderStyle="double" borderColor={C.primary} paddingX={2}>
     <Text bold color={C.primary}>🎨 LIMINAL</Text>
     <Spacer />
-    <Text color={C.muted}>Hybrid TUI</Text>
+    <Text color={C.muted}>Natural Interface</Text>
   </Box>
 );
 
@@ -46,9 +49,8 @@ const StatusBar = ({ status, message }: { status: any; message: string }) => (
   </Box>
 );
 
-// History with type support
 interface HistoryLine {
-  type: 'user' | 'output' | 'error' | 'system' | 'code' | 'audio';
+  type: 'user' | 'assistant' | 'output' | 'error' | 'system' | 'code' | 'audio';
   content: string;
 }
 
@@ -59,8 +61,15 @@ const History = ({ lines }: { lines: HistoryLine[] }) => (
         {line.type === 'user' && (
           <Text color={C.primary}>❯ {line.content}</Text>
         )}
+        {line.type === 'assistant' && (
+          <Box marginLeft={2} marginY={1}>
+            <Text>{line.content}</Text>
+          </Box>
+        )}
         {line.type === 'output' && (
-          <Text>{line.content}</Text>
+          <Box marginLeft={2}>
+            <Text>{line.content}</Text>
+          </Box>
         )}
         {line.type === 'error' && (
           <Text color={C.error}>{line.content}</Text>
@@ -109,14 +118,17 @@ const Input = ({ value, onChange, onSubmit }: {
 
 function App() {
   const [history, setHistory] = useState<HistoryLine[]>([
-    { type: 'system', content: 'Hybrid TUI initialized.' },
-    { type: 'system', content: 'Type /help for commands. /preview <file> to view content.' },
+    { type: 'system', content: 'Liminal initialized.' },
+    { type: 'assistant', content: 'Hi! I\'m Liminal, your creative coding partner.\n\nJust talk to me naturally:\n  • "Fix the Tone.js validation"\n  • "What\'s the status?"\n  • "Tell me about p5.js noise()"\n\nType "/help" for explicit commands.' },
   ]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<any>(null);
   const [statusMsg, setStatusMsg] = useState('Ready');
-  const [agent, setAgent] = useState<HarnessAgent | null>(null);
-  const [tasks, setTasks] = useState<AgentTask[]>([]);
+  const [, setNaturalInterface] = useState<NaturalInterface | null>(null);
+  const [shouldExit, setShouldExit] = useState(false);
+  
+  // Use ref for latest state in callbacks
+  const interfaceRef = useRef<NaturalInterface | null>(null);
 
   // Init
   useEffect(() => {
@@ -125,23 +137,38 @@ function App() {
     
     const llmClient = metaHarness.getLLMClient();
     if (llmClient) {
-      setAgent(createHarnessAgent(llmClient));
+      const harnessAgent = createHarnessAgent(llmClient);
+      const llmAgent = createLLMModeAgent(llmClient);
+      
+      const ni = new NaturalInterface({
+        harnessAgent,
+        llmAgent,
+        llmClient,
+        tasks: [],
+        onStatus: setStatusMsg,
+        onLog: (msg) => {
+          setHistory(h => [...h, { type: 'system', content: msg }]);
+        },
+      });
+      
+      setNaturalInterface(ni);
+      interfaceRef.current = ni;
+      
+      // Load tasks
+      loadTasks(ni);
     }
-
-    loadTasks();
 
     const interval = setInterval(() => {
       setStatus(metaHarness.getStatus());
     }, 2000);
 
-    // Cleanup on exit
     return () => {
       clearInterval(interval);
       audioPlayer.stop();
     };
   }, []);
 
-  const loadTasks = async () => {
+  const loadTasks = async (ni: NaturalInterface) => {
     try {
       const dir = path.join(process.cwd(), 'harness-tasks');
       const files = await fs.readdir(dir);
@@ -150,75 +177,69 @@ function App() {
         const content = await fs.readFile(path.join(dir, f), 'utf-8');
         loaded.push({ ...JSON.parse(content), approved: true });
       }
-      setTasks(loaded);
+      // Update the interface's tasks
+      (ni as any).tasks = loaded;
     } catch {
-      setTasks([]);
+      // No tasks loaded
     }
   };
 
-  const addLog = useCallback((msg: string) => {
-    setHistory(h => [...h, { type: 'system', content: msg }]);
-  }, []);
+  const handleSubmit = useCallback(async () => {
+    const userInput = input.trim();
+    if (!userInput) return;
 
-  const addOutput = useCallback((type: string, content: string) => {
-    setHistory(h => [...h, { type: type as any, content }]);
-  }, []);
-
-  const executeCommand = useCallback(async () => {
-    const cmdStr = input.trim();
-    if (!cmdStr) return;
-
-    setHistory(h => [...h, { type: 'user', content: cmdStr }]);
+    // Add user message to history
+    setHistory(h => [...h, { type: 'user', content: userInput }]);
     setInput('');
 
-    if (cmdStr.startsWith('/')) {
-      const parts = cmdStr.slice(1).split(' ');
-      const cmdName = parts[0];
-      const args = parts.slice(1);
-
-      const cmd = resolveCommand(cmdName);
-      if (cmd && agent) {
-        try {
-          const ctx: CommandContext = {
-            agent,
-            tasks,
-            logs: [],
-            addLog,
-            setStatusMessage: setStatusMsg,
-            addOutput,
-          };
-          const output = await cmd.execute(args, ctx);
-          setHistory(h => [...h, { type: 'output', content: output }]);
-        } catch (err) {
-          setHistory(h => [...h, { 
-            type: 'error', 
-            content: err instanceof Error ? err.message : String(err) 
-          }]);
-        }
-      } else {
-        setHistory(h => [...h, { 
-          type: 'error', 
-          content: `Unknown command: ${cmdName}. Type /help.` 
-        }]);
-      }
-    } else {
+    const ni = interfaceRef.current;
+    if (!ni) {
       setHistory(h => [...h, { 
-        type: 'system', 
-        content: 'Use /preview <file> or /run <task-id>' 
+        type: 'error', 
+        content: 'System not initialized. Check LLM configuration.' 
+      }]);
+      return;
+    }
+
+    // Process through natural interface
+    try {
+      const result = await ni.processInput(userInput);
+      
+      // Map result type to display type
+      const displayType = result.type === 'chat' ? 'assistant' : 'output';
+      setHistory(h => [...h, { type: displayType, content: result.response }]);
+      
+      if (!result.shouldContinue) {
+        setShouldExit(true);
+      }
+    } catch (err) {
+      setHistory(h => [...h, { 
+        type: 'error', 
+        content: err instanceof Error ? err.message : String(err) 
       }]);
     }
-  }, [input, agent, tasks, addLog, addOutput]);
+  }, [input]);
+
+  // Handle exit
+  useEffect(() => {
+    if (shouldExit) {
+      setTimeout(() => {
+        audioPlayer.stop();
+        process.exit(0);
+      }, 500);
+    }
+  }, [shouldExit]);
 
   return (
     <Box flexDirection="column" height="100%">
       <Header />
       <Box flexDirection="column" flexGrow={1} paddingY={1}>
-        <History lines={history.slice(-30)} />
+        <History lines={history.slice(-50)} />
       </Box>
       <Input 
         value={input} 
         onChange={setInput} 
-        onSubmit={executeCommand} 
+        onSubmit={handleSubmit} 
       />
       <StatusBar status={status} message={statusMsg} />
     </Box>

@@ -1,27 +1,26 @@
 import React from 'react';
-import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
+import {useCurrentFrame, interpolate, spring, AbsoluteFill} from 'remotion';
 
-export const BlueCircleAnimation: React.FC = () => {
+export const BlueCircle: React.FC = () => {
   const frame = useCurrentFrame();
-
-  const circleOpacity = interpolate(frame, [0, 30, 120, 150], [0, 1, 1, 0]);
-  const circleScale = spring({frame, fps: 30, from: 0, to: 1, config: {damping: 10}});
-  const circleY = interpolate(frame, [0, 150], [100, 540]);
-
+  
+  const scale = spring({frame, fps: 30, from: 0, to: 1, config: {damping: 12}});
+  
+  const yOffset = interpolate(frame, [0, 150], [0, -50], {extrapolateClamp: true});
+  
+  const opacity = interpolate(frame, [0, 10, 140, 150], [0, 1, 1, 0], {extrapolateClamp: true});
+  
   return (
-    <AbsoluteFill style={{backgroundColor: '#0a0a1a'}}>
+    <AbsoluteFill style={{backgroundColor: '#0a0a1a', justifyContent: 'center', alignItems: 'center'}}>
       <div
         style={{
-          position: 'absolute',
-          width: 200,
-          height: 200,
-          borderRadius: 100,
+          width: 300,
+          height: 300,
+          borderRadius: 150,
           backgroundColor: '#3b82f6',
-          left: 860,
-          top: circleY,
-          transform: `scale(${circleScale})`,
-          opacity: circleOpacity,
-          boxShadow: '0 0 60px rgba(59, 130, 246, 0.6)',
+          transform: `scale(${scale}) translateY(${yOffset}px)`,
+          opacity,
+          boxShadow: '0 0 60px rgba(59, 130, 246, 0.5)',
         }}
       />
     </AbsoluteFill>

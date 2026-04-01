@@ -14,7 +14,8 @@
     <main>
         <script>
 let t = 0;
-let hueVal;
+let shapes = [];
+let hueOffset = 0;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
@@ -22,54 +23,76 @@ function setup() {
 }
 
 function draw() {
-  fill(0, 30);
+  // Dynamic fade for trails
+  let fadeAlpha = map(sin(t * 0.5), -1, 1, 30, 80);
+  fill(10, fadeAlpha);
   rect(0, 0, width, height);
-  
+
   t += 0.02;
-  hueVal = (t * 50) % 360;
-  stroke(hueVal, 80, 100);
-  noFill();
-  strokeWeight(2);
-  
-  const centerX = width / 2 + cos(t * 0.8) * (width * 0.2);
-  const centerY = height / 2 + sin(t * 0.6) * (height * 0.2);
-  
-  // Rotate coordinate system
-  translate(centerX, centerY);
-  rotate(t);
-  
-  // Draw rotating geometric shapes with trails
-  for(let i = 0; i < 5; i++) {
-    const size = 80 + i * 30;
-    strokeWeight(1 + i % 2);
-    
-    if (i % 2 === 0) {
-      // Square rotation
-      rect(-size/2, -size/2, size, size);
-    } else {
-      // Circle rotation
-      ellipse(0, 0, size, size);
-    }
-    
-    rotate(PI / 4);
+  hueOffset = (hueOffset + 0.5) % 360;
+
+  // Add new shapes
+  if (frameCount % 4 === 0) {
+    let x = random(width * 0.1, width * 0.9);
+    let y = random(height * 0.1, height * 0.9);
+    let size = random(20, 80);
+    shapes.push({
+      x: x,
+      y: y,
+      size: size,
+      angle: random(TWO_PI),
+      speed: random(0.05, 0.2),
+      hue: (hueOffset + random(-30, 30)) % 360,
+      type: floor(random(3)) // 0: circle, 1: square, 2: triangle
+    });
   }
-  
-  // Add a dynamic triangle that changes size
-  resetTransform();
-  const triSize = 100 + sin(t * 2) * 50;
-  fill(hueVal, 70, 60, 30);
-  noStroke();
-  triangle(
-    width/2, height/2 - triSize,
-    width/2 - triSize * 0.866, height/2 + triSize * 0.5,
-    width/2 + triSize * 0.866, height/2 + triSize * 0.5
-  );
-  
-  // Add a small interactive circle that follows mouse
-  noFill();
-  strokeWeight(3);
-  stroke((hueVal + 180) % 360, 90, 100);
-  ellipse(mouseX, mouseY, 40 + sin(t * 5) * 20, 40 + sin(t * 5) * 20);
+
+  // Draw and animate shapes
+  for (let i = shapes.length - 1; i >= 0; i--) {
+    let s = shapes[i];
+    
+    // Update shape properties
+    s.angle += s.speed;
+    s.x += sin(t + s.angle) * 2;
+    s.y += cos(t + s.angle) * 2;
+    
+    // Wrap around screen
+    if (s.x < -50) s.x = width + 50;
+    if (s.x > width + 50) s.x = -50;
+    if (s.y < -50) s.y = height + 50;
+    if (s.y > height + 50) s.y = -50;
+    
+    // Draw shape with vibrant colors
+    let h = (s.hue + t * 20) % 360;
+    fill(h, 80, 90);
+    noStroke();
+    
+    push();
+    translate(s.x, s.y);
+    rotate(t + s.angle);
+    
+    switch(s.type) {
+      case 0: // Circle
+        circle(0, 0, s.size);
+        break;
+      case 1: // Square
+        rect(-s.size/2, -s.size/2, s.size, s.size);
+        break;
+      case 2: // Triangle
+        triangle(0, -s.size/2, -s.size/2, s.size/2, s.size/2, s.size/2);
+        break;
+    }
+    pop();
+    
+    // Remove shapes that are too old (keep performance)
+    if (frameCount > 500 && i > 100) {
+      shapes.splice(i, 1);
+    }
+  }
+}
+
+function windowResize() {
+  resizeCanvas(windowWidth, windowHeight);
 }
         </script>
     </main>

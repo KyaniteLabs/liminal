@@ -3,32 +3,30 @@ import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
 
 export const SimpleBlueCircle: React.FC = () => {
   const frame = useCurrentFrame();
-  const fps = 30;
   
-  // Calculate scale using a spring animation that starts at frame 0
-  const scale = spring({ 
-    frame, 
-    fps,
-    stiffness: 150,
-    damping: 20,
-    mass: 1
+  // Animate scale using a spring effect
+  const scale = spring({
+    frame,
+    fps: 30,
+    mass: 1,
+    tension: 200,
+    friction: 15
   });
   
-  // Calculate horizontal position to move the circle from left to right
-  const xPosition = interpolate(frame, [0, 150], [-300, 1920 + 300]);
+  // Move the circle horizontally across the screen
+  const xPosition = interpolate(frame, [0, 150], [-200, 1920 + 200]);
   
   return (
-    <AbsoluteFill style={{backgroundColor: '#000'}}>
+    <AbsoluteFill style={{backgroundColor: '#1a1a1a'}}>
       <div 
         style={{
           position: 'absolute',
-          top: '50%',
-          left: `${xPosition}px`,
-          transform: `translate(-50%, -50%) scale(${scale})`,
           width: 200,
           height: 200,
-          backgroundColor: '#3b82f6',
-          borderRadius: '50%'
+          backgroundColor: '#3b82e6',
+          borderRadius: '50%',
+          transform: `translate(${xPosition}px, 440px) scale(${scale})`,
+          transformOrigin: 'center center'
         }}
       />
     </AbsoluteFill>

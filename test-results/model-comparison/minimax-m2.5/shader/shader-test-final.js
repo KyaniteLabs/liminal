@@ -1,115 +1,115 @@
 let t = 0;
-let plasma;
-let cellSize = 4;
-let cols, rows;
-let timeOffset = 0;
+let palette = [];
 
 function setup() {
   createCanvas(800, 600);
-  pixelDensity(1);
   colorMode(HSB, 360, 100, 100, 1);
-  
-  cols = floor(width / cellSize);
-  rows = floor(height / cellSize);
-  plasma = new Array(cols * rows);
-  
+  pixelDensity(1);
   noStroke();
+  
+  for (let i = 0; i < 5; i++) {
+    palette.push([
+      (i * 60 + 180) % 360,
+      (i * 60 + 300) % 360,
+      (i * 60 + 60) % 360
+    ]);
+  }
 }
 
 function draw() {
   background(0, 0, 0, 0.15);
   
-  let baseHue = (t * 2) % 360;
-  let mouseInfluenceX = (mouseX / width - 0.5) * 2;
-  let mouseInfluenceY = (mouseY / height - 0.5) * 2;
+  let time = t * 0.008;
   
-  for (let y = 0; y < rows; y++) {
-    for (let x = 0; x < cols; x++) {
-      let xPos = x * cellSize;
-      let yPos = y * cellSize;
+  for (let x = 0; x < width; x += 4) {
+    for (let y = 0; y < height; y += 4) {
+      let nx = x * 0.003;
+      let ny = y * 0.003;
       
-      let noiseVal = noise(
-        x * 0.03 + t * 0.5 + mouseInfluenceX * 2,
-        y * 0.03 + t * 0.3 + mouseInfluenceY * 2,
-        t * 0.2
-      );
+      let n1 = noise(nx + time, ny);
+      let n2 = noise(nx + time * 1.5 + 100, ny + 100);
+      let n3 = noise(nx + time * 0.5 + 200, ny + time * 0.3);
       
-      let noiseVal2 = noise(
-        x * 0.05 - t * 0.4,
-        y * 0.05 - t * 0.4,
-        t * 0.15 + 100
-      );
+      let v = sin(n1 * 6 + time * 2) * 0.5 + 0.5;
+      let v2 = sin(n2 * 8 + time * 1.5) * 0.5 + 0.5;
+      let v3 = cos(n3 * 4 + time) * 0.5 + 0.5;
       
-      let combined = (noiseVal + noiseVal2) * 0.5;
+      let brightness = (v + v2 + v3) / 3;
+      brightness = pow(brightness, 1.5);
       
-      let hue = (baseHue + combined * 120 + x * 0.5 + y * 0.5) % 360;
-      let sat = 80 + combined * 20;
-      let bri = 60 + combined * 40;
+      let hue = (sin(time + x * 0.01 + y * 0.01) * 60 + 
+                 noise(nx * 2, ny * 2, time) * 120 + 
+                 180) % 360;
       
-      fill(hue, sat, bri, 0.7);
+      let saturation = 80 + brightness * 20;
+      let b = brightness * 100;
       
-      let size = cellSize * (0.5 + combined * 1.5);
-      let offsetX = (noiseVal - 0.5) * cellSize * 2;
-      let offsetY = (noiseVal2 - 0.5) * cellSize * 2;
-      
-      rect(xPos + offsetX, yPos + offsetY, size, size);
+      fill(hue, saturation, b, 0.6);
+      rect(x, y, 4, 4);
     }
   }
   
-  drawGlowLines(baseHue);
+  drawNeonWaves(time);
   
-  t += 0.02;
-  timeOffset += 0.01;
+  t += 1;
 }
 
-function drawGlowLines(hue) {
-  for (let i = 0; i < 5; i++) {
-    let offset = i * 72 + t * 30;
-    let alpha = map(sin(t * 2 + i), -1, 1, 0.1, 0.4);
+function drawNeonWaves(time) {
+  for (let i = 0; i < 8; i++) {
+    let offset = i * 40;
+    let hue = (time * 20 + i * 45 + 180) % 360;
     
-    stroke((hue + i * 30) % 360, 90, 100, alpha);
-    strokeWeight(2 + i);
+    for (let a = 0; a < TWO_PI; a += 0.1) {
+      let r = 150 + sin(a * 3 + time) * 30 + noise(cos(a) + time, sin(a) + time) * 50;
+      let x = width / 2 + cos(a + time * 0.5) * r + sin(time + i) * 20;
+      let y = height / 2 + sin(a + time * 0.3) * r + cos(time + i) * 20;
+      
+      let size = 3 + sin(a * 4 + time * 2) * 2;
+      
+      for (let glow = 3; glow > 0; glow--) {
+        fill(hue, 90, 100, 0.15 / glow);
+        ellipse(x, y, size * glow * 3, size * glow * 3);
+      }
+      
+      fill(hue, 85, 100, 0.9);
+      ellipse(x, y, size, size);
+    }
+  }
+  
+  for (let i = 0; i < 5; i++) {
+    let y = height / 2 + sin(time + i * 0.5) * 100;
+    let x = width / 2 + cos(time * 0.7 + i) * 80;
+    let h = (time * 30 + i * 72) % 360;
+    
+    for (let g = 4; g > 0; g--) {
+      fill(h, 70, 100, 0.1 / g);
+      ellipse(x, y, 40 * g, 40 * g);
+    }
+    
+    fill(h, 80, 100, 0.95);
+    ellipse(x, y, 8, 8);
+  }
+  
+  strokeWeight(2);
+  for (let i = 0; i < 3; i++) {
+    let hue = (time * 25 + i * 120) % 360;
+    stroke(hue, 85, 100, 0.6);
     noFill();
     
     beginShape();
-    for (let x = 0; x <= width; x += 20) {
+    for (let x = 0; x <= width; x += 10) {
       let y = height / 2 + 
-        sin(x * 0.01 + t * 2 + i) * 100 +
-        noise(x * 0.02, t, i) * 50;
+              sin(x * 0.02 + time + i) * 80 +
+              sin(x * 0.01 - time * 0.5) * 40 +
+              noise(x * 0.005, time) * 60;
       vertex(x, y);
     }
     endShape();
   }
   
-  for (let i = 0; i < 3; i++) {
-    let radius = 150 + sin(t + i) * 50 + mouseX * 0.1;
-    let angle = t * 0.5 + i * TWO_PI / 3;
-    
-    stroke((hue + 180 + i * 40) % 360, 70, 100, 0.3);
-    strokeWeight(1);
-    noFill();
-    
-    push();
-    translate(width / 2, height / 2);
-    rotate(angle);
-    
-    for (let a = 0; a < TWO_PI; a += 0.1) {
-      let r = radius + noise(cos(a), sin(a), t + i) * 30;
-      let x = cos(a) * r;
-      let y = sin(a) * r;
-      point(x, y);
-    }
-    pop();
-  }
+  noStroke();
 }
 
 function windowResized() {
   resizeCanvas(800, 600);
-  cols = floor(width / cellSize);
-  rows = floor(height / cellSize);
-  plasma = new Array(cols * rows);
-}
-
-function mousePressed() {
-  t = 0;
 }

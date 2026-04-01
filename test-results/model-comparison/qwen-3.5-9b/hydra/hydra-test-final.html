@@ -13,69 +13,59 @@
 <body>
     <main>
         <script>
+let history = [];
+const colors = [color(255), color(100, 200, 255), color(255, 100, 100), color(100, 255, 100)];
+let shapes = ['circle', 'square', 'triangle'];
+
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  colorMode(HSB, 360, 100, 50, 255);
-  background(0);
+  noStroke();
 }
 
 function draw() {
-  noStroke();
+  background(10, 10, 30, 20);
   
-  // Add feedback trail by drawing a semi-transparent black rect
-  fill(0, 0, 0, 20);
-  rect(0, 0, width, height);
+  // Add new point to history with random shape and color
+  let type = floor(random(4));
+  let x = width * (random()) + random(-50, 50);
+  let y = height * (random()) + random(-50, 50);
   
-  let x = random(width);
-  let y = random(height);
+  if (x < -100) x += width + 200;
+  if (y < -100) y += height + 200;
+  if (x > width + 100) x -= width + 200;
+  if (y > height + 100) y -= height + 200;
+
+  history.push({x, y, c: colors[type], s: shapes[floor(random(3))] });
   
-  for (let i = 0; i < 40; i++) {
-    // Decreasing size and opacity for trail effect
-    let s = map(i, 0, 40, 30, 2);
-    let h = map(i, 0, 40, 0, 360);
+  // Keep only last 150 points for performance
+  while(history.length > 150) {
+    history.shift();
+  }
+
+  for (let i = history.length - 1; i >= 0; i--) {
+    let p = history[i];
     
-    // Random geometric shapes
-    if (i % 3 === 0) {
-      fill(h, 80, s * 5);
-      circle(x, y, s);
-    } else if (i % 3 === 1) {
-      fill(h + 60, 90, s * 5);
+    // Fade out older points
+    let alpha = map(i, 0, history.length, 20, 255);
+    fill(p.c, alpha/2.5);
+    
+    if (p.s === 'circle') {
+      ellipse(p.x, p.y, map(i, 0, history.length, 10, 40));
+    } else if (p.s === 'square') {
       rectMode(CENTER);
-      rect(x, y, s, s);
+      square(p.x, p.y, map(i, 0, history.length, 20, 60));
     } else {
-      // Triangle
-      let triX = x;
-      let triY = y;
-      let triS = s / 1.732;
-      
       beginShape();
-      vertex(triX, triY - triS);
-      vertex(triX + triS, triY + triS);
-      vertex(triX - triS, triY + triS);
+      vertex(p.x + cos(radians(135)) * map(i, 0, history.length, 20, 40), p.y + sin(radians(135)) * map(i, 0, history.length, 20, 40));
+      vertex(p.x + cos(radians(-45)) * map(i, 0, history.length, 20, 40), p.y + sin(radians(-45)) * map(i, 0, history.length, 20, 40));
+      vertex(p.x + cos(radians(180)) * map(i, 0, history.length, 20, 40), p.y + sin(radians(180)) * map(i, 0, history.length, 20, 40));
       endShape(CLOSE);
     }
-    
-    // Move origin slightly for dynamic trail
-    x += random(-10, 10);
-    y += random(-5, 5);
   }
-  
-  // Randomly spawn a burst every few frames
-  if (frameCount % 2 === 0) {
-    let bx = width / 2 + random(-width/4, width/4);
-    let by = height / 2 + random(-height/4, height/4);
-    
-    for(let j=0; j<15; j++) {
-      let angle = map(j, 0, 15, 0, TWO_PI * 2);
-      let speed = random(5, 20);
-      let vx = cos(angle) * speed;
-      let vy = sin(angle) * speed;
-      
-      // Simulate particle trail logic (simplified for single frame burst)
-      fill(random(360), 100, 80);
-      circle(bx + vx, by + vy, random(2, 8));
-    }
-  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
 }
         </script>
     </main>

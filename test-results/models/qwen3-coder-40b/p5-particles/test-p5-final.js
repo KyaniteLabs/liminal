@@ -1,70 +1,90 @@
 let particles = [];
-const NUM_PARTICLES = 300;
+const numParticles = 400;
+const trailFade = 30;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  background(10, 20, 40);
+  background(10);
 }
 
 function draw() {
-  // Create trails by drawing a semi-transparent black rectangle over the canvas
-  fill(5, 10, 20, 40);
+  // Create fading trails with semi-transparent black
+  fill(0, trailFade);
   noStroke();
   rect(0, 0, width, height);
 
-  for (let i = 0; i < particles.length; i++) {
-    let p = particles[i];
+  for (let p of particles) {
     p.update();
     p.show();
-
-    // Remove particle if it goes off screen or fades out
-    if (p.lifetime <= 0 || p.pos.x < -50 || p.pos.x > width + 50 || 
-        p.pos.y < -50 || p.pos.y > height + 50) {
-      particles.splice(i, 1);
-      i--;
-    }
-  }
-
-  // Add new particles
-  if (particles.length < NUM_PARTICLES) {
-    particles.push(new Particle());
   }
 }
 
 class Particle {
   constructor() {
-    this.pos = createVector(random(width), random(height));
-    this.vel = p5.Vector.random2D().mult(random(1, 4));
-    this.acc = createVector(0, 0);
-    this.lifetime = 255;
-    this.size = random(3, 8);
-    this.hueValue = map(this.pos.x, 0, width, 190, 220); // Blue range
+    this.x = random(width);
+    this.y = random(height);
+    this.vx = random(-3, 3);
+    this.vy = random(-3, 3);
+    this.size = random(2, 5);
+    this.life = 1;
+    this.decay = random(0.98, 0.995);
   }
 
   update() {
-    // Add some wandering motion
-    let noiseScale = 0.01;
-    let time = frameCount * 0.05;
-    let angle = noise(time, this.pos.x * noiseScale, this.pos.y * noiseScale) * TWO_PI * 2;
-    this.acc = p5.Vector.fromAngle(angle).mult(0.1);
-    
-    this.vel.add(this.acc);
-    this.pos.add(this.vel);
-    this.lifetime -= 3; // Fade out
+    // Move particle
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Add wave-like motion for more interesting trails
+    this.x += sin(frameCount * 0.1 + this.x) * 0.5;
+    this.y += cos(frameCount * 0.1 + this.y) * 0.5;
+
+    // Slowly decay velocity to create smooth movement
+    this.vx *= this.decay;
+    this.vy *= this.decay;
+
+    // Add slight acceleration toward center for cohesion
+    let dx = width / 2 - this.x;
+    let dy = height / 2 - this.y;
+    this.vx += dx * 0.0005;
+    this.vy += dy * 0.0005;
+
+    // Wrap around screen edges
+    if (this.x < 0) this.x = width;
+    if (this.x > width) this.x = 0;
+    if (this.y < 0) this.y = height;
+    if (this.y > height) this.y = 0;
   }
 
   show() {
-    let alpha = map(this.lifetime, 0, 255, 0, 1);
-    colorMode(HSB);
-    fill(this.hueValue, 70, 80, alpha);
-    noStroke();
-    circle(this.pos.x, this.pos.y, this.size);
+    // Dynamic blue color based on particle life and motion
+    let speed = sqrt(this.vx * this.vx + this.vy * this.vy);
+    let b = map(speed, 0, 5, 200, 255); // Brighter when moving faster
+    fill(0, 100, b, 200);
     
-    // Draw a small trail line
-    let trailLen = 20;
-    stroke(this.hueValue, 60, 90, alpha * 0.5);
-    strokeWeight(1);
-    line(this.pos.x - this.vel.x * 3, this.pos.y - this.vel.y * 3, 
-         this.pos.x, this.pos.y);
+    // Draw particle as a circle
+    ellipse(this.x, this.y, this.size);
   }
 }
+
+// Initialize particles on window load
+function windowReady() {
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle());
+  }
+}
+
+window.onload = windowReady;
+
+// Handle window resize
+function windowResize() {
+  resizeCanvas(windowWidth, windowHeight);
+  // Re-initialize particles if the significant change in size
+  if (particles.length < numParticles) {
+    for (let i = 0; i < numParticles - particles.length; i++) {
+      particles.push(new Particle());
+    }
+  }
+}
+
+window.onresize = windowResize;

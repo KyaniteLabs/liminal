@@ -41,9 +41,13 @@ export {
 export {
   HarnessAgent,
   createHarnessAgent,
+  LLMModeAgent,
+  createLLMModeAgent,
   type AgentTask,
   type AgentStep,
   type AgentSession,
+  type LLMTask,
+  type LLMSession,
 } from './agent/index.js';
 
 // Tools (for advanced usage)

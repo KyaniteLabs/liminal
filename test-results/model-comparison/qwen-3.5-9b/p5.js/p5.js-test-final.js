@@ -1,90 +1,218 @@
 import React from 'react';
-import { useCurrentFrame, interpolate } from 'remotion';
-import { AbsoluteFill } from '@remotion/player';
+import { AbsoluteFill, useCurrentFrame, interpolate, Video } from 'remotion';
 
 export const BlueCircleAnimation: React.FC = () => {
-  const frame = useCurrentFrame();
-
   return (
-    <AbsoluteFill style={{ backgroundColor: '#1a202c' }}>
-      {/* Center the circle */}
+    <AbsoluteFill style={{ backgroundColor: '#051e3e' }}>
+      {/* Centered blue circle container */}
       <div
         style={{
+          width: '80%',
+          height: '80%',
           position: 'absolute',
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          width: '400px',
-          height: '400px',
-          borderRadius: '50%',
-          backgroundColor: '#3182ce', // Tailwind blue-500 equivalent
+          top: '10%',
+          left: '10%',
+          right: '10%',
+          bottom: '10%',
+          margin: 'auto',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center'
         }}
       >
-        {/* Inner glow effect */}
         <div
           style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '380px',
-            height: '380px',
+            width: `${interpolate(
+              frame,
+              [0, 75],
+              ['30%', '60%']
+            )}vw`,
+            height: `${interpolate(
+              frame,
+              [0, 75],
+              ['30%', '60%']
+            )}vh`,
+            backgroundColor: '#1e90ff',
             borderRadius: '50%',
-            background: `radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 70%)`,
+            boxShadow: `0 0 ${interpolate(
+              frame,
+              [0, 75],
+              ['20px', '80px']
+            )} #64b5f6`
           }}
         />
 
-        {/* Animated border */}
+        {/* Inner glowing orb */}
         <div
           style={{
-            position: 'absolute',
-            top: '-4px',
-            left: '-4px',
-            right: '-4px',
-            bottom: '-4px',
+            width: `${interpolate(
+              frame,
+              [0, 100],
+              ['10%', '30%']
+            )}vw`,
+            height: `${interpolate(
+              frame,
+              [0, 100],
+              ['10%', '30%']
+            )}vh`,
+            backgroundColor: '#87ceeb',
             borderRadius: '50%',
-            background: `linear-gradient(
-              45deg,
-              #3182ce 25%,
-              #63b3ed 50%,
-              #4299e1 75%
-            )`,
-            opacity: interpolate(frame, [0, 60, 120], [0.8, 1.0, 0.8]),
+            position: 'absolute',
+            top: '-20px',
+            left: '-20px'
           }}
         />
 
-        {/* Pulsing core */}
+        {/* Rotating ring */}
         <div
           style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: `translate(-50%, -50%) scale(${interpolate(frame, [0, 60, 120], [1.0, 1.2, 1.0])})`,
-            width: '340px',
-            height: '340px',
+            width: `${interpolate(
+              frame,
+              [0, 50],
+              ['40%', '80%']
+            )}vw`,
+            height: `${interpolate(
+              frame,
+              [0, 50],
+              ['40%', '80%']
+            )}vh`,
+            border: `2px solid #1e90ff`,
             borderRadius: '50%',
-            backgroundColor: '#fff',
-            opacity: interpolate(frame, [0, 60], [0, 0.8]),
+            position: 'absolute',
+            animation: `spin ${interpolate(
+              frame,
+              [0, 75],
+              ['8s', '3s']
+            )} linear infinite`
           }}
         />
 
-        {/* Text in center */}
+        {/* Text overlay */}
         <div
           style={{
             position: 'absolute',
-            top: '50%',
+            bottom: `${interpolate(
+              frame,
+              [0, 50],
+              ['10%', '-2%']
+            )}`,
             left: '50%',
-            transform: `translate(-50%, -50%) scale(${interpolate(frame, [0, 30], [1.0, 1.1])})`,
-            fontSize: '2rem',
+            transform: 'translateX(-50%)',
+            fontSize: `${interpolate(
+              frame,
+              [0, 75],
+              ['3rem', '6rem']
+            )}px`,
+            color: '#ffffff',
+            fontFamily: 'Arial, sans-serif',
             fontWeight: 'bold',
-            color: '#fff',
-            textAlign: 'center' as const,
-            textTransform: 'uppercase' as const,
-            letterSpacing: '4px',
+            textShadow: `0 2px ${interpolate(
+              frame,
+              [0, 75],
+              ['10px', '40px']
+            )} #64b5f6`
           }}
         >
-          Motion
+          BLUE CIRCLE
         </div>
+
+        {/* Floating particles */}
+        <div
+          style={{
+            position: 'absolute',
+            top: `${interpolate(
+              frame,
+              [0, 100],
+              ['20%', '80%']
+            )}%`,
+            left: `${interpolate(
+              frame,
+              [0, 50],
+              ['30%', '70%']
+            )}%`,
+            width: `${interpolate(
+              frame,
+              [0, 100],
+              ['8px', '24px']
+            )}`,
+            height: `${interpolate(
+              frame,
+              [0, 100],
+              ['8px', '24px']
+            )}`,
+            backgroundColor: '#ffffff',
+            borderRadius: '50%',
+            opacity: interpolate(
+              frame,
+              [0, 75],
+              [0.3, 0.8]
+            ),
+            animation: `float ${interpolate(
+              frame,
+              [0, 50],
+              ['4s', '6s']
+            )} ease-in-out infinite alternate`
+          }}
+        />
+
+        <div
+          style={{
+            position: 'absolute',
+            top: `${interpolate(
+              frame,
+              [0, 100],
+              ['70%', '30%']
+            )}%`,
+            left: `${interpolate(
+              frame,
+              [0, 50],
+              ['60%', '40%']
+            )}%`,
+            width: `${interpolate(
+              frame,
+              [0, 100],
+              ['8px', '24px']
+            )}`,
+            height: `${interpolate(
+              frame,
+              [0, 100],
+              ['8px', '24px']
+            )}`,
+            backgroundColor: '#ffffff',
+            borderRadius: '50%',
+            opacity: interpolate(
+              frame,
+              [0, 75],
+              [0.3, 0.8]
+            ),
+            animation: `float ${interpolate(
+              frame,
+              [0, 50],
+              ['6s', '9s']
+            )} ease-in-out infinite alternate`
+          }}
+        />
+
+        <style>
+          {`
+            @keyframes spin {
+              from {
+                transform: rotate(0deg);
+              }
+              to {
+                transform: rotate(360deg);
+              }
+            }
+            @keyframes float {
+              0% {
+                transform: translateY(0px) translateX(0px);
+              }
+              100% {
+                transform: translateY(-20px) translateX(20px);
+              }
+            }
+          `}
+        </style>
       </div>
     </AbsoluteFill>
   );

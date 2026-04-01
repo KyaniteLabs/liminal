@@ -13,82 +13,92 @@
 <body>
     <main>
         <script>
-let particles = [];
-let hue = 0;
-const maxParticles = 200;
-
 function setup() {
-  createCanvas(800, 600);
-  colorMode(HSB, 360, 100, 100);
-  noStroke();
+  createCanvas(windowWidth, windowHeight);
 }
 
 function draw() {
-  background(245);
+  background(10, 20, 40, 50);
   
-  for (let i = particles.length - 1; i >= 0; i--) {
-    let p = particles[i];
-    
-    if (p.x > width || p.x < 0 || p.y > height || p.y < 0) {
-      particles.splice(i, 1);
-      continue;
-    }
-    
-    p.move();
-    p.show();
-    
-    if (p.life <= 0) {
-      particles.splice(i, 1);
-    }
+  let particleCount = 300;
+  let particles = [];
+  
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle());
   }
   
-  hue = (hue + 2) % 360;
+  for (let p of particles) {
+    p.update();
+    p.show();
+    
+    // Additive blending for glowing effect
+    blendMode(BLEND);
+    noStroke();
+    fill(255, 150);
+    ellipse(p.x, p.y, size());
+    resetBlendMode();
+  }
 }
 
 class Particle {
   constructor() {
-    this.x = random(width);
-    this.y = random(height);
-    this.size = random(5, 15);
-    this.speedX = random(-2, 2);
-    this.speedY = random(-3, -1); // Move upwards primarily
-    this.life = map(this.size, 5, 15, 0.01, 0.04);
-    this.hueOffset = random(60);
-    this.wobble = random(TWO_PI * 2);
-    this.wobbleSpeed = random(0.02, 0.05);
+    this.reset();
   }
-
-  move() {
-    this.x += this.speedX;
-    this.y += this.speedY + sin(this.wobble) * 1.5;
-    this.wobble += this.wobbleSpeed;
+  
+  reset() {
+    this.pos = createVector(random(width), random(height));
+    this.vel = p5.Vector.random2D().mult(random(1, 3));
+    this.acc = createVector(0, 0);
+    this.size = random(2, 8);
+    this.maxSpeed = random(3, 6);
+    this.life = random(100, 255);
+  }
+  
+  update() {
+    // Mouse interaction: gentle attraction/repulsion based on proximity
+    let mouse = createVector(mouseX, mouseY);
+    let dist = p5.Vector.dist(this.pos, mouse);
     
-    // Add some turbulence
-    if (this.size > 8) {
-      this.x += random(-0.5, 0.5);
+    if (dist < 300) {
+      let force = p5.Vector.sub(mouse, this.pos).normalize();
+      force.mult(1 / (dist * dist)); // Inverse square law for stronger pull near center
+      force.limit(0.2);
+      this.applyForce(force);
     }
+    
+    // Perlin noise influence based on position
+    let flow = noise(this.pos.x * 0.005, this.pos.y * 0.005) * 2;
+    let noiseVel = p5.Vector.fromAngle(PI/2 + flow).mult(0.3);
+    this.applyForce(noiseVel);
+    
+    // Friction to slow down over time
+    this.vel.mult(0.98);
+    this.pos.add(this.vel);
+    
+    // Wrap around screen edges
+    if (this.pos.x < 0) this.pos.x = width;
+    if (this.pos.x > width) this.pos.x = 0;
+    if (this.pos.y < 0) this.pos.y = height;
+    if (this.pos.y > height) this.pos.y = 0;
+    
+    // Pulse size based on velocity magnitude
+    let speed = this.vel.mag();
+    this.size = map(speed, 0, this.maxSpeed * 2, 1, 15);
   }
-
+  
+  applyForce(force) {
+    force.mult(0.5);
+    this.acc.add(force);
+  }
+  
   show() {
-    let pColor = color((hue + this.hueOffset), 80, 90);
-    fill(pColor);
+    // Color shift based on position and speed
+    let hueVal = map(this.pos.x, 0, width, 180, 360);
+    let satVal = map(speed, 0, 20, 50, 100);
     
-    // Draw a soft circle with some transparency gradient effect
-    noStroke();
-    beginShape();
-    for (let angle = 0; angle < TWO_PI; angle += 0.1) {
-      let r = this.size * map(sin(angle), -1, 1, 0.5, 1.2);
-      let px = this.x + cos(angle) * r;
-      let py = this.y + sin(angle) * r;
-      vertex(px, py);
-    }
-    endShape(CLOSE);
-    
-    // Add a small trail effect
-    noFill();
-    stroke(pColor);
-    strokeWeight(2);
-    line(this.x - 10, this.y, this.x + 10, this.y);
+    stroke(hueVal + sin(frameCount * 0.01) * 20, satVal, 255, this.life);
+    strokeWeight(this.size / 3);
+    point(this.pos.x, this.pos.y);
   }
 }
         </script>

@@ -3,222 +3,142 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none';">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
-    <title>p5.js Sketch</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <title>Strudel Pattern</title>
+    <script src="https://unpkg.com/@strudel/repl@latest"></script>
     <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
-        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+        body { 
+            margin: 0; 
+            background: #1a1a2e; 
+            color: #fff; 
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace; 
+            padding: 20px;
+            min-height: 100vh;
+        }
+        #code-display {
+            background: #0a0a0f;
+            padding: 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            line-height: 1.5;
+            overflow-x: auto;
+            white-space: pre;
+            color: #a5b4fc;
+            border: 1px solid #312e81;
+        }
+        .keyword { color: #c084fc; }
+        .string { color: #86efac; }
+        .function { color: #60a5fa; }
+        .number { color: #fbbf24; }
+        #status {
+            margin-top: 12px;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+            display: inline-block;
+        }
+        #status.ready { background: #1e3a5f; color: #60a5fa; }
+        #status.playing { background: #064e3b; color: #34d399; }
+        #status.error { background: #450a0a; color: #f87171; }
+        .controls { margin-top: 16px; }
     </style>
 </head>
 <body>
-    <main>
-        <script>
-let beatTime = 0;
-let beatInterval = 60 / 130;
-let isKick = true;
-let beatCount = 0;
-let particles = [];
-let bassEnergy = 0;
-let highEnergy = 0;
-let decay = 0.95;
-
-function setup() {
-  createCanvas(800, 600);
-  pixelDensity(1);
-  colorMode(HSB, 360, 100, 100);
-  noiseSeed(42);
-}
-
-function draw() {
-  background(0, 0, 5, 30);
-  
-  beatTime += deltaTime / 1000;
-  
-  if (beatTime >= beatInterval) {
-    beatTime -= beatInterval;
-    isKick = !isKick;
-    beatCount++;
-    
-    if (isKick) {
-      bassEnergy = 1;
-      spawnRing();
-    } else {
-      highEnergy = 0.7;
-      spawnSparks();
-    }
-  }
-  
-  bassEnergy *= decay;
-  highEnergy *= decay;
-  
-  let beatPhase = beatTime / beatInterval;
-  let pulse = sin(beatPhase * PI) * 0.5 + 0.5;
-  
-  drawFlowField(pulse);
-  drawRings(pulse);
-  updateParticles();
-  drawGrid(pulse);
-  drawCentralGlow(pulse);
-  
-  bassEnergy *= 0.96;
-  highEnergy *= 0.94;
-}
-
-function drawFlowField(pulse) {
-  let cols = 40;
-  let rows = 30;
-  let w = width / cols;
-  let h = height / rows;
-  
-  for (let i = 0; i < cols; i++) {
-    for (let j = 0; j < rows; j++) {
-      let x = i * w + w / 2;
-      let y = j * h + h / 2;
-      let n = noise(i * 0.08, j * 0.08, frameCount * 0.01);
-      let angle = n * TWO_PI * 2 + bassEnergy * 2;
-      
-      let len = (8 + bassEnergy * 12) * pulse;
-      let hue = (n * 120 + 180 + frameCount * 0.5) % 360;
-      
-      stroke(hue, 80, 60 + highEnergy * 40);
-      strokeWeight(1 + pulse * 0.5);
-      push();
-      translate(x, y);
-      rotate(angle);
-      line(-len / 2, 0, len / 2, 0);
-      pop();
-    }
-  }
-}
-
-function drawRings(pulse) {
-  noFill();
-  let numRings = 3;
-  
-  for (let r = 0; r < numRings; r++) {
-    let radius = 50 + r * 60 + bassEnergy * 100;
-    let hue = (200 + r * 40 + frameCount) % 360;
-    let alpha = (0.8 - r * 0.2) * pulse;
-    
-    strokeWeight(3 - r * 0.5);
-    stroke(hue, 100, 80, alpha);
-    ellipse(width / 2, height / 2, radius * 2, radius * 2);
-    
-    for (let i = 0; i < 8; i++) {
-      let angle = (i / 8) * TWO_PI + frameCount * 0.02;
-      let x = width / 2 + cos(angle) * radius;
-      let y = height / 2 + sin(angle) * radius;
-      let size = 4 + pulse * 6;
-      
-      fill(hue, 100, 100);
-      noStroke();
-      ellipse(x, y, size, size);
-    }
-  }
-}
-
-function drawCentralGlow(pulse) {
-  let maxRadius = 150 + bassEnergy * 200;
-  
-  for (let i = 10; i > 0; i--) {
-    let r = (maxRadius / 10) * i;
-    let alpha = (1 - i / 10) * 0.3 * pulse;
-    let hue = (frameCount * 2 + i * 10) % 360;
-    
-    fill(hue, 100, 80, alpha);
-    noStroke();
-    ellipse(width / 2, height / 2, r * 2, r * 2);
-  }
-  
-  fill(0, 0, 100);
-  noStroke();
-  let coreSize = 20 + bassEnergy * 30 + pulse * 10;
-  ellipse(width / 2, height / 2, coreSize, coreSize);
-}
-
-function spawnRing() {
-  for (let i = 0; i < 36; i++) {
-    let angle = (i / 36) * TWO_PI;
-    particles.push({
-      x: width / 2,
-      y: height / 2,
-      vx: cos(angle) * (3 + random(2)),
-      vy: sin(angle) * (3 + random(2)),
-      life: 1,
-      size: 8 + random(8),
-      hue: (180 + random(60)) % 360
-    });
-  }
-}
-
-function spawnSparks() {
-  for (let i = 0; i < 20; i++) {
-    let angle = random(TWO_PI);
-    let speed = random(2, 5);
-    particles.push({
-      x: width / 2 + random(-50, 50),
-      y: height / 2 + random(-50, 50),
-      vx: cos(angle) * speed,
-      vy: sin(angle) * speed,
-      life: 1,
-      size: 3 + random(4),
-      hue: (300 + random(60)) % 360
-    });
-  }
-}
-
-function updateParticles() {
-  for (let i = particles.length - 1; i >= 0; i--) {
-    let p = particles[i];
-    p.x += p.vx;
-    p.y += p.vy;
-    p.life -= 0.02;
-    p.vx *= 0.98;
-    p.vy *= 0.98;
-    
-    if (p.life > 0) {
-      fill(p.hue, 100, 100, p.life * 100);
-      noStroke();
-      ellipse(p.x, p.y, p.size * p.life, p.size * p.life);
-    }
-    
-    if (p.life <= 0) {
-      particles.splice(i, 1);
-    }
-  }
-}
-
-function drawGrid(pulse) {
-  stroke(200, 50, 30, 20);
-  strokeWeight(1);
-  
-  let spacing = 40;
-  let offset = (frameCount * 0.5) % spacing;
-  
-  for (let x = -spacing + offset; x < width + spacing; x += spacing) {
-    let wobble = sin(x * 0.02 + frameCount * 0.05) * bassEnergy * 20;
-    line(x + wobble, 0, x - wobble, height);
-  }
-  
-  for (let y = -spacing + offset; y < height + spacing; y += spacing) {
-    let wobble = cos(y * 0.02 + frameCount * 0.05) * bassEnergy * 20;
-    line(0, y + wobble, width, y - wobble);
-  }
-  
-  let beatAlpha = bassEnergy * 50;
-  stroke(0, 100, 100, beatAlpha);
-  strokeWeight(2);
-  rect(0, 0, width, height);
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-}
-        </script>
-    </main>
+    <div style="max-width: 800px; margin: 0 auto;">
+        <h3 style="color: #ec4899; margin-bottom: 16px;">🎵 Strudel Live Coding Pattern</h3>
+        <div id="code-display"></div>
+        <div id="status" class="ready">Ready to play</div>
+        <div class="controls">
+            <button id="playBtn" style="padding: 12px 24px; font-size: 16px; background: #ec4899; color: white; border: none; border-radius: 6px; cursor: pointer; margin-top: 10px;">▶ Play Pattern</button>
+        </div>
+    </div>
+    <script type="module">
+        import { repl, controls } from 'https://unpkg.com/@strudel/repl@latest';
+        
+        const code = `\$: s("bd ~ ~ ~ | bd ~ ~ ~ | bd ~ ~ ~ | bd*2 ~ ~").gain(1),
+  \$: s("~ ~ sd ~ | ~ ~ sd ~ | ~ ~ sd ~ | ~ ~ sd ~").gain(0.85),
+  \$: s("hh:2*2 hh:2 hh:2*2 hh:2").gain(0.6),
+  \$: s("~ ~ hh:3 ~ | ~ ~ hh:3 ~ | ~ ~ hh:3 ~ | ~ ~ hh:3 ~").gain(0.4),
+  \$: s("cp:2 ~ ~ ~ | cp:3 ~ ~ ~ | cp:2 ~ ~ ~ | cp:3 ~ ~ ~").gain(0.5)`;
+        
+        // Syntax highlighting
+        const highlighted = code
+            .replace(/(stack|s|note|sound|cpm|fast|slow|gain|pan|room|delay|cutoff|resonance)/g, '<span class="keyword">$1</span>')
+            .replace(/("[^"]*"|'[^']*')/g, '<span class="string">$1</span>')
+            .replace(/(d+.?d*)/g, '<span class="number">$1</span>')
+            .replace(/(w+)s*(/g, '<span class="function">$1</span>(');
+        
+        document.getElementById('code-display').innerHTML = highlighted;
+        
+        const statusEl = document.getElementById('status');
+        const playBtn = document.getElementById('playBtn');
+        let isPlaying = false;
+        
+        async function initStrudel() {
+            try {
+                // Initialize Strudel REPL
+                const app = await repl({
+                    code: code,
+                    onError: (err) => {
+                        console.error('Strudel error:', err);
+                        statusEl.className = 'error';
+                        statusEl.textContent = 'Error: ' + err.message;
+                    }
+                });
+                
+                return app;
+            } catch (err) {
+                console.error('Failed to init Strudel:', err);
+                statusEl.className = 'error';
+                statusEl.textContent = 'Failed to initialize';
+                return null;
+            }
+        }
+        
+        let strudelApp = null;
+        
+        async function startPlayback() {
+            if (!strudelApp) {
+                strudelApp = await initStrudel();
+            }
+            if (strudelApp) {
+                await controls.start();
+                isPlaying = true;
+                statusEl.className = 'playing';
+                statusEl.textContent = '🔊 Playing (click to stop)';
+                playBtn.textContent = '⏹ Stop';
+            }
+        }
+        
+        async function stopPlayback() {
+            await controls.stop();
+            isPlaying = false;
+            statusEl.className = 'ready';
+            statusEl.textContent = 'Ready to play';
+            playBtn.textContent = '▶ Play Pattern';
+        }
+        
+        if (playBtn) {
+            playBtn.addEventListener('click', () => {
+                if (isPlaying) {
+                    stopPlayback();
+                } else {
+                    startPlayback();
+                }
+            });
+        }
+        
+        // Auto-start if requested
+        
+        
+        // Click on status to toggle too
+        statusEl.style.cursor = 'pointer';
+        statusEl.addEventListener('click', () => {
+            if (isPlaying) {
+                stopPlayback();
+            } else {
+                startPlayback();
+            }
+        });
+    </script>
 </body>
 </html>

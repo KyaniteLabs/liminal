@@ -1,108 +1,113 @@
 let shapes = [];
 let numShapes = 15;
-let trailAlpha = 0.08;
+let t = 0;
+let trailPositions = [];
 
 function setup() {
   createCanvas(800, 600);
   pixelDensity(1);
-  colorMode(HSB, 360, 100, 100, 1);
-  noiseSeed(42);
+  noiseSeed(99);
   
   for (let i = 0; i < numShapes; i++) {
     shapes.push({
-      x: random(width),
-      y: random(height),
-      baseX: random(width),
-      baseY: random(height),
-      size: random(15, 50),
-      type: floor(random(4)),
-      hue: random(360),
-      noiseOffset: random(1000),
-      noiseScale: random(0.005, 0.015),
-      rot: random(TWO_PI),
-      rotSpeed: random(-0.03, 0.03)
+      x: noise(i * 0.3) * width,
+      y: noise(i * 0.3 + 50) * height,
+      size: 15 + noise(i * 0.2) * 50,
+      angle: noise(i * 0.4) * TWO_PI,
+      speed: 0.002 + noise(i * 0.1) * 0.003,
+      shapeType: floor(noise(i * 0.6) * 4),
+      hue: noise(i * 0.25) * 360,
+      trail: [],
+      maxTrail: 30
     });
   }
-  
-  background(0);
 }
 
 function draw() {
-  fill(0, 0, 0, trailAlpha);
-  noStroke();
-  rect(0, 0, width, height);
+  background(10, 10, 20, 40);
   
   for (let i = 0; i < shapes.length; i++) {
     let s = shapes[i];
     
-    let noiseX = noise(s.noiseOffset + frameCount * s.noiseScale) * 2 - 1;
-    let noiseY = noise(s.noiseOffset + 500 + frameCount * s.noiseScale) * 2 - 1;
+    s.angle += s.speed;
+    let angleOffset = noise(i * 0.5, t * 0.5) * TWO_PI;
+    s.x += cos(s.angle + angleOffset) * 2;
+    s.y += sin(s.angle + angleOffset) * 2;
     
-    s.x += noiseX * 3;
-    s.y += noiseY * 3;
+    s.x = constrain(s.x, 0, width);
+    s.y = constrain(s.y, 0, height);
     
-    if (s.x < 0) s.x = width;
-    if (s.x > width) s.x = 0;
-    if (s.y < 0) s.y = height;
-    if (s.y > height) s.y = 0;
+    s.trail.push({x: s.x, y: s.y});
+    if (s.trail.length > s.maxTrail) {
+      s.trail.shift();
+    }
     
-    s.rot += s.rotSpeed;
-    
-    let hueShift = (s.hue + frameCount * 0.2) % 360;
-    let sizePulse = s.size * (0.8 + noise(s.noiseOffset + frameCount * 0.02) * 0.4);
+    noFill();
+    strokeWeight(1);
+    beginShape();
+    for (let j = 0; j < s.trail.length; j++) {
+      let alpha = map(j, 0, s.trail.length, 0, 200);
+      stroke(s.hue, 180, 255, alpha);
+      vertex(s.trail[j].x, s.trail[j].y);
+    }
+    endShape();
     
     push();
     translate(s.x, s.y);
-    rotate(s.rot);
+    rotate(s.angle);
+    noStroke();
+    colorMode(HSB, 360, 100, 100, 100);
+    fill(s.hue, 70, 90, 85);
     
-    stroke(hueShift, 80, 90, 0.7);
-    strokeWeight(2);
-    noFill();
-    
-    if (s.type === 0) {
-      ellipse(0, 0, sizePulse, sizePulse);
-    } else if (s.type === 1) {
+    if (s.shapeType === 0) {
+      ellipse(0, 0, s.size, s.size);
+    } else if (s.shapeType === 1) {
       rectMode(CENTER);
-      rect(0, 0, sizePulse, sizePulse, 4);
-    } else if (s.type === 2) {
-      let r = sizePulse / 2;
-      triangle(0, -r, r * 0.866, r * 0.5, -r * 0.866, r * 0.5);
+      rect(0, 0, s.size * 0.8, s.size * 0.8);
+    } else if (s.shapeType === 2) {
+      drawTriangle(0, 0, s.size * 0.6);
     } else {
-      beginShape();
-      for (let j = 0; j < 6; j++) {
-        let angle = TWO_PI * j / 6;
-        let px = cos(angle) * sizePulse / 2;
-        let py = sin(angle) * sizePulse / 2;
-        vertex(px, py);
-      }
-      endShape(CLOSE);
+      drawHexagon(0, 0, s.size * 0.5);
     }
-    
-    strokeWeight(1);
-    stroke(hueShift, 60, 100, 0.4);
-    if (s.type === 0) {
-      ellipse(0, 0, sizePulse * 0.5, sizePulse * 0.5);
-    } else if (s.type === 1) {
-      rect(0, 0, sizePulse * 0.5, sizePulse * 0.5, 2);
-    } else if (s.type === 2) {
-      let r = sizePulse / 4;
-      triangle(0, -r, r * 0.866, r * 0.5, -r * 0.866, r * 0.5);
-    } else {
-      beginShape();
-      for (let j = 0; j < 6; j++) {
-        let angle = TWO_PI * j / 6;
-        let px = cos(angle) * sizePulse / 4;
-        let py = sin(angle) * sizePulse / 4;
-        vertex(px, py);
-      }
-      endShape(CLOSE);
-    }
-    
     pop();
   }
+  
+  t += 0.01;
+  colorMode(RGB, 255);
+  
+  for (let i = 0; i < shapes.length; i++) {
+    let s = shapes[i];
+    for (let j = i + 1; j < shapes.length; j++) {
+      let other = shapes[j];
+      let d = dist(s.x, s.y, other.x, other.y);
+      if (d < 100) {
+        let alpha = map(d, 0, 100, 60, 0);
+        stroke(200, 220, 255, alpha);
+        strokeWeight(0.5);
+        line(s.x, s.y, other.x, other.y);
+      }
+    }
+  }
+}
+
+function drawTriangle(x, y, r) {
+  beginShape();
+  for (let i = 0; i < 3; i++) {
+    let angle = TWO_PI / 3 * i - HALF_PI;
+    vertex(x + cos(angle) * r, y + sin(angle) * r);
+  }
+  endShape(CLOSE);
+}
+
+function drawHexagon(x, y, r) {
+  beginShape();
+  for (let i = 0; i < 6; i++) {
+    let angle = TWO_PI / 6 * i;
+    vertex(x + cos(angle) * r, y + sin(angle) * r);
+  }
+  endShape(CLOSE);
 }
 
 function windowResized() {
   resizeCanvas(800, 600);
-  background(0);
 }

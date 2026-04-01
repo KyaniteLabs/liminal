@@ -1,38 +1,45 @@
 import React from 'react';
 import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
 
-export const BlueCircleAnimation: React.FC = () => {
+export const BlueCircle: React.FC = () => {
   const frame = useCurrentFrame();
-  
-  const scale = interpolate(
-    frame,
-    [0, 30, 60, 90, 120, 150],
-    [0.3, 1.2, 0.8, 1.1, 0.9, 1]
-  );
-  
-  const yOffset = interpolate(
-    frame,
-    [0, 75, 150],
-    [-50, 50, -50]
-  );
-  
-  const opacity = interpolate(
-    frame,
-    [0, 15, 135, 150],
-    [0, 1, 1, 0]
-  );
+
+  const scale = spring({frame, fps: 30, config: {damping: 10, stiffness: 100}});
+
+  const xPosition = interpolate(frame, [0, 75, 150], [0, 800, 0], {
+    extrapolateRight: 'clamp',
+  });
+
+  const yPosition = interpolate(frame, [0, 75, 150], [0, -200, 0], {
+    extrapolateRight: 'clamp',
+  });
+
+  const opacity = interpolate(frame, [0, 30, 120, 150], [0, 1, 1, 0], {
+    extrapolateRight: 'clamp',
+  });
+
+  const circleSize = interpolate(scale, [0, 1], [50, 200]);
 
   return (
-    <AbsoluteFill style={{backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center'}}>
+    <AbsoluteFill
+      style={{
+        backgroundColor: '#1a1a2e',
+        justifyContent: 'center',
+        alignItems: 'center',
+      }}
+    >
       <div
         style={{
-          width: 300,
-          height: 300,
+          position: 'absolute',
+          left: xPosition + 860,
+          top: yPosition + 440,
+          width: circleSize,
+          height: circleSize,
           borderRadius: '50%',
-          backgroundColor: '#4a90e2',
-          transform: `scale(${scale}) translateY(${yOffset}px)`,
+          backgroundColor: '#4a90d9',
+          boxShadow: '0 0 60px rgba(74, 144, 217, 0.6)',
           opacity: opacity,
-          boxShadow: '0 0 60px rgba(74, 144, 226, 0.6)',
+          transform: `scale(${scale})`,
         }}
       />
     </AbsoluteFill>

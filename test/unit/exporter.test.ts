@@ -4,24 +4,57 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
  *
  * Tests exportHTML(code, path), exportJS(code, path), exportZIP(project, path)
  * with 80% minimum coverage requirement
+ *
+ * NOTE: All code fixtures must exceed 500 bytes because CodeValidator enforces
+ * MIN_SIZE_REQUIREMENTS['p5'] = 500. Template literals with real newlines
+ * (backtick strings) are used to keep fixtures readable and above the limit.
  */
 
 import fs from 'fs/promises';
 import path from 'path';
 import { Exporter } from '../../src/export/Exporter.js';
 
+// Helper: reusable p5 sketch body that adds ~200 bytes of drawing logic
+// to ensure every fixture clears the 500b CodeValidator minimum for p5 domain.
+const P5_DRAW_BODY = `
+  for (let p of particles) {
+    fill(p.color);
+    noStroke();
+    ellipse(p.x, p.y, p.size);
+    p.x += random(-p.speed, p.speed);
+    p.y += random(-p.speed, p.speed);
+    if (p.x < 0) p.x = width;
+    if (p.x > width) p.x = 0;
+    if (p.y < 0) p.y = height;
+    if (p.y > height) p.y = 0;
+  }
+  ellipse(mouseX, mouseY, 30, 30);
+`;
+
 describe('Exporter', () => {
   const TEST_EXPORT_DIR = 'test-export-temp';
 
-  // Sample p5.js code for testing
+  // Sample p5.js code for testing (>600b to pass CodeValidator MIN_SIZE for p5 domain)
   const SAMPLE_P5_CODE = `function setup() {
   createCanvas(400, 400);
   background(220);
+  // Initialize particle system
+  particles = [];
+  for (let i = 0; i < 50; i++) {
+    particles.push({
+      x: random(width),
+      y: random(height),
+      size: random(5, 20),
+      speed: random(1, 3),
+      color: color(random(255), random(100, 200), random(255), 200)
+    });
+  }
 }
 
 function draw() {
-  ellipse(mouseX, mouseY, 50, 50);
-}`;
+  background(220, 220, 240, 25);
+${P5_DRAW_BODY}}
+`;
 
   const SAMPLE_PROJECT = {
     name: 'test-project',
@@ -142,7 +175,26 @@ function draw() {
 
     it('should handle special characters in code', async () => {
       const exporter = new Exporter();
-      const specialCode = '// Code with "quotes" and \'apostrophes\'\nfunction setup() { createCanvas(400, 400); }';
+      const specialCode = `// Code with "quotes" and 'apostrophes'
+function setup() {
+  createCanvas(400, 400);
+  background(220);
+  // Initialize shapes array with special characters
+  shapes = [];
+  for (let i = 0; i < 30; i++) {
+    shapes.push({
+      x: random(width),
+      y: random(height),
+      r: random(10, 50),
+      speed: random(1, 3),
+      color: color(random(255), random(100, 200), random(255), 200)
+    });
+  }
+}
+function draw() {
+  background(220);
+${P5_DRAW_BODY}}
+`;
       const outputPath = path.join(TEST_EXPORT_DIR, 'special.html');
 
       await exporter.exportHTML(specialCode, outputPath);
@@ -154,7 +206,26 @@ function draw() {
 
     it('should handle unicode characters in code', async () => {
       const exporter = new Exporter();
-      const unicodeCode = '// こんにちは世界\nfunction setup() { createCanvas(400, 400); }';
+      const unicodeCode = `// こんにちは世界
+function setup() {
+  createCanvas(400, 400);
+  background(220);
+  // Unicode test: 日本語テスト with particle system
+  particles = [];
+  for (let i = 0; i < 20; i++) {
+    particles.push({
+      x: random(width),
+      y: random(height),
+      size: random(5, 20),
+      speed: random(1, 3),
+      color: color(random(255), random(100, 200), random(255), 200)
+    });
+  }
+}
+function draw() {
+  background(220);
+${P5_DRAW_BODY}}
+`;
       const outputPath = path.join(TEST_EXPORT_DIR, 'unicode.html');
 
       await exporter.exportHTML(unicodeCode, outputPath);
@@ -167,13 +238,45 @@ function draw() {
       const exporter = new Exporter();
       const outputPath = path.join(TEST_EXPORT_DIR, 'sketch.html');
 
-      const codeA = `function setup() { createCanvas(100,100); }\nfunction draw() { background(255,0,0); }`;
-      const codeB = `function setup() { createCanvas(200,200); }\nfunction draw() { background(0,0,255); }`;
+      const codeA = `function setup() {
+  createCanvas(100, 100);
+  background(255, 0, 0);
+  // Red canvas with particles
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width), y: random(height),
+      size: random(5, 15), speed: random(1, 3),
+      color: color(255, 200, 200, 200)
+    });
+  }
+}
+function draw() {
+  background(255, 0, 0, 20);
+${P5_DRAW_BODY}}
+`;
+      const codeB = `function setup() {
+  createCanvas(200, 200);
+  background(0, 0, 255);
+  // Blue canvas with particles
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width), y: random(height),
+      size: random(5, 15), speed: random(1, 3),
+      color: color(200, 200, 255, 200)
+    });
+  }
+}
+function draw() {
+  background(0, 0, 255, 20);
+${P5_DRAW_BODY}}
+`;
       await exporter.exportHTML(codeA, outputPath);
       await exporter.exportHTML(codeB, outputPath);
 
       const content = await fs.readFile(outputPath, 'utf-8');
-      expect(content).toContain('createCanvas(200,200)');
+      expect(content).toContain('createCanvas(200, 200)');
     });
 
     it('should include Web Audio support and user-gesture comment when code uses AudioContext, createOscillator, or p5.sound', async () => {
@@ -181,10 +284,34 @@ function draw() {
       const outputPath = path.join(TEST_EXPORT_DIR, 'sound.html');
       const soundSketchCode = `function setup() {
   createCanvas(400, 400);
+  background(220);
   const ctx = new AudioContext();
   const osc = ctx.createOscillator();
+  // Audio visualization setup
+  analyser = ctx.createAnalyser();
+  osc.connect(analyser);
+  analyser.connect(ctx.destination);
+  osc.start();
+  freqData = new Uint8Array(analyser.frequencyBinCount);
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width),
+      y: random(height),
+      size: random(5, 20),
+      speed: random(1, 3),
+      color: color(random(255), random(100, 200), random(255), 200)
+    });
+  }
 }
-function draw() {}`;
+function draw() {
+  background(220);
+  analyser.getByteFrequencyData(freqData);
+  for (let i = 0; i < freqData.length; i++) {
+    const h = map(freqData[i], 0, 255, 0, height);
+    rect(i * 4, height - h, 3, h);
+  }
+}`;
 
       await exporter.exportHTML(soundSketchCode, outputPath);
 
@@ -201,8 +328,35 @@ function draw() {}`;
       const outputPath = path.join(TEST_EXPORT_DIR, 'p5sound.html');
       const p5SoundCode = `// uses p5.sound
 function preload() { loadSound('beat.mp3'); }
-function setup() { createCanvas(400, 400); }
-function draw() {}`;
+function setup() {
+  createCanvas(400, 400);
+  background(220);
+  // Sound reactive visuals
+  amplitude = new p5.Amplitude();
+  particles = [];
+  for (let i = 0; i < 40; i++) {
+    particles.push({
+      x: random(width),
+      y: random(height),
+      size: random(5, 15),
+      speed: random(1, 3)
+    });
+  }
+}
+function draw() {
+  background(220, 220, 240, 25);
+  const level = amplitude.getLevel();
+  const sz = map(level, 0, 1, 5, 80);
+  for (let p of particles) {
+    ellipse(p.x, p.y, sz);
+    p.x += random(-2, 2);
+    p.y += random(-2, 2);
+    if (p.x < 0) p.x = width;
+    if (p.x > width) p.x = 0;
+    if (p.y < 0) p.y = height;
+    if (p.y > height) p.y = 0;
+  }
+}`;
 
       await exporter.exportHTML(p5SoundCode, outputPath);
 
@@ -221,7 +375,7 @@ function draw() {}`;
 
       // Check that file was created
       const content = await fs.readFile(outputPath, 'utf-8');
-      expect(content).toBe(SAMPLE_P5_CODE);
+      expect(content).toBe(SAMPLE_P5_CODE.trimEnd());
     });
 
     it('should create directory if it does not exist', async () => {
@@ -279,7 +433,24 @@ function draw() {}`;
 
     it('should handle special characters in code', async () => {
       const exporter = new Exporter();
-      const specialCode = 'function setup() { createCanvas(400, 400); }\nconst str = "Hello \\"World\\"";\nconst arr = [\'a\', \'b\'];';
+      const specialCode = `function setup() {
+  createCanvas(400, 400);
+  // Special chars test: "quotes" and 'apostrophes'
+  const str = "Hello \\"World\\"";
+  const arr = ['a', 'b', 'c'];
+  shapes = [];
+  for (let i = 0; i < 30; i++) {
+    shapes.push({
+      x: random(width), y: random(height),
+      size: random(5, 20), speed: random(1, 3),
+      color: color(random(255), random(100, 200), random(255), 200)
+    });
+  }
+}
+function draw() {
+  background(220);
+${P5_DRAW_BODY}}
+`;
       const outputPath = path.join(TEST_EXPORT_DIR, 'special.js');
 
       await exporter.exportJS(specialCode, outputPath);
@@ -290,7 +461,26 @@ function draw() {}`;
 
     it('should handle unicode characters in code', async () => {
       const exporter = new Exporter();
-      const unicodeCode = '// こんにちは世界\nfunction setup() { createCanvas(400, 400); }\nconst x = 42;';
+      const unicodeCode = `// こんにちは世界
+function setup() {
+  createCanvas(400, 400);
+  background(220);
+  // Unicode test: 日本語テスト
+  particles = [];
+  for (let i = 0; i < 25; i++) {
+    particles.push({
+      x: random(width),
+      y: random(height),
+      size: random(5, 20),
+      speed: random(1, 3),
+      color: color(random(255), random(100, 200), random(255), 200)
+    });
+  }
+}
+function draw() {
+  background(220);
+${P5_DRAW_BODY}}
+`;
       const outputPath = path.join(TEST_EXPORT_DIR, 'unicode.js');
 
       await exporter.exportJS(unicodeCode, outputPath);
@@ -303,11 +493,24 @@ function draw() {}`;
       const exporter = new Exporter();
       const formattedCode = `function setup() {
   createCanvas(400, 400);
+  background(220);
+  // Formatting preservation test
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width),
+      y: random(height),
+      size: random(5, 20),
+      speed: random(1, 3),
+      color: color(random(255), random(100, 200), random(255), 200)
+    });
+  }
 }
 
 function draw() {
   background(220);
-}`;
+${P5_DRAW_BODY}}
+`;
       const outputPath = path.join(TEST_EXPORT_DIR, 'formatted.js');
 
       await exporter.exportJS(formattedCode, outputPath);
@@ -321,14 +524,46 @@ function draw() {
     it('should overwrite existing file', async () => {
       const exporter = new Exporter();
       const outputPath = path.join(TEST_EXPORT_DIR, 'sketch.js');
-      const codeA = `function setup() { createCanvas(100,100); }\nfunction draw() { background(255,0,0); }`;
-      const codeB = `function setup() { createCanvas(200,200); }\nfunction draw() { background(0,0,255); }`;
+      const codeA = `function setup() {
+  createCanvas(100, 100);
+  background(255, 0, 0);
+  // Red canvas with particles
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width), y: random(height),
+      size: random(5, 15), speed: random(1, 3),
+      color: color(255, 200, 200, 200)
+    });
+  }
+}
+function draw() {
+  background(255, 0, 0, 20);
+${P5_DRAW_BODY}}
+`;
+      const codeB = `function setup() {
+  createCanvas(200, 200);
+  background(0, 0, 255);
+  // Blue canvas with particles
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width), y: random(height),
+      size: random(5, 15), speed: random(1, 3),
+      color: color(200, 200, 255, 200)
+    });
+  }
+}
+function draw() {
+  background(0, 0, 255, 20);
+${P5_DRAW_BODY}}
+`;
 
       await exporter.exportJS(codeA, outputPath);
       await exporter.exportJS(codeB, outputPath);
 
       const content = await fs.readFile(outputPath, 'utf-8');
-      expect(content).toContain('createCanvas(200,200)');
+      expect(content).toContain('createCanvas(200, 200)');
     });
   });
 
@@ -572,9 +807,57 @@ function draw() {
 
     it('should handle concurrent exports', async () => {
       const exporter = new Exporter();
-      const codeA = `function setup() { createCanvas(100,100); }\nfunction draw() { background(255,0,0); }`;
-      const codeB = `function setup() { createCanvas(200,200); }\nfunction draw() { background(0,255,0); }`;
-      const codeC = `function setup() { createCanvas(300,300); }\nfunction draw() { background(0,0,255); }`;
+      const codeA = `function setup() {
+  createCanvas(100, 100);
+  background(255, 0, 0);
+  // Red canvas with particles
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width), y: random(height),
+      size: random(5, 15), speed: random(1, 3),
+      color: color(255, 200, 200, 200)
+    });
+  }
+}
+function draw() {
+  background(255, 0, 0, 20);
+${P5_DRAW_BODY}}
+`;
+      const codeB = `function setup() {
+  createCanvas(200, 200);
+  background(0, 255, 0);
+  // Green canvas with particles
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width), y: random(height),
+      size: random(5, 15), speed: random(1, 3),
+      color: color(200, 255, 200, 200)
+    });
+  }
+}
+function draw() {
+  background(0, 255, 0, 20);
+${P5_DRAW_BODY}}
+`;
+      const codeC = `function setup() {
+  createCanvas(300, 300);
+  background(0, 0, 255);
+  // Blue canvas with particles
+  particles = [];
+  for (let i = 0; i < 30; i++) {
+    particles.push({
+      x: random(width), y: random(height),
+      size: random(5, 15), speed: random(1, 3),
+      color: color(200, 200, 255, 200)
+    });
+  }
+}
+function draw() {
+  background(0, 0, 255, 20);
+${P5_DRAW_BODY}}
+`;
 
       const promises = [
         exporter.exportHTML(codeA, path.join(TEST_EXPORT_DIR, 'file1.html')),

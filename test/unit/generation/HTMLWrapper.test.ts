@@ -20,7 +20,7 @@ describe('HTMLWrapper', () => {
 
     it('detects already-wrapped HTML', () => {
       const code = '<!DOCTYPE html><html><body>p5</body></html>';
-      expect(HTMLWrapper.detectDomain(code)).toBe('p5'); // Wrapped defaults to p5
+      expect(HTMLWrapper.detectDomain(code)).toBe('html'); // Wrapped HTML without p5 CDN defaults to html
     });
 
     it('does not misclassify p5 code as shader', () => {

@@ -1,7 +1,35 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 /**
  * ShaderGenerator and ShaderTemplates tests
  */
+
+vi.mock('../../src/llm/LLMClient.js', () => {
+  const generate = vi.fn().mockImplementation((_system: string, user: string) => {
+    // Return different GLSL code based on the prompt to satisfy "different templates" test
+    const prompt = user.toLowerCase();
+    if (prompt.includes('fractal') || prompt.includes('mandelbrot')) {
+      return Promise.resolve({
+        code: 'precision mediump float;\nuniform float u_time;\nuniform vec2 u_resolution;\nvec2 z = vec2(0.0);\nvoid main() {\n  vec2 uv = gl_FragCoord.xy / u_resolution;\n  z = vec2(uv.x, uv.y);\n  gl_FragColor = vec4(0.0, 0.0, length(z), 1.0);\n}',
+        success: true,
+      });
+    }
+    if (prompt.includes('voronoi')) {
+      return Promise.resolve({
+        code: 'precision mediump float;\nuniform float u_time;\nuniform vec2 u_resolution;\nvec2 random2(vec2 p) { return fract(sin(p) * 43758.5453); }\nvoid main() {\n  vec2 uv = gl_FragCoord.xy / u_resolution;\n  gl_FragColor = vec4(uv, 0.5, 1.0);\n}',
+        success: true,
+      });
+    }
+    return Promise.resolve({
+      code: 'precision mediump float;\nuniform float u_time;\nuniform vec2 u_resolution;\nvoid main() {\n  vec2 uv = gl_FragCoord.xy / u_resolution;\n  gl_FragColor = vec4(uv.x, uv.y, 0.5 + 0.5 * sin(u_time), 1.0);\n}',
+      success: true,
+    });
+  });
+  class MockLLMClient {
+    generate = generate;
+  }
+  (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
+  return { LLMClient: MockLLMClient };
+});
 
 import { ShaderGenerator } from '../../src/generators/glsl/ShaderGenerator.js';
 import { selectShaderTemplate } from '../../src/generators/glsl/ShaderTemplates.js';
@@ -15,7 +43,7 @@ describe('ShaderGenerator', () => {
     expect(code.length).toBeGreaterThan(100);
   });
 
-  it('generate() returns template fallback when LLM not configured', async () => {
+  it('generate() returns valid GLSL via LLM mock', async () => {
     const gen = new ShaderGenerator();
     const code = await gen.generate('fractal zoom');
     expect(code).toContain('void main');

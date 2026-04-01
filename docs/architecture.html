@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liminal Architecture - Complete System Map</title>
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <link rel="stylesheet" href="styles/docs.css">
     <style>
         * {
             margin: 0;
@@ -366,6 +367,19 @@
     </style>
 </head>
 <body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html" class="active">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+            <li><a href="soul-system.html">SOUL</a></li>
+        </ul>
+    </nav>
     <div class="header">
         <h1>🎨 Liminal Architecture</h1>
         <div class="header-meta">Complete system map with wiring status | Last updated: 2026-04-01</div>
@@ -1129,6 +1143,10 @@ Meta-Harness (OBSERVES, DOES NOT MODIFY GENERATORS)
             <p style="font-size: 0.85rem; margin-top: 0.5rem;">Keep this updated as the system evolves</p>
         </div>
     </div>
+
+    <footer class="footer">
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+    </footer>
 
     <script>
         mermaid.initialize({ 

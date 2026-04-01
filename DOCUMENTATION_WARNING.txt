@@ -1,0 +1,42 @@
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                         ⚠️  STOP - READ THIS FIRST  ⚠️                        ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  BEFORE creating any HTML documentation, dashboard, landing page, or         ║
+║  status page, you MUST read PROJECT_RULES.md and AGENTS.md.                  ║
+║                                                                              ║
+║  📚 THE DOCUMENTATION SITE ALREADY EXISTS                                    ║
+║  ════════════════════════════════════════                                    ║
+║                                                                              ║
+║  Location: ../liminal-docs-site/docs/ (Git worktree on docs-site branch)     ║
+║                                                                              ║
+║  Dashboard:     dashboard.html      ← Status center - ALWAYS use this        ║
+║  Homepage:      index.html          ← Entry point                            ║
+║  Features:      features.html       ← Feature documentation                  ║
+║  CLI Ref:       cli-reference.html  ← Command reference                      ║
+║  Architecture:  architecture*.html  ← System docs                            ║
+║  SOUL System:   soul-system.html    ← Personality docs                       ║
+║  Harness Tasks: harness-tasks.html  ← Task documentation                     ║
+║                                                                              ║
+║  🚫 DO NOT CREATE NEW DASHBOARDS OR LANDING PAGES                            ║
+║  ═══════════════════════════════════════════════                             ║
+║                                                                              ║
+║  These files were DELETED because they competed with the docs-site:          ║
+║   - landing.html                                                             ║
+║   - output-samples/dashboard.html                                            ║
+║   - output-samples/landing.html                                              ║
+║   - output-samples/portfolio.html                                            ║
+║                                                                              ║
+║  If you need to add documentation:                                           ║
+║  1. Go to the docs-site worktree: cd ../liminal-docs-site                    ║
+║  2. Edit/add pages in docs/ directory                                        ║
+║  3. Update dashboard.html to reflect changes                                 ║
+║  4. Commit to docs-site branch                                               ║
+║                                                                              ║
+║  🔴 RULE 11: NO DUPLICATION                                                  ║
+║  Any new dashboard/landing HTML files will be DELETED.                       ║
+║  Update the existing docs-site instead.                                      ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+See PROJECT_RULES.md section "RULE 11: NO DUPLICATION" for full details.

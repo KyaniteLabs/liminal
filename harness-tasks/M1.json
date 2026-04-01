@@ -1,0 +1,13 @@
+{
+  "id": "M1",
+  "title": "Fix Tone.js Validation Gate",
+  "description": "Tone.js validation only fires on domain 'unknown', should also fire on 'music' domain",
+  "targetFile": "src/core/CodeValidator.ts",
+  "search": "    // Check 6: Tone.js API validation (catches hallucinated classes)\n    const toneJSErrors = detectedDomain === 'unknown' && /Tone\\./.test(cleaned) \n      ? validateToneJS(cleaned) \n      : [];",
+  "replace": "    // Check 6: Tone.js API validation (catches hallucinated classes)\n    const toneJSErrors = (detectedDomain === 'music' || detectedDomain === 'unknown') && /Tone\\./.test(cleaned) \n      ? validateToneJS(cleaned) \n      : [];",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "files": 1,
+  "approved": true
+}

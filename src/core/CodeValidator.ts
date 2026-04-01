@@ -643,7 +643,7 @@ export class CodeValidator {
     const qualityErrors = validateQuality(cleaned, detectedDomain);
     
     // Check 6: Tone.js API validation (catches hallucinated classes)
-    const toneJSErrors = detectedDomain === 'unknown' && /Tone\./.test(cleaned) 
+    const toneJSErrors = (detectedDomain === 'music' || detectedDomain === 'unknown') && /Tone\./.test(cleaned) 
       ? validateToneJS(cleaned) 
       : [];
 

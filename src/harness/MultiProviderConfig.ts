@@ -1,0 +1,199 @@
+/**
+ * Multi-Provider Configuration for Meta-Harness
+ * 
+ * Supports:
+ * - MiniMax (cloud)
+ * - LM Studio (local)
+ * - Ollama (local/cloud)
+ * - OpenRouter (cloud)
+ * - GLM International Coding Plan API (cloud)
+ * 
+ * Environment variables:
+ * - LIMINAL_LLM_BASE_URL - Default base URL
+ * - LIMINAL_LLM_MODEL - Default model
+ * - LIMINAL_LLM_API_KEY - Default API key
+ * - MINIMAX_API_KEY - MiniMax specific
+ * - GLM_API_KEY - GLM specific
+ * - OPENROUTER_API_KEY - OpenRouter specific
+ */
+
+import type { LLMConfig } from '../llm/LLMClient.js';
+
+export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'custom';
+
+export interface ProviderConfig extends LLMConfig {
+  provider: ProviderType;
+  name: string;
+  description?: string;
+}
+
+/**
+ * Pre-configured provider templates
+ */
+export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiKey'>> = {
+  minimax: {
+    provider: 'minimax',
+    name: 'MiniMax',
+    description: 'MiniMax M2.7 and other models',
+    baseUrl: 'https://api.minimax.chat/v1',
+    model: 'MiniMax-Text-01',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  lmstudio: {
+    provider: 'lmstudio',
+    name: 'LM Studio',
+    description: 'Local LM Studio server',
+    baseUrl: 'http://localhost:1234/v1',
+    model: 'local-model',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  ollama: {
+    provider: 'ollama',
+    name: 'Ollama',
+    description: 'Local Ollama server',
+    baseUrl: 'http://localhost:11434',
+    model: 'llama3.2',
+    apiStyle: 'ollama',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  openrouter: {
+    provider: 'openrouter',
+    name: 'OpenRouter',
+    description: 'OpenRouter API (access to many models)',
+    baseUrl: 'https://openrouter.ai/api/v1',
+    model: 'anthropic/claude-3.5-sonnet',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  glm: {
+    provider: 'glm',
+    name: 'GLM',
+    description: 'GLM International Coding Plan API',
+    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    model: 'glm-4',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  custom: {
+    provider: 'custom',
+    name: 'Custom',
+    description: 'Custom OpenAI-compatible endpoint',
+    baseUrl: 'http://localhost:8000/v1',
+    model: 'custom-model',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+};
+
+/**
+ * Get provider configuration with API key from environment
+ */
+export function getProviderConfig(provider: ProviderType): ProviderConfig | null {
+  const template = PROVIDER_TEMPLATES[provider];
+  
+  // Get API key from environment based on provider
+  let apiKey: string | undefined;
+  switch (provider) {
+    case 'minimax':
+      apiKey = process.env.MINIMAX_API_KEY;
+      break;
+    case 'glm':
+      apiKey = process.env.GLM_API_KEY;
+      break;
+    case 'openrouter':
+      apiKey = process.env.OPENROUTER_API_KEY;
+      break;
+    case 'ollama':
+    case 'lmstudio':
+      // Local providers don't need API keys
+      apiKey = undefined;
+      break;
+    case 'custom':
+      apiKey = process.env.LIMINAL_LLM_API_KEY || process.env.OPENAI_API_KEY;
+      break;
+  }
+  
+  // Allow environment overrides for baseUrl and model
+  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || template.baseUrl;
+  const model = process.env.LIMINAL_LLM_MODEL || template.model;
+  
+  return {
+    ...template,
+    baseUrl,
+    model,
+    apiKey,
+  };
+}
+
+/**
+ * Detect provider from base URL
+ */
+export function detectProviderFromUrl(baseUrl: string): ProviderType {
+  if (baseUrl.includes('minimax')) return 'minimax';
+  if (baseUrl.includes('openrouter')) return 'openrouter';
+  if (baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
+  if (baseUrl.includes('localhost:1234')) return 'lmstudio';
+  if (baseUrl.includes('localhost:11434')) return 'ollama';
+  return 'custom';
+}
+
+/**
+ * Get active provider from environment
+ */
+export function getActiveProvider(): ProviderType {
+  const baseUrl = process.env.LIMINAL_LLM_BASE_URL;
+  if (baseUrl) {
+    return detectProviderFromUrl(baseUrl);
+  }
+  
+  // Check for specific API keys
+  if (process.env.MINIMAX_API_KEY) return 'minimax';
+  if (process.env.GLM_API_KEY) return 'glm';
+  if (process.env.OPENROUTER_API_KEY) return 'openrouter';
+  
+  // Default to Ollama (local)
+  return 'ollama';
+}
+
+/**
+ * Check if a provider is properly configured
+ */
+export function isProviderConfigured(provider: ProviderType): boolean {
+  const config = getProviderConfig(provider);
+  if (!config) return false;
+  
+  // Local providers don't need API keys
+  if (provider === 'ollama' || provider === 'lmstudio') {
+    return true;
+  }
+  
+  return !!config.apiKey;
+}
+
+/**
+ * List all configured providers
+ */
+export function listConfiguredProviders(): ProviderType[] {
+  return (Object.keys(PROVIDER_TEMPLATES) as ProviderType[]).filter(isProviderConfigured);
+}
+
+/**
+ * Get LLMConfig for the active provider
+ */
+export function getActiveProviderConfig(): LLMConfig | null {
+  const provider = getActiveProvider();
+  const config = getProviderConfig(provider);
+  if (!config) return null;
+  
+  // Destructure to remove extra fields not in LLMConfig
+  const { provider: _, name, description, ...llmConfig } = config;
+  return llmConfig;
+}

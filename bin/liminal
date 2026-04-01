@@ -2,7 +2,7 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { run, PreviewServer, generateMusic, generateVisuals } from '../dist/index.js';
+import { run, PreviewServer, generateMusic, generateVisuals, metaHarness } from '../dist/index.js';
 import { getEffectiveConfig, saveConfig, loadProjectConfig, getMultiModelConfig } from '../dist/config/ConfigLoader.js';
 import { PromptHistory } from '../dist/config/PromptHistory.js';
 import { InteractiveMode } from '../dist/tui/InteractiveMode.js';
@@ -13,6 +13,9 @@ import { ModelRouter } from '../dist/compost/ModelRouter.js';
 import { chatCommand } from '../dist/chat/commands/chat.js';
 import fs from 'fs';
 import path from 'path';
+
+// Initialize Meta-Harness
+metaHarness.initialize();
 
 // Load config and set env vars for LLMClient to pick up
 async function initializeConfig() {

@@ -44,6 +44,9 @@ importers:
       ink:
         specifier: ^5.2.1
         version: 5.2.1(@types/react@18.3.28)(react@18.3.1)
+      mdast:
+        specifier: ^3.0.0
+        version: 3.0.0
       p5:
         specifier: ^1.9.0
         version: 1.11.11
@@ -71,6 +74,9 @@ importers:
       unified:
         specifier: ^11.0.5
         version: 11.0.5
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@testing-library/react':
         specifier: ^16.3.2
@@ -93,6 +99,9 @@ importers:
       '@types/helmet':
         specifier: ^0.0.48
         version: 0.0.48
+      '@types/mdast':
+        specifier: ^4.0.4
+        version: 4.0.4
       '@types/node':
         specifier: ^20.11.0
         version: 20.19.35
@@ -2320,6 +2329,10 @@ packages:
 
   mdast-util-to-string@4.0.0:
     resolution: {integrity: sha512-0H44vDimn51F0YwvxSJSm0eCDOJTRlmN0R1yBh4HLj9wiV1Dn0QoXGbvFAWj2hSItVTlCmBF1hqKlIyUBVFLPg==}
+
+  mdast@3.0.0:
+    resolution: {integrity: sha512-xySmf8g4fPKMeC07jXGz971EkLbWAJ83s4US2Tj9lEdnZ142UP5grN73H1Xd3HzrdbU5o9GYYP/y8F9ZSwLE9g==}
+    deprecated: '`mdast` was renamed to `remark`'
 
   media-typer@1.1.0:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
@@ -5609,6 +5622,8 @@ snapshots:
   mdast-util-to-string@4.0.0:
     dependencies:
       '@types/mdast': 4.0.4
+
+  mdast@3.0.0: {}
 
   media-typer@1.1.0: {}
 

@@ -43,6 +43,7 @@ import { RetryManager } from './RetryManager.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
+import { failureLogger } from '../harness/FailureLogger.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -212,6 +213,18 @@ export class LLMClient {
         latencyMs: Date.now() - llmStartTime, 
         error: errMsg 
       });
+      
+      // Log failure to Meta-Harness for pattern detection
+      failureLogger.log({
+        model: this.config.model,
+        domain: 'unknown', // Will be determined by caller context
+        prompt: userPrompt.slice(0, 500), // Truncate for privacy/size
+        error: errMsg,
+        errorType: error instanceof LLMTimeoutError ? 'timeout' : 
+                   error instanceof LLMAuthError ? 'validation' : 'generation',
+        duration: Date.now() - llmStartTime,
+      });
+      
       return {
         code: `// LLM generation failed: ${errMsg}`,
         success: false,

@@ -1,0 +1,14 @@
+{
+  "id": "M6",
+  "title": "Fix Console.log Leaks in Harness",
+  "description": "Replace console.log with Logger.info in harness files. Files: FailureLogger.ts, PatternDetector.ts, HarnessUpdater.ts",
+  "targetFile": "src/harness/FailureLogger.ts",
+  "search": "console.log(`[FailureLogger] Logged failure: ${filename}`);",
+  "replace": "Logger.info(`[FailureLogger] Logged failure: ${filename}`);",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "files": 3,
+  "note": "This is the first of 3 files. After this succeeds, apply similar changes to PatternDetector.ts and HarnessUpdater.ts",
+  "approved": true
+}

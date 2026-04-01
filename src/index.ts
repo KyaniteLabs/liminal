@@ -603,3 +603,24 @@ export type { HTMLGeneratorOptions } from './generators/html/HTMLWebGenerator.js
 // ASCII Art Generator
 export { ASCIIArtGenerator };
 export type { ASCIIOptions, ASCIIStyle } from './generators/ascii/ASCIIArtGenerator.js';
+
+// Meta-Harness - Self-improving infrastructure
+export {
+  failureLogger,
+  patternDetector,
+  harnessUpdater,
+  metaHarness,
+  type FailureRecord,
+  type Pattern,
+  type HarnessAdaptation,
+  type MetaHarnessStatus,
+  type ProviderType,
+  type ProviderConfig,
+  getProviderConfig,
+  getActiveProvider,
+  getActiveProviderConfig,
+  listConfiguredProviders,
+  isProviderConfigured,
+  detectProviderFromUrl,
+  PROVIDER_TEMPLATES,
+} from './harness/index.js';

@@ -1,0 +1,13 @@
+{
+  "id": "M4",
+  "title": "Fix Thinking Regex Greedy Match",
+  "description": "The regex [\\s\\S]* matches from first { to LAST }, producing malformed code. Change to non-greedy [\\s\\S]*?",
+  "targetFile": "src/llm/LLMClient.ts",
+  "search": "const functionMatch = thinking.match(/(function\\s+\\w+\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*\\})/);",
+  "replace": "const functionMatch = thinking.match(/(function\\s+\\w+\\s*\\([^)]*\\)\\s*\\{[\\s\\S]*?\\})/);",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "files": 1,
+  "approved": true
+}

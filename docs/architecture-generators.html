@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generators vs Harness - Architecture Discussion</title>
+    <link rel="stylesheet" href="styles/docs.css">
+    <style>
+        .philosophy-box {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-left: 4px solid #ff006e;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .philosophy-box h3 {
+            color: #ff006e;
+            margin-bottom: 0.75rem;
+        }
+        .comparison-table th {
+            background: #21262d;
+        }
+        .comparison-table td:first-child {
+            font-weight: 600;
+        }
+        .idea-box {
+            background: rgba(88, 166, 255, 0.1);
+            border: 1px solid var(--accent-blue);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        .idea-box h3 {
+            color: var(--accent-blue);
+            margin-bottom: 0.75rem;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html" class="active">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+            <li><a href="soul-system.html">SOUL</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <a href="architecture.html">Architecture</a>
+        <span>/</span>
+        <span>Generators vs Harness</span>
+    </div>
+
+    <main class="container">
+        <section class="section">
+            <h1 class="section-title">🏗️ Generators vs Harness Architecture</h1>
+            <p class="section-subtitle">Understanding the separation of concerns and exploring plugin architecture</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔧 What the Harness Can Do</h2>
+            
+            <h3 style="color: var(--accent-cyan);">Current Harness Tools (7 Total)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tool</th>
+                        <th>Capability</th>
+                        <th>What It Can Build/Fix</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>readFile</code></td>
+                        <td>Read source code</td>
+                        <td>Understand existing implementations</td>
+                    </tr>
+                    <tr>
+                        <td><code>writeFile</code></td>
+                        <td>Create new files</td>
+                        <td>New generators, validators, tools</td>
+                    </tr>
+                    <tr>
+                        <td><code>applyEdit</code></td>
+                        <td>Targeted modifications</td>
+                        <td>Fix bugs, update logic, refactor</td>
+                    </tr>
+                    <tr>
+                        <td><code>runBuild</code></td>
+                        <td>TypeScript compilation</td>
+                        <td>Verify changes compile</td>
+                    </tr>
+                    <tr>
+                        <td><code>runTests</code></td>
+                        <td>Test execution</td>
+                        <td>Validate functionality</td>
+                    </tr>
+                    <tr>
+                        <td><code>createBackup</code></td>
+                        <td>Safety net</td>
+                        <td>Enable rollback</td>
+                    </tr>
+                    <tr>
+                        <td><code>restoreBackup</code></td>
+                        <td>Undo changes</td>
+                        <td>Revert on failure</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="philosophy-box">
+                <h3>💡 Key Insight</h3>
+                <p>The harness is essentially a <strong>code-writing agent</strong>. It can read existing code, understand patterns, and write new code. But it needs <strong>guidance</strong> in the form of:</p>
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li>Clear task descriptions</li>
+                    <li>Examples of similar implementations</li>
+                    <li>Specific file locations</li>
+                    <li>Expected interfaces/types</li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📊 What Harness Can Build (With Guidance)</h2>
+            
+            <h3 style="color: var(--accent-green);">✅ HIGHLY FEASIBLE (Can Build)</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Why Feasible</th>
+                        <th>Success Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>M1: Fix Tone.js validation</td>
+                        <td>Simple regex change, clear target file</td>
+                        <td>95%</td>
+                    </tr>
+                    <tr>
+                        <td>M6: Replace console.log</td>
+                        <td>Pattern matching, search/replace</td>
+                        <td>90%</td>
+                    </tr>
+                    <tr>
+                        <td>M7: Rate limiting</td>
+                        <td>Add decorator/wrapper pattern</td>
+                        <td>85%</td>
+                    </tr>
+                    <tr>
+                        <td>New Generator (copy existing)</td>
+                        <td>Template-based, follow pattern</td>
+                        <td>80%</td>
+                    </tr>
+                    <tr>
+                        <td>New Tool for harness</td>
+                        <td>Implement Tool interface</td>
+                        <td>80%</td>
+                    </tr>
+                    <tr>
+                        <td>Validation rules</td>
+                        <td>Pattern matching, AST analysis</td>
+                        <td>75%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-yellow); margin-top: 2rem;">⚠️ MODERATE (Needs Strong Guidance)</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Challenge</th>
+                        <th>Success Rate</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>M9: SemanticValidator</td>
+                        <td>Needs CLIP integration, embedding logic</td>
+                        <td>60%</td>
+                    </tr>
+                    <tr>
+                        <td>M10: Accessibility</td>
+                        <td>WCAG rules, pixel analysis, complexity</td>
+                        <td>50%</td>
+                    </tr>
+                    <tr>
+                        <td>M11: RuntimeHealth</td>
+                        <td>Memory profiling, performance metrics</td>
+                        <td>55%</td>
+                    </tr>
+                    <tr>
+                        <td>New domain (e.g., Unity, Unreal)</td>
+                        <td>Needs domain expertise, new patterns</td>
+                        <td>40%</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-red); margin-top: 2rem;">❌ NOT FEASIBLE (Human Design Required)</h3>
+            <ul class="feature-list">
+                <li><strong>Core architecture changes</strong> - Ralph Loop modifications</li>
+                <li><strong>LLM provider integrations</strong> - New API styles</li>
+                <li><strong>Security model changes</strong> - SSRF, sandbox modifications</li>
+                <li><strong>Plugin system design</strong> - Interface definitions</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🎨 What ARE Generators?</h2>
+            
+            <div class="philosophy-box">
+                <h3>The Generator Philosophy</h3>
+                <p><strong>Generators are "dumb" code-producing functions.</strong> They don't think, don't learn, don't improve themselves. They simply:</p>
+                <ol style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li>Take a prompt</li>
+                    <li>Call LLM with system prompt</li>
+                    <li>Return generated code</li>
+                </ol>
+            </div>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Current Generator Structure</h3>
+            <pre><code>src/generators/
+├── p5/
+│   ├── P5Generator.ts          # Main generator
+│   ├── Noise.ts                # Noise utilities
+│   ├── FlowField.ts            # Flow field patterns
+│   └── CellularAutomata.ts     # CA patterns
+├── three/
+│   └── ThreeGenerator.ts       # 3D generator
+├── glsl/
+│   ├── ShaderGenerator.ts      # Shader gen
+│   └── ShaderTemplates.ts      # Shader templates
+├── hydra/
+│   └── HydraGenerator.ts       # Video synthesis
+├── music/
+│   └── MusicGenerator.ts       # Audio generation
+└── ascii/
+    └── ASCIIArtGenerator.ts    # ASCII art
+
+Each generator:
+- Extends BaseGenerator
+- Has a generate(prompt) method
+- Uses domain-specific system prompts
+- Returns { code, explanation }</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">How Generators Fit the Ralph Loop</h3>
+            <pre><code>Ralph Loop Iteration:
+┌─────────────────────────────────────────┐
+│  1. ENHANCE PROMPT                      │
+│     - Add compost DNA                   │
+│     - Load examples                     │
+│     - Add aesthetic guidance            │
+├─────────────────────────────────────────┤
+│  2. SELECT GENERATOR ◄── YOU ARE HERE   │
+│     - Based on domain (p5, glsl, etc.)  │
+│     - Generator calls LLM               │
+│     - Returns code                      │
+├─────────────────────────────────────────┤
+│  3. EVALUATE                            │
+│     - Guardrails check code             │
+│     - Validation                        │
+│     - Scoring                           │
+├─────────────────────────────────────────┤
+│  4. ACCUMULATE                          │
+│     - Save iteration                    │
+│     - Update context                    │
+│     - If failed → HARNESS FIXES IT      │
+└─────────────────────────────────────────┘</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔌 Generators as Skills/Plugins</h2>
+            
+            <div class="idea-box">
+                <h3>💡 THE IDEA: Plugin Architecture</h3>
+                <p>Instead of hardcoded generators, make them <strong>discoverable plugins</strong>:</p>
+                <ul style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li>Add new domains without touching core code</li>
+                    <li>Community can create generators</li>
+                    <li>Load only what you use</li>
+                    <li>Versioned independently</li>
+                </ul>
+            </div>
+
+            <h3 style="color: var(--accent-cyan);">Proposed Plugin Structure</h3>
+            <pre><code>plugins/
+├── core/                           # Built-in plugins
+│   ├── p5/
+│   │   ├── manifest.json          # Plugin metadata
+│   │   ├── generator.ts           # Generator implementation
+│   │   ├── prompts/               # System prompts
+│   │   ├── templates/             # Code templates
+│   │   └── validators/            # Domain-specific validation
+│   ├── three/
+│   ├── glsl/
+│   └── ...
+│
+└── community/                      # Third-party plugins
+    ├── unity/
+    │   ├── manifest.json
+    │   ├── generator.ts
+    │   └── README.md
+    ├── unreal/
+    ├── touchdesigner/
+    └── ...
+
+// Plugin manifest.json
+{
+  "id": "p5",
+  "name": "p5.js Generator",
+  "version": "2.0.0",
+  "author": "Liminal Team",
+  "description": "Generate p5.js creative coding sketches",
+  "entry": "generator.ts",
+  "supportedDomains": ["p5", "javascript", "canvas"],
+  "systemPrompt": "prompts/system.txt",
+  "templates": ["templates/basic.js", "templates/particles.js"],
+  "validators": ["validators/syntax.js"],
+  "dependencies": [],
+  "config": {
+    "defaultCanvasSize": [800, 600],
+    "enableNoise": true
+  }
+}</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Plugin Discovery & Loading</h3>
+            <pre><code>// PluginManager.ts
+class PluginManager {
+  private plugins: Map<string, GeneratorPlugin> = new Map();
+
+  async loadPlugin(path: string): Promise<void> {
+    const manifest = await this.readManifest(path);
+    const plugin = await import(manifest.entry);
+    
+    // Validate plugin interface
+    if (!this.validatePlugin(plugin)) {
+      throw new Error(`Invalid plugin: ${manifest.id}`);
+    }
+    
+    this.plugins.set(manifest.id, plugin);
+  }
+
+  getGenerator(domain: string): GeneratorPlugin | undefined {
+    // Find plugin by supported domain
+    for (const [id, plugin] of this.plugins) {
+      if (plugin.manifest.supportedDomains.includes(domain)) {
+        return plugin;
+      }
+    }
+  }
+
+  listPlugins(): PluginInfo[] {
+    return Array.from(this.plugins.values()).map(p => p.manifest);
+  }
+}</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">⚖️ Trade-offs: Built-in vs Plugin</h2>
+            
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Aspect</th>
+                        <th>Current (Built-in)</th>
+                        <th>Proposed (Plugin)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Installation</td>
+                        <td>All included, bloated</td>
+                        <td>Install only what you use</td>
+                    </tr>
+                    <tr>
+                        <td>New Domain</td>
+                        <td>Edit core code</td>
+                        <td>Drop in plugin folder</td>
+                    </tr>
+                    <tr>
+                        <td>Community</td>
+                        <td>PR to core repo</td>
+                        <td>Publish plugin package</td>
+                    </tr>
+                    <tr>
+                        <td>Versioning</td>
+                        <td>Tied to Liminal version</td>
+                        <td>Independent versions</td>
+                    </tr>
+                    <tr>
+                        <td>Reliability</td>
+                        <td>Tested with core</td>
+                        <td>Variable quality</td>
+                    </tr>
+                    <tr>
+                        <td>Complexity</td>
+                        <td>Simple</td>
+                        <td>More complex (loader, validation)</td>
+                    </tr>
+                    <tr>
+                        <td>Startup Time</td>
+                        <td>Slower (loads all)</td>
+                        <td>Faster (lazy loading)</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🎯 Recommendation</h2>
+            
+            <div class="philosophy-box">
+                <h3>Hybrid Approach</h3>
+                <p><strong>Phase 1 (Now):</strong> Keep core generators built-in for stability</p>
+                <p><strong>Phase 2 (Future):</strong> Add plugin system for extensibility</p>
+                <p style="margin-top: 0.5rem;">The harness can <strong>help build</strong> the plugin system by:</p>
+                <ol style="margin-top: 0.5rem; margin-left: 1.5rem;">
+                    <li>Creating the PluginManager class</li>
+                    <li>Converting existing generators to plugin format</li>
+                    <li>Creating plugin templates for new domains</li>
+                </ol>
+            </div>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Harness Task for Plugin System</h3>
+            <p>We could create a harness task:</p>
+            <pre><code>{
+  "id": "M12",
+  "title": "Create Plugin Architecture",
+  "description": "Add plugin system for generators. Create PluginManager, manifest schema, and convert one generator as proof of concept.",
+  "targetFile": "src/core/PluginManager.ts",
+  "risk": "medium",
+  "complexity": "high",
+  "approved": false
+}</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔗 Related Pages</h2>
+            <ul class="feature-list">
+                <li><a href="architecture-deep-dive.html">Architecture Deep Dive</a> - LLMModeAgent, NaturalInterface details</li>
+                <li><a href="harness-tasks.html">Harness Tasks</a> - M1-M11 task documentation</li>
+                <li><a href="architecture-all-guardrails.html">Guardrail Taxonomy</a> - 18-type guardrail system</li>
+            </ul>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+    </footer>
+</body>
+</html>

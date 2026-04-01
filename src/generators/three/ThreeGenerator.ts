@@ -1,32 +1,38 @@
-import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
-import { PromptLibrary } from '../../prompts/index.js';
+/**
+ * ThreeGenerator - Three.js generation with tier-based prompts
+ */
 
-export interface ThreeGeneratorOptions {
-  signal?: AbortSignal;
-}
+import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
-export class ThreeGenerator {
-  private llm: LLMClient;
-
-  constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>) {
-    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
+export class ThreeGenerator extends TierBasedGenerator {
+  constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
+    super('three', llmOrConfig);
   }
 
-  async generate(prompt: string, options?: ThreeGeneratorOptions): Promise<string> {
-    if (!LLMClient.isConfigured()) {
-      throw new Error('ThreeGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
+  async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
+    return super.generate(prompt, options);
+  }
+
+  /**
+   * Three.js-specific validation
+   */
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    // Three.js code should have scene, camera, or renderer
+    const hasThree = code.includes('THREE') || 
+                     code.includes('import * as THREE') ||
+                     code.includes('from "three"') ||
+                     code.includes("from 'three'");
+    
+    const hasScene = code.includes('Scene') || code.includes('scene');
+    const hasRenderer = code.includes('Renderer') || code.includes('renderer');
+    
+    if (!hasThree) {
+      return {
+        valid: false,
+        error: 'Generated code does not appear to use Three.js',
+      };
     }
 
-    const { system: systemPrompt, user: userPrompt } = PromptLibrary.render('three.generate', {
-      prompt,
-      threeVersion: '0.160.0',
-    });
-    const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
-
-    if (!response.code || response.code.trim() === '') {
-      throw new Error('ThreeGenerator: LLM returned empty code');
-    }
-
-    return response.code;
+    return { valid: true };
   }
 }

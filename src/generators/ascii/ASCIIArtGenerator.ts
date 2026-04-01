@@ -1,69 +1,39 @@
 /**
  * ASCIIArtGenerator - Generates text-based ASCII art via LLM
  * 
+ * Uses TierBasedGenerator for model-aware prompt adaptation
  * NO TEMPLATES - Everything goes through the LLM
- * 
- * FIXED: Simplified prompt, reduced dimensions, added examples
  */
 
-import { LLMClient } from '../../llm/LLMClient.js';
+import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
 export type ASCIIStyle = 'simple' | 'landscape' | 'abstract';
 
-export interface ASCIIOptions {
+export interface ASCIIOptions extends TierBasedGeneratorOptions {
   style?: ASCIIStyle;
   width?: number;
   height?: number;
 }
 
-export class ASCIIArtGenerator {
-  private llmClient: LLMClient;
-
-  constructor(llmClient?: LLMClient) {
-    this.llmClient = llmClient || new LLMClient();
+export class ASCIIArtGenerator extends TierBasedGenerator {
+  constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
+    super('ascii', llmOrConfig);
   }
 
-  async generate(prompt: string, options: ASCIIOptions = {}): Promise<string> {
-    if (!LLMClient.isConfigured()) {
-      throw new Error('ASCIIArtGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
-    }
-    
-    // Reduced default size for faster generation
-    const width = options.width || 40;
-    const height = options.height || 20;
-    const style = options.style || 'simple';
-    
-    const systemPrompt = `You create ASCII art. Output ONLY ASCII characters.
-
-RULES:
-1. Use ONLY these characters: space . - ~ + = * # % @
-2. Output EXACTLY ${height} lines
-3. Each line EXACTLY ${width} characters
-4. NO code blocks, NO explanations, NO markdown
-5. ONLY the ASCII art
-
-EXAMPLE OUTPUT:
-@@@@@@@@@@@@@@@@@@@@@@@@
-@.....................@
-@....@.........@......@
-@...@...........@.....@
-@..@....@@@......@....@
-@@@@@@@@@@@@@@@@@@@@@@@@
-
-Create ${style} ASCII art.`;
-
-    const userPrompt = `Subject: ${prompt}
-
-Output ${height} lines of ASCII art (${width} chars each):`;
-
-    const response = await this.llmClient.generate(systemPrompt, userPrompt);
-    const code = typeof response === 'string' ? response : (response.code || '');
-    
-    if (!code || code.trim() === '') {
-      throw new Error('ASCIIArtGenerator: LLM returned empty code');
-    }
-    
+  async generate(prompt: string, options?: ASCIIOptions): Promise<string> {
+    const code = await super.generate(prompt, options);
+    const width = options?.width || 40;
+    const height = options?.height || 20;
     return this.formatASCII(code, width, height);
+  }
+
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    // ASCII art should only contain specific characters
+    const allowedChars = /^[\s\.\-~+=*#%@\n\r]*$/;
+    if (!allowedChars.test(code)) {
+      return { valid: false, error: 'Generated code contains invalid characters for ASCII art' };
+    }
+    return { valid: true };
   }
 
   private formatASCII(code: string, width: number, height: number): string {

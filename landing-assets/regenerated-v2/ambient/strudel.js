@@ -1,1 +1,0 @@
-s(0).every(4, n(8)).stack(s(1/3), s(2/3)).fast(2, rev(n(4))).gain(.7).pan(.5).room(.3).delay(.1)

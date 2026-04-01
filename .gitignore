@@ -16,6 +16,7 @@ tmp-e2e/
 .vscode/
 *.swp
 *.swo
+.cursor/
 
 # OS
 .DS_Store
@@ -53,6 +54,29 @@ worktrees/
 # Dogfood temp artifacts
 dogfood-temp/
 
-# Landing screenshots
+# Test results (generated artifacts)
+test-results/
+
+# Landing page assets (build output)
 landing-*.png
+landing-archive/
+landing-assets/
 live-p5-test.png
+
+# Generated HTML in docs
+docs/*.html
+
+# Compost heap generated HTML
+compost/heap/*.html
+
+# Internal planning artifacts
+.todos/
+
+# One-off utility scripts (run locally, not distributed)
+capture-*.cjs
+capture-*.js
+record-*.cjs
+generate-example*.ts
+generate-example*.cjs
+generate-all-examples.ts
+dogfood-report-*.md

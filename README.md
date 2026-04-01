@@ -1,8 +1,20 @@
 # Liminal — Creative Coding Agent
 
+[![CI](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node](https://img.shields.io/node/v/liminal-ai)](https://nodejs.org/)
+
 > "The code evolves. You curate. The system learns."
 
 A sophisticated generative art system with an internal Ralph-Wiggum Loop for self-recursive iteration, comprehensive artistic knowledge, and intelligent guidance. Supports p5.js visuals, live music coding (Strudel/Hydra), multi-model swarm generation, deep collaboration, chat-based creative sessions, and a living Compost Mill for digesting creative material.
+
+## Table of Contents
+
+- [Quick Start](#quick-start)
+- [Usage](#usage)
+- [Architecture](#architecture)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Quick Start
 
@@ -618,7 +630,7 @@ const result = await run(enhanced.prompt, {
 - **Quality Gates**: Minimum quality thresholds prevent poor outputs from continuing
 - **Safety Guardrails**: API call limits, resource constraints
 - **Stagnation Detection**: Prevents infinite loops with score trend analysis
-- **Promise Detection`: Terminates when `<promise>COMPLETE</promise>` found in code
+- **Promise Detection**: Terminates when `<promise>COMPLETE</promise>` found in code
 - **Timeout Protection**: Configurable time limits per generation
 - **Graceful Degradation**: Tolerant of failures when enabled
 

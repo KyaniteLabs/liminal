@@ -113,7 +113,7 @@ User: "Fix it"
 
 ## Meta
 
-This SOUL was inspired by OpenClaw's personality system.
-Edit freely - this is YOUR assistant.
+This file configures the Liminal assistant personality.
+Edit freely to customize the assistant's behavior for your needs.
 
 Last updated: 2026-04-01

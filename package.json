@@ -5,6 +5,23 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "author": "Simon Gonzalez de Cruz",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Pastorsimon1798/liminal.git"
+  },
+  "homepage": "https://github.com/Pastorsimon1798/liminal#readme",
+  "bugs": {
+    "url": "https://github.com/Pastorsimon1798/liminal/issues"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
   "scripts": {
     "postinstall": "npm run build",
     "prepack": "npm run build",
@@ -49,10 +66,10 @@
     "concurrently": "^9.1.0",
     "eslint": "^8.57.1",
     "typescript": "^5.3.3",
-    "vitest": "^4.1.0"
+    "vitest": "^4.1.0",
+    "@playwright/test": "^1.58.2",
   },
   "dependencies": {
-    "@playwright/test": "^1.58.2",
     "@remotion/bundler": "^4.0.441",
     "@remotion/cli": "^4.0.441",
     "@remotion/renderer": "^4.0.441",

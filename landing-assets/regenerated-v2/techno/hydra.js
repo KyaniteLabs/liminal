@@ -1,1 +1,0 @@
-osc(2).scale(2,1).rotate(0.5).modulate(osc(4)).color().saturate(0.8).contrast(1.2).out()

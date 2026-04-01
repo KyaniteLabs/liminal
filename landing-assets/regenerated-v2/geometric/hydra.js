@@ -1,1 +1,0 @@
-osc(200, 0.5).rotate(osc(10)).modulate(noise(5, 0.3)).scale(1.5).color(0.6, 1, 0.5).blend(osc(300, 0.4).rotate(-osc(8))).scrollX(0.2).out()

@@ -1,1 +1,0 @@
-s(3, n(12), every(4, stack(slow(speed(gain(distort(room(delay(shape(s, pan(0.5), 0.3)), 0.7), 0.4), 0.8)), fast(rev(n(6)))))), s(12, chop(3, n(8))), sometimes(0.5, speed(stack(s(6), s(9))), 0.3)))

@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "author": "Simon Gonzalez de Cruz",
+  "author": "",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -47,9 +47,8 @@
     "p5js",
     "agent"
   ],
-  "author": "",
-  "license": "MIT",
   "devDependencies": {
+    "@playwright/test": "^1.58.2",
     "@testing-library/react": "^16.3.2",
     "@types/archiver": "^7.0.0",
     "@types/cookie-parser": "^1.4.10",
@@ -66,14 +65,18 @@
     "concurrently": "^9.1.0",
     "eslint": "^8.57.1",
     "typescript": "^5.3.3",
-    "vitest": "^4.1.0",
-    "@playwright/test": "^1.58.2"
+    "vitest": "^4.1.0"
   },
   "dependencies": {
+    "@babel/parser": "^7.29.2",
+    "@babel/traverse": "^7.29.0",
+    "@babel/types": "^7.29.0",
     "@remotion/bundler": "^4.0.441",
     "@remotion/cli": "^4.0.441",
     "@remotion/renderer": "^4.0.441",
+    "@types/babel__traverse": "^7.28.0",
     "archiver": "^7.0.1",
+    "clipboardy": "^5.3.1",
     "cookie-parser": "^1.4.7",
     "csurf": "^1.11.0",
     "dotenv": "^17.3.1",

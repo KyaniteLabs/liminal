@@ -22,7 +22,7 @@ type Domain = 'p5' | 'shader' | 'glsl' | 'three' | 'remotion' | 'music' | 'hydra
 // Size validation - from AUDIT: Qwen35 produced 66b and 74b "successes" that failed
 // -----------------------------------------------------------------------------
 const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
-  'p5': 500,        // p5 needs setup, draw, and some logic
+  'p5': 120,        // p5 simple sketch: setup + draw + canvas (min valid sketch)
   'shader': 800,    // GLSL needs uniforms, main(), and shader logic
   'glsl': 800,      // GLSL alias
   'three': 800,     // Three.js needs scene setup, objects, animation

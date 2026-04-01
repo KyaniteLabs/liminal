@@ -10,12 +10,20 @@
 import { LLMClient } from '../../llm/LLMClient.js';
 import { failureLogger } from '../FailureLogger.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
+import { selfEvaluation } from '../SelfEvaluation.js';
 import {
   readFileTool,
   writeFileTool,
   applyEditTool,
   runBuildTool,
   runTestsTool,
+  searchTool,
+  listDirTool,
+  typeCheckTool,
+  npmTool,
+  lspTool,
+  astValidatorTool,
+  importGuardTool,
   restoreBackupTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
@@ -161,25 +169,59 @@ export class HarnessAgent {
       console.log(`[HarnessAgent] Task completed successfully!`);
       console.log(`[HarnessAgent] Steps executed: ${session.steps.length}`);
       
+      // Self-evaluation: Record success
+      selfEvaluation.recordOutcome({
+        taskId: task.id,
+        success: true,
+        duration: Date.now() - new Date(session.startTime).getTime(),
+        toolsUsed: session.steps.map(s => s.tool),
+        errors: [],
+        strategy: task.verifyCommand ? 'verify-first' : 'direct',
+        timestamp: session.endTime,
+      });
+      
       return session;
       
     } catch (error) {
       session.status = 'failed';
       session.endTime = new Date().toISOString();
       
-      console.error(`[HarnessAgent] Task failed:`, error);
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error(`[HarnessAgent] Task failed:`, errorMsg);
       
       // Log failure
       failureLogger.log({
         model: this.llmClient['config']?.model || 'harness-agent',
         domain: 'harness',
         prompt: task.description,
-        error: error instanceof Error ? error.message : String(error),
+        error: errorMsg,
         errorType: 'generation',
         duration: Date.now() - new Date(session.startTime).getTime(),
       });
       
-      if (autoRollback && session.steps.length > 0) {
+      // Self-evaluation: Record failure
+      selfEvaluation.recordOutcome({
+        taskId: task.id,
+        success: false,
+        duration: Date.now() - new Date(session.startTime).getTime(),
+        toolsUsed: session.steps.map(s => s.tool),
+        errors: [errorMsg],
+        strategy: task.verifyCommand ? 'verify-first' : 'direct',
+        timestamp: session.endTime,
+      });
+      
+      // Self-correction: Check if retry is warranted
+      const retryDecision = selfEvaluation.shouldRetry(task.id, task.verifyCommand ? 'verify-first' : 'direct');
+      if (retryDecision.shouldRetry && autoRollback) {
+        console.log(`[HarnessAgent] Self-correction: ${retryDecision.reason}`);
+        await this.rollback(session);
+        session.status = 'rolled_back';
+        
+        // Log the retry strategy
+        console.log(`[HarnessAgent] Will retry with strategy: ${retryDecision.newStrategy}`);
+      }
+      
+      if (autoRollback && session.steps.length > 0 && !retryDecision.shouldRetry) {
         await this.rollback(session);
         session.status = 'rolled_back';
       }
@@ -208,6 +250,20 @@ export class HarnessAgent {
           return runBuildTool.execute(params);
         case 'runTests':
           return runTestsTool.execute(params);
+        case 'search':
+          return searchTool.execute(params);
+        case 'listDir':
+          return listDirTool.execute(params);
+        case 'typeCheck':
+          return typeCheckTool.execute(params);
+        case 'npm':
+          return npmTool.execute(params);
+        case 'lsp':
+          return lspTool.execute(params);
+        case 'astValidate':
+          return astValidatorTool.execute(params);
+        case 'importGuard':
+          return importGuardTool.execute(params);
         case 'restoreBackup':
           return restoreBackupTool.execute(params);
         default:
@@ -303,6 +359,48 @@ ${sessions.map(s => `
 - Duration: ${s.endTime ? new Date(s.endTime).getTime() - new Date(s.startTime).getTime() : 'ongoing'}ms
 `).join('')}
 `.trim();
+  }
+
+  /**
+   * Self-evaluation: Get current performance metrics
+   */
+  selfEvaluate(): {
+    summary: string;
+    needsImprovement: boolean;
+    recommendations: string[];
+  } {
+    const evaluation = selfEvaluation.evaluate();
+    const regression = selfEvaluation.detectRegression();
+    
+    const summary = selfEvaluation.getSummary();
+    
+    return {
+      summary,
+      needsImprovement: evaluation.needsImprovement || regression.hasRegression,
+      recommendations: [
+        ...evaluation.recommendations,
+        regression.hasRegression ? regression.details : null,
+      ].filter(Boolean) as string[],
+    };
+  }
+
+  /**
+   * Self-correction: Get improvement task if needed
+   */
+  generateImprovementTask(): {
+    shouldCreate: boolean;
+    title?: string;
+    description?: string;
+    priority?: 'low' | 'medium' | 'high' | 'critical';
+  } {
+    return selfEvaluation.generateImprovementTask();
+  }
+
+  /**
+   * Get error remediation suggestions
+   */
+  getErrorHelp(error: string): string[] {
+    return selfEvaluation.getErrorRemediation(error);
   }
 }
 

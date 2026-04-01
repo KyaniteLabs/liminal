@@ -13,6 +13,7 @@ import { render, Box, Text, useInput, Spacer } from 'ink';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import clipboard from 'clipboardy';
 import { 
   metaHarness, 
   createHarnessAgent,
@@ -93,16 +94,32 @@ const History = ({ lines }: { lines: HistoryLine[] }) => (
   </Box>
 );
 
-const Input = ({ value, onChange, onSubmit }: { 
+const Input = ({ value, onChange, onSubmit, onCopy }: { 
   value: string; 
   onChange: (v: string) => void;
   onSubmit: () => void;
+  onCopy?: () => void;
 }) => {
-  useInput((char, key) => {
+  useInput(async (char, key) => {
     if (key.return) {
       onSubmit();
     } else if (key.backspace || key.delete) {
       onChange(value.slice(0, -1));
+    } else if (key.ctrl && char === 'v') {
+      // Paste from clipboard - strip newlines for single-line input
+      try {
+        const pasted = await clipboard.read();
+        const cleaned = pasted.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+        onChange(value + cleaned);
+      } catch {
+        // Ignore paste errors
+      }
+    } else if (key.ctrl && char === 'c') {
+      // Copy current input or last response
+      if (onCopy) onCopy();
+    } else if (char === '\n' || char === '\r') {
+      // Ignore raw newlines from paste - require Enter key
+      return;
     } else if (char && !key.ctrl && !key.meta) {
       onChange(value + char);
     }
@@ -120,7 +137,7 @@ const Input = ({ value, onChange, onSubmit }: {
 function App() {
   const [history, setHistory] = useState<HistoryLine[]>([
     { type: 'system', content: 'Liminal initialized.' },
-    { type: 'assistant', content: 'Hi! I\'m Liminal, your creative coding partner.\n\nJust talk to me naturally:\n  • "Fix the Tone.js validation"\n  • "What\'s the status?"\n  • "Tell me about p5.js noise()"\n\nType "/help" for explicit commands.' },
+    { type: 'assistant', content: 'Hi! I\'m Liminal, your creative coding partner.\n\nJust talk to me naturally:\n  • "Fix the Tone.js validation"\n  • "What\'s the status?"\n  • "Tell me about p5.js noise()"\n\nShortcuts: Ctrl+V=paste, Ctrl+C=copy last response\nType "/help" for explicit commands.' },
   ]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<any>(null);
@@ -133,32 +150,57 @@ function App() {
 
   // Init
   useEffect(() => {
-    metaHarness.initialize();
-    setStatus(metaHarness.getStatus());
+    let mounted = true;
     
-    const llmClient = metaHarness.getLLMClient();
-    if (llmClient) {
-      const harnessAgent = createHarnessAgent(llmClient);
-      const llmAgent = createLLMModeAgent(llmClient);
-      
-      const ni = new NaturalInterface({
-        harnessAgent,
-        llmAgent,
-        llmClient,
-        tasks: [],
-        onStatus: setStatusMsg,
-        onLog: (msg) => {
-          setHistory(h => [...h, { type: 'system', content: msg }]);
-        },
-      });
-      
-      setNaturalInterface(ni);
-      interfaceRef.current = ni;
-      
-      // Load tasks
-      loadTasks(ni);
-    }
+    const init = async () => {
+      try {
+        await metaHarness.initialize();
+        if (!mounted) return;
+        
+        setStatus(metaHarness.getStatus());
+        
+        // DEV MODE: Use harness LLM (MiniMax) for BOTH chat and harness
+        // This gives better English grammar than local qwen models
+        const harnessLLMClient = metaHarness.getLLMClient();
+        
+        console.log('[TUI] DEV MODE: Using harness LLM for chat');
+        
+        if (harnessLLMClient) {
+          const harnessAgent = createHarnessAgent(harnessLLMClient);
+          const llmAgent = createLLMModeAgent(harnessLLMClient);
+          
+          const ni = new NaturalInterface({
+            harnessAgent,
+            llmAgent,
+            llmClient: harnessLLMClient,
+            tasks: [],
+            onStatus: setStatusMsg,
+            onLog: (msg) => {
+              setHistory(h => [...h, { type: 'system', content: msg }]);
+            },
+          });
+          
+          setNaturalInterface(ni);
+          interfaceRef.current = ni;
+          
+          // Load tasks
+          loadTasks(ni);
+        } else {
+          console.error('[TUI] Failed to initialize harness LLM');
+          setHistory(h => [...h, { type: 'error', content: 'Failed to initialize harness LLM. Check LIMINAL_HARNESS_BASE_URL.' }]);
+        }
+      } catch (err) {
+        console.error('[TUI] Init error:', err);
+        setHistory(h => [...h, { type: 'error', content: `Initialization error: ${err instanceof Error ? err.message : String(err)}` }]);
+      }
+    };
+    
+    init();
+    
+    return () => { mounted = false; };
+  }, []);
 
+  useEffect(() => {
     const interval = setInterval(() => {
       setStatus(metaHarness.getStatus());
     }, 2000);
@@ -231,6 +273,20 @@ function App() {
     }
   }, [shouldExit]);
 
+  // Copy last assistant message to clipboard
+  const handleCopy = useCallback(async () => {
+    const lastAssistant = [...history].reverse().find(h => h.type === 'assistant');
+    if (lastAssistant) {
+      try {
+        await clipboard.write(lastAssistant.content);
+        setStatusMsg('Copied to clipboard!');
+        setTimeout(() => setStatusMsg('Ready'), 2000);
+      } catch {
+        setStatusMsg('Copy failed');
+      }
+    }
+  }, [history]);
+
   return (
     <Box flexDirection="column" height="100%">
       <Header />
@@ -241,6 +297,7 @@ function App() {
         value={input} 
         onChange={setInput} 
         onSubmit={handleSubmit} 
+        onCopy={handleCopy}
       />
       <StatusBar status={status} message={statusMsg} />
     </Box>

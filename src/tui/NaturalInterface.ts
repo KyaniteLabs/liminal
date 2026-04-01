@@ -210,6 +210,10 @@ export class NaturalInterface {
       case 'q':
         return { type: 'command', response: 'Goodbye! 👋', shouldContinue: false };
       
+      case 'test':
+      case 'diagnostic':
+        return this.handleDiagnostic();
+      
       default:
         return {
           type: 'ambiguous',
@@ -299,7 +303,7 @@ ${recentHistory}
 
 USER: ${input}
 
-Respond naturally as your personality. If the user is asking you to modify code (fix, add, change, etc.), you should suggest using the agent mode by saying something like "I can help with that. Should I make those changes?"`;
+Respond naturally as your personality. If the user asks you to modify code (fix, add, change, etc.) OR says words like "do", "make", "create", "implement" — immediately invoke the agent without asking for confirmation. Only ask "Should I...?" if the request is ambiguous or destructive (delete, overwrite).`;
 
       const result = await this.llmClient.complete({
         prompt,
@@ -403,10 +407,61 @@ Respond naturally as your personality. If the user is asking you to modify code 
       '  • tasks  - List pending tasks',
       '  • run <id> - Execute a task',
       '  • preview <file> - Preview a file',
+      '  • test   - Run diagnostic tests',
       '  • clear  - Clear screen',
       '  • exit   - Quit',
     ].join('\n');
 
+    return { type: 'command', response, shouldContinue: true };
+  }
+
+  private async handleDiagnostic(): Promise<NaturalInputResult> {
+    this.onStatus('Running diagnostics...');
+    
+    const tests: string[] = [];
+    
+    // Test 1: LLM Connection
+    try {
+      const result = await this.llmClient.complete({
+        prompt: 'Say "PASS" and nothing else.',
+        maxTokens: 10,
+      });
+      tests.push(`1. LLM Connection: ${result.success && result.text.includes('PASS') ? 'PASS' : 'FAIL'}`);
+    } catch (e) {
+      tests.push(`1. LLM Connection: FAIL (${e instanceof Error ? e.message : String(e)})`);
+    }
+    
+    // Test 2: JSON Parsing
+    try {
+      const json = '{"test": true, "number": 42}';
+      const parsed = JSON.parse(json);
+      tests.push(`2. JSON Parsing: ${parsed.test === true && parsed.number === 42 ? 'PASS' : 'FAIL'}`);
+    } catch {
+      tests.push('2. JSON Parsing: FAIL');
+    }
+    
+    // Test 3: Harness Status
+    const { metaHarness } = await import('../harness/index.js');
+    const status = metaHarness.getStatus();
+    tests.push(`3. Harness Online: ${status.initialized ? 'PASS' : 'FAIL'}`);
+    
+    // Test 4: Context Retention
+    const contextTest = await this.llmClient.complete({
+      prompt: 'Remember this word: "banana". Confirm you remember it.',
+      maxTokens: 20,
+    });
+    tests.push(`4. Context Retention: ${contextTest.success && contextTest.text.toLowerCase().includes('banana') ? 'PASS' : 'FAIL'}`);
+    
+    const response = [
+      '📊 HARNESS DIAGNOSTIC RESULTS',
+      '',
+      ...tests,
+      '',
+      `Provider: ${this.llmClient.getConfig().model}`,
+      `Harness: ${status.activeProvider}`,
+      `Failures loaded: ${status.recentFailures}`,
+    ].join('\n');
+    
     return { type: 'command', response, shouldContinue: true };
   }
 

@@ -1,88 +1,44 @@
 let time = 0;
 
 function setup() {
-  createCanvas(800, 600);
-  pixelDensity(1);
-  colorMode(HSB, 360, 100, 100);
+  createCanvas(windowWidth, windowHeight);
+  colorMode(HSB, 360, 100, 100, 100);
+  noiseSeed(random(10000));
 }
 
 function draw() {
-  loadPixels();
+  background(0, 0, 8, 25);
+  time += 0.02;
   
-  for (let x = 0; x < width; x++) {
-    for (let y = 0; y < height; y++) {
-      let nx = x / width;
-      let ny = y / height;
+  blendMode(ADD);
+  
+  for (let x = 0; x < width; x += 4) {
+    for (let y = 0; y < height; y += 4) {
+      let n1 = noise(x * 0.003, y * 0.003, time);
+      let n2 = noise(x * 0.007 + 100, y * 0.007 + 100, time * 1.3);
+      let n3 = noise(x * 0.002 + 200, y * 0.002 + 200, time * 0.8);
+      let n4 = noise(x * 0.01 + 300, y * 0.01 + 300, time * 2);
       
-      let n1 = noise(nx * 3 + time * 0.5, ny * 3, time * 0.3);
-      let n2 = noise(nx * 5 - time * 0.4, ny * 5 + time * 0.4, time * 0.6);
-      let n3 = noise(nx * 8 + time * 0.3 + sin(time * 0.2) * 2, ny * 8 - time * 0.5, time * 0.7);
-      let n4 = noise(nx * 2 + cos(time * 0.15) * 3, ny * 2 + sin(time * 0.25) * 3, time * 0.4);
+      let plasma = sin(n1 * PI * 4 + time * 2) * 0.35 +
+                   sin(n2 * PI * 3 + time * 2.5) * 0.3 +
+                   sin(n3 * PI * 2 + time * 1.5) * 0.2 +
+                   (n4 - 0.5) * 0.3;
       
-      let plasma = n1 * 0.4 + n2 * 0.3 + n3 * 0.2 + n4 * 0.1;
+      let hue = (plasma * 180 + time * 80) % 360;
+      let sat = 90 + sin(plasma * PI) * 10;
+      let bri = 90 + sin(plasma * PI * 2) * 10;
       
-      let colorShift = sin(plasma * TWO_PI * 4 + time * 2) * 0.5 + 0.5;
-      let hue = (plasma * 360 + time * 30 + colorShift * 120) % 360;
-      
-      let brightness = 85 + sin(plasma * TWO_PI * 6 + time * 3) * 15;
-      let saturation = 100;
-      
-      let idx = (x + y * width) * 4;
-      let rgb = hsbToRgb(hue, saturation, brightness);
-      
-      pixels[idx] = rgb.r;
-      pixels[idx + 1] = rgb.g;
-      pixels[idx + 2] = rgb.b;
+      fill(hue, sat, bri, 60);
+      noStroke();
+      let size = 5 + plasma * 8;
+      ellipse(x, y, size, size);
     }
   }
   
-  updatePixels();
-  
-  let glowLayer = createGraphics(width, height);
-  glowLayer.loadPixels();
-  
-  for (let i = 0; i < 3; i++) {
-    glowLayer.filter(BLUR, 8);
-  }
-  
-  blendMode(ADD);
-  tint(255, 30);
-  image(glowLayer, 0, 0);
   blendMode(BLEND);
-  tint(255, 255);
-  
-  time += 0.015;
-}
-
-function hsbToRgb(h, s, b) {
-  h = h % 360;
-  s = constrain(s, 0, 100) / 100;
-  b = constrain(b, 0, 100) / 100;
-  
-  let c = b * s;
-  let x = c * (1 - Math.abs((h / 60) % 2 - 1));
-  let m = b - c;
-  
-  let r, g, bl;
-  
-  if (h < 60) { r = c; g = x; bl = 0; }
-  else if (h < 120) { r = x; g = c; bl = 0; }
-  else if (h < 180) { r = 0; g = c; bl = x; }
-  else if (h < 240) { r = 0; g = x; bl = c; }
-  else if (h < 300) { r = x; g = 0; bl = c; }
-  else { r = c; g = 0; bl = x; }
-  
-  return {
-    r: (r + m) * 255,
-    g: (g + m) * 255,
-    b: (bl + m) * 255
-  };
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-}
-
-function mouseMoved() {
-  time += 0.02;
+  noiseSeed(random(10000));
 }

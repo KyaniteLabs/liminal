@@ -1,130 +1,90 @@
 let shapes = [];
-let trailCanvas;
-let trailAlpha = 12;
-let time = 0;
+const numShapes = 40;
 
 function setup() {
-  createCanvas(800, 600);
+  createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
-  colorMode(HSB, 360, 100, 100, 100);
-  
-  trailCanvas = createGraphics(800, 600);
-  trailCanvas.pixelDensity(1);
-  trailCanvas.colorMode(HSB, 360, 100, 100, 100);
-  trailCanvas.background(0, 0, 4);
-  
-  for (let i = 0; i < 20; i++) {
-    shapes.push(createShape(i));
+  colorMode(HSB, 360, 100, 100, 1);
+  for (let i = 0; i < numShapes; i++) {
+    shapes.push({
+      x: random(width),
+      y: random(height),
+      nx: random(1000),
+      ny: random(1000),
+      size: random(20, 70),
+      rot: random(TWO_PI),
+      rotSpeed: random(-0.02, 0.02),
+      hue: random(360),
+      type: floor(random(4)),
+      speed: random(0.005, 0.015),
+      phase: random(TWO_PI)
+    });
   }
-  
-  windowResized();
-}
-
-function createShape(index) {
-  let types = ['triangle', 'square', 'circle', 'hexagon', 'diamond'];
-  return {
-    x: random(width),
-    y: random(height),
-    vx: 0,
-    vy: 0,
-    baseX: random(width),
-    baseY: random(height),
-    size: random(20, 60),
-    rotation: random(TWO_PI),
-    rotSpeed: random(-0.03, 0.03),
-    type: types[floor(random(types.length))],
-    noiseOffsetX: random(1000),
-    noiseOffsetY: random(1000),
-    noiseOffsetR: random(1000),
-    hueOffset: random(360),
-    speed: random(0.8, 2),
-    orbitRadius: random(50, 150)
-  };
 }
 
 function draw() {
-  time += 0.008;
+  fill(0, 0, 8, 0.12);
+  rect(0, 0, width, height);
   
-  trailCanvas.noStroke();
-  trailCanvas.fill(0, 0, 4, trailAlpha);
-  trailCanvas.rect(0, 0, width, height);
+  let mx = mouseX / width;
+  let my = mouseY / height;
   
-  for (let shape of shapes) {
-    let noiseX = noise(shape.noiseOffsetX + time * 0.5) * 2 - 1;
-    let noiseY = noise(shape.noiseOffsetY + time * 0.5) * 2 - 1;
-    let noiseR = noise(shape.noiseOffsetR + time * 0.3) * 2 - 1;
+  for (let s of shapes) {
+    let nx = noise(s.nx) * 2 - 1;
+    let ny = noise(s.ny) * 2 - 1;
+    let mouseInfluence = dist(mouseX, mouseY, s.x, s.y) < 200 ? 0.5 : 0;
     
-    shape.baseX += noiseX * shape.speed;
-    shape.baseY += noiseY * shape.speed;
+    s.x += nx * s.speed * 80 + (mx * width - s.x) * mouseInfluence * 0.002;
+    s.y += ny * s.speed * 80 + (my * height - s.y) * mouseInfluence * 0.002;
+    s.nx += 0.006;
+    s.ny += 0.006;
+    s.rot += s.rotSpeed;
+    s.phase += 0.02;
     
-    shape.baseX = constrain(shape.baseX, 0, width);
-    shape.baseY = constrain(shape.baseY, 0, height);
+    s.x = (s.x + width) % width;
+    s.y = (s.y + height) % height;
     
-    shape.x = shape.baseX + cos(time * 2 + shape.noiseOffsetX) * shape.orbitRadius * noiseR;
-    shape.y = shape.baseY + sin(time * 2 + shape.noiseOffsetY) * shape.orbitRadius * noiseR;
+    push();
+    translate(s.x, s.y);
+    rotate(s.rot + sin(s.phase) * 0.3);
     
-    shape.rotation += shape.rotSpeed * (0.5 + abs(noiseR) * 1.5);
+    let pulse = 1 + sin(s.phase) * 0.15;
+    let currentSize = s.size * pulse;
     
-    let hue = (shape.hueOffset + time * 30 + frameCount * 0.1) % 360;
-    let sat = 70 + noise(shape.noiseOffsetX) * 30;
-    let bri = 80 + noise(shape.noiseOffsetY) * 20;
+    noStroke();
+    fill(s.hue, 70, 90, 0.7);
     
-    trailCanvas.push();
-    trailCanvas.translate(shape.x, shape.y);
-    trailCanvas.rotate(shape.rotation);
-    trailCanvas.fill(hue, sat, bri, 85);
-    trailCanvas.noStroke();
+    if (s.type === 0) {
+      ellipse(0, 0, currentSize);
+    } else if (s.type === 1) {
+      triangle(0, -currentSize/2, -currentSize/2, currentSize/2, currentSize/2, currentSize/2);
+    } else if (s.type === 2) {
+      rectMode(CENTER);
+      rect(0, 0, currentSize, currentSize);
+    } else {
+      beginShape();
+      for (let i = 0; i < 6; i++) {
+        let angle = TWO_PI * i / 6;
+        let r = i % 2 === 0 ? currentSize/2 : currentSize/4;
+        vertex(cos(angle) * r, sin(angle) * r);
+      }
+      endShape(CLOSE);
+    }
     
-    drawShape(trailCanvas, shape.type, shape.size);
-    trailCanvas.pop();
+    fill(s.hue, 40, 100, 0.4);
+    if (s.type === 0) {
+      ellipse(0, 0, currentSize * 0.3);
+    } else if (s.type === 1) {
+      triangle(0, -currentSize/4, -currentSize/4, currentSize/4, currentSize/4, currentSize/4);
+    } else if (s.type === 2) {
+      rect(0, 0, currentSize * 0.4, currentSize * 0.4);
+    } else {
+      ellipse(0, 0, currentSize * 0.2);
+    }
+    pop();
   }
-  
-  image(trailCanvas, 0, 0);
-  
-  fill(0, 0, 100, 30);
-  noStroke();
-  textSize(11);
-  textAlign(RIGHT, BOTTOM);
-  text('geometric feedback', width - 12, height - 10);
-}
-
-function drawShape(p, type, size) {
-  switch(type) {
-    case 'triangle':
-      p.triangle(0, -size/2, -size/2, size/2, size/2, size/2);
-      break;
-    case 'square':
-      p.rect(-size/2, -size/2, size, size);
-      break;
-    case 'circle':
-      p.ellipse(0, 0, size, size);
-      break;
-    case 'hexagon':
-      drawPolygon(p, 6, size/2);
-      break;
-    case 'diamond':
-      p.quad(0, -size/2, size/2.5, 0, 0, size/2, -size/2.5, 0);
-      break;
-  }
-}
-
-function drawPolygon(p, sides, radius) {
-  p.beginShape();
-  for (let i = 0; i < sides; i++) {
-    let angle = TWO_PI / sides * i - HALF_PI;
-    p.vertex(cos(angle) * radius, sin(angle) * radius);
-  }
-  p.endShape(CLOSE);
 }
 
 function windowResized() {
   resizeCanvas(windowWidth, windowHeight);
-  trailCanvas.resizeCanvas(windowWidth, windowHeight);
-}
-
-function mousePressed() {
-  for (let shape of shapes) {
-    shape.baseX = mouseX + random(-50, 50);
-    shape.baseY = mouseY + random(-50, 50);
-  }
 }

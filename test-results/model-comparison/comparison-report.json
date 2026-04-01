@@ -7,8 +7,8 @@
       "success": false,
       "score": 0.18333333333333335,
       "iterations": 2,
-      "duration": 170330,
-      "codeLength": 2280,
+      "duration": 135065,
+      "codeLength": 1631,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -17,11 +17,11 @@
       "model": "Qwen 3.5 9B",
       "prompt": "neon plasma effect with color cycling",
       "domain": "shader",
-      "success": true,
-      "score": 0.7583333333333334,
+      "success": false,
+      "score": 0.6083333333333333,
       "iterations": 2,
-      "duration": 103447,
-      "codeLength": 1438,
+      "duration": 82404,
+      "codeLength": 1519,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -30,11 +30,24 @@
       "model": "Qwen 3.5 9B",
       "prompt": "techno beat at 130 BPM",
       "domain": "strudel",
-      "success": true,
-      "score": 0.7583333333333334,
-      "iterations": 3,
-      "duration": 231575,
-      "codeLength": 2729,
+      "success": false,
+      "score": 0.55,
+      "iterations": 2,
+      "duration": 15881,
+      "codeLength": 247,
+      "hasThinkTags": false,
+      "isValid": true,
+      "errors": []
+    },
+    {
+      "model": "Qwen 3.5 9B",
+      "prompt": "geometric shapes with feedback trails",
+      "domain": "hydra",
+      "success": false,
+      "score": 0.6083333333333333,
+      "iterations": 2,
+      "duration": 70124,
+      "codeLength": 1903,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -46,21 +59,8 @@
       "success": false,
       "score": 0.18333333333333335,
       "iterations": 2,
-      "duration": 73457,
-      "codeLength": 1248,
-      "hasThinkTags": false,
-      "isValid": true,
-      "errors": []
-    },
-    {
-      "model": "Qwen 3.5 9B",
-      "prompt": "geometric shapes with feedback trails",
-      "domain": "hydra",
-      "success": true,
-      "score": 0.7583333333333334,
-      "iterations": 6,
-      "duration": 438330,
-      "codeLength": 2282,
+      "duration": 18370,
+      "codeLength": 919,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -70,10 +70,10 @@
       "prompt": "neon plasma effect with color cycling",
       "domain": "shader",
       "success": false,
-      "score": 0.6833333333333335,
+      "score": 0.6083333333333333,
       "iterations": 2,
-      "duration": 83804,
-      "codeLength": 2327,
+      "duration": 32410,
+      "codeLength": 1278,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -83,10 +83,10 @@
       "prompt": "techno beat at 130 BPM",
       "domain": "strudel",
       "success": false,
-      "score": 0.6833333333333335,
+      "score": 0.55,
       "iterations": 2,
-      "duration": 82421,
-      "codeLength": 3801,
+      "duration": 8441,
+      "codeLength": 200,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -96,10 +96,10 @@
       "prompt": "geometric shapes with feedback trails",
       "domain": "hydra",
       "success": false,
-      "score": 0.6833333333333335,
+      "score": 0.5333333333333333,
       "iterations": 2,
-      "duration": 63305,
-      "codeLength": 2547,
+      "duration": 66523,
+      "codeLength": 1331,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -111,8 +111,8 @@
       "success": false,
       "score": 0.18333333333333335,
       "iterations": 2,
-      "duration": 28400,
-      "codeLength": 1692,
+      "duration": 22942,
+      "codeLength": 937,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -124,8 +124,8 @@
       "success": false,
       "score": 0.6083333333333333,
       "iterations": 2,
-      "duration": 59711,
-      "codeLength": 2119,
+      "duration": 50344,
+      "codeLength": 1182,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -135,23 +135,25 @@
       "prompt": "techno beat at 130 BPM",
       "domain": "strudel",
       "success": false,
-      "score": 0.6083333333333333,
-      "iterations": 2,
-      "duration": 80040,
-      "codeLength": 4602,
+      "score": 0,
+      "iterations": 0,
+      "duration": 21064,
+      "codeLength": 0,
       "hasThinkTags": false,
-      "isValid": true,
-      "errors": []
+      "isValid": false,
+      "errors": [
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(); p5 code is too small (89b) - minimum is 500b. This likely indicates a failed generation.. Reason: quality threshold not met (score 0.30 < 0.7 for domain: p5)"
+      ]
     },
     {
       "model": "MiniMax-M2.7",
       "prompt": "geometric shapes with feedback trails",
       "domain": "hydra",
-      "success": true,
-      "score": 0.7583333333333334,
-      "iterations": 3,
-      "duration": 87352,
-      "codeLength": 3406,
+      "success": false,
+      "score": 0.6083333333333333,
+      "iterations": 2,
+      "duration": 74601,
+      "codeLength": 2368,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -163,18 +165,48 @@
       "success": false,
       "score": 0,
       "iterations": 0,
-      "duration": 301,
+      "duration": 306,
       "codeLength": 0,
       "hasThinkTags": false,
       "isValid": false,
       "errors": [
-        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(); p5 code is too small (66b) - minimum is 500b. This likely indicates a failed generation.. Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
       ]
     },
     {
       "model": "MiniMax-M2.7-highspeed",
       "prompt": "neon plasma effect with color cycling",
       "domain": "shader",
+      "success": false,
+      "score": 0,
+      "iterations": 0,
+      "duration": 276,
+      "codeLength": 0,
+      "hasThinkTags": false,
+      "isValid": false,
+      "errors": [
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(); p5 code is too small (66b) - minimum is 500b. This likely indicates a failed generation.. Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
+      ]
+    },
+    {
+      "model": "MiniMax-M2.7-highspeed",
+      "prompt": "techno beat at 130 BPM",
+      "domain": "strudel",
+      "success": false,
+      "score": 0,
+      "iterations": 0,
+      "duration": 429,
+      "codeLength": 0,
+      "hasThinkTags": false,
+      "isValid": false,
+      "errors": [
+        "Liminal run failed: Generation failed validation: No code provided. Reason: max iterations reached (3)"
+      ]
+    },
+    {
+      "model": "MiniMax-M2.7-highspeed",
+      "prompt": "geometric shapes with feedback trails",
+      "domain": "hydra",
       "success": false,
       "score": 0,
       "iterations": 0,
@@ -183,37 +215,7 @@
       "hasThinkTags": false,
       "isValid": false,
       "errors": [
-        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
-      ]
-    },
-    {
-      "model": "MiniMax-M2.7-highspeed",
-      "prompt": "techno beat at 130 BPM",
-      "domain": "strudel",
-      "success": false,
-      "score": 0,
-      "iterations": 0,
-      "duration": 291,
-      "codeLength": 0,
-      "hasThinkTags": false,
-      "isValid": false,
-      "errors": [
-        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
-      ]
-    },
-    {
-      "model": "MiniMax-M2.7-highspeed",
-      "prompt": "geometric shapes with feedback trails",
-      "domain": "hydra",
-      "success": false,
-      "score": 0,
-      "iterations": 0,
-      "duration": 406,
-      "codeLength": 0,
-      "hasThinkTags": false,
-      "isValid": false,
-      "errors": [
-        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(). Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
+        "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas(); p5 code is too small (66b) - minimum is 500b. This likely indicates a failed generation.. Reason: quality threshold not met (score 0.07 < 0.7 for domain: p5)"
       ]
     },
     {
@@ -223,8 +225,8 @@
       "success": false,
       "score": 0.18333333333333335,
       "iterations": 2,
-      "duration": 7427,
-      "codeLength": 773,
+      "duration": 9374,
+      "codeLength": 887,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -234,10 +236,10 @@
       "prompt": "neon plasma effect with color cycling",
       "domain": "shader",
       "success": false,
-      "score": 0.6083333333333333,
+      "score": 0.6833333333333335,
       "iterations": 2,
-      "duration": 17650,
-      "codeLength": 1519,
+      "duration": 19503,
+      "codeLength": 2627,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -247,10 +249,10 @@
       "prompt": "techno beat at 130 BPM",
       "domain": "strudel",
       "success": false,
-      "score": 0.6083333333333333,
+      "score": 0.65,
       "iterations": 2,
-      "duration": 43079,
-      "codeLength": 4482,
+      "duration": 9675,
+      "codeLength": 220,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -260,10 +262,10 @@
       "prompt": "geometric shapes with feedback trails",
       "domain": "hydra",
       "success": false,
-      "score": 0.6083333333333333,
+      "score": 0.6833333333333335,
       "iterations": 2,
-      "duration": 45609,
-      "codeLength": 2890,
+      "duration": 11463,
+      "codeLength": 2657,
       "hasThinkTags": false,
       "isValid": true,
       "errors": []
@@ -272,41 +274,41 @@
   "stats": {
     "Qwen 3.5 9B": {
       "attempts": 4,
-      "successes": 3,
-      "avgScore": 0.6145833333333334,
-      "avgTime": 235920.5,
-      "totalIterations": 13,
+      "successes": 0,
+      "avgScore": 0.48750000000000004,
+      "avgTime": 75868.5,
+      "totalIterations": 8,
       "contaminationCount": 0
     },
     "Qwen 3 Coder 40B": {
       "attempts": 4,
       "successes": 0,
-      "avgScore": 0.5583333333333335,
-      "avgTime": 75746.75,
+      "avgScore": 0.46875,
+      "avgTime": 31436,
       "totalIterations": 8,
       "contaminationCount": 0
     },
     "MiniMax-M2.7": {
       "attempts": 4,
-      "successes": 1,
-      "avgScore": 0.5395833333333333,
-      "avgTime": 63875.75,
-      "totalIterations": 9,
+      "successes": 0,
+      "avgScore": 0.35,
+      "avgTime": 42237.75,
+      "totalIterations": 6,
       "contaminationCount": 0
     },
     "MiniMax-M2.7-highspeed": {
       "attempts": 4,
       "successes": 0,
       "avgScore": 0,
-      "avgTime": 317.75,
+      "avgTime": 321,
       "totalIterations": 0,
       "contaminationCount": 0
     },
     "MiniMax-M2.5": {
       "attempts": 4,
       "successes": 0,
-      "avgScore": 0.5020833333333333,
-      "avgTime": 28441.25,
+      "avgScore": 0.55,
+      "avgTime": 12503.75,
       "totalIterations": 8,
       "contaminationCount": 0
     }

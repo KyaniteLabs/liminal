@@ -1,90 +1,64 @@
-let particles = [];
-let hueOffset = 0;
-let trailFade = 25;
-
 function setup() {
   createCanvas(windowWidth, windowHeight);
-  pixelDensity(1);
-  noiseSeed(48392);
-  
-  for (let i = 0; i < 300; i++) {
-    particles.push(new Particle());
-  }
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
-  background(5);
+  colorMode(HSB, 360, 100, 50, 255);
+  background(0);
 }
 
 function draw() {
-  fill(10, trailFade);
   noStroke();
+  
+  // Add feedback trail by drawing a semi-transparent black rect
+  fill(0, 0, 0, 20);
   rect(0, 0, width, height);
   
-  hueOffset += 0.3;
+  let x = random(width);
+  let y = random(height);
   
-  for (let p of particles) {
-    p.update();
-    p.draw();
-  }
-}
-
-class Particle {
-  constructor() {
-    this.pos = createVector(random(width), random(height));
-    this.vel = createVector(0, 0);
-    this.acc = createVector(0, 0);
-    this.maxSpeed = random(2, 4);
-    this.hue = random(360);
-    this.size = random(3, 8);
-    this.trailLength = Math.floor(random(5, 15));
-    this.history = [];
-    this.angleOffset = random(TWO_PI);
-    this.timeScale = random(0.002, 0.005);
-  }
-  
-  update() {
-    // Use noise to create organic movement
-    let angle = noise(this.pos.x * 0.01 + this.angleOffset, this.pos.y * 0.01 + hueOffset, frameCount * this.timeScale) * TWO_PI * 2;
-    let force = p5.Vector.fromAngle(angle);
-    force.mult(0.2);
+  for (let i = 0; i < 40; i++) {
+    // Decreasing size and opacity for trail effect
+    let s = map(i, 0, 40, 30, 2);
+    let h = map(i, 0, 40, 0, 360);
     
-    this.acc.add(force);
-    this.vel.add(this.acc);
-    this.vel.limit(this.maxSpeed);
-    this.pos.add(this.vel);
-    this.acc.mult(0);
-    
-    // Handle boundaries with wrapping
-    if (this.pos.x < 0) this.pos.x = width;
-    if (this.pos.x > width) this.pos.x = 0;
-    if (this.pos.y < 0) this.pos.y = height;
-    if (this.pos.y > height) this.pos.y = 0;
-    
-    // Update history for trail effect
-    this.history.push({x: this.pos.x, y: this.pos.y});
-    while (this.history.length > this.trailLength) {
-      this.history.shift();
-    }
-  }
-  
-  draw() {
-    let colorVal = (this.hue + hueOffset) % 360;
-    
-    // Draw trail
-    for (let i = 0; i < this.history.length; i++) {
-      let alpha = map(i, 0, this.history.length - 1, 0.2, 0);
-      let sizeRatio = map(i, 0, this.history.length - 1, 0.3, 1);
+    // Random geometric shapes
+    if (i % 3 === 0) {
+      fill(h, 80, s * 5);
+      circle(x, y, s);
+    } else if (i % 3 === 1) {
+      fill(h + 60, 90, s * 5);
+      rectMode(CENTER);
+      rect(x, y, s, s);
+    } else {
+      // Triangle
+      let triX = x;
+      let triY = y;
+      let triS = s / 1.732;
       
-      stroke(colorVal, 80, alpha * 255);
-      strokeWeight(this.size * sizeRatio);
-      point(this.history[i].x, this.history[i].y);
+      beginShape();
+      vertex(triX, triY - triS);
+      vertex(triX + triS, triY + triS);
+      vertex(triX - triS, triY + triS);
+      endShape(CLOSE);
     }
     
-    // Draw head
-    noStroke();
-    fill(colorVal, 90, 255);
-    ellipse(this.pos.x, this.pos.y, this.size, this.size);
+    // Move origin slightly for dynamic trail
+    x += random(-10, 10);
+    y += random(-5, 5);
+  }
+  
+  // Randomly spawn a burst every few frames
+  if (frameCount % 2 === 0) {
+    let bx = width / 2 + random(-width/4, width/4);
+    let by = height / 2 + random(-height/4, height/4);
+    
+    for(let j=0; j<15; j++) {
+      let angle = map(j, 0, 15, 0, TWO_PI * 2);
+      let speed = random(5, 20);
+      let vx = cos(angle) * speed;
+      let vy = sin(angle) * speed;
+      
+      // Simulate particle trail logic (simplified for single frame burst)
+      fill(random(360), 100, 80);
+      circle(bx + vx, by + vy, random(2, 8));
+    }
   }
 }

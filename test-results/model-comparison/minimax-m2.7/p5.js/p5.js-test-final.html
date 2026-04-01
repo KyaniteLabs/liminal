@@ -3,76 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;">
-    <meta http-equiv="X-Frame-Options" content="DENY">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
     <title>Remotion Composition</title>
     <style>
-        body { margin: 0; padding: 2rem; background: #0a0a0f; color: #e0e0e0; font-family: 'Monaco', 'Menlo', monospace; font-size: 0.85rem; line-height: 1.6; }
-        pre { white-space: pre-wrap; word-wrap: break-word; }
-        .badge { display: inline-block; padding: 0.25rem 0.75rem; border-radius: 6px; background: rgba(139, 92, 246, 0.2); color: #8b5cf6; font-size: 0.8rem; margin-bottom: 1rem; }
-        .note { color: #a0a0b0; font-size: 0.8rem; margin-bottom: 1rem; }
+        body { 
+            margin: 0; 
+            padding: 2rem; 
+            background: #0a0a0f; 
+            color: #e0e0e0; 
+            font-family: 'Monaco', 'Menlo', monospace; 
+            font-size: 0.85rem; 
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(236, 72, 153, 0.2));
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+        .badge { 
+            display: inline-block; 
+            padding: 0.25rem 0.75rem; 
+            border-radius: 6px; 
+            background: rgba(139, 92, 246, 0.3); 
+            color: #a78bfa; 
+            font-size: 0.8rem; 
+            margin-right: 0.5rem;
+        }
+        .meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            color: #94a3b8;
+        }
+        .meta-value {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        pre { 
+            white-space: pre-wrap; 
+            word-wrap: break-word;
+            background: #0f0f1a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            overflow-x: auto;
+        }
+        .note { 
+            color: #94a3b8; 
+            font-size: 0.8rem; 
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+        }
     </style>
 </head>
 <body>
-    <div class="badge">Remotion</div>
-    <p class="note">Remotion requires a bundler to render. This is the generated composition code:</p>
+    <div class="header">
+        <span class="badge">Remotion</span>
+        <span class="badge">React</span>
+        <div class="meta">
+            <div class="meta-item">Duration: <span class="meta-value">5.0s</span> (150 frames @ 30fps)</div>
+            <div class="meta-item">Resolution: <span class="meta-value">300×300</span></div>
+        </div>
+    </div>
     <pre><code>import React from 'react';
 import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
 
-export const BlueCircle: React.FC&lt;{fps: number; durationInFrames: number; width: number; height: number}&gt; = () =&gt; {
+export const BlueCircleAnimation: React.FC = () =&gt; {
   const frame = useCurrentFrame();
-
-  const scale = interpolate(frame, [0, 40, 80, 120, 150], [0, 1.2, 0.8, 1.1, 0], {
-    extrapolateRight: 'clamp',
-  });
-
-  const opacity = interpolate(frame, [0, 20, 130, 150], [0, 1, 1, 0], {
-    extrapolateRight: 'clamp',
-  });
-
-  const yOffset = interpolate(frame, [0, 60, 150], [100, 0, -50], {
-    extrapolateRight: 'clamp',
-  });
-
-  const glowIntensity = interpolate(frame, [0, 75, 150], [0, 30, 0], {
-    extrapolateRight: 'clamp',
-  });
-
-  const circleSize = 300;
+  
+  const scale = interpolate(
+    frame,
+    [0, 30, 60, 90, 120, 150],
+    [0.3, 1.2, 0.8, 1.1, 0.9, 1]
+  );
+  
+  const yOffset = interpolate(
+    frame,
+    [0, 75, 150],
+    [-50, 50, -50]
+  );
+  
+  const opacity = interpolate(
+    frame,
+    [0, 15, 135, 150],
+    [0, 1, 1, 0]
+  );
 
   return (
-    &lt;AbsoluteFill style={{backgroundColor: '#0a0a1a', justifyContent: 'center', alignItems: 'center'}}&gt;
+    &lt;AbsoluteFill style={{backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center'}}&gt;
       &lt;div
         style={{
-          position: 'absolute',
-          transform: `translateY(${yOffset}px) scale(${scale})`,
+          width: 300,
+          height: 300,
+          borderRadius: '50%',
+          backgroundColor: '#4a90e2',
+          transform: `scale(${scale}) translateY(${yOffset}px)`,
           opacity: opacity,
-          width: circleSize,
-          height: circleSize,
-          borderRadius: '50%',
-          backgroundColor: '#1e90ff',
-          boxShadow: `
-            0 0 ${20 + glowIntensity}px #1e90ff,
-            0 0 ${40 + glowIntensity * 2}px #1e90ff,
-            0 0 ${60 + glowIntensity * 3}px rgba(30, 144, 255, 0.5)
-          `,
-        }}
-      /&gt;
-      &lt;div
-        style={{
-          position: 'absolute',
-          transform: `translateY(${yOffset}px) scale(${scale * 0.7})`,
-          opacity: opacity * 0.3,
-          width: circleSize,
-          height: circleSize,
-          borderRadius: '50%',
-          backgroundColor: '#87ceeb',
+          boxShadow: '0 0 60px rgba(74, 144, 226, 0.6)',
         }}
       /&gt;
     &lt;/AbsoluteFill&gt;
   );
 };</code></pre>
+    <p class="note">
+        💡 <strong>Note:</strong> Remotion compositions require the Remotion CLI or bundler to render. 
+        Use <code>npx remotion render</code> to generate the video from this code.
+    </p>
 </body>
 </html>

@@ -1,76 +1,50 @@
-let particles = [];
-const particleCount = 300;
-let timeOffset = 0;
+let t = 0;
 
 function setup() {
   createCanvas(windowWidth, windowHeight);
   pixelDensity(1);
-  colorMode(HSB, 360, 100, 100, 1);
-  
-  for (let i = 0; i < particleCount; i++) {
-    particles.push({
-      x: random(width),
-      y: random(height),
-      vx: random(-2, 2),
-      vy: random(-2, 2),
-      size: random(3, 8),
-      hueOffset: random(360)
-    });
-  }
 }
 
 function draw() {
-  background(15, 15, 20);
+  background(0);
+  loadPixels();
   
-  for (let i = 0; i < particleCount; i++) {
-    let p = particles[i];
-    
-    // Update position with noise-based movement
-    let noiseX = noise(p.x * 0.01 + timeOffset) - 0.5;
-    let noiseY = noise(p.y * 0.01 + timeOffset) - 0.5;
-    
-    p.x += p.vx + noiseX * 4;
-    p.y += p.vy + noiseY * 4;
-    
-    // Wrap around screen
-    if (p.x < 0) p.x = width;
-    if (p.x > width) p.x = 0;
-    if (p.y < 0) p.y = height;
-    if (p.y > height) p.y = 0;
-    
-    // Calculate dynamic hue based on time, position and particle offset
-    let baseHue = (timeOffset * 50 + p.hueOffset + noise(p.x * 0.02, p.y * 0.02, timeOffset * 0.5) * 180) % 360;
-    
-    // Calculate distance to center for radial gradient effect
-    let distToCenter = dist(p.x, p.y, width / 2, height / 2);
-    let saturation = map(distToCenter, 0, width / 2, 80, 40);
-    let brightness = map(noise(p.x * 0.03 + timeOffset), 0, 1, 60, 95);
-    
-    // Alpha based on noise and position
-    let alpha = map(noise(p.x * 0.02, p.y * 0.02, timeOffset), 0, 1, 0.3, 0.8);
-    
-    fill(baseHue, saturation, brightness, alpha);
-    
-    // Draw particles with varying sizes
-    let currentSize = map(noise(p.x * 0.05 + timeOffset), 0, 1, p.size * 0.5, p.size * 2);
-    circle(p.x, p.y, currentSize);
+  const w = width;
+  const h = height;
+  const d = pixelDensity();
+  const w_d = w * d;
+  const h_d = h * d;
+  
+  t += 0.04;
+  
+  for (let y = 0; y < h_d; y++) {
+    for (let x = 0; x < w_d; x++) {
+      const i = (x + y * w_d) * 4;
+      
+      // Create swirling motion
+      const dx = x - w_d / 2;
+      const dy = y - h_d / 2;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+      const angle = Math.atan2(dy, dx) + t * 0.5;
+      
+      // Generate plasma effect with multiple sine waves
+      let value = 0;
+      value += Math.sin((x/w_d)*8 + t) * 0.33;
+      value += Math.sin((y/h_d)*8 + t) * 0.33;
+      value += Math.sin((dist/50) - t*2) * 0.34;
+      value += Math.sin(angle*4 + t) * 0.33;
+      
+      // Color cycling using sine waves with phase offsets
+      const r = Math.floor(128 + 127 * Math.sin(value + t));
+      const g = Math.floor(128 + 127 * Math.sin(value + t + 2.094)); // +120 degrees
+      const b = Math.floor(128 + 127 * Math.sin(value + t + 4.189)); // +240 degrees
+      
+      pixels[i] = r;
+      pixels[i+1] = g;
+      pixels[i+2] = b;
+      pixels[i+3] = 255;
+    }
   }
   
-  // Add glowing center effect
-  let centerGradient = createGraphics(width, height);
-  centerGradient.clear();
-  centerGradient.beginRadialGradient(0, 0, 0, width / 2, height / 2, min(width, height) * 0.7);
-  centerGradient.addColorStop(0, `hsla(${timeOffset * 50 % 360},100%,80%,0.3)`);
-  centerGradient.addColorStop(1, `hsla(${(timeOffset * 50 + 120) % 360},100%,20%,0)`);
-  centerGradient.rect(0, 0, width, height);
-  
-  blendMode(ADD);
-  image(centerGradient, 0, 0);
-  blendMode(NORMAL);
-  
-  timeOffset += 0.05;
-}
-
-function windowResized() {
-  resizeCanvas(windowWidth, windowHeight);
+  updatePixels();
 }

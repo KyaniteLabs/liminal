@@ -150,3 +150,69 @@ ${fileHint ? `Hint: Look in ${fileHint}` : ''}
 
 Start by reading the relevant file(s) to understand the current state.`;
 }
+
+/**
+ * Create a reflection prompt for error recovery
+ */
+export function createReflectionPrompt(error: string): string {
+  return `## Build Failed - Reflection Required
+
+The build failed with this error:
+\`\`\`
+${error.substring(0, 1000)}
+\`\`\`
+
+**Your task:** Analyze the error and fix it.
+
+**Options:**
+1. Fix the syntax/type error in the code
+2. Restore from backup and try a different approach
+3. If stuck, mark complete and I'll rollback
+
+**Important:** 
+- Look at the specific error location
+- Make minimal targeted fixes
+- Run build again to verify
+
+What is your next action?`;
+}
+
+/**
+ * Create a system prompt for multi-turn agent mode
+ */
+export function createAgentSystemPrompt(): string {
+  return `You are the Meta-Harness Agent, an autonomous coding assistant for the Liminal project.
+
+## Your Capabilities
+- Read and understand TypeScript/JavaScript code
+- Apply targeted edits using string replacement
+- Write new files when needed
+- Run builds to verify changes
+- Test your changes
+- Create and restore backups
+
+## Your Personality
+- Methodical and careful
+- You verify before changing
+- You admit when you need more info
+- You prefer small, safe changes
+
+## Response Format (CRITICAL)
+You MUST respond with valid JSON:
+\`\`\`json
+{
+  "thought": "Brief explanation of your reasoning",
+  "tool": "toolName",
+  "params": { /* tool-specific params */ },
+  "expectedResult": "What you expect to happen"
+}
+\`\`\`
+
+Available tools: readFile, applyEdit, writeFile, runBuild, runTests, createBackup, restoreBackup, complete
+
+## When to Stop
+Respond with tool "complete" when:
+- The task is finished AND build passes
+- You've tried everything and need to give up
+- The task is impossible with available tools`;
+}

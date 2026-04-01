@@ -1,71 +1,91 @@
 import React from 'react';
-import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
+import { useCurrentFrame, interpolate } from 'remotion';
+import { AbsoluteFill } from '@remotion/player';
 
 export const BlueCircleAnimation: React.FC = () => {
   const frame = useCurrentFrame();
-  
-  // Animation parameters
-  const durationInFrames = 150; // 5 seconds at 30fps
-  const radiusStart = 20;
-  const radiusEnd = 80;
-  const opacityStart = 0.3;
-  const opacityEnd = 1;
-  const rotationSpeed = 60;
-  
-  // Calculate animation values based on frame number
-  const progress = interpolate(frame, [0, durationInFrames], [0, 1]);
-  
-  const radius = spring(interpolate(frame, [0, durationInFrames], [radiusStart, radiusEnd]), {damping: 25});
-  const opacity = interpolate(progress, [0, 1], [opacityStart, opacityEnd]);
-  const rotation = (frame * rotationSpeed) % 360;
-  
+
   return (
-    <AbsoluteFill style={{backgroundColor: '#0a0e17'}}>
+    <AbsoluteFill style={{ backgroundColor: '#1a202c' }}>
+      {/* Center the circle */}
       <div
         style={{
           position: 'absolute',
           top: '50%',
           left: '50%',
-          width: radius + 'px',
-          height: radius + 'px',
+          transform: 'translate(-50%, -50%)',
+          width: '400px',
+          height: '400px',
           borderRadius: '50%',
-          background: 'radial-gradient(circle at center, #3b82f6 0%, #1d4ed8 100%)',
-          boxShadow: `0 ${radius / 4}px ${radius / 2}px rgba(59, 130, 246, 0.5), inset 0 ${-radius / 10}px ${radius / 5}px rgba(59, 130, 246, 0.3)`,
-          opacity: opacity,
-          transformOrigin: 'center center',
-          animation: `none`, // Animation handled via Remotion's frame-based timing
-          willChange: 'transform'
+          backgroundColor: '#3182ce', // Tailwind blue-500 equivalent
         }}
       >
-        {/* Inner highlight for depth */}
+        {/* Inner glow effect */}
         <div
           style={{
             position: 'absolute',
-            top: 0,
-            left: 0,
-            width: radius * 0.3 + 'px',
-            height: radius * 0.3 + 'px',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '380px',
+            height: '380px',
             borderRadius: '50%',
-            background: '#60a5fa',
-            opacity: 0.4,
-            transformOrigin: 'center center'
+            background: `radial-gradient(circle, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 70%)`,
           }}
         />
+
+        {/* Animated border */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '-4px',
+            left: '-4px',
+            right: '-4px',
+            bottom: '-4px',
+            borderRadius: '50%',
+            background: `linear-gradient(
+              45deg,
+              #3182ce 25%,
+              #63b3ed 50%,
+              #4299e1 75%
+            )`,
+            opacity: interpolate(frame, [0, 60, 120], [0.8, 1.0, 0.8]),
+          }}
+        />
+
+        {/* Pulsing core */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: `translate(-50%, -50%) scale(${interpolate(frame, [0, 60, 120], [1.0, 1.2, 1.0])})`,
+            width: '340px',
+            height: '340px',
+            borderRadius: '50%',
+            backgroundColor: '#fff',
+            opacity: interpolate(frame, [0, 60], [0, 0.8]),
+          }}
+        />
+
+        {/* Text in center */}
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: `translate(-50%, -50%) scale(${interpolate(frame, [0, 30], [1.0, 1.1])})`,
+            fontSize: '2rem',
+            fontWeight: 'bold',
+            color: '#fff',
+            textAlign: 'center' as const,
+            textTransform: 'uppercase' as const,
+            letterSpacing: '4px',
+          }}
+        >
+          Motion
+        </div>
       </div>
-      
-      {/* Subtle grid pattern in background */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          width: '100%',
-          height: '100%',
-          backgroundImage: `radial-gradient(#1f2937 1px, transparent 1px)`,
-          backgroundSize: '40px 40px',
-          opacity: 0.1
-        }}
-      />
     </AbsoluteFill>
   );
 };

@@ -508,4 +508,122 @@ Rules:
   static isConfigured(): boolean {
     return !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY'));
   }
+
+  /**
+   * Raw completion interface for agent/conversation mode
+   * Returns raw text response for multi-turn conversations
+   */
+  async complete(options: {
+    prompt: string;
+    systemPrompt?: string;
+    maxTokens?: number;
+    temperature?: number;
+    signal?: AbortSignal;
+  }): Promise<{ text: string; success: boolean; error?: string }> {
+    const {
+      prompt,
+      systemPrompt = 'You are a helpful assistant.',
+      maxTokens = 2000,
+      temperature = 0.7,
+      signal,
+    } = options;
+
+    try {
+      const result = await RetryManager.executeWithRetry(async () => {
+        if (this.config.apiStyle === 'ollama') {
+          return await this.callOllamaRaw(systemPrompt, prompt, maxTokens, temperature, signal);
+        }
+        return await this.callOpenAIRaw(systemPrompt, prompt, maxTokens, temperature, signal);
+      });
+
+      return result;
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        text: '',
+        success: false,
+        error: errMsg,
+      };
+    }
+  }
+
+  /** Raw OpenAI-compatible call returning text */
+  private async callOpenAIRaw(
+    system: string,
+    user: string,
+    maxTokens: number,
+    temperature: number,
+    signal?: AbortSignal,
+  ): Promise<{ text: string; success: boolean }> {
+    const baseUrl = this.config.baseUrl;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.config.apiKey) {
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+    }
+
+    const timeoutSignal = signal || AbortSignal.timeout(300000);
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+        temperature,
+        max_tokens: maxTokens,
+      }),
+      signal: timeoutSignal,
+    });
+
+    if (!response.ok) {
+      throw this.classifyHttpError(response.status, response.statusText);
+    }
+
+    const data = await response.json() as Record<string, unknown>;
+    const choices = data.choices as Array<{ message?: { content?: string } }> | undefined;
+    const content = choices?.[0]?.message?.content;
+    return { text: content || '', success: true };
+  }
+
+  /** Raw Ollama call returning text */
+  private async callOllamaRaw(
+    system: string,
+    user: string,
+    maxTokens: number,
+    temperature: number,
+    signal?: AbortSignal,
+  ): Promise<{ text: string; success: boolean }> {
+    const baseUrl = this.config.baseUrl;
+    const timeoutSignal = signal || AbortSignal.timeout(120000);
+    const numCtx = Math.min(maxTokens * 2, 32768);
+
+    const response = await fetch(`${baseUrl}/api/generate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: this.config.model,
+        system,
+        prompt: user,
+        stream: false,
+        options: {
+          num_predict: maxTokens,
+          num_ctx: numCtx,
+          temperature,
+        },
+      }),
+      signal: timeoutSignal,
+    });
+
+    if (!response.ok) {
+      throw new LLMError(`Ollama API error: ${response.status}`, 'ollama', response.status, response.status >= 500);
+    }
+
+    const data = await response.json();
+    return { text: (data as Record<string, unknown>).response as string || '', success: true };
+  }
 }

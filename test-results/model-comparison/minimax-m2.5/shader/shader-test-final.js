@@ -1,59 +1,115 @@
 let t = 0;
+let plasma;
+let cellSize = 4;
+let cols, rows;
+let timeOffset = 0;
 
 function setup() {
   createCanvas(800, 600);
-  colorMode(HSB, 360, 100, 100);
   pixelDensity(1);
+  colorMode(HSB, 360, 100, 100, 1);
+  
+  cols = floor(width / cellSize);
+  rows = floor(height / cellSize);
+  plasma = new Array(cols * rows);
+  
   noStroke();
 }
 
 function draw() {
-  background(0);
+  background(0, 0, 0, 0.15);
   
-  loadPixels();
+  let baseHue = (t * 2) % 360;
+  let mouseInfluenceX = (mouseX / width - 0.5) * 2;
+  let mouseInfluenceY = (mouseY / height - 0.5) * 2;
   
-  for (let x = 0; x < width; x++) {
-    for (let y = 0; y < height; y++) {
-      let nx = x * 0.006;
-      let ny = y * 0.006;
+  for (let y = 0; y < rows; y++) {
+    for (let x = 0; x < cols; x++) {
+      let xPos = x * cellSize;
+      let yPos = y * cellSize;
       
-      let v1 = sin(noise(nx + t * 0.3, ny) * TWO_PI);
-      let v2 = sin(noise(nx - t * 0.2, ny + t * 0.4) * TWO_PI + 1);
-      let v3 = sin(noise(nx * 1.2 + t * 0.1, ny * 1.2 - t * 0.15) * TWO_PI + 2);
-      let v4 = sin(noise(nx * 0.8 - t * 0.25, ny * 0.8 + t * 0.2) * TWO_PI + 3);
+      let noiseVal = noise(
+        x * 0.03 + t * 0.5 + mouseInfluenceX * 2,
+        y * 0.03 + t * 0.3 + mouseInfluenceY * 2,
+        t * 0.2
+      );
       
-      let plasma = (v1 + v2 + v3 + v4) * 0.25;
-      plasma = (plasma + 1) * 0.5;
+      let noiseVal2 = noise(
+        x * 0.05 - t * 0.4,
+        y * 0.05 - t * 0.4,
+        t * 0.15 + 100
+      );
       
-      let colorShift = t * 15;
-      let hue = (plasma * 180 + colorShift) % 360;
+      let combined = (noiseVal + noiseVal2) * 0.5;
       
-      if (hue < 0) hue += 360;
+      let hue = (baseHue + combined * 120 + x * 0.5 + y * 0.5) % 360;
+      let sat = 80 + combined * 20;
+      let bri = 60 + combined * 40;
       
-      let brightness = pow(plasma, 0.7) * 100;
-      let saturation = 80 + plasma * 20;
+      fill(hue, sat, bri, 0.7);
       
-      let idx = (x + y * width) * 4;
-      let r = brightness * cos((hue / 360) * TWO_PI) + brightness;
-      let g = brightness * cos((hue / 360 - 0.33) * TWO_PI) + brightness;
-      let b = brightness * cos((hue / 360 - 0.66) * TWO_PI) + brightness;
+      let size = cellSize * (0.5 + combined * 1.5);
+      let offsetX = (noiseVal - 0.5) * cellSize * 2;
+      let offsetY = (noiseVal2 - 0.5) * cellSize * 2;
       
-      pixels[idx] = constrain(r, 0, 255);
-      pixels[idx + 1] = constrain(g, 0, 255);
-      pixels[idx + 2] = constrain(b, 0, 255);
-      pixels[idx + 3] = 255;
+      rect(xPos + offsetX, yPos + offsetY, size, size);
     }
   }
   
-  updatePixels();
+  drawGlowLines(baseHue);
   
-  t += 0.015;
+  t += 0.02;
+  timeOffset += 0.01;
+}
+
+function drawGlowLines(hue) {
+  for (let i = 0; i < 5; i++) {
+    let offset = i * 72 + t * 30;
+    let alpha = map(sin(t * 2 + i), -1, 1, 0.1, 0.4);
+    
+    stroke((hue + i * 30) % 360, 90, 100, alpha);
+    strokeWeight(2 + i);
+    noFill();
+    
+    beginShape();
+    for (let x = 0; x <= width; x += 20) {
+      let y = height / 2 + 
+        sin(x * 0.01 + t * 2 + i) * 100 +
+        noise(x * 0.02, t, i) * 50;
+      vertex(x, y);
+    }
+    endShape();
+  }
   
-  if (frameCount % 60 === 0) {
-    console.log("Plasma cycling");
+  for (let i = 0; i < 3; i++) {
+    let radius = 150 + sin(t + i) * 50 + mouseX * 0.1;
+    let angle = t * 0.5 + i * TWO_PI / 3;
+    
+    stroke((hue + 180 + i * 40) % 360, 70, 100, 0.3);
+    strokeWeight(1);
+    noFill();
+    
+    push();
+    translate(width / 2, height / 2);
+    rotate(angle);
+    
+    for (let a = 0; a < TWO_PI; a += 0.1) {
+      let r = radius + noise(cos(a), sin(a), t + i) * 30;
+      let x = cos(a) * r;
+      let y = sin(a) * r;
+      point(x, y);
+    }
+    pop();
   }
 }
 
 function windowResized() {
   resizeCanvas(800, 600);
+  cols = floor(width / cellSize);
+  rows = floor(height / cellSize);
+  plasma = new Array(cols * rows);
+}
+
+function mousePressed() {
+  t = 0;
 }

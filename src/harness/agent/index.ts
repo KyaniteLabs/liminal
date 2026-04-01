@@ -9,3 +9,12 @@ export {
   type AgentStep,
   type AgentSession,
 } from './HarnessAgent.js';
+
+export {
+  LLMModeAgent,
+  createLLMModeAgent,
+  type LLMTask,
+  type ToolCall,
+  type AgentMessage,
+  type LLMSession,
+} from './LLMModeAgent.js';

@@ -1,53 +1,34 @@
 import React from 'react';
-import {useCurrentFrame, interpolate, spring, AbsoluteFill} from 'remotion';
+import {useCurrentFrame, interpolate, AbsoluteFill, spring} from 'remotion';
 
 export const SimpleBlueCircle: React.FC = () => {
   const frame = useCurrentFrame();
+  const fps = 30;
   
-  // Calculate position using spring physics for a bouncing effect
-  const yPosition = spring({
-    frame,
-    fps: 30,
-    durationInFrames: 150,
-    mass: 1,
-    tension: 200,
-    friction: 40,
-    from: -200,
-    to: 0
+  // Calculate scale using a spring animation that starts at frame 0
+  const scale = spring({ 
+    frame, 
+    fps,
+    stiffness: 150,
+    damping: 20,
+    mass: 1
   });
-
-  // Scale animation with spring effect
-  const scale = spring({
-    frame,
-    fps: 30,
-    durationInFrames: 150,
-    mass: 1,
-    tension: 300,
-    friction: 30,
-    from: 0.2,
-    to: 1
-  });
-
-  // Rotation animation using linear interpolation
-  const rotation = interpolate(
-    frame,
-    [0, 150],
-    [0, 720]
-  );
-
+  
+  // Calculate horizontal position to move the circle from left to right
+  const xPosition = interpolate(frame, [0, 150], [-300, 1920 + 300]);
+  
   return (
     <AbsoluteFill style={{backgroundColor: '#000'}}>
       <div 
         style={{
-          width: 300,
-          height: 300,
-          backgroundColor: '#0066cc',
-          borderRadius: '50%',
           position: 'absolute',
-          left: '50%',
           top: '50%',
-          transform: `translate(-50%, -50%) translateY(${yPosition}px) scale(${scale}) rotate(${rotation}deg)`,
-          boxShadow: '0 10px 40px rgba(0, 102, 204, 0.6)',
+          left: `${xPosition}px`,
+          transform: `translate(-50%, -50%) scale(${scale})`,
+          width: 200,
+          height: 200,
+          backgroundColor: '#3b82f6',
+          borderRadius: '50%'
         }}
       />
     </AbsoluteFill>

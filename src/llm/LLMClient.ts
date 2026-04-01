@@ -142,6 +142,23 @@ export class LLMClient {
     return 'ollama';
   }
 
+  /** Detect provider name from baseUrl or model for logging */
+  private detectProvider(): string {
+    const baseUrl = this.config.baseUrl.toLowerCase();
+    const model = this.config.model.toLowerCase();
+    
+    if (baseUrl.includes('minimax')) return 'minimax';
+    if (baseUrl.includes('openai')) return 'openai';
+    if (baseUrl.includes('anthropic')) return 'anthropic';
+    if (baseUrl.includes('localhost:11434')) return 'ollama';
+    if (baseUrl.includes('localhost:1234') || baseUrl.includes('lmstudio')) return 'lmstudio';
+    if (model.includes('qwen')) return 'lmstudio';
+    if (model.includes('llama')) return 'ollama';
+    if (model.includes('gemma') || model.includes('mistral')) return 'local';
+    
+    return 'local';
+  }
+
   /** Enable response caching */
   enableCache(options?: { ttlMs?: number; maxEntries?: number }): void {
     this.cache = new CacheManager({ enabled: true, ...options });
@@ -171,12 +188,56 @@ export class LLMClient {
     return { ...this.config };
   }
 
+  private resolvedModel: string | null = null;
+
+  /** Auto-detect model from LM Studio /v1/models endpoint */
+  private async resolveModel(): Promise<string> {
+    if (this.resolvedModel) return this.resolvedModel;
+    
+    // Only auto-detect for local endpoints (LM Studio, etc.)
+    const baseUrl = this.config.baseUrl;
+    const isLocal = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
+    
+    if (!isLocal) {
+      this.resolvedModel = this.config.model;
+      return this.resolvedModel;
+    }
+    
+    try {
+      const response = await fetch(`${baseUrl}/models`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      
+      const data = await response.json() as { data?: Array<{ id: string }> };
+      const models = data.data || [];
+      
+      if (models.length > 0) {
+        // Use first available model (LM Studio typically has one loaded)
+        this.resolvedModel = models[0].id;
+        console.log(`[LLMClient] Auto-detected model: ${this.resolvedModel}`);
+        return this.resolvedModel;
+      }
+    } catch (err) {
+      console.log(`[LLMClient] Auto-detect failed: ${err instanceof Error ? err.message : String(err)}`);
+    }
+    
+    this.resolvedModel = this.config.model;
+    console.log(`[LLMClient] Using fallback model: ${this.resolvedModel}`);
+    return this.resolvedModel;
+  }
+
   /**
    * Generate code from prompts
    * Universal interface - works with any OpenAI-compatible endpoint
    */
   async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {
     const llmStartTime = Date.now();
+    
+    // Auto-detect model on first use (for local endpoints like LM Studio)
+    const resolvedModel = await this.resolveModel();
+    if (resolvedModel !== this.config.model) {
+      this.config.model = resolvedModel;
+    }
+    
     try {
       // Check cache
       const cached = bypassCache ? null : this.cache.get(systemPrompt, userPrompt);
@@ -185,6 +246,7 @@ export class LLMClient {
       }
 
       eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', { 
+        provider: this.detectProvider(),
         model: this.config.model, 
         promptPreview: userPrompt.slice(0, 100) 
       });
@@ -202,6 +264,7 @@ export class LLMClient {
       }
 
       eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', { 
+        provider: this.detectProvider(),
         model: this.config.model, 
         success: true, 
         latencyMs: Date.now() - llmStartTime 
@@ -213,6 +276,7 @@ export class LLMClient {
       const isRetryable = error instanceof LLMError && error.retryable;
       console.error('LLMClient.generate failed:', errMsg, isRetryable ? '(retryable, retries exhausted)' : '');
       eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', { 
+        provider: this.detectProvider(),
         model: this.config.model, 
         success: false, 
         latencyMs: Date.now() - llmStartTime, 
@@ -424,6 +488,8 @@ Rules:
     const timeoutMs = 300000;
     const timeoutSignal = signal || AbortSignal.timeout(timeoutMs);
     
+    console.log(`[LLMClient] Sending request with model: ${this.config.model}`);
+    
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers,
@@ -533,6 +599,12 @@ Rules:
       signal,
     } = options;
 
+    // Auto-detect model on first use (for local endpoints like LM Studio)
+    const resolvedModel = await this.resolveModel();
+    if (resolvedModel !== this.config.model) {
+      this.config.model = resolvedModel;
+    }
+
     try {
       const result = await RetryManager.executeWithRetry(async () => {
         if (this.config.apiStyle === 'ollama') {
@@ -630,5 +702,84 @@ Rules:
 
     const data = await response.json();
     return { text: (data as Record<string, unknown>).response as string || '', success: true };
+  }
+
+  /**
+   * Stream tokens in real-time for chat interfaces
+   * Yields partial content as it arrives from the LLM
+   */
+  async *stream(
+    systemPrompt: string,
+    userPrompt: string,
+    signal?: AbortSignal,
+  ): AsyncGenerator<string> {
+    // Auto-detect model on first use
+    const resolvedModel = await this.resolveModel();
+    if (resolvedModel !== this.config.model) {
+      this.config.model = resolvedModel;
+    }
+
+    const baseUrl = this.config.baseUrl;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+    };
+    if (this.config.apiKey) {
+      headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+    }
+
+    const response = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        model: this.config.model,
+        messages: [
+          { role: 'system', content: systemPrompt },
+          { role: 'user', content: userPrompt },
+        ],
+        temperature: this.config.temperature,
+        max_tokens: this.config.maxTokens,
+        stream: true,
+      }),
+      signal: signal || AbortSignal.timeout(300000),
+    });
+
+    if (!response.ok) {
+      throw this.classifyHttpError(response.status, response.statusText);
+    }
+
+    // Parse SSE stream
+    const reader = response.body!.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || ''; // Keep incomplete line in buffer
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            if (data === '[DONE]') return;
+
+            try {
+              const parsed = JSON.parse(data);
+              const content = parsed.choices?.[0]?.delta?.content;
+              if (content) {
+                yield content;
+              }
+            } catch {
+              // Skip malformed JSON
+            }
+          }
+        }
+      }
+    } finally {
+      reader.releaseLock();
+    }
   }
 }

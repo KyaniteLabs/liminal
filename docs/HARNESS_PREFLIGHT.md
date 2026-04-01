@@ -57,6 +57,34 @@ curl $LIMINAL_LLM_BASE_URL/models 2>/dev/null | head -5
 
 ---
 
+## 💾 Persistent Memory (Auto-Enabled)
+
+The harness now remembers everything across restarts:
+
+```
+~/.liminal/memory/harness-memory.json
+├── Tasks (M1-M11 status, outcomes)
+├── Adaptations (fixes applied, success/failure)
+├── Episodes (conversations, generations)
+└── Patterns (failure patterns detected)
+```
+
+**What this means:**
+- ✅ Tasks completed in previous sessions are remembered
+- ✅ Adaptations (fixes) are tracked with outcomes
+- ✅ User preferences are learned over time
+- ✅ Pattern detection improves with history
+- ✅ Auto-saves every 30 seconds + on graceful shutdown
+
+**View memory status:**
+```bash
+# In TUI
+/status
+# Shows: Memory loaded, tasks total/completed, adaptations count
+```
+
+---
+
 ## 🛡️ Safety Features (Auto-Enabled)
 
 ### What Happens Automatically
@@ -110,7 +138,7 @@ npm run build
 cd /Users/simongonzalezdecruz/workspaces/liminal
 npm run tui
 ```
-Harness state is preserved.
+Harness state is preserved via HarnessMemory.
 
 **Scenario 4: Need to stop ALL operations**
 ```bash
@@ -139,7 +167,7 @@ npm run tui
 ```
 /tasks
 ```
-**Expected:** M1, M4, M6, M7, M8 (and M9-M11 if you added them)
+**Expected:** M1-M11 (all approved and ready)
 
 ### Step 3: Dry Run (Read task first)
 ```bash
@@ -227,7 +255,7 @@ npm run build 2>&1 | head -30
 4. **M7** - Logger fix (safe)
 5. **M8** - Logger fix (safe)
 
-**Wait on M9-M11** until you're comfortable with the harness.
+**M9-M11** are now implemented and safe to run.
 
 ---
 

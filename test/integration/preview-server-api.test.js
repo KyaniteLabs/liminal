@@ -101,14 +101,21 @@ describe('PreviewServer API', () => {
   background(220);
   particles = [];
   for (let i = 0; i < 50; i++) {
-    particles.push({ x: random(width), y: random(height), size: random(5, 20) });
+    particles.push({ x: random(width), y: random(height), speed: random(1, 3), size: random(5, 20), col: color(random(255), random(100, 200), random(255), 200) });
   }
 }
 function draw() {
   background(0, 25);
   for (let p of particles) {
+    fill(p.col);
+    noStroke();
     ellipse(p.x, p.y, p.size);
-    p.x += random(-1, 1);
+    p.x += random(-p.speed, p.speed);
+    p.y += random(-p.speed, p.speed);
+    if (p.x < 0) p.x = width;
+    if (p.x > width) p.x = 0;
+    if (p.y < 0) p.y = height;
+    if (p.y > height) p.y = 0;
   }
 }`;
 

@@ -1,7 +1,7 @@
 # Liminal Architecture Quick Reference
 
 **Generated:** 2026-04-01  
-**Full Diagram:** Open `docs/architecture.html` in browser
+**Version:** 2.0 - Now with Persistent Memory & M9-M11 Guardrails
 
 ---
 
@@ -24,23 +24,31 @@
 **Status:** ACTIVE - Recently wired to RalphLoop
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│  MetaHarnessIntegration 🟢    (Receives failure reports)   │
-│  ├── FailureLogger 🟢                                       │
-│  ├── PatternDetector 🟢                                     │
-│  ├── HarnessUpdater 🟡     (Creates tasks, no auto-exec)   │
-│  ├── HarnessAgent 🟢       (7 tools, rollback)             │
-│  ├── ValidationGuard 🟢                                     │
-│  └── RateLimiter 🟢                                         │
-└─────────────────────────────────────────────────────────────┘
+┌─────────────────────────────────────────────────────────────────────┐
+│  MetaHarnessIntegration 🟢    (Receives failure reports)           │
+│  ├── FailureLogger 🟢         (Persistent to ~/.liminal/failures/) │
+│  ├── PatternDetector 🟢                                            │
+│  ├── HarnessUpdater 🟡        (Creates tasks, no auto-exec)        │
+│  ├── HarnessAgent 🟢          (7 tools, rollback)                  │
+│  ├── HarnessMemory 🟢         (NEW: Persistent task/adapt memory)  │
+│  ├── ValidationGuard 🟢                                            │
+│  └── RateLimiter 🟢                                                │
+└─────────────────────────────────────────────────────────────────────┘
 ```
+
+**Recently Added:**
+- ✅ **HarnessMemory** - Persistent storage for tasks, adaptations, episodes
+  - Location: `~/.liminal/memory/harness-memory.json`
+  - Tracks: M1-M8 tasks, applied fixes, conversations, patterns
+- ✅ Auto-save every 30s + on shutdown
+- ✅ Survives restarts - harness remembers what it did
 
 **Recently Fixed:**
 - ✅ RalphLoop reports failures via `onGenerationComplete()`
 - ✅ E2E tests report to harness
 - ✅ Harness-specific LLM config (temp: 0.2 for code fixes)
 
-**Task Queue:** M1, M4, M6, M7, M8 (all approved)
+**Task Queue:** M1-M11 (M9-M11 now implemented)
 
 ---
 
@@ -51,177 +59,167 @@
 | Component | Status | Notes |
 |-----------|--------|-------|
 | RalphLoop | 🟢 | Now reports to harness |
-| CodeValidator | 🟢 | Includes Tone.js validation (M1 fix needed) |
+| CodeValidator | 🟢 | M1-M8 validated |
 | CreativeEvaluator | 🟢 | 5 dimensions, 0.7 threshold |
 | GenerationOrchestrator | 🟢 | Swarm, Collab, Standard modes |
-| SafetyGuardrails | 🟢 | Budget, circuit breaker, rate limit |
+| SafetyGuardrails | 🟢 | M1-M8 implemented |
 | PromiseDetector | 🟢 | "COMPLETE" detection |
 | ScoringEngine | 🟢 | Multiple strategies |
+| SemanticValidator | 🟢 | **NEW M9** - Intent matching |
+| RuntimeHealthMonitor | 🟢 | **NEW M10** - Memory/FPS monitoring |
+| AccessibilityGuardrails | 🟢 | **NEW M11** - Photosensitivity, a11y |
 | LIR | 🟣 | Parser exists, full integration WIP |
 
 ---
 
-### 3. Generators ("Dumb" by Design) 🟡
+### 3. Generators ("Dumb" by Design + Model Tiers) 🟡
 
-**Status:** INTENTIONALLY NOT SELF-IMPROVING
+**Status:** INTENTIONALLY NOT SELF-IMPROVING + **NEW: Model-Aware**
 
-| Generator | Status | Type |
-|-----------|--------|------|
-| P5GeneratorLLM | 🟡 | Main p5 generator (NO TEMPLATES) |
-| ShaderGenerator | 🟡 | GLSL shaders |
-| ThreeGenerator | 🟡 | Three.js 3D |
-| HydraGenerator | 🟡 | Video synthesis |
-| ToneGenerator | 🟡 | Audio synthesis |
-| StrudelGenerator | 🟡 | Live coding music |
-| RemotionGenerator | 🟡 | Video components |
-| HTMLWebGenerator | 🟡 | Web pages |
-| ASCIIArtGenerator | 🟡 | ASCII art |
+| Generator | Status | Type | Model Tier Support |
+|-----------|--------|------|-------------------|
+| P5GeneratorLLM | 🟡 | p5.js | 🆕 V2 with tier detection |
+| ShaderGenerator | 🟡 | GLSL | Planned |
+| ThreeGenerator | 🟡 | Three.js | Planned |
+| HydraGenerator | 🟡 | Video synth | Planned |
+| ToneGenerator | 🟡 | Audio | Planned |
+| StrudelGenerator | 🟡 | Music | Planned |
 
-**⚠️ Design Principle:** Generators stay dumb. Harness improves the SYSTEM around them.
-
----
-
-### 4. TUI & Preview 🟢
-
-**Status:** ACTIVE
-
-| Component | Status | Function |
-|-----------|--------|----------|
-| HarnessTUI | 🟢 | Ink-based terminal UI |
-| Commands | 🟢 | 10+ commands (/run, /preview, etc.) |
-| PreviewRouter | 🟢 | Auto-routes terminal/browser |
-| BrowserLauncher | 🟢 | Cross-platform browser open |
-| AudioPlayer | 🟢 | System audio playback |
-
----
-
-### 5. Collaboration & Swarm 🟢/🟡
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| SwarmOrchestrator | 🟢 | 7-persona swarm |
-| CreativeBoard | 🟢 | 3-critic evaluation |
-| DeepCollaboration | 🟡 | Built, rarely used |
-| Consensus | ⚪ | Discussed, not prioritized |
-
----
-
-### 6. Evolution & Learning 🟢/🟡
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| MapElites | 🟢 | Quality diversity |
-| NoveltyArchive | 🟢 | Behavior tracking |
-| AestheticModel | 🟡 | Built, slow learning |
-| ArchiveLearning | 🟡 | Built, underutilized |
-
----
-
-### 7. Compost System 🟢
-
-| Component | Status | Notes |
-|-----------|--------|-------|
-| CompostHeap | 🟢 | Code fragment accumulation |
-| CompostMill | 🟢 | Auto-digest at capacity |
-| SeedBank | 🟣 | Exists, partial integration |
-
----
-
-## Wiring Status
-
-### ✅ Recently Fixed (Critical)
-
+**🆕 Model Tier System:**
 ```
-RalphLoop ──reports failures──► Meta-Harness
-    │                              │
-    └── onGenerationComplete()     ├── FailureLogger
-                                   ├── PatternDetector
-                                   └── HarnessAgent
-
-E2E Tests ──reports results──► Meta-Harness
-    └── success/failure logged
+┌─────────────────────────────────────────────────────────────┐
+│  Model Detection → Tier Selection → Prompt Format           │
+├─────────────────────────────────────────────────────────────┤
+│  FLAGSHIP (Claude 4, GPT-4)                                 │
+│  ├── 200k context, 8k budget                                │
+│  └── Concise prompts, XML tags, few-shot examples           │
+├─────────────────────────────────────────────────────────────┤
+│  MEDIUM (GPT-3.5, Claude Haiku)                             │
+│  ├── 100k context, 4k budget                                │
+│  └── Detailed instructions, markdown format                 │
+├─────────────────────────────────────────────────────────────┤
+│  LOCAL (Qwen, Llama, etc.)                                  │
+│  ├── 16k context, 2k budget ← FIXED                         │
+│  └── Explicit instructions, few-shot required               │
+├─────────────────────────────────────────────────────────────┤
+│  TINY (TinyLlama, Phi-2)                                    │
+│  ├── 8k context, 1k budget                                  │
+│  └── Minimal prompts, plain text, no examples               │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### ⚠️ Intentionally Not Wired
+**⚠️ Design Principle:** Generators stay dumb but become **context-aware**. The Harness improves the SYSTEM around them.
+
+---
+
+### 4. Guardrails (M1-M18 Status)
+
+| # | Guardrail | Status | Implementation |
+|---|-----------|--------|----------------|
+| M1 | Prompt Validation | 🟢 | `CodeValidator` |
+| M2 | Domain Routing | 🟢 | `GeneratorRegistry` |
+| M3 | Budget/Rate Limit | 🟢 | `SafetyGuardrails` |
+| M4 | Syntax Validation | 🟢 | `CodeValidator` |
+| M5 | Safety (execution) | 🟢 | `SandboxRunner` |
+| M6 | Anti-Hallucination | 🟢 | `APIValidator` |
+| M7 | Aesthetic Quality | 🟢 | `AestheticScorer` |
+| M8 | Output Size | 🟢 | `CodeValidator.checkSize()` |
+| **M9** | **Semantic Alignment** | 🟢 **NEW** | `SemanticValidator` |
+| **M10** | **Runtime Health** | 🟢 **NEW** | `RuntimeHealthMonitor` |
+| **M11** | **Accessibility** | 🟢 **NEW** | `AccessibilityGuardrails` |
+| M12-M18 | (Various) | ⚪ | Planned/Future |
+
+**🆕 M9: SemanticValidator**
+- LLM-based intent matching
+- Quick static checks (colors, animation, particles)
+- Question: "Does the output match what the user asked for?"
+
+**🆕 M10: RuntimeHealthMonitor**
+- Memory leak detection (growing heap)
+- FPS monitoring (degradation detection)
+- Console error tracking
+- Object accumulation detection
+- Uses Puppeteer for runtime analysis
+
+**🆕 M11: AccessibilityGuardrails**
+- Photosensitivity: No flashing > 3Hz (seizure prevention)
+- Color blindness: Red/green safety
+- Contrast: WCAG AA checks
+- Motion: Respects prefers-reduced-motion
+- Audio: Sudden loud noise detection
+
+---
+
+### 5. Memory Systems 🟢
 
 ```
-Generators ──NO guardrails──► X
-    │                          │
-    └── By design              └── Harness handles safety
-
-HarnessUpdater ──NO auto-exec──► X
-    │                              │
-    └── Creates tasks              └── Requires manual approval
+┌────────────────────────────────────────────────────────────────┐
+│  PERSISTENT STORAGE (~/.liminal/)                              │
+├────────────────────────────────────────────────────────────────┤
+│  config.json              → Provider configuration             │
+│  history.json             → Prompt history                     │
+│  memory/harness-memory.json → 🆕 Tasks, adaptations, episodes │
+│  failures/                → Failure logs for pattern detection │
+│  output/                  → Generated outputs                  │
+│  routing/                 → Routing data                       │
+└────────────────────────────────────────────────────────────────┘
 ```
 
----
-
-## Task List
-
-| ID | Title | Status |
-|----|-------|--------|
-| M1 | Fix Tone.js Validation Gate | ✅ Ready |
-| M4 | Fix Thinking Regex | ✅ Ready |
-| M6 | Fix Console.log (FailureLogger) | ✅ Ready |
-| M7 | Fix Console.log (PatternDetector) | ✅ Ready |
-| M8 | Fix Console.log (HarnessUpdater) | ✅ Ready |
+**Memory Types:**
+- **EpisodicMemory** - Conversations, generations, feedback (now persisted)
+- **HarnessMemory** - Tasks M1-M11, adaptations, pattern history
+- **FailureLogger** - Structured failure records
+- **Compost Heap** - Failed generations for learning
 
 ---
 
-## Architecture Principles
+### 6. Prompt System (Context Engineering) 🟢
 
-1. **Harness Improves, Generators Don't:** Only the meta-harness self-improves
-2. **Observe, Then Fix:** Harness watches failures, applies fixes to system
-3. **Generators Stay Dumb:** No self-improvement in generators
-4. **Manual Approval:** Tasks require approval (auto-execution planned)
-5. **Safety First:** ValidationGuard ensures safe changes only
+**New Architecture V2:**
 
----
-
-## Environment Variables
-
-```bash
-# Standard LLM
-LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
-LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
-
-# Harness-specific (NEW)
-LIMINAL_HARNESS_TEMPERATURE=0.2      # Low for precise fixes
-LIMINAL_HARNESS_MAX_TOKENS=4096
-LIMINAL_HARNESS_TIMEOUT=60000
-LIMINAL_HARNESS_MAX_RETRIES=3
+```
+User Prompt
+    ↓
+┌─────────────────────────────────────────┐
+│  Model Tier Detection                   │
+│  (flagship/medium/local/tiny)           │
+├─────────────────────────────────────────┤
+│  Context Assembly                       │
+│  • SOUL.md → personality                │
+│  • PROJECT_RULES.md → constraints       │
+│  • Domain docs → technical knowledge    │
+│  • HarnessMemory → recent adaptations   │
+├─────────────────────────────────────────┤
+│  Prompt Format Selection                │
+│  • XML tags (Claude)                    │
+│  • Markdown (GPT)                       │
+│  • Plain text (local)                   │
+├─────────────────────────────────────────┤
+│  Token Budget Management                │
+│  (trim context to fit tier budget)      │
+└─────────────────────────────────────────┘
+    ↓
+LLM Call
 ```
 
----
-
-## Quick Commands
-
-```bash
-# Start TUI
-npm run tui
-
-# In TUI:
-/status          # Check harness status
-/tasks           # List available tasks
-/run M1          # Execute task M1
-/run M4          # Execute task M4
-/run M6          # Execute task M6
-/run M7          # Execute task M7
-/run M8          # Execute task M8
-```
+**Key Insight (2026 Best Practice):**
+> "Context Engineering replaced Prompt Engineering" — Andrej Karpathy
 
 ---
 
-## Abandoned Components
+## Quick Links
 
-| Component | Reason |
-|-----------|--------|
-| Template-based Generators | Violates NO TEMPLATES rule |
-| ParticleSystem (template) | Now handled by LLM |
-| CellularAutomata (template) | Now handled by LLM |
-| SelfReflection | Merged into HarnessAgent |
-| React GUI | Deprecated for TUI |
+| Document | Purpose |
+|----------|---------|
+| `GENERATOR_ARCHITECTURE_V2.md` | Full generator redesign |
+| `GUARDRAIL_EXHAUSTIVE.md` | All 18 guardrails analyzed |
+| `HARNESS_PREFLIGHT.md` | Task queue & execution plan |
+| `WHAT_TO_EXPECT.md` | Test outcomes & status |
 
 ---
 
-**Full Visual Diagram:** `docs/architecture.html` (open in browser)
+## Recent Commits
+
+1. **Persistent Memory** - HarnessMemory for cross-session state
+2. **Model Tiers** - Flagship/Medium/Local/Tiny detection
+3. **M9-M11** - Semantic, Runtime Health, Accessibility guardrails

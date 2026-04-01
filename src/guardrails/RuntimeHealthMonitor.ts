@@ -10,7 +10,7 @@
  * Requires Puppeteer to run code in headless browser.
  */
 
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer from 'puppeteer';
 import { getChromeArgs } from '../security/SandboxConfig.js';
 import { generateHTML } from '../utils/generateHTML.js';
 
@@ -61,7 +61,7 @@ export class RuntimeHealthMonitor {
   /**
    * Monitor code health over time
    */
-  async monitor(code: string, domain: string): Promise<RuntimeHealthResult> {
+  async monitor(code: string, _domain: string): Promise<RuntimeHealthResult> {
     const browser = await puppeteer.launch({
       headless: true,
       args: getChromeArgs({ forceDisableSandbox: this.options.disableSandbox }),
@@ -90,7 +90,7 @@ export class RuntimeHealthMonitor {
 
       // Inject performance tracker
       await page.evaluateOnNewDocument(() => {
-        // @ts-ignore
+        // @ts-expect-error
         window.__liminalMetrics = {
           frameCount: 0,
           lastFrameTime: performance.now(),
@@ -100,7 +100,7 @@ export class RuntimeHealthMonitor {
 
         // Track FPS
         function trackFrame() {
-          // @ts-ignore
+          // @ts-expect-error
           const metrics = window.__liminalMetrics;
           const now = performance.now();
           const elapsed = now - metrics.lastFrameTime;
@@ -114,12 +114,12 @@ export class RuntimeHealthMonitor {
 
         // Track object count (rough approximation)
         setInterval(() => {
-          // @ts-ignore
+          // @ts-expect-error
           const metrics = window.__liminalMetrics;
           // Count various object types that might accumulate
           let count = 0;
           if (typeof window.p5 !== 'undefined') {
-            // @ts-ignore
+            // @ts-expect-error
             count += Object.keys(window).filter(k => k.startsWith('_')).length;
           }
           metrics.objectCounts.push(count);
@@ -142,7 +142,7 @@ export class RuntimeHealthMonitor {
       // Get initial metrics
       const initialMetrics = await page.metrics();
       initialObjectCount = await page.evaluate(() => {
-        // @ts-ignore
+        // @ts-expect-error
         return window.__liminalMetrics?.objectCounts?.slice(-1)[0] || 0;
       });
       memorySamples.push(initialMetrics.JSHeapUsedSize / 1024 / 1024);
@@ -159,9 +159,9 @@ export class RuntimeHealthMonitor {
 
         // Get FPS samples from page
         const pageFps = await page.evaluate(() => {
-          // @ts-ignore
+          // @ts-expect-error
           const samples = window.__liminalMetrics?.fpsSamples || [];
-          // @ts-ignore
+          // @ts-expect-error
           window.__liminalMetrics.fpsSamples = []; // Reset for next interval
           return samples;
         });
@@ -169,9 +169,9 @@ export class RuntimeHealthMonitor {
       }
 
       // Get final metrics
-      const finalMetrics = await page.metrics();
+      const _finalMetrics = await page.metrics();
       finalObjectCount = await page.evaluate(() => {
-        // @ts-ignore
+        // @ts-expect-error
         return window.__liminalMetrics?.objectCounts?.slice(-1)[0] || 0;
       });
 

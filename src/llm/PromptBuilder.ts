@@ -13,7 +13,7 @@ import { join } from 'path';
 import { 
   detectModelTier, 
   getModelProfile, 
-  trimContext, 
+  _trimContext,
   selectPromptStyle,
   type ModelTier 
 } from './ModelTier.js';

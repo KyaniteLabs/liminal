@@ -9,7 +9,7 @@
  * - Audio: No sudden loud noises
  */
 
-import puppeteer, { Browser, Page } from 'puppeteer';
+import puppeteer from 'puppeteer';
 import { getChromeArgs } from '../security/SandboxConfig.js';
 import { generateHTML } from '../utils/generateHTML.js';
 
@@ -46,7 +46,7 @@ export class AccessibilityGuardrails {
   /**
    * Run full accessibility check
    */
-  async check(code: string, domain: string): Promise<AccessibilityResult> {
+  async check(code: string, _domain: string): Promise<AccessibilityResult> {
     const browser = await puppeteer.launch({
       headless: true,
       args: getChromeArgs({ forceDisableSandbox: this.options.disableSandbox }),
@@ -60,7 +60,7 @@ export class AccessibilityGuardrails {
 
       // Inject accessibility tracker
       await page.evaluateOnNewDocument(() => {
-        // @ts-ignore
+        // @ts-expect-error
         window.__accessibilityMetrics = {
           luminanceSamples: [] as number[],
           flashCount: 0,
@@ -81,7 +81,7 @@ export class AccessibilityGuardrails {
             // Relative luminance formula
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
             
-            // @ts-ignore
+            // @ts-expect-error
             const metrics = window.__accessibilityMetrics;
             const change = Math.abs(luminance - metrics.lastLuminance);
             if (change > 0.5) { // Significant change
@@ -109,7 +109,7 @@ export class AccessibilityGuardrails {
 
       // Get metrics
       const metrics = await page.evaluate(() => {
-        // @ts-ignore
+        // @ts-expect-error
         return window.__accessibilityMetrics || {};
       });
 

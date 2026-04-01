@@ -20,6 +20,7 @@ export interface ConversationMessage {
   metadata?: {
     toolCalls?: string[];
     commandExecuted?: string;
+    thinking?: string;
   };
 }
 
@@ -122,7 +123,7 @@ export class NaturalInterface {
    * Process natural language input
    * This is the main entry point - like Claude Code's input handling
    */
-  async processInput(input: string): Promise<NaturalInputResult> {
+  async processInput(input: string, onStream?: (chunk: string) => void): Promise<NaturalInputResult> {
     const trimmed = input.trim();
     
     // Add user message to history
@@ -144,8 +145,8 @@ export class NaturalInterface {
       return this.handleAgentRequest(trimmed);
     }
     
-    // 4. Default: chat mode with personality
-    return this.handleChat(trimmed);
+    // 4. Default: chat mode with personality (streaming if callback provided)
+    return this.handleChat(trimmed, onStream);
   }
 
   /**
@@ -284,9 +285,9 @@ export class NaturalInterface {
   }
 
   /**
-   * Handle chat (conversational mode with SOUL personality)
+   * Handle chat with streaming for real-time response
    */
-  private async handleChat(input: string): Promise<NaturalInputResult> {
+  private async handleChat(input: string, onStream?: (chunk: string) => void): Promise<NaturalInputResult> {
     this.onStatus('Thinking...');
 
     try {
@@ -296,17 +297,58 @@ export class NaturalInterface {
         .map(m => `${m.role}: ${m.content}`)
         .join('\n\n');
 
-      const prompt = `${this.session.soul}
-
-CONVERSATION HISTORY:
+      const systemPrompt = this.session.soul;
+      const userPrompt = `CONVERSATION HISTORY:
 ${recentHistory}
 
 USER: ${input}
 
 Respond naturally as your personality. If the user asks you to modify code (fix, add, change, etc.) OR says words like "do", "make", "create", "implement" — immediately invoke the agent without asking for confirmation. Only ask "Should I...?" if the request is ambiguous or destructive (delete, overwrite).`;
 
+      // Use streaming if callback provided
+      if (onStream) {
+        let fullResponse = '';
+        let isThinking = false;
+        let thinkingContent = '';
+
+        for await (const chunk of this.llmClient.stream(systemPrompt, userPrompt)) {
+          // Handle thinking tags from MiniMax
+          if (chunk.includes('<think>')) {
+            isThinking = true;
+            this.onStatus('🤔 Thinking...');
+            continue;
+          }
+          
+          if (chunk.includes('</think>')) {
+            isThinking = false;
+            this.onStatus('Generating...');
+            continue;
+          }
+
+          if (isThinking) {
+            thinkingContent += chunk;
+            // Show brief thinking indicator
+            if (thinkingContent.length % 50 === 0) {
+              this.onStatus(`🤔 Thinking... (${thinkingContent.length} chars)`);
+            }
+            continue;
+          }
+
+          fullResponse += chunk;
+          onStream(chunk);
+        }
+
+        // Clean up any remaining think tags
+        fullResponse = this.cleanThinkTags(fullResponse);
+        
+        this.addMessage('assistant', fullResponse, { thinking: thinkingContent });
+        return { type: 'chat', response: fullResponse, shouldContinue: true };
+      }
+
+      // Fallback to non-streaming
       const result = await this.llmClient.complete({
-        prompt,
+        prompt: userPrompt,
+        systemPrompt,
         maxTokens: 1000,
         temperature: 0.7,
       });
@@ -315,7 +357,7 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
         throw new Error(result.error || 'LLM failed');
       }
 
-      const response = result.text.trim();
+      const response = this.cleanThinkTags(result.text.trim());
       this.addMessage('assistant', response);
 
       return { type: 'chat', response, shouldContinue: true };
@@ -328,6 +370,14 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
         shouldContinue: true,
       };
     }
+  }
+
+  private cleanThinkTags(text: string): string {
+    return text
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/<think>/gi, '')
+      .replace(/<\/think>/gi, '')
+      .trim();
   }
 
   // Command handlers

@@ -54,6 +54,7 @@ const StatusBar = ({ status, message }: { status: any; message: string }) => (
 interface HistoryLine {
   type: 'user' | 'assistant' | 'output' | 'error' | 'system' | 'code' | 'audio';
   content: string;
+  streaming?: boolean;
 }
 
 const History = ({ lines }: { lines: HistoryLine[] }) => (
@@ -65,7 +66,7 @@ const History = ({ lines }: { lines: HistoryLine[] }) => (
         )}
         {line.type === 'assistant' && (
           <Box marginLeft={2} marginY={1}>
-            <Text>{line.content}</Text>
+            <Text>{line.content}{line.streaming && <Text color={C.primary}>▌</Text>}</Text>
           </Box>
         )}
         {line.type === 'output' && (
@@ -244,13 +245,47 @@ function App() {
       return;
     }
 
-    // Process through natural interface
+    // Process through natural interface with streaming for chat
     try {
-      const result = await ni.processInput(userInput);
+      let streamingContent = '';
       
-      // Map result type to display type
+      const result = await ni.processInput(userInput, (chunk) => {
+        // Stream handler - updates UI incrementally
+        streamingContent += chunk;
+        
+        // Update the last assistant message or add a new streaming one
+        setHistory(h => {
+          const lastMsg = h[h.length - 1];
+          if (lastMsg && lastMsg.type === 'assistant' && lastMsg.streaming) {
+            // Update existing streaming message
+            return [...h.slice(0, -1), { 
+              type: 'assistant', 
+              content: streamingContent,
+              streaming: true,
+            }];
+          } else {
+            // Add new streaming message
+            return [...h, { 
+              type: 'assistant', 
+              content: streamingContent,
+              streaming: true,
+            }];
+          }
+        });
+      });
+      
+      // Finalize the message - mark as not streaming
       const displayType = result.type === 'chat' ? 'assistant' : 'output';
-      setHistory(h => [...h, { type: displayType, content: result.response }]);
+      setHistory(h => {
+        const lastMsg = h[h.length - 1];
+        if (lastMsg && lastMsg.streaming) {
+          return [...h.slice(0, -1), { 
+            type: displayType, 
+            content: result.response,
+          }];
+        }
+        return [...h, { type: displayType, content: result.response }];
+      });
       
       if (!result.shouldContinue) {
         setShouldExit(true);

@@ -176,7 +176,7 @@
         <section class="section">
             <h1 class="section-title">📊 Development Dashboard</h1>
             <p class="section-subtitle">Real-time status of all Liminal components and development tasks</p>
-            <p style="color: var(--text-muted); font-size: 0.875rem;">Last updated: April 1, 2026 | Commit: 16e2d0e</p>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Last updated: April 1, 2026 | Commit: fb22f95</p>
         </section>
 
         <!-- Critical Alerts -->
@@ -186,9 +186,9 @@
                 <h4>⚠️ Documentation Site on docs-site Branch</h4>
                 <p>The new documentation site is complete but on the <code>docs-site</code> branch. Needs merge to main when audit work is complete.</p>
             </div>
-            <div class="alert warning">
-                <h4>⚠️ Repository Cleanup Needed</h4>
-                <p>141 files in root (professional standard: <20). 26 markdown files, 40+ screenshots need organizing per PUBLIC_AUDIT_REPORT.md.</p>
+            <div class="alert success">
+                <h4>✅ Repository Cleanup Complete</h4>
+                <p>Root directory cleaned from 141 files to 17 files. Internal audit docs archived to docs/archive/. LICENSE, CONTRIBUTING.md, CODE_OF_CONDUCT.md added.</p>
             </div>
         </section>
 
@@ -411,9 +411,9 @@
                 </div>
                 <div class="task-column">
                     <h4>⏸️ Blocked</h4>
-                    <div class="task-item low">
-                        <div class="task-id">REPO</div>
-                        <div>Repository cleanup</div>
+                    <div class="task-item low" style="opacity: 0.5;">
+                        <div class="task-id">MERGE</div>
+                        <div>docs-site → main</div>
                     </div>
                 </div>
             </div>
@@ -423,15 +423,15 @@
         <section class="section">
             <h2 class="section-title">❌ What's Missing / Incomplete</h2>
             
-            <div class="alert">
-                <h4>Repository Organization (CRITICAL)</h4>
+            <div class="alert success">
+                <h4>✅ Repository Organization - COMPLETE</h4>
                 <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
-                    <li>141 files in root (should be <20)</li>
-                    <li>26 markdown files need organizing to docs/internal/</li>
-                    <li>40+ PNG screenshots need moving to docs/assets/</li>
-                    <li>7 log files should be in .gitignore</li>
-                    <li>Missing LICENSE file</li>
-                    <li>package.json missing repository metadata</li>
+                    <li>✅ 141 → 17 files in root</li>
+                    <li>✅ Internal audit docs archived to docs/archive/</li>
+                    <li>✅ LICENSE file added</li>
+                    <li>✅ CONTRIBUTING.md added</li>
+                    <li>✅ CODE_OF_CONDUCT.md added</li>
+                    <li>✅ package.json metadata complete</li>
                 </ul>
             </div>
 
@@ -445,19 +445,20 @@
                 </ul>
             </div>
 
-            <div class="alert" style="background: rgba(137, 87, 229, 0.1); border-color: var(--accent-purple);">
-                <h4 style="color: var(--accent-purple);">Nice to Have</h4>
+            <div class="alert success">
+                <h4>✅ Nice to Have - COMPLETE</h4>
                 <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
-                    <li>CONTRIBUTING.md</li>
-                    <li>CODE_OF_CONDUCT.md</li>
-                    <li>CHANGELOG standardization</li>
+                    <li>✅ CONTRIBUTING.md - Added</li>
+                    <li>✅ CODE_OF_CONDUCT.md - Added</li>
+                    <li>✅ CHANGELOG.md - Standardized format</li>
                 </ul>
             </div>
         </section>
 
         <!-- Recent Commits -->
         <section class="section">
-            <h2 class="section-title">📝 Recent Commits (docs-site branch)</h2>
+            <h2 class="section-title">📝 Recent Commits</h2>
+            <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;">Main Branch</h3>
             <table>
                 <thead>
                     <tr>
@@ -467,6 +468,49 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td><code>fb22f95</code></td>
+                        <td>Add DOCUMENTATION_WARNING.txt - prevent duplicate creation</td>
+                        <td>1 file changed, 42 insertions</td>
+                    </tr>
+                    <tr>
+                        <td><code>0301698</code></td>
+                        <td>Add NO DUPLICATION rule - prevent wheel reinvention</td>
+                        <td>1 file changed, 69 insertions</td>
+                    </tr>
+                    <tr>
+                        <td><code>f903f28</code></td>
+                        <td>Add PROJECT_RULES.md - Documentation is the Bible</td>
+                        <td>2 files changed, 264 insertions</td>
+                    </tr>
+                    <tr>
+                        <td><code>3f9f6db</code></td>
+                        <td>Fix: Remove trailing comma in package.json devDependencies</td>
+                        <td>1 file changed, 1 insertion(+), 1 deletion(-)</td>
+                    </tr>
+                    <tr>
+                        <td><code>7d3bf92</code></td>
+                        <td>chore: Public repo cleanup for professional release</td>
+                        <td>28+ files removed, LICENSE/CONTRIBUTING/COC added</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-cyan); margin: 2rem 0 1rem;">Docs-Site Branch</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Commit</th>
+                        <th>Message</th>
+                        <th>Files</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>78094ce</code></td>
+                        <td>Add Development Dashboard + link all pages</td>
+                        <td>9 files changed, 509 insertions</td>
+                    </tr>
                     <tr>
                         <td><code>16e2d0e</code></td>
                         <td>Add navigation to existing architecture pages</td>
@@ -485,11 +529,10 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol style="margin-left: 1.5rem; color: var(--text-secondary); line-height: 2;">
-                <li><strong>Merge docs-site to main</strong> when audit work is complete</li>
-                <li><strong>Repository cleanup</strong> - organize root directory</li>
-                <li><strong>Add LICENSE file</strong> - MIT license</li>
-                <li><strong>Implement M9-M11</strong> - Critical guardrails</li>
-                <li><strong>Test harness tasks</strong> - Run M1-M8</li>
+                <li><strong>Merge docs-site to main</strong> - Documentation site is ready</li>
+                <li><strong>Implement M9-M11</strong> - Critical guardrails (Semantic, Accessibility, Runtime)</li>
+                <li><strong>Test harness tasks</strong> - Run M1-M8 and verify fixes</li>
+                <li><strong>Update index.html</strong> - Link to CONTRIBUTING.md, CODE_OF_CONDUCT.md, LICENSE</li>
             </ol>
         </section>
     </main>

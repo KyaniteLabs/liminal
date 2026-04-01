@@ -10,7 +10,6 @@ import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'fs';
 import { join } from 'path';
 import { PromptLibrary } from '../prompts/PromptLibrary.js';
 import { LLMClient } from '../llm/LLMClient.js';
-import type { BlogTheme } from './themes.js';
 import { getTheme } from './themes.js';
 
 // ── Types ──
@@ -66,9 +65,9 @@ export class BlogToVideoPipeline {
     });
 
     const result = await this.llm.generate(rendered.system, rendered.user);
-    if (!result.success) throw new Error('Script generation failed');
-
     const script = result.code;
+    if (!result.success || !script) throw new Error('Script generation failed');
+
     const dir = this.ensureOutputDir(theme.slug);
     const scriptPath = join(dir, 'script.md');
     writeFileSync(scriptPath, script, 'utf-8');
@@ -93,9 +92,9 @@ export class BlogToVideoPipeline {
     });
 
     const result = await this.llm.generate(rendered.system, rendered.user);
-    if (!result.success) throw new Error('Spec generation failed');
-
     const spec = result.code;
+    if (!result.success || !spec) throw new Error('Spec generation failed');
+
     const dir = this.ensureOutputDir(themeSlug);
     const specPath = join(dir, 'spec.md');
     writeFileSync(specPath, spec, 'utf-8');
@@ -120,7 +119,7 @@ export class BlogToVideoPipeline {
       const { script, path: scriptPath } = await this.generateScript(themeId);
 
       // Stage 2: Script → Spec
-      const { spec, path: specPath } = await this.generateSpec(script, theme.slug, options);
+      const { path: specPath } = await this.generateSpec(script, theme.slug, options);
 
       // Stage 3 is the existing Remotion pipeline — return spec for now.
       // The RemotionGenerator + RemotionRenderer can be called separately

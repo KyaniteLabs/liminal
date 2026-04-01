@@ -388,11 +388,11 @@ Output only the code, no explanation.`;
 
       let generatedCode: string;
       try {
-        const result = await client.generate(prompt, {
-          temperature: 0.7,
-          max_tokens: 500,
-        });
-        generatedCode = result.content || '';
+        const result = await client.generate(
+          'You are a creative coding assistant. Generate p5.js code.',
+          prompt
+        );
+        generatedCode = result.code || '';
       } catch (error) {
         console.warn('[E2E] LLM generation failed:', error);
         return; // Skip test

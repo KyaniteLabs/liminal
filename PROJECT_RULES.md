@@ -227,3 +227,72 @@ docs: Updated features.html and dashboard.html
 **These rules are BINDING for all future work on Liminal.**
 
 *Violating these rules requires explicit justification and immediate correction.*
+
+---
+
+## 🚫 RULE 11: NO DUPLICATION - Prevention of Wheel Reinvention
+
+### CRITICAL: Only ONE Documentation Site Exists
+
+**There is ONLY ONE documentation site:**
+- **Location:** `docs/` directory (in docs-site branch)
+- **Dashboard:** `docs/dashboard.html`
+- **NO other dashboards allowed**
+- **NO other landing pages allowed**
+- **NO competing HTML documentation sites allowed**
+
+### Forbidden Actions
+❌ Creating new `dashboard.html` anywhere else  
+❌ Creating new `landing.html` anywhere else  
+❌ Creating new documentation HTML sites  
+❌ Creating "status pages" outside of docs/  
+❌ Creating "project overview" HTML files  
+
+### If You See Another Agent Trying to Create:
+1. **STOP THEM IMMEDIATELY**
+2. Point them to the existing docs-site in worktree
+3. Tell them to update `docs/dashboard.html` instead
+4. Quote: "The docs-site is the single source of truth - no duplicates allowed"
+
+### Existing Files That Were Removed (DO NOT RECREATE):
+- ~~`./landing.html`~~ (REMOVED - use docs-site)
+- ~~`./output-samples/dashboard.html`~~ (REMOVED - use docs-site)
+- ~~`./output-samples/landing.html`~~ (REMOVED - use docs-site)
+- ~~`./output-samples/portfolio.html`~~ (REMOVED - use docs-site)
+
+### If New HTML Documentation is Needed:
+1. Add it to `docs/` in the docs-site worktree
+2. Link it from existing pages
+3. Update dashboard.html to reference it
+4. Cross-link with navigation bar
+
+### Violation Consequences
+- Any new dashboard/landing HTML files will be **DELETED**
+- Agent must be informed of the rules
+- Work must be redone in the docs-site
+
+---
+
+## 📍 QUICK REFERENCE
+
+### Where to Find Things
+| What | Where |
+|------|-------|
+| Documentation Site | `../liminal-docs-site/docs/` (worktree) |
+| Dashboard | `../liminal-docs-site/docs/dashboard.html` |
+| Homepage | `../liminal-docs-site/docs/index.html` |
+| Feature Docs | `../liminal-docs-site/docs/features.html` |
+| CLI Reference | `../liminal-docs-site/docs/cli-reference.html` |
+| Architecture | `../liminal-docs-site/docs/architecture*.html` |
+
+### To Update Documentation
+```bash
+cd ../liminal-docs-site/docs
+# Edit files
+git add -A
+git commit -m "docs: Description of changes"
+```
+
+---
+
+**REMEMBER: The docs-site is the BIBLE. No exceptions. No duplicates. No reinventions.**

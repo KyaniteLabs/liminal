@@ -22,7 +22,7 @@
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",
     "benchmark": "node scripts/benchmark.js",
-    "tui": "node --import tsx src/tui/index.tsx"
+    "tui": "npx tsx src/tui/HarnessTUI.tsx"
   },
   "keywords": [
     "generative-art",

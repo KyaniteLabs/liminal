@@ -176,19 +176,19 @@
         <section class="section">
             <h1 class="section-title">📊 Development Dashboard</h1>
             <p class="section-subtitle">Real-time status of all Liminal components and development tasks</p>
-            <p style="color: var(--text-muted); font-size: 0.875rem;">Last updated: April 1, 2026 | Commit: fb22f95</p>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Last updated: April 1, 2026 | Commit: 1a0ed93 | <a href="THE_BIBLE.md">📖 THE BIBLE (Source of Truth)</a></p>
         </section>
 
         <!-- Critical Alerts -->
         <section class="section">
             <h2 class="section-title">🚨 Critical Items</h2>
-            <div class="alert">
-                <h4>⚠️ Documentation Site on docs-site Branch</h4>
-                <p>The new documentation site is complete but on the <code>docs-site</code> branch. Needs merge to main when audit work is complete.</p>
+            <div class="alert success">
+                <h4>✅ All Systems Operational</h4>
+                <p><strong>1741 tests passing, 0 failures.</strong> M9-M11 guardrails implemented. All generators migrated to TierBasedGenerator. Persistent memory active.</p>
             </div>
             <div class="alert success">
-                <h4>✅ Repository Cleanup Complete</h4>
-                <p>Root directory cleaned from 141 files to 17 files. Internal audit docs archived to docs/archive/. LICENSE, CONTRIBUTING.md, CODE_OF_CONDUCT.md added.</p>
+                <h4>✅ Test Suite Fixed</h4>
+                <p>132 test files, 1741 tests passing. Fixture sizes fixed, LLM mocks added, async issues resolved.</p>
             </div>
         </section>
 
@@ -197,78 +197,140 @@
             <h2 class="section-title">📈 Overview</h2>
             <div class="dashboard-grid">
                 <div class="dashboard-card">
-                    <h3>🎯 Core Features</h3>
+                    <h3>🧪 Test Suite</h3>
                     <div class="metric">
-                        <span class="metric-label">Implemented</span>
-                        <span class="metric-value" style="color: var(--accent-green);">12 / 15</span>
+                        <span class="metric-label">Test Files</span>
+                        <span class="metric-value" style="color: var(--accent-green);">132</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Tests Passing</span>
+                        <span class="metric-value" style="color: var(--accent-green);">1741</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Failures</span>
+                        <span class="metric-value" style="color: var(--accent-green);">0</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 80%; background: var(--accent-green);"></div>
-                    </div>
-                    <div class="metric" style="margin-top: 1rem;">
-                        <span class="metric-label">In Progress</span>
-                        <span class="metric-value" style="color: var(--accent-yellow);">2</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Planned</span>
-                        <span class="metric-value" style="color: var(--accent-purple);">1</span>
+                        <div class="progress-fill" style="width: 100%; background: var(--accent-green);"></div>
                     </div>
                 </div>
 
                 <div class="dashboard-card">
-                    <h3>🛡️ Guardrails</h3>
+                    <h3>🛡️ Guardrails (M1-M18)</h3>
                     <div class="metric">
-                        <span class="metric-label">Exists</span>
-                        <span class="metric-value" style="color: var(--accent-green);">5 / 18</span>
+                        <span class="metric-label">Implemented</span>
+                        <span class="metric-value" style="color: var(--accent-green);">11 / 18</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 28%; background: var(--accent-green);"></div>
+                        <div class="progress-fill" style="width: 61%; background: var(--accent-green);"></div>
                     </div>
                     <div class="metric" style="margin-top: 1rem;">
-                        <span class="metric-label">Partial</span>
-                        <span class="metric-value" style="color: var(--accent-yellow);">2</span>
+                        <span class="metric-label">M1-M8 (Core)</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅ 8/8</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Planned</span>
-                        <span class="metric-value" style="color: var(--accent-purple);">11</span>
+                        <span class="metric-label">M9-M11 (New)</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅ 3/3</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">M12-M18 (Future)</span>
+                        <span class="metric-value" style="color: var(--accent-purple);">⚪ 0/7</span>
                     </div>
                 </div>
 
                 <div class="dashboard-card">
                     <h3>🔧 Harness Tasks</h3>
                     <div class="metric">
-                        <span class="metric-label">Ready to Run</span>
-                        <span class="metric-value" style="color: var(--accent-green);">5 / 8</span>
+                        <span class="metric-label">M1-M11 Complete</span>
+                        <span class="metric-value" style="color: var(--accent-green);">11 / 11</span>
                     </div>
                     <div class="progress-bar">
-                        <div class="progress-fill" style="width: 62%; background: var(--accent-green);"></div>
+                        <div class="progress-fill" style="width: 100%; background: var(--accent-green);"></div>
                     </div>
                     <div class="metric" style="margin-top: 1rem;">
-                        <span class="metric-label">Planned</span>
-                        <span class="metric-value" style="color: var(--accent-purple);">3</span>
+                        <span class="metric-label">Core (M1-M8)</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Completed</span>
-                        <span class="metric-value" style="color: var(--accent-blue);">0</span>
+                        <span class="metric-label">Semantic (M9)</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Runtime (M10)</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Accessibility (M11)</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅</span>
                     </div>
                 </div>
 
                 <div class="dashboard-card">
-                    <h3>📚 Documentation</h3>
+                    <h3>💾 Memory Systems</h3>
                     <div class="metric">
-                        <span class="metric-label">Pages Created</span>
-                        <span class="metric-value" style="color: var(--accent-green);">11</span>
+                        <span class="metric-label">HarnessMemory</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅ Active</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Cross-Linked</span>
-                        <span class="metric-value" style="color: var(--accent-green);">✅ Yes</span>
+                        <span class="metric-label">Persistence</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅ ~/.liminal/</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Status</span>
-                        <span class="metric-value" style="color: var(--accent-green);">✅ Complete</span>
+                        <span class="metric-label">Auto-Save</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅ 30s + shutdown</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">EpisodicMemory</span>
+                        <span class="metric-value" style="color: var(--accent-green);">✅ Wired</span>
                     </div>
                 </div>
             </div>
+        </section>
+
+        <!-- Model Tiers -->
+        <section class="section">
+            <h2 class="section-title">🤖 Model Tier System</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tier</th>
+                        <th>Models</th>
+                        <th>Context</th>
+                        <th>Budget</th>
+                        <th>Prompt Style</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>FLAGSHIP</strong></td>
+                        <td>Claude 4, GPT-4</td>
+                        <td>200k tokens</td>
+                        <td>8000</td>
+                        <td>Concise, XML tags</td>
+                    </tr>
+                    <tr>
+                        <td><strong>MEDIUM</strong></td>
+                        <td>GPT-3.5, Claude Haiku</td>
+                        <td>100k tokens</td>
+                        <td>4000</td>
+                        <td>Detailed instructions</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LOCAL</strong></td>
+                        <td>Qwen, Llama, Mistral</td>
+                        <td>16k tokens</td>
+                        <td>2000</td>
+                        <td>Explicit, few-shot</td>
+                    </tr>
+                    <tr>
+                        <td><strong>TINY</strong></td>
+                        <td>TinyLlama, Phi-2</td>
+                        <td>8k tokens</td>
+                        <td>1000</td>
+                        <td>Minimal, plain text</td>
+                    </tr>
+                </tbody>
+            </table>
         </section>
 
         <!-- Feature Status -->
@@ -285,9 +347,45 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td><strong>Persistent Memory</strong></td>
+                        <td><span class="badge badge-success">✅ NEW</span></td>
+                        <td><code>HarnessMemory.ts</code></td>
+                        <td>~/.liminal/memory/ - Tasks, adaptations, episodes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Model Tier Detection</strong></td>
+                        <td><span class="badge badge-success">✅ NEW</span></td>
+                        <td><code>ModelTier.ts</code>, <code>PromptBuilder.ts</code></td>
+                        <td>Flagship/Medium/Local/Tiny</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tier-Based Generators</strong></td>
+                        <td><span class="badge badge-success">✅ Migrated</span></td>
+                        <td><code>TierBasedGenerator.ts</code> (base)</td>
+                        <td>All 9 generators migrated</td>
+                    </tr>
+                    <tr>
+                        <td><strong>M9: SemanticValidator</strong></td>
+                        <td><span class="badge badge-success">✅ NEW</span></td>
+                        <td><code>guardrails/SemanticValidator.ts</code></td>
+                        <td>Intent matching via LLM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>M10: RuntimeHealthMonitor</strong></td>
+                        <td><span class="badge badge-success">✅ NEW</span></td>
+                        <td><code>guardrails/RuntimeHealthMonitor.ts</code></td>
+                        <td>Memory leak, FPS monitoring</td>
+                    </tr>
+                    <tr>
+                        <td><strong>M11: AccessibilityGuardrails</strong></td>
+                        <td><span class="badge badge-success">✅ NEW</span></td>
+                        <td><code>guardrails/AccessibilityGuardrails.ts</code></td>
+                        <td>Photosensitivity, WCAG</td>
+                    </tr>
+                    <tr>
                         <td><strong>Natural Language Interface</strong></td>
                         <td><span class="badge badge-success">✅ Complete</span></td>
-                        <td><code>NaturalInterface.ts</code>, <code>IntentRouter.ts</code></td>
+                        <td><code>NaturalInterface.ts</code></td>
                         <td>Routes without prefixes</td>
                     </tr>
                     <tr>
@@ -324,7 +422,7 @@
                         <td><strong>Multi-Domain Support</strong></td>
                         <td><span class="badge badge-success">✅ Active</span></td>
                         <td><code>generators/*</code></td>
-                        <td>p5, Three.js, GLSL, Hydra, Strudel</td>
+                        <td>p5, Three.js, GLSL, Hydra, Strudel, Tone</td>
                     </tr>
                     <tr>
                         <td><strong>Tool System</strong></td>
@@ -333,28 +431,10 @@
                         <td>7 tools with rate limiting</td>
                     </tr>
                     <tr>
-                        <td><strong>Harness Tasks M1-M8</strong></td>
-                        <td><span class="badge badge-success">✅ Ready</span></td>
+                        <td><strong>Harness Tasks M1-M11</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
                         <td><code>harness-tasks/*.json</code></td>
-                        <td>5 ready, 3 planned</td>
-                    </tr>
-                    <tr>
-                        <td><strong>SemanticValidator</strong></td>
-                        <td><span class="badge badge-error">🆕 Planned</span></td>
-                        <td>M9</td>
-                        <td>CLIP/LLM-based validation</td>
-                    </tr>
-                    <tr>
-                        <td><strong>AccessibilityGuardrails</strong></td>
-                        <td><span class="badge badge-error">🆕 Planned</span></td>
-                        <td>M10</td>
-                        <td>WCAG 2.1 compliance</td>
-                    </tr>
-                    <tr>
-                        <td><strong>RuntimeHealthMonitor</strong></td>
-                        <td><span class="badge badge-error">🆕 Planned</span></td>
-                        <td>M11</td>
-                        <td>Memory leak detection</td>
+                        <td>All 11 tasks ready</td>
                     </tr>
                 </tbody>
             </table>
@@ -367,159 +447,143 @@
                 <div class="task-column">
                     <h4>✅ Complete</h4>
                     <div class="task-item medium">
+                        <div class="task-id">TESTS</div>
+                        <div>1741 tests passing</div>
+                    </div>
+                    <div class="task-item medium">
+                        <div class="task-id">MEMORY</div>
+                        <div>HarnessMemory persistent</div>
+                    </div>
+                    <div class="task-item medium">
+                        <div class="task-id">TIERS</div>
+                        <div>Model tier detection</div>
+                    </div>
+                    <div class="task-item medium">
+                        <div class="task-id">GENERATORS</div>
+                        <div>All 9 migrated to base class</div>
+                    </div>
+                    <div class="task-item medium">
+                        <div class="task-id">M9</div>
+                        <div>SemanticValidator</div>
+                    </div>
+                    <div class="task-item medium">
+                        <div class="task-id">M10</div>
+                        <div>RuntimeHealthMonitor</div>
+                    </div>
+                    <div class="task-item medium">
+                        <div class="task-id">M11</div>
+                        <div>AccessibilityGuardrails</div>
+                    </div>
+                    <div class="task-item medium">
                         <div class="task-id">DOCS</div>
-                        <div>Documentation site</div>
-                    </div>
-                    <div class="task-item medium">
-                        <div class="task-id">NLI</div>
-                        <div>Natural Language Interface</div>
-                    </div>
-                    <div class="task-item medium">
-                        <div class="task-id">LLMA</div>
-                        <div>LLMModeAgent</div>
-                    </div>
-                    <div class="task-item low">
-                        <div class="task-id">TUI</div>
-                        <div>Hybrid TUI</div>
+                        <div>THE BIBLE complete</div>
                     </div>
                 </div>
                 <div class="task-column">
                     <h4>🟡 In Progress</h4>
                     <div class="task-item high">
-                        <div class="task-id">AUDIT</div>
-                        <div>Public audit cleanup</div>
+                        <div class="task-id">MERGE</div>
+                        <div>feature/persistent-memory → main</div>
                     </div>
                     <div class="task-item medium">
-                        <div class="task-id">MERGE</div>
+                        <div class="task-id">SYNC</div>
                         <div>docs-site → main</div>
                     </div>
                 </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
                     <div class="task-item critical">
-                        <div class="task-id">M9</div>
-                        <div>SemanticValidator</div>
+                        <div class="task-id">M12</div>
+                        <div>Version Compatibility</div>
                     </div>
                     <div class="task-item critical">
-                        <div class="task-id">M10</div>
-                        <div>Accessibility</div>
+                        <div class="task-id">M13</div>
+                        <div>Dependency Health</div>
                     </div>
                     <div class="task-item critical">
-                        <div class="task-id">M11</div>
-                        <div>RuntimeHealth</div>
+                        <div class="task-id">M14</div>
+                        <div>Resource Prediction</div>
                     </div>
                 </div>
                 <div class="task-column">
                     <h4>⏸️ Blocked</h4>
                     <div class="task-item low" style="opacity: 0.5;">
-                        <div class="task-id">MERGE</div>
-                        <div>docs-site → main</div>
+                        <div class="task-id">M15-18</div>
+                        <div>Future guardrails</div>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- What's Missing -->
+        <!-- Test Fixes Summary -->
         <section class="section">
-            <h2 class="section-title">❌ What's Missing / Incomplete</h2>
+            <h2 class="section-title">🧪 Recent Test Fixes</h2>
             
             <div class="alert success">
-                <h4>✅ Repository Organization - COMPLETE</h4>
+                <h4>✅ Bucket A - Fixture Sizes</h4>
                 <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
-                    <li>✅ 141 → 17 files in root</li>
-                    <li>✅ Internal audit docs archived to docs/archive/</li>
-                    <li>✅ LICENSE file added</li>
-                    <li>✅ CONTRIBUTING.md added</li>
-                    <li>✅ CODE_OF_CONDUCT.md added</li>
-                    <li>✅ package.json metadata complete</li>
-                </ul>
-            </div>
-
-            <div class="alert warning">
-                <h4>Guardrails (13 of 18 missing)</h4>
-                <p>Only 5 guardrail types exist. Critical missing:</p>
-                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
-                    <li>Semantic Alignment (M9)</li>
-                    <li>Accessibility (M10) - Legal requirement</li>
-                    <li>Runtime Health (M11) - Memory leaks</li>
+                    <li><code>test/unit/exporter.test.ts</code> - ~16 fixtures enlarged to >500 bytes</li>
+                    <li><code>test/unit/gui-export-selected.test.js</code> - 2 fixtures enlarged</li>
                 </ul>
             </div>
 
             <div class="alert success">
-                <h4>✅ Nice to Have - COMPLETE</h4>
+                <h4>✅ Bucket B - Generator LLM Mocks</h4>
                 <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
-                    <li>✅ CONTRIBUTING.md - Added</li>
-                    <li>✅ CODE_OF_CONDUCT.md - Added</li>
-                    <li>✅ CHANGELOG.md - Standardized format</li>
+                    <li><code>test/unit/shader-generator.test.ts</code> - Added vi.mock for LLMClient</li>
+                    <li><code>test/unit/three-generator.test.ts</code> - Added vi.mock for LLMClient</li>
+                    <li><code>test/unit/generators/RemotionGenerator.test.ts</code> - Added vi.mock</li>
+                    <li><code>test/generators/p5-generator.test.js</code> - vi.mock + async fixes</li>
+                </ul>
+            </div>
+
+            <div class="alert success">
+                <h4>✅ Bucket C - Ralph-loop + Misc</h4>
+                <ul style="margin-left: 1.5rem; color: var(--text-secondary);">
+                    <li><code>test/integration/evaluator-gallery.test.js</code> - Fixed Promise mock</li>
+                    <li><code>test/unit/core/CodeValidator.test.ts</code> - 11 fixtures rewritten</li>
+                    <li><code>test/integration/preview-server-api.test.js</code> - sampleCode enlarged</li>
+                    <li>Various lint fixes across src/</li>
                 </ul>
             </div>
         </section>
 
         <!-- Recent Commits -->
         <section class="section">
-            <h2 class="section-title">📝 Recent Commits</h2>
-            <h3 style="color: var(--accent-cyan); margin-bottom: 1rem;">Main Branch</h3>
+            <h2 class="section-title">📝 Recent Commits (feature/persistent-memory)</h2>
             <table>
                 <thead>
                     <tr>
                         <th>Commit</th>
                         <th>Message</th>
-                        <th>Files</th>
+                        <th>Impact</th>
                     </tr>
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>fb22f95</code></td>
-                        <td>Add DOCUMENTATION_WARNING.txt - prevent duplicate creation</td>
-                        <td>1 file changed, 42 insertions</td>
+                        <td><code>1a0ed93</code></td>
+                        <td>fix: Remove duplicate exports</td>
+                        <td>Clean build</td>
                     </tr>
                     <tr>
-                        <td><code>0301698</code></td>
-                        <td>Add NO DUPLICATION rule - prevent wheel reinvention</td>
-                        <td>1 file changed, 69 insertions</td>
+                        <td><code>ee57b32</code></td>
+                        <td>feat: Migrate all generators to TierBasedGenerator</td>
+                        <td>9 generators migrated</td>
                     </tr>
                     <tr>
-                        <td><code>f903f28</code></td>
-                        <td>Add PROJECT_RULES.md - Documentation is the Bible</td>
-                        <td>2 files changed, 264 insertions</td>
+                        <td><code>f750b7a</code></td>
+                        <td>feat: Implement M9-M11 Guardrails</td>
+                        <td>Semantic, Runtime, Accessibility</td>
                     </tr>
                     <tr>
-                        <td><code>3f9f6db</code></td>
-                        <td>Fix: Remove trailing comma in package.json devDependencies</td>
-                        <td>1 file changed, 1 insertion(+), 1 deletion(-)</td>
+                        <td><code>acc6dd1</code></td>
+                        <td>feat: Add Model Tier detection</td>
+                        <td>Flagship/Medium/Local/Tiny</td>
                     </tr>
                     <tr>
-                        <td><code>7d3bf92</code></td>
-                        <td>chore: Public repo cleanup for professional release</td>
-                        <td>28+ files removed, LICENSE/CONTRIBUTING/COC added</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3 style="color: var(--accent-cyan); margin: 2rem 0 1rem;">Docs-Site Branch</h3>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Commit</th>
-                        <th>Message</th>
-                        <th>Files</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>78094ce</code></td>
-                        <td>Add Development Dashboard + link all pages</td>
-                        <td>9 files changed, 509 insertions</td>
-                    </tr>
-                    <tr>
-                        <td><code>16e2d0e</code></td>
-                        <td>Add navigation to existing architecture pages</td>
-                        <td>2 files changed</td>
-                    </tr>
-                    <tr>
-                        <td><code>6263e40</code></td>
-                        <td>Comprehensive documentation site with cross-linked pages</td>
-                        <td>7 files changed, 1720 insertions</td>
+                        <td><code>a911e0b</code></td>
+                        <td>feat: Add HarnessMemory</td>
+                        <td>Persistent memory system</td>
                     </tr>
                 </tbody>
             </table>
@@ -529,16 +593,26 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol style="margin-left: 1.5rem; color: var(--text-secondary); line-height: 2;">
-                <li><strong>Merge docs-site to main</strong> - Documentation site is ready</li>
-                <li><strong>Implement M9-M11</strong> - Critical guardrails (Semantic, Accessibility, Runtime)</li>
-                <li><strong>Test harness tasks</strong> - Run M1-M8 and verify fixes</li>
-                <li><strong>Update index.html</strong> - Link to CONTRIBUTING.md, CODE_OF_CONDUCT.md, LICENSE</li>
+                <li><strong>Merge feature/persistent-memory → main</strong> - All tests passing, ready to merge</li>
+                <li><strong>Merge docs-site → main</strong> - Documentation site ready</li>
+                <li><strong>Implement M12-M18</strong> - Future guardrails (Version, Dependency, Resource, etc.)</li>
+                <li><strong>Community Plugins</strong> - Extract generator plugin API</li>
             </ol>
+        </section>
+
+        <!-- Source of Truth -->
+        <section class="section">
+            <h2 class="section-title">📖 Source of Truth</h2>
+            <div class="alert success">
+                <h4>THE BIBLE</h4>
+                <p>Complete system documentation is at <a href="THE_BIBLE.md" style="color: var(--accent-cyan);"><strong>docs/THE_BIBLE.md</strong></a></p>
+                <p style="margin-top: 0.5rem;">This dashboard is a summary. For complete details, always refer to THE BIBLE.</p>
+            </div>
         </section>
     </main>
 
     <footer class="footer">
-        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a> • <a href="THE_BIBLE.md">📖 THE BIBLE</a></p>
     </footer>
 </body>
 </html>

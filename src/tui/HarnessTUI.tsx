@@ -409,6 +409,45 @@ function App() {
     }
   }, [shouldExit]);
 
+  // Handle graceful shutdown and cleanup
+  useEffect(() => {
+    const handleSIGINT = () => {
+      audioPlayer.stop();
+      process.stderr.write('\n👋 Interrupted. Goodbye!\n');
+      process.exit(0);
+    };
+    
+    const handleSIGTERM = () => {
+      audioPlayer.stop();
+      process.exit(0);
+    };
+    
+    const handleUncaughtException = (err: Error) => {
+      process.stderr.write(`\n💥 Fatal error: ${err.message}\n`);
+      audioPlayer.stop();
+      process.exit(1);
+    };
+    
+    const handleUnhandledRejection = (reason: unknown) => {
+      process.stderr.write(`\n⚠️ Unhandled rejection: ${reason}\n`);
+      // Don't exit, just log
+    };
+    
+    // Register handlers
+    process.on('SIGINT', handleSIGINT);
+    process.on('SIGTERM', handleSIGTERM);
+    process.on('uncaughtException', handleUncaughtException);
+    process.on('unhandledRejection', handleUnhandledRejection);
+    
+    return () => {
+      // Cleanup handlers on unmount
+      process.off('SIGINT', handleSIGINT);
+      process.off('SIGTERM', handleSIGTERM);
+      process.off('uncaughtException', handleUncaughtException);
+      process.off('unhandledRejection', handleUnhandledRejection);
+    };
+  }, []);
+
   // Copy last assistant message to clipboard
   const handleCopy = useCallback(async () => {
     const lastAssistant = [...history].reverse().find(h => h.type === 'assistant');
@@ -451,8 +490,24 @@ function App() {
   );
 }
 
-export function startHarnessTUI() {
-  render(<App />);
+import { validateStdin } from './StdinValidator.js';
+
+export async function startHarnessTUI() {
+  try {
+    // Validate stdin before attempting to render
+    await validateStdin();
+    
+    // If validation passes, render the TUI
+    render(<App />);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    
+    // Print error to stderr (not stdout, so it doesn't interfere with piping)
+    process.stderr.write('\n' + message + '\n\n');
+    
+    // Exit with error code
+    process.exit(1);
+  }
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {

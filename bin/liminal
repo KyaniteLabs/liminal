@@ -558,8 +558,8 @@ else if (cmd === 'chat') {
 }
 else if (cmd === 'tui') {
   // Launch the Natural Language TUI (Meta-Harness + NaturalInterface)
-  import('../dist/tui/HarnessTUI.js').then(({ startHarnessTUI }) => {
-    startHarnessTUI();
+  import('../dist/tui/HarnessTUI.js').then(async ({ startHarnessTUI }) => {
+    await startHarnessTUI();
   }).catch(err => {
     console.error('TUI error:', err.message);
     console.error('Make sure to run `npm run build` first.');

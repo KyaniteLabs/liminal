@@ -503,6 +503,529 @@ Each entry includes:
 
 ---
 
+## CERAFICA — Additional Plans
+
+### Instagram Glaze #004 RE Pipeline (starry-tickling-starlight)
+- **Ambition**: MEDIUM
+- **Scope**: Image-based ceramic glaze reverse engineering pipeline on photo from Mac Photos "To Post" album
+- **Key Decisions**: Abbreviated pipeline (stages 00, 02, 06 only), MCP image analysis for visual observation, HTML dashboard output
+- **Pipeline**: Target acquisition → Visual observation → Recipe synthesis with UMF estimation
+
+### Fix Regenerate Caption Bug (zazzy-spinning-puzzle)
+- **Ambition**: SMALL — single variable name bug
+- **Scope**: `testData` referenced instead of `allData` in pipeline.html, causing regeneration to silently fail
+- **Philosophical Statement**: The regeneration API succeeds but the UI never updates — classic silent failure from wrong variable name
+
+### Schema Restructuring: Separate Glaze ID from Visual Description (zazzy-doodling-wadler)
+- **Ambition**: MEDIUM
+- **Scope**: Separate technical glaze identification from visual color description in Cerafica vision pipeline
+- **Key Decisions**: Add `color_appearance` field separate from `glaze_type` — describe what you SEE, not what glazes you think were used
+- **Innovation**: Wrong glaze IDs + correct visual description is MORE useful than wrong glaze IDs alone
+- **Notable Quote**: "The wrong glaze IDs + correct visual description would be MORE useful than wrong glaze IDs alone."
+
+### Reels/Stories/Carousel Support (twinkling-popping-rabin)
+- **Ambition**: MEDIUM
+- **Scope**: MediaType enum, aspect ratio detection, content routing for Instagram
+- **Key Decisions**: Vertical videos <90s → Reels, else → feed post; carousel support for multi-image
+
+### Full End-to-End Pipeline Test + Frame Generation (steady-stirring-zebra)
+- **Ambition**: LARGE
+- **Scope**: Complete Cerafica pipeline test with video frame generation
+- **Key Decisions**: Run full pipeline from photo export through frame generation to verify all components work together
+
+### Fix Memory Crash in Video Frame Generator (tidy-drifting-unicorn)
+- **Ambition**: MEDIUM
+- **Scope**: 100GB+ RAM consumption from numpy arrays in video frame generator
+- **Root Cause**: Accumulating frames as full numpy arrays instead of processing and discarding
+
+### Process 6 Videos Through Cerafica Pipeline (toasty-fluttering-lollipop)
+- **Ambition**: LARGE
+- **Scope**: Batch processing of 6 ceramic videos through the complete pipeline
+- **Key Decisions**: Sequential processing with individual verification per video
+
+### Video Frame Extraction for AI Vision Analysis (sunny-questing-adleman)
+- **Ambition**: MEDIUM
+- **Scope**: Extract representative frames from pottery videos for vision analysis in 4 chunks
+- **Key Decisions**: Frame extraction strategy optimized for AI vision model context windows
+
+### Fix Seeds/Ideas Pipeline for Dashboard (tender-bubbling-spark)
+- **Ambition**: SMALL
+- **Scope**: Fix seeds/ideas data flow to Cerafica dashboard
+
+### Fix Video Footer HUD Missing Stats + Adaptive Typewriter Speed (swift-snacking-squirrel)
+- **Ambition**: SMALL
+- **Scope**: Video re-HUD footer missing stats display, typewriter speed not adaptive to text length
+
+### Fix Vision Analysis Accuracy Regression (velvety-wobbling-dolphin)
+- **Ambition**: LARGE
+- **Scope**: Aggressive compression causing detail loss, duplicate exports in vision pipeline
+- **Key Decisions**: Optimize compression thresholds, deduplicate export paths
+
+### Detection Improvement for Cerafica Vision (woolly-spinning-aho)
+- **Ambition**: MEDIUM
+- **Scope**: Improve accuracy of glaze/piece detection in vision analysis pipeline
+
+### Portfolio Redesign to Match Cerafica Visual Identity (toasty-zooming-bear)
+- **Ambition**: MEDIUM
+- **Scope**: Portfolio redesign matching Cerafica's dark sci-fi visual identity
+
+### Fix Caption Generation Issues (structured-chasing-umbrella)
+- **Ambition**: SMALL
+- **Scope**: Redundant "glaze" in captions, singular/plural mismatch in generated text
+
+### Frame IMG_4967.MOV as Lazur-ix-4 (transient-finding-plum)
+- **Ambition**: MEDIUM — mcp-video evaluation
+- **Scope**: Frame a specific ceramic video using mcp-video tools to evaluate their quality
+
+### Zoom Panels in Re-HUD with Sequential Reveal (zesty-discovering-gray)
+- **Ambition**: MEDIUM
+- **Scope**: Add zoom panel images to re-HUD mode, revealed sequentially like a scanning system
+- **Key Decisions**: Extract zoom panels from framed photo (2x), sequential fade-in animation (Panel 0 at 15%, Panel 1 at 35%, Panel 2 at 55% of video)
+- **Innovation**: Sequential reveal creates "discovery" narrative — like a scanner finding regions of interest
+
+---
+
+## OPENGLAZE — Additional Plans
+
+### UMF Calculation Engine + Ralph Loop for OpenGlaze (wild-mapping-donut)
+- **Ambition**: MASSIVE — full chemistry engine with creative loop
+- **Scope**: Real UMF calculations AND a Ralph Loop for iterative glaze recipe improvement
+- **Key Decisions**: Combine rigorous chemistry with creative iteration
+
+### Human Door for Glaze Experiments with 6 Visualizations (transient-dreaming-hartmanis)
+- **Ambition**: LARGE
+- **Scope**: 6 different visualizations for glaze experiment data in Human Door dashboard
+- **Key Decisions**: Multiple visualization types for different aspects of glaze chemistry
+
+### Move Chemistry Knowledge to Database + Audit Rules (velvet-sniffing-shell)
+- **Ambition**: LARGE
+- **Scope**: Move hardcoded glaze chemistry knowledge to database, audit and expand rules
+- **Agent Sub-Plan**: steady-stirring-zebra-agent variant contains detailed Glaze Chemistry Rules Audit Report
+
+---
+
+## MCP-VIDEO — Additional Plans
+
+### AgentCut Full Feature Test Plan (starry-tickling-starlight variant)
+- **Ambition**: MEDIUM — 17 features, 20 test cases
+- **Scope**: Comprehensive testing of all AgentCut/MCP-video features using test videos
+- **Test Strategy**: 7 batches (Info/Basic → Transform → Effects → Audio → Conversion → Composite → Subtitles)
+- **Notable**: Evidence of thorough dogfooding — testing every tool with real video assets
+
+### Get AAA Score on Glama for mcp-video PR #3637 (typed-coalescing-rain)
+- **Ambition**: MEDIUM
+- **Scope**: Achieve AAA score on Glama MCP registry for mcp-video PR
+- **Key Decisions**: Quality improvements to pass Glama's automated review
+
+### Add Remotion Integration to mcp-video v0.8.0 (virtual-tickling-whisper)
+- **Ambition**: LARGE — 8 new tools, 4 phases
+- **Scope**: Add Remotion-based video tools to MCP server
+- **New Tools**: 8 Remotion tools for programmatic video generation
+- **Key Decisions**: Remotion as first-class backend alongside FFmpeg
+
+### mcp-video Explainer Video Holistic Quality Improvements (witty-marinating-mitten)
+- **Ambition**: LARGE — 10 priority items
+- **Scope**: Visual quality improvements to mcp-video's own explainer video (dogfooding)
+- **Key Decisions**: 10 priority items covering visual quality, pacing, design consistency
+
+---
+
+## RESEARCH PIPELINE & STRATEGY — Additional Plans
+
+### AgentPay Research: "Stripe for Agent Transactions" (stateless-cuddling-sutherland)
+- **Ambition**: MASSIVE — 512-line competitive landscape analysis
+- **Scope**: MCP-native financial API for AI agents — comprehensive market research
+- **Key Findings**: Sapiom ($15.75M raised), Google AP2 protocol, Coinbase x402 payment standard, AgentaOS — emerging competitive landscape
+- **Market**: AI agent market projected $52-183B by 2030-2033 (40-50% CAGR)
+- **Agent Sub-Plans**: abstract-popping-yao agent variants contain deep research on TAM, pricing models, regulation, and reputation systems
+- **Philosophical Statement**: Agent payment infrastructure is the next frontier — agents need to transact autonomously
+
+### Research → RE Pipeline Integration Fix (steady-hatching-coecke)
+- **Ambition**: SMALL
+- **Scope**: Fix integration between research pipeline and reverse engineering pipeline
+
+### Persistent Research Improvement System with RQS Scoring (temporal-chasing-gray)
+- **Ambition**: LARGE
+- **Scope**: Research Quality Score system inspired by Karpathy's autoresearch
+- **Key Decisions**: Experiment logging with IMPROVEMENT-LOG.md, RQS tracking from 77→81
+- **Philosophical Statement**: Self-improving research — the research process itself should get better over time
+
+### Phase 1 Deep Research: 15 Product Opportunities (wondrous-imagining-engelbart)
+- **Ambition**: MASSIVE
+- **Scope**: 15 product opportunities identified across 10+ domains
+- **Agent Sub-Plan**: woolly-spinning-aho variant contains 40+ opportunities from Reddit/HN/GitHub mining
+- **Key Decisions**: Market signal mining across social platforms, research frontiers, and GitHub trending
+- **Philosophical Statement**: "Find white space — tool categories where no clear winner exists"
+
+### Research Skill Creation Plan (velvet-exploring-muffin)
+- **Ambition**: LARGE
+- **Scope**: Web research skill with quick/deep/comprehensive modes
+- **Agent Sub-Plan**: velvet-exploring-muffin agent variant contains full EspanolMCP Wave 3+4 implementation (1216 lines)
+
+### Vision Prompting Best Practices (velvety-wobbling-dolphin agent variant)
+- **Ambition**: LARGE
+- **Scope**: Research synthesis on vision prompting for maximum detail extraction from multimodal AI models
+- **Key Findings**: JSON schema prompting, structured output, domain-specific prompting techniques
+- **Notable**: This research directly informed Cerafica's vision analysis pipeline improvements
+
+---
+
+## ESPANOLMCP — Spanish Translation MCP Server
+
+### EspanolMCP Wave 3 & Wave 4 (snug-drifting-ocean)
+- **Ambition**: MASSIVE — Waves 3+4 implementation plan
+- **Scope**: Fix 8 critical bugs in MCP adapter, implement hardening measures
+- **Critical Bugs**: All 16 tool callbacks use wrong signature (params undefined at runtime), only 4 of 16 tools registered, @ts-nocheck hiding type errors, translate_code_comment is a placeholder
+- **Wave 3**: Fix callbacks (async ({ params }) → async (params)), extract shared infrastructure, register all 16 tools
+- **Wave 4**: Error handling, configuration system, security test suite, documentation
+- **Architecture**: Shared provider-factory.ts + types.ts extracted from 3x duplicated code
+
+---
+
+## GOOGLE WORKSPACE — Additional Plans
+
+### Agent Email Identity Architecture (zesty-stargazing-lemon)
+- **Ambition**: LARGE — 252 lines
+- **Scope**: Dedicated agent email identity (agent@puenteworks.com) with OAuth and send capabilities
+- **Key Decisions**: Separate OAuth (not delegation), 4 trust levels (supervised → can-send), rate limiting (5/hr, 20/day)
+- **Trust Model**: supervised (replies only, 10 max) → partial (replies auto, 20 max) → autonomous (unlimited) → can-send (after 5 successful)
+- **Philosophical Statement**: "Agent needs to send emails on user's behalf — replies, new emails, meeting invites, digest summaries"
+
+### Research-Pipeline GWS Integration (snappy-twirling-wadler)
+- **Ambition**: MEDIUM — deferred
+- **Scope**: New stage 06-publish pushing research outputs to PARA knowledge base in Google Drive
+- **Key Decisions**: DEFERRED — wait for GWS agent's PARA structure to stabilize
+- **Philosophical Statement**: Integration should wait until the structure is finalized — don't build on shifting foundations
+
+---
+
+## MINING YOUR GITHUB — Algorithm Sourcing
+
+### Mining Your GitHub for Liminal (swift-knitting-knuth)
+- **Ambition**: MASSIVE — 45 repos, 4 tiers, 18 priority items
+- **Scope**: Analyze all GitHub repos for algorithms to port into Liminal
+- **Key Decisions**: 4-tier priority system (Tier 1: direct port, Tier 2: significant value, Tier 3: pattern extraction, Tier 4: reference)
+- **10 Synergy Combinations**: Algorithms that combine powerfully when ported together
+- **7-Phase Mining Order**: Dependency-aware execution plan for systematic code mining
+- **Philosophical Statement**: Your own past work is the best source of algorithms — mine it systematically
+
+---
+
+## CERAMICS FOUNDATION — Workspace Setup
+
+### Ceramics Foundation Standalone Workspace + Glaze Lab Setup (synchronous-swimming-quasar)
+- **Ambition**: MEDIUM
+- **Scope**: Standalone workspace for ceramics foundation knowledge + Glaze Lab project setup
+- **Key Decisions**: Separate workspace for ceramics domain knowledge, integrated with Glaze Lab
+
+---
+
+## PLANS DISCOVERED IN SESSION 2 — Deep Audit, Strategy & Cross-Project Work
+
+### LIMINAL — Deep Systems Audit & Fixes
+
+### Liminal Deep Audit: Unification, Synergy & Self-Improvement (vast-cooking-hamster)
+- **Ambition**: MASSIVE — 6-section deep audit
+- **Scope**: Full analysis of Liminal's self-improvement pipeline and system synergies
+- **Key Findings**: MAP-Elites is write-only (never used for selection), NoveltyArchive is write-only, AestheticModel predicts but never influences generation, Compost DNA registered but never consumed, Swarm mining disconnected from archive
+- **Critical Insight**: Store works but Retrieve-and-Enhance is broken — the closed self-improvement loop is NOT connected
+- **21 Prioritized Fixes**: Organized by dependency order across unification, synergy wiring, and self-improvement categories
+- **Philosophical Statement**: The system generates valuable data (novelty scores, aesthetic predictions, compost DNA) but never feeds it back into generation decisions
+
+### Liminal Forensic Audit Fix Plan (vivid-shimmying-meadow)
+- **Ambition**: MASSIVE — 4 waves of fixes from 38-section forensic audit
+- **Scope**: Critical bugs through infrastructure, 98 generated files audited (67% valid, 26 broken)
+- **Key Decisions**: Wave-based execution (Critical → High → Medium → Infrastructure)
+- **What Shipped**: CodeValidator.ts, test fixes, Vitest migration, CDN centralization
+
+### Liminal Red Team Audit Fix Plan (zippy-gliding-moon)
+- **Ambition**: MASSIVE — 8-phase remediation
+- **Scope**: 122 source files, 130 test suites — zero suites executing due to ESM/Jest mismatch
+- **Key Decisions**: Vitest migration (Jest can't handle ESM), fix CLI compost silent failure, LLM fallback stub removal, type safety (ILLMClient interface)
+- **Critical Bugs**: CLI compost command silently fails (missing `await`), CompostMill LLM fallback produces empty results, 34 silent catch blocks, CDN URLs hardcoded in 7 locations
+- **Philosophical Statement**: "The entire test suite is broken — 0/130 suites execute"
+
+### RalphLoop Decomposition (virtual-prancing-blanket)
+- **Ambition**: LARGE
+- **Scope**: Decompose RalphLoop from 1185→150 lines into 8 focused modules
+- **New Modules**: LoopConfig, ContextBuilder, PromptEnhancer, GenerationOrchestrator, EvolutionIntegration, LoopPersistence, StagnationDetector, OrganismLoop
+- **What Shipped**: Full decomposition completed
+
+### Prompt System Overhaul (wild-stargazing-torvalds)
+- **Ambition**: MASSIVE — 24 prompts, 6-wave rewrite
+- **Scope**: 8 in PromptLibrary, 7 exported constants, 9 inline prompts — all need structured framework
+- **Key Decisions**: Role/Task/Constraints/Format/Examples/Domain-Rules template, domain-specific prompt engineering
+- **Innovation**: Structured prompt framework using 2026 best practices replacing ad-hoc prompt strings
+
+### CEO Agents Fix Plan (vivid-cuddling-pillow)
+- **Ambition**: LARGE — 6 bugs, 6 tasks
+- **Scope**: Multi-agent deliberation system with critical failures
+- **Bugs Found**: Unreachable final positions (agents never reach consensus), brittle decision detection, garbage memo fallback, sequential not parallel board execution, truncation not summarization, no API retry
+- **Philosophical Statement**: The deliberation system looks like it works but agents never actually reach final consensus positions
+
+---
+
+### LIMINAL — Validation & Infrastructure
+
+### Fix Validation Pipeline + Dogfood (snappy-herding-marshmallow) — FULL TEXT
+- **Ambition**: LARGE — full validation gate design
+- **Scope**: RalphLoop declares "done" based on regex without testing code actually runs
+- **Key Decisions**: CodeValidator.ts — 3 checks (strip reasoning text, structural validation per domain, self-contained check), wired at 3 points (RalphLoop, Exporter, index.ts)
+- **3-Check Architecture**: (1) Strip LLM reasoning text with expanded skip patterns, (2) Per-domain structural validation (p5 needs setup/draw/createCanvas, GLSL needs void main, Three needs THREE.*, Remotion needs useCurrentFrame), (3) Self-contained check for HTML-wrapped code
+- **Dogfood Plan**: 16 generations across cloud (MiniMax-M2.7) + local (LM Studio), all domains tested
+- **Philosophical Statement**: "Liminal's Ralph Loop declares 'done' and saves files based entirely on regex pattern matching. It never validates that generated code actually runs."
+
+### Fix ~60 Failing Unit Tests (starry-enchanting-pony) — FULL TEXT
+- **Ambition**: MEDIUM
+- **Scope**: 3 root causes — fixtures too small for MIN_SIZE_REQUIREMENTS, generators need LLM mocks, HTMLWrapper expectation change
+- **Execution Order**: Enlarge fixtures first (26 tests) → Mock LLM generators (26 tests) → Fix expectations (4 tests)
+- **Philosophical Statement**: "Tests are the harness. Fix the tests to match current correct behavior."
+
+---
+
+### MCP-VIDEO — Deep Audit & Expansion
+
+### AgentCut Full Feature Test Plan (starry-tickling-starlight)
+- **Ambition**: LARGE — 17 features tested across 7 batches
+- **Scope**: Comprehensive testing of all mcp-video tools using real video assets
+- **Test Strategy**: 20 test cases across info, trim, transforms, effects, audio, conversion, composite, and subtitles
+- **Notable**: Named "AgentCut" — original name before rename to mcp-video
+
+### Remotion Integration for mcp-video v0.8.0 (virtual-tickling-whisper)
+- **Ambition**: LARGE — 8 new tools, 4 phases
+- **Scope**: Add Remotion-based video generation tools to mcp-video MCP server
+- **Key Decisions**: React-based video composition, component rendering, frame extraction, video assembly
+- **What Shipped**: 8 Remotion tools integrated into mcp-video
+
+### Get AAA Score on Glama (typed-coalescing-rain)
+- **Ambition**: LARGE
+- **Scope**: mcp-video PR #3637 — achieve highest quality score on Glama MCP registry
+- **Key Decisions**: Quality gate for public presentation of mcp-video
+
+---
+
+### ESPANOL MCP — Spanish Translation MCP Server
+
+### EspanolMCP Wave 3 & Wave 4 Plan (zazzy-spinning-puzzle)
+- **Ambition**: MASSIVE — 16 tools fixed + hardening
+- **Scope**: Fix critical bugs preventing MCP adapter operation, then harden for production
+- **Critical Bugs**: All 16 tools receive `undefined` params (wrong callback signature `async ({ params })` instead of `async (params)`), only 4 of 16 tools registered, `// @ts-nocheck` hiding type errors, `translate_code_comment` is placeholder (marks `[TRANSLATED]` instead of translating)
+- **Wave 3**: Fix callback signatures, extract shared types/provider-factory, register all 16 tools
+- **Wave 4**: Error handling, configuration system, security tests, documentation
+- **Architecture**: Monorepo with 7 packages, @espanol/providers, @espanol/security
+
+### EspanolMCP Wave 3+4 Agent Variant (sprightly-snacking-hopper-agent-*)
+- **Ambition**: MASSIVE — 1216-line agent variant with full implementation details
+- **Scope**: Same as parent plan but with complete code listings for every file
+- **Notable**: Demonstrates parallel agent execution pattern — parent spawns sub-agents with exclusive file ownership
+
+---
+
+### AGENT FINANCIAL INFRASTRUCTURE
+
+### AgentPay Research: Agent Financial Infrastructure (stateless-cuddling-sutherland)
+- **Ambition**: MASSIVE — 512-line competitive landscape analysis
+- **Scope**: "Stripe for Agent Transactions" — MCP-native financial API for AI agents
+- **Key Decisions**: Crypto/blockchain as primary solution for agent payments (KYC barriers in traditional finance), open-source core + hosted convenience model
+- **Competitive Landscape**: Sapiom ($15.75M raised), Google AP2, Coinbase x402 protocol, AgentaOS
+- **Market Size**: AI agent market $52-183B by 2030-2033, agentic commerce could reach $3-5T by 2030
+- **Philosophical Statement**: "The gap between agent capability and financial infrastructure is the biggest opportunity in AI tooling"
+
+### Agent Financial Infrastructure Deep Research (abstract-popping-yao-agent-*)
+- **Ambition**: MASSIVE — agent variant with comprehensive research
+- **Scope**: 8 research areas — market sizing, pricing models, OSS business models, GTM strategies, licensing, regulatory, reputation systems, model resilience
+- **Key Findings**: Crypto/blockchain emerging as primary solution, open source models (Supabase, PostHog) demonstrate viable paths to $70M+ ARR, regulatory uncertainty biggest bottleneck
+- **Notable**: Parallel agent research pattern — one research question per agent
+
+---
+
+### CERAFICA — Video Pipeline & Vision
+
+### Reels/Stories/Carousel Support (twinkling-popping-rabin)
+- **Ambition**: MEDIUM
+- **Scope**: Instagram content type routing — vertical videos <90s become Reels, else feed posts
+- **Key Decisions**: MediaType enum, aspect ratio detection, content routing
+
+### Vision Detection Improvement Plan (woolly-spinning-aho)
+- **Ambition**: LARGE
+- **Scope**: Improve accuracy of ceramic vision analysis pipeline
+- **Agent Variant (woolly-spinning-aho-agent-*)**: Vision prompting best practices research synthesis
+- **Key Findings**: JSON schema prompting for structured output, explicit field descriptions and constraints improve extraction quality
+
+### Fix Vision Analysis Accuracy Regression (velvety-wobbling-dolphin)
+- **Ambition**: MEDIUM
+- **Scope**: Aggressive compression causing quality loss, duplicate exports in pipeline
+- **Agent Variants (3 agents)**: Each researched different aspects — prompt engineering, compression settings, export deduplication
+
+### Fix Video Footer HUD Missing Stats (swift-snacking-squirrel)
+- **Ambition**: SMALL
+- **Scope**: Re-HUD mode missing statistics display in footer + adaptive typewriter speed
+
+### Fix Memory Crash in Video Frame Generator (tidy-drifting-unicorn)
+- **Ambition**: MEDIUM
+- **Scope**: 100GB+ RAM usage from numpy arrays accumulating in memory during frame generation
+- **Key Decisions**: Streaming frame processing, memory-mapped arrays, batch-and-discard pattern
+
+### Zoom Panels in Re-HUD Mode (zazzy-doodling-wadler)
+- **Ambition**: MEDIUM
+- **Scope**: Sequential reveal zoom panels extracted from framed photo, composited onto video frames
+- **Innovation**: Scanning-system animation — panels appear one at a time with fade-in, simulating a discovery process
+- **Timing**: Panel 0 at 15%, Panel 1 at 35%, Panel 2 at 55% of video duration
+
+### Process 6 Videos Through Pipeline (toasty-fluttering-lollipop)
+- **Ambition**: LARGE
+- **Scope**: Batch processing of 6 ceramic videos through full Cerafica pipeline
+
+### Portfolio Redesign (toasty-zooming-bear)
+- **Ambition**: LARGE
+- **Scope**: Portfolio visual identity aligned with Cerafica dark sci-fi aesthetic
+
+### Frame IMG_4967.MOV via mcp-video (transient-finding-plum)
+- **Ambition**: MEDIUM
+- **Scope**: Evaluate mcp-video tools by framing a ceramic piece video — Lazur-ix-4
+
+### Schema Restructuring: Separate Glaze ID from Visual Description (zesty-stargazing-lemon)
+- **Ambition**: MEDIUM
+- **Scope**: Split overloaded `glaze_type` field into technical glaze ID + visual `color_appearance` description
+- **Key Insight**: "The wrong glaze IDs + correct visual description would be MORE useful than wrong glaze IDs alone"
+- **Innovation**: `color_appearance` field using existing color taxonomy (oatmeal, toast, ivory, slate_blue, chun_blue, etc.)
+
+### Fix Regenerate Caption Bug (starry-tickling-starlight — same name, different plan: zesty-discovering-gray)
+- **Ambition**: SMALL
+- **Scope**: `testData` (undefined) should be `allData` in caption regeneration UI
+- **Evidence**: Classic variable naming bug — two similar names, one undefined
+
+### Instagram Glaze #004 RE Pipeline (zippy-gathering-meerkat)
+- **Ambition**: MEDIUM
+- **Scope**: Run image-based ceramic glaze reverse engineering on newest photo from Mac Photos album
+- **Pipeline**: Photo export → Stage 00 (target brief) → Stage 02 (visual observation via MCP image analysis) → Stage 06 (recipe synthesis + UMF estimation) → HTML dashboard
+
+---
+
+### OPENGLAZE — Chemistry & Dashboard
+
+### Glaze Chemistry Rules Audit (steady-stirring-zebra-agent-*)
+- **Ambition**: LARGE
+- **Scope**: Audit hardcoded glaze chemistry rules against authoritative ceramic sources
+- **Methodology**: Each rule evaluated for accuracy against Allan Chemical Corporation, Ceramic Arts Network, manufacturer SDS sheets
+- **Notable**: Demonstrates commitment to factual accuracy in ceramic science
+
+### Video Frame Generator for Pottery-as-Rotating-Planets (wondrous-riding-parnas)
+- **Ambition**: LARGE
+- **Scope**: Generate animated video frames showing ceramic pieces as rotating planets
+- **Key Concept**: Each ceramic piece becomes a planet — surface details become terrain, glazes become atmospheres
+
+---
+
+### RESEARCH PIPELINE & ICM
+
+### Persistent Research Improvement System (temporal-chasing-gray)
+- **Ambition**: LARGE
+- **Scope**: RQS scoring system inspired by Karpathy's autoresearch, experiment logging
+- **Key Decisions**: IMPROVEMENT-LOG.md tracking, RQS (Research Quality Score) metric
+- **Philosophical Statement**: "The jagged frontier was a measurement error. Evaluation is the skill gaining value, not execution."
+
+### Mining Your GitHub for Liminal (swift-knitting-knuth)
+- **Ambition**: MASSIVE — 45 repos analyzed
+- **Scope**: Find algorithms and patterns across developer's 45 GitHub repositories to port into Liminal
+- **Key Decisions**: 4 tiers (Must-Mine / Should-Mine / Could-Mine / Skip), 10 synergy combinations, 7-phase mining order
+- **Philosophical Statement**: Extract patterns from existing work rather than building from scratch
+
+### Deep Research Plan: 15 Product Opportunities (wondrous-imagining-engelbart)
+- **Ambition**: MASSIVE — Phase 1 research
+- **Scope**: Find 15+ NEW product opportunities across 10+ domains not already covered
+- **Agent Variant**: Research across Reddit, Hacker News, GitHub Trending, Indie Hackers, Product Hunt
+- **Key Finding**: 40+ opportunities identified, including Reddit Lead Delivery Service, social intent scouting
+- **Philosophical Statement**: "Find white space — tool categories where no clear winner exists"
+
+### Research Skill Creation Plan (velvet-exploring-muffin)
+- **Ambition**: LARGE
+- **Scope**: Create web-research skill with quick/deep/comprehensive modes
+- **Agent Variant (velvet-exploring-muffin-agent-*)**: Researches available approaches and designs skill architecture
+
+### PR #2 Inspection Report for ICM (validated-nibbling-floyd)
+- **Ambition**: MEDIUM
+- **Scope**: Review and merge second PR for ICM research-pipeline workspace
+- **Key Decisions**: Merge criteria, quality gate verification
+
+---
+
+### GOOGLE WORKSPACE AGENT
+
+### Agent Email Identity Architecture (zesty-discovering-gray — NOTE: same file as snug-leaping-dragonfly from previous session)
+- **Ambition**: LARGE — full OAuth architecture
+- **Scope**: Dedicated agent email identity (agent@puenteworks.com) with send capabilities
+- **Key Decisions**: Separate OAuth (not delegation), 4 trust levels (supervised → can-send), rate limiting (5 emails/hour, 20/day)
+- **Security Model**: Preview mode shows first 3 lines, hourly/daily limits, content screening, audit trail, weekly review
+- **Philosophical Statement**: "Agent needs to send emails on user's behalf — reducing cognitive load while automating routine communications"
+
+### Research-Pipeline GWS Integration (snappy-twirling-wadler)
+- **Ambition**: LARGE — deferred
+- **Scope**: New stage 06-publish pushing research outputs to PARA knowledge base in Google Drive
+- **Key Decisions**: DEFERRED — wait for GWS agent's PARA structure to stabilize before integration
+- **PARA Mapping**: Reports → Resources/Research/{topic}/, Datasets → Google Sheets, Docs → Google Docs
+
+---
+
+### CROSS-PROJECT & INFRASTRUCTURE
+
+### Atelier Repository Architecture Analysis (sprightly-snacking-hopper-agent-a409810079b223d36)
+- **Ambition**: SMALL — blocked
+- **Scope**: Analyze architecture of "Pastorsimon1798/atelier" GitHub repo
+- **Outcome**: BLOCKED — repository not found. Either wrong name or private repo
+- **Notable**: Evidence of the developer's earlier project naming (Atelier → later renamed Liminal)
+
+### Write AUDIT_FULL.md + AUDIT_WORKFLOW.md (transient-juggling-koala / wild-gliding-map)
+- **Ambition**: MASSIVE — 38-section audit + 9-phase repeatable workflow
+- **Scope**: Complete forensic audit documentation and repeatable audit procedure
+- **38 Sections**: Swallowed errors, dead code, stubs, CLI gaps, generator issues, config gaps, LLM robustness, compost integrity, RalphLoop issues, type safety, missing error handling, console.log leaks, race conditions, hardcoded values, TODO/FIXME, missing tests, barrel exports, CI issues, test quality, security, docs gaps, TypeScript config, prompt issues, package.json, gitignore, GitHub presentation, landing page, severity summary, dependency vulnerabilities, git secrets, repo bloat, platform compat, signal handling, disk exhaustion, npm publishability, generator output correctness, GitHub settings, landing page accessibility
+- **Severity**: 6 CRITICAL, 12 HIGH, 34 MEDIUM, 14 LOW, 8 GOOD
+- **Dependency Vulnerabilities**: 12 CVEs including critical loader-utils prototype pollution
+- **Generator Output**: 98 files — 67% valid, 26 broken, P5/Three/GLSL best, ASCII worst at 25%
+- **Philosophical Statement**: Standardized audit procedure enables consistent quality across all projects
+
+### Address Remaining Liminal Audit Issues (transient-juggling-koala)
+- **Ambition**: MEDIUM — 5 remaining tasks
+- **Scope**: Fix remaining issues from forensic audit that weren't covered in earlier waves
+
+### Reset Clean-Branch Working Tree (zany-gliding-mist)
+- **Ambition**: SMALL — session recovery
+- **Scope**: Session crashed, discard all working tree changes to restore clean state
+- **Steps**: Restore deleted files, reset submodule, remove untracked
+- **Notable**: Evidence of development chaos — session crashes requiring recovery plans are a recurring pattern
+
+---
+
+## AGENT VARIANT SUB-PLANS (21 files)
+
+These are sub-plans generated by parallel agents spawned from parent plans. They contain detailed implementation code and research that supplements the parent plans:
+
+| Parent Plan | Agent Variant | Content |
+|------------|---------------|---------|
+| abstract-popping-yao | a1f6045eedbb2c104 | Agent Financial Infrastructure deep research ($52-183B market) |
+| abstract-popping-yao | aafaf9b7ca42f8b1b | Agent Financial Infrastructure research variant |
+| encapsulated-bouncing-seal | ab0ca85649a | (Sub-task variant) |
+| lucky-wobbling-lampson | af70d7008bc9b39e4 | (Sub-task variant) |
+| memoized-snacking-locket | a2ba5fe4b2f4cdd96 | (Sub-task variant) |
+| parsed-singing-panda | a8c931164d60931b6 | (Sub-task variant) |
+| quizzical-squishing-pebble | a06a861df1eb5c97d | (Sub-task variant) |
+| serene-splashing-bengio | a3ac68455ba5a086a | (Sub-task variant) |
+| snappy-herding-marshmallow | a1105b4b2af388b7a | (Sub-task variant) |
+| sprightly-snacking-hopper | a409810079b223d36 | Atelier repo analysis (BLOCKED — repo not found) |
+| sprightly-snacking-hopper | a631a9486556533ee | (Sub-task variant) |
+| steady-stirring-zebra | a945e8953dbb849ef | Glaze Chemistry Rules Audit Report |
+| steady-stirring-zebra | a9a7a8f00da3e88b5 | (Sub-task variant) |
+| velvet-exploring-muffin | a3e26967e5f4ae4f6 | EspanolMCP Wave 3+4 full implementation (1216 lines) |
+| velvety-wobbling-dolphin | a103de76f28a79a9b | Vision Prompting Best Practices Research |
+| velvety-wobbling-dolphin | a3c9a0eaeca371589 | (Sub-task variant) |
+| velvety-wobbling-dolphin | a93dee0873289cc8b | (Sub-task variant) |
+| woolly-spinning-aho | a7f9efb0076241c4b | Product Opportunity Analysis 2026 (40+ opportunities) |
+| woolly-spinning-aho | a879d18ea9a1b88d5 | (Sub-task variant) |
+| woolly-spinning-aho | afa4035ec0d8534c9 | (Sub-task variant) |
+| zany-gliding-mist | a04f3aedc5eb3153d | (Sub-task variant) |
+
+---
+
 ## PATTERN ANALYSIS
 
 ### Recurring Themes Across All Plans
@@ -522,23 +1045,27 @@ Each entry includes:
 7. **The gap is shipping, not knowing** — Repeated in the career transition plan. "Not a tutorial. Not learning more skills."
 
 ### Ambition Distribution
-- MASSIVE: ~20 plans (multi-week, multi-wave efforts)
-- LARGE: ~45 plans (significant features, system redesigns)
-- MEDIUM: ~60 plans (features, bug fixes with analysis)
-- SMALL: ~75 plans (quick fixes, config changes, commits)
+- MASSIVE: ~30 plans (multi-week, multi-wave efforts)
+- LARGE: ~65 plans (significant features, system redesigns)
+- MEDIUM: ~75 plans (features, bug fixes with analysis)
+- SMALL: ~80 plans (quick fixes, config changes, commits)
 
 ### Project Coverage
-- Liminal: ~40 plans
-- mcp-video: ~25 plans
-- Cerafica/Instagram: ~35 plans
-- OpenGlaze/Glaze Lab: ~25 plans
-- ICM/Research Pipeline: ~15 plans
+- Liminal: ~55 plans (largest project — includes deep audits, prompt system, decomposition)
+- mcp-video: ~30 plans (includes AgentCut tests, Remotion integration, Glama score)
+- Cerafica/Instagram: ~50 plans (vision pipeline, video framing, RE pipeline, caption fixes)
+- OpenGlaze/Glaze Lab: ~30 plans (UMF engine, chemistry audit, dashboard redesigns)
+- ICM/Research Pipeline: ~20 plans (RQS scoring, product research, skill creation)
 - Hooks/Infrastructure: ~15 plans
-- Google Workspace Agent: ~5 plans
+- Google Workspace Agent: ~7 plans
+- EspanolMCP: ~3 plans (new project — Spanish translation MCP server)
+- Agent Financial Infrastructure: ~3 plans (AgentPay research — new research area)
 - Hydra Creative Agent: ~2 plans
 - TradesFlow: ~3 plans
 - Career/Personal: ~5 plans
-- Other/research: ~30 plans
+- GitHub Mining: ~2 plans (algorithm sourcing from 45 repos)
+- Other/research: ~35 plans
+- Agent Variant Sub-Plans: 21 files (parallel agent research outputs)
 
 ---
 
@@ -579,3 +1106,21 @@ Each entry includes:
 > "God Object: engine.py (3,249 lines) handles ALL core FFmpeg operations." — Red Team Audit
 
 > "Dominant_colors always returns [] — stub that never works. Smoothness param accepted but never used." — Dead code audit
+
+> "The entire test suite is broken — 0/130 suites execute." — Red Team Audit Fix
+
+> "The wrong glaze IDs + correct visual description would be MORE useful than wrong glaze IDs alone." — Schema Restructuring plan
+
+> "The gap between agent capability and financial infrastructure is the biggest opportunity in AI tooling." — AgentPay Research
+
+> "Your own past work is the best source of algorithms — mine it systematically." — Mining Your GitHub plan
+
+> "Agent needs to send emails on user's behalf — replies, new emails, meeting invites, digest summaries." — Agent Email Architecture
+
+> "Integration should wait until the structure is finalized — don't build on shifting foundations." — GWS Integration deferral
+
+> "The system generates valuable data (novelty scores, aesthetic predictions, compost DNA) but never feeds it back into generation decisions." — Liminal Deep Audit
+
+> "The deliberation system looks like it works but agents never actually reach final consensus positions." — CEO Agents Fix
+
+> "Self-improving research — the research process itself should get better over time." — Persistent Research Improvement

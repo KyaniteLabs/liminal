@@ -58,6 +58,44 @@ export {
   createCatastrophicGuardrails,
 } from './rules/CatastrophicGuardrails.js';
 
+// Validation layer
+export {
+  SchemaValidator,
+  initializeValidator,
+  getValidator,
+  type ValidationResult,
+  type ValidationError,
+  type SchemaDefinition,
+} from './validation/SchemaValidator.js';
+
+// Remediation layer
+export {
+  RemediationEngine,
+  initializeRemediationEngine,
+  getRemediationEngine,
+  classifyError,
+  ERROR_TAXONOMY,
+  ERROR_PATTERNS,
+  type ErrorClassification,
+  type ErrorPattern,
+} from './remediation/ErrorTaxonomy.js';
+
+// Correctness guardrails
+export {
+  TypeCheckGuardrail,
+} from './correctness/TypeCheckGuardrail.js';
+
+export {
+  TestVerificationGuardrail,
+  type TestRunResult,
+  type TestFailure,
+} from './correctness/TestVerificationGuardrail.js';
+
+// Hygiene guardrails
+export {
+  CodeStyleGuardrail,
+} from './hygiene/CodeStyleGuardrail.js';
+
 // M9-M11: Legacy guardrails (backward compatibility)
 export {
   SemanticValidator,

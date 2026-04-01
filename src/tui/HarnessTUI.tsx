@@ -41,15 +41,41 @@ const Header = () => (
   </Box>
 );
 
-const StatusBar = ({ status, message }: { status: any; message: string }) => (
-  <Box borderStyle="single" borderColor={C.muted} paddingX={1}>
-    <Text color={C.muted}>
-      {status?.initialized ? '🟢' : '🔴'} {status?.activeProvider || 'offline'} | 
-      🔊 {audioPlayer.isPlaying() ? 'Playing' : 'Stopped'} |
-      {message}
-    </Text>
-  </Box>
-);
+interface ActivityState {
+  phase: 'idle' | 'thinking' | 'generating' | 'executing' | 'validating' | 'retrying';
+  step?: number;
+  totalSteps?: number;
+  currentTool?: string;
+  thinkingChars?: number;
+  lastActivity: number;
+}
+
+const StatusBar = ({ status, message, activity }: { status: any; message: string; activity: ActivityState }) => {
+  const phaseEmoji = {
+    idle: '⏸️',
+    thinking: '🤔',
+    generating: '✨',
+    executing: '🔧',
+    validating: '✅',
+    retrying: '🔄',
+  }[activity.phase];
+  
+  const progress = activity.step && activity.totalSteps 
+    ? `[${activity.step}/${activity.totalSteps}]` 
+    : '';
+  
+  const tool = activity.currentTool ? `→ ${activity.currentTool}` : '';
+  const thinking = activity.thinkingChars ? `(💭 ${activity.thinkingChars})` : '';
+  
+  return (
+    <Box borderStyle="single" borderColor={activity.phase === 'idle' ? C.muted : C.primary} paddingX={1}>
+      <Text color={activity.phase === 'idle' ? C.muted : C.primary}>
+        {status?.initialized ? '🟢' : '🔴'} {status?.activeProvider || 'offline'} | 
+        {phaseEmoji} {message} {progress} {tool} {thinking}
+      </Text>
+    </Box>
+  );
+};
 
 interface HistoryLine {
   type: 'user' | 'assistant' | 'output' | 'error' | 'system' | 'code' | 'audio';
@@ -143,11 +169,17 @@ function App() {
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<any>(null);
   const [statusMsg, setStatusMsg] = useState('Ready');
+  const [activity, setActivity] = useState<ActivityState>({ phase: 'idle', lastActivity: Date.now() });
   const [, setNaturalInterface] = useState<NaturalInterface | null>(null);
   const [shouldExit, setShouldExit] = useState(false);
   
   // Use ref for latest state in callbacks
   const interfaceRef = useRef<NaturalInterface | null>(null);
+  
+  // Helper to update activity with timestamp
+  const updateActivity = useCallback((update: Partial<ActivityState>) => {
+    setActivity(prev => ({ ...prev, ...update, lastActivity: Date.now() }));
+  }, []);
 
   // Init
   useEffect(() => {
@@ -248,31 +280,38 @@ function App() {
     // Process through natural interface with streaming for chat
     try {
       let streamingContent = '';
-      setStatusMsg('🤔 Thinking...');
+      updateActivity({ phase: 'thinking', thinkingChars: 0 });
+      setStatusMsg('Processing...');
       
-      const result = await ni.processInput(userInput, (chunk) => {
+      const result = await ni.processInput(userInput, (chunk, meta) => {
         // Stream handler - updates UI incrementally
-        streamingContent += chunk;
+        if (meta?.type === 'thinking') {
+          updateActivity({ phase: 'thinking', thinkingChars: meta.length });
+          return;
+        }
         
-        // Update the last assistant message or add a new streaming one
-        setHistory(h => {
-          const lastMsg = h[h.length - 1];
-          if (lastMsg && lastMsg.type === 'assistant' && lastMsg.streaming) {
-            // Update existing streaming message
-            return [...h.slice(0, -1), { 
-              type: 'assistant', 
-              content: streamingContent,
-              streaming: true,
-            }];
-          } else {
-            // Add new streaming message
-            return [...h, { 
-              type: 'assistant', 
-              content: streamingContent,
-              streaming: true,
-            }];
-          }
-        });
+        if (meta?.type === 'content') {
+          updateActivity({ phase: 'generating' });
+          streamingContent += chunk;
+          
+          // Update the last assistant message or add a new streaming one
+          setHistory(h => {
+            const lastMsg = h[h.length - 1];
+            if (lastMsg && lastMsg.type === 'assistant' && lastMsg.streaming) {
+              return [...h.slice(0, -1), { 
+                type: 'assistant', 
+                content: streamingContent,
+                streaming: true,
+              }];
+            } else {
+              return [...h, { 
+                type: 'assistant', 
+                content: streamingContent,
+                streaming: true,
+              }];
+            }
+          });
+        }
       });
       
       // Finalize the message - mark as not streaming
@@ -291,15 +330,17 @@ function App() {
       if (!result.shouldContinue) {
         setShouldExit(true);
       }
+      updateActivity({ phase: 'idle', thinkingChars: 0, currentTool: undefined });
       setStatusMsg('Ready');
     } catch (err) {
+      updateActivity({ phase: 'idle' });
       setStatusMsg('Error');
       setHistory(h => [...h, { 
         type: 'error', 
         content: err instanceof Error ? err.message : String(err) 
       }]);
     }
-  }, [input]);
+  }, [input, updateActivity]);
 
   // Handle exit
   useEffect(() => {
@@ -337,7 +378,7 @@ function App() {
         onSubmit={handleSubmit} 
         onCopy={handleCopy}
       />
-      <StatusBar status={status} message={statusMsg} />
+      <StatusBar status={status} message={statusMsg} activity={activity} />
     </Box>
   );
 }

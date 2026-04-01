@@ -123,7 +123,10 @@ export class NaturalInterface {
    * Process natural language input
    * This is the main entry point - like Claude Code's input handling
    */
-  async processInput(input: string, onStream?: (chunk: string) => void): Promise<NaturalInputResult> {
+  async processInput(
+    input: string, 
+    onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
+  ): Promise<NaturalInputResult> {
     const trimmed = input.trim();
     
     // Add user message to history
@@ -287,7 +290,10 @@ export class NaturalInterface {
   /**
    * Handle chat with streaming for real-time response
    */
-  private async handleChat(input: string, onStream?: (chunk: string) => void): Promise<NaturalInputResult> {
+  private async handleChat(
+    input: string, 
+    onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
+  ): Promise<NaturalInputResult> {
     this.onStatus('Thinking...');
 
     try {
@@ -316,6 +322,7 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
           if (chunk.includes('<think>')) {
             isThinking = true;
             this.onStatus('🤔 Thinking...');
+            if (onStream) onStream('', { type: 'thinking', length: thinkingContent.length });
             continue;
           }
           
@@ -330,12 +337,13 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
             // Show brief thinking indicator
             if (thinkingContent.length % 50 === 0) {
               this.onStatus(`🤔 Thinking... (${thinkingContent.length} chars)`);
+              if (onStream) onStream('', { type: 'thinking', length: thinkingContent.length });
             }
             continue;
           }
 
           fullResponse += chunk;
-          onStream(chunk);
+          if (onStream) onStream(chunk, { type: 'content' });
         }
 
         // Clean up any remaining think tags

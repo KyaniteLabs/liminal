@@ -336,3 +336,38 @@ harness-tasks/
 - See `DOGFOOD_QUEUES.md` for test procedures
 - See `src/harness/prompts/self-improve.ts` for system prompt
 - See `plan.md` for implementation plan
+
+---
+
+## 📚 DOCUMENTATION BIBLE RULE
+
+**CRITICAL:** The documentation site at `docs/` is the single source of truth.
+
+### Golden Rule
+> **NEVER** let code and documentation diverge. The docs site IS the project bible.
+
+### Requirements for ALL Agents
+1. **Check dashboard.html** before starting work
+2. **Update relevant docs** when making code changes
+3. **Update dashboard.html** status on EVERY commit
+4. **Expand docs** to include new features/discussions
+
+### Pages That Must Be Maintained
+| Page | Purpose | Update When... |
+|------|---------|----------------|
+| `dashboard.html` | Project status | Every commit |
+| `features.html` | Feature docs | New features |
+| `cli-reference.html` | CLI docs | New commands |
+| `harness-tasks.html` | Task docs | Task changes |
+| `architecture*.html` | Architecture | System changes |
+| `soul-system.html` | SOUL docs | Personality changes |
+
+### Violation Policy
+- Code commits without doc updates are **BLOCKED**
+- Docs must be updated **BEFORE** or **WITH** code changes
+- Dashboard must reflect **REALITY** at all times
+
+---
+
+**Last Updated:** 2026-04-01  
+**Rule Status:** BINDING

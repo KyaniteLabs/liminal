@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
-**Version:** 2.0 - Production Ready  
+**Version:** 2.1 - DGF Complete  
 **Date:** 2026-04-01  
-**Status:** 1741 tests passing, 0 failures  
-**Branch:** feature/persistent-memory (ready to merge to main)
+**Status:** 31 guardrail tests passing, DGF Phases 1-3 complete  
+**Branch:** narrative/liminal-archaeology  
 
 ---
 
@@ -11,7 +11,11 @@
 
 Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
 
-- **18 Guardrails** (M1-M11 implemented, M12-M18 planned)
+- **Deterministic Guardrails Framework (DGF)** - 3-phase multi-layer protection system
+  - Phase 1: Foundation (Observation, Constraint)
+  - Phase 2: Validation & Remediation (Schema, Error Taxonomy, Correctness, Hygiene)
+  - Phase 3: Evolution (Constitution, Self-Healing)
+- **31 Total Guardrails** across 4 categories
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
 - **Meta-Harness** self-improvement system
@@ -22,33 +26,25 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 ## Test Status: ✅ ALL PASSING
 
 ```
-Test Files: 132
-Tests:      1741 passing
-Failures:   0
+Guardrail Tests:
+  - test/guardrails/GuardrailSystem.test.ts:     8 tests passing
+  - test/guardrails/FullSystemSmoke.test.ts:    10 tests passing
+  - test/e2e/guardrails-e2e.test.ts:            13 tests passing (with real LLM)
+  
+Total Guardrail Tests: 31 passing
+Full System Tests: 1741+ passing
+Failures: 0
 ```
 
-### Recent Test Fixes (Other Agent's Work)
+### Recent Test Achievements
 
-**Bucket A - Fixture Size Fixes:**
-- `test/unit/exporter.test.ts` - Enlarged ~16 code fixtures from ~50-120 bytes to >500 bytes
-- `test/unit/gui-export-selected.test.js` - Enlarged 2 fixtures to >500 bytes
-
-**Bucket B - Generator LLM Mocks:**
-- `test/unit/shader-generator.test.ts` - Added vi.mock for LLMClient with GLSL responses
-- `test/unit/three-generator.test.ts` - Added vi.mock for LLMClient with Three.js HTML responses
-- `test/unit/generators/RemotionGenerator.test.ts` - Added vi.mock for LLMClient with Remotion JSX
-- `test/generators/p5-generator.test.js` - Added vi.mock for LLMClient, made all 40+ tests async
-
-**Bucket C - Ralph-loop + Misc:**
-- `test/integration/evaluator-gallery.test.js` - Fixed mock returning Promise instead of value
-- `test/unit/core/CodeValidator.test.ts` - Rewrote all 11 failing fixtures to exceed domain minimums (p5: 500b, shader: 800b, three: 800b)
-- `test/integration/preview-server-api.test.js` - Enlarged sampleCode to >500 bytes
-- `src/generators/hydra/HydraGenerator.ts` - Fixed unnecessary regex escapes
-- `src/harness/MetaHarnessIntegration.ts` - Removed unused import
-- `src/utils/htmlWrapper.ts` - Converted regex literals to new RegExp() to avoid template-literal lint issues
-- `src/guardrails/AccessibilityGuardrails.ts` - Fixed @ts-ignore → @ts-expect-error with descriptions
-- `src/guardrails/RuntimeHealthMonitor.ts` - Same fixes
-- `src/llm/PromptBuilder.ts` - Prefixed unused variables
+**Deterministic Guardrails Framework - COMPLETE:**
+- ✅ Phase 1: 4 Catastrophic guardrails (Max Iteration, Resource, Tool, Schema)
+- ✅ Phase 2: Validation, Remediation, Correctness (2), Hygiene (1)
+- ✅ Phase 3: Constitution + Self-Healing guardrail
+- ✅ E2E test with real LLM integration (Qwen3-Coder-40B via LM Studio)
+- ✅ All tier levels working (SHADOW→ADVISORY→ENFORCING→AUTONOMOUS)
+- ✅ Terminal action remediation verified
 
 ---
 
@@ -60,10 +56,25 @@ Failures:   0
 ├─────────────────────────────────────────────────────────────────────────────┤
 │                                                                              │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ USER INTERFACE LAYER                                                 │    │
-│  │  ├── NaturalInterface (no prefixes, intent routing)                 │    │
-│  │  ├── HarnessTUI (terminal UI)                                       │    │
-│  │  └── Web Preview Server                                             │    │
+│  │ DETERMINISTIC GUARDRAILS FRAMEWORK (DGF)                            │    │
+│  │  Phase 1: Foundation (Tier 3 - AUTONOMOUS)                          │    │
+│  │   ├── MaxIterationGuardrail     - Prevents infinite loops           │    │
+│  │   ├── ResourceExhaustionGuardrail - Token/memory/time/api limits    │    │
+│  │   ├── ToolPermissionGuardrail   - Whitelist-based authorization     │    │
+│  │   └── OutputSchemaGuardrail     - JSON schema validation            │    │
+│  │                                                                     │    │
+│  │  Phase 2: Validation & Remediation (Tier 2 - ENFORCING)             │    │
+│  │   ├── SchemaValidator           - Zod-like type-safe validation     │    │
+│  │   ├── RemediationEngine         - Error taxonomy & auto-fix         │    │
+│  │   ├── TypeCheckGuardrail        - tsc --noEmit integration          │    │
+│  │   ├── TestVerificationGuardrail - Runs related tests                │    │
+│  │   └── CodeStyleGuardrail        - ESLint + Prettier (Advisory)      │    │
+│  │                                                                     │    │
+│  │  Phase 3: Evolution (Tier 3 - AUTONOMOUS)                           │    │
+│  │   ├── Constitution              - Self-learning rule database       │    │
+│  │   └── SelfHealingGuardrail      - Pattern matching & prevention     │    │
+│  │                                                                     │    │
+│  │  4 Tiers: SHADOW→ADVISORY→ENFORCING→AUTONOMOUS                      │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    ↓                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
@@ -102,8 +113,7 @@ Failures:   0
 │  │  └── ASCIIArtGenerator      - ASCII art                            │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    ↓                                         │
-│  ┌─────────────────────────────────────────────────────────────────────┐    │
-│  │ GUARDRAIL LAYER (M1-M18)                                           │    │
+│  │ GUARDRAIL LAYER (M1-M18 + DGF)                                     │    │
 │  │  M1:  ✅ Prompt Validation          - CodeValidator                 │    │
 │  │  M2:  ✅ Domain Routing             - GeneratorRegistry             │    │
 │  │  M3:  ✅ Budget/Rate Limit          - SafetyGuardrails              │    │
@@ -116,6 +126,8 @@ Failures:   0
 │  │  M10: ✅ Runtime Health             - RuntimeHealthMonitor          │    │
 │  │  M11: ✅ Accessibility              - AccessibilityGuardrails       │    │
 │  │  M12-M18: ⚪ Planned/Future                                         │    │
+│  │                                                                     │    │
+│  │  DGF: ✅ COMPLETE (see above)                                       │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    ↓                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
@@ -125,10 +137,96 @@ Failures:   0
 │  │  ├── CompostHeap            - Failed generations                    │    │
 │  │  ├── NoveltyArchive         - Pattern diversity                     │    │
 │  │  ├── QualityArchive         - High-quality examples                 │    │
+│  │  ├── Constitution           - Learned guardrail rules               │    │
 │  │  └── ArtKnowledgeGraph      - Concepts, techniques                  │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                                                              │
 └─────────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Deterministic Guardrails Framework (DGF)
+
+**Location:** `src/guardrails/`
+
+### Phase 1: Foundation Layer (Catastrophic)
+
+| Guardrail | File | Purpose | Tier |
+|-----------|------|---------|------|
+| MaxIterationGuardrail | `rules/CatastrophicGuardrails.ts` | Blocks infinite loops at 50 iterations | AUTONOMOUS |
+| ResourceExhaustionGuardrail | `rules/CatastrophicGuardrails.ts` | Enforces token/memory/time/api limits | AUTONOMOUS |
+| ToolPermissionGuardrail | `rules/CatastrophicGuardrails.ts` | Whitelist-based tool authorization | AUTONOMOUS |
+| OutputSchemaGuardrail | `rules/CatastrophicGuardrails.ts` | JSON schema validation | AUTONOMOUS |
+
+### Phase 2: Validation & Remediation Layer
+
+| Component | File | Purpose | Tier |
+|-----------|------|---------|------|
+| SchemaValidator | `validation/SchemaValidator.ts` | Zod-like type-safe validation | ENFORCING |
+| RemediationEngine | `remediation/ErrorTaxonomy.ts` | 15 error types with auto-fix strategies | ENFORCING |
+| TypeCheckGuardrail | `correctness/TypeCheckGuardrail.ts` | Runs tsc --noEmit on changes | ENFORCING |
+| TestVerificationGuardrail | `correctness/TestVerificationGuardrail.ts` | Runs test suite on affected files | ENFORCING |
+| CodeStyleGuardrail | `hygiene/CodeStyleGuardrail.ts` | ESLint + Prettier integration | ADVISORY |
+
+**Error Taxonomy (15 types):**
+```
+SYNTAX_ERROR      - Auto-fixable via AST (max 2 retries)
+MISSING_SEMICOLON - eslint --fix (max 1 retry)
+UNMATCHED_BRACKET - Balance brackets (max 2 retries)
+TYPE_ERROR        - TypeScript fixes (max 3 retries)
+MISSING_TYPE      - Infer & add annotations (max 2 retries)
+TEST_FAILURE      - Analyze & fix (max 3 retries)
+ASSERTION_FAILURE - Adjust implementation (max 2 retries)
+TIMEOUT           - Not auto-fixable (max 1 retry)
+RATE_LIMIT        - Not auto-fixable (backoff required)
+HALLUCINATION     - Not auto-fixable (requires human)
+SCHEMA_VIOLATION  - Validation errors
+LINT_ERROR        - Style issues
+PERMISSION_ERROR  - Tool misuse
+RESOURCE_ERROR    - Token/memory exhausted
+UNKNOWN_ERROR     - Fallback
+```
+
+### Phase 3: Evolution Layer
+
+| Component | File | Purpose | Tier |
+|-----------|------|---------|------|
+| Constitution | `evolution/Constitution.ts` | Self-learning rule database | AUTONOMOUS |
+| SelfHealingGuardrail | `evolution/SelfHealingGuardrail.ts` | Pattern matching & prevention | AUTONOMOUS |
+
+**Constitution Features:**
+- Extracts patterns from failure messages
+- Rule confidence scoring (0.0 - 0.95)
+- Automatic rule deprecation (confidence < 0.3)
+- Prevention: Blocks actions matching known failure patterns
+- Remediation: Suggests fixes from past successes
+- Export/import for persistence
+- Effectiveness tracking (success/failure counts)
+
+### Guardrail Tiers
+
+| Tier | Level | Action | Progression |
+|------|-------|--------|-------------|
+| 0 | SHADOW | Log only, don't block | Default |
+| 1 | ADVISORY | Warn but allow override | 95% success over 50 tasks |
+| 2 | ENFORCING | Block with remediation | 95% success over 100 tasks |
+| 3 | AUTONOMOUS | Full auto-remediation | 95% success over 200 tasks |
+
+### DGF Test Results
+
+```
+✓ Max iteration blocking (100 iterations > 50 max)
+✓ Resource exhaustion detection (tokens, memory, time, API calls)
+✓ Tool permission enforcement
+✓ Schema validation (valid/invalid detection)
+✓ Error taxonomy classification
+✓ Remediation engine auto-fix strategies
+✓ Shadow mode operation
+✓ Remediation with terminal actions
+✓ Constitution rule learning
+✓ Constitution export/import
+✓ E2E with real LLM (code generation + guardrail validation)
 ```
 
 ---
@@ -160,12 +258,6 @@ Failures:   0
 ├── config.json                 # Provider config
 └── history.json                # Prompt history
 ```
-
-**Task Queue Status:**
-- M1-M8: ✅ Core guardrails (implemented)
-- M9: ✅ Semantic Validation (implemented)
-- M10: ✅ Runtime Health Monitoring (implemented)
-- M11: ✅ Accessibility (implemented)
 
 ---
 
@@ -233,9 +325,9 @@ Failures:   0
 
 ---
 
-### 4. Guardrails (M1-M18)
+### 4. Guardrails (M1-M18 + DGF)
 
-**Location:** `src/guardrails/` (M9-M11), `src/core/` (M1-M8)
+**Location:** `src/guardrails/` (DGF + M9-M11), `src/core/` (M1-M8)
 
 | # | Name | Location | Implementation | Status |
 |---|------|----------|----------------|--------|
@@ -250,19 +342,23 @@ Failures:   0
 | M9 | Semantic Alignment | `guardrails/SemanticValidator.ts` | Intent matching | ✅ |
 | M10 | Runtime Health | `guardrails/RuntimeHealthMonitor.ts` | Memory, FPS monitoring | ✅ |
 | M11 | Accessibility | `guardrails/AccessibilityGuardrails.ts` | Photosensitivity, a11y | ✅ |
-| M12 | Version Compatibility | - | API version matching | ⚪ |
-| M13 | Dependency Health | - | CDN validation | ⚪ |
-| M14 | Resource Prediction | - | GPU/CPU estimation | ⚪ |
-| M15 | Consistency | - | Style coherence | ⚪ |
-| M16 | Code Clarity | - | Readability | ⚪ |
-| M17 | Thermal/Power | - | Mobile optimization | ⚪ |
-| M18 | Telemetry | - | Privacy checks | ⚪ |
+| M12-M18 | Planned | - | Future work | ⚪ |
+| **DGF** | **COMPLETE** | `guardrails/` | **3-phase framework** | ✅ |
+
+**DGF Categories (4 total):**
+
+| Category | Guardrails | Priority | Tier Range |
+|----------|-----------|----------|------------|
+| Catastrophic | 4 | 0 (Highest) | AUTONOMOUS |
+| Correctness | 2 | 1 | ENFORCING |
+| Hygiene | 1 | 2 | ADVISORY |
+| Evolution | 1 | 3 (Lowest) | AUTONOMOUS |
 
 ---
 
 ### 5. Memory Systems
 
-**Location:** `src/brain/`, `src/harness/`, `src/compost/`, `src/learning/`
+**Location:** `src/brain/`, `src/harness/`, `src/compost/`, `src/learning/`, `src/guardrails/evolution/`
 
 | System | File | Purpose | Persistence |
 |--------|------|---------|-------------|
@@ -271,6 +367,7 @@ Failures:   0
 | CompostHeap | `compost/CompostHeap.ts` | Failed generations | ✅ File-based |
 | NoveltyArchive | `learning/NoveltyArchive.ts` | Pattern diversity | ✅ File-based |
 | QualityArchive | `learning/QualityArchive.ts` | High-quality examples | ✅ File-based |
+| Constitution | `guardrails/evolution/Constitution.ts` | Learned guardrail rules | ✅ Export/import |
 | ArtKnowledgeGraph | `brain/ArtKnowledgeGraph.ts` | Concepts, techniques | ❌ In-memory |
 
 ---
@@ -323,12 +420,15 @@ Failures:   0
 | Integration Tests | ~20 files | ✅ Passing |
 | Generator Tests | ~12 files | ✅ Passing |
 | E2E Tests | ~10 files | ✅ Passing |
+| Guardrail Tests | 3 files | ✅ 31 tests passing |
 
-**Test Fixes Applied:**
-- ✅ Fixture sizes enlarged to >500 bytes
-- ✅ LLM mocks added for generators
-- ✅ Async test fixes
-- ✅ CodeValidator fixtures rewritten
+**Test Files (DGF):**
+```
+test/guardrails/
+├── GuardrailSystem.test.ts      # 8 unit tests
+├── FullSystemSmoke.test.ts      # 10 integration tests
+└── e2e/guardrails-e2e.test.ts   # 13 E2E tests (with real LLM)
+```
 
 ---
 
@@ -344,7 +444,15 @@ liminal/
 │   ├── evolution/          # Evolutionary algorithms
 │   ├── gallery/            # Output gallery
 │   ├── generators/         # All generators
-│   ├── guardrails/         # M9-M11 guardrails
+│   ├── guardrails/         # DGF + M9-M11
+│   │   ├── core/           # Registry, types, ResourceLimiter
+│   │   ├── rules/          # Catastrophic guardrails
+│   │   ├── validation/     # SchemaValidator
+│   │   ├── remediation/    # ErrorTaxonomy, RemediationEngine
+│   │   ├── correctness/    # TypeCheck, TestVerification
+│   │   ├── hygiene/        # CodeStyle
+│   │   ├── evolution/      # Constitution, SelfHealing
+│   │   └── index.ts        # Main exports
 │   ├── harness/            # Meta-harness
 │   ├── learning/           # Quality/Novelty archives
 │   ├── llm/                # LLM infrastructure
@@ -356,7 +464,8 @@ liminal/
 │   ├── swarm/              # Swarm mode
 │   ├── tui/                # Terminal UI
 │   └── utils/              # Utilities
-├── test/                   # Test suite (1741 tests)
+├── test/                   # Test suite (1741+ tests)
+│   └── guardrails/         # DGF tests (31 tests)
 ├── docs/                   # Documentation (THE BIBLE)
 ├── harness-tasks/          # M1-M11 task definitions
 └── ~/.liminal/             # User data (created at runtime)
@@ -387,10 +496,46 @@ export { trimContext, selectPromptStyle };
 export type { ModelTier, ModelProfile };
 export { PromptBuilder, type PromptContext, type BuiltPrompt };
 
-// Guardrails
+// Guardrails (M9-M11)
 export { SemanticValidator, type SemanticValidationResult };
 export { RuntimeHealthMonitor, type RuntimeHealthResult };
 export { AccessibilityGuardrails, type AccessibilityResult };
+
+// DGF - Deterministic Guardrails Framework
+export {
+  GuardrailTier,
+  type GuardrailRule,
+  type ExecutionContext,
+  type GuardrailResult,
+  type RemediationResult,
+} from './guardrails/core/types.js';
+export {
+  GuardrailRegistry,
+  initializeGuardrails,
+  getGuardrailRegistry,
+} from './guardrails/core/GuardrailRegistry.js';
+export {
+  SchemaValidator,
+  initializeValidator,
+  getValidator,
+  type ValidationResult,
+} from './guardrails/validation/SchemaValidator.js';
+export {
+  RemediationEngine,
+  classifyError,
+  ERROR_TAXONOMY,
+  type ErrorClassification,
+} from './guardrails/remediation/ErrorTaxonomy.js';
+export {
+  Constitution,
+  initializeConstitution,
+  getConstitution,
+  type FailureRecord,
+} from './guardrails/evolution/Constitution.js';
+export {
+  SelfHealingGuardrail,
+  type SelfHealingConfig,
+} from './guardrails/evolution/SelfHealingGuardrail.js';
 
 // Meta-Harness
 export { metaHarness, type MetaHarnessStatus };
@@ -424,24 +569,26 @@ LIMINAL_LOG_LEVEL=info
 
 ## Recent Changes (Last 20 Commits)
 
-1. **fix:** Remove duplicate exports for HTMLWebGenerator
-2. **feat:** Migrate all generators to TierBasedGenerator
-3. **fix:** Apply lint fixes to guardrails
-4. **docs:** Update THE BIBLE with persistent memory, M9-M11
-5. **feat:** Implement M9-M11 Guardrails
-6. **feat:** Add Model Tier detection
-7. **feat:** Add HarnessMemory
-8. **docs:** Add DOCUMENTATION_WARNING
-9. **rules:** Add NO DUPLICATION rule
-10. **docs:** Add PROJECT_RULES.md
-11. **fix:** Pre-flight audit fixes
-12. **feat:** Natural language interface
-13. **feat:** Full LLM Mode
-14. **feat:** Meta-Harness integration
-15. **feat:** Harness TUI
-16. **feat:** Meta-Harness infrastructure
-17. **docs:** Audit reports
-18. **docs:** Gaps and improvements
+1. **fix(tests):** Correct LLMClient.generate() call signature in E2E test
+2. **fix(prompts):** Escape template variables in blog-to-video.ts
+3. **test(guardrails):** E2E test with real LLM integration (31 tests)
+4. **test(guardrails):** Full system smoke test (10 integration tests)
+5. **feat(guardrails):** Phase 3 - Self-Healing & Evolution (Constitution)
+6. **feat(guardrails):** Phase 2 - Validation, Remediation, Correctness, Hygiene
+7. **feat(guardrails):** Phase 1 - Foundation (Observation, Constraint)
+8. **fix:** Remove duplicate exports for HTMLWebGenerator
+9. **feat:** Migrate all generators to TierBasedGenerator
+10. **fix:** Apply lint fixes to guardrails
+11. **docs:** Update THE BIBLE with persistent memory, M9-M11
+12. **feat:** Implement M9-M11 Guardrails
+13. **feat:** Add Model Tier detection
+14. **feat:** Add HarnessMemory
+15. **docs:** Add DOCUMENTATION_WARNING
+16. **rules:** Add NO DUPLICATION rule
+17. **docs:** Add PROJECT_RULES.md
+18. **fix:** Pre-flight audit fixes
+19. **feat:** Natural language interface
+20. **feat:** Full LLM Mode
 
 ---
 
@@ -456,9 +603,9 @@ LIMINAL_LOG_LEVEL=info
 
 ## Next Steps
 
-1. ✅ Merge `feature/persistent-memory` to `main`
-2. ✅ Merge `docs-site` to `main`
-3. 🔄 Implement M12-M18 (future)
+1. ✅ DGF Phases 1-3 COMPLETE
+2. 🔄 M12-M18 implementation (future)
+3. 🔄 Constitution persistence to disk (optional)
 4. 🔄 Community plugins (future)
 
 ---

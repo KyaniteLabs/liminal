@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liminal — DEV Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='15' fill='%23d4a054'/><text x='50' y='68' font-family='serif' font-size='55' font-weight='700' fill='%230d0c0f' text-anchor='middle'>L</text></svg>">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a2e;
+    --border: #2a2a3e;
+    --text: #e2e8f0;
+    --text-dim: #94a3b8;
+    --accent: #d4a054;
+    --accent2: #8b5cf6;
+    --green: #10b981;
+    --red: #ef4444;
+    --blue: #3b82f6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+
+  code, .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+
+  .status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  .status-pass { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .status-fail { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .status-warn { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+
+  .tier-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .tier-shadow { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+  .tier-advisory { background: rgba(212, 160, 84, 0.15); color: var(--accent); }
+  .tier-enforcing { background: rgba(59, 130, 246, 0.15); color: var(--blue); }
+  .tier-autonomous { background: rgba(139, 92, 246, 0.15); color: var(--accent2); }
+
+  .phase-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-radius: 8px;
+    margin-bottom: 12px;
+  }
+
+  .phase-complete {
+    border-left: 3px solid var(--green);
+  }
+
+  .guardrail-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .guardrail-item:last-child {
+    border-bottom: none;
+  }
+
+  .metric-box {
+    text-align: center;
+    padding: 16px;
+    background: var(--bg);
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .metric-value {
+    font-size: 32px;
+    font-weight: 700;
+    color: var(--accent);
+  }
+
+  .metric-label {
+    font-size: 11px;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .nav-link {
+    padding: 8px 16px;
+    border-radius: 6px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .nav-link:hover, .nav-link.active {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  .test-result {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 0;
+    font-size: 13px;
+  }
+
+  pre {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+    overflow-x: auto;
+    font-size: 12px;
+    line-height: 1.6;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+</style>
+</head>
+<body class="min-h-screen">
+
+<!-- Header -->
+<header class="border-b" style="border-color: var(--border); background: var(--surface);">
+  <div class="max-w-7xl mx-auto px-6 py-4">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <svg width="40" height="40" viewBox="0 0 100 100"><rect width="100" height="100" rx="15" fill="#d4a054"/><text x="50" y="68" font-family="serif" font-size="55" font-weight="700" fill="#0d0c0f" text-anchor="middle">L</text></svg>
+        <div>
+          <h1 class="text-xl font-bold">Liminal</h1>
+          <p class="text-xs text-gray-500 mono">DEV DASHBOARD v2.1</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-6">
+        <div class="flex items-center gap-2">
+          <span class="status-dot status-pass"></span>
+          <span class="text-sm">System Operational</span>
+        </div>
+        <div class="text-right">
+          <div class="text-2xl font-bold" style="color: var(--green);">31</div>
+          <div class="text-xs text-gray-500">Guardrail Tests</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation -->
+<nav class="border-b" style="border-color: var(--border);">
+  <div class="max-w-7xl mx-auto px-6">
+    <div class="flex gap-2 py-3">
+      <a href="#overview" class="nav-link active" onclick="showTab('overview')">Overview</a>
+      <a href="#dgf" class="nav-link" onclick="showTab('dgf')">DGF (Guardrails)</a>
+      <a href="#tests" class="nav-link" onclick="showTab('tests')">Test Results</a>
+      <a href="#api" class="nav-link" onclick="showTab('api')">API Reference</a>
+      <a href="#config" class="nav-link" onclick="showTab('config')">Config</a>
+    </div>
+  </div>
+</nav>
+
+<main class="max-w-7xl mx-auto px-6 py-8">
+
+  <!-- Overview Tab -->
+  <div id="overview" class="tab-content active">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+      <div class="metric-box">
+        <div class="metric-value">31</div>
+        <div class="metric-label">Guardrails</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-value" style="color: var(--accent2);">3</div>
+        <div class="metric-label">DGF Phases</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-value" style="color: var(--blue);">4</div>
+        <div class="metric-label">Categories</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-value" style="color: var(--green);">1741+</div>
+        <div class="metric-label">Total Tests</div>
+      </div>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <!-- System Status -->
+      <div class="card">
+        <h2 class="text-lg font-semibold mb-4 flex items-center gap-2">
+          <span class="status-dot status-pass"></span>
+          System Status
+        </h2>
+        <div class="space-y-3">
+          <div class="flex justify-between items-center py-2 border-b" style="border-color: var(--border);">
+            <span class="text-sm text-gray-400">Meta-Harness</span>
+            <span class="text-sm font-medium" style="color: var(--green);">🟢 Active</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b" style="border-color: var(--border);">
+            <span class="text-sm text-gray-400">Ralph Loop</span>
+            <span class="text-sm font-medium" style="color: var(--green);">🟢 Active</span>
+          </div>
+          <div class="flex justify-between items-center py-2 border-b" style="border-color: var(--border);">
+            <span class="text-sm text-gray-400">DGF Framework</span>
+            <span class="text-sm font-medium" style="color: var(--green);">✅ Complete</span>
+          </div>
+          <div class="flex justify-between items-center py-2">
+            <span class="text-sm text-gray-400">Constitution</span>
+            <span class="text-sm font-medium" style="color: var(--green);">🟢 Learning</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Commits -->
+      <div class="card">
+        <h2 class="text-lg font-semibold mb-4">Recent Commits</h2>
+        <div class="space-y-2 text-sm">
+          <div class="flex gap-3">
+            <span class="mono text-xs text-gray-500">e763592</span>
+            <span class="text-gray-300">fix(tests): correct LLMClient.generate() signature</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="mono text-xs text-gray-500">e69af71</span>
+            <span class="text-gray-300">fix(prompts): escape template variables</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="mono text-xs text-gray-500">e6b890b</span>
+            <span class="text-gray-300">test(guardrails): E2E test with real LLM</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="mono text-xs text-gray-500">3e952be</span>
+            <span class="text-gray-300">test(guardrails): Full system smoke test</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="mono text-xs text-gray-500">6fc87e9</span>
+            <span class="text-gray-300">feat(guardrails): Phase 3 - Constitution</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="mono text-xs text-gray-500">ea630fd</span>
+            <span class="text-gray-300">feat(guardrails): Phase 2 - Validation</span>
+          </div>
+          <div class="flex gap-3">
+            <span class="mono text-xs text-gray-500">27974bb</span>
+            <span class="text-gray-300">feat(guardrails): Phase 1 - Foundation</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DGF Tab -->
+  <div id="dgf" class="tab-content">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold mb-2">Deterministic Guardrails Framework</h2>
+      <p class="text-gray-400">3-phase multi-layer protection system with self-healing capabilities</p>
+    </div>
+
+    <!-- Phase 1 -->
+    <div class="card mb-6 phase-complete">
+      <div class="phase-header">
+        <span class="text-2xl">🛡️</span>
+        <div class="flex-1">
+          <h3 class="font-semibold">Phase 1: Foundation</h3>
+          <p class="text-sm text-gray-500">Observation & Constraint Layers</p>
+        </div>
+        <span class="tier-badge tier-autonomous">Tier 3 - Autonomous</span>
+        <span class="status-dot status-pass"></span>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="guardrail-item">
+          <div>
+            <div class="font-medium">MaxIterationGuardrail</div>
+            <div class="text-xs text-gray-500">Prevents infinite loops at 50 iterations</div>
+          </div>
+          <span class="tier-badge tier-autonomous">AUTONOMOUS</span>
+        </div>
+        <div class="guardrail-item">
+          <div>
+            <div class="font-medium">ResourceExhaustionGuardrail</div>
+            <div class="text-xs text-gray-500">Token/memory/time/API limits</div>
+          </div>
+          <span class="tier-badge tier-autonomous">AUTONOMOUS</span>
+        </div>
+        <div class="guardrail-item">
+          <div>
+            <div class="font-medium">ToolPermissionGuardrail</div>
+            <div class="text-xs text-gray-500">Whitelist-based authorization</div>
+          </div>
+          <span class="tier-badge tier-autonomous">AUTONOMOUS</span>
+        </div>
+        <div class="guardrail-item">
+          <div>
+            <div class="font-medium">OutputSchemaGuardrail</div>
+            <div class="text-xs text-gray-500">JSON schema validation</div>
+          </div>
+          <span class="tier-badge tier-autonomous">AUTONOMOUS</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 2 -->
+    <div class="card mb-6 phase-complete">
+      <div class="phase-header">
+        <span class="text-2xl">✓</span>
+        <div class="flex-1">
+          <h3 class="font-semibold">Phase 2: Validation & Remediation</h3>
+          <p class="text-sm text-gray-500">Schema, Error Taxonomy, Correctness, Hygiene</p>
+        </div>
+        <span class="status-dot status-pass"></span>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div class="p-4 rounded-lg" style="background: var(--bg);">
+          <h4 class="font-semibold mb-3 flex items-center gap-2">
+            <span class="tier-badge tier-enforcing">ENFORCING</span>
+          </h4>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              SchemaValidator
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              TypeCheckGuardrail
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              TestVerificationGuardrail
+            </li>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-lg" style="background: var(--bg);">
+          <h4 class="font-semibold mb-3 flex items-center gap-2">
+            <span class="tier-badge tier-enforcing">ENFORCING</span>
+          </h4>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              RemediationEngine
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              15 Error Types
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              Auto-fix Strategies
+            </li>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-lg" style="background: var(--bg);">
+          <h4 class="font-semibold mb-3 flex items-center gap-2">
+            <span class="tier-badge tier-advisory">ADVISORY</span>
+          </h4>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              CodeStyleGuardrail
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              ESLint Integration
+            </li>
+            <li class="flex items-center gap-2">
+              <span class="status-dot status-pass"></span>
+              Prettier Integration
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="p-4 rounded-lg" style="background: var(--bg);">
+        <h4 class="font-semibold mb-2">Error Taxonomy (15 Types)</h4>
+        <div class="grid grid-cols-5 gap-2 text-xs">
+          <div class="p-2 rounded" style="background: var(--surface2);">SYNTAX_ERROR</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">MISSING_SEMICOLON</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">UNMATCHED_BRACKET</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">TYPE_ERROR</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">MISSING_TYPE</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">TEST_FAILURE</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">ASSERTION_FAILURE</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">TIMEOUT</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">RATE_LIMIT</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">HALLUCINATION</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">SCHEMA_VIOLATION</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">LINT_ERROR</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">PERMISSION_ERROR</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">RESOURCE_ERROR</div>
+          <div class="p-2 rounded" style="background: var(--surface2);">UNKNOWN_ERROR</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phase 3 -->
+    <div class="card mb-6 phase-complete">
+      <div class="phase-header">
+        <span class="text-2xl">🧬</span>
+        <div class="flex-1">
+          <h3 class="font-semibold">Phase 3: Evolution</h3>
+          <p class="text-sm text-gray-500">Constitution & Self-Healing</p>
+        </div>
+        <span class="tier-badge tier-autonomous">Tier 3 - Autonomous</span>
+        <span class="status-dot status-pass"></span>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-lg" style="background: var(--bg);">
+          <h4 class="font-semibold mb-3">Constitution</h4>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li>✓ Self-learning rule database</li>
+            <li>✓ Pattern extraction from failures</li>
+            <li>✓ Rule confidence scoring (0.0 - 0.95)</li>
+            <li>✓ Automatic deprecation (confidence &lt; 0.3)</li>
+            <li>✓ Export/import for persistence</li>
+            <li>✓ Effectiveness tracking</li>
+          </ul>
+        </div>
+
+        <div class="p-4 rounded-lg" style="background: var(--bg);">
+          <h4 class="font-semibold mb-3">SelfHealingGuardrail</h4>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li>✓ Prevents known failure patterns</li>
+            <li>✓ Suggests fixes from past successes</li>
+            <li>✓ Confidence threshold filtering</li>
+            <li>✓ Max healing attempts limit</li>
+            <li>✓ Prevention & suggestion modes</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tier Progression -->
+    <div class="card">
+      <h3 class="font-semibold mb-4">Tier Progression Rules</h3>
+      <div class="grid grid-cols-4 gap-4">
+        <div class="text-center p-4 rounded-lg" style="background: var(--bg);">
+          <div class="tier-badge tier-shadow mb-2">SHADOW</div>
+          <div class="text-sm text-gray-400">Log only</div>
+          <div class="text-xs text-gray-600 mt-1">Default</div>
+        </div>
+        <div class="text-center p-4 rounded-lg" style="background: var(--bg);">
+          <div class="tier-badge tier-advisory mb-2">ADVISORY</div>
+          <div class="text-sm text-gray-400">Warn, allow</div>
+          <div class="text-xs text-gray-600 mt-1">95% over 50 tasks</div>
+        </div>
+        <div class="text-center p-4 rounded-lg" style="background: var(--bg);">
+          <div class="tier-badge tier-enforcing mb-2">ENFORCING</div>
+          <div class="text-sm text-gray-400">Block, remediate</div>
+          <div class="text-xs text-gray-600 mt-1">95% over 100 tasks</div>
+        </div>
+        <div class="text-center p-4 rounded-lg" style="background: var(--bg);">
+          <div class="tier-badge tier-autonomous mb-2">AUTONOMOUS</div>
+          <div class="text-sm text-gray-400">Auto-fix</div>
+          <div class="text-xs text-gray-600 mt-1">95% over 200 tasks</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tests Tab -->
+  <div id="tests" class="tab-content">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold mb-2">Test Results</h2>
+      <p class="text-gray-400">All guardrail tests passing with real LLM integration</p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 mb-8">
+      <div class="card">
+        <h3 class="font-semibold mb-4 flex items-center gap-2">
+          <span class="status-dot status-pass"></span>
+          GuardrailSystem.test.ts
+        </h3>
+        <div class="space-y-2">
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Max iteration blocking</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Resource exhaustion</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Tool permission enforcement</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Schema validation</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Error classification</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Shadow mode</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Terminal actions</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Remediaton flow</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t" style="border-color: var(--border);">
+          <div class="text-right">
+            <span class="text-2xl font-bold" style="color: var(--green);">8</span>
+            <span class="text-sm text-gray-500">/ 8 passed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-4 flex items-center gap-2">
+          <span class="status-dot status-pass"></span>
+          FullSystemSmoke.test.ts
+        </h3>
+        <div class="space-y-2">
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Initialize complete system</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Phase 1 catastrophic</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Phase 2 validation</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Phase 3 evolution</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Complete workflow</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Constitution export/import</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Tier progression</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Effectiveness tracking</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Rule confidence</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Remediation suggestions</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t" style="border-color: var(--border);">
+          <div class="text-right">
+            <span class="text-2xl font-bold" style="color: var(--green);">10</span>
+            <span class="text-sm text-gray-500">/ 10 passed</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-4 flex items-center gap-2">
+          <span class="status-dot status-pass"></span>
+          guardrails-e2e.test.ts
+        </h3>
+        <div class="space-y-2">
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Max iteration guardrail</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Resource exhaustion</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Tool permissions</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Schema validation</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Learn from failures</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Remediation suggestions</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Real LLM + guardrails</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Failed generation learning</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Constitution persistence</span>
+          </div>
+          <div class="test-result">
+            <span class="status-dot status-pass"></span>
+            <span class="text-sm">Guardrail effectiveness</span>
+          </div>
+        </div>
+        <div class="mt-4 pt-4 border-t" style="border-color: var(--border);">
+          <div class="text-right">
+            <span class="text-2xl font-bold" style="color: var(--green);">13</span>
+            <span class="text-sm text-gray-500">/ 13 passed</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 class="font-semibold mb-4">E2E LLM Integration Test</h3>
+      <pre><code><span style="color: var(--green);">✓</span> LLM Auto-detected: qwen3-coder-next-reap-40b-a3b-i1
+<span style="color: var(--green);">✓</span> Generated p5.js code (blue circle sketch)
+<span style="color: var(--green);">✓</span> Passed Phase 1 guardrails (max iteration, resources)
+<span style="color: var(--green);">✓</span> Passed Phase 2 guardrails (schema validation)
+<span style="color: var(--green);">✓</span> Constitution recorded success pattern
+<span style="color: var(--accent);">⚠</span> Chrome unavailable (sandbox validation skipped)</code></pre>
+    </div>
+  </div>
+
+  <!-- API Tab -->
+  <div id="api" class="tab-content">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold mb-2">API Reference</h2>
+      <p class="text-gray-400">Key exports from src/guardrails/index.ts</p>
+    </div>
+
+    <div class="space-y-6">
+      <div class="card">
+        <h3 class="font-semibold mb-3" style="color: var(--accent);">Core Types</h3>
+        <pre><code>export {
+  GuardrailTier,                    // 0=SHADOW, 1=ADVISORY, 2=ENFORCING, 3=AUTONOMOUS
+  type GuardrailRule,               // Interface for guardrail implementations
+  type ExecutionContext,            // Context passed to all guardrails
+  type GuardrailResult,             // Result of guardrail evaluation
+  type RemediationResult,           // Result of remediation attempt
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-3" style="color: var(--accent);">Registry</h3>
+        <pre><code>export {
+  GuardrailRegistry,                // Central guardrail registry
+  initializeGuardrails,             // Initialize with config
+  getGuardrailRegistry,             // Get global instance
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-3" style="color: var(--accent);">Validation</h3>
+        <pre><code>export {
+  SchemaValidator,                  // Zod-like schema validation
+  initializeValidator,
+  getValidator,
+  type ValidationResult,
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-3" style="color: var(--accent);">Remediation</h3>
+        <pre><code>export {
+  RemediationEngine,                // Auto-fix strategies
+  classifyError,                    // Error classifier function
+  ERROR_TAXONOMY,                   // 15 error type definitions
+  type ErrorClassification,
+}</code></pre>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-3" style="color: var(--accent);">Evolution</h3>
+        <pre><code>export {
+  Constitution,                     // Self-learning rule database
+  initializeConstitution,
+  getConstitution,
+  type FailureRecord,
+  
+  SelfHealingGuardrail,             // Pattern matching & prevention
+  type SelfHealingConfig,
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Config Tab -->
+  <div id="config" class="tab-content">
+    <div class="mb-6">
+      <h2 class="text-2xl font-bold mb-2">Configuration</h2>
+      <p class="text-gray-400">Environment variables and setup</p>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div class="card">
+        <h3 class="font-semibold mb-4">LLM Provider</h3>
+        <div class="space-y-4">
+          <div>
+            <div class="text-sm text-gray-500 mb-1">LM Studio (Local)</div>
+            <pre><code>export LIMINAL_LLM_BASE_URL="http://localhost:1234/v1"
+export LIMINAL_LLM_MODEL="qwen3.5-9b"</code></pre>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500 mb-1">Ollama (Local)</div>
+            <pre><code>export LIMINAL_LLM_BASE_URL="http://localhost:11434/v1"
+export LIMINAL_LLM_MODEL="qwen2.5:14b"</code></pre>
+          </div>
+          <div>
+            <div class="text-sm text-gray-500 mb-1">OpenAI</div>
+            <pre><code>export OPENAI_API_KEY="sk-..."
+export LIMINAL_LLM_MODEL="gpt-4o"</code></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 class="font-semibold mb-4">Guardrail Initialization</h3>
+        <pre class="text-sm"><code>import { initializeGuardrailSystem } from './guardrails/index.js';
+
+const system = initializeGuardrailSystem({
+  shadowMode: false,              // false = enforce, true = log only
+  defaultTier: GuardrailTier.ENFORCING,
+  telemetry: true,
+});
+
+// Register additional guardrails
+system.registry.register(new TypeCheckGuardrail({
+  maxErrors: 10,
+  autoFix: false,
+  failOnError: true,
+}));
+
+// Evaluate
+const result = await system.registry.evaluate(context);</code></pre>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="px-6 py-8 border-t mt-12" style="border-color: var(--border);">
+  <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-gray-500">
+    <div class="flex items-center gap-3">
+      <svg width="24" height="24" viewBox="0 0 100 100"><rect width="100" height="100" rx="15" fill="#d4a054"/><text x="50" y="68" font-family="serif" font-size="55" font-weight="700" fill="#0d0c0f" text-anchor="middle">L</text></svg>
+      <span>Liminal DEV Dashboard · Always consult THE BIBLE (docs/THE_BIBLE.md)</span>
+    </div>
+    <div class="flex items-center gap-4">
+      <span>Branch: narrative/liminal-archaeology</span>
+      <span>·</span>
+      <span>Status: DGF COMPLETE</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+function showTab(tabId) {
+  // Hide all tabs
+  document.querySelectorAll('.tab-content').forEach(tab => {
+    tab.classList.remove('active');
+  });
+  
+  // Remove active from nav links
+  document.querySelectorAll('.nav-link').forEach(link => {
+    link.classList.remove('active');
+  });
+  
+  // Show selected tab
+  document.getElementById(tabId).classList.add('active');
+  
+  // Add active to clicked link
+  event.target.classList.add('active');
+}
+</script>
+
+</body>
+</html>

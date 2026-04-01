@@ -259,13 +259,20 @@ export function getHarnessProviderConfig(): LLMConfig | null {
   
   // If harness-specific config exists, use it
   if (harnessBaseUrl && harnessModel) {
+    // Use minimax API key if minimax endpoint
+    const isMinimax = harnessBaseUrl.includes('minimax');
+    const apiKey = harnessApiKey || 
+      (isMinimax ? process.env.MINIMAX_API_KEY : undefined) ||
+      process.env.LIMINAL_LLM_API_KEY || 
+      process.env.OPENAI_API_KEY;
+    
     return {
       baseUrl: harnessBaseUrl,
       model: harnessModel,
-      apiKey: harnessApiKey || process.env.LIMINAL_LLM_API_KEY || process.env.OPENAI_API_KEY,
+      apiKey,
       temperature: harnessTemp ? parseFloat(harnessTemp) : 0.2,
       maxTokens: harnessMaxTokens ? parseInt(harnessMaxTokens) : 4096,
-      apiStyle: harnessBaseUrl.includes('minimax') ? 'openai' : 'openai',
+      apiStyle: 'openai',
     };
   }
   

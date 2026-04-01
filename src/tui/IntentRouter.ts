@@ -27,19 +27,23 @@ export interface IntentResult {
 const AGENT_PATTERNS = [
   // Direct action words
   /^(fix|repair|correct|solve)\b/i,
-  /^(add|implement|create|build)\s+(?:a|an|the|\w+)/i,
+  /^(add|implement|create|build|make|do)\s+(?:a|an|the|\w+)/i,
   /^(change|modify|update|refactor|rewrite)\b/i,
   /^(remove|delete|clean\s+up)\b/i,
   /^(improve|optimize|enhance|polish)\b/i,
   /^(find|locate)\s+(?:and|&)?\s*(?:fix|repair)/i,
+  /^(write|generate|produce)\s+(?:the|a|an)\b/i,
   
   // Task descriptions
-  /^(?:can\s+you|could\s+you|please)\s+(?:fix|add|change|implement|update|remove)/i,
-  /^(?:we\s+need|i\s+need|it\s+needs)\s+to\s+(?:be\s+)?(fixed|added|changed|implemented)/i,
+  /^(?:can\s+you|could\s+you|please)\s+(?:fix|add|change|implement|update|remove|create|make|do)/i,
+  /^(?:we\s+need|i\s+need|it\s+needs)\s+to\s+(?:be\s+)?(fixed|added|changed|implemented|created|made|done)/i,
   
   // Specific contexts
   /\b(bug|issue|error|broken|failing)\b.*\b(fix|repair|solve)\b/i,
   /\b(should|must|needs?\s+to)\s+\w+\s+(?:the|a|an)\s+\w+/i,
+  
+  // Proactive commands
+  /^(yes|yeah|yep|ok|okay|sure|go ahead|do it|proceed)\b/i,
 ];
 
 /**
@@ -169,6 +173,14 @@ const DEFAULT_SOUL = `You are Liminal, a creative coding partner.
 You help with generative art, creative technology, and code.
 Be enthusiastic, precise, and honest about uncertainty.
 Never hallucinate APIs - only suggest real functions.
+
+CRITICAL RULES FOR FILE CREATION:
+1. Use TypeScript (.ts) not JavaScript (.js) or text (.txt)
+2. Tests go in test/unit/.../Name.test.ts using vitest (describe, it, expect)
+3. Source code goes in src/.../Name.ts
+4. Guardrails go in src/guardrails/MXX_Name.ts
+5. NEVER create files in root directory
+6. Follow existing project patterns exactly
 
 You can chat about creative ideas or help fix the system via the harness.
 When the user asks you to fix, add, or change code, you may invoke tools.`;

@@ -20,6 +20,7 @@ export interface ConversationMessage {
   metadata?: {
     toolCalls?: string[];
     commandExecuted?: string;
+    thinking?: string;
   };
 }
 
@@ -122,7 +123,10 @@ export class NaturalInterface {
    * Process natural language input
    * This is the main entry point - like Claude Code's input handling
    */
-  async processInput(input: string): Promise<NaturalInputResult> {
+  async processInput(
+    input: string, 
+    onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
+  ): Promise<NaturalInputResult> {
     const trimmed = input.trim();
     
     // Add user message to history
@@ -144,8 +148,8 @@ export class NaturalInterface {
       return this.handleAgentRequest(trimmed);
     }
     
-    // 4. Default: chat mode with personality
-    return this.handleChat(trimmed);
+    // 4. Default: chat mode with personality (streaming if callback provided)
+    return this.handleChat(trimmed, onStream);
   }
 
   /**
@@ -209,6 +213,10 @@ export class NaturalInterface {
       case 'quit':
       case 'q':
         return { type: 'command', response: 'Goodbye! 👋', shouldContinue: false };
+      
+      case 'test':
+      case 'diagnostic':
+        return this.handleDiagnostic();
       
       default:
         return {
@@ -280,9 +288,12 @@ export class NaturalInterface {
   }
 
   /**
-   * Handle chat (conversational mode with SOUL personality)
+   * Handle chat with streaming for real-time response
    */
-  private async handleChat(input: string): Promise<NaturalInputResult> {
+  private async handleChat(
+    input: string, 
+    onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
+  ): Promise<NaturalInputResult> {
     this.onStatus('Thinking...');
 
     try {
@@ -292,17 +303,60 @@ export class NaturalInterface {
         .map(m => `${m.role}: ${m.content}`)
         .join('\n\n');
 
-      const prompt = `${this.session.soul}
-
-CONVERSATION HISTORY:
+      const systemPrompt = this.session.soul;
+      const userPrompt = `CONVERSATION HISTORY:
 ${recentHistory}
 
 USER: ${input}
 
-Respond naturally as your personality. If the user is asking you to modify code (fix, add, change, etc.), you should suggest using the agent mode by saying something like "I can help with that. Should I make those changes?"`;
+Respond naturally as your personality. If the user asks you to modify code (fix, add, change, etc.) OR says words like "do", "make", "create", "implement" — immediately invoke the agent without asking for confirmation. Only ask "Should I...?" if the request is ambiguous or destructive (delete, overwrite).`;
 
+      // Use streaming if callback provided
+      if (onStream) {
+        let fullResponse = '';
+        let isThinking = false;
+        let thinkingContent = '';
+
+        for await (const chunk of this.llmClient.stream(systemPrompt, userPrompt)) {
+          // Handle thinking tags from MiniMax
+          if (chunk.includes('<think>')) {
+            isThinking = true;
+            this.onStatus('🤔 Thinking...');
+            if (onStream) onStream('', { type: 'thinking', length: thinkingContent.length });
+            continue;
+          }
+          
+          if (chunk.includes('</think>')) {
+            isThinking = false;
+            this.onStatus('Generating...');
+            continue;
+          }
+
+          if (isThinking) {
+            thinkingContent += chunk;
+            // Show brief thinking indicator
+            if (thinkingContent.length % 50 === 0) {
+              this.onStatus(`🤔 Thinking... (${thinkingContent.length} chars)`);
+              if (onStream) onStream('', { type: 'thinking', length: thinkingContent.length });
+            }
+            continue;
+          }
+
+          fullResponse += chunk;
+          if (onStream) onStream(chunk, { type: 'content' });
+        }
+
+        // Clean up any remaining think tags
+        fullResponse = this.cleanThinkTags(fullResponse);
+        
+        this.addMessage('assistant', fullResponse, { thinking: thinkingContent });
+        return { type: 'chat', response: fullResponse, shouldContinue: true };
+      }
+
+      // Fallback to non-streaming
       const result = await this.llmClient.complete({
-        prompt,
+        prompt: userPrompt,
+        systemPrompt,
         maxTokens: 1000,
         temperature: 0.7,
       });
@@ -311,7 +365,7 @@ Respond naturally as your personality. If the user is asking you to modify code 
         throw new Error(result.error || 'LLM failed');
       }
 
-      const response = result.text.trim();
+      const response = this.cleanThinkTags(result.text.trim());
       this.addMessage('assistant', response);
 
       return { type: 'chat', response, shouldContinue: true };
@@ -324,6 +378,14 @@ Respond naturally as your personality. If the user is asking you to modify code 
         shouldContinue: true,
       };
     }
+  }
+
+  private cleanThinkTags(text: string): string {
+    return text
+      .replace(/<think>[\s\S]*?<\/think>/gi, '')
+      .replace(/<think>/gi, '')
+      .replace(/<\/think>/gi, '')
+      .trim();
   }
 
   // Command handlers
@@ -403,10 +465,61 @@ Respond naturally as your personality. If the user is asking you to modify code 
       '  • tasks  - List pending tasks',
       '  • run <id> - Execute a task',
       '  • preview <file> - Preview a file',
+      '  • test   - Run diagnostic tests',
       '  • clear  - Clear screen',
       '  • exit   - Quit',
     ].join('\n');
 
+    return { type: 'command', response, shouldContinue: true };
+  }
+
+  private async handleDiagnostic(): Promise<NaturalInputResult> {
+    this.onStatus('Running diagnostics...');
+    
+    const tests: string[] = [];
+    
+    // Test 1: LLM Connection
+    try {
+      const result = await this.llmClient.complete({
+        prompt: 'Say "PASS" and nothing else.',
+        maxTokens: 10,
+      });
+      tests.push(`1. LLM Connection: ${result.success && result.text.includes('PASS') ? 'PASS' : 'FAIL'}`);
+    } catch (e) {
+      tests.push(`1. LLM Connection: FAIL (${e instanceof Error ? e.message : String(e)})`);
+    }
+    
+    // Test 2: JSON Parsing
+    try {
+      const json = '{"test": true, "number": 42}';
+      const parsed = JSON.parse(json);
+      tests.push(`2. JSON Parsing: ${parsed.test === true && parsed.number === 42 ? 'PASS' : 'FAIL'}`);
+    } catch {
+      tests.push('2. JSON Parsing: FAIL');
+    }
+    
+    // Test 3: Harness Status
+    const { metaHarness } = await import('../harness/index.js');
+    const status = metaHarness.getStatus();
+    tests.push(`3. Harness Online: ${status.initialized ? 'PASS' : 'FAIL'}`);
+    
+    // Test 4: Context Retention
+    const contextTest = await this.llmClient.complete({
+      prompt: 'Remember this word: "banana". Confirm you remember it.',
+      maxTokens: 20,
+    });
+    tests.push(`4. Context Retention: ${contextTest.success && contextTest.text.toLowerCase().includes('banana') ? 'PASS' : 'FAIL'}`);
+    
+    const response = [
+      '📊 HARNESS DIAGNOSTIC RESULTS',
+      '',
+      ...tests,
+      '',
+      `Provider: ${this.llmClient.getConfig().model}`,
+      `Harness: ${status.activeProvider}`,
+      `Failures loaded: ${status.recentFailures}`,
+    ].join('\n');
+    
     return { type: 'command', response, shouldContinue: true };
   }
 

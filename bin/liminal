@@ -23,9 +23,10 @@ async function initializeConfig() {
   
   // Set env vars so LLMClient picks them up
   // Note: provider is no longer used - we use baseUrl + model directly
-  if (config.baseUrl) process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;
-  process.env.LIMINAL_LLM_MODEL = config.model;
-  if (config.apiKey) process.env.LIMINAL_LLM_API_KEY = config.apiKey;
+  // Only set if not already set in environment (respect user env vars)
+  if (config.baseUrl && !process.env.LIMINAL_LLM_BASE_URL) process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;
+  // NOTE: We don't set LIMINAL_LLM_MODEL - let LLMClient auto-detect from /v1/models
+  if (config.apiKey && !process.env.LIMINAL_LLM_API_KEY) process.env.LIMINAL_LLM_API_KEY = config.apiKey;
   
   return config;
 }

@@ -32,6 +32,13 @@ export {
   type PatternHistory,
 } from './HarnessMemory.js';
 export {
+  selfEvaluation,
+  SelfEvaluation,
+  type TaskOutcome,
+  type StrategyMetrics,
+  type SelfEvaluationReport,
+} from './SelfEvaluation.js';
+export {
   getProviderConfig,
   getActiveProvider,
   getActiveProviderConfig,

@@ -14,6 +14,13 @@ export { writeFileTool, WriteFileTool } from './WriteFileTool.js';
 export { applyEditTool, ApplyEditTool } from './ApplyEditTool.js';
 export { runBuildTool, RunBuildTool } from './RunBuildTool.js';
 export { runTestsTool, RunTestsTool } from './RunTestsTool.js';
+export { searchTool, SearchTool } from './SearchTool.js';
+export { listDirTool, ListDirTool } from './ListDirTool.js';
+export { typeCheckTool, TypeCheckTool } from './TypeCheckTool.js';
+export { npmTool, NpmTool } from './NpmTool.js';
+export { lspTool, LSPTool } from './LSPTool.js';
+export { astValidatorTool, ASTValidatorTool } from './ASTValidatorTool.js';
+export { importGuardTool, ImportGuardTool } from './ImportGuardTool.js';
 export { createBackupTool, restoreBackupTool, CreateBackupTool, RestoreBackupTool } from './BackupTools.js';
 
 export { rateLimiter, RateLimiter } from './RateLimiter.js';

@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture Deep Dive - Liminal Documentation</title>
+    <link rel="stylesheet" href="styles/docs.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+            <li><a href="soul-system.html">SOUL</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <a href="architecture.html">Architecture</a>
+        <span>/</span>
+        <span>Deep Dive</span>
+    </div>
+
+    <main class="container">
+        <section class="section">
+            <h1 class="section-title">🔬 Architecture Deep Dive</h1>
+            <p class="section-subtitle">Technical details of LLMModeAgent, NaturalInterface, and the Tool System</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🤖 LLMModeAgent</h2>
+            <p>The autonomous agent that plans and executes tasks with reflection.</p>
+            
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Architecture Flow</h3>
+            <pre class="mermaid">
+flowchart TD
+    A[User Input] --> B[NaturalInterface]
+    B --> C{Intent Detection}
+    C -->|Agent Pattern| D[LLMModeAgent]
+    C -->|Command| E[Direct Execution]
+    C -->|Chat| F[Chat Mode]
+    
+    D --> G[Create LLMTask]
+    G --> H[LLM Plans Tool Calls]
+    H --> I[Execute Tool]
+    I --> J{Success?}
+    J -->|Yes| K[Run Build]
+    J -->|No| L[Reflection]
+    L --> H
+    K --> M{Build Pass?}
+    M -->|Yes| N[Task Complete]
+    M -->|No| O[Rollback]
+    O --> P[Report Failure]
+            </pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Key Components</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>File</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>LLMModeAgent</strong></td>
+                        <td><code>src/harness/agent/LLMModeAgent.ts</code></td>
+                        <td>Main agent orchestration</td>
+                    </tr>
+                    <tr>
+                        <td><strong>ConversationSession</strong></td>
+                        <td><code>src/harness/agent/LLMModeAgent.ts</code></td>
+                        <td>Message history management</td>
+                    </tr>
+                    <tr>
+                        <td><strong>getLLMPlan()</strong></td>
+                        <td>Private method</td>
+                        <td>Calls LLM to decide next action</td>
+                    </tr>
+                    <tr>
+                        <td><strong>attemptErrorRecovery()</strong></td>
+                        <td>Private method</td>
+                        <td>Reflection loop on failures</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Conversation Flow</h3>
+            <pre><code>// 1. Initialize with system prompt
+system: SOUL.md content
+
+// 2. Add task description
+user: "Fix the Tone.js validation to include music domain"
+
+// 3. LLM responds with plan
+assistant: {
+  "thought": "I need to read CodeValidator.ts",
+  "tool": "readFile",
+  "params": { "path": "src/core/CodeValidator.ts" },
+  "expectedResult": "See validation logic"
+}
+
+// 4. Execute tool, get result
+tool: { success: true, data: "...file contents..." }
+
+// 5. LLM plans next step
+assistant: {
+  "thought": "Found the issue, will apply fix",
+  "tool": "applyEdit",
+  "params": { ... },
+  "expectedResult": "Update gating condition"
+}
+
+// 6. Continue until complete or max steps</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">💬 NaturalInterface</h2>
+            <p>Routes user input to appropriate handler without prefixes.</p>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Intent Detection Patterns</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Type</th>
+                        <th>Patterns</th>
+                        <th>Examples</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Agent</strong></td>
+                        <td><code>fix</code>, <code>add</code>, <code>change</code>, <code>implement</code></td>
+                        <td>"Fix the validation"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Command</strong></td>
+                        <td><code>status</code>, <code>tasks</code>, <code>run</code>, <code>preview</code></td>
+                        <td>"What's the status?"</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Chat</strong></td>
+                        <td>Questions, greetings, discussion</td>
+                        <td>"Tell me about p5.js"</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Routing Logic</h3>
+            <pre><code>function processInput(input):
+  // 1. Check for explicit slash commands
+  if input starts with "/":
+    return handleSlashCommand(input)
+  
+  // 2. Match command patterns
+  commandMatch = matchCommand(input)
+  if commandMatch:
+    return executeCommand(commandMatch)
+  
+  // 3. Check for agent patterns
+  if isAgentRequest(input):
+    return handleAgentRequest(input)
+  
+  // 4. Default to chat
+  return handleChat(input)</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔧 Tool System</h2>
+            <p>Seven tools available to the LLMModeAgent:</p>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Tool Reference</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tool</th>
+                        <th>File</th>
+                        <th>Rate Limit</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>readFile</code></td>
+                        <td><code>src/harness/tools/ReadFileTool.ts</code></td>
+                        <td>10 reads/min</td>
+                    </tr>
+                    <tr>
+                        <td><code>writeFile</code></td>
+                        <td><code>src/harness/tools/WriteFileTool.ts</code></td>
+                        <td>10 writes/min</td>
+                    </tr>
+                    <tr>
+                        <td><code>applyEdit</code></td>
+                        <td><code>src/harness/tools/ApplyEditTool.ts</code></td>
+                        <td>10 writes/min</td>
+                    </tr>
+                    <tr>
+                        <td><code>runBuild</code></td>
+                        <td><code>src/harness/tools/RunBuildTool.ts</code></td>
+                        <td>12 builds/min</td>
+                    </tr>
+                    <tr>
+                        <td><code>runTests</code></td>
+                        <td><code>src/harness/tools/RunTestsTool.ts</code></td>
+                        <td>12 tests/min</td>
+                    </tr>
+                    <tr>
+                        <td><code>createBackup</code></td>
+                        <td><code>src/harness/tools/BackupTools.ts</code></td>
+                        <td>10 writes/min</td>
+                    </tr>
+                    <tr>
+                        <td><code>restoreBackup</code></td>
+                        <td><code>src/harness/tools/BackupTools.ts</code></td>
+                        <td>10 writes/min</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Safety Features</h3>
+            <ul class="feature-list">
+                <li><strong>Path Validation:</strong> Only allows src/, test/, docs/, scripts/</li>
+                <li><strong>Auto-Backup:</strong> Creates backup before any edit</li>
+                <li><strong>Auto-Rollback:</strong> Restores backup if build fails</li>
+                <li><strong>Rate Limiting:</strong> Prevents abuse</li>
+                <li><strong>Max Steps:</strong> 15 steps default (configurable)</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔄 Meta-Harness Integration</h2>
+            <p>How the agent reports failures back to the Meta-Harness:</p>
+
+            <pre><code>┌─────────────────────────────────────────┐
+│         Meta-Harness Flow               │
+├─────────────────────────────────────────┤
+│                                         │
+│  1. FailureLogger.log()                 │
+│     └── Save to ~/.liminal/failures/    │
+│                                         │
+│  2. PatternDetector.analyze()           │
+│     └── Look for recurring patterns     │
+│                                         │
+│  3. HarnessUpdater.applyAdaptation()    │
+│     └── Generate fix, create task       │
+│                                         │
+│  4. Task executed by HarnessAgent       │
+│     └── Build verified, committed       │
+│                                         │
+└─────────────────────────────────────────┘</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📁 File Structure</h2>
+            <pre><code>src/harness/
+├── agent/
+│   ├── HarnessAgent.ts           # Structured task execution
+│   ├── LLMModeAgent.ts           # Autonomous agent (NEW)
+│   └── index.ts                  # Exports
+├── prompts/
+│   └── self-improve.ts           # System prompts
+├── tools/
+│   ├── ReadFileTool.ts
+│   ├── WriteFileTool.ts
+│   ├── ApplyEditTool.ts
+│   ├── RunBuildTool.ts
+│   ├── RunTestsTool.ts
+│   ├── BackupTools.ts
+│   ├── RateLimiter.ts
+│   └── index.ts
+├── FailureLogger.ts              # Failure persistence
+├── PatternDetector.ts            # Pattern analysis
+├── HarnessUpdater.ts             # Auto-fix generation
+└── MetaHarnessIntegration.ts     # Central coordinator
+
+src/tui/
+├── NaturalInterface.ts           # Intent routing (NEW)
+├── IntentRouter.ts               # Pattern detection (NEW)
+├── HarnessTUI.tsx                # Main TUI component
+└── commands.ts                   # Explicit commands</code></pre>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+    </footer>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'dark' });
+    </script>
+</body>
+</html>

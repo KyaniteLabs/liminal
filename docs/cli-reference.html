@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CLI Reference - Liminal Documentation</title>
+    <link rel="stylesheet" href="styles/docs.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="cli-reference.html" class="active">CLI</a></li>
+            <li><a href="soul-system.html">SOUL</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>CLI Reference</span>
+    </div>
+
+    <main class="container">
+        <section class="section">
+            <h1 class="section-title">💻 CLI Reference</h1>
+            <p class="section-subtitle">Command-line interface for Liminal</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🚀 Commands</h2>
+            
+            <h3 style="color: var(--accent-cyan);">liminal tui</h3>
+            <p>Launch the interactive TUI with natural language interface.</p>
+            <pre><code>$ liminal tui
+
+# Or use the shorthand alias:
+$ lim tui</code></pre>
+            <p style="margin-top: 1rem;">Inside the TUI, you can type naturally:</p>
+            <ul class="feature-list">
+                <li><code>"Fix the validation"</code> — Agent mode</li>
+                <li><code>"What's the status?"</code> — Command mode</li>
+                <li><code>"Tell me about p5.js"</code> — Chat mode</li>
+            </ul>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">liminal --prompt "..."</h3>
+            <p>Generate art directly from the command line.</p>
+            <pre><code>$ liminal --prompt "Create a calming blue particle system"
+$ liminal --prompt "Generate a shader with Perlin noise" --domain glsl</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">liminal serve</h3>
+            <p>Start the preview server for browser-based viewing.</p>
+            <pre><code>$ liminal serve
+# Server starts on http://localhost:3000</code></pre>
+        </section>
+
+        <section class="section" id="configuration">
+            <h2 class="section-title">⚙️ Configuration</h2>
+            
+            <h3 style="color: var(--accent-cyan);">Environment Variables</h3>
+            <p>Copy <code>.env.example</code> to <code>.env</code> and configure:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Variable</th>
+                        <th>Description</th>
+                        <th>Default</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>LIMINAL_LLM_PROVIDER</code></td>
+                        <td>LLM provider (lmstudio, ollama, openai)</td>
+                        <td>lmstudio</td>
+                    </tr>
+                    <tr>
+                        <td><code>LIMINAL_LLM_BASE_URL</code></td>
+                        <td>Base URL for LLM API</td>
+                        <td>http://localhost:1234/v1</td>
+                    </tr>
+                    <tr>
+                        <td><code>LIMINAL_LLM_MODEL</code></td>
+                        <td>Model name to use</td>
+                        <td>qwen2.5-coder-7b-instruct</td>
+                    </tr>
+                    <tr>
+                        <td><code>OPENAI_API_KEY</code></td>
+                        <td>OpenAI API key (if using OpenAI)</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><code>LIMINAL_ALLOW_LOCALHOST_LLM</code></td>
+                        <td>Allow localhost connections</td>
+                        <td>true</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">Example .env</h3>
+            <pre><code># LM Studio (default)
+LIMINAL_LLM_PROVIDER=lmstudio
+LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
+LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
+
+# Or Ollama
+LIMINAL_LLM_PROVIDER=ollama
+LIMINAL_LLM_BASE_URL=http://localhost:11434
+LIMINAL_LLM_MODEL=codellama:7b
+
+# Or OpenAI
+LIMINAL_LLM_PROVIDER=openai
+LIMINAL_LLM_MODEL=gpt-4
+OPENAI_API_KEY=sk-...</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🎮 TUI Commands</h2>
+            <p>When inside the TUI, you can use explicit commands with <code>/</code> prefix:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Command</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>/status</code></td><td>Show harness status</td></tr>
+                    <tr><td><code>/tasks</code></td><td>List pending harness tasks</td></tr>
+                    <tr><td><code>/run &lt;task-id&gt;</code></td><td>Execute a task (e.g., <code>/run M1</code>)</td></tr>
+                    <tr><td><code>/preview &lt;file&gt;</code></td><td>Preview file (auto-routes)</td></tr>
+                    <tr><td><code>/play &lt;audio&gt;</code></td><td>Play audio file</td></tr>
+                    <tr><td><code>/stop</code></td><td>Stop audio playback</td></tr>
+                    <tr><td><code>/browser</code></td><td>Open browser preview</td></tr>
+                    <tr><td><code>/help</code></td><td>Show help</td></tr>
+                    <tr><td><code>/clear</code></td><td>Clear screen</td></tr>
+                    <tr><td><code>/exit</code></td><td>Quit TUI</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔧 npm Scripts</h2>
+            <p>Available npm/pnpm scripts:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Script</th>
+                        <th>Command</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>build</code></td><td><code>tsc</code></td><td>Compile TypeScript</td></tr>
+                    <tr><td><code>test</code></td><td><code>vitest run</code></td><td>Run tests</td></tr>
+                    <tr><td><code>tui</code></td><td><code>tsx src/tui/HarnessTUI.tsx</code></td><td>Launch TUI</td></tr>
+                    <tr><td><code>lint</code></td><td><code>eslint src/</code></td><td>Lint code</td></tr>
+                    <tr><td><code>typecheck</code></td><td><code>tsc --noEmit</code></td><td>Type check only</td></tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+    </footer>
+</body>
+</html>

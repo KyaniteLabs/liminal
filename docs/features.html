@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features - Liminal Documentation</title>
+    <link rel="stylesheet" href="styles/docs.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html" class="active">Features</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+            <li><a href="soul-system.html">SOUL</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>Features</span>
+    </div>
+
+    <main class="container">
+        <section class="section">
+            <h1 class="section-title">⚡ Features</h1>
+            <p class="section-subtitle">Explore Liminal's capabilities</p>
+        </section>
+
+        <section class="section" id="natural-interface">
+            <h2 class="section-title">💬 Natural Language Interface</h2>
+            <p>Just type naturally—no command prefixes needed. Liminal's NaturalInterface routes your input intelligently:</p>
+            
+            <table style="margin-top: 1.5rem;">
+                <thead>
+                    <tr>
+                        <th>You Type</th>
+                        <th>Mode</th>
+                        <th>What Happens</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>"Fix the Tone.js validation"</code></td>
+                        <td><span class="badge badge-info">Agent</span></td>
+                        <td>LLM plans and executes code changes</td>
+                    </tr>
+                    <tr>
+                        <td><code>"What's the status?"</code></td>
+                        <td><span class="badge badge-info">Command</span></td>
+                        <td>Shows harness status</td>
+                    </tr>
+                    <tr>
+                        <td><code>"Tell me about p5.js"</code></td>
+                        <td><span class="badge badge-info">Chat</span></td>
+                        <td>Conversational response with SOUL personality</td>
+                    </tr>
+                    <tr>
+                        <td><code>"Run task M1"</code></td>
+                        <td><span class="badge badge-info">Command</span></td>
+                        <td>Executes structured task</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3 style="margin-top: 2rem; color: var(--accent-cyan);">How It Works</h3>
+            <pre><code>User Input
+    ↓
+┌─────────────────────────────────────┐
+│  IntentRouter.detectIntent()        │
+│  • Pattern matching for commands    │
+│  • Agent patterns (fix, add, change)│
+│  • Chat patterns (questions)        │
+└─────────────────────────────────────┘
+    ↓
+Route to:
+├── Agent Mode → LLMModeAgent
+├── Command Mode → Direct execution  
+└── Chat Mode → LLM with SOUL.md</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🤖 LLM Mode Agent</h2>
+            <p>Autonomous agent that plans its own steps, reflects on results, and adapts its strategy.</p>
+            
+            <h3 style="margin-top: 1.5rem; color: var(--accent-cyan);">Capabilities</h3>
+            <ul class="feature-list">
+                <li><strong>Planning:</strong> LLM decides which tools to call based on task description</li>
+                <li><strong>Reflection:</strong> Analyzes tool results and adjusts approach</li>
+                <li><strong>Multi-turn:</strong> Maintains conversation context across steps</li>
+                <li><strong>Recovery:</strong> Attempts to fix errors automatically (up to 3 retries)</li>
+                <li><strong>Rollback:</strong> Auto-restores backups on failure</li>
+            </ul>
+
+            <h3 style="margin-top: 1.5rem; color: var(--accent-cyan);">Available Tools</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Tool</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>readFile</code></td><td>Read file contents before modifying</td></tr>
+                    <tr><td><code>applyEdit</code></td><td>Targeted string replacement</td></tr>
+                    <tr><td><code>writeFile</code></td><td>Write entire file (use sparingly)</td></tr>
+                    <tr><td><code>runBuild</code></td><td>Verify TypeScript compiles</td></tr>
+                    <tr><td><code>runTests</code></td><td>Run test suite</td></tr>
+                    <tr><td><code>createBackup</code></td><td>Create backup before changes</td></tr>
+                    <tr><td><code>restoreBackup</code></td><td>Restore from backup on failure</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🎯 Meta-Harness</h2>
+            <p>Self-improving system that observes failures, detects patterns, and updates itself.</p>
+            
+            <h3 style="margin-top: 1.5rem; color: var(--accent-cyan);">Components</h3>
+            <div class="card-grid">
+                <div class="card">
+                    <h3>FailureLogger</h3>
+                    <p>Logs all generation failures with context (model, domain, prompt, error, duration)</p>
+                </div>
+                <div class="card">
+                    <h3>PatternDetector</h3>
+                    <p>Analyzes failure logs to detect recurring patterns across time</p>
+                </div>
+                <div class="card">
+                    <h3>HarnessUpdater</h3>
+                    <p>Applies automatic fixes based on detected patterns</p>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 2rem; color: var(--accent-cyan);">18-Type Guardrail Architecture</h3>
+            <p>Comprehensive quality assurance system. <a href="architecture-all-guardrails.html">View full taxonomy →</a></p>
+            
+            <table style="margin-top: 1rem;">
+                <thead>
+                    <tr>
+                        <th>Category</th>
+                        <th>Types</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Code Quality</td>
+                        <td>Syntax, types, validation</td>
+                        <td><span class="badge badge-success">✅ Exists</span></td>
+                    </tr>
+                    <tr>
+                        <td>Safety</td>
+                        <td>Sandbox, SSRF, rate limiting</td>
+                        <td><span class="badge badge-success">✅ Exists</span></td>
+                    </tr>
+                    <tr>
+                        <td>Anti-Hallucination</td>
+                        <td>API validation, API detection</td>
+                        <td><span class="badge badge-warning">⚠️ Partial</span></td>
+                    </tr>
+                    <tr>
+                        <td>Aesthetic</td>
+                        <td>Visual quality, animation</td>
+                        <td><span class="badge badge-warning">⚠️ Partial</span></td>
+                    </tr>
+                    <tr>
+                        <td>Semantic Alignment</td>
+                        <td>Prompt-to-output matching</td>
+                        <td><span class="badge badge-error">🆕 Planned</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔄 Ralph-Wiggum Loop</h2>
+            <p>Self-recursive iteration engine that generates, evaluates, accumulates, and improves.</p>
+            
+            <pre><code>┌─────────────────────────────────────────────┐
+│          RALPH-WIGGUM LOOP                  │
+├─────────────────────────────────────────────┤
+│                                             │
+│  1. GENERATE → LLM creates code             │
+│  2. EVALUATE → Quality gates                │
+│  3. ACCUMULATE → Save iteration             │
+│  4. GUIDANCE → Proactive suggestions        │
+│  5. ENHANCE → Inject compost DNA            │
+│  6. CHECK → Stagnation/promise detection    │
+│                                             │
+│  Repeat until: promise OR max-iterations   │
+└─────────────────────────────────────────────┘</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🌐 Multi-Domain Support</h2>
+            <p>Generate creative code across multiple domains:</p>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <h3>p5.js</h3>
+                    <p>Generative art with noise(), particles, flow fields</p>
+                    <span class="badge badge-success">✅ Active</span>
+                </div>
+                <div class="card">
+                    <h3>Three.js</h3>
+                    <p>3D graphics, shaders, WebGL</p>
+                    <span class="badge badge-success">✅ Active</span>
+                </div>
+                <div class="card">
+                    <h3>GLSL Shaders</h3>
+                    <p>Fragment/vertex shaders, SDFs</p>
+                    <span class="badge badge-success">✅ Active</span>
+                </div>
+                <div class="card">
+                    <h3>Hydra</h3>
+                    <p>Live coding visuals, video synthesis</p>
+                    <span class="badge badge-success">✅ Active</span>
+                </div>
+                <div class="card">
+                    <h3>Strudel</h3>
+                    <p>Live music coding, patterns</p>
+                    <span class="badge badge-success">✅ Active</span>
+                </div>
+                <div class="card">
+                    <h3>Remotion</h3>
+                    <p>Programmatic video</p>
+                    <span class="badge badge-success">✅ Active</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🖥️ Hybrid TUI</h2>
+            <p>Terminal UI with intelligent preview routing:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Content Type</th>
+                        <th>Preview Target</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>Code, ASCII, Audio</td><td>Terminal</td></tr>
+                    <tr><td>p5.js, Three.js, GLSL</td><td>Browser</td></tr>
+                    <tr><td>Hydra sketches</td><td>Browser</td></tr>
+                    <tr><td>Strudel patterns</td><td>Terminal + Browser</td></tr>
+                </tbody>
+            </table>
+
+            <p style="margin-top: 1rem;">Commands: <code>/preview</code>, <code>/play</code>, <code>/browser</code>, <code>/stop</code></p>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+    </footer>
+</body>
+</html>

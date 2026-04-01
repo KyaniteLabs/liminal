@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harness Tasks - Liminal Documentation</title>
+    <link rel="stylesheet" href="styles/docs.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+            <li><a href="soul-system.html">SOUL</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>Harness Tasks</span>
+    </div>
+
+    <main class="container">
+        <section class="section">
+            <h1 class="section-title">🔧 Harness Tasks</h1>
+            <p class="section-subtitle">Self-improvement tasks for the Meta-Harness</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">What are Harness Tasks?</h2>
+            <p>Harness tasks are JSON files that define code changes for the Meta-Harness to execute. They enable the system to fix itself, add features, and improve over time.</p>
+            
+            <div class="card" style="margin-top: 1.5rem; border-left: 4px solid var(--accent-green);">
+                <p><strong>💡 Philosophy:</strong> Generators are "dumb" (no self-improvement) but ARE improved by harness fixes. The harness observes → detects patterns → fixes the system.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📋 Task Files (M1-M11)</h2>
+            <p>All tasks are stored in <code>harness-tasks/</code> as JSON files:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>M1</strong></td>
+                        <td>Fix Tone.js Validation Gate</td>
+                        <td><span class="badge badge-success">✅ Ready</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M4</strong></td>
+                        <td>Add Stricter Hallucination Detection</td>
+                        <td><span class="badge badge-success">✅ Ready</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M6</strong></td>
+                        <td>Replace console.log with Logger</td>
+                        <td><span class="badge badge-success">✅ Ready</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M7</strong></td>
+                        <td>Add Rate Limiting to LLM Calls</td>
+                        <td><span class="badge badge-success">✅ Ready</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M8</strong></td>
+                        <td>Add Validation for Hydra Sketches</td>
+                        <td><span class="badge badge-success">✅ Ready</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M9</strong></td>
+                        <td>Implement SemanticValidator</td>
+                        <td><span class="badge badge-error">🆕 Planned</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M10</strong></td>
+                        <td>Implement AccessibilityGuardrails</td>
+                        <td><span class="badge badge-error">🆕 Planned</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M11</strong></td>
+                        <td>Implement RuntimeHealthMonitor</td>
+                        <td><span class="badge badge-error">🆕 Planned</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📄 Task File Format</h2>
+            <p>Tasks follow a simple JSON structure:</p>
+            
+            <pre><code>{
+  "id": "M1",
+  "title": "Fix Tone.js Validation Gate",
+  "description": "Tone.js validation only fires on domain 'unknown'...",
+  "targetFile": "src/core/CodeValidator.ts",
+  "search": "    // Check 6: Tone.js API validation...",
+  "replace": "    // Check 6: Tone.js API validation...",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "approved": true
+}</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Field Reference</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Field</th>
+                        <th>Required</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>id</code></td><td>✅</td><td>Unique task identifier</td></tr>
+                    <tr><td><code>title</code></td><td>✅</td><td>Short descriptive title</td></tr>
+                    <tr><td><code>description</code></td><td>✅</td><td>Detailed explanation</td></tr>
+                    <tr><td><code>targetFile</code></td><td>✅</td><td>File to modify</td></tr>
+                    <tr><td><code>search</code></td><td>✅</td><td>Exact string to find</td></tr>
+                    <tr><td><code>replace</code></td><td>✅</td><td>Replacement string</td></tr>
+                    <tr><td><code>verifyCommand</code></td><td>❌</td><td>Command to verify fix</td></tr>
+                    <tr><td><code>risk</code></td><td>❌</td><td>low/medium/high</td></tr>
+                    <tr><td><code>complexity</code></td><td>❌</td><td>low/medium/high</td></tr>
+                    <tr><td><code>approved</code></td><td>✅</td><td>Must be true to execute</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">▶️ Executing Tasks</h2>
+            
+            <h3 style="color: var(--accent-cyan);">Via TUI</h3>
+            <pre><code>$ liminal tui
+
+# Inside TUI:
+&gt; /run M1
+✅ Task M1: SUCCESS</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Via Natural Language</h3>
+            <pre><code>&gt; Fix the Tone.js validation
+→ Detects agent intent
+→ LLM plans steps
+→ Executes fix
+✅ Task completed</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Safety Features</h3>
+            <ul class="feature-list">
+                <li><strong>Build Verification:</strong> Runs <code>npm run build</code> after changes</li>
+                <li><strong>Auto-Rollback:</strong> Restores backup if build fails</li>
+                <li><strong>Rate Limiting:</strong> 5 LLM calls/min, 10 writes/min</li>
+                <li><strong>Path Validation:</strong> Only modifies src/, test/, docs/, scripts/</li>
+            </ul>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">✏️ Creating Custom Tasks</h2>
+            
+            <h3 style="color: var(--accent-cyan);">Step 1: Create JSON File</h3>
+            <pre><code>// harness-tasks/MY-TASK.json
+{
+  "id": "MY-TASK",
+  "title": "Add new feature",
+  "description": "Description of what this does",
+  "targetFile": "src/my/file.ts",
+  "search": "// OLD CODE HERE",
+  "replace": "// NEW CODE HERE",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "approved": true
+}</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Step 2: Test the Search</h3>
+            <p>Verify the <code>search</code> string matches exactly in the target file:</p>
+            <pre><code># Use grep to verify
+$ grep -n "search string" src/my/file.ts</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Step 3: Execute</h3>
+            <pre><code>$ liminal tui
+&gt; /run MY-TASK</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔍 Task Categories</h2>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🐛 Bug Fixes (M1, M4)</h3>
+                    <p>Fix known issues in validation, detection, etc.</p>
+                </div>
+                <div class="card">
+                    <h3>🔒 Safety (M7)</h3>
+                    <p>Add rate limiting, validation, guards</p>
+                </div>
+                <div class="card">
+                    <h3>🏗️ Infrastructure (M6)</h3>
+                    <p>Logging, monitoring, cleanup</p>
+                </div>
+                <div class="card">
+                    <h3>✅ Validation (M8, M9, M10, M11)</h3>
+                    <p>New guardrails for quality assurance</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+    </footer>
+</body>
+</html>

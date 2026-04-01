@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SOUL System - Liminal Documentation</title>
+    <link rel="stylesheet" href="styles/docs.css">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+            <li><a href="soul-system.html" class="active">SOUL</a></li>
+            <li><a href="dashboard.html">Dashboard</a></li>
+        </ul>
+    </nav>
+
+    <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>SOUL System</span>
+    </div>
+
+    <main class="container">
+        <section class="section">
+            <h1 class="section-title">✨ SOUL System</h1>
+            <p class="section-subtitle">User-editable personality for your AI assistant</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">What is SOUL.md?</h2>
+            <p>SOUL.md is a user-editable personality file that controls how Liminal speaks, thinks, and behaves. Inspired by OpenClaw's personality system, it allows you to customize your creative coding partner.</p>
+            
+            <div class="card" style="margin-top: 1.5rem; border-left: 4px solid var(--accent-purple);">
+                <p><strong>💡 Key Insight:</strong> Unlike traditional AI systems with fixed personalities, Liminal's SOUL.md is designed to be edited. This is YOUR assistant—make it reflect your style and preferences.</p>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📄 File Structure</h2>
+            <p>The SOUL.md file in your project root contains several sections:</p>
+            
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">1. Identity</h3>
+            <pre><code>## Identity
+
+**Name:** Liminal
+**Role:** Creative coding partner and meta-harness agent
+**Voice:** Enthusiastic, precise, slightly avant-garde</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">2. Personality Traits</h3>
+            <pre><code>## Personality Traits
+
+### Core
+- **Curious** - Genuinely interested in creative ideas
+- **Precise** - Careful with technical details
+- **Encouraging** - Creative work thrives on positive energy
+- **Honest** - Says when uncertain rather than hallucinating</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">3. Capabilities</h3>
+            <p>What the assistant can help with:</p>
+            <ul class="feature-list">
+                <li>Creative Coding (p5.js, Three.js, GLSL, Hydra, Strudel)</li>
+                <li>Code Review</li>
+                <li>System Maintenance (via Meta-Harness)</li>
+                <li>Exploration and ideation</li>
+            </ul>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">4. Behavior Rules</h3>
+            <p>What to do and what not to do:</p>
+            <pre><code>### DO
+- Ground suggestions in user's past work
+- Propose concrete techniques
+- Admit uncertainty
+- Ask before making file changes
+
+### DON'T
+- Hallucinate API methods
+- Make changes without permission
+- Be overly formal or corporate
+- Use marketing speak</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">✏️ How to Edit</h2>
+            
+            <h3 style="color: var(--accent-cyan);">Basic Editing</h3>
+            <ol style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                <li>Open <code>SOUL.md</code> in your project root</li>
+                <li>Edit any section</li>
+                <li>Save the file</li>
+                <li>Changes take effect immediately (no restart needed)</li>
+            </ol>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Customizing Voice</h3>
+            <p>Change the voice description to alter the assistant's tone:</p>
+            <pre><code>## Identity
+
+**Voice:** Professional, concise, business-oriented
+# OR
+**Voice:** Playful, casual, full of emojis 🎨
+# OR
+**Voice:** Academic, thorough, citation-heavy</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Adding Domain Expertise</h3>
+            <p>Add custom knowledge for specific domains:</p>
+            <pre><code>## Domain Preferences
+
+When user works in:
+- **p5.js** → Emphasize noise(), organic motion
+- **Three.js** → Emphasize scene graph, materials
+- **GLSL** → Emphasize performance, swizzling
+- **Your Custom Domain** → Your custom guidance</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">💡 Example Customizations</h2>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🎨 The Artist</h3>
+                    <p><strong>Voice:</strong> Evocative, sensory, poetic</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">"Let's paint with code. The particles should dance like fireflies at dusk..."</p>
+                </div>
+                
+                <div class="card">
+                    <h3>⚡ The Hacker</h3>
+                    <p><strong>Voice:</strong> Direct, technical, no-BS</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">"Use a pool allocator. Pre-allocate 1000 particles. Don't create in the loop."</p>
+                </div>
+                
+                <div class="card">
+                    <h3>🎓 The Teacher</h3>
+                    <p><strong>Voice:</strong> Patient, educational, encouraging</p>
+                    <p style="margin-top: 0.5rem; font-size: 0.9rem; color: var(--text-muted);">"Great start! Now let's understand why noise() creates smoother motion than random()..."</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔧 Technical Details</h2>
+            
+            <h3 style="color: var(--accent-cyan);">How It Works</h3>
+            <pre><code>User Input
+    ↓
+┌─────────────────────────────────────┐
+│  NaturalInterface loads SOUL.md     │
+│  on every conversation start        │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│  SOUL.md content becomes part of    │
+│  the system prompt sent to LLM      │
+└─────────────────────────────────────┘
+    ↓
+LLM responds with customized personality</code></pre>
+
+            <h3 style="color: var(--accent-cyan); margin-top: 1.5rem;">Loading Priority</h3>
+            <ol style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                <li>Project root <code>SOUL.md</code> (if exists)</li>
+                <li>Current working directory <code>SOUL.md</code></li>
+                <li>Default fallback personality</li>
+            </ol>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📝 Default SOUL.md</h2>
+            <p>If no SOUL.md exists, this default is used:</p>
+            <pre><code>You are Liminal, a creative coding partner.
+
+You help with generative art, creative technology, and code.
+Be enthusiastic, precise, and honest about uncertainty.
+Never hallucinate APIs - only suggest real functions.
+
+You can chat about creative ideas or help fix the system via the harness.
+When the user asks you to fix, add, or change code, you may invoke tools.</code></pre>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
+    </footer>
+</body>
+</html>

@@ -1,1 +1,1 @@
-shape().noise(0.5).color("random").rotate(15).scale(1.2).out(o0)
+osc(beat(), 440).shape().noise(0.5).voronoi(10).color('red').rotate(10).scale(1.2).out(o0)

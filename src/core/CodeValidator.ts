@@ -436,6 +436,9 @@ function validateQuality(code: string, domain: Domain): string[] {
       if (!hasAnimation) {
         errors.push('GLSL shader should animate using u_time');
       }
+      
+      // GLSL Semantic Validation
+      errors.push(...validateGLSLSemantics(code));
       break;
     }
     case 'three': {
@@ -447,6 +450,147 @@ function validateQuality(code: string, domain: Domain): string[] {
         errors.push('Three.js code mixing importmap with global THREE - use one style consistently');
       }
       break;
+    }
+  }
+  
+  return errors;
+}
+
+// -----------------------------------------------------------------------------
+// Check 5.5: GLSL Semantic Validation (catches undefined functions, invalid operators)
+// -----------------------------------------------------------------------------
+function validateGLSLSemantics(code: string): string[] {
+  const errors: string[] = [];
+  const trimmed = code.trim();
+  
+  // Extract all function definitions
+  const functionDefs = new Set<string>();
+  const funcDefMatches = trimmed.matchAll(/(?:float|vec2|vec3|vec4|int|void)\s+(\w+)\s*\(/g);
+  for (const match of funcDefMatches) {
+    functionDefs.add(match[1]);
+  }
+  
+  // GLSL built-in functions (common ones)
+  const builtInFunctions = new Set([
+    // Trigonometry
+    'sin', 'cos', 'tan', 'asin', 'acos', 'atan',
+    // Exponential
+    'pow', 'exp', 'log', 'exp2', 'log2', 'sqrt', 'inversesqrt',
+    // Common
+    'abs', 'sign', 'floor', 'ceil', 'fract', 'mod', 'min', 'max', 'clamp', 'mix', 'step', 'smoothstep',
+    // Geometric
+    'length', 'distance', 'dot', 'cross', 'normalize', 'faceforward', 'reflect', 'refract',
+    // Texture
+    'texture2D', 'texture', 'textureLod',
+    // Noise (if defined in shader)
+    'noise', 'hash', 'fbm', 'snoise',
+    // Constructor-like
+    'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4', 'int', 'float', 'bool'
+  ]);
+  
+  // Extract all function calls
+  const funcCallMatches = trimmed.matchAll(/(\w+)\s*\(/g);
+  for (const match of funcCallMatches) {
+    const funcName = match[1];
+    // Skip if it's a definition (we're in the call list), a builtin, or a type constructor
+    if (!functionDefs.has(funcName) && !builtInFunctions.has(funcName)) {
+      // Check if it's actually a macro or keyword
+      if (!['if', 'for', 'while', 'return', 'switch', 'case', 'default'].includes(funcName)) {
+        errors.push(`GLSL: Undefined function '${funcName}()' - must be defined before use or is a built-in`);
+      }
+    }
+  }
+  
+  // Check for invalid % operator (GLSL uses mod() instead)
+  // Match % that isn't inside a comment or string
+  const lines = trimmed.split('\n');
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Remove comments
+    const cleanLine = line.replace(/\/\/.*$/, '').replace(/\/\*[\s\S]*?\*\//, '');
+    if (/%\s*[\d.]/.test(cleanLine)) {
+      errors.push(`GLSL Line ${i + 1}: Invalid '%' operator - GLSL uses mod(x, y) instead of x % y`);
+    }
+  }
+  
+  // Check for undefined uniforms (if texture2D is used, a sampler2D must be declared)
+  if (/texture2D\s*\(/.test(trimmed) && !/sampler2D\s+\w+/.test(trimmed)) {
+    errors.push('GLSL: texture2D() used but no sampler2D uniform declared');
+  }
+  
+  return errors;
+}
+
+// -----------------------------------------------------------------------------
+// Check 5.6: Tone.js API Validation (catches hallucinated classes)
+// -----------------------------------------------------------------------------
+const VALID_TONE_CLASSES = new Set([
+  // Core
+  'Transport', 'Destination', 'Master', 'Listener', 'Context',
+  // Sources
+  'Oscillator', 'PulseOscillator', 'PWMOscillator', 'FatOscillator',
+  'AMSynth', 'FMSynth', 'MonoSynth', 'PolySynth', 'Synth', 'MembraneSynth', 
+  'MetalSynth', 'NoiseSynth', 'DuoSynth', 'PluckSynth', 'GrainSynth',
+  // Effects
+  'Reverb', 'Delay', 'FeedbackDelay', 'PingPongDelay',
+  'Distortion', 'Chorus', 'Phaser', 'Tremolo', 'Vibrato',
+  'Filter', 'EQ3', 'Compressor', 'Limiter', 'Gate',
+  'AutoFilter', 'AutoPanner', 'AutoWah', 'BitCrusher', 'Chebyshev',
+  'Convolver', 'JCReverb', 'StereoWidener', 'PitchShift', 'FrequencyShifter',
+  // Components
+  'Envelope', 'LFO', 'AmplitudeEnvelope', 'FrequencyEnvelope', 'ScaledEnvelope',
+  'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter',
+  // Signals
+  'Gain', 'Signal', 'Multiply', 'Add', 'Subtract', 'Abs', 'Negate', 'Pow',
+  // Events/Sequencing
+  'Loop', 'Part', 'Pattern', 'Sequence', 'Event', 'Draw',
+  // Utils
+  'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo',
+  'ToneAudioBuffer', 'ToneAudioBuffers', 'Time', 'Frequency'
+]);
+
+export function validateToneJS(code: string): string[] {
+  const errors: string[] = [];
+  
+  // Find all Tone.XXX class instantiations
+  const classMatches = code.matchAll(/new\s+Tone\.(\w+)/g);
+  for (const match of classMatches) {
+    const className = match[1];
+    if (!VALID_TONE_CLASSES.has(className)) {
+      errors.push(`Tone.js: Invalid class 'Tone.${className}' - check Tone.js API documentation`);
+    }
+  }
+  
+  // Find Tone.XXX method calls (some classes are method-only)
+  const methodMatches = code.matchAll(/Tone\.(\w+)\s*\(/g);
+  for (const match of methodMatches) {
+    const methodName = match[1];
+    // Common valid methods
+    const validMethods = new Set([
+      'start', 'stop', 'pause', 'dispose', 'toDestination', 'toMaster',
+      'connect', 'disconnect', 'chain', 'fan',
+      'set', 'get', 'triggerAttack', 'triggerRelease', 'triggerAttackRelease',
+      'sync', 'unsync', 'mute', 'unmute',
+      'dbToGain', 'gainToDb', 'intervalToFrequencyRatio', 'frequencyToMidi',
+      'now', 'immediate', 'seconds', 'transport', 'context', 'destination'
+    ]);
+    if (!VALID_TONE_CLASSES.has(methodName) && !validMethods.has(methodName)) {
+      // Might be a valid method we haven't listed, don't error yet
+    }
+  }
+  
+  // Check for common hallucinations from AUDIT
+  const hallucinationPatterns = [
+    { pattern: /Tone\.Reverberator/, suggestion: 'Tone.Reverb' },
+    { pattern: /Tone\.DrivingPattern/, suggestion: 'Tone.Pattern or Tone.Loop' },
+    { pattern: /Tone\.ReverbNode/, suggestion: 'Tone.Reverb' },
+    { pattern: /Tone\.PitchBend/, suggestion: 'Tone.PitchShift or signal value manipulation' },
+    { pattern: /Tone\.Noise\s*\(\s*['"]8ves['"]/, suggestion: 'Tone.Noise("brown") or Tone.Noise("pink")' }
+  ];
+  
+  for (const { pattern, suggestion } of hallucinationPatterns) {
+    if (pattern.test(code)) {
+      errors.push(`Tone.js: Invalid API '${pattern.source.replace(/\\/g, '')}' - did you mean '${suggestion}'?`);
     }
   }
   
@@ -497,8 +641,13 @@ export class CodeValidator {
     
     // Check 5: Quality checks (NEW from AUDIT)
     const qualityErrors = validateQuality(cleaned, detectedDomain);
+    
+    // Check 6: Tone.js API validation (catches hallucinated classes)
+    const toneJSErrors = detectedDomain === 'unknown' && /Tone\./.test(cleaned) 
+      ? validateToneJS(cleaned) 
+      : [];
 
-    const allErrors = [...structuralErrors, ...selfContainedErrors, ...sizeErrors, ...qualityErrors];
+    const allErrors = [...structuralErrors, ...selfContainedErrors, ...sizeErrors, ...qualityErrors, ...toneJSErrors];
 
     return {
       valid: allErrors.length === 0,
@@ -515,5 +664,10 @@ export class CodeValidator {
   /** Get minimum size requirement for a domain */
   static getMinSize(domain: Domain): number {
     return MIN_SIZE_REQUIREMENTS[domain] || MIN_SIZE_REQUIREMENTS['unknown'];
+  }
+  
+  /** Validate Tone.js code for hallucinated APIs */
+  static validateToneJS(code: string): string[] {
+    return validateToneJS(code);
   }
 }

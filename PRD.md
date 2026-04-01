@@ -839,6 +839,134 @@ Output: <promise>COMPLETE</promise> only when all requirements met.
 
 ---
 
+## 11.5 Meta-Harness (Self-Improving Infrastructure)
+
+The Meta-Harness is an **outer-loop observability system** that watches the generator loop, detects failure patterns, and updates the harness itself. It implements the principle: *"Never fix broken output programmatically — update the harness so the next output isn't broken."*
+
+### 11.5.1 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                      META-HARNESS                                │
+│  ┌──────────────┐  ┌────────────────┐  ┌──────────────────┐    │
+│  │ FailureLogger │──▶│ PatternDetector │──▶│ HarnessUpdater  │    │
+│  └──────────────┘  └────────────────┘  └──────────────────┘    │
+│         │                   │                     │              │
+│         ▼                   ▼                     ▼              │
+│  ~/.liminal/failures/   Pattern DB           Adaptations        │
+│                         (in-memory)          (logged)           │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+                    ┌──────────────────┐
+                    │ Generator Loop   │
+                    │ (p5, GLSL, etc)  │
+                    └──────────────────┘
+```
+
+### 11.5.2 Components
+
+| Component | Purpose | Location |
+|-----------|---------|----------|
+| **FailureLogger** | Captures all failures with rich context (model, domain, prompt, error, thinking) | `src/harness/FailureLogger.ts` |
+| **PatternDetector** | Analyzes failures to detect recurring patterns | `src/harness/PatternDetector.ts` |
+| **HarnessUpdater** | Applies adaptations based on detected patterns | `src/harness/HarnessUpdater.ts` |
+
+### 11.5.3 Known Patterns (from Dogfooding)
+
+| Pattern ID | Description | Detection Criteria | Adaptation |
+|------------|-------------|-------------------|------------|
+| `qwen-thinking-trap` | Qwen models get stuck in thinking mode | model includes 'qwen' + timeout + thinking.length > 1000 + empty code | Use simplified prompts |
+| `glsl-undefined-function` | GLSL uses noise() without defining it | domain='glsl' + validation error contains 'not defined' | Add function definitions to prompt |
+| `tone-hallucinated-api` | Tone.js uses non-existent classes | domain='tone' + validation error contains 'is not a valid class' | Add API whitelist to prompt |
+| `strudel-tidal-confusion` | Models use TidalCycles Haskell syntax | domain='strudel' + code contains 'd1 $' or 'sound "' | Add anti-patterns section |
+| `ascii-timeout` | ASCII art times out | domain='ascii' + errorType='timeout' | Reduce default dimensions |
+| `html-404-error` | HTML generator returns 404 | domain='html' + error contains '404' | Fix endpoint routing |
+
+### 11.5.4 Failure Record Schema
+
+```typescript
+interface FailureRecord {
+  id: string;                    // Unique failure ID
+  timestamp: string;             // ISO timestamp
+  sessionId: string;             // Session grouping
+  model: string;                 // Model identifier (e.g., 'qwen3.5:14b')
+  domain: string;                // Generator domain (p5, glsl, tone, etc)
+  prompt: string;                // User prompt
+  code?: string;                 // Generated code (if any)
+  error: string;                 // Error message
+  errorType: 'timeout' | 'validation' | 'generation' | 'runtime' | 'other';
+  validationErrors?: string[];   // Validation-specific errors
+  thinking?: string;             // Model thinking content (for debugging)
+  duration: number;              // Time to failure (ms)
+}
+```
+
+### 11.5.5 Usage
+
+```typescript
+import { 
+  failureLogger, 
+  patternDetector, 
+  harnessUpdater 
+} from './src/harness/index.js';
+
+// In generator, when failure occurs:
+if (!validationResult.valid) {
+  failureLogger.log({
+    model: 'qwen3.5:14b',
+    domain: 'p5',
+    prompt: userPrompt,
+    code: generatedCode,
+    error: validationResult.error,
+    errorType: 'validation',
+    validationErrors: validationResult.errors,
+    thinking: modelResponse.thinking,
+    duration: Date.now() - startTime
+  });
+}
+
+// Periodically analyze patterns:
+const failures = failureLogger.getRecentFailures(100);
+for (const failure of failures) {
+  const patterns = patternDetector.analyze(failure);
+  for (const pattern of patterns) {
+    await harnessUpdater.applyAdaptation(pattern);
+  }
+}
+
+// Generate harness report:
+console.log(harnessUpdater.generateReport());
+```
+
+### 11.5.6 Storage
+
+- **Failures**: `~/.liminal/failures/{id}.json`
+- **Patterns**: In-memory (rebuilt on each analysis)
+- **Adaptations**: Logged to console + can be persisted
+
+### 11.5.7 Integration with Ralph-Wiggum Loop
+
+The Meta-Harness sits **outside** the Ralph-Wiggum loop, observing but not interfering:
+
+```
+┌─────────────────┐     observes      ┌──────────────────┐
+│  Meta-Harness   │◄─────────────────│ Ralph-Wiggum Loop│
+│  (outer loop)   │                   │ (inner loop)     │
+└─────────────────┘                   └──────────────────┘
+         │                                      │
+         │ updates                              │ generates
+         ▼                                      ▼
+┌──────────────────┐                   ┌──────────────────┐
+│ Harness Prompts  │──────────────────▶│ LLM Generators   │
+│ (p5, GLSL, etc)  │    improved by    │ (p5, GLSL, etc)  │
+└──────────────────┘    adaptations    └──────────────────┘
+```
+
+This implements the **Ralph Wiggum Principle**: The harness (agent model) "sits on the loop" and learns from failures, while the generators (generator models) run "in the loop" creating code.
+
+---
+
 ## 12. Appendices
 
 ### 12.1 Research Sources

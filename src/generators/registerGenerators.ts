@@ -13,9 +13,6 @@
  */
 
 import { generatorRegistry, GeneratorEntry } from './GeneratorRegistry.js';
-import { ParticleSystem } from './p5/ParticleSystem.js';
-import { CellularAutomata } from './p5/CellularAutomata.js';
-import { FlowField } from './p5/FlowField.js';
 import { ShaderGenerator } from './glsl/ShaderGenerator.js';
 import { ThreeGenerator } from './three/ThreeGenerator.js';
 import { RemotionGenerator } from './remotion/RemotionGenerator.js';
@@ -25,32 +22,8 @@ import { ASCIIArtGenerator } from './ascii/ASCIIArtGenerator.js';
 import { StrudelGenerator } from './strudel/StrudelGenerator.js';
 import { HydraGenerator } from './hydra/HydraGenerator.js';
 import { ToneGenerator } from './tone/ToneGenerator.js';
-import { promptToGeneratorParams } from '../utils/promptToGeneratorParams.js';
 
 // --- Shared canHandle helpers ---
-
-/** Confidence for particle/galaxy patterns */
-const particleConfidence = (prompt: string): number => {
-  const lower = prompt.toLowerCase();
-  if (/particle|galaxy/.test(lower)) return 0.7;
-  return 0;
-};
-
-/** Confidence for cellular/automata/lenia patterns */
-const cellularConfidence = (prompt: string): number => {
-  const lower = prompt.toLowerCase();
-  // lenia is more specific than generic "cellular" -> higher confidence
-  if (/lenia/.test(lower)) return 0.9;
-  if (/cellular|automata/.test(lower)) return 0.7;
-  return 0;
-};
-
-/** Confidence for flow field patterns */
-const flowFieldConfidence = (prompt: string): number => {
-  const lower = prompt.toLowerCase();
-  if (/flow\s*field|flow\s*particle|particles?\s+flow/.test(lower)) return 0.7;
-  return 0;
-};
 
 /** Confidence for shader/glsl patterns */
 const shaderConfidence = (prompt: string): number => {
@@ -134,40 +107,7 @@ const toneConfidence = (prompt: string): number => {
 
 // --- Generator entries ---
 
-const particleEntry: GeneratorEntry = {
-  name: 'particle',
-  canHandle: particleConfidence,
-  generate: (prompt: string, params?: Record<string, unknown>) => {
-    const derived = promptToGeneratorParams(prompt);
-    const lower = prompt.toLowerCase();
-    const merged: Record<string, unknown> = { ...derived, ...params };
-    if (/blue/.test(lower)) merged.palette = 'cool';
-    if (/warm|red|orange/.test(lower)) merged.palette = 'warm';
-    return ParticleSystem.generate(merged);
-  },
-};
 
-const cellularEntry: GeneratorEntry = {
-  name: 'cellular',
-  canHandle: cellularConfidence,
-  generate: (prompt: string, _params?: Record<string, unknown>) => {
-    const derived = promptToGeneratorParams(prompt);
-    return CellularAutomata.generate(derived);
-  },
-};
-
-const flowFieldEntry: GeneratorEntry = {
-  name: 'flowfield',
-  canHandle: flowFieldConfidence,
-  generate: (prompt: string, params?: Record<string, unknown>) => {
-    const derived = promptToGeneratorParams(prompt);
-    const lower = prompt.toLowerCase();
-    const merged: Record<string, unknown> = { ...derived, ...params };
-    if (/blue/.test(lower)) merged.palette = 'cool';
-    if (/warm|red|orange/.test(lower)) merged.palette = 'warm';
-    return FlowField.generate(merged);
-  },
-};
 
 const shaderEntry: GeneratorEntry = {
   name: 'shader',
@@ -269,9 +209,8 @@ export function registerAllGenerators(): void {
   // Only register if not already registered (idempotent)
   if (generatorRegistry.getAll().length > 0) return;
 
-  generatorRegistry.register(particleEntry);
-  generatorRegistry.register(cellularEntry);
-  generatorRegistry.register(flowFieldEntry);
+  // NOTE: Template-based generators removed. All p5 generation goes through LLM.
+  // Domain-specific generators for non-p5 domains
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
   generatorRegistry.register(remotionEntry);
@@ -280,14 +219,13 @@ export function registerAllGenerators(): void {
   generatorRegistry.register(strudelEntry);
   generatorRegistry.register(hydraEntry);
   generatorRegistry.register(toneEntry);
+  
+  // LLM-based p5 generator (fallback for all p5 sketches)
   generatorRegistry.register(llmEntry);
 }
 
 // Re-export for convenience
 export {
-  particleConfidence,
-  cellularConfidence,
-  flowFieldConfidence,
   shaderConfidence,
   threeConfidence,
   htmlConfidence,

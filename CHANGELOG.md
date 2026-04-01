@@ -2,6 +2,75 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.3.0.0] - 2026-04-01
+
+### Added — Meta-Harness (Self-Improving Infrastructure)
+- FailureLogger: Captures all failures with rich context (model, domain, prompt, error, thinking)
+  - Auto-saves to `~/.liminal/failures/{id}.json`
+  - FailureRecord schema: id, timestamp, sessionId, model, domain, prompt, code, error, errorType, validationErrors, thinking, duration
+- PatternDetector: Analyzes failures to detect recurring patterns
+  - 6 known patterns from dogfooding: qwen-thinking-trap, glsl-undefined-function, tone-hallucinated-api, strudel-tidal-confusion, ascii-timeout, html-404-error
+  - Pattern interface with detector functions, occurrence tracking, affected models/domains
+- HarnessUpdater: Applies adaptations based on detected patterns
+  - Automatic adaptation tracking with HarnessAdaptation interface
+  - Report generation with harnessUpdater.generateReport()
+- Exports via `src/harness/index.ts`: failureLogger, patternDetector, harnessUpdater
+
+### Added — Model-Specific Adaptations
+- Qwen model detection and simplified prompts
+  - Auto-detects Qwen models via model name matching
+  - Uses simplified system/user prompts to avoid "thinking trap"
+  - Extracts code from thinking field if response is empty
+- Ollama native API support
+  - Added `apiStyle: 'ollama'` config option
+  - Bypasses OpenAI-compatible endpoint issues
+  - Direct `/api/generate` endpoint usage
+
+### Added — Domain Validation Enhancements
+- GLSL semantic validation
+  - Catches undefined functions (noise, fbm, hash without definitions)
+  - Detects invalid operators (`%` instead of mod())
+  - Function call vs definition tracking
+- Tone.js API whitelist validation
+  - Validates Tone.* class names against known API
+  - Catches hallucinated classes (Reverberator, DrivingPattern, ReverbNode)
+  - Suggests closest valid class names
+- Strudel prompt with working examples and anti-patterns
+  - 5 working code examples
+  - Anti-patterns section: NEVER use Haskell `$`, NEVER write `d1 $`, NEVER bare `s("bd")`
+  - Distinguishes Strudel JavaScript from TidalCycles Haskell
+
+### Changed — Generator Architecture
+- **BREAKING**: Removed all template fallbacks from P5Generator
+  - Deleted: ParticleSystem, CellularAutomata, FlowField templates
+  - P5Generator now forces LLM path exclusively
+  - All p5 generation uses P5GeneratorLLM with model-specific prompts
+- Raised confidence scores for domain routing
+  - three.js: 0.5 → 0.95
+  - strudel: 0.6 → 0.95
+  - Prevents misrouting to generic generators
+
+### Fixed
+- Qwen3.5 family complete failure on complex prompts
+  - Root cause: "thinking trap" consuming all tokens without outputting code
+  - Solution: Simplified prompts for Qwen models
+- ASCII generator 404 errors on some models
+- HTML generator endpoint routing issues
+- GLSL generator using undefined noise functions
+- Tone.js generator hallucinating non-existent APIs
+- Strudel generator confusing TidalCycles vs Strudel syntax
+
+### Documentation
+- PRD.md: Added comprehensive Meta-Harness section (11.5)
+  - Architecture diagram
+  - Component reference table
+  - Known patterns table with detection criteria
+  - Failure record schema
+  - Usage examples
+  - Ralph-Wiggum Loop integration explanation
+
+---
+
 ## [0.2.0.0] - 2026-03-29
 
 ### Added — LIR Evaluation Integration

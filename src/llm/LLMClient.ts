@@ -221,8 +221,30 @@ export class LLMClient {
   }
 
   async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {
+    // Model-specific prompt adaptation
+    // Qwen models get stuck in "thinking mode" with complex prompts
+    // Use simplified prompt for Qwen to avoid the thinking trap
+    if (this.isQwenModel()) {
+      const simplifiedSystem = `You are a creative coder. Generate p5.js code.
+Rules:
+- Output ONLY JavaScript code
+- Use function setup() and function draw()
+- Include createCanvas()
+- NO explanations, NO markdown`;
+      
+      const simplifiedUser = `Create a p5.js sketch: ${prompt}${context ? '\nContext: ' + context : ''}`;
+      
+      return this.generate(simplifiedSystem, simplifiedUser, signal, bypassCache);
+    }
+    
     const rendered = PromptLibrary.render('p5.generate', { prompt, context: context || '' });
     return this.generate(rendered.system, rendered.user, signal, bypassCache);
+  }
+  
+  /** Check if current model is a Qwen model (has thinking mode issues) */
+  private isQwenModel(): boolean {
+    const model = this.config.model.toLowerCase();
+    return model.includes('qwen') || model.includes('qwen3.5');
   }
 
   async improveP5Sketch(currentCode: string): Promise<LLMResponse> {
@@ -244,8 +266,17 @@ export class LLMClient {
     
     // Ollama format
     const ollamaResponse = response.response as string | undefined;
+    const ollamaThinking = response.thinking as string | undefined;
+    
+    // Qwen models: may have empty response but thinking field contains content
+    // Capture thinking as reasoning, try to extract code from it if response is empty
     if (ollamaResponse !== undefined) {
-      return this.sanitizeOutput(ollamaResponse);
+      // If response is empty but thinking has content, try to extract code from thinking
+      if ((!ollamaResponse || ollamaResponse.trim() === '') && ollamaThinking) {
+        const extractedFromThinking = this.extractCodeFromThinking(ollamaThinking);
+        return this.sanitizeOutput(extractedFromThinking || '', ollamaThinking);
+      }
+      return this.sanitizeOutput(ollamaResponse, ollamaThinking);
     }
     
     // Fallback: try to find content anywhere in response
@@ -259,6 +290,25 @@ export class LLMClient {
       success: false,
       error: 'Unable to parse LLM response',
     };
+  }
+  
+  /**
+   * Extract code from thinking field (for models like Qwen that output code in thinking)
+   */
+  private extractCodeFromThinking(thinking: string): string | null {
+    // Look for code blocks in thinking
+    const codeBlockMatch = thinking.match(/```(?:javascript|js|p5|glsl|html)?\n([\s\S]*?)```/i);
+    if (codeBlockMatch) {
+      return codeBlockMatch[1].trim();
+    }
+    
+    // Look for code-like content (function declarations, etc.)
+    const functionMatch = thinking.match(/(function\s+\w+\s*\([^)]*\)\s*\{[\s\S]*\})/);
+    if (functionMatch) {
+      return functionMatch[1];
+    }
+    
+    return null;
   }
 
   /**

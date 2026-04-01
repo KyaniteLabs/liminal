@@ -193,6 +193,77 @@ Liminal uses a sophisticated multi-layered architecture:
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
+## Meta-Harness (Self-Improving Infrastructure)
+
+Liminal includes a **Meta-Harness** that observes failures, detects patterns, and updates the harness itself. It implements the principle: *"Never fix broken output programmatically — update the harness so the next output isn't broken."*
+
+### How It Works
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      META-HARNESS (Outer Loop)                       │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  FailureLogger  →  PatternDetector  →  HarnessUpdater                │
+│        │                  │                   │                      │
+│        ▼                  ▼                   ▼                      │
+│  ~/.liminal/         Known Patterns      Applied Adaptations        │
+│  failures/           (6 patterns)        (logged + reported)        │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ observes
+┌─────────────────────────────────────────────────────────────────────┐
+│                    GENERATOR LOOP (Inner Loop)                       │
+│              (p5, GLSL, Tone.js, Strudel, etc.)                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+### Known Failure Patterns
+
+| Pattern | Affected Models | Solution |
+|---------|-----------------|----------|
+| **Qwen Thinking Trap** | Qwen3.5 family | Simplified prompts, thinking field extraction |
+| **GLSL Undefined Functions** | All models | Semantic validation, required function injection |
+| **Tone.js API Hallucinations** | Smaller models | API whitelist validation |
+| **Strudel/Tidal Confusion** | All models | Anti-patterns section, syntax distinction |
+| **ASCII Timeout** | Larger prompts | Reduced default dimensions |
+| **HTML 404 Errors** | Endpoint routing | Native Ollama API support |
+
+### Usage
+
+```typescript
+import { failureLogger, patternDetector, harnessUpdater } from 'liminal';
+
+// Log a failure
+failureLogger.log({
+  model: 'qwen3.5:14b',
+  domain: 'p5',
+  prompt: 'complex particle system',
+  error: 'Request timed out',
+  errorType: 'timeout',
+  thinking: modelResponse.thinking,
+  duration: 30000
+});
+
+// Analyze patterns
+const patterns = patternDetector.analyze(failure);
+for (const pattern of patterns) {
+  await harnessUpdater.applyAdaptation(pattern);
+}
+
+// Generate report
+console.log(harnessUpdater.generateReport());
+```
+
+### Key Features
+
+- **FailureLogger**: Auto-saves to `~/.liminal/failures/{id}.json` with rich context
+- **PatternDetector**: 6 known patterns from dogfooding with configurable detectors
+- **HarnessUpdater**: Automatic adaptation tracking and report generation
+- **Model-Specific Adaptations**: Qwen detection, simplified prompts, Ollama native API
+- **Domain Validation**: GLSL semantic checks, Tone.js API whitelist, Strudel anti-patterns
+
 ## Generation Modes
 
 | Mode | Flag | Description |

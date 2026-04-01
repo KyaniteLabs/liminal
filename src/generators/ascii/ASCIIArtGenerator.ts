@@ -2,18 +2,18 @@
  * ASCIIArtGenerator - Generates text-based ASCII art via LLM
  * 
  * NO TEMPLATES - Everything goes through the LLM
+ * 
+ * FIXED: Simplified prompt, reduced dimensions, added examples
  */
 
 import { LLMClient } from '../../llm/LLMClient.js';
 
-export type ASCIIStyle = 'geometric' | 'character' | 'landscape' | 'abstract' | 'typography' | 'mandala';
+export type ASCIIStyle = 'simple' | 'landscape' | 'abstract';
 
 export interface ASCIIOptions {
   style?: ASCIIStyle;
   width?: number;
   height?: number;
-  characters?: string;
-  animated?: boolean;
 }
 
 export class ASCIIArtGenerator {
@@ -28,26 +28,33 @@ export class ASCIIArtGenerator {
       throw new Error('ASCIIArtGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
     }
     
-    const width = options.width || 60;
-    const height = options.height || 30;
-    const style = options.style || 'abstract';
+    // Reduced default size for faster generation
+    const width = options.width || 40;
+    const height = options.height || 20;
+    const style = options.style || 'simple';
     
-    const systemPrompt = `You are an ASCII art expert. Create precise, beautiful ASCII art.
+    const systemPrompt = `You create ASCII art. Output ONLY ASCII characters.
 
 RULES:
-1. Output ONLY ASCII characters, no markdown, no explanations
-2. Use space, .,-~+=*#%@ for shading (light to dark)
-3. Width: ${width} characters, Height: ${height} lines
-4. Style: ${style}
-5. Keep proportions correct
-6. Use negative space effectively`;
+1. Use ONLY these characters: space . - ~ + = * # % @
+2. Output EXACTLY ${height} lines
+3. Each line EXACTLY ${width} characters
+4. NO code blocks, NO explanations, NO markdown
+5. ONLY the ASCII art
 
-    const userPrompt = `Create ASCII art: ${prompt}
+EXAMPLE OUTPUT:
+@@@@@@@@@@@@@@@@@@@@@@@@
+@.....................@
+@....@.........@......@
+@...@...........@.....@
+@..@....@@@......@....@
+@@@@@@@@@@@@@@@@@@@@@@@@
 
-Dimensions: ${width}x${height}
-Style: ${style}
+Create ${style} ASCII art.`;
 
-Output ONLY the ASCII art (no code blocks, no explanations):`;
+    const userPrompt = `Subject: ${prompt}
+
+Output ${height} lines of ASCII art (${width} chars each):`;
 
     const response = await this.llmClient.generate(systemPrompt, userPrompt);
     const code = typeof response === 'string' ? response : (response.code || '');
@@ -65,8 +72,14 @@ Output ONLY the ASCII art (no code blocks, no explanations):`;
     // Remove code block markers if present
     const cleanLines = lines
       .filter(line => !line.startsWith('```'))
+      .filter(line => !line.startsWith('//'))
       .slice(0, height)
-      .map(line => line.slice(0, width));
+      .map(line => line.slice(0, width).padEnd(width, ' '));
+    
+    // Ensure exactly height lines
+    while (cleanLines.length < height) {
+      cleanLines.push(' '.repeat(width));
+    }
     
     return cleanLines.join('\n');
   }

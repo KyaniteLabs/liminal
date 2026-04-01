@@ -42,6 +42,49 @@ Key subsystems and their roles:
 - **Aesthetic model**: Persists across runs (saved to `~/.liminal/aesthetic_model.json`); predictions bias generation — low-prediction regions get "try different" hints, high-prediction regions get "lean in" guidance.
 - **Dynamic routing**: Routing data updates from actual generation outcomes via rolling averages, replacing static A/B test numbers over time.
 
+## Meta-Harness (added 2026-04-01)
+
+The Meta-Harness implements the **Ralph Wiggum Principle**: the harness (agent model) "sits on the loop" and learns from failures, while the generators (generator models) run "in the loop" creating code. It is an outer-loop observability system that observes failures, detects patterns, and updates the harness itself.
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                      META-HARNESS (Outer Loop)                       │
+│  ┌──────────────┐  ┌────────────────┐  ┌──────────────────┐          │
+│  │ FailureLogger │──▶│ PatternDetector │──▶│ HarnessUpdater  │          │
+│  └──────────────┘  └────────────────┘  └──────────────────┘          │
+│         │                   │                     │                  │
+│         ▼                   ▼                     ▼                  │
+│  ~/.liminal/         Known Patterns        Applied Adaptations       │
+│  failures/           (6 patterns)          (logged + reported)       │
+└─────────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼ observes
+┌─────────────────────────────────────────────────────────────────────┐
+│                    GENERATOR LOOP (Inner Loop)                       │
+│              (p5, GLSL, Tone.js, Strudel, etc.)                      │
+└─────────────────────────────────────────────────────────────────────┘
+```
+
+**Core principle**: *"Never fix broken output programmatically — update the harness so the next output isn't broken."*
+
+### Known Patterns (from Dogfooding)
+
+| Pattern | Description | Detection | Adaptation |
+|---------|-------------|-----------|------------|
+| `qwen-thinking-trap` | Qwen models get stuck in thinking mode | model.includes('qwen') + timeout + thinking.length > 1000 + empty code | Simplified prompts |
+| `glsl-undefined-function` | GLSL uses noise() without defining it | domain='glsl' + validation error contains 'not defined' | Add function definitions |
+| `tone-hallucinated-api` | Tone.js uses non-existent classes | domain='tone' + validation error contains 'is not a valid class' | API whitelist |
+| `strudel-tidal-confusion` | Models use TidalCycles Haskell syntax | domain='strudel' + code contains 'd1 $' or 'sound "' | Anti-patterns section |
+| `ascii-timeout` | ASCII art times out | domain='ascii' + errorType='timeout' | Reduce dimensions |
+| `html-404-error` | HTML generator returns 404 | domain='html' + error.contains('404') | Fix endpoint routing |
+
+### Design Decisions
+
+- **Cold fallback**: Pattern detection runs without blocking generation; failures are logged asynchronously
+- **Failure record schema**: Captures model, domain, prompt, code, error, errorType, validationErrors, thinking, duration — everything needed for post-hoc analysis
+- **No false positives**: Patterns only trigger when multiple criteria match (e.g., Qwen + timeout + long thinking + empty code)
+- **Adaptation tracking**: Every applied adaptation is logged with timestamp, enabling longitudinal analysis of harness effectiveness
+
 ## Emergent recursion / computational life
 
 The loop is a sandbox for self-improving, recursive behavior: the same prompt over a changing world can produce emergent refinement. The design tolerates (and optionally encourages) computational-life-style dynamics within safe bounds—sandboxed execution and clear termination prevent runaway or unsafe self-modification. With the 2026-03-21 unification, all subsystems (loop, compost, swarm, archive, MAP-Elites) now participate in the feedback cycle, making "computational life" a reality rather than aspiration.

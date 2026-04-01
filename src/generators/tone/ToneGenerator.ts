@@ -2,6 +2,8 @@
  * ToneGenerator - Generates Web Audio synthesis using Tone.js via LLM
  * 
  * NO TEMPLATES - Everything goes through the LLM
+ * 
+ * FIXED: Added comprehensive API reference to prevent hallucinations
  */
 
 import { LLMClient } from '../../llm/LLMClient.js';
@@ -32,19 +34,47 @@ export class ToneGenerator {
 
 Generate Tone.js code for interactive audio experiences.
 
-CONSTRAINTS:
-- Output ONLY valid JavaScript code using Tone.js
-- Must wait for user interaction to start audio (browser policy)
-- Use Tone.Transport for timing
-- Include BPM control
-- Add visual feedback for audio
+VALID TONE.JS CLASSES (USE ONLY THESE):
+// Sources
+- Tone.Synth, Tone.PolySynth, Tone.FMSynth, Tone.AMSynth
+- Tone.MembraneSynth, Tone.MetalSynth, Tone.NoiseSynth
+- Tone.Oscillator, Tone.FatOscillator
+
+// Effects  
+- Tone.Reverb, Tone.Delay, Tone.FeedbackDelay, Tone.PingPongDelay
+- Tone.Distortion, Tone.Chorus, Tone.Phaser, Tone.Tremolo
+- Tone.Filter, Tone.EQ3, Tone.Compressor
+
+// Components
+- Tone.Gain, Tone.Panner, Tone.LFO
+- Tone.Envelope, Tone.FrequencyEnvelope
+
+// Transport
+- Tone.Transport, Tone.Loop, Tone.Sequence, Tone.Part
+
+CRITICAL RULES:
+1. Output ONLY valid JavaScript using Tone.js
+2. ALWAYS use: const synth = new Tone.Synth() — NOT Tone.Synthesizer or made-up names
+3. Reverb is Tone.Reverb — NOT Tone.Reverberator or Tone.ReverbNode
+4. ALWAYS wait for user interaction before starting audio
+5. Use Tone.Transport for timing
+6. Include play/stop buttons
+7. Add visual feedback
 
 OUTPUT FORMAT:
 - Complete JavaScript code
 - Initialize Tone.js properly
-- Create synths, sequences, and effects
-- Add play/stop controls
-- NO markdown, NO explanations`;
+- NO markdown, NO explanations
+
+EXAMPLE:
+const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+const reverb = new Tone.Reverb(2).toDestination();
+synth.connect(reverb);
+
+function play() {
+  Tone.start();
+  synth.triggerAttackRelease(["C4", "E4", "G4"], "8n");
+}`;
 
     const userPrompt = `Create Tone.js audio: ${prompt}
 

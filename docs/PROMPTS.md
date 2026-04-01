@@ -115,6 +115,71 @@ Prompts follow semver:
 
 All prompts are currently at version `2.0.0` following the March 2026 prompt engineering overhaul.
 
+## Model-Specific Adaptations
+
+Liminal adapts prompts based on the target model to handle known failure patterns:
+
+### Qwen Models (Thinking Trap)
+
+Qwen models can get stuck in "thinking mode," consuming all tokens without outputting code. The system detects Qwen models and applies simplified prompts:
+
+```typescript
+// Detected via: model.toLowerCase().includes('qwen')
+// Simplified prompt structure:
+const simplifiedSystem = 'You are a creative coder. Generate p5.js sketches.';
+const simplifiedUser = `Create a p5.js sketch: ${prompt}\n\nOutput ONLY JavaScript code (no explanations):`;
+```
+
+**Fallback**: If the response is empty but the `thinking` field contains code, the system extracts code from there.
+
+### Strudel Anti-Patterns
+
+The `music.strudel` prompt includes explicit anti-patterns to prevent TidalCycles Haskell syntax confusion:
+
+```
+ANTI-PATTERNS (NEVER DO):
+- NEVER use Haskell $ or # operators — these don't exist in Strudel
+- NEVER write "d1 $" — Strudel doesn't use d1, d2, etc.
+- NEVER use bare s("bd") without $: prefix
+- NEVER write patterns like "s1 [c4, c3]" — this is not valid syntax
+
+CORRECT:
+$: s("bd*4, sd*2, hh*8")
+stack(
+  $: s("bd*4"),
+  $: s("~ sd ~ sd")
+)
+```
+
+### GLSL Semantic Validation
+
+GLSL prompts include required function definitions to prevent undefined function errors:
+
+```glsl
+// Required definitions that must be included:
+float hash(float n) { return fract(sin(n) * 43758.5453123); }
+float noise(vec3 x) { /* ... */ }
+float fbm(vec3 x) { /* ... */ }
+```
+
+The validator catches:
+- Undefined functions (noise, fbm, hash without definitions)
+- Invalid operators (`%` instead of `mod()`)
+
+### Tone.js API Whitelist
+
+Tone.js generation uses an API whitelist to catch hallucinated classes:
+
+```typescript
+const validToneClasses = [
+  'Synth', 'AMSynth', 'FMSynth', 'PolySynth', 'MembraneSynth', 'MetalSynth',
+  'Reverb', 'Delay', 'Distortion', 'Chorus', 'Phaser', 'Tremolo',
+  'Pattern', 'Sequence', 'Transport', 'Master', 'Gain', 
+  'Oscillator', 'Noise', 'Filter', 'Envelope', 'LFO'
+];
+// Catches: Tone.Reverberator, Tone.DrivingPattern, Tone.ReverbNode (hallucinations)
+```
+
 ## Usage
 
 ```typescript

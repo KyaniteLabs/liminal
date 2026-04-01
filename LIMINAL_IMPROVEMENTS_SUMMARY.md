@@ -307,5 +307,73 @@ for (const alert of alerts) {
 | `src/config/model-routing.ts` | NEW | 398 | Data-driven model selection |
 | `src/core/TelemetryAggregator.ts` | NEW | 355 | Continuous quality tracking |
 | `src/config/telemetry-seed.ts` | NEW | 474 | Audit data as baseline |
+| `src/harness/FailureLogger.ts` | NEW | 80 | Failure capture with context |
+| `src/harness/PatternDetector.ts` | NEW | 150 | Pattern detection from failures |
+| `src/harness/HarnessUpdater.ts` | NEW | 140 | Adaptation application |
+| `src/harness/index.ts` | NEW | 20 | Meta-harness exports |
+| `src/llm/LLMClient.ts` | MODIFIED | 200+ | Qwen detection, simplified prompts |
 
-**Total:** 2,367 lines of new/improved infrastructure code
+**Total:** 2,367+ lines of new/improved infrastructure code
+
+---
+
+## Meta-Harness (Self-Improving Infrastructure) — Added 2026-04-01
+
+The Meta-Harness implements the **Ralph Wiggum Principle**: the harness (agent model) "sits on the loop" and learns from failures, while the generators (generator models) run "in the loop" creating code.
+
+### Components
+
+| Component | File | Purpose |
+|-----------|------|---------|
+| **FailureLogger** | `src/harness/FailureLogger.ts` | Captures all failures with rich context (model, domain, prompt, error, thinking) |
+| **PatternDetector** | `src/harness/PatternDetector.ts` | Detects 6 known patterns from dogfooding |
+| **HarnessUpdater** | `src/harness/HarnessUpdater.ts` | Applies adaptations based on detected patterns |
+
+### Known Patterns
+
+| Pattern | Affected | Detection | Adaptation |
+|---------|----------|-----------|------------|
+| `qwen-thinking-trap` | Qwen3.5 family | timeout + thinking.length > 1000 + empty code | Simplified prompts |
+| `glsl-undefined-function` | All models | validation error contains 'not defined' | Add function definitions |
+| `tone-hallucinated-api` | Smaller models | validation error contains 'is not a valid class' | API whitelist |
+| `strudel-tidal-confusion` | All models | code contains 'd1 $' or 'sound "' | Anti-patterns section |
+| `ascii-timeout` | Larger prompts | errorType='timeout' | Reduce dimensions |
+| `html-404-error` | Endpoint routing | error.contains('404') | Fix endpoint routing |
+
+### Usage
+
+```typescript
+import { failureLogger, patternDetector, harnessUpdater } from './harness/index.js';
+
+// Log a failure
+failureLogger.log({
+  model: 'qwen3.5:14b',
+  domain: 'p5',
+  prompt: 'complex particle system',
+  error: 'Request timed out',
+  errorType: 'timeout',
+  thinking: modelResponse.thinking,
+  duration: 30000
+});
+
+// Analyze patterns
+const patterns = patternDetector.analyze(failure);
+for (const pattern of patterns) {
+  await harnessUpdater.applyAdaptation(pattern);
+}
+
+// Generate report
+console.log(harnessUpdater.generateReport());
+```
+
+### Model-Specific Adaptations
+
+**Qwen Detection and Simplified Prompts:**
+- Auto-detects Qwen models via `model.toLowerCase().includes('qwen')`
+- Uses simplified system/user prompts to avoid "thinking trap"
+- Extracts code from thinking field if response is empty
+
+**Ollama Native API Support:**
+- Added `apiStyle: 'ollama'` config option
+- Bypasses OpenAI-compatible endpoint issues
+- Direct `/api/generate` endpoint usage

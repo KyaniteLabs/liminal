@@ -1,3 +1,9 @@
+/**
+ * StrudelGenerator - Generates Strudel (TidalCycles for JavaScript) patterns
+ * 
+ * FIXED: Better prompt handling, more validation
+ */
+
 import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
 import { PromptLibrary } from '../../prompts/index.js';
 
@@ -44,31 +50,37 @@ export class StrudelGenerator {
     // Remove HTML-style comments
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
     
-    // Find actual code start
+    // Split into lines
     const lines = clean.split('\n');
-    const codeStart = lines.findIndex(l => 
-      l.trim().startsWith('stack') || 
-      l.trim().startsWith('sound') ||
-      l.trim().startsWith('s(') ||
-      l.trim().startsWith('note') ||
-      l.trim().startsWith('const') ||
-      l.trim().startsWith('import')
-    );
+    const codeLines: string[] = [];
     
-    if (codeStart > 0) {
-      clean = lines.slice(codeStart).join('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      
+      // Skip empty lines at start
+      if (trimmed === '' && codeLines.length === 0) continue;
+      
+      // Skip explanation lines
+      if (trimmed && !trimmed.startsWith('//')) {
+        // Must have Strudel syntax indicators
+        const hasStrudelSyntax = /\b(stack|s\(|sound|note|\.out\(|$:|\.(gain|delay|room|pan)|every\(|fast\(|slow\()/.test(trimmed);
+        const hasInvalidSyntax = /\b(s1\s+\[|d1\s+\$|#|\$\s+sound)/.test(trimmed);
+        
+        if (!hasStrudelSyntax || hasInvalidSyntax) {
+          continue;
+        }
+      }
+      
+      codeLines.push(line);
     }
     
-    // Remove any remaining explanation lines (lines without Strudel syntax)
-    const strudelLines = clean.split('\n').filter(line => {
-      const trimmed = line.trim();
-      if (trimmed === '') return false;
-      if (trimmed.startsWith('//')) return true; // Keep comments
-      // Keep lines with Strudel patterns
-      return /[\(\)=.,;]/.test(trimmed) || 
-             /\b(stack|s|note|sound|cpm|fast|slow|gain|pan|room|delay)\b/.test(trimmed);
-    });
+    clean = codeLines.join('\n');
     
-    return strudelLines.join('\n').trim();
+    // Validate: must have at least one sound source
+    if (!/\b(s\(|sound\(|note\()/.test(clean)) {
+      throw new Error('StrudelGenerator: No sound source found (need s(), sound(), or note())');
+    }
+    
+    return clean.trim();
   }
 }

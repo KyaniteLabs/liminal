@@ -217,18 +217,190 @@
     "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
   },
   {
+    "domain": "tone",
+    "model": "qwen35",
+    "status": "TIMEOUT",
+    "duration": 300296,
+    "size": 0,
+    "error": "Liminal run failed: ToneGenerator: Generated code does not use Tone.js"
+  },
+  {
+    "domain": "ascii",
+    "model": "qwen35",
+    "status": "TIMEOUT",
+    "duration": 545131,
+    "size": 0,
+    "error": "Liminal run failed: ASCIIArtGenerator: LLM returned empty code"
+  },
+  {
+    "domain": "glsl",
+    "model": "phi4",
+    "status": "TIMEOUT",
+    "duration": 419241,
+    "size": 0,
+    "error": "Liminal run failed: ShaderGenerator: Generated code appears truncated or incomplete"
+  },
+  {
+    "domain": "strudel",
+    "model": "phi4",
+    "status": "FAIL",
+    "duration": 37531,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: Strudel code should contain pattern functions: s()"
+  },
+  {
+    "domain": "hydra",
+    "model": "phi4",
+    "status": "FAIL",
+    "duration": 11316,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: hydra code is too small (126b) - minimum is 150b. "
+  },
+  {
+    "domain": "tone",
+    "model": "phi4",
+    "status": "FAIL",
+    "duration": 45804,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "html",
+    "model": "phi4",
+    "status": "FAIL",
+    "duration": 96591,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "ascii",
+    "model": "phi4",
+    "status": "FAIL",
+    "duration": 7161,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "remotion",
+    "model": "phi4",
+    "status": "PASS",
+    "duration": 32801,
+    "size": 3404
+  },
+  {
+    "domain": "p5",
+    "model": "lfm",
+    "status": "PASS",
+    "duration": 36,
+    "size": 2164
+  },
+  {
+    "domain": "glsl",
+    "model": "lfm",
+    "status": "FAIL",
+    "duration": 49639,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: shader code is too small (583b) - minimum is 800b."
+  },
+  {
+    "domain": "three",
+    "model": "lfm",
+    "status": "FAIL",
+    "duration": 93496,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "strudel",
+    "model": "lfm",
+    "status": "FAIL",
+    "duration": 56794,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "hydra",
+    "model": "lfm",
+    "status": "FAIL",
+    "duration": 35253,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: hydra code is too small (77b) - minimum is 150b. T"
+  },
+  {
+    "domain": "tone",
+    "model": "lfm",
+    "status": "TIMEOUT",
+    "duration": 118978,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "html",
+    "model": "lfm",
+    "status": "TIMEOUT",
+    "duration": 113172,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "ascii",
+    "model": "lfm",
+    "status": "TIMEOUT",
+    "duration": 115666,
+    "size": 0,
+    "error": "Liminal run failed: ASCIIArtGenerator: LLM returned empty code"
+  },
+  {
+    "domain": "remotion",
+    "model": "lfm",
+    "status": "TIMEOUT",
+    "duration": 227259,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: remotion code is too small (454b) - minimum is 500"
+  },
+  {
+    "domain": "p5",
+    "model": "granite-350m",
+    "status": "PASS",
+    "duration": 295,
+    "size": 2163
+  },
+  {
+    "domain": "strudel",
+    "model": "gemma",
+    "status": "FAIL",
+    "duration": 45331,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
+    "domain": "ascii",
+    "model": "gemma",
+    "status": "TIMEOUT",
+    "duration": 349860,
+    "size": 0,
+    "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
+  },
+  {
     "domain": "html",
     "model": "qwen35",
     "status": "TIMEOUT",
-    "duration": 300186,
+    "duration": 300378,
     "size": 0,
     "error": "Liminal run failed: HTMLWebGenerator: LLM output is not valid HTML"
   },
   {
-    "domain": "remotion",
-    "model": "qwen35",
+    "domain": "p5",
+    "model": "phi4",
+    "status": "PASS",
+    "duration": 177,
+    "size": 2164
+  },
+  {
+    "domain": "three",
+    "model": "phi4",
     "status": "TIMEOUT",
-    "duration": 601021,
+    "duration": 792996,
     "size": 0,
     "error": "Liminal run failed: Generation failed validation: p5.js code must contain at least one of: function "
   }

@@ -27,13 +27,20 @@ const PROMPTS: Record<string, string> = {
   
   html: `Create a responsive landing page for a creative coding portfolio. Include a hero section with animated gradient background, project cards, and contact form.`,
   
-  ascii: `Create simple ASCII art of a mountain landscape. Use only basic characters like @ # % * + = - . and spaces.`
+  ascii: `Create simple ASCII art of a mountain landscape. Use only basic characters like @ # % * + = - . and spaces.`,
   
   tone: `Create a Tone.js synthesizer patch that plays an ambient drone with reverb and delay effects. Use multiple oscillators and LFOs for rich sound.`
 };
 
 // Removed MiniMax-M2.1 (consistently times out)
-const MODEL_CONFIGS: Record<string, { baseUrl: string; apiKeyEnv: string; modelId?: string }> = {
+interface ModelConfig {
+  baseUrl: string;
+  apiKeyEnv: string;
+  modelId?: string;
+  apiStyle?: 'openai' | 'ollama' | 'anthropic';
+}
+
+const MODEL_CONFIGS: Record<string, ModelConfig> = {
   'MiniMax-M2.7': { baseUrl: 'https://api.minimax.io/v1', apiKeyEnv: 'MINIMAX_API_KEY' },
   'MiniMax-M2.5': { baseUrl: 'https://api.minimax.io/v1', apiKeyEnv: 'MINIMAX_API_KEY' },
   'Qwen3.5-9B': { baseUrl: 'http://localhost:1234/v1', apiKeyEnv: 'LMSTUDIO_API_KEY', modelId: 'qwen3.5-9b' },
@@ -43,8 +50,10 @@ const MODEL_CONFIGS: Record<string, { baseUrl: string; apiKeyEnv: string; modelI
   // Ollama Local Models
   'Granite4-1b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'granite4:1b' },
   'Granite4-350m': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'granite4:350m' },
-  'Qwen3.5-0.8b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'qwen3.5:0.8b' },
-  'Qwen3.5-2b': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'qwen3.5:2b' },
+  // Qwen models REQUIRE native Ollama API - OpenAI compatibility layer breaks them
+  // See: https://github.com/ollama/ollama/issues/XXX (Qwen OpenAI compat issue)
+  'Qwen3.5-0.8b': { baseUrl: 'http://localhost:11434', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'qwen3.5:0.8b', apiStyle: 'ollama' },
+  'Qwen3.5-2b': { baseUrl: 'http://localhost:11434', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'qwen3.5:2b', apiStyle: 'ollama' },
   'Phi4-Mini': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'phi4-mini:latest' },
   'Gemma3-4B-Ollama': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'gemma3:4b' },
   'LFM2.5-Thinking': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'lfm2.5-thinking:1.2b' }
@@ -60,7 +69,8 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
     apiKey: llmConfig.apiKey,
     model: llmConfig.modelId || llmConfig.model,
     temperature: 0.7,
-    maxTokens: 4000
+    maxTokens: 4000,
+    apiStyle: llmConfig.apiStyle
   });
   
   llm.disableCache();

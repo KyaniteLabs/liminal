@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Complete Guardrail Architecture - 18 Types</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: #000;
+            color: #fff;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(180deg, #1a1a2e 0%, #0f0f23 100%);
+            padding: 3rem 2rem;
+            text-align: center;
+            border-bottom: 4px solid #ff006e;
+        }
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(90deg, #ff006e, #fb5607, #ffbe0b, #06ffa5, #3a86ff, #8338ec);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        .intro {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid #333;
+        }
+        .intro h2 {
+            color: #ff006e;
+            margin-bottom: 1rem;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        .card {
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 3px solid;
+            position: relative;
+        }
+        .card::before {
+            content: attr(data-num);
+            position: absolute;
+            top: -15px;
+            left: 20px;
+            background: #000;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border: 3px solid;
+        }
+        
+        /* Status colors */
+        .exists { border-color: #06ffa5; color: #06ffa5; }
+        .exists::before { border-color: #06ffa5; color: #06ffa5; }
+        .partial { border-color: #ffbe0b; color: #ffbe0b; }
+        .partial::before { border-color: #ffbe0b; color: #ffbe0b; }
+        .missing { border-color: #ff006e; color: #ff4d6d; }
+        .missing::before { border-color: #ff006e; color: #ff4d6d; }
+        .future { border-color: #8338ec; color: #e0aaff; }
+        .future::before { border-color: #8338ec; color: #e0aaff; }
+        
+        .card h3 {
+            margin-top: 10px;
+            margin-bottom: 0.5rem;
+            font-size: 1.3rem;
+        }
+        .card-subtitle {
+            opacity: 0.8;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+        .checks {
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+        .checks h4 {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+        .checks ul {
+            list-style: none;
+            font-size: 0.9rem;
+        }
+        .checks li {
+            padding: 0.3rem 0;
+            padding-left: 1.2rem;
+            position: relative;
+        }
+        .checks li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+        }
+        .status-bar {
+            margin-top: 1rem;
+            padding: 0.5rem 1rem;
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+        .priority {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-left: 1rem;
+        }
+        .p-critical { background: #ff006e; color: #fff; }
+        .p-high { background: #fb5607; color: #fff; }
+        .p-medium { background: #ffbe0b; color: #000; }
+        .p-low { background: #8338ec; color: #fff; }
+        
+        .summary {
+            background: #0f0f23;
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid #333;
+        }
+        .summary h2 {
+            color: #ff006e;
+            margin-bottom: 1.5rem;
+        }
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+        .stat {
+            background: rgba(0,0,0,0.4);
+            padding: 1.5rem;
+            border-radius: 12px;
+            text-align: center;
+        }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: bold;
+        }
+        .stat-label {
+            color: #888;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+        .critical-box {
+            background: linear-gradient(135deg, #2d0a0a 0%, #4a0e0e 100%);
+            border: 2px solid #ff006e;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+        .critical-box h3 {
+            color: #ff4d6d;
+            margin-bottom: 0.5rem;
+        }
+        code {
+            background: rgba(255,255,255,0.1);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ COMPLETE GUARDRAIL ARCHITECTURE</h1>
+        <p style="color: #888; font-size: 1.2rem;">All 18 Types - Original 5 + 13 Missing</p>
+    </div>
+
+    <div class="container">
+        <div class="intro">
+            <h2>⚠️ Critical Finding</h2>
+            <p style="color: #aaa; font-size: 1.1rem;">
+                We discovered <strong>13 additional guardrail types</strong> that are missing from the current system. 
+                Most critically: <strong>Semantic Alignment</strong> (does output match prompt?) and 
+                <strong>Accessibility</strong> (photosensitivity, legal requirement) are completely absent.
+            </p>
+        </div>
+
+        <div class="summary">
+            <h2>📊 Implementation Status</h2>
+            <div class="stats">
+                <div class="stat">
+                    <div class="stat-number" style="color: #06ffa5;">5</div>
+                    <div class="stat-label">Implemented</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" style="color: #ffbe0b;">3</div>
+                    <div class="stat-label">Partial</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" style="color: #ff006e;">10</div>
+                    <div class="stat-label">Missing</div>
+                </div>
+                <div class="stat">
+                    <div class="stat-number" style="color: #8338ec;">18</div>
+                    <div class="stat-label">Total Types</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid">
+            <!-- Original 5 -->
+            <div class="card exists" data-num="1">
+                <h3>🔧 Code Quality</h3>
+                <div class="card-subtitle">Syntax, Structure, Completeness</div>
+                <span class="priority p-high">Implemented</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>Balanced braces/parens</li>
+                        <li>Required functions exist</li>
+                        <li>Domain detection</li>
+                        <li>Size limits</li>
+                    </ul>
+                </div>
+                <div class="status-bar">src/core/CodeValidator.ts</div>
+            </div>
+
+            <div class="card partial" data-num="2">
+                <h3>👻 Anti-Hallucination</h3>
+                <div class="card-subtitle">Real APIs Only</div>
+                <span class="priority p-medium">Partial</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>API exists in library</li>
+                        <li>Correct method names</li>
+                        <li>Valid parameters</li>
+                    </ul>
+                </div>
+                <div class="status-bar">M1 task fixes Tone.js validation</div>
+            </div>
+
+            <div class="card partial" data-num="3">
+                <h3>🗑️ Anti-Slop</h3>
+                <div class="card-subtitle">Reject Low-Effort Output</div>
+                <span class="priority p-medium">Partial</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>Not generic patterns</li>
+                        <li>Has clear concept</li>
+                        <li>Above "student project" quality</li>
+                    </ul>
+                </div>
+                <div class="status-bar">Needs explicit slop detection</div>
+            </div>
+
+            <div class="card partial" data-num="4">
+                <h3>🎨 Aesthetic Quality</h3>
+                <div class="card-subtitle">Domain-Specific Beauty</div>
+                <span class="priority p-medium">Partial</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>Visual: Color, composition</li>
+                        <li>Audio: Frequency, structure</li>
+                        <li>Professional polish</li>
+                    </ul>
+                </div>
+                <div class="status-bar">Visual good, audio minimal</div>
+            </div>
+
+            <div class="card exists" data-num="5">
+                <h3>🔒 Safety</h3>
+                <div class="card-subtitle">Security & Resource Limits</div>
+                <span class="priority p-high">Implemented</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>No eval() or new Function()</li>
+                        <li>Infinite loop detection</li>
+                        <li>Memory/CPU limits</li>
+                    </ul>
+                </div>
+                <div class="status-bar">src/core/SafetyGuardrails.ts</div>
+            </div>
+
+            <!-- Missing 13 -->
+            <div class="card missing" data-num="6">
+                <h3>🎯 Semantic Alignment</h3>
+                <div class="card-subtitle">Does Output Match Prompt?</div>
+                <span class="priority p-critical">MISSING</span>
+                <div class="checks">
+                    <h4>Why Critical</h4>
+                    <ul>
+                        <li>No check if output matches request</li>
+                        <li>Beautiful but wrong subject</li>
+                        <li>Completely missing elements</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NEED: src/core/SemanticValidator.ts</div>
+            </div>
+
+            <div class="card missing" data-num="7">
+                <h3>⏱️ Temporal Health</h3>
+                <div class="card-subtitle">Runtime Performance Over Time</div>
+                <span class="priority p-critical">MISSING</span>
+                <div class="checks">
+                    <h4>Why Critical</h4>
+                    <ul>
+                        <li>Memory leak detection</li>
+                        <li>Gradual slowdown</li>
+                        <li>Crash after N seconds</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NEED: RuntimeHealthMonitor</div>
+            </div>
+
+            <div class="card missing" data-num="8">
+                <h3>♿ Accessibility</h3>
+                <div class="card-subtitle">Universal Design & Safety</div>
+                <span class="priority p-critical">MISSING</span>
+                <div class="checks">
+                    <h4>Why Critical</h4>
+                    <ul>
+                        <li>Photosensitivity (seizure risk!)</li>
+                        <li>Color blindness compatibility</li>
+                        <li>Legal WCAG 2.1 requirement</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NEED: AccessibilityGuardrails</div>
+            </div>
+
+            <div class="card partial" data-num="9">
+                <h3>🎲 Diversity/Novelty</h3>
+                <div class="card-subtitle">Anti-Repetition</div>
+                <span class="priority p-medium">Partial</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>Not same as previous outputs</li>
+                        <li>Hash similarity detection</li>
+                        <li>Prevents convergence</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NoveltyArchive exists, underused</div>
+            </div>
+
+            <div class="card partial" data-num="10">
+                <h3>📱 Responsive</h3>
+                <div class="card-subtitle">Cross-Platform Compatibility</div>
+                <span class="priority p-medium">Partial</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>Mobile viewport</li>
+                        <li>Touch vs mouse</li>
+                        <li>Browser compatibility</li>
+                    </ul>
+                </div>
+                <div class="status-bar">Some in HTMLWrapper</div>
+            </div>
+
+            <div class="card missing" data-num="11">
+                <h3>🔗 Dependency Health</h3>
+                <div class="card-subtitle">External Resource Validity</div>
+                <span class="priority p-medium">Missing</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>CDN links valid</li>
+                        <li>Version pinned (not "latest")</li>
+                        <li>No broken assets</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NOT IMPLEMENTED</div>
+            </div>
+
+            <div class="card missing" data-num="12">
+                <h3>📦 Version Compatibility</h3>
+                <div class="card-subtitle">Library API Version Match</div>
+                <span class="priority p-medium">Missing</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>API matches library version</li>
+                        <li>No deprecated functions</li>
+                        <li>Feature availability</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NOT IMPLEMENTED</div>
+            </div>
+
+            <div class="card missing" data-num="13">
+                <h3>💾 Resource Prediction</h3>
+                <div class="card-subtitle">Hardware Feasibility</div>
+                <span class="priority p-medium">Missing</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>GPU load estimation</li>
+                        <li>Mobile feasibility</li>
+                        <li>Crash prediction</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NOT IMPLEMENTED</div>
+            </div>
+
+            <div class="card partial" data-num="14">
+                <h3>🔄 Consistency</h3>
+                <div class="card-subtitle">Style Coherence</div>
+                <span class="priority p-medium">Partial</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>Color palette consistency</li>
+                        <li>Style coherence</li>
+                        <li>Temporal coherence</li>
+                    </ul>
+                </div>
+                <div class="status-bar">ColorHarmonyCritic exists</div>
+            </div>
+
+            <div class="card missing" data-num="15">
+                <h3>🔍 Code Clarity</h3>
+                <div class="card-subtitle">Human-Readable Output</div>
+                <span class="priority p-low">Missing</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>Sensible variable names</li>
+                        <li>No dead code</li>
+                        <li>Logical structure</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NOT IMPLEMENTED</div>
+            </div>
+
+            <div class="card future" data-num="16">
+                <h3>🌍 Ethical/Bias</h3>
+                <div class="card-subtitle">Harmful Content Prevention</div>
+                <span class="priority p-low">Future</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>No stereotypes</li>
+                        <li>Cultural sensitivity</li>
+                        <li>Fair representation</li>
+                    </ul>
+                </div>
+                <div class="status-bar">COMPLEX - Future work</div>
+            </div>
+
+            <div class="card missing" data-num="17">
+                <h3>🌡️ Thermal/Power</h3>
+                <div class="card-subtitle">Device Health</div>
+                <span class="priority p-low">Missing</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>CPU/GPU intensity</li>
+                        <li>Battery drain</li>
+                        <li>Overheating risk</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NOT IMPLEMENTED</div>
+            </div>
+
+            <div class="card missing" data-num="18">
+                <h3>📊 Telemetry</h3>
+                <div class="card-subtitle">Privacy Protection</div>
+                <span class="priority p-low">Missing</span>
+                <div class="checks">
+                    <h4>Checks</h4>
+                    <ul>
+                        <li>No IP logging</li>
+                        <li>No fingerprinting</li>
+                        <li>Privacy by default</li>
+                    </ul>
+                </div>
+                <div class="status-bar">NOT IMPLEMENTED</div>
+            </div>
+        </div>
+
+        <div class="critical-box">
+            <h3>🚨 Most Critical Missing</h3>
+            <p style="color: #aaa; margin-bottom: 1rem;">
+                <strong>1. Semantic Alignment:</strong> Currently no check if a "Japanese garden" prompt produces actual garden imagery. 
+                We could generate beautiful abstract art and score 0.9 aesthetic while being completely wrong.
+            </p>
+            <p style="color: #aaa; margin-bottom: 1rem;">
+                <strong>2. Accessibility:</strong> No photosensitivity detection. Code with flashing lights (>3Hz) can trigger seizures.
+                This is a <strong>legal WCAG 2.1 requirement</strong>.
+            </p>
+            <p style="color: #aaa;">
+                <strong>3. Temporal Health:</strong> Memory leaks and gradual performance degradation are invisible until crash.
+                No monitoring of runtime health over time.
+            </p>
+        </div>
+
+        <div class="summary">
+            <h2>📋 Recommendation</h2>
+            <p style="color: #aaa; margin-bottom: 1rem;">
+                Implement the 3 critical missing guardrails as soon as possible:
+            </p>
+            <ol style="color: #ccc; margin-left: 2rem; line-height: 2;">
+                <li><strong>SemanticValidator</strong> - CLIP-based or LLM-based prompt-to-output matching</li>
+                <li><strong>AccessibilityGuardrails</strong> - Photosensitivity detection, color blindness check</li>
+                <li><strong>RuntimeHealthMonitor</strong> - Memory leak detection, performance tracking</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liminal Guardrail Architecture - Complete Taxonomy</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: #050505;
+            color: #e0e0e0;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a0a2e 50%, #16213e 100%);
+            padding: 3rem 2rem;
+            border-bottom: 4px solid #ff006e;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            background: linear-gradient(90deg, #ff006e, #8338ec, #3a86ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #888;
+            font-size: 1.2rem;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .intro {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid #ff006e;
+        }
+        
+        .intro-title {
+            color: #ff006e;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Guardrail Type Cards */
+        .guardrail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+        
+        .guardrail-type {
+            border-radius: 16px;
+            padding: 1.5rem;
+            border: 3px solid;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .guardrail-type::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: currentColor;
+        }
+        
+        /* Type 1: Code Quality */
+        .type-code {
+            background: linear-gradient(135deg, #0d1b2a 0%, #1b263b 100%);
+            border-color: #00b4d8;
+            color: #90e0ef;
+        }
+        
+        /* Type 2: Aesthetic */
+        .type-aesthetic {
+            background: linear-gradient(135deg, #1a0a2e 0%, #2d1b4e 100%);
+            border-color: #e0aaff;
+            color: #e0aaff;
+        }
+        
+        /* Type 3: Anti-Slop */
+        .type-slop {
+            background: linear-gradient(135deg, #2d0a0a 0%, #4a0e0e 100%);
+            border-color: #ff006e;
+            color: #ff4d6d;
+        }
+        
+        /* Type 4: Anti-Hallucination */
+        .type-hallucination {
+            background: linear-gradient(135deg, #0a1628 0%, #0d1b2a 100%);
+            border-color: #fb5607;
+            color: #ffbe0b;
+        }
+        
+        /* Type 5: Safety */
+        .type-safety {
+            background: linear-gradient(135deg, #0a1f0a 0%, #0d2b1d 100%);
+            border-color: #06ffa5;
+            color: #06ffa5;
+        }
+        
+        .type-header {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .type-icon {
+            font-size: 2rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            background: rgba(0,0,0,0.3);
+        }
+        
+        .type-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+        
+        .type-subtitle {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .check-category {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+        
+        .check-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .check-list {
+            list-style: none;
+        }
+        
+        .check-list li {
+            padding: 0.4rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: #ccc;
+        }
+        
+        .check-list li::before {
+            content: "▸";
+            position: absolute;
+            left: 0;
+            color: currentColor;
+        }
+        
+        .implementation {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.4);
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+        
+        .imp-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            opacity: 0.7;
+        }
+        
+        /* Flow Diagram */
+        .flow-section {
+            background: #0a0a0f;
+            border-radius: 16px;
+            padding: 2rem;
+            margin: 2rem 0;
+            border: 2px solid #333;
+        }
+        
+        .flow-title {
+            color: #fff;
+            font-size: 1.5rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        
+        .pipeline {
+            display: flex;
+            flex-direction: column;
+            gap: 0;
+        }
+        
+        .pipe-stage {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            margin: 0.5rem 0;
+            border-radius: 12px;
+            position: relative;
+        }
+        
+        .pipe-gate {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .gate-code { background: #0077b6; color: white; }
+        .gate-hallucination { background: #fb5607; color: white; }
+        .gate-slop { background: #ff006e; color: white; }
+        .gate-aesthetic { background: #8338ec; color: white; }
+        .gate-safety { background: #06ffa5; color: black; }
+        
+        .arrow-down {
+            text-align: center;
+            color: #666;
+            font-size: 1.5rem;
+            padding: 0.5rem;
+        }
+        
+        .fail-path {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-left: 2rem;
+            padding: 1rem;
+            background: rgba(255, 0, 0, 0.1);
+            border-left: 4px solid #ff006e;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .fail-label {
+            color: #ff4d6d;
+            font-size: 0.85rem;
+        }
+        
+        /* Specific Examples */
+        .example-section {
+            margin: 3rem 0;
+        }
+        
+        .example-title {
+            color: #fff;
+            font-size: 2rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .example-card {
+            background: #111;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border: 2px solid #333;
+        }
+        
+        .example-card.slop { border-color: #ff006e; }
+        .example-card.hallucination { border-color: #fb5607; }
+        
+        .example-bad {
+            background: #2d0a0a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #ff006e;
+        }
+        
+        .example-good {
+            background: #0a2d0a;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            border-left: 4px solid #06ffa5;
+        }
+        
+        .example-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+        
+        .example-bad .example-label { color: #ff4d6d; }
+        .example-good .example-label { color: #06ffa5; }
+        
+        pre {
+            font-family: monospace;
+            font-size: 0.85rem;
+            overflow-x: auto;
+            color: #ccc;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 1rem;
+        }
+        
+        .status-exists { background: #06ffa5; color: black; }
+        .status-partial { background: #ffbe0b; color: black; }
+        .status-missing { background: #ff006e; color: white; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🛡️ GUARDRAIL ARCHITECTURE</h1>
+        <div class="subtitle">Five Types of Quality Gates for Creative Code Generation</div>
+    </div>
+
+    <div class="container">
+        <div class="intro">
+            <div class="intro-title">⚠️ Critical Architecture Understanding</div>
+            <p style="color: #aaa; font-size: 1.1rem; line-height: 1.8;">
+                Quality control isn't just "validation." There are <strong>five distinct types</strong> of guardrails,
+                each catching different failure modes. Missing any type creates holes in quality assurance.
+            </p>
+        </div>
+
+        <!-- The Five Types -->
+        <div class="guardrail-grid">
+            <!-- Type 1: Code Quality -->
+            <div class="guardrail-type type-code">
+                <div class="type-header">
+                    <div class="type-icon">🔧</div>
+                    <div>
+                        <div class="type-title">1. CODE QUALITY</div>
+                        <div class="type-subtitle">Universal Structure & Syntax</div>
+                    </div>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Structure Checks</div>
+                    <ul class="check-list">
+                        <li>Balanced braces, parens, brackets</li>
+                        <li>Required functions exist (setup, draw)</li>
+                        <li>Valid syntax for language (JS/GLSL)</li>
+                        <li>No incomplete functions</li>
+                        <li>Proper indentation (basic)</li>
+                    </ul>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Domain Detection</div>
+                    <ul class="check-list">
+                        <li>Detect p5.js vs GLSL vs Three.js</li>
+                        <li>Route to correct validator</li>
+                        <li>Apply domain-specific rules</li>
+                    </ul>
+                </div>
+                
+                <div class="implementation">
+                    <div class="imp-label">Implementation</div>
+                    src/core/CodeValidator.ts
+                    <span class="status-badge status-exists">Exists</span>
+                </div>
+            </div>
+
+            <!-- Type 2: Anti-Hallucination -->
+            <div class="guardrail-type type-hallucination">
+                <div class="type-header">
+                    <div class="type-icon">👻</div>
+                    <div>
+                        <div class="type-title">2. ANTI-HALLUCINATION</div>
+                        <div class="type-subtitle">Real APIs Only</div>
+                    </div>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">API Validation</div>
+                    <ul class="check-list">
+                        <li>Check p5.js functions exist</li>
+                        <li>Verify Tone.js API calls</li>
+                        <li>Validate Three.js classes</li>
+                        <li>No made-up methods</li>
+                        <li>Correct parameter counts</li>
+                    </ul>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Known Hallucinations</div>
+                    <ul class="check-list">
+                        <li>Tone.js: Non-existent synth types</li>
+                        <li>p5: Fake draw modes</li>
+                        <li>GLSL: Wrong built-in functions</li>
+                        <li>Misspelled API names</li>
+                    </ul>
+                </div>
+                
+                <div class="implementation">
+                    <div class="imp-label">Implementation</div>
+                    src/core/CodeValidator.ts (validateToneJS)
+                    <span class="status-badge status-partial">Partial</span>
+                </div>
+            </div>
+
+            <!-- Type 3: Anti-Slop -->
+            <div class="guardrail-type type-slop">
+                <div class="type-header">
+                    <div class="type-icon">🗑️</div>
+                    <div>
+                        <div class="type-title">3. ANTI-SLOP</div>
+                        <div class="type-subtitle">Reject Low-Effort Output</div>
+                    </div>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Generic Pattern Detection</div>
+                    <ul class="check-list">
+                        <li>"Blue circle on gray background"</li>
+                        <li>Random particle soup</li>
+                        <li>Copy-paste noise patterns</li>
+                        <li>No clear concept or intent</li>
+                        <li>Low complexity (lines < 50)</li>
+                    </ul>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Effort Indicators</div>
+                    <ul class="check-list">
+                        <li>Unique visual concepts</li>
+                        <li>Coherent color palette</li>
+                        <li>Thoughtful composition</li>
+                        <li>Creative technique usage</li>
+                        <li>Not "student project" quality</li>
+                    </ul>
+                </div>
+                
+                <div class="implementation">
+                    <div class="imp-label">Implementation</div>
+                    src/core/CreativeEvaluator.ts (emergence, interestingness)
+                    <span class="status-badge status-partial">Partial</span>
+                </div>
+            </div>
+
+            <!-- Type 4: Aesthetic Quality -->
+            <div class="guardrail-type type-aesthetic">
+                <div class="type-header">
+                    <div class="type-icon">🎨</div>
+                    <div>
+                        <div class="type-title">4. AESTHETIC QUALITY</div>
+                        <div class="type-subtitle">Domain-Specific Beauty</div>
+                    </div>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Visual (p5/Shader/Three)</div>
+                    <ul class="check-list">
+                        <li>Color harmony</li>
+                        <li>Composition balance</li>
+                        <li>Visual complexity</li>
+                        <li>Motion quality (if animated)</li>
+                        <li>Professional polish</li>
+                    </ul>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Audio (Tone/Strudel)</div>
+                    <ul class="check-list">
+                        <li>Frequency balance</li>
+                        <li>Musical structure</li>
+                        <li>Sound design quality</li>
+                        <li>No clipping/distortion</li>
+                        <li>Pleasing timbre</li>
+                    </ul>
+                </div>
+                
+                <div class="implementation">
+                    <div class="imp-label">Implementation</div>
+                    src/core/CreativeEvaluator.ts (creativeScore)
+                    <span class="status-badge status-exists">Exists</span>
+                </div>
+            </div>
+
+            <!-- Type 5: Safety -->
+            <div class="guardrail-type type-safety">
+                <div class="type-header">
+                    <div class="type-icon">🔒</div>
+                    <div>
+                        <div class="type-title">5. SAFETY</div>
+                        <div class="type-subtitle">Security & Resource Limits</div>
+                    </div>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Security</div>
+                    <ul class="check-list">
+                        <li>No eval() or new Function()</li>
+                        <li>No child_process</li>
+                        <li>No fetch to unknown domains</li>
+                        <li>No localStorage/cookie abuse</li>
+                        <li>Safe CSS (no expression)</li>
+                    </ul>
+                </div>
+                
+                <div class="check-category">
+                    <div class="check-title">Resource Limits</div>
+                    <ul class="check-list">
+                        <li>Infinite loop detection</li>
+                        <li>Memory usage limits</li>
+                        <li>CPU throttling</li>
+                        <li>Canvas size limits</li>
+                        <li>Audio context limits</li>
+                    </ul>
+                </div>
+                
+                <div class="implementation">
+                    <div class="imp-label">Implementation</div>
+                    src/core/SafetyGuardrails.ts + src/security/
+                    <span class="status-badge status-exists">Exists</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pipeline Flow -->
+        <div class="flow-section">
+            <div class="flow-title">🔄 Generation Pipeline with All Guardrails</div>
+            
+            <div class="pipeline">
+                <div class="pipe-stage">
+                    <div class="pipe-gate gate-code">1. CODE QUALITY GATE</div>
+                    <div class="fail-path">
+                        <span class="fail-label">Fail: Syntax error → Report to harness → Fix validation</span>
+                    </div>
+                </div>
+                
+                <div class="arrow-down">↓</div>
+                
+                <div class="pipe-stage">
+                    <div class="pipe-gate gate-hallucination">2. ANTI-HALLUCINATION GATE</div>
+                    <div class="fail-path">
+                        <span class="fail-label">Fail: Fake API → Report to harness → Fix API validation (M1!)</span>
+                    </div>
+                </div>
+                
+                <div class="arrow-down">↓</div>
+                
+                <div class="pipe-stage">
+                    <div class="pipe-gate gate-slop">3. ANTI-SLOP GATE</div>
+                    <div class="fail-path">
+                        <span class="fail-label">Fail: Generic/boring → Report to harness → Improve prompts</span>
+                    </div>
+                </div>
+                
+                <div class="arrow-down">↓</div>
+                
+                <div class="pipe-stage">
+                    <div class="pipe-gate gate-aesthetic">4. AESTHETIC QUALITY GATE</div>
+                    <div class="fail-path">
+                        <span class="fail-label">Fail: Low quality → Report to harness → Adjust thresholds</span>
+                    </div>
+                </div>
+                
+                <div class="arrow-down">↓</div>
+                
+                <div class="pipe-stage">
+                    <div class="pipe-gate gate-safety">5. SAFETY GATE</div>
+                    <div class="fail-path">
+                        <span class="fail-label">Fail: Security issue → Report to harness → Block pattern</span>
+                    </div>
+                </div>
+                
+                <div class="arrow-down">↓</div>
+                
+                <div class="pipe-stage" style="background: rgba(6, 255, 165, 0.1); border: 2px solid #06ffa5; border-radius: 8px;">
+                    <div style="color: #06ffa5; font-weight: 700; font-size: 1.2rem;">✓ OUTPUT APPROVED</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Examples -->
+        <div class="example-section">
+            <div class="example-title">📋 Real Examples</div>
+            
+            <div class="example-card slop">
+                <h3 style="color: #ff4d6d; margin-bottom: 1rem;">🗑️ Anti-Slop Example</h3>
+                
+                <div class="example-bad">
+                    <div class="example-label">❌ SLOP (Reject)</div>
+                    <pre>function setup() {
+  createCanvas(400, 400);
+}
+
+function draw() {
+  background(200);
+  fill(0, 0, 255);
+  ellipse(200, 200, 100, 100); // Just a blue circle
+}</pre>
+                    <p style="color: #aaa; margin-top: 0.5rem; font-size: 0.9rem;">
+                        Zero creativity. No animation. No concept. "Student project" quality.
+                    </p>
+                </div>
+                
+                <div class="example-good">
+                    <div class="example-label">✅ NOT SLOP (Accept)</div>
+                    <pre>function setup() {
+  createCanvas(400, 400);
+  colorMode(HSB);
+  noStroke();
+}
+
+function draw() {
+  background(0);
+  // Flowing organic blobs with sin waves
+  for (let i = 0; i < 10; i++) {
+    let x = noise(i * 0.5, frameCount * 0.01) * width;
+    let y = noise(i * 0.5 + 100, frameCount * 0.01) * height;
+    let size = sin(frameCount * 0.05 + i) * 50 + 60;
+    fill((frameCount + i * 30) % 360, 70, 90);
+    ellipse(x, y, size);
+  }
+}</pre>
+                    <p style="color: #aaa; margin-top: 0.5rem; font-size: 0.9rem;">
+                        Clear concept (flowing blobs), animation, color harmony, creative technique.
+                    </p>
+                </div>
+            </div>
+
+            <div class="example-card hallucination">
+                <h3 style="color: #ffbe0b; margin-bottom: 1rem;">👻 Anti-Hallucination Example</h3>
+                
+                <div class="example-bad">
+                    <div class="example-label">❌ HALLUCINATION (Reject)</div>
+                    <pre>// Fake Tone.js API
+const synth = new Tone.MegaSynth(); // Doesn't exist!
+synth.playNote("C4"); // Wrong method name
+
+// Fake p5 function
+setPixelColor(10, 10, 255); // Doesn't exist</pre>
+                    <p style="color: #aaa; margin-top: 0.5rem; font-size: 0.9rem;">
+                        LLM invented "MegaSynth" and "setPixelColor". These don't exist in the libraries.
+                    </p>
+                </div>
+                
+                <div class="example-good">
+                    <div class="example-label">✅ REAL API (Accept)</div>
+                    <pre>// Real Tone.js API
+const synth = new Tone.PolySynth(Tone.Synth).toDestination();
+synth.triggerAttackRelease("C4", "8n");
+
+// Real p5 function
+set(10, 10, color(255)); // Actual p5 pixel function</pre>
+                    <p style="color: #aaa; margin-top: 0.5rem; font-size: 0.9rem;">
+                        Uses actual documented APIs. M1 task fixes Tone.js validation to catch this!
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Missing Guardrails -->
+        <div class="flow-section">
+            <div class="flow-title">⚠️ Current Gaps in Guardrails</div>
+            
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem;">
+                <div style="background: rgba(255, 0, 110, 0.1); padding: 1.5rem; border-radius: 8px; border: 2px solid #ff006e;">
+                    <h4 style="color: #ff4d6d; margin-bottom: 0.5rem;">Anti-Slop: WEAK</h4>
+                    <p style="color: #aaa; font-size: 0.9rem;">
+                        CreativeEvaluator has "emergence" and "interestingness" but doesn't explicitly 
+                        reject "blue circle on gray background" type outputs.
+                    </p>
+                </div>
+                
+                <div style="background: rgba(251, 86, 7, 0.1); padding: 1.5rem; border-radius: 8px; border: 2px solid #fb5607;">
+                    <h4 style="color: #ffbe0b; margin-bottom: 0.5rem;">Anti-Hallucination: PARTIAL</h4>
+                    <p style="color: #aaa; font-size: 0.9rem;">
+                        Tone.js validation exists but only fires on 'unknown' domain (M1 fixes this!).
+                        p5.js hallucination checking is minimal.
+                    </p>
+                </div>
+                
+                <div style="background: rgba(131, 56, 236, 0.1); padding: 1.5rem; border-radius: 8px; border: 2px solid #8338ec;">
+                    <h4 style="color: #e0aaff; margin-bottom: 0.5rem;">Aesthetic: PER-DOMAIN NEEDED</h4>
+                    <p style="color: #aaa; font-size: 0.9rem;">
+                        Visual evaluation exists but audio aesthetic evaluation is minimal. 
+                        Each generator needs domain-specific aesthetic checks.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 3rem; color: #666; border-top: 1px solid #333; margin-top: 3rem;">
+            <p>Complete Guardrail Taxonomy | Liminal Architecture</p>
+        </div>
+    </div>
+</body>
+</html>

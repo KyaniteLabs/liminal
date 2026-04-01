@@ -197,3 +197,60 @@ export function getActiveProviderConfig(): LLMConfig | null {
   const { provider: _, name, description, ...llmConfig } = config;
   return llmConfig;
 }
+
+// ------------------------------------------------------------------------------
+// Harness-Specific Configuration
+// Used by Meta-Harness for code fixes (lower temperature for precision)
+// ------------------------------------------------------------------------------
+
+export interface HarnessLLMConfig {
+  /** Temperature for code fixes (default: 0.2 for precision) */
+  temperature: number;
+  /** Max tokens for code generation (default: 4096) */
+  maxTokens: number;
+  /** Request timeout in ms (default: 60000) */
+  timeoutMs: number;
+  /** Max retries for failed requests (default: 3) */
+  maxRetries: number;
+  /** Context window size (default: 8192) */
+  contextWindow: number;
+}
+
+// Default harness config values (used when env vars not set)
+const HARNESS_DEFAULTS = {
+  temperature: 0.2,      // Low temp for precise code fixes
+  maxTokens: 4096,       // Standard code context
+  timeoutMs: 60000,      // 1 minute timeout
+  maxRetries: 3,         // Retry failed requests
+  contextWindow: 8192,   // Context window for file understanding
+} as const;
+
+/**
+ * Get harness-specific LLM configuration
+ * Reads from environment variables with defaults
+ */
+export function getHarnessLLMConfig(): HarnessLLMConfig {
+  return {
+    temperature: parseFloat(process.env.LIMINAL_HARNESS_TEMPERATURE || String(HARNESS_DEFAULTS.temperature)),
+    maxTokens: parseInt(process.env.LIMINAL_HARNESS_MAX_TOKENS || String(HARNESS_DEFAULTS.maxTokens), 10),
+    timeoutMs: parseInt(process.env.LIMINAL_HARNESS_TIMEOUT || String(HARNESS_DEFAULTS.timeoutMs), 10),
+    maxRetries: parseInt(process.env.LIMINAL_HARNESS_MAX_RETRIES || String(HARNESS_DEFAULTS.maxRetries), 10),
+    contextWindow: parseInt(process.env.LIMINAL_HARNESS_CONTEXT_WINDOW || String(HARNESS_DEFAULTS.contextWindow), 10),
+  };
+}
+
+/**
+ * Get LLMConfig for harness use (applies harness-specific overrides)
+ */
+export function getHarnessProviderConfig(): LLMConfig | null {
+  const baseConfig = getActiveProviderConfig();
+  if (!baseConfig) return null;
+  
+  const harnessConfig = getHarnessLLMConfig();
+  
+  return {
+    ...baseConfig,
+    temperature: harnessConfig.temperature,
+    maxTokens: harnessConfig.maxTokens,
+  };
+}

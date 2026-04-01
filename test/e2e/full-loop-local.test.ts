@@ -11,6 +11,7 @@ import os from 'os';
 import { run } from '../../src/index.js';
 import { getEffectiveConfig } from '../../src/config/ConfigLoader.js';
 import { LLMClient } from '../../src/llm/LLMClient.js';
+import { metaHarness } from '../../src/harness/MetaHarnessIntegration.js';
 
 const LLM_REQUEST_TIMEOUT_MS = 20000;
 const E2E_TIMEOUT_MS = 120000; // full loop with 2 iterations can be slow
@@ -85,6 +86,7 @@ describe('E2E full loop (local Ollama)', () => {
   });
 
   test('run() full loop: result.code, iterations >= 1, setup/draw, output files exist', async () => {
+    const startTime = Date.now();
     const reachable = await isOllamaReachable();
     if (!reachable) {
       console.warn(
@@ -99,14 +101,34 @@ describe('E2E full loop (local Ollama)', () => {
     const prompt = 'Draw a simple blue circle';
 
     let result: Awaited<ReturnType<typeof run>>;
+    let testPassed = false;
+    let testError: string | undefined;
+    
     try {
       result = await run(prompt, {
         maxIterations: 2,
         output: outputDir,
         project,
       });
+
+      expect(result).toBeDefined();
+      expect(result.code).toBeDefined();
+      expect(typeof result.code).toBe('string');
+      expect(result.code).toMatch(/function\s+setup\s*\(/);
+      expect(result.code).toMatch(/function\s+draw\s*\(/);
+      expect(result.iterations).toBeGreaterThanOrEqual(1);
+
+      expect(result.jsPath).toBeDefined();
+      expect(result.htmlPath).toBeDefined();
+      const jsExists = await fs.access(result.jsPath!).then(() => true).catch(() => false);
+      const htmlExists = await fs.access(result.htmlPath!).then(() => true).catch(() => false);
+      expect(jsExists).toBe(true);
+      expect(htmlExists).toBe(true);
+      
+      testPassed = true;
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err);
+      testError = msg;
       if (
         /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|AbortError|connection|refused|unreachable|404/i.test(
           msg
@@ -118,23 +140,19 @@ describe('E2E full loop (local Ollama)', () => {
         return;
       }
       throw err;
+    } finally {
+      // Report test result to Meta-Harness
+      await metaHarness.onGenerationComplete({
+        success: testPassed,
+        model: 'ollama',
+        domain: 'p5',
+        prompt: prompt,
+        error: testError,
+        duration: Date.now() - startTime,
+      });
+      
+      // Cleanup temp output
+      await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
     }
-
-    expect(result).toBeDefined();
-    expect(result.code).toBeDefined();
-    expect(typeof result.code).toBe('string');
-    expect(result.code).toMatch(/function\s+setup\s*\(/);
-    expect(result.code).toMatch(/function\s+draw\s*\(/);
-    expect(result.iterations).toBeGreaterThanOrEqual(1);
-
-    expect(result.jsPath).toBeDefined();
-    expect(result.htmlPath).toBeDefined();
-    const jsExists = await fs.access(result.jsPath!).then(() => true).catch(() => false);
-    const htmlExists = await fs.access(result.htmlPath!).then(() => true).catch(() => false);
-    expect(jsExists).toBe(true);
-    expect(htmlExists).toBe(true);
-
-    // Cleanup temp output
-    await fs.rm(outputDir, { recursive: true, force: true }).catch(() => {});
   }, E2E_TIMEOUT_MS);
 });

@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liminal Architecture V2 - Corrected Guardrails</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: #0a0a0f;
+            color: #e2e8f0;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+            padding: 2rem;
+            border-bottom: 4px solid #6366f1;
+        }
+        
+        .header h1 {
+            color: #818cf8;
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+        }
+        
+        .alert {
+            background: rgba(239, 68, 68, 0.1);
+            border-left: 4px solid #ef4444;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .alert-title {
+            color: #fca5a5;
+            font-weight: 600;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            background: #111827;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            overflow: hidden;
+            border: 1px solid #1f2937;
+        }
+        
+        .section-header {
+            background: #1e293b;
+            padding: 1.5rem;
+            border-bottom: 2px solid #334155;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #f8fafc;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-content {
+            padding: 2rem;
+        }
+        
+        /* Architecture Diagram */
+        .arch-diagram {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 2rem;
+            font-family: monospace;
+            font-size: 0.9rem;
+            line-height: 1.8;
+            overflow-x: auto;
+            border: 2px solid #1e293b;
+        }
+        
+        .layer {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            border-radius: 8px;
+            position: relative;
+        }
+        
+        .layer-harness {
+            background: linear-gradient(90deg, #1e1b4b 0%, #312e81 100%);
+            border: 2px solid #6366f1;
+        }
+        
+        .layer-core {
+            background: linear-gradient(90deg, #064e3b 0%, #065f46 100%);
+            border: 2px solid #10b981;
+        }
+        
+        .layer-generators {
+            background: linear-gradient(90deg, #451a03 0%, #78350f 100%);
+            border: 2px solid #f59e0b;
+        }
+        
+        .layer-output {
+            background: linear-gradient(90deg, #1e3a5f 0%, #1e40af 100%);
+            border: 2px solid #3b82f6;
+        }
+        
+        .layer-title {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        
+        .layer-harness .layer-title { color: #a5b4fc; }
+        .layer-core .layer-title { color: #6ee7b7; }
+        .layer-generators .layer-title { color: #fcd34d; }
+        .layer-output .layer-title { color: #93c5fd; }
+        
+        .component-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 0.5rem 0;
+        }
+        
+        .comp {
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        
+        .comp-harness { background: #4338ca; color: #e0e7ff; }
+        .comp-core { background: #059669; color: #d1fae5; }
+        .comp-gen { background: #b45309; color: #fef3c7; }
+        .comp-output { background: #2563eb; color: #dbeafe; }
+        .comp-guardrail { background: #dc2626; color: #fee2e2; border: 2px dashed #fca5a5; }
+        .comp-aesthetic { background: #7c3aed; color: #ede9fe; border: 2px solid #a78bfa; }
+        
+        .arrow {
+            color: #6b7280;
+            margin: 0 0.5rem;
+        }
+        
+        .bidirectional {
+            color: #10b981;
+        }
+        
+        .flow-annotation {
+            color: #9ca3af;
+            font-size: 0.8rem;
+            font-style: italic;
+            margin-left: 1rem;
+        }
+        
+        /* Guardrail Types Section */
+        .guardrail-types {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .guardrail-card {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid;
+        }
+        
+        .guardrail-universal {
+            border-color: #ef4444;
+            background: linear-gradient(135deg, #0f172a 0%, #450a0a 100%);
+        }
+        
+        .guardrail-aesthetic {
+            border-color: #a855f7;
+            background: linear-gradient(135deg, #0f172a 0%, #3b0764 100%);
+        }
+        
+        .guardrail-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .guardrail-universal .guardrail-title { color: #fca5a5; }
+        .guardrail-aesthetic .guardrail-title { color: #d8b4fe; }
+        
+        .guardrail-scope {
+            font-size: 0.8rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            display: inline-block;
+            margin-bottom: 1rem;
+        }
+        
+        .scope-universal { background: #7f1d1d; color: #fecaca; }
+        .scope-per-gen { background: #581c87; color: #e9d5ff; }
+        
+        .check-list {
+            list-style: none;
+        }
+        
+        .check-list li {
+            padding: 0.5rem 0;
+            padding-left: 1.5rem;
+            position: relative;
+            color: #cbd5e1;
+        }
+        
+        .check-list li::before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: #22c55e;
+            font-weight: bold;
+        }
+        
+        /* Generator Detail Cards */
+        .gen-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+        
+        .gen-card {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 1.5rem;
+            border: 2px solid #78350f;
+        }
+        
+        .gen-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .gen-name {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #fcd34d;
+        }
+        
+        .gen-type {
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            background: #78350f;
+            color: #fef3c7;
+            border-radius: 4px;
+        }
+        
+        .gen-section {
+            margin: 1rem 0;
+        }
+        
+        .gen-section-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: #94a3b8;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+        }
+        
+        .improvement-track {
+            background: #1e293b;
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid #6366f1;
+        }
+        
+        .improvement-track-title {
+            font-weight: 600;
+            color: #a5b4fc;
+            margin-bottom: 0.5rem;
+        }
+        
+        /* Relationship diagram */
+        .relationship-map {
+            background: #0f172a;
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 1.5rem;
+            border: 2px solid #334155;
+        }
+        
+        .rel-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin: 1.5rem 0;
+            flex-wrap: wrap;
+        }
+        
+        .rel-box {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+        }
+        
+        .rel-harness { background: #4338ca; color: white; }
+        .rel-core { background: #059669; color: white; }
+        .rel-gen { background: #d97706; color: white; }
+        .rel-fix { background: #dc2626; color: white; }
+        
+        .rel-arrow {
+            font-size: 1.5rem;
+            color: #6b7280;
+        }
+        
+        .rel-label {
+            background: #1e293b;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            color: #94a3b8;
+            max-width: 300px;
+        }
+        
+        .rel-fixes {
+            color: #fca5a5;
+        }
+        
+        .rel-improves {
+            color: #6ee7b7;
+        }
+        
+        code {
+            background: #1e293b;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #e2e8f0;
+        }
+        
+        .highlight {
+            background: rgba(99, 102, 241, 0.2);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+        }
+        
+        .correction-box {
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%);
+            border: 2px solid #6366f1;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .correction-title {
+            color: #a5b4fc;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+        
+        .key-point {
+            background: #0f172a;
+            border-left: 4px solid #10b981;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .key-point-title {
+            color: #6ee7b7;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Liminal Architecture V2</h1>
+        <div class="subtitle">Corrected: Multi-Type Guardrails & Harness-Generator Relationship</div>
+    </div>
+
+    <div class="container">
+        <!-- Correction Notice -->
+        <div class="correction-box">
+            <div class="correction-title">🔧 Architecture Correction</div>
+            <p style="color: #cbd5e1; margin-bottom: 1rem;">
+                The previous architecture incorrectly showed generators as "dumb" and implied they weren't improved by the harness. 
+                <strong>This was wrong.</strong>
+            </p>
+            <div class="key-point">
+                <div class="key-point-title">Correct Understanding:</div>
+                <p>Generators don't have their OWN self-improving loop, but they ARE improved by the harness like everything else. The harness can fix generator code, prompts, validation - anything.</p>
+            </div>
+            <div class="key-point">
+                <div class="key-point-title">Guardrail Types:</div>
+                <p>There are <strong>multiple types</strong> of guardrails, not one. Code quality guardrails apply to everyone, but each generator needs its own OUTPUT aesthetic quality guardrails.</p>
+            </div>
+        </div>
+
+        <!-- Corrected Architecture Flow -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">🌊 Corrected Data Flow</div>
+            </div>
+            <div class="section-content">
+                <div class="arch-diagram">
+<!-- Layer 1: Harness -->
+<div class="layer layer-harness">
+    <div class="layer-title">🔧 META-HARNESS (Self-Improving Layer)</div>
+    <div class="component-row">
+        <span class="comp comp-harness">FailureLogger</span>
+        <span class="comp comp-harness">PatternDetector</span>
+        <span class="comp comp-harness">HarnessAgent</span>
+        <span class="comp comp-harness">HarnessUpdater</span>
+    </div>
+    <div class="flow-annotation">
+        ↓ Observes failures from ALL layers ↓<br>
+        ↓ Fixes ANY component (including generators!) ↓
+    </div>
+</div>
+
+<!-- Connection -->
+<div style="text-align: center; color: #6b7280; margin: 0.5rem 0;">
+    ↑ Reports failures | Fixes applied via tasks (M1, M4, M6-8) ↓
+</div>
+
+<!-- Layer 2: Core -->
+<div class="layer layer-core">
+    <div class="layer-title">⚙️ CORE ENGINE (RalphLoop)</div>
+    <div class="component-row">
+        <span class="comp comp-core">RalphLoop</span>
+        <span class="comp comp-guardrail">CodeValidator</span>
+        <span class="comp comp-core">CreativeEvaluator</span>
+        <span class="comp comp-core">GenerationOrchestrator</span>
+    </div>
+    <div class="flow-annotation">
+        ↓ Passes code to generators ↓<br>
+        ↑ Reports results to harness ↑
+    </div>
+</div>
+
+<!-- Connection -->
+<div style="text-align: center; color: #6b7280; margin: 0.5rem 0;">
+    ← Code Quality Guardrails (Universal) →
+</div>
+
+<!-- Layer 3: Generators -->
+<div class="layer layer-generators">
+    <div class="layer-title">🎨 GENERATORS (No Self-Loop, BUT Improved by Harness)</div>
+    
+    <div style="margin: 1rem 0; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+        <div style="color: #fcd34d; font-weight: 600; margin-bottom: 0.5rem;">P5GeneratorLLM</div>
+        <div class="component-row">
+            <span class="comp comp-gen">Generate p5.js</span>
+            <span class="arrow">→</span>
+            <span class="comp comp-aesthetic">Visual Aesthetic Guardrails</span>
+            <span class="arrow">→</span>
+            <span class="comp comp-guardrail">Code Structure Check</span>
+        </div>
+        <div class="flow-annotation">
+            ↓ If visual quality fails, harness can fix prompts/validation ↓
+        </div>
+    </div>
+    
+    <div style="margin: 1rem 0; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+        <div style="color: #fcd34d; font-weight: 600; margin-bottom: 0.5rem;">ToneGenerator</div>
+        <div class="component-row">
+            <span class="comp comp-gen">Generate Tone.js</span>
+            <span class="arrow">→</span>
+            <span class="comp comp-aesthetic">Audio Aesthetic Guardrails</span>
+            <span class="arrow">→</span>
+            <span class="comp comp-guardrail">Code Structure Check</span>
+        </div>
+        <div class="flow-annotation">
+            ↓ If audio quality fails, harness can fix Tone.js validation (M1!) ↓
+        </div>
+    </div>
+    
+    <div style="margin: 1rem 0; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+        <div style="color: #fcd34d; font-weight: 600; margin-bottom: 0.5rem;">ShaderGenerator</div>
+        <div class="component-row">
+            <span class="comp comp-gen">Generate GLSL</span>
+            <span class="arrow">→</span>
+            <span class="comp comp-aesthetic">Shader Aesthetic Guardrails</span>
+            <span class="arrow">→</span>
+            <span class="comp comp-guardrail">GLSL Syntax Check</span>
+        </div>
+        <div class="flow-annotation">
+            ↓ If shader quality fails, harness fixes validation rules ↓
+        </div>
+    </div>
+</div>
+
+<!-- Connection -->
+<div style="text-align: center; color: #6b7280; margin: 0.5rem 0;">
+    ← Output Quality Evaluation →
+</div>
+
+<!-- Layer 4: Output -->
+<div class="layer layer-output">
+    <div class="layer-title">📦 OUTPUT (Validated & Scored)</div>
+    <div class="component-row">
+        <span class="comp comp-output">HTML/JS Files</span>
+        <span class="comp comp-output">Quality Score</span>
+        <span class="comp comp-output">Failure Report → Harness</span>
+    </div>
+</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Guardrail Types Explained -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">🛡️ Two Types of Guardrails</div>
+            </div>
+            <div class="section-content">
+                <div class="guardrail-types">
+                    <!-- Universal Code Quality -->
+                    <div class="guardrail-card guardrail-universal">
+                        <div class="guardrail-title">🔴 Type 1: Universal Code Quality Guardrails</div>
+                        <span class="guardrail-scope scope-universal">APPLIES TO EVERYONE</span>
+                        <p style="color: #cbd5e1; margin: 1rem 0;">
+                            Structural validation that all code must pass regardless of generator.
+                        </p>
+                        <ul class="check-list">
+                            <li>Syntax validation (balanced braces, parens)</li>
+                            <li>Domain detection (p5, shader, three, etc.)</li>
+                            <li>Size limits (min/max code length)</li>
+                            <li>Forbidden patterns (eval, new Function)</li>
+                            <li>Required functions (setup, draw for p5)</li>
+                            <li>Basic structure completeness</li>
+                        </ul>
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <strong style="color: #fca5a5;">Implementation:</strong><br>
+                            <code>src/core/CodeValidator.ts</code> - Single validator used by all
+                        </div>
+                    </div>
+
+                    <!-- Per-Generator Aesthetic -->
+                    <div class="guardrail-card guardrail-aesthetic">
+                        <div class="guardrail-title">🟣 Type 2: Per-Generator Aesthetic Guardrails</div>
+                        <span class="guardrail-scope scope-per-gen">ONE PER GENERATOR</span>
+                        <p style="color: #cbd5e1; margin: 1rem 0;">
+                            Output quality evaluation specific to the generator's domain.
+                        </p>
+                        <ul class="check-list">
+                            <li><strong>P5:</strong> Visual composition, color harmony, animation</li>
+                            <li><strong>Tone:</strong> Audio synthesis quality, frequency balance</li>
+                            <li><strong>Shader:</strong> Visual complexity, raymarching quality</li>
+                            <li><strong>Three:</strong> 3D scene composition, lighting</li>
+                            <li><strong>Strudel:</strong> Rhythm patterns, musical structure</li>
+                            <li><strong>Hydra:</strong> Video synthesis chains, modulation</li>
+                        </ul>
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px;">
+                            <strong style="color: #d8b4fe;">Implementation:</strong><br>
+                            Each generator OR CreativeEvaluator needs domain-specific aesthetic checks
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generator Detail -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">🎨 Generator Architecture Detail</div>
+            </div>
+            <div class="section-content">
+                <div class="gen-grid">
+                    <!-- P5 Generator -->
+                    <div class="gen-card">
+                        <div class="gen-header">
+                            <span class="gen-name">P5GeneratorLLM</span>
+                            <span class="gen-type">Visual</span>
+                        </div>
+                        
+                        <div class="gen-section">
+                            <div class="gen-section-title">Code Quality Guardrails (Universal)</div>
+                            <ul class="check-list">
+                                <li>Has setup() and draw() functions</li>
+                                <li>p5.js API calls are valid</li>
+                                <li>No syntax errors</li>
+                                <li>Reasonable code size</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="gen-section">
+                            <div class="gen-section-title">Aesthetic Guardrails (P5-Specific)</div>
+                            <ul class="check-list">
+                                <li>Visual composition balance</li>
+                                <li>Color usage and harmony</li>
+                                <li>Animation presence</li>
+                                <li>Interactivity elements</li>
+                                <li>Shape variety</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="improvement-track">
+                            <div class="improvement-track-title">How Harness Improves This Generator:</div>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">
+                                If P5 outputs consistently fail aesthetic checks, harness can:<br>
+                                → Improve prompts in <code>src/prompts/p5.js</code><br>
+                                → Adjust validation thresholds<br>
+                                → Fix CreativeEvaluator scoring<br>
+                                → Update routing logic
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Tone Generator -->
+                    <div class="gen-card">
+                        <div class="gen-header">
+                            <span class="gen-name">ToneGenerator</span>
+                            <span class="gen-type">Audio</span>
+                        </div>
+                        
+                        <div class="gen-section">
+                            <div class="gen-section-title">Code Quality Guardrails (Universal)</div>
+                            <ul class="check-list">
+                                <li>Tone.js API calls are valid (M1 fix!)</li>
+                                <li>Valid audio graph construction</li>
+                                <li>No syntax errors</li>
+                                <li>Proper initialization</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="gen-section">
+                            <div class="gen-section-title">Aesthetic Guardrails (Audio-Specific)</div>
+                            <ul class="check-list">
+                                <li>Frequency spectrum balance</li>
+                                <li>Synthesis quality</li>
+                                <li>Envelope characteristics</li>
+                                <li>Effect chain appropriateness</li>
+                                <li>Audio output presence</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="improvement-track">
+                            <div class="improvement-track-title">How Harness Improves This Generator:</div>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">
+                                If Tone outputs fail validation (current issue!):<br>
+                                → <strong>M1 task:</strong> Fix validation gate to check 'music' domain<br>
+                                → Improve Tone.js prompts<br>
+                                → Add audio-specific quality checks<br>
+                                → Fix Tone.js hallucination detection
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Shader Generator -->
+                    <div class="gen-card">
+                        <div class="gen-header">
+                            <span class="gen-name">ShaderGenerator</span>
+                            <span class="gen-type">Visual/GLSL</span>
+                        </div>
+                        
+                        <div class="gen-section">
+                            <div class="gen-section-title">Code Quality Guardrails (Universal)</div>
+                            <ul class="check-list">
+                                <li>Valid GLSL syntax</li>
+                                <li>Has main() function</li>
+                                <li>Sets gl_FragColor</li>
+                                <li>Proper uniform declarations</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="gen-section">
+                            <div class="gen-section-title">Aesthetic Guardrails (Shader-Specific)</div>
+                            <ul class="check-list">
+                                <li>Visual complexity</li>
+                                <li>Raymarching quality</li>
+                                <li>Color gradient smoothness</li>
+                                <li>Noise/texture usage</li>
+                                <li>Animation smoothness</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="improvement-track">
+                            <div class="improvement-track-title">How Harness Improves This Generator:</div>
+                            <p style="color: #94a3b8; font-size: 0.9rem;">
+                                If shader outputs fail:<br>
+                                → Fix GLSL validation rules<br>
+                                → Improve shader prompts<br>
+                                → Adjust quality thresholds<br>
+                                → Fix uniform detection
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relationship Map -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">🔗 Correct Relationship Map</div>
+            </div>
+            <div class="section-content">
+                <div class="relationship-map">
+                    <div class="rel-row">
+                        <div class="rel-box rel-harness">Meta-Harness</div>
+                        <span class="rel-arrow rel-fixes">→</span>
+                        <div class="rel-label">
+                            <strong style="color: #fca5a5;">FIXES</strong><br>
+                            Applies tasks to ANY component
+                        </div>
+                    </div>
+
+                    <div class="rel-row" style="margin-left: 2rem;">
+                        <div class="rel-box rel-core">RalphLoop</div>
+                        <span class="rel-arrow rel-fixes">→</span>
+                        <div class="rel-label">
+                            Harness can fix:<br>
+                            Validation, scoring, orchestration
+                        </div>
+                    </div>
+
+                    <div class="rel-row" style="margin-left: 2rem;">
+                        <div class="rel-box rel-gen">Generators</div>
+                        <span class="rel-arrow rel-fixes">→</span>
+                        <div class="rel-label">
+                            Harness can fix:<br>
+                            Prompts, validation rules, quality checks
+                        </div>
+                    </div>
+
+                    <div style="border-top: 2px solid #334155; margin: 2rem 0;"></div>
+
+                    <div class="rel-row">
+                        <div class="rel-box rel-gen">Generators</div>
+                        <span class="rel-arrow">→</span>
+                        <div class="rel-box rel-fix">Code Quality Guardrails</div>
+                        <span class="rel-arrow">→</span>
+                        <div class="rel-box rel-fix">Aesthetic Guardrails</div>
+                    </div>
+
+                    <div class="rel-row" style="margin-left: 4rem;">
+                        <span class="rel-arrow">↓</span>
+                        <div class="rel-label">
+                            If fail → Report to harness
+                        </div>
+                    </div>
+
+                    <div class="rel-row" style="margin-left: 4rem;">
+                        <div class="rel-box rel-harness">Harness Detects Pattern</div>
+                        <span class="rel-arrow">→</span>
+                        <div class="rel-box rel-fix">Creates Fix Task</div>
+                        <span class="rel-arrow">→</span>
+                        <div class="rel-box rel-fix">Applies to Generator</div>
+                    </div>
+                </div>
+
+                <div class="key-point" style="margin-top: 2rem;">
+                    <div class="key-point-title">Key Insight:</div>
+                    <p>
+                        The harness doesn't just fix "the system around generators" - 
+                        it can directly fix generator prompts, validation, and quality checks. 
+                        M1 is a perfect example: it fixes Tone.js validation IN the CodeValidator 
+                        that affects ToneGenerator outputs.
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Examples -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">📋 How Tasks Improve Generators</div>
+            </div>
+            <div class="section-content">
+                <div style="background: #0f172a; border-radius: 12px; padding: 1.5rem; border: 2px solid #334155;">
+                    <h3 style="color: #fcd34d; margin-bottom: 1rem;">Current Task Queue</h3>
+                    
+                    <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border-left: 4px solid #6366f1;">
+                        <strong style="color: #a5b4fc;">M1: Fix Tone.js Validation Gate</strong><br>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">
+                            <strong>Problem:</strong> Tone.js validation only fires on 'unknown' domain<br>
+                            <strong>Fix:</strong> Also check 'music' domain<br>
+                            <strong>Affects:</strong> ToneGenerator outputs now properly validated<br>
+                            <strong>File:</strong> <code>src/core/CodeValidator.ts</code>
+                        </span>
+                    </div>
+
+                    <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border-left: 4px solid #6366f1;">
+                        <strong style="color: #a5b4fc;">M4: Fix Thinking Regex</strong><br>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">
+                            <strong>Problem:</strong> Greedy regex matches too much<br>
+                            <strong>Fix:</strong> Make regex non-greedy<br>
+                            <strong>Affects:</strong> ALL generators - better code extraction<br>
+                            <strong>File:</strong> <code>src/llm/LLMClient.ts</code>
+                        </span>
+                    </div>
+
+                    <div style="margin: 1.5rem 0; padding: 1rem; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border-left: 4px solid #6366f1;">
+                        <strong style="color: #a5b4fc;">M6-M8: Fix Console.log Leaks</strong><br>
+                        <span style="color: #94a3b8; font-size: 0.9rem;">
+                            <strong>Problem:</strong> Using console.log instead of Logger<br>
+                            <strong>Fix:</strong> Use proper Logger<br>
+                            <strong>Affects:</strong> Harness observability<br>
+                            <strong>Files:</strong> <code>FailureLogger.ts, PatternDetector.ts, HarnessUpdater.ts</code>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">📌 Summary</div>
+            </div>
+            <div class="section-content">
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem;">
+                    <div style="background: #0f172a; padding: 1.5rem; border-radius: 12px; border: 2px solid #dc2626;">
+                        <h3 style="color: #fca5a5; margin-bottom: 1rem;">🔴 Universal Guardrails</h3>
+                        <ul style="color: #cbd5e1; list-style: none;">
+                            <li>✓ One system for all</li>
+                            <li>✓ Code structure</li>
+                            <li>✓ Syntax validation</li>
+                            <li>✓ Size limits</li>
+                            <li>✓ Security patterns</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: #0f172a; padding: 1.5rem; border-radius: 12px; border: 2px solid #a855f7;">
+                        <h3 style="color: #d8b4fe; margin-bottom: 1rem;">🟣 Aesthetic Guardrails</h3>
+                        <ul style="color: #cbd5e1; list-style: none;">
+                            <li>✓ Per-generator type</li>
+                            <li>✓ Output quality</li>
+                            <li>✓ Domain-specific</li>
+                            <li>✓ Visual/Audio/etc</li>
+                            <li>✓ Creative scoring</li>
+                        </ul>
+                    </div>
+
+                    <div style="background: #0f172a; padding: 1.5rem; border-radius: 12px; border: 2px solid #6366f1;">
+                        <h3 style="color: #a5b4fc; margin-bottom: 1rem;">🔧 Harness Improvements</h3>
+                        <ul style="color: #cbd5e1; list-style: none;">
+                            <li>✓ Fixes ALL components</li>
+                            <li>✓ Including generators</li>
+                            <li>✓ Via task system</li>
+                            <li>✓ Pattern detection</li>
+                            <li>✓ Surgical changes</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 3rem; color: #6b7280; border-top: 1px solid #1f2937; margin-top: 3rem;">
+            <p>Liminal Architecture V2 | Corrected Multi-Type Guardrails</p>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,13 @@
+{
+  "id": "M8",
+  "title": "Fix Console.log Leaks in HarnessUpdater",
+  "description": "Replace console.log with Logger.info in HarnessUpdater.ts",
+  "targetFile": "src/harness/HarnessUpdater.ts",
+  "search": "console.log(`[HarnessUpdater] Applying adaptation for ${adaptation.pattern}`);",
+  "replace": "Logger.info(`[HarnessUpdater] Applying adaptation for ${adaptation.pattern}`);",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "files": 1,
+  "approved": true
+}

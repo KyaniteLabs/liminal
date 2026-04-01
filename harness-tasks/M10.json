@@ -1,0 +1,18 @@
+{
+  "id": "M10",
+  "title": "Implement AccessibilityGuardrails",
+  "description": "Create guardrail for WCAG 2.1 compliance. Critical: Detect photosensitive seizure risk from flashing content (>3Hz). Also check color contrast, color blindness compatibility, and motion sensitivity.",
+  "targetFile": "src/core/AccessibilityGuardrails.ts",
+  "search": "",
+  "replace": "",
+  "verifyCommand": "npm run build && npm test -- src/core/AccessibilityGuardrails.test.ts",
+  "risk": "low",
+  "complexity": "medium",
+  "files": 2,
+  "legalRequirement": "WCAG 2.1 - Photosensitive Seizure Prevention",
+  "testCases": [
+    "Flashing background every 2 frames → Should FAIL (seizure risk)",
+    "Smooth color transitions → Should PASS"
+  ],
+  "approved": false
+}

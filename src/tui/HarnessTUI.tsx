@@ -1,12 +1,8 @@
 #!/usr/bin/env node
 /**
- * Harness TUI - Terminal UI for Meta-Harness
+ * Harness TUI - Terminal UI with Hybrid Preview
  * 
- * Pattern: Claw Code / Claude Code
- * - Command palette (/command)
- * - Tool inventory display
- * - Task queue management
- * - Live status panel
+ * Terminal for chat/commands + Browser for complex previews
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -20,41 +16,46 @@ import {
   type HarnessAgent 
 } from '../harness/index.js';
 import { resolveCommand, type CommandContext } from './commands.js';
+import { audioPlayer } from './preview/index.js';
 
-// Colors
 const C = {
   primary: 'cyan',
   success: 'green', 
   warning: 'yellow',
   error: 'red',
   muted: 'gray',
+  code: 'green',
+  audio: 'magenta',
 };
 
-// Header
 const Header = () => (
   <Box borderStyle="double" borderColor={C.primary} paddingX={2}>
     <Text bold color={C.primary}>🎨 LIMINAL</Text>
     <Spacer />
-    <Text color={C.muted}>Meta-Harness</Text>
+    <Text color={C.muted}>Hybrid TUI</Text>
   </Box>
 );
 
-// Status Bar
 const StatusBar = ({ status, message }: { status: any; message: string }) => (
   <Box borderStyle="single" borderColor={C.muted} paddingX={1}>
     <Text color={C.muted}>
       {status?.initialized ? '🟢' : '🔴'} {status?.activeProvider || 'offline'} | 
-      Failures: {status?.recentFailures || 0} | 
+      🔊 {audioPlayer.isPlaying() ? 'Playing' : 'Stopped'} |
       {message}
     </Text>
   </Box>
 );
 
-// Command History
-const History = ({ lines }: { lines: { type: string; content: string }[] }) => (
+// History with type support
+interface HistoryLine {
+  type: 'user' | 'output' | 'error' | 'system' | 'code' | 'audio';
+  content: string;
+}
+
+const History = ({ lines }: { lines: HistoryLine[] }) => (
   <Box flexDirection="column" flexGrow={1} overflow="hidden">
     {lines.map((line, i) => (
-      <Box key={i}>
+      <Box key={i} flexDirection="column">
         {line.type === 'user' && (
           <Text color={C.primary}>❯ {line.content}</Text>
         )}
@@ -67,17 +68,22 @@ const History = ({ lines }: { lines: { type: string; content: string }[] }) => (
         {line.type === 'system' && (
           <Text color={C.muted}>{line.content}</Text>
         )}
+        {line.type === 'code' && (
+          <Box borderStyle="single" borderColor={C.code} marginY={1}>
+            <Text color={C.code}>{line.content}</Text>
+          </Box>
+        )}
+        {line.type === 'audio' && (
+          <Box borderStyle="single" borderColor={C.audio} marginY={1}>
+            <Text color={C.audio}>{line.content}</Text>
+          </Box>
+        )}
       </Box>
     ))}
   </Box>
 );
 
-// Command Input
-const Input = ({ 
-  value, 
-  onChange, 
-  onSubmit 
-}: { 
+const Input = ({ value, onChange, onSubmit }: { 
   value: string; 
   onChange: (v: string) => void;
   onSubmit: () => void;
@@ -101,11 +107,10 @@ const Input = ({
   );
 };
 
-// Main App
 function App() {
-  const [history, setHistory] = useState<{ type: string; content: string }[]>([
-    { type: 'system', content: 'Meta-Harness initialized.' },
-    { type: 'system', content: 'Type /help for commands' },
+  const [history, setHistory] = useState<HistoryLine[]>([
+    { type: 'system', content: 'Hybrid TUI initialized.' },
+    { type: 'system', content: 'Type /help for commands. /preview <file> to view content.' },
   ]);
   const [input, setInput] = useState('');
   const [status, setStatus] = useState<any>(null);
@@ -129,7 +134,11 @@ function App() {
       setStatus(metaHarness.getStatus());
     }, 2000);
 
-    return () => clearInterval(interval);
+    // Cleanup on exit
+    return () => {
+      clearInterval(interval);
+      audioPlayer.stop();
+    };
   }, []);
 
   const loadTasks = async () => {
@@ -151,6 +160,10 @@ function App() {
     setHistory(h => [...h, { type: 'system', content: msg }]);
   }, []);
 
+  const addOutput = useCallback((type: string, content: string) => {
+    setHistory(h => [...h, { type: type as any, content }]);
+  }, []);
+
   const executeCommand = useCallback(async () => {
     const cmdStr = input.trim();
     if (!cmdStr) return;
@@ -158,7 +171,6 @@ function App() {
     setHistory(h => [...h, { type: 'user', content: cmdStr }]);
     setInput('');
 
-    // Handle commands
     if (cmdStr.startsWith('/')) {
       const parts = cmdStr.slice(1).split(' ');
       const cmdName = parts[0];
@@ -173,6 +185,7 @@ function App() {
             logs: [],
             addLog,
             setStatusMessage: setStatusMsg,
+            addOutput,
           };
           const output = await cmd.execute(args, ctx);
           setHistory(h => [...h, { type: 'output', content: output }]);
@@ -185,23 +198,22 @@ function App() {
       } else {
         setHistory(h => [...h, { 
           type: 'error', 
-          content: `Unknown command: ${cmdName}. Type /help for available commands.` 
+          content: `Unknown command: ${cmdName}. Type /help.` 
         }]);
       }
     } else {
-      // Natural language - could route to LLM
       setHistory(h => [...h, { 
         type: 'system', 
-        content: 'Use /run <task-id> to execute tasks, or /help for commands.' 
+        content: 'Use /preview <file> or /run <task-id>' 
       }]);
     }
-  }, [input, agent, tasks, addLog]);
+  }, [input, agent, tasks, addLog, addOutput]);
 
   return (
     <Box flexDirection="column" height="100%">
       <Header />
       <Box flexDirection="column" flexGrow={1} paddingY={1}>
-        <History lines={history.slice(-20)} />
+        <History lines={history.slice(-30)} />
       </Box>
       <Input 
         value={input} 
@@ -213,12 +225,10 @@ function App() {
   );
 }
 
-// Entry point
 export function startHarnessTUI() {
   render(<App />);
 }
 
-// CLI entry
 if (require.main === module) {
   startHarnessTUI();
 }

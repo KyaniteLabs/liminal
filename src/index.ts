@@ -57,6 +57,7 @@ import { AestheticModel } from './evolution/AestheticModel.js';
 import { MetaMode } from './evolution/MetaMode.js';
 import { SafetyGuardrails } from './core/SafetyGuardrails.js';
 import { FeedbackQueue } from './gallery/FeedbackQueue.js';
+import { metaHarness } from './harness/MetaHarnessIntegration.js';
 import { generateVisuals } from './generateVisuals.js';
 import { generateMusicToVisual } from './musicToVisual/generateMusicToVisual.js';
 import { generateMusic } from './music/generateMusic.js';
@@ -292,6 +293,15 @@ export async function run(prompt: string, options: {
     };
 
   } catch (error) {
+    // Report error to Meta-Harness
+    await metaHarness.onGenerationComplete({
+      success: false,
+      model: 'local',
+      domain: 'unknown',
+      prompt: prompt,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      duration: Date.now() - startTime,
+    });
     throw new Error(`Liminal run failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }

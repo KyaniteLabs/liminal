@@ -1,0 +1,18 @@
+{
+  "id": "M9",
+  "title": "Implement SemanticValidator",
+  "description": "Create guardrail that checks if generated output matches the prompt intent. Uses CLIP embeddings to compare prompt text to rendered output image. Prevents cases where beautiful art is generated but completely wrong subject.",
+  "targetFile": "src/core/SemanticValidator.ts",
+  "search": "",
+  "replace": "",
+  "verifyCommand": "npm run build && npm test -- src/core/SemanticValidator.test.ts",
+  "risk": "medium",
+  "complexity": "high",
+  "files": 2,
+  "dependencies": ["@xenova/transformers"],
+  "testCases": [
+    "Prompt: 'Japanese garden' → Code: ellipse(200,200,50) → Should FAIL",
+    "Prompt: 'Japanese garden' → Code: actual garden rendering → Should PASS"
+  ],
+  "approved": false
+}

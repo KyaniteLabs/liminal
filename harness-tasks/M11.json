@@ -1,0 +1,17 @@
+{
+  "id": "M11",
+  "title": "Implement RuntimeHealthMonitor",
+  "description": "Create guardrail that monitors runtime performance and detects memory leaks, gradual slowdown, and resource exhaustion. Runs code in sandbox and measures memory growth, frame rate stability over 30 seconds.",
+  "targetFile": "src/core/RuntimeHealthMonitor.ts",
+  "search": "",
+  "replace": "",
+  "verifyCommand": "npm run build && npm test -- src/core/RuntimeHealthMonitor.test.ts",
+  "risk": "low",
+  "complexity": "high",
+  "files": 2,
+  "testCases": [
+    "Code with growing array (memory leak) → Should FAIL after 30s",
+    "Code with object pooling → Should PASS"
+  ],
+  "approved": false
+}

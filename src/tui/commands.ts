@@ -1,11 +1,13 @@
 /**
  * TUI Commands - Command palette for Meta-Harness
- * 
- * Pattern: Claw Code command inventory
- * Commands are discoverable, documented, and executable
  */
 
 import type { HarnessAgent, AgentTask } from '../harness/index.js';
+import { audioPlayer } from './preview/AudioPlayer.js';
+import { browserLauncher } from './preview/BrowserLauncher.js';
+import { previewRouter } from './preview/PreviewRouter.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 
 export interface CommandContext {
   agent: HarnessAgent;
@@ -13,6 +15,7 @@ export interface CommandContext {
   logs: string[];
   addLog: (msg: string) => void;
   setStatusMessage: (msg: string) => void;
+  addOutput: (type: string, content: string) => void;
 }
 
 export interface Command {
@@ -33,9 +36,16 @@ export const commands: Record<string, Command> = {
         const cmd = commands[args[0]];
         return `${cmd.name}: ${cmd.description}\nUsage: ${cmd.usage}`;
       }
-      return Object.values(commands)
-        .map(c => `  /${c.name.padEnd(12)} ${c.description}`)
-        .join('\n');
+      return [
+        'Commands:',
+        ...Object.values(commands).map(c => `  /${c.name.padEnd(12)} ${c.description}`),
+        '',
+        'Preview commands:',
+        '  /preview <file>  - Preview file (auto-routes to terminal/browser)',
+        '  /play <audio>    - Play audio file',
+        '  /stop            - Stop audio playback',
+        '  /browser         - Open last preview in browser',
+      ].join('\n');
     }
   },
 
@@ -43,15 +53,18 @@ export const commands: Record<string, Command> = {
     name: 'status',
     description: 'Show harness status',
     usage: '/status',
-    execute: async (_args, _ctx) => {
+    execute: async () => {
       const { metaHarness } = await import('../harness/index.js');
       const status = metaHarness.getStatus();
+      const browserInfo = browserLauncher.getInfo();
+      
       return [
-        `Harness: ${status.initialized ? 'Online' : 'Offline'}`,
+        `Harness: ${status.initialized ? '🟢 Online' : '🔴 Offline'}`,
         `Provider: ${status.activeProvider}`,
         `Failures: ${status.recentFailures}`,
         `Patterns: ${status.detectedPatterns.length}`,
-        `Adaptations: ${status.appliedAdaptations.length}`,
+        `Browser: ${browserInfo.running ? `🟢 Port ${browserInfo.port}` : '⚪ Stopped'}`,
+        `Audio: ${audioPlayer.isPlaying() ? '🔊 Playing' : '⚪ Stopped'}`,
       ].join('\n');
     }
   },
@@ -76,7 +89,7 @@ export const commands: Record<string, Command> = {
       const taskId = args[0];
       if (!taskId) return 'Error: Task ID required. Usage: /run <task-id>';
       
-      const task = ctx.tasks.find((t: AgentTask) => t.id === taskId);
+      const task = ctx.tasks.find(t => t.id === taskId);
       if (!task) return `Error: Task ${taskId} not found`;
       
       ctx.setStatusMessage(`Running ${taskId}...`);
@@ -87,7 +100,128 @@ export const commands: Record<string, Command> = {
       ctx.addLog(`Task ${taskId}: ${session.status}`);
       ctx.setStatusMessage('Ready');
       
-      return `Task ${taskId}: ${session.status.toUpperCase()}\nSteps: ${session.steps.length}\nDuration: ${session.endTime ? new Date(session.endTime).getTime() - new Date(session.startTime).getTime() : 0}ms`;
+      // Auto-preview on success
+      if (session.status === 'success' && task.targetFile) {
+        ctx.addLog(`Run /preview ${task.targetFile} to see result`);
+      }
+      
+      return `Task ${taskId}: ${session.status.toUpperCase()}\nSteps: ${session.steps.length}`;
+    }
+  },
+
+  preview: {
+    name: 'preview',
+    description: 'Preview file (auto-routes to best viewer)',
+    usage: '/preview <file>',
+    execute: async (args, ctx) => {
+      const filePath = args[0];
+      if (!filePath) return 'Error: File path required. Usage: /preview <file>';
+      
+      // Check if file exists
+      try {
+        await fs.access(filePath);
+      } catch {
+        return `Error: File not found: ${filePath}`;
+      }
+      
+      // Route to appropriate viewer
+      const decision = await previewRouter.route(filePath);
+      
+      switch (decision.target) {
+        case 'terminal': {
+          // Show in terminal
+          const content = await fs.readFile(filePath, 'utf-8');
+          const lines = content.split('\n').slice(0, 50);
+          ctx.addOutput('code', lines.join('\n'));
+          return `Showing ${path.basename(filePath)} in terminal (${lines.length} lines)`;
+        }
+        
+        case 'browser': {
+          // Open browser
+          ctx.setStatusMessage('Opening browser...');
+          const url = await browserLauncher.previewFile(filePath);
+          ctx.setStatusMessage('Ready');
+          return `🌐 Opened in browser: ${url}`;
+        }
+        
+        case 'both': {
+          // Play audio + open browser
+          const result = await audioPlayer.play(filePath);
+          if (!result.success) {
+            return `Error playing audio: ${result.error}`;
+          }
+          
+          // Show waveform in terminal
+          const info = await audioPlayer.getAudioInfo(filePath);
+          ctx.addOutput('audio', [
+            `🔊 Playing: ${info.name}`,
+            `Format: ${info.format}`,
+            audioPlayer.getWaveform(),
+            '',
+            'Use /stop to stop playback',
+          ].join('\n'));
+          
+          return `🔊 Playing audio (visualizer in terminal)`;
+        }
+        
+        case 'none':
+        default:
+          return `Cannot preview: ${decision.reason}`;
+      }
+    }
+  },
+
+  play: {
+    name: 'play',
+    description: 'Play audio file',
+    usage: '/play <audio-file>',
+    execute: async (args, ctx) => {
+      const filePath = args[0];
+      if (!filePath) return 'Error: Audio file required';
+      
+      const result = await audioPlayer.play(filePath);
+      if (!result.success) {
+        return `Error: ${result.error}`;
+      }
+      
+      const info = await audioPlayer.getAudioInfo(filePath);
+      ctx.addOutput('audio', [
+        `🔊 ${info.name}`,
+        audioPlayer.getWaveform(),
+      ].join('\n'));
+      
+      return `Playing ${info.format} audio...`;
+    }
+  },
+
+  stop: {
+    name: 'stop',
+    description: 'Stop audio playback',
+    usage: '/stop',
+    execute: async () => {
+      if (!audioPlayer.isPlaying()) {
+        return 'No audio playing';
+      }
+      audioPlayer.stop();
+      return '⏹️ Audio stopped';
+    }
+  },
+
+  browser: {
+    name: 'browser',
+    description: 'Open/reopen browser preview',
+    usage: '/browser [file]',
+    execute: async (args) => {
+      if (args[0]) {
+        const url = await browserLauncher.previewFile(args[0]);
+        return `🌐 Opened: ${url}`;
+      }
+      
+      const url = await browserLauncher.reopenLast();
+      if (url) {
+        return `🌐 Reopened: ${url}`;
+      }
+      return 'No previous preview. Use /preview <file> first.';
     }
   },
 
@@ -95,9 +229,7 @@ export const commands: Record<string, Command> = {
     name: 'clear',
     description: 'Clear the screen',
     usage: '/clear',
-    execute: async () => {
-      return '\x1Bc';
-    }
+    execute: async () => '\x1Bc',
   },
 
   exit: {
@@ -106,6 +238,9 @@ export const commands: Record<string, Command> = {
     usage: '/exit',
     aliases: ['quit', 'q'],
     execute: async () => {
+      // Cleanup
+      audioPlayer.stop();
+      await browserLauncher.stopServer();
       process.exit(0);
       return '';
     }

@@ -1,0 +1,13 @@
+{
+  "id": "M7",
+  "title": "Fix Console.log Leaks in PatternDetector",
+  "description": "Replace console.log with Logger.info in PatternDetector.ts",
+  "targetFile": "src/harness/PatternDetector.ts",
+  "search": "console.log(`[PatternDetector] Analyzing failure for patterns`);",
+  "replace": "Logger.info(`[PatternDetector] Analyzing failure for patterns`);",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "files": 1,
+  "approved": true
+}

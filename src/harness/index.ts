@@ -29,9 +29,12 @@ export {
   listConfiguredProviders,
   isProviderConfigured,
   detectProviderFromUrl,
+  getHarnessLLMConfig,
+  getHarnessProviderConfig,
   PROVIDER_TEMPLATES,
   type ProviderType,
   type ProviderConfig,
+  type HarnessLLMConfig,
 } from './MultiProviderConfig.js';
 
 // Harness Agent (Self-Improvement)

@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liminal Architecture - Complete System Map</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, monospace;
+            background: #0d1117;
+            color: #c9d1d9;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
+            padding: 2rem;
+            border-bottom: 3px solid #3b82f6;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header h1 {
+            color: #60a5fa;
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header-meta {
+            color: #9ca3af;
+            font-size: 0.9rem;
+        }
+        
+        .legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .legend-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+        }
+        
+        .status-built { background: #22c55e; }
+        .status-wired { background: #3b82f6; }
+        .status-built-not-wired { background: #f59e0b; }
+        .status-planned { background: #8b5cf6; }
+        .status-discussed { background: #6b7280; }
+        .status-abandoned { background: #ef4444; text-decoration: line-through; }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .section {
+            margin-bottom: 3rem;
+            background: #161b22;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #30363d;
+        }
+        
+        .section-header {
+            background: #21262d;
+            padding: 1.5rem;
+            border-bottom: 1px solid #30363d;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .section-title {
+            font-size: 1.5rem;
+            color: #e6edf3;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .section-icon {
+            font-size: 1.25rem;
+        }
+        
+        .section-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+        
+        .badge-core { background: #dc2626; color: white; }
+        .badge-active { background: #16a34a; color: white; }
+        .badge-wip { background: #ca8a04; color: white; }
+        .badge-planned { background: #7c3aed; color: white; }
+        .badge-deprecated { background: #6b7280; color: white; }
+        
+        .section-content {
+            padding: 2rem;
+        }
+        
+        .mermaid {
+            background: #0d1117;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+        
+        .component-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .component-card {
+            background: #0d1117;
+            border: 2px solid #30363d;
+            border-radius: 8px;
+            padding: 1rem;
+            transition: all 0.2s;
+        }
+        
+        .component-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .component-card.built-wired {
+            border-color: #3b82f6;
+            background: linear-gradient(135deg, #0d1117 0%, #1e3a5f 100%);
+        }
+        
+        .component-card.built-not-wired {
+            border-color: #f59e0b;
+            background: linear-gradient(135deg, #0d1117 0%, #451a03 100%);
+        }
+        
+        .component-card.planned {
+            border-color: #8b5cf6;
+            border-style: dashed;
+            background: linear-gradient(135deg, #0d1117 0%, #2e1065 100%);
+        }
+        
+        .component-card.discussed {
+            border-color: #6b7280;
+            border-style: dotted;
+            opacity: 0.8;
+        }
+        
+        .component-card.abandoned {
+            border-color: #ef4444;
+            opacity: 0.6;
+            text-decoration: line-through;
+        }
+        
+        .component-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.5rem;
+        }
+        
+        .component-name {
+            font-weight: 600;
+            color: #e6edf3;
+            font-size: 1rem;
+        }
+        
+        .component-status {
+            font-size: 0.7rem;
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .status-tag-wired { background: #3b82f6; color: white; }
+        .status-tag-built { background: #22c55e; color: white; }
+        .status-tag-partial { background: #f59e0b; color: black; }
+        .status-tag-planned { background: #8b5cf6; color: white; }
+        .status-tag-discussed { background: #6b7280; color: white; }
+        .status-tag-abandoned { background: #ef4444; color: white; }
+        
+        .component-path {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: #8b949e;
+            margin-bottom: 0.5rem;
+        }
+        
+        .component-desc {
+            font-size: 0.85rem;
+            color: #b4bcc5;
+            line-height: 1.5;
+        }
+        
+        .component-meta {
+            margin-top: 0.75rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid #30363d;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+        
+        .flow-diagram {
+            background: #0d1117;
+            padding: 2rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+        
+        .flow-row {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .flow-box {
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .flow-box.user { background: #1f2937; border: 1px solid #4b5563; }
+        .flow-box.core { background: #1e3a5f; border: 1px solid #3b82f6; color: #93c5fd; }
+        .flow-box.harness { background: #065f46; border: 1px solid #10b981; color: #6ee7b7; }
+        .flow-box.generator { background: #451a03; border: 1px solid #f59e0b; color: #fcd34d; }
+        .flow-box.output { background: #312e81; border: 1px solid #818cf8; color: #c7d2fe; }
+        
+        .flow-arrow {
+            color: #6b7280;
+            font-size: 1.25rem;
+        }
+        
+        .wire-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+        
+        .wire-connected { color: #22c55e; }
+        .wire-disconnected { color: #ef4444; }
+        
+        .note {
+            background: #1f2937;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .note-title {
+            font-weight: 600;
+            color: #fbbf24;
+            margin-bottom: 0.25rem;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+        
+        .stat-card {
+            background: #0d1117;
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid #30363d;
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #60a5fa;
+        }
+        
+        .stat-label {
+            color: #9ca3af;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid #30363d;
+            padding-bottom: 0.5rem;
+        }
+        
+        .tab {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: none;
+            color: #9ca3af;
+            cursor: pointer;
+            border-radius: 6px;
+            font-size: 0.875rem;
+        }
+        
+        .tab:hover {
+            background: #21262d;
+            color: #e6edf3;
+        }
+        
+        .tab.active {
+            background: #3b82f6;
+            color: white;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        code {
+            background: #21262d;
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.875em;
+            color: #e6edf3;
+        }
+        
+        .abandoned-section {
+            opacity: 0.7;
+        }
+        
+        .abandoned-section .section-header {
+            background: #451a03;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🎨 Liminal Architecture</h1>
+        <div class="header-meta">Complete system map with wiring status | Last updated: 2026-04-01</div>
+        
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box status-built"></div>
+                <span>Built & Wired</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box status-built-not-wired"></div>
+                <span>Built but Not Wired</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box status-wired"></div>
+                <span>Wired Integration</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box status-planned"></div>
+                <span>Planned/Implemented</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box status-discussed"></div>
+                <span>Discussed/Documented</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box status-abandoned"></div>
+                <span>Abandoned/Deprecated</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Stats Overview -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">42</div>
+                <div class="stat-label">Built Components</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">28</div>
+                <div class="stat-label">Wired Integrations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">14</div>
+                <div class="stat-label">Planned Features</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">8</div>
+                <div class="stat-label">Abandoned Ideas</div>
+            </div>
+        </div>
+
+        <!-- High Level Flow -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🌊</span>
+                    Data Flow Architecture
+                </div>
+                <span class="section-badge badge-core">CORE</span>
+            </div>
+            <div class="section-content">
+                <div class="flow-diagram">
+                    <div class="flow-row">
+                        <div class="flow-box user">User Prompt</div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box core">RalphLoop
+                            <span class="wire-indicator wire-connected">●</span>
+                        </div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box generator">Generators
+                            <span class="wire-indicator wire-disconnected">○</span>
+                        </div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box output">Code Output</div>
+                    </div>
+                    <div class="flow-row" style="margin-left: 2rem;">
+                        <span class="flow-arrow">↓</span>
+                        <div class="flow-box harness">Meta-Harness
+                            <span class="wire-indicator wire-connected">●</span>
+                        </div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box harness">Pattern Detect</div>
+                        <span class="flow-arrow">→</span>
+                        <div class="flow-box harness">Fix Tasks</div>
+                        <span class="flow-arrow">↺</span>
+                        <div class="flow-box core">Validation</div>
+                    </div>
+                </div>
+                
+                <div class="note">
+                    <div class="note-title">⚡ Wiring Status</div>
+                    <p><strong>Recently Fixed:</strong> RalphLoop now reports failures to Meta-Harness via <code>onGenerationComplete()</code> calls. E2E tests also report to harness.</p>
+                    <p><strong>Still Unwired:</strong> Generators remain "dumb" by design - they don't self-improve. The harness observes and fixes the system around them.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Meta-Harness Layer -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🔧</span>
+                    Meta-Harness (Self-Improvement Layer)
+                </div>
+                <span class="section-badge badge-active">ACTIVE</span>
+            </div>
+            <div class="section-content">
+                <div class="component-grid">
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">MetaHarnessIntegration</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/harness/MetaHarnessIntegration.ts</div>
+                        <div class="component-desc">Central coordinator. Now receives reports from RalphLoop and E2E tests.</div>
+                        <div class="component-meta">Wired: RalphLoop, E2E tests | Exports: metaHarness singleton</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">HarnessAgent</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/harness/agent/HarnessAgent.ts</div>
+                        <div class="component-desc">Executes tasks with 7 tools. Has rollback, rate limiting, budget tracking.</div>
+                        <div class="component-meta">Tools: 7 | Auto-rollback: Yes | Rate limit: Yes</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">FailureLogger</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/harness/FailureLogger.ts</div>
+                        <div class="component-desc">Logs failures to JSON files for pattern analysis.</div>
+                        <div class="component-meta">Output: logs/failures-*.jsonl | Rotation: Daily</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">PatternDetector</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/harness/PatternDetector.ts</div>
+                        <div class="component-desc">Analyzes failures to detect known error patterns (M1, M4 types).</div>
+                        <div class="component-meta">Patterns: 8 defined | Detection: Regex + heuristics</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">HarnessUpdater</span>
+                            <span class="component-status status-tag-partial">Built</span>
+                        </div>
+                        <div class="component-path">src/harness/HarnessUpdater.ts</div>
+                        <div class="component-desc">Applies adaptations based on detected patterns. Creates tasks but doesn't auto-execute.</div>
+                        <div class="component-meta">⚠️ Not auto-wired: Requires manual task approval</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">MultiProviderConfig</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/harness/MultiProviderConfig.ts</div>
+                        <div class="component-desc">Supports 5 providers: MiniMax, LM Studio, Ollama, OpenRouter, GLM. Now with harness-specific config.</div>
+                        <div class="component-meta">Providers: 5 | Env vars: LIMINAL_HARNESS_*</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">ValidationGuard</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/harness/tools/ValidationGuard.ts</div>
+                        <div class="component-desc">Safety checks before changes. Path validation, forbidden patterns, change size limits.</div>
+                        <div class="component-meta">Max lines: 50/edit | Forbidden: eval, child_process</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">RateLimiter</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/harness/tools/RateLimiter.ts</div>
+                        <div class="component-desc">Prevents API abuse. Per-operation limits.</div>
+                        <div class="component-meta">LLM: 5/min | Writes: 10/min | Builds: 12/min</div>
+                    </div>
+
+                    <div class="component-card planned">
+                        <div class="component-header">
+                            <span class="component-name">HarnessEvaluator</span>
+                            <span class="component-status status-tag-planned">Planned</span>
+                        </div>
+                        <div class="component-path">src/harness/HarnessEvaluator.ts</div>
+                        <div class="component-desc">Would evaluate task success quality beyond just build passing.</div>
+                        <div class="component-meta">📝 Planned: Assess fix quality, regression risk</div>
+                    </div>
+
+                    <div class="component-card planned">
+                        <div class="component-header">
+                            <span class="component-name">Auto-Execution</span>
+                            <span class="component-status status-tag-planned">Planned</span>
+                        </div>
+                        <div class="component-path">MetaHarnessIntegration.ts options</div>
+                        <div class="component-desc">Would auto-execute low-risk tasks without approval.</div>
+                        <div class="component-meta">📝 Planned: autoExecuteTasks, riskThreshold options</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Core Engine -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">⚙️</span>
+                    Core Engine (RalphLoop)
+                </div>
+                <span class="section-badge badge-core">CORE</span>
+            </div>
+            <div class="section-content">
+                <div class="component-grid">
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">RalphLoop</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/RalphLoop.ts</div>
+                        <div class="component-desc">Self-recursive iteration engine. NOW REPORTS TO HARNESS via onGenerationComplete().</div>
+                        <div class="component-meta">✅ WIRED: Reports failures to Meta-Harness</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">CodeValidator</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/CodeValidator.ts</div>
+                        <div class="component-desc">Structural validation gate. Strips reasoning, checks syntax, domain-specific rules.</div>
+                        <div class="component-meta">Status: ✅ Active | Includes Tone.js validation (M1 fix candidate)</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">CreativeEvaluator</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/CreativeEvaluator.ts</div>
+                        <div class="component-desc">Quality scoring (0-1). Technical + creative + aesthetic dimensions.</div>
+                        <div class="component-meta">Threshold: 0.7 | Dimensions: 5 | LIR support: Yes</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">GenerationOrchestrator</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/GenerationOrchestrator.ts</div>
+                        <div class="component-desc">Dispatches to swarm, collab, or standard generators.</div>
+                        <div class="component-meta">Modes: Swarm, DeepCollab, Standard</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">SafetyGuardrails</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/SafetyGuardrails.ts</div>
+                        <div class="component-desc">Budget tracking, circuit breaker, rate limiting, stop file check.</div>
+                        <div class="component-meta">Budget: $1 default | Circuit: 5 failures | Rate: 60/min</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">PromiseDetector</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/PromiseDetector.ts</div>
+                        <div class="component-desc">Detects "COMPLETE" markers in code to signal iteration completion.</div>
+                        <div class="component-meta">Pattern: /COMPLETE|done|finished/i</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">ScoringEngine</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/ScoringEngine.ts</div>
+                        <div class="component-desc">Evaluates code quality with multiple strategies.</div>
+                        <div class="component-meta">Strategies: basic, detailed, strict</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">ContextAccumulation</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/core/ContextAccumulation.ts</div>
+                        <div class="component-desc">Builds iterative context across RalphLoop iterations.</div>
+                        <div class="component-meta">Persistence: In-memory + file</div>
+                    </div>
+
+                    <div class="component-card planned">
+                        <div class="component-header">
+                            <span class="component-name">LIR Integration</span>
+                            <span class="component-status status-tag-planned">Partial</span>
+                        </div>
+                        <div class="component-path">src/core/lir/</div>
+                        <div class="component-desc">Language-Intermediate Representation for structured code parsing.</div>
+                        <div class="component-meta">⚠️ Partial: Parser exists, full integration WIP</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generators -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🎨</span>
+                    Generators ("Dumb" by Design)
+                </div>
+                <span class="section-badge badge-wip">NO SELF-IMPROVEMENT</span>
+            </div>
+            <div class="section-content">
+                <div class="note">
+                    <div class="note-title">⚠️ Design Principle</div>
+                    <p>Generators are intentionally "dumb" - they generate code but don't self-improve. The harness observes failures and fixes the system around them. This separation allows the harness to improve without modifying working generators.</p>
+                </div>
+                
+                <div class="component-grid">
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">P5GeneratorLLM</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/p5/P5GeneratorLLM.ts</div>
+                        <div class="component-desc">Main p5.js generator via LLM. No templates, no fallbacks.</div>
+                        <div class="component-meta">✅ Built | ⚠️ No guardrails (by design - harness handles it)</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">ShaderGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/glsl/ShaderGenerator.ts</div>
+                        <div class="component-desc">GLSL shader generation.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">ThreeGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/three/ThreeGenerator.ts</div>
+                        <div class="component-desc">Three.js 3D scene generation.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">HydraGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/hydra/HydraGenerator.ts</div>
+                        <div class="component-desc">Hydra video synthesis generation.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">ToneGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/tone/ToneGenerator.ts</div>
+                        <div class="component-desc">Tone.js audio synthesis.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">StrudelGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/strudel/StrudelGenerator.ts</div>
+                        <div class="component-desc">Strudel live coding music.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">RemotionGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/remotion/RemotionGenerator.ts</div>
+                        <div class="component-desc">Remotion video components.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">HTMLWebGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/html/HTMLWebGenerator.ts</div>
+                        <div class="component-desc">HTML/CSS web page generation.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">ASCIIArtGenerator</span>
+                            <span class="component-status status-tag-built">Built</span>
+                        </div>
+                        <div class="component-path">src/generators/ascii/ASCIIArtGenerator.ts</div>
+                        <div class="component-desc">ASCII art generation.</div>
+                        <div class="component-meta">✅ Built | Type: Domain-specific</div>
+                    </div>
+
+                    <div class="component-card abandoned">
+                        <div class="component-header">
+                            <span class="component-name">Template-based Generators</span>
+                            <span class="component-status status-tag-abandoned">Abandoned</span>
+                        </div>
+                        <div class="component-path">src/generators/p5/templates/</div>
+                        <div class="component-desc">Template fallbacks for p5 generators. VIOLATES CURRENT RULES.</div>
+                        <div class="component-meta">❌ ABANDONED: No templates rule in AGENTS.md</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- TUI & Preview -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">💻</span>
+                    TUI & Preview System
+                </div>
+                <span class="section-badge badge-active">ACTIVE</span>
+            </div>
+            <div class="section-content">
+                <div class="component-grid">
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">HarnessTUI</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/tui/HarnessTUI.tsx</div>
+                        <div class="component-desc">Interactive terminal UI using Ink (React for terminal).</div>
+                        <div class="component-meta">✅ Built & Wired: Commands work, integrates with harness</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">Commands</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/tui/commands.ts</div>
+                        <div class="component-desc">Command palette: /help, /status, /tasks, /run, /preview, etc.</div>
+                        <div class="component-meta">✅ Built & Wired: 10+ commands</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">PreviewRouter</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/tui/preview/PreviewRouter.ts</div>
+                        <div class="component-desc">Routes content to terminal or browser based on type.</div>
+                        <div class="component-meta">✅ Built & Wired: Auto-routing logic</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">BrowserLauncher</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/tui/preview/BrowserLauncher.ts</div>
+                        <div class="component-desc">Opens PreviewServer in browser via 'open' package.</div>
+                        <div class="component-meta">✅ Built & Wired: Cross-platform browser launch</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">AudioPlayer</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/tui/preview/AudioPlayer.ts</div>
+                        <div class="component-desc">Plays audio files using system players (afplay, mpg123, aplay).</div>
+                        <div class="component-meta">✅ Built & Wired: Cross-platform audio playback</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Collaboration & Swarm -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🐝</span>
+                    Collaboration & Swarm
+                </div>
+                <span class="section-badge badge-wip">PARTIAL</span>
+            </div>
+            <div class="section-content">
+                <div class="component-grid">
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">SwarmOrchestrator</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/swarm/SwarmOrchestrator.ts</div>
+                        <div class="component-desc">7-persona Ollama swarm for generation.</div>
+                        <div class="component-meta">✅ Built & Wired: Personas: Artist, Coder, Critic, etc.</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">DeepCollaboration</span>
+                            <span class="component-status status-tag-partial">Built</span>
+                        </div>
+                        <div class="component-path">src/collab/DeepCollaboration.ts</div>
+                        <div class="component-desc">Multi-model specialized roles.</div>
+                        <div class="component-meta">⚠️ Built but rarely used</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">CreativeBoard</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/collab/CreativeBoard.ts</div>
+                        <div class="component-desc">Multi-critic evaluation board.</div>
+                        <div class="component-meta">✅ Built & Wired: 3 critics (Minimalist, Expressionist, Technician)</div>
+                    </div>
+
+                    <div class="component-card discussed">
+                        <div class="component-header">
+                            <span class="component-name">Consensus Mechanism</span>
+                            <span class="component-status status-tag-discussed">Discussed</span>
+                        </div>
+                        <div class="component-path">Design docs only</div>
+                        <div class="component-desc">Voting-based consensus for swarm decisions.</div>
+                        <div class="component-meta">💭 Discussed but not prioritized</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Evolution & Learning -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🧬</span>
+                    Evolution & Learning
+                </div>
+                <span class="section-badge badge-wip">PARTIAL</span>
+            </div>
+            <div class="section-content">
+                <div class="component-grid">
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">MapElites</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/evolution/MapElites.ts</div>
+                        <div class="component-desc">Quality diversity optimization.</div>
+                        <div class="component-meta">✅ Built & Wired: Archives high-quality diverse solutions</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">NoveltyArchive</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/evolution/NoveltyArchive.ts</div>
+                        <div class="component-desc">Tracks novel solutions to encourage exploration.</div>
+                        <div class="component-meta">✅ Built & Wired: Behavior vector tracking</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">AestheticModel</span>
+                            <span class="component-status status-tag-partial">Built</span>
+                        </div>
+                        <div class="component-path">src/evolution/AestheticModel.ts</div>
+                        <div class="component-desc">Predicts aesthetic quality from behavior vectors.</div>
+                        <div class="component-meta">⚠️ Built but learning is slow</div>
+                    </div>
+
+                    <div class="component-card built-not-wired">
+                        <div class="component-header">
+                            <span class="component-name">ArchiveLearning</span>
+                            <span class="component-status status-tag-partial">Built</span>
+                        </div>
+                        <div class="component-path">src/learning/ArchiveLearning.ts</div>
+                        <div class="component-desc">Learns from archive of high-quality outputs.</div>
+                        <div class="component-meta">⚠️ Built but underutilized</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Compost System -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🗑️</span>
+                    Compost System (Code Recycling)
+                </div>
+                <span class="section-badge badge-wip">PARTIAL</span>
+            </div>
+            <div class="section-content">
+                <div class="component-grid">
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">CompostHeap</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/compost/CompostHeap.ts</div>
+                        <div class="component-desc">Accumulates code fragments for later digestion.</div>
+                        <div class="component-meta">✅ Built & Wired: Auto-compost enabled</div>
+                    </div>
+
+                    <div class="component-card built-wired">
+                        <div class="component-header">
+                            <span class="component-name">CompostMill</span>
+                            <span class="component-status status-tag-wired">Wired</span>
+                        </div>
+                        <div class="component-path">src/compost/CompostMill.ts</div>
+                        <div class="component-desc">Digests heap into reusable seeds using LLM.</div>
+                        <div class="component-meta">✅ Built & Wired: Auto-digest at capacity</div>
+                    </div>
+
+                    <div class="component-card planned">
+                        <div class="component-header">
+                            <span class="component-name">SeedBank</span>
+                            <span class="component-status status-tag-planned">Partial</span>
+                        </div>
+                        <div class="component-path">src/compost/SeedBank.ts</div>
+                        <div class="component-desc">Stores and retrieves digested seeds.</div>
+                        <div class="component-meta">⚠️ Exists but integration incomplete</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abandoned/Deprecated -->
+        <div class="section abandoned-section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🪦</span>
+                    Abandoned / Deprecated
+                </div>
+                <span class="section-badge badge-deprecated">DEPRECATED</span>
+            </div>
+            <div class="section-content">
+                <div class="component-grid">
+                    <div class="component-card abandoned">
+                        <div class="component-header">
+                            <span class="component-name">Template-based P5Generator</span>
+                            <span class="component-status status-tag-abandoned">Abandoned</span>
+                        </div>
+                        <div class="component-path">src/generators/p5/P5Generator.ts</div>
+                        <div class="component-desc">Original template-based generator. VIOLATES NO-TEMPLATE RULE.</div>
+                        <div class="component-meta">❌ ABANDONED: Replaced by P5GeneratorLLM</div>
+                    </div>
+
+                    <div class="component-card abandoned">
+                        <div class="component-header">
+                            <span class="component-name">ParticleSystem (template)</span>
+                            <span class="component-status status-tag-abandoned">Abandoned</span>
+                        </div>
+                        <div class="component-path">src/generators/p5/ParticleSystem.ts</div>
+                        <div class="component-desc">Template particle system. Now handled by LLM.</div>
+                        <div class="component-meta">❌ ABANDONED: No templates rule</div>
+                    </div>
+
+                    <div class="component-card abandoned">
+                        <div class="component-header">
+                            <span class="component-name">CellularAutomata (template)</span>
+                            <span class="component-status status-tag-abandoned">Abandoned</span>
+                        </div>
+                        <div class="component-path">src/generators/p5/CellularAutomata.ts</div>
+                        <div class="component-desc">Template CA generator. Now handled by LLM.</div>
+                        <div class="component-meta">❌ ABANDONED: No templates rule</div>
+                    </div>
+
+                    <div class="component-card abandoned">
+                        <div class="component-header">
+                            <span class="component-name">SelfReflection</span>
+                            <span class="component-status status-tag-abandoned">Merged</span>
+                        </div>
+                        <div class="component-path">src/improvement/SelfReflection.ts</div>
+                        <div class="component-desc">Original self-improvement module. Merged into Meta-Harness.</div>
+                        <div class="component-meta">❌ MERGED: Functionality in HarnessAgent</div>
+                    </div>
+
+                    <div class="component-card discussed">
+                        <div class="component-header">
+                            <span class="component-name">GUI (React)</span>
+                            <span class="component-status status-tag-discussed">Discussed</span>
+                        </div>
+                        <div class="component-path">src/gui/</div>
+                        <div class="component-desc">React-based GUI. Deprecated in favor of TUI.</div>
+                        <div class="component-meta">💭 Kept for reference but not maintained</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Wiring Summary -->
+        <div class="section">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="section-icon">🔌</span>
+                    Wiring Summary
+                </div>
+                <span class="section-badge badge-core">CRITICAL</span>
+            </div>
+            <div class="section-content">
+                <h3 style="color: #e6edf3; margin-bottom: 1rem;">Recently Fixed (Today)</h3>
+                <ul style="color: #b4bcc5; margin-left: 1.5rem; margin-bottom: 1.5rem;">
+                    <li>✅ <strong>RalphLoop → Meta-Harness:</strong> Now calls <code>onGenerationComplete()</code> after each iteration and on validation failure</li>
+                    <li>✅ <strong>run() → Meta-Harness:</strong> Error handling reports to harness</li>
+                    <li>✅ <strong>E2E Tests → Meta-Harness:</strong> Tests report success/failure to harness in finally block</li>
+                    <li>✅ <strong>Harness LLM Config:</strong> Added harness-specific parameters (lower temp for code fixes)</li>
+                </ul>
+
+                <h3 style="color: #e6edf3; margin-bottom: 1rem;">Still Not Wired (By Design)</h3>
+                <ul style="color: #b4bcc5; margin-left: 1.5rem; margin-bottom: 1.5rem;">
+                    <li>⚠️ <strong>Generators → Guardrails:</strong> Generators don't use SafetyGuardrails - this is intentional. The harness observes failures and fixes the system, not the generators.</li>
+                    <li>⚠️ <strong>HarnessUpdater → Auto-Execute:</strong> Creates tasks but doesn't auto-run them. Requires manual approval via TUI.</li>
+                </ul>
+
+                <h3 style="color: #e6edf3; margin-bottom: 1rem;">Data Flow</h3>
+                <pre style="background: #0d1117; padding: 1rem; border-radius: 8px; overflow-x: auto; color: #9ca3af;"><code>User Prompt
+    ↓
+RalphLoop (NOW REPORTS FAILURES TO HARNESS)
+    ↓
+Generators (DUMB - just generate, no self-improvement)
+    ↓
+Code Output ← Validated ← Scored
+    ↓
+Meta-Harness (OBSERVES, DOES NOT MODIFY GENERATORS)
+    ├── FailureLogger (logs failures)
+    ├── PatternDetector (detects patterns)
+    ├── HarnessAgent (applies fixes to SYSTEM, not generators)
+    └── Task System (M1, M4, M6, M7, M8)</code></pre>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div style="text-align: center; padding: 3rem; color: #6b7280; border-top: 1px solid #30363d; margin-top: 3rem;">
+            <p>Liminal Architecture Map | Generated 2026-04-01</p>
+            <p style="font-size: 0.85rem; margin-top: 0.5rem;">Keep this updated as the system evolves</p>
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'dark',
+            themeVariables: {
+                primaryColor: '#3b82f6',
+                primaryTextColor: '#fff',
+                primaryBorderColor: '#3b82f6',
+                lineColor: '#6b7280',
+                secondaryColor: '#1f2937',
+                tertiaryColor: '#111827'
+            }
+        });
+    </script>
+</body>
+</html>

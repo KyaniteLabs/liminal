@@ -36,6 +36,7 @@ import { recordRoutingOutcome } from '../routing/RoutingData.js';
 import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
+import { metaHarness } from '../harness/MetaHarnessIntegration.js';
 
 // Extracted modules
 import {
@@ -196,6 +197,16 @@ export class RalphLoop {
         const validation = CodeValidator.validate(code);
         if (!validation.valid) {
           Logger.warn('RalphLoop', `Code validation failed: ${validation.errors.join('; ')}`);
+          // Report validation failure to Meta-Harness
+          await metaHarness.onGenerationComplete({
+            success: false,
+            model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+            domain: normalizedOptions.collabDomain || 'p5',
+            prompt: prompt,
+            code: code,
+            error: `Validation failed: ${validation.errors.join('; ')}`,
+            duration: Date.now() - startTime,
+          });
           // Force score to 0 so quality gate rejects this iteration
           currentCode = validation.cleanedCode || '// Validation failed — empty code';
         } else {
@@ -499,6 +510,16 @@ export class RalphLoop {
         }
 
       } catch (error) {
+        // Report error to Meta-Harness
+        await metaHarness.onGenerationComplete({
+          success: false,
+          model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+          domain: normalizedOptions.collabDomain || 'p5',
+          prompt: prompt,
+          error: error instanceof Error ? error.message : String(error),
+          duration: Date.now() - startTime,
+        });
+        
         if (!normalizedOptions.tolerateErrors) {
           throw error;
         }
@@ -515,6 +536,17 @@ export class RalphLoop {
     }
 
     const duration = Date.now() - startTime;
+
+    // Report final result to Meta-Harness
+    await metaHarness.onGenerationComplete({
+      success: completed,
+      model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+      domain: normalizedOptions.collabDomain || 'p5',
+      prompt: prompt,
+      code: currentCode,
+      error: completed ? undefined : reason,
+      duration: duration,
+    });
 
     // Persist archive learning data
     if (qualityArchive) {

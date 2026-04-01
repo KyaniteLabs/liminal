@@ -1,41 +1,31 @@
 /**
  * StrudelGenerator - Generates Strudel (TidalCycles for JavaScript) patterns
  * 
- * FIXED: Better prompt handling, more validation
+ * Uses TierBasedGenerator for model-aware prompt adaptation
  */
 
-import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
-import { PromptLibrary } from '../../prompts/index.js';
+import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
-export interface StrudelGeneratorOptions {
-  signal?: AbortSignal;
+export interface StrudelGeneratorOptions extends TierBasedGeneratorOptions {
   bpm?: number;
 }
 
-export class StrudelGenerator {
-  private llm: LLMClient;
-
-  constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>) {
-    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
+export class StrudelGenerator extends TierBasedGenerator {
+  constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
+    super('strudel', llmOrConfig);
   }
 
   async generate(prompt: string, options?: StrudelGeneratorOptions): Promise<string> {
-    if (!LLMClient.isConfigured()) {
-      throw new Error('StrudelGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
+    const code = await super.generate(prompt, options);
+    return this.sanitizeCode(code);
+  }
+
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    // Must have at least one sound source
+    if (!/\b(s\(|sound\(|note\()/.test(code)) {
+      return { valid: false, error: 'No sound source found (need s(), sound(), or note())' };
     }
-
-    const { system: systemPrompt, user: userPrompt } = PromptLibrary.render('music.strudel', {
-      prompt,
-      bpm: String(options?.bpm || 120),
-    });
-    
-    const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
-
-    if (!response.code || response.code.trim() === '') {
-      throw new Error('StrudelGenerator: LLM returned empty code');
-    }
-
-    return this.sanitizeCode(response.code);
+    return { valid: true };
   }
 
   private sanitizeCode(code: string): string {
@@ -75,11 +65,6 @@ export class StrudelGenerator {
     }
     
     clean = codeLines.join('\n');
-    
-    // Validate: must have at least one sound source
-    if (!/\b(s\(|sound\(|note\()/.test(clean)) {
-      throw new Error('StrudelGenerator: No sound source found (need s(), sound(), or note())');
-    }
     
     return clean.trim();
   }

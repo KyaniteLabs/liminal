@@ -386,8 +386,8 @@ ${safeCode}
         const highlighted = code
             .replace(/\b(stack|s|note|sound|cpm|fast|slow|gain|pan|room|delay|cutoff|resonance)\b/g, '<span class="keyword">$1</span>')
             .replace(/("[^"]*"|'[^']*')/g, '<span class="string">$1</span>')
-            .replace(/\b(\d+\.?\d*)\b/g, '<span class="number">$1</span>')
-            .replace(/(\w+)\s*\(/g, '<span class="function">$1</span>(');
+            .replace(new RegExp('\\b(\\d+\\.?\\d*)\\b', 'g'), '<span class="number">$1</span>')
+            .replace(new RegExp('(\\w+)\\s*\\(', 'g'), '<span class="function">$1</span>(');
         
         document.getElementById('code-display').innerHTML = highlighted;
         

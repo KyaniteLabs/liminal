@@ -1,45 +1,23 @@
-import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
+import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
-export interface HydraGeneratorOptions {
-  signal?: AbortSignal;
-}
+export interface HydraGeneratorOptions extends TierBasedGeneratorOptions {}
 
-export class HydraGenerator {
-  private llm: LLMClient;
-
-  constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>) {
-    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
+export class HydraGenerator extends TierBasedGenerator {
+  constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
+    super('hydra', llmOrConfig);
   }
 
   async generate(prompt: string, options?: HydraGeneratorOptions): Promise<string> {
-    if (!LLMClient.isConfigured()) {
-      throw new Error('HydraGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
+    const code = await super.generate(prompt, options);
+    return this.sanitizeCode(code);
+  }
+
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    // Basic Hydra validation - must have Hydra-specific syntax
+    if (!/\b(osc|shape|noise|voronoi|src|render|out)\b/.test(code)) {
+      return { valid: false, error: 'No Hydra syntax found' };
     }
-
-    const systemPrompt = `You are an expert in Hydra video synthesizer (hydra-synth).
-
-Generate Hydra JavaScript code for live coding visual patterns.
-
-CONSTRAINTS:
-- Output ONLY valid Hydra JavaScript code
-- Use Hydra's chainable API: osc(), shape(), noise(), voronoi(), etc.
-- Connect to output with .out(o0) or similar
-- Use .kaleid(), .color(), .rotate(), .scale() for effects
-- NO markdown, NO explanation, NO code blocks
-
-OUTPUT FORMAT:
-- Single line or multi-line chain of Hydra methods
-- Must end with .out(o0)`;
-
-    const userPrompt = `Create Hydra video synth: ${prompt}`;
-    
-    const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
-
-    if (!response.code || response.code.trim() === '') {
-      throw new Error('HydraGenerator: LLM returned empty code');
-    }
-
-    return this.sanitizeCode(response.code);
+    return { valid: true };
   }
 
   private sanitizeCode(code: string): string {
@@ -65,7 +43,7 @@ OUTPUT FORMAT:
       if (trimmed === '' && codeLines.length === 0) continue;
       
       // Skip explanation lines (that don't look like code)
-      if (trimmed && !trimmed.startsWith('//') && !/[\(\)=.,;]/.test(trimmed)) {
+      if (trimmed && !trimmed.startsWith('//') && !/[()=.,;]/.test(trimmed)) {
         // Might be an explanation - check if it has Hydra syntax
         if (!/\b(osc|shape|noise|voronoi|src|render|out)\b/.test(trimmed)) {
           continue;

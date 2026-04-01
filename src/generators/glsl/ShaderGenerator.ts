@@ -1,79 +1,57 @@
-import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
-import { PromptLibrary } from '../../prompts/index.js';
+/**
+ * ShaderGenerator - GLSL shader generation with tier-based prompts
+ */
 
-export interface ShaderGeneratorOptions {
-  signal?: AbortSignal;
-}
+import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
-export class ShaderGenerator {
-  private llm: LLMClient;
-
-  constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>) {
-    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
+export class ShaderGenerator extends TierBasedGenerator {
+  constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
+    super('shader', llmOrConfig);
   }
 
-  async generate(prompt: string, options?: ShaderGeneratorOptions): Promise<string> {
-    if (!LLMClient.isConfigured()) {
-      throw new Error('ShaderGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
-    }
-
-    const { system: systemPrompt, user: userPrompt } = PromptLibrary.render('glsl.generate', {
-      prompt,
-    });
-    const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
-
-    if (!response.code || response.code.trim() === '') {
-      throw new Error('ShaderGenerator: LLM returned empty code');
-    }
-
-    // Check for truncated/incomplete code - log warning but don't fail
-    if (this.isTruncated(response.code)) {
-      console.warn('[ShaderGenerator] Warning: Code may be truncated, attempting to use anyway');
-      // Only throw if code is critically incomplete (no main function)
-      if (!response.code.includes('void main') && !response.code.includes('gl_FragColor')) {
-        throw new Error('ShaderGenerator: Generated code is critically incomplete (missing main or gl_FragColor)');
-      }
-    }
-
-    return response.code;
+  async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
+    return super.generate(prompt, options);
   }
 
   /**
-   * Detect if GLSL code is truncated or incomplete
+   * GLSL-specific validation
    */
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    // Check for truncated/incomplete code
+    if (this.isTruncated(code)) {
+      // Only fail if critically incomplete
+      if (!code.includes('void main') && !code.includes('gl_FragColor')) {
+        return {
+          valid: false,
+          error: 'Generated code is critically incomplete (missing main or gl_FragColor)',
+        };
+      }
+      console.warn('[ShaderGenerator] Warning: Code may be truncated, attempting to use anyway');
+    }
+
+    return { valid: true };
+  }
+
   private isTruncated(code: string): boolean {
     const trimmed = code.trim();
-    
-    // Check for mid-line truncation (no newline at end)
     const lastChar = trimmed.slice(-1);
     const lastLine = trimmed.split('\n').pop() || '';
     
-    // Ends mid-line without semicolon or closing brace
     if (!['}', ';', '\n'].includes(lastChar) && lastLine.length > 0) {
-      // Check if it's a comment (might be intentional)
       if (!lastLine.trim().startsWith('//') && !lastLine.trim().startsWith('/*')) {
         return true;
       }
     }
     
-    // Check for unclosed braces
     const openBraces = (code.match(/\{/g) || []).length;
     const closeBraces = (code.match(/\}/g) || []).length;
-    if (openBraces > closeBraces) {
-      return true;
-    }
+    if (openBraces > closeBraces) return true;
     
-    // Check for unclosed parentheses
     const openParens = (code.match(/\(/g) || []).length;
     const closeParens = (code.match(/\)/g) || []).length;
-    if (openParens > closeParens) {
-      return true;
-    }
+    if (openParens > closeParens) return true;
     
-    // Check for missing main function or gl_FragColor
-    if (!code.includes('void main') || !code.includes('gl_FragColor')) {
-      return true;
-    }
+    if (!code.includes('void main') || !code.includes('gl_FragColor')) return true;
     
     return false;
   }

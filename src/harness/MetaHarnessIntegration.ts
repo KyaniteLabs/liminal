@@ -6,11 +6,13 @@
  * - PatternDetector (detects patterns in failures)
  * - HarnessUpdater (applies adaptations)
  * - MultiProviderConfig (manages LLM providers)
+ * - HarnessMemory (persistent memory across sessions)
  * 
  * Usage:
  *   import { metaHarness } from './MetaHarnessIntegration.js';
- *   metaHarness.initialize();
- *   metaHarness.onGenerationComplete(result);
+ *   await metaHarness.initialize();
+ *   await metaHarness.onGenerationComplete(result);
+ *   await metaHarness.shutdown();
  */
 
 import { failureLogger, type FailureRecord } from './FailureLogger.js';
@@ -24,6 +26,7 @@ import {
   type ProviderType 
 } from './MultiProviderConfig.js';
 import { LLMClient } from '../llm/LLMClient.js';
+import { harnessMemory, type HarnessTask } from './HarnessMemory.js';
 
 export interface MetaHarnessStatus {
   initialized: boolean;
@@ -32,6 +35,7 @@ export interface MetaHarnessStatus {
   recentFailures: number;
   detectedPatterns: Pattern[];
   appliedAdaptations: HarnessAdaptation[];
+  memory: ReturnType<typeof harnessMemory.getStatus>;
 }
 
 export class MetaHarnessIntegration {
@@ -41,14 +45,20 @@ export class MetaHarnessIntegration {
 
   /**
    * Initialize the Meta-Harness
-   * - Loads previous state
+   * - Loads persistent memory (tasks, adaptations, episodes)
+   * - Loads previous failures
    * - Detects available providers
    * - Applies any pending adaptations
    */
-  initialize(): void {
+  async initialize(): Promise<void> {
     if (this.initialized) return;
     
     console.log('[MetaHarness] Initializing...');
+    
+    // Initialize persistent memory FIRST
+    await harnessMemory.initialize();
+    const memoryStatus = harnessMemory.getStatus();
+    console.log(`[MetaHarness] Memory loaded: ${memoryStatus.tasksTotal} tasks, ${memoryStatus.adaptationsTotal} adaptations, ${memoryStatus.episodesTotal} episodes`);
     
     // Detect available providers
     const providers = listConfiguredProviders();
@@ -70,16 +80,49 @@ export class MetaHarnessIntegration {
     const recentFailures = failureLogger.getRecentFailures(100);
     console.log(`[MetaHarness] Loaded ${recentFailures.length} recent failures`);
     
-    // Detect patterns from history
+    // Detect patterns from history and record to memory
     for (const failure of recentFailures) {
       const patterns = patternDetector.analyze(failure);
       if (patterns.length > 0) {
         console.log(`[MetaHarness] Detected patterns in historical failure: ${patterns.map((p: Pattern) => p.name).join(', ')}`);
+        for (const pattern of patterns) {
+          harnessMemory.recordPatternOccurrence(pattern.name, failure.domain);
+        }
       }
     }
     
     this.initialized = true;
     console.log('[MetaHarness] Initialization complete');
+  }
+
+  /**
+   * Shutdown - save all persistent state
+   */
+  async shutdown(): Promise<void> {
+    console.log('[MetaHarness] Shutting down...');
+    await harnessMemory.shutdown();
+    console.log('[MetaHarness] Shutdown complete');
+  }
+
+  /**
+   * Start a harness task (M1-M8 or custom)
+   */
+  startTask(type: HarnessTask['type'], description: string): string {
+    return harnessMemory.startTask({ type, description });
+  }
+
+  /**
+   * Complete a harness task
+   */
+  completeTask(taskId: string, outcome: { status: HarnessTask['status']; error?: string; outcome?: string; artifacts?: string[] }): void {
+    harnessMemory.completeTask(taskId, outcome);
+  }
+
+  /**
+   * Get incomplete tasks (for resuming after restart)
+   */
+  getIncompleteTasks(): HarnessTask[] {
+    return harnessMemory.getIncompleteTasks();
   }
 
   /**
@@ -95,8 +138,16 @@ export class MetaHarnessIntegration {
     duration: number;
   }): Promise<void> {
     if (!this.initialized) {
-      this.initialize();
+      await this.initialize();
     }
+
+    // Record episode for every generation
+    harnessMemory.recordEpisode({
+      type: 'generation',
+      domain: result.domain,
+      prompt: result.prompt,
+      code: result.code,
+    });
 
     if (!result.success && result.error) {
       // Log the failure
@@ -119,15 +170,55 @@ export class MetaHarnessIntegration {
         sessionId: failureLogger.getSessionId(),
       });
       
+      // Record pattern occurrences
+      for (const pattern of detectedPatterns) {
+        harnessMemory.recordPatternOccurrence(pattern.name, result.domain);
+      }
+      
       // Apply adaptations for detected patterns
       for (const pattern of detectedPatterns) {
         console.log(`[MetaHarness] Applying adaptation for pattern: ${pattern.name}`);
         const adaptation = await harnessUpdater.applyAdaptation(pattern);
         if (adaptation) {
           this.appliedAdaptations.push(adaptation);
+          
+          // Record adaptation to persistent memory
+          harnessMemory.recordAdaptation({
+            patternName: pattern.name,
+            patternSeverity: pattern.severity,
+            fixType: adaptation.fixType,
+            targetFile: adaptation.targetFile,
+            description: adaptation.description,
+            success: adaptation.success,
+            error: adaptation.error,
+            diff: adaptation.diff,
+          });
         }
       }
     }
+  }
+
+  /**
+   * Record a conversation episode
+   */
+  recordConversation(prompt: string, response: string, tags?: string[]): string {
+    return harnessMemory.recordEpisode({
+      type: 'conversation',
+      prompt: `${prompt} -> ${response.substring(0, 200)}...`,
+      tags,
+    });
+  }
+
+  /**
+   * Record feedback episode
+   */
+  recordFeedback(artworkId: string, rating: number, comment: string): string {
+    return harnessMemory.recordEpisode({
+      type: 'feedback',
+      prompt: artworkId,
+      score: rating,
+      comment,
+    });
   }
 
   /**
@@ -141,6 +232,7 @@ export class MetaHarnessIntegration {
       recentFailures: failureLogger.getRecentFailures(100).length,
       detectedPatterns: patternDetector.getHighImpactPatterns(1),
       appliedAdaptations: [...this.appliedAdaptations, ...harnessUpdater.getAdaptations()],
+      memory: harnessMemory.getStatus(),
     };
   }
 
@@ -214,4 +306,21 @@ if (typeof process !== 'undefined' && process.stdout?.isTTY) {
       console.warn('[MetaHarness] Auto-initialization failed:', err);
     }
   }, 100);
+}
+
+// Ensure shutdown on exit
+if (typeof process !== 'undefined') {
+  process.on('exit', () => {
+    metaHarness.shutdown().catch(console.error);
+  });
+  
+  process.on('SIGINT', async () => {
+    await metaHarness.shutdown();
+    process.exit(0);
+  });
+  
+  process.on('SIGTERM', async () => {
+    await metaHarness.shutdown();
+    process.exit(0);
+  });
 }

@@ -1,38 +1,101 @@
 # Liminal Documentation
 
-## Getting Started
+**The complete source of truth for the Liminal creative coding agent.**
 
-- [Architecture and Philosophy](ARCHITECTURE_AND_PHILOSOPHY.md) — design principles and system overview
-- [Architecture Quick Reference](ARCHITECTURE_QUICKREF.md) — component diagram and status
+---
 
-## Security
+## 📖 THE BIBLE (Start Here)
 
-- [Security Guide](SECURITY.md) — deployment checklist, environment variables, threat model
+**[THE_BIBLE.md](./THE_BIBLE.md)** - Comprehensive system documentation covering:
+- Complete architecture overview
+- All subsystems (Meta-Harness, Ralph Loop, Generators, Guardrails)
+- Test status (1741 tests passing)
+- Recent fixes and cleanup
+- API exports
+- Configuration
 
-## Reference
+---
 
-- [Creative Domain Types](CREATIVE_DOMAIN_TYPES.md) — supported output domains and detection
-- [Guardrail Taxonomy](GUARDRAIL_TAXONOMY.md) — guardrail classification system
-- [Guardrail Reference](GUARDRAIL_EXHAUSTIVE.md) — complete guardrail documentation
-- [Dynamic Domain Registration](dynamic-domain-registration.md) — adding new creative domains
-- [Prompts](PROMPTS.md) — prompt engineering reference
+## Quick Navigation
 
-## Operational
+### Core Documentation
+| Document | Purpose |
+|----------|---------|
+| [THE_BIBLE.md](./THE_BIBLE.md) | **Complete system reference** |
+| [ARCHITECTURE_QUICKREF.md](./ARCHITECTURE_QUICKREF.md) | Quick visual overview |
+| [GENERATOR_ARCHITECTURE_V2.md](./GENERATOR_ARCHITECTURE_V2.md) | Generator design |
 
-- [Harness Preflight](HARNESS_PREFLIGHT.md) — pre-activation checklist
-- [What to Expect](WHAT_TO_EXPECT.md) — expected behavior and known behaviors
-- [Master Plan](MASTER_PLAN.md) — project roadmap and decision log
+### Guardrails & Safety
+| Document | Purpose |
+|----------|---------|
+| [GUARDRAIL_TAXONOMY.md](./GUARDRAIL_TAXONOMY.md) | M1-M18 definitions |
+| [GUARDRAIL_EXHAUSTIVE.md](./GUARDRAIL_EXHAUSTIVE.md) | Complete analysis |
+| [SECURITY.md](./SECURITY.md) | Security considerations |
 
-## Research
+### Meta-Harness
+| Document | Purpose |
+|----------|---------|
+| [HARNESS_PREFLIGHT.md](./HARNESS_PREFLIGHT.md) | Task queue M1-M11 |
+| [WHAT_TO_EXPECT.md](./WHAT_TO_EXPECT.md) | Test outcomes |
+| [READY_TO_LAUNCH.md](./READY_TO_LAUNCH.md) | Launch checklist |
 
-- [Ralph Wiggum Research](RALPH_WIGGUM_RESEARCH.md) — the core iterative loop pattern
-- [Preliminary Research](PRELIMINARY_RESEARCH.md) — early project research notes
-- [Aguera y Arcas Research](RESEARCH_AGUERA_Y_ARCAS_BOOK_AND_VIDEOS.md) — creative AI references
-- [Computational Life / Emergent Garden](RESEARCH_COMPUTATIONAL_LIFE_EMERGENT_GARDEN.md) — generative art research
-- [P5.js GA Ecosystem](RESEARCH_P5_GA_ECOSYSTEM.md) — p5.js and genetic algorithm landscape
-- [Agent Generator Architecture](AGENT_GENERATOR_ARCHITECTURE.md) — generator design patterns
+### Philosophy & Research
+| Document | Purpose |
+|----------|---------|
+| [ARCHITECTURE_AND_PHILOSOPHY.md](./ARCHITECTURE_AND_PHILOSOPHY.md) | Design principles |
+| [AGENT_GENERATOR_ARCHITECTURE.md](./AGENT_GENERATOR_ARCHITECTURE.md) | Generator vs Harness |
+| [PROJECT_RULES.md](./PROJECT_RULES.md) | Development rules |
 
-## Archive
+---
 
-- [archive/](archive/) — superseded documents and historical reference
-- [plans/](plans/) — design plans from completed implementation phases
+## System Status
+
+```
+Tests:      1741 passing, 0 failures
+Files:      262 source files, 224 test files
+Guardrails: M1-M11 implemented, M12-M18 planned
+Memory:     Persistent (HarnessMemory)
+Generators: Model-aware (TierBasedGenerator)
+```
+
+---
+
+## What's New
+
+### 2026-04-01
+- ✅ **THE BIBLE** - Complete system documentation
+- ✅ **Test Suite Fixed** - 1741 tests passing (fixture sizes, mocks, async fixes)
+- ✅ **All Generators Migrated** - TierBasedGenerator base class
+- ✅ **M9-M11 Guardrails** - Semantic, Runtime Health, Accessibility
+- ✅ **Persistent Memory** - HarnessMemory with auto-save
+- ✅ **Model Tiers** - Flagship/Medium/Local/Tiny detection
+
+---
+
+## Important Rules
+
+**From PROJECT_RULES.md:**
+
+1. **NO DUPLICATION** - Check existing code before writing new
+2. **THE BIBLE IS SOURCE OF TRUTH** - Update docs before code
+3. **Tests Must Pass** - 1741 tests, 0 failures
+
+---
+
+## Directory Structure
+
+```
+docs/
+├── THE_BIBLE.md                  ← START HERE
+├── README.md                     ← This file
+├── ARCHITECTURE_QUICKREF.md      ← Visual overview
+├── GENERATOR_ARCHITECTURE_V2.md  ← Generator design
+├── GUARDRAIL_*.md                ← Guardrail docs
+├── HARNESS_*.md                  ← Meta-harness docs
+├── *RESEARCH*.md                ← Background research
+└── archive/                      ← Old docs
+```
+
+---
+
+**For complete information, see [THE_BIBLE.md](./THE_BIBLE.md)**

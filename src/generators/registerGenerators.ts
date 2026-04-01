@@ -16,7 +16,7 @@ import { generatorRegistry, GeneratorEntry } from './GeneratorRegistry.js';
 import { ShaderGenerator } from './glsl/ShaderGenerator.js';
 import { ThreeGenerator } from './three/ThreeGenerator.js';
 import { RemotionGenerator } from './remotion/RemotionGenerator.js';
-import { P5GeneratorLLM } from './p5/P5GeneratorLLM.js';
+import { P5GeneratorV2 } from './p5/P5GeneratorV2.js';
 import { HTMLWebGenerator } from './html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from './ascii/ASCIIArtGenerator.js';
 import { StrudelGenerator } from './strudel/StrudelGenerator.js';
@@ -192,11 +192,11 @@ const toneEntry: GeneratorEntry = {
   },
 };
 
-const llmEntry: GeneratorEntry = {
-  name: 'llm',
-  canHandle: () => 0, // fallback: never wins, but always available
+const p5Entry: GeneratorEntry = {
+  name: 'p5',
+  canHandle: () => 0.1, // fallback: low confidence but always available
   generate: async (prompt: string) => {
-    const gen = new P5GeneratorLLM();
+    const gen = new P5GeneratorV2();
     return gen.generate(prompt);
   },
 };
@@ -220,8 +220,8 @@ export function registerAllGenerators(): void {
   generatorRegistry.register(hydraEntry);
   generatorRegistry.register(toneEntry);
   
-  // LLM-based p5 generator (fallback for all p5 sketches)
-  generatorRegistry.register(llmEntry);
+  // P5 generator with tier-based prompting (fallback for all p5 sketches)
+  generatorRegistry.register(p5Entry);
 }
 
 // Re-export for convenience

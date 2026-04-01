@@ -194,7 +194,7 @@ export function getActiveProviderConfig(): LLMConfig | null {
   if (!config) return null;
   
   // Destructure to remove extra fields not in LLMConfig
-  const { provider: _, name, description, ...llmConfig } = config;
+  const { provider: _, name: _name, description: _description, ...llmConfig } = config;
   return llmConfig;
 }
 

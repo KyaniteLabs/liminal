@@ -1,17 +1,22 @@
-import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
-import { PromptLibrary } from '../../prompts/index.js';
+/**
+ * RemotionGenerator - Generates Remotion React video components
+ * 
+ * Uses TierBasedGenerator for model-aware prompt adaptation
+ */
 
-export interface RemotionGeneratorOptions {
-  signal?: AbortSignal;
-}
+import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 
-export class RemotionGenerator {
-  private llm: LLMClient;
+export interface RemotionGeneratorOptions extends TierBasedGeneratorOptions {}
 
-  constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>) {
-    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
+export class RemotionGenerator extends TierBasedGenerator {
+  constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
+    super('remotion', llmOrConfig);
   }
 
+  /**
+   * Check if this generator can handle the given prompt
+   * Domain-specific capability check - preserved from original
+   */
   canHandle(prompt: string): number {
     const lower = prompt.toLowerCase();
     if (/\b(remotion)\b/.test(lower)) return 0.9;
@@ -20,23 +25,14 @@ export class RemotionGenerator {
   }
 
   async generate(prompt: string, options?: RemotionGeneratorOptions): Promise<string> {
-    if (!LLMClient.isConfigured()) {
-      throw new Error('RemotionGenerator: No LLM configured. Set LIMINAL_LLM_BASE_URL and LIMINAL_LLM_MODEL.');
+    return super.generate(prompt, options);
+  }
+
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    // Basic Remotion validation - should be React component
+    if (!code.includes('export') || !code.includes('Component')) {
+      return { valid: false, error: 'Generated code does not appear to be a valid Remotion component' };
     }
-
-    const { system: systemPrompt, user: userPrompt } = PromptLibrary.render('remotion.generate', {
-      prompt,
-      fps: '30',
-      duration: '150',
-      width: '1920',
-      height: '1080',
-    });
-    const response = await this.llm.generate(systemPrompt, userPrompt, options?.signal);
-
-    if (!response.code || response.code.trim() === '') {
-      throw new Error('RemotionGenerator: LLM returned empty code');
-    }
-
-    return response.code;
+    return { valid: true };
   }
 }

@@ -530,18 +530,53 @@ export default {
   defaultConfig
 };
 
-// LLM Generator
+// LLM Generator (Legacy - use P5GeneratorV2 for tier-based)
 export { P5GeneratorLLM };
 export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './llm/LLMClient.js';
 export type { LLMConfig, LLMResponse } from './llm/LLMClient.js';
 
+// Model Tier Detection & Prompt Building
+export { 
+  detectModelTier, 
+  getModelProfile, 
+  getModelInfo, 
+  trimContext, 
+  selectPromptStyle,
+  type ModelTier,
+  type ModelProfile 
+} from './llm/ModelTier.js';
+export { PromptBuilder, type PromptContext, type BuiltPrompt } from './llm/PromptBuilder.js';
+
+// Tier-Based Generator Infrastructure
+export { 
+  TierBasedGenerator, 
+  type TierBasedGeneratorOptions 
+} from './generators/TierBasedGenerator.js';
+
+// V2 Generators (tier-based)
+export { P5GeneratorV2, type P5GeneratorV2Options } from './generators/p5/P5GeneratorV2.js';
+export { ShaderGenerator } from './generators/glsl/ShaderGenerator.js';
+export { ThreeGenerator } from './generators/three/ThreeGenerator.js';
+export { HydraGenerator } from './generators/hydra/HydraGenerator.js';
+export { StrudelGenerator } from './generators/strudel/StrudelGenerator.js';
+export { ToneGenerator } from './generators/tone/ToneGenerator.js';
+export { RemotionGenerator } from './generators/remotion/RemotionGenerator.js';
+export { HTMLWebGenerator } from './generators/html/HTMLWebGenerator.js';
+export { ASCIIArtGenerator } from './generators/ascii/ASCIIArtGenerator.js';
+
 export type { PersistedLoopState } from './core/ContextAccumulation.js';
 
-// GLSL Generator
-export { ShaderGenerator };
 
-// Three.js Generator
-export { ThreeGenerator };
+
+// M9-M11 Guardrails
+export { 
+  SemanticValidator,
+  RuntimeHealthMonitor, 
+  AccessibilityGuardrails,
+  type SemanticValidationResult,
+  type RuntimeHealthResult,
+  type AccessibilityResult,
+} from './guardrails/index.js';
 
 // Swarm
 export { SwarmOrchestrator } from './swarm/SwarmOrchestrator.js';
@@ -608,12 +643,8 @@ export type {
 // Constants
 export { SERVICE_DEFAULTS } from './constants.js';
 
-// HTML Web Generator
-export { HTMLWebGenerator };
+// HTML Web Generator & ASCII Art Generator types (classes exported above with tier-based generators)
 export type { HTMLGeneratorOptions } from './generators/html/HTMLWebGenerator.js';
-
-// ASCII Art Generator
-export { ASCIIArtGenerator };
 export type { ASCIIOptions, ASCIIStyle } from './generators/ascii/ASCIIArtGenerator.js';
 
 // Meta-Harness - Self-improving infrastructure

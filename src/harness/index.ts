@@ -23,6 +23,15 @@ export { patternDetector, PatternDetector, type Pattern, KNOWN_PATTERNS } from '
 export { harnessUpdater, HarnessUpdater, type HarnessAdaptation } from './HarnessUpdater.js';
 export { metaHarness, MetaHarnessIntegration, type MetaHarnessStatus } from './MetaHarnessIntegration.js';
 export {
+  harnessMemory,
+  HarnessMemory,
+  type HarnessMemoryState,
+  type HarnessTask,
+  type AdaptationRecord,
+  type MemoryEpisode,
+  type PatternHistory,
+} from './HarnessMemory.js';
+export {
   getProviderConfig,
   getActiveProvider,
   getActiveProviderConfig,

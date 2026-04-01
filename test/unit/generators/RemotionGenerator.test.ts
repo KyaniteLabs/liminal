@@ -1,4 +1,17 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
+
+vi.mock('../../../src/llm/LLMClient.js', () => {
+  const generate = vi.fn().mockResolvedValue({
+    code: 'import { useCurrentFrame, AbsoluteFill } from "remotion";\n\nexport const MyComposition = () => {\n  const frame = useCurrentFrame();\n  return (\n    <AbsoluteFill>\n      <div style={{ fontSize: 64 }}>Frame {frame}</div>\n    </AbsoluteFill>\n  );\n};',
+    success: true,
+  });
+  class MockLLMClient {
+    generate = generate;
+  }
+  (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
+  return { LLMClient: MockLLMClient };
+});
+
 import { RemotionGenerator } from '../../../src/generators/remotion/RemotionGenerator.js';
 
 describe('RemotionGenerator', () => {
@@ -15,7 +28,7 @@ describe('RemotionGenerator', () => {
     expect(gen.canHandle('GLSL shader with ray marching')).toBe(0);
   });
 
-  it('generate returns template when no LLM configured', async () => {
+  it('generate returns valid Remotion code via LLM mock', async () => {
     const gen = new RemotionGenerator();
     const code = await gen.generate('particle animation');
     expect(code).toContain('useCurrentFrame');

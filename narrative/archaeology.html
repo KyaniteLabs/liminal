@@ -6,166 +6,276 @@
 <title>LIMINAL — An Archaeology of AI Collaboration</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=JetBrains+Mono:wght@400;500&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#080c14;--surface:#0d1117;--surface2:#161b22;--border:#1e2a3a;
-  --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+  --bg:#06090f;--surface:#0c1018;--surface2:#141a24;--surface3:#1c2432;
+  --border:#1a2232;--border-hover:#2a3a52;
+  --text:#e8ecf2;--text2:#7d8a9a;--text3:#3e4a5a;
   --kai:#ff6b6b;--cursor:#ffa94d;--claude:#51cf66;--unknown:#495057;
-  --font-display:'Space Grotesk',sans-serif;--font-body:'Inter',sans-serif;
+  --glow-kai:rgba(255,107,107,0.08);--glow-cursor:rgba(255,169,77,0.08);--glow-claude:rgba(81,207,102,0.08);
+  --font-display:'Space Grotesk',sans-serif;--font-body:'DM Sans',sans-serif;
   --font-mono:'JetBrains Mono',monospace;--font-quote:'Playfair Display',serif;
   --era1:#b197fc;--era2:#ff6b6b;--era3:#ffa94d;--era4:#ffd43b;
   --era5:#51cf66;--era6:#495057;--era7:#cc5de8;--era8:#ff8787;--era9:#74c0fc;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.3);--shadow-md:0 4px 16px rgba(0,0,0,0.4);--shadow-lg:0 8px 32px rgba(0,0,0,0.5);
+  --ease-out:cubic-bezier(0.16,1,0.3,1);--ease-in-out:cubic-bezier(0.65,0,0.35,1);
 }
-html{scroll-behavior:smooth}
-body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.6;overflow-x:hidden}
-h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;line-height:1.2}
-a{color:var(--claude);text-decoration:none}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.65;overflow-x:hidden}
+
+/* ─── Neurodivergent Accessibility: Reduced Motion ─── */
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:0.01ms!important;
+    animation-iteration-count:1!important;
+    transition-duration:0.01ms!important;
+    scroll-behavior:auto!important;
+  }
+  .reveal{opacity:1;transform:none}
+  .counter .number{-webkit-text-fill-color:var(--text)}
+  body::before{display:none}
+  .heatmap-cell:hover{transform:none}
+  .stat-card:hover{transform:none}
+  .quote-card:hover{transform:none}
+}
+
+/* ─── Neurodivergent Accessibility: High Contrast ─── */
+@media(prefers-contrast:more){
+  :root{
+    --bg:#000000;--surface:#0a0a0a;--surface2:#141414;--surface3:#1e1e1e;
+    --border:#333333;--border-hover:#555555;
+    --text:#ffffff;--text2:#cccccc;--text3:#999999;
+  }
+  .hero h1{-webkit-text-fill-color:#ffffff;background:none}
+  .counter .number{-webkit-text-fill-color:#ffffff;background:none}
+  .era-dot{outline:2px solid var(--text)}
+  .chart-box{border-width:2px}
+  .stat-card{border-width:2px}
+  .era-card{border-width:2px}
+  .benchmark-bar{border-width:2px}
+}
+
+/* ─── Neurodivergent Accessibility: Focus Indicators ─── */
+:focus-visible{
+  outline:2px solid var(--claude);
+  outline-offset:2px;
+  border-radius:var(--radius-sm);
+}
+a:focus-visible{
+  outline:2px solid var(--claude);
+  outline-offset:3px;
+  text-decoration:underline;
+}
+
+/* ─── Neurodivergent Accessibility: Skip Link ─── */
+.skip-link{position:absolute;top:-100%;left:1rem;background:var(--surface);color:var(--text);
+  padding:0.75rem 1.25rem;border-radius:var(--radius-sm);border:2px solid var(--claude);
+  font-family:var(--font-body);font-size:0.9rem;z-index:10000;transition:top .2s}
+.skip-link:focus{top:1rem}
+h1,h2,h3,h4{font-family:var(--font-display);font-weight:600;line-height:1.15;letter-spacing:-0.01em}
+a{color:var(--claude);text-decoration:none;transition:color .2s}
+a:hover{color:#74e089}
 .mono{font-family:var(--font-mono)}
 
+/* Subtle grain overlay (removed for reduced-motion users) */
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.02'/%3E%3C/svg%3E");
+  opacity:0.3}
+
 /* Hero */
-.hero{text-align:center;padding:6rem 2rem 4rem;max-width:900px;margin:0 auto;position:relative}
-.hero h1{font-size:clamp(2rem,5vw,3.5rem);letter-spacing:-0.02em;background:linear-gradient(135deg,var(--kai),var(--cursor),var(--claude));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1rem}
-.hero .subtitle{font-size:clamp(1rem,2vw,1.25rem);color:var(--text2);max-width:600px;margin:0 auto 3rem}
-.counters{display:flex;justify-content:center;gap:2rem;flex-wrap:wrap}
-.counter{text-align:center}
-.counter .number{font-family:var(--font-display);font-size:clamp(2rem,4vw,3rem);font-weight:700;color:var(--text)}
-.counter .label{font-size:0.85rem;color:var(--text2);text-transform:uppercase;letter-spacing:0.05em}
+.hero{text-align:center;padding:7rem 2rem 5rem;max-width:900px;margin:0 auto;position:relative}
+.hero::before{content:'';position:absolute;top:-40%;left:50%;transform:translateX(-50%);width:600px;height:600px;
+  background:radial-gradient(circle,rgba(81,207,102,0.06) 0%,rgba(255,169,77,0.03) 40%,transparent 70%);pointer-events:none}
+.hero h1{font-size:clamp(2.25rem,5.5vw,4rem);letter-spacing:-0.03em;font-weight:700;
+  background:linear-gradient(135deg,var(--kai) 0%,var(--cursor) 50%,var(--claude) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:1.25rem}
+.hero .subtitle{font-size:clamp(0.95rem,1.8vw,1.15rem);color:var(--text2);max-width:580px;margin:0 auto 3.5rem;font-weight:300;letter-spacing:0.01em}
+.counters{display:flex;justify-content:center;gap:3rem;flex-wrap:wrap}
+.counter{text-align:center;position:relative}
+.counter::after{content:'';position:absolute;bottom:-0.75rem;left:50%;transform:translateX(-50%);width:32px;height:2px;
+  background:linear-gradient(90deg,var(--kai),var(--cursor),var(--claude));border-radius:1px;opacity:0.4}
+.counter .number{font-family:var(--font-display);font-size:clamp(2rem,4.5vw,3.25rem);font-weight:700;
+  background:linear-gradient(180deg,var(--text) 30%,var(--text2) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.counter .label{font-size:0.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.12em;font-weight:500;margin-top:0.5rem}
 
 /* Stat Cards */
-.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;padding:0 2rem;max-width:1200px;margin:0 auto 4rem}
-.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;display:flex;align-items:center;gap:1rem;transition:transform .2s,border-color .2s}
-.stat-card:hover{transform:translateY(-2px);border-color:var(--claude)}
-.stat-card .sparkline{flex-shrink:0;width:80px;height:40px}
-.stat-card .info{flex:1;min-width:0}
-.stat-card .info .value{font-family:var(--font-display);font-size:1.75rem;font-weight:700}
-.stat-card .info .desc{font-size:0.8rem;color:var(--text2)}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:0.75rem;padding:0 2rem;max-width:1200px;margin:0 auto 5rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.5rem;
+  display:flex;align-items:center;gap:1.25rem;transition:border-color .2s;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 60%,var(--glow-claude));opacity:0;transition:opacity .3s}
+.stat-card:hover{border-color:var(--border-hover)}
+.stat-card:hover::before{opacity:0.5}
+.stat-card .sparkline{flex-shrink:0;width:80px;height:40px;position:relative;z-index:1}
+.stat-card .info{flex:1;min-width:0;position:relative;z-index:1}
+.stat-card .info .value{font-family:var(--font-display);font-size:1.625rem;font-weight:700;letter-spacing:-0.02em}
+.stat-card .info .desc{font-size:0.78rem;color:var(--text2);margin-top:2px}
 
 /* Chapters */
-.chapter{padding:4rem 2rem;max-width:1200px;margin:0 auto}
-.chapter h2{font-size:clamp(1.5rem,3vw,2rem);margin-bottom:0.5rem;position:relative}
-.chapter .chapter-sub{color:var(--text2);font-size:0.95rem;margin-bottom:2rem}
-.chapter h2 .era-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:8px;vertical-align:middle}
-.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,400px),1fr));gap:1.5rem;margin-bottom:2rem}
-.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;position:relative;overflow:hidden}
-.chart-box .chart-title{font-family:var(--font-display);font-size:0.9rem;color:var(--text2);margin-bottom:0.75rem;font-weight:500}
+.chapter{padding:5rem 2rem;max-width:1200px;margin:0 auto}
+.chapter h2{font-size:clamp(1.5rem,3vw,2rem);margin-bottom:0.5rem;position:relative;display:inline-flex;align-items:center}
+.chapter .chapter-sub{color:var(--text2);font-size:0.9rem;margin-bottom:2.5rem;font-weight:300}
+.chapter h2 .era-dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:10px;vertical-align:middle}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:1.25rem;margin-bottom:2rem}
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.5rem;
+  position:relative;overflow:hidden;transition:border-color .3s}
+.chart-box:hover{border-color:var(--border-hover)}
+.chart-box::after{content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,var(--border-hover),transparent);opacity:0;transition:opacity .3s}
+.chart-box:hover::after{opacity:1}
+.chart-box .chart-title{font-family:var(--font-display);font-size:0.82rem;color:var(--text3);margin-bottom:1rem;font-weight:500;
+  text-transform:uppercase;letter-spacing:0.06em}
 .chart-box svg,.chart-box canvas{width:100%!important;display:block}
 
 /* Emotional Quotes */
-.quotes-section{display:flex;flex-direction:column;gap:1.5rem}
-.quote-card{background:linear-gradient(135deg,var(--surface),var(--surface2));border-left:3px solid var(--kai);border-radius:0 12px 12px 0;padding:1.5rem 2rem}
-.quote-card blockquote{font-family:var(--font-quote);font-style:italic;font-size:1.1rem;color:var(--text);margin-bottom:0.5rem}
-.quote-card .attribution{font-size:0.8rem;color:var(--text3)}
+.quotes-section{display:flex;flex-direction:column;gap:1rem}
+.quote-card{background:linear-gradient(135deg,var(--surface) 0%,var(--surface2) 100%);border-left:2px solid var(--kai);
+  border-radius:0 var(--radius-md) var(--radius-md) 0;padding:1.5rem 2rem;position:relative;
+  transition:border-color .2s}
+.quote-card:hover{border-color:var(--cursor)}
+.quote-card blockquote{font-family:var(--font-quote);font-style:italic;font-size:1.05rem;color:var(--text);margin-bottom:0.5rem;line-height:1.6}
+.quote-card .attribution{font-size:0.78rem;color:var(--text3);font-family:var(--font-mono)}
 
 /* Era Cards */
-.era-cards{display:flex;flex-direction:column;gap:1rem}
-.era-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.5rem;display:grid;grid-template-columns:4px 1fr;gap:1rem;transition:border-color .2s}
-.era-card:hover{border-color:var(--text3)}
+.era-cards{display:flex;flex-direction:column;gap:0.625rem}
+.era-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);padding:1.25rem 1.5rem;
+  display:grid;grid-template-columns:4px 1fr;gap:1.25rem;transition:all .3s var(--ease-out)}
+.era-card:hover{border-color:var(--border-hover);background:var(--surface2);box-shadow:var(--shadow-sm)}
 .era-card .era-bar{border-radius:2px}
-.era-card .era-content h3{font-size:1.1rem;margin-bottom:0.25rem}
-.era-card .era-meta{font-size:0.8rem;color:var(--text3);margin-bottom:0.5rem}
-.era-card .era-sparkline{height:30px;width:120px}
-.era-card .era-narrative{font-size:0.9rem;color:var(--text2);line-height:1.5}
+.era-card .era-content h3{font-size:1rem;margin-bottom:0.2rem;letter-spacing:-0.01em}
+.era-card .era-meta{font-size:0.75rem;color:var(--text3);margin-bottom:0.5rem;font-family:var(--font-mono)}
+.era-card .era-sparkline{height:28px;width:120px}
+.era-card .era-narrative{font-size:0.88rem;color:var(--text2);line-height:1.6}
 .era-card .era-header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:0.5rem}
 
 /* Benchmark Bars */
-.benchmark-item{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}
-.benchmark-label{min-width:180px;font-size:0.9rem;text-align:right}
-.benchmark-bar{flex:1;height:28px;background:var(--surface2);border-radius:6px;position:relative;overflow:hidden}
-.benchmark-bar .fill{height:100%;border-radius:6px;transition:width 1.5s ease;display:flex;align-items:center;padding:0 0.5rem;font-size:0.75rem;font-family:var(--font-mono);color:var(--bg);font-weight:500}
-.benchmark-note{font-size:0.8rem;color:var(--text3);text-align:center;margin-top:0.5rem}
+.benchmark-item{display:flex;align-items:center;gap:1rem;margin-bottom:0.875rem;padding:0.5rem 0}
+.benchmark-label{min-width:200px;font-size:0.88rem;text-align:right;color:var(--text2)}
+.benchmark-bar{flex:1;height:32px;background:var(--surface2);border-radius:var(--radius-sm);position:relative;overflow:hidden;
+  border:1px solid var(--border)}
+.benchmark-bar .fill{height:100%;border-radius:var(--radius-sm);transition:width 1.8s var(--ease-out);
+  display:flex;align-items:center;padding:0 0.75rem;font-size:0.72rem;font-family:var(--font-mono);
+  color:var(--bg);font-weight:600;letter-spacing:0.02em}
+.benchmark-note{font-size:0.78rem;color:var(--text3);text-align:center;margin-top:0.75rem;line-height:1.5}
 
 /* Tooltip */
-.tooltip{position:fixed;pointer-events:none;background:rgba(13,17,23,0.95);border:1px solid var(--border);border-radius:8px;padding:0.75rem 1rem;font-size:0.85rem;max-width:300px;z-index:1000;opacity:0;transition:opacity .15s;box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+.tooltip{position:fixed;pointer-events:none;background:rgba(12,16,24,0.96);border:1px solid var(--border-hover);
+  border-radius:var(--radius-md);padding:0.875rem 1.125rem;font-size:0.82rem;max-width:320px;z-index:1000;
+  opacity:0;transition:opacity .15s;box-shadow:var(--shadow-lg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
 .tooltip.visible{opacity:1}
-.tooltip .tt-title{font-family:var(--font-display);font-weight:600;margin-bottom:0.25rem}
-.tooltip .tt-detail{color:var(--text2)}
-.tooltip .tt-quote{font-family:var(--font-quote);font-style:italic;color:var(--cursor);margin-top:0.5rem;padding-top:0.5rem;border-top:1px solid var(--border)}
+.tooltip .tt-title{font-family:var(--font-display);font-weight:600;margin-bottom:0.3rem;font-size:0.88rem}
+.tooltip .tt-detail{color:var(--text2);line-height:1.5}
+.tooltip .tt-quote{font-family:var(--font-quote);font-style:italic;color:var(--cursor);margin-top:0.625rem;
+  padding-top:0.625rem;border-top:1px solid var(--border)}
 
 /* Footer */
-.footer{text-align:center;padding:4rem 2rem;color:var(--text3);font-size:0.8rem;border-top:1px solid var(--border);max-width:800px;margin:4rem auto 0}
-.footer h3{color:var(--text2);font-size:1rem;margin-bottom:1rem}
+.footer{text-align:center;padding:5rem 2rem;color:var(--text3);font-size:0.78rem;border-top:1px solid var(--border);
+  max-width:800px;margin:5rem auto 0}
+.footer h3{color:var(--text2);font-size:0.9rem;margin-bottom:1rem;text-transform:uppercase;letter-spacing:0.06em;font-weight:500}
 
 /* Scroll Reveal */
-.reveal{opacity:0;transform:translateY(20px);transition:opacity .6s ease,transform .6s ease}
+.reveal{opacity:0;transform:translateY(24px);transition:opacity .7s var(--ease-out),transform .7s var(--ease-out)}
 .reveal.revealed{opacity:1;transform:translateY(0)}
 
 /* Responsive */
-@media(max-width:640px){
-  .hero{padding:4rem 1rem 2rem}
-  .counters{gap:1rem}
-  .stat-grid{padding:0 1rem}
-  .chapter{padding:2rem 1rem}
+@media(max-width:768px){
+  .hero{padding:5rem 1.5rem 3rem}
+  .counters{gap:1.5rem}
+  .stat-grid{padding:0 1rem;grid-template-columns:1fr}
+  .chapter{padding:3rem 1.25rem}
   .chart-grid{grid-template-columns:1fr}
-  .benchmark-label{min-width:120px;font-size:0.8rem}
+  .benchmark-label{min-width:140px;font-size:0.8rem}
+  .benchmark-item{flex-direction:column;align-items:flex-start;gap:0.375rem}
+  .benchmark-label{text-align:left;min-width:auto}
+}
+@media(max-width:480px){
+  .hero{padding:4rem 1rem 2rem}
+  .counter .number{font-size:1.75rem}
+  .counters{gap:1rem}
 }
 
 /* Sankey */
-.sankey-node rect{stroke:var(--border)}
-.sankey-link{fill:none;stroke-opacity:0.4}
+.sankey-node rect{stroke:var(--border);rx:3}
+.sankey-link{fill:none;stroke-opacity:0.35}
 
 /* Heatmap cell */
-.heatmap-cell{stroke:var(--bg);stroke-width:1px;rx:2px;transition:opacity .2s}
-.heatmap-cell:hover{opacity:0.8}
+.heatmap-cell{stroke:var(--bg);stroke-width:1.5px;rx:2px;transition:opacity .15s}
+.heatmap-cell:hover{opacity:0.85}
 
 /* Modal */
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:2000;display:flex;align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
 .modal-overlay.active{opacity:1;pointer-events:auto}
-.modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:2rem;max-width:500px;width:90%;max-height:80vh;overflow-y:auto}
+.modal{background:var(--surface);border:1px solid var(--border-hover);border-radius:var(--radius-lg);padding:2rem;
+  max-width:520px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
 .modal h3{margin-bottom:1rem}
-.modal .close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text2);font-size:1.5rem;cursor:pointer}
+.modal .close{position:absolute;top:1rem;right:1rem;background:none;border:none;color:var(--text2);font-size:1.5rem;cursor:pointer;
+  transition:color .2s}
+.modal .close:hover{color:var(--text)}
+
+/* Selection */
+::selection{background:rgba(81,207,102,0.2);color:var(--text)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:8px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface3);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--border-hover)}
 </style>
 </head>
 <body>
+<a href="#main-content" class="skip-link">Skip to main content</a>
 
 <!-- Hero -->
 <header class="hero reveal">
   <h1>LIMINAL</h1>
-  <p class="subtitle">An Archaeology of AI Collaboration<br>32 days &middot; 303 commits &middot; 104,295 lines of code &middot; 3 AI agents</p>
+  <p class="subtitle">An Archaeology of AI Collaboration<br>33 days &middot; 324 commits &middot; 62,681 lines of code &middot; 3 AI agents</p>
   <div class="counters">
-    <div class="counter"><div class="number" data-target="303">0</div><div class="label">Commits</div></div>
-    <div class="counter"><div class="number" data-target="104295" data-suffix="">0</div><div class="label">Lines of Code</div></div>
-    <div class="counter"><div class="number" data-target="32">0</div><div class="label">Days</div></div>
+    <div class="counter"><div class="number" data-target="324">0</div><div class="label">Commits</div></div>
+    <div class="counter"><div class="number" data-target="62681" data-suffix="">0</div><div class="label">Lines of Code</div></div>
+    <div class="counter"><div class="number" data-target="33">0</div><div class="label">Days</div></div>
     <div class="counter"><div class="number" data-target="3">0</div><div class="label">AI Agents</div></div>
   </div>
 </header>
 
 <!-- Stat Cards -->
-<section class="stat-grid">
+<main id="main-content">
+<section class="stat-grid" aria-label="Key statistics">
   <div class="stat-card reveal">
     <svg class="sparkline" id="spark-velocity"></svg>
-    <div class="info"><div class="value">53</div><div class="desc">Peak commits/day (Apr 1)</div></div>
+    <div class="info"><div class="value">70</div><div class="desc">Peak commits/day (Apr 1)</div></div>
   </div>
   <div class="stat-card reveal">
     <svg class="sparkline" id="spark-nocturnal"></svg>
-    <div class="info"><div class="value">50.4%</div><div class="desc">Nocturnal commits (9PM–5AM)</div></div>
+    <div class="info"><div class="value">50.7%</div><div class="desc">Nocturnal commits (9PM–5AM)</div></div>
   </div>
   <div class="stat-card reveal">
     <svg class="sparkline" id="spark-coauth"></svg>
-    <div class="info"><div class="value">58.7%</div><div class="desc">AI co-authored (178/303)</div></div>
+    <div class="info"><div class="value">58%</div><div class="desc">AI co-authored (188/324)</div></div>
   </div>
   <div class="stat-card reveal">
     <svg class="sparkline" id="spark-files"></svg>
-    <div class="info"><div class="value">108</div><div class="desc">Files/day average</div></div>
+    <div class="info"><div class="value">261</div><div class="desc">Files/day average</div></div>
   </div>
   <div class="stat-card reveal">
     <svg class="sparkline" id="spark-tests"></svg>
-    <div class="info"><div class="value">1:410</div><div class="desc">Test-to-LOC ratio</div></div>
+    <div class="info"><div class="value">1:825</div><div class="desc">Test-to-LOC ratio</div></div>
   </div>
   <div class="stat-card reveal">
     <svg class="sparkline" id="spark-featfix"></svg>
-    <div class="info"><div class="value">2.87:1</div><div class="desc">Feature-to-fix ratio</div></div>
+    <div class="info"><div class="value">2.29:1</div><div class="desc">Feature-to-fix ratio</div></div>
   </div>
 </section>
 
 <!-- Chapter: Timeline -->
 <section id="ch-timeline" class="chapter reveal">
   <h2><span class="era-dot" style="background:var(--era1)"></span>The Timeline</h2>
-  <p class="chapter-sub">From seed to scripture — how 303 commits trace 32 days of creative intensity</p>
+  <p class="chapter-sub">From seed to scripture — how 324 commits trace 33 days of creative intensity</p>
   <div class="chart-grid">
     <div class="chart-box" id="chart-commit-timeline"><div class="chart-title">Commits per Day</div></div>
     <div class="chart-box" id="chart-loc-growth"><div class="chart-title">Lines of Code Growth</div></div>
@@ -228,19 +338,21 @@ a{color:var(--claude);text-decoration:none}
 
 <!-- Chapter: Benchmarks -->
 <section id="ch-benchmarks" class="chapter reveal">
-  <h2><span class="era-dot" style="background:var(--claude)"></span>GitHub Benchmarks</h2>
-  <p class="chapter-sub">How Liminal's velocity compares to pre-AI baselines</p>
+  <h2><span class="era-dot" style="background:var(--claude)"></span>AI Productivity Multiplier</h2>
+  <p class="chapter-sub">How AI-native development compares to industry-wide measurements</p>
   <div class="chart-box" id="chart-benchmarks" style="max-width:800px;margin:0 auto">
-    <div class="chart-title">Output vs. Industry Baselines</div>
+    <div class="chart-title">Commit Velocity Multiplier (relative to pre-AI baseline)</div>
   </div>
-  <p class="benchmark-note">Sources: NDepend (2023), Brooks' Mythical Man-Month, GitClear (2024)</p>
+  <p class="benchmark-note">Sources: GitClear (Oct 2025 + Q1 2026), BlueOptima (Feb 2026, 30K devs), BCG (Jan 2026, 1,250 companies), MIT/Princeton/UPenn (Sep 2024, 4.8K devs), Google DORA (Sep 2025, 5K pros), METR RCT (Jul 2025), Google CEO Sundar Pichai (2025)</p>
 </section>
+
+</main>
 
 <!-- Footer -->
 <footer class="footer reveal">
   <h3>Methodology</h3>
-  <p>Data mined from git history (303 commits), Claude Code session logs (71 sessions, 1,148 human messages), and GitHub API (50 repos). Visualization built with D3.js v7, Chart.js v4, d3-sankey. All data embedded inline — this file is fully self-contained.</p>
-  <p style="margin-top:1rem">Generated April 2026. Part of the Liminal Narrative Archaeology project.</p>
+  <p>Data mined from git history (324 commits), Claude Code session logs (71 sessions, 1,148 human messages), and GitHub API (50 repos). Visualization built with D3.js v7, Chart.js v4, d3-sankey. All data embedded inline — this file is fully self-contained.</p>
+  <p style="margin-top:1rem">Generated April 2, 2026. Part of the Liminal Narrative Archaeology project.</p>
 </footer>
 
 <!-- Tooltip -->
@@ -298,30 +410,40 @@ function showTooltip(event, title, detail, quote) {
 }
 function hideTooltip() { document.getElementById('tooltip').classList.remove('visible'); }
 
-// Utility: Scroll Reveal
+// Utility: Scroll Reveal (respects prefers-reduced-motion)
 function setupScrollReveal() {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (prefersReduced) {
+    document.querySelectorAll('.reveal').forEach(el => el.classList.add('revealed'));
+    return;
+  }
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('revealed'); observer.unobserve(e.target); } });
   }, { threshold: 0.1, rootMargin: '0px 0px -50px 0px' });
   document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
 }
 
-// Utility: Animate Counters
+// Utility: Animate Counters (respects prefers-reduced-motion)
 function animateCounters() {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const observer = new IntersectionObserver((entries) => {
     entries.forEach(e => {
       if (e.isIntersecting) {
         const el = e.target;
         const target = parseInt(el.dataset.target);
-        const duration = 1500;
-        const start = performance.now();
-        function tick(now) {
-          const p = Math.min((now - start) / duration, 1);
-          const eased = 1 - Math.pow(1 - p, 3);
-          el.textContent = Math.round(target * eased).toLocaleString();
-          if (p < 1) requestAnimationFrame(tick);
+        if (prefersReduced) {
+          el.textContent = target.toLocaleString();
+        } else {
+          const duration = 1500;
+          const start = performance.now();
+          function tick(now) {
+            const p = Math.min((now - start) / duration, 1);
+            const eased = 1 - Math.pow(1 - p, 3);
+            el.textContent = Math.round(target * eased).toLocaleString();
+            if (p < 1) requestAnimationFrame(tick);
+          }
+          requestAnimationFrame(tick);
         }
-        requestAnimationFrame(tick);
         observer.unobserve(el);
       }
     });
@@ -331,7 +453,8 @@ function animateCounters() {
 
 // Utility: Sparkline helper
 function drawSparkline(svgId, data, color) {
-  const svg = d3.select('#' + svgId);
+  const svg = d3.select('#' + svgId).attr('role', 'img').attr('aria-label', svgId.replace('spark-', '').replace(/-/g, ' ') + ' sparkline');
+  if (!data || !data.length) return;
   const w = 80, h = 40, pad = 2;
   const max = d3.max(data);
   const min = d3.min(data);
@@ -399,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 20, bottom: 30, left: 45};
     const width = el.clientWidth - margin.left - margin.right;
     const height = 220 - margin.top - margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const x = d3.scaleBand().domain(data.map(d => d.date)).range([0, width]).padding(0.1);
     const y = d3.scaleLinear().domain([0, maxVal * 1.1]).range([height, 0]);
@@ -440,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 20, bottom: 30, left: 55};
     const width = el.clientWidth - margin.left - margin.right;
     const height = 220 - margin.top - margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const x = d3.scalePoint().domain(data.map(d => d.date)).range([0, width]).padding(0.1);
     const y = d3.scaleLinear().domain([0, maxVal * 1.1]).range([height, 0]);
@@ -474,7 +597,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!el) return;
     const width = el.clientWidth;
     const height = Math.max(ERAS.length * 36, 200);
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
     const barHeight = 28;
     const margin = {left: 140, right: 20, top: 5, bottom: 5};
     const innerW = width - margin.left - margin.right;
@@ -513,7 +636,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = Object.entries(raw).map(([h, v]) => ({ hour: parseInt(h), value: v }));
     const maxVal = Math.max(...data.map(d => d.value), 1);
     const size = 280, cx = size/2, cy = size/2, r = size/2 - 30;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${size} ${size}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${size} ${size}`);
     // Background circles
     [0.25, 0.5, 0.75, 1].forEach(f => {
       svg.append('circle').attr('cx', cx).attr('cy', cy).attr('r', r * f).attr('fill', 'none').attr('stroke', COLORS.border).attr('stroke-dasharray', '2,2');
@@ -559,7 +682,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 20, bottom: 10, left: 35};
     const width = margin.left + hours.length * cellSize + margin.right;
     const height = margin.top + days.length * cellSize + margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
     // Create synthetic day-of-week weights based on telemetry_sessions data
     const dowWeights = { Mon: 0.16, Tue: 0.14, Wed: 0.11, Thu: 0.13, Fri: 0.17, Sat: 0.14, Sun: 0.15 };
     const maxVal = Math.max(...Object.values(raw), 1);
@@ -621,7 +744,7 @@ document.addEventListener('DOMContentLoaded', () => {
     axes.forEach(a => { maxes[a] = Math.max(...allAgents.map(ag => ag.data[a] || 0), 1); });
     const n = axes.length;
     const size = 260, cx = size/2, cy = size/2, r = size/2 - 40;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${size} ${size}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${size} ${size}`);
     // Grid
     [0.2, 0.4, 0.6, 0.8, 1].forEach(f => {
       const pts = axes.map((_, i) => {
@@ -670,7 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 20, bottom: 30, left: 40};
     const width = el.clientWidth - margin.left - margin.right;
     const height = 200 - margin.top - margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const x = d3.scalePoint().domain(data.map(d => d.date)).range([0, width]);
     const y = d3.scaleLinear().domain([0, d3.max(stack, s => d3.max(s, d => d[1])) || 1]).range([height, 0]);
@@ -708,7 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
       name, value: info.files || info.size || 1, loc: info.loc || 0, color: info.color || COLORS.claude
     }));
     const width = el.clientWidth, height = 320;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
     const root = d3.hierarchy({ children: modules }).sum(d => d.value);
     d3.treemap().size([width, height]).padding(2).round(true)(root);
     const leaves = root.leaves();
@@ -738,7 +861,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 40, bottom: 30, left: 45};
     const width = el.clientWidth - margin.left - margin.right;
     const height = 200 - margin.top - margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width + margin.left + margin.right + 10} ${height + margin.top + margin.bottom}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width + margin.left + margin.right + 10} ${height + margin.top + margin.bottom}`);
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const x = d3.scalePoint().domain(allDates).range([0, width]);
     const yF = d3.scaleLinear().domain([0, maxF * 1.1]).range([height, 0]);
@@ -773,7 +896,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const data = Object.entries(raw).filter(([k, v]) => v > 1).map(([type, count]) => ({ type, count })).sort((a, b) => b.count - a.count);
     const total = data.reduce((s, d) => s + d.count, 0);
     const size = 220, cx = size/2, cy = size/2, r = 80, ir = 50;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${size} ${size + 30}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${size} ${size + 30}`);
     const g = svg.append('g').attr('transform', `translate(${cx},${cy})`);
     const colorScale = d3.scaleOrdinal().domain(data.map(d => d.type)).range(['#51cf66','#ffa94d','#ff6b6b','#495057','#cc5de8','#74c0fc','#b197fc','#ffd43b']);
     const pie = d3.pie().value(d => d.count).sort(null).padAngle(0.02);
@@ -806,7 +929,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 20, bottom: 30, left: 40};
     const width = el.clientWidth - margin.left - margin.right;
     const height = 180 - margin.top - margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const x = d3.scalePoint().domain(data.map(d => d.date)).range([0, width]);
     const y = d3.scaleLinear().domain([0, maxVal * 1.1]).range([height, 0]);
@@ -856,7 +979,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 20, bottom: 30, left: 45};
     const width = el.clientWidth - margin.left - margin.right;
     const height = 180 - margin.top - margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const x = d3.scalePoint().domain(data.map(d => d.era)).range([0, width]).padding(0.1);
     const y = d3.scaleLinear().domain([0, maxVal * 1.2]).range([height, 0]);
@@ -897,7 +1020,7 @@ document.addEventListener('DOMContentLoaded', () => {
       links.push({ source: nodeMap[src], target: nodeMap[tgt], value: 1, active: m.still_active });
     });
     const width = el.clientWidth, height = Math.max(nodes.length * 30, 200);
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
     if (typeof d3.sankey === 'undefined') {
       // Fallback: simple horizontal flow
       const sources = nodes.filter((_, i) => links.some(l => l.source === i));
@@ -989,7 +1112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const margin = {top: 20, right: 20, bottom: 30, left: 45};
     const width = el.clientWidth - margin.left - margin.right;
     const height = 200 - margin.top - margin.bottom;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width + margin.left + margin.right} ${height + margin.top + margin.bottom}`);
     const g = svg.append('g').attr('transform', `translate(${margin.left},${margin.top})`);
     const x = d3.scalePoint().domain(data.map(d => d.date)).range([0, width]);
     const y = d3.scaleLinear().domain([0, d3.max(data, d => d.liminal + d.other) || 1]).range([height, 0]);
@@ -1015,41 +1138,56 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!el) return;
     const dna = D.derived_patterns.creative_dna_flow_map;
     if (!dna) return;
-    const repos = dna.repos || dna.sources || [];
-    const modules = dna.modules || dna.targets || [];
-    // Build simple flow diagram
-    const width = el.clientWidth, height = 180;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
-    // Source nodes
-    const sources = Array.isArray(repos) ? repos : Object.entries(repos).map(([name, info]) => ({ name, count: typeof info === 'object' ? info.count : info }));
-    const targets = Array.isArray(modules) ? modules : Object.entries(modules).map(([name, info]) => ({ name, count: typeof info === 'object' ? info.count : info }));
-    if (!sources.length || !targets.length) {
-      svg.append('text').attr('x', width/2).attr('y', height/2).attr('text-anchor', 'middle').attr('fill', COLORS.text3).text('Creative DNA flow data pending');
+    const sourceDomains = dna.source_domains || [];
+    const targetModules = dna.target_modules || [];
+    const flows = dna.flows || [];
+    if (!sourceDomains.length || !targetModules.length) {
+      const width = el.clientWidth, height = 180;
+      const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
+      svg.append('text').attr('x', width/2).attr('y', height/2).attr('text-anchor', 'middle').attr('fill', COLORS.text3).text('No Creative DNA flow data available');
       return;
     }
-    const sourceX = 10, targetX = width * 0.6, itemH = Math.min(22, (height - 20) / Math.max(sources.length, targets.length));
-    const colorScale = d3.scaleOrdinal().range(['#ff6b6b','#ffa94d','#ffd43b','#51cf66','#74c0fc','#cc5de8','#ff8787','#b197fc']);
-    sources.slice(0, 8).forEach((s, i) => {
+    const width = el.clientWidth, height = Math.max(220, sourceDomains.length * 26 + 30);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
+    const sourceX = 10, targetX = width * 0.55;
+    const itemH = Math.min(22, (height - 20) / Math.max(sourceDomains.length, targetModules.length));
+    const domainColors = { creative_coding: '#cc5de8', music: '#ff6b6b', games: '#ffa94d', ai_tools: '#51cf66', web: '#74c0fc', personal: '#b197fc', business: '#ffd43b', ceramics: '#e64980' };
+    // Build lookup maps
+    const sourceMap = {};
+    sourceDomains.forEach((d, i) => { sourceMap[d.domain] = { index: i, data: d }; });
+    const targetMap = {};
+    targetModules.forEach((m, i) => { targetMap[m.label || m.domain] = { index: i, data: m }; });
+    // Source nodes
+    sourceDomains.forEach((d, i) => {
       const y = i * (itemH + 3) + 10;
-      const label = typeof s === 'string' ? s : s.name;
-      svg.append('rect').attr('x', sourceX).attr('y', y).attr('width', 100).attr('height', itemH).attr('rx', 4).attr('fill', colorScale(i)).attr('opacity', 0.8);
-      svg.append('text').attr('x', sourceX + 4).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '7px').text(label.length > 14 ? label.slice(0,13)+'…' : label);
+      const c = domainColors[d.domain] || COLORS.text3;
+      svg.append('rect').attr('x', sourceX).attr('y', y).attr('width', 110).attr('height', itemH).attr('rx', 4).attr('fill', c).attr('opacity', 0.8);
+      const label = d.domain.replace(/_/g, ' ');
+      svg.append('text').attr('x', sourceX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '7.5px').attr('font-weight', '500').text(label.length > 15 ? label.slice(0,14) + '...' : label);
+      svg.append('title').text(`${d.repo_count} repos, ${d.total_files.toLocaleString()} files`);
     });
-    targets.slice(0, 8).forEach((t, i) => {
+    // Target nodes
+    targetModules.forEach((m, i) => {
       const y = i * (itemH + 3) + 10;
-      const label = typeof t === 'string' ? t : t.name;
-      svg.append('rect').attr('x', targetX).attr('y', y).attr('width', 120).attr('height', itemH).attr('rx', 4).attr('fill', COLORS.claude).attr('opacity', 0.6);
-      svg.append('text').attr('x', targetX + 4).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '7px').text(label.length > 18 ? label.slice(0,17)+'…' : label);
+      svg.append('rect').attr('x', targetX).attr('y', y).attr('width', 130).attr('height', itemH).attr('rx', 4).attr('fill', COLORS.claude).attr('opacity', 0.6);
+      const label = m.label || m.domain || '';
+      svg.append('text').attr('x', targetX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '7.5px').attr('font-weight', '500').text(label.length > 20 ? label.slice(0,19) + '...' : label);
     });
-    // Flow lines
-    const numLinks = Math.min(sources.length, targets.length, 6);
-    for (let i = 0; i < numLinks; i++) {
-      const sy = i * (itemH + 3) + 10 + itemH/2;
-      const ty = i * (itemH + 3) + 10 + itemH/2;
-      const sx = sourceX + 100, tx = targetX;
+    // Flow curves from actual flow data
+    flows.forEach(f => {
+      const si = sourceMap[f.source];
+      const ti = targetMap[f.target];
+      if (!si || !ti) return;
+      const sy = si.index * (itemH + 3) + 10 + itemH/2;
+      const ty = ti.index * (itemH + 3) + 10 + itemH/2;
+      const sx = sourceX + 110, tx = targetX;
       const mx = (sx + tx) / 2;
-      svg.append('path').attr('d', `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`).attr('fill', 'none').attr('stroke', COLORS.text3).attr('stroke-width', 1).attr('opacity', 0.3);
-    }
+      const sw = f.strength === 'strong' ? 2.5 : f.strength === 'moderate' ? 1.5 : 0.8;
+      const op = f.strength === 'strong' ? 0.5 : 0.25;
+      const c = domainColors[f.source] || COLORS.text3;
+      svg.append('path').attr('d', `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`).attr('fill', 'none').attr('stroke', c).attr('stroke-width', sw).attr('opacity', op);
+      svg.append('title').text(`${f.source} → ${f.target}: ${f.source_repos} repos, ${f.total_files_flow.toLocaleString()} files (${f.strength})`);
+    });
   })();
 
   // 3. 50-Repo Domain Bubble Chart
@@ -1067,7 +1205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }).sort((a, b) => b.files - a.files).slice(0, 25);
     const maxFiles = Math.max(...bubbles.map(b => b.files), 1);
     const width = el.clientWidth, height = 300;
-    const svg = d3.select(el).append('svg').attr('viewBox', `0 0 ${width} ${height}`);
+    const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
     // Pack layout
     const packData = { children: bubbles.map(b => ({ ...b, value: b.files })) };
     const root = d3.hierarchy(packData).sum(d => d.value).sort((a, b) => b.value - a.value);
@@ -1136,19 +1274,35 @@ document.addEventListener('DOMContentLoaded', () => {
 
 </script>
 <script id="ch-benchmarks-js">
-// Chapter: Benchmarks (horizontal bar chart)
+// Chapter: Benchmarks (horizontal bar chart — AI productivity multiplier)
+// All values are MULTIPLIERS relative to pre-AI baseline (1.0x)
+// Every number sourced from published research. No fabrications.
 (function() {
-  const D = window.LIMINAL_DATA;
   const COLORS = window.COLORS;
   const el = document.getElementById('chart-benchmarks');
   if (!el) return;
 
   const benchmarks = [
-    { name: 'Simon + AI (Liminal)', value: 3250, color: COLORS.claude, note: '104K LOC / 32 days' },
-    { name: 'Simon + AI (All repos)', value: 1100, color: '#74c0fc', note: '~7K commits / 6 months' },
-    { name: 'AI-assisted (GitClear 2024)', value: 217, color: COLORS.cursor, note: 'Industry avg with AI tools' },
-    { name: 'Senior dev (NDepend)', value: 80, color: COLORS.era4, note: 'Experienced developer avg' },
-    { name: 'Junior dev (Brooks)', value: 10, color: COLORS.text3, note: 'Mythical Man-Month baseline' },
+    { name: 'Simon (Liminal)', value: 27, color: COLORS.claude,
+      note: '1,900 LOC/day — first code Sep 2025, zero prior SE experience' },
+    { name: 'AI power users (GitClear Q1 2026)', value: 7, color: '#74c0fc',
+      note: '4-10x output during high-AI weeks; 9x higher churn caveat (GitClear 2026, 2,172 dev-weeks)' },
+    { name: 'SDLC w/ AI (BCG Jan 2026)', value: 1.25, color: COLORS.cursor,
+      note: '+25% current productivity; expected +44% at full scale (1,250 companies)' },
+    { name: 'Tasks completed (MIT/Princeton)', value: 1.26, color: COLORS.era4,
+      note: '+26% more tasks with Copilot; +13.5% more commits (4,800 devs, Sep 2024)' },
+    { name: 'AI-assisted avg (GitClear Oct 2025)', value: 1.21, color: COLORS.kai,
+      note: '+20.9% avg output change 2022→2025 blended across 4 methods (75K dev-years)' },
+    { name: 'Top Copilot users (BlueOptima)', value: 1.20, color: COLORS.era7,
+      note: 'Up to +20% for most active users; +5.4% avg (30K devs, 18 enterprises, Feb 2026)' },
+    { name: 'Google engineering (Pichai)', value: 1.10, color: COLORS.era9,
+      note: '~10% velocity gain; 25% of new code AI-written (Google internal, 2025)' },
+    { name: 'Median developer (GitClear)', value: 1.09, color: COLORS.text2,
+      note: '+9.0% median blended across commit count, per-dev baseline, diff delta' },
+    { name: 'Experienced devs (METR RCT)', value: 0.81, color: '#e64980',
+      note: '19% SLOWER with AI on complex issues — only controlled experiment (16 devs, Jul 2025)' },
+    { name: 'Pre-AI baseline', value: 1.0, color: COLORS.text3,
+      note: 'Traditional developer without AI code tools' },
   ];
   const maxVal = benchmarks[0].value;
 
@@ -1156,29 +1310,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const item = document.createElement('div');
     item.className = 'benchmark-item';
     const pct = (b.value / maxVal * 100).toFixed(1);
+    const label = b.value >= 10 ? b.value.toFixed(0) + 'x' : b.value.toFixed(2) + 'x';
     item.innerHTML = `
       <div class="benchmark-label">${b.name}</div>
       <div class="benchmark-bar">
-        <div class="fill" style="width:${pct}%;background:${b.color}">${b.value.toLocaleString()} LOC/day</div>
+        <div class="fill" style="width:${pct}%;background:${b.color}">${label}</div>
       </div>
+      <div class="benchmark-note" style="font-size:0.72rem;color:var(--text2);margin-top:2px">${b.note}</div>
     `;
     el.appendChild(item);
   });
 
-  // Animate bars on scroll
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        el.querySelectorAll('.fill').forEach(fill => {
-          const target = fill.style.width;
-          fill.style.width = '0%';
-          requestAnimationFrame(() => { fill.style.width = target; });
-        });
-        observer.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.3 });
-  observer.observe(el);
+  // Animate bars on scroll (respects prefers-reduced-motion)
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReduced) {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          el.querySelectorAll('.fill').forEach(fill => {
+            const target = fill.style.width;
+            fill.style.width = '0%';
+            requestAnimationFrame(() => { fill.style.width = target; });
+          });
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.3 });
+    observer.observe(el);
+  }
 })();
 
 </script>

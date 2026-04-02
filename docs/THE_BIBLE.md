@@ -11,7 +11,7 @@
 
 Liminal is a creative coding agent with self-improving capabilities. It generates
 p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video
-(Remotion/Hydra), and more. The system features **18 major subsystems**:
+(Remotion/Hydra), and more. The system features **19 major subsystems**:
 
 ### Core Framework
 - **Deterministic Guardrails Framework (DGF)** - 3-phase multi-layer protection
@@ -34,6 +34,11 @@ p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video
 - **SOUL System** - User-editable AI personality
 
 ### Learning & Memory
+- **Thinking-Trace Feedback Loop** - Meta-learning from LLM reasoning traces (ALL 9 generators)
+  - Captures generator `<think>` tags and reasoning fields
+  - Harness analyzes with: "WHERE DID IT GO WRONG?" / "HOW CAN I COMMUNICATE BETTER?"
+  - Generator thinking and harness thinking kept separate
+  - Real-time adaptation based on model reasoning patterns
 - **Meta-Harness** - Self-improvement system (7 tools)
 - **Ralph Loop** - Iterative refinement engine
 - **Compost System** - Failure learning (Mill, Shredder, Soup)
@@ -645,7 +650,96 @@ test/guardrails/
 
 ---
 
-### 13. Aesthetic System
+### 13. Thinking-Trace Feedback Loop ⭐ PRIMARY INNOVATION
+
+**Location:** 
+- `src/llm/LLMClient.ts` - Thinking extraction
+- `src/generators/TierBasedGenerator.ts` - Thinking capture & reporting
+- `src/harness/MetaHarnessIntegration.ts` - Harness analysis
+- `src/harness/ThinkingSeparation.ts` - Repository & separation
+- `src/emergent/ModelBehaviorPatterns.ts` - Pattern detection
+
+**Purpose:** Meta-learning from LLM reasoning traces. Unlike any other creative coding tool, Liminal captures and learns from the model's *reasoning process*, not just its output.
+
+**Core Principle:** Generator thinking and harness thinking are kept completely separate and analyzed differently.
+
+**Architecture:**
+
+```
+Generator (any of 9) → LLM Call → {code, thinking, metrics}
+                                        ↓
+                              TierBasedGenerator
+                                        ↓
+                    ┌───────────────────┼───────────────────┐
+                    ↓                   ↓                   ↓
+          Code Recovery        Emergent Patterns      Meta-Harness
+          (if needed)          (long-term trends)     (immediate analysis)
+                                                       ↓
+                                            "WHERE DID IT GO WRONG?"
+                                            "HOW CAN I COMMUNICATE BETTER?"
+                                                       ↓
+                                            Harness LLM Analysis
+                                                       ↓
+                                            Insights → System Improvement
+```
+
+**Components:**
+
+| Component | File | Purpose | Status |
+|-----------|------|---------|--------|
+| LLMClient | `llm/LLMClient.ts` | Extract thinking from responses | 🟢 Active |
+| TierBasedGenerator | `generators/TierBasedGenerator.ts` | Capture & report thinking (ALL 9 generators) | 🟢 Active |
+| ThinkingRepository | `harness/ThinkingSeparation.ts` | Store generator/harness thinking separately | 🟢 Active |
+| ThinkingMiner | `harness/ThinkingSeparation.ts` | Extract insights from thinking | 🟢 Active |
+| MetaHarness | `harness/MetaHarnessIntegration.ts` | Analyze with harness LLM | 🟢 Active |
+| ModelBehaviorPatterns | `emergent/ModelBehaviorPatterns.ts` | Long-term pattern detection | 🟢 Active |
+
+**Thinking Separation:**
+
+| Type | Location | Question | Mined For |
+|------|----------|----------|-----------|
+| Generator | `~/.liminal/thinking-traces/generator/` | "How do I create this code?" | `code_in_thinking`, `confusion`, `over_engineering` |
+| Harness | `~/.liminal/thinking-traces/harness/` | "How do I fix this system?" | Architecture, tools, validation gaps |
+
+**Analysis Questions (asked by harness LLM for every generation):**
+
+1. **WHERE DID IT GO WRONG?**
+   - What misunderstanding did the generator have?
+   - What confusion is evident in the thinking?
+   - What pattern of failure do you see?
+
+2. **HOW CAN I COMMUNICATE BETTER?**
+   - What should the prompt have said differently?
+   - What examples or constraints were missing?
+   - How should instructions be rephrased?
+
+3. **SYSTEM IMPROVEMENT SUGGESTIONS**
+   - Should validation be changed?
+   - Should the prompt template be updated?
+   - Is there a model-specific quirk to handle?
+
+**Real-World Impact:**
+
+Minimax M2.7 case study:
+- **Problem**: Returned "empty code" for 8/9 domains
+- **Traditional diagnosis**: "Model is broken, don't use it"
+- **Thinking-Trace diagnosis**: Discovered model puts code inside `<think>` tags
+- **Result**: 0% → 67% success rate (code recovery implemented)
+- **System learning**: Auto-detect `code_in_thinking` pattern
+
+**Coverage:**
+- ✅ All 9 generators (p5, Three.js, GLSL, Strudel, Hydra, Tone.js, Remotion, HTML, ASCII)
+- ✅ CLI, TUI, Chat, and programmatic API
+- ✅ Success and failure paths
+- ✅ Real-time analysis (no batching)
+
+**Synergy with Compost:**
+- Compost = "What to generate?" (evolutionary search)
+- Thinking-Trace = "How to communicate?" (meta-learning)
+
+---
+
+### 14. Aesthetic System
 
 **Location:** `src/aesthetic/`
 
@@ -669,7 +763,7 @@ test/guardrails/
 
 ---
 
-### 14. Plugin System
+### 15. Plugin System
 
 **Location:** `src/plugins/`
 
@@ -692,7 +786,7 @@ test/guardrails/
 
 ---
 
-### 15. SOUL System
+### 16. SOUL System
 
 **Location:** `SOUL.md`, `src/harness/personality/SOUL.md`
 
@@ -714,7 +808,7 @@ test/guardrails/
 
 ---
 
-### 16. LLM Mode Agent
+### 17. LLM Mode Agent
 
 **Location:** `src/chat/`, `src/tui/`
 
@@ -734,7 +828,7 @@ test/guardrails/
 
 ---
 
-### 17. Routing System
+### 18. Routing System
 
 **Location:** `src/routing/`
 
@@ -755,7 +849,7 @@ test/guardrails/
 
 ---
 
-### 18. Scavenger System
+### 19. Scavenger System
 
 **Location:** `src/scavenger/`
 

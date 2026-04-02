@@ -129,6 +129,17 @@ export {
   type AccessibilityOptions,
 } from './AccessibilityGuardrails.js';
 
+// M12-M18: Compliance guardrails
+export {
+  PrivacyGuardrail,
+  InjectionGuardrail,
+  SupplyChainGuardrail,
+  AuditGuardrail,
+  FairnessGuardrail,
+  ExplainabilityGuardrail,
+  ResilienceGuardrail,
+} from './compliance/index.js';
+
 /**
  * Quick-start function to initialize full guardrail system
  */
@@ -179,6 +190,17 @@ export function initializeGuardrailSystem(config: GuardrailSystemConfig = {}) {
   // Register catastrophic guardrails
   const catastrophicGuardrails = createCatastrophicGuardrails();
   catastrophicGuardrails.forEach(g => registry.register(g));
+  
+  // Register M12-M18 compliance guardrails
+  import('./compliance/index.js').then(compliance => {
+    registry.register(compliance.PrivacyGuardrail);
+    registry.register(compliance.InjectionGuardrail);
+    registry.register(compliance.SupplyChainGuardrail);
+    registry.register(compliance.AuditGuardrail);
+    registry.register(compliance.FairnessGuardrail);
+    registry.register(compliance.ExplainabilityGuardrail);
+    registry.register(compliance.ResilienceGuardrail);
+  });
   
   return {
     registry,

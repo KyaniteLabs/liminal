@@ -109,9 +109,9 @@ export class GuardrailRegistry {
     
     let modifiedContext = { ...context };
     
-    // Sort guardrails by category priority: catastrophic > correctness > hygiene > evolution
+    // Sort guardrails by category priority: catastrophic > correctness > hygiene > compliance > evolution
     const sortedGuardrails = this.getAll().sort((a, b) => {
-      const priority = { catastrophic: 0, correctness: 1, hygiene: 2, evolution: 3 };
+      const priority = { catastrophic: 0, correctness: 1, hygiene: 2, compliance: 3, evolution: 4 };
       return priority[a.category] - priority[b.category];
     });
     

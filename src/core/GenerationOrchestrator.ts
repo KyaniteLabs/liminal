@@ -71,7 +71,7 @@ export class GenerationOrchestrator {
     loadedPrompt: string,
     bypassCache?: boolean
   ): Promise<GenerationResult> {
-    registerAllGenerators();
+    await registerAllGenerators();
     const dispatched = generatorRegistry.dispatch(loadedPrompt);
 
     if (this.options.useSwarm) {

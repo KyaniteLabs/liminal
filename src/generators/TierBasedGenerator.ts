@@ -137,11 +137,12 @@ export abstract class TierBasedGenerator {
   }
 
   /**
-   * Record observation to emergent patterns system
+   * Record observation to emergent patterns system AND notify harness
+   * This is how the harness gets access to generator thinking
    */
   private async recordToEmergentPatterns(prompt: string, response: LLMResponse): Promise<void> {
     try {
-      // Dynamic import to avoid circular dependencies
+      // 1. Store in emergent patterns (for long-term trend analysis)
       const { modelBehaviorPatterns } = await import('../emergent/ModelBehaviorPatterns.js');
       
       modelBehaviorPatterns.recordObservation({
@@ -153,9 +154,27 @@ export abstract class TierBasedGenerator {
         outcome: response.success ? 'success' : 'failure',
         recoveredFromThinking: response.recoveredFromThinking,
       });
+      
+      // 2. Notify Meta-Harness (for immediate analysis)
+      // CRITICAL: This gives the harness access to generator thinking
+      // so it can answer: "WHERE DID IT GO WRONG?" and "HOW CAN I COMMUNICATE BETTER?"
+      const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
+      
+      await metaHarness.onGenerationComplete({
+        success: response.success,
+        model: this.llm.getConfig().model,
+        domain: this.domain,
+        prompt,
+        code: response.code,
+        error: response.success ? undefined : 'Generation failed',
+        duration: 0, // Not tracked at this level
+        thinking: response.thinking,  // KEY: Pass generator thinking to harness
+        recoveredFromThinking: response.recoveredFromThinking,
+      });
+      
     } catch (err) {
-      // Don't fail generation if emergent tracking fails
-      console.warn(`[${this.constructor.name}] Failed to record emergent pattern:`, (err as Error).message);
+      // Don't fail generation if reporting fails
+      console.warn(`[${this.constructor.name}] Failed to report to harness:`, (err as Error).message);
     }
   }
 

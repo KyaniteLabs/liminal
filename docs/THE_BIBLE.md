@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
-**Version:** 2.0 - Production Ready  
-**Date:** 2026-04-01  
-**Status:** 1741 tests passing, 0 failures  
-**Branch:** feature/persistent-memory (ready to merge to main)
+**Version:** 2.1 - Production Ready  
+**Date:** 2026-04-02  
+**Status:** 295 commits, worktree isolation deployed  
+**Branch:** main
 
 ---
 
@@ -11,11 +11,14 @@
 
 Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
 
+- **19 Subsystems** (8 core + 11 supporting)
 - **18 Guardrails** (M1-M11 implemented, M12-M18 planned)
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
+- **Thinking-Trace Feedback Loop** - Meta-learning from model reasoning
+- **Worktree Isolation** - Multi-agent development workflow
 
 ---
 
@@ -332,6 +335,162 @@ Failures:   0
 
 ---
 
+### 9. Compost System
+
+**Location:** `src/compost/`
+
+**Purpose:** Failure learning system that turns failed generations into nutrients for future improvements.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| CompostHeap | `CompostHeap.ts` | Stores and retrieves failed attempts |
+| CompostMill | `CompostMill.ts` | Processes failures into learnings |
+| ModelRouter | `ModelRouter.ts` | Routes to appropriate model based on history |
+
+**Storage:** `~/.liminal/compost/`
+
+---
+
+### 10. Thinking-Trace Feedback Loop ⭐
+
+**Location:** `src/llm/`, `src/generators/`, `src/harness/`, `src/emergent/`
+
+**Purpose:** Meta-learning from model reasoning traces. Captures and learns from the model's thinking process, not just output.
+
+**Key Innovation:** Answers "WHERE DID IT GO WRONG?" and "HOW CAN I COMMUNICATE BETTER?"
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| ReasoningCapture | `llm/LLMClient.ts` | Extracts `<think>` tags, reasoning_content |
+| ThinkingRepository | `harness/ThinkingSeparation.ts` | Separate storage for generator/harness thinking |
+| InsightMiner | `harness/ThinkingSeparation.ts` | Extracts actionable insights |
+| ModelBehaviorPatterns | `emergent/ModelBehaviorPatterns.ts` | Long-term pattern detection |
+
+**Storage:** `~/.liminal/thinking-traces/{source}/`
+
+---
+
+### 11. Plugin System
+
+**Location:** `src/plugins/`
+
+**Purpose:** Extensible plugin architecture for custom generators and behaviors.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| PluginLoader | `PluginLoader.ts` | Discovers and loads plugins |
+| HookSystem | `HookSystem.ts` | Pre/post generation hooks |
+
+**Hook Points:**
+- `preGeneration` - Modify prompt before generation
+- `postGeneration` - Process output after generation
+- `preValidation` - Custom validation rules
+- `postExport` - Custom export formats
+
+---
+
+### 12. TUI (Terminal User Interface)
+
+**Location:** `src/tui/`
+
+**Purpose:** Rich terminal interface for interactive development.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| HarnessTUI | `HarnessTUI.tsx` | Main TUI application |
+| NaturalInterface | `NaturalInterface.ts` | No-prefix command parsing |
+| IntentRouter | `IntentRouter.ts` | Routes natural language to commands |
+| Commands | `commands.ts` | /run, /status, /tasks, etc. |
+
+**Features:**
+- Streaming output with think tag handling
+- Debug panel (Ctrl+D)
+- Rich activity monitoring
+- Phase indicators
+
+---
+
+### 13. Aesthetic System
+
+**Location:** `src/aesthetic/`
+
+**Purpose:** Multi-dimensional aesthetic quality scoring.
+
+**Dimensions:**
+- Visual complexity
+- Color harmony
+- Motion dynamics
+- Composition balance
+
+---
+
+### 14. Audio System
+
+**Location:** `src/audio/`
+
+**Purpose:** Audio analysis and extraction for music-to-visual generation.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| AudioExtractor | `AudioExtractor.ts` | Extracts audio features |
+| PitchExtractor | `PitchExtractor.ts` | Pitch detection |
+
+---
+
+### 15. Chat System
+
+**Location:** `src/chat/`
+
+**Purpose:** Conversational interface and guidance engine.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| GuidanceEngine | `GuidanceEngine.ts` | Context-aware suggestions |
+
+---
+
+### 16. Collaboration System
+
+**Location:** `src/collab/`
+
+**Purpose:** Multi-agent collaborative generation modes.
+
+**Modes:**
+- **Swarm:** Multiple agents with voting
+- **Collab:** Sequential refinement
+
+---
+
+### 17. Worktree Isolation System
+
+**Location:** `scripts/`, `docs/`
+
+**Purpose:** Multi-agent development workflow for safe parallel work.
+
+**Note:** This is a development workflow system, not runtime code.
+
+**Components:**
+| Script | Purpose |
+|--------|---------|
+| `setup-worktree-defaults.sh` | Global git configuration |
+| `git-worktree-manager` | CLI for worktree operations |
+| `worktree-shell-integration.sh` | Shell functions |
+
+**Commands:**
+- `git wt <branch>` - Create/switch worktree
+- `git wtl` - List worktrees
+- `git wtc` - Clean merged worktrees
+
+**Documentation:** `docs/WORKTREE_SYSTEM.md`
+
+---
+
 ## File Structure
 
 ```
@@ -424,24 +583,26 @@ LIMINAL_LOG_LEVEL=info
 
 ## Recent Changes (Last 20 Commits)
 
-1. **fix:** Remove duplicate exports for HTMLWebGenerator
-2. **feat:** Migrate all generators to TierBasedGenerator
-3. **fix:** Apply lint fixes to guardrails
-4. **docs:** Update THE BIBLE with persistent memory, M9-M11
-5. **feat:** Implement M9-M11 Guardrails
-6. **feat:** Add Model Tier detection
-7. **feat:** Add HarnessMemory
-8. **docs:** Add DOCUMENTATION_WARNING
-9. **rules:** Add NO DUPLICATION rule
-10. **docs:** Add PROJECT_RULES.md
-11. **fix:** Pre-flight audit fixes
-12. **feat:** Natural language interface
-13. **feat:** Full LLM Mode
-14. **feat:** Meta-Harness integration
-15. **feat:** Harness TUI
-16. **feat:** Meta-Harness infrastructure
-17. **docs:** Audit reports
-18. **docs:** Gaps and improvements
+1. **feat:** Systematize worktree isolation for multi-agent development
+2. **feat:** Thinking-Trace Feedback Loop implementation
+3. **feat:** Harness analyzes generator thinking (Where wrong? How communicate?)
+4. **feat:** Thinking Separation - generator vs harness thinking
+5. **feat:** TUI streaming, debug panel, Meta-Harness self-evaluation
+6. **fix:** TUI detect non-TTY stdin and exit gracefully
+7. **docs:** Update THE BIBLE with 19 subsystems
+8. **cleanup:** Delete merged/stale branches (docs-site, remediation, voice-aesthetic)
+9. **feat:** Initialize 18 repos with worktree support
+10. **fix:** Remove duplicate exports for HTMLWebGenerator
+11. **feat:** Migrate all generators to TierBasedGenerator
+12. **fix:** Apply lint fixes to guardrails
+13. **docs:** Update THE BIBLE with persistent memory, M9-M11
+14. **feat:** Implement M9-M11 Guardrails
+15. **feat:** Add Model Tier detection
+16. **feat:** Add HarnessMemory
+17. **docs:** Add DOCUMENTATION_WARNING
+18. **rules:** Add NO DUPLICATION rule
+19. **docs:** Add PROJECT_RULES.md
+20. **feat:** Natural language interface
 
 ---
 
@@ -456,10 +617,11 @@ LIMINAL_LOG_LEVEL=info
 
 ## Next Steps
 
-1. ✅ Merge `feature/persistent-memory` to `main`
-2. ✅ Merge `docs-site` to `main`
-3. 🔄 Implement M12-M18 (future)
-4. 🔄 Community plugins (future)
+1. ✅ Merge worktree system to `main` - DONE
+2. ✅ Delete stale branches - DONE
+3. ✅ Initialize 18 repos with worktree support - DONE
+4. 🔄 Implement M12-M18 (future)
+5. 🔄 Community plugins (future)
 
 ---
 

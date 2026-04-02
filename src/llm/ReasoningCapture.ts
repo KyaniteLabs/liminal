@@ -93,7 +93,7 @@ const REASONING_PATTERNS: Array<{
   },
   {
     type: 'timeout_precursor',
-    regex: /(?:let me think|thinking|considering|pondering|evaluating|assessing).{100,}/is,
+    regex: /(?:let me think|thinking|considering|pondering|evaluating|assessing).{100,}/gis,
     confidence: 0.5,
     description: 'Long reasoning without code generation',
   },
@@ -117,13 +117,13 @@ const REASONING_PATTERNS: Array<{
   },
   {
     type: 'no_code_generation',
-    regex: /^(?!.*\b(function|const|let|var|class|if|for|while|import|export|return)\b).*$/s,
+    regex: /^(?!.*\b(function|const|let|var|class|if|for|while|import|export|return)\b).*$/gs,
     confidence: 0.9,
     description: 'Reasoning contains no code keywords',
   },
   {
     type: 'code_in_thinking',
-    regex: /<think>[\s\S]*?(function\s+\w+|const\s+\w+|let\s+\w+|var\s+\w+)[\s\S]*?<\/think>/i,
+    regex: /<think>[\s\S]*?(function\s+\w+|const\s+\w+|let\s+\w+|var\s+\w+)[\s\S]*?<\/think>/gi,
     confidence: 0.85,
     description: 'Model put code inside <think> tags instead of main output',
   },

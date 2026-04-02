@@ -6,18 +6,137 @@ The **Thinking-Trace Feedback Loop** is Liminal's mechanism for capturing, analy
 
 > **Core Innovation**: Unlike traditional systems that discard "failed" outputs, Liminal treats the model's reasoning process as first-class telemetry, extracting insights from *how* the model thinks, not just *what* it produces.
 
+> **Unique Architecture**: Generator thinking and harness thinking are kept completely separate and analyzed differently. The harness asks two critical questions: **"WHERE DID IT GO WRONG?"** and **"HOW CAN I COMMUNICATE BETTER?"**
+
+---
+
+## Architecture Overview
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     GENERATION PHASE                             │
+│                                                                  │
+│  User Prompt → ANY of 9 Generators → LLM Call                   │
+│                                              ↓                  │
+│                                    ┌──────────────────┐         │
+│                                    │ Raw Response     │         │
+│                                    │ ├─ code          │         │
+│                                    │ ├─ thinking      │ ←───────┼── KEY
+│                                    │ └─ metrics       │         │
+│                                    └────────┬─────────┘         │
+│                                             ↓                   │
+│                              ┌──────────────────────┐          │
+│                              │ Thinking Recovery    │          │
+│                              │ (if code empty)      │          │
+│                              └──────────┬───────────┘          │
+└─────────────────────────────────────────┼──────────────────────┘
+                                          ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                     REPORTING PHASE                              │
+│                                                                  │
+│  TierBasedGenerator calls:                                       │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │ 1. Emergent Patterns (long-term trends)                     │ │
+│  │    → modelBehaviorPatterns.recordObservation()              │ │
+│  │                                                             │ │
+│  │ 2. Meta-Harness (immediate analysis)                        │ │
+│  │    → metaHarness.onGenerationComplete({thinking})          │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+└─────────────────────────────────────────┬───────────────────────┘
+                                          ↓
+┌─────────────────────────────────────────────────────────────────┐
+│                     HARNESS ANALYSIS PHASE                       │
+│                                                                  │
+│  MetaHarness.analyzeGeneratorThinking():                         │
+│                                                                  │
+│  Prompts harness LLM with:                                       │
+│  ┌─────────────────────────────────────────────────────────────┐ │
+│  │ PROMPT GIVEN TO GENERATOR: [original prompt]                │ │
+│  │ SUCCESS: [true/false]                                       │ │
+│  │                                                             │ │
+│  │ GENERATOR'S THINKING:                                       │ │
+│  │ [full thinking trace]                                       │ │
+│  │                                                             │ │
+│  │ YOUR TASK:                                                  │ │
+│  │ 1. WHERE DID IT GO WRONG?                                   │ │
+│  │ 2. HOW CAN I COMMUNICATE BETTER?                            │ │
+│  │ 3. SYSTEM IMPROVEMENT SUGGESTIONS                           │ │
+│  └─────────────────────────────────────────────────────────────┘ │
+│                              ↓                                   │
+│                    ┌──────────────────┐                         │
+│                    │ Harness LLM      │                         │
+│                    │ analyzes         │                         │
+│                    └────────┬─────────┘                         │
+│                             ↓                                    │
+│                    ┌──────────────────┐                         │
+│                    │ Insights stored  │                         │
+│                    │ in harnessMemory │                         │
+│                    └──────────────────┘                         │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## Separation of Concerns
+
+### Generator Thinking
+- **Location**: `~/.liminal/thinking-traces/generator/`
+- **Question**: "How do I create this code?"
+- **Content**: Creative reasoning, domain confusion, code attempts
+- **Mined For**:
+  - `code_in_thinking` - Code embedded in `<think>` tags
+  - `confusion` - Unclear on requirements
+  - `over_engineering` - Premature optimization
+  - `wrong_domain` - Thinking about wrong technology
+
+### Harness Thinking  
+- **Location**: `~/.liminal/thinking-traces/harness/`
+- **Question**: "How do I fix this system?"
+- **Content**: Meta-reasoning about architecture, tools, prompts
+- **Mined For**:
+  - Tool suggestions
+  - Architectural insights
+  - Validation gaps
+  - Prompt engineering improvements
+
+**CRITICAL**: These are NEVER mixed. They serve different purposes.
+
+---
+
+## Implementation Status
+
+### ✅ Fully Implemented
+
+| Component | Status | Location |
+|-----------|--------|----------|
+| Thinking extraction | ✅ | `src/llm/LLMClient.ts` |
+| Code recovery | ✅ | `src/generators/TierBasedGenerator.ts` |
+| Generator thinking storage | ✅ | `src/harness/ThinkingSeparation.ts` |
+| Harness thinking storage | ✅ | `src/harness/ThinkingSeparation.ts` |
+| Harness analysis | ✅ | `src/harness/MetaHarnessIntegration.ts` |
+| Emergent patterns | ✅ | `src/emergent/ModelBehaviorPatterns.ts` |
+| All 9 generators wired | ✅ | All extend `TierBasedGenerator` |
+
+### All 9 Generators Use This Architecture
+
+1. **P5GeneratorV2** - p5.js visual sketches
+2. **ThreeGenerator** - Three.js 3D graphics
+3. **ShaderGenerator** - GLSL shaders
+4. **StrudelGenerator** - Strudel music patterns
+5. **HydraGenerator** - Hydra video synthesis
+6. **ToneGenerator** - Tone.js audio
+7. **RemotionGenerator** - Remotion video
+8. **HTMLWebGenerator** - HTML/CSS
+9. **ASCIIArtGenerator** - ASCII art
+
 ---
 
 ## Machine Learning Concepts
 
 ### 1. Reasoning Distillation
 
-Traditional LLM systems treat the model as a black box:
-```
-Input → [Black Box] → Output
-```
+Traditional systems treat the model as a black box. Liminal extracts the reasoning trace:
 
-Liminal opens the box:
 ```
 Input → [Model] → {Thinking} → {Output}
                  ↓              ↓
@@ -30,31 +149,19 @@ Input → [Model] → {Thinking} → {Output}
             Meta-Learning ←───┘
 ```
 
-The **reasoning trace** (the model's internal monologue, captured in `<think>` tags or reasoning fields) contains:
-- Intent signals (what the model *tried* to do)
-- Confidence indicators (uncertainty markers)
-- Strategy choices (which approach was selected)
-- Error precursors (confusion before failure)
-
 ### 2. Adversarial Failure Mining
 
-When a model produces empty code but rich thinking, traditional systems throw away both. Liminal uses this as **adversarial training data**:
+When a model produces empty code but rich thinking:
 
 | Traditional | Thinking-Trace Loop |
 |-------------|---------------------|
 | "Empty output = discard" | "Empty output + thinking = pattern detection" |
-| Generic error logs | Structured reasoning analysis |
-| Reactive fixing | Predictive adaptation |
-
-The system detects patterns like:
-- **Code-in-Thinking**: Model puts code in `<think>` tags (Minimax pattern)
-- **Infinite Reconsideration**: Model stuck in analysis paralysis
-- **Over-Engineering**: Premature optimization for simple tasks
-- **Hallucination**: References to non-existent APIs
+| Generic error logs | "WHERE DID IT GO WRONG?" analysis |
+| Reactive fixing | "HOW CAN I COMMUNICATE BETTER?" adaptation |
 
 ### 3. Meta-Learning from Reasoning
 
-The harness model receives not just *what* failed, but *why* the generator thought it would succeed:
+The harness doesn't just see *what* failed—it sees *why* the generator thought it would work:
 
 ```
 Generator Thinking:
@@ -62,151 +169,22 @@ Generator Thinking:
 for performance..."
 
 Harness Analysis:
-→ Pattern: over_engineering detected
-→ Model: over-complicating simple task
-→ Suggestion: Add "keep it simple" constraint
-→ Adaptation: Apply to future prompts
+→ WHERE DID IT GO WRONG?
+  Pattern: over_engineering detected
+  
+→ HOW CAN I COMMUNICATE BETTER?  
+  Suggestion: Add "keep it simple" constraint
+  
+→ SYSTEM IMPROVEMENT
+  Adaptation: Apply to future prompts
 ```
-
-This is **meta-learning**—learning how to learn from the generator's own reasoning process.
-
-### 4. Nutrient-Rich Compost
-
-The Compost Mill receives thinking traces as **high-entropy nutrients**:
-
-| Input Type | Nutrient Value |
-|------------|----------------|
-| Working code | High (functional patterns) |
-| Broken code | Medium (anti-patterns) |
-| **Thinking traces** | **Very High** (intent + strategy) |
-
-Thinking contains:
-- **Semantic embeddings** of the model's understanding
-- **Decision boundaries** (why this approach vs. that)
-- **Alternative explorations** (paths not taken)
-
-When the Compost Mill digests these, it generates seeds with *understanding*, not just syntax.
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                    GENERATION PHASE                              │
-│                                                                  │
-│  ┌─────────────┐    ┌──────────────────┐    ┌─────────────────┐ │
-│  │   Prompt    │───►│  LLM (Generator) │───►│ Raw Response    │ │
-│  └─────────────┘    └──────────────────┘    └────────┬────────┘ │
-│                                                      │           │
-│                              ┌───────────────────────┘           │
-│                              ↓                                   │
-│                    ┌──────────────────┐                         │
-│                    │ Parse Response   │                         │
-│                    │ ├─ Extract code  │                         │
-│                    │ ├─ Extract thinking│                        │
-│                    │ └─ Compute metrics │                        │
-│                    └────────┬─────────┘                         │
-│                             │                                    │
-│              ┌──────────────┼──────────────┐                    │
-│              ↓              ↓              ↓                    │
-│        ┌─────────┐  ┌────────────┐  ┌────────────┐             │
-│        │  Code   │  │  Thinking  │  │  Metrics   │             │
-│        │ (Output)│  │  (Trace)   │  │  (ML feats)│             │
-│        └────┬────┘  └─────┬──────┘  └─────┬──────┘             │
-│             │             │               │                    │
-└─────────────┼─────────────┼───────────────┼────────────────────┘
-              │             │               │
-              ▼             ▼               ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     FEEDBACK PHASE                               │
-│                                                                  │
-│  ┌─────────────┐  ┌──────────────────┐  ┌─────────────────────┐ │
-│  │   Compost   │  │  Harness Model   │  │  Emergent Patterns  │ │
-│  │    Mill     │  │  (Meta-Learner)  │  │   (Pattern Detect)  │ │
-│  │             │  │                  │  │                     │ │
-│  │ ├─ Thinking │  │ ├─ Analyze trace │  │ ├─ code_in_thinking │ │
-│  │ │  as       │  │ │  for patterns  │  │ ├─ over_engineering │ │
-│  │ │  nutrients│  │ │                │  │ ├─ confusion        │ │
-│  │ └─ Seeds    │  │ └─ Suggest fixes │  │ └─ trends           │ │
-│  │    w/       │  │                  │  │                     │ │
-│  │    intent   │  │                  │  │                     │ │
-│  └─────────────┘  └──────────────────┘  └─────────────────────┘ │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## Key Components
-
-### 1. LLMClient (Reasoning Extraction Layer)
-
-**Function**: Parse raw LLM responses into structured `{code, thinking, metrics}`
-
-**ML Techniques**:
-- **Multi-modal parsing**: Handles OpenAI, Ollama, Anthropic response formats
-- **Pattern extraction**: Regex-based thinking tag detection
-- **Feature engineering**: Computes `hasCodeBlocks`, `hasFunctionDefinitions`, `attemptedDomain`
-
-**Code Recovery Strategy**:
-```typescript
-if (codeEmpty && thinkingHasCodeBlocks) {
-  code = extractFromThinking(thinking);
-  markAsRecovered();
-}
-```
-
-### 2. ThinkingAnalyzer (Meta-Learning Engine)
-
-**Function**: Analyze reasoning traces to generate adaptation suggestions
-
-**ML Techniques**:
-- **Pattern classification**: Maps reasoning content to known failure modes
-- **Confidence scoring**: Ranks suggestions by pattern frequency
-- **Causal inference**: Links reasoning patterns to output failures
-
-**Example Analysis**:
-```
-Input: "<think>I'll use object pooling for performance...</think>"
-Pattern: over_engineering (confidence: 0.75)
-Suggestion: Add "keep it simple" constraint to prompt
-Learning: "Model over-complicates simple tasks"
-```
-
-### 3. ModelBehaviorPatterns (Emergent Pattern Detection)
-
-**Function**: Track patterns across many generations to detect model-specific behaviors
-
-**ML Techniques**:
-- **Time-series analysis**: Detects trends (increasing/decreasing/stable)
-- **Frequency analysis**: Identifies recurring issues per model/domain
-- **Auto-adaptation**: Generates prompt modifications automatically
-
-**Patterns Tracked**:
-- `code_in_thinking` - Model puts code in `<think>` tags
-- `infinite_reconsideration` - Model stuck in circular reasoning
-- `truncated_code` - Consistent mid-function cutoffs
-- `wrong_domain` - Domain confusion patterns
-
-### 4. Compost Integration (Nutrient Enrichment)
-
-**Function**: Feed thinking traces into Compost Mill as high-value nutrients
-
-**ML Concept**: **Data Augmentation via Reasoning**
-
-Standard compost: "Here's broken code"
-Enriched compost: "Here's broken code, and *here's what the model thought it was doing*"
-
-This allows the Compost Mill to generate seeds that account for **model intent**, not just output.
 
 ---
 
 ## Real-World Example: Minimax M2.7
 
 ### The Problem
-
-Minimax M2.7 was returning empty code for 8/9 domains, appearing completely broken.
+Minimax M2.7 appeared broken—returning empty code for 8/9 domains.
 
 ### Traditional Diagnosis
 "Model doesn't work. Don't use it."
@@ -232,64 +210,53 @@ This should work well...
 </think>
 ```
 
-**Analysis**:
-- Pattern: `code_in_thinking`
-- Confidence: 0.85
-- Root cause: Model outputs code inside `<think>` tags
-- Solution: Extract code from thinking, add prompt constraint
+**Harness Analysis**:
+- **WHERE DID IT GO WRONG?**: Model outputs code inside `<think>` tags
+- **HOW CAN I COMMUNICATE BETTER?**: Add "Output code AFTER thinking tags" instruction
+- **Pattern**: `code_in_thinking` (confidence: 0.85)
 
-**Result**: Model went from 11% success to recoverable for all domains.
-
----
-
-## Benefits
-
-### 1. **Zero-Waste Telemetry**
-
-Every generation attempt produces value:
-- Success → Code + Thinking → Compost nutrients
-- Failure → Thinking → Pattern detection → Adaptation
-
-### 2. **Model-Specific Optimization**
-
-Detects quirks of specific models:
-- Minimax: Code in thinking
-- Qwen: Over-apologizing
-- Local models: Truncation issues
-
-Automatically adapts prompts per model.
-
-### 3. **Predictive Failure Prevention**
-
-Reasoning patterns predict failures *before* they happen:
-- "Let me reconsider..." → Likely timeout
-- "I'm not sure..." → Likely confusion → Wrong domain
-
-System can intervene early.
-
-### 4. **Continuous Learning Loop**
-
-```
-Generate → Capture Thinking → Analyze → Adapt → Generate Better
-     ↑_________________________________________________↓
-```
-
-System improves with every attempt, successful or not.
+**Result**: Model went from 0% to 67% recoverable (6/9 domains).
 
 ---
 
-## Comparison to Compost Mill
+## Data Flow
 
-| Feature | Compost Mill | Thinking-Trace Loop |
-|---------|--------------|---------------------|
-| **Input** | Code files | Reasoning traces |
-| **Process** | Digestion/shredding | Pattern detection |
-| **Output** | Seeds/nuggets | Adaptations/fixes |
-| **ML Concept** | Evolutionary search | Meta-learning |
-| **Timeframe** | Hours (digestion) | Real-time (per gen) |
-| **Value** | Long-term improvement | Immediate adaptation |
+### Generator Level
+```typescript
+// In TierBasedGenerator.generate()
+const response = await this.llm.generate(...);
 
-**Synergy**: Compost provides *what* to generate; Thinking-Trace provides *how* to prompt for it.
+// response contains:
+// - code: string (may be empty)
+// - thinking: string (the reasoning trace)
+// - thinkingMetrics: { length, hasCodeBlocks, hasFunctionDefinitions, ... }
+// - recoveredFromThinking: boolean
+
+// Automatically:
+// 1. Attempt code recovery if empty
+// 2. Store in emergent patterns
+// 3. Report to meta-harness with thinking
+```
+
+### Harness Level
+```typescript
+// In MetaHarnessIntegration.analyzeGeneratorThinking()
+const analysisPrompt = `
+PROMPT GIVEN TO GENERATOR: ${result.prompt}
+SUCCESS: ${result.success}
+
+GENERATOR'S THINKING:
+${result.thinking}
+
+YOUR TASK:
+1. WHERE DID IT GO WRONG?
+2. HOW CAN I COMMUNICATE BETTER?
+3. SYSTEM IMPROVEMENT SUGGESTIONS
+`;
+
+const response = await this.llmClient.generate(...);
+// Stores insights in harness memory
+```
 
 ---
 
@@ -297,41 +264,83 @@ System improves with every attempt, successful or not.
 
 No configuration required—the system is always active.
 
-**Optional Environment Variables**:
-```bash
-# Thinking trace storage
-LIMINAL_THINKING_DIR=~/.liminal/thinking-traces
-
-# Pattern detection sensitivity (0-1)
-LIMINAL_PATTERN_THRESHOLD=0.7
-
-# Enable/disable auto-adaptation
-LIMINAL_AUTO_ADAPT=true
+**Storage Locations**:
+```
+~/.liminal/
+├── thinking-traces/
+│   ├── generator/          # Generator reasoning
+│   │   └── YYYY-MM-DD.jsonl
+│   └── harness/            # Harness reasoning  
+│       └── YYYY-MM-DD.jsonl
+├── emergent-patterns/
+│   └── patterns.json       # Long-term trends
+└── failures/
+    └── *.json              # Failure records with thinking
 ```
 
 ---
 
-## Future Enhancements
+## Comparison to Compost Mill
 
-1. **Chain-of-Thought Distillation**: Train smaller models on extracted reasoning
-2. **Cross-Model Reasoning Transfer**: Apply Minimax insights to other models
-3. **Reasoning Embeddings**: Vectorize thinking for similarity search
-4. **Interactive Reasoning**: Show user the model's reasoning process
+| Feature | Compost Mill | Thinking-Trace Loop |
+|---------|--------------|---------------------|
+| **Input** | Code fragments | Reasoning traces |
+| **Question** | "What to generate?" | "How to communicate?" |
+| **Process** | Digestion/collision | Pattern detection |
+| **Output** | Seeds/nuggets | Adaptations/fixes |
+| **ML Concept** | Evolutionary search | Meta-learning |
+| **Timeframe** | Hours (digestion) | Real-time (per gen) |
+| **Analyzes** | Content | Intent |
+
+**Synergy**: 
+- Compost provides *what* to generate
+- Thinking-Trace provides *how* to ask for it
+
+---
+
+## Benefits
+
+### 1. **Zero-Waste Telemetry**
+Every generation produces value:
+- Success → Code + Thinking → Learning
+- Failure → Thinking → Root cause analysis
+
+### 2. **Model-Specific Optimization**
+Auto-detects quirks:
+- Minimax: Code in thinking
+- Qwen: Over-apologizing  
+- Local models: Truncation
+
+### 3. **Self-Improving Communication**
+The system learns how to talk to each model:
+- "Add explicit instructions for Minimax"
+- "Use simpler prompts for small models"
+- "Include examples for complex domains"
+
+### 4. **Debugging Power**
+As a coding agent, you have full visibility:
+- Generator thinking traces
+- Harness analysis results
+- Pattern detection
+- Improvement suggestions
 
 ---
 
 ## Summary
 
-The Thinking-Trace Feedback Loop transforms Liminal from a **code generator** into a **learning system**:
+The Thinking-Trace Feedback Loop transforms Liminal from a **code generator** into a **learning system** that:
 
-- **Captures** reasoning traces (the "why" behind the "what")
-- **Analyzes** patterns in model thinking
-- **Adapts** prompts and configurations automatically
-- **Feeds** insights back into generation loop
+1. **Captures** reasoning traces from ALL 9 generators
+2. **Separates** generator thinking from harness thinking
+3. **Analyzes** with two critical questions:
+   - **WHERE DID IT GO WRONG?**
+   - **HOW CAN I COMMUNICATE BETTER?**
+4. **Adapts** prompts and system based on insights
+5. **Feeds** learnings back into the generation loop
 
-**Result**: Every failure makes the system smarter. Every success teaches it more about model behavior.
+**Result**: Every failure teaches the system how to communicate better. Every success confirms what works.
 
-> *"The model's thinking is not waste—it's the richest training data you have."*
+> *"The model's thinking is not waste—it's the richest training data you have. And the harness's analysis of that thinking is how the system learns to improve itself."*
 
 ---
 
@@ -339,4 +348,4 @@ The Thinking-Trace Feedback Loop transforms Liminal from a **code generator** in
 
 - [Compost Mill](./compost-mill.md) - Long-term nutrient processing
 - [Meta-Harness](../architecture/meta-harness.md) - System adaptation engine
-- [Model Tiers](../architecture/model-tiers.md) - Model-specific optimizations
+- [Architecture Overview](../architecture/README.md) - Full system design

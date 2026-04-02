@@ -295,6 +295,72 @@ console.log(patterns);
 
 ---
 
+## Thinking-Trace Feedback Loop
+
+**CRITICAL ARCHITECTURE**: All generators now report their thinking to the harness.
+
+### How It Works
+
+1. **Generator Produces Thinking**
+   ```typescript
+   // In any of the 9 generators
+   const response = await llm.generate(prompt);
+   // response.thinking contains the model's reasoning
+   ```
+
+2. **TierBasedGenerator Reports to Harness**
+   ```typescript
+   await metaHarness.onGenerationComplete({
+     success: response.success,
+     model: this.llm.getConfig().model,
+     domain: this.domain,
+     prompt,
+     code: response.code,
+     thinking: response.thinking,  // ← KEY
+     recoveredFromThinking: response.recoveredFromThinking,
+   });
+   ```
+
+3. **Harness Analyzes with LLM**
+   The harness prompts its LLM:
+   ```
+   GENERATOR'S THINKING:
+   [full thinking trace]
+   
+   YOUR TASK:
+   1. WHERE DID IT GO WRONG?
+   2. HOW CAN I COMMUNICATE BETTER?
+   3. SYSTEM IMPROVEMENT SUGGESTIONS
+   ```
+
+4. **Insights Stored**
+   - Stored in harness memory
+   - Used to improve prompts
+   - High-confidence suggestions trigger adaptations
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/generators/TierBasedGenerator.ts` | Captures & reports thinking |
+| `src/harness/MetaHarnessIntegration.ts` | Receives & analyzes thinking |
+| `src/harness/ThinkingSeparation.ts` | Separates generator/harness thinking |
+| `src/emergent/ModelBehaviorPatterns.ts` | Long-term pattern detection |
+
+### Separation of Concerns
+
+**Generator Thinking** (`~/.liminal/thinking-traces/generator/`):
+- "How do I create this code?"
+- Mined for: code_in_thinking, confusion, over_engineering
+
+**Harness Thinking** (`~/.liminal/thinking-traces/harness/`):
+- "How do I fix this system?"
+- Mined for: architectural insights, tool suggestions
+
+**NEVER MIXED** - They serve different purposes.
+
+---
+
 ## File Structure
 
 ```

@@ -11,13 +11,12 @@
 
 Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
 
-- **19 Subsystems** (8 core + 11 supporting)
+- **21 Subsystems** (8 core + 14 supporting)
 - **18 Guardrails** (M1-M11 implemented, M12-M18 planned)
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
-- **Thinking-Trace Feedback Loop** - Meta-learning from model reasoning
 - **Worktree Isolation** - Multi-agent development workflow
 
 ---
@@ -113,7 +112,7 @@ Failures:   0
 │  │  M4:  ✅ Syntax Validation          - CodeValidator                 │    │
 │  │  M5:  ✅ Safety (execution)         - SandboxRunner                 │    │
 │  │  M6:  ✅ Anti-Hallucination         - APIValidator                  │    │
-│  │  M7:  ✅ Aesthetic Quality          - AestheticScorer               │    │
+│  │  M7:  ✅ Aesthetic Quality          - AestheticCritic               │    │
 │  │  M8:  ✅ Output Size                - CodeValidator                 │    │
 │  │  M9:  ✅ Semantic Alignment         - SemanticValidator             │    │
 │  │  M10: ✅ Runtime Health             - RuntimeHealthMonitor          │    │
@@ -166,9 +165,9 @@ Failures:   0
 
 **Task Queue Status:**
 - M1-M8: ✅ Core guardrails (implemented)
-- M9: ✅ Semantic Validation (implemented)
-- M10: ✅ Runtime Health Monitoring (implemented)
-- M11: ✅ Accessibility (implemented)
+- M9: ✅ Semantic Validation (implemented, task archived)
+- M10: ✅ Runtime Health Monitoring (implemented, task archived)
+- M11: ✅ Accessibility (implemented, task archived)
 
 ---
 
@@ -231,8 +230,9 @@ Failures:   0
 2. Load `PROJECT_RULES.md` → constraints
 3. Load `docs/domains/{domain}.md` → technical knowledge
 4. Load from `HarnessMemory` → adaptations, preferences
-5. Trim to token budget
-6. Format for model tier
+5. Load from `config/liminal.json` → user configuration
+6. Trim to token budget
+7. Format for model tier
 
 ---
 
@@ -248,11 +248,11 @@ Failures:   0
 | M4 | Syntax Validation | `core/CodeValidator.ts` | Domain-specific parsing | ✅ |
 | M5 | Safety (execution) | `sandbox/SandboxRunner.ts` | Sandboxed execution | ✅ |
 | M6 | Anti-Hallucination | `core/CodeValidator.ts` | API validation | ✅ |
-| M7 | Aesthetic Quality | `aesthetic/` | Multi-dimension scoring | ✅ |
+| M7 | Aesthetic Quality | `aesthetic/AestheticCritic.ts` | Multi-dimension scoring | ✅ |
 | M8 | Output Size | `core/CodeValidator.ts` | Min size requirements | ✅ |
-| M9 | Semantic Alignment | `guardrails/SemanticValidator.ts` | Intent matching | ✅ |
-| M10 | Runtime Health | `guardrails/RuntimeHealthMonitor.ts` | Memory, FPS monitoring | ✅ |
-| M11 | Accessibility | `guardrails/AccessibilityGuardrails.ts` | Photosensitivity, a11y | ✅ |
+| M9 | Semantic Alignment | `guardrails/SemanticValidator.ts` | Intent matching | ✅ (archived) |
+| M10 | Runtime Health | `guardrails/RuntimeHealthMonitor.ts` | Memory, FPS monitoring | ✅ (archived) |
+| M11 | Accessibility | `guardrails/AccessibilityGuardrails.ts` | Photosensitivity, a11y | ✅ (archived) |
 | M12 | Version Compatibility | - | API version matching | ⚪ |
 | M13 | Dependency Health | - | CDN validation | ⚪ |
 | M14 | Resource Prediction | - | GPU/CPU estimation | ⚪ |
@@ -265,14 +265,14 @@ Failures:   0
 
 ### 5. Memory Systems
 
-**Location:** `src/brain/`, `src/harness/`, `src/compost/`, `src/learning/`
+**Location:** `src/brain/`, `src/harness/`, `src/compost/`, `src/learning/`, `src/evolution/`
 
 | System | File | Purpose | Persistence |
 |--------|------|---------|-------------|
 | HarnessMemory | `harness/HarnessMemory.ts` | Tasks, adaptations, episodes | ✅ ~/.liminal/memory/ |
 | EpisodicMemory | `brain/EpisodicMemory.ts` | Conversations, generations | ✅ Via HarnessMemory |
 | CompostHeap | `compost/CompostHeap.ts` | Failed generations | ✅ File-based |
-| NoveltyArchive | `learning/NoveltyArchive.ts` | Pattern diversity | ✅ File-based |
+| NoveltyArchive | `evolution/NoveltyArchive.ts` | Pattern diversity | ✅ File-based |
 | QualityArchive | `learning/QualityArchive.ts` | High-quality examples | ✅ File-based |
 | ArtKnowledgeGraph | `brain/ArtKnowledgeGraph.ts` | Concepts, techniques | ❌ In-memory |
 
@@ -352,27 +352,90 @@ Failures:   0
 
 ---
 
-### 10. Thinking-Trace Feedback Loop ⭐
+### 10. Evolution System
 
-**Location:** `src/llm/`, `src/generators/`, `src/harness/`, `src/emergent/`
+**Location:** `src/evolution/`
 
-**Purpose:** Meta-learning from model reasoning traces. Captures and learns from the model's thinking process, not just output.
-
-**Key Innovation:** Answers "WHERE DID IT GO WRONG?" and "HOW CAN I COMMUNICATE BETTER?"
+**Purpose:** Interactive Genetic Algorithm (IGA) and quality diversity search for creative coding.
 
 **Components:**
 | Component | File | Purpose |
 |-----------|------|---------|
-| ReasoningCapture | `llm/LLMClient.ts` | Extracts `<think>` tags, reasoning_content |
-| ThinkingRepository | `harness/ThinkingSeparation.ts` | Separate storage for generator/harness thinking |
-| InsightMiner | `harness/ThinkingSeparation.ts` | Extracts actionable insights |
-| ModelBehaviorPatterns | `emergent/ModelBehaviorPatterns.ts` | Long-term pattern detection |
-
-**Storage:** `~/.liminal/thinking-traces/{source}/`
+| IGA | `IGA.ts` | Interactive Genetic Algorithm |
+| MapElites | `MapElites.ts` | Quality diversity search |
+| NoveltyArchive | `NoveltyArchive.ts` | Pattern diversity tracking |
+| CrossDomainCrossover | `CrossDomainCrossover.ts` | Cross-domain genetic operations |
+| AestheticModel | `AestheticModel.ts` | Aesthetic preference learning |
+| BehaviorVectors | `BehaviorVectors.ts` | Behavior characterization |
+| FitnessCombiner | `FitnessCombiner.ts` | Multi-objective fitness |
+| MetaMode | `MetaMode.ts` | Meta-evolution strategies |
+| ProgressiveDesignTiers | `ProgressiveDesignTiers.ts` | Tiered design evolution |
 
 ---
 
-### 11. Plugin System
+### 11. Routing System
+
+**Location:** `src/routing/`
+
+**Purpose:** Intelligent model routing based on quality prediction.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| SmartRouter | `SmartRouter.ts` | Intelligent request routing |
+| QualityPredictor | `QualityPredictor.ts` | Predict output quality |
+| RoutingData | `RoutingData.ts` | Routing data structures |
+
+---
+
+### 12. Scavenger System
+
+**Location:** `src/scavenger/`
+
+**Purpose:** DNA extraction from code for reuse and remixing.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| DNAExtractor | `DNAExtractor.ts` | Extract DNA from code |
+| FragmentArchive | `fragments/FragmentArchive.ts` | Store and retrieve fragments |
+
+---
+
+### 13. Music System
+
+**Location:** `src/music/`
+
+**Purpose:** Music generation and theory engine.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| Arpeggiator | `Arpeggiator.ts` | Arpeggio generation |
+| MarkovChain | `MarkovChain.ts` | Markov chain composition |
+| TheoryEngine | `TheoryEngine.ts` | Music theory utilities |
+| EuclideanRhythm | `EuclideanRhythm.ts` | Euclidean rhythm generation |
+| RhymeEngine | `RhymeEngine.ts` | Lyric rhyme detection |
+| StructureTemplates | `StructureTemplates.ts` | Song structure templates |
+| SyllableCounter | `SyllableCounter.ts` | Lyric syllable counting |
+| generateMusic | `generateMusic.ts` | Main music generation |
+
+---
+
+### 14. Composite System
+
+**Location:** `src/composite/`
+
+**Purpose:** Composition utilities for combining creative elements.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| Compositor | `Compositor.ts` | Composition engine |
+
+---
+
+### 15. Plugin System
 
 **Location:** `src/plugins/`
 
@@ -392,7 +455,7 @@ Failures:   0
 
 ---
 
-### 12. TUI (Terminal User Interface)
+### 16. TUI (Terminal User Interface)
 
 **Location:** `src/tui/`
 
@@ -414,7 +477,7 @@ Failures:   0
 
 ---
 
-### 13. Aesthetic System
+### 17. Aesthetic System
 
 **Location:** `src/aesthetic/`
 
@@ -428,7 +491,7 @@ Failures:   0
 
 ---
 
-### 14. Audio System
+### 18. Audio System
 
 **Location:** `src/audio/`
 
@@ -442,7 +505,7 @@ Failures:   0
 
 ---
 
-### 15. Chat System
+### 19. Chat System
 
 **Location:** `src/chat/`
 
@@ -455,7 +518,7 @@ Failures:   0
 
 ---
 
-### 16. Collaboration System
+### 20. Collaboration System
 
 **Location:** `src/collab/`
 
@@ -467,7 +530,7 @@ Failures:   0
 
 ---
 
-### 17. Worktree Isolation System
+### 21. Worktree Isolation System
 
 **Location:** `scripts/`, `docs/`
 
@@ -584,7 +647,7 @@ LIMINAL_LOG_LEVEL=info
 ## Recent Changes (Last 20 Commits)
 
 1. **feat:** Systematize worktree isolation for multi-agent development
-2. **feat:** Thinking-Trace Feedback Loop implementation
+2. **feat:** Worktree isolation system for multi-agent development
 3. **feat:** Harness analyzes generator thinking (Where wrong? How communicate?)
 4. **feat:** Thinking Separation - generator vs harness thinking
 5. **feat:** TUI streaming, debug panel, Meta-Harness self-evaluation

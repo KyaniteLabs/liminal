@@ -58,7 +58,7 @@ export const SupplyChainGuardrail: GuardrailRule = {
   tier: GuardrailTier.ADVISORY,
   category: 'compliance',
 
-  async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
+  async evaluate(_context: ExecutionContext): Promise<GuardrailResult> {
     // Run audit
     const audit = await runNpmAudit();
 

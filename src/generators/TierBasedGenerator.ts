@@ -131,7 +131,7 @@ export abstract class TierBasedGenerator {
     });
 
     // 7. Record to emergent patterns system for long-term learning
-    this.recordToEmergentPatterns(prompt, response);
+    await this.recordToEmergentPatterns(prompt, response);
 
     return response.code;
   }
@@ -139,10 +139,10 @@ export abstract class TierBasedGenerator {
   /**
    * Record observation to emergent patterns system
    */
-  private recordToEmergentPatterns(prompt: string, response: LLMResponse): void {
+  private async recordToEmergentPatterns(prompt: string, response: LLMResponse): Promise<void> {
     try {
       // Dynamic import to avoid circular dependencies
-      const { modelBehaviorPatterns } = require('../emergent/ModelBehaviorPatterns.js');
+      const { modelBehaviorPatterns } = await import('../emergent/ModelBehaviorPatterns.js');
       
       modelBehaviorPatterns.recordObservation({
         model: this.llm.getConfig().model,

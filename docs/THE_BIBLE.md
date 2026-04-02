@@ -192,7 +192,13 @@ Failures: 0
 │ M9:  ✅ Semantic Alignment         - SemanticValidator             │  │
 │ M10: ✅ Runtime Health             - RuntimeHealthMonitor          │  │
 │ M11: ✅ Accessibility              - AccessibilityGuardrails       │  │
-│ M12-M18: ⚪ Planned/Future                                         │  │
+│ M12: 📝 Privacy Guardrail          - PII filter, data anonymizer   │  │
+│ M13: 📝 Prompt Injection Defense   - Jailbreak detection           │  │
+│ M14: 📝 Supply Chain Guardrail     - Dependency audit, SBOM        │  │
+│ M15: 📝 Audit & Compliance         - Non-repudiation logging       │  │
+│ M16: 📝 Fairness & Bias            - Output diversity checks       │  │
+│ M17: 📝 Explainability             - Decision tracing, attribution  │  │
+│ M18: 📝 Resilience                 - Circuit breakers, fallbacks    │  │
 │                                                                    │  │
 │ DGF: ✅ COMPLETE (see above)                                       │  │
 │  └────────────────────────┘        │
@@ -415,7 +421,13 @@ UNKNOWN_ERROR     - Fallback
 | M9 | Semantic Alignment | `guardrails/SemanticValidator.ts` | Intent matching | ✅ |
 | M10 | Runtime Health | `guardrails/RuntimeHealthMonitor.ts` | Memory, FPS monitoring | ✅ |
 | M11 | Accessibility | `guardrails/AccessibilityGuardrails.ts` | Photosensitivity, a11y | ✅ |
-| M12-M18 | Planned | - | Future work | ⚪ |
+| M12 | Privacy Guardrail | `guardrails/PrivacyGuardrail.ts` | PII detection, anonymization | 📝 |
+| M13 | Prompt Injection Defense | `guardrails/InjectionGuardrail.ts` | Jailbreak, prompt leak detection | 📝 |
+| M14 | Supply Chain Guardrail | `guardrails/SupplyChainGuardrail.ts` | Dependency audit, SBOM gen | 📝 |
+| M15 | Audit & Compliance | `guardrails/AuditGuardrail.ts` | Non-repudiation logging | 📝 |
+| M16 | Fairness & Bias | `guardrails/FairnessGuardrail.ts` | Output diversity, bias metrics | 📝 |
+| M17 | Explainability | `guardrails/ExplainabilityGuardrail.ts` | Decision tracing, attribution | 📝 |
+| M18 | Resilience | `guardrails/ResilienceGuardrail.ts` | Circuit breakers, graceful deg | 📝 |
 | **DGF** | **COMPLETE** | `guardrails/` | **3-phase framework** | ✅ |
 
 **DGF Categories (4 total):**
@@ -426,6 +438,30 @@ UNKNOWN_ERROR     - Fallback
 | Correctness | 2 | 1 | ENFORCING |
 | Hygiene | 1 | 2 | ADVISORY |
 | Evolution | 1 | 3 (Lowest) | AUTONOMOUS |
+
+---
+
+### M12-M18 Guardrail Specifications
+
+**Status:** 📝 Designed, Not Implemented
+**Priority:** Post-DGF (after core framework stabilization)
+
+| Guardrail | Purpose | Key Components | Tier |
+|-----------|---------|----------------|------|
+| **M12: Privacy** | Prevent PII leakage in prompts/outputs | `PIIDetector`, `Anonymizer`, `DataClassifier` | ENFORCING |
+| **M13: Prompt Injection** | Detect jailbreaks and prompt leaks | `JailbreakDetector`, `PromptLeakDetector` | AUTONOMOUS |
+| **M14: Supply Chain** | Audit dependencies, generate SBOM | `DependencyAuditor`, `SbomGenerator`, `VulnScanner` | ADVISORY |
+| **M15: Audit & Compliance** | Non-repudiable operation logs | `AuditLogger`, `ComplianceReporter`, `LogChain` | ENFORCING |
+| **M16: Fairness & Bias** | Ensure output diversity, measure bias | `DiversityChecker`, `BiasMetrics`, `FairnessReporter` | ADVISORY |
+| **M17: Explainability** | Trace decisions, attribute outputs | `DecisionTracer`, `AttributionEngine` | SHADOW |
+| **M18: Resilience** | Circuit breakers, graceful degradation | `CircuitBreaker`, `FallbackHandler`, `DegradationManager` | AUTONOMOUS |
+
+**Implementation Notes:**
+- M12-M13 are **critical** for production deployments with user data
+- M14 requires integration with `npm audit` and OSV database
+- M15 needs append-only, cryptographically signed logs
+- M16-M17 are **research features** for bias/interpretability studies
+- M18 overlaps with DGF Catastrophic guardrails (shared circuit breaker)
 
 ---
 

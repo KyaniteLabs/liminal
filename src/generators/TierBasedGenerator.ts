@@ -97,7 +97,7 @@ export abstract class TierBasedGenerator {
         }
         
         // Always feed thinking to compost (even if recovery failed)
-        await this.feedThinkingToCompost(prompt, response);
+        await this.feedThinkingToRepository(prompt, response);
       }
       
       // If still no code after recovery attempt, throw error
@@ -107,7 +107,7 @@ export abstract class TierBasedGenerator {
     } else {
       // We have code, but also capture thinking for successful generations
       if (response.thinking) {
-        await this.feedThinkingToCompost(prompt, response);
+        await this.feedThinkingToRepository(prompt, response);
       }
     }
 
@@ -209,43 +209,37 @@ export abstract class TierBasedGenerator {
   }
 
   /**
-   * Feed thinking content to compost heap
-   * All thinking becomes nutrients for future improvements
+   * Feed generator thinking to repository (NOT compost - that's for digested seeds)
+   * Thinking is mined for insights, NOT composted
    */
-  private async feedThinkingToCompost(prompt: string, response: LLMResponse): Promise<void> {
+  private async feedThinkingToRepository(prompt: string, response: LLMResponse): Promise<void> {
     try {
-      const fs = await import('node:fs/promises');
-      const path = await import('node:path');
-      const os = await import('node:os');
+      const { thinkingRepository } = await import('../harness/ThinkingSeparation.js');
       
-      // Write thinking to compost directory as JSONL
-      const compostDir = path.join(os.homedir(), '.liminal', 'compost-thinking');
-      await fs.mkdir(compostDir, { recursive: true });
+      const entry = thinkingRepository.storeGeneratorThinking({
+        model: this.llm.getConfig().model,
+        domain: this.domain,
+        thinking: response.thinking || '',
+        code: response.code,
+        outcome: response.success ? 'success' : response.code ? 'partial' : 'failure',
+        prompt: prompt,
+      });
       
-      const entry = {
-        type: response.code && response.code.trim() ? 'hybrid' : 'thinking',
-        content: response.thinking || '',
-        source: {
-          model: this.llm.getConfig().model,
-          domain: this.domain,
-          prompt: prompt.slice(0, 200), // Truncate for storage
-        },
-        metadata: {
-          wasEmptyCode: !response.code || response.code.trim() === '',
-          recoveredCode: response.recoveredFromThinking || false,
-          thinkingLength: response.thinking?.length || 0,
-          thinkingMetrics: response.thinkingMetrics,
-          timestamp: new Date().toISOString(),
-        },
-      };
+      console.log(`[${this.constructor.name}] Generator thinking stored (${response.thinking?.length || 0} chars)`);
       
-      const filePath = path.join(compostDir, 'thinking-trace.jsonl');
-      await fs.appendFile(filePath, JSON.stringify(entry) + '\n');
+      // Log insights if any found
+      if (entry.insights && entry.insights.length > 0) {
+        console.log(`[${this.constructor.name}] Insights from thinking:`);
+        entry.insights.forEach(i => console.log(`  - ${i}`));
+      }
       
-      console.log(`[${this.constructor.name}] Thinking fed to compost (${response.thinking?.length || 0} chars)`);
+      if (entry.actionItems && entry.actionItems.length > 0) {
+        console.log(`[${this.constructor.name}] Action items:`);
+        entry.actionItems.forEach(a => console.log(`  - ${a}`));
+      }
     } catch (err) {
-      // Don't fail generation if compost fails
-      console.warn(`[${this.constructor.name}] Failed to feed thinking to compost:`, (err as Error).message);
+      // Don't fail generation if repository fails
+      console.warn(`[${this.constructor.name}] Failed to store thinking:`, (err as Error).message);
     }
   }
 

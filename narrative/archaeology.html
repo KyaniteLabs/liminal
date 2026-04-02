@@ -15,7 +15,7 @@
 :root{
   --bg:#06090f;--surface:#0c1018;--surface2:#141a24;--surface3:#1c2432;
   --border:#1a2232;--border-hover:#2a3a52;
-  --text:#e8ecf2;--text2:#7d8a9a;--text3:#3e4a5a;
+  --text:#e8ecf2;--text2:#8d99aa;--text3:#6a7888;
   --kai:#ff6b6b;--cursor:#ffa94d;--claude:#51cf66;--unknown:#495057;
   --glow-kai:rgba(255,107,107,0.08);--glow-cursor:rgba(255,169,77,0.08);--glow-claude:rgba(81,207,102,0.08);
   --font-display:'Space Grotesk',sans-serif;--font-body:'DM Sans',sans-serif;
@@ -612,7 +612,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .on('mouseover', function(e) { showTooltip(e, `<div class="tt-title">${era.name}</div><div class="tt-detail">${era.dates}<br>${era.commits} commits</div>`); })
         .on('mouseout', hideTooltip);
       // Commit count
-      g.append('text').attr('x', margin.left + barW + 8).attr('y', barHeight/2).attr('fill', COLORS.text3).attr('font-size', '11px').attr('dominant-baseline', 'middle').text(`${era.commits}`);
+      g.append('text').attr('x', margin.left + barW + 8).attr('y', barHeight/2).attr('fill', COLORS.text2).attr('font-size', '12px').attr('dominant-baseline', 'middle').text(`${era.commits}`);
     });
   })();
 })();
@@ -646,7 +646,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const angle = (d.hour / 24) * 2 * Math.PI - Math.PI/2;
       const lx = cx + (r + 15) * Math.cos(angle);
       const ly = cy + (r + 15) * Math.sin(angle);
-      svg.append('text').attr('x', lx).attr('y', ly).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', COLORS.text3).attr('font-size', '9px').text(d.hour + ':00');
+      svg.append('text').attr('x', lx).attr('y', ly).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', COLORS.text2).attr('font-size', '11px').text(d.hour + ':00');
     });
     // Bars
     const barWidth = (2 * Math.PI / 24) * 0.7;
@@ -700,8 +700,8 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
     // Labels
-    days.forEach((day, i) => svg.append('text').attr('x', margin.left - 5).attr('y', margin.top + i * cellSize + cellSize/2).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('fill', COLORS.text3).attr('font-size', '10px').text(day));
-    hours.filter(h => h % 3 === 0).forEach(h => svg.append('text').attr('x', margin.left + h * cellSize + cellSize/2).attr('y', margin.top - 5).attr('text-anchor', 'middle').attr('fill', COLORS.text3).attr('font-size', '10px').text(h + ':00'));
+    days.forEach((day, i) => svg.append('text').attr('x', margin.left - 5).attr('y', margin.top + i * cellSize + cellSize/2).attr('text-anchor', 'end').attr('dominant-baseline', 'middle').attr('fill', COLORS.text2).attr('font-size', '11px').text(day));
+    hours.filter(h => h % 3 === 0).forEach(h => svg.append('text').attr('x', margin.left + h * cellSize + cellSize/2).attr('y', margin.top - 5).attr('text-anchor', 'middle').attr('fill', COLORS.text2).attr('font-size', '11px').text(h + ':00'));
   })();
 
   // 3. Agent Radar (Spider chart)
@@ -759,7 +759,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const ex = cx + r * Math.cos(angle), ey = cy + r * Math.sin(angle);
       svg.append('line').attr('x1', cx).attr('y1', cy).attr('x2', ex).attr('y2', ey).attr('stroke', COLORS.border);
       const lx = cx + (r + 18) * Math.cos(angle), ly = cy + (r + 18) * Math.sin(angle);
-      svg.append('text').attr('x', lx).attr('y', ly).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', COLORS.text3).attr('font-size', '9px').text(axisLabels[i]);
+      svg.append('text').attr('x', lx).attr('y', ly).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', COLORS.text2).attr('font-size', '11px').text(axisLabels[i]);
     });
     // Data polygons
     allAgents.forEach(ag => {
@@ -774,7 +774,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const legend = svg.append('g').attr('transform', `translate(${size - 90}, 10)`);
     allAgents.forEach((ag, i) => {
       legend.append('rect').attr('x', 0).attr('y', i * 14).attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', ag.color);
-      legend.append('text').attr('x', 14).attr('y', i * 14 + 9).attr('fill', COLORS.text2).attr('font-size', '9px').text(ag.name);
+      legend.append('text').attr('x', 14).attr('y', i * 14 + 9).attr('fill', COLORS.text2).attr('font-size', '11px').text(ag.name);
     });
   })();
 
@@ -809,7 +809,7 @@ document.addEventListener('DOMContentLoaded', () => {
     agentNames.forEach((a, i) => {
       if (a === 'unknown') return;
       legend.append('rect').attr('x', 0).attr('y', i * 14).attr('width', 10).attr('height', 10).attr('rx', 2).attr('fill', agentColors[a]);
-      legend.append('text').attr('x', 14).attr('y', i * 14 + 9).attr('fill', COLORS.text2).attr('font-size', '9px').text(a.charAt(0).toUpperCase() + a.slice(1));
+      legend.append('text').attr('x', 14).attr('y', i * 14 + 9).attr('fill', COLORS.text2).attr('font-size', '11px').text(a.charAt(0).toUpperCase() + a.slice(1));
     });
   })();
 })();
@@ -844,7 +844,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .on('mouseover', function(e, d) { showTooltip(e, `<div class="tt-title">${d.data.name}</div><div class="tt-detail">${d.data.value} files${d.data.loc ? ' · ' + d.data.loc.toLocaleString() + ' LOC' : ''}</div>`); d3.select(this).attr('opacity', 1); })
       .on('mouseout', function() { hideTooltip(); d3.select(this).attr('opacity', 0.8); });
     svg.selectAll('text').data(leaves.filter(d => (d.x1 - d.x0) > 40 && (d.y1 - d.y0) > 18)).enter().append('text')
-      .attr('x', d => d.x0 + 4).attr('y', d => d.y0 + 14).attr('fill', '#080c14').attr('font-size', '10px').attr('font-weight', '600').text(d => d.data.name.length > 16 ? d.data.name.slice(0,15) + '…' : d.data.name);
+      .attr('x', d => d.x0 + 4).attr('y', d => d.y0 + 14).attr('fill', '#080c14').attr('font-size', '11px').attr('font-weight', '600').text(d => d.data.name.length > 16 ? d.data.name.slice(0,15) + '…' : d.data.name);
   })();
 
   // 2. File & Test Growth overlay
@@ -884,8 +884,8 @@ document.addEventListener('DOMContentLoaded', () => {
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     gT.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     // Legend
-    g.append('text').attr('x', 10).attr('y', 12).attr('fill', COLORS.claude).attr('font-size', '10px').text('— Files');
-    g.append('text').attr('x', 60).attr('y', 12).attr('fill', COLORS.kai).attr('font-size', '10px').text('--- Tests');
+    g.append('text').attr('x', 10).attr('y', 12).attr('fill', COLORS.claude).attr('font-size', '11px').text('— Files');
+    g.append('text').attr('x', 60).attr('y', 12).attr('fill', COLORS.kai).attr('font-size', '11px').text('--- Tests');
   })();
 
   // 3. Commit Types Donut
@@ -914,7 +914,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const col = i < 3 ? 0 : 1;
       const row = i % 3;
       legend.append('rect').attr('x', col * 100).attr('y', row * 14).attr('width', 8).attr('height', 8).attr('rx', 2).attr('fill', colorScale(d.type));
-      legend.append('text').attr('x', col * 100 + 12).attr('y', row * 14 + 8).attr('fill', COLORS.text2).attr('font-size', '9px').text(`${d.type} (${d.count})`);
+      legend.append('text').attr('x', col * 100 + 12).attr('y', row * 14 + 8).attr('fill', COLORS.text2).attr('font-size', '11px').text(`${d.type} (${d.count})`);
     });
   })();
 
@@ -998,7 +998,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .on('mouseover', function(e) { showTooltip(e, `<div class="tt-title">${d.era}</div><div class="tt-detail">Intensity: ${d.value}/5</div><div class="tt-quote">${d.label}</div>`); })
         .on('mouseout', hideTooltip);
     });
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '9px').attr('transform', 'rotate(-20)').attr('text-anchor', 'end');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px').attr('transform', 'rotate(-20)').attr('text-anchor', 'end');
     g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
   })();
@@ -1029,13 +1029,13 @@ document.addEventListener('DOMContentLoaded', () => {
       sources.forEach((n, i) => {
         const y = i * (itemH + 4) + 10;
         svg.append('rect').attr('x', sourceX).attr('y', y).attr('width', 120).attr('height', itemH).attr('rx', 4).attr('fill', n.color).attr('opacity', 0.8);
-        svg.append('text').attr('x', sourceX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '8px').text(n.name.length > 22 ? n.name.slice(0,21)+'…' : n.name);
+        svg.append('text').attr('x', sourceX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '10px').attr('font-weight', '500').text(n.name.length > 22 ? n.name.slice(0,21)+'…' : n.name);
       });
       targets.forEach((n, i) => {
         const y = i * (itemH + 4) + 10;
         svg.append('rect').attr('x', targetX).attr('y', y).attr('width', 140).attr('height', itemH).attr('rx', 4).attr('fill', n.color).attr('opacity', 0.8);
         const status = links.find(l => l.target === nodes.indexOf(n))?.active ? '✓' : '✗';
-        svg.append('text').attr('x', targetX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '8px').text(status + ' ' + (n.name.length > 20 ? n.name.slice(0,19)+'…' : n.name));
+        svg.append('text').attr('x', targetX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '10px').attr('font-weight', '500').text(status + ' ' + (n.name.length > 20 ? n.name.slice(0,19)+'…' : n.name));
       });
       // Links
       links.forEach(l => {
@@ -1057,7 +1057,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .attr('x', d => d.x0 < width / 2 ? d.x0 - 5 : d.x1 + 5)
         .attr('y', d => (d.y0 + d.y1) / 2).attr('dy', '0.35em')
         .attr('text-anchor', d => d.x0 < width / 2 ? 'end' : 'start')
-        .attr('fill', COLORS.text2).attr('font-size', '9px').text(d => d.name.length > 30 ? d.name.slice(0,29)+'…' : d.name);
+        .attr('fill', COLORS.text2).attr('font-size', '11px').text(d => d.name.length > 30 ? d.name.slice(0,29)+'…' : d.name);
     }
   })();
 
@@ -1127,9 +1127,9 @@ document.addEventListener('DOMContentLoaded', () => {
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     // Legend
     g.append('rect').attr('x', width - 130).attr('y', 0).attr('width', 8).attr('height', 8).attr('rx', 2).attr('fill', COLORS.claude);
-    g.append('text').attr('x', width - 118).attr('y', 8).attr('fill', COLORS.text2).attr('font-size', '9px').text('Liminal');
+    g.append('text').attr('x', width - 118).attr('y', 8).attr('fill', COLORS.text2).attr('font-size', '11px').text('Liminal');
     g.append('rect').attr('x', width - 65).attr('y', 0).attr('width', 8).attr('height', 8).attr('rx', 2).attr('fill', COLORS.unknown);
-    g.append('text').attr('x', width - 53).attr('y', 8).attr('fill', COLORS.text2).attr('font-size', '9px').text('Other repos');
+    g.append('text').attr('x', width - 53).attr('y', 8).attr('fill', COLORS.text2).attr('font-size', '11px').text('Other repos');
   })();
 
   // 2. Creative DNA Sankey
@@ -1163,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const c = domainColors[d.domain] || COLORS.text3;
       svg.append('rect').attr('x', sourceX).attr('y', y).attr('width', 110).attr('height', itemH).attr('rx', 4).attr('fill', c).attr('opacity', 0.8);
       const label = d.domain.replace(/_/g, ' ');
-      svg.append('text').attr('x', sourceX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '7.5px').attr('font-weight', '500').text(label.length > 15 ? label.slice(0,14) + '...' : label);
+      svg.append('text').attr('x', sourceX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '11px').attr('font-weight', '600').text(label.length > 15 ? label.slice(0,14) + '...' : label);
       svg.append('title').text(`${d.repo_count} repos, ${d.total_files.toLocaleString()} files`);
     });
     // Target nodes
@@ -1171,7 +1171,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const y = i * (itemH + 3) + 10;
       svg.append('rect').attr('x', targetX).attr('y', y).attr('width', 130).attr('height', itemH).attr('rx', 4).attr('fill', COLORS.claude).attr('opacity', 0.6);
       const label = m.label || m.domain || '';
-      svg.append('text').attr('x', targetX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '7.5px').attr('font-weight', '500').text(label.length > 20 ? label.slice(0,19) + '...' : label);
+      svg.append('text').attr('x', targetX + 5).attr('y', y + itemH/2 + 3).attr('fill', '#080c14').attr('font-size', '11px').attr('font-weight', '600').text(label.length > 20 ? label.slice(0,19) + '...' : label);
     });
     // Flow curves from actual flow data
     flows.forEach(f => {
@@ -1218,7 +1218,7 @@ document.addEventListener('DOMContentLoaded', () => {
         .on('mouseover', function(e) { showTooltip(e, `<div class="tt-title">${d.data.name}</div><div class="tt-detail">${d.data.domain}<br>${d.data.files} files</div>`); d3.select(this).attr('opacity', 1); })
         .on('mouseout', function() { hideTooltip(); d3.select(this).attr('opacity', 0.7); });
       if (r > 15) {
-        svg.append('text').attr('x', d.x).attr('y', d.y).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', '#080c14').attr('font-size', `${Math.min(r/3, 9)}px`).attr('font-weight', '600').text(d.data.name.length > 12 ? d.data.name.slice(0,11)+'…' : d.data.name);
+        svg.append('text').attr('x', d.x).attr('y', d.y).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', '#080c14').attr('font-size', `${Math.min(r/3, 11)}px`).attr('font-weight', '600').text(d.data.name.length > 12 ? d.data.name.slice(0,11)+'…' : d.data.name);
       }
     });
     // Legend
@@ -1226,7 +1226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const legend = svg.append('g').attr('transform', `translate(10, ${height - 15})`);
     domains.slice(0, 6).forEach((d, i) => {
       legend.append('rect').attr('x', i * 85).attr('y', 0).attr('width', 8).attr('height', 8).attr('rx', 2).attr('fill', domainColors[d] || '#495057');
-      legend.append('text').attr('x', i * 85 + 11).attr('y', 8).attr('fill', COLORS.text3).attr('font-size', '8px').text(d);
+      legend.append('text').attr('x', i * 85 + 11).attr('y', 8).attr('fill', COLORS.text2).attr('font-size', '10px').text(d);
     });
   })();
 })();
@@ -1316,7 +1316,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="benchmark-bar">
         <div class="fill" style="width:${pct}%;background:${b.color}">${label}</div>
       </div>
-      <div class="benchmark-note" style="font-size:0.72rem;color:var(--text2);margin-top:2px">${b.note}</div>
+      <div class="benchmark-note" style="font-size:0.8rem;color:var(--text2);margin-top:2px">${b.note}</div>
     `;
     el.appendChild(item);
   });

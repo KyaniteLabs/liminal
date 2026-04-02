@@ -129,6 +129,7 @@ export class MetaHarnessIntegration {
 
   /**
    * Call when a generation completes (success or failure)
+   * NOW includes generator thinking for harness analysis
    */
   async onGenerationComplete(result: {
     success: boolean;
@@ -138,6 +139,8 @@ export class MetaHarnessIntegration {
     code?: string;
     error?: string;
     duration: number;
+    thinking?: string;  // NEW: Generator thinking for harness analysis
+    recoveredFromThinking?: boolean;
   }): Promise<void> {
     if (!this.initialized) {
       await this.initialize();
@@ -151,8 +154,14 @@ export class MetaHarnessIntegration {
       code: result.code,
     });
 
+    // CRITICAL: Analyze generator thinking even if successful
+    // This helps answer: "WHERE DID IT GO WRONG?" and "HOW CAN I COMMUNICATE BETTER?"
+    if (result.thinking) {
+      await this.analyzeGeneratorThinking(result);
+    }
+
     if (!result.success && result.error) {
-      // Log the failure
+      // Log the failure WITH thinking context
       const failure: Omit<FailureRecord, 'timestamp' | 'sessionId'> = {
         model: result.model,
         domain: result.domain,
@@ -161,6 +170,7 @@ export class MetaHarnessIntegration {
         error: result.error,
         errorType: 'generation',
         duration: result.duration,
+        thinking: result.thinking,  // Include thinking for context
       };
       
       failureLogger.log(failure);
@@ -197,6 +207,110 @@ export class MetaHarnessIntegration {
           });
         }
       }
+    }
+  }
+
+  /**
+   * Analyze generator thinking to answer:
+   * - WHERE DID IT GO WRONG?
+   * - HOW CAN I COMMUNICATE BETTER?
+   * 
+   * This is the KEY function that lets the harness learn from the generator's reasoning
+   */
+  private async analyzeGeneratorThinking(result: {
+    success: boolean;
+    model: string;
+    domain: string;
+    prompt: string;
+    code?: string;
+    error?: string;
+    thinking?: string;
+    recoveredFromThinking?: boolean;
+  }): Promise<void> {
+    if (!this.llmClient || !result.thinking) return;
+    
+    console.log('[MetaHarness] Analyzing generator thinking...');
+    
+    // Build the prompt for the harness model
+    const analysisPrompt = `
+You are the Meta-Harness analyzing a generator model's thinking process.
+
+PROMPT GIVEN TO GENERATOR:
+${result.prompt}
+
+GENERATOR MODEL: ${result.model}
+DOMAIN: ${result.domain}
+SUCCESS: ${result.success}
+${result.error ? `ERROR: ${result.error}` : ''}
+
+GENERATOR'S THINKING PROCESS:
+${result.thinking.slice(0, 3000)}
+
+YOUR TASK - Answer these questions:
+
+1. WHERE DID IT GO WRONG?
+   - What misunderstanding did the generator have?
+   - What confusion is evident in the thinking?
+   - What pattern of failure do you see?
+
+2. HOW CAN I COMMUNICATE BETTER?
+   - What should the prompt have said differently?
+   - What examples or constraints were missing?
+   - How should instructions be rephrased?
+
+3. SYSTEM IMPROVEMENT SUGGESTIONS
+   - Should validation be changed?
+   - Should the prompt template be updated?
+   - Is there a model-specific quirk to handle?
+
+Respond with a JSON object:
+{
+  "whereWentWrong": "specific analysis of the failure",
+  "howToCommunicateBetter": "concrete suggestion for prompt improvement",
+  "systemImprovement": "what should change in the system",
+  "confidence": 0.8
+}
+`;
+
+    try {
+      const response = await this.llmClient.generate(
+        'You are a meta-learning analyzer. Output JSON only.',
+        analysisPrompt,
+        AbortSignal.timeout(30000)
+      );
+      
+      if (response.code) {
+        // Try to extract JSON
+        const jsonMatch = response.code.match(/\{[\s\S]*\}/);
+        if (jsonMatch) {
+          const analysis = JSON.parse(jsonMatch[0]);
+          
+          console.log('[MetaHarness] Analysis complete:');
+          console.log(`  Where wrong: ${analysis.whereWentWrong?.slice(0, 80)}...`);
+          console.log(`  How to improve: ${analysis.howToCommunicateBetter?.slice(0, 80)}...`);
+          
+          // Store this insight
+          harnessMemory.recordEpisode({
+            type: 'feedback',
+            prompt: `Analysis of ${result.model} thinking for ${result.domain}`,
+            comment: analysis.whereWentWrong,
+            tags: [
+              'thinking-analysis',
+              `model:${result.model}`,
+              `domain:${result.domain}`,
+              result.success ? 'success' : 'failure',
+            ],
+          });
+          
+          // If high confidence suggestion, could auto-adapt prompt templates
+          if (analysis.confidence > 0.8 && analysis.systemImprovement) {
+            console.log('[MetaHarness] High-confidence system improvement suggested:');
+            console.log(`  ${analysis.systemImprovement}`);
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[MetaHarness] Failed to analyze thinking:', (err as Error).message);
     }
   }
 

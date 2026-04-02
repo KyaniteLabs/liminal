@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Architecture - Liminal Documentation</title>
+    <link rel="stylesheet" href="styles/docs.css">
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <h1>Liminal</h1>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="architecture.html" class="active">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+            <li><a href="soul-system.html">SOUL</a></li>
+            <li><a href="visual-bible.html">Visual Bible</a></li>
+        </ul>
+    </nav>
+
+    <div class="breadcrumbs">
+        <a href="index.html">Home</a>
+        <span>/</span>
+        <span>Architecture</span>
+    </div>
+
+    <main class="container">
+        <section class="section">
+            <h1 class="section-title">🏗️ Architecture</h1>
+            <p class="section-subtitle">System overview, components, and technical design</p>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📐 System Overview</h2>
+            <p>Liminal is built on a layered architecture with 18 major subsystems organized into logical layers:</p>
+            
+            <pre class="mermaid">
+flowchart TB
+    subgraph UI["User Interface Layer"]
+        TUI["TUI Terminal"]
+        CHAT["Chat System"]
+        NATURAL["Natural Interface"]
+        SOUL["SOUL System"]
+    end
+
+    subgraph CORE["Core Framework"]
+        RALPH["Ralph Loop"]
+        META["Meta-Harness"]
+        GENERATORS["9 Generators"]
+    end
+
+    subgraph SAFETY["Safety Layer"]
+        DGF["DGF - 3 Phases"]
+        M1["M1-M11 Guardrails"]
+        M12["M12-M18 Planned"]
+    end
+
+    subgraph LEARN["Learning Layer"]
+        MEMORY["Memory Systems"]
+        COMPOST["Compost Heap"]
+        SWARM["Swarm System"]
+    end
+
+    subgraph INFRA["Infrastructure"]
+        LLM["LLM Client"]
+        ROUTING["Smart Routing"]
+        SEC["Security"]
+    end
+
+    UI --> CORE
+    CORE --> SAFETY
+    CORE --> LEARN
+    CORE --> INFRA
+            </pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🧩 Subsystem Architecture</h2>
+            <p>The 18 subsystems are organized into functional groups:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Group</th>
+                        <th>Subsystems</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Core Framework</strong></td>
+                        <td>Meta-Harness, Ralph Loop, Generators, DGF, Memory</td>
+                        <td><span class="badge badge-success">5/5 Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>User Interface</strong></td>
+                        <td>TUI, Chat, SOUL, Natural Interface</td>
+                        <td><span class="badge badge-success">4/4 Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Intelligence</strong></td>
+                        <td>Swarm, Compost, Aesthetic, Routing, Scavenger</td>
+                        <td><span class="badge badge-success">5/5 Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Infrastructure</strong></td>
+                        <td>LLM Client, Security, Testing, Plugins, LLM Mode</td>
+                        <td><span class="badge badge-success">4/4 Complete</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🛡️ Guardrail Architecture</h2>
+            <p>Two complementary guardrail systems protect the codebase:</p>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <h3>M1-M18 Guardrails</h3>
+                    <p>Traditional milestone-based guardrails for specific quality checks.</p>
+                    <ul>
+                        <li>M1-M11: <span class="badge badge-success">Complete</span></li>
+                        <li>M12-M18: <span class="badge badge-warning">Planned</span></li>
+                    </ul>
+                </div>
+                <div class="card">
+                    <h3>DGF Framework</h3>
+                    <p>3-phase Deterministic Guardrails Framework with runtime protection.</p>
+                    <ul>
+                        <li>Phase 1: Foundation</li>
+                        <li>Phase 2: Validation & Remediation</li>
+                        <li>Phase 3: Evolution</li>
+                    </ul>
+                    <p><span class="badge badge-success">31 Tests Passing</span></p>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📚 Detailed Documentation</h2>
+            <p>Explore specific architectural components:</p>
+            
+            <div class="card-grid">
+                <div class="card">
+                    <h3>🔬 Deep Dive</h3>
+                    <p>LLMModeAgent, NaturalInterface, and Tool System internals.</p>
+                    <a href="architecture-deep-dive.html" class="btn btn-primary">Read More →</a>
+                </div>
+                <div class="card">
+                    <h3>🎨 Generators</h3>
+                    <p>9 generator architecture: p5.js, GLSL, Three.js, Hydra, Strudel, Tone, Remotion, HTML, ASCII.</p>
+                    <a href="architecture-generators.html" class="btn btn-primary">Read More →</a>
+                </div>
+                <div class="card">
+                    <h3>📖 THE BIBLE</h3>
+                    <p>Complete 1513-line system documentation with all subsystems.</p>
+                    <a href="THE_BIBLE.md" class="btn btn-primary">Read More →</a>
+                </div>
+                <div class="card">
+                    <h3>🔍 Visual Bible</h3>
+                    <p>Dashboard view of system status, task board, and loose ends.</p>
+                    <a href="visual-bible.html" class="btn btn-primary">View Dashboard →</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">🔄 Data Flow</h2>
+            <p>How a generation request flows through the system:</p>
+            
+            <pre><code>User Input
+    ↓
+┌─────────────────────────────────────┐
+│  NaturalInterface / IntentRouter    │
+│  Detects command vs chat vs agent   │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│  GeneratorRegistry.route()          │
+│  Selects appropriate generator      │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│  Ralph Loop (iterative refinement)  │
+│  Generate → Evaluate → Accumulate   │
+└─────────────────────────────────────┘
+    ↓
+┌─────────────────────────────────────┐
+│  DGF Guardrails (3-phase)           │
+│  Validate → Remediate → Learn       │
+└─────────────────────────────────────┘
+    ↓
+Output (code, visualization, or chat)</code></pre>
+        </section>
+
+        <section class="section">
+            <h2 class="section-title">📊 Component Reference</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Component</th>
+                        <th>Location</th>
+                        <th>Purpose</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>RalphLoop</strong></td>
+                        <td><code>src/core/RalphLoop.ts</code></td>
+                        <td>Iterative refinement engine</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Meta-Harness</strong></td>
+                        <td><code>src/harness/</code></td>
+                        <td>Self-improvement with 7 tools</td>
+                    </tr>
+                    <tr>
+                        <td><strong>DGF Core</strong></td>
+                        <td><code>src/guardrails/</code></td>
+                        <td>3-phase guardrail framework</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Compost Heap</strong></td>
+                        <td><code>src/compost/</code></td>
+                        <td>Failure learning system</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Swarm System</strong></td>
+                        <td><code>src/swarm/</code></td>
+                        <td>Multi-agent generation</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LLM Client</strong></td>
+                        <td><code>src/llm/LLMClient.ts</code></td>
+                        <td>Unified LLM interface</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <p>Liminal Architecture Documentation</p>
+        </div>
+    </footer>
+
+    <script>
+        mermaid.initialize({ startOnLoad: true });
+    </script>
+</body>
+</html>

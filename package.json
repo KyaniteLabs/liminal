@@ -5,7 +5,7 @@
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "author": "",
+  "author": "Simon Gonzalez de Cruz",
   "license": "MIT",
   "repository": {
     "type": "git",

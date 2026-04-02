@@ -1,0 +1,730 @@
+{
+  "project": "Liminal",
+  "description": "Codebase evolution telemetry mined from git history across 9 development eras",
+  "mined_at": "2026-04-01",
+  "total_commits": 303,
+  "lifespan": "32 days (Feb 28 - Apr 1, 2026)",
+
+  "file_growth_timeline": {
+    "description": "Total file count at each era boundary commit",
+    "data": [
+      {
+        "commit": "b620e02",
+        "date": "2026-02-28",
+        "era": 1,
+        "era_name": "The Seed (start)",
+        "total_files": 2,
+        "commit_message": "Initial commit",
+        "cumulative_commits": 1
+      },
+      {
+        "commit": "3471966",
+        "date": "2026-02-28",
+        "era": 1,
+        "era_name": "The Seed (Kai scaffolding)",
+        "total_files": 9,
+        "commit_message": "feat(task-job-1772343399527-kai-001): initialize project with TypeScript and Jest",
+        "cumulative_commits": 2
+      },
+      {
+        "commit": "e09981e",
+        "date": "2026-03-19",
+        "era": 1,
+        "era_name": "The Seed (end - LLM working)",
+        "total_files": 416,
+        "commit_message": "[I] Add liminal-archive.zip to inbox",
+        "cumulative_commits": 59
+      },
+      {
+        "commit": "94671ad",
+        "date": "2026-04-01",
+        "era": 2,
+        "era_name": "The Explosion (after Hydra merge)",
+        "total_files": 2180,
+        "commit_message": "feat(guardrails): Phase 3 - Self-Healing & Evolution (Constitution)",
+        "cumulative_commits": 294
+      },
+      {
+        "commit": "3ccb2d2",
+        "date": "2026-03-19",
+        "era": 2,
+        "era_name": "The Explosion (end)",
+        "total_files": 2146,
+        "commit_message": "[I] Phase 1: native improvements + Wave 1-5 evolution merge cleanup",
+        "cumulative_commits": 41
+      },
+      {
+        "commit": "6fc87e9",
+        "date": "2026-04-01",
+        "era": 8,
+        "era_name": "The Dogfood Crucible",
+        "total_files": 3440,
+        "commit_message": "feat(guardrails): implement Deterministic Guardrails Framework Phase 1",
+        "cumulative_commits": 297
+      },
+      {
+        "commit": "27974bb",
+        "date": "2026-04-01",
+        "era": 9,
+        "era_name": "THE BIBLE",
+        "total_files": 3432,
+        "commit_message": "feat: TUI streaming, debug panel, and Meta-Harness self-evaluation",
+        "cumulative_commits": 295
+      },
+      {
+        "commit": "ae21b06",
+        "date": "2026-04-01",
+        "era": 9,
+        "era_name": "THE BIBLE",
+        "total_files": 3414,
+        "commit_message": "fix(tui): detect non-TTY stdin and exit gracefully with helpful error",
+        "cumulative_commits": 292
+      },
+      {
+        "commit": "9f5d7d8",
+        "date": "2026-04-01",
+        "era": 9,
+        "era_name": "THE BIBLE (HEAD before narrative branch)",
+        "total_files": 3417,
+        "commit_message": "feat(narrative): deep session mining with chunked parallel agents",
+        "cumulative_commits": 292
+      },
+      {
+        "commit": "5f067ac",
+        "date": "2026-04-01",
+        "era": 9,
+        "era_name": "THE BIBLE (current HEAD)",
+        "total_files": 3463,
+        "commit_message": "feat(narrative): deep session mining with chunked parallel agents",
+        "cumulative_commits": 303
+      }
+    ],
+    "derived_insights": "The codebase exploded from 2 files to 2180 files in the first two days (Era 1-2), driven by Kai agent scaffolding and Cursor IDE bursts. The largest single jump was 416→2180 (a 5.2x increase) during the Hydra merge. Growth then continued steadily from 2146 to 3463 over the remaining eras, with a notable plateau at 3400-3463 in the final two eras, suggesting architectural maturity rather than unchecked expansion."
+  },
+
+  "language_evolution": {
+    "description": "File count by language at each era boundary",
+    "data": [
+      {
+        "commit": "b620e02",
+        "date": "2026-02-28",
+        "era": 1,
+        "typescript": 0,
+        "javascript": 0,
+        "markdown": 2,
+        "json": 0,
+        "test_files": 0
+      },
+      {
+        "commit": "3471966",
+        "date": "2026-02-28",
+        "era": 1,
+        "typescript": 2,
+        "javascript": 1,
+        "markdown": 2,
+        "json": 2,
+        "test_files": 1
+      },
+      {
+        "commit": "e09981e",
+        "date": "2026-03-19",
+        "era": 1,
+        "typescript": 19,
+        "javascript": 353,
+        "markdown": 3,
+        "json": 4,
+        "test_files": 18
+      },
+      {
+        "commit": "94671ad",
+        "date": "2026-04-01",
+        "era": 2,
+        "typescript": 132,
+        "javascript": 1960,
+        "markdown": 16,
+        "json": 8,
+        "test_files": 92
+      },
+      {
+        "commit": "3ccb2d2",
+        "date": "2026-03-19",
+        "era": 2,
+        "typescript": 104,
+        "javascript": 1959,
+        "markdown": 16,
+        "json": 7,
+        "test_files": 76
+      },
+      {
+        "commit": "6fc87e9",
+        "date": "2026-04-01",
+        "era": 8,
+        "typescript": 524,
+        "javascript": 181,
+        "markdown": 2543,
+        "json": 38,
+        "test_files": 222
+      },
+      {
+        "commit": "27974bb",
+        "date": "2026-04-01",
+        "era": 9,
+        "typescript": 517,
+        "javascript": 181,
+        "markdown": 2542,
+        "json": 38,
+        "test_files": 222
+      },
+      {
+        "commit": "ae21b06",
+        "date": "2026-04-01",
+        "era": 9,
+        "typescript": 509,
+        "javascript": 181,
+        "markdown": 2534,
+        "json": 37,
+        "test_files": 220
+      },
+      {
+        "commit": "9f5d7d8",
+        "date": "2026-04-01",
+        "era": 9,
+        "typescript": 511,
+        "javascript": 181,
+        "markdown": 2535,
+        "json": 37,
+        "test_files": 221
+      },
+      {
+        "commit": "5f067ac",
+        "date": "2026-04-01",
+        "era": 9,
+        "typescript": 531,
+        "javascript": 181,
+        "markdown": 2547,
+        "json": 48,
+        "test_files": 224
+      }
+    ],
+    "derived_insights": "A dramatic language shift occurred at the Era 2/3 boundary. Early code was JavaScript-dominated (353 JS vs 19 TS at Era 1 end). By Era 8, TypeScript overtook JavaScript completely (524 TS vs 181 JS). The massive markdown count (2547) reflects auto-generated gallery artifacts, session logs, and documentation. The JavaScript count stabilized at 181 after the migration, consisting primarily of gallery outputs and config files. TypeScript became the definitive source language."
+  },
+
+  "module_emergence_timeline": {
+    "description": "When key architectural modules first appeared in the codebase",
+    "data": [
+      {
+        "module": "PreviewServer",
+        "first_commit": "0af9cab",
+        "date": "2026-02-28",
+        "era": 1,
+        "commit_message": "feat(task-job-...kai-009): Implement PreviewServer with Express server for live p5.js sketch preview"
+      },
+      {
+        "module": "Gallery",
+        "first_commit": "edee11c",
+        "date": "2026-02-28",
+        "era": 1,
+        "commit_message": "feat(task-job-...kai-011): Implement Gallery save/load iterations"
+      },
+      {
+        "module": "Exporter",
+        "first_commit": "c6d7cb7",
+        "date": "2026-02-28",
+        "era": 1,
+        "commit_message": "feat(task-job-...kai-013): Implement Exporter"
+      },
+      {
+        "module": "CreativeEvaluator",
+        "first_commit": "a7637da",
+        "date": "2026-02-28",
+        "era": 1,
+        "commit_message": "feat(task-job-...kai-004): implement CreativeEvaluator quality gates"
+      },
+      {
+        "module": "RalphLoop",
+        "first_commit": "44274f9",
+        "date": "2026-02-28",
+        "era": 1,
+        "commit_message": "feat(task-job-...kai-014): Implement RalphLoop iteration engine"
+      },
+      {
+        "module": "LLMClient",
+        "first_commit": "e6678b7",
+        "date": "2026-03-01",
+        "era": 1,
+        "commit_message": "Add P5GeneratorLLM with LLM integration"
+      },
+      {
+        "module": "ConfigLoader",
+        "first_commit": "c058a96",
+        "date": "2026-03-07",
+        "era": 2,
+        "commit_message": "Add workspace configuration and documentation updates"
+      },
+      {
+        "module": "SwarmOrchestrator",
+        "first_commit": "3feb975",
+        "date": "2026-03-20",
+        "era": 3,
+        "commit_message": "refactor: Final unification - TokenMill to Swarm rename, branding, config, cache"
+      },
+      {
+        "module": "CompostMill",
+        "first_commit": "860b589",
+        "date": "2026-03-20",
+        "era": 3,
+        "commit_message": "feat: Add Compost Mill - living digestion system for creative material"
+      },
+      {
+        "module": "SeedBank",
+        "first_commit": "860b589",
+        "date": "2026-03-20",
+        "era": 3,
+        "commit_message": "feat: Add Compost Mill - living digestion system for creative material"
+      },
+      {
+        "module": "ScoringEngine",
+        "first_commit": "129b7d8",
+        "date": "2026-03-20",
+        "era": 3,
+        "commit_message": "feat: Consolidate architecture - unify types, scoring, collaboration, and wiring"
+      },
+      {
+        "module": "LIRPromptFormatter",
+        "first_commit": "2948a3b",
+        "date": "2026-03-22",
+        "era": 4,
+        "commit_message": "feat(lir): wire LIR structured data through all consumers (Wave 5)"
+      },
+      {
+        "module": "ContextBuilder",
+        "first_commit": "bf3ad7f",
+        "date": "2026-03-21",
+        "era": 4,
+        "commit_message": "refactor: Decompose RalphLoop.ts (1185 to 377 lines) into 8 focused modules"
+      },
+      {
+        "module": "ChatCLI",
+        "first_commit": "e4d5811",
+        "date": "2026-03-22",
+        "era": 5,
+        "commit_message": "feat(chat): add ChatCLI with split-view terminal UI"
+      },
+      {
+        "module": "AestheticCritic",
+        "first_commit": "a3c8178",
+        "date": "2026-03-29",
+        "era": 7,
+        "commit_message": "feat(aesthetic): add AestheticCritic orchestrator and barrel exports"
+      },
+      {
+        "module": "AudioAnalyzer",
+        "first_commit": "41754ed",
+        "date": "2026-03-29",
+        "era": 7,
+        "commit_message": "feat(audio): add AudioAnalyzer orchestrator and barrel exports"
+      },
+      {
+        "module": "AestheticStrategy",
+        "first_commit": "740078c",
+        "date": "2026-03-29",
+        "era": 7,
+        "commit_message": "feat(aesthetic): add AestheticStrategy ScoringStrategy plugin"
+      },
+      {
+        "module": "GuardrailRegistry",
+        "first_commit": "27974bb",
+        "date": "2026-04-01",
+        "era": 9,
+        "commit_message": "feat(guardrails): implement Deterministic Guardrails Framework Phase 1"
+      },
+      {
+        "module": "GuardrailDashboard",
+        "first_commit": "bb67f67",
+        "date": "2026-04-01",
+        "era": 9,
+        "commit_message": "docs: Update THE_BIBLE.md and create DEV dashboard for DGF"
+      }
+    ],
+    "modules_not_found": ["EvolutionEngine", "MusicTheory", "OrganismMode", "LiveOrganismState", "SwarmIntelligence"],
+    "derived_insights": "Core architecture was laid down in Era 1 by the Kai agent in a single evening (Feb 28): PreviewServer, Gallery, Exporter, CreativeEvaluator, RalphLoop. The LLM client arrived slightly later (Mar 1). Era 3 (Mar 20) brought the Compost Mill metaphor and the Swarm system. Era 4 saw the LIR system and ContextBuilder emerge from RalphLoop decomposition. Multimedia modules (AudioAnalyzer, AestheticCritic) appeared simultaneously in Era 7 (Mar 29). The GuardrailRegistry is the newest major module, appearing on the final day (Era 9). EvolutionEngine and MusicTheory exist as submodules within evolution/ and music/ directories but not as standalone class files."
+  },
+
+  "test_growth": {
+    "description": "Test file count at each era boundary",
+    "data": [
+      {"commit": "b620e02", "date": "2026-02-28", "era": 1, "test_files": 0},
+      {"commit": "3471966", "date": "2026-02-28", "era": 1, "test_files": 1},
+      {"commit": "e09981e", "date": "2026-03-19", "era": 1, "test_files": 18},
+      {"commit": "94671ad", "date": "2026-04-01", "era": 2, "test_files": 92},
+      {"commit": "3ccb2d2", "date": "2026-03-19", "era": 2, "test_files": 76},
+      {"commit": "6fc87e9", "date": "2026-04-01", "era": 8, "test_files": 222},
+      {"commit": "27974bb", "date": "2026-04-01", "era": 9, "test_files": 222},
+      {"commit": "ae21b06", "date": "2026-04-01", "era": 9, "test_files": 220},
+      {"commit": "9f5d7d8", "date": "2026-04-01", "era": 9, "test_files": 221},
+      {"commit": "5f067ac", "date": "2026-04-01", "era": 9, "test_files": 224}
+    ],
+    "derived_insights": "Test count grew from 0 to 18 during the Kai agent scaffolding (Era 1), then exploded to 92 during the Hydra merge (Era 2). The massive jump from 76 to 222 tests between Eras 2 and 8 reflects the Quality Crusade (Era 4) which migrated to Vitest and added comprehensive test coverage. The test count stabilized at 220-224 in the final eras, indicating testing maturity. The test-to-source ratio reached approximately 1:2.4 at the final state (224 tests for ~531 TypeScript files)."
+  },
+
+  "dependency_growth": {
+    "description": "Production and dev dependency counts over time",
+    "data": [
+      {
+        "commit": "e09981e",
+        "date": "2026-03-19",
+        "era": 1,
+        "dependencies": 5,
+        "dev_dependencies": 6,
+        "dep_list": ["@types/archiver", "archiver", "express", "p5", "puppeteer"],
+        "note": "Minimal creative coding stack"
+      },
+      {
+        "commit": "94671ad",
+        "date": "2026-04-01",
+        "era": 2,
+        "dependencies": 10,
+        "dev_dependencies": 10,
+        "dep_list": ["@types/archiver", "@types/react", "archiver", "dotenv", "express", "ink", "p5", "puppeteer", "react", "tsx"],
+        "note": "Added React/Ink for TUI, dotenv for config"
+      },
+      {
+        "commit": "3ccb2d2",
+        "date": "2026-03-19",
+        "era": 2,
+        "dependencies": 10,
+        "dev_dependencies": 10,
+        "dep_list": ["@types/archiver", "@types/react", "archiver", "dotenv", "express", "ink", "p5", "puppeteer", "react", "tsx"],
+        "note": "Same as 94671ad - consolidation era"
+      },
+      {
+        "commit": "6fc87e9",
+        "date": "2026-04-01",
+        "era": 8,
+        "dependencies": 28,
+        "dev_dependencies": 18,
+        "dep_list": ["@babel/parser", "@babel/traverse", "@babel/types", "@remotion/bundler", "@remotion/cli", "@remotion/renderer", "@types/babel__traverse", "archiver", "clipboardy", "cookie-parser", "csurf", "dotenv", "express", "express-rate-limit", "helmet", "ink", "mdast", "open", "p5", "puppeteer", "react", "react-dom", "remark", "remark-parse", "remotion", "tsx", "unified", "zod"],
+        "note": "Massive expansion: Remotion video, Babel AST, security hardening, Markdown processing, Zod validation"
+      },
+      {
+        "commit": "27974bb",
+        "date": "2026-04-01",
+        "era": 9,
+        "dependencies": 28,
+        "dev_dependencies": 18,
+        "dep_list": ["@babel/parser", "@babel/traverse", "@babel/types", "@remotion/bundler", "@remotion/cli", "@remotion/renderer", "@types/babel__traverse", "archiver", "clipboardy", "cookie-parser", "csurf", "dotenv", "express", "express-rate-limit", "helmet", "ink", "mdast", "open", "p5", "puppeteer", "react", "react-dom", "remark", "remark-parse", "remotion", "tsx", "unified", "zod"],
+        "note": "Dependencies stabilized"
+      },
+      {
+        "commit": "ae21b06",
+        "date": "2026-04-01",
+        "era": 9,
+        "dependencies": 28,
+        "dev_dependencies": 18,
+        "note": "No change from previous"
+      },
+      {
+        "commit": "9f5d7d8",
+        "date": "2026-04-01",
+        "era": 9,
+        "dependencies": 28,
+        "dev_dependencies": 18,
+        "note": "No change from previous"
+      },
+      {
+        "commit": "5f067ac",
+        "date": "2026-04-01",
+        "era": 9,
+        "dependencies": 28,
+        "dev_dependencies": 18,
+        "note": "Dependencies frozen at 28 prod + 18 dev"
+      }
+    ],
+    "derived_insights": "Dependencies grew in two major waves: the initial 5-dep creative coding stack (p5, express, puppeteer, archiver) held from Era 1 through early Era 2. Then a massive 2.8x jump (10 to 28 dependencies) occurred during the Multimedia Expansion (Eras 7-8), adding Remotion for video, Babel for AST analysis, security middleware (helmet, csurf, rate-limiting), Markdown processing (remark, unified), and Zod for validation. The dependency count froze at 28+18 from Era 8 onward, suggesting the architecture reached a stable surface area."
+  },
+
+  "source_loc_timeline": {
+    "description": "TypeScript lines of code at each era boundary",
+    "data": [
+      {"commit": "e09981e", "date": "2026-03-19", "era": 1, "ts_loc": 5785},
+      {"commit": "94671ad", "date": "2026-04-01", "era": 2, "ts_loc": 24847},
+      {"commit": "3ccb2d2", "date": "2026-03-19", "era": 2, "ts_loc": 15307},
+      {"commit": "6fc87e9", "date": "2026-04-01", "era": 8, "ts_loc": 100060},
+      {"commit": "27974bb", "date": "2026-04-01", "era": 9, "ts_loc": 98293},
+      {"commit": "ae21b06", "date": "2026-04-01", "era": 9, "ts_loc": 96099},
+      {"commit": "9f5d7d8", "date": "2026-04-01", "era": 9, "ts_loc": 96269},
+      {"commit": "5f067ac", "date": "2026-04-01", "era": 9, "ts_loc": 101991}
+    ],
+    "derived_insights": "TypeScript LOC tells a dramatic story: 5,785 lines at Era 1 end (the Kai scaffolding), then a 4.3x jump to 24,847 during the Explosion (Era 2). The codebase then contracted slightly to 15,307 during consolidation (Era 3 cleanup). The largest growth occurred between Eras 3 and 8, reaching 100,060 lines - a 6.5x increase driven by multimedia expansion (audio, video, aesthetic critics), the chat system, and the Compost Mill. The final codebase sits at 101,991 TypeScript lines. The slight dip from 100K to 96K between Eras 8 and 9 reflects dead code removal and the GuardrailRegistry consolidation, before recovering to 102K with narrative tooling additions."
+  },
+
+  "architectural_milestones": {
+    "description": "Module directory growth across eras showing architectural layering",
+    "data": [
+      {
+        "commit": "e09981e",
+        "date": "2026-03-19",
+        "era": 1,
+        "src_modules": {
+          "core": 5,
+          "generators": 4,
+          "gallery": 2,
+          "render": 2,
+          "export": 1,
+          "llm": 1
+        },
+        "total_src_files": 17,
+        "note": "Minimal architecture: core loop + generators + IO"
+      },
+      {
+        "commit": "94671ad",
+        "date": "2026-04-01",
+        "era": 2,
+        "src_modules": {
+          "generators": 12,
+          "core": 9,
+          "tui": 9,
+          "collab": 7,
+          "evolution": 6,
+          "utils": 5,
+          "gallery": 3,
+          "gui": 3,
+          "improvement": 3,
+          "config": 2,
+          "learning": 2,
+          "render": 2,
+          "routing": 2,
+          "sandbox": 2,
+          "cli": 1,
+          "export": 1,
+          "llm": 1,
+          "music": 1
+        },
+        "total_src_files": 71,
+        "note": "Major expansion: TUI, collaboration, evolution, learning added"
+      },
+      {
+        "commit": "3ccb2d2",
+        "date": "2026-03-19",
+        "era": 2,
+        "src_modules": {
+          "generators": 12,
+          "core": 9,
+          "tui": 8,
+          "evolution": 6,
+          "utils": 5,
+          "gallery": 3,
+          "gui": 3,
+          "config": 2,
+          "render": 2,
+          "sandbox": 2,
+          "cli": 1,
+          "export": 1,
+          "llm": 1,
+          "music": 1,
+          "musicToVisual": 1,
+          "improvement": 1
+        },
+        "total_src_files": 59,
+        "note": "Consolidation: collab/learning removed, musicToVisual added"
+      },
+      {
+        "commit": "6fc87e9",
+        "date": "2026-04-01",
+        "era": 8,
+        "src_modules": {
+          "core": 39,
+          "harness": 31,
+          "generators": 22,
+          "compost": 21,
+          "prompts": 18,
+          "tui": 17,
+          "guardrails": 16,
+          "audio": 13,
+          "collab": 11,
+          "aesthetic": 10,
+          "evolution": 9,
+          "brain": 8,
+          "music": 8,
+          "utils": 8,
+          "chat": 7,
+          "llm": 7,
+          "security": 7,
+          "swarm": 7,
+          "scavenger": 6,
+          "config": 4
+        },
+        "total_src_files": 264,
+        "note": "Full architecture: 20 modules, every subsystem present"
+      },
+      {
+        "commit": "27974bb",
+        "date": "2026-04-01",
+        "era": 9,
+        "src_modules": {
+          "core": 39,
+          "harness": 31,
+          "generators": 22,
+          "compost": 21,
+          "prompts": 18,
+          "tui": 17,
+          "audio": 13,
+          "collab": 11,
+          "aesthetic": 10,
+          "evolution": 9,
+          "guardrails": 9,
+          "brain": 8,
+          "music": 8,
+          "utils": 8,
+          "chat": 7,
+          "llm": 7,
+          "security": 7,
+          "swarm": 7,
+          "scavenger": 6,
+          "config": 4
+        },
+        "total_src_files": 257,
+        "note": "Guardrails reorganized (16 to 9 files)"
+      },
+      {
+        "commit": "5f067ac",
+        "date": "2026-04-01",
+        "era": 9,
+        "src_modules": {
+          "core": 39,
+          "harness": 31,
+          "generators": 22,
+          "compost": 21,
+          "prompts": 19,
+          "tui": 17,
+          "guardrails": 16,
+          "audio": 13,
+          "collab": 11,
+          "aesthetic": 10,
+          "evolution": 9,
+          "brain": 8,
+          "music": 8,
+          "utils": 8,
+          "chat": 7,
+          "llm": 7,
+          "security": 7,
+          "swarm": 7,
+          "scavenger": 6,
+          "config": 4
+        },
+        "total_src_files": 268,
+        "note": "Final state: 20 modules, guardrails expanded back to 16"
+      }
+    ],
+    "derived_insights": "The architecture grew from 6 modules (17 files) in Era 1 to 20 modules (268 files) at the final state. The most dramatic expansion was core/ going from 5 to 39 files (7.8x growth), reflecting the decomposition of RalphLoop into focused modules. The harness/ module (31 files) and compost/ (21 files) are Era 8-9 additions that didn't exist in early eras. Modules that appeared and disappeared include collab/ (Era 2, removed Era 3, reappeared Era 8), improvement/ (Era 2 only), learning/ (Era 2 only), and sandbox/ (Era 2 only). The final architecture has a clear layering: core/harness at the center, generators/compost/prompts as processing pipelines, and audio/aesthetic/music/evolution as creative subsystems."
+  },
+
+  "hotspots": {
+    "description": "Most frequently modified source files - indicators of architectural churn and stability",
+    "data": [
+      {"file": "src/core/RalphLoop.ts", "modifications": 41, "role": "Central orchestration loop"},
+      {"file": "src/index.ts", "modifications": 33, "role": "CLI entry point and routing"},
+      {"file": "src/llm/LLMClient.ts", "modifications": 28, "role": "LLM provider abstraction"},
+      {"file": "src/config/ConfigLoader.ts", "modifications": 13, "role": "Configuration management"},
+      {"file": "src/compost/CompostMill.ts", "modifications": 13, "role": "Creative material digestion"},
+      {"file": "src/core/CreativeEvaluator.ts", "modifications": 12, "role": "Quality scoring engine"},
+      {"file": "src/render/PreviewServer.ts", "modifications": 12, "role": "Live preview HTTP server"},
+      {"file": "src/tui/HarnessTUI.tsx", "modifications": 11, "role": "Terminal UI for meta-harness"},
+      {"file": "src/tui/index.tsx", "modifications": 11, "role": "TUI entry point"},
+      {"file": "src/generators/p5/P5GeneratorLLM.ts", "modifications": 9, "role": "LLM-powered p5.js generation"},
+      {"file": "src/utils/htmlWrapper.ts", "modifications": 8, "role": "HTML output templating"},
+      {"file": "src/swarm/personas.ts", "modifications": 8, "role": "AI persona definitions"},
+      {"file": "src/render/Renderer.ts", "modifications": 8, "role": "Output rendering pipeline"},
+      {"file": "src/generators/three/ThreeGenerator.ts", "modifications": 7, "role": "Three.js 3D generation"},
+      {"file": "src/generators/glsl/ShaderGenerator.ts", "modifications": 7, "role": "GLSL shader generation"},
+      {"file": "src/compost/defaults.ts", "modifications": 7, "role": "Compost default configurations"},
+      {"file": "src/core/LoopConfig.ts", "modifications": 7, "role": "Loop configuration types"},
+      {"file": "src/export/Exporter.ts", "modifications": 7, "role": "Archive/ZIP export"},
+      {"file": "src/compost/SemanticExtractor.ts", "modifications": 7, "role": "NLP-based material extraction"},
+      {"file": "src/compost/CollisionEngine.ts", "modifications": 7, "role": "Creative idea collision"},
+      {"file": "src/prompts/index.ts", "modifications": 6, "role": "Prompt registry"},
+      {"file": "src/core/CodeValidator.ts", "modifications": 6, "role": "Generated code validation"},
+      {"file": "src/harness/index.ts", "modifications": 6, "role": "Meta-harness entry point"},
+      {"file": "src/generators/registerGenerators.ts", "modifications": 6, "role": "Generator plugin registration"},
+      {"file": "src/compost/types.ts", "modifications": 6, "role": "Compost type definitions"}
+    ],
+    "derived_insights": "RalphLoop.ts is the undisputed hotspot at 41 modifications, nearly 25% more than the second-most-modified file (index.ts at 33). This makes sense as RalphLoop is the central orchestration engine that everything flows through. The top 3 hotspots (RalphLoop, index.ts, LLMClient) account for 102 modifications - the brain stem of the application. Notably, the compost/ directory has 4 files in the top 25, showing it was heavily iterated on during development. The TUI files (HarnessTUI.tsx, index.tsx) are Era 9 additions that quickly became hotspots, suggesting active UI development in the final days."
+  },
+
+  "dead_code_removals": {
+    "description": "Source files that were deleted during the project's lifetime",
+    "data": [
+      {
+        "date": "2026-02-28",
+        "commit": "kai-021",
+        "era": 1,
+        "files_deleted": ["src/index.js"],
+        "message": "Rewrite src/index.js to use RalphLoop.run() instead of generateBasicSketch()",
+        "narrative": "The original JavaScript entry point was replaced with a TypeScript version during Kai agent scaffolding"
+      },
+      {
+        "date": "2026-03-20",
+        "commit": "unknown",
+        "era": 3,
+        "files_deleted": ["src/temp_import.txt"],
+        "message": "chore: Remove temp files and add documentation",
+        "narrative": "Temporary import file cleaned up during consolidation"
+      },
+      {
+        "date": "2026-03-20",
+        "commit": "860b589",
+        "era": 3,
+        "files_deleted": [
+          "src/cli/Completions.ts",
+          "src/collab/critics/ArtisticCritic.ts",
+          "src/collab/critics/DomainExpert.ts",
+          "src/collab/critics/TechnicalCritic.ts",
+          "src/collab/critics/index.ts",
+          "src/core/FitnessCalculator.ts",
+          "src/tui/components/VoiceInput.tsx"
+        ],
+        "message": "feat: Add Compost Mill - living digestion system for creative material",
+        "narrative": "The Compost Mill arrival triggered a major cleanup: 3 critic files removed from collab/, FitnessCalculator absorbed into ScoringEngine, and VoiceInput removed from TUI. The critics were replaced by the aesthetic critic system."
+      },
+      {
+        "date": "2026-03-20",
+        "commit": "unknown",
+        "era": 3,
+        "files_deleted": ["src/compost/integration/PromptLibraryBridge.ts"],
+        "message": "feat: Complete remaining consolidation - tests, routing merge, dead code, wiring",
+        "narrative": "PromptLibraryBridge removed as compost/prompt integration was re-architected"
+      },
+      {
+        "date": "2026-03-21",
+        "commit": "bf3ad7f",
+        "era": 4,
+        "files_deleted": ["src/core/EvaluationFramework.ts"],
+        "message": "refactor: Decompose RalphLoop.ts (1185 to 377 lines) into 8 focused modules",
+        "narrative": "EvaluationFramework was decomposed and distributed across the new modular architecture"
+      }
+    ],
+    "derived_insights": "Dead code removal happened in three waves: (1) Era 1's JS-to-TS migration, (2) Era 3's Compost Mill consolidation which removed 7 files including the entire collab/critics/ directory and FitnessCalculator, and (3) Era 4's RalphLoop decomposition which removed EvaluationFramework. Total: 11 files deleted across the project's lifetime. The deletions are architecturally meaningful - they represent real consolidation (critics unified, evaluation distributed) rather than aimless cleanup. The low deletion count (11 files in 303 commits) suggests most code that was written stayed in the codebase, either because it was well-targeted or because technical debt was carried forward."
+  },
+
+  "summary_metrics": {
+    "growth_rate": {
+      "files_per_day": "108 files/day over 32 days (2 to 3463)",
+      "ts_loc_per_day": "3,187 TS LOC/day over 32 days (0 to 101,991)",
+      "commits_per_day": "9.5 commits/day average",
+      "peak_day": "2026-03-22 with 45 commits",
+      "peak_growth_day": "Mar 19-20 saw files grow from 416 to 2180"
+    },
+    "architecture_at_end": {
+      "total_modules": 20,
+      "total_src_files": 268,
+      "total_ts_loc": 101991,
+      "total_test_files": 224,
+      "test_to_source_ratio": "0.84 (224 tests / 268 source files)",
+      "dependencies": 28,
+      "dev_dependencies": 18,
+      "most_complex_module": "core/ (39 files)",
+      "largest_module": "core/ (39 files)",
+      "newest_module": "guardrails/ (16 files, added Era 9)"
+    }
+  }
+}

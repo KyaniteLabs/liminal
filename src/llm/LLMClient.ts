@@ -203,6 +203,14 @@ export class LLMClient {
       return this.resolvedModel;
     }
     
+    // If model is explicitly configured (not the default), use it
+    const defaultModel = 'qwen2.5-coder-7b-instruct';
+    if (this.config.model && this.config.model !== defaultModel) {
+      this.resolvedModel = this.config.model;
+      console.log(`[LLMClient] Using configured model: ${this.resolvedModel}`);
+      return this.resolvedModel;
+    }
+    
     try {
       const response = await fetch(`${baseUrl}/models`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);

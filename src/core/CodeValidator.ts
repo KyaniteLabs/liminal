@@ -16,7 +16,7 @@ export interface ValidationResult {
   errors: string[];
 }
 
-type Domain = 'p5' | 'shader' | 'glsl' | 'three' | 'remotion' | 'music' | 'hydra' | 'strudel' | 'unknown';
+type Domain = 'p5' | 'shader' | 'glsl' | 'three' | 'remotion' | 'music' | 'hydra' | 'strudel' | 'html' | 'ascii' | 'unknown';
 
 // -----------------------------------------------------------------------------
 // Size validation - from AUDIT: Qwen35 produced 66b and 74b "successes" that failed
@@ -30,6 +30,8 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'music': 100,     // Music code can be compact
   'hydra': 150,     // Hydra chains need multiple method calls
   'strudel': 100,   // Strudel patterns can be compact
+  'html': 500,      // HTML pages need structure
+  'ascii': 50,      // ASCII art can be small
   'unknown': 100,
 };
 
@@ -64,22 +66,30 @@ const CONTAMINATION_PATTERNS: RegExp[] = [
 // Domain detection
 // -----------------------------------------------------------------------------
 function detectDomain(code: string): Domain {
-  if (isAlreadyWrapped(code)) {
-    // Three.js: check for ES module imports or importmap containing three
-    if (code.includes('import * as THREE') || 
-        code.includes('from "three"') || 
-        code.includes('from \'three\'') ||
-        /<script\s+type="importmap"[^>]*>[\s\S]*?"three"[\s\S]*?<\/script>/.test(code)) {
-      return 'three';
-    }
+  // HTML-wrapped content detection
+  const isWrapped = isAlreadyWrapped(code);
+  
+  // HTML: standalone HTML page (not Three.js wrapped)
+  if (isWrapped) {
+    const hasThreeImport = /import.*\bfrom\s+['"]three['"]/.test(code) || /<script\s+type="importmap"[^>]*>[\s\S]*?"three"[\s\S]*?<\/script>/.test(code);
+    const hasDoctype = code.trim().startsWith('<!DOCTYPE html>');
+    const hasHTMLTag = /<html[^>]*>/i.test(code);
+    
+    // Three.js wrapped in HTML
+    if (hasDoctype && hasHTMLTag && hasThreeImport) return 'three';
+    
+    // p5.js wrapped in HTML (check for p5.js CDN)
+    if (/p5\.js|cdnjs.*p5/.test(code) || /\bsetup\s*\(\s*\)/.test(code) || /\bdraw\s*\(\s*\)/.test(code)) return 'p5';
+    
+    // Generic HTML page
+    if (hasDoctype || hasHTMLTag) return 'html';
+    
+    // WebGL shader wrapped
     if (/getContext\(['"]webgl/.test(code)) return 'shader';
-    return 'p5';
   }
-  // Three.js
-  const hasDoctype = code.trim().startsWith('<!DOCTYPE html>');
-  const hasHTMLTag = /<html[^>]*>/i.test(code);
-  const hasThreeImport = /import.*\bfrom\s+['"]three['"]/.test(code) || /<script\s+type="importmap">/.test(code);
-  if (hasDoctype && hasHTMLTag && hasThreeImport) return 'three';
+
+  // Three.js (bare imports)
+  if (/THREE\.|import.*three|new\s+THREE\./.test(code)) return 'three';
 
   // GLSL
   const hasVoidMain = /void\s+main\s*\(/.test(code);
@@ -101,11 +111,16 @@ function detectDomain(code: string): Domain {
     return 'strudel';
   }
 
-  // Music (general - Strudel / Hydra)
-  if (/\$:\s*s\(/.test(code) || /osc\(|src\(|render\(/.test(code) || /strudel|hydra/i.test(code)) return 'music';
+  // Music (general - Strudel / Hydra / Tone.js)
+  if (/\$:\s*s\(/.test(code) || /osc\(|src\(|render\(/.test(code) || /strudel|hydra/i.test(code) || /Tone\./.test(code)) return 'music';
 
-  // Three.js (not HTML-wrapped, bare imports)
-  if (/THREE\.|import.*three|new\s+THREE\./.test(code)) return 'three';
+  // ASCII Art: box-drawing and block characters (but not code)
+  if ((/[\u2580-\u259F\u2500-\u257F]/.test(code) || (/[█▓▒░]/.test(code) && code.length < 5000)) && !/function\s+\w+\s*\(/.test(code)) {
+    return 'ascii';
+  }
+
+  // p5: setup, draw, createCanvas
+  if (/\bsetup\s*\(\s*\)/.test(code) || /\bdraw\s*\(\s*\)/.test(code) || /\bcreateCanvas\s*\(/.test(code)) return 'p5';
 
   // Default p5
   return 'p5';
@@ -113,7 +128,7 @@ function detectDomain(code: string): Domain {
 
 function isAlreadyWrapped(code: string): boolean {
   const trimmed = code.trim();
-  return trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html');
+  return trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html') || trimmed.startsWith('<!doctype');
 }
 
 // -----------------------------------------------------------------------------

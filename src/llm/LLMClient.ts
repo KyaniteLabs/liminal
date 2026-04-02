@@ -44,6 +44,7 @@ import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
+import { loadModelConfig } from './ModelConfig.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -91,6 +92,15 @@ export interface LLMResponse {
   error?: string;
   fromCache?: boolean;
   isComplete?: boolean;
+  // Thinking trace feedback loop fields
+  thinking?: string;           // Raw <think> content from model
+  thinkingMetrics?: {
+    length: number;
+    hasCodeBlocks: boolean;
+    hasFunctionDefinitions: boolean;
+    attemptedDomain?: string;
+  };
+  recoveredFromThinking?: boolean;  // True if code was extracted from thinking
 }
 
 function env(key: string): string | undefined {
@@ -347,11 +357,14 @@ Rules:
     // Handle different response shapes
     const response = data as Record<string, unknown>;
     
+    // Extract raw thinking FIRST (before any processing)
+    const rawThinking = this.extractRawThinking(data);
+    
     // OpenAI-compatible format
     const choices = response.choices as Array<{ message?: { content?: string; reasoning_content?: string } }> | undefined;
     if (choices && choices[0]?.message) {
       const message = choices[0].message;
-      return this.sanitizeOutput(message.content || '', message.reasoning_content);
+      return this.sanitizeOutput(message.content || '', message.reasoning_content, rawThinking);
     }
     
     // Ollama format
@@ -364,22 +377,86 @@ Rules:
       // If response is empty but thinking has content, try to extract code from thinking
       if ((!ollamaResponse || ollamaResponse.trim() === '') && ollamaThinking) {
         const extractedFromThinking = this.extractCodeFromThinking(ollamaThinking);
-        return this.sanitizeOutput(extractedFromThinking || '', ollamaThinking);
+        return this.sanitizeOutput(extractedFromThinking || '', ollamaThinking, rawThinking || ollamaThinking);
       }
-      return this.sanitizeOutput(ollamaResponse, ollamaThinking);
+      return this.sanitizeOutput(ollamaResponse, ollamaThinking, rawThinking || ollamaThinking);
     }
     
     // Fallback: try to find content anywhere in response
     const anyContent = JSON.stringify(response).match(/"content"\s*:\s*"([^"]*)"/)?.[1];
     if (anyContent) {
-      return this.sanitizeOutput(anyContent);
+      return this.sanitizeOutput(anyContent, undefined, rawThinking);
     }
     
     return {
       code: '',
       success: false,
       error: 'Unable to parse LLM response',
+      thinking: rawThinking,
+      thinkingMetrics: rawThinking ? this.analyzeThinking(rawThinking) : undefined,
     };
+  }
+  
+  /**
+   * Extract raw thinking content from any response format
+   * Captures <think> tags, reasoning_content fields, etc.
+   */
+  private extractRawThinking(data: unknown): string | undefined {
+    const response = data as Record<string, unknown>;
+    
+    // Check for reasoning_content (OpenAI format)
+    const choices = response.choices as Array<{ message?: { reasoning_content?: string } }> | undefined;
+    if (choices?.[0]?.message?.reasoning_content) {
+      return choices[0].message.reasoning_content;
+    }
+    
+    // Check for thinking field (Ollama format)
+    if (response.thinking && typeof response.thinking === 'string') {
+      return response.thinking;
+    }
+    
+    // Check for <think> tags in content
+    const messageContent = choices?.[0]?.message && 'content' in choices[0].message 
+      ? (choices[0].message as { content?: string }).content 
+      : undefined;
+    const content = response.content || messageContent || (response.response as string);
+    if (typeof content === 'string') {
+      const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/i);
+      if (thinkMatch) {
+        return thinkMatch[1].trim();
+      }
+    }
+    
+    return undefined;
+  }
+  
+  /**
+   * Analyze thinking content for metrics and patterns
+   */
+  private analyzeThinking(thinking: string): NonNullable<LLMResponse['thinkingMetrics']> {
+    return {
+      length: thinking.length,
+      hasCodeBlocks: /```[\s\S]*?```/.test(thinking),
+      hasFunctionDefinitions: /function\s+\w+\s*\(/.test(thinking),
+      attemptedDomain: this.detectDomainInThinking(thinking),
+    };
+  }
+  
+  /**
+   * Detect which domain the model was trying to generate
+   */
+  private detectDomainInThinking(thinking: string): string | undefined {
+    const lower = thinking.toLowerCase();
+    if (lower.includes('p5') || lower.includes('particle') || lower.includes('canvas')) return 'p5';
+    if (lower.includes('three') || lower.includes('3d') || lower.includes('scene')) return 'three';
+    if (lower.includes('glsl') || lower.includes('shader') || lower.includes('fragment')) return 'glsl';
+    if (lower.includes('strudel') || lower.includes('pattern') || lower.includes('beat')) return 'strudel';
+    if (lower.includes('hydra') || lower.includes('osc') || lower.includes('src(')) return 'hydra';
+    if (lower.includes('tone') || lower.includes('synth') || lower.includes('audio')) return 'tone';
+    if (lower.includes('remotion') || lower.includes('video') || lower.includes('composition')) return 'remotion';
+    if (lower.includes('html') || lower.includes('css') || lower.includes('web')) return 'html';
+    if (lower.includes('ascii') || lower.includes('art') || lower.includes('characters')) return 'ascii';
+    return undefined;
   }
   
   /**
@@ -404,8 +481,12 @@ Rules:
   /**
    * Universal output sanitizer
    * Handles contamination from ANY model: <think> tags, markdown fences, reasoning text
+   * Now includes thinking trace capture for feedback loop
    */
-  private sanitizeOutput(content: string, reasoning?: string): LLMResponse {
+  private sanitizeOutput(content: string, reasoning?: string, thinking?: string): LLMResponse {
+    // PRESERVE thinking BEFORE stripping tags
+    const preservedThinking = thinking || this.extractThinkingFromContent(content);
+    
     // Step 1: Strip <think> tags (Qwen, DeepSeek, etc.)
     let cleanCode = content.replace(/<think>[\s\S]*?<\/think>/gi, '');
     
@@ -444,16 +525,41 @@ Rules:
     
     cleanCode = lines.slice(codeStartIndex).join('\n').trim();
     
-    // Step 4: Validate code completeness
+    // Step 4: Recovery - if code is empty but thinking has code blocks, extract from thinking
+    let recoveredFromThinking = false;
+    if ((!cleanCode || cleanCode.trim() === '') && preservedThinking) {
+      const codeFromThinking = this.extractCodeFromThinking(preservedThinking);
+      if (codeFromThinking) {
+        cleanCode = codeFromThinking;
+        recoveredFromThinking = true;
+        console.log(`[LLMClient] Recovered ${codeFromThinking.length} chars of code from thinking`);
+      }
+    }
+    
+    // Step 5: Validate code completeness
     const isComplete = this.isCodeComplete(cleanCode);
+    
+    // Step 6: Analyze thinking for metrics
+    const thinkingMetrics = preservedThinking ? this.analyzeThinking(preservedThinking) : undefined;
     
     return {
       code: cleanCode,
       explanation: content,
       reasoning,
+      thinking: preservedThinking,      // NEW: thinking trace
+      thinkingMetrics,                  // NEW: thinking analysis
+      recoveredFromThinking,            // NEW: recovery flag
       success: cleanCode.length > 0,
       isComplete,
     };
+  }
+  
+  /**
+   * Extract thinking content embedded in main content
+   */
+  private extractThinkingFromContent(content: string): string | undefined {
+    const thinkMatch = content.match(/<think>([\s\S]*?)<\/think>/i);
+    return thinkMatch ? thinkMatch[1].trim() : undefined;
   }
 
   /** Check if code is structurally complete */
@@ -789,5 +895,60 @@ Rules:
     } finally {
       reader.releaseLock();
     }
+  }
+
+  /**
+   * Create LLMClient for harness tasks (self-improvement, code fixes)
+   * Uses harness-specific configuration with lower temperature for precision
+   */
+  static forHarness(): LLMClient {
+    const config = loadModelConfig();
+    const harness = config.harness;
+    
+    return new LLMClient({
+      baseUrl: harness.baseUrl,
+      apiKey: harness.apiKey,
+      model: harness.model,
+      temperature: harness.temperature,
+      maxTokens: harness.maxTokens,
+    });
+  }
+
+  /**
+   * Create LLMClient for generation tasks (creative coding)
+   * Uses generation configuration with higher temperature for creativity
+   */
+  static forGeneration(): LLMClient {
+    const config = loadModelConfig();
+    const generation = config.generation;
+    
+    return new LLMClient({
+      baseUrl: generation.baseUrl,
+      apiKey: generation.apiKey,
+      model: generation.model,
+      temperature: generation.temperature,
+      maxTokens: generation.maxTokens,
+    });
+  }
+
+  /**
+   * Create both harness and generation clients
+   */
+  static createSplit(): { harness: LLMClient; generation: LLMClient } {
+    return {
+      harness: LLMClient.forHarness(),
+      generation: LLMClient.forGeneration(),
+    };
+  }
+
+  /**
+   * Validate model configuration
+   */
+  static validateConfig(): { valid: boolean; errors: string[]; warnings: string[] } {
+    return { 
+      valid: true, 
+      errors: [], 
+      warnings: [] 
+    };
   }
 }

@@ -37,6 +37,7 @@ import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 import { metaHarness } from '../harness/MetaHarnessIntegration.js';
+import { RuntimeHealthMonitor } from '../guardrails/RuntimeHealthMonitor.js';
 
 // Extracted modules
 import {
@@ -218,19 +219,36 @@ export class RalphLoop {
         // Check code completeness (structural - braces, parens balanced)
         const isComplete = RalphLoop.isCodeComplete(currentCode);
         
-        // Runtime validation: test if code actually works
+        // Runtime validation: ACTUALLY EXECUTE the code to check for runtime errors
         let runtimeValid = true;
         let runtimeError = '';
+        let consoleErrorCount = 0;
         
-        // Detect output type and run appropriate runtime test
-        const outputType = detectOutputType(currentCode);
-        if (outputType === 'glsl') {
-          // For GLSL, we can't easily test in Node, but we can check syntax
-          const hasMain = /void\s+main\s*\(/.test(currentCode);
-          const hasFragColor = /gl_FragColor/.test(currentCode);
-          if (!hasMain || !hasFragColor) {
-            runtimeValid = false;
-            runtimeError = 'Missing main() or gl_FragColor';
+        // Only run runtime validation for visual domains that can be tested in browser
+        const testableDomains = ['p5', 'three', 'glsl', 'html'];
+        const domainToTest = normalizedOptions.collabDomain || 'p5';
+        
+        if (testableDomains.includes(domainToTest) && currentCode.length > 100) {
+          try {
+            const healthMonitor = new RuntimeHealthMonitor({ 
+              durationMs: 3000,  // 3 second quick check
+              disableSandbox: process.env.LIMINAL_DISABLE_SANDBOX === 'true'
+            });
+            
+            const healthResult = await healthMonitor.quickCheck(currentCode, domainToTest);
+            
+            runtimeValid = healthResult.healthy && healthResult.metrics.consoleErrorCount === 0;
+            consoleErrorCount = healthResult.metrics.consoleErrorCount;
+            
+            if (!runtimeValid) {
+              runtimeError = healthResult.issues.join('; ') || 
+                            (consoleErrorCount > 0 ? `${consoleErrorCount} console errors` : 'Runtime validation failed');
+            }
+          } catch (healthErr) {
+            // If runtime check itself fails, log but don't block (could be env issue)
+            Logger.warn('RalphLoop', `Runtime check error: ${healthErr instanceof Error ? healthErr.message : 'unknown'}`);
+            // Still mark as valid to not block users due to infra issues
+            runtimeValid = true;
           }
         }
         
@@ -238,8 +256,10 @@ export class RalphLoop {
         if (!runtimeValid) {
           Logger.warn('RalphLoop', `Runtime validation failed: ${runtimeError}`);
           if (normalizedOptions.chatMode) {
-            normalizedOptions.onThought?.(`Runtime check failed: ${runtimeError}`);
+            normalizedOptions.onThought?.(`⚠️ Runtime check failed: ${runtimeError}. Forcing another iteration.`);
           }
+        } else if (consoleErrorCount > 0) {
+          Logger.warn('RalphLoop', `Runtime validation found ${consoleErrorCount} console errors`);
         }
 
         // Diagnostic: Log that we got fresh code (not from cache)
@@ -325,6 +345,20 @@ export class RalphLoop {
             aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
             noveltyScore: evaluation.dimensions?.novelty ?? 0,
           });
+        }
+
+        // Runtime validation penalty: if code has runtime errors, force score to 0
+        // This prevents broken code from being accepted
+        if (!runtimeValid) {
+          evaluation.score = 0;
+          if (!evaluation.issues) {
+            evaluation.issues = [];
+          }
+          evaluation.issues.push(`[runtime] ${runtimeError}`);
+          Logger.warn('RalphLoop', `Runtime validation failed - forcing score to 0`);
+          if (normalizedOptions.chatMode) {
+            normalizedOptions.onThought?.(`❌ Code has runtime errors. Score forced to 0. Will retry...`);
+          }
         }
 
         // Quality gate: break if score below minimum threshold (after giving it a chance)
@@ -664,27 +698,3 @@ export class RalphLoop {
   }
 }
 
-/**
- * Detect output type from generated code
- */
-function detectOutputType(code: string): 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'remotion' | 'unknown' {
-  if (code.includes('function setup()') || code.includes('createCanvas')) {
-    return 'p5';
-  }
-  if (code.includes('THREE.') || code.includes('WebGLRenderer')) {
-    return 'three';
-  }
-  if (code.includes('void main') && code.includes('gl_FragColor')) {
-    return 'glsl';
-  }
-  if (code.includes('.out(o0)') || code.includes('src(o0)')) {
-    return 'hydra';
-  }
-  if (code.includes('.s(') && (code.includes('stack') || code.includes('$:'))) {
-    return 'strudel';
-  }
-  if (code.includes('Remotion') || code.includes('useCurrentFrame')) {
-    return 'remotion';
-  }
-  return 'unknown';
-}

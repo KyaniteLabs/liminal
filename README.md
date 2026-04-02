@@ -8,6 +8,35 @@
 
 A sophisticated generative art system with an internal Ralph-Wiggum Loop for self-recursive iteration, comprehensive artistic knowledge, and intelligent guidance. Supports p5.js visuals, live music coding (Strudel/Hydra), multi-model swarm generation, deep collaboration, chat-based creative sessions, and a living Compost Mill for digesting creative material.
 
+## 🧠 Unique Innovations
+
+Liminal is not just another code generator. It pioneers two unique approaches to working with LLMs:
+
+### 1. Compost Mill — Evolutionary Code Synthesis
+
+**What it does**: Digests previous generations (working and broken) into nutrient-rich seeds for future evolution.
+
+**ML Concept**: Genetic programming with neural guidance
+
+**Why it matters**: Your past work continuously improves your future output. The system learns *what* to generate.
+
+### 2. Thinking-Trace Feedback Loop — Meta-Learning from Reasoning
+
+> **Unique to Liminal**: Unlike any other creative coding tool, we capture and learn from the model's *reasoning process*, not just its output.
+
+**What it does**: Extracts `<think>` tags and reasoning traces, analyzes patterns in model behavior, and adapts prompts automatically.
+
+**ML Concepts**: 
+- **Reasoning Distillation** — Extracting intent from model monologues
+- **Adversarial Failure Mining** — Learning from empty outputs with rich thinking
+- **Meta-Learning** — The harness learns how the generator thinks
+
+**Why it matters**: When Minimax M2.7 returned "empty code," traditional systems would discard it. Liminal discovered it was putting code *inside* `<think>` tags and now recovers it automatically. The system learns *how* to prompt.
+
+**The Philosophy**: *Nothing is waste. Model thinking is the richest training data you have.*
+
+📖 **Learn more**: [Feature Documentation](./docs/features/README.md)
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)

@@ -525,6 +525,16 @@ export { P5GeneratorLLM };
 export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './llm/LLMClient.js';
 export type { LLMConfig, LLMResponse } from './llm/LLMClient.js';
 
+// Model Configuration - Harness/Generation Split
+export {
+  loadModelConfig,
+  validateModelConfig,
+  formatModelConfig,
+  getModelEnvDocs,
+  type ModelConfig,
+  type SplitModelConfig,
+} from './llm/ModelConfig.js';
+
 // Model Tier Detection & Prompt Building
 export { 
   detectModelTier, 

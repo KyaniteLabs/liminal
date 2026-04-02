@@ -42,7 +42,8 @@ export type ReasoningPatternType =
   | 'premature_optimization'
   | 'circular_reasoning'
   | 'excessive_alternatives'
-  | 'no_code_generation';
+  | 'no_code_generation'
+  | 'code_in_thinking'  // NEW: Model put code in thinking tags (Minimax pattern)
 
 export interface ReasoningQuality {
   score: number; // 0-1
@@ -119,6 +120,12 @@ const REASONING_PATTERNS: Array<{
     regex: /^(?!.*\b(function|const|let|var|class|if|for|while|import|export|return)\b).*$/s,
     confidence: 0.9,
     description: 'Reasoning contains no code keywords',
+  },
+  {
+    type: 'code_in_thinking',
+    regex: /<think>[\s\S]*?(function\s+\w+|const\s+\w+|let\s+\w+|var\s+\w+)[\s\S]*?<\/think>/i,
+    confidence: 0.85,
+    description: 'Model put code inside <think> tags instead of main output',
   },
 ];
 
@@ -322,6 +329,7 @@ export class ReasoningCapture {
       circular_reasoning: 0,
       excessive_alternatives: 0,
       no_code_generation: 0,
+      code_in_thinking: 0,
     };
 
     let totalQuality = 0;

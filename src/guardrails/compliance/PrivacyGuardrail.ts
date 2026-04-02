@@ -116,7 +116,7 @@ export const PrivacyGuardrail: GuardrailRule = {
 
   async remediate(
     context: ExecutionContext,
-    violation: GuardrailResult
+    _violation: GuardrailResult
   ): Promise<RemediationResult> {
     const anonymizedPrompt = context.prompt ? anonymizePII(context.prompt) : undefined;
     const anonymizedOutput = typeof context.output === 'string'

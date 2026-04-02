@@ -185,6 +185,75 @@
 
 ---
 
+## Phase 8: Context Management & Precision Instruction (NEW — 1 week)
+
+**Target gap:** #4 Context management (context dump files, compaction events, session re-statements)
+**Based on:** `narrative/data/context-management-analysis.json` — full telemetry mining of context skills
+**Learning style:** Study your own trajectory, then practice the next level
+
+### What the Data Shows
+
+Your context management improved in three non-linear phases:
+
+| Phase | Eras | Messages/Commit | What Happened |
+|-------|------|-----------------|---------------|
+| Context Chaos | 1-3 | 3.86 → 9.90 | Treated context as the AI's job. 208 "context" mentions. Built first hooks reactively. |
+| Hypercorrection | 4-5 | 9.90 → 8.92 | Overcompensated — 80 micromanagement msgs vs 21 trust msgs (3.8:1). Fragmented sessions. |
+| Delegation Mastery | 7-9 | 0.85 → 1.53 | Learned to need LESS context. 5-word instructions producing 13-file features. Near-zero context loss. |
+
+**The Key Insight:** You improved NOT by managing context better, but by learning to NEED less of it. The shift from "tell the AI everything" to "describe what you want precisely and trust execution" is the hallmark of experienced AI collaborators.
+
+### What You're Already Good At
+
+- **Infrastructure-based context persistence** — hooks, memory files, plans. This is your primary strategy and it works.
+- **Session continuity** — context-dump.js + session-restore.js eliminated context loss by Era 7
+- **Meta-cognition** — 135 meta-cognitive messages. You actively recognize and name patterns (the hook system IS this)
+
+### What to Practice Next
+
+**Study:**
+- Precision instruction writing: how to say more with fewer words
+- The "intent signal-to-noise ratio" — every word in your prompt should carry unique information
+- Task decomposition vs. context dumping — when to split tasks vs. when to provide background
+- The "trust but verify" pattern — give clear intent, then check output, not process
+
+**Exercise:**
+1. Take 10 of your longest messages from the human-messages.json (by character count)
+2. Rewrite each to be ≤50% of original length while preserving intent
+3. Run both versions through Claude Code on the same task
+4. Compare output quality — if the shorter version produces equal or better results, you've found wasted context
+5. Track your messages/commit ratio over your next project — target ≤2.0
+
+**Deliverable:** 10 before/after prompt pairs with output quality comparison.
+
+---
+
+## Tool Bloat Audit (from context-management-analysis.json)
+
+### Core Tools (KEEP — actively used)
+| Tool | Evidence | Why It's Core |
+|------|----------|---------------|
+| Hooks system | 26 hooks, 9 still active | Primary meta-cognitive instrument |
+| Plan files | 249 plans across 71 sessions | Context management before execution |
+| Memory files | 5 files, heavily referenced | Persistent cross-session memory |
+| Context dumps | 109 messages, session-restore hook | Session continuity (costly but works) |
+| Compost Mill | 21 files, active | Niche but useful for creative workflows |
+
+### Likely Bloat (AUDIT → likely remove)
+| Tool | Files | Why It's Bloat |
+|------|-------|----------------|
+| Triple collab systems | 18+ files | 3 overlapping agent coordination systems |
+| Triple scoring engines | ? files | CreativeEvaluator active, others may be redundant |
+| Triple prompt systems | 19+ files | PromptStore + PromptLibrary + ContextBuilder from different eras |
+| Triple memory stores | ? files | HarnessMemory active, art memories may not be exercised |
+| Multiple generator bases | 22 files | TierBasedGenerator + BaseGenerator + Generator |
+| Multiple UI systems | 7 files | gui/ + gallery/ + ui/ when TUI is primary |
+| 13 tiny modules | ≤3 files each | Some legitimate (constants), some stubs (learning, improvement) |
+
+**Recommendation:** Before adding ANY new module, audit whether an existing one already solves the problem. The triple-redundancy pattern (3 of everything) is your #1 architectural smell.
+
+---
+
 ## What This Plan Does NOT Cover
 
 The ML-specific learning plan is in `narrative/ML-LEARNING-PLAN.md`. It covers:
@@ -207,4 +276,26 @@ The plan is designed for Simon's natural rhythm: burst through a phase in 1-3 de
 
 ---
 
-*Sources: GAP-ANALYSIS.md (12 diagnosed gaps), DEVELOPER-PROFILE.md (6 learning patterns), telemetry-sessions.json (1,148 messages), telemetry-git.json (303 commits).*
+## Cross-Repo Archaeology Findings (from 7,059 commits, 50 repos)
+
+**Source:** `narrative/data/cross-repo-analysis.json`, `narrative/data/model-adoption-analysis.json`
+
+Your full GitHub history (not just Liminal) reveals a broader pattern:
+
+| Metric | Value |
+|--------|-------|
+| Total commits | 7,059 across 50 repos |
+| Peak month | March 2026 (1,396 commits, 19 repos) |
+| Explosion point | November 2025 (979 commits, 25 repos — up from 187/6 in October) |
+| Primary language shift | "none" (curated lists) → TypeScript (Nov 2025) |
+| Nocturnal ratio (all repos) | Strong evening/early-morning pattern (04:00 and 16:00 peaks) |
+| Most productive day | Friday (1,198 commits) |
+| Top repo by commits | awesome-mcp-servers (4,649 commits — curated content, not code) |
+
+**The November 2025 inflection:** Your local-first shift (Ollama + LM Studio) removed the API cost barrier. In the same month you also adopted Qwen and OpenRouter. Repo count went from 6 to 25. This wasn't just trying more tools — it was the beginning of understanding that different models have different strengths.
+
+**Model adoption lag:** You adopt actively-researched tools within 0-3 months of release (vs 6-12 month industry average). MiniMax-M2.7 was adopted in the same month. GLM-5 within 1 month.
+
+---
+
+*Sources: GAP-ANALYSIS.md (12 diagnosed gaps), DEVELOPER-PROFILE.md (6 learning patterns), telemetry-sessions.json (1,148 messages), telemetry-git.json (303 commits), github-commits.csv (7,059 commits), github-repos.csv (50 repos), model-adoption-analysis.json, token-efficiency-plan.md.*

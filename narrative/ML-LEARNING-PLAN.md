@@ -267,4 +267,95 @@ What Simon needs is not more code but conceptual understanding of why each techn
 
 ---
 
-*Sources: human-messages.json (1,148 messages), telemetry-sessions.json (frustration_analysis, emotional_arc), telemetry-git.json (commit patterns), telemetry-agents.json (agent profiles), SYNTHESIS.md (Unresolved Threads), DEVELOPER-PROFILE.md (Learning Patterns). ML correlations derived from systematic analysis of how each Liminal subsystem maps to established ML techniques.*
+## Context Management Skill Trajectory (from telemetry mining)
+
+**Source:** `narrative/data/context-management-analysis.json`
+
+Your context management evolved through three distinct phases during the 32-day build:
+
+### Phase 1: Context Chaos (Eras 1-3) — 3.86 msg/commit
+- 208 mentions of "context" — highest density in the project
+- Hallucination frustration took **24 hours** to produce session-restore system
+- Zero context management hooks existed before Era 3
+- Context dumps contained raw task notifications (not curated context)
+- **Skill level:** Beginner — "context is the AI's problem"
+
+### Phase 2: Hypercorrection (Eras 4-5) — 9.90 msg/commit (PEAK)
+- 80 micromanagement messages vs 21 trust-delegation (3.8:1 ratio)
+- Built 5 hooks rapidly (wiring, review, bug-dismissal, overcomplication, context-dump)
+- Session count spiked to 27 (fragmented, short sessions)
+- 72 "compact" mentions — actively wrestling with context windows
+- **Skill level:** Intermediate — "I'll give the AI SO MUCH context it can't fail"
+
+### Phase 3: Delegation Mastery (Eras 7-9) — 0.85 msg/commit
+- **11.6x reduction** from Era 4 peak
+- Session bytes/session peaked at 24,735 — RICHER sessions with FEWER messages
+- Only 2 context-loss events in the entire project, both in early eras
+- Meta-cognition: 135 messages actively recognizing patterns
+- Built self-improving Meta-Harness (Era 8)
+- **Skill level:** Advanced — "5 words, 13 files, trust the agent"
+
+### The Meta-Insight
+
+You improved NOT by learning to manage context better, but by learning to NEED less of it. The trajectory from 9.90 → 0.85 messages/commit is a shift from "tell the AI everything" to "describe intent precisely and trust execution."
+
+Evidence:
+- Era 3: *"Anything that is not wired up needs to be wired up"* — vague, 11 words
+- Era 5: *"ChatCLI with split-view terminal UI"* — specific, 7 words
+- Era 7: *"Voice-to-visual parameter mapping"* — precise, 5 words → 13 files created
+- Era 9: *"THE_BIBLE documentation"* — naming convention IS the instruction
+
+### Implication for ML Learning
+
+This pattern is exactly how prompt engineering matures. Module 8 (Prompt Optimization) is the natural extension of your context management trajectory. You've already discovered the key insight empirically — the DSPy framework will give you the formal framework to systematize it.
+
+---
+
+## Tool Bloat Analysis (which modules you actually use)
+
+### Core (KEEP)
+| Tool | Why |
+|------|-----|
+| Hooks system (26 hooks) | Primary meta-cognitive instrument |
+| Plan files (249 plans) | Context before execution |
+| Memory files (5 files) | Persistent cross-session state |
+| Context dumps + session-restore | Session continuity |
+
+### Likely Bloat (AUDIT before keeping)
+| Redundant Set | Files | Recommendation |
+|---------------|-------|----------------|
+| collab + swarm + deep-collaboration | 18+ | Consolidate to harness pattern |
+| CreativeEvaluator + ScoringEngine + AestheticCritic | ? | Keep active one, audit hot path |
+| PromptStore + PromptLibrary + ContextBuilder | 19+ | Keep PromptLibrary + ContextBuilder |
+| HarnessMemory + EpisodicMemory + SemanticArtMemory | ? | Keep HarnessMemory |
+| TierBasedGenerator + BaseGenerator + Generator | 22 | Single interface + strategy |
+| gui/ + gallery/ + ui/ | 7 | Keep TUI only |
+| 13 tiny modules (≤3 files) | varies | Audit: some stubs (learning, improvement) |
+
+**Rule of thumb from your data:** Before adding a new module, check if an existing one already solves the problem. Your #1 architectural pattern is "build 3 of everything" — this is efficient for exploration but costly for maintenance.
+
+---
+
+## Model Release Correlation (from cross-repo archaeology)
+
+Your model adoption speed vs. release dates reveals an **early adopter pattern** that accelerated after the local-first shift (Nov 2025):
+
+| Model/Tool | Release | First Use | Lag | Notes |
+|-----------|---------|-----------|-----|-------|
+| MiniMax-M2.7 | Mar 2026 | Mar 2026 | **0 months** | Same-month adoption |
+| GLM-5 | Feb 2026 | Mar 2026 | **1 month** | Immediate integration into Liminal |
+| Claude 3.5 Haiku | Oct 2024 | Dec 2024 | **2 months** | Fast adoption — became primary tool |
+| Qwen 3 Coder | Jul 2025 | Nov 2025 | **4 months** | Adopted with local-first shift |
+| Gemini 2.5 | Mar 2025 | Aug 2025 | **5 months** | |
+| Cursor IDE | Mar 2023 | Apr 2025 | **25 months** | Late discovery — didn't research |
+| Ollama | Jun 2023 | Nov 2025 | **29 months** | Late discovery — adopted with local shift |
+
+**Average lag for actively-researched tools: ~2 months** (vs 6-12 months industry average).
+
+**Key inflection point:** November 2025 — when you adopted Ollama + LM Studio + Qwen simultaneously, your repo count exploded from 2 to 25. Local model hosting removed the API cost barrier, enabling rapid experimentation. This is why Liminal ended up with a 6-provider routing architecture.
+
+**Token efficiency plan:** See `narrative/data/token-efficiency-plan.md` for the full actionable plan (7 rules, context hygiene, budget targets).
+
+---
+
+*Sources: human-messages.json (1,148 messages), telemetry-sessions.json (frustration_analysis, emotional_arc), telemetry-git.json (commit patterns), telemetry-agents.json (agent profiles), context-management-analysis.json (context skill trajectory), github-commits.csv (7,059 commits across 50 repos), model-adoption-analysis.json, token-efficiency-plan.md. ML correlations derived from systematic analysis of how each Liminal subsystem maps to established ML techniques.*

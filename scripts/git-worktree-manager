@@ -1,0 +1,444 @@
+#!/bin/bash
+# Git Worktree Manager
+# Advanced CLI for worktree operations
+# Usage: git-worktree-manager <command> [options]
+
+set -e
+
+SCRIPT_NAME="git-worktree-manager"
+VERSION="1.0.0"
+
+# Colors
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Helper functions
+log_info() { echo -e "${BLUE}ℹ${NC} $1"; }
+log_success() { echo -e "${GREEN}✓${NC} $1"; }
+log_warn() { echo -e "${YELLOW}⚠${NC} $1"; }
+log_error() { echo -e "${RED}✗${NC} $1"; }
+
+show_help() {
+    cat << EOF
+Git Worktree Manager v$VERSION
+
+USAGE:
+    $SCRIPT_NAME <command> [options]
+
+COMMANDS:
+    create <branch> [base]     Create new worktree (alias: c)
+    list [options]             List all worktrees (alias: ls, l)
+    clean [options]            Clean merged/stale worktrees (alias: gc)
+    remove <name> [options]    Remove specific worktree (alias: rm, r)
+    agent <task-id>            Create agent-specific worktree (alias: a)
+    switch [name]              Switch to worktree (alias: s, sw)
+    status                     Show worktree status (alias: st)
+    prune                      Prune stale worktree metadata
+    doctor                     Check worktree health
+    
+OPTIONS:
+    -f, --force                Force operation (for remove)
+    -n, --dry-run              Show what would be done, don't do it
+    -v, --verbose              Verbose output
+    -h, --help                 Show this help
+    --version                  Show version
+
+EXAMPLES:
+    $SCRIPT_NAME create feature-login
+    $SCRIPT_NAME create feature-oauth main
+    $SCRIPT_NAME agent task-123
+    $SCRIPT_NAME list --verbose
+    $SCRIPT_NAME clean --dry-run
+    $SCRIPT_NAME remove feature-login --force
+    $SCRIPT_NAME doctor
+
+EOF
+}
+
+get_repo_root() {
+    git rev-parse --show-toplevel 2>/dev/null || {
+        log_error "Not in a git repository"
+        exit 1
+    }
+}
+
+cmd_create() {
+    local branch=$1
+    local base=${2:-main}
+    local repo_root=$(get_repo_root)
+    local wt_path="$repo_root/.worktrees/$branch"
+    
+    if [ -z "$branch" ]; then
+        log_error "Branch name required"
+        echo "Usage: $SCRIPT_NAME create <branch> [base-branch]"
+        exit 1
+    fi
+    
+    # Check if worktree already exists
+    if [ -d "$wt_path" ]; then
+        log_warn "Worktree already exists: $wt_path"
+        log_info "Switching to existing worktree..."
+        echo "$wt_path"
+        return 0
+    fi
+    
+    # Check if branch exists
+    if git show-ref --verify --quiet "refs/heads/$branch"; then
+        log_info "Creating worktree from existing branch: $branch"
+        git worktree add "$wt_path" "$branch"
+    else
+        log_info "Creating new branch and worktree: $branch (from $base)"
+        git worktree add -b "$branch" "$wt_path" "$base"
+    fi
+    
+    log_success "Worktree created: $wt_path"
+    echo "$wt_path"
+}
+
+cmd_agent() {
+    local task_id=$1
+    local repo_root=$(get_repo_root)
+    
+    if [ -z "$task_id" ]; then
+        # Generate random task ID
+        task_id=$(git rev-parse --short HEAD)-$(date +%s | tail -c 5)
+        log_info "Generated task ID: $task_id"
+    fi
+    
+    local branch="agent-$task_id"
+    local wt_path="$repo_root/.worktrees/$branch"
+    
+    # Create agent worktree from main
+    log_info "Creating agent worktree: $branch"
+    git worktree add -b "$branch" "$wt_path" main
+    
+    log_success "Agent worktree ready: $wt_path"
+    echo "$wt_path"
+}
+
+cmd_list() {
+    local verbose=false
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -v|--verbose) verbose=true ;;
+            *) ;;
+        esac
+        shift
+    done
+    
+    local repo_root=$(get_repo_root)
+    
+    echo "📂 Worktrees in: $repo_root"
+    echo ""
+    
+    git worktree list | while read -r line; do
+        local path=$(echo "$line" | awk '{print $1}')
+        local commit=$(echo "$line" | awk '{print $2}')
+        local branch=$(echo "$line" | awk '{print $3}')
+        
+        # Check if it's a feature worktree
+        if [[ "$path" == *".worktrees"* ]]; then
+            local name=$(basename "$path")
+            local status=""
+            
+            if [ "$verbose" = true ]; then
+                # Get additional info
+                local last_commit=$(git -C "$path" log -1 --format=%cr 2>/dev/null || echo "unknown")
+                local uncommitted=$(git -C "$path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+                
+                if [ "$uncommitted" -gt 0 ]; then
+                    status=" | 📝 $uncommitted uncommitted"
+                fi
+                
+                printf "  %-30s %s @ %s%s\n" "$name" "$branch" "$last_commit" "$status"
+            else
+                printf "  %-30s %s\n" "$name" "$branch"
+            fi
+        else
+            # Main worktree
+            printf "  %-30s %s (main)\n" "(main repo)" "$branch"
+        fi
+    done
+    
+    echo ""
+    log_info "Total: $(git worktree list | wc -l) worktrees"
+}
+
+cmd_clean() {
+    local dry_run=false
+    local force=false
+    
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -n|--dry-run) dry_run=true ;;
+            -f|--force) force=true ;;
+            *) ;;
+        esac
+        shift
+    done
+    
+    local repo_root=$(get_repo_root)
+    local removed=0
+    
+    log_info "Scanning for cleanable worktrees..."
+    
+    git worktree list --porcelain | grep -E "^worktree " | cut -d' ' -f2 | while read -r path; do
+        # Skip main worktree
+        [[ "$path" == "$repo_root" ]] && continue
+        
+        local name=$(basename "$path")
+        local branch=$(git -C "$path" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
+        
+        # Check if branch is merged
+        if git branch --merged main | grep -q "^[* ]* $branch$"; then
+            log_info "Found merged worktree: $name (branch: $branch)"
+            
+            if [ "$dry_run" = true ]; then
+                log_info "[DRY-RUN] Would remove: $path"
+            else
+                # Check for uncommitted changes
+                local uncommitted=$(git -C "$path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+                if [ "$uncommitted" -gt 0 ] && [ "$force" = false ]; then
+                    log_warn "Skipping $name (has $uncommitted uncommitted changes, use --force to override)"
+                    continue
+                fi
+                
+                git worktree remove "$path" 2>/dev/null || git worktree remove --force "$path"
+                log_success "Removed: $name"
+                ((removed++))
+            fi
+        fi
+    done
+    
+    if [ "$dry_run" = true ]; then
+        log_info "Dry run complete. Use without --dry-run to actually clean."
+    else
+        log_success "Cleanup complete. Removed $removed worktrees."
+    fi
+    
+    # Prune stale metadata
+    git worktree prune
+}
+
+cmd_remove() {
+    local name=$1
+    local force=false
+    
+    shift
+    while [[ $# -gt 0 ]]; do
+        case $1 in
+            -f|--force) force=true ;;
+            *) ;;
+        esac
+        shift
+    done
+    
+    if [ -z "$name" ]; then
+        log_error "Worktree name required"
+        echo "Usage: $SCRIPT_NAME remove <name> [--force]"
+        exit 1
+    fi
+    
+    local repo_root=$(get_repo_root)
+    local wt_path="$repo_root/.worktrees/$name"
+    
+    if [ ! -d "$wt_path" ]; then
+        log_error "Worktree not found: $wt_path"
+        exit 1
+    fi
+    
+    # Check for uncommitted changes
+    local uncommitted=$(git -C "$wt_path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$uncommitted" -gt 0 ] && [ "$force" = false ]; then
+        log_warn "Worktree has $uncommitted uncommitted changes"
+        log_info "Use --force to remove anyway, or commit/stash changes first"
+        exit 1
+    fi
+    
+    git worktree remove "$wt_path" 2>/dev/null || git worktree remove --force "$wt_path"
+    log_success "Removed worktree: $name"
+}
+
+cmd_switch() {
+    local name=$1
+    local repo_root=$(get_repo_root)
+    
+    if [ -n "$name" ]; then
+        # Switch to specific worktree
+        local wt_path="$repo_root/.worktrees/$name"
+        if [ -d "$wt_path" ]; then
+            echo "$wt_path"
+        else
+            log_error "Worktree not found: $name"
+            exit 1
+        fi
+    else
+        # Interactive switch
+        local worktrees=$(git worktree list --porcelain | grep -E "\.worktrees" | grep -E "^worktree " | cut -d' ' -f2)
+        
+        if [ -z "$worktrees" ]; then
+            log_error "No feature worktrees found"
+            exit 1
+        fi
+        
+        if command -v fzf &> /dev/null; then
+            local selected=$(echo "$worktrees" | fzf --preview 'basename {}' --header="Select worktree:")
+            if [ -n "$selected" ]; then
+                echo "$selected"
+            fi
+        else
+            # Numbered list
+            echo "$worktrees" | nl
+            read -p "Select worktree number: " num
+            local selected=$(echo "$worktrees" | sed -n "${num}p")
+            if [ -n "$selected" ]; then
+                echo "$selected"
+            fi
+        fi
+    fi
+}
+
+cmd_status() {
+    local repo_root=$(get_repo_root)
+    local total=$(git worktree list | wc -l | tr -d ' ')
+    local feature=$(git worktree list | grep -c ".worktrees" || echo 0)
+    local main=$((total - feature))
+    
+    echo "📊 Worktree Status"
+    echo ""
+    echo "Repository: $(basename $repo_root)"
+    echo "Total worktrees: $total"
+    echo "  - Main worktrees: $main"
+    echo "  - Feature worktrees: $feature"
+    echo ""
+    
+    # Check for stale metadata
+    local stale=$(git worktree prune -n 2>&1 | grep -c "would remove" || echo 0)
+    if [ "$stale" -gt 0 ]; then
+        log_warn "Found $stale stale worktree entries (run 'prune' to clean)"
+    fi
+    
+    # Check for uncommitted changes
+    local dirty=0
+    git worktree list --porcelain | grep -E "^worktree " | cut -d' ' -f2 | while read -r path; do
+        local uncommitted=$(git -C "$path" status --porcelain 2>/dev/null | wc -l | tr -d ' ')
+        if [ "$uncommitted" -gt 0 ]; then
+            ((dirty++))
+        fi
+    done
+    
+    if [ "$dirty" -gt 0 ]; then
+        log_warn "$dirty worktrees have uncommitted changes"
+    else
+        log_success "All worktrees clean"
+    fi
+}
+
+cmd_doctor() {
+    local repo_root=$(get_repo_root)
+    local issues=0
+    
+    echo "🔍 Running worktree health check..."
+    echo ""
+    
+    # Check 1: .worktrees is gitignored
+    if ! git check-ignore -q .worktrees 2>/dev/null; then
+        log_error ".worktrees/ is not in .gitignore"
+        echo "  Fix: echo '.worktrees/' >> .gitignore"
+        ((issues++))
+    else
+        log_success ".worktrees/ is properly gitignored"
+    fi
+    
+    # Check 2: Worktrees directory exists
+    if [ ! -d "$repo_root/.worktrees" ]; then
+        log_warn ".worktrees/ directory does not exist"
+        echo "  Fix: mkdir -p .worktrees"
+        ((issues++))
+    else
+        log_success ".worktrees/ directory exists"
+    fi
+    
+    # Check 3: No tracked files in worktrees
+    local tracked=$(git ls-files .worktrees/ 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$tracked" -gt 0 ]; then
+        log_error "Found $tracked tracked files in .worktrees/"
+        echo "  Fix: git rm --cached -r .worktrees/ && echo '.worktrees/' >> .gitignore"
+        ((issues++))
+    else
+        log_success "No tracked files in .worktrees/"
+    fi
+    
+    # Check 4: Stale worktree metadata
+    local stale=$(git worktree prune -n 2>&1 | grep -c "would remove" || echo 0)
+    if [ "$stale" -gt 0 ]; then
+        log_warn "Found $stale stale worktree entries"
+        echo "  Fix: git worktree prune"
+        ((issues++))
+    else
+        log_success "No stale worktree metadata"
+    fi
+    
+    # Check 5: Duplicate branch checkouts
+    git worktree list --porcelain | grep "^branch " | sort | uniq -d | while read -r dup; do
+        log_error "Duplicate branch checkout: $dup"
+        ((issues++))
+    done
+    
+    echo ""
+    if [ "$issues" -eq 0 ]; then
+        log_success "All checks passed! Worktree system is healthy."
+    else
+        log_warn "Found $issues issue(s). See suggestions above."
+    fi
+}
+
+# Main command dispatcher
+case "${1:-}" in
+    create|c)
+        shift
+        cmd_create "$@"
+        ;;
+    agent|a)
+        shift
+        cmd_agent "$@"
+        ;;
+    list|ls|l)
+        shift
+        cmd_list "$@"
+        ;;
+    clean|gc)
+        shift
+        cmd_clean "$@"
+        ;;
+    remove|rm|r)
+        shift
+        cmd_remove "$@"
+        ;;
+    switch|s|sw)
+        shift
+        cmd_switch "$@"
+        ;;
+    status|st)
+        shift
+        cmd_status "$@"
+        ;;
+    prune)
+        git worktree prune
+        log_success "Pruned stale worktree metadata"
+        ;;
+    doctor)
+        shift
+        cmd_doctor "$@"
+        ;;
+    --version)
+        echo "$SCRIPT_NAME v$VERSION"
+        ;;
+    -h|--help|help|*)
+        show_help
+        ;;
+esac

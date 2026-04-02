@@ -548,8 +548,8 @@ document.addEventListener('DOMContentLoaded', () => {
       .on('mouseover', function(e, d) { showTooltip(e, `<div class="tt-title">${d.date}</div><div class="tt-detail">${d.value} commits</div>`); d3.select(this).attr('opacity', 1); })
       .on('mouseout', function() { hideTooltip(); d3.select(this).attr('opacity', 0.7); });
     // Axes
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((d,i) => i % Math.ceil(data.length/8) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
-    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((d,i) => i % Math.ceil(data.length/8) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
+    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
   })();
 
@@ -586,8 +586,8 @@ document.addEventListener('DOMContentLoaded', () => {
         g.append('circle').attr('cx', x(data[idx].date)).attr('cy', y(data[idx].value)).attr('r', 5).attr('fill', era.color).attr('stroke', '#fff').attr('stroke-width', 1);
       }
     });
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((d,i) => i % Math.ceil(data.length/8) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
-    g.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(d => (d/1000)+'k')).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((d,i) => i % Math.ceil(data.length/8) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
+    g.append('g').call(d3.axisLeft(y).ticks(4).tickFormat(d => (d/1000)+'k')).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
   })();
 
@@ -801,8 +801,8 @@ document.addEventListener('DOMContentLoaded', () => {
     g.selectAll('.layer').data(stack).enter().append('path')
       .attr('class', 'layer').attr('d', area)
       .attr('fill', d => agentColors[d.key] || '#495057').attr('opacity', 0.8);
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((_, i) => i % Math.ceil(data.length/8) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
-    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((_, i) => i % Math.ceil(data.length/8) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
+    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     // Legend
     const legend = g.append('g').attr('transform', `translate(${width - 120}, 0)`);
@@ -877,10 +877,10 @@ document.addEventListener('DOMContentLoaded', () => {
     g.append('path').datum(testData).attr('d', lineT).attr('fill', 'none').attr('stroke', COLORS.kai).attr('stroke-width', 2).attr('stroke-dasharray', '4,3');
     g.selectAll('.t-dot').data(testData).enter().append('circle').attr('cx', d => x(d.date)).attr('cy', d => yT(d.tests)).attr('r', 2.5).attr('fill', COLORS.kai);
     // Axes
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(allDates.filter((_, i) => i % Math.ceil(allDates.length/6) === 0)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
-    g.append('g').call(d3.axisLeft(yF).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(allDates.filter((_, i) => i % Math.ceil(allDates.length/6) === 0)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
+    g.append('g').call(d3.axisLeft(yF).ticks(4)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     const gT = svg.append('g').attr('transform', `translate(${width + margin.left + 10},${margin.top})`);
-    gT.call(d3.axisRight(yT).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    gT.call(d3.axisRight(yT).ticks(4)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     gT.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     // Legend
@@ -907,7 +907,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .on('mouseout', hideTooltip);
     // Center text
     g.append('text').attr('text-anchor', 'middle').attr('y', -5).attr('fill', COLORS.text).attr('font-size', '22px').attr('font-weight', '700').attr('font-family', 'var(--font-display)').text(total);
-    g.append('text').attr('text-anchor', 'middle').attr('y', 12).attr('fill', COLORS.text3).attr('font-size', '10px').text('total commits');
+    g.append('text').attr('text-anchor', 'middle').attr('y', 12).attr('fill', COLORS.text2).attr('font-size', '10px').text('total commits');
     // Legend below
     const legend = svg.append('g').attr('transform', `translate(10, ${size + 5})`);
     data.slice(0, 6).forEach((d, i) => {
@@ -941,8 +941,8 @@ document.addEventListener('DOMContentLoaded', () => {
     g.append('path').datum(data).attr('d', area).attr('fill', 'url(#grad-deps)');
     g.append('path').datum(data).attr('d', line).attr('fill', 'none').attr('stroke', COLORS.era4).attr('stroke-width', 2);
     g.selectAll('.dot').data(data).enter().append('circle').attr('cx', d => x(d.date)).attr('cy', d => y(d.value)).attr('r', 3).attr('fill', COLORS.era4);
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((_, i) => i % Math.ceil(data.length/6) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
-    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((_, i) => i % Math.ceil(data.length/6) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
+    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
   })();
 })();
@@ -998,8 +998,8 @@ document.addEventListener('DOMContentLoaded', () => {
         .on('mouseover', function(e) { showTooltip(e, `<div class="tt-title">${d.era}</div><div class="tt-detail">Intensity: ${d.value}/5</div><div class="tt-quote">${d.label}</div>`); })
         .on('mouseout', hideTooltip);
     });
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px').attr('transform', 'rotate(-20)').attr('text-anchor', 'end');
-    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px').attr('transform', 'rotate(-20)').attr('text-anchor', 'end');
+    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
   })();
 
@@ -1043,7 +1043,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const ty = l.target * (itemH + 4) + 10 + itemH/2;
         const sx = sourceX + 120, tx = targetX;
         const mx = (sx + tx) / 2;
-        svg.append('path').attr('d', `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`).attr('fill', 'none').attr('stroke', l.active ? COLORS.claude : COLORS.text3).attr('stroke-width', 1.5).attr('opacity', 0.5);
+        svg.append('path').attr('d', `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`).attr('fill', 'none').attr('stroke', l.active ? COLORS.claude : COLORS.text2).attr('stroke-width', 1.5).attr('opacity', 0.5);
       });
     } else {
       const sankey = d3.sankey().nodeWidth(12).nodePadding(8).extent([[10, 10], [width - 10, height - 10]]);
@@ -1122,8 +1122,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const area = d3.area().x(d => x(d.data.date)).y0(d => y(d[0])).y1(d => y(d[1])).curve(d3.curveMonotoneX);
       g.append('path').datum(layer).attr('d', area).attr('fill', colors[i]).attr('opacity', 0.7);
     });
-    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((_, i) => i % Math.ceil(data.length/10) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
-    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text3).style('font-size', '10px');
+    g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x).tickValues(data.filter((_, i) => i % Math.ceil(data.length/10) === 0).map(d => d.date)).tickFormat(d => d.slice(5))).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
+    g.append('g').call(d3.axisLeft(y).ticks(4)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     // Legend
     g.append('rect').attr('x', width - 130).attr('y', 0).attr('width', 8).attr('height', 8).attr('rx', 2).attr('fill', COLORS.claude);
@@ -1144,7 +1144,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!sourceDomains.length || !targetModules.length) {
       const width = el.clientWidth, height = 180;
       const svg = d3.select(el).append('svg').attr('role','img').attr('viewBox', `0 0 ${width} ${height}`);
-      svg.append('text').attr('x', width/2).attr('y', height/2).attr('text-anchor', 'middle').attr('fill', COLORS.text3).text('No Creative DNA flow data available');
+      svg.append('text').attr('x', width/2).attr('y', height/2).attr('text-anchor', 'middle').attr('fill', COLORS.text2).text('No Creative DNA flow data available');
       return;
     }
     const width = el.clientWidth, height = Math.max(220, sourceDomains.length * 26 + 30);

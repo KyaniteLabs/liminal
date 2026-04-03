@@ -21,13 +21,13 @@ export interface CompositionConfig {
 }
 
 /** Options for the RemotionRenderer constructor */
-export interface RemotionRendererOptions {
+interface RemotionRendererOptions {
   /** Directory where temporary Remotion projects will be scaffolded. Defaults to os.tmpdir(). */
   tempDir?: string;
 }
 
 /** Options for the composition config */
-export interface CompositionConfigOptions {
+interface CompositionConfigOptions {
   id: string;
   fps: number;
   durationInFrames: number;
@@ -36,7 +36,7 @@ export interface CompositionConfigOptions {
 }
 
 /** Options for renderToVideo */
-export interface RenderToVideoOptions {
+interface RenderToVideoOptions {
   /** Path to the scaffolded Remotion project directory */
   projectDir: string;
   /** Path where the output video will be written */

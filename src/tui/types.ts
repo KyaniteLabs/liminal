@@ -9,9 +9,3 @@ export interface Iteration {
   /** True when PromiseDetector detected completion promise in this iteration */
   promiseDetected?: boolean;
 }
-
-interface PlayerPianoState {
-  isPlaying: boolean;
-  currentIndex: number;
-  speed: number;
-}

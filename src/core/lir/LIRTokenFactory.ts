@@ -9,7 +9,6 @@
 import type {
   LIRCodeToken,
   LIRDocToken,
-  LIRTextToken,
   SymbolKind,
 } from './types.js';
 
@@ -80,14 +79,14 @@ function estimateComplexity(source: string): number {
 /**
  * Count words in a string
  */
-function countWords(text: string): number {
+export function countWords(text: string): number {
   return text.trim().split(/\s+/).filter(Boolean).length;
 }
 
 /**
  * Extract headings from markdown/text content
  */
-function extractHeadings(content: string): Array<{ level: number; text: string }> {
+export function extractHeadings(content: string): Array<{ level: number; text: string }> {
   const headings: Array<{ level: number; text: string }> = [];
   const lines = content.split('\n');
 
@@ -109,7 +108,7 @@ function extractHeadings(content: string): Array<{ level: number; text: string }
 /**
  * Extract code blocks from markdown/text content
  */
-function extractCodeBlocks(content: string): Array<{ language: string; code: string }> {
+export function extractCodeBlocks(content: string): Array<{ language: string; code: string }> {
   const codeBlocks: Array<{ language: string; code: string }> = [];
   // Match markdown code blocks: ```language code ```
   const regex = /```(\w+)?\n([\s\S]*?)```/g;
@@ -128,7 +127,7 @@ function extractCodeBlocks(content: string): Array<{ language: string; code: str
 /**
  * Count paragraphs in text content
  */
-function countParagraphs(content: string): number {
+export function countParagraphs(content: string): number {
   return content
     .split(/\n\n+/)
     .map((p) => p.trim())
@@ -336,39 +335,4 @@ export function createDocToken(
   return token;
 }
 
-/**
- * Create a LIR text token from plain text content
- *
- * @param source - Source file path
- * @param content - Full text content
- * @returns A valid LIRTextToken
- */
-export function createTextToken(source: string, content: string): LIRTextToken {
-  const id = generateId(source, content);
 
-  const headings = extractHeadings(content);
-  const codeBlocks = extractCodeBlocks(content);
-  const wordCount = countWords(content);
-  const paragraphCount = countParagraphs(content);
-
-  const token: LIRTextToken = {
-    type: 'text',
-    id,
-    domain: 'general',
-    layer: 'content',
-    metadata: {},
-    tags: [],
-    content,
-    structure: {
-      headings,
-      codeBlocks,
-    },
-    metrics: {
-      wordCount,
-      paragraphCount,
-      headingCount: headings.length,
-    },
-  };
-
-  return token;
-}

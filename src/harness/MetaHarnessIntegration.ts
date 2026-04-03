@@ -178,7 +178,7 @@ export class MetaHarnessIntegration {
       // Apply adaptations for detected patterns
       for (const pattern of detectedPatterns) {
         console.log(`[MetaHarness] Applying adaptation for pattern: ${pattern.name}`);
-        const adaptation = await harnessUpdater.applyAdaptation(pattern);
+        const adaptation = harnessUpdater.applyAdaptation(pattern);
         if (adaptation) {
           this.appliedAdaptations.push(adaptation);
           
@@ -300,11 +300,13 @@ export const metaHarness = new MetaHarnessIntegration();
 if (typeof process !== 'undefined' && process.stdout?.isTTY) {
   // Delay initialization to avoid circular dependencies during module load
   setTimeout(() => {
-    try {
-      metaHarness.initialize();
-    } catch (err) {
-      console.warn('[MetaHarness] Auto-initialization failed:', err);
-    }
+    void (async () => {
+      try {
+        await metaHarness.initialize();
+      } catch (err) {
+        console.warn('[MetaHarness] Auto-initialization failed:', err);
+      }
+    })();
   }, 100);
 }
 
@@ -314,13 +316,11 @@ if (typeof process !== 'undefined') {
     metaHarness.shutdown().catch(console.error);
   });
   
-  process.on('SIGINT', async () => {
-    await metaHarness.shutdown();
-    process.exit(0);
+  process.on('SIGINT', () => {
+    void metaHarness.shutdown().then(() => process.exit(0));
   });
   
-  process.on('SIGTERM', async () => {
-    await metaHarness.shutdown();
-    process.exit(0);
+  process.on('SIGTERM', () => {
+    void metaHarness.shutdown().then(() => process.exit(0));
   });
 }

@@ -216,10 +216,10 @@ export class BatchProcessor<TInput, TOutput> {
       executing.push(promise);
 
       // Remove settled promises to avoid unbounded growth.
-      promise.finally(() => {
+      void promise.finally(() => {
         const idx = executing.indexOf(promise);
         if (idx !== -1) {
-          executing.splice(idx, 1);
+          void executing.splice(idx, 1);
         }
       });
     }

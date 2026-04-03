@@ -7,6 +7,8 @@
  * - Build runs: 12 per minute max
  */
 
+import { formatError } from '../../utils/errors.js';
+
 interface RateLimitConfig {
   minDelayMs: number;
   maxPerMinute: number;

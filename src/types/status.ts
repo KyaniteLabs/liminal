@@ -59,4 +59,18 @@ export function isTerminalStatus(status: Status): boolean {
   return TERMINAL_STATUSES.includes(status);
 }
 
+/**
+ * Check if a status is waiting (job queued but not started)
+ */
+export function isWaitingStatus(status: Status): boolean {
+  return WAITING_STATUSES.includes(status);
+}
+
+/**
+ * Check if a status is active (job currently processing)
+ */
+export function isActiveStatus(status: Status): boolean {
+  return ACTIVE_STATUSES.includes(status);
+}
+
 

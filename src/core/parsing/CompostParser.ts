@@ -89,7 +89,7 @@ export class CompostParser {
     // Route to appropriate parser based on extension
     let tokens: LIRToken[];
     try {
-      tokens = await this.routeToParser(filePath, content);
+      tokens = this.routeToParser(filePath, content);
     } catch (error) {
       if (error instanceof LIRParseError) {
         throw error;

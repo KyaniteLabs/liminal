@@ -28,6 +28,13 @@ export function isValidDomain(value: string): value is Domain {
 }
 
 /**
+ * Get default domain for fallback scenarios
+ */
+export function getDefaultDomain(): Domain {
+  return Domain.UNKNOWN;
+}
+
+/**
  * Domains that require HTML wrapper
  */
 export const WRAPPED_DOMAINS = [Domain.P5, Domain.THREE, Domain.TONE, Domain.HYDRA];

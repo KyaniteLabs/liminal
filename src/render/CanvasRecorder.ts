@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { formatError } from '../utils/errors.js';
 import { VideoExporter } from '../export/VideoExporter.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Domain } from '../types/domains.js';

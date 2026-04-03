@@ -317,8 +317,8 @@ export async function run(prompt: string, options: {
     }
     throw new GenerationError(
         `Liminal run failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        undefined,
-        undefined,
+        'unknown',
+        {},
         error instanceof Error ? error : undefined
       );
   }

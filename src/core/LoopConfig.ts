@@ -15,7 +15,7 @@ import { Domain } from '../types/domains.js';
 import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
 import type { SwarmOptions } from '../types/options/SwarmOptions.js';
 import { type DebugOptions, normalizeDebugOptions } from '../types/options/DebugOptions.js';
-import type { RenderOptions } from '../types/options/RenderOptions.js';
+import { type RenderOptions, normalizeRenderOptions } from '../types/options/RenderOptions.js';
 
 export const DEFAULT_MAX_ITERATIONS = 20;
 export const DEFAULT_TIMEOUT_MINUTES = 30;
@@ -229,6 +229,6 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
     debug: normalizeDebugOptions(options?.debug),
-    render: options?.render ?? {},
+    render: normalizeRenderOptions(options?.render),
   };
 }

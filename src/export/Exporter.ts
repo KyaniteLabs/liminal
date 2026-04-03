@@ -155,7 +155,7 @@ export class Exporter {
     }
 
     // Create ZIP archive
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const output = createWriteStream(outputPath);
       const archive = archiver('zip', {
         zlib: { level: 9 } // Maximum compression
@@ -208,7 +208,7 @@ export class Exporter {
       }
 
       // Finalize the archive
-      archive.finalize();
+      await archive.finalize();
     });
   }
 

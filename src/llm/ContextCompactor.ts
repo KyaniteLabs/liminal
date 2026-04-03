@@ -157,5 +157,3 @@ export class ContextCompactor {
     };
   }
 }
-
-const contextCompactor = new ContextCompactor();

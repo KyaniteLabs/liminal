@@ -375,7 +375,7 @@ export class RalphLoop {
         }
 
         // Update evolution subsystems
-        const { noveltyScore, hints } = await evolution.update(iteration, currentCode, evaluation.score, prompt);
+        const { noveltyScore, hints } = evolution.update(iteration, currentCode, evaluation.score, prompt);
 
         // Append aesthetic hints to usedPrompt for next iteration's context
         if (hints) {

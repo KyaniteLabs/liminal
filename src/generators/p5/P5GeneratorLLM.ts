@@ -14,7 +14,7 @@ export class P5GeneratorLLM {
   private llm: LLMClient;
 
   constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>, _options?: P5GeneratorOptions) {
-    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient(llmOrConfig);
+    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient({ ...llmOrConfig, role: 'generator' });
   }
 
   async generate(prompt: string, options?: P5GeneratorOptions): Promise<string> {

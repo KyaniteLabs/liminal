@@ -32,7 +32,7 @@ export class SemanticValidator {
   private threshold: number;
 
   constructor(options?: SemanticValidatorOptions) {
-    this.llm = options?.llm || new LLMClient();
+    this.llm = options?.llm || new LLMClient({ role: 'generator' });
     this.threshold = options?.threshold ?? DEFAULT_THRESHOLD;
   }
 

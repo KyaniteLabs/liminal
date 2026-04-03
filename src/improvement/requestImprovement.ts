@@ -39,6 +39,7 @@ export async function requestImprovement(
       baseUrl: effectiveConfig.baseUrl,
       model: effectiveConfig.model,
       apiKey: effectiveConfig.apiKey,
+      role: 'generator',
     });
   }
 

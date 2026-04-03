@@ -254,7 +254,7 @@ export class PreviewServer {
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');
         const { mergeConfig } = await import('../compost/defaults.js');
-        const llm = new LLMClient();
+        const llm = new LLMClient({ role: 'generator' });
         const mill = new CompostMill(llm, mergeConfig());
         const millStatus = await mill.statusAsync();
 
@@ -277,7 +277,7 @@ export class PreviewServer {
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');
         const { mergeConfig } = await import('../compost/defaults.js');
-        const llm = new LLMClient();
+        const llm = new LLMClient({ role: 'generator' });
         const mill = new CompostMill(llm, mergeConfig());
         const seeds = await mill.listSeeds();
         res.json({ seeds: seeds.slice(0, 50), total: seeds.length });

@@ -74,7 +74,7 @@ async function generateVisualsLLM(
   signal?: AbortSignal,
   llm?: LLMClient
 ): Promise<string> {
-  const client = llm ?? new LLMClient();
+  const client = llm ?? new LLMClient({ role: 'generator' });
 
   let systemPrompt: string;
   let userPrompt: string;

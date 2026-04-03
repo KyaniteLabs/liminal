@@ -31,9 +31,9 @@ export abstract class TierBasedGenerator {
     llmOrConfig?: LLMClient | Partial<LLMConfig>
   ) {
     this.domain = domain;
-    this.llm = llmOrConfig instanceof LLMClient 
-      ? llmOrConfig 
-      : new LLMClient(llmOrConfig);
+    this.llm = llmOrConfig instanceof LLMClient
+      ? llmOrConfig
+      : new LLMClient({ ...llmOrConfig, role: 'generator' });
     
     this.tier = detectModelTier(this.llm.getConfig());
     this.promptBuilder = new PromptBuilder(this.llm.getConfig());

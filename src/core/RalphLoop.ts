@@ -615,7 +615,7 @@ export class RalphLoop {
               message: `Auto-fed iteration ${iteration} (score: ${evaluation.score.toFixed(2)}) to compost heap`,
             });
             if (await heap.isOverCapacity()) {
-              const mill = new CompostMill(new LLMClient(), compostConfig);
+              const mill = new CompostMill(new LLMClient({ role: 'generator' }), compostConfig);
               await mill.digest();
               eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
                 stage: 'auto-digest',

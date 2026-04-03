@@ -125,7 +125,7 @@ export async function generateMusic(options: GenerateMusicOptions): Promise<Gene
  * Generate music code via LLM. Returns empty string on failure.
  */
 async function generateMusicLLM(prompt: string, bpm: number, platform: GenerateMusicPlatform, signal?: AbortSignal, llm?: LLMClient): Promise<string> {
-  const client = llm ?? new LLMClient();
+  const client = llm ?? new LLMClient({ role: 'generator' });
 
   let systemPrompt: string;
   let userPrompt: string;

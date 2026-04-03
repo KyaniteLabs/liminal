@@ -134,6 +134,70 @@ These are the blocking issues that prevent Liminal from producing ANY output:
 - Follow the table above — consolidate 3 collaboration systems, 3 scoring systems, 3 memory systems
 - Agent instruction: "There are 3 collaboration systems (SwarmOrchestrator, DeepCollaboration, CollabClient), 3 scoring systems (CreativeEvaluator, ScoringEngine, AestheticCritic), and 3 memory systems (HarnessMemory, EpisodicMemory, SemanticArtMemory). Fix: (1) Keep SwarmOrchestrator as THE collaboration system, extract useful code from the other two, delete the rest, (2) Make ScoringEngine a plugin host with Strategy pattern, convert CreativeEvaluator and AestheticCritic into scoring strategies that plug into it, (3) Keep HarnessMemory as THE memory system, archive the others. After consolidation, run all tests to verify nothing broke."
 
+### Tier 3: Make It Smart (Days 5-7)
+
+**Fix 9: Add Best-of-N Multi-Candidate Generation to RalphLoop**
+- File: `src/loop/RalphLoop.ts`
+- Currently generates exactly 1 candidate per iteration. The entire rejection sampling architecture requires N.
+- Agent instruction: "RalphLoop generates 1 candidate per iteration. The architecture assumes N candidates (rejection sampling, quality thresholds). Fix: (1) Add `numCandidates` parameter (default 3) to RalphLoop constructor, (2) Generate N candidates per iteration, (3) Score all N, keep the best, (4) Feed the best back into context for next iteration. Write a test first: set numCandidates=3, verify 3 candidates are generated and the highest-scored one is selected."
+
+**Fix 10: Implement Sparse Routing in SwarmOrchestrator**
+- File: `src/swarm/SwarmOrchestrator.ts`
+- All 5 personas always generate for every input (dense). Should be sparse — route to 2-3 relevant experts.
+- Agent instruction: "SwarmOrchestrator runs all 5 personas for every prompt. Fix: (1) Create a routing function that computes relevance of each persona's specialty to the current prompt, (2) Select top-K personas (default K=3) based on relevance, (3) Only invoke selected personas, (4) Track which personas were selected for later calibration. Write a test: given a music prompt, verify the audio specialist is selected and the typography specialist is not."
+
+**Fix 11: Replace Deterministic ModelRouter with Thompson Sampling**
+- File: `src/routing/ModelRouter.ts` or `src/routing/SmartRouter.ts`
+- Current routing has no learning — same model always selected for same task type.
+- Agent instruction: "ModelRouter selects models deterministically with no learning from past performance. Fix: (1) Track per-model performance history (model, domain, score, timestamp) in HarnessMemory, (2) Implement Thompson Sampling: each model gets a Beta(alpha, beta) distribution, sample from each, pick highest sample, (3) After each generation, update alpha (success) or beta (failure) based on quality score vs threshold, (4) Add exploration boost when RalphLoop detects stagnation. Write a test: after 10 generations where Model A consistently scores higher than Model B, verify Model A is selected more often."
+
+**Fix 12: Replace CompostMill Domain-Tag Retrieval with Semantic Search**
+- File: `src/compost/CompostMill.ts`, `src/compost/SeedBank.ts`
+- Seeds retrieved by keyword tags, not by meaning. Two seeds about "generative animation" but tagged differently never match.
+- Agent instruction: "SeedBank retrieves seeds by domain tag matching. Fix: (1) Add `@xenova/transformers` dependency for local sentence embeddings, (2) Add `embed()` method to SeedBank that converts seed content to a vector, (3) Add `retrieveSimilar(promptEmbedding, topK)` method that returns seeds by cosine similarity, not tag match, (4) Wire into ContextBuilder so generations receive semantically relevant seeds. Write a test: add a seed about 'flowing particle systems', generate with prompt about 'fluid dynamics', verify the seed is retrieved even without matching tags."
+
+**Fix 13: Add Tournament Selection to MapElites, SeedBank, CompostSoup**
+- Files: `src/evolution/MapElites.ts`, `src/compost/SeedBank.ts`, `src/compost/CompostSoup.ts`
+- All three use uniform random selection for choosing parents. Tournament selection is a 5-line fix per file.
+- Agent instruction: "MapElites.getRandomElite(), SeedBank.getRandomSeed(), and CompostSoup.selectParent() all use uniform random selection. Fix: Replace each with tournament selection: (1) Pick K random candidates (default K=3), (2) Return the one with the highest fitness score. This takes 5 lines per file. Write a test: populate an archive with scores [0.1, 0.5, 0.9], run selection 100 times, verify the 0.9-scored candidate is selected significantly more often than 0.1."
+
+### Tier 4: Make It Real (Days 8-14)
+
+**Fix 14: Implement Render-and-Score Aesthetic Pipeline**
+- File: `src/aesthetic/AestheticCritic.ts` + new `src/aesthetic/VisualRenderer.ts`
+- Critics analyze source code text only. "White square" failures are never caught because code is never rendered.
+- Agent instruction: "AestheticCritic reads source code but never renders it. A p5.js sketch that produces a white square passes the same text-based checks as one producing a complex animation. Fix: (1) Create VisualRenderer that executes p5.js/Three.js code in a headless browser (Puppeteer) and captures a screenshot, (2) Feed screenshot to a vision model or extract pixel-level features (color histogram, edge density, entropy), (3) Add visual quality score as a new evaluation dimension. Write a test: verify that a white-square sketch scores lower than a multi-colored animation on the visual dimension."
+
+**Fix 15: Add 1/5th Success Rule and Stagnation Temperature Spike**
+- File: `src/loop/RalphLoop.ts`
+- No formal convergence detection and no escape from local optima.
+- Agent instruction: "RalphLoop has no formal (1+1)-ES convergence rule and no mechanism to escape local optima. Fix: (1) Implement the 1/5th success rule: track success rate over last 5 iterations (did score improve?), if success rate > 1/5 increase mutation/exploration, if < 1/5 decrease, (2) Add stagnation detection: if score hasn't improved by >0.01 in 5 iterations, inject a temperature spike (force creative divergence), (3) After spike, resume normal convergence. Write a test: simulate a scenario where scores plateau at 0.75 for 5 iterations, verify temperature spike occurs."
+
+**Fix 16: Correct All Data Accuracy Issues**
+- Files: All files in `narrative/data/` that contain audited figures
+- 20 data accuracy corrections from forensic audit: sessions 58 (not 71), messages 920 (not 1148), dogfood rate 11.1%/21.2% (not 7.4%), lifespan 33 (not 32), model dates, commit counts.
+- Agent instruction: "The archaeology data files contain 20 verified inaccuracies from the forensic audit. Fix each one: (1) Session count: 71→58 in telemetry-sessions.json, (2) Message count: 1148→920, (3) Dogfood rate: 7.4%→split into Agent A 11.1% and Agent B 21.2%, (4) Lifespan: 32→33, (5) Claude Code CLI date: Feb 1→Feb 24, (6) All other audit corrections from AUDIT-REPORT.md. After corrections, verify all derived calculations (tokens, percentages) still sum correctly."
+
+**Fix 17: Convert Scoring Components to Pluggable Strategy Pattern**
+- Files: `src/evaluators/CreativeEvaluator.ts`, `src/aesthetic/AestheticCritic.ts`, `src/scoring/ScoringEngine.ts`
+- Part of triple-redundancy consolidation. Needed before domain-adaptive weights.
+- Agent instruction: "CreativeEvaluator and AestheticCritic are hardcoded into the scoring pipeline. Fix: (1) Define a ScoringStrategy interface with `evaluate(code, domain) → Score`, (2) Convert CreativeEvaluator to implement ScoringStrategy, (3) Convert AestheticCritic to implement ScoringStrategy, (4) Make ScoringEngine accept multiple strategies with configurable weights, (5) Wire through RalphLoop. Write a test: register two strategies with different weights, verify the combined score is the weighted average."
+
+**Fix 18: Replace Babel with Tree-Sitter for Multi-Language LIR**
+- Files: `src/lir/parsers/CodeParser.ts`, `src/lir/parsers/` (new language parsers)
+- LIR only parses JavaScript/TypeScript. The other 7 domains have no structural analysis.
+- Agent instruction: "LIR's CodeParser uses Babel which only handles JavaScript/TypeScript. The other 7 domains (GLSL, Strudel, Hydra, Tone.js, Three.js, Remotion, HTML) have no structural parsing. Fix: (1) Add tree-sitter dependency with grammar packages for glsl, python, html, etc., (2) Create a ParserRegistry that selects the correct parser based on domain, (3) Implement domain-specific parsers that extract structural features (GLSL: uniforms, functions, main; Strudel: patterns, stacks; Hydra: sources, outputs), (4) Fallback to regex for unsupported languages. Write a test: parse a GLSL shader, verify uniforms and void main() are extracted as LIR tokens."
+
+**Fix 19: Add Incremental Context Checkpointing**
+- File: `src/context/ContextAccumulator.ts`
+- Stores 50 full snapshots. Consumes context window with redundant data.
+- Agent instruction: "ContextAccumulator stores full state snapshots. After 50 iterations, this consumes massive context window space with mostly redundant data. Fix: (1) Switch to delta-based checkpointing: store only the diff between iterations, (2) Keep full snapshot only at iteration 0 and the latest, (3) Reconstruct any intermediate state by applying deltas from iteration 0, (4) Add a compression pass that summarizes old deltas into a single summary paragraph. Write a test: run 10 iterations, verify that context size grows sub-linearly (not linearly)."
+
+**Fix 20: Add Domain-Adaptive Scoring Weights**
+- File: `src/scoring/ScoringEngine.ts`
+- CreativeEvaluator has no learning mechanism. Same weights regardless of domain.
+- Agent instruction: "ScoringEngine applies the same weight to every scoring dimension regardless of domain. But typography matters more for HTML than for audio, and sound harmony matters only for Tone.js/Strudel. Fix: (1) Define per-domain weight profiles (p5: {technical: 0.3, creative: 0.3, aesthetic: 0.2, novelty: 0.2}, strudel: {technical: 0.2, creative: 0.2, aesthetic: 0.1, novelty: 0.2, sound: 0.3}), (2) Load weights based on domain parameter, (3) Track which weight profiles produce higher scores over time, (4) Add a learning mode that adjusts weights based on promoted/rejected history. Write a test: score the same code with p5 weights and strudel weights, verify they produce different scores."
+
 ---
 
 # PART 2: ARCHITECTURE + ML CORRECTIONS
@@ -569,16 +633,25 @@ The philosophical framing of Liminal as an entity that exists in the space betwe
 6. Fix cache defeat (Fix 5)
 7. Wire archives to generation context (Fix 6)
 
-### Week 3: Make It Good (Tier 2 + ML Upgrades)
+### Week 2.5: Make It Good (Tier 2)
 8. Fix SwarmOrchestrator ensemble quality (Fix 7)
 9. Consolidate triple redundancy (Fix 8)
-10. Begin ML upgrades: embedding-based compost retrieval (Component 2)
 
-### Week 4+: Make It Smart (ML Architecture)
-11. Implement Thompson Sampling for ModelRouter (Component 6)
-12. Add embedding-based behavior descriptors for MapElites (Component 4)
-13. Begin cross-modal learning integration for AudioPipeline (Component 8)
-14. Set up DSPy for prompt optimization (Component 10)
+### Week 3: Make It Smart (Tier 3)
+10. Add Best-of-N generation to RalphLoop (Fix 9)
+11. Implement sparse routing in Swarm (Fix 10)
+12. Replace ModelRouter with Thompson Sampling (Fix 11)
+13. Replace tag matching with semantic search (Fix 12)
+14. Add tournament selection to all archives (Fix 13)
+
+### Week 4: Make It Real (Tier 4)
+15. Implement render-and-score pipeline (Fix 14)
+16. Add 1/5th success rule + stagnation spike (Fix 15)
+17. Correct all data accuracy issues (Fix 16)
+18. Convert scoring to Strategy pattern (Fix 17)
+19. Replace Babel with tree-sitter (Fix 18)
+20. Add incremental checkpointing (Fix 19)
+21. Add domain-adaptive scoring (Fix 20)
 
 ---
 

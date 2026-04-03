@@ -1,0 +1,215 @@
+{
+  "summary": {
+    "duplicate_pairs_found": 8,
+    "high_similarity": [
+      "Tool structure pattern across harness tools",
+      "Error message formatting pattern",
+      "Input validation patterns",
+      "LLM API call patterns"
+    ],
+    "medium_similarity": [
+      "fs.mkdir error handling patterns",
+      "Duration tracking patterns",
+      "File operation error wrapping",
+      "Telemetry result patterns"
+    ]
+  },
+  "duplicates": [
+    {
+      "function_a": {
+        "file": "src/harness/tools/ReadFileTool.ts",
+        "line": 12,
+        "name": "execute"
+      },
+      "function_b": {
+        "file": "src/harness/tools/WriteFileTool.ts",
+        "line": 14,
+        "name": "execute"
+      },
+      "similarity": "90%",
+      "recommendation": "Extract common tool execution wrapper to base Tool class - both use identical validation, timing, and error handling patterns",
+      "shared_patterns": [
+        "const startTime = Date.now()",
+        "if (!this.validatePath(filePath)) return { success: false, error, duration }",
+        "return { success: true, data, duration: Date.now() - startTime }",
+        "catch (error) { return { success: false, error: this.formatError(error), duration } }"
+      ]
+    },
+    {
+      "function_a": {
+        "file": "src/harness/tools/ApplyEditTool.ts",
+        "line": 16,
+        "name": "execute"
+      },
+      "function_b": {
+        "file": "src/harness/tools/BackupTools.ts",
+        "line": 12,
+        "name": "execute"
+      },
+      "similarity": "88%",
+      "recommendation": "Standardize all harness tools on the same execution wrapper pattern - 7+ tools have nearly identical structure",
+      "shared_patterns": [
+        "Timing measurement with Date.now()",
+        "Path validation using this.validatePath()",
+        "Error formatting using this.formatError()",
+        "Consistent ToolResult return shape"
+      ]
+    },
+    {
+      "function_a": {
+        "file": "src/gallery/Gallery.ts",
+        "line": 96,
+        "name": "mkdir error handling"
+      },
+      "function_b": {
+        "file": "src/export/Exporter.ts",
+        "line": 68,
+        "name": "mkdir error handling"
+      },
+      "similarity": "95%",
+      "recommendation": "Create shared utility: `ensureDir(dir: string): Promise<void>` with consistent error message",
+      "shared_patterns": [
+        "try { await fs.mkdir(dir, { recursive: true }) } catch (error) { throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`) }"
+      ],
+      "occurrences": 12
+    },
+    {
+      "function_a": {
+        "file": "src/gallery/Gallery.ts",
+        "line": 75,
+        "name": "validateStringInput"
+      },
+      "function_b": {
+        "file": "src/export/Exporter.ts",
+        "line": 47,
+        "name": "validateCodeInput"
+      },
+      "similarity": "92%",
+      "recommendation": "Extract shared validation utility: `validateNonEmptyString(value: unknown, fieldName: string): asserts value is string`",
+      "shared_patterns": [
+        "if (!value || typeof value !== 'string' || value.trim() === '') { throw new Error('X is required and must be a non-empty string') }"
+      ],
+      "occurrences": 17
+    },
+    {
+      "function_a": {
+        "file": "src/gallery/Gallery.ts",
+        "line": 99,
+        "name": "formatFsError"
+      },
+      "function_b": {
+        "file": "src/gallery/SeedArchive.ts",
+        "line": 72,
+        "name": "formatFsError"
+      },
+      "similarity": "100%",
+      "recommendation": "Use shared error formatting utility - exact same pattern repeated 25+ times across codebase",
+      "shared_patterns": [
+        "error instanceof Error ? error.message : 'Unknown error'"
+      ],
+      "files_affected": [
+        "src/gallery/Gallery.ts",
+        "src/gallery/SeedArchive.ts",
+        "src/export/Exporter.ts",
+        "src/core/parsing/CompostParser.ts",
+        "src/llm/LLMClient.ts",
+        "src/swarm/SwarmOrchestrator.ts",
+        "src/guardrails/*.ts"
+      ]
+    },
+    {
+      "function_a": {
+        "file": "src/generators/TierBasedGenerator.ts",
+        "line": 66,
+        "name": "llm.generate"
+      },
+      "function_b": {
+        "file": "src/generators/p5/P5GeneratorLLM.ts",
+        "line": 32,
+        "name": "llm.generateP5Sketch"
+      },
+      "similarity": "75%",
+      "recommendation": "Standardize generator pattern - both handle LLM responses similarly, could use shared response validator",
+      "shared_patterns": [
+        "await this.llm.generate(...)",
+        "if (!response.code || response.code.trim() === '') { throw new Error('...') }"
+      ]
+    },
+    {
+      "function_a": {
+        "file": "src/harness/tools/RunBuildTool.ts",
+        "line": 35,
+        "name": "duration calculation"
+      },
+      "function_b": {
+        "file": "src/harness/tools/RunTestsTool.ts",
+        "line": 44,
+        "name": "duration calculation"
+      },
+      "similarity": "85%",
+      "recommendation": "Add timing decorator/wrapper to base Tool class to automatically track duration",
+      "shared_patterns": [
+        "const startTime = Date.now()",
+        "duration: Date.now() - startTime"
+      ],
+      "occurrences": 15
+    },
+    {
+      "function_a": {
+        "file": "src/swarm/SwarmOrchestrator.ts",
+        "line": 359,
+        "name": "latency tracking"
+      },
+      "function_b": {
+        "file": "src/core/RalphLoop.ts",
+        "line": 205,
+        "name": "duration tracking"
+      },
+      "similarity": "80%",
+      "recommendation": "Create shared TelemetryTimer utility class for consistent timing across all async operations",
+      "shared_patterns": [
+        "const startTime = Date.now()",
+        "latencyMs: Date.now() - startTime",
+        "duration: Date.now() - startTime"
+      ]
+    }
+  ],
+  "consolidation_opportunities": [
+    {
+      "utility_name": "validateNonEmptyString",
+      "location": "src/utils/validation.ts",
+      "description": "Centralize string input validation used across Gallery, Exporter, SeedArchive, Renderer",
+      "estimated_lines_saved": 50
+    },
+    {
+      "utility_name": "ensureDirectory",
+      "location": "src/utils/fs.ts",
+      "description": "Shared fs.mkdir wrapper with consistent error handling",
+      "estimated_lines_saved": 40
+    },
+    {
+      "utility_name": "formatErrorMessage",
+      "location": "src/utils/errors.ts",
+      "description": "Standardize error.message extraction with fallback",
+      "estimated_lines_saved": 60
+    },
+    {
+      "utility_name": "TelemetryTimer",
+      "location": "src/utils/timing.ts",
+      "description": "Auto-tracking timer for async operations",
+      "estimated_lines_saved": 30
+    },
+    {
+      "refactor": "Tool.execute wrapper",
+      "location": "src/harness/tools/types.ts",
+      "description": "Add execute wrapper to base Tool class that handles timing and error formatting automatically",
+      "estimated_lines_saved": 100
+    }
+  ],
+  "total_estimated_lines_reduced": 280,
+  "files_requiring_most_deduplication": [
+    "src/export/Exporter.ts",
+    "src/gallery/Gallery.ts",
+    "src/harness/tools/*.ts"
+  ]
+}

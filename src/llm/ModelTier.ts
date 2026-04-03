@@ -142,14 +142,6 @@ export function getModelProfile(tier: ModelTier): ModelProfile {
 }
 
 /**
- * Get full model info from config
- */
-export function getModelInfo(config: LLMConfig): ModelProfile {
-  const tier = detectModelTier(config);
-  return getModelProfile(tier);
-}
-
-/**
  * Trim context to fit within token budget
  */
 export function trimContext(context: string, maxTokens: number): string {
@@ -170,43 +162,4 @@ export function trimContext(context: string, maxTokens: number): string {
          context.slice(-keepEnd);
 }
 
-/**
- * Select prompt style based on tier
- */
-export function selectPromptStyle(tier: ModelTier): {
-  format: 'concise' | 'detailed' | 'minimal';
-  useXmlTags: boolean;
-  useMarkdown: boolean;
-  includeExamples: boolean;
-} {
-  switch (tier) {
-    case 'flagship':
-      return {
-        format: 'concise',      // Smart enough, don't over-explain
-        useXmlTags: true,       // Claude-style works well
-        useMarkdown: true,
-        includeExamples: true,  // Can learn from examples
-      };
-    case 'medium':
-      return {
-        format: 'detailed',     // Needs more guidance
-        useXmlTags: false,      // Keep it simple
-        useMarkdown: true,
-        includeExamples: true,
-      };
-    case 'local':
-      return {
-        format: 'detailed',     // Needs explicit instructions
-        useXmlTags: false,      // Simple formatting
-        useMarkdown: true,
-        includeExamples: true,  // Few-shot helps a lot
-      };
-    case 'tiny':
-      return {
-        format: 'minimal',      // Keep it short
-        useXmlTags: false,      // Too verbose
-        useMarkdown: false,     // Plain text
-        includeExamples: false, // No room for examples
-      };
-  }
-}
+

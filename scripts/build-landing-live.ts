@@ -4,7 +4,7 @@
  * Creates wrapper HTMLs with CDNs + builds gallery
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 
 const MODELS = [
   { key: 'minimax/MiniMax-M2.7', name: 'MiniMax-M2.7', short: 'minimax-m27' },

@@ -10,6 +10,7 @@
 
 import type { LLMClientLike } from './SemanticExtractor.js';
 import type { MultiModelConfig } from '../config/ConfigLoader.js';
+import { formatError } from '../utils/errors.js';
 
 /** Task classification for routing decisions */
 export type TaskType =

@@ -214,5 +214,6 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     _disableIterationExtension: options?._disableIterationExtension ?? false,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
+    debug: normalizeDebugOptions(options?.debug),
   };
 }

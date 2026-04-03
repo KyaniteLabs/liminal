@@ -11,6 +11,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { formatError } from '../utils/errors.js';
 import type {
   GeneratorPlugin,
   PluginManifest,
@@ -120,7 +121,7 @@ export class PluginLoader {
       const loadError: PluginLoadError = {
         pluginId,
         path: pluginPath,
-        error: error instanceof Error ? error.message : String(error),
+        error: formatError('PluginLoader', error),
       };
 
       this.emitEvent({

@@ -176,7 +176,7 @@
         <section class="section">
             <h1 class="section-title">📊 Development Dashboard</h1>
             <p class="section-subtitle">Real-time status of all Liminal components and development tasks</p>
-            <p style="color: var(--text-muted); font-size: 0.875rem;">Last updated: April 1, 2026 | Commit: 1a0ed93 | <a href="THE_BIBLE.md">📖 THE BIBLE (Source of Truth)</a></p>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">Last updated: April 3, 2026 | Docs: Harness Tasks M1-M8 | <a href="THE_BIBLE.md">📖 THE BIBLE (Source of Truth)</a></p>
         </section>
 
         <!-- Critical Alerts -->
@@ -433,8 +433,99 @@
                     <tr>
                         <td><strong>Harness Tasks M1-M11</strong></td>
                         <td><span class="badge badge-success">✅ Complete</span></td>
-                        <td><code>harness-tasks/*.json</code></td>
+                        <td><code>harness-tasks/archive/*.json</code></td>
                         <td>All 11 tasks ready</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Harness Tasks Detail -->
+        <section class="section">
+            <h2 class="section-title">🔨 Harness Tasks M1-M8 Detail</h2>
+            <p>Self-improvement tasks that fix the Meta-Harness itself. All task files are in <code>harness-tasks/archive/</code>.</p>
+            
+            <table style="margin-top: 1.5rem;">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Target File</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>M1</strong></td>
+                        <td>Fix Tone.js Validation Gate</td>
+                        <td><code>src/core/CodeValidator.ts</code></td>
+                        <td>Validation now fires on 'music' domain in addition to 'unknown'</td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M4</strong></td>
+                        <td>Fix Thinking Regex Greedy Match</td>
+                        <td><code>src/llm/LLMClient.ts</code></td>
+                        <td>Fixed <code>[\s\S]*</code> → <code>[\s\S]*?</code> non-greedy matching</td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M6</strong></td>
+                        <td>Fix Console.log in FailureLogger</td>
+                        <td><code>src/harness/FailureLogger.ts</code></td>
+                        <td>Replaced console.log with Logger.info</td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M7</strong></td>
+                        <td>Fix Console.log in PatternDetector</td>
+                        <td><code>src/harness/PatternDetector.ts</code></td>
+                        <td>Replaced console.log with Logger.info</td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M8</strong></td>
+                        <td>Fix Console.log in HarnessUpdater</td>
+                        <td><code>src/harness/HarnessUpdater.ts</code></td>
+                        <td>Replaced console.log with Logger.info</td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                    </tr>
+                </tbody>
+            </table>
+            
+            <div class="card" style="margin-top: 1.5rem; border-left: 4px solid var(--accent-yellow);">
+                <p><strong>ℹ️ Note on M2 & M3:</strong> These were implemented directly during initial development without separate task files. M2 covered Domain Routing (GeneratorRegistry.ts) and M3 covered Budget/Rate Limiting (SafetyGuardrails.ts).</p>
+            </div>
+            
+            <h3 style="margin-top: 2rem; color: var(--accent-cyan);">Extended Tasks (M9-M11)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Title</th>
+                        <th>Target File</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>M9</strong></td>
+                        <td>Implement SemanticValidator</td>
+                        <td><code>src/guardrails/SemanticValidator.ts</code></td>
+                        <td><span class="badge badge-success">✅ Implemented</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M10</strong></td>
+                        <td>Implement AccessibilityGuardrails</td>
+                        <td><code>src/guardrails/AccessibilityGuardrails.ts</code></td>
+                        <td><span class="badge badge-success">✅ Implemented</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>M11</strong></td>
+                        <td>Implement RuntimeHealthMonitor</td>
+                        <td><code>src/guardrails/RuntimeHealthMonitor.ts</code></td>
+                        <td><span class="badge badge-success">✅ Implemented</span></td>
                     </tr>
                 </tbody>
             </table>

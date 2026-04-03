@@ -16,7 +16,7 @@
 export type CircuitState = 'closed' | 'open' | 'half-open';
 
 /** Configuration options for a CircuitBreaker instance. */
-export interface CircuitBreakerConfig {
+interface CircuitBreakerConfig {
   /** Consecutive failures required to trip the breaker open. */
   failureThreshold: number;
   /** Milliseconds to wait in the open state before transitioning to half-open. */
@@ -26,7 +26,7 @@ export interface CircuitBreakerConfig {
 }
 
 /** Snapshot of the internal health metrics of a circuit breaker. */
-export interface CircuitStats {
+interface CircuitStats {
   /** Current breaker state. */
   state: CircuitState;
   /** Consecutive failures since the last success. */

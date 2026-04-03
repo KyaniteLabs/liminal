@@ -4,7 +4,8 @@
  */
 
 import { chromium } from 'playwright';
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
+import { ensureDir } from '../src/utils/fs.js';
 import { join, dirname } from 'path';
 
 const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'];
@@ -62,7 +63,7 @@ async function generatePreview(browser: any, model: string, domain: string): Pro
   }
   
   const previewDir = `examples/previews/${model}`;
-  mkdirSync(previewDir, { recursive: true });
+  ensureDir(previewDir);
   
   const page = await browser.newPage();
   await page.setViewportSize({ width: 800, height: 600 });

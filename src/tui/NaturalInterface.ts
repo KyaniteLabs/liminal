@@ -12,6 +12,7 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { loadSoul } from './IntentRouter.js';
 import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
+import { formatError } from '../utils/errors.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -278,10 +279,10 @@ export class NaturalInterface {
       };
       
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
+      const msg = formatError('Agent', error);
       return { 
         type: 'agent', 
-        response: `❌ Error: ${msg}`, 
+        response: `❌ ${msg}`, 
         shouldContinue: true,
       };
     }
@@ -371,10 +372,10 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
       return { type: 'chat', response, shouldContinue: true };
       
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
+      const msg = formatError('Chat', error);
       return { 
         type: 'chat', 
-        response: `I'm having trouble thinking right now: ${msg}`, 
+        response: `I'm having trouble thinking right now: ${msg.split(': ').slice(1).join(': ')}`, 
         shouldContinue: true,
       };
     }

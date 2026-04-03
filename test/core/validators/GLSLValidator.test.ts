@@ -28,7 +28,8 @@ describe('GLSLValidator', () => {
         uniform float u_time;
         
         void main() {
-          fragColor = vec4(sin(u_time), 0.5, 0.5, 1.0);
+          vec3 color = vec3(0.5, 0.5, sin(u_time));
+          fragColor = vec4(color, 1.0);
         }
       `;
 
@@ -40,8 +41,11 @@ describe('GLSLValidator', () => {
     it('should validate vertex shader with gl_Position', () => {
       const code = `
         attribute vec2 position;
+        uniform float u_time;
+        
         void main() {
-          gl_Position = vec4(position, 0.0, 1.0);
+          vec3 pos = vec3(0.5, 0.5, sin(u_time));
+          gl_Position = vec4(position.x + pos.x, position.y + pos.y, 0.0, 1.0);
         }
       `;
 

@@ -280,6 +280,9 @@ if (flags.favorite) {
 // Initialize config (loads from file or uses defaults)
 await initializeConfig();
 
+// Load role definitions for LLMClient
+await LLMClient.loadRoles();
+
 const hasOutputFlag = flags.output !== undefined;
 const hasPromptFlag = flags.prompt !== undefined;
 const isLiveMusic = flags.mode === 'live-music' || cmd === 'live-music';
@@ -459,6 +462,7 @@ else if (cmd === 'compost') {
 
     // Create primary (fast) LLM client
     const primaryLLM = new LLMClient({
+      role: 'generator',
       provider: 'ollama',
       baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
       model: fastModelName,
@@ -466,6 +470,7 @@ else if (cmd === 'compost') {
 
     // Create secondary (powerful) LLM client
     const secondaryLLM = new LLMClient({
+      role: 'generator',
       provider: 'ollama',
       baseUrl: process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434',
       model: powerfulModelName,
@@ -498,8 +503,8 @@ else if (cmd === 'compost') {
     fastLLM = primaryLLM; // For backward compatibility with fastLLM parameter
   } else {
     // Single-model mode (original behavior)
-    llm = new LLMClient();
-    fastLLM = new LLMClient({ provider: 'lmstudio' });
+    llm = new LLMClient({ role: 'generator' });
+    fastLLM = new LLMClient({ role: 'generator', provider: 'lmstudio' });
   }
 
   const action = parseArgs(process.argv.slice(2));
@@ -595,7 +600,7 @@ else if (cmd === 'narrative') {
         const { readFileSync } = await import('fs');
         if (!readFileSync) throw new Error(`Script not found: ${scriptPath}`);
         const script = readFileSync(scriptPath, 'utf-8');
-        const llm = new LLMClient();
+        const llm = new LLMClient({ role: 'generator' });
         const pipeline = new BlogToVideoPipeline(llm);
         const spec = await pipeline.generateSpec(script);
         console.log('');
@@ -611,7 +616,7 @@ else if (cmd === 'narrative') {
         process.exit(1);
       }
 
-      const llm = new LLMClient();
+      const llm = new LLMClient({ role: 'generator' });
       const pipeline = new BlogToVideoPipeline(llm);
 
       if (scriptOnly) {

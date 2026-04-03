@@ -11,6 +11,7 @@
  */
 
 import { LLMClient } from '../llm/LLMClient.js';
+import { formatError } from '../utils/errors.js';
 
 export interface SemanticValidationResult {
   aligned: boolean;
@@ -96,11 +97,10 @@ Does the code match the user's request? Analyze and return JSON.`;
         explanation: result.explanation || 'No explanation provided',
       };
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
       return {
         aligned: false,
         score: 0,
-        issues: [`Validation error: ${message}`],
+        issues: [formatError('Semantic validation', error)],
         explanation: 'Validation failed due to error',
       };
     }

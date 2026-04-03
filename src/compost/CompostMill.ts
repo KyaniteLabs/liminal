@@ -341,7 +341,7 @@ export class CompostMill {
       },
       tags: [...seed.source.domains, 'seed'],
     }));
-    this.soup.run(fragments);
+    await this.soup.run(fragments);
   }
 
   /** Stop the soup loop. */

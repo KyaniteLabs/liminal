@@ -5,7 +5,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { formatErrorWithFallback } from '../../utils/errors.js';
+import { formatError } from '../../utils/errors.js';
 
 const BACKUP_DIR = path.join(os.tmpdir(), 'liminal-harness-backups');
 
@@ -71,7 +71,7 @@ export async function restoreBackup(backupPath: string, originalPath?: string): 
     };
   } catch (error) {
     console.error('[Backup] Restore failed:', error);
-    throw new Error(formatError('Backup restore failed', error));
+    throw new Error(formatErrorWithFallback('Backup restore failed', error));
   }
 }
 
@@ -91,7 +91,7 @@ export async function cleanupOldBackups(maxAgeHours: number = 24): Promise<void>
       if (now - stats.mtime.getTime() > maxAgeMs) {
         await fs.unlink(filePath).catch((error) => {
           console.error('[Backup] Failed to delete old backup:', error);
-          throw new Error(formatError('Backup cleanup failed', error));
+          throw new Error(formatErrorWithFallback('Backup cleanup failed', error));
         });
       }
     }

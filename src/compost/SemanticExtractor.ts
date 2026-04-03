@@ -11,6 +11,7 @@ import { lirArrayToString } from '../core/lir/CompatibilityAdapter.js';
 import { LIRParseError } from '../core/lir/errors.js';
 import type { CompostConfig } from './types.js';
 import type { LIRToken } from '../core/lir/types.js';
+import { Logger } from '../utils/Logger.js';
 
 /** Minimal LLM client interface. */
 export interface LLMClientLike {
@@ -65,7 +66,7 @@ export class SemanticExtractor {
       this.cache.set(cacheKey, summary);
       return summary;
     } catch (err) {
-      console.warn('[SemanticExtractor] extractCode failed:', err);
+      Logger.warn('SemanticExtractor', 'extractCode failed:', err);
       const fallback = `[Code file: ${path.basename(filePath)}]`;
       this.cache.set(cacheKey, fallback);
       return fallback;
@@ -113,7 +114,7 @@ export class SemanticExtractor {
 
     // If no parser is available, return null
     if (!this.parser) {
-      console.warn('[SemanticExtractor] LIR enabled but no CompostParser provided');
+      Logger.warn('SemanticExtractor', 'LIR enabled but no CompostParser provided');
       return null;
     }
 
@@ -126,13 +127,9 @@ export class SemanticExtractor {
     } catch (error) {
       // Log warning and return null on parse failure
       if (error instanceof LIRParseError) {
-        console.warn(
-          `[SemanticExtractor] LIR parsing failed for ${filePath}: ${error.message}`,
-        );
+        Logger.warn('SemanticExtractor', `LIR parsing failed for ${filePath}: ${error.message}`);
       } else if (error instanceof Error) {
-        console.warn(
-          `[SemanticExtractor] Unexpected error during LIR extraction for ${filePath}: ${error.message}`,
-        );
+        Logger.warn('SemanticExtractor', `Unexpected error during LIR extraction for ${filePath}: ${error.message}`);
       }
       return null;
     }
@@ -159,7 +156,7 @@ export class SemanticExtractor {
 
     if (textExts.includes(ext)) {
       const content = await fs.readFile(filePath, 'utf-8').catch((err) => {
-        console.warn(`[SemanticExtractor] Failed to read ${filePath}:`, err instanceof Error ? err.message : err);
+        Logger.warn('SemanticExtractor', `Failed to read ${filePath}:`, err instanceof Error ? err.message : err);
         return '';
       });
       return this.extractText(content, filePath);

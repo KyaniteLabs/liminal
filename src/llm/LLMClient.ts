@@ -577,7 +577,7 @@ Rules:
 
   /** Check if LLM is configured */
   static isConfigured(): boolean {
-    return !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY'));
+    return !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY') || SERVICE_DEFAULTS.LOCAL_LLM_URL);
   }
 
   /**

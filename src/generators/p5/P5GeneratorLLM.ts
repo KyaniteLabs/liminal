@@ -1,4 +1,5 @@
 import { LLMClient, LLMConfig } from '../../llm/LLMClient.js';
+import { GenerationError } from '../../errors/GenerationError.js';
 
 export interface P5GeneratorOptions {
   maxIterations?: number;
@@ -18,8 +19,9 @@ export class P5GeneratorLLM {
 
   async generate(prompt: string, options?: P5GeneratorOptions): Promise<string> {
     if (!LLMClient.isConfigured()) {
-      throw new Error(
-        '[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_API_KEY or OPENAI_API_KEY is set.'
+      throw new GenerationError(
+        '[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_API_KEY or OPENAI_API_KEY is set.',
+        'p5'
       );
     }
 
@@ -32,7 +34,11 @@ export class P5GeneratorLLM {
     const llmResponse = await this.llm.generateP5Sketch(prompt, context, options?.signal, options?.bypassCache);
 
     if (!llmResponse.code || llmResponse.code.trim() === '') {
-      throw new Error('P5GeneratorLLM: LLM returned empty code for prompt: ' + prompt.slice(0, 100));
+      throw new GenerationError(
+        'P5GeneratorLLM: LLM returned empty code for prompt: ' + prompt.slice(0, 100),
+        'p5',
+        { prompt: prompt.slice(0, 100) }
+      );
     }
 
     return llmResponse.code;

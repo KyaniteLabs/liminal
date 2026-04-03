@@ -252,6 +252,16 @@ export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Prom
 }
 
 /**
+ * Save config to JSON file
+ * @param config Config object to save
+ * @param configPath Path to config file (defaults to ~/.liminal/config.json)
+ */
+export async function saveConfig(config: UserConfig, configPath: string = DEFAULT_CONFIG_PATH): Promise<void> {
+  await fs.mkdir(path.dirname(configPath), { recursive: true });
+  await fs.writeFile(configPath, JSON.stringify(config, null, 2), 'utf-8');
+}
+
+/**
  * Get effective configuration by merging project config (optional), file config, and env vars.
  * Env vars take precedence over file config; project config overrides user file for overlapping keys.
  * @param projectConfigPath - Optional directory or path to load config/liminal.json from

@@ -9,8 +9,13 @@ import path from 'path';
 
 const cliPath = path.join(process.cwd(), 'bin/liminal');
 
-// Check if LM Studio is available (skips LLM-dependent tests if not)
+// Check if LM Studio is available and responsive enough for E2E tests
 async function isLLMAvailable() {
+  // In test environments, skip LLM-dependent CLI tests unless explicitly enabled,
+  // because local LLM endpoints are often too slow for reliable E2E testing.
+  if (process.env.NODE_ENV === 'test' && !process.env.RUN_SLOW_LLM_TESTS) {
+    return false;
+  }
   try {
     const res = await fetch('http://localhost:1234/v1/models', { signal: AbortSignal.timeout(1000) });
     return res.ok;

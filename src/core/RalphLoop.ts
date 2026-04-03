@@ -516,6 +516,23 @@ export class RalphLoop {
           }
         }
 
+        // Save iteration context and update final score before quality/success gates
+        // so that callbacks and finalScore are set even when breaking early
+        const iterationContext: IterationContext = {
+          iteration,
+          prompt: loadedPrompt,
+          usedPrompt,
+          code: currentCode,
+          evaluation: { score: evaluation.score, issues: evaluation.issues ?? [] },
+          timestamp: new Date().toISOString(),
+          maxIterations: normalizedOptions.maxIterations,
+          selectedCandidateIndex: candidates.length > 0 ? candidates.find(c => c.code === currentCode)?.index ?? 0 : 0,
+          numCandidatesGenerated: numCandidates,
+        };
+        ContextAccumulation.save(iterationContext);
+        normalizedOptions.onIteration?.(iterationContext);
+        finalScore = evaluation.score;
+
         // Quality gate: break if score below minimum threshold (after giving it a chance)
         // Only apply quality gate after at least 2 iterations to allow initial attempts
         // Use domain-specific threshold if available, otherwise use default minQualityScore
@@ -642,30 +659,10 @@ export class RalphLoop {
 
         // Store previous code before saving current iteration
         previousCode = currentCode;
-        
-        // Save iteration context
-        const iterationContext: IterationContext = {
-          iteration,
-          prompt: loadedPrompt,
-          usedPrompt,
-          code: currentCode,
-          evaluation: { score: evaluation.score, issues: evaluation.issues ?? [] },
-          timestamp: new Date().toISOString(),
-          maxIterations: normalizedOptions.maxIterations,
-          selectedCandidateIndex: candidates.length > 0 ? candidates.find(c => c.code === currentCode)?.index ?? 0 : 0,
-          numCandidatesGenerated: numCandidates,
-        };
-        ContextAccumulation.save(iterationContext);
-
-        // Call onIteration callback for chat mode
-        normalizedOptions.onIteration?.(iterationContext);
 
         // Persist to gallery
         await persistence.saveIteration(iteration, currentCode);
         await persistence.saveMergeStep(iteration);
-
-        // Update final score
-        finalScore = evaluation.score;
 
         // Track score history for convergence detection
         scoreHistory.push(evaluation.score);

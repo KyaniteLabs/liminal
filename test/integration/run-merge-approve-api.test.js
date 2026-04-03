@@ -7,6 +7,15 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import http from 'http';
+import { LLMClient } from '../../src/llm/LLMClient.js';
+
+function skipIfNoLLM() {
+  if (!LLMClient.isConfigured()) {
+    console.log('[SKIP] LLM not configured — skipping organism API test');
+    return true;
+  }
+  return false;
+}
 
 const TEST_DIR = path.join(os.tmpdir(), `atelier-run-merge-${Date.now()}`);
 const TEST_CONFIG_PATH = path.join(TEST_DIR, 'config.json');
@@ -46,6 +55,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
+      signal: AbortSignal.timeout(8000),
     });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || res.statusText);
@@ -53,7 +63,9 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
   }
 
   async function get(pathname) {
-    const res = await fetch(`http://127.0.0.1:${port}${pathname}`);
+    const res = await fetch(`http://127.0.0.1:${port}${pathname}`, {
+      signal: AbortSignal.timeout(8000),
+    });
     const body = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(body.error || res.statusText);
     return body;
@@ -61,6 +73,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
   describe('POST /api/run with mode=organism (W1-R)', () => {
     it('accepts mode=organism and traits, returns 200, gallery has organism iterations', async () => {
+      if (skipIfNoLLM()) return;
       const projectName = `organism-${Date.now()}`;
       const { status, body } = await post('/api/run', {
         prompt: 'ambient glitch',
@@ -89,6 +102,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
   describe('POST /api/merge (W1-M)', () => {
     it('returns 200 with proposed musicCode/visualCode when merging two organism versions', async () => {
+      if (skipIfNoLLM()) return;
       const projectName = `merge-test-${Date.now()}`;
       await post('/api/run', {
         prompt: 'ambient',
@@ -115,6 +129,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
   describe('POST /api/approve (W1-A)', () => {
     it('saves proposed as next version and returns 200', async () => {
+      if (skipIfNoLLM()) return;
       const projectName = `approve-test-${Date.now()}`;
       await post('/api/run', {
         prompt: 'reactive',
@@ -146,6 +161,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
 
   describe('POST /api/propose-mutate (W1-PT)', () => {
     it('with traits only returns proposed organism with updated BPM/palette (no LLM)', async () => {
+      if (skipIfNoLLM()) return;
       const projectName = `mutate-traits-${Date.now()}`;
       await post('/api/run', {
         prompt: 'ambient',

@@ -221,17 +221,21 @@ vi.mock('../../src/utils/Logger.js', () => ({
   },
 }));
 
-vi.mock('../../src/core/ScoringEngine.js', () => ({
-  ScoringEngine: class MockScoringEngine {
-    async score() {
-      return {
-        score: 0.75,
-        issues: [],
-        dimensions: { technical: 0.8, creative: 0.7, novelty: 0.6 },
-      };
-    }
-  },
-}));
+vi.mock('../../src/core/ScoringEngine.js', () => {
+  let callCount = 0;
+  return {
+    ScoringEngine: class MockScoringEngine {
+      async score() {
+        callCount++;
+        return {
+          score: 0.70 + (callCount % 5) * 0.02,
+          issues: [],
+          dimensions: { technical: 0.8, creative: 0.7, novelty: 0.6 },
+        };
+      }
+    },
+  };
+});
 
 vi.mock('../../src/core/PromptStore.js', () => ({
   PromptStore: {
@@ -394,17 +398,21 @@ vi.mock('../../src/collab/CollaborationEngine.js', () => ({
 
 vi.mock('../../src/collab/types.js', () => ({}));
 
-vi.mock('../../src/core/ScoringEngine.js', () => ({
-  ScoringEngine: class MockScoringEngine {
-    async score() {
-      return {
-        score: 0.75,
-        issues: [],
-        dimensions: { technical: 0.8, creative: 0.7, novelty: 0.6 },
-      };
-    }
-  },
-}));
+vi.mock('../../src/core/ScoringEngine.js', () => {
+  let callCount = 0;
+  return {
+    ScoringEngine: class MockScoringEngine {
+      async score() {
+        callCount++;
+        return {
+          score: 0.70 + (callCount % 5) * 0.02,
+          issues: [],
+          dimensions: { technical: 0.8, creative: 0.7, novelty: 0.6 },
+        };
+      }
+    },
+  };
+});
 
 vi.mock('../../src/core/OrganismLoop.js', () => ({
   runOrganismMode: vi.fn(async (_prompt: string, options: any, startTime: number) => {

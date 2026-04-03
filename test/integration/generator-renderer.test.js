@@ -16,6 +16,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { existsSync } from 'fs';
 import { fileURLToPath } from 'url';
+import { LLMClient } from '../../src/llm/LLMClient.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -35,7 +36,7 @@ async function safeStartServer(server, port) {
   }
 }
 
-describe.skipIf(process.env.CI)('Generator-Renderer Integration Tests', () => {
+describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests', () => {
   let previewServer;
   let renderer;
   const TEST_PORT = 3457;

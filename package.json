@@ -51,7 +51,6 @@
   ],
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "playwright": "^1.58.2",
     "@testing-library/react": "^16.3.2",
     "@types/archiver": "^7.0.0",
     "@types/cookie-parser": "^1.4.10",
@@ -67,6 +66,8 @@
     "@typescript-eslint/parser": "^7.18.0",
     "concurrently": "^9.1.0",
     "eslint": "^8.57.1",
+    "playwright": "^1.58.2",
+    "sharp": "0.34.5",
     "typescript": "^5.3.3",
     "vitest": "^4.1.0"
   },
@@ -115,5 +116,13 @@
   "optionalDependencies": {
     "meyda": "^5.6.3",
     "pitchfinder": "^2.3.4"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "esbuild",
+      "protobufjs",
+      "puppeteer"
+    ]
   }
 }

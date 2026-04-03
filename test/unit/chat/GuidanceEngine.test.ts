@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { GuidanceEngine } from '../../../src/chat/GuidanceEngine.js';
-import { SemanticArtMemory } from '../../../src/brain/SemanticArtMemory.js';
+import { SemanticArtMemory } from '../../../src/brain/archive/SemanticArtMemory.js';
 import type { CompostMill } from '../../../src/compost/CompostMill.js';
 import type { GenerationContext } from '../../../src/chat/types.js';
 

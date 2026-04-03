@@ -109,7 +109,7 @@ export class NaturalInterface {
     };
     
     // Load SOUL.md
-    this.loadSoul();
+    void this.loadSoul();
   }
 
   private async loadSoul(): Promise<void> {

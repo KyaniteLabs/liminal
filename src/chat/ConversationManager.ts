@@ -13,6 +13,7 @@ import { RalphLoop } from '../core/RalphLoop.js';
 import type { IterationContext } from '../core/LoopConfig.js';
 // Note: SemanticArtMemory archived as part of Fix 8 - using HarnessMemory via GuidanceEngine
 import { GuidanceEngine } from './GuidanceEngine.js';
+import { SemanticArtMemory } from '../brain/archive/SemanticArtMemory.js';
 
 // Interview phase type
 type InterviewPhase = 'greeting' | 'discovery' | 'confirm' | 'generating';
@@ -40,10 +41,12 @@ export class ConversationManager {
 
   // Guidance engine for proactive suggestions
   guidance: GuidanceEngine;
+  artBrain: SemanticArtMemory;
 
-  constructor() {
+  constructor(artBrain?: SemanticArtMemory) {
     // Initialize with default state
-    this.guidance = new GuidanceEngine();
+    this.artBrain = artBrain || new SemanticArtMemory();
+    this.guidance = new GuidanceEngine(this.artBrain);
   }
 
   /**

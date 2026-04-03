@@ -104,7 +104,7 @@ export class ArchiveLearning {
     domain: string,
     qualityScore: number,
     metadata?: Record<string, unknown>
-  ): ArchivedItem | null {
+  ) {
     if (qualityScore < this.config.minQuality) {
       return null;
     }
@@ -124,7 +124,7 @@ export class ArchiveLearning {
       usedCount: 0,
     };
 
-    this.archive.add(item);
+    void this.archive.add(item);
     return item;
   }
 
@@ -165,7 +165,7 @@ export class ArchiveLearning {
       );
 
       // Track usage
-      this.archive.recordUsage(example.id);
+      void this.archive.recordUsage(example.id);
     }
 
     return parts.join('\n');
@@ -222,7 +222,7 @@ export class ArchiveLearning {
       if (entry.length > charBudget) break;
       parts.push(entry);
       charBudget -= entry.length;
-      this.archive.recordUsage(ex.id);
+      void this.archive.recordUsage(ex.id);
     }
 
     if (parts.length === 0) return prompt;
@@ -257,7 +257,7 @@ export class ArchiveLearning {
    * @param itemId - ID of the archived item
    */
   recordUsage(itemId: string): void {
-    this.archive.recordUsage(itemId);
+    void this.archive.recordUsage(itemId);
   }
 
   /**
@@ -266,7 +266,7 @@ export class ArchiveLearning {
    * @param rating - Rating value (typically 0-1 or 1-5)
    */
   addUserRating(itemId: string, rating: number): void {
-    this.archive.addUserRating(itemId, rating);
+    void this.archive.addUserRating(itemId, rating);
   }
 
   /**
@@ -299,7 +299,7 @@ export class ArchiveLearning {
    * @param domain - Domain identifier
    * @returns ArchivedItem if added, null if quality too low
    */
-  addFragment(fragment: MinedFragment, domain: string): ArchivedItem | null {
+  addFragment(fragment: MinedFragment, domain: string) {
     const qualityScore = Math.min(fragment.score / 15, 1); // Normalize score to 0-1
     return this.addOutput(
       fragment.sessionPrompt || fragment.text.slice(0, 100),
@@ -322,7 +322,7 @@ export class ArchiveLearning {
    * @param domain - Domain identifier (falls back to first domain in fragment.domains)
    * @returns ArchivedItem if added, null if quality too low
    */
-  addCreativeFragment(fragment: CreativeFragment, domain?: string): ArchivedItem | null {
+  addCreativeFragment(fragment: CreativeFragment, domain?: string) {
     const effectiveDomain = domain ?? fragment.domains[0] ?? 'unknown';
     return this.addOutput(
       fragment.content.slice(0, 100),

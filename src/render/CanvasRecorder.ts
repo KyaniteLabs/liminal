@@ -96,7 +96,6 @@ export class CanvasRecorder {
       } catch (error) {
         const message = this.formatErrorMessage(error);
         console.error('[CanvasRecorder] Cleanup failed:', message);
-        throw new Error(`CanvasRecorder cleanup failed: ${message}`);
       }
     }
   }

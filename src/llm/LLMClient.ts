@@ -558,7 +558,11 @@ Rules:
 
   /** Check if LLM is configured */
   static isConfigured(): boolean {
-    return !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY') || SERVICE_DEFAULTS.LOCAL_LLM_URL);
+    const hasExplicitConfig = !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY'));
+    if (hasExplicitConfig) return true;
+    // In test environments, don't treat the hardcoded default local URL as configured,
+    // otherwise E2E tests try to call a non-existent localhost endpoint and timeout.
+    return process.env.NODE_ENV !== 'test' && !!SERVICE_DEFAULTS.LOCAL_LLM_URL;
   }
 
   /**

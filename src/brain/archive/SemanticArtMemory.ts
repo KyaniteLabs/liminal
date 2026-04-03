@@ -1,4 +1,4 @@
-import { ArtKnowledgeGraph, Concept } from './ArtKnowledgeGraph.js';
+import { ArtKnowledgeGraph, Concept } from '../ArtKnowledgeGraph.js';
 import { EpisodicMemory, GenerationSession } from './EpisodicMemory.js';
 
 export type Domain = 'p5' | 'shader' | 'three' | 'music' | 'hydra' | 'strudel';

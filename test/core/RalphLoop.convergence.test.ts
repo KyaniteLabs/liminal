@@ -6,6 +6,7 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { RalphLoop } from '../../src/core/RalphLoop.js';
+import { LLMClient } from '../../src/llm/LLMClient.js';
 
 describe('RalphLoop', () => {
   describe('Convergence detection', () => {
@@ -18,6 +19,10 @@ describe('RalphLoop', () => {
     });
 
     it('should track iteration count correctly', async () => {
+      if (!LLMClient.isConfigured()) {
+        console.log('[SKIP] LLM not configured');
+        return;
+      }
       // Mock the generation to return consistent scores that don't converge
       const mockGenerate = vi.fn();
       

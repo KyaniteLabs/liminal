@@ -53,9 +53,9 @@ export async function runInSandbox(
         url.startsWith('https://cdnjs.cloudflare.com/') &&
         url.includes('p5')
       ) {
-        req.continue();
+        void req.continue();
       } else {
-        req.abort();
+        void req.abort();
       }
     });
 

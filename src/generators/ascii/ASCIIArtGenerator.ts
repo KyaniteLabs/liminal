@@ -29,7 +29,7 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
     // ASCII art should only contain specific characters
-    const allowedChars = /^[\s\.\-~+=*#%@\n\r]*$/;
+    const allowedChars = /^[\s.\-~+=*#%@\n\r]*$/;
     if (!allowedChars.test(code)) {
       return { valid: false, error: 'Generated code contains invalid characters for ASCII art' };
     }

@@ -158,13 +158,14 @@ describe('RetryManager', () => {
       const promise = RetryManager.executeWithRetry(fn, { 
         maxRetries: 2, 
         baseDelayMs: 10 
-      });
+      }).catch(e => e);
       
       await vi.advanceTimersByTimeAsync(0);
       await vi.advanceTimersByTimeAsync(10);
       await vi.advanceTimersByTimeAsync(20);
       
-      await expect(promise).rejects.toThrow(LLMTimeoutError);
+      const result = await promise;
+      expect(result).toBeInstanceOf(LLMTimeoutError);
       expect(fn).toHaveBeenCalledTimes(3); // Initial + 2 retries
     });
 

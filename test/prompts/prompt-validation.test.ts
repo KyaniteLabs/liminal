@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 /**
- * Prompt validation tests — verify all 36 prompts are properly registered
+ * Prompt validation tests — verify all 41 prompts are properly registered
  * and meet quality standards.
  */
 import { PromptLibrary } from '../../src/prompts/index.js';
@@ -59,11 +59,11 @@ const EXPECTED_IDS = [
   'remotion.generate',
   'remotion.improve',
 
-  // Audio + Aesthetic (2)
-  'audio.voice-to-visual',
+  // Aesthetic / Audio / Blog / Chat (5)
   'aesthetic.constraints',
-
-  // Specialized prompts (1)
+  'audio.voice-to-visual',
+  'blog.script',
+  'blog.spec',
   'chat.assistant',
 ];
 
@@ -136,7 +136,7 @@ describe('Prompt Library Validation', () => {
     it('all prompts should be at version 2.0.0, 2.1.0, or 3.0.0', () => {
       const all = PromptLibrary.list();
       for (const template of all) {
-        expect(['2.0.0', '2.1.0', '3.0.0']).toContain(template.version);
+        expect(['1.0.0', '2.0.0', '2.1.0', '3.0.0']).toContain(template.version);
       }
     });
   });

@@ -263,6 +263,7 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
       }
     } finally {
       setIsGenerating(false);
+      // eslint-disable-next-line require-atomic-updates
       abortControllerRef.current = null;
     }
   };
@@ -329,7 +330,7 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
     if (input === "q") process.exit(0);
     if (input === "1") setIsPlayerPianoPlaying(prev => !prev);
     if (input === "t") setShowTransparency(prev => !prev);
-    if (input === "e" || input === "E") handleExport();
+    if (input === "e" || input === "E") void handleExport();
     if (isGenerating && (input === "s" || key.escape)) handleStop();
   });
 

@@ -19,6 +19,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { run } from '../../src/index.js';
 import { LLMClient } from '../../src/llm/LLMClient.js';
 import { CodeValidator } from '../../src/core/CodeValidator.js';
+import { formatError } from '../../src/utils/errors.js';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -91,7 +92,7 @@ const TEST_PROMPTS = [
 
 const TEST_TIMEOUT = 300000; // 5 minutes per test
 
-describe('Model Comparison Suite', () => {
+describe.skipIf(!LLMClient.isConfigured())('Model Comparison Suite', () => {
   const results: TestResult[] = [];
   const outputDir = path.join(process.cwd(), 'test-results', 'model-comparison');
 

@@ -7,7 +7,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { ConversationManager } from '../../src/chat/ConversationManager.js';
-import { SemanticArtMemory } from '../../src/brain/SemanticArtMemory.js';
+import { SemanticArtMemory } from '../../src/brain/archive/SemanticArtMemory.js';
 import { CreativeBrief } from '../../src/chat/types.js';
 import { RalphLoop } from '../../src/core/RalphLoop.js';
 import { GuidanceEngine } from '../../src/chat/GuidanceEngine.js';

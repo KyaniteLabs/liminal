@@ -43,6 +43,13 @@ export class RawByteProcessor {
     return { headerHex, tailHex, sha256, size, hexChunks, base64 };
   }
 
+  /** Return base64 for files < 100KB, otherwise null. */
+  static async getBase64(filePath: string): Promise<string | null> {
+    const buffer = await fs.readFile(filePath);
+    if (buffer.length >= BASE64_MAX_SIZE) return null;
+    return buffer.toString('base64');
+  }
+
   /** Split a hex string into chunks of specified size. */
   static chunkHex(hexString: string, chunkSize: number = HEX_CHUNK_SIZE): string[] {
     if (hexString.length === 0) return [];

@@ -152,20 +152,22 @@ const Input = ({ value, onChange, onSubmit, onCopy, onToggleDebug }: {
   onCopy?: () => void;
   onToggleDebug?: () => void;
 }) => {
-  useInput(async (char, key) => {
+  useInput((char, key) => {
     if (key.return) {
       onSubmit();
     } else if (key.backspace || key.delete) {
       onChange(value.slice(0, -1));
     } else if (key.ctrl && char === 'v') {
       // Paste from clipboard - strip newlines for single-line input
-      try {
-        const pasted = await clipboard.read();
-        const cleaned = pasted.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
-        onChange(value + cleaned);
-      } catch {
-        // Ignore paste errors
-      }
+      void (async () => {
+        try {
+          const pasted = await clipboard.read();
+          const cleaned = pasted.replace(/\n/g, ' ').replace(/\s+/g, ' ').trim();
+          onChange(value + cleaned);
+        } catch {
+          // Ignore paste errors
+        }
+      })();
     } else if (key.ctrl && char === 'c') {
       // Copy current input or last response
       if (onCopy) onCopy();
@@ -255,7 +257,7 @@ function App() {
           interfaceRef.current = ni;
           
           // Load tasks
-          loadTasks(ni);
+          await loadTasks(ni);
         } else {
           console.error('[TUI] Failed to initialize harness LLM');
           setHistory(h => [...h, { type: 'error', content: 'Failed to initialize harness LLM. Check LIMINAL_HARNESS_BASE_URL.' }]);
@@ -266,7 +268,7 @@ function App() {
       }
     };
     
-    init();
+    void init();
     
     return () => { mounted = false; };
   }, []);
@@ -481,8 +483,8 @@ function App() {
       <Input 
         value={input} 
         onChange={setInput} 
-        onSubmit={handleSubmit} 
-        onCopy={handleCopy}
+        onSubmit={() => { void handleSubmit(); }} 
+        onCopy={() => { void handleCopy(); }}
         onToggleDebug={handleToggleDebug}
       />
       <StatusBar status={status} message={statusMsg} activity={activity} />
@@ -511,5 +513,5 @@ export async function startHarnessTUI() {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
-  startHarnessTUI();
+  void startHarnessTUI();
 }

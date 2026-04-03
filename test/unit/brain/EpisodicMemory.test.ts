@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { EpisodicMemory, Episode, Conversation, GenerationSession } from '../../../src/brain/EpisodicMemory';
+import { EpisodicMemory, Episode, Conversation, GenerationSession } from '../../../src/brain/archive/EpisodicMemory.js';
 
 describe('EpisodicMemory', () => {
   let episodicMemory: EpisodicMemory;

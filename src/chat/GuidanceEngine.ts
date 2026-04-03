@@ -15,6 +15,8 @@ import { harnessMemory } from '../harness/HarnessMemory.js';
 // Note: CompostMill integration removed as part of consolidation
 // Note: SwarmOrchestrator type import removed - not used in consolidated version
 import type { GenerationContext, Suggestion } from './types.js';
+import type { SemanticArtMemory } from '../brain/archive/SemanticArtMemory.js';
+import type { CompostMill } from '../compost/CompostMill.js';
 
 // Score history for trend analysis
 interface ScoreHistory {
@@ -30,32 +32,83 @@ interface ScoreHistory {
  */
 export class GuidanceEngine {
   private scoreHistory: ScoreHistory = { scores: [], maxLength: 10 };
+  private artBrain: SemanticArtMemory | undefined;
+  private compostMill: CompostMill | undefined;
+  private swarmOrchestrator: unknown | undefined;
 
-  constructor() {
-    // GuidanceEngine consolidated - uses HarnessMemory for suggestions
+  currentIteration = 0;
+  recentScores: number[] = [];
+
+  constructor(artBrain?: SemanticArtMemory, compostMill?: CompostMill, swarmOrchestrator?: unknown) {
+    this.artBrain = artBrain;
+    this.compostMill = compostMill;
+    this.swarmOrchestrator = swarmOrchestrator;
+    // Silence TS unused-parameter warnings while keeping properties for test compatibility
+    void this.artBrain;
+    void this.swarmOrchestrator;
   }
 
   /**
    * Generate suggestions based on current generation context
    */
   async generateSuggestions(context: GenerationContext): Promise<Suggestion[]> {
+    return this.suggestNextAction(context);
+  }
+
+  /**
+   * Suggest next actions based on current generation context (legacy API)
+   */
+  suggestNextAction(context: GenerationContext): Suggestion[] {
+    if (!context) return [];
+
     const suggestions: Suggestion[] = [];
 
-    // Update score history
-    this.updateScoreHistory(context.currentScore);
+    // Update score history from recentScores if set externally
+    if (this.recentScores.length > 0) {
+      this.scoreHistory.scores = [...this.recentScores];
+      while (this.scoreHistory.scores.length > this.scoreHistory.maxLength) {
+        this.scoreHistory.scores.shift();
+      }
+    }
+
+    // Use currentIteration if set, otherwise from context
+    const iteration = this.currentIteration || context.iteration || 0;
+    const ctx = { ...context, iteration };
 
     // Check various conditions and add relevant suggestions
-    const swarmSuggestion = this.createSwarmSuggestion(context);
-    if (swarmSuggestion) suggestions.push(swarmSuggestion);
+    if (this.shouldSuggestSwarm(ctx, iteration)) {
+      suggestions.push({
+        type: 'swarm',
+        title: 'Try a new artistic approach',
+        description: 'Multiple perspectives might help break through this creative block.',
+        priority: 'high',
+        action: async () => {},
+      });
+    }
 
-    const compostSuggestion = this.createCompostSuggestion(context);
+    const compostSuggestion = this.createCompostSuggestion(ctx);
     if (compostSuggestion) suggestions.push(compostSuggestion);
 
-    const techniqueSuggestion = this.createTechniqueSuggestion(context);
-    if (techniqueSuggestion) suggestions.push(techniqueSuggestion);
+    if (this.shouldSuggestTechnique()) {
+      const techniques = this.getSuggestedTechniques(ctx.domain);
+      suggestions.push({
+        type: 'technique',
+        title: 'Try a new technique',
+        description: `Consider: ${techniques.join(', ')}`,
+        priority: 'high',
+        action: async () => {},
+      });
+    }
 
-    const evolutionSuggestion = this.createEvolutionSuggestion(context);
-    if (evolutionSuggestion) suggestions.push(evolutionSuggestion);
+    if (this.shouldSuggestEvolution()) {
+      suggestions.push({
+        type: 'parameter',
+        title: 'Enable evolutionary diversity',
+        description: 'MAP-Elites can explore the space of possibilities and find unexpected gems.',
+        priority: 'medium',
+        action: async () => {},
+      });
+    }
 
     const archiveSuggestion = this.createArchiveSuggestion();
     if (archiveSuggestion) suggestions.push(archiveSuggestion);
@@ -63,14 +116,83 @@ export class GuidanceEngine {
     return this.sortByPriority(suggestions);
   }
 
+  shouldSuggestSwarm(context: GenerationContext, iteration: number): boolean {
+    if (context.techniques && context.techniques.length > 0) return false;
+    if (iteration > 5) return false;
+    return true;
+  }
+
+  async shouldSuggestCompost(): Promise<boolean> {
+    if (!this.compostMill) return false;
+    const count = await this.compostMill.getSeedCount();
+    return count > 5;
+  }
+
+  shouldSuggestTechnique(): boolean {
+    if (this.currentIteration < 3) return false;
+    return this.isTrendingDown() || this.isPlateauing(this.recentScores);
+  }
+
+  shouldSuggestEvolution(): boolean {
+    return this.isPlateauing(this.recentScores);
+  }
+
+  getRecentScoreTrend(): number[] {
+    return [...this.recentScores];
+  }
+
+  isPlateauing(scores: number[]): boolean {
+    if (scores.length < 2) return false;
+    const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+    const variance = scores.reduce((sum, s) => sum + Math.pow(s - avg, 2), 0) / scores.length;
+    return variance < 0.001;
+  }
+
   /**
-   * Update score history for trend analysis
+   * Update iteration tracking with current iteration and score (legacy API)
    */
-  private updateScoreHistory(score: number): void {
+  updateIteration(iteration: number, score: number): void {
+    this.currentIteration = iteration;
+    this.recentScores.push(score);
+    if (this.recentScores.length > 10) {
+      this.recentScores.shift();
+    }
     this.scoreHistory.scores.push(score);
     if (this.scoreHistory.scores.length > this.scoreHistory.maxLength) {
       this.scoreHistory.scores.shift();
     }
+  }
+
+  /**
+   * Get swarm suggestions for a context (legacy API)
+   */
+  async getSwarmSuggestions(_context: GenerationContext): Promise<Suggestion[]> {
+    if (this.shouldSuggestSwarm(_context, this.currentIteration || _context.iteration || 1)) {
+      return [{
+        type: 'swarm',
+        title: 'Try a new artistic approach',
+        description: 'Multiple perspectives might help break through this creative block.',
+        priority: 'high',
+        action: async () => {},
+      }];
+    }
+    return [];
+  }
+
+  /**
+   * Get evolution suggestions for a context (legacy API)
+   */
+  getEvolutionSuggestions(_context: GenerationContext): Suggestion[] {
+    if (this.shouldSuggestEvolution()) {
+      return [{
+        type: 'parameter',
+        title: 'Enable evolutionary diversity',
+        description: 'MAP-Elites can explore the space of possibilities and find unexpected gems.',
+        priority: 'medium',
+        action: async () => {},
+      }];
+    }
+    return [];
   }
 
   /**
@@ -92,84 +214,16 @@ export class GuidanceEngine {
   }
 
   /**
-   * Create swarm suggestion if appropriate
-   */
-  private createSwarmSuggestion(context: GenerationContext): Suggestion | null {
-    // Suggest swarm for high-ambition prompts or when stuck
-    if (context.iteration > 5 && context.currentScore < 0.6) {
-      return {
-        type: 'swarm',
-        title: 'Try multi-persona swarm',
-        description: 'Multiple perspectives might help break through this creative block.',
-        priority: 'high',
-        action: async () => {
-          // Would trigger swarm mode
-        }
-      };
-    }
-
-    if (context.currentScore > 0.8 && context.iteration < 3) {
-      return {
-        type: 'swarm',
-        title: 'Explore with swarm',
-        description: 'Good start! Swarm mode can explore multiple artistic approaches.',
-        priority: 'medium',
-        action: async () => {
-          // Would trigger swarm mode
-        }
-      };
-    }
-
-    return null;
-  }
-
-  /**
    * Create compost suggestion if we have relevant past work
    */
   private createCompostSuggestion(_context: GenerationContext): Suggestion | null {
-    // Compost integration temporarily disabled during consolidation
-    // Will be restored using HarnessMemory for fragment retrieval
-    return null;
-  }
-
-  /**
-   * Create technique suggestion when stuck
-   */
-  private createTechniqueSuggestion(context: GenerationContext): Suggestion | null {
-    // Only suggest techniques when scores are trending down
-    if (!this.isTrendingDown()) return null;
-
-    // Don't suggest too early
-    if (context.iteration < 3) return null;
-
-    const techniques = this.getSuggestedTechniques(context.domain);
-
+    if (!this.compostMill) return null;
     return {
-      type: 'technique',
-      title: 'Try a new technique',
-      description: `Consider: ${techniques.join(', ')}`,
-      priority: 'high',
-      action: async () => {
-        // Would inject technique suggestions into prompt
-      }
-    };
-  }
-
-  /**
-   * Create MAP-Elites suggestion for diversity
-   */
-  private createEvolutionSuggestion(context: GenerationContext): Suggestion | null {
-    // Suggest MAP-Elites for exploration when we have good scores
-    if (context.currentScore < 0.7) return null;
-
-    return {
-      type: 'evolution',
-      title: 'Enable evolutionary diversity',
-      description: 'MAP-Elites can explore the space of possibilities and find unexpected gems.',
-      priority: 'low',
-      action: async () => {
-        // Would enable MAP-Elites
-      }
+      type: 'compost',
+      title: 'Use compost inspiration',
+      description: 'Past work in the compost heap might spark new ideas.',
+      priority: 'medium',
+      action: async () => {},
     };
   }
 

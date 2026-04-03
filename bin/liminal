@@ -3,7 +3,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 import { run, PreviewServer, generateMusic, generateVisuals, metaHarness } from '../dist/index.js';
-import { getEffectiveConfig, saveConfig, loadProjectConfig, getMultiModelConfig } from '../dist/config/ConfigLoader.js';
+import { getEffectiveConfig, saveConfig, loadProjectConfig } from '../dist/config/ConfigLoader.js';
 import { PromptHistory } from '../dist/config/PromptHistory.js';
 import { InteractiveMode } from '../dist/tui/InteractiveMode.js';
 import { CompostMill } from '../dist/compost/CompostMill.js';

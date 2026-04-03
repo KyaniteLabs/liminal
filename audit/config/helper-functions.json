@@ -1,0 +1,478 @@
+{
+  "summary": {
+    "env_helpers": 3,
+    "isConfigured_functions": 1,
+    "isValid_functions": 1,
+    "canExecute_functions": 1,
+    "canHandle_functions": 10,
+    "getConfig_functions": 3,
+    "loadConfig_functions": 2
+  },
+  "env_helpers": [
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 162,
+      "signature": "function env(key: string): string | undefined",
+      "implementation": "return process.env[`LIMINAL_${key}`];",
+      "usage_count": 9,
+      "used_in": [
+        "getEffectiveConfig (lines 267, 287, 288, 289)",
+        "getMultiModelConfig (lines 313, 314, 315, 316)"
+      ],
+      "duplicate_of": [
+        "src/llm/LLMClient.ts:96",
+        "src/core/RalphLoop.ts:62"
+      ]
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 96,
+      "signature": "function env(key: string): string | undefined",
+      "implementation": "return process.env[`LIMINAL_${key}`];",
+      "usage_count": 6,
+      "used_in": [
+        "constructor (lines 117, 121, 122)",
+        "isConfigured (line 580)",
+        "callOpenAICompatible (line 467)",
+        "callOllama (line 521)"
+      ],
+      "duplicate_of": [
+        "src/config/ConfigLoader.ts:162",
+        "src/core/RalphLoop.ts:62"
+      ]
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 62,
+      "signature": "function env(key: string): string | undefined",
+      "implementation": "return process.env[`LIMINAL_${key}`];",
+      "usage_count": 1,
+      "used_in": [
+        "run method (line 96)"
+      ],
+      "duplicate_of": [
+        "src/config/ConfigLoader.ts:162",
+        "src/llm/LLMClient.ts:96"
+      ]
+    }
+  ],
+  "validation_functions": [
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 579,
+      "name": "isConfigured",
+      "signature": "static isConfigured(): boolean",
+      "checks": [
+        "env('LLM_BASE_URL')",
+        "process.env.OPENAI_API_KEY",
+        "env('LLM_API_KEY')",
+        "SERVICE_DEFAULTS.LOCAL_LLM_URL"
+      ],
+      "used_by": [
+        "TierBasedGenerator.ts:42",
+        "P5GeneratorLLM.ts:20",
+        "tui/commands.ts:128",
+        "music/generateMusic.ts:98",
+        "generateVisuals.ts:46",
+        "improvement/requestImprovement.ts:45"
+      ],
+      "usage_count": 6
+    },
+    {
+      "file": "src/utils/htmlWrapper.ts",
+      "line": 952,
+      "name": "isValidDomain",
+      "signature": "static isValidDomain(domain: string): domain is Domain",
+      "checks": [
+        "this.getSupportedDomains().includes(domain as Domain)"
+      ],
+      "used_by": [],
+      "usage_count": 0,
+      "note": "Type guard function for Domain type"
+    },
+    {
+      "file": "src/llm/CircuitBreaker.ts",
+      "line": 112,
+      "name": "canExecute",
+      "signature": "canExecute(): boolean",
+      "checks": [
+        "this.state === 'closed'",
+        "this.state === 'half-open' && this.halfOpenAttempts < this.config.halfOpenMaxAttempts"
+      ],
+      "used_by": [],
+      "usage_count": 0,
+      "note": "Circuit breaker pattern - checks if request can be attempted"
+    }
+  ],
+  "loader_functions": [
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "name": "loadConfig",
+      "line": 242,
+      "signature": "export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Promise<UserConfig | null>",
+      "fallback_chain": [
+        "File read from configPath",
+        "Returns null on error"
+      ],
+      "usage_count": 2,
+      "used_by": [
+        "getEffectiveConfig (line 262)"
+      ]
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "name": "loadProjectConfig",
+      "line": 209,
+      "signature": "export async function loadProjectConfig(configDirOrPath?: string): Promise<ProjectConfig | null>",
+      "fallback_chain": [
+        "config/liminal.json",
+        "config/atelier.json (legacy fallback)"
+      ],
+      "usage_count": 2,
+      "used_by": [
+        "getEffectiveConfig (line 263)",
+        "getMultiModelConfig (line 299)"
+      ]
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "name": "getEffectiveConfig",
+      "line": 261,
+      "signature": "export async function getEffectiveConfig(configPath?: string, projectConfigPath?: string): Promise<EffectiveConfig>",
+      "fallback_chain": [
+        "env('LLM_PROVIDER')",
+        "projectConfig.llm.provider",
+        "fileConfig.defaultProvider",
+        "'lmstudio' (default)"
+      ],
+      "usage_count": 1,
+      "note": "Main config resolution function - merges all sources"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "name": "getMultiModelConfig",
+      "line": 298,
+      "signature": "export async function getMultiModelConfig(projectConfigPath?: string): Promise<MultiModelConfig | null>",
+      "fallback_chain": [
+        "projectConfig.multiModel",
+        "env('LLM_PROVIDER_PRIMARY/SECONDARY')",
+        "env('LLM_BASE_URL_PRIMARY/SECONDARY')",
+        "env('LLM_MODEL_PRIMARY/SECONDARY')",
+        "env('LLM_API_KEY_PRIMARY/SECONDARY')"
+      ],
+      "usage_count": 1,
+      "note": "Dual-model configuration for cascade/specialized routing"
+    }
+  ],
+  "getConfig_functions": [
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 187,
+      "name": "getConfig",
+      "signature": "getConfig(): LLMConfig",
+      "implementation": "return { ...this.config };",
+      "used_by": [
+        "TierBasedGenerator.ts:37,38",
+        "tui/NaturalInterface.ts:518"
+      ],
+      "usage_count": 3
+    },
+    {
+      "file": "src/index.ts",
+      "line": 339,
+      "name": "getConfig",
+      "signature": "getConfig(): LiminalConfig",
+      "implementation": "return this.config;",
+      "used_by": [],
+      "usage_count": 0,
+      "note": "Liminal class config getter"
+    },
+    {
+      "file": "src/render/CanvasRecorder.ts",
+      "line": 39,
+      "name": "getConfig",
+      "signature": "getConfig(): RecordingConfig",
+      "implementation": "Returns recording configuration",
+      "used_by": [],
+      "usage_count": 0
+    }
+  ],
+  "canHandle_functions": [
+    {
+      "file": "src/generators/registerGenerators.ts",
+      "line": 29,
+      "name": "shaderConfidence",
+      "signature": "const shaderConfidence = (prompt: string): number",
+      "pattern_checks": [
+        "/ray\\s*march|sdf|fragment/ -> 0.9",
+        "/shader|glsl/ -> 0.7"
+      ],
+      "used_by": ["shaderEntry"]
+    },
+    {
+      "file": "src/generators/registerGenerators.ts",
+      "line": 38,
+      "name": "threeConfidence",
+      "signature": "const threeConfidence = (prompt: string): number",
+      "pattern_checks": [
+        "/three\\.js|threejs|\\bthree\\b/ -> 0.95",
+        "/\\b3d\\b.*\\b(scene|cube|...)/ -> 0.90",
+        "/\\b3d\\b|webgl/ -> 0.75"
+      ],
+      "used_by": ["threeEntry"]
+    },
+    {
+      "file": "src/generators/registerGenerators.ts",
+      "line": 50,
+      "name": "htmlConfidence",
+      "signature": "const htmlConfidence = (prompt: string): number",
+      "pattern_checks": [
+        "/portfolio|landing\\s*page|dashboard|web\\s*app/ -> 0.95",
+        "/\\bhtml\\b|\\bcss\\b|.../ -> 0.90"
+      ],
+      "used_by": ["htmlEntry"]
+    },
+    {
+      "file": "src/generators/registerGenerators.ts",
+      "line": 62,
+      "name": "asciiConfidence",
+      "signature": "const asciiConfidence = (prompt: string): number",
+      "pattern_checks": [
+        "/\\bascii\\s*art\\b/ -> 0.95",
+        "/\\bascii\\b/ -> 0.90"
+      ],
+      "used_by": ["asciiEntry"]
+    },
+    {
+      "file": "src/generators/registerGenerators.ts",
+      "line": 74,
+      "name": "strudelConfidence",
+      "signature": "const strudelConfidence = (prompt: string): number",
+      "pattern_checks": [
+        "/\\bstrudel\\b|\\btidal\\b|live\\s*coding\\s*music/ -> 0.95"
+      ],
+      "used_by": ["strudelEntry"]
+    },
+    {
+      "file": "src/generators/registerGenerators.ts",
+      "line": 87,
+      "name": "hydraConfidence",
+      "signature": "const hydraConfidence = (prompt: string): number",
+      "pattern_checks": [
+        "/hydra|video\\s*synth|visual\\s*synthesis/ -> 0.95"
+      ],
+      "used_by": ["hydraEntry"]
+    },
+    {
+      "file": "src/generators/registerGenerators.ts",
+      "line": 95,
+      "name": "toneConfidence",
+      "signature": "const toneConfidence = (prompt: string): number",
+      "pattern_checks": [
+        "/\\btone\\.?js\\b|\\btonejs\\b|web\\s*audio\\s*api/ -> 0.95",
+        "/\\bsynth\\b|\\bsynthesizer\\b.*\\bjs\\b/ -> 0.90"
+      ],
+      "used_by": ["toneEntry"]
+    },
+    {
+      "file": "src/generators/GeneratorRegistry.ts",
+      "line": 132,
+      "name": "canHandle (dynamic)",
+      "signature": "const canHandle = (prompt: string): number",
+      "description": "Dynamically created for registerDomain() - checks keywords",
+      "used_by": ["GeneratorRegistry.dispatch()"]
+    },
+    {
+      "file": "src/generators/remotion/RemotionGenerator.ts",
+      "line": 20,
+      "name": "canHandle",
+      "signature": "canHandle(prompt: string): number",
+      "description": "Instance method on RemotionGenerator",
+      "used_by": ["remotionEntry in registerGenerators.ts:134"]
+    },
+    {
+      "file": "src/plugins/types.ts",
+      "line": 76,
+      "name": "canHandle",
+      "signature": "canHandle?(prompt: string): number",
+      "description": "Optional plugin interface method",
+      "used_by": ["PluginLoader.ts:206-208"]
+    }
+  ],
+  "constructor_signatures_with_config": [
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 116,
+      "class": "LLMClient",
+      "signature": "constructor(config?: Partial<LLMConfig>)",
+      "config_falls_back_to": [
+        "env('LLM_BASE_URL')",
+        "env('LLM_API_KEY')",
+        "process.env.OPENAI_API_KEY",
+        "env('LLM_MODEL')",
+        "SERVICE_DEFAULTS.LOCAL_LLM_URL"
+      ]
+    },
+    {
+      "file": "src/index.ts",
+      "line": 335,
+      "class": "Liminal",
+      "signature": "constructor(config: Partial<LiminalConfig> = {})",
+      "config_merges_with": ["defaultConfig"]
+    },
+    {
+      "file": "src/generators/TierBasedGenerator.ts",
+      "line": 35,
+      "class": "TierBasedGenerator",
+      "signature": "constructor(llm: LLMClient, config?: Partial<TierBasedConfig>)",
+      "note": "Takes LLM client and optional config"
+    },
+    {
+      "file": "src/llm/PromptBuilder.ts",
+      "line": 50,
+      "class": "PromptBuilder",
+      "signature": "constructor(config: LLMConfig)",
+      "note": "Requires LLMConfig to build tier-appropriate prompts"
+    },
+    {
+      "file": "src/llm/CircuitBreaker.ts",
+      "line": 100,
+      "class": "CircuitBreaker",
+      "signature": "constructor(config?: Partial<CircuitBreakerConfig>)",
+      "config_merges_with": ["DEFAULT_CONFIG"]
+    },
+    {
+      "file": "src/routing/SmartRouter.ts",
+      "line": 27,
+      "class": "SmartRouter",
+      "signature": "constructor(config?: RoutingConfig)",
+      "config_optional": true
+    },
+    {
+      "file": "src/core/SafetyGuardrails.ts",
+      "line": 35,
+      "class": "SafetyGuardrails",
+      "signature": "constructor(config?: SafetyConfig)",
+      "config_optional": true
+    },
+    {
+      "file": "src/core/parsing/CodeParser.ts",
+      "line": 59,
+      "class": "CodeParser",
+      "signature": "constructor(config: Partial<CodeParserConfig> = {})",
+      "config_optional": true
+    },
+    {
+      "file": "src/compost/CompostHeap.ts",
+      "line": 15,
+      "class": "CompostHeap",
+      "signature": "constructor(config: Partial<CompostConfig> & Pick<CompostConfig, 'heapDir'>)"
+    },
+    {
+      "file": "src/swarm/SwarmOrchestrator.ts",
+      "line": 42,
+      "class": "SwarmOrchestrator",
+      "signature": "constructor(config?: Partial<SwarmConfig>, options?: SwarmOrchestratorOptions)"
+    },
+    {
+      "file": "src/collab/CollaborativeClient.ts",
+      "line": 39,
+      "class": "CollaborativeClient",
+      "signature": "constructor(config: CollaborativeConfig)"
+    },
+    {
+      "file": "src/collab/DeepCollaboration.ts",
+      "line": 59,
+      "class": "DeepCollaboration",
+      "signature": "constructor(config: DeepCollaborationConfig)"
+    },
+    {
+      "file": "src/collab/CollaborationEngine.ts",
+      "line": 72,
+      "class": "CollaborationEngine",
+      "signature": "constructor(config: CollaborationEngineConfig)"
+    },
+    {
+      "file": "src/learning/ArchiveLearning.ts",
+      "line": 76,
+      "class": "ArchiveLearning",
+      "signature": "constructor(config: ArchiveConfig = {})"
+    },
+    {
+      "file": "src/learning/QualityArchive.ts",
+      "line": 99,
+      "class": "QualityArchive",
+      "signature": "constructor(config: QualityArchiveConfig = {})"
+    }
+  ],
+  "issues": [
+    {
+      "severity": "high",
+      "type": "duplicate_implementation",
+      "description": "3 identical env() function implementations across codebase",
+      "locations": [
+        "src/config/ConfigLoader.ts:162",
+        "src/llm/LLMClient.ts:96",
+        "src/core/RalphLoop.ts:62"
+      ],
+      "recommendation": "Extract to shared utility in src/utils/env.ts"
+    },
+    {
+      "severity": "medium",
+      "type": "inconsistent_naming",
+      "description": "Similar config getter functions have different naming patterns",
+      "locations": [
+        "LLMClient.getConfig()",
+        "Liminal.getConfig()",
+        "CanvasRecorder.getConfig()"
+      ],
+      "note": "All follow getConfig() pattern consistently - not an issue"
+    },
+    {
+      "severity": "low",
+      "type": "scattered_config_access",
+      "description": "Environment variables accessed directly in multiple places",
+      "locations": [
+        "LLMClient constructor accesses env() and process.env directly",
+        "isConfigured() mixes env() and process.env access",
+        "ConfigLoader uses env() helper consistently"
+      ],
+      "recommendation": "Standardize on env() helper for all LIMINAL_ prefixed vars"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "action": "Extract env() helper to shared utility",
+      "target": "src/utils/env.ts",
+      "description": "Create single env() function and replace all duplicates",
+      "affected_files": [
+        "src/config/ConfigLoader.ts",
+        "src/llm/LLMClient.ts",
+        "src/core/RalphLoop.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "action": "Document env variable naming convention",
+      "description": "All environment variables should use LIMINAL_ prefix",
+      "exceptions": [
+        "process.env.OPENAI_API_KEY (external standard)",
+        "process.env.MINIMAX_API_KEY (external standard)",
+        "process.env.HOME (system standard)"
+      ]
+    }
+  ],
+  "statistics": {
+    "total_files_searched": "src/**/*.ts",
+    "env_usage_by_file": {
+      "src/config/ConfigLoader.ts": 9,
+      "src/llm/LLMClient.ts": 6,
+      "src/core/RalphLoop.ts": 1
+    },
+    "isConfigured_call_sites": 6,
+    "canHandle_implementations": 10,
+    "config_loader_functions": 4,
+    "constructors_taking_config": 15
+  }
+}

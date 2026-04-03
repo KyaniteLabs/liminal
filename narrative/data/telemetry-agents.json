@@ -3,6 +3,7 @@
     "generated": "2026-04-01",
     "source": "git log analysis + session JSONL chunks",
     "total_commits_analyzed": 303,
+    "scope_note": "303 includes non-Liminal repo commits from the same git history; 294 are Liminal-specific",
     "total_lines_added": 484818,
     "total_lines_removed": 190988,
     "net_lines": 293830

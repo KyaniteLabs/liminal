@@ -546,9 +546,7 @@ export type { LLMConfig, LLMResponse } from './llm/LLMClient.js';
 export { 
   detectModelTier, 
   getModelProfile, 
-  getModelInfo, 
   trimContext, 
-  selectPromptStyle,
   type ModelTier,
   type ModelProfile 
 } from './llm/ModelTier.js';

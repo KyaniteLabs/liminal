@@ -451,7 +451,7 @@ Cross-referencing the 10 component architectures with the YouTube correlation ma
 | Component | Source | Correlation Strength |
 |-----------|--------|---------------------|
 | **RalphLoop core technique** | **Geoffrey Huntley's Ralph Wiggum Loop** (created mid-2025, went viral Dec 2025). Simon directly adapted Huntley's technique — a bash loop feeding errors back into LLM prompts until the task completes. The Liminal version adds creative scoring, evolutionary iteration, and compost integration ON TOP of Huntley's core pattern. Huntley is the originator of the loop itself. | **Confirmed Attribution** — Simon learned directly from Huntley's published materials |
-| Hook system (26 hooks) | "The senior engineer's guide to AI coding: custom hooks" (How I AI, Jan 26) | **Very Strong** — described as "single most direct correlation" |
+| RalphLoop evolutionary additions (ES scoring, convergence, quality thresholds) | **AI Warehouse** — 14 videos in 6 days (Mar 15-20). NOT tutorials. No narration, no explanation. Just music and colored blocks trying, failing, iterating, and gradually learning. The RL concepts (selection pressure, fitness landscapes, convergence) were absorbed through **visual pattern recognition**, not verbal instruction. Simon watched agents *behave*, not teachers *teach*. This is a fundamentally different learning modality than every other video source — closer to watching clay emerge on a wheel than watching a lecture. | **Very Strong** — but through *visual intuition*, not conceptual explanation |
 | MCP integration | Matthew Berman "How to setup MCP servers" (Sep 16, 2025) | **Very Strong** — tool-use architecture shaped directly |
 | ICM Methodology | Jake Van Clief "Folder System" (Mar 11, watched twice). User explicitly credits: "Jake Van Clief literally came up with ICM." | **Confirmed Attribution** — Simon names the source |
 | Memory system | Brian Casel "Memory Problem" (Oct 11, 2025); Letta "Context Repositories" (Mar 6, 2026) | **Strong** |
@@ -547,6 +547,25 @@ The philosophical framing of Liminal as an entity that exists in the space betwe
 - **Geoffrey Huntley** created the Ralph Wiggum Loop (mid-2025). Simon's RalphLoop adapts Huntley's technique for creative coding. The evolutionary scoring, compost integration, and quality thresholds are Simon's additions, but the core loop pattern is Huntley's.
 - **Jake Van Clief** created the ICM (Infinite Context Machine) methodology. Simon explicitly credits: "Jake Van Clief literally came up with ICM."
 - The CompostMill is the crown jewel of originality. It is the single most unique idea in Liminal, and it came from clay — not from a video.
+
+---
+
+### Learning Modality Note: AI Warehouse as Visual Intuition
+
+AI Warehouse deserves special analysis because it represents a fundamentally different learning channel than every other YouTube source:
+
+**Format:** No narration. No explanation. No talking head. Just music and colored blocks (agents) trying tasks, failing, and gradually improving across training iterations. It's visual art about machine learning, not instructional content about machine learning.
+
+**Why this matters for Liminal:** Simon didn't *learn about* evolutionary algorithms from AI Warehouse in any academic sense. He *watched* agents learn. The pattern — try, fail, adjust, try again, gradually improve — was absorbed visually, the same way a ceramicist learns clay behavior by watching it respond on the wheel. The concepts of selection pressure, fitness landscapes, and convergence weren't taught; they were *felt* through repeated visual exposure to agents navigating them.
+
+This creates an interesting attribution chain:
+1. **Geoffrey Huntley** provided the explicit technique (the Ralph Wiggum Loop — run agent, feed errors back, repeat)
+2. **AI Warehouse** provided the visual intuition (watch agents try-fail-improve through colored blocks over music)
+3. **Simon** combined them: Huntley's explicit technique + Warehouse's visual intuition → a loop that generates creative code and evolves it toward quality
+
+The evolutionary additions Simon made (scoring, quality thresholds, convergence detection, compost seed injection) map to what he *saw* in AI Warehouse (agents being scored, thresholds for success, convergence to solutions), not what anyone *told* him to do. This is pattern transfer through visual observation — closer to how craft knowledge passes between makers than how academic knowledge passes through instruction.
+
+This also explains why the formal ML names don't match: Simon wasn't learning terminology. He was watching behavior. The gap between "what he built" and "what it's formally called" exists because the concepts arrived through a different channel than the vocabulary.
 
 ---
 

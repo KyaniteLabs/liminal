@@ -8,6 +8,7 @@ import { writeFileSync, existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 import { ensureDir } from '../utils/fs.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface FailureRecord {
   id?: string;
@@ -54,7 +55,7 @@ export class FailureLogger {
 
     writeFileSync(filepath, JSON.stringify(record, null, 2));
     
-    console.log(`[Meta-Harness] Failure logged: ${filepath}`);
+    Logger.info('Meta-Harness', `Failure logged: ${filepath}`);
   }
 
   getRecentFailures(count: number = 100): FailureRecord[] {

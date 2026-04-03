@@ -2,9 +2,10 @@ import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { env } from '../utils/env.js';
+import { Logger } from '../utils/Logger.js';
 
 /** Routing mode for multi-model generation */
-export type RoutingMode = 'cascade' | 'speculative' | 'ensemble' | 'specialized';
+export type RoutingMode = 'cascade' | 'speculative' | 'ensemble' | 'specialized' | 'thompson';
 
 export interface UserConfig {
   defaultProvider: string;
@@ -225,7 +226,7 @@ export async function loadProjectConfig(configDirOrPath?: string): Promise<Proje
       const content = await fs.readFile(legacyPath, 'utf-8');
       return JSON.parse(content) as ProjectConfig;
     } catch (err) {
-      console.warn('[ConfigLoader] Failed to load legacy config:', err);
+      Logger.warn('ConfigLoader', 'Failed to load legacy config:', err);
       return null;
     }
   }
@@ -245,7 +246,7 @@ export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Prom
     const config = JSON.parse(content) as UserConfig;
     return config;
   } catch (err) {
-    console.warn('[ConfigLoader] Failed to load config:', err);
+    Logger.warn('ConfigLoader', 'Failed to load config:', err);
     return null;
   }
 }

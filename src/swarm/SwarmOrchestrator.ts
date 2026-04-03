@@ -3,6 +3,7 @@ import type { ProjectDNA } from '../scavenger/types.js';
 import type { MinedFragment } from './types.js';
 import { DEFAULT_PERSONAS } from './personas.js';
 import { DEFAULT_REFINEMENT_CONSTRAINTS } from './types.js';
+import { ALL_EXPERTS, type ExpertDescription } from './ExpertPersonas.js';
 import { VotingEngine } from './VotingEngine.js';
 import { HeuristicScorer } from './HeuristicScorer.js';
 import { MiningEngine } from './MiningEngine.js';
@@ -18,6 +19,15 @@ export interface SwarmOrchestratorOptions {
 }
 
 /**
+ * Routing result for prompt-to-expert matching
+ */
+export interface RoutingResult {
+  selectedExperts: ExpertDescription[];
+  scores: Map<string, number>;
+  reasoning: string;
+}
+
+/**
  * Swarm orchestrator — multi-model collaborative generation.
  *
  * Designed for Ollama's multi-model concurrent API (`/api/generate` format).
@@ -25,6 +35,9 @@ export interface SwarmOrchestratorOptions {
  * be used via a custom callback that adapts the OpenAI-compatible format, but
  * multi-model diversity (different personas calling different models) requires
  * Ollama.
+ * 
+ * Features learned routing: prompts are matched to the most relevant 2-3 experts
+ * based on keyword similarity rather than using all experts equally.
  */
 export class SwarmOrchestrator {
   private config: SwarmConfig;
@@ -59,6 +72,137 @@ export class SwarmOrchestrator {
     // Set progress callback from options
     this._onProgress = options?.onProgress;
     this._onFragmentsMined = options?.onFragmentsMined;
+  }
+
+  /**
+   * Route a prompt to the most relevant experts based on keyword similarity.
+   * Uses sparse routing: selects 2-3 most relevant experts, not all experts.
+   * 
+   * @param prompt The user prompt to route
+   * @returns RoutingResult with selected experts and similarity scores
+   */
+  routePromptToExperts(prompt: string): RoutingResult {
+    const promptLower = prompt.toLowerCase();
+    const scores = new Map<string, number>();
+    
+    // Calculate keyword match score for each expert
+    for (const expert of ALL_EXPERTS) {
+      let score = 0;
+      const matchedKeywords: string[] = [];
+      
+      for (const keyword of expert.keywords) {
+        // Exact keyword match
+        if (promptLower.includes(keyword.toLowerCase())) {
+          score += 2;
+          matchedKeywords.push(keyword);
+        }
+        // Partial match for compound keywords
+        else if (keyword.includes(' ')) {
+          const parts = keyword.split(' ');
+          const partialMatches = parts.filter(part => 
+            part.length > 3 && promptLower.includes(part.toLowerCase())
+          ).length;
+          if (partialMatches > 0) {
+            score += partialMatches * 0.5;
+            matchedKeywords.push(keyword);
+          }
+        }
+      }
+      
+      // Bonus for description similarity (simple word overlap)
+      const descWords = expert.description.toLowerCase().split(/\s+/);
+      const promptWords = new Set(promptLower.split(/\s+/));
+      for (const word of descWords) {
+        if (word.length > 4 && promptWords.has(word)) {
+          score += 0.5;
+        }
+      }
+      
+      scores.set(expert.id, score);
+    }
+    
+    // Sort by score and select top 2-3 experts
+    const sortedExperts = [...scores.entries()]
+      .sort((a, b) => b[1] - a[1]);
+    
+    // Filter to those with positive scores
+    const positiveScorers = sortedExperts.filter(([, score]) => score > 0);
+    
+    // Select experts: if no matches, fall back to top 2; otherwise select 2-3 based on scores
+    let selectedIds: string[];
+    if (positiveScorers.length === 0) {
+      // No keyword matches - fall back to top 2 experts by score (all will have 0)
+      selectedIds = sortedExperts.slice(0, 2).map(([id]) => id);
+    } else {
+      // Select 2-3 experts based on score distribution
+      let selectedCount = 2;
+      if (positiveScorers.length >= 3) {
+        // If there's a significant drop-off after 2, use 2; otherwise use 3
+        const scoreDiff = positiveScorers[1][1] - (positiveScorers[2]?.[1] ?? 0);
+        if (scoreDiff < 2) {
+          selectedCount = 3;
+        }
+      }
+      selectedIds = positiveScorers.slice(0, selectedCount).map(([id]) => id);
+    }
+    
+    const selectedExperts = ALL_EXPERTS.filter(e => selectedIds.includes(e.id));
+    
+    // Build reasoning string
+    const reasoningParts: string[] = [];
+    for (const expert of selectedExperts) {
+      const score = scores.get(expert.id) ?? 0;
+      const matches = expert.keywords.filter(kw => 
+        promptLower.includes(kw.toLowerCase())
+      ).slice(0, 3);
+      reasoningParts.push(`${expert.name}: score=${score.toFixed(1)}, keywords=[${matches.join(', ')}]`);
+    }
+    
+    return {
+      selectedExperts,
+      scores,
+      reasoning: `Selected ${selectedExperts.length} experts: ${reasoningParts.join('; ')}`,
+    };
+  }
+
+  /**
+   * Get personas for a prompt using learned routing.
+   * Replaces the default all-personas approach with sparse expert selection.
+   * 
+   * @param prompt The user prompt
+   * @returns Array of relevant personas (2-3 instead of all 5)
+   */
+  getRoutedPersonas(prompt: string): SwarmPersona[] {
+    const routing = this.routePromptToExperts(prompt);
+    
+    // Map expert descriptions to personas
+    return routing.selectedExperts.map(expert => {
+      // Check if we already have this expert in personas
+      const existing = this.personas.find(p => p.id === expert.id);
+      if (existing) {
+        return existing;
+      }
+      
+      // Create new persona from expert description
+      return {
+        id: expert.id,
+        name: expert.name,
+        displayName: expert.name,
+        model: 'qwen2.5-coder:7b',
+        // All experts use same temperature - differentiation from system prompts
+        temperature: 0.7,
+        maxTokens: 1500,
+        systemPrompt: expert.systemPrompt,
+        voice: expert.description,
+        thinkingStyle: `Creative approach: ${expert.description}`,
+        votingBias: `Votes for outputs matching ${expert.name.toLowerCase()} aesthetic`,
+        constraints: [
+          `Emphasize ${expert.keywords[0]} aesthetics`,
+          `Consider ${expert.keywords[1]} principles`,
+        ],
+        votingPower: 2,
+      };
+    });
   }
 
   /**
@@ -196,6 +340,7 @@ export class SwarmOrchestrator {
 
   /**
    * Main entry point: run the full swarm evolution.
+   * Uses learned routing to select relevant experts for the prompt.
    */
   async run(prompt: string, mode?: SwarmMode): Promise<SwarmResult> {
     const startTime = Date.now();
@@ -207,6 +352,14 @@ export class SwarmOrchestrator {
     let lastWinner: string | null = null;
     let converged = false;
     let convergenceRound: number | null = null;
+
+    // Route prompt to relevant experts (sparse selection)
+    const routing = this.routePromptToExperts(prompt);
+    Logger.info('SwarmOrchestrator', `Routing: ${routing.reasoning}`);
+    
+    // Use routed personas for this run
+    const routedPersonas = this.getRoutedPersonas(prompt);
+    Logger.info('SwarmOrchestrator', `Selected ${routedPersonas.length} experts for generation`);
 
     // Musical chairs: randomize model-to-persona assignments
     if (this.config.musicalChairs) {
@@ -224,9 +377,17 @@ export class SwarmOrchestrator {
         (roundNum - 1) % this.config.refinementConstraints.length
       ];
 
-      // Run round
+      // Run round with routed personas
       const isFinalRound = roundNum === this.config.maxRounds;
-      const result = await this.runRound(currentSeed, roundNum, effectiveMode, constraint, isFinalRound, prevWinnerOutputs);
+      const result = await this.runRound(
+        currentSeed, 
+        roundNum, 
+        effectiveMode, 
+        constraint, 
+        isFinalRound, 
+        prevWinnerOutputs,
+        routedPersonas
+      );
       rounds.push(result);
 
       // Track winner output for novelty scoring in future rounds
@@ -294,7 +455,7 @@ export class SwarmOrchestrator {
   }
 
   /**
-   * Run a single round: generate from all personas, conduct voting.
+   * Run a single round: generate from selected personas, conduct voting.
    * Uses HeuristicScorer for non-final rounds, VotingEngine for final round only.
    */
   async runRound(
@@ -303,17 +464,21 @@ export class SwarmOrchestrator {
     mode: SwarmMode,
     constraint: string,
     isFinalRound: boolean,
-    prevWinnerOutputs: string[]
+    prevWinnerOutputs: string[],
+    personas?: SwarmPersona[]
   ): Promise<RoundResult> {
     const effectiveSeed = `${seed}\n\nConstraint: ${constraint}`;
+    
+    // Use provided personas (routed) or fall back to all personas
+    const activePersonas = personas ?? this.personas;
 
     // Generate outputs
     let outputs: Map<string, SwarmOutput>;
     if (mode === 'ring') {
-      outputs = await this.generateRing(effectiveSeed, roundNum);
+      outputs = await this.generateRing(effectiveSeed, roundNum, activePersonas);
     } else {
       // competitive, hybrid, mesh all use parallel generation
-      outputs = await this.generateParallel(effectiveSeed, roundNum);
+      outputs = await this.generateParallel(effectiveSeed, roundNum, activePersonas);
     }
 
     // Conduct voting: heuristic for early rounds, LLM for final round only
@@ -322,7 +487,7 @@ export class SwarmOrchestrator {
     if (isFinalRound) {
       votingResult = await VotingEngine.conductVoting(
         outputs,
-        this.personas,
+        activePersonas,
         roundNum,
         this.config,
         this.callOllama
@@ -330,7 +495,7 @@ export class SwarmOrchestrator {
     } else {
       votingResult = HeuristicScorer.score(
         outputs,
-        this.personas,
+        activePersonas,
         constraint,
         prevWinnerOutputs
       );
@@ -351,11 +516,15 @@ export class SwarmOrchestrator {
   }
 
   /**
-   * Generate from all personas in parallel (competitive/hybrid/mesh).
+   * Generate from selected personas in parallel (competitive/hybrid/mesh).
    */
-  private async generateParallel(seed: string, roundNum: number): Promise<Map<string, SwarmOutput>> {
+  private async generateParallel(
+    seed: string, 
+    roundNum: number,
+    personas: SwarmPersona[]
+  ): Promise<Map<string, SwarmOutput>> {
     const outputs = new Map<string, SwarmOutput>();
-    const promises = this.personas.map(async (persona) => {
+    const promises = personas.map(async (persona) => {
       const startTime = Date.now();
       try {
         const userPrompt = `Prompt: ${seed}\n\n${persona.constraints.map(c => `Constraint: ${c}`).join('\n')}`;
@@ -365,7 +534,8 @@ export class SwarmOrchestrator {
           persona.systemPrompt,
           userPrompt,
           {
-            temperature: persona.temperature,
+            // All personas use same temperature - differentiation from system prompts
+            temperature: 0.7,
             num_predict: persona.maxTokens,
           }
         );
@@ -399,11 +569,15 @@ export class SwarmOrchestrator {
   /**
    * Generate sequentially in a ring: each persona sees previous output.
    */
-  private async generateRing(seed: string, roundNum: number): Promise<Map<string, SwarmOutput>> {
+  private async generateRing(
+    seed: string, 
+    roundNum: number,
+    personas: SwarmPersona[]
+  ): Promise<Map<string, SwarmOutput>> {
     const outputs = new Map<string, SwarmOutput>();
     let currentChain = seed;
 
-    for (const persona of this.personas) {
+    for (const persona of personas) {
       const startTime = Date.now();
       try {
         const chainContext = currentChain.length > 300 ? currentChain.slice(-300) : currentChain;
@@ -414,7 +588,8 @@ export class SwarmOrchestrator {
           persona.systemPrompt,
           userPrompt,
           {
-            temperature: persona.temperature,
+            // All personas use same temperature - differentiation from system prompts
+            temperature: 0.7,
             num_predict: persona.maxTokens,
           }
         );

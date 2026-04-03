@@ -5,11 +5,23 @@
  * - P5Validator: src/core/validators/P5Validator.ts
  * - GLSLValidator: src/core/validators/GLSLValidator.ts
  * - ThreeValidator: src/core/validators/ThreeValidator.ts
+ * - StrudelValidator: src/core/validators/StrudelValidator.ts
+ * - HydraValidator: src/core/validators/HydraValidator.ts
+ * - ToneValidator: src/core/validators/ToneValidator.ts
+ * - RemotionValidator: src/core/validators/RemotionValidator.ts
+ * - HTMLValidator: src/core/validators/HTMLValidator.ts
+ * - ASCIIValidator: src/core/validators/ASCIIValidator.ts
  */
 
 import { P5Validator } from './validators/P5Validator.js';
 import { GLSLValidator } from './validators/GLSLValidator.js';
 import { ThreeValidator } from './validators/ThreeValidator.js';
+import { StrudelValidator } from './validators/StrudelValidator.js';
+import { HydraValidator } from './validators/HydraValidator.js';
+import { ToneValidator } from './validators/ToneValidator.js';
+import { RemotionValidator } from './validators/RemotionValidator.js';
+import { HTMLValidator } from './validators/HTMLValidator.js';
+import { ASCIIValidator } from './validators/ASCIIValidator.js';
 import {
   type ValidationResult,
   type Domain,
@@ -27,10 +39,13 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'shader': GLSLValidator.getMinSize(),
   'glsl': GLSLValidator.getMinSize(),
   'three': ThreeValidator.getMinSize(),
-  'remotion': 500,
+  'strudel': StrudelValidator.getMinSize(),
+  'hydra': HydraValidator.getMinSize(),
+  'tone': ToneValidator.getMinSize(),
+  'remotion': RemotionValidator.getMinSize(),
+  'html': HTMLValidator.getMinSize(),
+  'ascii': ASCIIValidator.getMinSize(),
   'music': 100,
-  'hydra': 150,
-  'strudel': 100,
   'unknown': 100,
 };
 
@@ -39,40 +54,67 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
 // -----------------------------------------------------------------------------
 function detectDomain(code: string): Domain {
   if (isAlreadyWrapped(code)) {
-    if (code.includes('import * as THREE') ||
-        code.includes('from "three"') ||
-        code.includes('from \'three\'') ||
-        /<script\s+type="importmap"[^>]*>[\s\S]*?"three"[\s\S]*?<\/script>/.test(code)) {
-      return 'three';
-    }
-    if (/getContext\(['"]webgl/.test(code)) return 'shader';
-    return 'p5';
+    // Check for HTML-specific domains first
+    const hasThreeImport = code.includes('import * as THREE') ||
+                           code.includes('from "three"') ||
+                           code.includes('from \'three\'') ||
+                           /<script\s+type="importmap"[^>]*>[\s\S]*?"three"[\s\S]*?<\/script>/.test(code);
+    if (hasThreeImport) return 'three';
+
+    const hasToneImport = /from\s+['"]tone['"]/.test(code) || /\bTone\./.test(code);
+    if (hasToneImport) return 'tone';
+
+    const hasRemotion = /from\s+['"]remotion['"]/.test(code) || /useCurrentFrame|AbsoluteFill/.test(code);
+    if (hasRemotion) return 'remotion';
+
+    const hasP5Import = /p5\.js|p5\.min\.js/.test(code);
+    if (hasP5Import) return 'p5';
+
+    const hasWebGL = /getContext\(['"]webgl/.test(code);
+    if (hasWebGL) return 'shader';
+
+    // Generic HTML
+    return 'html';
   }
 
-  const hasDoctype = code.trim().startsWith('<!DOCTYPE html>');
+  // Check for HTML document
+  const hasDoctype = code.trim().toUpperCase().startsWith('<!DOCTYPE');
   const hasHTMLTag = /<html[^>]*>/i.test(code);
-  const hasThreeImport = /import.*\bfrom\s+['"]three['"]/.test(code) || /<script\s+type="importmap">/.test(code);
-  if (hasDoctype && hasHTMLTag && hasThreeImport) return 'three';
+  if (hasDoctype || hasHTMLTag) return 'html';
 
+  // Check for ASCII art
+  if (ASCIIValidator.detectASCII(code)) return 'ascii';
+
+  // Check for GLSL
   const hasVoidMain = /void\s+main\s*\(/.test(code);
   const hasFragColor = /gl_FragColor|out\s+vec4\s+fragColor/.test(code);
   const hasUniforms = /uniform\s+(vec2|vec3|vec4|float|int|mat)/.test(code);
   const glslCount = [hasVoidMain, hasFragColor, hasUniforms].filter(Boolean).length;
   if (glslCount >= 2 && !code.includes('function setup()') && !code.includes('function draw()')) return 'shader';
 
+  // Check for Remotion
   if (/useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code)) return 'remotion';
 
-  if (/osc\(|src\(|noise\(|shape\(|gradient\(|solid\(/.test(code) && /\.out\(/.test(code) && !/\$:/.test(code)) {
+  // Check for Hydra
+  if (/\b(osc|src|noise|shape|gradient|solid|voronoi)\s*\(/.test(code) && /\.out\(/.test(code) && !/\$:/.test(code)) {
     return 'hydra';
   }
 
-  if (/\$:\s*s\(|\.stack\(|\.slow\(|\.fast\(/.test(code) && !/osc\(|src\(/.test(code)) {
+  // Check for Strudel
+  if (/\$:\s*s\(|\.stack\(|\.slow\(|\.fast\(/.test(code) && !/\bosc\(|\bsrc\(/.test(code)) {
     return 'strudel';
   }
 
-  if (/\$:\s*s\(/.test(code) || /osc\(|src\(|render\(/.test(code) || /strudel|hydra/i.test(code)) return 'music';
-  if (/THREE\.|import.*three|new\s+THREE\./.test(code)) return 'three';
+  // Check for Tone.js
+  if (/\bTone\./.test(code) || /from\s+['"]tone['"]/.test(code)) return 'tone';
 
+  // Check for general music patterns
+  if (/\$:\s*s\(/.test(code) || /\bosc\(|\bsrc\(|\brender\(/.test(code) || /strudel|hydra/i.test(code)) return 'music';
+
+  // Check for Three.js
+  if (/\bTHREE\.|import.*three|new\s+THREE\./.test(code)) return 'three';
+
+  // Default to p5
   return 'p5';
 }
 
@@ -107,31 +149,43 @@ function validateStructure(code: string, domain: Domain): string[] {
       errors.push(...result.errors);
       break;
     }
-    case 'hydra': {
-      if (!/\.out\(/.test(trimmed)) errors.push('Hydra code MUST end with .out() to render');
-      if (/\.sin\(|\.cos\(/.test(trimmed)) errors.push('Hydra code contains invalid method: .sin( or .cos(');
-      if (!/osc\(|src\(|noise\(|shape\(|gradient\(|solid\(/.test(trimmed)) {
-        errors.push('Hydra code should use a source function');
-      }
+    case 'strudel': {
+      const result = StrudelValidator.validate(trimmed);
+      errors.push(...result.errors);
       break;
     }
-    case 'strudel': {
-      if (!/\$:\s*s\(|\.stack\(|sound\(|note\(|\bs\(["']/.test(trimmed)) {
-        errors.push('Strudel code should contain pattern functions');
-      }
-      if (/[\u4e00-\u9fff]/.test(trimmed)) errors.push('Strudel code contains non-ASCII characters');
+    case 'hydra': {
+      const result = HydraValidator.validate(trimmed);
+      errors.push(...result.errors);
+      break;
+    }
+    case 'tone': {
+      const result = ToneValidator.validate(trimmed);
+      errors.push(...result.errors);
       break;
     }
     case 'remotion': {
-      if (!/useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(trimmed)) {
-        errors.push('Remotion code must use Remotion components');
-      }
+      const result = RemotionValidator.validate(trimmed);
+      errors.push(...result.errors);
+      break;
+    }
+    case 'html': {
+      const result = HTMLValidator.validate(trimmed);
+      errors.push(...result.errors);
+      break;
+    }
+    case 'ascii': {
+      const result = ASCIIValidator.validate(trimmed);
+      errors.push(...result.errors);
       break;
     }
     case 'music': {
+      // Music domain is a fallback - check for strudel or hydra patterns
       const hasStrudel = /\$:\s*s\(/.test(trimmed);
-      const hasHydra = /osc\(|src\(|render\(/.test(trimmed);
-      if (!hasStrudel && !hasHydra) errors.push('Music code must contain Strudel or Hydra patterns');
+      const hasHydra = /\bosc\(|\bsrc\(|\brender\(/.test(trimmed);
+      if (!hasStrudel && !hasHydra) {
+        errors.push('Music code must contain Strudel or Hydra patterns');
+      }
       break;
     }
   }
@@ -157,6 +211,17 @@ function validateSelfContained(code: string, domain: Domain): string[] {
       errors.push(...GLSLValidator.validateHTMLWrapped(code));
       break;
     }
+    case 'tone': {
+      // Tone.js should have its CDN or import
+      if (!/tone\.js|from\s+['"]tone['"]/.test(code)) {
+        errors.push('HTML-wrapped Tone.js should include Tone.js CDN or module import');
+      }
+      break;
+    }
+    case 'html': {
+      // HTML validation already checks structure
+      break;
+    }
   }
   return errors;
 }
@@ -168,49 +233,6 @@ function validateSize(code: string, domain: Domain): string[] {
     return [`${domain} code is too small (${size}b) - minimum is ${minSize}b`];
   }
   return [];
-}
-
-// -----------------------------------------------------------------------------
-// Tone.js validation
-// -----------------------------------------------------------------------------
-const VALID_TONE_CLASSES = new Set([
-  'Transport', 'Destination', 'Master', 'Listener', 'Context',
-  'Oscillator', 'PulseOscillator', 'PWMOscillator', 'FatOscillator',
-  'AMSynth', 'FMSynth', 'MonoSynth', 'PolySynth', 'Synth', 'MembraneSynth',
-  'MetalSynth', 'NoiseSynth', 'DuoSynth', 'PluckSynth', 'GrainSynth',
-  'Reverb', 'Delay', 'FeedbackDelay', 'PingPongDelay',
-  'Distortion', 'Chorus', 'Phaser', 'Tremolo', 'Vibrato',
-  'Filter', 'EQ3', 'Compressor', 'Limiter', 'Gate',
-  'AutoFilter', 'AutoPanner', 'AutoWah', 'BitCrusher', 'Chebyshev',
-  'Convolver', 'JCReverb', 'StereoWidener', 'PitchShift', 'FrequencyShifter',
-  'Envelope', 'LFO', 'AmplitudeEnvelope', 'FrequencyEnvelope', 'ScaledEnvelope',
-  'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter',
-  'Gain', 'Signal', 'Multiply', 'Add', 'Subtract', 'Abs', 'Negate', 'Pow',
-  'Loop', 'Part', 'Pattern', 'Sequence', 'Event', 'Draw',
-  'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo',
-  'ToneAudioBuffer', 'ToneAudioBuffers', 'Time', 'Frequency'
-]);
-
-export function validateToneJS(code: string): string[] {
-  const errors: string[] = [];
-
-  for (const match of code.matchAll(/new\s+Tone\.(\w+)/g)) {
-    if (!VALID_TONE_CLASSES.has(match[1])) {
-      errors.push(`Tone.js: Invalid class 'Tone.${match[1]}'`);
-    }
-  }
-
-  const hallucinations = [
-    { pattern: /Tone\.Reverberator/, msg: 'Tone.Reverb' },
-    { pattern: /Tone\.DrivingPattern/, msg: 'Tone.Pattern or Tone.Loop' },
-    { pattern: /Tone\.ReverbNode/, msg: 'Tone.Reverb' },
-  ];
-
-  for (const { pattern, msg } of hallucinations) {
-    if (pattern.test(code)) errors.push(`Tone.js: Invalid API - did you mean '${msg}'?`);
-  }
-
-  return errors;
 }
 
 // -----------------------------------------------------------------------------
@@ -233,9 +255,6 @@ export class CodeValidator {
       ...validateStructure(cleaned, detectedDomain),
       ...validateSelfContained(cleaned, detectedDomain),
       ...validateSize(cleaned, detectedDomain),
-      ...((detectedDomain === 'music' || detectedDomain === 'unknown') && /Tone\./.test(cleaned)
-        ? validateToneJS(cleaned)
-        : [])
     ];
 
     return { valid: allErrors.length === 0, cleanedCode: cleaned, errors: allErrors };

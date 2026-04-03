@@ -11,6 +11,7 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { env } from '../utils/env.js';
+import { Logger } from '../utils/Logger.js';
 import { Provider } from '../types/providers.js';
 
 export interface LLMConfig {
@@ -189,15 +190,15 @@ export class LLMClient {
       if (models.length > 0) {
         // Use first available model (LM Studio typically has one loaded)
         this.resolvedModel = models[0].id;
-        console.log(`[LLMClient] Auto-detected model: ${this.resolvedModel}`);
+        Logger.info('LLMClient', `Auto-detected model: ${this.resolvedModel}`);
         return this.resolvedModel;
       }
     } catch (err) {
-      console.log(`[LLMClient] Auto-detect failed: ${err instanceof Error ? err.message : String(err)}`);
+      Logger.info('LLMClient', `Auto-detect failed: ${err instanceof Error ? err.message : String(err)}`);
     }
     
     this.resolvedModel = this.config.model;
-    console.log(`[LLMClient] Using fallback model: ${this.resolvedModel}`);
+    Logger.info('LLMClient', `Using fallback model: ${this.resolvedModel}`);
     return this.resolvedModel;
   }
 
@@ -464,7 +465,7 @@ Rules:
     const timeoutMs = 300000;
     const timeoutSignal = signal || AbortSignal.timeout(timeoutMs);
     
-    console.log(`[LLMClient] Sending request with model: ${this.config.model}`);
+    Logger.info('LLMClient', `Sending request with model: ${this.config.model}`);
     
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',

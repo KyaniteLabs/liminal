@@ -34,9 +34,11 @@ export class Renderer {
       args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     try {
+      // eslint-disable-next-line require-atomic-updates
       Renderer.browser = await Renderer.browserLaunching;
       return Renderer.browser;
     } catch (err) {
+      // eslint-disable-next-line require-atomic-updates
       Renderer.browserLaunching = null;
       throw err;
     }
@@ -50,8 +52,10 @@ export class Renderer {
       await Renderer.browser.close().catch((err) => {
         Logger.warn('Renderer', `Failed to close browser: ${err instanceof Error ? err.message : err}`);
       });
+      // eslint-disable-next-line require-atomic-updates
       Renderer.browser = null;
     }
+    // eslint-disable-next-line require-atomic-updates
     Renderer.browserLaunching = null;
   }
 

@@ -64,6 +64,7 @@ const DEFAULT_CONFIG: CircuitBreakerConfig = {
  *     await callProvider();
  *     breaker.recordSuccess();
  *   } catch {
+ *     // Intentional bare catch: Example code in documentation - bare catch is acceptable here
  *     breaker.recordFailure();
  *   }
  * }

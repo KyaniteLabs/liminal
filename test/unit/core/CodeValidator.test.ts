@@ -226,6 +226,131 @@ const camera = {};`;
     });
   });
 
+  describe('Strudel structural validation', () => {
+    it('should validate valid Strudel code', () => {
+      const code = `
+$: s("bd sd")
+$: s("hh*4")
+$: note("c3 eb3 g3").s("sawtooth")
+$: s("cp").rarely(x => x.rev())
+$: stack(s("bd*2"), note("c3 eb3"))
+  .slow(2)
+  .gain(0.8)
+bpm(120)
+setcps(0.5)
+      `;
+      const result = CodeValidator.validate(code, 'strudel');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject non-Strudel code', () => {
+      const code = `function setup() { createCanvas(400,400); }`;
+      const result = CodeValidator.validate(code, 'strudel');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('pattern functions');
+    });
+
+    it('should reject Strudel code with non-ASCII characters', () => {
+      const code = `
+$: s("鼓 鈸")
+$: note("c3")
+      `;
+      const result = CodeValidator.validate(code, 'strudel');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Strudel code contains non-ASCII characters');
+    });
+  });
+
+  describe('Hydra structural validation', () => {
+    it('should validate valid Hydra code', () => {
+      const code = `
+osc(10, 0.1, 0.8)
+  .color(1, 0.2, 0.5)
+  .rotate(() => time * 0.1)
+  .modulate(noise(3))
+  .out()
+
+gradient(0.5)
+  .color(0.2, 0.8, 1)
+  .diff(osc(5))
+  .out(o1)
+
+shape(4, 0.5)
+  .repeat(3, 3)
+  .rotate(0.5)
+  .out(o2)
+
+render()
+      `;
+      const result = CodeValidator.validate(code, 'hydra');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject Hydra code without .out()', () => {
+      const code = `
+// This is hydra code without output
+osc(10, 0.1, 0.5)
+  .color(1, 0.5, 0.2)
+  .rotate(0.5)
+      `;
+      const result = CodeValidator.validate(code, 'hydra');
+      expect(result.errors).toContain('Hydra code MUST end with .out() to render');
+    });
+
+    it('should reject Hydra code without source function', () => {
+      const code = `/* Hydra Validation Test */
+// This Hydra code is missing a source function
+// It tries to use color without osc, noise, gradient, etc.
+.color(1, 0, 0)
+  .rotate(0.5)
+  .brightness(0.5)
+  .out()
+// The validator should catch this error
+      `;
+      const result = CodeValidator.validate(code, 'hydra');
+      expect(result.errors).toContain('Hydra code should use a source function: osc(), src(), noise(), shape(), gradient(), solid(), voronoi()');
+    });
+  });
+
+  describe('Tone.js structural validation', () => {
+    it('should validate valid Tone.js code', () => {
+      const code = `
+const synth = new Tone.Synth({
+  oscillator: { type: 'triangle' },
+  envelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 1 }
+}).toDestination();
+
+const reverb = new Tone.Reverb(2).toDestination();
+synth.connect(reverb);
+
+synth.triggerAttackRelease("C4", "8n");
+      `;
+      const result = CodeValidator.validate(code, 'tone');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject Tone.js code without Tone reference', () => {
+      const code = `
+// This code doesn't reference Tone
+const synth = {};
+const audio = new AudioContext();
+      `;
+      const result = CodeValidator.validate(code, 'tone');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Tone.js code must reference Tone object or import from "tone"');
+    });
+
+    it('should reject invalid Tone.js classes', () => {
+      const code = `
+const synth = new Tone.InvalidSynth();
+const reverb = new Tone.FakeReverb();
+      `;
+      const result = CodeValidator.validate(code, 'tone');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('Invalid class');
+    });
+  });
+
   describe('Remotion structural validation', () => {
     it('should validate valid Remotion code', () => {
       const code = `import { useCurrentFrame, AbsoluteFill, interpolate } from 'remotion';
@@ -264,6 +389,112 @@ export default function MyComp() {
     it('should reject non-Remotion code', () => {
       const code = `function setup() { createCanvas(400,400); }`;
       const result = CodeValidator.validate(code, 'remotion');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('Remotion');
+    });
+  });
+
+  describe('HTML structural validation', () => {
+    it('should validate valid HTML document', () => {
+      const code = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test Page - A Comprehensive HTML Document Example</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+    h1 { color: #333; }
+    .container { max-width: 800px; margin: 0 auto; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Hello World</h1>
+    <p>This is a comprehensive HTML document with sufficient content to pass validation.</p>
+    <main>
+      <article>
+        <h2>Article Title</h2>
+        <p>Article content goes here with more text to ensure proper size.</p>
+      </article>
+    </main>
+    <footer>
+      <p>&copy; 2024 Test Page. All rights reserved.</p>
+    </footer>
+  </div>
+  <script>
+    console.log('Page loaded successfully');
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM ready');
+    });
+  </script>
+</body>
+</html>`;
+      const result = CodeValidator.validate(code, 'html');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject HTML without DOCTYPE', () => {
+      const code = `<html><head><title>Test</title></head><body><h1>Hello</h1></body></html>`;
+      const result = CodeValidator.validate(code, 'html');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('HTML document must start with <!DOCTYPE html>');
+    });
+
+    it('should reject HTML with eval()', () => {
+      const code = `<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Test</title></head>
+<body>
+  <script>eval('alert(1)');</script>
+</body>
+</html>`;
+      const result = CodeValidator.validate(code, 'html');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('HTML Security: Dangerous eval() detected');
+    });
+  });
+
+  describe('ASCII structural validation', () => {
+    it('should validate valid ASCII art', () => {
+      const code = `/* ASCII Art */
+   _____    _____
+  /     \\  /     \\
+ |  o o  ||  o o  |
+ |   <   ||   <   |
+ |  \_/  ||  \_/  |
+  \_____/  \_____/
+    | |      | |
+    | |      | |
+   _| |_    _| |_
+  |     |  |     |
+  |_____|  |_____|
+     ASCII ART EXAMPLE
+    `;
+      const result = CodeValidator.validate(code, 'ascii');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject ASCII art with Unicode', () => {
+      const code = `/* ASCII Art with Unicode */
++------+------+
+|  世界 |      |
++------+------+
+| Hello|こん  |
++------+------+
+      `;
+      const result = CodeValidator.validate(code, 'ascii');
+      expect(result.valid).toBe(false);
+      expect(result.errors[0]).toContain('invalid characters');
+    });
+
+    it('should reject ASCII art with only whitespace', () => {
+      const code = `
+
+
+
+      `;
+      const result = CodeValidator.validate(code, 'ascii');
       expect(result.valid).toBe(false);
     });
   });
@@ -335,8 +566,10 @@ function setup() {
 </body>
 </html>`;
       const result = CodeValidator.validate(code);
+      // Without p5 CDN, detected as HTML - should fail HTML validation
       expect(result.valid).toBe(false);
-      expect(result.errors.some(e => e.includes('CDN'))).toBe(true);
+      // Should have HTML-related errors (missing title, charset)
+      expect(result.errors.some(e => e.includes('title') || e.includes('charset'))).toBe(true);
     });
 
     it('should pass raw JS without self-contained check', () => {
@@ -347,6 +580,57 @@ function setup() {
 }`;
       const result = CodeValidator.validate(code);
       expect(result.valid).toBe(true);
+    });
+  });
+
+  describe('Domain auto-detection', () => {
+    it('should auto-detect p5 domain', () => {
+      const code = `function setup() { createCanvas(400,400); }`;
+      expect(CodeValidator.detectDomain(code)).toBe('p5');
+    });
+
+    it('should auto-detect glsl domain', () => {
+      const code = `void main() { gl_FragColor = vec4(1.0); }`;
+      expect(CodeValidator.detectDomain(code)).toBe('shader');
+    });
+
+    it('should auto-detect three domain', () => {
+      const code = `import * as THREE from 'three'; const scene = new THREE.Scene();`;
+      expect(CodeValidator.detectDomain(code)).toBe('three');
+    });
+
+    it('should auto-detect strudel domain', () => {
+      const code = `$: s("bd sd")`;
+      expect(CodeValidator.detectDomain(code)).toBe('strudel');
+    });
+
+    it('should auto-detect hydra domain', () => {
+      const code = `osc(10).out()`;
+      expect(CodeValidator.detectDomain(code)).toBe('hydra');
+    });
+
+    it('should auto-detect tone domain', () => {
+      const code = `const synth = new Tone.Synth();`;
+      expect(CodeValidator.detectDomain(code)).toBe('tone');
+    });
+
+    it('should auto-detect remotion domain', () => {
+      const code = `import { useCurrentFrame } from 'remotion';`;
+      expect(CodeValidator.detectDomain(code)).toBe('remotion');
+    });
+
+    it('should auto-detect html domain', () => {
+      const code = `<!DOCTYPE html><html><body></body></html>`;
+      expect(CodeValidator.detectDomain(code)).toBe('html');
+    });
+
+    it('should auto-detect ascii domain', () => {
+      const code = `
+  /\\
+ /  \\
+/____\\
+      `;
+      expect(CodeValidator.detectDomain(code)).toBe('ascii');
     });
   });
 
@@ -366,12 +650,16 @@ function setup() {
       expect(result.valid).toBe(false);
     });
 
-    it('should auto-detect domain when not specified', () => {
-      const p5Code = `function setup() { createCanvas(400,400); }`;
-      expect(CodeValidator.detectDomain(p5Code)).toBe('p5');
-
-      const glslCode = `void main() { gl_FragColor = vec4(1.0); }`;
-      expect(CodeValidator.detectDomain(glslCode)).toBe('shader');
+    it('should get minimum sizes for all domains', () => {
+      expect(CodeValidator.getMinSize('p5')).toBe(120);
+      expect(CodeValidator.getMinSize('shader')).toBe(800);
+      expect(CodeValidator.getMinSize('three')).toBe(800);
+      expect(CodeValidator.getMinSize('strudel')).toBe(100);
+      expect(CodeValidator.getMinSize('hydra')).toBe(150);
+      expect(CodeValidator.getMinSize('tone')).toBe(100);
+      expect(CodeValidator.getMinSize('remotion')).toBe(500);
+      expect(CodeValidator.getMinSize('html')).toBe(200);
+      expect(CodeValidator.getMinSize('ascii')).toBe(50);
     });
   });
 });

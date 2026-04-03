@@ -9,12 +9,15 @@
  * - Artist references and inspiration
  *
  * This makes Liminal a well-rounded artistic creative tool with rich context.
+ * 
+ * Consolidated as part of Fix 8: Triple Redundancy - Now uses HarnessMemory.
  */
 
-import { SemanticArtMemory } from './SemanticArtMemory.js';
-import type { Domain } from './SemanticArtMemory.js';
 import { ArtKnowledgeGraph } from './ArtKnowledgeGraph.js';
-import { CreativePreferenceExtractor } from './CreativePreferenceExtractor.js';
+// Note: CreativePreferenceExtractor not used in consolidated version
+import { harnessMemory } from '../harness/HarnessMemory.js';
+
+export type Domain = 'p5' | 'shader' | 'three' | 'music' | 'hydra' | 'strudel';
 
 export interface EnhancementContext {
   domain: Domain;
@@ -36,7 +39,7 @@ export interface EnhancedPrompt {
 /**
  * Artistic vocabulary by domain for prompt enhancement
  */
-const ARTISTIC_VOCABULARY = {
+const ARTISTIC_VOCABULARY: Record<Domain, { elements: string[]; principles: string[]; modifiers: string[] }> = {
   p5: {
     elements: ['coordinate systems', 'shape primitives', 'color modes', 'animation', 'interaction'],
     principles: ['generative', 'algorithmic', 'procedural', 'emergent behavior', 'computational design'],
@@ -127,16 +130,15 @@ const INTENT_TECHNIQUES: Record<string, string[]> = {
 
 /**
  * PromptEnhancer adds artistic vocabulary and context to generation prompts
+ * 
+ * Consolidated: Now uses HarnessMemory instead of SemanticArtMemory.
  */
 export class PromptEnhancer {
-  private artMemory: SemanticArtMemory;
   private knowledgeGraph: ArtKnowledgeGraph;
-  private preferenceExtractor: CreativePreferenceExtractor;
 
-  constructor(artMemory?: SemanticArtMemory) {
-    this.artMemory = artMemory || new SemanticArtMemory();
-    this.knowledgeGraph = this.artMemory.knowledgeGraph;
-    this.preferenceExtractor = new CreativePreferenceExtractor();
+  constructor() {
+    this.knowledgeGraph = new ArtKnowledgeGraph();
+    this.knowledgeGraph.loadSeedData();
   }
 
   /**
@@ -148,239 +150,205 @@ export class PromptEnhancer {
     const principles: string[] = [];
     const artists: string[] = [];
 
-    // 1. Add domain-specific vocabulary
-    const domainVocab = ARTISTIC_VOCABULARY[context.domain];
-    if (domainVocab) {
-      const relevantElements = this.selectRelevantElements(basePrompt, domainVocab.elements);
-      if (relevantElements.length > 0) {
-        enhancements.push(`Consider using: ${relevantElements.join(', ')}`);
-      }
+    // Get vocabulary for the domain
+    const vocab = ARTISTIC_VOCABULARY[context.domain];
+    if (vocab) {
+      // Add relevant elements
+      const relevantElements = this.selectRelevantItems(vocab.elements, context.intent, 2);
+      enhancements.push(...relevantElements.map(e => `${e} techniques`));
 
-      const relevantPrinciples = this.selectRelevantElements(basePrompt, domainVocab.principles);
-      if (relevantPrinciples.length > 0) {
-        principles.push(...relevantPrinciples);
+      // Add principles
+      const relevantPrinciples = this.selectRelevantItems(vocab.principles, context.intent, 2);
+      principles.push(...relevantPrinciples);
+
+      // Add modifiers based on mood or complexity
+      if (context.mood) {
+        const moodMods = vocab.modifiers.filter(m => 
+          this.isMoodRelated(m, context.mood!)
+        );
+        enhancements.push(...moodMods.slice(0, 2));
       }
     }
 
-    // 2. Add mood-specific enhancements
+    // Add mood-specific enhancements
     if (context.mood && MOOD_ENHANCEMENTS[context.mood]) {
-      const moodEnhancement = MOOD_ENHANCEMENTS[context.mood];
-
-      // Add principles for mood (directly from mood enhancements)
-      for (const principle of moodEnhancement.principles) {
-        if (!principles.includes(principle)) {
-          principles.push(principle);
-        }
-      }
-
-      // Add color theory for mood
-      const colorConcepts = this.getConceptDetails(moodEnhancement.colors, 'color');
-      if (colorConcepts.length > 0) {
-        enhancements.push(`Color approach: ${colorConcepts.join(', ')}`);
-      }
-
-      // Add techniques for mood
-      const moodTechniques = this.getConceptDetails(moodEnhancement.techniques, 'technique');
-      techniques.push(...moodTechniques.filter(t => !techniques.includes(t)));
+      const moodData = MOOD_ENHANCEMENTS[context.mood];
+      principles.push(...moodData.principles.slice(0, 2));
+      techniques.push(...moodData.techniques.slice(0, 2));
+      enhancements.push(...moodData.colors.slice(0, 2));
     }
 
-    // 3. Add intent-based technique suggestions
-    const intentLower = context.intent.toLowerCase();
+    // Add intent-based techniques
     for (const [keyword, techs] of Object.entries(INTENT_TECHNIQUES)) {
-      if (intentLower.includes(keyword)) {
-        const relevantTechs = this.getDomainTechniques(techs, context.domain);
-        techniques.push(...relevantTechs.filter(t => !techniques.includes(t)));
+      if (context.intent.toLowerCase().includes(keyword)) {
+        techniques.push(...techs.slice(0, 2));
+      }
+    }
+    if (context.techniques) {
+      techniques.push(...context.techniques);
+    }
+
+    // Get artist references from knowledge graph
+    const relevantArtists = this.findRelevantArtists(context);
+    artists.push(...relevantArtists.slice(0, 3));
+
+    // Get recent inspiration from HarnessMemory
+    const recentEpisodes = harnessMemory.getRecentEpisodes(5);
+    if (recentEpisodes.length > 0) {
+      const recentDomains = new Set(recentEpisodes.map(ep => ep.domain).filter(Boolean));
+      if (recentDomains.has(context.domain)) {
+        enhancements.push(`building on previous ${context.domain} work`);
       }
     }
 
-    // 4. Add artist references if relevant
-    const relevantArtists = this.getRelevantArtists(context);
-    if (relevantArtists.length > 0) {
-      // Take top 2-3 most relevant artists
-      const topArtists = relevantArtists.slice(0, 3);
-      enhancements.push(`Artist reference: Consider approaches by ${topArtists.join(', ')}`);
-    }
-
-    // Update artists array for return
-    artists.push(...relevantArtists);
-
-    // 5. Add user preference context from CreativePreferenceExtractor
-    const extractedPrefs = this.preferenceExtractor.extractFromPrompt(basePrompt);
-    if (extractedPrefs.length > 0) {
-      const prefSummary = extractedPrefs
-        .slice(0, 5)
-        .map(p => `${p.category}: ${p.value}`)
-        .join(', ');
-      enhancements.push(`User preferences detected: ${prefSummary}`);
-    }
-
-    // 6. Add design principles based on complexity
-    if (context.complexity === 'simple') {
-      principles.push('Simplicity', 'Clarity', 'Focus');
-    } else if (context.complexity === 'complex') {
-      principles.push('Depth', 'Layering', 'Complexity', 'Richness');
-    }
-
-    // 7. Build enhanced prompt
-    let enhancedPrompt = basePrompt;
-
-    if (enhancements.length > 0 || principles.length > 0 || techniques.length > 0) {
-      enhancedPrompt += '\n\n---\nArtistic Context:\n';
-
-      if (techniques.length > 0) {
-        enhancedPrompt += `\nTechniques to consider: ${techniques.slice(0, 5).join(', ')}`;
-      }
-
-      if (principles.length > 0) {
-        enhancedPrompt += `\nDesign principles: ${principles.slice(0, 10).join(', ')}`;
-      }
-
-      if (enhancements.length > 0) {
-        enhancedPrompt += `\n\nNotes:\n${enhancements.map(e => `- ${e}`).join('\n')}`;
-      }
-    }
+    // Build the enhanced prompt
+    const enhancementText = this.buildEnhancementText(enhancements, techniques, principles, artists);
+    const enhancedPrompt = `${basePrompt}\n\n${enhancementText}`;
 
     return {
       prompt: enhancedPrompt,
       enhancements,
-      techniques: Array.from(new Set(techniques)),
-      principles: Array.from(new Set(principles)),
-      artists,
+      techniques: [...new Set(techniques)],
+      principles: [...new Set(principles)],
+      artists: [...new Set(artists)],
     };
   }
 
   /**
-   * Get domain-specific techniques (filtering for the target domain)
+   * Select items from a list that are relevant to the given intent
    */
-  private getDomainTechniques(techniqueNames: string[], domain: Domain): string[] {
-    const domainTechniques = this.knowledgeGraph.query({ type: 'technique', domain });
-    const domainTechNames = new Set(domainTechniques.map(t => t.name));
-
-    // Return techniques that match the domain or are domain-agnostic
-    return techniqueNames.filter(t =>
-      domainTechNames.has(t) || !this.isDomainSpecific(t)
-    );
-  }
-
-  /**
-   * Check if a technique is domain-specific
-   */
-  private isDomainSpecific(technique: string): boolean {
-    const domainSpecific = [
-      'raymarching', 'shader', 'glsl', 'webgl', 'vertex', 'fragment',
-      'pattern', 'sequencing', 'temporal', 'polyrhythms',
-      'texture', 'feedback', 'blend', 'layer',
-    ];
-    const lower = technique.toLowerCase();
-    return domainSpecific.some(d => lower.includes(d));
-  }
-
-  /**
-   * Select relevant elements from a list based on prompt content
-   */
-  private selectRelevantElements(prompt: string, elements: string[]): string[] {
-    const promptLower = prompt.toLowerCase();
-    return elements.filter(e => {
-      // Include if not already mentioned in prompt
-      return !promptLower.includes(e.toLowerCase());
-    });
-  }
-
-  /**
-   * Get concept details from knowledge graph
-   */
-  private getConceptDetails(names: string[], _type: string): string[] {
-    const details: string[] = [];
-
-    for (const name of names) {
-      const concept = this.knowledgeGraph.getConcept(name);
-      if (concept && concept.description) {
-        details.push(name);
-      }
-    }
-
-    return details;
-  }
-
-  /**
-   * Get relevant artists based on context
-   */
-  private getRelevantArtists(context: EnhancementContext): string[] {
-    // Get artists associated with the domain
-    const artists = this.knowledgeGraph.query({ type: 'artist' });
-
-    // Score artists by relevance
-    const scored = artists.map(artist => {
-      let score = 0;
-
-      // Check domain association
-      if ((artist as any).domain === context.domain) {
-        score += 0.5;
-      }
-
-      // Check related concepts for domain match
-      const related = this.knowledgeGraph.findRelated(artist.id, 2);
-      const domainRelated = related.filter(r => (r as any).domain === context.domain);
-      score += domainRelated.length * 0.1;
-
-      // Check for mood alignment in related concepts
-      if (context.mood) {
-        const moodRelated = related.filter(r =>
-          r.description?.toLowerCase().includes(context.mood!.toLowerCase())
-        );
-        score += moodRelated.length * 0.15;
-      }
-
-      // Check for intent alignment
-      const intentLower = context.intent.toLowerCase();
-      const intentRelated = related.filter(r =>
-        r.name.toLowerCase().includes(intentLower) ||
-        r.description?.toLowerCase().includes(intentLower)
-      );
-      score += intentRelated.length * 0.1;
-
-      return { artist, score };
+  private selectRelevantItems(items: string[], intent: string, count: number): string[] {
+    const intentWords = intent.toLowerCase().split(/\s+/);
+    
+    // Score each item by how many intent words it matches
+    const scored = items.map(item => {
+      const itemLower = item.toLowerCase();
+      const score = intentWords.reduce((acc, word) => {
+        return acc + (itemLower.includes(word) ? 1 : 0);
+      }, 0);
+      return { item, score };
     });
 
-    // Return top artists by relevance
-    return scored
-      .filter(s => s.score > 0.3)
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 5)
-      .map(s => s.artist.name);
+    // Sort by score and select top items
+    scored.sort((a, b) => b.score - a.score);
+    return scored.slice(0, count).map(s => s.item);
   }
 
   /**
-   * Get artistic vocabulary for a domain
+   * Check if a modifier is related to a mood
    */
-  getVocabularyForDomain(domain: Domain): { elements: string[]; principles: string[]; modifiers: string[] } {
-    return ARTISTIC_VOCABULARY[domain] || {
-      elements: [],
-      principles: [],
-      modifiers: [],
+  private isMoodRelated(modifier: string, mood: string): boolean {
+    const moodMap: Record<string, string[]> = {
+      calm: ['fluid', 'organic', 'soft'],
+      energetic: ['dynamic', 'responsive', 'evolving'],
+      mysterious: ['ethereal', 'hypnotic', 'transformative'],
+      playful: ['dynamic', 'responsive', 'evolving'],
+      melancholic: ['organic', 'fluid', 'ethereal'],
+      abstract: ['geometric', 'fractal', 'recursive'],
     };
+
+    const relatedModifiers = moodMap[mood] || [];
+    return relatedModifiers.some(m => modifier.includes(m));
   }
 
   /**
-   * Get mood enhancements
+   * Find relevant artists from the knowledge graph
    */
-  getMoodEnhancements(mood: string): { principles: string[]; techniques: string[]; colors: string[] } | null {
-    return MOOD_ENHANCEMENTS[mood] || null;
-  }
-
-  /**
-   * Get technique suggestions for an intent
-   */
-  getTechniquesForIntent(intent: string): string[] {
-    const intentLower = intent.toLowerCase();
-    const techniques: string[] = [];
-
-    for (const [keyword, techs] of Object.entries(INTENT_TECHNIQUES)) {
-      if (intentLower.includes(keyword)) {
-        techniques.push(...techs);
+  private findRelevantArtists(context: EnhancementContext): string[] {
+    const artists: string[] = [];
+    
+    // Query the knowledge graph for relevant concepts
+    const concepts = this.knowledgeGraph.query({ type: 'movement' });
+    
+    for (const concept of concepts) {
+      if (this.isRelevantToContext(concept.name, context)) {
+        // Find related artists
+        const related = this.knowledgeGraph.findRelated(concept.id, 2);
+        for (const rel of related) {
+          if (rel.type === 'artist') {
+            artists.push(rel.name);
+          }
+        }
       }
     }
 
-    return Array.from(new Set(techniques));
+    return artists;
+  }
+
+  /**
+   * Check if a concept is relevant to the context
+   */
+  private isRelevantToContext(conceptName: string, context: EnhancementContext): boolean {
+    const contextText = `${context.intent} ${context.mood || ''} ${context.techniques?.join(' ') || ''}`.toLowerCase();
+    return contextText.includes(conceptName.toLowerCase()) ||
+           conceptName.toLowerCase().split(/\s+/).some(word => contextText.includes(word));
+  }
+
+  /**
+   * Build the enhancement text to append to the prompt
+   */
+  private buildEnhancementText(
+    enhancements: string[],
+    techniques: string[],
+    principles: string[],
+    artists: string[]
+  ): string {
+    const parts: string[] = [];
+
+    if (techniques.length > 0) {
+      parts.push(`Techniques: ${techniques.slice(0, 4).join(', ')}.`);
+    }
+
+    if (principles.length > 0) {
+      parts.push(`Design principles: ${principles.slice(0, 3).join(', ')}.`);
+    }
+
+    if (enhancements.length > 0) {
+      parts.push(`Consider: ${enhancements.slice(0, 4).join(', ')}.`);
+    }
+
+    if (artists.length > 0) {
+      parts.push(`Artistic references: ${artists.slice(0, 3).join(', ')}.`);
+    }
+
+    return parts.join(' ');
+  }
+
+  /**
+   * Extract domain-specific suggestions based on recent memory
+   */
+  getDomainSuggestions(domain: Domain, limit: number = 3): string[] {
+    const suggestions: string[] = [];
+    
+    // Get recent episodes for this domain from HarnessMemory
+    const episodes = harnessMemory.getRecentEpisodes(20)
+      .filter(ep => ep.domain === domain);
+    
+    if (episodes.length > 0) {
+      // Extract common tags
+      const tagCounts = new Map<string, number>();
+      for (const ep of episodes) {
+        for (const tag of ep.tags || []) {
+          tagCounts.set(tag, (tagCounts.get(tag) || 0) + 1);
+        }
+      }
+      
+      // Sort by frequency and return top suggestions
+      const sorted = Array.from(tagCounts.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit);
+      
+      suggestions.push(...sorted.map(([tag]) => tag));
+    }
+
+    // Add default suggestions from vocabulary if needed
+    if (suggestions.length < limit) {
+      const vocab = ARTISTIC_VOCABULARY[domain];
+      if (vocab) {
+        suggestions.push(...vocab.elements.slice(0, limit - suggestions.length));
+      }
+    }
+
+    return suggestions;
   }
 }

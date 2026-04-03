@@ -57,6 +57,7 @@ import { GenerationOrchestrator } from './GenerationOrchestrator.js';
 import { EvolutionIntegration } from './EvolutionIntegration.js';
 import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
+import { SuccessRateTracker } from './SuccessRateTracker.js';
 import { runOrganismMode } from './OrganismLoop.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
 import { env } from '../utils/env.js';
@@ -106,6 +107,11 @@ export class RalphLoop {
     // Initialize subsystems
     const gallery = new Gallery(normalizedOptions.galleryDir);
     const stagnation = new StagnationDetector(normalizedOptions.stagnationThreshold ?? 7);
+    const successRateTracker = new SuccessRateTracker({
+      windowSize: 20,
+      explorationThreshold: 0.2,
+      recoveryThreshold: 0.3,
+    });
 
     let archiveLearning: ArchiveLearning | null = null;
     let qualityArchive: QualityArchive | null = null;
@@ -139,7 +145,13 @@ export class RalphLoop {
     let completed = false;
     let reason = '';
     let currentCode = '';
+    let previousCode = '';
     let finalScore = 0;
+
+    // Convergence tracking: score history for detecting plateau
+    const scoreHistory: number[] = [];
+    const CONVERGENCE_WINDOW = 3;
+    const CONVERGENCE_THRESHOLD = 0.01;
 
     // Main loop
     while (iteration < normalizedOptions.maxIterations) {
@@ -171,7 +183,8 @@ export class RalphLoop {
         const loadedPrompt = PromptStore.load(prompt);
 
         // Build context and enhance prompt
-        const contextForInjection = buildContextForInjection(iteration, normalizedOptions, prompt, loadedPrompt);
+        // Pass previous code to generate unique hash for cache defeat
+        const contextForInjection = buildContextForInjection(iteration, normalizedOptions, prompt, loadedPrompt, previousCode);
         let usedPrompt = PromptStore.injectContext(loadedPrompt, contextForInjection);
         if (usedPrompt === loadedPrompt) {
           usedPrompt = loadedPrompt + '\n\n---\nContext from previous iterations:\n' + contextForInjection;
@@ -184,36 +197,135 @@ export class RalphLoop {
         // Enhance with compost seed, DNA, and archive examples
         usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning);
 
+        // Adjust numCandidates based on success rate for high-exploration mode
+        const adjustedNumCandidates = successRateTracker.getRecommendedCandidates(normalizedOptions.numCandidates ?? 1);
+        if (adjustedNumCandidates !== (normalizedOptions.numCandidates ?? 1) && normalizedOptions.chatMode) {
+          normalizedOptions.onThought?.(`Increasing to ${adjustedNumCandidates} candidates for exploration...`);
+        }
+
         if (normalizedOptions.chatMode) {
-          normalizedOptions.onThought?.('Generating code...');
+          normalizedOptions.onThought?.(`Generating ${adjustedNumCandidates} candidate(s)...`);
         }
 
-        // Generate code (bypass cache to ensure fresh generation each iteration)
-        // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
-        const { code } = await generator.generate(usedPrompt, loadedPrompt, true);
+        // Best-of-N: Generate multiple candidates and select the best
+        const numCandidates = adjustedNumCandidates;
+        const candidates: Array<{ code: string; score: number; issues: string[]; index: number }> = [];
 
-        // Validate generated code before accepting it
-        const validation = CodeValidator.validate(code);
-        if (!validation.valid) {
-          Logger.warn('RalphLoop', `Code validation failed: ${validation.errors.join('; ')}`);
-          // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
-          if (process.env.NODE_ENV !== 'test') {
-            await metaHarness.onGenerationComplete({
-              success: false,
-              model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-              domain: normalizedOptions.collabDomain || 'p5',
-              prompt: prompt,
-              code: code,
-              error: `Validation failed: ${validation.errors.join('; ')}`,
-              duration: Date.now() - startTime,
+        for (let i = 0; i < numCandidates; i++) {
+          try {
+            // Generate code (bypass cache to ensure fresh generation each iteration)
+            // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
+            const { code } = await generator.generate(usedPrompt, loadedPrompt, true);
+
+            // Validate generated code before accepting it
+            const validation = CodeValidator.validate(code);
+
+            if (!validation.valid) {
+              Logger.warn('RalphLoop', `Candidate ${i} validation failed: ${validation.errors.join('; ')}`);
+              // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
+              if (process.env.NODE_ENV !== 'test') {
+                await metaHarness.onGenerationComplete({
+                  success: false,
+                  model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+                  domain: normalizedOptions.collabDomain || 'p5',
+                  prompt: prompt,
+                  code: code,
+                  error: `Validation failed: ${validation.errors.join('; ')}`,
+                  duration: Date.now() - startTime,
+                });
+              }
+              // Skip this candidate - don't add to candidates list
+              continue;
+            }
+
+            const candidateCode = validation.cleanedCode;
+
+            // Check code completeness (structural - braces, parens balanced)
+            const isComplete = RalphLoop.isCodeComplete(candidateCode);
+
+            // Quick score for candidate selection (simpler than full evaluation)
+            // We'll do full evaluation on the best candidate
+            const quickScore = isComplete ? 0.5 : 0.3; // Basic completeness bonus
+
+            candidates.push({
+              code: candidateCode,
+              score: quickScore, // Will be replaced with full score
+              issues: [],
+              index: i,
             });
+          } catch (candidateError) {
+            Logger.warn('RalphLoop', `Candidate ${i} generation failed: ${formatError('RalphLoop', candidateError)}`);
+            // Continue to next candidate
+            if (!normalizedOptions.tolerateErrors) {
+              throw candidateError;
+            }
           }
-          // Force score to 0 so quality gate rejects this iteration
-          currentCode = validation.cleanedCode || '// Validation failed — empty code';
-        } else {
-          currentCode = validation.cleanedCode;
         }
-        
+
+        // Select the best candidate or fail if none valid
+        if (candidates.length === 0) {
+          Logger.warn('RalphLoop', `All ${numCandidates} candidates failed validation`);
+          currentCode = '// All candidates failed validation';
+          // Force a low score to trigger quality gate break
+          finalScore = 0;
+        } else {
+          // For single candidate (default), just use it
+          // For multiple candidates, we need to fully evaluate each to find the best
+          let bestCandidate = candidates[0];
+
+          if (candidates.length > 1) {
+            // Score all candidates fully to find the best
+            for (let i = 0; i < candidates.length; i++) {
+              const candidate = candidates[i];
+              try {
+                // LIR: Parse generated code into structured tokens if enabled
+                let lirContext: LIREvaluationContext | undefined;
+                if (normalizedOptions.lirEnabled) {
+                  try {
+                    const genParser = new GeneratedCodeParser();
+                    const lirTokens = genParser.parse(candidate.code);
+                    if (lirTokens.length > 0) {
+                      lirContext = {
+                        lirTokens,
+                        visualIntent: normalizedOptions.visualMappingParams as any,
+                        lirEnabled: true,
+                      };
+                    }
+                  } catch {
+                    // LIR parsing failed — regex fallback will be used
+                  }
+                }
+
+                const quickScoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                const quickEvaluation = await quickScoringEngine.score(
+                  {
+                    output: candidate.code,
+                    criteria: normalizedOptions.evaluationCriteria,
+                    lirContext,
+                  },
+                  normalizedOptions.evaluationStrategy ?? 'detailed',
+                );
+
+                candidate.score = quickEvaluation.score;
+                candidate.issues = quickEvaluation.issues ?? [];
+
+                if (candidate.score > bestCandidate.score) {
+                  bestCandidate = candidate;
+                }
+              } catch (scoringError) {
+                Logger.warn('RalphLoop', `Failed to score candidate ${candidate.index}: ${formatError('RalphLoop', scoringError)}`);
+                // Keep the existing score, continue to next candidate
+              }
+            }
+
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.(`Selected candidate ${bestCandidate.index + 1}/${numCandidates} (score: ${bestCandidate.score.toFixed(2)})`);
+            }
+          }
+
+          currentCode = bestCandidate.code;
+        }
+
         // Check code completeness (structural - braces, parens balanced)
         const isComplete = RalphLoop.isCodeComplete(currentCode);
         
@@ -243,41 +355,61 @@ export class RalphLoop {
 
         // Diagnostic: Log that we got fresh code (not from cache)
         if (normalizedOptions.chatMode) {
-          normalizedOptions.onThought?.(`Generated ${code.length} characters of code (iteration ${iteration})`);
+          normalizedOptions.onThought?.(`Generated ${currentCode.length} characters of code (iteration ${iteration})`);
         }
 
         // Evaluate quality
-        if (normalizedOptions.chatMode) {
-          normalizedOptions.onThought?.('Evaluating code quality...');
-        }
-
-        // LIR: Parse generated code into structured tokens if enabled
+        // If we already evaluated multiple candidates, use the best candidate's score
+        // Otherwise, run evaluation for the single candidate
+        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number> };
         let lirContext: LIREvaluationContext | undefined;
-        if (normalizedOptions.lirEnabled) {
-          try {
-            const genParser = new GeneratedCodeParser();
-            const lirTokens = genParser.parse(currentCode);
-            if (lirTokens.length > 0) {
-              lirContext = {
-                lirTokens,
-                visualIntent: normalizedOptions.visualMappingParams as any,
-                lirEnabled: true,
-              };
-            }
-          } catch {
-            // LIR parsing failed — regex fallback will be used
-          }
-        }
 
-        const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-        const evaluation = await scoringEngine.score(
-          {
-            output: currentCode,
-            criteria: normalizedOptions.evaluationCriteria,
-            lirContext,
-          },
-          normalizedOptions.evaluationStrategy ?? 'detailed',
-        );
+        // Handle case where all candidates failed validation
+        if (candidates.length === 0) {
+          evaluation = { score: 0, issues: ['All candidates failed validation'] };
+        } else if (candidates.length > 1) {
+          // We already evaluated all candidates, use the best one's score
+          const bestCandidate = candidates.find(c => c.code === currentCode);
+          evaluation = {
+            score: bestCandidate?.score ?? 0,
+            issues: bestCandidate?.issues ?? [],
+          };
+          if (normalizedOptions.chatMode) {
+            normalizedOptions.onThought?.(`Using pre-evaluated score: ${evaluation.score.toFixed(2)}`);
+          }
+        } else {
+          // Single candidate - run full evaluation
+          if (normalizedOptions.chatMode) {
+            normalizedOptions.onThought?.('Evaluating code quality...');
+          }
+
+          // LIR: Parse generated code into structured tokens if enabled
+          if (normalizedOptions.lirEnabled) {
+            try {
+              const genParser = new GeneratedCodeParser();
+              const lirTokens = genParser.parse(currentCode);
+              if (lirTokens.length > 0) {
+                lirContext = {
+                  lirTokens,
+                  visualIntent: normalizedOptions.visualMappingParams as any,
+                  lirEnabled: true,
+                };
+              }
+            } catch {
+              // LIR parsing failed — regex fallback will be used
+            }
+          }
+
+          const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+          evaluation = await scoringEngine.score(
+            {
+              output: currentCode,
+              criteria: normalizedOptions.evaluationCriteria,
+              lirContext,
+            },
+            normalizedOptions.evaluationStrategy ?? 'detailed',
+          );
+        }
 
         // Aesthetic guardrails: run AestheticCritic if enabled
         if (normalizedOptions.useAestheticGuardrails) {
@@ -324,6 +456,64 @@ export class RalphLoop {
             aestheticScore: evaluation.dimensions?.aesthetic ?? evaluation.dimensions?.creative ?? 0,
             noveltyScore: evaluation.dimensions?.novelty ?? 0,
           });
+        }
+
+        // Render-based scoring: if enabled, render code and blend with syntactic score
+        if (normalizedOptions.useRenderScoring && candidates.length > 0) {
+          try {
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.('Running render-based quality analysis...');
+            }
+            
+            const { RenderAndScorePipeline } = await import('../render/RenderAndScorePipeline.js');
+            const pipeline = new RenderAndScorePipeline(normalizedOptions.renderScoringOptions);
+            
+            const renderResult = await pipeline.process(currentCode);
+            
+            if (renderResult.success) {
+              // Blend render score with existing score
+              const blendedScore = RenderAndScorePipeline.blendScores({
+                baseScore: evaluation.score,
+                renderScore: renderResult.score,
+                renderWeight: 0.4,
+                mode: 'adaptive',
+              });
+              
+              const oldScore = evaluation.score;
+              evaluation.score = blendedScore;
+              
+              if (normalizedOptions.chatMode) {
+                normalizedOptions.onThought?.(`Render score: ${renderResult.score.toFixed(2)}, blended: ${blendedScore.toFixed(2)} (was ${oldScore.toFixed(2)})`);
+              }
+              
+              // Add render score info to dimensions
+              if (!evaluation.dimensions) {
+                evaluation.dimensions = {};
+              }
+              evaluation.dimensions.render = renderResult.score;
+              
+              // Log render details
+              if (renderResult.visual) {
+                Logger.debug('RalphLoop', `Visual score: ${renderResult.visual.score.toFixed(2)} (color: ${renderResult.visual.colorVariety.toFixed(2)}, edges: ${renderResult.visual.edgeComplexity.toFixed(2)})`);
+              }
+              if (renderResult.audio) {
+                Logger.debug('RalphLoop', `Audio score: ${renderResult.audio.score.toFixed(2)} (freq: ${renderResult.audio.frequencyVariety.toFixed(2)}, dynamics: ${renderResult.audio.dynamics.toFixed(2)})`);
+              }
+            } else {
+              Logger.warn('RalphLoop', `Render scoring failed: ${renderResult.error}`);
+              if (normalizedOptions.chatMode) {
+                normalizedOptions.onThought?.(`Render analysis skipped: ${renderResult.error}`);
+              }
+            }
+            
+            // Clean up resources
+            await pipeline.close();
+          } catch (renderError) {
+            Logger.warn('RalphLoop', 'Render scoring error:', renderError);
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.('Render analysis unavailable');
+            }
+          }
         }
 
         // Quality gate: break if score below minimum threshold (after giving it a chance)
@@ -416,7 +606,7 @@ export class RalphLoop {
               });
             }
           } catch (err) {
-            console.warn('Auto-compost failed:', err);
+            Logger.warn('RalphLoop', 'Auto-compost failed:', err);
           }
         }
 
@@ -450,6 +640,9 @@ export class RalphLoop {
           Logger.warn('RalphLoop', 'Failed to record routing outcome:', err instanceof Error ? err.message : err);
         });
 
+        // Store previous code before saving current iteration
+        previousCode = currentCode;
+        
         // Save iteration context
         const iterationContext: IterationContext = {
           iteration,
@@ -459,6 +652,8 @@ export class RalphLoop {
           evaluation: { score: evaluation.score, issues: evaluation.issues ?? [] },
           timestamp: new Date().toISOString(),
           maxIterations: normalizedOptions.maxIterations,
+          selectedCandidateIndex: candidates.length > 0 ? candidates.find(c => c.code === currentCode)?.index ?? 0 : 0,
+          numCandidatesGenerated: numCandidates,
         };
         ContextAccumulation.save(iterationContext);
 
@@ -472,11 +667,48 @@ export class RalphLoop {
         // Update final score
         finalScore = evaluation.score;
 
+        // Track score history for convergence detection
+        scoreHistory.push(evaluation.score);
+
         // Check stagnation
         const stagnationResult = stagnation.check(iteration, evaluation.score, noveltyScore, prompt);
+
+        // Log exploration mode changes
+        if (stagnationResult.exploreAggressively !== undefined) {
+          const wasExploring = successRateTracker.shouldExploreAggressively();
+          successRateTracker.recordAttempt(evaluation.score >= 0.7);
+          const isExploring = successRateTracker.shouldExploreAggressively();
+
+          if (!wasExploring && isExploring) {
+            Logger.info('RalphLoop', `Entering high-exploration mode (success rate: ${(stagnationResult.successRate ?? 0).toFixed(2)})`);
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.('Success rate dropped — increasing exploration...');
+            }
+          } else if (wasExploring && !isExploring) {
+            Logger.info('RalphLoop', `Exiting high-exploration mode (success rate: ${successRateTracker.getSuccessRate().toFixed(2)})`);
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.('Success rate recovered — returning to normal mode');
+            }
+          }
+        }
+
         if (stagnationResult.shouldBreak) {
           reason = stagnationResult.reason;
           break;
+        }
+
+        // Convergence detection: stop if score hasn't improved by >0.01 in 3 iterations
+        if (scoreHistory.length >= CONVERGENCE_WINDOW) {
+          const recentScores = scoreHistory.slice(-CONVERGENCE_WINDOW);
+          const maxInWindow = Math.max(...recentScores);
+          const minInWindow = Math.min(...recentScores);
+          const improvement = maxInWindow - minInWindow;
+
+          if (improvement < CONVERGENCE_THRESHOLD) {
+            reason = `convergence detected (score plateau: ${minInWindow.toFixed(3)}-${maxInWindow.toFixed(3)} over ${CONVERGENCE_WINDOW} iterations)`;
+            Logger.info('RalphLoop', reason);
+            break;
+          }
         }
 
         const promiseDetected = PromiseDetector.detect(currentCode);

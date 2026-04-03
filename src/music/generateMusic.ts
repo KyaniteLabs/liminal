@@ -23,6 +23,7 @@ import { generateArpeggio } from './Arpeggiator.js';
 import { classifyRhyme, getRhymeScore } from './RhymeEngine.js';
 import { countSyllables, countLineSyllables } from './SyllableCounter.js';
 import { listTemplates, buildStructureFromTemplate } from './StructureTemplates.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * MusicTheoryContext — exposes the music theory engine for use by callers.
@@ -101,7 +102,7 @@ export async function generateMusic(options: GenerateMusicOptions): Promise<Gene
       if (code) return { code };
     } catch (err) {
       // Fall through to template
-      console.warn('[generateMusic] LLM generation failed, falling back to template:', err);
+      Logger.warn('generateMusic', 'LLM generation failed, falling back to template:', err);
     }
   }
 

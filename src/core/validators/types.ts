@@ -13,7 +13,19 @@ export interface DomainValidationResult {
   errors: string[];
 }
 
-export type Domain = 'p5' | 'shader' | 'glsl' | 'three' | 'remotion' | 'music' | 'hydra' | 'strudel' | 'unknown';
+export type Domain = 
+  | 'p5' 
+  | 'shader' 
+  | 'glsl' 
+  | 'three' 
+  | 'remotion' 
+  | 'music' 
+  | 'hydra' 
+  | 'strudel' 
+  | 'tone'
+  | 'html'
+  | 'ascii'
+  | 'unknown';
 
 // -----------------------------------------------------------------------------
 // Reasoning-text patterns (lines to strip from LLM output)

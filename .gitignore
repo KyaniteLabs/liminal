@@ -56,12 +56,17 @@ dogfood-temp/
 
 # Test results (generated artifacts)
 test-results/
+test-output/
+test-stream/
 
 # Landing page assets (build output)
 landing-*.png
 landing-archive/
 landing-assets/
 live-p5-test.png
+
+# Stream evolution artifacts
+stream/
 
 # Generated HTML in docs
 docs/*.html
@@ -80,3 +85,8 @@ generate-example*.ts
 generate-example*.cjs
 generate-all-examples.ts
 dogfood-report-*.md
+
+# Root-level artifacts (managed in artifacts/ directory)
+*.log
+regeneration.log
+test-qwen*.log

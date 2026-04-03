@@ -177,14 +177,15 @@ export class BatchProcessor<TInput, TOutput> {
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          job.status = Status.RUNNING;
+          const currentJob = job;
+          currentJob.status = Status.RUNNING;
           this.activeCount++;
-          const result = await processor(job.input);
+          const result = await processor(currentJob.input);
           this.activeCount--;
 
-          job.status = Status.COMPLETED;
-          job.result = result;
-          job.completedAt = Date.now();
+          currentJob.status = Status.COMPLETED;
+          currentJob.result = result;
+          currentJob.completedAt = Date.now();
           return;
         } catch (err) {
           this.activeCount--;

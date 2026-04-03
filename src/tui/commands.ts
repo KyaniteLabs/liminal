@@ -10,7 +10,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { formatError } from '../utils/errors.js';
 
-export interface CommandContext {
+interface CommandContext {
   agent: HarnessAgent;
   tasks: AgentTask[];
   logs: string[];
@@ -321,7 +321,7 @@ export const commands: Record<string, Command> = {
   }
 };
 
-export function resolveCommand(input: string): Command | null {
+function resolveCommand(input: string): Command | null {
   const name = input.toLowerCase();
   return commands[name] || 
     Object.values(commands).find(c => c.aliases?.includes(name)) ||

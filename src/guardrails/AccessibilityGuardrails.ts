@@ -12,6 +12,7 @@
 import puppeteer from 'puppeteer';
 import { getChromeArgs } from '../security/SandboxConfig.js';
 import { generateHTML } from '../utils/generateHTML.js';
+import { formatError } from '../utils/errors.js';
 
 export interface AccessibilityResult {
   accessible: boolean;
@@ -172,8 +173,7 @@ export class AccessibilityGuardrails {
       };
 
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      issues.push(`Accessibility check error: ${message}`);
+      issues.push(formatError('Accessibility check', error));
       
       return {
         accessible: false,

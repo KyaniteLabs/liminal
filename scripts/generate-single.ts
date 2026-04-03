@@ -188,7 +188,7 @@ async function main() {
       model: modelName,
       domain,
       success: false,
-      error: error instanceof Error ? error.message : String(error)
+      error: formatError('generate-single', error)
     };
     console.error(`RESULT: ${JSON.stringify(output)}`);
     process.exit(1);

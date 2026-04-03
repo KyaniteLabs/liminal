@@ -394,6 +394,12 @@ export class Liminal {
 export { RalphLoop };
 export { normalizeOptions, DEFAULT_MAX_ITERATIONS, DEFAULT_TIMEOUT_MINUTES, DEFAULT_MIN_QUALITY_SCORE } from './core/LoopConfig.js';
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions } from './core/LoopConfig.js';
+
+// Options types (Render, Swarm, Debug)
+export type { RenderOptions, RecordingOptions, PreviewOptions, CanvasDimensions, RecordingFormat } from './types/options/RenderOptions.js';
+export { DEFAULT_RENDER_OPTIONS, normalizeRenderOptions } from './types/options/RenderOptions.js';
+export type { SwarmOptions } from './types/options/SwarmOptions.js';
+export type { DebugOptions } from './types/options/DebugOptions.js';
 import { requestImprovement } from './core/SelfImprovement.js';
 export { requestImprovement, type ImprovementContext, type RequestImprovementOptions, type ImprovementGenerator } from './core/SelfImprovement.js';
 export type { RequestImprovementState } from './improvement/requestImprovement.js';

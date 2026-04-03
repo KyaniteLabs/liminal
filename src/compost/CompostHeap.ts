@@ -107,8 +107,17 @@ export class CompostHeap {
   async clear(): Promise<void> {
     await this.ensureDir();
     const files = await this.listFiles();
+    const errors: Error[] = [];
     for (const relPath of files) {
-      await fs.unlink(path.join(this.heapDir, relPath));
+      try {
+        await fs.unlink(path.join(this.heapDir, relPath));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : 'Unknown error';
+        errors.push(new Error(`Failed to delete ${relPath}: ${message}`));
+      }
+    }
+    if (errors.length > 0) {
+      throw new Error(`Heap clear failed for ${errors.length} file(s): ${errors[0].message}`);
     }
   }
 

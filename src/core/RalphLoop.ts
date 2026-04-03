@@ -27,6 +27,7 @@ import { PromiseDetector } from './PromiseDetector.js';
 import { Gallery } from '../gallery/Gallery.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
+import { formatError } from '../utils/errors.js';
 import { CodeValidator } from './CodeValidator.js';
 import { CompostMill } from '../compost/CompostMill.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
@@ -517,7 +518,7 @@ export class RalphLoop {
             model: normalizedOptions.useSwarm ? 'swarm' : 'local',
             domain: normalizedOptions.collabDomain || 'p5',
             prompt: prompt,
-            error: error instanceof Error ? error.message : String(error),
+            error: formatError('RalphLoop', error),
             duration: Date.now() - startTime,
           });
         }

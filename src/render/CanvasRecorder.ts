@@ -113,7 +113,7 @@ export class CanvasRecorder {
   }
 
   private formatErrorMessage(error: unknown): string {
-    return error instanceof Error ? error.message : String(error);
+    return formatError('CanvasRecorder', error);
   }
 
   private wrapForDomain(code: string, domain: Domain): string {

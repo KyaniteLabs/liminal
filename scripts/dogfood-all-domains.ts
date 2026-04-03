@@ -158,7 +158,7 @@ async function runSingleTest(domain: typeof DOMAINS[0], model: typeof MODELS[0])
     };
   } catch (error) {
     const duration = Date.now() - startTime;
-    const errorMsg = error instanceof Error ? error.message : String(error);
+    const errorMsg = formatError('DogfoodRunner', error);
     console.log(`  ❌ ${duration}ms - ERROR: ${errorMsg.substring(0, 100)}`);
     
     return {

@@ -17,20 +17,22 @@ export class HeapMonitor {
   start(mill: CompostMill): void {
     if (this.timer) return;
 
-    this.timer = setInterval(async () => {
-      if (this.digesting) return; // debounce
+    this.timer = setInterval(() => {
+      void (async () => {
+        if (this.digesting) return; // debounce
 
-      try {
-        const shouldDigest = await mill.shouldAutoDigest();
-        if (shouldDigest) {
-          this.digesting = true;
-          await mill.digest();
+        try {
+          const shouldDigest = await mill.shouldAutoDigest();
+          if (shouldDigest) {
+            this.digesting = true;
+            await mill.digest();
+            this.digesting = false;
+          }
+        } catch (err) {
+          Logger.warn('HeapMonitor', 'auto-digest failed:', err);
           this.digesting = false;
         }
-      } catch (err) {
-        Logger.warn('HeapMonitor', 'auto-digest failed:', err);
-        this.digesting = false;
-      }
+      })();
     }, this.intervalMs);
   }
 

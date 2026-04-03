@@ -16,3 +16,14 @@ export {
   DEFAULT_RENDER_OPTIONS,
   normalizeRenderOptions,
 } from './RenderOptions.js';
+
+export type {
+  DebugOptions,
+  LogLevel,
+} from './DebugOptions.js';
+
+export {
+  DEFAULT_DEBUG_OPTIONS,
+  normalizeDebugOptions,
+  shouldLog,
+} from './DebugOptions.js';

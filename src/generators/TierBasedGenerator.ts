@@ -12,7 +12,7 @@ import { LLMClient, LLMConfig } from '../llm/LLMClient.js';
 import { PromptBuilder } from '../llm/PromptBuilder.js';
 import { detectModelTier, trimContext, type ModelTier } from '../llm/ModelTier.js';
 import { harnessMemory } from '../harness/HarnessMemory.js';
-import { GenerationError } from '../errors/GenerationError.js';
+// import { GenerationError } from '../errors/GenerationError.js'; // TODO: Create GenerationError.ts
 
 export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;

@@ -14,6 +14,8 @@
  */
 
 import { P5Wrapper } from '../core/wrappers/P5Wrapper.js';
+import { ThreeWrapper } from '../core/wrappers/ThreeWrapper.js';
+import { GenericWrapper } from '../core/wrappers/GenericWrapper.js';
 
 export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'remotion' | 'html' | 'ascii';
 

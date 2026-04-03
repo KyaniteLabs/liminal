@@ -70,7 +70,7 @@ export class ThreeValidator {
   /**
    * Check if code is HTML-wrapped
    */
-  private static isAlreadyWrapped(code: string): boolean {
+  private static _isAlreadyWrapped(_code: string): boolean {
     const trimmed = code.trim();
     return trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html');
   }

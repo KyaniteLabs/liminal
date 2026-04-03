@@ -175,7 +175,7 @@ describe('Model Comparison Suite', () => {
                 codeLength: 0,
                 hasThinkTags: false,
                 isValid: false,
-                errors: [error instanceof Error ? error.message : String(error)],
+                errors: [formatError('ModelComparison', error)],
               });
               throw error;
             }

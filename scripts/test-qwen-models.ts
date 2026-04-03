@@ -159,11 +159,11 @@ async function runTest(model: typeof QWEN_MODELS[0], domain: string) {
       duration,
       size: 0,
       errors: [],
-      errorMessage: error instanceof Error ? error.message : String(error)
+      errorMessage: formatError('QwenModelTest', error)
     });
     
     console.log(`  ❌ ${isTimeout ? 'TIMEOUT' : 'FAIL'} (${duration}ms)`);
-    const msg = error instanceof Error ? error.message : String(error);
+    const msg = formatError('QwenModelTest', error);
     console.log(`     ${msg.substring(0, 100)}`);
   }
 }

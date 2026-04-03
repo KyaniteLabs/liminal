@@ -13,6 +13,7 @@
 import puppeteer from 'puppeteer';
 import { getChromeArgs } from '../security/SandboxConfig.js';
 import { generateHTML } from '../utils/generateHTML.js';
+import { formatError } from '../utils/errors.js';
 
 export interface RuntimeHealthResult {
   healthy: boolean;
@@ -226,8 +227,7 @@ export class RuntimeHealthMonitor {
       };
 
     } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      issues.push(`Monitoring error: ${message}`);
+      issues.push(formatError('Runtime monitoring', error));
       
       return {
         healthy: false,

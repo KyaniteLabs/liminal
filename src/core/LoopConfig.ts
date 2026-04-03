@@ -71,11 +71,16 @@ export interface LoopOptions {
   /** Domain for collaboration quality assessment (default: 'p5') */
   collabDomain?: Domain;
   /** Enable swarm generation (7-persona Ollama swarm) */
+  /** @deprecated Use swarm.enabled instead */
   useSwarm?: boolean;
   /** Configuration for the swarm */
+  /** @deprecated Use swarm.config instead */
   swarmConfig?: Partial<SwarmConfig>;
   /** Swarm generative mode (default: 'hybrid') */
+  /** @deprecated Use swarm.mode instead */
   swarmMode?: SwarmMode;
+  /** New nested swarm options (preferred over deprecated flat properties) */
+  swarm?: SwarmOptions;
   /** Enable archive learning — store high-quality outputs for few-shot improvement */
   useArchiveLearning?: boolean;
   /** Path for quality archive JSON (default: ~/.liminal/archive/quality_archive.json) */

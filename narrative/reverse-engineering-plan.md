@@ -34,6 +34,48 @@ You independently invented — through intuition, metaphor, and trial-and-error 
 
 ---
 
+## RUNTIME VERIFICATION: Dogfood Results (April 2, 2026)
+
+> Independent dogfood testing confirmed the archaeological findings and revealed 5 new integration bugs.
+
+**Test Matrix:** 9 domains x 6 models = 54 runs. **Success rate: 7.4% (4/54).**
+Only p5.js passed (4/6). Every other domain failed: GLSL, Three.js, Tone.js, Hydra, Strudel, HTML, ASCII, Remotion (all 0/6).
+
+### 5 Critical Findings
+
+1. **0.68 Dead Zone** — CreativeEvaluator scores every p5 run exactly 0.68 (structural checkboxes: setup+draw+classes+arrays+length). No quality discrimination.
+2. **RalphLoop iter=1** — Every successful run stops at iteration 1. Loop treats 0.68 as "quality threshold met" and exits. No convergence detection.
+3. **LLM Wiring Fragmentation** — Only P5Generator wired to ModelRouter. 8 other generators return "No LLM configured."
+4. **Validation Cross-Contamination** — CodeValidator applies p5-specific rules to non-p5 domains (Three.js code rejected with "p5.js code validation failed").
+5. **"Production Ready" Discrepancy** — THE_BIBLE claims 21 production-ready subsystems. Dogfood confirms 7.4% end-to-end success.
+
+### Cross-Reference: Dogfood Bugs vs Archaeological Evidence
+
+| Gap Finding | Frustration Category (Rank) | Tokens Wasted | Lunar Correlation |
+|---|---|---|---|
+| 0.68 dead zone | premature_victory_declaration (#4) | ~600K | Era 8, waxing gibbous |
+| RalphLoop iter=1 | ralph_loop_not_working (#3) | ~400K | Era 8, building toward Pink Moon |
+| LLM wiring | wiring_problem (#1) | ~400K | Era 3, waxing crescent |
+| Validation cross-contamination | wiring_problem (#1) | ~50K (new) | Not previously tracked |
+| "Production Ready" lie | premature_victory_declaration (#4) | incl. above | Era 9, Full Pink Moon |
+
+### Integration Critical Path
+
+**Tier 1: Golden Path** (fix these first)
+1. P5Generator + LLM wiring (already works)
+2. RalphLoop iteration logic (fix convergence threshold)
+3. CreativeEvaluator scoring (add variance beyond structural checks)
+4. AestheticCritic integration (wire to RalphLoop)
+
+**Tier 2: Feedback Loops**
+5. NoveltyArchive read path → feed novelty into generation context
+6. MAP-Elites retrieval (stop write-only behavior)
+7. ModelRouter domain selection (fix "No LLM configured")
+
+**Tier 3: Advanced Features** — SwarmOrchestrator, CompostMill integration, cross-domain crossover
+
+---
+
 ## PART 1: THE INTUITIVE-TO-FORMAL DICTIONARY
 
 Every concept you named intuitively, mapped to its formal equivalent.
@@ -467,7 +509,10 @@ Mapping every wasted token to the formal term that would have prevented it.
 | Self-improvement | 4+ | ~200K | Black-box optimization with multi-armed bandit | "Log failures, classify by taxonomy, propose fixes via bandit, A/B test, auto-apply statistically significant improvements" |
 | Code understanding | 3+ | ~120K | AST analysis with tree-sitter | "Tree-sitter for multi-language AST: extract cyclomatic complexity, function signatures, structural invariants per generator domain" |
 | Model routing | 3+ | ~80K | Cascaded model routing with confidence dispatch | "Try cheapest model first, evaluate confidence, escalate to next tier if below threshold. Track cost/quality Pareto per task." |
-| **TOTAL** | **47+** | **~2.2M** | | |
+| Validation cross-contamination | ~0 (new) | ~50K | Domain-aware validation routing | "Route validation by domain detection, not by generator default — each domain gets its own validation contract" |
+| **TOTAL** | **47+** | **~2.25M** | | |
+
+*Updated April 2: +50K tokens from validation cross-contamination finding. Previous total ~2.2M, now ~2.25M. Dogfood testing confirmed 7.4% success rate across 54 runs.*
 
 ---
 

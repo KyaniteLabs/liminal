@@ -6,7 +6,7 @@
  */
 
 import { spawn } from 'child_process';
-import { writeFileSync, mkdirSync, existsSync, readFileSync } from 'fs';
+import { writeFileSync, existsSync, readFileSync } from 'fs';
 
 const WAVES = [
   // Wave 1: MiniMax-M2.7 first 6 domains

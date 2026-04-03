@@ -321,9 +321,4 @@ export const commands: Record<string, Command> = {
   }
 };
 
-function resolveCommand(input: string): Command | null {
-  const name = input.toLowerCase();
-  return commands[name] || 
-    Object.values(commands).find(c => c.aliases?.includes(name)) ||
-    null;
-}
+

@@ -1,0 +1,4521 @@
+{
+  "total_searches": 6813,
+  "date_range": "2017-09-04 to 2026-03-30",
+  "ai_coding_searches": [
+    {
+      "query": "Hermes agent",
+      "date": "2026-03-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "procedural Loop generated recursive",
+      "date": "2026-03-19",
+      "categories": [
+        "creative"
+      ]
+    },
+    {
+      "query": "sniper agents ai coding",
+      "date": "2026-03-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "is the point of training my own llm",
+      "date": "2026-02-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Claude code skills",
+      "date": "2026-02-21",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "sidecar CLI coding tool",
+      "date": "2026-02-21",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "Claude code",
+      "date": "2026-02-20",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "pie coding agent",
+      "date": "2026-02-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "MacBook Air M4 developer machine setup",
+      "date": "2026-02-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "MacBook Air M4 accessories",
+      "date": "2026-02-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m5",
+      "date": "2026-02-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m4",
+      "date": "2026-02-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "mac studio for local llm",
+      "date": "2026-02-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "local AI cluster",
+      "date": "2026-02-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Claude",
+      "date": "2026-01-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "anycubic kobra 3 maintenance",
+      "date": "2025-12-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "anycubic Cobra 3 maintenance",
+      "date": "2025-12-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "gpt 5.2",
+      "date": "2025-12-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "GPT 5",
+      "date": "2025-12-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "cursor",
+      "date": "2025-11-22",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "CLI coding AI agent",
+      "date": "2025-11-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "kilo code CLI",
+      "date": "2025-11-10",
+      "categories": [
+        "tools"
+      ]
+    },
+    {
+      "query": "how to select a tech stack when you are coding with an AI assistant",
+      "date": "2025-10-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best programming languages for Vibe coding",
+      "date": "2025-10-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Droid versus Claude code",
+      "date": "2025-10-14",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "Klein kilo code others",
+      "date": "2025-10-13",
+      "categories": [
+        "tools"
+      ]
+    },
+    {
+      "query": "kilo code",
+      "date": "2025-10-11",
+      "categories": [
+        "tools"
+      ]
+    },
+    {
+      "query": "Hydraulic by Josh Levi",
+      "date": "2025-10-11",
+      "categories": [
+        "ai",
+        "creative"
+      ]
+    },
+    {
+      "query": "hydraulic",
+      "date": "2025-10-11",
+      "categories": [
+        "ai",
+        "creative"
+      ]
+    },
+    {
+      "query": "how to use Claude agent SDK",
+      "date": "2025-10-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to use cloud SD card agent SDK",
+      "date": "2025-10-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "make your own llm local voice assistant",
+      "date": "2025-09-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "cursor and other mac terminal tools",
+      "date": "2025-09-22",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "cursor and other mag terminal tools",
+      "date": "2025-09-22",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "claude mcp server setup local",
+      "date": "2025-09-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "claude mcp server setup",
+      "date": "2025-09-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Claude mCP server",
+      "date": "2025-09-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chatgpt robot",
+      "date": "2025-09-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ChatGPT disk",
+      "date": "2025-09-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "AI desk companion robot",
+      "date": "2025-09-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "AI desk companion",
+      "date": "2025-09-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "QUALCOMM snapdragon X PCs",
+      "date": "2025-09-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "QUALCOMM snapdragon",
+      "date": "2025-09-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "copilot plus pc",
+      "date": "2025-09-06",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "copilot plusbc",
+      "date": "2025-09-06",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "Rain sounds",
+      "date": "2025-09-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Rain sounds",
+      "date": "2025-09-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ChatGPT five versus gemini 2.5",
+      "date": "2025-08-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ChatGPT five versus",
+      "date": "2025-08-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chat gpt braindump dictation shortcut apple notes and notion",
+      "date": "2025-08-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Chat GPT braindump dictation shortcut apple notes and notion",
+      "date": "2025-08-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Chad GPT random shortcut",
+      "date": "2025-08-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "apple shortcuts chatgpt5",
+      "date": "2025-08-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "apple shortcuts chatgpt",
+      "date": "2025-08-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chatgpt 5",
+      "date": "2025-08-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chatgpt 5",
+      "date": "2025-08-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Chad GPT 5",
+      "date": "2025-08-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Claude",
+      "date": "2025-08-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "custom gpt",
+      "date": "2025-08-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "custom gpt",
+      "date": "2025-08-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chat gpt5",
+      "date": "2025-08-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chat gpt5",
+      "date": "2025-08-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fragrance oils for candle science",
+      "date": "2025-07-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "what is the easiest way to run an offline llm on Mac",
+      "date": "2025-06-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "the cut straight guys kiss",
+      "date": "2025-06-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "letpot lph-air",
+      "date": "2025-06-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "letpot lph-air",
+      "date": "2025-06-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "using eyeshadow for nail art",
+      "date": "2025-04-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Using eyeshadow for nail",
+      "date": "2025-04-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Baile Inolvidable",
+      "date": "2025-04-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "drag race",
+      "date": "2025-04-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "thunderbolts trailer",
+      "date": "2025-03-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "breath of fire trailer",
+      "date": "2025-03-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "pen15 s1 trailer",
+      "date": "2025-01-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "baile inolvidable bad bunny",
+      "date": "2025-01-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sebastien grainger and the mountains",
+      "date": "2024-12-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Kai Ju",
+      "date": "2024-10-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "crappy childhood fairy",
+      "date": "2024-09-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "crappy childhood fairy",
+      "date": "2024-09-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "painting short nails",
+      "date": "2024-08-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "painting short nails",
+      "date": "2024-08-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "short nail manicure at home",
+      "date": "2024-08-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "How to paint your nails",
+      "date": "2024-08-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "the last of us season 2 trailer",
+      "date": "2024-08-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Fairfield circuitry pedals",
+      "date": "2024-08-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hasanabi queerbaiting",
+      "date": "2024-07-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ipad air m2 11 inch",
+      "date": "2024-06-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "iPad Air M2",
+      "date": "2024-06-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "älvdalen 3-seat sleeper sofa with chaise",
+      "date": "2024-06-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "megalopolis trailer",
+      "date": "2024-05-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "uc irvine professor detained",
+      "date": "2024-05-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "claire saffitz chocolate chip cookies",
+      "date": "2024-05-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "claire saffitz chocolate chip cookies",
+      "date": "2024-05-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "claire saffitz chocolate chip cookies",
+      "date": "2024-05-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Wait for",
+      "date": "2024-04-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best mason stains for high fire stoneware",
+      "date": "2024-04-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "daily show",
+      "date": "2024-04-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "philodendron painted lady",
+      "date": "2024-02-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "philodendron verrucosum trailing care",
+      "date": "2024-02-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "philodendron verrucosum trailing",
+      "date": "2024-02-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "calathea musaica",
+      "date": "2024-02-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "calathea musaica",
+      "date": "2024-02-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "different types of men's chains",
+      "date": "2024-02-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to start using porcelain",
+      "date": "2024-01-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to start throwing porcelain",
+      "date": "2024-01-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "tiny tina's wonderland gameplay trailer",
+      "date": "2023-12-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "gimtrr cube storage",
+      "date": "2023-12-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "11 inch cube storage organization ideas",
+      "date": "2023-12-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "storage bin organization ideas",
+      "date": "2023-12-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Daniel Craig James Bond 4K collection",
+      "date": "2023-12-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Daniel Craig James Bond 4K",
+      "date": "2023-12-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Daniel Craig James Bond",
+      "date": "2023-12-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "miss universe 2023 dress nicaragua",
+      "date": "2023-11-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ayaneo air 1s",
+      "date": "2023-11-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ayaneo air 1s cyberpunk",
+      "date": "2023-11-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ayaneo air 1s cyberpunk",
+      "date": "2023-11-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ayaneo air 1s vs steam deck",
+      "date": "2023-11-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ayaneo air 1s",
+      "date": "2023-11-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ayaneo air 1s",
+      "date": "2023-11-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "microsoft copilot",
+      "date": "2023-11-08",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "matte clear coat for men nail polish",
+      "date": "2023-10-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "matte clesr cost for men nail polish",
+      "date": "2023-10-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "nail polish for men",
+      "date": "2023-10-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "nail polish for men",
+      "date": "2023-10-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "boy de chanel black nail polish",
+      "date": "2023-10-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "nail polish for men shades",
+      "date": "2023-10-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "nail polish for men",
+      "date": "2023-10-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fragrance world imperium",
+      "date": "2023-10-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sairset mortar fix cracks in ceramics",
+      "date": "2023-10-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "must have clone fragrances",
+      "date": "2023-10-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "highest quality clone fragrances",
+      "date": "2023-10-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "net samurai build cyberpunk 2077",
+      "date": "2023-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "medium haircut wavy hair",
+      "date": "2023-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "for all mankind season 1 trailer",
+      "date": "2023-10-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "al haramain amber oud ruby edition",
+      "date": "2023-09-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "al haramain amber oud",
+      "date": "2023-09-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "al haramain amber oud",
+      "date": "2023-09-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "al haramain amber oud",
+      "date": "2023-09-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best clone fragrances",
+      "date": "2023-09-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best clone fragrances",
+      "date": "2023-09-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "can you add more storage to dell xps 17 9700",
+      "date": "2023-09-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "can you add more storage to dell xps 17 9700",
+      "date": "2023-09-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "what we do in the shadows trailer season 1",
+      "date": "2023-09-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "thai panang curry",
+      "date": "2023-09-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "thai basil",
+      "date": "2023-09-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "learn languages with chat gpt",
+      "date": "2023-08-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "learn langusges with chat gpt",
+      "date": "2023-08-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "under desk storage",
+      "date": "2023-08-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "asparagus fern plumosa seeds",
+      "date": "2023-08-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "apple airpods max charging stand",
+      "date": "2023-08-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to train my own ai llm",
+      "date": "2023-08-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to train my own ai model",
+      "date": "2023-08-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "crate training a dog",
+      "date": "2023-07-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "beat brand of training treats",
+      "date": "2023-07-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "firstmate grain friendly dog food",
+      "date": "2023-07-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "firstmate grain friendly dog food",
+      "date": "2023-07-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ahsoka trailer",
+      "date": "2023-07-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "cairn terrier",
+      "date": "2023-07-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to train my dog to be home alone",
+      "date": "2023-07-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "leash walking training",
+      "date": "2023-07-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "leash walking training",
+      "date": "2023-07-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "leash walking training",
+      "date": "2023-07-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to leash train your dog",
+      "date": "2023-07-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "dog leash training",
+      "date": "2023-07-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to groom wire haired terrier mix",
+      "date": "2023-07-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best healthy training treats for dogs",
+      "date": "2023-07-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "what is the best treat for dog training",
+      "date": "2023-07-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best training treats for small dogs",
+      "date": "2023-07-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to train a maltipoo puppy",
+      "date": "2023-07-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "weathertech cargo containment system review",
+      "date": "2023-06-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "obsidian copilot",
+      "date": "2023-06-12",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "Notion AI",
+      "date": "2023-06-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "home depot storage sheds",
+      "date": "2023-05-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "2023 honda cr v sport hybrid regenerative braking",
+      "date": "2023-05-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "roland aira",
+      "date": "2023-05-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "roland aira and novation circuit tracks",
+      "date": "2023-05-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "roland aira and novation circuit",
+      "date": "2023-05-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "roland aira",
+      "date": "2023-05-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "build a gpt 4 api with python",
+      "date": "2023-04-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "python and gpt",
+      "date": "2023-04-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "swarm trailer",
+      "date": "2023-04-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "kailh box white sound test",
+      "date": "2023-04-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best neroli fragrance bvlgari man wood neroli",
+      "date": "2023-03-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best neroli fragrance",
+      "date": "2023-03-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best spring fragrances",
+      "date": "2023-03-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chat GPT and Siri",
+      "date": "2023-03-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "AI copilot",
+      "date": "2023-03-21",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "yellow jackets season two trailer",
+      "date": "2023-03-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "alcohol ink paintings",
+      "date": "2023-03-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "alcohol ink paintings",
+      "date": "2023-03-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "medium haircut wavy hair",
+      "date": "2023-02-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to use air dry clay",
+      "date": "2023-02-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "How to use air dry clay",
+      "date": "2023-02-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "How to use air dry clay",
+      "date": "2023-02-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "mason stains for ceramics",
+      "date": "2023-02-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "antifragile",
+      "date": "2023-01-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "propagate fairy castle cactus",
+      "date": "2023-01-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fairy castle cactus",
+      "date": "2023-01-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fairy castle cactus",
+      "date": "2023-01-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chatgpt",
+      "date": "2022-12-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "3d design app 2022 ipad air",
+      "date": "2022-12-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ghosts bbc trailer season 1",
+      "date": "2022-11-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Shark ai ultra",
+      "date": "2022-10-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Shark ai uktra",
+      "date": "2022-10-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "different types of thai curry",
+      "date": "2022-10-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Super Mario trailer",
+      "date": "2022-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to recycle Claire",
+      "date": "2022-09-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods pro ear tips",
+      "date": "2022-08-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "house of the dragon",
+      "date": "2022-07-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook pro 14 inch vs macbook air m2",
+      "date": "2022-07-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m2 macbook air accessories",
+      "date": "2022-07-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m2 macbook air base model",
+      "date": "2022-07-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m2 macbook air",
+      "date": "2022-07-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m2 macbook air base model",
+      "date": "2022-07-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m2 macbook air vs 14 inch macbook pro",
+      "date": "2022-07-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m2 base model review",
+      "date": "2022-07-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook pro 14 inch vs macbook air m2",
+      "date": "2022-07-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m2 vs macbook pro 14",
+      "date": "2022-07-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m2 vs macbook pro m2",
+      "date": "2022-07-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m2 macbook air vs m1pro macbook pro",
+      "date": "2022-07-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m2 vs m1",
+      "date": "2022-07-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best keychain edc",
+      "date": "2022-07-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jupiter 8 diffusion filter",
+      "date": "2022-07-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Jupiter 8 diffusion filter",
+      "date": "2022-07-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Aidan gallagher",
+      "date": "2022-06-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Waikiki",
+      "date": "2022-06-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "prince waikiki hotel oceanfront",
+      "date": "2022-06-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "prince waikiki hotel",
+      "date": "2022-06-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "prince waikiki hotel",
+      "date": "2022-06-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Waikiki nightlife",
+      "date": "2022-06-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Waikiki trolley",
+      "date": "2022-06-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Waikiki",
+      "date": "2022-06-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Notion iPad second brain",
+      "date": "2022-06-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Notion iPad second brain",
+      "date": "2022-06-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "find my draining iPad battery",
+      "date": "2022-06-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best bag for macbook air m1",
+      "date": "2022-06-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "laptop sleeve macbook air",
+      "date": "2022-06-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Macbook air m1 bag",
+      "date": "2022-06-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Machook air m1 bag",
+      "date": "2022-06-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air vs ipad pro 12.9",
+      "date": "2022-06-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m1 macbook air sling bag",
+      "date": "2022-06-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m1 macbook air",
+      "date": "2022-06-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best bag for macbook air m1",
+      "date": "2022-06-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Best messenger bag for macbook air 13",
+      "date": "2022-06-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air",
+      "date": "2022-06-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Macbook air",
+      "date": "2022-06-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ipad air vs ipad pro",
+      "date": "2022-06-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ipad air vs ipad pro",
+      "date": "2022-06-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "mandalorian season 3 trailer",
+      "date": "2022-05-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ted talk foraging",
+      "date": "2022-05-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hawaiian phrases",
+      "date": "2022-05-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "waikiki walking tour",
+      "date": "2022-05-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "gay hawaii travel",
+      "date": "2022-05-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "what to wear in hawaii for men",
+      "date": "2022-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "what to wear in hawaii",
+      "date": "2022-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Waikiki",
+      "date": "2022-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hawaii 2022",
+      "date": "2022-05-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "prince waikiki hotel",
+      "date": "2022-05-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "prince waikiki hotel",
+      "date": "2022-05-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Spain travel itineraries",
+      "date": "2022-05-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Spain beaches",
+      "date": "2022-05-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Spain vacation",
+      "date": "2022-05-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "solo trip to Spain",
+      "date": "2022-05-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hawaii solo travel",
+      "date": "2022-05-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "oahu hawaii",
+      "date": "2022-05-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "which is the best Hawaiian island for the first time is it",
+      "date": "2022-05-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bowen yang and aidy bryant",
+      "date": "2022-05-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best leave in conditioner for wavy hair",
+      "date": "2022-04-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Thor trailer",
+      "date": "2022-04-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "seiko samurai",
+      "date": "2022-04-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "long hairstyles men",
+      "date": "2022-03-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best uses for airtags",
+      "date": "2022-03-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "tauruscamp grain wallet",
+      "date": "2022-03-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airtag car",
+      "date": "2022-03-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "AirTag",
+      "date": "2022-03-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "AirTag wallet",
+      "date": "2022-03-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "miss marvel trailer",
+      "date": "2022-03-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airtag accessories",
+      "date": "2022-03-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Airtag wallet",
+      "date": "2022-03-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "wallet with airtag",
+      "date": "2022-03-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best le labo fragrance",
+      "date": "2022-03-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "university of chicago ukraine",
+      "date": "2022-02-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Horn snail",
+      "date": "2022-02-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "inventing anna trailer",
+      "date": "2022-02-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to set up an aquarium air pump",
+      "date": "2022-01-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Air stone for aquarium",
+      "date": "2022-01-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to raise KH in water",
+      "date": "2022-01-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to raise KH in water",
+      "date": "2022-01-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Portrait aquarium",
+      "date": "2021-12-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ficus retusa bonsai care",
+      "date": "2021-12-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Maisel",
+      "date": "2021-12-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Peloton seat pain",
+      "date": "2021-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "The Expanse trailer",
+      "date": "2021-11-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "concept 2 rower storage",
+      "date": "2021-11-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods max",
+      "date": "2021-11-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods max",
+      "date": "2021-11-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best real oud fragrance",
+      "date": "2021-11-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "logic vs garageband",
+      "date": "2021-10-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best middle eastern fragrances",
+      "date": "2021-10-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "homepod mini stereo pair",
+      "date": "2021-10-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "using airpods mic with garageband",
+      "date": "2021-10-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "using airpods with garageband",
+      "date": "2021-10-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "mac mini m1 garageband",
+      "date": "2021-10-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "middle eastern fragrances",
+      "date": "2021-10-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods max",
+      "date": "2021-10-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods pro",
+      "date": "2021-10-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods max vs airpods pro",
+      "date": "2021-10-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Airpods pro",
+      "date": "2021-10-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "l’instant guerlain",
+      "date": "2021-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "blind buy fragrance",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "blind buy fall fragrance",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fall fragrances",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best middle eastern fragrances",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best middle eastern fragrances",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best oud fragrance",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best oriental fragrances",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best spicy fragrances",
+      "date": "2021-10-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Cool weather fragrance",
+      "date": "2021-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fall fragrances 2021",
+      "date": "2021-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best cold weather fragrance",
+      "date": "2021-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fall fragrances",
+      "date": "2021-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fall fragrances",
+      "date": "2021-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fall fragrances",
+      "date": "2021-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fall fragrances",
+      "date": "2021-10-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fall fragrances",
+      "date": "2021-10-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fall fragrances",
+      "date": "2021-10-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "california clean air vehicle sticker where to put",
+      "date": "2021-09-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "california clean air vehicle sticker",
+      "date": "2021-09-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airtags",
+      "date": "2021-09-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best uses for airtags",
+      "date": "2021-09-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airtag",
+      "date": "2021-09-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Airpods pro 2021",
+      "date": "2021-09-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods pro vs beats studio earbuds",
+      "date": "2021-09-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods max",
+      "date": "2021-09-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpods pro",
+      "date": "2021-09-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "house of the dragon",
+      "date": "2021-09-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "spiderman trailer no way home",
+      "date": "2021-08-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "neroli fragrances",
+      "date": "2021-08-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "affordable niche fragrances",
+      "date": "2021-08-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best ergonomic office chair on amazon",
+      "date": "2021-08-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best office chair under 500",
+      "date": "2021-08-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best ergonomic office chair on amazon",
+      "date": "2021-08-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best ergonomic office chair on amazon",
+      "date": "2021-08-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best ergonomic office chair on amazon",
+      "date": "2021-08-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "gabrylly ergonomic mesh office chair",
+      "date": "2021-08-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "maison margiela",
+      "date": "2021-08-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "workpro 12000 series ergonomic executive chair",
+      "date": "2021-08-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best mattress for back pain",
+      "date": "2021-08-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "shea moisture for smooth hair",
+      "date": "2021-07-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "seiko samurai mod",
+      "date": "2021-07-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "seiko samurai",
+      "date": "2021-07-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best shea moisture products for wavy hair",
+      "date": "2021-07-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best hair conditioner",
+      "date": "2021-07-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best conditioner to straighten hair",
+      "date": "2021-07-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "seiko samurai",
+      "date": "2021-06-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "browser history ost jai p",
+      "date": "2021-06-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "kia niro vs hyundai kona 2011",
+      "date": "2021-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "kia niro vs hyundai kona plug in hybrid",
+      "date": "2021-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "kia niro vs hyundai kona",
+      "date": "2021-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "kia niro plug in hybrid 2021 vs hyundai",
+      "date": "2021-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hyundai kona ev",
+      "date": "2021-05-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hyundai kona ev vs kia niro ev",
+      "date": "2021-05-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hyundai kona ev",
+      "date": "2021-05-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hyundai koma ev",
+      "date": "2021-05-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fragrances not to buy",
+      "date": "2021-05-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "the ordinary hydrating factors",
+      "date": "2021-04-30",
+      "categories": [
+        "ai",
+        "creative"
+      ]
+    },
+    {
+      "query": "men nail polish",
+      "date": "2021-04-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fragancia",
+      "date": "2021-04-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fragsncia",
+      "date": "2021-04-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to use dog nail grinder",
+      "date": "2021-04-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to cut long dog nails",
+      "date": "2021-04-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hyeam hair",
+      "date": "2021-04-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jeremy fragrance",
+      "date": "2021-04-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "natural looking highlights for dark brown hair",
+      "date": "2021-04-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "highlights for men black hair",
+      "date": "2021-04-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hair color for dark hair",
+      "date": "2021-04-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "velvet rage",
+      "date": "2021-04-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "highlights for men black hair",
+      "date": "2021-04-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "overtone for brown hair",
+      "date": "2021-04-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "velvet rage",
+      "date": "2021-04-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "montblanc starwalker fragrance",
+      "date": "2021-04-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "violet leaf fragrance",
+      "date": "2021-04-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best blind buy fragrances",
+      "date": "2021-04-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best montblanc fragrance",
+      "date": "2021-04-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best montblanc fragrance",
+      "date": "2021-04-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "gym fragrance",
+      "date": "2021-04-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best fragrance for gay men",
+      "date": "2021-04-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "tresemme repair and smooth multi tasking styler",
+      "date": "2021-03-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "tresemme volume smooth and shape hot air styler",
+      "date": "2021-03-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hair styling cream",
+      "date": "2021-03-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best styling cream for wavy hair",
+      "date": "2021-03-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "drugstore wavy hair products",
+      "date": "2021-03-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "air dry hair products",
+      "date": "2021-03-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hair pre styler",
+      "date": "2021-03-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "salon guy layered haircut",
+      "date": "2021-03-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "msi ge75 raider",
+      "date": "2021-03-18",
+      "categories": [
+        "ai",
+        "tools"
+      ]
+    },
+    {
+      "query": "eren haircut",
+      "date": "2021-03-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hair ties for guys",
+      "date": "2021-03-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "thick wavy hair",
+      "date": "2021-03-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "tidal wave hair product",
+      "date": "2021-03-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "maison margiela",
+      "date": "2021-03-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best cushion for office chair",
+      "date": "2021-03-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "enfleurage",
+      "date": "2021-03-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "guerlain",
+      "date": "2021-03-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "blind buy fragrances",
+      "date": "2021-03-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best spring fragrances for men",
+      "date": "2021-02-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fragrance",
+      "date": "2021-02-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fukien tea bonsai care",
+      "date": "2021-02-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fukien tea bonsai vs chinese elm",
+      "date": "2021-02-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fukien tea bonsai",
+      "date": "2021-02-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai",
+      "date": "2021-02-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "buy bonsai",
+      "date": "2021-02-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "mens hair brands",
+      "date": "2021-02-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hair oil",
+      "date": "2021-02-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best hair oil for men",
+      "date": "2021-02-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best hair oil for men",
+      "date": "2021-02-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "men's hair products",
+      "date": "2021-02-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "awkward stage hair men",
+      "date": "2021-02-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best shampoo and conditioner for normal hair",
+      "date": "2021-02-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best shampoo and conditioner for thick wavy hair",
+      "date": "2021-02-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to grow out your hair",
+      "date": "2021-02-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "baise plants",
+      "date": "2021-01-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai",
+      "date": "2021-01-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai",
+      "date": "2021-01-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai",
+      "date": "2021-01-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "doig chamberlain",
+      "date": "2021-01-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "doig chamberlain",
+      "date": "2021-01-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fairy castle cactus",
+      "date": "2021-01-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "pot without drainage holes",
+      "date": "2020-12-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "claire saffitz dessert person",
+      "date": "2020-12-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "french solitaire",
+      "date": "2020-12-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "claire saffitz dessert person",
+      "date": "2020-12-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best audio unit extensions for garageband ios",
+      "date": "2020-11-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best accessories for macbook air m1",
+      "date": "2020-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best sccessories formscbook air m1",
+      "date": "2020-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1",
+      "date": "2020-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1",
+      "date": "2020-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1 8gb",
+      "date": "2020-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "base model macbook air m1 ram",
+      "date": "2020-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "base model macbook air m1",
+      "date": "2020-11-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air v pro",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1 8gb vs 16gb",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Macbook air m1 accessories",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1 music production",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1 logic",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1 logic pro",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "base model macbook air m1",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "base model macbook air m1",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "base modek macbook air m1",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "cheapest macbook air",
+      "date": "2020-11-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1",
+      "date": "2020-11-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "macbook air m1",
+      "date": "2020-11-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m1 macbook air",
+      "date": "2020-11-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "m1 macbook air",
+      "date": "2020-11-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "work it daily",
+      "date": "2020-11-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "#taihao",
+      "date": "2020-10-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "i write sins not tragedies harry styles",
+      "date": "2020-10-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "i write sins not tragedies",
+      "date": "2020-10-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "dragon fruit propagation",
+      "date": "2020-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "#HouseOfTheDragon",
+      "date": "2020-09-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "mandalorian season 2 trailer",
+      "date": "2020-09-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "the fountain tarot",
+      "date": "2020-09-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "hyundai bts",
+      "date": "2020-09-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain tarot review",
+      "date": "2020-08-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bts bon voyage hawaii",
+      "date": "2020-07-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "painting procreate iPad Pro",
+      "date": "2020-07-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "realistic painting brushes procreate",
+      "date": "2020-07-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best procreate brushes for painting",
+      "date": "2020-07-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ipad painting",
+      "date": "2020-07-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ipad painting tutorial",
+      "date": "2020-07-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "iPad painting tutorial",
+      "date": "2020-07-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "learn digital painting procreate",
+      "date": "2020-07-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "learn digital painting",
+      "date": "2020-07-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "milk kefir without grains",
+      "date": "2020-06-14",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "milk kefir without grains",
+      "date": "2020-06-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to make kefir without grains",
+      "date": "2020-06-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airplane part 2 BTS",
+      "date": "2020-05-31",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "force of nature trailer",
+      "date": "2020-05-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "syngonium thai",
+      "date": "2020-04-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Visited https://www.ultramobile.com/?utm_source=discover&utm_medium=display&utm_campaign=rmkt&utm_content=19mo_LimitedTimeOffer_Product_Photo_SN_I_NA_NA~Discover_CV_NA_Rmkt_SV_Target_CPA_Mixed_2019_06-05_12-31",
+      "date": "2020-04-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "Visited market://details?id=com.ralphs.mobile",
+      "date": "2020-04-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "peperomia tetragona",
+      "date": "2020-03-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "janet craig dracaena",
+      "date": "2020-03-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "janet craig dracaena",
+      "date": "2020-03-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "dragon's tongue plant",
+      "date": "2020-02-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "aloe vera for hair growth",
+      "date": "2020-02-22",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "air plant terrarium",
+      "date": "2020-02-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "air plants",
+      "date": "2020-02-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to display air plants",
+      "date": "2020-02-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "air plants",
+      "date": "2020-02-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "what are air plants",
+      "date": "2020-02-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "terragenesis mercury",
+      "date": "2019-09-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "terragenesis",
+      "date": "2019-09-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "vr painting",
+      "date": "2019-08-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "vr painting",
+      "date": "2019-08-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "painted ruins",
+      "date": "2019-08-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "painting on unstretched canvas",
+      "date": "2019-07-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to texture acrylic paint on canvas",
+      "date": "2019-06-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "legion trailer",
+      "date": "2019-06-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "airpod alternative",
+      "date": "2019-06-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "art fair tips",
+      "date": "2019-06-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "art fair",
+      "date": "2019-06-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "art fair tips",
+      "date": "2019-06-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "air max 270",
+      "date": "2019-04-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jordan 1 vs air force 1",
+      "date": "2019-03-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jordan 1 vs air force 1",
+      "date": "2019-02-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jordan 1 vs air force 1",
+      "date": "2019-02-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best brushes for acrylic painting",
+      "date": "2019-01-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "best acrylic paint",
+      "date": "2019-01-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "beat acrylix paint",
+      "date": "2019-01-17",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to paint a face",
+      "date": "2019-01-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to paint a portrait",
+      "date": "2019-01-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to paint a landscape with acrylics for beginners",
+      "date": "2018-12-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to paint a landscape with palette knife",
+      "date": "2018-12-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to paint a landscape",
+      "date": "2018-12-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to paint a face",
+      "date": "2018-12-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to paint a fave",
+      "date": "2018-12-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "painting asmr",
+      "date": "2018-11-25",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "palette knife painting tutorial",
+      "date": "2018-11-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "palette knife painting tutorial",
+      "date": "2018-11-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "watercolor painting for beginners",
+      "date": "2018-11-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "palette knife painting tutorial",
+      "date": "2018-11-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "palette knife painting acrylic",
+      "date": "2018-11-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fluid art painting",
+      "date": "2018-11-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to scan a large painting",
+      "date": "2018-11-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to scan a painting for prints",
+      "date": "2018-11-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to scan a painting on canvas",
+      "date": "2018-11-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fluid painting with acrylics",
+      "date": "2018-10-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fluid painting with acrylics",
+      "date": "2018-10-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fluid painting",
+      "date": "2018-10-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "acrylic fluid painting",
+      "date": "2018-10-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "acrylic fluid painting",
+      "date": "2018-10-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fluid painting",
+      "date": "2018-10-19",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "acrylic pour strainer",
+      "date": "2018-10-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "daily show",
+      "date": "2018-10-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how i finish my paintings with silicone",
+      "date": "2018-10-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how i finish my paintings with sikicone",
+      "date": "2018-10-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to seal acrylic pour painting",
+      "date": "2018-10-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "seal acrylic painting with spray",
+      "date": "2018-10-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fluid painting",
+      "date": "2018-10-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "dark phoenix trailer",
+      "date": "2018-09-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "dungeons and dragons",
+      "date": "2018-08-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "foals mountain at my gates",
+      "date": "2018-06-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "genetic testing",
+      "date": "2018-04-12",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "ocean acrylic painting",
+      "date": "2018-04-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "vintage fountain pen",
+      "date": "2018-03-23",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "twin bonsai",
+      "date": "2018-03-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor 1911 standard",
+      "date": "2018-03-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor 1911 standard vs platinum 3776",
+      "date": "2018-03-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor sapporo",
+      "date": "2018-03-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor pro gear slim",
+      "date": "2018-03-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor pro gear slim",
+      "date": "2018-03-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "waterman fountain pen",
+      "date": "2018-03-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor fountain pen",
+      "date": "2018-03-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chromatography explained",
+      "date": "2018-02-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "eyedropper fountain pen",
+      "date": "2018-02-26",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "samsung gear iconx 2018 vs airpods",
+      "date": "2018-02-24",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "vacuum fill fountain pen",
+      "date": "2018-02-21",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "visconti fountain pen",
+      "date": "2018-02-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor professional gear four seasons",
+      "date": "2018-02-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor professional gear manyo",
+      "date": "2018-02-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "sailor professional gear fountain pen",
+      "date": "2018-02-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "visconti rembrandt fountain pen",
+      "date": "2018-02-20",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "dragon ball super",
+      "date": "2018-02-11",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "pelikan fountain pen",
+      "date": "2018-02-02",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "annihilation trailer",
+      "date": "2018-01-03",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "juniper bonsai from nursery stock",
+      "date": "2017-12-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai soil",
+      "date": "2017-12-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai soil",
+      "date": "2017-12-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "juniperus squamata bonsai",
+      "date": "2017-12-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai from nursery",
+      "date": "2017-12-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai from nursery stock",
+      "date": "2017-12-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "juniper bonsai from nursery stock",
+      "date": "2017-12-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai trees for beginners",
+      "date": "2017-12-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai trees for beginners",
+      "date": "2017-12-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "bonsai",
+      "date": "2017-12-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "platinum vs sailor",
+      "date": "2017-12-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "platinum vs sailor",
+      "date": "2017-12-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen revolution",
+      "date": "2017-12-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen revolution",
+      "date": "2017-12-05",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "japanese fountain pen",
+      "date": "2017-11-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "3776 century vs sailor",
+      "date": "2017-11-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "platinum fountain pen",
+      "date": "2017-11-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen",
+      "date": "2017-11-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "pelikan fountain pen",
+      "date": "2017-11-04",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen paper",
+      "date": "2017-11-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen paper",
+      "date": "2017-11-01",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "visconti fountain pen",
+      "date": "2017-10-30",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "stub nib fountain pen",
+      "date": "2017-10-29",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "vintage fountain pens ebay",
+      "date": "2017-10-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "vintage fountain pen",
+      "date": "2017-10-28",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "visconti fountain pen",
+      "date": "2017-10-27",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "baoer fountain pen",
+      "date": "2017-10-18",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "last jedi trailer",
+      "date": "2017-10-16",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "chinese fountain pens",
+      "date": "2017-10-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "lingmo fountain pen",
+      "date": "2017-10-15",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "brown fountain pen ink",
+      "date": "2017-10-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen ink",
+      "date": "2017-10-13",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "black fountain pen ink",
+      "date": "2017-10-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "star wars trailer",
+      "date": "2017-10-10",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen black ink",
+      "date": "2017-10-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen ink",
+      "date": "2017-10-09",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "black fountain pen ink",
+      "date": "2017-10-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jinhao fountain pen",
+      "date": "2017-10-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jinhao fountain pen",
+      "date": "2017-10-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "jinhao fountain pen",
+      "date": "2017-10-08",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen",
+      "date": "2017-10-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen calais",
+      "date": "2017-10-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen vintage",
+      "date": "2017-10-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen",
+      "date": "2017-10-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "how to write with a fountain pen",
+      "date": "2017-10-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen",
+      "date": "2017-10-07",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "cross fountain pen",
+      "date": "2017-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen vintage",
+      "date": "2017-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen",
+      "date": "2017-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen",
+      "date": "2017-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "fountain pen",
+      "date": "2017-10-06",
+      "categories": [
+        "ai"
+      ]
+    },
+    {
+      "query": "emily haines",
+      "date": "2017-09-09",
+      "categories": [
+        "ai"
+      ]
+    }
+  ],
+  "monthly_distribution": {
+    "2017-09": 1,
+    "2017-10": 30,
+    "2017-11": 7,
+    "2017-12": 14,
+    "2018-01": 1,
+    "2018-02": 11,
+    "2018-03": 9,
+    "2018-04": 2,
+    "2018-06": 1,
+    "2018-08": 1,
+    "2018-09": 1,
+    "2018-10": 13,
+    "2018-11": 10,
+    "2018-12": 5,
+    "2019-01": 5,
+    "2019-02": 2,
+    "2019-03": 1,
+    "2019-04": 1,
+    "2019-06": 6,
+    "2019-07": 1,
+    "2019-08": 3,
+    "2019-09": 2,
+    "2020-02": 7,
+    "2020-03": 3,
+    "2020-04": 3,
+    "2020-05": 2,
+    "2020-06": 3,
+    "2020-07": 9,
+    "2020-08": 1,
+    "2020-09": 4,
+    "2020-10": 4,
+    "2020-11": 23,
+    "2020-12": 4,
+    "2021-01": 7,
+    "2021-02": 16,
+    "2021-03": 18,
+    "2021-04": 22,
+    "2021-05": 9,
+    "2021-06": 2,
+    "2021-07": 6,
+    "2021-08": 12,
+    "2021-09": 10,
+    "2021-10": 29,
+    "2021-11": 6,
+    "2021-12": 3,
+    "2022-01": 4,
+    "2022-02": 3,
+    "2022-03": 11,
+    "2022-04": 3,
+    "2022-05": 19,
+    "2022-06": 24,
+    "2022-07": 16,
+    "2022-08": 1,
+    "2022-09": 1,
+    "2022-10": 4,
+    "2022-11": 1,
+    "2022-12": 2,
+    "2023-01": 4,
+    "2023-02": 5,
+    "2023-03": 8,
+    "2023-04": 4,
+    "2023-05": 6,
+    "2023-06": 3,
+    "2023-07": 17,
+    "2023-08": 7,
+    "2023-09": 11,
+    "2023-10": 14,
+    "2023-11": 8,
+    "2023-12": 7,
+    "2024-01": 2,
+    "2024-02": 6,
+    "2024-04": 3,
+    "2024-05": 5,
+    "2024-06": 3,
+    "2024-07": 1,
+    "2024-08": 6,
+    "2024-09": 2,
+    "2024-10": 1,
+    "2024-12": 1,
+    "2025-01": 2,
+    "2025-03": 2,
+    "2025-04": 4,
+    "2025-06": 4,
+    "2025-07": 1,
+    "2025-08": 15,
+    "2025-09": 16,
+    "2025-10": 9,
+    "2025-11": 3,
+    "2025-12": 4,
+    "2026-01": 1,
+    "2026-02": 11,
+    "2026-03": 3
+  },
+  "learning_phases": [
+    {
+      "name": "First Spark",
+      "dates": "2025-06-01 to 2025-07-31",
+      "description": "First AI exploration — searching for offline LLM on Mac",
+      "searches": [
+        "what is the easiest way to run an offline llm on mac"
+      ],
+      "signal": "Curiosity about local AI, not yet coding with it"
+    },
+    {
+      "name": "GPT Discovery",
+      "dates": "2025-08-01 to 2025-08-31",
+      "description": "Intensive ChatGPT exploration — GPT-5, custom GPTs, comparisons",
+      "searches": [
+        "chat gpt5",
+        "chatgpt 5",
+        "custom gpt",
+        "chatgpt five versus gemini 2.5"
+      ],
+      "signal": "Evaluating AI capabilities, looking for practical workflows"
+    },
+    {
+      "name": "Tool Stack Formation",
+      "dates": "2025-09-01 to 2025-09-30",
+      "description": "MCP servers, Cursor, local voice assistants — building the mental model",
+      "searches": [
+        "claude mcp server setup local",
+        "cursor and other mac terminal tools",
+        "make your own llm local voice assistant"
+      ],
+      "signal": "Moving from consumer AI to developer tools. MCP discovery is pivotal."
+    },
+    {
+      "name": "Agent Awakening",
+      "dates": "2025-10-01 to 2025-10-31",
+      "description": "Claude Agent SDK, vibe coding, tech stack selection — agents become real",
+      "searches": [
+        "how to use claude agent sdk",
+        "droid versus claude code",
+        "best programming languages for vibe coding"
+      ],
+      "signal": "First search for Claude Code alternatives. Vibe coding as concept enters vocabulary."
+    },
+    {
+      "name": "Quiet Consolidation",
+      "dates": "2025-11-01 to 2026-01-31",
+      "description": "CLI coding agents, GPT 5.2 — fewer searches, deeper engagement",
+      "searches": [
+        "cli coding ai agent",
+        "gpt 5.2",
+        "claude"
+      ],
+      "signal": "Less searching, more doing. Learning through building."
+    },
+    {
+      "name": "Claude Code Adoption",
+      "dates": "2026-02-01 to 2026-02-28",
+      "description": "Claude Code, skills, sidecar tools, Mac Studio for local LLM — full commitment",
+      "searches": [
+        "claude code",
+        "claude code skills",
+        "sidecar cli coding tool",
+        "local ai cluster",
+        "mac studio for local llm"
+      ],
+      "signal": "Coincides with Liminal Era 1 (Seed). These searches are the exact week the project begins."
+    },
+    {
+      "name": "Advanced Agentic",
+      "dates": "2026-03-01 to 2026-03-31",
+      "description": "Sniper agents, Hermes agent — exploring frontier agentic patterns",
+      "searches": [
+        "sniper agents ai coding",
+        "hermes agent"
+      ],
+      "signal": "Parallel to Liminal Eras 4-9. Searches now about advanced patterns, not basics."
+    }
+  ]
+}

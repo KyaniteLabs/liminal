@@ -1,0 +1,19 @@
+{
+  "id": "html",
+  "name": "HTML Web Generator",
+  "version": "2.0.0",
+  "description": "Generates HTML/CSS web pages and components",
+  "entry": "index.js",
+  "domains": ["html", "css", "web"],
+  "keywords": [
+    "html",
+    "css",
+    "web",
+    "page",
+    "website",
+    "portfolio",
+    "landing"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

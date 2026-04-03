@@ -26,4 +26,7 @@ export { createBackupTool, restoreBackupTool, CreateBackupTool, RestoreBackupToo
 export { rateLimiter, RateLimiter } from './RateLimiter.js';
 export { validationGuard, ValidationGuard } from './ValidationGuard.js';
 
+export { toolTelemetry, ToolTelemetry, type ToolCallRecord, type ToolTelemetryAnalysis } from './ToolTelemetry.js';
+export { telemetryWrapper, TelemetryWrapper, type ToolContext } from './TelemetryWrapper.js';
+
 export { createBackup, restoreBackup, cleanupOldBackups, listBackups } from './backup.js';

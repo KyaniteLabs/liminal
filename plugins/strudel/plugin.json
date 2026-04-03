@@ -1,0 +1,19 @@
+{
+  "id": "strudel",
+  "name": "Strudel Music Generator",
+  "version": "2.0.0",
+  "description": "Generates Strudel live coding music patterns",
+  "entry": "index.js",
+  "domains": ["strudel", "music", "audio", "live coding"],
+  "keywords": [
+    "strudel",
+    "tidal",
+    "music",
+    "pattern",
+    "beat",
+    "drum",
+    "sequencer"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

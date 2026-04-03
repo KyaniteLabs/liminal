@@ -1,0 +1,20 @@
+{
+  "id": "shader",
+  "name": "GLSL Shader Generator",
+  "version": "2.0.0",
+  "description": "Generates GLSL fragment shaders for WebGL with ray marching, SDFs, and visual effects",
+  "entry": "index.js",
+  "domains": ["glsl", "shader", "fragment", "webgl"],
+  "keywords": [
+    "shader",
+    "glsl",
+    "fragment",
+    "ray march",
+    "sdf",
+    "webgl",
+    "noise",
+    "pattern"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

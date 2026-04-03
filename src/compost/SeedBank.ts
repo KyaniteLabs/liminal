@@ -42,8 +42,13 @@ export class SeedBank {
 
   /** Persist seeds to disk. */
   private async save(): Promise<void> {
-    await fs.mkdir(this.seedDir, { recursive: true });
-    await fs.writeFile(this.seedsPath, JSON.stringify(this.seeds, null, 2), 'utf-8');
+    try {
+      await fs.mkdir(this.seedDir, { recursive: true });
+      await fs.writeFile(this.seedsPath, JSON.stringify(this.seeds, null, 2), 'utf-8');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to save seeds: ${message}`);
+    }
   }
 
   /** Add a seed to the bank. */

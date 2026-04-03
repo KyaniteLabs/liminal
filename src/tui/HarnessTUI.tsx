@@ -22,7 +22,6 @@ import {
 } from '../harness/index.js';
 import { NaturalInterface } from './NaturalInterface.js';
 import { audioPlayer } from './preview/index.js';
-import { formatError } from '../utils/errors.js';
 
 const C = {
   primary: 'cyan',
@@ -501,10 +500,10 @@ export async function startHarnessTUI() {
     // If validation passes, render the TUI
     render(<App />);
   } catch (error) {
-    const message = formatError('TUI', error);
+    const message = error instanceof Error ? error.message : String(error);
     
     // Print error to stderr (not stdout, so it doesn't interfere with piping)
-    process.stderr.write('\n' + message.split(': ').slice(1).join(': ') + '\n\n');
+    process.stderr.write('\n' + message + '\n\n');
     
     // Exit with error code
     process.exit(1);

@@ -13,6 +13,11 @@ import archiver from 'archiver';
 import { createWriteStream } from 'fs';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { CodeValidator } from '../core/CodeValidator.js';
+import {
+  validateCode,
+  validateOutputPath,
+  validateProjectName,
+} from '../utils/validation.js';
 import { RemotionRenderer } from '../render/RemotionRenderer.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
 
@@ -43,15 +48,9 @@ export class Exporter {
    * @throws Error if validation fails or file system error occurs
    */
   async exportHTML(code: string, outputPath: string): Promise<void> {
-    // Validate code
-    if (!code || typeof code !== 'string' || code.trim() === '') {
-      throw new Error('Code is required and must be a non-empty string');
-    }
-
-    // Validate output path
-    if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
-      throw new Error('Output path is required and must be a non-empty string');
-    }
+    // Validate inputs
+    validateCode(code);
+    validateOutputPath(outputPath);
 
     // Structural validation before wrapping
     const validation = CodeValidator.validate(code);
@@ -86,15 +85,9 @@ export class Exporter {
    * @throws Error if validation fails or file system error occurs
    */
   async exportJS(code: string, outputPath: string): Promise<void> {
-    // Validate code
-    if (!code || typeof code !== 'string' || code.trim() === '') {
-      throw new Error('Code is required and must be a non-empty string');
-    }
-
-    // Validate output path
-    if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
-      throw new Error('Output path is required and must be a non-empty string');
-    }
+    // Validate inputs
+    validateCode(code);
+    validateOutputPath(outputPath);
 
     // Structural validation before saving
     const validation = CodeValidator.validate(code);
@@ -148,15 +141,9 @@ export class Exporter {
       throw new Error('Project is required');
     }
 
-    // Validate project name
-    if (!project.name || typeof project.name !== 'string' || project.name.trim() === '') {
-      throw new Error('Project name is required');
-    }
-
-    // Validate output path
-    if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
-      throw new Error('Output path is required and must be a non-empty string');
-    }
+    // Validate inputs
+    validateProjectName(project.name);
+    validateOutputPath(outputPath);
 
     // Create directory if it doesn't exist
     const dir = path.dirname(outputPath);
@@ -233,15 +220,9 @@ export class Exporter {
    * @throws Error if validation fails or rendering fails
    */
   async exportVideo(code: string, outputPath: string, options: VideoExportOptions): Promise<void> {
-    // Validate code
-    if (!code || typeof code !== 'string' || code.trim() === '') {
-      throw new Error('Code is required');
-    }
-
-    // Validate output path
-    if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
-      throw new Error('Output path is required');
-    }
+    // Validate inputs
+    validateCode(code);
+    validateOutputPath(outputPath, 'Output path is required');
 
     // Validate domain
     if (!options?.domain) {

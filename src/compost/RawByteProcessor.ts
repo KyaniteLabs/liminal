@@ -53,12 +53,4 @@ export class RawByteProcessor {
     return chunks;
   }
 
-  /** Get full base64 encoding for files under 100KB, null otherwise. */
-  static async getBase64(filePath: string): Promise<string | null> {
-    const stat = await fs.stat(filePath);
-    if (stat.size >= BASE64_MAX_SIZE) return null;
-
-    const buffer = await fs.readFile(filePath);
-    return buffer.toString('base64');
-  }
 }

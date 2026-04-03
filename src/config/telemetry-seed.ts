@@ -542,37 +542,4 @@ export const SEED_TELEMETRY: GenerationTelemetry[] = [
   })),
 ] as GenerationTelemetry[];
 
-/**
- * Summary statistics from seed data
- */
-export const SEED_SUMMARY = {
-  totalExamples: 48,
-  successfulGenerations: 46,
-  failedGenerations: 2,
-  tooSmallGenerations: 6,
-  overallSuccessRate: 0.96,
-  domainSuccessRates: {
-    'p5': 1.0,        // 6/6
-    'glsl': 1.0,      // 6/6
-    'three': 0.83,    // 5/6 (1 failed)
-    'hydra': 0.5,     // 2/4 (2 too small)
-    'strudel': 1.0,   // 6/6
-    'remotion': 1.0,  // 6/6
-    'html': 1.0,      // 6/6 (template)
-    'ascii': 1.0,     // 6/6 (template)
-  },
-  modelsToAvoid: {
-    'three': ['qwen3.5-9b'],
-    'hydra': ['qwen3.5-9b', 'minimax-m2.5', 'qwen3-coder-40b', 'kimi-k2.5'],
-  },
-  slowModels: ['qwen3.5-9b'],
-  fastModels: ['gemma3-4b', 'minimax-m2.5'],
-  qualityLeaders: {
-    'p5': ['minimax-m2.5', 'minimax-m2.7', 'kimi-k2.5'],
-    'glsl': ['minimax-m2.7', 'kimi-k2.5', 'qwen3-coder-40b'],
-    'three': ['minimax-m2.7', 'minimax-m2.5'],
-    'hydra': ['minimax-m2.7', 'gemma3-4b'],
-    'strudel': ['qwen3-coder-40b', 'gemma3-4b'],
-    'remotion': ['minimax-m2.7', 'qwen3-coder-40b', 'qwen3.5-9b'],
-  },
-};
+

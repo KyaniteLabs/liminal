@@ -19,6 +19,8 @@ import { createProvider } from './ProviderFactory.js';
 import { CapabilityRegistry } from './CapabilityRegistry.js';
 import { BaseProvider } from './providers/BaseProvider.js';
 import type { ProviderRequest, ProviderResponse } from './ProviderTypes.js';
+import type { ModelRole, ResolvedRoleConfig } from '../config/RoleConfig.js';
+import { loadRoleConfig } from '../config/RoleConfig.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -31,6 +33,12 @@ export interface LLMConfig {
   temperature?: number;
   /** Maximum tokens to generate */
   maxTokens?: number;
+  /**
+   * Optional role — when set, resolves config from RoleConfig system
+   * (generator/evaluator/harness). Overrides baseUrl/model/apiKey from
+   * role-based configuration if available.
+   */
+  role?: ModelRole;
   /**
    * API style - DEPRECATED, silently ignored.
    * Provider detection is now handled by ProviderFactory.
@@ -90,16 +98,40 @@ export class LLMClient {
   private config: LLMConfig;
   private cache = new CacheManager({ enabled: true });
   private provider: BaseProvider | null = null;
+  private role: ModelRole | undefined;
+  /** Cached role config — populated lazily when role is used */
+  private static roleConfigs: Record<ModelRole, ResolvedRoleConfig> | null = null;
 
   constructor(config?: Partial<LLMConfig>) {
-    const baseUrl = config?.baseUrl || env('LLM_BASE_URL') || SERVICE_DEFAULTS.LOCAL_LLM_URL;
+    this.role = config?.role;
+
+    // If a role is specified, try to resolve from RoleConfig system
+    let roleBaseUrl: string | undefined;
+    let roleApiKey: string | undefined;
+    let roleModel: string | undefined;
+    let roleTemperature: number | undefined;
+    let roleMaxTokens: number | undefined;
+
+    if (this.role) {
+      const roleCfg = LLMClient.getRoleConfigSync(this.role);
+      if (roleCfg) {
+        roleBaseUrl = roleCfg.baseUrl;
+        roleApiKey = roleCfg.apiKey;
+        roleModel = roleCfg.model;
+        roleTemperature = roleCfg.temperature;
+        roleMaxTokens = roleCfg.maxTokens;
+      }
+    }
+
+    const baseUrl = config?.baseUrl || roleBaseUrl || env('LLM_BASE_URL') || SERVICE_DEFAULTS.LOCAL_LLM_URL;
 
     this.config = {
       baseUrl,
-      apiKey: config?.apiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY,
-      model: config?.model || env('LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL,
-      temperature: config?.temperature ?? 0.7,
-      maxTokens: config?.maxTokens ?? 4096,
+      apiKey: config?.apiKey ?? roleApiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY,
+      model: config?.model || roleModel || env('LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL,
+      temperature: config?.temperature ?? roleTemperature ?? 0.7,
+      maxTokens: config?.maxTokens ?? roleMaxTokens ?? 4096,
+      role: this.role,
       // apiStyle is deprecated — silently accepted but ignored
       apiStyle: config?.apiStyle,
       endpointPath: config?.endpointPath,
@@ -107,6 +139,71 @@ export class LLMClient {
       transformRequest: config?.transformRequest,
       parseResponse: config?.parseResponse,
     };
+  }
+
+  /**
+   * Resolve role config synchronously (uses cached or env-var-only fallback).
+   * Full RoleConfig loading is async, but constructors can't be async.
+   * Call `LLMClient.loadRoles()` once at startup to populate the cache.
+   */
+  private static getRoleConfigSync(role: ModelRole): ResolvedRoleConfig | null {
+    if (LLMClient.roleConfigs) {
+      return LLMClient.roleConfigs[role] || null;
+    }
+    // Synchronous env-var fallback for each role
+    const envMap: Record<ModelRole, { baseUrl: string[]; model: string[]; apiKey: string[] }> = {
+      generator: {
+        baseUrl: ['LLM_BASE_URL'],
+        model: ['LLM_MODEL'],
+        apiKey: ['LLM_API_KEY'],
+      },
+      evaluator: {
+        baseUrl: ['EVALUATOR_BASE_URL', 'LLM_BASE_URL'],
+        model: ['EVALUATOR_MODEL', 'LLM_MODEL'],
+        apiKey: ['EVALUATOR_API_KEY', 'LLM_API_KEY'],
+      },
+      harness: {
+        baseUrl: ['HARNESS_BASE_URL', 'LLM_BASE_URL'],
+        model: ['HARNESS_MODEL', 'LLM_MODEL'],
+        apiKey: ['HARNESS_API_KEY', 'LLM_API_KEY'],
+      },
+    };
+    const sources = envMap[role];
+    const baseUrl = sources.baseUrl.map(k => env(k)).find(Boolean);
+    const model = sources.model.map(k => env(k)).find(Boolean);
+    const apiKey = sources.apiKey.map(k => process.env[k] || env(k)).find(Boolean);
+
+    if (baseUrl || model) {
+      return {
+        baseUrl: baseUrl || SERVICE_DEFAULTS.LOCAL_LLM_URL,
+        model: model || SERVICE_DEFAULTS.DEFAULT_MODEL,
+        apiKey,
+        temperature: role === 'generator' ? 0.7 : role === 'evaluator' ? 0.2 : 0.5,
+        maxTokens: 4096,
+        timeout: 120000,
+        thinking: { enabled: false },
+        streaming: role === 'harness',
+      };
+    }
+    return null;
+  }
+
+  /**
+   * Load role configs from file (async). Call once at startup.
+   * After this, constructors with `role` will use cached file config.
+   */
+  static async loadRoles(projectDir?: string): Promise<void> {
+    try {
+      LLMClient.roleConfigs = await loadRoleConfig(projectDir);
+    } catch {
+      // Role config loading failure is non-fatal — env vars still work
+      LLMClient.roleConfigs = null;
+    }
+  }
+
+  /** Get the role this client was configured for */
+  getRole(): ModelRole | undefined {
+    return this.role;
   }
 
   // ── Provider delegation ──

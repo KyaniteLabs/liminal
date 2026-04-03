@@ -40,6 +40,19 @@ const MODEL_CAPABILITIES: Record<string, Partial<ModelCapabilities>> = {
   'gemini-2.5-pro*':    { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 2000000, thinkingStyle: 'budget_tokens', streamingStyle: 'sse' },
   'gemini-2.5-flash*':  { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 1000000, thinkingStyle: 'budget_tokens', streamingStyle: 'sse' },
 
+  // Google Gemma 4 (released April 2026, Apache 2.0)
+  // All sizes support native thinking via <|channel>thought tokens and function calling.
+  // Ollama handles thinking parsing server-side, exposing it as a separate field.
+  'gemma-4-31b*':       { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'think_tags', streamingStyle: 'sse' },
+  'gemma-4-26b*':       { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'think_tags', streamingStyle: 'sse' },
+  'gemma-4-E4B*':       { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'think_tags', streamingStyle: 'sse' },
+  'gemma-4-E2B*':       { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'think_tags', streamingStyle: 'sse' },
+  'gemma4:31b*':        { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'think_tags', streamingStyle: 'json_lines' },
+  'gemma4:26b*':        { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'think_tags', streamingStyle: 'json_lines' },
+  'gemma4:E4B*':        { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'think_tags', streamingStyle: 'json_lines' },
+  'gemma4:E2B*':        { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'think_tags', streamingStyle: 'json_lines' },
+  'gemma4*':            { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'think_tags', streamingStyle: 'json_lines' },
+
   // DeepSeek
   'deepseek-r1*':       { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'think_tags', streamingStyle: 'sse' },
   'deepseek-chat*':     { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },

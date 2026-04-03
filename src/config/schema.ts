@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getAllProviders, getDefaultProvider } from '../types/providers.js';
+import { ConfigError } from '../errors/ConfigError.js';
 
 /**
  * LLM Configuration Schema
@@ -25,7 +26,10 @@ export function validateLLMConfig(config: unknown): LLMConfig {
   } catch (error) {
     if (error instanceof z.ZodError) {
       const issues = error.issues.map(i => `${i.path.join('.')}: ${i.message}`).join('\n  ');
-      throw new Error(`Configuration validation failed:\n  ${issues}\n\nSee docs/config.md for configuration options.`);
+      throw new ConfigError('Configuration validation failed', {
+        issues,
+        docs: 'docs/config.md'
+      });
     }
     throw error;
   }

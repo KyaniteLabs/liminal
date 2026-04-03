@@ -7,8 +7,8 @@ import type { LIRToken } from '../core/lir/types.js';
 /** Digest schedule mode. */
 export type DigestSchedule = 'manual' | 'daily' | 'weekly';
 
-/** LLM provider mode. */
-export type LLMProviderMode = 'local' | 'cloud' | 'auto';
+/** @deprecated Provider mode is no longer used - use baseUrl directly */
+type LLMProviderMode = 'local' | 'cloud' | 'auto';
 
 /** Fragment extraction layer. */
 export type FragmentLayer = 'semantic' | 'structured' | 'raw';

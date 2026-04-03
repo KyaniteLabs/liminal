@@ -12,6 +12,7 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Logger } from '../utils/Logger.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
+import { validateString } from '../utils/validation.js';
 
 export class Renderer {
   private readonly RENDER_TIMEOUT = 30000;
@@ -61,13 +62,8 @@ export class Renderer {
    * @throws Error if rendering fails or output path is invalid
    */
   async render(code: string, outputPath: string): Promise<void> {
-    if (!code || typeof code !== 'string') {
-      throw new Error('Sketch code is required and must be a non-empty string');
-    }
-
-    if (!outputPath || typeof outputPath !== 'string') {
-      throw new Error('Output path is required and must be a string');
-    }
+    validateString(code, 'Sketch code');
+    validateString(outputPath, 'Output path');
 
     const outputDir = path.dirname(outputPath);
     try {

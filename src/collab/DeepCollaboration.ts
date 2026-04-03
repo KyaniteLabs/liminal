@@ -41,8 +41,9 @@ import type {
   PhaseResult,
   Analysis,
   PhaseUpdate,
-  DomainType,
+
 } from './types.js';
+import { Domain } from '../types/domains.js';
 
 /**
  * Deep collaborative client with specialized roles and phases
@@ -81,7 +82,7 @@ export class DeepCollaboration {
    */
   async generate(
     prompt: string,
-    domain: DomainType = '',
+    domain: Domain = Domain.EMPTY,
     systemPrompt: string = '',
     phaseCallback?: (update: PhaseUpdate) => void
   ): Promise<string> {
@@ -107,7 +108,7 @@ export class DeepCollaboration {
    */
   async generateDeepCollaboration(
     prompt: string,
-    domain: DomainType = '',
+    domain: Domain = Domain.EMPTY,
     systemPrompt: string = '',
     phaseCallback?: (update: PhaseUpdate) => void
   ): Promise<DeepCollaborationResult> {
@@ -283,7 +284,7 @@ export class DeepCollaboration {
    */
   private async phaseDivergence(
     prompt: string,
-    domain: DomainType,
+    domain: Domain,
     systemPrompt: string
   ): Promise<PhaseResult> {
     const start = Date.now();
@@ -333,7 +334,7 @@ export class DeepCollaboration {
   private async phaseAnalysis(
     prompt: string,
     currentOutput: string,
-    domain: DomainType,
+    domain: Domain,
     systemPrompt: string
   ): Promise<PhaseResult> {
     const start = Date.now();
@@ -392,7 +393,7 @@ export class DeepCollaboration {
     prompt: string,
     currentOutput: string,
     analyses: Analysis[],
-    domain: DomainType,
+    domain: Domain,
     systemPrompt: string
   ): Promise<PhaseResult> {
     const start = Date.now();

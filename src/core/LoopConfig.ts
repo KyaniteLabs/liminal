@@ -10,7 +10,8 @@ import { NoveltyArchive } from '../evolution/NoveltyArchive.js';
 import type { EvaluationStrategy } from './ScoringEngine.js';
 import type { SafetyConfig } from './SafetyGuardrails.js';
 import type { CollaborationMode } from '../collab/CollaborationEngine.js';
-import type { DeepCollaborationConfig, CollaborativeConfig, DomainType } from '../collab/types.js';
+import type { DeepCollaborationConfig, CollaborativeConfig } from '../collab/types.js';
+import { Domain } from '../types/domains.js';
 import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
 
 export const DEFAULT_MAX_ITERATIONS = 20;
@@ -67,7 +68,7 @@ export interface LoopOptions {
   /** Configuration for collaboration (merged with defaults) */
   collabConfig?: Partial<DeepCollaborationConfig & CollaborativeConfig>;
   /** Domain for collaboration quality assessment (default: 'p5') */
-  collabDomain?: DomainType;
+  collabDomain?: Domain;
   /** Enable swarm generation (7-persona Ollama swarm) */
   useSwarm?: boolean;
   /** Configuration for the swarm */
@@ -141,7 +142,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   useDeepCollab: boolean;
   useCollab: boolean;
   collabConfig: Partial<DeepCollaborationConfig & CollaborativeConfig>;
-  collabDomain: DomainType;
+  collabDomain: Domain;
   useSwarm: boolean;
   swarmConfig: Partial<SwarmConfig>;
   swarmMode: SwarmMode;
@@ -193,7 +194,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     useCollab: options?.useCollab ?? false,
     collabConfig: options?.collabConfig || {},
     collabMode: options?.collabMode,
-    collabDomain: options?.collabDomain || 'p5',
+    collabDomain: options?.collabDomain || Domain.P5,
     useSwarm: options?.useSwarm ?? false,
     swarmConfig: options?.swarmConfig || {},
     swarmMode: options?.swarmMode ?? ('hybrid' as SwarmMode),

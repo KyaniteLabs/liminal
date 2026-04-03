@@ -45,6 +45,7 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { env } from '../utils/env.js';
+import { Provider } from '../types/providers.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -133,10 +134,10 @@ export class LLMClient {
     // But Ollama also has OpenAI-compatible mode at /v1
     // If URL ends with /v1, use OpenAI style
     if (baseUrl.endsWith('/v1')) {
-      return 'openai';
+      return Provider.OPENAI;
     }
     // Otherwise assume Ollama native
-    return 'ollama';
+    return Provider.OLLAMA;
   }
 
   /** Detect provider name from baseUrl or model for logging */
@@ -144,13 +145,13 @@ export class LLMClient {
     const baseUrl = this.config.baseUrl.toLowerCase();
     const model = this.config.model.toLowerCase();
     
-    if (baseUrl.includes('minimax')) return 'minimax';
-    if (baseUrl.includes('openai')) return 'openai';
+    if (baseUrl.includes('minimax')) return Provider.MINIMAX;
+    if (baseUrl.includes('openai')) return Provider.OPENAI;
     if (baseUrl.includes('anthropic')) return 'anthropic';
-    if (baseUrl.includes('localhost:11434')) return 'ollama';
-    if (baseUrl.includes('localhost:1234') || baseUrl.includes('lmstudio')) return 'lmstudio';
-    if (model.includes('qwen')) return 'lmstudio';
-    if (model.includes('llama')) return 'ollama';
+    if (baseUrl.includes('localhost:11434')) return Provider.OLLAMA;
+    if (baseUrl.includes('localhost:1234') || baseUrl.includes('lmstudio')) return Provider.LMSTUDIO;
+    if (model.includes('qwen')) return Provider.LMSTUDIO;
+    if (model.includes('llama')) return Provider.OLLAMA;
     if (model.includes('gemma') || model.includes('mistral')) return 'local';
     
     return 'local';

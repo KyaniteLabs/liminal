@@ -1,6 +1,8 @@
 # AGENTS.md - Liminal Meta-Harness
 
-**Last Updated:** 2026-04-01
+**Last Updated:** 2026-04-03
+
+**Cross-agent rules:** See `~/.agents/rules/UNIVERSAL.md` for the 10 golden principles shared across all agents.
 
 ---
 

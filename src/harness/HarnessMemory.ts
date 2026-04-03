@@ -13,13 +13,14 @@
 import { promises as fs } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
+import { Status } from '../types/status.js';
 
 // Task tracking
 export interface HarnessTask {
   id: string;
   type: 'M1' | 'M2' | 'M3' | 'M4' | 'M5' | 'M6' | 'M7' | 'M8' | 'M9' | 'M10' | 'M11' | 'custom';
   description: string;
-  status: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped';
+  status: Status.PENDING | Status.IN_PROGRESS | Status.COMPLETED | Status.FAILED | Status.SKIPPED;
   startedAt?: string;
   completedAt?: string;
   error?: string;
@@ -196,7 +197,7 @@ export class HarnessMemory {
     const newTask: HarnessTask = {
       ...task,
       id,
-      status: 'in_progress',
+      status: Status.IN_PROGRESS,
       startedAt: new Date().toISOString(),
     };
     this.state.tasks.push(newTask);
@@ -230,14 +231,14 @@ export class HarnessMemory {
    * Get pending tasks
    */
   getPendingTasks(): HarnessTask[] {
-    return this.state.tasks.filter(t => t.status === 'pending');
+    return this.state.tasks.filter(t => t.status === Status.PENDING);
   }
 
   /**
    * Get incomplete tasks (pending or in_progress)
    */
   getIncompleteTasks(): HarnessTask[] {
-    return this.state.tasks.filter(t => t.status === 'pending' || t.status === 'in_progress');
+    return this.state.tasks.filter(t => t.status === Status.PENDING || t.status === Status.IN_PROGRESS);
   }
 
   /**
@@ -403,9 +404,9 @@ export class HarnessMemory {
     return {
       initialized: true,
       tasksTotal: this.state.tasks.length,
-      tasksPending: this.state.tasks.filter(t => t.status === 'pending').length,
-      tasksInProgress: this.state.tasks.filter(t => t.status === 'in_progress').length,
-      tasksCompleted: this.state.tasks.filter(t => t.status === 'completed').length,
+      tasksPending: this.state.tasks.filter(t => t.status === Status.PENDING).length,
+      tasksInProgress: this.state.tasks.filter(t => t.status === Status.IN_PROGRESS).length,
+      tasksCompleted: this.state.tasks.filter(t => t.status === Status.COMPLETED).length,
       adaptationsTotal: this.state.adaptations.length,
       adaptationsSuccessful: this.state.adaptations.filter(a => a.success).length,
       episodesTotal: this.state.episodes.length,

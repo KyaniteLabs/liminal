@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import { VideoExporter } from '../export/VideoExporter.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
-import type { Domain } from '../chat/types.js';
+import { Domain } from '../types/domains.js';
 
 export interface RecordingOptions {
   fps: number;
@@ -117,14 +117,14 @@ export class CanvasRecorder {
   }
 
   private wrapForDomain(code: string, domain: Domain): string {
-    if (domain === 'p5') {
+    if (domain === Domain.P5) {
       return HTMLWrapper.wrap(code);
     }
     // Accept 'shader' domain; also handle any non-Domain string that looks like GLSL
-    if (domain === 'shader') {
+    if (domain === Domain.SHADER) {
       return HTMLWrapper.wrap(code, { domain: 'shader' as any });
     }
-    if (domain === 'three') {
+    if (domain === Domain.THREE) {
       // Three.js code may already be complete HTML
       if (code.trim().startsWith('<!DOCTYPE') || code.trim().startsWith('<html')) {
         return code;

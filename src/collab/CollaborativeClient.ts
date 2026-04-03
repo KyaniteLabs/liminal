@@ -20,8 +20,8 @@ import type {
   CollaborativeResult,
   CollaborationRound,
   PhaseUpdate,
-  DomainType,
 } from './types.js';
+import { Domain } from '../types/domains.js';
 
 /**
  * Client that makes Local and Cloud collaborate deeply
@@ -57,7 +57,7 @@ export class CollaborativeClient {
    */
   async generate(
     prompt: string,
-    domain: DomainType = '',
+    domain: Domain = Domain.EMPTY,
     systemPrompt: string = '',
     progressCallback?: (update: PhaseUpdate) => void
   ): Promise<string> {
@@ -81,7 +81,7 @@ export class CollaborativeClient {
    */
   async generateCollaborative(
     prompt: string,
-    domain: DomainType = '',
+    domain: Domain = Domain.EMPTY,
     systemPrompt: string = '',
     progressCallback?: (update: PhaseUpdate) => void
   ): Promise<CollaborativeResult> {
@@ -314,7 +314,7 @@ export class CollaborativeClient {
     prompt: string,
     localOutput: string,
     cloudOutput: string,
-    domain: DomainType,
+    domain: Domain,
     systemPrompt: string
   ): Promise<[string, string]> {
     // Local analyzes Cloud's work
@@ -381,7 +381,7 @@ export class CollaborativeClient {
     originalPrompt: string,
     output: string,
     author: string,
-    _domain: DomainType
+    _domain: Domain
   ): string {
     return `Analyze this output from ${author} for the following request:
 
@@ -427,7 +427,7 @@ Create an improved version that addresses this feedback while maintaining your s
    */
   private async scoreOutputs(
     outputs: string[],
-    domain: DomainType
+    domain: Domain
   ): Promise<Record<number, number>> {
     const scores: Record<number, number> = {};
     for (let i = 0; i < outputs.length; i++) {

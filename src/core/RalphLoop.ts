@@ -18,6 +18,7 @@
  * - OrganismLoop: organism mode
  */
 
+import { Domain } from '../types/domains.js';
 import { PromptStore } from './PromptStore.js';
 import path from 'node:path';
 import { ContextAccumulation } from './ContextAccumulation.js';
@@ -58,6 +59,7 @@ import { StagnationDetector } from './StagnationDetector.js';
 import { runOrganismMode } from './OrganismLoop.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
 import { env } from '../utils/env.js';
+import { Provider } from '../types/providers.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
 
@@ -89,8 +91,8 @@ export class RalphLoop {
 
     // Warn if swarm mode is used with non-Ollama provider
     if (normalizedOptions.useSwarm) {
-      const provider = env('LLM_PROVIDER') || 'lmstudio';
-      if (provider !== 'ollama') {
+      const provider = env('LLM_PROVIDER') || Provider.LMSTUDIO;
+      if (provider !== Provider.OLLAMA) {
         Logger.warn('RalphLoop', `Swarm mode is designed for Ollama. Current provider is "${provider}". Swarm may not work correctly.`);
       }
     }
@@ -220,7 +222,7 @@ export class RalphLoop {
         
         // Detect output type and run appropriate runtime test
         const outputType = detectOutputType(currentCode);
-        if (outputType === 'glsl') {
+        if (outputType === Domain.GLSL) {
           // For GLSL, we can't easily test in Node, but we can check syntax
           const hasMain = /void\s+main\s*\(/.test(currentCode);
           const hasFragColor = /gl_FragColor/.test(currentCode);
@@ -328,7 +330,7 @@ export class RalphLoop {
         // Use domain-specific threshold if available, otherwise use default minQualityScore
         // Detect domain from prompt keywords if collabDomain is the default 'p5'
         let domain = normalizedOptions.collabDomain || 'p5';
-        if (domain === 'p5') {
+        if (domain === Domain.P5) {
           const promptLower = prompt.toLowerCase();
           if (promptLower.includes('ascii') || promptLower.includes('text art')) domain = 'ascii';
           else if (promptLower.includes('music') || promptLower.includes('strudel') || promptLower.includes('hydra')) domain = 'music';

@@ -4,6 +4,7 @@
  * Meta-Harness uses this to learn from failures and update itself
  */
 
+import { Domain } from '../types/domains.js';
 import { FailureRecord, failureLogger } from './FailureLogger.js';
 
 export interface Pattern {
@@ -40,7 +41,7 @@ export const KNOWN_PATTERNS: Omit<Pattern, 'occurrences' | 'firstSeen' | 'lastSe
     description: 'GLSL code uses functions like noise() or fbm() without defining them',
     detector: (f) => {
       const errors = f.validationErrors || [];
-      return f.domain === 'glsl' &&
+      return f.domain === Domain.GLSL &&
              f.errorType === 'validation' &&
              errors.some(e => e.includes('not defined'));
     }
@@ -51,7 +52,7 @@ export const KNOWN_PATTERNS: Omit<Pattern, 'occurrences' | 'firstSeen' | 'lastSe
     description: 'Tone.js code uses classes that do not exist (e.g., Tone.Reverberator)',
     detector: (f) => {
       const errors = f.validationErrors || [];
-      return f.domain === 'tone' &&
+      return f.domain === Domain.TONE &&
              f.errorType === 'validation' &&
              errors.some(e => e.includes('is not a valid class') || e.includes('does not exist'));
     }
@@ -62,7 +63,7 @@ export const KNOWN_PATTERNS: Omit<Pattern, 'occurrences' | 'firstSeen' | 'lastSe
     description: 'Models use TidalCycles Haskell syntax instead of Strudel JavaScript',
     detector: (f) => {
       const code = f.code || '';
-      return f.domain === 'strudel' &&
+      return f.domain === Domain.STRUDEL &&
              (code.includes('d1 $') || code.includes('sound "')) &&
              !code.includes('$:');
     }

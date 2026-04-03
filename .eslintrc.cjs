@@ -9,6 +9,7 @@ module.exports = {
     ecmaVersion: 'latest',
     sourceType: 'module',
     ecmaFeatures: { jsx: true },
+    project: './tsconfig.json',
   },
   plugins: ['@typescript-eslint'],
   extends: [
@@ -20,6 +21,13 @@ module.exports = {
     '@typescript-eslint/no-explicit-any': 'off',
     'no-empty': ['error', { allowEmptyCatch: true }],
     'no-case-declarations': 'off',
+    // Async/await enforcement rules
+    'prefer-promise-reject-errors': 'error',
+    'require-atomic-updates': 'error',
+    '@typescript-eslint/no-floating-promises': 'error',
+    '@typescript-eslint/require-await': 'warn',
+    '@typescript-eslint/await-thenable': 'error',
+    '@typescript-eslint/no-misused-promises': 'error',
   },
   overrides: [
     {

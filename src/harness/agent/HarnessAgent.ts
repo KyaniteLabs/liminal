@@ -9,6 +9,7 @@
 
 import { LLMClient } from '../../llm/LLMClient.js';
 import { failureLogger } from '../FailureLogger.js';
+import { Status } from '../../types/status.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
 import { selfEvaluation } from '../SelfEvaluation.js';
 import {
@@ -49,7 +50,7 @@ export interface AgentStep {
 export interface AgentSession {
   task: AgentTask;
   steps: AgentStep[];
-  status: 'pending' | 'running' | 'success' | 'failed' | 'rolled_back';
+  status: Status.PENDING | Status.RUNNING | Status.SUCCESS | Status.FAILED | Status.ROLLED_BACK;
   startTime: string;
   endTime?: string;
 }
@@ -89,7 +90,7 @@ export class HarnessAgent {
     const session: AgentSession = {
       task,
       steps: [],
-      status: 'running',
+      status: Status.RUNNING,
       startTime: new Date().toISOString(),
     };
     
@@ -136,9 +137,9 @@ export class HarnessAgent {
         if (autoRollback) {
           console.log(`[HarnessAgent] Rolling back changes...`);
           await this.rollback(session);
-          session.status = 'rolled_back';
+          session.status = Status.ROLLED_BACK;
         } else {
-          session.status = 'failed';
+          session.status = Status.FAILED;
         }
         
         // Log failure for pattern detection
@@ -163,7 +164,7 @@ export class HarnessAgent {
       }
 
       // Success!
-      session.status = 'success';
+      session.status = Status.SUCCESS;
       session.endTime = new Date().toISOString();
       
       console.log(`[HarnessAgent] Task completed successfully!`);
@@ -183,7 +184,7 @@ export class HarnessAgent {
       return session;
       
     } catch (error) {
-      session.status = 'failed';
+      session.status = Status.FAILED;
       session.endTime = new Date().toISOString();
       
       const errorMsg = error instanceof Error ? error.message : String(error);
@@ -215,7 +216,7 @@ export class HarnessAgent {
       if (retryDecision.shouldRetry && autoRollback) {
         console.log(`[HarnessAgent] Self-correction: ${retryDecision.reason}`);
         await this.rollback(session);
-        session.status = 'rolled_back';
+        session.status = Status.ROLLED_BACK;
         
         // Log the retry strategy
         console.log(`[HarnessAgent] Will retry with strategy: ${retryDecision.newStrategy}`);
@@ -223,7 +224,7 @@ export class HarnessAgent {
       
       if (autoRollback && session.steps.length > 0 && !retryDecision.shouldRetry) {
         await this.rollback(session);
-        session.status = 'rolled_back';
+        session.status = Status.ROLLED_BACK;
       }
       
       return session;
@@ -336,9 +337,9 @@ export class HarnessAgent {
 
   generateReport(): string {
     const sessions = this.getAllSessions();
-    const successful = sessions.filter(s => s.status === 'success').length;
-    const failed = sessions.filter(s => s.status === 'failed').length;
-    const rolledBack = sessions.filter(s => s.status === 'rolled_back').length;
+    const successful = sessions.filter(s => s.status === Status.SUCCESS).length;
+    const failed = sessions.filter(s => s.status === Status.FAILED).length;
+    const rolledBack = sessions.filter(s => s.status === Status.ROLLED_BACK).length;
 
     return `
 # HarnessAgent Report

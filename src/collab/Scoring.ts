@@ -5,7 +5,7 @@
  * Used across both CollaborativeClient and DeepCollaboration.
  */
 
-import type { DomainType } from './types.js';
+import { Domain } from '../types/domains.js';
 
 /**
  * Quick heuristic quality score for creative outputs
@@ -17,7 +17,7 @@ import type { DomainType } from './types.js';
  * @param domain - The creative domain (e.g., 'ascii', 'music', 'code')
  * @returns Quality score between 0.0 and 1.0
  */
-export function quickScore(output: string, domain: DomainType): number {
+export function quickScore(output: string, domain: Domain): number {
   let score = 0.5;
 
   // Length check - use more generous range from DeepCollaboration (100-3000)
@@ -50,7 +50,7 @@ export function quickScore(output: string, domain: DomainType): number {
     // Note density (from DeepCollaboration)
     const noteCount = (output.match(/[CDEFGAB]/gi) || []).length;
     if (noteCount >= 10) score += 0.1;
-  } else if (domain === 'code' || domain === 'p5' || domain === 'glsl' || domain === 'three') {
+  } else if (domain === Domain.CODE || domain === Domain.P5 || domain === Domain.GLSL || domain === Domain.THREE) {
     // Code keywords - merged from both versions
     // From CollabClient: basic keywords
     const collabKeywords = ['def ', 'class', 'function', 'return', 'import', 'var', 'let', 'const'];

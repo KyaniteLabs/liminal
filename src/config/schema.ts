@@ -1,10 +1,11 @@
 import { z } from 'zod';
+import { getAllProviders, getDefaultProvider } from '../types/providers.js';
 
 /**
  * LLM Configuration Schema
  */
 export const LLMConfigSchema = z.object({
-  provider: z.enum(['lmstudio', 'ollama', 'minimax', 'openai', 'openrouter', 'glm', 'custom']).default('lmstudio'),
+  provider: z.enum(getAllProviders() as [string, ...string[]]).default(getDefaultProvider()),
   baseUrl: z.string().url().default('http://localhost:1234/v1'),
   model: z.string().min(1).default('qwen2.5-coder-7b-instruct'),
   apiKey: z.string().optional(),

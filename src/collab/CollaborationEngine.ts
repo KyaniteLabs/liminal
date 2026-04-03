@@ -13,7 +13,8 @@ import { SwarmOrchestrator, type SwarmOrchestratorOptions } from '../swarm/Swarm
 import type { SwarmConfig, SwarmMode, SwarmResult } from '../swarm/types.js';
 import { DeepCollaboration } from './DeepCollaboration.js';
 import { CollaborativeClient } from './CollaborativeClient.js';
-import type { DeepCollaborationConfig, DeepCollaborationResult, CollaborativeConfig, CollaborativeResult, PhaseUpdate, DomainType } from './types.js';
+import type { DeepCollaborationConfig, DeepCollaborationResult, CollaborativeConfig, CollaborativeResult, PhaseUpdate } from './types.js';
+import { Domain } from '../types/domains.js';
 import { ScoringEngine } from '../core/ScoringEngine.js';
 
 // ---------------------------------------------------------------------------
@@ -44,7 +45,7 @@ export interface CollaborationEngineConfig {
   /** Which strategy to use. */
   mode: CollaborationMode;
   /** Domain hint for scoring. */
-  domain?: DomainType;
+  domain?: Domain;
   /** System prompt prefix. */
   systemPrompt?: string;
   /** Convergence threshold (0-1). Stop early when quality reaches this. */

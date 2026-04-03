@@ -11,6 +11,7 @@
  * Extracted from RalphLoop.ts (lines 176-193, 346-418, 973-1066).
  */
 
+import { Domain } from '../types/domains.js';
 import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import type { GeneratorEntry } from '../generators/GeneratorRegistry.js';
 import { registerAllGenerators } from '../generators/registerGenerators.js';
@@ -140,7 +141,7 @@ export class GenerationOrchestrator {
 
     const engine = new CollaborationEngine({
       mode: this.options.collabMode!,
-      domain: this.options.collabDomain || 'p5',
+      domain: this.options.collabDomain || Domain.P5,
       systemPrompt: '',
       callLLM: llmCaller,
       convergenceThreshold: this.options.collabConfig?.convergenceThreshold,
@@ -183,7 +184,7 @@ export class GenerationOrchestrator {
     prompt: string,
     fallbackLLM: (prompt: string, systemPrompt?: string) => Promise<string>
   ): Promise<string> {
-    const domain = this.options.collabDomain || 'p5';
+    const domain = this.options.collabDomain || Domain.P5;
 
     if (this.options.useDeepCollab) {
       const collab = new DeepCollaboration({

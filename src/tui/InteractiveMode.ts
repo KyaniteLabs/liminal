@@ -1,5 +1,6 @@
 import readline from 'readline';
 import { PromptHistory } from '../config/PromptHistory.js';
+import { Provider } from '../types/providers.js';
 
 export interface InteractiveOptions {
   provider?: string;
@@ -23,7 +24,7 @@ export class InteractiveMode {
    * Get list of available providers
    */
   getProviders(): string[] {
-    return ['lmstudio', 'minimax', 'ollama', 'openai', 'hybrid'];
+    return [Provider.LMSTUDIO, Provider.MINIMAX, Provider.OLLAMA, Provider.OPENAI, 'hybrid'];
   }
 
   /**
@@ -82,7 +83,7 @@ export class InteractiveMode {
     return new Promise((resolve) => {
       this.rl.question('Select provider (1-' + providers.length + '): ', (answer) => {
         const num = parseInt(answer.trim()) - 1;
-        resolve(providers[num] || 'lmstudio');
+        resolve(providers[num] || Provider.LMSTUDIO);
       });
     });
   }

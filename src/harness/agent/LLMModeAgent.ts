@@ -10,6 +10,7 @@
 
 import { LLMClient } from '../../llm/LLMClient.js';
 import { failureLogger } from '../FailureLogger.js';
+import { Status } from '../../types/status.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
 import { getSelfImprovePrompt, createReflectionPrompt } from '../prompts/self-improve.js';
 import {
@@ -49,7 +50,7 @@ export interface AgentMessage {
 export interface LLMSession {
   task: LLMTask;
   messages: AgentMessage[];
-  status: 'pending' | 'running' | 'success' | 'failed' | 'rolled_back';
+  status: Status.PENDING | Status.RUNNING | Status.SUCCESS | Status.FAILED | Status.ROLLED_BACK;
   startTime: string;
   endTime?: string;
   stepCount: number;
@@ -84,7 +85,7 @@ export class LLMModeAgent {
     const session: LLMSession = {
       task,
       messages: [],
-      status: 'running',
+      status: Status.RUNNING,
       startTime: new Date().toISOString(),
       stepCount: 0,
       backups: [],
@@ -145,7 +146,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Check for completion
         if (toolCall.tool === 'complete') {
           console.log('[LLMModeAgent] Task completed by LLM');
-          session.status = 'success';
+          session.status = Status.SUCCESS;
           session.endTime = new Date().toISOString();
           return session;
         }
@@ -172,9 +173,9 @@ When the task is complete and build passes, respond with tool "complete".`;
             if (session.backups.length > 0) {
               console.log('[LLMModeAgent] Rolling back changes...');
               await this.rollback(session);
-              session.status = 'rolled_back';
+              session.status = Status.ROLLED_BACK;
             } else {
-              session.status = 'failed';
+              session.status = Status.FAILED;
             }
             
             // Log failure
@@ -197,25 +198,25 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       // Max steps reached
       console.error(`[LLMModeAgent] Max steps (${maxSteps}) reached`);
-      session.status = 'failed';
+      session.status = Status.FAILED;
       session.endTime = new Date().toISOString();
       
       // Rollback if needed
       if (session.backups.length > 0) {
         await this.rollback(session);
-        session.status = 'rolled_back';
+        session.status = Status.ROLLED_BACK;
       }
 
       return session;
 
     } catch (error) {
       console.error('[LLMModeAgent] Unexpected error:', error);
-      session.status = 'failed';
+      session.status = Status.FAILED;
       session.endTime = new Date().toISOString();
       
       if (session.backups.length > 0) {
         await this.rollback(session);
-        session.status = 'rolled_back';
+        session.status = Status.ROLLED_BACK;
       }
 
       failureLogger.log({
@@ -424,9 +425,9 @@ When the task is complete and build passes, respond with tool "complete".`;
 
   generateReport(): string {
     const sessions = this.getAllSessions();
-    const successful = sessions.filter(s => s.status === 'success').length;
-    const failed = sessions.filter(s => s.status === 'failed').length;
-    const rolledBack = sessions.filter(s => s.status === 'rolled_back').length;
+    const successful = sessions.filter(s => s.status === Status.SUCCESS).length;
+    const failed = sessions.filter(s => s.status === Status.FAILED).length;
+    const rolledBack = sessions.filter(s => s.status === Status.ROLLED_BACK).length;
 
     return `
 # LLMModeAgent Report

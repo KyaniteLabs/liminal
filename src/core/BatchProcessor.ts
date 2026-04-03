@@ -4,6 +4,8 @@
  * Inspired by Print-OS's batch_processor.py pattern.
  */
 
+import { Status } from '../types/status.js';
+
 /**
  * Represents a single job in the batch processing queue.
  *
@@ -18,7 +20,7 @@ export interface BatchJob<TInput, TOutput> {
   /** Priority value — higher values are processed first when the queue is drained. */
   priority: number;
   /** Current lifecycle status of the job. */
-  status: 'pending' | 'running' | 'completed' | 'failed';
+  status: Status.PENDING | Status.RUNNING | Status.COMPLETED | Status.FAILED;
   /** The successful result, populated once the job completes. */
   result?: TOutput;
   /** Error message, populated when the job fails after all retry attempts. */
@@ -125,7 +127,7 @@ export class BatchProcessor<TInput, TOutput> {
       id,
       input,
       priority,
-      status: 'pending',
+      status: Status.PENDING,
       submittedAt: Date.now(),
     };
     this.queue.push(job);
@@ -161,7 +163,7 @@ export class BatchProcessor<TInput, TOutput> {
       throw new Error('No processor function set. Call setProcessor() first.');
     }
 
-    const pending = this.queue.filter((job) => job.status === 'pending');
+    const pending = this.queue.filter((job) => job.status === Status.PENDING);
 
     // Sort by descending priority so higher-priority jobs run first.
     pending.sort((a, b) => b.priority - a.priority);
@@ -175,12 +177,12 @@ export class BatchProcessor<TInput, TOutput> {
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
-          job.status = 'running';
+          job.status = Status.RUNNING;
           this.activeCount++;
           const result = await processor(job.input);
           this.activeCount--;
 
-          job.status = 'completed';
+          job.status = Status.COMPLETED;
           job.result = result;
           job.completedAt = Date.now();
           return;
@@ -195,7 +197,7 @@ export class BatchProcessor<TInput, TOutput> {
       }
 
       // All retries exhausted — mark as failed.
-      job.status = 'failed';
+      job.status = Status.FAILED;
       job.error = lastError ?? 'Unknown error';
       job.completedAt = Date.now();
     };
@@ -241,10 +243,10 @@ export class BatchProcessor<TInput, TOutput> {
   /**
    * Return all jobs that have completed successfully.
    *
-   * @returns An array of jobs whose status is `'completed'`.
+   * @returns An array of jobs whose status is `Status.COMPLETED`.
    */
   getResults(): Array<BatchJob<TInput, TOutput>> {
-    return this.queue.filter((job) => job.status === 'completed');
+    return this.queue.filter((job) => job.status === Status.COMPLETED);
   }
 
   /**
@@ -255,7 +257,7 @@ export class BatchProcessor<TInput, TOutput> {
    */
   clear(): void {
     this.queue = this.queue.filter(
-      (job) => job.status === 'pending' || job.status === 'running',
+      (job) => job.status === Status.PENDING || job.status === Status.RUNNING,
     );
   }
 
@@ -263,7 +265,7 @@ export class BatchProcessor<TInput, TOutput> {
    * The number of jobs currently waiting to be processed.
    */
   get pendingCount(): number {
-    return this.queue.filter((job) => job.status === 'pending').length;
+    return this.queue.filter((job) => job.status === Status.PENDING).length;
   }
 
   /**

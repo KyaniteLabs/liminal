@@ -11,7 +11,7 @@
 import { CreativeEvaluator } from './CreativeEvaluator.js';
 import { HeuristicScorer } from '../swarm/HeuristicScorer.js';
 import { quickScore } from '../collab/Scoring.js';
-import type { DomainType } from '../collab/types.js';
+import { Domain } from '../types/domains.js';
 import type { SwarmPersona } from '../swarm/types.js';
 
 // ---------------------------------------------------------------------------
@@ -27,7 +27,7 @@ export type EvaluationResult = ScoringResult;
 /** Legacy evaluation context shape (backward-compatible with EvaluationFramework). */
 export interface EvaluationContext {
   prompt?: string;
-  domain?: DomainType;
+  domain?: Domain;
   criteria?: string[];
   previousOutputs?: string[];
   persona?: SwarmPersona;
@@ -53,7 +53,7 @@ export interface ScoringInput {
   /** The creative output to score. */
   output: string;
   /** Domain hint for domain-specific heuristics. */
-  domain?: DomainType;
+  domain?: Domain;
   /** Original prompt / constraint text. */
   prompt?: string;
   /** Previous outputs for novelty calculation. */
@@ -177,7 +177,7 @@ class KeywordStrategy implements ScoringStrategy {
   name = 'keyword';
 
   score(input: ScoringInput): ScoringResult {
-    const raw = quickScore(input.output, input.domain ?? '');
+    const raw = quickScore(input.output, input.domain ?? Domain.EMPTY);
     return {
       score: Math.max(0, Math.min(1, raw)),
       dimensions: {},

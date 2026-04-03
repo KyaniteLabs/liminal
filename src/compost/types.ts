@@ -218,11 +218,3 @@ export interface CollisionPair {
   b: CompostFragment;
   strategy: string;
 }
-
-/** Digest generation inputs. */
-export interface DigestInputs {
-  stats: DigestStats;
-  seeds: Seed[];
-  soupHighlights: string[];
-  domainHeatmap: Record<string, number>;
-}

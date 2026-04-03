@@ -1,0 +1,651 @@
+{
+  "_metadata": {
+    "audit_date": "2026-04-02",
+    "auditor": "Task 1.3: Catalog All Default Values and Constants",
+    "files_analyzed": [
+      "src/constants.ts",
+      "src/config/*.ts",
+      "src/**/defaults.ts",
+      "src/core/LoopConfig.ts",
+      "src/llm/LLMClient.ts",
+      "src/harness/MultiProviderConfig.ts"
+    ]
+  },
+  "service_defaults": {
+    "location": "src/constants.ts",
+    "export": "SERVICE_DEFAULTS",
+    "values": {
+      "PREVIEW_PORT": 3456,
+      "LOCAL_LLM_URL": "http://localhost:1234/v1",
+      "OLLAMA_URL": "http://localhost:11434",
+      "REASONING_URL": "http://localhost:8000",
+      "MINIMAX_URL": "https://api.minimax.io/v1",
+      "P5_VERSION": "1.9.0",
+      "THREE_VERSION": "0.160.0"
+    },
+    "derived_constants": {
+      "P5_CDN": "https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js",
+      "P5_SOUND_CDN": "https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.sound.min.js",
+      "THREE_CDN": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "THREE_ADDONS_CDN": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+    }
+  },
+  "hardcoded_fallbacks": [
+    {
+      "value": "qwen2.5-coder-7b-instruct",
+      "type": "model_name",
+      "description": "Default model for LLM generation",
+      "locations": [
+        {"file": "src/llm/LLMClient.ts", "line": 122},
+        {"file": "src/config/ConfigLoader.ts", "line": 288},
+        {"file": "src/config/ConfigLoader.ts", "line": 315},
+        {"file": "src/tui/index.tsx", "line": 177}
+      ],
+      "occurrences": 4,
+      "priority": "high"
+    },
+    {
+      "value": "lmstudio",
+      "type": "provider",
+      "description": "Default LLM provider",
+      "locations": [
+        {"file": "src/config/ConfigLoader.ts", "line": 267},
+        {"file": "src/config/ConfigLoader.ts", "line": 280},
+        {"file": "src/core/RalphLoop.ts", "line": 96},
+        {"file": "src/tui/InteractiveMode.ts", "line": 85}
+      ],
+      "occurrences": 4,
+      "priority": "high"
+    },
+    {
+      "value": "ollama",
+      "type": "provider",
+      "description": "Default provider for multi-model config",
+      "locations": [
+        {"file": "src/config/ConfigLoader.ts", "line": 313},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 163}
+      ],
+      "occurrences": 2,
+      "priority": "medium"
+    },
+    {
+      "value": "p5",
+      "type": "domain",
+      "description": "Default collaboration domain",
+      "locations": [
+        {"file": "src/core/LoopConfig.ts", "line": 196},
+        {"file": "src/core/RalphLoop.ts", "line": 205},
+        {"file": "src/core/RalphLoop.ts", "line": 334},
+        {"file": "src/core/RalphLoop.ts", "line": 390},
+        {"file": "src/core/RalphLoop.ts", "line": 434},
+        {"file": "src/core/RalphLoop.ts", "line": 446},
+        {"file": "src/core/RalphLoop.ts", "line": 520},
+        {"file": "src/core/RalphLoop.ts", "line": 549},
+        {"file": "src/core/GenerationOrchestrator.ts", "line": 127},
+        {"file": "src/core/GenerationOrchestrator.ts", "line": 143},
+        {"file": "src/core/GenerationOrchestrator.ts", "line": 186},
+        {"file": "src/core/EvolutionIntegration.ts", "line": 91}
+      ],
+      "occurrences": 12,
+      "priority": "high"
+    },
+    {
+      "value": "cascade",
+      "type": "routing_mode",
+      "description": "Default multi-model routing mode",
+      "locations": [
+        {"file": "src/config/ConfigLoader.ts", "line": 326}
+      ],
+      "occurrences": 1,
+      "priority": "low"
+    },
+    {
+      "value": "hybrid",
+      "type": "swarm_mode",
+      "description": "Default swarm generation mode",
+      "locations": [
+        {"file": "src/core/LoopConfig.ts", "line": 199},
+        {"file": "src/swarm/SwarmOrchestrator.ts", "line": 51}
+      ],
+      "occurrences": 2,
+      "priority": "medium"
+    },
+    {
+      "value": "gallery",
+      "type": "directory",
+      "description": "Default gallery directory",
+      "locations": [
+        {"file": "src/core/LoopConfig.ts", "line": 167},
+        {"file": "src/index.ts", "line": 162}
+      ],
+      "occurrences": 2,
+      "priority": "low"
+    },
+    {
+      "value": "http://localhost:1234/v1",
+      "type": "url",
+      "description": "Default local LLM URL (duplicated)",
+      "locations": [
+        {"file": "src/constants.ts", "line": 11},
+        {"file": "src/compost/defaults.ts", "line": 46},
+        {"file": "src/compost/defaults.ts", "line": 51},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 48}
+      ],
+      "occurrences": 4,
+      "priority": "high",
+      "note": "Should use SERVICE_DEFAULTS.LOCAL_LLM_URL"
+    },
+    {
+      "value": "http://localhost:11434",
+      "type": "url",
+      "description": "Default Ollama URL (duplicated)",
+      "locations": [
+        {"file": "src/constants.ts", "line": 13},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 58}
+      ],
+      "occurrences": 2,
+      "priority": "medium",
+      "note": "Should use SERVICE_DEFAULTS.OLLAMA_URL"
+    }
+  ],
+  "magic_numbers": [
+    {
+      "value": 4096,
+      "meaning": "max_tokens default for LLM requests",
+      "context": "Prevents OOM on 8GB GPUs",
+      "locations": [
+        {"file": "src/llm/LLMClient.ts", "line": 124, "context": "LLMClient constructor"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 42, "context": "minimax template"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 52, "context": "lmstudio template"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 62, "context": "ollama template"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 72, "context": "openrouter template"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 82, "context": "glm template"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 92, "context": "custom template"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 222, "context": "HARNESS_DEFAULTS"},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 274, "context": "getHarnessProviderConfig"}
+      ],
+      "total_occurrences": 9,
+      "consolidation_recommendation": "Use HARNESS_DEFAULTS.maxTokens or LLMClient constant"
+    },
+    {
+      "value": 300000,
+      "meaning": "timeout_ms (5 minutes) for OpenAI-compatible LLM calls",
+      "locations": [
+        {"file": "src/llm/LLMClient.ts", "line": 488},
+        {"file": "src/llm/LLMClient.ts", "line": 643},
+        {"file": "src/llm/LLMClient.ts", "line": 743}
+      ],
+      "total_occurrences": 3,
+      "consolidation_recommendation": "Extract to SERVICE_DEFAULTS.LLM_TIMEOUT_MS"
+    },
+    {
+      "value": 120000,
+      "meaning": "timeout_ms (2 minutes) for Ollama native API calls",
+      "locations": [
+        {"file": "src/llm/LLMClient.ts", "line": 535},
+        {"file": "src/llm/LLMClient.ts", "line": 679}
+      ],
+      "total_occurrences": 2,
+      "consolidation_recommendation": "Extract to SERVICE_DEFAULTS.OLLAMA_TIMEOUT_MS"
+    },
+    {
+      "value": 60000,
+      "meaning": "timeout_ms (1 minute) for various operations",
+      "locations": [
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 223, "context": "Harness default timeout"},
+        {"file": "src/harness/tools/RunTestsTool.ts", "line": 17, "context": "Test timeout"},
+        {"file": "src/harness/tools/RunBuildTool.ts", "context": "Build timeout"},
+        {"file": "src/harness/tools/TypeCheckTool.ts", "line": 52, "context": "Type check timeout"},
+        {"file": "src/compost/HeapMonitor.ts", "line": 12, "context": "Heap monitoring interval"},
+        {"file": "src/compost/defaults.ts", "line": 44, "context": "Soup cycle interval"}
+      ],
+      "total_occurrences": 6,
+      "consolidation_recommendation": "Different contexts, keep separate but document"
+    },
+    {
+      "value": 30000,
+      "meaning": "timeout_ms (30 seconds) for shorter operations",
+      "locations": [
+        {"file": "src/compost/defaults.ts", "line": 48, "context": "Compost LLM timeout"},
+        {"file": "src/compost/defaults.ts", "line": 55, "context": "Compost local timeout"},
+        {"file": "src/harness/tools/SearchTool.ts", "line": 64, "context": "Search timeout"},
+        {"file": "src/harness/tools/SearchTool.ts", "line": 113, "context": "Search fallback timeout"},
+        {"file": "src/harness/tools/LSPTool.ts", "line": 79, "context": "LSP timeout"},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 319, "context": "Command timeout"},
+        {"file": "src/harness/MetaHarnessIntegration.ts", "line": 273, "context": "Status check timeout"},
+        {"file": "src/render/Renderer.ts", "line": 17, "context": "Render timeout"},
+        {"file": "src/harness/HarnessMemory.ts", "line": 138, "context": "Memory flush interval"}
+      ],
+      "total_occurrences": 9,
+      "consolidation_recommendation": "Consider DEFAULT_TIMEOUT_MS constant"
+    },
+    {
+      "value": 20,
+      "meaning": "max_iterations for RalphLoop",
+      "locations": [
+        {"file": "src/core/LoopConfig.ts", "line": 16},
+        {"file": "src/index.ts", "line": 91},
+        {"file": "src/index.ts", "line": 157}
+      ],
+      "total_occurrences": 3
+    },
+    {
+      "value": 30,
+      "meaning": "timeout_minutes for RalphLoop",
+      "locations": [
+        {"file": "src/core/LoopConfig.ts", "line": 17},
+        {"file": "src/index.ts", "line": 92},
+        {"file": "src/index.ts", "line": 158}
+      ],
+      "total_occurrences": 3
+    },
+    {
+      "value": 0.7,
+      "meaning": "default_temperature for LLM generation",
+      "locations": [
+        {"file": "src/harness/MultiProviderConfig.ts", "lines": [41, 51, 61, 71, 81, 91]},
+        {"file": "src/config/ConfigLoader.ts", "line": 317, "context": "Multi-model config"},
+        {"file": "src/swarm/personas.ts", "line": 18},
+        {"file": "src/swarm/SwarmOrchestrator.ts", "line": 179},
+        {"file": "src/prompts/specialized/chat.ts", "line": 36}
+      ],
+      "total_occurrences": 11,
+      "consolidation_recommendation": "Use PROVIDER_TEMPLATES or DEFAULT_TEMPERATURE constant"
+    },
+    {
+      "value": 0.2,
+      "meaning": "default_temperature for Meta-Harness (precise code fixes)",
+      "locations": [
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 221, "context": "HARNESS_DEFAULTS"}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 3456,
+      "meaning": "Preview server port",
+      "locations": [
+        {"file": "src/constants.ts", "line": 9},
+        {"file": "src/render/PreviewServer.ts", "line": 42},
+        {"file": "src/index.ts", "line": 105}
+      ],
+      "total_occurrences": 3,
+      "consolidation_recommendation": "Always use SERVICE_DEFAULTS.PREVIEW_PORT"
+    },
+    {
+      "value": 50,
+      "meaning": "max history entries in PromptHistory",
+      "locations": [
+        {"file": "src/config/PromptHistory.ts", "line": 16}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 10,
+      "meaning": "ContextCompactor maxMessages threshold",
+      "locations": [
+        {"file": "src/llm/ContextCompactor.ts", "line": 33}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 20,
+      "meaning": "ContextCompactor maxMessages limit",
+      "locations": [
+        {"file": "src/llm/ContextCompactor.ts", "line": 32}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 8192,
+      "meaning": "Harness context window size",
+      "locations": [
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 225}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 3,
+      "meaning": "Harness max retries",
+      "locations": [
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 224}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 7,
+      "meaning": "Stagnation threshold (iterations without improvement)",
+      "locations": [
+        {"file": "src/core/LoopConfig.ts", "line": 191}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 50,
+      "meaning": "Max iterations cap in LoopConfig normalization",
+      "locations": [
+        {"file": "src/core/RalphLoop.ts", "line": 367}
+      ],
+      "note": "Hardcoded safety cap for iteration extension"
+    },
+    {
+      "value": 0.90,
+      "meaning": "Excellent quality threshold for early termination",
+      "locations": [
+        {"file": "src/core/RalphLoop.ts", "line": 351}
+      ],
+      "note": "Loop terminates early if score >= 0.90 and code is complete"
+    },
+    {
+      "value": 800,
+      "meaning": "Default canvas width (Renderer)",
+      "locations": [
+        {"file": "src/render/Renderer.ts", "line": 18}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 600,
+      "meaning": "Default canvas height (Renderer)",
+      "locations": [
+        {"file": "src/render/Renderer.ts", "line": 19}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 1920,
+      "meaning": "Default video width (Remotion)",
+      "locations": [
+        {"file": "src/render/RemotionRenderer.ts", "line": 51}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 1080,
+      "meaning": "Default video height (Remotion)",
+      "locations": [
+        {"file": "src/render/RemotionRenderer.ts", "line": 52}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 30,
+      "meaning": "Default FPS (Remotion)",
+      "locations": [
+        {"file": "src/render/RemotionRenderer.ts", "line": 49}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 150,
+      "meaning": "Default duration in frames (Remotion)",
+      "locations": [
+        {"file": "src/render/RemotionRenderer.ts", "line": 50}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 32768,
+      "meaning": "Max context window cap for Ollama num_ctx",
+      "locations": [
+        {"file": "src/llm/LLMClient.ts", "line": 541}
+      ],
+      "note": "Prevents OOM on small GPUs"
+    },
+    {
+      "value": 120,
+      "meaning": "Default BPM for music generation",
+      "locations": [
+        {"file": "src/musicToVisual/generateMusicToVisual.ts", "line": 27}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 50,
+      "meaning": "Max examples per domain (QualityArchive)",
+      "locations": [
+        {"file": "src/learning/QualityArchive.ts", "line": 90}
+      ],
+      "total_occurrences": 1
+    },
+    {
+      "value": 0.65,
+      "meaning": "Minimum quality threshold for archive learning",
+      "locations": [
+        {"file": "src/learning/QualityArchive.ts", "line": 87},
+        {"file": "src/learning/ArchiveLearning.ts", "line": 67}
+      ],
+      "total_occurrences": 2
+    },
+    {
+      "value": 10,
+      "meaning": "MAP-Elites grid dimensions default",
+      "locations": [
+        {"file": "src/core/LoopConfig.ts", "line": 189}
+      ],
+      "total_occurrences": 1
+    }
+  ],
+  "duplication_map": {
+    "qwen2.5-coder-7b-instruct": [
+      "src/llm/LLMClient.ts",
+      "src/config/ConfigLoader.ts",
+      "src/tui/index.tsx"
+    ],
+    "lmstudio": [
+      "src/config/ConfigLoader.ts",
+      "src/core/RalphLoop.ts",
+      "src/tui/InteractiveMode.ts"
+    ],
+    "http://localhost:1234/v1": [
+      "src/constants.ts",
+      "src/compost/defaults.ts",
+      "src/harness/MultiProviderConfig.ts"
+    ],
+    "http://localhost:11434": [
+      "src/constants.ts",
+      "src/harness/MultiProviderConfig.ts"
+    ],
+    "0.7": [
+      "src/harness/MultiProviderConfig.ts (6x in PROVIDER_TEMPLATES)",
+      "src/config/ConfigLoader.ts",
+      "src/swarm/personas.ts",
+      "src/swarm/SwarmOrchestrator.ts",
+      "src/prompts/specialized/chat.ts"
+    ],
+    "4096": [
+      "src/llm/LLMClient.ts",
+      "src/harness/MultiProviderConfig.ts (7x)",
+      "src/harness/MultiProviderConfig.ts HARNESS_DEFAULTS"
+    ],
+    "cascade": [
+      "src/config/ConfigLoader.ts",
+      "src/harness/MultiProviderConfig.ts"
+    ],
+    "p5": [
+      "src/core/LoopConfig.ts",
+      "src/core/RalphLoop.ts (8x)",
+      "src/core/GenerationOrchestrator.ts (3x)",
+      "src/core/EvolutionIntegration.ts"
+    ]
+  },
+  "default_constants_by_file": {
+    "src/constants.ts": {
+      "description": "Centralized service defaults",
+      "exports": ["SERVICE_DEFAULTS", "P5_CDN", "P5_SOUND_CDN", "THREE_CDN", "THREE_ADDONS_CDN"]
+    },
+    "src/core/LoopConfig.ts": {
+      "description": "RalphLoop configuration defaults",
+      "exports": ["DEFAULT_MAX_ITERATIONS", "DEFAULT_TIMEOUT_MINUTES", "DEFAULT_MIN_QUALITY_SCORE"],
+      "values": {
+        "DEFAULT_MAX_ITERATIONS": 20,
+        "DEFAULT_TIMEOUT_MINUTES": 30,
+        "DEFAULT_MIN_QUALITY_SCORE": 0.7
+      }
+    },
+    "src/compost/defaults.ts": {
+      "description": "Compost Mill configuration",
+      "exports": ["DEFAULT_CONFIG", "buildDefaults", "mergeConfig"],
+      "notable_values": {
+        "heapDir": "compost/heap/",
+        "maxHeapSizeBytes": "50 * 1024 * 1024 (50MB)",
+        "digestDir": "compost/digest/",
+        "seedDir": "compost/seeds/",
+        "digestSchedule": "weekly",
+        "digestDayOfWeek": 0,
+        "soupEnabled": true,
+        "soupPopulationSize": 20,
+        "soupMaxStepsPerCycle": 50,
+        "soupSeedPromotionThreshold": 0.7,
+        "soupCycleIntervalMs": 60000,
+        "llm.baseUrl": "http://localhost:1234/v1",
+        "llm.timeoutMs": 30000,
+        "seedPromotionThreshold": 0.4,
+        "maxSeedsPerDigest": 20,
+        "nuggetRetentionDays": 90
+      }
+    },
+    "src/harness/MultiProviderConfig.ts": {
+      "description": "Provider templates and harness config",
+      "exports": ["PROVIDER_TEMPLATES", "HARNESS_DEFAULTS", "getHarnessLLMConfig"],
+      "values": {
+        "PROVIDER_TEMPLATES.*.temperature": 0.7,
+        "PROVIDER_TEMPLATES.*.maxTokens": 4096,
+        "HARNESS_DEFAULTS.temperature": 0.2,
+        "HARNESS_DEFAULTS.maxTokens": 4096,
+        "HARNESS_DEFAULTS.timeoutMs": 60000,
+        "HARNESS_DEFAULTS.maxRetries": 3,
+        "HARNESS_DEFAULTS.contextWindow": 8192
+      }
+    },
+    "src/config/PromptHistory.ts": {
+      "description": "Prompt history management",
+      "values": {
+        "DEFAULT_HISTORY_PATH": "~/.liminal/history.json",
+        "MAX_RECENT": 50
+      }
+    },
+    "src/aesthetic/types.ts": {
+      "description": "Aesthetic design constraints",
+      "exports": ["DEFAULT_DESIGN_CONSTRAINTS"],
+      "values": {
+        "color.maxColors": 7,
+        "color.saturationRange": [0.05, 0.95],
+        "color.lightnessRange": [0.1, 0.9],
+        "color.contrastMin": 3.0,
+        "layout.minWhitespace": 0.1,
+        "layout.balanceThreshold": 0.3,
+        "typography.maxFonts": 3,
+        "typography.minReadability": 3.0,
+        "sound.maxDissonance": 0.5,
+        "sound.rhythmicCoherenceMin": 0.3
+      }
+    },
+    "src/swarm/types.ts": {
+      "description": "Swarm configuration",
+      "exports": ["DEFAULT_REFINEMENT_CONSTRAINTS"]
+    }
+  },
+  "recommendations": [
+    {
+      "priority": "high",
+      "issue": "Model default duplicated 4 times",
+      "recommendation": "Create DEFAULT_MODEL constant in src/constants.ts and reference everywhere",
+      "files_to_update": [
+        "src/llm/LLMClient.ts",
+        "src/config/ConfigLoader.ts",
+        "src/tui/index.tsx"
+      ]
+    },
+    {
+      "priority": "high",
+      "issue": "Provider 'lmstudio' fallback duplicated 4 times",
+      "recommendation": "Create DEFAULT_PROVIDER constant in src/constants.ts",
+      "files_to_update": [
+        "src/config/ConfigLoader.ts",
+        "src/core/RalphLoop.ts",
+        "src/tui/InteractiveMode.ts"
+      ]
+    },
+    {
+      "priority": "high",
+      "issue": "Local LLM URL duplicated outside SERVICE_DEFAULTS",
+      "recommendation": "Replace hardcoded 'http://localhost:1234/v1' with SERVICE_DEFAULTS.LOCAL_LLM_URL",
+      "files_to_update": [
+        "src/compost/defaults.ts",
+        "src/harness/MultiProviderConfig.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "issue": "Temperature 0.7 duplicated 11 times",
+      "recommendation": "Create DEFAULT_TEMPERATURE constant, use PROVIDER_TEMPLATES for provider configs",
+      "files_to_update": [
+        "src/harness/MultiProviderConfig.ts (already uses template)",
+        "src/config/ConfigLoader.ts",
+        "src/swarm/personas.ts",
+        "src/prompts/specialized/chat.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "issue": "max_tokens 4096 duplicated 9 times",
+      "recommendation": "Use HARNESS_DEFAULTS.maxTokens or create DEFAULT_MAX_TOKENS in constants.ts",
+      "files_to_update": [
+        "src/llm/LLMClient.ts",
+        "src/harness/MultiProviderConfig.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "issue": "Domain 'p5' fallback duplicated 12 times",
+      "recommendation": "Create DEFAULT_COLLAB_DOMAIN constant",
+      "files_to_update": [
+        "src/core/LoopConfig.ts",
+        "src/core/RalphLoop.ts",
+        "src/core/GenerationOrchestrator.ts",
+        "src/core/EvolutionIntegration.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "issue": "Timeout values scattered across files",
+      "recommendation": "Create TIMEOUT constants: LLM_TIMEOUT_MS, TEST_TIMEOUT_MS, BUILD_TIMEOUT_MS",
+      "files_to_update": [
+        "src/llm/LLMClient.ts",
+        "src/harness/tools/*.ts",
+        "src/compost/defaults.ts"
+      ]
+    },
+    {
+      "priority": "low",
+      "issue": "Quality threshold 0.7 defined in multiple places",
+      "recommendation": "Use existing DEFAULT_MIN_QUALITY_SCORE from LoopConfig everywhere",
+      "files_to_update": [
+        "src/index.ts",
+        "src/compost/defaults.ts (soupSeedPromotionThreshold)"
+      ]
+    },
+    {
+      "priority": "low",
+      "issue": "Ollama URL duplicated",
+      "recommendation": "Use SERVICE_DEFAULTS.OLLAMA_URL in MultiProviderConfig.ts",
+      "files_to_update": [
+        "src/harness/MultiProviderConfig.ts"
+      ]
+    },
+    {
+      "priority": "info",
+      "issue": "Good: SERVICE_DEFAULTS already exists and is used correctly in some places",
+      "recommendation": "Expand SERVICE_DEFAULTS pattern to other default categories"
+    }
+  ],
+  "summary": {
+    "total_service_defaults": 7,
+    "total_hardcoded_fallbacks": 9,
+    "total_magic_numbers": 28,
+    "duplicated_values": 9,
+    "high_priority_consolidation_needed": 3,
+    "medium_priority_consolidation_needed": 4,
+    "files_with_scattered_defaults": 15
+  }
+}

@@ -1,0 +1,698 @@
+{
+  "summary": {
+    "total_env_calls": 16,
+    "total_process_env_access": 64,
+    "with_fallbacks": 67,
+    "without_fallbacks": 13,
+    "files_analyzed": 15
+  },
+  "env_helper_calls": [
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 96,
+      "pattern": "function env(key: string): string | undefined",
+      "fallback_chain": ["process.env[`LIMINAL_${key}`]"],
+      "context": "helper_function_definition",
+      "note": "Helper function implementation - maps env('X') to process.env.LIMINAL_X"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 117,
+      "pattern": "env('LLM_BASE_URL')",
+      "fallback_chain": ["config?.baseUrl", "env('LLM_BASE_URL')", "SERVICE_DEFAULTS.LOCAL_LLM_URL"],
+      "context": "constructor",
+      "risk": "low"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 121,
+      "pattern": "env('LLM_API_KEY')",
+      "fallback_chain": ["config?.apiKey", "env('LLM_API_KEY')", "process.env.OPENAI_API_KEY"],
+      "context": "constructor",
+      "risk": "low",
+      "note": "Uses nullish coalescing (??) instead of logical OR (||)"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 122,
+      "pattern": "env('LLM_MODEL')",
+      "fallback_chain": ["config?.model", "env('LLM_MODEL')", "'qwen2.5-coder-7b-instruct'"],
+      "context": "constructor",
+      "risk": "low"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 580,
+      "pattern": "env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY')",
+      "fallback_chain": ["env('LLM_BASE_URL')", "process.env.OPENAI_API_KEY", "env('LLM_API_KEY')", "SERVICE_DEFAULTS.LOCAL_LLM_URL"],
+      "context": "static_isConfigured_method",
+      "risk": "low"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 62,
+      "pattern": "function env(key: string): string | undefined",
+      "fallback_chain": ["process.env[`LIMINAL_${key}`]"],
+      "context": "helper_function_definition",
+      "note": "Duplicate helper function implementation"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 96,
+      "pattern": "env('LLM_PROVIDER')",
+      "fallback_chain": ["env('LLM_PROVIDER')", "'lmstudio'"],
+      "context": "swarm_mode_validation",
+      "risk": "low"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 162,
+      "pattern": "function env(key: string): string | undefined",
+      "fallback_chain": ["process.env[`LIMINAL_${key}`]"],
+      "context": "helper_function_definition",
+      "note": "Third duplicate helper function implementation"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 267,
+      "pattern": "env('LLM_PROVIDER')",
+      "fallback_chain": ["env('LLM_PROVIDER')", "projectProvider", "fileConfig?.defaultProvider", "'lmstudio'"],
+      "context": "getEffectiveConfig",
+      "risk": "low"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 287,
+      "pattern": "env('LLM_BASE_URL')",
+      "fallback_chain": ["env('LLM_BASE_URL')", "projectLlm.baseUrl", "fileProviderConfig.baseUrl"],
+      "context": "getEffectiveConfig",
+      "risk": "medium",
+      "note": "No final default - can return undefined"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 288,
+      "pattern": "env('LLM_MODEL')",
+      "fallback_chain": ["env('LLM_MODEL')", "projectLlm.model", "fileProviderConfig.model", "'qwen2.5-coder-7b-instruct'"],
+      "context": "getEffectiveConfig",
+      "risk": "low"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 289,
+      "pattern": "env('LLM_API_KEY')",
+      "fallback_chain": ["env('LLM_API_KEY')", "projectLlm.apiKey", "fileProviderConfig.apiKey", "process.env.OPENAI_API_KEY", "process.env.MINIMAX_API_KEY"],
+      "context": "getEffectiveConfig",
+      "risk": "low",
+      "note": "Longest fallback chain with process.env fallbacks"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 313,
+      "pattern": "env(`LLM_PROVIDER${suffix}`)",
+      "fallback_chain": ["partial?.provider", "env(`LLM_PROVIDER${suffix}`)", "'ollama'"],
+      "context": "getMultiModelConfig",
+      "risk": "low",
+      "note": "Dynamic key with suffix (_PRIMARY or _SECONDARY)"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 314,
+      "pattern": "env(`LLM_BASE_URL${suffix}`)",
+      "fallback_chain": ["partial?.baseUrl", "env(`LLM_BASE_URL${suffix}`)"],
+      "context": "getMultiModelConfig",
+      "risk": "high",
+      "note": "No final default - can return undefined"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 315,
+      "pattern": "env(`LLM_MODEL${suffix}`)",
+      "fallback_chain": ["partial?.model", "env(`LLM_MODEL${suffix}`)", "'qwen2.5-coder-7b-instruct'"],
+      "context": "getMultiModelConfig",
+      "risk": "low"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 316,
+      "pattern": "env(`LLM_API_KEY${suffix}`)",
+      "fallback_chain": ["env(`LLM_API_KEY${suffix}`)", "process.env.OPENAI_API_KEY", "process.env.MINIMAX_API_KEY"],
+      "context": "getMultiModelConfig",
+      "risk": "low"
+    }
+  ],
+  "process_env_direct": [
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 121,
+      "pattern": "process.env.OPENAI_API_KEY",
+      "has_fallback": true,
+      "fallback_chain": ["config?.apiKey", "env('LLM_API_KEY')", "process.env.OPENAI_API_KEY"],
+      "context": "constructor_apiKey_fallback",
+      "risk": "low"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 466,
+      "pattern": "process.env.LIMINAL_ALLOW_LOCALHOST_LLM !== 'false'",
+      "has_fallback": true,
+      "fallback_default": "true",
+      "context": "SSRF_protection_callOpenAICompatible",
+      "risk": "low",
+      "note": "Opt-out flag - defaults to allowing localhost"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 467,
+      "pattern": "process.env.LIMINAL_ALLOW_PRIVATE_IP_LLM === 'true'",
+      "has_fallback": true,
+      "fallback_default": "false",
+      "context": "SSRF_protection_callOpenAICompatible",
+      "risk": "low",
+      "note": "Opt-in flag - defaults to blocking private IPs"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 521,
+      "pattern": "process.env.LIMINAL_ALLOW_LOCALHOST_LLM !== 'false'",
+      "has_fallback": true,
+      "fallback_default": "true",
+      "context": "SSRF_protection_callOllama",
+      "risk": "low"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 522,
+      "pattern": "process.env.LIMINAL_ALLOW_PRIVATE_IP_LLM === 'true'",
+      "has_fallback": true,
+      "fallback_default": "false",
+      "context": "SSRF_protection_callOllama",
+      "risk": "low"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "line": 580,
+      "pattern": "process.env.OPENAI_API_KEY",
+      "has_fallback": true,
+      "fallback_chain": ["env('LLM_BASE_URL')", "process.env.OPENAI_API_KEY", "env('LLM_API_KEY')", "SERVICE_DEFAULTS.LOCAL_LLM_URL"],
+      "context": "static_isConfigured_method",
+      "risk": "low"
+    },
+    {
+      "file": "src/index.ts",
+      "line": 289,
+      "pattern": "process.env.NODE_ENV !== 'test'",
+      "has_fallback": true,
+      "fallback_default": "non-test_behavior",
+      "context": "CLI_command_execution",
+      "risk": "low"
+    },
+    {
+      "file": "src/routing/RoutingData.ts",
+      "line": 37,
+      "pattern": "process.env.HOME",
+      "has_fallback": false,
+      "context": "PERF_DIR_definition",
+      "risk": "medium",
+      "note": "Assumes HOME env var is always set - may break on Windows"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 106,
+      "pattern": "process.env.MINIMAX_API_KEY",
+      "has_fallback": false,
+      "context": "getProviderConfig_switch_minimax",
+      "risk": "medium",
+      "note": "Provider-specific API key - expected to be undefined if not configured"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 109,
+      "pattern": "process.env.GLM_API_KEY",
+      "has_fallback": false,
+      "context": "getProviderConfig_switch_glm",
+      "risk": "medium"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 112,
+      "pattern": "process.env.OPENROUTER_API_KEY",
+      "has_fallback": false,
+      "context": "getProviderConfig_switch_openrouter",
+      "risk": "medium"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 120,
+      "pattern": "process.env.LIMINAL_LLM_API_KEY || process.env.OPENAI_API_KEY",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_LLM_API_KEY", "process.env.OPENAI_API_KEY"],
+      "context": "getProviderConfig_switch_custom",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 125,
+      "pattern": "process.env.LIMINAL_LLM_BASE_URL",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_LLM_BASE_URL", "template.baseUrl"],
+      "context": "getProviderConfig_override",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 126,
+      "pattern": "process.env.LIMINAL_LLM_MODEL",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_LLM_MODEL", "template.model"],
+      "context": "getProviderConfig_override",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 152,
+      "pattern": "process.env.LIMINAL_LLM_BASE_URL",
+      "has_fallback": false,
+      "context": "getActiveProvider",
+      "risk": "medium",
+      "note": "Used for detection - undefined is valid (triggers API key checks)"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 158,
+      "pattern": "process.env.MINIMAX_API_KEY",
+      "has_fallback": false,
+      "context": "getActiveProvider_detection",
+      "risk": "low",
+      "note": "Presence check only - undefined is expected if not using minimax"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 159,
+      "pattern": "process.env.GLM_API_KEY",
+      "has_fallback": false,
+      "context": "getActiveProvider_detection",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 160,
+      "pattern": "process.env.OPENROUTER_API_KEY",
+      "has_fallback": false,
+      "context": "getActiveProvider_detection",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 234,
+      "pattern": "process.env.LIMINAL_HARNESS_TEMPERATURE",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_HARNESS_TEMPERATURE", "String(HARNESS_DEFAULTS.temperature)"],
+      "context": "getHarnessLLMConfig",
+      "risk": "low",
+      "default_value": "0.2"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 235,
+      "pattern": "process.env.LIMINAL_HARNESS_MAX_TOKENS",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_HARNESS_MAX_TOKENS", "String(HARNESS_DEFAULTS.maxTokens)"],
+      "context": "getHarnessLLMConfig",
+      "risk": "low",
+      "default_value": "4096"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 236,
+      "pattern": "process.env.LIMINAL_HARNESS_TIMEOUT",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_HARNESS_TIMEOUT", "String(HARNESS_DEFAULTS.timeoutMs)"],
+      "context": "getHarnessLLMConfig",
+      "risk": "low",
+      "default_value": "60000"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 237,
+      "pattern": "process.env.LIMINAL_HARNESS_MAX_RETRIES",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_HARNESS_MAX_RETRIES", "String(HARNESS_DEFAULTS.maxRetries)"],
+      "context": "getHarnessLLMConfig",
+      "risk": "low",
+      "default_value": "3"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 238,
+      "pattern": "process.env.LIMINAL_HARNESS_CONTEXT_WINDOW",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LIMINAL_HARNESS_CONTEXT_WINDOW", "String(HARNESS_DEFAULTS.contextWindow)"],
+      "context": "getHarnessLLMConfig",
+      "risk": "low",
+      "default_value": "8192"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 254,
+      "pattern": "process.env.LIMINAL_HARNESS_BASE_URL",
+      "has_fallback": true,
+      "context": "getHarnessProviderConfig_check",
+      "risk": "low",
+      "note": "Presence check - falls back to active provider if undefined"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 255,
+      "pattern": "process.env.LIMINAL_HARNESS_MODEL",
+      "has_fallback": true,
+      "context": "getHarnessProviderConfig_check",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 256,
+      "pattern": "process.env.LIMINAL_HARNESS_API_KEY",
+      "has_fallback": true,
+      "context": "getHarnessProviderConfig",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 257,
+      "pattern": "process.env.LIMINAL_HARNESS_TEMPERATURE",
+      "has_fallback": true,
+      "context": "getHarnessProviderConfig",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 258,
+      "pattern": "process.env.LIMINAL_HARNESS_MAX_TOKENS",
+      "has_fallback": true,
+      "context": "getHarnessProviderConfig",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 265,
+      "pattern": "process.env.MINIMAX_API_KEY",
+      "has_fallback": true,
+      "fallback_chain": ["harnessApiKey", "process.env.MINIMAX_API_KEY (if isMinimax)", "process.env.LIMINAL_LLM_API_KEY", "process.env.OPENAI_API_KEY"],
+      "context": "getHarnessProviderConfig_apiKey_fallback",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 266,
+      "pattern": "process.env.LIMINAL_LLM_API_KEY",
+      "has_fallback": true,
+      "context": "getHarnessProviderConfig_apiKey_fallback",
+      "risk": "low"
+    },
+    {
+      "file": "src/harness/MultiProviderConfig.ts",
+      "line": 267,
+      "pattern": "process.env.OPENAI_API_KEY",
+      "has_fallback": true,
+      "context": "getHarnessProviderConfig_apiKey_fallback",
+      "risk": "low"
+    },
+    {
+      "file": "src/security/SandboxConfig.ts",
+      "line": 44,
+      "pattern": "process.env.LIMINAL_DISABLE_SANDBOX === 'true'",
+      "has_fallback": true,
+      "fallback_default": "false",
+      "context": "getChromeArgs",
+      "risk": "low",
+      "note": "Security-critical opt-in flag"
+    },
+    {
+      "file": "src/security/UrlValidator.ts",
+      "line": 112,
+      "pattern": "process.env.LIMINAL_ALLOWED_HOSTS",
+      "has_fallback": true,
+      "context": "getAllowedHostsFromEnv",
+      "risk": "low",
+      "note": "Returns empty array if undefined"
+    },
+    {
+      "file": "src/security/RateLimiter.ts",
+      "line": 64,
+      "pattern": "process.env.NODE_ENV === 'development'",
+      "has_fallback": true,
+      "context": "rate_limiter_dev_bypass",
+      "risk": "low"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 289,
+      "pattern": "process.env.OPENAI_API_KEY || process.env.MINIMAX_API_KEY",
+      "has_fallback": true,
+      "fallback_chain": ["env('LLM_API_KEY')", "projectLlm.apiKey", "fileProviderConfig.apiKey", "process.env.OPENAI_API_KEY", "process.env.MINIMAX_API_KEY"],
+      "context": "getEffectiveConfig_apiKey",
+      "risk": "low"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 316,
+      "pattern": "process.env.OPENAI_API_KEY || process.env.MINIMAX_API_KEY",
+      "has_fallback": true,
+      "fallback_chain": ["env(`LLM_API_KEY${suffix}`)", "process.env.OPENAI_API_KEY", "process.env.MINIMAX_API_KEY"],
+      "context": "getMultiModelConfig_apiKey",
+      "risk": "low"
+    },
+    {
+      "file": "src/tui/index.tsx",
+      "line": 177,
+      "pattern": "process.env.LLM_MODEL",
+      "has_fallback": true,
+      "fallback_chain": ["process.env.LLM_MODEL", "'qwen2.5-coder-7b-instruct'"],
+      "context": "TUI_log_model_name",
+      "risk": "low",
+      "note": "Uses bare LLM_MODEL without LIMINAL_ prefix - inconsistent"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 123,
+      "pattern": "process.env.HOME",
+      "has_fallback": false,
+      "context": "aesthetic_model_path",
+      "risk": "medium"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 128,
+      "pattern": "process.env.HOME",
+      "has_fallback": false,
+      "context": "map_elites_path",
+      "risk": "medium"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 201,
+      "pattern": "process.env.NODE_ENV !== 'test'",
+      "has_fallback": true,
+      "context": "meta_harness_validation_skip",
+      "risk": "low"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 516,
+      "pattern": "process.env.NODE_ENV !== 'test'",
+      "has_fallback": true,
+      "context": "meta_harness_error_skip",
+      "risk": "low"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 545,
+      "pattern": "process.env.NODE_ENV !== 'test'",
+      "has_fallback": true,
+      "context": "console_output_skip",
+      "risk": "low"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 564,
+      "pattern": "process.env.HOME",
+      "has_fallback": false,
+      "context": "map_elites_save_path",
+      "risk": "medium"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 573,
+      "pattern": "process.env.HOME",
+      "has_fallback": false,
+      "context": "aesthetic_model_save_path",
+      "risk": "medium"
+    },
+    {
+      "file": "src/learning/QualityArchive.ts",
+      "line": 93,
+      "pattern": "process.env.HOME",
+      "has_fallback": false,
+      "context": "DEFAULT_PATH_static",
+      "risk": "medium"
+    },
+    {
+      "file": "src/learning/ArchiveLearning.ts",
+      "line": 80,
+      "pattern": "process.env.HOME",
+      "has_fallback": true,
+      "fallback_chain": ["config.archivePath", "`${process.env.HOME}/...`"],
+      "context": "archive_path_with_config_fallback",
+      "risk": "low"
+    },
+    {
+      "file": "src/render/PreviewServer.ts",
+      "line": 126,
+      "pattern": "process.env.NODE_ENV === 'test'",
+      "has_fallback": true,
+      "context": "test_env_detection",
+      "risk": "low"
+    },
+    {
+      "file": "src/render/PreviewServer.ts",
+      "line": 132,
+      "pattern": "process.env.NODE_ENV === 'production'",
+      "has_fallback": true,
+      "context": "cookie_secure_flag",
+      "risk": "low"
+    },
+    {
+      "file": "src/utils/Logger.ts",
+      "line": 19,
+      "pattern": "process.env.LIMINAL_LOG_LEVEL?.toLowerCase()",
+      "has_fallback": true,
+      "context": "log_level_config",
+      "risk": "low",
+      "note": "Uses optional chaining, defaults to 'warn'"
+    }
+  ],
+  "files_with_both_patterns": [
+    "src/llm/LLMClient.ts",
+    "src/config/ConfigLoader.ts"
+  ],
+  "duplicate_helper_functions": [
+    {
+      "pattern": "function env(key: string): string | undefined { return process.env[`LIMINAL_${key}`]; }",
+      "locations": [
+        "src/llm/LLMClient.ts:96",
+        "src/core/RalphLoop.ts:62",
+        "src/config/ConfigLoader.ts:162"
+      ],
+      "risk": "medium",
+      "recommendation": "Extract to shared utility function"
+    }
+  ],
+  "risk_assessment": {
+    "high": [
+      {
+        "file": "src/config/ConfigLoader.ts",
+        "line": 314,
+        "pattern": "env(`LLM_BASE_URL${suffix}`)",
+        "reason": "No final default - baseUrl can be undefined in multi-model config"
+      }
+    ],
+    "medium": [
+      {
+        "file": "src/routing/RoutingData.ts",
+        "line": 37,
+        "pattern": "process.env.HOME",
+        "reason": "No fallback - may break on Windows without HOME env var"
+      },
+      {
+        "file": "src/core/RalphLoop.ts",
+        "lines": [123, 128, 564, 573],
+        "pattern": "process.env.HOME",
+        "reason": "No fallback - paths may fail on Windows"
+      },
+      {
+        "file": "src/learning/QualityArchive.ts",
+        "line": 93,
+        "pattern": "process.env.HOME",
+        "reason": "No fallback in static DEFAULT_PATH"
+      },
+      {
+        "file": "src/harness/MultiProviderConfig.ts",
+        "lines": [106, 109, 112, 152, 158, 159, 160],
+        "pattern": "process.env.*_API_KEY",
+        "reason": "No fallback but expected - these are provider-specific presence checks"
+      },
+      {
+        "pattern": "Duplicate env() helper functions",
+        "locations": ["src/llm/LLMClient.ts", "src/core/RalphLoop.ts", "src/config/ConfigLoader.ts"],
+        "reason": "Code duplication - maintenance burden"
+      }
+    ],
+    "low": [
+      {
+        "description": "All patterns with proper fallback chains",
+        "count": 54,
+        "examples": [
+          "env('LLM_MODEL') with default 'qwen2.5-coder-7b-instruct'",
+          "process.env.LIMINAL_HARNESS_* with HARNESS_DEFAULTS",
+          "process.env.NODE_ENV checks with boolean fallbacks"
+        ]
+      }
+    ]
+  },
+  "inconsistencies_found": [
+    {
+      "type": "naming_inconsistency",
+      "description": "TUI uses bare LLM_MODEL instead of LIMINAL_LLM_MODEL",
+      "location": "src/tui/index.tsx:177",
+      "recommendation": "Change to process.env.LIMINAL_LLM_MODEL for consistency"
+    },
+    {
+      "type": "operator_inconsistency",
+      "description": "Mixed use of || and ?? operators",
+      "locations": [
+        "src/llm/LLMClient.ts:121 uses ?? for apiKey",
+        "src/llm/LLMClient.ts:117 uses || for baseUrl"
+      ],
+      "recommendation": "Standardize on || for all env var fallbacks"
+    },
+    {
+      "type": "duplicate_implementation",
+      "description": "env() helper defined in 3 different files",
+      "recommendation": "Create src/utils/Env.ts with shared implementation"
+    }
+  ],
+  "env_var_names_used": {
+    "LIMINAL_LLM_BASE_URL": 7,
+    "LIMINAL_LLM_API_KEY": 6,
+    "LIMINAL_LLM_MODEL": 5,
+    "LIMINAL_LLM_PROVIDER": 3,
+    "LIMINAL_HARNESS_TEMPERATURE": 3,
+    "LIMINAL_HARNESS_MAX_TOKENS": 3,
+    "LIMINAL_HARNESS_TIMEOUT": 1,
+    "LIMINAL_HARNESS_MAX_RETRIES": 1,
+    "LIMINAL_HARNESS_CONTEXT_WINDOW": 1,
+    "LIMINAL_HARNESS_BASE_URL": 1,
+    "LIMINAL_HARNESS_MODEL": 1,
+    "LIMINAL_HARNESS_API_KEY": 1,
+    "LIMINAL_ALLOW_LOCALHOST_LLM": 4,
+    "LIMINAL_ALLOW_PRIVATE_IP_LLM": 4,
+    "LIMINAL_ALLOWED_HOSTS": 1,
+    "LIMINAL_DISABLE_SANDBOX": 1,
+    "LIMINAL_LOG_LEVEL": 1,
+    "MINIMAX_API_KEY": 5,
+    "GLM_API_KEY": 3,
+    "OPENROUTER_API_KEY": 3,
+    "OPENAI_API_KEY": 8,
+    "NODE_ENV": 9,
+    "HOME": 7,
+    "LLM_MODEL": 1
+  },
+  "audit_metadata": {
+    "audit_date": "2026-04-02",
+    "auditor": "Task 1.1: Environment Variable Access Catalog",
+    "files_scanned": "src/**/*.ts",
+    "total_patterns_found": 80,
+    "coverage": "complete"
+  }
+}

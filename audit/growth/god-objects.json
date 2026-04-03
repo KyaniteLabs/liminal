@@ -1,0 +1,298 @@
+{
+  "summary": {
+    "files_over_500_lines": [
+      "src/brain/comprehensive-artistic-knowledge.ts",
+      "src/core/parsing/CodeParser.ts",
+      "src/core/CreativeEvaluator.ts",
+      "src/utils/htmlWrapper.ts",
+      "src/collab/CreativeBoard.ts",
+      "src/generators/p5/CellularAutomata.ts",
+      "src/llm/LLMClient.ts",
+      "src/core/RalphLoop.ts",
+      "src/index.ts",
+      "src/core/CodeValidator.ts",
+      "src/brain/CreativePreferenceExtractor.ts",
+      "src/config/telemetry-seed.ts",
+      "src/generators/p5/ParticleSystem.ts",
+      "src/swarm/SwarmOrchestrator.ts",
+      "src/brain/SymbolicCreativeLanguage.ts",
+      "src/tui/NaturalInterface.ts",
+      "src/brain/ArtKnowledgeGraph.ts",
+      "src/brain/SemanticArtMemory.ts"
+    ],
+    "files_over_1000_lines": [
+      "src/brain/comprehensive-artistic-knowledge.ts"
+    ],
+    "classes_over_20_methods": [
+      {
+        "class": "CellularAutomata",
+        "file": "src/generators/p5/CellularAutomata.ts",
+        "estimated_methods": 244
+      },
+      {
+        "class": "CreativeEvaluator",
+        "file": "src/core/CreativeEvaluator.ts",
+        "estimated_methods": 300
+      },
+      {
+        "class": "HTMLWrapper",
+        "file": "src/utils/htmlWrapper.ts",
+        "estimated_methods": 194
+      },
+      {
+        "class": "LLMClient",
+        "file": "src/llm/LLMClient.ts",
+        "estimated_methods": 191
+      },
+      {
+        "class": "CreativeBoard",
+        "file": "src/collab/CreativeBoard.ts",
+        "estimated_methods": 182
+      },
+      {
+        "class": "CodeValidator",
+        "file": "src/core/CodeValidator.ts",
+        "estimated_methods": 163
+      }
+    ],
+    "functions_over_100_lines": [
+      {
+        "function": "validateStructure",
+        "file": "src/core/CodeValidator.ts",
+        "approx_lines": 135,
+        "note": "Large switch statement for domain validation"
+      },
+      {
+        "function": "extractSymbols (inferred)",
+        "file": "src/core/parsing/CodeParser.ts",
+        "approx_lines": 100,
+        "note": "Complex TypeScript AST traversal"
+      },
+      {
+        "function": "wrapHTML (inferred)",
+        "file": "src/utils/htmlWrapper.ts",
+        "approx_lines": 100,
+        "note": "HTML generation with template literals"
+      }
+    ]
+  },
+  "large_files": [
+    {
+      "file": "src/brain/comprehensive-artistic-knowledge.ts",
+      "lines": 1150,
+      "exports": 8,
+      "imports": 0,
+      "functions": 1,
+      "classes": 0,
+      "recommendation": "This is a data/config file - contains art knowledge dataset. Consider splitting into domain-specific files (color-theory.ts, composition-rules.ts, etc.) or convert to JSON"
+    },
+    {
+      "file": "src/core/parsing/CodeParser.ts",
+      "lines": 980,
+      "exports": 1,
+      "imports": 5,
+      "functions": 6,
+      "classes": 1,
+      "estimated_methods": 220,
+      "recommendation": "Split into CodeParser/ directory with separate files: SymbolExtractor.ts, MetricsCalculator.ts, LanguageDetector.ts"
+    },
+    {
+      "file": "src/core/CreativeEvaluator.ts",
+      "lines": 969,
+      "exports": 2,
+      "imports": 5,
+      "functions": 4,
+      "classes": 1,
+      "estimated_methods": 300,
+      "recommendation": "Split into CreativeEvaluator/ directory with separate files per evaluation domain: AestheticEvaluator.ts, TechnicalEvaluator.ts, SemanticEvaluator.ts"
+    },
+    {
+      "file": "src/utils/htmlWrapper.ts",
+      "lines": 957,
+      "exports": 4,
+      "imports": 0,
+      "functions": 11,
+      "classes": 1,
+      "estimated_methods": 194,
+      "recommendation": "Extract domain-specific wrappers into separate files: P5Wrapper.ts, ThreeWrapper.ts, ShaderWrapper.ts, MusicWrapper.ts"
+    },
+    {
+      "file": "src/collab/CreativeBoard.ts",
+      "lines": 876,
+      "exports": 4,
+      "imports": 0,
+      "functions": 2,
+      "classes": 1,
+      "estimated_methods": 182,
+      "recommendation": "Extract event handlers, state management, and UI components into separate modules"
+    },
+    {
+      "file": "src/generators/p5/CellularAutomata.ts",
+      "lines": 835,
+      "exports": 1,
+      "imports": 1,
+      "functions": 17,
+      "classes": 1,
+      "estimated_methods": 244,
+      "recommendation": "Extract CA algorithms into separate files per rule type (GameOfLife.ts, Rule30.ts, etc.)"
+    },
+    {
+      "file": "src/llm/LLMClient.ts",
+      "lines": 794,
+      "exports": 7,
+      "imports": 8,
+      "functions": 2,
+      "classes": 5,
+      "estimated_methods": 191,
+      "recommendation": "Split into: ErrorClasses.ts, ProviderAdapters/, RequestBuilder.ts, ResponseParser.ts"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "lines": 686,
+      "exports": 2,
+      "imports": 31,
+      "functions": 2,
+      "classes": 1,
+      "estimated_methods": 19,
+      "recommendation": "Extract iteration strategies, state machines, and telemetry into separate modules"
+    },
+    {
+      "file": "src/index.ts",
+      "lines": 673,
+      "exports": 93,
+      "imports": 39,
+      "functions": 4,
+      "classes": 1,
+      "estimated_methods": 35,
+      "recommendation": "Split main Liminal class - extract into: LiminalCore.ts, LiminalAPI.ts, CommandHandlers.ts"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "lines": 673,
+      "exports": 3,
+      "imports": 0,
+      "functions": 16,
+      "classes": 1,
+      "estimated_methods": 163,
+      "recommendation": "Split validators into separate files per domain: P5Validator.ts, GLSLValidator.ts, ThreeValidator.ts, MusicValidator.ts"
+    },
+    {
+      "file": "src/brain/CreativePreferenceExtractor.ts",
+      "lines": 623,
+      "exports": 5,
+      "imports": 0,
+      "functions": 3,
+      "classes": 1,
+      "recommendation": "Extract extractors per preference type into separate files"
+    },
+    {
+      "file": "src/config/telemetry-seed.ts",
+      "lines": 578,
+      "exports": 2,
+      "imports": 1,
+      "functions": 0,
+      "classes": 0,
+      "recommendation": "This is a data/config file - consider converting to JSON or splitting by telemetry domain"
+    },
+    {
+      "file": "src/generators/p5/ParticleSystem.ts",
+      "lines": 568,
+      "exports": 1,
+      "imports": 1,
+      "functions": 3,
+      "classes": 2,
+      "recommendation": "Split particle behaviors and emitters into separate files"
+    },
+    {
+      "file": "src/swarm/SwarmOrchestrator.ts",
+      "lines": 562,
+      "exports": 2,
+      "imports": 12,
+      "functions": 0,
+      "classes": 1,
+      "recommendation": "Extract swarm strategies and agent management into separate modules"
+    },
+    {
+      "file": "src/brain/SymbolicCreativeLanguage.ts",
+      "lines": 558,
+      "exports": 4,
+      "imports": 0,
+      "functions": 0,
+      "classes": 1,
+      "recommendation": "Split symbol types into separate files per domain"
+    },
+    {
+      "file": "src/tui/NaturalInterface.ts",
+      "lines": 547,
+      "exports": 4,
+      "imports": 4,
+      "functions": 0,
+      "classes": 1,
+      "recommendation": "Extract command parsers and intent handlers into separate modules"
+    },
+    {
+      "file": "src/brain/ArtKnowledgeGraph.ts",
+      "lines": 545,
+      "exports": 5,
+      "imports": 1,
+      "functions": 0,
+      "classes": 1,
+      "recommendation": "Extract graph operations and query methods into separate files"
+    },
+    {
+      "file": "src/brain/SemanticArtMemory.ts",
+      "lines": 520,
+      "exports": 6,
+      "imports": 2,
+      "functions": 0,
+      "classes": 1,
+      "recommendation": "Extract memory adapters and storage backends into separate files"
+    }
+  ],
+  "priority_refactors": [
+    {
+      "rank": 1,
+      "file": "src/core/CodeValidator.ts",
+      "reason": "Contains 16 standalone validation functions doing domain-specific work. High impact for maintainability.",
+      "effort": "Medium",
+      "suggested_action": "Create validators/ directory with DomainValidator interface and implementations per domain"
+    },
+    {
+      "rank": 2,
+      "file": "src/utils/htmlWrapper.ts",
+      "reason": "11 functions handling different domain wrapping logic. Duplicated patterns.",
+      "effort": "Medium",
+      "suggested_action": "Create wrappers/ directory with WrapperStrategy pattern"
+    },
+    {
+      "rank": 3,
+      "file": "src/llm/LLMClient.ts",
+      "reason": "5 classes in single file, mixing error types, client logic, and provider specifics.",
+      "effort": "Low",
+      "suggested_action": "Move error classes to llm/errors.ts, extract provider logic to adapters/"
+    },
+    {
+      "rank": 4,
+      "file": "src/core/CreativeEvaluator.ts",
+      "reason": "Large class with 300+ methods, hard to test and maintain.",
+      "effort": "High",
+      "suggested_action": "Split into evaluation strategies using Strategy pattern"
+    },
+    {
+      "rank": 5,
+      "file": "src/index.ts",
+      "reason": "Main entry point with 93 exports, violating single responsibility.",
+      "effort": "High",
+      "suggested_action": "Extract API surface to separate modules, keep index.ts as thin barrel file"
+    }
+  ],
+  "statistics": {
+    "total_ts_files": 113,
+    "files_over_500_lines": 18,
+    "files_over_1000_lines": 1,
+    "total_lines_in_src": 54685,
+    "average_lines_per_file": 484,
+    "percent_files_over_500_lines": "15.9%"
+  },
+  "generated_at": "2026-04-02T15:21:00Z"
+}

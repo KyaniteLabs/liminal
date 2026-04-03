@@ -7,12 +7,6 @@
  * This module provides early detection to fail fast with a helpful message.
  */
 
-interface StdinValidationResult {
-  valid: boolean;
-  reason?: string;
-  suggestion?: string;
-}
-
 /**
  * Check if stdin is a TTY (terminal)
  */
@@ -62,19 +56,4 @@ export async function validateStdin(): Promise<void> {
       'Suggestion: Run directly in an interactive terminal: liminal tui'
     );
   }
-}
-
-/**
- * Synchronous version for simple checks
- */
-function validateStdinSync(): StdinValidationResult {
-  if (!isStdinTTY()) {
-    return {
-      valid: false,
-      reason: 'stdin is not a TTY',
-      suggestion: 'Run from an interactive terminal without piping/redirecting',
-    };
-  }
-  
-  return { valid: true };
 }

@@ -25,7 +25,7 @@ export interface ConversationMessage {
   };
 }
 
-export interface ConversationSession {
+interface ConversationSession {
   id: string;
   messages: ConversationMessage[];
   soul: string;
@@ -33,7 +33,7 @@ export interface ConversationSession {
   updatedAt: string;
 }
 
-export interface NaturalInputResult {
+interface NaturalInputResult {
   type: 'chat' | 'agent' | 'command' | 'ambiguous';
   response: string;
   actionTaken?: string;

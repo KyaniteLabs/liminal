@@ -548,7 +548,9 @@ The philosophical framing of Liminal as an entity that exists in the space betwe
 - **Jake Van Clief** created the ICM (Infinite Context Machine) methodology. Simon explicitly credits: "Jake Van Clief literally came up with ICM."
 - The CompostMill is the crown jewel of originality. It is the single most unique idea in Liminal, and it came from clay — not from a video.
 
-**Note on AI Warehouse:** 14 AI Warehouse videos were watched during the RL Discovery era (Mar 15-20). Simon confirms these were entertainment — visual art of colored blocks learning through iteration with music, no narration. While the YouTube correlation analysis flagged temporal proximity to RalphLoop development, Simon states AI Warehouse did NOT influence RalphLoop's design. The RalphLoop technique came from Geoffrey Huntley; the evolutionary additions (scoring, convergence, quality thresholds) are Simon's own creative adaptations.
+**Note on AI Warehouse:** 14 AI Warehouse videos were watched during the RL Discovery era (Mar 15-20). Format: music and colored blocks trying, failing, iterating, gradually learning. No narration, no explanation — pure visual ML. Simon confirms: AI Warehouse taught him ML concepts *visually and intuitively* (evolution, selection pressure, fitness landscapes, convergence) that he absorbed without learning their formal names. These concepts ARE real influences on Liminal's evolutionary design — just not the RalphLoop specifically. The RalphLoop came from a separate stream: viral YouTube discussion → Geoffrey Huntley's published materials. Two independent learning streams converging in the same codebase during the same week.
+
+**Simon's own words:** "AI Warehouse is machine learning, and I did learn visually and intuitively. I didn't know those by name in any way, and even the Ralph Loop I only know as the Ralph loop. I don't know exactly what it is in machine learning terms." This confirms the core insight: concepts arrived through visual observation and viral discussion, not through academic instruction. The vocabulary gap is real and expected.
 
 ---
 

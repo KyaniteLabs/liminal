@@ -15,13 +15,13 @@
 
 4) **COMPLETED** — External data sources explored. Lunar phase data integrated. GitHub public API insufficient for global commit data. Google Takeout data declined by user. See data/external-data.md for Takeout-3 integration.
 
-5) **COMPLETED** — Era 10 defined ("The Cleanup") and added to deliverable. Post-Apr-1 activity tracked: 8 main commits + 10 unmerged branch commits covering documentation audit, repo reorganization, and cross-agent tooling audit.
+5) **COMPLETED** — Era 10 defined ("The Cleanup") and expanded. Originally 8 main commits. Now 35+ commits across Apr 2-3: config audit cascade (catalog → classify → fix → deep audit), documentation remediation, cross-agent tooling audit, and 4-agent parallel worktree development. Era confirmed as significant.
 
 6) **COMPLETED** — Archaeology workflow formalized. See narrative/liminal-archaeology branch and pattern established. Templates and data pipeline documented in memory/archaeology-session-summary.md.
 
 7) **COMPLETED** — Blog/video outlines deferred to post-archaeology phase. Content exists in deliverable but not yet extracted into separate blog posts or video scripts.
 
-8) **PENDING** — Repo organization agent waiting in separate worktree. All content agents must finish before coordination can begin. The agent is on agent-kimi-20260402 branch.
+8) **PENDING** — Repo organization agent waiting in separate worktree (agent-kimi-20260402 branch). BLOCKED — must merge last after all other agents finish. Has merge playbook, monitoring scripts, and pre-launch checklist ready. 3,700+ files reorganized.
 
 9) **COMPLETED** — Forensic audit done Apr 2, 2026. See AUDIT-REPORT.md. Overall rating B+; 1 critical, 8 moderate, 8 minor issues. No fabricated data.
 
@@ -31,6 +31,17 @@
 
 ## New items discovered during work
 
-12) **PENDING** — Era 10 may grow significantly. Currently 8 commits on main (Apr 2). The nascent era could expand with launch prep, cross-agent tooling research, or further documentation remediation as the project matures toward public release.
+12) **IN PROGRESS** — Era 10 has grown significantly. 25+ new commits on main (Apr 2-3): config audit cascade (catalog → classify → fix → deep audit). 4 concurrent AI agents now active in separate worktrees. Era renamed from tentative to confirmed.
 
-13) **PENDING** — Blog and video content extraction. Archaeology deliverable has rich narrative material suitable for blog posts and video scripts. Outlines started but not yet written. Blocked on user decision.
+13) **PENDING** — Blog and video content extraction. Archaeology deliverable has rich narrative material suitable for blog posts and video scripts. Full drafts exist for posts 4, 5 and video 1. Posts 1-3 and videos 2-3 have outlines only.
+
+14) **COMPLETED** — YouTube engagement enrichment. Added heuristic distinction between active watching (intentional learning) and passive autoplay (learning by osmosis). See youtube-engagement-heuristics.json. Active ~35-40%, passive ~60-65%. User validated the distinction applies.
+
+15) **PENDING** — Multi-agent coordination tracking. Four agents running in parallel worktrees:
+    - **Archaeology** (this branch): Narrative forensics, updating with latest commits
+    - **Foamy** (worktree-foamy-kindling-crane): Cross-agent AI tooling audit — STILL WORKING, expanding roadmap
+    - **Kimi** (agent-kimi-20260402): Structural repo reorg — BLOCKED, waiting for other agents to finish
+    - **Main branch agent**: Config audit cascade — STILL WORKING, may produce more commits
+    Merge order: foamy → archaeology → kimi (structural reorg must go last)
+
+16) **PENDING** — User validation of YouTube engagement heuristics. The engagement model needs spot-checking against actual experience. Which videos were actively watched vs autoplayed? See youtube-engagement-heuristics.json for initial estimates.

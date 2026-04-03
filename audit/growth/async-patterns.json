@@ -1,0 +1,553 @@
+{
+  "summary": {
+    "files_with_promises": [
+      "src/render/PreviewServer.ts",
+      "src/compost/CompostMill.ts",
+      "src/llm/RetryManager.ts",
+      "src/core/SelfImprovement.ts",
+      "src/core/BatchProcessor.ts",
+      "src/guardrails/RuntimeHealthMonitor.ts",
+      "src/guardrails/AccessibilityGuardrails.ts",
+      "src/tui/InteractiveMode.ts",
+      "src/render/CanvasRecorder.ts",
+      "src/render/Renderer.ts",
+      "src/harness/tools/RateLimiter.ts",
+      "src/harness/agent/LLMModeAgent.ts",
+      "src/sandbox/SandboxRunner.ts",
+      "src/evolution/MetaMode.ts",
+      "src/export/Exporter.ts",
+      "src/compost/CompostSoup.ts",
+      "src/core/RalphLoop.ts",
+      "src/core/SoupLoop.ts",
+      "src/core/parsing/ParsingCache.ts",
+      "src/config/ConfigLoader.ts",
+      "src/gallery/Gallery.ts",
+      "src/scavenger/DNAExtractor.ts",
+      "src/harness/MetaHarnessIntegration.ts",
+      "src/harness/tools/TypeCheckTool.ts",
+      "src/harness/tools/LSPTool.ts",
+      "src/harness/tools/ApplyEditTool.ts",
+      "src/harness/tools/SearchTool.ts",
+      "src/harness/tools/ReadFileTool.ts",
+      "src/harness/tools/WriteFileTool.ts",
+      "src/harness/tools/backup.ts",
+      "src/harness/HarnessMemory.ts",
+      "src/compost/SemanticExtractor.ts"
+    ],
+    "files_with_async_await": [
+      "src/music/generateMusic.ts",
+      "src/swarm/VotingEngine.ts",
+      "src/swarm/SwarmOrchestrator.ts",
+      "src/llm/RetryManager.ts",
+      "src/llm/CircuitBreaker.ts",
+      "src/llm/ContextCompactor.ts",
+      "src/llm/LLMClient.ts",
+      "src/llm/PromptBuilder.ts",
+      "src/core/SelfImprovement.ts",
+      "src/core/RalphLoop.ts",
+      "src/core/BatchProcessor.ts",
+      "src/core/OrganismLoop.ts",
+      "src/core/SoupLoop.ts",
+      "src/core/LoopPersistence.ts",
+      "src/core/ScoringEngine.ts",
+      "src/core/PromptEnhancer.ts",
+      "src/core/parsing/ParsingCache.ts",
+      "src/core/parsing/CompostParser.ts",
+      "src/core/GenerationOrchestrator.ts",
+      "src/guardrails/RuntimeHealthMonitor.ts",
+      "src/guardrails/AccessibilityGuardrails.ts",
+      "src/guardrails/SemanticValidator.ts",
+      "src/chat/GuidanceEngine.ts",
+      "src/chat/ConversationManager.ts",
+      "src/config/ConfigLoader.ts",
+      "src/config/PromptHistory.ts",
+      "src/tui/commands.ts",
+      "src/tui/NaturalInterface.ts",
+      "src/tui/IntentRouter.ts",
+      "src/tui/StdinValidator.ts",
+      "src/tui/preview/AudioPlayer.ts",
+      "src/tui/preview/BrowserLauncher.ts",
+      "src/tui/preview/PreviewRouter.ts",
+      "src/tui/InteractiveMode.ts",
+      "src/plugins/HookSystem.ts",
+      "src/plugins/PluginLoader.ts",
+      "src/learning/QualityArchive.ts",
+      "src/gallery/Gallery.ts",
+      "src/gallery/FeedbackQueue.ts",
+      "src/gallery/SeedArchive.ts",
+      "src/render/CanvasRecorder.ts",
+      "src/render/PreviewServer.ts",
+      "src/render/RemotionRenderer.ts",
+      "src/render/Renderer.ts",
+      "src/utils/htmlWrapper.ts",
+      "src/composite/Compositor.ts",
+      "src/scavenger/DNAExtractor.ts",
+      "src/scavenger/fragments/FragmentArchive.ts",
+      "src/harness/MetaHarnessIntegration.ts",
+      "src/harness/tools/RateLimiter.ts",
+      "src/harness/tools/RunBuildTool.ts",
+      "src/harness/tools/ValidationGuard.ts",
+      "src/harness/tools/TypeCheckTool.ts",
+      "src/harness/tools/RunTestsTool.ts",
+      "src/harness/tools/LSPTool.ts",
+      "src/harness/tools/ApplyEditTool.ts",
+      "src/harness/tools/NpmTool.ts",
+      "src/harness/tools/SearchTool.ts",
+      "src/harness/tools/ReadFileTool.ts",
+      "src/harness/tools/WriteFileTool.ts",
+      "src/harness/tools/ListDirTool.ts",
+      "src/harness/tools/backup.ts",
+      "src/harness/tools/BackupTools.ts",
+      "src/harness/agent/LLMModeAgent.ts",
+      "src/harness/agent/HarnessAgent.ts",
+      "src/harness/index.ts",
+      "src/harness/HarnessMemory.ts",
+      "src/collab/CollaborationEngine.ts",
+      "src/collab/DeepCollaboration.ts",
+      "src/collab/CollaborativeClient.ts",
+      "src/sandbox/SandboxRunner.ts",
+      "src/evolution/AestheticModel.ts",
+      "src/evolution/IGA.ts",
+      "src/evolution/MetaMode.ts",
+      "src/evolution/MapElites.ts",
+      "src/gui/exportSelected.ts",
+      "src/improvement/requestImprovement.ts",
+      "src/generateVisuals.ts",
+      "src/brain/EpisodicMemory.ts",
+      "src/brain/comprehensive-artistic-knowledge.ts",
+      "src/index.ts",
+      "src/generators/tone/ToneGenerator.ts",
+      "src/generators/ascii/ASCIIArtGenerator.ts",
+      "src/generators/p5/P5GeneratorLLM.ts",
+      "src/generators/strudel/StrudelGenerator.ts",
+      "src/generators/html/HTMLWebGenerator.ts",
+      "src/generators/GeneratorRegistry.ts",
+      "src/generators/TierBasedGenerator.ts",
+      "src/generators/hydra/HydraGenerator.ts",
+      "src/routing/RoutingData.ts",
+      "src/export/Exporter.ts",
+      "src/export/VideoExporter.ts",
+      "src/compost/DigestGenerator.ts",
+      "src/compost/CompostMill.ts",
+      "src/compost/SoupStateManager.ts",
+      "src/compost/SeedBank.ts",
+      "src/compost/integration/SwarmBridge.ts",
+      "src/compost/integration/FragmentArchiveBridge.ts",
+      "src/compost/FragmentScorer.ts",
+      "src/compost/DigestScheduler.ts",
+      "src/compost/cli.ts",
+      "src/compost/HeapMonitor.ts",
+      "src/compost/MetadataExtractor.ts",
+      "src/compost/CompostHeap.ts",
+      "src/compost/CollisionEngine.ts",
+      "src/compost/SemanticExtractor.ts",
+      "src/compost/ModelRouter.ts",
+      "src/compost/CompostSoup.ts",
+      "src/compost/RawByteProcessor.ts",
+      "src/musicToVisual/generateMusicToVisual.ts"
+    ],
+    "files_with_mixed_patterns": [
+      "src/render/PreviewServer.ts",
+      "src/compost/CompostMill.ts",
+      "src/llm/RetryManager.ts",
+      "src/core/SelfImprovement.ts",
+      "src/core/BatchProcessor.ts",
+      "src/guardrails/RuntimeHealthMonitor.ts",
+      "src/guardrails/AccessibilityGuardrails.ts",
+      "src/tui/InteractiveMode.ts",
+      "src/render/CanvasRecorder.ts",
+      "src/render/Renderer.ts",
+      "src/harness/tools/RateLimiter.ts",
+      "src/harness/agent/LLMModeAgent.ts",
+      "src/sandbox/SandboxRunner.ts",
+      "src/evolution/MetaMode.ts",
+      "src/export/Exporter.ts",
+      "src/compost/CompostSoup.ts",
+      "src/core/RalphLoop.ts",
+      "src/core/SoupLoop.ts",
+      "src/core/parsing/ParsingCache.ts",
+      "src/config/ConfigLoader.ts",
+      "src/gallery/Gallery.ts",
+      "src/scavenger/DNAExtractor.ts",
+      "src/harness/MetaHarnessIntegration.ts",
+      "src/harness/tools/TypeCheckTool.ts",
+      "src/harness/tools/LSPTool.ts",
+      "src/harness/tools/ApplyEditTool.ts",
+      "src/harness/tools/SearchTool.ts",
+      "src/harness/tools/ReadFileTool.ts",
+      "src/harness/tools/WriteFileTool.ts",
+      "src/harness/tools/backup.ts",
+      "src/harness/HarnessMemory.ts",
+      "src/compost/SemanticExtractor.ts"
+    ],
+    "callbacks_found": [
+      "setTimeout callbacks in new Promise wrappers",
+      "fs operation error handlers in .catch()",
+      "browser.close() error handlers",
+      "import() dynamic loading with .then()"
+    ]
+  },
+  "mixed_pattern_files": [
+    {
+      "file": "src/render/PreviewServer.ts",
+      "promise_count": 3,
+      "async_await_count": 12,
+      "details": { "then": 1, "new_promise": 2, "catch": 0 },
+      "recommendation": "Refactor .then() chains to async/await; keep new Promise for server initialization"
+    },
+    {
+      "file": "src/compost/CompostMill.ts",
+      "promise_count": 2,
+      "async_await_count": 23,
+      "details": { "then": 1, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .then() usage to async/await for consistency"
+    },
+    {
+      "file": "src/llm/RetryManager.ts",
+      "promise_count": 1,
+      "async_await_count": 4,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for delay - justified use case"
+    },
+    {
+      "file": "src/core/SelfImprovement.ts",
+      "promise_count": 1,
+      "async_await_count": 1,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for timeout pattern - justified"
+    },
+    {
+      "file": "src/core/BatchProcessor.ts",
+      "promise_count": 1,
+      "async_await_count": 5,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for delay - justified use case"
+    },
+    {
+      "file": "src/guardrails/RuntimeHealthMonitor.ts",
+      "promise_count": 1,
+      "async_await_count": 14,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for interval delay - justified"
+    },
+    {
+      "file": "src/guardrails/AccessibilityGuardrails.ts",
+      "promise_count": 1,
+      "async_await_count": 8,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for duration delay - justified"
+    },
+    {
+      "file": "src/tui/InteractiveMode.ts",
+      "promise_count": 3,
+      "async_await_count": 4,
+      "details": { "then": 0, "new_promise": 3, "catch": 0 },
+      "recommendation": "Keep new Promise wrappers for user input - UI pattern is justified"
+    },
+    {
+      "file": "src/render/CanvasRecorder.ts",
+      "promise_count": 2,
+      "async_await_count": 14,
+      "details": { "then": 0, "new_promise": 1, "catch": 1 },
+      "recommendation": "Keep patterns - delay Promise justified, .catch() for cleanup is acceptable"
+    },
+    {
+      "file": "src/render/Renderer.ts",
+      "promise_count": 3,
+      "async_await_count": 14,
+      "details": { "then": 0, "new_promise": 1, "catch": 2 },
+      "recommendation": "Consider refactoring .catch() calls to try/catch blocks for consistency"
+    },
+    {
+      "file": "src/harness/tools/RateLimiter.ts",
+      "promise_count": 1,
+      "async_await_count": 3,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for delay - justified use case"
+    },
+    {
+      "file": "src/harness/agent/LLMModeAgent.ts",
+      "promise_count": 1,
+      "async_await_count": 15,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for delay - justified use case"
+    },
+    {
+      "file": "src/sandbox/SandboxRunner.ts",
+      "promise_count": 2,
+      "async_await_count": 7,
+      "details": { "then": 0, "new_promise": 1, "catch": 1 },
+      "recommendation": "Keep patterns - delay Promise justified, .catch() for cleanup acceptable"
+    },
+    {
+      "file": "src/evolution/MetaMode.ts",
+      "promise_count": 1,
+      "async_await_count": 1,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for yield delay - justified"
+    },
+    {
+      "file": "src/export/Exporter.ts",
+      "promise_count": 1,
+      "async_await_count": 9,
+      "details": { "then": 0, "new_promise": 1, "catch": 0 },
+      "recommendation": "Keep new Promise for stream processing - justified"
+    },
+    {
+      "file": "src/compost/CompostSoup.ts",
+      "promise_count": 2,
+      "async_await_count": 8,
+      "details": { "then": 0, "new_promise": 1, "catch": 1 },
+      "recommendation": "Keep patterns - child process handling with Promises is justified"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "promise_count": 5,
+      "async_await_count": 22,
+      "details": { "then": 0, "new_promise": 0, "catch": 5 },
+      "recommendation": "Refactor .catch() calls to try/catch blocks for consistency"
+    },
+    {
+      "file": "src/core/SoupLoop.ts",
+      "promise_count": 1,
+      "async_await_count": 1,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/core/parsing/ParsingCache.ts",
+      "promise_count": 1,
+      "async_await_count": 15,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "promise_count": 1,
+      "async_await_count": 14,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/gallery/Gallery.ts",
+      "promise_count": 1,
+      "async_await_count": 22,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/scavenger/DNAExtractor.ts",
+      "promise_count": 3,
+      "async_await_count": 19,
+      "details": { "then": 0, "new_promise": 0, "catch": 3 },
+      "recommendation": "Refactor .catch() calls to try/catch blocks for consistency"
+    },
+    {
+      "file": "src/harness/MetaHarnessIntegration.ts",
+      "promise_count": 1,
+      "async_await_count": 10,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/harness/tools/TypeCheckTool.ts",
+      "promise_count": 1,
+      "async_await_count": 1,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/harness/tools/LSPTool.ts",
+      "promise_count": 1,
+      "async_await_count": 3,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/harness/tools/ApplyEditTool.ts",
+      "promise_count": 1,
+      "async_await_count": 3,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/harness/tools/SearchTool.ts",
+      "promise_count": 1,
+      "async_await_count": 2,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/harness/tools/ReadFileTool.ts",
+      "promise_count": 1,
+      "async_await_count": 2,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/harness/tools/WriteFileTool.ts",
+      "promise_count": 1,
+      "async_await_count": 4,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/harness/tools/backup.ts",
+      "promise_count": 2,
+      "async_await_count": 8,
+      "details": { "then": 0, "new_promise": 0, "catch": 2 },
+      "recommendation": "Refactor .catch() calls to try/catch blocks for consistency"
+    },
+    {
+      "file": "src/harness/HarnessMemory.ts",
+      "promise_count": 1,
+      "async_await_count": 6,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    },
+    {
+      "file": "src/compost/SemanticExtractor.ts",
+      "promise_count": 1,
+      "async_await_count": 5,
+      "details": { "then": 0, "new_promise": 0, "catch": 1 },
+      "recommendation": "Refactor .catch() to try/catch for consistency"
+    }
+  ],
+  "new_promise_usages": [
+    {
+      "file": "src/llm/RetryManager.ts",
+      "line": 56,
+      "pattern": "await new Promise(resolve => setTimeout(resolve, delay))",
+      "purpose": "Delay/sleep functionality",
+      "justified": true
+    },
+    {
+      "file": "src/core/SelfImprovement.ts",
+      "line": 72,
+      "pattern": "new Promise<never>((_, reject) => { ... setTimeout ... })",
+      "purpose": "Timeout promise for racing",
+      "justified": true
+    },
+    {
+      "file": "src/core/BatchProcessor.ts",
+      "line": 296,
+      "pattern": "new Promise((resolve) => setTimeout(resolve, ms))",
+      "purpose": "Delay between batches",
+      "justified": true
+    },
+    {
+      "file": "src/guardrails/RuntimeHealthMonitor.ts",
+      "line": 153,
+      "pattern": "await new Promise(r => setTimeout(r, this.options.sampleIntervalMs))",
+      "purpose": "Sampling interval delay",
+      "justified": true
+    },
+    {
+      "file": "src/guardrails/AccessibilityGuardrails.ts",
+      "line": 108,
+      "pattern": "await new Promise(r => setTimeout(r, this.options.checkDurationMs))",
+      "purpose": "Check duration delay",
+      "justified": true
+    },
+    {
+      "file": "src/tui/InteractiveMode.ts",
+      "lines": [48, 64, 82],
+      "pattern": "new Promise((resolve) => { rl.question(...) })",
+      "purpose": "Wrap readline interface in Promise",
+      "justified": true
+    },
+    {
+      "file": "src/render/CanvasRecorder.ts",
+      "line": 72,
+      "pattern": "new Promise(resolve => setTimeout(resolve, delay))",
+      "purpose": "Frame capture delay",
+      "justified": true
+    },
+    {
+      "file": "src/render/PreviewServer.ts",
+      "lines": [351, 371],
+      "pattern": "new Promise((resolve, reject) => { server.listen(...) })",
+      "purpose": "Server startup/shutdown handling",
+      "justified": true
+    },
+    {
+      "file": "src/render/Renderer.ts",
+      "line": 141,
+      "pattern": "new Promise(resolve => setTimeout(resolve, ms))",
+      "purpose": "Render delay",
+      "justified": true
+    },
+    {
+      "file": "src/harness/tools/RateLimiter.ts",
+      "line": 141,
+      "pattern": "new Promise(resolve => setTimeout(resolve, ms))",
+      "purpose": "Rate limiting delay",
+      "justified": true
+    },
+    {
+      "file": "src/harness/agent/LLMModeAgent.ts",
+      "line": 195,
+      "pattern": "await new Promise(r => setTimeout(r, 100))",
+      "purpose": "Retry delay",
+      "justified": true
+    },
+    {
+      "file": "src/sandbox/SandboxRunner.ts",
+      "line": 70,
+      "pattern": "await new Promise((r) => setTimeout(r, 300))",
+      "purpose": "Sandbox initialization delay",
+      "justified": true
+    },
+    {
+      "file": "src/evolution/MetaMode.ts",
+      "line": 60,
+      "pattern": "await new Promise((resolve) => setTimeout(resolve, 1))",
+      "purpose": "Yield to event loop",
+      "justified": true
+    },
+    {
+      "file": "src/export/Exporter.ts",
+      "line": 170,
+      "pattern": "new Promise((resolve, reject) => { stream.on(...) })",
+      "purpose": "Stream completion handling",
+      "justified": true
+    },
+    {
+      "file": "src/compost/CompostSoup.ts",
+      "line": 139,
+      "pattern": "await new Promise<void>((resolve, reject) => { childProcess.on(...) })",
+      "purpose": "Child process execution wrapper",
+      "justified": true
+    }
+  ],
+  "then_chains": [
+    {
+      "file": "src/render/PreviewServer.ts",
+      "line": 260,
+      "pattern": "await import('../core/RalphLoop.js').then(m => m.RalphLoop.getProgress())",
+      "recommendation": "Refactor to: const m = await import('../core/RalphLoop.js'); const loopProgress = m.RalphLoop.getProgress();"
+    },
+    {
+      "file": "src/compost/CompostMill.ts",
+      "line": 374,
+      "pattern": "this.heap.listFiles().then(f => f.length)",
+      "recommendation": "Refactor to: const f = await this.heap.listFiles(); return f.length;"
+    }
+  ],
+  "recommendations": {
+    "high_priority": [
+      "Refactor 2 .then() chains in PreviewServer.ts and CompostMill.ts to async/await",
+      "Refactor 21 .catch() calls across 20 files to use try/catch blocks"
+    ],
+    "low_priority": [
+      "Review 15 new Promise usages - most are justified for delays/setTimeout",
+      "Consider utility function for sleep: const sleep = (ms) => new Promise(r => setTimeout(r, ms))"
+    ],
+    "style_guide": [
+      "Standardize on async/await for all asynchronous flow control",
+      "Use try/catch blocks instead of .catch() for error handling",
+      "Keep new Promise only for: setTimeout delays, event emitter wrapping, stream handling",
+      "Consider adding eslint rule to discourage .then()/.catch() in favor of async/await"
+    ]
+  }
+}

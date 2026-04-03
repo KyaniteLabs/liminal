@@ -5,7 +5,7 @@
  * Captures screenshots and audio output for quality analysis.
  */
 
-import { chromium, Browser, Page, BrowserContext } from 'playwright';
+import { chromium, Browser, Page, BrowserContext, ConsoleMessage } from 'playwright';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -166,7 +166,7 @@ export class HeadlessRenderer {
       await page.setViewportSize({ width: opts.width, height: opts.height });
 
       // Capture console logs
-      page.on('console', (msg) => {
+      page.on('console', (msg: ConsoleMessage) => {
         const log = `[${msg.type()}] ${msg.text()}`;
         logs.push(log);
         if (msg.type() === 'error') {
@@ -175,7 +175,7 @@ export class HeadlessRenderer {
       });
 
       // Capture page errors
-      page.on('pageerror', (error) => {
+      page.on('pageerror', (error: Error) => {
         errors.push(error.message);
       });
 
@@ -290,7 +290,7 @@ export class HeadlessRenderer {
   private async captureAudio(page: Page, opts: Required<RenderOptions>): Promise<AudioCaptureResult> {
     try {
       // Inject audio capture code
-      const audioData = await page.evaluate(async (duration) => {
+      const audioData = await page.evaluate(async (duration: number) => {
         const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
         
         // Wait a bit for audio to start

@@ -51,6 +51,7 @@
   ],
   "devDependencies": {
     "@playwright/test": "^1.58.2",
+    "playwright": "^1.58.2",
     "@testing-library/react": "^16.3.2",
     "@types/archiver": "^7.0.0",
     "@types/cookie-parser": "^1.4.10",

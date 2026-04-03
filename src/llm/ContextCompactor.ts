@@ -11,13 +11,13 @@
 
 import type { LLMClient } from './LLMClient.js';
 
-export interface CompactorMessage {
+interface CompactorMessage {
   role: 'system' | 'user' | 'assistant';
   content: string;
   timestamp?: string;
 }
 
-export interface CompactorOptions {
+interface CompactorOptions {
   maxMessages?: number;
   recentThreshold?: number;
   llmClient?: LLMClient;
@@ -158,4 +158,4 @@ export class ContextCompactor {
   }
 }
 
-export const contextCompactor = new ContextCompactor();
+const contextCompactor = new ContextCompactor();

@@ -10,7 +10,7 @@ export interface Iteration {
   promiseDetected?: boolean;
 }
 
-export interface PlayerPianoState {
+interface PlayerPianoState {
   isPlaying: boolean;
   currentIndex: number;
   speed: number;

@@ -7,6 +7,10 @@ export {
   DOMAIN_ROUTING_DATA,
   OVERALL_FITNESS,
   DOMAIN_KEYWORDS,
+  recordRoutingOutcome,
+  getRollingPerformance,
+  getOptimalModelBandit,
+  getBanditStats,
 } from './RoutingData.js';
 export type {
   DomainType,
@@ -25,3 +29,12 @@ export type {
   RoutingDecision,
   RoutingConfig,
 } from './SmartRouter.js';
+
+export {
+  GeneratorBanditRouter,
+  generatorBanditRouter,
+} from './GeneratorBanditRouter.js';
+export type {
+  BanditArm,
+  BanditState,
+} from './GeneratorBanditRouter.js';

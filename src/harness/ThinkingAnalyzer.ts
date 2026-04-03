@@ -8,12 +8,15 @@
 
 import type { LLMResponse } from '../llm/LLMClient.js';
 import { reasoningCapture, type DetectedPattern } from '../llm/ReasoningCapture.js';
+import { normalizeThinking, stripThinkTags } from '../llm/ThinkingNormalizer.js';
+import type { NormalizedThinking } from '../llm/ProviderTypes.js';
 
 export interface ThinkingAnalysis {
   model: string;
   domain: string;
   prompt: string;
   thinkingSummary: string;
+  thinkingSource: NormalizedThinking['source'];
   codeRecovered: boolean;
   originalCodeEmpty: boolean;
   detectedPatterns: DetectedPattern[];
@@ -34,8 +37,35 @@ export class ThinkingAnalyzer {
    * Called by harness when failures occur
    */
   analyze(response: LLMResponse, prompt: string, domain: string, model: string): ThinkingAnalysis {
-    const thinking = response.thinking || '';
-    
+    // Use ThinkingNormalizer for structured extraction, with fallback to response.thinking
+    let thinking = response.thinking || '';
+    let thinkingSource: NormalizedThinking['source'] = thinking ? 'think_tags' : 'none';
+
+    // If no pre-populated thinking, try extracting from raw response via normalizer
+    if (!thinking) {
+      const normalized = normalizeThinking(response, '');
+      if (normalized.source !== 'none') {
+        thinking = normalized.text;
+        thinkingSource = normalized.source;
+      }
+    }
+
+    // Also check for <think/> tags leaked into code or explanation
+    if (!thinking && response.code) {
+      const stripped = stripThinkTags(response.code);
+      if (stripped.thinking) {
+        thinking = stripped.thinking;
+        thinkingSource = 'think_tags';
+      }
+    }
+    if (!thinking && response.explanation) {
+      const stripped = stripThinkTags(response.explanation);
+      if (stripped.thinking) {
+        thinking = stripped.thinking;
+        thinkingSource = 'think_tags';
+      }
+    }
+
     // Capture reasoning trace
     const trace = reasoningCapture.capture({
       model,
@@ -79,6 +109,7 @@ export class ThinkingAnalyzer {
       domain,
       prompt: prompt.slice(0, 200),
       thinkingSummary: this.summarizeThinking(thinking),
+      thinkingSource,
       codeRecovered: response.recoveredFromThinking || false,
       originalCodeEmpty: !response.code || response.code === '',
       detectedPatterns,

@@ -15,6 +15,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { Logger } from '../utils/Logger.js';
+import { generatorBanditRouter } from './GeneratorBanditRouter.js';
 
 /**
  * Record of a generation outcome for dynamic routing.
@@ -39,6 +40,7 @@ const PERF_DIR = `${process.env.HOME}/.liminal/routing`;
 
 /**
  * Record a generation outcome for dynamic routing.
+ * Also feeds the online Thompson Sampling bandit for continuous learning.
  */
 export async function recordRoutingOutcome(record: RoutingRecord): Promise<void> {
   try {
@@ -51,6 +53,11 @@ export async function recordRoutingOutcome(record: RoutingRecord): Promise<void>
     const filePath = path.join(PERF_DIR, `${record.domain}.json`);
     await fs.mkdir(PERF_DIR, { recursive: true });
     await fs.writeFile(filePath, JSON.stringify(records), 'utf-8');
+
+    // Feed the online bandit
+    if (record.qualityScore > 0) {
+      generatorBanditRouter.recordOutcome(record.domain, record.model, record.qualityScore);
+    }
   } catch (err) {
     // Best-effort recording
     Logger.warn('RoutingData', 'Failed to record routing outcome:', err);
@@ -94,6 +101,25 @@ export async function getRollingPerformance(domain: DomainType): Promise<Rolling
   }
 
   return { local, cloud };
+}
+
+/**
+ * Get the optimal model for a domain using Thompson Sampling bandit.
+ * Returns null if the bandit hasn't collected enough data yet
+ * (caller should fall back to static DOMAIN_ROUTING_DATA).
+ */
+export function getOptimalModelBandit(domain: DomainType): ModelChoice | null {
+  if (!generatorBanditRouter.isReady(domain)) {
+    return null;
+  }
+  return generatorBanditRouter.selectModel(domain);
+}
+
+/**
+ * Get bandit statistics for monitoring/debugging.
+ */
+export function getBanditStats(domain: DomainType) {
+  return generatorBanditRouter.getDomainStats(domain);
 }
 
 /**

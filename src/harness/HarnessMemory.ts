@@ -16,6 +16,8 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { Status } from '../types/status.js';
 import type { CalibrationWeights, CalibrationData } from '../calibration/CalibrationSuite.js';
+import { getGlobalEmbeddingService } from '../embeddings/EmbeddingService.js';
+import { findKNearestNeighbors } from '../utils/vectors.js';
 
 // Task tracking
 export interface HarnessTask {
@@ -55,6 +57,8 @@ export interface MemoryEpisode {
   score?: number;
   comment?: string;
   tags?: string[];
+  /** Embedding vector for semantic retrieval (set lazily) */
+  embedding?: number[];
 }
 
 // Pattern occurrence tracking
@@ -363,6 +367,130 @@ export class HarnessMemory {
    */
   getEpisodesByDomain(domain: string): MemoryEpisode[] {
     return this.state.episodes.filter(e => e.domain === domain);
+  }
+
+  // ==================== Semantic Retrieval (Embedding-based RAG) ====================
+
+  /**
+   * Retrieve the most relevant past episodes for a given prompt using
+   * embedding-based cosine similarity (semantic retrieval).
+   *
+   * This replaces chronological loading with meaning-based retrieval:
+   * instead of "last 50 episodes", it returns the K episodes whose
+   * prompts are most semantically similar to the current prompt.
+   *
+   * Falls back to chronological retrieval if embeddings are unavailable.
+   */
+  async getRelevantEpisodes(query: string, k: number = 5): Promise<MemoryEpisode[]> {
+    const episodes = this.state.episodes.filter(e => e.prompt && e.prompt.length > 0);
+
+    if (episodes.length === 0) {
+      return [];
+    }
+
+    // Fewer episodes than k — return all
+    if (episodes.length <= k) {
+      return episodes;
+    }
+
+    try {
+      const embeddingService = getGlobalEmbeddingService();
+      await embeddingService.initialize();
+
+      // Embed the query
+      const queryResult = await embeddingService.embed(query);
+      const queryVec = queryResult.vector;
+
+      // Embed any episodes that don't have embeddings yet (lazy embedding)
+      const unembedded = episodes.filter(e => !e.embedding);
+      if (unembedded.length > 0) {
+        // Batch embed (limit to most recent 100 to avoid huge batches)
+        const toEmbed = unembedded.slice(-100);
+        for (const episode of toEmbed) {
+          if (episode.prompt) {
+            const result = await embeddingService.embed(episode.prompt);
+            episode.embedding = result.vector;
+          }
+        }
+        this.dirty = true;
+      }
+
+      // Collect episodes with embeddings
+      const embedded: Array<{ episode: MemoryEpisode; vector: number[] }> = [];
+      for (const ep of episodes) {
+        if (ep.embedding) {
+          embedded.push({ episode: ep, vector: ep.embedding });
+        }
+      }
+
+      if (embedded.length === 0) {
+        // Fallback: no embeddings available
+        return this.getRecentEpisodes(k);
+      }
+
+      // Find K nearest neighbors by cosine similarity
+      const vectors = embedded.map(e => e.vector);
+      const neighborIndices = findKNearestNeighbors(queryVec, vectors, k);
+
+      return neighborIndices.map(idx => embedded[idx].episode);
+    } catch (error) {
+      // Embedding service unavailable — fall back to chronological
+      console.warn('[HarnessMemory] Semantic retrieval failed, using chronological fallback:', error);
+      return this.getRecentEpisodes(k);
+    }
+  }
+
+  /**
+   * Get relevant episodes filtered by domain (semantic retrieval within a domain).
+   */
+  async getRelevantEpisodesByDomain(
+    query: string,
+    domain: string,
+    k: number = 5,
+  ): Promise<MemoryEpisode[]> {
+    const domainEpisodes = this.getEpisodesByDomain(domain).filter(e => e.prompt && e.prompt.length > 0);
+
+    if (domainEpisodes.length <= k) {
+      return domainEpisodes;
+    }
+
+    try {
+      const embeddingService = getGlobalEmbeddingService();
+      await embeddingService.initialize();
+
+      const queryResult = await embeddingService.embed(query);
+      const queryVec = queryResult.vector;
+
+      // Lazy embed
+      const unembedded = domainEpisodes.filter(e => !e.embedding);
+      if (unembedded.length > 0) {
+        for (const episode of unembedded.slice(-50)) {
+          if (episode.prompt) {
+            const result = await embeddingService.embed(episode.prompt);
+            episode.embedding = result.vector;
+          }
+        }
+        this.dirty = true;
+      }
+
+      const embedded: Array<{ episode: MemoryEpisode; vector: number[] }> = [];
+      for (const ep of domainEpisodes) {
+        if (ep.embedding) {
+          embedded.push({ episode: ep, vector: ep.embedding });
+        }
+      }
+
+      if (embedded.length === 0) {
+        return domainEpisodes.slice(-k);
+      }
+
+      const vectors = embedded.map(e => e.vector);
+      const neighborIndices = findKNearestNeighbors(queryVec, vectors, k);
+
+      return neighborIndices.map(idx => embedded[idx].episode);
+    } catch {
+      return domainEpisodes.slice(-k);
+    }
   }
 
   // ==================== Pattern Operations ====================

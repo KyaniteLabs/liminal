@@ -17,6 +17,7 @@ import { analyzeColorHarmony } from './critics/ColorHarmonyCritic.js';
 import { analyzeLayout } from './critics/LayoutCritic.js';
 import { analyzeTypography } from './critics/TypographyCritic.js';
 import { analyzeSoundHarmony } from './critics/SoundHarmonyCritic.js';
+import { analyzeWithLLMJudge, type LLMClientLike, type LLMJudgeResult } from './critics/LLMJudgeCritic.js';
 import type { CalibrationWeights, CalibrationResult } from '../calibration/CalibrationSuite.js';
 import { CorrelationCalculator } from '../calibration/CorrelationCalculator.js';
 import type { HarnessMemory } from '../harness/HarnessMemory.js';
@@ -54,6 +55,7 @@ const DEFAULT_CALIBRATION_WEIGHTS: CalibrationWeights = {
 export class AestheticCritic {
   private calibrationWeights: Map<string, CalibrationWeights> = new Map();
   private harnessMemory?: HarnessMemory;
+  private llmClient?: LLMClientLike;
 
   /**
    * Set HarnessMemory for persistent calibration storage
@@ -61,6 +63,65 @@ export class AestheticCritic {
   setHarnessMemory(memory: HarnessMemory): void {
     this.harnessMemory = memory;
     this.loadCalibrationData();
+  }
+
+  /**
+   * Set LLM client for LLM-as-Judge evaluation mode.
+   * When set, `critiqueWithLLM()` becomes available for higher-quality scoring.
+   */
+  setLLMClient(llm: LLMClientLike): void {
+    this.llmClient = llm;
+  }
+
+  /**
+   * Evaluate code using LLM-as-Judge (async, higher quality).
+   * Falls back to heuristic critics if no LLM is configured.
+   *
+   * This is the "dual-path" approach: heuristic critics are fast and free,
+   * LLM-as-Judge is slower but produces calibrated, reasoning-aware scores.
+   * Use the heuristic path for real-time feedback during generation loops,
+   * and the LLM path for final evaluation and calibration.
+   */
+  async critiqueWithLLM(
+    code: string,
+    domain: string = 'p5',
+    config?: Partial<CriticConfig>,
+  ): Promise<AestheticReport | LLMJudgeResult> {
+    if (!this.llmClient) {
+      // No LLM available — fall back to heuristic critics
+      return this.critique(code, config);
+    }
+
+    const constraints: DesignConstraints = {
+      ...DEFAULT_DESIGN_CONSTRAINTS,
+      ...config?.constraints,
+      color: { ...DEFAULT_DESIGN_CONSTRAINTS.color, ...config?.constraints?.color },
+      layout: { ...DEFAULT_DESIGN_CONSTRAINTS.layout, ...config?.constraints?.layout },
+      typography: { ...DEFAULT_DESIGN_CONSTRAINTS.typography, ...config?.constraints?.typography },
+      sound: { ...DEFAULT_DESIGN_CONSTRAINTS.sound, ...config?.constraints?.sound },
+      general: { ...DEFAULT_DESIGN_CONSTRAINTS.general, ...config?.constraints?.general },
+    };
+
+    // Run both paths in parallel: heuristic + LLM
+    const heuristicReport = this.critique(code, config);
+    const llmReport = await analyzeWithLLMJudge(code, domain, this.llmClient, constraints);
+
+    // Blend: weight LLM score more heavily (0.7 LLM + 0.3 heuristic)
+    // unless the LLM call failed
+    if (llmReport.usedLLM) {
+      const blendedScore = (llmReport.score * 0.7) + (heuristicReport.score * 0.3);
+      const passed = blendedScore >= constraints.general.minAestheticScore
+        && llmReport.violations.filter(v => v.severity === 'error').length === 0;
+
+      return {
+        ...llmReport,
+        score: Math.round(blendedScore * 1000) / 1000,
+        violations: [...heuristicReport.violations, ...llmReport.violations],
+        passed,
+      };
+    }
+
+    return heuristicReport;
   }
 
   /**

@@ -3,7 +3,7 @@
  * Extracts ~32-dim behavior feature vectors from code strings.
  */
 
-export type Domain = 'p5' | 'glsl' | 'three' | 'music';
+export type Domain = 'p5' | 'glsl' | 'three' | 'music' | 'html' | 'ascii' | 'remotion' | 'hydra' | 'strudel';
 
 /** Detect what domain a code string belongs to. */
 export function detectDomain(code: string): Domain {
@@ -17,7 +17,32 @@ export function detectDomain(code: string): Domain {
     return 'three';
   }
 
-  // 3. Music: audio-specific patterns
+  // 3. Remotion: React video components
+  if (/useCurrentFrame|useVideoConfig|AbsoluteFill|Sequence/.test(code) || /from\s+['"]remotion/.test(code)) {
+    return 'remotion';
+  }
+
+  // 4. Hydra: video synth patterns
+  if (/\.out\(|osc\(|shape\(|kaleid\(|scrollX|scrollY/.test(code)) {
+    return 'hydra';
+  }
+
+  // 5. Strudel: pattern language
+  if (/\bs\s+\(|stack\s*\(|seq\s*\(|note\s*\(|sound\s*\(|\.cpm\b/.test(code)) {
+    return 'strudel';
+  }
+
+  // 6. ASCII Art: box-drawing and block characters
+  if (/[\u2580-\u259F\u2500-\u257F]/.test(code) || (/[█▓▒░@#%*]/.test(code) && code.length < 5000)) {
+    return 'ascii';
+  }
+
+  // 7. HTML: markup structure
+  if (/<!DOCTYPE\s+html>|<html[\s>]/i.test(code) || (/<(div|section|header|footer|main|article)/i.test(code) && /<\/html>/i.test(code))) {
+    return 'html';
+  }
+
+  // 8. Music: audio-specific patterns
   if (
     /play\s*\(\s*\)/.test(code) ||
     /oscillator/i.test(code) ||
@@ -31,12 +56,12 @@ export function detectDomain(code: string): Domain {
     return 'music';
   }
 
-  // 4. p5: setup, draw, createCanvas
+  // 9. p5: setup, draw, createCanvas
   if (/\bsetup\s*\(\s*\)/.test(code) || /\bdraw\s*\(\s*\)/.test(code) || /\bcreateCanvas\s*\(/.test(code)) {
     return 'p5';
   }
 
-  // 5. Default to p5
+  // 10. Default to p5 (most common domain)
   return 'p5';
 }
 
@@ -124,14 +149,92 @@ function extractMusicFeatures(code: string): number[] {
   ];
 }
 
+/** Extract the 8-element HTML feature sub-vector. */
+function extractHTMLFeatures(code: string): number[] {
+  return [
+    /<header|hero|banner/i.test(code) ? 1 : 0,          // 0: hasHeader
+    /<nav|navigation|menu/i.test(code) ? 1 : 0,         // 1: hasNav
+    /<section|article|main/i.test(code) ? 1 : 0,        // 2: hasSections
+    /<button|cta|call-to-action/i.test(code) ? 1 : 0,   // 3: hasCTA
+    /<footer/i.test(code) ? 1 : 0,                      // 4: hasFooter
+    /style=|class=|css/i.test(code) ? 1 : 0,            // 5: hasStyling
+    /responsive|@media|viewport/i.test(code) ? 1 : 0,   // 6: isResponsive
+    measureComplexity(code),                             // 7: codeComplexity
+  ];
+}
+
+/** Extract the 8-element ASCII art feature sub-vector. */
+function extractASCIIFeatures(code: string): number[] {
+  const blockChars = (code.match(/[\u2580-\u259F]/g) || []).length;
+  const lineChars = (code.match(/[\u2500-\u257F]/g) || []).length;
+  return [
+    Math.min(blockChars / 50, 1),                       // 0: blockDensity
+    Math.min(lineChars / 50, 1),                        // 1: lineDensity
+    /[█▓▒░]/.test(code) ? 1 : 0,                        // 2: hasShading
+    /[┌┐└┘├┤┬┴┼]/.test(code) ? 1 : 0,                   // 3: hasBoxDrawing
+    /[@#%*+=\-:]/.test(code) ? 1 : 0,                   // 4: hasASCIIChars (hyphen escaped)
+    code.split('\n').length > 10 ? 1 : 0,               // 5: hasMultipleLines
+    code.length > 200 ? 1 : 0,                          // 6: hasContent
+    measureComplexity(code),                             // 7: codeComplexity
+  ];
+}
+
+/** Extract the 8-element Remotion feature sub-vector. */
+function extractRemotionFeatures(code: string): number[] {
+  return [
+    /useCurrentFrame/.test(code) ? 1 : 0,               // 0: usesFrame
+    /useVideoConfig/.test(code) ? 1 : 0,                // 1: usesVideoConfig
+    /AbsoluteFill/.test(code) ? 1 : 0,                  // 2: usesAbsoluteFill
+    /Sequence/.test(code) ? 1 : 0,                      // 3: usesSequence
+    /interpolate|spring/.test(code) ? 1 : 0,            // 4: usesAnimation
+    /from\s+['"]remotion/.test(code) ? 1 : 0,           // 5: importsRemotion
+    /export\s+default\s+function/.test(code) ? 1 : 0,   // 6: hasComponent
+    measureComplexity(code),                             // 7: codeComplexity
+  ];
+}
+
+/** Extract the 8-element Hydra feature sub-vector. */
+function extractHydraFeatures(code: string): number[] {
+  return [
+    /\.out\(/.test(code) ? 1 : 0,                       // 0: hasOutput
+    /osc\(/.test(code) ? 1 : 0,                         // 1: usesOscillator
+    /shape\(/.test(code) ? 1 : 0,                       // 2: usesShape
+    /kaleid\(/.test(code) ? 1 : 0,                      // 3: usesKaleidoscope
+    /scrollX|scrollY/.test(code) ? 1 : 0,               // 4: usesScroll
+    /src\(/.test(code) ? 1 : 0,                         // 5: usesSource
+    /modulate|blend|mult|add/.test(code) ? 1 : 0,       // 6: usesEffects
+    measureComplexity(code),                             // 7: codeComplexity
+  ];
+}
+
+/** Extract the 8-element Strudel feature sub-vector. */
+function extractStrudelFeatures(code: string): number[] {
+  return [
+    /\bs\s+\(/.test(code) ? 1 : 0,                      // 0: usesPattern
+    /stack\s*\(/.test(code) ? 1 : 0,                    // 1: usesStack
+    /seq\s*\(/.test(code) ? 1 : 0,                      // 2: usesSequence
+    /note\s*\(/.test(code) ? 1 : 0,                     // 3: usesNotes
+    /sound\s*\(/.test(code) ? 1 : 0,                    // 4: usesSound
+    /\.cpm\b|bpm/.test(code) ? 1 : 0,                   // 5: usesTempo
+    /\.|\*|\//.test(code) ? 1 : 0,                      // 6: usesRhythmOps
+    measureComplexity(code),                             // 7: codeComplexity
+  ];
+}
+
 /** Extract a 32-dim behavior feature vector from code. Each value in [0, 1]. */
 export function extractBehavior(code: string, domain?: Domain): number[] {
   const detected = domain ?? detectDomain(code);
 
-  const p5Features    = detected === 'p5'    ? extractP5Features(code)    : new Array(8).fill(0);
-  const glslFeatures  = detected === 'glsl'  ? extractGLSLFeatures(code)  : new Array(8).fill(0);
-  const threeFeatures = detected === 'three' ? extractThreeFeatures(code) : new Array(8).fill(0);
-  const musicFeatures = detected === 'music' ? extractMusicFeatures(code) : new Array(8).fill(0);
+  const p5Features       = detected === 'p5'       ? extractP5Features(code)       : new Array(8).fill(0);
+  const glslFeatures     = detected === 'glsl'     ? extractGLSLFeatures(code)     : new Array(8).fill(0);
+  const threeFeatures    = detected === 'three'    ? extractThreeFeatures(code)    : new Array(8).fill(0);
+  const musicFeatures    = detected === 'music'    ? extractMusicFeatures(code)    : new Array(8).fill(0);
+  const htmlFeatures     = detected === 'html'     ? extractHTMLFeatures(code)     : new Array(8).fill(0);
+  const asciiFeatures    = detected === 'ascii'    ? extractASCIIFeatures(code)    : new Array(8).fill(0);
+  const remotionFeatures = detected === 'remotion' ? extractRemotionFeatures(code) : new Array(8).fill(0);
+  const hydraFeatures    = detected === 'hydra'    ? extractHydraFeatures(code)    : new Array(8).fill(0);
+  const strudelFeatures  = detected === 'strudel'  ? extractStrudelFeatures(code)  : new Array(8).fill(0);
 
-  return [...p5Features, ...glslFeatures, ...threeFeatures, ...musicFeatures];
+  return [...p5Features, ...glslFeatures, ...threeFeatures, ...musicFeatures, 
+          ...htmlFeatures, ...asciiFeatures, ...remotionFeatures, ...hydraFeatures, ...strudelFeatures];
 }

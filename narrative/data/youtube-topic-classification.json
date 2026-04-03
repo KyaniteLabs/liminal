@@ -1,0 +1,1010 @@
+{
+  "methodology": "title-based keyword classification with channel context",
+  "classified_date": "2026-04-02",
+  "total_videos": 1481,
+  "false_positives_removed": 22,
+  "classified_videos": 1459,
+  "unclassified_count": 184,
+  "categories": {
+    "coding_agents": "Claude Code, Cursor, Copilot, Windsurf, coding assistants, IDE integrations, code generation tools",
+    "llm_models": "GPT, Claude, Gemini, Llama, model releases, benchmarks, model comparisons, API updates",
+    "agent_arch": "Agent design, MCP, tool use, agentic frameworks, multi-agent systems, agent SDK",
+    "creative_ai": "AI art, image generation, Midjourney, DALL-E, AI music, creative tools, design AI",
+    "local_ai": "Running models locally, Ollama, hardware, GPU, edge AI, self-hosted, RTX",
+    "ml_fundamentals": "Machine learning theory, training, fine-tuning, research papers, neural networks, RAG",
+    "voice_audio": "TTS, voice AI, audio generation, speech, podcast AI, voice cloning",
+    "video_gen": "Sora, Runway, Kling, video generation tools, text-to-video, AI video",
+    "philosophy_ethics": "AI safety, alignment, societal impact, regulation, AI ethics, existential risk"
+  },
+  "distribution": {
+    "llm_models": 481,
+    "coding_agents": 444,
+    "other_ai": 184,
+    "agent_arch": 109,
+    "ml_fundamentals": 100,
+    "local_ai": 54,
+    "philosophy_ethics": 40,
+    "creative_ai": 24,
+    "video_gen": 12,
+    "voice_audio": 11
+  },
+  "monthly_timeline": [
+    {
+      "month": "2025-01",
+      "categories": {
+        "llm_models": 2,
+        "other_ai": 1
+      },
+      "total": 3
+    },
+    {
+      "month": "2025-02",
+      "categories": {
+        "other_ai": 2,
+        "ml_fundamentals": 1
+      },
+      "total": 3
+    },
+    {
+      "month": "2025-03",
+      "categories": {
+        "agent_arch": 1,
+        "llm_models": 4,
+        "other_ai": 2,
+        "video_gen": 1,
+        "coding_agents": 1
+      },
+      "total": 9
+    },
+    {
+      "month": "2025-04",
+      "categories": {
+        "other_ai": 5,
+        "philosophy_ethics": 1,
+        "llm_models": 5,
+        "ml_fundamentals": 2
+      },
+      "total": 13
+    },
+    {
+      "month": "2025-05",
+      "categories": {
+        "local_ai": 1,
+        "other_ai": 7,
+        "llm_models": 4,
+        "ml_fundamentals": 1
+      },
+      "total": 13
+    },
+    {
+      "month": "2025-06",
+      "categories": {
+        "other_ai": 10,
+        "llm_models": 3,
+        "local_ai": 1,
+        "ml_fundamentals": 2
+      },
+      "total": 16
+    },
+    {
+      "month": "2025-07",
+      "categories": {
+        "llm_models": 4,
+        "other_ai": 4,
+        "ml_fundamentals": 1,
+        "agent_arch": 1
+      },
+      "total": 10
+    },
+    {
+      "month": "2025-08",
+      "categories": {
+        "llm_models": 41,
+        "philosophy_ethics": 1,
+        "creative_ai": 1,
+        "other_ai": 13,
+        "voice_audio": 1,
+        "coding_agents": 6,
+        "video_gen": 5,
+        "agent_arch": 1
+      },
+      "total": 69
+    },
+    {
+      "month": "2025-09",
+      "categories": {
+        "llm_models": 74,
+        "other_ai": 33,
+        "local_ai": 14,
+        "agent_arch": 8,
+        "coding_agents": 43,
+        "creative_ai": 6,
+        "voice_audio": 4,
+        "philosophy_ethics": 2,
+        "ml_fundamentals": 2
+      },
+      "total": 186
+    },
+    {
+      "month": "2025-10",
+      "categories": {
+        "llm_models": 59,
+        "coding_agents": 53,
+        "other_ai": 24,
+        "ml_fundamentals": 8,
+        "philosophy_ethics": 5,
+        "creative_ai": 3,
+        "agent_arch": 11,
+        "video_gen": 5,
+        "local_ai": 3
+      },
+      "total": 171
+    },
+    {
+      "month": "2025-11",
+      "categories": {
+        "llm_models": 72,
+        "creative_ai": 3,
+        "coding_agents": 30,
+        "other_ai": 28,
+        "philosophy_ethics": 5,
+        "agent_arch": 4,
+        "local_ai": 3,
+        "voice_audio": 1,
+        "ml_fundamentals": 8
+      },
+      "total": 154
+    },
+    {
+      "month": "2025-12",
+      "categories": {
+        "other_ai": 22,
+        "coding_agents": 13,
+        "llm_models": 52,
+        "agent_arch": 3,
+        "philosophy_ethics": 3,
+        "creative_ai": 1,
+        "voice_audio": 3,
+        "ml_fundamentals": 3
+      },
+      "total": 100
+    },
+    {
+      "month": "2026-01",
+      "categories": {
+        "coding_agents": 9,
+        "llm_models": 30,
+        "local_ai": 1,
+        "other_ai": 14,
+        "philosophy_ethics": 2
+      },
+      "total": 56
+    },
+    {
+      "month": "2026-02",
+      "categories": {
+        "coding_agents": 140,
+        "llm_models": 68,
+        "ml_fundamentals": 23,
+        "agent_arch": 24,
+        "voice_audio": 2,
+        "philosophy_ethics": 4,
+        "local_ai": 13,
+        "creative_ai": 1,
+        "other_ai": 14
+      },
+      "total": 289
+    },
+    {
+      "month": "2026-03",
+      "categories": {
+        "coding_agents": 131,
+        "ml_fundamentals": 46,
+        "llm_models": 54,
+        "agent_arch": 54,
+        "local_ai": 14,
+        "other_ai": 5,
+        "philosophy_ethics": 17,
+        "video_gen": 1,
+        "creative_ai": 9
+      },
+      "total": 331
+    },
+    {
+      "month": "2026-04",
+      "categories": {
+        "coding_agents": 18,
+        "llm_models": 9,
+        "local_ai": 4,
+        "agent_arch": 2,
+        "ml_fundamentals": 3
+      },
+      "total": 36
+    }
+  ],
+  "top_channels_per_category": {
+    "coding_agents": [
+      {
+        "channel": "WorldofAI",
+        "videos": 43
+      },
+      {
+        "channel": "AI News & Strategy Daily | Nate B Jones",
+        "videos": 23
+      },
+      {
+        "channel": "IndyDevDan",
+        "videos": 16
+      },
+      {
+        "channel": "Chase AI",
+        "videos": 16
+      },
+      {
+        "channel": "Nate Herk | AI Automation",
+        "videos": 12
+      },
+      {
+        "channel": "xCreate",
+        "videos": 9
+      },
+      {
+        "channel": "Jake Van Clief",
+        "videos": 9
+      },
+      {
+        "channel": "Ray Fernando",
+        "videos": 9
+      },
+      {
+        "channel": "How I AI",
+        "videos": 9
+      },
+      {
+        "channel": "Matthew Berman",
+        "videos": 9
+      }
+    ],
+    "llm_models": [
+      {
+        "channel": "AI News & Strategy Daily | Nate B Jones",
+        "videos": 99
+      },
+      {
+        "channel": "Matthew Berman",
+        "videos": 40
+      },
+      {
+        "channel": "Universe of AI",
+        "videos": 20
+      },
+      {
+        "channel": "Dylan Davis",
+        "videos": 20
+      },
+      {
+        "channel": "WorldofAI",
+        "videos": 17
+      },
+      {
+        "channel": "AICodeKing",
+        "videos": 16
+      },
+      {
+        "channel": "TechTiff",
+        "videos": 15
+      },
+      {
+        "channel": "Sam Witteveen",
+        "videos": 7
+      },
+      {
+        "channel": "Theo - t3\u2024gg",
+        "videos": 6
+      },
+      {
+        "channel": "TheAIGRID",
+        "videos": 6
+      }
+    ],
+    "agent_arch": [
+      {
+        "channel": "IndyDevDan",
+        "videos": 11
+      },
+      {
+        "channel": "AI News & Strategy Daily | Nate B Jones",
+        "videos": 6
+      },
+      {
+        "channel": "AI Warehouse",
+        "videos": 6
+      },
+      {
+        "channel": "WorldofAI",
+        "videos": 5
+      },
+      {
+        "channel": "J. Gravelle",
+        "videos": 3
+      },
+      {
+        "channel": "BoxminingAI",
+        "videos": 2
+      },
+      {
+        "channel": "Igor Kudryk (Salesforce)",
+        "videos": 2
+      },
+      {
+        "channel": "Greg Isenberg",
+        "videos": 2
+      },
+      {
+        "channel": "Nate Herk | AI Automation",
+        "videos": 2
+      },
+      {
+        "channel": "AI Tinkerers",
+        "videos": 2
+      }
+    ],
+    "creative_ai": [
+      {
+        "channel": "AI Warehouse",
+        "videos": 3
+      },
+      {
+        "channel": "gptars",
+        "videos": 3
+      },
+      {
+        "channel": "Universe of AI",
+        "videos": 1
+      },
+      {
+        "channel": "Pezzza's Work",
+        "videos": 1
+      },
+      {
+        "channel": "Yosh",
+        "videos": 1
+      },
+      {
+        "channel": "Alex Ziskind",
+        "videos": 1
+      },
+      {
+        "channel": "Jesse Showalter",
+        "videos": 1
+      },
+      {
+        "channel": "Dave's Garage",
+        "videos": 1
+      },
+      {
+        "channel": "Griffin Wooldridge",
+        "videos": 1
+      },
+      {
+        "channel": "Rick Beato",
+        "videos": 1
+      }
+    ],
+    "local_ai": [
+      {
+        "channel": "xCreate",
+        "videos": 16
+      },
+      {
+        "channel": "Alex Ziskind",
+        "videos": 6
+      },
+      {
+        "channel": "Tim Carambat",
+        "videos": 3
+      },
+      {
+        "channel": "Jeff Geerling",
+        "videos": 2
+      },
+      {
+        "channel": "VirtualizationHowto",
+        "videos": 2
+      },
+      {
+        "channel": "AI News & Strategy Daily | Nate B Jones",
+        "videos": 2
+      },
+      {
+        "channel": "Warp",
+        "videos": 2
+      },
+      {
+        "channel": "Onchain AI Garage",
+        "videos": 1
+      },
+      {
+        "channel": "Bijan Bowen",
+        "videos": 1
+      },
+      {
+        "channel": "Fahd Mirza",
+        "videos": 1
+      }
+    ],
+    "ml_fundamentals": [
+      {
+        "channel": "Claudius Papirus",
+        "videos": 23
+      },
+      {
+        "channel": "AI Warehouse",
+        "videos": 8
+      },
+      {
+        "channel": "AI News & Strategy Daily | Nate B Jones",
+        "videos": 5
+      },
+      {
+        "channel": "Julia Turc",
+        "videos": 5
+      },
+      {
+        "channel": "Two Minute Papers",
+        "videos": 3
+      },
+      {
+        "channel": "Matthew Berman",
+        "videos": 2
+      },
+      {
+        "channel": "Daniel Bourke",
+        "videos": 2
+      },
+      {
+        "channel": "Machine Learning Street Talk",
+        "videos": 2
+      },
+      {
+        "channel": "IBM Technology",
+        "videos": 2
+      },
+      {
+        "channel": "Hugging Face",
+        "videos": 2
+      }
+    ],
+    "voice_audio": [
+      {
+        "channel": "Bijan Bowen",
+        "videos": 2
+      },
+      {
+        "channel": "NetworkChuck",
+        "videos": 2
+      },
+      {
+        "channel": "Better Stack",
+        "videos": 1
+      },
+      {
+        "channel": "Prompt Engineering",
+        "videos": 1
+      },
+      {
+        "channel": "Google",
+        "videos": 1
+      },
+      {
+        "channel": "Jon Hernandez AI",
+        "videos": 1
+      },
+      {
+        "channel": "Lenny's Podcast",
+        "videos": 1
+      },
+      {
+        "channel": "DB Tech",
+        "videos": 1
+      },
+      {
+        "channel": "How I AI",
+        "videos": 1
+      }
+    ],
+    "video_gen": [
+      {
+        "channel": "Claudius Papirus",
+        "videos": 1
+      },
+      {
+        "channel": "Github Awesome",
+        "videos": 1
+      },
+      {
+        "channel": "AI Search",
+        "videos": 1
+      },
+      {
+        "channel": "Rowan Cheung",
+        "videos": 1
+      },
+      {
+        "channel": "Matthew Berman",
+        "videos": 1
+      },
+      {
+        "channel": "AI News & Strategy Daily | Nate B Jones",
+        "videos": 1
+      },
+      {
+        "channel": "AI Video School",
+        "videos": 1
+      },
+      {
+        "channel": "Youri van Hofwegen",
+        "videos": 1
+      },
+      {
+        "channel": "Tao Prompts",
+        "videos": 1
+      },
+      {
+        "channel": "Dan Kieft",
+        "videos": 1
+      }
+    ],
+    "philosophy_ethics": [
+      {
+        "channel": "AI News & Strategy Daily | Nate B Jones",
+        "videos": 14
+      },
+      {
+        "channel": "Claudius Papirus",
+        "videos": 3
+      },
+      {
+        "channel": "Smosh",
+        "videos": 2
+      },
+      {
+        "channel": "EO",
+        "videos": 2
+      },
+      {
+        "channel": "Zero to MVP",
+        "videos": 1
+      },
+      {
+        "channel": "AI Explained",
+        "videos": 1
+      },
+      {
+        "channel": "The Daily Show",
+        "videos": 1
+      },
+      {
+        "channel": "Imran Gardezi",
+        "videos": 1
+      },
+      {
+        "channel": "Mo Gawdat",
+        "videos": 1
+      },
+      {
+        "channel": "InsideAI",
+        "videos": 1
+      }
+    ]
+  },
+  "flagged_false_positives": [
+    {
+      "title": "\"Pay These People!\" - Wanda Sykes Shows Some Love For The TSA Agents Currently Working Without Pay",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2026-03-13",
+      "original_topic": "agent_arch",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Trump's Speech Was Disborbing | Why DOJ Didn't Search Epstein's Storage Units | AI Wants To Nuke Us",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2026-03-12",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "MS NOW EXCLUSIVE: FBI agents concerned Kash Patel is purging staff to distract from his bad press",
+      "channel": "MS NOW",
+      "date": "2026-03-06",
+      "original_topic": "agent_arch",
+      "reason": "government/political content"
+    },
+    {
+      "title": "Trump's Speech Was Disborbing | Why DOJ Didn't Search Epstein's Storage Units | AI Wants To Nuke Us",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2026-02-26",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Trump Admin: Obey Or Die | AI Health Advice | The Best Of The Worst Gadgets From CES",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2026-01-23",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "What You Get With The Trump Gold Card | Why Did The U.S. Seize An Oil Tanker? | AI Product Placement",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2026-01-13",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Trump Admin: Obey Or Die | AI Health Advice | The Best Of The Worst Gadgets From CES",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2026-01-09",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Professor Loses It Over ChatGPT Essays | Gianmarco Soresi | Stand Up Comedy Crowd Work",
+      "channel": "Gianmarco Soresi",
+      "date": "2025-12-15",
+      "original_topic": "llm_watched",
+      "reason": "stand-up comedy routine"
+    },
+    {
+      "title": "What You Get With The Trump Gold Card | Why Did The U.S. Seize An Oil Tanker? | AI Product Placement",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-12-12",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Andrew Ross Sorkin On Affordability, What Happens If The AI Bubble Bursts, And Paramount vs. Netflix",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-12-10",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Trump signs executive order launching Genesis Mission AI project",
+      "channel": "NBC News",
+      "date": "2025-11-26",
+      "original_topic": "other_ai",
+      "reason": "government/political content"
+    },
+    {
+      "title": "Newsom says Trump sending federal agents to San Francisco",
+      "channel": "NBC News",
+      "date": "2025-10-23",
+      "original_topic": "agent_arch",
+      "reason": "government/political content"
+    },
+    {
+      "title": "The A.I. Stock Bubble | ChatGPT, Grok, Go Erotic | Banning Human-Chatbot Marriage",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-10-22",
+      "original_topic": "llm_watched",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "California Will Now Require ICE Agents To Show Their Faces - Gov. Gavin Newsom",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-09-24",
+      "original_topic": "agent_arch",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Viewed A federal judge ordered the Trump administration to release pro-Palestinian activist and Columbia University grad",
+      "channel": "MS NOW",
+      "date": "2025-06-20",
+      "original_topic": "agent_arch",
+      "reason": "government/political content"
+    },
+    {
+      "title": "ICE Agents Cosplay As Rogue Cops | Pete Hegseth Has Neither Guts Nor Balls",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-06-20",
+      "original_topic": "agent_arch",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "The Sound Of Science: Meta's AI Recommended Meth | Does Ozempic Increase Penis Size?",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-06-14",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "Trump mobilizes Marines to \u2018protect\u2019 and \u2018transport\u2019 ICE agents in Los Angeles",
+      "channel": "NBC News",
+      "date": "2025-06-10",
+      "original_topic": "agent_arch",
+      "reason": "government/political content"
+    },
+    {
+      "title": "Viewed This week\u2019s episode is an enchanting Cuban Courtyard themed plant store \u201cTula House\u201d in a Brooklyn warehouse. Mee",
+      "channel": "OnlyPlants",
+      "date": "2025-04-29",
+      "original_topic": "ml_fundamentals",
+      "reason": "plant care content"
+    },
+    {
+      "title": "\"You Were A Pain In The Ass\" - Tramell Tillman On Stephen Colbert's Visit To The \"Severance\" Set",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-03-11",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    },
+    {
+      "title": "\"Who's the Man One?\" \ud83c\udfa4: Emma Willmann | Full Special on our Channel!",
+      "channel": "Don't Tell Comedy",
+      "date": "2025-03-02",
+      "original_topic": "other_ai",
+      "reason": "stand-up comedy"
+    },
+    {
+      "title": "Fed Workers Can Ignore Musk Email | A Living Cringe Meme | Trump Licks Feet In Viral AI Video",
+      "channel": "The Late Show with Stephen Colbert",
+      "date": "2025-02-27",
+      "original_topic": "other_ai",
+      "reason": "entertainment talk show"
+    }
+  ],
+  "sample_unclassified": [
+    {
+      "title": "AI is making CEOs delusional",
+      "channel": "Mo Bitar",
+      "date": "2026-03-29"
+    },
+    {
+      "title": "AI Is MANIPULATING How You Think | Mark Suman",
+      "channel": "Peter McCormack",
+      "date": "2026-03-26"
+    },
+    {
+      "title": "AI has a subsidization problem",
+      "channel": "Theo - t3\u2024gg",
+      "date": "2026-03-25"
+    },
+    {
+      "title": "AI Learns How To Play The Worlds Hardest Game",
+      "channel": "MrMommsen",
+      "date": "2026-03-20"
+    },
+    {
+      "title": "AI just Broke Trackmania's Greatest World Record",
+      "channel": "Yosh",
+      "date": "2026-03-19"
+    },
+    {
+      "title": "Ralph Wiggum Demo #ai #vibecoding #ralphwiggum #demo #tech",
+      "channel": "Jessica Wang",
+      "date": "2026-02-24"
+    },
+    {
+      "title": "The AI Moments That Shaped 2025 and Predictions for 2026 with Nate Jones",
+      "channel": "Shira Lazar",
+      "date": "2026-02-19"
+    },
+    {
+      "title": "AI Isn't as Powerful as We Think | Hannah Fry",
+      "channel": "New Scientist",
+      "date": "2026-02-18"
+    },
+    {
+      "title": "AI Fears Leading to 'Indiscriminate' Selloff: Morgan Stanley",
+      "channel": "Bloomberg Technology",
+      "date": "2026-02-18"
+    },
+    {
+      "title": "Dev Workloads and LLMs\u2026 under $1000",
+      "channel": "Alex Ziskind",
+      "date": "2026-02-18"
+    },
+    {
+      "title": "AI is destroying open source, and it's not even good yet",
+      "channel": "Jeff Geerling",
+      "date": "2026-02-17"
+    },
+    {
+      "title": "I Ran a Trillion Parameter AI on a Mac... Here\u2019s the Secret",
+      "channel": "Alex Ziskind",
+      "date": "2026-02-14"
+    },
+    {
+      "title": "Did Super Bowl Ads Just Predict an AI Crash? | Pivot",
+      "channel": "Pivot with Kara Swisher and Scott Galloway",
+      "date": "2026-02-11"
+    },
+    {
+      "title": "How AI Data Centers Will Break America (Like 2008)",
+      "channel": "GEN",
+      "date": "2026-02-11"
+    },
+    {
+      "title": "I built a private AI mini-cluster with Framework Desktop",
+      "channel": "Jeff Geerling",
+      "date": "2026-02-09"
+    },
+    {
+      "title": "The BEST AI Mini PC That One Upped Apple? AMD Strix Halo Beelink GTR9 Pro",
+      "channel": "ServeTheHome",
+      "date": "2026-02-09"
+    },
+    {
+      "title": "The AI crash will change everything",
+      "channel": "Chris Norlund",
+      "date": "2026-02-08"
+    },
+    {
+      "title": "Tiiny AI Pocket Lab Review: Legit Device or Overhyped Scam?",
+      "channel": "Quick Guidez",
+      "date": "2026-02-04"
+    },
+    {
+      "title": "AI shakes software sector",
+      "channel": "CNBC Television",
+      "date": "2026-02-04"
+    },
+    {
+      "title": "Hassabis on an AI Shift Bigger Than Industrial Age",
+      "channel": "Bloomberg Live",
+      "date": "2026-01-24"
+    },
+    {
+      "title": "We love our AI overlords \ud83d\udcbb #aijokes #parenthumor #kidssay #funnykidstomorrow story pirates TikTok",
+      "channel": "Story Pirates",
+      "date": "2026-01-22"
+    },
+    {
+      "title": "Antigravity AgentKit Supercharges Your AI 100x",
+      "channel": "WorldofAI",
+      "date": "2026-01-20"
+    },
+    {
+      "title": "The Risk of AI Hybrids & How To Protect Ourselves Now | Gregg Braden",
+      "channel": "Dr. Mayim Bialik",
+      "date": "2026-01-19"
+    },
+    {
+      "title": "AI CEO: It's Moving Faster Than We Expected. There Is No \u201cOFF\u201d Switch | Mustafa Suleyman",
+      "channel": "Dr. Mayim Bialik",
+      "date": "2026-01-12"
+    },
+    {
+      "title": "How AI Would Run a Country",
+      "channel": "The Infographics Show",
+      "date": "2026-01-07"
+    },
+    {
+      "title": "New Atlas Robot Revealed! Boston Dynamics & Hyundai Just Changed Robotics Forever",
+      "channel": "CNET",
+      "date": "2026-01-06"
+    },
+    {
+      "title": "At CES 2026, AI Takes Over Las Vegas",
+      "channel": "Cheddar",
+      "date": "2026-01-05"
+    },
+    {
+      "title": "The Growing AI Backlash Nobody Wants to Talk About.",
+      "channel": "TheAIGRID",
+      "date": "2026-01-04"
+    },
+    {
+      "title": "Adam Marblestone \u2013 AI is missing something fundamental about the brain",
+      "channel": "Dwarkesh Patel",
+      "date": "2026-01-03"
+    },
+    {
+      "title": "Why Meta Just Spent $2 Billion to Acquire Manus AI \ud83e\udd2f",
+      "channel": "Julia McCoy",
+      "date": "2026-01-02"
+    },
+    {
+      "title": "AI Aliens Exist? Are Future Humans Contacting Us & How To Prepare",
+      "channel": "Dr. Mayim Bialik",
+      "date": "2026-01-02"
+    },
+    {
+      "title": "Scary Stories w/ Kallmekris | Reading Reddit Stories",
+      "channel": "Smosh Pit",
+      "date": "2026-01-01"
+    },
+    {
+      "title": "AI in 2026: 3 Predictions For What\u2019s To Come (a16z Big Ideas)",
+      "channel": "a16z",
+      "date": "2026-01-01"
+    },
+    {
+      "title": "An AI Expert Challenges an AI Skeptic, with Ethan Mollick",
+      "channel": "Adam Conover",
+      "date": "2025-12-31"
+    },
+    {
+      "title": "AI in 2026 | 8 Predictions About What's Coming",
+      "channel": "Sinead Bovell",
+      "date": "2025-12-27"
+    },
+    {
+      "title": "If Hallmark made an MTG movie!",
+      "channel": "BigdaddyswagsMTG",
+      "date": "2025-12-20"
+    },
+    {
+      "title": "Stop Writing Nano Banana Pro Prompts. Let AI Do It Instead.",
+      "channel": "Dylan Davis",
+      "date": "2025-12-19"
+    },
+    {
+      "title": "12 AI Tools You Won\u2019t Believe Are Free",
+      "channel": "Rick Mulready",
+      "date": "2025-12-18"
+    },
+    {
+      "title": "China\u2019s \"Impossible\" AI Breakthrough: We Are In Trouble",
+      "channel": "TheAIGRID",
+      "date": "2025-12-18"
+    },
+    {
+      "title": "AI CEOs Are  Disappearing - They Know Whats Coming",
+      "channel": "TheAIGRID",
+      "date": "2025-12-16"
+    },
+    {
+      "title": "AI CEO: It's Moving Faster Than We Expected. There Is No \u201cOFF\u201d Switch | Mustafa Suleyman",
+      "channel": "Dr. Mayim Bialik",
+      "date": "2025-12-16"
+    },
+    {
+      "title": "Important AI Race WARNING",
+      "channel": "David Carbutt ",
+      "date": "2025-12-16"
+    },
+    {
+      "title": "Best AI Tools for Designing 3D Printed Products",
+      "channel": "Slant 3D",
+      "date": "2025-12-13"
+    },
+    {
+      "title": "Can You Pass This Science Quiz? (Beopardy ft. @kallmekris!)",
+      "channel": "Smosh Pit",
+      "date": "2025-12-11"
+    },
+    {
+      "title": "Boomers should not be told when content is Al!! Ft. Ola Labib #ai #boomers",
+      "channel": "SubwayTakes with Kareem Rahma",
+      "date": "2025-12-10"
+    },
+    {
+      "title": "China Lens: Beijing betting big on AI devices",
+      "channel": "CNBC Television",
+      "date": "2025-12-10"
+    },
+    {
+      "title": "Why is Everyone So Wrong About AI Water Use??",
+      "channel": "Hank Green",
+      "date": "2025-12-08"
+    },
+    {
+      "title": "Can You Pass This Science Quiz? (Beopardy ft. @kallmekris!)",
+      "channel": "Smosh Pit",
+      "date": "2025-12-05"
+    },
+    {
+      "title": "AI Slop Is Only Going to Get Worse - Inside Games Daily",
+      "channel": "Inside Games",
+      "date": "2025-12-04"
+    },
+    {
+      "title": "How close is the worst case scenario?: Crash Course Futures of AI #3",
+      "channel": "CrashCourse",
+      "date": "2025-12-03"
+    }
+  ],
+  "classification_notes": "Classification uses regex keyword matching on video titles and channel names, with priority-ordered category matching and channel-specific heuristics. Categories are checked in order: coding_agents > video_gen > voice_audio > creative_ai > agent_arch > local_ai > philosophy_ethics > ml_fundamentals > llm_models (catch-all). Of 1481 total videos, 22 false positives were removed (1.5%), leaving 1459 classified videos. 184 videos (12.6%) fell into 'other_ai' with no keyword match. These are typically general commentary, reaction videos, or tangentially AI-related content that doesn't fit a specific technical category. False positive identification uses channel-name heuristics: NBC News/MS NOW political content with 'agents' meaning law enforcement, Late Show with Stephen Colbert variety segments, OnlyPlants (plant care), Don't Tell Comedy (stand-up). Channel-specific rules handle edge cases: Jake Van Clief maps to coding_agents, Two Minute Papers to ml_fundamentals, Claudius Papirus to ml_fundamentals, Dylan Patel to philosophy_ethics, Dario Amodei to philosophy_ethics, Matthew Berman to llm_models, AI Explained to llm_models."
+}

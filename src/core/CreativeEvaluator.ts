@@ -312,6 +312,16 @@ export class CreativeEvaluator {
       return this.assessStrudel(output, options);
     }
 
+    // HTML/CSS evaluation
+    if (this.detectsHTMLUsage(output)) {
+      return this.assessHTML(output);
+    }
+
+    // ASCII art evaluation
+    if (this.detectsASCIIUsage(output)) {
+      return this.assessASCII(output);
+    }
+
     // Calculate metrics
     const metrics = this.analyzeMetrics(output);
 
@@ -856,6 +866,33 @@ export class CreativeEvaluator {
   }
 
   /**
+   * Detect HTML/CSS code (standalone HTML pages, not p5.js)
+   */
+  static detectsHTMLUsage(code: string): boolean {
+    // Must have HTML structure but NOT be a p5.js wrapped sketch
+    const hasHTML = /<!DOCTYPE\s+html/i.test(code) || /<html/i.test(code);
+    const hasCSS = /<style/i.test(code) || /<link[^>]*stylesheet/i.test(code);
+    const hasJS = /<script/i.test(code);
+    const isP5Wrapped = /function\s+setup\s*\(\s*\)/.test(code) && /createCanvas/.test(code);
+    
+    // It's HTML if it has HTML structure and isn't just a p5.js sketch wrapper
+    return hasHTML && (hasCSS || hasJS) && !isP5Wrapped;
+  }
+
+  /**
+   * Detect ASCII art code
+   */
+  static detectsASCIIUsage(code: string): boolean {
+    // ASCII art uses box-drawing characters or density characters
+    const hasASCIIChars = /[\u2580-\u259F█▓▒░@#%*+=-]/.test(code);
+    const isP5 = /function\s+setup\s*\(\s*\)/.test(code) && /createCanvas/.test(code);
+    const isHTML = /<html/i.test(code) || /<!DOCTYPE/i.test(code);
+    
+    // It's ASCII if it uses ASCII art characters and isn't p5 or HTML
+    return hasASCIIChars && !isP5 && !isHTML;
+  }
+
+  /**
    * Assess GLSL shader code quality
    */
   private static assessShader(output: string, options?: AssessOptions): AssessmentResult {
@@ -1057,6 +1094,131 @@ export class CreativeEvaluator {
       emergenceScore: 0,
       interestingnessScore: 0,
       calibratedScore,
+    };
+  }
+
+  /**
+   * Assess HTML/CSS code quality
+   */
+  private static assessHTML(output: string): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    // Remove <think> tags for evaluation
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+    // Technical checks for HTML structure
+    if (/<!DOCTYPE\s+html/i.test(codeOnly)) technicalScore += 0.1;
+    if (/<html[^>]*>/i.test(codeOnly)) technicalScore += 0.1;
+    if (/<head[^>]*>/i.test(codeOnly) && /<\/head>/i.test(codeOnly)) technicalScore += 0.1;
+    if (/<body[^>]*>/i.test(codeOnly) && /<\/body>/i.test(codeOnly)) technicalScore += 0.1;
+    
+    // CSS presence
+    if (/<style[^>]*>/i.test(codeOnly)) technicalScore += 0.15;
+    if (/<link[^>]*stylesheet/i.test(codeOnly)) technicalScore += 0.1;
+    
+    // JavaScript presence
+    if (/<script[^>]*>/i.test(codeOnly)) technicalScore += 0.15;
+    
+    // Basic syntax check
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.1;
+    
+    // Code length (substantial HTML pages)
+    if (codeOnly.length > 500) technicalScore += 0.05;
+    if (codeOnly.length > 1000) technicalScore += 0.05;
+
+    // Creative checks
+    // Animation via CSS
+    if (/@keyframes|animation:|transition:/i.test(codeOnly)) creativeScore += 0.2;
+    // Canvas usage
+    if (/<canvas/i.test(codeOnly) || /getContext\s*\(\s*['"]2d['"]/i.test(codeOnly)) creativeScore += 0.2;
+    // SVG usage
+    if (/<svg/i.test(codeOnly)) creativeScore += 0.15;
+    // WebGL/Three.js usage in HTML
+    if (/getContext\s*\(\s*['"]webgl['"]/i.test(codeOnly) || /WebGL/i.test(codeOnly)) creativeScore += 0.2;
+    // Rich CSS (gradients, transforms, filters)
+    if (/gradient|transform|filter/i.test(codeOnly)) creativeScore += 0.15;
+    // Interactivity
+    if (/addEventListener|onclick|onmousemove/i.test(codeOnly)) creativeScore += 0.1;
+    // Typography/Fonts
+    if (/@font-face|font-family/i.test(codeOnly)) creativeScore += 0.1;
+
+    // Issues
+    if (!/<html/i.test(codeOnly)) issues.push('Missing <html> tag');
+    if (!/<body/i.test(codeOnly)) issues.push('Missing <body> tag');
+    if (codeOnly.length < 200) issues.push('HTML page too short');
+
+    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: 0,
+      interestingnessScore: 0,
+    };
+  }
+
+  /**
+   * Assess ASCII art code quality
+   */
+  private static assessASCII(output: string): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    // Remove <think> tags for evaluation
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+    // Technical checks
+    // Has function structure
+    if (/function\s+\w+\s*\(/.test(codeOnly)) technicalScore += 0.2;
+    if (/console\.log|print|process\.stdout\.write/.test(codeOnly)) technicalScore += 0.15;
+    
+    // Has loops for generating patterns
+    if (/\b(for|while)\s*\(/.test(codeOnly)) technicalScore += 0.15;
+    
+    // Has string/array manipulation
+    if (/\.repeat\(|\.join\(|\.map\(/.test(codeOnly)) technicalScore += 0.15;
+    
+    // Basic syntax
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.15;
+    
+    // Code length
+    if (codeOnly.length > 100) technicalScore += 0.1;
+    if (codeOnly.length > 300) technicalScore += 0.1;
+
+    // Creative checks
+    // Box-drawing characters
+    if (/[\u2580-\u259F]/.test(codeOnly)) creativeScore += 0.2;
+    // Density characters
+    if (/[█▓▒░@#%*+=-]/.test(codeOnly)) creativeScore += 0.15;
+    // Unicode blocks
+    if (/[▀▄█]/.test(codeOnly)) creativeScore += 0.15;
+    // Animation/frame logic
+    if (/frame|animate|setInterval|setTimeout/.test(codeOnly)) creativeScore += 0.2;
+    // Randomness/pattern variation
+    if (/Math\.random|random|noise/.test(codeOnly)) creativeScore += 0.15;
+    // Complex patterns (nested loops, recursion)
+    if ((codeOnly.match(/\b(for|while)\s*\(/g) || []).length >= 2) creativeScore += 0.15;
+
+    // Issues
+    if (codeOnly.length < 50) issues.push('ASCII code too short');
+    if (!/[\u2580-\u259F█▓▒░@#%*+=-]/.test(codeOnly)) issues.push('Missing ASCII art characters');
+
+    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: 0,
+      interestingnessScore: 0,
     };
   }
 

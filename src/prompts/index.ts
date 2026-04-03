@@ -15,6 +15,7 @@ import './compost.js';
 import './remotion.js';
 import './audio.js';
 import './aesthetic.js';
+import './blog-to-video.js';
 
 // Specialized prompt modules (Phase 4)
 export { EVALUATION_SYSTEM_PROMPT, EVALUATION_TEMPERATURE, buildEvaluationPrompt } from './specialized/evaluation.js';

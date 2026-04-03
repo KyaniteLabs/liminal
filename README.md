@@ -8,6 +8,54 @@
 
 A sophisticated generative art system with an internal Ralph-Wiggum Loop for self-recursive iteration, comprehensive artistic knowledge, and intelligent guidance. Supports p5.js visuals, live music coding (Strudel/Hydra), multi-model swarm generation, deep collaboration, chat-based creative sessions, and a living Compost Mill for digesting creative material.
 
+## 🧠 Unique Innovations
+
+Liminal pioneers two unique approaches to working with LLMs—both **fully implemented** and **production-ready**:
+
+### 1. Compost Mill — Evolutionary Code Synthesis ✅
+
+**What it does**: Digests previous generations into nutrient-rich seeds for future evolution.
+
+**ML Concept**: Genetic programming with neural guidance
+
+**Why it matters**: The system learns *what* to generate from your past work.
+
+### 2. Thinking-Trace Feedback Loop — Meta-Learning from Reasoning ✅
+
+> **Unique to Liminal**: Unlike any other creative coding tool, we capture and learn from the model's *reasoning process*, not just its output.
+
+**What it does**:
+- Extracts thinking traces from **all 9 generators** (p5, Three.js, GLSL, Strudel, Hydra, Tone.js, Remotion, HTML, ASCII)
+- **Separates** generator thinking from harness thinking (never mixed)
+- **Analyzes** with the harness LLM asking two critical questions:
+  1. **"WHERE DID IT GO WRONG?"** — Root cause analysis
+  2. **"HOW CAN I COMMUNICATE BETTER?"** — Prompt improvement
+- **Adapts** the system based on insights
+
+**Real-World Impact**: 
+- Minimax M2.7: 0% → 67% success by detecting `code_in_thinking` pattern
+- Automatic recovery of code from `<think>` tags
+- Model-specific prompt optimization
+
+**ML Concepts**: 
+- **Reasoning Distillation** — Extracting intent from monologues
+- **Adversarial Failure Mining** — Learning from failures with rich thinking
+- **Meta-Learning** — Harness learns how generators think
+
+**Architecture**:
+```
+Generator → Thinking → TierBasedGenerator → MetaHarness
+                                              ↓
+                                    "Where wrong?"
+                                    "How communicate better?"
+                                              ↓
+                                    Insights → System Improvement
+```
+
+**The Philosophy**: *Nothing is waste. Model thinking is the richest training data you have. And the harness's analysis of that thinking is how the system learns to improve itself.*
+
+📖 **Learn more**: [Feature Documentation](./docs/features/README.md)
+
 ## Table of Contents
 
 - [Quick Start](#quick-start)

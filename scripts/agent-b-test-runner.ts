@@ -1,10 +1,14 @@
 #!/usr/bin/env tsx
 /**
  * Agent B Test Runner - Simple sequential runner with timeouts
+ * 
+ * Includes runtime validation to catch false positives:
+ * Code that generates but has runtime errors (undefined vars, shader compile errors, etc.)
  */
 
 import { run } from '../src/index.js';
 import fs from 'fs';
+import { RuntimeHealthMonitor } from '../src/guardrails/RuntimeHealthMonitor.js';
 
 const DOMAINS = [
   { name: 'p5', prompt: 'Create a calming blue particle system with flowing movement' },
@@ -50,20 +54,65 @@ async function runTest(domain: typeof DOMAINS[0], model: typeof MODELS[0]) {
       project: `b-${domain.name}-${model.tag}`,
     });
     
-    const duration = Date.now() - startTime;
+    const generationDuration = Date.now() - startTime;
     let size = 0;
     try {
       size = fs.statSync(outputPath).size;
     } catch {}
     
-    RESULTS.push({ 
-      domain: domain.name, 
-      model: model.tag, 
-      status: 'PASS', 
-      duration, 
-      size 
-    });
-    console.log(`✅ PASS | ${size}b | ${duration}ms`);
+    // RUNTIME VALIDATION: Actually execute the code to check for runtime errors
+    console.log(' [runtime check...]');
+    const healthMonitor = new RuntimeHealthMonitor({ durationMs: 3000, disableSandbox: true });
+    
+    // Read the generated HTML file for validation
+    let codeToValidate = result.code;
+    if (!codeToValidate && fs.existsSync(outputPath)) {
+      codeToValidate = fs.readFileSync(outputPath, 'utf-8');
+    }
+    
+    let runtimeStatus: 'PASS' | 'FAIL' = 'PASS';
+    let runtimeError = '';
+    
+    if (codeToValidate) {
+      try {
+        const healthResult = await healthMonitor.quickCheck(codeToValidate, domain.name);
+        
+        if (!healthResult.healthy || healthResult.metrics.consoleErrorCount > 0) {
+          runtimeStatus = 'FAIL';
+          runtimeError = healthResult.issues.join('; ') || `Console errors: ${healthResult.metrics.consoleErrorCount}`;
+        }
+      } catch (healthErr) {
+        // If health check itself fails, mark as FAIL
+        runtimeStatus = 'FAIL';
+        runtimeError = healthErr instanceof Error ? healthErr.message : 'Runtime validation error';
+      }
+    } else {
+      runtimeStatus = 'FAIL';
+      runtimeError = 'No code generated';
+    }
+    
+    const totalDuration = Date.now() - startTime;
+    
+    if (runtimeStatus === 'PASS') {
+      RESULTS.push({ 
+        domain: domain.name, 
+        model: model.tag, 
+        status: 'PASS', 
+        duration: totalDuration, 
+        size 
+      });
+      console.log(`✅ PASS | ${size}b | ${generationDuration}ms + runtime check`);
+    } else {
+      RESULTS.push({ 
+        domain: domain.name, 
+        model: model.tag, 
+        status: 'FAIL', 
+        duration: totalDuration, 
+        size, 
+        error: `Runtime validation failed: ${runtimeError}` 
+      });
+      console.log(`❌ FAIL (runtime) | ${size}b | ${runtimeError.slice(0, 60)}`);
+    }
     
   } catch (error: unknown) {
     const duration = Date.now() - startTime;

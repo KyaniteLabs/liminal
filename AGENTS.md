@@ -368,6 +368,72 @@ console.log(patterns);
 
 ---
 
+## Thinking-Trace Feedback Loop
+
+**CRITICAL ARCHITECTURE**: All generators now report their thinking to the harness.
+
+### How It Works
+
+1. **Generator Produces Thinking**
+   ```typescript
+   // In any of the 9 generators
+   const response = await llm.generate(prompt);
+   // response.thinking contains the model's reasoning
+   ```
+
+2. **TierBasedGenerator Reports to Harness**
+   ```typescript
+   await metaHarness.onGenerationComplete({
+     success: response.success,
+     model: this.llm.getConfig().model,
+     domain: this.domain,
+     prompt,
+     code: response.code,
+     thinking: response.thinking,  // ← KEY
+     recoveredFromThinking: response.recoveredFromThinking,
+   });
+   ```
+
+3. **Harness Analyzes with LLM**
+   The harness prompts its LLM:
+   ```
+   GENERATOR'S THINKING:
+   [full thinking trace]
+   
+   YOUR TASK:
+   1. WHERE DID IT GO WRONG?
+   2. HOW CAN I COMMUNICATE BETTER?
+   3. SYSTEM IMPROVEMENT SUGGESTIONS
+   ```
+
+4. **Insights Stored**
+   - Stored in harness memory
+   - Used to improve prompts
+   - High-confidence suggestions trigger adaptations
+
+### Key Files
+
+| File | Purpose |
+|------|---------|
+| `src/generators/TierBasedGenerator.ts` | Captures & reports thinking |
+| `src/harness/MetaHarnessIntegration.ts` | Receives & analyzes thinking |
+| `src/harness/ThinkingSeparation.ts` | Separates generator/harness thinking |
+| `src/emergent/ModelBehaviorPatterns.ts` | Long-term pattern detection |
+
+### Separation of Concerns
+
+**Generator Thinking** (`~/.liminal/thinking-traces/generator/`):
+- "How do I create this code?"
+- Mined for: code_in_thinking, confusion, over_engineering
+
+**Harness Thinking** (`~/.liminal/thinking-traces/harness/`):
+- "How do I fix this system?"
+- Mined for: architectural insights, tool suggestions
+
+**NEVER MIXED** - They serve different purposes.
+
+---
+
 ## File Structure
 
 ```
@@ -420,25 +486,117 @@ harness-tasks/
 > **NEVER** let code and documentation diverge. The docs site IS the project bible.
 
 ### Requirements for ALL Agents
-1. **Check dashboard.html** before starting work
+1. **Check visual-bible.html** before starting work
 2. **Update relevant docs** when making code changes
-3. **Update dashboard.html** status on EVERY commit
+3. **Update visual-bible.html** status on EVERY commit
 4. **Expand docs** to include new features/discussions
 
 ### Pages That Must Be Maintained
 | Page | Purpose | Update When... |
 |------|---------|----------------|
-| `dashboard.html` | Project status | Every commit |
+| `visual-bible.html` | Project status | Every commit |
 | `features.html` | Feature docs | New features |
 | `cli-reference.html` | CLI docs | New commands |
 | `harness-tasks.html` | Task docs | Task changes |
 | `architecture*.html` | Architecture | System changes |
 | `soul-system.html` | SOUL docs | Personality changes |
+| `THE_BIBLE.md` | Source of truth | ANY system change |
+
+### THE_BIBLE.md Sections (1513 lines)
+
+**Core Documentation:**
+- Executive Summary
+- Test Status
+- System Architecture
+- DGF (3 phases)
+- 18 Subsystem Details
+- File Structure
+- API Exports
+- Configuration
+
+**Engineering Best Practices (NEW):**
+- Glossary (terms defined)
+- Troubleshooting Guide (debugging)
+- Contributing Guide (how to update)
+- API Quick Reference (common functions)
+- Decision Log (ADRs)
+- Runbooks (operational procedures)
+- Changelog (version history)
+- Getting Started (onboarding)
+- Observability (health checks)
+- Security Runbook (incidents)
+- Migrations Guide (breaking changes)
+- Index (quick find)
 
 ### Violation Policy
 - Code commits without doc updates are **BLOCKED**
 - Docs must be updated **BEFORE** or **WITH** code changes
 - Dashboard must reflect **REALITY** at all times
+
+---
+
+## 🎯 THE ONE VISUAL BIBLE
+
+**CRITICAL:** There is only ONE official development dashboard for this entire project. It is called the **Visual Bible** to distinguish it from THE_BIBLE.md (text format).
+
+### Visual vs Text Bible
+| Format | File | Purpose |
+|--------|------|---------|
+| **Visual Bible** | `docs/visual-bible.html` | Interactive dashboard, Kanban, metrics |
+| **Text Bible** | `docs/THE_BIBLE.md` | Source of truth, complete documentation |
+
+### The Correct Dashboard
+```
+Name: Visual Bible
+Location: docs/visual-bible.html
+URL: http://localhost:8080/visual-bible.html
+Format: Original style with Kanban board, Feature Status table, System Status
+Content: Mirrors THE_BIBLE.md (937 lines, 18 subsystems)
+```
+
+### What the Dashboard Contains
+- Overview metrics cards (4 cards)
+- Feature Status table (all 18 subsystems)
+- Task Board Kanban (4 columns: Complete, In Progress, Planned, Blocked)
+- System Status section
+- Recent Commits table
+- Next Steps list
+
+### ❌ NEVER TOUCH THESE
+| File | Reason |
+|------|--------|
+| `gui/src/components/GuardrailDashboard.tsx` | ARCHIVED - Old GUI component |
+| `gui/src/App.tsx` | ARCHIVED GUI - Don't add dashboard tab |
+| `gui/src/gui/liveOrganismState.ts` | ARCHIVED GUI - Don't add 'guardrails' tab |
+| `dev-dashboard.html` | DELETED - Wrongly created |
+| Any new `*dashboard*.html` | WRONG - Always update existing |
+
+### ✅ WHEN USER SAYS "DASHBOARD" OR "VISUAL BIBLE"
+1. Ask: "Do you mean docs/visual-bible.html?"
+2. Confirm before ANY edits
+3. Update `docs/visual-bible.html` ONLY
+4. Never create new dashboard files
+5. Never touch archived GUI components
+
+### Prevention Checklist
+Before ANY dashboard work:
+- [ ] Confirmed `docs/visual-bible.html` is the target
+- [ ] Verified `gui/` files are NOT being modified
+- [ ] No new dashboard files created
+- [ ] Original format preserved (Kanban, sections)
+- [ ] Content matches current THE_BIBLE.md
+
+**Remember:** There is ONE dashboard. It is called **Visual Bible**. It lives at `docs/visual-bible.html`. Everything else is wrong.
+
+### Prevention Checklist
+Before ANY dashboard work:
+- [ ] Confirmed `docs/visual-bible.html` is the target
+- [ ] Verified `gui/` files are NOT being modified
+- [ ] No new dashboard files created
+- [ ] Original format preserved (Kanban, sections)
+- [ ] Content matches current THE_BIBLE.md
+
+**Remember:** There is ONE dashboard. It is the **Visual Bible**. It lives at `docs/visual-bible.html`. Everything else is wrong.
 
 ---
 

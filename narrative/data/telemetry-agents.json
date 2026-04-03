@@ -1,0 +1,416 @@
+{
+  "metadata": {
+    "generated": "2026-04-01",
+    "source": "git log analysis + session JSONL chunks",
+    "total_commits_analyzed": 303,
+    "scope_note": "303 includes non-Liminal repo commits from the same git history; 294 are Liminal-specific",
+    "total_lines_added": 484818,
+    "total_lines_removed": 190988,
+    "net_lines": 293830
+  },
+  "kai_agent": {
+    "description": "OpenClaw agent (Era 1) - autonomous coding agent running a task-job pipeline",
+    "commit_count": 29,
+    "time_span": {
+      "first_commit": "2026-02-28T21:39:38-08:00",
+      "last_commit": "2026-03-01T00:25:55-08:00",
+      "duration_hours": 2.8,
+      "duration_display": "2 hours 46 minutes"
+    },
+    "velocity": {
+      "commits_per_hour": 10.5,
+      "avg_minutes_between_commits": 5.9,
+      "min_minutes_between_commits": 0.5,
+      "max_minutes_between_commits": 23.9
+    },
+    "task_jobs": {
+      "distinct_task_ids": 2,
+      "task_ids": ["1772343399527", "1772343681762"],
+      "sequence_range": "001 to 027",
+      "pattern": "feat(task-job-{ID}-kai-{SEQ}): {description}"
+    },
+    "commit_verb_distribution": {
+      "implement": 16,
+      "fix": 3,
+      "verify": 2,
+      "create": 2,
+      "update": 1,
+      "rewrite": 1,
+      "super-testing": 1,
+      "verified": 1,
+      "achieved": 1,
+      "initialize": 1
+    },
+    "lines_changed": {
+      "insertions": 50404,
+      "deletions": 27604,
+      "net": 22800
+    },
+    "behavioral_patterns": [
+      "Relentlessly sequential: implement component N, then test component N, move to N+1",
+      "Self-verification loops: commits 019/020 both verify test coverage percentages",
+      "Test-obsessed: spent 8 of 29 commits on testing infrastructure",
+      "Near-zero creative latitude: every commit follows the task-job template",
+      "Rapid fire: sub-6-minute average cycle time suggests pre-planned batch execution",
+      "Coverage-driven: explicitly chased percentage targets (80%, 92%, 95%)"
+    ],
+    "notable_commits": [
+      "feat(task-job-1772343681762-kai-019): Verified >92% test coverage exceeds 80% requirement",
+      "feat(task-job-1772343681762-kai-019): Achieved >95% coverage for RalphLoop and >92% overall coverage",
+      "feat(task-job-1772343681762-kai-020): Super-testing verification and final cleanup"
+    ]
+  },
+  "cursor_agent": {
+    "description": "Cursor IDE AI assistant (Era 2) - bulk feature addition and scaffolding",
+    "commit_count": 15,
+    "time_span": {
+      "first_commit": "2026-03-19T00:29:09-07:00",
+      "last_commit": "2026-03-19T14:02:37-07:00",
+      "duration_hours": 13.6,
+      "duration_display": "13 hours 33 minutes"
+    },
+    "velocity": {
+      "commits_per_hour": 1.1,
+      "avg_minutes_between_commits": 58.1,
+      "min_minutes_between_commits": 0.1,
+      "max_minutes_between_commits": 591.0
+    },
+    "commit_category_distribution": {
+      "add": 8,
+      "enhance": 3,
+      "update": 2,
+      "fix": 1,
+      "temporarily_remove": 1
+    },
+    "lines_changed": {
+      "insertions": 19785,
+      "deletions": 1290,
+      "net": 18495
+    },
+    "behavioral_patterns": [
+      "Scaffolding-focused: 8 of 15 commits are 'Add X' - new modules, not refinements",
+      "Bulk dumps: initial burst of 10 commits in under 3 minutes (00:29 to 00:35)",
+      "Quality pass: single large 'Fix 34-item codebase audit' commit suggests bulk generation then retroactive cleanup",
+      "Broad but shallow: touched generators, GUI, TUI, tests, config, docs - everything at once",
+      "Deletion-averse: only 1,290 lines removed vs 19,785 added (6.5% deletion ratio)",
+      "Stopped mid-day: last commit at 14:02, then silent - likely human switched to Claude Code"
+    ],
+    "commit_messages": [
+      "[A] Enhance core system with self-improvement loops",
+      "[A] Add new feature modules",
+      "[A] Enhance TUI with timeline and utilities",
+      "[A] Enhance generators, gallery, and preview server",
+      "[A] Add comprehensive test suite",
+      "[A] Update documentation and architecture",
+      "[A] Update configuration and tooling",
+      "[A] Add utility scripts",
+      "[A] Add generated gallery and output files",
+      "[A] Add Cursor IDE configuration",
+      "[A] Add standalone GUI web application",
+      "[A] Temporarily remove GitHub workflows for push",
+      "[A] Add 4 creative coding generators: noise/flow fields, GLSL shaders, Three.js, LLM music",
+      "[A] Fix 34-item codebase audit: security, logic bugs, architecture, performance",
+      "[A] Add generated artifacts and .claude to .gitignore"
+    ]
+  },
+  "claude_code": {
+    "description": "Claude Code CLI agent (Eras 3-9) - sustained development with co-authorship attribution",
+    "commit_count": {
+      "total": 259,
+      "with_co_author": 158,
+      "without_co_author": 101,
+      "co_author_percentage": 61.0
+    },
+    "co_authorship": {
+      "claude_opus_4_6": 173,
+      "claude_other": 5,
+      "note": "173 commits include Kai/Cursor era commits that were co-authored; Claude Code specific is 158"
+    },
+    "time_span": {
+      "first_commit": "2026-02-28T21:36:34-08:00",
+      "last_commit": "2026-04-01T13:18:26-07:00",
+      "duration_days": 31.7,
+      "active_days": 13
+    },
+    "velocity": {
+      "commits_per_hour": 0.34,
+      "commits_per_active_day": 19.9,
+      "peak_day": "2026-04-01",
+      "peak_day_commits": 53
+    },
+    "top_active_days": [
+      {"date": "2026-04-01", "commits": 53},
+      {"date": "2026-03-22", "commits": 45},
+      {"date": "2026-03-29", "commits": 32},
+      {"date": "2026-03-20", "commits": 28},
+      {"date": "2026-03-31", "commits": 21}
+    ],
+    "conventional_commit_breakdown": {
+      "feat": 120,
+      "fix": 52,
+      "docs": 31,
+      "chore": 14,
+      "refactor": 7,
+      "test": 6,
+      "other": 29
+    },
+    "lines_changed": {
+      "insertions": 414629,
+      "deletions": 162094,
+      "net": 252535,
+      "insertion_to_deletion_ratio": "2.56:1"
+    },
+    "session_data": {
+      "era3_consolidation": {
+        "sessions": 9,
+        "human_messages": 108,
+        "span": "2026-03-20T16:55:37Z to 2026-03-20T22:06:36Z",
+        "messages_per_session": 12.0
+      },
+      "era4_quality": {
+        "sessions": 27,
+        "human_messages": 277,
+        "span": "2026-03-21T00:05:15Z to 2026-03-22T22:57:47Z",
+        "messages_per_session": 10.3
+      },
+      "era5_conversational": {
+        "sessions": 21,
+        "human_messages": 329,
+        "span": "2026-03-22T03:43:48Z to 2026-03-23T18:58:47Z",
+        "messages_per_session": 15.7
+      },
+      "era6_quiet": {
+        "sessions": 2,
+        "human_messages": 41,
+        "span": "2026-03-24T00:35:33Z to 2026-03-24T01:48:54Z",
+        "messages_per_session": 20.5
+      },
+      "era7_multimedia": {
+        "sessions": 5,
+        "human_messages": 148,
+        "span": "2026-03-29T03:56:17Z to 2026-03-29T20:28:28Z",
+        "messages_per_session": 29.6
+      },
+      "era8_dogfood": {
+        "sessions": 4,
+        "human_messages": 125,
+        "span": "2026-03-30T01:07:57Z to 2026-03-31T21:35:33Z",
+        "messages_per_session": 31.3
+      },
+      "era9_bible": {
+        "sessions": 3,
+        "human_messages": 81,
+        "span": "2026-04-01T04:09:40Z to 2026-04-01T18:46:19Z",
+        "messages_per_session": 27.0
+      },
+      "totals": {
+        "sessions": 71,
+        "human_messages": 1109,
+        "avg_messages_per_session": 15.6
+      }
+    },
+    "hooks_system": {
+      "global_hooks_count": 26,
+      "hook_files": [
+        "bash-exit-logger.sh",
+        "block-webfetch.sh",
+        "block-websearch.sh",
+        "check-bug-dismissal.js",
+        "check-overcomplication.js",
+        "code-quality.js",
+        "context-dump.js",
+        "destructive-guard.sh",
+        "file-protection.sh",
+        "health-write.sh",
+        "mcp-enforcement-check.sh",
+        "process-enforcement.js",
+        "remove-active-flag.sh",
+        "review-checklist.js",
+        "save-progress.sh",
+        "session-end-wiring-check.js",
+        "session-lock-acquire.sh",
+        "session-lock-release.sh",
+        "session-restore.js",
+        "staleness-check.js",
+        "superpowers-enforcement-check.sh",
+        "uncommitted-check.sh",
+        "vault-notify.sh",
+        "win-loss-tracker.js",
+        "wiring-checklist.js",
+        "write-active-flag.sh"
+      ],
+      "hook_categories": {
+        "safety_guards": ["destructive-guard.sh", "file-protection.sh", "block-webfetch.sh", "block-websearch.sh"],
+        "quality_enforcement": ["code-quality.js", "review-checklist.js", "check-overcomplication.js"],
+        "process_enforcement": ["process-enforcement.js", "superpowers-enforcement-check.sh", "mcp-enforcement-check.sh"],
+        "session_management": ["session-lock-acquire.sh", "session-lock-release.sh", "session-restore.js", "context-dump.js", "save-progress.sh"],
+        "wiring_verification": ["wiring-checklist.js", "session-end-wiring-check.js"],
+        "observability": ["win-loss-tracker.js", "health-write.sh", "vault-notify.sh", "staleness-check.sh", "uncommitted-check.sh"]
+      }
+    },
+    "memory_system": {
+      "files_count": 6,
+      "files": [
+        "MEMORY.md",
+        "feedback_indexing-rules.md",
+        "lir-evaluation-integration.md",
+        "lir-status.md",
+        "pre-existing-flaky-tests.md",
+        "promo-video-pipeline.md"
+      ],
+      "purpose": "Persistent cross-session context for Claude Code agent"
+    }
+  },
+  "agent_comparison": {
+    "velocity_comparison": {
+      "kai": {
+        "commits_per_hour": 10.5,
+        "span_hours": 2.8,
+        "total_commits": 29
+      },
+      "cursor": {
+        "commits_per_hour": 1.1,
+        "span_hours": 13.6,
+        "total_commits": 15
+      },
+      "claude_code": {
+        "commits_per_hour": 0.34,
+        "span_hours": 759.7,
+        "total_commits": 259
+      }
+    },
+    "output_comparison": {
+      "kai": {"insertions": 50404, "deletions": 27604, "insertions_per_commit": 1738},
+      "cursor": {"insertions": 19785, "deletions": 1290, "insertions_per_commit": 1319},
+      "claude_code": {"insertions": 414629, "deletions": 162094, "insertions_per_commit": 1601}
+    },
+    "quality_signals": {
+      "kai": {
+        "fix_to_total_ratio": 0.10,
+        "self_verify_commits": 5,
+        "test_commits": 8,
+        "observation": "Machine-like precision but shallow - implemented to spec, verified to metric, never questioned requirements"
+      },
+      "cursor": {
+        "fix_to_total_ratio": 0.07,
+        "self_verify_commits": 0,
+        "test_commits": 1,
+        "observation": "Maximum surface area, minimum depth - scaffolded everything, tested almost nothing, left a 34-item audit bill"
+      },
+      "claude_code": {
+        "fix_to_total_ratio": 0.20,
+        "self_verify_commits": "tracked via hooks",
+        "test_commits": 6,
+        "observation": "Self-correcting over time - 20% fix rate shows iterative quality, hooks enforce process, memory preserves lessons"
+      }
+    },
+    "behavioral_archetypes": {
+      "kai": "The Assembly Line Worker",
+      "cursor": "The Landscaper",
+      "claude_code": "The Architect"
+    }
+  },
+  "co_authorship_patterns": {
+    "total_with_co_author": 178,
+    "total_without_co_author": 125,
+    "co_author_percentage": 58.7,
+    "agents": {
+      "claude_opus_4_6": 173,
+      "claude_generic": 5
+    },
+    "non_co_authored_breakdown": {
+      "kai_commits": 29,
+      "cursor_commits": 15,
+      "claude_code_early_sessions": 13,
+      "claude_code_recent_sessions": 68,
+      "note": "Non-co-authored Claude Code commits cluster in two periods: early (before co-author convention established) and recent (April 1 burst)"
+    },
+    "co_authored_by_day": {
+      "2026-02-28": 6,
+      "2026-03-19": 21,
+      "2026-03-20": 28,
+      "2026-03-21": 8,
+      "2026-03-22": 45,
+      "2026-03-23": 12,
+      "2026-03-28": 16,
+      "2026-03-29": 31,
+      "2026-03-30": 5,
+      "2026-03-31": 3,
+      "2026-04-01": 3
+    },
+    "non_co_authored_by_day": {
+      "2026-02-28": 28,
+      "2026-03-01": 8,
+      "2026-03-07": 1,
+      "2026-03-19": 2,
+      "2026-03-21": 1,
+      "2026-03-23": 3,
+      "2026-03-29": 1,
+      "2026-03-30": 13,
+      "2026-03-31": 18,
+      "2026-04-01": 50
+    }
+  },
+  "commit_message_analysis": {
+    "total_commits": 303,
+    "length_distribution": {
+      "0-19_chars": 3,
+      "20-39_chars": 20,
+      "40-59_chars": 109,
+      "60-79_chars": 133,
+      "80-99_chars": 28,
+      "100-119_chars": 9,
+      "140-159_chars": 1
+    },
+    "average_length": 62.2,
+    "median_length": 61,
+    "by_agent_style": {
+      "kai": {
+        "pattern": "feat(task-job-{ID}-kai-{SEQ}): {description}",
+        "avg_length_estimate": 75,
+        "consistency": "mechanically uniform - every message follows exact template",
+        "prefix_ratio": "100% feat() prefix"
+      },
+      "cursor": {
+        "pattern": "[A] {Verb} {description}",
+        "avg_length_estimate": 50,
+        "consistency": "uniform tag but varied verbs",
+        "prefix_ratio": "100% [A] prefix"
+      },
+      "claude_code": {
+        "pattern": "{type}({scope}): {description}",
+        "avg_length_estimate": 60,
+        "consistency": "conventional commits with scope, varied quality",
+        "prefix_ratio": "88% conventional commit prefix (feat/fix/docs/refactor/test/chore)"
+      }
+    },
+    "tagged_commits": {
+      "F_fix_commits": [
+        {"date": "2026-03-19T14:35:30", "message": "[F] Fix isConfigured for local providers + type-only imports"},
+        {"date": "2026-03-19T02:28:06", "message": "[F] Fix flatted DoS vulnerability via pnpm override"}
+      ],
+      "I_import_commits": [
+        {"date": "2026-03-20T15:17:07", "message": "[I] Add all Atelier + Liminal creative outputs to inbox"},
+        {"date": "2026-03-19T22:40:28", "message": "[I] Add liminal-archive.zip to inbox"},
+        {"date": "2026-03-19T13:59:35", "message": "[I] Phase 1: native improvements + Wave 1-5 evolution merge cleanup"}
+      ]
+    }
+  },
+  "narrative_insights": [
+    "THREE AGENTS, THREE PHILOSOPHIES: Kai was an assembly line - 29 commits in 2.8 hours, mechanically executing a task list with sub-6-minute cycle times. Cursor was a landscaper - dumped 15 commits of scaffolding in one afternoon, adding modules faster than it could test them (the '34-item audit' commit is the tell). Claude Code is the architect - 259 commits over 31 days, with a self-improving infrastructure of 26 hooks, 6 memory files, and persistent cross-session context.",
+
+    "THE CO-AUTHORSHIP TELL: 178 of 303 commits carry 'Co-Authored-By: Claude' - a transparency marker that reveals which sessions were AI-driven. But the 125 without co-authorship include the Kai era (29), Cursor era (15), and a suspicious April 1 burst of 50 commits. The non-co-authored commits cluster when human operators were more hands-on or when the co-author convention wasn't yet established.",
+
+    "VELOCITY IS NOT QUALITY: Kai had the highest commit velocity (10.5/hour) but the narrowest scope - it implemented to spec and stopped. Cursor had moderate velocity (1.1/hour) but left technical debt visible in the '34-item audit' commit. Claude Code is the slowest (0.34/hour) but the only agent that built its own quality enforcement infrastructure.",
+
+    "THE HOOKS ARE THE DIFFERENCE: 26 custom hooks represent Claude Code's meta-cognitive layer - something neither Kai nor Cursor had. They enforce process (wiring-checklist, process-enforcement), quality (code-quality, review-checklist), and safety (destructive-guard, file-protection). This is an agent that learned to police itself.",
+
+    "SESSION DEEPENING: Claude Code's sessions got longer over time - Era 3 averaged 12 messages per session, Era 8 averaged 31. The agent was being trusted with increasingly complex multi-step tasks as the human-LLM collaboration matured. The quiet era (Era 6, only 2 sessions) is the breath between waves.",
+
+    "THE APRIL 1 ANOMALY: 53 commits on a single day (50 non-co-authored) suggests either a burst of human-driven work or a session where the co-author convention was skipped. This is the most commit-dense day in the entire project history.",
+
+    "LINE ECONOMICS: Across all agents, 484,818 lines were added and 190,988 removed (2.54:1 ratio). Cursor was the most insertion-heavy (15.3:1 ratio), suggesting greenfield scaffolding. Claude Code had the most balanced ratio (2.56:1), indicating both building and refactoring.",
+
+    "MEMORY AS CONTINUITY: The 6 memory files in Claude Code's project directory are a form of externalized cognition - indexing rules, LIR status, known flaky tests, pipeline notes. This is how an agent without persistent state maintains continuity across 71 sessions spanning 13 active days."
+  ]
+}

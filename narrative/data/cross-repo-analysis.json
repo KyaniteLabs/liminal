@@ -1,0 +1,317 @@
+{
+  "monthly_velocity": {
+    "2024-11": 44,
+    "2024-12": 359,
+    "2025-01": 65,
+    "2025-02": 43,
+    "2025-03": 602,
+    "2025-04": 828,
+    "2025-05": 241,
+    "2025-06": 394,
+    "2025-07": 265,
+    "2025-08": 212,
+    "2025-09": 316,
+    "2025-10": 187,
+    "2025-11": 979,
+    "2025-12": 300,
+    "2026-01": 404,
+    "2026-02": 349,
+    "2026-03": 1396,
+    "2026-04": 75
+  },
+  "monthly_active_repos": {
+    "2024-11": 1,
+    "2024-12": 1,
+    "2025-01": 1,
+    "2025-02": 1,
+    "2025-03": 2,
+    "2025-04": 2,
+    "2025-05": 2,
+    "2025-06": 2,
+    "2025-07": 2,
+    "2025-08": 2,
+    "2025-09": 7,
+    "2025-10": 6,
+    "2025-11": 25,
+    "2025-12": 5,
+    "2026-01": 5,
+    "2026-02": 9,
+    "2026-03": 19,
+    "2026-04": 4
+  },
+  "hourly_pattern": {
+    "0": 165,
+    "1": 182,
+    "2": 176,
+    "3": 177,
+    "4": 420,
+    "5": 332,
+    "6": 329,
+    "7": 329,
+    "8": 406,
+    "9": 220,
+    "10": 391,
+    "11": 210,
+    "12": 249,
+    "13": 250,
+    "14": 256,
+    "15": 323,
+    "16": 443,
+    "17": 372,
+    "18": 337,
+    "19": 386,
+    "20": 351,
+    "21": 245,
+    "22": 293,
+    "23": 217
+  },
+  "day_of_week": {
+    "Monday": 1130,
+    "Tuesday": 961,
+    "Wednesday": 781,
+    "Thursday": 910,
+    "Friday": 1198,
+    "Saturday": 1016,
+    "Sunday": 1063
+  },
+  "tool_mentions": {
+    "claude": 111,
+    "ollama": 8,
+    "lmstudio": 3,
+    "openrouter": 2,
+    "gemini": 6,
+    "qwen": 5,
+    "cursor": 17,
+    "kai": 62,
+    "minimax": 5,
+    "copilot": 10,
+    "gpt": 7,
+    "glm": 1
+  },
+  "tool_by_month": {
+    "2025-11": {
+      "claude": 74,
+      "ollama": 5,
+      "lmstudio": 1,
+      "qwen": 2,
+      "cursor": 6,
+      "gemini": 2
+    },
+    "2025-09": {
+      "openrouter": 2,
+      "claude": 1
+    },
+    "2026-01": {
+      "gemini": 1,
+      "claude": 5
+    },
+    "2026-02": {
+      "claude": 5,
+      "copilot": 4,
+      "kai": 1
+    },
+    "2026-03": {
+      "ollama": 3,
+      "claude": 7,
+      "cursor": 5,
+      "kai": 58,
+      "qwen": 3,
+      "minimax": 3,
+      "lmstudio": 2,
+      "glm": 1,
+      "copilot": 1
+    },
+    "2026-04": {
+      "claude": 2,
+      "minimax": 2
+    },
+    "2025-12": {
+      "claude": 5,
+      "gemini": 1,
+      "copilot": 2
+    },
+    "2025-08": {
+      "copilot": 1,
+      "claude": 5,
+      "gemini": 2,
+      "gpt": 1
+    },
+    "2025-06": {
+      "cursor": 2
+    },
+    "2025-05": {
+      "cursor": 3,
+      "kai": 1
+    },
+    "2025-04": {
+      "cursor": 1,
+      "gpt": 3,
+      "kai": 1
+    },
+    "2025-10": {
+      "claude": 3,
+      "copilot": 2
+    },
+    "2025-03": {
+      "claude": 2,
+      "gpt": 2
+    },
+    "2025-02": {
+      "claude": 1
+    },
+    "2025-01": {
+      "kai": 1
+    },
+    "2024-12": {
+      "gpt": 1,
+      "claude": 1
+    }
+  },
+  "top_repos": {
+    "awesome-mcp-servers": 4649,
+    "apex-vault": 488,
+    "liminal": 294,
+    "Farm-to-Stars": 192,
+    "voice-to-scultpure-app": 116,
+    "prompt-optimizer": 109,
+    "CyberWitches": 106,
+    "mcp-video": 85,
+    "EvoLab": 81,
+    "GameStory-Lab": 77,
+    "atelier": 61,
+    "noise.sh": 55,
+    "hydra-creative-agent": 52,
+    "Generative-Assets-Lab": 51,
+    "FlowCLI": 49,
+    "GlazeLab": 44,
+    "LifeOS": 41,
+    "Interpreted-Context-Methdology": 38,
+    "VoxForge": 36,
+    "Generative-Score-Lab": 36
+  },
+  "language_evolution": {
+    "2026-02": {
+      "Astro": 2,
+      "Makefile": 1,
+      "Python": 9,
+      "HTML": 2,
+      "none": 334,
+      "TypeScript": 1
+    },
+    "2025-11": {
+      "Astro": 12,
+      "JavaScript": 139,
+      "TypeScript": 549,
+      "Dart": 4,
+      "Go": 60,
+      "Python": 80,
+      "HTML": 89,
+      "none": 46
+    },
+    "2025-09": {
+      "Astro": 18,
+      "JavaScript": 14,
+      "TypeScript": 93,
+      "Dart": 20,
+      "Python": 57,
+      "none": 114
+    },
+    "2026-01": {
+      "Go": 15,
+      "TypeScript": 45,
+      "Python": 57,
+      "none": 287
+    },
+    "2025-10": {
+      "Go": 42,
+      "TypeScript": 21,
+      "Python": 24,
+      "none": 100
+    },
+    "2025-12": {
+      "TypeScript": 29,
+      "HTML": 26,
+      "Python": 14,
+      "none": 231
+    },
+    "2026-03": {
+      "Python": 236,
+      "CSS": 8,
+      "TypeScript": 336,
+      "none": 800,
+      "HTML": 16
+    },
+    "2026-04": {
+      "TypeScript": 75
+    },
+    "2025-08": {
+      "Python": 76,
+      "none": 136
+    },
+    "2025-07": {
+      "Python": 60,
+      "none": 205
+    },
+    "2025-06": {
+      "Python": 31,
+      "none": 363
+    },
+    "2025-05": {
+      "Python": 27,
+      "none": 214
+    },
+    "2025-04": {
+      "Python": 94,
+      "none": 734
+    },
+    "2025-03": {
+      "Python": 17,
+      "none": 585
+    },
+    "2025-02": {
+      "none": 43
+    },
+    "2025-01": {
+      "none": 65
+    },
+    "2024-12": {
+      "none": 359
+    },
+    "2024-11": {
+      "none": 44
+    }
+  },
+  "commit_prefixes": {
+    "feat": 309,
+    "docs": 139,
+    "fix": 116,
+    "chore": 72,
+    "Merge branch 'punkpeye": 42,
+    "test": 31,
+    "refactor": 17,
+    "add": 12,
+    "feat(chat)": 11,
+    "feat(lir)": 10,
+    "Merge branch 'main' of https": 8,
+    "feat(audio)": 8,
+    "feat(aesthetic)": 7,
+    "fix(chat)": 7,
+    "Fix PostCSS config": 6,
+    "Initial commit": 6,
+    "feat(research-pipeline)": 5,
+    "feat(re)": 5,
+    "feat(cli)": 5,
+    "fix\ud83d\udd27": 5
+  },
+  "repo_domains": {
+    "Other": 35,
+    "Web/Frontend": 1,
+    "Creative/Art": 3,
+    "AI/ML": 6,
+    "Personal": 1,
+    "Business": 1,
+    "Tools/Libraries": 3
+  },
+  "total_commits": 7059,
+  "total_repos": 50
+}

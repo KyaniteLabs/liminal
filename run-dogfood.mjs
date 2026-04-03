@@ -7,7 +7,7 @@ run(prompt, {
   output, 
   project 
 }).then(r => {
-  console.log('✅ DONE:', r.iterations, 'iterations, score:', r.evaluation?.score);
+  console.log('✅ DONE:', r.iterations, 'iterations, score:', r.finalScore);
   process.exit(0);
 }).catch(e => {
   console.error('❌ FAIL:', e.message);

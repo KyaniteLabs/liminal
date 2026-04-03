@@ -56,6 +56,10 @@ export interface LLMResponse {
   code: string;
   explanation?: string;
   reasoning?: string;
+  /** Raw thinking text from models that output reasoning tags */
+  thinking?: string;
+  /** True if code was recovered from thinking/reasoning tags */
+  recoveredFromThinking?: boolean;
   success: boolean;
   error?: string;
   fromCache?: boolean;

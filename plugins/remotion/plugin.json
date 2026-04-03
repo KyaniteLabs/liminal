@@ -1,0 +1,17 @@
+{
+  "id": "remotion",
+  "name": "Remotion Video Generator",
+  "version": "2.0.0",
+  "description": "Generates Remotion React video compositions",
+  "entry": "index.js",
+  "domains": ["remotion", "video", "react"],
+  "keywords": [
+    "remotion",
+    "video",
+    "react",
+    "composition",
+    "render"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

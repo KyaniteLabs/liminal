@@ -287,6 +287,21 @@ export async function run(prompt: string, options: {
 
     const duration = Date.now() - startTime;
 
+    // Report SUCCESS to Meta-Harness for analysis
+    // NOTE: Generators also report individually with thinking traces
+    // This provides the overall loop-level view
+    if (process.env.NODE_ENV !== 'test') {
+      await metaHarness.onGenerationComplete({
+        success: true,
+        model: 'local',
+        domain: 'unknown', // Generators report their own domain with thinking
+        prompt: prompt,
+        code: loopResult.code,
+        duration: duration,
+        // Note: Individual generator thinking is captured by TierBasedGenerator
+      });
+    }
+
     return {
       code: loopResult.code,
       iterations: loopResult.iterations,
@@ -304,12 +319,12 @@ export async function run(prompt: string, options: {
     };
 
   } catch (error) {
-    // Report error to Meta-Harness (skip during tests to avoid log pollution)
+    // Report ERROR to Meta-Harness
     if (process.env.NODE_ENV !== 'test') {
       await metaHarness.onGenerationComplete({
         success: false,
         model: 'local',
-        domain: 'unknown',
+        domain: 'unknown', // Generators report their own domain with thinking
         prompt: prompt,
         error: error instanceof Error ? error.message : 'Unknown error',
         duration: Date.now() - startTime,
@@ -554,6 +569,16 @@ export default {
 export { P5GeneratorLLM };
 export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './llm/LLMClient.js';
 export type { LLMConfig, LLMResponse } from './llm/LLMClient.js';
+
+// Model Configuration - Harness/Generation Split
+export {
+  loadModelConfig,
+  validateModelConfig,
+  formatModelConfig,
+  getModelEnvDocs,
+  type ModelConfig,
+  type SplitModelConfig,
+} from './llm/ModelConfig.js';
 
 // Model Tier Detection & Prompt Building
 export { 

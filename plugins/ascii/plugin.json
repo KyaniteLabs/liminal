@@ -1,0 +1,16 @@
+{
+  "id": "ascii",
+  "name": "ASCII Art Generator",
+  "version": "2.0.0",
+  "description": "Generates ASCII art and text-based visuals",
+  "entry": "index.js",
+  "domains": ["ascii", "text", "art"],
+  "keywords": [
+    "ascii",
+    "ascii art",
+    "text art",
+    "character art"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

@@ -1,0 +1,18 @@
+{
+  "id": "tone",
+  "name": "Tone.js Audio Generator",
+  "version": "2.0.0",
+  "description": "Generates Tone.js Web Audio synthesis code",
+  "entry": "index.js",
+  "domains": ["tone", "tone.js", "audio", "synthesis"],
+  "keywords": [
+    "tone",
+    "tone.js",
+    "web audio",
+    "synth",
+    "synthesizer",
+    "audio"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

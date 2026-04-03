@@ -1,0 +1,24 @@
+{
+  "id": "p5",
+  "name": "P5.js Generator",
+  "version": "2.0.0",
+  "description": "Generates p5.js creative coding sketches with canvas-based animations and interactive art",
+  "entry": "index.js",
+  "domains": ["p5", "p5.js", "processing", "canvas"],
+  "keywords": [
+    "canvas",
+    "animation",
+    "sketch",
+    "circle",
+    "particles",
+    "ellipse",
+    "rect",
+    "color",
+    "draw",
+    "setup",
+    "creative coding",
+    "generative art"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

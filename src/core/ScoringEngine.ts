@@ -16,13 +16,14 @@ import { quickScore } from '../collab/Scoring.js';
 import { Domain } from '../types/domains.js';
 import type { SwarmPersona } from '../swarm/types.js';
 import type { DesignConstraints, CriticConfig, LIREvaluationContext } from '../aesthetic/types.js';
+import { LLMClient } from '../llm/LLMClient.js';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 /** Legacy evaluation strategy names (backward-compatible with EvaluationFramework). */
-export type EvaluationStrategy = 'detailed' | 'fast' | 'heuristic' | 'fitness' | 'comprehensive' | 'keyword' | 'creative' | 'aesthetic';
+export type EvaluationStrategy = 'detailed' | 'fast' | 'heuristic' | 'fitness' | 'comprehensive' | 'keyword' | 'creative' | 'aesthetic' | 'llm';
 
 /** Legacy evaluation result shape (backward-compatible with EvaluationFramework). */
 export type EvaluationResult = ScoringResult;
@@ -298,6 +299,61 @@ export interface FitnessInput extends ScoringInput {
   weights?: Record<string, number | undefined>;
 }
 
+/** LLM strategy — uses an LLM to evaluate creative output quality. */
+export class LLMScoringStrategy implements ScoringStrategy {
+  name = 'llm';
+  private llm: LLMClient;
+
+  constructor(llm?: LLMClient) {
+    this.llm = llm ?? new LLMClient({ role: 'evaluator' });
+  }
+
+  async score(input: ScoringInput): Promise<ScoringResult> {
+    const criteria = input.criteria?.join(', ') ?? 'technical quality, creativity, novelty';
+    const systemPrompt = `You are an expert creative artifact evaluator. Score the artifact against the given criteria.
+Return ONLY a JSON object with this exact structure:
+{
+  "score": <number 0-1>,
+  "technical": <number 0-1>,
+  "creative": <number 0-1>,
+  "novelty": <number 0-1>,
+  "reasoning": "<brief explanation>",
+  "suggestions": ["<suggestion1>", ...]
+}`;
+
+    const userPrompt = `Criteria: ${criteria}\nDomain: ${input.domain ?? 'general'}\n${input.prompt ? `Prompt: ${input.prompt}\n` : ''}Artifact:\n${input.output}`;
+
+    try {
+      const response = await this.llm.generate(systemPrompt, userPrompt);
+
+      if (!response.success || !response.code) {
+        return { score: 0.5, dimensions: {}, strategy: this.name, issues: ['LLM evaluation failed'] };
+      }
+
+      const jsonMatch = response.code.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        return { score: 0.5, dimensions: {}, strategy: this.name, issues: ['Could not parse LLM response'] };
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      const dimensions: Partial<Record<ScoreDimension, number>> = {};
+      if (typeof parsed.technical === 'number') dimensions.technical = Math.max(0, Math.min(1, parsed.technical));
+      if (typeof parsed.creative === 'number') dimensions.creative = Math.max(0, Math.min(1, parsed.creative));
+      if (typeof parsed.novelty === 'number') dimensions.novelty = Math.max(0, Math.min(1, parsed.novelty));
+
+      return {
+        score: Math.max(0, Math.min(1, typeof parsed.score === 'number' ? parsed.score : 0.5)),
+        dimensions,
+        strategy: this.name,
+        issues: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
+        report: { reasoning: parsed.reasoning || '' },
+      };
+    } catch {
+      return { score: 0.5, dimensions: {}, strategy: this.name, issues: ['LLM evaluation error'] };
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // ScoringEngine
 // ---------------------------------------------------------------------------
@@ -318,16 +374,19 @@ export class ScoringEngine {
   private strategies = new Map<string, ScoringStrategy>();
   private defaultStrategyName: string;
 
-  constructor(defaultStrategy: string = 'comprehensive') {
+  constructor(defaultStrategy: string = 'comprehensive', llm?: LLMClient) {
     // Register built-in strategies
     this.register(new ComprehensiveStrategy());
     this.register(new FastStrategy());
     this.register(new KeywordStrategy());
     this.register(new FitnessStrategy());
-    
+
     // New strategies from consolidated systems
     this.register(new CreativeStrategy());
     this.register(new AestheticStrategy());
+
+    // LLM-based evaluation strategy
+    this.register(new LLMScoringStrategy(llm));
 
     // Legacy aliases (backward-compatible names from EvaluationFramework)
     this.registerAlias('detailed', 'comprehensive');

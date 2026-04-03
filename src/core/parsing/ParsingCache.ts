@@ -16,6 +16,7 @@ import * as crypto from 'node:crypto';
 import * as fs from 'node:fs/promises';
 import * as path from 'path';
 import type { LIRToken } from '../lir/types.js';
+import { Logger } from '../../utils/Logger.js';
 
 /**
  * Cache entry structure stored on disk
@@ -78,12 +79,12 @@ export class ParsingCache {
           this.memoryCache.set(entry.hash, entry);
         } catch (error) {
           // Skip corrupted cache files
-          console.warn(`Failed to load cache file ${file}:`, error);
+          Logger.warn('ParsingCache', `Failed to load cache file ${file}:`, error);
         }
       }
     } catch (error) {
       // Cache directory doesn't exist yet, that's fine
-      console.warn('Failed to initialize cache directory:', error);
+      Logger.warn('ParsingCache', 'Failed to initialize cache directory:', error);
     }
   }
 
@@ -226,7 +227,7 @@ export class ParsingCache {
       );
     } catch (error) {
       // Cache directory doesn't exist or can't be read
-      console.warn('Failed to clear cache directory:', error);
+      Logger.warn('ParsingCache', 'Failed to clear cache directory:', error);
     }
   }
 }

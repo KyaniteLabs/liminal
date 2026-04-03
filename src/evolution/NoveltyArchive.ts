@@ -64,4 +64,64 @@ export class NoveltyArchive {
   clear(): void {
     this.items = [];
   }
+
+  /**
+   * Retrieve the most novel examples from the archive.
+   * Since items don't have content/prompts directly, this returns
+   * behavior vectors with their novelty scores.
+   * @param count - Number of examples to return
+   * @returns Array of behavior vectors sorted by novelty (most novel first)
+   */
+  retrieveNovelExamples(count: number): Array<{ behavior: number[]; noveltyScore: number }> {
+    if (this.items.length === 0) return [];
+
+    // Calculate novelty score for each item relative to the rest
+    const scored = this.items.map((item, index) => {
+      // Compute novelty against all other items except self
+      const others = this.items.filter((_, i) => i !== index);
+      const k = Math.min(this.kNeighbors, others.length);
+      
+      let noveltyScore = 1.0;
+      if (others.length > 0) {
+        const distances = others.map((other) => this.distance(item, other));
+        distances.sort((a, b) => a - b);
+        
+        let total = 0;
+        for (let i = 0; i < k; i++) {
+          total += distances[i];
+        }
+        noveltyScore = others.length > 0 ? total / k : 1.0;
+      }
+
+      return { behavior: [...item], noveltyScore };
+    });
+
+    // Sort by novelty score descending and return top count
+    return scored
+      .sort((a, b) => b.noveltyScore - a.noveltyScore)
+      .slice(0, count);
+  }
+
+  /**
+   * Retrieve novel examples that are maximally different from a reference behavior.
+   * Useful for finding examples that diverge from the current generation.
+   * @param referenceBehavior - Behavior vector to compare against
+   * @param topK - Number of examples to return
+   * @returns Array of behavior vectors most different from reference
+   */
+  retrieveNovelFromReference(
+    referenceBehavior: number[],
+    topK: number
+  ): Array<{ behavior: number[]; distance: number }> {
+    if (this.items.length === 0) return [];
+
+    const scored = this.items.map((item) => ({
+      behavior: [...item],
+      distance: this.distance(item, referenceBehavior),
+    }));
+
+    return scored
+      .sort((a, b) => b.distance - a.distance)
+      .slice(0, topK);
+  }
 }

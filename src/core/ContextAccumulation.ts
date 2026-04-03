@@ -28,6 +28,7 @@ import fs from 'fs';
 import path from 'path';
 import { safeJsonParse, PersistedLoopStateSchema } from '../security/JsonSchemas.js';
 import { ensureDir } from '../utils/fs.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface PersistedLoopState {
   bestFitness: number;
@@ -113,7 +114,7 @@ export class ContextAccumulation {
       const raw = fs.readFileSync(filePath, 'utf-8');
       return safeJsonParse(raw, PersistedLoopStateSchema, 'ContextAccumulation');
     } catch (err) {
-      console.warn('Failed to load loop state:', err);
+      Logger.warn('ContextAccumulation', 'Failed to load loop state:', err);
       return null;
     }
   }

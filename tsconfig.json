@@ -22,7 +22,7 @@
     "noUnusedParameters": true
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist", "test"],
+  "exclude": ["node_modules", "dist", "test", "src/collab/archive", "src/brain/archive"],
   "ts-node": {
     "esm": true,
     "experimentalSpecifierResolution": "node"

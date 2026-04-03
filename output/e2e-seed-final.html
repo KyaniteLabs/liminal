@@ -3,27 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>p5.js Sketch</title>
+    <title>Generated Output</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            background: #f0f0f0;
-        }
-        main {
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        }
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
     </style>
 </head>
 <body>
     <main>
         <script>
-function setup(){ createCanvas(800, 600); } function draw(){ background(0); noStroke(); noiseSeed(1337); let x = map(mouseX, 0, width, 0, 25); let y = map(mouseY, 0, height, 0, 25); for(let i=0; i<200; i++){ let n = noise(x + i*0.1, y + i*0.1, frameCount * 0.01) * 360; // Simulated Cost Growth Curve fill(n, 10); ellipse(i*4, (i%2)*20, 4+n*5, 4+n*3); } for(let j=0; j<100; j++){ let nx = noise(j*0.1, frameCount * 0.005) * width; let ny = noise(j*0.1 + 99, frameCount * 0.005) * height; fill(200); ellipse(nx, ny, 3, 3); } for(let k=0; k<150; k++){ let nk = noise(k*0.05, frameCount * 0.008) * width; let nky = noise(k*0.05 + 77, frameCount * 0.008) * height; fill(255); ellipse(nk, nky, 1.5+nk/500, 1.5+nky/500); } } function windowResized(){ resizeCanvas(windowWidth, windowHeight); }
+let angle = 0;
+let radius = 100;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  background(220);
+}
+
+function draw() {
+  background(30, 30, 50); // Darker background for contrast
+  
+  let centerX = width / 2;
+  let centerY = height / 2;
+  
+  // Animate the circle size and position
+  let x = centerX + cos(angle) * radius;
+  let y = centerY + sin(angle) * radius;
+  let d = map(sin(frameCount * 0.1), -1, 1, 30, 80);
+  
+  // Draw a trail effect
+  fill(255, 30);
+  noStroke();
+  rect(0, 0, width, height);
+  
+  // Draw the main animated circle
+  noStroke();
+  let red = map(sin(frameCount * 0.05), -1, 1, 100, 255);
+  let green = map(cos(frameCount * 0.03), -1, 1, 100, 255);
+  let blue = map(sin(frameCount * 0.07), -1, 1, 100, 255);
+  fill(red, green, blue);
+  
+  circle(x, y, d);
+  
+  // Draw a connecting line to center
+  stroke(200, 50);
+  strokeWeight(2);
+  line(centerX, centerY, x, y);
+  
+  angle += 0.03;
+}
         </script>
     </main>
 </body>

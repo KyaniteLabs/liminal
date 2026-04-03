@@ -191,6 +191,7 @@ export class PromptBuilder {
     try {
       ctx.soul = await readFile(join(process.cwd(), 'SOUL.md'), 'utf-8');
     } catch {
+      // Intentional bare catch: Optional file loading, failure is acceptable
       ctx.soul = 'You are Liminal, a creative coding assistant.';
     }
 
@@ -198,6 +199,7 @@ export class PromptBuilder {
     try {
       ctx.rules = await readFile(join(process.cwd(), 'PROJECT_RULES.md'), 'utf-8');
     } catch {
+      // Intentional bare catch: Optional file loading, failure is acceptable
       ctx.rules = 'Output valid, working code only.';
     }
 
@@ -208,7 +210,7 @@ export class PromptBuilder {
         'utf-8'
       );
     } catch {
-      // Domain docs are optional
+      // Intentional bare catch: Optional file loading, failure is acceptable
     }
 
     // Add memory if provided

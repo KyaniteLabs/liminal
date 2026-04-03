@@ -2,24 +2,27 @@
  * ScoringEngine — pluggable, normalized scoring for creative output.
  *
  * All strategies output 0-1 scores on the same dimensions. Register
- * custom strategies or use the built-in ones: comprehensive, fast, keyword.
+ * custom strategies or use the built-in ones: comprehensive, fast, keyword,
+ * creative, aesthetic, fitness.
  *
- * Built-in strategies: comprehensive, fast, keyword, fitness.
- * Legacy aliases: detailed→comprehensive, heuristic→fast, fast→keyword.
+ * Consolidated as part of Fix 8: Consolidate Triple Redundancy.
+ * CreativeEvaluator and AestheticCritic are now available as scoring strategies.
  */
 
 import { CreativeEvaluator } from './CreativeEvaluator.js';
+import { AestheticCritic } from '../aesthetic/AestheticCritic.js';
 import { HeuristicScorer } from '../swarm/HeuristicScorer.js';
 import { quickScore } from '../collab/Scoring.js';
 import { Domain } from '../types/domains.js';
 import type { SwarmPersona } from '../swarm/types.js';
+import type { DesignConstraints, CriticConfig, LIREvaluationContext } from '../aesthetic/types.js';
 
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
 /** Legacy evaluation strategy names (backward-compatible with EvaluationFramework). */
-export type EvaluationStrategy = 'detailed' | 'fast' | 'heuristic' | 'fitness' | 'comprehensive' | 'keyword';
+export type EvaluationStrategy = 'detailed' | 'fast' | 'heuristic' | 'fitness' | 'comprehensive' | 'keyword' | 'creative' | 'aesthetic';
 
 /** Legacy evaluation result shape (backward-compatible with EvaluationFramework). */
 export type EvaluationResult = ScoringResult;
@@ -33,6 +36,12 @@ export interface EvaluationContext {
   persona?: SwarmPersona;
   dimensionScores?: Record<string, number | undefined>;
   weights?: Record<string, number | undefined>;
+  /** Design constraints for aesthetic evaluation. */
+  designConstraints?: DesignConstraints;
+  /** Critic configuration for aesthetic evaluation. */
+  criticConfig?: Partial<CriticConfig>;
+  /** LIR context for LIR-aware evaluation. */
+  lirContext?: LIREvaluationContext;
 }
 
 /** Normalized dimension names shared across all strategies. */
@@ -63,7 +72,11 @@ export interface ScoringInput {
   /** Evaluation criteria dimensions. */
   criteria?: string[];
   /** Optional LIR context for LIR-aware evaluation strategies. */
-  lirContext?: import('../aesthetic/types.js').LIREvaluationContext;
+  lirContext?: LIREvaluationContext;
+  /** Design constraints for aesthetic evaluation. */
+  designConstraints?: DesignConstraints;
+  /** Critic configuration for aesthetic evaluation. */
+  criticConfig?: Partial<CriticConfig>;
 }
 
 /** Result from any scoring strategy. */
@@ -76,6 +89,10 @@ export interface ScoringResult {
   issues?: string[];
   /** The strategy name that produced this result. */
   strategy: string;
+  /** Optional aesthetic violations (from aesthetic strategy). */
+  violations?: Array<{ rule: string; severity: 'error' | 'warning' | 'info'; message: string }>;
+  /** Optional report details (from creative/aesthetic strategies). */
+  report?: unknown;
 }
 
 /** A scoring strategy plugin. */
@@ -213,6 +230,68 @@ class FitnessStrategy implements ScoringStrategy {
   }
 }
 
+/** Creative strategy — wraps CreativeEvaluator for detailed creative assessment. */
+class CreativeStrategy implements ScoringStrategy {
+  name = 'creative';
+
+  score(input: ScoringInput): ScoringResult {
+    const result = CreativeEvaluator.assess(input.output, {
+      evaluationCriteria: ['creative', 'technical', 'novelty', 'emergence', 'interestingness'],
+      domain: input.domain,
+    });
+
+    const dimensions: Partial<Record<ScoreDimension, number>> = {
+      creative: result.creativeScore,
+      technical: result.technicalScore,
+    };
+    if (result.noveltyScore !== undefined) dimensions.novelty = result.noveltyScore;
+    if (result.emergenceScore !== undefined) dimensions.emergence = result.emergenceScore;
+    if (result.interestingnessScore !== undefined) dimensions.interestingness = result.interestingnessScore;
+
+    return {
+      score: result.score,
+      dimensions,
+      issues: result.issues,
+      strategy: this.name,
+      report: {
+        metrics: result.metrics,
+        improvementTrajectory: (result as unknown as { improvementTrajectory?: number[] }).improvementTrajectory,
+      },
+    };
+  }
+}
+
+/** Aesthetic strategy — wraps AestheticCritic for design-focused assessment. */
+class AestheticStrategy implements ScoringStrategy {
+  name = 'aesthetic';
+  private critic = new AestheticCritic();
+
+  score(input: ScoringInput): ScoringResult {
+    const report = this.critic.critique(
+      input.output,
+      input.criticConfig,
+      input.lirContext
+    );
+
+    // Map aesthetic dimensions
+    const dimensions: Partial<Record<ScoreDimension, number>> = {
+      aesthetic: report.score,
+    };
+
+    return {
+      score: report.score,
+      dimensions,
+      strategy: this.name,
+      violations: report.violations,
+      report: {
+        passed: report.passed,
+        timestamp: report.timestamp,
+        ...(report as unknown as Record<string, unknown>),
+      },
+    };
+  }
+}
+
 /** Extended input shape for the fitness strategy. */
 export interface FitnessInput extends ScoringInput {
   dimensionScores?: Record<string, number | undefined>;
@@ -223,6 +302,18 @@ export interface FitnessInput extends ScoringInput {
 // ScoringEngine
 // ---------------------------------------------------------------------------
 
+/**
+ * ScoringEngine — THE scoring system for Liminal.
+ *
+ * Consolidated as part of Fix 8: Consolidate Triple Redundancy.
+ * Now serves as a plugin host with Strategy pattern, supporting:
+ * - comprehensive: Full assessment via CreativeEvaluator
+ * - creative: Creative-focused assessment
+ * - aesthetic: Design-focused assessment via AestheticCritic
+ * - fast: Heuristic scoring
+ * - keyword: Quick keyword-based scoring
+ * - fitness: Weighted average of pre-computed scores
+ */
 export class ScoringEngine {
   private strategies = new Map<string, ScoringStrategy>();
   private defaultStrategyName: string;
@@ -233,6 +324,10 @@ export class ScoringEngine {
     this.register(new FastStrategy());
     this.register(new KeywordStrategy());
     this.register(new FitnessStrategy());
+    
+    // New strategies from consolidated systems
+    this.register(new CreativeStrategy());
+    this.register(new AestheticStrategy());
 
     // Legacy aliases (backward-compatible names from EvaluationFramework)
     this.registerAlias('detailed', 'comprehensive');
@@ -270,6 +365,13 @@ export class ScoringEngine {
   }
 
   /**
+   * Check if the engine has a registered strategy.
+   */
+  hasStrategy(name: string): boolean {
+    return this.strategies.has(name);
+  }
+
+  /**
    * Score using a specific strategy.
    * Falls back to default if the named strategy is not found.
    */
@@ -293,11 +395,36 @@ export class ScoringEngine {
     return result.score;
   }
 
+  /**
+   * Score with creative focus.
+   */
+  async scoreCreative(input: string, domain?: Domain): Promise<ScoringResult> {
+    return this.score({ output: input, domain }, 'creative');
+  }
+
+  /**
+   * Score with aesthetic focus.
+   */
+  async scoreAesthetic(
+    input: string,
+    criticConfig?: Partial<CriticConfig>,
+    lirContext?: LIREvaluationContext
+  ): Promise<ScoringResult> {
+    return this.score({ output: input, criticConfig, lirContext }, 'aesthetic');
+  }
+
   /** Set the default strategy. */
   setDefault(name: string): void {
     if (!this.strategies.has(name)) {
       throw new Error(`Unknown scoring strategy: "${name}". Available: ${this.listStrategies().join(', ')}`);
     }
     this.defaultStrategyName = name;
+  }
+
+  /**
+   * Get the default strategy name.
+   */
+  getDefault(): string {
+    return this.defaultStrategyName;
   }
 }

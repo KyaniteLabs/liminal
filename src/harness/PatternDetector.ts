@@ -6,6 +6,7 @@
 
 import { Domain } from '../types/domains.js';
 import { FailureRecord, failureLogger } from './FailureLogger.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface Pattern {
   id: string;
@@ -124,7 +125,7 @@ export class PatternDetector {
         }
 
         detected.push(pattern);
-        console.log(`[Meta-Harness] Pattern detected: ${pattern.name} (${pattern.occurrences} occurrences)`);
+        Logger.info('Meta-Harness', `Pattern detected: ${pattern.name} (${pattern.occurrences} occurrences)`);
       }
     }
 

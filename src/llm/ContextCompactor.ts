@@ -110,7 +110,7 @@ export class ContextCompactor {
         return response.text.trim();
       }
     } catch {
-      // Fall back to extractive
+      // Intentional bare catch: Fallback to extractive summary is expected behavior
     }
 
     return this.extractiveSummary(messages);

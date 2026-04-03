@@ -92,11 +92,13 @@ export class CompostMill {
   /** Add files or directories to the heap. */
   async add(inputPaths: string[]): Promise<void> {
     for (const inputPath of inputPaths) {
-      const stat = await fs.stat(inputPath).catch((err) => {
+      let stat: import('node:fs').Stats | null = null;
+      try {
+        stat = await fs.stat(inputPath);
+      } catch (err) {
         console.warn(`[CompostMill] Cannot access ${inputPath}:`, err instanceof Error ? err.message : err);
-        return null;
-      });
-      if (!stat) continue;
+        continue;
+      }
 
       if (stat.isDirectory()) {
         await this.heap.addDirectory(inputPath);
@@ -371,12 +373,12 @@ export class CompostMill {
   async statusAsync(): Promise<MillStatus> {
     const [heapSize, heapFiles, seedCount] = await Promise.all([
       this.heap.getHeapSize(),
-      this.heap.listFiles().then(f => f.length),
+      this.heap.listFiles(),
       this.seedBank.count(),
     ]);
     return {
       heapSize,
-      heapFileCount: heapFiles,
+      heapFileCount: heapFiles.length,
       seedCount,
       soupRunning: this.soup?.isRunning() ?? false,
       soupGeneration: 0,

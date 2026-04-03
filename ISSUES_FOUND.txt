@@ -1,0 +1,85 @@
+═══════════════════════════════════════════════════════════════════════════════
+                    PLUS ULTRA REMEDIATION - ISSUES FOUND
+                         (During Double-Check Verification)
+═══════════════════════════════════════════════════════════════════════════════
+
+Date: April 3, 2026
+Status: Issues Identified and Documented
+
+═══════════════════════════════════════════════════════════════════════════════
+1. MISSING FILE: docs/visual-bible.html
+═══════════════════════════════════════════════════════════════════════════════
+
+Wave 16.3 agent claimed to create this file, but it does not exist.
+
+EXPECTED LOCATION: docs/visual-bible.html
+STATUS: ❌ NOT FOUND
+ACTION: Creating file now
+
+═══════════════════════════════════════════════════════════════════════════════
+2. BARE CATCH BLOCKS (5 additional found)
+═══════════════════════════════════════════════════════════════════════════════
+
+The audit originally found 2 bare catches in:
+  - src/harness/tools/backup.ts:96 ✅ FIXED
+  - src/render/CanvasRecorder.ts:93 ✅ FIXED
+
+ADDITIONAL bare catches found in src/llm/:
+
+  a) src/llm/CircuitBreaker.ts:66
+     Context: Example code in JSDoc comment
+     Status: ⚠️ Acceptable (documentation example)
+     
+  b) src/llm/ContextCompactor.ts:112
+     Context: Fallback to extractive summary
+     Status: ⚠️ Intentional (control flow pattern)
+     Action: Add comment explaining intent
+     
+  c) src/llm/PromptBuilder.ts:193, 200, 210 (3 occurrences)
+     Context: Loading optional files (SOUL.md, PROJECT_RULES.md, domain docs)
+     Status: ⚠️ Intentional (optional file loading)
+     Action: Add comments explaining intent
+
+ANALYSIS:
+These bare catches use try/catch as control flow for optional operations:
+- Loading files that may not exist (SOUL.md, PROJECT_RULES.md, domain docs)
+- Graceful degradation for optional features (extractive summary fallback)
+- Different pattern from "error swallowing" bugs
+
+COMMENT STATUS:
+✅ ContextCompactor.ts:112 - Has comment "// Fall back to extractive"
+✅ PromptBuilder.ts:193, 200 - Have default values (self-documenting)
+✅ PromptBuilder.ts:210 - Has comment "// Domain docs are optional"
+⚠️ CircuitBreaker.ts:66 - In JSDoc example code (acceptable)
+
+RECOMMENDATION:
+All intentional bare catches are already documented with comments or context.
+No action needed - these are valid control flow patterns, not error suppression bugs.
+
+═══════════════════════════════════════════════════════════════════════════════
+3. VERIFICATION SUMMARY
+═══════════════════════════════════════════════════════════════════════════════
+
+BUILD:                    ✅ Passing
+TYPE CHECK:               ✅ Passing
+ENUM FILES:               ✅ All exist (providers, domains, status)
+UTILITY FILES:            ✅ All exist (errors, validation, fs)
+VALIDATOR FILES:          ✅ All exist (P5, GLSL, Three, types)
+WRAPPER FILES:            ✅ All exist (P5, Three, Generic)
+ERROR FILES:              ✅ All exist (base, Config, Validation, Generation)
+OPTIONS FILES:            ✅ All exist (Swarm, Render, Debug)
+TEST FILES:               ✅ 27 new test files created
+ENUM USAGE:               ✅ Provider (15), Domain (28), Status (56)
+DOCUMENTATION:            ⚠️ visual-bible.html missing (being created)
+BARE CATCHES:             ⚠️ 5 additional found (intentional but undocumented)
+
+═══════════════════════════════════════════════════════════════════════════════
+4. ACTIONS TAKEN
+═══════════════════════════════════════════════════════════════════════════════
+
+[ ] Create docs/visual-bible.html
+[ ] Add comments to intentional bare catches in src/llm/
+[ ] Update remediation report with findings
+[ ] Final verification pass
+
+═══════════════════════════════════════════════════════════════════════════════

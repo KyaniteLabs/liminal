@@ -2,7 +2,7 @@ import readline from 'readline';
 import { PromptHistory } from '../config/PromptHistory.js';
 import { Provider } from '../types/providers.js';
 
-export interface InteractiveOptions {
+interface InteractiveOptions {
   provider?: string;
   model?: string;
   maxIterations?: number;

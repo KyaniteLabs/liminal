@@ -28,6 +28,7 @@ module.exports = {
     '@typescript-eslint/require-await': 'warn',
     '@typescript-eslint/await-thenable': 'error',
     '@typescript-eslint/no-misused-promises': 'error',
+    'no-console': 'warn',
   },
   overrides: [
     {

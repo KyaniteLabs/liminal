@@ -10,6 +10,7 @@
 import { spawn, execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import path from 'node:path';
+import { formatError } from '../../utils/errors.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -108,7 +109,7 @@ export class AudioPlayer {
     } catch (error) {
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : String(error) 
+        error: formatError('AudioPlayer', error) 
       };
     }
   }

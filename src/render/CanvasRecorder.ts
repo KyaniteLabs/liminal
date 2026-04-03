@@ -93,8 +93,9 @@ export class CanvasRecorder {
       try {
         await fs.rm(framesDir, { recursive: true, force: true });
       } catch (error) {
-        console.error('[CanvasRecorder] Cleanup failed:', error);
-        throw new Error(`CanvasRecorder cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        const message = this.formatErrorMessage(error);
+        console.error('[CanvasRecorder] Cleanup failed:', message);
+        throw new Error(`CanvasRecorder cleanup failed: ${message}`);
       }
     }
   }
@@ -109,6 +110,10 @@ export class CanvasRecorder {
       if (!canvas) return null;
       return canvas.toDataURL('image/png');
     `;
+  }
+
+  private formatErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : String(error);
   }
 
   private wrapForDomain(code: string, domain: Domain): string {

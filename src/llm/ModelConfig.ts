@@ -1,13 +1,22 @@
 /**
- * ModelConfig - Configuration management for Harness/Generation model split
+ * ModelConfig - Configuration management for three-role model split
  *
  * Supports separate model configurations for:
  * - Harness: Self-improvement, code fixes, validation (needs precision)
  * - Generation: Creative coding output (needs creativity)
+ * - Evaluator: Quality assessment, scoring, comparison (needs consistency)
+ *
+ * Provider detection delegates to RoleConfig.detectProviderType().
+ * Backward compatible with existing LIMINAL_HARNESS_* and LIMINAL_LLM_* env vars.
  */
 
+import { detectProviderType } from '../config/RoleConfig.js';
+import type { ProviderType, ModelRole } from '../config/RoleConfig.js';
+
+export { ProviderType, ModelRole };
+
 export interface ModelConfig {
-  provider: 'lmstudio' | 'ollama' | 'minimax' | 'openrouter' | 'glm' | 'custom';
+  provider: ProviderType;
   baseUrl: string;
   model: string;
   apiKey?: string;
@@ -19,12 +28,14 @@ export interface ModelConfig {
 export interface SplitModelConfig {
   harness: ModelConfig;
   generation: ModelConfig;
+  evaluator: ModelConfig;
   fallbackToGeneration: boolean;  // If harness model fails, use generation
 }
 
 // Default configuration values
 const DEFAULT_HARNESS_TEMPERATURE = 0.2;  // Low temp for precision
 const DEFAULT_GENERATION_TEMPERATURE = 0.7;  // Higher temp for creativity
+const DEFAULT_EVALUATOR_TEMPERATURE = 0.2;  // Low temp for consistent scoring
 const DEFAULT_MAX_TOKENS = 4096;
 const DEFAULT_TIMEOUT = 120000;
 
@@ -34,11 +45,13 @@ const DEFAULT_TIMEOUT = 120000;
 export function loadModelConfig(): SplitModelConfig {
   const harnessConfig = loadHarnessConfig();
   const generationConfig = loadGenerationConfig();
+  const evaluatorConfig = loadEvaluatorConfig();
   const fallbackToGeneration = process.env.LIMINAL_HARNESS_FALLBACK !== 'false';
 
   return {
     harness: harnessConfig,
     generation: generationConfig,
+    evaluator: evaluatorConfig,
     fallbackToGeneration,
   };
 }
@@ -47,7 +60,7 @@ export function loadModelConfig(): SplitModelConfig {
  * Load harness-specific configuration
  * Falls back to generation config if not explicitly set
  */
-function loadHarnessConfig(): ModelConfig {
+export function loadHarnessConfig(): ModelConfig {
   // Check for explicit harness configuration
   const harnessBaseUrl = process.env.LIMINAL_HARNESS_BASE_URL || process.env.LIMINAL_LLM_BASE_URL;
   const harnessModel = process.env.LIMINAL_HARNESS_MODEL || process.env.LIMINAL_LLM_MODEL;
@@ -56,13 +69,13 @@ function loadHarnessConfig(): ModelConfig {
   const harnessTokens = parseInt(process.env.LIMINAL_HARNESS_MAX_TOKENS || String(DEFAULT_MAX_TOKENS));
   const harnessTimeout = parseInt(process.env.LIMINAL_HARNESS_TIMEOUT || String(DEFAULT_TIMEOUT));
 
-  // Determine provider
-  const provider = detectProvider(harnessBaseUrl);
+  const baseUrl = harnessBaseUrl || 'http://localhost:1234/v1';
+  const model = harnessModel || 'unknown';
 
   return {
-    provider,
-    baseUrl: harnessBaseUrl || 'http://localhost:1234/v1',
-    model: harnessModel || 'unknown',
+    provider: detectProviderType(baseUrl, model),
+    baseUrl,
+    model,
     apiKey: harnessApiKey,
     temperature: harnessTemp,
     maxTokens: harnessTokens,
@@ -73,19 +86,16 @@ function loadHarnessConfig(): ModelConfig {
 /**
  * Load generation-specific configuration
  */
-function loadGenerationConfig(): ModelConfig {
+export function loadGenerationConfig(): ModelConfig {
   const baseUrl = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';
   const model = process.env.LIMINAL_LLM_MODEL || 'unknown';
   const apiKey = process.env.LIMINAL_LLM_API_KEY;
   const temp = parseFloat(process.env.LIMINAL_LLM_TEMPERATURE || String(DEFAULT_GENERATION_TEMPERATURE));
-  
-  // Use defaults if not set (silence unused warnings)
-  void DEFAULT_HARNESS_TEMPERATURE;
   const tokens = parseInt(process.env.LIMINAL_LLM_MAX_TOKENS || String(DEFAULT_MAX_TOKENS));
   const timeout = parseInt(process.env.LIMINAL_LLM_TIMEOUT || String(DEFAULT_TIMEOUT));
 
   return {
-    provider: detectProvider(baseUrl),
+    provider: detectProviderType(baseUrl, model),
     baseUrl,
     model,
     apiKey,
@@ -96,18 +106,29 @@ function loadGenerationConfig(): ModelConfig {
 }
 
 /**
- * Detect provider from base URL
+ * Load evaluator-specific configuration
+ * Falls back to generation config if not explicitly set
  */
-function detectProvider(baseUrl?: string): ModelConfig['provider'] {
-  if (!baseUrl) return 'lmstudio';
-  
-  if (baseUrl.includes('minimax')) return 'minimax';
-  if (baseUrl.includes('openrouter')) return 'openrouter';
-  if (baseUrl.includes('glm') || baseUrl.includes('bigmodel')) return 'glm';
-  if (baseUrl.includes('11434') || baseUrl.includes('ollama')) return 'ollama';
-  if (baseUrl.includes('1234') || baseUrl.includes('lmstudio')) return 'lmstudio';
-  
-  return 'custom';
+export function loadEvaluatorConfig(): ModelConfig {
+  const evaluatorBaseUrl = process.env.LIMINAL_EVALUATOR_BASE_URL || process.env.LIMINAL_LLM_BASE_URL;
+  const evaluatorModel = process.env.LIMINAL_EVALUATOR_MODEL || process.env.LIMINAL_LLM_MODEL;
+  const evaluatorApiKey = process.env.LIMINAL_EVALUATOR_API_KEY || process.env.LIMINAL_LLM_API_KEY;
+  const evaluatorTemp = parseFloat(process.env.LIMINAL_EVALUATOR_TEMPERATURE || String(DEFAULT_EVALUATOR_TEMPERATURE));
+  const evaluatorTokens = parseInt(process.env.LIMINAL_EVALUATOR_MAX_TOKENS || String(DEFAULT_MAX_TOKENS));
+  const evaluatorTimeout = parseInt(process.env.LIMINAL_EVALUATOR_TIMEOUT || String(DEFAULT_TIMEOUT));
+
+  const baseUrl = evaluatorBaseUrl || 'http://localhost:1234/v1';
+  const model = evaluatorModel || 'unknown';
+
+  return {
+    provider: detectProviderType(baseUrl, model),
+    baseUrl,
+    model,
+    apiKey: evaluatorApiKey,
+    temperature: evaluatorTemp,
+    maxTokens: evaluatorTokens,
+    timeout: evaluatorTimeout,
+  };
 }
 
 /**
@@ -137,8 +158,16 @@ export function validateModelConfig(config: SplitModelConfig): {
     warnings.push('Generation model not explicitly set - will auto-detect');
   }
 
+  // Check evaluator config
+  if (!config.evaluator.baseUrl) {
+    warnings.push('Evaluator base URL not set - falling back to generation config');
+  }
+  if (!config.evaluator.model || config.evaluator.model === 'unknown') {
+    warnings.push('Evaluator model not explicitly set - will auto-detect');
+  }
+
   // Check for common configuration issues
-  if (config.harness.model === config.generation.model && 
+  if (config.harness.model === config.generation.baseUrl &&
       config.harness.baseUrl === config.generation.baseUrl &&
       config.harness.temperature === config.generation.temperature) {
     warnings.push('Harness and generation use identical configs - consider separating for different tasks');
@@ -157,6 +186,7 @@ export function validateModelConfig(config: SplitModelConfig): {
 export function formatModelConfig(config: SplitModelConfig): string {
   const h = config.harness;
   const g = config.generation;
+  const e = config.evaluator;
 
   return `
 Model Configuration:
@@ -175,6 +205,13 @@ GENERATION (Creative Output):
   Base URL: ${g.baseUrl}
   Temperature: ${g.temperature}
   Max Tokens: ${g.maxTokens}
+
+EVALUATOR (Quality Assessment):
+  Provider: ${e.provider}
+  Model: ${e.model}
+  Base URL: ${e.baseUrl}
+  Temperature: ${e.temperature}
+  Max Tokens: ${e.maxTokens}
 
 Fallback: ${config.fallbackToGeneration ? 'enabled' : 'disabled'}
 `;
@@ -204,12 +241,21 @@ LIMINAL_LLM_TEMPERATURE      # Default: 0.7 (higher for creativity)
 LIMINAL_LLM_MAX_TOKENS       # Default: 4096
 LIMINAL_LLM_TIMEOUT          # Default: 120000ms
 
+## Evaluator (Quality Assessment, Scoring)
+LIMINAL_EVALUATOR_BASE_URL   # API endpoint for evaluator (falls back to LLM_BASE_URL)
+LIMINAL_EVALUATOR_MODEL      # Model name for evaluator (falls back to LLM_MODEL)
+LIMINAL_EVALUATOR_API_KEY    # API key for evaluator (falls back to LLM_API_KEY)
+LIMINAL_EVALUATOR_TEMPERATURE # Default: 0.2 (low for consistent scoring)
+LIMINAL_EVALUATOR_MAX_TOKENS  # Default: 4096
+LIMINAL_EVALUATOR_TIMEOUT     # Default: 120000ms
+
 ## Quick Setup Examples
 
 # Same provider, different models:
 LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
 LIMINAL_LLM_MODEL=qwen2.5-coder-14b
 LIMINAL_HARNESS_MODEL=qwen2.5-coder-7b
+LIMINAL_EVALUATOR_MODEL=qwen2.5-coder-14b
 
 # Different providers:
 LIMINAL_HARNESS_BASE_URL=http://localhost:1234/v1
@@ -217,5 +263,8 @@ LIMINAL_HARNESS_MODEL=qwen2.5-coder-7b
 LIMINAL_LLM_BASE_URL=https://api.minimax.chat/v1
 LIMINAL_LLM_MODEL=MiniMax-Text-01
 LIMINAL_LLM_API_KEY=sk-...
+LIMINAL_EVALUATOR_BASE_URL=https://openrouter.ai/api/v1
+LIMINAL_EVALUATOR_MODEL=google/gemini-2.0-flash
+LIMINAL_EVALUATOR_API_KEY=sk-or-...
 `;
 }

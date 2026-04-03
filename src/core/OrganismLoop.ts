@@ -15,6 +15,7 @@ import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
 import { eventBus, EventTypes } from './EventBus.js';
 import type { LoopResult, NormalizedLoopOptions } from './LoopConfig.js';
 import { formatSeedForPrompt } from './lir/LIRPromptFormatter.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Run the Ralph-Wiggum Loop in organism mode.
@@ -71,7 +72,7 @@ export async function runOrganismMode(
         enhancedPrompt += '\n\nCreative seed from compost:\n' + formatSeedForPrompt(seed, 500);
       }
     } catch (err) {
-      console.warn('Organism compost seed injection failed:', err);
+      Logger.warn('OrganismLoop', 'Compost seed injection failed:', err);
     }
 
     const result = await generateMusicToVisual(enhancedPrompt, { traits: options.traits });

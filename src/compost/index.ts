@@ -31,7 +31,7 @@ export { CompostHeap } from './CompostHeap.js';
 export { CompostShredder } from './CompostShredder.js';
 export { FragmentScorer } from './FragmentScorer.js';
 export { CollisionEngine } from './CollisionEngine.js';
-export { SeedBank } from './SeedBank.js';
+export { SeedBank, type EmbeddedSeed } from './SeedBank.js';
 export { DigestGenerator } from './DigestGenerator.js';
 export { CompostMill } from './CompostMill.js';
 export { CompostSoup } from './CompostSoup.js';
@@ -49,6 +49,19 @@ export { DigestScheduler } from './DigestScheduler.js';
 // CLI
 export { parseArgs, execute } from './cli.js';
 export type { CLIAction } from './cli.js';
+
+// Model Router
+export {
+  ModelRouter,
+  sampleBeta,
+  type Task,
+  type TaskType,
+  type ModelResponse,
+  type ModelPerformanceRecord,
+  type BetaDistribution,
+  type BanditArm,
+  type ThompsonConfig,
+} from './ModelRouter.js';
 
 // Integration bridges
 export { FragmentArchiveBridge } from './integration/FragmentArchiveBridge.js';

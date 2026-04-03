@@ -11,7 +11,7 @@ import { buildCreativeBrief, type InterviewAnswers } from './CreativeBrief.js';
 import { getNextQuestion } from './InterviewPhase.js';
 import { RalphLoop } from '../core/RalphLoop.js';
 import type { IterationContext } from '../core/LoopConfig.js';
-import { SemanticArtMemory } from '../brain/SemanticArtMemory.js';
+// Note: SemanticArtMemory archived as part of Fix 8 - using HarnessMemory via GuidanceEngine
 import { GuidanceEngine } from './GuidanceEngine.js';
 
 // Interview phase type
@@ -38,14 +38,12 @@ export class ConversationManager {
   interviewPhase: InterviewPhase = 'greeting';
   interviewAnswers: Map<string, any> = new Map();
 
-  // Art Brain integration (Phase 2: SemanticArtMemory)
-  artBrain: SemanticArtMemory;
+  // Guidance engine for proactive suggestions
   guidance: GuidanceEngine;
 
-  constructor(artBrain?: SemanticArtMemory) {
+  constructor() {
     // Initialize with default state
-    this.artBrain = artBrain || new SemanticArtMemory();
-    this.guidance = new GuidanceEngine(this.artBrain);
+    this.guidance = new GuidanceEngine();
   }
 
   /**

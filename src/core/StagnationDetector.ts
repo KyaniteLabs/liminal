@@ -9,23 +9,33 @@
 
 import { SelfReflectionEngine } from '../improvement/SelfReflection.js';
 import { ContextAccumulation } from './ContextAccumulation.js';
+import { SuccessRateTracker, type SuccessRateConfig } from './SuccessRateTracker.js';
 
 export interface StagnationCheckResult {
   shouldBreak: boolean;
   reason: string;
+  /** Whether high-exploration mode is recommended */
+  exploreAggressively?: boolean;
+  /** Current success rate (0-1) */
+  successRate?: number;
 }
 
 /**
  * Detects stagnation and attempts recovery via self-reflection.
+ * Also tracks success rate for adaptive exploration.
  */
 export class StagnationDetector {
   private bestScore = 0;
   private iterationsSinceLastImprovement = 0;
   private readonly selfReflection = new SelfReflectionEngine();
+  private readonly successRateTracker: SuccessRateTracker;
 
   constructor(
-    private stagnationThreshold: number
-  ) {}
+    private stagnationThreshold: number,
+    successRateConfig?: SuccessRateConfig
+  ) {
+    this.successRateTracker = new SuccessRateTracker(successRateConfig);
+  }
 
   /**
    * Check for stagnation after each iteration.
@@ -40,6 +50,10 @@ export class StagnationDetector {
     noveltyScore: number,
     prompt: string
   ): StagnationCheckResult {
+    // Record this attempt for success rate tracking
+    const isSuccess = evaluationScore > 0.7;
+    this.successRateTracker.recordAttempt(isSuccess);
+
     // High novelty resets stagnation
     if (noveltyScore > 0.5) {
       this.iterationsSinceLastImprovement = Math.max(0, this.iterationsSinceLastImprovement - 1);
@@ -48,7 +62,12 @@ export class StagnationDetector {
     if (evaluationScore > this.bestScore) {
       this.bestScore = evaluationScore;
       this.iterationsSinceLastImprovement = 0;
-      return { shouldBreak: false, reason: '' };
+      return {
+        shouldBreak: false,
+        reason: '',
+        exploreAggressively: this.successRateTracker.shouldExploreAggressively(),
+        successRate: this.successRateTracker.getSuccessRate(),
+      };
     }
 
     this.iterationsSinceLastImprovement++;
@@ -78,21 +97,57 @@ export class StagnationDetector {
           });
           // Reset counter to give improvement a chance
           this.iterationsSinceLastImprovement = 0;
-          return { shouldBreak: false, reason: '' };
+          return {
+            shouldBreak: false,
+            reason: '',
+            exploreAggressively: this.successRateTracker.shouldExploreAggressively(),
+            successRate: this.successRateTracker.getSuccessRate(),
+          };
         } else {
           return {
             shouldBreak: true,
-            reason: `stagnation detected (${this.iterationsSinceLastImprovement} iterations without improvement)`
+            reason: `stagnation detected (${this.iterationsSinceLastImprovement} iterations without improvement)`,
+            exploreAggressively: this.successRateTracker.shouldExploreAggressively(),
+            successRate: this.successRateTracker.getSuccessRate(),
           };
         }
       } else {
         return {
           shouldBreak: true,
-          reason: `stagnation detected (${this.iterationsSinceLastImprovement} iterations without improvement)`
+          reason: `stagnation detected (${this.iterationsSinceLastImprovement} iterations without improvement)`,
+          exploreAggressively: this.successRateTracker.shouldExploreAggressively(),
+          successRate: this.successRateTracker.getSuccessRate(),
         };
       }
     }
 
-    return { shouldBreak: false, reason: '' };
+    return {
+      shouldBreak: false,
+      reason: '',
+      exploreAggressively: this.successRateTracker.shouldExploreAggressively(),
+      successRate: this.successRateTracker.getSuccessRate(),
+    };
+  }
+
+  /**
+   * Check if we should explore aggressively based on success rate.
+   * Returns true when success rate drops below 1/5th (20%).
+   */
+  shouldExploreAggressively(): boolean {
+    return this.successRateTracker.shouldExploreAggressively();
+  }
+
+  /**
+   * Get the current success rate (0-1).
+   */
+  getSuccessRate(): number {
+    return this.successRateTracker.getSuccessRate();
+  }
+
+  /**
+   * Get a snapshot of success rate metrics.
+   */
+  getSuccessRateSnapshot() {
+    return this.successRateTracker.getSnapshot();
   }
 }

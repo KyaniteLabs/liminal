@@ -4,11 +4,12 @@
  * Handles the complex generation dispatch logic:
  * - LLM caller wrapper for collaboration modes
  * - Swarm generation (7-persona Ollama swarm)
- * - Deep collaboration (multi-model specialized roles)
- * - Simple 2-model collaboration
+ * - Collaboration via CollaborationEngine (consolidated to SwarmOrchestrator)
  * - Standard generator registry dispatch
  *
- * Extracted from RalphLoop.ts (lines 176-193, 346-418, 973-1066).
+ * Consolidated as part of Fix 8: Consolidate Triple Redundancy.
+ * DeepCollaboration and CollaborativeClient have been removed.
+ * All collaboration now routes through CollaborationEngine -> SwarmOrchestrator.
  */
 
 import { Domain } from '../types/domains.js';
@@ -16,14 +17,12 @@ import { generatorRegistry } from '../generators/GeneratorRegistry.js';
 import type { GeneratorEntry } from '../generators/GeneratorRegistry.js';
 import { registerAllGenerators } from '../generators/registerGenerators.js';
 import { Gallery } from '../gallery/Gallery.js';
-import { DeepCollaboration } from '../collab/DeepCollaboration.js';
-import { CollaborativeClient } from '../collab/CollaborativeClient.js';
-import { CollaborationEngine } from '../collab/CollaborationEngine.js';
-import type { DeepCollaborationConfig, CollaborativeConfig } from '../collab/types.js';
+import { CollaborationEngine, type PhaseUpdate } from '../collab/CollaborationEngine.js';
 import { SwarmOrchestrator } from '../swarm/SwarmOrchestrator.js';
 import { MiningEngine } from '../swarm/MiningEngine.js';
 import { ArchiveLearning } from '../learning/index.js';
 import type { NormalizedLoopOptions } from './LoopConfig.js';
+import { Logger } from '../utils/Logger.js';
 
 type DispatchResult = { entry: GeneratorEntry; confidence: number } | null;
 
@@ -56,6 +55,9 @@ async function collabLLMCaller(
 
 /**
  * Orchestrates code generation across swarm, collaboration, and standard generators.
+ * 
+ * CONSOLIDATED: All collaboration now routes through CollaborationEngine.
+ * The old DeepCollaboration and CollaborativeClient classes have been removed.
  */
 export class GenerationOrchestrator {
   constructor(
@@ -79,11 +81,9 @@ export class GenerationOrchestrator {
       return this.generateWithSwarm(usedPrompt);
     }
 
+    // Consolidated collaboration path - all collaboration goes through CollaborationEngine
     if (this.options.useDeepCollab || this.options.useCollab) {
-      if (this.options.collabMode) {
-        return this.generateWithCollabEngine(usedPrompt, dispatched);
-      }
-      return this.generateWithCollaboration(usedPrompt, dispatched, bypassCache);
+      return this.generateWithCollaboration(usedPrompt, dispatched);
     }
 
     if (dispatched) {
@@ -117,7 +117,7 @@ export class GenerationOrchestrator {
       try {
         await this.gallery.saveSwarmSession(this.options.project, swarmResult);
       } catch (err) {
-        console.warn('Swarm session save failed:', err);
+        Logger.warn('GenerationOrchestrator', 'Swarm session save failed:', err);
       }
     }
 
@@ -128,25 +128,41 @@ export class GenerationOrchestrator {
           this.archiveLearning.addFragment(fragment, this.options.collabDomain || 'p5');
         }
       } catch (err) {
-        console.warn('Swarm mining failed:', err);
+        Logger.warn('GenerationOrchestrator', 'Swarm mining failed:', err);
       }
     }
 
     return { code: swarmResult.finalOutput };
   }
 
-  private async generateWithCollabEngine(usedPrompt: string, dispatched: DispatchResult): Promise<GenerationResult> {
+  /**
+   * Generate using the consolidated CollaborationEngine.
+   * 
+   * As part of Fix 8: Consolidate Triple Redundancy, all collaboration
+   * modes (deep collab, simple collab) now route through CollaborationEngine
+   * which uses SwarmOrchestrator internally.
+   */
+  private async generateWithCollaboration(
+    usedPrompt: string,
+    dispatched: DispatchResult
+  ): Promise<GenerationResult> {
     const llmCaller = (prompt: string, _systemPrompt?: string) =>
       collabLLMCaller(prompt, _systemPrompt, this.options, dispatched);
 
+    // All collaboration now goes through the consolidated CollaborationEngine
+    // which routes to SwarmOrchestrator
     const engine = new CollaborationEngine({
-      mode: this.options.collabMode!,
       domain: this.options.collabDomain || Domain.P5,
       systemPrompt: '',
       callLLM: llmCaller,
       convergenceThreshold: this.options.collabConfig?.convergenceThreshold,
       maxRounds: this.options.collabConfig?.maxRounds ?? this.options.collabConfig?.maxPhases,
-      onProgress: (update) => {
+      swarmConfig: {
+        mode: this.options.swarmMode ?? 'hybrid',
+        maxRounds: this.options.swarmConfig?.maxRounds ?? 4,
+        ...this.options.swarmConfig,
+      },
+      onProgress: (update: PhaseUpdate & { mode: string }) => {
         this.options.onProgress?.({
           iteration: 0,
           score: update.quality || 0,
@@ -159,73 +175,5 @@ export class GenerationOrchestrator {
 
     const collabResult = await engine.run(usedPrompt);
     return { code: collabResult.output };
-  }
-
-  private async generateWithCollaboration(usedPrompt: string, dispatched: DispatchResult, bypassCache?: boolean): Promise<GenerationResult> {
-    const shouldUseCollab = !dispatched || dispatched.entry.name === 'llm';
-
-    if (shouldUseCollab) {
-      const llmCaller = (prompt: string, _systemPrompt?: string) =>
-        collabLLMCaller(prompt, _systemPrompt, this.options, dispatched);
-      const code = await this.runCollaboration(usedPrompt, llmCaller);
-      return { code };
-    } else if (dispatched) {
-      const code = await dispatched.entry.generate(usedPrompt);
-      return { code };
-    }
-
-    const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
-    const generator = new P5GeneratorLLM(undefined, { bypassCache });
-    const code = await generator.generate(usedPrompt, { bypassCache });
-    return { code };
-  }
-
-  private async runCollaboration(
-    prompt: string,
-    fallbackLLM: (prompt: string, systemPrompt?: string) => Promise<string>
-  ): Promise<string> {
-    const domain = this.options.collabDomain || Domain.P5;
-
-    if (this.options.useDeepCollab) {
-      const collab = new DeepCollaboration({
-        ...this.options.collabConfig,
-        callLLM: fallbackLLM,
-      } as DeepCollaborationConfig);
-
-      return await collab.generate(
-        prompt,
-        domain,
-        '',
-        (update) => {
-          this.options.onProgress?.({
-            iteration: 0,
-            score: update.quality || 0,
-            promiseDetected: false,
-            code: update.output || '',
-            timestamp: new Date().toISOString(),
-          });
-        }
-      );
-    } else {
-      const collab = new CollaborativeClient({
-        ...this.options.collabConfig,
-        callLLM: fallbackLLM,
-      } as CollaborativeConfig);
-
-      return await collab.generate(
-        prompt,
-        domain,
-        '',
-        (update) => {
-          this.options.onProgress?.({
-            iteration: 0,
-            score: update.quality || 0,
-            promiseDetected: false,
-            code: update.output || '',
-            timestamp: new Date().toISOString(),
-          });
-        }
-      );
-    }
   }
 }

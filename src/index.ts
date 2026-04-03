@@ -690,3 +690,23 @@ export {
   detectProviderFromUrl,
   PROVIDER_TEMPLATES,
 } from './harness/index.js';
+
+// Embeddings - Semantic search and vector similarity
+export {
+  EmbeddingService,
+  getGlobalEmbeddingService,
+  resetGlobalEmbeddingService,
+} from './embeddings/index.js';
+export type {
+  EmbeddingConfig,
+  EmbeddingResult,
+} from './embeddings/index.js';
+
+// Vector utilities
+export {
+  cosineSimilarity,
+  euclideanDistance,
+  normalizeVector,
+  dotProduct,
+  findKNearestNeighbors,
+} from './utils/vectors.js';

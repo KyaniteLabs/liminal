@@ -6,17 +6,25 @@ import { describe, it, expect } from 'vitest';
 import { SwarmOrchestrator } from '../../src/swarm/SwarmOrchestrator.js';
 import { SwarmMode } from '../../src/swarm/types.js';
 import type { SwarmConfig } from '../../src/swarm/types.js';
+import { DEFAULT_PERSONAS } from '../../src/swarm/personas.js';
 
 // Mock Ollama caller that returns deterministic responses per persona
-const createMockOllama = (): (model: string, prompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string> => {
-  return async (_model: string, prompt: string): Promise<string> => {
-    if (prompt.includes('You are Max')) return 'Brief. Precise.';
-    if (prompt.includes('You are Rex')) return 'This is wrong. Challenge it.';
-    if (prompt.includes('You are Sam')) return 'The warm light touched her face as she remembered.';
-    if (prompt.includes('You are Kai')) return 'The system connects flows through hidden networks.';
-    if (prompt.includes('You are Nova')) return 'Two worlds bridge into one unified vision.';
-    if (prompt.includes('1st choice') || prompt.includes('2nd choice')) return '1st choice: C\n2nd choice: A\nSam had the most emotion.';
-    return 'Default response.';
+const createMockOllama = (): (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string> => {
+  return async (_model: string, systemPrompt: string): Promise<string> => {
+    // Support both old personas and new expert personas
+    if (systemPrompt.includes('You are Max') || systemPrompt.includes('Distiller')) return 'Brief. Precise.';
+    if (systemPrompt.includes('You are Rex') || systemPrompt.includes('Explorer')) return 'This is wrong. Challenge it.';
+    if (systemPrompt.includes('You are Sam') || systemPrompt.includes('Muse')) return 'The warm light touched her face as she remembered.';
+    if (systemPrompt.includes('You are Kai') || systemPrompt.includes('Architect')) return 'The system connects flows through hidden networks.';
+    if (systemPrompt.includes('You are Nova') || systemPrompt.includes('Synthesizer')) return 'Two worlds bridge into one unified vision.';
+    // Support new expert personas
+    if (systemPrompt.includes('Geometer')) return 'function setup() { createCanvas(400, 400); } function draw() { background(0); rect(50, 50, 100, 100); }';
+    if (systemPrompt.includes('Naturalist')) return 'function setup() { createCanvas(400, 400); } function draw() { background(0); circle(200, 200, 50); }';
+    if (systemPrompt.includes('Mathematician')) return 'function setup() { createCanvas(400, 400); } function draw() { background(0); line(0, 0, 400, 400); }';
+    if (systemPrompt.includes('Physicist')) return 'function setup() { createCanvas(400, 400); } function draw() { background(0); ellipse(200, 200, 80, 60); }';
+    if (systemPrompt.includes('Synesthete')) return 'function setup() { createCanvas(400, 400); } function draw() { background(0); rect(100, 100, 200, 200); }';
+    if (systemPrompt.includes('1st choice') || systemPrompt.includes('2nd choice')) return '1st choice: A\n2nd choice: B\nWinner is best.';
+    return 'Default response with some code.';
   };
 };
 
@@ -118,7 +126,7 @@ describe('SwarmOrchestrator', () => {
           name: 'Alpha',
           displayName: 'Alpha',
           model: 'test-model',
-          temperature: 0.5,
+          temperature: 0.7,
           maxTokens: 80,
           systemPrompt: 'You are Alpha. Write rich, varied vocabulary.',
           voice: 'Rich.',
@@ -132,7 +140,7 @@ describe('SwarmOrchestrator', () => {
           name: 'Beta',
           displayName: 'Beta',
           model: 'test-model',
-          temperature: 0.5,
+          temperature: 0.7,
           maxTokens: 80,
           systemPrompt: 'You are Beta.',
           voice: 'Flat.',
@@ -144,14 +152,14 @@ describe('SwarmOrchestrator', () => {
       ];
 
       let callCount = 0;
-      const convergingMock = async (_model: string, prompt: string): Promise<string> => {
+      const convergingMock = async (_model: string, _systemPrompt: string, userPrompt: string): Promise<string> => {
         callCount++;
         // Alpha: rich vocabulary, good length → higher heuristic score
-        if (prompt.includes('You are Alpha')) {
+        if (userPrompt.includes('Alpha')) {
           return 'Spectral luminance cascades through crystalline corridors, weaving ephemeral tapestries of shimmering resonance across vast undulating landscapes.';
         }
         // Beta: minimal output → lower scores on vocabulary and length
-        if (prompt.includes('You are Beta')) {
+        if (userPrompt.includes('Beta')) {
           return 'Short.';
         }
         // LLM voting (final round only): vote for alpha
@@ -177,4 +185,37 @@ describe('SwarmOrchestrator', () => {
     }, 30000);
   });
 
+  describe('routing', () => {
+    it('should route geometric prompts to relevant experts', () => {
+      const orchestrator = new SwarmOrchestrator();
+      const routing = orchestrator.routePromptToExperts('Geometric grid with circles and lines');
+      
+      expect(routing.selectedExperts.length).toBeGreaterThan(0);
+      expect(routing.reasoning).toBeTruthy();
+      
+      // Should have scores for all experts
+      expect(routing.scores.size).toBeGreaterThan(0);
+    });
+
+    it('should use configured personas when routing is not explicitly called', async () => {
+      const mockOllama = async (): Promise<string> => {
+        return 'function setup() { createCanvas(400, 400); } function draw() { background(0); }';
+      };
+
+      const orchestrator = new SwarmOrchestrator(
+        { 
+          maxRounds: 1, 
+          musicalChairs: false, 
+          streamDir: './test-stream',
+          personas: DEFAULT_PERSONAS.slice(0, 2), // Use only 2 personas
+        },
+        { callOllama: mockOllama }
+      );
+
+      const result = await orchestrator.run('Test');
+      
+      expect(result.rounds.length).toBe(1);
+      expect(result.rounds[0]?.outputs.size).toBeLessThanOrEqual(2);
+    }, 10000);
+  });
 });

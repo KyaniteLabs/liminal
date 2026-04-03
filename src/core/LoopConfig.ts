@@ -115,6 +115,12 @@ export interface LoopOptions {
   debug?: DebugOptions;
   /** Render options for canvas output, recording, and preview server */
   render?: RenderOptions;
+  /** Number of candidates to generate per iteration (Best-of-N). Default: 1 (disabled) */
+  numCandidates?: number;
+  /** Enable render-based scoring - renders code in headless browser and scores visual/audio output */
+  useRenderScoring?: boolean;
+  /** Options for render-based scoring pipeline */
+  renderScoringOptions?: import('../render/RenderAndScorePipeline.js').PipelineOptions;
 }
 
 export interface LoopResult {
@@ -136,6 +142,10 @@ export interface IterationContext {
   evaluation: { score: number; issues: string[]; [key: string]: unknown };
   timestamp: string;
   maxIterations?: number;
+  /** Best-of-N: which candidate index was selected (0 = first, if N=1 this is always 0) */
+  selectedCandidateIndex?: number;
+  /** Best-of-N: total number of candidates generated this iteration */
+  numCandidatesGenerated?: number;
 }
 
 export interface NormalizedLoopOptions extends LoopOptions {
@@ -230,5 +240,8 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
     debug: normalizeDebugOptions(options?.debug),
     render: normalizeRenderOptions(options?.render),
+    numCandidates: Math.max(1, options?.numCandidates ?? 1),
+    useRenderScoring: options?.useRenderScoring ?? false,
+    renderScoringOptions: options?.renderScoringOptions ?? {},
   };
 }

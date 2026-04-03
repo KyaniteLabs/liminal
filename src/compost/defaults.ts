@@ -7,6 +7,9 @@
 
 import type { CompostConfig, LLMProviderConfig } from './types.js';
 
+/** Default cloud model for compost fallback — configurable via roles.evaluator */
+const DEFAULT_CLOUD_MODEL = 'claude-sonnet-4-20250514';
+
 /** Deep partial — makes all nested properties optional too. */
 type DeepPartial<T> = {
   [P in keyof T]?: T[P] extends object ? DeepPartial<T[P]> : T[P];
@@ -51,7 +54,7 @@ export function buildDefaults(projectCompost?: {
     localBaseUrl: 'http://localhost:1234/v1',
     localModel: 'auto',
     cloudApiKeyEnvVar: 'ANTHROPIC_API_KEY',
-    cloudModel: 'claude-sonnet-4-20250514',
+    cloudModel: DEFAULT_CLOUD_MODEL,
     localTimeoutMs: 30000,
   },
   seedPromotionThreshold: projectCompost?.seedPromotionThreshold ?? 0.4,

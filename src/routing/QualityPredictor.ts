@@ -69,11 +69,11 @@ const MAX_HISTORY_PER_PAIR = 100;
 /** Exponential moving average weight for new outcomes (0–1). */
 const EMA_ALPHA = 0.3;
 
-/** Model identifiers used for recommendations. */
-const MODEL_IDS: Record<RoutingFeatures['modelTier'], string> = {
-  local: 'local-qwen',
-  cloud: 'cloud-minimax',
-  premium: 'premium-gpt',
+/** Tier identifiers used for quality tracking and recommendations. */
+const TIER_IDS: Record<RoutingFeatures['modelTier'], string> = {
+  local: 'local',
+  cloud: 'cloud',
+  premium: 'premium',
 };
 
 /**
@@ -221,7 +221,7 @@ export class QualityPredictor {
     return {
       predictedScore: Math.round(predictedScore * 1000) / 1000,
       confidence: Math.round(confidence * 1000) / 1000,
-      recommendedModel: MODEL_IDS[recommendedTier],
+      recommendedModel: TIER_IDS[recommendedTier],
       reasoning,
     };
   }
@@ -334,7 +334,7 @@ export class QualityPredictor {
   private tierFromModel(
     modelId: string,
   ): RoutingFeatures['modelTier'] | null {
-    for (const [tier, id] of Object.entries(MODEL_IDS)) {
+    for (const [tier, id] of Object.entries(TIER_IDS)) {
       if (id === modelId) {
         return tier as RoutingFeatures['modelTier'];
       }
@@ -387,7 +387,7 @@ export class QualityPredictor {
       parts.push('No domain history; defaulting to local with cloud fallback.');
     }
 
-    parts.push(`Recommended tier: ${tier} (${MODEL_IDS[tier]}).`);
+    parts.push(`Recommended tier: ${tier} (${TIER_IDS[tier]}).`);
 
     return parts.join(' ');
   }

@@ -19,7 +19,7 @@ export class P5GeneratorLLM {
   async generate(prompt: string, options?: P5GeneratorOptions): Promise<string> {
     if (!LLMClient.isConfigured()) {
       throw new Error(
-        'P5GeneratorLLM: No LLM configured. Set LLM_API_KEY or configure a local model to generate p5 sketches.'
+        '[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_API_KEY or OPENAI_API_KEY is set.'
       );
     }
 

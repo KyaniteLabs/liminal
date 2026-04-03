@@ -126,7 +126,7 @@ export const commands: Record<string, Command> = {
       // Check if LLM is configured
       const { LLMClient } = await import('../llm/LLMClient.js');
       if (!LLMClient.isConfigured()) {
-        return 'Error: No LLM configured. Set LIMINAL_LLM_BASE_URL or OPENAI_API_KEY';
+        return 'Error: No LLM configured. Set LIMINAL_LLM_BASE_URL, LIMINAL_LLM_API_KEY, or OPENAI_API_KEY. Or ensure a local LLM server is running at localhost:1234.';
       }
 
       ctx.setStatusMessage('Starting LLM agent...');

@@ -13,7 +13,9 @@ import type { CollaborationMode } from '../collab/CollaborationEngine.js';
 import type { DeepCollaborationConfig, CollaborativeConfig } from '../collab/types.js';
 import { Domain } from '../types/domains.js';
 import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
+import type { SwarmOptions } from '../types/options/SwarmOptions.js';
 import { type DebugOptions, normalizeDebugOptions } from '../types/options/DebugOptions.js';
+import type { RenderOptions } from '../types/options/RenderOptions.js';
 
 export const DEFAULT_MAX_ITERATIONS = 20;
 export const DEFAULT_TIMEOUT_MINUTES = 30;
@@ -111,6 +113,8 @@ export interface LoopOptions {
   _disableIterationExtension?: boolean;
   /** Debug and diagnostics configuration */
   debug?: DebugOptions;
+  /** Render options for canvas output, recording, and preview server */
+  render?: RenderOptions;
 }
 
 export interface LoopResult {
@@ -165,6 +169,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   lirEnabled: boolean;
   _disableIterationExtension: boolean;
   debug: Required<DebugOptions>;
+  render: Required<NonNullable<RenderOptions>>;
 }
 
 /**
@@ -224,5 +229,6 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
     debug: normalizeDebugOptions(options?.debug),
+    render: options?.render ?? {},
   };
 }

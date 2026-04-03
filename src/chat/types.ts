@@ -83,10 +83,14 @@ export interface GenerationContext {
   techniques: Technique[];
   constraints: string[];
   references: Reference[];
+  /** Current iteration number */
+  iteration: number;
+  /** Current quality score (0-1) */
+  currentScore: number;
 }
 
 export interface Suggestion {
-  type: 'technique' | 'parameter' | 'swarm' | 'compost' | 'archive';
+  type: 'technique' | 'parameter' | 'swarm' | 'compost' | 'archive' | 'evolution';
   title: string;
   description: string;
   action?: () => Promise<unknown>;

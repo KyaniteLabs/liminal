@@ -6,6 +6,8 @@
  * - Creative quality (complexity, techniques, aesthetics)
  * - Aesthetic = visual (creative) + sound (when sound APIs present)
  * - Returns score 0-1, with minimum threshold of 0.7 to pass
+ * 
+ * Now with calibration support for improved correlation with human judgment.
  */
 
 import { extractBehavior } from '../evolution/BehaviorVectors.js';
@@ -13,6 +15,8 @@ import type { NoveltyArchive } from '../evolution/NoveltyArchive.js';
 import type { AestheticModel } from '../evolution/AestheticModel.js';
 import { CreativeBoard } from '../collab/CreativeBoard.js';
 import type { BoardDeliberation } from '../collab/CreativeBoard.js';
+import type { CalibrationWeights, CalibrationResult } from '../calibration/CalibrationSuite.js';
+import { CorrelationCalculator } from '../calibration/CorrelationCalculator.js';
 
 export interface AssessOptions {
   /** When provided, overall score is the average of scores for these dimensions. Known dimensions: "technical", "aesthetic", "novelty", "emergence", "interestingness". Aesthetic combines visual (creative) and sound. */
@@ -25,9 +29,11 @@ export interface AssessOptions {
   behaviorVector?: number[];
   /** Domain hint for behavior extraction */
   domain?: string;
+  /** Use calibrated weights if available */
+  useCalibration?: boolean;
 }
 
-interface AssessmentResult {
+export interface AssessmentResult {
   passed: boolean;
   score: number;
   issues: string[];
@@ -38,6 +44,8 @@ interface AssessmentResult {
   aestheticScore?: number;
   emergenceScore?: number;
   interestingnessScore?: number;
+  /** Calibrated score if calibration is available */
+  calibratedScore?: number;
 }
 
 interface CodeMetrics {
@@ -55,7 +63,19 @@ interface CodeMetrics {
 
 const MIN_QUALITY_THRESHOLD = 0.7;
 
+// Default calibration weights
+const DEFAULT_CALIBRATION_WEIGHTS: CalibrationWeights = {
+  technicalWeight: 0.6,
+  creativeWeight: 0.4,
+  aestheticWeight: 0.5,
+  noveltyWeight: 0.3,
+  emergenceWeight: 0.2,
+  interestingnessWeight: 0.25,
+};
+
 export class CreativeEvaluator {
+  private static calibrationWeights: Map<string, CalibrationWeights> = new Map();
+
   /**
    * Get fitness score and issues for code (same as assess score/issues).
    * @deprecated Use assess() directly — this is an alias.
@@ -69,6 +89,160 @@ export class CreativeEvaluator {
   ): { score: number; issues: string[] } {
     const result = this.assess(code);
     return { score: result.score, issues: result.issues };
+  }
+
+  /**
+   * Set calibration weights for a domain
+   */
+  static setCalibrationWeights(domain: string, weights: Partial<CalibrationWeights>): void {
+    const current = this.getCalibrationWeights(domain);
+    this.calibrationWeights.set(domain, { ...current, ...weights });
+  }
+
+  /**
+   * Get calibration weights for a domain
+   */
+  static getCalibrationWeights(domain: string): CalibrationWeights {
+    return this.calibrationWeights.get(domain) ?? { ...DEFAULT_CALIBRATION_WEIGHTS };
+  }
+
+  /**
+   * Check if a domain has been calibrated
+   */
+  static isCalibrated(domain: string): boolean {
+    return this.calibrationWeights.has(domain);
+  }
+
+  /**
+   * Clear calibration for a domain (or all domains if not specified)
+   */
+  static clearCalibration(domain?: string): void {
+    if (domain) {
+      this.calibrationWeights.delete(domain);
+    } else {
+      this.calibrationWeights.clear();
+    }
+  }
+
+  /**
+   * Calculate calibrated score using domain-specific weights
+   */
+  private static calculateCalibratedScore(
+    technicalScore: number,
+    creativeScore: number,
+    domain: string,
+    options?: AssessOptions,
+  ): number {
+    const weights = this.getCalibrationWeights(domain);
+
+    if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
+      const dimensionScores: number[] = [];
+      const weightValues: number[] = [];
+
+      for (const criterion of options.evaluationCriteria) {
+        if (criterion === 'technical') {
+          dimensionScores.push(technicalScore);
+          weightValues.push(weights.technicalWeight);
+        } else if (criterion === 'aesthetic' || criterion === 'creative') {
+          dimensionScores.push(creativeScore);
+          weightValues.push(criterion === 'aesthetic' ? weights.aestheticWeight : weights.creativeWeight);
+        }
+      }
+
+      if (dimensionScores.length > 0) {
+        const totalWeight = weightValues.reduce((a: number, b: number) => a + b, 0);
+        const weightedSum = dimensionScores.reduce((sum, score, i) => sum + score * weightValues[i], 0);
+        return totalWeight > 0 ? weightedSum / totalWeight : technicalScore * 0.6 + creativeScore * 0.4;
+      }
+    }
+
+    // Default weighted average using calibration weights
+    const totalWeight = weights.technicalWeight + weights.creativeWeight;
+    return (technicalScore * weights.technicalWeight + creativeScore * weights.creativeWeight) / totalWeight;
+  }
+
+  /**
+   * Calibrate the evaluator based on human ratings
+   */
+  static calibrate(
+    domain: string,
+    samples: Array<{ 
+      code: string; 
+      humanRating: number; 
+      technicalScore?: number; 
+      creativeScore?: number;
+    }>,
+  ): CalibrationResult {
+    if (samples.length < 5) {
+      throw new Error('Need at least 5 samples with human ratings to calibrate');
+    }
+
+    // Use imported CorrelationCalculator
+
+    // Calculate scores for samples that don't have them
+    const evaluatedSamples = samples.map(sample => {
+      if (sample.technicalScore === undefined || sample.creativeScore === undefined) {
+        const result = this.assess(sample.code, { domain });
+        return {
+          systemScore: result.score,
+          humanRating: sample.humanRating,
+          technicalScore: result.technicalScore,
+          creativeScore: result.creativeScore,
+        };
+      }
+      return {
+        systemScore: sample.technicalScore * 0.6 + sample.creativeScore * 0.4,
+        humanRating: sample.humanRating,
+        technicalScore: sample.technicalScore,
+        creativeScore: sample.creativeScore,
+      };
+    });
+
+    const systemScores = evaluatedSamples.map(s => s.systemScore);
+    const humanRatings = evaluatedSamples.map(s => s.humanRating);
+
+    // Calculate correlations
+    const pearson = CorrelationCalculator.pearson(systemScores, humanRatings);
+    const spearman = CorrelationCalculator.spearman(systemScores, humanRatings);
+
+    // Perform regression
+    const regression = CorrelationCalculator.linearRegression(systemScores, humanRatings);
+
+    // Calculate MSE
+    const mse = CorrelationCalculator.meanSquaredError(systemScores, humanRatings);
+
+    // Find optimal weights
+    const features = evaluatedSamples.map(s => [s.technicalScore, s.creativeScore]);
+    const optimalRawWeights = CorrelationCalculator.findOptimalWeights(features, humanRatings);
+    const totalWeight = optimalRawWeights.reduce((a: number, b: number) => a + b, 0);
+    const normalizedWeights = optimalRawWeights.map((w: number) => w / totalWeight);
+
+    const optimalWeights: CalibrationWeights = {
+      technicalWeight: normalizedWeights[0] ?? DEFAULT_CALIBRATION_WEIGHTS.technicalWeight,
+      creativeWeight: normalizedWeights[1] ?? DEFAULT_CALIBRATION_WEIGHTS.creativeWeight,
+      aestheticWeight: DEFAULT_CALIBRATION_WEIGHTS.aestheticWeight,
+      noveltyWeight: DEFAULT_CALIBRATION_WEIGHTS.noveltyWeight,
+      emergenceWeight: DEFAULT_CALIBRATION_WEIGHTS.emergenceWeight,
+      interestingnessWeight: DEFAULT_CALIBRATION_WEIGHTS.interestingnessWeight,
+    };
+
+    // Store the weights
+    this.calibrationWeights.set(domain, optimalWeights);
+
+    return {
+      correlation: {
+        pearson,
+        spearman,
+        sampleSize: samples.length,
+      },
+      regression,
+      optimalWeights,
+      mse,
+      isCalibrated: Math.abs(pearson) > 0.7,
+      sampleCount: samples.length,
+      domain,
+      timestamp: Date.now(),
+    };
   }
 
   /**
@@ -120,22 +294,22 @@ export class CreativeEvaluator {
 
     // Shader-specific evaluation
     if (this.detectsShaderUsage(output)) {
-      return this.assessShader(output);
+      return this.assessShader(output, options);
     }
 
     // Three.js-specific evaluation
     if (this.detectsThreeUsage(output)) {
-      return this.assessThree(output);
+      return this.assessThree(output, options);
     }
 
     // Hydra visual synth evaluation
     if (this.detectsHydraUsage(output)) {
-      return this.assessHydra(output);
+      return this.assessHydra(output, options);
     }
 
     // Strudel music evaluation
     if (this.detectsStrudelUsage(output)) {
-      return this.assessStrudel(output);
+      return this.assessStrudel(output, options);
     }
 
     // Calculate metrics
@@ -163,8 +337,14 @@ export class CreativeEvaluator {
     const emergenceScore = this.calculateEmergenceScore(output, metrics);
     const interestingnessScore = this.calculateInterestingnessScore(output, metrics);
 
+    // Calculate overall score (with calibration if requested and available)
     let overallScore: number;
-    if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
+    let calibratedScore: number | undefined;
+
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      overallScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      calibratedScore = overallScore;
+    } else if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
       const dimensionScores: number[] = [];
       for (const criterion of options.evaluationCriteria) {
         if (criterion === 'technical') dimensionScores.push(technicalScore);
@@ -197,6 +377,7 @@ export class CreativeEvaluator {
       aestheticScore,
       emergenceScore,
       interestingnessScore,
+      calibratedScore,
     };
   }
 
@@ -671,13 +852,13 @@ export class CreativeEvaluator {
    * Detect Strudel music code
    */
   static detectsStrudelUsage(code: string): boolean {
-    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) && /\bstack|\$:|#|\.s\(|\.n\(/.test(code);
+    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) && /\bstack|\$:|#|\.\s\(|\.n\(/.test(code);
   }
 
   /**
    * Assess GLSL shader code quality
    */
-  private static assessShader(output: string): AssessmentResult {
+  private static assessShader(output: string, options?: AssessOptions): AssessmentResult {
     const issues: string[] = [];
     let technicalScore = 0;
     let creativeScore = 0;
@@ -702,7 +883,15 @@ export class CreativeEvaluator {
     if (output.length < 100) issues.push('Shader code too short');
     if (!/uniform\s+float\s+u_time/.test(output)) issues.push('Missing u_time uniform');
 
-    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
+    // Apply calibration if requested
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
     return {
       passed: overallScore >= MIN_QUALITY_THRESHOLD,
       score: Math.max(0, Math.min(1, overallScore)),
@@ -712,13 +901,14 @@ export class CreativeEvaluator {
       metrics: this.getEmptyMetrics(),
       emergenceScore: 0,
       interestingnessScore: 0,
+      calibratedScore,
     };
   }
 
   /**
    * Assess Three.js code quality
    */
-  private static assessThree(output: string): AssessmentResult {
+  private static assessThree(output: string, options?: AssessOptions): AssessmentResult {
     const issues: string[] = [];
     let technicalScore = 0;
     let creativeScore = 0;
@@ -743,7 +933,15 @@ export class CreativeEvaluator {
 
     if (output.length < 200) issues.push('Three.js code too short');
 
-    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
+    // Apply calibration if requested
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
     return {
       passed: overallScore >= MIN_QUALITY_THRESHOLD,
       score: Math.max(0, Math.min(1, overallScore)),
@@ -753,13 +951,14 @@ export class CreativeEvaluator {
       metrics: this.getEmptyMetrics(),
       emergenceScore: 0,
       interestingnessScore: 0,
+      calibratedScore,
     };
   }
 
   /**
    * Assess Hydra visual synth code quality
    */
-  private static assessHydra(output: string): AssessmentResult {
+  private static assessHydra(output: string, options?: AssessOptions): AssessmentResult {
     const issues: string[] = [];
     let technicalScore = 0;
     let creativeScore = 0;
@@ -787,7 +986,15 @@ export class CreativeEvaluator {
     if (codeOnly.length < 50) issues.push('Hydra code too short');
     if (!/\.out\s*\(/.test(codeOnly)) issues.push('Missing .out() call');
 
-    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
+    // Apply calibration if requested
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
     return {
       passed: overallScore >= MIN_QUALITY_THRESHOLD,
       score: Math.max(0, Math.min(1, overallScore)),
@@ -797,13 +1004,14 @@ export class CreativeEvaluator {
       metrics: this.getEmptyMetrics(),
       emergenceScore: 0,
       interestingnessScore: 0,
+      calibratedScore,
     };
   }
 
   /**
    * Assess Strudel music code quality
    */
-  private static assessStrudel(output: string): AssessmentResult {
+  private static assessStrudel(output: string, options?: AssessOptions): AssessmentResult {
     const issues: string[] = [];
     let technicalScore = 0;
     let creativeScore = 0;
@@ -830,7 +1038,15 @@ export class CreativeEvaluator {
     if (codeOnly.length < 50) issues.push('Strudel code too short');
     if (!/\bs\s*\(/.test(codeOnly) && !/\.s\(/.test(codeOnly)) issues.push('Missing sound() call');
 
-    const overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
+    // Apply calibration if requested
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
     return {
       passed: overallScore >= MIN_QUALITY_THRESHOLD,
       score: Math.max(0, Math.min(1, overallScore)),
@@ -840,6 +1056,7 @@ export class CreativeEvaluator {
       metrics: this.getEmptyMetrics(),
       emergenceScore: 0,
       interestingnessScore: 0,
+      calibratedScore,
     };
   }
 
@@ -902,9 +1119,14 @@ export class CreativeEvaluator {
     const richness = Math.min((totalImportCount + totalCallCount) / 15, 1);
     interestingnessScore = Math.min(1, interestingnessScore * 0.6 + richness * 0.4);
 
-    // Recalculate overall score
+    // Recalculate overall score with optional calibration
     let overallScore: number;
-    if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
+    let calibratedScore: number | undefined;
+
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      overallScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      calibratedScore = overallScore;
+    } else if (options?.evaluationCriteria && options.evaluationCriteria.length > 0) {
       const dimensionScores: number[] = [];
       for (const criterion of options.evaluationCriteria) {
         if (criterion === 'technical') dimensionScores.push(technicalScore);
@@ -930,6 +1152,7 @@ export class CreativeEvaluator {
       aestheticScore: baseline.aestheticScore,
       emergenceScore,
       interestingnessScore,
+      calibratedScore,
     };
   }
 

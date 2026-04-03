@@ -6,6 +6,7 @@
 
 import { Pattern } from './PatternDetector.js';
 import { failureLogger } from './FailureLogger.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface HarnessAdaptation {
   patternId: string;
@@ -30,7 +31,7 @@ export class HarnessUpdater {
    * Apply adaptation based on detected pattern
    */
   applyAdaptation(pattern: Pattern): HarnessAdaptation | null {
-    console.log(`[Meta-Harness] Considering adaptation for: ${pattern.name}`);
+    Logger.info('Meta-Harness', `Considering adaptation for: ${pattern.name}`);
 
     switch (pattern.id) {
       case 'qwen-thinking-trap':
@@ -49,7 +50,7 @@ export class HarnessUpdater {
         return this.applyASCIISimplification(pattern);
       
       default:
-        console.log(`[Meta-Harness] No automatic adaptation for: ${pattern.id}`);
+        Logger.info('Meta-Harness', `No automatic adaptation for: ${pattern.id}`);
         return null;
     }
   }
@@ -65,7 +66,7 @@ export class HarnessUpdater {
     };
     
     this.adaptations.push(adaptation);
-    console.log(`[Meta-Harness] ✓ Adaptation applied: ${adaptation.description}`);
+    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
     
     return adaptation;
   }
@@ -80,7 +81,7 @@ export class HarnessUpdater {
     };
     
     this.adaptations.push(adaptation);
-    console.log(`[Meta-Harness] ✓ Adaptation applied: ${adaptation.description}`);
+    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
     
     return adaptation;
   }
@@ -95,7 +96,7 @@ export class HarnessUpdater {
     };
     
     this.adaptations.push(adaptation);
-    console.log(`[Meta-Harness] ✓ Adaptation applied: ${adaptation.description}`);
+    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
     
     return adaptation;
   }
@@ -110,7 +111,7 @@ export class HarnessUpdater {
     };
     
     this.adaptations.push(adaptation);
-    console.log(`[Meta-Harness] ✓ Adaptation applied: ${adaptation.description}`);
+    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
     
     return adaptation;
   }
@@ -125,7 +126,7 @@ export class HarnessUpdater {
     };
     
     this.adaptations.push(adaptation);
-    console.log(`[Meta-Harness] ✓ Adaptation applied: ${adaptation.description}`);
+    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
     
     return adaptation;
   }

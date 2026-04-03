@@ -1,4 +1,4 @@
-import { LiminalError } from './base';
+import { LiminalError } from './base.js';
 
 /**
  * Error for configuration-related issues.

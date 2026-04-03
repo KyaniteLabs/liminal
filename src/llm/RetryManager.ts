@@ -1,6 +1,6 @@
 import { LLMTimeoutError, LLMRateLimitError } from './LLMClient.js';
 
-export interface RetryOptions {
+interface RetryOptions {
   maxRetries?: number;
   baseDelayMs?: number;
   maxDelayMs?: number;

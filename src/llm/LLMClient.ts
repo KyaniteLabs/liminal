@@ -185,6 +185,18 @@ export class LLMClient {
     return { ...this.config };
   }
 
+  /**
+   * Get config with sensitive fields redacted
+   * Safe for logging
+   */
+  getSafeConfig(): LLMConfig {
+    const config = this.getConfig();
+    return {
+      ...config,
+      apiKey: config.apiKey ? '[REDACTED]' : undefined,
+    };
+  }
+
   private resolvedModel: string | null = null;
 
   /** Auto-detect model from LM Studio /v1/models endpoint */

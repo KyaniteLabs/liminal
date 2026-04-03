@@ -3,9 +3,6 @@ import path from 'path';
 import os from 'os';
 import { env } from '../utils/env.js';
 
-/** Routing mode for multi-model generation */
-export type RoutingMode = 'cascade' | 'speculative' | 'ensemble' | 'specialized';
-
 export interface UserConfig {
   defaultProvider: string;
   providers: {

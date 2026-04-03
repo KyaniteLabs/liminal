@@ -1,0 +1,816 @@
+{
+  "summary": {
+    "total_error_messages": 47,
+    "with_mismatched_validation": 4,
+    "without_fix_guidance": 28,
+    "configuration_related": 15,
+    "validation_related": 32
+  },
+  "error_messages": [
+    {
+      "file": "src/tui/commands.ts",
+      "line": 129,
+      "message": "Error: No LLM configured. Set LIMINAL_LLM_BASE_URL or OPENAI_API_KEY",
+      "validation_function": "LLMClient.isConfigured()",
+      "validation_checks": ["LIMINAL_LLM_BASE_URL", "OPENAI_API_KEY", "LIMINAL_LLM_API_KEY", "SERVICE_DEFAULTS.LOCAL_LLM_URL"],
+      "message_lists": ["LIMINAL_LLM_BASE_URL", "OPENAI_API_KEY"],
+      "mismatch": true,
+      "missing_from_message": ["LIMINAL_LLM_API_KEY", "SERVICE_DEFAULTS.LOCAL_LLM_URL (http://localhost:1234/v1)"],
+      "severity": "medium",
+      "recommendation": "Update message to include LIMINAL_LLM_API_KEY or simplify to 'Check LLM configuration with LIMINAL_LLM_BASE_URL, LIMINAL_LLM_API_KEY, or OPENAI_API_KEY'"
+    },
+    {
+      "file": "src/generators/TierBasedGenerator.ts",
+      "line": 43,
+      "message": "TierBasedGenerator: No LLM configured",
+      "validation_function": "LLMClient.isConfigured()",
+      "validation_checks": ["LIMINAL_LLM_BASE_URL", "OPENAI_API_KEY", "LIMINAL_LLM_API_KEY", "SERVICE_DEFAULTS.LOCAL_LLM_URL"],
+      "message_lists": [],
+      "mismatch": true,
+      "missing_from_message": ["All configuration options"],
+      "severity": "medium",
+      "generic": true,
+      "recommendation": "Add guidance: 'Set LIMINAL_LLM_BASE_URL or LIMINAL_LLM_API_KEY environment variable'"
+    },
+    {
+      "file": "src/generators/p5/P5GeneratorLLM.ts",
+      "line": 21,
+      "message": "P5GeneratorLLM: No LLM configured. Set LLM_API_KEY or configure a local model to generate p5 sketches.",
+      "validation_function": "LLMClient.isConfigured()",
+      "validation_checks": ["LIMINAL_LLM_BASE_URL", "OPENAI_API_KEY", "LIMINAL_LLM_API_KEY", "SERVICE_DEFAULTS.LOCAL_LLM_URL"],
+      "message_lists": ["LLM_API_KEY"],
+      "mismatch": true,
+      "missing_from_message": ["LIMINAL_LLM_BASE_URL", "OPENAI_API_KEY", "LIMINAL_LLM_API_KEY"],
+      "severity": "medium",
+      "recommendation": "Use consistent env var name: LIMINAL_LLM_API_KEY instead of LLM_API_KEY"
+    },
+    {
+      "file": "src/improvement/requestImprovement.ts",
+      "line": 46,
+      "message": "LLM not configured",
+      "validation_function": "LLMClient.isConfigured()",
+      "validation_checks": ["LIMINAL_LLM_BASE_URL", "OPENAI_API_KEY", "LIMINAL_LLM_API_KEY", "SERVICE_DEFAULTS.LOCAL_LLM_URL"],
+      "message_lists": [],
+      "mismatch": true,
+      "missing_from_message": ["All configuration options", "how to fix"],
+      "severity": "medium",
+      "generic": true,
+      "recommendation": "Add guidance on how to configure LLM"
+    },
+    {
+      "file": "src/harness/MetaHarnessIntegration.ts",
+      "line": 264,
+      "message": "LLM not configured",
+      "validation_function": "this.llmClient existence check",
+      "validation_checks": ["llmClient initialization"],
+      "message_lists": [],
+      "mismatch": false,
+      "missing_from_message": ["how to fix"],
+      "severity": "low",
+      "generic": true,
+      "recommendation": "Add guidance: 'Run /status to check configuration'"
+    },
+    {
+      "file": "src/tui/commands.ts",
+      "line": 94,
+      "message": "Error: Task ID required. Usage: /run <task-id>",
+      "validation_function": "inline check: !taskId",
+      "validation_checks": ["taskId is falsy"],
+      "message_lists": ["taskId"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/tui/commands.ts",
+      "line": 123,
+      "message": "Error: Task description required. Usage: /agent <description>\\n\\nExample: /agent \"Fix the Tone.js validation to also check music domain\"",
+      "validation_function": "inline check: !description",
+      "validation_checks": ["description is falsy"],
+      "message_lists": ["description"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/tui/commands.ts",
+      "line": 141,
+      "message": "Error: LLM client not initialized. Run /status to check.",
+      "validation_function": "llmClient existence check",
+      "validation_checks": ["llmClient is null"],
+      "message_lists": [],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/tui/commands.ts",
+      "line": 192,
+      "message": "Error: File path required. Usage: /preview <file>",
+      "validation_function": "inline check: !filePath",
+      "validation_checks": ["filePath is falsy"],
+      "message_lists": ["filePath"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/tui/commands.ts",
+      "line": 254,
+      "message": "Error: Audio file required",
+      "validation_function": "inline check: !filePath",
+      "validation_checks": ["filePath is falsy"],
+      "message_lists": ["filePath"],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "low",
+      "recommendation": "Add usage example: 'Usage: /play <audio-file-path>'"
+    },
+    {
+      "file": "src/tui/StdinValidator.ts",
+      "line": 48,
+      "message": "TUI Error: stdin is /dev/null. The terminal session was detached or stdin was redirected.\\nSuggestion: Run from an interactive terminal without piping/redirecting stdin.",
+      "validation_function": "isStdinDevNull()",
+      "validation_checks": ["stdin path is /dev/null"],
+      "message_lists": ["/dev/null"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/tui/StdinValidator.ts",
+      "line": 55,
+      "message": "TUI Error: stdin is not a TTY (interactive terminal required).\\nCommon causes:\\n  - Running in CI/CD pipeline\\n  - Piping input: echo \"cmd\" | liminal tui\\n  - Redirecting stdin: liminal tui < /dev/null\\n  - Detached process (nohup, disown)\\nSuggestion: Run directly in an interactive terminal: liminal tui",
+      "validation_function": "isStdinTTY()",
+      "validation_checks": ["process.stdin.isTTY"],
+      "message_lists": ["isTTY"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 618,
+      "message": "No code provided",
+      "validation_function": "CodeValidator.validate()",
+      "validation_checks": ["code is falsy or not string"],
+      "message_lists": [],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "low",
+      "generic": true,
+      "recommendation": "Add context: 'Generation produced no code - try again with clearer prompt'"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 627,
+      "message": "Code is empty after stripping LLM reasoning text",
+      "validation_function": "stripReasoningText()",
+      "validation_checks": ["cleaned code is empty"],
+      "message_lists": [],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "medium",
+      "recommendation": "Add guidance: 'LLM output contained only reasoning text. Try regenerating.'"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 254,
+      "message": "p5.js code must contain at least one of: function setup(), function draw(), or createCanvas()",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/function\\s+setup\\s*\\(/", "/function\\s+draw\\s*\\(/", "/createCanvas\\s*\\(/"],
+      "message_lists": ["setup", "draw", "createCanvas"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 267,
+      "message": "GLSL shader must contain void main(), gl_FragColor/fragColor, or gl_Position/gl_FragCoord",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/void\\s+main\\s*\\(/", "/gl_FragColor|fragColor/", "/gl_Position|gl_FragCoord/"],
+      "message_lists": ["void main", "gl_FragColor", "gl_Position"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 274,
+      "message": "Three.js code must reference THREE object or import from \"three\"",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/THREE\\.|import.*from\\s+['\"]three['\"]|from\\s+['\"]three['\"]/"],
+      "message_lists": ["THREE", "import from three"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 282,
+      "message": "Hydra code MUST end with .out() to render",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/\\.out\\(/"],
+      "message_lists": [".out()"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 295,
+      "message": "Hydra code contains invalid method: {name} — check API documentation",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/.sin\\(/", "/.cos\\(/", "/colorShift/", "/feedback/"],
+      "message_lists": ["sin", "cos", "colorShift", "feedback"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 315,
+      "message": "Strudel code should contain pattern functions: s(), sound(), note(), or .stack()",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/\\$:\\s*s\\(/", "/\\.stack\\(/", "/sound\\(/", "/note\\(/", "/\\bs\\([\"']/"],
+      "message_lists": ["s()", "sound()", "note()", ".stack()"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 319,
+      "message": "Strudel code contains non-ASCII characters (likely LLM contamination)",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/[\\u4e00-\\u9fff]/"],
+      "message_lists": ["non-ASCII"],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "medium",
+      "recommendation": "Add guidance: 'Regenerate or manually remove non-ASCII characters'"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 326,
+      "message": "Remotion code must use useCurrentFrame, AbsoluteFill, Composition, or import from \"remotion\"",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/useCurrentFrame|AbsoluteFill|<Composition|from\\s+['\"]remotion['\"]/"],
+      "message_lists": ["useCurrentFrame", "AbsoluteFill", "Composition", "remotion import"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 334,
+      "message": "Music code must contain Strudel patterns ($: s(...)) or Hydra functions (osc(), src(), render())",
+      "validation_function": "validateStructure()",
+      "validation_checks": ["/\\$:\\s*s\\(/", "/osc\\(|src\\(|render\\(/"],
+      "message_lists": ["$:", "osc()", "src()"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 383,
+      "message": "HTML-wrapped p5.js must include p5.js CDN",
+      "validation_function": "validateSelfContained()",
+      "validation_checks": ["/p5\\.js|p5\\.min\\.js/"],
+      "message_lists": ["p5.js CDN"],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "medium",
+      "recommendation": "Add guidance: 'Include <script src=\"https://cdnjs.cloudflare.com/ajax/libs/p5.js/...\">'"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 389,
+      "message": "HTML-wrapped Three.js must include Three.js CDN or importmap",
+      "validation_function": "validateSelfContained()",
+      "validation_checks": ["/three\\.js|three\\.module\\.js|from\\s+['\"]three['\"]|importmap/"],
+      "message_lists": ["three.js CDN", "importmap"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 395,
+      "message": "HTML-wrapped GLSL must include <canvas> and webgl context",
+      "validation_function": "validateSelfContained()",
+      "validation_checks": ["/getContext\\(['\"]webgl/", "/<canvas/"],
+      "message_lists": ["canvas", "webgl context"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 413,
+      "message": "{domain} code is too small ({size}b) - minimum is {minSize}b. This likely indicates a failed generation.",
+      "validation_function": "validateSize()",
+      "validation_checks": ["code.length < MIN_SIZE_REQUIREMENTS[domain]"],
+      "message_lists": ["size", "minSize"],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "high",
+      "recommendation": "Add guidance: 'Try regenerating with more detailed prompt'"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 434,
+      "message": "GLSL shader should use noise functions or multiple colors for complexity",
+      "validation_function": "validateQuality()",
+      "validation_checks": ["/noise|hash|fbm|snoise|voronoi/", "/vec3\\([^)]+,[^)]+,[^)]+\\)/"],
+      "message_lists": ["noise", "vec3 with 3 components"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 437,
+      "message": "GLSL shader should animate using u_time",
+      "validation_function": "validateQuality()",
+      "validation_checks": ["/u_time|time/"],
+      "message_lists": ["u_time"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "low"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 450,
+      "message": "Three.js code mixing importmap with global THREE - use one style consistently",
+      "validation_function": "validateQuality()",
+      "validation_checks": ["importmap and global THREE used together"],
+      "message_lists": ["importmap", "global THREE"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 499,
+      "message": "GLSL: Undefined function '{funcName}()' - must be defined before use or is a built-in",
+      "validation_function": "validateGLSLSemantics()",
+      "validation_checks": ["function call not in definitions or builtins"],
+      "message_lists": ["funcName"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 512,
+      "message": "GLSL Line {line}: Invalid '%' operator - GLSL uses mod(x, y) instead of x % y",
+      "validation_function": "validateGLSLSemantics()",
+      "validation_checks": ["/%\\s*[\\d.]/"],
+      "message_lists": ["%"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 518,
+      "message": "GLSL: texture2D() used but no sampler2D uniform declared",
+      "validation_function": "validateGLSLSemantics()",
+      "validation_checks": ["/texture2D\\s*\\(/ without /sampler2D\\s+\\w+/"],
+      "message_lists": ["texture2D", "sampler2D"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 560,
+      "message": "Tone.js: Invalid class 'Tone.{className}' - check Tone.js API documentation",
+      "validation_function": "validateToneJS()",
+      "validation_checks": ["class not in VALID_TONE_CLASSES"],
+      "message_lists": ["className"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/core/CodeValidator.ts",
+      "line": 593,
+      "message": "Tone.js: Invalid API '{pattern}' - did you mean '{suggestion}'?",
+      "validation_function": "validateToneJS()",
+      "validation_checks": ["hallucination patterns"],
+      "message_lists": ["pattern", "suggestion"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 26,
+      "message": "WebGL not available",
+      "validation_function": "testGLSL()",
+      "validation_checks": ["canvas.getContext('webgl') returns null"],
+      "message_lists": [],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "high",
+      "generic": true,
+      "recommendation": "Add guidance: 'WebGL is required. Enable hardware acceleration or use a different browser.'"
+    },
+    {
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 36,
+      "message": "Could not create shader",
+      "validation_function": "testGLSL()",
+      "validation_checks": ["gl.createShader returns null"],
+      "message_lists": [],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "high",
+      "generic": true,
+      "recommendation": "Add context about WebGL context loss"
+    },
+    {
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 47,
+      "message": "GLSL Compile Error",
+      "validation_function": "testGLSL()",
+      "validation_checks": ["!gl.getShaderParameter(shader, gl.COMPILE_STATUS)"],
+      "message_lists": [],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "high",
+      "details_field": true,
+      "recommendation": "Error includes details field with actual compile error"
+    },
+    {
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 72,
+      "message": "Missing scene initialization",
+      "validation_function": "testThreeJS()",
+      "validation_checks": ["!code.includes('Scene') && !code.includes('scene')"],
+      "message_lists": ["Scene"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 77,
+      "message": "Missing camera",
+      "validation_function": "testThreeJS()",
+      "validation_checks": ["!code.includes('Camera') && !code.includes('camera')"],
+      "message_lists": ["Camera"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 82,
+      "message": "Missing renderer",
+      "validation_function": "testThreeJS()",
+      "validation_checks": ["!code.includes('WebGLRenderer') && !code.includes('renderer')"],
+      "message_lists": ["WebGLRenderer"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 87,
+      "message": "Missing animation loop",
+      "validation_function": "testThreeJS()",
+      "validation_checks": ["!code.includes('animate') && !code.includes('render')"],
+      "message_lists": ["animate", "render"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "medium"
+    },
+    {
+      "file": "src/generators/glsl/ShaderGenerator.ts",
+      "line": 26,
+      "message": "Generated code is critically incomplete (missing main or gl_FragColor)",
+      "validation_function": "inline validation",
+      "validation_checks": ["!code.includes('void main') || !code.includes('gl_FragColor')"],
+      "message_lists": ["void main", "gl_FragColor"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/generators/html/HTMLWebGenerator.ts",
+      "line": 30,
+      "message": "Generated code is not valid HTML",
+      "validation_function": "inline check",
+      "validation_checks": ["!code.includes('<')"],
+      "message_lists": [],
+      "mismatch": false,
+      "has_fix_guidance": false,
+      "severity": "high",
+      "generic": true,
+      "recommendation": "Add guidance: 'Expected HTML with tags like <html>, <body>, <script>'"
+    },
+    {
+      "file": "src/generators/html/HTMLWebGenerator.ts",
+      "line": 41,
+      "message": "HTMLWebGenerator: LLM output is not valid HTML",
+      "validation_function": "inline check",
+      "validation_checks": ["!html.includes('<html') && !html.includes('<!DOCTYPE')"],
+      "message_lists": ["html", "DOCTYPE"],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    },
+    {
+      "file": "src/generators/tone/ToneGenerator.ts",
+      "line": 33,
+      "message": "Generated code does not use Tone.js",
+      "validation_function": "inline check",
+      "validation_checks": ["!/Tone\\./.test(code)"],
+      "message_lists": ["Tone."],
+      "mismatch": false,
+      "has_fix_guidance": true,
+      "severity": "high"
+    }
+  ],
+  "validation_functions": [
+    {
+      "name": "LLMClient.isConfigured",
+      "file": "src/llm/LLMClient.ts",
+      "line": 579,
+      "checks": [
+        "LIMINAL_LLM_BASE_URL (via env('LLM_BASE_URL'))",
+        "process.env.OPENAI_API_KEY",
+        "LIMINAL_LLM_API_KEY (via env('LLM_API_KEY'))",
+        "SERVICE_DEFAULTS.LOCAL_LLM_URL (http://localhost:1234/v1)"
+      ],
+      "error_messages_that_use_it": [
+        "src/tui/commands.ts:129 - Error: No LLM configured. Set LIMINAL_LLM_BASE_URL or OPENAI_API_KEY",
+        "src/generators/TierBasedGenerator.ts:43 - TierBasedGenerator: No LLM configured",
+        "src/generators/p5/P5GeneratorLLM.ts:21 - P5GeneratorLLM: No LLM configured...",
+        "src/improvement/requestImprovement.ts:46 - LLM not configured"
+      ],
+      "notes": "Validation checks 4 sources, but error messages inconsistently document only 1-2 of them"
+    },
+    {
+      "name": "CodeValidator.validate",
+      "file": "src/core/CodeValidator.ts",
+      "line": 616,
+      "checks": [
+        "Code exists and is string",
+        "Strip contamination tags",
+        "Strip reasoning text",
+        "Structural validation per domain",
+        "Self-contained HTML check",
+        "Size validation",
+        "Quality checks",
+        "Tone.js API validation"
+      ],
+      "error_messages_that_use_it": [
+        "Multiple validation errors from validateStructure, validateSize, validateQuality, etc."
+      ],
+      "notes": "Central validation hub that delegates to specialized validators"
+    },
+    {
+      "name": "RuntimeValidator.testGLSL",
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 20,
+      "checks": [
+        "WebGL context available",
+        "Shader can be created",
+        "Shader compiles successfully"
+      ],
+      "error_messages_that_use_it": [
+        "WebGL not available",
+        "Could not create shader",
+        "GLSL Compile Error"
+      ],
+      "notes": "Client-side only - tests actual WebGL compilation"
+    },
+    {
+      "name": "RuntimeValidator.testThreeJS",
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 66,
+      "checks": [
+        "Scene initialization present",
+        "Camera present",
+        "Renderer present",
+        "Animation loop present"
+      ],
+      "error_messages_that_use_it": [
+        "Missing scene initialization",
+        "Missing camera",
+        "Missing renderer",
+        "Missing animation loop"
+      ],
+      "notes": "Static analysis for Three.js - actual rendering test would require browser/headless"
+    },
+    {
+      "name": "stripReasoningText",
+      "file": "src/core/CodeValidator.ts",
+      "line": 157,
+      "checks": [
+        "Remove LLM reasoning patterns",
+        "Remove markdown fences",
+        "Detect code start patterns"
+      ],
+      "error_messages_that_use_it": [
+        "Code is empty after stripping LLM reasoning text"
+      ],
+      "notes": "Uses REASONING_PATTERNS and CODE_START_PATTERNS to identify actual code"
+    },
+    {
+      "name": "validateStructure",
+      "file": "src/core/CodeValidator.ts",
+      "line": 235,
+      "checks": [
+        "Domain-specific structural requirements",
+        "p5: setup/draw/createCanvas",
+        "GLSL: void main, gl_FragColor",
+        "Three.js: THREE reference",
+        "Hydra: .out() call, valid sources",
+        "Strudel: pattern functions",
+        "Remotion: remotion imports/hooks"
+      ],
+      "error_messages_that_use_it": [
+        "All structural validation errors per domain"
+      ],
+      "notes": "Domain-aware structural validation with 8 different domain handlers"
+    },
+    {
+      "name": "validateSize",
+      "file": "src/core/CodeValidator.ts",
+      "line": 407,
+      "checks": [
+        "Code length >= MIN_SIZE_REQUIREMENTS[domain]"
+      ],
+      "error_messages_that_use_it": [
+        "{domain} code is too small ({size}b) - minimum is {minSize}b"
+      ],
+      "notes": "Added from AUDIT findings - catches failed generations that produce tiny outputs"
+    }
+  ],
+  "categories": {
+    "accurate": [
+      {
+        "file": "src/tui/commands.ts:94",
+        "message": "Error: Task ID required. Usage: /run <task-id>",
+        "why": "Clear error with usage guidance"
+      },
+      {
+        "file": "src/tui/commands.ts:123",
+        "message": "Error: Task description required. Usage: /agent <description>",
+        "why": "Clear error with usage and example"
+      },
+      {
+        "file": "src/tui/StdinValidator.ts:55",
+        "message": "TUI Error: stdin is not a TTY...",
+        "why": "Excellent error with multiple causes and suggestion"
+      },
+      {
+        "file": "src/core/CodeValidator.ts:512",
+        "message": "GLSL Line {line}: Invalid '%' operator...",
+        "why": "Specific error with correct solution (use mod())"
+      }
+    ],
+    "outdated": [
+      {
+        "file": "src/generators/p5/P5GeneratorLLM.ts:21",
+        "message": "Set LLM_API_KEY or configure a local model...",
+        "issue": "Uses 'LLM_API_KEY' instead of 'LIMINAL_LLM_API_KEY'",
+        "recommendation": "Update to use consistent LIMINAL_ prefixed env var name"
+      }
+    ],
+    "missing_context": [
+      {
+        "file": "src/generators/TierBasedGenerator.ts:43",
+        "message": "TierBasedGenerator: No LLM configured",
+        "issue": "No guidance on how to configure LLM",
+        "recommendation": "Add: 'Set LIMINAL_LLM_BASE_URL or LIMINAL_LLM_API_KEY'"
+      },
+      {
+        "file": "src/improvement/requestImprovement.ts:46",
+        "message": "LLM not configured",
+        "issue": "Generic message with no fix guidance",
+        "recommendation": "Add configuration instructions"
+      },
+      {
+        "file": "src/core/RuntimeValidator.ts:26",
+        "message": "WebGL not available",
+        "issue": "No guidance on how to resolve",
+        "recommendation": "Add browser/hardware acceleration guidance"
+      }
+    ],
+    "inconsistent_env_vars": [
+      {
+        "file": "src/tui/commands.ts:129",
+        "message": "Set LIMINAL_LLM_BASE_URL or OPENAI_API_KEY",
+        "issue": "Misses LIMINAL_LLM_API_KEY and SERVICE_DEFAULTS.LOCAL_LLM_URL",
+        "validation_checks": 4,
+        "message_covers": 2
+      },
+      {
+        "file": "src/generators/p5/P5GeneratorLLM.ts:21",
+        "message": "Set LLM_API_KEY",
+        "issue": "Wrong env var name (should be LIMINAL_LLM_API_KEY)",
+        "validation_checks": 4,
+        "message_covers": 0.5
+      }
+    ],
+    "generic_useless": [
+      {
+        "file": "src/tui/commands.ts:254",
+        "message": "Error: Audio file required",
+        "issue": "No usage example",
+        "recommendation": "Add: 'Usage: /play <audio-file-path>'"
+      },
+      {
+        "file": "src/core/CodeValidator.ts:618",
+        "message": "No code provided",
+        "issue": "Contextless - doesn't explain WHY",
+        "recommendation": "Add: 'Generation produced no code - prompt may be unclear'"
+      }
+    ]
+  },
+  "recommendations": [
+    {
+      "priority": "high",
+      "issue": "Inconsistent LLM configuration error messages",
+      "affected_files": [
+        "src/tui/commands.ts:129",
+        "src/generators/TierBasedGenerator.ts:43",
+        "src/generators/p5/P5GeneratorLLM.ts:21",
+        "src/improvement/requestImprovement.ts:46"
+      ],
+      "solution": "Create a shared LLM_CONFIGURATION_ERROR constant with consistent messaging listing all valid options: LIMINAL_LLM_BASE_URL, LIMINAL_LLM_API_KEY, OPENAI_API_KEY, or default localhost:1234"
+    },
+    {
+      "priority": "high",
+      "issue": "Generic error messages without fix guidance",
+      "count": 8,
+      "examples": [
+        "TierBasedGenerator: No LLM configured",
+        "LLM not configured",
+        "No code provided",
+        "WebGL not available",
+        "Could not create shader"
+      ],
+      "solution": "Add 'how to fix' guidance to all error messages, following StdinValidator pattern"
+    },
+    {
+      "priority": "medium",
+      "issue": "Wrong environment variable name in P5GeneratorLLM",
+      "file": "src/generators/p5/P5GeneratorLLM.ts:21",
+      "solution": "Change 'LLM_API_KEY' to 'LIMINAL_LLM_API_KEY' to match actual validation"
+    },
+    {
+      "priority": "medium",
+      "issue": "Missing LIMINAL_LLM_API_KEY from tui/commands error message",
+      "file": "src/tui/commands.ts:129",
+      "solution": "Add LIMINAL_LLM_API_KEY to error message or reference configuration documentation"
+    },
+    {
+      "priority": "low",
+      "issue": "Inconsistent error formatting",
+      "observation": "Some errors start with 'Error:' prefix, others don't",
+      "solution": "Standardize on either 'Error: ' prefix for all user-facing errors or remove it consistently"
+    }
+  ],
+  "env_var_usage": {
+    "LIMINAL_LLM_BASE_URL": {
+      "files": ["src/llm/LLMClient.ts", "src/config/ConfigLoader.ts", "src/harness/MultiProviderConfig.ts"],
+      "purpose": "Base URL for LLM API endpoint",
+      "validated_in": "LLMClient.isConfigured()",
+      "documented_in_errors": ["src/tui/commands.ts"]
+    },
+    "LIMINAL_LLM_API_KEY": {
+      "files": ["src/llm/LLMClient.ts", "src/config/ConfigLoader.ts"],
+      "purpose": "API key for LLM authentication",
+      "validated_in": "LLMClient.isConfigured()",
+      "documented_in_errors": []
+    },
+    "OPENAI_API_KEY": {
+      "files": ["src/llm/LLMClient.ts", "src/config/ConfigLoader.ts", "src/harness/MultiProviderConfig.ts"],
+      "purpose": "OpenAI API key (legacy, non-prefixed)",
+      "validated_in": "LLMClient.isConfigured()",
+      "documented_in_errors": ["src/tui/commands.ts", "src/generators/p5/P5GeneratorLLM.ts"]
+    },
+    "LIMINAL_LLM_MODEL": {
+      "files": ["src/llm/LLMClient.ts", "src/config/ConfigLoader.ts", "src/harness/MultiProviderConfig.ts"],
+      "purpose": "Model name to use",
+      "validated_in": "Not in isConfigured()",
+      "documented_in_errors": []
+    },
+    "SERVICE_DEFAULTS.LOCAL_LLM_URL": {
+      "files": ["src/llm/LLMClient.ts", "src/constants.ts"],
+      "purpose": "Default localhost fallback (http://localhost:1234/v1)",
+      "validated_in": "LLMClient.isConfigured()",
+      "documented_in_errors": [],
+      "notes": "Not an env var - hardcoded default, but checked in validation"
+    }
+  }
+}

@@ -1,0 +1,248 @@
+{
+  "audit_date": "2026-04-02",
+  "auditor": "archaeology-audit-agent",
+  "source_document": "narrative/reverse-engineering-plan.md",
+  "methodology": "Each claim verified against source code in the archaeology worktree. Grades: exact_match (formally equivalent), rough_analogy (similar spirit, different mechanics), forced_comparison (stretching), incorrect (wrong).",
+  "claims": [
+    {
+      "id": 1,
+      "claimed_pattern": "Variational Autoencoder",
+      "liminal_module": "CompostMill",
+      "source_file": "src/compost/CompostMill.ts",
+      "grade": "rough_analogy",
+      "evidence": "CompostMill implements a 7-stage ETL pipeline: add files to heap, extract metadata/semantics, shred into fragments, run collisions (pairings), score fragments, promote to SeedBank, generate digest. The agricultural metaphor (heap/shred/mix/seeds/soup) maps loosely to VAE concepts (encoder/latent space/sampling/decoder), but the code does not implement any VAE mechanics: no encoder network, no latent distribution sampling, no reconstruction loss, no KL-divergence regularization, no differentiable decoder. It is a batch processing pipeline for creative content.",
+      "formal_gaps": [
+        "No encoder that maps input to a probability distribution in latent space",
+        "No sampling from a learned latent distribution (seeds are extracted, not sampled)",
+        "No reconstruction loss or KL-divergence objective",
+        "No decoder network (seeds are text fragments, not decoded outputs)",
+        "No differentiable training loop or gradient-based optimization",
+        "The 'latent space' is a structured file system (SeedBank JSON), not a continuous vector space"
+      ]
+    },
+    {
+      "id": 2,
+      "claimed_pattern": "GAN (Generative Adversarial Network)",
+      "liminal_module": "Generator (various) + AestheticCritic",
+      "source_file": "src/aesthetic/AestheticCritic.ts, src/core/RalphLoop.ts",
+      "grade": "rough_analogy",
+      "evidence": "AestheticCritic runs 4 sub-critics (ColorHarmony, Layout, Typography, SoundHarmony) on source code text via regex pattern matching. It produces a score and violations list. In RalphLoop, when useAestheticGuardrails is true, the critic's score applies a penalty multiplier to the evaluation score. The generator (LLM) never receives gradients from the critic, the critic is not trained adversarially against the generator, and there is no minimax game. The critic is a static rule-based filter applied post-generation.",
+      "formal_gaps": [
+        "No adversarial training loop (minimax game between generator and discriminator)",
+        "No gradient flow from critic to generator (the LLM generator is not trainable)",
+        "Critic is rule-based (regex patterns), not a learned neural network discriminator",
+        "No Nash equilibrium or convergence dynamics",
+        "The relationship is evaluator-filter, not adversarial co-training"
+      ]
+    },
+    {
+      "id": 3,
+      "claimed_pattern": "Mixture of Experts",
+      "liminal_module": "SwarmOrchestrator",
+      "source_file": "src/swarm/SwarmOrchestrator.ts",
+      "grade": "rough_analogy",
+      "evidence": "SwarmOrchestrator dispatches to 5 personas (Kai/Nova/Rex/Sam/Max), each with different models, temperatures, and system prompts. It runs 4 modes (competitive, hybrid, ring, mesh). In competitive mode, all generate in parallel and a winner is selected. In hybrid mode, top 2 are combined. This resembles an ensemble method more than MoE. In formal MoE, a gating network routes each input to a sparse subset of experts. Here, ALL personas always generate for every input (dense, not sparse), and voting selects the winner. There is no learned gating function.",
+      "formal_gaps": [
+        "No gating network or router that selects a sparse subset of experts per input",
+        "All personas generate for every input (dense execution, not sparse routing)",
+        "Selection is post-hoc voting (Borda count or heuristic), not input-conditional routing",
+        "No load balancing or expert capacity constraints",
+        "No training of the gating/router function"
+      ]
+    },
+    {
+      "id": 4,
+      "claimed_pattern": "Multi-Head Attention",
+      "liminal_module": "5 personas (Kai/Nova/Rex/Sam/Max)",
+      "source_file": "src/swarm/personas.ts",
+      "grade": "forced_comparison",
+      "evidence": "The 5 personas are independently-prompted LLM calls with different system prompts, models, and temperatures. Each persona processes the same input independently and produces an output. Voting combines them. Multi-Head Attention in transformers involves learned linear projections (Q/K/V), scaled dot-product attention, and concatenation of attention heads followed by a final linear projection. The personas share none of these mechanics. They are an ensemble of diverse models, not attention heads.",
+      "formal_gaps": [
+        "No learned Query/Key/Value projections",
+        "No attention weights computed via scaled dot-product",
+        "No softmax over attention scores",
+        "No concatenation of head outputs followed by linear projection",
+        "The personas have different models and temperatures -- attention heads are identical architecture with different learned parameters",
+        "The combination mechanism is voting (Borda count), not weighted sum by attention scores"
+      ]
+    },
+    {
+      "id": 5,
+      "claimed_pattern": "Memetic Algorithm / (1+1) Evolution Strategy",
+      "liminal_module": "RalphLoop",
+      "source_file": "src/core/RalphLoop.ts",
+      "grade": "rough_analogy",
+      "evidence": "RalphLoop is an iterative refinement loop that: (1) generates code from a fixed prompt, (2) validates and scores it, (3) checks quality gates and completion, (4) accumulates context from previous iterations, (5) repeats. It does use context from previous iterations (a form of elitism), has a stagnation detector, and terminates on quality threshold or promise detection. The memetic aspect is loose: the 'local search' is LLM re-generation with accumulated context, not a neighborhood operator. The (1+1)-ES claim is closer: one parent generates one offspring, the better one survives. But there is no mutation rate, no self-adaptive step size, no 1/5th success rule.",
+      "formal_gaps": [
+        "No explicit mutation operator (the LLM generates freely, not by perturbing the parent)",
+        "No self-adaptive step size or 1/5th success rule",
+        "No formal convergence detection (uses promise tags and score thresholds)",
+        "Context accumulation is not the same as elitism -- previous outputs inform the prompt but are not formally selected",
+        "The stagnation detector counts iterations below threshold but does not implement simulated annealing or restart"
+      ]
+    },
+    {
+      "id": 6,
+      "claimed_pattern": "Aspect-Oriented Programming (AOP)",
+      "liminal_module": "26 hooks (PreToolUse/PostToolUse/etc.)",
+      "source_file": "~/.claude/hooks/ (external to repo)",
+      "grade": "rough_analogy",
+      "evidence": "The Claude Code hooks system (PreToolUse, PostToolUse, PreCommit, PostCommit, etc.) intercepts tool calls and can modify, block, or augment them. This is structurally similar to AOP's advice (before/after/around) applied to join points (tool invocations). The hooks are JavaScript functions that inspect and potentially modify tool call parameters. The cross-cutting concern separation (logging, validation, enforcement) is genuinely AOP-like. However, the hooks are not pointcuts on arbitrary code -- they are constrained to Claude Code's lifecycle events.",
+      "formal_gaps": [
+        "Hooks are constrained to Claude Code lifecycle events, not arbitrary method join points",
+        "No pointcut language or pattern matching for join point selection",
+        "No weaving (compile-time or load-time aspect composition)",
+        "No aspect precedence or ordering system beyond hook type",
+        "The implementation is more interceptor filter chain than AOP"
+      ]
+    },
+    {
+      "id": 7,
+      "claimed_pattern": "Event Sourcing",
+      "liminal_module": "Context dumps (ContextAccumulation)",
+      "source_file": "src/core/ContextAccumulation.ts",
+      "grade": "forced_comparison",
+      "evidence": "ContextAccumulation stores iteration states (prompt, code, evaluation, timestamp) in an array with a max size of 50. It truncates oldest entries (FIFO) when full. It can persist loop state to JSON files and load it back. This is a simple history buffer with persistence, not event sourcing. Event sourcing stores every state-changing event and reconstructs current state by replaying the event log. ContextAccumulation stores full state snapshots, not events. There is no event log, no replay mechanism, no temporal queries, and no delta compression.",
+      "formal_gaps": [
+        "Stores full state snapshots, not atomic events",
+        "No event replay mechanism to reconstruct current state",
+        "No temporal queries (point-in-time state reconstruction)",
+        "No delta compression (each snapshot is independent)",
+        "No event versioning or schema evolution",
+        "FIFO truncation discards history, violating event sourcing's append-only principle"
+      ]
+    },
+    {
+      "id": 8,
+      "claimed_pattern": "Reward Model",
+      "liminal_module": "ScoringEngine",
+      "source_file": "src/core/ScoringEngine.ts",
+      "grade": "rough_analogy",
+      "evidence": "ScoringEngine is a pluggable strategy pattern with 4 built-in strategies: ComprehensiveStrategy (wraps CreativeEvaluator.assess), FastStrategy (wraps HeuristicScorer.scoreOutput), KeywordStrategy (wraps quickScore), and FitnessStrategy (weighted average of pre-computed scores). Each strategy produces a 0-1 score with optional dimension breakdowns. This is a scoring/evaluation framework, not a learned reward model. There is no training on human preferences (RLHF), no reward model network, no learning from promoted/rejected history.",
+      "formal_gaps": [
+        "No learned model trained on preference data (all strategies are hand-coded heuristics or regex)",
+        "No gradient-based training or fine-tuning from human feedback",
+        "No reward model network or neural architecture",
+        "No learning from accepted/rejected examples over time",
+        "No calibration against human preference judgments"
+      ]
+    },
+    {
+      "id": 9,
+      "claimed_pattern": "Multi-Armed Bandit (epsilon-greedy)",
+      "liminal_module": "ModelRouter",
+      "source_file": "src/compost/ModelRouter.ts",
+      "grade": "rough_analogy",
+      "evidence": "ModelRouter implements 4 routing modes: cascade (try fast model, escalate on failure/low confidence), speculative (TODO stub, falls back to cascade), ensemble (run both, compare), and specialized (route by task type). It uses confidence thresholds and task-type heuristics. This is a routing/dispatching system, not a multi-armed bandit. There is no exploration-exploitation tradeoff, no epsilon-greedy policy, no Thompson Sampling, no UCB, no reward tracking per arm, and no regret minimization. The 'rolling averages' claim in the reverse-engineering plan does not appear in the code.",
+      "formal_gaps": [
+        "No exploration-exploitation tradeoff mechanism",
+        "No epsilon-greedy, Thompson Sampling, or UCB policy",
+        "No reward tracking per arm (model)",
+        "No regret minimization objective",
+        "No learning from past outcomes to adjust routing probabilities",
+        "The routing is deterministic (cascade/specialized) or parallel (ensemble), not stochastic"
+      ]
+    },
+    {
+      "id": 10,
+      "claimed_pattern": "Novelty Search with Quality-Diversity (MAP-Elites + NoveltyArchive)",
+      "liminal_module": "MapElites + NoveltyArchive",
+      "source_file": "src/evolution/MapElites.ts, src/evolution/NoveltyArchive.ts",
+      "grade": "rough_analogy",
+      "evidence": "MapElites implements a correct N-dimensional quality-diversity grid with insert (replaces if higher fitness), coverage metric, and persistence. NoveltyArchive implements k-NN novelty scoring via average Euclidean distance to k nearest neighbors. Both exist and work as described. However: (1) getRandomElite() uses uniform random selection (confirmed -- line 107-112), not tournament or fitness-proportionate selection; (2) neither archive feeds back into generation context (write-only issue confirmed); (3) NoveltyArchive uses O(n*k) linear scan, not a KD-tree. The components are correct implementations of their respective algorithms, but they are not integrated into a unified Novelty Search with Quality-Diversity pipeline.",
+      "formal_gaps": [
+        "getRandomElite() confirmed uniform random (not tournament selection) -- plan's 'Almost-Got-It-Right' claim is accurate",
+        "Archives are write-only -- no retrieval path into generation context",
+        "No unified NSQD algorithm integrating both archives",
+        "NoveltyArchive linear scan (O(n*k)) noted correctly in plan",
+        "No behavioral characterization refinement"
+      ]
+    }
+  ],
+  "almost_got_it_right_claims": [
+    {
+      "claim": "getRandomElite() uses uniform random instead of tournament selection",
+      "source_file": "src/evolution/MapElites.ts",
+      "line_range": "107-112",
+      "verified": true,
+      "evidence": "Code: const idx = Math.floor(Math.random() * cells.length); return cells[idx]; -- pure uniform random, no fitness consideration.",
+      "grade": "correct"
+    },
+    {
+      "claim": "NoveltyArchive linear scan is O(n*k)",
+      "source_file": "src/evolution/NoveltyArchive.ts",
+      "line_range": "41-53",
+      "verified": true,
+      "evidence": "noveltyScore() maps over all items computing distance, sorts, takes first k. O(n) distance computations + O(n log n) sort.",
+      "grade": "correct"
+    },
+    {
+      "claim": "VotingEngine correct Borda count but no calibration",
+      "source_file": "src/swarm/VotingEngine.ts",
+      "verified": true,
+      "evidence": "VotingEngine uses letter-based first/second choice parsing. The actual Borda count implementation is in SwarmOrchestrator's scoring aggregation. No calibration (temperature scaling) is applied to persona scores.",
+      "grade": "correct"
+    },
+    {
+      "claim": "SeedBank getRandomSeed() uses uniform random",
+      "source_file": "src/compost/SeedBank.ts",
+      "verified": true,
+      "evidence": "The module does not have a getRandomSeed() method. Seeds are retrieved via getAll(), getTop(n), or getByDomain(). There is no random selection method at all -- the plan's claim about tournament selection for SeedBank may refer to a different access pattern.",
+      "grade": "partially_correct"
+    }
+  ],
+  "speculative_claims": {
+    "improvement_percentages": {
+      "summary": "unverifiable -- no baseline or methodology cited",
+      "details": [
+        "Claim: '30-50% better first-iteration quality' from closing feedback loop -- no A/B test, no metric definition, no baseline measurement",
+        "Claim: '15-25% higher quality of injected seeds' from tournament selection -- no existing quality measurement to compare against",
+        "Claim: '60-80% reduction in context window overhead' from incremental checkpoints -- no current overhead measurement",
+        "Claim: '60-80% better aesthetic prediction' from render-and-score -- no current prediction accuracy measurement",
+        "Claim: '50% reduction in frustration-to-fix latency' from learned hooks -- no latency measurement system",
+        "Claim: '15-25% faster convergence' from 1/5th success rule -- no convergence rate measurement",
+        "All percentages are speculative engineering estimates with no empirical backing"
+      ]
+    },
+    "token_waste_estimates": {
+      "summary": "unverifiable -- no calculation trail",
+      "details": [
+        "Claim: ~400K tokens wasted on RalphLoop convergence -- no session token accounting provided",
+        "Claim: ~300K tokens wasted on write-only archives -- no attribution methodology",
+        "Claim: ~200K tokens wasted on triple redundancy -- no definition of what counts as 'wasted'",
+        "Claim: ~1.5M total tokens wasted -- sum of unverifiable individual estimates",
+        "Updated claim: ~2.25M tokens in Part 5 heatmap -- increased without explanation of methodology change",
+        "No token counting tool, no API usage logs, no methodology for attributing specific tokens to specific architectural gaps"
+      ]
+    },
+    "session_count_estimates": {
+      "summary": "unverifiable -- no session-to-gap attribution methodology",
+      "details": [
+        "Claims like '6+ sessions' for RalphLoop, '5+' for write-only archives, '47+' total are not backed by session analysis methodology",
+        "The raw data (human-messages.json with 58 sessions) exists but the attribution of specific sessions to specific gaps is not shown"
+      ]
+    }
+  },
+  "summary": {
+    "total_claims": 10,
+    "grades": {
+      "exact_match": 0,
+      "rough_analogy": 6,
+      "forced_comparison": 2,
+      "incorrect": 0,
+      "not_applicable": 0
+    },
+    "assessment": "None of the 10 claims are formally exact matches. Six are rough analogies that capture a genuine structural similarity -- the code does implement something in the same spirit as the claimed pattern, but without the formal mechanics. Two are forced comparisons where the claimed pattern is a stretch (Multi-Head Attention for 5 personas, Event Sourcing for context dumps). Zero are incorrect -- every named module exists and does something related to the claim. The Almost-Got-It-Right table is notably more accurate than the headline claims: the getRandomElite() uniform random bug and NoveltyArchive O(n*k) linear scan are confirmed by code inspection. The speculative improvement percentages (30-50%, 15-25%, 60-80%) and token waste estimates (~2.25M) have no empirical backing and should be treated as narrative framing rather than engineering estimates.",
+    "strongest_claims": [
+      "MAP-Elites grid implementation is genuinely a quality-diversity archive (closest to a real reinvention)",
+      "NoveltyArchive k-NN scoring is genuinely novelty search (correct algorithm, wrong data structure for scale)",
+      "Hooks as AOP-like interceptors is structurally accurate for the Claude Code lifecycle",
+      "RalphLoop as iterative refinement with context accumulation captures the (1+1)-ES spirit"
+    ],
+    "weakest_claims": [
+      "5 personas as Multi-Head Attention (no Q/K/V, no attention scores, no projection -- purely an ensemble)",
+      "Context dumps as Event Sourcing (snapshots, not events; no replay; no temporal queries)",
+      "ModelRouter as Multi-Armed Bandit (no exploration/exploitation, no reward tracking, no learning)"
+    ]
+  }
+}

@@ -1,14 +1,15 @@
 {
   "project": "Liminal",
   "lifespan": "35 days (Feb 28 - Apr 3, 2026)",
-  "total_commits": 327,
+  "total_commits": 393,
   "contributors": [
-    {"name": "Simon", "commits": 229, "percentage": 77.9},
-    {"name": "Pastorsimon1798", "commits": 63, "percentage": 21.4, "note": "Same person as Simon, earlier git identity"},
+    {"name": "Simon", "commits": 229, "percentage": 58.3},
+    {"name": "Kimi", "commits": 91, "percentage": 23.2, "note": "KimiCode agent - Plus Ultra Remediation + Full Remediation on marketing-strategy branch"},
+    {"name": "Pastorsimon1798", "commits": 63, "percentage": 16.0, "note": "Same person as Simon, earlier git identity"},
     {"name": "Kyanite", "commits": 1, "percentage": 0.3, "note": "PR merge"},
     {"name": "Kai", "commits": 1, "percentage": 0.3, "note": "GitHub Guardian audit bot"}
   ],
-  "adjusted_contribution": "292 of 294 commits by one developer (Simon/Pastorsimon1798)",
+  "adjusted_contribution": "292 of 302 human commits by one developer (Simon/Pastorsimon1798); 91 commits by KimiCode agent",
   "work_patterns": {
     "peak_hours": "9 PM - 1 AM (nocturnal creative push)",
     "secondary_session": "8 AM - 12 PM (morning fixes/tests/docs)",
@@ -33,20 +34,20 @@
     "2026-03-21": 9,
     "2026-03-01": 8,
     "2026-03-07": 1,
-    "2026-04-03": 15,
+    "2026-04-03": 79,
     "2026-04-02": 18,
     "2026-03-24_through_2026-03-27": "ZERO COMMITS - 4 day silence"
   },
   "commit_types": {
-    "feat": 145,
-    "fix": 50,
-    "docs": 30,
-    "chore": 14,
-    "refactor": 7,
-    "test": 4,
+    "feat": 158,
+    "fix": 59,
+    "docs": 35,
+    "chore": 29,
+    "refactor": 34,
+    "test": 16,
     "perf": 1,
     "security": 1,
-    "other": 42
+    "other": 53
   },
   "codebase_growth": [
     {"commit": "b620e02", "date": "2026-02-28", "files": 2, "milestone": "PRD only"},
@@ -55,7 +56,8 @@
     {"commit": "#150", "date": "2026-03-23", "files": 2878, "milestone": "Art brain implementation"},
     {"commit": "#200", "date": "2026-03-29", "files": 3103, "milestone": "Voice/aesthetic guardrails"},
     {"commit": "#250", "date": "2026-03-31", "files": 3718, "milestone": "Pre-flight audit (peak file count)"},
-    {"commit": "9f5d7d8", "date": "2026-04-01", "files": 3417, "milestone": "HEAD (reduced after cleanup)"}
+    {"commit": "9f5d7d8", "date": "2026-04-01", "files": 3417, "milestone": "HEAD (reduced after cleanup)"},
+    {"commit": "b202090", "date": "2026-04-03", "files": 3417, "milestone": "Plus Ultra Remediation complete (90 commits)"}
   ],
   "eras": [
     {
@@ -227,9 +229,9 @@
       "id": 10,
       "name": "The Cleanup",
       "dates": "Apr 2-3",
-      "commits": "295-327 (~33)",
+      "commits": "295-393 (~99)",
       "author": "Simon",
-      "description": "Post-feature cleanup, config audit cascade, deep structural audit, multi-agent coordination",
+      "description": "Post-feature cleanup, config audit cascade, deep structural audit, multi-agent coordination, Plus Ultra remediation, Full Remediation Tiers 0-3",
       "key_events": [
         "Worktree isolation system enables multi-agent development (edecbca)",
         "THE_BIBLE 2.1 audited — 29% discrepancies found (bef21ac, c2911d6)",
@@ -240,19 +242,28 @@
         "Deep structural audit: 12 dimensions in 5 minutes (21e54cf-a42acb2)",
         "Repository reorganization for GitHub launch (agent-kimi branch, unmerged)",
         "Cross-agent audit: Claude Code vs Kilocode vs KimiCode (foamy branch, unmerged)",
-        "4 concurrent AI agents across 4 worktrees (first multi-agent coordination in project history)"
+        "4 concurrent AI agents across 4 worktrees (first multi-agent coordination in project history)",
+        "Plus Ultra Remediation: 90 commits, 16 waves of code quality fixes (Kimi agent) (b202090)",
+        "Full Remediation Tiers 0-3: 14,655 insertions implementing Fixes 2-14 (Kimi agent on marketing-strategy branch, 98cf9e5)",
+        "6 new domain validators: ASCII, HTML, Hydra, Remotion, Strudel, Tone",
+        "Triple redundancy consolidation: EpisodicMemory, SemanticArtMemory, CollaborativeClient, DeepCollaboration deleted (1,731 lines)",
+        "Thompson Sampling ModelRouter, semantic search SeedBank, tournament selection",
+        "Render-and-score pipeline: HeadlessRenderer, VisualScorer, AudioScorer",
+        "ExpertPersonas with system-prompt specialization and sparse routing"
       ],
       "sub_phases": {
         "A": "Repository hygiene (Apr 2, 14:29-16:37, 7 commits)",
         "B": "Config audit catalog (Apr 2, 23:03-23:40, 11 commits)",
         "C": "Config fixes (Apr 3, 00:06-00:08, 5 commits)",
-        "D": "Deep structural audit (Apr 3, 00:09-00:14, 12 commits)"
+        "D": "Deep structural audit (Apr 3, 00:09-00:14, 12 commits)",
+        "E": "Plus Ultra Remediation (Apr 3, 90 commits by Kimi agent — enums, error handling, god object splitting, dead code removal)",
+        "F": "Full Remediation Tiers 0-3 (Apr 3, marketing-strategy branch — 14,655 insertions, Fixes 2-14 implemented)"
       },
-      "narrative_arc": "The developer stops building features and turns critical attention to the project's structural integrity. A multi-day audit cascade catalogs configuration issues, fixes the highest-impact problems, then expands into deep structural analysis. Meanwhile, parallel AI agents handle repo reorganization and cross-agent tooling research. This is the first era of multi-agent coordination in the project's history."
+      "narrative_arc": "The developer stops building features and turns critical attention to the project's structural integrity. A multi-day audit cascade catalogs configuration issues, fixes the highest-impact problems, then expands into deep structural analysis. Meanwhile, parallel AI agents handle repo reorganization and cross-agent tooling research. This is the first era of multi-agent coordination in the project's history. The cleanup escalates dramatically when a Kimi agent runs the Plus Ultra Remediation — 90 commits of code quality fixes (enums, error handling, god object splitting, dead code removal) bringing the codebase to professional standards. Then Kimi continues with the Full Remediation, implementing 14 of the 20 fixes from the archaeology remediation plan: domain validators, convergence tracking, Thompson Sampling model routing, semantic seed search, sparse expert routing, render-and-score pipeline, and triple redundancy consolidation. 14,655 lines added, 1,731 lines of redundant code deleted, 245 tests passing. The project goes from 'structurally sound but non-functional' to 'architecturally complete, awaiting final wiring.'"
     }
   ],
   "branches": {
-    "active": ["main", "docs-site", "feature/persistent-memory"],
+    "active": ["main", "docs-site", "feature/persistent-memory", "marketing-strategy"],
     "merged": ["feat/voice-aesthetic-guardrails", "fix/remediation-audit-findings", "feat/plugins-streaming-compaction"],
     "via_pr": ["fix/forensic-audit-all (PR #2)"]
   },
@@ -282,6 +293,39 @@
         "Reference to 'Claw Code pattern' (Claw = Claude)",
         "Reference to 'Claude Code style' natural language interface"
       ]
+    },
+    "kimi_agent": {
+      "pattern": "Plus Ultra + Full Remediation commits",
+      "commits": 91,
+      "dates": "Apr 3, 2026",
+      "branches": ["main", "marketing-strategy"],
+      "role": "Plus Ultra code quality + Full Remediation Tiers 0-3 (14 fixes)",
+      "status": "completed — 91 commits across main + marketing-strategy",
+      "description": "KimiCode agent running systematic code quality remediation. Completed 90 Plus Ultra commits (enums, error handling, god object splitting, dead code removal) then continued with Full Remediation implementing 14 of 20 archaeology fixes. Stopped after Fix 14 as instructed."
+    },
+    "era10_multi_agent": {
+      "description": "First multi-agent coordination in project history",
+      "agents": {
+        "claude_code": {
+          "role": "Archaeology data mining, era classification, forensic audit",
+          "status": "active"
+        },
+        "kilocode": {
+          "role": "Cross-agent tooling research (foamy branch)",
+          "status": "active"
+        },
+        "kimi": {
+          "role": "Plus Ultra code quality + Full Remediation Tiers 0-3 (14 fixes)",
+          "status": "completed — 91 commits across main + marketing-strategy",
+          "commits": 91
+        },
+        "agent_kimi": {
+          "role": "Repository reorganization for GitHub launch",
+          "status": "active (unmerged branch)"
+        }
+      },
+      "worktrees": 4,
+      "note": "Kimi completed Fix 14 and stopped as instructed"
     }
   }
 }

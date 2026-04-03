@@ -29,7 +29,7 @@ export class HarnessUpdater {
   /**
    * Apply adaptation based on detected pattern
    */
-  async applyAdaptation(pattern: Pattern): Promise<HarnessAdaptation | null> {
+  applyAdaptation(pattern: Pattern): HarnessAdaptation | null {
     console.log(`[Meta-Harness] Considering adaptation for: ${pattern.name}`);
 
     switch (pattern.id) {

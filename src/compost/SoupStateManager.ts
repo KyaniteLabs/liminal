@@ -6,6 +6,7 @@
 import fs from 'node:fs/promises';
 import type { CompostConfig, SoupState, CompostFragment } from './types.js';
 import { safeJsonParse, SoupStateSchema } from '../security/JsonSchemas.js';
+import { Logger } from '../utils/Logger.js';
 
 /** Default empty soup state. */
 const DEFAULT_STATE: SoupState = {
@@ -34,7 +35,7 @@ export class SoupStateManager {
       }
       return parsed;
     } catch (err) {
-      console.warn('[SoupStateManager] failed to load state, using default:', err);
+      Logger.warn('SoupStateManager', 'failed to load state, using default:', err);
       return { ...DEFAULT_STATE };
     }
   }

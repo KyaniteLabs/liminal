@@ -6,6 +6,7 @@
  */
 
 import { z } from 'zod';
+import { Logger } from '../utils/Logger.js';
 
 // ============================================================================
 // Compost / SeedBank Schemas
@@ -138,9 +139,9 @@ export function safeJsonParse<T>(
   } catch (err) {
     const contextMsg = context ? ` in ${context}` : '';
     if (err instanceof z.ZodError) {
-      console.error(`[Security] Schema validation failed${contextMsg}:`, err.issues);
+      Logger.error('Security', `Schema validation failed${contextMsg}:`, err.issues);
     } else {
-      console.error(`[Security] Invalid JSON${contextMsg}:`, err);
+      Logger.error('Security', `Invalid JSON${contextMsg}:`, err);
     }
     return null;
   }

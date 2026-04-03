@@ -11,6 +11,7 @@ import { LLMClient } from '../../llm/LLMClient.js';
 import { failureLogger } from '../FailureLogger.js';
 import { Status } from '../../types/status.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
+import { formatError } from '../../utils/errors.js';
 import { selfEvaluation } from '../SelfEvaluation.js';
 import {
   readFileTool,
@@ -187,8 +188,8 @@ export class HarnessAgent {
       session.status = Status.FAILED;
       session.endTime = new Date().toISOString();
       
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error(`[HarnessAgent] Task failed:`, errorMsg);
+      const errorMsg = formatError('HarnessAgent', error);
+      console.error(errorMsg);
       
       // Log failure
       failureLogger.log({

@@ -6,7 +6,7 @@ export interface ChatOptions {
   verbose?: boolean;
 }
 
-export async function chatCommand(options: ChatOptions = {}): Promise<void> {
+export function chatCommand(options: ChatOptions = {}): void {
   // Initialize ConversationManager
   const conversation = new ConversationManager();
 

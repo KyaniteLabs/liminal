@@ -13,6 +13,8 @@
  * - ascii: ASCII art display
  */
 
+import { P5Wrapper } from '../core/wrappers/P5Wrapper.js';
+
 export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'remotion' | 'html' | 'ascii';
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
@@ -287,35 +289,7 @@ export class HTMLWrapper {
   }
 
   private static wrapP5(code: string, includeP5Sound = false, title = 'p5.js Sketch'): string {
-    const safeCode = code.replace(/\u003c\/script\u003e/gi, '<\\/script>');
-    const usesWebAudio = /AudioContext|createOscillator|p5\.sound/i.test(code);
-    const soundComment = usesWebAudio
-      ? '\n    <!-- Sound may require user click to start (browser policy). -->'
-      : '';
-    const p5SoundScript = includeP5Sound
-      ? `\n    <script src="${P5_SOUND_CDN}"></script>`
-      : '';
-
-    return `<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${title}</title>
-    <script src="${P5_CDN}"></script>${p5SoundScript}
-    <style>
-        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
-        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
-    </style>
-</head>
-<body>${soundComment}
-    <main>
-        <script>
-${safeCode}
-        </script>
-    </main>
-</body>
-</html>`;
+    return P5Wrapper.wrap(code, { includeP5Sound, title });
   }
 
   private static wrapStrudel(code: string, autoPlay = false): string {

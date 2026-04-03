@@ -171,30 +171,35 @@ export class ParsingCache {
    * @param token - LIR token to cache
    */
   async set(filePath: string, token: LIRToken): Promise<void> {
-    // Lazy initialization
-    if (this.memoryCache.size === 0) {
-      await this.initialize();
+    try {
+      // Lazy initialization
+      if (this.memoryCache.size === 0) {
+        await this.initialize();
+      }
+
+      // Ensure cache directory exists
+      await fs.mkdir(this.cacheDir, { recursive: true });
+
+      // Compute file hash
+      const hash = await this.computeFileHash(filePath);
+      if (hash === null) {
+        throw new Error(`Cannot compute hash for file: ${filePath}`);
+      }
+
+      // Create cache entry
+      const entry: CacheEntry = { hash, token };
+
+      // Store in memory
+      this.memoryCache.set(hash, entry);
+      this.filePathToHash.set(filePath, hash);
+
+      // Persist to disk
+      const cacheFilePath = this.getCacheFilePath(hash);
+      await fs.writeFile(cacheFilePath, JSON.stringify(entry, null, 2), 'utf-8');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Cache write failed: ${message}`);
     }
-
-    // Ensure cache directory exists
-    await fs.mkdir(this.cacheDir, { recursive: true });
-
-    // Compute file hash
-    const hash = await this.computeFileHash(filePath);
-    if (hash === null) {
-      throw new Error(`Cannot compute hash for file: ${filePath}`);
-    }
-
-    // Create cache entry
-    const entry: CacheEntry = { hash, token };
-
-    // Store in memory
-    this.memoryCache.set(hash, entry);
-    this.filePathToHash.set(filePath, hash);
-
-    // Persist to disk
-    const cacheFilePath = this.getCacheFilePath(hash);
-    await fs.writeFile(cacheFilePath, JSON.stringify(entry, null, 2), 'utf-8');
   }
 
   /**

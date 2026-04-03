@@ -4,9 +4,10 @@
  * Every failure is logged with rich context for pattern detection
  */
 
-import { writeFileSync, mkdirSync, existsSync, readdirSync, readFileSync } from 'fs';
+import { writeFileSync, existsSync, readdirSync, readFileSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { ensureDir } from '../utils/fs.js';
 
 export interface FailureRecord {
   id?: string;
@@ -37,9 +38,7 @@ export class FailureLogger {
   }
 
   private ensureDir(): void {
-    if (!existsSync(this.logDir)) {
-      mkdirSync(this.logDir, { recursive: true });
-    }
+    ensureDir(this.logDir);
   }
 
   log(failure: Omit<FailureRecord, 'timestamp' | 'sessionId' | 'id'>): void {

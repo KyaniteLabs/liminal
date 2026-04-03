@@ -12,6 +12,7 @@ import { FitnessCombiner } from '../evolution/FitnessCombiner.js';
 import { MapElites } from '../evolution/MapElites.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
+import { Logger } from '../utils/Logger.js';
 
 export class CompostSoup {
   private config: CompostConfig;
@@ -132,7 +133,7 @@ export class CompostSoup {
       try {
         await this.cycle(fragments);
       } catch (err) {
-        console.warn('[CompostSoup] cycle failed, continuing:', err);
+        Logger.warn('CompostSoup', 'cycle failed, continuing:', err);
       }
 
       // Wait before next cycle
@@ -171,7 +172,7 @@ export class CompostSoup {
       );
       return result.success ? result.code : `${a.content.slice(0, 50)} + ${b.content.slice(0, 50)}`;
     } catch (err) {
-      console.warn('[CompostSoup] mergeViaLLM failed, using fallback:', err);
+      Logger.warn('CompostSoup', 'mergeViaLLM failed, using fallback:', err);
       return `${a.content.slice(0, 50)} + ${b.content.slice(0, 50)}`;
     }
   }

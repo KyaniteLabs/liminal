@@ -14,6 +14,7 @@
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Record of a generation outcome for dynamic routing.
@@ -52,7 +53,7 @@ export async function recordRoutingOutcome(record: RoutingRecord): Promise<void>
     await fs.writeFile(filePath, JSON.stringify(records), 'utf-8');
   } catch (err) {
     // Best-effort recording
-    console.warn('[RoutingData] Failed to record routing outcome:', err);
+    Logger.warn('RoutingData', 'Failed to record routing outcome:', err);
   }
 }
 
@@ -65,7 +66,7 @@ async function loadRoutingRecords(domain: DomainType): Promise<RoutingRecord[]> 
     const raw = await fs.readFile(filePath, 'utf-8');
     return JSON.parse(raw);
   } catch (err) {
-    console.warn('[RoutingData] Failed to load routing records:', err);
+    Logger.warn('RoutingData', 'Failed to load routing records:', err);
     return [];
   }
 }

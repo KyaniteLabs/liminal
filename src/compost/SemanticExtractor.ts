@@ -38,7 +38,7 @@ export class SemanticExtractor {
   }
 
   /** Extract semantic content from text/markdown files. Direct extraction, no LLM. */
-  async extractText(content: string, filePath: string): Promise<string> {
+  extractText(content: string, filePath: string): string {
     if (!content.trim()) return `[Empty file: ${path.basename(filePath)}]`;
     // Truncate very long files for semantic extraction
     return content.length > 10000 ? content.slice(0, 10000) + '\n... [truncated]' : content;
@@ -76,7 +76,7 @@ export class SemanticExtractor {
    *  @todo Implement when LLM client supports multimodal (image) inputs.
    *  Currently returns a stub since the LLMClientLike interface does not support image data.
    */
-  async extractImage(filePath: string): Promise<string> {
+  extractImage(filePath: string): string {
     return `[Image file: ${path.basename(filePath)} — multimodal extraction requires vision-capable LLM client]`;
   }
 
@@ -84,7 +84,7 @@ export class SemanticExtractor {
    *  @todo Implement using Whisper API or similar for transcription + LLM summarization.
    *  @deprecated Stub — returns placeholder text, not real transcription.
    */
-  async extractAudio(filePath: string): Promise<string> {
+  extractAudio(filePath: string): string {
     return `[Audio file: ${path.basename(filePath)} — transcription/summary not yet implemented]`;
   }
 
@@ -92,7 +92,7 @@ export class SemanticExtractor {
    *  @todo Implement using frame sampling + vision model for scene description.
    *  @deprecated Stub — returns placeholder text, not real scene descriptions.
    */
-  async extractVideo(filePath: string): Promise<string> {
+  extractVideo(filePath: string): string {
     return `[Video file: ${path.basename(filePath)} — frame description not yet implemented]`;
   }
 

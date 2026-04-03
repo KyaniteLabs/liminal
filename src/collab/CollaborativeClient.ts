@@ -425,10 +425,10 @@ Create an improved version that addresses this feedback while maintaining your s
   /**
    * Score outputs using quality assessment
    */
-  private async scoreOutputs(
+  private scoreOutputs(
     outputs: string[],
     domain: Domain
-  ): Promise<Record<number, number>> {
+  ): Record<number, number> {
     const scores: Record<number, number> = {};
     for (let i = 0; i < outputs.length; i++) {
       scores[i] = quickScore(outputs[i], domain);

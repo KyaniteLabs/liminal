@@ -3,6 +3,7 @@
  */
 
 import { CompostMill } from './CompostMill.js';
+import { Logger } from '../utils/Logger.js';
 
 export class DigestScheduler {
   private timer: ReturnType<typeof setTimeout> | null = null;
@@ -18,7 +19,7 @@ export class DigestScheduler {
       try {
         await mill.digest();
       } catch (err) {
-        console.warn('[DigestScheduler] scheduled digest failed:', err);
+        Logger.warn('DigestScheduler', 'scheduled digest failed:', err);
       }
       // Reschedule
       this.timer = setTimeout(run, ms);

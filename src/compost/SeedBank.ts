@@ -7,6 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { CompostConfig, Seed } from './types.js';
 import { safeJsonParse, SeedSchema } from '../security/JsonSchemas.js';
+import { Logger } from '../utils/Logger.js';
 
 export class SeedBank {
   private seedDir: string;
@@ -34,7 +35,7 @@ export class SeedBank {
       const raw = await fs.readFile(this.seedsPath, 'utf-8');
       this.seeds = safeJsonParse(raw, SeedSchema.array(), 'SeedBank') ?? [];
     } catch (err) {
-      console.warn('[SeedBank] failed to load seeds, starting empty:', err);
+      Logger.warn('SeedBank', 'failed to load seeds, starting empty:', err);
       this.seeds = [];
     }
   }

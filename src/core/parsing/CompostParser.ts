@@ -117,10 +117,10 @@ export class CompostParser {
    * @param content - File content
    * @returns Array of LIR tokens
    */
-  private async routeToParser(
+  private routeToParser(
     filePath: string,
     content: string,
-  ): Promise<LIRToken[]> {
+  ): LIRToken[] {
     const ext = this.getExtension(filePath).toLowerCase();
 
     // Route to CodeParser for code files

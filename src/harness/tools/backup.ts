@@ -5,16 +5,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { formatErrorWithFallback } from '../../utils/errors.js';
 
 const BACKUP_DIR = path.join(os.tmpdir(), 'liminal-harness-backups');
-
-/**
- * Format error message consistently
- */
-function formatError(context: string, error: unknown): string {
-  const message = error instanceof Error ? error.message : 'Unknown error';
-  return `${context}: ${message}`;
-}
 
 export interface BackupResult {
   success: boolean;
@@ -45,7 +38,7 @@ export async function createBackup(filePath: string): Promise<BackupResult> {
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : String(error),
+      error: formatErrorWithFallback('createBackup', error),
     };
   }
 }

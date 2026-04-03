@@ -27,6 +27,7 @@ export type State = IterationContext;
 import fs from 'fs';
 import path from 'path';
 import { safeJsonParse, PersistedLoopStateSchema } from '../security/JsonSchemas.js';
+import { ensureDir } from '../utils/fs.js';
 
 export interface PersistedLoopState {
   bestFitness: number;
@@ -92,7 +93,7 @@ export class ContextAccumulation {
    */
   saveState(filePath: string, state: PersistedLoopState): void {
     const data = JSON.stringify(state, null, 2);
-    fs.mkdirSync(path.dirname(filePath), { recursive: true });
+    ensureDir(path.dirname(filePath));
     fs.writeFileSync(filePath, data, 'utf-8');
   }
 

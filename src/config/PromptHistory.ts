@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { Logger } from '../utils/Logger.js';
 
 export interface HistoryEntry {
   prompt: string;
@@ -30,7 +31,7 @@ export class PromptHistory {
       const content = await fs.readFile(this.filePath, 'utf-8');
       return JSON.parse(content) as HistoryData;
     } catch (err) {
-      console.warn('[PromptHistory] Failed to load history, using defaults:', err);
+      Logger.warn('PromptHistory', 'Failed to load history, using defaults:', err);
       return { recent: [], favorites: [] };
     }
   }

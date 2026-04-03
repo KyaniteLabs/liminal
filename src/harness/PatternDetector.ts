@@ -131,7 +131,7 @@ export class PatternDetector {
     return detected;
   }
 
-  async analyzeRecentFailures(count: number = 100): Promise<Map<string, Pattern>> {
+  analyzeRecentFailures(count: number = 100): Map<string, Pattern> {
     const failures = failureLogger.getRecentFailures(count);
     
     for (const failure of failures) {

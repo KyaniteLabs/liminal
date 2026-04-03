@@ -45,13 +45,15 @@
 
         <section class="section">
             <h2 class="section-title">📋 Task Files (M1-M11)</h2>
-            <p>All tasks are stored in <code>harness-tasks/</code> as JSON files:</p>
+            <p>All tasks are stored in <code>harness-tasks/archive/</code> as JSON files:</p>
             
+            <h3 style="color: var(--accent-green); margin-top: 1.5rem;">Core Completed Tasks (M1-M8)</h3>
             <table>
                 <thead>
                     <tr>
                         <th>Task</th>
                         <th>Title</th>
+                        <th>Target File</th>
                         <th>Status</th>
                     </tr>
                 </thead>
@@ -59,42 +61,68 @@
                     <tr>
                         <td><strong>M1</strong></td>
                         <td>Fix Tone.js Validation Gate</td>
-                        <td><span class="badge badge-success">✅ Ready</span></td>
+                        <td><code>src/core/CodeValidator.ts</code></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
                     </tr>
                     <tr>
                         <td><strong>M4</strong></td>
-                        <td>Add Stricter Hallucination Detection</td>
-                        <td><span class="badge badge-success">✅ Ready</span></td>
+                        <td>Fix Thinking Regex Greedy Match</td>
+                        <td><code>src/llm/LLMClient.ts</code></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
                     </tr>
                     <tr>
                         <td><strong>M6</strong></td>
-                        <td>Replace console.log with Logger</td>
-                        <td><span class="badge badge-success">✅ Ready</span></td>
+                        <td>Fix Console.log in FailureLogger</td>
+                        <td><code>src/harness/FailureLogger.ts</code></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
                     </tr>
                     <tr>
                         <td><strong>M7</strong></td>
-                        <td>Add Rate Limiting to LLM Calls</td>
-                        <td><span class="badge badge-success">✅ Ready</span></td>
+                        <td>Fix Console.log in PatternDetector</td>
+                        <td><code>src/harness/PatternDetector.ts</code></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
                     </tr>
                     <tr>
                         <td><strong>M8</strong></td>
-                        <td>Add Validation for Hydra Sketches</td>
-                        <td><span class="badge badge-success">✅ Ready</span></td>
+                        <td>Fix Console.log in HarnessUpdater</td>
+                        <td><code>src/harness/HarnessUpdater.ts</code></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
                     </tr>
+                </tbody>
+            </table>
+            
+            <div class="card" style="margin-top: 1rem; border-left: 4px solid var(--accent-yellow);">
+                <p><strong>ℹ️ Note:</strong> M2 and M3 were implemented directly during initial development and don't have separate task files. They covered Domain Routing (M2) and Budget/Rate Limiting (M3).</p>
+            </div>
+            
+            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">Extended Tasks (M9-M11)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Task</th>
+                        <th>Title</th>
+                        <th>Target File</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
                     <tr>
                         <td><strong>M9</strong></td>
                         <td>Implement SemanticValidator</td>
-                        <td><span class="badge badge-error">🆕 Planned</span></td>
+                        <td><code>src/guardrails/SemanticValidator.ts</code></td>
+                        <td><span class="badge badge-success">✅ Implemented</span></td>
                     </tr>
                     <tr>
                         <td><strong>M10</strong></td>
                         <td>Implement AccessibilityGuardrails</td>
-                        <td><span class="badge badge-error">🆕 Planned</span></td>
+                        <td><code>src/guardrails/AccessibilityGuardrails.ts</code></td>
+                        <td><span class="badge badge-success">✅ Implemented</span></td>
                     </tr>
                     <tr>
                         <td><strong>M11</strong></td>
                         <td>Implement RuntimeHealthMonitor</td>
-                        <td><span class="badge badge-error">🆕 Planned</span></td>
+                        <td><code>src/guardrails/RuntimeHealthMonitor.ts</code></td>
+                        <td><span class="badge badge-success">✅ Implemented</span></td>
                     </tr>
                 </tbody>
             </table>

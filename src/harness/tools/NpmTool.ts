@@ -10,6 +10,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { Tool, type ToolResult } from './types.js';
+import { formatError } from '../../utils/errors.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -79,7 +80,7 @@ export class NpmTool extends Tool {
       };
 
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : String(error);
+      const errMsg = formatError('NpmTool', error);
       return { 
         success: false, 
         error: errMsg,

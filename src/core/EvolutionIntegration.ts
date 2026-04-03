@@ -35,12 +35,12 @@ export class EvolutionIntegration {
    * Update evolution subsystems after a generation step.
    * Returns novelty score and any hints to inject into the next prompt.
    */
-  async update(
+  update(
     iteration: number,
     code: string,
     evaluationScore: number,
     prompt: string
-  ): Promise<EvolutionUpdateResult> {
+  ): EvolutionUpdateResult {
     let noveltyScore = 0;
     let hints = '';
 

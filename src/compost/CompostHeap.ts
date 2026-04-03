@@ -7,6 +7,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import type { Dirent } from 'node:fs';
 import type { CompostConfig } from './types.js';
+import { Logger } from '../utils/Logger.js';
 
 export class CompostHeap {
   private heapDir: string;
@@ -87,7 +88,7 @@ export class CompostHeap {
     try {
       entries = await fs.readdir(dir, { withFileTypes: true });
     } catch (err) {
-      console.warn('[CompostHeap] walkDir failed:', err);
+      Logger.warn('CompostHeap', 'walkDir failed:', err);
       return;
     }
 

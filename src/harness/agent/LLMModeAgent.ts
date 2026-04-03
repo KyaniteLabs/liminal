@@ -12,6 +12,7 @@ import { LLMClient } from '../../llm/LLMClient.js';
 import { failureLogger } from '../FailureLogger.js';
 import { Status } from '../../types/status.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
+import { formatError } from '../../utils/errors.js';
 import { getSelfImprovePrompt, createReflectionPrompt } from '../prompts/self-improve.js';
 import {
   readFileTool,
@@ -223,7 +224,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         model: this.llmClient['config']?.model || 'llm-agent',
         domain: 'harness-llm',
         prompt: task.description,
-        error: error instanceof Error ? error.message : String(error),
+        error: formatError('LLMModeAgent', error),
         errorType: 'generation',
         duration: Date.now() - new Date(session.startTime).getTime(),
       });

@@ -5,7 +5,7 @@
  * Handles validation of p5.js code including raw JS and HTML-wrapped sketches.
  */
 
-import type { ValidationResult } from '../CodeValidator.js';
+// Note: ValidationResult type can be imported from CodeValidator if needed for integration
 
 export interface P5ValidationResult {
   valid: boolean;

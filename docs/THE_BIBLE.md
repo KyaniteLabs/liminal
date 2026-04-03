@@ -169,6 +169,20 @@ Failures:   0
 - M10: ✅ Runtime Health Monitoring (implemented, task archived)
 - M11: ✅ Accessibility (implemented, task archived)
 
+**Harness Tasks (M1-M8) Details:**
+
+| ID | Title | Target File | Description | Status |
+|----|-------|-------------|-------------|--------|
+| M1 | Fix Tone.js Validation Gate | `src/core/CodeValidator.ts` | Tone.js validation only fired on 'unknown' domain, now also fires on 'music' domain | ✅ Complete |
+| M4 | Fix Thinking Regex Greedy Match | `src/llm/LLMClient.ts` | Changed `[\s\S]*` to `[\s\S]*?` to fix greedy matching issue | ✅ Complete |
+| M6 | Fix Console.log in FailureLogger | `src/harness/FailureLogger.ts` | Replaced console.log with Logger.info | ✅ Complete |
+| M7 | Fix Console.log in PatternDetector | `src/harness/PatternDetector.ts` | Replaced console.log with Logger.info | ✅ Complete |
+| M8 | Fix Console.log in HarnessUpdater | `src/harness/HarnessUpdater.ts` | Replaced console.log with Logger.info | ✅ Complete |
+
+*Note: M2 (Domain Routing) and M3 (Budget/Rate Limit) were implemented directly during initial development without separate task files.*
+
+**Task File Location:** `harness-tasks/archive/*.json`
+
 ---
 
 ### 2. Ralph Loop (Core Engine)

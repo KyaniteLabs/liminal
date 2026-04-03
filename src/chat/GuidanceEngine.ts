@@ -343,7 +343,7 @@ export class GuidanceEngine {
   /**
    * Get swarm suggestions (async method for external access)
    */
-  async getSwarmSuggestions(context: GenerationContext): Promise<Suggestion[]> {
+  getSwarmSuggestions(context: GenerationContext): Suggestion[] {
     if (!this.shouldSuggestSwarm(context, this.currentIteration)) {
       return [];
     }

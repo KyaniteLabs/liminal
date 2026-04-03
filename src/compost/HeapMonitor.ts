@@ -3,6 +3,7 @@
  */
 
 import { CompostMill } from './CompostMill.js';
+import { Logger } from '../utils/Logger.js';
 
 export class HeapMonitor {
   private intervalMs: number;
@@ -27,7 +28,7 @@ export class HeapMonitor {
           this.digesting = false;
         }
       } catch (err) {
-        console.warn('[HeapMonitor] auto-digest failed:', err);
+        Logger.warn('HeapMonitor', 'auto-digest failed:', err);
         this.digesting = false;
       }
     }, this.intervalMs);

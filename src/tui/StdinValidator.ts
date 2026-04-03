@@ -7,7 +7,7 @@
  * This module provides early detection to fail fast with a helpful message.
  */
 
-export interface StdinValidationResult {
+interface StdinValidationResult {
   valid: boolean;
   reason?: string;
   suggestion?: string;
@@ -67,7 +67,7 @@ export async function validateStdin(): Promise<void> {
 /**
  * Synchronous version for simple checks
  */
-export function validateStdinSync(): StdinValidationResult {
+function validateStdinSync(): StdinValidationResult {
   if (!isStdinTTY()) {
     return {
       valid: false,

@@ -8,7 +8,7 @@
 // Core Ralph-Wiggum Loop components
 import { RalphLoop } from './core/RalphLoop.js';
 import { ValidationError } from './errors/ValidationError.js';
-// import { GenerationError } from './errors/GenerationError.js'; // TODO: Create GenerationError.ts
+import { GenerationError } from './errors/GenerationError.js';
 import { CodeValidator } from './core/CodeValidator.js';
 import { CreativeEvaluator } from './core/CreativeEvaluator.js';
 import { PromiseDetector } from './core/PromiseDetector.js';

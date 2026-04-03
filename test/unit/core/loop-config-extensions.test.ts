@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { normalizeOptions } from '../../../src/core/LoopConfig.js';
+import type { RenderOptions } from '../../../src/types/options/RenderOptions.js';
 
 describe('LoopConfig audio + aesthetic extensions', () => {
   it('accepts useAestheticGuardrails option', () => {
@@ -33,5 +34,66 @@ describe('LoopConfig audio + aesthetic extensions', () => {
   it('defaults aestheticConfig to empty object', () => {
     const opts = normalizeOptions({});
     expect(opts.aestheticConfig).toEqual({});
+  });
+});
+
+describe('LoopConfig RenderOptions integration', () => {
+  it('accepts render option with canvas dimensions', () => {
+    const render: RenderOptions = {
+      canvas: { width: 1920, height: 1080 },
+    };
+    const opts = normalizeOptions({ render });
+    expect(opts.render).toBeDefined();
+    expect(opts.render.canvas).toEqual({ width: 1920, height: 1080 });
+  });
+
+  it('accepts render option with recording config', () => {
+    const render: RenderOptions = {
+      recording: { enabled: true, duration: 10, fps: 60, format: 'mp4' },
+    };
+    const opts = normalizeOptions({ render });
+    expect(opts.render.recording).toEqual({
+      enabled: true,
+      duration: 10,
+      fps: 60,
+      format: 'mp4',
+    });
+  });
+
+  it('accepts render option with preview config', () => {
+    const render: RenderOptions = {
+      preview: { enabled: true, port: 8080, autoOpen: false },
+    };
+    const opts = normalizeOptions({ render });
+    expect(opts.render.preview).toEqual({
+      enabled: true,
+      port: 8080,
+      autoOpen: false,
+    });
+  });
+
+  it('defaults render to empty object when not provided', () => {
+    const opts = normalizeOptions({});
+    expect(opts.render).toEqual({});
+  });
+
+  it('accepts full render options', () => {
+    const render: RenderOptions = {
+      canvas: { width: 800, height: 600 },
+      recording: { enabled: false, duration: 5, fps: 30, format: 'webm' },
+      preview: { enabled: false, port: 3000, autoOpen: true },
+    };
+    const opts = normalizeOptions({ render });
+    expect(opts.render).toEqual(render);
+  });
+
+  it('preserves partial render options', () => {
+    const render: RenderOptions = {
+      canvas: { width: 100 },
+    };
+    const opts = normalizeOptions({ render });
+    expect(opts.render.canvas).toEqual({ width: 100 });
+    expect(opts.render.recording).toBeUndefined();
+    expect(opts.render.preview).toBeUndefined();
   });
 });

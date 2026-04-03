@@ -5,6 +5,7 @@
 
 import type { CompostConfig, CompostFragment, FragmentScore } from './types.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
+import { Logger } from '../utils/Logger.js';
 
 /** Weights for each scoring dimension. */
 const WEIGHTS = {
@@ -59,7 +60,7 @@ export class FragmentScorer {
       }
       return 5;
     } catch (err) {
-      console.warn('[FragmentScorer] LLM scoring failed, using neutral score:', err);
+      Logger.warn('FragmentScorer', 'LLM scoring failed, using neutral score:', err);
       return 5;
     }
   }

@@ -7,33 +7,61 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 /**
+ * Format error message with context
+ */
+function formatFsError(context: string, error: unknown): string {
+  const message = error instanceof Error ? error.message : 'Unknown error';
+  return `${context}: ${message}`;
+}
+
+/**
  * Ensure a directory exists, creating it recursively if needed.
  * No-op if directory already exists.
+ * @throws Error if directory creation fails
  */
 export function ensureDir(dir: string): void {
-  fs.mkdirSync(dir, { recursive: true });
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+  } catch (error) {
+    throw new Error(formatFsError('Failed to create directory', error));
+  }
 }
 
 /**
  * Ensure a directory exists (async version).
  * No-op if directory already exists.
+ * @throws Error if directory creation fails
  */
 export async function ensureDirAsync(dir: string): Promise<void> {
-  await fs.promises.mkdir(dir, { recursive: true });
+  try {
+    await fs.promises.mkdir(dir, { recursive: true });
+  } catch (error) {
+    throw new Error(formatFsError('Failed to create directory', error));
+  }
 }
 
 /**
  * Write a file, ensuring the parent directory exists first.
+ * @throws Error if write fails
  */
 export function writeFileEnsuringDir(filePath: string, content: string): void {
-  ensureDir(path.dirname(filePath));
-  fs.writeFileSync(filePath, content, 'utf-8');
+  try {
+    ensureDir(path.dirname(filePath));
+    fs.writeFileSync(filePath, content, 'utf-8');
+  } catch (error) {
+    throw new Error(formatFsError('Failed to write file', error));
+  }
 }
 
 /**
  * Write a file async, ensuring the parent directory exists first.
+ * @throws Error if write fails
  */
 export async function writeFileEnsuringDirAsync(filePath: string, content: string): Promise<void> {
-  await ensureDirAsync(path.dirname(filePath));
-  await fs.promises.writeFile(filePath, content, 'utf-8');
+  try {
+    await ensureDirAsync(path.dirname(filePath));
+    await fs.promises.writeFile(filePath, content, 'utf-8');
+  } catch (error) {
+    throw new Error(formatFsError('Failed to write file', error));
+  }
 }

@@ -38,6 +38,8 @@ export interface HookContext {
   metadata?: Record<string, unknown>;
 }
 
+import { Logger } from '../utils/Logger.js';
+
 export type HookHandler = (context: HookContext) => Promise<HookContext | void>;
 
 export interface HookSubscription {
@@ -112,7 +114,7 @@ export class HookSystem {
           currentContext = { ...currentContext, ...result };
         }
       } catch (error) {
-        console.error(`[HookSystem] Handler ${hook.id} failed:`, error);
+        Logger.error('HookSystem', `Handler ${hook.id} failed:`, error);
         // Continue with other handlers
       }
     }

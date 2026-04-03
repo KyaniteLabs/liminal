@@ -4,7 +4,8 @@
  */
 
 import { spawn } from 'child_process';
-import { writeFileSync, mkdirSync } from 'fs';
+import { writeFileSync } from 'fs';
+import { ensureDir } from '../src/utils/fs.js';
 
 const MODELS = [
   { provider: 'minimax', model: 'MiniMax-M2.7' },
@@ -69,7 +70,7 @@ async function main() {
     }
   }
   
-  mkdirSync('examples/results', { recursive: true });
+  ensureDir('examples/results');
   writeFileSync('examples/results/p5-all-models.json', JSON.stringify(results, null, 2));
   
   console.log('\n' + '═'.repeat(60));

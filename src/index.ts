@@ -24,6 +24,7 @@ import {
 } from './core/types.js';
 
 import { promptToGeneratorParams } from './utils/promptToGeneratorParams.js';
+import { validatePrompt } from './utils/validation.js';
 import { P5Generator } from './generators/p5/P5Generator.js';
 import { ParticleSystem } from './generators/p5/ParticleSystem.js';
 import { CellularAutomata } from './generators/p5/CellularAutomata.js';
@@ -181,9 +182,7 @@ export async function run(prompt: string, options: {
     validateLLMConfig(rawConfig); // Fail fast on bad config
 
     // Validate input
-    if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-      throw new Error('Prompt is required and must be a non-empty string');
-    }
+    validatePrompt(prompt);
 
     const cwd = process.cwd();
     const outputResolved = normalizePath(cwd, output);

@@ -6,11 +6,12 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { ContextAccumulation } from '../../../src/core/ContextAccumulation.js';
+import { ensureDir } from '../../../src/utils/fs.js';
 
 const tmpDir = path.join(os.tmpdir(), `atelier-persist-test-${Date.now()}`);
 
 beforeAll(() => {
-  fs.mkdirSync(tmpDir, { recursive: true });
+  ensureDir(tmpDir);
 });
 
 afterAll(() => {

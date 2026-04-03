@@ -142,14 +142,6 @@ export class GLSLValidator {
   }
 
   /**
-   * Check if code is HTML-wrapped
-   */
-  private static _isAlreadyWrapped(_code: string): boolean {
-    const trimmed = code.trim();
-    return trimmed.startsWith('<!DOCTYPE') || trimmed.startsWith('<html');
-  }
-
-  /**
    * Validate HTML-wrapped GLSL
    */
   static validateHTMLWrapped(code: string): string[] {

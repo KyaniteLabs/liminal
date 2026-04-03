@@ -13,6 +13,7 @@ import type { CollaborationMode } from '../collab/CollaborationEngine.js';
 import type { DeepCollaborationConfig, CollaborativeConfig } from '../collab/types.js';
 import { Domain } from '../types/domains.js';
 import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
+import { type DebugOptions, normalizeDebugOptions } from '../types/options/DebugOptions.js';
 
 export const DEFAULT_MAX_ITERATIONS = 20;
 export const DEFAULT_TIMEOUT_MINUTES = 30;
@@ -214,6 +215,5 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     _disableIterationExtension: options?._disableIterationExtension ?? false,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,
     _noveltyArchive: options?.useMapElites ? new NoveltyArchive() : undefined,
-    debug: normalizeDebugOptions(options?.debug),
   };
 }

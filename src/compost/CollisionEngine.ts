@@ -6,6 +6,7 @@
 import type { CompostConfig, CompostFragment, CollisionPair, CollisionResult } from './types.js';
 import { RetryManager } from '../llm/RetryManager.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
+import { Logger } from '../utils/Logger.js';
 
 export class CollisionEngine {
   private config: CompostConfig;
@@ -234,7 +235,7 @@ export class CollisionEngine {
       );
       return result.success ? result.code : `[${a.domain} + ${b.domain}] collision`;
     } catch (err) {
-      console.warn('[CollisionEngine] mergePair failed:', err);
+      Logger.warn('CollisionEngine', 'mergePair failed:', err);
       return `[${a.domain} + ${b.domain}] collision`;
     }
   }

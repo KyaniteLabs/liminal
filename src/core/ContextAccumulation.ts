@@ -90,11 +90,17 @@ export class ContextAccumulation {
   /**
    * Persist loop state to a JSON file.
    * Useful for resuming sessions across restarts.
+   * @throws Error if serialization or write fails
    */
   saveState(filePath: string, state: PersistedLoopState): void {
-    const data = JSON.stringify(state, null, 2);
-    ensureDir(path.dirname(filePath));
-    fs.writeFileSync(filePath, data, 'utf-8');
+    try {
+      const data = JSON.stringify(state, null, 2);
+      ensureDir(path.dirname(filePath));
+      fs.writeFileSync(filePath, data, 'utf-8');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      throw new Error(`Failed to save loop state: ${message}`);
+    }
   }
 
   /**

@@ -5,7 +5,8 @@
  */
 
 import { spawn } from 'child_process';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync } from 'fs';
+import { ensureDir } from '../src/utils/fs.js';
 
 const ALL_TASKS = [
   { provider: 'minimax', model: 'MiniMax-M2.7', domains: ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'] },
@@ -106,7 +107,7 @@ async function main() {
   }
   
   // Save results
-  mkdirSync('examples/results', { recursive: true });
+  ensureDir('examples/results');
   writeFileSync('examples/results/all-generations.json', JSON.stringify({
     timestamp: new Date().toISOString(),
     totalTasks: results.length,

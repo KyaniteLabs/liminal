@@ -247,38 +247,40 @@ export class ChatCLI {
     });
 
     // Set up the prompt
-    this.readlineInterface.on('line', async (input: string) => {
-      // Trim and skip empty input
-      const trimmed = input.trim();
-      if (trimmed.length === 0) {
-        this.showPrompt();
-        return;
-      }
-
-      // Handle exit commands
-      if (trimmed.toLowerCase() === 'exit' || trimmed.toLowerCase() === 'quit') {
-        this.stopInputLoop();
-        return;
-      }
-
-      // Process the input
-      try {
-        await this.handleUserInput(trimmed);
-
-        // Show the response
-        const session = this.conversation.sessionHistory[0];
-        if (session && session.messages.length > 0) {
-          const lastMessage = session.messages[session.messages.length - 1];
-          if (lastMessage.role === 'assistant') {
-            console.log(`\nAgent: ${lastMessage.content}\n`);
-          }
+    this.readlineInterface.on('line', (input: string) => {
+      void (async () => {
+        // Trim and skip empty input
+        const trimmed = input.trim();
+        if (trimmed.length === 0) {
+          this.showPrompt();
+          return;
         }
-      } catch (error) {
-        console.error('Error processing input:', error instanceof Error ? error.message : error);
-      }
 
-      // Show prompt again
-      this.showPrompt();
+        // Handle exit commands
+        if (trimmed.toLowerCase() === 'exit' || trimmed.toLowerCase() === 'quit') {
+          this.stopInputLoop();
+          return;
+        }
+
+        // Process the input
+        try {
+          await this.handleUserInput(trimmed);
+
+          // Show the response
+          const session = this.conversation.sessionHistory[0];
+          if (session && session.messages.length > 0) {
+            const lastMessage = session.messages[session.messages.length - 1];
+            if (lastMessage.role === 'assistant') {
+              console.log(`\nAgent: ${lastMessage.content}\n`);
+            }
+          }
+        } catch (error) {
+          console.error('Error processing input:', error instanceof Error ? error.message : error);
+        }
+
+        // Show prompt again
+        this.showPrompt();
+      })();
     });
 
     // Handle Ctrl+C

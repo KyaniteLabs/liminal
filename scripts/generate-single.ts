@@ -9,7 +9,8 @@ import { ShaderGenerator } from '../src/generators/glsl/ShaderGenerator.js';
 import { ThreeGenerator } from '../src/generators/three/ThreeGenerator.js';
 import { StrudelGenerator } from '../src/generators/strudel/StrudelGenerator.js';
 import { HydraGenerator } from '../src/generators/hydra/HydraGenerator.js';
-import { mkdirSync, writeFileSync } from 'fs';
+import { writeFileSync } from 'fs';
+import { ensureDir } from '../src/utils/fs.js';
 import { LLMClient } from '../src/llm/LLMClient.js';
 
 const PROMPTS: Record<string, string> = {
@@ -165,7 +166,7 @@ async function main() {
     
     const duration = Date.now() - startTime;
     
-    mkdirSync(`${outputDir}/2026-03-31--default`, { recursive: true });
+    ensureDir(`${outputDir}/2026-03-31--default`);
     writeFileSync(`${outputDir}/2026-03-31--default/v1.js`, code);
     
     const output = {

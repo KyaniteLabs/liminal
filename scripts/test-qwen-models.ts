@@ -11,7 +11,8 @@ import { HydraGenerator } from '../src/generators/hydra/HydraGenerator.js';
 import { ToneGenerator } from '../src/generators/tone/ToneGenerator.js';
 import { LLMClient } from '../src/llm/LLMClient.js';
 import { CodeValidator } from '../src/core/CodeValidator.js';
-import { mkdirSync, writeFileSync } from 'fs';
+import { writeFileSync } from 'fs';
+import { ensureDir } from '../src/utils/fs.js';
 import path from 'path';
 
 const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'html', 'ascii', 'remotion', 'tone'];
@@ -124,7 +125,7 @@ async function runTest(model: typeof QWEN_MODELS[0], domain: string) {
     
     // Save output
     const outputDir = path.join('test-qwen-output', `${model.name}-${domain}`);
-    mkdirSync(outputDir, { recursive: true });
+    ensureDir(outputDir);
     writeFileSync(path.join(outputDir, 'output.js'), code);
     
     const status = errors.length === 0 ? 'success' : 'fail';
@@ -210,7 +211,7 @@ async function main() {
   
   // Save results to JSON
   const resultsPath = 'test-qwen-output/results.json';
-  mkdirSync('test-qwen-output', { recursive: true });
+  ensureDir('test-qwen-output');
   writeFileSync(resultsPath, JSON.stringify(RESULTS, null, 2));
   console.log(`\n💾 Results saved to: ${resultsPath}`);
 }

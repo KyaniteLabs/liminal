@@ -5,7 +5,8 @@
  */
 
 import { spawn } from 'child_process';
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync } from 'fs';
+import { ensureDir } from '../src/utils/fs.js';
 
 const ALL_TASKS = [
   // MiniMax
@@ -84,7 +85,7 @@ async function main() {
   }
   
   // Save batch results
-  mkdirSync('examples/batches', { recursive: true });
+  ensureDir('examples/batches');
   writeFileSync(`examples/batches/batch-${startIdx}.json`, JSON.stringify(results, null, 2));
   
   console.log('');

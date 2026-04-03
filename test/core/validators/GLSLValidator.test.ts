@@ -21,14 +21,16 @@ describe('GLSLValidator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
-    it('should validate shader with fragColor output', () => {
+    it('should validate shader with fragColor output using vec3 color variable', () => {
       const code = `
         precision mediump float;
         out vec4 fragColor;
         uniform float u_time;
+        uniform vec2 u_resolution;
         
         void main() {
-          vec3 color = vec3(0.5, 0.5, sin(u_time));
+          vec2 uv = gl_FragCoord.xy / u_resolution;
+          vec3 color = vec3(uv.x, uv.y, sin(u_time));
           fragColor = vec4(color, 1.0);
         }
       `;
@@ -42,10 +44,12 @@ describe('GLSLValidator', () => {
       const code = `
         attribute vec2 position;
         uniform float u_time;
+        uniform vec2 u_resolution;
         
         void main() {
-          vec3 pos = vec3(0.5, 0.5, sin(u_time));
-          gl_Position = vec4(position.x + pos.x, position.y + pos.y, 0.0, 1.0);
+          vec2 uv = position / u_resolution;
+          vec3 animatedPos = vec3(uv.x, uv.y, sin(u_time));
+          gl_Position = vec4(position.x + animatedPos.x * 0.1, position.y, 0.0, 1.0);
         }
       `;
 
@@ -132,7 +136,7 @@ describe('GLSLValidator', () => {
         void main() {
           float s = sin(u_time);
           float c = cos(u_time);
-          vec3 v = vec3(s, c, 0.5);
+          vec3 v = vec3(0.5, 0.5, s);
           gl_FragColor = vec4(v, 1.0);
         }
       `;

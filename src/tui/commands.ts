@@ -8,6 +8,7 @@ import { browserLauncher } from './preview/BrowserLauncher.js';
 import { previewRouter } from './preview/PreviewRouter.js';
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { formatError } from '../utils/errors.js';
 
 export interface CommandContext {
   agent: HarnessAgent;
@@ -177,8 +178,7 @@ export const commands: Record<string, Command> = {
         
       } catch (error) {
         ctx.setStatusMessage('Error');
-        const msg = error instanceof Error ? error.message : String(error);
-        return `❌ Error: ${msg}`;
+        return `❌ ${formatError('Command', error)}`;
       }
     }
   },

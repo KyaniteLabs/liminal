@@ -6,7 +6,8 @@
  */
 
 import { spawn } from 'child_process';
-import { mkdirSync, existsSync, writeFileSync } from 'fs';
+import { existsSync, writeFileSync } from 'fs';
+import { ensureDir } from '../src/utils/fs.js';
 import { join } from 'path';
 
 const PROVIDERS = {
@@ -54,9 +55,7 @@ async function runTask(task: Task): Promise<{ task: Task; success: boolean; dura
   
   // Ensure log directory exists
   const logDir = task.logFile.substring(0, task.logFile.lastIndexOf('/'));
-  if (!existsSync(logDir)) {
-    mkdirSync(logDir, { recursive: true });
-  }
+  ensureDir(logDir);
   
   return new Promise((resolve) => {
     const args = [

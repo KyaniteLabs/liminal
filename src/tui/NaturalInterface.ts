@@ -372,10 +372,10 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
       return { type: 'chat', response, shouldContinue: true };
       
     } catch (error) {
-      const msg = formatError('Chat', error);
+      const msg = error instanceof Error ? error.message : String(error);
       return { 
         type: 'chat', 
-        response: `I'm having trouble thinking right now: ${msg.split(': ').slice(1).join(': ')}`, 
+        response: `I'm having trouble thinking right now: ${msg}`, 
         shouldContinue: true,
       };
     }

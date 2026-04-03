@@ -29,6 +29,34 @@ Your agents need these rules as non-negotiable constraints.
 ```
 You are working on Liminal, a creative coding agent framework built in TypeScript.
 
+## Architectural Principle #0: Creative Metabolism
+
+**Every byproduct of every process is potential fuel for another. Never discard. Always digest.**
+
+This principle is deeper than any single component. It governs the entire system:
+
+| Byproduct | Source Process | Digest Into | Feed To |
+|-----------|---------------|-------------|---------|
+| Failed creative code | Generation | Composted fragments → seeds | CompostMill → future context |
+| AI reasoning traces | Generator model | Process telemetry → critique signal | Evaluator → dimensional feedback |
+| Rejected N-1 candidates | Best-of-N selection | Second-order seeds | ContextBuilder → diverse examples |
+| Validation rejections | Domain validators | Per-domain mistake library | Prompts → "avoid these patterns" |
+| Critic disagreement | AestheticCritic (4 specialists) | Creative tension vector | Generator → targeted improvement direction |
+| Evicted context | ContextAccumulator | Compressed trajectory summary | Creative direction memory |
+| Error messages / stack traces | Failed code execution | Failure pattern library | Prompts → known failure modes |
+| Low-novelty solutions | NoveltyArchive | Default/comfort zone map | Anti-pattern signal → push away from defaults |
+| Exploration outcomes | Temperature / parameter sweeps | Per-domain optimal meta-params | Adaptive exploration settings |
+| Score breakdowns | CreativeEvaluator dimensions | Dimensional feedback (not just sum) | Generator → "color strong, layout weak" |
+
+**Origin of this principle:** Simon's ceramics practice. Clay scraps are rehydrated and reused. Failed glazes become ingredients for new experiments. Trimmings are wedged back into fresh clay. Nothing leaves the studio without having been fully used. CompostMill was the first computational expression of this principle. Reasoning trace recycling is the second. The principle itself — Creative Metabolism — is the generalization: a closed-loop creative ecosystem where nothing is wasted.
+
+**When building ANY new component, ask:**
+1. What does this component produce that's currently discarded?
+2. Can that byproduct be digested into fuel for another process?
+3. If not, why not? Can the component be redesigned so it CAN?
+
+---
+
 MANDATORY RULES (violation = immediate stop and fix):
 
 1. WIRE EVERYTHING END-TO-END. Every module you create or modify MUST be:

@@ -1,0 +1,922 @@
+{
+  "summary": {
+    "total_deletions": 41,
+    "total_assignments": 63,
+    "test_files_affected": 14,
+    "script_files_affected": 10
+  },
+  "deletions": [
+    {
+      "file": "test/setup.ts",
+      "line": 28,
+      "code": "delete process.env[key];",
+      "context": "beforeAll hook - clears LLM env vars before tests",
+      "restoration": "afterAll hook restores values",
+      "risk": "low - proper lifecycle with backup/restore"
+    },
+    {
+      "file": "test/setup.ts",
+      "line": 37,
+      "code": "delete process.env[key];",
+      "context": "afterAll hook - cleanup restored values that were undefined",
+      "restoration": "afterAll hook (self-restoring)",
+      "risk": "low - proper lifecycle"
+    },
+    {
+      "file": "test/e2e/full-loop-local.test.ts",
+      "line": 24,
+      "code": "delete process.env[key];",
+      "context": "restoreEnv() function - cleanup during test teardown",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-local.test.ts",
+      "line": 80,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "beforeEach hook - ensure no API key for local tests",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-local.test.ts",
+      "line": 81,
+      "code": "delete process.env.OPENAI_API_KEY;",
+      "context": "beforeEach hook - ensure no OpenAI key for local tests",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-cloud.test.ts",
+      "line": 28,
+      "code": "delete process.env[key];",
+      "context": "restoreEnv() function - cleanup during test teardown",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "scripts/run-agent-a.ts",
+      "line": 127,
+      "code": "delete process.env.LIMINAL_LLM_BASE_URL;",
+      "context": "Set env for test - cloud models use default endpoint",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b.ts",
+      "line": 124,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "Set env for local test - remove API key for Ollama",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b-batched.ts",
+      "line": 83,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "Set env for local test - remove API key for Ollama",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-single-test.ts",
+      "line": 63,
+      "code": "delete process.env.LIMINAL_LLM_BASE_URL;",
+      "context": "Set env for single test - use default for cloud",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b-quick.ts",
+      "line": 59,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "Set env for quick test - remove API key for Ollama",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 18,
+      "code": "delete process.env[key];",
+      "context": "restoreEnv() function - cleanup during test teardown",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 106,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "Test 'local (ollama) backend' - ensure no API key",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 107,
+      "code": "delete process.env.OPENAI_API_KEY;",
+      "context": "Test 'local (ollama) backend' - ensure no OpenAI key",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/gui-config-api.test.js",
+      "line": 31,
+      "code": "delete process.env.ATELIER_LLM_PROVIDER;",
+      "context": "beforeAll hook - unset LLM env so saved file config is used",
+      "restoration": "Values restored implicitly (afterAll doesn't restore)",
+      "risk": "medium - comment says intentional but no explicit restore"
+    },
+    {
+      "file": "test/integration/gui-config-api.test.js",
+      "line": 32,
+      "code": "delete process.env.ATELIER_LLM_MODEL;",
+      "context": "beforeAll hook - unset LLM env so saved file config is used",
+      "restoration": "Values restored implicitly (afterAll doesn't restore)",
+      "risk": "medium - comment says intentional but no explicit restore"
+    },
+    {
+      "file": "test/integration/gui-config-api.test.js",
+      "line": 33,
+      "code": "delete process.env.ATELIER_LLM_BASE_URL;",
+      "context": "beforeAll hook - unset LLM env so saved file config is used",
+      "restoration": "Values restored implicitly (afterAll doesn't restore)",
+      "risk": "medium - comment says intentional but no explicit restore"
+    },
+    {
+      "file": "test/integration/gui-config-api.test.js",
+      "line": 34,
+      "code": "delete process.env.ATELIER_LLM_API_KEY;",
+      "context": "beforeAll hook - unset LLM env so saved file config is used",
+      "restoration": "Values restored implicitly (afterAll doesn't restore)",
+      "risk": "medium - comment says intentional but no explicit restore"
+    },
+    {
+      "file": "test/integration/gui-config-api.test.js",
+      "line": 46,
+      "code": "delete process.env.LIMINAL_CONFIG_PATH;",
+      "context": "afterAll hook - cleanup test config path",
+      "restoration": "afterAll hook (self-restoring)",
+      "risk": "low - proper cleanup in afterAll"
+    },
+    {
+      "file": "test/integration/run-merge-approve-api.test.js",
+      "line": 40,
+      "code": "delete process.env.LIMINAL_CONFIG_PATH;",
+      "context": "afterAll hook - cleanup test config path",
+      "restoration": "afterAll hook (self-restoring)",
+      "risk": "low - proper cleanup in afterAll"
+    },
+    {
+      "file": "test/security/sandbox-config.test.ts",
+      "line": 15,
+      "code": "delete process.env.LIMINAL_DISABLE_SANDBOX;",
+      "context": "beforeEach hook - start with clean sandbox state",
+      "restoration": "afterEach hook restores process.env = originalEnv",
+      "risk": "low - full env restoration pattern"
+    },
+    {
+      "file": "test/security/url-validator.test.ts",
+      "line": 117,
+      "code": "delete process.env.LIMINAL_ALLOWED_HOSTS;",
+      "context": "beforeEach hook - start with clean allowed hosts",
+      "restoration": "afterEach hook restores process.env = originalEnv",
+      "risk": "low - full env restoration pattern"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 34,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "afterEach hook - cleanup API keys after each test",
+      "restoration": "afterEach hook (self-restoring)",
+      "risk": "low - proper cleanup in afterEach"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 35,
+      "code": "delete process.env.ATELIER_LLM_API_KEY;",
+      "context": "afterEach hook - cleanup API keys after each test",
+      "restoration": "afterEach hook (self-restoring)",
+      "risk": "low - proper cleanup in afterEach"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 36,
+      "code": "delete process.env.OPENAI_API_KEY;",
+      "context": "afterEach hook - cleanup API keys after each test",
+      "restoration": "afterEach hook (self-restoring)",
+      "risk": "low - proper cleanup in afterEach"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 68,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "Test 'isConfigured returns false' - ensure clean state",
+      "restoration": "afterEach hook",
+      "risk": "low - afterEach cleans up"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 69,
+      "code": "delete process.env.ATELIER_LLM_API_KEY;",
+      "context": "Test 'isConfigured returns false' - ensure clean state",
+      "restoration": "afterEach hook",
+      "risk": "low - afterEach cleans up"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 76,
+      "code": "delete process.env.OPENAI_API_KEY;",
+      "context": "Test 'isConfigured returns true when OPENAI_API_KEY' - cleanup after",
+      "restoration": "afterEach hook",
+      "risk": "low - afterEach cleans up"
+    },
+    {
+      "file": "test/unit/ralph-loop.test.ts",
+      "line": 596,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "beforeEach hook - ensure no API key for tests",
+      "restoration": false,
+      "risk": "medium - no restoration, affects subsequent tests in file"
+    },
+    {
+      "file": "test/unit/ralph-loop.test.ts",
+      "line": 597,
+      "code": "delete process.env.ATELIER_LLM_API_KEY;",
+      "context": "beforeEach hook - ensure no API key for tests",
+      "restoration": false,
+      "risk": "medium - no restoration, affects subsequent tests in file"
+    },
+    {
+      "file": "test/unit/request-improvement.test.ts",
+      "line": 19,
+      "code": "delete process.env.LIMINAL_LLM_API_KEY;",
+      "context": "afterEach hook - cleanup after tests",
+      "restoration": "afterEach hook (self-restoring)",
+      "risk": "low - proper cleanup in afterEach"
+    },
+    {
+      "file": "test/unit/request-improvement.test.ts",
+      "line": 20,
+      "code": "delete process.env.ATELIER_LLM_API_KEY;",
+      "context": "afterEach hook - cleanup after tests",
+      "restoration": "afterEach hook (self-restoring)",
+      "risk": "low - proper cleanup in afterEach"
+    },
+    {
+      "file": "test/unit/request-improvement.test.ts",
+      "line": 21,
+      "code": "delete process.env.ATELIER_LLM_BASE_URL;",
+      "context": "afterEach hook - cleanup after tests",
+      "restoration": "afterEach hook (self-restoring)",
+      "risk": "low - proper cleanup in afterEach"
+    }
+  ],
+  "assignments": [
+    {
+      "file": "test/setup.ts",
+      "line": 27,
+      "code": "saved[key] = process.env[key];",
+      "context": "beforeAll hook - backup env vars before clearing",
+      "restoration": "afterAll hook restores from saved",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-local.test.ts",
+      "line": 77,
+      "code": "process.env.LIMINAL_LLM_PROVIDER = 'ollama';",
+      "context": "beforeEach hook - configure for local Ollama",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-local.test.ts",
+      "line": 78,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434';",
+      "context": "beforeEach hook - set base URL with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-local.test.ts",
+      "line": 79,
+      "code": "process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'llama3.2';",
+      "context": "beforeEach hook - set model with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-cloud.test.ts",
+      "line": 72,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';",
+      "context": "Test body - set base URL with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/full-loop-cloud.test.ts",
+      "line": 73,
+      "code": "process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'qwen3.5-9b';",
+      "context": "Test body - set model with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/e2e/models/minimax-m2-5.test.ts",
+      "line": 18,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;",
+      "context": "beforeAll hook - configure for MiniMax",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/minimax-m2-5.test.ts",
+      "line": 19,
+      "code": "process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;",
+      "context": "beforeAll hook - configure for MiniMax",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/qwen3-5-9b.test.ts",
+      "line": 19,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;",
+      "context": "beforeAll hook - configure for Qwen",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/qwen3-5-9b.test.ts",
+      "line": 20,
+      "code": "process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;",
+      "context": "beforeAll hook - configure for Qwen",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/qwen3-coder-40b.test.ts",
+      "line": 18,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;",
+      "context": "beforeAll hook - configure for Qwen Coder",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/qwen3-coder-40b.test.ts",
+      "line": 19,
+      "code": "process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;",
+      "context": "beforeAll hook - configure for Qwen Coder",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/minimax-m2-7-highspeed.test.ts",
+      "line": 18,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;",
+      "context": "beforeAll hook - configure for MiniMax",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/minimax-m2-7-highspeed.test.ts",
+      "line": 19,
+      "code": "process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;",
+      "context": "beforeAll hook - configure for MiniMax",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/minimax-m2-7.test.ts",
+      "line": 18,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;",
+      "context": "beforeAll hook - configure for MiniMax",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/models/minimax-m2-7.test.ts",
+      "line": 19,
+      "code": "process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;",
+      "context": "beforeAll hook - configure for MiniMax",
+      "restoration": false,
+      "risk": "medium - no restoration after test suite"
+    },
+    {
+      "file": "test/e2e/model-comparison.test.ts",
+      "line": 119,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = model.baseUrl;",
+      "context": "Test loop - configure for each model iteration",
+      "restoration": false,
+      "risk": "high - test loop modifies env without restoration"
+    },
+    {
+      "file": "test/e2e/model-comparison.test.ts",
+      "line": 120,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.model;",
+      "context": "Test loop - configure for each model iteration",
+      "restoration": false,
+      "risk": "high - test loop modifies env without restoration"
+    },
+    {
+      "file": "test/e2e/model-comparison.test.ts",
+      "line": 122,
+      "code": "process.env.LIMINAL_LLM_API_KEY = model.apiKey;",
+      "context": "Test loop - set API key for cloud models",
+      "restoration": false,
+      "risk": "high - test loop modifies env without restoration"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 51,
+      "code": "process.env.LIMINAL_LLM_PROVIDER = 'lmstudio';",
+      "context": "Test 'cloud backend' - configure provider",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 52,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:1234/v1';",
+      "context": "Test 'cloud backend' - set base URL with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 53,
+      "code": "process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'local-model';",
+      "context": "Test 'cloud backend' - set model with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 103,
+      "code": "process.env.LIMINAL_LLM_PROVIDER = 'ollama';",
+      "context": "Test 'local backend' - configure provider",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 104,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_LLM_BASE_URL || 'http://localhost:11434';",
+      "context": "Test 'local backend' - set base URL with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/dual-llm.test.ts",
+      "line": 105,
+      "code": "process.env.LIMINAL_LLM_MODEL = process.env.LIMINAL_LLM_MODEL || 'llama3.2';",
+      "context": "Test 'local backend' - set model with fallback",
+      "restoration": "afterEach hook via restoreEnv()",
+      "risk": "low - proper backup/restore pattern"
+    },
+    {
+      "file": "test/integration/gui-config-api.test.js",
+      "line": 29,
+      "code": "process.env.LIMINAL_CONFIG_PATH = TEST_CONFIG_PATH;",
+      "context": "beforeAll hook - set test config path",
+      "restoration": "afterAll hook deletes the var",
+      "risk": "low - proper cleanup in afterAll"
+    },
+    {
+      "file": "test/integration/run-merge-approve-api.test.js",
+      "line": 28,
+      "code": "process.env.LIMINAL_CONFIG_PATH = TEST_CONFIG_PATH;",
+      "context": "beforeAll hook - set test config path",
+      "restoration": "afterAll hook deletes the var",
+      "risk": "low - proper cleanup in afterAll"
+    },
+    {
+      "file": "test/security/sandbox-config.test.ts",
+      "line": 52,
+      "code": "process.env.LIMINAL_DISABLE_SANDBOX = 'true';",
+      "context": "Test - set env var to test sandbox disabling",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/security/sandbox-config.test.ts",
+      "line": 67,
+      "code": "process.env.LIMINAL_DISABLE_SANDBOX = 'true';",
+      "context": "Test - set env var for combined condition test",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/security/sandbox-config.test.ts",
+      "line": 83,
+      "code": "process.env.LIMINAL_DISABLE_SANDBOX = 'true';",
+      "context": "Test - set env var for secure args test",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/security/sandbox-config.test.ts",
+      "line": 93,
+      "code": "process.env.LIMINAL_DISABLE_SANDBOX = 'false';",
+      "context": "Test - set env var to 'false' value",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/security/sandbox-config.test.ts",
+      "line": 101,
+      "code": "process.env.LIMINAL_DISABLE_SANDBOX = '';",
+      "context": "Test - set env var to empty string",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/security/url-validator.test.ts",
+      "line": 129,
+      "code": "process.env.LIMINAL_ALLOWED_HOSTS = 'host1.com, host2.com, host3.com';",
+      "context": "Test - set allowed hosts env var",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/security/url-validator.test.ts",
+      "line": 134,
+      "code": "process.env.LIMINAL_ALLOWED_HOSTS = '';",
+      "context": "Test - set allowed hosts to empty",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/security/url-validator.test.ts",
+      "line": 139,
+      "code": "process.env.LIMINAL_ALLOWED_HOSTS = 'host1.com,,host2.com, ,host3.com';",
+      "context": "Test - set allowed hosts with empty entries",
+      "restoration": "afterEach restores process.env = originalEnv",
+      "risk": "low - full env restoration"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 63,
+      "code": "process.env.LIMINAL_LLM_API_KEY = 'test-sk-key';",
+      "context": "Test - set API key for isConfigured test",
+      "restoration": "afterEach hook deletes the var",
+      "risk": "low - proper cleanup in afterEach"
+    },
+    {
+      "file": "test/unit/llm-client.test.ts",
+      "line": 74,
+      "code": "process.env.OPENAI_API_KEY = 'sk-test';",
+      "context": "Test - set OpenAI key for isConfigured test",
+      "restoration": "Test deletes after assertion",
+      "risk": "low - immediate cleanup in test"
+    },
+    {
+      "file": "test/unit/llm/minimax-lmstudio.test.ts",
+      "line": 77,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:8080/v1';",
+      "context": "Test - set env vars for environment config test",
+      "restoration": "Test restores original values after",
+      "risk": "low - manual backup/restore in test"
+    },
+    {
+      "file": "test/unit/llm/minimax-lmstudio.test.ts",
+      "line": 78,
+      "code": "process.env.LIMINAL_LLM_API_KEY = 'env-api-key';",
+      "context": "Test - set API key for environment config test",
+      "restoration": "Test restores original value after",
+      "risk": "low - manual backup/restore in test"
+    },
+    {
+      "file": "test/unit/llm/minimax-lmstudio.test.ts",
+      "line": 79,
+      "code": "process.env.LIMINAL_LLM_MODEL = 'env-model';",
+      "context": "Test - set model for environment config test",
+      "restoration": "Test restores original value after",
+      "risk": "low - manual backup/restore in test"
+    },
+    {
+      "file": "scripts/run-agent-a.ts",
+      "line": 125,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = model.baseUrl;",
+      "context": "Set env for local model test",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-a.ts",
+      "line": 129,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.name;",
+      "context": "Set env for each test iteration",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b.ts",
+      "line": 120,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = process.env.LIMINAL_CLOUD_BASE_URL || 'https://api.moonshot.cn/v1';",
+      "context": "Set env for cloud model (kimi)",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b.ts",
+      "line": 121,
+      "code": "process.env.LIMINAL_LLM_API_KEY = process.env.MOONSHOT_API_KEY || process.env.LIMINAL_CLOUD_API_KEY;",
+      "context": "Set API key for cloud model",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b.ts",
+      "line": 123,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';",
+      "context": "Set env for local Ollama tests",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b.ts",
+      "line": 126,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.name;",
+      "context": "Set env for each test iteration",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-single-test.ts",
+      "line": 61,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = model.baseUrl;",
+      "context": "Set env for single test run",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-single-test.ts",
+      "line": 65,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.fullName;",
+      "context": "Set env for single test run",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b-quick.ts",
+      "line": 57,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';",
+      "context": "Set env for quick test",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b-quick.ts",
+      "line": 58,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.name;",
+      "context": "Set env for quick test",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b-batched.ts",
+      "line": 81,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';",
+      "context": "Set env for batched tests",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-agent-b-batched.ts",
+      "line": 82,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.name;",
+      "context": "Set env for batched tests",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/agent-b-test-runner.ts",
+      "line": 43,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';",
+      "context": "Set env for agent-b test runner",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/agent-b-test-runner.ts",
+      "line": 44,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.name;",
+      "context": "Set env for agent-b test runner",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/agent-b-batch.ts",
+      "line": 56,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';",
+      "context": "Set env for agent-b batch",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/agent-b-batch.ts",
+      "line": 57,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.name;",
+      "context": "Set env for agent-b batch",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-local-only.ts",
+      "line": 83,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';",
+      "context": "Set env for local-only runner",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/run-local-only.ts",
+      "line": 84,
+      "code": "process.env.LIMINAL_LLM_MODEL = model.name;",
+      "context": "Set env for local-only runner",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/generate-single.ts",
+      "line": 151,
+      "code": "process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;",
+      "context": "Set env for single generation",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/generate-single.ts",
+      "line": 152,
+      "code": "process.env.LIMINAL_LLM_API_KEY = apiKey;",
+      "context": "Set env for single generation",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    },
+    {
+      "file": "scripts/generate-single.ts",
+      "line": 153,
+      "code": "process.env.LIMINAL_LLM_MODEL = modelName;",
+      "context": "Set env for single generation",
+      "restoration": false,
+      "risk": "high - no restoration after script runs"
+    }
+  ],
+  "test_setup_files": [
+    {
+      "file": "test/setup.ts",
+      "purpose": "Global test setup - isolate tests from user's LLM environment",
+      "env_vars_cleared": [
+        "LIMINAL_LLM_PROVIDER",
+        "LIMINAL_LLM_API_KEY",
+        "LIMINAL_LLM_BASE_URL",
+        "LIMINAL_LLM_MODEL",
+        "ATELIER_LLM_API_KEY",
+        "ATELIER_LLM_BASE_URL",
+        "OPENAI_API_KEY",
+        "MINIMAX_API_KEY",
+        "LIMINAL_REASONING_URL"
+      ],
+      "restoration": true,
+      "pattern": "backupEnv + beforeAll / restoreEnv + afterAll"
+    }
+  ],
+  "patterns": {
+    "proper_isolation": [
+      "test/setup.ts",
+      "test/e2e/full-loop-local.test.ts",
+      "test/e2e/full-loop-cloud.test.ts",
+      "test/integration/dual-llm.test.ts",
+      "test/security/sandbox-config.test.ts",
+      "test/security/url-validator.test.ts"
+    ],
+    "missing_restoration": [
+      "scripts/run-agent-a.ts",
+      "scripts/run-agent-b.ts",
+      "scripts/run-agent-b-quick.ts",
+      "scripts/run-agent-b-batched.ts",
+      "scripts/run-single-test.ts",
+      "scripts/agent-b-test-runner.ts",
+      "scripts/agent-b-batch.ts",
+      "scripts/run-local-only.ts",
+      "scripts/generate-single.ts",
+      "test/e2e/models/minimax-m2-5.test.ts",
+      "test/e2e/models/qwen3-5-9b.test.ts",
+      "test/e2e/models/qwen3-coder-40b.test.ts",
+      "test/e2e/models/minimax-m2-7-highspeed.test.ts",
+      "test/e2e/models/minimax-m2-7.test.ts",
+      "test/e2e/model-comparison.test.ts",
+      "test/unit/ralph-loop.test.ts"
+    ],
+    "comment_says_use_default": [
+      "scripts/run-agent-a.ts:127",
+      "scripts/run-single-test.ts:63"
+    ],
+    "full_env_replacement": [
+      "test/security/sandbox-config.test.ts",
+      "test/security/url-validator.test.ts"
+    ]
+  },
+  "issues": [
+    {
+      "severity": "high",
+      "description": "Scripts modify environment variables without restoration, affecting user's shell after execution",
+      "locations": [
+        "scripts/run-agent-a.ts",
+        "scripts/run-agent-b.ts",
+        "scripts/run-agent-b-quick.ts",
+        "scripts/run-agent-b-batched.ts",
+        "scripts/run-single-test.ts",
+        "scripts/agent-b-test-runner.ts",
+        "scripts/agent-b-batch.ts",
+        "scripts/run-local-only.ts",
+        "scripts/generate-single.ts"
+      ],
+      "recommendation": "Add backup/restore pattern or use isolated child processes"
+    },
+    {
+      "severity": "medium",
+      "description": "E2E model tests set env vars in beforeAll without restoration, affecting subsequent test files if run in same process",
+      "locations": [
+        "test/e2e/models/minimax-m2-5.test.ts",
+        "test/e2e/models/qwen3-5-9b.test.ts",
+        "test/e2e/models/qwen3-coder-40b.test.ts",
+        "test/e2e/models/minimax-m2-7-highspeed.test.ts",
+        "test/e2e/models/minimax-m2-7.test.ts"
+      ],
+      "recommendation": "Add afterAll hook to restore original values"
+    },
+    {
+      "severity": "medium",
+      "description": "Model comparison test modifies env in test loop without restoration",
+      "locations": [
+        "test/e2e/model-comparison.test.ts:119-122"
+      ],
+      "recommendation": "Backup env before loop and restore after, or use isolated test cases"
+    },
+    {
+      "severity": "medium",
+      "description": "Ralph loop test clears API keys in beforeEach without restoration",
+      "locations": [
+        "test/unit/ralph-loop.test.ts:596-597"
+      ],
+      "recommendation": "Add afterEach to restore values or use backup/restore pattern"
+    },
+    {
+      "severity": "low",
+      "description": "GUI config API test deletes ATELIER_* env vars without explicit restoration (comment says intentional)",
+      "locations": [
+        "test/integration/gui-config-api.test.js:31-34"
+      ],
+      "recommendation": "Consider adding afterAll to restore these values for clarity"
+    }
+  ],
+  "statistics": {
+    "deletions_by_type": {
+      "with_restoration": 18,
+      "without_restoration": 14,
+      "in_scripts": 5
+    },
+    "assignments_by_type": {
+      "with_restoration": 30,
+      "without_restoration": 19,
+      "in_scripts": 14
+    },
+    "files_with_proper_isolation": 6,
+    "files_with_missing_restoration": 17
+  },
+  "recommendations": [
+    {
+      "priority": "high",
+      "action": "Add backup/restore pattern to all scripts in scripts/ directory",
+      "files": [
+        "scripts/run-agent-a.ts",
+        "scripts/run-agent-b.ts",
+        "scripts/run-single-test.ts",
+        "scripts/run-agent-b-quick.ts",
+        "scripts/run-agent-b-batched.ts"
+      ],
+      "pattern": "Use the backupEnv/restoreEnv pattern from test/e2e/full-loop-local.test.ts"
+    },
+    {
+      "priority": "medium",
+      "action": "Add afterAll restoration to E2E model test files",
+      "files": [
+        "test/e2e/models/*.test.ts"
+      ]
+    },
+    {
+      "priority": "medium",
+      "action": "Fix ralph-loop.test.ts to restore API keys after tests",
+      "files": [
+        "test/unit/ralph-loop.test.ts"
+      ]
+    },
+    {
+      "priority": "low",
+      "action": "Consider adding explicit restoration to GUI config test",
+      "files": [
+        "test/integration/gui-config-api.test.js"
+      ]
+    }
+  ]
+}

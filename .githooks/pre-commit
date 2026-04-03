@@ -1,0 +1,23 @@
+#!/bin/bash
+# Pre-commit hook for documentation validation
+
+echo "🔍 Running pre-commit documentation checks..."
+
+# Check if THE_BIBLE.md was modified
+if git diff --cached --name-only | grep -q "docs/THE_BIBLE.md"; then
+    echo "✓ THE_BIBLE.md updated"
+else
+    # Check if src/ files were modified
+    if git diff --cached --name-only | grep -q "^src/"; then
+        echo "⚠️  WARNING: You modified src/ but not THE_BIBLE.md"
+        echo "   Run: npm run validate-docs"
+        echo "   Or commit with --no-verify to skip"
+        # Don't block, just warn
+    fi
+fi
+
+# Run validation scripts
+node scripts/validate-version.js --quiet || exit 1
+node scripts/verify-file-refs.js --quiet || exit 1
+
+echo "✅ Documentation checks passed"

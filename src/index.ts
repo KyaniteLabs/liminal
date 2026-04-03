@@ -50,6 +50,7 @@ import { MetaMode } from './evolution/MetaMode.js';
 import { SafetyGuardrails } from './core/SafetyGuardrails.js';
 import { FeedbackQueue } from './gallery/FeedbackQueue.js';
 import { metaHarness } from './harness/MetaHarnessIntegration.js';
+import { validateLLMConfig } from './config/schema.js';
 import { generateVisuals } from './generateVisuals.js';
 import { generateMusicToVisual } from './musicToVisual/generateMusicToVisual.js';
 import { generateMusic } from './music/generateMusic.js';
@@ -171,6 +172,14 @@ export async function run(prompt: string, options: {
   const evaluationCriteria = creativeOptions?.evaluationCriteria ?? defaultConfig.creative.evaluationCriteria;
 
   try {
+    // Validate config early
+    const rawConfig = {
+      baseUrl: process.env.LIMINAL_LLM_BASE_URL,
+      apiKey: process.env.LIMINAL_LLM_API_KEY || process.env.OPENAI_API_KEY,
+      model: process.env.LIMINAL_LLM_MODEL,
+    };
+    validateLLMConfig(rawConfig); // Fail fast on bad config
+
     // Validate input
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
       throw new Error('Prompt is required and must be a non-empty string');

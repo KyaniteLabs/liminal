@@ -1,22 +1,25 @@
-## Summary
+## Description
+<!-- Describe your changes -->
 
-Brief description of what this PR does and why.
-
-## Changes
-
-- Change 1
-- Change 2
-
-## Test Plan
-
-- [ ] `pnpm run typecheck` passes
-- [ ] `pnpm run lint` passes
-- [ ] `pnpm test` passes
-- [ ] Manual testing: [describe what you tested]
+## Type of Change
+- [ ] Bug fix
+- [ ] New feature
+- [ ] Breaking change
+- [ ] Documentation update
 
 ## Checklist
+- [ ] Code compiles (`npm run build`)
+- [ ] Tests pass (`npm run test`)
+- [ ] Lint passes (`npm run lint`)
+- [ ] **THE_BIBLE.md updated** (if src/ changed)
+- [ ] **Version bumped** (if applicable)
+- [ ] **Changelog updated**
 
-- [ ] Code follows project style guidelines
-- [ ] Tests added/updated for new functionality
-- [ ] No `console.log` statements left in production code
-- [ ] No `any` types introduced without justification
+## Documentation Updates Required?
+<!-- If you changed src/ files, did you update THE_BIBLE.md? -->
+- [ ] No - only internal changes
+- [ ] Yes - I have updated THE_BIBLE.md
+- [ ] N/A - no src/ changes
+
+## Verification
+<!-- Link to any related PRs, issues, or documentation -->

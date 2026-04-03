@@ -77,6 +77,77 @@ npm run tui
 
 ---
 
+## Development Workflow (Worktree Isolation Required)
+
+**Rule:** All feature work MUST be done in isolated git worktrees. No exceptions.
+
+### Why Worktrees?
+
+- **Multi-Agent Safety:** Each agent has isolated workspace, no conflicts
+- **Parallel Development:** Work on multiple branches simultaneously
+- **Build Isolation:** `node_modules/`, build artifacts don't collide
+- **Fast Context Switch:** `cd` between worktrees vs `git stash && checkout`
+
+### Quick Commands
+
+```bash
+# Create and switch to new worktree
+git wt feature-name
+
+# Or use the worktree manager
+git-worktree-manager create feature-name
+
+# List all worktrees
+git wtl
+# or
+git-worktree-manager list
+
+# Clean up merged worktrees
+git wtc
+# or
+git-worktree-manager clean
+```
+
+### Agent Worktree Pattern
+
+When multiple agents work simultaneously:
+
+```bash
+# Agent A creates isolated worktree
+git worktree add .worktrees/agent-a7b13158 feature-a
+cd .worktrees/agent-a7b13158
+
+# Agent B creates separate worktree
+git worktree add .worktrees/agent-ab731eb7 feature-b
+cd .worktrees/agent-ab731eb7
+
+# Both agents work independently - no conflicts
+```
+
+### Setup (One-Time Per Project)
+
+```bash
+# From repo root
+git-worktree-init
+
+# Or manually:
+mkdir -p .worktrees
+echo ".worktrees/" >> .gitignore
+```
+
+### Safety Rules
+
+1. **Stay in your worktree** - Don't modify files in other agents' worktrees
+2. **Commit before switching** - Keeps each worktree clean
+3. **Use descriptive names** - `PROJ-123-fix-login` not `fix-stuff`
+4. **Clean up after merge** - `git wtr <worktree-name>` when done
+
+### Full Documentation
+
+See `docs/WORKTREE_SYSTEM.md` for complete guide.
+
+---
+
 ## Meta-Harness Components
 
 ### 1. FailureLogger

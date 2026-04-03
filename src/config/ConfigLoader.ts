@@ -1,6 +1,7 @@
 import fs from 'fs/promises';
 import path from 'path';
 import os from 'os';
+import { env } from '../utils/env.js';
 
 export interface UserConfig {
   defaultProvider: string;
@@ -157,10 +158,6 @@ export interface MultiModelConfig {
     /** Maximum concurrent requests for secondary model */
     secondaryConcurrency?: number;
   };
-}
-
-function env(key: string): string | undefined {
-  return process.env[`LIMINAL_${key}`];
 }
 
 const LIMINAL_CONFIG_DIR = '.liminal';

@@ -1,0 +1,166 @@
+{
+  "summary": {
+    "abstract_classes": [
+      {
+        "name": "Tool",
+        "file": "src/harness/tools/types.ts",
+        "implementations": 13,
+        "note": "Well-used abstraction, appropriate for the use case"
+      },
+      {
+        "name": "TierBasedGenerator",
+        "file": "src/generators/TierBasedGenerator.ts",
+        "implementations": 9,
+        "note": "Well-used abstraction, appropriate for the use case"
+      }
+    ],
+    "interfaces_with_many_optionals": [
+      {
+        "name": "LoopOptions",
+        "file": "src/core/LoopConfig.ts",
+        "optional_count": 42,
+        "note": "CRITICAL: God interface with excessive optional properties"
+      },
+      {
+        "name": "ProjectConfig",
+        "file": "src/config/ConfigLoader.ts",
+        "optional_count": 35,
+        "note": "High optional count - config object with nested optional structures"
+      },
+      {
+        "name": "LLMProviderConfig",
+        "file": "src/compost/types.ts",
+        "optional_count": 13,
+        "note": "Contains deprecated properties contributing to bloat"
+      },
+      {
+        "name": "LLMConfig",
+        "file": "src/llm/LLMClient.ts",
+        "optional_count": 10,
+        "note": "High optional count for provider-agnostic config"
+      },
+      {
+        "name": "TierBasedGeneratorOptions",
+        "file": "src/generators/TierBasedGenerator.ts",
+        "optional_count": 3,
+        "note": "Reasonable count"
+      }
+    ],
+    "deep_inheritance_chains": [
+      {
+        "name": "Tool hierarchy",
+        "depth": 2,
+        "chain": ["Tool (abstract)", "ConcreteTool (e.g., ReadFileTool)"],
+        "note": "Shallow hierarchy, acceptable"
+      },
+      {
+        "name": "TierBasedGenerator hierarchy",
+        "depth": 2,
+        "chain": ["TierBasedGenerator (abstract)", "ConcreteGenerator (e.g., P5GeneratorV2)"],
+        "note": "Shallow hierarchy, acceptable"
+      },
+      {
+        "name": "LLMError hierarchy",
+        "depth": 2,
+        "chain": ["Error", "LLMError", "LLMTimeoutError/LLMRateLimitError/LLMAuthError"],
+        "note": "Standard error hierarchy, acceptable"
+      }
+    ],
+    "wrapper_classes": [
+      {
+        "name": "P5GeneratorV2",
+        "file": "src/generators/p5/P5GeneratorV2.ts",
+        "issue": "Thin wrapper around TierBasedGenerator with minimal additional logic",
+        "lines_of_code": 59,
+        "unique_logic_lines": 15
+      },
+      {
+        "name": "ReadFileTool",
+        "file": "src/harness/tools/ReadFileTool.ts",
+        "issue": "Tool pattern results in many small wrapper-like classes",
+        "lines_of_code": 71,
+        "note": "Justified by the Tool abstraction pattern - enables polymorphism"
+      }
+    ]
+  },
+  "over_abstractions": [
+    {
+      "type": "god_interface",
+      "name": "LoopOptions",
+      "file": "src/core/LoopConfig.ts",
+      "optional_count": 42,
+      "issue": "Interface has 42 optional properties - violates Interface Segregation Principle. Contains flags for unrelated features: swarm, collab, archive learning, map elites, aesthetic model, etc.",
+      "recommendation": "Split into feature-specific interfaces: SwarmLoopOptions, CollabLoopOptions, EvolutionLoopOptions, etc. Use composition or intersection types."
+    },
+    {
+      "type": "god_interface",
+      "name": "ProjectConfig",
+      "file": "src/config/ConfigLoader.ts",
+      "optional_count": 35,
+      "issue": "Config interface with excessive optional nested objects. Easy to accumulate technical debt as features are added.",
+      "recommendation": "Use a discriminated union or plugin-based config pattern. Each feature should register its config schema."
+    },
+    {
+      "type": "deprecated_property_bloat",
+      "name": "LLMProviderConfig",
+      "file": "src/compost/types.ts",
+      "optional_count": 13,
+      "issue": "Interface has 5 deprecated properties (marked with @deprecated) contributing to technical debt",
+      "recommendation": "Remove deprecated properties in next major version. Document migration path."
+    },
+    {
+      "type": "thin_wrapper",
+      "name": "P5GeneratorV2",
+      "file": "src/generators/p5/P5GeneratorV2.ts",
+      "issue": "Only adds ~15 lines of unique logic (validateOutput + promptSuggestsSound) beyond base class",
+      "recommendation": "Consider if validation logic could be moved to a strategy pattern or if subclass is truly needed"
+    }
+  ],
+  "positive_abstractions": [
+    {
+      "name": "Tool",
+      "reason": "Clean abstraction with 13 implementations, enables polymorphic tool execution in harness agent"
+    },
+    {
+      "name": "TierBasedGenerator",
+      "reason": "Centralizes model-tier adaptation logic across 9 generators, reduces duplication"
+    },
+    {
+      "name": "LLMError hierarchy",
+      "reason": "Standard error classification enabling retry logic and error handling strategies"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "HIGH",
+      "issue": "LoopOptions interface is a 'god interface' with 42 optional properties",
+      "action": "Refactor into feature-specific interfaces and use composition",
+      "benefit": "Improved type safety, better IDE autocomplete, easier testing"
+    },
+    {
+      "priority": "MEDIUM",
+      "issue": "ProjectConfig interface accumulates optional properties from all features",
+      "action": "Adopt plugin-based configuration pattern",
+      "benefit": "Feature modules own their config, easier to maintain"
+    },
+    {
+      "priority": "MEDIUM",
+      "issue": "Deprecated properties in LLMProviderConfig contribute to technical debt",
+      "action": "Schedule removal for v2.0, provide migration guide",
+      "benefit": "Cleaner API surface, less confusion for developers"
+    },
+    {
+      "priority": "LOW",
+      "issue": "Some generators are thin wrappers (P5GeneratorV2)",
+      "action": "Evaluate if factory pattern or configuration-based approach would suffice",
+      "benefit": "Fewer files to maintain, less boilerplate"
+    }
+  ],
+  "statistics": {
+    "total_abstract_classes": 2,
+    "total_interfaces_with_10plus_optionals": 3,
+    "max_inheritance_depth": 2,
+    "total_wrapper_like_classes": 2,
+    "overall_assessment": "Mostly healthy abstraction patterns with one critical issue (LoopOptions god interface)"
+  }
+}

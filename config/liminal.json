@@ -1,0 +1,36 @@
+{
+  "version": "2.1.0",
+  "name": "liminal-ai",
+  "description": "Creative coding agent configuration",
+  "settings": {
+    "logLevel": "info",
+    "defaultModelTier": "local",
+    "maxIterations": 10,
+    "sandbox": {
+      "enabled": true,
+      "timeout": 30000
+    },
+    "memory": {
+      "enabled": true,
+      "persistPath": "~/.liminal/memory/"
+    },
+    "compost": {
+      "enabled": true,
+      "persistPath": "~/.liminal/compost/"
+    },
+    "harness": {
+      "enabled": true,
+      "autoApply": false,
+      "maxTasksPerSession": 5
+    }
+  },
+  "routing": {
+    "smartRouting": true,
+    "qualityPrediction": true
+  },
+  "evolution": {
+    "enabled": true,
+    "populationSize": 20,
+    "mutationRate": 0.1
+  }
+}

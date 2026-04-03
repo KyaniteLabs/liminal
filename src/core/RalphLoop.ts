@@ -58,11 +58,7 @@ import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
 import { runOrganismMode } from './OrganismLoop.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
-
-// Helper to access environment variables
-function env(key: string): string | undefined {
-  return process.env[`LIMINAL_${key}`];
-}
+import { env } from '../utils/env.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
 

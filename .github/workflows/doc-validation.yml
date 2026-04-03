@@ -1,0 +1,32 @@
+name: Documentation Validation
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  validate-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      
+      # Version Consistency Check
+      - name: Check Version Consistency
+        run: node scripts/validate-version.js
+        
+      # File Existence Check
+      - name: Verify Bible File References
+        run: node scripts/verify-file-refs.js
+        
+      # Undocumented Code Detection
+      - name: Detect Undocumented Code
+        run: node scripts/detect-undocumented.js

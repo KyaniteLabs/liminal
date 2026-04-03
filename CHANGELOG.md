@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [0.3.0.0] - 2026-04-01
+## [2.1.0] - 2026-04-01
 
 ### Added — Meta-Harness (Self-Improving Infrastructure)
 - FailureLogger: Captures all failures with rich context (model, domain, prompt, error, thinking)

@@ -44,6 +44,7 @@ import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
+import { env } from '../utils/env.js';
 import { loadModelConfig } from './ModelConfig.js';
 
 export interface LLMConfig {
@@ -101,10 +102,6 @@ export interface LLMResponse {
     attemptedDomain?: string;
   };
   recoveredFromThinking?: boolean;  // True if code was extracted from thinking
-}
-
-function env(key: string): string | undefined {
-  return process.env[`LIMINAL_${key}`];
 }
 
 /**
@@ -196,6 +193,18 @@ export class LLMClient {
   /** Get current config */
   getConfig(): LLMConfig {
     return { ...this.config };
+  }
+
+  /**
+   * Get config with sensitive fields redacted
+   * Safe for logging
+   */
+  getSafeConfig(): LLMConfig {
+    const config = this.getConfig();
+    return {
+      ...config,
+      apiKey: config.apiKey ? '[REDACTED]' : undefined,
+    };
   }
 
   private resolvedModel: string | null = null;
@@ -691,7 +700,7 @@ Rules:
 
   /** Check if LLM is configured */
   static isConfigured(): boolean {
-    return !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY'));
+    return !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY') || SERVICE_DEFAULTS.LOCAL_LLM_URL);
   }
 
   /**

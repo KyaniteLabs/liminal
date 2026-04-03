@@ -1,0 +1,752 @@
+{
+  "summary": {
+    "magic_strings_found": 8,
+    "should_be_enum": [
+      "Provider",
+      "Domain",
+      "ApiStyle",
+      "JobStatus",
+      "TaskStatus",
+      "CollaborationMode",
+      "SwarmMode",
+      "ModelTier"
+    ],
+    "should_be_union_type": [
+      "ProviderType (already exists)",
+      "DomainType (already exists in some files)"
+    ],
+    "estimated_refactor_effort": "high - 50+ files affected"
+  },
+  "strings": [
+    {
+      "value": "lmstudio",
+      "type": "provider",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 92},
+        {"file": "src/config/schema.ts", "line": 7},
+        {"file": "src/config/ConfigLoader.ts", "line": 264},
+        {"file": "src/config/ConfigLoader.ts", "line": 268},
+        {"file": "src/config/ConfigLoader.ts", "line": 277},
+        {"file": "src/tui/InteractiveMode.ts", "line": 26},
+        {"file": "src/tui/InteractiveMode.ts", "line": 85},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 45}
+      ],
+      "recommendation": "Use Provider enum: 'lmstudio' | 'ollama' | 'minimax' | 'openai' | 'openrouter' | 'glm' | 'custom'"
+    },
+    {
+      "value": "ollama",
+      "type": "provider",
+      "occurrences": [
+        {"file": "src/llm/LLMClient.ts", "line": 63},
+        {"file": "src/llm/LLMClient.ts", "line": 67},
+        {"file": "src/llm/LLMClient.ts", "line": 131},
+        {"file": "src/llm/LLMClient.ts", "line": 139},
+        {"file": "src/llm/LLMClient.ts", "line": 150},
+        {"file": "src/llm/LLMClient.ts", "line": 153},
+        {"file": "src/llm/LLMClient.ts", "line": 252},
+        {"file": "src/llm/LLMClient.ts", "line": 526},
+        {"file": "src/llm/LLMClient.ts", "line": 557},
+        {"file": "src/llm/LLMClient.ts", "line": 607},
+        {"file": "src/llm/LLMClient.ts", "line": 697},
+        {"file": "src/core/RalphLoop.ts", "line": 93},
+        {"file": "src/config/ConfigLoader.ts", "line": 267},
+        {"file": "src/config/ConfigLoader.ts", "line": 270},
+        {"file": "src/config/ConfigLoader.ts", "line": 277},
+        {"file": "src/config/telemetry-seed.ts", "line": 73},
+        {"file": "src/config/telemetry-seed.ts", "line": 155},
+        {"file": "src/config/telemetry-seed.ts", "line": 238},
+        {"file": "src/config/telemetry-seed.ts", "line": 323},
+        {"file": "src/config/telemetry-seed.ts", "line": 406},
+        {"file": "src/config/telemetry-seed.ts", "line": 488},
+        {"file": "src/tui/InteractiveMode.ts", "line": 26},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 55},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 60},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 114},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 144},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 163},
+        {"file": "src/compost/types.ts", "line": 31}
+      ],
+      "recommendation": "Use Provider enum: part of ProviderType already defined in MultiProviderConfig.ts"
+    },
+    {
+      "value": "minimax",
+      "type": "provider",
+      "occurrences": [
+        {"file": "src/llm/LLMClient.ts", "line": 147},
+        {"file": "src/config/schema.ts", "line": 7},
+        {"file": "src/config/telemetry-seed.ts", "line": 21},
+        {"file": "src/config/telemetry-seed.ts", "line": 34},
+        {"file": "src/config/telemetry-seed.ts", "line": 103},
+        {"file": "src/config/telemetry-seed.ts", "line": 116},
+        {"file": "src/config/telemetry-seed.ts", "line": 185},
+        {"file": "src/config/telemetry-seed.ts", "line": 198},
+        {"file": "src/config/telemetry-seed.ts", "line": 268},
+        {"file": "src/config/telemetry-seed.ts", "line": 281},
+        {"file": "src/config/telemetry-seed.ts", "line": 354},
+        {"file": "src/config/telemetry-seed.ts", "line": 367},
+        {"file": "src/config/telemetry-seed.ts", "line": 436},
+        {"file": "src/config/telemetry-seed.ts", "line": 449},
+        {"file": "src/config/telemetry-seed.ts", "line": 518},
+        {"file": "src/config/telemetry-seed.ts", "line": 535},
+        {"file": "src/tui/InteractiveMode.ts", "line": 26},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 22},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 35},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 105},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 140},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 158}
+      ],
+      "recommendation": "Use Provider enum: part of ProviderType already defined in MultiProviderConfig.ts"
+    },
+    {
+      "value": "p5",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 201},
+        {"file": "src/core/RalphLoop.ts", "line": 329},
+        {"file": "src/core/RalphLoop.ts", "line": 330},
+        {"file": "src/core/RalphLoop.ts", "line": 331},
+        {"file": "src/core/RalphLoop.ts", "line": 336},
+        {"file": "src/core/RalphLoop.ts", "line": 386},
+        {"file": "src/core/RalphLoop.ts", "line": 388},
+        {"file": "src/core/RalphLoop.ts", "line": 430},
+        {"file": "src/core/RalphLoop.ts", "line": 442},
+        {"file": "src/core/RalphLoop.ts", "line": 516},
+        {"file": "src/core/RalphLoop.ts", "line": 545},
+        {"file": "src/core/RalphLoop.ts", "line": 666},
+        {"file": "src/core/RalphLoop.ts", "line": 668},
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 25},
+        {"file": "src/core/CodeValidator.ts", "line": 76},
+        {"file": "src/core/CodeValidator.ts", "line": 111},
+        {"file": "src/core/CodeValidator.ts", "line": 248},
+        {"file": "src/core/CodeValidator.ts", "line": 381},
+        {"file": "src/core/CodeValidator.ts", "line": 444},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 103},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 115},
+        {"file": "src/core/LoopConfig.ts", "line": 29},
+        {"file": "src/core/LoopConfig.ts", "line": 30},
+        {"file": "src/core/LoopConfig.ts", "line": 176},
+        {"file": "src/core/LoopConfig.ts", "line": 196},
+        {"file": "src/config/telemetry-seed.ts", "line": 19},
+        {"file": "src/config/telemetry-seed.ts", "line": 32},
+        {"file": "src/config/telemetry-seed.ts", "line": 45},
+        {"file": "src/config/telemetry-seed.ts", "line": 58},
+        {"file": "src/config/telemetry-seed.ts", "line": 71},
+        {"file": "src/config/telemetry-seed.ts", "line": 84},
+        {"file": "src/config/model-routing.ts", "line": 65},
+        {"file": "src/config/model-routing.ts", "line": 555},
+        {"file": "src/config/model-routing.ts", "line": 571},
+        {"file": "src/chat/types.ts", "line": 97},
+        {"file": "src/collab/types.ts", "line": 162},
+        {"file": "src/tui/preview/BrowserLauncher.ts", "line": 50},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 16},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 99}
+      ],
+      "recommendation": "Use Domain enum: 'p5' | 'shader' | 'glsl' | 'three' | 'remotion' | 'music' | 'hydra' | 'strudel' | 'ascii' | 'html' | 'unknown'"
+    },
+    {
+      "value": "three",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 666},
+        {"file": "src/core/RalphLoop.ts", "line": 671},
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 28},
+        {"file": "src/core/CodeValidator.ts", "line": 73},
+        {"file": "src/core/CodeValidator.ts", "line": 82},
+        {"file": "src/core/CodeValidator.ts", "line": 108},
+        {"file": "src/core/CodeValidator.ts", "line": 271},
+        {"file": "src/core/CodeValidator.ts", "line": 387},
+        {"file": "src/core/CodeValidator.ts", "line": 444},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 117},
+        {"file": "src/core/RuntimeValidator.ts", "line": 150},
+        {"file": "src/core/RuntimeValidator.ts", "line": 155},
+        {"file": "src/config/telemetry-seed.ts", "line": 183},
+        {"file": "src/config/telemetry-seed.ts", "line": 196},
+        {"file": "src/config/telemetry-seed.ts", "line": 209},
+        {"file": "src/config/telemetry-seed.ts", "line": 223},
+        {"file": "src/config/telemetry-seed.ts", "line": 236},
+        {"file": "src/config/telemetry-seed.ts", "line": 249},
+        {"file": "src/config/model-routing.ts", "line": 113},
+        {"file": "src/config/model-routing.ts", "line": 556},
+        {"file": "src/config/model-routing.ts", "line": 565},
+        {"file": "src/config/model-routing.ts", "line": 573},
+        {"file": "src/tui/preview/BrowserLauncher.ts", "line": 50},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 16},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 109},
+        {"file": "src/collab/types.ts", "line": 162},
+        {"file": "src/collab/CreativeBoard.ts", "line": 404},
+        {"file": "src/collab/CreativeBoard.ts", "line": 422}
+      ],
+      "recommendation": "Use Domain enum: already partially typed in chat/types.ts but not consistently used"
+    },
+    {
+      "value": "glsl",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 223},
+        {"file": "src/core/RalphLoop.ts", "line": 666},
+        {"file": "src/core/RalphLoop.ts", "line": 674},
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 27},
+        {"file": "src/core/CodeValidator.ts", "line": 426},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 116},
+        {"file": "src/core/RuntimeValidator.ts", "line": 150},
+        {"file": "src/core/RuntimeValidator.ts", "line": 158},
+        {"file": "src/config/telemetry-seed.ts", "line": 101},
+        {"file": "src/config/telemetry-seed.ts", "line": 114},
+        {"file": "src/config/telemetry-seed.ts", "line": 127},
+        {"file": "src/config/telemetry-seed.ts", "line": 140},
+        {"file": "src/config/telemetry-seed.ts", "line": 153},
+        {"file": "src/config/telemetry-seed.ts", "line": 166},
+        {"file": "src/config/model-routing.ts", "line": 90},
+        {"file": "src/config/model-routing.ts", "line": 556},
+        {"file": "src/config/model-routing.ts", "line": 572},
+        {"file": "src/tui/preview/BrowserLauncher.ts", "line": 50},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 16},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 104},
+        {"file": "src/collab/types.ts", "line": 162}
+      ],
+      "recommendation": "Use Domain enum: alias for 'shader', should be consolidated"
+    },
+    {
+      "value": "shader",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 26},
+        {"file": "src/core/CodeValidator.ts", "line": 75},
+        {"file": "src/core/CodeValidator.ts", "line": 89},
+        {"file": "src/core/CodeValidator.ts", "line": 262},
+        {"file": "src/core/CodeValidator.ts", "line": 393},
+        {"file": "src/core/CodeValidator.ts", "line": 427},
+        {"file": "src/chat/types.ts", "line": 97},
+        {"file": "src/utils/htmlWrapper.ts", "line": 16}
+      ],
+      "recommendation": "Use Domain enum: consolidate with 'glsl' or keep separate with clear distinction"
+    },
+    {
+      "value": "pending",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/core/BatchProcessor.ts", "line": 21},
+        {"file": "src/core/BatchProcessor.ts", "line": 128},
+        {"file": "src/core/BatchProcessor.ts", "line": 164},
+        {"file": "src/core/BatchProcessor.ts", "line": 258},
+        {"file": "src/core/BatchProcessor.ts", "line": 266},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 52},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 52},
+        {"file": "src/harness/HarnessMemory.ts", "line": 22},
+        {"file": "src/harness/HarnessMemory.ts", "line": 233},
+        {"file": "src/harness/HarnessMemory.ts", "line": 240}
+      ],
+      "recommendation": "Use JobStatus/TaskStatus enum: 'pending' | 'running' | 'completed' | 'failed' | 'success' | 'rolled_back'"
+    },
+    {
+      "value": "running",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/core/BatchProcessor.ts", "line": 21},
+        {"file": "src/core/BatchProcessor.ts", "line": 178},
+        {"file": "src/core/BatchProcessor.ts", "line": 258},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 52},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 87},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 52},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 92},
+        {"file": "src/compost/cli.ts", "line": 144}
+      ],
+      "recommendation": "Use JobStatus enum: 'pending' | 'running' | 'completed' | 'failed' | 'success'"
+    },
+    {
+      "value": "completed",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/core/BatchProcessor.ts", "line": 21},
+        {"file": "src/core/BatchProcessor.ts", "line": 183},
+        {"file": "src/core/BatchProcessor.ts", "line": 247},
+        {"file": "src/chat/types.ts", "line": 8},
+        {"file": "src/harness/HarnessMemory.ts", "line": 22},
+        {"file": "src/harness/HarnessMemory.ts", "line": 408}
+      ],
+      "recommendation": "Use JobStatus enum: already partially typed but inconsistent"
+    },
+    {
+      "value": "failed",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/core/BatchProcessor.ts", "line": 21},
+        {"file": "src/core/BatchProcessor.ts", "line": 198},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 52},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 177},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 200},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 213},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 428},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 52},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 141},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 186},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 340},
+        {"file": "src/harness/HarnessMemory.ts", "line": 22}
+      ],
+      "recommendation": "Use JobStatus enum: already partially typed in HarnessAgent"
+    },
+    {
+      "value": "success",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 52},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 148},
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 427},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 52},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 166},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 339},
+        {"file": "src/harness/SelfEvaluation.ts", "line": 73},
+        {"file": "src/tui/commands.ts", "line": 108},
+        {"file": "src/tui/commands.ts", "line": 168},
+        {"file": "src/tui/NaturalInterface.ts", "line": 255},
+        {"file": "src/tui/NaturalInterface.ts", "line": 260}
+      ],
+      "recommendation": "Use TaskStatus enum: 'pending' | 'running' | 'success' | 'failed' | 'rolled_back'"
+    },
+    {
+      "value": "swarm",
+      "type": "mode",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 200},
+        {"file": "src/core/RalphLoop.ts", "line": 515},
+        {"file": "src/core/RalphLoop.ts", "line": 544},
+        {"file": "src/core/types.ts", "line": 10},
+        {"file": "src/core/types.ts", "line": 95},
+        {"file": "src/config/ConfigLoader.ts", "line": 88},
+        {"file": "src/config/ConfigLoader.ts", "line": 109},
+        {"file": "src/config/ConfigLoader.ts", "line": 267},
+        {"file": "src/config/ConfigLoader.ts", "line": 274},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 24},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 56},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 58},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 82},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 104},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 118},
+        {"file": "src/chat/types.ts", "line": 89},
+        {"file": "src/chat/GuidanceEngine.ts", "line": 205},
+        {"file": "src/chat/GuidanceEngine.ts", "line": 352},
+        {"file": "src/learning/ArchiveLearning.ts", "line": 349},
+        {"file": "src/prompts/personas.ts", "line": 13},
+        {"file": "src/prompts/personas.ts", "line": 17},
+        {"file": "src/prompts/personas.ts", "line": 30},
+        {"file": "src/prompts/personas.ts", "line": 34},
+        {"file": "src/prompts/personas.ts", "line": 47},
+        {"file": "src/prompts/personas.ts", "line": 51},
+        {"file": "src/prompts/personas.ts", "line": 64},
+        {"file": "src/prompts/personas.ts", "line": 68},
+        {"file": "src/prompts/personas.ts", "line": 81},
+        {"file": "src/prompts/personas.ts", "line": 85},
+        {"file": "src/prompts/swarm.ts", "line": 16}
+      ],
+      "recommendation": "Use CollaborationMode enum: 'swarm' | 'phases' | 'simple' - defined in CollaborationEngine.ts but not consistently used"
+    },
+    {
+      "value": "hybrid",
+      "type": "mode",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 443},
+        {"file": "src/core/LoopConfig.ts", "line": 75},
+        {"file": "src/core/LoopConfig.ts", "line": 199},
+        {"file": "src/config/ConfigLoader.ts", "line": 88},
+        {"file": "src/config/ConfigLoader.ts", "line": 125},
+        {"file": "src/config/ConfigLoader.ts", "line": 267},
+        {"file": "src/config/ConfigLoader.ts", "line": 274},
+        {"file": "src/swarm/types.ts", "line": 18},
+        {"file": "src/swarm/MiningEngine.ts", "line": 43},
+        {"file": "src/swarm/MiningEngine.ts", "line": 62},
+        {"file": "src/swarm/SwarmOrchestrator.ts", "line": 49},
+        {"file": "src/swarm/SwarmOrchestrator.ts", "line": 238},
+        {"file": "src/swarm/SwarmOrchestrator.ts", "line": 458},
+        {"file": "src/tui/InteractiveMode.ts", "line": 26}
+      ],
+      "recommendation": "Use SwarmMode enum: 'hybrid' | 'competitive' | 'collaborative' | 'ring' | 'mesh' - defined in swarm/types.ts"
+    },
+    {
+      "value": "local",
+      "type": "tier/location",
+      "occurrences": [
+        {"file": "src/llm/ModelTier.ts", "line": 15},
+        {"file": "src/llm/ModelTier.ts", "line": 43},
+        {"file": "src/llm/ModelTier.ts", "line": 44},
+        {"file": "src/llm/ModelTier.ts", "line": 45},
+        {"file": "src/llm/ModelTier.ts", "line": 46},
+        {"file": "src/llm/ModelTier.ts", "line": 47},
+        {"file": "src/llm/ModelTier.ts", "line": 48},
+        {"file": "src/llm/ModelTier.ts", "line": 49},
+        {"file": "src/llm/ModelTier.ts", "line": 50},
+        {"file": "src/llm/ModelTier.ts", "line": 51},
+        {"file": "src/llm/ModelTier.ts", "line": 79},
+        {"file": "src/llm/ModelTier.ts", "line": 131},
+        {"file": "src/llm/ModelTier.ts", "line": 154},
+        {"file": "src/llm/ModelTier.ts", "line": 156},
+        {"file": "src/llm/ModelTier.ts", "line": 197},
+        {"file": "src/llm/PromptBuilder.ts", "line": 64},
+        {"file": "src/core/RalphLoop.ts", "line": 200},
+        {"file": "src/core/RalphLoop.ts", "line": 443},
+        {"file": "src/core/RalphLoop.ts", "line": 515},
+        {"file": "src/core/RalphLoop.ts", "line": 544},
+        {"file": "src/ui/TransparencyViewer.ts", "line": 80}
+      ],
+      "recommendation": "Use ModelTier enum: 'flagship' | 'medium' | 'local' | 'tiny' - defined in ModelTier.ts"
+    },
+    {
+      "value": "openai",
+      "type": "provider/api-style",
+      "occurrences": [
+        {"file": "src/llm/LLMClient.ts", "line": 62},
+        {"file": "src/llm/LLMClient.ts", "line": 67},
+        {"file": "src/llm/LLMClient.ts", "line": 131},
+        {"file": "src/llm/LLMClient.ts", "line": 136},
+        {"file": "src/llm/LLMClient.ts", "line": 148},
+        {"file": "src/config/schema.ts", "line": 7},
+        {"file": "src/config/ConfigLoader.ts", "line": 125},
+        {"file": "src/config/ConfigLoader.ts", "line": 137},
+        {"file": "src/config/ConfigLoader.ts", "line": 267},
+        {"file": "src/config/ConfigLoader.ts", "line": 271},
+        {"file": "src/config/ConfigLoader.ts", "line": 272},
+        {"file": "src/tui/InteractiveMode.ts", "line": 26},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 40},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 50},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 70},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 80},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 90}
+      ],
+      "recommendation": "Use Provider/ApiStyle enum: already typed but inconsistent in string fallbacks"
+    },
+    {
+      "value": "openrouter",
+      "type": "provider",
+      "occurrences": [
+        {"file": "src/config/schema.ts", "line": 7},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 22},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 65},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 111},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 141}
+      ],
+      "recommendation": "Use Provider enum: part of ProviderType in MultiProviderConfig.ts"
+    },
+    {
+      "value": "glm",
+      "type": "provider",
+      "occurrences": [
+        {"file": "src/config/schema.ts", "line": 7},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 22},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 75},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 108},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 142}
+      ],
+      "recommendation": "Use Provider enum: part of ProviderType in MultiProviderConfig.ts"
+    },
+    {
+      "value": "custom",
+      "type": "provider",
+      "occurrences": [
+        {"file": "src/config/schema.ts", "line": 7},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 22},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 85},
+        {"file": "src/harness/MultiProviderConfig.ts", "line": 119}
+      ],
+      "recommendation": "Use Provider enum: part of ProviderType in MultiProviderConfig.ts"
+    },
+    {
+      "value": "music",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 30},
+        {"file": "src/core/CodeValidator.ts", "line": 105},
+        {"file": "src/core/CodeValidator.ts", "line": 330},
+        {"file": "src/core/CodeValidator.ts", "line": 646},
+        {"file": "src/core/RalphLoop.ts", "line": 334},
+        {"file": "src/core/RalphLoop.ts", "line": 442},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 119},
+        {"file": "src/core/LoopConfig.ts", "line": 173},
+        {"file": "src/core/AmbiguityDetector.ts", "line": 263},
+        {"file": "src/core/CreativeEvaluator.ts", "line": 153},
+        {"file": "src/core/CreativeEvaluator.ts", "line": 158},
+        {"file": "src/chat/types.ts", "line": 97},
+        {"file": "src/collab/Scoring.ts", "line": 53}
+      ],
+      "recommendation": "Use Domain enum: part of Domain type but used as runtime string"
+    },
+    {
+      "value": "hydra",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 334},
+        {"file": "src/core/RalphLoop.ts", "line": 666},
+        {"file": "src/core/RalphLoop.ts", "line": 677},
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 32},
+        {"file": "src/core/CodeValidator.ts", "line": 96},
+        {"file": "src/core/CodeValidator.ts", "line": 278},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 118},
+        {"file": "src/core/RuntimeValidator.ts", "line": 150},
+        {"file": "src/core/RuntimeValidator.ts", "line": 161},
+        {"file": "src/config/telemetry-seed.ts", "line": 266},
+        {"file": "src/tui/preview/BrowserLauncher.ts", "line": 50},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 16},
+        {"file": "src/generateVisuals.ts", "line": 17},
+        {"file": "src/chat/types.ts", "line": 97}
+      ],
+      "recommendation": "Use Domain enum: part of Domain type"
+    },
+    {
+      "value": "strudel",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 334},
+        {"file": "src/core/RalphLoop.ts", "line": 666},
+        {"file": "src/core/RalphLoop.ts", "line": 680},
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 33},
+        {"file": "src/core/CodeValidator.ts", "line": 101},
+        {"file": "src/core/CodeValidator.ts", "line": 306},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 119},
+        {"file": "src/core/RuntimeValidator.ts", "line": 150},
+        {"file": "src/core/RuntimeValidator.ts", "line": 164},
+        {"file": "src/tui/preview/BrowserLauncher.ts", "line": 50},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 16},
+        {"file": "src/tui/preview/PreviewRouter.ts", "line": 33},
+        {"file": "src/generateVisuals.ts", "line": 17},
+        {"file": "src/music/generateMusic.ts", "line": 70},
+        {"file": "src/chat/types.ts", "line": 97}
+      ],
+      "recommendation": "Use Domain enum: part of Domain type"
+    },
+    {
+      "value": "remotion",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 335},
+        {"file": "src/core/RalphLoop.ts", "line": 442},
+        {"file": "src/core/RalphLoop.ts", "line": 666},
+        {"file": "src/core/RalphLoop.ts", "line": 683},
+        {"file": "src/core/CodeValidator.ts", "line": 19},
+        {"file": "src/core/CodeValidator.ts", "line": 29},
+        {"file": "src/core/CodeValidator.ts", "line": 92},
+        {"file": "src/core/CodeValidator.ts", "line": 323},
+        {"file": "src/core/TelemetryAggregator.ts", "line": 120},
+        {"file": "src/core/RuntimeValidator.ts", "line": 150},
+        {"file": "src/core/RuntimeValidator.ts", "line": 167},
+        {"file": "src/collab/types.ts", "line": 162},
+        {"file": "src/collab/CreativeBoard.ts", "line": 404},
+        {"file": "src/chat/types.ts", "line": 97}
+      ],
+      "recommendation": "Use Domain enum: part of Domain type"
+    },
+    {
+      "value": "ascii",
+      "type": "domain",
+      "occurrences": [
+        {"file": "src/core/RalphLoop.ts", "line": 333},
+        {"file": "src/core/RalphLoop.ts", "line": 442},
+        {"file": "src/core/LoopConfig.ts", "line": 172},
+        {"file": "src/collab/types.ts", "line": 162}
+      ],
+      "recommendation": "Use Domain enum: part of Domain type"
+    },
+    {
+      "value": "active",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/chat/ConversationManager.ts", "line": 76},
+        {"file": "src/chat/ConversationManager.ts", "line": 101},
+        {"file": "src/chat/types.ts", "line": 8}
+      ],
+      "recommendation": "Use ConversationStatus enum: 'active' | 'paused' | 'completed'"
+    },
+    {
+      "value": "paused",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/chat/types.ts", "line": 8}
+      ],
+      "recommendation": "Use ConversationStatus enum: 'active' | 'paused' | 'completed'"
+    },
+    {
+      "value": "rolled_back",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/harness/agent/LLMModeAgent.ts", "line": 52},
+        {"file": "src/harness/agent/HarnessAgent.ts", "line": 52}
+      ],
+      "recommendation": "Use TaskStatus enum: already part of TaskStatus type"
+    },
+    {
+      "value": "in_progress",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/harness/HarnessMemory.ts", "line": 22},
+        {"file": "src/harness/HarnessMemory.ts", "line": 240}
+      ],
+      "recommendation": "Use HarnessTaskStatus enum: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped'"
+    },
+    {
+      "value": "skipped",
+      "type": "status",
+      "occurrences": [
+        {"file": "src/harness/HarnessMemory.ts", "line": 22}
+      ],
+      "recommendation": "Use HarnessTaskStatus enum: 'pending' | 'in_progress' | 'completed' | 'failed' | 'skipped'"
+    },
+    {
+      "value": "phases",
+      "type": "mode",
+      "occurrences": [
+        {"file": "src/config/ConfigLoader.ts", "line": 88},
+        {"file": "src/config/ConfigLoader.ts", "line": 109},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 24}
+      ],
+      "recommendation": "Use CollaborationMode enum: 'swarm' | 'phases' | 'simple'"
+    },
+    {
+      "value": "simple",
+      "type": "mode/complexity",
+      "occurrences": [
+        {"file": "src/config/ConfigLoader.ts", "line": 109},
+        {"file": "src/collab/CollaborationEngine.ts", "line": 24},
+        {"file": "src/chat/types.ts", "line": 118},
+        {"file": "src/chat/CreativeBrief.ts", "line": 110},
+        {"file": "src/chat/CreativeBrief.ts", "line": 116},
+        {"file": "src/chat/ConversationManager.ts", "line": 182},
+        {"file": "src/core/AmbiguityDetector.ts", "line": 187}
+      ],
+      "recommendation": "Use CollaborationMode or Complexity enum depending on context"
+    },
+    {
+      "value": "openai-api",
+      "type": "api-style",
+      "occurrences": [
+        {"file": "src/llm/LLMClient.ts", "line": 62},
+        {"file": "src/llm/LLMClient.ts", "line": 67},
+        {"file": "src/llm/LLMClient.ts", "line": 131}
+      ],
+      "recommendation": "Use ApiStyle enum: 'openai' | 'ollama' | 'anthropic' - defined in LLMClient.ts"
+    },
+    {
+      "value": "anthropic",
+      "type": "api-style/provider",
+      "occurrences": [
+        {"file": "src/llm/LLMClient.ts", "line": 64},
+        {"file": "src/llm/LLMClient.ts", "line": 67},
+        {"file": "src/llm/LLMClient.ts", "line": 149},
+        {"file": "src/config/ConfigLoader.ts", "line": 267},
+        {"file": "src/config/ConfigLoader.ts", "line": 272}
+      ],
+      "recommendation": "Use ApiStyle enum: 'openai' | 'ollama' | 'anthropic'"
+    }
+  ],
+  "categories": {
+    "providers": {
+      "strings": ["lmstudio", "ollama", "minimax", "openai", "openrouter", "glm", "custom", "anthropic"],
+      "affected_files": 12,
+      "recommendation": "Centralize in shared Provider enum in src/types/provider.ts"
+    },
+    "domains": {
+      "strings": ["p5", "glsl", "three", "shader", "music", "hydra", "strudel", "remotion", "ascii", "html", "node"],
+      "affected_files": 35,
+      "recommendation": "Centralize in shared Domain enum in src/types/domain.ts - consolidate 'glsl'/'shader' distinction"
+    },
+    "status": {
+      "strings": ["pending", "running", "completed", "failed", "success", "active", "paused", "rolled_back", "in_progress", "skipped"],
+      "affected_files": 14,
+      "recommendation": "Create separate enums: JobStatus, TaskStatus, ConversationStatus, HarnessTaskStatus"
+    },
+    "modes": {
+      "strings": ["swarm", "hybrid", "phases", "simple", "local", "cloud", "collab", "competitive"],
+      "affected_files": 18,
+      "recommendation": "Use existing enums: CollaborationMode, SwarmMode, ModelTier"
+    },
+    "api_styles": {
+      "strings": ["openai", "ollama", "anthropic"],
+      "affected_files": 5,
+      "recommendation": "Use ApiStyle enum from LLMClient.ts consistently"
+    }
+  },
+  "fallback_chains": [
+    {
+      "pattern": "|| 'lmstudio'",
+      "occurrences": 4,
+      "files": ["src/core/RalphLoop.ts", "src/config/ConfigLoader.ts"],
+      "recommendation": "Use constant: DEFAULT_PROVIDER = Provider.LMSTUDIO"
+    },
+    {
+      "pattern": "|| 'p5'",
+      "occurrences": 15,
+      "files": ["src/core/RalphLoop.ts", "src/core/LoopConfig.ts", "src/core/GenerationOrchestrator.ts", "src/core/EvolutionIntegration.ts", "src/core/PromptEnhancer.ts"],
+      "recommendation": "Use constant: DEFAULT_DOMAIN = Domain.P5"
+    },
+    {
+      "pattern": "|| 'ollama'",
+      "occurrences": 2,
+      "files": ["src/config/ConfigLoader.ts"],
+      "recommendation": "Use constant: FALLBACK_PROVIDER = Provider.OLLAMA"
+    }
+  ],
+  "existing_types": [
+    {
+      "name": "ProviderType",
+      "location": "src/harness/MultiProviderConfig.ts:22",
+      "values": "'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'custom'",
+      "coverage": "partial - missing 'openai', 'anthropic'"
+    },
+    {
+      "name": "Domain",
+      "location": "src/chat/types.ts:97",
+      "values": "'p5' | 'shader' | 'three' | 'music' | 'hydra' | 'strudel' | 'remotion'",
+      "coverage": "partial - missing 'glsl', 'ascii', 'html', 'node'"
+    },
+    {
+      "name": "Domain (local)",
+      "location": "src/core/CodeValidator.ts:19",
+      "values": "'p5' | 'shader' | 'glsl' | 'three' | 'remotion' | 'music' | 'hydra' | 'strudel' | 'unknown'",
+      "coverage": "local type, not exported"
+    },
+    {
+      "name": "CollaborationMode",
+      "location": "src/collab/CollaborationEngine.ts:24",
+      "values": "'swarm' | 'phases' | 'simple'",
+      "coverage": "good but not consistently used"
+    },
+    {
+      "name": "SwarmMode",
+      "location": "src/swarm/types.ts",
+      "values": "HYBRID = 'hybrid', etc (enum)",
+      "coverage": "good - uses proper enum"
+    },
+    {
+      "name": "ModelTier",
+      "location": "src/llm/ModelTier.ts:15",
+      "values": "'flagship' | 'medium' | 'local' | 'tiny'",
+      "coverage": "good but string comparisons remain"
+    },
+    {
+      "name": "TaskStatus",
+      "location": "src/harness/agent/HarnessAgent.ts:52",
+      "values": "'pending' | 'running' | 'success' | 'failed' | 'rolled_back'",
+      "coverage": "good for harness tasks"
+    }
+  ],
+  "recommendations": {
+    "priority_high": [
+      "Create shared Provider enum and replace all provider string literals",
+      "Create shared Domain enum and replace all domain string literals",
+      "Consolidate 'glsl' vs 'shader' usage (they appear to be aliases)"
+    ],
+    "priority_medium": [
+      "Standardize status enums across BatchProcessor, HarnessAgent, HarnessMemory",
+      "Extract all || '' fallback chains to named constants",
+      "Move existing types to shared location (src/types/)"
+    ],
+    "priority_low": [
+      "Use existing CollaborationMode and SwarmMode enums consistently",
+      "Use existing ModelTier enum consistently",
+      "Use existing ApiStyle type consistently"
+    ]
+  }
+}

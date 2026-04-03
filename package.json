@@ -1,11 +1,11 @@
 {
   "name": "liminal-ai",
-  "version": "1.0.0",
+  "version": "2.1.0",
   "description": "Creative coding agent with internal Ralph-Wiggum Loop and multi-domain intelligence",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
-  "author": "",
+  "author": "Simon Gonzalez de Cruz",
   "license": "MIT",
   "repository": {
     "type": "git",
@@ -39,7 +39,9 @@
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",
     "benchmark": "node scripts/benchmark.js",
-    "tui": "npx tsx src/tui/HarnessTUI.tsx"
+    "tui": "npx tsx src/tui/HarnessTUI.tsx",
+    "validate-docs": "node scripts/validate-version.js && node scripts/verify-file-refs.js",
+    "audit-docs": "node scripts/audit-docs.js"
   },
   "keywords": [
     "generative-art",

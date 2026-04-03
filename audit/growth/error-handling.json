@@ -1,0 +1,361 @@
+{
+  "summary": {
+    "total_catch_blocks": 149,
+    "bare_catches": 2,
+    "console_only_warnings": 47,
+    "console_only_errors": 21,
+    "logger_warn": 18,
+    "logger_error": 5,
+    "throw_new": 92,
+    "rethrow": 0,
+    "return_with_fallback": 35
+  },
+  "patterns": [
+    {
+      "file": "src/harness/tools/backup.ts",
+      "line": 96,
+      "pattern": "bare_catch",
+      "code": "await fs.unlink(filePath).catch(() => {});",
+      "risk": "high - errors swallowed silently, file deletion failures invisible"
+    },
+    {
+      "file": "src/render/CanvasRecorder.ts",
+      "line": 93,
+      "pattern": "bare_catch",
+      "code": "await fs.rm(framesDir, { recursive: true, force: true }).catch(() => {});",
+      "risk": "high - cleanup failures invisible, could leave temp files"
+    },
+    {
+      "file": "src/config/ConfigLoader.ts",
+      "line": 194,
+      "pattern": "silent_catch",
+      "code": "} catch (err) { // Silently skip any errors during migration }",
+      "risk": "medium - intentionally silent for migration, but could hide real issues"
+    },
+    {
+      "file": "src/evolution/MapElites.ts",
+      "line": 98,
+      "pattern": "silent_catch_with_comment",
+      "code": "} catch (loadError) { // File doesn't exist or is invalid — start fresh }",
+      "risk": "low - intentional for 'file not found' case, but broad catch"
+    },
+    {
+      "file": "src/scavenger/DNAExtractor.ts",
+      "line": 116,
+      "pattern": "console_warn_with_continue",
+      "code": "catch (err) { console.warn('DNAExtractor.scanForCarcasses failed:', err); }",
+      "risk": "low - warning logged, but continues without handling"
+    },
+    {
+      "file": "src/compost/CompostSoup.ts",
+      "line": 134,
+      "pattern": "console_warn_with_continue",
+      "code": "catch (err) { console.warn('[CompostSoup] cycle failed, continuing:', err); }",
+      "risk": "low - intentional best-effort processing"
+    },
+    {
+      "file": "src/compost/DigestScheduler.ts",
+      "line": 20,
+      "pattern": "console_warn_silent",
+      "code": "catch (err) { console.warn('[DigestScheduler] scheduled digest failed:', err); }",
+      "risk": "medium - scheduled task failures logged but not escalated"
+    },
+    {
+      "file": "src/compost/HeapMonitor.ts",
+      "line": 29,
+      "pattern": "console_warn_silent",
+      "code": "catch (err) { console.warn('[HeapMonitor] auto-digest failed:', err); }",
+      "risk": "medium - background task failure not escalated"
+    },
+    {
+      "file": "src/core/GenerationOrchestrator.ts",
+      "line": 118,
+      "pattern": "console_warn_silent",
+      "code": "catch (err) { console.warn('Swarm session save failed:', err); }",
+      "risk": "low - best-effort save operation"
+    },
+    {
+      "file": "src/core/GenerationOrchestrator.ts",
+      "line": 129,
+      "pattern": "console_warn_silent",
+      "code": "catch (err) { console.warn('Swarm mining failed:', err); }",
+      "risk": "low - best-effort mining operation"
+    },
+    {
+      "file": "src/core/ContextAccumulation.ts",
+      "line": 108,
+      "pattern": "console_warn_with_return",
+      "code": "catch (err) { console.warn('Failed to load loop state:', err); return null; }",
+      "risk": "low - returns null on failure, caller must handle"
+    },
+    {
+      "file": "src/config/PromptHistory.ts",
+      "line": 32,
+      "pattern": "console_warn_with_fallback",
+      "code": "catch (err) { console.warn('[PromptHistory] Failed to load history...'); return { recent: [], favorites: [] }; }",
+      "risk": "low - appropriate fallback for config loading"
+    },
+    {
+      "file": "src/compost/SoupStateManager.ts",
+      "line": 36,
+      "pattern": "console_warn_with_fallback",
+      "code": "catch (err) { console.warn('[SoupStateManager] failed to load state...'); return { ...DEFAULT_STATE }; }",
+      "risk": "low - appropriate default fallback"
+    },
+    {
+      "file": "src/compost/SeedBank.ts",
+      "line": 36,
+      "pattern": "console_warn_with_fallback",
+      "code": "catch (err) { console.warn('[SeedBank] failed to load seeds...'); this.seeds = []; }",
+      "risk": "low - appropriate empty fallback"
+    },
+    {
+      "file": "src/routing/RoutingData.ts",
+      "line": 53,
+      "pattern": "console_warn_best_effort",
+      "code": "catch (err) { console.warn('[RoutingData] Failed to record routing outcome:', err); }",
+      "risk": "low - best-effort telemetry"
+    },
+    {
+      "file": "src/routing/RoutingData.ts",
+      "line": 67,
+      "pattern": "console_warn_with_return",
+      "code": "catch (err) { console.warn('[RoutingData] Failed to load routing records:', err); return []; }",
+      "risk": "low - returns empty array on failure"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 312,
+      "pattern": "graceful_degradation",
+      "code": "catch (e) { normalizedOptions.onThought?.('Aesthetic analysis skipped...'); }",
+      "risk": "low - graceful degradation with notification"
+    },
+    {
+      "file": "src/core/RalphLoop.ts",
+      "line": 415,
+      "pattern": "console_warn_best_effort",
+      "code": "catch (err) { console.warn('Auto-compost failed:', err); }",
+      "risk": "low - best-effort background task"
+    },
+    {
+      "file": "src/core/OrganismLoop.ts",
+      "line": 73,
+      "pattern": "console_warn_best_effort",
+      "code": "catch (err) { console.warn('Organism compost seed injection failed:', err); }",
+      "risk": "low - best-effort enhancement"
+    },
+    {
+      "file": "src/core/PromptEnhancer.ts",
+      "line": 41,
+      "pattern": "logger_warn_silent",
+      "code": "catch (err) { Logger.warn('RalphLoop', 'Compost seed injection failed:', err); }",
+      "risk": "low - best-effort enhancement"
+    },
+    {
+      "file": "src/harness/HarnessMemory.ts",
+      "line": 140,
+      "pattern": "console_error_with_fallback",
+      "code": "catch (err) { console.error('[HarnessMemory] Initialization failed:', err); this.state = { ...DEFAULT_STATE }; }",
+      "risk": "medium - initialization failure logged but defaults used"
+    },
+    {
+      "file": "src/harness/HarnessMemory.ts",
+      "line": 170,
+      "pattern": "console_error_silent",
+      "code": "catch (err) { console.error('[HarnessMemory] Save failed:', err); }",
+      "risk": "high - persistence failure not escalated, data loss risk"
+    },
+    {
+      "file": "src/harness/HarnessMemory.ts",
+      "line": 136,
+      "pattern": "promise_catch_console_error",
+      "code": "this.save().catch(console.error);",
+      "risk": "high - background save failures invisible"
+    },
+    {
+      "file": "src/learning/QualityArchive.ts",
+      "line": 157,
+      "pattern": "logger_error_then_rethrow",
+      "code": "catch (error) { Logger.error('QualityArchive', ...); throw error; }",
+      "risk": "low - properly logs then re-throws"
+    },
+    {
+      "file": "src/core/parsing/ParsingCache.ts",
+      "line": 79,
+      "pattern": "console_warn_silent_continue",
+      "code": "catch (error) { console.warn('Failed to load cache file...'); }",
+      "risk": "low - cache miss handled gracefully"
+    },
+    {
+      "file": "src/render/PreviewServer.ts",
+      "line": 61,
+      "pattern": "console_warn_with_action",
+      "code": "catch (err) { console.warn('[PreviewServer] Failed to write to SSE client, removing:', err); this.sseClients.delete(client); }",
+      "risk": "low - appropriate cleanup on error"
+    },
+    {
+      "file": "src/tui/index.tsx",
+      "line": 258,
+      "pattern": "typed_error_handling",
+      "code": "catch (err: any) { if (err?.name === 'AbortError'...) }",
+      "risk": "low - good pattern for specific error handling"
+    },
+    {
+      "file": "src/index.ts",
+      "line": 261,
+      "pattern": "fallback_on_error",
+      "code": "catch (error) { // create simple ZIP fallback }",
+      "risk": "low - provides degraded functionality on failure"
+    },
+    {
+      "file": "src/export/Exporter.ts",
+      "line": 70,
+      "pattern": "throw_new_with_context",
+      "code": "catch (error) { throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`); }",
+      "risk": "low - good pattern: wrap with context"
+    },
+    {
+      "file": "src/sandbox/SandboxRunner.ts",
+      "line": 73,
+      "pattern": "return_error_object",
+      "code": "catch (err) { return { completed: false, error: message }; }",
+      "risk": "low - returns structured error instead of throwing"
+    },
+    {
+      "file": "src/harness/agent/HarnessAgent.ts",
+      "line": 321,
+      "pattern": "return_error_object",
+      "code": "catch (error) { return { success: false, error: error instanceof Error ? error.message : String(error) }; }",
+      "risk": "low - returns structured error"
+    },
+    {
+      "file": "src/compost/ModelRouter.ts",
+      "line": 251,
+      "pattern": "return_error_object",
+      "code": "catch (error) { return { code: '', success: false, ... }; }",
+      "risk": "low - returns structured error with context"
+    },
+    {
+      "file": "src/improvement/requestImprovement.ts",
+      "line": 56,
+      "pattern": "return_error_with_fallback",
+      "code": "catch (err) { Logger.error(...); return { code: templateFallback(...), improved: false, error: msg }; }",
+      "risk": "low - returns fallback with error info"
+    },
+    {
+      "file": "src/core/LoopPersistence.ts",
+      "line": 33,
+      "pattern": "conditional_rethrow",
+      "code": "catch (error) { if (!this.options.tolerateErrors) { throw error; } }",
+      "risk": "low - configurable error handling"
+    },
+    {
+      "file": "src/render/Renderer.ts",
+      "line": 38,
+      "pattern": "cleanup_then_rethrow",
+      "code": "catch (err) { Renderer.browserLaunching = null; throw err; }",
+      "risk": "low - cleanup before re-throwing"
+    },
+    {
+      "file": "src/security/JsonSchemas.ts",
+      "line": 138,
+      "pattern": "type_specific_handling",
+      "code": "catch (err) { if (err instanceof z.ZodError) { ... } else { ... } }",
+      "risk": "low - good pattern for typed errors"
+    },
+    {
+      "file": "src/compost/SemanticExtractor.ts",
+      "line": 126,
+      "pattern": "typed_error_handling",
+      "code": "catch (error) { if (error instanceof LIRParseError) { ... } }",
+      "risk": "low - specific handling for known error types"
+    },
+    {
+      "file": "src/utils/normalizePath.ts",
+      "line": 24,
+      "pattern": "fallback_on_specific_error",
+      "code": "catch (realpathError) { baseReal = baseAbs; }",
+      "risk": "low - graceful fallback for realpath failure"
+    },
+    {
+      "file": "src/learning/QualityArchive.ts",
+      "line": 132,
+      "pattern": "error_code_specific_handling",
+      "code": "catch (error) { if ((error as NodeJS.ErrnoException).code === 'ENOENT') { ... } }",
+      "risk": "low - handles specific filesystem error"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "high",
+      "issue": "Bare catches swallowing errors",
+      "locations": [
+        "src/harness/tools/backup.ts:96",
+        "src/render/CanvasRecorder.ts:93"
+      ],
+      "suggestion": "Replace bare catches with at least console.warn logging, or propagate error to caller"
+    },
+    {
+      "priority": "high",
+      "issue": "Silent persistence failures",
+      "locations": [
+        "src/harness/HarnessMemory.ts:136",
+        "src/harness/HarnessMemory.ts:170"
+      ],
+      "suggestion": "HarnessMemory save failures should emit events or retry, not just log to console"
+    },
+    {
+      "priority": "medium",
+      "issue": "Inconsistent error logging utility",
+      "locations": [
+        "Multiple files use console.warn/error directly",
+        "Some files use Logger utility"
+      ],
+      "suggestion": "Standardize on Logger utility for all error logging; add structured logging support"
+    },
+    {
+      "priority": "medium",
+      "issue": "Mixed error handling patterns",
+      "observation": "Some functions throw, some return error objects, some use callbacks",
+      "suggestion": "Consider standardizing on Result<T, E> pattern or consistent exception hierarchy"
+    },
+    {
+      "priority": "medium",
+      "issue": "Error message formatting inconsistency",
+      "observation": "Various formats: [Context] message, Context: message, just message",
+      "suggestion": "Standardize error message format across the codebase"
+    },
+    {
+      "priority": "low",
+      "issue": "Best-effort operations may fail silently",
+      "locations": [
+        "Background tasks in compost/",
+        "Cache operations",
+        "Telemetry recording"
+      ],
+      "suggestion": "Consider cumulative error tracking for best-effort operations"
+    }
+  ],
+  "good_patterns": [
+    {
+      "pattern": "error instanceof Error check",
+      "example": "const msg = err instanceof Error ? err.message : 'Unknown error'",
+      "benefit": "Type-safe error message extraction"
+    },
+    {
+      "pattern": "Contextual error wrapping",
+      "example": "throw new Error(`Failed to export HTML: ${error.message}`)",
+      "benefit": "Preserves error chain while adding context"
+    },
+    {
+      "pattern": "Specific error code handling",
+      "example": "if ((error as NodeJS.ErrnoException).code === 'ENOENT')",
+      "benefit": "Handles expected errors gracefully"
+    },
+    {
+      "pattern": "Fallback with notification",
+      "example": "catch (e) { onThought?.('Aesthetic analysis skipped...') }",
+      "benefit": "User-visible degradation notification"
+    }
+  ]
+}

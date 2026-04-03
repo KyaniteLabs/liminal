@@ -19,6 +19,7 @@ vi.mock('../../src/llm/LLMClient.js', () => {
   });
   class MockLLMClient {
     generate = generate;
+    getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
   return { LLMClient: MockLLMClient };

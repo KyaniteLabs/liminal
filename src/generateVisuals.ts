@@ -7,6 +7,7 @@
 
 import { LLMClient } from './llm/LLMClient.js';
 import { PromptLibrary } from './prompts/index.js';
+import { validatePrompt } from './utils/validation.js';
 
 export interface GenerateVisualsOptions {
   prompt: string;
@@ -36,9 +37,7 @@ export async function generateVisuals(
 ): Promise<GenerateVisualsResult> {
   const { prompt, audioInput, platform = 'hydra', signal, llm } = options;
 
-  if (!prompt || typeof prompt !== 'string' || prompt.trim().length === 0) {
-    throw new Error('prompt is required and must be a non-empty string');
-  }
+  validatePrompt(prompt);
 
   const trimmedPrompt = prompt.trim().toLowerCase();
 

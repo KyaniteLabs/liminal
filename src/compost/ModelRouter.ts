@@ -11,6 +11,7 @@
 import type { LLMClientLike } from './SemanticExtractor.js';
 import type { MultiModelConfig } from '../config/ConfigLoader.js';
 import { formatError } from '../utils/errors.js';
+import { Logger } from '../utils/Logger.js';
 
 /** Task classification for routing decisions */
 export type TaskType =
@@ -120,7 +121,7 @@ export class ModelRouter implements LLMClientLike {
       task.priority === 'high';
 
     if (shouldEscalate && this.secondary) {
-      console.log(`[ModelRouter] Escalating to secondary model (reason: ${!primaryResult.success ? 'failure' : 'low confidence/complexity'})`);
+      Logger.info('ModelRouter', `Escalating to secondary model (reason: ${!primaryResult.success ? 'failure' : 'low confidence/complexity'})`);
       const secondaryResult = await this.callModel(this.secondary, task.systemPrompt, task.userPrompt, task.signal);
       return {
         ...secondaryResult,
@@ -143,7 +144,7 @@ export class ModelRouter implements LLMClientLike {
   private async speculativeDecode(task: Task): Promise<ModelResponse> {
     // TODO: Implement true speculative decoding once we verify tokenizer compatibility
     // For now, fall back to cascade routing
-    console.log('[ModelRouter] Speculative decoding not yet implemented, using cascade');
+    Logger.info('ModelRouter', 'Speculative decoding not yet implemented, using cascade');
     return await this.cascadeRoute(task);
   }
 
@@ -169,7 +170,7 @@ export class ModelRouter implements LLMClientLike {
 
       if (similarity > 0.8) {
         // High agreement - use primary result (faster)
-        console.log(`[ModelRouter] Ensemble: high agreement (${similarity.toFixed(2)}), using primary`);
+        Logger.info('ModelRouter', `Ensemble: high agreement (${similarity.toFixed(2)}), using primary`);
         return {
           ...primaryResult,
           model: 'ensemble',
@@ -178,7 +179,7 @@ export class ModelRouter implements LLMClientLike {
         };
       } else {
         // Low agreement - use secondary (more powerful/reliable)
-        console.log(`[ModelRouter] Ensemble: low agreement (${similarity.toFixed(2)}), using secondary`);
+        Logger.info('ModelRouter', `Ensemble: low agreement (${similarity.toFixed(2)}), using secondary`);
         return {
           ...secondaryResult,
           model: 'ensemble',

@@ -1,6 +1,6 @@
 # THE BIBLE - Liminal System Documentation
 
-**Version:** 2.1.0 - Production Ready  
+**Version:** 2.1.0 - Beta  
 **Date:** 2026-04-02  
 **Status:** 295 commits, worktree isolation deployed  
 **Branch:** main
@@ -21,13 +21,18 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 
 ---
 
-## Test Status: ✅ ALL PASSING
+## Test Status: ⚠️ PARTIAL
 
 ```
-Test Files: 132
-Tests:      1741 passing
-Failures:   0
+Test Files: ~250
+Tests:      Variable (see known issues)
+Failures:   Some unit test failures
 ```
+
+### Running Tests
+- Unit Tests: Run with `npm test -- --run` (requires `--run` flag to avoid timeout)
+- Note: Tests frequently timeout on first run without `--run` flag
+- Some GLSL validator tests currently failing
 
 ### Recent Test Fixes (Other Agent's Work)
 
@@ -336,10 +341,10 @@ Failures:   0
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Unit Tests | ~100 files | ✅ Passing |
-| Integration Tests | ~20 files | ✅ Passing |
-| Generator Tests | ~12 files | ✅ Passing |
-| E2E Tests | ~10 files | ✅ Passing |
+| Unit Tests | ~150 files | ⚠️ Some failures |
+| Integration Tests | ~40 files | ⚠️ Timeout issues |
+| Generator Tests | ~30 files | ⚠️ Requires LLM mocks |
+| E2E Tests | ~30 files | ⚠️ Slow/timeout prone |
 
 **Test Fixes Applied:**
 - ✅ Fixture sizes enlarged to >500 bytes
@@ -685,10 +690,11 @@ LIMINAL_LOG_LEVEL=info
 
 ## Known Limitations
 
-1. **M12-M18:** Not yet implemented
-2. **Template Removal:** All template-based generation removed (pure LLM now)
-3. **Browser Dependency:** M9-M11 require Puppeteer/Playwright
-4. **Local Models:** 16k context limit (tier detection respects this)
+1. **Test Suite:** Has timeouts and some failing tests (see Test Status above)
+2. **M12-M18:** Not yet implemented
+3. **Template Removal:** All template-based generation removed (pure LLM now)
+4. **Browser Dependency:** M9-M11 require Puppeteer/Playwright
+5. **Local Models:** 16k context limit (tier detection respects this)
 
 ---
 

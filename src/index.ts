@@ -7,6 +7,8 @@
 
 // Core Ralph-Wiggum Loop components
 import { RalphLoop } from './core/RalphLoop.js';
+import { ValidationError } from './errors/ValidationError.js';
+import { GenerationError } from './errors/GenerationError.js';
 import { CodeValidator } from './core/CodeValidator.js';
 import { CreativeEvaluator } from './core/CreativeEvaluator.js';
 import { PromiseDetector } from './core/PromiseDetector.js';
@@ -216,7 +218,9 @@ export async function run(prompt: string, options: {
     // Final validation gate before saving
     const finalValidation = CodeValidator.validate(loopResult.code);
     if (!finalValidation.valid) {
-      throw new Error(`Generation failed validation: ${finalValidation.errors.join('; ')}. Reason: ${loopResult.reason}`);
+      throw new ValidationError('Generation failed validation', finalValidation.errors, {
+          reason: loopResult.reason
+        });
     }
     const finalCode = finalValidation.cleanedCode;
 
@@ -304,7 +308,12 @@ export async function run(prompt: string, options: {
         duration: Date.now() - startTime,
       });
     }
-    throw new Error(`Liminal run failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new GenerationError(
+        `Liminal run failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        undefined,
+        undefined,
+        error instanceof Error ? error : undefined
+      );
   }
 }
 

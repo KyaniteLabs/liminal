@@ -735,3 +735,51 @@ export {
   dotProduct,
   findKNearestNeighbors,
 } from './utils/vectors.js';
+
+// =============================================================================
+// COMPOSITION ENGINE - Multi-layer composition system
+// =============================================================================
+
+export {
+  // Core engine
+  CompositionEngine,
+  StateManager,
+  LayerManager,
+  
+  // Types
+  DomainType,
+  BlendMode,
+  Layer,
+  LayerConfig,
+  LayerMetadata,
+  Composition,
+  GlobalSettings,
+  AudioSettings,
+  CompositionMetadata,
+  LiminalProject,
+  Export,
+  Import,
+  
+  // Constants
+  DEFAULT_LAYER_CONFIG,
+  DEFAULT_GLOBAL_SETTINGS,
+  
+  // Factory functions
+  createLayer,
+  createLayerFromResponse,
+  createComposition,
+  exportProject,
+  
+  // Adapters
+  AdapterRegistry,
+  adapterRegistry,
+  p5Adapter,
+  toneAdapter,
+} from './composition/index.js';
+
+export type {
+  CompositionEngineOptions,
+  RenderContext,
+  LayerManagerOptions,
+  LayerAdapter,
+} from './composition/index.js';

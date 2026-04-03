@@ -1,7 +1,7 @@
 {
   "project": "Liminal",
-  "lifespan": "33 days (Feb 28 - Apr 1, 2026)",
-  "total_commits": 294,
+  "lifespan": "35 days (Feb 28 - Apr 3, 2026)",
+  "total_commits": 327,
   "contributors": [
     {"name": "Simon", "commits": 229, "percentage": 77.9},
     {"name": "Pastorsimon1798", "commits": 63, "percentage": 21.4, "note": "Same person as Simon, earlier git identity"},
@@ -33,6 +33,8 @@
     "2026-03-21": 9,
     "2026-03-01": 8,
     "2026-03-07": 1,
+    "2026-04-03": 15,
+    "2026-04-02": 18,
     "2026-03-24_through_2026-03-27": "ZERO COMMITS - 4 day silence"
   },
   "commit_types": {
@@ -220,6 +222,33 @@
         "Non-TTY stdin graceful exit (final commit 9f5d7d8)"
       ],
       "narrative_arc": "The final day establishes THE_BIBLE as sacred documentation, adds persistent memory, a plugin system, and streaming TUI — 44 commits in a single day"
+    },
+    {
+      "id": 10,
+      "name": "The Cleanup",
+      "dates": "Apr 2-3",
+      "commits": "295-327 (~33)",
+      "author": "Simon",
+      "description": "Post-feature cleanup, config audit cascade, deep structural audit, multi-agent coordination",
+      "key_events": [
+        "Worktree isolation system enables multi-agent development (edecbca)",
+        "THE_BIBLE 2.1 audited — 29% discrepancies found (bef21ac, c2911d6)",
+        "Documentation remediation system: validation scripts, git hooks, CI (c5d5559)",
+        "LLM isConfigured() bug fix affecting all non-p5 generators (c57e8ca)",
+        "Config audit cascade: 10 catalog commits in 11 minutes (0805200-0a13c21)",
+        "Config fixes: error alignment, env consolidation, Zod validation, secret redaction (0f194c3-e9c7f09)",
+        "Deep structural audit: 12 dimensions in 5 minutes (21e54cf-a42acb2)",
+        "Repository reorganization for GitHub launch (agent-kimi branch, unmerged)",
+        "Cross-agent audit: Claude Code vs Kilocode vs KimiCode (foamy branch, unmerged)",
+        "4 concurrent AI agents across 4 worktrees (first multi-agent coordination in project history)"
+      ],
+      "sub_phases": {
+        "A": "Repository hygiene (Apr 2, 14:29-16:37, 7 commits)",
+        "B": "Config audit catalog (Apr 2, 23:03-23:40, 11 commits)",
+        "C": "Config fixes (Apr 3, 00:06-00:08, 5 commits)",
+        "D": "Deep structural audit (Apr 3, 00:09-00:14, 12 commits)"
+      },
+      "narrative_arc": "The developer stops building features and turns critical attention to the project's structural integrity. A multi-day audit cascade catalogs configuration issues, fixes the highest-impact problems, then expands into deep structural analysis. Meanwhile, parallel AI agents handle repo reorganization and cross-agent tooling research. This is the first era of multi-agent coordination in the project's history."
     }
   ],
   "branches": {

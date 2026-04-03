@@ -1,0 +1,152 @@
+{
+  "summary": {
+    "total_dependencies": 506,
+    "node_modules_size": "963M",
+    "pnpm_store_size": "390M",
+    "direct_dependencies": 29,
+    "dev_dependencies": 19,
+    "optional_dependencies": 2,
+    "duplicate_functionality": [],
+    "version_duplicates": 2,
+    "large_dependencies": ["@remotion/*", "puppeteer", "@babel/*"],
+    "outdated_dependencies": []
+  },
+  "direct_dependencies": {
+    "count": 29,
+    "production": [
+      "@babel/parser", "@babel/traverse", "@babel/types",
+      "@remotion/bundler", "@remotion/cli", "@remotion/renderer",
+      "@types/babel__traverse", "archiver", "clipboardy",
+      "cookie-parser", "csurf", "dotenv", "express",
+      "express-rate-limit", "helmet", "ink", "mdast",
+      "open", "p5", "puppeteer", "react", "react-dom",
+      "remark", "remark-parse", "remotion", "tsx",
+      "unified", "zod"
+    ]
+  },
+  "dev_dependencies": {
+    "count": 19,
+    "packages": [
+      "@playwright/test", "@testing-library/react", "@types/archiver",
+      "@types/cookie-parser", "@types/csurf", "@types/express",
+      "@types/express-rate-limit", "@types/helmet", "@types/mdast",
+      "@types/node", "@types/react", "@types/react-dom",
+      "@typescript-eslint/eslint-plugin", "@typescript-eslint/parser",
+      "concurrently", "eslint", "typescript", "vitest"
+    ]
+  },
+  "optional_dependencies": {
+    "count": 2,
+    "packages": ["meyda", "pitchfinder"]
+  },
+  "duplicates": [
+    {
+      "functionality": "schema validation",
+      "libraries": ["zod@3.25.76", "zod@4.3.6"],
+      "recommendation": "Consolidate to zod@4.3.6 (latest), check @remotion/zod-types compatibility"
+    },
+    {
+      "functionality": "babel parsing",
+      "libraries": ["@babel/parser@7.24.1", "@babel/parser@7.29.2"],
+      "recommendation": "Update lockfile to use single version - 7.29.2 is already direct dep"
+    }
+  ],
+  "duplicate_functionality_analysis": {
+    "date_libraries": {
+      "status": "clean",
+      "found": [],
+      "recommendation": "None - no duplicate date libraries detected"
+    },
+    "http_clients": {
+      "status": "clean",
+      "found": ["node-native-fetch"],
+      "recommendation": "None - only native fetch/express, no axios duplication"
+    },
+    "utility_libraries": {
+      "status": "warning",
+      "found": ["lodash (transitive)"],
+      "recommendation": "Review if lodash is needed or if native methods suffice"
+    },
+    "markdown_processing": {
+      "status": "review",
+      "libraries": ["mdast", "remark", "remark-parse", "unified"],
+      "recommendation": "These work together in unified ecosystem - verify all are required"
+    }
+  },
+  "large_dependencies": [
+    {
+      "package": "@remotion/*",
+      "estimated_size": "32M+",
+      "impact": "Video generation - only needed if using video features"
+    },
+    {
+      "package": "puppeteer",
+      "estimated_size": "12M+",
+      "impact": "Headless browser - large Chromium download on first run"
+    },
+    {
+      "package": "@babel/*",
+      "estimated_size": "3M+",
+      "impact": "AST parsing for code analysis - essential"
+    }
+  ],
+  "security_risks": [
+    {
+      "package": "csurf",
+      "version": "1.11.0",
+      "risk": "Deprecated package - CSRF protection for Express, consider modern alternatives",
+      "severity": "low"
+    },
+    {
+      "package": "package-lock",
+      "version": "n/a",
+      "risk": "No package-lock.json found - using pnpm-lock.yaml instead. npm audit requires package-lock",
+      "severity": "info"
+    }
+  ],
+  "overrides_in_use": [
+    {
+      "package": "loader-utils",
+      "override": ">=2.0.4",
+      "reason": "Security patch for prototype pollution"
+    },
+    {
+      "package": "flatted",
+      "override": ">=3.4.0",
+      "reason": "Security/bug fix"
+    }
+  ],
+  "recommendations": [
+    {
+      "priority": "medium",
+      "action": "Deduplicate zod versions",
+      "details": "Two versions of zod installed (3.25.76, 4.3.6). Consolidate to reduce bundle size."
+    },
+    {
+      "priority": "low",
+      "action": "Update pnpm-lock.yaml",
+      "details": "Two versions of @babel/parser present. Run pnpm update to consolidate."
+    },
+    {
+      "priority": "low",
+      "action": "Review csurf deprecation",
+      "details": "Consider migrating to modern CSRF protection middleware."
+    },
+    {
+      "priority": "low",
+      "action": "Verify markdown library usage",
+      "details": "mdast, remark, unified are all used - ensure no overlapping functionality."
+    },
+    {
+      "priority": "info",
+      "action": "Monitor lodash usage",
+      "details": "Lodish is a transitive dependency - verify it's not duplicated in tree."
+    }
+  ],
+  "audit_metadata": {
+    "date": "2026-04-02",
+    "auditor": "harness-agent",
+    "pnpm_version": true,
+    "lockfile": "pnpm-lock.yaml"
+  }
+}

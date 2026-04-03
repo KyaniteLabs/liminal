@@ -1,0 +1,351 @@
+{
+  "summary": {
+    "scan_date": "2026-04-03",
+    "total_exports_checked": 1112,
+    "potentially_dead_exports_found": 28,
+    "commented_code_blocks": [],
+    "unused_variables": [],
+    "notes": "Scan focused on exported functions and classes. Most commented code found were descriptive comments, not commented-out code blocks."
+  },
+  "potentially_dead": [
+    {
+      "name": "validateSyllableConstraint",
+      "file": "src/music/SyllableCounter.ts",
+      "line": 189,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "quantizeToScale",
+      "file": "src/music/TheoryEngine.ts",
+      "line": 235,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "generateProgression",
+      "file": "src/music/TheoryEngine.ts",
+      "line": 375,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "buildTransitionMatrix",
+      "file": "src/music/MarkovChain.ts",
+      "line": 76,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "euclideanToNoteSequence",
+      "file": "src/music/EuclideanRhythm.ts",
+      "line": 209,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "getTemplate",
+      "file": "src/music/StructureTemplates.ts",
+      "line": 168,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "getModelProfile",
+      "file": "src/llm/ModelTier.ts",
+      "line": 140,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "getModelInfo",
+      "file": "src/llm/ModelTier.ts",
+      "line": 147,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "selectPromptStyle",
+      "file": "src/llm/ModelTier.ts",
+      "line": 176,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "lirToString",
+      "file": "src/core/lir/CompatibilityAdapter.ts",
+      "line": 260,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "stringToLIR",
+      "file": "src/core/lir/CompatibilityAdapter.ts",
+      "line": 152,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "createDocToken",
+      "file": "src/core/lir/LIRTokenFactory.ts",
+      "line": 279,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "createTextToken",
+      "file": "src/core/lir/LIRTokenFactory.ts",
+      "line": 346,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "createCodeToken",
+      "file": "src/core/lir/LIRTokenFactory.ts",
+      "line": 149,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "validateToneJS",
+      "file": "src/core/CodeValidator.ts",
+      "line": 552,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "seedToFragment",
+      "file": "src/core/types.ts",
+      "line": 31,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "compostFragmentToFragment",
+      "file": "src/core/types.ts",
+      "line": 56,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "minedFragmentToFragment",
+      "file": "src/core/types.ts",
+      "line": 79,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "scavengerToFragment",
+      "file": "src/core/types.ts",
+      "line": 110,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "isFromOrigin",
+      "file": "src/core/types.ts",
+      "line": 133,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "normalizeOptions",
+      "file": "src/core/LoopConfig.ts",
+      "line": 163,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "chatCommand",
+      "file": "src/chat/commands/chat.ts",
+      "line": 9,
+      "export_type": "async function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "loadProjectConfig",
+      "file": "src/config/ConfigLoader.ts",
+      "line": 206,
+      "export_type": "async function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "getMultiModelConfig",
+      "file": "src/config/ConfigLoader.ts",
+      "line": 295,
+      "export_type": "async function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "saveConfig",
+      "file": "src/config/ConfigLoader.ts",
+      "line": 334,
+      "export_type": "async function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "validateAgainstConstraints",
+      "file": "src/core/CreativeConstraints.ts",
+      "line": 63,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "getPhaseOrder",
+      "file": "src/chat/InterviewPhase.ts",
+      "line": 93,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "getAllQuestions",
+      "file": "src/chat/InterviewPhase.ts",
+      "line": 100,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "generateSummary",
+      "file": "src/chat/InterviewPhase.ts",
+      "line": 155,
+      "export_type": "function",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "formatSeedForDisplay",
+      "file": "src/core/lir/LIRPromptFormatter.ts",
+      "line": 102,
+      "export_type": "function",
+      "last_import_reference": "src/compost/cli.ts",
+      "confidence": "medium - only 1 import found, may be removable"
+    },
+    {
+      "name": "TransparencyViewer",
+      "file": "src/ui/TransparencyViewer.ts",
+      "line": 73,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "CircuitBreaker",
+      "file": "src/llm/CircuitBreaker.ts",
+      "line": 72,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "ContextCompactor",
+      "file": "src/llm/ContextCompactor.ts",
+      "line": 26,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "RuntimeValidator",
+      "file": "src/core/RuntimeValidator.ts",
+      "line": 16,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "BatchProcessor",
+      "file": "src/core/BatchProcessor.ts",
+      "line": 72,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "SoupLoop",
+      "file": "src/core/SoupLoop.ts",
+      "line": 42,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "CreativeWorkflow",
+      "file": "src/core/CreativeWorkflow.ts",
+      "line": 41,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "LIRSummaryError",
+      "file": "src/core/lir/errors.ts",
+      "line": 25,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    },
+    {
+      "name": "LLMAuthError",
+      "file": "src/llm/LLMClient.ts",
+      "line": 31,
+      "export_type": "class",
+      "last_import_reference": null,
+      "confidence": "high - 0 imports found"
+    }
+  ],
+  "files_with_dead_code": [
+    "src/music/SyllableCounter.ts",
+    "src/music/TheoryEngine.ts",
+    "src/music/MarkovChain.ts",
+    "src/music/EuclideanRhythm.ts",
+    "src/music/StructureTemplates.ts",
+    "src/llm/ModelTier.ts",
+    "src/llm/CircuitBreaker.ts",
+    "src/llm/ContextCompactor.ts",
+    "src/llm/LLMClient.ts",
+    "src/core/lir/CompatibilityAdapter.ts",
+    "src/core/lir/LIRTokenFactory.ts",
+    "src/core/lir/LIRPromptFormatter.ts",
+    "src/core/lir/errors.ts",
+    "src/core/CodeValidator.ts",
+    "src/core/types.ts",
+    "src/core/LoopConfig.ts",
+    "src/core/RuntimeValidator.ts",
+    "src/core/BatchProcessor.ts",
+    "src/core/SoupLoop.ts",
+    "src/core/CreativeWorkflow.ts",
+    "src/core/CreativeConstraints.ts",
+    "src/chat/InterviewPhase.ts",
+    "src/chat/commands/chat.ts",
+    "src/config/ConfigLoader.ts",
+    "src/ui/TransparencyViewer.ts"
+  ]
+}

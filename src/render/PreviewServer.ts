@@ -376,12 +376,15 @@ export class PreviewServer {
     if (!this.server) {
       return false;
     }
-    return new Promise((resolve) => {
+    
+    await new Promise<void>((resolve) => {
       this.server!.close(() => {
-        this.server = null;
-        resolve(true);
+        resolve();
       });
     });
+    
+    this.server = null;
+    return true;
   }
 
   serveSketch(code: string | null): void {

@@ -1,0 +1,65 @@
+{
+  "summary": {
+    "total_todos": 6,
+    "total_fixmes": 0,
+    "total_hacks": 0,
+    "total_xxx": 0,
+    "oldest_date": "2026-03-22"
+  },
+  "items": [
+    {
+      "file": "src/core/parsing/DocParser.ts",
+      "line": 321,
+      "type": "TODO",
+      "text": "Track line numbers from AST",
+      "date": "2026-03-22",
+      "age_days": 11,
+      "context": "buildTokens()"
+    },
+    {
+      "file": "src/compost/ModelRouter.ts",
+      "line": 143,
+      "type": "TODO",
+      "text": "Implement true speculative decoding once we verify tokenizer compatibility",
+      "date": "2026-03-22",
+      "age_days": 11,
+      "context": "speculativeDecode()"
+    },
+    {
+      "file": "src/compost/ModelRouter.ts",
+      "line": 262,
+      "type": "TODO",
+      "text": "Replace with more sophisticated semantic similarity",
+      "date": "2026-03-22",
+      "age_days": 11,
+      "context": "calculateSimilarity()"
+    },
+    {
+      "file": "src/chat/GuidanceEngine.ts",
+      "line": 30,
+      "type": "TODO",
+      "text": "Use swarmOrchestrator for swarm-based suggestions",
+      "date": "2026-03-23",
+      "age_days": 10,
+      "context": "GuidanceEngine class"
+    },
+    {
+      "file": "src/chat/GuidanceEngine.ts",
+      "line": 52,
+      "type": "TODO",
+      "text": "Store swarmOrchestrator when implementing swarm suggestions",
+      "date": "2026-03-23",
+      "age_days": 10,
+      "context": "constructor()"
+    },
+    {
+      "file": "src/security/SecurityLogger.ts",
+      "line": 56,
+      "type": "TODO",
+      "text": "Send to SIEM/security monitoring service in production",
+      "date": "2026-03-30",
+      "age_days": 3,
+      "context": "logSecurityEvent()"
+    }
+  ]
+}

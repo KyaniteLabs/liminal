@@ -13,6 +13,7 @@ import { Status } from '../../types/status.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
 import { formatError } from '../../utils/errors.js';
 import { selfEvaluation } from '../SelfEvaluation.js';
+import { telemetryWrapper } from '../tools/TelemetryWrapper.js';
 import {
   readFileTool,
   writeFileTool,
@@ -69,9 +70,32 @@ export class HarnessAgent {
   private llmClient: LLMClient;
   private sessions: Map<string, AgentSession> = new Map();
   private currentSession?: AgentSession;
+  private reasoningContext?: string;
+  private reasoningTraceId?: string;
 
   constructor(llmClient: LLMClient) {
     this.llmClient = llmClient;
+  }
+
+  /**
+   * Set reasoning context for telemetry correlation
+   */
+  setReasoningContext(reasoning: string, traceId?: string): void {
+    this.reasoningContext = reasoning;
+    this.reasoningTraceId = traceId;
+    telemetryWrapper.setContext({
+      reasoning: this.reasoningContext,
+      reasoningTraceId: this.reasoningTraceId,
+    });
+  }
+
+  /**
+   * Clear reasoning context
+   */
+  clearReasoningContext(): void {
+    this.reasoningContext = undefined;
+    this.reasoningTraceId = undefined;
+    telemetryWrapper.clearContext();
   }
 
   /**
@@ -233,44 +257,30 @@ export class HarnessAgent {
   }
 
   /**
-   * Call a tool with rate limiting
+   * Call a tool with rate limiting and telemetry
    */
   private async callTool(toolName: string, params: unknown): Promise<ToolResult> {
     const operation = toolName === 'readFile' ? 'fileRead' : 
                       toolName === 'writeFile' || toolName === 'applyEdit' ? 'fileWrite' :
                       toolName === 'runBuild' ? 'buildRun' : 'testRun';
     
+    // Update context with current session info
+    telemetryWrapper.setContext({
+      reasoning: this.reasoningContext,
+      reasoningTraceId: this.reasoningTraceId,
+      taskId: this.currentSession?.task.id,
+      iteration: this.currentSession?.steps.length,
+    });
+    
     const rateLimitResult = await rateLimiter.execute(operation, async () => {
-      switch (toolName) {
-        case 'readFile':
-          return readFileTool.execute(params);
-        case 'writeFile':
-          return writeFileTool.execute(params);
-        case 'applyEdit':
-          return applyEditTool.execute(params);
-        case 'runBuild':
-          return runBuildTool.execute(params);
-        case 'runTests':
-          return runTestsTool.execute(params);
-        case 'search':
-          return searchTool.execute(params);
-        case 'listDir':
-          return listDirTool.execute(params);
-        case 'typeCheck':
-          return typeCheckTool.execute(params);
-        case 'npm':
-          return npmTool.execute(params);
-        case 'lsp':
-          return lspTool.execute(params);
-        case 'astValidate':
-          return astValidatorTool.execute(params);
-        case 'importGuard':
-          return importGuardTool.execute(params);
-        case 'restoreBackup':
-          return restoreBackupTool.execute(params);
-        default:
-          return { success: false, error: `Unknown tool: ${toolName}` };
+      // Get the tool instance
+      const tool = this.getToolInstance(toolName);
+      if (!tool) {
+        return { success: false, error: `Unknown tool: ${toolName}` };
       }
+      
+      // Wrap with telemetry
+      return telemetryWrapper.wrap(tool, params);
     });
 
     const result = rateLimitResult.result || { 
@@ -288,6 +298,28 @@ export class HarnessAgent {
     }
 
     return result;
+  }
+
+  /**
+   * Get tool instance by name
+   */
+  private getToolInstance(toolName: string) {
+    switch (toolName) {
+      case 'readFile': return readFileTool;
+      case 'writeFile': return writeFileTool;
+      case 'applyEdit': return applyEditTool;
+      case 'runBuild': return runBuildTool;
+      case 'runTests': return runTestsTool;
+      case 'search': return searchTool;
+      case 'listDir': return listDirTool;
+      case 'typeCheck': return typeCheckTool;
+      case 'npm': return npmTool;
+      case 'lsp': return lspTool;
+      case 'astValidate': return astValidatorTool;
+      case 'importGuard': return importGuardTool;
+      case 'restoreBackup': return restoreBackupTool;
+      default: return null;
+    }
   }
 
   /**

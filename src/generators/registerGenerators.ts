@@ -22,6 +22,7 @@ import { ASCIIArtGenerator } from './ascii/ASCIIArtGenerator.js';
 import { StrudelGenerator } from './strudel/StrudelGenerator.js';
 import { HydraGenerator } from './hydra/HydraGenerator.js';
 import { ToneGenerator } from './tone/ToneGenerator.js';
+import { pluginLoader } from '../plugins/PluginLoader.js';
 
 // --- Shared canHandle helpers ---
 
@@ -201,15 +202,35 @@ const p5Entry: GeneratorEntry = {
   },
 };
 
-/**
- * Register all generators with the singleton registry.
- * Call once at application startup.
- */
-export function registerAllGenerators(): void {
-  // Only register if not already registered (idempotent)
-  if (generatorRegistry.getAll().length > 0) return;
+let pluginsLoaded = false;
 
-  // NOTE: Template-based generators removed. All p5 generation goes through LLM.
+/**
+ * Try to load plugins from plugins/ directory
+ */
+async function loadPlugins(): Promise<boolean> {
+  try {
+    const results = await pluginLoader.loadAll();
+    
+    // Register loaded plugins with GeneratorRegistry
+    for (const plugin of pluginLoader.getAllPlugins()) {
+      generatorRegistry.register({
+        name: plugin.manifest.id,
+        canHandle: plugin.canHandle || (() => 0.1),
+        generate: plugin.generate.bind(plugin),
+      });
+    }
+    
+    return results.some(r => r.success);
+  } catch (error) {
+    console.warn('[registerGenerators] Failed to load plugins:', error);
+    return false;
+  }
+}
+
+/**
+ * Register static generators as fallback
+ */
+function registerStaticGenerators(): void {
   // Domain-specific generators for non-p5 domains
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
@@ -222,6 +243,27 @@ export function registerAllGenerators(): void {
   
   // P5 generator with tier-based prompting (fallback for all p5 sketches)
   generatorRegistry.register(p5Entry);
+}
+
+/**
+ * Register all generators with the singleton registry.
+ * Call once at application startup.
+ * 
+ * First tries to load from plugins/, falls back to static registration.
+ */
+export async function registerAllGenerators(): Promise<void> {
+  // Only register if not already registered (idempotent)
+  if (generatorRegistry.getAll().length > 0) return;
+
+  // Try to load plugins first
+  pluginsLoaded = await loadPlugins();
+  
+  if (!pluginsLoaded) {
+    console.log('[registerGenerators] Falling back to static generator registration');
+    registerStaticGenerators();
+  } else {
+    console.log(`[registerGenerators] Loaded ${pluginLoader.getAllPlugins().length} plugins`);
+  }
 }
 
 // Re-export for convenience

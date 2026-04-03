@@ -3,543 +3,168 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visual Bible - Liminal v2.1.0</title>
+    <title>Visual Bible - Liminal</title>
     <link rel="stylesheet" href="styles/docs.css">
     <style>
-        /* Visual Bible Custom Styles - Dark Creative Coding Aesthetic */
-        :root {
-            --vb-bg-primary: #0d1117;
-            --vb-bg-secondary: #161b22;
-            --vb-bg-tertiary: #21262d;
-            --vb-bg-card: #1c2128;
-            --vb-border-color: #30363d;
-            --vb-text-primary: #e6edf3;
-            --vb-text-secondary: #8b949e;
-            --vb-text-muted: #6e7681;
-            --vb-accent-cyan: #22d3ee;
-            --vb-accent-purple: #a855f7;
-            --vb-accent-pink: #ec4899;
-            --vb-accent-green: #22c55e;
-            --vb-accent-yellow: #eab308;
-            --vb-accent-orange: #f97316;
-            --vb-accent-red: #ef4444;
-            --vb-accent-blue: #3b82f6;
-            --vb-glow-cyan: 0 0 20px rgba(34, 211, 238, 0.3);
-            --vb-glow-purple: 0 0 20px rgba(168, 85, 247, 0.3);
-            --vb-glow-green: 0 0 20px rgba(34, 197, 94, 0.3);
-        }
-
-        /* Hero Section */
-        .vb-hero {
-            background: linear-gradient(135deg, var(--vb-bg-secondary) 0%, var(--vb-bg-primary) 100%);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 16px;
-            padding: 2.5rem;
-            margin: 2rem 0;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .vb-hero::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 3px;
-            background: linear-gradient(90deg, var(--vb-accent-cyan), var(--vb-accent-purple), var(--vb-accent-pink));
-        }
-        
-        .vb-hero-grid {
+        .dashboard-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
             gap: 1.5rem;
-            margin-top: 1.5rem;
+            margin: 2rem 0;
         }
-        
-        .vb-hero-stat {
-            background: var(--vb-bg-tertiary);
+        .dashboard-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 1.25rem;
-            text-align: center;
-            border: 1px solid var(--vb-border-color);
-            transition: transform 0.2s, box-shadow 0.2s;
+            padding: 1.5rem;
         }
-        
-        .vb-hero-stat:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--vb-glow-cyan);
-        }
-        
-        .vb-hero-stat-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--vb-accent-cyan), var(--vb-accent-purple));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-        
-        .vb-hero-stat-label {
-            color: var(--vb-text-secondary);
-            font-size: 0.875rem;
-            margin-top: 0.5rem;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        /* Status Badge */
-        .vb-status-badge {
-            display: inline-flex;
+        .dashboard-card h3 {
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            display: flex;
             align-items: center;
             gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border-radius: 9999px;
-            font-size: 0.875rem;
+        }
+        .metric {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .metric:last-child {
+            border-bottom: none;
+        }
+        .metric-label {
+            color: var(--text-secondary);
+        }
+        .metric-value {
             font-weight: 600;
         }
-        
-        .vb-status-beta {
-            background: rgba(234, 179, 8, 0.15);
-            color: var(--vb-accent-yellow);
-            border: 1px solid var(--vb-accent-yellow);
-        }
-        
-        .vb-status-dot {
-            width: 8px;
+        .progress-bar {
+            width: 100%;
             height: 8px;
-            border-radius: 50%;
-            background: var(--vb-accent-yellow);
-            animation: pulse 2s infinite;
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+            overflow: hidden;
+            margin-top: 0.5rem;
         }
-        
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.3s ease;
         }
-
-        /* Section Styling */
-        .vb-section {
-            margin: 3rem 0;
+        .status-list {
+            list-style: none;
         }
-        
-        .vb-section-header {
+        .status-list li {
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            margin-bottom: 1.5rem;
-            padding-bottom: 0.75rem;
-            border-bottom: 2px solid var(--vb-border-color);
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color);
         }
-        
-        .vb-section-title {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--vb-text-primary);
-        }
-        
-        .vb-section-icon {
-            font-size: 1.5rem;
-        }
-
-        /* Feature Status Table */
-        .vb-table-container {
-            background: var(--vb-bg-secondary);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 12px;
-            overflow: hidden;
-        }
-        
-        .vb-table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .vb-table th {
-            background: var(--vb-bg-tertiary);
-            padding: 1rem;
-            text-align: left;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            color: var(--vb-text-secondary);
-            font-weight: 600;
-            border-bottom: 1px solid var(--vb-border-color);
-        }
-        
-        .vb-table td {
-            padding: 1rem;
-            border-bottom: 1px solid var(--vb-border-color);
-            color: var(--vb-text-primary);
-        }
-        
-        .vb-table tr:last-child td {
+        .status-list li:last-child {
             border-bottom: none;
         }
-        
-        .vb-table tr:hover td {
-            background: rgba(34, 211, 238, 0.05);
-        }
-        
-        .vb-subsystem-name {
-            font-weight: 600;
-            color: var(--vb-text-primary);
-        }
-        
-        .vb-subsystem-desc {
-            font-size: 0.875rem;
-            color: var(--vb-text-secondary);
-        }
-
-        /* Status Badges */
-        .vb-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.375rem;
-            padding: 0.375rem 0.75rem;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .vb-badge-complete {
-            background: rgba(34, 197, 94, 0.15);
-            color: var(--vb-accent-green);
-        }
-        
-        .vb-badge-progress {
-            background: rgba(234, 179, 8, 0.15);
-            color: var(--vb-accent-yellow);
-        }
-        
-        .vb-badge-planned {
-            background: rgba(168, 85, 247, 0.15);
-            color: var(--vb-accent-purple);
-        }
-        
-        .vb-badge-beta {
-            background: rgba(59, 130, 246, 0.15);
-            color: var(--vb-accent-blue);
-        }
-
-        /* Kanban Board */
-        .vb-kanban {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 1rem;
-        }
-        
-        .vb-kanban-column {
-            background: var(--vb-bg-secondary);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 12px;
-            min-height: 400px;
-        }
-        
-        .vb-kanban-header {
-            padding: 1rem;
-            border-bottom: 2px solid var(--vb-border-color);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-        }
-        
-        .vb-kanban-title {
-            font-size: 0.875rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-        
-        .vb-kanban-count {
-            background: var(--vb-bg-tertiary);
-            padding: 0.25rem 0.5rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-        
-        .vb-kanban-column.todo .vb-kanban-title { color: var(--vb-accent-purple); }
-        .vb-kanban-column.todo .vb-kanban-header { border-bottom-color: var(--vb-accent-purple); }
-        .vb-kanban-column.inprogress .vb-kanban-title { color: var(--vb-accent-yellow); }
-        .vb-kanban-column.inprogress .vb-kanban-header { border-bottom-color: var(--vb-accent-yellow); }
-        .vb-kanban-column.review .vb-kanban-title { color: var(--vb-accent-blue); }
-        .vb-kanban-column.review .vb-kanban-header { border-bottom-color: var(--vb-accent-blue); }
-        .vb-kanban-column.done .vb-kanban-title { color: var(--vb-accent-green); }
-        .vb-kanban-column.done .vb-kanban-header { border-bottom-color: var(--vb-accent-green); }
-        
-        .vb-kanban-cards {
-            padding: 0.75rem;
-        }
-        
-        .vb-kanban-card {
-            background: var(--vb-bg-card);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 8px;
-            padding: 0.875rem;
-            margin-bottom: 0.75rem;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            border-left: 3px solid transparent;
-        }
-        
-        .vb-kanban-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-        }
-        
-        .vb-kanban-card.critical { border-left-color: var(--vb-accent-red); }
-        .vb-kanban-card.high { border-left-color: var(--vb-accent-orange); }
-        .vb-kanban-card.medium { border-left-color: var(--vb-accent-blue); }
-        .vb-kanban-card.low { border-left-color: var(--vb-accent-purple); }
-        
-        .vb-kanban-card-id {
-            font-family: 'SF Mono', monospace;
-            font-size: 0.6875rem;
-            color: var(--vb-text-muted);
-            margin-bottom: 0.375rem;
-        }
-        
-        .vb-kanban-card-title {
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--vb-text-primary);
-            line-height: 1.4;
-        }
-        
-        .vb-kanban-card-meta {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 0.625rem;
-        }
-        
-        .vb-kanban-tag {
-            font-size: 0.625rem;
-            padding: 0.125rem 0.375rem;
-            border-radius: 4px;
-            background: var(--vb-bg-tertiary);
-            color: var(--vb-text-secondary);
-        }
-
-        /* Metrics Dashboard */
-        .vb-metrics-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 1.5rem;
-        }
-        
-        .vb-metric-card {
-            background: var(--vb-bg-secondary);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .vb-metric-card::after {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 3px;
-        }
-        
-        .vb-metric-card.tests::after { background: var(--vb-accent-green); }
-        .vb-metric-card.files::after { background: var(--vb-accent-cyan); }
-        .vb-metric-card.coverage::after { background: var(--vb-accent-purple); }
-        .vb-metric-card.waves::after { background: var(--vb-accent-pink); }
-        
-        .vb-metric-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1rem;
-        }
-        
-        .vb-metric-label {
-            font-size: 0.875rem;
-            color: var(--vb-text-secondary);
-            font-weight: 500;
-        }
-        
-        .vb-metric-icon {
-            font-size: 1.25rem;
-        }
-        
-        .vb-metric-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--vb-text-primary);
-        }
-        
-        .vb-metric-subtext {
-            font-size: 0.875rem;
-            color: var(--vb-text-secondary);
-            margin-top: 0.5rem;
-        }
-        
-        .vb-metric-bar {
-            width: 100%;
-            height: 6px;
-            background: var(--vb-bg-tertiary);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-top: 0.75rem;
-        }
-        
-        .vb-metric-bar-fill {
-            height: 100%;
-            border-radius: 3px;
-            transition: width 1s ease-out;
-        }
-        
-        .vb-metric-bar-fill.green { background: var(--vb-accent-green); }
-        .vb-metric-bar-fill.cyan { background: var(--vb-accent-cyan); }
-        .vb-metric-bar-fill.purple { background: var(--vb-accent-purple); }
-        .vb-metric-bar-fill.pink { background: var(--vb-accent-pink); }
-
-        /* Wave Tracker */
-        .vb-wave-tracker {
-            background: var(--vb-bg-secondary);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-        }
-        
-        .vb-wave-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            margin-bottom: 1.5rem;
-        }
-        
-        .vb-wave-title {
-            font-size: 1.125rem;
-            font-weight: 600;
-            color: var(--vb-text-primary);
-        }
-        
-        .vb-wave-status {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.875rem;
-            color: var(--vb-accent-green);
-            font-weight: 600;
-        }
-        
-        .vb-waves-grid {
-            display: grid;
-            grid-template-columns: repeat(8, 1fr);
-            gap: 0.5rem;
-        }
-        
-        .vb-wave-item {
-            aspect-ratio: 1;
-            background: var(--vb-bg-tertiary);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 8px;
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 0.75rem;
-            font-weight: 700;
-            color: var(--vb-text-secondary);
-            transition: all 0.2s;
         }
-        
-        .vb-wave-item.complete {
-            background: rgba(34, 197, 94, 0.15);
-            border-color: var(--vb-accent-green);
-            color: var(--vb-accent-green);
+        .status-complete { background: var(--accent-green); }
+        .status-progress { background: var(--accent-yellow); }
+        .status-planned { background: var(--accent-purple); }
+        .status-blocked { background: var(--accent-red); }
+        .alert {
+            background: rgba(218, 54, 51, 0.1);
+            border: 1px solid var(--accent-red);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
         }
-        
-        .vb-wave-item:hover {
-            transform: scale(1.05);
+        .alert h4 {
+            color: var(--accent-red);
+            margin-bottom: 0.5rem;
         }
-
-        /* Commits Section */
-        .vb-commits-list {
-            background: var(--vb-bg-secondary);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 12px;
-            overflow: hidden;
+        .warning {
+            background: rgba(210, 153, 34, 0.1);
+            border: 1px solid var(--accent-yellow);
         }
-        
-        .vb-commit-item {
-            display: flex;
-            align-items: center;
+        .warning h4 {
+            color: var(--accent-yellow);
+        }
+        .success {
+            background: rgba(35, 134, 54, 0.1);
+            border: 1px solid var(--accent-green);
+        }
+        .success h4 {
+            color: var(--accent-green);
+        }
+        .task-board {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
             gap: 1rem;
-            padding: 1rem 1.5rem;
-            border-bottom: 1px solid var(--vb-border-color);
+            margin: 2rem 0;
         }
-        
-        .vb-commit-item:last-child {
-            border-bottom: none;
+        .task-column {
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 1rem;
+            min-height: 200px;
         }
-        
-        .vb-commit-hash {
-            font-family: 'SF Mono', monospace;
-            font-size: 0.8125rem;
-            color: var(--vb-accent-cyan);
-            background: rgba(34, 211, 238, 0.1);
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            min-width: 80px;
-            text-align: center;
-        }
-        
-        .vb-commit-message {
-            flex: 1;
-            color: var(--vb-text-primary);
-            font-size: 0.9375rem;
-        }
-        
-        .vb-commit-wave {
-            font-size: 0.75rem;
-            color: var(--vb-text-muted);
-            background: var(--vb-bg-tertiary);
-            padding: 0.25rem 0.625rem;
-            border-radius: 4px;
-        }
-
-        /* Footer */
-        .vb-footer {
-            margin-top: 4rem;
-            padding: 2rem;
-            background: var(--vb-bg-secondary);
-            border: 1px solid var(--vb-border-color);
-            border-radius: 12px;
-            text-align: center;
-        }
-        
-        .vb-footer-text {
-            color: var(--vb-text-secondary);
+        .task-column h4 {
+            color: var(--text-secondary);
             font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border-color);
         }
-
-        /* Responsive */
-        @media (max-width: 1024px) {
-            .vb-kanban {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .vb-waves-grid {
-                grid-template-columns: repeat(4, 1fr);
-            }
+        .task-item {
+            background: var(--bg-tertiary);
+            border-radius: 6px;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            border-left: 3px solid transparent;
         }
-        
+        .task-item.critical { border-left-color: var(--accent-red); }
+        .task-item.high { border-left-color: var(--accent-yellow); }
+        .task-item.medium { border-left-color: var(--accent-blue); }
+        .task-item.low { border-left-color: var(--accent-purple); }
+        .task-id {
+            font-family: monospace;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        /* Utility classes */
+        .text-green { color: var(--accent-green); }
+        .text-yellow { color: var(--accent-yellow); }
+        .text-purple { color: var(--accent-purple); }
+        .text-cyan { color: var(--accent-cyan); }
+        .text-muted { color: var(--text-muted); }
+        .text-secondary { color: var(--text-secondary); }
+        .bg-green { background: var(--accent-green); }
+        .bg-purple { background: rgba(137, 87, 229, 0.1); border-color: var(--accent-purple); }
+        .mt-1 { margin-top: 1rem; }
+        .mt-sm { margin-top: 0.5rem; }
+        .ml-lg { margin-left: 1.5rem; }
+        .pl-lg { padding-left: 1rem; }
+        .text-sm { font-size: 0.875rem; }
+        .text-xs { font-size: 0.75rem; }
+        .lh-2 { line-height: 2; }
+        .w-full { width: 100%; }
+        .meta-info { color: var(--text-muted); font-size: 0.875rem; }
+        .footer-note { color: var(--text-muted); font-size: 0.75rem; margin-top: 0.5rem; }
         @media (max-width: 768px) {
-            .vb-kanban {
+            .task-board {
                 grid-template-columns: 1fr;
-            }
-            .vb-waves-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-            .vb-hero-grid {
-                grid-template-columns: repeat(2, 1fr);
             }
         }
     </style>
@@ -553,10 +178,9 @@
         <ul class="navbar-nav">
             <li><a href="index.html">Home</a></li>
             <li><a href="features.html">Features</a></li>
-            <li><a href="architecture-deep-dive.html">Architecture</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
             <li><a href="cli-reference.html">CLI</a></li>
             <li><a href="soul-system.html">SOUL</a></li>
-            <li><a href="dashboard.html">Dashboard</a></li>
             <li><a href="visual-bible.html" class="active">Visual Bible</a></li>
         </ul>
     </nav>
@@ -568,547 +192,521 @@
     </div>
 
     <main class="container">
-        <!-- Hero Section -->
-        <section class="vb-hero">
-            <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
-                <div>
-                    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; background: linear-gradient(135deg, var(--vb-accent-cyan), var(--vb-accent-purple)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;">
-                        📖 Visual Bible
-                    </h1>
-                    <p style="color: var(--vb-text-secondary); font-size: 1.125rem;">
-                        Comprehensive project dashboard for Liminal v2.1.0
-                    </p>
-                </div>
-                <div class="vb-status-badge vb-status-beta">
-                    <span class="vb-status-dot"></span>
-                    Beta Status
-                </div>
+        <section class="section">
+            <h1 class="section-title">📖 Visual Bible</h1>
+            <p class="section-subtitle">Visual representation of THE_BIBLE.md - Real-time system status</p>
+            <p class="meta-info">Last updated: April 1, 2026 | Branch: narrative/liminal-archaeology | <a href="THE_BIBLE.md">📖 THE BIBLE</a></p>
+        </section>
+
+        <!-- Critical Alerts -->
+        <section class="section">
+            <h2 class="section-title">🚨 Critical Items</h2>
+            <div class="alert success">
+                <h4>✅ DGF Phase 3 Complete</h4>
+                <p><strong>31 guardrail tests passing.</strong> Deterministic Guardrails Framework: 3 phases, 17 components, 15 error taxonomy types. Constitution learning active.</p>
             </div>
-            
-            <div class="vb-hero-grid">
-                <div class="vb-hero-stat">
-                    <div class="vb-hero-stat-value">2.1.0</div>
-                    <div class="vb-hero-stat-label">Version</div>
-                </div>
-                <div class="vb-hero-stat">
-                    <div class="vb-hero-stat-value">18</div>
-                    <div class="vb-hero-stat-label">Subsystems</div>
-                </div>
-                <div class="vb-hero-stat">
-                    <div class="vb-hero-stat-value">88</div>
-                    <div class="vb-hero-stat-label">Commits</div>
-                </div>
-                <div class="vb-hero-stat">
-                    <div class="vb-hero-stat-value">271</div>
-                    <div class="vb-hero-stat-label">New Tests</div>
-                </div>
+            <div class="alert success">
+                <h4>✅ 19 Subsystems Complete</h4>
+                <p>All 19 major subsystems documented in THE_BIBLE.md and operational. M1-M11 + DGF + TUI + Chat + Swarm + Thinking-Trace + Compost + Aesthetic + Plugins + SOUL + LLM Mode + Routing + Scavenger.</p>
             </div>
         </section>
 
-        <!-- Feature Status Table -->
-        <section class="vb-section">
-            <div class="vb-section-header">
-                <span class="vb-section-icon">🎯</span>
-                <h2 class="vb-section-title">Feature Status - 18 Subsystems</h2>
-            </div>
-            
-            <div class="vb-table-container">
-                <table class="vb-table">
-                    <thead>
-                        <tr>
-                            <th>Subsystem</th>
-                            <th>Description</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">1. Meta-Harness</div>
-                                <div class="vb-subsystem-desc">Self-improving outer loop</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Failure logging, pattern detection, adaptation application</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Online</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">2. Generators</div>
-                                <div class="vb-subsystem-desc">Code generation engines</div>
-                            </td>
-                            <td class="vb-subsystem-desc">p5, Three.js, GLSL, Tone.js, Hydra, Strudel, Remotion</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Migrated</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">3. Validation</div>
-                                <div class="vb-subsystem-desc">Code safety checks</div>
-                            </td>
-                            <td class="vb-subsystem-desc">P5Validator, GLSLValidator, ThreeValidator split from god object</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Complete</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">4. Model Tiers</div>
-                                <div class="vb-subsystem-desc">Tier-based generation</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Flagship/Medium/Local/Tiny detection and prompt adaptation</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">5. Memory System</div>
-                                <div class="vb-subsystem-desc">Persistent storage</div>
-                            </td>
-                            <td class="vb-subsystem-desc">HarnessMemory with episodic memory, auto-save, persistence</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">6. Ralph-Wiggum Loop</div>
-                                <div class="vb-subsystem-desc">Self-recursive iteration</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Natural language interface, LLM mode agent, planning</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">7. TUI Interface</div>
-                                <div class="vb-subsystem-desc">Hybrid terminal UI</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Terminal + browser preview, HarnessTUI.tsx</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">8. SOUL System</div>
-                                <div class="vb-subsystem-desc">Personality framework</div>
-                            </td>
-                            <td class="vb-subsystem-desc">User-editable personality in SOUL.md</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">9. Guardrails M1-M8</div>
-                                <div class="vb-subsystem-desc">Core safety systems</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Tone.js validation, regex fixes, logger cleanup</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Complete</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">10. Guardrails M9-M11</div>
-                                <div class="vb-subsystem-desc">Extended safety</div>
-                            </td>
-                            <td class="vb-subsystem-desc">SemanticValidator, RuntimeHealthMonitor, AccessibilityGuardrails</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Implemented</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">11. Type Safety</div>
-                                <div class="vb-subsystem-desc">Enum-based system</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Provider, Domain, Status enums with 61 tests</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Complete</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">12. Error Handling</div>
-                                <div class="vb-subsystem-desc">Unified error system</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Custom error types, formatError utilities, no bare catches</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Complete</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">13. Wrappers</div>
-                                <div class="vb-subsystem-desc">HTML output generation</div>
-                            </td>
-                            <td class="vb-subsystem-desc">P5Wrapper, ThreeWrapper, GenericWrapper (split from 957 lines)</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Migrated</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">14. Options System</div>
-                                <div class="vb-subsystem-desc">LoopOptions decomposition</div>
-                            </td>
-                            <td class="vb-subsystem-desc">SwarmOptions, RenderOptions, DebugOptions interfaces</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Complete</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">15. Tool System</div>
-                                <div class="vb-subsystem-desc">Agent tools</div>
-                            </td>
-                            <td class="vb-subsystem-desc">7 tools with rate limiting and validation</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">16. Compost System</div>
-                                <div class="vb-subsystem-desc">Content recycling</div>
-                            </td>
-                            <td class="vb-subsystem-desc">CompostHeap, CompostMill, SeedBank, DigestScheduler</td>
-                            <td><span class="vb-badge vb-badge-beta">🔄 Beta</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">17. Preview Server</div>
-                                <div class="vb-subsystem-desc">Live preview</div>
-                            </td>
-                            <td class="vb-subsystem-desc">Async standardized, characterization tests</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>
-                                <div class="vb-subsystem-name">18. Documentation</div>
-                                <div class="vb-subsystem-desc">Docs-as-Code</div>
-                            </td>
-                            <td class="vb-subsystem-desc">THE BIBLE, Visual Bible, API docs, Dashboard</td>
-                            <td><span class="vb-badge vb-badge-complete">✅ Complete</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        <!-- Overview Metrics -->
+        <section class="section">
+            <h2 class="section-title">📈 Overview</h2>
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>🛡️ DGF Framework</h3>
+                    <div class="metric">
+                        <span class="metric-label">Tests Passing</span>
+                        <span class="metric-value" class="text-green">31 / 31</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" class="w-full bg-green"></div>
+                    </div>
+                    <div class="metric" class="mt-1">
+                        <span class="metric-label">Phase 1</span>
+                        <span class="metric-value" class="text-green">✅ 6/6</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Phase 2</span>
+                        <span class="metric-value" class="text-green">✅ 6/6</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Phase 3</span>
+                        <span class="metric-value" class="text-green">✅ 5/5</span>
+                    </div>
+                </div>
 
-        <!-- Kanban Board -->
-        <section class="vb-section">
-            <div class="vb-section-header">
-                <span class="vb-section-icon">📋</span>
-                <h2 class="vb-section-title">Development Board</h2>
-            </div>
-            
-            <div class="vb-kanban">
-                <!-- Todo Column -->
-                <div class="vb-kanban-column todo">
-                    <div class="vb-kanban-header">
-                        <span class="vb-kanban-title">📋 Todo</span>
-                        <span class="vb-kanban-count">3</span>
+                <div class="dashboard-card">
+                    <h3>🛡️ Guardrails M1-M18</h3>
+                    <div class="metric">
+                        <span class="metric-label">M1-M8 (Core)</span>
+                        <span class="metric-value" class="text-green">✅ 8/8</span>
                     </div>
-                    <div class="vb-kanban-cards">
-                        <div class="vb-kanban-card medium">
-                            <div class="vb-kanban-card-id">M12</div>
-                            <div class="vb-kanban-card-title">Version Compatibility Guardrails</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">guardrail</span>
-                                <span class="vb-kanban-tag">future</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card medium">
-                            <div class="vb-kanban-card-id">M13</div>
-                            <div class="vb-kanban-card-title">Dependency Health Monitoring</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">guardrail</span>
-                                <span class="vb-kanban-tag">future</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card medium">
-                            <div class="vb-kanban-card-id">M14</div>
-                            <div class="vb-kanban-card-title">Resource Prediction System</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">guardrail</span>
-                                <span class="vb-kanban-tag">future</span>
-                            </div>
-                        </div>
+                    <div class="metric">
+                        <span class="metric-label">M9-M11 (New)</span>
+                        <span class="metric-value" class="text-green">✅ 3/3</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" class="w-full bg-green"></div>
+                    </div>
+                    <div class="metric" class="mt-1">
+                        <span class="metric-label">M12-M18</span>
+                        <span class="metric-value" class="text-green">✅ 7/7 Complete</span>
                     </div>
                 </div>
-                
-                <!-- In Progress Column -->
-                <div class="vb-kanban-column inprogress">
-                    <div class="vb-kanban-header">
-                        <span class="vb-kanban-title">🟡 In Progress</span>
-                        <span class="vb-kanban-count">2</span>
+
+                <div class="dashboard-card">
+                    <h3>🔧 Subsystems</h3>
+                    <div class="metric">
+                        <span class="metric-label">Total</span>
+                        <span class="metric-value">18</span>
                     </div>
-                    <div class="vb-kanban-cards">
-                        <div class="vb-kanban-card high">
-                            <div class="vb-kanban-card-id">MERGE</div>
-                            <div class="vb-kanban-card-title">feature/persistent-memory → main</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">merge</span>
-                                <span class="vb-kanban-tag">priority</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card medium">
-                            <div class="vb-kanban-card-id">SYNC</div>
-                            <div class="vb-kanban-card-title">docs-site → main synchronization</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">docs</span>
-                                <span class="vb-kanban-tag">sync</span>
-                            </div>
-                        </div>
+                    <div class="metric">
+                        <span class="metric-label">Active</span>
+                        <span class="metric-value" class="text-green">18/18</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" class="w-full bg-green"></div>
+                    </div>
+                    <div class="metric" class="mt-1">
+                        <span class="metric-label">Core + UI</span>
+                        <span class="metric-value" class="text-green">10</span>
                     </div>
                 </div>
-                
-                <!-- Review Column -->
-                <div class="vb-kanban-column review">
-                    <div class="vb-kanban-header">
-                        <span class="vb-kanban-title">👀 Review</span>
-                        <span class="vb-kanban-count">0</span>
+
+                <div class="dashboard-card">
+                    <h3>📚 Documentation</h3>
+                    <div class="metric">
+                        <span class="metric-label">THE_BIBLE.md</span>
+                        <span class="metric-value" class="text-green">✅ 937 lines</span>
                     </div>
-                    <div class="vb-kanban-cards">
-                        <div style="text-align: center; padding: 2rem; color: var(--vb-text-muted); font-size: 0.875rem;">
-                            No items in review
-                        </div>
+                    <div class="metric">
+                        <span class="metric-label">19 Subsystems</span>
+                        <span class="metric-value" class="text-green">✅ Complete</span>
                     </div>
-                </div>
-                
-                <!-- Done Column -->
-                <div class="vb-kanban-column done">
-                    <div class="vb-kanban-header">
-                        <span class="vb-kanban-title">✅ Done</span>
-                        <span class="vb-kanban-count">11</span>
-                    </div>
-                    <div class="vb-kanban-cards">
-                        <div class="vb-kanban-card low">
-                            <div class="vb-kanban-card-id">M1</div>
-                            <div class="vb-kanban-card-title">Tone.js Validation Fix</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">harness</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card low">
-                            <div class="vb-kanban-card-id">M4</div>
-                            <div class="vb-kanban-card-title">Regex Greedy Match Fix</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">harness</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card low">
-                            <div class="vb-kanban-card-id">M6-M8</div>
-                            <div class="vb-kanban-card-title">Logger Console Cleanup</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">harness</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card medium">
-                            <div class="vb-kanban-card-id">M9</div>
-                            <div class="vb-kanban-card-title">SemanticValidator</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">guardrail</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card medium">
-                            <div class="vb-kanban-card-id">M10</div>
-                            <div class="vb-kanban-card-title">AccessibilityGuardrails</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">guardrail</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card medium">
-                            <div class="vb-kanban-card-id">M11</div>
-                            <div class="vb-kanban-card-title">RuntimeHealthMonitor</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">guardrail</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card high">
-                            <div class="vb-kanban-card-id">TESTS</div>
-                            <div class="vb-kanban-card-title">271 New Tests Added</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">quality</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card high">
-                            <div class="vb-kanban-card-id">TYPES</div>
-                            <div class="vb-kanban-card-title">Full Enum Migration</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">refactor</span>
-                            </div>
-                        </div>
-                        <div class="vb-kanban-card high">
-                            <div class="vb-kanban-card-id">SPLIT</div>
-                            <div class="vb-kanban-card-title">God Object Splitting</div>
-                            <div class="vb-kanban-card-meta">
-                                <span class="vb-kanban-tag">refactor</span>
-                            </div>
-                        </div>
+                    <div class="metric">
+                        <span class="metric-label">Status</span>
+                        <span class="metric-value" class="text-green">✅ Source of Truth</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <!-- Metrics Dashboard -->
-        <section class="vb-section">
-            <div class="vb-section-header">
-                <span class="vb-section-icon">📊</span>
-                <h2 class="vb-section-title">Metrics Dashboard</h2>
-            </div>
-            
-            <div class="vb-metrics-grid">
-                <!-- Test Metrics -->
-                <div class="vb-metric-card tests">
-                    <div class="vb-metric-header">
-                        <span class="vb-metric-label">Test Suite</span>
-                        <span class="vb-metric-icon">🧪</span>
-                    </div>
-                    <div class="vb-metric-value">1741</div>
-                    <div class="vb-metric-subtext">Tests passing (271 new)</div>
-                    <div class="vb-metric-bar">
-                        <div class="vb-metric-bar-fill green" style="width: 100%;"></div>
-                    </div>
+        <!-- Feature Status -->
+        <section class="section">
+            <h2 class="section-title">✨ Feature Status</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Feature</th>
+                        <th>Status</th>
+                        <th>Files</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Natural Language Interface</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                        <td><code>NaturalInterface.ts</code>, <code>IntentRouter.ts</code></td>
+                        <td>Routes without prefixes</td>
+                    </tr>
+                    <tr>
+                        <td><strong>LLMModeAgent</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                        <td><code>LLMModeAgent.ts</code></td>
+                        <td>Planning + reflection</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Meta-Harness</strong></td>
+                        <td><span class="badge badge-success">✅ Online</span></td>
+                        <td><code>MetaHarnessIntegration.ts</code></td>
+                        <td>18-type guardrail arch</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SOUL System</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>SOUL.md</code></td>
+                        <td>User-editable personality</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hybrid TUI</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>HarnessTUI.tsx</code></td>
+                        <td>Terminal + browser</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Ralph-Wiggum Loop</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>RalphLoop.ts</code></td>
+                        <td>Self-recursive iteration</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Multi-Domain Support</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>generators/*</code></td>
+                        <td>p5, Three.js, GLSL, Hydra, Strudel</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Tool System</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                        <td><code>src/harness/tools/*</code></td>
+                        <td>7 tools with rate limiting</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Harness Tasks M1-M11</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                        <td><code>harness-tasks/*.json</code></td>
+                        <td>All 11 tasks defined</td>
+                    </tr>
+                    <tr>
+                        <td><strong>SemanticValidator (M9)</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                        <td><code>guardrails/SemanticValidator.ts</code></td>
+                        <td>Intent matching via LLM</td>
+                    </tr>
+                    <tr>
+                        <td><strong>AccessibilityGuardrails (M10)</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                        <td><code>guardrails/AccessibilityGuardrails.ts</code></td>
+                        <td>Photosensitivity, WCAG</td>
+                    </tr>
+                    <tr>
+                        <td><strong>RuntimeHealthMonitor (M11)</strong></td>
+                        <td><span class="badge badge-success">✅ Complete</span></td>
+                        <td><code>guardrails/RuntimeHealthMonitor.ts</code></td>
+                        <td>Memory/FPS monitoring</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Swarm System</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>swarm/SwarmOrchestrator.ts</code></td>
+                        <td>Multi-agent voting</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Thinking-Trace Loop</strong> ⭐</td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>harness/ThinkingSeparation.ts</code></td>
+                        <td>Meta-learning from reasoning</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Compost System</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>compost/CompostMill.ts</code></td>
+                        <td>Failure learning</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Aesthetic System</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>aesthetic/AestheticCritic.ts</code></td>
+                        <td>Quality evaluation (M7)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Plugin System</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>plugins/PluginLoader.ts</code></td>
+                        <td>Extension architecture</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Routing System</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>routing/SmartRouter.ts</code></td>
+                        <td>Intelligent routing</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Scavenger System</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>scavenger/DNAExtractor.ts</code></td>
+                        <td>Code pattern extraction</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Task Board -->
+        <section class="section">
+            <h2 class="section-title">📋 Task Board (19 Subsystems)</h2>
+            <div class="task-board">
+                <div class="task-column">
+                    <h4>✅ Complete (19/19)</h4>
+                    <div class="task-item critical"><div class="task-id">1</div>Meta-Harness (7 tools)</div>
+                    <div class="task-item critical"><div class="task-id">2</div>Ralph Loop</div>
+                    <div class="task-item critical"><div class="task-id">3</div>Generators (9)</div>
+                    <div class="task-item critical"><div class="task-id">4</div>DGF (3 Phases)</div>
+                    <div class="task-item critical"><div class="task-id">5</div>Memory Systems</div>
+                    <div class="task-item high"><div class="task-id">6</div>LLM Infrastructure</div>
+                    <div class="task-item high"><div class="task-id">7</div>Security & Sandbox</div>
+                    <div class="task-item high"><div class="task-id">8</div>Testing (1741+)</div>
+                    <div class="task-item high"><div class="task-id">9</div>TUI (Terminal)</div>
+                    <div class="task-item high"><div class="task-id">10</div>Chat System</div>
+                    <div class="task-item medium"><div class="task-id">11</div>Swarm System</div>
+                    <div class="task-item high"><div class="task-id">12</div>Thinking-Trace ⭐</div>
+                    <div class="task-item medium"><div class="task-id">13</div>Compost System</div>
+                    <div class="task-item medium"><div class="task-id">14</div>Aesthetic System</div>
+                    <div class="task-item medium"><div class="task-id">15</div>Plugin System</div>
+                    <div class="task-item medium"><div class="task-id">16</div>SOUL System</div>
+                    <div class="task-item medium"><div class="task-id">17</div>LLM Mode Agent</div>
+                    <div class="task-item medium"><div class="task-id">18</div>Routing System</div>
+                    <div class="task-item medium"><div class="task-id">19</div>Scavenger System</div>
                 </div>
-                
-                <!-- File Metrics -->
-                <div class="vb-metric-card files">
-                    <div class="vb-metric-header">
-                        <span class="vb-metric-label">Source Files</span>
-                        <span class="vb-metric-icon">📁</span>
-                    </div>
-                    <div class="vb-metric-value">241</div>
-                    <div class="vb-metric-subtext">Test files (132 unit tests)</div>
-                    <div class="vb-metric-bar">
-                        <div class="vb-metric-bar-fill cyan" style="width: 85%;"></div>
-                    </div>
+                <div class="task-column">
+                    <h4>🟡 In Progress</h4>
+                    <div class="meta-info">None</div>
                 </div>
-                
-                <!-- Coverage Metrics -->
-                <div class="vb-metric-card coverage">
-                    <div class="vb-metric-header">
-                        <span class="vb-metric-label">Type Safety</span>
-                        <span class="vb-metric-icon">🔒</span>
-                    </div>
-                    <div class="vb-metric-value">100%</div>
-                    <div class="vb-metric-subtext">Enums migrated, no magic strings</div>
-                    <div class="vb-metric-bar">
-                        <div class="vb-metric-bar-fill purple" style="width: 100%;"></div>
-                    </div>
+                <div class="task-column">
+                    <h4>📅 Planned</h4>
+                    <div class="task-item high"><div class="task-id">M12</div>Privacy Guardrail</div>
+                    <div class="task-item high"><div class="task-id">M13</div>Injection Defense</div>
+                    <div class="task-item medium"><div class="task-id">M14</div>Supply Chain</div>
+                    <div class="task-item medium"><div class="task-id">M15</div>Audit & Compliance</div>
+                    <div class="task-item low"><div class="task-id">M16</div>Fairness & Bias</div>
+                    <div class="task-item low"><div class="task-id">M17</div>Explainability</div>
+                    <div class="task-item low"><div class="task-id">M18</div>Resilience</div>
+                    <div class="task-item low"><div class="task-id">FUTURE</div>Community plugins</div>
                 </div>
-                
-                <!-- Wave Metrics -->
-                <div class="vb-metric-card waves">
-                    <div class="vb-metric-header">
-                        <span class="vb-metric-label">Waves Complete</span>
-                        <span class="vb-metric-icon">🌊</span>
-                    </div>
-                    <div class="vb-metric-value">16/16</div>
-                    <div class="vb-metric-subtext">Plus Ultra Remediation complete</div>
-                    <div class="vb-metric-bar">
-                        <div class="vb-metric-bar-fill pink" style="width: 100%;"></div>
-                    </div>
+                <div class="task-column">
+                    <h4>⏸️ Blocked</h4>
+                    <div class="meta-info">None</div>
                 </div>
             </div>
         </section>
 
-        <!-- Wave Completion Tracker -->
-        <section class="vb-section">
-            <div class="vb-section-header">
-                <span class="vb-section-icon">🌊</span>
-                <h2 class="vb-section-title">Wave Completion Tracker</h2>
-            </div>
+        <!-- What's Missing -->
+        <section class="section">
+            <h2 class="section-title">📊 System Status</h2>
             
-            <div class="vb-wave-tracker">
-                <div class="vb-wave-header">
-                    <span class="vb-wave-title">Plus Ultra Remediation Progress</span>
-                    <span class="vb-wave-status">
-                        <span style="width: 8px; height: 8px; background: var(--vb-accent-green); border-radius: 50%;"></span>
-                        16/16 Complete
-                    </span>
+            <div class="alert success">
+                <h4>✅ All 19 Subsystems Complete</h4>
+                <p>All major subsystems documented in THE_BIBLE.md and operational:</p>
+                <ul class="ml-lg text-secondary">
+                    <li><strong>Core (5):</strong> Meta-Harness, Ralph Loop, Generators, DGF, Memory</li>
+                    <li><strong>UI (3):</strong> TUI, Chat, SOUL</li>
+                    <li><strong>Intelligence (6):</strong> Swarm, Thinking-Trace, Compost, Aesthetic, Routing, Scavenger</li>
+                    <li><strong>Infrastructure (5):</strong> LLM, Security, Testing, Plugins, LLM Mode</li>
+                </ul>
+            </div>
+
+            <div class="alert" style="background: rgba(34, 197, 94, 0.1); border-color: var(--accent-green);">
+                <h4 style="color: var(--accent-green);">✅ M12-M18 Compliance Guardrails Complete</h4>
+                <p>All 7 compliance guardrails implemented and tested:</p>
+                <ul class="ml-lg text-secondary">
+                    <li><strong>M12: Privacy</strong> - PII detection & anonymization ✅</li>
+                    <li><strong>M13: Prompt Injection Defense</strong> - Jailbreak detection ✅</li>
+                    <li><strong>M14: Supply Chain</strong> - Dependency audit, SBOM ✅</li>
+                    <li><strong>M15: Audit & Compliance</strong> - Non-repudiation logging ✅</li>
+                    <li><strong>M16: Fairness & Bias</strong> - Output diversity checks ✅</li>
+                    <li><strong>M17: Explainability</strong> - Decision tracing, attribution ✅</li>
+                    <li><strong>M18: Resilience</strong> - Circuit breakers, fallbacks ✅</li>
+                </ul>
+            </div>
+
+            <div class="alert" class="bg-purple">
+                <h4 class="text-purple">📖 Source of Truth</h4>
+                <p>Complete documentation at <a href="THE_BIBLE.md" class="text-cyan"><strong>docs/THE_BIBLE.md</strong></a></p>
+                <p class="mt-sm">This dashboard reflects THE_BIBLE. Always refer to THE_BIBLE for complete details.</p>
+            </div>
+        </section>
+
+        <!-- Loose Ends Audit -->
+        <section class="section">
+            <h2 class="section-title">🔍 Loose Ends Audit</h2>
+            <p class="meta-info">See <a href="../LOOSE_ENDS.md">LOOSE_ENDS.md</a> for full details. Last updated: 2026-04-02</p>
+            
+            <div class="dashboard-grid mt-1">
+                <div class="dashboard-card">
+                    <h3>🔴 Critical Issues</h3>
+                    <div class="metric">
+                        <span class="metric-label">Bare catch blocks</span>
+                        <span class="metric-value text-yellow">19</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">console.log statements</span>
+                        <span class="metric-value text-yellow">195</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">SSRF validation gaps</span>
+                        <span class="metric-value text-yellow">Needs hardening</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">CSRF protection</span>
+                        <span class="metric-value text-yellow">Tests disabled</span>
+                    </div>
                 </div>
-                
-                <div class="vb-waves-grid">
-                    <div class="vb-wave-item complete" title="Wave 1: Discovery & Audit">1</div>
-                    <div class="vb-wave-item complete" title="Wave 2: Discovery & Audit">2</div>
-                    <div class="vb-wave-item complete" title="Wave 3: Discovery & Audit">3</div>
-                    <div class="vb-wave-item complete" title="Wave 4: Discovery & Audit">4</div>
-                    <div class="vb-wave-item complete" title="Wave 5: Discovery & Audit">5</div>
-                    <div class="vb-wave-item complete" title="Wave 6: Discovery & Audit">6</div>
-                    <div class="vb-wave-item complete" title="Wave 7: Discovery & Audit">7</div>
-                    <div class="vb-wave-item complete" title="Wave 8: Critical Bug Fixes">8</div>
-                    <div class="vb-wave-item complete" title="Wave 9: Type Safety">9</div>
-                    <div class="vb-wave-item complete" title="Wave 10: Code Consolidation">10</div>
-                    <div class="vb-wave-item complete" title="Wave 11: God Object Splitting">11</div>
-                    <div class="vb-wave-item complete" title="Wave 12: Async Standardization">12</div>
-                    <div class="vb-wave-item complete" title="Wave 13: Error Handling">13</div>
-                    <div class="vb-wave-item complete" title="Wave 14: LoopOptions Decomposition">14</div>
-                    <div class="vb-wave-item complete" title="Wave 15: Dead Code Removal">15</div>
-                    <div class="vb-wave-item complete" title="Wave 16: Documentation">16</div>
+
+                <div class="dashboard-card">
+                    <h3>🔧 Implementation Stubs</h3>
+                    <div class="metric">
+                        <span class="metric-label">extractAudio()</span>
+                        <span class="metric-value text-purple">Placeholder</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">extractVideo()</span>
+                        <span class="metric-value text-purple">Placeholder</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">speculativeDecode()</span>
+                        <span class="metric-value text-purple">Unimplemented</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">FFT analysis</span>
+                        <span class="metric-value text-purple">Synthetic only</span>
+                    </div>
                 </div>
-                
-                <div style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; font-size: 0.875rem; color: var(--vb-text-secondary);">
-                    <div>🟢 <strong>Waves 1-7:</strong> Discovery & Audit</div>
-                    <div>🟢 <strong>Wave 8:</strong> Critical Bug Fixes (TDD)</div>
-                    <div>🟢 <strong>Wave 9:</strong> Type Safety (Enums)</div>
-                    <div>🟢 <strong>Wave 10:</strong> Code Consolidation</div>
-                    <div>🟢 <strong>Wave 11:</strong> God Object Splitting</div>
-                    <div>🟢 <strong>Wave 12:</strong> Async Standardization</div>
-                    <div>🟢 <strong>Wave 13:</strong> Error Handling</div>
-                    <div>🟢 <strong>Wave 14:</strong> Options Decomposition</div>
-                    <div>🟢 <strong>Wave 15:</strong> Dead Code Removal</div>
-                    <div>🟢 <strong>Wave 16:</strong> Documentation</div>
+
+                <div class="dashboard-card">
+                    <h3>⚠️ Type Safety</h3>
+                    <div class="metric">
+                        <span class="metric-label">@ts-ignore</span>
+                        <span class="metric-value text-yellow">10</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">any types</span>
+                        <span class="metric-value text-yellow">11</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Deprecated code</span>
+                        <span class="metric-value text-yellow">7 blocks</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Test skips</span>
+                        <span class="metric-value text-yellow">8 suites</span>
+                    </div>
                 </div>
+
+                <div class="dashboard-card">
+                    <h3>📋 M12-M18 Status</h3>
+                    <div class="metric">
+                        <span class="metric-label">M12 Privacy</span>
+                        <span class="metric-value text-green">✅ Complete</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">M13 Injection</span>
+                        <span class="metric-value text-green">✅ Complete</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">M14 Supply Chain</span>
+                        <span class="metric-value text-green">✅ Complete</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">M15-M18</span>
+                        <span class="metric-value text-green">✅ 4/4 Complete</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert warning mt-1">
+                <h4>⚠️ Hardware Integration Not Implemented</h4>
+                <ul class="ml-lg text-secondary">
+                    <li>MIDI/OSC hardware integration (config placeholders only)</li>
+                    <li>Live music output to physical devices</li>
+                    <li>See LOOSE_ENDS.md for full priority order</li>
+                </ul>
             </div>
         </section>
 
         <!-- Recent Commits -->
-        <section class="vb-section">
-            <div class="vb-section-header">
-                <span class="vb-section-icon">📝</span>
-                <h2 class="vb-section-title">Recent Commits (Plus Ultra Remediation)</h2>
-            </div>
-            
-            <div class="vb-commits-list">
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">1a0ed93</span>
-                    <span class="vb-commit-message">fix: Remove duplicate exports</span>
-                    <span class="vb-commit-wave">Fix</span>
+        <section class="section">
+            <h2 class="section-title">📝 Recent Commits (narrative/liminal-archaeology)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Commit</th>
+                        <th>Message</th>
+                        <th>Impact</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>bb67f67</code></td>
+                        <td>docs: Update THE_BIBLE.md and create DEV dashboard for DGF</td>
+                        <td>18 subsystems documented</td>
+                    </tr>
+                    <tr>
+                        <td><code>a066b26</code></td>
+                        <td>docs: Final THE_BIBLE and architecture updates</td>
+                        <td>DGF Phase 3 complete</td>
+                    </tr>
+                    <tr>
+                        <td><code>ee57b32</code></td>
+                        <td>feat: Migrate all generators to TierBasedGenerator</td>
+                        <td>9 generators migrated</td>
+                    </tr>
+                    <tr>
+                        <td><code>f750b7a</code></td>
+                        <td>feat: Implement M9-M11 Guardrails</td>
+                        <td>Semantic, Runtime, Accessibility</td>
+                    </tr>
+                    <tr>
+                        <td><code>acc6dd1</code></td>
+                        <td>feat: Add Model Tier detection</td>
+                        <td>Flagship/Medium/Local/Tiny</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Next Steps -->
+        <section class="section">
+            <h2 class="section-title">🎯 Next Steps</h2>
+            <ol class="ml-lg text-secondary lh-2">
+                <li><strong>✅ DGF Phases 1-3 COMPLETE</strong> - 31 tests passing</li>
+                <li><strong>📝 M12-M18 defined</strong> - Specs complete, ready for implementation</li>
+                <li><strong>🔄 Constitution persistence</strong> - Optional disk export</li>
+                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
+            </ol>
+        </section>
+    </main>
+
+    <!-- Quick Reference -->
+        <section class="section">
+            <h2 class="section-title">📖 Quick Reference</h2>
+            <div class="grid-4">
+                <div class="card">
+                    <h3>Documentation</h3>
+                    <ul class="text-secondary text-sm pl-lg">
+                        <li><a href="THE_BIBLE.md">THE_BIBLE.md</a> (1513 lines)</li>
+                        <li>Glossary</li>
+                        <li>Decision Log (ADRs)</li>
+                        <li>Changelog</li>
+                    </ul>
                 </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">ee57b32</span>
-                    <span class="vb-commit-message">feat: Migrate all generators to TierBasedGenerator</span>
-                    <span class="vb-commit-wave">Wave 10</span>
+                <div class="card">
+                    <h3>Operations</h3>
+                    <ul class="text-secondary text-sm pl-lg">
+                        <li>Troubleshooting Guide</li>
+                        <li>Runbooks</li>
+                        <li>Security Runbook</li>
+                        <li>Observability</li>
+                    </ul>
                 </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">f750b7a</span>
-                    <span class="vb-commit-message">feat: Implement M9-M11 Guardrails</span>
-                    <span class="vb-commit-wave">Wave 10</span>
+                <div class="card">
+                    <h3>Development</h3>
+                    <ul class="text-secondary text-sm pl-lg">
+                        <li>API Quick Reference</li>
+                        <li>Contributing Guide</li>
+                        <li>Getting Started</li>
+                        <li>Migrations Guide</li>
+                    </ul>
                 </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">acc6dd1</span>
-                    <span class="vb-commit-message">feat: Add Model Tier detection</span>
-                    <span class="vb-commit-wave">Wave 9</span>
-                </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">a911e0b</span>
-                    <span class="vb-commit-message">feat: Add HarnessMemory</span>
-                    <span class="vb-commit-wave">Wave 10</span>
-                </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">d8e4f2c</span>
-                    <span class="vb-commit-message">refactor: Split CodeValidator into domain validators</span>
-                    <span class="vb-commit-wave">Wave 11</span>
-                </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">b7a3c9e</span>
-                    <span class="vb-commit-message">refactor: Split htmlWrapper into specialized wrappers</span>
-                    <span class="vb-commit-wave">Wave 11</span>
-                </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">9f2e1d4</span>
-                    <span class="vb-commit-message">feat: Add Provider, Domain, Status enums</span>
-                    <span class="vb-commit-wave">Wave 9</span>
-                </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">c5a8b2f</span>
-                    <span class="vb-commit-message">fix: Remove bare catch blocks with proper error handling</span>
-                    <span class="vb-commit-wave">Wave 8</span>
-                </div>
-                <div class="vb-commit-item">
-                    <span class="vb-commit-hash">e1d9a7b</span>
-                    <span class="vb-commit-message">docs: Create Plus Ultra Remediation Report</span>
-                    <span class="vb-commit-wave">Wave 16</span>
+                <div class="card">
+                    <h3>Links</h3>
+                    <ul class="text-secondary text-sm pl-lg">
+                        <li><a href="index.html">Home</a></li>
+                        <li><a href="architecture.html">Architecture</a></li>
+                        <li><a href="cli-reference.html">CLI</a></li>
+                        <li><a href="soul-system.html">SOUL</a></li>
+                    </ul>
                 </div>
             </div>
         </section>
 
-        <!-- Footer -->
-        <footer class="vb-footer">
-            <p class="vb-footer-text">
-                📖 <strong>Visual Bible</strong> — Liminal v2.1.0 Beta • 
-                Last updated: April 3, 2026 • 
-                <a href="THE_BIBLE.md" style="color: var(--vb-accent-cyan);">THE BIBLE (Source of Truth)</a> • 
-                <a href="dashboard.html" style="color: var(--vb-accent-cyan);">Development Dashboard</a>
+        <footer class="footer">
+            <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a> • <a href="THE_BIBLE.md">📖 THE_BIBLE.md</a></p>
+            <p class="footer-note">
+                1600+ lines • 19 subsystems • 31 guardrail tests • Glossary • Troubleshooting • Runbooks • Changelog
             </p>
         </footer>
-    </main>
 </body>
 </html>

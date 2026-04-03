@@ -14,6 +14,7 @@ import { Status } from '../../types/status.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
 import { formatError } from '../../utils/errors.js';
 import { getSelfImprovePrompt, createReflectionPrompt } from '../prompts/self-improve.js';
+import { thinkingRepository } from '../ThinkingSeparation.js';
 import {
   readFileTool,
   writeFileTool,
@@ -278,12 +279,22 @@ When the task is complete and build passes, respond with tool "complete".`;
       const jsonStr = jsonMatch[1] || text;
       const parsed = JSON.parse(jsonStr.trim());
       
-      return {
+      const toolCall = {
         thought: parsed.thought || 'No thought provided',
         tool: parsed.tool || 'unknown',
         params: parsed.params || {},
         expectedResult: parsed.expectedResult || 'No expectation set',
       };
+      
+      // CAPTURE HARNESS THINKING - this is the harness LLM's reasoning about fixing the system
+      // This is DIFFERENT from generator thinking and must be kept separate
+      thinkingRepository.storeHarnessThinking({
+        model: this.llmClient.getConfig().model,
+        thinking: toolCall.thought,
+        context: 'adaptation',
+      });
+      
+      return toolCall;
     } catch (e) {
       console.error('[LLMModeAgent] Failed to parse LLM response:', e);
       console.error('Raw response:', rateLimitResult.result);

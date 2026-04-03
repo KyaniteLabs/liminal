@@ -76,3 +76,14 @@ export {
   rateLimiter,
   validationGuard,
 } from './tools/index.js';
+
+// Tool Telemetry
+export {
+  toolTelemetry,
+  ToolTelemetry,
+  telemetryWrapper,
+  TelemetryWrapper,
+  type ToolCallRecord,
+  type ToolTelemetryAnalysis,
+  type ToolContext,
+} from './tools/index.js';

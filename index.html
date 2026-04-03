@@ -322,96 +322,185 @@
   </div>
 </section>
 
-<!-- Gallery -->
+<!-- Gallery - Latest Test Results -->
 <section class="px-6 py-24 max-w-5xl mx-auto" id="gallery">
   <div class="text-center mb-16">
-    <span class="text-xs mono tracking-widest" style="color: var(--accent2);">OUTPUTS</span>
-    <h2 class="text-3xl md:text-4xl font-bold mt-2">Gallery</h2>
+    <span class="text-xs mono tracking-widest" style="color: var(--accent2);">TEST RESULTS</span>
+    <h2 class="text-3xl md:text-4xl font-bold mt-2">Latest Test Run Results</h2>
     <p class="text-sm text-[var(--text-dim)] mt-3">
-      9 creative coding domains: p5.js, GLSL shaders, Three.js, Strudel, Hydra, Tone.js, Remotion, HTML, and ASCII art.
+      Real outputs from Agent B test run (April 1, 2026). 10 models across 9 domains.
     </p>
   </div>
 
-  <div class="grid md:grid-cols-2 gap-6">
-    <div class="gallery-card">
-      <div class="gallery-preview" style="position: relative; overflow: hidden;">
-        <iframe src="landing-assets/showcase/p5-best.html" 
+  <div class="grid md:grid-cols-2 gap-6" id="testResultsGrid">
+    <!-- PASS: gemma + p5 -->
+    <div class="gallery-card" style="border-left: 3px solid var(--green);">
+      <div class="gallery-preview" style="position: relative; overflow: hidden; height: 250px; background: #1a1a2e;">
+        <iframe src="landing-live/b-p5-gemma.html/b-p5-gemma-final.html" 
                 style="width: 100%; height: 100%; border: none;"
                 loading="lazy"
-                title="p5.js Particle System">
+                title="p5.js - Gemma">
         </iframe>
+        <div class="absolute top-3 left-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: var(--green); color: #000; font-weight: 600;">PASS</span>
+        </div>
         <div class="absolute bottom-3 left-3 right-3" style="pointer-events: none;">
-          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">p5.js — Particle Flow</span>
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">p5.js — Gemma</span>
         </div>
       </div>
       <div class="p-4">
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium">Calming Blue Particle System</span>
-          <span class="text-xs mono" style="color: var(--green);">score: 0.68</span>
+          <span class="text-sm font-medium">Interactive Particle System</span>
+          <span class="text-xs mono" style="color: var(--green);">129ms · 2.1KB</span>
         </div>
-        <p class="text-xs text-[var(--text-dim)] mt-1">LM Studio · flowing movement · depth &amp; flow field</p>
+        <p class="text-xs text-[var(--text-dim)] mt-1">gemma · passed validation · working output</p>
       </div>
     </div>
 
-    <div class="gallery-card">
-      <div class="gallery-preview" style="position: relative; overflow: hidden;">
-        <iframe src="landing-assets/showcase/glsl-best.html" 
+    <!-- PASS: gemma + GLSL -->
+    <div class="gallery-card" style="border-left: 3px solid var(--green);">
+      <div class="gallery-preview" style="position: relative; overflow: hidden; height: 250px; background: #1a1a2e;">
+        <iframe src="landing-live/b-glsl-gemma.html/b-glsl-gemma-final.html" 
                 style="width: 100%; height: 100%; border: none;"
                 loading="lazy"
-                title="GLSL Plasma Shader">
+                title="GLSL - Gemma">
         </iframe>
+        <div class="absolute top-3 left-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: var(--green); color: #000; font-weight: 600;">PASS</span>
+        </div>
         <div class="absolute bottom-3 left-3 right-3" style="pointer-events: none;">
-          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">GLSL — Shader</span>
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">GLSL — Gemma</span>
         </div>
       </div>
       <div class="p-4">
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium">Abstract Plasma Shader</span>
-          <span class="text-xs mono" style="color: var(--green);">score: 0.90</span>
+          <span class="text-sm font-medium">Ray-marched Nebula Shader</span>
+          <span class="text-xs mono" style="color: var(--green);">324s · 6KB</span>
         </div>
-        <p class="text-xs text-[var(--text-dim)] mt-1">LM Studio · animated colors · noise-based displacement</p>
+        <p class="text-xs text-[var(--text-dim)] mt-1">gemma · high-quality output · 6KB shader</p>
       </div>
     </div>
 
-    <div class="gallery-card">
-      <div class="gallery-preview" style="position: relative; overflow: hidden;">
-        <iframe src="landing-assets/showcase/glsl-neon.html" 
+    <!-- PASS: phi4 + p5 -->
+    <div class="gallery-card" style="border-left: 3px solid var(--green);">
+      <div class="gallery-preview" style="position: relative; overflow: hidden; height: 250px; background: #1a1a2e;">
+        <iframe src="landing-live/b-p5-phi4.html/b-p5-phi4-final.html" 
                 style="width: 100%; height: 100%; border: none;"
                 loading="lazy"
-                title="GLSL Neon Shader">
+                title="p5.js - Phi4">
         </iframe>
+        <div class="absolute top-3 left-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: var(--green); color: #000; font-weight: 600;">PASS</span>
+        </div>
         <div class="absolute bottom-3 left-3 right-3" style="pointer-events: none;">
-          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">GLSL — Neon</span>
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">p5.js — Phi4</span>
         </div>
       </div>
       <div class="p-4">
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium">Neon Wave Shader</span>
-          <span class="text-xs mono" style="color: var(--green);">score: 0.87</span>
+          <span class="text-sm font-medium">Particle Animation</span>
+          <span class="text-xs mono" style="color: var(--green);">177ms · 2.1KB</span>
         </div>
-        <p class="text-xs text-[var(--text-dim)] mt-1">Qwen3-Coder-40B · glowing waves · cyberpunk aesthetic</p>
+        <p class="text-xs text-[var(--text-dim)] mt-1">phi4 · fast generation · working code</p>
       </div>
     </div>
 
-    <div class="gallery-card">
-      <div class="gallery-preview" style="position: relative; overflow: hidden;">
-        <iframe src="landing-assets/showcase/three-cube.html" 
+    <!-- PASS: granite-350m + remotion -->
+    <div class="gallery-card" style="border-left: 3px solid var(--green);">
+      <div class="gallery-preview" style="position: relative; overflow: hidden; height: 250px; background: #1a1a2e;">
+        <iframe src="landing-live/b-remotion-granite-350m.html/b-remotion-granite-350m-final.html" 
                 style="width: 100%; height: 100%; border: none;"
                 loading="lazy"
-                title="Three.js 3D Cube">
+                title="Remotion - Granite 350M">
         </iframe>
+        <div class="absolute top-3 left-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: var(--green); color: #000; font-weight: 600;">PASS</span>
+        </div>
         <div class="absolute bottom-3 left-3 right-3" style="pointer-events: none;">
-          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">Three.js — 3D</span>
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">Remotion — Granite-350M</span>
         </div>
       </div>
       <div class="p-4">
         <div class="flex items-center justify-between">
-          <span class="text-sm font-medium">Rotating 3D Cube</span>
-          <span class="text-xs mono" style="color: var(--green);">score: 0.82</span>
+          <span class="text-sm font-medium">Video Composition</span>
+          <span class="text-xs mono" style="color: var(--green);">8.9s · 3.5KB</span>
         </div>
-        <p class="text-xs text-[var(--text-dim)] mt-1">Kimi k1.5 · interesting lighting · geometry</p>
+        <p class="text-xs text-[var(--text-dim)] mt-1">granite-350m · only pass for this model · remotion</p>
       </div>
     </div>
+
+    <!-- PASS: gemma + tone -->
+    <div class="gallery-card" style="border-left: 3px solid var(--green);">
+      <div class="gallery-preview" style="position: relative; overflow: hidden; background: var(--surface2); display: flex; align-items: center; justify-content: center;">
+        <div style="text-align: center; padding: 2rem;">
+          <div style="font-size: 3rem; margin-bottom: 1rem;">🎹</div>
+          <div class="text-xs mono" style="color: var(--text-dim);">Tone.js Audio</div>
+        </div>
+        <div class="absolute top-3 left-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: var(--green); color: #000; font-weight: 600;">PASS</span>
+        </div>
+        <div class="absolute bottom-3 left-3 right-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">Tone.js — Gemma</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">Generative Music</span>
+          <span class="text-xs mono" style="color: var(--green);">157s · 4.3KB</span>
+        </div>
+        <p class="text-xs text-[var(--text-dim)] mt-1">gemma · ambient audio · working Tone.js</p>
+      </div>
+    </div>
+
+    <!-- PASS: gemma + remotion -->
+    <div class="gallery-card" style="border-left: 3px solid var(--green);">
+      <div class="gallery-preview" style="position: relative; overflow: hidden; height: 250px; background: #1a1a2e;">
+        <iframe src="landing-live/b-remotion-gemma.html/b-remotion-gemma-final.html" 
+                style="width: 100%; height: 100%; border: none;"
+                loading="lazy"
+                title="Remotion - Gemma">
+        </iframe>
+        <div class="absolute top-3 left-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: var(--green); color: #000; font-weight: 600;">PASS</span>
+        </div>
+        <div class="absolute bottom-3 left-3 right-3" style="pointer-events: none;">
+          <span class="text-xs mono px-2 py-1 rounded" style="background: rgba(0,0,0,0.8); color: var(--text-dim);">Remotion — Gemma</span>
+        </div>
+      </div>
+      <div class="p-4">
+        <div class="flex items-center justify-between">
+          <span class="text-sm font-medium">Animated Video</span>
+          <span class="text-xs mono" style="color: var(--green);">50s · 3.6KB</span>
+        </div>
+        <p class="text-xs text-[var(--text-dim)] mt-1">gemma · video composition · 4/9 pass rate</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Test Summary Stats -->
+  <div class="mt-12 p-6 rounded-xl" style="background: var(--surface); border: 1px solid var(--border);">
+    <h3 class="text-lg font-semibold mb-4">Test Run Summary</h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+      <div class="p-4 rounded-lg" style="background: var(--bg);">
+        <div class="text-2xl font-bold" style="color: var(--green);">15</div>
+        <div class="text-xs text-[var(--text-dim)]">Passed</div>
+      </div>
+      <div class="p-4 rounded-lg" style="background: var(--bg);">
+        <div class="text-2xl font-bold" style="color: var(--red);">50</div>
+        <div class="text-xs text-[var(--text-dim)]">Failed</div>
+      </div>
+      <div class="p-4 rounded-lg" style="background: var(--bg);">
+        <div class="text-2xl font-bold" style="color: var(--yellow);">23</div>
+        <div class="text-xs text-[var(--text-dim)]">Timeout</div>
+      </div>
+      <div class="p-4 rounded-lg" style="background: var(--bg);">
+        <div class="text-2xl font-bold">88</div>
+        <div class="text-xs text-[var(--text-dim)]">Total Tests</div>
+      </div>
+    </div>
+    <p class="text-xs text-[var(--text-dim)] mt-4 text-center">
+      Models tested: gemma, phi4, qwen35, granite-1b, granite-350m, lfm, minimax-m27, minimax-m25, lm-coder-40b, lm-qwen-9b
+    </p>
   </div>
 </section>
 

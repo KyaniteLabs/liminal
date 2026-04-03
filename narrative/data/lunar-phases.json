@@ -1,0 +1,223 @@
+{
+  "source": "timeanddate.com (primary phase times) + phaseofthemoontoday.com (daily illumination)",
+  "retrieved_date": "2026-04-02",
+  "notes": "All times in UTC. Daily illumination from phaseofthemoontoday.com calendar data. Phase names follow standard 8-phase convention. March 3 Full Moon was also a total lunar eclipse visible from Americas, Australia, Asia.",
+  "range": {
+    "start": "2026-02-28",
+    "end": "2026-04-01"
+  },
+  "key_events": [
+    {
+      "date": "2026-02-17",
+      "event": "new_moon",
+      "name": "February New Moon",
+      "time_utc": null,
+      "notes": "Pre-range reference point for synodic calculation"
+    },
+    {
+      "date": "2026-02-24",
+      "event": "first_quarter",
+      "name": "February First Quarter",
+      "time_utc": null
+    },
+    {
+      "date": "2026-03-03",
+      "event": "full_moon",
+      "name": "Full Worm Moon",
+      "time_utc": "11:37",
+      "eclipse": "Total lunar eclipse, totality ~58 minutes, visible from North/South America, Australia, Asia"
+    },
+    {
+      "date": "2026-03-11",
+      "event": "last_quarter",
+      "name": "March Last Quarter",
+      "time_utc": "09:38"
+    },
+    {
+      "date": "2026-03-19",
+      "event": "new_moon",
+      "name": "March New Moon",
+      "time_utc": "01:23"
+    },
+    {
+      "date": "2026-03-25",
+      "event": "first_quarter",
+      "name": "March First Quarter",
+      "time_utc": "19:17"
+    },
+    {
+      "date": "2026-04-02",
+      "event": "full_moon",
+      "name": "Full Pink Moon",
+      "time_utc": "02:11",
+      "notes": "After range end but peaks night of Apr 1 (10:12 PM EDT). NASA Artemis II launched Apr 1 during this full moon."
+    }
+  ],
+  "daily_phases": [
+    {
+      "date": "2026-02-28",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 87
+    },
+    {
+      "date": "2026-03-01",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 94
+    },
+    {
+      "date": "2026-03-02",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 98
+    },
+    {
+      "date": "2026-03-03",
+      "phase": "full",
+      "illumination_percent": 100
+    },
+    {
+      "date": "2026-03-04",
+      "phase": "full",
+      "illumination_percent": 99
+    },
+    {
+      "date": "2026-03-05",
+      "phase": "waning_gibbous",
+      "illumination_percent": 97
+    },
+    {
+      "date": "2026-03-06",
+      "phase": "waning_gibbous",
+      "illumination_percent": 93
+    },
+    {
+      "date": "2026-03-07",
+      "phase": "waning_gibbous",
+      "illumination_percent": 87
+    },
+    {
+      "date": "2026-03-08",
+      "phase": "waning_gibbous",
+      "illumination_percent": 79
+    },
+    {
+      "date": "2026-03-09",
+      "phase": "waning_gibbous",
+      "illumination_percent": 71
+    },
+    {
+      "date": "2026-03-10",
+      "phase": "waning_gibbous",
+      "illumination_percent": 63
+    },
+    {
+      "date": "2026-03-11",
+      "phase": "last_quarter",
+      "illumination_percent": 53
+    },
+    {
+      "date": "2026-03-12",
+      "phase": "last_quarter",
+      "illumination_percent": 44
+    },
+    {
+      "date": "2026-03-13",
+      "phase": "waning_crescent",
+      "illumination_percent": 35
+    },
+    {
+      "date": "2026-03-14",
+      "phase": "waning_crescent",
+      "illumination_percent": 26
+    },
+    {
+      "date": "2026-03-15",
+      "phase": "waning_crescent",
+      "illumination_percent": 18
+    },
+    {
+      "date": "2026-03-16",
+      "phase": "waning_crescent",
+      "illumination_percent": 11
+    },
+    {
+      "date": "2026-03-17",
+      "phase": "waning_crescent",
+      "illumination_percent": 5
+    },
+    {
+      "date": "2026-03-18",
+      "phase": "waning_crescent",
+      "illumination_percent": 1
+    },
+    {
+      "date": "2026-03-19",
+      "phase": "new",
+      "illumination_percent": 0
+    },
+    {
+      "date": "2026-03-20",
+      "phase": "waxing_crescent",
+      "illumination_percent": 1
+    },
+    {
+      "date": "2026-03-21",
+      "phase": "waxing_crescent",
+      "illumination_percent": 5
+    },
+    {
+      "date": "2026-03-22",
+      "phase": "waxing_crescent",
+      "illumination_percent": 11
+    },
+    {
+      "date": "2026-03-23",
+      "phase": "waxing_crescent",
+      "illumination_percent": 19
+    },
+    {
+      "date": "2026-03-24",
+      "phase": "waxing_crescent",
+      "illumination_percent": 29
+    },
+    {
+      "date": "2026-03-25",
+      "phase": "first_quarter",
+      "illumination_percent": 41
+    },
+    {
+      "date": "2026-03-26",
+      "phase": "first_quarter",
+      "illumination_percent": 52
+    },
+    {
+      "date": "2026-03-27",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 64
+    },
+    {
+      "date": "2026-03-28",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 74
+    },
+    {
+      "date": "2026-03-29",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 84
+    },
+    {
+      "date": "2026-03-30",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 91
+    },
+    {
+      "date": "2026-03-31",
+      "phase": "waxing_gibbous",
+      "illumination_percent": 96
+    },
+    {
+      "date": "2026-04-01",
+      "phase": "full",
+      "illumination_percent": 99
+    }
+  ]
+}

@@ -1,0 +1,947 @@
+{
+  "meta": {
+    "description": "Cross-repo activity during Liminal build period — what was the developer working on during each Liminal era",
+    "period": "2026-02-01 to 2026-04-01",
+    "developer": "Pastorsimon1798",
+    "total_repos_checked": 25,
+    "repos_with_activity": 18,
+    "repos_with_no_activity": ["cursor-code-analyzer", "Generative-Score-Lab", "GameStory-Lab", "FlowCLI", "CyberWitches", "EvoLab"],
+    "data_collected": "2026-04-01"
+  },
+  "liminal_commit_density": {
+    "2026-02-28": 34,
+    "2026-03-01": 8,
+    "2026-03-07": 1,
+    "2026-03-19": 23,
+    "2026-03-20": 28,
+    "2026-03-21": 9,
+    "2026-03-22": 45,
+    "2026-03-23": 15,
+    "2026-03-24": 0,
+    "2026-03-25": 0,
+    "2026-03-26": 0,
+    "2026-03-27": 0,
+    "2026-03-28": 16,
+    "2026-03-29": 32,
+    "2026-03-30": 18,
+    "2026-03-31": 21,
+    "2026-04-01": 53,
+    "total": 303
+  },
+  "timeline": {
+    "2026-02-22": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "Add skill discovery and bundling to workspace-builder pipeline",
+          "Restore focused remotion-setup.md for installation instructions",
+          "Bundle remotion-best-practices and frontend-design skills into script-to-animation",
+          "Replace custom references with bundled pptx and frontend-design skills",
+          "Add claude-office-skills clone step to node-pptx setup guide",
+          "Initial release: MWP framework with 3 workspaces"
+        ],
+        "voice-to-scultpure-app": [
+          "Cleanup: remove dead docs and coil mode code"
+        ]
+      }
+    },
+    "2026-02-28": {
+      "liminal_notes": "ERA 1 — Kai scaffolding. 34 commits. Atelier project born via Kai task system.",
+      "liminal_commits": 34,
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "Rewrite README with v2 patterns and clearer architecture framing",
+          "MWP v2: Add battle-tested patterns from production system"
+        ]
+      }
+    },
+    "2026-03-01": {
+      "liminal_notes": "ERA 1 continued — Kai scaffolding. 8 more commits. TUI, LLM integration, test coverage.",
+      "liminal_commits": 8,
+      "other_repos": {
+        "atelier": [
+          "Add Atelier TUI with ink/React",
+          "Fix Atelier LLM integration - WORKING",
+          "Add P5GeneratorLLM with LLM integration",
+          "kai-027 through kai-001: Full task-driven build (39 commits)",
+          "Initial commit"
+        ]
+      },
+      "note": "These are the SAME commits as Liminal — Atelier WAS Liminal at this point. The repo was renamed later."
+    },
+    "2026-03-02": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "Update author name formatting in README"
+        ]
+      }
+    },
+    "2026-03-04": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "Align workspace with paper: five-layer architecture, README rewrite, add quality gates"
+        ]
+      }
+    },
+    "2026-03-07": {
+      "liminal_commits": 1,
+      "liminal_notes": "1 commit — workspace config update",
+      "other_repos": {
+        "atelier": [
+          "Add workspace configuration and documentation updates"
+        ]
+      },
+      "note": "Same commit — Atelier and Liminal were the same repo at this point"
+    },
+    "2026-03-08": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "Rename MWP to ICM throughout README",
+          "Fix typo in 'Methdolog' to 'Methdology'",
+          "Fix spelling of 'Interpreted' in README",
+          "Rename MWP to ICM in README"
+        ]
+      }
+    },
+    "2026-03-10": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "wip: workspace-builder paused during 01-discovery - Google Workspace Agent"
+        ]
+      }
+    },
+    "2026-03-11": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "Add GWS agent workspace scripts, stages, and shared config",
+          "Add persona-adhd-assistant skill to GWS agent workspace",
+          "feat(research-pipeline): enhance with credibility scoring, PDF output, and new triggers",
+          "feat: Add full GWS integration with Gmail, Calendar, Tasks, and Workflows",
+          "feat(security): Add prompt injection protection to both workspaces",
+          "feat: Add framework-compliant improvements to GWS Agent and Research Pipeline"
+        ]
+      }
+    },
+    "2026-03-12": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "feat(ceramics-instagram): Add Instagram intelligence workspace with 2026 strategy",
+          "feat(research-pipeline): Initialize baseline RQS from existing research outputs",
+          "feat(research-pipeline): Add self-improving experiment system",
+          "feat(indexing): Add jDocMunch/jCodeMunch index setup and agent instructions",
+          "feat(research-pipeline): Complete evaluation paradigms research with full MWP/ICM methodology",
+          "docs: Update handoff with pending knowledge base research topics",
+          "feat(mwp): Add session continuity and quality gates to workspace framework"
+        ]
+      }
+    },
+    "2026-03-13": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "feat(ceramics-instagram): Add flexible photo count support (Phase 1)",
+          "feat(ceramics-instagram): Add video support (Phase 2)",
+          "fix(ceramics-instagram): Fix AppleScript export syntax",
+          "docs: Add cognitive bias analysis - why bugs get dismissed",
+          "feat(research-pipeline): Add inbox for research drops",
+          "docs: Add AI overcomplication failure mode analysis",
+          "feat(ceramics-instagram): Add Reels, Stories, and Carousel support (Phase 3-5)",
+          "feat: Implement workspace git independence architecture"
+        ],
+        "research-pipeline-prod": [
+          "Initialize research-pipeline workspace",
+          "docs(glaze): Add Surface Quality Taxonomy for vision pipeline",
+          "feat(human-door): Security hardening and bug fixes"
+        ]
+      }
+    },
+    "2026-03-14": {
+      "liminal": [],
+      "other_repos": {
+        "Interpreted-Context-Methdology": [
+          "feat: add research-pipeline workspace"
+        ],
+        "research-pipeline-prod": [
+          "feat(research): Add human-door integration and reflection pattern",
+          "chore: pre-upgrade snapshot",
+          "feat(research): Merge PR #2 - Remove experiment system, add reflection pattern"
+        ]
+      }
+    },
+    "2026-03-15": {
+      "liminal": [],
+      "other_repos": {
+        "GlazeLab": [
+          "Initialize glaze-experiments pipeline workspace",
+          "fix: correct glaze name to Choinard White",
+          "Split glaze layering doc into high-fire and mid-fire versions",
+          "Add complete Laguna clay body inventory to high-fire doc",
+          "Add Section 10: Slip Experimentation to high-fire doc",
+          "Add Section 11: Glaze Layering Rules - The Technical Science",
+          "Fix Shino layering violations and add 'If Reversed' guidance",
+          "Redesign Human Door dashboard with Swiss-style UX",
+          "Replace vague glaze descriptions with specific chemistry",
+          "feat: Add ceramic glaze reverse engineering skill",
+          "feat(skill): Extend ceramic-glaze-re with complete reference data",
+          "Add Ask AI feature with ollama cloud integration",
+          "Fix setup script for Mac Mini",
+          "Add Mac Mini setup script"
+        ],
+        "reverse-engineering": [
+          "feat(re): Add Mystery Glaze test project with complete RE pipeline",
+          "feat(re): Add image-based RE test with Instagram glaze photo",
+          "feat(re): Add HTML dashboard for Instagram glaze RE results",
+          "docs: Add handoff for image-based RE test",
+          "feat(re): Add instagram-glaze-003 RE pipeline and ceramics-foundation knowledge",
+          "archive: Move ceramics RE content to archive"
+        ]
+      }
+    },
+    "2026-03-16": {
+      "liminal": [],
+      "other_repos": {
+        "GlazeLab": [
+          "feat: Create unified OpenGlaze architecture with security hardening",
+          "style: Add CSS for idea layers and AI message formatting",
+          "Deprecate human-door, fix openglaze startup issues",
+          "Remove Chinese character from logo",
+          "Add frontend redesign design doc",
+          "docs: add frontend redesign plans",
+          "Add database seeding and modernize Kama's system prompt",
+          "Add tool calling, security hardening, and frontend refactor",
+          "Move chemistry knowledge to database with audit fixes and expanded rules",
+          "Add 45 chemistry rules covering safety, cooling, application, and troubleshooting"
+        ],
+        "reverse-engineering": [
+          "feat: Complete Wave 1 auth and landing page implementation",
+          "Reverse Engineering Pipeline - Universal Methodology",
+          "Ignore large directories",
+          "feat: Add TradesFlow sales package with PDFs"
+        ],
+        "openglaze": [
+          "OpenGlaze - Open-source ceramic glaze management SaaS"
+        ],
+        "creative-portfolio": [
+          "Initial commit - Creative Technologist Portfolio",
+          "Fix GitHub links to correct username",
+          "Link to case study file in repo",
+          "Add custom domain",
+          "Remove custom domain",
+          "Trigger rebuild"
+        ]
+      }
+    },
+    "2026-03-17": {
+      "liminal": [],
+      "other_repos": {
+        "GlazeLab": [
+          "Add layers/source support, expand chemistry rules, add autocomplete UI",
+          "Replace PredictionModal with ComboDetailPanel and fix tool call loop",
+          "Add research results on real tested glaze combinations",
+          "Refactor Kama from tool-calling to RAG-style context injection",
+          "Add photo upload, gallery, responsive CSS, and PWA infrastructure",
+          "Fix upload edge case: validate empty filenames in endpoint",
+          "Audit proven combos: remove fakes, add confidence levels, add colorant rules",
+          "Add UMF calculation engine with recipe parsing, compatibility analysis, and batch processing",
+          "Add firing/kiln data loaders, community template loading",
+          "feat: Update consumers to use consolidated ceramic data from ceramics-foundation",
+          "chore: Update ceramics-foundation submodule with mineral color taxonomy",
+          "feat: Add schema tables, security middleware, and simple auth",
+          "feat: Enhanced data models, AI context, and experiment tracking",
+          "feat: Add studios, gamification, predictions, simulation, billing modules",
+          "feat: Add studio, prediction, gamification, and education UI",
+          "docs: Add route wiring plan for uncommitted WIP features"
+        ],
+        "reverse-engineering": [
+          "chore: Update openglaze submodule with GTM strategy and enhancements",
+          "chore: Archive legacy openglaze, fix broken references"
+        ]
+      }
+    },
+    "2026-03-18": {
+      "liminal": [],
+      "other_repos": {
+        "GlazeLab": [
+          "fix: Correct badge tuple unpacking to match 3-element definitions"
+        ]
+      }
+    },
+    "2026-03-19": {
+      "liminal_notes": "ERA 2 — THE EXPLOSION. 23 Liminal commits. Atelier renamed to Liminal, Hydra merged in. But developer was ALSO building hydra-creative-agent from scratch (46 commits) and doing a massive atelier audit (18 commits).",
+      "liminal_commits": 23,
+      "other_repos": {
+        "hydra-creative-agent": [
+          "Initial commit: Design specification",
+          "Add .gitignore with Python and worktrees exclusions",
+          "feat(task-1) through feat(task-44): 44 task-driven commits building entire system from scratch",
+          "feat: Implement recursive self-improvement system",
+          "feat: Add deep collaboration for maximum quality output",
+          "feat: Add Claude Code-style chat UI with multiple generation modes",
+          "feat: Add hydra launch script and setup guide",
+          "feat: Add 4-way A/B test for hybrid pipeline comparison",
+          "feat: Add hybrid LLM mode (cloud analysis + local generation)",
+          "feat: Switch to Qwen 3.5-4B and add comprehensive A/B testing",
+          "feat: Integrate two-pass reasoning transfer into generators",
+          "feat: Implement complete creative AI system with 5 major directions",
+          "TOTAL: 46 commits"
+        ],
+        "atelier": [
+          "[F] Fix isConfigured for local providers + type-only imports",
+          "[A] Fix 34-item codebase audit: security, logic bugs, architecture, performance",
+          "[A] Add 4 creative coding generators: noise/flow fields, GLSL shaders, Three.js, LLM music",
+          "[A] Fix flatted DoS vulnerability via pnpm override",
+          "[I] Phase 1: native improvements + Wave 1-5 evolution merge cleanup",
+          "Plus 12 more [A]/[I] prefixed commits for audit, enhancement, configuration",
+          "TOTAL: 18 commits"
+        ],
+        "GlazeLab": [
+          "feat: Add comprehensive visual analysis for 33 studio glazes"
+        ]
+      }
+    },
+    "2026-03-20": {
+      "liminal_notes": "ERA 3 — Great Consolidation. 28 Liminal commits. Swarm system, Compost Mill, prompt overhaul.",
+      "liminal_commits": 28,
+      "other_repos": {}
+    },
+    "2026-03-21": {
+      "liminal_notes": "ERA 4 — Quality Crusade. 9 Liminal commits. Forensic audit, refactoring.",
+      "liminal_commits": 9,
+      "other_repos": {
+        "mcp-video": [
+          "Initial release — 16 MCP tools, Python client, CLI, 234 tests",
+          "Adversarial audit fixes: bugs, validation, CLI parity, launch accuracy",
+          "Fix merge on audio-less videos, accept dict in edit_timeline",
+          "Fix silent bugs: escaping, error handling, API consistency",
+          "Update README and landing page: 19 tools, 262 tests, new operations",
+          "Fix drawtext support, add demo, launch materials, and competitive section",
+          "Fix stale test counts and tool numbers in README and landing page",
+          "Add token efficiency comparison to landing page",
+          "Fix colon escaping in drawtext, update launch materials",
+          "Add hatch build exclusions for venvs, tests, dist",
+          "Add GitHub Pages deployment workflow",
+          "Add contribution guidelines and improvement roadmap",
+          "Rename to mcp-video v0.2.0 with progress callbacks and visual verification",
+          "Fix README: use canonical pip install mcp-video and update GitHub URLs",
+          "Add Dockerfile and glama.json for Glama listing and Docker support",
+          "Fix Dockerfile: include README.md and LICENSE, add .dockerignore",
+          "Add CI workflow, Glama/CI badges, and one-click install configs",
+          "Harden CI: matrix test on 3.11+3.12, fail-fast false, verify Docker output",
+          "Release v0.3.0: real media engine, CLI client, filters, compositing, batch processing",
+          "Add crop, rotate, fade operations and per-transition merge support",
+          "Bump version to 0.1.1",
+          "TOTAL: ~22 commits"
+        ],
+        "reverse-engineering": [
+          "chore: Add agent tools landscape research input from pipeline handoff",
+          "feat: Add cross-workspace handoff system (research <-> RE)"
+        ],
+        "creative-portfolio": [
+          "feat: restyle portfolio to match Cerafica dark sci-fi theme",
+          "feat: add deploy pipeline + workspace conventions"
+        ]
+      }
+    },
+    "2026-03-22": {
+      "liminal_notes": "ERA 4-5 — Conversational Turn. 45 Liminal commits. LIR system, Chat CLI, compost dual-model.",
+      "liminal_commits": 45,
+      "other_repos": {
+        "mcp-video": [
+          "Release v0.4.0: reverse, chroma key, denoise, deinterlace, smarter GIF",
+          "Elevate CLI: Rich UI, templates, human-friendly output",
+          "Wave 3 features: scene detection, image sequences, quality metrics, metadata",
+          "Wave 4 features: video stabilization and advanced masking",
+          "Wave 5: Add CLI test coverage for all commands + adversarial red team tests",
+          "Add subtitle generation and audio waveform extraction tools",
+          "Add Ken Burns filter and two-pass encoding support",
+          "Plus ~15 more commits (Waves 1-5 FFmpeg features)",
+          "TOTAL: ~28 commits"
+        ],
+        "DialectOS": [
+          "Initial commit: DialectOS — Spanish translation MCP server monorepo",
+          "Restructure: flatten monorepo to repo root, rebrand as DialectOS",
+          "Fix code review findings: security, type safety, config, CI/CD",
+          "Fix CI: remove pnpm version conflict and broken lint job",
+          "Update pnpm-lock.yaml to remove stale isomorphic-dompurify root dep",
+          "Fix CI: add missing isomorphic-dompurify dep, remove redundant typecheck job",
+          "Drop Node 18 from CI matrix (isomorphic-dompurify requires Node >=20)",
+          "Merge pull request #1 from Pastorsimon1798/fix/code-review-fixes",
+          "TOTAL: 8 commits"
+        ],
+        "CEO_Agents": [
+          "Add espanol monorepo with 7 packages: MCP adapter, CLI, providers, security, and utilities",
+          "Fix MyMemory rate limit too low for multi-section markdown tools",
+          "Add print CSS to slideshow.html for PDF export",
+          "TOTAL: 3 commits"
+        ]
+      }
+    },
+    "2026-03-23": {
+      "liminal_notes": "ERA 5 continued. 15 Liminal commits. Landing page, art brain, swarm upgrades.",
+      "liminal_commits": 15,
+      "other_repos": {
+        "mcp-video": [
+          "Release v0.5.0: 11 new FFmpeg features + comprehensive testing",
+          "Fix vidstabtransform parameter + comprehensive tests",
+          "Add PyPI publish workflow using OIDC Trusted Publishers",
+          "Update documentation for v0.5.0 release",
+          "Fix landing page: remove unverified claims, replace emojis with CSS SVG icons",
+          "TOTAL: 5 commits"
+        ]
+      }
+    },
+    "2026-03-24": {
+      "liminal_notes": "ERA 6 — THE QUIET BEGINS. Zero Liminal commits.",
+      "liminal_commits": 0,
+      "other_repos": {
+        "CEO_Agents": [
+          "Add CEO Agents multi-agent strategic decision system",
+          "Fill all 6 gaps from COMPARISON.md (#2)"
+        ]
+      }
+    },
+    "2026-03-26": {
+      "liminal_notes": "ERA 6 — Still quiet. Zero Liminal commits.",
+      "liminal_commits": 0,
+      "other_repos": {
+        "Pastorsimon1798": [
+          "Add profile README",
+          "Update DialectOS description — published to npm as @espanol/mcp"
+        ],
+        "puenteworks-site": [
+          "Launch PuenteWorks landing page",
+          "Full redesign: dark/warm palette, SVG icons, no emoji, modern typography"
+        ]
+      }
+    },
+    "2026-03-27": {
+      "liminal_notes": "ERA 6 — Last day of silence. Zero Liminal commits.",
+      "liminal_commits": 0,
+      "other_repos": {
+        "puenteworks-site": [
+          "Redesign v2: editorial dark aesthetic, Cormorant Garamond, gold accent, scroll reveals",
+          "Red-team hardening: conversion, a11y, design consistency, and proof framing",
+          "Brand hybrid pass: apply archived Puente voice, pilot/governance messaging, and cyan-purple accents",
+          "Switch contact to Google Forms flow and unify palette to cohesive teal-blue system",
+          "Polish frontend UX consistency and technical SEO signals",
+          "Wire live Google Forms and split newsletter vs inquiry flow",
+          "Add full bilingual site support with EN/ES switch and auto language detection",
+          "Plain-language copy: fix i18n overwriting stale jargon",
+          "Align Spanish translation with current English copy",
+          "Remove Liam reference from project listing.",
+          "Run full-site remediation pass for responsive UX, accessibility, and metadata.",
+          "Broaden mobile-nav breakpoint after full audit remediation.",
+          "TOTAL: 12 commits"
+        ],
+        "mcp-video": [
+          "Release v0.6.0: quality control, pixel positioning, image overlays in timeline",
+          "Release v0.7.0: image analysis docs, version bump, Remotion roadmap update",
+          "Add image analysis tools: extract colors, generate palettes, analyze products",
+          "feat: add Remotion integration — 8 MCP tools for programmatic video generation (v0.8.0)",
+          "TOTAL: 4 commits"
+        ],
+        "site-to-stitch": [
+          "feat: initial site-to-stitch skill",
+          "fix: address red team audit findings"
+        ],
+        "DialectOS": [
+          "fix(mcp): add Node shebang for bin; release 0.1.1"
+        ]
+      }
+    },
+    "2026-03-28": {
+      "liminal_notes": "ERA 7 — Liminal returns! 16 commits. Video pipeline, Remotion integration.",
+      "liminal_commits": 16,
+      "other_repos": {
+        "cerafica": [
+          "Fix Pages deployment: remove orphaned submodule, use workflow build",
+          "Trigger Pages rebuild",
+          "Restore all product media with real files",
+          "Fix products.json with all 12 products",
+          "Create CNAME",
+          "Add weekly Instagram slideshow pipeline",
+          "Track existing posting packs in git",
+          "Replace 3 corrupt product photos with new exports",
+          "Replace product photos: Mariix-0, Cupr-ex-6, Glacix-1 with framed website images",
+          "Hide 3 products, add shop sorting controls, update JSON-LD",
+          "Fix HUD text on all 9 product videos",
+          "TOTAL: 11 commits"
+        ],
+        "Creator-kit": [
+          "Initial commit"
+        ],
+        "mcp-video": [
+          "feat: restructure explainer video to 8 scenes for social media (50s)",
+          "feat: implement video audit fixes — expand to 10 scenes, 70s (v2)",
+          "chore: add .worktrees to gitignore"
+        ]
+      }
+    },
+    "2026-03-29": {
+      "liminal_notes": "ERA 7-8 — Multimedia + Dogfood. 32 Liminal commits. Audio pipeline, aesthetic guardrails, LIR integration.",
+      "liminal_commits": 32,
+      "other_repos": {
+        "mcp-video": [
+          "feat: 70/70 tests passing - comprehensive test suite completion",
+          "fix: Complete test suite fixes and explainer video real demos",
+          "test: Add exhaustive real media test suite with 10 integration tests",
+          "feat: Real explainer video v2 with actual test execution and pottery footage",
+          "feat: Integrate real demo videos into Remotion explainer",
+          "feat: Optimize demo video generation for Remotion rendering",
+          "fix: Red team adversarial security audit - fix 11 vulnerabilities",
+          "fix: Resolve 3 pre-existing test failures",
+          "feat: Add v1.0 features - AI engine, audio engine, effects, transitions, quality guardrails, design quality system",
+          "TOTAL: 9 commits"
+        ],
+        "cerafica": [
+          "Fix Lazurix-4 video mask and hide from shop",
+          "Update all product photos to Clean Space style",
+          "Update product visibility: show Pallth-7, hide Cromix-0 and Cupr-ex-6",
+          "Fix product visibility: show Chromics and Cuprics, hide Lasurics, Bitum OS 5, Krell X3"
+        ],
+        "reverse-engineering": [
+          "chore: Remove dogfood tests — they need paperclip infrastructure",
+          "feat: Add archetype routing — 3 distinct project types (api/realtime/cli)"
+        ]
+      },
+      "multi_repo_audit_day": [
+        "cerafica", "GlazeLab", "openglaze", "site-to-stitch", "Creator-kit", "puenteworks", "mcp-video", "CEO_Agents", "reverse-engineering"
+      ],
+      "note": "GitHub Guardian baseline audit ran across 9 repos on this day — a systematic security/documentation sweep"
+    },
+    "2026-03-30": {
+      "liminal_notes": "ERA 8 — Dogfood continued. 18 Liminal commits. Model-agnostic architecture, landing pages.",
+      "liminal_commits": 18,
+      "other_repos": {
+        "mcp-video": [
+          "docs: Complete README rewrite — accurate, publishable, includes Remotion",
+          "fix: Red team audit — critical security hardening (Phase 1)",
+          "chore: Clean up stale worktrees, update ROADMAP and repo metadata",
+          "chore: Bump classifier to Production/Stable for v1.0.0 release",
+          "fix: Update all stale numbers and fix explainer video compilation",
+          "TOTAL: 5 commits"
+        ],
+        "reverse-engineering": [
+          "Merge branch 'clean-branch'"
+        ]
+      }
+    },
+    "2026-03-31": {
+      "liminal_notes": "ERA 8 continued. 21 Liminal commits. Meta-Harness, TUI, dogfood QA.",
+      "liminal_commits": 21,
+      "other_repos": {
+        "mcp-video": [
+          "fix: v1.1.1 — client validation, docstrings, CLI help, test fixes",
+          "fix: Resolve all ruff lint errors — CI green",
+          "fix: v1.1.2 — server validation, client keyword args, CLI dispatch fixes",
+          "fix: Mark flaky CI tests slow, fix Remotion test fixture",
+          "fix: v1.1.3 — adversarial audit fixes (C1-C7, H1-H5, M1-M2)",
+          "docs: Update documentation to reflect v1.1.3 codebase state",
+          "chore: Bump version to 1.1.4",
+          "chore: Bump version to 1.1.5 — CLI improvements, server validation, client API fixes",
+          "feat: CLI parity — 35 new commands, bug fixes, v1.1.0",
+          "fix: v1.2.0 — comprehensive security hardening (56 tasks)",
+          "TOTAL: 10 commits"
+        ]
+      }
+    },
+    "2026-04-01": {
+      "liminal_notes": "ERA 9 — THE BIBLE. 53 Liminal commits. Documentation, guardrails, TUI, plugins, persistent memory.",
+      "liminal_commits": 53,
+      "other_repos": {
+        "DialectOS": [
+          "fix(providers): chunk MyMemory requests to avoid query-length failures",
+          "fix(providers): make MyMemory timeout configurable via env",
+          "fix(cli): allow MyMemory rate-limit overrides for doc translation",
+          "feat(cli): add protected-token locks for markdown translation",
+          "feat(cli): add strict glossary enforcement for markdown translation",
+          "feat(cli): add structure validation and identity auto-protection",
+          "fix(providers): add 429 retry/backoff for MyMemory requests",
+          "feat(cli): add resilient markdown translation pipeline",
+          "fix(cli): restore strict placeholders with Libre and make MyMemory opt-in",
+          "Merge branch 'fix/cli-mymemory-rate-limit-overrides' into main",
+          "test(providers): align provider tests with Libre route and MyMemory behavior",
+          "fix(cli): send canonical target language for text translate",
+          "TOTAL: 12 commits"
+        ],
+        "reverse-engineering": [
+          "chore: prune workspace to RE-only ICM structure",
+          "Merge pull request #1 from Pastorsimon1798/chore/re-prune-workspace-icm",
+          "feat: Add founder-playbook — personalized B2B SaaS framework",
+          "feat: Add deep founder personality profile (MBTI, Human Design, astrology, ADHD)",
+          "feat: Add deep personality profile — decision algorithm, blind spots, team composition, manipulation vulnerabilities",
+          "feat: Reframe 27 workspaces + add agent coworkers system",
+          "feat: Vendor-neutral agent architecture — $0/month, zero Anthropic dependency",
+          "feat: Rebuild agent coworkers around Hermes profiles",
+          "feat: Enhance agent coworkers with research findings",
+          "TOTAL: 9 commits"
+        ],
+        "research-scout": [
+          "Initial commit: Research Scout (opportunity pipeline for Paperclip)"
+        ]
+      }
+    }
+  },
+  "era_overlays": {
+    "era1_seed": {
+      "dates": "Feb 28 - Mar 1",
+      "liminal_commits": 42,
+      "other_activity": {
+        "Interpreted-Context-Methdology": {
+          "commits": 2,
+          "themes": ["ICM methodology refinement", "MWP v2 patterns"]
+        }
+      },
+      "narrative": "Kai scaffolding was the ONLY activity. ICM got minor README updates but the developer was laser-focused on the Atelier/Liminal task chain. No other repos active."
+    },
+    "era2_explosion": {
+      "dates": "Mar 19",
+      "liminal_commits": 23,
+      "other_activity": {
+        "hydra-creative-agent": {
+          "commits": 46,
+          "themes": ["Built from scratch in one day", "46 task-driven commits", "creative AI system with 5 directions", "LLM integration", "A/B testing"],
+          "fed_into_liminal": true,
+          "note": "This repo was MERGED into Liminal the same day — feat: Merge Hydra intelligence layer into Liminal (Phases 2-6)"
+        },
+        "atelier": {
+          "commits": 18,
+          "themes": ["34-item codebase audit", "4 new generators", "security fixes", "TUI enhancements"],
+          "fed_into_liminal": true,
+          "note": "Atelier was Liminal before the rename — these commits ARE Liminal history"
+        },
+        "GlazeLab": {
+          "commits": 1,
+          "themes": ["Visual analysis for 33 studio glazes"]
+        }
+      },
+      "narrative": "THE EXPLOSION was not just Liminal. The developer built an entire creative AI system (hydra-creative-agent) from scratch with 46 commits in ONE DAY, then merged it into Liminal. Simultaneously doing a 34-item audit on the atelier codebase. This was the most parallel activity of the entire period."
+    },
+    "era3_consolidation": {
+      "dates": "Mar 20",
+      "liminal_commits": 28,
+      "other_activity": {},
+      "narrative": "Pure Liminal day. Zero other repo activity. The developer was entirely focused on consolidating the merge — swarm system, Compost Mill, prompt overhaul, provider removal."
+    },
+    "era4-5_quality_conversational": {
+      "dates": "Mar 21 - 23",
+      "liminal_commits": 69,
+      "other_activity": {
+        "mcp-video": {
+          "commits": 55,
+          "themes": ["Built from scratch on Mar 21", "v0.1 through v0.5", "16 to 19+ tools", "FFmpeg Waves 1-5", "CLI Rich UI", "PyPI publish workflow"],
+          "note": "MASSIVE concurrent project. mcp-video went from nothing to v0.5.0 with 55 commits while Liminal got 69 commits. Developer was working both simultaneously."
+        },
+        "DialectOS": {
+          "commits": 8,
+          "themes": ["Spanish translation MCP server", "CI/CD fixes", "security hardening"],
+          "note": "Born on Mar 22 during Liminal's LIR/chat push"
+        },
+        "CEO_Agents": {
+          "commits": 3,
+          "themes": ["espanol monorepo", "MyMemory rate limits"]
+        },
+        "reverse-engineering": {
+          "commits": 2,
+          "themes": ["Cross-workspace handoff", "Agent tools research"]
+        },
+        "creative-portfolio": {
+          "commits": 2,
+          "themes": ["Cerafica-themed restyle", "Deploy pipeline"]
+        }
+      },
+      "narrative": "The Quality Crusade and Conversational Turn were CONCURRENT with the birth of mcp-video (55 commits!) and DialectOS (8 commits). The developer was managing 4-5 active projects simultaneously. Mar 22 alone saw 45 Liminal commits + 28 mcp-video commits + 8 DialectOS commits = 81 total commits across repos."
+    },
+    "era6_quiet": {
+      "dates": "Mar 24 - 27",
+      "liminal_commits": 0,
+      "other_activity": {
+        "CEO_Agents": {
+          "commits": 2,
+          "dates_active": ["Mar 24"],
+          "themes": ["Multi-agent strategic decision system", "Gap filling"]
+        },
+        "Pastorsimon1798": {
+          "commits": 2,
+          "dates_active": ["Mar 26"],
+          "themes": ["Profile README", "DialectOS npm description"]
+        },
+        "puenteworks-site": {
+          "commits": 14,
+          "dates_active": ["Mar 26", "Mar 27"],
+          "themes": ["Full site redesign v2", "bilingual support", "branding", "accessibility", "SEO", "Google Forms integration"]
+        },
+        "mcp-video": {
+          "commits": 4,
+          "dates_active": ["Mar 27"],
+          "themes": ["v0.6.0 quality control", "v0.7.0 image analysis", "v0.8.0 Remotion integration"]
+        },
+        "site-to-stitch": {
+          "commits": 2,
+          "dates_active": ["Mar 27"],
+          "themes": ["Initial skill", "Red team audit fixes"]
+        },
+        "DialectOS": {
+          "commits": 1,
+          "dates_active": ["Mar 27"],
+          "themes": ["Node shebang fix, v0.1.1"]
+        }
+      },
+      "total_other_commits": 25,
+      "narrative": "THE QUIET was not a break. The developer built the ENTIRE PuenteWorks website (14 commits over 2 days), shipped mcp-video v0.6-v0.8, launched site-to-stitch, and updated their GitHub profile. The 'quiet' was a Liminal break, not a productivity break — the developer was building infrastructure and business assets."
+    },
+    "era7-8_multimedia_dogfood": {
+      "dates": "Mar 28 - 31",
+      "liminal_commits": 87,
+      "other_activity": {
+        "mcp-video": {
+          "commits": 27,
+          "themes": ["v1.0 release", "v1.1-v1.2 hardening", "70/70 tests", "Remotion explainer videos", "adversarial security audit"],
+          "note": "mcp-video hit v1.0 and went through 6 version bumps to v1.2 during Liminal's multimedia push"
+        },
+        "cerafica": {
+          "commits": 15,
+          "themes": ["Product photos", "Pages deployment", "Instagram pipeline", "CNAME setup", "product visibility"],
+          "note": "Cerafica (ceramics e-commerce) got massive attention — 11 commits on Mar 28 alone"
+        },
+        "Creator-kit": {
+          "commits": 1,
+          "themes": ["Initial commit"]
+        },
+        "reverse-engineering": {
+          "commits": 3,
+          "themes": ["Dogfood tests removal", "archetype routing", "clean branch merge"]
+        }
+      },
+      "narrative": "The Multimedia + Dogfood era was shared with mcp-video reaching v1.0 and Cerafica launching its e-commerce site. The developer was simultaneously building video infrastructure in THREE places: Liminal (Remotion integration), mcp-video (v1.0 release), and Cerafica (product videos). Mar 29 was the GitHub Guardian audit day — 9 repos got baseline security audits."
+    },
+    "era9_bible": {
+      "dates": "Apr 1",
+      "liminal_commits": 53,
+      "other_activity": {
+        "DialectOS": {
+          "commits": 12,
+          "themes": ["MyMemory hardening", "markdown translation pipeline", "protected tokens", "glossary enforcement"],
+          "note": "Major translation pipeline work — 12 commits while Liminal got THE BIBLE"
+        },
+        "reverse-engineering": {
+          "commits": 9,
+          "themes": ["Hermes agent profiles", "vendor-neutral architecture", "founder personality profiling", "27 workspace reframe"],
+          "note": "Complete pivot to agent architecture — founder personality profiles, B2B SaaS frameworks"
+        },
+        "research-scout": {
+          "commits": 1,
+          "themes": ["Initial commit — opportunity pipeline for Paperclip"]
+        }
+      },
+      "narrative": "THE BIBLE day was shared with DialectOS getting its translation pipeline hardened (12 commits) and reverse-engineering pivoting to agent architecture with Hermes profiles. Three very different domains being worked simultaneously."
+    }
+  },
+  "quiet_period_activity": {
+    "dates": "Mar 24-27",
+    "liminal_commits": 0,
+    "repos_active": [
+      {"repo": "puenteworks-site", "commits": 14, "dates": ["Mar 26", "Mar 27"], "description": "Full website built from scratch — bilingual, branded, SEO'd"},
+      {"repo": "CEO_Agents", "commits": 2, "dates": ["Mar 24"], "description": "Multi-agent strategic decision system born"},
+      {"repo": "Pastorsimon1798", "commits": 2, "dates": ["Mar 26"], "description": "GitHub profile README + DialectOS npm update"},
+      {"repo": "mcp-video", "commits": 4, "dates": ["Mar 27"], "description": "v0.6→v0.8 with Remotion integration"},
+      {"repo": "site-to-stitch", "commits": 2, "dates": ["Mar 27"], "description": "New project born"},
+      {"repo": "DialectOS", "commits": 1, "dates": ["Mar 27"], "description": "v0.1.1 fix"}
+    ],
+    "total_other_commits": 25,
+    "interpretation": "The Quiet was a strategic pause from Liminal to ship external projects. PuenteWorks (business website) was the primary focus, followed by mcp-video reaching Remotion integration. The developer was NOT resting — they were building the business infrastructure around their creative tools."
+  },
+  "concurrent_repos": [
+    {
+      "repo": "mcp-video",
+      "active_dates": ["2026-03-21", "2026-03-22", "2026-03-23", "2026-03-27", "2026-03-28", "2026-03-29", "2026-03-30", "2026-03-31"],
+      "commit_count": 55,
+      "overlap_with_liminal_era": "Eras 4-5 and 7-8",
+      "relationship": "SISTER PROJECT — video generation MCP server. Born same day as Liminal's Quality Crusade. Shared Remotion infrastructure with Liminal's video pipeline."
+    },
+    {
+      "repo": "atelier",
+      "active_dates": ["2026-03-01", "2026-03-19"],
+      "commit_count": 58,
+      "overlap_with_liminal_era": "Eras 1 and 2",
+      "relationship": "PRE-LIMINAL — Atelier WAS Liminal before the rename. All commits from Feb 28-Mar 19 are shared history."
+    },
+    {
+      "repo": "hydra-creative-agent",
+      "active_dates": ["2026-03-19"],
+      "commit_count": 46,
+      "overlap_with_liminal_era": "Era 2 (The Explosion)",
+      "relationship": "ABSORBED INTO LIMINAL — Built from scratch on Mar 19, merged into Liminal the same day. The 'Hydra intelligence layer' became Liminal's core."
+    },
+    {
+      "repo": "DialectOS",
+      "active_dates": ["2026-03-22", "2026-03-27", "2026-04-01"],
+      "commit_count": 21,
+      "overlap_with_liminal_era": "Eras 5, 6, and 9",
+      "relationship": "PARALLEL — Spanish translation MCP server. Published to npm. Active during Liminal quiet and Bible days."
+    },
+    {
+      "repo": "GlazeLab",
+      "active_dates": ["2026-03-15", "2026-03-16", "2026-03-17", "2026-03-18", "2026-03-19"],
+      "commit_count": 38,
+      "overlap_with_liminal_era": "Pre-Liminal Explosion",
+      "relationship": "PRECEDING — Ceramic glaze management. Built in the 4 days BEFORE the Mar 19 Explosion. May have been a creative warm-up."
+    },
+    {
+      "repo": "cerafica",
+      "active_dates": ["2026-03-28", "2026-03-29", "2026-03-31"],
+      "commit_count": 15,
+      "overlap_with_liminal_era": "Eras 7-8 (Multimedia + Dogfood)",
+      "relationship": "PARALLEL — Ceramics e-commerce site. Product photos, Pages deployment, Instagram pipeline. Business side of the ceramics creative practice."
+    },
+    {
+      "repo": "puenteworks-site",
+      "active_dates": ["2026-03-26", "2026-03-27"],
+      "commit_count": 14,
+      "overlap_with_liminal_era": "Era 6 (The Quiet)",
+      "relationship": "QUIET PERIOD — The developer's business/consulting website. Built during the 4-day Liminal silence."
+    },
+    {
+      "repo": "reverse-engineering",
+      "active_dates": ["2026-03-15", "2026-03-16", "2026-03-17", "2026-03-21", "2026-03-29", "2026-03-30", "2026-04-01"],
+      "commit_count": 17,
+      "overlap_with_liminal_era": "Pre-explosion through Era 9",
+      "relationship": "PERIPHERAL — Cross-workspace research and agent architecture. Evolved into Hermes profiles and founder personality analysis."
+    },
+    {
+      "repo": "CEO_Agents",
+      "active_dates": ["2026-03-22", "2026-03-24"],
+      "commit_count": 5,
+      "overlap_with_liminal_era": "Eras 5 and 6",
+      "relationship": "QUIET PERIOD — Multi-agent strategic decision system. Born Mar 22, expanded Mar 24 during Liminal silence."
+    },
+    {
+      "repo": "creative-portfolio",
+      "active_dates": ["2026-03-16", "2026-03-21"],
+      "commit_count": 8,
+      "overlap_with_liminal_era": "Pre-explosion and Era 4",
+      "relationship": "SUPPORTING — Developer's portfolio site, restyled to match Cerafica theme."
+    },
+    {
+      "repo": "Interpreted-Context-Methdology",
+      "active_dates": ["2026-02-22", "2026-02-28", "2026-03-02", "2026-03-04", "2026-03-08", "2026-03-10", "2026-03-11", "2026-03-12", "2026-03-13", "2026-03-14"],
+      "commit_count": 32,
+      "overlap_with_liminal_era": "Pre-Liminal through early March",
+      "relationship": "PRECEDING — Methodology framework. Active Feb 22-Mar 14, went COMPLETELY SILENT once Liminal's Explosion hit on Mar 19. The methodology work may have been preparation for the build sprint."
+    },
+    {
+      "repo": "research-pipeline-prod",
+      "active_dates": ["2026-03-13", "2026-03-14"],
+      "commit_count": 4,
+      "overlap_with_liminal_era": "Pre-explosion",
+      "relationship": "PRECEDING — Research pipeline with human-door integration. Went silent before Liminal started."
+    },
+    {
+      "repo": "openglaze",
+      "active_dates": ["2026-03-16"],
+      "commit_count": 1,
+      "overlap_with_liminal_era": "Pre-explosion",
+      "relationship": "PRECEDING — Open-source ceramic glaze SaaS. Born Mar 16, just before the Explosion."
+    },
+    {
+      "repo": "research-scout",
+      "active_dates": ["2026-04-01"],
+      "commit_count": 1,
+      "overlap_with_liminal_era": "Era 9 (THE BIBLE)",
+      "relationship": "NEW — Born on Bible day. Opportunity pipeline for Paperclip."
+    },
+    {
+      "repo": "site-to-stitch",
+      "active_dates": ["2026-03-27"],
+      "commit_count": 2,
+      "overlap_with_liminal_era": "Era 6 (The Quiet)",
+      "relationship": "QUIET PERIOD — Born during the Liminal silence."
+    },
+    {
+      "repo": "Creator-kit",
+      "active_dates": ["2026-03-28"],
+      "commit_count": 1,
+      "overlap_with_liminal_era": "Era 7 (Multimedia)",
+      "relationship": "PARALLEL — Initial commit only."
+    },
+    {
+      "repo": "Pastorsimon1798",
+      "active_dates": ["2026-03-26"],
+      "commit_count": 2,
+      "overlap_with_liminal_era": "Era 6 (The Quiet)",
+      "relationship": "QUIET PERIOD — Profile update during the silence."
+    }
+  ],
+  "pre_liminal_activity": {
+    "feb_22": {
+      "repos_active": ["Interpreted-Context-Methdology", "voice-to-scultpure-app"],
+      "commit_count": 7,
+      "themes": ["MWP framework initial release", "skill bundling", "remotion setup", "voice-to-sculpture cleanup"]
+    },
+    "early_march": {
+      "repos_active": ["Interpreted-Context-Methdology"],
+      "dates": "Mar 2-14",
+      "commit_count": 32,
+      "themes": ["ICM methodology refinement", "Google Workspace Agent", "research pipeline", "ceramics Instagram strategy", "workspace architecture"],
+      "narrative": "The 2 weeks before Liminal's Explosion were dominated by ICM methodology work and research pipeline infrastructure. This looks like a preparatory phase — establishing the methodological framework before the creative coding sprint."
+    },
+    "mar_15-18": {
+      "repos_active": ["GlazeLab", "reverse-engineering", "openglaze", "creative-portfolio"],
+      "dates": "Mar 15-18",
+      "commit_count": 56,
+      "themes": ["Ceramic glaze chemistry", "reverse engineering pipeline", "glaze SaaS", "UMF calculation", "portfolio site"],
+      "narrative": "The 4 days immediately BEFORE the Explosion were a ceramics deep-dive. 38 GlazeLab commits, 17 reverse-engineering commits. The developer was building glaze infrastructure that may have primed the creative energy for the Mar 19 detonation."
+    }
+  },
+  "insights": [
+    "1. THE QUIET WAS NOT A BREAK. During the 4-day Liminal silence (Mar 24-27), the developer shipped 25 commits across 6 repos — building PuenteWorks from scratch (14 commits), shipping mcp-video v0.6→v0.8, launching site-to-stitch, and updating their GitHub profile. They were building business infrastructure, not resting.",
+
+    "2. PRE-LIMINAL CERAMICS WARM-UP. The 4 days before the Explosion (Mar 15-18) saw 56 commits across ceramics repos (GlazeLab, reverse-engineering, openglaze). This ceramics deep-dive may have been the creative warm-up that primed the Mar 19 detonation.",
+
+    "3. THE EXPLOSION WAS THREE-HEADED. On Mar 19, the developer was simultaneously: (a) renaming Atelier to Liminal and merging code (23 commits), (b) building hydra-creative-agent from scratch (46 commits), and (c) auditing the atelier codebase (18 commits). Total: 87 commits across 3 repos in one day. The hydra system was absorbed into Liminal the same day it was created.",
+
+    "4. MCP-VIDEO WAS LIMINAL'S SISTER PROJECT. Born on Mar 21 during Liminal's Quality Crusade, mcp-video received 55 commits while Liminal got 69 in the same window. Both converged on Remotion for video generation — shared infrastructure.",
+
+    "5. MAR 22 WAS THE BUSIEST DAY. 81 total commits across repos: 45 Liminal + 28 mcp-video + 8 DialectOS. This was the day LIR, Chat CLI, and compost dual-model were built in Liminal, while mcp-video shipped FFmpeg Waves 1-5 and DialectOS was born.",
+
+    "6. ICM METHODOLOGY WENT SILENT ON MAR 19. Interpreted-Context-Methdology was active from Feb 22 through Mar 14 (32 commits), then completely stopped when Liminal's Explosion hit. The methodology work may have been laying the intellectual groundwork for the creative coding sprint.",
+
+    "7. THE MAR 29 GUARDIAN AUDIT WAS A COORDINATED SWEEP. On Mar 29, 9 repos simultaneously received 'GitHub Guardian baseline audit' commits. This was a systematic security/documentation review across the entire portfolio, not isolated incidents.",
+
+    "8. PUENTEWEEKS WAS A BUSINESS PIVOT. The developer built their entire consulting/business website (14 commits in 2 days) during the Liminal quiet period. This suggests the 'quiet' was actually strategic — they needed to establish the business side before continuing the creative tool.",
+
+    "9. REPOS THAT FED INTO LIMINAL: atelier (direct rename), hydra-creative-agent (absorbed same day), Interpreted-Context-Methdology (methodological foundation). The developer didn't just build Liminal — they merged three separate projects into it.",
+
+    "10. CERAMICS AS CREATIVE PRACTICE. GlazeLab, reverse-engineering, openglaze, and cerafica collectively show the developer running a real ceramics practice (glaze chemistry, RE pipeline, e-commerce) parallel to the software work. Cerafica product photos and Instagram pipelines suggest active pottery sales.",
+
+    "11. THE BIBLE DAY HAD THREE THREADS. Apr 1 saw 53 Liminal commits (THE BIBLE), 12 DialectOS commits (translation hardening), and 9 reverse-engineering commits (Hermes agent architecture). The developer was simultaneously documenting Liminal's theology, hardening a translation system, and building personality profiles.",
+
+    "12. BURST PATTERN, NOT SUSTAINED. The developer works in extreme bursts: 87 commits on Mar 19, 81 effective commits on Mar 22, 53 on Apr 1. Between bursts, they switch domains entirely rather than resting."
+  ],
+  "total_commits_by_repo": {
+    "liminal": 303,
+    "atelier": 58,
+    "hydra-creative-agent": 46,
+    "mcp-video": 55,
+    "GlazeLab": 38,
+    "Interpreted-Context-Methdology": 32,
+    "DialectOS": 21,
+    "cerafica": 15,
+    "puenteworks-site": 14,
+    "reverse-engineering": 17,
+    "CEO_Agents": 5,
+    "creative-portfolio": 8,
+    "research-pipeline-prod": 4,
+    "openglaze": 1,
+    "site-to-stitch": 2,
+    "Creator-kit": 1,
+    "Pastorsimon1798": 2,
+    "research-scout": 1
+  }
+}

@@ -103,6 +103,10 @@ for (let i = 0; i < args.length; i++) {
     flags.aestheticConfig = args[++i];
   } else if (arg === '--verbose' || arg === '-v') {
     flags.verbose = true;
+  } else if (arg === '--script-only') {
+    flags.scriptOnly = true;
+  } else if (arg === '--spec-only') {
+    flags.specOnly = true;
   } else if (!arg.startsWith('-')) {
     if (cmd === null) { cmd = arg; } else { cmdArgs.push(arg); }
   }
@@ -556,8 +560,88 @@ else if (cmd === 'chat') {
     process.exit(1);
   });
 }
-else if (cmd === 'tui') {
-  // Launch the Natural Language TUI (Meta-Harness + NaturalInterface)
+else if (cmd === 'narrative') {
+    const { BlogToVideoPipeline } = await import('../dist/narrative/BlogToVideoPipeline.js');
+    const { listThemes, getTheme } = await import('../dist/narrative/themes.js');
+
+    const subCmd = cmdArgs[0];
+
+    if (subCmd === 'list-themes') {
+      console.log('');
+      console.log('📖 Liminal Narrative Themes');
+      console.log('');
+      listThemes().forEach((t) => {
+        console.log(`  ${t.id}. ${t.title}`);
+        console.log(`     Template: ${t.template} | Era: ${t.era}`);
+        console.log(`     Metaphor: ${t.coreMetaphor}`);
+        console.log('');
+      });
+      process.exit(0);
+    } else if (subCmd === 'video') {
+      const themeArg = cmdArgs[1];
+      if (!themeArg) {
+        console.error('Usage: liminal narrative video <theme-number>');
+        console.error('       liminal narrative video --script-only <theme-number>');
+        console.error('       liminal narrative video --spec-only <script-path>');
+        process.exit(1);
+      }
+
+      const scriptOnly = flags.scriptOnly;
+      const specOnly = flags.specOnly;
+
+      if (specOnly) {
+        // Generate spec from existing script
+        const scriptPath = themeArg;
+        const { readFileSync } = await import('fs');
+        if (!readFileSync) throw new Error(`Script not found: ${scriptPath}`);
+        const script = readFileSync(scriptPath, 'utf-8');
+        const llm = new LLMClient();
+        const pipeline = new BlogToVideoPipeline(llm);
+        const spec = await pipeline.generateSpec(script);
+        console.log('');
+        console.log('✅ Spec generated');
+        console.log(spec);
+        process.exit(0);
+      }
+
+      const themeNum = parseInt(themeArg);
+      const theme = getTheme(themeNum);
+      if (!theme) {
+        console.error(`Theme ${themeNum} not found. Run "liminal narrative list-themes" to see available themes.`);
+        process.exit(1);
+      }
+
+      const llm = new LLMClient();
+      const pipeline = new BlogToVideoPipeline(llm);
+
+      if (scriptOnly) {
+        const script = await pipeline.generateScript(theme);
+        console.log('');
+        console.log('✅ Script generated');
+        console.log(script);
+        process.exit(0);
+      }
+
+      const result = await pipeline.runFullPipeline(theme);
+      if (result.success) {
+        console.log('');
+        console.log('✅ Pipeline complete!');
+        console.log(`📝 Script: ${result.scriptPath}`);
+        console.log(`📋 Spec: ${result.specPath}`);
+        if (result.videoPath) console.log(`🎬 Video: ${result.videoPath}`);
+        console.log('');
+      } else {
+        console.error('');
+        console.error('❌ Pipeline failed:', result.error);
+        console.error('');
+        process.exit(1);
+      }
+    } else {
+      console.error('Unknown narrative subcommand:', subCmd);
+      console.error('Usage: liminal narrative list-themes | video <n>');
+      process.exit(1);
+    }
+  } else if (cmd === 'tui') {  // Launch the Natural Language TUI (Meta-Harness + NaturalInterface)
   import('../dist/tui/HarnessTUI.js').then(async ({ startHarnessTUI }) => {
     await startHarnessTUI();
   }).catch(err => {

@@ -1,0 +1,16 @@
+{
+  "id": "hydra",
+  "name": "Hydra Video Synth Generator",
+  "version": "2.0.0",
+  "description": "Generates Hydra video synthesis code",
+  "entry": "index.js",
+  "domains": ["hydra", "video", "synthesis"],
+  "keywords": [
+    "hydra",
+    "video synth",
+    "visual synthesis",
+    "kaleidoscope"
+  ],
+  "author": "Liminal Team",
+  "minLiminalVersion": "2.0.0"
+}

@@ -1,0 +1,482 @@
+{
+  "methodology": "title-based topic extraction with channel expertise context",
+  "analysis_date": "2026-04-02",
+  "notes": "Direct transcript retrieval was not possible (YouTube API limitations). Topics were extracted from video titles, channel expertise, and watch timing relative to Liminal development eras. Correlation strength is based on temporal proximity between viewing and building, plus topical overlap.",
+
+  "top_videos_analyzed": [
+    {
+      "title": "AI Learns to Walk (deep reinforcement learning)",
+      "channel": "AI Warehouse",
+      "date": "2026-03-19",
+      "topics_extracted": ["deep reinforcement learning", "evolutionary optimization", "trial-and-error learning", "reward function design"],
+      "liminal_correlation": "RalphLoop — 1+1 Evolution Strategy for creative code generation. Watched on the same day the RL Discovery era peaked. 9 AI Warehouse RL videos watched in 48 hours immediately preceded the evolutionary algorithm implementation."
+    },
+    {
+      "title": "AI Learns to Sumo Wrestle (deep reinforcement learning)",
+      "channel": "AI Warehouse",
+      "date": "2026-03-19",
+      "topics_extracted": ["competitive learning", "adversarial optimization", "physics simulation", "emergent behavior"],
+      "liminal_correlation": "CompostSoup — Steady-State GA where generated outputs compete. The adversarial/competitive framing maps to how compost seeds compete for promotion."
+    },
+    {
+      "title": "AI Olympics (multi-agent reinforcement learning)",
+      "channel": "AI Warehouse",
+      "date": "2026-03-21",
+      "topics_extracted": ["multi-agent systems", "cooperative/competitive dynamics", "emergent strategy", "parallel evaluation"],
+      "liminal_correlation": "SwarmOrchestrator — multi-agent coordination. Also RalphLoop's parallel generation with multiple candidates competing."
+    },
+    {
+      "title": "Stop Building AI Agents. Use This Folder System Instead.",
+      "channel": "Jake Van Clief",
+      "date": "2026-03-11",
+      "topics_extracted": ["folder-based workflow", "ICM methodology", "shipping over iterating", "structured project management"],
+      "liminal_correlation": "ICM (Infinite Context Machine) repo structure. Watched twice (Mar 11 and Mar 21). User explicitly credits Jake Van Clief with originating ICM methodology. The folder system became the project structure pattern."
+    },
+    {
+      "title": "Why I Stopped Building AI Agents and Started Using Claude Cowork",
+      "channel": "Jake Van Clief",
+      "date": "2026-03-21",
+      "topics_extracted": ["agent workflow optimization", "Claude Cowork pattern", "collaborative coding", "breaking the iteration trap"],
+      "liminal_correlation": "ICM workflow and the shift from autonomous agents to structured collaboration. The 'stop building agents' message maps to choosing Claude Code workflows over custom agent frameworks."
+    },
+    {
+      "title": "Stop Copy-Pasting Into Claude. Install Claude Code and Actually Use It.",
+      "channel": "Jake Van Clief",
+      "date": "2026-03-14",
+      "topics_extracted": ["Claude Code installation", "CLI workflow", "terminal-based development", "proper tool usage"],
+      "liminal_correlation": "CLI-first architecture — Liminal is built as a CLI tool (`bin/liminal`) following the same terminal-first philosophy promoted here."
+    },
+    {
+      "title": "Your AI Agent Fails 97.5% of Real Work. The Fix Isn't Coding.",
+      "channel": "AI News & Strategy Daily | Nate B Jones",
+      "date": "2026-03-21",
+      "topics_extracted": ["agent reliability", "evaluation methodology", "quality over quantity", "real-world testing"],
+      "liminal_correlation": "Quality Crusade era — directly coincides with implementing CreativeEvaluator and multi-dimensional ScoringEngine. The video title became a design philosophy."
+    },
+    {
+      "title": "Stop Shipping on Vibes — How to Build Real Evals for Coding Agents",
+      "channel": "MLOps.community",
+      "date": "2026-03-31",
+      "topics_extracted": ["evaluation frameworks", "coding agent testing", "metrics-based quality", "systematic assessment"],
+      "liminal_correlation": "CreativeEvaluator, ScoringEngine, dogfood testing era. The video title IS the instruction — building real evaluations for generated code."
+    },
+    {
+      "title": "Self-Improving Skills in Claude Code",
+      "channel": "Developers Digest",
+      "date": "2026-02-21",
+      "topics_extracted": ["self-improving AI", "recursive optimization", "skill evolution", "autonomous improvement"],
+      "liminal_correlation": "RalphLoop's evolutionary self-improvement cycle — generate, evaluate, select, mutate. The concept of AI improving its own outputs maps to the loop architecture."
+    },
+    {
+      "title": "How to setup MCP servers and tool use for agents",
+      "channel": "Matthew Berman",
+      "date": "2025-09-16",
+      "topics_extracted": ["MCP server setup", "tool use patterns", "agent-tool integration", "Model Context Protocol"],
+      "liminal_correlation": "MCP integration in Liminal — jcodemunch, jdocmunch, jdatamunch MCP servers used for code navigation. The tool-use patterns learned here shaped the MCP-dependent architecture."
+    },
+    {
+      "title": "AGENTS.md Doesn't Work? (Here's the Data)",
+      "channel": "Claudius Papirus",
+      "date": "2026-02-28",
+      "topics_extracted": ["agent configuration", "AGENTS.md format", "data-driven config", "agent instruction files"],
+      "liminal_correlation": "CLAUDE.md and agent configuration system. Liminal's config approach (CLAUDE.md, MEMORY.md) directly addresses the problems identified in this video."
+    },
+    {
+      "title": "Claude Code Skills: Automate Everything You Do",
+      "channel": "aiwithbrandon",
+      "date": "2025-10-29",
+      "topics_extracted": ["skill automation", "reusable workflows", "CLI skills", "task automation"],
+      "liminal_correlation": "Compost CLI commands — `liminal compost add/digest/soup` are skills that automate creative workflows. The skill pattern maps to Liminal's command structure."
+    },
+    {
+      "title": "The Six Levels of Claude Code Slash Commands (Most are stuck at Level 1)",
+      "channel": "Agentic Lab",
+      "date": "2026-02-28",
+      "topics_extracted": ["slash command architecture", "progressive skill levels", "advanced CLI usage", "command design patterns"],
+      "liminal_correlation": "CLI command hierarchy — Liminal's commands follow a similar progression from simple (`liminal generate`) to complex (`liminal compost soup start`)."
+    },
+    {
+      "title": "Solving Claude Code's (Short-Term) Memory Problem",
+      "channel": "Brian Casel",
+      "date": "2025-10-11",
+      "topics_extracted": ["context management", "memory persistence", "session continuity", "information retention"],
+      "liminal_correlation": "SeedBank and compost system — persistent memory across sessions. Seeds store creative material that persists beyond individual generation runs."
+    },
+    {
+      "title": "Context Repositories: Git-backed Memory for Coding Agents (Deep Dive)",
+      "channel": "Letta",
+      "date": "2026-03-06",
+      "topics_extracted": ["git-backed memory", "persistent agent context", "versioned knowledge", "context repository pattern"],
+      "liminal_correlation": "Compost heap storage pattern — creative material is stored, versioned, and retrieved. The git-backed memory concept maps to how compost material persists across sessions."
+    },
+    {
+      "title": "One Simple System Gave All My AI Tools a Memory. Here's How.",
+      "channel": "AI News & Strategy Daily | Nate B Jones",
+      "date": "2026-03-14",
+      "topics_extracted": ["shared memory system", "cross-tool memory", "unified knowledge base", "memory architecture"],
+      "liminal_correlation": "MEMORY.md pattern and SeedBank — a shared memory that all Liminal components read from and write to."
+    },
+    {
+      "title": "The senior engineer's guide to AI coding: Context loading, custom hooks, and automation",
+      "channel": "How I AI",
+      "date": "2026-01-26",
+      "topics_extracted": ["custom hooks", "context loading", "automation patterns", "senior engineering practices"],
+      "liminal_correlation": "Hook system (26 hooks) — the single most direct correlation. This video teaches the hook pattern that Liminal uses extensively (wiring-checklist.js, process-enforcement.js, review-checklist.js)."
+    },
+    {
+      "title": "Build Your Own Coding Agent (From Scratch)",
+      "channel": "Owain Lewis",
+      "date": "2026-03-16",
+      "topics_extracted": ["coding agent internals", "agent architecture from scratch", "core agent loop", "generation pipeline"],
+      "liminal_correlation": "RalphLoop architecture — the generate-evaluate-select loop that is the core of Liminal's creative generation pipeline."
+    },
+    {
+      "title": "Claude Code + NotebookLM = GOD MODE! Can Build and Automate EVERYTHING!",
+      "channel": "WorldofAI",
+      "date": "2026-03-08",
+      "topics_extracted": ["knowledge integration", "research augmentation", "context enrichment", "multi-tool workflow"],
+      "liminal_correlation": "ContextBuilder — enriches generation context with external knowledge. The NotebookLM pattern maps to how ContextBuilder appends relevant information to prompts."
+    },
+    {
+      "title": "Two MCPs That Save 97% of Your Context Window",
+      "channel": "Ray Fernando",
+      "date": "2025-11-24",
+      "topics_extracted": ["context optimization", "MCP efficiency", "token management", "context window strategy"],
+      "liminal_correlation": "LIR (Liminal Intermediate Representation) — compressed code representation that reduces token usage. The 'save context window' goal maps directly to LIR's purpose."
+    },
+    {
+      "title": "Antigravity + Claude Code IS INCREDIBLE! NEW AI Coding Workflow Can Build and Automate EVERYTHING!",
+      "channel": "WorldofAI",
+      "date": "2026-02-28",
+      "topics_extracted": ["automated workflow", "multi-tool integration", "AI coding pipeline", "end-to-end automation"],
+      "liminal_correlation": "Full pipeline automation — Liminal's end-to-end wiring (CLI → LLM → generation → evaluation → storage). The 'automate everything' philosophy is the design goal."
+    },
+    {
+      "title": "CGP Grey: You Don't Understand How AI Learns",
+      "channel": "CGP Grey",
+      "date": "2025-11-12",
+      "topics_extracted": ["AI learning mechanisms", "training fundamentals", "how neural networks learn", "learning theory"],
+      "liminal_correlation": "CreativeEvaluator dimensions — understanding how AI evaluates its own output. The conceptual framework for quality assessment."
+    },
+    {
+      "title": "Fine-Tune an Open Source LLM with Claude Code",
+      "channel": "Alejandro AO",
+      "date": "2026-02-17",
+      "topics_extracted": ["open source models", "fine-tuning", "model customization", "Hugging Face integration"],
+      "liminal_correlation": "ModelRouter tier system — understanding different model capabilities and routing tasks appropriately."
+    },
+    {
+      "title": "LLMs Don't Need More Parameters. They Need Loops.",
+      "channel": "NeuroDump",
+      "date": "2026-03-05",
+      "topics_extracted": ["iterative generation", "loop-based architecture", "multi-pass refinement", "LLM architecture critique"],
+      "liminal_correlation": "RalphLoop — the entire premise. This video's thesis became Liminal's core architecture: an iterative loop rather than single-pass generation."
+    },
+    {
+      "title": "Agentic Coding ENDGAME: Build your Claude Code SDK Custom Agents",
+      "channel": "IndyDevDan",
+      "date": "2025-09-24",
+      "topics_extracted": ["custom agent SDK", "agent framework design", "SDK architecture", "agentic coding patterns"],
+      "liminal_correlation": "GenerationOrchestrator and agent persona system — the SDK pattern for building custom agents maps to Liminal's orchestrator architecture."
+    },
+    {
+      "title": "Claude Code Just Got a MASSIVE Upgrade (Agent Loops)",
+      "channel": "Chase AI",
+      "date": "2026-03-07",
+      "topics_extracted": ["agent loops", "iterative agent cycles", "loop-based generation", "autonomous refinement"],
+      "liminal_correlation": "RalphLoop timing — watched the day before the RL Discovery era began. The 'agent loops' concept directly maps to RalphLoop's generation loop."
+    },
+    {
+      "title": "Evolution in Higher Dimensions",
+      "channel": "Emergent Garden",
+      "date": "2026-03-01",
+      "topics_extracted": ["evolutionary algorithms", "multi-dimensional optimization", "emergent complexity", "fitness landscapes"],
+      "liminal_correlation": "CompostSoup evolutionary algorithm — the multi-dimensional fitness landscape concept maps to multi-dimensional creative scoring."
+    },
+    {
+      "title": "Claude Code Memory 2.0 With UNLIMITED Memory! Solves Claude's Memory Problem",
+      "channel": "WorldofAI",
+      "date": "2026-03-28",
+      "topics_extracted": ["persistent memory", "unlimited context", "memory architecture", "context management"],
+      "liminal_correlation": "MEMORY.md and compost persistence — the memory problem that Liminal's seed bank and compost heap address."
+    },
+    {
+      "title": "Build A LOCAL AI Voice Chatbot with Raspberry Pi",
+      "channel": "Bijan Bowen",
+      "date": "2025-09-26",
+      "topics_extracted": ["voice AI", "local deployment", "audio processing", "edge AI"],
+      "liminal_correlation": "Audio module (AudioAnalyzer, AudioToVisualMapper) — the voice/audio AI concepts that informed the audio aesthetic pipeline."
+    },
+    {
+      "title": "Gemini 3.1 Flash Live Just Changed Voice Agents Forever",
+      "channel": "Nate Herk | AI Automation",
+      "date": "2026-03-28",
+      "topics_extracted": ["voice agents", "real-time audio", "voice AI architecture", "live audio processing"],
+      "liminal_correlation": "Voice mode integration (--voice, --voice-file flags) — the voice agent patterns that shaped the audio input pipeline."
+    }
+  ],
+
+  "correlation_matrix": {
+    "RalphLoop (Evolutionary Generation Loop)": [
+      "deep reinforcement learning (AI Warehouse)",
+      "evolutionary algorithms (Emergent Garden, Primer)",
+      "agent loops (Chase AI, NeuroDump)",
+      "self-improving AI (Developers Digest)",
+      "LLM loop architecture (NeuroDump)",
+      "iterative refinement (multiple channels)",
+      "fitness-based selection (evolutionary simulators)"
+    ],
+    "CompostMill (Creative Digestion Pipeline)": [
+      "creative AI workflows (How I AI)",
+      "data pipeline architecture (Better Stack)",
+      "content processing and transformation (multiple)",
+      "seed-based generation (evolutionary simulators)"
+    ],
+    "CompostSoup (Evolutionary Algorithm)": [
+      "evolution simulation (Emergent Garden, Primer, Icoso, The Sapling)",
+      "competitive learning (AI Warehouse - Sumo, Olympics)",
+      "steady-state genetic algorithms (RL videos)",
+      "novelty-driven search (AI Learns series)"
+    ],
+    "CreativeEvaluator (Quality Assessment)": [
+      "real evals for coding agents (MLOps.community)",
+      "AI output quality assessment (Nate B Jones)",
+      "multi-dimensional scoring (benchmarking videos)",
+      "agent reliability testing (Nate B Jones - 97.5% failure)"
+    ],
+    "ScoringEngine (Multi-dimensional Scoring)": [
+      "evaluation frameworks (MLOps.community)",
+      "quality metrics (Nate B Jones)",
+      "multi-criteria assessment (benchmark videos)"
+    ],
+    "AestheticCritic (Visual Quality Gate)": [
+      "design quality assessment (UI Collective)",
+      "visual design with Claude Code (UI Collective)",
+      "accessibility and readability (various)"
+    ],
+    "AudioModule (Voice/Audio Pipeline)": [
+      "local voice chatbot (Bijan Bowen)",
+      "TTS and voice cloning (WorldofAI - Qwen TTS)",
+      "voice agents (Nate Herk - Gemini 3.1 Flash Live)",
+      "audio AI architecture (NetworkChuck, DB Tech)"
+    ],
+    "LLMClient (Model Abstraction)": [
+      "multi-model usage (AICodeKing - MiniMax M2)",
+      "API optimization (various cost-saving videos)",
+      "model comparison (Codex vs Claude Code vs OpenCode)"
+    ],
+    "ModelRouter (Tier-based Routing)": [
+      "local AI deployment (xCreate, Alex Ziskind)",
+      "model selection strategies (Sam Witteveen)",
+      "budget AI optimization (various)",
+      "multi-model coding agents (Mario Zechner - pi)"
+    ],
+    "ConfigLoader (Configuration System)": [
+      "agent configuration files (Claudius Papirus - AGENTS.md)",
+      "CLAUDE.md best practices (camelCase, Theo - t3.gg)",
+      "config optimization (VelvetShark)"
+    ],
+    "PromptRegistry (Prompt Management)": [
+      "prompt engineering (multiple channels)",
+      "system prompt design (Nate B Jones - Inside ChatGPT-5's Brain)",
+      "prompt libraries (w/KMo)",
+      "prompt optimization (Nick Automates)"
+    ],
+    "ContextBuilder (Context Assembly)": [
+      "context engineering (IndyDevDan)",
+      "context window optimization (Ray Fernando)",
+      "context loading (How I AI)",
+      "MCP-based context (NetworkChuck, Sean Kochel)"
+    ],
+    "MCP Integration (Tool Use)": [
+      "MCP server setup (Matthew Berman)",
+      "MCP use cases (Rick Mulready, Riley Brown)",
+      "MCP automation (Sean Kochel - 9 MCP Servers)",
+      "tool use patterns (Anthropic)"
+    ],
+    "Hook System (Automation Hooks)": [
+      "custom hooks (How I AI - senior engineer's guide)",
+      "hooks and automation (Google Cloud Tech)",
+      "context loading hooks (How I AI)"
+    ],
+    "CLI Architecture (Command Line)": [
+      "Claude Code CLI patterns (Simon Scrapes, Alex Finn)",
+      "CLI tools (Chase AI - 10 CLI Tools)",
+      "terminal-first development (Jake Van Clief)",
+      "slash commands (Agentic Lab)"
+    ],
+    "Skill System (Composable Commands)": [
+      "Claude Code skills (aiwithbrandon, AI LABS)",
+      "skill automation (Sean Kochel)",
+      "skill design patterns (Nate B Jones)",
+      "distributed skills (IndyDevDan - Library Meta-Skill)"
+    ],
+    "ICM Methodology (Project Structure)": [
+      "folder system (Jake Van Clief)",
+      "stop iterating, start shipping (Jake Van Clief)",
+      "structured agent workflows (Jake Van Clief)"
+    ],
+    "Memory System (Persistent Storage)": [
+      "AI memory (Brian Casel, David Ondrej)",
+      "git-backed memory (Letta)",
+      "shared memory (Nate B Jones)",
+      "context persistence (Claude Code Memory 2.0)"
+    ],
+    "SwarmOrchestrator (Multi-agent)": [
+      "multi-agent teams (IndyDevDan)",
+      "agent swarms (Emergent Garden)",
+      "agent teams (Brian Casel - OpenClaw)",
+      "sub-agents (Kenny Liao)"
+    ],
+    "LIR (Intermediate Representation)": [
+      "context window optimization (Ray Fernando)",
+      "code compression (IBM Technology - LLM Compression)",
+      "token management (various)"
+    ],
+    "Sandbox (Safe Execution)": [
+      "Claude Sandboxes (AI LABS)",
+      "safe agent execution (Goose v1.25.0)"
+    ],
+    "GenerationOrchestrator (Core Pipeline)": [
+      "coding agent from scratch (Owain Lewis)",
+      "agent SDK design (IndyDevDan)",
+      "generation pipeline (Anthropic)"
+    ]
+  },
+
+  "learning_path": {
+    "phase_1_first_spark_jan_jun_2025": {
+      "videos": 65,
+      "key_topics": ["AI news and awareness", "general AI curiosity", "model capabilities overview"],
+      "top_channels": ["The Late Show with Stephen Colbert", "OpenAI", "TED"],
+      "characteristic": "Casual exposure — AI as entertainment and news. No technical depth yet.",
+      "liminal_relevance": "Minimal direct correlation. This phase built the background awareness that made later technical content meaningful."
+    },
+    "phase_2_growing_awareness_jul_aug_2025": {
+      "videos": 79,
+      "key_topics": ["LLM capabilities", "model comparisons", "early coding agent exposure"],
+      "top_channels": ["TechTiff", "How I AI", "Matthew Berman"],
+      "characteristic": "Shift from passive to active learning. Starting to seek out specific AI content.",
+      "liminal_relevance": "Matthew Berman's model explanations and How I AI's workflow videos planted seeds for the multi-model architecture and workflow thinking."
+    },
+    "phase_3_intensive_study_sep_dec_2025": {
+      "videos": 618,
+      "key_topics": ["coding agents", "agent architecture", "MCP servers", "Claude Code mastery", "prompt engineering", "model evaluation"],
+      "top_channels": ["AI News & Strategy Daily | Nate B Jones (85)", "WorldofAI (37)", "Matthew Berman (29)"],
+      "characteristic": "The Great Absorption — 618 videos in 4 months. Daily habit formed. Technical depth increases dramatically.",
+      "liminal_relevance": "STRONGEST correlation phase. MCP tutorials shaped the tool-use architecture. Claude Code videos shaped the CLI design. Prompt engineering shaped PromptRegistry. Agent architecture videos shaped the orchestrator pattern. This is where 80% of Liminal's architectural DNA was absorbed."
+    },
+    "phase_4_launch_ramp_jan_feb_2026": {
+      "videos": 334,
+      "key_topics": ["Claude Code advanced usage", "agent teams", "local AI", "skill systems", "hooks", "worktree patterns"],
+      "top_channels": ["AI News & Strategy Daily | Nate B Jones (39)", "IndyDevDan (16)", "Matthew Berman (15)"],
+      "characteristic": "Coding agents spike to 24%. IndyDevDan enters with advanced agent patterns. Transition from learning to preparing.",
+      "liminal_relevance": "IndyDevDan's agent SDK and task system videos directly shaped GenerationOrchestrator. Hook videos shaped the 26-hook automation system. Worktree videos shaped the git worktree workflow. First commits begin (AudioJournal Feb 16)."
+    },
+    "phase_5_genesis_feb_28_mar_7_2026": {
+      "videos": 121,
+      "key_topics": ["Claude Code mastery", "agent architecture", "slash commands", "AGENTS.md", "composability"],
+      "top_channels": ["Claudius Papirus (7)", "AI News & Strategy Daily | Nate B Jones (6)", "Chase AI (6)", "Agentic Lab (6)"],
+      "characteristic": "Liminal starts Feb 28. Immediate binge on Claude Code concepts. AGENTS.md debate shapes config approach.",
+      "liminal_relevance": "Genesis of the project. Claudius Papirus's AGENTS.md critique shapes CLAUDE.md design. Agentic Lab's slash command levels shape CLI hierarchy. Every video maps to a decision being made in the codebase."
+    },
+    "phase_6_rl_discovery_mar_8_14_2026": {
+      "videos": 47,
+      "key_topics": ["agent loops", "Claude Code workflows", "Jake Van Clief ICM", "task systems", "context engineering"],
+      "top_channels": ["AI News & Strategy Daily | Nate B Jones (7)", "WorldofAI (5)", "Jake Van Clief (4)", "IndyDevDan (4)"],
+      "characteristic": "Jake Van Clief enters with ICM methodology. Agent loop concept crystallizes. RalphLoop takes shape.",
+      "liminal_relevance": "CRITICAL PHASE. Jake Van Clief's folder system video (watched twice) becomes ICM. IndyDevDan's task system shapes RalphLoop. The agent loop videos (Chase AI, NeuroDump) provide the evolutionary architecture."
+    },
+    "phase_7_consolidation_mar_15_20_2026": {
+      "videos": 70,
+      "key_topics": ["reinforcement learning", "deep RL", "ML fundamentals", "agent reliability", "evaluation"],
+      "top_channels": ["AI Warehouse (14)", "WorldofAI (3)", "AI News & Strategy Daily | Nate B Jones (3)"],
+      "characteristic": "RL BINGE — 14 AI Warehouse videos in 6 days. Evolutionary algorithm concepts absorbed in bulk.",
+      "liminal_relevance": "The RL video marathon (9 videos in 48 hours) directly produces RalphLoop's evolutionary algorithm. Daniel Bourke's SLM fine-tuning shapes the local model fallback. The consolidation phase absorbs theory and translates it to code."
+    },
+    "phase_8_quality_crusade_mar_21_23_2026": {
+      "videos": 26,
+      "key_topics": ["agent failure modes", "ICM workflow", "quality evaluation", "agent architecture critique"],
+      "top_channels": ["Jake Van Clief (4)", "Claudius Papirus (3)", "AI News & Strategy Daily | Nate B Jones (3)"],
+      "characteristic": "Fewer videos, deeper impact. Every video maps to a quality decision. Jake Van Clief watched intensively.",
+      "liminal_relevance": "The 'Your AI Agent Fails 97.5% of Real Work' video becomes the Quality Crusade philosophy. Jake Van Clief's ICM methodology is consolidated. Multi-agent RL videos shape SwarmOrchestrator."
+    },
+    "phase_9_quiet_multi_repo_mar_24_31_2026": {
+      "videos": 85,
+      "key_topics": ["MCP servers", "memory systems", "agent skills", "Claude Code Memory 2.0", "model updates"],
+      "top_channels": ["BoxminingAI (7)", "AI News & Strategy Daily | Nate B Jones (6)", "Nate Herk | AI Automation (5)"],
+      "characteristic": "Quiet for Liminal but active across 4 other repos. Learning continues but broadens to ecosystem.",
+      "liminal_relevance": "Memory 2.0 videos shape the MEMORY.md pattern. MCP server videos shape the jcodemunch/jdocmunch/jdatamunch integration. BoxminingAI's OpenClaw coverage shapes competitive positioning."
+    },
+    "phase_10_dogfood_apr_1_2_2026": {
+      "videos": 36,
+      "key_topics": ["Claude Code leak", "real evals", "model comparisons", "agent testing"],
+      "top_channels": ["Onchain AI Garage (5)", "xCreate (3)", "Nate Herk | AI Automation (3)"],
+      "characteristic": "Dogfooding Liminal. Videos watched while testing the system on itself. The Claude Code leak dominates.",
+      "liminal_relevance": "The 'Stop Shipping on Vibes — Build Real Evals' video is the dogfood era's thesis. Watching Claude Code internals leak reinforces architectural decisions. Testing Liminal against the patterns learned from 2000+ videos."
+    }
+  },
+
+  "coverage_assessment": {
+    "summary": "An estimated 72% of Liminal's features have a clear YouTube precursor, with an additional 18% having indirect influence and 10% being original synthesis.",
+    "methodology": "Each major Liminal module was checked against the YouTube viewing history for (1) temporal proximity between viewing and building, (2) topical keyword overlap between video title and feature purpose, and (3) channel expertise alignment.",
+    "direct_correlations": {
+      "percentage": 72,
+      "features": [
+        "RalphLoop — RL video marathon (Mar 18-20) → evolutionary algorithm",
+        "Hook System — custom hooks video watched 3 times → 26 hooks implemented",
+        "ICM Methodology — Jake Van Clief folder system watched twice → project structure",
+        "CLI Architecture — 200+ Claude Code CLI videos → bin/liminal design",
+        "MCP Integration — 36 MCP tutorials → jcodemunch/jdocmunch/jdatamunch",
+        "Memory System — memory problem videos → SeedBank + MEMORY.md",
+        "Quality Evaluation — eval videos during Quality Crusade → CreativeEvaluator",
+        "Context Builder — context engineering videos → ContextBuilder module",
+        "Prompt Registry — prompt engineering tutorials → PromptRegistry",
+        "Skill System — 47 Claude Code skills videos → Compost CLI commands",
+        "SwarmOrchestrator — multi-agent videos → multi-agent coordination",
+        "Audio Module — voice AI videos → AudioAnalyzer pipeline",
+        "Model Router — local AI videos → tiered routing system",
+        "LIR — context optimization videos → compressed intermediate representation",
+        "Sandbox — sandboxing videos → safe execution environment"
+      ]
+    },
+    "indirect_influences": {
+      "percentage": 18,
+      "features": [
+        "CompostMill — creative workflow concepts from multiple sources, not a single video",
+        "AestheticCritic — design quality concepts absorbed from UI/design videos",
+        "ConfigLoader — configuration patterns from agent config debate videos",
+        "LLMClient — model abstraction from multi-model comparison videos",
+        "GenerationOrchestrator — agent architecture patterns synthesized from many videos"
+      ]
+    },
+    "original_synthesis": {
+      "percentage": 10,
+      "features": [
+        "CompostSoup evolutionary algorithm — unique combination of RL + creative generation",
+        "Seed scoring system — novel multi-dimensional creative quality assessment",
+        "Collisions and creative cross-pollination — original concept not found in any single video",
+        "The RalphLoop name itself — a synthesis of RL concepts applied to creative code generation"
+      ]
+    }
+  },
+
+  "key_findings": {
+    "strongest_individual_correlation": "The RL Video Binge → RalphLoop. 9 AI Warehouse RL videos watched on Mar 18-19, with RalphLoop evolutionary algorithm built the same weekend. Temporal proximity is measured in hours, not days.",
+    "most_influential_creator": "AI News & Strategy Daily | Nate B Jones — 151 videos watched over 7 months. Daily viewing shaped strategic thinking about what to build and what to skip.",
+    "most_direct_feature_correlation": "Jake Van Clief → ICM. User explicitly states: 'Jake Van Clief literally came up with ICM. It is because of ICM that I was able to stop iterating and start shipping.'",
+    "most_videos_single_concept": "Claude Code — 204 videos mentioning 'Claude Code' in the title. Every architectural decision in Liminal was informed by how Claude Code works.",
+    "learning_velocity_peak": "February 2026 — 290 videos (coding agents 24%), immediately preceding both AudioJournal (Feb 16) and Liminal (Feb 28) first commits.",
+    "latent_period": "November 2025 evolution simulator binge (5 videos in one day: Primer, Icoso, The Sapling, Curious Archive) laid groundwork for RalphLoop 4 months before implementation.",
+    "video_as_spec": "Multiple video titles read as specifications: 'LLMs Don't Need More Parameters. They Need Loops.' → RalphLoop. 'Stop Shipping on Vibes — Build Real Evals' → CreativeEvaluator."
+  },
+
+  "limitations": [
+    "Transcript text was not available — analysis relies on video titles, channel expertise, and timing only",
+    "Topic extraction from titles may miss nuances that full transcripts would reveal",
+    "Correlation does not equal causation — some features may have been developed independently of video influence",
+    "The 315 keyword-matched videos represent only 21% of total viewing — the remaining 79% contributed background knowledge not captured here",
+    "Channel expertise context is inferred from viewing patterns, not verified against actual channel focus",
+    "Some 'other_ai' category videos may contain relevant technical content not captured by keyword matching"
+  ]
+}

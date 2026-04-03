@@ -100,12 +100,12 @@ describe('GenericWrapper', () => {
 
     describe('ASCII detection', () => {
       it('detects ASCII art', () => {
-        const code = '█▓▒░\n████\n▓▓▓▓';
+        const code = '█▓▒░\n████\n▓▓▓▓\n▒▒▒▒\n░░░░\n████';
         expect(GenericWrapper.detectDomain(code)).toBe('ascii');
       });
 
       it('requires multiple lines for ASCII', () => {
-        const code = '████'; // Single line
+        const code = '████\n▓▓▓▓\n▒▒▒▒'; // Only 3 lines
         expect(GenericWrapper.detectDomain(code)).toBeNull();
       });
 
@@ -243,7 +243,7 @@ describe('GenericWrapper', () => {
       const code = '████\n▓▓▓▓\n▒▒▒▒';
       const result = GenericWrapper.wrap(code, { domain: 'ascii' });
       
-      expect(result).toContain('<!DOCTYPE html>';
+      expect(result).toContain('<!DOCTYPE html>');
       expect(result).toContain('ASCII Art');
       expect(result).toContain('Courier New');
     });

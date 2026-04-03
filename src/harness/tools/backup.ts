@@ -50,10 +50,7 @@ export async function restoreBackup(backupPath: string, originalPath?: string): 
     // Validate backup exists
     const stats = await fs.stat(backupPath).catch(() => null);
     if (!stats) {
-      return {
-        success: false,
-        error: `Backup '${backupPath}' does not exist`,
-      };
+      throw new Error(`Backup '${backupPath}' does not exist`);
     }
     
     // If original path not provided, derive from backup name
@@ -72,10 +69,8 @@ export async function restoreBackup(backupPath: string, originalPath?: string): 
       backupPath,
     };
   } catch (error) {
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : String(error),
-    };
+    console.error('[Backup] Restore failed:', error);
+    throw new Error(`Backup restore failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
 }
 
@@ -93,7 +88,10 @@ export async function cleanupOldBackups(maxAgeHours: number = 24): Promise<void>
       const stats = await fs.stat(filePath);
       
       if (now - stats.mtime.getTime() > maxAgeMs) {
-        await fs.unlink(filePath).catch(() => {});
+        await fs.unlink(filePath).catch((error) => {
+      console.error('[Backup] Failed to delete old backup:', error);
+      throw new Error(`Backup cleanup failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    });
       }
     }
   } catch {

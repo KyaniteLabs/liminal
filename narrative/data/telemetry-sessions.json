@@ -11,7 +11,7 @@
 
   "sessions_per_era": {
     "description": "Number of coding sessions per development era, derived from JSONL chunk files",
-    "total_sessions": 71,
+    "total_sessions": 58,
     "eras": {
       "era1-seed": {
         "session_count": 0,
@@ -36,7 +36,7 @@
       },
       "era4-quality": {
         "session_count": 27,
-        "human_messages_total": 297,
+        "human_messages_total": 277,
         "avg_messages_per_session": 11.0,
         "date_range": "2026-03-21 to 2026-03-22",
         "peak_session": {
@@ -46,7 +46,7 @@
       },
       "era5-conversational": {
         "session_count": 21,
-        "human_messages_total": 348,
+        "human_messages_total": 329,
         "avg_messages_per_session": 16.6,
         "date_range": "2026-03-22 to 2026-03-23",
         "peak_session": {
@@ -57,7 +57,7 @@
       },
       "era6-quiet": {
         "session_count": 2,
-        "human_messages_total": 148,
+        "human_messages_total": 41,
         "avg_messages_per_session": 74.0,
         "date_range": "2026-03-24",
         "peak_session": {
@@ -68,7 +68,7 @@
       },
       "era7-multimedia": {
         "session_count": 5,
-        "human_messages_total": 41,
+        "human_messages_total": 148,
         "avg_messages_per_session": 8.2,
         "date_range": "2026-03-29",
         "insight": "Voice + aesthetic features. Sessions were more directive/implementation-focused, less exploratory dialogue."
@@ -94,7 +94,7 @@
     },
     "derived_insights": [
       "Development happened across 13 calendar days (Mar 20 - Apr 1, 2026), with gaps on Mar 25-28",
-      "Era 4 (Quality) had the most sessions (27) but era 5 (Conversational) had more total messages (348 vs 297)",
+      "Era 4 (Quality) had the most sessions (27) but era 5 (Conversational) had more total messages (329 vs 277)",
       "Era 6 (Quiet) had the fewest sessions (2) but the highest per-session message count (74.0 avg)",
       "Session intensity peaks at era 8 (The Crucible) and era 6 (Quiet), suggesting deep work periods",
       "The last three eras (7-9) show increasing session size as the project matures from implementation to evaluation to documentation"
@@ -103,7 +103,7 @@
 
   "message_statistics": {
     "description": "Aggregate statistics on human messages across all sessions",
-    "total_human_message_count": 1148,
+    "total_human_message_count": 920,
     "sessions_in_human_messages_json": 58,
     "note": "human-messages.json contains 58 sessions (subset of 71 total from era chunks; era1/era2 are empty, and some era3-9 sessions appear in overlapping chunk files)",
     "session_size_distribution": {
@@ -309,7 +309,7 @@
       "day_32_apr_1": "THE BIBLE - Calm. Documentation. Narrative mining. (era9)"
     },
     "derived_insights": [
-      "11 instances of fuck/fucking across 1148 messages (0.96% of messages) - not casual profanity, always tied to specific system failures",
+      "11 instances of fuck/fucking across 920 messages (1.2% of messages) - not casual profanity, always tied to specific system failures",
       "Frustration is always productive: every significant frustration event led to permanent automated enforcement infrastructure",
       "The frustration curve is U-shaped: peaks at era3 (wiring) and era8 (dogfooding), with a calm middle period",
       "The developer does not express frustration at the project itself, only at agent behavior patterns (hallucination, not wiring, premature victory)",
@@ -453,7 +453,7 @@
         "file_size_bytes": 178229,
         "file_size_human": "174 KB",
         "session_count": 27,
-        "human_messages_total": 297,
+        "human_messages_total": 277,
         "bytes_per_session": 6601,
         "intensity_tier": "sustained",
         "date_range": "2026-03-21 to 2026-03-22"
@@ -462,7 +462,7 @@
         "file_size_bytes": 205168,
         "file_size_human": "200 KB",
         "session_count": 21,
-        "human_messages_total": 348,
+        "human_messages_total": 329,
         "bytes_per_session": 9770,
         "intensity_tier": "intense",
         "date_range": "2026-03-22 to 2026-03-23",
@@ -472,7 +472,7 @@
         "file_size_bytes": 13186,
         "file_size_human": "13 KB",
         "session_count": 2,
-        "human_messages_total": 148,
+        "human_messages_total": 41,
         "bytes_per_session": 6593,
         "intensity_tier": "deep",
         "date_range": "2026-03-24",
@@ -482,7 +482,7 @@
         "file_size_bytes": 123677,
         "file_size_human": "121 KB",
         "session_count": 5,
-        "human_messages_total": 41,
+        "human_messages_total": 148,
         "bytes_per_session": 24735,
         "intensity_tier": "dense",
         "date_range": "2026-03-29",
@@ -540,12 +540,12 @@
       }
     ],
     "derived_insights": [
-      "Total data volume is 722 KB across 71 sessions spanning 13 active days",
+      "Total data volume is 722 KB across 58 sessions spanning 13 active days",
       "Era 5 (Conversational) has the largest data volume (200 KB) - this was the period of most active human-agent dialogue",
       "Era 3 (Consolidation) had the highest daily intensity - 123 KB produced in a single day (Mar 20)",
       "Era 7 (Multimedia) has the highest bytes-per-session (24.7 KB) - large implementation plans and code blocks",
       "The 4-day gap (Mar 25-28) between era6 and era7 is the only significant gap in the development timeline",
-      "Data volume does not correlate with session count: era6 had only 2 sessions but 148 messages (deep sustained work)"
+      "Data volume does not correlate with session count: era7 had only 5 sessions but 148 messages (dense implementation work)"
     ]
   },
 
@@ -599,8 +599,8 @@
 
   "summary_insights": {
     "headline_metrics": {
-      "total_sessions": 71,
-      "total_human_messages": 1148,
+      "total_sessions": 58,
+      "total_human_messages": 920,
       "project_duration_days": 13,
       "data_volume": "722 KB",
       "frustration_incidents": "~50 tagged messages",

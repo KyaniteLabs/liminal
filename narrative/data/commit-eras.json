@@ -1,6 +1,6 @@
 {
   "project": "Liminal",
-  "lifespan": "32 days (Feb 28 - Apr 1, 2026)",
+  "lifespan": "33 days (Feb 28 - Apr 1, 2026)",
   "total_commits": 294,
   "contributors": [
     {"name": "Simon", "commits": 229, "percentage": 77.9},
@@ -30,8 +30,8 @@
     "2026-03-30": 18,
     "2026-03-28": 16,
     "2026-03-23": 15,
-    "2026-03-21": 14,
-    "2026-03-01": 9,
+    "2026-03-21": 9,
+    "2026-03-01": 8,
     "2026-03-07": 1,
     "2026-03-24_through_2026-03-27": "ZERO COMMITS - 4 day silence"
   },
@@ -59,13 +59,13 @@
     {
       "id": 1,
       "name": "The Seed",
-      "dates": "Feb 28 - Mar 1",
+      "dates": "Feb 28 - Mar 7",
       "commits": "1-43 (~43)",
       "author": "Pastorsimon1798",
       "description": "Kai agent builds entire scaffolding in one evening (29 task-jobs)",
       "key_events": [
         "PRD committed (b620e02)",
-        "Kai agent runs 27 task-jobs building full architecture",
+        "Kai agent runs 29 task-jobs building full architecture",
         "PromiseDetector, PromptStore, ContextAccumulation, CreativeEvaluator built",
         "P5Generator, ParticleSystem, CellularAutomata generators built",
         "Full test coverage >92%",
@@ -81,7 +81,7 @@
       "author": "Pastorsimon1798 + Simon",
       "description": "Cursor IDE agent writes 15 commits in 6 minutes; project renamed Atelier → Liminal",
       "key_events": [
-        "15 [A]-tagged commits in 6-minute burst (00:29-00:35)",
+        "12 [A]-tagged commits in 6-minute burst (00:29-00:35)",
         "Security fix: flatted DoS vulnerability",
         "4 new creative coding generators (noise/flow fields, GLSL, Three.js, LLM music)",
         "34-item codebase audit fix",
@@ -235,7 +235,7 @@
     "kai_agent": {
       "pattern": "feat(task-job-XXXXXXXXXXXX-kai-NNN):",
       "commits": 29,
-      "dates": "Feb 28 - Mar 1",
+      "dates": "Feb 28 - Mar 7",
       "description": "Automated scaffolding agent that built the initial architecture"
     },
     "cursor_ide": {

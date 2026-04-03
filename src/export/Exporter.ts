@@ -19,6 +19,7 @@ import {
   validateProjectName,
 } from '../utils/validation.js';
 import { RemotionRenderer } from '../render/RemotionRenderer.js';
+import { ValidationError } from '../errors/ValidationError.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
 
 export interface ProjectIteration {
@@ -55,7 +56,7 @@ export class Exporter {
     // Structural validation before wrapping
     const validation = CodeValidator.validate(code);
     if (!validation.valid) {
-      throw new Error(`Code validation failed: ${validation.errors.join('; ')}`);
+      throw new ValidationError('Code validation failed', validation.errors);
     }
     code = validation.cleanedCode;
 

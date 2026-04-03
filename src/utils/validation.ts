@@ -5,6 +5,8 @@
  * found across the codebase.
  */
 
+import { ValidationError } from '../errors/ValidationError.js';
+
 /**
  * Validates that input is a non-empty string
  * @param input - Value to validate
@@ -14,7 +16,7 @@
  */
 export function validateString(input: unknown, name: string): string {
   if (!input || typeof input !== 'string') {
-    throw new Error(`${name} is required and must be a non-empty string`);
+    throw new ValidationError(`${name} is required and must be a non-empty string`);
   }
   return input;
 }
@@ -28,7 +30,7 @@ export function validateString(input: unknown, name: string): string {
  */
 export function validateNonEmptyString(input: unknown, name: string): string {
   if (!input || typeof input !== 'string' || input.trim() === '') {
-    throw new Error(`${name} is required and must be a non-empty string`);
+    throw new ValidationError(`${name} is required and must be a non-empty string`);
   }
   return input;
 }
@@ -42,7 +44,7 @@ export function validateNonEmptyString(input: unknown, name: string): string {
  */
 export function validateCode(input: unknown): string {
   if (!input || typeof input !== 'string' || input.trim() === '') {
-    throw new Error('Code is required and must be a non-empty string');
+    throw new ValidationError('Code is required and must be a non-empty string');
   }
   return input;
 }
@@ -59,7 +61,7 @@ export function validateOutputPath(
   customMessage?: string
 ): string {
   if (!outputPath || typeof outputPath !== 'string' || outputPath.trim() === '') {
-    throw new Error(customMessage || 'Output path is required and must be a non-empty string');
+    throw new ValidationError(customMessage || 'Output path is required and must be a non-empty string');
   }
   return outputPath;
 }
@@ -72,7 +74,7 @@ export function validateOutputPath(
  */
 export function validatePrompt(input: unknown): string {
   if (!input || typeof input !== 'string' || input.trim().length === 0) {
-    throw new Error('Prompt is required and must be a non-empty string');
+    throw new ValidationError('Prompt is required and must be a non-empty string');
   }
   return input;
 }
@@ -90,7 +92,7 @@ export function validateOptionalString(
 ): string | undefined {
   if (input === undefined || input === null) return undefined;
   if (typeof input !== 'string') {
-    throw new Error(`${name} must be a string if provided`);
+    throw new ValidationError(`${name} must be a string if provided`);
   }
   return input;
 }
@@ -104,7 +106,7 @@ export function validateOptionalString(
  */
 export function validateNumber(input: unknown, name: string): number {
   if (typeof input !== 'number' || isNaN(input)) {
-    throw new Error(`${name} is required and must be a number`);
+    throw new ValidationError(`${name} is required and must be a number`);
   }
   return input;
 }
@@ -117,7 +119,7 @@ export function validateNumber(input: unknown, name: string): number {
  */
 export function validateProjectName(name: unknown): string {
   if (!name || typeof name !== 'string' || name.trim() === '') {
-    throw new Error('Project name is required');
+    throw new ValidationError('Project name is required');
   }
   return name;
 }

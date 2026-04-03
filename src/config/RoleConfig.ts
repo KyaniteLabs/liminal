@@ -15,7 +15,6 @@ import { readFile, writeFile, mkdir } from 'fs/promises';
 import { join, dirname } from 'path';
 import { homedir } from 'os';
 import { env } from '../utils/env.js';
-import { Logger } from '../utils/Logger.js';
 import { CapabilityRegistry } from '../llm/CapabilityRegistry.js';
 import type { ModelCapabilities } from '../llm/CapabilityRegistry.js';
 import type { ThinkingConfig } from '../llm/ProviderTypes.js';

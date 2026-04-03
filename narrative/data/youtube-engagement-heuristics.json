@@ -67,6 +67,63 @@
       "rationale": "Catch-all category — mostly autoplayed news and roundup content."
     }
   },
+  "creator_engagement_dimension": {
+    "methodology": "Creator loyalty overrides topic classification. Tier 1 creators are actively followed regardless of what they cover — user confirmed. Tier 2 creators are actively watched when topic is relevant.",
+    "tier_1_creators": [
+      {
+        "name": "AI News & Strategy Daily | Nate B Jones",
+        "total_videos": 150,
+        "engagement": "active",
+        "confidence": "very high",
+        "rationale": "150 videos over 7 months, consistent weekly watch. User confirmed as KEY creator — watched regardless of topic. Top creator by volume."
+      },
+      {
+        "name": "IndyDevDan",
+        "total_videos": 26,
+        "engagement": "active",
+        "confidence": "very high",
+        "rationale": "Developer-focused AI content directly relevant to Claude Code workflow. Peak Feb-Mar 2026. User confirmed as KEY creator — same caliber as Nate B Jones, above Berman in importance."
+      },
+      {
+        "name": "Jake Van Clief",
+        "total_videos": 9,
+        "engagement": "active",
+        "confidence": "very high",
+        "rationale": "All 9 videos in Mar-Apr 2026. Agent workflow and Claude Code customization content. Titles like 'Stop Building AI Agents' directly influenced Era 9-10. User confirmed as KEY creator — quality over quantity, same caliber as Nate B Jones."
+      }
+    ],
+    "tier_2_creators": [
+      {
+        "name": "Matthew Berman",
+        "total_videos": 85,
+        "engagement": "mostly_active",
+        "confidence": "high",
+        "rationale": "85 videos over 2.5 years. Consistent watching. Active when covering tools/models. Less directly influential than Tier 1 despite higher volume."
+      },
+      {
+        "name": "WorldofAI",
+        "total_videos": 69,
+        "engagement": "mostly_active",
+        "confidence": "high",
+        "rationale": "Open-source AI tool reviews directly relevant to Liminal's stack decisions."
+      },
+      {
+        "name": "AI Warehouse",
+        "total_videos": 19,
+        "engagement": "active",
+        "confidence": "very high",
+        "rationale": "Agent learning videos (RL/ES) directly correlated with RalphLoop implementation."
+      },
+      {
+        "name": "Nate Herk | AI Automation",
+        "total_videos": 16,
+        "engagement": "active",
+        "confidence": "high",
+        "rationale": "AI automation workflows directly relevant to multi-agent coordination work."
+      }
+    ],
+    "note": "Creator engagement is independent of topic. A Nate B Jones video about video generation gets active engagement even though the 'video_gen' topic category is only 20% active. Tier 1 creators (Nate B Jones, IndyDevDan, Jake Van Clief) are a stronger signal than topic relevance. Jake Van Clief's 9 videos had outsized influence — discovered late but directly shaped Era 9-10 decisions. User validated Apr 3, 2026."
+  },
   "correlated_active_examples": [
     {
       "videos": ["RL/ES agent learning videos (AI Warehouse)"],

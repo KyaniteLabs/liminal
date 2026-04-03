@@ -36,7 +36,22 @@ Era 10 is **actively forming**. The main branch agent is still working. This ass
 | 23:39 | `969d244` | audit: classify configuration security issues |
 | 23:40 | `0a13c21` | audit: gap analysis against April 2026 best practices |
 
-### Phase C: Config Fixes + Deep Audit (Apr 3, 00:06-00:14) — 15 commits
+### Phase E: TDD Error Handling (Apr 3, ~01:00+) — 6 commits
+
+Following the deep audit's identification of error handling gaps (149 catch blocks, 2 bare catches), the main agent entered a TDD cycle applying RED→GREEN→Refactor to backup and recorder modules:
+
+| Time | Commit | Description |
+|------|--------|-------------|
+| ~01:00 | `8d87375` | test(backup): add error handling tests (RED) |
+| ~01:00 | `59566df` | test(recorder): add error handling tests (RED) |
+| ~01:01 | `abe0966` | fix(backup): add error handling (GREEN) |
+| ~01:01 | `07fa03c` | fix(recorder): add error handling (GREEN) |
+| ~01:02 | `7f62fca` | refactor(backup): extract error message constant |
+| ~01:02 | `b567424` | refactor(recorder): improve error message formatting |
+
+This is the audit cascade reaching its natural conclusion: catalog → classify → fix → deep audit → TDD remediation. The cycle shows the developer's agent moving from observation to action with proper test coverage.
+
+Total main commits: 333 (was 294 at Era 9 end, was 327 at Phase D end).
 
 | Time | Commit | Description |
 |------|--------|-------------|
@@ -195,8 +210,8 @@ However, the sub-phase structure (A/B/C/D) should be preserved in the data for f
 
 - **Name:** The Cleanup
 - **Dates:** Apr 2-3, 2026 (ongoing)
-- **Commit range:** 295-327 on main (33 commits), plus branches
-- **Sub-phases:** A (repo hygiene), B (config catalog), C (config fixes), D (deep audit)
+- **Commit range:** 295-339 on main (39 commits), plus branches
+- **Sub-phases:** A (repo hygiene), B (config catalog), C (config fixes), D (deep audit), E (TDD remediation)
 - **Author:** Simon
 - **Narrative:** The developer stops building features and turns critical attention to the project's structural integrity. A multi-day audit cascade catalogs configuration issues, fixes the highest-impact problems, then expands into deep structural analysis. Meanwhile, parallel AI agents handle repo reorganization and cross-agent tooling research. The system gains the ability to verify its own documentation, validate its own configuration, and coordinate multiple AI workers simultaneously.
 - **Key events:**

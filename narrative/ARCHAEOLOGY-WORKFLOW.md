@@ -68,6 +68,46 @@ for f in .claude/hooks/*.{js,sh}; do echo "## $f"; cat "$f"; echo; done > "$OUTP
 
 ---
 
+## Phase 1.5: Database Construction (Automated)
+
+Phase 1 produces flat files. Phase 1.5 converts them into a single SQLite database for interactive exploration and programmatic querying.
+
+### Toolchain
+
+| Tool | Purpose | Install |
+|------|---------|---------|
+| `sqlite-utils` | JSON/CSV → SQLite conversion | `uv tool install sqlite-utils` |
+| `datasette` | Interactive web UI + JSON API | `uv tool install datasette` |
+
+### Build
+
+```bash
+# From project root
+python3 narrative/scripts/build-archaeology-db.py --verbose
+
+# Or let the serve script build automatically:
+bash narrative/scripts/serve-archaeology.sh
+```
+
+### Output
+
+| Artifact | Location | Notes |
+|----------|----------|-------|
+| `archaeology.db` | `narrative/data/archaeology.db` | Gitignored — rebuild at any time |
+| Datasette UI | `http://localhost:8001` | Faceted browsing, FTS, canned queries |
+| JSON API | `http://localhost:8001/archaeology.json` | For programmatic access by Phase 3 agents |
+
+### What the DB Contains
+
+The build script auto-detects and imports:
+- CSV files (commits) → indexed tables
+- Flat JSON arrays (sessions, YouTube searches) → tables
+- Nested JSON (eras, telemetry, derived patterns) → flattened into separate tables
+- Audit files → verification tables
+- FTS5 enabled on: commit messages, session content, era descriptions
+
+---
+
 ## Phase 2: Era Classification (Human + AI)
 
 ### Era Detection Heuristics
@@ -105,6 +145,23 @@ for f in .claude/hooks/*.{js,sh}; do echo "## $f"; cat "$f"; echo; done > "$OUTP
 
 Launch these as parallel sub-agents:
 
+### Data Access Pattern
+
+All Phase 3 agents should query the archaeology database instead of parsing raw files:
+
+```bash
+# Example: Query commits via Datasette JSON API
+curl "http://localhost:8001/archaeology/commits.json?_facet=repo&_facet=author&_sort=date"
+
+# Example: Full-text search
+curl "http://localhost:8001/archaeology/commits.json?_search=telemetry"
+
+# Example: Era velocity query
+curl "http://localhost:8001/archaeology.json?sql=SELECT+e.name,e.commits+FROM+eras+e"
+```
+
+If the Datasette server is not running, agents can query archaeology.db directly with sqlite3 or sqlite-utils.
+
 ### Agent 1: SDLC Gap Finder
 Identifies missing practices: test-first, integration testing, CI/CD, code review, refactoring cycles. Ranks by ROI.
 
@@ -138,6 +195,7 @@ Correlates video watching with commit themes. Identifies smoking guns. Maps crea
 | Creator profiles | JSON | `narrative/data/youtube-creators.json` | Top creator monthly patterns |
 | Blog outlines | Markdown | `narrative/blog/` | Era-based posts |
 | Video scripts | Markdown | `narrative/video/` | Using blog-to-video pipeline |
+| Interactive Datasette | SQLite DB + Datasette config | `narrative/data/archaeology.db` | Faceted browsing, FTS, JSON API, canned queries |
 
 ### Quality Gate: Red Team Audit
 
@@ -168,6 +226,10 @@ Coordinate worktree cleanup with repo organization agent
 ```
 .claude/worktrees/archaeology/
 ├── narrative/
+│   ├── scripts/
+│   │   ├── build-archaeology-db.py
+│   │   ├── datasette-metadata.yaml
+│   │   └── serve-archaeology.sh
 │   ├── archaeology.html          # Main visualization deliverable
 │   ├── curriculum.md             # Learning curriculum
 │   ├── reverse-engineering-plan.md

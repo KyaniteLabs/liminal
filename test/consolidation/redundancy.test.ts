@@ -11,8 +11,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { CollaborationEngine } from '../../src/collab/CollaborationEngine.js';
 import { ScoringEngine } from '../../src/core/ScoringEngine.js';
 import { harnessMemory, HarnessMemory } from '../../src/harness/HarnessMemory.js';
-import { DeprecatedCollaboration } from '../../src/collab/DeprecatedCollaboration.js';
-import { EpisodicMemory, SemanticArtMemory } from '../../src/brain/ArchivedMemorySystems.js';
 
 describe('Fix 8: Consolidate Triple Redundancy', () => {
   describe('1. Collaboration System Consolidation', () => {
@@ -24,20 +22,12 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
       expect(typeof engine.run).toBe('function');
     });
 
-    it('should throw error when trying to use deprecated DeepCollaboration', () => {
-      expect(() => {
-        new DeprecatedCollaboration.DeepCollaboration({
-          callLLM: async () => 'test',
-        });
-      }).toThrow(/DEPRECATED|Consolidate Triple Redundancy/);
+    it('should not have deprecated DeepCollaboration module', async () => {
+      await expect(import('../../src/collab/DeprecatedCollaboration.js')).rejects.toThrow();
     });
 
-    it('should throw error when trying to use deprecated CollaborativeClient', () => {
-      expect(() => {
-        new DeprecatedCollaboration.CollaborativeClient({
-          callLLM: async () => 'test',
-        });
-      }).toThrow(/DEPRECATED|Consolidate Triple Redundancy/);
+    it('should not have deprecated CollaborativeClient module', async () => {
+      await expect(import('../../src/collab/DeprecatedCollaboration.js')).rejects.toThrow();
     });
 
     it('should only support swarm mode', async () => {
@@ -229,34 +219,21 @@ describe('Fix 8: Consolidate Triple Redundancy', () => {
     });
   });
 
-  describe('4. Compatibility Shims', () => {
-    it('should have EpisodicMemory compatibility shim', () => {
-      // Should warn but not throw
-      const memory = new EpisodicMemory();
-      expect(memory).toBeDefined();
+  describe('4. Deprecated Modules Removed', () => {
+    it('should not have EpisodicMemory module (use HarnessMemory instead)', async () => {
+      await expect(import('../../src/brain/ArchivedMemorySystems.js')).rejects.toThrow();
     });
 
-    it('should have SemanticArtMemory compatibility shim', () => {
-      // Should warn but not throw
-      const memory = new SemanticArtMemory();
-      expect(memory).toBeDefined();
+    it('should not have SemanticArtMemory module (use HarnessMemory instead)', async () => {
+      await expect(import('../../src/brain/ArchivedMemorySystems.js')).rejects.toThrow();
     });
 
-    it('EpisodicMemory shim should delegate to HarnessMemory', () => {
-      const memory = new EpisodicMemory();
-      
-      // These should work through the shim
-      memory.recordGeneration({
-        id: 'test-gen',
-        prompt: 'Test',
-        code: 'code',
-        domain: 'p5',
-        score: 0.8,
-      });
-
-      const recent = memory.recallRecent(10);
-      expect(recent).toBeDefined();
-      expect(Array.isArray(recent)).toBe(true);
+    it('HarnessMemory should provide all memory functionality', () => {
+      // HarnessMemory is the consolidated memory system
+      expect(harnessMemory).toBeDefined();
+      expect(typeof harnessMemory.initialize).toBe('function');
+      expect(typeof harnessMemory.save).toBe('function');
+      expect(typeof harnessMemory.getRelevantEpisodes).toBe('function');
     });
   });
 });

@@ -48,6 +48,16 @@ export abstract class TierBasedGenerator {
   }
 
   /**
+   * Generate with full telemetry — returns the complete LLMResponse
+   * including reasoning traces, thinking source, quality scores, and
+   * detected patterns. Use this for campaign/telemetry flows that need
+   * more than just the generated code.
+   */
+  async generateFull(prompt: string, options?: TierBasedGeneratorOptions): Promise<LLMResponse> {
+    return this.generateInternal(prompt, options);
+  }
+
+  /**
    * Generate a Layer with full metadata.
    * This is the preferred method for layer-based composition.
    */

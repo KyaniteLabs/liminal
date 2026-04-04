@@ -24,6 +24,14 @@ export class P5GeneratorLLM {
   }
 
   /**
+   * Generate with full telemetry — returns complete LLMResponse
+   * including reasoning traces, thinking source, quality scores.
+   */
+  async generateFull(prompt: string, options?: P5GeneratorOptions): Promise<LLMResponse> {
+    return this.generateInternal(prompt, options);
+  }
+
+  /**
    * Generate a Layer with full metadata.
    */
   async generateLayer(prompt: string, options?: P5GeneratorOptions): Promise<Layer> {

@@ -109,8 +109,12 @@ export interface LoopEvaluationData {
 export interface SwarmRoundData {
   round: number;
   totalRounds: number;
-  winnerId: string | null;
+  outputs: Record<string, unknown>;
+  votes: Record<string, unknown>;
+  winner: string | null;
   converged: boolean;
+  vocabularySize?: number;
+  timestamp?: number;
 }
 
 // ── Event types ──

@@ -107,7 +107,7 @@ bpm(120)
       delete (globalThis as unknown as { window: { strudel?: unknown } }).window.strudel;
       
       expect(() => uninitializedAdapter.render(mockLayer, mockContainer))
-        .toThrow('Strudel not loaded. Call initialize() first.');
+        .toThrow('Strudel not loaded. Call async initialize() first.');
       
       // Restore strudel for other tests
       (globalThis as unknown as { window: { strudel?: unknown } }).window.strudel = originalStrudel;

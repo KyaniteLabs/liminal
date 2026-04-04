@@ -145,7 +145,7 @@ describe('HydraAdapter', () => {
       
       expect(() => {
         freshAdapter.render(mockLayer, mockContainer);
-      }).toThrow('Hydra not loaded. Call initialize() first.');
+      }).toThrow('Hydra not loaded. Call async initialize() first.');
       
       // Restore window.Hydra
       (window as unknown as { Hydra: typeof MockHydra }).Hydra = MockHydra;

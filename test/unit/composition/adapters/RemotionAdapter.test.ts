@@ -105,7 +105,7 @@ describe('RemotionAdapter', () => {
     it('should throw error if initialize() was not called', () => {
       const layer = createMockLayer();
       expect(() => adapter.render(layer, mockContainer)).toThrow(
-        'Remotion not loaded. Call initialize() first.'
+        'Remotion not loaded. Call async initialize() first.'
       );
     });
 

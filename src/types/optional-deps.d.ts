@@ -57,3 +57,27 @@ declare module 'meyda' {
   export const audioContext: unknown;
   export const bufferSize: number;
 }
+
+/**
+ * Extensions to the Window object for Puppeteer-injected metrics.
+ * Used by AccessibilityGuardrails and RuntimeHealthMonitor.
+ */
+interface AccessibilityMetrics {
+  luminanceSamples: number[];
+  flashCount: number;
+  lastLuminance: number;
+  hasAudio: boolean;
+  audioPeakLevel: number;
+}
+
+interface LiminalMetrics {
+  frameCount: number;
+  lastFrameTime: number;
+  fpsSamples: number[];
+  objectCounts: number[];
+}
+
+interface Window {
+  __accessibilityMetrics?: AccessibilityMetrics;
+  __liminalMetrics?: LiminalMetrics;
+}

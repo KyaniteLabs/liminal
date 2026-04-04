@@ -91,7 +91,6 @@ export class RuntimeHealthMonitor {
 
       // Inject performance tracker
       await page.evaluateOnNewDocument(() => {
-        // @ts-expect-error -- puppeteer types
         window.__liminalMetrics = {
           frameCount: 0,
           lastFrameTime: performance.now(),
@@ -101,8 +100,7 @@ export class RuntimeHealthMonitor {
 
         // Track FPS
         function trackFrame() {
-          // @ts-expect-error -- puppeteer types
-          const metrics = window.__liminalMetrics;
+          const metrics = window.__liminalMetrics!;
           const now = performance.now();
           const elapsed = now - metrics.lastFrameTime;
           const fps = 1000 / elapsed;
@@ -115,8 +113,7 @@ export class RuntimeHealthMonitor {
 
         // Track object count (rough approximation)
         setInterval(() => {
-          // @ts-expect-error -- puppeteer types
-          const metrics = window.__liminalMetrics;
+          const metrics = window.__liminalMetrics!;
           // Count various object types that might accumulate
           let count = 0;
           // Simple heuristic: count window properties starting with _
@@ -141,7 +138,6 @@ export class RuntimeHealthMonitor {
       // Get initial metrics
       const initialMetrics = await page.metrics();
       initialObjectCount = await page.evaluate(() => {
-        // @ts-expect-error -- puppeteer types
         return window.__liminalMetrics?.objectCounts?.slice(-1)[0] || 0;
       });
       memorySamples.push((initialMetrics.JSHeapUsedSize || 0) / 1024 / 1024);
@@ -158,10 +154,8 @@ export class RuntimeHealthMonitor {
 
         // Get FPS samples from page
         const pageFps = await page.evaluate(() => {
-          // @ts-expect-error -- puppeteer types
           const samples = window.__liminalMetrics?.fpsSamples || [];
-          // @ts-expect-error -- puppeteer types
-          window.__liminalMetrics.fpsSamples = []; // Reset for next interval
+          window.__liminalMetrics!.fpsSamples = []; // Reset for next interval
           return samples;
         });
         fpsSamples.push(...pageFps);
@@ -170,7 +164,6 @@ export class RuntimeHealthMonitor {
       // Get final metrics
       await page.metrics(); // Final metrics for completeness
       finalObjectCount = await page.evaluate(() => {
-        // @ts-expect-error -- puppeteer types
         return window.__liminalMetrics?.objectCounts?.slice(-1)[0] || 0;
       });
 

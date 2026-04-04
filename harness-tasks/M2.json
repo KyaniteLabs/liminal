@@ -1,0 +1,13 @@
+{
+  "id": "M2",
+  "title": "Add Tone.js Import Check",
+  "description": "Ensure Tone.js validation also checks for proper import statements",
+  "targetFile": "src/core/CodeValidator.ts",
+  "search": "const toneJSErrors = (detectedDomain === 'music' || detectedDomain === 'unknown') && /Tone\\./.test(cleaned)",
+  "replace": "const hasToneImport = /import.*Tone.*from['\"]tone['\"]/i.test(cleaned) || /require\\(['\"]tone['\"]\\)/i.test(cleaned);\n  const toneJSErrors = (detectedDomain === 'music' || detectedDomain === 'unknown') && /Tone\\./.test(cleaned)",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "files": 1,
+  "approved": true
+}

@@ -1,0 +1,13 @@
+{
+  "id": "M3",
+  "title": "Fix Shader Validation for GLSL",
+  "description": "Shader validation should recognize GLSL syntax more accurately",
+  "targetFile": "src/core/CodeValidator.ts",
+  "search": "const shaderErrors = detectedDomain === 'shader' && !/void\\s+main\\s*\\(\\)/.test(cleaned)",
+  "replace": "const shaderErrors = detectedDomain === 'shader' && !/(?:void\\s+main\\s*\\(\\s*\\)|gl_Position|gl_FragColor)/.test(cleaned)",
+  "verifyCommand": "npm run build",
+  "risk": "low",
+  "complexity": "low",
+  "files": 1,
+  "approved": true
+}

@@ -1,0 +1,13 @@
+{
+  "id": "M5",
+  "title": "Add Timeout Handling to LLMClient",
+  "description": "Add proper timeout handling for LLM requests to prevent hanging",
+  "targetFile": "src/llm/LLMClient.ts",
+  "search": "async generate(prompt: string): Promise<LLMResponse> {",
+  "replace": "async generate(prompt: string, timeoutMs = 60000): Promise<LLMResponse> {\n    const controller = new AbortController();\n    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);",
+  "verifyCommand": "npm run build",
+  "risk": "medium",
+  "complexity": "medium",
+  "files": 1,
+  "approved": true
+}

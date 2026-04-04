@@ -146,6 +146,7 @@ export {
 import { initializeGuardrails } from './core/GuardrailRegistry.js';
 import { initializeTelemetry } from './observation/TelemetryCollector.js';
 import { createCatastrophicGuardrails } from './rules/CatastrophicGuardrails.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface GuardrailSystemConfig {
   /** Shadow mode: observe only, don't block */
@@ -200,6 +201,8 @@ export function initializeGuardrailSystem(config: GuardrailSystemConfig = {}) {
     registry.register(compliance.FairnessGuardrail);
     registry.register(compliance.ExplainabilityGuardrail);
     registry.register(compliance.ResilienceGuardrail);
+  }).catch(err => {
+    Logger.error('Guardrails', 'Failed to load compliance guardrails:', err instanceof Error ? err.message : err);
   });
   
   return {

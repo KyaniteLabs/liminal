@@ -199,7 +199,7 @@ export class ParsingCache {
       await fs.writeFile(cacheFilePath, JSON.stringify(entry, null, 2), 'utf-8');
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Cache write failed: ${message}`);
+      throw new Error(`Cache write failed: ${message}`, { cause: error });
     }
   }
 

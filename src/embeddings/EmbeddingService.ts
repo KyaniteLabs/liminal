@@ -104,11 +104,12 @@ export class EmbeddingService {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unknown error';
-      Logger.error(
+      Logger.warn(
         'EmbeddingService',
-        `Failed to initialize local model: ${message}`
+        `Failed to initialize local model (will retry on next embed call): ${message}`
       );
-      // Don't throw - we'll fall back to OpenAI or throw on embed()
+      // Clear initPromise so initialization can be retried
+      this.initPromise = null;
     }
   }
 

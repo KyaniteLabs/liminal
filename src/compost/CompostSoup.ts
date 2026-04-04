@@ -141,11 +141,20 @@ export class CompostSoup {
       signal.addEventListener('abort', () => controller.abort(), { once: true });
     }
 
+    let consecutiveFailures = 0;
+    const MAX_CONSECUTIVE_FAILURES = 5;
+
     while (!controller.signal.aborted) {
       try {
         await this.cycle(fragments);
+        consecutiveFailures = 0;
       } catch (err) {
+        consecutiveFailures++;
         Logger.warn('CompostSoup', 'cycle failed, continuing:', err);
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+          Logger.error('CompostSoup', `${MAX_CONSECUTIVE_FAILURES} consecutive cycle failures, stopping soup`);
+          break;
+        }
       }
 
       // Wait before next cycle

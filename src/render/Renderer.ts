@@ -113,7 +113,7 @@ export class Renderer {
       });
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Failed to render sketch: ${error.message}`);
+        throw new Error(`Failed to render sketch: ${error.message}`, { cause: error });
       }
       throw new Error('Failed to render sketch: Unknown error');
     } finally {

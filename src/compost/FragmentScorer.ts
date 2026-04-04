@@ -60,7 +60,7 @@ export class FragmentScorer {
       }
       return 5;
     } catch (err) {
-      Logger.warn('FragmentScorer', 'LLM scoring failed, using neutral score:', err);
+      Logger.warn('FragmentScorer', 'LLM scoring failed, using neutral score (5/10):', err instanceof Error ? err.message : err);
       return 5;
     }
   }

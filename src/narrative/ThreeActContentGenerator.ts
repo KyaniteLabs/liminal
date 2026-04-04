@@ -13,6 +13,7 @@
  */
 
 import { LLMClient } from '../llm/LLMClient.js';
+import { Logger } from '../utils/Logger.js';
 import { threeActAdapter, type ThreeActContent, type EraDefinition } from './ThreeActAdapter.js';
 
 // ── Prompt templates ──
@@ -123,7 +124,8 @@ export class ThreeActContentGenerator {
         } else {
           failureCount++;
         }
-      } catch {
+      } catch (err) {
+        Logger.warn('ThreeActContentGenerator', `Act generation failed:`, err instanceof Error ? err.message : err);
         failureCount++;
       }
     }

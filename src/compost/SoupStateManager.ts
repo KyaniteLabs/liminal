@@ -34,8 +34,12 @@ export class SoupStateManager {
         return { ...DEFAULT_STATE };
       }
       return parsed;
-    } catch (err) {
-      Logger.warn('SoupStateManager', 'failed to load state, using default:', err);
+    } catch (err: any) {
+      if (err?.code === 'ENOENT') {
+        Logger.debug('SoupStateManager', 'No saved state found, starting fresh');
+      } else {
+        Logger.error('SoupStateManager', 'State file corrupted or unreadable, starting fresh:', err instanceof Error ? err.message : err);
+      }
       return { ...DEFAULT_STATE };
     }
   }

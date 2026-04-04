@@ -15,11 +15,20 @@ export class DigestScheduler {
       ? 24 * 60 * 60 * 1000
       : 7 * 24 * 60 * 60 * 1000;
 
+    let consecutiveFailures = 0;
+    const MAX_CONSECUTIVE_FAILURES = 5;
+
     const run = async () => {
       try {
         await mill.digest();
+        consecutiveFailures = 0;
       } catch (err) {
+        consecutiveFailures++;
         Logger.warn('DigestScheduler', 'scheduled digest failed:', err);
+        if (consecutiveFailures >= MAX_CONSECUTIVE_FAILURES) {
+          Logger.error('DigestScheduler', `${MAX_CONSECUTIVE_FAILURES} consecutive digest failures, stopping scheduler`);
+          return;
+        }
       }
       // Reschedule
       this.timer = setTimeout(() => void run(), ms);

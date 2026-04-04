@@ -23,6 +23,7 @@ import {
 } from '../harness/index.js';
 import { NaturalInterface } from './NaturalInterface.js';
 import { audioPlayer } from './preview/index.js';
+import { Logger } from '../utils/Logger.js';
 
 const C = {
   primary: 'cyan',
@@ -296,8 +297,8 @@ function App() {
       }
       // Update the interface's tasks
       ni.setTasks(loaded);
-    } catch {
-      // No tasks loaded
+    } catch (err) {
+      Logger.debug('HarnessTUI', 'No saved tasks loaded:', err instanceof Error ? err.message : err);
     }
   };
 

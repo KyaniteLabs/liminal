@@ -134,7 +134,7 @@ export class QualityArchive {
         // File doesn't exist yet - that's fine
         Logger.info('QualityArchive', 'Archive file not found, starting fresh');
       } else {
-        Logger.warn('QualityArchive', `Could not load archive: ${(error as Error).message}`);
+        Logger.error('QualityArchive', `Archive file corrupted or unreadable, starting fresh: ${(error as Error).message}`);
       }
     }
   }

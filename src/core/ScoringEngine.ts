@@ -278,8 +278,8 @@ class AestheticStrategy implements ScoringStrategy {
       this.critic.setLLMClient(llm as any);
       this.llmWired = true;
     } catch (err) {
-      Logger.debug('ScoringEngine', 'Failed to wire LLM for dual-path evaluation:', err);
-      this.llmWired = true; // Don't retry
+      Logger.warn('ScoringEngine', 'Failed to wire LLM for dual-path evaluation:', err);
+      this.llmWired = false; // Allow retry on next score() call
     }
   }
 
@@ -547,8 +547,9 @@ export class ScoringEngine {
         strategy: `${result.strategy}+llm`,
         issues: [...(result.issues ?? []), ...(resolved.issues ?? [])],
       };
-    } catch {
-      return result; // LLM failed, return heuristic result
+    } catch (err) {
+      Logger.warn('ScoringEngine', 'LLM score boost failed, returning heuristic result:', err instanceof Error ? err.message : err);
+      return result;
     }
   }
 }

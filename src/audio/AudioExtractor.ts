@@ -109,7 +109,8 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
         : new Float32Array(12),
       perceptualSharpness: (result.perceptualSharpness as number) ?? 0,
     };
-  } catch {
+  } catch (err) {
+    Logger.warn('AudioExtractor', 'Feature extraction failed, returning defaults:', err instanceof Error ? err.message : err);
     return { ...DEFAULTS, chroma: new Float32Array(12) };
   }
 }

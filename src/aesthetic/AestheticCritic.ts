@@ -23,6 +23,7 @@ import { analyzeWithLLMJudge, type LLMClientLike, type LLMJudgeResult } from './
 import type { CalibrationWeights, CalibrationResult } from '../calibration/CalibrationSuite.js';
 import { CorrelationCalculator } from '../calibration/CorrelationCalculator.js';
 import type { HarnessMemory } from '../harness/HarnessMemory.js';
+import { Logger } from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
 // Critic registry
@@ -403,8 +404,8 @@ export class AestheticCritic {
             this.calibrationWeights = new Map(Object.entries(data.weights));
           }
         }
-      } catch {
-        Logger.debug('AestheticCritic', 'Failed to parse calibration weights file');
+      } catch (err) {
+        Logger.warn('AestheticCritic', 'Calibration data parse failed, using defaults:', err instanceof Error ? err.message : err);
       }
     }
   }

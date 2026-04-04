@@ -86,16 +86,20 @@ export class MetadataExtractor {
     if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'svg', 'tiff'].includes(ext)) {
       metadata.format = ext.toUpperCase();
       const dims = await this.extractImageDimensions(filePath);
-      metadata.dimensions = dims;
+      if (dims) {
+        metadata.dimensions = dims;
+      }
     }
 
     // Audio metadata with optional music-metadata
     if (['mp3', 'wav', 'ogg', 'm4a', 'flac', 'aac'].includes(ext)) {
       metadata.format = ext.toUpperCase();
       const audioMeta = await this.extractAudioMetadata(filePath);
-      metadata.duration = audioMeta.duration;
-      if (audioMeta.sampleRate) {
-        metadata.sampleRate = audioMeta.sampleRate;
+      if (audioMeta) {
+        metadata.duration = audioMeta.duration;
+        if (audioMeta.sampleRate) {
+          metadata.sampleRate = audioMeta.sampleRate;
+        }
       }
     }
 
@@ -104,12 +108,12 @@ export class MetadataExtractor {
 
   /**
    * Extract image dimensions using sharp (if available).
-   * Falls back to zeros if sharp is not installed.
+   * Returns null if sharp is not installed or extraction fails.
    */
-  private static async extractImageDimensions(filePath: string): Promise<{ width: number; height: number }> {
+  private static async extractImageDimensions(filePath: string): Promise<{ width: number; height: number } | null> {
     const sharp = await getSharp();
     if (!sharp || typeof sharp !== 'function') {
-      return { width: 0, height: 0 };
+      return null;
     }
 
     try {
@@ -121,18 +125,18 @@ export class MetadataExtractor {
       };
     } catch (err) {
       Logger.warn('MetadataExtractor', `Failed to extract image dimensions from ${filePath}:`, err);
-      return { width: 0, height: 0 };
+      return null;
     }
   }
 
   /**
    * Extract audio metadata using music-metadata (if available).
-   * Falls back to zeros if music-metadata is not installed.
+   * Returns null if music-metadata is not installed or extraction fails.
    */
-  private static async extractAudioMetadata(filePath: string): Promise<{ duration: number; sampleRate?: number; bitrate?: number }> {
+  private static async extractAudioMetadata(filePath: string): Promise<{ duration: number; sampleRate?: number; bitrate?: number } | null> {
     const mm = await getMusicMetadata();
     if (!mm || typeof mm !== 'object' || !('parseFile' in mm)) {
-      return { duration: 0 };
+      return null;
     }
 
     try {
@@ -146,7 +150,7 @@ export class MetadataExtractor {
       };
     } catch (err) {
       Logger.warn('MetadataExtractor', `Failed to extract audio metadata from ${filePath}:`, err);
-      return { duration: 0 };
+      return null;
     }
   }
 

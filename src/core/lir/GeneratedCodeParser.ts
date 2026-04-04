@@ -30,7 +30,7 @@ export class GeneratedCodeParser {
     try {
       return this.parser.parse(generatedCode, 'generated.js');
     } catch (err) {
-      Logger.debug('GeneratedCodeParser', 'Parse failed, returning empty:', err);
+      Logger.debug('GeneratedCodeParser', 'Parse failed, returning empty:', err instanceof Error ? err.message : err);
       return [];
     }
   }

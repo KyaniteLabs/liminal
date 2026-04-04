@@ -196,8 +196,7 @@ async function migrateLegacyConfig(): Promise<void> {
       await fs.copyFile(legacyPath, newPath);
     }
   } catch (err) {
-    // Silently skip any errors during migration
-    // The error is likely ENOENT which is expected if no legacy config exists
+    Logger.warn('ConfigLoader', 'Config migration failed:', err instanceof Error ? err.message : err);
   }
 }
 

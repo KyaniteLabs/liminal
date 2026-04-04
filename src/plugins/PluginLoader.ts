@@ -260,8 +260,8 @@ export class PluginLoader {
     for (const handler of this.eventHandlers) {
       try {
         handler(event);
-      } catch {
-        Logger.warn('PluginLoader', 'Event handler error');
+      } catch (err) {
+        Logger.warn('PluginLoader', 'Plugin handler error:', err instanceof Error ? err.message : err);
       }
     }
   }

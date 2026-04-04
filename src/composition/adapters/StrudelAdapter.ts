@@ -124,28 +124,27 @@ export class StrudelAdapter implements LayerAdapter {
 
     // Execute the pattern code
     const startTime = Date.now();
-    let pattern: StrudelPattern | null = null;
 
-    try {
-      // Evaluate the pattern in the Strudel REPL
-      strudel.repl.evaluate(layer.code).then((result) => {
-        pattern = result.pattern;
-      }).catch((err) => {
-        Logger.error('StrudelAdapter', 'Pattern evaluation failed:', err);
-      });
-    } catch (error) {
-      Logger.error('StrudelAdapter', 'Error executing Strudel code:', error);
-    }
-
-    // Store instance info
+    // Create instance info before async evaluation so .then() can update pattern
     const instanceInfo: StrudelInstance = {
-      pattern,
+      pattern: null,
       repl: strudel.repl,
       startTime,
       bpm,
       isPlaying: false,
     };
     this.instances.set(layer.id, instanceInfo);
+
+    try {
+      // Evaluate the pattern in the Strudel REPL
+      strudel.repl.evaluate(layer.code).then((result) => {
+        instanceInfo.pattern = result.pattern;
+      }).catch((err) => {
+        Logger.error('StrudelAdapter', 'Pattern evaluation failed:', err);
+      });
+    } catch (error) {
+      Logger.error('StrudelAdapter', 'Error executing Strudel code:', error);
+    }
 
     // Set up controls
     const startBtn = document.getElementById(`strudel-start-${layer.id}`);

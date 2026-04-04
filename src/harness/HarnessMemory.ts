@@ -124,6 +124,7 @@ export class HarnessMemory {
   private memoryFile: string;
   // private calibrationFile: string; // Reserved for future use
   private dirty = false;
+  private lastSaveFailed = false;
   private saveInterval?: NodeJS.Timeout;
 
   constructor() {
@@ -132,6 +133,9 @@ export class HarnessMemory {
     // this.calibrationFile = join(this.memoryDir, 'calibration-data.json'); // Reserved for future use
     this.state = { ...DEFAULT_STATE };
   }
+
+  /** Check if the last save operation failed. */
+  get hasSaveError(): boolean { return this.lastSaveFailed; }
 
   /**
    * Initialize memory - load from disk or create fresh
@@ -147,9 +151,14 @@ export class HarnessMemory {
         // Migrate if needed
         this.state = this.migrate(loaded);
         Logger.debug('HarnessMemory', `Loaded ${this.state.tasks.length} tasks, ${this.state.adaptations.length} adaptations, ${this.state.episodes.length} episodes, ${this.state.calibration.length} calibrations`);
-      } catch (err) {
-        // File doesn't exist, use defaults
-        Logger.debug('HarnessMemory', 'No previous memory found, starting fresh');
+      } catch (err: any) {
+        if (err?.code === 'ENOENT') {
+          // File doesn't exist — expected on first run
+          Logger.debug('HarnessMemory', 'No previous memory found, starting fresh');
+        } else {
+          // Corrupted or unreadable file — log as warning, start fresh
+          Logger.warn('HarnessMemory', `Memory file unreadable, starting fresh: ${err instanceof Error ? err.message : err}`);
+        }
         this.state = { ...DEFAULT_STATE };
         await this.save();
       }
@@ -157,7 +166,7 @@ export class HarnessMemory {
       // Auto-save every 30 seconds if dirty
       this.saveInterval = setInterval(() => {
         if (this.dirty) {
-          this.save().catch((err) => Logger.error('HarnessMemory', `Auto-save failed: ${err}`));
+          this.save().catch((err) => Logger.warn('HarnessMemory', `Auto-save failed: ${err}`));
         }
       }, 30000);
 
@@ -184,6 +193,7 @@ export class HarnessMemory {
    */
   async save(): Promise<void> {
     try {
+      this.lastSaveFailed = false;
       this.state.lastUpdated = new Date().toISOString();
       await fs.writeFile(
         this.memoryFile,
@@ -192,6 +202,7 @@ export class HarnessMemory {
       );
       this.dirty = false;
     } catch (err) {
+      this.lastSaveFailed = true;
       Logger.error('HarnessMemory', `Save failed: ${err}`);
     }
   }

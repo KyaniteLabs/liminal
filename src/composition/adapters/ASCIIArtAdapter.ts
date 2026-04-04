@@ -8,6 +8,7 @@
 import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
+import { getCSSBlendMode } from '../utils/blendModes.js';
 
 /** ASCII art instance tracking */
 interface ASCIIInstance {
@@ -51,6 +52,11 @@ export class ASCIIArtAdapter implements LayerAdapter {
     preElement.style.padding = '10px';
     preElement.style.zIndex = String(layer.config.zIndex);
     preElement.dataset.layerId = layer.id;
+    
+    // Apply blend mode
+    if (layer.config.blendMode !== 'normal') {
+      preElement.style.mixBlendMode = getCSSBlendMode(layer.config.blendMode);
+    }
 
     container.appendChild(preElement);
 

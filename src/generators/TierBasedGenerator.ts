@@ -12,6 +12,7 @@ import { LLMClient, LLMConfig, LLMResponse } from '../llm/LLMClient.js';
 import { PromptBuilder } from '../llm/PromptBuilder.js';
 import { detectModelTier, trimContext, type ModelTier } from '../llm/ModelTier.js';
 import { harnessMemory } from '../harness/HarnessMemory.js';
+import { metaHarness } from '../harness/MetaHarnessIntegration.js';
 import { GenerationError } from '../errors/GenerationError.js';
 import { Layer, createLayer, DomainType } from '../composition/types.js';
 
@@ -125,7 +126,21 @@ export abstract class TierBasedGenerator {
       });
     }
 
-    // 6. Record to memory
+    // 6. Report to meta-harness with thinking trace for analysis
+    if (process.env.NODE_ENV !== 'test') {
+      await metaHarness.onGenerationComplete({
+        success: true,
+        model: this.llm.getConfig().model || 'unknown',
+        domain: this.domain,
+        prompt,
+        code: response.code,
+        duration: 0,
+        thinking: response.thinking,
+        recoveredFromThinking: response.recoveredFromThinking,
+      });
+    }
+
+    // 7. Record to memory
     harnessMemory.recordEpisode({
       type: 'generation',
       domain: this.domain,

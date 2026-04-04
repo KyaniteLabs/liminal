@@ -301,6 +301,27 @@ Respond with a JSON object:
               result.success ? 'success' : 'failure',
             ],
           });
+
+          // Persist insight to disk for observability and external analysis
+          try {
+            const tracesDir = path.join(process.env.HOME || '/tmp', '.liminal', 'thinking-traces', 'harness');
+            await fs.mkdir(tracesDir, { recursive: true });
+            const randomSuffix = Math.random().toString(36).slice(2, 8);
+            const traceFile = path.join(tracesDir, `harness-insight-${Date.now()}-${randomSuffix}.json`);
+            const tracePayload = {
+              timestamp: new Date().toISOString(),
+              model: result.model,
+              domain: result.domain,
+              whereWentWrong: analysis.whereWentWrong,
+              howToCommunicateBetter: analysis.howToCommunicateBetter,
+              systemImprovement: analysis.systemImprovement,
+              confidence: analysis.confidence,
+            };
+            await fs.writeFile(traceFile, JSON.stringify(tracePayload, null, 2), 'utf-8');
+            console.log(`[MetaHarness] Insight persisted to ${traceFile}`);
+          } catch (writeErr) {
+            console.warn('[MetaHarness] Failed to persist insight:', (writeErr as Error).message);
+          }
           
           // If high confidence suggestion, could auto-adapt prompt templates
           if (analysis.confidence > 0.8 && analysis.systemImprovement) {

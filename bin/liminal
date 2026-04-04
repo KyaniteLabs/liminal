@@ -149,6 +149,10 @@ if (flags.help) {
   console.log('  --routing-mode <mode>       Dual-model routing: cascade, speculative, ensemble, specialized');
   console.log('  --confidence-threshold <n>  Cascade escalation threshold (0-1, default: 0.8)');
   console.log('  --verbose, -v               Verbose output');
+  console.log('  --voice                     Enable voice-driven visual mapping');
+  console.log('  --voice-file <path>         Audio file for voice-to-visual analysis');
+  console.log('  --aesthetic <preset>        Aesthetic guardrail preset (lenient|moderate|strict)');
+  console.log('  --aesthetic-config <json>   Aesthetic guardrail configuration');
   console.log('  --help, -h                  Show this help message');
   console.log('  --version                   Show version');
   console.log('');
@@ -366,6 +370,8 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     swarmConfig: flags.swarmRounds ? { maxRounds: flags.swarmRounds } : undefined,
     useAestheticGuardrails: !!(flags.aesthetic || flags.aestheticConfig),
     aestheticConfig: flags.aesthetic ? { preset: flags.aesthetic } : undefined,
+    voiceFile: flags.voiceFile,
+    voice: flags.voice,
   }).then(async (result) => {
     console.log('');
     console.log('✅ Generation complete!');

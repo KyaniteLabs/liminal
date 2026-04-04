@@ -33,17 +33,13 @@
     "gui": "node gui/start.js",
     "gui:dev": "cd gui && npm run dev",
     "gui:all": "concurrently -k -n b,v \"node gui/start.js\" \"npm run gui:dev\"",
-    "gui:start": "node scripts/start-gui.js",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src/",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",
-    "benchmark": "node scripts/benchmark.js",
     "tui": "npx tsx src/tui/HarnessTUI.tsx",
-    "dogfood:report": "npx tsx scripts/generate-dogfood-report.ts",
-    "validate-docs": "node scripts/validate-version.js && node scripts/verify-file-refs.js",
-    "audit-docs": "node scripts/audit-docs.js"
+    "dogfood:report": "npx tsx scripts/generate-dogfood-report.ts"
   },
   "keywords": [
     "generative-art",
@@ -71,7 +67,6 @@
     "eslint": "^8.57.1",
     "jsdom": "^29.0.1",
     "playwright": "^1.59.1",
-    "sharp": "0.34.5",
     "typescript": "^5.3.3",
     "vitest": "^4.1.2"
   },

@@ -29,3 +29,4 @@ export {
 export type { ExpertDescription } from './ExpertPersonas.js';
 export { ModelRouter } from './ModelRouter.js';
 export type { RoutingOption, RoutingDecision } from './ModelRouter.js';
+export { NotationTranslator } from './NotationTranslator.js';

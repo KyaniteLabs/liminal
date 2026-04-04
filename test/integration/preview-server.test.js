@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, beforeAll, afterAll } from 'vitest';
 import { PreviewServer } from '../../src/render/PreviewServer.js';
 import http from 'http';
 
@@ -35,12 +35,6 @@ describe('PreviewServer Integration Tests', () => {
       expect(result).toBe(true);
     });
 
-    it('should start server on default port if not specified', async () => {
-      await previewServer.start();
-
-      const response = await fetch('http://localhost:3456/');
-      expect(response.status).toBe(200);
-    });
 
     it('should handle multiple start calls gracefully', async () => {
       await previewServer.start(TEST_PORT);
@@ -378,13 +372,29 @@ describe('PreviewServer Integration Tests', () => {
   });
 
   describe('configuration', () => {
-    it('should use default port 3456 when no port specified', async () => {
-      await previewServer.start();
+    describe('default port behavior', () => {
+      let defaultPortServer;
 
-      const response = await fetch('http://localhost:3456/');
-      expect(response.status).toBe(200);
+      beforeAll(async () => {
+        defaultPortServer = new PreviewServer();
+        await defaultPortServer.start();
+      });
 
-      await previewServer.stop();
+      afterAll(async () => {
+        if (defaultPortServer) {
+          await defaultPortServer.stop();
+        }
+      });
+
+      it('should start server on default port if not specified', async () => {
+        const response = await fetch('http://localhost:3456/');
+        expect(response.status).toBe(200);
+      });
+
+      it('should use default port 3456 when no port specified', async () => {
+        const response = await fetch('http://localhost:3456/');
+        expect(response.status).toBe(200);
+      });
     });
 
     it('should accept custom port numbers', async () => {

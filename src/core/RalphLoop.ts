@@ -113,6 +113,41 @@ export class RalphLoop {
       recoveryThreshold: 0.3,
     });
 
+    // Voice-driven visual mapping: analyze audio file if provided
+    if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
+      try {
+        const { AudioAnalyzer } = await import('../audio/index.js');
+        const { execFile } = await import('child_process');
+        const { promisify } = await import('util');
+        const execFileAsync = promisify(execFile);
+
+        // Decode audio file to raw PCM (s16le, mono, 44100Hz) via ffmpeg
+        const { stdout: pcmBuffer } = await execFileAsync('ffmpeg', [
+          '-i', normalizedOptions.voiceFile,
+          '-f', 's16le',
+          '-ac', '1',
+          '-ar', '44100',
+          '-v', 'quiet',
+          'pipe:1',
+        ], { maxBuffer: 50 * 1024 * 1024, encoding: 'buffer' });
+
+        // Convert Int16 PCM to Float32 (-1.0 to 1.0)
+        const int16 = new Int16Array(pcmBuffer.buffer, pcmBuffer.byteOffset, pcmBuffer.byteLength / 2);
+        const float32 = new Float32Array(int16.length);
+        for (let i = 0; i < int16.length; i++) {
+          float32[i] = int16[i] / 32768;
+        }
+
+        const analyzer = new AudioAnalyzer();
+        const result = analyzer.analyze(float32, 44100);
+        const visualMapping = analyzer.getVisualMapping(result);
+        normalizedOptions.visualMappingParams = visualMapping as unknown as Record<string, unknown>;
+        Logger.info('RalphLoop', `Voice analysis complete: mapped audio features to visual params`);
+      } catch (err) {
+        Logger.warn('RalphLoop', `Voice analysis failed (is ffmpeg installed?), continuing without visual mapping: ${err instanceof Error ? err.message : err}`);
+      }
+    }
+
     let archiveLearning: ArchiveLearning | null = null;
     let qualityArchive: QualityArchive | null = null;
     let aestheticModel: AestheticModel | null = null;
@@ -416,6 +451,13 @@ export class RalphLoop {
           try {
             const { AestheticCritic } = await import('../aesthetic/index.js');
             const critic = new AestheticCritic();
+            // Wire LLM client for dual-path evaluation (LLM-as-Judge + heuristic)
+            try {
+              const llmForCritic = new LLMClient({ role: 'evaluator' });
+              critic.setLLMClient(llmForCritic as any);
+            } catch {
+              // LLM client creation failed — heuristic-only path will be used
+            }
             const aestheticReport = critic.critique(
               currentCode,
               normalizedOptions.aestheticConfig as any,

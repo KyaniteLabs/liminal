@@ -75,7 +75,7 @@ export class SecurityLogger {
     // Send to SIEM if enabled
     if (this.config.enableSIEM && this.config.siemEndpoint) {
       this.sendToSIEM(fullEvent).catch((err) => {
-        console.error('Failed to send to SIEM:', err);
+        console.error('Failed to send to SIEM:', err); // eslint-disable-line no-console
       });
     }
   }

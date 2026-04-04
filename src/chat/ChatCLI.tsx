@@ -7,6 +7,7 @@ import { render, Box, Text, Spacer } from 'ink';
 import React, { useState, useEffect } from 'react';
 import type { ReactElement } from 'react';
 import { createInterface } from 'readline';
+import { Logger } from '../utils/Logger.js';
 import { ConversationManager } from './ConversationManager.js';
 import type { Parameter, Domain } from './types.js';
 
@@ -271,11 +272,12 @@ export class ChatCLI {
           if (session && session.messages.length > 0) {
             const lastMessage = session.messages[session.messages.length - 1];
             if (lastMessage.role === 'assistant') {
+              // eslint-disable-next-line no-console
               console.log(`\nAgent: ${lastMessage.content}\n`);
             }
           }
         } catch (error) {
-          console.error('Error processing input:', error instanceof Error ? error.message : error);
+          Logger.error('ChatCLI', 'Error processing input:', error instanceof Error ? error.message : error);
         }
 
         // Show prompt again

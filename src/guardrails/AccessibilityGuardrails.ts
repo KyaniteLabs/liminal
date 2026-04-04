@@ -108,7 +108,7 @@ export class AccessibilityGuardrails {
 
       // Get metrics
       const metrics = await page.evaluate(() => {
-        return window.__accessibilityMetrics as AccessibilityMetrics | null;;
+        return window.__accessibilityMetrics as AccessibilityMetrics | null;
       });
 
       // Analyze code for static checks

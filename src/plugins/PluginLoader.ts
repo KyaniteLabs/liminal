@@ -12,6 +12,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { formatError } from '../utils/errors.js';
+import { Logger } from '../utils/Logger.js';
 import type {
   GeneratorPlugin,
   PluginManifest,
@@ -260,7 +261,7 @@ export class PluginLoader {
       try {
         handler(event);
       } catch {
-        // Ignore handler errors
+        Logger.warn('PluginLoader', 'Event handler error');
       }
     }
   }

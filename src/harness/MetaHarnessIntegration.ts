@@ -567,7 +567,7 @@ if (typeof process !== 'undefined' && process.stdout?.isTTY) {
 // Ensure shutdown on exit
 if (typeof process !== 'undefined') {
   process.on('exit', () => {
-    metaHarness.shutdown().catch(console.error);
+    metaHarness.shutdown().catch(console.error); // eslint-disable-line no-console
   });
   
   process.on('SIGINT', () => {

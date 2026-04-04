@@ -31,15 +31,15 @@ function formatMessage(context: string, message: string): string {
 
 export const Logger = {
   debug(context: string, message: string, ...args: unknown[]): void {
-    if (shouldLog('debug')) console.debug(formatMessage(context, message), ...args);
+    if (shouldLog('debug')) console.debug(formatMessage(context, message), ...args); // eslint-disable-line no-console
   },
 
   info(context: string, message: string, ...args: unknown[]): void {
-    if (shouldLog('info')) console.log(formatMessage(context, message), ...args);
+    if (shouldLog('info')) console.log(formatMessage(context, message), ...args); // eslint-disable-line no-console
   },
 
   warn(context: string, message: string, ...args: unknown[]): void {
-    if (shouldLog('warn')) console.warn(formatMessage(context, message), ...args);
+    if (shouldLog('warn')) console.warn(formatMessage(context, message), ...args); // eslint-disable-line no-console
   },
 
   error(context: string, message: string, ...args: unknown[]): void {

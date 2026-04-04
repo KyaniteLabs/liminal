@@ -66,7 +66,7 @@ const dashboardData = {
 };
 
 // Read the HTML template
-const template = readFileSync('scripts/campaign-dashboard.html', 'utf-8');
+const template = readFileSync('artifacts/campaign-dashboard.html', 'utf-8');
 
 // Inject the data
 const html = template.replace('{/* DATA_INJECTION */}', JSON.stringify(dashboardData));

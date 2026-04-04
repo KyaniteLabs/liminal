@@ -27,3 +27,5 @@ export {
   createExpertPersonas,
 } from './ExpertPersonas.js';
 export type { ExpertDescription } from './ExpertPersonas.js';
+export { ModelRouter } from './ModelRouter.js';
+export type { RoutingOption, RoutingDecision } from './ModelRouter.js';

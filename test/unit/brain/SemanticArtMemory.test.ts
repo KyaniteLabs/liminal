@@ -5,9 +5,9 @@ import {
   Inspiration,
   Technique,
   CreativeContext
-} from '../../../dist/brain/SemanticArtMemory.js';
-import { ArtKnowledgeGraph } from '../../../dist/brain/ArtKnowledgeGraph.js';
-import { EpisodicMemory } from '../../../dist/brain/EpisodicMemory.js';
+} from '../../../src/brain/archive/SemanticArtMemory.js';
+import { ArtKnowledgeGraph } from '../../../src/brain/ArtKnowledgeGraph.js';
+import { EpisodicMemory } from '../../../src/brain/archive/EpisodicMemory.js';
 
 describe('SemanticArtMemory', () => {
   let memory: SemanticArtMemory;

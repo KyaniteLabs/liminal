@@ -89,9 +89,9 @@ describe('detectDomain', () => {
 // ── extractBehavior tests ──
 
 describe('extractBehavior', () => {
-  it('returns array of 32 numbers', () => {
+  it('returns array of 72 numbers (9 domains × 8 features)', () => {
     const vec = extractBehavior(p5Code);
-    expect(vec).toHaveLength(32);
+    expect(vec).toHaveLength(72);
     expect(vec.every(v => typeof v === 'number')).toBe(true);
   });
 
@@ -148,7 +148,7 @@ describe('extractBehavior', () => {
 
   it('returns zeros for non-matching domain features', () => {
     const vec = extractBehavior(p5Code);
-    // p5 code: GLSL slots (8-15), Three.js slots (16-23), Music slots (24-31) should be all 0
-    expect(vec.slice(8, 32).every(v => v === 0)).toBe(true);
+    // p5 code: all non-p5 slots (8-71) should be all 0
+    expect(vec.slice(8, 72).every(v => v === 0)).toBe(true);
   });
 });

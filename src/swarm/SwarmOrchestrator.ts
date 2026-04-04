@@ -9,6 +9,8 @@ import { HeuristicScorer } from './HeuristicScorer.js';
 import { MiningEngine } from './MiningEngine.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { TIMEOUT_DEFAULT_MS, TOKEN_LIMIT_LARGE, TRUNCATE_MEDIUM } from '../constants/limits.js';
+import { SymbolicCreativeLanguage, type CreativeSymbol } from '../brain/SymbolicCreativeLanguage.js';
+import { eventBus, EventTypes } from '../core/EventBus.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { Logger } from '../utils/Logger.js';
@@ -45,6 +47,12 @@ export class SwarmOrchestrator {
   private personas: SwarmPersona[];
   private callOllama: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
   private dna: ProjectDNA | null = null;
+
+  /** Emergent creative vocabulary — discovers technique patterns across rounds. */
+  private readonly creativeLanguage = new SymbolicCreativeLanguage(100);
+
+  /** Tracks which vocabulary entries appeared in winning outputs (for outcome recording). */
+  private lastRoundSymbolIds: Map<string, string[]> = new Map();
 
   /**
    * Pre-load DNA for domain knowledge injection into swarm prompts.
@@ -380,18 +388,45 @@ export class SwarmOrchestrator {
         (roundNum - 1) % this.config.refinementConstraints.length
       ];
 
+      // Inject vocabulary from previous rounds into the seed (P0.1)
+      const vocabularyHint = this.buildVocabularyHint(roundNum);
+      const enrichedSeed = vocabularyHint
+        ? `${currentSeed}\n\nDiscovered techniques: ${vocabularyHint}`
+        : currentSeed;
+
       // Run round with routed personas
       const isFinalRound = roundNum === this.config.maxRounds;
       const result = await this.runRound(
-        currentSeed, 
-        roundNum, 
-        effectiveMode, 
-        constraint, 
-        isFinalRound, 
+        enrichedSeed,
+        roundNum,
+        effectiveMode,
+        constraint,
+        isFinalRound,
         prevWinnerOutputs,
         routedPersonas
       );
       rounds.push(result);
+
+      // Discover vocabulary from all outputs this round (P0.1)
+      this.discoverRoundVocabulary(result);
+
+      // Record outcome: boost vocabulary entries that appeared in the winner (P0.1)
+      const winnerSymbolIds = this.lastRoundSymbolIds.get(result.winnerId ?? '') ?? [];
+      if (winnerSymbolIds.length > 0) {
+        this.creativeLanguage.recordOutcome(winnerSymbolIds, 0.8);
+      }
+
+      // Prune vocabulary if it exceeds bounds
+      this.creativeLanguage.pruneVocabulary();
+
+      // Emit swarm round event (P0.2)
+      eventBus.emit(EventTypes.SWARM_ROUND, 'SwarmOrchestrator', {
+        round: roundNum,
+        totalRounds: this.config.maxRounds,
+        winnerId: result.winnerId,
+        converged,
+        vocabularySize: this.creativeLanguage.getQualityReport().totalSymbols,
+      } as unknown as Record<string, unknown>);
 
       // Track winner output for novelty scoring in future rounds
       if (result.winnerContent) {
@@ -736,5 +771,63 @@ export class SwarmOrchestrator {
   get onProgress() { return this._onProgress; }
   set onProgress(fn: ((data: { round: number; totalRounds: number; winnerId: string | null; converged: boolean }) => void) | undefined) {
     this._onProgress = fn;
+  }
+
+  // ── P0.1: Vocabulary discovery and injection ──
+
+  /**
+   * Build a vocabulary hint string from discovered techniques to inject into next round's seed.
+   * Only includes entries with positive effectiveness to avoid injecting noise.
+   */
+  private buildVocabularyHint(roundNum: number): string {
+    if (roundNum <= 1) return ''; // No vocabulary before first round
+
+    const vocab = this.creativeLanguage.getVocabulary();
+    const effective = vocab.filter(s => s.effectiveness > 0.3);
+
+    if (effective.length === 0) return '';
+
+    // Format top entries as a compact hint (max 5 to avoid context bloat)
+    const topEntries = effective.slice(0, 5);
+    return topEntries
+      .map(s => `${s.name}(${s.effectiveness.toFixed(2)})`)
+      .join(', ');
+  }
+
+  /**
+   * Discover vocabulary from all outputs in a round.
+   * Tracks which symbols were discovered per persona for later outcome recording.
+   */
+  private discoverRoundVocabulary(result: RoundResult): void {
+    this.lastRoundSymbolIds.clear();
+
+    for (const [personaId, output] of result.outputs.entries()) {
+      const content = output.content;
+      if (!content || content.startsWith('[Generation error')) continue;
+
+      const discovered = this.creativeLanguage.discoverSymbols(content, 'visual');
+      const symbolIds = discovered.map(s => s.id);
+
+      if (symbolIds.length > 0) {
+        this.lastRoundSymbolIds.set(personaId, symbolIds);
+      }
+    }
+
+    const report = this.creativeLanguage.getQualityReport();
+    Logger.info('SwarmOrchestrator', `Vocabulary: ${report.totalSymbols} symbols, avg effectiveness=${report.avgEffectiveness.toFixed(2)}`);
+  }
+
+  /**
+   * Get the current vocabulary state (for external consumers like protocol analytics).
+   */
+  getVocabulary(): CreativeSymbol[] {
+    return this.creativeLanguage.getVocabulary();
+  }
+
+  /**
+   * Get the vocabulary quality report.
+   */
+  getVocabularyReport() {
+    return this.creativeLanguage.getQualityReport();
   }
 }

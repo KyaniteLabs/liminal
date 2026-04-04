@@ -453,9 +453,9 @@ export class ScoringEngine {
    * Score using a specific strategy.
    * Falls back to default if the named strategy is not found.
    *
-   * NOTE: This method returns raw strategy results as-is. For feedback-driven
-   * systems that need reliable score spread, use scoreReliable() instead — it
-   * adds a minimum coverage gate that avoids the 0.68 dead zone.
+   * NOTE: For feedback-driven systems that need reliable score spread, use
+   * scoreReliable() instead — it adds a minimum coverage gate that avoids
+   * the 0.68 dead zone. This method returns raw strategy results as-is.
    */
   async score(input: ScoringInput, strategyName?: string): Promise<ScoringResult> {
     const name = strategyName ?? this.defaultStrategyName;

@@ -77,9 +77,12 @@ npm run dogfood:report
 ```bash
 # In TUI:
 /run M1    # Fix Tone.js validation gate
+/run M2    # Fix GLSL shader validation
+/run M3    # Fix Three.js domain routing
 /run M4    # Fix thinking regex greedy match
-/run M6    # Fix console.log in FailureLogger
-/run M7    # Fix console.log in PatternDetector
+/run M5    # Fix console.log in FailureLogger
+/run M6    # Fix console.log in PatternDetector
+/run M7    # Fix console.log in HarnessUpdater
 /run M8    # Fix console.log in HarnessUpdater
 ```
 
@@ -249,6 +252,67 @@ Tasks are JSON files in `harness-tasks/`:
 5. Success → Done
 6. Failure → Rollback → Report
 ```
+
+### Available Tasks (M1-M8)
+
+| Task | Title | Description |
+|------|-------|-------------|
+| M1 | Fix Tone.js Validation Gate | Tone.js validation only fires on 'unknown' domain, should also fire on 'music' |
+| M2 | Fix GLSL Shader Validation | Allows function definitions in GLSL shaders |
+| M3 | Fix Three.js Domain Routing | Handles '3d' domain alias for Three.js |
+| M4 | Fix Thinking Extraction Regex | Documents global flag usage for thinking extraction |
+| M5 | Add Logger Import | Ensure Logger imported in harness components |
+| M6 | Fix Console.log Leaks in FailureLogger | Replace console.log with Logger.info in FailureLogger.ts |
+| M7 | Fix Console.log Leaks in PatternDetector | Replace console.log with Logger.info in PatternDetector.ts |
+| M8 | Fix Console.log Leaks in HarnessUpdater | Replace console.log with Logger.info in HarnessUpdater.ts |
+
+### Task JSON Schema
+
+```json
+{
+  "id": "M1",
+  "title": "Human-readable title",
+  "description": "Detailed description of the issue",
+  "targetFile": "path/to/file.ts",
+  "search": "exact string to find",
+  "replace": "replacement string",
+  "verifyCommand": "npm run build && npm test",
+  "risk": "low|medium|high",
+  "complexity": "low|medium|high",
+  "files": 1,
+  "approved": true
+}
+```
+
+---
+
+## Dog Food Testing
+
+### Running Tests
+
+```bash
+# Full dog food test (all domains × all models)
+npx tsx scripts/dogfood-all-domains.ts
+
+# Generate report
+npx tsx scripts/generate-dogfood-report.ts
+
+# E2E test suite
+npm run test:e2e
+```
+
+### Report Location
+
+- JSON Report: `dogfood-report.json`
+- Markdown Report: `dogfood-report.md`
+- Failure Database: `~/.liminal/failures/`
+
+### Success Criteria
+
+- 9 domains tested (p5, glsl, three, strudel, hydra, tone, remotion, html, ascii)
+- Multiple models validated
+- All failures logged to harness
+- Report generated with recommendations
 
 ---
 
@@ -596,5 +660,5 @@ Before ANY dashboard work:
 
 ---
 
-**Last Updated:** 2026-04-01  
+**Last Updated:** 2026-04-03  
 **Rule Status:** BINDING

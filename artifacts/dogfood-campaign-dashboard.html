@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LIMINAL — Dogfood Campaign Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=JetBrains+Mono:wght@400;500&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#06090f;--surface:#0c1018;--surface2:#141a24;--surface3:#1c2432;
+  --border:#1a2232;--border-hover:#2a3a52;
+  --text:#e8ecf2;--text2:#8d99aa;--text3:#6a7888;
+  --accent:#51cf66;--accent2:#74c0fc;--accent3:#ffd43b;--danger:#ff6b6b;
+  --font-display:'Space Grotesk',sans-serif;--font-body:'DM Sans',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+  --radius-sm:6px;--radius-md:10px;--radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.3);--shadow-md:0 4px 16px rgba(0,0,0,0.4);
+}
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:0.01ms!important;transition-duration:0.01ms!important}
+}
+@media(prefers-contrast:more){
+  :root{--bg:#000;--text:#fff;--text2:#ccc;--text3:#999;--border:#444}
+}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:var(--radius-sm)}
+.skip-link{position:absolute;top:-100%;left:1rem;background:var(--surface);color:var(--text);
+  padding:0.75rem 1.25rem;border-radius:var(--radius-sm);border:2px solid var(--accent);
+  font-family:var(--font-body);font-size:0.9rem;z-index:10000}
+.skip-link:focus{top:1rem}
+html{scroll-behavior:smooth;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--text);font-family:var(--font-body);line-height:1.65;overflow-x:hidden}
+main{max-width:1200px;margin:0 auto;padding:2rem 1.5rem}
+a{color:var(--accent2)}
+
+/* ─── Hero ─── */
+.hero{text-align:center;padding:3rem 0 2rem;border-bottom:1px solid var(--border);margin-bottom:2rem}
+.hero h1{font-family:var(--font-display);font-size:clamp(2rem,5vw,3.2rem);font-weight:700;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;margin-bottom:0.5rem}
+.hero .subtitle{color:var(--text2);font-size:1.1rem}
+.hero .meta{color:var(--text3);font-size:0.85rem;margin-top:0.5rem;font-family:var(--font-mono)}
+
+/* ─── Nav ─── */
+nav{display:flex;gap:1rem;flex-wrap:wrap;justify-content:center;margin:1.5rem 0;padding:0.75rem;
+  background:var(--surface);border-radius:var(--radius-md);border:1px solid var(--border)}
+nav a{text-decoration:none;color:var(--text2);font-size:0.85rem;font-weight:500;padding:0.3rem 0.6rem;
+  border-radius:var(--radius-sm);transition:color 0.2s,background 0.2s}
+nav a:hover{color:var(--text);background:var(--surface2)}
+
+/* ─── Stat Cards ─── */
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:1.25rem;text-align:center;transition:border-color 0.2s}
+.stat-card:hover{border-color:var(--border-hover)}
+.stat-card .value{font-family:var(--font-display);font-size:2rem;font-weight:700;color:var(--accent)}
+.stat-card .value.danger{color:var(--danger)}
+.stat-card .value.warn{color:var(--accent3)}
+.stat-card .value.info{color:var(--accent2)}
+.stat-card .label{color:var(--text2);font-size:0.85rem;margin-top:0.25rem}
+
+/* ─── Section ─── */
+section{margin-bottom:3rem}
+section h2{font-family:var(--font-display);font-size:1.5rem;font-weight:600;margin-bottom:1rem;
+  padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+section h3{font-family:var(--font-display);font-size:1.15rem;font-weight:500;color:var(--text2);margin:1.5rem 0 0.75rem}
+
+/* ─── Chart Box ─── */
+.chart-box{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:1.25rem;margin-bottom:1rem;position:relative}
+.chart-box canvas{max-height:400px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:768px){.chart-row{grid-template-columns:1fr}}
+
+/* ─── Heatmap ─── */
+.heatmap-container{overflow-x:auto}
+.heatmap{border-collapse:separate;border-spacing:3px;width:100%}
+.heatmap th{font-family:var(--font-mono);font-size:0.75rem;color:var(--text3);padding:0.3rem 0.5rem;text-align:center;white-space:nowrap}
+.heatmap th.model-name{text-align:right;max-width:180px;overflow:hidden;text-overflow:ellipsis}
+.heatmap td{padding:0;border-radius:var(--radius-sm);text-align:center;font-family:var(--font-mono);
+  font-size:0.7rem;font-weight:500;min-width:48px;height:36px;position:relative;cursor:default;
+  transition:transform 0.15s}
+.heatmap td:hover{transform:scale(1.15);z-index:2}
+.heatmap td .cell-val{position:relative;z-index:1;color:#fff;text-shadow:0 1px 2px rgba(0,0,0,0.5)}
+
+/* ─── Model Table ─── */
+.model-table{width:100%;border-collapse:collapse;font-size:0.9rem}
+.model-table th{text-align:left;color:var(--text3);font-weight:500;padding:0.5rem 0.75rem;
+  border-bottom:1px solid var(--border);font-size:0.8rem;text-transform:uppercase;letter-spacing:0.05em}
+.model-table td{padding:0.5rem 0.75rem;border-bottom:1px solid var(--border)}
+.model-table tr:hover{background:var(--surface)}
+.model-table .bar{height:6px;border-radius:3px;background:var(--surface3);display:inline-block;min-width:40px}
+.model-table .bar-fill{height:100%;border-radius:3px}
+.model-table .source-badge{font-size:0.7rem;padding:0.15rem 0.4rem;border-radius:3px;font-family:var(--font-mono)}
+.source-cloud{background:rgba(81,207,102,0.15);color:var(--accent)}
+.source-local{background:rgba(116,192,252,0.15);color:var(--accent2)}
+.source-ollama-cloud{background:rgba(255,212,59,0.15);color:var(--accent3)}
+
+/* ─── Error List ─── */
+.error-list{list-style:none}
+.error-list li{padding:0.6rem 0.75rem;border-left:3px solid var(--danger);margin-bottom:0.5rem;
+  background:var(--surface);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:0.85rem}
+.error-list .count{font-family:var(--font-mono);font-weight:600;color:var(--danger);margin-right:0.5rem}
+
+/* ─── Footer ─── */
+footer{text-align:center;padding:2rem 0;border-top:1px solid var(--border);color:var(--text3);font-size:0.8rem}
+</style>
+</head>
+<body>
+<a href="#main" class="skip-link">Skip to main content</a>
+<main id="main">
+  <div class="hero">
+    <h1>Dogfood Campaign Dashboard</h1>
+    <p class="subtitle">12 models × 9 creative coding domains × 3 rounds</p>
+    <p class="meta" id="hero-meta"></p>
+  </div>
+  <nav>
+    <a href="#overview">Overview</a>
+    <a href="#rankings">Rankings</a>
+    <a href="#heatmap">Heatmap</a>
+    <a href="#domains">Domains</a>
+    <a href="#charts">Charts</a>
+    <a href="#errors">Errors</a>
+  </nav>
+
+  <!-- Overview Stats -->
+  <section id="overview">
+    <h2>Overview</h2>
+    <div class="stats-grid" id="stats-grid"></div>
+  </section>
+
+  <!-- Model Rankings -->
+  <section id="rankings">
+    <h2>Model Rankings</h2>
+    <table class="model-table" id="model-table"></table>
+  </section>
+
+  <!-- Domain × Model Heatmap -->
+  <section id="heatmap">
+    <h2>Domain × Model Heatmap</h2>
+    <div class="heatmap-container">
+      <table class="heatmap" id="heatmap-table"></table>
+    </div>
+  </section>
+
+  <!-- Domain Analysis -->
+  <section id="domains">
+    <h2>Domain Analysis</h2>
+    <div class="chart-row">
+      <div class="chart-box"><canvas id="domain-chart"></canvas></div>
+      <div class="chart-box"><canvas id="duration-chart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Charts -->
+  <section id="charts">
+    <h2>Model Comparison</h2>
+    <div class="chart-box"><canvas id="model-bar-chart"></canvas></div>
+    <h3>Success Rate by Source</h3>
+    <div class="chart-row">
+      <div class="chart-box"><canvas id="source-chart"></canvas></div>
+      <div class="chart-box"><canvas id="codelen-chart"></canvas></div>
+    </div>
+  </section>
+
+  <!-- Error Patterns -->
+  <section id="errors">
+    <h2>Error Patterns</h2>
+    <ul class="error-list" id="error-list"></ul>
+  </section>
+
+  <footer>
+    <p>Generated by <strong>LIMINAL</strong> dogfood campaign system</p>
+    <p id="footer-timestamp"></p>
+  </footer>
+</main>
+
+<script>
+// ─── Data ───
+const DATA = {"generatedAt":"2026-04-04T14:42:14.210Z","campaignsAnalyzed":3,"totalRuns":324,"totalSuccesses":209,"overallSuccessRate":0.6450617283950617,"models":[{"model":"MiniMax-M2.7","source":"minimax-cloud","totalRuns":27,"successes":22,"failures":5,"successRate":0.8148148148148148,"avgDuration":52447.03703703704,"avgCodeLength":2668.090909090909,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":47851.666666666664},"glsl":{"ok":3,"fail":0,"avgDuration":23849.333333333332},"three":{"ok":2,"fail":1,"avgDuration":63331},"strudel":{"ok":3,"fail":0,"avgDuration":84691.66666666667},"hydra":{"ok":3,"fail":0,"avgDuration":14154},"remotion":{"ok":0,"fail":3,"avgDuration":49402.333333333336},"html":{"ok":3,"fail":0,"avgDuration":57437.666666666664},"ascii":{"ok":2,"fail":1,"avgDuration":69976},"tone":{"ok":3,"fail":0,"avgDuration":61329.666666666664}},"errorBreakdown":{"RemotionGenerator: Generated code does not appear to be a va":3,"ASCIIArtGenerator: Generated code contains invalid character":1,"ThreeGenerator: Generated code does not appear to use Three.":1}},{"model":"lfm2.5-thinking:1.2b","source":"ollama-local","totalRuns":27,"successes":22,"failures":5,"successRate":0.8148148148148148,"avgDuration":87148.25925925926,"avgCodeLength":4069.6363636363635,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":68284.33333333333},"glsl":{"ok":3,"fail":0,"avgDuration":66525.33333333333},"three":{"ok":3,"fail":0,"avgDuration":176598.33333333334},"strudel":{"ok":0,"fail":3,"avgDuration":39871.666666666664},"hydra":{"ok":1,"fail":2,"avgDuration":75743.33333333333},"remotion":{"ok":3,"fail":0,"avgDuration":63735},"html":{"ok":3,"fail":0,"avgDuration":216413.33333333334},"ascii":{"ok":3,"fail":0,"avgDuration":22382},"tone":{"ok":3,"fail":0,"avgDuration":54781}},"errorBreakdown":{"StrudelGenerator: No sound source found (need s(), sound(), ":3,"HydraGenerator: No Hydra syntax found":2}},{"model":"kimi-k2.5:cloud","source":"ollama-cloud","totalRuns":27,"successes":21,"failures":6,"successRate":0.7777777777777778,"avgDuration":154175.7037037037,"avgCodeLength":4070.3809523809523,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":202685},"glsl":{"ok":3,"fail":0,"avgDuration":103588},"three":{"ok":3,"fail":0,"avgDuration":179810},"strudel":{"ok":0,"fail":3,"avgDuration":94684},"hydra":{"ok":2,"fail":1,"avgDuration":223254.33333333334},"remotion":{"ok":3,"fail":0,"avgDuration":79407.33333333333},"html":{"ok":3,"fail":0,"avgDuration":262700.6666666667},"ascii":{"ok":1,"fail":2,"avgDuration":96672.66666666667},"tone":{"ok":3,"fail":0,"avgDuration":144779.33333333334}},"errorBreakdown":{"StrudelGenerator: No sound source found (need s(), sound(), ":3,"ASCIIArtGenerator: Generated code contains invalid character":2,"HydraGenerator: No Hydra syntax found":1}},{"model":"granite4:350m","source":"ollama-local","totalRuns":27,"successes":21,"failures":6,"successRate":0.7777777777777778,"avgDuration":78919.92592592593,"avgCodeLength":4045.8571428571427,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":61472},"glsl":{"ok":3,"fail":0,"avgDuration":69249.33333333333},"three":{"ok":3,"fail":0,"avgDuration":123543},"strudel":{"ok":0,"fail":3,"avgDuration":41855.333333333336},"hydra":{"ok":3,"fail":0,"avgDuration":56062.666666666664},"remotion":{"ok":2,"fail":1,"avgDuration":66642.33333333333},"html":{"ok":3,"fail":0,"avgDuration":209303},"ascii":{"ok":1,"fail":2,"avgDuration":21488.333333333332},"tone":{"ok":3,"fail":0,"avgDuration":60663.333333333336}},"errorBreakdown":{"StrudelGenerator: No sound source found (need s(), sound(), ":3,"ASCIIArtGenerator: Generated code contains invalid character":2,"RemotionGenerator: Generated code does not appear to be a va":1}},{"model":"gemma3:4b","source":"ollama-local","totalRuns":27,"successes":20,"failures":7,"successRate":0.7407407407407407,"avgDuration":153457.2962962963,"avgCodeLength":4839.75,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":287479.6666666667},"glsl":{"ok":3,"fail":0,"avgDuration":83877.33333333333},"three":{"ok":3,"fail":0,"avgDuration":210218.66666666666},"strudel":{"ok":0,"fail":3,"avgDuration":95215.66666666667},"hydra":{"ok":3,"fail":0,"avgDuration":122997},"remotion":{"ok":2,"fail":1,"avgDuration":165459.66666666666},"html":{"ok":3,"fail":0,"avgDuration":245750},"ascii":{"ok":0,"fail":3,"avgDuration":56320.333333333336},"tone":{"ok":3,"fail":0,"avgDuration":113797.33333333333}},"errorBreakdown":{"StrudelGenerator: No sound source found (need s(), sound(), ":3,"ASCIIArtGenerator: Generated code contains invalid character":3,"RemotionGenerator: Generated code does not appear to be a va":1}},{"model":"phi4-mini:latest","source":"ollama-local","totalRuns":27,"successes":20,"failures":7,"successRate":0.7407407407407407,"avgDuration":80710.70370370371,"avgCodeLength":4641.1,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":68618.66666666667},"glsl":{"ok":3,"fail":0,"avgDuration":63758.333333333336},"three":{"ok":3,"fail":0,"avgDuration":164100.33333333334},"strudel":{"ok":0,"fail":3,"avgDuration":54851.666666666664},"hydra":{"ok":3,"fail":0,"avgDuration":46946.333333333336},"remotion":{"ok":2,"fail":1,"avgDuration":60495.333333333336},"html":{"ok":3,"fail":0,"avgDuration":211362},"ascii":{"ok":0,"fail":3,"avgDuration":7636},"tone":{"ok":3,"fail":0,"avgDuration":48627.666666666664}},"errorBreakdown":{"StrudelGenerator: No sound source found (need s(), sound(), ":3,"ASCIIArtGenerator: Generated code contains invalid character":3,"RemotionGenerator: Generated code does not appear to be a va":1}},{"model":"granite4:1b","source":"ollama-local","totalRuns":27,"successes":20,"failures":7,"successRate":0.7407407407407407,"avgDuration":78994.44444444444,"avgCodeLength":4345.45,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":70701},"glsl":{"ok":3,"fail":0,"avgDuration":64829},"three":{"ok":3,"fail":0,"avgDuration":123533},"strudel":{"ok":0,"fail":3,"avgDuration":43897},"hydra":{"ok":1,"fail":2,"avgDuration":73590},"remotion":{"ok":3,"fail":0,"avgDuration":67164.33333333333},"html":{"ok":3,"fail":0,"avgDuration":220035.33333333334},"ascii":{"ok":2,"fail":1,"avgDuration":10489.333333333334},"tone":{"ok":2,"fail":1,"avgDuration":36711}},"errorBreakdown":{"StrudelGenerator: No sound source found (need s(), sound(), ":3,"HydraGenerator: No Hydra syntax found":2,"ASCIIArtGenerator: Generated code contains invalid character":1,"ToneGenerator: Generated code does not use Tone.js":1}},{"model":"deepseek-v3.2:cloud","source":"ollama-cloud","totalRuns":27,"successes":19,"failures":8,"successRate":0.7037037037037037,"avgDuration":169972.66666666666,"avgCodeLength":4596.368421052632,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":230133},"glsl":{"ok":3,"fail":0,"avgDuration":110270.66666666667},"three":{"ok":3,"fail":0,"avgDuration":193908.33333333334},"strudel":{"ok":0,"fail":3,"avgDuration":121053.33333333333},"hydra":{"ok":1,"fail":2,"avgDuration":293868.6666666667},"remotion":{"ok":3,"fail":0,"avgDuration":82617.33333333333},"html":{"ok":3,"fail":0,"avgDuration":279491},"ascii":{"ok":0,"fail":3,"avgDuration":84225.66666666667},"tone":{"ok":3,"fail":0,"avgDuration":134186}},"errorBreakdown":{"StrudelGenerator: No sound source found (need s(), sound(), ":3,"HydraGenerator: No Hydra syntax found":2,"ASCIIArtGenerator: Generated code contains invalid character":3}},{"model":"gemma4:latest","source":"ollama-local","totalRuns":27,"successes":19,"failures":8,"successRate":0.7037037037037037,"avgDuration":165157.40740740742,"avgCodeLength":4798.526315789473,"domainResults":{"p5":{"ok":3,"fail":0,"avgDuration":237098.33333333334},"glsl":{"ok":3,"fail":0,"avgDuration":85920},"three":{"ok":2,"fail":1,"avgDuration":246942.66666666666},"strudel":{"ok":0,"fail":3,"avgDuration":115240.66666666667},"hydra":{"ok":1,"fail":2,"avgDuration":126681.33333333333},"remotion":{"ok":3,"fail":0,"avgDuration":197364.33333333334},"html":{"ok":3,"fail":0,"avgDuration":258210},"ascii":{"ok":1,"fail":2,"avgDuration":87854.66666666667},"tone":{"ok":3,"fail":0,"avgDuration":131104.66666666666}},"errorBreakdown":{"ThreeGenerator: Generated code does not appear to use Three.":1,"StrudelGenerator: No sound source found (need s(), sound(), ":3,"HydraGenerator: No Hydra syntax found":2,"ASCIIArtGenerator: Generated code contains invalid character":2}},{"model":"qwen3.5:cloud","source":"ollama-cloud","totalRuns":27,"successes":10,"failures":17,"successRate":0.37037037037037035,"avgDuration":25742.777777777777,"avgCodeLength":4394.2,"domainResults":{"p5":{"ok":0,"fail":3,"avgDuration":24829.333333333332},"glsl":{"ok":3,"fail":0,"avgDuration":23998.333333333332},"three":{"ok":2,"fail":1,"avgDuration":27045},"strudel":{"ok":0,"fail":3,"avgDuration":30712.666666666668},"hydra":{"ok":0,"fail":3,"avgDuration":31398},"remotion":{"ok":0,"fail":3,"avgDuration":21381.333333333332},"html":{"ok":3,"fail":0,"avgDuration":24465.666666666668},"ascii":{"ok":0,"fail":3,"avgDuration":25434.666666666668},"tone":{"ok":2,"fail":1,"avgDuration":22420}},"errorBreakdown":{"P5GeneratorLLM: LLM returned empty code for prompt: Create a":3,"StrudelGenerator: LLM returned empty code":3,"HydraGenerator: LLM returned empty code":3,"RemotionGenerator: Generated code does not appear to be a va":2,"ASCIIArtGenerator: LLM returned empty code":3,"ThreeGenerator: LLM returned empty code":1,"ToneGenerator: LLM returned empty code":1,"RemotionGenerator: LLM returned empty code":1}},{"model":"qwen3.5:0.8b","source":"ollama-local","totalRuns":27,"successes":8,"failures":19,"successRate":0.2962962962962963,"avgDuration":89546.74074074074,"avgCodeLength":5925.75,"domainResults":{"p5":{"ok":2,"fail":1,"avgDuration":66522.66666666667},"glsl":{"ok":0,"fail":3,"avgDuration":113195},"three":{"ok":3,"fail":0,"avgDuration":57875.666666666664},"strudel":{"ok":0,"fail":3,"avgDuration":56369},"hydra":{"ok":0,"fail":3,"avgDuration":58525},"remotion":{"ok":0,"fail":3,"avgDuration":113388.66666666667},"html":{"ok":3,"fail":0,"avgDuration":113513},"ascii":{"ok":0,"fail":3,"avgDuration":113193.66666666667},"tone":{"ok":0,"fail":3,"avgDuration":113338}},"errorBreakdown":{"ShaderGenerator: LLM returned empty code":3,"StrudelGenerator: No sound source found (need s(), sound(), ":3,"HydraGenerator: No Hydra syntax found":3,"RemotionGenerator: LLM returned empty code":3,"ASCIIArtGenerator: LLM returned empty code":3,"ToneGenerator: LLM returned empty code":3,"P5GeneratorLLM: LLM returned empty code for prompt: Create a":1}},{"model":"qwen3.5:2b","source":"ollama-local","totalRuns":27,"successes":7,"failures":20,"successRate":0.25925925925925924,"avgDuration":146555.03703703705,"avgCodeLength":5523.142857142857,"domainResults":{"p5":{"ok":0,"fail":3,"avgDuration":121083},"glsl":{"ok":1,"fail":2,"avgDuration":163058.33333333334},"three":{"ok":3,"fail":0,"avgDuration":76147},"strudel":{"ok":0,"fail":3,"avgDuration":151738},"hydra":{"ok":0,"fail":3,"avgDuration":164699.66666666666},"remotion":{"ok":0,"fail":3,"avgDuration":164369.66666666666},"html":{"ok":3,"fail":0,"avgDuration":148698.66666666666},"ascii":{"ok":0,"fail":3,"avgDuration":164571},"tone":{"ok":0,"fail":3,"avgDuration":164630}},"errorBreakdown":{"P5GeneratorLLM: LLM returned empty code for prompt: Create a":3,"StrudelGenerator: LLM returned empty code":2,"HydraGenerator: LLM returned empty code":3,"RemotionGenerator: LLM returned empty code":3,"ASCIIArtGenerator: LLM returned empty code":3,"ToneGenerator: LLM returned empty code":3,"ShaderGenerator: LLM returned empty code":2,"StrudelGenerator: No sound source found (need s(), sound(), ":1}}],"domainSummary":{"p5":{"totalRuns":36,"successes":29,"successRate":0.8055555555555556,"avgDuration":123896.55555555556,"bestModel":"MiniMax-M2.7","worstModel":"qwen3.5:cloud"},"glsl":{"totalRuns":36,"successes":31,"successRate":0.8611111111111112,"avgDuration":81009.91666666667,"bestModel":"MiniMax-M2.7","worstModel":"qwen3.5:0.8b"},"three":{"totalRuns":36,"successes":33,"successRate":0.9166666666666666,"avgDuration":136921.08333333334,"bestModel":"lfm2.5-thinking:1.2b","worstModel":"MiniMax-M2.7"},"strudel":{"totalRuns":36,"successes":3,"successRate":0.08333333333333333,"avgDuration":77515.05555555556,"bestModel":"MiniMax-M2.7","worstModel":"lfm2.5-thinking:1.2b"},"hydra":{"totalRuns":36,"successes":18,"successRate":0.5,"avgDuration":107326.69444444444,"bestModel":"MiniMax-M2.7","worstModel":"qwen3.5:cloud"},"remotion":{"totalRuns":36,"successes":21,"successRate":0.5833333333333334,"avgDuration":94285.63888888889,"bestModel":"lfm2.5-thinking:1.2b","worstModel":"MiniMax-M2.7"},"html":{"totalRuns":36,"successes":36,"successRate":1,"avgDuration":187281.69444444444,"bestModel":"MiniMax-M2.7","worstModel":"MiniMax-M2.7"},"ascii":{"totalRuns":36,"successes":10,"successRate":0.2777777777777778,"avgDuration":63353.694444444445,"bestModel":"lfm2.5-thinking:1.2b","worstModel":"gemma3:4b"},"tone":{"totalRuns":36,"successes":28,"successRate":0.7777777777777778,"avgDuration":90530.66666666667,"bestModel":"MiniMax-M2.7","worstModel":"qwen3.5:0.8b"}}};
+
+// ─── Chart.js defaults ───
+Chart.defaults.color = '#8d99aa';
+Chart.defaults.borderColor = '#1a2232';
+Chart.defaults.font.family = "'DM Sans', sans-serif";
+Chart.defaults.font.size = 12;
+
+const COLORS = {
+  green: '#51cf66', blue: '#74c0fc', yellow: '#ffd43b', red: '#ff6b6b',
+  purple: '#b197fc', orange: '#ffa94d', teal: '#20b2a3', pink: '#f06595',
+};
+const MODEL_COLORS = [
+  '#51cf66','#74c0fc','#ffd43b','#ff6b6b','#b197fc','#ffa94d',
+  '#20b2a3','#f06595','#69db7c','#4dabf7','#fcc419','#ff8787'
+];
+const DOMAIN_COLORS = {
+  p5:'#ff6b6b', glsl:'#ffa94d', three:'#ffd43b', strudel:'#51cf66',
+  hydra:'#74c0fc', remotion:'#b197fc', html:'#f06595', ascii:'#20b2a3', tone:'#cc5de8'
+};
+const DOMAIN_LABELS = { p5:'p5.js', glsl:'GLSL', three:'Three.js', strudel:'Strudel', hydra:'Hydra', remotion:'Remotion', html:'HTML', ascii:'ASCII', tone:'Tone.js' };
+
+// ─── Utility ───
+function fmt(pct) { return (pct * 100).toFixed(1) + '%'; }
+function fmtDur(ms) { return (ms / 1000).toFixed(1) + 's'; }
+function rateColor(rate) {
+  if (rate >= 0.8) return COLORS.green;
+  if (rate >= 0.6) return COLORS.blue;
+  if (rate >= 0.4) return COLORS.yellow;
+  return COLORS.red;
+}
+function sourceClass(src) {
+  if (src === 'minimax-cloud') return 'source-cloud';
+  if (src === 'ollama-local') return 'source-local';
+  return 'source-ollama-cloud';
+}
+function sourceLabel(src) {
+  return { 'minimax-cloud': 'Cloud API', 'ollama-local': 'Local', 'ollama-cloud': 'Ollama Cloud' }[src] || src;
+}
+
+// ─── Render ───
+function render() {
+  const { models, domainSummary, generatedAt, totalRuns, totalSuccesses, overallSuccessRate, campaignsAnalyzed } = DATA;
+
+  // Hero meta
+  document.getElementById('hero-meta').textContent =
+    `${totalRuns} runs | ${models.length} models | Generated ${new Date(generatedAt).toLocaleString()}`;
+  document.getElementById('footer-timestamp').textContent = `Report generated: ${new Date(generatedAt).toISOString()}`;
+
+  // ── Stats Grid ──
+  const avgSuccess = models.reduce((s,m) => s + m.successRate, 0) / models.length;
+  const fastest = models.reduce((a,b) => a.avgDuration < b.avgDuration ? a : b);
+  const best = models.reduce((a,b) => a.successRate > b.successRate ? a : b);
+  const statsHtml = [
+    { value: totalRuns, label: 'Total Runs', cls: 'info' },
+    { value: fmt(overallSuccessRate), label: 'Overall Success', cls: avgSuccess >= 0.7 ? '' : 'warn' },
+    { value: models.length, label: 'Models Tested', cls: 'info' },
+    { value: DOMAINS.length, label: 'Creative Domains', cls: 'info' },
+    { value: best.model.split(':')[0], label: 'Best Model (' + fmt(best.successRate) + ')', cls: '' },
+    { value: fmtDur(fastest.avgDuration), label: 'Fastest (' + fastest.model.split(':')[0] + ')', cls: '' },
+  ].map(s => `<div class="stat-card"><div class="value ${s.cls}">${s.value}</div><div class="label">${s.label}</div></div>`).join('');
+  document.getElementById('stats-grid').innerHTML = statsHtml;
+
+  // ── Model Table ──
+  const sorted = [...models].sort((a,b) => b.successRate - a.successRate);
+  let tableHtml = `<thead><tr>
+    <th>#</th><th>Model</th><th>Source</th><th>Success Rate</th><th>Visual</th>
+    <th>Avg Duration</th><th>Avg Code</th>
+  </tr></thead><tbody>`;
+  sorted.forEach((m, i) => {
+    const pct = fmt(m.successRate);
+    const barW = Math.round(m.successRate * 100);
+    const col = rateColor(m.successRate);
+    tableHtml += `<tr>
+      <td style="color:var(--text3)">${i + 1}</td>
+      <td style="font-weight:600;font-family:var(--font-mono);font-size:0.85rem">${m.model}</td>
+      <td><span class="source-badge ${sourceClass(m.source)}">${sourceLabel(m.source)}</span></td>
+      <td style="font-weight:600;color:${col}">${m.successes}/${m.totalRuns} (${pct})</td>
+      <td><div class="bar" style="width:100px"><div class="bar-fill" style="width:${barW}%;background:${col}"></div></div></td>
+      <td style="font-family:var(--font-mono);font-size:0.85rem">${fmtDur(m.avgDuration)}</td>
+      <td style="font-family:var(--font-mono);font-size:0.85rem">${Math.round(m.avgCodeLength)} chars</td>
+    </tr>`;
+  });
+  tableHtml += '</tbody>';
+  document.getElementById('model-table').innerHTML = tableHtml;
+
+  // ── Heatmap ──
+  const domainOrder = DOMAINS;
+  let hmHtml = `<thead><tr><th class="model-name">Model</th>`;
+  domainOrder.forEach(d => { hmHtml += `<th>${DOMAIN_LABELS[d]}</th>`; });
+  hmHtml += `<th>Avg</th></tr></thead><tbody>`;
+  sorted.forEach(m => {
+    hmHtml += `<tr><th class="model-name">${m.model}</th>`;
+    domainOrder.forEach(d => {
+      const dr = m.domainResults[d];
+      if (!dr) { hmHtml += `<td style="background:var(--surface2)"><span class="cell-val">—</span></td>`; return; }
+      const total = dr.ok + dr.fail;
+      const rate = total > 0 ? dr.ok / total : 0;
+      const col = rateColor(rate);
+      const opacity = Math.max(0.3, rate);
+      hmHtml += `<td style="background:${col}${Math.round(opacity * 255).toString(16).padStart(2,'0')}">
+        <span class="cell-val">${dr.ok}/${total}</span></td>`;
+    });
+    const pct = fmt(m.successRate);
+    const col = rateColor(m.successRate);
+    hmHtml += `<td style="background:${col}40"><span class="cell-val">${pct}</span></td></tr>`;
+  });
+  hmHtml += '</tbody>';
+  document.getElementById('heatmap-table').innerHTML = hmHtml;
+
+  // ── Domain Success Chart ──
+  new Chart(document.getElementById('domain-chart'), {
+    type: 'bar',
+    data: {
+      labels: domainOrder.map(d => DOMAIN_LABELS[d]),
+      datasets: [{
+        label: 'Success Rate',
+        data: domainOrder.map(d => {
+          const ds = domainSummary[d];
+          return ds ? (ds.successRate * 100) : 0;
+        }),
+        backgroundColor: domainOrder.map(d => DOMAIN_COLORS[d] + '99'),
+        borderColor: domainOrder.map(d => DOMAIN_COLORS[d]),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Success Rate by Domain (%)', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+      },
+      scales: {
+        x: { max: 100, grid: { color: '#1a2232' }, ticks: { callback: v => v + '%' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ── Duration Chart ──
+  new Chart(document.getElementById('duration-chart'), {
+    type: 'bar',
+    data: {
+      labels: domainOrder.map(d => DOMAIN_LABELS[d]),
+      datasets: [{
+        label: 'Avg Duration (s)',
+        data: domainOrder.map(d => {
+          let total = 0, count = 0;
+          models.forEach(m => { if (m.domainResults[d]) { total += m.domainResults[d].avgDuration; count++; } });
+          return count > 0 ? total / count / 1000 : 0;
+        }),
+        backgroundColor: domainOrder.map(d => DOMAIN_COLORS[d] + '66'),
+        borderColor: domainOrder.map(d => DOMAIN_COLORS[d]),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Avg Duration by Domain (seconds)', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+      },
+      scales: {
+        x: { grid: { color: '#1a2232' }, ticks: { callback: v => v + 's' } },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // ── Model Bar Chart ──
+  new Chart(document.getElementById('model-bar-chart'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(m => m.model.length > 22 ? m.model.slice(0, 20) + '…' : m.model),
+      datasets: [{
+        label: 'Success Rate',
+        data: sorted.map(m => m.successRate * 100),
+        backgroundColor: sorted.map((_, i) => MODEL_COLORS[i % MODEL_COLORS.length] + '99'),
+        borderColor: sorted.map((_, i) => MODEL_COLORS[i % MODEL_COLORS.length]),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Model Success Rate (%)', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+      },
+      scales: {
+        y: { max: 100, grid: { color: '#1a2232' }, ticks: { callback: v => v + '%' } },
+        x: { grid: { display: false }, ticks: { font: { family: "'JetBrains Mono',monospace", size: 10 }, maxRotation: 45 } }
+      }
+    }
+  });
+
+  // ── Source Doughnut ──
+  const sourceGroups = {};
+  models.forEach(m => {
+    if (!sourceGroups[m.source]) sourceGroups[m.source] = { ok: 0, total: 0 };
+    sourceGroups[m.source].ok += m.successes;
+    sourceGroups[m.source].total += m.totalRuns;
+  });
+  const sourceKeys = Object.keys(sourceGroups);
+  new Chart(document.getElementById('source-chart'), {
+    type: 'doughnut',
+    data: {
+      labels: sourceKeys.map(s => sourceLabel(s)),
+      datasets: [{
+        data: sourceKeys.map(s => sourceGroups[s].ok),
+        backgroundColor: sourceKeys.map((_, i) => [COLORS.green, COLORS.blue, COLORS.yellow][i] + 'cc'),
+        borderColor: '#0c1018',
+        borderWidth: 2,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: { display: true, text: 'Successes by Source', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+        legend: { position: 'bottom', labels: { padding: 16 } }
+      }
+    }
+  });
+
+  // ── Code Length Chart ──
+  new Chart(document.getElementById('codelen-chart'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(m => m.model.length > 18 ? m.model.slice(0, 16) + '…' : m.model),
+      datasets: [{
+        label: 'Avg Code Length',
+        data: sorted.map(m => Math.round(m.avgCodeLength)),
+        backgroundColor: sorted.map((_, i) => MODEL_COLORS[i % MODEL_COLORS.length] + '66'),
+        borderColor: sorted.map((_, i) => MODEL_COLORS[i % MODEL_COLORS.length]),
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        title: { display: true, text: 'Avg Code Length (chars)', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+      },
+      scales: {
+        y: { grid: { color: '#1a2232' }, ticks: { callback: v => v.toLocaleString() } },
+        x: { grid: { display: false }, ticks: { font: { family: "'JetBrains Mono',monospace", size: 9 }, maxRotation: 45 } }
+      }
+    }
+  });
+
+  // ── Error List ──
+  const allErrors = {};
+  models.forEach(m => {
+    Object.entries(m.errorBreakdown || {}).forEach(([err, count]) => {
+      allErrors[err] = (allErrors[err] || 0) + count;
+    });
+  });
+  const errorSorted = Object.entries(allErrors).sort((a,b) => b[1] - a[1]);
+  document.getElementById('error-list').innerHTML = errorSorted.map(([err, count]) =>
+    `<li><span class="count">${count}×</span>${err}</li>`
+  ).join('');
+}
+
+render();
+</script>
+</body>
+</html>

@@ -93,3 +93,11 @@ test-qwen*.log
 
 # Compost state file
 compost/soup-state.json
+
+# Dogfood campaign outputs
+dogfood-output*/
+dogfood-campaign-*/
+dogfood-*.json
+
+# Narrative local data
+narrative/data/

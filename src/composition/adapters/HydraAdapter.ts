@@ -8,6 +8,7 @@
 import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
+import { getWebGLBlendFunc } from '../utils/blendModes.js';
 
 /** Hydra synth instance type */
 interface HydraSynth {
@@ -102,6 +103,14 @@ export class HydraAdapter implements LayerAdapter {
       width,
       height,
     });
+
+    // Apply WebGL blend mode if not normal
+    const gl = canvas.getContext('webgl');
+    if (gl && layer.config.blendMode !== 'normal') {
+      const { src, dst } = getWebGLBlendFunc(layer.config.blendMode);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(src, dst);
+    }
 
     // Store instance
     this.instances.set(layer.id, hydra);

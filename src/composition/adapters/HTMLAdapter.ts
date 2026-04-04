@@ -8,6 +8,7 @@
 import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
+import { getCSSBlendMode } from '../utils/blendModes.js';
 
 /** Instance data for HTML layer */
 interface HTMLLayerInstance {
@@ -51,6 +52,11 @@ export class HTMLAdapter implements LayerAdapter {
     wrapper.style.height = '100%';
     wrapper.style.pointerEvents = 'none';
     wrapper.style.zIndex = String(layer.config.zIndex);
+    
+    // Apply blend mode
+    if (layer.config.blendMode !== 'normal') {
+      wrapper.style.mixBlendMode = getCSSBlendMode(layer.config.blendMode);
+    }
 
     // Parse and sanitize HTML
     const { html, styles } = this.parseHTML(layer.code);

@@ -8,6 +8,7 @@
 import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
+import { getCanvasCompositeOp } from '../utils/blendModes.js';
 
 /** p5.js sketch instance */
 interface P5Instance {
@@ -77,6 +78,12 @@ export class P5Adapter implements LayerAdapter {
       
       p.setup = () => {
         p.canvas = p.createCanvas(width, height).elt as HTMLCanvasElement;
+        
+        // Apply blend mode to canvas context
+        const ctx = p.canvas.getContext('2d');
+        if (ctx && layer.config.blendMode !== 'normal') {
+          ctx.globalCompositeOperation = getCanvasCompositeOp(layer.config.blendMode);
+        }
         
         // Execute user setup code if present
         if (userCode.includes('function setup')) {

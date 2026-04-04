@@ -151,10 +151,11 @@ export {
   DEFAULT_GLOBAL_SETTINGS,
   CompositionMetadata,
   LiminalProject,
-  Export,
-  Import,
   createLayer,
   createLayerFromResponse,
   createComposition,
   exportProject,
 } from '../composition/types.js';
+
+// Import and re-export adapter types
+export type { Export, Import } from '../composition/adapters/index.js';

@@ -8,6 +8,7 @@
 import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
+import { getWebGLBlendFunc } from '../utils/blendModes.js';
 
 /** WebGL shader instance data */
 interface ShaderInstance {
@@ -97,6 +98,13 @@ export class ShaderAdapter implements LayerAdapter {
 
     // Get uniform locations
     const uniforms = this.getUniformLocations(gl, program);
+
+    // Apply WebGL blend mode if not normal
+    if (layer.config.blendMode !== 'normal') {
+      const { src, dst } = getWebGLBlendFunc(layer.config.blendMode);
+      gl.enable(gl.BLEND);
+      gl.blendFunc(src, dst);
+    }
 
     // Create instance
     const instance: ShaderInstance = {

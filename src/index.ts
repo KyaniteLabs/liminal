@@ -63,7 +63,7 @@ import path from 'path';
 import { normalizePath, assertSafeSegment } from './utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from './constants.js';
 
-export const LIMINAL_VERSION = '1.0.0';
+export const LIMINAL_VERSION = '2.1.0';
 
 export interface LiminalConfig {
   name: string;
@@ -472,6 +472,10 @@ export type { AestheticDataPoint } from './evolution/AestheticModel.js';
 /** @library Public API — not wired into RalphLoop */
 export { MetaMode } from './evolution/MetaMode.js';
 export type { Experiment } from './evolution/MetaMode.js';
+/** @library Public API — creative variation generator */
+export { generateFiveVariations } from './evolution/IGA.js';
+/** @library Public API — cross-domain technique transfer */
+export { crossoverReasoning, combineReasoning } from './evolution/CrossDomainCrossover.js';
 
 // Safety Guardrails
 export { SafetyGuardrails } from './core/SafetyGuardrails.js';

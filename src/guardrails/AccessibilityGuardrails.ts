@@ -61,7 +61,6 @@ export class AccessibilityGuardrails {
 
       // Inject accessibility tracker
       await page.evaluateOnNewDocument(() => {
-        // @ts-expect-error -- puppeteer types
         window.__accessibilityMetrics = {
           luminanceSamples: [] as number[],
           flashCount: 0,
@@ -82,8 +81,7 @@ export class AccessibilityGuardrails {
             // Relative luminance formula
             const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
             
-            // @ts-expect-error -- puppeteer types
-            const metrics = window.__accessibilityMetrics;
+            const metrics = window.__accessibilityMetrics!;
             const change = Math.abs(luminance - metrics.lastLuminance);
             if (change > 0.5) { // Significant change
               metrics.flashCount++;
@@ -110,8 +108,7 @@ export class AccessibilityGuardrails {
 
       // Get metrics
       const metrics = await page.evaluate(() => {
-        // @ts-expect-error -- puppeteer types
-        return window.__accessibilityMetrics || {};
+        return window.__accessibilityMetrics as AccessibilityMetrics | null;;
       });
 
       // Analyze code for static checks
@@ -119,7 +116,7 @@ export class AccessibilityGuardrails {
 
       // Check photosensitivity (flashing > 3Hz is dangerous)
       const checkDurationSeconds = this.options.checkDurationMs / 1000;
-      const flashRate = (metrics.flashCount || 0) / checkDurationSeconds;
+      const flashRate = (metrics?.flashCount || 0) / checkDurationSeconds;
       const photosensitivityPass = flashRate <= 3; // Max 3 flashes per second
 
       if (!photosensitivityPass) {

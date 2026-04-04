@@ -55,7 +55,7 @@ def import_csv(db: Path, table: str, csv_path: Path, verbose: bool = False) -> i
     if not csv_path.exists():
         log(f"SKIP {csv_path.name} (not found)", verbose)
         return 0
-    run_su(["insert", str(db), table, str(csv_path), "--csv", "--create"], verbose)
+    run_su(["insert", str(db), table, str(csv_path), "--csv"], verbose)
     with open(csv_path, encoding="utf-8") as f:
         count = sum(1 for _ in csv.reader(f)) - 1
     log(f"IMPORTED {csv_path.name} -> {table} ({count} rows)", verbose)
@@ -216,6 +216,17 @@ MAPPED_IMPORTS: list[tuple[str, dict[str, str]]] = [
 # Indexes & FTS
 # ---------------------------------------------------------------------------
 
+def table_exists(db: Path, table: str) -> bool:
+    result = run_su(["query", str(db), f"SELECT name FROM sqlite_master WHERE type='table' AND name='{table}'"])
+    if result.returncode == 0 and result.stdout.strip():
+        try:
+            rows = json.loads(result.stdout)
+            return len(rows) > 0
+        except json.JSONDecodeError:
+            pass
+    return False
+
+
 def create_indexes(db: Path, verbose: bool = False) -> None:
     indexes = [
         ("commits", ["date", "author", "repo"]),
@@ -225,13 +236,23 @@ def create_indexes(db: Path, verbose: bool = False) -> None:
         ("lunar_phases", ["date"]),
     ]
     for table, columns in indexes:
+        if not table_exists(db, table):
+            log(f"SKIP indexes on {table} (table not found)", verbose)
+            continue
         for col in columns:
             run_su(["create-index", str(db), table, col, "--name", f"idx_{table}_{col}", "--if-not-exists"], verbose)
 
 
 def create_fts(db: Path, verbose: bool = False) -> None:
     for table, columns in [("commits", ["message"]), ("sessions", ["messages"]), ("eras", ["description", "narrative_arc"])]:
-        run_su(["enable-fts", str(db), table] + columns + ["--fts4", "--create-triggers", "--if-not-exists"], verbose)
+        if not table_exists(db, table):
+            log(f"SKIP FTS on {table} (table not found)", verbose)
+            continue
+        fts_table = f"{table}_fts"
+        if table_exists(db, fts_table):
+            log(f"SKIP FTS on {table} (already exists)", verbose)
+            continue
+        run_su(["enable-fts", str(db), table] + columns + ["--fts4", "--create-triggers"], verbose)
 
 
 # ---------------------------------------------------------------------------

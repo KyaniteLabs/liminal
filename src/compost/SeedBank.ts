@@ -199,6 +199,12 @@ export class SeedBank {
     return this.seeds[idx];
   }
 
+  /** Backward compat: return just the content string of a random seed. */
+  async getRandomContent(): Promise<string | undefined> {
+    const seed = await this.getRandomSeed();
+    return seed?.content;
+  }
+
   /**
    * Generate embedding for text using the configured embedding service.
    * @param text - Text to embed

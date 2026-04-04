@@ -72,9 +72,13 @@ describe('LoopConfig RenderOptions integration', () => {
     });
   });
 
-  it('defaults render to empty object when not provided', () => {
+  it('defaults render to full defaults when not provided', () => {
     const opts = normalizeOptions({});
-    expect(opts.render).toEqual({});
+    expect(opts.render).toEqual({
+      canvas: { width: 800, height: 600 },
+      recording: { enabled: false, duration: 5, fps: 30, format: 'webm' },
+      preview: { enabled: false, port: 3000, autoOpen: true },
+    });
   });
 
   it('accepts full render options', () => {
@@ -87,13 +91,13 @@ describe('LoopConfig RenderOptions integration', () => {
     expect(opts.render).toEqual(render);
   });
 
-  it('preserves partial render options', () => {
+  it('preserves partial render options, filling defaults', () => {
     const render: RenderOptions = {
       canvas: { width: 100 },
     };
     const opts = normalizeOptions({ render });
-    expect(opts.render.canvas).toEqual({ width: 100 });
-    expect(opts.render.recording).toBeUndefined();
-    expect(opts.render.preview).toBeUndefined();
+    expect(opts.render.canvas).toEqual({ width: 100, height: 600 });
+    expect(opts.render.recording).toEqual({ enabled: false, duration: 5, fps: 30, format: 'webm' });
+    expect(opts.render.preview).toEqual({ enabled: false, port: 3000, autoOpen: true });
   });
 });

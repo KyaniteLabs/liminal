@@ -105,6 +105,20 @@ section h3{font-family:var(--font-display);font-size:1.15rem;font-weight:500;col
   background:var(--surface);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:0.85rem}
 .error-list .count{font-family:var(--font-mono);font-weight:600;color:var(--danger);margin-right:0.5rem}
 
+/* ─── Reasoning Cards ─── */
+.reasoning-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;margin-bottom:1rem}
+.reasoning-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-md);
+  padding:1rem;transition:border-color 0.2s}
+.reasoning-card:hover{border-color:var(--border-hover)}
+.reasoning-card .model-name{font-family:var(--font-mono);font-size:0.85rem;font-weight:600;margin-bottom:0.5rem}
+.reasoning-card .metric{display:flex;justify-content:space-between;padding:0.2rem 0;font-size:0.8rem;color:var(--text2)}
+.reasoning-card .metric .val{font-family:var(--font-mono);color:var(--text)}
+.pattern-bar{display:flex;align-items:center;gap:0.5rem;margin:0.15rem 0;font-size:0.75rem;color:var(--text2)}
+.pattern-bar .bar{height:4px;border-radius:2px;background:var(--surface3);min-width:60px;flex:1}
+.pattern-bar .bar-fill{height:100%;border-radius:2px}
+.pattern-tag{display:inline-block;font-size:0.7rem;padding:0.1rem 0.35rem;border-radius:3px;
+  font-family:var(--font-mono);margin:0.1rem;background:rgba(81,207,102,0.1);color:var(--accent);border:1px solid rgba(81,207,102,0.2)}
+
 /* ─── Footer ─── */
 footer{text-align:center;padding:2rem 0;border-top:1px solid var(--border);color:var(--text3);font-size:0.8rem}
 </style>
@@ -121,6 +135,7 @@ footer{text-align:center;padding:2rem 0;border-top:1px solid var(--border);color
     <a href="#overview">Overview</a>
     <a href="#rankings">Rankings</a>
     <a href="#heatmap">Heatmap</a>
+    <a href="#reasoning">Reasoning</a>
     <a href="#domains">Domains</a>
     <a href="#charts">Charts</a>
     <a href="#errors">Errors</a>
@@ -144,6 +159,21 @@ footer{text-align:center;padding:2rem 0;border-top:1px solid var(--border);color
     <div class="heatmap-container">
       <table class="heatmap" id="heatmap-table"></table>
     </div>
+  </section>
+
+  <!-- Reasoning Telemetry -->
+  <section id="reasoning">
+    <h2>Reasoning Telemetry</h2>
+    <div class="stats-grid" id="reasoning-stats"></div>
+    <h3>Reasoning Quality by Model</h3>
+    <div class="chart-box"><canvas id="reasoning-quality-chart"></canvas></div>
+    <h3>Thinking Sources</h3>
+    <div class="chart-row">
+      <div class="chart-box"><canvas id="thinking-source-chart"></canvas></div>
+      <div class="chart-box"><canvas id="reasoning-length-chart"></canvas></div>
+    </div>
+    <h3>Detected Patterns</h3>
+    <div id="pattern-grid" class="reasoning-grid"></div>
   </section>
 
   <!-- Domain Analysis -->
@@ -290,6 +320,136 @@ function render() {
   });
   hmHtml += '</tbody>';
   document.getElementById('heatmap-table').innerHTML = hmHtml;
+
+  // ── Reasoning Telemetry Stats ──
+  const rTel = models.map(m => m.reasoningTelemetry).filter(Boolean);
+  const totalWithThinking = rTel.reduce((s, t) => s + t.runsWithThinking, 0);
+  const totalRunsAll = models.reduce((s, m) => s + m.totalRuns, 0);
+  const avgQuality = rTel.filter(t => t.avgReasoningQuality > 0).length > 0
+    ? rTel.filter(t => t.avgReasoningQuality > 0).reduce((s, t) => s + t.avgReasoningQuality, 0) / rTel.filter(t => t.avgReasoningQuality > 0).length
+    : 0;
+  const totalRecoveries = rTel.reduce((s, t) => s + Math.round(t.recoveryRate * t.runsWithThinking), 0);
+
+  const rsHtml = [
+    { value: totalWithThinking, label: 'Runs with Thinking', cls: 'info' },
+    { value: totalRunsAll > 0 ? ((totalWithThinking / totalRunsAll) * 100).toFixed(1) + '%' : '0%', label: 'Thinking Coverage', cls: totalWithThinking > 0 ? '' : 'warn' },
+    { value: (avgQuality * 100).toFixed(0) + '%', label: 'Avg Reasoning Quality', cls: avgQuality >= 0.6 ? '' : 'warn' },
+    { value: totalRecoveries, label: 'Code Recoveries', cls: 'info' },
+  ].map(s => `<div class="stat-card"><div class="value ${s.cls}">${s.value}</div><div class="label">${s.label}</div></div>`).join('');
+  document.getElementById('reasoning-stats').innerHTML = rsHtml;
+
+  // ── Reasoning Quality Bar Chart ──
+  const modelsWithQuality = sorted.filter(m => m.reasoningTelemetry?.avgReasoningQuality > 0);
+  if (modelsWithQuality.length > 0) {
+    new Chart(document.getElementById('reasoning-quality-chart'), {
+      type: 'bar',
+      data: {
+        labels: modelsWithQuality.map(m => m.model.length > 22 ? m.model.slice(0, 20) + '…' : m.model),
+        datasets: [{
+          label: 'Avg Quality',
+          data: modelsWithQuality.map(m => (m.reasoningTelemetry.avgReasoningQuality * 100)),
+          backgroundColor: modelsWithQuality.map(m => {
+            const q = m.reasoningTelemetry.avgReasoningQuality;
+            if (q >= 0.8) return COLORS.green + '99';
+            if (q >= 0.6) return COLORS.blue + '99';
+            if (q >= 0.4) return COLORS.yellow + '99';
+            return COLORS.red + '99';
+          }),
+          borderColor: modelsWithQuality.map(m => {
+            const q = m.reasoningTelemetry.avgReasoningQuality;
+            if (q >= 0.8) return COLORS.green;
+            if (q >= 0.6) return COLORS.blue;
+            if (q >= 0.4) return COLORS.yellow;
+            return COLORS.red;
+          }),
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Reasoning Quality by Model (%)', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+        },
+        scales: {
+          y: { max: 100, grid: { color: '#1a2232' }, ticks: { callback: v => v + '%' } },
+          x: { grid: { display: false }, ticks: { font: { family: "'JetBrains Mono',monospace", size: 10 }, maxRotation: 45 } }
+        }
+      }
+    });
+  } else {
+    document.getElementById('reasoning-quality-chart').parentElement.innerHTML =
+      '<p style="color:var(--text3);font-size:0.85rem;padding:2rem;text-align:center">No reasoning quality data available — run a new campaign with generateFull() to capture thinking traces</p>';
+  }
+
+  // ── Thinking Source Doughnut ──
+  const sourceAgg = {};
+  rTel.forEach(t => { for (const [src, cnt] of Object.entries(t.thinkingSources || {})) { sourceAgg[src] = (sourceAgg[src] || 0) + cnt; } });
+  const srcKeys = Object.keys(sourceAgg);
+  if (srcKeys.length > 0) {
+    new Chart(document.getElementById('thinking-source-chart'), {
+      type: 'doughnut',
+      data: {
+        labels: srcKeys,
+        datasets: [{
+          data: srcKeys.map(k => sourceAgg[k]),
+          backgroundColor: [COLORS.green + 'cc', COLORS.blue + 'cc', COLORS.yellow + 'cc', COLORS.purple + 'cc'],
+          borderColor: '#0c1018',
+          borderWidth: 2,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          title: { display: true, text: 'Thinking Sources', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+          legend: { position: 'bottom', labels: { padding: 16 } }
+        }
+      }
+    });
+  }
+
+  // ── Reasoning Length Chart ──
+  const modelsWithThinking = sorted.filter(m => m.reasoningTelemetry?.avgThinkingLength > 0);
+  if (modelsWithThinking.length > 0) {
+    new Chart(document.getElementById('reasoning-length-chart'), {
+      type: 'bar',
+      data: {
+        labels: modelsWithThinking.map(m => m.model.length > 18 ? m.model.slice(0, 16) + '…' : m.model),
+        datasets: [{
+          label: 'Avg Thinking Length',
+          data: modelsWithThinking.map(m => Math.round(m.reasoningTelemetry.avgThinkingLength)),
+          backgroundColor: MODEL_COLORS.slice(0, modelsWithThinking.length).map(c => c + '66'),
+          borderColor: MODEL_COLORS.slice(0, modelsWithThinking.length),
+          borderWidth: 1,
+          borderRadius: 4,
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { display: false },
+          title: { display: true, text: 'Avg Thinking Length (chars)', color: '#e8ecf2', font: { family: "'Space Grotesk',sans-serif", size: 14 } },
+        },
+        scales: {
+          y: { grid: { color: '#1a2232' }, ticks: { callback: v => v.toLocaleString() } },
+          x: { grid: { display: false }, ticks: { font: { family: "'JetBrains Mono',monospace", size: 9 }, maxRotation: 45 } }
+        }
+      }
+    });
+  }
+
+  // ── Detected Patterns Grid ──
+  const allPatterns = {};
+  rTel.forEach(t => { (t.topPatterns || []).forEach(p => { allPatterns[p.pattern] = (allPatterns[p.pattern] || 0) + p.count; }); });
+  const patternSorted = Object.entries(allPatterns).sort((a, b) => b[1] - a[1]);
+  const maxPatternCount = patternSorted[0]?.[1] || 1;
+  document.getElementById('pattern-grid').innerHTML = patternSorted.slice(0, 12).map(([pattern, count]) => {
+    const pct = (count / maxPatternCount * 100).toFixed(0);
+    return `<div class="pattern-bar"><span class="count" style="color:var(--accent3);font-family:var(--font-mono);font-size:0.75rem">${count}×</span>
+      <div class="bar"><div class="bar-fill" style="width:${pct}%;background:var(--accent3)"></div></div>
+      <span style="min-width:180px">${pattern}</span></div>`;
+  }).join('') || '<p style="color:var(--text3);font-size:0.85rem">No reasoning patterns detected</p>';
 
   // ── Domain Success Chart ──
   new Chart(document.getElementById('domain-chart'), {

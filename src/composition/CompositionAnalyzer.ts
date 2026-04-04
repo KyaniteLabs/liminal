@@ -13,6 +13,7 @@
  */
 
 import type { DomainType } from './types.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * A recommendation for a domain based on prompt analysis
@@ -171,8 +172,9 @@ export class CompositionAnalyzer {
         const llmResults = await this.analyzeWithLLM(prompt);
         // Merge keyword and LLM results, preferring higher confidence
         return this.mergeRecommendations(keywordResults, llmResults);
-      } catch {
+      } catch (err) {
         // If LLM fails, fall back to keyword results
+        Logger.warn('CompositionAnalyzer', 'LLM analysis failed, degrading to keyword results:', err);
         return this.sortRecommendations(keywordResults);
       }
     }

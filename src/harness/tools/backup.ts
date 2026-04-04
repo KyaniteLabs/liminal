@@ -114,7 +114,8 @@ export async function listBackups(filePath?: string): Promise<string[]> {
     }
     
     return files;
-  } catch {
+  } catch (err) {
+    Logger.debug('Backup', 'Failed to list backups:', err);
     return [];
   }
 }

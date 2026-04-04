@@ -500,7 +500,8 @@ export class HarnessMemory {
       const neighborIndices = findKNearestNeighbors(queryVec, vectors, k);
 
       return neighborIndices.map(idx => embedded[idx].episode);
-    } catch {
+    } catch (err) {
+      Logger.warn('HarnessMemory', 'Embedding similarity failed, falling back to chronological order:', err);
       return domainEpisodes.slice(-k);
     }
   }

@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { render, Box, Text, useInput, useStdout, Spacer } from "ink";
 import fs from "fs/promises";
 import path from "path";
+import { Logger } from "../utils/Logger.js";
 import { fileURLToPath } from "url";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -61,7 +62,10 @@ async function loadGallery(): Promise<GalleryEntry[]> {
       }
     }
     return projects.sort((a, b) => b.projectName.localeCompare(a.projectName));
-  } catch { return []; }
+  } catch (err) {
+    Logger.debug('TUI', 'Failed to list projects:', err);
+    return [];
+  }
 }
 
 function useTerminalSize() {

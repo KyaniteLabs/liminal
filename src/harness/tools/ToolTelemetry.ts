@@ -10,6 +10,7 @@ import { Logger } from '../../utils/Logger.js';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { ToolResult } from './types.js';
+import { Logger } from '../../utils/Logger.js';
 
 export interface ToolCallRecord {
   id: string;
@@ -189,8 +190,8 @@ export class ToolTelemetry {
         try {
           const content = readFileSync(join(this.logDir, f), 'utf-8');
           return JSON.parse(content) as ToolCallRecord;
-        } catch {
-          Logger.debug('ToolTelemetry', 'Failed to parse telemetry file', f);
+        } catch (err) {
+          Logger.debug('ToolTelemetry', `Failed to read log file ${f}:`, err);
           return null;
         }
       })

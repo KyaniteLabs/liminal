@@ -13,6 +13,7 @@ import { loadSoul } from './IntentRouter.js';
 import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
+import { Logger } from '../utils/Logger.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -115,7 +116,8 @@ export class NaturalInterface {
   private async loadSoul(): Promise<void> {
     try {
       this.session.soul = await loadSoul();
-    } catch {
+    } catch (err) {
+      Logger.debug('NaturalInterface', 'Failed to load SOUL.md, using default:', err);
       this.session.soul = 'You are Liminal, a creative coding partner.';
     }
   }

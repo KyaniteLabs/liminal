@@ -16,6 +16,7 @@ import { join, basename, extname } from 'path';
 import { PromptLibrary } from '../prompts/PromptLibrary.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { listThemes } from './themes.js';
+import { Logger } from '../utils/Logger.js';
 
 // ── Types ──
 
@@ -235,7 +236,9 @@ DURATION: ~25-35 seconds total at ${spec.fps}fps`,
       if (content.includes('new p5') || content.includes('createCanvas')) return 'p5';
       if (content.includes('THREE.') || content.includes('WebGLRenderer')) return 'three';
       if (content.includes('gl_FragColor') || content.includes('void main')) return 'glsl';
-    } catch { /* ignore */ }
+    } catch (err) {
+      Logger.debug('PromoVideoGenerator', `Failed to detect type for ${filePath}:`, err);
+    }
 
     return null;
   }
@@ -260,6 +263,8 @@ DURATION: ~25-35 seconds total at ${spec.fps}fps`,
           callback(fullPath);
         }
       }
-    } catch { /* ignore permission errors */ }
+    } catch (err) {
+      Logger.debug('PromoVideoGenerator', `Permission error walking ${dir}:`, err);
+    }
   }
 }

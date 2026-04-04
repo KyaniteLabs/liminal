@@ -47,7 +47,7 @@ export class PromptHistory {
       await fs.writeFile(this.filePath, JSON.stringify(data, null, 2));
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
-      throw new Error(`Failed to save prompt history: ${message}`);
+      throw new Error(`Failed to save prompt history: ${message}`, { cause: error });
     }
   }
 

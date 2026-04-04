@@ -10,6 +10,7 @@
  */
 
 import { CompositionEngine } from './CompositionEngine.js';
+import { Logger } from '../utils/Logger.js';
 import {
   LiminalProject,
   LiminalProjectV1,
@@ -204,8 +205,8 @@ export class ProjectSerializer {
         }
 
         return await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-      } catch {
-        // Fall through to fallback
+      } catch (err) {
+        Logger.debug('ProjectSerializer', 'JSZip export failed, using fallback:', err);
       }
     }
 

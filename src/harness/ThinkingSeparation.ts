@@ -11,6 +11,7 @@
 import { writeFileSync, readFileSync, readdirSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { Logger } from '../utils/Logger.js';
 
 export type ThinkingSource = 'generator' | 'harness' | 'user';
 
@@ -269,12 +270,14 @@ export class ThinkingRepository {
               timestamp: entry.timestamp,
             });
           }
-        } catch {
+        } catch (err) {
           // Skip malformed files
+          Logger.debug('ThinkingSeparation', `Skipping malformed file:`, err);
         }
       }
-    } catch {
+    } catch (err) {
       // Directory read failed
+      Logger.debug('ThinkingSeparation', 'Directory read failed:', err);
       return [];
     }
 
@@ -310,12 +313,14 @@ export class ThinkingRepository {
             if (entry.actionItems && entry.actionItems.length > 0) {
               collected.push(...entry.actionItems);
             }
-          } catch {
+          } catch (err) {
             // Skip malformed files
+            Logger.debug('ThinkingSeparation', `Skipping malformed file:`, err);
           }
         }
-      } catch {
+      } catch (err) {
         // Directory read failed
+        Logger.debug('ThinkingSeparation', 'Directory read failed:', err);
       }
 
       items.set(source, collected);

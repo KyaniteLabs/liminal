@@ -130,7 +130,7 @@ export class VideoExporter {
       if (err.code === 'ENOENT') {
         throw new Error(`FFmpeg not found at '${this.ffmpegPath}'. Install FFmpeg and ensure it is on PATH.`);
       }
-      throw new Error(`FFmpeg failed: ${err.message}`);
+      throw new Error(`FFmpeg failed: ${err.message}`, { cause: error });
     }
   }
 }

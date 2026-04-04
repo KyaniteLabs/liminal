@@ -10,6 +10,7 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Load the SOUL.md personality file
@@ -25,7 +26,8 @@ export async function loadSoul(): Promise<string> {
     try {
       const content = await fs.readFile(soulPath, 'utf-8');
       return content;
-    } catch {
+    } catch (err) {
+      Logger.debug('IntentRouter', `Regex failed for pattern:`, err);
       continue;
     }
   }

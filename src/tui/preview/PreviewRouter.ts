@@ -6,6 +6,7 @@
 
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { Logger } from '../../utils/Logger.js';
 
 export type PreviewTarget = 'terminal' | 'browser' | 'both' | 'none';
 
@@ -85,7 +86,8 @@ export class PreviewRouter {
     try {
       const content = await fs.readFile(filePath, 'utf-8');
       return content.slice(0, 2000); // First 2KB
-    } catch {
+    } catch (err) {
+      Logger.debug('PreviewRouter', `Failed to peek at ${filePath}:`, err);
       return '';
     }
   }

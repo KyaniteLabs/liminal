@@ -226,7 +226,7 @@ ${layers.join('\n')}
       if (err.code === 'ENOENT') {
         throw new Error('FFmpeg not found. Install FFmpeg and ensure it is on PATH.');
       }
-      throw new Error(`Compositing failed: ${err.message}`);
+      throw new Error(`Compositing failed: ${err.message}`, { cause: error });
     }
   }
 }

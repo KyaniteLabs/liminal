@@ -82,4 +82,40 @@ export class PromptHistory {
     return data.recent.slice(0, limit).map(e => e.prompt);
   }
 
+  /**
+   * Get recent history entries with timestamps
+   */
+  async getEntries(limit: number = 10): Promise<HistoryEntry[]> {
+    const data = await this.loadData();
+    return data.recent.slice(0, limit);
+  }
+
+  /**
+   * Add a prompt to favorites
+   */
+  async addFavorite(prompt: string): Promise<void> {
+    const data = await this.loadData();
+    if (!data.favorites.includes(prompt)) {
+      data.favorites.push(prompt);
+      await this.saveData(data);
+    }
+  }
+
+  /**
+   * Get all favorite prompts
+   */
+  async getFavorites(): Promise<string[]> {
+    const data = await this.loadData();
+    return data.favorites;
+  }
+
+  /**
+   * Remove a prompt from favorites
+   */
+  async removeFavorite(prompt: string): Promise<void> {
+    const data = await this.loadData();
+    data.favorites = data.favorites.filter(f => f !== prompt);
+    await this.saveData(data);
+  }
+
 }

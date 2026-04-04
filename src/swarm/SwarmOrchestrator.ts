@@ -16,6 +16,20 @@ import fs from 'fs/promises';
 import path from 'path';
 import { Logger } from '../utils/Logger.js';
 
+/** Default config for SwarmOrchestrator — single source of truth for all defaults. */
+const DEFAULT_SWARM_CONFIG: SwarmConfig = {
+  ollamaHost: SERVICE_DEFAULTS.OLLAMA_URL,
+  ollamaTimeout: TIMEOUT_DEFAULT_MS / 1000,
+  maxRounds: 10,
+  convergenceThreshold: 3,
+  musicalChairs: false,
+  mode: 'hybrid' as SwarmMode,
+  personas: DEFAULT_PERSONAS,
+  refinementConstraints: DEFAULT_REFINEMENT_CONSTRAINTS,
+  streamDir: './stream',
+  skipRouting: false,
+};
+
 export interface SwarmOrchestratorOptions {
   callOllama?: (model: string, systemPrompt: string, userPrompt: string, options?: { temperature?: number; num_predict?: number }) => Promise<string>;
   onProgress?: (data: { round: number; totalRounds: number; winnerId: string | null; converged: boolean }) => void;
@@ -66,18 +80,7 @@ export class SwarmOrchestrator {
   }
 
   constructor(config?: Partial<SwarmConfig>, options?: SwarmOrchestratorOptions) {
-    this.config = {
-      ollamaHost: config?.ollamaHost ?? SERVICE_DEFAULTS.OLLAMA_URL,
-      ollamaTimeout: config?.ollamaTimeout ?? (TIMEOUT_DEFAULT_MS / 1000),
-      maxRounds: config?.maxRounds ?? 10,
-      convergenceThreshold: config?.convergenceThreshold ?? 3,
-      musicalChairs: config?.musicalChairs ?? false,
-      mode: config?.mode ?? 'hybrid' as SwarmMode,
-      personas: config?.personas ?? DEFAULT_PERSONAS,
-      refinementConstraints: config?.refinementConstraints ?? DEFAULT_REFINEMENT_CONSTRAINTS,
-      streamDir: config?.streamDir ?? './stream',
-      skipRouting: config?.skipRouting ?? false,
-    };
+    this.config = { ...DEFAULT_SWARM_CONFIG, ...config };
     this.personas = [...this.config.personas];
 
     // Default Ollama caller

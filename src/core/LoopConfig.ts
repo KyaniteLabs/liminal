@@ -194,6 +194,8 @@ export interface NormalizedLoopOptions extends LoopOptions {
  * Normalize loop options with defaults
  */
 export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOptions {
+  // NOTE: Coverage is enforced at compile time — NormalizedLoopOptions has all-required
+  // fields, so TypeScript flags any property missing from the return object.
   return {
     maxIterations: options?.maxIterations || DEFAULT_MAX_ITERATIONS,
     timeoutMinutes: options?.timeoutMinutes || DEFAULT_TIMEOUT_MINUTES,

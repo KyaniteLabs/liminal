@@ -33,16 +33,18 @@ function hashKey(system: string, user: string): string {
   return hash.toString(36);
 }
 
+const DEFAULT_CACHE_OPTIONS: Required<CacheOptions> = {
+  enabled: true,
+  ttlMs: CACHE_TTL_MS,
+  maxEntries: CACHE_MAX_ENTRIES,
+};
+
 export class CacheManager {
   private cache = new Map<string, CacheEntry>();
   private options: Required<CacheOptions>;
 
   constructor(options?: CacheOptions) {
-    this.options = {
-      enabled: options?.enabled ?? true,
-      ttlMs: options?.ttlMs ?? CACHE_TTL_MS,
-      maxEntries: options?.maxEntries ?? CACHE_MAX_ENTRIES,
-    };
+    this.options = { ...DEFAULT_CACHE_OPTIONS, ...options };
   }
 
   get(system: string, user: string): string | null {

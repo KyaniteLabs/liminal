@@ -152,6 +152,16 @@ export class LLMClient {
       transformRequest: config?.transformRequest,
       parseResponse: config?.parseResponse,
     };
+
+    // Dev-mode guard: detect if config has keys this constructor silently drops
+    if (process.env.NODE_ENV !== 'production' && config) {
+      const knownKeys = new Set(Object.keys(this.config));
+      const providedKeys = Object.keys(config) as (keyof LLMConfig)[];
+      const dropped = providedKeys.filter(k => !knownKeys.has(k as string));
+      if (dropped.length > 0) {
+        Logger.warn('LLMClient', `Config properties silently dropped: ${dropped.join(', ')}. Add to LLMConfig or constructor.`);
+      }
+    }
   }
 
   /**

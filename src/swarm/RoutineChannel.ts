@@ -35,8 +35,10 @@ export interface ChannelStats {
   compressionRatio: number;
 }
 
-const DEFAULT_MAX_HISTORY = 50;
-const DEFAULT_COMPRESS_THRESHOLD = 3;
+const DEFAULT_CHANNEL_CONFIG: Required<ChannelConfig> = {
+  maxHistory: 50,
+  compressThreshold: 3,
+};
 
 export class RoutineChannel {
   private readonly maxHistory: number;
@@ -45,8 +47,9 @@ export class RoutineChannel {
   private compressedCount = 0;
 
   constructor(config?: ChannelConfig) {
-    this.maxHistory = config?.maxHistory ?? DEFAULT_MAX_HISTORY;
-    this.compressThreshold = config?.compressThreshold ?? DEFAULT_COMPRESS_THRESHOLD;
+    const resolved = { ...DEFAULT_CHANNEL_CONFIG, ...config };
+    this.maxHistory = resolved.maxHistory;
+    this.compressThreshold = resolved.compressThreshold;
   }
 
   /**

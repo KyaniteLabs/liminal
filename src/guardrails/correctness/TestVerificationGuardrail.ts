@@ -90,6 +90,7 @@ export class TestVerificationGuardrail implements GuardrailRule {
     }
   }
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(context: ExecutionContext, violation: GuardrailResult): Promise<RemediationResult> {
     const failures = (violation.details as { failures?: TestFailure[] })?.failures || [];
     

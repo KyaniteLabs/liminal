@@ -48,6 +48,7 @@ export class MaxIterationGuardrail implements GuardrailRule {
     };
   }
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(context: ExecutionContext, _violation: GuardrailResult): Promise<RemediationResult> {
     // Generate partial result with explanation
     return {
@@ -121,6 +122,7 @@ export class ResourceExhaustionGuardrail implements GuardrailRule {
     };
   }
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(context: ExecutionContext, violation: GuardrailResult): Promise<RemediationResult> {
     const limiter = getResourceLimiter(context.taskId);
     if (!limiter) {
@@ -239,6 +241,7 @@ export class ToolPermissionGuardrail implements GuardrailRule {
     };
   }
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(context: ExecutionContext, _violation: GuardrailResult): Promise<RemediationResult> {
     const { allowedTools } = context;
     
@@ -340,6 +343,7 @@ export class OutputSchemaGuardrail implements GuardrailRule {
     }
   }
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(context: ExecutionContext, _violation: GuardrailResult): Promise<RemediationResult> {
     // Attempt to fix by requesting structured output
     return {

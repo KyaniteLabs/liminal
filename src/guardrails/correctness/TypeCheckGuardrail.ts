@@ -90,6 +90,7 @@ export class TypeCheckGuardrail implements GuardrailRule {
     }
   }
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(context: ExecutionContext, violation: GuardrailResult): Promise<RemediationResult> {
     // Type errors need human review or LLM fix
     return {

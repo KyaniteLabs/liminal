@@ -115,6 +115,7 @@ export const PrivacyGuardrail: GuardrailRule = {
     };
   },
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(
     context: ExecutionContext,
     _violation: GuardrailResult

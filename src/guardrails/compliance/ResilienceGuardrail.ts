@@ -131,6 +131,7 @@ export const ResilienceGuardrail: GuardrailRule = {
     };
   },
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(): Promise<RemediationResult> {
     return {
       success: true,

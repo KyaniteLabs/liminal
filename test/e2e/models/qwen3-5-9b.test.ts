@@ -14,7 +14,7 @@ const MODEL_CONFIG = {
 
 const TEST_TIMEOUT = 120000;
 
-describe('Qwen 3.5 9B', () => {
+describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3.5 9B', () => {
   beforeAll(() => {
     process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
     process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;

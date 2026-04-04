@@ -13,7 +13,7 @@ const MODEL_CONFIG = {
 
 const TEST_TIMEOUT = 180000; // 3 minutes - slower model
 
-describe('Qwen 3 Coder 40B', () => {
+describe.skipIf(process.env.CI || !process.env.LIMINAL_LLM_BASE_URL)('Qwen 3 Coder 40B', () => {
   beforeAll(() => {
     process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
     process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;

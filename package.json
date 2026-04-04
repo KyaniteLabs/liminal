@@ -29,6 +29,7 @@
     "test": "vitest run",
     "test:integration": "vitest run test/integration",
     "test:e2e": "vitest run test/e2e",
+    "test:cloud": "RUN_CLOUD_MODEL_TESTS=1 vitest run test/e2e",
     "gui": "node gui/start.js",
     "gui:dev": "cd gui && npm run dev",
     "gui:all": "concurrently -k -n b,v \"node gui/start.js\" \"npm run gui:dev\"",

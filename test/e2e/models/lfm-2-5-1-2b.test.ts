@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 /**
  * Liquid Foundation Model 2.5 1.2B Test Suite
  * Local model via LM Studio - very small, very fast
+ * Skips in CI or when no local LLM is configured.
  */
 
 import { run } from '../../../src/index.js';
@@ -14,7 +15,9 @@ const MODEL_CONFIG = {
 
 const TEST_TIMEOUT = 60000; // 1 minute - small model
 
-describe('LFM 2.5 1.2B', () => {
+// Skip when running in CI or when no local LLM is explicitly configured
+const skipNoLLM = process.env.CI || !process.env.LIMINAL_LLM_BASE_URL?.includes('localhost');
+describe.skipIf(skipNoLLM)('LFM 2.5 1.2B', () => {
   beforeAll(() => {
     process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
     process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;

@@ -13,7 +13,7 @@ const MODEL_CONFIG = {
 
 const TEST_TIMEOUT = 60000;
 
-describe.skipIf(!process.env.MINIMAX_API_KEY)('MiniMax-M2.7', () => {
+describe.skipIf(!process.env.RUN_CLOUD_MODEL_TESTS)('MiniMax-M2.7', () => {
   beforeAll(() => {
     process.env.LIMINAL_LLM_BASE_URL = MODEL_CONFIG.baseUrl;
     process.env.LIMINAL_LLM_MODEL = MODEL_CONFIG.model;

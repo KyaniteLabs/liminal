@@ -56,7 +56,7 @@ describe('E2E full loop (cloud LLM)', () => {
     restoreEnv(envBackup);
   });
 
-  test.skipIf(process.env.CI)('run() full loop with cloud (lmstudio): result has code, iterations, output files', async () => {
+  test.skipIf(process.env.CI || !process.env.RUN_CLOUD_MODEL_TESTS)('run() full loop with cloud (lmstudio): result has code, iterations, output files', async () => {
     const distPath = path.join(process.cwd(), 'dist', 'index.js');
     if (!fs.existsSync(distPath)) {
       console.warn('Skipping E2E cloud test: dist/index.js not found (run npm run build first).');

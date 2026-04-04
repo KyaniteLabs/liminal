@@ -51,6 +51,12 @@ Liminal is a creative coding agent with a **Meta-Harness** - a self-improving ou
 npm run tui
 ```
 
+### Generate Dogfood Report
+
+```bash
+npm run dogfood:report
+```
+
 ### TUI Commands
 
 ```

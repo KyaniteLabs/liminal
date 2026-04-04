@@ -117,9 +117,8 @@ describe('SwarmOrchestrator', () => {
       expect(result.finalOutput).toBeTruthy();
     }, 10000);
 
-    it.skip('should detect convergence', async () => {
+    it('should detect convergence', async () => {
       // Use a custom 2-persona set where alpha always scores higher on heuristic dimensions.
-      // Alpha produces richer output → higher vocabulary, better length, etc.
       const convergingPersonas = [
         {
           id: 'alpha',
@@ -151,18 +150,15 @@ describe('SwarmOrchestrator', () => {
         },
       ];
 
-      let callCount = 0;
-      const convergingMock = async (_model: string, _systemPrompt: string, userPrompt: string): Promise<string> => {
-        callCount++;
-        // Alpha: rich vocabulary, good length → higher heuristic score
-        if (userPrompt.includes('Alpha')) {
+      const convergingMock = async (_model: string, systemPrompt: string, _userPrompt: string): Promise<string> => {
+        // Alpha: rich vocabulary → higher heuristic score
+        if (systemPrompt.includes('Alpha')) {
           return 'Spectral luminance cascades through crystalline corridors, weaving ephemeral tapestries of shimmering resonance across vast undulating landscapes.';
         }
-        // Beta: minimal output → lower scores on vocabulary and length
-        if (userPrompt.includes('Beta')) {
+        // Beta: minimal output → lower scores
+        if (systemPrompt.includes('Beta')) {
           return 'Short.';
         }
-        // LLM voting (final round only): vote for alpha
         return '1st choice: A\n2nd choice: B\nAlpha is better.';
       };
 
@@ -173,13 +169,13 @@ describe('SwarmOrchestrator', () => {
           musicalChairs: false,
           personas: convergingPersonas,
           streamDir: './test-stream',
+          skipRouting: true,
         },
         { callOllama: convergingMock }
       );
 
       const result = await orchestrator.run('Test');
 
-      // Alpha should consistently win on heuristic dimensions (richer vocab, better length)
       expect(result.converged).toBe(true);
       expect(result.convergenceRound).toBeLessThanOrEqual(6);
     }, 30000);

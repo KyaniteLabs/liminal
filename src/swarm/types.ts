@@ -30,6 +30,8 @@ export interface SwarmConfig {
   personas: SwarmPersona[];
   refinementConstraints: string[];
   streamDir: string;
+  /** Skip expert routing and use configured personas directly (useful for testing) */
+  skipRouting?: boolean;
 }
 
 export interface SwarmOutput {

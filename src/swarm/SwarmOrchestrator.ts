@@ -354,13 +354,15 @@ export class SwarmOrchestrator {
     let converged = false;
     let convergenceRound: number | null = null;
 
-    // Route prompt to relevant experts (sparse selection)
-    const routing = this.routePromptToExperts(prompt);
-    Logger.info('SwarmOrchestrator', `Routing: ${routing.reasoning}`);
-    
-    // Use routed personas for this run
-    const routedPersonas = this.getRoutedPersonas(prompt);
-    Logger.info('SwarmOrchestrator', `Selected ${routedPersonas.length} experts for generation`);
+    // Route prompt to relevant experts, or use configured personas directly
+    const routedPersonas = this.config.skipRouting
+      ? this.personas
+      : this.getRoutedPersonas(prompt);
+    if (!this.config.skipRouting) {
+      const routing = this.routePromptToExperts(prompt);
+      Logger.info('SwarmOrchestrator', `Routing: ${routing.reasoning}`);
+    }
+    Logger.info('SwarmOrchestrator', `Using ${routedPersonas.length} personas for generation`);
 
     // Musical chairs: randomize model-to-persona assignments
     if (this.config.musicalChairs) {

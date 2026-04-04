@@ -115,6 +115,11 @@ export { ThreeAdapter, threeAdapter } from './ThreeAdapter.js';
 export { HTMLAdapter, htmlAdapter } from './HTMLAdapter.js';
 export { RemotionAdapter, remotionAdapter } from './RemotionAdapter.js';
 export { HydraAdapter, hydraAdapter } from './HydraAdapter.js';
+export { P5Adapter, p5Adapter } from './P5Adapter.js';
+export { ToneAdapter, toneAdapter } from './ToneAdapter.js';
 
 /** Global adapter registry instance */
 export const adapterRegistry = new AdapterRegistry();
+
+// Re-export registration utilities
+export { registerAllAdapters, allAdapters } from './registerAdapters.js';

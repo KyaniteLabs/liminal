@@ -23,9 +23,11 @@ const EXTENSION_LANGUAGES: Record<string, string> = {
 
 /** Lazy-loaded sharp module */
 let sharpModule: unknown = null;
+let sharpLoading: Promise<unknown> | null = null;
 
 /** Lazy-loaded music-metadata module */
 let musicMetadataModule: unknown = null;
+let musicMetadataLoading: Promise<unknown> | null = null;
 
 /**
  * Dynamically import sharp for image processing.
@@ -33,14 +35,14 @@ let musicMetadataModule: unknown = null;
  */
 async function getSharp(): Promise<unknown> {
   if (sharpModule) return sharpModule;
-  try {
-    const mod = await import('sharp');
-    // Handle both ESM and CommonJS exports
-    sharpModule = (mod && typeof mod === 'object' && 'default' in mod) ? mod.default : mod;
-    return sharpModule;
-  } catch {
-    return null;
-  }
+  if (sharpLoading) return sharpLoading;
+  sharpLoading = import('sharp')
+    .then(mod => {
+      sharpModule = (mod && typeof mod === 'object' && 'default' in mod) ? mod.default : mod;
+      return sharpModule;
+    })
+    .catch(() => null);
+  return sharpLoading;
 }
 
 /**
@@ -49,12 +51,14 @@ async function getSharp(): Promise<unknown> {
  */
 async function getMusicMetadata(): Promise<unknown> {
   if (musicMetadataModule) return musicMetadataModule;
-  try {
-    musicMetadataModule = await import('music-metadata');
-    return musicMetadataModule;
-  } catch {
-    return null;
-  }
+  if (musicMetadataLoading) return musicMetadataLoading;
+  musicMetadataLoading = import('music-metadata')
+    .then(mod => {
+      musicMetadataModule = mod;
+      return mod;
+    })
+    .catch(() => null);
+  return musicMetadataLoading;
 }
 
 export class MetadataExtractor {

@@ -77,6 +77,7 @@ function generateSyntheticFFT(musicCode: string): number[] {
 
 /** Lazy-loaded Meyda module */
 let meydaModule: unknown = null;
+let meydaLoading: Promise<unknown> | null = null;
 
 /**
  * Dynamically import Meyda for audio feature extraction.
@@ -84,13 +85,14 @@ let meydaModule: unknown = null;
  */
 async function getMeyda(): Promise<unknown> {
   if (meydaModule) return meydaModule;
-  try {
-    const mod = await import('meyda');
-    meydaModule = (mod && typeof mod === 'object' && 'default' in mod) ? mod.default : mod;
-    return meydaModule;
-  } catch {
-    return null;
-  }
+  if (meydaLoading) return meydaLoading;
+  meydaLoading = import('meyda')
+    .then(mod => {
+      meydaModule = (mod && typeof mod === 'object' && 'default' in mod) ? mod.default : mod;
+      return meydaModule;
+    })
+    .catch(() => null);
+  return meydaLoading;
 }
 
 /**

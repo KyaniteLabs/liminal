@@ -12,16 +12,18 @@
 
 1. [Executive Summary](#executive-summary)
 2. [Positioning & Voice](#positioning--voice)
-3. [The Three Open Questions — Answered](#the-three-open-questions--answered)
-4. [Audience Strategy](#audience-strategy)
-5. [Channel Recommendations](#channel-recommendations)
-6. [Content Calendar Framework](#content-calendar-framework)
-7. [Launch Sequence](#launch-sequence)
-8. [Bilingual (EN/ES) Strategy](#bilingual-enes-strategy)
-9. [Video Content Strategy](#video-content-strategy)
-10. [The "Archaeology as Content" Angle](#the-archaeology-as-content-angle)
-11. [Metrics & Success Indicators](#metrics--success-indicators)
-12. [Appendix: Research Sources](#appendix-research-sources)
+3. [The Three-Act Story](#the-three-act-story-human--agents--self-building-tool)
+4. [The Three Open Questions — Answered](#the-three-open-questions--answered)
+5. [Audience Strategy](#audience-strategy)
+6. [Channel Recommendations](#channel-recommendations)
+7. [Content Calendar Framework](#content-calendar-framework)
+8. [Launch Sequence](#launch-sequence)
+9. [Bilingual (EN/ES) Strategy](#bilingual-enes-strategy)
+10. [Video Content Strategy](#video-content-strategy)
+11. [The "Archaeology as Content" Angle](#the-archaeology-as-content-angle)
+12. [Competitive Differentiation](#competitive-differentiation)
+13. [Metrics & Success Indicators](#metrics--success-indicators)
+14. [Appendix: Research Sources](#appendix-research-sources)
 
 ---
 
@@ -37,6 +39,20 @@ Liminal is not an AI agent showcase. It is a **creative coding tool** that happe
 Liminal generates art → MCP video captures it → Published as marketing → 
 Drives users to Liminal → More art generated → More video content → Flywheel spins
 ```
+
+### The Self-Referential Flywheel
+
+The flywheel above treats marketing as a step AFTER creation. The three-act flywheel makes the creation process itself the marketing:
+
+```
+Simon has an idea → Agents build it → Mistakes happen (0.68 dead zone)
+  → Liminal reaches critical mass → MetaHarness detects its own failures
+    → Liminal improves its own generators → Better outputs
+      → Outputs ARE the marketing → Liminal narrates its own construction
+        → Published as three-act channel content → Proof, not claim
+```
+
+This is the "Liminal Builds Itself" narrative. The tool's construction story, told from three perspectives (developer, agents, tool), is itself the most compelling marketing asset. Full specification: [`THREE-ACT-PLAYBOOK.md`](THREE-ACT-PLAYBOOK.md).
 
 ### Key Constraints
 
@@ -90,6 +106,31 @@ Drives users to Liminal → More art generated → More video content → Flywhe
 | **"294 commits. 33 days. One Pink Moon."** | Archaeology-first; curiosity-driven |
 
 **Recommendation:** Use "Generate art without knowing the names" as primary tagline. Use "294 commits. 33 days. One Pink Moon" for archaeology-focused content.
+
+---
+
+## The Three-Act Story: Human → Agents → Self-Building Tool
+
+The story of Liminal is a **progression**, not three parallel voices. It maps to the actual development history:
+
+| Act | Who Speaks | Eras | Narrative Beat |
+|-----|-----------|------|----------------|
+| **1: The Vision** | Simon (developer) | 1–3 | Ideas, metaphors, intuitive architecture. "I built a VAE and called it a compost bin." |
+| **2: The Build** | Agents (Kai/Cursor/Claude) | 4–7 | Construction, mistakes, forensic traces. "54 runs. Score: 0.68. All of them." |
+| **3: The Handoff** | Liminal (the tool) | 8–11 | Self-testing, self-improving, self-narrating. "I detected a pattern failure. Here is what changed." |
+
+The critical moment is the **Act 2→3 transition** — the gradient where agents' work produces a system capable of detecting its own failures and improving its own generators. This is not "AI replaces human." It's "human, agents, and tool find their respective roles."
+
+### The Four Proof Layers
+
+| Layer | What It Proves | Key Artifact |
+|-------|---------------|-------------|
+| **Archaeology** | "We did the work" | 57 deliverables, B+ audit, archaeology.html |
+| **Agent Forensics** | "The agents left traces" | 0.68 dead zone, agent personality fingerprints |
+| **Self-Improvement** | "The tool improves itself" | MetaHarness auto-adaptations, dogfood telemetry |
+| **Self-Narration** | "The tool tells its own story" | Faceless channel episodes, TextGen about itself |
+
+Layer 4 is the proof that makes the other three credible. Full specification: [`THREE-ACT-PLAYBOOK.md`](THREE-ACT-PLAYBOOK.md).
 
 ---
 
@@ -546,6 +587,24 @@ Based on Blog 3 analysis, the most effective format is:
 | "Domain Deep Dives" | 9 episodes | Tutorial, 10-15 min |
 | "The Archaeology" | 5 episodes | Data visualization, 5-10 min |
 | "Generative Art Hour" | Ongoing | Live stream, 1-2 hours |
+| **"The Three Acts"** | **8+ episodes** | **Faceless, AI-narrated, 5-10 min** |
+
+### Faceless Channel: "The Three Acts"
+
+A faceless YouTube series where three AI-narrated voices tell the story of Liminal's construction. Inspired by [Claudius Papirus](https://www.youtube.com/@ClaudiusPapirusYT), an AI narrator running a successful channel with the tagline "No hype, just how it actually works."
+
+**Why this works post-YouTube 2026 crackdown:** YouTube's January 2026 enforcement wave (4.7B views wiped) targets content that obscures its AI nature. Liminal's channel is inherently compliant — the AI production IS the product. The meta-recursive nature IS the disclosure.
+
+**Production pipeline using Liminal's own tools:**
+1. TextGenerativeGenerator → scripts from each act's POV
+2. Swarm personas → distinct voice sections per act
+3. PromoVideoGenerator → visual assets per platform
+4. MetaHarness → quality gate on generated scripts
+5. External: voice synthesis + Remotion assembly
+
+**Season 1 arc:** Episodes progress from Act 1 (Simon's vision) through Act 2 (agents building) to Act 3 (Liminal finishing itself). The channel's existence IS the proof of Act 3.
+
+Full episode guide: [`THREE-ACT-PLAYBOOK.md`](THREE-ACT-PLAYBOOK.md).
 
 ---
 
@@ -565,26 +624,52 @@ The forensic analysis of the build process is **itself** viral content. The arch
 | Architecture audit | Technical report | arXiv, GitHub |
 | YouTube correlation data | Data visualization | Twitter, Blog |
 
-### The Narrative Arc
+### The Narrative Arc (Three-Act Mapping)
 
-**Already Published:**
-- Blog 3: The Quiet That Wasn't (the 4-day silence)
-- Blog 4: The Pink Moon (the final 3 eras)
-- Blog 5: What You Build Without Knowing the Names (architecture audit)
+The blog series maps to the three-act progression:
 
-**Future Posts:**
-- Blog 6: "The CompostMill: From Ceramic Metaphor to Working Code"
+**Act 1 — The Vision (published):**
+- Blog 3: The Quiet That Wasn't (the 4-day silence — creative redistribution)
+- Blog 5: What You Build Without Knowing the Names (architecture audit — intuitive → formal)
+
+**Act 2 — The Build (published + planned):**
+- Blog 4: The Pink Moon (dogfood tests, agent fingerprints, the 0.68 dead zone)
+- Blog 6 (planned): "The CompostMill: From Ceramic Metaphor to Working Code"
+
+**Act 3 — The Handoff (planned):**
 - Blog 7: "1,481 YouTube Videos: The Learning Path That Built Liminal"
 - Blog 8: "Why I Documented Every Failure (And Why You Should Too)"
+- Blog 9 (new): "The Tool That Narrates Itself" — Act 3 as direct subject
+
+**Cross-medium:** Each blog post becomes a faceless channel episode via BlogToVideoPipeline. The three-act voice format (developer/agent/tool narration) applies to both written and video content.
 
 ### Viral Potential
 
-The archaeology narrative has multiple viral hooks:
+The archaeology + three-act narrative has compounding viral hooks:
 
 1. **The 33-day timeline** — Relatable to indie hackers
 2. **The 0.68 dead zone** — Concrete, surprising data point
 3. **The lunar alignment** — Almost too perfect to be true (but verified)
 4. **The honest audit** — B+ rating, not A+ — builds trust
+5. **"The tool narrates itself"** — Novel enough to generate curiosity clicks
+6. **The handoff gradient** — "AI replaces human" is clickbait; "human, agents, and tool find their roles" is nuanced and shareable
+
+---
+
+## Competitive Differentiation
+
+No other creative coding CLI can make these claims:
+
+| Claim | Liminal's Evidence | Nearest Competitor |
+|-------|-------------------|-------------------|
+| "The tool narrates its own construction" | Three-act faceless channel (THREE-ACT-PLAYBOOK.md) | None |
+| "57 forensic archaeology deliverables" | AUDIT-REPORT.md, archaeology.html, 11 classified eras | None |
+| "We published the scoring dead zone" | Blog 4, Video Script 1 (0.68 across 54 runs) | Competitors hide failures |
+| "The tool improved its own generators" | MetaHarness auto-adaptation logs, HarnessMemory | GitHub Copilot (no public telemetry) |
+| "Bilingual EN/ES by default" | Blog 3/4/5, all content parallel-created | Very few dev tools |
+| "7,059 commits mined across 11 eras" | Full archaeology corpus | None — requires years of documented history |
+
+**The moat is compounding:** Data (7,059 commits) + narrative (three-act arc) + honesty (B+ audit) + self-reference (the channel IS the proof) create a position that cannot be replicated without doing the work first.
 
 ---
 
@@ -712,6 +797,9 @@ Track these weekly to predict success:
 2. [ ] Complete "34 Days of Liminal" blog series
 3. [ ] Prepare Product Hunt launch assets
 4. [ ] Line up Hunter or confirm self-hunt strategy
+5. [ ] Produce faceless channel pilot episode ("The Three Acts" S01E01)
+6. [ ] Run dogfood campaign and capture three-act marketing artifacts
+7. [ ] Generate three-voice sample content using TextGenerativeGenerator
 
 ### Launch Criteria
 
@@ -726,3 +814,4 @@ Do not launch until:
 ---
 
 *This document will be updated as the product evolves. Last updated: April 3, 2026.*
+*Three-act self-referential strategy added: April 3, 2026. See [THREE-ACT-PLAYBOOK.md](THREE-ACT-PLAYBOOK.md) for full specification.*

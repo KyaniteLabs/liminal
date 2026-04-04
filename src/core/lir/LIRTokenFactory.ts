@@ -9,6 +9,7 @@
 import type {
   LIRCodeToken,
   LIRDocToken,
+  LIRTextToken,
   SymbolKind,
 } from './types.js';
 
@@ -335,4 +336,41 @@ export function createDocToken(
   return token;
 }
 
+/**
+ * Create a LIR text token from plain text content
+ *
+ * Extracts structural elements (headings, code blocks) and computes metrics.
+ *
+ * @param source - Source file path or identifier
+ * @param content - Plain text content
+ * @returns A valid LIRTextToken
+ */
+export function createTextToken(
+  source: string,
+  content: string,
+): LIRTextToken {
+  const id = generateId(source, content);
+  const headings = extractHeadings(content);
+  const codeBlocks = extractCodeBlocks(content);
 
+  const token: LIRTextToken = {
+    type: 'text',
+    id,
+    domain: 'text',
+    layer: 'content',
+    metadata: {},
+    tags: [],
+    content,
+    structure: {
+      headings,
+      codeBlocks,
+    },
+    metrics: {
+      wordCount: countWords(content),
+      paragraphCount: countParagraphs(content),
+      headingCount: headings.length,
+    },
+  };
+
+  return token;
+}

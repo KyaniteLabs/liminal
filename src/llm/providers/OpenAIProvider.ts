@@ -76,11 +76,14 @@ export class OpenAIProvider extends BaseProvider {
 
     const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
 
+    // Some providers (e.g. MiniMax) return code in reasoning_content with empty content
+    const hasContent = content.length > 0 || (thinking.source !== 'none' && thinking.text.length > 0);
+
     return {
       content,
       thinking: thinking.source !== 'none' ? thinking : undefined,
       model: data.model || this.config.model,
-      success: content.length > 0,
+      success: hasContent,
       usage: usage ? {
         inputTokens: usage.prompt_tokens || 0,
         outputTokens: usage.completion_tokens || 0,

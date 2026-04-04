@@ -138,19 +138,22 @@ export function isFromOrigin(fragment: CreativeFragment, origin: FragmentOrigin)
 // Re-export composition types for convenience
 // ---------------------------------------------------------------------------
 
-export {
+export type {
   DomainType,
   BlendMode,
   Layer,
   LayerConfig,
   LayerMetadata,
-  DEFAULT_LAYER_CONFIG,
   Composition,
   GlobalSettings,
   AudioSettings,
-  DEFAULT_GLOBAL_SETTINGS,
   CompositionMetadata,
   LiminalProject,
+} from '../composition/types.js';
+
+export {
+  DEFAULT_LAYER_CONFIG,
+  DEFAULT_GLOBAL_SETTINGS,
   createLayer,
   createLayerFromResponse,
   createComposition,

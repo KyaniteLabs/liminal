@@ -857,33 +857,122 @@ Rules:
     }
 
     // Sanitize the content (strip markdown fences, narrative text, think tags)
-    let sanitized = sanitizeOutput(response.content);
+    const { sanitized, extractedReasoning } = sanitizeOutputWithReasoning(response.content);
+
+    // Prefer explicit thinking field (Ollama, Anthropic), fall back to extracted narrative
+    const thinking = response.thinking?.text || extractedReasoning || undefined;
 
     // If main content is empty but thinking/reasoning contains code, recover from it.
     // This handles providers like MiniMax that may return code in reasoning_content
     // or wrap the entire response in <think> tags.
+    let code = sanitized.code;
     let recoveredFromThinking = false;
-    if (!sanitized.code && response.thinking?.text) {
-      const recovered = sanitizeOutput(response.thinking.text);
-      if (recovered.code) {
-        sanitized = recovered;
+    let isComplete = sanitized.isComplete;
+    if (!code && thinking) {
+      const recovered = sanitizeOutputWithReasoning(thinking);
+      if (recovered.sanitized.code) {
+        code = recovered.sanitized.code;
         recoveredFromThinking = true;
+        isComplete = recovered.sanitized.isComplete;
       }
     }
 
     return {
-      code: sanitized.code,
+      code,
       explanation: response.content,
-      reasoning: response.thinking?.text || undefined,
-      thinking: response.thinking?.text || undefined,
+      reasoning: thinking,
+      thinking,
       recoveredFromThinking,
-      success: sanitized.success,
-      isComplete: sanitized.isComplete,
+      success: code.length > 0,
+      isComplete,
     };
   }
 }
 
 // ── Shared sanitization utility ──
+
+/**
+ * sanitizeOutputWithReasoning — like sanitizeOutput but also extracts
+ * the narrative/reasoning text that gets stripped before code.
+ * For providers (LM Studio, etc.) that don't expose reasoning_content
+ * separately but mix reasoning into the content body.
+ */
+export function sanitizeOutputWithReasoning(content: string): {
+  sanitized: { code: string; success: boolean; isComplete: boolean };
+  extractedReasoning: string;
+} {
+  // Step 1: Extract <think/> tags first (some models do emit them)
+  const thinkPattern = /<think\b[^>]*>([\s\S]*?)<\/think>/gi;
+  let tagReasoning = '';
+  let cleanCode = content;
+  const thinkMatches = content.matchAll(thinkPattern);
+  for (const m of thinkMatches) {
+    tagReasoning += m[1] + '\n';
+  }
+  cleanCode = content.replace(thinkPattern, '');
+
+  // Step 2: Extract code from markdown fences
+  const markdownMatch = cleanCode.match(/```(?:\w+)?\n([\s\S]*?)```/);
+  if (markdownMatch) {
+    // Everything before the first ``` is narrative/reasoning
+    const beforeFence = cleanCode.substring(0, cleanCode.indexOf('```')).trim();
+    const narrativeReasoning = beforeFence
+      .split('\n')
+      .filter(line => line.trim().length > 0)
+      .join('\n');
+
+    cleanCode = markdownMatch[1].trim();
+
+    // Combine: explicit think tags + narrative before code
+    const extractedReasoning = [tagReasoning.trim(), narrativeReasoning]
+      .filter(Boolean)
+      .join('\n\n');
+
+    return {
+      sanitized: { code: cleanCode, success: cleanCode.length > 0, isComplete: isCodeComplete(cleanCode) },
+      extractedReasoning,
+    };
+  }
+
+  // No markdown fences — extract leading narrative before code starts
+  const lines = cleanCode.split('\n');
+  const codeStartPatterns = [
+    /^(let|const|var|function|class|if|for|while|import|export|return|precision|void|vec|uniform)\b/,
+    /^<!DOCTYPE/i,
+    /^<html/i,
+    /^<script/i,
+    /^\$/,
+    /^osc\(|^src\(|^render\(/,
+  ];
+
+  let codeStartIndex = 0;
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed) continue;
+
+    if (codeStartPatterns.some(p => p.test(trimmed))) {
+      codeStartIndex = i;
+      break;
+    }
+
+    if (/^(Here|I'll|Let me|This|The user)/i.test(trimmed)) {
+      codeStartIndex = i + 1;
+    }
+  }
+
+  const narrativeLines = lines.slice(0, codeStartIndex).filter(l => l.trim().length > 0);
+  const narrativeReasoning = narrativeLines.join('\n');
+  cleanCode = lines.slice(codeStartIndex).join('\n').trim();
+
+  const extractedReasoning = [tagReasoning.trim(), narrativeReasoning]
+    .filter(Boolean)
+    .join('\n\n');
+
+  return {
+    sanitized: { code: cleanCode, success: cleanCode.length > 0, isComplete: isCodeComplete(cleanCode) },
+    extractedReasoning,
+  };
+}
 
 /**
  * Universal output sanitizer

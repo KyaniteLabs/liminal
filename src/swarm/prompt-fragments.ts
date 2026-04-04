@@ -13,6 +13,12 @@ export const SHARED_CODE_GUIDELINES = [
   'Include brief comments for non-obvious logic only',
 ];
 
+/** Compact notation legend appended to every expert prompt. */
+export const notationLegend =
+  '[Notation: ~d=domain ~s=style ~m=mood ~t=tech ~x=avoid. ' +
+  'Tokens like ~d:shader mean "use shader art domain". ' +
+  'Expand with expandNotation() if needed.]';
+
 /** Compose a full system prompt from shared base + expert-specific parts. */
 export function composeExpertPrompt(parts: {
   title: string;
@@ -31,6 +37,8 @@ export function composeExpertPrompt(parts: {
     ...parts.techniques.map(t => `- ${t}`),
     '',
     `Influences: ${parts.heroes}`,
+    '',
+    notationLegend,
   ];
   return lines.join('\n');
 }

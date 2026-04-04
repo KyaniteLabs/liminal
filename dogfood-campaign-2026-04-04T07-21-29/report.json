@@ -1,0 +1,338 @@
+{
+  "model": "MiniMax-M2.7",
+  "timestamp": "2026-04-04T07:45:05.597Z",
+  "totalRuns": 27,
+  "successes": 22,
+  "failures": 5,
+  "successRate": 0.8148148148148148,
+  "avgDuration": 52447.03703703704,
+  "avgCodeLength": 2668.090909090909,
+  "resultsByDomain": {
+    "p5": {
+      "success": 3,
+      "failure": 0,
+      "avgDuration": 47851.666666666664,
+      "avgCodeLength": 3746.3333333333335
+    },
+    "glsl": {
+      "success": 3,
+      "failure": 0,
+      "avgDuration": 23849.333333333332,
+      "avgCodeLength": 1376
+    },
+    "three": {
+      "success": 2,
+      "failure": 1,
+      "avgDuration": 63331,
+      "avgCodeLength": 1885
+    },
+    "strudel": {
+      "success": 3,
+      "failure": 0,
+      "avgDuration": 84691.66666666667,
+      "avgCodeLength": 228.33333333333334
+    },
+    "hydra": {
+      "success": 3,
+      "failure": 0,
+      "avgDuration": 14154,
+      "avgCodeLength": 1581.3333333333333
+    },
+    "remotion": {
+      "success": 0,
+      "failure": 3,
+      "avgDuration": 49402.333333333336,
+      "avgCodeLength": 0
+    },
+    "html": {
+      "success": 3,
+      "failure": 0,
+      "avgDuration": 57437.666666666664,
+      "avgCodeLength": 8727
+    },
+    "ascii": {
+      "success": 2,
+      "failure": 1,
+      "avgDuration": 69976,
+      "avgCodeLength": 1829
+    },
+    "tone": {
+      "success": 3,
+      "failure": 0,
+      "avgDuration": 61329.666666666664,
+      "avgCodeLength": 1431
+    }
+  },
+  "results": [
+    {
+      "round": 1,
+      "domain": "p5",
+      "success": true,
+      "duration": 45347,
+      "codeLength": 4918,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round1-p5.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:21:29.512Z"
+    },
+    {
+      "round": 1,
+      "domain": "glsl",
+      "success": true,
+      "duration": 16784,
+      "codeLength": 1113,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round1-glsl.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:22:14.860Z"
+    },
+    {
+      "round": 1,
+      "domain": "three",
+      "success": true,
+      "duration": 68360,
+      "codeLength": 2159,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round1-three.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:22:31.644Z"
+    },
+    {
+      "round": 1,
+      "domain": "strudel",
+      "success": true,
+      "duration": 104167,
+      "codeLength": 37,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round1-strudel.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:23:40.004Z"
+    },
+    {
+      "round": 1,
+      "domain": "hydra",
+      "success": true,
+      "duration": 13947,
+      "codeLength": 1929,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round1-hydra.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:25:24.172Z"
+    },
+    {
+      "round": 1,
+      "domain": "remotion",
+      "success": false,
+      "duration": 32287,
+      "codeLength": 0,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:25:38.119Z"
+    },
+    {
+      "round": 1,
+      "domain": "html",
+      "success": true,
+      "duration": 65335,
+      "codeLength": 10117,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round1-html.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:26:10.406Z"
+    },
+    {
+      "round": 1,
+      "domain": "ascii",
+      "success": false,
+      "duration": 112335,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:27:15.742Z"
+    },
+    {
+      "round": 1,
+      "domain": "tone",
+      "success": true,
+      "duration": 93923,
+      "codeLength": 290,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round1-tone.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:29:08.077Z"
+    },
+    {
+      "round": 2,
+      "domain": "p5",
+      "success": true,
+      "duration": 34695,
+      "codeLength": 3140,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round2-p5.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:30:42.001Z"
+    },
+    {
+      "round": 2,
+      "domain": "glsl",
+      "success": true,
+      "duration": 34915,
+      "codeLength": 1674,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round2-glsl.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:31:16.696Z"
+    },
+    {
+      "round": 2,
+      "domain": "three",
+      "success": false,
+      "duration": 72746,
+      "codeLength": 0,
+      "error": "ThreeGenerator: Generated code does not appear to use Three.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:31:51.612Z"
+    },
+    {
+      "round": 2,
+      "domain": "strudel",
+      "success": true,
+      "duration": 51388,
+      "codeLength": 289,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round2-strudel.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:33:04.358Z"
+    },
+    {
+      "round": 2,
+      "domain": "hydra",
+      "success": true,
+      "duration": 16394,
+      "codeLength": 1395,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round2-hydra.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:33:55.747Z"
+    },
+    {
+      "round": 2,
+      "domain": "remotion",
+      "success": false,
+      "duration": 47168,
+      "codeLength": 0,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:34:12.142Z"
+    },
+    {
+      "round": 2,
+      "domain": "html",
+      "success": true,
+      "duration": 50620,
+      "codeLength": 7414,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round2-html.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:34:59.310Z"
+    },
+    {
+      "round": 2,
+      "domain": "ascii",
+      "success": true,
+      "duration": 46358,
+      "codeLength": 1829,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round2-ascii.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:35:49.932Z"
+    },
+    {
+      "round": 2,
+      "domain": "tone",
+      "success": true,
+      "duration": 40934,
+      "codeLength": 1965,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round2-tone.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:36:36.290Z"
+    },
+    {
+      "round": 3,
+      "domain": "p5",
+      "success": true,
+      "duration": 63513,
+      "codeLength": 3181,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-p5.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:37:17.225Z"
+    },
+    {
+      "round": 3,
+      "domain": "glsl",
+      "success": true,
+      "duration": 19849,
+      "codeLength": 1341,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-glsl.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:38:20.738Z"
+    },
+    {
+      "round": 3,
+      "domain": "three",
+      "success": true,
+      "duration": 48887,
+      "codeLength": 1611,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-three.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:38:40.587Z"
+    },
+    {
+      "round": 3,
+      "domain": "strudel",
+      "success": true,
+      "duration": 98520,
+      "codeLength": 359,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-strudel.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:39:29.475Z"
+    },
+    {
+      "round": 3,
+      "domain": "hydra",
+      "success": true,
+      "duration": 12121,
+      "codeLength": 1420,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-hydra.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:41:07.995Z"
+    },
+    {
+      "round": 3,
+      "domain": "remotion",
+      "success": false,
+      "duration": 68752,
+      "codeLength": 0,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:41:20.117Z"
+    },
+    {
+      "round": 3,
+      "domain": "html",
+      "success": true,
+      "duration": 56358,
+      "codeLength": 8650,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-html.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:42:28.870Z"
+    },
+    {
+      "round": 3,
+      "domain": "ascii",
+      "success": true,
+      "duration": 51235,
+      "codeLength": 1829,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-ascii.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:43:25.229Z"
+    },
+    {
+      "round": 3,
+      "domain": "tone",
+      "success": true,
+      "duration": 49132,
+      "codeLength": 2038,
+      "code": "dogfood-campaign-2026-04-04T07-21-29/code/round3-tone.js",
+      "thinkingSource": "cloud",
+      "timestamp": "2026-04-04T07:44:16.464Z"
+    }
+  ]
+}

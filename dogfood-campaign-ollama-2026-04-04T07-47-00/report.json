@@ -1,0 +1,1426 @@
+{
+  "models": [
+    "kimi-k2.5:cloud",
+    "deepseek-v3.2:cloud",
+    "qwen3.5:cloud"
+  ],
+  "timestamp": "2026-04-04T10:24:28.091Z",
+  "totalRuns": 81,
+  "successes": 50,
+  "failures": 31,
+  "successRate": 0.6172839506172839,
+  "avgDuration": 116630.38271604938,
+  "avgCodeLength": 4335.02,
+  "resultsByModel": {
+    "kimi-k2.5:cloud": {
+      "successes": 21,
+      "failures": 6,
+      "successRate": 0.7777777777777778,
+      "avgDuration": 154175.7037037037,
+      "avgCodeLength": 4070.3809523809523,
+      "byDomain": {
+        "p5": [
+          {
+            "success": true,
+            "duration": 106168,
+            "codeLength": 2467
+          },
+          {
+            "success": true,
+            "duration": 286168,
+            "codeLength": 3347
+          },
+          {
+            "success": true,
+            "duration": 215719,
+            "codeLength": 2846
+          }
+        ],
+        "glsl": [
+          {
+            "success": true,
+            "duration": 70159,
+            "codeLength": 2321
+          },
+          {
+            "success": true,
+            "duration": 107039,
+            "codeLength": 2703
+          },
+          {
+            "success": true,
+            "duration": 133566,
+            "codeLength": 2691
+          }
+        ],
+        "three": [
+          {
+            "success": true,
+            "duration": 123208,
+            "codeLength": 1702
+          },
+          {
+            "success": true,
+            "duration": 220196,
+            "codeLength": 2422
+          },
+          {
+            "success": true,
+            "duration": 196026,
+            "codeLength": 2094
+          }
+        ],
+        "strudel": [
+          {
+            "success": false,
+            "duration": 53273,
+            "codeLength": 0,
+            "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())"
+          },
+          {
+            "success": false,
+            "duration": 102226,
+            "codeLength": 0,
+            "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())"
+          },
+          {
+            "success": false,
+            "duration": 128553,
+            "codeLength": 0,
+            "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())"
+          }
+        ],
+        "hydra": [
+          {
+            "success": true,
+            "duration": 106983,
+            "codeLength": 3370
+          },
+          {
+            "success": true,
+            "duration": 281171,
+            "codeLength": 2528
+          },
+          {
+            "success": false,
+            "duration": 281609,
+            "codeLength": 0,
+            "error": "HydraGenerator: No Hydra syntax found"
+          }
+        ],
+        "remotion": [
+          {
+            "success": true,
+            "duration": 76867,
+            "codeLength": 3312
+          },
+          {
+            "success": true,
+            "duration": 84062,
+            "codeLength": 3273
+          },
+          {
+            "success": true,
+            "duration": 77293,
+            "codeLength": 3933
+          }
+        ],
+        "html": [
+          {
+            "success": true,
+            "duration": 246011,
+            "codeLength": 13610
+          },
+          {
+            "success": true,
+            "duration": 273537,
+            "codeLength": 11228
+          },
+          {
+            "success": true,
+            "duration": 268554,
+            "codeLength": 13030
+          }
+        ],
+        "ascii": [
+          {
+            "success": false,
+            "duration": 110780,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+          },
+          {
+            "success": false,
+            "duration": 89023,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+          },
+          {
+            "success": true,
+            "duration": 90215,
+            "codeLength": 1829
+          }
+        ],
+        "tone": [
+          {
+            "success": true,
+            "duration": 165460,
+            "codeLength": 2625
+          },
+          {
+            "success": true,
+            "duration": 143071,
+            "codeLength": 2070
+          },
+          {
+            "success": true,
+            "duration": 125807,
+            "codeLength": 2077
+          }
+        ]
+      }
+    },
+    "deepseek-v3.2:cloud": {
+      "successes": 19,
+      "failures": 8,
+      "successRate": 0.7037037037037037,
+      "avgDuration": 169972.66666666666,
+      "avgCodeLength": 4596.368421052632,
+      "byDomain": {
+        "p5": [
+          {
+            "success": true,
+            "duration": 215703,
+            "codeLength": 3616
+          },
+          {
+            "success": true,
+            "duration": 181334,
+            "codeLength": 3257
+          },
+          {
+            "success": true,
+            "duration": 293362,
+            "codeLength": 3063
+          }
+        ],
+        "glsl": [
+          {
+            "success": true,
+            "duration": 117155,
+            "codeLength": 2671
+          },
+          {
+            "success": true,
+            "duration": 97811,
+            "codeLength": 2717
+          },
+          {
+            "success": true,
+            "duration": 115846,
+            "codeLength": 3184
+          }
+        ],
+        "three": [
+          {
+            "success": true,
+            "duration": 125458,
+            "codeLength": 1661
+          },
+          {
+            "success": true,
+            "duration": 206099,
+            "codeLength": 2383
+          },
+          {
+            "success": true,
+            "duration": 250168,
+            "codeLength": 2401
+          }
+        ],
+        "strudel": [
+          {
+            "success": false,
+            "duration": 126829,
+            "codeLength": 0,
+            "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())"
+          },
+          {
+            "success": false,
+            "duration": 110450,
+            "codeLength": 0,
+            "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())"
+          },
+          {
+            "success": false,
+            "duration": 125881,
+            "codeLength": 0,
+            "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())"
+          }
+        ],
+        "hydra": [
+          {
+            "success": false,
+            "duration": 300025,
+            "codeLength": 0,
+            "error": "HydraGenerator: No Hydra syntax found"
+          },
+          {
+            "success": false,
+            "duration": 300021,
+            "codeLength": 0,
+            "error": "HydraGenerator: No Hydra syntax found"
+          },
+          {
+            "success": true,
+            "duration": 281560,
+            "codeLength": 3186
+          }
+        ],
+        "remotion": [
+          {
+            "success": true,
+            "duration": 87337,
+            "codeLength": 4477
+          },
+          {
+            "success": true,
+            "duration": 75359,
+            "codeLength": 3087
+          },
+          {
+            "success": true,
+            "duration": 85156,
+            "codeLength": 4028
+          }
+        ],
+        "html": [
+          {
+            "success": true,
+            "duration": 293107,
+            "codeLength": 13709
+          },
+          {
+            "success": true,
+            "duration": 251382,
+            "codeLength": 12903
+          },
+          {
+            "success": true,
+            "duration": 293984,
+            "codeLength": 13781
+          }
+        ],
+        "ascii": [
+          {
+            "success": false,
+            "duration": 81784,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+          },
+          {
+            "success": false,
+            "duration": 79890,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+          },
+          {
+            "success": false,
+            "duration": 91003,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+          }
+        ],
+        "tone": [
+          {
+            "success": true,
+            "duration": 115945,
+            "codeLength": 1857
+          },
+          {
+            "success": true,
+            "duration": 145296,
+            "codeLength": 2694
+          },
+          {
+            "success": true,
+            "duration": 141317,
+            "codeLength": 2656
+          }
+        ]
+      }
+    },
+    "qwen3.5:cloud": {
+      "successes": 10,
+      "failures": 17,
+      "successRate": 0.37037037037037035,
+      "avgDuration": 25742.777777777777,
+      "avgCodeLength": 4394.2,
+      "byDomain": {
+        "p5": [
+          {
+            "success": false,
+            "duration": 21469,
+            "codeLength": 0,
+            "error": "P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include par"
+          },
+          {
+            "success": false,
+            "duration": 23861,
+            "codeLength": 0,
+            "error": "P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include par"
+          },
+          {
+            "success": false,
+            "duration": 29158,
+            "codeLength": 0,
+            "error": "P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include par"
+          }
+        ],
+        "glsl": [
+          {
+            "success": true,
+            "duration": 29739,
+            "codeLength": 1169
+          },
+          {
+            "success": true,
+            "duration": 20890,
+            "codeLength": 1912
+          },
+          {
+            "success": true,
+            "duration": 21366,
+            "codeLength": 1145
+          }
+        ],
+        "three": [
+          {
+            "success": true,
+            "duration": 27676,
+            "codeLength": 2074
+          },
+          {
+            "success": false,
+            "duration": 28085,
+            "codeLength": 0,
+            "error": "ThreeGenerator: LLM returned empty code"
+          },
+          {
+            "success": true,
+            "duration": 25374,
+            "codeLength": 2041
+          }
+        ],
+        "strudel": [
+          {
+            "success": false,
+            "duration": 34036,
+            "codeLength": 0,
+            "error": "StrudelGenerator: LLM returned empty code"
+          },
+          {
+            "success": false,
+            "duration": 33782,
+            "codeLength": 0,
+            "error": "StrudelGenerator: LLM returned empty code"
+          },
+          {
+            "success": false,
+            "duration": 24320,
+            "codeLength": 0,
+            "error": "StrudelGenerator: LLM returned empty code"
+          }
+        ],
+        "hydra": [
+          {
+            "success": false,
+            "duration": 24701,
+            "codeLength": 0,
+            "error": "HydraGenerator: LLM returned empty code"
+          },
+          {
+            "success": false,
+            "duration": 48008,
+            "codeLength": 0,
+            "error": "HydraGenerator: LLM returned empty code"
+          },
+          {
+            "success": false,
+            "duration": 21485,
+            "codeLength": 0,
+            "error": "HydraGenerator: LLM returned empty code"
+          }
+        ],
+        "remotion": [
+          {
+            "success": false,
+            "duration": 27821,
+            "codeLength": 0,
+            "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component"
+          },
+          {
+            "success": false,
+            "duration": 17881,
+            "codeLength": 0,
+            "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component"
+          },
+          {
+            "success": false,
+            "duration": 18442,
+            "codeLength": 0,
+            "error": "RemotionGenerator: LLM returned empty code"
+          }
+        ],
+        "html": [
+          {
+            "success": true,
+            "duration": 15160,
+            "codeLength": 10936
+          },
+          {
+            "success": true,
+            "duration": 43338,
+            "codeLength": 11155
+          },
+          {
+            "success": true,
+            "duration": 14899,
+            "codeLength": 10139
+          }
+        ],
+        "ascii": [
+          {
+            "success": false,
+            "duration": 19832,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: LLM returned empty code"
+          },
+          {
+            "success": false,
+            "duration": 27336,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: LLM returned empty code"
+          },
+          {
+            "success": false,
+            "duration": 29136,
+            "codeLength": 0,
+            "error": "ASCIIArtGenerator: LLM returned empty code"
+          }
+        ],
+        "tone": [
+          {
+            "success": true,
+            "duration": 16186,
+            "codeLength": 1423
+          },
+          {
+            "success": false,
+            "duration": 24953,
+            "codeLength": 0,
+            "error": "ToneGenerator: LLM returned empty code"
+          },
+          {
+            "success": true,
+            "duration": 26121,
+            "codeLength": 1948
+          }
+        ]
+      }
+    }
+  },
+  "results": [
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "p5",
+      "success": true,
+      "duration": 106168,
+      "codeLength": 2467,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round1-p5.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T07:47:00.923Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "glsl",
+      "success": true,
+      "duration": 70159,
+      "codeLength": 2321,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round1-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T07:48:47.093Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "three",
+      "success": true,
+      "duration": 123208,
+      "codeLength": 1702,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round1-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T07:49:57.254Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "strudel",
+      "success": false,
+      "duration": 53273,
+      "codeLength": 0,
+      "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T07:52:00.464Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "hydra",
+      "success": true,
+      "duration": 106983,
+      "codeLength": 3370,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round1-hydra.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T07:52:53.740Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "remotion",
+      "success": true,
+      "duration": 76867,
+      "codeLength": 3312,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round1-remotion.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T07:54:40.725Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "html",
+      "success": true,
+      "duration": 246011,
+      "codeLength": 13610,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round1-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T07:55:57.594Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "ascii",
+      "success": false,
+      "duration": 110780,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:00:03.607Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 1,
+      "domain": "tone",
+      "success": true,
+      "duration": 165460,
+      "codeLength": 2625,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round1-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:01:54.391Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "p5",
+      "success": true,
+      "duration": 286168,
+      "codeLength": 3347,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round2-p5.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:04:39.855Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "glsl",
+      "success": true,
+      "duration": 107039,
+      "codeLength": 2703,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round2-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:09:26.025Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "three",
+      "success": true,
+      "duration": 220196,
+      "codeLength": 2422,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round2-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:11:13.067Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "strudel",
+      "success": false,
+      "duration": 102226,
+      "codeLength": 0,
+      "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:14:53.264Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "hydra",
+      "success": true,
+      "duration": 281171,
+      "codeLength": 2528,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round2-hydra.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:16:35.491Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "remotion",
+      "success": true,
+      "duration": 84062,
+      "codeLength": 3273,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round2-remotion.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:21:16.663Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "html",
+      "success": true,
+      "duration": 273537,
+      "codeLength": 11228,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round2-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:22:40.726Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "ascii",
+      "success": false,
+      "duration": 89023,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:27:14.265Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 2,
+      "domain": "tone",
+      "success": true,
+      "duration": 143071,
+      "codeLength": 2070,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round2-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:28:43.289Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "p5",
+      "success": true,
+      "duration": 215719,
+      "codeLength": 2846,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round3-p5.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:31:06.360Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "glsl",
+      "success": true,
+      "duration": 133566,
+      "codeLength": 2691,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round3-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:34:42.080Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "three",
+      "success": true,
+      "duration": 196026,
+      "codeLength": 2094,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round3-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:36:55.648Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "strudel",
+      "success": false,
+      "duration": 128553,
+      "codeLength": 0,
+      "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:40:11.674Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "hydra",
+      "success": false,
+      "duration": 281609,
+      "codeLength": 0,
+      "error": "HydraGenerator: No Hydra syntax found",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:42:20.227Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "remotion",
+      "success": true,
+      "duration": 77293,
+      "codeLength": 3933,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round3-remotion.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:47:01.837Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "html",
+      "success": true,
+      "duration": 268554,
+      "codeLength": 13030,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round3-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:48:19.131Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "ascii",
+      "success": true,
+      "duration": 90215,
+      "codeLength": 1829,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round3-ascii.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:52:47.686Z"
+    },
+    {
+      "model": "kimi-k2.5:cloud",
+      "round": 3,
+      "domain": "tone",
+      "success": true,
+      "duration": 125807,
+      "codeLength": 2077,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/kimi_k2_5_cloud-round3-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:54:17.903Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "p5",
+      "success": true,
+      "duration": 215703,
+      "codeLength": 3616,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round1-p5.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:56:23.711Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "glsl",
+      "success": true,
+      "duration": 117155,
+      "codeLength": 2671,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round1-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T08:59:59.415Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "three",
+      "success": true,
+      "duration": 125458,
+      "codeLength": 1661,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round1-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:01:56.571Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "strudel",
+      "success": false,
+      "duration": 126829,
+      "codeLength": 0,
+      "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:04:02.030Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "hydra",
+      "success": false,
+      "duration": 300025,
+      "codeLength": 0,
+      "error": "HydraGenerator: No Hydra syntax found",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:06:08.861Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "remotion",
+      "success": true,
+      "duration": 87337,
+      "codeLength": 4477,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round1-remotion.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:11:08.887Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "html",
+      "success": true,
+      "duration": 293107,
+      "codeLength": 13709,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round1-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:12:36.225Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "ascii",
+      "success": false,
+      "duration": 81784,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:17:29.334Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 1,
+      "domain": "tone",
+      "success": true,
+      "duration": 115945,
+      "codeLength": 1857,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round1-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:18:51.119Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "p5",
+      "success": true,
+      "duration": 181334,
+      "codeLength": 3257,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round2-p5.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:20:47.067Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "glsl",
+      "success": true,
+      "duration": 97811,
+      "codeLength": 2717,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round2-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:23:48.402Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "three",
+      "success": true,
+      "duration": 206099,
+      "codeLength": 2383,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round2-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:25:26.214Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "strudel",
+      "success": false,
+      "duration": 110450,
+      "codeLength": 0,
+      "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:28:52.314Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "hydra",
+      "success": false,
+      "duration": 300021,
+      "codeLength": 0,
+      "error": "HydraGenerator: No Hydra syntax found",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:30:42.765Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "remotion",
+      "success": true,
+      "duration": 75359,
+      "codeLength": 3087,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round2-remotion.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:35:42.786Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "html",
+      "success": true,
+      "duration": 251382,
+      "codeLength": 12903,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round2-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:36:58.147Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "ascii",
+      "success": false,
+      "duration": 79890,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:41:09.530Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 2,
+      "domain": "tone",
+      "success": true,
+      "duration": 145296,
+      "codeLength": 2694,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round2-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:42:29.421Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "p5",
+      "success": true,
+      "duration": 293362,
+      "codeLength": 3063,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round3-p5.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:44:54.718Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "glsl",
+      "success": true,
+      "duration": 115846,
+      "codeLength": 3184,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round3-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:49:48.082Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "three",
+      "success": true,
+      "duration": 250168,
+      "codeLength": 2401,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round3-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:51:43.929Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "strudel",
+      "success": false,
+      "duration": 125881,
+      "codeLength": 0,
+      "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:55:54.098Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "hydra",
+      "success": true,
+      "duration": 281560,
+      "codeLength": 3186,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round3-hydra.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T09:57:59.980Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "remotion",
+      "success": true,
+      "duration": 85156,
+      "codeLength": 4028,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round3-remotion.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:02:41.541Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "html",
+      "success": true,
+      "duration": 293984,
+      "codeLength": 13781,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round3-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:04:06.700Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "ascii",
+      "success": false,
+      "duration": 91003,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:09:00.686Z"
+    },
+    {
+      "model": "deepseek-v3.2:cloud",
+      "round": 3,
+      "domain": "tone",
+      "success": true,
+      "duration": 141317,
+      "codeLength": 2656,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/deepseek_v3_2_cloud-round3-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:10:31.689Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "p5",
+      "success": false,
+      "duration": 21469,
+      "codeLength": 0,
+      "error": "P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include par",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:12:53.008Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "glsl",
+      "success": true,
+      "duration": 29739,
+      "codeLength": 1169,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round1-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:13:14.477Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "three",
+      "success": true,
+      "duration": 27676,
+      "codeLength": 2074,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round1-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:13:44.217Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "strudel",
+      "success": false,
+      "duration": 34036,
+      "codeLength": 0,
+      "error": "StrudelGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:14:11.896Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "hydra",
+      "success": false,
+      "duration": 24701,
+      "codeLength": 0,
+      "error": "HydraGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:14:45.932Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "remotion",
+      "success": false,
+      "duration": 27821,
+      "codeLength": 0,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:15:10.633Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "html",
+      "success": true,
+      "duration": 15160,
+      "codeLength": 10936,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round1-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:15:38.454Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "ascii",
+      "success": false,
+      "duration": 19832,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:15:53.617Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 1,
+      "domain": "tone",
+      "success": true,
+      "duration": 16186,
+      "codeLength": 1423,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round1-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:16:13.449Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "p5",
+      "success": false,
+      "duration": 23861,
+      "codeLength": 0,
+      "error": "P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include par",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:16:29.636Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "glsl",
+      "success": true,
+      "duration": 20890,
+      "codeLength": 1912,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round2-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:16:53.498Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "three",
+      "success": false,
+      "duration": 28085,
+      "codeLength": 0,
+      "error": "ThreeGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:17:14.389Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "strudel",
+      "success": false,
+      "duration": 33782,
+      "codeLength": 0,
+      "error": "StrudelGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:17:42.475Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "hydra",
+      "success": false,
+      "duration": 48008,
+      "codeLength": 0,
+      "error": "HydraGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:18:16.258Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "remotion",
+      "success": false,
+      "duration": 17881,
+      "codeLength": 0,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:19:04.267Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "html",
+      "success": true,
+      "duration": 43338,
+      "codeLength": 11155,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round2-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:19:22.149Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "ascii",
+      "success": false,
+      "duration": 27336,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:20:05.489Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 2,
+      "domain": "tone",
+      "success": false,
+      "duration": 24953,
+      "codeLength": 0,
+      "error": "ToneGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:20:32.826Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "p5",
+      "success": false,
+      "duration": 29158,
+      "codeLength": 0,
+      "error": "P5GeneratorLLM: LLM returned empty code for prompt: Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include par",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:20:57.780Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "glsl",
+      "success": true,
+      "duration": 21366,
+      "codeLength": 1145,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round3-glsl.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:21:26.938Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "three",
+      "success": true,
+      "duration": 25374,
+      "codeLength": 2041,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round3-three.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:21:48.306Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "strudel",
+      "success": false,
+      "duration": 24320,
+      "codeLength": 0,
+      "error": "StrudelGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:22:13.681Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "hydra",
+      "success": false,
+      "duration": 21485,
+      "codeLength": 0,
+      "error": "HydraGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:22:38.001Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "remotion",
+      "success": false,
+      "duration": 18442,
+      "codeLength": 0,
+      "error": "RemotionGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:22:59.487Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "html",
+      "success": true,
+      "duration": 14899,
+      "codeLength": 10139,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round3-html.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:23:17.930Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "ascii",
+      "success": false,
+      "duration": 29136,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: LLM returned empty code",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:23:32.830Z"
+    },
+    {
+      "model": "qwen3.5:cloud",
+      "round": 3,
+      "domain": "tone",
+      "success": true,
+      "duration": 26121,
+      "codeLength": 1948,
+      "code": "dogfood-campaign-ollama-2026-04-04T07-47-00/code/qwen3_5_cloud-round3-tone.js",
+      "thinkingSource": "ollama-cloud",
+      "timestamp": "2026-04-04T10:24:01.967Z"
+    }
+  ]
+}

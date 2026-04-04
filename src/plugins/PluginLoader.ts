@@ -260,8 +260,13 @@ export class PluginLoader {
     for (const handler of this.eventHandlers) {
       try {
         handler(event);
+<<<<<<< HEAD
       } catch (err) {
         Logger.warn('PluginLoader', 'Plugin handler error:', err instanceof Error ? err.message : err);
+=======
+      } catch {
+        Logger.warn('PluginLoader', 'Event handler error');
+>>>>>>> d4be5bb (fix: add logging to 3 silent catch blocks)
       }
     }
   }

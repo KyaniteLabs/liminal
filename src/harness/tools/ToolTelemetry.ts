@@ -6,6 +6,7 @@
  */
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'fs';
+import { Logger } from '../../utils/Logger.js';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { ToolResult } from './types.js';
@@ -189,6 +190,7 @@ export class ToolTelemetry {
           const content = readFileSync(join(this.logDir, f), 'utf-8');
           return JSON.parse(content) as ToolCallRecord;
         } catch {
+          Logger.debug('ToolTelemetry', 'Failed to parse telemetry file', f);
           return null;
         }
       })

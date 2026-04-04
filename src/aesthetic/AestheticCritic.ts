@@ -4,6 +4,8 @@
 // Now with calibration support for improved correlation with human judgment.
 // ---------------------------------------------------------------------------
 
+import { Logger } from '../utils/Logger.js';
+
 import type {
   AestheticReport,
   AestheticViolation,
@@ -402,7 +404,7 @@ export class AestheticCritic {
           }
         }
       } catch {
-        // Ignore parse errors
+        Logger.debug('AestheticCritic', 'Failed to parse calibration weights file');
       }
     }
   }

@@ -32,8 +32,8 @@ export function detectDomain(code: string): Domain {
     return 'strudel';
   }
 
-  // 6. ASCII Art: box-drawing and block characters
-  if (/[\u2580-\u259F\u2500-\u257F]/.test(code) || (/[█▓▒░@#%*]/.test(code) && code.length < 5000)) {
+  // 6. ASCII Art: box-drawing and block characters (Unicode only — avoid false positives from %, *, @ in code)
+  if (/[\u2580-\u259F\u2500-\u257F]/.test(code) || (/[█▓▒░]/.test(code) && code.length < 5000)) {
     return 'ascii';
   }
 

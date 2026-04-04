@@ -719,3 +719,169 @@ LIMINAL_LOG_LEVEL=info
 ---
 
 **THE BIBLE is the source of truth. When in doubt, consult this document.**
+
+### 22. Calibration System
+
+**Location:** `src/calibration/`
+
+**Purpose:** Model calibration and performance measurement infrastructure.
+
+**Key Components:**
+- `CalibrationSuite.ts` - Orchestrates calibration workflows
+- `AccuracyMeasurer.ts` - Measures model accuracy against benchmarks
+- `LatencyProfiler.ts` - Profiles inference latency
+- `QualityAssessor.ts` - Assesses output quality metrics
+
+**Usage:**
+```typescript
+import { CalibrationSuite } from './src/calibration/CalibrationSuite.js';
+
+const suite = new CalibrationSuite({
+  models: ['qwen2.5-coder-7b', 'minimax-m1-7b'],
+  domains: ['p5', 'glsl', 'three']
+});
+await suite.run();
+```
+
+**Status:** Active - Used for model comparison and selection.
+
+---
+
+### 23. Embeddings System
+
+**Location:** `src/embeddings/`
+
+**Purpose:** Vector embedding generation and similarity search for semantic retrieval.
+
+**Key Components:**
+- `EmbeddingGenerator.ts` - Generates vector embeddings from text
+- `VectorStore.ts` - Stores and indexes embeddings
+- `SimilaritySearch.ts` - Performs cosine similarity search
+- `DimensionalityReducer.ts` - Reduces embedding dimensions
+
+**Usage:**
+```typescript
+import { EmbeddingGenerator } from './src/embeddings/EmbeddingGenerator.js';
+
+const generator = new EmbeddingGenerator({ model: 'xenova/all-MiniLM-L6-v2' });
+const embedding = await generator.embed('creative coding prompt');
+```
+
+**Status:** Active - Used for semantic memory retrieval in harness.
+
+---
+
+### 24. Emergent Behavior System
+
+**Location:** `src/emergent/`
+
+**Purpose:** Detects and analyzes emergent behaviors from LLM outputs.
+
+**Key Components:**
+- `EmergentDetector.ts` - Detects unexpected patterns
+- `ModelBehaviorPatterns.ts` - Catalogs known patterns
+- `SuggestionEngine.ts` - Generates suggestions based on patterns
+
+**Usage:**
+```typescript
+import { EmergentDetector } from './src/emergent/EmergentDetector.js';
+
+const detector = new EmergentDetector();
+const patterns = await detector.analyze(output);
+```
+
+**Status:** Active - Monitors for novel code generation patterns.
+
+---
+
+### 25. Error Handling System
+
+**Location:** `src/errors/`
+
+**Purpose:** Centralized error taxonomy and handling.
+
+**Key Components:**
+- `GenerationError.ts` - Base error class for generation failures
+- `error-classification.ts` - Error type definitions
+- `ErrorTaxonomy.ts` - Categorizes and remediates errors
+
+**Usage:**
+```typescript
+import { GenerationError } from './src/errors/GenerationError.js';
+
+throw new GenerationError('Validation failed', { code: 'VALIDATION_ERROR' });
+```
+
+**Status:** Active - Used across all generators.
+
+---
+
+### 26. Music-to-Visual Bridge
+
+**Location:** `src/musicToVisual/`
+
+**Purpose:** Bridges music generation with visual generation via audio analysis.
+
+**Key Components:**
+- `generateMusicToVisual.ts` - Main orchestrator
+- `AudioAnalyzer.ts` - Extracts BPM and FFT data (optional: Meyda)
+- Pattern-based FFT analysis as fallback
+
+**Usage:**
+```typescript
+import { generateMusicToVisual } from './src/musicToVisual/generateMusicToVisual.js';
+
+const result = await generateMusicToVisual({
+  musicPlatform: 'strudel',
+  visualPlatform: 'hydra',
+  traits: { bpm: 120, palette: 'neon' }
+});
+```
+
+**Status:** Active - Optional dependencies: meyda, music-metadata.
+
+---
+
+### 27. Narrative Archaeology System
+
+**Location:** `src/narrative/`
+
+**Purpose:** Long-term narrative tracking and archaeological analysis of generated content.
+
+**Key Components:**
+- `NarrativeArchaeologist.ts` - Analyzes content evolution over time
+- `LineageTracker.ts` - Tracks code lineage and influences
+- `archaeology.db` - SQLite database for narrative storage
+
+**Usage:**
+```typescript
+import { NarrativeArchaeologist } from './src/narrative/NarrativeArchaeologist.js';
+
+const archaeologist = new NarrativeArchaeologist();
+await archaeologist.record({ id: 'gen-123', prompt, code, domain });
+```
+
+**Status:** Active - Stores data in `narrative/data/archaeology.db`.
+
+---
+
+### 28. Rendering Pipeline
+
+**Location:** `src/render/`
+
+**Purpose:** Video rendering and preview generation.
+
+**Key Components:**
+- `CanvasRecorder.ts` - Records canvas to video
+- `PreviewServer.ts` - Serves preview HTML
+- `VisualScorer.ts` - Scores visual output quality
+
+**Usage:**
+```typescript
+import { CanvasRecorder } from './src/render/CanvasRecorder.js';
+
+const recorder = new CanvasRecorder({ fps: 30, duration: 5 });
+await recorder.record(code, 'p5', 'output.mp4');
+```
+
+**Status:** Active - Uses Remotion for video rendering.

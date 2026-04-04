@@ -551,7 +551,7 @@ ${fragmentSource.replace(/`/g, '\\`')}\`;
    * @param layer - The layer to destroy
    * @param instance - The shader instance
    */
-  destroy(layer: Layer, instance?: unknown): void {
+  destroy(layer: Layer, _instance?: unknown): void {
     const shaderInstance = this.instances.get(layer.id);
     if (!shaderInstance) {
       return;

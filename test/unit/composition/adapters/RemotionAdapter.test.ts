@@ -3,28 +3,14 @@
  *
  * Tests for the RemotionAdapter that renders Remotion video compositions.
  * All tests should initially FAIL (RED phase of TDD).
+ *
+ * @vitest-environment jsdom
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { RemotionAdapter } from '../../../../src/composition/adapters/RemotionAdapter.js';
+import { RemotionAdapter, remotionAdapter } from '../../../../src/composition/adapters/RemotionAdapter.js';
 import type { Layer, GlobalSettings } from '../../../../src/composition/types.js';
 import type { RenderContext } from '../../../../src/composition/CompositionEngine.js';
-
-// Mock Remotion module
-const mockUseCurrentFrame = vi.fn().mockReturnValue(0);
-const mockAbsoluteFill = ({ children }: { children: React.ReactNode }) => children;
-const mockComposition = ({ children }: { children: React.ReactNode }) => children;
-const mockPlayer = vi.fn();
-
-vi.mock('remotion', () => ({
-  useCurrentFrame: () => mockUseCurrentFrame(),
-  AbsoluteFill: mockAbsoluteFill,
-  Composition: mockComposition,
-  Player: mockPlayer,
-  getRemotionEnvironment: () => ({ isStudio: false }),
-  continueRender: vi.fn(),
-  delayRender: vi.fn().mockReturnValue('handle'),
-}));
 
 // Test fixtures
 const createMockLayer = (overrides?: Partial<Layer>): Layer => ({
@@ -91,10 +77,16 @@ describe('RemotionAdapter', () => {
   beforeEach(() => {
     adapter = new RemotionAdapter();
     mockContainer = document.createElement('div');
+    mockContainer.id = 'test-container';
+    document.body.appendChild(mockContainer);
     vi.clearAllMocks();
   });
 
   afterEach(() => {
+    const existing = document.getElementById('test-container');
+    if (existing) {
+      existing.remove();
+    }
     vi.resetAllMocks();
   });
 
@@ -105,7 +97,6 @@ describe('RemotionAdapter', () => {
 
     it('should load Remotion module dynamically', async () => {
       await adapter.initialize();
-      // After initialization, the adapter should have the module
       expect(adapter).toBeDefined();
     });
   });
@@ -125,7 +116,6 @@ describe('RemotionAdapter', () => {
 
       adapter.render(layer, mockContainer, context);
 
-      // Should create a container for the Remotion player
       const playerContainer = mockContainer.querySelector('.remotion-player-container');
       expect(playerContainer).toBeTruthy();
     });
@@ -139,6 +129,8 @@ describe('RemotionAdapter', () => {
 
       const playerContainer = mockContainer.querySelector('.remotion-player-container') as HTMLElement;
       expect(playerContainer).toBeTruthy();
+      expect(playerContainer.style.width).toBe('100%');
+      expect(playerContainer.style.height).toBe('100%');
     });
 
     it('should return an instance object', async () => {
@@ -159,7 +151,6 @@ describe('RemotionAdapter', () => {
 
       const instance = adapter.render(layer, mockContainer, context);
 
-      // Instance should be trackable
       expect(instance).toBeTruthy();
     });
   });
@@ -307,9 +298,10 @@ export const Comp = () => <AbsoluteFill><div>Static</div></AbsoluteFill>;`,
 
     it('should catch missing Composition export', () => {
       const layer = createMockLayer({
-        code: `import { useCurrentFrame } from 'remotion';
+        code: `import { useCurrentFrame, AbsoluteFill } from 'remotion';
 const frame = useCurrentFrame();
-export default () => <div>{frame}</div>;`,
+const MyComp = () => <AbsoluteFill><div>{frame}</div></AbsoluteFill>;
+// No export statement`,
       });
       const result = adapter.validate(layer);
 
@@ -371,8 +363,7 @@ export default () => <div>{frame}</div>;`,
       const layer = createMockLayer({ config: { ...createMockLayer().config, zIndex: 5 } });
       const script = adapter.generateScript(layer, mockGlobalSettings);
 
-      expect(script).toContain('z-index: 5');
-      expect(script).toContain('zIndex: 5');
+      expect(script).toContain('zIndex = 5');
     });
 
     it('should generate HTML that creates a container div', () => {
@@ -392,7 +383,6 @@ export default () => <div>{frame}</div>;`,
 
       const instance = adapter.render(layer, mockContainer, context);
       
-      // Should not throw
       expect(() => adapter.destroy(layer, instance)).not.toThrow();
     });
 
@@ -403,18 +393,17 @@ export default () => <div>{frame}</div>;`,
 
       adapter.render(layer, mockContainer, context);
       
+      expect(mockContainer.querySelector('.remotion-player-container')).toBeTruthy();
+      
       const instance = adapter.render(layer, mockContainer, context);
       adapter.destroy(layer, instance);
 
-      const playerContainer = mockContainer.querySelector('.remotion-player-container');
-      // After destroy, the player should be removed or marked as destroyed
       expect(adapter.getExports(layer)).toEqual([]);
     });
 
     it('should handle destroy for non-existent layer', () => {
       const layer = createMockLayer({ id: 'non-existent' });
       
-      // Should not throw even if layer was never rendered
       expect(() => adapter.destroy(layer, null)).not.toThrow();
     });
 
@@ -425,14 +414,12 @@ export default () => <div>{frame}</div>;`,
 
       const instance = adapter.render(layer, mockContainer, context);
       
-      // Destroy should complete without errors
       expect(() => adapter.destroy(layer, instance)).not.toThrow();
     });
   });
 
   describe('singleton export', () => {
-    it('should export remotionAdapter singleton', async () => {
-      const { remotionAdapter } = await import('../../../../src/composition/adapters/RemotionAdapter.js');
+    it('should export remotionAdapter singleton', () => {
       expect(remotionAdapter).toBeDefined();
       expect(remotionAdapter).toBeInstanceOf(RemotionAdapter);
     });

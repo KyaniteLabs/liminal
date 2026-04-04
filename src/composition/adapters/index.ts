@@ -107,5 +107,14 @@ export class AdapterRegistry {
   }
 }
 
+// Export adapters
+export { ASCIIArtAdapter, asciiArtAdapter } from './ASCIIArtAdapter.js';
+export { StrudelAdapter, strudelAdapter } from './StrudelAdapter.js';
+export { ShaderAdapter, shaderAdapter } from './ShaderAdapter.js';
+export { ThreeAdapter, threeAdapter } from './ThreeAdapter.js';
+export { HTMLAdapter, htmlAdapter } from './HTMLAdapter.js';
+export { RemotionAdapter, remotionAdapter } from './RemotionAdapter.js';
+export { HydraAdapter, hydraAdapter } from './HydraAdapter.js';
+
 /** Global adapter registry instance */
 export const adapterRegistry = new AdapterRegistry();

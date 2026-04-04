@@ -2,25 +2,37 @@
  * ThreeAdapter - Adapter for Three.js 3D layers.
  *
  * Renders Three.js scenes in a container and exposes 3D scene properties
- * for cross-layer communication.
+ * for cross-layer communication. Supports camera position exports and
+ * mouse coordinate imports from p5 for camera control.
+ *
+ * @example
+ * ```typescript
+ * const adapter = new ThreeAdapter();
+ * await adapter.initialize();
+ * const instance = adapter.render(layer, container, context);
+ * const exports = adapter.getExports(layer);
+ * adapter.destroy(layer, instance);
+ * ```
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 
-/** Three.js types (simplified) */
+/** Three.js Scene type (simplified) */
 interface THREEScene {
   add: (object: THREEObject) => void;
   remove: (object: THREEObject) => void;
   children: THREEObject[];
 }
 
+/** Three.js Camera type (simplified) */
 interface THREECamera {
   position: { x: number; y: number; z: number };
   lookAt: (x: number, y: number, z: number) => void;
 }
 
+/** Three.js Renderer type (simplified) */
 interface THREERenderer {
   setSize: (width: number, height: number) => void;
   render: (scene: THREEScene, camera: THREECamera) => void;
@@ -28,10 +40,12 @@ interface THREERenderer {
   dispose: () => void;
 }
 
+/** Three.js Object3D type (simplified) */
 interface THREEObject {
   rotation: { x: number; y: number; z: number };
 }
 
+/** Three.js module interface */
 interface THREEModule {
   Scene: new () => THREEScene;
   PerspectiveCamera: new (fov: number, aspect: number, near: number, far: number) => THREECamera;
@@ -42,6 +56,7 @@ interface THREEModule {
   Color: new (color: string | number) => unknown;
 }
 
+/** Internal instance tracking for a Three.js layer */
 interface ThreeInstance {
   scene: THREEScene;
   camera: THREECamera;
@@ -50,12 +65,23 @@ interface ThreeInstance {
   objects: THREEObject[];
 }
 
+/**
+ * Adapter for rendering Three.js 3D scenes in a composition layer.
+ *
+ * Implements the LayerAdapter interface for the 'three' domain type.
+ * Manages scene creation, rendering loop, and cleanup.
+ */
 export class ThreeAdapter implements LayerAdapter {
   private threeModule?: THREEModule;
   private instances = new Map<string, ThreeInstance>();
 
   /**
    * Load Three.js module dynamically.
+   *
+   * Checks for the global THREE object in the browser environment.
+   * Must be called before render().
+   *
+   * @returns Promise that resolves when initialization is complete
    */
   async initialize(): Promise<void> {
     if (!this.threeModule) {
@@ -69,6 +95,15 @@ export class ThreeAdapter implements LayerAdapter {
 
   /**
    * Render the Three.js layer into a container.
+   *
+   * Creates a scene, camera, and renderer. Starts the animation loop.
+   * Executes the layer's code in an eval context with THREE access.
+   *
+   * @param layer - The layer to render
+   * @param container - DOM element to render into
+   * @param context - Optional render context with settings and state
+   * @returns The Three.js instance with scene, camera, renderer, and objects
+   * @throws Error if Three.js is not loaded (call initialize() first)
    */
   render(layer: Layer, container: HTMLElement, context?: RenderContext): ThreeInstance {
     const THREE = this.threeModule;
@@ -161,6 +196,12 @@ export class ThreeAdapter implements LayerAdapter {
 
   /**
    * Get exports for this layer.
+   *
+   * Exports camera position (x, y, z), scene objects, and renderer
+   * for use by other layers in the composition.
+   *
+   * @param layer - The layer to get exports for
+   * @returns Array of export definitions with getters
    */
   getExports(layer: Layer): Export[] {
     const instance = this.instances.get(layer.id);
@@ -202,8 +243,14 @@ export class ThreeAdapter implements LayerAdapter {
 
   /**
    * Get imports that this layer needs.
+   *
+   * Requests mouseX and mouseY from p5 layers for camera control.
+   * These are mapped to cameraControlX and cameraControlY aliases.
+   *
+   * @param _layer - The layer to get imports for (unused but required by interface)
+   * @returns Array of import definitions
    */
-  getImports(): Import[] {
+  getImports(_layer: Layer): Import[] {
     // Three.js can import from p5 for camera control
     return [
       {
@@ -223,8 +270,14 @@ export class ThreeAdapter implements LayerAdapter {
 
   /**
    * Destroy/cleanup layer instance.
+   *
+   * Cancels the animation frame, disposes the renderer,
+   * removes the canvas from the DOM, and cleans up the instance.
+   *
+   * @param layer - The layer to destroy
+   * @param _instance - The instance to destroy (unused - retrieved from internal map)
    */
-  destroy(layer: Layer): void {
+  destroy(layer: Layer, _instance?: unknown): void {
     const instance = this.instances.get(layer.id);
     if (instance) {
       // Cancel animation frame
@@ -249,6 +302,14 @@ export class ThreeAdapter implements LayerAdapter {
 
   /**
    * Validate layer code.
+   *
+   * Checks that the layer code contains required Three.js components:
+   * - THREE.Scene
+   * - THREE.PerspectiveCamera
+   * - THREE.WebGLRenderer
+   *
+   * @param layer - The layer to validate
+   * @returns Validation result with valid flag and optional error messages
    */
   validate(layer: Layer): { valid: boolean; errors?: string[] } {
     const errors: string[] = [];
@@ -271,6 +332,15 @@ export class ThreeAdapter implements LayerAdapter {
 
   /**
    * Generate standalone script for HTML export.
+   *
+   * Creates a self-contained HTML script that:
+   * - Loads Three.js from CDN
+   * - Creates a container element
+   * - Executes the layer code
+   *
+   * @param layer - The layer to generate script for
+   * @param _settings - Global settings (unused but required by interface)
+   * @returns HTML script string
    */
   generateScript(layer: Layer, _settings: GlobalSettings): string {
     return `
@@ -289,5 +359,5 @@ ${layer.code.split('\n').map(line => '  ' + line).join('\n')}
   }
 }
 
-/** Singleton instance */
+/** Singleton instance for convenient access */
 export const threeAdapter = new ThreeAdapter();

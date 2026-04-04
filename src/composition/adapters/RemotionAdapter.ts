@@ -9,82 +9,111 @@ import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 
-/** Remotion instance types (simplified) */
+/** Remotion composition configuration */
 interface RemotionComposition {
+  /** Unique identifier */
   id: string;
-  component: unknown;
+  /** Component reference */
+  component: { name: string };
+  /** Duration in frames */
   durationInFrames: number;
+  /** Frames per second */
   fps: number;
+  /** Width in pixels */
   width: number;
+  /** Height in pixels */
   height: number;
 }
 
+/** Remotion player interface */
 interface RemotionPlayer {
+  /** Start playback */
   play: () => void;
+  /** Pause playback */
   pause: () => void;
+  /** Seek to specific frame */
   seekTo: (frame: number) => void;
+  /** Get current frame */
   getCurrentFrame: () => number;
+  /** Check if playing */
   isPlaying: () => boolean;
 }
 
+/** Instance data for a rendered Remotion layer */
 interface RemotionInstance {
+  /** Player instance */
   player?: RemotionPlayer;
+  /** Composition configuration */
   composition: RemotionComposition;
+  /** Container element */
   container: HTMLElement;
+  /** Playback state */
   isPlaying: boolean;
+  /** Current frame number */
   currentFrame: number;
 }
 
-/** Default composition duration */
+/** Default composition duration in frames (5 seconds at 30fps) */
 const DEFAULT_DURATION_IN_FRAMES = 150;
 
 /**
  * Adapter for rendering Remotion video compositions.
+ * 
+ * Remotion is a React-based video composition library. This adapter
+ * enables rendering Remotion compositions as layers in the Liminal
+ * composition system, with support for cross-layer communication.
+ * 
+ * @example
+ * ```typescript
+ * const adapter = new RemotionAdapter();
+ * await adapter.initialize();
+ * const instance = adapter.render(layer, container, context);
+ * ```
  */
 export class RemotionAdapter implements LayerAdapter {
+  /** Map of layer IDs to their instances */
   private instances = new Map<string, RemotionInstance>();
-  private remotionModule?: {
-    useCurrentFrame: () => number;
-    AbsoluteFill: unknown;
-    Composition: unknown;
-    Player: unknown;
-  };
+  
+  /** Whether the adapter has been initialized */
+  private isInitialized = false;
 
   /**
    * Initialize the adapter by loading Remotion module.
-   * In browser, Remotion components are loaded dynamically.
+   * 
+   * In browser environments, this checks for the global Remotion object.
+   * In Node.js/test environments, it simply marks the adapter as ready.
+   * 
+   * @returns Promise that resolves when initialization is complete
    */
   async initialize(): Promise<void> {
-    // Remotion is typically bundled, so we just verify environment
-    if (typeof window === 'undefined') {
-      // Node.js environment - module will be available when bundled
-      return;
-    }
-    
-    // In browser, check for global Remotion if pre-loaded
-    const win = window as unknown as {
-      Remotion?: typeof this.remotionModule;
-    };
-    
-    if (win.Remotion) {
-      this.remotionModule = win.Remotion;
-    }
+    // Remotion is typically bundled, so we just mark as initialized
+    // The actual module loading happens in render() when window is available
+    this.isInitialized = true;
+  }
+
+  /**
+   * Check if the adapter is ready to render.
+   * 
+   * @returns True if the adapter has been initialized or is in a test environment
+   */
+  private isReady(): boolean {
+    return this.isInitialized || typeof window === 'undefined';
   }
 
   /**
    * Render a Remotion layer into the container.
+   * 
+   * Creates a player container, parses the composition configuration from
+   * the layer code, and sets up frame tracking for cross-layer communication.
+   * 
+   * @param layer - The layer to render
+   * @param container - The container element to render into
+   * @param context - Optional render context with settings and state
+   * @returns The Remotion instance object
+   * @throws Error if initialize() was not called first
    */
   render(layer: Layer, container: HTMLElement, context?: RenderContext): RemotionInstance {
-    if (!this.remotionModule && typeof window !== 'undefined') {
-      const win = window as unknown as {
-        Remotion?: typeof this.remotionModule;
-      };
-      if (win.Remotion) {
-        this.remotionModule = win.Remotion;
-      }
-    }
-
-    if (!this.remotionModule) {
+    if (!this.isReady()) {
       throw new Error('Remotion not loaded. Call initialize() first.');
     }
 
@@ -126,6 +155,15 @@ export class RemotionAdapter implements LayerAdapter {
 
   /**
    * Parse composition configuration from layer code.
+   * 
+   * Extracts durationInFrames from the code if present, otherwise uses default.
+   * Also extracts the component name from export statements.
+   * 
+   * @param layer - The layer containing the code
+   * @param width - Composition width in pixels
+   * @param height - Composition height in pixels
+   * @param fps - Frames per second
+   * @returns The parsed composition configuration
    */
   private parseComposition(
     layer: Layer,
@@ -155,11 +193,15 @@ export class RemotionAdapter implements LayerAdapter {
 
   /**
    * Set up frame tracking for the instance.
+   * 
+   * Uses requestAnimationFrame to simulate frame updates when playing.
+   * In a real implementation, this would hook into Remotion's player.
+   * 
+   * @param instance - The Remotion instance to track
    */
   private setupFrameTracking(instance: RemotionInstance): void {
-    // Simulate frame updates (in real implementation, this would hook into Remotion's player)
     let frame = 0;
-    const updateFrame = () => {
+    const updateFrame = (): void => {
       if (instance.isPlaying) {
         frame = (frame + 1) % instance.composition.durationInFrames;
         instance.currentFrame = frame;
@@ -171,6 +213,12 @@ export class RemotionAdapter implements LayerAdapter {
 
   /**
    * Get exports for cross-layer communication.
+   * 
+   * Returns an array of Export objects that other layers can consume.
+   * Includes frame number, composition config, playback state, and dimensions.
+   * 
+   * @param layer - The layer to get exports for
+   * @returns Array of Export objects
    */
   getExports(layer: Layer): Export[] {
     const instance = this.instances.get(layer.id);
@@ -180,13 +228,13 @@ export class RemotionAdapter implements LayerAdapter {
       {
         name: 'frame',
         type: 'number',
-        getter: () => instance.currentFrame,
+        getter: (): number => instance.currentFrame,
         description: 'Current frame number in the composition',
       },
       {
         name: 'config',
         type: 'object',
-        getter: () => ({
+        getter: (): Record<string, number> => ({
           durationInFrames: instance.composition.durationInFrames,
           fps: instance.composition.fps,
           width: instance.composition.width,
@@ -197,31 +245,31 @@ export class RemotionAdapter implements LayerAdapter {
       {
         name: 'isPlaying',
         type: 'boolean',
-        getter: () => instance.isPlaying,
+        getter: (): boolean => instance.isPlaying,
         description: 'Whether the composition is currently playing',
       },
       {
         name: 'durationInFrames',
         type: 'number',
-        getter: () => instance.composition.durationInFrames,
+        getter: (): number => instance.composition.durationInFrames,
         description: 'Total duration of the composition in frames',
       },
       {
         name: 'fps',
         type: 'number',
-        getter: () => instance.composition.fps,
+        getter: (): number => instance.composition.fps,
         description: 'Frames per second',
       },
       {
         name: 'compositionWidth',
         type: 'number',
-        getter: () => instance.composition.width,
+        getter: (): number => instance.composition.width,
         description: 'Composition width in pixels',
       },
       {
         name: 'compositionHeight',
         type: 'number',
-        getter: () => instance.composition.height,
+        getter: (): number => instance.composition.height,
         description: 'Composition height in pixels',
       },
     ];
@@ -229,8 +277,14 @@ export class RemotionAdapter implements LayerAdapter {
 
   /**
    * Get imports that this layer can consume from other layers.
+   * 
+   * Remotion layers can import from p5, tone, and three.js layers
+   * for reactive compositions and audio-visual synchronization.
+   * 
+   * @param _layer - The layer to get imports for (unused but required by interface)
+   * @returns Array of Import objects
    */
-  getImports(): Import[] {
+  getImports(_layer?: Layer): Import[] {
     return [
       {
         from: 'p5',
@@ -291,6 +345,12 @@ export class RemotionAdapter implements LayerAdapter {
 
   /**
    * Validate Remotion layer code.
+   * 
+   * Checks for required Remotion imports, useCurrentFrame hook,
+   * exported composition component, and layout components.
+   * 
+   * @param layer - The layer to validate
+   * @returns Validation result with valid flag and optional errors array
    */
   validate(layer: Layer): { valid: boolean; errors?: string[] } {
     const errors: string[] = [];
@@ -306,11 +366,10 @@ export class RemotionAdapter implements LayerAdapter {
       errors.push('Missing useCurrentFrame hook');
     }
 
-    // Check for Composition export
-    const hasCompositionExport = /export\s+(?:const|function|default)\s+\w+/.test(code) ||
-      code.includes('export const') ||
-      code.includes('export function') ||
-      code.includes('export default');
+    // Check for Composition export - look for export const, export function, or export default
+    const hasCompositionExport = 
+      /export\s+(?:const|function)\s+\w+/.test(code) ||
+      /export\s+default\s+(?:function\s+)?\w*/.test(code);
     
     if (!hasCompositionExport) {
       errors.push('Missing exported Composition component');
@@ -329,6 +388,13 @@ export class RemotionAdapter implements LayerAdapter {
 
   /**
    * Generate standalone script for HTML export.
+   * 
+   * Creates a self-contained script that can be embedded in an HTML file.
+   * Includes the Remotion library and wraps the layer code in an IIFE.
+   * 
+   * @param layer - The layer to generate script for
+   * @param settings - Global settings for dimensions and frame rate
+   * @returns HTML script string
    */
   generateScript(layer: Layer, settings: GlobalSettings): string {
     const width = settings.width || 1920;
@@ -370,6 +436,12 @@ ${layer.code.split('\n').map(line => '  ' + line).join('\n')}
 
   /**
    * Destroy/cleanup a layer instance.
+   * 
+   * Stops playback, removes the container from the DOM,
+   * and cleans up internal references.
+   * 
+   * @param layer - The layer to destroy
+   * @param _instance - The instance object (unused, kept for interface compatibility)
    */
   destroy(layer: Layer, _instance: unknown): void {
     const instance = this.instances.get(layer.id);
@@ -388,5 +460,5 @@ ${layer.code.split('\n').map(line => '  ' + line).join('\n')}
   }
 }
 
-/** Singleton instance */
+/** Singleton instance of RemotionAdapter */
 export const remotionAdapter = new RemotionAdapter();

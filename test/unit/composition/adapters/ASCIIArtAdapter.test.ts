@@ -167,7 +167,7 @@ describe('ASCIIArtAdapter', () => {
 
       expect(maxLineLengthExport).toBeDefined();
       expect(maxLineLengthExport?.type).toBe('number');
-      expect(maxLineLengthExport?.getter()).toBe(15);
+      expect(maxLineLengthExport?.getter()).toBe(14); // 'VERY LONG LINE'.length === 14
     });
 
     it('should return empty array if layer not rendered', () => {

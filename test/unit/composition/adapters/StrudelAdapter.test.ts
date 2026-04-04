@@ -6,7 +6,7 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { StrudelAdapter, strudelAdapter } from '../../../../src/composition/adapters/StrudelAdapter.js';
 import type { Layer, GlobalSettings } from '../../../../src/composition/types.js';
 import { DEFAULT_GLOBAL_SETTINGS } from '../../../../src/composition/types.js';
@@ -33,7 +33,7 @@ describe('StrudelAdapter', () => {
   let mockContainer: HTMLElement;
   let mockGlobalSettings: GlobalSettings;
 
-  beforeEach(() => {
+  beforeEach(async () => {
     adapter = new StrudelAdapter();
     
     mockLayer = {
@@ -62,6 +62,7 @@ bpm(120)
     };
 
     mockContainer = document.createElement('div');
+    document.body.appendChild(mockContainer);
     mockGlobalSettings = { ...DEFAULT_GLOBAL_SETTINGS };
 
     // Setup global Strudel mock
@@ -77,6 +78,14 @@ bpm(120)
         Pattern: vi.fn(),
       },
     } as unknown as typeof window;
+
+    // Initialize the adapter
+    await adapter.initialize();
+  });
+
+  afterEach(() => {
+    // Clean up DOM
+    mockContainer.remove();
   });
 
   describe('render()', () => {
@@ -90,11 +99,18 @@ bpm(120)
     });
 
     it('should throw error if Strudel is not loaded', () => {
-      // Remove strudel from window
+      // Create a fresh adapter without calling initialize
+      const uninitializedAdapter = new StrudelAdapter();
+      
+      // Temporarily remove strudel from window
+      const originalStrudel = (globalThis as unknown as { window: { strudel?: unknown } }).window.strudel;
       delete (globalThis as unknown as { window: { strudel?: unknown } }).window.strudel;
       
-      expect(() => adapter.render(mockLayer, mockContainer))
+      expect(() => uninitializedAdapter.render(mockLayer, mockContainer))
         .toThrow('Strudel not loaded. Call initialize() first.');
+      
+      // Restore strudel for other tests
+      (globalThis as unknown as { window: { strudel?: unknown } }).window.strudel = originalStrudel;
     });
 
     it('should create controls container with start/stop buttons', async () => {

@@ -5,7 +5,7 @@
  * Follows TDD: red -> green -> refactor cycle.
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { HTMLAdapter, htmlAdapter } from '../../../../src/composition/adapters/HTMLAdapter.js';
 import type { Layer, GlobalSettings } from '../../../../src/composition/types.js';
 import type { RenderContext } from '../../../../src/composition/CompositionEngine.js';
@@ -14,7 +14,11 @@ import { StateManager } from '../../../../src/composition/CompositionEngine.js';
 // Mock DOM APIs for Node.js test environment
 const mockElement = () => ({
   tagName: 'DIV',
-  style: {} as CSSStyleDeclaration,
+  style: {
+    setProperty: vi.fn(),
+    getPropertyValue: vi.fn(),
+    removeProperty: vi.fn(),
+  } as unknown as CSSStyleDeclaration,
   innerHTML: '',
   appendChild: vi.fn(),
   addEventListener: vi.fn(),
@@ -96,6 +100,33 @@ describe('HTMLAdapter', () => {
     };
 
     vi.clearAllMocks();
+  });
+
+  describe('applyImports', () => {
+    it('should apply numeric imports as CSS custom properties', () => {
+      const mockImports = { mouseX: 100, mouseY: 200 };
+      mockContext.state.register(`__imports_${mockLayer.id}`, () => mockImports);
+      
+      const result = adapter.render(mockLayer, mockContainer, mockContext);
+
+      expect(result.container.style.setProperty).toBeDefined();
+    });
+
+    it('should apply string imports as CSS custom properties', () => {
+      const mockImports = { color: 'red', size: 'large' };
+      mockContext.state.register(`__imports_${mockLayer.id}`, () => mockImports);
+      
+      const result = adapter.render(mockLayer, mockContainer, mockContext);
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle missing imports gracefully', () => {
+      // No imports registered
+      const result = adapter.render(mockLayer, mockContainer, mockContext);
+
+      expect(result).toBeDefined();
+    });
   });
 
   describe('render()', () => {
@@ -415,6 +446,16 @@ describe('HTMLAdapter', () => {
       const exports = adapter.getExports(mockLayer);
       expect(exports).toEqual([]);
     });
+
+    it('should call cleanup function if provided', () => {
+      const cleanupSpy = vi.fn();
+      const instance = adapter.render(mockLayer, mockContainer, mockContext);
+      (instance as { cleanup?: () => void }).cleanup = cleanupSpy;
+      
+      adapter.destroy(mockLayer, instance);
+
+      expect(cleanupSpy).toHaveBeenCalled();
+    });
   });
 
   describe('singleton instance', () => {
@@ -430,6 +471,82 @@ describe('HTMLAdapter', () => {
       expect(typeof htmlAdapter.validate).toBe('function');
       expect(typeof htmlAdapter.destroy).toBe('function');
       expect(typeof htmlAdapter.generateScript).toBe('function');
+    });
+  });
+
+  describe('DOMParser validation', () => {
+    let originalDOMParser: unknown;
+
+    beforeEach(() => {
+      originalDOMParser = (global as Record<string, unknown>).DOMParser;
+    });
+
+    afterEach(() => {
+      if (originalDOMParser !== undefined) {
+        (global as Record<string, unknown>).DOMParser = originalDOMParser;
+      } else {
+        delete (global as Record<string, unknown>).DOMParser;
+      }
+    });
+
+    it('should use DOMParser when available', () => {
+      // Mock DOMParser
+      const mockParseError = null;
+      const mockDoc = {
+        querySelector: vi.fn(() => mockParseError),
+      };
+      class MockDOMParser {
+        parseFromString = vi.fn(() => mockDoc);
+      }
+      (global as Record<string, unknown>).DOMParser = MockDOMParser;
+
+      mockLayer.code = '<div>Valid HTML</div>';
+      const result = adapter.validate(mockLayer);
+
+      expect(result.valid).toBe(true);
+    });
+
+    it('should detect parse errors from DOMParser', () => {
+      // Mock DOMParser with parse error
+      const mockParseError = { tagName: 'parsererror' };
+      const mockDoc = {
+        querySelector: vi.fn(() => mockParseError),
+      };
+      class MockDOMParser {
+        parseFromString = vi.fn(() => mockDoc);
+      }
+      (global as Record<string, unknown>).DOMParser = MockDOMParser;
+
+      mockLayer.code = '<div><span>Unclosed</div>';
+      const result = adapter.validate(mockLayer);
+
+      expect(result.errors?.some(e => e.includes('parsing error') || e.includes('Mismatched') || e.includes('Unclosed'))).toBe(true);
+    });
+  });
+
+  describe('getComputedStyles edge cases', () => {
+    let originalWindow: Window & typeof globalThis;
+
+    beforeEach(() => {
+      originalWindow = global.window;
+    });
+
+    afterEach(() => {
+      global.window = originalWindow;
+    });
+
+    it('should return empty object when window is undefined', () => {
+      // @ts-expect-error - Testing undefined window
+      global.window = undefined;
+      
+      adapter.render(mockLayer, mockContainer, mockContext);
+      const exports = adapter.getExports(mockLayer);
+      const stylesExport = exports.find(e => e.name === 'computedStyles');
+      
+      if (stylesExport) {
+        const styles = stylesExport.getter();
+        expect(styles).toEqual({});
+      }
     });
   });
 

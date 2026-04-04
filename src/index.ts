@@ -751,10 +751,32 @@ export {
   CompositionEngine,
   StateManager,
   LayerManager,
-  
-  // Types
+
+  // Constants
+  DEFAULT_LAYER_CONFIG,
+  DEFAULT_GLOBAL_SETTINGS,
+
+  // Factory functions
+  createLayer,
+  createLayerFromResponse,
+  createComposition,
+  exportProject,
+
+  // Adapters
+  AdapterRegistry,
+  adapterRegistry,
+  p5Adapter,
+  toneAdapter,
+} from './composition/index.js';
+
+export type {
+  // String-union types
   DomainType,
   BlendMode,
+  MaskMode,
+  AssetType,
+
+  // Core interfaces
   Layer,
   LayerConfig,
   LayerMetadata,
@@ -765,25 +787,8 @@ export {
   LiminalProject,
   Export,
   Import,
-  
-  // Constants
-  DEFAULT_LAYER_CONFIG,
-  DEFAULT_GLOBAL_SETTINGS,
-  
-  // Factory functions
-  createLayer,
-  createLayerFromResponse,
-  createComposition,
-  exportProject,
-  
-  // Adapters
-  AdapterRegistry,
-  adapterRegistry,
-  p5Adapter,
-  toneAdapter,
-} from './composition/index.js';
 
-export type {
+  // Engine option types
   CompositionEngineOptions,
   RenderContext,
   LayerManagerOptions,

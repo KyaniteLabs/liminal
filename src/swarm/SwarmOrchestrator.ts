@@ -419,15 +419,6 @@ export class SwarmOrchestrator {
       // Prune vocabulary if it exceeds bounds
       this.creativeLanguage.pruneVocabulary();
 
-      // Emit swarm round event (P0.2)
-      eventBus.emit(EventTypes.SWARM_ROUND, 'SwarmOrchestrator', {
-        round: roundNum,
-        totalRounds: this.config.maxRounds,
-        winnerId: result.winnerId,
-        converged,
-        vocabularySize: this.creativeLanguage.getQualityReport().totalSymbols,
-      } as unknown as Record<string, unknown>);
-
       // Track winner output for novelty scoring in future rounds
       if (result.winnerContent) {
         prevWinnerOutputs.push(result.winnerContent);
@@ -440,13 +431,27 @@ export class SwarmOrchestrator {
           if (consecutiveWins >= this.config.convergenceThreshold) {
             converged = true;
             convergenceRound = roundNum;
-            break;
           }
         } else {
           consecutiveWins = 1;
           lastWinner = result.winnerId;
         }
       }
+
+      // Emit swarm round event with full round data (P0.2)
+      eventBus.emit(EventTypes.SWARM_ROUND, 'SwarmOrchestrator', {
+        round: roundNum,
+        totalRounds: this.config.maxRounds,
+        outputs: Object.fromEntries(result.outputs),
+        votes: Object.fromEntries(result.votes),
+        winner: result.winnerId,
+        converged,
+        vocabularySize: this.creativeLanguage.getQualityReport().totalSymbols,
+        timestamp: Date.now(),
+      } as unknown as Record<string, unknown>);
+
+      // Break after emitting the convergence round event
+      if (converged) break;
 
       // Select next seed
       currentSeed = this.selectNextSeed(result, effectiveMode, constraint);

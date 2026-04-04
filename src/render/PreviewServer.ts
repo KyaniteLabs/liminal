@@ -8,7 +8,7 @@ import express, { Express } from 'express';
 import path from 'path';
 import { Server } from 'http';
 import helmet from 'helmet';
-import csurf from 'csurf';
+import { doubleCsrf } from 'csrf-csrf';
 import cookieParser from 'cookie-parser';
 import { Gallery } from '../gallery/Gallery.js';
 import { Exporter } from '../export/Exporter.js';
@@ -124,18 +124,27 @@ export class PreviewServer {
     // Cookie parser required for CSRF
     this.app.use(cookieParser());
 
-    // CSRF Protection (disabled in test environment for easier testing)
+    // CSRF Protection using double-submit cookie pattern (disabled in test environment)
     const isTestEnv = process.env.NODE_ENV === 'test';
-    const csrfProtection = isTestEnv 
+
+    const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
+      getSecret: () => process.env.CSRF_SECRET || 'liminal-csrf-secret-change-in-production',
+      getSessionIdentifier: () => 'liminal-preview',
+      cookieName: 'x-csrf-token',
+      cookieOptions: {
+        sameSite: 'strict' as const,
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        httpOnly: true,
+      },
+      size: 32,
+      ignoredMethods: ['GET', 'HEAD', 'OPTIONS'],
+      getCsrfTokenFromRequest: (req) => req.headers['x-csrf-token'] as string | undefined,
+    });
+
+    const csrfProtection = isTestEnv
       ? (_req: any, _res: any, next: any) => next() // No-op middleware for tests
-      : csurf({
-          cookie: {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-          },
-          value: (req) => req.headers['x-csrf-token'] as string,
-        });
+      : doubleCsrfProtection;
 
     // Apply CSRF to state-changing routes only
     this.app.use('/api/preview/versions', csrfProtection);
@@ -143,8 +152,9 @@ export class PreviewServer {
     this.app.use('/api/export', csrfProtection);
 
     // Add CSRF token endpoint (returns dummy token in test mode)
-    this.app.get('/api/csrf-token', csrfProtection, (req, res) => {
-      res.json({ csrfToken: isTestEnv ? 'test-token' : req.csrfToken() });
+    this.app.get('/api/csrf-token', (req, res) => {
+      const token = isTestEnv ? 'test-token' : generateCsrfToken(req, res);
+      res.json({ csrfToken: token });
     });
 
     // Apply rate limiting to API routes (must be before route handlers)

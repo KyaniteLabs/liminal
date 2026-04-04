@@ -157,7 +157,7 @@ export class AudioPlayer {
   /**
    * Get file info
    */
-  async getAudioInfo(filePath: string): Promise<{ name: string; format: string }> {
+  getAudioInfo(filePath: string): { name: string; format: string } {
     const ext = path.extname(filePath).toLowerCase();
     const name = path.basename(filePath);
     

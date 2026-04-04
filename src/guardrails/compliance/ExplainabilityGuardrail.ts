@@ -77,6 +77,7 @@ export const ExplainabilityGuardrail: GuardrailRule = {
   tier: GuardrailTier.SHADOW,
   category: 'compliance',
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     // Record this evaluation
     recordDecision(

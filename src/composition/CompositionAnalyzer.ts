@@ -228,6 +228,7 @@ export class CompositionAnalyzer {
    * @param prompt - The user prompt to analyze
    * @returns Array of domain recommendations
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async analyzeWithLLM(prompt: string): Promise<DomainRecommendation[]> {
     // In a real implementation, this would call an LLM
     // For now, return a reasonable default based on prompt analysis

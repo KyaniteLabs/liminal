@@ -57,7 +57,7 @@ export class HydraAdapter implements LayerAdapter {
   /**
    * Load Hydra module dynamically.
    */
-  async initialize(): Promise<void> {
+  initialize(): void {
     if (!this.hydraModule) {
       // In browser, Hydra is loaded via CDN
       if (typeof window !== 'undefined' && (window as unknown as { Hydra: HydraConstructor }).Hydra) {

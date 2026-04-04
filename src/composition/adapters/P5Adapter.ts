@@ -38,7 +38,7 @@ export class P5Adapter implements LayerAdapter {
   /**
    * Load p5.js module dynamically.
    */
-  async initialize(): Promise<void> {
+  initialize(): void {
     if (!this.p5Module) {
       // In browser, p5 is global
       if (typeof window !== 'undefined' && (window as unknown as { p5: P5Constructor }).p5) {

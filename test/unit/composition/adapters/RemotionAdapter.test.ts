@@ -92,7 +92,7 @@ describe('RemotionAdapter', () => {
 
   describe('initialize()', () => {
     it('should initialize without errors', async () => {
-      await expect(adapter.initialize()).resolves.not.toThrow();
+      expect(() => adapter.initialize()).not.toThrow();
     });
 
     it('should load Remotion module dynamically', async () => {

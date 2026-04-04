@@ -51,6 +51,7 @@ export class GuidanceEngine {
   /**
    * Generate suggestions based on current generation context
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async generateSuggestions(context: GenerationContext): Promise<Suggestion[]> {
     return this.suggestNextAction(context);
   }
@@ -166,6 +167,7 @@ export class GuidanceEngine {
   /**
    * Get swarm suggestions for a context (legacy API)
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async getSwarmSuggestions(_context: GenerationContext): Promise<Suggestion[]> {
     if (this.shouldSuggestSwarm(_context, this.currentIteration || _context.iteration || 1)) {
       return [{
@@ -274,6 +276,7 @@ export class GuidanceEngine {
   /**
    * Get compost suggestions (async method for external access)
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async getCompostSuggestions(context: GenerationContext): Promise<Suggestion[]> {
     const suggestion = this.createCompostSuggestion(context);
     return suggestion ? [suggestion] : [];

@@ -85,7 +85,7 @@ export class RemotionAdapter implements LayerAdapter {
    * 
    * @returns Promise that resolves when initialization is complete
    */
-  async initialize(): Promise<void> {
+  initialize(): void {
     // Remotion is typically bundled, so we just mark as initialized
     // The actual module loading happens in render() when window is available
     this.isInitialized = true;

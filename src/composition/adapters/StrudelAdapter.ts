@@ -69,7 +69,7 @@ export class StrudelAdapter implements LayerAdapter {
    * In a browser environment, Strudel is expected to be loaded via CDN
    * and available as `window.strudel`.
    */
-  async initialize(): Promise<void> {
+  initialize(): void {
     if (!this.strudelModule) {
       // In browser, Strudel is global
       if (typeof window !== 'undefined' && (window as WindowWithStrudel).strudel) {

@@ -39,6 +39,7 @@ export class Constitution {
   /**
    * Learn from a failure
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async learnFromFailure(failure: FailureRecord): Promise<LearnedRule | null> {
     // Don't learn from unresolved failures
     if (failure.resolution === 'failed') {
@@ -80,6 +81,7 @@ export class Constitution {
   /**
    * Apply learned rules to prevent errors
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async applyPrevention(
     context: ExecutionContext,
     proposedAction: string
@@ -102,6 +104,7 @@ export class Constitution {
   /**
    * Get remediation suggestion from learned rules
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async getRemediationSuggestion(
     error: Error | string,
     _context: ExecutionContext

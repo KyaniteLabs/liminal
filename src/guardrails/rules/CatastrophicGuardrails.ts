@@ -26,6 +26,7 @@ export class MaxIterationGuardrail implements GuardrailRule {
   tier = GuardrailTier.AUTONOMOUS; // Always enforced
   category = 'catastrophic' as const;
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const { step, maxSteps } = context;
     
@@ -80,6 +81,7 @@ export class ResourceExhaustionGuardrail implements GuardrailRule {
   tier = GuardrailTier.AUTONOMOUS;
   category = 'catastrophic' as const;
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const limiter = getResourceLimiter(context.taskId);
     
@@ -194,6 +196,7 @@ export class ToolPermissionGuardrail implements GuardrailRule {
   tier = GuardrailTier.AUTONOMOUS;
   category = 'catastrophic' as const;
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const { proposedTool, allowedTools } = context;
     
@@ -277,6 +280,7 @@ export class OutputSchemaGuardrail implements GuardrailRule {
   tier = GuardrailTier.ENFORCING;
   category = 'catastrophic' as const;
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const { output, schema } = context;
     

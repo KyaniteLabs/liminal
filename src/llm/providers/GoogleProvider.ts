@@ -135,6 +135,7 @@ export class GoogleProvider extends BaseProvider {
     };
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async *stream(_req: ProviderRequest): AsyncGenerator<StreamEvent> {
     // Google Gemini streaming requires the SSE endpoint:
     // /v1beta/models/{model}:streamGenerateContent?alt=sse&key=...

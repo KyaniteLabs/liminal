@@ -34,13 +34,6 @@ Failures:   Some unit test failures
 - Note: Tests frequently timeout on first run without `--run` flag
 - Some GLSL validator tests currently failing
 
-### Dogfood Metrics
-- Command: Run with `npm run dogfood:report` to generate a fresh report
-- Last run: Apr 3, 2026 — 66.7% success rate (12/18 tests passed)
-- Failures captured: 3,238 files in `~/.liminal/failures/`
-- Active providers: LM Studio, Ollama, MiniMax
-- Domains tested: p5, GLSL, Three.js, Tone.js, Hydra, HTML/Web
-
 ### Recent Test Fixes (Other Agent's Work)
 
 **Bucket A - Fixture Size Fixes:**
@@ -171,9 +164,19 @@ Failures:   Some unit test failures
 ├── memory/
 │   └── harness-memory.json    # Tasks, adaptations, episodes
 ├── failures/                   # Failure logs
+├── thinking-traces/
+│   └── harness/               # Harness thinking-trace insights
+│       └── harness-insight-${timestamp}-${random}.json
 ├── config.json                 # Provider config
 └── history.json                # Prompt history
 ```
+
+**Observability:**
+- Generator thinking traces are captured by `TierBasedGenerator` and passed to `metaHarness.onGenerationComplete()`
+- `MetaHarnessIntegration.analyzeGeneratorThinking()` analyzes reasoning via the harness LLM
+- Insights are persisted to `~/.liminal/thinking-traces/harness/` as JSON files containing:
+  - `timestamp`, `model`, `domain`, `whereWentWrong`, `howToCommunicateBetter`, `systemImprovement`, `confidence`
+- High-confidence suggestions (confidence > 0.8) are logged for potential auto-adaptation
 
 **Task Queue Status:**
 - M1-M8: ✅ Core guardrails (implemented)

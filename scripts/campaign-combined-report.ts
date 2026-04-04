@@ -19,7 +19,13 @@ interface RunResult {
   duration: number;
   codeLength: number;
   error?: string;
+  // Reasoning telemetry
+  reasoning?: string;
+  thinking?: string;
   thinkingSource?: string;
+  reasoningQuality?: number;
+  recoveredFromThinking?: boolean;
+  detectedPatterns?: string[];
   timestamp: string;
 }
 
@@ -69,6 +75,15 @@ interface CombinedModelResult {
   avgCodeLength: number;
   domainResults: Record<string, { ok: number; fail: number; avgDuration: number }>;
   errorBreakdown: Record<string, number>;
+  // Reasoning telemetry
+  reasoningTelemetry: {
+    runsWithThinking: number;
+    avgThinkingLength: number;
+    avgReasoningQuality: number;
+    recoveryRate: number;
+    topPatterns: { pattern: string; count: number }[];
+    thinkingSources: Record<string, number>;
+  };
 }
 
 interface CombinedReport {
@@ -116,10 +131,39 @@ function analyzeModel(name: string, source: string, results: RunResult[]): Combi
   const errorBreakdown: Record<string, number> = {};
   for (const r of fail) {
     const err = r.error || 'unknown';
-    // Normalize error to first 60 chars
     const key = err.slice(0, 60);
     errorBreakdown[key] = (errorBreakdown[key] || 0) + 1;
   }
+
+  // Reasoning telemetry
+  const withThinking = results.filter(r => r.thinking || r.reasoning);
+  const patternCounts: Record<string, number> = {};
+  for (const r of results) {
+    for (const p of r.detectedPatterns || []) {
+      patternCounts[p] = (patternCounts[p] || 0) + 1;
+    }
+  }
+  const thinkingSources: Record<string, number> = {};
+  for (const r of results) {
+    const src = r.thinkingSource || 'none';
+    thinkingSources[src] = (thinkingSources[src] || 0) + 1;
+  }
+
+  const reasoningTelemetry: CombinedModelResult['reasoningTelemetry'] = {
+    runsWithThinking: withThinking.length,
+    avgThinkingLength: withThinking.length > 0
+      ? withThinking.reduce((s, r) => s + (r.thinking || r.reasoning || '').length, 0) / withThinking.length
+      : 0,
+    avgReasoningQuality: results.filter(r => r.reasoningQuality != null).length > 0
+      ? results.filter(r => r.reasoningQuality != null).reduce((s, r) => s + (r.reasoningQuality || 0), 0) / results.filter(r => r.reasoningQuality != null).length
+      : 0,
+    recoveryRate: results.filter(r => r.recoveredFromThinking).length / Math.max(results.length, 1),
+    topPatterns: Object.entries(patternCounts)
+      .map(([pattern, count]) => ({ pattern, count }))
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 10),
+    thinkingSources,
+  };
 
   return {
     model: name,
@@ -132,6 +176,7 @@ function analyzeModel(name: string, source: string, results: RunResult[]): Combi
     avgCodeLength: ok.length > 0 ? ok.reduce((s, r) => s + r.codeLength, 0) / ok.length : 0,
     domainResults,
     errorBreakdown,
+    reasoningTelemetry,
   };
 }
 

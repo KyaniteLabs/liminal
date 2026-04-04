@@ -266,8 +266,24 @@ class CreativeStrategy implements ScoringStrategy {
 class AestheticStrategy implements ScoringStrategy {
   name = 'aesthetic';
   private critic = new AestheticCritic();
+  private llmWired = false;
+
+  /** Wire LLM for dual-path evaluation. Called lazily on first score. */
+  private async wireLLM(): Promise<void> {
+    if (this.llmWired) return;
+    try {
+      const { LLMClient } = await import('../llm/LLMClient.js');
+      const llm = new LLMClient({ role: 'evaluator' });
+      this.critic.setLLMClient(llm as any);
+      this.llmWired = true;
+    } catch {
+      this.llmWired = true; // Don't retry
+    }
+  }
 
   score(input: ScoringInput): ScoringResult {
+    // Fire-and-forget LLM wiring (non-blocking)
+    void this.wireLLM();
     const report = this.critic.critique(
       input.output,
       input.criticConfig,

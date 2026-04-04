@@ -107,6 +107,10 @@ export interface LoopOptions {
   aestheticConfig?: { preset?: string; strictness?: 'lenient' | 'moderate' | 'strict'; constraints?: Record<string, unknown> };
   /** Audio-derived visual parameters for prompt injection */
   visualMappingParams?: Record<string, unknown>;
+  /** Path to audio file for voice-driven visual mapping. Analyzed by AudioAnalyzer to produce visualMappingParams. */
+  voiceFile?: string;
+  /** Enable voice-driven visual mapping (microphone input, not file-based). Requires voiceFile OR runtime audio capture. */
+  voice?: boolean;
   /** Enable LIR-based evaluation — parses generated code into structured tokens for critics and evaluator */
   lirEnabled?: boolean;
   /** Disable iteration extension (for testing). When true, maxIteration is strictly enforced. */
@@ -176,6 +180,8 @@ export interface NormalizedLoopOptions extends LoopOptions {
   useAestheticGuardrails: boolean;
   aestheticConfig: Record<string, unknown>;
   visualMappingParams?: Record<string, unknown>;
+  voiceFile?: string;
+  voice?: boolean;
   lirEnabled: boolean;
   _disableIterationExtension: boolean;
   debug: Required<DebugOptions>;
@@ -234,6 +240,8 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     useAestheticGuardrails: options?.useAestheticGuardrails ?? false,
     aestheticConfig: (options?.aestheticConfig ?? {}) as Record<string, unknown>,
     visualMappingParams: options?.visualMappingParams,
+    voiceFile: options?.voiceFile,
+    voice: options?.voice,
     lirEnabled: options?.lirEnabled ?? false,
     _disableIterationExtension: options?._disableIterationExtension ?? false,
     _mapElites: options?.useMapElites ? new MapElites(options?.mapElitesDims ?? [10, 10]) : undefined,

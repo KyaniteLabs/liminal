@@ -13,12 +13,15 @@ export type DomainType =
   | 'three'
   | 'shader'
   | 'tone'
+  | 'music'
   | 'strudel'
   | 'hydra'
   | 'ascii'
   | 'remotion'
+  | 'video'
   | 'html'
-  | 'textgen';
+  | 'textgen'
+  | 'group';
 
 /** Blend modes for layer compositing */
 export type BlendMode =
@@ -30,6 +33,30 @@ export type BlendMode =
   | 'lighten'
   | 'difference'
   | 'exclusion';
+
+/** Mask modes for layer masking */
+export type MaskMode = 'alpha' | 'luminance' | 'inverse-alpha';
+
+/** Layer mask configuration */
+export interface LayerMask {
+  /** Unique identifier */
+  id: string;
+
+  /** Layer ID used as the mask source */
+  sourceLayerId: string;
+
+  /** Layer ID being masked */
+  targetLayerId: string;
+
+  /** Mask mode */
+  mode: MaskMode;
+
+  /** Whether to invert the mask */
+  invert: boolean;
+
+  /** Feather/blur radius in pixels */
+  feather: number;
+}
 
 /** A single layer in a composition */
 export interface Layer {
@@ -56,6 +83,15 @@ export interface Layer {
 
   /** Parent layer ID for grouped layers */
   parentLayerId?: string;
+
+  /** Whether this layer is a group container */
+  isGroup?: boolean;
+
+  /** Child layer IDs (if this is a group) */
+  children?: string[];
+
+  /** Group name (if this is a group) */
+  name?: string;
 }
 
 /** Configuration for how a layer renders */
@@ -194,10 +230,28 @@ export interface CompositionMetadata {
   tags: string[];
 }
 
-/** Liminal project file format */
+/** Asset types supported in projects */
+export type AssetType = 'image' | 'audio' | 'font' | 'data';
+
+/** External asset reference */
+export interface Asset {
+  /** Unique identifier */
+  id: string;
+
+  /** Asset type */
+  type: AssetType;
+
+  /** Source URL */
+  url: string;
+
+  /** Base64-encoded data for embedded assets */
+  data?: string;
+}
+
+/** Liminal project file format v2.0 */
 export interface LiminalProject {
   /** File format version */
-  version: string;
+  version: '2.0' | '1.0';
 
   /** The composition */
   composition: Composition;
@@ -209,6 +263,77 @@ export interface LiminalProject {
     generator?: string;
     version?: string;
   };
+
+  /** Keyframe animations (v2.0) */
+  animations?: Animation[];
+
+  /** Layer masks (v2.0) */
+  masks?: LayerMask[];
+
+  /** External assets (v2.0) */
+  assets?: Asset[];
+}
+
+/** Legacy v1.0 project format */
+export interface LiminalProjectV1 {
+  /** File format version */
+  version: '1.0';
+
+  /** The composition */
+  composition: Composition;
+
+  /** Project metadata */
+  metadata: {
+    created: string;
+    modified: string;
+    generator?: string;
+    version?: string;
+  };
+}
+
+/** Supported easing functions for keyframe animations */
+export type EasingFunction =
+  | 'linear'
+  | 'ease'
+  | 'ease-in'
+  | 'ease-out'
+  | 'ease-in-out'
+  | 'bounce'
+  | 'elastic'
+  | 'back-in'
+  | 'back-out';
+
+/** A single keyframe defining layer properties at a specific time */
+export interface Keyframe {
+  /** Time position 0-1 (start to end) */
+  time: number;
+
+  /** Properties to apply at this time */
+  properties: Partial<LayerConfig>;
+
+  /** Easing function to use from this keyframe to the next */
+  easing?: EasingFunction;
+}
+
+/** Animation configuration for a layer */
+export interface Animation {
+  /** Unique identifier */
+  id: string;
+
+  /** Target layer ID */
+  layerId: string;
+
+  /** Duration in milliseconds */
+  duration: number;
+
+  /** Keyframe definitions */
+  keyframes: Keyframe[];
+
+  /** Whether animation should loop */
+  loop?: boolean;
+
+  /** Whether animation should start automatically */
+  autoplay?: boolean;
 }
 
 /** What a layer exports for other layers to consume */
@@ -238,7 +363,7 @@ export interface Import {
   as: string;
 
   /** Is required */
-  required: boolean;
+  required?: boolean;
 }
 
 /**

@@ -58,7 +58,11 @@ interface CampaignResult {
   code?: string;
   error?: string;
   reasoning?: string;
+  thinking?: string;
   thinkingSource?: string;
+  reasoningQuality?: number;
+  recoveredFromThinking?: boolean;
+  detectedPatterns?: string[];
   timestamp: string;
 }
 
@@ -109,59 +113,68 @@ function parseArgs(): { rounds: number; models: string[] } {
 
 // ── Generator dispatch ──
 
+interface GenerationTelemetry {
+  code: string;
+  thinking?: string;
+  thinkingSource?: string;
+  reasoningQuality?: number;
+  recoveredFromThinking?: boolean;
+  detectedPatterns?: string[];
+}
+
 async function generateWithLLM(
   prompt: string,
   domain: string,
   llm: LLMClient
-): Promise<{ code: string; reasoning?: string }> {
+): Promise<GenerationTelemetry> {
+  const toTelemetry = (resp: any): GenerationTelemetry => ({
+    code: resp.code,
+    thinking: resp.thinking,
+    thinkingSource: resp.thinkingSource,
+    reasoningQuality: resp.reasoningQuality,
+    recoveredFromThinking: resp.recoveredFromThinking,
+    detectedPatterns: resp.detectedPatterns,
+  });
+
   switch (domain) {
     case 'p5': {
       const gen = new P5GeneratorLLM(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'glsl': {
       const gen = new ShaderGenerator();
       (gen as any).llm = llm;
-      const code = await gen.generate(prompt);
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'three': {
       const gen = new ThreeGenerator();
       (gen as any).llm = llm;
-      const code = await gen.generate(prompt);
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'strudel': {
       const gen = new StrudelGenerator(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'hydra': {
       const gen = new HydraGenerator(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'remotion': {
       const gen = new RemotionGenerator();
       (gen as any).llm = llm;
-      const code = await gen.generate(prompt);
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'html': {
       const gen = new HTMLWebGenerator(llm);
-      const code = await gen.generate(prompt, { responsive: true, includeAnimations: true });
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'ascii': {
       const gen = new ASCIIArtGenerator(llm);
-      const code = await gen.generate(prompt, { style: 'abstract', width: 60, height: 30 });
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     case 'tone': {
       const gen = new ToneGenerator(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      return toTelemetry(await gen.generateFull(prompt));
     }
     default:
       throw new Error(`Unknown domain: ${domain}`);
@@ -225,14 +238,14 @@ async function main() {
         let result: CampaignResult;
 
         try {
-          const { code, reasoning } = await generateWithLLM(prompt, domain, llm);
+          const telemetry = await generateWithLLM(prompt, domain, llm);
           const duration = Date.now() - startTime;
 
           const codeFile = join(outputBase, 'code', `${safeModel}-round${round}-${domain}.js`);
-          writeFileSync(codeFile, code);
+          writeFileSync(codeFile, telemetry.code);
 
-          if (reasoning) {
-            writeFileSync(join(outputBase, 'traces', `${safeModel}-round${round}-${domain}-reasoning.txt`), reasoning);
+          if (telemetry.thinking) {
+            writeFileSync(join(outputBase, 'traces', `${safeModel}-round${round}-${domain}-thinking.txt`), telemetry.thinking);
           }
 
           result = {
@@ -241,14 +254,19 @@ async function main() {
             domain,
             success: true,
             duration,
-            codeLength: code.length,
+            codeLength: telemetry.code.length,
             code: codeFile,
-            reasoning: reasoning || undefined,
-            thinkingSource: 'ollama-cloud',
+            reasoning: telemetry.thinking || undefined,
+            thinking: telemetry.thinking || undefined,
+            thinkingSource: telemetry.thinkingSource || 'ollama-cloud',
+            reasoningQuality: telemetry.reasoningQuality,
+            recoveredFromThinking: telemetry.recoveredFromThinking,
+            detectedPatterns: telemetry.detectedPatterns,
             timestamp: runTimestamp,
           };
 
-          console.log(`OK (${(duration / 1000).toFixed(1)}s, ${code.length} chars)`);
+          const thinkingTag = telemetry.thinking ? ` [thinking: ${telemetry.thinking.length} chars]` : '';
+          console.log(`OK (${(duration / 1000).toFixed(1)}s, ${telemetry.code.length} chars${thinkingTag})`);
 
         } catch (error: any) {
           const duration = Date.now() - startTime;

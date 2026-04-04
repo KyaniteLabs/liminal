@@ -59,8 +59,13 @@ interface CampaignResult {
   codeLength: number;
   code?: string;
   error?: string;
+  // Reasoning / thinking telemetry
   reasoning?: string;
+  thinking?: string;
   thinkingSource?: string;
+  reasoningQuality?: number;
+  recoveredFromThinking?: boolean;
+  detectedPatterns?: string[];
   timestamp: string;
 }
 
@@ -85,12 +90,21 @@ function loadCompleted(outputBase: string): Set<string> {
  * The generators don't pass signals internally, so we monkey-patch
  * the LLMClient's generate method to inject the abort signal.
  */
+interface GenerationTelemetry {
+  code: string;
+  thinking?: string;
+  thinkingSource?: string;
+  reasoningQuality?: number;
+  recoveredFromThinking?: boolean;
+  detectedPatterns?: string[];
+}
+
 async function generateWithLLM(
   prompt: string,
   domain: string,
   llm: LLMClient,
   abortSignal?: AbortSignal
-): Promise<{ code: string; reasoning?: string }> {
+): Promise<GenerationTelemetry> {
   // Monkey-patch llm.generate to inject the abort signal if provided
   if (abortSignal) {
     const origGenerate = llm.generate.bind(llm);
@@ -101,51 +115,114 @@ async function generateWithLLM(
   switch (domain) {
     case 'p5': {
       const gen = new P5GeneratorLLM(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'glsl': {
       const gen = new ShaderGenerator();
       (gen as any).llm = llm;
-      const code = await gen.generate(prompt);
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'three': {
       const gen = new ThreeGenerator();
       (gen as any).llm = llm;
-      const code = await gen.generate(prompt);
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'strudel': {
       const gen = new StrudelGenerator(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'hydra': {
       const gen = new HydraGenerator(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'remotion': {
       const gen = new RemotionGenerator();
       (gen as any).llm = llm;
-      const code = await gen.generate(prompt);
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'html': {
       const gen = new HTMLWebGenerator(llm);
-      const code = await gen.generate(prompt, { responsive: true, includeAnimations: true });
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'ascii': {
       const gen = new ASCIIArtGenerator(llm);
-      const code = await gen.generate(prompt, { style: 'abstract', width: 60, height: 30 });
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     case 'tone': {
       const gen = new ToneGenerator(llm);
-      const code = await gen.generate(prompt);
-      return { code };
+      const resp = await gen.generateFull(prompt);
+      return {
+        code: resp.code,
+        thinking: resp.thinking,
+        thinkingSource: resp.thinkingSource,
+        reasoningQuality: resp.reasoningQuality,
+        recoveredFromThinking: resp.recoveredFromThinking,
+        detectedPatterns: resp.detectedPatterns,
+      };
     }
     default:
       throw new Error(`Unknown domain: ${domain}`);
@@ -216,15 +293,15 @@ async function main() {
     try {
       const controller = new AbortController();
       const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-      const { code, reasoning } = await generateWithLLM(prompt, domain, llm, controller.signal);
+      const telemetry = await generateWithLLM(prompt, domain, llm, controller.signal);
       clearTimeout(timer);
       const duration = Date.now() - startTime;
 
       const codeFile = join(outputBase, 'code', `${safeModel}-round${round}-${domain}.js`);
-      writeFileSync(codeFile, code);
+      writeFileSync(codeFile, telemetry.code);
 
-      if (reasoning) {
-        writeFileSync(join(outputBase, 'traces', `${safeModel}-round${round}-${domain}-reasoning.txt`), reasoning);
+      if (telemetry.thinking) {
+        writeFileSync(join(outputBase, 'traces', `${safeModel}-round${round}-${domain}-thinking.txt`), telemetry.thinking);
       }
 
       result = {
@@ -233,14 +310,19 @@ async function main() {
         domain,
         success: true,
         duration,
-        codeLength: code.length,
+        codeLength: telemetry.code.length,
         code: codeFile,
-        reasoning: reasoning || undefined,
-        thinkingSource: 'local',
+        reasoning: telemetry.thinking || undefined,
+        thinking: telemetry.thinking || undefined,
+        thinkingSource: telemetry.thinkingSource || 'local',
+        reasoningQuality: telemetry.reasoningQuality,
+        recoveredFromThinking: telemetry.recoveredFromThinking,
+        detectedPatterns: telemetry.detectedPatterns,
         timestamp: runTimestamp,
       };
 
-      console.log(`OK (${(duration / 1000).toFixed(1)}s, ${code.length} chars)`);
+      const thinkingTag = telemetry.thinking ? ` [thinking: ${telemetry.thinking.length} chars${telemetry.recoveredFromThinking ? ', recovered' : ''}]` : '';
+      console.log(`OK (${(duration / 1000).toFixed(1)}s, ${telemetry.code.length} chars${thinkingTag})`);
 
     } catch (error: any) {
       const duration = Date.now() - startTime;

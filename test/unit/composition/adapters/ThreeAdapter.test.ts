@@ -160,7 +160,7 @@ describe('ThreeAdapter', () => {
       (window as unknown as { THREE?: typeof mockTHREE }).THREE = undefined;
       
       expect(() => adapter.render(mockLayer, mockContainer, mockContext)).toThrow(
-        'Three.js not loaded. Call initialize() first.'
+        'Three.js not loaded. Call async initialize() first.'
       );
     });
 

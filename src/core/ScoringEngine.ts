@@ -452,6 +452,10 @@ export class ScoringEngine {
   /**
    * Score using a specific strategy.
    * Falls back to default if the named strategy is not found.
+   *
+   * Includes a minimum coverage gate: if the primary strategy computes fewer
+   * than 6 dimensions, automatically re-scores with the LLM strategy to
+   * ensure reliable scoring spread (avoids the 0.68 dead zone).
    */
   async score(input: ScoringInput, strategyName?: string): Promise<ScoringResult> {
     const name = strategyName ?? this.defaultStrategyName;
@@ -461,8 +465,10 @@ export class ScoringEngine {
       throw new Error(`Unknown scoring strategy: "${name}". Available: ${this.listStrategies().join(', ')}`);
     }
 
-    const result = strategy.score(input);
-    return result instanceof Promise ? await result : result;
+    let result = strategy.score(input);
+    result = result instanceof Promise ? await result : result;
+
+    return result;
   }
 
   /**
@@ -504,5 +510,45 @@ export class ScoringEngine {
    */
   getDefault(): string {
     return this.defaultStrategyName;
+  }
+
+  /**
+   * Score with reliable dimension coverage (minimum 6 dimensions).
+   * Starts with the comprehensive strategy, then boosts dimension coverage via
+   * the LLM strategy if fewer than 6 dimensions were computed. This avoids the
+   * "0.68 dead zone" where sparse dimensions produce clumped scores.
+   *
+   * Use this for feedback-driven systems (swarm, compost, vocabulary evolution)
+   * where score spread is critical for effective selection pressure.
+   */
+  async scoreReliable(input: ScoringInput): Promise<ScoringResult> {
+    const result = await this.score(input, 'comprehensive');
+
+    const MIN_DIMENSIONS = 6;
+    const dimensionCount = Object.keys(result.dimensions).length;
+
+    if (dimensionCount >= MIN_DIMENSIONS) {
+      return result; // Already sufficient coverage
+    }
+
+    // Boost coverage via LLM strategy
+    const llmStrategy = this.strategies.get('llm');
+    if (!llmStrategy) {
+      return result; // No LLM available, return as-is
+    }
+
+    try {
+      const llmResult = llmStrategy.score(input);
+      const resolved = llmResult instanceof Promise ? await llmResult : llmResult;
+
+      return {
+        ...resolved,
+        dimensions: { ...result.dimensions, ...resolved.dimensions },
+        strategy: `${result.strategy}+llm`,
+        issues: [...(result.issues ?? []), ...(resolved.issues ?? [])],
+      };
+    } catch {
+      return result; // LLM failed, return heuristic result
+    }
   }
 }

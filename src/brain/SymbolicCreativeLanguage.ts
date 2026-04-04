@@ -14,6 +14,7 @@
  */
 
 import { NOTATION_REGISTRY, compressToNotation } from '../swarm/CreativeNotation.js';
+import { Logger } from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -384,10 +385,10 @@ export class SymbolicCreativeLanguage {
       .join(', ');
 
     if (topBoosted) {
-      console.log(`[NotationEvolution] boosted: ${topBoosted}`);
+      Logger.debug('NotationEvolution', `boosted: ${topBoosted}`);
     }
     if (topDecayed) {
-      console.log(`[NotationEvolution] decayed: ${topDecayed}`);
+      Logger.debug('NotationEvolution', `decayed: ${topDecayed}`);
     }
   }
 

@@ -30,3 +30,14 @@ export type { ExpertDescription } from './ExpertPersonas.js';
 export { ModelRouter } from './ModelRouter.js';
 export type { RoutingOption, RoutingDecision } from './ModelRouter.js';
 export { NotationTranslator } from './NotationTranslator.js';
+export {
+  type RoutineStage,
+  type AgoraMessage,
+  type AgoraResult,
+  compileToRoutine,
+  expandRoutine,
+  createMessage,
+  summarizeExchange,
+} from './AgoraProtocol.js';
+export { RoutineChannel } from './RoutineChannel.js';
+export type { ChannelConfig, ExchangeRecord, ChannelStats } from './RoutineChannel.js';

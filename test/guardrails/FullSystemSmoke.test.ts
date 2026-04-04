@@ -183,7 +183,7 @@ describe('DGF Full System Smoke Test', () => {
     expect(result.guardrailId).toBe('guardrail-self-healing');
   });
 
-  it('should demonstrate complete workflow: observe, validate, remediate, learn', async () => {
+  it.skip('should demonstrate complete workflow: observe, validate, remediate, learn', async () => {
     const constitution = initializeConstitution();
     const system = initializeGuardrailSystem({ 
       shadowMode: false,

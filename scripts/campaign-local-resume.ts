@@ -80,11 +80,24 @@ function loadCompleted(outputBase: string): Set<string> {
   return completed;
 }
 
+/**
+ * Generate with a hard timeout using AbortController.
+ * The generators don't pass signals internally, so we monkey-patch
+ * the LLMClient's generate method to inject the abort signal.
+ */
 async function generateWithLLM(
   prompt: string,
   domain: string,
-  llm: LLMClient
+  llm: LLMClient,
+  abortSignal?: AbortSignal
 ): Promise<{ code: string; reasoning?: string }> {
+  // Monkey-patch llm.generate to inject the abort signal if provided
+  if (abortSignal) {
+    const origGenerate = llm.generate.bind(llm);
+    (llm as any).generate = (sys: string, user: string, _sig?: AbortSignal, bypass?: boolean) =>
+      origGenerate(sys, user, abortSignal, bypass);
+  }
+
   switch (domain) {
     case 'p5': {
       const gen = new P5GeneratorLLM(llm);
@@ -201,13 +214,10 @@ async function main() {
     let result: CampaignResult;
 
     try {
-      // Race with timeout
-      const { code, reasoning } = await Promise.race([
-        generateWithLLM(prompt, domain, llm),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error(`Timeout after ${TIMEOUT_MS / 1000}s`)), TIMEOUT_MS)
-        ),
-      ]);
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      const { code, reasoning } = await generateWithLLM(prompt, domain, llm, controller.signal);
+      clearTimeout(timer);
       const duration = Date.now() - startTime;
 
       const codeFile = join(outputBase, 'code', `${safeModel}-round${round}-${domain}.js`);

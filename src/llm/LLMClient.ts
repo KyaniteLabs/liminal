@@ -857,14 +857,26 @@ Rules:
     }
 
     // Sanitize the content (strip markdown fences, narrative text, think tags)
-    const sanitized = sanitizeOutput(response.content);
+    let sanitized = sanitizeOutput(response.content);
+
+    // If main content is empty but thinking/reasoning contains code, recover from it.
+    // This handles providers like MiniMax that may return code in reasoning_content
+    // or wrap the entire response in <think> tags.
+    let recoveredFromThinking = false;
+    if (!sanitized.code && response.thinking?.text) {
+      const recovered = sanitizeOutput(response.thinking.text);
+      if (recovered.code) {
+        sanitized = recovered;
+        recoveredFromThinking = true;
+      }
+    }
 
     return {
       code: sanitized.code,
       explanation: response.content,
       reasoning: response.thinking?.text || undefined,
       thinking: response.thinking?.text || undefined,
-      recoveredFromThinking: false,
+      recoveredFromThinking,
       success: sanitized.success,
       isComplete: sanitized.isComplete,
     };

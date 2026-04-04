@@ -76,6 +76,7 @@ export class SwarmOrchestrator {
       personas: config?.personas ?? DEFAULT_PERSONAS,
       refinementConstraints: config?.refinementConstraints ?? DEFAULT_REFINEMENT_CONSTRAINTS,
       streamDir: config?.streamDir ?? './stream',
+      skipRouting: config?.skipRouting ?? false,
     };
     this.personas = [...this.config.personas];
 

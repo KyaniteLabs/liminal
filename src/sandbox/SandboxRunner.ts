@@ -8,7 +8,7 @@
 import puppeteer, { Browser } from 'puppeteer';
 import { generateHTML } from '../utils/generateHTML.js';
 import { getChromeArgs } from '../security/SandboxConfig.js';
-import { Logger } from '../utils/Logger.js';
+
 
 export interface SandboxResult {
   stdout?: string;
@@ -25,8 +25,34 @@ export interface SandboxOptions {
 const DEFAULT_TIMEOUT_MS = 30_000;
 
 /**
+ * Force-close a Puppeteer browser by killing its Chromium process.
+ *
+ * When user code (e.g., `while(true){}`) blocks the page's main thread,
+ * `browser.close()` can hang indefinitely because Puppeteer waits for CDP
+ * responses from pages that can't respond. `process.kill()` sends SIGKILL
+ * directly from Node.js — no CDP cooperation needed.
+ */
+function forceKillBrowser(browser: Browser): void {
+  const proc = browser.process();
+  if (proc?.pid) {
+    try {
+      process.kill(proc.pid, 'SIGKILL');
+    } catch {
+      // Process may already be dead
+    }
+  } else {
+    // Fallback: try graceful close (may hang, but no PID available)
+    void browser.close().catch(() => {});
+  }
+}
+
+/**
  * Run p5.js code in an isolated headless page with timeout and no file/network access.
  * Use for preview and living run; no callback.
+ *
+ * Uses Promise.race() with a manual timeout to guarantee we return within timeoutMs
+ * even when user code (e.g., while(true){}) blocks the page's main thread and
+ * prevents Puppeteer's internal timeout from firing.
  */
 export async function runInSandbox(
   code: string,
@@ -66,7 +92,19 @@ export async function runInSandbox(
       bodyStyle: 'margin: 0; padding: 0; overflow: hidden;',
       fullscreen: true,
     });
-    await page.setContent(html, { waitUntil: 'load', timeout: timeoutMs });
+
+    // Race page loading against a manual timeout. When user code blocks the
+    // page's main thread (e.g. while(true){}), Puppeteer's built-in setContent
+    // timeout may not fire. The manual timeout guarantees we always return.
+    const loadPromise = page.setContent(html, { waitUntil: 'load', timeout: timeoutMs });
+    // Prevent unhandled rejection if the browser is killed before loadPromise settles.
+    loadPromise.catch(() => {});
+
+    const manualTimeout = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error(`Sandbox timeout: execution exceeded ${timeoutMs}ms`)), timeoutMs);
+    });
+
+    await Promise.race([loadPromise, manualTimeout]);
     await page.waitForSelector('canvas', { timeout: Math.min(10000, timeoutMs) });
     await new Promise((r) => setTimeout(r, 300));
 
@@ -76,9 +114,7 @@ export async function runInSandbox(
     return { completed: false, error: message };
   } finally {
     if (browser) {
-      await browser.close().catch((err) => {
-        Logger.warn('SandboxRunner', 'Failed to close browser: ' + (err instanceof Error ? err.message : err));
-      });
+      forceKillBrowser(browser);
     }
   }
 }

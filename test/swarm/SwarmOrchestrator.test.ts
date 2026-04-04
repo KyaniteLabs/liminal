@@ -126,7 +126,7 @@ describe('SwarmOrchestrator', () => {
           displayName: 'Alpha',
           model: 'test-model',
           temperature: 0.7,
-          maxTokens: 80,
+          maxTokens: 200, // High enough that HeuristicScorer doesn't penalize length
           systemPrompt: 'You are Alpha. Write rich, varied vocabulary.',
           voice: 'Rich.',
           thinkingStyle: 'Linear.',
@@ -150,12 +150,20 @@ describe('SwarmOrchestrator', () => {
         },
       ];
 
+      // Stateful mock: Alpha returns different rich outputs each round to maintain novelty.
+      // Without this, HeuristicScorer's novelty dimension drops to 0 on repeated identical
+      // output, causing the winner to alternate between Alpha and Beta.
+      let alphaRound = 0;
+      const alphaOutputs = [
+        'Spectral luminance cascades through crystalline corridors of light.',
+        'Shimmering resonance weaves ephemeral tapestries across vast undulating landscapes.',
+        'Crystalline vibrations pulse through corridors of shimmering spectral glow.',
+      ];
+
       const convergingMock = async (_model: string, systemPrompt: string, _userPrompt: string): Promise<string> => {
-        // Alpha: rich vocabulary → higher heuristic score
         if (systemPrompt.includes('Alpha')) {
-          return 'Spectral luminance cascades through crystalline corridors, weaving ephemeral tapestries of shimmering resonance across vast undulating landscapes.';
+          return alphaOutputs[alphaRound++ % alphaOutputs.length];
         }
-        // Beta: minimal output → lower scores
         if (systemPrompt.includes('Beta')) {
           return 'Short.';
         }

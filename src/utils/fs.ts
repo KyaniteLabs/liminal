@@ -23,7 +23,7 @@ export function ensureDir(dir: string): void {
   try {
     fs.mkdirSync(dir, { recursive: true });
   } catch (error) {
-    throw new Error(formatFsError('Failed to create directory', error));
+    throw new Error(formatFsError('Failed to create directory', error), { cause: error });
   }
 }
 
@@ -36,7 +36,7 @@ export async function ensureDirAsync(dir: string): Promise<void> {
   try {
     await fs.promises.mkdir(dir, { recursive: true });
   } catch (error) {
-    throw new Error(formatFsError('Failed to create directory', error));
+    throw new Error(formatFsError('Failed to create directory', error), { cause: error });
   }
 }
 
@@ -49,7 +49,7 @@ export function writeFileEnsuringDir(filePath: string, content: string): void {
     ensureDir(path.dirname(filePath));
     fs.writeFileSync(filePath, content, 'utf-8');
   } catch (error) {
-    throw new Error(formatFsError('Failed to write file', error));
+    throw new Error(formatFsError('Failed to write file', error), { cause: error });
   }
 }
 
@@ -62,6 +62,6 @@ export async function writeFileEnsuringDirAsync(filePath: string, content: strin
     await ensureDirAsync(path.dirname(filePath));
     await fs.promises.writeFile(filePath, content, 'utf-8');
   } catch (error) {
-    throw new Error(formatFsError('Failed to write file', error));
+    throw new Error(formatFsError('Failed to write file', error), { cause: error });
   }
 }

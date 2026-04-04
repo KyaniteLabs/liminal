@@ -13,6 +13,7 @@ import {
   RemediationResult,
   GuardrailTier,
 } from '../core/types.js';
+import { Logger } from '../../utils/Logger.js';
 
 const execAsync = promisify(exec);
 
@@ -216,8 +217,8 @@ export class TestVerificationGuardrail implements GuardrailRule {
           failures,
         };
       }
-    } catch {
-      // Failed to parse JSON
+    } catch (err) {
+      Logger.warn('TestVerificationGuardrail', 'JSON parse failed, falling back to text heuristic:', err instanceof Error ? err.message : err);
     }
     
     // Fallback: simple text parsing

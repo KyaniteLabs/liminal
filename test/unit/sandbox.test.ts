@@ -52,18 +52,7 @@ describe.skipIf(process.env.CI)('Sandbox runInSandbox', () => {
   });
 
   describe('timeout', () => {
-    // FIXME: This test is skipped because the current sandbox implementation
-    // cannot interrupt infinite loops that block the main JavaScript thread.
-    // Puppeteer's page.setDefaultTimeout() doesn't help when the page is
-    // unresponsive due to `while(true){}`.
-    // 
-    // To fix this, the sandbox would need to:
-    // 1. Run user code in a Web Worker, or
-    // 2. Use a separate process that can be killed, or  
-    // 3. Instrument code with yield points before execution
-    //
-    // See: https://github.com/puppeteer/puppeteer/issues/xxxx
-    it.skip('infinite loop times out and returns completed: false', async () => {
+    it('infinite loop times out and returns completed: false', async () => {
       const result = await runInSandbox('while(true){}', { timeoutMs: 5000 });
 
       expect(result.completed).toBe(false);

@@ -25,7 +25,7 @@ jobs:
       - run: pnpm test:coverage
       - name: Check coverage gaps
         if: always()
-        run: npx tsx scripts/ci/check-coverage-gaps.ts --warn
+        run: npx tsx scripts/ci/check-coverage-gaps.ts
       - name: Coverage summary
         if: always()
         run: |

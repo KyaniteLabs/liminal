@@ -21,6 +21,59 @@ A cron job scans every 5 minutes and logs violations to `memory/git-monitor-log.
 
 If you see your worktree flagged, fix it immediately.
 
+## Archaeology Data Access (MANDATORY)
+
+All archaeology and telemetry data lives in a SQLite database. **NEVER parse raw JSON/CSV files from `narrative/data/` directly.** Always use the DB.
+
+### Database Location
+- **Path:** `narrative/data/archaeology.db` (gitignored, derived data)
+- **Rebuild:** `python3 narrative/scripts/build-archaeology-db.py --project-root . --verbose`
+- **Serve:** `bash narrative/scripts/serve-archaeology.sh` → http://localhost:8001
+
+### How to Query
+
+```bash
+# Direct query (fastest, no server needed)
+sqlite-utils query narrative/data/archaeology.db "SELECT * FROM commits WHERE repo='web' LIMIT 5" --table
+
+# Full-text search
+sqlite-utils query narrative/data/archaeology.db "SELECT * FROM commits_fts WHERE commits_fts MATCH 'telemetry'" --table
+
+# Datasette JSON API (if server running)
+curl "http://localhost:8001/archaeology/commits.json?_facet=repo&_sort=date"
+
+# Python script
+sqlite3.connect("narrative/data/archaeology.db").execute("SELECT ...")
+```
+
+### Key Tables
+| Table | Rows | What it contains |
+|-------|------|------------------|
+| `commits` | 7,059 | All git commits (repo, date, time, message, author) |
+| `eras` | 10 | Named developmental eras (name, dates, commits, frustration_category, dominant_intent) |
+| `sessions` | 58 | Claude Code sessions (session_id, timestamp, messages, human_message_count) |
+| `youtube_searches` | 5,300 | YouTube search history |
+| `monthly_velocity` | 18 | Monthly commit counts across repos |
+| `model_timeline` | 10 | LLM model adoption over time |
+| `github_repos` | 50 | All GitHub repos with metrics |
+| `yt_creators` | 50 | AI YouTube creator profiles |
+| `lunar_phases` | 33 | Daily lunar phase data |
+| `audit_*` | varies | Forensic audit verification data |
+| Plus ~50 more | — | Telemetry, cross-repo, codebase growth, etc. |
+
+### FTS-enabled Tables
+Search with `WHERE {table}_fts MATCH 'query'`: `commits` (message), `sessions` (messages), `eras` (description, narrative_arc)
+
+### Indexed Columns
+Fast lookups on: commits (date, author, repo), eras (name), sessions (timestamp, session_id), lunar_phases (date)
+
+### Rules
+1. **Rebuild before use** if the DB doesn't exist or data may be stale
+2. **Never commit the DB** — it's gitignored derived data
+3. **Prefer SQL over file parsing** — one query replaces reading 48 files
+4. **Prefer FTS over grep** — full-text search is indexed
+5. **Prefer facets over manual counting** — `GROUP BY` with indexes is faster than iterating JSON
+
 ## Archaeology Workflow
 
 Post-hoc forensic mining of development history. Transforms git commits, session data, hooks, and repo interactions into structured narrative deliverables.

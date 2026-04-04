@@ -22,10 +22,10 @@ export default defineConfig({
         // Per-file enforcement is handled by scripts/ci/check-coverage-gaps.ts
         // which runs in CI alongside this ratchet.
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        statements: 55.6,
-        branches: 47.9,
-        functions: 55.8,
-        lines: 56.3,
+        statements: 60.8,
+        branches: 51.1,
+        functions: 61.4,
+        lines: 61.6,
         autoUpdate: (n: number) => Math.floor(n * 10) / 10,
       },
     },

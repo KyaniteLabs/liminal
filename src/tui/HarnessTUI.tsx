@@ -13,6 +13,7 @@ import { render, Box, Text, useInput, Spacer } from 'ink';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { Logger } from '../utils/Logger.js';
 import clipboard from 'clipboardy';
 import { 
   metaHarness, 
@@ -236,7 +237,7 @@ function App() {
         // This gives better English grammar than local qwen models
         const harnessLLMClient = metaHarness.getLLMClient();
         
-        console.log('[TUI] DEV MODE: Using harness LLM for chat');
+        Logger.info('TUI', 'DEV MODE: Using harness LLM for chat');
         
         if (harnessLLMClient) {
           const harnessAgent = createHarnessAgent(harnessLLMClient);

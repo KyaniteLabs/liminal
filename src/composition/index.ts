@@ -34,16 +34,22 @@ export {
   // Enums
   DomainType,
   BlendMode,
+  MaskMode,
+  AssetType,
   
   // Core interfaces
   Layer,
   LayerConfig,
   LayerMetadata,
+  LayerMask,
   Composition,
   GlobalSettings,
   AudioSettings,
   CompositionMetadata,
   LiminalProject,
+  LiminalProjectV1,
+  Asset,
+  Animation,
   
   // Constants
   DEFAULT_LAYER_CONFIG,
@@ -80,3 +86,61 @@ export type { Export, Import } from './adapters/index.js';
 // Concrete adapters (register as needed)
 export { P5Adapter, p5Adapter } from './adapters/P5Adapter.js';
 export { ToneAdapter, toneAdapter } from './adapters/ToneAdapter.js';
+
+// Adapter registration utilities
+export { registerAllAdapters, allAdapters } from './adapters/registerAdapters.js';
+
+// Composition Analyzer
+export {
+  CompositionAnalyzer,
+  type DomainRecommendation,
+  type AnalyzerOptions,
+  type KeywordMapping,
+  type DependencyRule,
+  DEFAULT_KEYWORD_MAPPINGS,
+  DOMAIN_DEPENDENCIES,
+  DOMAIN_RENDER_ORDER,
+} from './CompositionAnalyzer.js';
+
+// Layer Sequencer
+export {
+  LayerSequencer,
+  AbortError,
+  type LayerSequencerOptions,
+  type SequencerResult,
+} from './LayerSequencer.js';
+
+// Prompt Enhancer for cross-layer integration
+export {
+  PromptEnhancer,
+  type EnhancementContext,
+  type EnhancedPrompt,
+} from './PromptEnhancer.js';
+
+// Blend Mode Utilities
+export {
+  getCSSBlendMode,
+  getCanvasCompositeOp,
+  getWebGLBlendFunc,
+  applyBlendMode,
+} from './utils/blendModes.js';
+
+// Layer Mask System
+export {
+  LayerMaskManager,
+  LayerMaskGroup,
+} from './LayerMask.js';
+
+// Keyframe Animation System
+export {
+  KeyframeAnimation,
+  type AnimationOptions,
+} from './KeyframeAnimation.js';
+
+// Project Serializer
+export {
+  ProjectSerializer,
+  type ExportOptions,
+  type ImportResult,
+  type ValidationResult,
+} from './ProjectSerializer.js';

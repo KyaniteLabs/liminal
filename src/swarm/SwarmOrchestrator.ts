@@ -10,6 +10,7 @@ import { MiningEngine } from './MiningEngine.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { TIMEOUT_DEFAULT_MS, TOKEN_LIMIT_LARGE, TRUNCATE_MEDIUM } from '../constants/limits.js';
 import { SymbolicCreativeLanguage, type CreativeSymbol } from '../brain/SymbolicCreativeLanguage.js';
+import { RoutineChannel, type ChannelConfig } from './RoutineChannel.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import fs from 'fs/promises';
 import path from 'path';
@@ -51,6 +52,9 @@ export class SwarmOrchestrator {
   /** Emergent creative vocabulary — discovers technique patterns across rounds. */
   private readonly creativeLanguage = new SymbolicCreativeLanguage(100);
 
+  /** Inter-agent communication channel using the Agora protocol. */
+  private readonly routineChannel: RoutineChannel;
+
   /** Tracks which vocabulary entries appeared in winning outputs (for outcome recording). */
   private lastRoundSymbolIds: Map<string, string[]> = new Map();
 
@@ -81,6 +85,10 @@ export class SwarmOrchestrator {
     // Set progress callback from options
     this._onProgress = options?.onProgress;
     this._onFragmentsMined = options?.onFragmentsMined;
+
+    // Initialize the Agora routine channel for inter-agent communication
+    const channelConfig: ChannelConfig = { maxHistory: 20, compressThreshold: 3 };
+    this.routineChannel = new RoutineChannel(channelConfig);
   }
 
   /**
@@ -407,6 +415,35 @@ export class SwarmOrchestrator {
       );
       rounds.push(result);
 
+      // ── Agora routine channel: inter-agent messaging ──
+      if (result.winnerId && result.winnerContent) {
+        const allExpertIds = [...result.outputs.keys()];
+        const nonWinnerIds = allExpertIds.filter(id => id !== result.winnerId);
+
+        // Winner broadcasts proposal to all other experts
+        this.routineChannel.broadcast(
+          result.winnerId,
+          'propose',
+          result.winnerContent,
+          roundNum,
+          nonWinnerIds,
+        );
+
+        // Each non-winner sends refine feedback directly to the winner
+        for (const expertId of nonWinnerIds) {
+          const expertOutput = result.outputs.get(expertId);
+          if (expertOutput && expertOutput.content && !expertOutput.content.startsWith('[Generation error')) {
+            this.routineChannel.directMessage(
+              expertId,
+              result.winnerId,
+              'refine',
+              expertOutput.content,
+              roundNum,
+            );
+          }
+        }
+      }
+
       // Discover vocabulary from all outputs this round (P0.1)
       this.discoverRoundVocabulary(result);
 
@@ -451,7 +488,21 @@ export class SwarmOrchestrator {
       } as unknown as Record<string, unknown>);
 
       // Break after emitting the convergence round event
-      if (converged) break;
+      if (converged) {
+        // Broadcast consensus from winner via Agora routine channel
+        if (result.winnerId && result.winnerContent) {
+          const allExpertIds = [...result.outputs.keys()];
+          const nonWinnerIds = allExpertIds.filter(id => id !== result.winnerId);
+          this.routineChannel.broadcast(
+            result.winnerId,
+            'merge',
+            result.winnerContent,
+            roundNum,
+            nonWinnerIds,
+          );
+        }
+        break;
+      }
 
       // Select next seed
       currentSeed = this.selectNextSeed(result, effectiveMode, constraint);
@@ -834,5 +885,22 @@ export class SwarmOrchestrator {
    */
   getVocabularyReport() {
     return this.creativeLanguage.getQualityReport();
+  }
+
+  // ── Agora routine channel access ──
+
+  /**
+   * Get the routine channel for external consumption (protocol analytics, etc.).
+   */
+  getRoutineChannel(): RoutineChannel {
+    return this.routineChannel;
+  }
+
+  /**
+   * Get a compressed summary of a specific round's Agora exchange.
+   * Returns undefined if the round has fewer messages than the compress threshold.
+   */
+  getRoundCompressedSummary(round: number) {
+    return this.routineChannel.getCompressedExchange(round);
   }
 }

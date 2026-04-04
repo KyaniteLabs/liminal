@@ -10,12 +10,23 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
-import { 
-  HeadlessRenderer, 
-  VisualScorer, 
-  AudioScorer, 
-  RenderAndScorePipeline 
+import {
+  HeadlessRenderer,
+  VisualScorer,
+  AudioScorer,
+  RenderAndScorePipeline
 } from '../../src/render/index.js';
+
+// Check if Playwright is available (skip browser-dependent tests in CI without browsers)
+let playwrightAvailable = false;
+try {
+  require.resolve('playwright');
+  playwrightAvailable = true;
+} catch {
+  playwrightAvailable = false;
+}
+
+const describeIfBrowser = playwrightAvailable ? describe : describe.skip;
 
 // Sample p5.js code for testing
 const sampleP5Code = `
@@ -76,7 +87,29 @@ function draw() {
 }
 `;
 
-describe('HeadlessRenderer', () => {
+describe('HeadlessRenderer domain detection', () => {
+  it('should detect p5.js code', () => {
+    const domain = HeadlessRenderer.detectDomain(sampleP5Code);
+    expect(domain).toBe('p5');
+  });
+
+  it('should detect Three.js code', () => {
+    const domain = HeadlessRenderer.detectDomain(sampleThreeCode);
+    expect(domain).toBe('three');
+  });
+
+  it('should detect GLSL code', () => {
+    const domain = HeadlessRenderer.detectDomain(sampleGLSLCode);
+    expect(domain).toBe('glsl');
+  });
+
+  it('should return unknown for unrecognizable code', () => {
+    const domain = HeadlessRenderer.detectDomain('console.log("hello")');
+    expect(domain).toBe('unknown');
+  });
+});
+
+describeIfBrowser('HeadlessRenderer rendering', () => {
   let renderer: HeadlessRenderer;
 
   beforeAll(async () => {
@@ -88,66 +121,42 @@ describe('HeadlessRenderer', () => {
     await renderer.close();
   });
 
-  describe('domain detection', () => {
-    it('should detect p5.js code', () => {
-      const domain = HeadlessRenderer.detectDomain(sampleP5Code);
-      expect(domain).toBe('p5');
+  it('should render p5.js code and capture screenshot', async () => {
+    const result = await renderer.render(sampleP5Code, {
+      width: 400,
+      height: 400,
+      waitForStabilization: true,
+      stabilizationTime: 1000,
     });
 
-    it('should detect Three.js code', () => {
-      const domain = HeadlessRenderer.detectDomain(sampleThreeCode);
-      expect(domain).toBe('three');
+    expect(result.success).toBe(true);
+    expect(result.screenshot).toBeDefined();
+    expect(result.screenshot?.success).toBe(true);
+    expect(result.screenshot?.buffer.length).toBeGreaterThan(0);
+  }, 30000);
+
+  it('should capture console logs', async () => {
+    const codeWithLog = `
+      function setup() {
+        createCanvas(100, 100);
+        console.log('test message');
+        noLoop();
+      }
+      function draw() {
+        background(200);
+      }
+    `;
+
+    const result = await renderer.render(codeWithLog, {
+      width: 100,
+      height: 100,
     });
 
-    it('should detect GLSL code', () => {
-      const domain = HeadlessRenderer.detectDomain(sampleGLSLCode);
-      expect(domain).toBe('glsl');
-    });
-
-    it('should return unknown for unrecognizable code', () => {
-      const domain = HeadlessRenderer.detectDomain('console.log("hello")');
-      expect(domain).toBe('unknown');
-    });
-  });
-
-  describe('rendering', () => {
-    it('should render p5.js code and capture screenshot', async () => {
-      const result = await renderer.render(sampleP5Code, {
-        width: 400,
-        height: 400,
-        waitForStabilization: true,
-        stabilizationTime: 1000,
-      });
-
-      expect(result.success).toBe(true);
-      expect(result.screenshot).toBeDefined();
-      expect(result.screenshot?.success).toBe(true);
-      expect(result.screenshot?.buffer.length).toBeGreaterThan(0);
-    }, 30000);
-
-    it('should capture console logs', async () => {
-      const codeWithLog = `
-        function setup() {
-          createCanvas(100, 100);
-          console.log('test message');
-          noLoop();
-        }
-        function draw() {
-          background(200);
-        }
-      `;
-
-      const result = await renderer.render(codeWithLog, {
-        width: 100,
-        height: 100,
-      });
-
-      expect(result.logs.some(log => log.includes('test message'))).toBe(true);
-    }, 30000);
-  });
+    expect(result.logs.some(log => log.includes('test message'))).toBe(true);
+  }, 30000);
 });
 
-describe('VisualScorer', () => {
+describeIfBrowser('VisualScorer', () => {
   let scorer: VisualScorer;
   let renderer: HeadlessRenderer;
 
@@ -287,7 +296,7 @@ describe('AudioScorer', () => {
   });
 });
 
-describe('RenderAndScorePipeline', () => {
+describeIfBrowser('RenderAndScorePipeline', () => {
   let pipeline: RenderAndScorePipeline;
 
   beforeEach(() => {

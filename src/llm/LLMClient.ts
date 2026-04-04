@@ -222,6 +222,16 @@ export class LLMClient {
     }
   }
 
+  /**
+   * Clear global static caches to enable environment isolation.
+   * This is essential when running tests with different model configurations
+   * to prevent configuration leakage between runs.
+   */
+  static clearGlobalCache(): void {
+    LLMClient.roleConfigs = null;
+    LLMClient.roleConfigFile = null;
+  }
+
   /** Get the role this client was configured for */
   getRole(): ModelRole | undefined {
     return this.role;

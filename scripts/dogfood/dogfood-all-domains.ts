@@ -114,15 +114,26 @@ function formatError(context: string, error: unknown): string {
   return `${context}: ${String(error)}`;
 }
 
+/**
+ * Clear all LLM-related caches to ensure clean state between model runs.
+ * This prevents configuration leakage between different models.
+ */
+function clearLLMCaches(): void {
+  LLMClient.clearGlobalCache();
+}
+
 async function runSingleTest(domain: typeof DOMAINS[0], model: typeof MODELS[0]): Promise<DogfoodResult> {
   console.log(`\n🔄 Running: ${domain.name} × ${model.name}`);
-  
+
   const startTime = Date.now();
   const timestamp = Date.now();
   const outputPath = `landing-live/${domain.name}-${model.name}.html`;
   const tempOutputDir = path.join(PROJECT_ROOT, `dogfood-temp/${domain.name}-${model.name}-${timestamp}`);
   const fullOutputPath = path.join(PROJECT_ROOT, outputPath);
-  
+
+  // Clear LLM caches before setting environment to ensure clean state
+  clearLLMCaches();
+
   // Clean up temp dir if exists
   if (fs.existsSync(tempOutputDir)) {
     fs.rmSync(tempOutputDir, { recursive: true });

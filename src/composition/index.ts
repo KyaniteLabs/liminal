@@ -29,14 +29,27 @@
  * ```
  */
 
-// Core types
+// Core types (runtime exports — constants, functions)
 export {
-  // Enums
+  // Constants
+  DEFAULT_LAYER_CONFIG,
+  DEFAULT_GLOBAL_SETTINGS,
+
+  // Factory functions
+  createLayer,
+  createLayerFromResponse,
+  createComposition,
+  exportProject,
+} from './types.js';
+
+// Core types (type-only exports — interfaces erased at runtime)
+export type {
+  // String-union types
   DomainType,
   BlendMode,
   MaskMode,
   AssetType,
-  
+
   // Core interfaces
   Layer,
   LayerConfig,
@@ -50,16 +63,6 @@ export {
   LiminalProjectV1,
   Asset,
   Animation,
-  
-  // Constants
-  DEFAULT_LAYER_CONFIG,
-  DEFAULT_GLOBAL_SETTINGS,
-  
-  // Factory functions
-  createLayer,
-  createLayerFromResponse,
-  createComposition,
-  exportProject,
 } from './types.js';
 
 // Layer Manager

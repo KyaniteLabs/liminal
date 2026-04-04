@@ -260,11 +260,11 @@ function App() {
           // Load tasks
           await loadTasks(ni);
         } else {
-          console.error('[TUI] Failed to initialize harness LLM');
+          Logger.error('TUI', 'Failed to initialize harness LLM');
           setHistory(h => [...h, { type: 'error', content: 'Failed to initialize harness LLM. Check LIMINAL_HARNESS_BASE_URL.' }]);
         }
       } catch (err) {
-        console.error('[TUI] Init error:', err);
+        Logger.error('TUI', 'Init error:', err);
         setHistory(h => [...h, { type: 'error', content: `Initialization error: ${err instanceof Error ? err.message : String(err)}` }]);
       }
     };

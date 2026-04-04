@@ -387,6 +387,6 @@ const main = async () => {
 };
 
 main().catch((err) => {
-  console.error('Fatal error:', err);
+  console.error('Fatal error:', err); // eslint-disable-line no-console
   process.exit(1);
 });

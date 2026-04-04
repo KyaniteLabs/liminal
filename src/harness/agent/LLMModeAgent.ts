@@ -15,6 +15,7 @@ import { rateLimiter } from '../tools/RateLimiter.js';
 import { formatError } from '../../utils/errors.js';
 import { getSelfImprovePrompt, createReflectionPrompt } from '../prompts/self-improve.js';
 import { thinkingRepository } from '../ThinkingSeparation.js';
+import { thinkingAnalyzer } from '../ThinkingAnalyzer.js';
 import {
   readFileTool,
   writeFileTool,
@@ -73,6 +74,7 @@ export class LLMModeAgent {
   private llmClient: LLMClient;
   private sessions: Map<string, LLMSession> = new Map();
   private currentSession?: LLMSession;
+  private analyses: import('../ThinkingAnalyzer.js').ThinkingAnalysis[] = [];
 
   constructor(llmClient: LLMClient) {
     this.llmClient = llmClient;
@@ -293,7 +295,28 @@ When the task is complete and build passes, respond with tool "complete".`;
         thinking: toolCall.thought,
         context: 'adaptation',
       });
-      
+
+      // ANALYZE THINKING - feed the LLM's plan through the ThinkingAnalyzer
+      // to detect patterns, suggest fixes, and extract learning insights
+      try {
+        const analysis = thinkingAnalyzer.analyze(
+          {
+            code: jsonStr,
+            thinking: toolCall.thought,
+            success: true,
+          },
+          toolCall.thought.slice(0, 200),
+          'harness-llm',
+          this.llmClient.getConfig().model,
+        );
+
+        // Store the analysis result for later retrieval via getRecentInsights
+        this.storeAnalysis(analysis);
+      } catch (analysisErr) {
+        // Analysis failure must not break the agent loop
+        console.warn('[LLMModeAgent] ThinkingAnalyzer failed:', analysisErr);
+      }
+
       return toolCall;
     } catch (e) {
       console.error('[LLMModeAgent] Failed to parse LLM response:', e);
@@ -427,12 +450,33 @@ When the task is complete and build passes, respond with tool "complete".`;
     console.log('[LLMModeAgent] Rollback complete');
   }
 
+  /**
+   * Store a ThinkingAnalysis result and persist it via the repository
+   */
+  private storeAnalysis(analysis: import('../ThinkingAnalyzer.js').ThinkingAnalysis): void {
+    this.analyses.push(analysis);
+
+    // Persist analysis insights as harness thinking so they surface
+    // in getRecentInsights() and getActionableItems()
+    if (analysis.suggestedFix) {
+      thinkingRepository.storeHarnessThinking({
+        model: analysis.model,
+        thinking: `[ThinkingAnalysis] ${analysis.learning}. Suggested fix: ${analysis.suggestedFix.description}`,
+        context: 'improvement',
+      });
+    }
+  }
+
   getSession(id: string): LLMSession | undefined {
     return this.sessions.get(id);
   }
 
   getAllSessions(): LLMSession[] {
     return Array.from(this.sessions.values());
+  }
+
+  getAnalyses(): import('../ThinkingAnalyzer.js').ThinkingAnalysis[] {
+    return this.analyses;
   }
 
   generateReport(): string {

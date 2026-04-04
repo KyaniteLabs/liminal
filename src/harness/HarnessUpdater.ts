@@ -56,18 +56,20 @@ export class HarnessUpdater {
   }
 
   private applyQwenSimplification(pattern: Pattern): HarnessAdaptation {
-    // This is already hardcoded in LLMClient, but we log it
     const adaptation: HarnessAdaptation = {
       patternId: pattern.id,
       action: 'simplifiedPromptsForQwen',
-      description: 'Use simplified prompts for Qwen models to avoid thinking trap',
-      applied: true,
-      appliedAt: new Date().toISOString()
+      description: 'Detected Qwen thinking trap pattern',
+      applied: false,
+      appliedAt: new Date().toISOString(),
+      patternName: pattern.name,
+      patternSeverity: 'medium',
+      fixType: 'prompt'
     };
-    
+
     this.adaptations.push(adaptation);
-    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
-    
+    Logger.info('Meta-Harness', `📋 Pattern recorded: ${adaptation.description}`);
+
     return adaptation;
   }
 
@@ -75,14 +77,17 @@ export class HarnessUpdater {
     const adaptation: HarnessAdaptation = {
       patternId: pattern.id,
       action: 'addGLSLFunctionDefinitions',
-      description: 'GLSL prompt now includes required function definitions (noise, hash, fbm)',
-      applied: true,
-      appliedAt: new Date().toISOString()
+      description: 'Detected GLSL undefined function pattern',
+      applied: false,
+      appliedAt: new Date().toISOString(),
+      patternName: pattern.name,
+      patternSeverity: 'medium',
+      fixType: 'template'
     };
-    
+
     this.adaptations.push(adaptation);
-    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
-    
+    Logger.info('Meta-Harness', `📋 Pattern recorded: ${adaptation.description}`);
+
     return adaptation;
   }
 
@@ -90,14 +95,17 @@ export class HarnessUpdater {
     const adaptation: HarnessAdaptation = {
       patternId: pattern.id,
       action: 'addToneAPIWhitelist',
-      description: 'Tone.js prompt now includes valid API reference to prevent hallucinations',
-      applied: true,
-      appliedAt: new Date().toISOString()
+      description: 'Detected Tone.js hallucinated API pattern',
+      applied: false,
+      appliedAt: new Date().toISOString(),
+      patternName: pattern.name,
+      patternSeverity: 'medium',
+      fixType: 'template'
     };
-    
+
     this.adaptations.push(adaptation);
-    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
-    
+    Logger.info('Meta-Harness', `📋 Pattern recorded: ${adaptation.description}`);
+
     return adaptation;
   }
 
@@ -105,14 +113,17 @@ export class HarnessUpdater {
     const adaptation: HarnessAdaptation = {
       patternId: pattern.id,
       action: 'enhanceStrudelPrompt',
-      description: 'Strudel prompt now includes anti-patterns section (NEVER use Tidal syntax)',
-      applied: true,
-      appliedAt: new Date().toISOString()
+      description: 'Detected Strudel/Tidal confusion pattern',
+      applied: false,
+      appliedAt: new Date().toISOString(),
+      patternName: pattern.name,
+      patternSeverity: 'medium',
+      fixType: 'prompt'
     };
-    
+
     this.adaptations.push(adaptation);
-    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
-    
+    Logger.info('Meta-Harness', `📋 Pattern recorded: ${adaptation.description}`);
+
     return adaptation;
   }
 
@@ -120,14 +131,17 @@ export class HarnessUpdater {
     const adaptation: HarnessAdaptation = {
       patternId: pattern.id,
       action: 'reduceASCIIDimensions',
-      description: 'ASCII art default dimensions reduced from 60x30 to 40x20 for faster generation',
-      applied: true,
-      appliedAt: new Date().toISOString()
+      description: 'Detected ASCII art timeout pattern',
+      applied: false,
+      appliedAt: new Date().toISOString(),
+      patternName: pattern.name,
+      patternSeverity: 'medium',
+      fixType: 'config'
     };
-    
+
     this.adaptations.push(adaptation);
-    Logger.info('Meta-Harness', `✓ Adaptation applied: ${adaptation.description}`);
-    
+    Logger.info('Meta-Harness', `📋 Pattern recorded: ${adaptation.description}`);
+
     return adaptation;
   }
 
@@ -145,7 +159,7 @@ export class HarnessUpdater {
       `Generated: ${new Date().toISOString()}`,
       `Session: ${failureLogger.getSessionId()}`,
       '',
-      '## Applied Adaptations',
+      '## Detected Patterns',
       ''
     ];
 
@@ -154,7 +168,7 @@ export class HarnessUpdater {
     }
 
     if (this.adaptations.length === 0) {
-      report.push('No adaptations applied yet.');
+      report.push('No patterns detected yet.');
     }
 
     return report.join('\n');

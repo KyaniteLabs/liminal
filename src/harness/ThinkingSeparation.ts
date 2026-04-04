@@ -8,7 +8,7 @@
  * These must NEVER mix. They serve different purposes and mine different insights.
  */
 
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, readFileSync, readdirSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
 
@@ -239,28 +239,88 @@ export class ThinkingRepository {
 
   /**
    * Get recent insights by source
+   * Reads JSON files from the thinking-traces directory and returns
+   * the N most recent insights sorted by timestamp.
    */
-  getRecentInsights(_source: ThinkingSource, _limit: number = 10): {
+  getRecentInsights(source: ThinkingSource, limit: number = 10): {
     insight: string;
     actionItem: string;
     timestamp: string;
   }[] {
-    // This would read from the repository
-    // Simplified for now
-    return [];
+    const dir = join(this.baseDir, source);
+    if (!existsSync(dir)) {
+      return [];
+    }
+
+    const results: { insight: string; actionItem: string; timestamp: string }[] = [];
+
+    try {
+      const files = readdirSync(dir).filter(f => f.endsWith('.json'));
+      for (const file of files) {
+        try {
+          const raw = readFileSync(join(dir, file), 'utf-8');
+          const entry: SeparatedThinking = JSON.parse(raw);
+          const insights = entry.insights || [];
+          const actionItems = entry.actionItems || [];
+          for (let i = 0; i < insights.length; i++) {
+            results.push({
+              insight: insights[i],
+              actionItem: actionItems[i] || '',
+              timestamp: entry.timestamp,
+            });
+          }
+        } catch {
+          // Skip malformed files
+        }
+      }
+    } catch {
+      // Directory read failed
+      return [];
+    }
+
+    // Sort by timestamp descending, then take the N most recent
+    results.sort((a, b) => b.timestamp.localeCompare(a.timestamp));
+    return results.slice(0, limit);
   }
 
   /**
-   * Get actionable items from all thinking
+   * Get actionable items from all thinking sources.
+   * Scans generator/ and harness/ thinking traces for action items
+   * and returns a Map of source to array of action items.
    */
   getActionableItems(): Map<ThinkingSource, string[]> {
     const items = new Map<ThinkingSource, string[]>();
-    
-    // This would aggregate action items from all entries
-    // Simplified for now
-    items.set('generator', []);
-    items.set('harness', []);
-    
+    const sources: ThinkingSource[] = ['generator', 'harness'];
+
+    for (const source of sources) {
+      const collected: string[] = [];
+      const dir = join(this.baseDir, source);
+
+      if (!existsSync(dir)) {
+        items.set(source, collected);
+        continue;
+      }
+
+      try {
+        const files = readdirSync(dir).filter(f => f.endsWith('.json'));
+        for (const file of files) {
+          try {
+            const raw = readFileSync(join(dir, file), 'utf-8');
+            const entry: SeparatedThinking = JSON.parse(raw);
+            if (entry.actionItems && entry.actionItems.length > 0) {
+              collected.push(...entry.actionItems);
+            }
+          } catch {
+            // Skip malformed files
+          }
+        }
+      } catch {
+        // Directory read failed
+      }
+
+      items.set(source, collected);
+    }
+
     return items;
   }
 }

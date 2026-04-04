@@ -6,8 +6,14 @@
  * symbols, and composes new expressions by combining symbols through sequential,
  * parallel, or hierarchical strategies.
  *
+ * Also tracks notation token effectiveness via EMA (exponential moving average),
+ * allowing the CompostSoup loop to learn which creative-notation tokens correlate
+ * with winning offspring.
+ *
  * Pure TypeScript, ESM, zero external dependencies.
  */
+
+import { NOTATION_REGISTRY, compressToNotation } from '../swarm/CreativeNotation.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -77,6 +83,9 @@ export interface ComposedExpression {
 export class SymbolicCreativeLanguage {
   /** Internal symbol store keyed by symbol id. */
   private vocabulary: Map<string, CreativeSymbol> = new Map();
+
+  /** EMA scores for notation tokens (token string -> effectiveness 0-1). */
+  private notationEma: Map<string, number> = new Map();
 
   /** Maximum number of symbols to retain after pruning. */
   private maxVocabularySize: number;
@@ -306,6 +315,92 @@ export class SymbolicCreativeLanguage {
 
     this.vocabulary.set(transferred.id, transferred);
     return transferred;
+  }
+
+  // -----------------------------------------------------------------------
+  // Notation evolution
+  // -----------------------------------------------------------------------
+
+  /**
+   * Evolve notation token effectiveness based on soup round outcomes.
+   *
+   * For each winning seed, compresses its content to notation tokens via
+   * {@link compressToNotation}, then boosts the EMA of any tokens present in
+   * {@link NOTATION_REGISTRY}. For each losing seed, the matching tokens have
+   * their EMA decayed. Logs the top 3 boosted and top 3 decayed tokens.
+   *
+   * Tokens not in NOTATION_REGISTRY are silently ignored (no crash).
+   *
+   * @param winningSeeds - Content strings of seeds that won their round.
+   * @param losingSeeds  - Content strings of seeds that lost their round.
+   */
+  evolveNotation(winningSeeds: string[], losingSeeds: string[]): void {
+    const BOOST_ALPHA = 0.3;
+    const DECAY_ALPHA = 0.15;
+    const BOOST_TARGET = 1.0;
+    const DECAY_TARGET = 0.0;
+
+    const boosted: Array<{ token: string; score: number }> = [];
+    const decayed: Array<{ token: string; score: number }> = [];
+
+    for (const seed of winningSeeds) {
+      const notation = compressToNotation(seed);
+      const tokens = notation.split(/\s+/).filter(Boolean);
+      for (const token of tokens) {
+        if (NOTATION_REGISTRY.has(token)) {
+          const prev = this.notationEma.get(token) ?? 0.5;
+          const next = BOOST_ALPHA * BOOST_TARGET + (1 - BOOST_ALPHA) * prev;
+          this.notationEma.set(token, next);
+          boosted.push({ token, score: next });
+        }
+      }
+    }
+
+    for (const seed of losingSeeds) {
+      const notation = compressToNotation(seed);
+      const tokens = notation.split(/\s+/).filter(Boolean);
+      for (const token of tokens) {
+        if (NOTATION_REGISTRY.has(token)) {
+          const prev = this.notationEma.get(token) ?? 0.5;
+          const next = DECAY_ALPHA * DECAY_TARGET + (1 - DECAY_ALPHA) * prev;
+          this.notationEma.set(token, next);
+          decayed.push({ token, score: next });
+        }
+      }
+    }
+
+    // Log top 3 boosted (highest final score)
+    const topBoosted = boosted
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map((b) => `${b.token}=${b.score.toFixed(3)}`)
+      .join(', ');
+
+    // Log top 3 decayed (lowest final score)
+    const topDecayed = decayed
+      .sort((a, b) => a.score - b.score)
+      .slice(0, 3)
+      .map((d) => `${d.token}=${d.score.toFixed(3)}`)
+      .join(', ');
+
+    if (topBoosted) {
+      console.log(`[NotationEvolution] boosted: ${topBoosted}`);
+    }
+    if (topDecayed) {
+      console.log(`[NotationEvolution] decayed: ${topDecayed}`);
+    }
+  }
+
+  /**
+   * Return a snapshot of all tracked notation token EMA scores.
+   *
+   * Useful for inspection, debugging, and seeding future soup rounds with
+   * token-effectiveness context.
+   *
+   * @returns Map of notation token string to its current EMA score (0-1).
+   */
+  getNotationStats(): Map<string, number> {
+    return new Map(this.notationEma);
   }
 
   // -----------------------------------------------------------------------

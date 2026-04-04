@@ -13,6 +13,7 @@ import { MapElites } from '../evolution/MapElites.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
 import { Logger } from '../utils/Logger.js';
+import { SymbolicCreativeLanguage } from '../brain/SymbolicCreativeLanguage.js';
 
 export class CompostSoup {
   private config: CompostConfig;
@@ -23,6 +24,7 @@ export class CompostSoup {
   private fitnessCombiner: FitnessCombiner;
   private mapElites: MapElites;
   private abortController: AbortController | null = null;
+  private notationLang: SymbolicCreativeLanguage;
 
   constructor(config: CompostConfig, llm: LLMClientLike) {
     this.config = config;
@@ -32,6 +34,7 @@ export class CompostSoup {
     this.scorer = new FragmentScorer(config, llm);
     this.fitnessCombiner = new FitnessCombiner(config.fitnessWeights);
     this.mapElites = new MapElites(config.mapElitesDims ?? [10, 10]);
+    this.notationLang = new SymbolicCreativeLanguage();
     // Evolutionary infrastructure ready for soup fitness scoring
     void this.fitnessCombiner;
     void this.mapElites;
@@ -112,6 +115,15 @@ export class CompostSoup {
       });
       eventBus.emit(EventTypes.COMPOST_SEED, 'CompostSoup', { seedId: offspring.id, score: score.total, source: `soup:${fragA.id}+${fragB.id}`, domains: [domainA, domainB] });
       state = this.stateManager.recordPromotion(state, offspring);
+    }
+
+    // Evolve notation vocabulary from round outcomes
+    if (state.population.length >= 2) {
+      const sorted = [...state.population].sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+      const mid = Math.ceil(sorted.length / 2);
+      const winners = sorted.slice(0, mid).map((f) => f.content);
+      const losers = sorted.slice(mid).map((f) => f.content);
+      this.notationLang.evolveNotation(winners, losers);
     }
 
     await this.stateManager.save(state);

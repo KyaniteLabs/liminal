@@ -76,6 +76,17 @@ export interface DomainStats {
   avoidModels: string[];
 }
 
+export interface TrendBucket {
+  date: string;
+  total: number;
+  successful: number;
+  successRate: number;
+}
+
+export interface TrendResult {
+  buckets: TrendBucket[];
+}
+
 export interface QualityAlert {
   /** Alert type */
   type: 'size_regression' | 'failure_spike' | 'quality_drop' | 'slow_generation';
@@ -350,6 +361,74 @@ export class TelemetryAggregator {
       ...g,
       timestamp: new Date(g.timestamp),
     }));
+  }
+
+  /**
+   * Get historical trending data grouped by time buckets
+   */
+  getTrends(options: {
+    granularity?: 'day' | 'week';
+    model?: string;
+    domain?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}): TrendResult {
+    const { granularity = 'day', model, domain, startDate, endDate } = options;
+    const start = startDate ? new Date(startDate + 'T00:00:00Z') : undefined;
+    const end = endDate ? new Date(endDate + 'T00:00:00Z') : undefined;
+
+    const bucketMap = new Map<string, { total: number; successful: number }>();
+
+    for (const g of this.generations) {
+      if (model && g.modelId !== model) continue;
+      if (domain && g.domain !== domain) continue;
+
+      const gDayStart = Date.UTC(
+        g.timestamp.getUTCFullYear(),
+        g.timestamp.getUTCMonth(),
+        g.timestamp.getUTCDate()
+      );
+
+      if (start && gDayStart < start.getTime()) continue;
+      if (end && gDayStart > end.getTime()) continue;
+
+      const bucketKey = granularity === 'week'
+        ? this.formatISOWeek(g.timestamp)
+        : this.formatISODate(g.timestamp);
+
+      const current = bucketMap.get(bucketKey) || { total: 0, successful: 0 };
+      current.total++;
+      if (g.success) current.successful++;
+      bucketMap.set(bucketKey, current);
+    }
+
+    const buckets = Array.from(bucketMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([date, stats]) => ({
+        date,
+        total: stats.total,
+        successful: stats.successful,
+        successRate: stats.total > 0 ? stats.successful / stats.total : 0,
+      }));
+
+    return { buckets };
+  }
+
+  private formatISODate(date: Date): string {
+    const y = date.getUTCFullYear();
+    const m = String(date.getUTCMonth() + 1).padStart(2, '0');
+    const d = String(date.getUTCDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private formatISOWeek(date: Date): string {
+    const tmp = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+    const dayNum = (tmp.getUTCDay() + 6) % 7;
+    tmp.setUTCDate(tmp.getUTCDate() - dayNum + 3);
+    const firstThursday = tmp.getTime();
+    const yearStart = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
+    const weekNum = Math.ceil((((firstThursday - yearStart.getTime()) / 86400000) + 1) / 7);
+    return `${tmp.getUTCFullYear()}-W${String(weekNum).padStart(2, '0')}`;
   }
 
   /**

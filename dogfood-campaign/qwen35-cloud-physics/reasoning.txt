@@ -1,0 +1,67 @@
+1.  **Analyze the Request:**
+    *   **Goal:** Create a p5.js sketch.
+    *   **Core Elements:** Multiple balls, bouncing inside a circular boundary, collision detection between balls.
+    *   **Technical Requirements:** Use `setup()` and `draw()`, use `createCanvas()`, wrap in code fences.
+
+2.  **Conceptualize the Physics:**
+    *   *Container:* A large circle in the center of the canvas.
+    *   *Objects:* Ball class/objects with position ($x, y$), velocity ($vx, vy$), radius ($r$), and color.
+    *   *Movement:* Update position by adding velocity.
+    *   *Wall Collision:* Distance from center > (Container Radius - Ball Radius). Reflect velocity vector based on the normal vector at the point of impact.
+    *   *Ball-to-Ball Collision:* Distance between centers < (Radius 1 + Radius 2). This requires elastic collision physics (conservation of momentum and kinetic energy).
+
+3.  **Drafting the Code Structure:**
+    *   **Global Variables:** Array for balls, container radius.
+    *   **Class `Ball`:**
+        *   `constructor(x, y, r)`
+        *   `update()`: Move and check wall collisions.
+        *   `draw()`: Render the ball.
+        *   `checkCollision(other)`: Handle ball-to-ball physics.
+    *   **`setup()`:** Initialize canvas, create balls array.
+    *   **`draw()`:** Clear background, draw container, update/draw balls, check collisions between all pairs.
+
+4.  **Refining the Physics Math (Mental Check):**
+    *   *Wall Collision:* The normal vector is simply the vector from the center to the ball. If the ball hits the wall, we need to reflect the velocity vector $V$ across the normal $N$. Formula: $V_{new} = V - 2(V \cdot N)N$.
+    *   *Ball Collision:* This is the tricky part.
+        1.  Calculate distance.
+        2.  If colliding, resolve overlap (move them apart slightly so they don't stick).
+        3.  Calculate unit normal and unit tangent vectors.
+        4.  Project velocities onto these vectors.
+        5.  Swap normal velocity components (assuming equal mass for simplicity, or use mass formula).
+        6.  Reassemble velocity vectors.
+
+5.  **Writing the Code (Iterative refinement):**
+
+    *   *Setup:* Let's make the canvas 600x600. Let's have 10-15 balls.
+    *   *The Ball Class:*
+        *   Need `pos` (p5.Vector), `vel` (p5.Vector), `r`.
+        *   *Wall Logic:* `let d = pos.mag()`. If `d + r > containerRadius`, push it back inside and reflect.
+        *   *Reflection Logic:* `let normal = pos.copy().normalize()`. `let dot = vel.dot(normal)`. `vel.sub(p5.Vector.mult(normal, 2 * dot))`.
+
+    *   *The Collision Logic (Simplified for stability):*
+        *   Loop through balls `i` from 0 to length.
+        *   Loop through balls `j` from `i + 1` to length.
+        *   Check distance.
+        *   If collision:
+            *   Resolve overlap (crucial to prevent sticking). Move balls apart along the collision normal by the amount of overlap.
+            *   Elastic collision math.
+            *   *Simpler approach for p5.js sketches:* Often, swapping velocities along the normal axis works well enough for equal mass balls.
+
+6.  **Polishing the Visuals:**
+    *   Add a stroke to the boundary circle.
+    *   Give balls random colors.
+    *   Add a slight friction or just keep it perfectly elastic? Perfectly elastic is more fun for "bouncing".
+
+7.  **Final Code Assembly (incorporating into the response):**
+    *   (Self-Correction during drafting): Make sure to handle the edge case where balls spawn on top of each other. (Random placement logic needs to be safe, or just let the physics resolve it immediately).
+    *   *Optimization:* Use `p5.Vector` for cleaner math.
+
+8.  **Final Review against constraints:**
+    *   `setup()`? Yes.
+    *   `draw()`? Yes.
+    *   `createCanvas()`? Yes.
+    *   Code fences? Yes.
+
+**(Self-Correction on Collision Math):** The full elastic collision formula can be verbose. I will use a robust standard implementation involving normal/tangent vectors to ensure energy is conserved correctly.
+
+9.  **Generate Output.** (Proceed to generate the JS block).

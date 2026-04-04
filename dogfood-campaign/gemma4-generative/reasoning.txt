@@ -1,0 +1,10 @@
+Here's a plan to create the generative art sketch:
+1.  **Goal:** Flowing organic lines using Perlin noise and color gradients.
+2.  **Tool:** p5.js.
+3.  **Structure:** `setup()` and `draw()`.
+4.  **Noise Implementation:** Use `noise()` function. Since Perlin noise is 1D, I'll pass coordinates that change over time and space (`x`, `y`, `time_offset`) to get a value that dictates the flow/curve.
+5.  **Drawing Technique:** Instead of drawing random points, I'll use a continuous line drawing mechanism. I'll sample points along a path defined by the noise.
+6.  **Flowing Effect:** The input coordinates for the noise will change smoothly over time to simulate movement.
+7.  **Color Gradient:** The color of the line segments will be mapped to the noise value or the position (`x` or `y`) to create a gradient effect.
+
+Let's start writing the code.

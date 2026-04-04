@@ -1,0 +1,51 @@
+We are going to create a p5.js sketch with the following:
+ 1. A circle boundary in the center of the canvas.
+ 2. Multiple balls (let's say 10) that bounce off the circle boundary and also off each other.
+
+ Steps:
+ - We'll create a Ball class that has properties for position, velocity, radius, and color.
+ - In the setup function, we'll create a canvas and initialize an array of balls with random positions (within the circle) and velocities.
+ - In the draw function, we'll update each ball's position, check for collisions with the boundary (circle) and with other balls, and then draw them.
+
+ Boundary: We'll have a fixed circle in the center of the canvas. The balls should bounce off the inner edge of this circle.
+ How to bounce off a circle? We can check the distance from the center of the circle to the ball's center. If it's greater than (circleRadius - ballRadius), then we need to bounce.
+
+ Collision between balls: When two balls collide, we'll swap their velocities (or calculate elastic collision).
+
+ Let's define:
+   - circleRadius: 200
+   - circleCenter: (width/2, height/2)
+
+ We'll create a function to check if a ball is outside the boundary and then adjust its velocity to bounce.
+
+ Steps for ball-boundary collision:
+   Let d = distance from ball's center to circleCenter.
+   If d > (circleRadius - ballRadius), then the ball is hitting the boundary.
+   We can calculate the normal vector from the circle center to the ball (ball.pos - circleCenter) and normalize it.
+   Then reflect the velocity vector of the ball over this normal.
+
+ Steps for ball-ball collision:
+   Check the distance between two balls. If the distance is less than the sum of their radii, they are colliding.
+   We can use the elastic collision formula for two balls with the same mass.
+
+ However, note that we have to avoid checking the same pair twice and also avoid adjusting the same ball multiple times in one frame.
+
+ Let's plan:
+
+  1. Ball class:
+        constructor()
+        update()
+        display()
+        checkBoundaryCollision()
+        checkBallCollision(otherBall)
+
+  2. In draw:
+        For each ball:
+          update position
+          check boundary collision
+        Then for each pair of balls (i and j, where j>i):
+          check collision between ball[i] and ball[j]
+
+  3. We'll use vectors for position and velocity.
+
+ Let's code accordingly.

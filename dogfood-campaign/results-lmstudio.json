@@ -1,0 +1,101 @@
+[
+  {
+    "model": "lfm2.5-1.2b-instruct",
+    "provider": "lmstudio-local",
+    "domain": "particles",
+    "thinking_chars": 0,
+    "content_chars": 1519,
+    "code_chars": 898,
+    "tokens": 468,
+    "elapsed_s": 4.3,
+    "score": 1.0
+  },
+  {
+    "model": "lfm2.5-1.2b-instruct",
+    "provider": "lmstudio-local",
+    "domain": "generative",
+    "thinking_chars": 0,
+    "content_chars": 2391,
+    "code_chars": 1553,
+    "tokens": 702,
+    "elapsed_s": 6.3,
+    "score": 1.0
+  },
+  {
+    "model": "lfm2.5-1.2b-instruct",
+    "provider": "lmstudio-local",
+    "domain": "physics",
+    "thinking_chars": 0,
+    "content_chars": 2886,
+    "code_chars": 2208,
+    "tokens": 826,
+    "elapsed_s": 7.5,
+    "score": 1.0
+  },
+  {
+    "model": "gemma-4-26b-a4b-it",
+    "provider": "lmstudio-local",
+    "domain": "particles",
+    "thinking_chars": 0,
+    "content_chars": 19990,
+    "code_chars": 19990,
+    "tokens": 2000,
+    "elapsed_s": 69.5,
+    "score": 0.0
+  },
+  {
+    "model": "gemma-4-26b-a4b-it",
+    "provider": "lmstudio-local",
+    "domain": "generative",
+    "thinking_chars": 0,
+    "content_chars": 19990,
+    "code_chars": 19990,
+    "tokens": 2000,
+    "elapsed_s": 69.5,
+    "score": 0.0
+  },
+  {
+    "model": "gemma-4-26b-a4b-it",
+    "provider": "lmstudio-local",
+    "domain": "physics",
+    "thinking_chars": 0,
+    "content_chars": 19990,
+    "code_chars": 19990,
+    "tokens": 2000,
+    "elapsed_s": 69.6,
+    "score": 0.0
+  },
+  {
+    "model": "qwen3.5-2b",
+    "provider": "lmstudio-local",
+    "domain": "particles",
+    "thinking_chars": 0,
+    "content_chars": 2631,
+    "code_chars": 2613,
+    "tokens": 753,
+    "elapsed_s": 9.9,
+    "score": 1.0
+  },
+  {
+    "model": "qwen3.5-2b",
+    "provider": "lmstudio-local",
+    "domain": "generative",
+    "thinking_chars": 0,
+    "content_chars": 1387,
+    "code_chars": 1369,
+    "tokens": 409,
+    "elapsed_s": 5.4,
+    "score": 1.0
+  },
+  {
+    "model": "qwen3.5-2b",
+    "provider": "lmstudio-local",
+    "domain": "physics",
+    "thinking_chars": 0,
+    "content_chars": 3478,
+    "code_chars": 3460,
+    "tokens": 1150,
+    "elapsed_s": 15.0,
+    "score": 1.0
+  }
+]

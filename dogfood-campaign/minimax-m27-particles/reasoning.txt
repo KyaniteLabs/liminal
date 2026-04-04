@@ -1,0 +1,148 @@
+1.  **Analyze the Request:**
+    *   **Type:** p5.js sketch.
+    *   **Core Functionality:** Particle system.
+    *   **Trigger:** Mouse cursor.
+    *   **Visual Effects:** Colorful sparks, gravity, fade-out.
+
+2.  **Design the Particle Class (Conceptual):**
+    *   *Properties:* Position (x, y), Velocity (vx, vy), Acceleration (gravity), Color (RGB/HSB), Lifespan/Alpha, Size.
+    *   *Constructor:* Initialize at mouse position, random velocity (explosive), random color.
+    *   *Update Method:* Apply gravity (vy += gravity), move (x += vx, y += vy), decrease lifespan.
+    *   *Draw Method:* Draw ellipse/point, apply alpha based on lifespan.
+
+3.  **Design the Main Logic:**
+    *   *Setup:* Create canvas (windowWidth/Height), background color (dark to make sparks pop).
+    *   *Draw Loop:*
+        *   Option A: Clear background every frame (trails are shorter).
+        *   Option B: Draw a semi-transparent background rect (creates trails). Let's go with Option A for "sparks" usually implies a crisp look, but Option B looks cooler. Let's stick to `background(0, 0, 0)` for a clean look, or maybe a very low alpha background for a slight trail effect. Let's do `background(0)` for simplicity and crisp sparks, or `background(0, 50)` for trails. Let's go with a dark grey background and a slight alpha to create a "tail" effect without full persistence.
+    *   *Emission:* Create a new particle(s) every frame or when mouse moves/dragged. Let's make it emit continuously while the mouse is pressed or just moving. The prompt says "emits... from the mouse cursor", so emitting while pressing is usually more satisfying, but emitting on move works too. Let's do: if mouse is pressed, emit particles.
+
+4.  **Refining the Visuals (Spark feel):**
+    *   *Color:* Random hues (HSB mode is great for colorful variations).
+    *   *Shape:* Small circles or points.
+    *   *Gravity:* A small positive `ay` value.
+    *   *Fade:* The alpha (transparency) decreases as the particle ages.
+
+5.  **Drafting the Code (Mental or Scratchpad):**
+
+    *   *Setup:*
+        ```javascript
+        function setup() { createCanvas(windowWidth, windowHeight); colorMode(HSB, 360, 100, 100); }
+        ```
+
+    *   *Particle Object:*
+        ```javascript
+        class Particle {
+            constructor(x, y) {
+                this.pos = createVector(x, y);
+                this.vel = p5.Vector.random2D().mult(random(1, 5)); // Burst out
+                this.acc = createVector(0, 0.1); // Gravity
+                this.life = 255;
+                this.hue = random(360);
+            }
+            update() {
+                this.vel.add(this.acc);
+                this.pos.add(this.vel);
+                this.life -= 5;
+            }
+            display() {
+                noStroke();
+                fill(this.hue, 80, 100, this.life);
+                ellipse(this.pos.x, this.pos.y, 4);
+            }
+        }
+        ```
+
+    *   *Array Management:*
+        `let particles = [];`
+        `particles.push(new Particle(mouseX, mouseY));`
+        Loop through array, remove if `life < 0`.
+
+6.  **Adding Polish:**
+    *   Background trail: Using `background(0, 0, 0, 20)` creates a nice fade effect for the whole screen while particles individually fade out.
+    *   Speed variation: Make the burst velocity slightly random to look natural.
+    *   Efficiency: Limit max particles? 500-1000 is usually fine for basic p5.js.
+
+7.  **Final Code Structure Assembly:**
+    *   Include standard p5.js CDN link (implied by user request for p5.js code, usually assumed they have the environment, but good to mention).
+    *   `setup()`: Canvas, HSB color mode.
+    *   `draw()`: Background (semi-transparent black for trails), Emitting logic, Update logic, Draw logic.
+
+8.  **Self-Correction during drafting:**
+    *   *Problem:* If I just use `background(0)`, particles won't look like they are moving, they'll just pop in and out.
+    *   *Solution:* Use `background(0, 0, 0, 20)` to leave a faint trail of where the particles were.
+    *   *Gravity direction:* Positive Y is down.
+
+9.  **Writing the actual code block:**
+    *   Define `Particle` class.
+    *   Implement `setup()` and `draw()`.
+    *   Ensure `mousePressed()` or `draw()` logic handles emission. Let's make it emit when the mouse is pressed to control the flow, or continuously for a "drawing" effect. The prompt asks for "emits from cursor", usually implies interaction. I will make it emit when the mouse is *pressed* to simulate a "sparks" tool, or continuous movement. Continuous movement with a high emission rate is often more visually pleasing for a "magic" cursor effect. Let's try: Emit constantly while moving, maybe more when clicking. Actually, let's stick to the simplest "Sparks" definition: Sparks happen when you click/drag.
+
+10. **Final Code Check:**
+    *   Does it have gravity? Yes (`vel.y += 0.1`).
+    *   Does it fade out? Yes (`life` variable).
+    *   Is it colorful? Yes (Random HSB).
+    *   Does it come from mouse? Yes.
+
+**(Self-Correction on Emission Rate):** A single particle per frame is boring. I should emit ~5-10 per frame while the mouse is down.
+
+11. **Constructing the Output:** Present the code wrapped in the requested fences with a brief explanation.
+
+**(Refining the look):** To make it look like *sparks*, the velocity should be high and the lifespan short, with a slight downward drag (gravity).
+
+Let's write the code.
+
+*   **Color Mode:** HSB is easier for "rainbow" or "vibrant" colors.
+*   **Background:** `bg = color(0, 0, 0, 25)` (Dark with alpha for trails).
+*   **Particle:** Position, velocity, acceleration (gravity), life (alpha), size.
+
+Code construction looks good. I will provide a single HTML file structure or just the script block? The prompt asks for a "p5.js sketch", usually the JS code is preferred. I'll provide the JS code assuming it's in an HTML file with the CDN.
+
+Wait, I should make sure the `windowResized` function is included so it looks good on different screens.
+
+Let's add a "glow" effect? Maybe too complex for a basic request. Keep it simple with `noStroke` and semi-transparent fill.
+
+Let's finalize the `draw` loop logic:
+1. Fill background (alpha).
+2. If mouse is pressed: create 5 particles at `mouseX, mouseY`.
+3. Loop through particles: update, display, remove dead ones.
+
+Okay, ready to generate.
+
+*   **Prompt:** "Create a p5.js sketch..."
+*   **Key Elements:** Particle system, colorful, mouse cursor, gravity, fade-out.
+
+Let's write it.
+
+*   `function setup()`: `createCanvas(windowWidth, windowHeight)`, `colorMode(HSB, 360, 100, 100, 100)`.
+*   `function draw()`: `background(0, 0, 0, 2)` (Very dark, slight trail).
+*   `if (mouseIsPressed)`:
+    *   for i in range(5):
+        *   `particles.push(new Particle(mouseX, mouseY, random(360), 100, 100))`
+
+*   `class Particle`:
+    *   `constructor(x, y)`:
+        *   `this.pos = createVector(x, y)`
+        *   `this.vel = p5.Vector.random2D().mult(random(2, 6))` (Burst)
+        *   `this.acc = createVector(0, 0.2)` (Gravity)
+        *   `this.lifespan = 100`
+        *   `this.hue = random(360)`
+    *   `run()`:
+        *   `this.update()`
+        *   `this.display()`
+    *   `update()`:
+        *   `this.vel.add(this.acc)`
+        *   `this.pos.add(this.vel)`
+        *   `this.lifespan -= 2`
+    *   `display()`:
+        *   `noStroke()`
+        *   `fill(this.hue, 80, 90, this.lifespan)`
+        *   `ellipse(...)`
+
+Looks solid. I will present this clearly.
+
+One small tweak: Use `trail` effect in background. `background(0, 0, 0, 40)` gives a better "firework" trail feel than just black.
+
+Double check the "fades out" requirement. Yes, `this.lifespan` controls alpha.
+
+I will format the response to be copy-paste

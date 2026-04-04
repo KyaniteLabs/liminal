@@ -1,0 +1,181 @@
+Thinking Process:
+
+1.  **Analyze the Request:**
+    *   **Topic:** Particle system emitting colorful sparks.
+    *   **Trigger:** Mouse cursor.
+    *   **Physics:** Gravity, fade-out.
+    *   **Framework:** p5.js.
+    *   **Structure:** `function setup()` and `function draw()`.
+    *   **Format:** Wrapped in ```javascript ``` fences.
+
+2.  **Determine Key p5.js Components:**
+    *   `createCanvas(width, height)`: Initialize the main stage.
+    *   `color()`: Define particle colors (random or dynamic).
+    *   `draw()`: The main loop. Inside: clear screen, update particles, handle mouse interaction (if needed), render particles.
+    *   `particles()` array: Store particle objects (x, y, vx, vy, radius, alpha, color).
+    *   `mousePressed()` event: Trigger when mouse button is clicked.
+
+3.  **Physics/Logic:**
+    *   Spawn particles when mouse enters the canvas.
+    *   Particles need position (`x`, `y`), velocity (`vx`, `vy`), and radius.
+    *   Gravity: Apply to velocity (`vy += gravity`).
+    *   Friction/Air resistance (optional but nice): Reduce velocity over time.
+    *   Decay: Decrease alpha (`alpha -= alphaSpeed`).
+    *   Rendering: `rect()` for simplicity or `ellipse()` (particles are small dots). `fillColor()`, `strokeWeight()`.
+    *   `fade-out`: `alpha = alpha * fadeSpeed`.
+    *   `createCanvas()`: Use `createCanvas()` or `noLoop()`.
+
+4.  **Drafting the Code:**
+    *   *Setup:* Set canvas size. Create particle array.
+    *   *Input:* `mousePressed()` sets a counter for sparks? Or just triggers immediately. Let's make it trigger a new batch or multiple sparks.
+    *   *Animation:* Update and draw loop.
+    *   *Physics:* Update x/y, speed, and gravity.
+    *   *Visuals:* Random colors, fading alpha.
+
+5.  **Refining the Physics:**
+    *   `vy += 1` (gravity)
+    *   `x += vx`
+    *   `y += vy`
+    *   `vx *= 0.98` (friction)
+    *   `vy *= 0.98` (friction)
+    *   `alpha *= 0.9` (fade)
+
+6.  **Refining the Rendering:**
+    *   `createParticle(x, y, vx, vy, color)`
+    *   `drawParticle(x, y, vx, vy, color)`
+    *   Use random hue for color.
+
+7.  **Final Code Assembly:**
+    *   Start with imports? No, pure p5.js.
+    *   Use `let` for particle instances to manage performance.
+    *   Make it look cool (glow effect).
+
+8.  **Review against constraints:**
+    *   p5.js? Yes.
+    *   `createCanvas`? Yes.
+    *   `function setup()`? Yes.
+    *   `function draw()`? Yes.
+    *   Mouse trigger? Yes.
+    *   Gravity/Fade? Yes.
+
+9.  **Final Polish:** Add a nice fade-out transition and ensure the loop is efficient. Maybe use a `mousePressed()` event and `mouseReleased()`.
+
+    *   *Self-Correction on Physics:* Standard gravity + velocity decay is good, but maybe the sparks fade out quickly so the screen doesn't get crowded.
+    *   *Visuals:* `strokeColor` might be better for particles? Or `fillColor`. `fill()` with alpha.
+    *   *Color:* Use `hsl()` for vibrant colors.
+
+    Let's write the actual code.
+
+```javascript
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noLoop(); // Standard pattern for physics, but p5 usually needs loop
+  // Wait, standard p5 pattern is:
+  // setup();
+  // draw();
+}
+function draw() {
+  // logic
+}
+```
+Correct structure.
+
+Code Structure:
+1. Setup function: init variables, create particles array.
+2. Mouse: `mousePressed()`: trigger sparks.
+3. Draw: Update gravity/velocity for sparks. Draw sparks.
+
+Physics constants:
+`gravity`: 0.2
+`friction`: 0.9
+`decay`: 0.9
+`spawnCount`: 10 (per click) or random count.
+
+Let's finalize the code.
+
+```javascript
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  particleCount = 0;
+  gravity = 0.03;
+  friction = 0.98;
+  fadeSpeed = 0.01;
+}
+
+function draw() {
+  background(0);
+  createSpark(mouseX, mouseY, randomColor());
+  // ... update and draw particles
+}
+```
+
+Let's improve the spark physics slightly to make them look like sparks.
+Random velocity on spawn?
+Gravity on every frame.
+
+Okay, ready to generate.
+
+```javascript
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  // Initialize variables
+}
+
+function draw() {
+  background(0);
+  // Particle system logic
+}
+```
+
+Wait, standard p5 setup/draw structure in the request.
+The user asked for `function setup()` and `function draw()`.
+I should ensure I don't accidentally use `noLoop` if not needed, or just use standard setup/draw.
+
+Let's write it.
+- Setup: Initialize canvas.
+- Draw: Clear.
+- Loop: Spawn logic.
+- Draw: Update physics.
+
+One tricky part: `mousePressed` inside `setup` is fine, but `mouseClick` event listener is better for sparks.
+Actually, `if (mousePressed())` or similar is easier.
+
+Let's write the final version.
+
+```javascript
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  let particles = [];
+}
+
+function draw() {
+  background(0);
+  if (mouseX !== null && mouseX > 0 && mouseY > 0) {
+    createSpark(mouseX, mouseY);
+  }
+  for (let i = 0; i < particles.length; i++) {
+    updateParticle(particles[i]);
+    drawParticle(particles[i]);
+  }
+}
+```
+
+Wait, `particles` array should contain objects.
+`let particle = { x, y, vx, vy, alpha, color }`
+
+I will structure it properly.
+
+```javascript
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+  // ... setup particles
+}
+
+function draw() {
+  background(0);
+  // ...
+}
+```
+
+Okay, proceeding.

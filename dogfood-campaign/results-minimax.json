@@ -1,0 +1,35 @@
+[
+  {
+    "model": "minimax-m2.7",
+    "provider": "minimax-cloud",
+    "domain": "particles",
+    "thinking_chars": 7952,
+    "content_chars": 0,
+    "code_chars": 0,
+    "tokens": 2069,
+    "elapsed_s": 40.6,
+    "score": 0.0
+  },
+  {
+    "model": "minimax-m2.7",
+    "provider": "minimax-cloud",
+    "domain": "generative",
+    "thinking_chars": 7455,
+    "content_chars": 0,
+    "code_chars": 0,
+    "tokens": 2067,
+    "elapsed_s": 50.3,
+    "score": 0.0
+  },
+  {
+    "model": "minimax-m2.7",
+    "provider": "minimax-cloud",
+    "domain": "physics",
+    "thinking_chars": 7434,
+    "content_chars": 0,
+    "code_chars": 0,
+    "tokens": 2066,
+    "elapsed_s": 37.7,
+    "score": 0.0
+  }
+]

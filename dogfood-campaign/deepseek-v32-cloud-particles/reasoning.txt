@@ -1,0 +1,26 @@
+We are going to create a particle system that emits colorful sparks from the mouse cursor.
+ Each spark will be a particle with:
+   - position: starting at the mouse position
+   - velocity: random in all directions (but we might adjust for gravity)
+   - acceleration: gravity pulling down (positive y direction)
+   - color: random and vibrant
+   - lifespan: the particle will fade out and shrink over time.
+
+ We'll have an array of particles. In draw(), we'll update and display each particle.
+ We'll also remove particles that have died (when their lifespan is below 0).
+
+ Steps:
+ 1. In setup(), create a canvas and initialize an empty array for particles.
+ 2. In draw(), clear the background (maybe with a slight transparency for a trail effect).
+ 3. Check the mouse position and create a few particles at the mouse each frame.
+ 4. For each particle, update its position based on velocity and acceleration, update its velocity by acceleration, and reduce its lifespan.
+ 5. Draw each particle with its color and size, and maybe use alpha for fade-out.
+
+ Let's set the gravity to be a constant acceleration in the y direction.
+
+ We'll use:
+   createCanvas(windowWidth, windowHeight) to make it fullscreen, but we can adjust.
+
+ Note: We'll use random colors, for example by using random(255) for RGB.
+
+ Let's code accordingly.

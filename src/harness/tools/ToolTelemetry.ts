@@ -8,6 +8,7 @@
 import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'fs';
 import { join } from 'path';
 import { homedir } from 'os';
+import { Logger } from '../../utils/Logger.js';
 import type { ToolResult } from './types.js';
 
 export interface ToolCallRecord {

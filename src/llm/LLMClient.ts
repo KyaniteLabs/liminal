@@ -140,7 +140,7 @@ export class LLMClient {
 
     this.config = {
       baseUrl,
-      apiKey: config?.apiKey ?? roleApiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY,
+      apiKey: config?.apiKey ?? roleApiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY ?? process.env.MINIMAX_API_KEY,
       model: config?.model || roleModel || env('LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL,
       temperature: config?.temperature ?? roleTemperature ?? 0.7,
       maxTokens: config?.maxTokens ?? roleMaxTokens ?? 4096,

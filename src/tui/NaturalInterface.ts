@@ -294,7 +294,7 @@ export class NaturalInterface {
    * Handle chat with streaming for real-time response
    */
   private async handleChat(
-    input: string,
+    _input: string,
     onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
   ): Promise<NaturalInputResult> {
     this.onStatus('Thinking...');

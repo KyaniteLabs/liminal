@@ -126,9 +126,6 @@ export class ProceduralTier {
     this._strategySampler = deps.strategySampler;
     this._prototype = deps.prototype;
     this.worldModel = deps.worldModel;
-    // DI deps stored for future wiring (strategySampler, prototype)
-    void this._strategySampler;
-    void this._prototype;
   }
 
   // ---------------------------------------------------------------------------
@@ -176,6 +173,18 @@ export class ProceduralTier {
       // Check success rate
       const successRate = pattern.alpha / (pattern.alpha + pattern.beta);
       if (successRate < this.config.minSuccessRate) continue;
+
+      // Check strategy confidence via Thompson sampling
+      if (pattern.strategy) {
+        const strategyConfidence = this._strategySampler.getConfidence(pattern.strategy);
+        if (strategyConfidence < this.config.mediumConfidenceThreshold) continue;
+      }
+
+      // Check domain prototype similarity (how close to known-good centroid)
+      if (pattern.domain) {
+        const centroid = this._prototype.getCentroid(pattern.domain);
+        if (centroid && centroid.exampleCount > 0 && pattern.avgQuality < centroid.avgQuality * 0.5) continue;
+      }
 
       // Pattern qualifies! Determine confidence level
       const confidence: RoutineConfidence = modelConfidence >= this.config.highConfidenceThreshold

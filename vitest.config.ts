@@ -30,9 +30,9 @@ export default defineConfig({
         // Per-file enforcement: scripts/ci/check-coverage-gaps.ts
         // Quality enforcement: scripts/testing/test-quality-check.mjs
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        statements: 69.1,
-        branches: 59.1,
-        functions: 70.1,
+        statements: 70,
+        branches: 70,
+        functions: 70,
         lines: 70,
         autoUpdate: (n: number) => Math.floor(n * 10) / 10,
       },

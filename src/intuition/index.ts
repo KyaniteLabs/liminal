@@ -26,3 +26,9 @@ export type { CacheEntry, IntuitionCacheConfig, CacheStats, SerializedCache } fr
 
 export { MemoryConsolidator } from './MemoryConsolidator.js';
 export type { ConsolidationEpisode, ConsolidatedPattern, ConsolidationResult, ConsolidatorConfig } from './MemoryConsolidator.js';
+
+export { DreamEngine } from './DreamEngine.js';
+export type { DreamConcept, DreamOutput, DreamJournalEntry, DreamEngineConfig } from './DreamEngine.js';
+
+export { SleepScheduler } from './SleepScheduler.js';
+export type { SleepDepth, SleepScheduleConfig, SleepState, ActivitySample } from './SleepScheduler.js';

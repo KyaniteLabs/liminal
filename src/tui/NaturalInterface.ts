@@ -49,7 +49,7 @@ const COMMAND_PATTERNS: Record<string, RegExp[]> = {
   tasks: [/\b(tasks?|todo|pending)\b/i, /what (?:needs|remains) to be done/i],
   run: [/\brun\s+(\w+)/i, /execute\s+(?:task\s+)?(\w+)/i],
   preview: [/\bpreview\s+(\S+)/i, /show\s+(?:me\s+)?(?:the\s+)?(?:file\s+)?(\S+)/i],
-  help: [/\bhelp\b/i, /what can you do/i, /commands/i, /\?$/],
+  help: [/\bhelp\b/i, /what can you do/i, /commands/i, /^\?$/],
   exit: [/\b(exit|quit|bye|goodbye)\b/i, /^q$/i],
   clear: [/\bclear\b/i, /clean (?:the )?screen/i],
 };
@@ -309,8 +309,6 @@ export class NaturalInterface {
       const systemPrompt = this.session.soul;
       const userPrompt = `CONVERSATION HISTORY:
 ${recentHistory}
-
-USER: ${input}
 
 Respond naturally as your personality. If the user asks you to modify code (fix, add, change, etc.) OR says words like "do", "make", "create", "implement" \u2014 immediately invoke the agent without asking for confirmation. Only ask "Should I...?" if the request is ambiguous or destructive (delete, overwrite).`;
 

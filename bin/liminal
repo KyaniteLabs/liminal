@@ -101,6 +101,8 @@ for (let i = 0; i < args.length; i++) {
     flags.aesthetic = args[++i];
   } else if (arg === '--aesthetic-config') {
     flags.aestheticConfig = args[++i];
+  } else if (arg === '--intuition') {
+    flags.intuition = true;
   } else if (arg === '--verbose' || arg === '-v') {
     flags.verbose = true;
   } else if (arg === '--script-only') {

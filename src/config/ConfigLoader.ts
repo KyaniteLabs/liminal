@@ -125,6 +125,21 @@ export interface ProjectConfig {
     stagnationThreshold?: number;
     useArchiveLearning?: boolean;
   };
+  /** Intuition system — compressed-experience-based quality signals. */
+  intuition?: {
+    /** Enable intuition scoring dimension (additive, not replacing). */
+    enabled?: boolean;
+    /** Minimum prototype examples before intuition activates per domain. Default: 3. */
+    minPrototypeExamples?: number;
+    /** Weight for prototype distance signal. Default: 0.4. */
+    prototypeWeight?: number;
+    /** Weight for novelty signal. Default: 0.3. */
+    noveltyWeight?: number;
+    /** Weight for Thompson confidence signal. Default: 0.3. */
+    thompsonWeight?: number;
+    /** Score threshold for Thompson success updates. Default: 0.7. */
+    successThreshold?: number;
+  };
 }
 
 export interface EffectiveConfig {

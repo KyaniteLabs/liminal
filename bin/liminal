@@ -8,6 +8,7 @@ import { PromptHistory } from '../dist/config/PromptHistory.js';
 import { InteractiveMode } from '../dist/tui/InteractiveMode.js';
 import { CompostMill } from '../dist/compost/CompostMill.js';
 import { parseArgs, execute } from '../dist/compost/cli.js';
+import { handleGitCommand } from '../dist/git/index.js';
 import { LLMClient } from '../dist/llm/LLMClient.js';
 import { ModelRouter } from '../dist/compost/ModelRouter.js';
 import { chatCommand } from '../dist/chat/commands/chat.js';
@@ -132,6 +133,7 @@ if (flags.help) {
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
   console.log('  composite                   Compose video layers from a JSON spec');
   console.log('  chat                        Start conversational creative coding mode');
+  console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
   console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
   console.log('');
   console.log('OPTIONS:');
@@ -576,6 +578,12 @@ else if (cmd === 'chat') {
   // Chat command - conversational creative coding mode
   chatCommand({ verbose: flags.verbose || false }).catch(err => {
     console.error('Chat error:', err.message);
+    process.exit(1);
+  });
+}
+else if (cmd === 'git') {
+  handleGitCommand(cmdArgs[0], cmdArgs.slice(1)).catch(err => {
+    console.error('Git error:', err.message);
     process.exit(1);
   });
 }

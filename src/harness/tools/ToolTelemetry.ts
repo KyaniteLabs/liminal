@@ -6,7 +6,6 @@
  */
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'fs';
-import { Logger } from '../../utils/Logger.js';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { ToolResult } from './types.js';
@@ -190,13 +189,8 @@ export class ToolTelemetry {
         try {
           const content = readFileSync(join(this.logDir, f), 'utf-8');
           return JSON.parse(content) as ToolCallRecord;
-<<<<<<< HEAD
         } catch (err) {
           Logger.debug('ToolTelemetry', `Failed to read log file ${f}:`, err);
-=======
-        } catch {
-          Logger.debug('ToolTelemetry', 'Failed to parse telemetry file', f);
->>>>>>> d4be5bb (fix: add logging to 3 silent catch blocks)
           return null;
         }
       })

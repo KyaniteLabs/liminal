@@ -8,6 +8,8 @@ import { IntuitionStrategy } from '../../src/intuition/IntuitionStrategy.js';
 import { IntuitionCache } from '../../src/intuition/IntuitionCache.js';
 import { MemoryConsolidator } from '../../src/intuition/MemoryConsolidator.js';
 import type { ConsolidationEpisode } from '../../src/intuition/MemoryConsolidator.js';
+import { CreativeWorldModel } from '../../src/intuition/CreativeWorldModel.js';
+import type { BehaviorVector } from '../../src/intuition/CreativeWorldModel.js';
 import type { ScoringInput } from '../../src/core/ScoringEngine.js';
 
 // ---------------------------------------------------------------------------
@@ -732,5 +734,129 @@ describe('MemoryConsolidator', () => {
     const result = consolidator.consolidate(episodes);
     expect(Object.keys(result.byDomain).length).toBe(2);
     expect(result.byDomain.p5.avgQuality).toBeGreaterThan(result.byDomain.glsl.avgQuality);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// CreativeWorldModel
+// ---------------------------------------------------------------------------
+describe('CreativeWorldModel', () => {
+  let model: CreativeWorldModel;
+
+  beforeEach(() => {
+    model = new CreativeWorldModel({ minObservations: 3, kNeighbors: 3 });
+  });
+
+  const makeBehavior = (overrides: Partial<BehaviorVector>): BehaviorVector => ({
+    domain: 'p5',
+    lineCount: 50,
+    techniqueDiversity: 3,
+    hasInteraction: 1,
+    hasColor: 1,
+    hasLoops: 1,
+    hasFunctions: 0,
+    hasClasses: 0,
+    commentDensity: 0.1,
+    ...overrides,
+  });
+
+  it('should record observations', () => {
+    model.record(makeBehavior({}), 0.8);
+    expect(model.getObservationCount()).toBe(1);
+  });
+
+  it('should extract behavior vectors from code', () => {
+    const code = `
+      function setup() { createCanvas(400, 400); }
+      function draw() {
+        background(220);
+        fill(color(255, 0, 0));
+        for (let i = 0; i < 10; i++) {
+          ellipse(mouseX + i * 20, mouseY, 10, 10);
+        }
+      }
+    `;
+    const behavior = CreativeWorldModel.extractBehavior(code, 'p5');
+    expect(behavior.domain).toBe('p5');
+    expect(behavior.lineCount).toBeGreaterThan(0);
+    expect(behavior.hasInteraction).toBe(1); // mouseX, mouseY
+    expect(behavior.hasColor).toBe(1);       // fill, color
+    expect(behavior.hasLoops).toBe(1);       // for loop
+    expect(behavior.hasFunctions).toBe(1);   // function setup, draw
+    expect(behavior.techniqueDiversity).toBeGreaterThanOrEqual(3);
+  });
+
+  it('should return null for prediction with insufficient data', () => {
+    model.record(makeBehavior({}), 0.8);
+    model.record(makeBehavior({}), 0.7);
+    expect(model.predict(makeBehavior({}))).toBeNull(); // Need 3
+  });
+
+  it('should predict quality after sufficient observations', () => {
+    // High-quality pattern: interactive + colorful + loops
+    for (let i = 0; i < 5; i++) {
+      model.record(makeBehavior({ hasInteraction: 1, hasColor: 1, hasLoops: 1, techniqueDiversity: 4 }), 0.85);
+    }
+    // Low-quality pattern: bare minimum
+    for (let i = 0; i < 5; i++) {
+      model.record(makeBehavior({ hasInteraction: 0, hasColor: 0, hasLoops: 0, techniqueDiversity: 1, lineCount: 5 }), 0.3);
+    }
+
+    const highPred = model.predict(makeBehavior({ hasInteraction: 1, hasColor: 1, hasLoops: 1, techniqueDiversity: 4 }));
+    expect(highPred).not.toBeNull();
+    expect(highPred!.predicted).toBeGreaterThan(0.6);
+
+    const lowPred = model.predict(makeBehavior({ hasInteraction: 0, hasColor: 0, hasLoops: 0, techniqueDiversity: 1, lineCount: 5 }));
+    expect(lowPred).not.toBeNull();
+    expect(lowPred!.predicted).toBeLessThan(0.5);
+  });
+
+  it('should report isReady after min observations', () => {
+    expect(model.isReady('p5')).toBe(false);
+    for (let i = 0; i < 3; i++) model.record(makeBehavior({}), 0.7);
+    expect(model.isReady('p5')).toBe(true);
+  });
+
+  it('should track domain stats', () => {
+    model.record(makeBehavior({ domain: 'p5' }), 0.9);
+    model.record(makeBehavior({ domain: 'p5' }), 0.7);
+    model.record(makeBehavior({ domain: 'glsl' }), 0.5);
+
+    const p5Stats = model.getDomainStats('p5');
+    expect(p5Stats).not.toBeNull();
+    expect(p5Stats!.count).toBe(2);
+    expect(p5Stats!.avgQuality).toBeCloseTo(0.8, 2);
+    expect(p5Stats!.bestQuality).toBe(0.9);
+  });
+
+  it('should list domains', () => {
+    model.record(makeBehavior({ domain: 'p5' }), 0.8);
+    model.record(makeBehavior({ domain: 'glsl' }), 0.7);
+    expect(model.getDomains()).toContain('p5');
+    expect(model.getDomains()).toContain('glsl');
+  });
+
+  it('should serialize and deserialize', () => {
+    for (let i = 0; i < 3; i++) model.record(makeBehavior({}), 0.8);
+    const state = model.serialize();
+    expect(state.version).toBe(1);
+    expect(state.observations.length).toBe(3);
+
+    const model2 = new CreativeWorldModel();
+    model2.deserialize(state);
+    expect(model2.getObservationCount()).toBe(3);
+    expect(model2.isReady('p5')).toBe(true);
+  });
+
+  it('should reset', () => {
+    model.record(makeBehavior({}), 0.8);
+    model.reset();
+    expect(model.getObservationCount()).toBe(0);
+  });
+
+  it('should evict oldest when at max capacity', () => {
+    const small = new CreativeWorldModel({ maxObservations: 5, minObservations: 1 });
+    for (let i = 0; i < 8; i++) small.record(makeBehavior({ lineCount: i * 10 }), 0.5 + i * 0.05);
+    expect(small.getObservationCount()).toBe(5);
   });
 });

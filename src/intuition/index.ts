@@ -32,3 +32,6 @@ export type { DreamConcept, DreamOutput, DreamJournalEntry, DreamEngineConfig } 
 
 export { SleepScheduler } from './SleepScheduler.js';
 export type { SleepDepth, SleepScheduleConfig, SleepState, ActivitySample } from './SleepScheduler.js';
+
+export { CreativeWorldModel } from './CreativeWorldModel.js';
+export type { BehaviorVector, WorldObservation, QualityPrediction, WorldModelConfig, WorldModelState } from './CreativeWorldModel.js';

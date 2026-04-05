@@ -194,6 +194,7 @@ export class RemediationEngine {
   /**
    * Attempt to remediate an error
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(
     error: Error | string,
     context: ExecutionContext
@@ -270,7 +271,7 @@ export class RemediationEngine {
     }
   }
   
-  private async fixSyntaxError(errorMessage: string, context: ExecutionContext): Promise<RemediationResult> {
+  private fixSyntaxError(errorMessage: string, context: ExecutionContext): RemediationResult {
     return {
       success: true,
       action: 'syntax_fix',
@@ -281,7 +282,7 @@ export class RemediationEngine {
     };
   }
   
-  private async fixTypeError(errorMessage: string, context: ExecutionContext): Promise<RemediationResult> {
+  private fixTypeError(errorMessage: string, context: ExecutionContext): RemediationResult {
     return {
       success: true,
       action: 'type_fix',
@@ -292,7 +293,7 @@ export class RemediationEngine {
     };
   }
   
-  private async fixTestFailure(errorMessage: string, context: ExecutionContext): Promise<RemediationResult> {
+  private fixTestFailure(errorMessage: string, context: ExecutionContext): RemediationResult {
     return {
       success: true,
       action: 'test_fix',
@@ -303,7 +304,7 @@ export class RemediationEngine {
     };
   }
   
-  private async handleTimeout(_errorMessage: string, _context: ExecutionContext): Promise<RemediationResult> {
+  private handleTimeout(_errorMessage: string, _context: ExecutionContext): RemediationResult {
     return {
       success: false,
       action: 'timeout',
@@ -322,7 +323,7 @@ export class RemediationEngine {
     };
   }
   
-  private async fixJSONError(_errorMessage: string, context: ExecutionContext): Promise<RemediationResult> {
+  private fixJSONError(_errorMessage: string, context: ExecutionContext): RemediationResult {
     return {
       success: true,
       action: 'json_fix',
@@ -333,7 +334,7 @@ export class RemediationEngine {
     };
   }
   
-  private async fixSchemaViolation(_errorMessage: string, context: ExecutionContext): Promise<RemediationResult> {
+  private fixSchemaViolation(_errorMessage: string, context: ExecutionContext): RemediationResult {
     return {
       success: true,
       action: 'schema_fix',
@@ -344,7 +345,7 @@ export class RemediationEngine {
     };
   }
   
-  private async suggestAlternativeTool(_errorMessage: string, context: ExecutionContext): Promise<RemediationResult> {
+  private suggestAlternativeTool(_errorMessage: string, context: ExecutionContext): RemediationResult {
     const { allowedTools } = context;
     
     if (!allowedTools || allowedTools.length === 0) {

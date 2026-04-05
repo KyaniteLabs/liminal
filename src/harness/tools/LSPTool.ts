@@ -47,6 +47,7 @@ export class LSPTool extends Tool {
   readonly name = 'lsp';
   readonly description = 'Language Server Protocol operations';
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async execute(params: unknown): Promise<ToolResult> {
     const { operation, ...args } = params as { operation: string } & Record<string, unknown>;
 
@@ -120,19 +121,19 @@ export class LSPTool extends Tool {
     }
   }
 
-  private async getAutocomplete(_params: LSPAutocompleteParams): Promise<ToolResult> {
+  private getAutocomplete(_params: LSPAutocompleteParams): ToolResult {
     // Stub - full LSP autocomplete requires maintaining tsserver connection
-    return { 
-      success: false, 
-      error: 'Autocomplete requires persistent LSP connection - use search tool instead' 
+    return {
+      success: false,
+      error: 'Autocomplete requires persistent LSP connection - use search tool instead'
     };
   }
 
-  private async getDefinition(_params: LSPDefinitionParams): Promise<ToolResult> {
+  private getDefinition(_params: LSPDefinitionParams): ToolResult {
     // Use grep as fallback for go-to-definition
-    return { 
-      success: false, 
-      error: 'Use search tool with pattern to find definitions' 
+    return {
+      success: false,
+      error: 'Use search tool with pattern to find definitions'
     };
   }
 }

@@ -50,6 +50,7 @@ export class ASTValidatorTool extends Tool {
   readonly name = 'astValidate';
   readonly description = 'Parse and validate code using AST';
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async execute(params: unknown): Promise<ToolResult<ASTValidateResult>> {
     const { code, checks = ['syntax', 'imports', 'exports'] } = params as ASTValidateParams;
 

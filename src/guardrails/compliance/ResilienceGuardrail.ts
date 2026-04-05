@@ -97,6 +97,7 @@ export const ResilienceGuardrail: GuardrailRule = {
   tier: GuardrailTier.AUTONOMOUS,
   category: 'compliance',
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const cb = getCircuitBreaker(context.taskId);
 
@@ -130,6 +131,7 @@ export const ResilienceGuardrail: GuardrailRule = {
     };
   },
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(): Promise<RemediationResult> {
     return {
       success: true,

@@ -62,6 +62,7 @@ export const FairnessGuardrail: GuardrailRule = {
   tier: GuardrailTier.ADVISORY,
   category: 'compliance',
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const output = typeof context.output === 'string' ? context.output : '';
     const domain = context.schema?.toString() || 'unknown';

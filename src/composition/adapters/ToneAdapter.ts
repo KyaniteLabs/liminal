@@ -43,7 +43,7 @@ export class ToneAdapter implements LayerAdapter {
   /**
    * Load Tone.js module dynamically.
    */
-  async initialize(): Promise<void> {
+  initialize(): void {
     if (!this.toneModule) {
       // In browser, Tone is global
       if (typeof window !== 'undefined' && (window as unknown as { Tone: ToneInstance }).Tone) {

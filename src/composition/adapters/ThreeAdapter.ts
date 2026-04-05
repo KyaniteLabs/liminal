@@ -85,7 +85,7 @@ export class ThreeAdapter implements LayerAdapter {
    *
    * @returns Promise that resolves when initialization is complete
    */
-  async initialize(): Promise<void> {
+  initialize(): void {
     if (!this.threeModule) {
       // In browser, THREE is global
       if (typeof window !== 'undefined' && (window as unknown as { THREE: THREEModule }).THREE) {

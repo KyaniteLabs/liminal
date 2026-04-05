@@ -77,6 +77,7 @@ export const InjectionGuardrail: GuardrailRule = {
   tier: GuardrailTier.AUTONOMOUS,
   category: 'compliance',
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const textToCheck = context.prompt || '';
     const findings = detectInjection(textToCheck);

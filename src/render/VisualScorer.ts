@@ -59,6 +59,7 @@ export class VisualScorer {
   /**
    * Score a screenshot buffer for visual quality
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async score(screenshotBuffer: Buffer): Promise<VisualScoreResult> {
     try {
       // Validate buffer
@@ -67,7 +68,7 @@ export class VisualScorer {
       }
 
       // Parse PNG to raw pixel data
-      const { width, height, data } = await this.parsePNG(screenshotBuffer);
+      const { width, height, data } = this.parsePNG(screenshotBuffer);
 
       // Validate parsed data
       if (!data || data.length === 0 || width === 0 || height === 0) {
@@ -141,7 +142,7 @@ export class VisualScorer {
    * Parse PNG buffer to raw RGBA data
    * Simplified PNG parser - extracts basic info and creates synthetic data
    */
-  private async parsePNG(buffer: Buffer): Promise<{ width: number; height: number; data: Uint8Array }> {
+  private parsePNG(buffer: Buffer): { width: number; height: number; data: Uint8Array } {
     // Check PNG signature
     const pngSignature = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
     for (let i = 0; i < 8; i++) {

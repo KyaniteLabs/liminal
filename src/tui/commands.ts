@@ -32,6 +32,7 @@ export const commands: Record<string, Command> = {
     name: 'help',
     description: 'Show available commands',
     usage: '/help [command]',
+    // eslint-disable-next-line @typescript-eslint/require-await
     execute: async (args) => {
       if (args[0] && commands[args[0]]) {
         const cmd = commands[args[0]];
@@ -58,6 +59,7 @@ export const commands: Record<string, Command> = {
     name: 'status',
     description: 'Show harness status',
     usage: '/status',
+    // eslint-disable-next-line @typescript-eslint/require-await
     execute: async () => {
       const { metaHarness } = await import('../harness/index.js');
       const status = metaHarness.getStatus();
@@ -78,6 +80,7 @@ export const commands: Record<string, Command> = {
     name: 'tasks',
     description: 'List pending tasks',
     usage: '/tasks',
+    // eslint-disable-next-line @typescript-eslint/require-await
     execute: async (_args, ctx) => {
       if (ctx.tasks.length === 0) return 'No pending tasks';
       return ctx.tasks.map(t => 
@@ -226,7 +229,7 @@ export const commands: Record<string, Command> = {
           }
           
           // Show waveform in terminal
-          const info = await audioPlayer.getAudioInfo(filePath);
+          const info = audioPlayer.getAudioInfo(filePath);
           ctx.addOutput('audio', [
             `🔊 Playing: ${info.name}`,
             `Format: ${info.format}`,
@@ -258,7 +261,7 @@ export const commands: Record<string, Command> = {
         return `Error: ${result.error}`;
       }
       
-      const info = await audioPlayer.getAudioInfo(filePath);
+      const info = audioPlayer.getAudioInfo(filePath);
       ctx.addOutput('audio', [
         `🔊 ${info.name}`,
         audioPlayer.getWaveform(),
@@ -272,6 +275,7 @@ export const commands: Record<string, Command> = {
     name: 'stop',
     description: 'Stop audio playback',
     usage: '/stop',
+    // eslint-disable-next-line @typescript-eslint/require-await
     execute: async () => {
       if (!audioPlayer.isPlaying()) {
         return 'No audio playing';
@@ -303,6 +307,7 @@ export const commands: Record<string, Command> = {
     name: 'clear',
     description: 'Clear the screen',
     usage: '/clear',
+    // eslint-disable-next-line @typescript-eslint/require-await
     execute: async () => '\x1Bc',
   },
 

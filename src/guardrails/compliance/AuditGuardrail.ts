@@ -36,12 +36,12 @@ function calculateHash(entry: Omit<AuditEntry, 'hash'>): string {
 /**
  * Add entry to audit log
  */
-async function addAuditEntry(
+function addAuditEntry(
   operation: string,
   taskId: string,
   data: Record<string, unknown>,
   user?: string
-): Promise<AuditEntry> {
+): AuditEntry {
   const prevEntry = auditLog[auditLog.length - 1];
   const prevHash = prevEntry ? prevEntry.hash : null;
 
@@ -64,7 +64,7 @@ async function addAuditEntry(
 /**
  * Verify audit chain integrity
  */
-async function verifyAuditChain(): Promise<boolean> {
+function verifyAuditChain(): boolean {
   for (let i = 1; i < auditLog.length; i++) {
     const entry = auditLog[i];
     const prevEntry = auditLog[i - 1];
@@ -87,7 +87,7 @@ async function verifyAuditChain(): Promise<boolean> {
 /**
  * Get audit log for a task
  */
-async function getAuditLog(taskId: string): Promise<AuditEntry[]> {
+function getAuditLog(taskId: string): AuditEntry[] {
   return auditLog.filter(entry => entry.taskId === taskId);
 }
 
@@ -100,9 +100,10 @@ export const AuditGuardrail: GuardrailRule = {
   tier: GuardrailTier.ENFORCING,
   category: 'compliance',
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     // Log this operation
-    await addAuditEntry(
+    addAuditEntry(
       'guardrail-evaluation',
       context.taskId,
       {
@@ -114,7 +115,7 @@ export const AuditGuardrail: GuardrailRule = {
 
     // Verify chain integrity periodically (every 10 entries)
     if (auditLog.length % 10 === 0) {
-      const valid = await verifyAuditChain();
+      const valid = verifyAuditChain();
       if (!valid) {
         return {
           passed: false,

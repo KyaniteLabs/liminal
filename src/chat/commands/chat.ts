@@ -6,6 +6,7 @@ export interface ChatOptions {
   verbose?: boolean;
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 export async function chatCommand(options: ChatOptions = {}): Promise<void> {
   // Initialize ConversationManager
   const conversation = new ConversationManager();

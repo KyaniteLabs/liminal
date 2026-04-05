@@ -26,9 +26,10 @@ export class TypeCheckGuardrail implements GuardrailRule {
   tier = GuardrailTier.ENFORCING;
   category = 'correctness' as const;
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const { changedFiles } = context;
-    
+
     // If no files changed, skip
     if (!changedFiles || changedFiles.length === 0) {
       return {
@@ -89,6 +90,7 @@ export class TypeCheckGuardrail implements GuardrailRule {
     }
   }
   
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(context: ExecutionContext, violation: GuardrailResult): Promise<RemediationResult> {
     // Type errors need human review or LLM fix
     return {

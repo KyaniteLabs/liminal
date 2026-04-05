@@ -85,6 +85,7 @@ export const PrivacyGuardrail: GuardrailRule = {
   tier: GuardrailTier.ENFORCING,
   category: 'compliance',
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async evaluate(context: ExecutionContext): Promise<GuardrailResult> {
     const textToCheck = [
       context.prompt || '',
@@ -114,6 +115,7 @@ export const PrivacyGuardrail: GuardrailRule = {
     };
   },
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async remediate(
     context: ExecutionContext,
     _violation: GuardrailResult

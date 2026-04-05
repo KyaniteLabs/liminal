@@ -45,6 +45,7 @@ export class ImportGuardTool extends Tool {
   readonly name = 'importGuard';
   readonly description = 'Validate imports against security whitelist';
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async execute(params: unknown): Promise<ToolResult<ImportGuardResult>> {
     const { code, domain } = params as ImportGuardParams;
 

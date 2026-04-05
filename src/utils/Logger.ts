@@ -43,6 +43,6 @@ export const Logger = {
   },
 
   error(context: string, message: string, ...args: unknown[]): void {
-    if (shouldLog('error')) console.error(formatMessage(context, message), ...args);
+    if (shouldLog('error')) console.error(formatMessage(context, message), ...args); // eslint-disable-line no-console
   },
 };

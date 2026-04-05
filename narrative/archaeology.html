@@ -7610,8 +7610,11 @@ document.addEventListener('DOMContentLoaded', () => {
       g.append('rect').attr('x', margin.left).attr('width', barW).attr('height', barHeight).attr('rx', 4).attr('fill', era.color).attr('opacity', 0.8)
         .on('mouseover', function(e) { showTooltip(e, `<div class="tt-title">${era.name}</div><div class="tt-detail">${era.dates}<br>${era.commits} commits</div>`); })
         .on('mouseout', hideTooltip);
-      // Commit count
-      g.append('text').attr('x', margin.left + barW + 8).attr('y', barHeight/2).attr('fill', COLORS.text2).attr('font-size', '12px').attr('dominant-baseline', 'middle').text(`${era.commits}`);
+      // Commit count — position inside bar if bar is very long, outside otherwise
+      const textX = barW > innerW * 0.85 ? margin.left + barW - 8 : margin.left + barW + 8;
+      const textColor = barW > innerW * 0.85 ? 'rgba(0,0,0,0.7)' : COLORS.text2;
+      const textAnchor = barW > innerW * 0.85 ? 'end' : 'start';
+      g.append('text').attr('x', textX).attr('y', barHeight/2).attr('fill', textColor).attr('font-size', '12px').attr('dominant-baseline', 'middle').attr('text-anchor', textAnchor).text(`${era.commits}`);
     });
   })();
 })();
@@ -8078,7 +8081,7 @@ document.addEventListener('DOMContentLoaded', () => {
         svg.append('path').attr('d', `M${sx},${sy} C${mx},${sy} ${mx},${ty} ${tx},${ty}`).attr('fill', 'none').attr('stroke', l.active ? COLORS.claude : COLORS.text2).attr('stroke-width', 1.5).attr('opacity', 0.5);
       });
     } else {
-      const sankey = d3.sankey().nodeWidth(12).nodePadding(8).extent([[10, 10], [width - 10, height - 10]]);
+      const sankey = d3.sankey().nodeWidth(80).nodePadding(12).extent([[100, 10], [width - 100, height - 10]]);
       const graph = sankey({ nodes: nodes.map(n => ({ ...n })), links: links.map(l => ({ ...l })) });
       svg.selectAll('.sankey-link').data(graph.links).enter().append('path')
         .attr('class', 'sankey-link').attr('d', function(d) { return d3.sankeyLinkHorizontal()(d); })
@@ -8246,8 +8249,8 @@ document.addEventListener('DOMContentLoaded', () => {
     entries.forEach(([name, a], i) => {
       const card = document.createElement('div');
       card.style.cssText = `display:inline-block;vertical-align:top;width:${cardW}px;margin-right:12px;padding:12px;background:${COLORS.surface2};border-radius:8px;border:1px solid ${COLORS.border}`;
-      const commits = a.commit_count || 0;
-      const ins = a.lines_changed ? a.lines_changed.insertions : 0;
+      const commits = typeof a.commit_count === 'object' ? (a.commit_count.total || 0) : (a.commit_count || 0);
+      const ins = a.lines_changed ? (typeof a.lines_changed.insertions === 'object' ? a.lines_changed.insertions.total || 0 : a.lines_changed.insertions) : 0;
       const fixRate = a.economics ? (a.economics.fix_rate * 100).toFixed(0) : '?';
       card.innerHTML = `<div style="color:${name === 'kai' ? COLORS.kai : name === 'claude' ? COLORS.claude : COLORS.cursor};font-weight:600;font-size:13px;margin-bottom:6px">${name.toUpperCase()}</div>
         <div style="color:${COLORS.text2};font-size:11px;line-height:1.6">${commits} commits &middot; ${(ins/1000).toFixed(1)}K insertions<br>Fix rate: ${fixRate}%<br>${a.velocity ? a.velocity.commits_per_hour.toFixed(1) + ' commits/hr' : ''}<br><em style="color:${COLORS.text3};font-size:11px">${a.archetype || ''}</em></div>`;
@@ -8913,7 +8916,9 @@ document.addEventListener('DOMContentLoaded', () => {
       .on('mouseout', hideTooltip);
 
     g.append('g').attr('transform', `translate(0,${height})`).call(d3.axisBottom(x))
-      .selectAll('text').attr('fill', COLORS.text2).style('font-size', '9px').attr('transform', 'rotate(-25)').attr('text-anchor', 'end');
+      .selectAll('text').attr('fill', COLORS.text2).style('font-size', '10px')
+      .text(d => d.replace(' Era','').replace('The ','').replace('Consolidation','Consol.').replace('Conversational','Conv.').replace('Multimedia','Multi.').replace('Dogfood','Dogfd.').replace('Quality','Qual.').replace('Explosion','Expl.').replace('Pruning','Prune.'))
+      .attr('transform', 'rotate(-35)').attr('text-anchor', 'end').attr('dx', '-3px').attr('dy', '3px');
     g.append('g').call(d3.axisLeft(y).ticks(5)).selectAll('text').attr('fill', COLORS.text2).style('font-size', '11px');
     g.selectAll('.domain, .tick line').attr('stroke', COLORS.border);
     g.append('text').attr('x', -30).attr('y', -8).attr('fill', COLORS.text2).style('font-size', '11px').text('Autonomy Score');
@@ -8974,9 +8979,16 @@ document.addEventListener('DOMContentLoaded', () => {
   (function() {
     const el = document.getElementById('chart-cross-repo');
     if (!el) return;
-    const timeline = cross.timeline || [];
-    if (!timeline.length) return;
     const density = cross.liminal_commit_density || {};
+    // Generate timeline from density keys if timeline array not available
+    let timeline = cross.timeline || [];
+    if (!timeline.length && Object.keys(density).length > 0) {
+      timeline = Object.keys(density).filter(k => k !== 'total').sort();
+    }
+    if (!timeline.length) {
+      el.innerHTML += '<div style="padding:40px;text-align:center;color:var(--text3)">No cross-repo timeline data available</div>';
+      return;
+    }
     // Build data: for each day, liminal commits vs other commits
     const data = timeline.map(d => {
       const date = d.date || d;
@@ -9070,7 +9082,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const el = document.getElementById('chart-repo-bubbles');
     if (!el) return;
     const repos = repoDepth.repos;
-    if (!repos || !repos.length) return;
+    if (!repos || Object.keys(repos).length === 0) {
+      el.innerHTML += '<div style="padding:40px;text-align:center;color:var(--text3)">No repository data available</div>';
+      return;
+    }
     const domainMap = repoDepth.domain_map || {};
     const domainColors = { 'Creative/Art': '#cc5de8', 'AI/ML': '#51cf66', 'Web/Frontend': '#74c0fc', 'Tools/Libraries': '#ffa94d', 'Games': '#ff6b6b', 'Business': '#ffd43b', 'Ceramics': '#e64980', 'Personal': '#b197fc', 'Other': '#495057' };
     const bubbles = (Array.isArray(repos) ? repos : Object.entries(repos).map(([name, info]) => ({ name, ...info }))).map(r => {
@@ -9164,7 +9179,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const key = weekStart.toISOString().slice(0, 10);
       if (!weeks[key]) weeks[key] = { liminal: 0, other: 0 };
       weeks[key].liminal += d.liminal || 0;
-      weeks[key].other += (d.other || 0);
+      weeks[key].other += (d.other_repos || d.other || 0);
     });
     const data = Object.entries(weeks).map(([week, vals]) => ({ week, liminal: vals.liminal, other: vals.other }))
       .sort((a, b) => a.week.localeCompare(b.week));

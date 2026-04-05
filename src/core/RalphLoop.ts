@@ -509,6 +509,31 @@ export class RalphLoop {
           });
         }
 
+        // Intuition-based scoring: blend experience-weighted quality signal
+        if (normalizedOptions.useIntuition && candidates.length > 0) {
+          try {
+            const { IntuitionEngine } = await import('../intuition/index.js');
+            const intuitionEngine = new IntuitionEngine();
+            const intuitionAssessment = intuitionEngine.assess(
+              currentCode,
+              normalizedOptions.project ?? 'default',
+              candidates.map((c: { code: string }) => c.code),
+            );
+
+            // Blend: 70% analytical score + 30% intuition signal
+            evaluation.score = evaluation.score * 0.7 + intuitionAssessment.score * 0.3;
+
+            if (intuitionAssessment.usedProceduralShortcut) {
+              normalizedOptions.onThought?.(`[intuition] Procedural shortcut: ${intuitionAssessment.explanation}`);
+            }
+
+            // Record outcome for future learning
+            intuitionEngine.recordOutcome(currentCode, normalizedOptions.project ?? 'default', evaluation.score);
+          } catch (e) {
+            normalizedOptions.onThought?.(`Intuition analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
+          }
+        }
+
         // Render-based scoring: if enabled, render code and blend with syntactic score
         if (normalizedOptions.useRenderScoring && candidates.length > 0) {
           try {

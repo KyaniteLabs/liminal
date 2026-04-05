@@ -264,7 +264,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         temperature: 0.2, // Low temperature for deterministic tool calls
       });
 
-      return { result: response.text };
+      return response.text;
     });
 
     if (!rateLimitResult.result) {
@@ -274,7 +274,9 @@ When the task is complete and build passes, respond with tool "complete".`;
 
     // Parse JSON response
     try {
-      const text = rateLimitResult.result as unknown as string;
+      // rateLimiter.execute() wraps the return in { result: T }, so the text is
+      // in rateLimitResult.result (which is the string returned from fn above).
+      const text = String(rateLimitResult.result);
       // Extract JSON from markdown code blocks if present
       const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || 
                         text.match(/```\s*([\s\S]*?)```/) ||

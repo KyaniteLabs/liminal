@@ -2,7 +2,7 @@
  * MiniMaxProvider - MiniMax API (M2.7, M2.5, Text-01)
  *
  * MiniMax provides OpenAI-compatible endpoints but has some specific requirements:
- * - Correct base URL: https://api.minimaxi.com/v1 (NOT api.minimax.io)
+ * - Correct base URL: https://api.minimax.io/v1 (International Token Plan) or https://api.minimaxi.com/v1 (Chinese domestic)
  * - Model names: MiniMax-M2.7, MiniMax-M2.5, MiniMax-Text-01
  * - Returns reasoning_content for thinking models
  * - May return empty content if prompt format is incorrect

@@ -382,8 +382,7 @@ export class LLMClient {
     const baseUrl = this.config.baseUrl.toLowerCase();
     const model = this.config.model.toLowerCase();
 
-    if (baseUrl.includes('minimaxi')) return Provider.MINIMAX;
-    if (baseUrl.includes('minimax')) return Provider.MINIMAX; // Legacy
+    if (baseUrl.includes('minimax')) return Provider.MINIMAX; // Matches both api.minimaxi.com and api.minimax.io
     if (baseUrl.includes('openai')) return Provider.OPENAI;
     if (baseUrl.includes('anthropic')) return 'anthropic';
     if (baseUrl.includes('localhost:11434')) return Provider.OLLAMA;

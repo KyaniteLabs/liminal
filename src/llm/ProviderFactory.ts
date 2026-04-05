@@ -26,7 +26,7 @@ export function detectProvider(config: ProviderConfig): ProviderName {
   if (baseUrl.includes('anthropic') || baseUrl.includes('api.anthropic')) return 'anthropic';
   if (baseUrl.includes('generativelanguage') || baseUrl.includes('googleapis')) return 'google';
   if (baseUrl.includes(':11434') || baseUrl.includes('ollama')) return 'ollama';
-  if (baseUrl.includes('minimaxi')) return 'minimax'; // MiniMax specific provider
+  if (baseUrl.includes('minimax')) return 'minimax'; // Matches both api.minimaxi.com and api.minimax.io
   if (baseUrl.includes('openai') || baseUrl.includes('api.openai')) return 'openai';
 
   // Local endpoints: check model name for hints

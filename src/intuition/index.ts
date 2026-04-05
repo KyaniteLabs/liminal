@@ -35,3 +35,15 @@ export type { SleepDepth, SleepScheduleConfig, SleepState, ActivitySample } from
 
 export { CreativeWorldModel } from './CreativeWorldModel.js';
 export type { BehaviorVector, WorldObservation, QualityPrediction, WorldModelConfig, WorldModelState } from './CreativeWorldModel.js';
+
+export { ForgettingCurve } from './ForgettingCurve.js';
+export type { DecayableItem, DecayResult, ForgettingCurveConfig, DecaySummary } from './ForgettingCurve.js';
+
+export { MemoryBudget } from './MemoryBudget.js';
+export type { PrunableStore, StoreBudget, MemoryBudgetConfig, StoreHealth, MemoryHealthReport } from './MemoryBudget.js';
+
+export { ProceduralTier } from './ProceduralTier.js';
+export type { RoutineConfidence, ProceduralRoutine, ProceduralTierConfig, PromotionResult, ProceduralTierState } from './ProceduralTier.js';
+
+export { IntuitionEngine } from './IntuitionEngine.js';
+export type { IntuitionSignal, IntuitionAssessment, IntuitionEngineConfig, IntuitionHealthReport, IntuitionEngineState } from './IntuitionEngine.js';

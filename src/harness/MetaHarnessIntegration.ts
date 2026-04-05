@@ -70,11 +70,15 @@ export class MetaHarnessIntegration {
     Logger.debug('MetaHarnessIntegration', `Available providers: ${providers.join(', ') || 'none'}`);
     Logger.debug('MetaHarnessIntegration', `Active provider: ${activeProvider}`);
     
-    // Initialize LLM client with harness-specific config (lower temp for code fixes)
+    // Initialize LLM client with harness-specific config
+    // Note: We pass role:'harness' so LLMClient resolves temperature from RoleConfig (0.5).
+    // We only spread provider-level fields (baseUrl, model, apiKey) — NOT temperature,
+    // because the role system should own that setting.
     const config = getHarnessProviderConfig() || getActiveProviderConfig();
     if (config) {
-      this.llmClient = new LLMClient({ ...config, role: 'harness' });
-      Logger.debug('MetaHarnessIntegration', `LLM client configured: ${config.model} @ ${config.baseUrl} (temp: ${config.temperature})`);
+      const { temperature: _ignoreTemp, maxTokens: _ignoreTokens, ...providerFields } = config;
+      this.llmClient = new LLMClient({ ...providerFields, role: 'harness' });
+      Logger.debug('MetaHarnessIntegration', `LLM client configured: ${config.model} @ ${config.baseUrl}`);
     } else {
       Logger.warn('MetaHarnessIntegration', 'No LLM provider configured. Set LIMINAL_LLM_BASE_URL or provider API key.');
     }

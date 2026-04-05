@@ -16,6 +16,24 @@ export interface ThinkingConfig {
   effort?: 'low' | 'medium' | 'high';
 }
 
+export interface ToolDefinition {
+  name: string;
+  description: string;
+  parameters: Record<string, unknown>;
+}
+
+export interface ToolCallResult {
+  id: string;
+  name: string;
+  arguments: string;
+}
+
+export interface ToolResultMessage {
+  toolCallId: string;
+  result: string;
+  isError?: boolean;
+}
+
 export interface ProviderRequest {
   systemPrompt: string;
   userPrompt: string;
@@ -23,6 +41,10 @@ export interface ProviderRequest {
   maxTokens?: number;
   thinking?: ThinkingConfig;
   signal?: AbortSignal;
+  /** Tools the LLM can call (native function calling) */
+  tools?: ToolDefinition[];
+  /** Tool results from previous calls (multi-turn tool use) */
+  toolResults?: ToolResultMessage[];
 }
 
 // ── Response ──
@@ -51,6 +73,10 @@ export interface ProviderResponse {
   model: string;
   success: boolean;
   error?: string;
+  /** Tool calls requested by the model */
+  toolCalls?: ToolCallResult[];
+  /** Whether the model wants to call tools instead of generating text */
+  finishReason?: 'stop' | 'tool_calls' | 'length' | 'error';
 }
 
 // ── Streaming ──
@@ -58,6 +84,7 @@ export interface ProviderResponse {
 export type StreamEvent =
   | { type: 'thinking'; content: string }
   | { type: 'content'; content: string }
+  | { type: 'tool_call'; toolCallId: string; toolName: string; arguments: string }
   | { type: 'done'; usage?: TokenUsage }
   | { type: 'error'; error: string };
 

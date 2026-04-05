@@ -140,7 +140,7 @@ describe('getProviderConfig', () => {
     expect(config).not.toBeNull();
     expect(config!.provider).toBe('minimax');
     expect(config!.apiKey).toBe('mm-key');
-    expect(config!.baseUrl).toBe('https://api.minimaxi.com/v1');
+    expect(config!.baseUrl).toBe('https://api.minimax.io/v1');
     expect(config!.model).toBe('MiniMax-M2.7');
     expect(config!.apiStyle).toBe('openai');
   });

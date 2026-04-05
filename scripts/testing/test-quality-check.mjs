@@ -12,7 +12,7 @@
  *   1 = violations found (warnings treated as errors in CI)
  */
 
-import { readFileSync, readdirSync, globSync } from 'node:fs';
+import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join, basename, dirname } from 'node:path';
 import { cwd } from 'node:process';
 
@@ -258,24 +258,20 @@ function checkToBeDefinedCap(content, filePath) {
 
 // ── Main execution ──────────────────────────────────────────────────────
 function findTestFiles() {
-  const patterns = [
-    'test/**/*.test.ts',
-    'test/**/*.test.tsx',
-    'test/**/*.spec.ts',
-    'test/**/*.spec.tsx',
-  ];
+  const exts = ['.test.ts', '.test.tsx', '.spec.ts', '.spec.tsx'];
+  const results = [];
 
-  const files = new Set();
-  for (const pattern of patterns) {
-    const matches = globSync(pattern);
-    for (const match of matches) {
-      if (!match.includes('node_modules') && !match.includes('dist/')) {
-        files.add(match);
-      }
+  function walk(dir) {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules' || entry.name === 'dist') continue;
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) walk(full);
+      else if (exts.some(ext => entry.name.endsWith(ext))) results.push(full);
     }
   }
 
-  return [...files].sort();
+  walk('test');
+  return results.sort();
 }
 
 function checkFile(filePath) {

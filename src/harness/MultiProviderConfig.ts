@@ -35,7 +35,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     provider: 'minimax',
     name: 'MiniMax',
     description: 'MiniMax M2.7 and other models (Global Token Plan)',
-    baseUrl: 'https://api.minimaxi.com/v1',
+    baseUrl: 'https://api.minimax.io/v1',
     model: 'MiniMax-M2.7',
     apiStyle: 'openai',
     temperature: 0.7,
@@ -137,7 +137,7 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
  * Detect provider from base URL
  */
 export function detectProviderFromUrl(baseUrl: string): ProviderType {
-  if (baseUrl.includes('minimaxi')) return 'minimax';
+  if (baseUrl.includes('minimax')) return 'minimax';
   if (baseUrl.includes('openrouter')) return 'openrouter';
   if (baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
   if (baseUrl.includes('localhost:1234')) return 'lmstudio';

@@ -746,6 +746,79 @@ Rules:
   }
 
   /**
+   * Generate with native tool calling support.
+   * Returns structured tool calls instead of JSON-in-text parsing.
+   */
+  async generateWithTools(options: {
+    systemPrompt: string;
+    userPrompt: string;
+    tools: import('./ProviderTypes.js').ToolDefinition[];
+    toolResults?: import('./ProviderTypes.js').ToolResultMessage[];
+    maxTokens?: number;
+    temperature?: number;
+    signal?: AbortSignal;
+  }): Promise<{
+    content: string;
+    toolCalls?: import('./ProviderTypes.js').ToolCallResult[];
+    finishReason?: string;
+    success: boolean;
+    error?: string;
+  }> {
+    const resolvedModel = await this.resolveModel();
+    this.syncResolvedModel(resolvedModel);
+
+    try {
+      const provider = this.getProvider();
+
+      // Only use native tools if the provider supports them
+      if (!provider.supportsToolUse()) {
+        // Fall back to text-based tool calling
+        const result = await this.complete({
+          prompt: options.userPrompt,
+          systemPrompt: options.systemPrompt,
+          maxTokens: options.maxTokens,
+          temperature: options.temperature,
+          signal: options.signal,
+        });
+        return {
+          content: result.text,
+          success: result.success,
+          error: result.error,
+          finishReason: 'stop',
+        };
+      }
+
+      const req: ProviderRequest = {
+        systemPrompt: options.systemPrompt,
+        userPrompt: options.userPrompt,
+        tools: options.tools,
+        toolResults: options.toolResults,
+        temperature: options.temperature ?? this.config.temperature,
+        maxTokens: options.maxTokens ?? this.config.maxTokens,
+        signal: options.signal,
+      };
+
+      const response = await provider.generate(req);
+
+      return {
+        content: response.content,
+        toolCalls: response.toolCalls,
+        finishReason: response.finishReason,
+        success: response.success,
+        error: response.error,
+      };
+    } catch (error) {
+      const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      return {
+        content: '',
+        success: false,
+        error: errMsg,
+        finishReason: 'error',
+      };
+    }
+  }
+
+  /**
    * Stream tokens in real-time for chat interfaces
    * Yields partial content as it arrives from the LLM
    */

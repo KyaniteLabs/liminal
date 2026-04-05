@@ -50,6 +50,30 @@ export class OpenAIProvider extends BaseProvider {
       }
     }
 
+    // Native tool calling (OpenAI function calling format)
+    if (req.tools && req.tools.length > 0 && this.capabilities.toolUse) {
+      body.tools = req.tools.map(t => ({
+        type: 'function',
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters,
+        },
+      }));
+    }
+
+    // Inject tool results from previous calls
+    if (req.toolResults && req.toolResults.length > 0) {
+      const messages = body.messages as Array<Record<string, unknown>>;
+      for (const tr of req.toolResults) {
+        messages.push({
+          role: 'tool',
+          tool_call_id: tr.toolCallId,
+          content: tr.result,
+        });
+      }
+    }
+
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
 
     const response = await fetch(url, {
@@ -72,13 +96,44 @@ export class OpenAIProvider extends BaseProvider {
     const data = await response.json();
     const thinking = normalizeThinking(data, 'openai');
 
-    const choices = data.choices as Array<{ message?: { content?: string } }> | undefined;
-    const content = choices?.[0]?.message?.content || '';
+    const choices = data.choices as Array<{
+      message?: {
+        content?: string;
+        tool_calls?: Array<{
+          id: string;
+          function: { name: string; arguments: string };
+        }>;
+      };
+      finish_reason?: string;
+    }> | undefined;
+    const choice = choices?.[0];
+    const content = choice?.message?.content || '';
 
     const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
 
+    // Parse native tool calls from response
+    let toolCalls: import('../ProviderTypes.js').ToolCallResult[] | undefined;
+    let finishReason: import('../ProviderTypes.js').ProviderResponse['finishReason'] = 'stop';
+
+    if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+      toolCalls = choice.message.tool_calls.map(tc => ({
+        id: tc.id,
+        name: tc.function.name,
+        arguments: tc.function.arguments,
+      }));
+      finishReason = 'tool_calls';
+    }
+
+    if (choice?.finish_reason === 'tool_calls') {
+      finishReason = 'tool_calls';
+    } else if (choice?.finish_reason === 'length') {
+      finishReason = 'length';
+    }
+
     // Some providers (e.g. MiniMax) return code in reasoning_content with empty content
-    const hasContent = content.length > 0 || (thinking.source !== 'none' && thinking.text.length > 0);
+    const hasToolCalls = !!(toolCalls && toolCalls.length > 0);
+    const hasContent = content.length > 0 || (thinking.source !== 'none' && thinking.text.length > 0)
+      || hasToolCalls;
 
     return {
       content,
@@ -89,6 +144,8 @@ export class OpenAIProvider extends BaseProvider {
         inputTokens: usage.prompt_tokens || 0,
         outputTokens: usage.completion_tokens || 0,
       } : undefined,
+      toolCalls,
+      finishReason,
     };
   }
 

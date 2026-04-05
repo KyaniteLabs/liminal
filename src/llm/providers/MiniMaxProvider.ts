@@ -16,6 +16,8 @@ import type {
   ProviderCapabilities,
   StreamEvent,
 } from '../ProviderTypes.js';
+
+type ToolCallResult = import('../ProviderTypes.js').ToolCallResult;
 import { BaseProvider } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { normalizeThinking } from '../ThinkingNormalizer.js';
@@ -36,7 +38,6 @@ export class MiniMaxProvider extends BaseProvider {
       'Authorization': `Bearer ${this.config.apiKey || ''}`,
     };
 
-    // MiniMax works best with explicit text response format
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -46,6 +47,30 @@ export class MiniMaxProvider extends BaseProvider {
       temperature: req.temperature ?? this.config.temperature ?? 0.7,
       max_tokens: req.maxTokens ?? this.config.maxTokens ?? 4096,
     };
+
+    // Native tool calling (OpenAI-compatible format)
+    if (req.tools && req.tools.length > 0 && this.capabilities.toolUse) {
+      body.tools = req.tools.map(t => ({
+        type: 'function',
+        function: {
+          name: t.name,
+          description: t.description,
+          parameters: t.parameters,
+        },
+      }));
+    }
+
+    // Inject tool results from previous calls
+    if (req.toolResults && req.toolResults.length > 0) {
+      const messages = body.messages as Array<Record<string, unknown>>;
+      for (const tr of req.toolResults) {
+        messages.push({
+          role: 'tool',
+          tool_call_id: tr.toolCallId,
+          content: tr.result,
+        });
+      }
+    }
 
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
 
@@ -71,7 +96,7 @@ export class MiniMaxProvider extends BaseProvider {
       }
 
       const data = await response.json();
-      
+
       // Debug logging for troubleshooting
       if (process.env.MINIMAX_DEBUG) {
         Logger.debug('MiniMaxProvider', `Response: ${JSON.stringify(data, null, 2).slice(0, 500)}`);
@@ -81,36 +106,60 @@ export class MiniMaxProvider extends BaseProvider {
       const thinking = normalizeThinking(data, 'openai');
 
       // Extract content from response
-      const choices = data.choices as Array<{ 
-        message?: { 
+      const choices = data.choices as Array<{
+        message?: {
           content?: string;
           reasoning_content?: string;
-        } 
+          tool_calls?: Array<{
+            id: string;
+            function: { name: string; arguments: string };
+          }>;
+        };
+        finish_reason?: string;
       }> | undefined;
-      
-      let content = choices?.[0]?.message?.content || '';
-      
+
+      const choice = choices?.[0];
+      let content = choice?.message?.content || '';
+
+      // Parse native tool calls from response
+      let toolCalls: ToolCallResult[] | undefined;
+      let finishReason: ProviderResponse['finishReason'] = 'stop';
+
+      if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+        toolCalls = choice.message.tool_calls.map(tc => ({
+          id: tc.id,
+          name: tc.function.name,
+          arguments: tc.function.arguments,
+        }));
+        finishReason = 'tool_calls';
+      }
+
+      if (choice?.finish_reason === 'tool_calls') {
+        finishReason = 'tool_calls';
+      } else if (choice?.finish_reason === 'length') {
+        finishReason = 'length';
+      }
+
       // Fallback: try to extract from reasoning_content if content is empty
-      // Some MiniMax models put thinking in reasoning_content
-      if (!content && choices?.[0]?.message?.reasoning_content) {
-        content = choices[0].message.reasoning_content;
+      if (!content && choice?.message?.reasoning_content) {
+        content = choice.message.reasoning_content;
         Logger.debug('MiniMaxProvider', 'Using reasoning_content as fallback');
       }
 
       // Check for content in alternative locations
       if (!content && data.output) {
-        // MiniMax sometimes uses different response structure
         content = typeof data.output === 'string' ? data.output : data.output?.text || '';
       }
 
-      const usage = data.usage as { 
-        prompt_tokens?: number; 
+      const usage = data.usage as {
+        prompt_tokens?: number;
         completion_tokens?: number;
         total_tokens?: number;
       } | undefined;
 
-      const success = content.length > 0;
-      
+      const hasToolCalls = !!(toolCalls && toolCalls.length > 0);
+      const success = content.length > 0 || hasToolCalls;
+
       if (!success) {
         Logger.warn('MiniMaxProvider', `Empty response from model ${this.config.model}. Response: ${JSON.stringify(data).slice(0, 200)}`);
       }
@@ -124,6 +173,8 @@ export class MiniMaxProvider extends BaseProvider {
           inputTokens: usage.prompt_tokens || 0,
           outputTokens: usage.completion_tokens || 0,
         } : undefined,
+        toolCalls,
+        finishReason,
       };
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -133,6 +184,7 @@ export class MiniMaxProvider extends BaseProvider {
         model: this.config.model,
         success: false,
         error: `MiniMax request failed: ${errorMsg}`,
+        finishReason: 'error',
       };
     }
   }

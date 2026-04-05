@@ -13,13 +13,13 @@ export default defineConfig({
       reporters: ['text', 'json', 'json-summary'],
       thresholds: {
         // ━━━ Global coverage ratchet ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        // TARGET: 75% across all metrics (see CLAUDE.md)
+        // TARGET: 70% across all metrics (user-requested)
         //
         // Current → Target gaps:
-        //   Statements: 68.6% → 75% (gap: -6.4pp)
-        //   Branches:   58.9% → 75% (gap: -16.1pp)
-        //   Functions:  69.7% → 75% (gap: -5.3pp)
-        //   Lines:      69.5% → 75% (gap: -5.5pp)
+        //   Statements: 68.6% → 70% (gap: -1.4pp)
+        //   Branches:   58.8% → 70% (gap: -11.2pp)
+        //   Functions:  69.6% → 70% (gap: -0.4pp)
+        //   Lines:      69.5% → 70% (gap: -0.5pp)
         //
         // These values auto-increase when coverage improves.
         // Coverage can only go UP, never DOWN. Any decrease fails CI.
@@ -30,10 +30,10 @@ export default defineConfig({
         // Per-file enforcement: scripts/ci/check-coverage-gaps.ts
         // Quality enforcement: scripts/testing/test-quality-check.mjs
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-        statements: 68.6,
-        branches: 58.8,
-        functions: 69.6,
-        lines: 69.5,
+        statements: 70,
+        branches: 70,
+        functions: 70,
+        lines: 70,
         autoUpdate: (n: number) => Math.floor(n * 10) / 10,
       },
     },

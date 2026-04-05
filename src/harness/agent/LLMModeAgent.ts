@@ -334,13 +334,28 @@ When the task is complete and build passes, respond with tool "complete".`;
     try {
       // rateLimiter.execute() wraps the return in { result: T }, so the text is
       // in rateLimitResult.result (which is the string returned from fn above).
-      const text = String(rateLimitResult.result);
+      let text = String(rateLimitResult.result);
+
+      // Strip <think/>, <thinkContent/>, and similar reasoning wrappers
+      // Models like MiniMax M2.7 wrap reasoning in these tags before the JSON
+      text = text.replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '')
+                 .replace(/<thinkContent\b[^>]*>[\s\S]*?<\/thinkContent>/gi, '')
+                 .replace(/<reasoning\b[^>]*>[\s\S]*?<\/reasoning>/gi, '')
+                 .trim();
+
       // Extract JSON from markdown code blocks if present
-      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) || 
+      const jsonMatch = text.match(/```json\s*([\s\S]*?)```/) ||
                         text.match(/```\s*([\s\S]*?)```/) ||
                         [null, text];
       const jsonStr = jsonMatch[1] || text;
-      const parsed = JSON.parse(jsonStr.trim());
+
+      // Find the first '{' and try to parse from there — handles leading text before JSON
+      const jsonStart = jsonStr.indexOf('{');
+      if (jsonStart === -1) {
+        Logger.error('LLMModeAgent', 'No JSON object found in response');
+        return null;
+      }
+      const parsed = JSON.parse(jsonStr.slice(jsonStart));
       
       const toolCall = {
         thought: parsed.thought || 'No thought provided',

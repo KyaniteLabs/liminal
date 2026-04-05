@@ -13,7 +13,7 @@ export const SERVICE_DEFAULTS = {
   OLLAMA_URL: 'http://localhost:11434',
   /** Reasoning service base URL */
   REASONING_URL: 'http://localhost:8000',
-  /** MiniMax M2.7 cloud API base URL (international: api.minimax.io; Chinese domestic: api.minimaxi.com) */
+  /** MiniMax M2.7 cloud API base URL (international Token Plan: api.minimax.io; Chinese domestic: api.minimaxi.com) */
   MINIMAX_URL: 'https://api.minimax.io/v1',
   /** p5.js CDN version */
   P5_VERSION: '1.9.0',

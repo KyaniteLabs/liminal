@@ -40,6 +40,7 @@ describe('SemanticValidator', () => {
 
   describe('constructor', () => {
     it('uses default threshold of 0.7 when no options provided', async () => {
+      // Score of 0.69 should fail the default threshold of 0.7
       mockLlmGenerate.mockResolvedValue({
         code: JSON.stringify({
           aligned: true,
@@ -123,6 +124,7 @@ describe('SemanticValidator', () => {
 
       const result = await validator.validate('complex scene', 'simple code', 'p5');
 
+      // aligned in the JSON is true but score 0.5 < threshold 0.7
       expect(result.aligned).toBe(false);
       expect(result.score).toBe(0.5);
     });
@@ -281,9 +283,15 @@ describe('SemanticValidator', () => {
     it('detects color mismatch: prompt asks for blue but code uses red', () => {
       const result = validator.quickCheck(
         'blue background',
+<<<<<<< HEAD
         'background("red"); fill("green");',
       );
       // Prompt says blue, code has color names "red" and "green" but not "blue"
+=======
+        'background(255, 0, 0); fill(0, 255, 0);',
+      );
+      // Prompt says blue, code has red + green but not blue
+>>>>>>> 1d8d53fc (fix(test): wrap mock declarations in vi.hoisted() destructured form for 4 test files)
       expect(result.issues).toEqual(
         expect.arrayContaining([expect.stringContaining('"blue"')]),
       );
@@ -292,9 +300,15 @@ describe('SemanticValidator', () => {
     it('detects color mismatch: prompt asks for red but code uses green', () => {
       const result = validator.quickCheck(
         'red circle',
+<<<<<<< HEAD
         'fill("green"); ellipse(50,50,20);',
       );
       // Prompt says red, code has color name "green" but not "red"
+=======
+        'fill(0, 255, 0); ellipse(50,50,20);',
+      );
+      // Prompt says red, code has green but not red
+>>>>>>> 1d8d53fc (fix(test): wrap mock declarations in vi.hoisted() destructured form for 4 test files)
       expect(result.issues).toEqual(
         expect.arrayContaining([expect.stringContaining('"red"')]),
       );
@@ -310,10 +324,18 @@ describe('SemanticValidator', () => {
     });
 
     it('does not flag color when no colors are in the code at all', () => {
+<<<<<<< HEAD
+=======
+      // Only flags when prompt mentions a color AND code has SOME color (but wrong one)
+>>>>>>> 1d8d53fc (fix(test): wrap mock declarations in vi.hoisted() destructured form for 4 test files)
       const result = validator.quickCheck(
         'blue background',
         'rect(10, 10, 50, 50);',
       );
+<<<<<<< HEAD
+=======
+      // No colors in code at all → should not flag (no confusion about which color)
+>>>>>>> 1d8d53fc (fix(test): wrap mock declarations in vi.hoisted() destructured form for 4 test files)
       expect(result.issues).toEqual([]);
     });
 
@@ -346,10 +368,17 @@ describe('SemanticValidator', () => {
       );
     });
 
+<<<<<<< HEAD
     it('does not flag interaction when code has onclick handler', () => {
       const result = validator.quickCheck(
         'click to change color',
         'canvas.onclick = () => { fill(random(255)); }; function draw() { ellipse(50,50,20); }',
+=======
+    it('does not flag interaction when code has mousePressed', () => {
+      const result = validator.quickCheck(
+        'click to change color',
+        'function mousePressed() { fill(random(255)); } function draw() { ellipse(50,50,20); }',
+>>>>>>> 1d8d53fc (fix(test): wrap mock declarations in vi.hoisted() destructured form for 4 test files)
       );
       const interactIssues = result.issues.filter(i => i.includes('interactivity'));
       expect(interactIssues).toEqual([]);
@@ -377,7 +406,11 @@ describe('SemanticValidator', () => {
     it('detects multiple issues simultaneously', () => {
       const result = validator.quickCheck(
         'blue animated particle system with mouse interaction',
+<<<<<<< HEAD
         'function setup() { createCanvas(400, 400); fill("red"); }',
+=======
+        'function setup() { createCanvas(400, 400); fill(255, 0, 0); }',
+>>>>>>> 1d8d53fc (fix(test): wrap mock declarations in vi.hoisted() destructured form for 4 test files)
       );
 
       expect(result.issues.length).toBeGreaterThanOrEqual(2);
@@ -396,6 +429,11 @@ describe('SemanticValidator', () => {
 
     it('returns empty issues for empty code', () => {
       const result = validator.quickCheck('blue circle', '');
+<<<<<<< HEAD
+=======
+      // No color references in empty code, no animation, no interaction → no issues
+      // Only particle check would fire, but 'particle' not in prompt
+>>>>>>> 1d8d53fc (fix(test): wrap mock declarations in vi.hoisted() destructured form for 4 test files)
       expect(result.issues).toEqual([]);
     });
   });

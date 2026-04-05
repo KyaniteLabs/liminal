@@ -79,7 +79,7 @@ export class DomainPrototype {
    */
   distanceToCentroid(domain: string, embedding: number[]): number {
     const centroid = this.centroids.get(domain);
-    if (!centroid || centroid.centroid.length !== 0) return 0;
+    if (!centroid || centroid.centroid.length === 0) return 0;
 
     let dotProduct = 0;
     let normA = 0;
@@ -91,7 +91,8 @@ export class DomainPrototype {
     }
 
     if (normA === 0 || normB === 0) return 0;
-    return dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    const similarity = dotProduct / (Math.sqrt(normA) * Math.sqrt(normB));
+    return 1 - similarity; // cosine distance
   }
 
   /**
@@ -104,8 +105,9 @@ export class DomainPrototype {
     const centroid = this.centroids.get(domain);
     if (!centroid) return 0.5; // No data — neutral prediction
 
-    // Use sigmoid-like mapping: distance 0 → 1, distance 1 → ~0.5, distance 2+ → ~0
-    return 1 / (1 + Math.exp(dist * 5));
+    // Map cosine distance [0,2] → quality [1,0]
+    // distance 0 (identical) → quality ~1, distance 1 (orthogonal) → ~0.5, distance 2 (opposite) → ~0
+    return Math.max(0, Math.min(1, 1 - dist / 2));
   }
 
   /** Get all domain prototypes (for reporting). */

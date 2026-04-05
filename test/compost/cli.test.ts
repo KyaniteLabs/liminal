@@ -107,6 +107,7 @@ describe('CLI execute', () => {
       shouldAutoDigest: vi.fn(),
       listSeeds: vi.fn<() => Promise<unknown>>().mockResolvedValue([]),
       getTopSeeds: vi.fn<() => Promise<unknown>>().mockResolvedValue([]),
+      getProjectStore: vi.fn().mockReturnValue(null),
     };
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (mockMill.shouldAutoDigest as any).mockResolvedValue(false);

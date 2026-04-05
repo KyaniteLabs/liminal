@@ -9,6 +9,7 @@
  */
 
 import { LLMClient } from '../../llm/LLMClient.js';
+import { ContextCompactor } from '../../llm/ContextCompactor.js';
 import { Logger } from '../../utils/Logger.js';
 import { failureLogger } from '../FailureLogger.js';
 import { Status } from '../../types/status.js';
@@ -17,6 +18,7 @@ import { formatError } from '../../utils/errors.js';
 import { getSelfImprovePrompt, createReflectionPrompt } from '../prompts/self-improve.js';
 import { thinkingRepository } from '../ThinkingSeparation.js';
 import { thinkingAnalyzer } from '../ThinkingAnalyzer.js';
+import { eventBus, EventTypes } from '../../core/EventBus.js';
 import {
   readFileTool,
   writeFileTool,
@@ -76,6 +78,7 @@ export class LLMModeAgent {
   private sessions: Map<string, LLMSession> = new Map();
   private currentSession?: LLMSession;
   private analyses: import('../ThinkingAnalyzer.js').ThinkingAnalysis[] = [];
+  private compactor = new ContextCompactor({ maxMessages: 40, recentThreshold: 14 });
 
   constructor(llmClient: LLMClient) {
     this.llmClient = llmClient;
@@ -101,6 +104,13 @@ export class LLMModeAgent {
 
     Logger.debug('LLMModeAgent', `Starting autonomous task: ${task.title}`);
     Logger.debug('LLMModeAgent', `Budget: ${maxSteps} LLM calls`);
+
+    // Emit start event for TUI/SSE streaming
+    eventBus.emit(EventTypes.PROCESS_START, 'LLMModeAgent', {
+      process: 'agent-task',
+      stage: 'planning',
+      metadata: { taskId: task.id, title: task.title, maxSteps },
+    });
 
     // Initialize conversation with system prompt
     session.messages.push({
@@ -133,6 +143,14 @@ When the task is complete and build passes, respond with tool "complete".`;
         session.stepCount++;
         Logger.debug('LLMModeAgent', `Step ${session.stepCount}/${maxSteps}`);
 
+        // Emit progress event for TUI
+        eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+          process: 'agent-task',
+          current: session.stepCount,
+          total: maxSteps,
+          stage: `planning step ${session.stepCount}`,
+        });
+
         // Get LLM's plan
         const toolCall = await this.getLLMPlan(session);
         
@@ -153,11 +171,26 @@ When the task is complete and build passes, respond with tool "complete".`;
           Logger.debug('LLMModeAgent', 'Task completed by LLM');
           session.status = Status.SUCCESS;
           session.endTime = new Date().toISOString();
+          eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+            process: 'agent-task',
+            success: true,
+            iterations: session.stepCount,
+            durationMs: Date.now() - new Date(session.startTime).getTime(),
+          });
           return session;
         }
 
         // Execute the tool
         const result = await this.executeTool(toolCall);
+
+        // Emit tool execution event for TUI
+        eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+          process: 'agent-task',
+          current: session.stepCount,
+          total: maxSteps,
+          stage: `executed ${toolCall.tool}`,
+          message: result.success ? `${toolCall.tool} succeeded` : `${toolCall.tool} failed: ${(result.error || '').slice(0, 100)}`,
+        });
         
         // Record tool result
         session.messages.push({
@@ -192,7 +225,15 @@ When the task is complete and build passes, respond with tool "complete".`;
               errorType: 'validation',
               duration: Date.now() - new Date(session.startTime).getTime(),
             });
-            
+
+            eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+              process: 'agent-task',
+              success: false,
+              reason: 'Build failed',
+              iterations: session.stepCount,
+              durationMs: Date.now() - new Date(session.startTime).getTime(),
+            });
+
             return session;
           }
         }
@@ -205,6 +246,14 @@ When the task is complete and build passes, respond with tool "complete".`;
         Logger.error('LLMModeAgent', `Max steps (${maxSteps}) reached`);
       session.status = Status.FAILED;
       session.endTime = new Date().toISOString();
+
+      eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+        process: 'agent-task',
+        success: false,
+        reason: `Max steps (${maxSteps}) reached`,
+        iterations: session.stepCount,
+        durationMs: Date.now() - new Date(session.startTime).getTime(),
+      });
       
       // Rollback if needed
       if (session.backups.length > 0) {
@@ -218,7 +267,14 @@ When the task is complete and build passes, respond with tool "complete".`;
       Logger.error('LLMModeAgent', `Unexpected error: ${error}`);
       session.status = Status.FAILED;
       session.endTime = new Date().toISOString();
-      
+
+      eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+        process: 'agent-task',
+        success: false,
+        reason: `Unexpected error: ${error instanceof Error ? error.message : String(error)}`,
+        iterations: session.stepCount,
+      });
+
       if (session.backups.length > 0) {
         await this.rollback(session);
         session.status = Status.ROLLED_BACK;
@@ -243,19 +299,21 @@ When the task is complete and build passes, respond with tool "complete".`;
   private async getLLMPlan(session: LLMSession): Promise<ToolCall | null> {
     const rateLimitResult = await rateLimiter.execute('llmCall', async () => {
       // Build conversation context
-      const conversation = session.messages.map(m => {
-        if (m.role === 'system') return m.content;
-        if (m.role === 'user') return `User: ${m.content}`;
-        if (m.role === 'assistant') {
-          const tc = m.toolCall!;
-          return `Assistant: ${tc.thought}\nTool: ${tc.tool}\nParams: ${JSON.stringify(tc.params)}`;
-        }
-        if (m.role === 'tool') {
-          const tr = m.toolResult!;
-          return `Tool Result: ${tr.success ? 'SUCCESS' : 'FAILED'} - ${tr.error || 'OK'}`;
-        }
-        return '';
-      }).join('\n\n---\n\n');
+      let messages = session.messages.map(m => ({
+        role: m.role as 'system' | 'user' | 'assistant',
+        content: m.role === 'system' ? m.content :
+                 m.role === 'user' ? m.content :
+                 m.role === 'assistant' ? JSON.stringify(m.toolCall) :
+                 JSON.stringify(m.toolResult),
+      }));
+
+      // Compact if conversation is getting long
+      if (this.compactor.needsCompaction(messages)) {
+        messages = await this.compactor.compact(messages);
+        Logger.debug('LLMModeAgent', `Compacted conversation from ${session.messages.length} to ${messages.length} messages`);
+      }
+
+      const conversation = messages.map(m => `${m.role}: ${m.content}`).join('\n\n---\n\n');
 
       // Call LLM
       const response = await this.llmClient.complete({

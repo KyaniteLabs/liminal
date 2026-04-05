@@ -23,6 +23,8 @@ jobs:
       - run: pnpm lint
       - run: pnpm build
       - run: pnpm test:coverage
+      - name: Test quality check
+        run: pnpm test:quality
       - name: Check coverage gaps
         if: always()
         run: npx tsx scripts/ci/check-coverage-gaps.ts

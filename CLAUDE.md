@@ -21,6 +21,41 @@ A cron job scans every 5 minutes and logs violations to `memory/git-monitor-log.
 
 If you see your worktree flagged, fix it immediately.
 
+## Test Quality Standards (mandatory for all agents)
+
+Every test file written or modified MUST meet these standards. No exceptions.
+
+### The 7 Rules
+
+1. **Assert outcomes, not process.** Test what the code *returns/does*, not which internal functions it calls. `expect(result.score).toBe(0.8)` not `expect(mockFn).toHaveBeenCalled()`.
+
+2. **No `toBeDefined()` / `toBeTruthy()` / `toBeGreaterThan(0)` alone.** Every assertion must check a specific expected value or a tight range. If you can't name the expected value, the test isn't testing anything.
+
+3. **`vi.hoisted()` is mandatory** for any mock variable referenced inside `vi.mock()` factories. Vitest hoists `vi.mock()` above all `const` declarations — plain variables cause `ReferenceError: Cannot access before initialization`.
+
+4. **Mock at boundaries, not internals.** Mock external deps (LLM APIs, filesystem, network). Never mock the module under test. If you're mocking 5+ internal modules, the test proves nothing — refactor to test at a higher level.
+
+5. **Mock API contracts must match reality.** `rateLimiter.execute()` returns `{ result: T }`, not `T`. `telemetryWrapper.wrap()` calls `tool.execute(params)`. A mock that returns the wrong shape passes tests but proves nothing.
+
+6. **Test error paths, not just happy paths.** Every module must have at least one test for: empty input, null/undefined, thrown errors, failed operations. If only happy-path tests exist, the file is WEAK.
+
+7. **Integration tests must integrate.** A file in `test/integration/` must exercise ≥2 real modules together with real data flowing between them. Tests that import a single module and call it in isolation are unit tests — put them in `test/unit/`.
+
+### Test Quality Ratings
+
+| Rating | Meaning | Action |
+|--------|---------|--------|
+| GOOD | Behavioral assertions, real data flow, error paths covered | Ship it |
+| ADEQUATE | Tests real behavior but gaps in assertions or error paths | Fix before merge |
+| WEAK | Tests private methods, over-mocked, trivial assertions | Rewrite required |
+| PADDING | Only constructor + report tests | Do not commit |
+
+### Enforcement
+
+- **ESLint custom rules** in `eslint-rules/` catch `vi.hoisted` violations and weak assertions at lint time
+- **Vitest coverage ratchet** (`autoUpdate: true` in `vitest.config.ts`) ensures coverage only goes UP
+- **Pre-commit hook** (`.githooks/pre-commit`) runs `vitest --related` for staged source files
+
 ## Archaeology Data Access (MANDATORY)
 
 All archaeology and telemetry data lives in a SQLite database. **NEVER parse raw JSON/CSV files from `narrative/data/` directly.** Always use the DB.

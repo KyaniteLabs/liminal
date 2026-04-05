@@ -23,7 +23,7 @@ import type { ThinkingConfig } from '../llm/ProviderTypes.js';
 // ── Types ──
 
 export type ModelRole = 'generator' | 'evaluator' | 'harness';
-export type ProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'google';
+export type ProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'google' | 'minimax';
 
 export interface RoleProviderConfig {
   /** Provider type — auto-detected from baseUrl if omitted */
@@ -166,8 +166,9 @@ export function detectProviderType(baseUrl: string, model?: string): ProviderTyp
   const url = baseUrl.toLowerCase();
   const m = (model || '').toLowerCase();
 
-  if (url.includes('anthropic')) return 'anthropic';
   if (url.includes('openrouter')) return 'openrouter';
+  if (url.includes('minimax')) return 'minimax'; // Before anthropic — api.minimax.io/anthropic contains "anthropic"
+  if (url.includes('anthropic')) return 'anthropic';
   if (url.includes('generativelanguage.googleapis')) return 'google';
   if (url.includes('11434') || url.includes('ollama')) return 'ollama';
 
@@ -176,7 +177,7 @@ export function detectProviderType(baseUrl: string, model?: string): ProviderTyp
   if (m.startsWith('gemini')) return 'google';
   if (m.startsWith('deepseek-r1')) return 'ollama';
 
-  // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, Minimax, etc.)
+  // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, etc.)
   return 'openai';
 }
 

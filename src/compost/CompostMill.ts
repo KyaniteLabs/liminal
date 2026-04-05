@@ -28,6 +28,7 @@ import { ModelRouter } from './ModelRouter.js';
 import { CompostParser } from '../core/parsing/CompostParser.js';
 import type { LIRToken } from '../core/lir/types.js';
 import { formatSeedForPrompt } from '../core/lir/LIRPromptFormatter.js';
+import type { ProjectStore } from './ProjectStore.js';
 
 export class CompostMill {
   private config: CompostConfig;
@@ -43,16 +44,19 @@ export class CompostMill {
   private fastLLM: LLMClientLike;
   /** Optional model router for dual-model architecture */
   private modelRouter?: ModelRouter;
+  /** Optional project store for event-sourced history tracking. */
+  private projectStore?: ProjectStore;
 
   constructor(
     llm: LLMClientLike,
-    overrides?: Partial<CompostConfig> & { soupStatePath?: string; fastLLM?: LLMClientLike; parser?: CompostParser; modelRouter?: ModelRouter },
+    overrides?: Partial<CompostConfig> & { soupStatePath?: string; fastLLM?: LLMClientLike; parser?: CompostParser; modelRouter?: ModelRouter; projectStore?: ProjectStore },
   ) {
     const config = mergeConfig(overrides as Partial<CompostConfig>);
     this.config = config;
     this.llm = llm;
     this.fastLLM = overrides?.fastLLM ?? llm;
     this.modelRouter = overrides?.modelRouter;
+    this.projectStore = overrides?.projectStore;
 
     this.heap = new CompostHeap(config);
     // Auto-create CompostParser when LIR is enabled and no parser was provided
@@ -91,6 +95,9 @@ export class CompostMill {
 
   /** Add files or directories to the heap. */
   async add(inputPaths: string[]): Promise<void> {
+    const addedPaths: string[] = [];
+    let totalBytes = 0;
+
     for (const inputPath of inputPaths) {
       let stat: import('node:fs').Stats | null = null;
       try {
@@ -101,11 +108,18 @@ export class CompostMill {
       }
 
       if (stat.isDirectory()) {
-        await this.heap.addDirectory(inputPath);
+        const paths = await this.heap.addDirectory(inputPath);
+        addedPaths.push(...paths);
+        totalBytes += stat.size;
       } else {
         await this.heap.addFile(inputPath);
+        addedPaths.push(inputPath);
+        totalBytes += stat.size;
       }
     }
+
+    // Record the heap_add event
+    this.projectStore?.recordHeapAdd(addedPaths, totalBytes);
   }
 
   /** Run the full digestion pipeline. */
@@ -130,8 +144,11 @@ export class CompostMill {
       return { stats: emptyStats, seeds: [], digestPath: '' };
     }
 
-    // Stage 2: Extract
+    // Record digest_start event
     const fullPaths = heapFiles.map(f => path.join(this.config.heapDir, f));
+    this.projectStore?.recordDigestStart(fullPaths);
+
+    // Stage 2: Extract
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'extract', message: `Extracting ${fullPaths.length} files...` });
     Logger.info('CompostMill', `Extracting ${fullPaths.length} files...`);
     const extractionResults = await this.extractAll(fullPaths);
@@ -246,6 +263,7 @@ export class CompostMill {
     // Save promoted seeds
     for (const seed of promotedSeeds) {
       await this.seedBank.add(seed);
+      this.projectStore?.recordSeedPromotion(seed);
     }
 
     // Feed seed domains into GeneratorRegistry as DNA for improved routing
@@ -287,8 +305,20 @@ export class CompostMill {
     const digestPath = await this.digestGenerator.save(stats, promotedSeeds, soupHighlights);
 
     // Stage 7: Prune (clear heap)
+    const seedsBeforePrune = await this.seedBank.count();
     await this.heap.purge();
     await this.seedBank.pruneOld();
+    const seedsAfterPrune = await this.seedBank.count();
+    if (seedsBeforePrune > seedsAfterPrune) {
+      this.projectStore?.recordSeedPrune(seedsBeforePrune - seedsAfterPrune, this.config.nuggetRetentionDays);
+    }
+
+    // Record digest_end event
+    this.projectStore?.recordDigestEnd(stats, promotedSeeds);
+
+    // Save a snapshot of the current state
+    const allSeeds = await this.seedBank.getAll();
+    this.projectStore?.saveSnapshot(allSeeds, 0);
 
     eventBus.emit(EventTypes.PROCESS_END, 'CompostMill', { process: 'compost-digest', success: true, durationMs: Date.now() - startTime, filesProcessed: stats.filesProcessed, fragmentCount: stats.fragmentCount, seedsPromoted: stats.seedsPromoted });
 
@@ -323,6 +353,8 @@ export class CompostMill {
     if (!this.soup) {
       this.soup = new CompostSoup(this.config, this.llm);
     }
+    // Record soup_start event
+    this.projectStore?.recordSoupStart(this.config.soupPopulationSize);
     // Load seeds from the seed bank and convert to fragments for the soup
     const seeds = await this.seedBank.getAll();
     const fragments: CompostFragment[] = seeds.map(seed => ({
@@ -347,6 +379,12 @@ export class CompostMill {
   /** Stop the soup loop. */
   stopSoup(): void {
     this.soup?.stop();
+    this.projectStore?.recordSoupStop(0, 0);
+  }
+
+  /** Get the ProjectStore for event history access (CLI commands). */
+  getProjectStore(): ProjectStore | undefined {
+    return this.projectStore;
   }
 
   /** Get current heap file paths. */

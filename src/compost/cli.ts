@@ -1,9 +1,16 @@
 /**
  * CLI argument parser and executor for `liminal compost` subcommands.
+ *
+ * Extended with event-sourced history commands:
+ *   - log       — Show recent events on the timeline
+ *   - undo      — Undo the most recent creative operation
+ *   - branch    — Create, list, switch, delete branches
+ *   - history   — Show a formatted project history summary
  */
 
 import type { Seed } from './types.js';
 import type { CompostMill } from './CompostMill.js';
+import type { ProjectStore } from './ProjectStore.js';
 import { formatSeedForDisplay } from '../core/lir/LIRPromptFormatter.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -12,7 +19,11 @@ export type CLIAction =
   | { command: 'digest' }
   | { command: 'soup'; subcommand: 'start' | 'stop' | 'status' }
   | { command: 'seeds'; subcommand: 'list' | 'show'; args?: string[] }
-  | { command: 'status' };
+  | { command: 'status' }
+  | { command: 'log'; limit?: number }
+  | { command: 'undo' }
+  | { command: 'branch'; subcommand: 'create' | 'list' | 'switch' | 'delete'; args?: string[]; description?: string }
+  | { command: 'history' };
 
 /** Parse CLI arguments into a typed action. */
 export function parseArgs(args: string[]): CLIAction {
@@ -34,6 +45,35 @@ export function parseArgs(args: string[]): CLIAction {
   }
   if (argv[0] === 'status') {
     return { command: 'status' };
+  }
+
+  // ─── Event-sourced history commands ────────────────────────────────────
+
+  if (argv[0] === 'log') {
+    const limit = argv[1] ? parseInt(argv[1], 10) : 20;
+    return { command: 'log', limit: isNaN(limit) ? 20 : limit };
+  }
+
+  if (argv[0] === 'undo') {
+    return { command: 'undo' };
+  }
+
+  if (argv[0] === 'branch') {
+    const sub = argv[1] as 'create' | 'list' | 'switch' | 'delete';
+    if (!sub || !['create', 'list', 'switch', 'delete'].includes(sub)) {
+      return { command: 'branch', subcommand: 'list' };
+    }
+    // Parse --description flag for create
+    let description: string | undefined;
+    const descIdx = argv.indexOf('--description');
+    if (descIdx !== -1 && argv[descIdx + 1]) {
+      description = argv[descIdx + 1];
+    }
+    return { command: 'branch', subcommand: sub, args: argv.slice(2), description };
+  }
+
+  if (argv[0] === 'history') {
+    return { command: 'history' };
   }
 
   return { command: 'status' };
@@ -144,7 +184,165 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       Logger.info('CompostCLI', '  Seeds: ' + status.seedCount);
       Logger.info('CompostCLI', '  Soup: ' + (status.soupRunning ? 'running' : 'stopped'));
       Logger.info('CompostCLI', '  Soup generation: ' + status.soupGeneration);
+
+      // Show project store summary if available
+      const store = mill.getProjectStore();
+      if (store) {
+        Logger.info('CompostCLI', '');
+        Logger.info('CompostCLI', 'Project History:');
+        Logger.info('CompostCLI', store.getStatusSummary().split('\n').map(l => '  ' + l).join('\n'));
+      }
+      break;
+    }
+
+    // ─── Event-sourced history commands ──────────────────────────────────
+
+    case 'log': {
+      const store = requireProjectStore(mill);
+      if (!store) break;
+
+      const timeline = store.getTimeline({ limit: action.limit ?? 20 });
+      if (timeline.entries.length === 0) {
+        Logger.info('CompostCLI', 'No events recorded yet. Run some compost operations first.');
+        break;
+      }
+
+      Logger.info('CompostCLI', `Timeline (${timeline.branchName}, ${timeline.entries.length}/${timeline.totalCount}):`);
+      Logger.info('CompostCLI', '─'.repeat(60));
+      for (const entry of timeline.entries) {
+        const time = formatTimestamp(entry.event.timestamp);
+        const delta = entry.deltaMs !== null ? ` (+${formatDelta(entry.deltaMs)})` : '';
+        Logger.info('CompostCLI', `  #${entry.event.id}  ${time}${delta}`);
+        Logger.info('CompostCLI', `       ${entry.description}`);
+      }
+      Logger.info('CompostCLI', '─'.repeat(60));
+      break;
+    }
+
+    case 'undo': {
+      const store = requireProjectStore(mill);
+      if (!store) break;
+
+      try {
+        const result = store.undo();
+        Logger.info('CompostCLI', 'Undone: ' + describeEventType(result.undoneEvent.type));
+        Logger.info('CompostCLI', '  Event #' + result.undoneEvent.id + ' at ' + result.undoneEvent.timestamp);
+        Logger.info('CompostCLI', '  Remaining events on branch: ' + result.remainingEvents);
+      } catch (err) {
+        Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Undo failed');
+      }
+      break;
+    }
+
+    case 'branch': {
+      const store = requireProjectStore(mill);
+      if (!store) break;
+
+      if (action.subcommand === 'list') {
+        const branches = store.listBranches();
+        if (branches.length === 0) {
+          Logger.info('CompostCLI', 'No branches. The main branch is always present.');
+        } else {
+          Logger.info('CompostCLI', 'Branches:');
+          for (const branch of branches) {
+            const active = branch.isActive ? ' *' : '  ';
+            const desc = branch.description ? ` — ${branch.description}` : '';
+            Logger.info('CompostCLI', `${active} ${branch.name} (event #${branch.eventId}, ${branch.createdAt})${desc}`);
+          }
+        }
+      } else if (action.subcommand === 'create') {
+        const name = action.args?.[0];
+        if (!name) {
+          Logger.info('CompostCLI', 'Usage: liminal compost branch create <name> [--description "desc"]');
+          break;
+        }
+        try {
+          const branch = store.createBranch(name, action.description);
+          Logger.info('CompostCLI', `Created branch "${branch.name}" at event #${branch.eventId}`);
+        } catch (err) {
+          Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Branch creation failed');
+        }
+      } else if (action.subcommand === 'switch') {
+        const name = action.args?.[0];
+        if (!name) {
+          Logger.info('CompostCLI', 'Usage: liminal compost branch switch <name>');
+          break;
+        }
+        try {
+          store.switchBranch(name);
+          Logger.info('CompostCLI', `Switched to branch "${name}"`);
+        } catch (err) {
+          Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Branch switch failed');
+        }
+      } else if (action.subcommand === 'delete') {
+        const name = action.args?.[0];
+        if (!name) {
+          Logger.info('CompostCLI', 'Usage: liminal compost branch delete <name>');
+          break;
+        }
+        try {
+          store.deleteBranch(name);
+          Logger.info('CompostCLI', `Deleted branch "${name}"`);
+        } catch (err) {
+          Logger.warn('CompostCLI', err instanceof Error ? err.message : 'Branch delete failed');
+        }
+      }
+      break;
+    }
+
+    case 'history': {
+      const store = requireProjectStore(mill);
+      if (!store) break;
+
+      Logger.info('CompostCLI', store.getStatusSummary());
       break;
     }
   }
+}
+
+// ─── Helper Functions ────────────────────────────────────────────────────────
+
+/** Get the ProjectStore from the mill, or print an error and return undefined. */
+function requireProjectStore(mill: CompostMill): ProjectStore | undefined {
+  const store = mill.getProjectStore();
+  if (!store) {
+    Logger.warn('CompostCLI', 'Project history is not enabled. Initialize a ProjectStore to enable timeline features.');
+    Logger.info('CompostCLI', 'Hint: const store = new ProjectStore({ projectRoot: cwd }); store.init();');
+  }
+  return store;
+}
+
+/** Format an ISO timestamp for display: "Apr 4, 14:32". */
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  const month = months[d.getMonth()] ?? '???';
+  const day = d.getDate();
+  const h = d.getHours().toString().padStart(2, '0');
+  const m = d.getMinutes().toString().padStart(2, '0');
+  return `${month} ${day}, ${h}:${m}`;
+}
+
+/** Format a millisecond delta for display. */
+function formatDelta(ms: number): string {
+  if (ms < 1000) return `${ms}ms`;
+  if (ms < 60000) return `${(ms / 1000).toFixed(0)}s`;
+  if (ms < 3600000) return `${(ms / 60000).toFixed(0)}m`;
+  return `${(ms / 3600000).toFixed(1)}h`;
+}
+
+/** Human-readable event type name. */
+function describeEventType(type: string): string {
+  const names: Record<string, string> = {
+    heap_add: 'Heap file addition',
+    digest_start: 'Digestion start',
+    digest_end: 'Digestion complete',
+    seed_promote: 'Seed promotion',
+    seed_prune: 'Seed pruning',
+    soup_start: 'Soup start',
+    soup_stop: 'Soup stop',
+    soup_cycle: 'Soup cycle',
+    seed_use: 'Seed usage',
+  };
+  return names[type] ?? type;
 }

@@ -46,6 +46,21 @@ export { SemanticExtractor, type LLMClientLike } from './SemanticExtractor.js';
 export { HeapMonitor } from './HeapMonitor.js';
 export { DigestScheduler } from './DigestScheduler.js';
 
+// Event-sourced history (SQLite)
+export { EventStore } from './EventStore.js';
+export type {
+  EventType,
+  CompostEvent,
+  Snapshot,
+  Branch,
+  UndoResult,
+  TimelineEntry,
+  EventStoreConfig,
+} from './EventStore.js';
+export { AssetStore, type StoredAsset } from './AssetStore.js';
+export { ProjectStore } from './ProjectStore.js';
+export type { ProjectStoreConfig, ProjectInitResult, FormattedTimeline } from './ProjectStore.js';
+
 // CLI
 export { parseArgs, execute } from './cli.js';
 export type { CLIAction } from './cli.js';

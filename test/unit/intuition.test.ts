@@ -1,10 +1,11 @@
 /**
- * Intuition module tests — ThompsonSampler, DomainPrototype, IntuitionStrategy
+ * Intuition module tests — ThompsonSampler, DomainPrototype, IntuitionStrategy, IntuitionCache
  */
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { ThompsonSampler } from '../../src/intuition/ThompsonSampler.js';
 import { DomainPrototype } from '../../src/intuition/DomainPrototype.js';
 import { IntuitionStrategy } from '../../src/intuition/IntuitionStrategy.js';
+import { IntuitionCache } from '../../src/intuition/IntuitionCache.js';
 import type { ScoringInput } from '../../src/core/ScoringEngine.js';
 
 // ---------------------------------------------------------------------------
@@ -273,5 +274,229 @@ describe('IntuitionStrategy', () => {
   it('should handle empty previousOutputs', async () => {
     const result = await strategy.score(makeInput({ previousOutputs: [] }));
     expect(result.dimensions.novelty).toBe(1); // max novelty with no history
+  });
+});
+
+// ---------------------------------------------------------------------------
+// IntuitionCache
+// ---------------------------------------------------------------------------
+describe('IntuitionCache', () => {
+  let cache: IntuitionCache;
+
+  beforeEach(() => {
+    cache = new IntuitionCache({ maxSize: 10, ttlMs: 1000 });
+  });
+
+  const makeAssessment = (score: number) => ({
+    score,
+    confidence: 0.8,
+    signals: [
+      { name: 'prototype', value: score, reason: `score=${score}` },
+      { name: 'novelty', value: 0.5, reason: 'mid novelty' },
+    ],
+    recommendation: `domain: p5 | score: ${score}`,
+  });
+
+  it('should store and retrieve assessments', () => {
+    const assessment = makeAssessment(0.85);
+    cache.set('p5', 'some output code', assessment);
+    const retrieved = cache.get('p5', 'some output code');
+    expect(retrieved).not.toBeNull();
+    expect(retrieved!.score).toBe(0.85);
+  });
+
+  it('should return null for cache miss', () => {
+    expect(cache.get('p5', 'never seen')).toBeNull();
+  });
+
+  it('should differentiate by domain', () => {
+    const assessment = makeAssessment(0.7);
+    cache.set('p5', 'code', assessment);
+    // Different domain, same output → miss
+    expect(cache.get('glsl', 'code')).toBeNull();
+    // Same domain, same output → hit
+    expect(cache.get('p5', 'code')).not.toBeNull();
+  });
+
+  it('should differentiate by output content', () => {
+    cache.set('p5', 'output-a', makeAssessment(0.9));
+    cache.set('p5', 'output-b', makeAssessment(0.3));
+    expect(cache.get('p5', 'output-a')!.score).toBe(0.9);
+    expect(cache.get('p5', 'output-b')!.score).toBe(0.3);
+  });
+
+  it('should expire entries after TTL', async () => {
+    const shortCache = new IntuitionCache({ maxSize: 10, ttlMs: 50 });
+    shortCache.set('p5', 'output', makeAssessment(0.8));
+    expect(shortCache.get('p5', 'output')).not.toBeNull();
+
+    // Wait for TTL
+    await new Promise(r => setTimeout(r, 60));
+    expect(shortCache.get('p5', 'output')).toBeNull();
+  });
+
+  it('should evict LRU when at capacity', () => {
+    const small = new IntuitionCache({ maxSize: 3, ttlMs: 60000 });
+    small.set('p5', 'first', makeAssessment(0.1));
+    small.set('p5', 'second', makeAssessment(0.2));
+    small.set('p5', 'third', makeAssessment(0.3));
+
+    // Access 'first' to make it recently used
+    small.get('p5', 'first');
+
+    // Add one more → should evict 'second' (least recently used)
+    small.set('p5', 'fourth', makeAssessment(0.4));
+
+    expect(small.get('p5', 'first')).not.toBeNull(); // accessed, kept
+    expect(small.get('p5', 'second')).toBeNull(); // evicted (LRU)
+    expect(small.get('p5', 'third')).not.toBeNull(); // kept
+    expect(small.get('p5', 'fourth')).not.toBeNull(); // just added
+  });
+
+  it('should track hit/miss stats', () => {
+    cache.set('p5', 'output', makeAssessment(0.8));
+
+    cache.get('p5', 'output'); // hit
+    cache.get('p5', 'output'); // hit
+    cache.get('p5', 'miss');   // miss
+
+    const stats = cache.getStats();
+    expect(stats.hits).toBe(2);
+    expect(stats.misses).toBe(1);
+    expect(stats.hitRate).toBeCloseTo(2 / 3, 2);
+    expect(stats.size).toBe(1);
+  });
+
+  it('should track evictions', () => {
+    const small = new IntuitionCache({ maxSize: 2, ttlMs: 60000 });
+    small.set('p5', 'a', makeAssessment(0.1));
+    small.set('p5', 'b', makeAssessment(0.2));
+    small.set('p5', 'c', makeAssessment(0.3)); // evicts 'a'
+
+    expect(small.getStats().evictions).toBe(1);
+  });
+
+  it('should find similar entries by embedding', () => {
+    const embCache = new IntuitionCache({ maxSize: 10, ttlMs: 60000, storeEmbeddings: true });
+    embCache.set('p5', 'output-1', makeAssessment(0.9), [1, 0, 0]);
+    embCache.set('p5', 'output-2', makeAssessment(0.3), [0, 1, 0]);
+
+    // Similar to first → high similarity
+    const similar = embCache.findSimilar('p5', [0.95, 0.05, 0], 0.8);
+    expect(similar).not.toBeNull();
+    expect(similar!.assessment.score).toBe(0.9);
+
+    // Orthogonal to both → no match above threshold
+    const noMatch = embCache.findSimilar('p5', [0, 0, 1], 0.8);
+    expect(noMatch).toBeNull();
+  });
+
+  it('should filter similarity by domain', () => {
+    const embCache = new IntuitionCache({ maxSize: 10, ttlMs: 60000, storeEmbeddings: true });
+    embCache.set('p5', 'output', makeAssessment(0.9), [1, 0, 0]);
+
+    // Same embedding, different domain → no match
+    expect(embCache.findSimilar('glsl', [1, 0, 0], 0.5)).toBeNull();
+  });
+
+  it('should purge expired entries', async () => {
+    const shortCache = new IntuitionCache({ maxSize: 10, ttlMs: 30 });
+    shortCache.set('p5', 'a', makeAssessment(0.8));
+    shortCache.set('p5', 'b', makeAssessment(0.9));
+
+    await new Promise(r => setTimeout(r, 40));
+    const purged = shortCache.purgeExpired();
+    expect(purged).toBe(2);
+    expect(shortCache.getStats().size).toBe(0);
+  });
+
+  it('should return domain-specific entries', () => {
+    cache.set('p5', 'a', makeAssessment(0.8));
+    cache.set('p5', 'b', makeAssessment(0.7));
+    cache.set('glsl', 'c', makeAssessment(0.6));
+
+    const p5Entries = cache.getDomainEntries('p5');
+    expect(p5Entries.length).toBe(2);
+    expect(p5Entries.every(e => e.domain === 'p5')).toBe(true);
+  });
+
+  it('should delete specific entries', () => {
+    cache.set('p5', 'a', makeAssessment(0.8));
+    expect(cache.delete('p5', 'a')).toBe(true);
+    expect(cache.get('p5', 'a')).toBeNull();
+    expect(cache.delete('p5', 'nonexistent')).toBe(false);
+  });
+
+  it('should serialize and deserialize', () => {
+    cache.set('p5', 'a', makeAssessment(0.85));
+    cache.set('glsl', 'b', makeAssessment(0.65));
+
+    const state = cache.serialize();
+    expect(state.version).toBe(1);
+    expect(state.entries.length).toBe(2);
+
+    const cache2 = new IntuitionCache({ maxSize: 10, ttlMs: 60000 });
+    cache2.deserialize(state);
+    expect(cache2.get('p5', 'a')!.score).toBe(0.85);
+    expect(cache2.get('glsl', 'b')!.score).toBe(0.65);
+  });
+
+  it('should reset completely', () => {
+    cache.set('p5', 'a', makeAssessment(0.8));
+    cache.get('p5', 'a');
+    cache.reset();
+    expect(cache.getStats().size).toBe(0);
+    expect(cache.getStats().hits).toBe(0);
+    expect(cache.getStats().misses).toBe(0);
+  });
+
+  it('should check has() correctly', () => {
+    expect(cache.has('p5', 'x')).toBe(false);
+    cache.set('p5', 'x', makeAssessment(0.5));
+    expect(cache.has('p5', 'x')).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// IntuitionStrategy with Cache
+// ---------------------------------------------------------------------------
+describe('IntuitionStrategy with Cache', () => {
+  let strategy: IntuitionStrategy;
+  let cache: IntuitionCache;
+
+  beforeEach(() => {
+    cache = new IntuitionCache({ maxSize: 100, ttlMs: 60000 });
+    const prototype = new DomainPrototype();
+    const modelSampler = new ThompsonSampler<string>({ minPulls: 2, successThreshold: 0.7 });
+    const strategySampler = new ThompsonSampler<string>({ minPulls: 2, successThreshold: 0.7 });
+    strategy = new IntuitionStrategy(prototype, modelSampler, strategySampler, undefined, cache);
+  });
+
+  const makeInput = (overrides?: Partial<ScoringInput>): ScoringInput => ({
+    output: 'function setup() { createCanvas(400, 400); }',
+    domain: 'p5' as any,
+    prompt: 'a simple p5 sketch',
+    ...overrides,
+  });
+
+  it('should return cached result on second call', async () => {
+    const input = makeInput();
+    const first = await strategy.score(input);
+    const second = await strategy.score(input);
+
+    expect(first.score).toBeCloseTo(second.score, 5);
+    expect(cache.getStats().hits).toBe(1); // second call was a cache hit
+  });
+
+  it('should compute fresh result for different outputs', async () => {
+    const result1 = await strategy.score(makeInput({ output: 'output A' }));
+    const result2 = await strategy.score(makeInput({ output: 'output B' }));
+
+    // Different outputs → cache miss on second
+    expect(cache.getStats().misses).toBeGreaterThanOrEqual(2);
+  });
+
+  it('should expose cache via getCache()', () => {
+    expect(strategy.getCache()).toBe(cache);
   });
 });

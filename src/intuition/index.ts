@@ -18,3 +18,6 @@ export type { DomainCentroid, PrototypeStore } from './DomainPrototype.js';
 
 export { IntuitionStrategy } from './IntuitionStrategy.js';
 export type { IntuitionConfig, IntuitionSignal, IntuitionAssessment } from './IntuitionStrategy.js';
+
+export { IntuitionCache } from './IntuitionCache.js';
+export type { CacheEntry, IntuitionCacheConfig, CacheStats, SerializedCache } from './IntuitionCache.js';

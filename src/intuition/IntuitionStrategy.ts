@@ -15,6 +15,7 @@
 import type { ScoringStrategy, ScoringInput, ScoringResult } from '../core/ScoringEngine.js';
 import { ThompsonSampler } from './ThompsonSampler.js';
 import { DomainPrototype } from './DomainPrototype.js';
+import { IntuitionCache } from './IntuitionCache.js';
 import { Logger } from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
@@ -87,6 +88,7 @@ export class IntuitionStrategy implements ScoringStrategy {
   private readonly prototype: DomainPrototype;
   private readonly modelSampler: ThompsonSampler<string>;
   private readonly strategySampler: ThompsonSampler<string>;
+  private readonly cache: IntuitionCache | null;
   private readonly config: Required<IntuitionConfig>;
   private lastAssessment: IntuitionAssessment | null = null;
 
@@ -95,11 +97,13 @@ export class IntuitionStrategy implements ScoringStrategy {
     modelSampler: ThompsonSampler<string>,
     strategySampler: ThompsonSampler<string>,
     config?: IntuitionConfig,
+    cache?: IntuitionCache,
   ) {
     this.prototype = prototype;
     this.modelSampler = modelSampler;
     this.strategySampler = strategySampler;
     this.config = { ...DEFAULT_INTUITION_CONFIG, ...config };
+    this.cache = cache ?? null;
   }
 
   /**
@@ -108,6 +112,32 @@ export class IntuitionStrategy implements ScoringStrategy {
    */
   async score(input: ScoringInput): Promise<ScoringResult> {
     const domain = input.domain ?? 'p5';
+
+    // Check cache first — avoid recomputing signals for seen outputs
+    if (this.cache) {
+      const cached = this.cache.get(domain, input.output);
+      if (cached) {
+        this.lastAssessment = cached;
+        if (this.config.debug) {
+          Logger.info('IntuitionStrategy', `Cache hit for ${domain} (score: ${cached.score.toFixed(3)})`);
+        }
+        return {
+          score: cached.score,
+          dimensions: {
+            intuition: cached.score,
+            novelty: cached.signals.find(s => s.name === 'novelty')?.value ?? 0.5,
+          },
+          strategy: this.name,
+          issues: cached.signals.filter(s => s.value < 0.3).map(s => `Low ${s.name}: ${s.reason}`),
+          report: {
+            signals: cached.signals,
+            recommendation: cached.recommendation ?? '',
+            confidence: cached.confidence,
+          },
+        };
+      }
+    }
+
     const signals: IntuitionSignal[] = [];
     let totalScore = 0;
     let totalConfidence = 0;
@@ -177,6 +207,11 @@ export class IntuitionStrategy implements ScoringStrategy {
 
     this.lastAssessment = { score, confidence, signals, recommendation };
 
+    // Populate cache for future lookups
+    if (this.cache) {
+      this.cache.set(domain, input.output, this.lastAssessment);
+    }
+
     if (this.config.debug) {
       Logger.info('IntuitionStrategy', `Intuition: ${score.toFixed(3)} (confidence: ${confidence.toFixed(3)}) for ${domain}`);
       Logger.debug('IntuitionStrategy', `Signals: ${signals.map(s => `${s.name}=${s.value.toFixed(3)}`).join(', ')}`);
@@ -217,6 +252,13 @@ export class IntuitionStrategy implements ScoringStrategy {
    */
   getStrategySampler(): ThompsonSampler<string> {
     return this.strategySampler;
+  }
+
+  /**
+   * Get the intuition cache (for external inspection or persistence).
+   */
+  getCache(): IntuitionCache | null {
+    return this.cache;
   }
 
   // ---------------------------------------------------------------------------

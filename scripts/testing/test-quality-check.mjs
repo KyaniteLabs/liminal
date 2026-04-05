@@ -29,6 +29,9 @@ const CONFIG = {
 
   // Severity for CI
   warningAsError: process.env.CI === 'true',
+
+  // toBeDefined cap: warning now, error when STRICT_QUALITY=1
+  toBeDefinedStrict: process.env.STRICT_QUALITY === '1',
 };
 
 // ── Violation tracking ────────────────────────────────────────────────────
@@ -222,6 +225,37 @@ function checkPaddingTests(content, filePath) {
   }
 }
 
+// ── Rule: toBe-defined-cap ────────────────────────────────────────────────
+// Enforces that toBeDefined() is at most 5% of total assertions per file
+// Target: 75% coverage requires high-quality assertions, not existence checks
+function checkToBeDefinedCap(content, filePath) {
+  const MAX_DEFINED_RATIO = 0.05; // 5% cap
+
+  // Count all expect() assertions
+  const assertionMatches = content.match(/expect\s*\(/g) || [];
+  const totalAssertions = assertionMatches.length;
+
+  if (totalAssertions < 10) return; // Skip small files
+
+  // Count toBeDefined assertions
+  const definedMatches = content.match(/\.toBeDefined\s*\(\)/g) || [];
+  const definedCount = definedMatches.length;
+
+  const ratio = definedCount / totalAssertions;
+  if (ratio > MAX_DEFINED_RATIO) {
+    const severity = CONFIG.toBeDefinedStrict ? 'error' : 'warning';
+    addViolation(
+      severity,
+      'tobe-defined-cap',
+      filePath,
+      0,
+      `toBeDefined() is ${(ratio * 100).toFixed(1)}% of assertions (${definedCount}/${totalAssertions}), ` +
+      `exceeding the 5% cap. Replace with toBe(expectedValue) or toEqual(expectedShape). ` +
+      `(Coverage target: 75% — existence-only assertions don't count toward it.)`,
+    );
+  }
+}
+
 // ── Main execution ──────────────────────────────────────────────────────
 function findTestFiles() {
   const patterns = [
@@ -250,6 +284,7 @@ function checkFile(filePath) {
   checkViHoisted(content, filePath);
   checkWeakAssertions(content, filePath);
   checkPaddingTests(content, filePath);
+  checkToBeDefinedCap(content, filePath);
 }
 
 // Run

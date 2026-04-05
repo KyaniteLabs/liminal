@@ -27,7 +27,39 @@ jobs:
         run: pnpm test:quality
       - name: Check coverage gaps
         if: always()
-        run: npx tsx scripts/ci/check-coverage-gaps.ts
+        run: npx tsx scripts/ci/check-coverage-gaps.ts --warn
+      - name: Coverage target progress
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "## Coverage Target Progress (75% goal)"
+            node -e "
+              const s = require('./coverage/coverage-summary.json');
+              const t = s.total;
+              const metrics = [
+                ['Statements', t.lines.pct],
+                ['Branches', t.branches.pct],
+                ['Functions', t.functions.pct],
+                ['Lines', t.lines.pct],
+              ];
+              const TARGET = 75;
+              let allMet = true;
+              console.log('| Metric | Current | Target | Gap | Status |');
+              console.log('|--------|---------|--------|-----|--------|');
+              for (const [name, pct] of metrics) {
+                const gap = (TARGET - pct).toFixed(1);
+                const status = pct >= TARGET ? 'ON TARGET' : 'BELOW TARGET';
+                if (pct < TARGET) allMet = false;
+                console.log('| ' + name + ' | ' + pct + '% | ' + TARGET + '% | ' + gap + 'pp | ' + status + ' |');
+              }
+              console.log('');
+              if (allMet) {
+                console.log('TARGET MET: All metrics at or above 75%');
+              } else {
+                console.log('TARGET NOT MET: Coverage must reach 75%. Priority modules: src/music/, src/plugins/, src/config/, src/generators/');
+              }
+            "
+          fi
       - name: Coverage summary
         if: always()
         run: |

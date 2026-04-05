@@ -105,3 +105,4 @@ narrative/data/archaeology.inspect.json
 
 # Python cache
 __pycache__/
+audit-*.png

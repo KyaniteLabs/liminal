@@ -24,10 +24,10 @@ export interface GitConfig {
   bridgeToCompost: boolean;
 }
 
-/** Default git configuration */
+/** Default git configuration — ON by default, agent manages version control automatically */
 export const DEFAULT_GIT_CONFIG: GitConfig = {
-  enabled: false,
-  autoCommit: false,
+  enabled: true,
+  autoCommit: true,
   branchPerRun: true,
   branchPrefix: 'liminal/',
   autoPush: false,

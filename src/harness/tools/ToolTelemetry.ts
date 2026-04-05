@@ -6,7 +6,6 @@
  */
 
 import { writeFileSync, mkdirSync, existsSync, readFileSync, readdirSync } from 'fs';
-import { Logger } from '../../utils/Logger.js';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { ToolResult } from './types.js';

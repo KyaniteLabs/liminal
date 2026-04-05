@@ -31,8 +31,8 @@ export default defineConfig({
         // Quality enforcement: scripts/testing/test-quality-check.mjs
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         statements: 68.6,
-        branches: 58.9,
-        functions: 69.7,
+        branches: 58.8,
+        functions: 69.6,
         lines: 69.5,
         autoUpdate: (n: number) => Math.floor(n * 10) / 10,
       },

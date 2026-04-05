@@ -23,7 +23,6 @@ import { analyzeWithLLMJudge, type LLMClientLike, type LLMJudgeResult } from './
 import type { CalibrationWeights, CalibrationResult } from '../calibration/CalibrationSuite.js';
 import { CorrelationCalculator } from '../calibration/CorrelationCalculator.js';
 import type { HarnessMemory } from '../harness/HarnessMemory.js';
-import { Logger } from '../utils/Logger.js';
 
 // ---------------------------------------------------------------------------
 // Critic registry

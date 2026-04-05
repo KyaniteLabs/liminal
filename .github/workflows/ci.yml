@@ -22,4 +22,25 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm build
-      - run: pnpm test
+      - run: pnpm test:coverage
+      - name: Coverage summary
+        if: always()
+        run: |
+          if [ -f coverage/coverage-summary.json ]; then
+            echo "## Coverage Summary"
+            node -e "
+              const s = require('./coverage/coverage-summary.json');
+              const t = s.total;
+              console.log('| Metric | Covered | Total | % |');
+              console.log('|--------|---------|-------|---|');
+              for (const [k,v] of [['Statements','lines'],['Branches','branches'],['Functions','functions'],['Lines','lines']]) {
+                console.log('| '+k+' | '+t[v].covered+' | '+t[v].total+' | '+t[v].pct+'% |');
+              }
+            "
+          fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 7

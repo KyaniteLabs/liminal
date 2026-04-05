@@ -1,23 +1,45 @@
 #!/bin/bash
-# Pre-commit hook for documentation validation
+# Pre-commit hook for documentation validation + test verification
 
-echo "🔍 Running pre-commit documentation checks..."
+echo "🔍 Running pre-commit checks..."
 
-# Check if THE_BIBLE.md was modified
+# --- Documentation checks ---
 if git diff --cached --name-only | grep -q "docs/THE_BIBLE.md"; then
     echo "✓ THE_BIBLE.md updated"
 else
-    # Check if src/ files were modified
     if git diff --cached --name-only | grep -q "^src/"; then
         echo "⚠️  WARNING: You modified src/ but not THE_BIBLE.md"
         echo "   Run: npm run validate-docs"
-        echo "   Or commit with --no-verify to skip"
-        # Don't block, just warn
     fi
 fi
 
 # Run validation scripts
-node scripts/validate-version.js --quiet || exit 1
-node scripts/verify-file-refs.js --quiet || exit 1
+node scripts/analysis/validate-version.js --quiet || exit 1
+node scripts/analysis/verify-file-refs.js --quiet || exit 1
+
+# Run doc-validate if available (CI-mirrored check)
+PROJECT_ROOT=$(git rev-parse --show-toplevel)
+if [ -f "$HOME/.local/bin/doc-validate" ]; then
+    "$HOME/.local/bin/doc-validate" "$PROJECT_ROOT" || {
+        echo "❌ Documentation validation failed"
+        exit 1
+    }
+fi
 
 echo "✅ Documentation checks passed"
+
+# --- Test verification for changed files ---
+CHANGED_SRC=$(git diff --cached --name-only | grep "^src/.*\.ts$" | head -10)
+if [ -n "$CHANGED_SRC" ]; then
+    echo "🧪 Running tests for changed source files..."
+    # vitest --related runs only tests that import the changed files
+    npx vitest run --related $CHANGED_SRC --reporter=verbose 2>&1 | tail -5
+    if [ $? -ne 0 ]; then
+        echo "❌ Tests failed for changed files. Fix before committing."
+        echo "   Run with --no-verify to skip (not recommended)."
+        exit 1
+    fi
+    echo "✅ Changed file tests passed"
+fi
+
+echo "✅ All pre-commit checks passed"

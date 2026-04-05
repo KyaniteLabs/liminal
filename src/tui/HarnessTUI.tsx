@@ -23,7 +23,6 @@ import {
 } from '../harness/index.js';
 import { NaturalInterface } from './NaturalInterface.js';
 import { audioPlayer } from './preview/index.js';
-import { Logger } from '../utils/Logger.js';
 
 const C = {
   primary: 'cyan',

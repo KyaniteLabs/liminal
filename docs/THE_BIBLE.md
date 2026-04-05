@@ -1,6 +1,6 @@
 # THE BIBLE - Liminal System Documentation
 
-**Version:** 2.2.0 - Beta  
+**Version:** 2.1.0 - Beta  
 **Date:** 2026-04-03  
 **Status:** 296+ commits, dog food infrastructure complete  
 **Branch:** main

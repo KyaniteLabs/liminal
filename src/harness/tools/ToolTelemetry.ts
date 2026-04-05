@@ -10,7 +10,6 @@ import { Logger } from '../../utils/Logger.js';
 import { join } from 'path';
 import { homedir } from 'os';
 import type { ToolResult } from './types.js';
-import { Logger } from '../../utils/Logger.js';
 
 export interface ToolCallRecord {
   id: string;

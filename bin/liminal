@@ -377,6 +377,7 @@ if (cmd === 'generate' || cmd === 'gen' || cmd === 'g' || flags.prompt) {
     swarmConfig: flags.swarmRounds ? { maxRounds: flags.swarmRounds } : undefined,
     useAestheticGuardrails: !!(flags.aesthetic || flags.aestheticConfig),
     aestheticConfig: flags.aesthetic ? { preset: flags.aesthetic } : undefined,
+    useIntuition: !!flags.intuition,
     voiceFile: flags.voiceFile,
     voice: flags.voice,
   }).then(async (result) => {

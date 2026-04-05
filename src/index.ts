@@ -145,6 +145,8 @@ export async function run(prompt: string, options: {
   swarmConfig?: Record<string, unknown>;
   /** New nested swarm options (preferred) */
   swarm?: import('./types/options/SwarmOptions.js').SwarmOptions;
+  /** Enable intuition-based quality scoring dimension */
+  useIntuition?: boolean;
 } = {}): Promise<{
   code: string;
   iterations: number;
@@ -219,6 +221,7 @@ export async function run(prompt: string, options: {
       useSwarm: options.useSwarm,
       swarmMode: options.swarmMode as import('./swarm/types.js').SwarmMode,
       swarmConfig: options.swarmConfig as Partial<import('./swarm/types.js').SwarmConfig>,
+      useIntuition: options.useIntuition,
     });
 
     // Initialize Exporter

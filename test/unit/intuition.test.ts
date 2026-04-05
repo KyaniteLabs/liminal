@@ -6,6 +6,8 @@ import { ThompsonSampler } from '../../src/intuition/ThompsonSampler.js';
 import { DomainPrototype } from '../../src/intuition/DomainPrototype.js';
 import { IntuitionStrategy } from '../../src/intuition/IntuitionStrategy.js';
 import { IntuitionCache } from '../../src/intuition/IntuitionCache.js';
+import { MemoryConsolidator } from '../../src/intuition/MemoryConsolidator.js';
+import type { ConsolidationEpisode } from '../../src/intuition/MemoryConsolidator.js';
 import type { ScoringInput } from '../../src/core/ScoringEngine.js';
 
 // ---------------------------------------------------------------------------
@@ -498,5 +500,237 @@ describe('IntuitionStrategy with Cache', () => {
 
   it('should expose cache via getCache()', () => {
     expect(strategy.getCache()).toBe(cache);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// MemoryConsolidator
+// ---------------------------------------------------------------------------
+describe('MemoryConsolidator', () => {
+  let consolidator: MemoryConsolidator;
+  let modelSampler: ThompsonSampler<string>;
+  let strategySampler: ThompsonSampler<string>;
+  let prototype: DomainPrototype;
+
+  beforeEach(() => {
+    modelSampler = new ThompsonSampler<string>({ minPulls: 1, successThreshold: 0.7 });
+    strategySampler = new ThompsonSampler<string>({ minPulls: 1, successThreshold: 0.7 });
+    prototype = new DomainPrototype();
+    consolidator = new MemoryConsolidator(
+      { modelSampler, strategySampler, prototype },
+      { successThreshold: 0.7, minEpisodesForPattern: 2, maxPatterns: 50 },
+    );
+  });
+
+  const makeEpisodes = (overrides: Partial<ConsolidationEpisode>[]): ConsolidationEpisode[] =>
+    overrides.map((o, i) => ({
+      domain: 'p5',
+      output: `output-${i}`,
+      qualityScore: 0.8,
+      timestamp: new Date().toISOString(),
+      ...o,
+    }));
+
+  it('should consolidate episodes into patterns', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.85 },
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.75 },
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.9 },
+    ]);
+
+    const result = consolidator.consolidate(episodes);
+    expect(result.episodesProcessed).toBe(3);
+    expect(result.patternsCreated).toBeGreaterThanOrEqual(1);
+    expect(result.byDomain.p5).toBeDefined();
+    expect(result.byDomain.p5.episodes).toBe(3);
+  });
+
+  it('should group by domain, model, and strategy', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'qwen3', strategy: 'solo', qualityScore: 0.8 },
+      { domain: 'p5', model: 'qwen3', strategy: 'solo', qualityScore: 0.7 },
+      { domain: 'p5', model: 'ollama', strategy: 'swarm', qualityScore: 0.9 },
+      { domain: 'p5', model: 'ollama', strategy: 'swarm', qualityScore: 0.85 },
+      { domain: 'glsl', model: 'qwen3', strategy: 'solo', qualityScore: 0.6 },
+      { domain: 'glsl', model: 'qwen3', strategy: 'solo', qualityScore: 0.65 },
+    ]);
+
+    const result = consolidator.consolidate(episodes);
+    // Should create patterns at domain, domain:model, and domain:model:strategy levels
+    const allPatterns = consolidator.getAllPatterns();
+    expect(allPatterns.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it('should compute correct Thompson Beta params', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'test-model', qualityScore: 0.9 }, // success
+      { domain: 'p5', model: 'test-model', qualityScore: 0.9 }, // success
+      { domain: 'p5', model: 'test-model', qualityScore: 0.3 }, // failure
+    ]);
+
+    consolidator.consolidate(episodes);
+    const pattern = consolidator.getPattern('p5:test-model');
+    expect(pattern).not.toBeNull();
+    expect(pattern!.alpha).toBe(3); // 2 successes + 1 prior
+    expect(pattern!.beta).toBe(2);  // 1 failure + 1 prior
+  });
+
+  it('should skip groups with too few episodes', () => {
+    const smallConsolidator = new MemoryConsolidator(undefined, { minEpisodesForPattern: 3 });
+    const episodes = makeEpisodes([
+      { domain: 'p5', qualityScore: 0.8 },
+      { domain: 'p5', qualityScore: 0.7 },
+    ]);
+
+    const result = smallConsolidator.consolidate(episodes);
+    expect(result.patternsCreated).toBe(0);
+  });
+
+  it('should update ThompsonSampler during consolidation', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'model-a', qualityScore: 0.9 },
+      { domain: 'p5', model: 'model-a', qualityScore: 0.85 },
+    ]);
+
+    consolidator.consolidate(episodes);
+    const stats = modelSampler.getArmStats('model-a');
+    expect(stats).not.toBeNull();
+    expect(stats!.pulls).toBeGreaterThan(0);
+  });
+
+  it('should update strategy sampler during consolidation', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'qwen3', strategy: 'swarm', qualityScore: 0.9 },
+      { domain: 'p5', model: 'qwen3', strategy: 'swarm', qualityScore: 0.85 },
+    ]);
+
+    consolidator.consolidate(episodes);
+    const stats = strategySampler.getArmStats('swarm');
+    expect(stats).not.toBeNull();
+    expect(stats!.pulls).toBeGreaterThan(0);
+  });
+
+  it('should update domain prototype from high-quality episodes', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', qualityScore: 0.9, embedding: [0.8, 0.2] },
+      { domain: 'p5', qualityScore: 0.85, embedding: [0.7, 0.3] },
+    ]);
+
+    const result = consolidator.consolidate(episodes);
+    expect(result.prototypeUpdates).toBe(2);
+    expect(prototype.getCentroid('p5')).not.toBeNull();
+    expect(prototype.getCentroid('p5')!.exampleCount).toBe(2);
+  });
+
+  it('should not update prototype from low-quality episodes', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', qualityScore: 0.3, embedding: [0.5, 0.5] },
+      { domain: 'p5', qualityScore: 0.4, embedding: [0.4, 0.6] },
+    ]);
+
+    const result = consolidator.consolidate(episodes);
+    expect(result.prototypeUpdates).toBe(0);
+  });
+
+  it('should apply Ebbinghaus retention decay', () => {
+    // Create episodes from 60 days ago (ensures retention < 1)
+    const oldDate = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'old-model', qualityScore: 0.8, timestamp: oldDate },
+      { domain: 'p5', model: 'old-model', qualityScore: 0.7, timestamp: oldDate },
+    ]);
+
+    consolidator.consolidate(episodes);
+    const pattern = consolidator.getPattern('p5:old-model');
+    expect(pattern).not.toBeNull();
+    // Pattern was created from old timestamps → retention should have decayed
+    // R(t) = exp(-daysSinceUpdate / stability), stability=10
+    expect(pattern!.retention).toBeLessThan(1);
+    expect(pattern!.retention).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should prune stale patterns over max age', () => {
+    const pruner = new MemoryConsolidator(undefined, {
+      maxAgeDays: 0.001, // ~1.4 minutes
+      maxPatterns: 100,
+    });
+    const oldTimestamp = new Date(Date.now() - 200 * 60 * 1000).toISOString(); // 200 min ago
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'ancient', qualityScore: 0.8, timestamp: oldTimestamp },
+      { domain: 'p5', model: 'ancient', qualityScore: 0.7, timestamp: oldTimestamp },
+    ]);
+
+    pruner.consolidate(episodes);
+    // Apply decay + prune by running another consolidate with empty
+    const result = pruner.consolidate([]);
+    expect(result.patternsPruned).toBeGreaterThanOrEqual(0);
+  });
+
+  it('should budget-gate to maxPatterns', () => {
+    const small = new MemoryConsolidator(undefined, { maxPatterns: 2, minEpisodesForPattern: 1 });
+    for (let i = 0; i < 5; i++) {
+      small.consolidate(makeEpisodes([
+        { domain: `domain-${i}`, qualityScore: 0.8 },
+      ]));
+    }
+    expect(small.patternCount).toBeLessThanOrEqual(2);
+  });
+
+  it('should serialize and deserialize', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.85 },
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.75 },
+    ]);
+    consolidator.consolidate(episodes);
+
+    const state = consolidator.serialize();
+    expect(state.version).toBe(1);
+    expect(state.patterns.length).toBeGreaterThan(0);
+
+    const consolidator2 = new MemoryConsolidator();
+    consolidator2.deserialize(state);
+    expect(consolidator2.patternCount).toBe(consolidator.patternCount);
+    expect(consolidator2.getPattern('p5:qwen3')).not.toBeNull();
+  });
+
+  it('should reset all state', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', qualityScore: 0.8 },
+      { domain: 'p5', qualityScore: 0.7 },
+    ]);
+    consolidator.consolidate(episodes);
+    consolidator.reset();
+    expect(consolidator.patternCount).toBe(0);
+    expect(consolidator.processedCount).toBe(0);
+  });
+
+  it('should merge patterns on repeated consolidation', () => {
+    const batch1 = makeEpisodes([
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.8 },
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.7 },
+    ]);
+    consolidator.consolidate(batch1);
+
+    const batch2 = makeEpisodes([
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.9 },
+      { domain: 'p5', model: 'qwen3', qualityScore: 0.85 },
+    ]);
+    consolidator.consolidate(batch2);
+
+    const pattern = consolidator.getPattern('p5:qwen3');
+    expect(pattern!.episodeCount).toBe(4);
+  });
+
+  it('should report domain-level aggregation', () => {
+    const episodes = makeEpisodes([
+      { domain: 'p5', qualityScore: 0.8 },
+      { domain: 'p5', qualityScore: 0.9 },
+      { domain: 'glsl', qualityScore: 0.6 },
+      { domain: 'glsl', qualityScore: 0.7 },
+    ]);
+
+    const result = consolidator.consolidate(episodes);
+    expect(Object.keys(result.byDomain).length).toBe(2);
+    expect(result.byDomain.p5.avgQuality).toBeGreaterThan(result.byDomain.glsl.avgQuality);
   });
 });

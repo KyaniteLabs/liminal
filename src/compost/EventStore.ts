@@ -31,7 +31,7 @@
  */
 
 import Database from 'better-sqlite3';
-import { mkdirSync, existsSync } from 'node:fs';
+import { mkdirSync, existsSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 
@@ -783,7 +783,7 @@ export class EventStore {
     // DB file size
     let dbSizeBytes = 0;
     try {
-      const stat = require('node:fs').statSync(this.dbPath);
+      const stat = statSync(this.dbPath);
       dbSizeBytes = stat.size;
     } catch {
       // DB not yet written

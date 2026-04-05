@@ -36,6 +36,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint src/",
+    "test:quality": "node scripts/testing/test-quality-check.mjs",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",
     "tui": "npx tsx src/tui/HarnessTUI.tsx",

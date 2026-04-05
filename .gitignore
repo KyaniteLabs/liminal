@@ -98,3 +98,10 @@ dogfood-*.json
 
 # Narrative local data
 narrative/data/
+
+# Archaeology database (derived data, rebuild with build-archaeology-db.py)
+narrative/data/archaeology.db
+narrative/data/archaeology.inspect.json
+
+# Python cache
+__pycache__/

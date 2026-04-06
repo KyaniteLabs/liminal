@@ -1,3 +1,6 @@
+import { JSON_ONLY_OUTPUT_INSTRUCTION } from '../contracts.js';
+import { getDimensionEvaluationSchema } from '../evaluatorSchemas.js';
+
 /**
  * Specialized evaluation prompt for assessing creative output quality.
  *
@@ -72,20 +75,9 @@ GROUNDING RULE (anti-hallucination protocol):
 - NEVER assign a score without referencing concrete evidence from the submitted work.
 - If you cannot find evidence for a dimension, score it no higher than the midpoint of the scale and note the lack of evidence.
 
-OUTPUT FORMAT — respond with ONLY valid JSON matching this schema (no markdown fences, no commentary outside the JSON):
-{
-  "scores": {
-    "<dimension>": <number>,
-    ...
-  },
-  "evidence": {
-    "<dimension>": "<specific code/visual feature justifying the score>",
-    ...
-  },
-  "overall": <number>,
-  "issues": ["<string>", ...],
-  "strengths": ["<string>", ...]
-}
+OUTPUT FORMAT — ${JSON_ONLY_OUTPUT_INSTRUCTION}
+Use this schema:
+${getDimensionEvaluationSchema()}
 
 - "overall" is the arithmetic mean of all dimension scores (rounded to one decimal).
 - "issues" lists concrete problems that should be addressed, with line references or feature names.

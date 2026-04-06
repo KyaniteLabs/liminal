@@ -86,8 +86,8 @@ question. Do NOT generate code in CLARIFY mode.
 
 DELIVERY MODE:
 Produce final, tested, production-ready code. Every constraint must be satisfied.
-If a constraint cannot be met, explain why and propose an alternative BEFORE
-generating code.
+If the constraints are contradictory or impossible to satisfy, switch back to
+CLARIFY MODE and ask numbered questions instead of guessing.
 
 ═══════════════════════════════════════════
 HARD CONSTRAINT VALIDATION (DFM RULES)

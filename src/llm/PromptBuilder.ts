@@ -16,6 +16,14 @@ import {
   type ModelTier 
 } from './ModelTier.js';
 import type { LLMConfig } from './LLMClient.js';
+import {
+  RAW_CODE_LOCAL_FORMAT_RULE,
+  RAW_CODE_LOCAL_RULE,
+  RAW_CODE_NO_MARKDOWN_RULE,
+  RAW_CODE_OUTPUT_INSTRUCTION,
+  RAW_CODE_TINY_RULE_SUMMARY,
+  getRawCodeOutputLabel,
+} from '../prompts/contracts.js';
 import { Logger } from '../utils/Logger.js';
 
 export interface PromptContext {
@@ -91,7 +99,7 @@ export class PromptBuilder {
       '</request>',
       '',
       '<instruction>',
-      `Generate ${ctx.domain} code. Output ONLY code, no explanations.`,
+      `Generate ${ctx.domain} code. ${RAW_CODE_OUTPUT_INSTRUCTION}`,
       '</instruction>',
     ].join('\n');
 
@@ -107,7 +115,7 @@ export class PromptBuilder {
       '',
       'RULES:',
       '1. ' + (ctx.rules || 'Output valid code only.'),
-      '2. No explanations outside code comments.',
+      '2. ' + RAW_CODE_NO_MARKDOWN_RULE,
       '3. Include all necessary imports/setup.',
       '',
       ctx.domainDocs ? `DOMAIN KNOWLEDGE (${ctx.domain}):\n${ctx.domainDocs}` : '',
@@ -117,7 +125,7 @@ export class PromptBuilder {
       'REQUEST:',
       ctx.userRequest,
       '',
-      'OUTPUT: Valid ' + ctx.domain + ' code.',
+      getRawCodeOutputLabel(ctx.domain),
     ].join('\n');
 
     return { system, user };
@@ -134,8 +142,8 @@ export class PromptBuilder {
       'You generate code.',
       '',
       'RULES:',
-      '- Output ONLY code',
-      '- No explanations',
+      '- ' + RAW_CODE_LOCAL_RULE,
+      '- ' + RAW_CODE_LOCAL_FORMAT_RULE,
       '- Valid ' + ctx.domain + ' code',
       '',
       ctx.domainDocs ? `ABOUT ${ctx.domain.toUpperCase()}:\n${this.summarizeDocs(ctx.domainDocs, 500)}` : '',
@@ -162,7 +170,7 @@ export class PromptBuilder {
       '',
       ctx.userRequest,
       '',
-      'RULES: code only, no explanations.',
+      RAW_CODE_TINY_RULE_SUMMARY,
     ].join('\n');
 
     return {

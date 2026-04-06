@@ -5,6 +5,7 @@
  */
 
 import { PromptLibrary } from './PromptLibrary.js';
+import { RAW_CODE_OUTPUT_INSTRUCTION } from './contracts.js';
 
 /**
  * p5.generate - Generate p5.js sketches from descriptions.
@@ -18,7 +19,7 @@ PromptLibrary.register({
 Generate a complete, self-contained p5.js sketch based on the user's description.
 
 CONSTRAINTS:
-- CRITICAL: Output ONLY the raw JavaScript code - NO markdown fences, NO code blocks
+- CRITICAL: ${RAW_CODE_OUTPUT_INSTRUCTION}
 - CRITICAL: DO NOT include any explanatory text, reasoning, or commentary
 - CRITICAL: Start directly with variable declarations, setup(), or other code
 - DO NOT use external assets, APIs, or libraries beyond p5.js
@@ -31,10 +32,9 @@ CRITICAL CONSTRAINTS:
 - DO NOT include the word "glsl" in your output
 - DO NOT use shader-specific terms like "fragment", "vertex", "uniform"
 - Your code MUST use function setup() and function draw()
-- Your code MUST be wrapped in a markdown code block with language "javascript"
 
 OUTPUT FORMAT:
-- Output a single JavaScript code block containing setup() and draw() functions
+- Output a single raw JavaScript file containing setup() and draw() functions
 - The code MUST be self-contained and immediately runnable
 
 DOMAIN RULES:
@@ -51,7 +51,6 @@ DOMAIN RULES:
   updated: '2026-03-20',
   metadata: {
     description: 'Generate p5.js sketches from natural language descriptions',
-    supportsContext: true,
   },
 });
 
@@ -67,7 +66,7 @@ PromptLibrary.register({
 Improve the provided p5.js sketch across three dimensions: visual quality, code structure, and performance.
 
 CONSTRAINTS:
-- CRITICAL: Output ONLY the raw JavaScript code - NO markdown fences, NO code blocks
+- CRITICAL: ${RAW_CODE_OUTPUT_INSTRUCTION}
 - CRITICAL: DO NOT include any explanatory text, reasoning, or commentary
 - CRITICAL: Start directly with variable declarations, setup(), or other code
 - DO NOT replace the entire creative approach — preserve the core concept
@@ -88,7 +87,7 @@ IMPROVEMENT FOCUS:
 4. Bug fixes — If the sketch has bugs, fix them. If it's slow, optimize the draw loop.
 
 OUTPUT FORMAT:
-- Output the complete improved p5.js sketch as a single JavaScript code block
+- Output the complete improved p5.js sketch as raw JavaScript only
 - The code MUST be self-contained and immediately runnable`,
   userPromptTemplate: `Improve this p5.js sketch:
 

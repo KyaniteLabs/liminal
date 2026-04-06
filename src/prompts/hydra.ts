@@ -1,4 +1,5 @@
 import { PromptLibrary } from './PromptLibrary.js';
+import { RAW_CODE_OUTPUT_INSTRUCTION } from './contracts.js';
 
 PromptLibrary.register({
   id: 'hydra.generate',
@@ -11,8 +12,7 @@ Generate Hydra (hydra-synth) JavaScript code based on the user's description.
 \${audioContext}
 
 CONSTRAINTS:
-- DO NOT wrap code in markdown fences or code blocks
-- DO NOT add explanatory text before or after the code
+- ${RAW_CODE_OUTPUT_INSTRUCTION}
 - DO NOT use deprecated hydra-synth 0.x methods
 - DO NOT create more than 4 simultaneous source chains (performance limit)
 - DO NOT forget .out() — every source chain MUST end with .out()

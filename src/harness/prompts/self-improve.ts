@@ -1,3 +1,5 @@
+import { JSON_ONLY_OUTPUT_INSTRUCTION, TOOL_CALL_JSON_SCHEMA } from '../../prompts/contracts.js';
+
 /**
  * System Prompt for Meta-Harness Self-Improvement Agent
  * 
@@ -53,15 +55,10 @@ Restore a file from backup if changes fail.
 
 ## Response Format
 
-Respond with a JSON object:
+${JSON_ONLY_OUTPUT_INSTRUCTION}
 
 \`\`\`json
-{
-  "thought": "Brief explanation of what you're doing",
-  "tool": "toolName",
-  "params": { ... },
-  "expectedResult": "What you expect to happen"
-}
+${TOOL_CALL_JSON_SCHEMA}
 \`\`\`
 
 ## Example Session
@@ -198,14 +195,9 @@ export function createAgentSystemPrompt(): string {
 - You prefer small, safe changes
 
 ## Response Format (CRITICAL)
-You MUST respond with valid JSON:
+${JSON_ONLY_OUTPUT_INSTRUCTION}
 \`\`\`json
-{
-  "thought": "Brief explanation of your reasoning",
-  "tool": "toolName",
-  "params": { /* tool-specific params */ },
-  "expectedResult": "What you expect to happen"
-}
+${TOOL_CALL_JSON_SCHEMA}
 \`\`\`
 
 Available tools: readFile, applyEdit, writeFile, runBuild, runTests, createBackup, restoreBackup, complete

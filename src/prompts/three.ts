@@ -1,4 +1,5 @@
 import { PromptLibrary } from './PromptLibrary.js';
+import { RAW_HTML_OUTPUT_INSTRUCTION } from './contracts.js';
 
 PromptLibrary.register({
   id: 'three.generate',
@@ -9,7 +10,7 @@ PromptLibrary.register({
 Generate a complete, self-contained HTML file with an interactive 3D scene based on the user's description.
 
 CONSTRAINTS:
-- CRITICAL: Output ONLY the HTML file - NO markdown fences, NO code blocks
+- CRITICAL: ${RAW_HTML_OUTPUT_INSTRUCTION}
 - CRITICAL: DO NOT include any explanatory text, reasoning, or commentary before or within the code
 - CRITICAL: Start the HTML directly with <!DOCTYPE html>
 - DO NOT use THREE.Geometry (deprecated since r125) — use BufferGeometry

@@ -5,6 +5,7 @@ export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './er
 
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { PromptLibrary } from '../prompts/index.js';
+import { RAW_CODE_TINY_RULE_SUMMARY } from '../prompts/contracts.js';
 import { RetryManager } from './RetryManager.js';
 import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
 import { CacheManager } from './CacheManager.js';
@@ -621,17 +622,17 @@ export class LLMClient {
     if (!capabilities.jsonMode || capabilities.maxContextTokens < 8192) {
       const simplifiedSystem = `You are a creative coder. Generate p5.js code.
 Rules:
-- Output ONLY JavaScript code
+- Output raw JavaScript code only
 - Use function setup() and function draw()
 - Include createCanvas()
-- NO explanations, NO markdown`;
+- ${RAW_CODE_TINY_RULE_SUMMARY.replace('RULES: ', '')}`;
 
       const simplifiedUser = `Create a p5.js sketch: ${prompt}${context ? '\nContext: ' + context : ''}`;
 
       return this.generate(simplifiedSystem, simplifiedUser, signal, bypassCache);
     }
 
-    const rendered = PromptLibrary.render('p5.generate', { prompt, context: context || '' });
+    const rendered = PromptLibrary.render('p5.generate', { prompt });
     return this.generate(rendered.system, rendered.user, signal, bypassCache);
   }
 

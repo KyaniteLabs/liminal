@@ -36,6 +36,12 @@ vi.mock('../../../src/utils/Logger.js', () => ({
 
 import { PromptBuilder } from '../../../src/llm/PromptBuilder.js';
 import type { PromptContext } from '../../../src/llm/PromptBuilder.js';
+import {
+  RAW_CODE_LOCAL_RULE,
+  RAW_CODE_NO_MARKDOWN_RULE,
+  RAW_CODE_TINY_RULE_SUMMARY,
+  getRawCodeOutputLabel,
+} from '../../../src/prompts/contracts.js';
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -164,7 +170,7 @@ describe('PromptBuilder', () => {
 
       expect(result.system).toContain('RULES:');
       expect(result.system).toContain('1. Output valid code.');
-      expect(result.system).toContain('2. No explanations outside code comments.');
+      expect(result.system).toContain(`2. ${RAW_CODE_NO_MARKDOWN_RULE}`);
       expect(result.system).toContain('3. Include all necessary imports/setup.');
       expect(result.system).toContain('You are Liminal.');
     });
@@ -175,7 +181,7 @@ describe('PromptBuilder', () => {
 
       expect(result.user).toContain('REQUEST:');
       expect(result.user).toContain('Create a bouncing ball animation');
-      expect(result.user).toContain('OUTPUT: Valid p5 code.');
+      expect(result.user).toContain(getRawCodeOutputLabel('p5'));
     });
 
     it('includes domain docs as DOMAIN KNOWLEDGE when provided', () => {
@@ -210,7 +216,7 @@ describe('PromptBuilder', () => {
       const result = builder.build(makeContext());
 
       expect(result.system).toContain('You generate code.');
-      expect(result.system).toContain('Output ONLY code');
+      expect(result.system).toContain(RAW_CODE_LOCAL_RULE);
       expect(result.system).toContain('Valid p5 code');
     });
 
@@ -296,7 +302,7 @@ describe('PromptBuilder', () => {
 
       expect(result.user).toContain('Generate p5 code for:');
       expect(result.user).toContain('Create a bouncing ball animation');
-      expect(result.user).toContain('RULES: code only, no explanations.');
+      expect(result.user).toContain(RAW_CODE_TINY_RULE_SUMMARY);
     });
 
     it('sets combined to the same value as user', () => {

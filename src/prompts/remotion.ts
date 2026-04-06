@@ -5,6 +5,7 @@
  */
 
 import { PromptLibrary } from './PromptLibrary.js';
+import { RAW_TSX_OUTPUT_INSTRUCTION } from './contracts.js';
 
 /**
  * remotion.generate - Generate Remotion video compositions from descriptions.
@@ -18,7 +19,7 @@ PromptLibrary.register({
 Generate a complete React/Remotion composition based on the user's description.
 
 CONSTRAINTS:
-- CRITICAL: Output ONLY valid TypeScript/React code — NO markdown fences, NO explanatory text
+- CRITICAL: ${RAW_TSX_OUTPUT_INSTRUCTION}
 - CRITICAL: Start directly with import statements
 - Use AbsoluteFill for full-screen compositions
 - Use useCurrentFrame() for animation timing, NOT requestAnimationFrame
@@ -68,11 +69,11 @@ PromptLibrary.register({
   systemPrompt: `You are improving an existing Remotion composition. The user wants changes while keeping the overall structure.
 
 CONSTRAINTS:
-- Output ONLY the improved TypeScript/React code
+- ${RAW_TSX_OUTPUT_INSTRUCTION}
 - Keep the same component name and export structure
 - Use Remotion APIs: useCurrentFrame, interpolate, spring, AbsoluteFill
 - Frame-based timing only (\${fps}fps, \${duration} frames, \${width}x\${height})`,
-  userPromptTemplate: 'Improve this Remotion composition based on: ${prompt}\n\nPrevious code:\n```tsx\n${previousCode}\n```',
+  userPromptTemplate: 'Improve this Remotion composition based on: ${prompt}\n\nPrevious code:\n${previousCode}',
   tags: ['generator', 'remotion', 'video', 'improvement'],
   created: '2026-03-28',
   updated: '2026-03-28',

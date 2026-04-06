@@ -4,6 +4,12 @@ import { describe, it, expect } from 'vitest';
  * and meet quality standards.
  */
 import { PromptLibrary } from '../../src/prompts/index.js';
+import {
+  RAW_CODE_OUTPUT_INSTRUCTION,
+  RAW_HTML_OUTPUT_INSTRUCTION,
+  RAW_TSX_OUTPUT_INSTRUCTION,
+  JSON_ONLY_OUTPUT_INSTRUCTION,
+} from '../../src/prompts/contracts.js';
 
 // Expected prompt IDs across all categories
 const EXPECTED_IDS = [
@@ -69,7 +75,7 @@ const EXPECTED_IDS = [
 
 describe('Prompt Library Validation', () => {
   describe('registration completeness', () => {
-    it('should have exactly 34 prompts registered', () => {
+    it('should have exactly 41 prompts registered', () => {
       const all = PromptLibrary.list();
       expect(all.length).toBe(EXPECTED_IDS.length);
     });
@@ -90,6 +96,27 @@ describe('Prompt Library Validation', () => {
   });
 
   describe('prompt quality', () => {
+
+
+    it('high-traffic generator prompts should reuse the shared raw-code contract wording', () => {
+      for (const id of ['p5.generate', 'p5.improve', 'glsl.generate', 'music.p5-webaudio']) {
+        const template = PromptLibrary.get(id);
+        expect(template?.systemPrompt).toContain(RAW_CODE_OUTPUT_INSTRUCTION);
+      }
+    });
+
+    it('additional generator prompts should reuse shared output contract wording', () => {
+      expect(PromptLibrary.get('three.generate')?.systemPrompt).toContain(RAW_HTML_OUTPUT_INSTRUCTION);
+      expect(PromptLibrary.get('hydra.generate')?.systemPrompt).toContain(RAW_CODE_OUTPUT_INSTRUCTION);
+      expect(PromptLibrary.get('remotion.generate')?.systemPrompt).toContain(RAW_TSX_OUTPUT_INSTRUCTION);
+      expect(PromptLibrary.get('remotion.improve')?.systemPrompt).toContain(RAW_TSX_OUTPUT_INSTRUCTION);
+      expect(PromptLibrary.get('audio.voice-to-visual')?.systemPrompt).toContain(RAW_CODE_OUTPUT_INSTRUCTION);
+    });
+
+
+    it('JSON-oriented prompts should reuse the shared JSON-only contract wording', () => {
+      expect(PromptLibrary.get('collab.scoring')?.systemPrompt).toContain(JSON_ONLY_OUTPUT_INSTRUCTION);
+    });
     it('every prompt should have a non-empty systemPrompt', () => {
       const all = PromptLibrary.list();
       for (const template of all) {

@@ -453,7 +453,7 @@
                 </div>
                 <div class="task-column">
                     <h4>🟡 In Progress</h4>
-                    <div class="meta-info">None</div>
+                    <div class="task-item high"><div class="task-id">A1</div>Prompt Architecture Audit</div>
                 </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
@@ -722,6 +722,16 @@
             </div>
 
             <div class="alert warning mt-1">
+                <h4>⚠️ Prompt Architecture Still Split</h4>
+                <ul class="ml-lg text-secondary">
+                    <li><code>PromptLibrary</code> is the registry for 41 reusable prompts</li>
+                    <li><code>PromptBuilder</code>, the simplified generator fallback prompt, the main generation templates, and selected JSON-oriented prompt surfaces now consume shared contract fragments; `LLMJudgeCritic` now uses JSON-only parsing</li>
+                    <li>High-confidence prompt contradictions were fixed on 2026-04-06 across registered prompts and PromptBuilder wording, but full consolidation is still pending</li>
+                    <li>Shared evaluator schema helpers now live in <code>src/prompts/evaluatorSchemas.ts</code></li>
+                </ul>
+            </div>
+
+            <div class="alert warning mt-1">
                 <h4>⚠️ Hardware Integration Not Implemented</h4>
                 <ul class="ml-lg text-secondary">
                     <li>MIDI/OSC hardware integration (config placeholders only)</li>
@@ -743,6 +753,11 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td><code>WIP</code></td>
+                        <td>docs/prompts: sync runtime inventory to 41 and fix contradictory output contracts</td>
+                        <td>Prompt audit remediation + active surface inventory</td>
+                    </tr>
                     <tr>
                         <td><code>bb67f67</code></td>
                         <td>docs: Update THE_BIBLE.md and create DEV dashboard for DGF</td>
@@ -776,9 +791,10 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>✅ DGF Phases 1-3 COMPLETE</strong> - 31 tests passing</li>
-                <li><strong>📝 M12-M18 defined</strong> - Specs complete, ready for implementation</li>
-                <li><strong>🔄 Constitution persistence</strong> - Optional disk export</li>
+                <li><strong>🔄 Consolidate prompt architecture</strong> - unify <code>PromptLibrary</code> and <code>PromptBuilder</code> responsibilities</li>
+                <li><strong>✅ Prompt inventory synced</strong> - docs/tests now reflect 41 registered prompts</li>
+                <li><strong>🔄 Consolidate non-registered prompt surfaces</strong> - 59 active prompt-bearing files inventoried; harness, TUI, evaluators, and scoring flows still need full unification</li>
+                <li><strong>✅ Shared contract fragments added</strong> - <code>src/prompts/contracts.ts</code> now anchors raw-code wording</li>
                 <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
             </ol>
         </section>

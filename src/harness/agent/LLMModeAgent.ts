@@ -18,6 +18,7 @@ import { formatError } from '../../utils/errors.js';
 import { getSelfImprovePrompt, createReflectionPrompt } from '../prompts/self-improve.js';
 import { thinkingRepository } from '../ThinkingSeparation.js';
 import { thinkingAnalyzer } from '../ThinkingAnalyzer.js';
+import { JSON_ONLY_OUTPUT_INSTRUCTION, TOOL_CALL_JSON_SCHEMA } from '../../prompts/contracts.js';
 import { eventBus, EventTypes } from '../../core/EventBus.js';
 import {
   readFileTool,
@@ -128,8 +129,10 @@ ${task.fileHint ? `Hint: Start by looking in ${task.fileHint}` : ''}
 
 You are in LLM-driven mode. Plan your own steps. Start by reading the relevant file(s).
 
+${JSON_ONLY_OUTPUT_INSTRUCTION}
+
 Respond with a JSON object containing your tool call:
-{\n  "thought": "What you're doing and why",\n  "tool": "toolName",\n  "params": { ... },\n  "expectedResult": "What you expect"\n}
+${TOOL_CALL_JSON_SCHEMA}
 
 When the task is complete and build passes, respond with tool "complete".`;
 
@@ -317,7 +320,7 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       // Call LLM
       const response = await this.llmClient.complete({
-        prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',
+        prompt: conversation + `\n\nWhat is your next tool call? ${JSON_ONLY_OUTPUT_INSTRUCTION}`,
         maxTokens: 2000,
         temperature: 0.2, // Low temperature for deterministic tool calls
       });

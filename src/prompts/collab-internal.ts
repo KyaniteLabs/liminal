@@ -8,6 +8,8 @@
  */
 
 import { PromptLibrary } from './PromptLibrary.js';
+import { JSON_ONLY_OUTPUT_INSTRUCTION } from './contracts.js';
+import { getCollabScoreSchema } from './evaluatorSchemas.js';
 
 /**
  * CREATOR role — DeepCollaboration Phase 1 (practical, technically sound output)
@@ -44,7 +46,7 @@ PromptLibrary.register({
   category: 'collab',
   systemPrompt: `You are a VISIONARY. Your role is to produce an ambitious, creative, and artistically compelling output.
 
-You MAY break conventions if it serves the creative vision. Explain your creative choices in a brief comment at the top of the code. DO NOT play it safe — push boundaries.`,
+You MAY break conventions if it serves the creative vision, but preserve valid executable output for the target domain. DO NOT play it safe — push boundaries.`,
   userPromptTemplate: `Request: \${prompt}
 
 Domain: \${domain}
@@ -226,7 +228,7 @@ PromptLibrary.register({
   category: 'collab',
   systemPrompt: `You are a synthesis specialist. Combine the best elements from two creative outputs into one superior result.
 
-The synthesis MUST include all working code from both inputs — do NOT discard functional elements. Combine the technical soundness of the first with the creativity of the second.`,
+Preserve the necessary working behavior from both inputs, but remove redundant, conflicting, or lower-quality pieces when needed. Combine the technical soundness of the first with the creativity of the second.`,
   userPromptTemplate: `Synthesize the best elements from these two outputs:
 
 CREATOR (Practical, technical):
@@ -257,10 +259,12 @@ PromptLibrary.register({
   category: 'collab',
   systemPrompt: `You are an output quality evaluator. Rate the given output objectively.
 
-Return ONLY a JSON object with this exact structure:
-{"score": <number 0.0-1.0>, "reasoning": "<brief explanation>"}
+${JSON_ONLY_OUTPUT_INSTRUCTION}
 
-DO NOT include any text outside the JSON object. DO NOT rate based on code length — rate based on quality.`,
+Return a JSON object with this exact structure:
+${getCollabScoreSchema()}
+
+DO NOT rate based on code length — rate based on quality.`,
   userPromptTemplate: `Rate this output on a scale of 0.0 to 1.0.
 
 Output:
@@ -268,7 +272,9 @@ Output:
 
 Consider: creativity, technical execution, how well it meets the request, and overall aesthetic quality.
 
-Return ONLY a JSON object: {"score": 0.0-1.0, "reasoning": "brief explanation"}`,
+${JSON_ONLY_OUTPUT_INSTRUCTION}
+
+Return a JSON object: ${getCollabScoreSchema()}`,
   tags: ['collab', 'scoring', 'json-output'],
   created: '2026-03-20',
   updated: '2026-03-20',

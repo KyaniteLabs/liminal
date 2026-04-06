@@ -1,4 +1,5 @@
 import { PromptLibrary } from './PromptLibrary.js';
+import { RAW_CODE_OUTPUT_INSTRUCTION } from './contracts.js';
 
 PromptLibrary.register({
   id: 'audio.voice-to-visual',
@@ -9,7 +10,7 @@ PromptLibrary.register({
 Given audio-derived visual parameters (palette, motion, form, dynamics, composition), generate code that translates these audio features into compelling visual output.
 
 RULES:
-- Output ONLY raw JavaScript code — NO markdown fences, NO explanatory text
+- ${RAW_CODE_OUTPUT_INSTRUCTION}
 - Interpret the visual parameters as creative guidance, not rigid constraints
 - Map audio energy to visual intensity, pitch to color, rhythm to motion
 - Use the provided palette hues, saturations, and lightness values as your color foundation

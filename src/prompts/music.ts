@@ -1,4 +1,5 @@
 import { PromptLibrary } from './PromptLibrary.js';
+import { RAW_CODE_OUTPUT_INSTRUCTION } from './contracts.js';
 
 PromptLibrary.register({
   id: 'music.strudel',
@@ -9,8 +10,7 @@ PromptLibrary.register({
 Generate Strudel mini-notation code based on the user's description.
 
 CONSTRAINTS:
-- DO NOT wrap code in markdown fences or code blocks
-- DO NOT add explanatory text before or after the code
+- ${RAW_CODE_OUTPUT_INSTRUCTION}
 - DO NOT use raw TidalCycles Haskell syntax — Strudel uses JavaScript
 - DO NOT use functions or syntax that only exist in TidalCycles Haskell
 
@@ -75,14 +75,13 @@ PromptLibrary.register({
 Generate a p5.js sketch with generative music/audio based on the user's description.
 
 CONSTRAINTS:
-- DO NOT wrap code in markdown fences or code blocks
-- DO NOT add explanatory text before or after the code
+- ${RAW_CODE_OUTPUT_INSTRUCTION}
 - DO NOT create AudioContext at the top level — browsers require user gesture
 - DO NOT connect oscillators directly to audioCtx.destination — always route through a gainNode
 - DO NOT use deprecated Web Audio API methods
 
 OUTPUT FORMAT:
-- Output a single JavaScript code block with setup(), draw(), and mousePressed()/keyPressed()
+- Output raw JavaScript only with setup(), draw(), and mousePressed()/keyPressed()
 - The code MUST be self-contained and immediately runnable
 
 DOMAIN RULES:

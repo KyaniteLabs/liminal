@@ -14,6 +14,7 @@
 
 import type { AestheticReport, AestheticViolation, DesignConstraints } from '../types.js';
 import { Logger } from '../../utils/Logger.js';
+import { JSON_ONLY_OUTPUT_INSTRUCTION } from '../../prompts/contracts.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -62,11 +63,20 @@ const DEFAULT_JUDGE_CONFIG: LLMJudgeConfig = {
 
 const SYSTEM_PROMPT = `You are an expert aesthetic judge for creative code. Evaluate the provided code on a 0.0-1.0 scale.
 
-You MUST respond in this exact format:
-SCORE: <number between 0.0 and 1.0>
-DIMENSIONS: color=<0-1> layout=<0-1> creativity=<0-1> coherence=<0-1>
-REASONING: <1-2 sentences explaining your score>
-VIOLATIONS: <comma-separated list of issues, or "none">
+${JSON_ONLY_OUTPUT_INSTRUCTION}
+
+Return a JSON object with this exact structure:
+{
+  "score": <number between 0.0 and 1.0>,
+  "dimensionScores": {
+    "color": <0-1>,
+    "layout": <0-1>,
+    "creativity": <0-1>,
+    "coherence": <0-1>
+  },
+  "reasoning": "<1-2 sentences explaining the score>",
+  "violations": ["<issue>", ...]
+}
 
 Scoring guidelines:
 - 0.0-0.3: Broken, incomplete, or visually incoherent
@@ -100,7 +110,7 @@ function buildJudgePrompt(code: string, domain: string, constraints: DesignConst
 ${code.slice(0, 3000)}
 \`\`\`${constraintBlock}
 
-Respond with SCORE, DIMENSIONS, REASONING, and VIOLATIONS.`;
+Return the JSON object only.`;
 }
 
 // ---------------------------------------------------------------------------
@@ -118,41 +128,41 @@ function parseJudgeResponse(response: string): {
   const violations: AestheticViolation[] = [];
   const dimensionScores: Record<string, number> = {};
 
-  // Parse SCORE
-  const scoreMatch = response.match(/SCORE:\s*([\d.]+)/i);
-  if (scoreMatch) {
-    score = Math.max(0, Math.min(1, parseFloat(scoreMatch[1])));
+  const jsonMatch = response.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) {
+    return { score, reasoning, violations, dimensionScores };
   }
 
-  // Parse DIMENSIONS
-  const dimMatch = response.match(/DIMENSIONS:\s*(.+)/i);
-  if (dimMatch) {
-    const pairs = dimMatch[1].trim().split(/\s+/);
-    for (const pair of pairs) {
-      const [name, val] = pair.split('=');
-      if (name && val) {
-        dimensionScores[name] = Math.max(0, Math.min(1, parseFloat(val)));
+  let parsed: any;
+  try {
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch {
+    return { score, reasoning, violations, dimensionScores };
+  }
+
+  if (typeof parsed.score === 'number') {
+    score = Math.max(0, Math.min(1, parsed.score));
+  }
+
+  if (parsed.dimensionScores && typeof parsed.dimensionScores === 'object') {
+    for (const [name, val] of Object.entries(parsed.dimensionScores)) {
+      if (typeof val === 'number') {
+        dimensionScores[name] = Math.max(0, Math.min(1, val));
       }
     }
   }
 
-  // Parse REASONING
-  const reasonMatch = response.match(/REASONING:\s*(.+?)(?:\nVIOLATIONS:|$)/is);
-  if (reasonMatch) {
-    reasoning = reasonMatch[1].trim();
+  if (typeof parsed.reasoning === 'string') {
+    reasoning = parsed.reasoning.trim();
   }
 
-  // Parse VIOLATIONS
-  const violMatch = response.match(/VIOLATIONS:\s*(.+?)(?:\n|$)/i);
-  if (violMatch) {
-    const violText = violMatch[1].trim();
-    if (violText.toLowerCase() !== 'none') {
-      const items = violText.split(',').map(v => v.trim()).filter(v => v.length > 0);
-      for (const item of items) {
+  if (Array.isArray(parsed.violations)) {
+    for (const item of parsed.violations) {
+      if (typeof item === 'string' && item.trim().length > 0) {
         violations.push({
           rule: 'llm-judge',
           severity: 'warning' as const,
-          message: item,
+          message: item.trim(),
         });
       }
     }

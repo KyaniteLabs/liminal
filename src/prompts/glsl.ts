@@ -1,4 +1,5 @@
 import { PromptLibrary } from './PromptLibrary.js';
+import { RAW_CODE_OUTPUT_INSTRUCTION } from './contracts.js';
 
 PromptLibrary.register({
   id: 'glsl.generate',
@@ -9,7 +10,7 @@ PromptLibrary.register({
 Generate a creative fragment shader based on the user's description.
 
 CONSTRAINTS:
-- CRITICAL: Output ONLY the raw GLSL code - NO markdown fences, NO code blocks
+- CRITICAL: ${RAW_CODE_OUTPUT_INSTRUCTION}
 - CRITICAL: DO NOT include any explanatory text, reasoning, or commentary
 - CRITICAL: Start directly with precision highp float; or uniform declarations
 - DO NOT use texture lookups without providing a fallback color/value
@@ -19,7 +20,7 @@ CONSTRAINTS:
 - DO NOT create simple gradients or basic color transitions - must be complex visuals
 
 OUTPUT FORMAT:
-- Output a single GLSL fragment shader code block
+- Output a single raw GLSL fragment shader
 - MUST include precision highp float; as the first line
 - MUST be at least 1000 characters of actual shader code
 

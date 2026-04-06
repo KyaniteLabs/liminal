@@ -2,7 +2,9 @@
 
 ## Overview
 
-Liminal uses a centralized `PromptLibrary` registry for all LLM prompts. Prompts are registered at module load time via side-effect imports in `src/prompts/index.ts`. Every prompt follows a structured format with role, constraints, output format, and domain rules.
+Liminal uses a centralized `PromptLibrary` registry for reusable registered prompts. Prompts are registered at module load time via side-effect imports in `src/prompts/index.ts`.
+
+However, `PromptLibrary` is not the only runtime prompt surface. The workspace also contains tier-based prompting in `src/llm/PromptBuilder.ts`, Meta-Harness prompts in `src/harness/prompts/self-improve.ts`, and embedded JSON-only/evaluator prompts in harness, scoring, and TUI flows. Every registered prompt should still follow a structured format with role, constraints, output format, and domain rules.
 
 ## Architecture
 
@@ -21,7 +23,7 @@ src/prompts/
 └── personas.ts           # Registered swarm persona prompts
 ```
 
-## All Registered Prompts (27 total)
+## All Registered Prompts (41 total)
 
 ### Generator Prompts
 
@@ -34,6 +36,8 @@ src/prompts/
 | `music.strudel` | generator | `${prompt}`, `${bpm}` | Generate Strudel mini-notation music |
 | `music.p5-webaudio` | generator | `${prompt}`, `${bpm}` | Generate p5.js + Web Audio sketches |
 | `hydra.generate` | generator | `${prompt}`, `${platform}`, `${audioContext}` | Generate Hydra live-coding visuals |
+| `remotion.generate` | narrative | `${prompt}`, `${fps}`, `${duration}`, `${width}`, `${height}`, `${compositionName}` | Generate Remotion compositions |
+| `remotion.improve` | narrative | `${code}`, `${fps}`, `${duration}`, `${width}`, `${height}` | Improve existing Remotion compositions |
 | `swarm.voting` | swarm | `${displayName}`, `${voice}`, `${votingBias}`, `${candidates}` | Swarm persona voting (JSON output) |
 
 ### Collaboration Role Prompts
@@ -75,6 +79,28 @@ src/prompts/
 |---|---|
 | `eval.heuristic-persona` | Default persona for EvaluationFramework heuristic strategy |
 
+### Compost Prompts
+
+| ID | Template Variables | Description |
+|---|---|---|
+| `compost.extract-code` | `${code}`, `${domain}` | Summarize code fragments for compost memory |
+| `compost.extract-image` | `${caption}` | Summarize non-code creative fragments |
+| `compost.collision-merge` | `${fragmentA}`, `${fragmentB}` | Cross-domain collision synthesis |
+| `compost.offspring-scoring` | `${domain}`, `${layer}`, `${tags}`, `${content}` | Score fragment novelty / usefulness |
+| `compost.digest-narrative` | `${entries}` | Weekly compost digest narrative |
+| `compost.seed-extraction` | `${content}` | Extract top reusable creative seeds |
+| `compost.synthesis` | `${creatorOutput}`, `${visionaryOutput}`, `${prompt}` | Merge best elements from divergent outputs |
+
+### Audio / Narrative / Chat Prompts
+
+| ID | Template Variables | Description |
+|---|---|---|
+| `aesthetic.constraints` | none | Evaluate generated output against aesthetic constraints |
+| `audio.voice-to-visual` | `${visualParameters}` | Convert audio-derived parameters into visual code |
+| `blog.script` | `${theme}`, `${era}`, `${template}`, `${format}`, `${platform}`, `${keyQuotes}`, `${dataPoints}` | Generate short-form technical video scripts |
+| `blog.spec` | `${script}`, `${resolution}`, `${fps}`, `${brandColors}`, `${brandFonts}` | Generate animation specs from scripts |
+| `chat.assistant` | context-dependent | Structured creative-coding assistant prompt |
+
 ## Domain Coverage Matrix
 
 | Domain | DOMAIN_GUIDANCE | Generator Prompt | Collab Role Support |
@@ -113,7 +139,23 @@ Prompts follow semver:
 - **Minor (x.Y.0)**: New template variables (backward compatible)
 - **Patch (x.y.Z)**: Text improvements, constraint additions
 
-All prompts are currently at version `2.0.0` following the March 2026 prompt engineering overhaul.
+Registered prompts currently span versions `1.0.0`, `2.0.0`, `2.1.0`, and `3.0.0`.
+
+## Output Contract Policy
+
+For code-generation prompts, the default output contract is:
+
+- raw code only
+- no markdown fences
+- no explanatory prose outside the code
+
+Exceptions should be explicit and limited to prompts that intentionally request JSON-only output, markdown specifications, or analysis / critique text.
+
+This policy now applies both to registered `PromptLibrary` prompts and to the tier-based wording in `PromptBuilder`.
+
+See `docs/internal/PROMPT_SURFACE_INVENTORY_2026-04-06.md` for the full active prompt-surface inventory and consolidation roadmap.
+
+Implementation note: shared canonical fragments now live in `src/prompts/contracts.ts`, and `PromptBuilder`, the simplified `LLMClient` fallback prompt, the main generation prompts in `PromptLibrary`, and selected JSON-oriented prompt surfaces consume them directly. `LLMJudgeCritic` now also uses a JSON-only evaluator contract. Shared evaluator schema helpers now live in `src/prompts/evaluatorSchemas.ts`.
 
 ## Model-Specific Adaptations
 
@@ -198,5 +240,5 @@ const issues = PromptLibrary.validate().filter(r => !r.valid);
 
 // Get stats
 const stats = PromptLibrary.stats();
-// { total: 27, byCategory: { p5: 2, generator: 4, ... }, ids: [...] }
+// { total: 41, byCategory: { collab: 13, evaluation: 2, swarm: 6, ... }, ids: [...] }
 ```

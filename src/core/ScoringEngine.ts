@@ -18,6 +18,8 @@ import { Domain } from '../types/domains.js';
 import type { SwarmPersona } from '../swarm/types.js';
 import type { DesignConstraints, CriticConfig, LIREvaluationContext } from '../aesthetic/types.js';
 import { LLMClient } from '../llm/LLMClient.js';
+import { JSON_ONLY_OUTPUT_INSTRUCTION } from '../prompts/contracts.js';
+import { getScalarScoringSchema } from '../prompts/evaluatorSchemas.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -330,15 +332,10 @@ export class LLMScoringStrategy implements ScoringStrategy {
   async score(input: ScoringInput): Promise<ScoringResult> {
     const criteria = input.criteria?.join(', ') ?? 'technical quality, creativity, novelty';
     const systemPrompt = `You are an expert creative artifact evaluator. Score the artifact against the given criteria.
-Return ONLY a JSON object with this exact structure:
-{
-  "score": <number 0-1>,
-  "technical": <number 0-1>,
-  "creative": <number 0-1>,
-  "novelty": <number 0-1>,
-  "reasoning": "<brief explanation>",
-  "suggestions": ["<suggestion1>", ...]
-}`;
+${JSON_ONLY_OUTPUT_INSTRUCTION}
+
+Return a JSON object with this exact structure:
+${getScalarScoringSchema()}`;
 
     const userPrompt = `Criteria: ${criteria}\nDomain: ${input.domain ?? 'general'}\n${input.prompt ? `Prompt: ${input.prompt}\n` : ''}Artifact:\n${input.output}`;
 

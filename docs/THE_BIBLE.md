@@ -346,6 +346,21 @@ Failures:   0 critical
 | CircuitBreaker | `CircuitBreaker.ts` | Failure handling |
 | RetryManager | `RetryManager.ts` | Retry logic |
 
+**Prompt surfaces (current reality):**
+- `src/prompts/*` via `PromptLibrary` — reusable registered prompt templates
+- `src/llm/PromptBuilder.ts` — tier-adaptive prompt assembly for `TierBasedGenerator`
+- `src/harness/prompts/self-improve.ts` and harness agent prompts — self-improvement / tool-calling flows
+
+**Prompt audit status (2026-04-06):**
+- Resolved high-confidence output-format contradictions in registered prompts
+- Normalized `PromptBuilder` wording toward the same raw-code contract
+- Added shared contract fragments in `src/prompts/contracts.ts` and wired `PromptBuilder`, the simplified `LLMClient` fallback prompt, the main `PromptLibrary` generation prompts, and selected JSON-oriented prompt surfaces to them
+- Converted `LLMJudgeCritic` from bespoke text parsing to JSON-only evaluator parsing
+- Added shared evaluator schema helpers in `src/prompts/evaluatorSchemas.ts` and wired core evaluator prompt surfaces to them
+- Synced prompt inventory docs/tests to the runtime count of 41 registered prompts
+- Full `PromptLibrary` ↔ `PromptBuilder` consolidation remains a follow-up architecture task
+- Full active inventory documented in `docs/internal/PROMPT_SURFACE_INVENTORY_2026-04-06.md`
+
 **Multi-Provider Support:**
 - OpenAI
 - Anthropic

@@ -30,6 +30,7 @@ import {
 } from './MultiProviderConfig.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { harnessMemory, type HarnessTask } from './HarnessMemory.js';
+import { JSON_ONLY_OUTPUT_INSTRUCTION } from '../prompts/contracts.js';
 
 export interface MetaHarnessStatus {
   initialized: boolean;
@@ -268,7 +269,7 @@ YOUR TASK - Answer these questions:
    - Should the prompt template be updated?
    - Is there a model-specific quirk to handle?
 
-Respond with a JSON object:
+Respond with a JSON object only:
 {
   "whereWentWrong": "specific analysis of the failure",
   "howToCommunicateBetter": "concrete suggestion for prompt improvement",
@@ -279,7 +280,7 @@ Respond with a JSON object:
 
     try {
       const response = await this.llmClient.generate(
-        'You are a meta-learning analyzer. Output JSON only.',
+        `You are a meta-learning analyzer. ${JSON_ONLY_OUTPUT_INSTRUCTION}`,
         analysisPrompt,
         AbortSignal.timeout(30000)
       );

@@ -927,13 +927,28 @@ export class CreativeEvaluator {
     if (output.length > 200) technicalScore += 0.1;
     if (output.length > 500) technicalScore += 0.1;
 
-    // Creative checks
-    if (/sin|cos|atan/.test(output)) creativeScore += 0.15;
-    if (/noise|random|fract/.test(output)) creativeScore += 0.15;
-    if (/ray\s*march|sdf|sdSphere|sdBox|length\(/.test(output)) creativeScore += 0.2;
-    if (/vec3.*col|mix|smoothstep/.test(output)) creativeScore += 0.15;
-    if (/for\s*\(/.test(output)) creativeScore += 0.15;
-    if (/u_time/.test(output)) creativeScore += 0.1;
+    // Creative checks — reward GLSL-specific visual techniques
+    // Trig/math functions (animation, wave patterns, plasma effects)
+    if (/sin|cos|atan/.test(output)) creativeScore += 0.12;
+    // Procedural noise, randomness, pattern tiling
+    if (/noise|random|fract/.test(output)) creativeScore += 0.1;
+    // SDF / ray marching (advanced 3D techniques)
+    if (/ray\s*march|sdf|sdSphere|sdBox|length\(/.test(output)) creativeScore += 0.12;
+    // Color blending and smooth transitions
+    if (/vec3.*col|mix|smoothstep/.test(output)) creativeScore += 0.1;
+    // Iteration / loops (complex pattern generation)
+    if (/for\s*\(/.test(output)) creativeScore += 0.1;
+    // Time-based animation
+    if (/u_time/.test(output)) creativeScore += 0.08;
+    // UV/coordinate manipulation (normalized coords, aspect correction)
+    if (/gl_FragCoord\.xy/.test(output)) creativeScore += 0.1;
+    // Math functions (sqrt, pow, abs, mod, clamp, normalize, dot, reflect)
+    if (/sqrt|pow\(|abs\(|mod\(|clamp|normalize|dot\(|reflect/.test(output)) creativeScore += 0.1;
+    // Component-wise color construction (col.r, col.g, col.b — hand-crafted palettes)
+    if (/col\.[rgb]|\.r\s*=|\.g\s*=|\.b\s*=/.test(output)) creativeScore += 0.08;
+    // Multiple uniforms (indicates richer shader interface)
+    const uniformCount = (output.match(/\buniform\s+/g) || []).length;
+    if (uniformCount >= 3) creativeScore += 0.1;
 
     if (output.length < 100) issues.push('Shader code too short');
     if (!/uniform\s+float\s+u_time/.test(output)) issues.push('Missing u_time uniform');

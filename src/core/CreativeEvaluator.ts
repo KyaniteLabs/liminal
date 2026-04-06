@@ -292,6 +292,24 @@ export class CreativeEvaluator {
       };
     }
 
+    // Gate: detect non-code output early to prevent conversational text from
+    // scoring 0.3-1.0 through the creative/technical heuristics.
+    const codeIndicators = /(?:function\s|const\s|let\s|var\s|class\s|import\s|=>|setup\(|draw\(|createElement|\.push\(|\.map\(|\.log\(|console\.|return\s|if\s*\(|for\s*\(|void\s+main|uniform\s|varying\s|attribute\s|gl_Position|gl_FragColor|gl_FragCoord|precision\s|vec[234]\s|mat[234]\s|sampler2D|float\s|ivec[234]|uvec[234]|#define|#ifdef|#endif|#version|out\s+vec|in\s+vec|layout\s*\()/;
+    const hasCodeStructure = codeIndicators.test(output);
+    if (!hasCodeStructure && output.length < 500) {
+      // Short non-code text — likely conversational response, not a creative artifact
+      return {
+        passed: false,
+        score: 0.1,
+        issues: ['No code detected in output'],
+        technicalScore: 0,
+        creativeScore: 0,
+        metrics: this.getEmptyMetrics(),
+        emergenceScore: 0,
+        interestingnessScore: 0,
+      };
+    }
+
     // Shader-specific evaluation
     if (this.detectsShaderUsage(output)) {
       return this.assessShader(output, options);

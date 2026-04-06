@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Liminal — AI Creative Coding Agent</title>
-<meta name="description" content="Real outputs from AI-generated creative code across 9 domains.">
+<title>Liminal Dogfood Gallery — Today's Run</title>
+<meta name="description" content="Real outputs from AI-generated creative code. Today's dogfood run across multiple domains and models.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -19,6 +19,7 @@
   --bg-elevated: #111114;
   --bg-card: #131318;
   --bg-card-hover: #1a1a22;
+  --bg-iframe: #000000;
 
   /* Text */
   --text-primary: #e0e0e0;
@@ -33,22 +34,22 @@
   --accent-violet: #a87bff;
   --accent-blue: #4facfe;
 
-  /* Iframe */
-  --bg-iframe: #000000;
+  /* Star rating */
+  --star-filled: #FFD700;
+  --star-empty: #555555;
 
-  /* Badge colors */
-  --badge-high-bg: rgba(0, 229, 200, 0.12);
-  --badge-high-text: var(--accent-cyan);
-  --badge-medium-bg: rgba(255, 176, 32, 0.12);
-  --badge-medium-text: var(--accent-amber);
+  /* Badge */
+  --badge-variant-bg: rgba(255, 79, 123, 0.12);
+  --badge-variant-text: var(--accent-rose);
+  --badge-standard-bg: rgba(0, 229, 200, 0.12);
+  --badge-standard-text: var(--accent-cyan);
 
   /* Borders */
   --border-subtle: rgba(255, 255, 255, 0.06);
   --border-hover: rgba(255, 255, 255, 0.12);
 
-  /* Glow effects */
+  /* Glow */
   --glow-cyan: 0 0 40px rgba(0, 229, 200, 0.08);
-  --glow-amber: 0 0 40px rgba(255, 176, 32, 0.08);
 
   /* Typography */
   --font-heading: 'JetBrains Mono', monospace;
@@ -68,12 +69,19 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 14px;
-  --radius-xl: 20px;
 
   /* Transitions */
   --transition-fast: 180ms ease;
   --transition-base: 300ms ease;
   --transition-slow: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+
+  /* Layout */
+  --grid-min: 400px;
+  --iframe-height: 300px;
+  --iframe-height-mobile: 220px;
+  --card-icon-size: 40px;
+  --card-icon-font: 24px;
+  --star-size: 20px;
 }
 
 /* ==============================
@@ -210,12 +218,17 @@ a:focus:not(:focus-visible) {
 .stats-bar {
   display: flex;
   justify-content: center;
+  align-items: center;
   gap: var(--space-2xl);
   padding: var(--space-lg) var(--space-xl);
   border-top: 1px solid var(--border-subtle);
   border-bottom: 1px solid var(--border-subtle);
   margin-bottom: var(--space-3xl);
   flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  background: var(--bg-primary);
+  z-index: 100;
 }
 
 .stat-item {
@@ -227,6 +240,7 @@ a:focus:not(:focus-visible) {
 .stat-item:nth-child(1) { animation-delay: 600ms; }
 .stat-item:nth-child(2) { animation-delay: 700ms; }
 .stat-item:nth-child(3) { animation-delay: 800ms; }
+.stat-item:nth-child(4) { animation-delay: 900ms; }
 
 .stat-value {
   font-family: var(--font-heading);
@@ -237,8 +251,7 @@ a:focus:not(:focus-visible) {
 }
 
 .stat-item:nth-child(1) .stat-value { color: var(--accent-cyan); }
-.stat-item:nth-child(2) .stat-value { color: var(--accent-amber); }
-.stat-item:nth-child(3) .stat-value { color: var(--accent-violet); }
+.stat-item:nth-child(4) .stat-value { color: var(--accent-amber); }
 
 .stat-label {
   font-size: 12px;
@@ -255,12 +268,33 @@ a:focus:not(:focus-visible) {
   align-self: stretch;
 }
 
+/* Export button */
+.export-btn {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 229, 200, 0.3);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.export-btn:hover {
+  background: rgba(0, 229, 200, 0.1);
+  color: var(--text-bright);
+}
+
 /* ==============================
    Gallery Grid
    ============================== */
 .gallery-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min), 1fr));
   gap: var(--space-xl);
   padding: 0 var(--space-xl) var(--space-4xl);
   max-width: 1600px;
@@ -297,7 +331,7 @@ a:focus:not(:focus-visible) {
   box-shadow: var(--glow-cyan);
 }
 
-/* Card header area */
+/* Card header */
 .card-header {
   display: flex;
   align-items: center;
@@ -306,11 +340,11 @@ a:focus:not(:focus-visible) {
 }
 
 .card-icon {
-  font-size: 24px;
+  font-size: var(--card-icon-font);
   line-height: 1;
   flex-shrink: 0;
-  width: 40px;
-  height: 40px;
+  width: var(--card-icon-size);
+  height: var(--card-icon-size);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -331,15 +365,15 @@ a:focus:not(:focus-visible) {
   line-height: 1.3;
 }
 
-.card-desc {
+.card-model-name {
   font-size: 13px;
   color: var(--text-secondary);
   margin-top: 2px;
   line-height: 1.4;
 }
 
-/* Quality badge */
-.quality-badge {
+/* Variant badge */
+.variant-badge {
   font-family: var(--font-heading);
   font-size: 10px;
   font-weight: 600;
@@ -352,14 +386,14 @@ a:focus:not(:focus-visible) {
   margin-top: 2px;
 }
 
-.quality-badge.high {
-  background: var(--badge-high-bg);
-  color: var(--badge-high-text);
+.variant-badge.hard {
+  background: var(--badge-variant-bg);
+  color: var(--badge-variant-text);
 }
 
-.quality-badge.medium {
-  background: var(--badge-medium-bg);
-  color: var(--badge-medium-text);
+.variant-badge.standard {
+  background: var(--badge-standard-bg);
+  color: var(--badge-standard-text);
 }
 
 /* Iframe preview */
@@ -369,26 +403,62 @@ a:focus:not(:focus-visible) {
 
 .card-preview iframe {
   width: 100%;
-  height: 300px;
+  height: var(--iframe-height);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-sm);
   background: var(--bg-iframe);
   display: block;
 }
 
-/* Card footer / meta */
+/* Star rating */
+.card-rating {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.star-widget {
+  display: inline-flex;
+  gap: 2px;
+}
+
+.star-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  font-size: var(--star-size);
+  line-height: 1;
+  color: var(--star-empty);
+  transition: color var(--transition-fast), transform var(--transition-fast);
+}
+
+.star-btn:hover {
+  transform: scale(1.2);
+}
+
+.star-btn.filled {
+  color: var(--star-filled);
+}
+
+.star-btn:hover ~ .star-btn {
+  color: var(--star-empty);
+}
+
+.rating-label {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-left: var(--space-sm);
+}
+
+/* Card footer */
 .card-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-sm) var(--space-lg) var(--space-lg);
-}
-
-.card-model {
-  font-family: var(--font-heading);
-  font-size: 11px;
-  color: var(--text-muted);
-  letter-spacing: 0.03em;
+  padding: var(--space-xs) var(--space-lg) var(--space-lg);
 }
 
 .card-fullscreen {
@@ -506,6 +576,10 @@ a:focus:not(:focus-visible) {
 }
 
 @media (max-width: 480px) {
+  :root {
+    --iframe-height: 220px;
+  }
+
   .hero-title {
     font-size: 28px;
   }
@@ -516,10 +590,6 @@ a:focus:not(:focus-visible) {
 
   .card-header {
     flex-wrap: wrap;
-  }
-
-  .card-preview iframe {
-    height: 220px;
   }
 
   .stats-bar {
@@ -538,276 +608,39 @@ a:focus:not(:focus-visible) {
 <header class="hero">
   <div class="hero-badge">Dogfood Gallery</div>
   <h1 class="hero-title">
-    <span class="accent">Liminal</span> — AI Creative Coding Agent
+    <span class="accent">Liminal</span> Dogfood Gallery
   </h1>
   <p class="hero-subtitle">
-    Real outputs from AI-generated creative code. Every card below is an unretouched
-    LLM generation across 9 creative coding domains.
+    Today's run — AI-generated creative code across multiple domains.
+    Every card is an unretouched LLM output. Rate and compare.
   </p>
 </header>
 
 <nav class="stats-bar" aria-label="Gallery statistics">
   <div class="stat-item">
-    <div class="stat-value">9</div>
-    <div class="stat-label">Domains</div>
-  </div>
-  <div class="stat-divider" aria-hidden="true"></div>
-  <div class="stat-item">
-    <div class="stat-value">79</div>
+    <div class="stat-value" id="stat-outputs">--</div>
     <div class="stat-label">Outputs</div>
   </div>
   <div class="stat-divider" aria-hidden="true"></div>
   <div class="stat-item">
-    <div class="stat-value">AI</div>
-    <div class="stat-label">Generated</div>
+    <div class="stat-value" id="stat-domains">--</div>
+    <div class="stat-label">Domains</div>
   </div>
+  <div class="stat-divider" aria-hidden="true"></div>
+  <div class="stat-item">
+    <div class="stat-value" id="stat-models">--</div>
+    <div class="stat-label">Models</div>
+  </div>
+  <div class="stat-divider" aria-hidden="true"></div>
+  <div class="stat-item">
+    <div class="stat-value" id="stat-avg-rating">--</div>
+    <div class="stat-label">Avg Rating</div>
+  </div>
+  <button class="export-btn" id="export-btn" type="button" aria-label="Export ratings as JSON">Export Ratings</button>
 </nav>
 
 <main id="gallery" class="gallery-grid" role="main">
-
-  <!-- p5.js Jellyfish -->
-  <article class="domain-card" data-domain="p5">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">🎨</div>
-      <div class="card-title-group">
-        <h2 class="card-title">p5.js Jellyfish</h2>
-        <p class="card-desc">Flowing jellyfish with 41 p5 API calls — the richest generated output</p>
-      </div>
-      <span class="quality-badge high">HIGH</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../landing-assets/dogfood-p5-jellyfish.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="p5.js Jellyfish — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">Multi-model</span>
-      <a class="card-fullscreen" href="../landing-assets/dogfood-p5-jellyfish.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- GLSL Fractal Shader -->
-  <article class="domain-card" data-domain="glsl">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">🔮</div>
-      <div class="card-title-group">
-        <h2 class="card-title">GLSL Fractal Shader</h2>
-        <p class="card-desc">Self-contained WebGL fractal with animated uniforms</p>
-      </div>
-      <span class="quality-badge high">HIGH</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../landing-assets/regenerated/shader-fractal/cli-project-final.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="GLSL Fractal Shader — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">Multi-model</span>
-      <a class="card-fullscreen" href="../landing-assets/regenerated/shader-fractal/cli-project-final.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- Three.js Abstract -->
-  <article class="domain-card" data-domain="three">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">🧊</div>
-      <div class="card-title-group">
-        <h2 class="card-title">Three.js Abstract</h2>
-        <p class="card-desc">57 THREE.js API calls — procedural 3D abstract geometry</p>
-      </div>
-      <span class="quality-badge high">HIGH</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../landing-assets/regenerated/three-abstract/cli-project-final.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="Three.js Abstract — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">Multi-model</span>
-      <a class="card-fullscreen" href="../landing-assets/regenerated/three-abstract/cli-project-final.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- Hydra Geometric -->
-  <article class="domain-card" data-domain="hydra">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">📺</div>
-      <div class="card-title-group">
-        <h2 class="card-title">Hydra Geometric</h2>
-        <p class="card-desc">8 hydra-synth API calls — geometric video synthesis</p>
-      </div>
-      <span class="quality-badge high">HIGH</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../landing-assets/dogfood-hydra-geometric.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="Hydra Geometric — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">Local</span>
-      <a class="card-fullscreen" href="../landing-assets/dogfood-hydra-geometric.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- Tone.js Synthesizer -->
-  <article class="domain-card" data-domain="tone">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">🎵</div>
-      <div class="card-title-group">
-        <h2 class="card-title">Tone.js Synthesizer</h2>
-        <p class="card-desc">13 Tone.js API refs — polysynth with effects chain</p>
-      </div>
-      <span class="quality-badge high">HIGH</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../artifacts/landing-live/b-tone-gemma.html/b-tone-gemma-final.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="Tone.js Synthesizer — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">Gemma</span>
-      <a class="card-fullscreen" href="../artifacts/landing-live/b-tone-gemma.html/b-tone-gemma-final.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- Strudel Beat Pattern -->
-  <article class="domain-card" data-domain="strudel">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">🥁</div>
-      <div class="card-title-group">
-        <h2 class="card-title">Strudel Beat Pattern</h2>
-        <p class="card-desc">Self-contained drum and bass with Tone.js CDN</p>
-      </div>
-      <span class="quality-badge medium">MEDIUM</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../dogfood-temp/minimax-m27/strudel.html/dogfood-minimax-strudel-final.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="Strudel Beat Pattern — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">MiniMax M2.7</span>
-      <a class="card-fullscreen" href="../dogfood-temp/minimax-m27/strudel.html/dogfood-minimax-strudel-final.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- Remotion Composition -->
-  <article class="domain-card" data-domain="remotion">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">🎬</div>
-      <div class="card-title-group">
-        <h2 class="card-title">Remotion Composition</h2>
-        <p class="card-desc">Kinetic typography with Remotion</p>
-      </div>
-      <span class="quality-badge high">HIGH</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../landing-assets/regenerated-v2/remotion/cli-project-final.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="Remotion Composition — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">Multi-model</span>
-      <a class="card-fullscreen" href="../landing-assets/regenerated-v2/remotion/cli-project-final.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- Glassmorphism Dashboard -->
-  <article class="domain-card" data-domain="html">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">🖼️</div>
-      <div class="card-title-group">
-        <h2 class="card-title">Glassmorphism Dashboard</h2>
-        <p class="card-desc">288-line dashboard with draggable widgets and dark mode</p>
-      </div>
-      <span class="quality-badge high">HIGH</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../dogfood-temp/minimax-m27/html.html/dogfood-minimax-html-final.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="Glassmorphism Dashboard — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">MiniMax M2.7</span>
-      <a class="card-fullscreen" href="../dogfood-temp/minimax-m27/html.html/dogfood-minimax-html-final.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
-  <!-- ASCII Art -->
-  <article class="domain-card" data-domain="ascii">
-    <div class="card-header">
-      <div class="card-icon" aria-hidden="true">💻</div>
-      <div class="card-title-group">
-        <h2 class="card-title">ASCII Art</h2>
-        <p class="card-desc">AI-generated ASCII art display</p>
-      </div>
-      <span class="quality-badge medium">MEDIUM</span>
-    </div>
-    <div class="card-preview">
-      <iframe
-        src="../dogfood-output-gemma/cli-project-final.html"
-        sandbox="allow-scripts allow-same-origin"
-        loading="lazy"
-        title="ASCII Art — AI-generated creative coding output"
-        role="img"
-      ></iframe>
-    </div>
-    <div class="card-footer">
-      <span class="card-model">Gemma</span>
-      <a class="card-fullscreen" href="../dogfood-output-gemma/cli-project-final.html" target="_blank" rel="noopener">
-        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
-      </a>
-    </div>
-  </article>
-
+  <!-- Cards injected by JS from gallery-data.js -->
 </main>
 
 <footer class="site-footer">
@@ -819,15 +652,181 @@ a:focus:not(:focus-visible) {
   </p>
 </footer>
 
+<script src="gallery-data.js"></script>
 <script>
 (function() {
   'use strict';
 
+  /* ==============================
+     Constants
+     ============================== */
+  var STORAGE_KEY = 'liminal-ratings';
   var CARDS_SELECTOR = '.domain-card';
   var VISIBLE_CLASS = 'visible';
   var REVEAL_THRESHOLD = 0.08;
   var REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 
+  /* ==============================
+     Ratings persistence
+     ============================== */
+  function loadRatings() {
+    try {
+      var raw = localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+      return {};
+    }
+  }
+
+  function saveRatings(ratings) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(ratings));
+    } catch (e) {
+      /* silently fail if storage is full or blocked */
+    }
+  }
+
+  function getAverageRating(ratings) {
+    var keys = Object.keys(ratings);
+    if (keys.length === 0) return '--';
+    var sum = 0;
+    for (var i = 0; i < keys.length; i++) {
+      sum += ratings[keys[i]];
+    }
+    return (sum / keys.length).toFixed(1);
+  }
+
+  /* ==============================
+     Stats update
+     ============================== */
+  function updateStats(ratings) {
+    document.getElementById('stat-outputs').textContent = GALLERY_STATS.totalOutputs;
+    document.getElementById('stat-domains').textContent = GALLERY_STATS.domainsTested;
+    document.getElementById('stat-models').textContent = GALLERY_STATS.models;
+    document.getElementById('stat-avg-rating').textContent = getAverageRating(ratings);
+  }
+
+  /* ==============================
+     Card rendering
+     ============================== */
+  function renderCards() {
+    var ratings = loadRatings();
+    var grid = document.getElementById('gallery');
+    var html = '';
+
+    for (var i = 0; i < GALLERY_CARDS.length; i++) {
+      var card = GALLERY_CARDS[i];
+      var meta = DOMAIN_META[card.domain] || { icon: '\u{1F4CB}', color: 'var(--text-muted)', title: card.domain };
+      var currentRating = ratings[card.id] || 0;
+      var variantClass = card.variant === 'hard' ? 'hard' : 'standard';
+      var variantLabel = card.variant === 'hard' ? 'HARD' : 'STD';
+
+      var starsHtml = '';
+      for (var s = 1; s <= 5; s++) {
+        var filledClass = s <= currentRating ? ' filled' : '';
+        starsHtml += '<button class="star-btn' + filledClass + '" ' +
+          'data-card-id="' + card.id + '" ' +
+          'data-star="' + s + '" ' +
+          'type="button" ' +
+          'aria-label="Rate ' + s + ' out of 5">' +
+          '\u2605' +
+          '</button>';
+      }
+
+      html += '<article class="domain-card" data-domain="' + card.domain + '">' +
+        '<div class="card-header">' +
+          '<div class="card-icon" aria-hidden="true">' + meta.icon + '</div>' +
+          '<div class="card-title-group">' +
+            '<h2 class="card-title">' + meta.title + '</h2>' +
+            '<p class="card-model-name">' + card.model + '</p>' +
+          '</div>' +
+          '<span class="variant-badge ' + variantClass + '">' + variantLabel + '</span>' +
+        '</div>' +
+        '<div class="card-preview">' +
+          '<iframe src="' + card.iframeSrc + '" ' +
+            'sandbox="allow-scripts allow-same-origin" ' +
+            'loading="lazy" ' +
+            'title="' + meta.title + ' output by ' + card.model + ' — AI-generated creative coding" ' +
+            'role="img">' +
+          '</iframe>' +
+        '</div>' +
+        '<div class="card-rating">' +
+          '<div class="star-widget" role="group" aria-label="Rate this output from 1 to 5 stars">' +
+            starsHtml +
+          '</div>' +
+          '<span class="rating-label" id="rating-label-' + card.id + '">' +
+            (currentRating > 0 ? currentRating + '/5' : 'Not rated') +
+          '</span>' +
+        '</div>' +
+        '<div class="card-footer">' +
+          '<span></span>' +
+          '<a class="card-fullscreen" href="' + card.iframeSrc + '" target="_blank" rel="noopener">' +
+            'View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>' +
+          '</a>' +
+        '</div>' +
+      '</article>';
+    }
+
+    grid.innerHTML = html;
+    updateStats(ratings);
+  }
+
+  /* ==============================
+     Star click handler
+     ============================== */
+  function handleStarClick(e) {
+    var btn = e.target.closest('.star-btn');
+    if (!btn) return;
+
+    var cardId = btn.getAttribute('data-card-id');
+    var starValue = parseInt(btn.getAttribute('data-star'), 10);
+
+    var ratings = loadRatings();
+    ratings[cardId] = starValue;
+    saveRatings(ratings);
+
+    /* Update star visuals for this card */
+    var widget = btn.closest('.star-widget');
+    var stars = widget.querySelectorAll('.star-btn');
+    for (var i = 0; i < stars.length; i++) {
+      var sv = parseInt(stars[i].getAttribute('data-star'), 10);
+      if (sv <= starValue) {
+        stars[i].classList.add('filled');
+      } else {
+        stars[i].classList.remove('filled');
+      }
+    }
+
+    /* Update label */
+    var label = document.getElementById('rating-label-' + cardId);
+    if (label) {
+      label.textContent = starValue + '/5';
+    }
+
+    /* Update average */
+    document.getElementById('stat-avg-rating').textContent = getAverageRating(ratings);
+  }
+
+  /* ==============================
+     Export ratings
+     ============================== */
+  function handleExport() {
+    var ratings = loadRatings();
+    var json = JSON.stringify(ratings, null, 2);
+    var blob = new Blob([json], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'liminal-ratings-' + new Date().toISOString().slice(0, 10) + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  /* ==============================
+     Scroll reveal
+     ============================== */
   function prefersReducedMotion() {
     return window.matchMedia(REDUCED_MOTION_QUERY).matches;
   }
@@ -859,10 +858,26 @@ a:focus:not(:focus-visible) {
     }
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', revealCards);
-  } else {
+  /* ==============================
+     Init
+     ============================== */
+  function init() {
+    renderCards();
+
+    /* Delegated click handler for stars */
+    document.getElementById('gallery').addEventListener('click', handleStarClick);
+
+    /* Export button */
+    document.getElementById('export-btn').addEventListener('click', handleExport);
+
+    /* Scroll reveal */
     revealCards();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
   }
 })();
 </script>

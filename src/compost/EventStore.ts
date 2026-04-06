@@ -872,13 +872,18 @@ export class EventStore {
       );
     }
 
-    // Prevent SQL injection escape sequences
-    const dangerousPatterns = ["'", '"', ';', '--', '/*', '*/', 'xp_', 'DROP', 'DELETE', 'INSERT', 'UPDATE', 'EXEC'];
-    const upperName = name.toUpperCase();
+    // Prevent SQL injection escape sequences (only block SQL syntax chars and prefix, not words)
+    const dangerousPatterns = ["'", '"', ';', '--', '/*', '*/', 'xp_'];
     for (const pattern of dangerousPatterns) {
-      if (upperName.includes(pattern)) {
+      if (name.includes(pattern)) {
         throw new Error(`Branch name contains dangerous pattern: ${pattern}`);
       }
+    }
+
+    // Block SQL keywords only when they appear as whole words (word-boundary check)
+    const sqlKeywords = /\b(DROP|DELETE|INSERT|UPDATE|EXEC|ALTER|CREATE|TRUNCATE)\b/i;
+    if (sqlKeywords.test(name)) {
+      throw new Error('Branch name contains SQL keyword');
     }
   }
 }

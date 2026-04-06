@@ -15,6 +15,55 @@ import type { ProviderType, ModelRole } from '../config/RoleConfig.js';
 
 export { ProviderType, ModelRole };
 
+/**
+ * Validate URL to prevent SSRF attacks.
+ * Localhost URLs are only allowed if explicitly enabled via environment variable.
+ */
+function validateBaseUrl(url: string): void {
+  try {
+    const parsed = new URL(url);
+
+    // Check if localhost is explicitly allowed
+    const allowLocalhost = process.env.LIMINAL_ALLOW_LOCALHOST === 'true';
+
+    // Block localhost URLs unless explicitly allowed
+    if (!allowLocalhost) {
+      const hostname = parsed.hostname.toLowerCase();
+      const dangerousHosts = [
+        'localhost',
+        '127.0.0.1',
+        '0.0.0.0',
+        '::1',
+        'localhost.localdomain',
+        'ip6-localhost',
+        'ip6-loopback',
+      ];
+
+      if (dangerousHosts.includes(hostname) || hostname.startsWith('127.') || hostname.startsWith('192.168.') || hostname.startsWith('10.') || hostname.startsWith('172.')) {
+        throw new Error(
+          `Local/private URL detected: ${url}. Set LIMINAL_ALLOW_LOCALHOST=true to allow localhost connections for development.`
+        );
+      }
+    }
+
+    // Ensure URL uses HTTPS or HTTP (no file://, data://, etc.)
+    if (!['http:', 'https:'].includes(parsed.protocol)) {
+      throw new Error(`Invalid URL protocol: ${parsed.protocol}. Only http:// and https:// are allowed.`);
+    }
+
+    // Basic URL structure validation
+    if (!parsed.hostname || parsed.hostname.length > 253) {
+      throw new Error('Invalid hostname');
+    }
+
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('Local/private URL detected')) {
+      throw error;
+    }
+    throw new Error(`Invalid base URL "${url}": ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
+}
+
 export interface ModelConfig {
   provider: ProviderType;
   baseUrl: string;
@@ -72,6 +121,9 @@ export function loadHarnessConfig(): ModelConfig {
   const baseUrl = harnessBaseUrl || 'http://localhost:1234/v1';
   const model = harnessModel || 'unknown';
 
+  // Validate URL to prevent SSRF attacks
+  validateBaseUrl(baseUrl);
+
   return {
     provider: detectProviderType(baseUrl, model),
     baseUrl,
@@ -93,6 +145,9 @@ export function loadGenerationConfig(): ModelConfig {
   const temp = parseFloat(process.env.LIMINAL_LLM_TEMPERATURE || String(DEFAULT_GENERATION_TEMPERATURE));
   const tokens = parseInt(process.env.LIMINAL_LLM_MAX_TOKENS || String(DEFAULT_MAX_TOKENS));
   const timeout = parseInt(process.env.LIMINAL_LLM_TIMEOUT || String(DEFAULT_TIMEOUT));
+
+  // Validate URL to prevent SSRF attacks
+  validateBaseUrl(baseUrl);
 
   return {
     provider: detectProviderType(baseUrl, model),
@@ -119,6 +174,9 @@ export function loadEvaluatorConfig(): ModelConfig {
 
   const baseUrl = evaluatorBaseUrl || 'http://localhost:1234/v1';
   const model = evaluatorModel || 'unknown';
+
+  // Validate URL to prevent SSRF attacks
+  validateBaseUrl(baseUrl);
 
   return {
     provider: detectProviderType(baseUrl, model),

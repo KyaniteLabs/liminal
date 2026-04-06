@@ -306,6 +306,11 @@ export class EventStore {
     const payloadHash = sha256(payloadJson);
     const targetBranch = branch ?? this.currentBranch;
 
+    // Validate branch name if provided explicitly
+    if (branch) {
+      this.validateBranchName(branch);
+    }
+
     const result = this.db.prepare(
       `INSERT INTO events (type, payload, timestamp, branch, payload_hash)
        VALUES (?, ?, ?, ?, ?)`
@@ -540,6 +545,9 @@ export class EventStore {
       throw new Error("Cannot create a branch named 'main' — it is the default branch");
     }
 
+    // Validate branch name to prevent SQL injection
+    this.validateBranchName(name);
+
     const existing = this.db.prepare('SELECT name FROM branches WHERE name = ?').get(name);
     if (existing) {
       throw new Error(`Branch '${name}' already exists`);
@@ -575,6 +583,9 @@ export class EventStore {
    * write to this branch.
    */
   switchBranch(name: string): void {
+    // Validate branch name to prevent SQL injection
+    this.validateBranchName(name);
+
     const branch = this.db.prepare('SELECT * FROM branches WHERE name = ?')
       .get(name) as BranchRow | undefined;
 
@@ -622,6 +633,9 @@ export class EventStore {
     if (name === this.currentBranch) {
       throw new Error("Cannot delete the currently active branch. Switch to another first.");
     }
+
+    // Validate branch name to prevent SQL injection
+    this.validateBranchName(name);
 
     this.db.prepare('DELETE FROM branches WHERE name = ?').run(name);
   }
@@ -837,6 +851,35 @@ export class EventStore {
       `SELECT * FROM events WHERE undone = 0 ORDER BY id DESC LIMIT 1`
     ).get() as EventRow | undefined;
     return row ? rowToEvent(row) : null;
+  }
+
+  /**
+   * Validate branch name to prevent SQL injection.
+   * Only allows alphanumeric, hyphens, underscores, and forward slashes.
+   */
+  private validateBranchName(name: string): void {
+    // Branch names should be safe for database queries and filesystem operations
+    // Allow: alphanumeric, hyphens, underscores, forward slashes (for nested branches)
+    const validPattern = /^[a-zA-Z0-9_-]+(\/[a-zA-Z0-9_-]+)*$/;
+
+    if (!name || name.length > 255) {
+      throw new Error('Branch name must be between 1 and 255 characters');
+    }
+
+    if (!validPattern.test(name)) {
+      throw new Error(
+        'Branch name can only contain alphanumeric characters, hyphens, underscores, and forward slashes'
+      );
+    }
+
+    // Prevent SQL injection escape sequences
+    const dangerousPatterns = ["'", '"', ';', '--', '/*', '*/', 'xp_', 'DROP', 'DELETE', 'INSERT', 'UPDATE', 'EXEC'];
+    const upperName = name.toUpperCase();
+    for (const pattern of dangerousPatterns) {
+      if (upperName.includes(pattern)) {
+        throw new Error(`Branch name contains dangerous pattern: ${pattern}`);
+      }
+    }
   }
 }
 

@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liminal — AI Creative Coding Agent</title>
+<meta name="description" content="Real outputs from AI-generated creative code across 9 domains.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;800&family=Source+Sans+3:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+/* ==============================
+   Design Tokens (CSS Custom Properties)
+   ============================== */
+:root {
+  /* Background layers */
+  --bg-deep: #050507;
+  --bg-primary: #0a0a0a;
+  --bg-elevated: #111114;
+  --bg-card: #131318;
+  --bg-card-hover: #1a1a22;
+
+  /* Text */
+  --text-primary: #e0e0e0;
+  --text-secondary: #9a9aaa;
+  --text-muted: #5e5e6e;
+  --text-bright: #f0f0f5;
+
+  /* Accent palette */
+  --accent-cyan: #00e5c8;
+  --accent-amber: #ffb020;
+  --accent-rose: #ff4f7b;
+  --accent-violet: #a87bff;
+  --accent-blue: #4facfe;
+
+  /* Iframe */
+  --bg-iframe: #000000;
+
+  /* Badge colors */
+  --badge-high-bg: rgba(0, 229, 200, 0.12);
+  --badge-high-text: var(--accent-cyan);
+  --badge-medium-bg: rgba(255, 176, 32, 0.12);
+  --badge-medium-text: var(--accent-amber);
+
+  /* Borders */
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-hover: rgba(255, 255, 255, 0.12);
+
+  /* Glow effects */
+  --glow-cyan: 0 0 40px rgba(0, 229, 200, 0.08);
+  --glow-amber: 0 0 40px rgba(255, 176, 32, 0.08);
+
+  /* Typography */
+  --font-heading: 'JetBrains Mono', monospace;
+  --font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+
+  /* Spacing scale */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  /* Radius */
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+
+  /* Transitions */
+  --transition-fast: 180ms ease;
+  --transition-base: 300ms ease;
+  --transition-slow: 500ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ==============================
+   Reset + Base
+   ============================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  scroll-behavior: smooth;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  background: var(--bg-primary);
+  min-height: 100vh;
+}
+
+/* ==============================
+   Skip to content (accessibility)
+   ============================== */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--accent-cyan);
+  color: var(--bg-deep);
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: var(--radius-sm);
+  z-index: 9999;
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: var(--space-md);
+}
+
+/* ==============================
+   Focus visible (keyboard nav)
+   ============================== */
+:focus-visible {
+  outline: 2px solid var(--accent-cyan);
+  outline-offset: 2px;
+}
+
+a:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* ==============================
+   Hero Section
+   ============================== */
+.hero {
+  position: relative;
+  padding: var(--space-4xl) var(--space-xl) var(--space-3xl);
+  text-align: center;
+  overflow: hidden;
+}
+
+.hero::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 140%;
+  height: 80%;
+  background: radial-gradient(ellipse at center, rgba(0, 229, 200, 0.06) 0%, rgba(10, 10, 10, 0) 60%);
+  pointer-events: none;
+}
+
+.hero-badge {
+  display: inline-block;
+  font-family: var(--font-heading);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent-cyan);
+  border: 1px solid rgba(0, 229, 200, 0.25);
+  padding: var(--space-xs) var(--space-md);
+  border-radius: 100px;
+  margin-bottom: var(--space-lg);
+  opacity: 0;
+  animation: fadeSlideUp 600ms var(--transition-slow) 200ms forwards;
+}
+
+.hero-title {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: clamp(32px, 6vw, 64px);
+  line-height: 1.1;
+  color: var(--text-bright);
+  letter-spacing: -0.02em;
+  margin-bottom: var(--space-md);
+  opacity: 0;
+  animation: fadeSlideUp 600ms var(--transition-slow) 350ms forwards;
+}
+
+.hero-title .accent {
+  background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.hero-subtitle {
+  font-family: var(--font-body);
+  font-weight: 300;
+  font-size: clamp(16px, 2.5vw, 20px);
+  color: var(--text-secondary);
+  max-width: 540px;
+  margin: 0 auto;
+  opacity: 0;
+  animation: fadeSlideUp 600ms var(--transition-slow) 500ms forwards;
+}
+
+/* ==============================
+   Stats Bar
+   ============================== */
+.stats-bar {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-2xl);
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--border-subtle);
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-3xl);
+  flex-wrap: wrap;
+}
+
+.stat-item {
+  text-align: center;
+  opacity: 0;
+  animation: fadeSlideUp 400ms var(--transition-slow) forwards;
+}
+
+.stat-item:nth-child(1) { animation-delay: 600ms; }
+.stat-item:nth-child(2) { animation-delay: 700ms; }
+.stat-item:nth-child(3) { animation-delay: 800ms; }
+
+.stat-value {
+  font-family: var(--font-heading);
+  font-weight: 800;
+  font-size: 28px;
+  color: var(--text-bright);
+  line-height: 1;
+}
+
+.stat-item:nth-child(1) .stat-value { color: var(--accent-cyan); }
+.stat-item:nth-child(2) .stat-value { color: var(--accent-amber); }
+.stat-item:nth-child(3) .stat-value { color: var(--accent-violet); }
+
+.stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-top: var(--space-xs);
+}
+
+.stat-divider {
+  width: 1px;
+  background: var(--border-subtle);
+  align-self: stretch;
+}
+
+/* ==============================
+   Gallery Grid
+   ============================== */
+.gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: var(--space-xl);
+  padding: 0 var(--space-xl) var(--space-4xl);
+  max-width: 1600px;
+  margin: 0 auto;
+}
+
+/* ==============================
+   Domain Card
+   ============================== */
+.domain-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition:
+    background var(--transition-base),
+    border-color var(--transition-base),
+    box-shadow var(--transition-slow);
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.domain-card.visible {
+  opacity: 1;
+  transform: translateY(0);
+  transition: opacity 500ms var(--transition-slow), transform 500ms var(--transition-slow),
+    background var(--transition-base), border-color var(--transition-base),
+    box-shadow var(--transition-slow);
+}
+
+.domain-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-hover);
+  box-shadow: var(--glow-cyan);
+}
+
+/* Card header area */
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-lg) var(--space-sm);
+}
+
+.card-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+}
+
+.card-title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.card-title {
+  font-family: var(--font-heading);
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-bright);
+  line-height: 1.3;
+}
+
+.card-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
+/* Quality badge */
+.quality-badge {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  margin-top: 2px;
+}
+
+.quality-badge.high {
+  background: var(--badge-high-bg);
+  color: var(--badge-high-text);
+}
+
+.quality-badge.medium {
+  background: var(--badge-medium-bg);
+  color: var(--badge-medium-text);
+}
+
+/* Iframe preview */
+.card-preview {
+  padding: 0 var(--space-md);
+}
+
+.card-preview iframe {
+  width: 100%;
+  height: 300px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  background: var(--bg-iframe);
+  display: block;
+}
+
+/* Card footer / meta */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-sm) var(--space-lg) var(--space-lg);
+}
+
+.card-model {
+  font-family: var(--font-heading);
+  font-size: 11px;
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+}
+
+.card-fullscreen {
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--accent-cyan);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: color var(--transition-fast);
+}
+
+.card-fullscreen:hover {
+  color: var(--text-bright);
+}
+
+.card-fullscreen .arrow {
+  transition: transform var(--transition-fast);
+}
+
+.card-fullscreen:hover .arrow {
+  transform: translateX(3px);
+}
+
+/* ==============================
+   Footer
+   ============================== */
+.site-footer {
+  text-align: center;
+  padding: var(--space-3xl) var(--space-xl);
+  border-top: 1px solid var(--border-subtle);
+}
+
+.footer-label {
+  font-family: var(--font-heading);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.05em;
+}
+
+.footer-version {
+  color: var(--accent-cyan);
+}
+
+.footer-note {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: var(--space-sm);
+}
+
+/* ==============================
+   Animations
+   ============================== */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ==============================
+   Reduced Motion
+   ============================== */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .hero-badge,
+  .hero-title,
+  .hero-subtitle,
+  .stat-item,
+  .domain-card {
+    opacity: 1;
+    transform: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* ==============================
+   Responsive
+   ============================== */
+@media (max-width: 860px) {
+  .gallery-grid {
+    grid-template-columns: 1fr;
+    padding: 0 var(--space-md) var(--space-3xl);
+  }
+
+  .hero {
+    padding: var(--space-3xl) var(--space-md) var(--space-2xl);
+  }
+
+  .stats-bar {
+    gap: var(--space-lg);
+    padding: var(--space-md);
+  }
+
+  .stat-divider {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero-title {
+    font-size: 28px;
+  }
+
+  .hero-subtitle {
+    font-size: 15px;
+  }
+
+  .card-header {
+    flex-wrap: wrap;
+  }
+
+  .card-preview iframe {
+    height: 220px;
+  }
+
+  .stats-bar {
+    gap: var(--space-md);
+  }
+
+  .stat-value {
+    font-size: 22px;
+  }
+}
+</style>
+</head>
+<body>
+<a href="#gallery" class="skip-link">Skip to gallery</a>
+
+<header class="hero">
+  <div class="hero-badge">Dogfood Gallery</div>
+  <h1 class="hero-title">
+    <span class="accent">Liminal</span> — AI Creative Coding Agent
+  </h1>
+  <p class="hero-subtitle">
+    Real outputs from AI-generated creative code. Every card below is an unretouched
+    LLM generation across 9 creative coding domains.
+  </p>
+</header>
+
+<nav class="stats-bar" aria-label="Gallery statistics">
+  <div class="stat-item">
+    <div class="stat-value">9</div>
+    <div class="stat-label">Domains</div>
+  </div>
+  <div class="stat-divider" aria-hidden="true"></div>
+  <div class="stat-item">
+    <div class="stat-value">79</div>
+    <div class="stat-label">Outputs</div>
+  </div>
+  <div class="stat-divider" aria-hidden="true"></div>
+  <div class="stat-item">
+    <div class="stat-value">AI</div>
+    <div class="stat-label">Generated</div>
+  </div>
+</nav>
+
+<main id="gallery" class="gallery-grid" role="main">
+
+  <!-- p5.js Jellyfish -->
+  <article class="domain-card" data-domain="p5">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">🎨</div>
+      <div class="card-title-group">
+        <h2 class="card-title">p5.js Jellyfish</h2>
+        <p class="card-desc">Flowing jellyfish with 41 p5 API calls — the richest generated output</p>
+      </div>
+      <span class="quality-badge high">HIGH</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../landing-assets/dogfood-p5-jellyfish.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="p5.js Jellyfish — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">Multi-model</span>
+      <a class="card-fullscreen" href="../landing-assets/dogfood-p5-jellyfish.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- GLSL Fractal Shader -->
+  <article class="domain-card" data-domain="glsl">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">🔮</div>
+      <div class="card-title-group">
+        <h2 class="card-title">GLSL Fractal Shader</h2>
+        <p class="card-desc">Self-contained WebGL fractal with animated uniforms</p>
+      </div>
+      <span class="quality-badge high">HIGH</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../landing-assets/regenerated/shader-fractal/cli-project-final.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="GLSL Fractal Shader — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">Multi-model</span>
+      <a class="card-fullscreen" href="../landing-assets/regenerated/shader-fractal/cli-project-final.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- Three.js Abstract -->
+  <article class="domain-card" data-domain="three">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">🧊</div>
+      <div class="card-title-group">
+        <h2 class="card-title">Three.js Abstract</h2>
+        <p class="card-desc">57 THREE.js API calls — procedural 3D abstract geometry</p>
+      </div>
+      <span class="quality-badge high">HIGH</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../landing-assets/regenerated/three-abstract/cli-project-final.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="Three.js Abstract — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">Multi-model</span>
+      <a class="card-fullscreen" href="../landing-assets/regenerated/three-abstract/cli-project-final.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- Hydra Geometric -->
+  <article class="domain-card" data-domain="hydra">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">📺</div>
+      <div class="card-title-group">
+        <h2 class="card-title">Hydra Geometric</h2>
+        <p class="card-desc">8 hydra-synth API calls — geometric video synthesis</p>
+      </div>
+      <span class="quality-badge high">HIGH</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../landing-assets/dogfood-hydra-geometric.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="Hydra Geometric — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">Local</span>
+      <a class="card-fullscreen" href="../landing-assets/dogfood-hydra-geometric.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- Tone.js Synthesizer -->
+  <article class="domain-card" data-domain="tone">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">🎵</div>
+      <div class="card-title-group">
+        <h2 class="card-title">Tone.js Synthesizer</h2>
+        <p class="card-desc">13 Tone.js API refs — polysynth with effects chain</p>
+      </div>
+      <span class="quality-badge high">HIGH</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../artifacts/landing-live/b-tone-gemma.html/b-tone-gemma-final.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="Tone.js Synthesizer — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">Gemma</span>
+      <a class="card-fullscreen" href="../artifacts/landing-live/b-tone-gemma.html/b-tone-gemma-final.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- Strudel Beat Pattern -->
+  <article class="domain-card" data-domain="strudel">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">🥁</div>
+      <div class="card-title-group">
+        <h2 class="card-title">Strudel Beat Pattern</h2>
+        <p class="card-desc">Self-contained drum and bass with Tone.js CDN</p>
+      </div>
+      <span class="quality-badge medium">MEDIUM</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../dogfood-temp/minimax-m27/strudel.html/dogfood-minimax-strudel-final.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="Strudel Beat Pattern — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">MiniMax M2.7</span>
+      <a class="card-fullscreen" href="../dogfood-temp/minimax-m27/strudel.html/dogfood-minimax-strudel-final.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- Remotion Composition -->
+  <article class="domain-card" data-domain="remotion">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">🎬</div>
+      <div class="card-title-group">
+        <h2 class="card-title">Remotion Composition</h2>
+        <p class="card-desc">Kinetic typography with Remotion</p>
+      </div>
+      <span class="quality-badge high">HIGH</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../landing-assets/regenerated-v2/remotion/cli-project-final.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="Remotion Composition — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">Multi-model</span>
+      <a class="card-fullscreen" href="../landing-assets/regenerated-v2/remotion/cli-project-final.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- Glassmorphism Dashboard -->
+  <article class="domain-card" data-domain="html">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">🖼️</div>
+      <div class="card-title-group">
+        <h2 class="card-title">Glassmorphism Dashboard</h2>
+        <p class="card-desc">288-line dashboard with draggable widgets and dark mode</p>
+      </div>
+      <span class="quality-badge high">HIGH</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../dogfood-temp/minimax-m27/html.html/dogfood-minimax-html-final.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="Glassmorphism Dashboard — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">MiniMax M2.7</span>
+      <a class="card-fullscreen" href="../dogfood-temp/minimax-m27/html.html/dogfood-minimax-html-final.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+  <!-- ASCII Art -->
+  <article class="domain-card" data-domain="ascii">
+    <div class="card-header">
+      <div class="card-icon" aria-hidden="true">💻</div>
+      <div class="card-title-group">
+        <h2 class="card-title">ASCII Art</h2>
+        <p class="card-desc">AI-generated ASCII art display</p>
+      </div>
+      <span class="quality-badge medium">MEDIUM</span>
+    </div>
+    <div class="card-preview">
+      <iframe
+        src="../dogfood-output-gemma/cli-project-final.html"
+        sandbox="allow-scripts allow-same-origin"
+        loading="lazy"
+        title="ASCII Art — AI-generated creative coding output"
+        role="img"
+      ></iframe>
+    </div>
+    <div class="card-footer">
+      <span class="card-model">Gemma</span>
+      <a class="card-fullscreen" href="../dogfood-output-gemma/cli-project-final.html" target="_blank" rel="noopener">
+        View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>
+      </a>
+    </div>
+  </article>
+
+</main>
+
+<footer class="site-footer">
+  <p class="footer-label">
+    Generated by <span class="footer-version">Liminal v2.1.0</span>
+  </p>
+  <p class="footer-note">
+    Every output is an unretouched LLM generation. No cherry-picking, no manual edits.
+  </p>
+</footer>
+
+<script>
+(function() {
+  'use strict';
+
+  var CARDS_SELECTOR = '.domain-card';
+  var VISIBLE_CLASS = 'visible';
+  var REVEAL_THRESHOLD = 0.08;
+  var REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
+
+  function prefersReducedMotion() {
+    return window.matchMedia(REDUCED_MOTION_QUERY).matches;
+  }
+
+  function revealCards() {
+    if (prefersReducedMotion()) {
+      var cards = document.querySelectorAll(CARDS_SELECTOR);
+      for (var i = 0; i < cards.length; i++) {
+        cards[i].classList.add(VISIBLE_CLASS);
+      }
+      return;
+    }
+
+    var observer = new IntersectionObserver(
+      function(entries) {
+        for (var i = 0; i < entries.length; i++) {
+          if (entries[i].isIntersecting) {
+            entries[i].target.classList.add(VISIBLE_CLASS);
+            observer.unobserve(entries[i].target);
+          }
+        }
+      },
+      { threshold: REVEAL_THRESHOLD }
+    );
+
+    var cards = document.querySelectorAll(CARDS_SELECTOR);
+    for (var j = 0; j < cards.length; j++) {
+      observer.observe(cards[j]);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', revealCards);
+  } else {
+    revealCards();
+  }
+})();
+</script>
+</body>
+</html>

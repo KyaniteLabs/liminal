@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline'; connect-src 'none'; img-src 'self' data: blob:; media-src 'self';">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>Tone.js Audio Synthesizer</title>
+    <script src="https://unpkg.com/tone@14.8.49/build/Tone.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background: #0a0a0f; 
+            color: #e2e8f0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        h3 {
+            color: #f59e0b;
+            margin-bottom: 20px;
+        }
+        #controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 12px 24px;
+            font-size: 16px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        #playBtn {
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
+            color: white;
+        }
+        #playBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(245, 158, 11, 0.4);
+        }
+        #stopBtn {
+            background: #334155;
+            color: #e2e8f0;
+        }
+        #stopBtn:hover {
+            background: #475569;
+        }
+        #status {
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        #status.ready { color: #94a3b8; }
+        #status.playing { color: #f59e0b; }
+        #visualizer {
+            width: 300px;
+            height: 100px;
+            background: #1e293b;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+    </style>
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com cdn.jsdelivr.net unpkg.com; style-src 'unsafe-inline'; img-src 'self' blob:; connect-src 'none'; font-src 'self';">
+</head>
+<body>
+    <h3>🎹 Tone.js Audio Synthesizer</h3>
+    <div id="controls">
+        <button id="playBtn">▶ Play</button>
+        <button id="stopBtn">⏹ Stop</button>
+    </div>
+    <div id="status" class="ready">Ready to play (click Start Audio)</div>
+    <canvas id="visualizer"></canvas>
+    <script>
+        let isPlaying = false;
+        const playBtn = document.getElementById('playBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const statusEl = document.getElementById('status');
+        
+        const reverb = new Tone.Reverb({ decay: 3.5, wet: 0.4 }).toDestination();
+const delay = new Tone.FeedbackDelay({ delayTime: "8n", feedback: 0.3, wet: 0.3 }).connect(reverb);
+const filter = new Tone.Filter({ frequency: 2000, type: "lowpass", Q: 5 });
+const lfo = new Tone.LFO({ frequency: 0.5, min: 500, max: 4000 }).connect(filter.frequency);
+lfo.start();
+        
+        playBtn.addEventListener('click', async () => {
+            await Tone.start();
+            isPlaying = true;
+            statusEl.className = 'playing';
+            statusEl.textContent = '🔊 Playing';
+            if (typeof play === 'function') play();
+        });
+        
+        stopBtn.addEventListener('click', () => {
+            isPlaying = false;
+            statusEl.className = 'ready';
+            statusEl.textContent = 'Stopped';
+            if (typeof stop === 'function') stop();
+        });
+    </script>
+</body>
+</html>

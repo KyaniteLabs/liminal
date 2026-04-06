@@ -4,17 +4,17 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockIsConfigured, mockGenerate, mockGetConfig } = vi.hoisted(() => ({
-  mockIsConfigured: vi.fn().mockReturnValue(false),
-  mockGenerate: vi.fn(),
-  mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' }),
-}));
-
-const LLMClientMock = vi.fn().mockImplementation(() => ({
-  generate: mockGenerate,
-  getConfig: mockGetConfig,
-}));
-LLMClientMock.isConfigured = mockIsConfigured;
+const { mockIsConfigured, mockGenerate, mockGetConfig, LLMClientMock } = vi.hoisted(() => {
+  const mockIsConfigured = vi.fn().mockReturnValue(false);
+  const mockGenerate = vi.fn();
+  const mockGetConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
+  const LLMClientMock = vi.fn(function(this: any) {
+    this.generate = mockGenerate;
+    this.getConfig = mockGetConfig;
+  });
+  (LLMClientMock as any).isConfigured = mockIsConfigured;
+  return { mockIsConfigured, mockGenerate, mockGetConfig, LLMClientMock };
+});
 
 vi.mock('../../../src/llm/LLMClient.js', () => ({
   LLMClient: LLMClientMock,

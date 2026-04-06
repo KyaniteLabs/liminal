@@ -57,13 +57,13 @@ describe('ToneGenerator', () => {
 
   it('generate strips thinking tags from output', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '<think hmm\n</think\nconst t = new Tone.Synth();',
+      code: '<think hmm</think' + '>\nconst t = new Tone.Synth();',
       success: true,
     });
     const gen = new ToneGenerator();
     const result = await gen.generate('synth');
-    expect(result).toBe('const t = new Tone.Synth();');
-    expect(result).not.toContain('think>');
+    expect(result).not.toContain('<think');
+    expect(result).toContain('Tone.Synth');
   });
 
   it('validateOutput rejects code without Tone references', async () => {

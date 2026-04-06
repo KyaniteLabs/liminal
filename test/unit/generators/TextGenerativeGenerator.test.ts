@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockGenerate = vi.fn().mockResolvedValue({
   code: 'line one\nline two\nline three',

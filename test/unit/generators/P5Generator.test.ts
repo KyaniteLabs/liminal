@@ -2,7 +2,7 @@
  * P5Generator (deprecated wrapper) unit tests.
  * Covers normalizeInput and delegation to P5GeneratorLLM.
  */
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockGenerate = vi.fn();
 

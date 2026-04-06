@@ -10,10 +10,10 @@ const { mockIsConfigured, mockGenerateP5Sketch, mockGetConfig, LLMClientMock } =
   const mockGenerateP5Sketch = vi.fn();
   const mockGetConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
 
-  const LLMClientMock = vi.fn().mockImplementation(() => ({
-    generateP5Sketch: mockGenerateP5Sketch,
-    getConfig: mockGetConfig,
-  }));
+  const LLMClientMock = vi.fn(function(this: any) {
+    this.generateP5Sketch = mockGenerateP5Sketch;
+    this.getConfig = mockGetConfig;
+  });
   (LLMClientMock as any).isConfigured = mockIsConfigured;
 
   return { mockIsConfigured, mockGenerateP5Sketch, mockGetConfig, LLMClientMock };

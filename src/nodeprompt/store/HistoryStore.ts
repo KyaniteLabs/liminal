@@ -19,13 +19,13 @@ export interface HistoryEntry {
 }
 
 function applyEntry(entry: HistoryEntry, data: Partial<NodeData> | Partial<EdgeData> | null, graph: GraphStore): void {
-  if (!data) return;
-
   switch (entry.type) {
     case 'updateNode':
+      if (!data) return;
       graph.updateNode(entry.targetId, data as Partial<NodeData>);
       break;
     case 'softDeleteNode':
+      if (!data) return;
       if ((data as Partial<NodeData>).isDeleted === false) {
         graph.restoreNode(entry.targetId);
       } else {
@@ -33,6 +33,7 @@ function applyEntry(entry: HistoryEntry, data: Partial<NodeData> | Partial<EdgeD
       }
       break;
     case 'restoreNode':
+      if (!data) return;
       if ((data as Partial<NodeData>).isDeleted === true) {
         graph.softDeleteNode(entry.targetId);
       } else {

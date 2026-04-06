@@ -139,9 +139,10 @@ describe('radialToCartesian', () => {
 
   it('zero maxRadius returns origin', () => {
     const result = radialToCartesian(2.0, 0.5, 0);
-    expect(result.x).toBe(0);
-    expect(result.y).toBe(0);
-    expect(result.z).toBe(0);
+    // Math.cos/sin can return -0; use toBeCloseTo for 0/-0 tolerance
+    expect(result.x).toBeCloseTo(0, 10);
+    expect(result.y).toBeCloseTo(0, 10);
+    expect(result.z).toBeCloseTo(0, 10);
   });
 });
 

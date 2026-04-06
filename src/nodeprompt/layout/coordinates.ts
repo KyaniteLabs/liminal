@@ -40,7 +40,8 @@ export function cartesianToSpherical(
     return { theta: 0, phi: 0, r: 0 };
   }
   const theta = Math.acos(Math.max(-1, Math.min(1, y / r)));
-  const phi = Math.atan2(z, x);
+  let phi = Math.atan2(z, x);
+  if (phi < 0) phi += 2 * Math.PI;
   return { theta, phi, r };
 }
 

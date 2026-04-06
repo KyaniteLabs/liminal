@@ -7,9 +7,9 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const mockGenerate = vi.fn();
 
 vi.mock('../../../src/generators/p5/P5GeneratorLLM.js', () => ({
-  P5GeneratorLLM: vi.fn().mockImplementation(() => ({
-    generate: mockGenerate,
-  })),
+  P5GeneratorLLM: vi.fn(function(this: any) {
+    this.generate = mockGenerate;
+  }),
 }));
 
 import { P5Generator } from '../../../src/generators/p5/P5Generator.js';

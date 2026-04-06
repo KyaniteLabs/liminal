@@ -27,9 +27,12 @@ vi.mock('../../../src/config/ConfigLoader.js', () => ({
 }));
 
 vi.mock('../../../src/llm/PromptBuilder.js', () => ({
-  PromptBuilder: vi.fn().mockImplementation(() => ({
-    build: vi.fn().mockReturnValue({ combined: 'test', system: 'sys', user: 'usr' }),
-  })),
+  PromptBuilder: Object.assign(
+    vi.fn(function(this: any) {
+      this.build = vi.fn().mockReturnValue({ combined: 'test', system: 'sys', user: 'usr' });
+    }),
+    { loadContext: vi.fn().mockResolvedValue({}) }
+  ),
 }));
 
 vi.mock('../../../src/llm/ModelTier.js', () => ({

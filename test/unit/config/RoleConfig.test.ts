@@ -42,6 +42,18 @@ describe('detectProviderType', () => {
   it('defaults to openai when no match', () => {
     expect(detectProviderType('http://localhost:1234/v1')).toBe('openai');
   });
+
+  it('detects minimax from international URL', () => {
+    expect(detectProviderType('https://api.minimax.io/v1')).toBe('minimax');
+  });
+
+  it('detects minimax from Chinese domestic URL', () => {
+    expect(detectProviderType('https://api.minimaxi.com/v1')).toBe('minimax');
+  });
+
+  it('detects minimax from Anthropic-compatible URL', () => {
+    expect(detectProviderType('https://api.minimax.io/anthropic')).toBe('minimax');
+  });
 });
 
 // ---------------------------------------------------------------------------

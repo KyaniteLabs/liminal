@@ -5,6 +5,8 @@ import { describe, it, expect, test } from 'vitest';
  */
 
 import { LLMClient, type LLMConfig } from '../../../src/llm/LLMClient.js';
+import { detectProvider } from '../../../src/llm/ProviderFactory.js';
+import { MiniMaxProvider } from '../../../src/llm/providers/MiniMaxProvider.js';
 
 function createFetchStub(response: unknown) {
   const stub = () =>
@@ -82,14 +84,14 @@ describe('LLMClient environment configuration', () => {
     const originalBaseUrl = process.env.LIMINAL_LLM_BASE_URL;
     const originalApiKey = process.env.LIMINAL_LLM_API_KEY;
     const originalModel = process.env.LIMINAL_LLM_MODEL;
-    
+
     process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:8080/v1';
     process.env.LIMINAL_LLM_API_KEY = 'env-api-key';
     process.env.LIMINAL_LLM_MODEL = 'env-model';
-    
+
     const client = new LLMClient();
     expect(client).toBeDefined();
-    
+
     // Restore env vars
     process.env.LIMINAL_LLM_BASE_URL = originalBaseUrl;
     process.env.LIMINAL_LLM_API_KEY = originalApiKey;
@@ -121,16 +123,18 @@ describe('LLMClient MiniMax response recovery', () => {
     const result = await client.generate('system', 'user');
     expect(result.success).toBe(true);
     expect(result.code).toContain('createCanvas');
-    expect(result.recoveredFromThinking).toBe(true);
+    // Provider-level reasoning_content fallback populates content directly,
+    // so LLMClient's thinking recovery path is not triggered
+    expect(result.recoveredFromThinking).toBe(false);
   });
 
-  it('recovers code from <think> tags when content is empty', async () => {
+  it('recovers code from think tags when content is empty', async () => {
+    const thinkContent = '<think' + '>\n```javascript\nfunction setup() { createCanvas(400, 400); }\nfunction draw() {}\n```\n</think' + '>';
     const { stub } = createFetchStub({
       choices: [
         {
           message: {
-            content:
-              '<think>\n```javascript\nfunction setup() { createCanvas(400, 400); }\nfunction draw() {}\n```\n</think>',
+            content: thinkContent,
           },
         },
       ],
@@ -146,6 +150,161 @@ describe('LLMClient MiniMax response recovery', () => {
     const result = await client.generate('system', 'user');
     expect(result.success).toBe(true);
     expect(result.code).toContain('createCanvas');
+    // Think tags in content → normalizeThinking extracts them →
+    // sanitized code is empty → LLMClient recovers from thinking
     expect(result.recoveredFromThinking).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// ProviderFactory — MiniMax detection ordering
+// ---------------------------------------------------------------------------
+describe('ProviderFactory MiniMax detection', () => {
+  it('detects minimax from international URL', () => {
+    expect(detectProvider({ baseUrl: 'https://api.minimax.io/v1', model: 'MiniMax-M2.7' })).toBe('minimax');
+  });
+
+  it('detects minimax from Chinese domestic URL', () => {
+    expect(detectProvider({ baseUrl: 'https://api.minimaxi.com/v1', model: 'MiniMax-M2.7' })).toBe('minimax');
+  });
+
+  it('detects minimax from Anthropic-compatible URL (not anthropic)', () => {
+    // This URL contains "anthropic" but should route to minimax, not anthropic
+    expect(detectProvider({ baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7' })).toBe('minimax');
+  });
+
+  it('still detects real anthropic correctly', () => {
+    expect(detectProvider({ baseUrl: 'https://api.anthropic.com/v1', model: 'claude-sonnet-4-20250514' })).toBe('anthropic');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// MiniMaxProvider — dual-mode
+// ---------------------------------------------------------------------------
+describe('MiniMaxProvider dual-mode', () => {
+  it('uses OpenAI mode by default', async () => {
+    const { stub } = createFetchStub({
+      choices: [{
+        message: { content: 'function setup() {}' },
+        finish_reason: 'stop',
+      }],
+    });
+    global.fetch = stub as any;
+
+    const provider = new MiniMaxProvider({
+      baseUrl: 'https://api.minimax.io/v1',
+      model: 'MiniMax-M2.7',
+      apiKey: 'test-key',
+    });
+
+    const result = await provider.generate({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.content).toBe('function setup() {}');
+  });
+
+  it('uses Anthropic mode when URL contains /anthropic', async () => {
+    const { stub } = createFetchStub({
+      content: [
+        { type: 'text', text: 'function setup() {}' },
+      ],
+      model: 'MiniMax-M2.7',
+      usage: { input_tokens: 10, output_tokens: 20 },
+    });
+    global.fetch = stub as any;
+
+    const provider = new MiniMaxProvider({
+      baseUrl: 'https://api.minimax.io/anthropic',
+      model: 'MiniMax-M2.7',
+      apiKey: 'test-key',
+    });
+
+    const result = await provider.generate({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.content).toBe('function setup() {}');
+  });
+
+  it('extracts thinking blocks in Anthropic mode', async () => {
+    const { stub } = createFetchStub({
+      content: [
+        { type: 'thinking', thinking: 'Let me reason about this...' },
+        { type: 'text', text: 'function setup() {}' },
+      ],
+      model: 'MiniMax-M2.7',
+      usage: { input_tokens: 10, output_tokens: 50 },
+    });
+    global.fetch = stub as any;
+
+    const provider = new MiniMaxProvider({
+      baseUrl: 'https://api.minimax.io/anthropic',
+      model: 'MiniMax-M2.7',
+      apiKey: 'test-key',
+    });
+
+    const result = await provider.generate({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.content).toBe('function setup() {}');
+    expect(result.thinking?.text).toBe('Let me reason about this...');
+    expect(result.thinking?.source).toBe('thinking_blocks');
+  });
+
+  it('reports toolUse=true in Anthropic mode', () => {
+    const provider = new MiniMaxProvider({
+      baseUrl: 'https://api.minimax.io/anthropic',
+      model: 'MiniMax-M2.7',
+      apiKey: 'test-key',
+    });
+
+    expect(provider.capabilities.toolUse).toBe(true);
+  });
+
+  it('reports toolUse=false in OpenAI mode (from CapabilityRegistry)', () => {
+    const provider = new MiniMaxProvider({
+      baseUrl: 'https://api.minimax.io/v1',
+      model: 'MiniMax-M2.7',
+      apiKey: 'test-key',
+    });
+
+    expect(provider.capabilities.toolUse).toBe(false);
+  });
+
+  it('sends Bearer token auth in Anthropic mode (not x-api-key)', async () => {
+    let capturedHeaders: Record<string, string> = {};
+    const stub = (_url: any, options: any) => {
+      capturedHeaders = options?.headers || {};
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          content: [{ type: 'text', text: 'result' }],
+          model: 'MiniMax-M2.7',
+        }),
+      } as Response);
+    };
+    global.fetch = stub as any;
+
+    const provider = new MiniMaxProvider({
+      baseUrl: 'https://api.minimax.io/anthropic',
+      model: 'MiniMax-M2.7',
+      apiKey: 'test-key-123',
+    });
+
+    await provider.generate({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+    });
+
+    expect(capturedHeaders['Authorization']).toBe('Bearer test-key-123');
+    expect(capturedHeaders['x-api-key']).toBeUndefined();
   });
 });

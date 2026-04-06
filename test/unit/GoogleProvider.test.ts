@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GoogleProvider } from '../../src/llm/providers/GoogleProvider.js';
 
-const mockFetch = vi.fn();
+const { mockFetch } = vi.hoisted(() => ({ mockFetch: vi.fn() }));
 vi.stubGlobal('fetch', mockFetch);
 
 vi.mock('../../src/llm/CapabilityRegistry.js', () => ({

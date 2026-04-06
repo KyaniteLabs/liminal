@@ -642,7 +642,7 @@ Rules:
 
   /** Check if LLM is configured */
   static isConfigured(): boolean {
-    const hasExplicitConfig = !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY'));
+    const hasExplicitConfig = !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY') || process.env.MINIMAX_API_KEY);
     if (hasExplicitConfig) return true;
     // In test environments, don't treat the hardcoded default local URL as configured,
     // otherwise E2E tests try to call a non-existent localhost endpoint and timeout.

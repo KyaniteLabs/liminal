@@ -1,13 +1,14 @@
 /**
- * Global test setup — isolate tests from user's LLM environment.
+ * Global test setup — make the default Vitest lane hermetic.
  *
- * Saves and clears all LLM-related env vars before tests run,
- * restores them after all tests complete. This prevents generators
- * from attempting real LLM calls when the server isn't running.
+ * Tests should not write to the user's real ~/.liminal or mutate live LLM
+ * environment unless an explicit opt-in lane is running.
  */
 
-import { beforeAll, afterAll } from 'vitest';
-import { withEnv, backupEnv, restoreEnv } from './helpers/env.js';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { afterAll, beforeEach } from 'vitest';
 
 const LLM_ENV_KEYS = [
   'LIMINAL_LLM_PROVIDER',
@@ -21,21 +22,42 @@ const LLM_ENV_KEYS = [
   'LIMINAL_REASONING_URL',
 ] as const;
 
-const saved: Record<string, string | undefined> = {};
+const originalEnv = { ...process.env };
+const testHome = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-test-home-'));
+const liminalHome = path.join(testHome, '.liminal');
 
-beforeAll(() => {
-  for (const key of LLM_ENV_KEYS) {
-    saved[key] = process.env[key];
-    delete process.env[key];
-  }
-});
+process.env.NODE_ENV = 'test';
+process.env.HOME = testHome;
+process.env.LIMINAL_TEST = '1';
+
+for (const dir of [
+  liminalHome,
+  path.join(liminalHome, 'archive'),
+  path.join(liminalHome, 'failures'),
+  path.join(liminalHome, 'memory'),
+  path.join(liminalHome, 'reasoning'),
+  path.join(liminalHome, 'routing'),
+  path.join(liminalHome, 'thinking-traces'),
+  path.join(liminalHome, 'tool-telemetry'),
+]) {
+  fs.mkdirSync(dir, { recursive: true });
+}
+
+for (const key of LLM_ENV_KEYS) {
+  delete process.env[key];
+}
 
 afterAll(() => {
-  for (const key of LLM_ENV_KEYS) {
-    if (saved[key] !== undefined) {
-      process.env[key] = saved[key];
-    } else {
-      delete process.env[key];
-    }
+  for (const key of Object.keys(process.env)) {
+    delete process.env[key];
+  }
+  Object.assign(process.env, originalEnv);
+  fs.rmSync(testHome, { recursive: true, force: true });
+});
+
+beforeEach(async () => {
+  const { LLMClient } = await import('../src/llm/LLMClient.js');
+  if (typeof LLMClient.clearGlobalCache === 'function') {
+    LLMClient.clearGlobalCache();
   }
 });

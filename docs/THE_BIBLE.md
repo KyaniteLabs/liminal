@@ -21,7 +21,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 
 ---
 
-## Test Status: ✅ COMPLETE
+## Test Status: ✅ DEFAULT LANE HERMETIC
 
 | Component | Status | Coverage |
 |-----------|--------|----------|
@@ -42,6 +42,11 @@ Failures:   0 critical
 - Unit Tests: Run with `npm test -- --run` (requires `--run` flag to avoid timeout)
 - Dog Food Tests: Run with `npm run dogfood` or via TUI `/dogfood` command
 - Note: Tests frequently timeout on first run without `--run` flag
+
+### Default Test Lane Safety
+- `test/setup.ts` now redirects `HOME` to a temporary test directory
+- default Vitest runs should not write to the user's real `~/.liminal`
+- live LLM credentials are cleared in the default lane unless explicitly reintroduced by a specific test
 
 ### Recent Test Fixes (Remediation Plan)
 

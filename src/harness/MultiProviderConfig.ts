@@ -109,7 +109,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     provider: 'glm',
     name: 'GLM',
     description: 'GLM International Coding Plan API',
-    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
+    baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
     model: 'glm-4.7',
     apiStyle: 'openai',
     temperature: 0.7,

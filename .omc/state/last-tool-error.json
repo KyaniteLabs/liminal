@@ -1,0 +1,7 @@
+{
+  "tool_name": "mcp__exa__web_fetch_exa",
+  "tool_input_preview": "{\"maxCharacters\":6000,\"urls\":[\"https://docs.z.ai/guides/chat-completion\"]}",
+  "error": "Error fetching URL(s): https://docs.z.ai/guides/chat-completion: CRAWL_NOT_FOUND",
+  "timestamp": "2026-04-07T16:33:39.364Z",
+  "retry_count": 1
+}

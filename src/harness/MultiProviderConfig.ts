@@ -73,7 +73,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'MiniMax-M2.7',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   lmstudio: {
     provider: 'lmstudio',
@@ -83,7 +83,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'local-model',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   ollama: {
     provider: 'ollama',
@@ -93,7 +93,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'llama3.2',
     apiStyle: 'ollama',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   openrouter: {
     provider: 'openrouter',
@@ -103,17 +103,17 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'anthropic/claude-3.5-sonnet',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   glm: {
     provider: 'glm',
     name: 'GLM',
-    description: 'GLM International Coding Plan API',
-    baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    model: 'glm-4.7',
+    description: 'GLM International Coding Plan API (GLM-5.1 flagship)',
+    baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+    model: 'glm-5.1',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   moonshot: {
     provider: 'moonshot',
@@ -123,17 +123,17 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'kimi-k2.5',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   kimi: {
     provider: 'kimi',
-    name: 'Kimi',
-    description: 'Moonshot AI Kimi K2.5 (International)',
-    baseUrl: 'https://api.moonshot.ai/v1',
-    model: 'kimi-k2.5',
+    name: 'Kimi Code',
+    description: 'Moonshot AI Kimi Code (K2P5) for Coding Agents',
+    baseUrl: 'https://api.kimi.com/coding/v1',
+    model: 'k2p5',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   custom: {
     provider: 'custom',
@@ -143,7 +143,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'custom-model',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
 };
 
@@ -183,9 +183,11 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
     apiKey = getApiKeyFromConfig(provider);
   }
   
-  // Allow environment overrides for baseUrl and model
-  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || template.baseUrl;
-  const model = process.env.LIMINAL_LLM_MODEL || template.model;
+  // Read baseUrl and model: env var → config file → template default
+  const fileProviders = loadConfigFile();
+  const fileProvider = fileProviders?.[provider];
+  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || fileProvider?.baseUrl || template.baseUrl;
+  const model = process.env.LIMINAL_LLM_MODEL || fileProvider?.model || template.model;
   
   return {
     ...template,
@@ -201,7 +203,8 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
 export function detectProviderFromUrl(baseUrl: string): ProviderType {
   if (baseUrl.includes('minimax')) return 'minimax';
   if (baseUrl.includes('openrouter')) return 'openrouter';
-  if (baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
+  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
+  if (baseUrl.includes('kimi.com')) return 'kimi';
   if (baseUrl.includes('moonshot')) return 'moonshot';
   if (baseUrl.includes('localhost:1234')) return 'lmstudio';
   if (baseUrl.includes('localhost:11434')) return 'ollama';
@@ -289,10 +292,10 @@ export interface HarnessLLMConfig {
 // Default harness config values (used when env vars not set)
 const HARNESS_DEFAULTS = {
   temperature: 0.2,      // Low temp for precise code fixes
-  maxTokens: 4096,       // Standard code context
-  timeoutMs: 60000,      // 1 minute timeout
+  maxTokens: 16384,      // Generous budget for complex code fixes
+  timeoutMs: 120000,     // 2 minute timeout (cloud providers can be slow)
   maxRetries: 3,         // Retry failed requests
-  contextWindow: 8192,   // Context window for file understanding
+  contextWindow: 32768,  // Generous context for large files
 } as const;
 
 /**

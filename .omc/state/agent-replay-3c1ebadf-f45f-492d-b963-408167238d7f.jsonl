@@ -1,0 +1,9 @@
+{"t":0,"agent":"a98ba6e","agent_type":"general-purpose","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ae4beca","agent_type":"Explore","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ae4beca","agent_type":"Explore","event":"agent_stop","success":true,"duration_ms":100292}
+{"t":0,"agent":"acec032","agent_type":"document-specialist","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"ae0b72d","agent_type":"document-specialist","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a7b0560","agent_type":"document-specialist","event":"agent_start","parent_mode":"none"}
+{"t":0,"agent":"a7b0560","agent_type":"document-specialist","event":"agent_stop","success":true,"duration_ms":109289}
+{"t":0,"agent":"acec032","agent_type":"document-specialist","event":"agent_stop","success":true,"duration_ms":158043}
+{"t":0,"agent":"ae0b72d","agent_type":"document-specialist","event":"agent_stop","success":true,"duration_ms":168953}

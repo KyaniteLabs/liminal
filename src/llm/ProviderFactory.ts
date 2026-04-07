@@ -27,8 +27,9 @@ export function detectProvider(config: ProviderConfig): ProviderName {
   if (baseUrl.includes('anthropic') || baseUrl.includes('api.anthropic')) return 'anthropic';
   if (baseUrl.includes('generativelanguage') || baseUrl.includes('googleapis')) return 'google';
   if (baseUrl.includes(':11434') || baseUrl.includes('ollama')) return 'ollama';
-  if (baseUrl.includes('bigmodel.cn')) return 'openai'; // ZhipuAI GLM — OpenAI-compatible
+  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel.cn')) return 'openai'; // ZhipuAI GLM — OpenAI-compatible
   if (baseUrl.includes('moonshot.ai') || baseUrl.includes('moonshot.cn')) return 'openai'; // KimiCode — OpenAI-compatible
+  if (baseUrl.includes('kimi.com')) return 'openai'; // Kimi Code — OpenAI-compatible, requires User-Agent
   if (baseUrl.includes('openai') || baseUrl.includes('api.openai')) return 'openai';
 
   // Local endpoints: check model name for hints

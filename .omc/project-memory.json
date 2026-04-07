@@ -599,8 +599,8 @@
     },
     {
       "path": "src/llm/LLMClient.ts",
-      "accessCount": 44,
-      "lastAccessed": 1775435238148,
+      "accessCount": 46,
+      "lastAccessed": 1775578369221,
       "type": "file"
     },
     {
@@ -658,6 +658,12 @@
       "type": "directory"
     },
     {
+      "path": "src/llm/ProviderFactory.ts",
+      "accessCount": 7,
+      "lastAccessed": 1775580956736,
+      "type": "file"
+    },
+    {
       "path": "src/generators/GeneratorRegistry.ts",
       "accessCount": 5,
       "lastAccessed": 1775429287160,
@@ -685,12 +691,6 @@
       "path": "src/llm/providers/MiniMaxProvider.ts",
       "accessCount": 4,
       "lastAccessed": 1775435224264,
-      "type": "file"
-    },
-    {
-      "path": "src/llm/ProviderFactory.ts",
-      "accessCount": 3,
-      "lastAccessed": 1775427294648,
       "type": "file"
     },
     {

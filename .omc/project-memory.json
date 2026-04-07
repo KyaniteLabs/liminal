@@ -1,0 +1,458 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1775538261800,
+  "projectRoot": "/Users/simongonzalezdecruz/workspaces/liminal/.claude/worktrees/special-mission",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": ">=18.0.0",
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "express",
+        "version": "5.2.1",
+        "category": "backend"
+      },
+      {
+        "name": "react",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "18.3.1",
+        "category": "frontend"
+      },
+      {
+        "name": "@playwright/test",
+        "version": "1.59.1",
+        "category": "testing"
+      },
+      {
+        "name": "playwright",
+        "version": "1.59.1",
+        "category": "testing"
+      },
+      {
+        "name": "vitest",
+        "version": "4.1.2",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": "Node.js 18.0.0"
+  },
+  "build": {
+    "buildCommand": "pnpm build",
+    "testCommand": "pnpm test",
+    "lintCommand": "pnpm lint",
+    "devCommand": null,
+    "scripts": {
+      "postinstall": "npm run build",
+      "prepack": "npm run build",
+      "build": "tsc",
+      "test": "vitest run",
+      "test:integration": "vitest run test/integration",
+      "test:e2e": "vitest run test/e2e",
+      "test:cloud": "RUN_CLOUD_MODEL_TESTS=1 vitest run test/e2e",
+      "gui": "node gui/start.js",
+      "gui:dev": "cd gui && npm run dev",
+      "gui:all": "concurrently -k -n b,v \"node gui/start.js\" \"npm run gui:dev\"",
+      "test:watch": "vitest",
+      "test:coverage": "vitest run --coverage",
+      "lint": "eslint src/",
+      "test:quality": "node scripts/testing/test-quality-check.mjs",
+      "typecheck": "tsc --noEmit",
+      "docs": "typedoc --out docs src/",
+      "tui": "npx tsx src/tui/HarnessTUI.tsx",
+      "dogfood:report": "npx tsx scripts/generate-dogfood-report.ts",
+      "prepare": "git config core.hooksPath .githooks",
+      "git:hygiene": "bash scripts/utils/git-hygiene.sh",
+      "git:hygiene:dry": "bash scripts/utils/git-hygiene.sh --dry-run"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": "*.test.ts",
+    "fileOrganization": null
+  },
+  "structure": {
+    "isMonorepo": false,
+    "workspaces": [],
+    "mainDirectories": [
+      "bin",
+      "docs",
+      "examples",
+      "scripts",
+      "src",
+      "test"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "artifacts": {
+      "path": "artifacts",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775538261793,
+      "keyFiles": [
+        "campaign-dashboard.html",
+        "dogfood-campaign-dashboard.html"
+      ]
+    },
+    "bin": {
+      "path": "bin",
+      "purpose": "Executable scripts",
+      "fileCount": 1,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "liminal"
+      ]
+    },
+    "compost": {
+      "path": "compost",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "soup-state.json"
+      ]
+    },
+    "config": {
+      "path": "config",
+      "purpose": "Configuration files",
+      "fileCount": 1,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "liminal.json"
+      ]
+    },
+    "dist": {
+      "path": "dist",
+      "purpose": "Distribution/build output",
+      "fileCount": 12,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "constants.d.ts",
+        "constants.d.ts.map",
+        "constants.js",
+        "constants.js.map",
+        "generateVisuals.d.ts"
+      ]
+    },
+    "docker": {
+      "path": "docker",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "seccomp-chrome.json"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 44,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "AGENT_GENERATOR_ARCHITECTURE.md",
+        "ARCHITECTURE_AND_PHILOSOPHY.md",
+        "ARCHITECTURE_QUICKREF.md",
+        "AUDIT_QUICK.sh",
+        "CREATIVE_DOMAIN_TYPES.md"
+      ]
+    },
+    "dogfood-campaign": {
+      "path": "dogfood-campaign",
+      "purpose": null,
+      "fileCount": 5,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "REPORT.md",
+        "results-lmstudio.json",
+        "results-minimax-v2.json",
+        "results-minimax.json",
+        "results.json"
+      ]
+    },
+    "dogfood-campaign-2026-04-04T07-21-29": {
+      "path": "dogfood-campaign-2026-04-04T07-21-29",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775538261795,
+      "keyFiles": [
+        "report.json",
+        "results.jsonl"
+      ]
+    },
+    "dogfood-campaign-local-2026-04-04T07-59-30": {
+      "path": "dogfood-campaign-local-2026-04-04T07-59-30",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1775538261796,
+      "keyFiles": [
+        "results.jsonl"
+      ]
+    },
+    "dogfood-campaign-ollama-2026-04-04T07-47-00": {
+      "path": "dogfood-campaign-ollama-2026-04-04T07-47-00",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775538261796,
+      "keyFiles": [
+        "report.json",
+        "results.jsonl"
+      ]
+    },
+    "examples": {
+      "path": "examples",
+      "purpose": "Example code",
+      "fileCount": 5,
+      "lastAccessed": 1775538261796,
+      "keyFiles": [
+        "composition-basic.ts",
+        "composition-programmatic.ts",
+        "dynamic-domain-registration.ts",
+        "generated-fireworks.js",
+        "parallel-results.json"
+      ]
+    },
+    "gui": {
+      "path": "gui",
+      "purpose": null,
+      "fileCount": 8,
+      "lastAccessed": 1775538261796,
+      "keyFiles": [
+        "index.html",
+        "package-lock.json",
+        "package.json",
+        "pnpm-lock.yaml",
+        "server.js"
+      ]
+    },
+    "harness-tasks": {
+      "path": "harness-tasks",
+      "purpose": null,
+      "fileCount": 14,
+      "lastAccessed": 1775538261796,
+      "keyFiles": [
+        "CONVERT_P5_TO_PLUGIN.md",
+        "CONVERT_P5_TO_PLUGIN_EVAL.md",
+        "M1.json",
+        "M10.json",
+        "M11.json"
+      ]
+    },
+    "output": {
+      "path": "output",
+      "purpose": null,
+      "fileCount": 20,
+      "lastAccessed": 1775538261796,
+      "keyFiles": [
+        "2026-03-01--test-prompt-export.js",
+        "default-archive.txt",
+        "default-archive.zip",
+        "default-final.html",
+        "default-final.js"
+      ]
+    },
+    "plugins": {
+      "path": "plugins",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775538261796,
+      "keyFiles": []
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 9,
+      "lastAccessed": 1775538261797,
+      "keyFiles": [
+        "campaign-cloud.ts",
+        "campaign-combined-report.ts",
+        "campaign-local-resume.ts",
+        "campaign-local.ts",
+        "campaign-ollama-cloud.ts"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1775538261797,
+      "keyFiles": [
+        "constants.ts",
+        "generateVisuals.ts",
+        "index.ts"
+      ]
+    },
+    "stream": {
+      "path": "stream",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1775538261797,
+      "keyFiles": [
+        "evolution_20260407035643..json",
+        "evolution_20260407035644..json",
+        "evolution_20260407035647..json"
+      ]
+    },
+    "test": {
+      "path": "test",
+      "purpose": "Test files",
+      "fileCount": 2,
+      "lastAccessed": 1775538261797,
+      "keyFiles": [
+        "console-usage.test.ts",
+        "setup.ts"
+      ]
+    },
+    "test-stream": {
+      "path": "test-stream",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1775538261797,
+      "keyFiles": [
+        "evolution_20260407035634..json",
+        "evolution_20260407035637..json"
+      ]
+    },
+    "compost/seeds": {
+      "path": "compost/seeds",
+      "purpose": "Database seeds",
+      "fileCount": 1,
+      "lastAccessed": 1775538261798,
+      "keyFiles": [
+        "seeds.json"
+      ]
+    },
+    "dist/config": {
+      "path": "dist/config",
+      "purpose": "Configuration files",
+      "fileCount": 24,
+      "lastAccessed": 1775538261798,
+      "keyFiles": [
+        "ConfigLoader.d.ts",
+        "ConfigLoader.d.ts.map",
+        "ConfigLoader.js"
+      ]
+    },
+    "gui/src": {
+      "path": "gui/src",
+      "purpose": "Source code",
+      "fileCount": 3,
+      "lastAccessed": 1775538261799,
+      "keyFiles": [
+        "App.tsx",
+        "index.css",
+        "main.jsx"
+      ]
+    },
+    "src/config": {
+      "path": "src/config",
+      "purpose": "Configuration files",
+      "fileCount": 6,
+      "lastAccessed": 1775538261800,
+      "keyFiles": [
+        "ConfigLoader.ts",
+        "PromptHistory.ts",
+        "RoleConfig.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/tui/NaturalInterface.ts",
+      "accessCount": 24,
+      "lastAccessed": 1775571813623,
+      "type": "file"
+    },
+    {
+      "path": "",
+      "accessCount": 5,
+      "lastAccessed": 1775571487024,
+      "type": "directory"
+    },
+    {
+      "path": "src",
+      "accessCount": 4,
+      "lastAccessed": 1775571501093,
+      "type": "directory"
+    },
+    {
+      "path": "src/tui",
+      "accessCount": 1,
+      "lastAccessed": 1775539004510,
+      "type": "directory"
+    },
+    {
+      "path": "src/tui/InteractiveMode.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775539013125,
+      "type": "file"
+    },
+    {
+      "path": "src/tui/IntentRouter.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775539013891,
+      "type": "file"
+    },
+    {
+      "path": "bin",
+      "accessCount": 1,
+      "lastAccessed": 1775539439395,
+      "type": "directory"
+    },
+    {
+      "path": "bin/liminal",
+      "accessCount": 1,
+      "lastAccessed": 1775539452871,
+      "type": "directory"
+    },
+    {
+      "path": "src/tui/HarnessTUI.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1775539454432,
+      "type": "file"
+    },
+    {
+      "path": "src/harness/agent/LLMModeAgent.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775571498620,
+      "type": "file"
+    },
+    {
+      "path": "src/harness/tools/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775571518190,
+      "type": "file"
+    },
+    {
+      "path": "src/harness/tools/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775571519050,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

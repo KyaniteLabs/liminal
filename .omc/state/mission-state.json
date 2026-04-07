@@ -1,0 +1,71 @@
+{
+  "updatedAt": "2026-04-07T14:19:30.406Z",
+  "missions": [
+    {
+      "id": "session:3c1ebadf-f45f-492d-b963-408167238d7f:none",
+      "source": "session",
+      "name": "none",
+      "objective": "Session mission",
+      "createdAt": "2026-04-07T04:02:31.170Z",
+      "updatedAt": "2026-04-07T14:19:30.406Z",
+      "status": "running",
+      "workerCount": 2,
+      "taskCounts": {
+        "total": 2,
+        "pending": 0,
+        "blocked": 0,
+        "inProgress": 1,
+        "completed": 1,
+        "failed": 0
+      },
+      "agents": [
+        {
+          "name": "general-purpose:a98ba6e",
+          "role": "general-purpose",
+          "ownership": "a98ba6e14ac6e08b0",
+          "status": "running",
+          "currentStep": null,
+          "latestUpdate": null,
+          "completedSummary": null,
+          "updatedAt": "2026-04-07T04:02:31.170Z"
+        },
+        {
+          "name": "Explore:ae4beca",
+          "role": "Explore",
+          "ownership": "ae4beca8fc7b8acf7",
+          "status": "done",
+          "currentStep": null,
+          "latestUpdate": "completed",
+          "completedSummary": null,
+          "updatedAt": "2026-04-07T14:19:30.406Z"
+        }
+      ],
+      "timeline": [
+        {
+          "id": "session-start:a98ba6e14ac6e08b0:2026-04-07T04:02:31.170Z",
+          "at": "2026-04-07T04:02:31.170Z",
+          "kind": "update",
+          "agent": "general-purpose:a98ba6e",
+          "detail": "started general-purpose:a98ba6e",
+          "sourceKey": "session-start:a98ba6e14ac6e08b0"
+        },
+        {
+          "id": "session-start:ae4beca8fc7b8acf7:2026-04-07T14:17:50.114Z",
+          "at": "2026-04-07T14:17:50.114Z",
+          "kind": "update",
+          "agent": "Explore:ae4beca",
+          "detail": "started Explore:ae4beca",
+          "sourceKey": "session-start:ae4beca8fc7b8acf7"
+        },
+        {
+          "id": "session-stop:ae4beca8fc7b8acf7:2026-04-07T14:19:30.406Z",
+          "at": "2026-04-07T14:19:30.406Z",
+          "kind": "completion",
+          "agent": "Explore:ae4beca",
+          "detail": "completed",
+          "sourceKey": "session-stop:ae4beca8fc7b8acf7"
+        }
+      ]
+    }
+  ]
+}

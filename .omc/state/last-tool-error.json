@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"git merge origin/main --no-edit 2>&1\",\"description\":\"Merge main into this worktree branch\"}",
+  "error": "Exit code 2\nerror: The following untracked working tree files would be overwritten by merge:\n\t.omc/project-memory.json\n\t.omc/state/hud-state.json\n\t.omc/state/hud-stdin-cache.json\n\t.omc/state/idle-notif-cooldown.json\n\t.omc/state/mission-state.json\n\t.omc/state/subagent-tracking.json\nPlease move or remove them before you merge.\nAborting\nMerge with strategy ort failed.",
+  "timestamp": "2026-04-07T16:08:47.239Z",
+  "retry_count": 1
+}

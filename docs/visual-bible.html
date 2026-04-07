@@ -195,7 +195,7 @@
         <section class="section">
             <h1 class="section-title">📖 Visual Bible</h1>
             <p class="section-subtitle">Visual representation of THE_BIBLE.md - Real-time system status</p>
-            <p class="meta-info">Last updated: April 1, 2026 | Branch: narrative/liminal-archaeology | <a href="THE_BIBLE.md">📖 THE BIBLE</a></p>
+            <p class="meta-info">Last updated: April 6, 2026 | Branch: main | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
         </section>
 
         <!-- Critical Alerts -->
@@ -784,6 +784,103 @@
         </section>
     </main>
 
+    <!-- Crash Recovery Status -->
+        <section class="section">
+            <h2 class="section-title">🔄 Crash Recovery Status (2026-04-06)</h2>
+            <div class="alert success">
+                <h4>✅ Atomic Recovery Complete</h4>
+                <p><strong>13 branches recovered and preserved.</strong> All atomic slices (single-focus fixes) have been extracted and committed to named branches. Remaining work is broader integration/reconstruction.</p>
+                <p class="footer-note">See <a href="RECOVERY_LEDGER.md">RECOVERY_LEDGER.md</a> for full details, landing order, and remaining work.</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>📊 Recovery Metrics</h3>
+                    <div class="metric">
+                        <span class="metric-label">Branches Recovered</span>
+                        <span class="metric-value text-green">13</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Landable (ready to merge)</span>
+                        <span class="metric-value text-green">12</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Reference Only (docs)</span>
+                        <span class="metric-value">1</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Superseded / Obsolete</span>
+                        <span class="metric-value text-muted">3 items</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>🔧 Recovery Categories</h3>
+                    <ul class="status-list">
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Landing page gallery (5 commits, 152 files)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Test infra (vi.hoisted, hermetic, capability gating)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Git hygiene (worktree orphan preservation)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Config paths (5 modules honor liminal home)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Generator coverage (TierBased + Hydra tests)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>📋 Remaining Non-Atomic Work</h3>
+                    <ul class="status-list">
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Test coverage to 70% target (~2pp gap)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Stash cleanup (34 agent auto-stashes)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Stale branch cleanup (~30 liminal/*-test-* branches)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Worktree hygiene (9 active, ~6 idle after closeout)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-planned">○</span>
+                            <span>Landing gallery large-merge review</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>🚀 Recommended Landing Order</h3>
+                    <ul class="status-list text-sm">
+                        <li><span class="text-green">1.</span> harness-readiness-v3 (test infra)</li>
+                        <li><span class="text-green">2.</span> hermetic-test-home (test reliability)</li>
+                        <li><span class="text-green">3.</span> vitest-capability-lanes (test gating)</li>
+                        <li><span class="text-green">4.</span> git-hygiene-safety (data loss fix)</li>
+                        <li><span class="text-green">5.</span> liminal-paths-* (batch, 5 branches)</li>
+                        <li><span class="text-green">6.</span> tier-hydra-tests (coverage)</li>
+                        <li><span class="text-green">7.</span> landing-gallery (largest, land last)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
     <!-- Quick Reference -->
         <section class="section">
             <h2 class="section-title">📖 Quick Reference</h2>
@@ -830,7 +927,7 @@
         <footer class="footer">
             <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a> • <a href="THE_BIBLE.md">📖 THE_BIBLE.md</a></p>
             <p class="footer-note">
-                1600+ lines • 19 subsystems • 31 guardrail tests • Glossary • Troubleshooting • Runbooks • Changelog
+                1600+ lines • 19 subsystems • 31 guardrail tests • Crash recovery complete (2026-04-06) • Glossary • Troubleshooting • Runbooks • Changelog
             </p>
         </footer>
 </body>

@@ -30,7 +30,10 @@ try {
 }
 
 const cdnAvailable = await isCdnAvailable();
-const browserReady = playwrightAvailable && cdnAvailable && !process.env.CI;
+// Browser tests run when playwright is installed and CDN is reachable.
+// CI has both (pnpm exec playwright install chromium runs before tests).
+// Sandboxed/offline dev environments skip via the CDN check.
+const browserReady = playwrightAvailable && cdnAvailable;
 
 const describeIfBrowser = browserReady ? describe : describe.skip;
 

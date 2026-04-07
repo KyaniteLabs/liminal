@@ -367,12 +367,123 @@ a:focus:not(:focus-visible) {
 
 .card-model-name {
   font-size: 13px;
-  color: var(--text-secondary);
+  color: var(--accent-cyan);
   margin-top: 2px;
   line-height: 1.4;
+  font-weight: 600;
 }
 
-/* Variant badge */
+/* Metadata row (iterations + variant badges) */
+.card-meta-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: 0 var(--space-lg);
+  margin-top: var(--space-xs);
+}
+
+.meta-badge {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 100px;
+  flex-shrink: 0;
+}
+
+.meta-badge.hard {
+  background: var(--badge-variant-bg);
+  color: var(--badge-variant-text);
+}
+
+.meta-badge.simple {
+  background: var(--badge-standard-bg);
+  color: var(--badge-standard-text);
+}
+
+.meta-badge.iterations {
+  background: rgba(168, 123, 255, 0.12);
+  color: var(--accent-violet);
+}
+
+.meta-badge.model-badge {
+  background: rgba(79, 172, 254, 0.12);
+  color: var(--accent-blue);
+}
+
+/* Prompt section */
+.card-prompt {
+  padding: var(--space-sm) var(--space-lg);
+}
+
+.card-prompt-label {
+  font-family: var(--font-heading);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.card-prompt-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  cursor: pointer;
+  transition: color var(--transition-fast);
+}
+
+.card-prompt-text:hover {
+  color: var(--text-primary);
+}
+
+.card-prompt-text.expanded {
+  -webkit-line-clamp: unset;
+  display: block;
+}
+
+/* Timestamp + duration row */
+.card-timestamp {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-xs) var(--space-lg);
+  font-family: var(--font-heading);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.card-timestamp .ts-label {
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.card-timestamp .ts-value {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.card-timestamp .ts-duration {
+  color: var(--accent-amber);
+  font-weight: 600;
+}
+
+.card-timestamp .ts-unknown {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+/* Variant badge (kept for backward compat) */
 .variant-badge {
   font-family: var(--font-heading);
   font-size: 10px;
@@ -718,8 +829,9 @@ a:focus:not(:focus-visible) {
       var card = GALLERY_CARDS[i];
       var meta = DOMAIN_META[card.domain] || { icon: '\u{1F4CB}', color: 'var(--text-muted)', title: card.domain };
       var currentRating = ratings[card.id] || 0;
-      var variantClass = card.variant === 'hard' ? 'hard' : 'standard';
-      var variantLabel = card.variant === 'hard' ? 'HARD' : 'STD';
+      var isHard = card.variant === 'hard' || card.variant === 'stress';
+      var variantClass = isHard ? 'hard' : 'standard';
+      var variantLabel = isHard ? 'STRESS' : 'SIMPLE';
 
       var starsHtml = '';
       for (var s = 1; s <= 5; s++) {
@@ -733,21 +845,42 @@ a:focus:not(:focus-visible) {
           '</button>';
       }
 
+      var promptText = card.prompt || '(no prompt recorded)';
+      var iterCount = card.iterations || '?';
+      var genTime = card.generatedAt || 'Unknown';
+      var durText = card.duration ? (card.duration + 's') : 'Duration not captured';
+
       html += '<article class="domain-card" data-domain="' + card.domain + '">' +
         '<div class="card-header">' +
           '<div class="card-icon" aria-hidden="true">' + meta.icon + '</div>' +
           '<div class="card-title-group">' +
-            '<h2 class="card-title">' + meta.title + '</h2>' +
+            '<h2 class="card-title">' + (card.label || meta.title) + '</h2>' +
             '<p class="card-model-name">' + card.model + '</p>' +
           '</div>' +
           '<span class="variant-badge ' + variantClass + '">' + variantLabel + '</span>' +
+        '</div>' +
+        '<div class="card-meta-row">' +
+          '<span class="meta-badge iterations">' + iterCount + ' iter</span>' +
+          '<span class="meta-badge ' + (isHard ? 'hard' : 'simple') + '">' + variantLabel + '</span>' +
+        '</div>' +
+        '<div class="card-timestamp">' +
+          '<span class="ts-label">Generated</span> ' +
+          '<span class="ts-value">' + genTime + '</span>' +
+          '<span class="ts-label">Duration</span> ' +
+          (card.duration
+            ? '<span class="ts-duration">' + durText + '</span>'
+            : '<span class="ts-unknown">' + durText + '</span>') +
+        '</div>' +
+        '<div class="card-prompt">' +
+          '<div class="card-prompt-label">Prompt</div>' +
+          '<div class="card-prompt-text" id="prompt-' + card.id + '">' + promptText + '</div>' +
         '</div>' +
         '<div class="card-preview">' +
           '<iframe src="' + card.iframeSrc + '" ' +
             'sandbox="allow-scripts allow-same-origin" ' +
             'loading="lazy" ' +
             'title="' + meta.title + ' output by ' + card.model + ' — AI-generated creative coding" ' +
-            'role="img">' +
+            '>' +
           '</iframe>' +
         '</div>' +
         '<div class="card-rating">' +
@@ -866,6 +999,14 @@ a:focus:not(:focus-visible) {
 
     /* Delegated click handler for stars */
     document.getElementById('gallery').addEventListener('click', handleStarClick);
+
+    /* Prompt expand/collapse */
+    document.getElementById('gallery').addEventListener('click', function(e) {
+      var promptEl = e.target.closest('.card-prompt-text');
+      if (promptEl) {
+        promptEl.classList.toggle('expanded');
+      }
+    });
 
     /* Export button */
     document.getElementById('export-btn').addEventListener('click', handleExport);

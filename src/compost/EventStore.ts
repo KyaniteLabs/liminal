@@ -52,7 +52,9 @@ export type EventType =
   | 'branch_switch'     // Active branch was switched
   | 'snapshot'          // A state snapshot was taken
   | 'undo'              // The last event was rolled back
-  | 'config_change';    // Compost config was changed
+  | 'config_change'      // Compost config was changed
+  | 'git_commit'         // A git commit was made via GitIntegration
+  | 'git_branch';        // A git branch was created via GitIntegration
 
 /** An immutable event in the compost timeline. */
 export interface CompostEvent {

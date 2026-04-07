@@ -23,6 +23,8 @@ import {
 } from '../harness/index.js';
 import { NaturalInterface } from './NaturalInterface.js';
 import { audioPlayer } from './preview/index.js';
+import { tuiDebugger } from './TuiDebugger.js';
+import { eventBus } from '../core/EventBus.js';
 
 const C = {
   primary: 'cyan',
@@ -122,19 +124,31 @@ const History = ({ lines }: { lines: HistoryLine[] }) => (
   </Box>
 );
 
-const DebugPanel = ({ logs, activity }: { logs: string[]; activity: ActivityState }) => (
-  <Box 
-    flexDirection="column" 
-    borderStyle="single" 
-    borderColor={C.muted}
+const DebugPanel = ({ logs, activity, debuggerActive, logFilePath }: {
+  logs: string[];
+  activity: ActivityState;
+  debuggerActive: boolean;
+  logFilePath: string | null;
+}) => (
+  <Box
+    flexDirection="column"
+    borderStyle="single"
+    borderColor={debuggerActive ? C.warning : C.muted}
     paddingX={1}
     width={60}
   >
-    <Text bold color={C.primary}>🔍 DEBUG</Text>
+    <Text bold color={C.primary}>
+      {'🔍 DEBUG'} {debuggerActive && <Text color={C.warning}> VERBOSE</Text>}
+    </Text>
     <Text color={C.muted}>Phase: {activity.phase}</Text>
     <Text color={C.muted}>Last Activity: {Math.floor((Date.now() - activity.lastActivity) / 1000)}s ago</Text>
     {activity.currentTool && <Text color={C.warning}>Tool: {activity.currentTool}</Text>}
     {activity.step && <Text color={C.muted}>Step: {activity.step}/{activity.totalSteps}</Text>}
+    {logFilePath && (
+      <Text color={C.muted} wrap="truncate-end">
+        Log: {logFilePath}
+      </Text>
+    )}
     <Box marginY={1}>
       <Text color={C.muted}>--- Recent Logs ---</Text>
     </Box>
@@ -210,17 +224,20 @@ function App() {
   // Use ref for latest state in callbacks
   const interfaceRef = useRef<NaturalInterface | null>(null);
   const debugLogRef = useRef<string[]>([]);
+  const streamingRef = useRef({ content: '' });
   
   // Helper to update activity with timestamp
   const updateActivity = useCallback((update: Partial<ActivityState>) => {
     setActivity(prev => ({ ...prev, ...update, lastActivity: Date.now() }));
   }, []);
   
-  // Add to debug log (ref + state for performance)
+  // Add to debug log (ref + state for performance, also feeds TuiDebugger)
   const addDebug = useCallback((msg: string) => {
     const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
     debugLogRef.current = [...debugLogRef.current.slice(-50), line];
     setDebugLog(debugLogRef.current);
+    // Also push to TuiDebugger for file-backed logging
+    tuiDebugger.captureLog('TUI', msg);
   }, []);
 
   // Init
@@ -323,14 +340,17 @@ function App() {
 
     // Process through natural interface with streaming for chat
     try {
-      let streamingContent = '';
+      streamingRef.current.content = '';
+      let lastFlush = 0;
+      const FLUSH_INTERVAL = 66; // ~15fps — prevents Ink render flooding
+
       updateActivity({ phase: 'thinking', thinkingChars: 0 });
       setStatusMsg('Processing...');
       addDebug('LLM: Starting stream request');
-      
+
       const startTime = Date.now();
       const result = await ni.processInput(userInput, (chunk, meta) => {
-        // Stream handler - updates UI incrementally
+        // Stream handler — accumulates in ref, flushes to state at ~15fps
         if (meta?.type === 'thinking') {
           updateActivity({ phase: 'thinking', thinkingChars: meta.length });
           if (meta.length && meta.length % 100 === 0) {
@@ -338,36 +358,38 @@ function App() {
           }
           return;
         }
-        
+
         if (meta?.type === 'content') {
           updateActivity({ phase: 'generating' });
-          streamingContent += chunk;
-          
-          // Log every 100 chars of content
-          if (streamingContent.length % 100 === 0) {
-            addDebug(`LLM: Generated ${streamingContent.length} chars (${Date.now() - startTime}ms)`);
+          streamingRef.current.content += chunk;
+
+          // Throttle: only flush to React state every FLUSH_INTERVAL ms
+          const now = Date.now();
+          if (now - lastFlush >= FLUSH_INTERVAL) {
+            lastFlush = now;
+            const snapshot = streamingRef.current.content;
+            setHistory(h => {
+              const lastMsg = h[h.length - 1];
+              if (lastMsg && lastMsg.type === 'assistant' && lastMsg.streaming) {
+                return [...h.slice(0, -1), {
+                  type: 'assistant',
+                  content: snapshot,
+                  streaming: true,
+                }];
+              } else {
+                return [...h, {
+                  type: 'assistant',
+                  content: snapshot,
+                  streaming: true,
+                }];
+              }
+            });
           }
-          
-          // Update the last assistant message or add a new streaming one
-          setHistory(h => {
-            const lastMsg = h[h.length - 1];
-            if (lastMsg && lastMsg.type === 'assistant' && lastMsg.streaming) {
-              return [...h.slice(0, -1), { 
-                type: 'assistant', 
-                content: streamingContent,
-                streaming: true,
-              }];
-            } else {
-              return [...h, { 
-                type: 'assistant', 
-                content: streamingContent,
-                streaming: true,
-              }];
-            }
-          });
         }
       });
-      
+
+      // Final flush — always update with complete content
+      const streamingContent = streamingRef.current.content;
       addDebug(`LLM: Stream complete in ${Date.now() - startTime}ms, ${streamingContent.length} chars`);
       addDebug(`RESULT: type=${result.type}, responseLen=${result.response?.length || 0}`);
       
@@ -467,9 +489,16 @@ function App() {
     }
   }, [history]);
 
-  // Toggle debug panel
+  // Toggle debug panel (also toggles TuiDebugger for verbose file logging)
   const handleToggleDebug = useCallback(() => {
-    setShowDebug(prev => !prev);
+    setShowDebug(prev => {
+      const next = !prev;
+      if (next) {
+        tuiDebugger.enable();
+      }
+      // Don't disable debugger on panel close — keep capturing for tail -f
+      return next;
+    });
   }, []);
 
   return (
@@ -480,7 +509,12 @@ function App() {
           <History lines={history.slice(-50)} />
         </Box>
         {showDebug && (
-          <DebugPanel logs={debugLog} activity={activity} />
+          <DebugPanel
+            logs={debugLog}
+            activity={activity}
+            debuggerActive={tuiDebugger.enabled}
+            logFilePath={tuiDebugger.logFilePath}
+          />
         )}
       </Box>
       <Input 
@@ -501,15 +535,27 @@ export async function startHarnessTUI() {
   try {
     // Validate stdin before attempting to render
     await validateStdin();
-    
+
+    // Tell EventBus to suppress stdout writes — Ink owns the terminal now
+    eventBus.enableTuiMode();
+
+    // Auto-enable verbose debug if env var is set
+    if (process.env.LIMINAL_VERBOSE === '1' || process.env.LIMINAL_LOG_LEVEL === 'debug') {
+      tuiDebugger.enable();
+      const logPath = tuiDebugger.logFilePath;
+      if (logPath) {
+        process.stderr.write(`\n[LIMINAL] Verbose debug ON — tail -f ${logPath}\n\n`);
+      }
+    }
+
     // If validation passes, render the TUI
     render(<App />);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
-    
+
     // Print error to stderr (not stdout, so it doesn't interfere with piping)
     process.stderr.write('\n' + message + '\n\n');
-    
+
     // Exit with error code
     process.exit(1);
   }

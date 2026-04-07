@@ -96,10 +96,12 @@ const userOverrides: Map<string, Partial<ModelCapabilities>> = new Map();
  * Supports trailing wildcard: 'claude-sonnet-4-*' matches 'claude-sonnet-4-20250514'
  */
 function matchesPattern(model: string, pattern: string): boolean {
-  if (pattern.endsWith('*')) {
-    return model.startsWith(pattern.slice(0, -1));
+  const m = model.toLowerCase();
+  const p = pattern.toLowerCase();
+  if (p.endsWith('*')) {
+    return m.startsWith(p.slice(0, -1));
   }
-  return model === pattern;
+  return m === p;
 }
 
 export class CapabilityRegistry {

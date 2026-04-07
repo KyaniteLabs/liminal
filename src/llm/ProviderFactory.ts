@@ -23,12 +23,16 @@ export function detectProvider(config: ProviderConfig): ProviderName {
   const baseUrl = config.baseUrl.toLowerCase();
 
   if (baseUrl.includes('openrouter')) return 'openrouter';
+  if (baseUrl.includes('minimax')) return 'minimax'; // Before anthropic — api.minimax.io/anthropic contains "anthropic"
   if (baseUrl.includes('anthropic') || baseUrl.includes('api.anthropic')) return 'anthropic';
   if (baseUrl.includes('generativelanguage') || baseUrl.includes('googleapis')) return 'google';
   if (baseUrl.includes(':11434') || baseUrl.includes('ollama')) return 'ollama';
+  if (baseUrl.includes("bigmodel.cn")) return "openai"; // ZhipuAI GLM — OpenAI-compatible
+  if (baseUrl.includes("moonshot.ai") || baseUrl.includes("moonshot.cn")) return "openai"; // KimiCode — OpenAI-compatible
   if (baseUrl.includes('minimaxi')) return 'minimax'; // MiniMax specific provider
   if (baseUrl.includes('bigmodel.cn')) return 'openai'; // ZhipuAI GLM — OpenAI-compatible
   if (baseUrl.includes('moonshot.ai') || baseUrl.includes('moonshot.cn')) return 'openai'; // KimiCode — OpenAI-compatible
+>>>>>>> origin/main
   if (baseUrl.includes('openai') || baseUrl.includes('api.openai')) return 'openai';
 
   // Local endpoints: check model name for hints

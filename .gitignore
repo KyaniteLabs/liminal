@@ -106,3 +106,12 @@ narrative/data/archaeology.inspect.json
 # Python cache
 __pycache__/
 audit-*.png
+
+# oh-my-claudecode runtime state
+.omc/
+
+# Agent session artifacts
+ISSUE-REPORT.md
+
+# Agent memory (local runtime)
+memory/

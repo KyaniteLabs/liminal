@@ -16,6 +16,7 @@ import { metaHarness } from '../harness/MetaHarnessIntegration.js';
 import { GenerationError } from '../errors/GenerationError.js';
 import { Layer, createLayer, DomainType } from '../composition/types.js';
 import { Logger } from '../utils/Logger.js';
+import { getEffectiveConfig } from '../config/ConfigLoader.js';
 
 export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;
@@ -28,18 +29,50 @@ export abstract class TierBasedGenerator {
   protected promptBuilder: PromptBuilder;
   protected tier: ModelTier;
   protected domain: string;
+  private _configNeedsResolution: boolean;
 
   constructor(
     domain: string,
     llmOrConfig?: LLMClient | Partial<LLMConfig>
   ) {
     this.domain = domain;
-    this.llm = llmOrConfig instanceof LLMClient
-      ? llmOrConfig
-      : new LLMClient({ ...llmOrConfig, role: 'generator' });
-    
+    this._configNeedsResolution = false;
+
+    if (llmOrConfig instanceof LLMClient) {
+      this.llm = llmOrConfig;
+    } else if (llmOrConfig && (llmOrConfig.baseUrl || llmOrConfig.apiKey || llmOrConfig.model)) {
+      // Caller provided partial config with meaningful values
+      this.llm = new LLMClient({ ...llmOrConfig, role: 'generator' });
+    } else {
+      // No config provided -- create placeholder and resolve lazily on first generate
+      this.llm = new LLMClient({ role: 'generator' });
+      this._configNeedsResolution = true;
+    }
+
     this.tier = detectModelTier(this.llm.getConfig());
     this.promptBuilder = new PromptBuilder(this.llm.getConfig());
+  }
+
+  /**
+   * Resolve LLM config from getEffectiveConfig() if no explicit config was provided.
+   * Called lazily on first generation to ensure providers like MiniMax (from
+   * ~/.liminal/config.json) are properly wired without requiring env vars.
+   */
+  private async resolveConfigIfNeeded(): Promise<void> {
+    if (!this._configNeedsResolution) return;
+    this._configNeedsResolution = false;
+
+    const config = await getEffectiveConfig(undefined, process.cwd());
+    if (config.baseUrl || config.apiKey) {
+      this.llm = new LLMClient({
+        baseUrl: config.baseUrl,
+        model: config.model,
+        apiKey: config.apiKey,
+        role: 'generator',
+      });
+      this.tier = detectModelTier(this.llm.getConfig());
+      this.promptBuilder = new PromptBuilder(this.llm.getConfig());
+    }
   }
 
   async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
@@ -83,9 +116,12 @@ export abstract class TierBasedGenerator {
    * Internal generation method that returns full LLMResponse.
    */
   private async generateInternal(
-    prompt: string, 
+    prompt: string,
     options?: TierBasedGeneratorOptions
   ): Promise<LLMResponse> {
+    // Resolve LLM config lazily on first generation call
+    await this.resolveConfigIfNeeded();
+
     if (!LLMClient.isConfigured()) {
       throw new GenerationError(`${this.constructor.name}: No LLM configured`, this.domain);
     }

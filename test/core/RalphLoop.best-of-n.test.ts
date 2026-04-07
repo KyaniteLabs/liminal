@@ -145,8 +145,19 @@ vi.mock('../../src/harness/MetaHarnessIntegration.js', () => ({
   metaHarness: { onGenerationComplete: vi.fn() },
 }));
 
+vi.mock('../../src/git/GitIntegration.js', () => ({
+  GitIntegration: vi.fn(function() {
+    return {
+      startRun: vi.fn().mockResolvedValue('test-branch'),
+      commitIteration: vi.fn().mockResolvedValue(undefined),
+      endRun: vi.fn().mockResolvedValue(undefined),
+      getStatus: vi.fn().mockReturnValue({ enabled: false }),
+    };
+  }),
+}));
+
 vi.mock('../../src/utils/Logger.js', () => ({
-  Logger: { warn: vi.fn(), info: vi.fn() },
+  Logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 describe('RalphLoop Best-of-N', () => {

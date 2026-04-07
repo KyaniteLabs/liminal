@@ -1,6 +1,7 @@
 import { LLMClient, LLMConfig, LLMResponse } from '../../llm/LLMClient.js';
 import { GenerationError } from '../../errors/GenerationError.js';
 import { Layer, createLayer } from '../../composition/types.js';
+import { getEffectiveConfig } from '../../config/ConfigLoader.js';
 
 export interface P5GeneratorOptions {
   maxIterations?: number;
@@ -13,9 +14,39 @@ export interface P5GeneratorOptions {
 
 export class P5GeneratorLLM {
   private llm: LLMClient;
+  private _configNeedsResolution: boolean;
 
   constructor(llmOrConfig?: LLMClient | Partial<LLMConfig>, _options?: P5GeneratorOptions) {
-    this.llm = llmOrConfig instanceof LLMClient ? llmOrConfig : new LLMClient({ ...llmOrConfig, role: 'generator' });
+    this._configNeedsResolution = false;
+
+    if (llmOrConfig instanceof LLMClient) {
+      this.llm = llmOrConfig;
+    } else if (llmOrConfig && (llmOrConfig.baseUrl || llmOrConfig.apiKey || llmOrConfig.model)) {
+      this.llm = new LLMClient({ ...llmOrConfig, role: 'generator' });
+    } else {
+      this.llm = new LLMClient({ role: 'generator' });
+      this._configNeedsResolution = true;
+    }
+  }
+
+  /**
+   * Resolve LLM config from getEffectiveConfig() if no explicit config was provided.
+   * Called lazily on first generation to ensure providers like MiniMax (from
+   * ~/.liminal/config.json) are properly wired without requiring env vars.
+   */
+  private async resolveConfigIfNeeded(): Promise<void> {
+    if (!this._configNeedsResolution) return;
+    this._configNeedsResolution = false;
+
+    const config = await getEffectiveConfig(undefined, process.cwd());
+    if (config.baseUrl || config.apiKey) {
+      this.llm = new LLMClient({
+        baseUrl: config.baseUrl,
+        model: config.model,
+        apiKey: config.apiKey,
+        role: 'generator',
+      });
+    }
   }
 
   async generate(prompt: string, options?: P5GeneratorOptions): Promise<string> {
@@ -36,7 +67,7 @@ export class P5GeneratorLLM {
    */
   async generateLayer(prompt: string, options?: P5GeneratorOptions): Promise<Layer> {
     const response = await this.generateInternal(prompt, options);
-    
+
     return createLayer('p5', response.code, prompt, {
       generator: 'P5GeneratorLLM',
       model: this.llm.getConfig().model || 'unknown',
@@ -51,6 +82,9 @@ export class P5GeneratorLLM {
    * Internal generation method.
    */
   private async generateInternal(prompt: string, options?: P5GeneratorOptions): Promise<LLMResponse> {
+    // Resolve LLM config lazily on first generation call
+    await this.resolveConfigIfNeeded();
+
     if (!LLMClient.isConfigured()) {
       throw new GenerationError(
         '[P5Generator] Using LLM-based generation. Ensure LIMINAL_LLM_API_KEY or OPENAI_API_KEY is set.',

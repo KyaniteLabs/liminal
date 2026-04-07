@@ -195,6 +195,26 @@ export class NaturalInterface {
       case 'diagnostic':
         return this.handleDiagnostic();
 
+      case 'debug': {
+        const action = args[0]?.toLowerCase();
+        if (action === 'on') {
+          const { tuiDebugger } = await import('./TuiDebugger.js');
+          tuiDebugger.enable();
+          const path = tuiDebugger.logFilePath ?? '~/.liminal/debug/';
+          return { type: 'command', response: `Debug mode ON. Log: ${path}\nUse Ctrl+D to show panel. tail -f ${path}`, shouldContinue: true };
+        }
+        if (action === 'off') {
+          const { tuiDebugger } = await import('./TuiDebugger.js');
+          tuiDebugger.disable();
+          return { type: 'command', response: 'Debug mode OFF.', shouldContinue: true };
+        }
+        return {
+          type: 'command',
+          response: 'Usage: /debug on|off\nEnables verbose file logging to ~/.liminal/debug/\nUse Ctrl+D to toggle the debug panel in TUI.',
+          shouldContinue: true,
+        };
+      }
+
       default:
         return {
           type: 'ambiguous',
@@ -207,7 +227,10 @@ export class NaturalInterface {
   /**
    * Handle agent request (LLM-driven code changes)
    */
-  private async handleAgentRequest(input: string): Promise<NaturalInputResult> {
+  private async handleAgentRequest(
+    input: string,
+    _onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
+  ): Promise<NaturalInputResult> {
     this.onStatus('Thinking...');
     this.onLog(`Agent task: ${input.slice(0, 60)}...`);
 
@@ -296,19 +319,16 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
       if (onStream) {
         let fullResponse = '';
         let thinkingContent = '';
-        // ANSI escape codes for dim rendering of thinking events
-        const THINKING_PREFIX = '\x1B[2m\u22B2 '; // dim + unicode triangle prefix
-        const THINKING_SUFFIX = '\x1B[0m';         // reset
+        const THINKING_PREFIX = '\x1B[2m\u22B2 ';
+        const THINKING_SUFFIX = '\x1B[0m';
 
         for await (const event of this.llmClient.streamWithThinking(systemPrompt, userPrompt)) {
           if (event.type === 'thinking') {
             thinkingContent += event.content;
             tuiDebug.streamEvent('thinking', event.content.length);
-            // Show brief thinking indicator
             if (thinkingContent.length % 50 === 0) {
               this.onStatus(`\uD83E\uDD14 Thinking... (${thinkingContent.length} chars)`);
             }
-            // Render thinking in dimmed style via callback
             onStream(`${THINKING_PREFIX}${event.content}${THINKING_SUFFIX}`, {
               type: 'thinking',
               length: thinkingContent.length,
@@ -320,7 +340,6 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
           }
         }
 
-        // Clean up any remaining think tags in the response
         fullResponse = this.cleanThinkTags(fullResponse);
 
         tuiDebug.llmResponse(Date.now() - startTime, fullResponse.length, fullResponse);
@@ -579,7 +598,7 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
   }
 
   private async handleDiagnostic(): Promise<NaturalInputResult> {
-    this.onStatus('Running diagnostics...');
+    this.onStatus('Testing LLM connectivity...');
 
     const tests: string[] = [];
 
@@ -589,31 +608,41 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
         prompt: 'Say "PASS" and nothing else.',
         maxTokens: 10,
       });
-      tests.push(`1. LLM Connection: ${result.success && result.text.includes('PASS') ? 'PASS' : 'FAIL'}`);
+      const llmOk = result.success && result.text.includes('PASS');
+      tests.push(`1. LLM Connection: ${llmOk ? 'PASS' : 'FAIL'}`);
+      this.onLog(`\u2713 LLM connectivity: ${llmOk ? 'OK' : 'FAIL'}`);
     } catch (e) {
       tests.push(`1. LLM Connection: FAIL (${e instanceof Error ? e.message : String(e)})`);
+      this.onLog(`\u2717 LLM connectivity: ${e instanceof Error ? e.message : String(e)}`);
     }
 
     // Test 2: JSON Parsing
     try {
       const json = '{"test": true, "number": 42}';
       const parsed = JSON.parse(json);
-      tests.push(`2. JSON Parsing: ${parsed.test === true && parsed.number === 42 ? 'PASS' : 'FAIL'}`);
+      const jsonOk = parsed.test === true && parsed.number === 42;
+      tests.push(`2. JSON Parsing: ${jsonOk ? 'PASS' : 'FAIL'}`);
+      this.onLog(`\u2713 JSON parsing: ${jsonOk ? 'OK' : 'FAIL'}`);
     } catch {
       tests.push('2. JSON Parsing: FAIL');
+      this.onLog('\u2717 JSON parsing: FAIL');
     }
 
     // Test 3: Harness Status
     const { metaHarness } = await import('../harness/index.js');
     const status = metaHarness.getStatus();
     tests.push(`3. Harness Online: ${status.initialized ? 'PASS' : 'FAIL'}`);
+    this.onLog(`\u2713 Harness: ${status.initialized ? 'OK' : 'OFFLINE'}`);
 
     // Test 4: Context Retention
+    this.onStatus('LLM connected. Testing context retention...');
     const contextTest = await this.llmClient.complete({
       prompt: 'Remember this word: "banana". Confirm you remember it.',
       maxTokens: 20,
     });
-    tests.push(`4. Context Retention: ${contextTest.success && contextTest.text.toLowerCase().includes('banana') ? 'PASS' : 'FAIL'}`);
+    const contextOk = contextTest.success && contextTest.text.toLowerCase().includes('banana');
+    tests.push(`4. Context Retention: ${contextOk ? 'PASS' : 'FAIL'}`);
+    this.onLog(`\u2713 Context retention: ${contextOk ? 'OK' : 'FAIL'}`);
 
     const response = [
       '\uD83D\uDCCA HARNESS DIAGNOSTIC RESULTS',

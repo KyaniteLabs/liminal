@@ -21,9 +21,9 @@ export interface UrlValidationOptions {
 // Default allowed hosts for LLM providers
 const DEFAULT_ALLOWED_HOSTS = [
   'api.openai.com',
-  'api.minimaxi.com',    // Correct MiniMax URL (with 'i')
-  'api.minimaxi.chat',   // Alternative MiniMax URL
-  'api.minimax.io',      // Legacy/incorrect (kept for backward compat)
+  'api.minimaxi.com',    // MiniMax Chinese domestic
+  'api.minimaxi.chat',   // MiniMax alternative
+  'api.minimax.io',       // MiniMax International Token Plan
   'localhost',
   '127.0.0.1',
 ];

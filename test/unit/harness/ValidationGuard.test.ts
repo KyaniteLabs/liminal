@@ -16,7 +16,7 @@ import { ValidationGuard } from '../../../src/harness/tools/ValidationGuard.js';
 // ---------------------------------------------------------------------------
 // Mock fs.readFile for validateContent tests (top-level as required by Vitest)
 // ---------------------------------------------------------------------------
-const mockReadFile = vi.hoisted(() => vi.fn());
+const { mockReadFile } = vi.hoisted(() => ({ mockReadFile: vi.fn() }));
 
 vi.mock('node:fs/promises', () => ({
   default: {

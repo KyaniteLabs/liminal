@@ -134,17 +134,28 @@ export const EventTypes = {
   SWARM_ROUND: 'swarm:round',
   RENDER_SCREENSHOT: 'render:screenshot',
   EXPORT_PROGRESS: 'export:progress',
+  GIT_COMMIT: 'git:commit',
+  GIT_BRANCH: 'git:branch',
+  GIT_INIT: 'git:init',
 } as const;
 
 // ── Singleton EventBus ──
 
 class Bus extends EventEmitter {
   private static MAX_LISTENERS = 100;
+  /** When true, suppress stdout writes to avoid corrupting Ink TUI rendering. */
+  private static _tuiMode = false;
 
   constructor() {
     super();
     this.setMaxListeners(Bus.MAX_LISTENERS);
   }
+
+  /** Enable TUI mode — routes event logs to stderr instead of stdout. */
+  static enableTuiMode(): void { Bus._tuiMode = true; }
+  /** Disable TUI mode — event logs go to stdout again. */
+  static disableTuiMode(): void { Bus._tuiMode = false; }
+  static isTuiMode(): boolean { return Bus._tuiMode; }
 
   /** Emit a typed event to all listeners (and log to console). */
   emit(eventType: string, source: string, data: Record<string, unknown>): boolean;
@@ -178,6 +189,15 @@ class Bus extends EventEmitter {
     return super.off('event', listener);
   }
 
+  // ── TUI mode wrappers (delegate to statics) ──
+
+  /** Enable TUI mode — suppress stdout writes to protect Ink rendering. */
+  enableTuiMode(): void { Bus.enableTuiMode(); }
+  /** Disable TUI mode — event logs go to stdout again. */
+  disableTuiMode(): void { Bus.disableTuiMode(); }
+  /** Check if TUI mode is active. */
+  isTuiMode(): boolean { return Bus.isTuiMode(); }
+
   /** Get recent events (ring buffer for late SSE clients). */
   private recentEvents: BusEvent[] = [];
   private static readonly MAX_RECENT = 200;
@@ -197,12 +217,16 @@ class Bus extends EventEmitter {
     // Store for recent buffer
     this.addRecentEvent(event);
 
+    // Suppress noisy events from console output
+    if (event.type === EventTypes.COMPOST_SCORE) return;
+
+    // In TUI mode, suppress stdout writes entirely — Ink owns the terminal.
+    // TuiDebugger captures events to file for tail -f inspection.
+    if (Bus.isTuiMode()) return;
+
     const ts = event.timestamp.split('T')[1]?.slice(0, 12) ?? event.timestamp;
     const src = event.source.padEnd(12);
     const type = event.type.padEnd(20);
-
-    // Suppress noisy events from console output
-    if (event.type === EventTypes.COMPOST_SCORE) return;
 
     const colorCode = this.getColorForType(event.type);
     const msg = `\x1b[${colorCode}m[${ts}]\x1b[0m \x1b[2m${src}\x1b[0m ${type}`;

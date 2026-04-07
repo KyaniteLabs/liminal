@@ -638,6 +638,8 @@ liminal/
 │   └── utils/              # Utilities
 ├── test/                   # Test suite (1741 tests)
 ├── docs/                   # Documentation (THE BIBLE)
+├── landing-live/           # Public dogfood gallery and recovered April 6 showcase assets
+│   └── recovered-dogfood/  # Stable repo-owned iframe assets copied out of transient worktrees
 ├── harness-tasks/          # M1-M11 task definitions
 └── ~/.liminal/             # User data (created at runtime)
 ```

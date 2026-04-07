@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline'; connect-src 'none'; img-src 'self' data: blob:; media-src 'self';">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>Generated Output</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    </style>
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com cdn.jsdelivr.net unpkg.com; style-src 'unsafe-inline'; img-src 'self' blob:; connect-src 'none'; font-src 'self';">
+</head>
+<body>
+    <main>
+        <script>
+let particles = [];
+const numParticles = 100;
+let gravityOn = false;
+const G = 0.5; // gravity strength
+const MOUSE_ATTRACTION = 0.5; // mouse attraction strength
+const MAX_TRAIL = 20;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  colorMode(HSB, 360, 100, 100, 100);
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function draw() {
+  // fade effect
+  noStroke();
+  fill(0, 0, 0, 20); // a bit of transparency for fade
+  rect(0, 0, width, height);
+
+  // update and draw particles
+  for (let p of particles) {
+    p.applyForce(createVector(0, G)); // gravity if enabled
+    // mouse attraction
+    let mouse = createVector(mouseX, mouseY);
+    let dir = p5.Vector.sub(mouse, p.pos);
+    let d = dir.mag();
+    if (d > 1) {
+      dir.normalize();
+      let forceMag = MOUSE_ATTRACTION * (p.mass) / (d * d); // adjust as needed
+      dir.mult(forceMag);
+      p.applyForce(dir);
+    }
+    p.update();
+    p.checkCollisions();
+    p.display();
+  }
+
+  // UI
+  fill(0);
+  textSize(16);
+  text("Gravity: " + (gravityOn ? "ON" : "OFF"), 20, 30);
+}
+
+function mousePressed() {
+  gravityOn = !gravityOn;
+}
+        </script>
+    </main>
+</body>
+</html>

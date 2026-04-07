@@ -1,13 +1,20 @@
 /**
  * MiniMaxProvider - MiniMax API (M2.7, M2.5, Text-01)
  *
- * MiniMax provides OpenAI-compatible endpoints but has some specific requirements:
- * - Correct base URL: https://api.minimax.io/v1 (International Token Plan) or https://api.minimaxi.com/v1 (Chinese domestic)
- * - Model names: MiniMax-M2.7, MiniMax-M2.5, MiniMax-Text-01
- * - Returns reasoning_content for thinking models
- * - May return empty content if prompt format is incorrect
+ * Dual-mode provider supporting both API compatibility modes:
+ *   1. OpenAI-compatible: api.minimax.io/v1 — /chat/completions, reasoning_content
+ *   2. Anthropic-compatible: api.minimax.io/anthropic — /v1/messages, native thinking blocks
  *
- * @see https://www.minimaxi.com/document
+ * Mode is auto-detected from the baseUrl path:
+ *   - Contains "/anthropic" → Anthropic Messages API format
+ *   - Otherwise → OpenAI chat completions format
+ *
+ * Key differences between modes:
+ *   - Auth: Both use Bearer token (MiniMax does NOT use x-api-key)
+ *   - Thinking: OpenAI mode uses reasoning_content; Anthropic mode uses thinking blocks
+ *   - Streaming: OpenAI mode uses SSE; Anthropic mode uses Anthropic SSE format
+ *
+ * @see https://platform.minimax.io/docs/guides/text-ai-coding-tools
  */
 
 import type {
@@ -20,18 +27,45 @@ import type {
 type ToolCallResult = import('../ProviderTypes.js').ToolCallResult;
 import { BaseProvider } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
-import { normalizeThinking } from '../ThinkingNormalizer.js';
-import { parseOpenAIStream } from '../StreamParser.js';
+import { normalizeThinking, extractAnthropicThinking } from '../ThinkingNormalizer.js';
+import { parseOpenAIStream, parseAnthropicStream } from '../StreamParser.js';
 import { Logger } from '../../utils/Logger.js';
 
 export class MiniMaxProvider extends BaseProvider {
   readonly name = 'minimax';
 
+  /** True when baseUrl contains "/anthropic" — use Anthropic Messages API format */
+  private get isAnthropicMode(): boolean {
+    return this.config.baseUrl.toLowerCase().includes('/anthropic');
+  }
+
   get capabilities(): ProviderCapabilities {
-    return CapabilityRegistry.getCapabilities(this.config.model);
+    const caps = CapabilityRegistry.getCapabilities(this.config.model);
+    // Anthropic-compatible endpoint supports tool calling
+    if (this.isAnthropicMode) {
+      return { ...caps, toolUse: true };
+    }
+    return caps;
   }
 
   async generate(req: ProviderRequest): Promise<ProviderResponse> {
+    if (this.isAnthropicMode) {
+      return this.generateAnthropic(req);
+    }
+    return this.generateOpenAI(req);
+  }
+
+  async *stream(req: ProviderRequest): AsyncGenerator<StreamEvent> {
+    if (this.isAnthropicMode) {
+      yield* this.streamAnthropic(req);
+    } else {
+      yield* this.streamOpenAI(req);
+    }
+  }
+
+  // ── OpenAI-compatible mode ──
+
+  private async generateOpenAI(req: ProviderRequest): Promise<ProviderResponse> {
     const url = `${this.config.baseUrl}/chat/completions`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -189,7 +223,103 @@ export class MiniMaxProvider extends BaseProvider {
     }
   }
 
-  async *stream(req: ProviderRequest): AsyncGenerator<StreamEvent> {
+  // ── Anthropic-compatible mode ──
+
+  private async generateAnthropic(req: ProviderRequest): Promise<ProviderResponse> {
+    // MiniMax Anthropic endpoint: baseUrl already contains /anthropic
+    const url = `${this.config.baseUrl}/v1/messages`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.config.apiKey || ''}`,
+    };
+
+    const body: Record<string, unknown> = {
+      model: this.config.model,
+      max_tokens: req.maxTokens ?? this.config.maxTokens ?? 4096,
+      messages: [
+        { role: 'user', content: req.userPrompt },
+      ],
+    };
+
+    // System prompt as top-level field (Anthropic Messages API convention)
+    if (req.systemPrompt) {
+      body.system = req.systemPrompt;
+    }
+
+    // Temperature — omit when thinking is enabled (Anthropic restriction)
+    const caps = CapabilityRegistry.getCapabilities(this.config.model);
+    const thinkingEnabled = req.thinking?.enabled && caps.thinking;
+    if (!thinkingEnabled) {
+      body.temperature = req.temperature ?? this.config.temperature ?? 0.7;
+    }
+
+    // Extended thinking
+    if (thinkingEnabled) {
+      body.thinking = {
+        type: 'enabled',
+        budget_tokens: req.thinking?.budgetTokens || 8000,
+      };
+    }
+
+    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+
+    Logger.debug('MiniMaxProvider', `Anthropic-mode request to ${url} with model ${this.config.model}`);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        Logger.error('MiniMaxProvider', `Anthropic-mode API error ${response.status}: ${errorText}`);
+        return {
+          content: '',
+          model: this.config.model,
+          success: false,
+          error: `MiniMax Anthropic API error ${response.status}: ${errorText}`,
+        };
+      }
+
+      const data = await response.json();
+
+      // Extract thinking from content blocks (same as AnthropicProvider)
+      const thinking = extractAnthropicThinking(data);
+      const contentBlocks = data.content as Array<{ type: string; text?: string }> | undefined;
+      const textBlocks = contentBlocks?.filter(b => b.type === 'text') || [];
+      const content = textBlocks.map(b => b.text || '').join('');
+
+      const usage = data.usage as { input_tokens?: number; output_tokens?: number } | undefined;
+
+      return {
+        content,
+        thinking: thinking.source !== 'none' ? thinking : undefined,
+        model: data.model || this.config.model,
+        success: content.length > 0,
+        usage: usage ? {
+          inputTokens: usage.input_tokens || 0,
+          outputTokens: usage.output_tokens || 0,
+        } : undefined,
+      };
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      Logger.error('MiniMaxProvider', `Anthropic-mode request failed: ${errorMsg}`);
+      return {
+        content: '',
+        model: this.config.model,
+        success: false,
+        error: `MiniMax Anthropic request failed: ${errorMsg}`,
+        finishReason: 'error',
+      };
+    }
+  }
+
+  // ── Streaming ──
+
+  private async *streamOpenAI(req: ProviderRequest): AsyncGenerator<StreamEvent> {
     const url = `${this.config.baseUrl}/chat/completions`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -232,6 +362,67 @@ export class MiniMaxProvider extends BaseProvider {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       yield { type: 'error', error: `MiniMax stream failed: ${errorMsg}` };
+    }
+  }
+
+  private async *streamAnthropic(req: ProviderRequest): AsyncGenerator<StreamEvent> {
+    const url = `${this.config.baseUrl}/v1/messages`;
+    const headers: Record<string, string> = {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${this.config.apiKey || ''}`,
+    };
+
+    const body: Record<string, unknown> = {
+      model: this.config.model,
+      max_tokens: req.maxTokens ?? this.config.maxTokens ?? 4096,
+      messages: [
+        { role: 'user', content: req.userPrompt },
+      ],
+      stream: true,
+    };
+
+    if (req.systemPrompt) {
+      body.system = req.systemPrompt;
+    }
+
+    const caps = CapabilityRegistry.getCapabilities(this.config.model);
+    const thinkingEnabled = req.thinking?.enabled && caps.thinking;
+    if (!thinkingEnabled) {
+      body.temperature = req.temperature ?? this.config.temperature ?? 0.7;
+    }
+
+    if (thinkingEnabled) {
+      body.thinking = {
+        type: 'enabled',
+        budget_tokens: req.thinking?.budgetTokens || 8000,
+      };
+    }
+
+    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
+
+      if (!response.ok) {
+        yield { type: 'error', error: `MiniMax Anthropic API error ${response.status}` };
+        return;
+      }
+
+      if (!response.body) {
+        yield { type: 'error', error: 'No response body' };
+        return;
+      }
+
+      // MiniMax Anthropic mode uses Anthropic SSE format
+      yield* parseAnthropicStream(response.body);
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      yield { type: 'error', error: `MiniMax Anthropic stream failed: ${errorMsg}` };
     }
   }
 }

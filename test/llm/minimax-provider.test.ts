@@ -240,8 +240,8 @@ describe('MiniMaxProvider', () => {
 
       expect(result.success).toBe(true);
       expect(result.content).toBe('function setup() {}');
-      expect(result.thinking).toBeDefined();
       expect(result.thinking?.text).toBe('Let me create a simple setup function');
+      expect(result.thinking?.source).toBe('reasoning_content');
     });
   });
 
@@ -304,7 +304,7 @@ describe('MiniMaxProvider', () => {
       }
 
       const errorEvent = events.find(e => e.type === 'error');
-      expect(errorEvent).toBeDefined();
+      expect(errorEvent?.type).toBe('error');
       expect(errorEvent?.error).toContain('500');
     });
   });

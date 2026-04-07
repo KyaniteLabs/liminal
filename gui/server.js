@@ -9,9 +9,11 @@ import { fileURLToPath } from 'url';
 import { loadConfig, loadProjectConfig, getEffectiveConfig, saveConfig } from '../dist/config/ConfigLoader.js';
 import { Gallery } from '../dist/gallery/Gallery.js';
 import { eventBus } from '../dist/core/EventBus.js';
+import { TuiBridgeService } from '../dist/tui-bridge/TuiBridgeService.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
+const homeDir = process.env.HOME || '';
 
 const DEFAULTS = {
   loop: { maxIterations: 20, timeoutMinutes: 30 },
@@ -19,24 +21,167 @@ const DEFAULTS = {
   galleryPath: 'gallery',
 };
 
-// In-memory store for "Run in sandbox" so GET /preview can serve the code
-const sandboxStore = new Map();
+/**
+ * Validate a gallery path to prevent path traversal attacks.
+ * Rejects paths containing '..', rejects absolute paths outside cwd/HOME,
+ * and resolves relative paths against cwd.
+ * @param {string} galleryPath
+ * @returns {string} resolved absolute path
+ * @throws {Error} on invalid path
+ */
+function validateGalleryPath(galleryPath) {
+  if (!galleryPath || typeof galleryPath !== 'string') {
+    throw new Error('Invalid gallery path');
+  }
+  if (galleryPath.includes('..')) {
+    throw new Error('Invalid gallery path');
+  }
+  const resolved = path.resolve(cwd, galleryPath);
+  if (path.isAbsolute(galleryPath)) {
+    if (!resolved.startsWith(cwd) && !resolved.startsWith(homeDir)) {
+      throw new Error('Invalid gallery path');
+    }
+  }
+  return resolved;
+}
+
+// In-memory store for "Run in preview" so GET /preview can serve the code
+const previewStore = new Map();
+const tuiBridge = new TuiBridgeService();
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
 
 /**
  * @param {string} [configPath] - Override path to ~/.atelier/config.json (e.g. for tests)
- * @param {number} [port] - Backend port (for sandbox preview URL in response)
+ * @param {number} [port] - Backend port (for preview URL in response)
  * @returns {import('express').Express}
  */
 export function createApp(configPath, port = 5174) {
   const app = express();
-  app.use(express.json());
+  app.use(express.json({ limit: '1mb' }));
+
+  // --- B1: Auth middleware for sensitive POST routes ---
+  const guiToken = process.env.LIMINAL_GUI_TOKEN;
+  if (guiToken) {
+    app.use((req, _res, next) => {
+      if (req.method !== 'POST') return next();
+      // /api/preview/run is exempt (low-sensitivity, iframe-driven)
+      if (req.path === '/api/preview/run') return next();
+      const authHeader = req.headers['authorization'];
+      const bearerToken = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
+      const queryToken = typeof req.query?.token === 'string' ? req.query.token : null;
+      const provided = bearerToken || queryToken;
+      if (provided !== guiToken) {
+        _res.status(401).json({ error: 'Unauthorized' });
+        return;
+      }
+      next();
+    });
+  }
+
+  // --- B2: Rate limiter for POST routes (30 req/min per IP) ---
+  const rateLimitMap = new Map();
+  const RATE_LIMIT_WINDOW_MS = 60_000;
+  const RATE_LIMIT_MAX = 30;
+
+  setInterval(() => {
+    const now = Date.now();
+    for (const [ip, entry] of rateLimitMap) {
+      if (now >= entry.resetAt) rateLimitMap.delete(ip);
+    }
+  }, 60_000).unref();
+
+  app.use((req, _res, next) => {
+    if (req.method !== 'POST') return next();
+    const ip = req.ip || req.socket?.remoteAddress || 'unknown';
+    const now = Date.now();
+    let entry = rateLimitMap.get(ip);
+    if (!entry || now >= entry.resetAt) {
+      entry = { count: 0, resetAt: now + RATE_LIMIT_WINDOW_MS };
+      rateLimitMap.set(ip, entry);
+    }
+    entry.count++;
+    if (entry.count > RATE_LIMIT_MAX) {
+      _res.status(429).json({ error: 'Rate limited' });
+      return;
+    }
+    next();
+  });
 
   const getConfigPath = () =>
     configPath || process.env.LIMINAL_CONFIG_PATH || process.env.ATELIER_CONFIG_PATH || path.join(process.env.HOME || '', '.liminal', 'config.json');
 
   const backendOrigin = `http://localhost:${port}`;
+
+  app.post('/api/tui/session', (_req, res) => {
+    try {
+      const status = tuiBridge.createSession();
+      res.status(200).json(status);
+    } catch (err) {
+      res.status(500).json({ error: err.message || String(err) });
+    }
+  });
+
+  app.get('/api/tui/session/:id/status', (req, res) => {
+    try {
+      res.status(200).json(tuiBridge.getStatus(req.params.id));
+    } catch (err) {
+      res.status(404).json({ error: err.message || String(err) });
+    }
+  });
+
+  app.post('/api/tui/session/:id/input', async (req, res) => {
+    try {
+      const result = await tuiBridge.submitInput(req.params.id, {
+        mode: req.body?.mode || 'chat',
+        text: req.body?.text || '',
+        clientIntent: req.body?.clientIntent,
+      });
+      res.status(200).json(result);
+    } catch (err) {
+      res.status(400).json({ error: err.message || String(err) });
+    }
+  });
+
+  app.post('/api/tui/session/:id/actions/:actionId/confirm', async (req, res) => {
+    try {
+      await tuiBridge.confirmAction(req.params.id, req.params.actionId);
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message || String(err) });
+    }
+  });
+
+  app.post('/api/tui/session/:id/actions/:actionId/cancel', (req, res) => {
+    try {
+      tuiBridge.cancelAction(req.params.id, req.params.actionId);
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message || String(err) });
+    }
+  });
+
+  app.get('/api/tui/session/:id/events', (req, res) => {
+    try {
+      const sessionId = req.params.id;
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+      res.flushHeaders();
+
+      for (const event of tuiBridge.getEvents(sessionId)) {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      }
+
+      const unsubscribe = tuiBridge.subscribe(sessionId, (event) => {
+        res.write(`data: ${JSON.stringify(event)}\n\n`);
+      });
+
+      req.on('close', () => unsubscribe());
+    } catch (err) {
+      res.status(400).json({ error: err.message || String(err) });
+    }
+  });
 
   app.get('/api/config', async (_req, res) => {
     try {
@@ -59,12 +204,11 @@ export function createApp(configPath, port = 5174) {
           provider: effective.provider,
           baseUrl: effective.baseUrl ?? '',
           model: effective.model,
-          apiKey: effective.apiKey ?? '',
+          apiKeyStored: Boolean(effective.apiKey),
         },
         loop,
         creative,
         galleryPath,
-        userConfig,
       });
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -77,7 +221,8 @@ export function createApp(configPath, port = 5174) {
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(process.cwd());
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
-      const resolvedPath = path.isAbsolute(galleryPath) ? galleryPath : path.join(process.cwd(), galleryPath);
+      let resolvedPath;
+      try { resolvedPath = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedPath);
       const projects = await gallery.listProjectDirs();
       res.json({ projects });
@@ -92,7 +237,8 @@ export function createApp(configPath, port = 5174) {
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(process.cwd());
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
-      const resolvedPath = path.isAbsolute(galleryPath) ? galleryPath : path.join(process.cwd(), galleryPath);
+      let resolvedPath;
+      try { resolvedPath = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedPath);
       const projectDirName = decodeURIComponent(req.params.project || '');
       const iterations = await gallery.loadHistoryFromDir(projectDirName);
@@ -125,12 +271,12 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
-  // Run in sandbox: store code and return URL to preview it
-  app.post('/api/sandbox/run', (req, res) => {
+  // Run in preview: store code and return URL to preview it
+  app.post('/api/preview/run', (req, res) => {
     try {
       const code = typeof req.body?.code === 'string' ? req.body.code : '';
       const version = Number.isInteger(req.body?.version) && req.body.version > 0 ? req.body.version : 1;
-      sandboxStore.set(version, code);
+      previewStore.set(version, code);
       const url = `${backendOrigin}/preview?version=${version}`;
       res.status(200).json({ url });
     } catch (err) {
@@ -141,7 +287,7 @@ export function createApp(configPath, port = 5174) {
   // Serve preview page (p5 + stored code) so iframe can show the sketch
   app.get('/preview', (req, res) => {
     const version = Math.max(1, parseInt(String(req.query.version), 10) || 1);
-    const code = sandboxStore.get(version) || 'function setup(){ createCanvas(400,400); } function draw(){ background(100); }';
+    const code = previewStore.get(version) || 'function setup(){ createCanvas(400,400); } function draw(){ background(100); }';
     const escaped = code.replace(/<\/script>/gi, '<\\/script>');
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -154,10 +300,38 @@ export function createApp(configPath, port = 5174) {
   <script src="${P5_CDN}"></script>
 </head>
 <body>
-  <script>${escaped}</script>
+  <script>
+    // Wave 3 isolation: strip network access before running generated code
+    window.fetch = undefined;
+    window.XMLHttpRequest = undefined;
+    window.WebSocket = undefined;
+    window.EventSource = undefined;
+    window.open = undefined;
+    try {
+      ${escaped}
+    } catch(e) {
+      document.body.innerHTML = '<pre style="color:#f66;padding:12px;font-family:monospace">Preview error: ' + e.message + '</pre>';
+    }
+  </script>
 </body>
 </html>`;
     res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    // Wave 3 isolation: CSP + security headers to sandbox the preview
+    res.setHeader('Content-Security-Policy', [
+      "default-src 'none'",
+      "script-src 'unsafe-inline' https://cdnjs.cloudflare.com",  // p5 CDN + inline generated code
+      "style-src 'unsafe-inline'",
+      "img-src * data: blob:",
+      "media-src * data: blob:",
+      "connect-src 'none'",
+      "font-src 'none'",
+      "frame-src 'none'",
+      "object-src 'none'",
+      "base-uri 'none'",
+      "form-action 'none'",
+    ].join('; '));
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
     res.send(html);
   });
 
@@ -174,7 +348,8 @@ export function createApp(configPath, port = 5174) {
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
-      const resolvedGallery = path.isAbsolute(galleryPath) ? galleryPath : path.join(cwd, galleryPath);
+      let resolvedGallery;
+      try { resolvedGallery = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const outputDir = path.join(cwd, 'output');
       const projectName = req.body?.project || `gui-${Date.now()}`;
       const maxIterations = Math.min(20, Math.max(1, parseInt(req.body?.maxIterations, 10) || 3));
@@ -279,7 +454,8 @@ export function createApp(configPath, port = 5174) {
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
-      const resolvedGallery = path.isAbsolute(galleryPath) ? galleryPath : path.join(cwd, galleryPath);
+      let resolvedGallery;
+      try { resolvedGallery = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedGallery);
       const history = await gallery.loadHistoryFromDir(dirName);
       const iterA = history.find((i) => i.version === versionA);
@@ -317,7 +493,8 @@ export function createApp(configPath, port = 5174) {
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
-      const resolvedGallery = path.isAbsolute(galleryPath) ? galleryPath : path.join(cwd, galleryPath);
+      let resolvedGallery;
+      try { resolvedGallery = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedGallery);
       const history = await gallery.loadHistoryFromDir(dirName);
       const nextVersion = history.length === 0 ? 1 : Math.max(...history.map((i) => i.version)) + 1;
@@ -348,7 +525,8 @@ export function createApp(configPath, port = 5174) {
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
-      const resolvedGallery = path.isAbsolute(galleryPath) ? galleryPath : path.join(cwd, galleryPath);
+      let resolvedGallery;
+      try { resolvedGallery = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedGallery);
       const history = await gallery.loadHistoryFromDir(dirName);
       const iter = history.find((i) => i.version === version);
@@ -479,7 +657,8 @@ export function createApp(configPath, port = 5174) {
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(cwd);
       const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
-      const resolvedGallery = path.isAbsolute(galleryPath) ? galleryPath : path.join(cwd, galleryPath);
+      let resolvedGallery;
+      try { resolvedGallery = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedGallery);
       const history = await gallery.loadHistoryFromDir(dirName);
       const iter = history.find((i) => i.version === version);

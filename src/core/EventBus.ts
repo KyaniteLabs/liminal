@@ -7,6 +7,7 @@
  */
 
 import { EventEmitter } from 'node:events';
+import { sanitizeTerminalText } from '../tui/sanitizeTerminalText.js';
 
 // ── Event schema ──
 
@@ -45,7 +46,8 @@ export interface ProcessProgressData {
 export interface LLMRequestData {
   provider: string;
   model: string;
-  promptPreview?: string;
+  /** Opaque request ID for correlating request/response events */
+  requestId?: string;
 }
 
 export interface LLMResponseData {
@@ -220,6 +222,9 @@ class Bus extends EventEmitter {
     // Suppress noisy events from console output
     if (event.type === EventTypes.COMPOST_SCORE) return;
 
+    // Test mode should stay quiet by default.
+    if (process.env.VITEST || process.env.NODE_ENV === 'test') return;
+
     // In TUI mode, suppress stdout writes entirely — Ink owns the terminal.
     // TuiDebugger captures events to file for tail -f inspection.
     if (Bus.isTuiMode()) return;
@@ -229,24 +234,24 @@ class Bus extends EventEmitter {
     const type = event.type.padEnd(20);
 
     const colorCode = this.getColorForType(event.type);
-    const msg = `\x1b[${colorCode}m[${ts}]\x1b[0m \x1b[2m${src}\x1b[0m ${type}`;
+    const msg = sanitizeTerminalText(`\x1b[${colorCode}m[${ts}]\x1b[0m \x1b[2m${src}\x1b[0m ${type}`, { maxLength: 160, singleLine: true });
 
     if (event.type === EventTypes.PROCESS_PROGRESS) {
       const d = event.data as unknown as ProcessProgressData;
       const bar = this.progressBar(d.current, d.total, 20);
-      process.stdout.write(`${msg} ${bar} ${d.current}/${d.total} ${d.stage}\x1b[0K\r\n`);
+      process.stdout.write(`${sanitizeTerminalText(`${msg} ${bar} ${d.current}/${d.total} ${d.stage}`, { maxLength: 180, singleLine: true })}\n`);
     } else if (event.type === EventTypes.LLM_RESPONSE) {
       const d = event.data as unknown as LLMResponseData;
       const status = d.success ? 'ok' : `err: ${d.error}`;
-      process.stdout.write(`${msg} ${d.provider}/${d.model} ${d.latencyMs}ms ${status}\x1b[0K\r\n`);
+      process.stdout.write(`${sanitizeTerminalText(`${msg} ${d.provider}/${d.model} ${d.latencyMs}ms ${status}`, { maxLength: 180, singleLine: true })}\n`);
     } else if (event.type === EventTypes.LOOP_ITERATION) {
       const d = event.data as unknown as LoopIterationData;
-      process.stdout.write(`${msg} iter=${d.iteration} score=${d.score.toFixed(2)}${d.promiseDetected ? ' PROMISE' : ''}\x1b[0K\r\n`);
+      process.stdout.write(`${sanitizeTerminalText(`${msg} iter=${d.iteration} score=${d.score.toFixed(2)}${d.promiseDetected ? ' PROMISE' : ''}`, { maxLength: 180, singleLine: true })}\n`);
     } else {
       // Generic: show a summary message from data
       const summary = (event.data as Record<string, unknown>).message ?? '';
       if (summary) {
-        process.stdout.write(`${msg} ${String(summary)}\x1b[0K\r\n`);
+        process.stdout.write(`${sanitizeTerminalText(`${msg} ${String(summary)}`, { maxLength: 180, singleLine: true })}\n`);
       }
     }
   }

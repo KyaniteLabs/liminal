@@ -111,6 +111,21 @@ describe('HarnessAgent', () => {
     expect(session.endTime).toBeDefined();
   });
 
+  it('executeTask rejects unapproved tasks before any tool runs', async () => {
+    const agent = new HarnessAgent(mockLLM as any);
+
+    await expect(agent.executeTask({
+      id: 't-unapproved',
+      title: 'Dangerous task',
+      description: 'Mutate files',
+      approved: false,
+    })).rejects.toThrow(/approved/i);
+
+    expect(mockReadFile.execute).not.toHaveBeenCalled();
+    expect(mockApplyEdit.execute).not.toHaveBeenCalled();
+    expect(mockRunBuild.execute).not.toHaveBeenCalled();
+  });
+
   it('executeTask records steps for targetFile + search/replace', async () => {
     const agent = new HarnessAgent(mockLLM as any);
     const session = await agent.executeTask({

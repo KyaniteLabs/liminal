@@ -111,6 +111,10 @@ export class HarnessAgent {
     timeoutMs?: number;
     autoRollback?: boolean;
   } = {}): Promise<AgentSession> {
+    if (task.approved !== true) {
+      throw new Error(`Task "${task.id}" must be explicitly approved before execution.`);
+    }
+
     const { maxSteps = 10, timeoutMs = 300000, autoRollback = true } = options;
     
     const session: AgentSession = {

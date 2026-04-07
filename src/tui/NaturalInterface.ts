@@ -14,6 +14,25 @@ import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
 import { Logger } from '../utils/Logger.js';
+import { PendingActionStore, type PendingActionRecord } from './PendingActionStore.js';
+
+/**
+ * Strip dangerous terminal control sequences from untrusted output.
+ * Allows CSI sequences (colors, cursor movement) but blocks:
+ * - OSC sequences (title set, clipboard access)
+ * - Full terminal reset (\x1Bc)
+ * - Program function keys and device control sequences
+ */
+export function sanitizeTerminalOutput(text: string): string {
+  return text
+    .replace(/\x1Bc/g, '')                         // terminal reset
+    .replace(/\x1B\][^\x07\x1B]*[\x07\x1B]/g, '')  // OSC sequences
+    .replace(/\x1B\[\d*[A-Z]/g, (m) => {           // CSI sequences — allow only safe ones
+      const cmd = m.replace(/\x1B\[/, '');
+      const letter = cmd.charAt(cmd.length - 1);
+      return 'ABCDEFGHJKmSs'.includes(letter) ? m : '';  // keep cursor/color, strip device/private
+    });
+}
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -68,6 +87,7 @@ export class NaturalInterface {
   private llmAgent: LLMModeAgent;
   private llmClient: LLMClient;
   private tasks: AgentTask[];
+  private pendingActions = new PendingActionStore();
   // Callbacks for UI updates
   private onStatus: (msg: string) => void;
   private onLog: (msg: string) => void;
@@ -182,11 +202,17 @@ export class NaturalInterface {
       case 'preview':
         return this.handlePreview(args[0] || '');
 
+      case 'confirm':
+        return this.handleConfirm(args[0] || '');
+
+      case 'cancel':
+        return this.handleCancel(args[0] || '');
+
       case 'help':
         return this.handleHelp();
 
       case 'clear':
-        return { type: 'command', response: '\x1Bc', shouldContinue: true };
+        return { type: 'command', response: '\x1B[2J\x1B[H', shouldContinue: true };  // CSI clear screen + cursor home only
 
       case 'exit':
       case 'quit':
@@ -242,8 +268,19 @@ export class NaturalInterface {
         title: input.slice(0, 50),
         description: input,
         maxSteps: 15,
-        approved: true,
+        approved: false, // Wave 1 containment: require explicit confirmation
       };
+
+      if (!task.approved) {
+        const pending = this.pendingActions.create('llm', task);
+        this.onStatus(`Task created — awaiting approval. Use /confirm ${pending.id} to proceed.`);
+        this.addMessage('system', `Task "${task.title}" created but not auto-approved. Confirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`);
+        return {
+          type: 'agent',
+          response: `Task "${task.title}" created and awaiting approval.\nReview required before mutation.\nConfirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`,
+          shouldContinue: true,
+        };
+      }
 
       const session = await this.llmAgent.executeTask(task);
 
@@ -274,7 +311,7 @@ export class NaturalInterface {
 
       return {
         type: 'agent',
-        response,
+        response: sanitizeTerminalOutput(response),
         actionTaken: `Executed ${session.stepCount} steps`,
         shouldContinue: true,
       };
@@ -283,7 +320,7 @@ export class NaturalInterface {
       const msg = formatError('Agent', error);
       return {
         type: 'agent',
-        response: `\u274C ${msg}`,
+        response: sanitizeTerminalOutput(`\u274C ${msg}`),
         shouldContinue: true,
       };
     }
@@ -327,12 +364,60 @@ export class NaturalInterface {
       return { type: 'command', response: `Task ${taskId} not found`, shouldContinue: true };
     }
 
-    this.onStatus(`Running ${taskId}...`);
-    const session = await this.harnessAgent.executeTask(task);
-
+    const pending = this.pendingActions.create('structured', task);
+    this.onStatus(`Task ${taskId} queued for review. Confirm with /confirm ${pending.id}.`);
+    this.addMessage('system', `Structured task ${taskId} queued for approval as ${pending.id}.`);
     return {
       type: 'command',
-      response: `Task ${taskId}: ${session.status.toUpperCase()}`,
+      response: `Task ${taskId} is awaiting approval.\nConfirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`,
+      shouldContinue: true,
+    };
+  }
+
+  private async handleConfirm(actionId: string): Promise<NaturalInputResult> {
+    if (!actionId) {
+      const pending = this.pendingActions.list();
+      const response = pending.length === 0
+        ? 'No pending actions to confirm.'
+        : `Pending actions:\n${pending.map(a => `  ${a.id}  ${a.title}`).join('\n')}`;
+      return { type: 'command', response, shouldContinue: true };
+    }
+
+    const record = this.pendingActions.confirm(actionId);
+    if (!record) {
+      return { type: 'command', response: `Pending action ${actionId} not found.`, shouldContinue: true };
+    }
+
+    if (record.kind === 'structured') {
+      this.onStatus(`Running approved task ${record.task.id}...`);
+      const session = await this.harnessAgent.executeTask({ ...(record.task as AgentTask), approved: true });
+      return {
+        type: 'command',
+        response: `Task ${(record.task as AgentTask).id}: ${session.status.toUpperCase()}`,
+        shouldContinue: true,
+      };
+    }
+
+    const session = await this.llmAgent.executeTask({ ...(record.task as LLMTask), approved: true });
+    const statusEmoji = session.status === 'success' ? '\u2705' :
+                       session.status === 'rolled_back' ? '\u23EE\uFE0F' : '\u274C';
+    return {
+      type: 'agent',
+      response: `${statusEmoji} Task ${session.status}`,
+      actionTaken: `Executed ${session.stepCount} steps`,
+      shouldContinue: true,
+    };
+  }
+
+  private handleCancel(actionId: string): NaturalInputResult {
+    if (!actionId) {
+      return { type: 'command', response: 'Please specify a pending action ID. Usage: /cancel <pending-id>', shouldContinue: true };
+    }
+
+    const cancelled = this.pendingActions.cancel(actionId);
+    return {
+      type: 'command',
+      response: cancelled ? `Pending action ${actionId} cancelled.` : `Pending action ${actionId} not found.`,
       shouldContinue: true,
     };
   }
@@ -455,5 +540,9 @@ export class NaturalInterface {
 
   setTasks(tasks: AgentTask[]): void {
     this.tasks = tasks;
+  }
+
+  getPendingActions(): PendingActionRecord[] {
+    return this.pendingActions.list();
   }
 }

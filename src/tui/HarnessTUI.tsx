@@ -25,6 +25,7 @@ import { NaturalInterface } from './NaturalInterface.js';
 import { audioPlayer } from './preview/index.js';
 import { tuiDebugger } from './TuiDebugger.js';
 import { eventBus } from '../core/EventBus.js';
+import { sanitizeTerminalText } from './sanitizeTerminalText.js';
 
 const C = {
   primary: 'cyan',
@@ -232,7 +233,7 @@ function App() {
   
   // Add to debug log (ref + state for performance, also feeds TuiDebugger)
   const addDebug = useCallback((msg: string) => {
-    const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
+    const line = sanitizeTerminalText(`[${new Date().toLocaleTimeString()}] ${msg}`, { maxLength: 180, singleLine: true });
     debugLogRef.current = [...debugLogRef.current.slice(-50), line];
     setDebugLog(debugLogRef.current);
     // Also push to TuiDebugger for file-backed logging
@@ -309,7 +310,7 @@ function App() {
       const loaded: AgentTask[] = [];
       for (const f of files.filter(f => f.endsWith('.json'))) {
         const content = await fs.readFile(path.join(dir, f), 'utf-8');
-        loaded.push({ ...JSON.parse(content), approved: true });
+        loaded.push({ ...JSON.parse(content), approved: false }); // Wave 1 containment: loaded tasks are NOT auto-approved
       }
       // Update the interface's tasks
       ni.setTasks(loaded);

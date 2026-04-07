@@ -1,4 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // ---------------------------------------------------------------------------
 // Mock boundary deps: ModelTier functions and fs/promises readFile.
@@ -36,6 +38,8 @@ vi.mock('../../../src/utils/Logger.js', () => ({
 
 import { PromptBuilder } from '../../../src/llm/PromptBuilder.js';
 import type { PromptContext } from '../../../src/llm/PromptBuilder.js';
+
+const PROJECT_ROOT = path.resolve(path.dirname(fileURLToPath(new URL('../../../src/llm/PromptBuilder.ts', import.meta.url))), '../..');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -435,6 +439,21 @@ describe('PromptBuilder', () => {
       expect(ctx.soul).toBe('Custom soul');
       expect(ctx.rules).toBe('Custom rules');
       expect(ctx.domainDocs).toBe('p5 domain docs');
+    });
+
+    it('uses repo-relative safe paths instead of process.cwd()', async () => {
+      mockReadFile.mockRejectedValue(new Error('ENOENT'));
+      const cwdSpy = vi.spyOn(process, 'cwd').mockReturnValue('/tmp/evil-cwd');
+
+      await PromptBuilder.loadContext('p5', 'Draw a circle');
+
+      expect(mockReadFile).toHaveBeenCalledWith(path.join(PROJECT_ROOT, 'SOUL.md'), 'utf-8');
+      expect(mockReadFile).toHaveBeenCalledWith(path.join(PROJECT_ROOT, 'PROJECT_RULES.md'), 'utf-8');
+      expect(mockReadFile).toHaveBeenCalledWith(path.join(PROJECT_ROOT, 'docs', 'domains', 'p5.md'), 'utf-8');
+
+      const readPaths = mockReadFile.mock.calls.map(call => String(call[0]));
+      expect(readPaths.some(p => p.startsWith('/tmp/evil-cwd'))).toBe(false);
+      cwdSpy.mockRestore();
     });
   });
 });

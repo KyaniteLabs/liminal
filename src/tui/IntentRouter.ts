@@ -18,9 +18,8 @@ import { Logger } from '../utils/Logger.js';
 export async function loadSoul(): Promise<string> {
   const candidates = [
     // 1. Project root (relative to this source file)
+    // CWD-based path removed — Wave 1 containment: no loading personality from arbitrary directories
     path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../SOUL.md'),
-    // 2. Current working directory
-    path.join(process.cwd(), 'SOUL.md'),
   ];
   for (const soulPath of candidates) {
     try {

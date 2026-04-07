@@ -6,7 +6,7 @@ export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './er
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { PromptLibrary } from '../prompts/index.js';
 import { RetryManager } from './RetryManager.js';
-import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
+import { TIMEOUT_OLLAMA_MS, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
@@ -505,10 +505,10 @@ export class LLMClient {
         return { code: cached, success: true, fromCache: true };
       }
 
+      // Wave 1 containment: prompt content removed from telemetry
       eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', {
         provider: this.detectProvider(),
         model: this.config.model,
-        promptPreview: userPrompt.slice(0, TRUNCATE_SHORT)
       });
 
       const result = await RetryManager.executeWithRetry(async () => {
@@ -675,11 +675,11 @@ Rules:
     const startTime = Date.now();
 
     try {
+      // Wave 1 containment: prompt content removed from telemetry
       eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', {
         provider: this.detectProvider(),
         model: this.config.model,
         method: 'complete',
-        promptPreview: systemPrompt?.slice(0, 100),
       });
 
       const result = await RetryManager.executeWithRetry(async () => {
@@ -928,11 +928,11 @@ Rules:
 
     const startTime = Date.now();
 
+    // Wave 1 containment: prompt content removed from telemetry
     eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', {
       provider: this.detectProvider(),
       model: this.config.model,
       method: 'streamWithThinking',
-      promptPreview: userPrompt.slice(0, 100),
     });
 
     const provider = this.getProvider();

@@ -42,19 +42,6 @@ interface NaturalInputResult {
 }
 
 /**
- * Command registry for natural language matching
- */
-const COMMAND_PATTERNS: Record<string, RegExp[]> = {
-  status: [/\b(status|health|state)\b/i, /how are you/i, /what's (?:the )?status/i],
-  tasks: [/\b(tasks?|todo|pending)\b/i, /what (?:needs|remains) to be done/i],
-  run: [/\brun\s+(\w+)/i, /execute\s+(?:task\s+)?(\w+)/i],
-  preview: [/\bpreview\s+(\S+)/i, /show\s+(?:me\s+)?(?:the\s+)?(?:file\s+)?(\S+)/i],
-  help: [/\bhelp\b/i, /what can you do/i, /commands/i, /\?$/],
-  exit: [/\b(exit|quit|bye|goodbye)\b/i, /^q$/i],
-  clear: [/\bclear\b/i, /clean (?:the )?screen/i],
-};
-
-/**
  * Agent patterns - indicate user wants code changes
  */
 const AGENT_PATTERNS = [
@@ -135,41 +122,18 @@ export class NaturalInterface {
     // Add user message to history
     this.addMessage('user', trimmed);
 
-    // 1. Check for exact slash commands first (habit from other systems)
+    // 1. Check for exact slash commands (only these get preset responses)
     if (trimmed.startsWith('/')) {
       return this.handleSlashCommand(trimmed.slice(1));
     }
 
-    // 2. Check for explicit command patterns
-    const commandMatch = this.matchCommand(trimmed);
-    if (commandMatch) {
-      return this.executeCommand(commandMatch.command, commandMatch.args);
-    }
-
-    // 3. Check for agent patterns (code changes)
+    // 2. Check for agent patterns (code changes)
     if (this.isAgentRequest(trimmed)) {
       return this.handleAgentRequest(trimmed);
     }
 
-    // 4. Default: chat mode with personality (streaming if callback provided)
+    // 3. Default: chat mode — everything goes through the LLM
     return this.handleChat(trimmed, onStream);
-  }
-
-  /**
-   * Match input against command patterns
-   */
-  private matchCommand(input: string): { command: string; args: string[] } | null {
-    for (const [command, patterns] of Object.entries(COMMAND_PATTERNS)) {
-      for (const pattern of patterns) {
-        const match = input.match(pattern);
-        if (match) {
-          // Extract args from capture groups
-          const args = match.slice(1).filter(Boolean) as string[];
-          return { command, args };
-        }
-      }
-    }
-    return null;
   }
 
   /**

@@ -18,6 +18,24 @@
  */
 
 import type { LLMConfig } from '../llm/LLMClient.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
+
+/** Read defaultProvider from ~/.liminal/config.json (sync, cached) */
+let _cachedDefault: string | null | undefined = undefined;
+function getDefaultProviderFromConfig(): string | null {
+  if (_cachedDefault !== undefined) return _cachedDefault as string | null;
+  try {
+    const configPath = path.join(os.homedir(), '.liminal', 'config.json');
+    const raw = fs.readFileSync(configPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    _cachedDefault = parsed.defaultProvider || null;
+  } catch {
+    _cachedDefault = null;
+  }
+  return _cachedDefault as string | null;
+}
 
 export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'custom';
 
@@ -167,13 +185,19 @@ export function getActiveProvider(): ProviderType {
   if (baseUrl) {
     return detectProviderFromUrl(baseUrl);
   }
-  
+
+  // Check config file defaultProvider before env var sniffing
+  const fileDefault = getDefaultProviderFromConfig();
+  if (fileDefault && PROVIDER_TEMPLATES[fileDefault as keyof typeof PROVIDER_TEMPLATES]) {
+    return fileDefault as ProviderType;
+  }
+
   // Check for specific API keys
   if (process.env.MINIMAX_API_KEY) return 'minimax';
   if (process.env.GLM_API_KEY) return 'glm';
   if (process.env.MOONSHOT_API_KEY) return 'moonshot';
   if (process.env.OPENROUTER_API_KEY) return 'openrouter';
-  
+
   // Default to Ollama (local)
   return 'ollama';
 }

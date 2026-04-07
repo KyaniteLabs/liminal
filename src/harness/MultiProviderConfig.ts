@@ -183,9 +183,11 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
     apiKey = getApiKeyFromConfig(provider);
   }
   
-  // Allow environment overrides for baseUrl and model
-  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || template.baseUrl;
-  const model = process.env.LIMINAL_LLM_MODEL || template.model;
+  // Read baseUrl and model: env var → config file → template default
+  const fileProviders = loadConfigFile();
+  const fileProvider = fileProviders?.[provider];
+  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || fileProvider?.baseUrl || template.baseUrl;
+  const model = process.env.LIMINAL_LLM_MODEL || fileProvider?.model || template.model;
   
   return {
     ...template,

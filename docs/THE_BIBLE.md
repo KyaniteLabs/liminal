@@ -777,14 +777,14 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 | 5 | Confirm/cancel keybindings wired to bridge | ✅ Done |
 | 6 | Trust/provenance labels rendered | ✅ Done |
 | 7 | Generated code untrusted by default | ✅ Done |
-| 8 | SSE reconnection on disconnect | ⬜ Remaining |
-| 9 | Scrollable history pane | ⬜ Remaining |
-| 10 | Inspect mode for tool output review | ⬜ Remaining |
-| 11 | Command routing (/status, /tasks, etc.) | ⬜ Remaining |
-| 12 | Preview/audio routing | ⬜ Remaining |
-| 13 | Happy-path parity verified end-to-end | ⬜ Remaining |
+| 8 | SSE reconnection on disconnect | ✅ Done |
+| 9 | Scrollable history pane | ✅ Done |
+| 10 | Inspect mode for tool output review | ✅ Done |
+| 11 | Command routing (/status, /tasks, etc.) | ✅ Done |
+| 12 | Preview/audio routing | ✅ Done |
+| 13 | Happy-path parity verified end-to-end | ⬜ Remaining (28 Go tests pass, TS build clean; needs live server+TUI smoke test) |
 
-**Current: 7/13 complete.** See `docs/TUI_BUBBLE_TEA_EXECUTION_PLAN.md` for detailed status.
+**Current: 12/13 complete.** Items 8-12 implemented in Wave 1+2 (commit `029e41dc`). Item 13 requires a live bridge+TUI integration run. See `docs/TUI_BUBBLE_TEA_EXECUTION_PLAN.md` for detailed status.
 
 ---
 

@@ -784,8 +784,8 @@
             <ol class="ml-lg text-secondary lh-2">
                 <li><strong>✅ Ink containment complete</strong> - approval enforcement, confirm/cancel, prompt containment, terminal sanitization, preview hardening</li>
                 <li><strong>✅ Bubble Tea runtime wired to bridge</strong> - session bootstrap via HTTP, SSE event streaming, confirm/cancel keybindings, trust labels</li>
-                <li><strong>📝 Add reconnect + scrollback to Bubble Tea</strong> - SSE reconnection loop, scrollable history pane, Inspect mode</li>
-                <li><strong>🔄 Retire Ink after happy-path parity</strong> - see Ink Retirement Checklist below</li>
+                <li><strong>✅ Wave 1+2 features complete</strong> - SSE reconnection, scrollable history, Inspect mode, command routing, preview/audio routing (28 Go tests passing)</li>
+                <li><strong>🔄 Retire Ink after live e2e parity test</strong> - see Ink Retirement Checklist below</li>
             </ol>
 
             <div class="alert" style="background: rgba(137, 87, 229, 0.1); border-color: var(--accent-purple); margin-top: 1.5rem;">
@@ -799,14 +799,14 @@
                     <li>✅ Confirm/cancel keybindings wired to bridge</li>
                     <li>✅ Trust/provenance labels rendered</li>
                     <li>✅ Generated code untrusted by default</li>
-                    <li>⬜ SSE reconnection on disconnect</li>
-                    <li>⬜ Scrollable history pane</li>
-                    <li>⬜ Inspect mode for tool output review</li>
-                    <li>⬜ Command routing (<code>/status</code>, <code>/tasks</code>, etc.)</li>
-                    <li>⬜ Preview/audio routing</li>
-                    <li>⬜ Happy-path parity verified end-to-end</li>
+                    <li>✅ SSE reconnection on disconnect (streamDisconnectedMsg → reconnectCmd → reconnectTickMsg)</li>
+                    <li>✅ Scrollable history pane (PgUp/PgDn/Up/Down with offset clamping)</li>
+                    <li>✅ Inspect mode for tool output review (mode.changed → INSPECT)</li>
+                    <li>✅ Command routing (<code>/status</code>, <code>/tasks</code>, <code>/help</code>, <code>/dogfood</code>)</li>
+                    <li>✅ Preview/audio routing (<code>/preview</code>, <code>/play</code>, <code>/browser</code> → action mode)</li>
+                    <li>⬜ Happy-path parity verified end-to-end (28 Go tests pass, TS build clean; needs live smoke test)</li>
                 </ul>
-                <p class="mt-sm text-muted text-xs">Current: 7/13 complete. No new strategic feature work in Ink.</p>
+                <p class="mt-sm text-muted text-xs">Current: 12/13 complete. No new strategic feature work in Ink.</p>
             </div>
         </section>
     </main>

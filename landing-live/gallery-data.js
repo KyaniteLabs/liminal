@@ -1,6 +1,6 @@
 window.GALLERY_DATA = {
-  "timestamp": "2026-04-07T18:52:00.995Z",
-  "total": 62,
+  "timestamp": "2026-04-07T19:42:09.995Z",
+  "total": 79,
   "byDomain": {
     "glsl-minimax": [
       {
@@ -120,6 +120,43 @@ window.GALLERY_DATA = {
         "model": "m27",
         "provider": "cloud",
         "path": "landing-live/cloud-tone-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "glm": [
+      {
+        "domain": "glm",
+        "model": "glsl-glm-5.1",
+        "provider": "unknown",
+        "path": "landing-live/glm-glsl-glm-5.1.html",
+        "success": true
+      },
+      {
+        "domain": "glm",
+        "model": "html-glm-5.1",
+        "provider": "unknown",
+        "path": "landing-live/glm-html-glm-5.1.html",
+        "success": true
+      },
+      {
+        "domain": "glm",
+        "model": "hydra-glm-5.1",
+        "provider": "unknown",
+        "path": "landing-live/glm-hydra-glm-5.1.html",
+        "success": true
+      },
+      {
+        "domain": "glm",
+        "model": "p5-glm-5.1",
+        "provider": "unknown",
+        "path": "landing-live/glm-p5-glm-5.1.html",
+        "success": true
+      },
+      {
+        "domain": "glm",
+        "model": "strudel-glm-5.1",
+        "provider": "unknown",
+        "path": "landing-live/glm-strudel-glm-5.1.html",
         "success": true
       }
     ],
@@ -408,6 +445,48 @@ window.GALLERY_DATA = {
     "minimax": [
       {
         "domain": "minimax",
+        "model": "glsl-minimax-m25",
+        "provider": "unknown",
+        "path": "landing-live/minimax-glsl-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "glsl-minimax-m27",
+        "provider": "unknown",
+        "path": "landing-live/minimax-glsl-minimax-m27.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "html-minimax-m25",
+        "provider": "unknown",
+        "path": "landing-live/minimax-html-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "html-minimax-m27",
+        "provider": "unknown",
+        "path": "landing-live/minimax-html-minimax-m27.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "hydra-minimax-m25",
+        "provider": "unknown",
+        "path": "landing-live/minimax-hydra-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "hydra-minimax-m27",
+        "provider": "unknown",
+        "path": "landing-live/minimax-hydra-minimax-m27.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
         "model": "p5-minimax-m25",
         "provider": "unknown",
         "path": "landing-live/minimax-p5-minimax-m25.html",
@@ -418,6 +497,27 @@ window.GALLERY_DATA = {
         "model": "p5-minimax-m27",
         "provider": "unknown",
         "path": "landing-live/minimax-p5-minimax-m27.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "strudel-minimax-m27",
+        "provider": "unknown",
+        "path": "landing-live/minimax-strudel-minimax-m27.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "three-minimax-m27",
+        "provider": "unknown",
+        "path": "landing-live/minimax-three-minimax-m27.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "tone-minimax-m27",
+        "provider": "unknown",
+        "path": "landing-live/minimax-tone-minimax-m27.html",
         "success": true
       }
     ],
@@ -470,6 +570,33 @@ window.GALLERY_DATA = {
         "model": "1.2b",
         "provider": "ollama",
         "path": "landing-live/ollama-p5-lfm2.5-thinking-1.2b.html",
+        "success": true
+      }
+    ],
+    "p5-ollama-gemma4": [
+      {
+        "domain": "p5-ollama-gemma4",
+        "model": "latest",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-ollama-gemma4-latest.html",
+        "success": true
+      }
+    ],
+    "p5-ollama-kimi-k2.5": [
+      {
+        "domain": "p5-ollama-kimi-k2.5",
+        "model": "cloud",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-ollama-kimi-k2.5-cloud.html",
+        "success": true
+      }
+    ],
+    "p5-ollama-qwen3.5": [
+      {
+        "domain": "p5-ollama-qwen3.5",
+        "model": "0.8b",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-ollama-qwen3.5-0.8b.html",
         "success": true
       }
     ],
@@ -617,6 +744,41 @@ window.GALLERY_DATA = {
       "model": "m27",
       "provider": "cloud",
       "path": "landing-live/cloud-tone-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "glm",
+      "model": "glsl-glm-5.1",
+      "provider": "unknown",
+      "path": "landing-live/glm-glsl-glm-5.1.html",
+      "success": true
+    },
+    {
+      "domain": "glm",
+      "model": "html-glm-5.1",
+      "provider": "unknown",
+      "path": "landing-live/glm-html-glm-5.1.html",
+      "success": true
+    },
+    {
+      "domain": "glm",
+      "model": "hydra-glm-5.1",
+      "provider": "unknown",
+      "path": "landing-live/glm-hydra-glm-5.1.html",
+      "success": true
+    },
+    {
+      "domain": "glm",
+      "model": "p5-glm-5.1",
+      "provider": "unknown",
+      "path": "landing-live/glm-p5-glm-5.1.html",
+      "success": true
+    },
+    {
+      "domain": "glm",
+      "model": "strudel-glm-5.1",
+      "provider": "unknown",
+      "path": "landing-live/glm-strudel-glm-5.1.html",
       "success": true
     },
     {
@@ -845,6 +1007,48 @@ window.GALLERY_DATA = {
     },
     {
       "domain": "minimax",
+      "model": "glsl-minimax-m25",
+      "provider": "unknown",
+      "path": "landing-live/minimax-glsl-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "glsl-minimax-m27",
+      "provider": "unknown",
+      "path": "landing-live/minimax-glsl-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "html-minimax-m25",
+      "provider": "unknown",
+      "path": "landing-live/minimax-html-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "html-minimax-m27",
+      "provider": "unknown",
+      "path": "landing-live/minimax-html-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "hydra-minimax-m25",
+      "provider": "unknown",
+      "path": "landing-live/minimax-hydra-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "hydra-minimax-m27",
+      "provider": "unknown",
+      "path": "landing-live/minimax-hydra-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
       "model": "p5-minimax-m25",
       "provider": "unknown",
       "path": "landing-live/minimax-p5-minimax-m25.html",
@@ -855,6 +1059,27 @@ window.GALLERY_DATA = {
       "model": "p5-minimax-m27",
       "provider": "unknown",
       "path": "landing-live/minimax-p5-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "strudel-minimax-m27",
+      "provider": "unknown",
+      "path": "landing-live/minimax-strudel-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "three-minimax-m27",
+      "provider": "unknown",
+      "path": "landing-live/minimax-three-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "tone-minimax-m27",
+      "provider": "unknown",
+      "path": "landing-live/minimax-tone-minimax-m27.html",
       "success": true
     },
     {
@@ -897,6 +1122,27 @@ window.GALLERY_DATA = {
       "model": "1.2b",
       "provider": "ollama",
       "path": "landing-live/ollama-p5-lfm2.5-thinking-1.2b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-ollama-gemma4",
+      "model": "latest",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-ollama-gemma4-latest.html",
+      "success": true
+    },
+    {
+      "domain": "p5-ollama-kimi-k2.5",
+      "model": "cloud",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-ollama-kimi-k2.5-cloud.html",
+      "success": true
+    },
+    {
+      "domain": "p5-ollama-qwen3.5",
+      "model": "0.8b",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-ollama-qwen3.5-0.8b.html",
       "success": true
     },
     {

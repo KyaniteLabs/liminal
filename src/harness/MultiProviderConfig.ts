@@ -127,10 +127,10 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
   },
   kimi: {
     provider: 'kimi',
-    name: 'Kimi',
-    description: 'Moonshot AI Kimi K2.5 (International)',
-    baseUrl: 'https://api.moonshot.ai/v1',
-    model: 'kimi-k2.5',
+    name: 'Kimi Code',
+    description: 'Moonshot AI Kimi Code (K2P5) for Coding Agents',
+    baseUrl: 'https://api.kimi.com/coding/v1',
+    model: 'k2p5',
     apiStyle: 'openai',
     temperature: 0.7,
     maxTokens: 4096,
@@ -204,6 +204,7 @@ export function detectProviderFromUrl(baseUrl: string): ProviderType {
   if (baseUrl.includes('minimax')) return 'minimax';
   if (baseUrl.includes('openrouter')) return 'openrouter';
   if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
+  if (baseUrl.includes('kimi.com')) return 'kimi';
   if (baseUrl.includes('moonshot')) return 'moonshot';
   if (baseUrl.includes('localhost:1234')) return 'lmstudio';
   if (baseUrl.includes('localhost:11434')) return 'ollama';

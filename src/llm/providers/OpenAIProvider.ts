@@ -33,6 +33,11 @@ export class OpenAIProvider extends BaseProvider {
       headers['Authorization'] = `Bearer ${this.config.apiKey}`;
     }
 
+    // Kimi Code API requires a coding agent User-Agent
+    if (this.config.baseUrl.includes('kimi.com')) {
+      headers['User-Agent'] = 'claude-code/1.0';
+    }
+
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -156,6 +161,11 @@ export class OpenAIProvider extends BaseProvider {
     };
     if (this.config.apiKey) {
       headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+    }
+
+    // Kimi Code API requires a coding agent User-Agent
+    if (this.config.baseUrl.includes('kimi.com')) {
+      headers['User-Agent'] = 'claude-code/1.0';
     }
 
     const body: Record<string, unknown> = {

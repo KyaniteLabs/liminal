@@ -305,7 +305,7 @@ Failures:   0 critical
 | M6 | Anti-Hallucination | `core/CodeValidator.ts` | API validation | ✅ |
 | M7 | Aesthetic Quality | `aesthetic/AestheticCritic.ts` | Multi-dimension scoring | ✅ |
 | M8 | Output Size | `core/CodeValidator.ts` | Min size requirements | ✅ |
-| M9 | Semantic Alignment | `guardrails/SemanticValidator.ts` | Intent matching | ✅ (archived) |
+| M9 | Semantic Alignment | `guardrails/SemanticValidator.ts` | Intent matching + static quick checks for color/interaction mismatches | ✅ (archived) |
 | M10 | Runtime Health | `guardrails/RuntimeHealthMonitor.ts` | Memory, FPS monitoring | ✅ (archived) |
 | M11 | Accessibility | `guardrails/AccessibilityGuardrails.ts` | Photosensitivity, a11y | ✅ (archived) |
 | M12 | Version Compatibility | - | API version matching | ⚪ |

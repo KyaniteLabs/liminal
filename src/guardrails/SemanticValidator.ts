@@ -118,21 +118,21 @@ Does the code match the user's request? Analyze and return JSON.`;
 
     // Color checks
     const colorMatches = {
-      'blue': /\bblue\b|#0000ff|rgb\(0,\s*0,\s*255/i,
-      'red': /\bred\b|#ff0000|rgb\(255,\s*0,\s*0/i,
-      'green': /\bgreen\b|#00ff00|rgb\(0,\s*255,\s*0/i,
-      'yellow': /\byellow\b|#ffff00/i,
-      'purple': /\bpurple\b|#800080/i,
-      'orange': /\borange\b|#ffa500/i,
-      'pink': /\bpink\b|#ffc0cb/i,
-      'black': /\bblack\b|#000000/i,
-      'white': /\bwhite\b|#ffffff/i,
+      'blue': /\bblue\b|#0000ff|rgb\(0,\s*0,\s*255|\b0\s*,\s*0\s*,\s*255\b/i,
+      'red': /\bred\b|#ff0000|rgb\(255,\s*0,\s*0|\b255\s*,\s*0\s*,\s*0\b/i,
+      'green': /\bgreen\b|#00ff00|rgb\(0,\s*255,\s*0|\b0\s*,\s*255\s*,\s*0\b/i,
+      'yellow': /\byellow\b|#ffff00|\b255\s*,\s*255\s*,\s*0\b/i,
+      'purple': /\bpurple\b|#800080|\b128\s*,\s*0\s*,\s*128\b/i,
+      'orange': /\borange\b|#ffa500|\b255\s*,\s*165\s*,\s*0\b/i,
+      'pink': /\bpink\b|#ffc0cb|\b255\s*,\s*192\s*,\s*203\b/i,
+      'black': /\bblack\b|#000000|\b0\s*,\s*0\s*,\s*0\b/i,
+      'white': /\bwhite\b|#ffffff|\b255\s*,\s*255\s*,\s*255\b/i,
     };
 
     for (const [color, regex] of Object.entries(colorMatches)) {
       if (promptLower.includes(color) && !regex.test(codeLower)) {
         // Check if any color is mentioned in code at all
-        const hasAnyColor = /\b(red|blue|green|yellow|purple|orange|pink|black|white)\b|#[0-9a-f]{6}/i.test(codeLower);
+        const hasAnyColor = /\b(red|blue|green|yellow|purple|orange|pink|black|white)\b|#[0-9a-f]{6}|(?:background|fill|stroke|color)\s*\(\s*\d{1,3}\s*,\s*\d{1,3}\s*,\s*\d{1,3}\b/i.test(codeLower);
         if (hasAnyColor) {
           issues.push(`Prompt asks for "${color}" but code may use different colors`);
         }
@@ -151,7 +151,7 @@ Does the code match the user's request? Analyze and return JSON.`;
     // Interaction checks
     const interactionKeywords = ['click', 'mouse', 'interactive', 'drag', 'hover'];
     const hasInteractionRequest = interactionKeywords.some(kw => promptLower.includes(kw));
-    const hasInteractionCode = /\b(mousePressed|mouseClicked|mouseMoved|mouseDragged|onclick|addEventListener.*click|addEventListener.*mouse)/.test(codeLower);
+    const hasInteractionCode = /\b(mousepressed|mouseclicked|mousemoved|mousedragged|onclick)\b|addeventlistener\s*\([^)]*(click|mouse)/.test(codeLower);
     
     if (hasInteractionRequest && !hasInteractionCode) {
       issues.push('Prompt requests interactivity but code lacks event handlers');

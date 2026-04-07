@@ -46,7 +46,7 @@ interface NaturalInputResult {
  */
 const AGENT_PATTERNS = [
   /^(?:can\s+you|could\s+you|please)?\s*(?:fix|repair|correct)\b/i,
-  /^(?:can\s+you|could\s+you|please)?\s*(?:add|implement|create|build)\s+(?:a|an|the|\w+)/i,
+  /^(?:can\s+you|could\s+you|please)?\s*(?:add|implement|create|build|make|generate)\s+(?:a|an|the|\w+)/i,
   /^(?:can\s+you|could\s+you|please)?\s*(?:change|modify|update|refactor|rewrite)\b/i,
   /^(?:can\s+you|could\s+you|please)?\s*(?:remove|delete|clean\s+up)\b/i,
   /^(?:can\s+you|could\s+you|please)?\s*(?:improve|optimize|enhance|polish)\b/i,
@@ -279,7 +279,8 @@ ${recentHistory}
 
 USER: ${input}
 
-Respond naturally as your personality. If the user asks you to modify code (fix, add, change, etc.) OR says words like "do", "make", "create", "implement" \u2014 immediately invoke the agent without asking for confirmation. Only ask "Should I...?" if the request is ambiguous or destructive (delete, overwrite).`;
+You are in CHAT mode. You cannot create files, run code, or modify anything \u2014 you are conversational only.
+Respond naturally as your personality. If the user wants something built, changed, or fixed, tell them to rephrase with action words (e.g. "fix the bug", "make a particle system") and the system will route them to the agent with tool access.`;
 
       // Use streaming if callback provided
       if (onStream) {

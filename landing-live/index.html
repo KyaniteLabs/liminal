@@ -483,30 +483,6 @@ a:focus:not(:focus-visible) {
   font-weight: 400;
 }
 
-/* Variant badge (kept for backward compat) */
-.variant-badge {
-  font-family: var(--font-heading);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 3px 10px;
-  border-radius: 100px;
-  flex-shrink: 0;
-  align-self: flex-start;
-  margin-top: 2px;
-}
-
-.variant-badge.hard {
-  background: var(--badge-variant-bg);
-  color: var(--badge-variant-text);
-}
-
-.variant-badge.standard {
-  background: var(--badge-standard-bg);
-  color: var(--badge-standard-text);
-}
-
 /* Iframe preview */
 .card-preview {
   padding: 0 var(--space-md);
@@ -830,7 +806,6 @@ a:focus:not(:focus-visible) {
       var meta = DOMAIN_META[card.domain] || { icon: '\u{1F4CB}', color: 'var(--text-muted)', title: card.domain };
       var currentRating = ratings[card.id] || 0;
       var isHard = card.variant === 'hard' || card.variant === 'stress';
-      var variantClass = isHard ? 'hard' : 'standard';
       var variantLabel = isHard ? 'STRESS' : 'SIMPLE';
 
       var starsHtml = '';
@@ -857,7 +832,6 @@ a:focus:not(:focus-visible) {
             '<h2 class="card-title">' + (card.label || meta.title) + '</h2>' +
             '<p class="card-model-name">' + card.model + '</p>' +
           '</div>' +
-          '<span class="variant-badge ' + variantClass + '">' + variantLabel + '</span>' +
         '</div>' +
         '<div class="card-meta-row">' +
           '<span class="meta-badge iterations">' + iterCount + ' iter</span>' +

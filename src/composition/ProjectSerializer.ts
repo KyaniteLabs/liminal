@@ -20,6 +20,7 @@ import {
   Asset,
   AssetType,
 } from './types.js';
+import { validateUrl, getAllowedHostsFromEnv } from '../security/UrlValidator.js';
 
 /** Export options for project serialization */
 export interface ExportOptions {
@@ -266,6 +267,13 @@ export class ProjectSerializer {
    * Import project from URL.
    */
   async importFromURL(url: string): Promise<LiminalProject> {
+    // Validate URL to prevent SSRF attacks
+    validateUrl(url, {
+      allowedHosts: getAllowedHostsFromEnv(),
+      allowPrivateIPs: false,
+      allowLocalhost: process.env.LIMINAL_ALLOW_LOCALHOST_LLM === 'true'
+    });
+
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch project: ${response.status} ${response.statusText}`);

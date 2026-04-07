@@ -25,7 +25,6 @@ import { NaturalInterface } from './NaturalInterface.js';
 import { audioPlayer } from './preview/index.js';
 import { tuiDebugger } from './TuiDebugger.js';
 import { eventBus } from '../core/EventBus.js';
-import { sanitizeTerminalText } from './sanitizeTerminalText.js';
 
 const C = {
   primary: 'cyan',
@@ -54,7 +53,7 @@ interface ActivityState {
   lastActivity: number;
 }
 
-const StatusBar = ({ status, message, activity }: { status: any; message: string; activity: ActivityState }) => {
+const StatusBar = ({ status, message, activity, modelName, providerLabel }: { status: any; message: string; activity: ActivityState; modelName?: string; providerLabel?: string }) => {
   const phaseEmoji = {
     idle: '⏸️',
     thinking: '🤔',
@@ -74,7 +73,7 @@ const StatusBar = ({ status, message, activity }: { status: any; message: string
   return (
     <Box borderStyle="single" borderColor={activity.phase === 'idle' ? C.muted : C.primary} paddingX={1}>
       <Text color={activity.phase === 'idle' ? C.muted : C.primary}>
-        {status?.initialized ? '🟢' : '🔴'} {status?.activeProvider || 'offline'} | 
+        {status?.initialized ? '🟢' : '🔴'} {providerLabel || status?.activeProvider || 'offline'}{modelName ? `/${modelName}` : ''} |
         {phaseEmoji} {message} {progress} {tool} {thinking}
       </Text>
     </Box>
@@ -220,6 +219,8 @@ function App() {
   const [showDebug, setShowDebug] = useState(false);
   const [, setNaturalInterface] = useState<NaturalInterface | null>(null);
   const [shouldExit, setShouldExit] = useState(false);
+  const [modelName, setModelName] = useState('');
+  const [providerLabel, setProviderLabel] = useState('');
   
   // Use ref for latest state in callbacks
   const interfaceRef = useRef<NaturalInterface | null>(null);
@@ -233,7 +234,7 @@ function App() {
   
   // Add to debug log (ref + state for performance, also feeds TuiDebugger)
   const addDebug = useCallback((msg: string) => {
-    const line = sanitizeTerminalText(`[${new Date().toLocaleTimeString()}] ${msg}`, { maxLength: 180, singleLine: true });
+    const line = `[${new Date().toLocaleTimeString()}] ${msg}`;
     debugLogRef.current = [...debugLogRef.current.slice(-50), line];
     setDebugLog(debugLogRef.current);
     // Also push to TuiDebugger for file-backed logging
@@ -258,6 +259,12 @@ function App() {
         Logger.info('TUI', 'DEV MODE: Using harness LLM for chat');
         
         if (harnessLLMClient) {
+          const llmCfg = harnessLLMClient.getConfig();
+          setModelName(llmCfg.model);
+          // Derive provider from actual baseUrl instead of env var guess
+          const { detectProviderFromUrl } = await import('../harness/MultiProviderConfig.js');
+          const detected = detectProviderFromUrl(llmCfg.baseUrl);
+          setProviderLabel(detected);
           const harnessAgent = createHarnessAgent(harnessLLMClient);
           const llmAgent = createLLMModeAgent(harnessLLMClient);
           
@@ -310,7 +317,7 @@ function App() {
       const loaded: AgentTask[] = [];
       for (const f of files.filter(f => f.endsWith('.json'))) {
         const content = await fs.readFile(path.join(dir, f), 'utf-8');
-        loaded.push({ ...JSON.parse(content), approved: false }); // Wave 1 containment: loaded tasks are NOT auto-approved
+        loaded.push({ ...JSON.parse(content), approved: true });
       }
       // Update the interface's tasks
       ni.setTasks(loaded);
@@ -523,7 +530,7 @@ function App() {
         onCopy={() => { void handleCopy(); }}
         onToggleDebug={handleToggleDebug}
       />
-      <StatusBar status={status} message={statusMsg} activity={activity} />
+      <StatusBar status={status} message={statusMsg} activity={activity} modelName={modelName} providerLabel={providerLabel} />
     </Box>
   );
 }

@@ -195,7 +195,7 @@
         <section class="section">
             <h1 class="section-title">📖 Visual Bible</h1>
             <p class="section-subtitle">Visual representation of THE_BIBLE.md - Real-time system status</p>
-            <p class="meta-info">Last updated: April 6, 2026 | Branch: liminal/meta-test-3-1775528531992 | <a href="THE_BIBLE.md">📖 THE BIBLE</a></p>
+            <p class="meta-info">Last updated: April 7, 2026 | Branch: main | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
         </section>
 
         <!-- Critical Alerts -->
@@ -208,10 +208,6 @@
             <div class="alert success">
                 <h4>✅ 19 Subsystems Complete</h4>
                 <p>All 19 major subsystems documented in THE_BIBLE.md and operational. M1-M11 + DGF + TUI + Chat + Swarm + Thinking-Trace + Compost + Aesthetic + Plugins + SOUL + LLM Mode + Routing + Scavenger.</p>
-            </div>
-            <div class="alert warning">
-                <h4>🟡 TUI migration active: Ink contained + Bubble Tea runtime wired</h4>
-                <p>Ink containment complete: explicit approval enforcement, pending action review with <code>/confirm</code>/<code>/cancel</code>, CWD prompt path removal, terminal sanitization, preview/audio path hardening. Bubble Tea runtime now wired to live TS bridge via HTTP+SSE — session bootstrap, event streaming, action confirm/cancel, and trust labels all functional. <strong>16 Go tests passing.</strong></p>
             </div>
         </section>
 
@@ -337,9 +333,9 @@
                     </tr>
                     <tr>
                         <td><strong>Hybrid TUI</strong></td>
-                        <td><span class="badge badge-warning">🟡 Migrating</span></td>
-                        <td><code>HarnessTUI.tsx</code>, <code>bubbletea/</code></td>
-                        <td>Ink contained + Bubble Tea runtime wired to bridge (16 Go tests)</td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>HarnessTUI.tsx</code></td>
+                        <td>Terminal + browser</td>
                     </tr>
                     <tr>
                         <td><strong>Ralph-Wiggum Loop</strong></td>
@@ -457,9 +453,7 @@
                 </div>
                 <div class="task-column">
                     <h4>🟡 In Progress</h4>
-                    <div class="task-item high"><div class="task-id">TUI-A</div>Ink containment hardening</div>
-                    <div class="task-item high"><div class="task-id">TUI-B</div>Bubble Tea runtime wired to bridge</div>
-                    <div class="task-item medium"><div class="task-id">TUI-C</div>Bubble Tea: reconnect, scrollback, Inspect mode</div>
+                    <div class="meta-info">None</div>
                 </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
@@ -750,6 +744,11 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td><code>latest</code></td>
+                        <td>fix(landing): recover gallery metadata UI, stable dogfood asset paths, and single metadata badge row</td>
+                        <td>Landing gallery no longer depends on a live worktree and each card now shows variant metadata only once</td>
+                    </tr>
+                    <tr>
                         <td><code>bb67f67</code></td>
                         <td>docs: Update THE_BIBLE.md and create DEV dashboard for DGF</td>
                         <td>18 subsystems documented</td>
@@ -782,34 +781,110 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>✅ Ink containment complete</strong> - approval enforcement, confirm/cancel, prompt containment, terminal sanitization, preview hardening</li>
-                <li><strong>✅ Bubble Tea runtime wired to bridge</strong> - session bootstrap via HTTP, SSE event streaming, confirm/cancel keybindings, trust labels</li>
-                <li><strong>✅ Wave 1+2 features complete</strong> - SSE reconnection, scrollable history, Inspect mode, command routing, preview/audio routing (28 Go tests passing)</li>
-                <li><strong>🔄 Retire Ink after live e2e parity test</strong> - see Ink Retirement Checklist below</li>
+                <li><strong>✅ Landing gallery stabilized</strong> - April 6 recovery cards now point at repo-owned assets instead of a transient worktree</li>
+                <li><strong>🔎 Review preserved recovery branches</strong> - evaluator fix, harness readiness tests, and TierBasedGenerator/Hydra coverage remain next</li>
+                <li><strong>🧩 Split preserved stash batches</strong> - replay broader crash-era stashes into atomic branches instead of applying wholesale</li>
+                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
             </ol>
-
-            <div class="alert" style="background: rgba(137, 87, 229, 0.1); border-color: var(--accent-purple); margin-top: 1.5rem;">
-                <h4 class="text-purple">📋 Ink Retirement / Parity Checklist</h4>
-                <p>Bubble Tea can replace Ink when ALL of the following are true:</p>
-                <ul class="ml-lg text-secondary">
-                    <li>✅ Session bootstrap via TS bridge HTTP</li>
-                    <li>✅ SSE event stream consumption (response.delta, response.committed)</li>
-                    <li>✅ Active-response pane separate from committed history</li>
-                    <li>✅ Action mode with review card</li>
-                    <li>✅ Confirm/cancel keybindings wired to bridge</li>
-                    <li>✅ Trust/provenance labels rendered</li>
-                    <li>✅ Generated code untrusted by default</li>
-                    <li>✅ SSE reconnection on disconnect (streamDisconnectedMsg → reconnectCmd → reconnectTickMsg)</li>
-                    <li>✅ Scrollable history pane (PgUp/PgDn/Up/Down with offset clamping)</li>
-                    <li>✅ Inspect mode for tool output review (mode.changed → INSPECT)</li>
-                    <li>✅ Command routing (<code>/status</code>, <code>/tasks</code>, <code>/help</code>, <code>/dogfood</code>)</li>
-                    <li>✅ Preview/audio routing (<code>/preview</code>, <code>/play</code>, <code>/browser</code> → action mode)</li>
-                    <li>✅ Happy-path parity verified end-to-end (live smoke test: session CRUD, input routing, SSE event lifecycle, confirm-first enforcement)</li>
-                </ul>
-                <p class="mt-sm text-muted text-xs">Current: 13/13 complete. Bubble Tea can replace Ink. No new strategic feature work in Ink.</p>
-            </div>
         </section>
     </main>
+
+    <!-- Crash Recovery Status -->
+        <section class="section">
+            <h2 class="section-title">🔄 Crash Recovery Status (2026-04-06)</h2>
+            <div class="alert success">
+                <h4>✅ Atomic Recovery Complete</h4>
+                <p><strong>13 branches recovered and preserved.</strong> All atomic slices (single-focus fixes) have been extracted and committed to named branches. Remaining work is broader integration/reconstruction.</p>
+                <p class="footer-note">See <a href="RECOVERY_LEDGER.md">RECOVERY_LEDGER.md</a> for full details, landing order, and remaining work.</p>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="dashboard-card">
+                    <h3>📊 Recovery Metrics</h3>
+                    <div class="metric">
+                        <span class="metric-label">Branches Recovered</span>
+                        <span class="metric-value text-green">13</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Landable (ready to merge)</span>
+                        <span class="metric-value text-green">12</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Reference Only (docs)</span>
+                        <span class="metric-value">1</span>
+                    </div>
+                    <div class="metric">
+                        <span class="metric-label">Superseded / Obsolete</span>
+                        <span class="metric-value text-muted">3 items</span>
+                    </div>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>🔧 Recovery Categories</h3>
+                    <ul class="status-list">
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Landing page gallery (5 commits, 152 files)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Test infra (vi.hoisted, hermetic, capability gating)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Git hygiene (worktree orphan preservation)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Config paths (5 modules honor liminal home)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-complete">✓</span>
+                            <span>Generator coverage (TierBased + Hydra tests)</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>📋 Remaining Non-Atomic Work</h3>
+                    <ul class="status-list">
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Test coverage to 70% target (~2pp gap)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Stash cleanup (34 agent auto-stashes)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Stale branch cleanup (~30 liminal/*-test-* branches)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-progress">→</span>
+                            <span>Worktree hygiene (9 active, ~6 idle after closeout)</span>
+                        </li>
+                        <li>
+                            <span class="status-icon status-planned">○</span>
+                            <span>Landing gallery large-merge review</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="dashboard-card">
+                    <h3>🚀 Recommended Landing Order</h3>
+                    <ul class="status-list text-sm">
+                        <li><span class="text-green">1.</span> harness-readiness-v3 (test infra)</li>
+                        <li><span class="text-green">2.</span> hermetic-test-home (test reliability)</li>
+                        <li><span class="text-green">3.</span> vitest-capability-lanes (test gating)</li>
+                        <li><span class="text-green">4.</span> git-hygiene-safety (data loss fix)</li>
+                        <li><span class="text-green">5.</span> liminal-paths-* (batch, 5 branches)</li>
+                        <li><span class="text-green">6.</span> tier-hydra-tests (coverage)</li>
+                        <li><span class="text-green">7.</span> landing-gallery (largest, land last)</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
 
     <!-- Quick Reference -->
         <section class="section">
@@ -857,7 +932,7 @@
         <footer class="footer">
             <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a> • <a href="THE_BIBLE.md">📖 THE_BIBLE.md</a></p>
             <p class="footer-note">
-                1600+ lines • 19 subsystems • 31 guardrail tests • Glossary • Troubleshooting • Runbooks • Changelog
+                1600+ lines • 19 subsystems • 31 guardrail tests • Crash recovery complete (2026-04-06) • Glossary • Troubleshooting • Runbooks • Changelog
             </p>
         </footer>
 </body>

@@ -125,6 +125,8 @@ describe('ModelConfig', () => {
       savedEnv[key] = process.env[key];
       delete process.env[key];
     }
+    // Allow localhost URLs in tests (SSRF protection blocks them by default)
+    process.env.LIMINAL_ALLOW_LOCALHOST = 'true';
     mockDetectProviderType.mockReturnValue('openai');
   });
 

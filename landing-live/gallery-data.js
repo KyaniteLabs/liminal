@@ -1,166 +1,952 @@
-/**
- * Liminal Dogfood Gallery — Card Data
- * Only outputs generated on April 6, 2026
- * Sorted by generation time, most recent first
- * All timestamps in Pacific Daylight Time (UTC-7)
- */
-
-const GALLERY_CARDS = [
-  // ── Latest first ────────────────────────────────────────────────────
-  {
-    id: "strudel-agent-simple-v2",
-    domain: "strudel",
-    model: "Agent Loop",
-    label: "Strudel",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Compose a lo-fi hip hop beat with vinyl crackle, Rhodes-style chord stabs using jazz voicings, a lazy boom-bap drum pattern with ghost notes, and a chopped vocal sample that re-pitches every 8 bars. Add tape wobble and tape saturation warmth.",
-    generatedAt: "2026-04-06 12:46 PM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/strudel-2026-04-06T19-46-09-001Z/dogfood-strudel-final.html"
+window.GALLERY_DATA = {
+  "timestamp": "2026-04-07T18:52:00.995Z",
+  "total": 62,
+  "byDomain": {
+    "glsl-minimax": [
+      {
+        "domain": "glsl-minimax",
+        "model": "m25",
+        "provider": "cloud",
+        "path": "landing-live/cloud-glsl-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "glsl-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-glsl-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "html-minimax": [
+      {
+        "domain": "html-minimax",
+        "model": "m25",
+        "provider": "cloud",
+        "path": "landing-live/cloud-html-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "html-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-html-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "hydra-minimax": [
+      {
+        "domain": "hydra-minimax",
+        "model": "m25",
+        "provider": "cloud",
+        "path": "landing-live/cloud-hydra-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "hydra-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-hydra-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "minimax-glsl-minimax": [
+      {
+        "domain": "minimax-glsl-minimax",
+        "model": "m25",
+        "provider": "cloud",
+        "path": "landing-live/cloud-minimax-glsl-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "minimax-glsl-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-minimax-glsl-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "minimax-p5-minimax": [
+      {
+        "domain": "minimax-p5-minimax",
+        "model": "m25",
+        "provider": "cloud",
+        "path": "landing-live/cloud-minimax-p5-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "minimax-p5-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-minimax-p5-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "p5-minimax": [
+      {
+        "domain": "p5-minimax",
+        "model": "m25",
+        "provider": "cloud",
+        "path": "landing-live/cloud-p5-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "p5-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-p5-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "strudel-minimax": [
+      {
+        "domain": "strudel-minimax",
+        "model": "m25",
+        "provider": "cloud",
+        "path": "landing-live/cloud-strudel-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "strudel-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-strudel-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "tone-minimax": [
+      {
+        "domain": "tone-minimax",
+        "model": "m27",
+        "provider": "cloud",
+        "path": "landing-live/cloud-tone-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "glsl": [
+      {
+        "domain": "glsl",
+        "model": "gemma3:4b",
+        "provider": "ollama",
+        "path": "landing-live/glsl-gemma3:4b.html",
+        "success": true
+      },
+      {
+        "domain": "glsl",
+        "model": "gemma4",
+        "provider": "ollama",
+        "path": "landing-live/glsl-gemma4.html",
+        "success": true
+      },
+      {
+        "domain": "glsl",
+        "model": "granite4:1b",
+        "provider": "ollama",
+        "path": "landing-live/glsl-granite4:1b.html",
+        "success": true
+      },
+      {
+        "domain": "glsl",
+        "model": "lfm2.5",
+        "provider": "ollama",
+        "path": "landing-live/glsl-lfm2.5.html",
+        "success": true
+      },
+      {
+        "domain": "glsl",
+        "model": "phi4-mini",
+        "provider": "ollama",
+        "path": "landing-live/glsl-phi4-mini.html",
+        "success": true
+      },
+      {
+        "domain": "glsl",
+        "model": "qwen3.5:2b",
+        "provider": "ollama",
+        "path": "landing-live/glsl-qwen3.5:2b.html",
+        "success": true
+      }
+    ],
+    "ascii-google-gemma-4-26b": [
+      {
+        "domain": "ascii-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-ascii-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "ascii-qwen3.5": [
+      {
+        "domain": "ascii-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-ascii-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "glsl-google-gemma-4-26b": [
+      {
+        "domain": "glsl-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-glsl-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "glsl-qwen3.5": [
+      {
+        "domain": "glsl-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-glsl-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "html-google-gemma-4-26b": [
+      {
+        "domain": "html-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-html-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "html-qwen3.5": [
+      {
+        "domain": "html-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-html-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "hydra-google-gemma-4-26b": [
+      {
+        "domain": "hydra-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-hydra-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "hydra-qwen3.5": [
+      {
+        "domain": "hydra-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-hydra-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "p5-google-gemma-4-26b": [
+      {
+        "domain": "p5-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-p5-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "p5-lmstudio-google-gemma-4-26b": [
+      {
+        "domain": "p5-lmstudio-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-p5-lmstudio-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "p5-lmstudio-qwen3.5": [
+      {
+        "domain": "p5-lmstudio-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-p5-lmstudio-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "p5-qwen3.5": [
+      {
+        "domain": "p5-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-p5-qwen3.5-2b.html",
+        "success": true
+      },
+      {
+        "domain": "p5-qwen3.5",
+        "model": "0.8b",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-qwen3.5-0.8b.html",
+        "success": true
+      },
+      {
+        "domain": "p5-qwen3.5",
+        "model": "2b",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "remotion-google-gemma-4-26b": [
+      {
+        "domain": "remotion-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-remotion-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "remotion-qwen3.5": [
+      {
+        "domain": "remotion-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-remotion-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "strudel-google-gemma-4-26b": [
+      {
+        "domain": "strudel-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-strudel-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "strudel-qwen3.5": [
+      {
+        "domain": "strudel-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-strudel-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "three-google-gemma-4-26b": [
+      {
+        "domain": "three-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-three-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "three-qwen3.5": [
+      {
+        "domain": "three-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-three-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "tone-google-gemma-4-26b": [
+      {
+        "domain": "tone-google-gemma-4-26b",
+        "model": "a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-tone-google-gemma-4-26b-a4b.html",
+        "success": true
+      }
+    ],
+    "tone-qwen3.5": [
+      {
+        "domain": "tone-qwen3.5",
+        "model": "2b",
+        "provider": "lmstudio",
+        "path": "landing-live/lmstudio-tone-qwen3.5-2b.html",
+        "success": true
+      }
+    ],
+    "local": [
+      {
+        "domain": "local",
+        "model": "lmstudio-glsl-google-gemma-4-26b-a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/local-lmstudio-glsl-google-gemma-4-26b-a4b.html",
+        "success": true
+      },
+      {
+        "domain": "local",
+        "model": "lmstudio-glsl-qwen3.5-2b",
+        "provider": "lmstudio",
+        "path": "landing-live/local-lmstudio-glsl-qwen3.5-2b.html",
+        "success": true
+      },
+      {
+        "domain": "local",
+        "model": "lmstudio-p5-google-gemma-4-26b-a4b",
+        "provider": "lmstudio",
+        "path": "landing-live/local-lmstudio-p5-google-gemma-4-26b-a4b.html",
+        "success": true
+      },
+      {
+        "domain": "local",
+        "model": "lmstudio-p5-qwen3.5-2b",
+        "provider": "lmstudio",
+        "path": "landing-live/local-lmstudio-p5-qwen3.5-2b.html",
+        "success": true
+      },
+      {
+        "domain": "local",
+        "model": "ollama-p5-gemma4-latest",
+        "provider": "ollama",
+        "path": "landing-live/local-ollama-p5-gemma4-latest.html",
+        "success": true
+      },
+      {
+        "domain": "local",
+        "model": "ollama-p5-qwen3.5-0.8b",
+        "provider": "ollama",
+        "path": "landing-live/local-ollama-p5-qwen3.5-0.8b.html",
+        "success": true
+      }
+    ],
+    "minimax": [
+      {
+        "domain": "minimax",
+        "model": "p5-minimax-m25",
+        "provider": "unknown",
+        "path": "landing-live/minimax-p5-minimax-m25.html",
+        "success": true
+      },
+      {
+        "domain": "minimax",
+        "model": "p5-minimax-m27",
+        "provider": "unknown",
+        "path": "landing-live/minimax-p5-minimax-m27.html",
+        "success": true
+      }
+    ],
+    "p5-gemma3": [
+      {
+        "domain": "p5-gemma3",
+        "model": "4b",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-gemma3-4b.html",
+        "success": true
+      }
+    ],
+    "p5-gemma4": [
+      {
+        "domain": "p5-gemma4",
+        "model": "latest",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-gemma4-latest.html",
+        "success": true
+      }
+    ],
+    "p5-granite4": [
+      {
+        "domain": "p5-granite4",
+        "model": "1b",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-granite4-1b.html",
+        "success": true
+      },
+      {
+        "domain": "p5-granite4",
+        "model": "350m",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-granite4-350m.html",
+        "success": true
+      }
+    ],
+    "p5-kimi-k2.5": [
+      {
+        "domain": "p5-kimi-k2.5",
+        "model": "cloud",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-kimi-k2.5-cloud.html",
+        "success": true
+      }
+    ],
+    "p5-lfm2.5-thinking": [
+      {
+        "domain": "p5-lfm2.5-thinking",
+        "model": "1.2b",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-lfm2.5-thinking-1.2b.html",
+        "success": true
+      }
+    ],
+    "p5-phi4-mini": [
+      {
+        "domain": "p5-phi4-mini",
+        "model": "latest",
+        "provider": "ollama",
+        "path": "landing-live/ollama-p5-phi4-mini-latest.html",
+        "success": true
+      }
+    ],
+    "three": [
+      {
+        "domain": "three",
+        "model": "gemma3:4b",
+        "provider": "ollama",
+        "path": "landing-live/three-gemma3:4b.html",
+        "success": true
+      },
+      {
+        "domain": "three",
+        "model": "granite4:1b",
+        "provider": "ollama",
+        "path": "landing-live/three-granite4:1b.html",
+        "success": true
+      },
+      {
+        "domain": "three",
+        "model": "phi4-mini",
+        "provider": "ollama",
+        "path": "landing-live/three-phi4-mini.html",
+        "success": true
+      },
+      {
+        "domain": "three",
+        "model": "qwen3.5:2b",
+        "provider": "ollama",
+        "path": "landing-live/three-qwen3.5:2b.html",
+        "success": true
+      }
+    ]
   },
-  {
-    id: "p5-agent-simple-v2",
-    domain: "p5",
-    model: "Agent Loop",
-    label: "p5.js",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Build a bioluminescent deep-sea ecosystem with jellyfish that pulse with light, plankton particles reacting to mouse proximity, and caustic light patterns rippling across the screen. Jellyfish tentacles should trail with physics-based motion.",
-    generatedAt: "2026-04-06 12:35 PM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/p5-2026-04-06T19-35-05-463Z/dogfood-p5-final.html"
-  },
-  {
-    id: "tone-agent-stress",
-    domain: "tone",
-    model: "Agent Loop",
-    label: "Tone.js",
-    variant: "stress",
-    iterations: 5,
-    prompt: "Build a generative ambient soundscape engine: Create 6 oscillators with different waveforms, each with its own LFO modulating frequency, filter cutoff, and amplitude. Use a Markov chain to probabilistically trigger note changes constrained to a Lydian mode. Add a convolution reverb with a long tail, sidechain each voice to a ghost kick for pulsing dynamics, and implement a spectral freeze effect that captures and sustains the current harmony on keypress.",
-    generatedAt: "2026-04-06 10:15 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/tone-hard-2026-04-06T17-15-43/dogfood-tone-hard-final.html"
-  },
-  {
-    id: "html-agent-simple",
-    domain: "html",
-    model: "Agent Loop",
-    label: "HTML",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Build an interactive sound visualization dashboard with real-time frequency bars rendered via CSS transforms, a circular waveform display using SVG paths, draggable synthesizer controls with knobs, and a dark theme with neon accent glow effects. No canvas — pure HTML/CSS/JS.",
-    generatedAt: "2026-04-06 10:15 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/html-2026-04-06T17-15-43/dogfood-html-final.html"
-  },
-  {
-    id: "strudel-agent-simple",
-    domain: "strudel",
-    model: "Agent Loop",
-    label: "Strudel",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Compose a lo-fi hip hop beat with vinyl crackle, Rhodes-style chord stabs using jazz voicings, a lazy boom-bap drum pattern with ghost notes, and a chopped vocal sample that re-pitches every 8 bars. Add tape wobble and tape saturation warmth.",
-    generatedAt: "2026-04-06 10:15 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/strudel-2026-04-06T17-15-43/dogfood-strudel-final.html"
-  },
-  {
-    id: "p5-agent-stress",
-    domain: "p5",
-    model: "Agent Loop",
-    label: "p5.js",
-    variant: "stress",
-    iterations: 5,
-    prompt: "Create a full fluid dynamics simulation using the Navier-Stokes equations. The canvas should display dye injection colored by velocity magnitude. Users can click and drag to inject colored dye and add force to the fluid. Include diffusion, advection, and projection steps. Add a toolbar with viscosity slider, diffusion rate, and a reset button. Display the FPS counter. Use a grid resolution of at least 128x128.",
-    generatedAt: "2026-04-06 10:15 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/p5-hard-2026-04-06T17-15-43/dogfood-p5-hard-final.html"
-  },
-  {
-    id: "p5-agent-simple",
-    domain: "p5",
-    model: "Agent Loop",
-    label: "p5.js",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Build a bioluminescent deep-sea ecosystem with jellyfish that pulse with light, plankton particles reacting to mouse proximity, and caustic light patterns rippling across the screen. Jellyfish tentacles should trail with physics-based motion.",
-    generatedAt: "2026-04-06 10:15 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/p5-2026-04-06T17-15-43/dogfood-p5-final.html"
-  },
-  {
-    id: "p5-qwen35-wt",
-    domain: "p5",
-    model: "Qwen 3.5",
-    label: "p5.js",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Build a bioluminescent deep-sea ecosystem with jellyfish that pulse with light, plankton particles reacting to mouse proximity, and caustic light patterns rippling across the screen. Jellyfish tentacles should trail with physics-based motion.",
-    generatedAt: "2026-04-06 09:13 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/p5-qwen35-1775492035156/dogfood-p5-qwen35-final.html"
-  },
-  {
-    id: "p5-minimax-m25-wt",
-    domain: "p5",
-    model: "MiniMax M2.5",
-    label: "p5.js",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Build a bioluminescent deep-sea ecosystem with jellyfish that pulse with light, plankton particles reacting to mouse proximity, and caustic light patterns rippling across the screen. Jellyfish tentacles should trail with physics-based motion.",
-    generatedAt: "2026-04-06 09:13 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/p5-minimax-m25-1775492017102/dogfood-p5-minimax-m25-final.html"
-  },
-  {
-    id: "p5-minimax-m27-wt-b",
-    domain: "p5",
-    model: "MiniMax M2.7",
-    label: "p5.js",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Build a bioluminescent deep-sea ecosystem with jellyfish that pulse with light, plankton particles reacting to mouse proximity, and caustic light patterns rippling across the screen. Jellyfish tentacles should trail with physics-based motion.",
-    generatedAt: "2026-04-06 09:13 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/p5-minimax-m27-1775491980357/dogfood-p5-minimax-m27-final.html"
-  },
-  {
-    id: "p5-minimax-m27-wt-a",
-    domain: "p5",
-    model: "MiniMax M2.7",
-    label: "p5.js",
-    variant: "simple",
-    iterations: 1,
-    prompt: "Build a bioluminescent deep-sea ecosystem with jellyfish that pulse with light, plankton particles reacting to mouse proximity, and caustic light patterns rippling across the screen. Jellyfish tentacles should trail with physics-based motion.",
-    generatedAt: "2026-04-06 09:06 AM PDT",
-    duration: null,
-    iframeSrc: "./recovered-dogfood/2026-04-06/p5-minimax-m27-1775491568890/dogfood-p5-minimax-m27-final.html"
-  }
-];
-
-/**
- * Domain metadata for display badges
- */
-const DOMAIN_META = {
-  p5:      { icon: "\u{1F3A8}", color: "var(--accent-cyan)",   title: "p5.js" },
-  glsl:    { icon: "\u{1F52E}", color: "var(--accent-violet)",  title: "GLSL" },
-  three:   { icon: "\u{1F9CA}", color: "var(--accent-blue)",    title: "Three.js" },
-  strudel: { icon: "\u{1F941}", color: "var(--accent-amber)",   title: "Strudel" },
-  hydra:   { icon: "\u{1F4FA}", color: "var(--accent-rose)",    title: "Hydra" },
-  tone:    { icon: "\u{1F3B5}", color: "var(--accent-amber)",   title: "Tone.js" },
-  remotion:{ icon: "\u{1F3AC}", color: "var(--accent-violet)",  title: "Remotion" },
-  html:    { icon: "\u{1F5BC}", color: "var(--accent-blue)",    title: "HTML" },
-  ascii:   { icon: "\u{1F4BB}", color: "var(--accent-cyan)",    title: "ASCII" }
-};
-
-/**
- * Computed stats from card data
- */
-const GALLERY_STATS = {
-  totalOutputs: GALLERY_CARDS.length,
-  domainsTested: new Set(GALLERY_CARDS.map(function(c) { return c.domain; })).size,
-  models: new Set(GALLERY_CARDS.map(function(c) { return c.model; })).size
+  "items": [
+    {
+      "domain": "glsl-minimax",
+      "model": "m25",
+      "provider": "cloud",
+      "path": "landing-live/cloud-glsl-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "glsl-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-glsl-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "html-minimax",
+      "model": "m25",
+      "provider": "cloud",
+      "path": "landing-live/cloud-html-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "html-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-html-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "hydra-minimax",
+      "model": "m25",
+      "provider": "cloud",
+      "path": "landing-live/cloud-hydra-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "hydra-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-hydra-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax-glsl-minimax",
+      "model": "m25",
+      "provider": "cloud",
+      "path": "landing-live/cloud-minimax-glsl-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "minimax-glsl-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-minimax-glsl-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "minimax-p5-minimax",
+      "model": "m25",
+      "provider": "cloud",
+      "path": "landing-live/cloud-minimax-p5-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "minimax-p5-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-minimax-p5-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "p5-minimax",
+      "model": "m25",
+      "provider": "cloud",
+      "path": "landing-live/cloud-p5-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "p5-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-p5-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "strudel-minimax",
+      "model": "m25",
+      "provider": "cloud",
+      "path": "landing-live/cloud-strudel-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "strudel-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-strudel-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "tone-minimax",
+      "model": "m27",
+      "provider": "cloud",
+      "path": "landing-live/cloud-tone-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "glsl",
+      "model": "gemma3:4b",
+      "provider": "ollama",
+      "path": "landing-live/glsl-gemma3:4b.html",
+      "success": true
+    },
+    {
+      "domain": "glsl",
+      "model": "gemma4",
+      "provider": "ollama",
+      "path": "landing-live/glsl-gemma4.html",
+      "success": true
+    },
+    {
+      "domain": "glsl",
+      "model": "granite4:1b",
+      "provider": "ollama",
+      "path": "landing-live/glsl-granite4:1b.html",
+      "success": true
+    },
+    {
+      "domain": "glsl",
+      "model": "lfm2.5",
+      "provider": "ollama",
+      "path": "landing-live/glsl-lfm2.5.html",
+      "success": true
+    },
+    {
+      "domain": "glsl",
+      "model": "phi4-mini",
+      "provider": "ollama",
+      "path": "landing-live/glsl-phi4-mini.html",
+      "success": true
+    },
+    {
+      "domain": "glsl",
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "path": "landing-live/glsl-qwen3.5:2b.html",
+      "success": true
+    },
+    {
+      "domain": "ascii-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-ascii-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "ascii-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-ascii-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "glsl-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-glsl-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "glsl-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-glsl-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "html-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-html-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "html-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-html-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "hydra-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-hydra-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "hydra-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-hydra-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-p5-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-lmstudio-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-p5-lmstudio-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-lmstudio-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-p5-lmstudio-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-p5-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "remotion-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-remotion-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "remotion-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-remotion-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "strudel-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-strudel-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "strudel-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-strudel-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "three-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-three-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "three-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-three-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "tone-google-gemma-4-26b",
+      "model": "a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-tone-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "tone-qwen3.5",
+      "model": "2b",
+      "provider": "lmstudio",
+      "path": "landing-live/lmstudio-tone-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "local",
+      "model": "lmstudio-glsl-google-gemma-4-26b-a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/local-lmstudio-glsl-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "local",
+      "model": "lmstudio-glsl-qwen3.5-2b",
+      "provider": "lmstudio",
+      "path": "landing-live/local-lmstudio-glsl-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "local",
+      "model": "lmstudio-p5-google-gemma-4-26b-a4b",
+      "provider": "lmstudio",
+      "path": "landing-live/local-lmstudio-p5-google-gemma-4-26b-a4b.html",
+      "success": true
+    },
+    {
+      "domain": "local",
+      "model": "lmstudio-p5-qwen3.5-2b",
+      "provider": "lmstudio",
+      "path": "landing-live/local-lmstudio-p5-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "local",
+      "model": "ollama-p5-gemma4-latest",
+      "provider": "ollama",
+      "path": "landing-live/local-ollama-p5-gemma4-latest.html",
+      "success": true
+    },
+    {
+      "domain": "local",
+      "model": "ollama-p5-qwen3.5-0.8b",
+      "provider": "ollama",
+      "path": "landing-live/local-ollama-p5-qwen3.5-0.8b.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "p5-minimax-m25",
+      "provider": "unknown",
+      "path": "landing-live/minimax-p5-minimax-m25.html",
+      "success": true
+    },
+    {
+      "domain": "minimax",
+      "model": "p5-minimax-m27",
+      "provider": "unknown",
+      "path": "landing-live/minimax-p5-minimax-m27.html",
+      "success": true
+    },
+    {
+      "domain": "p5-gemma3",
+      "model": "4b",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-gemma3-4b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-gemma4",
+      "model": "latest",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-gemma4-latest.html",
+      "success": true
+    },
+    {
+      "domain": "p5-granite4",
+      "model": "1b",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-granite4-1b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-granite4",
+      "model": "350m",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-granite4-350m.html",
+      "success": true
+    },
+    {
+      "domain": "p5-kimi-k2.5",
+      "model": "cloud",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-kimi-k2.5-cloud.html",
+      "success": true
+    },
+    {
+      "domain": "p5-lfm2.5-thinking",
+      "model": "1.2b",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-lfm2.5-thinking-1.2b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-phi4-mini",
+      "model": "latest",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-phi4-mini-latest.html",
+      "success": true
+    },
+    {
+      "domain": "p5-qwen3.5",
+      "model": "0.8b",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-qwen3.5-0.8b.html",
+      "success": true
+    },
+    {
+      "domain": "p5-qwen3.5",
+      "model": "2b",
+      "provider": "ollama",
+      "path": "landing-live/ollama-p5-qwen3.5-2b.html",
+      "success": true
+    },
+    {
+      "domain": "three",
+      "model": "gemma3:4b",
+      "provider": "ollama",
+      "path": "landing-live/three-gemma3:4b.html",
+      "success": true
+    },
+    {
+      "domain": "three",
+      "model": "granite4:1b",
+      "provider": "ollama",
+      "path": "landing-live/three-granite4:1b.html",
+      "success": true
+    },
+    {
+      "domain": "three",
+      "model": "phi4-mini",
+      "provider": "ollama",
+      "path": "landing-live/three-phi4-mini.html",
+      "success": true
+    },
+    {
+      "domain": "three",
+      "model": "qwen3.5:2b",
+      "provider": "ollama",
+      "path": "landing-live/three-qwen3.5:2b.html",
+      "success": true
+    }
+  ]
 };

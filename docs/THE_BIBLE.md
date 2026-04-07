@@ -782,9 +782,9 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 | 10 | Inspect mode for tool output review | ✅ Done |
 | 11 | Command routing (/status, /tasks, etc.) | ✅ Done |
 | 12 | Preview/audio routing | ✅ Done |
-| 13 | Happy-path parity verified end-to-end | ⬜ Remaining (28 Go tests pass, TS build clean; needs live server+TUI smoke test) |
+| 13 | Happy-path parity verified end-to-end | ✅ Done |
 
-**Current: 12/13 complete.** Items 8-12 implemented in Wave 1+2 (commit `029e41dc`). Item 13 requires a live bridge+TUI integration run. See `docs/TUI_BUBBLE_TEA_EXECUTION_PLAN.md` for detailed status.
+**Current: 13/13 complete.** Verified via live smoke test (commit `24531d8c`): session creation, status retrieval, chat/action/inspect input routing, SSE event stream (response.started→delta→completed→committed→status.updated), and confirmation-first enforcement (action mode returns `reviewRequired: true`). All 28 Go tests passing.
 
 ---
 

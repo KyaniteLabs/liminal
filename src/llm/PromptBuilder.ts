@@ -10,6 +10,7 @@
 
 import { readFile } from 'fs/promises';
 import { join } from 'path';
+import { fileURLToPath } from 'url';
 import { 
   detectModelTier, 
   getModelProfile,
@@ -17,6 +18,8 @@ import {
 } from './ModelTier.js';
 import type { LLMConfig } from './LLMClient.js';
 import { Logger } from '../utils/Logger.js';
+
+const PROMPT_BUILDER_ROOT = join(fileURLToPath(new URL('.', import.meta.url)), '../..');
 
 export interface PromptContext {
   // Core identity
@@ -190,7 +193,7 @@ export class PromptBuilder {
 
     // Try to load SOUL.md
     try {
-      ctx.soul = await readFile(join(process.cwd(), 'SOUL.md'), 'utf-8');
+      ctx.soul = await readFile(join(PROMPT_BUILDER_ROOT, 'SOUL.md'), 'utf-8');
     } catch (err) {
       Logger.debug('PromptBuilder', 'SOUL.md not found, using default soul:', err);
       ctx.soul = 'You are Liminal, a creative coding assistant.';
@@ -198,7 +201,7 @@ export class PromptBuilder {
 
     // Try to load PROJECT_RULES.md
     try {
-      ctx.rules = await readFile(join(process.cwd(), 'PROJECT_RULES.md'), 'utf-8');
+      ctx.rules = await readFile(join(PROMPT_BUILDER_ROOT, 'PROJECT_RULES.md'), 'utf-8');
     } catch (err) {
       Logger.debug('PromptBuilder', 'PROJECT_RULES.md not found, using default rules:', err);
       ctx.rules = 'Output valid, working code only.';
@@ -207,7 +210,7 @@ export class PromptBuilder {
     // Try to load domain docs
     try {
       ctx.domainDocs = await readFile(
-        join(process.cwd(), 'docs', 'domains', `${domain}.md`),
+        join(PROMPT_BUILDER_ROOT, 'docs', 'domains', `${domain}.md`),
         'utf-8'
       );
     } catch (err) {

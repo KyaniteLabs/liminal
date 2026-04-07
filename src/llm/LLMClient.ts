@@ -140,7 +140,7 @@ export class LLMClient {
 
     this.config = {
       baseUrl,
-      apiKey: config?.apiKey ?? roleApiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY,
+      apiKey: config?.apiKey ?? roleApiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY ?? process.env.MINIMAX_API_KEY,
       model: config?.model || roleModel || env('LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL,
       temperature: config?.temperature ?? roleTemperature ?? 0.7,
       maxTokens: config?.maxTokens ?? roleMaxTokens ?? 4096,
@@ -382,8 +382,7 @@ export class LLMClient {
     const baseUrl = this.config.baseUrl.toLowerCase();
     const model = this.config.model.toLowerCase();
 
-    if (baseUrl.includes('minimaxi')) return Provider.MINIMAX;
-    if (baseUrl.includes('minimax')) return Provider.MINIMAX; // Legacy
+    if (baseUrl.includes('minimax')) return Provider.MINIMAX; // Matches both api.minimaxi.com and api.minimax.io
     if (baseUrl.includes('openai')) return Provider.OPENAI;
     if (baseUrl.includes('anthropic')) return 'anthropic';
     if (baseUrl.includes('localhost:11434')) return Provider.OLLAMA;
@@ -643,7 +642,7 @@ Rules:
 
   /** Check if LLM is configured */
   static isConfigured(): boolean {
-    const hasExplicitConfig = !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY'));
+    const hasExplicitConfig = !!(env('LLM_BASE_URL') || process.env.OPENAI_API_KEY || env('LLM_API_KEY') || process.env.MINIMAX_API_KEY);
     if (hasExplicitConfig) return true;
     // In test environments, don't treat the hardcoded default local URL as configured,
     // otherwise E2E tests try to call a non-existent localhost endpoint and timeout.
@@ -673,7 +672,16 @@ Rules:
     const resolvedModel = await this.resolveModel();
     this.syncResolvedModel(resolvedModel);
 
+    const startTime = Date.now();
+
     try {
+      eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', {
+        provider: this.detectProvider(),
+        model: this.config.model,
+        method: 'complete',
+        promptPreview: systemPrompt?.slice(0, 100),
+      });
+
       const result = await RetryManager.executeWithRetry(async () => {
         const provider = this.getProvider();
         const req: ProviderRequest = {
@@ -734,9 +742,25 @@ Rules:
         throw primaryError;
       });
 
+      eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {
+        provider: this.detectProvider(),
+        model: this.config.model,
+        method: 'complete',
+        success: true,
+        duration: Date.now() - startTime,
+      });
+
       return result;
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Unknown error';
+      eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {
+        provider: this.detectProvider(),
+        model: this.config.model,
+        method: 'complete',
+        success: false,
+        duration: Date.now() - startTime,
+        error: errMsg,
+      });
       return {
         text: '',
         success: false,
@@ -896,17 +920,27 @@ Rules:
     systemPrompt: string,
     userPrompt: string,
     signal?: AbortSignal,
+    maxTokens?: number,
   ): AsyncGenerator<{ type: 'thinking' | 'content'; content: string }> {
     // Auto-detect model on first use
     const resolvedModel = await this.resolveModel();
     this.syncResolvedModel(resolvedModel);
+
+    const startTime = Date.now();
+
+    eventBus.emit(EventTypes.LLM_REQUEST, 'LLMClient', {
+      provider: this.detectProvider(),
+      model: this.config.model,
+      method: 'streamWithThinking',
+      promptPreview: userPrompt.slice(0, 100),
+    });
 
     const provider = this.getProvider();
     const req: ProviderRequest = {
       systemPrompt,
       userPrompt,
       temperature: this.config.temperature,
-      maxTokens: this.config.maxTokens,
+      maxTokens: maxTokens ?? this.config.maxTokens,
       signal,
     };
 
@@ -923,6 +957,14 @@ Rules:
         }
         // 'done' events are silently consumed
       }
+
+      eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {
+        provider: this.detectProvider(),
+        model: this.config.model,
+        method: 'streamWithThinking',
+        success: true,
+        duration: Date.now() - startTime,
+      });
     } catch (primaryError: unknown) {
       if (!this.isFallbackableError(primaryError)) {
         throw primaryError;
@@ -958,6 +1000,14 @@ Rules:
       }
 
       // All fallbacks exhausted
+      eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {
+        provider: this.detectProvider(),
+        model: this.config.model,
+        method: 'streamWithThinking',
+        success: false,
+        duration: Date.now() - startTime,
+        error: primaryError instanceof Error ? primaryError.message : 'Unknown error',
+      });
       throw primaryError;
     }
   }

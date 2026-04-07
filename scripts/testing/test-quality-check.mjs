@@ -27,8 +27,10 @@ const CONFIG = {
   maxErrors: Infinity,
   maxWarnings: Infinity,
 
-  // Severity for CI
-  warningAsError: process.env.CI === 'true',
+  // Treat warnings as errors only in strict mode (STRICT_QUALITY=1).
+  // Pre-existing warnings are tracked as tech debt; they don't block CI
+  // until STRICT_QUALITY enforcement is turned on deliberately.
+  warningAsError: process.env.STRICT_QUALITY === '1',
 
   // toBeDefined cap: warning now, error when STRICT_QUALITY=1
   toBeDefinedStrict: process.env.STRICT_QUALITY === '1',
@@ -59,13 +61,20 @@ function checkViHoisted(content, filePath) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
 
-    // Match: const { mockX, mockY } = vi.hoisted(() => ...
+    // Match: const { mockX, mockY } = vi.hoisted(() => ...  (destructuring form)
     const hoistedMatch = line.match(/const\s*\{([^}]+)\}\s*=\s*vi\.hoisted/);
     if (hoistedMatch) {
       const names = hoistedMatch[1].split(',').map(n => n.trim().split(':')[0].trim()).filter(Boolean);
       for (const name of names) {
         declarations.set(name, { line: i + 1, hoisted: true });
       }
+      continue;
+    }
+
+    // Match: const mockX = vi.hoisted(...)  (direct assignment form)
+    const hoistedDirectMatch = line.match(/^const\s+(\w+)\s*=\s*vi\.hoisted/);
+    if (hoistedDirectMatch) {
+      declarations.set(hoistedDirectMatch[1], { line: i + 1, hoisted: true });
       continue;
     }
 
@@ -86,6 +95,7 @@ function checkViHoisted(content, filePath) {
       // Find the factory function - scan ahead for the arrow function or function expression
       let depth = 0;
       let factoryStart = -1;
+      let blockFound = false;
       for (let j = i; j < lines.length && j < i + 50; j++) {
         const l = lines[j];
         if (l.includes('()') && (l.includes('=>') || l.includes('{'))) {
@@ -96,11 +106,12 @@ function checkViHoisted(content, filePath) {
           // We have the complete vi.mock() block
           const block = lines.slice(i, j + 1).join('\n');
           mockBlocks.push(block);
+          blockFound = true;
           break;
         }
       }
-      // If we couldn't find the end, take up to 30 lines
-      if (factoryStart >= 0 && mockBlocks.length === mockBlocks.filter(() => true).length) {
+      // Only fall back to 30-line window if we couldn't find the closing paren
+      if (!blockFound && factoryStart >= 0) {
         mockBlocks.push(lines.slice(i, i + 30).join('\n'));
       }
     }

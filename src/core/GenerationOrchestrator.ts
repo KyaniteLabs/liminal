@@ -22,6 +22,7 @@ import { SwarmOrchestrator } from '../swarm/SwarmOrchestrator.js';
 import { MiningEngine } from '../swarm/MiningEngine.js';
 import { ArchiveLearning } from '../learning/index.js';
 import type { NormalizedLoopOptions } from './LoopConfig.js';
+import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { Logger } from '../utils/Logger.js';
 
 type DispatchResult = { entry: GeneratorEntry; confidence: number } | null;
@@ -79,7 +80,8 @@ async function collabLLMCaller(
     return extractCode(result);
   }
   const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
-  const generator = new P5GeneratorLLM();
+  const config = await getEffectiveConfig(undefined, process.cwd());
+  const generator = new P5GeneratorLLM(config.baseUrl ? { baseUrl: config.baseUrl, model: config.model, apiKey: config.apiKey, role: 'generator' } : undefined);
   const result = await generator.generate(prompt);
   return extractCode(result);
 }
@@ -124,7 +126,8 @@ export class GenerationOrchestrator {
     }
 
     const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
-    const generator = new P5GeneratorLLM(undefined, { bypassCache });
+    const config = await getEffectiveConfig(undefined, process.cwd());
+    const generator = new P5GeneratorLLM(config.baseUrl ? { baseUrl: config.baseUrl, model: config.model, apiKey: config.apiKey, role: 'generator' } : undefined, { bypassCache });
     const result = await generator.generate(usedPrompt, { bypassCache });
     return normalizeGeneratorResult(result);
   }

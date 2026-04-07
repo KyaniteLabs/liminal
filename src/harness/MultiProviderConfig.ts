@@ -18,8 +18,42 @@
  */
 
 import type { LLMConfig } from '../llm/LLMClient.js';
+import fs from 'node:fs';
+import path from 'node:path';
+import os from 'node:os';
 
-export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'custom';
+/** Read defaultProvider from ~/.liminal/config.json (sync, cached) */
+let _cachedDefault: string | null = null;
+type ProviderFileConfig = Record<string, { apiKey?: string; baseUrl?: string; model?: string }>;
+let _cachedConfig: ProviderFileConfig | null = null;
+let _configLoaded = false;
+
+function loadConfigFile(): ProviderFileConfig | null {
+  if (_configLoaded) return _cachedConfig;
+  try {
+    const configPath = path.join(os.homedir(), '.liminal', 'config.json');
+    const raw = fs.readFileSync(configPath, 'utf-8');
+    const parsed = JSON.parse(raw);
+    _cachedConfig = parsed.providers || null;
+    _cachedDefault = parsed.defaultProvider || null;
+  } catch {
+    _cachedConfig = null;
+  }
+  _configLoaded = true;
+  return _cachedConfig;
+}
+
+function getDefaultProviderFromConfig(): string | null {
+  if (!_configLoaded) loadConfigFile();
+  return _cachedDefault;
+}
+
+function getApiKeyFromConfig(provider: string): string | undefined {
+  const providers = loadConfigFile();
+  return providers?.[provider]?.apiKey;
+}
+
+export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
 
 export interface ProviderConfig extends LLMConfig {
   provider: ProviderType;
@@ -83,10 +117,20 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
   },
   moonshot: {
     provider: 'moonshot',
-    name: 'KimiCode',
-    description: 'Moonshot AI KimiCode K2-P5',
+    name: 'Moonshot AI (Legacy)',
+    description: 'Moonshot AI Kimi API',
     baseUrl: 'https://api.moonshot.ai/v1',
-    model: 'kimi-k2-p5',
+    model: 'kimi-k2.5',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  kimi: {
+    provider: 'kimi',
+    name: 'Kimi',
+    description: 'Moonshot AI Kimi K2.5 (International)',
+    baseUrl: 'https://api.moonshot.ai/v1',
+    model: 'kimi-k2.5',
     apiStyle: 'openai',
     temperature: 0.7,
     maxTokens: 4096,
@@ -109,7 +153,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
 export function getProviderConfig(provider: ProviderType): ProviderConfig | null {
   const template = PROVIDER_TEMPLATES[provider];
   
-  // Get API key from environment based on provider
+  // Get API key: env var first, then config file
   let apiKey: string | undefined;
   switch (provider) {
     case 'minimax':
@@ -119,7 +163,8 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
       apiKey = process.env.GLM_API_KEY;
       break;
     case 'moonshot':
-      apiKey = process.env.MOONSHOT_API_KEY;
+    case 'kimi':
+      apiKey = process.env.MOONSHOT_API_KEY || process.env.KIMI_API_KEY;
       break;
     case 'openrouter':
       apiKey = process.env.OPENROUTER_API_KEY;
@@ -132,6 +177,10 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
     case 'custom':
       apiKey = process.env.LIMINAL_LLM_API_KEY || process.env.OPENAI_API_KEY;
       break;
+  }
+  // Fallback: read apiKey from ~/.liminal/config.json providers.<name>.apiKey
+  if (!apiKey) {
+    apiKey = getApiKeyFromConfig(provider);
   }
   
   // Allow environment overrides for baseUrl and model
@@ -167,13 +216,19 @@ export function getActiveProvider(): ProviderType {
   if (baseUrl) {
     return detectProviderFromUrl(baseUrl);
   }
-  
+
+  // Check config file defaultProvider before env var sniffing
+  const fileDefault = getDefaultProviderFromConfig();
+  if (fileDefault && PROVIDER_TEMPLATES[fileDefault as keyof typeof PROVIDER_TEMPLATES]) {
+    return fileDefault as ProviderType;
+  }
+
   // Check for specific API keys
   if (process.env.MINIMAX_API_KEY) return 'minimax';
   if (process.env.GLM_API_KEY) return 'glm';
   if (process.env.MOONSHOT_API_KEY) return 'moonshot';
   if (process.env.OPENROUTER_API_KEY) return 'openrouter';
-  
+
   // Default to Ollama (local)
   return 'ollama';
 }

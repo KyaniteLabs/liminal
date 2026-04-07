@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git merge origin/main --no-edit 2>&1\",\"description\":\"Merge main into this worktree branch\"}",
-  "error": "Exit code 2\nerror: The following untracked working tree files would be overwritten by merge:\n\t.omc/project-memory.json\n\t.omc/state/hud-state.json\n\t.omc/state/hud-stdin-cache.json\n\t.omc/state/idle-notif-cooldown.json\n\t.omc/state/mission-state.json\n\t.omc/state/subagent-tracking.json\nPlease move or remove them before you merge.\nAborting\nMerge with strategy ort failed.",
-  "timestamp": "2026-04-07T16:08:47.239Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"git stash && git merge origin/main --no-edit 2>&1\",\"description\":\"Stash changes then merge main\"}",
+  "error": "Exit code 1\nSaved working directory and index state WIP on worktree-special-mission: fd943bcc chore: stage local omc state before main merge\nAuto-merging .omc/project-memory.json\nCONFLICT (add/add): Merge conflict in .omc/project-memory.json\nAuto-merging .omc/state/hud-state.json\nCONFLICT (add/add): Merge conflict in .omc/state/hud-state.json\nAuto-merging .omc/state/hud-stdin-cache.json\nCONFLICT (add/add): Merge conflict in .omc/state/hud-stdin-cache.json\nAuto-merging .omc/state/idle-notif-coold...",
+  "timestamp": "2026-04-07T16:09:20.642Z",
+  "retry_count": 2
 }

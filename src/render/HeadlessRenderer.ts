@@ -6,6 +6,7 @@
  */
 
 import { chromium, Browser, Page, BrowserContext, ConsoleMessage } from 'playwright';
+import { existsSync, readdirSync } from 'node:fs';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -97,17 +98,56 @@ export class HeadlessRenderer {
   }
 
   /**
+   * Resolve a chromium executable path.
+   *
+   * Playwright pins a specific browser revision. When the bundled binary doesn't
+   * exist (e.g. a newer playwright version installed but only an older chromium
+   * build available in the environment), fall back to any chromium binary found
+   * under PLAYWRIGHT_BROWSERS_PATH or /opt/pw-browsers.
+   */
+  private static resolveChromiumExecutable(): string | undefined {
+    // Honor explicit override (e.g. set in CI or dev environments)
+    if (process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH) {
+      return process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+    }
+
+    // Check if the playwright-preferred binary exists; if so, let playwright use it
+    const preferredPath = chromium.executablePath();
+    if (existsSync(preferredPath)) return undefined; // let playwright resolve normally
+
+    // Fall back: scan for any installed chromium binary
+    const browsersPath = process.env.PLAYWRIGHT_BROWSERS_PATH ?? '/opt/pw-browsers';
+    if (!existsSync(browsersPath)) return undefined;
+
+    try {
+      const dirs = readdirSync(browsersPath);
+      for (const dir of dirs) {
+        if (!dir.startsWith('chromium')) continue;
+        for (const subPath of ['chrome-linux/chrome', 'chrome-linux64/chrome']) {
+          const candidate = `${browsersPath}/${dir}/${subPath}`;
+          if (existsSync(candidate)) return candidate;
+        }
+      }
+    } catch {
+      // scan failed — fall through
+    }
+    return undefined;
+  }
+
+  /**
    * Initialize the browser (lazy initialization)
    */
   async initialize(): Promise<void> {
     if (this.browser) return;
 
     try {
+      const executablePath = HeadlessRenderer.resolveChromiumExecutable();
       this.browser = await chromium.launch({
         headless: true,
+        executablePath,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
       });
-      
+
       this.context = await this.browser.newContext({
         viewport: { width: 1280, height: 720 },
         deviceScaleFactor: 1,

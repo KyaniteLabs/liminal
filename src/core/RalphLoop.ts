@@ -58,6 +58,7 @@ import { EvolutionIntegration } from './EvolutionIntegration.js';
 import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
 import { SuccessRateTracker } from './SuccessRateTracker.js';
+import { GitIntegration } from '../git/GitIntegration.js';
 import { runOrganismMode } from './OrganismLoop.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
 import { env } from '../utils/env.js';
@@ -112,6 +113,10 @@ export class RalphLoop {
       explorationThreshold: 0.2,
       recoveryThreshold: 0.3,
     });
+
+    // Git integration — auto-on, agent manages version control behind the scenes
+    const gitIntegration = new GitIntegration(normalizedOptions.git ?? {});
+    await gitIntegration.startRun(normalizedOptions.project ?? `run-${Date.now()}`);
 
     // Voice-driven visual mapping: analyze audio file if provided
     if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
@@ -740,6 +745,16 @@ export class RalphLoop {
         await persistence.saveIteration(iteration, currentCode);
         await persistence.saveMergeStep(iteration);
 
+        // Git: auto-commit iteration (agent manages this behind the scenes)
+        await gitIntegration.commitIteration({
+          prompt: loadedPrompt,
+          score: evaluation.score,
+          iteration,
+          code: currentCode,
+          filePath: path.join(normalizedOptions.galleryDir, normalizedOptions.project, `v${iteration}.js`),
+          model: lastModel,
+        });
+
         // Track score history for convergence detection
         scoreHistory.push(evaluation.score);
 
@@ -844,6 +859,9 @@ export class RalphLoop {
     }
 
     const duration = Date.now() - startTime;
+
+    // Git: end run, restore original branch
+    await gitIntegration.endRun(reason || 'loop ended');
 
     // Report final result to Meta-Harness (skip during tests to avoid log pollution)
     if (process.env.NODE_ENV !== 'test') {

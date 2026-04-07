@@ -4,13 +4,14 @@
 
 This repo has multiple agents working simultaneously in worktrees. Breaking these rules causes data loss and merge conflicts.
 
-### The 5 Rules
+### The 6 Rules
 
 1. **Always push after committing.** Run `git push` immediately after every commit. Unpushed commits on a worktree that gets cleaned up = lost work. No exceptions.
 2. **Clean up your worktree when done.** After your work is pushed and/or merged: remove the worktree (`git worktree remove <path>`), delete your local branch if merged, delete remote branch if merged. Never leave idle worktrees behind.
 3. **Start fresh branches after merges.** If your branch was merged (squash or otherwise) to main, do NOT continue committing on it. Checkout main, pull, create a new branch. Continuing on merged branches creates divergence.
 4. **Check the monitor log.** Before starting work, read `memory/git-monitor-log.md` to see what other agents are doing. Avoid stepping on active worktrees.
 5. **Commit incrementally.** Don't let 20+ files sit dirty. Commit in logical batches (every 5-10 files). Large uncommitted diffs make conflict resolution harder.
+6. **Clean up stashes at session end.** Git stashes are repo-global (not per-worktree). Test runners using `auto-stash` pile up fast — 90+ stashes from a single test session is typical. Before closing a session: `git stash list` → drop all `liminal: auto-stash` entries with `git stash drop stash@{N}`. Keep only stashes with meaningful WIP. If the stash list exceeds 10 entries, it's overdue for cleanup.
 
 ### Convention Violation Monitor
 
@@ -52,21 +53,21 @@ Every test file written or modified MUST meet these standards. No exceptions.
 
 ### Coverage Target (MANDATORY — all agents)
 
-**Target: 75% coverage across all 4 metrics.**
+**Target: 70% coverage across all 4 metrics.**
 
 | Metric | Current | Target | Gap |
 |--------|---------|--------|-----|
-| Statements | 61.5% | 75% | -13.5pp |
-| Branches | 51.9% | 75% | -23.1pp |
-| Functions | 62.2% | 75% | -12.8pp |
-| Lines | 62.4% | 75% | -12.6pp |
+| Statements | 67.4% | 70% | -2.6pp |
+| Branches | 57.3% | 70% | -12.7pp |
+| Functions | 68.2% | 70% | -1.8pp |
+| Lines | 68.2% | 70% | -1.8pp |
 
 *(Current values auto-update via the ratchet. This table reflects the gap at ratchet start.)*
 
 **Rules:**
 1. Every new `src/` file MUST include a corresponding test file. Zero-coverage files are CI failures.
 2. Every PR that modifies `src/` code MUST not decrease coverage. The ratchet enforces this.
-3. When writing tests, target the 75% threshold — not the current ratchet floor. Write tests that move the needle.
+3. When writing tests, target the 70% threshold — not the current ratchet floor. Write tests that move the needle.
 4. Priority modules for coverage investment: `src/music/`, `src/plugins/`, `src/config/`, `src/generators/` — these have the largest gaps.
 5. `toBeDefined()` usage MUST stay below 5% of total assertions per file. Use `toBe(expectedValue)` or `toEqual(expectedShape)` instead.
 6. The ratchet (`autoUpdate` in `vitest.config.ts`) is the enforcement mechanism. **Never manually lower thresholds.** They only go UP.

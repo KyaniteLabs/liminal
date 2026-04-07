@@ -8,18 +8,10 @@
 - [ ] Documentation update
 
 ## Checklist
-- [ ] Code compiles (`npm run build`)
-- [ ] Tests pass (`npm run test`)
-- [ ] Lint passes (`npm run lint`)
-- [ ] **THE_BIBLE.md updated** (if src/ changed)
-- [ ] **Version bumped** (if applicable)
-- [ ] **Changelog updated**
-
-## Documentation Updates Required?
-<!-- If you changed src/ files, did you update THE_BIBLE.md? -->
-- [ ] No - only internal changes
-- [ ] Yes - I have updated THE_BIBLE.md
-- [ ] N/A - no src/ changes
+- [ ] Code compiles (`pnpm run build`)
+- [ ] Tests pass (`pnpm test`)
+- [ ] Lint passes (`pnpm run lint`)
+- [ ] Coverage not decreased (`pnpm run test:coverage`)
 
 ## Verification
-<!-- Link to any related PRs, issues, or documentation -->
+<!-- Link to any related issues or provide reproduction steps -->

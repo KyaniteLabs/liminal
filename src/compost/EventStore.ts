@@ -52,7 +52,9 @@ export type EventType =
   | 'branch_switch'     // Active branch was switched
   | 'snapshot'          // A state snapshot was taken
   | 'undo'              // The last event was rolled back
-  | 'config_change';    // Compost config was changed
+  | 'config_change'      // Compost config was changed
+  | 'git_commit'         // A git commit was made via GitIntegration
+  | 'git_branch';        // A git branch was created via GitIntegration
 
 /** An immutable event in the compost timeline. */
 export interface CompostEvent {
@@ -879,12 +881,8 @@ export class EventStore {
         throw new Error(`Branch name contains dangerous pattern: ${pattern}`);
       }
     }
-
-    // Block SQL keywords only when they appear as whole words (word-boundary check)
-    const sqlKeywords = /\b(DROP|DELETE|INSERT|UPDATE|EXEC|ALTER|CREATE|TRUNCATE)\b/i;
-    if (sqlKeywords.test(name)) {
-      throw new Error('Branch name contains SQL keyword');
-    }
+    // Note: no keyword blocklist needed — branch names are used only in parameterized
+    // queries (never string-interpolated into SQL), so SQL keywords in names are harmless.
   }
 }
 

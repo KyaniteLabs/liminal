@@ -130,10 +130,15 @@ describe('SandboxConfig', () => {
     it('should contain expected secure arguments', () => {
       expect(SECURE_CHROME_ARGS).toContain('--disable-dev-shm-usage');
       expect(SECURE_CHROME_ARGS).toContain('--no-first-run');
-      expect(SECURE_CHROME_ARGS).toContain('--no-zygote');
-      expect(SECURE_CHROME_ARGS).toContain('--single-process');
       expect(SECURE_CHROME_ARGS).toContain('--disable-gpu');
       expect(SECURE_CHROME_ARGS).toContain('--disable-web-security=false');
+    });
+
+    it('should NOT contain --no-zygote or --single-process (incompatible with sandbox enabled)', () => {
+      // --no-zygote and --single-process require --no-sandbox to function — omitting them
+      // prevents the "Zygote cannot be disabled if sandbox is enabled" crash.
+      expect(SECURE_CHROME_ARGS).not.toContain('--no-zygote');
+      expect(SECURE_CHROME_ARGS).not.toContain('--single-process');
     });
 
     it('should NOT contain --no-sandbox', () => {

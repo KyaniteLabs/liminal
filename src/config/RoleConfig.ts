@@ -19,11 +19,12 @@ import { CapabilityRegistry } from '../llm/CapabilityRegistry.js';
 import { Logger } from '../utils/Logger.js';
 import type { ModelCapabilities } from '../llm/CapabilityRegistry.js';
 import type { ThinkingConfig } from '../llm/ProviderTypes.js';
+import { getEffectiveConfig } from './ConfigLoader.js';
 
 // ── Types ──
 
 export type ModelRole = 'generator' | 'evaluator' | 'harness';
-export type ProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'google';
+export type ProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'google' | 'minimax';
 
 export interface RoleProviderConfig {
   /** Provider type — auto-detected from baseUrl if omitted */
@@ -94,7 +95,23 @@ export async function loadRoleConfig(projectDir?: string): Promise<Record<ModelR
   const projectConfig = await loadProjectConfig(projectDir);
 
   // Merge: project > user (project overrides user for same keys)
-  const merged = mergeConfigs(fileConfig, projectConfig);
+  let merged = mergeConfigs(fileConfig, projectConfig);
+
+  // Fallback: UserConfig shape (defaultProvider/providers) → single role from effective config
+  if (!merged?.roles && (fileConfig as any)?.defaultProvider) {
+    const effective = await getEffectiveConfig();
+    if (effective.baseUrl || effective.model) {
+      merged = {
+        roles: {
+          generator: {
+            baseUrl: effective.baseUrl || DEFAULT_BASE_URL,
+            model: effective.model || 'unknown',
+            apiKey: effective.apiKey,
+          },
+        },
+      };
+    }
+  }
 
   // Apply capability overrides to registry
   if (merged?.capabilities) {
@@ -166,8 +183,9 @@ export function detectProviderType(baseUrl: string, model?: string): ProviderTyp
   const url = baseUrl.toLowerCase();
   const m = (model || '').toLowerCase();
 
-  if (url.includes('anthropic')) return 'anthropic';
   if (url.includes('openrouter')) return 'openrouter';
+  if (url.includes('minimax')) return 'minimax'; // Before anthropic — api.minimax.io/anthropic contains "anthropic"
+  if (url.includes('anthropic')) return 'anthropic';
   if (url.includes('generativelanguage.googleapis')) return 'google';
   if (url.includes('11434') || url.includes('ollama')) return 'ollama';
 
@@ -176,6 +194,7 @@ export function detectProviderType(baseUrl: string, model?: string): ProviderTyp
   if (m.startsWith('gemini')) return 'google';
   if (m.startsWith('deepseek-r1')) return 'ollama';
 
+  // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, etc.)
   // ZhipuAI GLM — OpenAI-compatible
   if (url.includes('bigmodel.cn')) return 'openai';
   // Moonshot KimiCode — OpenAI-compatible

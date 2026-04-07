@@ -17,6 +17,7 @@ import type { SwarmOptions } from '../types/options/SwarmOptions.js';
 import { type DebugOptions, normalizeDebugOptions } from '../types/options/DebugOptions.js';
 import { type RenderOptions, normalizeRenderOptions } from '../types/options/RenderOptions.js';
 
+
 export const DEFAULT_MAX_ITERATIONS = 20;
 export const DEFAULT_TIMEOUT_MINUTES = 30;
 export const DEFAULT_MIN_QUALITY_SCORE = 0.7;
@@ -123,6 +124,8 @@ export interface LoopOptions {
   render?: RenderOptions;
   /** Number of candidates to generate per iteration (Best-of-N). Default: 1 (disabled) */
   numCandidates?: number;
+  /** Git integration configuration */
+  git?: import('../git/types.js').GitConfig;
   /** Enable render-based scoring - renders code in headless browser and scores visual/audio output */
   useRenderScoring?: boolean;
   /** Options for render-based scoring pipeline */
@@ -154,6 +157,8 @@ export interface IterationContext {
   selectedCandidateIndex?: number;
   /** Best-of-N: total number of candidates generated this iteration */
   numCandidatesGenerated?: number;
+  /** Git integration configuration */
+  git?: import('../git/types.js').GitConfig;
 }
 
 export interface NormalizedLoopOptions extends LoopOptions {
@@ -191,6 +196,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   _disableIterationExtension: boolean;
   debug: Required<DebugOptions>;
   render: Required<NonNullable<RenderOptions>>;
+  git?: import('../git/types.js').GitConfig;
 }
 
 /**
@@ -259,5 +265,6 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     numCandidates: Math.max(1, options?.numCandidates ?? 1),
     useRenderScoring: options?.useRenderScoring ?? false,
     renderScoringOptions: options?.renderScoringOptions ?? {},
+    git: options?.git ?? undefined,
   };
 }

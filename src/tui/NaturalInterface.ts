@@ -217,6 +217,9 @@ export class NaturalInterface {
       case 'q':
         return { type: 'command', response: 'Goodbye! \uD83D\uDC4B', shouldContinue: false };
 
+      case 'provider':
+        return this.handleProvider(args);
+
       case 'test':
       case 'diagnostic':
         return this.handleDiagnostic();
@@ -458,6 +461,7 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
       '  \u2022 status - Show harness status',
       '  \u2022 tasks  - List pending tasks',
       '  \u2022 run <id> - Execute a task',
+      '  \u2022 provider [list|<name>|<url> <model>] - Switch LLM provider',
       '  \u2022 preview <file> - Preview a file',
       '  \u2022 test   - Run diagnostic tests',
       '  \u2022 clear  - Clear screen',
@@ -465,6 +469,65 @@ Respond naturally as your personality. If the user asks you to modify code (fix,
     ].join('\n');
 
     return { type: 'command', response, shouldContinue: true };
+  }
+
+  private async handleProvider(args: string[]): Promise<NaturalInputResult> {
+    const { PROVIDER_TEMPLATES, listConfiguredProviders, getProviderConfig } = await import('../harness/MultiProviderConfig.js');
+    const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
+
+    // /provider list — show all providers
+    if (!args[0] || args[0] === 'list' || args[0] === 'ls') {
+      const configured = listConfiguredProviders();
+      const current = metaHarness.getStatus()?.activeProvider || 'unknown';
+      const lines = ['Providers:'];
+      for (const [key, tmpl] of Object.entries(PROVIDER_TEMPLATES)) {
+        const isConfigured = configured.includes(key as any);
+        const isCurrent = key === current;
+        const marker = isCurrent ? ' <-- active' : '';
+        const status = isConfigured ? '[ok]' : '[--]';
+        lines.push(`  ${status} ${key.padEnd(12)} ${tmpl.name.padEnd(14)} ${tmpl.model}${marker}`);
+      }
+      lines.push('');
+      lines.push('Usage: /provider <name>       -- switch to a configured provider');
+      lines.push('       /provider <url> <model> -- switch to custom endpoint');
+      return { type: 'command', response: lines.join('\n'), shouldContinue: true };
+    }
+
+    // /provider <name> — switch to a known provider
+    const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
+    if (template) {
+      const config = getProviderConfig(args[0] as any);
+      if (!config?.apiKey && args[0] !== 'ollama' && args[0] !== 'lmstudio') {
+        return {
+          type: 'command',
+          response: `Not configured. Set the API key first:\n  export ${args[0].toUpperCase()}_API_KEY=your-key`,
+          shouldContinue: true,
+        };
+      }
+      metaHarness.switchProvider(config!.baseUrl, config!.model, config!.apiKey);
+      this.onLog(`Switched to ${template.name}: ${config!.model}`);
+      return {
+        type: 'command',
+        response: `Switched to ${template.name}: ${config!.model} @ ${config!.baseUrl}`,
+        shouldContinue: true,
+      };
+    }
+
+    // /provider <url> <model> — custom endpoint
+    if (args[0]?.startsWith('http') && args[1]) {
+      metaHarness.switchProvider(args[0], args[1], args[2]);
+      return {
+        type: 'command',
+        response: `Switched to custom: ${args[1]} @ ${args[0]}`,
+        shouldContinue: true,
+      };
+    }
+
+    return {
+      type: 'command',
+      response: `Unknown provider "${args[0]}". Run /provider list to see options.`,
+      shouldContinue: true,
+    };
   }
 
   private async handleDiagnostic(): Promise<NaturalInputResult> {

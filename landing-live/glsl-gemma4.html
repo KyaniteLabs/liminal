@@ -1,0 +1,46 @@
+#version 330
+precision mediump float;
+
+uniform float u_time;
+uniform vec2 u_resolution;
+
+void main() {
+    // Normalized UV coordinates (0 to 1)
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    
+    // Time-dependent coordinates for animation
+    vec2 p = uv * 2.0 - 1.0;
+    float t = u_time * 0.15;
+
+    // --- Plasma Core Calculation ---
+    // Use sine/cosine waves across spatial dimensions modulated by time
+    // The combination of different frequencies creates the complex, swirling pattern.
+    float plasma_factor1 = sin(p.x * 3.0 + t) * cos(p.y * 2.0 - t * 0.8);
+    float plasma_factor2 = cos(p.y * 3.0 + t * 0.5) * sin(p.x * 2.5 + t * 1.2);
+    float plasma_factor3 = sin((p.x + p.y) * 5.0 + t * 0.3);
+
+    // Combine factors to create a smooth, oscillating value field (the 'plasma value')
+    float plasma_value = (plasma_factor1 * 0.5 + plasma_factor2 * 0.3 + plasma_factor3 * 0.2);
+
+    // --- Color Mapping (Animated Color Palette) ---
+    // Map the calculated value to HSV or directly to RGB using smooth functions.
+    
+    // Use the plasma_value to shift color components
+    vec3 color_base = vec3(
+        sin(plasma_value * 1.5 + u_time * 0.5) * 0.5 + 0.5,
+        cos(plasma_value * 1.2 + u_time * 0.8) * 0.5 + 0.5,
+        sin(plasma_value * 1.8 - u_time * 0.3) * 0.5 + 0.5
+    );
+    
+    // Introduce subtle chromatic aberration/time shift for vibrancy
+    vec3 color_r = sin(uv.x * 10.0 + u_time * 0.5) * 0.5 + 0.5;
+    vec3 color_g = cos(uv.y * 10.0 + u_time * 0.5) * 0.5 + 0.5;
+    vec3 color_b = sin((uv.x + uv.y) * 10.0 + u_time * 0.5) * 0.5 + 0.5;
+    
+    // Final color mix: Blend the core plasma structure with the animated color shifts
+    vec3 final_color = mix(color_base, vec3(1.0), plasma_value * 0.8 + 0.2);
+    final_color = final_color * (0.8 + 0.2 * sin(u_time * 0.2)); // Overall pulsing effect
+
+    // Output the final color
+    gl_FragColor = vec4(final_color, 1.0);
+}

@@ -1,0 +1,18 @@
+void main() {
+    // Generate a dynamic background color based on time and position for the "plasma" effect
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    
+    // Mix colors to create gradients, simulating plasma emission from hot spots
+    vec4 baseColor = mix(
+        vec3(0.16575, 0.28235, 0.52941), 
+        vec3(0.18235, 0.29803, 0.56863), 
+        uv.x * u_resolution.y
+    );
+
+    // Add a glow intensity based on distance from center and time
+    float glowIntensity = pow(abs(uv.x - 0.5) + abs(uv.y - 0.5), -2.0);
+    
+    vec4 finalColor = mix(baseColor, vec3(1.0, 1.0, 1.0), glowIntensity * 0.5);
+
+    gl_FragColor = vec4(finalColor.rgb, finalColor.a);
+}

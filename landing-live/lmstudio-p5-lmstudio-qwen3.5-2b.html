@@ -1,0 +1,43 @@
+import p5 as pg;
+
+// Configuration for the calm blue particle system
+const numParticles = 100;
+const radius = 4;
+let particles = [];
+
+function setup() {
+  // Create canvas in center of screen, fill with white background
+  createCanvas(600, 600);
+  background(255);
+}
+
+function draw() {
+  // Clear the canvas every frame
+  noStroke();
+  
+  // Loop through particles and update their positions based on velocity
+  for (let i = 0; i < numParticles; i++) {
+    let p = particles[i];
+    
+    // Move particle from current position to new random position
+    p.pos.x += p.vel.x;
+    p.pos.y += p.vel.y;
+    
+    // Bounce off the edges of the canvas
+    if (p.pos.x < 0 || p.pos.x > width) {
+      p.vel.x *= -1;
+    } else if (p.pos.y < 0 || p.pos.y > height) {
+      p.vel.y *= -1;
+    }
+    
+    // Draw the particle in calm blue colors
+    fill(135, 206, 235); // Calming blue
+    strokeWeight(1.5);
+    noStroke();
+    ellipse(p.pos.x, p.pos.y, radius);
+  }
+
+  // Optional: Add some randomness to velocity for a more organic feel
+  particles[i].vel.x += random(-0.2, 0.2);
+  particles[i].vel.y += random(-0.2, 0.2);
+}

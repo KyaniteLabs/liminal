@@ -1,0 +1,12 @@
+osc(30,0,1)
+  .kaleid(8)
+  .rotate(() => time * 0.2)
+  .scale(0.6)
+  .out()
+
+shape(3)
+  .kaleid(6)
+  .rotate(() => -time * 0.1)
+  .scale(0.5)
+  .add()
+  .out()

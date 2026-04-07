@@ -1,0 +1,46 @@
+function setup() {
+  createCanvas(800, 600);
+  background('#f0f4f8'); // Calming light blue-grey
+}
+
+function draw() {
+  fill(135, 206, 235); // Soft calming blue
+  stroke(79, 192, 228); // Lighter blue outline
+  
+  // Create many small particles
+  for (let i = 0; i < 400; i++) {
+    let x = random(width) * scale();
+    let y = height - random(height) * scale();
+    
+    // Set initial velocity for "flowing" motion
+    let vx = sin(random(PI * 2)) * 1.5 + 0.5;
+    let vy = cos(random(PI * 2)) * 1.5 + 0.5;
+    
+    push(x, y);
+    translate(x, y);
+    
+    // Randomly change velocity to simulate gentle fluid movement
+    vx *= (random(0.8), random(0.8));
+    vy *= (random(0.8), random(0.8));
+    
+    noStroke();
+    
+    let radius = 2;
+    if (x > width) { x = -radius; } // Wrap around screen
+    if (y < height / 3) { y = height * 2/3; } // Keep some space at bottom
+    
+    fill(135, 206, 235);
+    
+    let alpha = map(vx + vy, -4, 4, 0.9, 1.0);
+    circle(x, y, radius * (alpha / 2));
+    noFill();
+  }
+}
+
+function scale() {
+  return width / 800; // Scale down for particles
+}
+
+// Optional: Smooth rendering for better look
+function preload() {}
+function frameCount() { return millis(); }

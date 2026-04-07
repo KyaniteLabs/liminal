@@ -1,0 +1,79 @@
+let particles = [];
+const numParticles = 150;
+const BLUE_COLOR_HUE = 200; // Blue hue
+
+// --- Particle Class ---
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    // Give it a gentle, upward/horizontal drift
+    this.vel = createVector(random(-0.5, 0.5), random(-0.5, 0.5));
+    this.acc = createVector(0, 0);
+    this.lifespan = 255;
+    this.radius = random(1, 3);
+  }
+
+  applyForce(force) {
+    this.acc.add(force);
+  }
+
+  update() {
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0); // Reset acceleration
+
+    // Gentle damping to keep movement smooth
+    this.vel.mult(0.98);
+
+    // Fade the particle over time
+    this.lifespan -= 2;
+  }
+
+  show() {
+    stroke(BLUE_COLOR_HUE, 100, 255, this.lifespan); // Soft, desaturated blue
+    strokeWeight(this.radius);
+    point(this.pos.x, this.pos.y);
+  }
+
+  isFinished() {
+    return this.lifespan <= 0;
+  }
+}
+
+// --- Setup and Loop ---
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  background(20, 20, 40); // Dark navy background for contrast
+  
+  // Initialize particles across the screen
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function draw() {
+  // Create a trailing effect by drawing a semi-transparent background
+  background(20, 20, 40, 50); 
+
+  // Update and show all particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    
+    p.update();
+    p.show();
+
+    // Check if the particle has faded out
+    if (p.isFinished()) {
+      // Remove particle and replace it with a new one at a random starting point
+      particles.splice(i, 1);
+      particles.push(new Particle(random(width), random(height)));
+    }
+  }
+}
+
+// Handle window resizing
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  background(20, 20, 40); // Clear background on resize
+}

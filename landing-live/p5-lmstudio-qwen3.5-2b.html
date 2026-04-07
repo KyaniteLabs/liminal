@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calming Blue Particle System</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #1a2b4d; /* Deep calming blue */
+        }
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+<script src="p5.js"></script>
+
+<function setup() {
+  createCanvas(windowWidth, windowHeight);
+}
+
+// Generate a soothing blue color palette that shifts slightly based on mouse position
+function setupRandomBlueColor(color) {
+  // Use HSL to generate a nice pastel/blue hue
+  // Hue: 180-240 (Cyan/Blue), Saturation: low, Lightness: medium-high for "calming"
+  colorMode(HSB, 360, 50, 70, 100); 
+}
+
+function draw() {
+  background(158, 92, 46); // Soft teal-blue background
+  
+  // Create a particle system using random seed for variety
+  let seeds = [randomSeed(), randomSeed()];
+  
+  // Move particles based on velocity and friction
+  for (let i = 0; i < seeds.length; i++) {
+    let x = random(width);
+    let y = random(height);
+    
+    // Calculate flow direction: slight bias towards bottom, but curved
+    let angle = map(random(0.5), 1, 2, PI/4, 3 * PI/4) + 
+                 sin(frameCount * 0.05 + seeds[i]) * 0.1;
+    
+    // Move particle
+    push();
+    translate(x, y);
+    rotate(angle);
+    
+    // Draw a small dot (particle) with varying sizes for depth effect
+    size(2 + random(3), 2);
+    fill(158, 92, 46); // Calming Blue
+    
+    // Add some glowing effect if it's near the center and we have multiple seeds
+    if (seeds[i] > 0.5) {
+      stroke(50 + randomSeed(), 70);
+    } else {
+      noStroke();
+    }
+    
+    fillMode(CLOSEST); // Draw circle with radius = size
+    fill(random(180, 240), 60, 90); // Brighter blue for the dot
+    
+    pop();
+  }
+}
+
+function mousePressed() {
+  seeds.push(mouseX);
+}
+
+function randomSeed() {
+  return seed(frameCount * 5 + frameCount / 100);
+}
+</body>
+</html>

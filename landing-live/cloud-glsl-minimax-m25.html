@@ -1,0 +1,33 @@
+/* Vertex shader */
+#version 330 core
+layout (location = 0) in vec3 aPos;
+void main() {
+    gl_Position = vec4(aPos, 1.0);
+}
+
+/* Fragment shader – abstract plasma */
+#version 330 core
+out vec4 FragColor;
+uniform float iTime;
+uniform vec2 iResolution;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / iResolution.xy;
+    float t = iTime * 0.5;
+
+    // Combine several sine waves to create plasma pattern
+    float v = sin(uv.x * 10.0 + t);
+    v += sin((uv.y * 10.0 + t) * 0.5);
+    v += sin((uv.x * 10.0 + uv.y * 10.0 + t) * 0.5);
+    v += sin(sqrt(uv.x * uv.x + uv.y * uv.y + 1.0) * 10.0 + t);
+    v = v * 0.25; // scale amplitude
+
+    // Map the value to a color palette (RGB)
+    vec3 col = vec3(
+        sin(v),
+        sin(v + 2.0943951), // +2π/3
+        sin(v + 4.1887902)  // +4π/3
+    ) * 0.5 + 0.5;
+
+    FragColor = vec4(col, 1.0);
+}

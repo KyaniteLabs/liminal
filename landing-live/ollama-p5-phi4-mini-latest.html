@@ -1,0 +1,76 @@
+let particles = [];
+const NUM_PARTICLES = 100;
+const BLUE_HUE = 200; // A calming blue hue in HSB
+
+function setup() {
+  createCanvas(600, 400);
+  background(20, 10, 10); // Dark background for contrast
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function draw() {
+  // Fading background effect for a trail look
+  background(20, 10, 10, 50);
+
+  for (let i = 0; i < particles.length; i++) {
+    particles[i].update();
+    particles[i].show();
+  }
+  
+  // Optional: Add a subtle glow effect or attractor point
+  drawCenterLight();
+}
+
+function drawCenterLight() {
+    // A very faint, slow moving light source in the center
+    let glowAlpha = map(sin(frameCount * 0.01), -1, 1, 5, 20);
+    fill(150, 100, 255, glowAlpha);
+    noStroke();
+    ellipse(width / 2, height / 2, 100 + abs(sin(frameCount * 0.02)) * 50, 100 + abs(sin(frameCount * 0.02)) * 50);
+}
+
+class Particle {
+  constructor(x, y) {
+    this.position = createVector(x, y);
+    this.velocity = p5.Vector.random2D().mult(random(0.5, 2));
+    this.acceleration = createVector(0, 0);
+    this.lifespan = 255;
+    this.radius = random(2, 4);
+    this.hue = BLUE_HUE;
+  }
+
+  applyForce(force) {
+    this.acceleration.add(force);
+  }
+
+  update() {
+    // Apply gravity-like constant pull towards the center 
+    let center = createVector(width / 2, height / 2);
+    let centerForce = p5.Vector.sub(p5.Vector.add(this.position, center), this.position).div(1000);
+    
+    this.acceleration.add(centerForce);
+
+    // Update velocity and position
+    this.velocity.add(this.acceleration);
+    this.velocity.limit(5); // Keep particles from moving too fast
+    this.position.add(this.velocity);
+
+    // Reset acceleration for the next frame
+    this.acceleration.mult(0);
+
+    // Fade lifespan and slightly reduce size
+    this.lifespan -= 3;
+    this.radius = map(this.lifespan, 0, 255, 1, 4);
+  }
+
+  show() {
+    colorMode(HSB, 360, 100, 100, 255);
+    stroke(this.hue, 80, 90, this.lifespan);
+    strokeWeight(this.radius);
+    fill(this.hue, 80, 90, this.lifespan * 0.8);
+    
+    ellipse(this.position.x, this.position.y, this.radius * 2, this.radius * 2);
+  }
+}

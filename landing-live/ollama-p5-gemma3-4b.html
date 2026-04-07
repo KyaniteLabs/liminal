@@ -1,0 +1,75 @@
+let particles = [];
+const NUM_PARTICLES = 150;
+
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    // Initialize with a slight random velocity for initial spread
+    this.vel = p5.Vector.random2D().mult(random(0.5, 2));
+    this.acc = createVector(0, 0);
+    this.lifespan = 255;
+  }
+
+  applyForce(force) {
+    this.acc.add(force);
+  }
+
+  update() {
+    // Apply damping/friction for a slow, calming movement
+    this.vel.mult(0.97);
+    this.acc.add(createVector(0, 0)); // Reset acceleration for the frame
+    
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0); // Ensure acceleration doesn't build up indefinitely
+    
+    this.lifespan -= 1;
+  }
+
+  display() {
+    stroke(135, 206, 235, this.lifespan); // Sky Blue color with fading alpha
+    strokeWeight(1.5);
+    point(this.pos.x, this.pos.y);
+  }
+}
+
+function setup() {
+  createCanvas(600, 400);
+  background(0, 0, 20); // Very dark blue background
+  
+  // Initialize particles spread across the canvas
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    let x = random(width);
+    let y = random(height);
+    particles.push(new Particle(x, y));
+  }
+}
+
+function draw() {
+  // Create a semi-transparent background to simulate trails and fading
+  background(0, 0, 20, 50); 
+  
+  let center = createVector(width / 2, height / 2);
+  
+  for (let i = 0; i < particles.length; i++) {
+    let p = particles[i];
+    
+    // 1. Attraction Force towards the center (Calming effect)
+    let force = p5.Vector.sub(center, p.pos);
+    force.setMag(0.01); // Weak, gentle force
+    p.applyForce(force);
+    
+    // 2. Update and Display
+    p.update();
+    p.display();
+  }
+}
+
+// Optional: Allow particles to be re-seeded or reset by mouse interaction
+function mousePressed() {
+  // Example: Add a burst of particles where the mouse clicked
+  for (let i = 0; i < 10; i++) {
+    particles.push(new Particle(mouseX, mouseY));
+  }
+}
+```

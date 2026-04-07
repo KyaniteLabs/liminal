@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>🎹 tone - qwen3.5-2b</title>
+  <style>
+    body { font-family: system-ui; max-width: 1200px; margin: 0 auto; padding: 20px; background: #0a0a0a; color: #e0e0e0; }
+    h1 { color: #fff; border-bottom: 2px solid #333; padding-bottom: 10px; }
+    .meta { display: flex; gap: 15px; margin: 20px 0; flex-wrap: wrap; }
+    .badge { background: #2a2a2a; padding: 5px 15px; border-radius: 4px; border: 1px solid #444; }
+    .success { color: #4ade80; }
+    pre { background: #1a1a1a; padding: 20px; border-radius: 8px; overflow-x: auto; border: 1px solid #333; }
+    code { font-family: 'SF Mono', Monaco, monospace; }
+  </style>
+</head>
+<body>
+  <h1>🎹 TONE - qwen3.5-2b</h1>
+  <div class="meta">
+    <span class="badge">🎯 qwen3.5-2b</span>
+    <span class="badge">⏱️ 66940ms</span>
+    <span class="badge success">✅ SUCCESS</span>
+  </div>
+  <p><strong>Prompt:</strong> Create an ambient drone synthesizer with reverb</p>
+  <pre><code>const { AudioWorkletNode, AudioWorkletNodeDecoder } = require('neuralcore');
+
+class AmbientDroneSynth {
+    constructor() {
+        this.outputNode = null;
+        this.decoderNode = null;
+        this.initialized = false;
+        
+        // Web Audio API nodes for reverb and ambient synthesis
+        this.reverbNode = null;
+        this.masterGainNode = null;
+    }
+
+    init(workletName) {
+        if (this.initialized) return;
+
+        const worklet = new AudioWorkletNode(
+            this, 
+            `worklet/${workletName}`, 
+            { name: 'worklet' }, 
+            () =&gt; { console.log('Worklet initialized'); }
+        );
+
+        // Create decoder node for processing audio streams
+        this.decoderNode = new AudioWorkletDecoder(this);
+        
+        // Connect nodes
+        worklet.connect(this.outputNode);
+        this.decoderNode.connect(worklet);
+
+        // Reverb graph setup (using basic impulse response simulation)
+        const reverbGain = this.reverbNode.gain;
+        const reverbConvolver = new AudioWorkletNode(
+            this, 
+            'worklet/ReverbConvolver', 
+            { name: 'convolver' }, 
+            () =&gt; {}
+        );
+
+        // Create a simple impulse response for reverb effect using sine sweep
+        const impulseGain = this.reverbNode.input;
+        
+        this.initialized = true;
+    }
+
+    resume() {
+        if (!this.initialized) return;
+
+        try {
+            // Resume audio processing
+            this.decoderNode.resume();
+            
+            // Connect reverb convolver to main output chain
+            const impulseGain = this.reverbNode.input;
+            this.outputNode.connect(impulseGain);
+            
+            console.log('Ambient Drone Synthesis resumed');
+        } catch (e) {
+            console.error('Error during resume:', e);
+        }
+    }
+
+    stop() {
+        if (!this.initialized) return;
+        
+        // Clean up connections and nodes
+        this.reverbNode.disconnect();
+        this.outputNode.disconnect();
+        this.decoderNode.disconnect();
+        
+        console.log('Ambient Drone Synthesis stopped');
+        this.initialized = false;
+    }
+
+    playDroneTone() {
+        if (!this.initialized) return;
+
+        // Create an oscillator for the drone tone
+        const osc = new OscillatorNode({
+            type: 'sine',
+            frequency: 261.63, // C4
+            duration: -5000 // Loop indefinitely
+        });
+
+        // Connect to a gain node for volume control
+        const gainNode = this.outputNode.gain;
+        
+        osc.connect(gainNode);
+        gainNode.connect(this.decoderNode.input);
+    }
+
+    createReverbConvolver() {
+        if (!this.initialized || !this.reverbNode) return null;
+
+        // Simulate a convolution with an impulse response (sine sweep)
+        const reverbGain = this.reverbNode.gain;
+        
+        // Create sine sweep for the impulse response
+        const rOsc = new OscillatorNode({ type: 'sweep', frequency: 0, duration: -5000 });
+        const rGain = new GainNode();
+
+        rOsc.connect(rGain);
+        rGain.connect(reverbConvolver.input); // Connect to reverb convolver input
+        reverbConvolver.connect(reverbGain.gain); // Reverb output to gain
+        
+        return {
+            convolver: reverbConvolver,
+            impulseResponse: (time) =&gt; {
+                const amp = 1 - Math.sin(time * Math.PI / 8); // Simple sweep curve
+                rOsc.frequency.setTargetAtTime(amp, time, 0.5);
+                return true;
+            }
+        };
+    }
+
+    reverbEffect() {
+        if (!this.initialized || !this.reverbNode) return null;
+
+        const convolver = this.createReverbConvolver();
+        
+        // Connect the generated impulse response to the main output chain
+        const reverbGain = this.reverbNode.input;
+        this.outputNode.connect(reverbGain);
+        
+        console.log('Reverb effect applied');
+    }
+}
+
+// Initialize global instance if needed
+const synthInstance = new AmbientDroneSynth();
+synthInstance.init('ambient');
+synthInstance.resume();
+
+module.exports = SynthInstance;</code></pre>
+</body>
+</html>

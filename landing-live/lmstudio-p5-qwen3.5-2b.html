@@ -1,0 +1,33 @@
+import * as p5 from 'p5';
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  background(187, 237, 246); // Soft sky blue
+}
+
+function draw() {
+  noStroke();
+  
+  // Create a particle system
+  for (let i = 0; i < 100; i++) {
+    randomParticle();
+  }
+
+  // Randomly change color slightly to create depth
+  if (random(0, 3) === 0) {
+    background(randomColor(200));
+  } else {
+    fill(187, 237, 246);
+  }
+}
+
+function randomParticle() {
+  let x = random(width);
+  let y = random(height);
+  
+  // Random size between 5 and 15 pixels
+  let size = random(5, 15);
+  
+  // Create a circle at the position
+  ellipse(x, y, size, size);
+}

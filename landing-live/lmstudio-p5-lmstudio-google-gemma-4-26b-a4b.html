@@ -1,0 +1,31 @@
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+}
+
+function draw() {
+  background(189, 223, 247); // Calming blue gradient
+  fill(0, 153, 255);         // Cyan for particles
+  stroke(160, 200, 255);     // Brighter outline
+  lineCount(1);              // Single line for smoothness
+
+  for (let i = 0; i < numberOfParticles; i++) {
+    let particleX = random(width);
+    let particleY = height - random(height * 0.3);
+    
+    // Flowing movement: calculate direction based on position and velocity
+    let speed = map(random(5, 12), particleX, width, 0, 10);
+    let angle = map(particleY, height, 0, PI * 2);
+    
+    vector v = create(particleX, particleY, speed, sin(angle));
+    particles[i].position(v.x, v.y);
+    particles[i].velocity(v);
+    particles[i].alpha(1 - (i / numberOfParticles) * 0.5); // Fade out effect
+    
+    ellipse(particles[i].x, particles[i].y, 3 + map(i, 0, numberOfParticles - 1), 8);
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

@@ -1,0 +1,20 @@
+// Kick - four on the floor
+$: s("bd*4").gain(0.9).room(0.15)
+
+// Clap on 2 and 4
+$: s("~ cp ~ cp").gain(0.7).room(0.3)
+
+// Closed hi-hats - 16ths with gain modulation
+$: s("hh*8").gain(sine.range(0.3, 0.6).slow(2)).speed(1.1)
+
+// Open hi-hat offbeats
+$: s("~ oh ~ oh ~ oh ~ oh").gain(0.35).speed(0.9)
+
+// Driving bass line
+$: note("c2 [~ c2] c2 [c3 ~]").s("sawtooth").cutoff(sine.range(200, 900).slow(4)).resonance(12).decay(0.18).sustain(0).gain(0.55)
+
+// Ride/percussion accent
+$: s("~ [~ rim] ~ [~ rim] ~ [~ rim] ~ [rim ~]").gain(0.3).speed(1.3)
+
+// Rhythmic noise stab
+$: s("[~ [~ stab]]/2").gain(0.4).cutoff(perlin.range(400, 2000).slow(3)).speed(0.8)

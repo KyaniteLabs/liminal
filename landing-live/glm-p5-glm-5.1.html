@@ -1,0 +1,81 @@
+let particles = [];
+const MAX_PARTICLES = 150;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+  for (let i = 0; i < MAX_PARTICLES; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  background(10, 15, 35, 25);
+
+  for (let p of particles) {
+    p.update();
+    p.display();
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+class Particle {
+  constructor() {
+    this.reset();
+    this.y = random(height);
+  }
+
+  reset() {
+    this.x = random(width);
+    this.y = random(-20, -5);
+    this.size = random(2, 8);
+    this.speedX = random(-0.3, 0.3);
+    this.speedY = random(0.2, 0.8);
+    this.opacity = random(40, 180);
+    this.hue = random(180, 230);
+    this.saturation = random(40, 80);
+    this.brightness = random(60, 100);
+    this.wobbleOffset = random(TWO_PI);
+    this.wobbleSpeed = random(0.005, 0.02);
+    this.wobbleAmp = random(0.3, 1.2);
+    this.pulseOffset = random(TWO_PI);
+    this.pulseSpeed = random(0.01, 0.03);
+  }
+
+  update() {
+    this.wobbleOffset += this.wobbleSpeed;
+    this.x += this.speedX + sin(this.wobbleOffset) * this.wobbleAmp;
+    this.y += this.speedY;
+
+    this.pulseOffset += this.pulseSpeed;
+
+    if (this.y > height + 20 || this.x < -20 || this.x > width + 20) {
+      this.reset();
+    }
+  }
+
+  display() {
+    let pulseFactor = 0.85 + 0.15 * sin(this.pulseOffset);
+    let currentSize = this.size * pulseFactor;
+    let currentOpacity = this.opacity * pulseFactor;
+
+    // Outer glow
+    fill(this.hue, this.saturation, this.brightness, currentOpacity * 0.15);
+    ellipse(this.x, this.y, currentSize * 4, currentSize * 4);
+
+    // Mid glow
+    fill(this.hue, this.saturation, this.brightness, currentOpacity * 0.35);
+    ellipse(this.x, this.y, currentSize * 2.5, currentSize * 2.5);
+
+    // Core
+    fill(this.hue, this.saturation - 10, this.brightness + 20, currentOpacity);
+    ellipse(this.x, this.y, currentSize, currentSize);
+
+    // Bright center
+    fill(200, 220, 255, currentOpacity * 0.8);
+    ellipse(this.x, this.y, currentSize * 0.4, currentSize * 0.4);
+  }
+}

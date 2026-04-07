@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pulse — Modern Landing Page</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'sans-serif'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background: #050505; font-family: 'Inter', sans-serif; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fade-up {
+      opacity: 0;
+      animation: fadeUp 0.8s ease-out forwards;
+    }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    .delay-600 { animation-delay: 0.6s; }
+    .delay-700 { animation-delay: 0.7s; }
+    .delay-800 { animation-delay: 0.8s; }
+
+    @keyframes scroll {
+      0% { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+    .animate-scroll {
+      animation: scroll 30s linear infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-15px); }
+    }
+    .animate-float {
+      animation: float 5s ease-in-out infinite;
+    }
+
+    @keyframes ripple {
+      0% { transform: scale(0.8); opacity: 0.5; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+    .animate-ripple {
+      animation: ripple 3s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+    }
+
+    @keyframes grow-bar {
+      from { width: 0%; }
+      to { width: var(--w); }
+    }
+    .animate-grow-bar {
+      animation: grow-bar 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes pulse-glow {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
+    }
+    .animate-pulse-glow {
+      animation: pulse-glow 4s ease-in-out infinite;
+    }
+
+    @keyframes spin-slow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .animate-spin-slow {
+      animation: spin-slow 20s linear infinite;
+    }
+
+    .card-hover {
+      transition: all 0.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+    .card-hover:hover {
+      border-color: rgba(255, 255, 255, 0.1);
+      transform: translateY(-4px);
+    }
+
+    .btn-shine {
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-shine::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.15) 50%, transparent 60%);
+      transform: skew(-12deg) translateX(-150%);
+      transition: transform 0.8s ease;
+    }
+    .btn-shine:hover::after {
+      transform: skew(-12deg) translateX(150%);
+    }
+
+    .gradient-text {
+      background: linear-gradient(135deg, #ffffff 0%, #a3a3a3 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .mask-fade {
+      mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+      -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 50%, #000 70%, transparent 100%);
+    }
+
+    .nav-blur {
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+    }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #050505; }
+    ::-webkit-scrollbar-thumb { background: #262626; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #404040; }
+
+    .counter { font-variant-numeric: tabular-nums; }
+  </style>
+</head>
+<body class="text-white antialiased">
+
+  <!-- Background Glow Effects -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-blue-600/20 rounded-full blur-[120px] animate-pulse-glow"></div>
+    <div class="absolute top-[30%] right-[-15%] w-[500px] h-[500px] bg-blue-500/10 rounded-full blur-[120px] animate-pulse-glow" style="animation-delay: 2s;"></div>
+    <div class="absolute bottom-[-10%] left-[30%] w-[400px] h-[400px] bg-blue-600/15 rounded-full blur-[100px] animate-pulse-glow" style="animation-delay: 1s;"></div>
+  </div>
+
+  <!-- Grid Background -->
+  <div class="fixed inset-0 pointer-events-none z-0 opacity-[0.03]" style="background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px); background-size: 60px 60px;"></div>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 nav-blur bg-[#050505]/80 border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-8">
+        <a href="#" class="flex items-center gap-2.5 group">
+          <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center group-hover:bg-blue-500 transition-colors duration-300">
+            <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+          </div>
+          <span class="text-white font-medium text-lg tracking-tight">Pulse</span>
+        </a>
+        <div class="hidden md:flex items-center gap-6">
+          <a href="#features" class="text-neutral-400 hover:text-white text-sm transition-colors duration-300">Features</a>
+          <a href="#how-it-works" class="text-neutral-400 hover:text-white text-sm transition-colors duration-300">How it Works</a>
+          <a href="#pricing" class="text-neutral-400 hover:text-white text-sm transition-colors duration-300">Pricing</a>
+          <a href="#testimonials" class="text-neutral-400 hover:text-white text-sm transition-colors duration-300">Testimonials</a>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <button class="hidden md:inline-flex text-neutral-400 hover:text-white text-sm transition-colors duration-300 px-4 py-2">Sign in</button>
+        <button class="btn-shine bg-white text-black text-sm font-medium h-10 px-6 rounded-full hover:bg-neutral-200 transition-colors duration-300">
+          Get Started
+        </button>
+        <button class="md:hidden text-neutral-400 hover:text-white p-2" id="mobile-menu-btn">
+          <i data-lucide="menu" class="w-5 h-5"></i>
+        </button>
+      </div>
+    </div>
+    <!-- Mobile Menu -->
+    <div class="md:hidden hidden border-t border-white/5 bg-[#050505]/95 nav-blur" id="mobile-menu">
+      <div class="px-6 py-4 space-y-3">
+        <a href="#features" class="block text-neutral-400 hover:text-white text-sm py-2 transition-colors">Features</a>
+        <a href="#how-it-works" class="block text-neutral-400 hover:text-white text-sm py-2 transition-colors">How it Works</a>
+        <a href="#pricing" class="block text-neutral-400 hover:text-white text-sm py-2 transition-colors">Pricing</a>
+        <a href="#testimonials" class="block text-neutral-400 hover:text-white text-sm py-2 transition-colors">Testimonials</a>
+        <a href="#" class="block text-neutral-400 hover:text-white text-sm py-2 transition-colors">Sign in</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <section class="relative z-10 pt-32 pb-20 px-6">
+    <div class="max-w-7xl mx-auto text-center">
+      <!-- Badge -->
+      <div class="animate-fade-up inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.02] mb-8">
+        <span class="w-2 h-2 rounded-full bg-blue-500 relative">
+          <span class="absolute inset-0 rounded-full bg-blue-500 animate-ripple"></span>
+        </span>
+        <span class="text-xs font-medium text-neutral-400 uppercase tracking-wider">Now in Public Beta</span>
+      </div>
+
+      <!-- Headline -->
+      <h1 class="animate-fade-up delay-100 text-5xl md:text-7xl lg:text-8xl font-medium tracking-tight leading-[1] max-w-5xl mx-auto">
+        <span class="gradient-text">Build faster.</span><br>
+        <span class="text-white">Ship smarter.</span>
+      </h1>
+
+      <!-- Subtitle -->
+      <p class="animate-fade-up delay-200 mt-8 text-lg md:text-xl font-light text-neutral-400 max-w-2xl mx-auto leading-relaxed">
+        The modern platform that helps teams design, develop, and deploy products with unprecedented speed and precision.
+      </p>
+
+      <!-- CTA Buttons -->
+      <div class="animate-fade-up delay-300 mt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
+        <button class="btn-shine bg-white text-black font-medium text-sm h-12 px-8 rounded-full hover:bg-neutral-200 transition-colors duration-300 flex items-center gap-2 w-full sm:w-auto justify-center">
+          Start Building Free
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+        <button class="h-12 px-8 rounded-full border border-white/10 text-white font-medium text-sm hover:border-white/20 hover:bg-white/[0.02] transition-all duration-300 flex items-center gap-2 w-full sm:w-auto justify-center">
+          <i data-lucide="play" class="w-4 h-4"></i>
+          Watch Demo
+        </button>
+      </div>
+
+      <!-- Hero Image -->
+      <div class="animate-fade-up delay-500 mt-16 relative max-w-5xl mx-auto">
+        <div class="absolute -inset-4 bg-gradient-to-b from-blue-500/10 to-transparent rounded-2xl blur-xl"></div>
+        <div class="relative rounded-2xl border border-white/10 overflow-hidden bg-[#0a0a0a]">
+          <div class="aspect-video flex items-center justify-center relative">
+            <img src="https://picsum.photos/seed/dashboard-hero/1200/675.jpg" alt="Dashboard Preview" class="w-full h-full object-cover opacity-60">
+            <div class="absolute inset-0 bg-gradient-to-t from-[#050505] via-transparent to-transparent"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+              <div class="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center hover:scale-110 transition-transform duration-300 cursor-pointer">
+                <i data-lucide="play" class="w-6 h-6 text-white ml-1"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div class="animate-fade-up delay-600 mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 max-w-3xl mx-auto">
+        <div class="text-center">
+          <div class="text-2xl md:text-3xl font-medium text-white counter">10K+</div>
+          <div class="text-sm text-neutral-500 mt-1">Active Users</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl md:text-3xl font-medium text-white counter">99.9%</div>
+          <div class="text-sm text-neutral-500 mt-1">Uptime</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl md:text-3xl font-medium text-white counter">50M+</div>
+          <div class="text-sm text-neutral-500 mt-1">API Requests</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl md:text-3xl font-medium text-white counter">4.9/5</div>
+          <div class="text-sm text-neutral-500 mt-1">User Rating</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Logo Marquee -->
+  <section class="relative z-10 py-16 border-y border-white/5">
+    <div class="max-w-7xl mx-auto px-6">
+      <p class="text-center text-xs font-medium text-neutral-500 uppercase tracking-wider mb-8">Trusted by teams at</p>
+      <div class="relative overflow-hidden mask-fade">
+        <div class="flex animate-scroll whitespace-nowrap">
+          <div class="flex items-center gap-16 px-8">
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Vercel</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Stripe</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Linear</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Notion</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Figma</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Raycast</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Arc</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Supabase</span>
+          </div>
+          <div class="flex items-center gap-16 px-8">
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Vercel</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Stripe</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Linear</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Notion</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Figma</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Raycast</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Arc</span>
+            <span class="text-neutral-600 text-xl font-medium tracking-tight">Supabase</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="relative z-10 py-32 px-6">
+    <div class="max-w-7xl mx-auto">
+      <div class="text-center max-w-2xl mx-auto mb-16">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-white/10 bg-white/[0.02] mb-6">
+          <span class="text-xs font-medium text-blue-400 uppercase tracking-wider">Features</span>
+        </div>
+        <h2 class="text-3xl md:text-5xl font-medium tracking-tight gradient-text">Everything you need</h2>
+        <p class="mt-4 text-lg font-light text-neutral-400 leading-relaxed">
+          Powerful tools designed to streamline your workflow and supercharge your productivity.
+        </p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Feature 1 -->
+        <div class="card-hover p-8 rounded-2xl border border-white/5 bg-white/[0.02] group">

@@ -1,0 +1,87 @@
+let particles = [];
+const NUM_PARTICLES = 100;
+
+/**
+ * Particle Class
+ * Represents an individual particle with position, velocity, and lifespan.
+ */
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    // Initialize velocity with a slight random variation
+    this.vel = p5.Vector.random2D();
+    this.vel.mult(0.1); // Keep initial speed slow
+    this.acc = createVector(0, 0);
+    this.lifespan = 255;
+    this.size = random(2, 4);
+  }
+
+  // Applies force and updates position
+  update() {
+    // Flowing/sinusoidal movement logic
+    let noiseFactorX = map(this.pos.x, 0, width, 0, 1);
+    let noiseFactorY = map(this.pos.y, 0, height, 0, 1);
+    
+    // Use noise for smooth, flowing force application
+    let flowX = noise(noiseFactorX * 0.1, noiseFactorY * 0.1) * 2 - 1;
+    let flowY = noise(noiseFactorX * 0.1 + 100, noiseFactorY * 0.1 + 100) * 2 - 1;
+
+    this.acc.set(flowX, flowY);
+    this.acc.mult(0.2); // Adjust flow strength
+
+    // Standard physics update
+    this.vel.add(this.acc);
+    this.vel.limit(2); // Limit max speed
+    this.pos.add(this.vel);
+    this.acc.mult(0); // Reset acceleration
+
+    // Decay lifespan and size
+    this.lifespan -= 2;
+    this.size = map(this.lifespan, 0, 255, 0, 4);
+  }
+
+  // Display the particle with blue color and transparency
+  show() {
+    let alpha = this.lifespan;
+    let blueHue = color(100, 150, 255, alpha);
+    fill(blueHue);
+    noStroke();
+    ellipse(this.pos.x, this.pos.y, this.size, this.size);
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  background(0);
+  // Initialize particles across the screen
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function draw() {
+  // Create a subtle trailing effect by drawing a semi-transparent background
+  background(0, 0, 0, 15); 
+
+  // Loop through and update every particle
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.show();
+
+    // Remove particle if its lifespan is depleted
+    if (p.lifespan < 0) {
+      particles.splice(i, 1);
+    }
+  }
+
+  // Respawn particles if the system is too sparse
+  if (particles.length < NUM_PARTICLES * 0.8) {
+    let newParticle = new Particle(random(width), random(height));
+    particles.push(newParticle);
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

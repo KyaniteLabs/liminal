@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>glsl - qwen3.5:2b</title>
+  <style>
+    body { margin: 0; padding: 20px; font-family: system-ui; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>glsl - qwen3.5:2b</h1>
+  <p><strong>Prompt:</strong> Create an abstract plasma shader with animated colors</p>
+  <p><strong>Valid:</strong> ❌</p>
+  <pre><code>precision highp float
+
+uniform vec2 u_resolution;
+uniform float u_time;
+
+out vec4 fragColor;
+
+// Simple pseudo-random function (hash) based on coordinates and time
+float hash(vec2 p) {
+    return fract(sin(dot(p * vec2(12.9898, 78.233)) + u_time * 0.1) * 43758.5453123);
+}
+
+// Smooth noise function (simplified Perlin-like)
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    float a = hash(i + vec2(0.0, 0.0));
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+void main() {
+    // Normalized UV coordinates
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+
+    // Center coordinates and scale factor
+    vec2 p = uv * 10.0 - 5.0;
+    float time_scale = u_time * 0.5;
+
+    // --- Plasma Simulation Components ---
+
+    // 1. Wave Motion (Primary structure)
+    float wave1 = sin(p.x * 3.0 + time_scale * 1.2) * 0.5 + 0.5;
+    float wave2 = cos(p.y * 2.5 - time_scale * 0.8) * 0.5 + 0.5;
+
+    // Combine waves using distance or multiplication for interesting patterns
+    float pattern = sin(dot(p * 0.5, vec2(1.0, 1.0)) + time_scale * 0.8) * 0.5 + 0.5;
+    
+    // 2. Noise Modulation (Detail and turbulence)
+    float noise_val = noise(p * 0.8 + vec2(time_scale * 0.2, time_scale * 0.1));
+    
+    // Combine pattern and noise for the base amplitude
+    float final_amplitude = pattern * 0.8 + noise_val * 0.2;
+    
+    // 3. Color Cycling (Animated color shift)
+    // Use time and space to generate oscillating color components
+    float r_color = sin(p.x * 0.5 + time_scale * 1.0) * 0.5 + 0.5;
+    float g_color = cos(p.y * 0.4 + time_scale * 1.2) * 0.5 + 0.5;
+    float b_color = sin(p.x * 0.2 + p.y * 0.3 + time_scale * 0.9) * 0.5 + 0.5;
+    
+    // --- Final Color Calculation ---
+    
+    // Modulate the base color by the spatial pattern and noise amplitude
+    vec3 plasma_color = vec3(
+        r_color * final_amplitude * 0.8 + 0.1,
+        g_color * final_amplitude * 0.8 + 0.1,
+        b_color * final_amplitude * 0.8 + 0.1
+    );
+    
+    // Apply intensity grading (Higher amplitude = brighter color)
+    plasma_color = pow(plasma_color, vec3(1.2));
+    
+    // Output the final color
+    fragColor = vec4(plasma_color, 1.0);
+}</code></pre>
+</body>
+</html>

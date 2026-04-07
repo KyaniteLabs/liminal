@@ -1,0 +1,70 @@
+#version 300 es
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+
+out vec4 fragColor;
+
+// Hash function for pseudo-random values
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(41.0, 43.0))) * 123.456789);
+}
+
+// Smooth noise function (simplified value noise)
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f); // Smoother step
+
+    float a = hash(i + vec2(0.0, 0.0));
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+// Fractal Brownian Motion (FBM) for detailed turbulence
+float fbm(vec2 p, int octaves, float lacunarity, float persistence) {
+    float total = 0.0;
+    float amplitude = 1.0;
+    float frequency = 1.0;
+    for (int i = 0; i < octaves; ++i) {
+        total += noise(p * frequency) * amplitude;
+        amplitude *= persistence;
+        frequency *= lacunarity;
+    }
+    return total;
+}
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    vec2 p = uv * 10.0 + vec2(u_time * 0.1, u_time * 0.08);
+
+    // Plasma motion factor - incorporates time and position for animation
+    vec2 plasma_coords = p * 1.5 + vec2(u_time * 0.3, u_time * 0.2);
+
+    // Calculate multiple layers of noise for complex structure
+    float n1 = fbm(plasma_coords * 1.0, 4, 2.0, 0.5);
+    float n2 = fbm(plasma_coords * 2.5 + vec2(u_time * 0.5, 0.0), 4, 2.0, 0.4);
+    float n3 = fbm(plasma_coords * 0.8 - vec2(u_time * 0.3, 0.3), 4, 2.0, 0.6);
+
+    // Combine noise features to simulate plasma density/structure
+    float plasma_intensity = pow(sin(n1 * 1.5 + n2 * 1.2 + n3 * 0.8), 2.0);
+    plasma_intensity = smoothstep(0.1, 0.9, plasma_intensity);
+
+    // Color mapping based on intensity and time for animated colors
+    // Use sine waves shifted over time to create flowing color gradients
+    float r_color = sin(plasma_intensity * 10.0 + u_time * 1.5) * 0.5 + 0.5;
+    float g_color = sin(plasma_intensity * 10.0 + u_time * 1.0) * 0.5 + 0.5;
+    float b_color = sin(plasma_intensity * 10.0 + u_time * 0.8) * 0.5 + 0.5;
+
+    // Apply a slight distortion/glow effect based on the noise magnitude
+    float glow = pow(plasma_intensity, 1.5);
+
+    vec3 final_color = mix(vec3(r_color, g_color, b_color), vec3(1.0), glow * 0.2);
+
+    // Final output color, clamping to ensure valid RGB
+    gl_FragColor = vec4(pow(final_color, vec3(1.0 + glow * 0.1)), 1.0);
+}

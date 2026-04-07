@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rotating Cube</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #111; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+
+<script>
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// Create a cube geometry (8 vertices)
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+
+// Create an array of materials for the wireframe effect
+const materials = [
+    0x00ff00, // Green
+    0xffff00, // Yellow
+    0xffaa00, // Orange
+    0xaa8800, // Dark Orange
+    0x5c4b12, // Brownish
+    0x3b2f06   // Black-ish dark
+];
+
+// Create a material that cycles through colors
+const dynamicMaterial = new THREE.MeshLambertMaterial({ 
+    vertexColors: true,
+    side: THREE.DoubleSide 
+});
+
+// Add the cube to the scene
+const cube = new THREE.Mesh(geometry, dynamicMaterial);
+scene.add(cube);
+
+// Animation loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Rotate the cube along its own axes
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.02;
+
+    renderer.render(scene, camera);
+}
+
+// Handle window resizing
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+animate();
+</script>
+
+</body>
+</html>

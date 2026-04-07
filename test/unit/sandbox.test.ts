@@ -4,9 +4,13 @@ import { describe, it, expect } from 'vitest';
  *
  * TDD: runInSandbox(validP5Code) completes without escape;
  *      runInSandbox('while(true){}') times out.
+ *
+ * Skipped when: CI=1, or CDN is unreachable (p5.js loads from
+ * cdnjs.cloudflare.com — tests hang without network access).
  */
 
 import { runInSandbox } from '../../src/sandbox/index.js';
+import { isCdnAvailable } from '../helpers/networkCheck.js';
 
 const VALID_P5_CODE = `
 function setup() {
@@ -19,7 +23,9 @@ function draw() {
 }
 `;
 
-describe.skipIf(process.env.CI)('Sandbox runInSandbox', () => {
+const cdnAvailable = await isCdnAvailable();
+
+describe.skipIf(process.env.CI || !cdnAvailable)('Sandbox runInSandbox', () => {
   describe('valid p5 sketch', () => {
     it('completes with completed: true and no host escape', async () => {
       const result = await runInSandbox(VALID_P5_CODE);

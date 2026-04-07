@@ -17,12 +17,15 @@ export interface SandboxConfig {
 
 /**
  * Default secure Chrome arguments (sandbox enabled)
+ *
+ * NOTE: --no-zygote and --single-process are intentionally excluded here.
+ * Those flags are only valid when --no-sandbox is also set (Docker containers).
+ * Using --no-zygote without --no-sandbox produces a fatal error:
+ * "Zygote cannot be disabled if sandbox is enabled."
  */
 export const SECURE_CHROME_ARGS = [
   '--disable-dev-shm-usage',     // Required for Docker
   '--no-first-run',              // Skip first run wizards
-  '--no-zygote',                 // Disable zygote process
-  '--single-process',            // Required for some Docker environments
   '--disable-gpu',               // Disable GPU acceleration
   '--disable-web-security=false', // Keep web security enabled
   '--disable-features=IsolateOrigins,site-per-process', // Performance

@@ -10,4 +10,5 @@ var (
 	PaneStyle = lipgloss.NewStyle().Border(lipgloss.NormalBorder()).BorderForeground(lipgloss.Color("8")).Padding(1)
 	FooterStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("10")).Padding(0, 1)
 	RowStyle = lipgloss.NewStyle().Align(lipgloss.Top)
+	ModeHintStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("8")).Padding(0, 1)
 )

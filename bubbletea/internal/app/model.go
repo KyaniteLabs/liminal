@@ -21,10 +21,14 @@ type Model struct {
 	PendingAction  *bridge.PendingAction
 
 	// Live bridge state
-	Bridge    *bridge.Client
-	SessionID string
-	Connected bool
-	Err       string
+	Bridge       *bridge.Client
+	SessionID    string
+	Connected    bool
+	Reconnecting bool
+	Err          string
+
+	// Scroll state
+	HistoryOffset int
 }
 
 func NewModel(bridgeURL string) Model {

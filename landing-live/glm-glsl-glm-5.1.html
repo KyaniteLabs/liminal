@@ -1,0 +1,72 @@
+uniform float u_time;
+uniform vec2 u_resolution;
+
+vec2 hash22(vec2 p) {
+    p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+    return -1.0 + 2.0 * fract(sin(p) * 43758.5453123);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    return mix(mix(dot(hash22(i), f),
+                   dot(hash22(i + vec2(1.0, 0.0)), f - vec2(1.0, 0.0)), u.x),
+               mix(dot(hash22(i + vec2(0.0, 1.0)), f - vec2(0.0, 1.0)),
+                   dot(hash22(i + vec2(1.0, 1.0)), f - vec2(1.0, 1.0)), u.x), u.y);
+}
+
+float fbm(vec2 p) {
+    float v = 0.0, a = 0.5;
+    mat2 rot = mat2(cos(0.5), sin(0.5), -sin(0.5), cos(0.5));
+    for (int i = 0; i < 7; i++) {
+        v += a * noise(p);
+        p = rot * p * 2.0 + vec2(100.0);
+        a *= 0.5;
+    }
+    return v;
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution.xy) / u_resolution.y;
+    float t = u_time * 0.35;
+
+    vec2 q = vec2(fbm(uv + t * 0.4), fbm(uv + vec2(5.2, 1.3) + t * 0.25));
+    vec2 r = vec2(fbm(uv + 4.0 * q + vec2(1.7, 9.2) + t * 0.18),
+                  fbm(uv + 4.0 * q + vec2(8.3, 2.8) + t * 0.26));
+    float f = fbm(uv + 4.0 * r);
+
+    float p1 = sin(uv.x * 6.0 + t * 2.0 + f * 5.0) * 0.5 + 0.5;
+    float p2 = sin(uv.y * 5.0 - t * 1.5 + q.x * 4.0) * 0.5 + 0.5;
+    float p3 = sin((uv.x + uv.y) * 4.0 + t * 1.8 + r.y * 6.0) * 0.5 + 0.5;
+    float p4 = sin(length(uv) * 7.0 - t * 1.2 + f * 3.0) * 0.5 + 0.5;
+    float p5 = sin(uv.x * 3.0 - uv.y * 5.0 + t * 0.9) * 0.5 + 0.5;
+    float plasma = (p1 + p2 + p3 + p4 + p5) / 5.0;
+
+    vec3 c1 = vec3(0.5, 0.0, 1.0);
+    vec3 c2 = vec3(0.0, 1.0, 0.6);
+    vec3 c3 = vec3(1.0, 0.0, 0.5);
+    vec3 c4 = vec3(0.0, 0.4, 1.0);
+    vec3 c5 = vec3(1.0, 0.5, 0.0);
+
+    vec3 col = mix(c1, c2, p1);
+    col = mix(col, c3, p2);
+    col = mix(col, c4, p3);
+    col = mix(col, c5, p4);
+
+    col = mix(col * 1.2, col * 0.8, plasma);
+
+    float warpIntensity = f * f * f + 0.6 * f * f + 0.5 * f;
+    col *= 0.5 + 0.5 * warpIntensity;
+
+    float pulse = 0.9 + 0.1 * sin(t * 4.0 + length(uv) * 10.0);
+    col *= pulse;
+
+    float vig = 1.0 - 0.45 * dot(uv, uv);
+    col *= vig;
+
+    col = col / (1.0 + col);
+    col = pow(col, vec3(0.85));
+
+    gl_FragColor = vec4(col, 1.0);
+}

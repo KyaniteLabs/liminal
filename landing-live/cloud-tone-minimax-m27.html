@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Ambient Drone</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+<script>
+(async () => {
+  await Tone.start();
+
+  // Reverb for spaciousness
+  const reverb = new Tone.Reverb({ decay: 15, wet: 0.9 }).toDestination();
+
+  // Low‑pass filter to soften high frequencies
+  const filter = new Tone.Filter(300, 'lowpass').toDestination();
+
+  // Oscillators tuned to form a simple chord
+  const osc1 = new Tone.Oscillator('C2', 'sine').connect(filter);
+  const osc2 = new Tone.Oscillator('G2', 'sine').connect(filter);
+  const osc3 = new Tone.Oscillator('C3', 'sine').connect(filter);
+
+  // Gain node for amplitude modulation
+  const gain = new Tone.Gain(0.4).connect(reverb);
+
+  // LFO for slow amplitude changes
+  const lfo = new Tone.LFO({ frequency: 0.1, min: 0.3, max: 1 }).start();
+  lfo.connect(gain.gain);
+
+  // Connect oscillators to the gain node
+  osc1.connect(gain);
+  osc2.connect(gain);
+  osc3.connect(gain);
+
+  // Start the oscillators
+  osc1.start();
+  osc2.start();
+  osc3.start();
+})();
+</script>
+</body>
+</html>

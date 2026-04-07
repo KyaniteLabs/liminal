@@ -1,0 +1,37 @@
+void main() {
+    // Set up screen coordinates and size
+    vec2 uv = (gl_FragCoord.xy - 0.5) / u_resolution.xy;
+    
+    // Create a gradient for the background plasma color
+    vec3 bgColor = mix(vec3(1.0, 0.8, 0.4), vec3(0.0, 0.6, 0.9), uv);
+    
+    // Animate the hue cycle (0 to 2PI)
+    float time = 0.5 * sin(gl_FragCoord.y * 0.1 + u_time);
+    vec3 currentColor = mix(bgColor, vec3(1.0, 0.8, 0.4), sin(time));
+    
+    // Create the core plasma effect with radial gradient
+    float r = length(uv) + time;
+    vec2 p = uv - 0.5 * uv.xy; // Normalize position to center
+    
+    // Calculate bloom intensity based on radius and time
+    float glow = 1.0 / (r + sin(time));
+    
+    // Apply colors with slight noise for organic feel
+    vec3 finalColor = currentColor + pow(p, 2.0) * 0.5; 
+    
+    gl_FragColor = vec4(finalColor, glow);
+}
+
+// Optional fragment shader to handle bloom if enabled in GLSL
+void main() {
+    // This is commented out as the vertex shader above already handles the core effect
+    
+    vec3 normal = normalize(gl_NormalMatrix * gl_NormalVector);
+    
+    float intensity = max(0.5, dot(normal, vec3(0.5, 0.5, 1.0)));
+    
+    // Apply bloom based on distance and intensity
+    float bloomStrength = pow(intensity, 4.0) + pow(gl_FragCoord.xy.x * gl_FragCoord.xy.y / u_resolution.y * u_resolution.x, 2.0);
+    
+    gl_FragColor = vec3(bloomStrength + 1.0, bloomStrength + 1.5, 0.8), rgba(1.0) / pow(bloomStrength, 1.5);
+}

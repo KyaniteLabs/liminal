@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+    <button id="start">Start Drone</button>
+    <script>
+        document.getElementById("start").addEventListener("click", async () => {
+            await Tone.start();
+            Tone.Transport.start();
+            const reverb = new Tone.Reverb({ decay: 12, wet: 0.8 }).toDestination();
+            const filter = new Tone.Filter({ type: "lowpass", frequency: 800, Q: 2 }).connect(reverb);
+            const chorus = new Tone.Chorus({ frequency: 0.5, delayTime: 10, depth: 1, wet: 0.3 }).start().connect(filter);
+            const drone = new Tone.PolySynth({
+                oscillator: { type: "sine" },
+                envelope: { attack: 4, decay: 1, sustain: 0.8, release: 10 }
+            }).connect(chorus);
+            drone.triggerAttackRelease(["C1","G1","D2","A1","E2","B1","F2","C3"], "8n");
+        });
+    </script>
+</body>
+</html>

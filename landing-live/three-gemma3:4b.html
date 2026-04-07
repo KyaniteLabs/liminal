@@ -1,0 +1,66 @@
+import * as THREE from 'three';
+
+// Setup
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+
+renderer.setSize(window.innerWidth, window.innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// 1. Create the Cube
+const geometry = new THREE.BoxGeometry(1, 1, 1);
+// Using MeshStandardMaterial to react realistically to lights
+const material = new THREE.MeshStandardMaterial({ color: 0x4CAF50 });
+const cube = new THREE.Mesh(geometry, material);
+scene.add(cube);
+
+// 2. Lighting Setup (Interesting Lighting)
+// Ambient light provides general illumination
+const ambientLight = new THREE.AmbientLight(0x404040, 2); // soft white light
+scene.add(ambientLight);
+
+// Directional light simulating a key light from an angle
+const directionalLight1 = new THREE.DirectionalLight(0xffffff, 1.5);
+directionalLight1.position.set(5, 10, 7.5);
+scene.add(directionalLight1);
+
+// Another directional light from a different angle to create contrast/rim light
+const directionalLight2 = new THREE.DirectionalLight(0x87CEEB, 1); // Sky blue light
+directionalLight2.position.set(-5, 5, -5);
+scene.add(directionalLight2);
+
+// Optional: Add a floor plane for better shadow context
+const floorGeometry = new THREE.PlaneGeometry(20, 20);
+const floorMaterial = new THREE.MeshStandardMaterial({ color: 0xcccccc, side: THREE.DoubleSide });
+const floor = new THREE.Mesh(floorGeometry, floorMaterial);
+floor.rotation.x = Math.PI / 2;
+floor.position.y = -1;
+scene.add(floor);
+
+
+// Camera positioning
+camera.position.z = 3;
+
+// Animation Loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Rotate the cube
+    cube.rotation.x += 0.005;
+    cube.rotation.y += 0.01;
+
+    // Rotate the floor slightly for visual interest
+    floor.rotation.y += 0.002;
+
+    renderer.render(scene, camera);
+}
+
+// Handle window resizing
+window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+});
+
+animate();

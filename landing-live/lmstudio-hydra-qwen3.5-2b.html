@@ -1,0 +1,342 @@
+from PIL import Image, ImageDraw
+
+def generate_kaleidoscope(width=1280, height=720):
+    img = Image.new('RGB', (width, height), 'black')
+    
+    primary_colors = [
+        (255, 0, 0),   # Red
+        (0, 255, 0),   # Green
+        (0, 0, 255),   # Blue
+        (128, 0, 128), # Purple
+        (0, 128, 255)  # Cyan
+    
+    def draw_segment(x, y, color_idx, rotation):
+        for i in range(5):  # Draw 5 segments per side for symmetry
+            angle = random.uniform(-rotation - (i * 360/5), rotation + (i * 360/5))
+            
+            cx = x + random.randint(-width//2, width//2)
+            cy = y + random.randint(-height//2, height//2)
+            
+            # Simplified: just create a semi-circle or similar shape
+            
+            r = 50 + random.randint(-10, 10)
+            
+            # Draw arc (top part of circle)
+            start_x = cx - r * max(0.8, abs(math.cos(angle)))
+            end_x = cx + r * max(0.8, abs(math.sin(angle + math.pi/2)))
+            start_y = cy + r * min(0.6, 1.0)
+            end_y = cy - r * min(0.4, 0.7)
+            
+            
+    
+    def draw_kaleidoscope_segment(center_x, center_y, color_idx):
+        cx = width // 2
+        cy = height // 2
+        
+        random_rotation = random.uniform(-0.5, 0.5)
+        
+        num_segments = 5
+        angle_step = (360 / num_segments) * random.rotation
+        
+        color = primary_colors[color_idx % len(primary_colors)]
+        
+        for i in range(num_segments):
+            rotation_angle = i * angle_step + random_rotation
+            radius = 80 + random.randint(-25, 25)
+            
+            start_angle_deg = (rotation_angle - 90) / 180 * math.pi
+            end_angle_deg = start_angle_deg + 360 * num_segments
+            
+            start_rad = math.radians(start_angle_deg)
+            end_rad = math.radians(end_angle_deg)
+            
+            # Normalize angles to be positive (start from top, clockwise)
+                start_rad += 2 * math.pi
+            
+            # Using ImageDraw polygon with multiple points to form a shape
+            
+    
+    def create_kaleidoscope():
+        img = Image.new('RGB', (width, height), 'black')
+        
+        palette = [
+            (255, 0, 0),   # Red
+            (0, 255, 0),   # Green
+            (0, 128, 255), # Cyan
+            (128, 0, 128),# Purple
+            (255, 128, 0)  # Orange
+        
+        
+        for i in range(3):  # Rotate the image 3 times to show symmetry
+            img = draw_kaleidosphere(img, palette[i % len(palette)], rotation=0.5 + i * random.uniform(-0.2, 0.2))
+        
+
+def draw_kaleidosphere(img, color_idx, rotation):
+    cx = width // 2
+    cy = height // 2
+    
+    num_segments = 6  # Number of segments per side for a full circle
+    angle_step = (360 / num_segments) * random.uniform(-1.5, 1.5)
+    
+    color = palette[color_idx % len(palette)]
+    
+    
+    for i in range(num_segments):
+        rotation_angle = i * angle_step + random.rotation
+        
+        start_rad = math.radians(rotation_angle - 90)
+        end_rad = math.radians(rotation_angle + 360 * num_segments)
+        
+        # Normalize to positive angles (start from top, go clockwise)
+            start_rad += 2 * math.pi
+        
+        
+        for j in range(num_segments + 1):
+            current_angle = rotation_angle + (j / num_segments) * angle_step
+            
+            if j == 0:
+                start_rad = current_angle - 90
+                end_rad = current_angle + 360 * num_segments
+                start_rad = current_angle
+                end_rad = current_angle
+            
+            r = 80 + random.randint(-15, 15)
+            
+            x1 = cx - r * math.cos(start_rad)
+            y1 = cy - r * math.sin(start_rad)
+            
+            x2 = cx - r * math.cos(end_rad)
+            y2 = cy - r * math.sin(end_rad)
+            
+            # Calculate midpoint for smoother drawing if needed, but simple arcs are okay
+            
+        start_x = int(x1)
+        end_x = int(x2)
+        start_y = int(y1)
+        end_y = int(y2)
+        
+        # Create a segment shape (top part of circle)
+        draw_kaleidoscope_segment(img, width/2, height/2, color_idx % len(palette), rotation_angle)
+
+def draw_kaleidoscope_segment(img, w, h, color_idx, angle):
+    cx = w // 2
+    cy = h // 2
+    
+    radius = min(150, abs(cx - img.width/2), abs(cy - img.height/2)) * random.uniform(0.8, 1.0)
+    
+    start_rad = math.radians(angle - 90)
+    end_rad = math.radians(angle + 360 * num_segments) # This is wrong logic above
+    
+
+def create_final_kaleidoscope():
+    img = Image.new('RGB', (1280, 720), 'black')
+    
+    palette = [
+        (255, 0, 0),   # Red
+        (0, 255, 0),   # Green
+        (0, 128, 255), # Cyan
+        (128, 0, 128),# Purple
+        (255, 128, 0)  # Orange
+    
+    num_colors = len(palette)
+    
+    for i in range(3):  # Rotate the image 3 times to create symmetry
+        img = draw_segment_layer(img, palette[i % num_colors], rotation=0.5 + i * random.uniform(-0.2, 0.2))
+        
+
+def draw_segment_layer(img, color_idx, rotation):
+    cx = width // 2
+    cy = height // 2
+    
+    num_segments_per_side = 6
+    angle_step = (360 / num_segments_per_side) * random.uniform(-1.5, 1.5)
+    
+    color = palette[color_idx % len(palette)]
+    
+    for i in range(num_segments_per_side):
+        rotation_angle = i * angle_step + random.rotation
+        
+        start_rad = math.radians(rotation_angle - 90)
+        end_rad = math.radians(rotation_angle + 360 * num_segments_per_side)
+        
+        # Normalize angles to be positive (start from top, go clockwise)
+            start_rad += 2 * math.pi
+        
+        r = 80 + random.randint(-15, 15)
+        
+        x1 = cx - r * math.cos(start_rad)
+        y1 = cy - r * math.sin(start_rad)
+        
+        x2 = cx - r * math.cos(end_rad)
+        y2 = cy - r * math.sin(end_rad)
+        
+        # Draw a segment (top part of circle) using ImageDraw
+        draw_kaleidoscope_segment_polygon(img, w/2, h/2, color_idx % len(palette), rotation_angle, x1, y1, x2, y2)
+
+def draw_kaleidoscope_segment_polygon(img, cx, cy, color_idx, angle, x1, y1, x2, y2):
+    r = 80 + random.randint(-15, 15)
+    
+    # Calculate start and end angles relative to top (90 degrees from horizontal)
+    # Angle 0 is at 3 o'clock, 90 is at 12 o'clock
+    
+    start_rad = math.radians(angle - 90)
+    end_rad = math.radians(angle + 360 * num_segments_per_side)
+    
+        start_rad += 2 * math.pi
+    
+    # Draw arc from x1,y1 to x2,y2 using ImageDraw
+    draw_kaleidoscope_segment_polygon_inner(img, cx, cy, color_idx % len(palette), angle, x1, y1, x2, y2)
+
+def draw_kaleidoscope_segment_polygon_inner(img, cx, cy, color_idx, angle, x1, y1, x2, y2):
+    draw = ImageDraw.Draw(img)
+    
+    r = 80 + random.randint(-15, 15)
+    
+    start_rad = math.radians(angle - 90)
+    end_rad = math.radians(angle + 360 * num_segments_per_side)
+    
+        start_rad += 2 * math.pi
+    
+    # Draw the segment (top part of circle)
+    draw.arc((x1, y1), (x2, y2), 'start', 'end', 
+             start=start_rad + random.uniform(-math.pi/4, math.pi/4),
+             end=end_rad - random.uniform(math.pi/4, math.pi/4))
+    
+
+def main():
+    create_final_kaleidoscope()
+
+if __name__ == "__main__":
+    from PIL import Image, ImageDraw
+    
+    width = 1280
+    height = 720
+    
+    img = Image.new('RGB', (width, height), 'black')
+    
+    palette = [
+        (255, 0, 0),   # Red
+        (0, 255, 0),   # Green
+        (0, 128, 255),# Cyan
+        (128, 0, 128),# Purple
+        (255, 128, 0)  # Orange
+    
+    num_segments = 6
+    
+    for i in range(3):  # Rotate the image 3 times to create symmetry
+        img = draw_layer(img, palette[i % len(palette)], rotation=0.5 + i * random.uniform(-0.2, 0.2))
+        
+
+def draw_layer(img, color_idx, rotation):
+    cx = width // 2
+    cy = height // 2
+    
+    num_segments_per_side = 6
+    angle_step = (360 / num_segments_per_side) * random.uniform(-1.5, 1.5)
+    
+    color = palette[color_idx % len(palette)]
+    
+    for i in range(num_segments_per_side):
+        rotation_angle = i * angle_step + random.rotation
+        
+        start_rad = math.radians(rotation_angle - 90)
+        end_rad = math.radians(rotation_angle + 360 * num_segments_per_side)
+        
+            start_rad += 2 * math.pi
+        
+        r = 80 + random.randint(-15, 15)
+        
+        x1 = cx - r * math.cos(start_rad)
+        y1 = cy - r * math.sin(start_rad)
+        
+        x2 = cx - r * math.cos(end_rad)
+        y2 = cy - r * math.sin(end_rad)
+        
+        draw_kaleidoscope_segment_polygon_inner(img, w/2, h/2, color_idx % len(palette), rotation_angle, x1, y1, x2, y2)
+
+def draw_kaleidoscope_segment_polygon_inner(img, cx, cy, color_idx, angle, x1, y1, x2, y2):
+    r = 80 + random.randint(-15, 15)
+    
+    start_rad = math.radians(angle - 90)
+    end_rad = math.radians(angle + 360 * num_segments_per_side)
+    
+        start_rad += 2 * math.pi
+    
+    draw = ImageDraw.Draw(img)
+    
+    # Use a specific method to draw the segment shape (top part of circle)
+    
+    for j in range(num_segments_per_side):
+        current_angle = angle + (j / num_segments_per_side) * 360 * random.uniform(-1.5, 1.5)
+        
+        if j == 0:
+            start_rad = math.radians(current_angle - 90)
+            end_rad = math.radians(current_angle + 360 * num_segments_per_side)
+            start_rad = math.radians(current_angle)
+            end_rad = math.radians(current_angle)
+            
+        x1 = cx - r * math.cos(start_rad)
+        y1 = cy - r * math.sin(start_rad)
+        
+        x2 = cx - r * math.cos(end_rad)
+        y2 = cy - r * math.sin(end_rad)
+        
+        # Draw the segment (top part of circle)
+        draw_kaleidoscope_segment_polygon_inner(img, w/2, h/2, color_idx % len(palette), current_angle, x1, y1, x2, y2)
+
+def main():
+    img = Image.new('RGB', (width, height), 'black')
+    
+    palette = [
+        (255, 0, 0),   # Red
+        (0, 255, 0),   # Green
+        (0, 128, 255),# Cyan
+        (128, 0, 128),# Purple
+        (255, 128, 0)  # Orange
+    
+    num_segments = 6
+    
+    for i in range(3):  # Rotate the image 3 times to create symmetry
+        img = draw_layer(img, palette[i % len(palette)], rotation=0.5 + i * random.uniform(-0.2, 0.2))
+        
+
+def draw_layer(img, color_idx, rotation):
+    cx = width // 2
+    cy = height // 2
+    
+    num_segments_per_side = 6
+    angle_step = (360 / num_segments_per_side) * random.uniform(-1.5, 1.5)
+    
+    color = palette[color_idx % len(palette)]
+    
+    for i in range(num_segments_per_side):
+        rotation_angle = i * angle_step + random.rotation
+        
+        start_rad = math.radians(rotation_angle - 90)
+        end_rad = math.radians(rotation_angle + 360 * num_segments_per_side)
+        
+            start_rad += 2 * math.pi
+        
+        r = 80 + random.randint(-15, 15)
+        
+        x1 = cx - r * math.cos(start_rad)
+        y1 = cy - r * math.sin(start_rad)
+        
+        x2 = cx - r * math.cos(end_rad)
+        y2 = cy - r * math.sin(end_rad)
+        
+        # Draw the segment (top part of circle) using a simplified arc drawing
+        
+
+def draw_kaleidoscope_segment_polygon(img, cx, cy, color_idx, angle, x1, y1, x2, y2):
+    r = 80 + random.randint(-15, 15)
+    
+    start_rad = math.radians(angle - 90)
+    end_rad = math.radians(angle + 360 * num_segments_per_side)
+    
+        start_rad += 2 * math.pi
+    
+    draw = ImageDraw.Draw(img)
+    
+    # Use a specific method to draw the segment shape (top part of circle)
+.out(o0)

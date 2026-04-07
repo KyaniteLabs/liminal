@@ -1,0 +1,75 @@
+let particles = [];
+const NUM_PARTICLES = 5; // Initial burst rate
+
+class Particle {
+  constructor(x, y) {
+    this.position = createVector(x, y);
+    // Gentle random velocity for a floating effect
+    this.velocity = p5.Vector.random2D();
+    this.velocity.mult(random(0.2, 1.5));
+    this.acceleration = createVector(0, 0.1); // Slight upward pull
+    this.lifespan = 255;
+    this.radius = random(2, 5);
+    // Calming blue color scheme
+    this.hue = random(180, 220); // Blues in HSB
+    this.saturation = 80;
+    this.brightness = random(70, 100);
+  }
+
+  applyForce(force) {
+    this.acceleration.add(force);
+  }
+
+  update() {
+    this.velocity.add(this.acceleration);
+    this.position.add(this.velocity);
+    this.acceleration.mult(0); // Reset acceleration
+    this.lifespan -= 3; // Fade rate
+  }
+
+  show() {
+    stroke(this.hue, this.saturation, this.brightness, this.lifespan);
+    strokeWeight(this.radius);
+    noFill();
+    ellipse(this.position.x, this.position.y, this.radius * 2);
+  }
+
+  isDone() {
+    return this.lifespan < 0;
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth * 0.8, windowHeight * 0.8);
+  colorMode(HSB, 360, 100, 100, 100);
+  background(220, 10, 10, 100); // Very light, almost transparent background initially
+}
+
+function draw() {
+  // Calming background: Use a semi-transparent blue rectangle to create a gentle trail effect
+  // Sky blue (approximate HSB for light blue)
+  background(200, 80, 10, 20);
+  
+  // Emit new particles continuously
+  if (frameCount % 3 === 0) {
+    let x = random(width);
+    let y = random(height);
+    particles.push(new Particle(x, y));
+  }
+
+  // Update and draw all particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.show();
+    
+    if (p.isDone()) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+// Optional: Handle window resizing
+function windowResized() {
+  resizeCanvas(windowWidth * 0.8, windowHeight * 0.8);
+}

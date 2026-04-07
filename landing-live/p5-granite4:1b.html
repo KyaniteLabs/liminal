@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>p5 - granite4:1b</title>
+  <style>
+    body { margin: 0; padding: 20px; font-family: system-ui; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>p5 - granite4:1b</h1>
+  <p><strong>Prompt:</strong> Create a calming blue particle system with flowing movement</p>
+  <p><strong>Valid:</strong> ✅</p>
+  <pre><code>let particles = [];
+const NUM_PARTICLES = 100;
+let flowFieldScale = 0.005;
+
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(0, 0);
+    this.acc = createVector(0, 0);
+    this.lifespan = 255;
+    this.radius = random(1, 3);
+  }
+
+  applyForce(force) {
+    this.acc.add(force);
+  }
+
+  update() {
+    // Apply the force from the noise field
+    let angle = noise(this.pos.x * flowFieldScale, this.pos.y * flowFieldScale, frameCount * 0.005) * TWO_PI * 2;
+    let force = createVector(cos(angle), sin(angle));
+    force.setMag(0.8); // Adjust flow strength
+
+    this.applyForce(force);
+
+    // Standard physics update
+    this.vel.add(this.acc);
+    this.vel.limit(5); // Limit speed
+    this.pos.add(this.vel);
+    this.acc.mult(0); // Reset acceleration
+
+    // Decay lifespan and fade out
+    this.lifespan -= 2;
+  }
+
+  display() {
+    let alpha = map(this.lifespan, 0, 255, 0, 200);
+    stroke(100, 150, 255, alpha); // Calming blue color
+    strokeWeight(this.radius);
+    point(this.pos.x, this.pos.y);
+  }
+
+  isDead() {
+    return this.lifespan &lt; 0;
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  background(20, 20, 40); // Deep, calming blue background
+  
+  // Initialize particles across the screen
+  for (let i = 0; i &lt; NUM_PARTICLES; i++) {
+    let x = random(width);
+    let y = random(height);
+    particles.push(new Particle(x, y));
+  }
+}
+
+function draw() {
+  // Create a slight trailing effect by drawing a semi-transparent background
+  background(20, 20, 40, 20); 
+
+  for (let i = particles.length - 1; i &gt;= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.display();
+
+    if (p.isDead()) {
+      // Remove dead particles
+      particles.splice(i, 1);
+      // Respawn particle at a random location to keep the system full
+      particles.push(new Particle(random(width), random(height)));
+    }
+  }
+}
+
+window.onresize = function() {
+  resizeCanvas(windowWidth, windowHeight);
+}</code></pre>
+</body>
+</html>

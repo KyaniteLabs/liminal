@@ -1,0 +1,46 @@
+import * as p5 from "p5";
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+}
+
+function draw() {
+  background(180);
+  
+  // Create the particle system
+  for (let i = 0; i < 200; i++) {
+    noSmooth();
+    p5.noStroke();
+    
+    // Random position within canvas bounds
+    let x = random(width);
+    let y = random(height);
+    
+    // Calculate distance from center to create a halo effect
+    let distCenter = dist(x, y, width/2, height/2);
+    
+    // Create particles with varying sizes and speeds for depth perception
+    fill(196, 235, 255); // Calming blue color
+    stroke(0);
+    strokeWeight(random(2, 5));
+    
+    size(distCenter * 3, distCenter * 3);
+    
+    let speed = random(0.8, 1.0);
+    
+    // Animate particles by changing position and size over time
+    if (i % 4 == 0) {
+      speed *= 2; // Faster animation for some particles
+    } else if (i % 4 == 3) {
+      speed /= 2; // Slower animation for some particles
+    }
+    
+    translate(width / 2, height / 2);
+    moveBy(random(-speed, speed), random(-speed, speed));
+    rotate(PI / 50 * i); // Slow rotation
+    
+    p5.push();
+    ellipse(x, y, size());
+    pop();
+  }
+}

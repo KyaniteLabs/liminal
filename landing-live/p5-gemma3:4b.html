@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>p5 - gemma3:4b</title>
+  <style>
+    body { margin: 0; padding: 20px; font-family: system-ui; }
+    pre { background: #f5f5f5; padding: 15px; border-radius: 8px; overflow-x: auto; }
+  </style>
+</head>
+<body>
+  <h1>p5 - gemma3:4b</h1>
+  <p><strong>Prompt:</strong> Create a calming blue particle system with flowing movement</p>
+  <p><strong>Valid:</strong> ✅</p>
+  <pre><code>let particles = [];
+const NUM_PARTICLES = 150;
+let flowField;
+let noiseScale = 0.005;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  // Initialize the flow field using Perlin noise for smooth, directional flow
+  flowField = createFlowField(createCanvasWidth(), createCanvasHeight(), noiseScale);
+  
+  // Initialize particles
+  for (let i = 0; i &lt; NUM_PARTICLES; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function draw() {
+  // Create a slight fade effect for a trailing, calming look
+  background(0, 0, 30, 40); // Dark blue background with low alpha
+  
+  // Update and display particles
+  for (let i = particles.length - 1; i &gt;= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.display();
+
+    // Remove particles that drift too far off screen
+    if (p.isOffScreen()) {
+      particles.splice(i, 1);
+    } else if (particles.length &lt; NUM_PARTICLES) {
+      // Respawn particle if the system is depleted
+      particles.push(new Particle(p.x, p.y));
+    }
+  }
+}
+
+// --- Particle Class ---
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.vel = createVector(0, 0);
+    this.acc = createVector(0, 0);
+    this.radius = random(1, 3);
+    this.hue = random(0, 360); // For subtle color variation
+    this.lifespan = 255;
+  }
+
+  // Calculate force from the flow field
+  follow(field) {
+    let force = field.get(this.pos.x, this.pos.y);
+    
+    // Apply the force, making it gentle (calming)
+    this.acc.add(force);
+    this.vel.add(this.acc);
+    this.vel.mult(0.9); // Damping/drag
+    this.pos.add(this.vel);
+    this.acc.mult(0); // Reset acceleration
+  }
+
+  update() {
+    // 1. Get force from the flow field
+    this.follow(flowField);
+    
+    // 2. Fade lifespan (optional, but adds movement depth)
+    this.lifespan -= 1.5;
+  }
+
+  display() {
+    noStroke();
+    // Use HSB for better color control (Blue tones)
+    fill(this.hue, 80, 100, this.lifespan); 
+    ellipse(this.pos.x, this.pos.y, this.radius * 2, this.radius * 2);
+  }
+  
+  isOffScreen() {
+    return this.pos.x &lt; -10 || this.pos.x &gt; width + 10 || this.pos.y &lt; -10 || this.pos.y &gt; height + 10;
+  }
+}
+
+// --- Flow Field Utility ---
+function createFlowField(w, h, scale) {
+  let field = new p5.Vector[w][h];
+  for (let y = 0; y &lt; h; y++) {
+    for (let x = 0; x &lt; w; x++) {
+      // Calculate angle using noise, which generates smooth, continuous patterns
+      let angle = noise(x * scale, y * scale) * TWO_PI * 2; 
+      let force = p5.Vector.fromAngle(angle);
+      force.setMag(1); // Set magnitude of the force
+      field[x][y] = force;
+    }
+  }
+  return field;
+}
+
+// FlowField Helper Object (to mimic accessing the field data)
+let flowField = {
+    get: function(x, y) {
+        // Interpolate between nearest points for smoother results
+        let x0 = floor(x);
+        let y0 = floor(y);
+        let x1 = floor(x) + 1;
+        let y1 = floor(y) + 1;
+        
+        let weightX = x - floor(x);
+        let weightY = y - floor(y);
+        
+        // Simple bilinear interpolation based on the stored vectors
+        let v00 = flowField[x0][y0];
+        let v10 = flowField[x1][y0];
+        let v01 = flowField[x0][y1];
+        let v11 = flowField[x1][y1];
+        
+        // Interpolate X
+        let vTop = p5.Vector.lerp(v00, v10, weightX);
+        let vBottom = p5.Vector.lerp(v01, v11, weightX);
+        
+        // Interpolate Y
+        let finalForce = p5.Vector.lerp(vTop, vBottom, weightY);
+        return finalForce;
+    }
+};
+
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  // Recreate the flow field on resize to match new dimensions
+  flowField = createFlowField(width, height, noiseScale);
+}</code></pre>
+</body>
+</html>

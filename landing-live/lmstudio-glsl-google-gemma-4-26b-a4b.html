@@ -1,0 +1,25 @@
+void main() {
+  // Create a base color for the plasma effect
+  vec3 baseColor = vec3(0.2, 0.4, 1.0);
+  
+  // Calculate position relative to center screen
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  float halfWidth = u_resolution.x * 0.5;
+  float centerX = u_resolution.x * 0.5;
+  float centerY = u_resolution.y * 0.5;
+  
+  // Calculate distance from center (radius squared)
+  float distSq = (uv.x - centerX) * (uv.x - centerX) + (uv.y - centerY) * (uv.y - centerY);
+  
+  // Apply a radial gradient intensity
+  float intensity = smoothstep(0.2, 1.5, distSq / (u_resolution.x * u_resolution.y));
+  
+  // Add some noise for organic movement effect
+  float noise = fract(sin(dot(uv.xy, vec2(12.9898, 43758.5453))) * 43758.5453) * 0.5 + intensity;
+  
+  // Create the plasma glow using Fresnel-like effect and exponential growth
+  float glow = pow(noise / (halfWidth * halfWidth), 2.5);
+  vec3 color = baseColor * intensity * glow;
+  
+  gl_FragColor = vec4(color, 1.0);
+}

@@ -1,0 +1,66 @@
+let particles = [];
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+}
+
+function draw() {
+  background(10, 20, 40, 50);
+  
+  // Add new particles
+  if (particles.length < 200) {
+    particles.push(new Particle());
+  }
+  
+  // Update and draw particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.display();
+    if (p.isDead()) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+class Particle {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.vx = random(-0.5, 0.5);
+    this.vy = random(-0.5, 0.5);
+    this.size = random(2, 8);
+    this.alpha = random(100, 200);
+    this.color = color(random(100, 180), random(180, 240), random(220, 255), this.alpha);
+    this.life = 255;
+    this.decay = random(0.5, 1.5);
+  }
+  
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.life -= this.decay;
+    
+    // Gentle drift
+    this.vx += random(-0.02, 0.02);
+    this.vy += random(-0.02, 0.02);
+    
+    // Contain within canvas with soft bounce
+    if (this.x < 0 || this.x > width) this.vx *= -1;
+    if (this.y < 0 || this.y > height) this.vy *= -1;
+  }
+  
+  display() {
+    fill(red(this.color), green(this.color), blue(this.color), this.life);
+    ellipse(this.x, this.y, this.size);
+  }
+  
+  isDead() {
+    return this.life < 0;
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

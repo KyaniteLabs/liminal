@@ -1,0 +1,18 @@
+#version 330 core
+out vec4 fragColor;
+uniform float iTime;
+uniform vec2 iResolution;
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / iResolution.xy;
+    uv.x *= iResolution.x / iResolution.y;
+    float t = iTime * 0.5;
+    float v = 0.0;
+    v += sin(uv.x * 10.0 + t);
+    v += sin(uv.y * 10.0 + t);
+    v += sin((uv.x + uv.y) * 10.0 + t);
+    v += sin(sqrt(uv.x*uv.x + uv.y*uv.y) * 10.0 + t);
+    v = v * 0.5;
+    vec3 col = 0.5 + 0.5 * cos(t + vec3(0.0, 2.0, 4.0) + v * 6.0);
+    fragColor = vec4(col, 1.0);
+}

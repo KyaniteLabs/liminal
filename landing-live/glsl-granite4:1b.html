@@ -1,0 +1,73 @@
+// GLSL Fragment Shader (Suitable for WebGL/OpenGL)
+
+// Assuming standard uniforms:
+// uniform vec2 u_resolution;
+// uniform float u_time;
+
+// --- Utility Noise Function (Placeholder, replace with actual implementation) ---
+// Simple pseudo-random noise for demonstration
+float hash(float n) {
+    return fract(sin(n) * 43758.5453);
+}
+
+float noise(vec2 p) {
+    float n = dot(floor(p) * 12.9898, vec2(78.233, 41.513));
+    float n1 = dot(floor(p + vec2(1.0, 0.0)) * 12.9898, vec2(78.233, 41.513));
+    float n2 = dot(floor(p + vec2(0.0, 1.0)) * 12.9898, vec2(78.233, 41.513));
+    float n3 = dot(floor(p + vec2(1.0, 1.0)) * 12.9898, vec2(78.233, 41.513));
+    
+    return mix(mix(hash(n), hash(n1), 0.5), 
+               mix(hash(n2), hash(n3), 0.5), 0.5);
+}
+
+// Smoother noise interpolation (optional, but recommended for plasma)
+float smoothNoise(vec2 p, float t) {
+    return sin(p.x * 0.1 + t * 0.5) * cos(p.y * 0.1 + t * 0.3) * 0.5 + 0.5;
+}
+// --------------------------------------------------------------------------
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    vec2 p = uv * 2.0 - 1.0; // Normalize to -1 to 1 space
+    float time = u_time * 0.5;
+
+    // --- Phase 1: Core Plasma Noise Generation ---
+    
+    // Scale and offset coordinates based on time for movement
+    vec2 p_time = p * 1.5 + vec2(time * 0.1, time * 0.08);
+    
+    // Multiple frequency layers for complex, organic structure (octaves)
+    float noise_low = noise(p_time * 0.5) * 0.5 + 0.5;
+    float noise_mid = noise(p_time * 1.5) * 0.5 + 0.5;
+    float noise_high = noise(p_time * 3.0) * 0.5 + 0.5;
+
+    // Combine noise using sine/cosine waves for smoother, field-like structures
+    float plasma_map = sin(p.y * 2.0 + time * 0.2) * 0.3 + 0.5;
+    plasma_map = plasma_map * cos(p.x * 2.0 + time * 0.1) * 0.3 + 0.5;
+    
+    // Final influence map: high values = bright plasma center
+    float influence = (noise_low * 0.6 + noise_mid * 0.3 + noise_high * 0.1);
+    influence = pow(clamp(influence, 0.2, 1.0), 2.0);
+
+
+    // --- Phase 2: Animated Color Generation ---
+
+    // Color components based on positional noise and time
+    float r_color = sin(p.y * 3.0 + time * 0.8) * 0.5 + 0.5;
+    float g_color = cos(p.x * 3.0 + time * 0.5) * 0.5 + 0.5;
+    float b_color = sin(p.x * 3.0 + time * 0.4) * 0.5 + 0.5;
+
+    // Modulation using the influence map: makes colors brighter where plasma is dense
+    vec3 base_color = vec3(r_color, g_color, b_color);
+    vec3 final_color = base_color * (0.5 + influence * 0.5);
+
+    // Opacity/Intensity Boost: Plasma tends to be bright and semi-transparent
+    float intensity = exp(-length(p) * 0.5) * influence * 1.5;
+    
+    // Apply a subtle glow/bloom effect by making the center brighter
+    final_color *= intensity * 1.5;
+
+
+    // --- Phase 3: Output ---
+    gl_FragColor = vec4(final_color, 1.0);
+}

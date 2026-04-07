@@ -1,0 +1,77 @@
+let particles = [];
+const NUM_PARTICLES = 100;
+
+class Particle {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    this.radius = random(2, 4);
+    this.vx = random(-0.5, 0.5);
+    this.vy = random(-0.5, 0.5);
+    this.life = 255;
+  }
+
+  update() {
+    // 1. Apply Flow/Force (Sine wave distortion for smooth movement)
+    let flowX = sin(this.y * 0.01 + frameCount * 0.01) * 0.5;
+    let flowY = cos(this.x * 0.01 + frameCount * 0.01) * 0.5;
+
+    // 2. Update Velocity incorporating flow
+    this.vx += (flowX - this.vx) * 0.05;
+    this.vy += (flowY - this.vy) * 0.05;
+
+    // 3. Update Position
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // 4. Friction/Damping (Keeps it calming, slows them slightly)
+    this.vx *= 0.98;
+    this.vy *= 0.98;
+
+    // 5. Fade life
+    this.life -= 1.5;
+  }
+
+  display() {
+    let alpha = this.life;
+    let blueColor = color(100, 180, 255, alpha); // Calming blue
+    fill(blueColor);
+    noStroke();
+    ellipse(this.x, this.y, this.radius, this.radius);
+  }
+
+  isDead() {
+    return this.life < 0;
+  }
+}
+
+function setup() {
+  createCanvas(800, 500);
+  background(10, 10, 30); // Dark background for contrast
+  
+  // Initialize particles
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  // Create a trailing effect by drawing a semi-transparent background layer
+  background(10, 10, 30, 30); 
+
+  // Update and draw particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.display();
+
+    // Handle particle death and respawn
+    if (p.isDead() || p.x < 0 || p.x > width || p.y < 0 || p.y > height) {
+      particles.splice(i, 1);
+      // Spawn a new particle to maintain count
+      let newParticle = new Particle();
+      newParticle.life = 255;
+      particles.push(newParticle);
+    }
+  }
+}

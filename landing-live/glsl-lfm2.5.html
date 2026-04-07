@@ -1,0 +1,71 @@
+// Vertex Shader (Standard pass-through)
+void main() {
+    gl_Position = vec4(position, 1.0);
+}
+
+// Fragment Shader (Plasma Generation)
+uniform float time;
+uniform vec2 resolution;
+uniform sampler2D u_texture; // Optionally use for background tiling
+
+// Simple 2D pseudo-random noise function
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(41.12, 28.34))) * 43758.5453);
+}
+
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    
+    // Smooth interpolation
+    vec2 u = f * f * (3.0 - 2.0 * f);
+    
+    float a = hash(i);
+    float b = hash(i + vec2(1.0, 0.0));
+    float c = hash(i + vec2(0.0, 1.0));
+    float d = hash(i + vec2(1.0, 1.0));
+    
+    return mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+}
+
+
+void main() {
+    vec2 uv = gl_FragCoord.xy / resolution.xy;
+    vec2 p = uv * 0.8 + time * 0.05;
+
+    // --- Core Plasma Calculation ---
+    
+    // 1. Flow/Warping Field (using multiple sin waves)
+    float flow_x = sin(p.y * 3.0 + time * 0.8) * 0.5 + cos(p.x * 2.0 + time * 0.6) * 0.3;
+    float flow_y = cos(p.x * 3.5 + time * 0.9) * 0.5 + sin(p.y * 2.5 + time * 0.7) * 0.3;
+
+    // 2. Noise Distortion (Applying the flow field to perturb coordinates)
+    vec2 warped_p = p + vec2(flow_x * 0.2, flow_y * 0.2);
+    
+    // 3. Secondary Noise layer for detail
+    float detail = noise(warped_p * 0.5 + vec2(time * 0.1, time * 0.05));
+
+    // --- Color Mapping ---
+    
+    // Calculate primary color values based on the flow
+    float c1 = sin(warped_p.x * 5.0 + time * 1.2) * 0.5 + 0.5;
+    float c2 = cos(warped_p.y * 4.0 + time * 0.9) * 0.5 + 0.5;
+    float c3 = sin(warped_p.x * 2.0 + warped_p.y * 3.0 + time * 1.5) * 0.5 + 0.5;
+
+    // Combine values and modulate by detail
+    vec3 color_rgb = vec3(
+        c1 * 0.8 + detail * 0.2,
+        c2 * 0.8 + detail * 0.2,
+        c3 * 0.8 + detail * 0.2
+    );
+
+    // Apply a strong color shift for the plasma effect (e.g., blue/purple/magenta spectrum)
+    vec3 final_color = mix(
+        vec3(0.0, 0.0, 0.8),    // Dark Blue base
+        vec3(0.8, 0.0, 1.0),    // Magenta highlights
+        pow(c1 * 0.5 + c2 * 0.5 + c3 * 0.5, 1.5) // Brightness modulator
+    );
+
+    // Final output color (clamped and multiplied by intensity)
+    gl_FragColor = vec4(final_color * 1.5, 1.0);
+}

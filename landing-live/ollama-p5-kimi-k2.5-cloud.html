@@ -1,0 +1,92 @@
+let particles = [];
+const NUM_PARTICLES = 100;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  background(0);
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  // Create a soft, fading trail effect (low alpha background)
+  background(0, 0, 10, 30); 
+
+  // Update and display particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.show();
+
+    // Remove dead particles
+    if (p.isFinished()) {
+      particles.splice(i, 1);
+    }
+  }
+
+  // Respawn particles if the count drops too low
+  if (particles.length < NUM_PARTICLES * 0.8) {
+    particles.push(new Particle());
+  }
+}
+
+/**
+ * Particle Class
+ * Represents a single, drifting particle.
+ */
+class Particle {
+  constructor() {
+    // Start near the bottom center, but with randomness
+    this.x = random(width);
+    this.y = height; 
+    
+    // Initial velocity (slow drift)
+    this.vx = random(-0.2, 0.2);
+    this.vy = random(-1, -0.5); // Gentle upward drift
+    
+    this.radius = random(1, 3);
+    this.lifespan = random(150, 255); // Controls fade speed
+    this.hue = random(180, 220);    // Cool blue tones
+  }
+
+  update() {
+    // Apply movement
+    this.x += this.vx;
+    this.y += this.vy;
+
+    // Slow down movement (drag/damping)
+    this.vx *= 0.98;
+    this.vy *= 0.98;
+
+    // Gentle 'gravity' or pull towards the center
+    let targetX = width / 2;
+    let targetY = height / 2;
+    let dx = targetX - this.x;
+    let dy = targetY - this.y;
+    
+    this.vx += dx * 0.001;
+    this.vy += dy * 0.0005;
+
+    // Decrease lifespan
+    this.lifespan -= 2;
+  }
+
+  show() {
+    // Use HSB color model for consistent blue hue
+    let alpha = map(this.lifespan, 0, 255, 0, 255);
+    
+    stroke(this.hue, 80, 90, alpha);
+    strokeWeight(this.radius);
+    noFill();
+    ellipse(this.x, this.y, this.radius * 2, this.radius * 2);
+  }
+
+  isFinished() {
+    return this.lifespan < 0;
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

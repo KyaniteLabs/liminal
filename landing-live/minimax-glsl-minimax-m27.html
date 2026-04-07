@@ -1,0 +1,23 @@
+uniform vec3 iResolution;
+uniform float iTime;
+uniform vec4 iMouse;
+uniform int iFrame;
+uniform float iTimeDelta;
+uniform float iFrameRate;
+uniform float iSampleRate;
+uniform vec4 iDate;
+uniform float iChannelTime[4];
+uniform vec3 iChannelResolution[4];
+uniform sampler2D iChannel0;
+uniform sampler2D iChannel1;
+uniform sampler2D iChannel2;
+uniform sampler2D iChannel3;
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord){
+    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;
+    float t = iTime * 0.5;
+    float v = sin(uv.x * 10.0 + t) + sin(uv.y * 10.0 + t) + sin(10.0 * length(uv) + t);
+    v *= 0.3333;
+    vec3 col = 0.5 + 0.5 * cos(v * 6.2831 + vec3(0.0, 2.0, 4.0));
+    fragColor = vec4(col, 1.0);
+}

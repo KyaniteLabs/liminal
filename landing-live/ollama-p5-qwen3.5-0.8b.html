@@ -1,0 +1,67 @@
+let particles;
+const NUM_PARTICLES = 100;
+const BLUE_HUE = 200; // A nice calming blue hue in HSB
+
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.vel = p5.Vector.random2D().mult(random(0.5, 2));
+    this.acc = createVector(0, 0);
+    this.lifespan = 255;
+    this.size = random(2, 4);
+  }
+
+  applyForce(force) {
+    this.acc.add(force);
+  }
+
+  update() {
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0); // Reset acceleration
+    this.lifespan -= 3; // Fade over time
+  }
+
+  show() {
+    stroke(BLUE_HUE, 80, 100, this.lifespan);
+    strokeWeight(this.size);
+    point(this.pos.x, this.pos.y);
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  particles = [];
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function draw() {
+  // Create a transparent background to create a trailing/fading effect
+  background(0, 0, 0, 20);
+
+  let center = createVector(width / 2, height / 2);
+
+  for (let i = 0; i < particles.length; i++) {
+    let p = particles[i];
+    p.update();
+    p.show();
+
+    // Simple attraction towards the center for a calming effect
+    let force = p5.Vector.sub(center, p.pos);
+    force.setMag(0.01); // Weak force towards center
+    p.applyForce(force);
+  }
+
+  // Respawn particles that have faded out
+  particles = particles.filter(p => p.lifespan > 0);
+  while (particles.length < NUM_PARTICLES) {
+    // Spawn new particles near the edges or randomly
+    particles.push(new Particle(random(width), random(height)));
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

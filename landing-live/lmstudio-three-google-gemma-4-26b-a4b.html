@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Rotating Cube</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #1a1a1a; color: white; font-family: sans-serif; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        .controls { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.5); padding: 15px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <p>Left Click: Rotate View | Right Click: Pan | Scroll: Zoom</p>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'https://unpkg.com/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+// Scene Setup
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x222222);
+scene.fog = new THREE.FogExp2(0x222222, 0.02);
+
+// Camera Setup
+const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 100);
+camera.position.set(3, 3, 6);
+
+// Renderer Setup
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = 'linear';
+document.body.appendChild(renderer.domElement);
+
+// Lighting
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+scene.add(ambientLight);
+
+const directionLight = new THREE.DirectionalLight(0xffffff, 1);
+directionLight.position.set(-3, 5, -4);
+directionLight.castShadow = true;
+directionLight.shadow.mapSize.width = 2048;
+directionLight.shadow.mapSize.height = 2048;
+scene.add(directionLight);
+
+// Geometry (Icosahedron for a "sharp" look)
+const geometry = new THREE.IcosahedronGeometry(1, 10); // Low detail for performance
+const material = new THREE.MeshStandardMaterial({ 
+    color: 0x4f86c7, 
+    roughness: 0.5, 
+    metalness: 0.3 
+});
+
+// Mesh creation
+const cube = new THREE.Mesh(geometry, material);
+cube.castShadow = true;
+cube.receiveShadow = true;
+scene.add(cube);
+
+// Animation Loop
+function animate() {
+    requestAnimationFrame(animate);
+
+    // Rotate the cube slowly
+    cube.rotation.x += 0.01;
+    cube.rotation.y += 0.01;
+
+    renderer.render(scene, camera);
+}
+
+// Handle Resize
+window.addEventListener('resize', () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+    renderer.setSize(width, height);
+
+    // Adjust cube position relative to new aspect ratio if needed, 
+    // or just let it stay centered. For a simple rotating cube, keep center fixed.
+}, { passive: true });
+
+// Start animation
+animate();
+
+</script>
+</body>
+</html>

@@ -1,0 +1,84 @@
+let particles = [];
+const NUM_PARTICLES = 150;
+
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    this.vel = p5.Vector.random2D().mult(random(0.1, 1.5));
+    this.acc = createVector(0, 0);
+    this.lifespan = 255;
+    this.radius = random(2, 4);
+  }
+
+  applyForce(force) {
+    this.acc.add(force);
+  }
+
+  update() {
+    // Apply slight drag/damping to slow movement naturally
+    this.vel.mult(0.98);
+    this.acc.add(createVector(0, 0.05)); // Gentle downward pull
+    
+    this.vel.add(this.acc);
+    this.pos.add(this.vel);
+    this.acc.mult(0); // Reset acceleration for the next frame
+    
+    this.lifespan -= 1.5; // Fade over time
+  }
+
+  show() {
+    let colorValue = this.lifespan;
+    
+    stroke(100, 150, 255, colorValue); // Semi-transparent blue
+    strokeWeight(this.radius);
+    point(this.pos.x, this.pos.y);
+  }
+}
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  colorMode(HSB, 360, 100, 100, 255);
+  
+  // Initialize particles across the screen
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    let x = random(width);
+    let y = random(height);
+    particles.push(new Particle(x, y));
+  }
+}
+
+function draw() {
+  // Create a semi-transparent background overlay to create soft trails
+  background(0, 10, 10, 15); 
+
+  // Center attraction force (Subtle drift towards the middle)
+  let center = createVector(width / 2, height / 2);
+  let force = p5.Vector.sub(center, createVector(width / 2, height / 2));
+  force.setMag(0.005); 
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+
+    // Apply gentle force towards the center
+    p.applyForce(force);
+
+    p.update();
+    p.show();
+
+    // Recycle particle if it fades out
+    if (p.lifespan < 0) {
+      particles.splice(i, 1);
+    }
+  }
+  
+  // Respawn particles if the count drops too low to maintain density
+  if (particles.length < NUM_PARTICLES * 0.8) {
+      let x = random(width);
+      let y = random(height);
+      particles.push(new Particle(x, y));
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

@@ -1,0 +1,82 @@
+let particles = [];
+const NUM_PARTICLES = 100;
+
+// --- Particle Class ---
+class Particle {
+  constructor(x, y) {
+    this.position = createVector(x, y);
+    // Initial random velocity, subtle movement
+    this.velocity = p5.Vector.random2D().mult(random(0.1, 0.5));
+    this.acceleration = createVector(0, 0);
+    this.lifespan = 255; // Opacity/life
+    this.radius = random(1, 3);
+    // Calming Blue Palette
+    this.color = color(100, 150, 255, 150); 
+  }
+
+  applyForce(force) {
+    this.acceleration.add(force);
+  }
+
+  update() {
+    // 1. Apply flow force (Sine/Cosine movement for gentle currents)
+    // This creates a slow, looping, wave-like movement pattern
+    let flowX = sin(this.position.y * 0.01 + frameCount * 0.005) * 0.3;
+    let flowY = cos(this.position.x * 0.01 + frameCount * 0.005) * 0.3;
+    
+    let flowForce = createVector(flowX, flowY);
+    this.applyForce(flowForce);
+
+    // 2. Standard physics update
+    this.velocity.add(this.acceleration);
+    this.velocity.limit(3); // Keep movement from getting too fast
+    this.position.add(this.velocity);
+    this.acceleration.mult(0); // Reset acceleration
+
+    // 3. Fade out and decay
+    this.lifespan -= 1.5;
+  }
+
+  display() {
+    stroke(this.color);
+    strokeWeight(this.radius);
+    // Use alpha based on lifespan for fading effect
+    fill(this.color.levels[0], this.color.levels[1], this.color.levels[2], this.lifespan);
+    ellipse(this.position.x, this.position.y, this.radius * 2);
+  }
+
+  isDead() {
+    return this.lifespan < 0;
+  }
+}
+
+function setup() {
+  createCanvas(800, 500);
+  background(10, 10, 40); // Dark, deep blue background
+  
+  // Initialize particles spread across the canvas
+  for (let i = 0; i < NUM_PARTICLES; i++) {
+    let x = random(width);
+    let y = random(height);
+    particles.push(new Particle(x, y));
+  }
+}
+
+function draw() {
+  // Create a semi-transparent background overlay instead of clearing fully
+  // This creates a trailing, ethereal effect, enhancing the 'flow'
+  background(10, 10, 40, 30); 
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    
+    p.update();
+    p.display();
+
+    if (p.isDead()) {
+      // Recycle dead particles to a random spot to maintain density
+      particles.splice(i, 1);
+      particles.push(new Particle(random(width), random(height)));
+    }
+  }
+}

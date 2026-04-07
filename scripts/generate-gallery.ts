@@ -21,16 +21,27 @@ interface GalleryItem {
 function parseFilename(filename: string): GalleryItem | null {
   // Skip index.html
   if (filename === 'index.html') return null;
-  
-  // Pattern 1: cloud-domain-model.html, lmstudio-domain-model.html, ollama-domain-model.html
-  let match = filename.match(/^(cloud|lmstudio|ollama)-(.+)-(.+)\.html$/);
+
+  // Helper: parse provider-domain-model from filename
+  const noExt = filename.replace(/\.html$/, '');
+
+  // Pattern 0: compound prefixes like cloud-minimax-*, local-lmstudio-*, local-ollama-*
+  const compoundMatch = noExt.match(/^(cloud-minimax|local-lmstudio|local-ollama)-(.+)-(.+)$/);
+  if (compoundMatch) {
+    const [, compound, domain, model] = compoundMatch;
+    const provider = compound.split('-')[1]; // minimax, lmstudio, ollama
+    return { domain, model, provider, path: filename, success: true };
+  }
+
+  // Pattern 1: provider-domain-model.html
+  let match = noExt.match(/^(cloud|lmstudio|ollama|minimax|glm)-(.+)-(.+)$/);
   if (match) {
     const [, provider, domain, model] = match;
-    return { domain, model, provider, path: `landing-live/${filename}`, success: true };
+    return { domain, model, provider, path: filename, success: true };
   }
-  
+
   // Pattern 2: domain-model.html (legacy)
-  match = filename.match(/^([a-z]+)-(.+)\.html$/);
+  match = noExt.match(/^([a-z][\w:]+)-(.+)$/);
   if (match) {
     const [, domain, model] = match;
     // Guess provider from model name
@@ -40,7 +51,7 @@ function parseFilename(filename: string): GalleryItem | null {
     else if (['gemma', 'qwen', 'phi4', 'granite', 'lfm2.5', 'deepseek', 'kimi', 'gemini'].some(m => model.toLowerCase().includes(m))) {
       provider = 'ollama';
     }
-    return { domain, model, provider, path: `landing-live/${filename}`, success: true };
+    return { domain, model, provider, path: filename, success: true };
   }
   
   return null;
@@ -163,12 +174,16 @@ function generateGallery() {
     .provider-ollama { background: #f59e0b; color: black; }
     .card-model { font-size: 1.1em; font-weight: 600; }
     .card-preview {
-      height: 200px;
+      height: 250px;
       background: #0f0f0f;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #555;
+      overflow: hidden;
+    }
+    .card-preview iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none;
+      transform: scale(1);
     }
     .card-footer {
       padding: 15px;
@@ -256,7 +271,7 @@ function generateGallery() {
             <div class="card-model">${item.model}</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="${item.path}" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
             <a href="${item.path}" class="btn" target="_blank">View Code</a>

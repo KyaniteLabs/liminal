@@ -88,12 +88,16 @@
     .provider-ollama { background: #f59e0b; color: black; }
     .card-model { font-size: 1.1em; font-weight: 600; }
     .card-preview {
-      height: 200px;
+      height: 250px;
       background: #0f0f0f;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: #555;
+      overflow: hidden;
+    }
+    .card-preview iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none;
+      transform: scale(1);
     }
     .card-footer {
       padding: 15px;
@@ -148,15 +152,15 @@
     <p class="subtitle">Multi-Provider Model Testing Results</p>
     <div class="stats">
       <div class="stat">
-        <div class="stat-value">79</div>
+        <div class="stat-value">94</div>
         <div class="stat-label">Total Tests</div>
       </div>
       <div class="stat">
-        <div class="stat-value">42</div>
+        <div class="stat-value">44</div>
         <div class="stat-label">Domains</div>
       </div>
       <div class="stat">
-        <div class="stat-value">39</div>
+        <div class="stat-value">27</div>
         <div class="stat-label">Models</div>
       </div>
     </div>
@@ -181,10 +185,10 @@
             <div class="card-model">m25</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-glsl-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-glsl-minimax-m25.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-glsl-minimax-m25.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -194,10 +198,62 @@
             <div class="card-model">m27</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-glsl-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-glsl-minimax-m27.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-glsl-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m25</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="cloud-minimax-glsl-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="cloud-minimax-glsl-minimax-m25.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="cloud-minimax-glsl-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="cloud-minimax-glsl-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m25</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-glsl-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-glsl-minimax-m25.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-glsl-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-glsl-minimax-m27.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -214,10 +270,10 @@
             <div class="card-model">m25</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-html-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-html-minimax-m25.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-html-minimax-m25.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -227,10 +283,36 @@
             <div class="card-model">m27</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-html-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-html-minimax-m27.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-html-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m25</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-html-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-html-minimax-m25.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-html-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-html-minimax-m27.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -247,10 +329,10 @@
             <div class="card-model">m25</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-hydra-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-hydra-minimax-m25.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-hydra-minimax-m25.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -260,76 +342,36 @@
             <div class="card-model">m27</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-hydra-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-hydra-minimax-m27.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-hydra-minimax-m27.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
-      </div>
-    </section>
-    
-    <section class="domain-section" data-domain="minimax-glsl-minimax">
-      <h2 class="domain-title">MINIMAX-GLSL-MINIMAX</h2>
-      <div class="grid">
-        
-        <div class="card" data-provider="cloud">
+        <div class="card" data-provider="minimax">
           <div class="card-header">
-            <span class="card-provider provider-cloud">cloud</span>
+            <span class="card-provider provider-minimax">minimax</span>
             <div class="card-model">m25</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="minimax-hydra-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-minimax-glsl-minimax-m25.html" class="btn" target="_blank">View Code</a>
+            <a href="minimax-hydra-minimax-m25.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
-        <div class="card" data-provider="cloud">
+        <div class="card" data-provider="minimax">
           <div class="card-header">
-            <span class="card-provider provider-cloud">cloud</span>
+            <span class="card-provider provider-minimax">minimax</span>
             <div class="card-model">m27</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="minimax-hydra-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-minimax-glsl-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-      </div>
-    </section>
-    
-    <section class="domain-section" data-domain="minimax-p5-minimax">
-      <h2 class="domain-title">MINIMAX-P5-MINIMAX</h2>
-      <div class="grid">
-        
-        <div class="card" data-provider="cloud">
-          <div class="card-header">
-            <span class="card-provider provider-cloud">cloud</span>
-            <div class="card-model">m25</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/cloud-minimax-p5-minimax-m25.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="cloud">
-          <div class="card-header">
-            <span class="card-provider provider-cloud">cloud</span>
-            <div class="card-model">m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/cloud-minimax-p5-minimax-m27.html" class="btn" target="_blank">View Code</a>
+            <a href="minimax-hydra-minimax-m27.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -340,16 +382,42 @@
       <h2 class="domain-title">P5-MINIMAX</h2>
       <div class="grid">
         
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m25</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="cloud-minimax-p5-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="cloud-minimax-p5-minimax-m25.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="cloud-minimax-p5-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="cloud-minimax-p5-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
         <div class="card" data-provider="cloud">
           <div class="card-header">
             <span class="card-provider provider-cloud">cloud</span>
             <div class="card-model">m25</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-p5-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-p5-minimax-m25.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-p5-minimax-m25.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -359,10 +427,36 @@
             <div class="card-model">m27</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-p5-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-p5-minimax-m27.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-p5-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m25</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-p5-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-p5-minimax-m25.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-p5-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-p5-minimax-m27.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -379,10 +473,10 @@
             <div class="card-model">m25</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-strudel-minimax-m25.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-strudel-minimax-m25.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-strudel-minimax-m25.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -392,10 +486,23 @@
             <div class="card-model">m27</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-strudel-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-strudel-minimax-m27.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-strudel-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-strudel-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-strudel-minimax-m27.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -412,82 +519,123 @@
             <div class="card-model">m27</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="cloud-tone-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/cloud-tone-minimax-m27.html" class="btn" target="_blank">View Code</a>
+            <a href="cloud-tone-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-tone-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-tone-minimax-m27.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
       </div>
     </section>
     
-    <section class="domain-section" data-domain="glm">
-      <h2 class="domain-title">GLM</h2>
+    <section class="domain-section" data-domain="glsl-glm">
+      <h2 class="domain-title">GLSL-GLM</h2>
       <div class="grid">
         
-        <div class="card" data-provider="unknown">
+        <div class="card" data-provider="glm">
           <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">glsl-glm-5.1</div>
+            <span class="card-provider provider-glm">glm</span>
+            <div class="card-model">5.1</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glm-glsl-glm-5.1.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glm-glsl-glm-5.1.html" class="btn" target="_blank">View Code</a>
+            <a href="glm-glsl-glm-5.1.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
-        <div class="card" data-provider="unknown">
+      </div>
+    </section>
+    
+    <section class="domain-section" data-domain="html-glm">
+      <h2 class="domain-title">HTML-GLM</h2>
+      <div class="grid">
+        
+        <div class="card" data-provider="glm">
           <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">html-glm-5.1</div>
+            <span class="card-provider provider-glm">glm</span>
+            <div class="card-model">5.1</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glm-html-glm-5.1.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glm-html-glm-5.1.html" class="btn" target="_blank">View Code</a>
+            <a href="glm-html-glm-5.1.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
-        <div class="card" data-provider="unknown">
+      </div>
+    </section>
+    
+    <section class="domain-section" data-domain="hydra-glm">
+      <h2 class="domain-title">HYDRA-GLM</h2>
+      <div class="grid">
+        
+        <div class="card" data-provider="glm">
           <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">hydra-glm-5.1</div>
+            <span class="card-provider provider-glm">glm</span>
+            <div class="card-model">5.1</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glm-hydra-glm-5.1.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glm-hydra-glm-5.1.html" class="btn" target="_blank">View Code</a>
+            <a href="glm-hydra-glm-5.1.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
-        <div class="card" data-provider="unknown">
+      </div>
+    </section>
+    
+    <section class="domain-section" data-domain="p5-glm">
+      <h2 class="domain-title">P5-GLM</h2>
+      <div class="grid">
+        
+        <div class="card" data-provider="glm">
           <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">p5-glm-5.1</div>
+            <span class="card-provider provider-glm">glm</span>
+            <div class="card-model">5.1</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glm-p5-glm-5.1.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glm-p5-glm-5.1.html" class="btn" target="_blank">View Code</a>
+            <a href="glm-p5-glm-5.1.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
-        <div class="card" data-provider="unknown">
+      </div>
+    </section>
+    
+    <section class="domain-section" data-domain="strudel-glm">
+      <h2 class="domain-title">STRUDEL-GLM</h2>
+      <div class="grid">
+        
+        <div class="card" data-provider="glm">
           <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">strudel-glm-5.1</div>
+            <span class="card-provider provider-glm">glm</span>
+            <div class="card-model">5.1</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glm-strudel-glm-5.1.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glm-strudel-glm-5.1.html" class="btn" target="_blank">View Code</a>
+            <a href="glm-strudel-glm-5.1.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -504,10 +652,10 @@
             <div class="card-model">gemma3:4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glsl-gemma3:4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glsl-gemma3:4b.html" class="btn" target="_blank">View Code</a>
+            <a href="glsl-gemma3:4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -517,10 +665,10 @@
             <div class="card-model">gemma4</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glsl-gemma4.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glsl-gemma4.html" class="btn" target="_blank">View Code</a>
+            <a href="glsl-gemma4.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -530,10 +678,10 @@
             <div class="card-model">granite4:1b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glsl-granite4:1b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glsl-granite4:1b.html" class="btn" target="_blank">View Code</a>
+            <a href="glsl-granite4:1b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -543,10 +691,10 @@
             <div class="card-model">lfm2.5</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glsl-lfm2.5.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glsl-lfm2.5.html" class="btn" target="_blank">View Code</a>
+            <a href="glsl-lfm2.5.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -556,10 +704,10 @@
             <div class="card-model">phi4-mini</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glsl-phi4-mini.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glsl-phi4-mini.html" class="btn" target="_blank">View Code</a>
+            <a href="glsl-phi4-mini.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -569,10 +717,10 @@
             <div class="card-model">qwen3.5:2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="glsl-qwen3.5:2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/glsl-qwen3.5:2b.html" class="btn" target="_blank">View Code</a>
+            <a href="glsl-qwen3.5:2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -589,10 +737,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-ascii-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-ascii-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-ascii-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -609,10 +757,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-ascii-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-ascii-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-ascii-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -629,10 +777,23 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-glsl-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-glsl-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-glsl-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="lmstudio">
+          <div class="card-header">
+            <span class="card-provider provider-lmstudio">lmstudio</span>
+            <div class="card-model">a4b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="local-lmstudio-glsl-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="local-lmstudio-glsl-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -649,10 +810,23 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-glsl-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-glsl-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-glsl-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="lmstudio">
+          <div class="card-header">
+            <span class="card-provider provider-lmstudio">lmstudio</span>
+            <div class="card-model">2b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="local-lmstudio-glsl-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="local-lmstudio-glsl-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -669,10 +843,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-html-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-html-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-html-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -689,10 +863,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-html-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-html-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-html-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -709,10 +883,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-hydra-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-hydra-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-hydra-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -729,10 +903,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-hydra-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-hydra-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-hydra-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -749,10 +923,23 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-p5-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-p5-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-p5-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="lmstudio">
+          <div class="card-header">
+            <span class="card-provider provider-lmstudio">lmstudio</span>
+            <div class="card-model">a4b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="local-lmstudio-p5-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="local-lmstudio-p5-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -769,10 +956,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-p5-lmstudio-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-p5-lmstudio-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-p5-lmstudio-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -789,10 +976,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-p5-lmstudio-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-p5-lmstudio-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-p5-lmstudio-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -809,10 +996,23 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-p5-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-p5-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-p5-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="lmstudio">
+          <div class="card-header">
+            <span class="card-provider provider-lmstudio">lmstudio</span>
+            <div class="card-model">2b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="local-lmstudio-p5-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="local-lmstudio-p5-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -822,10 +1022,23 @@
             <div class="card-model">0.8b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="local-ollama-p5-qwen3.5-0.8b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-qwen3.5-0.8b.html" class="btn" target="_blank">View Code</a>
+            <a href="local-ollama-p5-qwen3.5-0.8b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">0.8b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="ollama-p5-qwen3.5-0.8b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="ollama-p5-qwen3.5-0.8b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -835,10 +1048,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -855,10 +1068,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-remotion-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-remotion-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-remotion-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -875,10 +1088,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-remotion-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-remotion-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-remotion-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -895,10 +1108,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-strudel-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-strudel-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-strudel-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -915,10 +1128,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-strudel-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-strudel-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-strudel-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -935,10 +1148,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-three-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-three-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-three-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -955,10 +1168,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-three-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-three-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-three-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -975,10 +1188,10 @@
             <div class="card-model">a4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-tone-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-tone-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-tone-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -995,265 +1208,10 @@
             <div class="card-model">2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="lmstudio-tone-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/lmstudio-tone-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-      </div>
-    </section>
-    
-    <section class="domain-section" data-domain="local">
-      <h2 class="domain-title">LOCAL</h2>
-      <div class="grid">
-        
-        <div class="card" data-provider="lmstudio">
-          <div class="card-header">
-            <span class="card-provider provider-lmstudio">lmstudio</span>
-            <div class="card-model">lmstudio-glsl-google-gemma-4-26b-a4b</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/local-lmstudio-glsl-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="lmstudio">
-          <div class="card-header">
-            <span class="card-provider provider-lmstudio">lmstudio</span>
-            <div class="card-model">lmstudio-glsl-qwen3.5-2b</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/local-lmstudio-glsl-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="lmstudio">
-          <div class="card-header">
-            <span class="card-provider provider-lmstudio">lmstudio</span>
-            <div class="card-model">lmstudio-p5-google-gemma-4-26b-a4b</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/local-lmstudio-p5-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="lmstudio">
-          <div class="card-header">
-            <span class="card-provider provider-lmstudio">lmstudio</span>
-            <div class="card-model">lmstudio-p5-qwen3.5-2b</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/local-lmstudio-p5-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="ollama">
-          <div class="card-header">
-            <span class="card-provider provider-ollama">ollama</span>
-            <div class="card-model">ollama-p5-gemma4-latest</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/local-ollama-p5-gemma4-latest.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="ollama">
-          <div class="card-header">
-            <span class="card-provider provider-ollama">ollama</span>
-            <div class="card-model">ollama-p5-qwen3.5-0.8b</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/local-ollama-p5-qwen3.5-0.8b.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-      </div>
-    </section>
-    
-    <section class="domain-section" data-domain="minimax">
-      <h2 class="domain-title">MINIMAX</h2>
-      <div class="grid">
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">glsl-minimax-m25</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-glsl-minimax-m25.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">glsl-minimax-m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-glsl-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">html-minimax-m25</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-html-minimax-m25.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">html-minimax-m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-html-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">hydra-minimax-m25</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-hydra-minimax-m25.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">hydra-minimax-m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-hydra-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">p5-minimax-m25</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-p5-minimax-m25.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">p5-minimax-m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-p5-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">strudel-minimax-m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-strudel-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">three-minimax-m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-three-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-        <div class="card" data-provider="unknown">
-          <div class="card-header">
-            <span class="card-provider provider-unknown">unknown</span>
-            <div class="card-model">tone-minimax-m27</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/minimax-tone-minimax-m27.html" class="btn" target="_blank">View Code</a>
-          </div>
-        </div>
-        
-      </div>
-    </section>
-    
-    <section class="domain-section" data-domain="p5-gemma3">
-      <h2 class="domain-title">P5-GEMMA3</h2>
-      <div class="grid">
-        
-        <div class="card" data-provider="ollama">
-          <div class="card-header">
-            <span class="card-provider provider-ollama">ollama</span>
-            <div class="card-model">4b</div>
-          </div>
-          <div class="card-preview">
-            <span>Preview</span>
-          </div>
-          <div class="card-footer">
-            <a href="landing-live/ollama-p5-gemma3-4b.html" class="btn" target="_blank">View Code</a>
+            <a href="lmstudio-tone-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1270,10 +1228,63 @@
             <div class="card-model">latest</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="local-ollama-p5-gemma4-latest.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-gemma4-latest.html" class="btn" target="_blank">View Code</a>
+            <a href="local-ollama-p5-gemma4-latest.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">latest</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="ollama-p5-gemma4-latest.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="ollama-p5-gemma4-latest.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <section class="domain-section" data-domain="three-minimax">
+      <h2 class="domain-title">THREE-MINIMAX</h2>
+      <div class="grid">
+        
+        <div class="card" data-provider="minimax">
+          <div class="card-header">
+            <span class="card-provider provider-minimax">minimax</span>
+            <div class="card-model">m27</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="minimax-three-minimax-m27.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="minimax-three-minimax-m27.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <section class="domain-section" data-domain="p5-gemma3">
+      <h2 class="domain-title">P5-GEMMA3</h2>
+      <div class="grid">
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">4b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="ollama-p5-gemma3-4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="ollama-p5-gemma3-4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1290,10 +1301,10 @@
             <div class="card-model">1b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-granite4-1b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-granite4-1b.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-granite4-1b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1303,10 +1314,10 @@
             <div class="card-model">350m</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-granite4-350m.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-granite4-350m.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-granite4-350m.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1323,10 +1334,10 @@
             <div class="card-model">cloud</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-kimi-k2.5-cloud.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-kimi-k2.5-cloud.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-kimi-k2.5-cloud.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1343,10 +1354,10 @@
             <div class="card-model">1.2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-lfm2.5-thinking-1.2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-lfm2.5-thinking-1.2b.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-lfm2.5-thinking-1.2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1363,10 +1374,10 @@
             <div class="card-model">latest</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-ollama-gemma4-latest.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-ollama-gemma4-latest.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-ollama-gemma4-latest.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1383,10 +1394,10 @@
             <div class="card-model">cloud</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-ollama-kimi-k2.5-cloud.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-ollama-kimi-k2.5-cloud.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-ollama-kimi-k2.5-cloud.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1403,10 +1414,10 @@
             <div class="card-model">0.8b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-ollama-qwen3.5-0.8b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-ollama-qwen3.5-0.8b.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-ollama-qwen3.5-0.8b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1423,10 +1434,212 @@
             <div class="card-model">latest</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="ollama-p5-phi4-mini-latest.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/ollama-p5-phi4-mini-latest.html" class="btn" target="_blank">View Code</a>
+            <a href="ollama-p5-phi4-mini-latest.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+      </div>
+    </section>
+    
+    <section class="domain-section" data-domain="p5">
+      <h2 class="domain-title">P5</h2>
+      <div class="grid">
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">gemma3:4b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-gemma3:4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-gemma3:4b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">gemma4</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-gemma4.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-gemma4.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">granite4:1b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-granite4:1b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-granite4:1b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">lfm2.5</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-lfm2.5.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-lfm2.5.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="lmstudio">
+          <div class="card-header">
+            <span class="card-provider provider-lmstudio">lmstudio</span>
+            <div class="card-model">lmstudio-google-gemma-4-26b-a4b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-lmstudio-google-gemma-4-26b-a4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-lmstudio-google-gemma-4-26b-a4b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="lmstudio">
+          <div class="card-header">
+            <span class="card-provider provider-lmstudio">lmstudio</span>
+            <div class="card-model">lmstudio-qwen3.5-2b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-lmstudio-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-lmstudio-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">ollama-gemma4-latest</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-ollama-gemma4-latest.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-ollama-gemma4-latest.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">ollama-granite4-1b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-ollama-granite4-1b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-ollama-granite4-1b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">ollama-granite4-350m</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-ollama-granite4-350m.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-ollama-granite4-350m.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">ollama-kimi-k2.5-cloud</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-ollama-kimi-k2.5-cloud.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-ollama-kimi-k2.5-cloud.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">ollama-phi4-mini-latest</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-ollama-phi4-mini-latest.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-ollama-phi4-mini-latest.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">ollama-qwen3.5-0.8b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-ollama-qwen3.5-0.8b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-ollama-qwen3.5-0.8b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">ollama-qwen3.5-2b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-ollama-qwen3.5-2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-ollama-qwen3.5-2b.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">phi4-mini</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-phi4-mini.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-phi4-mini.html" class="btn" target="_blank">View Code</a>
+          </div>
+        </div>
+        
+        <div class="card" data-provider="ollama">
+          <div class="card-header">
+            <span class="card-provider provider-ollama">ollama</span>
+            <div class="card-model">qwen3.5:2b</div>
+          </div>
+          <div class="card-preview">
+            <iframe src="p5-qwen3.5:2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
+          </div>
+          <div class="card-footer">
+            <a href="p5-qwen3.5:2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1443,10 +1656,10 @@
             <div class="card-model">gemma3:4b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="three-gemma3:4b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/three-gemma3:4b.html" class="btn" target="_blank">View Code</a>
+            <a href="three-gemma3:4b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1456,10 +1669,10 @@
             <div class="card-model">granite4:1b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="three-granite4:1b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/three-granite4:1b.html" class="btn" target="_blank">View Code</a>
+            <a href="three-granite4:1b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1469,10 +1682,10 @@
             <div class="card-model">phi4-mini</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="three-phi4-mini.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/three-phi4-mini.html" class="btn" target="_blank">View Code</a>
+            <a href="three-phi4-mini.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1482,10 +1695,10 @@
             <div class="card-model">qwen3.5:2b</div>
           </div>
           <div class="card-preview">
-            <span>Preview</span>
+            <iframe src="three-qwen3.5:2b.html" loading="lazy" sandbox="allow-scripts"></iframe>
           </div>
           <div class="card-footer">
-            <a href="landing-live/three-qwen3.5:2b.html" class="btn" target="_blank">View Code</a>
+            <a href="three-qwen3.5:2b.html" class="btn" target="_blank">View Code</a>
           </div>
         </div>
         
@@ -1495,7 +1708,7 @@
   </main>
 
   <footer>
-    <p>Generated: 2026-04-07T19:42:09.996Z</p>
+    <p>Generated: 2026-04-07T19:58:22.382Z</p>
     <p>Liminal Dogfood Testing System</p>
   </footer>
 

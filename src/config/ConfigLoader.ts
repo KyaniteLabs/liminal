@@ -311,7 +311,7 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
     provider,
     baseUrl: env('LLM_BASE_URL') || projectLlm.baseUrl || fileProviderConfig.baseUrl,
     model: env('LLM_MODEL') || projectLlm.model || fileProviderConfig.model || SERVICE_DEFAULTS.DEFAULT_MODEL,
-    apiKey: env('LLM_API_KEY') || projectLlm.apiKey || fileProviderConfig.apiKey || process.env.OPENAI_API_KEY || process.env.MINIMAX_API_KEY,
+    apiKey: env('LLM_API_KEY') || projectLlm.apiKey || fileProviderConfig.apiKey || process.env.OPENAI_API_KEY || process.env.GLM_API_KEY || process.env.MOONSHOT_API_KEY || process.env.MINIMAX_API_KEY,
   };
 }
 

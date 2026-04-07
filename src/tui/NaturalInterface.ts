@@ -42,18 +42,9 @@ interface NaturalInputResult {
 }
 
 /**
- * Agent patterns - indicate user wants code changes
+ * Everything is agent mode. No separate chat.
+ * Conversational input just hits tool: "complete" on step 1.
  */
-const AGENT_PATTERNS = [
-  /^(?:can\s+you|could\s+you|please)?\s*(?:fix|repair|correct)\b/i,
-  /^(?:can\s+you|could\s+you|please)?\s*(?:add|implement|create|build|make|generate)\s+(?:a|an|the|\w+)/i,
-  /^(?:can\s+you|could\s+you|please)?\s*(?:change|modify|update|refactor|rewrite)\b/i,
-  /^(?:can\s+you|could\s+you|please)?\s*(?:remove|delete|clean\s+up)\b/i,
-  /^(?:can\s+you|could\s+you|please)?\s*(?:improve|optimize|enhance|polish)\b/i,
-  /\b(bug|issue|error|broken|failing)\b.*\b(fix|repair|solve)\b/i,
-  /\bis\s+(?:there\s+a\s+)?(?:way\s+to|method\s+to)\s+(?:fix|add|change)/i,
-  /\b(the|a|an)\s+\w+\s+(?:should|needs?|must)\s+(?:be\s+)?\w+/i,
-];
 
 /**
  * Natural Interface - Main entry point
@@ -115,32 +106,20 @@ export class NaturalInterface {
    */
   async processInput(
     input: string,
-    onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
+    _onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
   ): Promise<NaturalInputResult> {
     const trimmed = input.trim();
 
     // Add user message to history
     this.addMessage('user', trimmed);
 
-    // 1. Check for exact slash commands (only these get preset responses)
+    // 1. Check for exact slash commands
     if (trimmed.startsWith('/')) {
       return this.handleSlashCommand(trimmed.slice(1));
     }
 
-    // 2. Check for agent patterns (code changes)
-    if (this.isAgentRequest(trimmed)) {
-      return this.handleAgentRequest(trimmed);
-    }
-
-    // 3. Default: chat mode — everything goes through the LLM
-    return this.handleChat(trimmed, onStream);
-  }
-
-  /**
-   * Check if input is an agent request (code changes)
-   */
-  private isAgentRequest(input: string): boolean {
-    return AGENT_PATTERNS.some(pattern => pattern.test(input));
+    // 2. Everything else goes through the agent (with tools)
+    return this.handleAgentRequest(trimmed);
   }
 
   /**
@@ -255,99 +234,6 @@ export class NaturalInterface {
         shouldContinue: true,
       };
     }
-  }
-
-  /**
-   * Handle chat with streaming for real-time response
-   */
-  private async handleChat(
-    input: string,
-    onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
-  ): Promise<NaturalInputResult> {
-    this.onStatus('Thinking...');
-
-    try {
-      // Build conversation context
-      const recentHistory = this.session.messages
-        .slice(-10)
-        .map(m => `${m.role}: ${m.content}`)
-        .join('\n\n');
-
-      const systemPrompt = this.session.soul;
-      const userPrompt = `CONVERSATION HISTORY:
-${recentHistory}
-
-USER: ${input}
-
-You are in CHAT mode. You cannot create files, run code, or modify anything \u2014 you are conversational only.
-Respond naturally as your personality. If the user wants something built, changed, or fixed, tell them to rephrase with action words (e.g. "fix the bug", "make a particle system") and the system will route them to the agent with tool access.`;
-
-      // Use streaming if callback provided
-      if (onStream) {
-        let fullResponse = '';
-        let thinkingContent = '';
-        // ANSI escape codes for dim rendering of thinking events
-        const THINKING_PREFIX = '\x1B[2m\u22B2 '; // dim + unicode triangle prefix
-        const THINKING_SUFFIX = '\x1B[0m';         // reset
-
-        for await (const event of this.llmClient.streamWithThinking(systemPrompt, userPrompt)) {
-          if (event.type === 'thinking') {
-            thinkingContent += event.content;
-            // Show brief thinking indicator
-            if (thinkingContent.length % 50 === 0) {
-              this.onStatus(`\uD83E\uDD14 Thinking... (${thinkingContent.length} chars)`);
-            }
-            // Render thinking in dimmed style via callback
-            onStream(`${THINKING_PREFIX}${event.content}${THINKING_SUFFIX}`, {
-              type: 'thinking',
-              length: thinkingContent.length,
-            });
-          } else {
-            fullResponse += event.content;
-            onStream(event.content, { type: 'content' });
-          }
-        }
-
-        // Clean up any remaining think tags in the response
-        fullResponse = this.cleanThinkTags(fullResponse);
-
-        this.addMessage('assistant', fullResponse, { thinking: thinkingContent });
-        return { type: 'chat', response: fullResponse, shouldContinue: true };
-      }
-
-      // Fallback to non-streaming
-      const result = await this.llmClient.complete({
-        prompt: userPrompt,
-        systemPrompt,
-        maxTokens: 1000,
-        temperature: 0.7,
-      });
-
-      if (!result.success) {
-        throw new Error(result.error || 'LLM failed');
-      }
-
-      const response = this.cleanThinkTags(result.text.trim());
-      this.addMessage('assistant', response);
-
-      return { type: 'chat', response, shouldContinue: true };
-
-    } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      return {
-        type: 'chat',
-        response: `I'm having trouble thinking right now: ${msg}`,
-        shouldContinue: true,
-      };
-    }
-  }
-
-  private cleanThinkTags(text: string): string {
-    return text
-      .replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '')
-      .replace(/<think\b[^>]*>/gi, '')
-      .replace(/<\/think>/gi, '')
-      .trim();
   }
 
   // Command handlers

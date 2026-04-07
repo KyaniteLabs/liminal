@@ -4,13 +4,14 @@
 
 This repo has multiple agents working simultaneously in worktrees. Breaking these rules causes data loss and merge conflicts.
 
-### The 5 Rules
+### The 6 Rules
 
 1. **Always push after committing.** Run `git push` immediately after every commit. Unpushed commits on a worktree that gets cleaned up = lost work. No exceptions.
 2. **Clean up your worktree when done.** After your work is pushed and/or merged: remove the worktree (`git worktree remove <path>`), delete your local branch if merged, delete remote branch if merged. Never leave idle worktrees behind.
 3. **Start fresh branches after merges.** If your branch was merged (squash or otherwise) to main, do NOT continue committing on it. Checkout main, pull, create a new branch. Continuing on merged branches creates divergence.
 4. **Check the monitor log.** Before starting work, read `memory/git-monitor-log.md` to see what other agents are doing. Avoid stepping on active worktrees.
 5. **Commit incrementally.** Don't let 20+ files sit dirty. Commit in logical batches (every 5-10 files). Large uncommitted diffs make conflict resolution harder.
+6. **Clean up stashes at session end.** Git stashes are repo-global (not per-worktree). Test runners using `auto-stash` pile up fast — 90+ stashes from a single test session is typical. Before closing a session: `git stash list` → drop all `liminal: auto-stash` entries with `git stash drop stash@{N}`. Keep only stashes with meaningful WIP. If the stash list exceeds 10 entries, it's overdue for cleanup.
 
 ### Convention Violation Monitor
 

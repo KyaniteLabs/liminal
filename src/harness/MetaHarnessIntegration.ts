@@ -386,6 +386,15 @@ Respond with a JSON object:
   }
 
   /**
+   * Switch to a different provider at runtime.
+   * Creates a new LLMClient with the given provider config.
+   */
+  switchProvider(baseUrl: string, model: string, apiKey?: string): void {
+    this.llmClient = new LLMClient({ baseUrl, model, apiKey, role: 'harness' });
+    Logger.info('MetaHarnessIntegration', `Switched to ${model} @ ${baseUrl}`);
+  }
+
+  /**
    * Check if Meta-Harness is online
    */
   isOnline(): boolean {

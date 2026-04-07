@@ -47,8 +47,18 @@ export class GitService {
   }
 
   /** Get working tree status */
-  async status(): Promise<GitStatusResult> {
-    return this.git.status();
+  async status(): Promise<GitStatusResult | null> {
+    try {
+      return await this.git.status();
+    } catch (error) {
+      // Handle merge conflict state gracefully
+      const message = error instanceof Error ? error.message : String(error);
+      if (message.includes('needs merge') || message.includes('Merge conflict')) {
+        Logger.warn('GitService', 'Repository has merge conflicts - git operations may be limited');
+        return null;
+      }
+      throw error;
+    }
   }
 
   // ── Commit operations ──────────────────────────────
@@ -138,7 +148,7 @@ export class GitService {
   /** Get the current branch name */
   async currentBranch(): Promise<string> {
     const status = await this.status();
-    return status.current ?? 'main';
+    return status?.current ?? 'main';
   }
 
   /** List all branches */

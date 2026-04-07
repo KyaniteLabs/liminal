@@ -67,10 +67,16 @@ export class GitIntegration {
 
 
       // Stash dirty working tree if needed
+      // If status is null, there may be merge conflicts - skip stash and continue
       const status = await this.git.status();
-      if (!status.isClean()) {
-        await this.git.stash(`liminal: auto-stash before run ${name}`);
-        Logger.info('GitIntegration', 'Stashed uncommitted changes before run');
+      if (status && !status.isClean()) {
+        try {
+          await this.git.stash(`liminal: auto-stash before run ${name}`);
+          Logger.info('GitIntegration', 'Stashed uncommitted changes before run');
+        } catch (stashError) {
+          // If stashing fails (e.g., due to merge conflicts), log and continue
+          Logger.warn('GitIntegration', `Could not stash changes: ${stashError instanceof Error ? stashError.message : stashError}`);
+        }
       }
 
       // Create run branch
@@ -152,9 +158,9 @@ export class GitIntegration {
     if (!this.config.enabled || !this.runBranch) return;
 
     try {
-      // Commit any remaining changes
+      // Commit any remaining changes (if status is null due to merge conflicts, skip)
       const status = await this.git.status();
-      if (!status.isClean()) {
+      if (status && !status.isClean()) {
         await this.git.addAllAndCommit(`liminal: run complete — ${reason}`);
         Logger.info('GitIntegration', 'Committed final changes before restoring branch');
       }

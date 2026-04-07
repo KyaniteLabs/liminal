@@ -32,22 +32,57 @@ interface AuditResult {
 }
 
 /**
- * Walk up from the current file to find the project root (directory with package.json).
+ * Find the project root using multiple strategies:
+ * 1. Try git rev-parse --show-toplevel (most reliable, works in worktrees)
+ * 2. Walk up from process.cwd() looking for package.json
+ * 3. Walk up from current file location as fallback
  */
 async function findProjectRoot(): Promise<string> {
-  let current = dirname(fileURLToPath(import.meta.url));
+  // Strategy 1: Use git to find project root (works in worktrees)
+  try {
+    const result = await execFileAsync('git', ['rev-parse', '--show-toplevel'], {
+      timeout: 5000,
+      maxBuffer: 1024 * 1024,
+    });
+    const gitRoot = result.stdout.trim();
+    if (gitRoot) {
+      // Verify package.json exists at git root
+      await readFile(join(gitRoot, 'package.json'), 'utf8');
+      return gitRoot;
+    }
+  } catch {
+    // Git not available or not a git repo, fall through to file-based search
+  }
+
+  // Strategy 2: Walk up from process.cwd()
+  let current = process.cwd();
   for (let i = 0; i < 20; i++) {
     try {
       await readFile(join(current, 'package.json'), 'utf8');
       return current;
-    } catch (err) {
-      Logger.warn('SupplyChainGuardrail', 'Failed to read package.json while finding project root:', err);
+    } catch {
       const parent = dirname(current);
       if (parent === current) break;
       current = parent;
     }
   }
-  return dirname(fileURLToPath(import.meta.url));
+
+  // Strategy 3: Walk up from current file location as final fallback
+  current = dirname(fileURLToPath(import.meta.url));
+  for (let i = 0; i < 20; i++) {
+    try {
+      await readFile(join(current, 'package.json'), 'utf8');
+      return current;
+    } catch {
+      const parent = dirname(current);
+      if (parent === current) break;
+      current = parent;
+    }
+  }
+
+  // If all strategies fail, log warning and return cwd as last resort
+  Logger.warn('SupplyChainGuardrail', 'Could not find project root with package.json, using cwd');
+  return process.cwd();
 }
 
 const AUDIT_TIMEOUT_MS = 30_000;

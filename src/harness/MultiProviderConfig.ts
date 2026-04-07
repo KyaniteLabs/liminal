@@ -109,7 +109,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     provider: 'glm',
     name: 'GLM',
     description: 'GLM International Coding Plan API',
-    baseUrl: 'https://open.bigmodel.cn/api/coding/paas/v4',
+    baseUrl: 'https://api.z.ai/api/coding/paas/v4',
     model: 'glm-4.7',
     apiStyle: 'openai',
     temperature: 0.7,
@@ -203,7 +203,7 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
 export function detectProviderFromUrl(baseUrl: string): ProviderType {
   if (baseUrl.includes('minimax')) return 'minimax';
   if (baseUrl.includes('openrouter')) return 'openrouter';
-  if (baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
+  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
   if (baseUrl.includes('moonshot')) return 'moonshot';
   if (baseUrl.includes('localhost:1234')) return 'lmstudio';
   if (baseUrl.includes('localhost:11434')) return 'ollama';

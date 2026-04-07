@@ -19,7 +19,7 @@
 
 import type { LLMConfig } from '../llm/LLMClient.js';
 
-export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'custom';
+export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'custom';
 
 export interface ProviderConfig extends LLMConfig {
   provider: ProviderType;
@@ -76,7 +76,17 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     name: 'GLM',
     description: 'GLM International Coding Plan API',
     baseUrl: 'https://open.bigmodel.cn/api/paas/v4',
-    model: 'glm-4',
+    model: 'glm-4.7',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  moonshot: {
+    provider: 'moonshot',
+    name: 'KimiCode',
+    description: 'Moonshot AI KimiCode K2-P5',
+    baseUrl: 'https://api.moonshot.ai/v1',
+    model: 'kimi-k2-p5',
     apiStyle: 'openai',
     temperature: 0.7,
     maxTokens: 4096,
@@ -107,6 +117,9 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
       break;
     case 'glm':
       apiKey = process.env.GLM_API_KEY;
+      break;
+    case 'moonshot':
+      apiKey = process.env.MOONSHOT_API_KEY;
       break;
     case 'openrouter':
       apiKey = process.env.OPENROUTER_API_KEY;
@@ -140,6 +153,7 @@ export function detectProviderFromUrl(baseUrl: string): ProviderType {
   if (baseUrl.includes('minimax')) return 'minimax';
   if (baseUrl.includes('openrouter')) return 'openrouter';
   if (baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
+  if (baseUrl.includes('moonshot')) return 'moonshot';
   if (baseUrl.includes('localhost:1234')) return 'lmstudio';
   if (baseUrl.includes('localhost:11434')) return 'ollama';
   return 'custom';
@@ -157,6 +171,7 @@ export function getActiveProvider(): ProviderType {
   // Check for specific API keys
   if (process.env.MINIMAX_API_KEY) return 'minimax';
   if (process.env.GLM_API_KEY) return 'glm';
+  if (process.env.MOONSHOT_API_KEY) return 'moonshot';
   if (process.env.OPENROUTER_API_KEY) return 'openrouter';
   
   // Default to Ollama (local)

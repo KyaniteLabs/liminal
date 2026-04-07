@@ -76,6 +76,57 @@ export const commands: Record<string, Command> = {
     }
   },
 
+  provider: {
+    name: 'provider',
+    description: 'Switch LLM provider at runtime',
+    usage: '/provider [list|minimax|glm|kimi|ollama|<baseUrl> <model>]',
+    // eslint-disable-next-line @typescript-eslint/require-await
+    execute: async (args, _ctx) => {
+      const { PROVIDER_TEMPLATES, listConfiguredProviders, getProviderConfig } = await import('../harness/MultiProviderConfig.js');
+      const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
+
+      // /provider list — show all providers
+      if (!args[0] || args[0] === 'list' || args[0] === 'ls') {
+        const configured = listConfiguredProviders();
+        const current = metaHarness.getStatus()?.activeProvider || 'unknown';
+        const lines = ['Providers:'];
+        for (const [key, tmpl] of Object.entries(PROVIDER_TEMPLATES)) {
+          const isConfigured = configured.includes(key as any);
+          const isCurrent = key === current;
+          const marker = isCurrent ? ' ← active' : '';
+          const status = isConfigured ? '✅' : '⚪';
+          lines.push(`  ${status} ${key.padEnd(12)} ${tmpl.name.padEnd(14)} ${tmpl.model}${marker}`);
+        }
+        lines.push('');
+        lines.push('Usage: /provider <name>       — switch to a configured provider');
+        lines.push('       /provider <url> <model> — switch to custom endpoint');
+        return lines.join('\n');
+      }
+
+      // /provider <name> — switch to a known provider
+      const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
+      if (template) {
+        const config = getProviderConfig(args[0] as any);
+        if (!config?.apiKey && args[0] !== 'ollama' && args[0] !== 'lmstudio') {
+          return `⚠️  ${template.name} not configured. Set the API key first:\n  export ${args[0].toUpperCase()}_API_KEY=your-key`;
+        }
+        metaHarness.switchProvider(config!.baseUrl, config!.model, config!.apiKey);
+        return `✅ Switched to ${template.name}: ${config!.model} @ ${config!.baseUrl}`;
+      }
+
+      // /provider <url> <model> — custom endpoint
+      if (args[0]?.startsWith('http') && args[1]) {
+        const url = args[0];
+        const model = args[1];
+        const apiKey = args[2];
+        metaHarness.switchProvider(url, model, apiKey);
+        return `✅ Switched to custom: ${model} @ ${url}`;
+      }
+
+      return `Unknown provider "${args[0]}". Run /provider list to see options.`;
+    }
+  },
+
   tasks: {
     name: 'tasks',
     description: 'List pending tasks',

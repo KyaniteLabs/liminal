@@ -37,7 +37,7 @@ function getDefaultProviderFromConfig(): string | null {
   return _cachedDefault as string | null;
 }
 
-export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'custom';
+export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
 
 export interface ProviderConfig extends LLMConfig {
   provider: ProviderType;
@@ -101,10 +101,20 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
   },
   moonshot: {
     provider: 'moonshot',
-    name: 'KimiCode',
-    description: 'Moonshot AI KimiCode K2-P5',
+    name: 'Moonshot AI (Legacy)',
+    description: 'Moonshot AI Kimi API',
     baseUrl: 'https://api.moonshot.ai/v1',
-    model: 'kimi-k2-p5',
+    model: 'kimi-k2.5',
+    apiStyle: 'openai',
+    temperature: 0.7,
+    maxTokens: 4096,
+  },
+  kimi: {
+    provider: 'kimi',
+    name: 'Kimi',
+    description: 'Moonshot AI Kimi K2.5 (International)',
+    baseUrl: 'https://api.moonshot.ai/v1',
+    model: 'kimi-k2.5',
     apiStyle: 'openai',
     temperature: 0.7,
     maxTokens: 4096,
@@ -137,7 +147,8 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
       apiKey = process.env.GLM_API_KEY;
       break;
     case 'moonshot':
-      apiKey = process.env.MOONSHOT_API_KEY;
+    case 'kimi':
+      apiKey = process.env.MOONSHOT_API_KEY || process.env.KIMI_API_KEY;
       break;
     case 'openrouter':
       apiKey = process.env.OPENROUTER_API_KEY;

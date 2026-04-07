@@ -1,4 +1,6 @@
+// eslint-disable-next-line no-control-regex -- intentionally matches ANSI escape sequences
 const ANSI_ESCAPE_REGEX = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
+// eslint-disable-next-line no-control-regex -- intentionally matches control characters for sanitization
 const CONTROL_CHARS_REGEX = /[\u0000-\u0008\u000B-\u001F\u007F]/g;
 const PROMPT_PREVIEW_REGEXES = [
   /prompt:\s*.*/i,

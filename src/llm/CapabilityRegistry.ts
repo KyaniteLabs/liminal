@@ -57,6 +57,19 @@ const MODEL_CAPABILITIES: Record<string, Partial<ModelCapabilities>> = {
   'deepseek-r1*':       { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'think_tags', streamingStyle: 'sse' },
   'deepseek-chat*':     { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
 
+  // ZhipuAI GLM (International Coding Plan — open.bigmodel.cn)
+  'glm-4.7*':           { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 200000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
+  'glm-4.5*':           { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
+  'glm-4-plus*':        { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
+  'glm-4-flash*':       { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
+  'glm-4*':             { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
+  'codegeex-4*':        { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
+
+  // Moonshot AI KimiCode (api.moonshot.ai / api.moonshot.cn)
+  'kimi-k2-p5*':         { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
+  'kimi-k2*':            { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
+  'moonshot-v1*':        { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
+
   // MiniMax
   'minimax-m2.7*':      { thinking: true, streaming: true, jsonMode: true, toolUse: false, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'minimax-m2.5*':      { thinking: true, streaming: true, jsonMode: true, toolUse: false, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },

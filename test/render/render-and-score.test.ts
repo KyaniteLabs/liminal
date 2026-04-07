@@ -16,8 +16,11 @@ import {
   AudioScorer,
   RenderAndScorePipeline
 } from '../../src/render/index.js';
+import { isCdnAvailable } from '../helpers/networkCheck.js';
 
-// Check if Playwright is available (skip browser-dependent tests in CI without browsers)
+// Browser-dependent tests require:
+// 1. Playwright installed (HeadlessRenderer.initialize() will use a fallback chromium if needed)
+// 2. CDN reachable — rendered pages load p5.js from cdnjs.cloudflare.com
 let playwrightAvailable = false;
 try {
   require.resolve('playwright');
@@ -26,7 +29,13 @@ try {
   playwrightAvailable = false;
 }
 
-const describeIfBrowser = playwrightAvailable ? describe : describe.skip;
+const cdnAvailable = await isCdnAvailable();
+// Browser tests run when playwright is installed and CDN is reachable.
+// CI has both (pnpm exec playwright install chromium runs before tests).
+// Sandboxed/offline dev environments skip via the CDN check.
+const browserReady = playwrightAvailable && cdnAvailable;
+
+const describeIfBrowser = browserReady ? describe : describe.skip;
 
 // Sample p5.js code for testing
 const sampleP5Code = `

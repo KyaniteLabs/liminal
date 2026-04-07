@@ -421,11 +421,11 @@ describe('getHarnessProviderConfig', () => {
 // ===========================================================================
 
 describe('PROVIDER_TEMPLATES', () => {
-  it('contains all six provider types', () => {
+  it('contains all seven provider types', () => {
     const keys = Object.keys(PROVIDER_TEMPLATES) as ProviderType[];
-    expect(keys).toHaveLength(6);
+    expect(keys).toHaveLength(7);
     expect(keys).toEqual(
-      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openrouter', 'glm', 'custom']),
+      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openrouter', 'glm', 'moonshot', 'custom']),
     );
   });
 

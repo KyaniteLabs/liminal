@@ -14,6 +14,7 @@ import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
 import { Logger } from '../utils/Logger.js';
+import { tuiDebug } from './TUIDebugLogger.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -42,17 +43,18 @@ interface NaturalInputResult {
 }
 
 /**
- * Command registry for natural language matching
+ * Agent patterns - indicate user wants code changes
  */
-const COMMAND_PATTERNS: Record<string, RegExp[]> = {
-  status: [/\b(status|health|state)\b/i, /how are you/i, /what's (?:the )?status/i],
-  tasks: [/\b(tasks?|todo|pending)\b/i, /what (?:needs|remains) to be done/i],
-  run: [/\brun\s+(\w+)/i, /execute\s+(?:task\s+)?(\w+)/i],
-  preview: [/\bpreview\s+(\S+)/i, /show\s+(?:me\s+)?(?:the\s+)?(?:file\s+)?(\S+)/i],
-  help: [/\bhelp\b/i, /what can you do/i, /commands/i, /^\?$/],
-  exit: [/\b(exit|quit|bye|goodbye)\b/i, /^q$/i],
-  clear: [/\bclear\b/i, /clean (?:the )?screen/i],
-};
+const AGENT_PATTERNS = [
+  /^(?:can\s+you|could\s+you|please)?\s*(?:fix|repair|correct)\b/i,
+  /^(?:can\s+you|could\s+you|please)?\s*(?:add|implement|create|build)\s+(?:a|an|the|\w+)/i,
+  /^(?:can\s+you|could\s+you|please)?\s*(?:change|modify|update|refactor|rewrite)\b/i,
+  /^(?:can\s+you|could\s+you|please)?\s*(?:remove|delete|clean\s+up)\b/i,
+  /^(?:can\s+you|could\s+you|please)?\s*(?:improve|optimize|enhance|polish)\b/i,
+  /\b(bug|issue|error|broken|failing)\b.*\b(fix|repair|solve)\b/i,
+  /\bis\s+(?:there\s+a\s+)?(?:way\s+to|method\s+to)\s+(?:fix|add|change)/i,
+  /\b(the|a|an)\s+\w+\s+(?:should|needs?|must)\s+(?:be\s+)?\w+/i,
+];
 
 /**
  * Natural Interface - Main entry point
@@ -121,38 +123,28 @@ export class NaturalInterface {
     // Add user message to history
     this.addMessage('user', trimmed);
 
-    // 1. Check for exact slash commands first (habit from other systems)
+    // 1. Check for exact slash commands (only these get preset responses)
     if (trimmed.startsWith('/')) {
+      tuiDebug.route(trimmed, 'slash', 'starts with /');
       return this.handleSlashCommand(trimmed.slice(1));
     }
 
-    // 2. Check for explicit command patterns
-    const commandMatch = this.matchCommand(trimmed);
-    if (commandMatch) {
-      return this.executeCommand(commandMatch.command, commandMatch.args);
+    // 2. Check for agent patterns (code changes)
+    if (this.isAgentRequest(trimmed)) {
+      tuiDebug.route(trimmed, 'agent', 'matched AGENT_PATTERNS');
+      return this.handleAgentRequest(trimmed);
     }
 
-    // 3. Everything else → agent mode.
-    // The agent handles greetings, questions, AND task execution.
-    // No separate chat mode — prevents hallucinated execution output.
-    return this.handleAgentRequest(trimmed, onStream);
+    // 3. Default: chat mode — everything goes through the LLM
+    tuiDebug.route(trimmed, 'chat', 'default routing');
+    return this.handleChat(trimmed, onStream);
   }
 
   /**
-   * Match input against command patterns
+   * Check if input is an agent request (code changes)
    */
-  private matchCommand(input: string): { command: string; args: string[] } | null {
-    for (const [command, patterns] of Object.entries(COMMAND_PATTERNS)) {
-      for (const pattern of patterns) {
-        const match = input.match(pattern);
-        if (match) {
-          // Extract args from capture groups
-          const args = match.slice(1).filter(Boolean) as string[];
-          return { command, args };
-        }
-      }
-    }
-    return null;
+  private isAgentRequest(input: string): boolean {
+    return AGENT_PATTERNS.some(pattern => pattern.test(input));
   }
 
   /**
@@ -193,6 +185,12 @@ export class NaturalInterface {
       case 'q':
         return { type: 'command', response: 'Goodbye! \uD83D\uDC4B', shouldContinue: false };
 
+      case 'provider':
+        return this.handleProvider(args);
+
+      case 'debug':
+        return this.handleDebug(args);
+
       case 'test':
       case 'diagnostic':
         return this.handleDiagnostic();
@@ -220,7 +218,7 @@ export class NaturalInterface {
       default:
         return {
           type: 'ambiguous',
-          response: `Unknown command: ${command}. Try "help" for available commands.`,
+          response: `Unknown command: ${command}. Try /help for available commands.`,
           shouldContinue: true,
         };
     }
@@ -289,6 +287,103 @@ export class NaturalInterface {
     }
   }
 
+  /**
+   * Handle chat with streaming for real-time response
+   */
+  private async handleChat(
+    input: string,
+    onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
+  ): Promise<NaturalInputResult> {
+    this.onStatus('Thinking...');
+
+    try {
+      // Build conversation context
+      const recentHistory = this.session.messages
+        .slice(-10)
+        .map(m => `${m.role}: ${m.content}`)
+        .join('\n\n');
+
+      const systemPrompt = this.session.soul;
+      const userPrompt = `CONVERSATION HISTORY:
+${recentHistory}
+
+USER: ${input}
+
+Respond naturally as your personality. If the user asks you to modify code (fix, add, change, etc.) OR says words like "do", "make", "create", "implement" \u2014 immediately invoke the agent without asking for confirmation. Only ask "Should I...?" if the request is ambiguous or destructive (delete, overwrite).`;
+
+      // Log the LLM request
+      const startTime = Date.now();
+      tuiDebug.llmRequest(systemPrompt, userPrompt, { maxTokens: 1000, temperature: 0.7 });
+
+      // Use streaming if callback provided
+      if (onStream) {
+        let fullResponse = '';
+        let thinkingContent = '';
+        const THINKING_PREFIX = '\x1B[2m\u22B2 ';
+        const THINKING_SUFFIX = '\x1B[0m';
+
+        for await (const event of this.llmClient.streamWithThinking(systemPrompt, userPrompt)) {
+          if (event.type === 'thinking') {
+            thinkingContent += event.content;
+            tuiDebug.streamEvent('thinking', event.content.length);
+            if (thinkingContent.length % 50 === 0) {
+              this.onStatus(`\uD83E\uDD14 Thinking... (${thinkingContent.length} chars)`);
+            }
+            onStream(`${THINKING_PREFIX}${event.content}${THINKING_SUFFIX}`, {
+              type: 'thinking',
+              length: thinkingContent.length,
+            });
+          } else {
+            fullResponse += event.content;
+            tuiDebug.streamEvent('content', event.content.length);
+            onStream(event.content, { type: 'content' });
+          }
+        }
+
+        fullResponse = this.cleanThinkTags(fullResponse);
+
+        tuiDebug.llmResponse(Date.now() - startTime, fullResponse.length, fullResponse);
+        this.addMessage('assistant', fullResponse, { thinking: thinkingContent });
+        return { type: 'chat', response: fullResponse, shouldContinue: true };
+      }
+
+      // Fallback to non-streaming
+      const result = await this.llmClient.complete({
+        prompt: userPrompt,
+        systemPrompt,
+        maxTokens: 1000,
+        temperature: 0.7,
+      });
+
+      if (!result.success) {
+        tuiDebug.llmError(result.error || 'LLM failed');
+        throw new Error(result.error || 'LLM failed');
+      }
+
+      const response = this.cleanThinkTags(result.text.trim());
+      tuiDebug.llmResponse(Date.now() - startTime, response.length, response);
+      this.addMessage('assistant', response);
+
+      return { type: 'chat', response, shouldContinue: true };
+
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      tuiDebug.llmError(msg);
+      return {
+        type: 'chat',
+        response: `I'm having trouble thinking right now: ${msg}`,
+        shouldContinue: true,
+      };
+    }
+  }
+
+  private cleanThinkTags(text: string): string {
+    return text
+      .replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '')
+      .replace(/<think\b[^>]*>/gi, '')
+      .replace(/<\/think>/gi, '')
+      .trim();
+  }
 
   // Command handlers
   private async handleStatus(): Promise<NaturalInputResult> {
@@ -366,13 +461,140 @@ export class NaturalInterface {
       '  \u2022 status - Show harness status',
       '  \u2022 tasks  - List pending tasks',
       '  \u2022 run <id> - Execute a task',
+      '  \u2022 provider [list|<name>|<url> <model>] - Switch LLM provider',
       '  \u2022 preview <file> - Preview a file',
+      '  \u2022 debug  - Toggle debug logging (writes to ~/.liminal/logs/)',
       '  \u2022 test   - Run diagnostic tests',
       '  \u2022 clear  - Clear screen',
       '  \u2022 exit   - Quit',
     ].join('\n');
 
     return { type: 'command', response, shouldContinue: true };
+  }
+
+  private async handleProvider(args: string[]): Promise<NaturalInputResult> {
+    const { PROVIDER_TEMPLATES, listConfiguredProviders, getProviderConfig } = await import('../harness/MultiProviderConfig.js');
+    const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
+
+    // /provider list — show all providers
+    if (!args[0] || args[0] === 'list' || args[0] === 'ls') {
+      const configured = listConfiguredProviders();
+      const current = metaHarness.getStatus()?.activeProvider || 'unknown';
+      const lines = ['Providers:'];
+      for (const [key, tmpl] of Object.entries(PROVIDER_TEMPLATES)) {
+        const isConfigured = configured.includes(key as any);
+        const isCurrent = key === current;
+        const marker = isCurrent ? ' <-- active' : '';
+        const status = isConfigured ? '[ok]' : '[--]';
+        lines.push(`  ${status} ${key.padEnd(12)} ${tmpl.name.padEnd(14)} ${tmpl.model}${marker}`);
+      }
+      lines.push('');
+      lines.push('Usage: /provider <name>       -- switch to a configured provider');
+      lines.push('       /provider <url> <model> -- switch to custom endpoint');
+      return { type: 'command', response: lines.join('\n'), shouldContinue: true };
+    }
+
+    // /provider <name> — switch to a known provider
+    const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
+    if (template) {
+      const config = getProviderConfig(args[0] as any);
+      if (!config?.apiKey && args[0] !== 'ollama' && args[0] !== 'lmstudio') {
+        return {
+          type: 'command',
+          response: `Not configured. Set the API key first:\n  export ${args[0].toUpperCase()}_API_KEY=your-key`,
+          shouldContinue: true,
+        };
+      }
+      metaHarness.switchProvider(config!.baseUrl, config!.model, config!.apiKey);
+      this.onLog(`Switched to ${template.name}: ${config!.model}`);
+      return {
+        type: 'command',
+        response: `Switched to ${template.name}: ${config!.model} @ ${config!.baseUrl}`,
+        shouldContinue: true,
+      };
+    }
+
+    // /provider <url> <model> — custom endpoint
+    if (args[0]?.startsWith('http') && args[1]) {
+      metaHarness.switchProvider(args[0], args[1], args[2]);
+      return {
+        type: 'command',
+        response: `Switched to custom: ${args[1]} @ ${args[0]}`,
+        shouldContinue: true,
+      };
+    }
+
+    return {
+      type: 'command',
+      response: `Unknown provider "${args[0]}". Run /provider list to see options.`,
+      shouldContinue: true,
+    };
+  }
+
+  private handleDebug(args: string[]): NaturalInputResult {
+    const sub = args[0];
+
+    if (sub === 'on' || sub === 'enable' || sub === 'true') {
+      tuiDebug.enable();
+      return {
+        type: 'command',
+        response: [
+          'Debug logging ENABLED',
+          `Log file: ${tuiDebug.getLogPath()}`,
+          '',
+          'Watch it from another terminal:',
+          `  tail -f ${tuiDebug.getLogPath()}`,
+          '',
+          'Toggle off with: /debug off',
+        ].join('\n'),
+        shouldContinue: true,
+      };
+    }
+
+    if (sub === 'off' || sub === 'disable' || sub === 'false') {
+      tuiDebug.disable();
+      return { type: 'command', response: 'Debug logging DISABLED', shouldContinue: true };
+    }
+
+    if (sub === 'status') {
+      const config = this.llmClient.getConfig();
+      return {
+        type: 'command',
+        response: [
+          `Debug: ${tuiDebug.isEnabled() ? 'ENABLED' : 'DISABLED'}`,
+          `Log: ${tuiDebug.getLogPath()}`,
+          `Model: ${config.model}`,
+          `Base URL: ${config.baseUrl}`,
+          `Session: ${this.session.id}`,
+          `Messages: ${this.session.messages.length}`,
+        ].join('\n'),
+        shouldContinue: true,
+      };
+    }
+
+    // /debug with no args = toggle
+    if (!sub) {
+      if (tuiDebug.isEnabled()) {
+        tuiDebug.disable();
+        return { type: 'command', response: 'Debug logging DISABLED', shouldContinue: true };
+      }
+      tuiDebug.enable();
+      return {
+        type: 'command',
+        response: [
+          'Debug logging ENABLED',
+          `Log file: ${tuiDebug.getLogPath()}`,
+          `  tail -f ${tuiDebug.getLogPath()}`,
+        ].join('\n'),
+        shouldContinue: true,
+      };
+    }
+
+    return {
+      type: 'command',
+      response: `Unknown debug option: ${sub}. Use /debug (toggle), /debug on, /debug off, /debug status`,
+      shouldContinue: true,
+    };
   }
 
   private async handleDiagnostic(): Promise<NaturalInputResult> {

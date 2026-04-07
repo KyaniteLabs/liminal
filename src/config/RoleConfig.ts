@@ -139,17 +139,17 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
     generator: {
       baseUrl: ['LLM_BASE_URL'],
       model: ['LLM_MODEL'],
-      apiKey: ['LLM_API_KEY', 'OPENAI_API_KEY'],
+      apiKey: ['LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
     },
     evaluator: {
       baseUrl: ['EVALUATOR_BASE_URL', 'LLM_BASE_URL'],
       model: ['EVALUATOR_MODEL', 'LLM_MODEL'],
-      apiKey: ['EVALUATOR_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY'],
+      apiKey: ['EVALUATOR_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
     },
     harness: {
       baseUrl: ['HARNESS_BASE_URL', 'LLM_BASE_URL'],
       model: ['HARNESS_MODEL', 'LLM_MODEL'],
-      apiKey: ['HARNESS_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY'],
+      apiKey: ['HARNESS_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
     },
   };
 
@@ -195,6 +195,12 @@ export function detectProviderType(baseUrl: string, model?: string): ProviderTyp
   if (m.startsWith('deepseek-r1')) return 'ollama';
 
   // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, etc.)
+  // ZhipuAI GLM — OpenAI-compatible
+  if (url.includes('bigmodel.cn')) return 'openai';
+  // Moonshot KimiCode — OpenAI-compatible
+  if (url.includes('moonshot')) return 'openai';
+
+  // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, Minimax, etc.)
   return 'openai';
 }
 

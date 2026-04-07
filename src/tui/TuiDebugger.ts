@@ -18,6 +18,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { eventBus, type BusEvent } from '../core/EventBus.js';
 import { Logger } from '../utils/Logger.js';
+import { sanitizeTerminalText } from './sanitizeTerminalText.js';
 
 const LIMINAL_HOME = path.join(os.homedir(), '.liminal');
 const DEBUG_DIR = path.join(LIMINAL_HOME, 'debug');
@@ -147,7 +148,7 @@ class TuiDebugger {
     return this.ring.slice(-count).map(entry => {
       const ts = entry.timestamp.split('T')[1]?.slice(0, 12) ?? '';
       const src = entry.source.slice(0, 10).padEnd(10);
-      return `${ts} ${src} ${entry.type.padEnd(20)} ${entry.summary}`;
+      return sanitizeTerminalText(`${ts} ${src} ${entry.type.padEnd(20)} ${entry.summary}`, { maxLength: 160, singleLine: true });
     });
   }
 
@@ -158,8 +159,8 @@ class TuiDebugger {
       timestamp: new Date().toISOString(),
       source,
       type: 'debug:log',
-      summary: message.slice(0, 120),
-      data: { message },
+      summary: sanitizeTerminalText(message, { maxLength: 120, singleLine: true }),
+      data: { message: sanitizeTerminalText(message, { maxLength: 200, singleLine: true }) },
     };
     this.pushEntry(entry);
   }
@@ -195,7 +196,8 @@ class TuiDebugger {
     const d = event.data;
     switch (event.type) {
       case 'llm:request':
-        return `${d.provider ?? '?'}/${d.model ?? '?'} prompt=${String(d.promptPreview ?? '').slice(0, 60)}`;
+        // Wave 1 containment: prompt content redacted from debug output
+        return `${d.provider ?? '?'}/${d.model ?? '?'} [prompt redacted]`;
       case 'llm:response': {
         const status = d.success ? 'ok' : `ERR: ${d.error}`;
         return `${d.provider ?? '?'}/${d.model ?? '?'} ${d.latencyMs}ms ${status}`;
@@ -217,9 +219,9 @@ class TuiDebugger {
       case 'compost:seed':
         return `seed=${d.seedId} score=${d.score} from=${d.source}`;
       case 'swarm:round':
-        return `round=${d.round}/${d.totalRounds} winner=${d.winner ?? 'none'} converged=${d.converged}`;
+        return sanitizeTerminalText(`round=${d.round}/${d.totalRounds} winner=${d.winner ?? 'none'} converged=${d.converged}`, { maxLength: 120, singleLine: true });
       default:
-        return String(d.message ?? JSON.stringify(d).slice(0, 80));
+        return sanitizeTerminalText(String(d.message ?? JSON.stringify(d)), { maxLength: 120, singleLine: true });
     }
   }
 
@@ -231,7 +233,27 @@ class TuiDebugger {
                   entry.type.startsWith('compost') ? 'COMP' :
                   entry.type.startsWith('swarm') ? 'SWRM' :
                   'DBUG';
-    return `[${ts}] [${level}] [${entry.source}] ${entry.type} | ${entry.summary} | ${JSON.stringify(entry.data).slice(0, 200)}`;
+    const safeData = this.redactSensitive(entry.data);
+    return sanitizeTerminalText(
+      `[${ts}] [${level}] [${entry.source}] ${entry.type} | ${entry.summary} | ${JSON.stringify(safeData)}`,
+      { maxLength: 220, singleLine: true },
+    );
+  }
+
+  /** Redact known sensitive fields from debug data before writing to log. */
+  private redactSensitive(data: Record<string, unknown>): Record<string, unknown> {
+    const SENSITIVE_KEYS = new Set(['apiKey', 'api_key', 'token', 'authorization', 'password', 'secret', 'prompt', 'content']);
+    const redacted: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(data)) {
+      if (SENSITIVE_KEYS.has(key.toLowerCase())) {
+        redacted[key] = typeof value === 'string' ? `[redacted ${value.length}ch]` : '[redacted]';
+      } else if (typeof value === 'object' && value !== null && !Array.isArray(value)) {
+        redacted[key] = this.redactSensitive(value as Record<string, unknown>);
+      } else {
+        redacted[key] = value;
+      }
+    }
+    return redacted;
   }
 
   private writeFileHeader(): void {

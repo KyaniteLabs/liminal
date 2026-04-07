@@ -533,6 +533,68 @@ Failures:   0 critical
 - Rich activity monitoring
 - Phase indicators
 
+**Ink Containment Status (complete 2026-04-06):**
+- Agent approval enforcement: tasks default to `approved: false`, agents reject unapproved tasks
+- Pending action review: `/confirm <id>` and `/cancel <id>` implemented
+- CWD-based prompt loading removed from PromptBuilder
+- Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
+- Preview/audio path hardening added (`previewSafety.ts`)
+- No new strategic feature work in Ink — Bubble Tea is the permanent direction
+
+---
+
+### 16b. TUI Bridge Service
+
+**Location:** `src/tui-bridge/`
+
+**Purpose:** Shared HTTP + SSE bridge between TS backend and Bubble Tea (Go) TUI.
+
+**Components:**
+| Component | File | Purpose |
+|-----------|------|---------|
+| TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel |
+| TuiSessionStore | `TuiSessionStore.ts` | In-memory session state |
+| TuiEventStream | `TuiEventStream.ts` | Pub/sub SSE event stream |
+| Types | `types.ts` | Mode, trust, provenance, event types |
+
+**HTTP Endpoints** (mounted in `gui/server.js`):
+| Endpoint | Method | Purpose |
+|----------|--------|---------|
+| `/api/tui/session` | POST | Create session |
+| `/api/tui/session/:id/status` | GET | Get session status |
+| `/api/tui/session/:id/input` | POST | Submit user input |
+| `/api/tui/session/:id/events` | GET | SSE event stream |
+| `/api/tui/session/:id/actions/:aid/confirm` | POST | Confirm action |
+| `/api/tui/session/:id/actions/:aid/cancel` | POST | Cancel action |
+
+---
+
+### 16c. Bubble Tea TUI (Go)
+
+**Location:** `bubbletea/`
+
+**Purpose:** Operator-grade terminal UI with pane-first architecture, explicit modes, and confirmation-first mutation UX.
+
+**Architecture:**
+- Pane-first layout: history, active response, status/trust
+- Explicit modes: Chat, Inspect, Action, Confirm
+- Active-response pane: streaming responses don't touch committed history
+- Confirmation-first: no state mutation without operator approval
+- Trust/provenance labels: provider, model, trust-level badges
+- Generated code: untrusted by default
+
+**Go Components:**
+| Component | Package | Purpose |
+|-----------|---------|---------|
+| Model | `internal/app/model.go` | UI state, event application, confirm/cancel |
+| Update | `internal/app/update.go` | Bubble Tea Update loop with bridge wiring |
+| View | `internal/app/view.go` | Pane rendering with Lip Gloss styles |
+| Theme | `internal/ui/theme.go` | Style definitions |
+| Bridge Client | `internal/bridge/client.go` | HTTP + SSE client for TS bridge |
+| Event Types | `internal/bridge/events.go` | Event, SessionStatus, PendingAction structs |
+
+**Test Coverage:** 16 Go tests passing across bridge client, bootstrap, event handling, action modes, and view rendering.
+
 ---
 
 ### 17. Aesthetic System
@@ -701,6 +763,30 @@ LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
 LIMINAL_DISABLE_SANDBOX=false
 LIMINAL_LOG_LEVEL=info
 ```
+
+---
+
+## Ink Retirement / Parity Checklist
+
+Bubble Tea replaces Ink when ALL of the following are true. No new strategic feature work in Ink.
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | Session bootstrap via TS bridge HTTP | ✅ Done |
+| 2 | SSE event stream consumption (delta, committed) | ✅ Done |
+| 3 | Active-response pane separate from committed history | ✅ Done |
+| 4 | Action mode with review card rendering | ✅ Done |
+| 5 | Confirm/cancel keybindings wired to bridge | ✅ Done |
+| 6 | Trust/provenance labels rendered | ✅ Done |
+| 7 | Generated code untrusted by default | ✅ Done |
+| 8 | SSE reconnection on disconnect | ✅ Done |
+| 9 | Scrollable history pane | ✅ Done |
+| 10 | Inspect mode for tool output review | ✅ Done |
+| 11 | Command routing (/status, /tasks, etc.) | ✅ Done |
+| 12 | Preview/audio routing | ✅ Done |
+| 13 | Happy-path parity verified end-to-end | ✅ Done |
+
+**Current: 13/13 complete.** Verified via live smoke test (commit `24531d8c`): session creation, status retrieval, chat/action/inspect input routing, SSE event stream (response.started→delta→completed→committed→status.updated), and confirmation-first enforcement (action mode returns `reviewRequired: true`). All 28 Go tests passing.
 
 ---
 

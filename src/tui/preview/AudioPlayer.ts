@@ -12,6 +12,7 @@ import { promisify } from 'node:util';
 import path from 'node:path';
 import { formatError } from '../../utils/errors.js';
 import { Logger } from '../../utils/Logger.js';
+import { validateAudioPreviewPath } from './previewSafety.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -73,6 +74,11 @@ export class AudioPlayer {
     // Stop any currently playing audio
     this.stop();
 
+    const validationError = validateAudioPreviewPath(filePath);
+    if (validationError) {
+      return { success: false, error: validationError };
+    }
+
     const player = await this.detectPlayer();
     if (!player) {
       return { success: false, error: 'No audio player found. Install mpg123 or ffplay.' };
@@ -81,7 +87,8 @@ export class AudioPlayer {
     try {
       if (this.platform === 'win32') {
         // Windows: use start command
-        execFile('start', [filePath], { shell: true, windowsHide: true });
+        // Wave 4: Use cmd.exe directly instead of shell:true to prevent injection
+        spawn('cmd.exe', ['/c', 'start', '""', filePath], { windowsHide: true, stdio: 'ignore' });
         return { success: true };
       }
 

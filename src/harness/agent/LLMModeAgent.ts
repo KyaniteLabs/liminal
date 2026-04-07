@@ -88,6 +88,10 @@ export class LLMModeAgent {
    * Execute a task using LLM-driven planning
    */
   async executeTask(task: LLMTask): Promise<LLMSession> {
+    if (task.approved !== true) {
+      throw new Error(`Task "${task.id}" must be explicitly approved before execution.`);
+    }
+
     const maxSteps = task.maxSteps || 15;
     
     const session: LLMSession = {

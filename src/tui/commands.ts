@@ -17,6 +17,15 @@ interface CommandContext {
   addLog: (msg: string) => void;
   setStatusMessage: (msg: string) => void;
   addOutput: (type: string, content: string) => void;
+  createPendingAction?: (kind: 'structured' | 'llm', task: AgentTask | {
+    id: string;
+    title: string;
+    description: string;
+    maxSteps?: number;
+    approved: boolean;
+  }) => { id: string };
+  confirmPendingAction?: (id: string) => Promise<string>;
+  cancelPendingAction?: (id: string) => boolean;
 }
 
 export interface Command {
@@ -45,6 +54,8 @@ export const commands: Record<string, Command> = {
         'Task commands:',
         '  /run <task-id>   - Execute structured task (from harness-tasks/)',
         '  /agent <desc>    - Execute LLM-driven task (autonomous mode)',
+        '  /confirm <id>    - Confirm a pending action',
+        '  /cancel <id>     - Cancel a pending action',
         '',
         'Preview commands:',
         '  /preview <file>  - Preview file (auto-routes to terminal/browser)',
@@ -150,21 +161,15 @@ export const commands: Record<string, Command> = {
       
       const task = ctx.tasks.find(t => t.id === taskId);
       if (!task) return `Error: Task ${taskId} not found`;
-      
-      ctx.setStatusMessage(`Running ${taskId}...`);
-      ctx.addLog(`Starting task ${taskId}`);
-      
-      const session = await ctx.agent.executeTask(task);
-      
-      ctx.addLog(`Task ${taskId}: ${session.status}`);
-      ctx.setStatusMessage('Ready');
-      
-      // Auto-preview on success
-      if (session.status === 'success' && task.targetFile) {
-        ctx.addLog(`Run /preview ${task.targetFile} to see result`);
+
+      if (ctx.createPendingAction) {
+        const pending = ctx.createPendingAction('structured', task);
+        ctx.setStatusMessage('Task awaiting approval');
+        return `Task "${task.title}" created and awaiting approval.\nConfirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`;
       }
-      
-      return `Task ${taskId}: ${session.status.toUpperCase()}\nSteps: ${session.steps.length}`;
+
+      ctx.setStatusMessage('Approval flow unavailable');
+      return 'Error: pending action review is not configured for this command surface.';
     }
   },
 
@@ -188,7 +193,6 @@ export const commands: Record<string, Command> = {
       ctx.addLog(`LLM Task: ${description.slice(0, 60)}...`);
 
       try {
-        const { LLMModeAgent } = await import('../harness/agent/LLMModeAgent.js');
         const { metaHarness } = await import('../harness/index.js');
         
         const llmClient = metaHarness.getLLMClient();
@@ -196,46 +200,54 @@ export const commands: Record<string, Command> = {
           return 'Error: LLM client not initialized. Run /status to check.';
         }
 
-        const llmAgent = new LLMModeAgent(llmClient);
-        
         const task = {
           id: `llm-${Date.now()}`,
           title: description.slice(0, 50),
           description,
           maxSteps: 15,
-          approved: true,
+          approved: false, // Wave 1 containment: require explicit confirmation
         };
 
-        const session = await llmAgent.executeTask(task);
-        
-        // Add step details to log
-        for (const msg of session.messages) {
-          if (msg.role === 'assistant' && msg.toolCall) {
-            ctx.addLog(`→ ${msg.toolCall.tool}: ${msg.toolCall.thought.slice(0, 60)}...`);
-          } else if (msg.role === 'tool' && msg.toolResult) {
-            const status = msg.toolResult.success ? '✅' : '❌';
-            ctx.addLog(`  ${status} ${msg.toolResult.error || 'OK'}`);
-          }
+        if (ctx.createPendingAction) {
+          const pending = ctx.createPendingAction('llm', task);
+          ctx.setStatusMessage('Task awaiting approval');
+          return `Task "${task.title}" created but not auto-approved.\nThis is a safety containment measure.\nUse /confirm ${pending.id} to approve execution or /cancel ${pending.id} to cancel.`;
         }
 
-        ctx.setStatusMessage('Ready');
-        
-        const statusEmoji = session.status === 'success' ? '✅' : 
-                           session.status === 'rolled_back' ? '⏮️' : '❌';
-        
-        return [
-          `${statusEmoji} LLM Task: ${session.status.toUpperCase()}`,
-          `Steps: ${session.stepCount}`,
-          `LLM Calls: ${session.messages.filter(m => m.role === 'assistant').length}`,
-          session.status === 'rolled_back' ? 'Changes were rolled back due to failure' : '',
-        ].filter(Boolean).join('\n');
-        
+        return 'Error: pending action review is not configured for this command surface.';
       } catch (error) {
         ctx.setStatusMessage('Error');
         return `❌ ${formatError('Command', error)}`;
       }
     }
   },
+
+  confirm: {
+    name: 'confirm',
+    description: 'Confirm a pending action',
+    usage: '/confirm <pending-id>',
+    execute: async (args, ctx) => {
+      const actionId = args[0];
+      if (!actionId) return 'Error: Pending action ID required. Usage: /confirm <pending-id>';
+      if (!ctx.confirmPendingAction) return 'Error: pending action review is not configured for this command surface.';
+      return ctx.confirmPendingAction(actionId);
+    }
+  },
+
+  cancel: {
+    name: 'cancel',
+    description: 'Cancel a pending action',
+    usage: '/cancel <pending-id>',
+    execute: async (args, ctx) => {
+      const actionId = args[0];
+      if (!actionId) return 'Error: Pending action ID required. Usage: /cancel <pending-id>';
+      if (!ctx.cancelPendingAction) return 'Error: pending action review is not configured for this command surface.';
+      return ctx.cancelPendingAction(actionId)
+        ? `Pending action ${actionId} cancelled.`
+        : `Pending action ${actionId} not found.`;
+    }
+  },
+  
 
   preview: {
     name: 'preview',
@@ -359,7 +371,7 @@ export const commands: Record<string, Command> = {
     description: 'Clear the screen',
     usage: '/clear',
     // eslint-disable-next-line @typescript-eslint/require-await
-    execute: async () => '\x1Bc',
+    execute: async () => '\x1B[2J\x1B[H',  // CSI clear screen + cursor home only
   },
 
   exit: {
@@ -376,5 +388,3 @@ export const commands: Record<string, Command> = {
     }
   }
 };
-
-

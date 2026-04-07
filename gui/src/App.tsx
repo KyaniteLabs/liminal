@@ -3,7 +3,7 @@ import {
   liveOrganismReducer,
   INITIAL_LIVE_ORGANISM_STATE,
   switchToLiveOrganismView,
-  setSandboxRunResult,
+  setPreviewRunResult,
 } from './gui/liveOrganismState';
 import { CuratorMode } from './components/CuratorMode';
 import { ActivityDashboard } from './components/ActivityDashboard';
@@ -55,7 +55,7 @@ interface ConfigResponse {
     provider?: string;
     baseUrl?: string;
     model?: string;
-    apiKey?: string;
+    apiKeyStored?: boolean;
   };
   loop?: {
     maxIterations?: number;
@@ -93,7 +93,7 @@ const tabStyle = (active: boolean): React.CSSProperties => ({
 
 export default function App() {
   const [liveState, dispatchLive] = useReducer(liveOrganismReducer, INITIAL_LIVE_ORGANISM_STATE);
-  const { activeTab, sandboxUrl, runError } = liveState;
+  const { activeTab, previewUrl, runError } = liveState;
   const { events: compostEvents, connected: compostConnected } = useEventStream();
 
   const [config, setConfig] = useState<ConfigResponse | null>(null);
@@ -107,7 +107,7 @@ export default function App() {
   const [iterations, setIterations] = useState<GuiIteration[]>([]);
   const [selectedProject, setSelectedProject] = useState<string>('');
   const [selectedIterationIndex, setSelectedIterationIndex] = useState<number>(0);
-  const [sandboxRunning, setSandboxRunning] = useState<boolean>(false);
+  const [previewRunning, setPreviewRunning] = useState<boolean>(false);
   const [galleryApiFailed, setGalleryApiFailed] = useState<boolean>(false);
 
   // Merge / Approve: proposal from /api/merge or /api/propose-mutate
@@ -153,7 +153,7 @@ export default function App() {
         setProvider(data.effective?.provider ?? 'lmstudio');
         setBaseUrl(data.effective?.baseUrl ?? '');
         setModel(data.effective?.model ?? 'local-model');
-        setApiKey(data.effective?.apiKey ?? '');
+        setApiKey(data.effective?.apiKeyStored ? '(stored)' : '');
         setMaxIterations(data.loop?.maxIterations ?? 20);
         setTimeoutMinutes(data.loop?.timeoutMinutes ?? 30);
         setMinQualityScore(data.creative?.minQualityScore ?? 0.7);
@@ -217,76 +217,60 @@ export default function App() {
     return () => { cancelled = true; };
   }, [activeTab, selectedProject]);
 
-  // Hydra: when we have visuals code and are on Live Music, run Hydra in the container
+  // Hydra: show generated visuals code as read-only text (execution disabled for security)
   useEffect(() => {
     if (!visualsCode || activeTab !== 'liveMusic') return;
     const el = hydraContainerRef.current;
     if (!el) return;
 
-    const HYDRA_CDN = 'https://cdn.jsdelivr.net/npm/hydra-synth/dist/hydra-synth.js';
+    // Clear previous content safely
+    while (el.firstChild) el.removeChild(el.firstChild);
 
-    function runHydra() {
-      el.innerHTML = '';
-      const canvas = document.createElement('canvas');
-      canvas.width = el.offsetWidth || 640;
-      canvas.height = 360;
-      canvas.style.display = 'block';
-      canvas.style.width = '100%';
-      canvas.style.height = 'auto';
-      el.appendChild(canvas);
-      try {
-        const hydra = new (window as any).Hydra({ canvas, detectAudio: false });
-        const code = visualsCode.trim().replace(/^\/\/.*$/gm, '').trim();
-        if (code) {
-          // new Function() runs in global scope (Hydra API) but without closure access
-          const timeoutId = setTimeout(() => { throw new Error('Hydra execution timed out (5s)'); }, 5000);
-          const fn = new Function(code);
-          fn();
-          clearTimeout(timeoutId);
-        }
-      } catch (err: unknown) {
-        console.error('Hydra run error:', err);
-        const msg = err instanceof Error ? err.message : String(err);
-        el.innerHTML = `<div style="color:#f66;padding:12px">${msg}</div>`;
-      }
-    }
+    const notice = document.createElement('div');
+    notice.style.color = '#f66';
+    notice.style.padding = '12px';
+    notice.style.fontFamily = 'var(--font-body)';
+    notice.style.fontSize = '13px';
+    notice.textContent = 'Preview disabled \u2014 generated code is untrusted. Visual preview requires isolated runtime (coming soon).';
+    el.appendChild(notice);
 
-    if ((window as any).Hydra) {
-      runHydra();
-      return;
-    }
-    const script = document.createElement('script');
-    script.src = HYDRA_CDN;
-    script.onload = runHydra;
-    script.onerror = () => { el.innerHTML = '<div style="color:#f66;padding:12px">Failed to load Hydra</div>'; };
-    document.head.appendChild(script);
-    return () => { el.innerHTML = ''; };
+    const pre = document.createElement('pre');
+    pre.style.color = 'var(--atelier-success)';
+    pre.style.padding = '12px';
+    pre.style.fontFamily = 'var(--font-mono)';
+    pre.style.fontSize = '12px';
+    pre.style.whiteSpace = 'pre-wrap';
+    pre.style.wordBreak = 'break-word';
+    pre.textContent = visualsCode;
+    el.appendChild(pre);
+
+    return () => { while (el.firstChild) el.removeChild(el.firstChild); };
   }, [visualsCode, activeTab]);
 
-  const handleRunInSandbox = async () => {
+  const handleRunInPreview = async () => {
     const iteration = iterations[selectedIterationIndex];
     const code = iteration?.code ?? '';
     const version = (iteration?.version != null ? Number(iteration.version) : selectedIterationIndex + 1) || 1;
-    dispatchLive(setSandboxRunResult(null, null));
-    setSandboxRunning(true);
+    dispatchLive(setPreviewRunResult(null, null));
+    setPreviewRunning(true);
     try {
-      const res = await fetch(`${API}/sandbox/run`, {
+      const res = await fetch(`${API}/preview/run`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code, version }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        dispatchLive(setSandboxRunResult(null, data.error || res.statusText));
+        dispatchLive(setPreviewRunResult(null, data.error || res.statusText));
         return;
       }
       const url = data.url || `/preview?version=${version}`;
-      dispatchLive(setSandboxRunResult(url, null));
+      dispatchLive(setPreviewRunResult(url, null));
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Request failed';
-      dispatchLive(setSandboxRunResult(null, msg));
+      dispatchLive(setPreviewRunResult(null, msg));
     } finally {
-      setSandboxRunning(false);
+      setPreviewRunning(false);
     }
   };
 
@@ -584,6 +568,9 @@ export default function App() {
               className="atelier-input"
             />
           </label>
+          <p style={{ fontSize: 12, color: 'var(--atelier-text-muted)', marginTop: 4, lineHeight: 1.4 }}>
+            Keys are stored locally in ~/.liminal/config.json. Never sent to the frontend after saving.
+          </p>
         </div>
       </section>
 
@@ -902,11 +889,11 @@ export default function App() {
               </label>
               <button
                 type="button"
-                onClick={handleRunInSandbox}
-                disabled={sandboxRunning || !iterations.length}
+                onClick={handleRunInPreview}
+                disabled={previewRunning || !iterations.length}
                 className="atelier-btn atelier-btn--primary"
               >
-                {sandboxRunning ? 'Running…' : 'Run in sandbox'}
+                {previewRunning ? 'Running…' : 'Run preview'}
               </button>
               {iterations.length >= 2 && (
                 <button
@@ -934,7 +921,7 @@ export default function App() {
           )}
           {mergeProposal && (
             <div className="atelier-panel atelier-panel--raised" style={{ borderColor: 'rgba(90, 155, 110, 0.3)' }}>
-              <h3 className="atelier-heading" style={{ color: 'var(--atelier-success)' }}>Proposed (merge/mutate)</h3>
+              <h3 className="atelier-heading" style={{ color: 'var(--atelier-success)' }}>Proposed (merge/mutate) <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--atelier-text-muted)', marginLeft: 8 }}>AI-generated — verify before approving</span></h3>
               <pre className="atelier-code" style={{ maxHeight: 160 }}>
                 {mergeProposal.proposed.type === 'organism'
                   ? (mergeProposal.proposed.musicCode || '') + '\n---\n' + (mergeProposal.proposed.visualCode || '')
@@ -957,7 +944,7 @@ export default function App() {
               : (it?.code ?? '');
             return (
               <div className="atelier-panel">
-                <h3 className="atelier-heading">Code (v{(it?.version ?? selectedIterationIndex + 1)})</h3>
+                <h3 className="atelier-heading">Code (v{(it?.version ?? selectedIterationIndex + 1)}) <span style={{ fontSize: 11, fontWeight: 400, color: 'var(--atelier-text-muted)', marginLeft: 8 }}>generated — review before executing</span></h3>
                 <pre className="atelier-code" style={{ maxHeight: 280 }}>
                   <code>{code || '(empty)'}</code>
                 </pre>
@@ -967,17 +954,33 @@ export default function App() {
           {runError && (
             <div className="atelier-alert atelier-alert--error">{runError}</div>
           )}
-          {sandboxUrl && (
-            <div style={{ flex: 1, minHeight: 400, border: '1px solid var(--atelier-border)', borderRadius: 'var(--atelier-radius)', overflow: 'hidden' }}>
+          {previewUrl && (
+            <div style={{ flex: 1, minHeight: 400, border: '1px solid var(--atelier-border)', borderRadius: 'var(--atelier-radius)', overflow: 'hidden', position: 'relative' }}>
               <iframe
                 title="Live organism"
-                src={sandboxUrl}
+                src={previewUrl}
+                sandbox="allow-scripts"
                 style={{ width: '100%', height: '100%', minHeight: 400, border: 0, background: '#000' }}
               />
+              <div style={{
+                position: 'absolute',
+                top: 8,
+                right: 8,
+                background: 'rgba(0,0,0,0.7)',
+                color: 'var(--atelier-text-muted)',
+                fontSize: 11,
+                padding: '3px 8px',
+                borderRadius: 4,
+                fontFamily: 'var(--font-mono)',
+                pointerEvents: 'none',
+                zIndex: 10,
+              }}>
+                isolated preview
+              </div>
             </div>
           )}
-          {!sandboxUrl && !runError && activeTab === 'live' && (
-            <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14 }}>Select a project and iteration, then click Run in sandbox to see the live sketch.</p>
+          {!previewUrl && !runError && activeTab === 'live' && (
+            <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14 }}>Select a project and iteration, then click Run preview to see the live sketch.</p>
           )}
         </div>
       )}

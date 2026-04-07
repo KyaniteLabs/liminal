@@ -8,6 +8,7 @@ import open from 'open';
 import path from 'node:path';
 import { PreviewServer } from '../../render/PreviewServer.js';
 import { Exporter } from '../../export/Exporter.js';
+import { validateBrowserPreviewPath } from './previewSafety.js';
 
 export class BrowserLauncher {
   private previewServer?: PreviewServer;
@@ -69,6 +70,11 @@ export class BrowserLauncher {
    * Preview file in browser
    */
   async previewFile(filePath: string): Promise<string> {
+    const validationError = validateBrowserPreviewPath(filePath);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
     const port = await this.ensureServer();
     const url = `http://localhost:${port}/preview/${path.basename(filePath)}`;
     await open(url);

@@ -124,6 +124,22 @@ describe('LLMModeAgent', () => {
     expect(userMsg!.content).toContain('Fix the bug');
   });
 
+  it('executeTask rejects unapproved tasks before any LLM call runs', async () => {
+    const agent = new LLMModeAgent(mockLLM as any);
+
+    await expect(agent.executeTask({
+      id: 't-unapproved',
+      title: 'Dangerous task',
+      description: 'Mutate files',
+      approved: false,
+    })).rejects.toThrow(/approved/i);
+
+    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockReadFile.execute).not.toHaveBeenCalled();
+    expect(mockApplyEdit.execute).not.toHaveBeenCalled();
+    expect(mockRunBuild.execute).not.toHaveBeenCalled();
+  });
+
   it('executeTask sets FAILED when LLM response is unparseable', async () => {
     mockComplete.mockResolvedValue({ text: 'This is not JSON at all' });
     const agent = new LLMModeAgent(mockLLM as any);

@@ -59,6 +59,24 @@ $ liminal --prompt "Generate a shader with Perlin noise" --domain glsl</code></p
             <p>Start the preview server for browser-based viewing.</p>
             <pre><code>$ liminal serve
 # Server starts on http://localhost:3000</code></pre>
+
+            <h3 style="color: var(--accent-purple); margin-top: 2rem;">Bubble Tea TUI (Go)</h3>
+            <p>Next-generation operator-grade terminal UI. Requires the bridge server running (<code>liminal serve</code>).</p>
+            <pre><code>$ cd bubbletea && go run .
+
+# Or with a custom bridge URL:
+$ LIMINAL_BRIDGE_URL=http://localhost:3000 go run .</code></pre>
+            <table style="margin-top: 1rem;">
+                <thead>
+                    <tr><th>Key</th><th>Action</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td><code>Enter</code></td><td>Submit input via bridge</td></tr>
+                    <tr><td><code>y</code></td><td>Confirm pending action (ACTION mode)</td></tr>
+                    <tr><td><code>n</code></td><td>Cancel pending action (ACTION mode)</td></tr>
+                    <tr><td><code>q</code> / <code>Ctrl+C</code></td><td>Quit</td></tr>
+                </tbody>
+            </table>
         </section>
 
         <section class="section" id="configuration">

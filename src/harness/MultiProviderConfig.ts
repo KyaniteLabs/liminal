@@ -73,7 +73,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'MiniMax-M2.7',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   lmstudio: {
     provider: 'lmstudio',
@@ -83,7 +83,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'local-model',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   ollama: {
     provider: 'ollama',
@@ -93,7 +93,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'llama3.2',
     apiStyle: 'ollama',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   openrouter: {
     provider: 'openrouter',
@@ -103,17 +103,17 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'anthropic/claude-3.5-sonnet',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   glm: {
     provider: 'glm',
     name: 'GLM',
-    description: 'GLM International Coding Plan API',
+    description: 'GLM International Coding Plan API (GLM-5.1 flagship)',
     baseUrl: 'https://api.z.ai/api/coding/paas/v4',
-    model: 'glm-4.7',
+    model: 'glm-5.1',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   moonshot: {
     provider: 'moonshot',
@@ -123,7 +123,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'kimi-k2.5',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   kimi: {
     provider: 'kimi',
@@ -133,7 +133,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'k2p5',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
   custom: {
     provider: 'custom',
@@ -143,7 +143,7 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     model: 'custom-model',
     apiStyle: 'openai',
     temperature: 0.7,
-    maxTokens: 4096,
+    maxTokens: 16384,
   },
 };
 
@@ -292,10 +292,10 @@ export interface HarnessLLMConfig {
 // Default harness config values (used when env vars not set)
 const HARNESS_DEFAULTS = {
   temperature: 0.2,      // Low temp for precise code fixes
-  maxTokens: 4096,       // Standard code context
-  timeoutMs: 60000,      // 1 minute timeout
+  maxTokens: 16384,      // Generous budget for complex code fixes
+  timeoutMs: 120000,     // 2 minute timeout (cloud providers can be slow)
   maxRetries: 3,         // Retry failed requests
-  contextWindow: 8192,   // Context window for file understanding
+  contextWindow: 32768,  // Generous context for large files
 } as const;
 
 /**

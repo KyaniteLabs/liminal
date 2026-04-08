@@ -62,8 +62,8 @@ export const PlayerPiano: React.FC<PlayerPianoProps> = ({
   if (iterations.length === 0) {
     return (
       <Box flexDirection="column" alignItems="center" justifyContent="center" height={containerHeight}>
-        <Text color="gray">No iterations yet</Text>
-        <Text color="gray" dimColor>Generate some code to see the player piano</Text>
+        <Text color="#94A3B8">No iterations yet</Text>
+        <Text color="#94A3B8" dimColor>Generate some code to see the player piano</Text>
       </Box>
     );
   }
@@ -74,12 +74,12 @@ export const PlayerPiano: React.FC<PlayerPianoProps> = ({
   );
 
   return (
-    <Box flexDirection="column" height={containerHeight} borderStyle="round" borderColor="cyan">
+    <Box flexDirection="column" height={containerHeight} borderStyle="round" borderColor="#22C55E">
       {/* Header */}
       <Box paddingX={1} paddingY={0}>
-        <Text bold color="cyan">🎹 PLAYER PIANO</Text>
-        <Text color="gray">  {currentIndex + 1} / {iterations.length}</Text>
-        <Text color={isPlaying ? "green" : "yellow"}>  [{isPlaying ? "PLAYING" : "PAUSED"}]</Text>
+        <Text bold color="#22C55E">PLAYER PIANO</Text>
+        <Text color="#94A3B8">  {currentIndex + 1} / {iterations.length}</Text>
+        <Text color={isPlaying ? "#22C55E" : "#EAB308"}>  [{isPlaying ? "PLAYING" : "PAUSED"}]</Text>
       </Box>
 
       {/* Piano Roll - Code Lines */}
@@ -100,11 +100,11 @@ export const PlayerPiano: React.FC<PlayerPianoProps> = ({
               flexDirection="row"
               paddingX={1}
             >
-              <Text color={isCurrent ? 'cyan' : 'gray'} dimColor={!isCurrent}>
+              <Text color={isCurrent ? '#22C55E' : '#94A3B8'} dimColor={!isCurrent}>
                 {String(actualIndex + 1).padStart(3, '0')} │
               </Text>
               <Text 
-                color={isCurrent ? 'white' : 'gray'}
+                color={isCurrent ? '#F8FAFC' : '#94A3B8'}
                 dimColor={!isCurrent}
                 wrap="truncate-end"
               >
@@ -116,8 +116,8 @@ export const PlayerPiano: React.FC<PlayerPianoProps> = ({
       </Box>
 
       {/* Footer / Controls */}
-      <Box paddingX={1} paddingY={0} borderStyle="single" borderColor="gray">
-        <Text dimColor>[RETURN] Play/Pause  [↑↓] Navigate  [ESC] Exit</Text>
+      <Box paddingX={1} paddingY={0} borderStyle="single" borderColor="#334155">
+        <Text dimColor>[RETURN] Play/Pause  [Up/Dn] Navigate  [ESC] Exit</Text>
       </Box>
     </Box>
   );

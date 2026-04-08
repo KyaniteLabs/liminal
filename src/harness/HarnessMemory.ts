@@ -14,11 +14,13 @@
 import { promises as fs } from 'fs';
 import { homedir } from 'os';
 import { join } from 'path';
+import { Result, ok, err } from 'neverthrow';
 import { Logger } from '../utils/Logger.js';
 import { Status } from '../types/status.js';
 import type { CalibrationWeights, CalibrationData } from '../calibration/CalibrationSuite.js';
 import { getGlobalEmbeddingService } from '../embeddings/EmbeddingService.js';
 import { findKNearestNeighbors } from '../utils/vectors.js';
+import { PersistenceError } from '../errors/PersistenceError.js';
 
 // Task tracking
 export interface HarnessTask {
@@ -160,13 +162,20 @@ export class HarnessMemory {
           Logger.warn('HarnessMemory', `Memory file unreadable, starting fresh: ${err instanceof Error ? err.message : err}`);
         }
         this.state = { ...DEFAULT_STATE };
-        await this.save();
+        const initSave = await this.save();
+        if (initSave.isErr()) {
+          Logger.warn('HarnessMemory', `Initial save failed: ${initSave.error.message}`);
+        }
       }
 
       // Auto-save every 30 seconds if dirty
       this.saveInterval = setInterval(() => {
         if (this.dirty) {
-          this.save().catch((err) => Logger.warn('HarnessMemory', `Auto-save failed: ${err}`));
+          this.save().then((result) => {
+            if (result.isErr()) {
+              Logger.warn('HarnessMemory', `Auto-save failed: ${result.error.message}`);
+            }
+          });
         }
       }, 30000);
 
@@ -184,14 +193,17 @@ export class HarnessMemory {
       clearInterval(this.saveInterval);
     }
     if (this.dirty) {
-      await this.save();
+      const result = await this.save();
+      if (result.isErr()) {
+        Logger.warn('HarnessMemory', `Final save during shutdown failed: ${result.error.message}`);
+      }
     }
   }
 
   /**
    * Save state to disk
    */
-  async save(): Promise<void> {
+  async save(): Promise<Result<void, PersistenceError>> {
     try {
       this.lastSaveFailed = false;
       this.state.lastUpdated = new Date().toISOString();
@@ -201,9 +213,13 @@ export class HarnessMemory {
         'utf-8'
       );
       this.dirty = false;
-    } catch (err) {
+      return ok(undefined);
+    } catch (e) {
       this.lastSaveFailed = true;
-      Logger.error('HarnessMemory', `Save failed: ${err}`);
+      return err(new PersistenceError('Failed to save harness memory', {
+        cause: e instanceof Error ? e : undefined,
+        retryable: true,
+      }));
     }
   }
 
@@ -701,10 +717,10 @@ export class HarnessMemory {
   /**
    * Clear all memory (use with caution)
    */
-  async clear(): Promise<void> {
+  async clear(): Promise<Result<void, PersistenceError>> {
     this.state = { ...DEFAULT_STATE };
     this.dirty = true;
-    await this.save();
+    return this.save();
   }
 }
 

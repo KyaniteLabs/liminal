@@ -35,7 +35,7 @@ export class P5Wrapper {
     const hasHydra = /\bosc\s*\(|\bshape\s*\(|\.kaleid\s*\(|\.out\s*\(/.test(code);
     const hasTone = /\bTone\.|\bSynth\b|\bTransport\b/.test(code);
     const hasThree = /\bTHREE\.|\bScene\s*\(|\bCamera\s*\(/.test(code);
-    const hasShader = /void\s+main\s*\(|gl_FragColor|uniform\s+vec/.test(code);
+    const hasShader = /gl_FragColor|uniform\s+vec/.test(code);
     const hasRemotion = /useCurrentFrame|AbsoluteFill|from\s+['"]remotion['"]/.test(code);
     const hasASCII = /[█▓▒░@#%*+=\-~^]{10,}/.test(code) && !code.includes('function');
 

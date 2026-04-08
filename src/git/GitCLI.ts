@@ -89,7 +89,12 @@ async function handleInit(git: GitService): Promise<void> {
 }
 
 async function handleStatus(git: GitService): Promise<void> {
-  const status = await git.status();
+  const result = await git.status();
+  if (result.isErr()) {
+    console.error('Failed to get git status:', result.error.message);
+    return;
+  }
+  const status = result.value;
 
   const branch = status.current;
   console.log(`On branch ${branch}`);

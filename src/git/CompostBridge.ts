@@ -13,7 +13,9 @@
  *   const timeline = bridge.getUnifiedTimeline('my-project');
  */
 
+import { Result, ok, err } from 'neverthrow';
 import { Logger } from '../utils/Logger.js';
+import { CompostError } from '../errors/CompostError.js';
 import type { CommitInfo, BranchInfo, GitTimelineEntry } from './types.js';
 import type { EventStore, CompostEvent } from '../compost/EventStore.js';
 
@@ -28,7 +30,7 @@ export class CompostBridge {
    * Record a git commit as a compost event.
    * Stores the commit hash, message, and metadata in the unified timeline.
    */
-  async onCommit(commit: CommitInfo): Promise<CompostEvent | null> {
+  async onCommit(commit: CommitInfo): Promise<Result<CompostEvent, CompostError>> {
     try {
       const event = this.eventStore.append('git_commit', {
         hash: commit.hash,
@@ -39,17 +41,19 @@ export class CompostBridge {
       });
 
       Logger.debug('CompostBridge', `Recorded git commit ${commit.hash.slice(0, 7)} in compost timeline`);
-      return event;
+      return ok(event);
     } catch (error) {
-      Logger.warn('CompostBridge', `Failed to record git commit: ${error instanceof Error ? error.message : error}`);
-      return null;
+      return err(new CompostError(
+        `Failed to record git commit ${commit.hash.slice(0, 7)}`,
+        { cause: error instanceof Error ? error : undefined, retryable: true },
+      ));
     }
   }
 
   /**
    * Record a git branch creation as a compost event.
    */
-  async onBranch(branch: BranchInfo): Promise<CompostEvent | null> {
+  async onBranch(branch: BranchInfo): Promise<Result<CompostEvent, CompostError>> {
     try {
       const event = this.eventStore.append('git_branch', {
         name: branch.name,
@@ -58,10 +62,12 @@ export class CompostBridge {
       });
 
       Logger.debug('CompostBridge', `Recorded git branch ${branch.name} in compost timeline`);
-      return event;
+      return ok(event);
     } catch (error) {
-      Logger.warn('CompostBridge', `Failed to record git branch: ${error instanceof Error ? error.message : error}`);
-      return null;
+      return err(new CompostError(
+        `Failed to record git branch ${branch.name}`,
+        { cause: error instanceof Error ? error : undefined, retryable: true },
+      ));
     }
   }
 
@@ -71,11 +77,11 @@ export class CompostBridge {
    * Reads the compost EventStore timeline and separates git events
    * from creative events, returning them interleaved chronologically.
    */
-  getUnifiedTimeline(_project: string, limit = 50): GitTimelineEntry[] {
+  getUnifiedTimeline(_project: string, limit = 50): Result<GitTimelineEntry[], CompostError> {
     try {
       const entries = this.eventStore.timeline({ limit });
 
-      return entries.map((entry): GitTimelineEntry => {
+      return ok(entries.map((entry): GitTimelineEntry => {
         const evt = entry.event;
         const isGitEvent = evt.type === 'git_commit' || evt.type === 'git_branch';
         return {
@@ -84,10 +90,12 @@ export class CompostBridge {
           type: evt.type,
           data: evt.payload,
         };
-      });
+      }));
     } catch (error) {
-      Logger.warn('CompostBridge', `Failed to get unified timeline: ${error instanceof Error ? error.message : error}`);
-      return [];
+      return err(new CompostError(
+        'Failed to get unified timeline',
+        { cause: error instanceof Error ? error : undefined, retryable: true },
+      ));
     }
   }
 }

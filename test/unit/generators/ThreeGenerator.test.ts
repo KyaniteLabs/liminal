@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockGenerate = vi.fn().mockResolvedValue({
-  code: 'import * as THREE from "three";\nconst scene = new THREE.Scene();',
-  success: true,
-});
+const { mockGenerate } = vi.hoisted(() => ({
+  mockGenerate: vi.fn().mockResolvedValue({
+    code: 'import * as THREE from "three";\nconst scene = new THREE.Scene();',
+    success: true,
+  }),
+}));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {

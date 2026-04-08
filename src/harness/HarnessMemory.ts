@@ -171,7 +171,7 @@ export class HarnessMemory {
       // Auto-save every 30 seconds if dirty
       this.saveInterval = setInterval(() => {
         if (this.dirty) {
-          this.save().then((result) => {
+          void this.save().then((result) => {
             if (result.isErr()) {
               Logger.warn('HarnessMemory', `Auto-save failed: ${result.error.message}`);
             }

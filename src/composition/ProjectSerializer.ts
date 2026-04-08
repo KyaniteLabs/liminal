@@ -272,7 +272,7 @@ export class ProjectSerializer {
    */
   async importFromURL(url: string): Promise<LiminalProject> {
     // Validate URL to prevent SSRF attacks
-    validateUrl(url, {
+    await validateUrl(url, {
       allowedHosts: getAllowedHostsFromEnv(),
       allowPrivateIPs: false,
       allowLocalhost: process.env.LIMINAL_ALLOW_LOCALHOST_LLM === 'true'

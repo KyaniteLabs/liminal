@@ -4,7 +4,7 @@
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockGenerate = vi.fn();
+const { mockGenerate } = vi.hoisted(() => ({ mockGenerate: vi.fn() }));
 
 vi.mock('../../../src/generators/p5/P5GeneratorLLM.js', () => ({
   P5GeneratorLLM: vi.fn(function(this: any) {

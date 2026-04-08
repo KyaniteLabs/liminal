@@ -1,9 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockGenerate = vi.fn().mockResolvedValue({
-  code: '<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>',
-  success: true,
-});
+const { mockGenerate } = vi.hoisted(() => ({
+  mockGenerate: vi.fn().mockResolvedValue({
+    code: '<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>',
+    success: true,
+  }),
+}));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {

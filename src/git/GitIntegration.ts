@@ -17,6 +17,7 @@
 
 import { GitService } from './GitService.js';
 import { Logger } from '../utils/Logger.js';
+import { AsyncLock } from '../utils/AsyncLock.js';
 import type { GitConfig, IterationCommitContext, CommitInfo } from './types.js';
 import { DEFAULT_GIT_CONFIG } from './types.js';
 import type { CompostBridge } from './CompostBridge.js';
@@ -27,6 +28,7 @@ export class GitIntegration {
   private compostBridge?: CompostBridge;
   private originalBranch: string | null = null;
   private runBranch: string | null = null;
+  private lock = new AsyncLock();
 
   constructor(config: Partial<GitConfig>, compostBridge?: CompostBridge) {
     this.config = { ...DEFAULT_GIT_CONFIG, ...config };
@@ -54,6 +56,7 @@ export class GitIntegration {
     if (!this.config.enabled) return null;
     if (!this.config.branchPerRun) return null;
 
+    return this.lock.acquire(async () => {
     try {
       // Ensure we're in a git repo
       const isRepo = await this.git.isRepo();
@@ -102,6 +105,7 @@ export class GitIntegration {
       Logger.error('GitIntegration', `Failed to start run: ${error instanceof Error ? error.message : error}`);
       return null;
     }
+    });
   }
 
   /**
@@ -111,6 +115,7 @@ export class GitIntegration {
   async commitIteration(ctx: IterationCommitContext): Promise<CommitInfo | null> {
     if (!this.config.enabled || !this.config.autoCommit) return null;
 
+    return this.lock.acquire(async () => {
     try {
       const isRepo = await this.git.isRepo();
       if (!isRepo) return null;
@@ -146,6 +151,7 @@ export class GitIntegration {
       Logger.error('GitIntegration', `Failed to commit iteration: ${error instanceof Error ? error.message : error}`);
       return null;
     }
+    });
   }
 
   /**
@@ -157,6 +163,7 @@ export class GitIntegration {
   async endRun(reason: string): Promise<void> {
     if (!this.config.enabled || !this.runBranch) return;
 
+    return this.lock.acquire(async () => {
     try {
       // Commit any remaining changes (if status is null due to merge conflicts, skip)
       const status = await this.git.status();
@@ -189,6 +196,7 @@ export class GitIntegration {
       this.runBranch = null;
 
     }
+    });
   }
 
   /** Format a commit message from the template and iteration context */

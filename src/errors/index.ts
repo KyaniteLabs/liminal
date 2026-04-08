@@ -16,3 +16,4 @@ export { FileDiscoveryError } from './FileDiscoveryError.js';
 export { LLMGenerationError } from './LLMGenerationError.js';
 export { ExportError, SecurityError } from './ExportError.js';
 export { ServerError } from './ServerError.js';
+export { ProcessorError } from './ProcessorError.js';

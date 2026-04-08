@@ -2,18 +2,15 @@ import { describe, it, expect, beforeAll } from 'vitest';
 /**
  * Model Comparison Test Suite
  * 
- * Tests 5 models across identical prompts to compare:
+ * Tests models across identical prompts to compare:
  * - Success rate
  * - Quality scores
  * - Generation time
  * - Output cleanliness
- * 
- * Models:
- * 1. Qwen 3.5 9B (local)
- * 2. Qwen 3 Coder 40B (local)
- * 3. MiniMax-M2.7 (cloud)
- * 4. MiniMax-M2.7-highspeed (cloud)
- * 5. MiniMax-M2.5 (cloud)
+ *
+ * Cloud models: MiniMax-M2.7, MiniMax-M2.7-highspeed, MiniMax-M2.5,
+ *               GLM-5.1 (ZhipuAI), Kimi-k2p5 (Moonshot)
+ * Local models: Qwen 3.5 9B, Qwen 3 Coder 40B
  */
 
 import { run } from '../../src/index.js';
@@ -80,6 +77,20 @@ const MODELS: ModelConfig[] = [
     apiKey: process.env.MINIMAX_API_KEY,
     type: 'cloud',
   },
+  {
+    name: 'GLM-5.1',
+    baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+    model: 'glm-5.1',
+    apiKey: process.env.GLM_API_KEY,
+    type: 'cloud',
+  },
+  {
+    name: 'Kimi-k2p5',
+    baseUrl: 'https://api.kimi.com/coding/v1',
+    model: 'kimi-k2p5',
+    apiKey: process.env.KIMI_API_KEY,
+    type: 'cloud',
+  },
 ];
 
 // Test prompts by domain
@@ -103,9 +114,8 @@ describe.skipIf(!LLMClient.isConfigured())('Model Comparison Suite', () => {
   // Test each model with each prompt
   for (const model of MODELS) {
     describe(`Model: ${model.name}`, () => {
-      // Skip cloud models if no API key
-      const hasApiKey = model.apiKey || process.env.MINIMAX_API_KEY;
-      const testFn = model.type === 'cloud' && !hasApiKey ? it.skip : it;
+      // Skip cloud models if no API key for that specific provider
+      const testFn = model.type === 'cloud' && !model.apiKey ? it.skip : it;
 
       for (const { domain, prompt } of TEST_PROMPTS) {
         testFn(

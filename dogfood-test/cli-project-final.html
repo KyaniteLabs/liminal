@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com; style-src 'self' 'unsafe-inline'; connect-src 'none'; img-src 'self' data: blob:; media-src 'self';">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <title>Generated Output</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f0f0f0; }
+        main { box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    </style>
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self' 'unsafe-inline' cdnjs.cloudflare.com cdn.jsdelivr.net unpkg.com; style-src 'unsafe-inline'; img-src 'self' blob:; connect-src 'none'; font-src 'self';">
+</head>
+<body>
+    <main>
+        <script>
+function setup() {
+  createCanvas(600, 400);
+  // Ball properties
+  ballX = width / 2;
+  ballY = height / 2;
+  ballSize = 30;
+  // Initial velocity (speed)
+  velocityX = random(-5, 5);
+  velocityY = random(-5, 5);
+}
+
+function draw() {
+  background(220);
+
+  // 1. Update position (Physics)
+  ballX += velocityX;
+  ballY += velocityY;
+
+  // 2. Boundary Collision Detection (Horizontal)
+  // Check if the left or right edge is hit
+  if (ballX - ballSize / 2 > width || ballX + ballSize / 2 < 0) {
+    velocityX = -velocityX; // Reverse X direction
+  }
+
+  // 3. Boundary Collision Detection (Vertical)
+  // Check if the top or bottom edge is hit
+  if (ballY - ballSize / 2 > height || ballY + ballSize / 2 < 0) {
+    velocityY = -velocityY; // Reverse Y direction
+  }
+
+  // 4. Drawing
+  fill(255, 0, 0); // Red color
+  ellipse(ballX, ballY, ballSize, ballSize);
+}
+        </script>
+    </main>
+</body>
+</html>

@@ -1,0 +1,132 @@
+{
+  "timestamp": "2026-04-08T07:45:00Z",
+  "testRunId": "dogfood-parallel-2026-04-08",
+  "summary": {
+    "totalTests": 46,
+    "totalPassed": 14,
+    "totalFailed": 32,
+    "overallPassRate": "30.4%"
+  },
+  "byProvider": {
+    "lmstudio": {
+      "total": 9,
+      "passed": 0,
+      "failed": 9,
+      "passRate": "0%",
+      "models": ["qwen3.5-2b"],
+      "note": "Small local model struggles with all domains"
+    },
+    "ollama": {
+      "total": 9,
+      "passed": 2,
+      "failed": 7,
+      "passRate": "22.2%",
+      "models": ["gemma4:latest", "qwen3.5-0.8b"],
+      "note": "Only p5 domain shows partial success"
+    },
+    "minimax": {
+      "total": 18,
+      "passed": 12,
+      "failed": 6,
+      "passRate": "66.7%",
+      "models": ["minimax-m27", "minimax-m25"],
+      "note": "Best performing - succeeds on most domains"
+    },
+    "openrouter": {
+      "total": 10,
+      "passed": 0,
+      "failed": 10,
+      "passRate": "0%",
+      "models": ["claude-3.5-sonnet", "gpt-4o"],
+      "note": "Skipped - API key not configured"
+    }
+  },
+  "byDomain": {
+    "p5": {
+      "total": 10,
+      "passed": 6,
+      "failed": 4,
+      "passRate": "60%",
+      "bestProvider": "minimax"
+    },
+    "glsl": {
+      "total": 8,
+      "passed": 2,
+      "failed": 6,
+      "passRate": "25%",
+      "bestProvider": "minimax"
+    },
+    "three": {
+      "total": 8,
+      "passed": 3,
+      "failed": 5,
+      "passRate": "37.5%",
+      "bestProvider": "minimax"
+    },
+    "strudel": {
+      "total": 8,
+      "passed": 1,
+      "failed": 7,
+      "passRate": "12.5%",
+      "bestProvider": "minimax"
+    },
+    "hydra": {
+      "total": 4,
+      "passed": 2,
+      "failed": 2,
+      "passRate": "50%",
+      "bestProvider": "minimax"
+    },
+    "tone": {
+      "total": 4,
+      "passed": 2,
+      "failed": 2,
+      "passRate": "50%",
+      "bestProvider": "minimax"
+    },
+    "remotion": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "passRate": "0%",
+      "note": "All providers fail - validation too strict?"
+    },
+    "html": {
+      "total": 2,
+      "passed": 1,
+      "failed": 1,
+      "passRate": "50%",
+      "bestProvider": "minimax"
+    },
+    "ascii": {
+      "total": 2,
+      "passed": 0,
+      "failed": 2,
+      "passRate": "0%",
+      "note": "All providers fail - character validation issue"
+    }
+  },
+  "agents": {
+    "lmstudio-a": { "domains": 3, "passed": 0, "failed": 3 },
+    "lmstudio-b": { "domains": 6, "passed": 0, "failed": 6 },
+    "ollama-a": { "domains": 4, "passed": 1, "failed": 3 },
+    "ollama-b": { "domains": 5, "passed": 1, "failed": 4 },
+    "cloud-a": { "domains": 4, "passed": 4, "failed": 4 },
+    "cloud-b": { "domains": 5, "passed": 5, "failed": 5 }
+  },
+  "keyFindings": [
+    "Pipeline B1-B5 fixes verified: Error handling now works correctly",
+    "MiniMax cloud provider achieves 66.7% pass rate (best)",
+    "Local models (LM Studio/Ollama) struggle: 0-22% pass rate",
+    "p5 domain has highest success rate: 60%",
+    "remotion and ascii domains fail across all providers",
+    "OpenRouter not tested - missing API key"
+  ],
+  "recommendations": [
+    "Configure OpenRouter API key for broader model testing",
+    "Review remotion validation - may be too strict",
+    "Review ascii character validation - rejecting valid output",
+    "Consider larger local models (>4B params) for better results",
+    "Pipeline fixes successful - error propagation working"
+  ]
+}

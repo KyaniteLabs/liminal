@@ -1,0 +1,48 @@
+{
+  "timestamp": "2026-04-08T07:30:21.556Z",
+  "agent": "B",
+  "provider": "ollama",
+  "baseUrl": "http://localhost:11434/v1",
+  "total": 5,
+  "success": 1,
+  "failed": 4,
+  "rate": "20.0%",
+  "duration": "1340362ms",
+  "results": [
+    {
+      "domain": "hydra",
+      "model": "qwen3.5-0.8b",
+      "success": false,
+      "duration": 300061,
+      "error": "LLM generation failed: The operation was aborted due to timeout"
+    },
+    {
+      "domain": "tone",
+      "model": "qwen3.5-0.8b",
+      "success": false,
+      "duration": 300145,
+      "error": "LLM generation failed: The operation was aborted due to timeout"
+    },
+    {
+      "domain": "remotion",
+      "model": "qwen3.5-0.8b",
+      "success": false,
+      "duration": 297684,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component"
+    },
+    {
+      "domain": "html",
+      "model": "qwen3.5-0.8b",
+      "success": true,
+      "duration": 309536,
+      "outputPath": "dogfood-output/ollama-b-html-qwen3.5-0.8b.html"
+    },
+    {
+      "domain": "ascii",
+      "model": "qwen3.5-0.8b",
+      "success": false,
+      "duration": 132931,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+    }
+  ]
+}

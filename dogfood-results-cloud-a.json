@@ -1,0 +1,101 @@
+{
+  "agent": "A",
+  "timestamp": "2026-04-08T07:39:44.090Z",
+  "providersTested": [
+    "MiniMax"
+  ],
+  "providersSkipped": [
+    "OpenRouter"
+  ],
+  "domains": [
+    "p5",
+    "glsl",
+    "three",
+    "strudel"
+  ],
+  "summary": {
+    "total": 10,
+    "success": 4,
+    "failed": 4,
+    "rate": "50.0%"
+  },
+  "totalDuration": "516498ms",
+  "results": [
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "p5",
+      "success": true,
+      "duration": 38818
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "glsl",
+      "success": true,
+      "duration": 39252
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "three",
+      "success": true,
+      "duration": 55174
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "strudel",
+      "success": false,
+      "duration": 554,
+      "error": "API overloaded (529)"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "p5",
+      "success": true,
+      "duration": 76447
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "glsl",
+      "success": false,
+      "duration": 120410,
+      "error": "Timeout"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "three",
+      "success": false,
+      "duration": 65773,
+      "error": "ThreeGenerator: Generated code does not "
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "strudel",
+      "success": false,
+      "duration": 120070,
+      "error": "Timeout"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "claude-3.5-sonnet",
+      "domain": "all",
+      "success": false,
+      "duration": 0,
+      "notes": "API key not configured"
+    },
+    {
+      "provider": "OpenRouter",
+      "model": "gpt-4o",
+      "domain": "all",
+      "success": false,
+      "duration": 0,
+      "notes": "API key not configured"
+    }
+  ]
+}

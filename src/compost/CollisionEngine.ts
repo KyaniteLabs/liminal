@@ -299,12 +299,13 @@ export class CollisionEngine {
     );
 
     for (let i = 0; i < merged.length; i++) {
-      if (merged[i].status === 'fulfilled') {
+      const result = merged[i];
+      if (result.status === 'fulfilled') {
         results.push({
           fragmentA: pairsToProcess[i].a,
           fragmentB: pairsToProcess[i].b,
           strategy: pairsToProcess[i].strategy,
-          mergedContent: (merged[i] as PromiseFulfilledResult<string>).value,
+          mergedContent: String(result.value),
         });
       }
     }

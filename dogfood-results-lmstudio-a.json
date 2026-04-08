@@ -1,0 +1,33 @@
+{
+  "provider": "lmstudio",
+  "agent": "A",
+  "domains": ["p5", "glsl", "three"],
+  "timestamp": "2026-04-07T21:54:59Z",
+  "model": "qwen3.5-2b",
+  "results": [
+    {
+      "domain": "p5",
+      "success": false,
+      "error": "P5GeneratorV2: Generated code missing required setup() function",
+      "codeLength": 0
+    },
+    {
+      "domain": "glsl",
+      "success": false,
+      "error": "Generated code failed validation - code length 0",
+      "codeLength": 0
+    },
+    {
+      "domain": "three",
+      "success": false,
+      "error": "Generated code failed validation - code length 0",
+      "codeLength": 0
+    }
+  ],
+  "summary": {
+    "total": 3,
+    "passed": 0,
+    "failed": 3,
+    "passRate": "0%"
+  }
+}

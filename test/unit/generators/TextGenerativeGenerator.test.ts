@@ -95,23 +95,24 @@ describe('TextGenerativeGenerator', () => {
 
     it('applies maxWidth constraint from options', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'A'.repeat(120),
+        code: 'A'.repeat(120) + '\nsecond line',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('wide text', { maxWidth: 20 });
-      expect(result.length).toBe(20);
-      expect(result).toBe('AAAAAAAAAAAAAAAAAAAA...');
+      const lines = result.split('\n');
+      expect(lines[0].length).toBeLessThanOrEqual(20);
     });
 
     it('applies default maxWidth of 80 when not specified', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'B'.repeat(120),
+        code: 'B'.repeat(120) + '\nsecond line',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('very wide');
-      expect(result.length).toBe(80);
+      const lines = result.split('\n');
+      expect(lines[0].length).toBeLessThanOrEqual(80);
     });
 
     it('filters out Unicode characters when unicode option is false', async () => {

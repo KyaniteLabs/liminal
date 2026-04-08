@@ -13,8 +13,9 @@ export class LIRParseError extends Error {
     message: string,
     public readonly source: string,
     public readonly line?: number,
+    options?: { cause?: Error },
   ) {
-    super(message);
+    super(message, options);
     this.name = 'LIRParseError';
   }
 }

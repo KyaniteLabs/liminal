@@ -180,21 +180,19 @@ export class CompostSoup {
     return this.abortController !== null && !this.abortController.signal.aborted;
   }
 
-  /** Merge two fragments via LLM. */
+  /** Merge two fragments via LLM. Throws on failure so caller can skip the offspring. */
   private async mergeViaLLM(a: CompostFragment, b: CompostFragment): Promise<string> {
     if (!this.llm) {
-      return `[${a.domain}] ${a.content.slice(0, 100)} + [${b.domain}] ${b.content.slice(0, 100)}`;
+      throw new Error(`Cannot merge fragments: no LLM client available (${a.id} + ${b.id})`);
     }
 
-    try {
-      const result = await this.llm.generate(
-        'You are a creative evolution engine. Combine these two fragments from different domains into a novel offspring. Be surprising and specific.',
-        `[Parent A — domain: ${a.domain}]\n${a.content.slice(0, 1000)}\n\n[Parent B — domain: ${b.domain}]\n${b.content.slice(0, 1000)}\n\nCreate a novel offspring idea:`
-      );
-      return result.success ? result.code : `${a.content.slice(0, 50)} + ${b.content.slice(0, 50)}`;
-    } catch (err) {
-      Logger.warn('CompostSoup', 'mergeViaLLM failed, using fallback:', err);
-      return `${a.content.slice(0, 50)} + ${b.content.slice(0, 50)}`;
+    const result = await this.llm.generate(
+      'You are a creative evolution engine. Combine these two fragments from different domains into a novel offspring. Be surprising and specific.',
+      `[Parent A — domain: ${a.domain}]\n${a.content.slice(0, 1000)}\n\n[Parent B — domain: ${b.domain}]\n${b.content.slice(0, 1000)}\n\nCreate a novel offspring idea:`
+    );
+    if (!result.success) {
+      throw new Error(`LLM merge failed for ${a.id} + ${b.id}: generation unsuccessful`);
     }
+    return result.code;
   }
 }

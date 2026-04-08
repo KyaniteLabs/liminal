@@ -157,7 +157,7 @@ export class SwarmOrchestrator {
     } else {
       // Select 2-3 experts based on score distribution
       let selectedCount = 2;
-      if (positiveScorers.length >= 3) {
+      if (positiveScorers.length >= 3 && positiveScorers[0] && positiveScorers[1]) {
         // If there's a significant drop-off after 2, use 2; otherwise use 3
         const scoreDiff = positiveScorers[1][1] - (positiveScorers[2]?.[1] ?? 0);
         if (scoreDiff < 2) {
@@ -218,8 +218,8 @@ export class SwarmOrchestrator {
         thinkingStyle: `Creative approach: ${expert.description}`,
         votingBias: `Votes for outputs matching ${expert.name.toLowerCase()} aesthetic`,
         constraints: [
-          `Emphasize ${expert.keywords[0]} aesthetics`,
-          `Consider ${expert.keywords[1]} principles`,
+          `Emphasize ${expert.keywords[0] ?? 'core'} aesthetics`,
+          `Consider ${expert.keywords[1] ?? 'design'} principles`,
         ],
         votingPower: 2,
       };
@@ -600,6 +600,10 @@ export class SwarmOrchestrator {
     }
 
     const winnerOutput = outputs.get(votingResult.winnerId);
+    if (!winnerOutput) {
+      Logger.error('SwarmOrchestrator', `Winner ${votingResult.winnerId} not found in outputs. Available: ${[...outputs.keys()].join(', ')}`);
+      throw new Error(`Winner ${votingResult.winnerId} not found in outputs`);
+    }
 
     return {
       roundNum,
@@ -608,7 +612,7 @@ export class SwarmOrchestrator {
       votes: votingResult.votes,
       scores: votingResult.scores,
       winnerId: votingResult.winnerId,
-      winnerContent: winnerOutput?.content ?? '',
+      winnerContent: winnerOutput.content,
       constraint,
     };
   }
@@ -737,6 +741,10 @@ export class SwarmOrchestrator {
     if (mode === 'hybrid') {
       // Top 2 scoring outputs combined
       const sortedScores = [...result.scores.entries()].sort((a, b) => b[1] - a[1]);
+      if (sortedScores.length === 0) {
+        Logger.error('SwarmOrchestrator', 'No scores available for hybrid mode seed selection');
+        throw new Error('No scores available for hybrid mode seed selection');
+      }
       const topOutputs = sortedScores.slice(0, 2).map(([personaId]) => result.outputs.get(personaId)?.content ?? '');
       const combined = topOutputs.join('\n\n---\n\n');
       return `Synthesize and evolve these ideas into one cohesive piece:\n\n${combined}\n\nConstraint: ${constraint}`;
@@ -753,6 +761,10 @@ export class SwarmOrchestrator {
 
     // Mesh: hybrid-like but with all top fragments
     const sortedScores = [...result.scores.entries()].sort((a, b) => b[1] - a[1]);
+    if (sortedScores.length === 0) {
+      Logger.error('SwarmOrchestrator', 'No scores available for mesh mode seed selection');
+      throw new Error('No scores available for mesh mode seed selection');
+    }
     const topOutputs = sortedScores.slice(0, 3).map(([personaId]) => result.outputs.get(personaId)?.content ?? '');
     const combined = topOutputs.join('\n\n---\n\n');
     return `Weave these fragments into something new:\n\n${combined}\n\nConstraint: ${constraint}`;

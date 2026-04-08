@@ -12,7 +12,7 @@ import { RetryManager } from './RetryManager.js';
 import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
-import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
+import { validateUrlSync, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
@@ -402,7 +402,7 @@ export class LLMClient {
       const allowedHosts = getAllowedHostsFromEnv();
 
       try {
-        validateUrl(this.config.baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
+        validateUrlSync(this.config.baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
       } catch (err) {
         if (err instanceof SSRFError) {
           throw new LLMError(`SSRF Protection: ${err.message}`, 'llm', undefined, false);

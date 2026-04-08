@@ -151,11 +151,12 @@ describe('OpenAIProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('function setup() {}');
-    expect(result.model).toBe('gpt-4-0613');
-    expect(result.usage?.inputTokens).toBe(50);
-    expect(result.usage?.outputTokens).toBe(20);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('function setup() {}');
+    expect(result.value.model).toBe('gpt-4-0613');
+    expect(result.value.usage?.inputTokens).toBe(50);
+    expect(result.value.usage?.outputTokens).toBe(20);
   });
 
   it('returns error response on API failure', async () => {
@@ -163,9 +164,8 @@ describe('OpenAIProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('429');
-    expect(result.content).toBe('');
+    expect(result.isErr()).toBe(true);
+    expect(result.error.message).toContain('429');
   });
 
   it('sends messages with system and user roles', async () => {
@@ -215,7 +215,8 @@ describe('OpenAIProvider', () => {
     });
 
     const result = await provider.generate(makeRequest());
-    expect(result.success).toBe(false);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(false);
   });
 
   it('falls back to model from config when response has no model', async () => {
@@ -224,7 +225,7 @@ describe('OpenAIProvider', () => {
     });
 
     const result = await provider.generate(makeRequest());
-    expect(result.model).toBe('gpt-4');
+    expect(result.value.model).toBe('gpt-4');
   });
 });
 
@@ -293,11 +294,12 @@ describe('AnthropicProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toContain('function setup()');
-    expect(result.content).toContain('createCanvas(400,400)');
-    expect(result.usage?.inputTokens).toBe(20);
-    expect(result.usage?.outputTokens).toBe(15);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toContain('function setup()');
+    expect(result.value.content).toContain('createCanvas(400,400)');
+    expect(result.value.usage?.inputTokens).toBe(20);
+    expect(result.value.usage?.outputTokens).toBe(15);
   });
 
   it('returns error on API failure', async () => {
@@ -305,8 +307,8 @@ describe('AnthropicProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('529');
+    expect(result.isErr()).toBe(true);
+    expect(result.error.message).toContain('529');
   });
 
   it('omits temperature when thinking is enabled (Anthropic restriction)', async () => {
@@ -334,7 +336,8 @@ describe('AnthropicProvider', () => {
     });
 
     const result = await provider.generate(makeRequest());
-    expect(result.success).toBe(false);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(false);
   });
 });
 
@@ -385,10 +388,11 @@ describe('OllamaProvider', () => {
 
       const result = await provider.generate(makeRequest());
 
-      expect(result.success).toBe(true);
-      expect(result.content).toBe('native output');
-      expect(result.usage?.inputTokens).toBe(15);
-      expect(result.usage?.outputTokens).toBe(30);
+      expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+      expect(result.value.content).toBe('native output');
+      expect(result.value.usage?.inputTokens).toBe(15);
+      expect(result.value.usage?.outputTokens).toBe(30);
     });
 
     it('returns error on failed native request', async () => {
@@ -396,8 +400,8 @@ describe('OllamaProvider', () => {
 
       const result = await provider.generate(makeRequest());
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('500');
+      expect(result.isErr()).toBe(true);
+      expect(result.error.message).toContain('500');
     });
   });
 
@@ -443,8 +447,8 @@ describe('OllamaProvider', () => {
 
       const result = await provider.generate(makeRequest());
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Ollama OpenAI-compat error');
+      expect(result.isErr()).toBe(true);
+      expect(result.error.message).toContain('Ollama OpenAI-compat error');
     });
   });
 });
@@ -513,10 +517,11 @@ describe('OpenRouterProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('result');
-    expect(result.usage?.inputTokens).toBe(100);
-    expect(result.usage?.outputTokens).toBe(50);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('result');
+    expect(result.value.usage?.inputTokens).toBe(100);
+    expect(result.value.usage?.outputTokens).toBe(50);
   });
 
   it('returns error on API failure', async () => {
@@ -524,8 +529,8 @@ describe('OpenRouterProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('401');
+    expect(result.isErr()).toBe(true);
+    expect(result.error.message).toContain('401');
   });
 });
 
@@ -586,10 +591,11 @@ describe('GoogleProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('Here is the code.');
-    expect(result.thinking?.text).toBe('Let me think...');
-    expect(result.thinking?.budgetUsed).toBe(8);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('Here is the code.');
+    expect(result.value.thinking?.text).toBe('Let me think...');
+    expect(result.value.thinking?.budgetUsed).toBe(8);
   });
 
   it('defaults to generativelanguage.googleapis.com when baseUrl is generic', async () => {
@@ -614,8 +620,8 @@ describe('GoogleProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('429');
+    expect(result.isErr()).toBe(true);
+    expect(result.error.message).toContain('429');
   });
 
   it('returns success=false when content is empty', async () => {
@@ -625,7 +631,8 @@ describe('GoogleProvider', () => {
     });
 
     const result = await provider.generate(makeRequest());
-    expect(result.success).toBe(false);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(false);
   });
 
   it('stream() yields not-implemented error', async () => {
@@ -729,10 +736,11 @@ describe('MiniMaxProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('Generated code here');
-    expect(result.usage?.inputTokens).toBe(20);
-    expect(result.usage?.outputTokens).toBe(30);
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('Generated code here');
+    expect(result.value.usage?.inputTokens).toBe(20);
+    expect(result.value.usage?.outputTokens).toBe(30);
   });
 
   it('falls back to reasoning_content when content is empty', async () => {
@@ -748,8 +756,9 @@ describe('MiniMaxProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toContain('createCanvas');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toContain('createCanvas');
   });
 
   it('falls back to data.output for alternative response structure', async () => {
@@ -761,8 +770,9 @@ describe('MiniMaxProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('output-based content');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('output-based content');
   });
 
   it('falls back to string output for alternative response structure', async () => {
@@ -774,8 +784,9 @@ describe('MiniMaxProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('string-output-content');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('string-output-content');
   });
 
   it('returns error on API failure', async () => {
@@ -783,8 +794,8 @@ describe('MiniMaxProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('400');
+    expect(result.isErr()).toBe(true);
+    expect(result.error.message).toContain('400');
   });
 
   it('handles network/fetch errors gracefully', async () => {
@@ -792,8 +803,8 @@ describe('MiniMaxProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toContain('ECONNREFUSED');
+    expect(result.isErr()).toBe(true);
+    expect(result.error.message).toContain('ECONNREFUSED');
   });
 
   it('returns success=false with empty content when all fallbacks fail', async () => {
@@ -804,8 +815,9 @@ describe('MiniMaxProvider', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.content).toBe('');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(false);
+    expect(result.value.content).toBe('');
   });
 
   it('defaults temperature to 0.7 when not specified', async () => {

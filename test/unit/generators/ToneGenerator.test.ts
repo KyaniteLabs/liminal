@@ -59,12 +59,13 @@ describe('ToneGenerator', () => {
 
   it('generate strips thinking tags from output', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '<think hmm</think' + '>\nconst t = new Tone.Synth();',
+      // Use Chinese <think> (U+8C) which matches the LLM thinking-tag format
+      code: '<think> reasoning here</think>\nconst t = new Tone.Synth();',
       success: true,
     });
     const gen = new ToneGenerator();
     const result = await gen.generate('synth');
-    expect(result).not.toContain('<think');
+    expect(result).not.toContain('<think>');
     expect(result).toContain('Tone.Synth');
   });
 

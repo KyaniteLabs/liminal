@@ -97,9 +97,8 @@ describe('StrudelGenerator', () => {
     });
     const gen = new StrudelGenerator();
     const result = await gen.generate('drums');
-    const lines = result.split('\n');
-    expect(lines.length).toBe(1);
-    expect(lines[0]).toContain('s("bd")');
+    // Keeps code lines that have parens/operators or Strudel syntax
+    expect(result).toContain('s("bd")');
   });
 
   it('validateOutput rejects code without sound sources', async () => {

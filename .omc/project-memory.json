@@ -649,10 +649,22 @@
   },
   "hotPaths": [
     {
-      "path": "test/unit/llm/ModelConfig.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775684660141,
+      "path": "test/unit/llm/provider-adapters.test.ts",
+      "accessCount": 10,
+      "lastAccessed": 1775692586065,
       "type": "file"
+    },
+    {
+      "path": "test/unit/llm/ModelConfig.test.ts",
+      "accessCount": 3,
+      "lastAccessed": 1775692260443,
+      "type": "file"
+    },
+    {
+      "path": "test",
+      "accessCount": 2,
+      "lastAccessed": 1775692356137,
+      "type": "directory"
     },
     {
       "path": "src/llm/ModelConfig.ts",
@@ -667,10 +679,52 @@
       "type": "directory"
     },
     {
-      "path": "test",
+      "path": "test/helpers/mockLLM.ts",
       "accessCount": 1,
-      "lastAccessed": 1775684607721,
+      "lastAccessed": 1775692139348,
+      "type": "file"
+    },
+    {
+      "path": "test/unit/context-accumulation.test.js",
+      "accessCount": 1,
+      "lastAccessed": 1775692260080,
+      "type": "file"
+    },
+    {
+      "path": "src/llm/providers/MiniMaxProvider.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775692286858,
+      "type": "file"
+    },
+    {
+      "path": "src/llm/providers/BaseProvider.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775692297960,
+      "type": "file"
+    },
+    {
+      "path": "test/unit/llm",
+      "accessCount": 1,
+      "lastAccessed": 1775692307287,
       "type": "directory"
+    },
+    {
+      "path": "test/unit/llm/OllamaProvider.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775692328326,
+      "type": "file"
+    },
+    {
+      "path": "src/llm/providers/OllamaProvider.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775692338494,
+      "type": "file"
+    },
+    {
+      "path": "test/llm/minimax-provider.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775692371302,
+      "type": "file"
     }
   ],
   "userDirectives": []

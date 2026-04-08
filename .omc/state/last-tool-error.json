@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git checkout --theirs .omc/project-memory.json .omc/state/idle-notif-cooldown.json .omc/state/last-tool-error.json .omc/state/subagent-tracking.json && git add .omc/project-memory.json .om...",
-  "error": "Exit code 1\nUpdated 4 paths from the index\nThe following paths are ignored by one of your .gitignore files:\n.omc\nhint: Use -f if you really want to add them.\nhint: Disable this message with \"git config set advice.addIgnoredFile false\"",
-  "timestamp": "2026-04-08T16:05:51.637Z",
+  "tool_input_preview": "{\"command\":\"sed -i 's/result\\\\.thinking\\\\?/result.value.thinking/g' test/unit/llm/provider-adapters.test.ts\",\"description\":\"Fix result.thinking patterns\"}",
+  "error": "Exit code 1\nsed: 2: \"test/unit/llm/provider- ...\": undefined label 'est/unit/llm/provider-adapters.test.ts'",
+  "timestamp": "2026-04-08T23:56:57.145Z",
   "retry_count": 1
 }

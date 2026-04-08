@@ -18,6 +18,8 @@ import { Domain } from '../types/domains.js';
 import type { SwarmPersona } from '../swarm/types.js';
 import type { DesignConstraints, CriticConfig, LIREvaluationContext } from '../aesthetic/types.js';
 import { LLMClient } from '../llm/LLMClient.js';
+import { Result, ok, err } from 'neverthrow';
+import { LLMError } from '../llm/errors.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -327,18 +329,22 @@ export class LLMScoringStrategy implements ScoringStrategy {
     this.llm = llm ?? new LLMClient({ role: 'evaluator' });
   }
 
-  async score(input: ScoringInput): Promise<ScoringResult> {
+  /**
+   * Score with Result return — callers must explicitly handle LLM failures.
+   * Use this instead of score() when silent fallback to 0.5 is undesirable.
+   */
+  async scoreWithResult(input: ScoringInput): Promise<Result<ScoringResult, LLMError>> {
     const criteria = input.criteria?.join(', ') ?? 'technical quality, creativity, novelty';
     const systemPrompt = `You are an expert creative artifact evaluator. Score the artifact against the given criteria.
-Return ONLY a JSON object with this exact structure:
-{
-  "score": <number 0-1>,
-  "technical": <number 0-1>,
-  "creative": <number 0-1>,
-  "novelty": <number 0-1>,
-  "reasoning": "<brief explanation>",
-  "suggestions": ["<suggestion1>", ...]
-}`;
+	Return ONLY a JSON object with this exact structure:
+	{
+	  "score": <number 0-1>,
+	  "technical": <number 0-1>,
+	  "creative": <number 0-1>,
+	  "novelty": <number 0-1>,
+	  "reasoning": "<brief explanation>",
+	  "suggestions": ["<suggestion1>", ...]
+	}`;
 
     const userPrompt = `Criteria: ${criteria}\nDomain: ${input.domain ?? 'general'}\n${input.prompt ? `Prompt: ${input.prompt}\n` : ''}Artifact:\n${input.output}`;
 
@@ -346,12 +352,12 @@ Return ONLY a JSON object with this exact structure:
       const response = await this.llm.generate(systemPrompt, userPrompt);
 
       if (!response.success || !response.code) {
-        return { score: 0.5, dimensions: {}, strategy: this.name, issues: ['LLM evaluation failed'] };
+        return err(new LLMError('LLM evaluation failed: no successful response', 'scoring-engine', undefined, true));
       }
 
       const jsonMatch = response.code.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-        return { score: 0.5, dimensions: {}, strategy: this.name, issues: ['Could not parse LLM response'] };
+        return err(new LLMError('LLM evaluation failed: could not parse LLM response', 'scoring-engine', undefined, true));
       }
 
       const parsed = JSON.parse(jsonMatch[0]);
@@ -360,17 +366,33 @@ Return ONLY a JSON object with this exact structure:
       if (typeof parsed.creative === 'number') dimensions.creative = Math.max(0, Math.min(1, parsed.creative));
       if (typeof parsed.novelty === 'number') dimensions.novelty = Math.max(0, Math.min(1, parsed.novelty));
 
-      return {
+      return ok({
         score: Math.max(0, Math.min(1, typeof parsed.score === 'number' ? parsed.score : 0.5)),
         dimensions,
         strategy: this.name,
         issues: Array.isArray(parsed.suggestions) ? parsed.suggestions : [],
         report: { reasoning: parsed.reasoning || '' },
-      };
-    } catch (err) {
-      Logger.warn('ScoringEngine', 'LLM evaluation parse failed:', err);
-      return { score: 0.5, dimensions: {}, strategy: this.name, issues: ['LLM evaluation error'] };
+      });
+    } catch (error) {
+      Logger.warn('ScoringEngine', 'LLM evaluation parse failed:', error);
+      return err(new LLMError('LLM evaluation error', 'scoring-engine', undefined, true));
     }
+  }
+
+  /**
+   * Interface-compliant score() — delegates to scoreWithResult().
+   * Returns neutral 0.5 score on LLM failure for backward compatibility.
+   * Prefer scoreWithResult() for callers that need explicit error handling.
+   */
+  async score(input: ScoringInput): Promise<ScoringResult> {
+    const result = await this.scoreWithResult(input);
+    return result.match(
+      (scoringResult) => scoringResult,
+      (error) => {
+        Logger.warn('ScoringEngine', `LLM evaluation failed, using neutral score: ${error.message}`);
+        return { score: 0.5, dimensions: {}, strategy: this.name, issues: [error.message] };
+      },
+    );
   }
 }
 

@@ -412,11 +412,6 @@ class Bus extends EventEmitter {
     return null;
   }
 
-  /** Extract message string from event data safely */
-  private extractMessage(data: Record<string, unknown>): string {
-    const message = data.message;
-    return typeof message === 'string' ? message : '';
-  }
 }
 
 /** Singleton EventBus instance. Import and use across the codebase. */

@@ -20,7 +20,7 @@ export class ServerError extends LiminalError {
         ...(options?.endpoint && { endpoint: options.endpoint }),
         ...(options?.cause instanceof Error && { causeMessage: options.cause.message }),
       },
-      options
+      { cause: options?.cause instanceof Error ? options.cause : undefined }
     );
     this.port = options?.port;
     this.endpoint = options?.endpoint;

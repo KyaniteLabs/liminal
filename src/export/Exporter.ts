@@ -20,7 +20,7 @@ import {
 } from '../utils/validation.js';
 import { RemotionRenderer } from '../render/RemotionRenderer.js';
 import { ValidationError } from '../errors/ValidationError.js';
-import { ExportError, SecurityError } from '../errors/index.js';
+import { ExportError } from '../errors/index.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
 
 export interface ProjectIteration {

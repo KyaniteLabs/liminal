@@ -13,7 +13,7 @@ import { RetryManager } from './RetryManager.js';
 import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
-import { validateUrl, validateUrlSync, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
+import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';

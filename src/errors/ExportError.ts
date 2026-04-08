@@ -20,7 +20,7 @@ export class ExportError extends LiminalError {
         ...(options?.format && { format: options.format }),
         ...(options?.cause instanceof Error && { causeMessage: options.cause.message }),
       },
-      options
+      { cause: options?.cause instanceof Error ? options.cause : undefined }
     );
     this.path = options?.path;
     this.format = options?.format;
@@ -47,7 +47,7 @@ export class SecurityError extends LiminalError {
         ...(options?.reason && { reason: options.reason }),
         ...(options?.cause instanceof Error && { causeMessage: options.cause.message }),
       },
-      options
+      { cause: options?.cause instanceof Error ? options.cause : undefined }
     );
     this.path = options?.path;
     this.reason = options?.reason;

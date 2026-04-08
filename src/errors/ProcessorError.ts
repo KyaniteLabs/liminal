@@ -18,7 +18,7 @@ export class ProcessorError extends LiminalError {
         ...(options?.jobId && { jobId: options.jobId }),
         ...(options?.cause instanceof Error && { causeMessage: options.cause.message }),
       },
-      options
+      { cause: options?.cause instanceof Error ? options.cause : undefined }
     );
     this.jobId = options?.jobId;
   }

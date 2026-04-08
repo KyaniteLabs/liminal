@@ -32,6 +32,8 @@ export interface GenerationResult {
   thinking?: string;
   model?: string;
   recoveredFromThinking?: boolean;
+  /** Non-fatal errors from side-effects (gallery save, mining, etc.) */
+  warnings?: string[];
 }
 
 /**
@@ -146,12 +148,15 @@ export class GenerationOrchestrator {
     });
 
     const swarmResult = await orchestrator.run(prompt, this.options.swarmMode);
+    const warnings: string[] = [];
 
     if (this.options.project) {
       try {
         await this.gallery.saveSwarmSession(this.options.project, swarmResult);
       } catch (err) {
-        Logger.warn('GenerationOrchestrator', 'Swarm session save failed:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        Logger.error('GenerationOrchestrator', 'Swarm session save failed:', err);
+        warnings.push(`Swarm session save failed: ${msg}`);
       }
     }
 
@@ -162,11 +167,13 @@ export class GenerationOrchestrator {
           this.archiveLearning.addFragment(fragment, this.options.collabDomain || 'p5');
         }
       } catch (err) {
-        Logger.warn('GenerationOrchestrator', 'Swarm mining failed:', err);
+        const msg = err instanceof Error ? err.message : String(err);
+        Logger.error('GenerationOrchestrator', 'Swarm mining failed:', err);
+        warnings.push(`Swarm mining failed: ${msg}`);
       }
     }
 
-    return { code: swarmResult.finalOutput };
+    return { code: swarmResult.finalOutput, warnings: warnings.length > 0 ? warnings : undefined };
   }
 
   /**

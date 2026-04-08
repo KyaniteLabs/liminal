@@ -56,9 +56,6 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
-  // Reset modules cache for environment-dependent tests
-  vi?.resetModules?.();
-  
   // Ensure test environment is set
   process.env.NODE_ENV = 'test';
   process.env.VITEST = 'true';

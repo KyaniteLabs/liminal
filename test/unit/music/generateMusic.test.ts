@@ -12,6 +12,7 @@ import { SCALE_INTERVALS, NOTES } from '../../../src/music/TheoryEngine.js';
 const mockIsConfigured = vi.hoisted(() => vi.fn());
 const mockRender = vi.hoisted(() => vi.fn());
 const mockWarn = vi.hoisted(() => vi.fn());
+const mockError = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../src/llm/LLMClient.js', () => ({
   LLMClient: Object.assign(vi.fn(), { isConfigured: mockIsConfigured }),
@@ -22,7 +23,7 @@ vi.mock('../../../src/prompts/index.js', () => ({
 }));
 
 vi.mock('../../../src/utils/Logger.js', () => ({
-  Logger: { warn: mockWarn },
+  Logger: { warn: mockWarn, info: vi.fn(), error: mockError },
 }));
 
 // ---------------------------------------------------------------------------
@@ -357,7 +358,7 @@ describe('LLM fallback to template', () => {
     });
 
     expect(result.code).toContain('setcps');
-    expect(mockWarn).toHaveBeenCalled();
+    expect(mockError).toHaveBeenCalled();
   });
 
   it('falls back to p5 template when LLM fails on p5-webaudio', async () => {

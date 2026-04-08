@@ -21,8 +21,10 @@ const { mockReadFile } = vi.hoisted(() => ({ mockReadFile: vi.fn() }));
 vi.mock('node:fs/promises', () => ({
   default: {
     readFile: mockReadFile,
+    realpath: vi.fn((p: string) => Promise.resolve(p)),
   },
   readFile: mockReadFile,
+  realpath: vi.fn((p: string) => Promise.resolve(p)),
 }));
 
 // ---------------------------------------------------------------------------
@@ -61,70 +63,57 @@ function makeGuard(prefixes: string[]): ValidationGuard {
 describe('ValidationGuard.validatePath', () => {
   const guard = makeGuardWithCwd();
 
-  it('allows paths within src/', () => {
-    const result = guard.validatePath('src/index.ts');
+  it('allows paths within src/', async () => {
+    const result = await guard.validatePath('src/index.ts');
 
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
   });
 
-  it('allows paths within test/', () => {
-    const result = guard.validatePath('test/unit/foo.test.ts');
+  it('allows paths within test/', async () => {
+    const result = await guard.validatePath('test/unit/foo.test.ts');
 
     expect(result.valid).toBe(true);
     expect(result.errors).toEqual([]);
   });
 
-  it('rejects paths outside allowed directories', () => {
-    const result = guard.validatePath('/etc/passwd');
-
-    expect(result.valid).toBe(false);
-    expect(result.errors.length).toBeGreaterThanOrEqual(1);
-    expect(result.errors[0]).toContain('outside allowed directories');
+  it('rejects paths outside allowed directories', async () => {
+    await expect(guard.validatePath('/etc/passwd')).rejects.toThrow('outside allowed directories');
   });
 
-  it('rejects paths with directory traversal (..)', () => {
-    const result = guard.validatePath('../secret/keys.pem');
-
-    expect(result.valid).toBe(false);
-    const traversalError = result.errors.find(e => e.includes("'..'"));
-    expect(traversalError).toBeDefined();
+  it('rejects paths with directory traversal (..)', async () => {
+    await expect(guard.validatePath('../secret/keys.pem')).rejects.toThrow("'..'");
   });
 
-  it('warns about absolute paths when allowAbsolute is not set', () => {
-    const result = guard.validatePath('/absolute/path/file.ts', { allowAbsolute: false });
+  it('warns about absolute paths when allowAbsolute is not set', async () => {
+    const cwd = process.cwd();
+    const result = await guard.validatePath(path.join(cwd, 'src', 'file.ts'), { allowAbsolute: false });
 
     expect(result.warnings.length).toBe(1);
     expect(result.warnings[0]).toContain('absolute');
   });
 
-  it('does not warn about absolute paths when allowAbsolute is true', () => {
+  it('does not warn about absolute paths when allowAbsolute is true', async () => {
     const cwd = process.cwd();
-    const result = guard.validatePath(path.join(cwd, 'src', 'file.ts'), { allowAbsolute: true });
+    const result = await guard.validatePath(path.join(cwd, 'src', 'file.ts'), { allowAbsolute: true });
 
     expect(result.warnings).toEqual([]);
   });
 
-  it('accepts custom allowedPrefixes via options', () => {
-    const result = guard.validatePath('/custom/dir/file.ts', {
+  it('accepts custom allowedPrefixes via options', async () => {
+    const result = await guard.validatePath('/custom/dir/file.ts', {
       allowedPrefixes: ['/custom/dir'],
     });
 
     expect(result.valid).toBe(true);
   });
 
-  it('blocks path traversal via nested .. segments', () => {
-    const result = guard.validatePath('src/../../../etc/shadow');
-
-    expect(result.valid).toBe(false);
-    const traversalError = result.errors.find(e => e.includes("'..'"));
-    expect(traversalError).toBeDefined();
+  it('blocks path traversal via nested .. segments', async () => {
+    await expect(guard.validatePath('src/../../../etc/shadow')).rejects.toThrow("'..'");
   });
 
-  it('rejects paths in disallowed project directories', () => {
-    const result = guard.validatePath('node_modules/package/index.js');
-
-    expect(result.valid).toBe(false);
+  it('rejects paths in disallowed project directories', async () => {
+    await expect(guard.validatePath('node_modules/package/index.js')).rejects.toThrow('outside allowed directories');
   });
 });
 

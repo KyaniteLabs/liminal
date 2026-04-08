@@ -13,7 +13,7 @@ import { RetryManager } from './RetryManager.js';
 import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
-import { validateUrlSync, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
+import { validateUrl, validateUrlSync, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
@@ -394,16 +394,17 @@ export class LLMClient {
 
   // ── Provider delegation ──
 
-  /** Get or create the provider instance */
-  private getProvider(): BaseProvider {
+  /** Get or create the provider instance (async for DNS-based SSRF validation) */
+  private async getProvider(): Promise<BaseProvider> {
     if (!this.provider) {
       // SSRF validation on base URL before creating provider
-      const allowLocalhost = process.env.LIMINAL_ALLOW_LOCALHOST_LLM !== 'false';
+      // Default: localhost NOT allowed. Set LIMINAL_ALLOW_LOCALHOST_LLM=true to enable.
+      const allowLocalhost = process.env.LIMINAL_ALLOW_LOCALHOST_LLM === 'true';
       const allowPrivateIPs = process.env.LIMINAL_ALLOW_PRIVATE_IP_LLM === 'true';
       const allowedHosts = getAllowedHostsFromEnv();
 
       try {
-        validateUrlSync(this.config.baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
+        await validateUrl(this.config.baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
       } catch (err) {
         if (err instanceof SSRFError) {
           throw new LLMError(`SSRF Protection: ${err.message}`, 'llm', undefined, false);
@@ -572,7 +573,7 @@ export class LLMClient {
       
       const result = await RetryManager.executeWithRetry(async () => {
         return this.generateWithBreaker(providerName, async () => {
-          const provider = this.getProvider();
+          const provider = await this.getProvider();
           const req: ProviderRequest = {
             systemPrompt,
             userPrompt,
@@ -751,7 +752,7 @@ Rules:
       });
 
       const result = await RetryManager.executeWithRetry(async () => {
-        const provider = this.getProvider();
+        const provider = await this.getProvider();
         const req: ProviderRequest = {
           systemPrompt,
           userPrompt: prompt,
@@ -867,7 +868,7 @@ Rules:
     this.syncResolvedModel(resolvedModel);
 
     try {
-      const provider = this.getProvider();
+      const provider = await this.getProvider();
 
       // Only use native tools if the provider supports them
       if (!provider.supportsToolUse()) {
@@ -934,7 +935,7 @@ Rules:
     const resolvedModel = await this.resolveModel();
     this.syncResolvedModel(resolvedModel);
 
-    const provider = this.getProvider();
+    const provider = await this.getProvider();
     const req: ProviderRequest = {
       systemPrompt,
       userPrompt,
@@ -1014,7 +1015,7 @@ Rules:
       promptPreview: userPrompt.slice(0, 100),
     });
 
-    const provider = this.getProvider();
+    const provider = await this.getProvider();
     const req: ProviderRequest = {
       systemPrompt,
       userPrompt,

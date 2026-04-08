@@ -120,8 +120,7 @@ export class RalphLoop {
     const gitIntegration = new GitIntegration(normalizedOptions.git ?? {});
     await gitIntegration.startRun(normalizedOptions.project ?? `run-${Date.now()}`);
 
-    try {
-      // Voice-driven visual mapping: analyze audio file if provided
+    // Voice-driven visual mapping: analyze audio file if provided
     if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
       try {
         const { AudioAnalyzer } = await import('../audio/index.js');

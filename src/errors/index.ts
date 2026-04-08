@@ -9,6 +9,7 @@ export { LiminalError } from './base.js';
 export { ConfigError } from './ConfigError.js';
 export { ValidationError } from './ValidationError.js';
 export { GenerationError } from './GenerationError.js';
+export { LLMGenerationError } from './LLMGenerationError.js';
 export { GitError, GitRepoError, GitCommitError, GitPushError, GitStashError } from './GitError.js';
 export { CompostError, CompostDigestError, CompostSoupError, CompostStoreError } from './CompostError.js';
 export { PersistenceError } from './PersistenceError.js';

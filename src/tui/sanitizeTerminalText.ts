@@ -1,5 +1,7 @@
-// eslint-disable-next-line no-control-regex -- intentionally matches ANSI escape sequences
-const ANSI_ESCAPE_REGEX = /\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])/g;
+// eslint-disable-next-line no-control-regex -- intentionally matches ANSI escape sequences including RIS (reset \x1B c)
+const ANSI_ESCAPE_REGEX = /\x1B(?:[@-Z\\-_\x63]|\[[0-?]*[ -/]*[@-~])/g;
+// Matches OSC (Operating System Command) sequences like \x1B]0;title\x07
+const OSC_REGEX = /\x1B\][^\x07]*\x07/g;
 // eslint-disable-next-line no-control-regex -- intentionally matches control characters for sanitization
 const CONTROL_CHARS_REGEX = /[\u0000-\u0008\u000B-\u001F\u007F]/g;
 const PROMPT_PREVIEW_REGEXES = [
@@ -19,6 +21,7 @@ export function sanitizeTerminalText(
   const { maxLength = 160, singleLine = false } = options;
 
   let sanitized = text
+    .replace(OSC_REGEX, '')
     .replace(ANSI_ESCAPE_REGEX, '')
     .replace(/\r/g, '')
     .replace(CONTROL_CHARS_REGEX, '');

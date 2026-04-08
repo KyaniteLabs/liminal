@@ -2,6 +2,7 @@
 
 import { LLMError, LLMTimeoutError, LLMAuthError, LLMRateLimitError } from './errors.js';
 export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './errors.js';
+import { LLMGenerationError } from '../errors/LLMGenerationError.js';
 
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { PromptLibrary } from '../prompts/index.js';
@@ -605,11 +606,11 @@ export class LLMClient {
         duration: Date.now() - llmStartTime,
       });
 
-      return {
-        code: `// LLM generation failed: ${errMsg}`,
-        success: false,
-        error: errMsg,
-      };
+      throw new LLMGenerationError(`LLM generation failed: ${errMsg}`, {
+        cause: error instanceof Error ? error : undefined,
+        model: this.config.model,
+        duration: Date.now() - llmStartTime,
+      });
     }
   }
 

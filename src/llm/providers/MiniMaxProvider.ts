@@ -106,7 +106,9 @@ export class MiniMaxProvider extends BaseProvider {
       }
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || 300000) : undefined;
 
     Logger.debug('MiniMaxProvider', `Request to ${url} with model ${this.config.model}`);
 
@@ -220,6 +222,10 @@ export class MiniMaxProvider extends BaseProvider {
         error: `MiniMax request failed: ${errorMsg}`,
         finishReason: 'error',
       };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
@@ -261,7 +267,9 @@ export class MiniMaxProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || 300000) : undefined;
 
     Logger.debug('MiniMaxProvider', `Anthropic-mode request to ${url} with model ${this.config.model}`);
 
@@ -314,6 +322,10 @@ export class MiniMaxProvider extends BaseProvider {
         error: `MiniMax Anthropic request failed: ${errorMsg}`,
         finishReason: 'error',
       };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
@@ -337,7 +349,9 @@ export class MiniMaxProvider extends BaseProvider {
       stream: true,
     };
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || 300000) : undefined;
 
     try {
       const response = await fetch(url, {
@@ -362,6 +376,10 @@ export class MiniMaxProvider extends BaseProvider {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       yield { type: 'error', error: `MiniMax stream failed: ${errorMsg}` };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 
@@ -398,7 +416,9 @@ export class MiniMaxProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || 300000) : undefined;
 
     try {
       const response = await fetch(url, {
@@ -423,6 +443,10 @@ export class MiniMaxProvider extends BaseProvider {
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       yield { type: 'error', error: `MiniMax Anthropic stream failed: ${errorMsg}` };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 }

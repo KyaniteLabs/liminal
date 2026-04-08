@@ -1,0 +1,77 @@
+#version 330 소
+precision highp float;
+
+uniform float u_time;
+uniform vec2 u_resolution;
+uniform vec2 v_uv;
+
+// Simple pseudo-random hash function for noise
+float hash(vec2 p) {
+    return fract(sin(dot(p.xy, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+// Flowing noise function (using multiple offsets and time)
+float fluid_noise(vec2 p, float t) {
+    float n1 = hash(vec2(p.x * 0.1 + t * 0.1, p.y * 0.1));
+    float n2 = hash(vec2(p.x * 0.2 - t * 0.2, p.y * 0.2));
+    float n3 = hash(vec2(p.x * 0.15 + t * 0.15, p.y * 0.15));
+
+    // Combine and smooth the noise
+    float noise = sin(n1 * 5.0 + t * 0.5) * 0.5 + 0.5;
+    noise += cos(n2 * 3.0 + t * 0.7) * 0.3;
+    noise += sin(n3 * 7.0 - t * 0.3) * 0.2;
+
+    return abs(noise) * 1.5;
+}
+
+void main() {
+    // Normalized coordinates
+    vec2 uv = v_uv * 3.0;
+
+    // Time-varying offset for movement
+    float t = u_time * 0.15;
+
+    // --- Plasma Core Calculation ---
+
+    // Layer 1: Base flow (slow, large scale)
+    float flow1 = fluid_noise(uv * 0.5, t * 0.5);
+
+    // Layer 2: Mid-frequency ripple (faster movement)
+    float flow2 = fluid_noise(uv * 1.2, t * 1.2);
+
+    // Layer 3: High-frequency detail (energy spikes)
+    float flow3 = fluid_noise(uv * 2.5, t * 2.5);
+
+    // Combine flows into a density map (0.0 to 1.0)
+    float plasma_density = (flow1 * 0.4 + flow2 * 0.4 + flow3 * 0.2);
+
+    // Sharpen the edges and create plasma 'blobs'
+    float intensity = pow(plasma_density - 0.1, 2.0) * 0.8 + 0.2;
+
+    // --- Color Mapping ---
+
+    // Use the intensity map to drive color shifts
+    vec3 color_shift = sin(intensity * 10.0 + t * 0.5) * 0.5 + 0.5;
+    vec3 color_shift_2 = cos(intensity * 8.0 - t * 0.7) * 0.5 + 0.5;
+
+    // Base color palette (Deep blues, magentas, purples)
+    vec3 base_color = vec3(0.2, 0.1, 0.5);
+    vec3 plasma_color = mix(vec3(0.1, 0.1, 0.3), vec3(0.8, 0.5, 1.0), color_shift);
+
+    // Mix the plasma color with the base and apply the secondary shift
+    vec3 final_color = plasma_color * (1.0 - color_shift_2 * 0.3) + base_color * color_shift_2 * 0.3;
+
+    // --- Glow and Emission ---
+
+    // Calculate glow based on the highest intensity points
+    float glow_factor = smoothstep(0.8, 0.2, intensity);
+    
+    // Apply slight screen quad effect (vignette)
+    float vignette = 1.0 - pow(length(v_uv - 0.5) * 2.0, 1.5);
+
+    // Final output color: High intensity = high glow
+    vec3 final_output = final_color * glow_factor * 1.5 + vec3(0.0, 0.0, 0.0) * (1.0 - glow_factor);
+
+    // Apply vignette and ensure correct contrast
+    gl_FragColor = vec4(final_output * vignette, 1.0);
+}

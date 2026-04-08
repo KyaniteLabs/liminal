@@ -286,9 +286,9 @@ class AestheticStrategy implements ScoringStrategy {
     }
   }
 
-  score(input: ScoringInput): ScoringResult {
-    // Fire-and-forget LLM wiring (non-blocking)
-    void this.wireLLM();
+  async score(input: ScoringInput): Promise<ScoringResult> {
+    // Ensure LLM is wired before scoring (handles errors internally)
+    await this.wireLLM();
     const report = this.critic.critique(
       input.output,
       input.criticConfig,

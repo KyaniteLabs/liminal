@@ -39,6 +39,7 @@ import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 import { metaHarness } from '../harness/MetaHarnessIntegration.js';
+import { LLMGenerationError } from '../errors/LLMGenerationError.js';
 
 // Extracted modules
 import {
@@ -162,7 +163,7 @@ export class RalphLoop {
         clearTimeout(timeout);
 
         if (exitCode !== 0) {
-          throw new Error(`ffmpeg exited with code ${exitCode}`);
+          throw new LLMGenerationError(`ffmpeg exited with code ${exitCode}`, { model: 'ffmpeg' });
         }
 
         const pcmBuffer = Buffer.concat(chunks);
@@ -227,6 +228,7 @@ export class RalphLoop {
     const CONVERGENCE_THRESHOLD = 0.01;
 
     // Main loop
+    try {
     while (iteration < normalizedOptions.maxIterations) {
       if (normalizedOptions.signal?.aborted) {
         reason = 'aborted by user';
@@ -766,14 +768,16 @@ export class RalphLoop {
         }
 
         // Record routing outcome for dynamic routing
-        recordRoutingOutcome({
-          domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
-          model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
-          qualityScore: evaluation.score,
-          timestamp: new Date().toISOString(),
-        }).catch((err) => {
+        try {
+          await recordRoutingOutcome({
+            domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
+            model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
+            qualityScore: evaluation.score,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
           Logger.warn('RalphLoop', 'Failed to record routing outcome:', err instanceof Error ? err.message : err);
-        });
+        }
 
         // Store previous code before saving current iteration
         previousCode = currentCode;
@@ -895,10 +899,12 @@ export class RalphLoop {
       }
     }
 
-    const duration = Date.now() - startTime;
+    } finally {
+      // Git: end run, restore original branch (always cleanup)
+      await gitIntegration.endRun(reason || 'loop ended');
+    }
 
-    // Git: end run, restore original branch
-    await gitIntegration.endRun(reason || 'loop ended');
+    const duration = Date.now() - startTime;
 
     // Report final result to Meta-Harness (skip during tests to avoid log pollution)
     if (process.env.NODE_ENV !== 'test') {

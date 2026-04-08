@@ -20,6 +20,7 @@ import {
 } from '../utils/validation.js';
 import { RemotionRenderer } from '../render/RemotionRenderer.js';
 import { ValidationError } from '../errors/ValidationError.js';
+import { ExportError } from '../errors/index.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
 
 export interface ProjectIteration {
@@ -68,16 +69,20 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`, 
-        { cause: error instanceof Error ? error : undefined });
+      throw new ExportError(
+        `Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined, path: dir, format: 'html' }
+      );
     }
 
     // Write HTML file
     try {
       await fs.writeFile(outputPath, html, 'utf-8');
     } catch (error) {
-      throw new Error(`Failed to export HTML: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { cause: error instanceof Error ? error : undefined });
+      throw new ExportError(
+        `Failed to export HTML: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined, path: outputPath, format: 'html' }
+      );
     }
   }
 
@@ -95,7 +100,7 @@ export class Exporter {
     // Structural validation before saving
     const validation = CodeValidator.validate(code);
     if (!validation.valid) {
-      throw new Error(`Code validation failed: ${validation.errors.join('; ')}`);
+      throw new ValidationError('Code validation failed', validation.errors);
     }
     code = validation.cleanedCode;
 
@@ -104,8 +109,10 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { cause: error instanceof Error ? error : undefined });
+      throw new ExportError(
+        `Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined, path: dir, format: 'js' }
+      );
     }
 
     // Write JavaScript file
@@ -129,8 +136,10 @@ export class Exporter {
     try {
       await fs.writeFile(outputPath, jsContent, 'utf-8');
     } catch (error) {
-      throw new Error(`Failed to export JS: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { cause: error instanceof Error ? error : undefined });
+      throw new ExportError(
+        `Failed to export JS: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined, path: outputPath, format: 'js' }
+      );
     }
   }
 
@@ -143,7 +152,7 @@ export class Exporter {
   async exportZIP(project: Project, outputPath: string): Promise<void> {
     // Validate project
     if (!project || typeof project !== 'object') {
-      throw new Error('Project is required');
+      throw new ValidationError('Project is required');
     }
 
     // Validate inputs
@@ -155,8 +164,10 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { cause: error instanceof Error ? error : undefined });
+      throw new ExportError(
+        `Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined, path: dir, format: 'zip' }
+      );
     }
 
     // Create ZIP archive
@@ -168,12 +179,12 @@ export class Exporter {
 
       // Handle archive errors
       archive.on('error', (err) => {
-        reject(new Error(`Failed to create ZIP: ${err.message}`, { cause: err }));
+        reject(new ExportError(`Failed to create ZIP: ${err.message}`, { cause: err, path: outputPath, format: 'zip' }));
       });
 
       // Handle output stream errors
       output.on('error', (err) => {
-        reject(new Error(`Failed to write ZIP: ${err.message}`, { cause: err }));
+        reject(new ExportError(`Failed to write ZIP: ${err.message}`, { cause: err, path: outputPath, format: 'zip' }));
       });
 
       // Finalize the archive when done
@@ -232,7 +243,7 @@ export class Exporter {
 
     // Validate domain
     if (!options?.domain) {
-      throw new Error('VideoExportOptions domain is required');
+      throw new ValidationError('VideoExportOptions domain is required');
     }
 
     const {
@@ -248,8 +259,10 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
-        { cause: error instanceof Error ? error : undefined });
+      throw new ExportError(
+        `Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined, path: dir, format: 'video' }
+      );
     }
 
     if (domain === 'remotion') {

@@ -56,6 +56,11 @@ const DEFAULT_CONFIG: CircuitBreakerConfig = {
  * `recordFailure()` to automatically isolate failing providers and recover
  * once they start responding again.
  *
+ * Note: State mutations (recordSuccess, recordFailure, reset) are synchronous.
+ * In Node.js single-threaded event loop, synchronous operations are atomic
+ * relative to other JavaScript execution. Concurrent async operations will
+ * interleave but each individual state update completes before yielding.
+ *
  * @example
  * ```ts
  * const breaker = new CircuitBreaker({ failureThreshold: 3 });
@@ -109,6 +114,8 @@ export class CircuitBreaker {
    * Returns `true` when the breaker is **closed** (healthy) or **half-open**
    * (probing).  Returns `false` when the breaker is **open** (tripped) and
    * the reset timeout has not yet elapsed.
+   *
+   * This method first checks for state transitions due to timeout.
    */
   canExecute(): boolean {
     this.checkStateTransition();
@@ -118,7 +125,11 @@ export class CircuitBreaker {
     }
 
     if (this.state === 'half-open') {
-      return this.halfOpenAttempts < this.config.halfOpenMaxAttempts;
+      const canAttempt = this.halfOpenAttempts < this.config.halfOpenMaxAttempts;
+      if (canAttempt) {
+        this.halfOpenAttempts++;
+      }
+      return canAttempt;
     }
 
     // open
@@ -130,6 +141,8 @@ export class CircuitBreaker {
    *
    * Increments the lifetime success counter, resets the consecutive-failure
    * streak, and — if the breaker was half-open — closes the circuit.
+   *
+   * State mutations are synchronous and atomic within the Node.js event loop.
    */
   recordSuccess(): void {
     this.successCount++;
@@ -147,6 +160,8 @@ export class CircuitBreaker {
    * Increments the consecutive-failure counter and trips the breaker open if
    * the threshold is reached.  In the half-open state a single failure is
    * enough to re-open the circuit immediately.
+   *
+   * State mutations are synchronous and atomic within the Node.js event loop.
    */
   recordFailure(): void {
     this.failureCount++;
@@ -194,6 +209,8 @@ export class CircuitBreaker {
    *
    * Clears the failure counter and resets the half-open probe window.
    * Useful for administrative overrides or health-check endpoints.
+   *
+   * State mutations are synchronous and atomic within the Node.js event loop.
    */
   reset(): void {
     this.failureCount = 0;

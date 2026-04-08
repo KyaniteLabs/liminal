@@ -101,12 +101,14 @@ export async function generateMusic(options: GenerateMusicOptions): Promise<Gene
       const code = await generateMusicLLM(prompt, bpm, platform, signal, llm);
       if (code) return { code };
     } catch (err) {
-      // Fall through to template
-      Logger.warn('generateMusic', 'LLM generation failed, falling back to template:', err);
+      // Log error but continue to template fallback
+      Logger.error('generateMusic', 'LLM generation failed, using template fallback:', err);
+      // Continue to template fallback - don't throw to ensure user gets something
     }
   }
 
-  // Template fallback
+  // Template fallback - always indicate this is a template
+  Logger.info('generateMusic', `Using template fallback for platform: ${platform}`);
   if (platform === 'strudel') {
     const code = getStrudelCode(p, bpm);
     return { code };

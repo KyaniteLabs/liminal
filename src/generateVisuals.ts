@@ -48,12 +48,14 @@ export async function generateVisuals(
       const code = await generateVisualsLLM(prompt, platform, audioInput, signal, llm);
       if (code) return { code };
     } catch (err) {
-      // Fall through to template
-      Logger.warn('generateVisuals', 'LLM generation failed, falling back to template: ' + err);
+      // Log error but continue to template fallback
+      Logger.error('generateVisuals', 'LLM generation failed, using template fallback:', err);
+      // Continue to template fallback - don't throw to ensure user gets something
     }
   }
 
-  // Template fallback
+  // Template fallback - always indicate this is a template
+  Logger.info('generateVisuals', `Using template fallback for platform: ${platform}`);
   if (platform === 'hydra') {
     return { code: generateHydraCode(trimmedPrompt, !!audioInput, audioInput) };
   }

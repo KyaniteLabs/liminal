@@ -7,6 +7,7 @@ import {
   validateFilePath, 
   PathSanitizationError 
 } from '../security/PathSanitizer.js';
+import { ExportError } from '../errors/ExportError.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -128,9 +129,15 @@ export class VideoExporter {
     } catch (error: unknown) {
       const err = error as { code?: string; message?: string };
       if (err.code === 'ENOENT') {
-        throw new Error(`FFmpeg not found at '${this.ffmpegPath}'. Install FFmpeg and ensure it is on PATH.`);
+        throw new ExportError(
+          `FFmpeg not found at '${this.ffmpegPath}'. Install FFmpeg and ensure it is on PATH.`,
+          { cause: error instanceof Error ? error : undefined, format: 'video' }
+        );
       }
-      throw new Error(`FFmpeg failed: ${err.message}`, { cause: error });
+      throw new ExportError(
+        `FFmpeg failed: ${err.message}`,
+        { cause: error instanceof Error ? error : undefined, format: 'video' }
+      );
     }
   }
 }

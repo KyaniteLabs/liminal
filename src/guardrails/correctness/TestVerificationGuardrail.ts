@@ -4,7 +4,7 @@
  * Ensures all tests pass after code changes.
  */
 
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { promisify } from 'util';
 import {
   GuardrailRule,
@@ -15,7 +15,7 @@ import {
 } from '../core/types.js';
 import { Logger } from '../../utils/Logger.js';
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
 
 export interface TestRunResult {
   passed: boolean;
@@ -133,18 +133,12 @@ export class TestVerificationGuardrail implements GuardrailRule {
     }
     
     try {
-      // Run vitest on specific test files
-      const testPattern = testFiles.length > 0 
-        ? testFiles.join(' ')
-        : '';
-      
-      const { stdout, stderr } = await execAsync(
-        `npx vitest run ${testPattern} --reporter=json 2>&1`,
-        {
-          timeout: 120000,
-          cwd: process.cwd(),
-        }
-      );
+      // Run vitest on specific test files using execFile (no shell interpolation)
+      const args = ['vitest', 'run', ...testFiles, '--reporter', 'json'];
+      const { stdout, stderr } = await execFileAsync('npx', args, {
+        timeout: 120000,
+        cwd: process.cwd(),
+      });
       
       // Parse test results
       return this.parseTestResults(stdout + stderr);

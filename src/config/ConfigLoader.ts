@@ -163,6 +163,32 @@ export interface ModelConfig {
   maxTokens?: number;
 }
 
+/** Type guard for ProjectConfig */
+function isValidProjectConfig(value: unknown): value is ProjectConfig {
+  if (typeof value !== 'object' || value === null) return false;
+
+  // Basic structure validation - allow empty object as valid minimal config
+  return true;
+}
+
+/** Type guard for UserConfig */
+function isValidUserConfig(value: unknown): value is UserConfig {
+  if (typeof value !== 'object' || value === null) return false;
+  const obj = value as Record<string, unknown>;
+  
+  // Must have providers object if present
+  if (obj.providers !== undefined) {
+    if (typeof obj.providers !== 'object' || obj.providers === null) return false;
+  }
+  
+  // defaultProvider must be string if present
+  if (obj.defaultProvider !== undefined && typeof obj.defaultProvider !== 'string') {
+    return false;
+  }
+  
+  return true;
+}
+
 /** Multi-model router configuration */
 export interface MultiModelConfig {
   /** Primary/fast model (e.g., Qwen3.5-9B for speed) */
@@ -237,13 +263,21 @@ export async function loadProjectConfig(configDirOrPath?: string): Promise<Resul
   }
   try {
     const content = await fs.readFile(projectConfigPath, 'utf-8');
-    return ok(JSON.parse(content) as ProjectConfig);
+    const parsed: unknown = JSON.parse(content);
+    if (!isValidProjectConfig(parsed)) {
+      return reject(new PersistenceError('Invalid project config structure', { retryable: false }));
+    }
+    return ok(parsed);
   } catch (readError) {
     // Fallback: try legacy atelier.json filename
     const legacyPath = projectConfigPath.replace(/liminal\.json$/, 'atelier.json');
     try {
       const content = await fs.readFile(legacyPath, 'utf-8');
-      return ok(JSON.parse(content) as ProjectConfig);
+      const parsed: unknown = JSON.parse(content);
+      if (!isValidProjectConfig(parsed)) {
+        return reject(new PersistenceError('Invalid legacy project config structure', { retryable: false }));
+      }
+      return ok(parsed);
     } catch (error) {
       Logger.warn('ConfigLoader', 'Failed to load legacy config:', error);
       return reject(new PersistenceError('Failed to load project config', {
@@ -265,8 +299,11 @@ export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Prom
 
   try {
     const content = await fs.readFile(configPath, 'utf-8');
-    const config = JSON.parse(content) as UserConfig;
-    return ok(config);
+    const parsed: unknown = JSON.parse(content);
+    if (!isValidUserConfig(parsed)) {
+      return reject(new PersistenceError('Invalid user config structure', { retryable: false }));
+    }
+    return ok(parsed);
   } catch (error) {
     Logger.warn('ConfigLoader', 'Failed to load config:', error);
     return reject(new PersistenceError('Failed to load config', {

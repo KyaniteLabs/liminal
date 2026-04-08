@@ -164,7 +164,10 @@ export class CompostSoup {
           clearTimeout(timeout);
           reject(new DOMException('Aborted', 'AbortError'));
         }, { once: true });
-      }).catch(() => { /* aborted */ });
+      }).catch((err) => {
+        // Abort is expected when stopping, but log for debugging
+        Logger.debug('CompostSoup', 'Cycle wait aborted:', err);
+      });
     }
     eventBus.emit(EventTypes.PROCESS_END, 'CompostSoup', { process: 'compost-soup', success: true });
   }

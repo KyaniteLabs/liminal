@@ -19,6 +19,7 @@ import { Result, ok, err } from 'neverthrow';
 import { GitService } from './GitService.js';
 import { Logger } from '../utils/Logger.js';
 import { GitError } from '../errors/GitError.js';
+import { AsyncLock } from '../utils/AsyncLock.js';
 import type { GitConfig, IterationCommitContext, CommitInfo } from './types.js';
 import { DEFAULT_GIT_CONFIG } from './types.js';
 import type { CompostBridge } from './CompostBridge.js';
@@ -29,6 +30,7 @@ export class GitIntegration {
   private compostBridge?: CompostBridge;
   private originalBranch: string | null = null;
   private runBranch: string | null = null;
+  private lock = new AsyncLock();
 
   constructor(config: Partial<GitConfig>, compostBridge?: CompostBridge) {
     this.config = { ...DEFAULT_GIT_CONFIG, ...config };
@@ -55,6 +57,7 @@ export class GitIntegration {
   async startRun(name: string): Promise<Result<string, GitError>> {
     if (!this.config.enabled) return ok('');
     if (!this.config.branchPerRun) return ok('');
+    return this.lock.acquire(async () => {
 
     // Ensure we're in a git repo
     const isRepo = await this.git.isRepo();
@@ -102,6 +105,7 @@ export class GitIntegration {
     }
 
     return ok(branchName);
+    });
   }
 
   /**
@@ -112,6 +116,7 @@ export class GitIntegration {
     if (!this.config.enabled || !this.config.autoCommit) {
       return err(new GitError('Git integration disabled', { retryable: false }));
     }
+    return this.lock.acquire(async () => {
 
     const isRepo = await this.git.isRepo();
     if (!isRepo) {
@@ -164,6 +169,7 @@ export class GitIntegration {
     }
 
     return ok(commit);
+    });
   }
 
   /**
@@ -175,6 +181,7 @@ export class GitIntegration {
   async endRun(reason: string): Promise<void> {
     if (!this.config.enabled || !this.runBranch) return;
 
+    return this.lock.acquire(async () => {
     try {
       // Commit any remaining changes
       const statusResult = await this.git.status();
@@ -207,8 +214,8 @@ export class GitIntegration {
       Logger.error('GitIntegration', `Failed to end run: ${error instanceof Error ? error.message : error}`);
     } finally {
       this.runBranch = null;
-
     }
+    });
   }
 
   /** Format a commit message from the template and iteration context */

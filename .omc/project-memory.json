@@ -439,20 +439,20 @@
     },
     {
       "path": "src/llm/LLMClient.ts",
-      "accessCount": 60,
-      "lastAccessed": 1775625587843,
+      "accessCount": 68,
+      "lastAccessed": 1775664401359,
       "type": "file"
     },
     {
       "path": "",
-      "accessCount": 55,
-      "lastAccessed": 1775604404247,
+      "accessCount": 61,
+      "lastAccessed": 1775663134467,
       "type": "directory"
     },
     {
       "path": "src",
-      "accessCount": 41,
-      "lastAccessed": 1775660242283,
+      "accessCount": 52,
+      "lastAccessed": 1775663054975,
       "type": "directory"
     },
     {
@@ -463,14 +463,14 @@
     },
     {
       "path": "bin/liminal",
-      "accessCount": 20,
-      "lastAccessed": 1775433506405,
+      "accessCount": 22,
+      "lastAccessed": 1775662824286,
       "type": "file"
     },
     {
       "path": "src/config/ConfigLoader.ts",
-      "accessCount": 17,
-      "lastAccessed": 1775633412244,
+      "accessCount": 22,
+      "lastAccessed": 1775664431371,
       "type": "directory"
     },
     {
@@ -487,8 +487,8 @@
     },
     {
       "path": "src/llm",
-      "accessCount": 8,
-      "lastAccessed": 1775603422687,
+      "accessCount": 9,
+      "lastAccessed": 1775663028342,
       "type": "directory"
     },
     {

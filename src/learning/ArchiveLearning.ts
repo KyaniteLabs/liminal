@@ -7,6 +7,7 @@
 
 import { QualityArchive } from './QualityArchive.js';
 import { createHash } from 'crypto';
+import { Logger } from '../utils/Logger.js';
 import type { CreativeFragment } from '../core/types.js';
 import type { MinedFragment } from '../swarm/types.js';
 
@@ -124,7 +125,9 @@ export class ArchiveLearning {
       usedCount: 0,
     };
 
-    void this.archive.add(item);
+    this.archive.add(item).catch((err: unknown) => {
+      Logger.warn('ArchiveLearning', `Failed to add item to archive: ${err instanceof Error ? err.message : String(err)}`);
+    });
     return item;
   }
 
@@ -165,7 +168,9 @@ export class ArchiveLearning {
       );
 
       // Track usage
-      void this.archive.recordUsage(example.id);
+      this.archive.recordUsage(example.id).catch((err: unknown) => {
+        Logger.warn('ArchiveLearning', `Failed to record usage: ${err instanceof Error ? err.message : String(err)}`);
+      });
     }
 
     return parts.join('\n');
@@ -222,7 +227,9 @@ export class ArchiveLearning {
       if (entry.length > charBudget) break;
       parts.push(entry);
       charBudget -= entry.length;
-      void this.archive.recordUsage(ex.id);
+      this.archive.recordUsage(ex.id).catch((err: unknown) => {
+        Logger.warn('ArchiveLearning', `Failed to record usage: ${err instanceof Error ? err.message : String(err)}`);
+      });
     }
 
     if (parts.length === 0) return prompt;
@@ -257,7 +264,9 @@ export class ArchiveLearning {
    * @param itemId - ID of the archived item
    */
   recordUsage(itemId: string): void {
-    void this.archive.recordUsage(itemId);
+    this.archive.recordUsage(itemId).catch((err: unknown) => {
+      Logger.warn('ArchiveLearning', `Failed to record usage: ${err instanceof Error ? err.message : String(err)}`);
+    });
   }
 
   /**
@@ -266,7 +275,9 @@ export class ArchiveLearning {
    * @param rating - Rating value (typically 0-1 or 1-5)
    */
   addUserRating(itemId: string, rating: number): void {
-    void this.archive.addUserRating(itemId, rating);
+    this.archive.addUserRating(itemId, rating).catch((err: unknown) => {
+      Logger.warn('ArchiveLearning', `Failed to add user rating: ${err instanceof Error ? err.message : String(err)}`);
+    });
   }
 
   /**

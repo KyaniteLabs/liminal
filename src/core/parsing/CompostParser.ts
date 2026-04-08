@@ -83,6 +83,8 @@ export class CompostParser {
       throw new LIRParseError(
         `Failed to read file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         filePath,
+        undefined,
+        { cause: error instanceof Error ? error : undefined }
       );
     }
 
@@ -97,6 +99,8 @@ export class CompostParser {
       throw new LIRParseError(
         `Failed to parse file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         filePath,
+        undefined,
+        { cause: error instanceof Error ? error : undefined }
       );
     }
 

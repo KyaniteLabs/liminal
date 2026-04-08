@@ -8,6 +8,7 @@
 
 import { EventEmitter } from 'node:events';
 import { sanitizeTerminalText } from '../tui/sanitizeTerminalText.js';
+import { Logger } from '../utils/Logger.js';
 
 // ── Event schema ──
 
@@ -147,16 +148,38 @@ class Bus extends EventEmitter {
   private static MAX_LISTENERS = 100;
   /** When true, suppress stdout writes to avoid corrupting Ink TUI rendering. */
   private static _tuiMode = false;
+  /** Lock for TUI mode changes to prevent race conditions. */
+  private static _tuiModeLock = false;
+  /** Map to track wrapped listeners for safe removal */
+  private listenerMap = new Map<(event: BusEvent) => void, (event: BusEvent) => void>();
 
   constructor() {
     super();
     this.setMaxListeners(Bus.MAX_LISTENERS);
   }
 
-  /** Enable TUI mode — routes event logs to stderr instead of stdout. */
-  static enableTuiMode(): void { Bus._tuiMode = true; }
-  /** Disable TUI mode — event logs go to stdout again. */
-  static disableTuiMode(): void { Bus._tuiMode = false; }
+  /** 
+   * Enable TUI mode — routes event logs to stderr instead of stdout.
+   * Uses simple lock to prevent race conditions in concurrent toggles.
+   */
+  static enableTuiMode(): void { 
+    if (!Bus._tuiModeLock) {
+      Bus._tuiModeLock = true;
+      Bus._tuiMode = true; 
+      Bus._tuiModeLock = false;
+    }
+  }
+  /** 
+   * Disable TUI mode — event logs go to stdout again.
+   * Uses simple lock to prevent race conditions in concurrent toggles.
+   */
+  static disableTuiMode(): void { 
+    if (!Bus._tuiModeLock) {
+      Bus._tuiModeLock = true;
+      Bus._tuiMode = false; 
+      Bus._tuiModeLock = false;
+    }
+  }
   static isTuiMode(): boolean { return Bus._tuiMode; }
 
   /** Emit a typed event to all listeners (and log to console). */
@@ -178,16 +201,46 @@ class Bus extends EventEmitter {
     // Log to console (replaces scattered console.log calls)
     this.logToConsole(event);
 
-    return super.emit('event', event);
+    try {
+      return super.emit('event', event);
+    } catch (err) {
+      Logger.error('EventBus', 'Error emitting event:', err);
+      return false;
+    }
   }
 
   /** Subscribe to all events. */
   onEvent(listener: (event: BusEvent) => void): this {
-    return super.on('event', listener);
+    if (!listener || typeof listener !== 'function') {
+      Logger.error('EventBus', 'Attempted to register null/undefined listener');
+      return this;
+    }
+    
+    const wrappedListener = (event: BusEvent) => {
+      try {
+        listener(event);
+      } catch (err) {
+        Logger.error('EventBus', 'Handler failed:', err);
+      }
+    };
+    
+    this.listenerMap.set(listener, wrappedListener);
+    return super.on('event', wrappedListener);
   }
 
   /** Remove event listener. */
   offEvent(listener: (event: BusEvent) => void): this {
+    if (!listener) {
+      return this;
+    }
+    
+    const wrappedListener = this.listenerMap.get(listener);
+    if (wrappedListener) {
+      this.listenerMap.delete(listener);
+      return super.off('event', wrappedListener);
+    }
+    
+    // Fallback: try to remove the original listener directly
     return super.off('event', listener);
   }
 
@@ -202,17 +255,49 @@ class Bus extends EventEmitter {
 
   /** Get recent events (ring buffer for late SSE clients). */
   private recentEvents: BusEvent[] = [];
+  private recentEventsHead = 0;
   private static readonly MAX_RECENT = 200;
 
+  /**
+   * Add event to ring buffer.
+   * Uses circular buffer pattern to avoid race conditions in push/shift.
+   */
   addRecentEvent(event: BusEvent): void {
-    this.recentEvents.push(event);
-    if (this.recentEvents.length > Bus.MAX_RECENT) {
-      this.recentEvents.shift();
+    const maxSize = Bus.MAX_RECENT;
+    const currentSize = this.recentEvents.length;
+    
+    if (currentSize < maxSize) {
+      // Buffer not full yet, just append
+      this.recentEvents.push(event);
+    } else {
+      // Buffer full, overwrite oldest (circular)
+      this.recentEvents[this.recentEventsHead] = event;
+      this.recentEventsHead = (this.recentEventsHead + 1) % maxSize;
     }
   }
 
+  /**
+   * Get recent events in chronological order.
+   * Returns a copy to prevent external mutation.
+   */
   getRecentEvents(): BusEvent[] {
-    return [...this.recentEvents];
+    const maxSize = Bus.MAX_RECENT;
+    const size = this.recentEvents.length;
+    
+    if (size === 0) return [];
+    
+    // If buffer is not full, just return copy
+    if (size < maxSize) {
+      return [...this.recentEvents];
+    }
+    
+    // Buffer is full, reorder to chronological
+    const result: BusEvent[] = [];
+    for (let i = 0; i < maxSize; i++) {
+      const idx = (this.recentEventsHead + i) % maxSize;
+      result.push(this.recentEvents[idx]);
+    }
+    return result;
   }
 
   private logToConsole(event: BusEvent): void {
@@ -326,6 +411,7 @@ class Bus extends EventEmitter {
     }
     return null;
   }
+
 }
 
 /** Singleton EventBus instance. Import and use across the codebase. */

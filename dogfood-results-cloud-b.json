@@ -1,0 +1,106 @@
+{
+  "timestamp": "2026-04-08T07:25:40.850Z",
+  "agent": "B",
+  "domains": [
+    "hydra",
+    "tone",
+    "remotion",
+    "html",
+    "ascii"
+  ],
+  "providers": [
+    "MiniMax"
+  ],
+  "total": 10,
+  "success": 5,
+  "failed": 5,
+  "rate": "50.0%",
+  "duration": "120300ms",
+  "results": [
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "hydra",
+      "success": true,
+      "duration": 68034,
+      "notes": "Generated successfully"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "hydra",
+      "success": true,
+      "duration": 64916,
+      "notes": "Generated successfully"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "tone",
+      "success": true,
+      "duration": 66633,
+      "notes": "Generated successfully"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "tone",
+      "success": true,
+      "duration": 107299,
+      "notes": "Generated successfully"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "remotion",
+      "success": false,
+      "duration": 62943,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component",
+      "notes": "RemotionGenerator: Generated code does not appear to be a valid Remotion component"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "remotion",
+      "success": false,
+      "duration": 18242,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component",
+      "notes": "RemotionGenerator: Generated code does not appear to be a valid Remotion component"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "html",
+      "success": false,
+      "duration": 1542,
+      "error": "LLM generation failed: MiniMax API error 529: {\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"message\":\"The server cluster is currently under high load. Please retry after a short wait and thank you for your patience. (2064)\",\"http_code\":\"529\"},\"request_id\":\"0625357d72ca4210ed1d76518bd0c592\"}\n",
+      "notes": "LLM generation failed: MiniMax API error 529: {\"type\":\"error\",\"error\":{\"type\":\"overloaded_error\",\"me"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "html",
+      "success": true,
+      "duration": 22101,
+      "notes": "Generated successfully"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m27",
+      "domain": "ascii",
+      "success": false,
+      "duration": 120300,
+      "error": "LLM generation failed: MiniMax request failed: The operation was aborted due to timeout",
+      "notes": "LLM generation failed: MiniMax request failed: The operation was aborted due to timeout"
+    },
+    {
+      "provider": "MiniMax",
+      "model": "minimax-m25",
+      "domain": "ascii",
+      "success": false,
+      "duration": 101553,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art",
+      "notes": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+    }
+  ]
+}

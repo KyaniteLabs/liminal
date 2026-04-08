@@ -98,6 +98,10 @@ export class RenderAndScorePipeline {
   async process(code: string, domainHint?: RenderDomain): Promise<PipelineResult> {
     const startTime = Date.now();
 
+    // Set up overall timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), this.options.timeout);
+
     try {
       // Detect domain
       const domain = domainHint || HeadlessRenderer.detectDomain(code);
@@ -174,6 +178,8 @@ export class RenderAndScorePipeline {
         error: error instanceof Error ? error.message : 'Pipeline failed',
         duration,
       };
+    } finally {
+      clearTimeout(timeout);
     }
   }
 

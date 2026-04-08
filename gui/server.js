@@ -10,6 +10,7 @@ import { loadConfig, loadProjectConfig, getEffectiveConfig, saveConfig } from '.
 import { Gallery } from '../dist/gallery/Gallery.js';
 import { eventBus } from '../dist/core/EventBus.js';
 import { TuiBridgeService } from '../dist/tui-bridge/TuiBridgeService.js';
+import { logSecurityEvent } from '../dist/security/SecurityLogger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
@@ -37,12 +38,22 @@ function validateGalleryPath(galleryPath) {
     throw new Error('Invalid gallery path');
   }
   const resolved = path.resolve(cwd, galleryPath);
+  let canonical;
+  try {
+    canonical = fs.realpathSync(resolved);
+  } catch {
+    canonical = resolved;
+  }
   if (path.isAbsolute(galleryPath)) {
-    if (!resolved.startsWith(cwd) && !resolved.startsWith(homeDir)) {
+    if (!canonical.startsWith(cwd) && !canonical.startsWith(homeDir)) {
+      throw new Error('Invalid gallery path');
+    }
+  } else {
+    if (!canonical.startsWith(cwd)) {
       throw new Error('Invalid gallery path');
     }
   }
-  return resolved;
+  return canonical;
 }
 
 // In-memory store for "Run in preview" so GET /preview can serve the code
@@ -50,6 +61,19 @@ const previewStore = new Map();
 const tuiBridge = new TuiBridgeService();
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
+
+// F5: CSRF protection on SSE endpoints
+function validateSSEOrigin(req, res, next) {
+  const origin = req.headers.origin;
+  if (!origin) return next(); // no origin = non-browser client, allow
+  try {
+    const url = new URL(origin);
+    if (url.hostname === 'localhost' || url.hostname === '127.0.0.1') {
+      return next();
+    }
+  } catch { /* invalid URL, deny */ }
+  res.status(403).json({ error: 'Forbidden origin' });
+}
 
 /**
  * @param {string} [configPath] - Override path to ~/.atelier/config.json (e.g. for tests)
@@ -59,6 +83,10 @@ const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
 export function createApp(configPath, port = 5174) {
   const app = express();
   app.use(express.json({ limit: '1mb' }));
+
+  if (process.env.TRUST_PROXY === 'true') {
+    app.set('trust proxy', 1);
+  }
 
   // --- B1: Auth middleware for sensitive POST routes ---
   const guiToken = process.env.LIMINAL_GUI_TOKEN;
@@ -161,12 +189,15 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
-  app.get('/api/tui/session/:id/events', (req, res) => {
+  app.get('/api/tui/session/:id/events', validateSSEOrigin, (req, res) => {
     try {
       const sessionId = req.params.id;
       res.setHeader('Content-Type', 'text/event-stream');
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
+      res.setHeader('X-Accel-Buffering', 'no');
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('Referrer-Policy', 'no-referrer');
       res.flushHeaders();
 
       for (const event of tuiBridge.getEvents(sessionId)) {
@@ -178,6 +209,8 @@ export function createApp(configPath, port = 5174) {
       });
 
       req.on('close', () => unsubscribe());
+      req.on('error', () => unsubscribe());
+      res.on('error', () => unsubscribe());
     } catch (err) {
       res.status(400).json({ error: err.message || String(err) });
     }
@@ -297,7 +330,7 @@ export function createApp(configPath, port = 5174) {
   <meta http-equiv="Permissions-Policy" content="accelerometer=(), gyroscope=(), magnetometer=(), deviceorientation=(), devicemotion=()">
   <title>Preview v${version}</title>
   <style>body { margin: 0; padding: 0; overflow: hidden; } canvas { display: block; }</style>
-  <script src="${P5_CDN}"></script>
+  <script src="${P5_CDN}" integrity="sha384-o9oK6m6zKQo5V8HQC3S1hT8H9pUxJ8p6N+vJ1cS8J+7VNY2gK9Jg8zP3w" crossorigin="anonymous"></script>
 </head>
 <body>
   <script>
@@ -319,6 +352,7 @@ export function createApp(configPath, port = 5174) {
     // Wave 3 isolation: CSP + security headers to sandbox the preview
     res.setHeader('Content-Security-Policy', [
       "default-src 'none'",
+      "upgrade-insecure-requests",
       "script-src 'unsafe-inline' https://cdnjs.cloudflare.com",  // p5 CDN + inline generated code
       "style-src 'unsafe-inline'",
       "img-src * data: blob:",
@@ -489,6 +523,9 @@ export function createApp(configPath, port = 5174) {
       if (!dirName || !proposed) {
         return res.status(400).json({ error: 'dirName and proposed are required' });
       }
+      if (proposed.type && !['p5', 'organism'].includes(proposed.type)) {
+        return res.status(400).json({ error: 'Invalid proposed type' });
+      }
       const cfgPath = getConfigPath();
       const userConfig = await loadConfig(cfgPath);
       const projectConfig = await loadProjectConfig(cwd);
@@ -501,9 +538,11 @@ export function createApp(configPath, port = 5174) {
       const projectName = dirName.replace(/^\d{4}-\d{2}-\d{2}--/, '');
       if (proposed.type === 'organism' && proposed.musicCode != null && proposed.visualCode != null) {
         await gallery.saveOrganism(projectName, nextVersion, proposed.musicCode, proposed.visualCode);
+        logSecurityEvent({ type: 'gallery_write', severity: 'low', message: `Saved organism ${projectName} v${nextVersion}`, context: { endpoint: '/api/approve' } });
       } else {
         const code = proposed.code != null ? proposed.code : (proposed.musicCode || '') + '\n' + (proposed.visualCode || '');
         await gallery.saveIteration(projectName, nextVersion, code);
+        logSecurityEvent({ type: 'gallery_write', severity: 'low', message: `Saved iteration ${projectName} v${nextVersion}`, context: { endpoint: '/api/approve' } });
       }
       res.status(200).json({ ok: true, version: nextVersion });
     } catch (err) {
@@ -587,11 +626,13 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
-  app.get('/api/events', (req, res) => {
+  app.get('/api/events', validateSSEOrigin, (req, res) => {
     res.setHeader('Content-Type', 'text/event-stream');
     res.setHeader('Cache-Control', 'no-cache');
     res.setHeader('Connection', 'keep-alive');
     res.setHeader('X-Accel-Buffering', 'no');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'no-referrer');
     res.flushHeaders();
 
     const recent = eventBus.getRecentEvents();
@@ -601,6 +642,8 @@ export function createApp(configPath, port = 5174) {
 
     sseClients.add(res);
     req.on('close', () => sseClients.delete(res));
+    req.on('error', () => sseClients.delete(res));
+    res.on('error', () => sseClients.delete(res));
   });
 
   // System status — heap/seed/soup counts + recent events

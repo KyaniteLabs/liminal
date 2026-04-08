@@ -204,6 +204,7 @@ export function createApp(configPath, port = 5174) {
           provider: effective.provider,
           baseUrl: effective.baseUrl ?? '',
           model: effective.model,
+          apiKey: effective.apiKey || '',
           apiKeyStored: Boolean(effective.apiKey),
         },
         loop,

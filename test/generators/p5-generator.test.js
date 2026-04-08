@@ -22,6 +22,7 @@ function draw() {
 
   const LLMClientMock = vi.fn(function() {
     this.generate = mockGenerate;
+    this.generateP5Sketch = mockGenerate;
     this.getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
   });
   LLMClientMock.isConfigured = vi.fn().mockReturnValue(true);

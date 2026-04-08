@@ -14,6 +14,27 @@ import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
 import { Logger } from '../utils/Logger.js';
+import { sanitizeTerminalText } from './sanitizeTerminalText.js';
+
+/**
+ * Re-export sanitizeTerminalText as sanitizeTerminalOutput for backwards compatibility.
+ * Used by security regression tests and TUI components.
+ */
+export function sanitizeTerminalOutput(text: string): string {
+  // Strip terminal reset sequences (ESC c)
+  const terminalResetRegex = /\x1Bc/g;
+  // Strip OSC sequences (ESC ] ... BEL or ESC \\)
+  const oscRegex = /\x1B\][0-9]*;[^\x07\x1B]*(?:\x07|\x1B\\)/g;
+
+  let sanitized = text
+    .replace(terminalResetRegex, '')
+    .replace(oscRegex, '');
+
+  // Also apply basic terminal text sanitization
+  sanitized = sanitizeTerminalText(sanitized, { maxLength: 10000, singleLine: false });
+
+  return sanitized;
+}
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -41,26 +62,20 @@ interface NaturalInputResult {
   shouldContinue: boolean;
 }
 
-/**
- * Everything is agent mode. No separate chat.
- * Conversational input just hits tool: "complete" on step 1.
- */
+interface PendingAction {
+  id: string;
+  type: 'agent' | 'task';
+  task: AgentTask | LLMTask;
+  createdAt: string;
+}
 
-/**
- * Natural Interface - Main entry point
- *
- * Pattern from claw-code/Claude Code:
- * - Take raw user input
- * - Route to appropriate handler
- * - Maintain conversation context
- */
 export class NaturalInterface {
   private session: ConversationSession;
   private harnessAgent: HarnessAgent;
   private llmAgent: LLMModeAgent;
   private llmClient: LLMClient;
   private tasks: AgentTask[];
-  // Callbacks for UI updates
+  private pendingActions: PendingAction[] = [];
   private onStatus: (msg: string) => void;
   private onLog: (msg: string) => void;
 
@@ -87,7 +102,6 @@ export class NaturalInterface {
       updatedAt: new Date().toISOString(),
     };
 
-    // Load SOUL.md
     void this.loadSoul();
   }
 
@@ -100,73 +114,107 @@ export class NaturalInterface {
     }
   }
 
-  /**
-   * Process natural language input
-   * This is the main entry point - like Claude Code's input handling
-   */
+  getPendingActions(): PendingAction[] {
+    return [...this.pendingActions];
+  }
+
+  private createPendingAction(type: 'agent' | 'task', task: AgentTask | LLMTask): PendingAction {
+    const action: PendingAction = {
+      id: `pending-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+      type,
+      task,
+      createdAt: new Date().toISOString(),
+    };
+    this.pendingActions.push(action);
+    return action;
+  }
+
+  private async confirmPendingAction(actionId: string): Promise<NaturalInputResult> {
+    const index = this.pendingActions.findIndex(a => a.id === actionId);
+    if (index === -1) {
+      return {
+        type: 'command',
+        response: `Pending action ${actionId} not found`,
+        shouldContinue: true,
+      };
+    }
+
+    const action = this.pendingActions[index];
+    this.pendingActions.splice(index, 1);
+
+    if (action.type === 'agent') {
+      return this.executeAgentTask(action.task as LLMTask);
+    } else {
+      return this.executeHarnessTask(action.task as AgentTask);
+    }
+  }
+
+  private cancelPendingAction(actionId: string): NaturalInputResult {
+    const index = this.pendingActions.findIndex(a => a.id === actionId);
+    if (index === -1) {
+      return {
+        type: 'command',
+        response: `Pending action ${actionId} not found`,
+        shouldContinue: true,
+      };
+    }
+
+    this.pendingActions.splice(index, 1);
+    return {
+      type: 'command',
+      response: 'Action cancelled.',
+      shouldContinue: true,
+    };
+  }
+
   async processInput(
     input: string,
     _onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
   ): Promise<NaturalInputResult> {
     const trimmed = input.trim();
-
-    // Add user message to history
     this.addMessage('user', trimmed);
 
-    // 1. Check for exact slash commands
     if (trimmed.startsWith('/')) {
       return this.handleSlashCommand(trimmed.slice(1));
     }
 
-    // 2. Everything else goes through the agent (with tools)
     return this.handleAgentRequest(trimmed);
   }
 
-  /**
-   * Handle slash commands (explicit syntax)
-   */
   private async handleSlashCommand(input: string): Promise<NaturalInputResult> {
     const [command, ...args] = input.split(' ');
     return this.executeCommand(command, args);
   }
 
-  /**
-   * Execute a command
-   */
   private async executeCommand(command: string, args: string[]): Promise<NaturalInputResult> {
     this.onStatus(`Executing ${command}...`);
 
     switch (command) {
       case 'status':
         return this.handleStatus();
-
       case 'tasks':
         return this.handleTasks();
-
       case 'run':
         return this.handleRun(args[0] || '');
-
+      case 'confirm':
+        return this.handleConfirm(args[0] || '');
+      case 'cancel':
+        return this.handleCancel(args[0] || '');
       case 'preview':
         return this.handlePreview(args[0] || '');
-
       case 'help':
         return this.handleHelp();
-
       case 'clear':
         return { type: 'command', response: '\x1Bc', shouldContinue: true };
-
       case 'exit':
       case 'quit':
       case 'q':
-        return { type: 'command', response: 'Goodbye! \uD83D\uDC4B', shouldContinue: false };
-
+        return { type: 'command', response: 'Goodbye! 👋', shouldContinue: false };
       case 'provider':
         return this.handleProvider(args);
-
       case 'test':
       case 'diagnostic':
         return this.handleDiagnostic();
-
       default:
         return {
           type: 'ambiguous',
@@ -176,33 +224,44 @@ export class NaturalInterface {
     }
   }
 
-  /**
-   * Handle agent request (LLM-driven code changes)
-   */
   private async handleAgentRequest(input: string): Promise<NaturalInputResult> {
     this.onStatus('Thinking...');
-    this.onLog(`Agent task: ${input.slice(0, 60)}...`);
+    this.onLog(`Agent task queued: ${input.slice(0, 60)}...`);
+
+    const task: LLMTask = {
+      id: `agent-${Date.now()}`,
+      title: input.slice(0, 50),
+      description: input,
+      maxSteps: 15,
+      approved: false,
+    };
+
+    const action = this.createPendingAction('agent', task);
+
+    return {
+      type: 'agent',
+      response: `⏳ Task queued awaiting approval.\nRun "/confirm ${action.id}" to execute or "/cancel ${action.id}" to abort.`,
+      actionTaken: 'Queued for approval',
+      shouldContinue: true,
+    };
+  }
+
+  private async executeAgentTask(task: LLMTask): Promise<NaturalInputResult> {
+    this.onStatus('Executing...');
+    this.onLog(`Agent task: ${task.description.slice(0, 60)}...`);
 
     try {
-      const task: LLMTask = {
-        id: `agent-${Date.now()}`,
-        title: input.slice(0, 50),
-        description: input,
-        maxSteps: 15,
-        approved: true,
-      };
+      const approvedTask = { ...task, approved: true };
+      const session = await this.llmAgent.executeTask(approvedTask);
 
-      const session = await this.llmAgent.executeTask(task);
-
-      // Add to conversation history
       for (const msg of session.messages) {
         if (msg.role === 'assistant' && msg.toolCall) {
-          this.onLog(`\u2192 ${msg.toolCall.tool}`);
+          this.onLog(`-> ${msg.toolCall.tool}`);
         }
       }
 
-      const statusEmoji = session.status === 'success' ? '\u2705' :
-                         session.status === 'rolled_back' ? '\u23EE\uFE0F' : '\u274C';
+      const statusEmoji = session.status === 'success' ? '✅' :
+                         session.status === 'rolled_back' ? '⏮️' : '❌';
 
       const response = [
         `${statusEmoji} Task ${session.status}`,
@@ -225,24 +284,34 @@ export class NaturalInterface {
         actionTaken: `Executed ${session.stepCount} steps`,
         shouldContinue: true,
       };
-
     } catch (error) {
       const msg = formatError('Agent', error);
       return {
         type: 'agent',
-        response: `\u274C ${msg}`,
+        response: `❌ ${msg}`,
         shouldContinue: true,
       };
     }
   }
 
-  // Command handlers
+  private async executeHarnessTask(task: AgentTask): Promise<NaturalInputResult> {
+    this.onStatus(`Running ${task.id}...`);
+    const approvedTask = { ...task, approved: true };
+    const session = await this.harnessAgent.executeTask(approvedTask);
+
+    return {
+      type: 'command',
+      response: `✅ Task ${task.id}: ${session.status.toUpperCase()}`,
+      shouldContinue: true,
+    };
+  }
+
   private async handleStatus(): Promise<NaturalInputResult> {
     const { metaHarness } = await import('../harness/index.js');
     const status = metaHarness.getStatus();
 
     const response = [
-      `Harness: ${status.initialized ? '\uD83D\uDFE2 Online' : '\uD83D\uDD34 Offline'}`,
+      `Harness: ${status.initialized ? '🟢 Online' : '🔴 Offline'}`,
       `Provider: ${status.activeProvider}`,
       `Recent failures: ${status.recentFailures}`,
       `Detected patterns: ${status.detectedPatterns.length}`,
@@ -273,14 +342,36 @@ export class NaturalInterface {
       return { type: 'command', response: `Task ${taskId} not found`, shouldContinue: true };
     }
 
-    this.onStatus(`Running ${taskId}...`);
-    const session = await this.harnessAgent.executeTask(task);
+    const action = this.createPendingAction('task', { ...task, approved: false });
 
     return {
       type: 'command',
-      response: `Task ${taskId}: ${session.status.toUpperCase()}`,
+      response: `⏳ Task ${taskId} queued awaiting approval.\nRun "/confirm ${action.id}" to execute or "/cancel ${action.id}" to abort.`,
       shouldContinue: true,
     };
+  }
+
+  private async handleConfirm(actionId: string): Promise<NaturalInputResult> {
+    if (!actionId) {
+      if (this.pendingActions.length === 0) {
+        return { type: 'command', response: 'No pending actions awaiting confirmation.', shouldContinue: true };
+      }
+
+      const lines = this.pendingActions.map(a =>
+        `  ${a.id} - ${a.type === 'agent' ? 'Agent task' : `Task ${(a.task as AgentTask).id}`}`
+      );
+      return { type: 'command', response: `Pending actions:\n${lines.join('\n')}`, shouldContinue: true };
+    }
+
+    return this.confirmPendingAction(actionId);
+  }
+
+  private handleCancel(actionId: string): NaturalInputResult {
+    if (!actionId) {
+      return { type: 'command', response: 'Please specify an action ID. Usage: cancel <action-id>', shouldContinue: true };
+    }
+
+    return this.cancelPendingAction(actionId);
   }
 
   private async handlePreview(filePath: string): Promise<NaturalInputResult> {
@@ -288,35 +379,36 @@ export class NaturalInterface {
       return { type: 'command', response: 'Please specify a file path. Usage: preview <file>', shouldContinue: true };
     }
 
-    // Route to preview system
     const { browserLauncher } = await import('./preview/BrowserLauncher.js');
     const url = await browserLauncher.previewFile(filePath);
 
     return {
       type: 'command',
-      response: `\uD83C\uDF10 Opened in browser: ${url}`,
+      response: `🌐 Opened in browser: ${url}`,
       shouldContinue: true,
     };
   }
 
   private handleHelp(): NaturalInputResult {
     const response = [
-      'I\'m Liminal, your creative coding partner.',
+      "I'm Liminal, your creative coding partner.",
       '',
       'You can talk to me naturally:',
-      '  \u2022 "Fix the Tone.js validation" - I\'ll make code changes',
-      '  \u2022 "What\'s the status?" - I\'ll show system status',
-      '  \u2022 "Generate a particle system" - I\'ll help you create',
+      '  • "Fix the Tone.js validation" - I\'ll make code changes',
+      '  • "What\'s the status?" - I\'ll show system status',
+      '  • "Generate a particle system" - I\'ll help you create',
       '',
       'Or use explicit commands:',
-      '  \u2022 status - Show harness status',
-      '  \u2022 tasks  - List pending tasks',
-      '  \u2022 run <id> - Execute a task',
-      '  \u2022 provider [list|<name>|<url> <model>] - Switch LLM provider',
-      '  \u2022 preview <file> - Preview a file',
-      '  \u2022 test   - Run diagnostic tests',
-      '  \u2022 clear  - Clear screen',
-      '  \u2022 exit   - Quit',
+      '  • status - Show harness status',
+      '  • tasks  - List pending tasks',
+      '  • run <id> - Queue a task for execution',
+      '  • confirm [id] - Confirm a pending action',
+      '  • cancel <id> - Cancel a pending action',
+      '  • provider [list|<name>|<url> <model>] - Switch LLM provider',
+      '  • preview <file> - Preview a file',
+      '  • test   - Run diagnostic tests',
+      '  • clear  - Clear screen',
+      '  • exit   - Quit',
     ].join('\n');
 
     return { type: 'command', response, shouldContinue: true };
@@ -326,7 +418,6 @@ export class NaturalInterface {
     const { PROVIDER_TEMPLATES, listConfiguredProviders, getProviderConfig } = await import('../harness/MultiProviderConfig.js');
     const { metaHarness } = await import('../harness/MetaHarnessIntegration.js');
 
-    // /provider list — show all providers
     if (!args[0] || args[0] === 'list' || args[0] === 'ls') {
       const configured = listConfiguredProviders();
       const current = metaHarness.getStatus()?.activeProvider || 'unknown';
@@ -344,7 +435,6 @@ export class NaturalInterface {
       return { type: 'command', response: lines.join('\n'), shouldContinue: true };
     }
 
-    // /provider <name> — switch to a known provider
     const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
     if (template) {
       const config = getProviderConfig(args[0] as any);
@@ -364,7 +454,6 @@ export class NaturalInterface {
       };
     }
 
-    // /provider <url> <model> — custom endpoint
     if (args[0]?.startsWith('http') && args[1]) {
       metaHarness.switchProvider(args[0], args[1], args[2]);
       return {
@@ -386,7 +475,6 @@ export class NaturalInterface {
 
     const tests: string[] = [];
 
-    // Test 1: LLM Connection
     try {
       const result = await this.llmClient.complete({
         prompt: 'Say "PASS" and nothing else.',
@@ -397,7 +485,6 @@ export class NaturalInterface {
       tests.push(`1. LLM Connection: FAIL (${e instanceof Error ? e.message : String(e)})`);
     }
 
-    // Test 2: JSON Parsing
     try {
       const json = '{"test": true, "number": 42}';
       const parsed = JSON.parse(json);
@@ -406,12 +493,10 @@ export class NaturalInterface {
       tests.push('2. JSON Parsing: FAIL');
     }
 
-    // Test 3: Harness Status
     const { metaHarness } = await import('../harness/index.js');
     const status = metaHarness.getStatus();
     tests.push(`3. Harness Online: ${status.initialized ? 'PASS' : 'FAIL'}`);
 
-    // Test 4: Context Retention
     const contextTest = await this.llmClient.complete({
       prompt: 'Remember this word: "banana". Confirm you remember it.',
       maxTokens: 20,
@@ -419,7 +504,7 @@ export class NaturalInterface {
     tests.push(`4. Context Retention: ${contextTest.success && contextTest.text.toLowerCase().includes('banana') ? 'PASS' : 'FAIL'}`);
 
     const response = [
-      '\uD83D\uDCCA HARNESS DIAGNOSTIC RESULTS',
+      '📊 HARNESS DIAGNOSTIC RESULTS',
       '',
       ...tests,
       '',

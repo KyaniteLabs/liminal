@@ -438,16 +438,16 @@
       "type": "file"
     },
     {
+      "path": "",
+      "accessCount": 56,
+      "lastAccessed": 1775615858609,
+      "type": "directory"
+    },
+    {
       "path": "src/llm/LLMClient.ts",
       "accessCount": 55,
       "lastAccessed": 1775604026153,
       "type": "file"
-    },
-    {
-      "path": "",
-      "accessCount": 55,
-      "lastAccessed": 1775604404247,
-      "type": "directory"
     },
     {
       "path": "src/tui/HarnessTUI.tsx",

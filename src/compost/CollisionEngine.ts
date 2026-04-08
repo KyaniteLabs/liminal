@@ -48,15 +48,20 @@ export class CollisionEngine {
     // Group by domain first, then only compare across domains via sampling
     const byDomain = new Map<string, CompostFragment[]>();
     for (const frag of fragments) {
-      if (!byDomain.has(frag.domain)) byDomain.set(frag.domain, []);
-      byDomain.get(frag.domain)!.push(frag);
+      const domainFrags = byDomain.get(frag.domain);
+      if (!domainFrags) {
+        byDomain.set(frag.domain, [frag]);
+      } else {
+        domainFrags.push(frag);
+      }
     }
 
     const domains = [...byDomain.keys()];
     for (let i = 0; i < domains.length && pairs.length < 200; i++) {
       for (let j = i + 1; j < domains.length && pairs.length < 200; j++) {
-        const fragsA = byDomain.get(domains[i])!;
-        const fragsB = byDomain.get(domains[j])!;
+        const fragsA = byDomain.get(domains[i]);
+        const fragsB = byDomain.get(domains[j]);
+        if (!fragsA || !fragsB) continue;
         for (const a of fragsA) {
           if (pairs.length >= 200) break;
           for (const b of fragsB) {
@@ -82,8 +87,12 @@ export class CollisionEngine {
 
     for (const frag of fragments) {
       const key = `${frag.metadata.fileType}:${frag.metadata.size > 0 ? 'has-content' : 'empty'}`;
-      if (!grouped.has(key)) grouped.set(key, []);
-      grouped.get(key)!.push(frag);
+      const group = grouped.get(key);
+      if (!group) {
+        grouped.set(key, [frag]);
+      } else {
+        group.push(frag);
+      }
     }
 
     for (const [, group] of grouped) {
@@ -105,8 +114,12 @@ export class CollisionEngine {
 
     for (const frag of fragments) {
       const prefix = frag.metadata.hash.slice(0, 4);
-      if (!byPrefix.has(prefix)) byPrefix.set(prefix, []);
-      byPrefix.get(prefix)!.push(frag);
+      const prefixFrags = byPrefix.get(prefix);
+      if (!prefixFrags) {
+        byPrefix.set(prefix, [frag]);
+      } else {
+        prefixFrags.push(frag);
+      }
     }
 
     for (const [, group] of byPrefix) {
@@ -129,8 +142,12 @@ export class CollisionEngine {
 
     for (const frag of fragments) {
       for (const tag of frag.tags) {
-        if (!tagGroups.has(tag)) tagGroups.set(tag, []);
-        tagGroups.get(tag)!.push(frag);
+        const tagFrags = tagGroups.get(tag);
+        if (!tagFrags) {
+          tagGroups.set(tag, [frag]);
+        } else {
+          tagFrags.push(frag);
+        }
       }
     }
 
@@ -172,22 +189,31 @@ export class CollisionEngine {
     const byDomain = new Map<string, CompostFragment[]>();
 
     for (const frag of fragments) {
-      if (!byDomain.has(frag.domain)) byDomain.set(frag.domain, []);
-      byDomain.get(frag.domain)!.push(frag);
+      const domainFrags = byDomain.get(frag.domain);
+      if (!domainFrags) {
+        byDomain.set(frag.domain, [frag]);
+      } else {
+        domainFrags.push(frag);
+      }
     }
 
     for (const [, frags] of byDomain) {
       const byLayer = new Map<string, CompostFragment[]>();
       for (const frag of frags) {
-        if (!byLayer.has(frag.layer)) byLayer.set(frag.layer, []);
-        byLayer.get(frag.layer)!.push(frag);
+        const layerFrags = byLayer.get(frag.layer);
+        if (!layerFrags) {
+          byLayer.set(frag.layer, [frag]);
+        } else {
+          layerFrags.push(frag);
+        }
       }
 
       const layers = [...byLayer.keys()];
       for (let i = 0; i < layers.length; i++) {
         for (let j = i + 1; j < layers.length; j++) {
-          const fragsA = byLayer.get(layers[i])!;
-          const fragsB = byLayer.get(layers[j])!;
+          const fragsA = byLayer.get(layers[i]);
+          const fragsB = byLayer.get(layers[j]);
+          if (!fragsA || !fragsB) continue;
           let count = 0;
           for (const a of fragsA) {
             if (count >= 50) break;

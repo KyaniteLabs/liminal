@@ -32,17 +32,24 @@ const DEFAULT_TIMEOUT_MS = 30_000;
  * responses from pages that can't respond. `process.kill()` sends SIGKILL
  * directly from Node.js — no CDP cooperation needed.
  */
+let wasKilled = false;
+
 function forceKillBrowser(browser: Browser): void {
   const proc = browser.process();
   if (proc?.pid) {
     try {
       process.kill(proc.pid, 'SIGKILL');
+      wasKilled = true;
     } catch {
       // Process may already be dead
     }
   } else {
     // Fallback: try graceful close (may hang, but no PID available)
-    void browser.close().catch(() => {});
+    void browser.close().catch((err) => {
+      if (!wasKilled) {
+        console.error('Browser close failed:', err);
+      }
+    });
   }
 }
 
@@ -80,12 +87,12 @@ export async function runInSandbox(
         url.startsWith('https://cdnjs.cloudflare.com/') &&
         url.includes('p5')
       ) {
-        void req.continue().catch(() => {
-          // Request may already be handled or page closed - safe to ignore
+        void req.continue().catch((err) => {
+          console.error('Request continue failed:', err);
         });
       } else {
-        void req.abort().catch(() => {
-          // Request may already be handled or page closed - safe to ignore
+        void req.abort().catch((err) => {
+          console.error('Request abort failed:', err);
         });
       }
     });
@@ -101,7 +108,9 @@ export async function runInSandbox(
     // page's main thread (e.g. while(true){}), Puppeteer's built-in setContent
     // timeout may not fire. The manual timeout guarantees we always return.
     const loadPromise = page.setContent(html, { waitUntil: 'load', timeout: timeoutMs });
-    // Prevent unhandled rejection if the browser is killed before loadPromise settles.
+    // Intentionally swallow rejection: if the manual timeout fires and kills the
+    // browser, loadPromise will reject. We ignore this since we already have the
+    // timeout error to return. This prevents an unhandled promise rejection.
     loadPromise.catch(() => {});
 
     const manualTimeout = new Promise<never>((_, reject) => {

@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"# Resolve .omc/ state files by accepting the stash version\\ngit checkout --theirs .omc/project-memory.json .omc/state/hud-stdin-cache.json .omc/state/idle-notif-cooldown.json .omc/state/mi...",
-  "error": "Exit code 1\nUpdated 5 paths from the index\nThe following paths are ignored by one of your .gitignore files:\n.omc\nhint: Use -f if you really want to add them.\nhint: Disable this message with \"git config set advice.addIgnoredFile false\"",
-  "timestamp": "2026-04-07T23:54:08.398Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"git add test/unit/harness/MultiProviderConfig.test.ts src/generators/tone/ToneGenerator.ts test/unit/generators/TextGenerativeGenerator.test.ts && GIT_EDITOR=true git rebase --continue 2>&...",
+  "error": "Exit code 1\nYou must edit all merge conflicts and then\nmark them as resolved using git add",
+  "timestamp": "2026-04-08T03:10:42.837Z",
+  "retry_count": 4
 }

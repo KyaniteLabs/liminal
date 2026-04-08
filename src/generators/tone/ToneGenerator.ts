@@ -40,7 +40,7 @@ export class ToneGenerator extends TierBasedGenerator {
     let clean = code.replace(/```(?:javascript|js)?\n/g, '').replace(/```/g, '');
     
     // Strip <think> tags
-    clean = clean.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    clean = clean.replace(/<think[\s\S]*?<\/think>/gi, '');
     
     return clean.trim();
   }

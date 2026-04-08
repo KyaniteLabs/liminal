@@ -166,7 +166,7 @@ describe('TextGenerativeGenerator', () => {
         success: true,
       });
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('empty')).rejects.toThrow('Empty output');
+      await expect(gen.generate('empty')).rejects.toThrow('LLM returned empty code');
     });
 
     it('rejects whitespace-only output', async () => {
@@ -175,7 +175,7 @@ describe('TextGenerativeGenerator', () => {
         success: true,
       });
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('whitespace')).rejects.toThrow('Empty output');
+      await expect(gen.generate('whitespace')).rejects.toThrow('LLM returned empty code');
     });
 
     it('rejects code with markdown code blocks', async () => {

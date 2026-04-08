@@ -129,10 +129,16 @@ export class ValidationGuard {
 
   /**
    * Validate file content meets constraints
+   * SECURITY: Detects forbidden imports and requires
    */
   async validateContent(filePath: string, options?: ContentValidationOptions): Promise<ValidationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
+    
+    // SECURITY: Forbidden modules that could compromise security
+    const FORBIDDEN_MODULES = ['fs', 'child_process', 'path', 'os', 'net', 'http', 'https', 'cluster', 'dgram', 'repl', 'vm'];
+    const IMPORT_PATTERN = /(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+    
     const opts = {
       maxLines: 1000,
       maxLineLength: 500,
@@ -167,6 +173,15 @@ export class ValidationGuard {
           errors.push(`Forbidden pattern detected: ${pattern.source}`);
         }
       });
+
+      // SECURITY: Check for forbidden imports/requires
+      let importMatch;
+      while ((importMatch = IMPORT_PATTERN.exec(content)) !== null) {
+        const importedModule = importMatch[1];
+        if (FORBIDDEN_MODULES.some(m => importedModule === m || importedModule.startsWith(`${m}/`))) {
+          errors.push(`Security: Import of '${importedModule}' is not allowed`);
+        }
+      }
 
       return {
         valid: errors.length === 0,

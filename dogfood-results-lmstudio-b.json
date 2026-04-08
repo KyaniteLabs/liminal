@@ -1,0 +1,58 @@
+{
+  "provider": "lmstudio",
+  "agent": "B",
+  "baseUrl": "http://localhost:1234/v1",
+  "model": "qwen3.5-2b",
+  "timestamp": "2026-04-08T06:56:03Z",
+  "domains": ["strudel", "hydra", "tone", "remotion", "html", "ascii"],
+  "results": [
+    {
+      "domain": "strudel",
+      "prompt": "Create a techno beat",
+      "success": false,
+      "codeLength": 0,
+      "error": "StrudelGenerator: No sound source found (need s(), sound(), or note())"
+    },
+    {
+      "domain": "hydra",
+      "prompt": "Create a kaleidoscope effect",
+      "success": false,
+      "codeLength": 0,
+      "error": null
+    },
+    {
+      "domain": "tone",
+      "prompt": "Create ambient drone",
+      "success": false,
+      "codeLength": 0,
+      "error": "ToneGenerator: Generated code does not use Tone.js"
+    },
+    {
+      "domain": "remotion",
+      "prompt": "Create typing animation",
+      "success": false,
+      "codeLength": 0,
+      "error": "RemotionGenerator: Generated code does not appear to be a valid Remotion component"
+    },
+    {
+      "domain": "html",
+      "prompt": "Create landing page",
+      "success": false,
+      "codeLength": 0,
+      "error": null
+    },
+    {
+      "domain": "ascii",
+      "prompt": "Create mountain ASCII art",
+      "success": false,
+      "codeLength": 0,
+      "error": "ASCIIArtGenerator: Generated code contains invalid characters for ASCII art"
+    }
+  ],
+  "summary": {
+    "total": 6,
+    "passed": 0,
+    "failed": 6,
+    "passRate": "0%"
+  }
+}

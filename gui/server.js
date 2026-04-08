@@ -251,9 +251,9 @@ export function createApp(configPath, port = 5174) {
   app.get('/api/gallery', async (_req, res) => {
     try {
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
-      const projectConfig = await loadProjectConfig(process.cwd());
-      const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
+      const userConfigResult = await loadConfig(cfgPath);
+      const userConfig = userConfigResult.match(c => c, () => null);
+      const galleryPath = userConfig?.galleryPath ?? DEFAULTS.galleryPath;
       let resolvedPath;
       try { resolvedPath = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedPath);
@@ -267,9 +267,9 @@ export function createApp(configPath, port = 5174) {
   app.get('/api/gallery/:project', async (req, res) => {
     try {
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
-      const projectConfig = await loadProjectConfig(process.cwd());
-      const galleryPath = userConfig?.galleryPath ?? projectConfig?.galleryPath ?? DEFAULTS.galleryPath;
+      const userConfigResult = await loadConfig(cfgPath);
+      const userConfig = userConfigResult.match(c => c, () => null);
+      const galleryPath = userConfig?.galleryPath ?? DEFAULTS.galleryPath;
       let resolvedPath;
       try { resolvedPath = validateGalleryPath(galleryPath); } catch { return res.status(400).json({ error: 'Invalid gallery path' }); }
       const gallery = new Gallery(resolvedPath);

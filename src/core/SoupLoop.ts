@@ -114,9 +114,12 @@ export class SoupLoop {
 
       if (project && gallery && merged) {
         const version = steps;
-        await gallery.saveIteration(project, version, population[worstIdx].code).catch((err) => {
-          Logger.error('SoupLoop', `Gallery save failed: ${err instanceof Error ? err.message : err}`);
-        });
+        try {
+          await gallery.saveIteration(project, version, population[worstIdx].code);
+        } catch (err) {
+          Logger.error('SoupLoop', `Gallery save failed (iteration ${steps} lost): ${err instanceof Error ? err.message : err}`);
+          throw err;
+        }
       }
     }
 

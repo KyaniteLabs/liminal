@@ -223,8 +223,10 @@ export class DNAExtractor {
     // Check for test files
     try {
       const testDir = path.join(projectPath, 'test');
-      const entries = await fs.readdir(testDir).catch((err) => {
-        Logger.warn('DNAExtractor', 'Cannot read test directory: ' + (err instanceof Error ? err.message : err));
+      const entries = await fs.readdir(testDir).catch((err: unknown) => {
+        const code = (err as NodeJS.ErrnoException)?.code;
+        if (code === 'ENOENT') return []; // No test directory — normal
+        Logger.error('DNAExtractor', `Cannot read test directory (code=${code}): ${err instanceof Error ? err.message : err}`);
         return [];
       });
       if (entries.length > 0) patterns.push('has-test-suite');
@@ -247,8 +249,10 @@ export class DNAExtractor {
 
     // Check source structure
     try {
-      const srcFiles: string[] = await fs.readdir(path.join(projectPath, 'src')).catch((err) => {
-        Logger.warn('DNAExtractor', 'Cannot read src directory: ' + (err instanceof Error ? err.message : err));
+      const srcFiles: string[] = await fs.readdir(path.join(projectPath, 'src')).catch((err: unknown) => {
+        const code = (err as NodeJS.ErrnoException)?.code;
+        if (code === 'ENOENT') return [] as string[]; // No src directory — normal
+        Logger.error('DNAExtractor', `Cannot read src directory (code=${code}): ${err instanceof Error ? err.message : err}`);
         return [] as string[];
       });
       if (srcFiles.includes('core')) patterns.push('has-core-module');
@@ -266,9 +270,11 @@ export class DNAExtractor {
 
     // Look for prompt-related files
     const promptPatterns = ['prompt', 'PROMPT', 'template'];
-    for (const entry of await fs.readdir(projectPath).catch((err) => {
-      Logger.warn('DNAExtractor', `Cannot read project directory ${projectPath}: ` + (err instanceof Error ? err.message : err));
-      return [];
+    for (const entry of await fs.readdir(projectPath).catch((err: unknown) => {
+      const code = (err as NodeJS.ErrnoException)?.code;
+      if (code === 'ENOENT') return [] as string[]; // Project directory gone — normal
+      Logger.error('DNAExtractor', `Cannot read project directory ${projectPath} (code=${code}): ${err instanceof Error ? err.message : err}`);
+      return [] as string[];
     })) {
       if (promptPatterns.some(p => entry.toLowerCase().includes(p.toLowerCase())) && entry.endsWith('.md')) {
         try {

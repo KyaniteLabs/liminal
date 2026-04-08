@@ -80,9 +80,13 @@ export async function runInSandbox(
         url.startsWith('https://cdnjs.cloudflare.com/') &&
         url.includes('p5')
       ) {
-        void req.continue();
+        void req.continue().catch(() => {
+          // Request may already be handled or page closed - safe to ignore
+        });
       } else {
-        void req.abort();
+        void req.abort().catch(() => {
+          // Request may already be handled or page closed - safe to ignore
+        });
       }
     });
 

@@ -4,7 +4,6 @@
  * Central coordinator that wires up:
  * - FailureLogger (captures failures)
  * - PatternDetector (detects patterns in failures)
- * - HarnessUpdater (applies adaptations)
  * - MultiProviderConfig (manages LLM providers)
  * - HarnessMemory (persistent memory across sessions)
  * 
@@ -20,7 +19,7 @@ import path from 'node:path';
 import { Logger } from '../utils/Logger.js';
 import { failureLogger, type FailureRecord } from './FailureLogger.js';
 import { patternDetector, type Pattern } from './PatternDetector.js';
-import { harnessUpdater, type HarnessAdaptation } from './HarnessUpdater.js';
+// HarnessUpdater removed - was a no-op that only logged
 import { 
   getActiveProvider, 
   getActiveProviderConfig,
@@ -37,13 +36,13 @@ export interface MetaHarnessStatus {
   configuredProviders: ProviderType[];
   recentFailures: number;
   detectedPatterns: Pattern[];
-  appliedAdaptations: HarnessAdaptation[];
+  appliedAdaptations: string[]; // Pattern names that were detected
   memory: ReturnType<typeof harnessMemory.getStatus>;
 }
 
 export class MetaHarnessIntegration {
   private initialized = false;
-  private appliedAdaptations: HarnessAdaptation[] = [];
+  private appliedAdaptations: string[] = []; // Pattern names that were detected
   private llmClient?: LLMClient;
 
   /**
@@ -192,25 +191,19 @@ export class MetaHarnessIntegration {
         harnessMemory.recordPatternOccurrence(pattern.name, result.domain);
       }
       
-      // Apply adaptations for detected patterns
+      // Log detected patterns (manual fix required)
       for (const pattern of detectedPatterns) {
-        Logger.debug('MetaHarnessIntegration', `Applying adaptation for pattern: ${pattern.name}`);
-        const adaptation = harnessUpdater.applyAdaptation(pattern);
-        if (adaptation) {
-          this.appliedAdaptations.push(adaptation);
-          
-          // Record adaptation to persistent memory
-          harnessMemory.recordAdaptation({
-            patternName: pattern.name,
-            patternSeverity: pattern.severity ?? 'medium',
-            fixType: adaptation.fixType ?? 'code',
-            targetFile: adaptation.targetFile,
-            description: adaptation.description,
-            success: adaptation.success ?? true,
-            error: adaptation.error,
-            diff: adaptation.diff,
-          });
-        }
+        Logger.info('MetaHarnessIntegration', `Detected pattern (manual fix required): ${pattern.name}`);
+        this.appliedAdaptations.push(pattern.name);
+        
+        // Record pattern to persistent memory for later manual fixing
+        harnessMemory.recordAdaptation({
+          patternName: pattern.name,
+          patternSeverity: pattern.severity ?? 'medium',
+          fixType: 'manual',
+          description: `Pattern detected: ${pattern.name}. Manual fix required.`,
+          success: false,
+        });
       }
     }
   }
@@ -373,7 +366,7 @@ Respond with a JSON object:
       configuredProviders: listConfiguredProviders(),
       recentFailures: failureLogger.getRecentFailures(100).length,
       detectedPatterns: patternDetector.getHighImpactPatterns(1),
-      appliedAdaptations: [...this.appliedAdaptations, ...harnessUpdater.getAdaptations()],
+      appliedAdaptations: this.appliedAdaptations,
       memory: harnessMemory.getStatus(),
     };
   }

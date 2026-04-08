@@ -700,17 +700,15 @@ export type { ASCIIOptions, ASCIIStyle } from './generators/ascii/ASCIIArtGenera
 export type { TextGenOptions, TextGenForm, TextGenStyle } from './generators/textgen/TextGenerativeGenerator.js';
 // Note: ShaderGenerator, ThreeGenerator, HTMLWebGenerator, ASCIIArtGenerator, TextGenerativeGenerator exported below with TierBasedGenerator
 
-// Meta-Harness - Self-improving infrastructure
+// Meta-Harness - Failure observation and pattern detection
 export {
   failureLogger,
   patternDetector,
-  harnessUpdater,
   metaHarness,
   harnessMemory,
   HarnessMemory,
   type FailureRecord,
   type Pattern,
-  type HarnessAdaptation,
   type MetaHarnessStatus,
   type ProviderType,
   type ProviderConfig,

@@ -47,6 +47,11 @@ type GestureRecognizerOpts = {
   numHands: number;
 };
 
+export interface GestureEngineOptions {
+  /** Called when an inference error occurs during the recognition loop */
+  onError?: (error: string) => void;
+}
+
 // ── GestureEngine class ──
 
 export class GestureEngine {
@@ -57,6 +62,7 @@ export class GestureEngine {
   private _intervalId: ReturnType<typeof setInterval> | null = null;
   private _stream: MediaStream | null = null;
   private _destroyed = false;
+  private _onError?: (error: string) => void;
 
   // 1-Euro filters
   private _filterX: OneEuroFilterType | null = null;
@@ -78,8 +84,10 @@ export class GestureEngine {
    * Resolves when the first frame has been processed (or errors immediately
    * if the browser environment is missing required APIs).
    */
-  async start(videoElement?: HTMLVideoElement): Promise<void> {
+  async start(videoElement?: HTMLVideoElement, options?: GestureEngineOptions): Promise<void> {
     if (this.state.active) return;
+
+    this._onError = options?.onError;
 
     try {
       // Dynamically import browser-only modules (not installed in Node CLI)
@@ -215,7 +223,9 @@ export class GestureEngine {
           this._processResult(result, now);
         })
         .catch((err: unknown) => {
-          this.state.error = err instanceof Error ? err.message : String(err);
+          const msg = err instanceof Error ? err.message : String(err);
+          this.state.error = msg;
+          this._onError?.(msg);
         });
     }, INFERENCE_INTERVAL_MS);
   }

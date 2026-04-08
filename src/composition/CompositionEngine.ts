@@ -287,14 +287,12 @@ export class CompositionEngine {
    * Import from Liminal project format.
    * @deprecated Use ProjectSerializer.importProject() instead
    */
-  importProject(project: LiminalProject): void {
+  async importProject(project: LiminalProject): Promise<void> {
     // Use dynamic import to avoid circular dependency issues
     // eslint-disable-next-line @typescript-eslint/no-var-requires
     const { ProjectSerializer } = require('./ProjectSerializer.js');
     const serializer = new ProjectSerializer();
-    serializer.importProject(project, this).catch((err: Error) => {
-      Logger.error('CompositionEngine', 'Import failed:', err);
-    });
+    await serializer.importProject(project, this);
   }
 
   /**

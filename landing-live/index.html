@@ -268,7 +268,6 @@ a:focus:not(:focus-visible) {
   align-self: stretch;
 }
 
-/* Export button */
 .export-btn {
   font-family: var(--font-heading);
   font-size: 11px;
@@ -282,6 +281,8 @@ a:focus:not(:focus-visible) {
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background var(--transition-fast), color var(--transition-fast);
+  animation: fadeSlideUp 400ms var(--transition-slow) 1000ms forwards;
+  opacity: 0;
 }
 
 .export-btn:hover {
@@ -629,6 +630,7 @@ a:focus:not(:focus-visible) {
   .hero-title,
   .hero-subtitle,
   .stat-item,
+  .export-btn,
   .domain-card {
     opacity: 1;
     transform: none;
@@ -748,7 +750,6 @@ a:focus:not(:focus-visible) {
      Constants
      ============================== */
   var STORAGE_KEY = 'liminal-ratings';
-  var CARDS_SELECTOR = '.domain-card';
   var VISIBLE_CLASS = 'visible';
   var REVEAL_THRESHOLD = 0.08;
   var REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
@@ -868,7 +869,7 @@ a:focus:not(:focus-visible) {
         '<div class="card-footer">' +
           '<span></span>' +
           '<a class="card-fullscreen" href="' + card.iframeSrc + '" target="_blank" rel="noopener">' +
-            'View Fullscreen <span class="arrow" aria-hidden="true">&rarr;</span>' +
+            'View Fullscreen <span class="arrow" aria-hidden="true">\u2192</span>' +
           '</a>' +
         '</div>' +
       '</article>';
@@ -940,7 +941,7 @@ a:focus:not(:focus-visible) {
 
   function revealCards() {
     if (prefersReducedMotion()) {
-      var cards = document.querySelectorAll(CARDS_SELECTOR);
+      var cards = document.querySelectorAll('.domain-card');
       for (var i = 0; i < cards.length; i++) {
         cards[i].classList.add(VISIBLE_CLASS);
       }
@@ -959,7 +960,7 @@ a:focus:not(:focus-visible) {
       { threshold: REVEAL_THRESHOLD }
     );
 
-    var cards = document.querySelectorAll(CARDS_SELECTOR);
+    var cards = document.querySelectorAll('.domain-card');
     for (var j = 0; j < cards.length; j++) {
       observer.observe(cards[j]);
     }

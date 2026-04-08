@@ -652,7 +652,7 @@ describe('ScoringEngine', () => {
       const result = await engine.score(DEFAULT_INPUT);
 
       expect(result.score).toBe(0.5);
-      expect(result.issues).toEqual(['LLM evaluation failed']);
+      expect(result.issues).toEqual(['LLM evaluation failed: no successful response']);
     });
 
     it('returns 0.5 fallback when LLM response has no JSON object', async () => {
@@ -664,7 +664,7 @@ describe('ScoringEngine', () => {
       const result = await engine.score(DEFAULT_INPUT);
 
       expect(result.score).toBe(0.5);
-      expect(result.issues).toEqual(['Could not parse LLM response']);
+      expect(result.issues).toEqual(['LLM evaluation failed: could not parse LLM response']);
     });
 
     it('returns 0.5 fallback when JSON.parse throws', async () => {

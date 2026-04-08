@@ -56,6 +56,9 @@ async function isLLMAvailable(): Promise<boolean> {
   }
 }
 
+// Check if running in CI environment
+const isCI = (): boolean => !!process.env.CI;
+
 // Check if Chrome/Puppeteer is available
 function isChromeUnavailableError(error: string | undefined): boolean {
   if (!error) return false;
@@ -63,7 +66,7 @@ function isChromeUnavailableError(error: string | undefined): boolean {
   return /could not find|failed to launch|executable doesn't exist|no usable sandbox|chromium/i.test(msg);
 }
 
-describe.skipIf(process.env.CI)('E2E Guardrails with Real LLM', () => {
+describe('E2E Guardrails with Real LLM', () => {
   let llmAvailable = false;
   let constitution: Constitution;
   let system: ReturnType<typeof initializeGuardrailSystem>;
@@ -71,7 +74,7 @@ describe.skipIf(process.env.CI)('E2E Guardrails with Real LLM', () => {
   beforeAll(async () => {
     llmAvailable = await isLLMAvailable();
     if (!llmAvailable) {
-      console.warn('[E2E] LLM not available - tests will skip');
+      console.warn('[E2E] LLM not available - LLM-dependent tests will be skipped');
     }
     
     // Initialize constitution for learning
@@ -387,6 +390,7 @@ Requirements:
 Output only the code, no explanation.`;
 
       let generatedCode: string;
+      let generationError: Error | undefined;
       try {
         const result = await client.generate(
           'You are a creative coding assistant. Generate p5.js code.',
@@ -394,8 +398,14 @@ Output only the code, no explanation.`;
         );
         generatedCode = result.code || '';
       } catch (error) {
-        console.warn('[E2E] LLM generation failed:', error);
-        return; // Skip test
+        generationError = error instanceof Error ? error : new Error(String(error));
+      }
+      
+      // Skip assertions if generation failed - the skipIf should prevent reaching here
+      // but we handle edge cases gracefully
+      if (generationError) {
+        console.warn('[E2E] LLM generation failed:', generationError.message);
+        expect.unreachable('LLM generation should not fail when test is configured to run');
       }
 
       expect(generatedCode).toBeDefined();
@@ -464,13 +474,11 @@ Output only the code, no explanation.`;
       if (generatedCode.includes('createCanvas') && generatedCode.includes('function setup')) {
         const sandboxResult = await runInSandbox(generatedCode, { timeoutMs: 15000 });
         
-        if (isChromeUnavailableError(sandboxResult.error)) {
-          console.warn('[E2E] Chrome unavailable, skipping sandbox validation');
-          return;
+        // Skip sandbox assertions if Chrome is unavailable
+        if (!isChromeUnavailableError(sandboxResult.error)) {
+          expect(sandboxResult.completed).toBe(true);
+          expect(sandboxResult.error).toBeUndefined();
         }
-        
-        expect(sandboxResult.completed).toBe(true);
-        expect(sandboxResult.error).toBeUndefined();
       }
     }, E2E_TIMEOUT_MS);
 

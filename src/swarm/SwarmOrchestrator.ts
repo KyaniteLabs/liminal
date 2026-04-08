@@ -621,7 +621,7 @@ export class SwarmOrchestrator {
     roundNum: number,
     personas: SwarmPersona[]
   ): Promise<Map<string, SwarmOutput>> {
-    const outputs = new Map<string, SwarmOutput>();
+    // Use Promise.all with results array instead of shared Map to avoid race conditions
     const promises = personas.map(async (persona) => {
       const startTime = Date.now();
       try {
@@ -638,7 +638,7 @@ export class SwarmOrchestrator {
           }
         );
 
-        outputs.set(persona.id, {
+        return {
           personaId: persona.id,
           personaName: persona.displayName,
           content: content.trim(),
@@ -646,9 +646,9 @@ export class SwarmOrchestrator {
           tokensUsed: content.length, // Approximate
           latencyMs: Date.now() - startTime,
           roundNum,
-        });
+        };
       } catch (error) {
-        outputs.set(persona.id, {
+        return {
           personaId: persona.id,
           personaName: persona.displayName,
           content: `[Generation error: ${error instanceof Error ? error.message : 'unknown'}]`,
@@ -656,11 +656,17 @@ export class SwarmOrchestrator {
           tokensUsed: 0,
           latencyMs: Date.now() - startTime,
           roundNum,
-        });
+        };
       }
     });
 
-    await Promise.all(promises);
+    const results = await Promise.all(promises);
+    
+    // Build Map from results after all promises complete (race-free)
+    const outputs = new Map<string, SwarmOutput>();
+    for (const result of results) {
+      outputs.set(result.personaId, result);
+    }
     return outputs;
   }
 

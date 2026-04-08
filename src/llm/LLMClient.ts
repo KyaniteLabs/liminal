@@ -438,11 +438,21 @@ export class LLMClient {
   }
 
   private resolvedModel: string | null = null;
+  private resolveModelPromise: Promise<string> | null = null;
 
   /** Auto-detect model from LM Studio /v1/models endpoint */
   private async resolveModel(): Promise<string> {
     if (this.resolvedModel) return this.resolvedModel;
-
+    
+    // Race-safe lazy initialization: only first caller creates the promise
+    if (!this.resolveModelPromise) {
+      this.resolveModelPromise = this.doResolveModel();
+    }
+    
+    return this.resolveModelPromise;
+  }
+  
+  private async doResolveModel(): Promise<string> {
     // Only auto-detect for local endpoints (LM Studio, etc.)
     const baseUrl = this.config.baseUrl;
     const isLocal = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');
@@ -500,7 +510,7 @@ export class LLMClient {
 
     try {
       // Check cache
-      const cached = bypassCache ? null : await this.cache.get(systemPrompt, userPrompt);
+      const cached = bypassCache ? null : this.cache.get(systemPrompt, userPrompt);
       if (cached) {
         return { code: cached, success: true, fromCache: true };
       }
@@ -565,7 +575,7 @@ export class LLMClient {
 
       // Write to cache on success
       if (result.success && result.code && !bypassCache) {
-        await this.cache.set(systemPrompt, userPrompt, result.code);
+        this.cache.set(systemPrompt, userPrompt, result.code);
       }
 
       eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {

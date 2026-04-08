@@ -2,6 +2,9 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { TierBasedGenerator } from '../../src/generators/TierBasedGenerator.js';
 import { LLMClient, LLMResponse } from '../../src/llm/LLMClient.js';
 
+// Set env var so LLMClient.isConfigured() returns true
+process.env.LLM_API_KEY = 'test-api-key';
+
 // Create a concrete implementation for testing
 class TestGenerator extends TierBasedGenerator {
   constructor(domain: string, llmOrConfig?: LLMClient | Partial<ConstructorParameters<typeof LLMClient>[0]>) {

@@ -156,7 +156,8 @@ export class HeadlessRenderer {
       Logger.info('HeadlessRenderer', 'Browser initialized');
     } catch (error) {
       Logger.error('HeadlessRenderer', 'Failed to initialize browser:', error);
-      throw new Error(`Failed to initialize headless browser: ${error instanceof Error ? error.message : 'unknown error'}`);
+      throw new Error(`Failed to initialize headless browser: ${error instanceof Error ? error.message : 'unknown error'}`,
+        { cause: error instanceof Error ? error : undefined });
     }
   }
 

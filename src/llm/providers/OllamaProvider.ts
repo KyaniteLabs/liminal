@@ -55,56 +55,64 @@ export class OllamaProvider extends BaseProvider {
       },
     };
 
-    const signal = req.signal || AbortSignal.timeout(TIMEOUT_OLLAMA_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), TIMEOUT_OLLAMA_MS) : undefined;
 
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(`${baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      return {
-        content: '',
-        model: this.config.model,
-        success: false,
-        error: `Ollama API error ${response.status}`,
-      };
-    }
-
-    const data = await response.json();
-    let content = (data as Record<string, unknown>).response as string || '';
-    const thinking = normalizeThinking(data, 'ollama');
-
-    // Fallback: check for <think/> tags in response
-    if (thinking.source === 'none' && content.includes('<think')) {
-      const stripped = stripThinkTags(content);
-      content = stripped.content;
-      if (stripped.thinking) {
+      if (!response.ok) {
         return {
-          content,
-          thinking: { text: stripped.thinking, source: 'think_tags' },
+          content: '',
           model: this.config.model,
-          success: content.length > 0,
-          usage: (data as Record<string, unknown>).eval_count ? {
-            inputTokens: ((data as Record<string, unknown>).prompt_eval_count as number) || 0,
-            outputTokens: ((data as Record<string, unknown>).eval_count as number) || 0,
-          } : undefined,
+          success: false,
+          error: `Ollama API error ${response.status}`,
         };
       }
-    }
 
-    return {
-      content,
-      thinking: thinking.source !== 'none' ? thinking : undefined,
-      model: this.config.model,
-      success: content.length > 0,
-      usage: (data as Record<string, unknown>).eval_count ? {
-        inputTokens: ((data as Record<string, unknown>).prompt_eval_count as number) || 0,
-        outputTokens: ((data as Record<string, unknown>).eval_count as number) || 0,
-      } : undefined,
-    };
+      const data = await response.json();
+      let content = (data as Record<string, unknown>).response as string || '';
+      const thinking = normalizeThinking(data, 'ollama');
+
+      // Fallback: check for <think/> tags in response
+      if (thinking.source === 'none' && content.includes('<think')) {
+        const stripped = stripThinkTags(content);
+        content = stripped.content;
+        if (stripped.thinking) {
+          return {
+            content,
+            thinking: { text: stripped.thinking, source: 'think_tags' },
+            model: this.config.model,
+            success: content.length > 0,
+            usage: (data as Record<string, unknown>).eval_count ? {
+              inputTokens: ((data as Record<string, unknown>).prompt_eval_count as number) || 0,
+              outputTokens: ((data as Record<string, unknown>).eval_count as number) || 0,
+            } : undefined,
+          };
+        }
+      }
+
+      return {
+        content,
+        thinking: thinking.source !== 'none' ? thinking : undefined,
+        model: this.config.model,
+        success: content.length > 0,
+        usage: (data as Record<string, unknown>).eval_count ? {
+          inputTokens: ((data as Record<string, unknown>).prompt_eval_count as number) || 0,
+          outputTokens: ((data as Record<string, unknown>).eval_count as number) || 0,
+        } : undefined,
+      };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   private async generateOpenAICompat(req: ProviderRequest): Promise<ProviderResponse> {
@@ -120,25 +128,28 @@ export class OllamaProvider extends BaseProvider {
       max_tokens: req.maxTokens ?? this.config.maxTokens,
     };
 
-    const signal = req.signal || AbortSignal.timeout(TIMEOUT_DEFAULT_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), TIMEOUT_DEFAULT_MS) : undefined;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      return {
-        content: '',
-        model: this.config.model,
-        success: false,
-        error: `Ollama OpenAI-compat error ${response.status}`,
-      };
-    }
+      if (!response.ok) {
+        return {
+          content: '',
+          model: this.config.model,
+          success: false,
+          error: `Ollama OpenAI-compat error ${response.status}`,
+        };
+      }
 
-    const data = await response.json();
+      const data = await response.json();
     const thinking = normalizeThinking(data, 'openai');
     const choices = (data as Record<string, unknown>).choices as Array<{ message?: { content?: string } }> | undefined;
     const content = choices?.[0]?.message?.content || '';
@@ -149,6 +160,11 @@ export class OllamaProvider extends BaseProvider {
       model: this.config.model,
       success: content.length > 0,
     };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   async *stream(req: ProviderRequest): AsyncGenerator<StreamEvent> {
@@ -176,26 +192,34 @@ export class OllamaProvider extends BaseProvider {
       },
     };
 
-    const signal = req.signal || AbortSignal.timeout(TIMEOUT_OLLAMA_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), TIMEOUT_OLLAMA_MS) : undefined;
 
-    const response = await fetch(`${baseUrl}/api/generate`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(`${baseUrl}/api/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      yield { type: 'error', error: `Ollama API error ${response.status}` };
-      return;
+      if (!response.ok) {
+        yield { type: 'error', error: `Ollama API error ${response.status}` };
+        return;
+      }
+
+      if (!response.body) {
+        yield { type: 'error', error: 'No response body' };
+        return;
+      }
+
+      yield* parseOllamaStream(response.body);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
-
-    if (!response.body) {
-      yield { type: 'error', error: 'No response body' };
-      return;
-    }
-
-    yield* parseOllamaStream(response.body);
   }
 
   private async *streamOpenAICompat(req: ProviderRequest): AsyncGenerator<StreamEvent> {
@@ -212,25 +236,33 @@ export class OllamaProvider extends BaseProvider {
       stream: true,
     };
 
-    const signal = req.signal || AbortSignal.timeout(300000);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), 300000) : undefined;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      yield { type: 'error', error: `Ollama OpenAI-compat error ${response.status}` };
-      return;
+      if (!response.ok) {
+        yield { type: 'error', error: `Ollama OpenAI-compat error ${response.status}` };
+        return;
+      }
+
+      if (!response.body) {
+        yield { type: 'error', error: 'No response body' };
+        return;
+      }
+
+      yield* parseOpenAIStream(response.body);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
-
-    if (!response.body) {
-      yield { type: 'error', error: 'No response body' };
-      return;
-    }
-
-    yield* parseOpenAIStream(response.body);
   }
 }

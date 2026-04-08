@@ -104,12 +104,13 @@ export class EmbeddingService {
     } catch (error) {
       const message =
         error instanceof Error ? error.message : 'Unknown error';
-      Logger.warn(
+      Logger.error(
         'EmbeddingService',
-        `Failed to initialize local model (will retry on next embed call): ${message}`
+        `Failed to initialize local model: ${message}`
       );
       // Clear initPromise so initialization can be retried
       this.initPromise = null;
+      throw error;
     }
   }
 

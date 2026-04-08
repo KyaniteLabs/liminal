@@ -76,26 +76,29 @@ export class GoogleProvider extends BaseProvider {
       }
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || TIMEOUT_DEFAULT_MS) : undefined;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => response.statusText);
-      return {
-        content: '',
-        model: this.config.model,
-        success: false,
-        error: `Google API error ${response.status}: ${errorText}`,
-      };
-    }
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        return {
+          content: '',
+          model: this.config.model,
+          success: false,
+          error: `Google API error ${response.status}: ${errorText}`,
+        };
+      }
 
-    const data = await response.json();
+      const data = await response.json();
 
     // Extract content from candidates
     const candidates = data.candidates as Array<{
@@ -133,6 +136,11 @@ export class GoogleProvider extends BaseProvider {
         thinkingTokens: usageMeta.thoughtsTokenCount,
       } : undefined,
     };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

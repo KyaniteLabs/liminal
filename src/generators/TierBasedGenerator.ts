@@ -30,6 +30,7 @@ export abstract class TierBasedGenerator {
   protected tier: ModelTier;
   protected domain: string;
   private _configNeedsResolution: boolean;
+  private _configResolutionPromise: Promise<void> | null = null;
 
   constructor(
     domain: string,
@@ -57,12 +58,25 @@ export abstract class TierBasedGenerator {
    * Resolve LLM config from getEffectiveConfig() if no explicit config was provided.
    * Called lazily on first generation to ensure providers like MiniMax (from
    * ~/.liminal/config.json) are properly wired without requiring env vars.
+   * Uses a promise to prevent race conditions during concurrent calls.
    */
   private async resolveConfigIfNeeded(): Promise<void> {
     if (!this._configNeedsResolution) return;
-    this._configNeedsResolution = false;
-
+    
+    // Race-safe lazy initialization: only first caller creates the promise
+    if (!this._configResolutionPromise) {
+      this._configResolutionPromise = this.doResolveConfig();
+    }
+    
+    return this._configResolutionPromise;
+  }
+  
+  private async doResolveConfig(): Promise<void> {
     const config = await getEffectiveConfig(undefined, process.cwd());
+    if (!config) {
+      Logger.warn('TierBasedGenerator', 'Failed to resolve config');
+      return;
+    }
     if (config.baseUrl || config.apiKey) {
       this.llm = new LLMClient({
         baseUrl: config.baseUrl,
@@ -73,6 +87,7 @@ export abstract class TierBasedGenerator {
       this.tier = detectModelTier(this.llm.getConfig());
       this.promptBuilder = new PromptBuilder(this.llm.getConfig());
     }
+    this._configNeedsResolution = false;
   }
 
   async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
@@ -121,6 +136,16 @@ export abstract class TierBasedGenerator {
   ): Promise<LLMResponse> {
     // Resolve LLM config lazily on first generation call
     await this.resolveConfigIfNeeded();
+
+    // Ensure LLM is properly initialized
+    if (!this.llm) {
+      throw new GenerationError(`${this.constructor.name}: LLM not initialized`, this.domain);
+    }
+
+    // Ensure promptBuilder is properly initialized
+    if (!this.promptBuilder) {
+      throw new GenerationError(`${this.constructor.name}: PromptBuilder not initialized`, this.domain);
+    }
 
     if (!LLMClient.isConfigured()) {
       throw new GenerationError(`${this.constructor.name}: No LLM configured`, this.domain);
@@ -304,7 +329,7 @@ export abstract class TierBasedGenerator {
   /**
    * Get user preferences from memory
    */
-  private getUserPreferences(): string | undefined {
+  private getUserPreferences(): string {
     const recent = harnessMemory.getRecentEpisodes(5);
     const domains = recent.map(e => e.domain).filter(Boolean);
     const uniqueDomains = [...new Set(domains)];
@@ -312,7 +337,7 @@ export abstract class TierBasedGenerator {
     if (uniqueDomains.length > 0) {
       return `User frequently works with: ${uniqueDomains.join(', ')}`;
     }
-    return undefined;
+    return '';
   }
 
   /**

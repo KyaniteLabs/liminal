@@ -439,8 +439,8 @@
     },
     {
       "path": "src/llm/LLMClient.ts",
-      "accessCount": 60,
-      "lastAccessed": 1775625587843,
+      "accessCount": 64,
+      "lastAccessed": 1775663918494,
       "type": "file"
     },
     {
@@ -487,8 +487,8 @@
     },
     {
       "path": "src/llm",
-      "accessCount": 8,
-      "lastAccessed": 1775603422687,
+      "accessCount": 9,
+      "lastAccessed": 1775663343708,
       "type": "directory"
     },
     {
@@ -564,6 +564,12 @@
       "type": "file"
     },
     {
+      "path": "src/harness",
+      "accessCount": 3,
+      "lastAccessed": 1775663435090,
+      "type": "directory"
+    },
+    {
       "path": "src/compost/types.ts",
       "accessCount": 2,
       "lastAccessed": 1775429442866,
@@ -592,12 +598,6 @@
       "accessCount": 2,
       "lastAccessed": 1775598517702,
       "type": "file"
-    },
-    {
-      "path": "src/harness",
-      "accessCount": 2,
-      "lastAccessed": 1775603424357,
-      "type": "directory"
     },
     {
       "path": "test/e2e/models/minimax-m2-7.test.ts",

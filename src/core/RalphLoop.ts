@@ -229,6 +229,7 @@ export class RalphLoop {
     const CONVERGENCE_THRESHOLD = 0.01;
 
     // Main loop
+    try {
     while (iteration < normalizedOptions.maxIterations) {
       if (normalizedOptions.signal?.aborted) {
         reason = 'aborted by user';

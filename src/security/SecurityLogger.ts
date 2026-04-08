@@ -11,7 +11,8 @@ export type SecurityEventType =
   | 'rate_limit_violation'
   | 'csrf_failure'
   | 'invalid_auth'
-  | 'sandbox_escape_attempt';
+  | 'sandbox_escape_attempt'
+  | 'gallery_write';
 
 export interface SecurityEvent {
   type: SecurityEventType;
@@ -87,7 +88,7 @@ export class SecurityLogger {
    */
   private async sendToSIEM(event: SecurityEvent): Promise<void> {
     if (!this.config.siemEndpoint) return;
-    
+
     const response = await fetch(this.config.siemEndpoint, {
       method: 'POST',
       headers: {
@@ -95,6 +96,7 @@ export class SecurityLogger {
         ...(this.config.siemApiKey && { 'Authorization': `Bearer ${this.config.siemApiKey}` }),
       },
       body: JSON.stringify(event),
+      signal: AbortSignal.timeout(5000),
     });
     
     if (!response.ok) {

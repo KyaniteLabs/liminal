@@ -96,6 +96,11 @@ async function handleStatus(git: GitService): Promise<void> {
   }
   const status = result.value;
 
+  if (!status) {
+    console.log('Unable to get status - repository may have merge conflicts');
+    return;
+  }
+
   const branch = status.current;
   console.log(`On branch ${branch}`);
 

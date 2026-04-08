@@ -572,15 +572,55 @@ if (typeof process !== 'undefined' && process.stdout?.isTTY) {
 
 // Ensure shutdown on exit
 if (typeof process !== 'undefined') {
-  process.on('exit', () => {
-    metaHarness.shutdown().catch(console.error); // eslint-disable-line no-console
+  const SHUTDOWN_TIMEOUT_MS = 5000;
+  
+  // Use beforeExit for async cleanup with proper timeout and error handling
+  process.on('beforeExit', () => {
+    void (async () => {
+      try {
+        await Promise.race([
+          metaHarness.shutdown(),
+          new Promise<void>((_, reject) =>
+            setTimeout(() => reject(new Error('Shutdown timeout')), SHUTDOWN_TIMEOUT_MS)
+          ),
+        ]);
+      } catch (err) {
+        Logger.error('MetaHarnessIntegration', 'Shutdown failed on beforeExit:', err);
+      }
+    })();
   });
   
   process.on('SIGINT', () => {
-    void metaHarness.shutdown().then(() => process.exit(0));
+    void (async () => {
+      try {
+        await Promise.race([
+          metaHarness.shutdown(),
+          new Promise<void>((_, reject) => 
+            setTimeout(() => reject(new Error('Shutdown timeout')), SHUTDOWN_TIMEOUT_MS)
+          ),
+        ]);
+        process.exit(0);
+      } catch (err) {
+        Logger.error('MetaHarnessIntegration', 'Shutdown failed on SIGINT:', err);
+        process.exit(1);
+      }
+    })();
   });
   
   process.on('SIGTERM', () => {
-    void metaHarness.shutdown().then(() => process.exit(0));
+    void (async () => {
+      try {
+        await Promise.race([
+          metaHarness.shutdown(),
+          new Promise<void>((_, reject) => 
+            setTimeout(() => reject(new Error('Shutdown timeout')), SHUTDOWN_TIMEOUT_MS)
+          ),
+        ]);
+        process.exit(0);
+      } catch (err) {
+        Logger.error('MetaHarnessIntegration', 'Shutdown failed on SIGTERM:', err);
+        process.exit(1);
+      }
+    })();
   });
 }

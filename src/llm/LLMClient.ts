@@ -485,11 +485,21 @@ export class LLMClient {
   }
 
   private resolvedModel: string | null = null;
+  private resolveModelPromise: Promise<string> | null = null;
 
   /** Auto-detect model from LM Studio /v1/models endpoint */
   private async resolveModel(): Promise<string> {
     if (this.resolvedModel) return this.resolvedModel;
-
+    
+    // Race-safe lazy initialization: only first caller creates the promise
+    if (!this.resolveModelPromise) {
+      this.resolveModelPromise = this.doResolveModel();
+    }
+    
+    return this.resolveModelPromise;
+  }
+  
+  private async doResolveModel(): Promise<string> {
     // Only auto-detect for local endpoints (LM Studio, etc.)
     const baseUrl = this.config.baseUrl;
     const isLocal = baseUrl.includes('localhost') || baseUrl.includes('127.0.0.1');

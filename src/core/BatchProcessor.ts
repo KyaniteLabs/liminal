@@ -76,14 +76,19 @@ const DEFAULT_CONFIG: BatchProcessorConfig = {
 export class BatchProcessor<TInput, TOutput> {
   /** Internal job queue containing pending, running, completed, and failed jobs. */
   private queue: BatchJob<TInput, TOutput>[] = [];
-  /** Number of jobs currently executing. */
-  private activeCount = 0;
   /** Resolved configuration. */
   private readonly config: BatchProcessorConfig;
   /** The processing function applied to each job's input. */
   private processor?: (input: TInput) => Promise<TOutput>;
   /** Monotonic counter used to generate unique job IDs. */
   private idCounter = 0;
+  /** 
+   * Semaphore for concurrency control.
+   * Uses a queue of resolvers to ensure FIFO order and prevent race conditions
+   * in the check-then-act pattern that existed with activeCount.
+   */
+  private semaphoreQueue: Array<() => void> = [];
+  private semaphoreCount: number;
 
   /**
    * Create a new BatchProcessor.
@@ -100,6 +105,35 @@ export class BatchProcessor<TInput, TOutput> {
   ) {
     this.config = { ...DEFAULT_CONFIG, ...config };
     this.processor = processor;
+    this.semaphoreCount = this.config.maxConcurrency;
+  }
+
+  /**
+   * Acquire a permit from the semaphore.
+   * If no permits available, waits until one is released.
+   */
+  private async acquireSemaphore(): Promise<void> {
+    if (this.semaphoreCount > 0) {
+      this.semaphoreCount--;
+      return;
+    }
+    // Wait for a permit to become available
+    return new Promise((resolve) => {
+      this.semaphoreQueue.push(resolve);
+    });
+  }
+
+  /**
+   * Release a permit back to the semaphore.
+   * If there are waiters, resolves the next one.
+   */
+  private releaseSemaphore(): void {
+    if (this.semaphoreQueue.length > 0) {
+      const next = this.semaphoreQueue.shift();
+      next?.();
+    } else {
+      this.semaphoreCount++;
+    }
   }
 
   /**
@@ -175,22 +209,23 @@ export class BatchProcessor<TInput, TOutput> {
     const retryDelay = this.config.retryDelayMs;
 
     const runJob = async (job: BatchJob<TInput, TOutput>): Promise<void> => {
+      // Acquire semaphore before starting (prevents race in concurrency control)
+      await this.acquireSemaphore();
+      
       let lastError: string | undefined;
 
       for (let attempt = 0; attempt <= maxRetries; attempt++) {
         try {
           const currentJob = job;
           currentJob.status = Status.RUNNING;
-          this.activeCount++;
           const result = await processor(currentJob.input);
-          this.activeCount--;
 
           currentJob.status = Status.COMPLETED;
           currentJob.result = result;
           currentJob.completedAt = Date.now();
+          this.releaseSemaphore();
           return;
         } catch (err) {
-          this.activeCount--;
           lastError = err instanceof Error ? err.message : String(err);
           Logger.warn('BatchProcessor', `Job ${job.id} failed (attempt ${attempt + 1}/${maxRetries + 1}):`, lastError);
 
@@ -204,30 +239,18 @@ export class BatchProcessor<TInput, TOutput> {
       job.status = Status.FAILED;
       job.error = lastError ?? 'Unknown error';
       job.completedAt = Date.now();
+      this.releaseSemaphore();
     };
 
-    // Dispatch jobs respecting the concurrency cap.
+    // Dispatch all jobs concurrently - semaphore controls actual concurrency
     const executing: Promise<void>[] = [];
 
     for (const job of pending) {
-      // If we've hit the concurrency limit, wait for at least one slot.
-      if (this.activeCount >= this.config.maxConcurrency) {
-        await Promise.race(executing);
-      }
-
       const promise = runJob(job);
       executing.push(promise);
-
-      // Remove settled promises to avoid unbounded growth.
-      void promise.finally(() => {
-        const idx = executing.indexOf(promise);
-        if (idx !== -1) {
-          void executing.splice(idx, 1);
-        }
-      });
     }
 
-    // Wait for any remaining in-flight jobs to finish.
+    // Wait for all jobs to complete.
     await Promise.all(executing);
 
     return [...this.queue];
@@ -274,9 +297,10 @@ export class BatchProcessor<TInput, TOutput> {
 
   /**
    * The number of jobs currently executing.
+   * Calculated from semaphore state for thread safety.
    */
   get activeJobCount(): number {
-    return this.activeCount;
+    return this.config.maxConcurrency - this.semaphoreCount;
   }
 
   // ---------------------------------------------------------------------------

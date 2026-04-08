@@ -63,6 +63,8 @@ export class NaturalInterface {
   // Callbacks for UI updates
   private onStatus: (msg: string) => void;
   private onLog: (msg: string) => void;
+  // SOUL loading promise to avoid fire-and-forget
+  private soulLoadPromise: Promise<void>;
 
   constructor(options: {
     harnessAgent: HarnessAgent;
@@ -87,8 +89,8 @@ export class NaturalInterface {
       updatedAt: new Date().toISOString(),
     };
 
-    // Load SOUL.md
-    void this.loadSoul();
+    // Load SOUL.md - store promise to avoid fire-and-forget
+    this.soulLoadPromise = this.loadSoul();
   }
 
   private async loadSoul(): Promise<void> {
@@ -108,6 +110,9 @@ export class NaturalInterface {
     input: string,
     _onStream?: (chunk: string, meta?: { type: 'thinking' | 'content'; length?: number }) => void
   ): Promise<NaturalInputResult> {
+    // Ensure SOUL is loaded before processing
+    await this.soulLoadPromise;
+
     const trimmed = input.trim();
 
     // Add user message to history

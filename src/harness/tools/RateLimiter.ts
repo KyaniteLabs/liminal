@@ -8,6 +8,7 @@
  */
 
 import { formatError } from '../../utils/errors.js';
+import { AsyncLock } from '../../utils/AsyncLock.js';
 
 interface RateLimitConfig {
   minDelayMs: number;
@@ -26,6 +27,7 @@ export class RateLimiter {
   private lastCall: Map<string, number> = new Map();
   private callHistory: Map<string, number[]> = new Map();
   private limits: Map<string, RateLimitConfig>;
+  private lock = new AsyncLock();
 
   constructor(customLimits?: Record<string, RateLimitConfig>) {
     this.limits = new Map(Object.entries(customLimits || DEFAULT_LIMITS));
@@ -33,52 +35,69 @@ export class RateLimiter {
 
   /**
    * Check if operation is allowed (within burst limit)
+   * Thread-safe: uses locking for history access
    */
-  checkBurst(operation: string): { allowed: boolean; retryAfterMs?: number } {
+  async checkBurst(operation: string): Promise<{ allowed: boolean; retryAfterMs?: number }> {
     const config = this.limits.get(operation);
     if (!config) return { allowed: true };
 
-    const now = Date.now();
-    const window = 60 * 1000; // 1 minute
-    const history = this.callHistory.get(operation) || [];
-    
-    // Clean old entries
-    const recent = history.filter(t => now - t < window);
-    
-    if (recent.length >= config.maxPerMinute) {
-      const oldest = recent[0];
-      const retryAfter = window - (now - oldest);
-      return { allowed: false, retryAfterMs: retryAfter };
-    }
-    
-    return { allowed: true };
+    return this.lock.acquire(() => {
+      const now = Date.now();
+      const window = 60 * 1000; // 1 minute
+      const history = this.callHistory.get(operation) || [];
+      
+      // Clean old entries
+      const recent = history.filter(t => now - t < window);
+      
+      // Update history in-place with cleaned entries
+      this.callHistory.set(operation, recent);
+      
+      if (recent.length >= config.maxPerMinute) {
+        const oldest = recent[0];
+        const retryAfter = window - (now - oldest);
+        return { allowed: false, retryAfterMs: retryAfter };
+      }
+      
+      return { allowed: true };
+    });
   }
 
   /**
    * Throttle operation (enforce minimum delay)
+   * Thread-safe: uses locking for lastCall updates
    */
   async throttle(operation: string): Promise<void> {
     const config = this.limits.get(operation);
     if (!config || config.minDelayMs === 0) return;
 
-    const last = this.lastCall.get(operation) || 0;
+    // Read lastCall under lock
+    const last = await this.lock.acquire(() => {
+      return this.lastCall.get(operation) || 0;
+    });
+    
     const elapsed = Date.now() - last;
     
     if (elapsed < config.minDelayMs) {
       await sleep(config.minDelayMs - elapsed);
     }
     
-    this.lastCall.set(operation, Date.now());
+    // Update lastCall under lock
+    await this.lock.acquire(() => {
+      this.lastCall.set(operation, Date.now());
+    });
   }
 
   /**
    * Record an operation call
+   * Thread-safe: uses locking for history updates
    */
-  recordCall(operation: string): void {
-    const now = Date.now();
-    const history = this.callHistory.get(operation) || [];
-    history.push(now);
-    this.callHistory.set(operation, history);
+  async recordCall(operation: string): Promise<void> {
+    return this.lock.acquire(() => {
+      const now = Date.now();
+      const history = this.callHistory.get(operation) || [];
+      history.push(now);
+      this.callHistory.set(operation, history);
+    });
   }
 
   /**
@@ -89,7 +108,7 @@ export class RateLimiter {
     fn: () => Promise<T>
   ): Promise<{ result?: T; error?: string; rateLimited?: boolean }> {
     // Check burst limit
-    const burstCheck = this.checkBurst(operation);
+    const burstCheck = await this.checkBurst(operation);
     if (!burstCheck.allowed) {
       return {
         error: `Rate limit exceeded for ${operation}. Retry after ${Math.ceil((burstCheck.retryAfterMs || 0) / 1000)}s`,
@@ -101,7 +120,7 @@ export class RateLimiter {
     await this.throttle(operation);
 
     // Record and execute
-    this.recordCall(operation);
+    await this.recordCall(operation);
     
     try {
       const result = await fn();
@@ -113,29 +132,35 @@ export class RateLimiter {
 
   /**
    * Get current status for an operation
+   * Thread-safe: uses locking for history access
    */
-  getStatus(operation: string): {
+  async getStatus(operation: string): Promise<{
     callsLastMinute: number;
     limit: number;
     remaining: number;
     timeUntilReset?: number;
-  } {
+  }> {
     const config = this.limits.get(operation);
     if (!config) {
       return { callsLastMinute: 0, limit: Infinity, remaining: Infinity };
     }
 
-    const now = Date.now();
-    const window = 60 * 1000;
-    const history = this.callHistory.get(operation) || [];
-    const recent = history.filter(t => now - t < window);
-    
-    return {
-      callsLastMinute: recent.length,
-      limit: config.maxPerMinute,
-      remaining: Math.max(0, config.maxPerMinute - recent.length),
-      timeUntilReset: recent.length > 0 ? window - (now - recent[0]) : 0,
-    };
+    return this.lock.acquire(() => {
+      const now = Date.now();
+      const window = 60 * 1000;
+      const history = this.callHistory.get(operation) || [];
+      const recent = history.filter(t => now - t < window);
+      
+      // Update history in-place with cleaned entries
+      this.callHistory.set(operation, recent);
+      
+      return {
+        callsLastMinute: recent.length,
+        limit: config.maxPerMinute,
+        remaining: Math.max(0, config.maxPerMinute - recent.length),
+        timeUntilReset: recent.length > 0 ? window - (now - recent[0]) : 0,
+      };
+    });
   }
 }
 

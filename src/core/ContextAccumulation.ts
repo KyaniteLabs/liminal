@@ -2,8 +2,8 @@
  * ContextAccumulation - Manages state history and context accumulation
  *
  * Instance-based: each ContextAccumulation has its own isolated history.
- * A static `default` instance is provided for backward compatibility with
- * existing static method calls (RalphLoop.getState, reset, isRunning, getProgress).
+ * Uses AsyncLocalStorage for per-async-context instances to prevent
+ * race conditions when multiple RalphLoop instances run concurrently.
  *
  * Key behavior:
  * - save(state) adds state to history
@@ -26,6 +26,7 @@ export type State = IterationContext;
 
 import fs from 'fs';
 import path from 'path';
+import { AsyncLocalStorage } from 'async_hooks';
 import { safeJsonParse, PersistedLoopStateSchema } from '../security/JsonSchemas.js';
 import { ensureDir } from '../utils/fs.js';
 import { Logger } from '../utils/Logger.js';
@@ -40,12 +41,46 @@ export interface PersistedLoopState {
   savedAt: string;
 }
 
+/**
+ * AsyncLocalStorage for per-async-context ContextAccumulation instances.
+ * This prevents race conditions when multiple loops run concurrently.
+ */
+const contextStorage = new AsyncLocalStorage<ContextAccumulation>();
+
 export class ContextAccumulation {
   private history: State[] = [];
   private static readonly MAX_HISTORY_SIZE = 50;
 
-  /** Default shared instance for backward compatibility. */
-  static readonly default = new ContextAccumulation();
+  /** 
+   * Get the current context instance for this async context.
+   * Creates a new instance if none exists in the current async context.
+   */
+  private static getCurrentInstance(): ContextAccumulation {
+    const existing = contextStorage.getStore();
+    if (existing) {
+      return existing;
+    }
+    // Fallback: create isolated instance for backward compatibility
+    // This prevents the singleton race condition
+    return new ContextAccumulation();
+  }
+
+  /**
+   * Run a function with an isolated ContextAccumulation instance.
+   * Use this to ensure concurrent loops don't share state.
+   * 
+   * @example
+   * ```typescript
+   * await ContextAccumulation.runWithContext(async () => {
+   *   // All ContextAccumulation operations in this block are isolated
+   *   await RalphLoop.run(prompt, options);
+   * });
+   * ```
+   */
+  static async runWithContext<T>(fn: () => Promise<T>): Promise<T> {
+    const context = new ContextAccumulation();
+    return contextStorage.run(context, fn);
+  }
 
   /**
    * Save state to history
@@ -130,25 +165,37 @@ export class ContextAccumulation {
     }
   }
 
-  // ---- Static backward-compat wrappers (delegate to default instance) ----
+  // ---- Static backward-compat wrappers (delegate to async context instance) ----
 
-  /** @deprecated Use instance methods or ContextAccumulation.default */
+  /** 
+   * Save state to the current async context's history.
+   * Each concurrent loop gets its own isolated history.
+   */
   static save(state: State): void {
-    ContextAccumulation.default.save(state);
+    ContextAccumulation.getCurrentInstance().save(state);
   }
 
-  /** @deprecated Use instance methods or ContextAccumulation.default */
+  /** 
+   * Load most recent state from the current async context.
+   * Returns null if no state exists in this context.
+   */
   static load(): State | null {
-    return ContextAccumulation.default.load();
+    return ContextAccumulation.getCurrentInstance().load();
   }
 
-  /** @deprecated Use instance methods or ContextAccumulation.default */
+  /** 
+   * Get full history from the current async context.
+   * History is isolated per concurrent loop.
+   */
   static getHistory(): State[] {
-    return ContextAccumulation.default.getHistory();
+    return ContextAccumulation.getCurrentInstance().getHistory();
   }
 
-  /** @deprecated Use instance methods or ContextAccumulation.default */
+  /** 
+   * Clear history for the current async context.
+   * Only affects this loop's state, not other concurrent loops.
+   */
   static clear(): void {
-    ContextAccumulation.default.clear();
+    ContextAccumulation.getCurrentInstance().clear();
   }
 }

@@ -29,6 +29,8 @@ import path from 'path';
 import { safeJsonParse, PersistedLoopStateSchema } from '../security/JsonSchemas.js';
 import { ensureDir } from '../utils/fs.js';
 import { Logger } from '../utils/Logger.js';
+import { Result, ok, err } from 'neverthrow';
+import { PersistenceError } from '../errors/PersistenceError.js';
 
 export interface PersistedLoopState {
   bestFitness: number;
@@ -106,16 +108,25 @@ export class ContextAccumulation {
 
   /**
    * Load previously persisted loop state from a JSON file.
-   * Returns null if the file doesn't exist or can't be parsed.
+   * Returns Result — callers must explicitly handle load failures.
    */
-  loadState(filePath: string): PersistedLoopState | null {
-    if (!fs.existsSync(filePath)) return null;
+  loadState(filePath: string): Result<PersistedLoopState, PersistenceError> {
+    if (!fs.existsSync(filePath)) {
+      return err(new PersistenceError('Loop state file does not exist', { retryable: false }));
+    }
     try {
       const raw = fs.readFileSync(filePath, 'utf-8');
-      return safeJsonParse(raw, PersistedLoopStateSchema, 'ContextAccumulation');
-    } catch (err) {
-      Logger.warn('ContextAccumulation', 'Failed to load loop state:', err);
-      return null;
+      const parsed = safeJsonParse(raw, PersistedLoopStateSchema, 'ContextAccumulation');
+      if (!parsed) {
+        return err(new PersistenceError('Loop state file contains invalid JSON', { retryable: false }));
+      }
+      return ok(parsed);
+    } catch (error) {
+      Logger.warn('ContextAccumulation', 'Failed to load loop state:', error);
+      return err(new PersistenceError('Failed to load loop state', {
+        cause: error instanceof Error ? error : new Error(String(error)),
+        retryable: true,
+      }));
     }
   }
 

@@ -3,11 +3,13 @@ import { Box, Text, useInput } from "ink";
 import type { Iteration } from "../types";
 
 const COLORS = {
-  primary: "cyan",
-  muted: "gray",
-  border: "gray",
-  success: "green",
-  highlight: "magenta",
+  // Unified design tokens — matches index.tsx + Bubble Tea + GUI palette
+  primary: "#22C55E",
+  muted: "#94A3B8",
+  border: "#334155",
+  success: "#22C55E",
+  highlight: "#C084FC",
+  dim: "#475569",
 };
 
 interface IterationTimelineProps {
@@ -54,22 +56,22 @@ export const IterationTimeline: React.FC<IterationTimelineProps> = ({
     <Box flexDirection="column" borderStyle="single" borderColor={COLORS.border} width="22%" height={height} paddingX={1}>
       <Box marginBottom={1}>
         <Text bold color={COLORS.primary}>TIMELINE</Text>
-        <Text color={COLORS.muted}> {iterations.length} iter · [↑↓] select</Text>
+        <Text color={COLORS.dim}> {iterations.length} iter · [Up/Dn] select</Text>
       </Box>
       <Box flexDirection="column" flexGrow={1} overflow="hidden">
         {visible.map((iter, idx) => {
           const isSelected = idx === selectedIndex;
           const score = iter.score ?? iter.quality;
           const scoreStr = score != null ? score.toFixed(2) : "—";
-          const promiseTag = iter.promiseDetected ? " ✓" : "";
+          const passFail = score != null && score >= 0.7 ? "pass" : "fail";
           return (
             <Box key={iter.id}>
-              <Text color={isSelected ? COLORS.primary : COLORS.muted}>{isSelected ? "> " : "  "}</Text>
-              <Text color={isSelected ? "white" : COLORS.muted} bold={isSelected}>
+              <Text color={isSelected ? COLORS.primary : COLORS.dim}>{isSelected ? "> " : "  "}</Text>
+              <Text color={isSelected ? "#F8FAFC" : COLORS.muted} bold={isSelected}>
                 v{iter.id}
               </Text>
-              <Text color={COLORS.muted}> {formatTime(iter.timestamp)} </Text>
-              <Text color={COLORS.success}>s:{scoreStr}{promiseTag}</Text>
+              <Text color={COLORS.dim}> {formatTime(iter.timestamp)} </Text>
+              <Text color={passFail === "pass" ? COLORS.success : "#EF4444"}>s:{scoreStr} {passFail}</Text>
             </Box>
           );
         })}

@@ -79,16 +79,9 @@ function base64UrlCode(str: string): string {
 }
 
 const tabStyle = (active: boolean): React.CSSProperties => ({
-  padding: '10px 18px',
-  marginRight: 0,
-  border: '1px solid transparent',
-  borderRadius: 6,
-  background: active ? 'var(--atelier-accent-dim)' : 'var(--atelier-surface)',
-  color: active ? 'var(--atelier-accent)' : 'var(--atelier-text-muted)',
-  cursor: 'pointer',
-  fontSize: 14,
-  fontFamily: 'var(--font-body)',
-  fontWeight: 500,
+  /* Visual state handled by .atelier-tab / .atelier-tab--active in CSS.
+     Only active flag drives className; this object is kept minimal
+     for any dynamic overrides that CSS custom properties can't express. */
 });
 
 export default function App() {
@@ -457,60 +450,76 @@ export default function App() {
 
   return (
     <div style={{ padding: '32px 24px', maxWidth: 920, margin: '0 auto' }}>
-      <h1 className="liminal-title" style={{ marginBottom: 8 }}>Liminal</h1>
+      <a href="#main-content" className="atelier-skip-link">Skip to content</a>
+      <h1 className="atelier-title" style={{ marginBottom: 8 }}>Liminal</h1>
       <p style={{ margin: '0 0 24px', color: 'var(--atelier-text-muted)', fontSize: 15 }}>Creative coding studio — generate, merge, and evolve sketches.</p>
-      <div className="atelier-tabs">
+      <nav className="atelier-tabs" role="tablist" aria-label="Main sections">
         <button
           type="button"
-          style={tabStyle(activeTab === 'config')}
+          className={`atelier-tab${activeTab === 'config' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'config'}
           onClick={() => dispatchLive(switchToLiveOrganismView('config'))}
         >
           Config
         </button>
         <button
           type="button"
-          style={tabStyle(activeTab === 'create')}
+          className={`atelier-tab${activeTab === 'create' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'create'}
           onClick={() => dispatchLive(switchToLiveOrganismView('create'))}
         >
           Create
         </button>
         <button
           type="button"
-          style={tabStyle(activeTab === 'live')}
+          className={`atelier-tab${activeTab === 'live' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'live'}
           onClick={() => dispatchLive(switchToLiveOrganismView('live'))}
         >
           Live organism
         </button>
         <button
           type="button"
-          style={tabStyle(activeTab === 'liveMusic')}
+          className={`atelier-tab${activeTab === 'liveMusic' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'liveMusic'}
           onClick={() => dispatchLive(switchToLiveOrganismView('liveMusic'))}
         >
           Live Music
         </button>
         <button
           type="button"
-          style={tabStyle(activeTab === 'curator')}
+          className={`atelier-tab${activeTab === 'curator' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'curator'}
           onClick={() => dispatchLive(switchToLiveOrganismView('curator'))}
         >
           Curator
         </button>
         <button
           type="button"
-          style={tabStyle(activeTab === 'activity')}
+          className={`atelier-tab${activeTab === 'activity' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'activity'}
           onClick={() => dispatchLive(switchToLiveOrganismView('activity'))}
         >
           Activity
         </button>
         <button
           type="button"
-          style={tabStyle(activeTab === 'compost')}
+          className={`atelier-tab${activeTab === 'compost' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'compost'}
           onClick={() => dispatchLive(switchToLiveOrganismView('compost'))}
         >
           Compost
         </button>
-      </div>
+      </nav>
 
+      <main id="main-content">
       {activeTab === 'config' && (
         <form id="atelier-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="atelier-panel" style={{ maxWidth: 560 }} autoComplete="off">
           {error && (
@@ -984,6 +993,7 @@ export default function App() {
           )}
         </div>
       )}
+      </main>
     </div>
   );
 }

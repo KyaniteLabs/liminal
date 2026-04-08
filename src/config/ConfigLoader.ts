@@ -6,6 +6,8 @@ import { Logger } from '../utils/Logger.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { loadRoleConfig } from './RoleConfig.js';
 import type { ModelRole, ResolvedRoleConfig } from './RoleConfig.js';
+import { Result, ok, err as reject } from 'neverthrow';
+import { PersistenceError } from '../errors/PersistenceError.js';
 
 /** Routing mode for multi-model generation */
 export type RoutingMode = 'cascade' | 'speculative' | 'ensemble' | 'specialized' | 'thompson';
@@ -219,9 +221,9 @@ async function migrateLegacyConfig(): Promise<void> {
  * Load project config from config/liminal.json in the given directory (or path to file).
  * Falls back to config/atelier.json for backward compatibility.
  * @param configDirOrPath - Directory containing config/liminal.json (e.g. cwd), or path to file
- * @returns Project config or null if file doesn't exist or is invalid
+ * @returns Result with Project config or PersistenceError
  */
-export async function loadProjectConfig(configDirOrPath?: string): Promise<ProjectConfig | null> {
+export async function loadProjectConfig(configDirOrPath?: string): Promise<Result<ProjectConfig, PersistenceError>> {
   let projectConfigPath: string;
   if (!configDirOrPath) {
     projectConfigPath = path.join(process.cwd(), 'config', PROJECT_CONFIG_FILENAME);
@@ -235,16 +237,19 @@ export async function loadProjectConfig(configDirOrPath?: string): Promise<Proje
   }
   try {
     const content = await fs.readFile(projectConfigPath, 'utf-8');
-    return JSON.parse(content) as ProjectConfig;
+    return ok(JSON.parse(content) as ProjectConfig);
   } catch (readError) {
     // Fallback: try legacy atelier.json filename
     const legacyPath = projectConfigPath.replace(/liminal\.json$/, 'atelier.json');
     try {
       const content = await fs.readFile(legacyPath, 'utf-8');
-      return JSON.parse(content) as ProjectConfig;
-    } catch (err) {
-      Logger.warn('ConfigLoader', 'Failed to load legacy config:', err);
-      return null;
+      return ok(JSON.parse(content) as ProjectConfig);
+    } catch (error) {
+      Logger.warn('ConfigLoader', 'Failed to load legacy config:', error);
+      return reject(new PersistenceError('Failed to load project config', {
+        cause: error instanceof Error ? error : new Error(String(error)),
+        retryable: false,
+      }));
     }
   }
 }
@@ -252,19 +257,22 @@ export async function loadProjectConfig(configDirOrPath?: string): Promise<Proje
 /**
  * Load config from JSON file
  * @param configPath Path to config file (defaults to ~/.liminal/config.json)
- * @returns Config object or null if file doesn't exist or is invalid
+ * @returns Result with UserConfig or PersistenceError
  */
-export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Promise<UserConfig | null> {
+export async function loadConfig(configPath: string = DEFAULT_CONFIG_PATH): Promise<Result<UserConfig, PersistenceError>> {
   // Run migration on first load
   await migrateLegacyConfig();
 
   try {
     const content = await fs.readFile(configPath, 'utf-8');
     const config = JSON.parse(content) as UserConfig;
-    return config;
-  } catch (err) {
-    Logger.warn('ConfigLoader', 'Failed to load config:', err);
-    return null;
+    return ok(config);
+  } catch (error) {
+    Logger.warn('ConfigLoader', 'Failed to load config:', error);
+    return reject(new PersistenceError('Failed to load config', {
+      cause: error instanceof Error ? error : new Error(String(error)),
+      retryable: false,
+    }));
   }
 }
 
@@ -284,8 +292,22 @@ export async function saveConfig(config: UserConfig, configPath: string = DEFAUL
  * @param projectConfigPath - Optional directory or path to load config/liminal.json from
  */
 export async function getEffectiveConfig(configPath?: string, projectConfigPath?: string): Promise<EffectiveConfig> {
-  const fileConfig = configPath ? await loadConfig(configPath) : await loadConfig();
-  const projectConfig = projectConfigPath ? await loadProjectConfig(projectConfigPath) : null;
+  const fileConfigResult = configPath ? await loadConfig(configPath) : await loadConfig();
+  const fileConfig = fileConfigResult.match(
+    (config) => config,
+    (error) => {
+      Logger.warn('ConfigLoader', `Config load failed, using defaults: ${error.message}`);
+      return null;
+    },
+  );
+  const projectConfigResult = projectConfigPath ? await loadProjectConfig(projectConfigPath) : null;
+  const projectConfig = projectConfigResult?.match(
+    (config) => config,
+    (error) => {
+      Logger.warn('ConfigLoader', `Project config load failed: ${error.message}`);
+      return null;
+    },
+  ) ?? null;
 
   // Provider: env > project llm > user file
   const projectProvider = projectConfig?.llm?.provider;

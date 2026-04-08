@@ -6,6 +6,8 @@
 import type { CompostConfig, CompostFragment, FragmentScore } from './types.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
 import { Logger } from '../utils/Logger.js';
+import { Result, ok, err } from 'neverthrow';
+import { LLMError } from '../llm/errors.js';
 
 /** Weights for each scoring dimension. */
 const WEIGHTS = {
@@ -44,9 +46,12 @@ export class FragmentScorer {
     return { total, novelty, density, crossDomain, metadataRarity, connectionStrength };
   }
 
-  /** Score a fragment using LLM for semantic quality. */
-  async scoreLLM(fragment: CompostFragment): Promise<number> {
-    if (!this.llm) return 5; // neutral score if no LLM
+  /**
+   * Score a fragment using LLM for semantic quality.
+   * Returns Result — callers must explicitly handle LLM failures.
+   */
+  async scoreLLM(fragment: CompostFragment): Promise<Result<number, LLMError>> {
+    if (!this.llm) return err(new LLMError('No LLM client available for fragment scoring', 'fragment-scorer', undefined, false));
 
     try {
       const result = await this.llm.generate(
@@ -56,12 +61,12 @@ export class FragmentScorer {
 
       if (result.success) {
         const match = result.code.match(/"score"\s*:\s*(\d+\.?\d*)/);
-        if (match) return Math.min(10, Math.max(0, parseFloat(match[1])));
+        if (match) return ok(Math.min(10, Math.max(0, parseFloat(match[1]))));
       }
-      return 5;
-    } catch (err) {
-      Logger.warn('FragmentScorer', 'LLM scoring failed, using neutral score (5/10):', err instanceof Error ? err.message : err);
-      return 5;
+      return err(new LLMError('LLM fragment scoring failed: could not extract score from response', 'fragment-scorer', undefined, true));
+    } catch (error) {
+      Logger.warn('FragmentScorer', 'LLM scoring failed:', error instanceof Error ? error.message : error);
+      return err(new LLMError('LLM fragment scoring error', 'fragment-scorer', undefined, true));
     }
   }
 
@@ -70,7 +75,14 @@ export class FragmentScorer {
     const heuristic = this.scoreHeuristic(fragment);
     if (!this.llm) return heuristic;
 
-    const llmScore = await this.scoreLLM(fragment);
+    const llmResult = await this.scoreLLM(fragment);
+    const llmScore = llmResult.match(
+      (score) => score,
+      (error) => {
+        Logger.warn('FragmentScorer', `LLM scoring failed, using neutral score (5/10): ${error.message}`);
+        return 5;
+      },
+    );
     // Blend: 60% heuristic + 40% LLM
     heuristic.total = heuristic.total * 0.6 + llmScore * 0.4;
     return heuristic;

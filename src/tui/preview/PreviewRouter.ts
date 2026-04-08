@@ -158,13 +158,13 @@ export class PreviewRouter {
   getSummary(decision: PreviewDecision): string {
     switch (decision.target) {
       case 'terminal':
-        return `📺 Terminal: ${decision.terminalType}`;
+        return `[TERM] ${decision.terminalType} preview in terminal`;
       case 'browser':
-        return `🌐 Browser: ${decision.browserType || 'web content'}`;
+        return `[WEB] ${decision.browserType || 'web content'} preview in browser`;
       case 'both':
-        return `🔊 Terminal (audio) + 🌐 Browser (visual)`;
+        return `[DUAL] audio in terminal + visual in browser`;
       case 'none':
-        return `❌ Cannot preview: ${decision.reason}`;
+        return `[SKIP] Cannot preview: ${decision.reason}`;
     }
   }
 }

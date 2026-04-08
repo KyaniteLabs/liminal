@@ -68,8 +68,8 @@ export const XRayPanel: React.FC<XRayPanelProps> = ({
   if (iterations.length === 0) {
     return (
       <Box flexDirection="column" alignItems="center" justifyContent="center" height={20}>
-        <Text color="gray">No LLM output yet</Text>
-        <Text color="gray" dimColor>Generate some code to see x-ray view</Text>
+        <Text color="#94A3B8">No LLM output yet</Text>
+        <Text color="#94A3B8" dimColor>Generate some code to see x-ray view</Text>
       </Box>
     );
   }
@@ -77,41 +77,41 @@ export const XRayPanel: React.FC<XRayPanelProps> = ({
   const currentIteration = iterations[currentIndex];
 
   return (
-    <Box flexDirection="column" height={20} borderStyle="round" borderColor="magenta">
+    <Box flexDirection="column" height={20} borderStyle="round" borderColor="#C084FC">
       {/* Header */}
       <Box paddingX={1} paddingY={0}>
-        <Text bold color="magenta">👁️ X-RAY</Text>
-        <Text color="gray">  Iteration {currentIndex + 1} / {iterations.length}</Text>
-        <Text color={isStreaming ? "green" : "yellow"}>
+        <Text bold color="#C084FC">X-RAY</Text>
+        <Text color="#94A3B8">  Iteration {currentIndex + 1} / {iterations.length}</Text>
+        <Text color={isStreaming ? "#22C55E" : "#EAB308"}>
           {' '}[{isStreaming ? "STREAMING" : "IDLE"}]
         </Text>
       </Box>
 
       {/* Raw Output Stream */}
-      <Box 
-        flexDirection="column" 
-        flexGrow={1} 
+      <Box
+        flexDirection="column"
+        flexGrow={1}
         overflow="hidden"
         paddingX={1}
       >
         {tokens.length === 0 && !currentIteration ? (
-          <Text color="gray" dimColor>Waiting for LLM response...</Text>
+          <Text color="#94A3B8" dimColor>Waiting for LLM response...</Text>
         ) : (
           <>
             {/* Current iteration code preview */}
             {currentIteration && (
               <Box flexDirection="column" marginBottom={1}>
-                <Text color="cyan" bold>Current Code:</Text>
-                <Text color="white">{currentIteration.code.slice(0, 200)}</Text>
-                {currentIteration.code.length > 200 && <Text color="gray">...</Text>}
+                <Text color="#22C55E" bold>Current Code:</Text>
+                <Text color="#F8FAFC">{currentIteration.code.slice(0, 200)}</Text>
+                {currentIteration.code.length > 200 && <Text color="#94A3B8">...</Text>}
               </Box>
             )}
 
             {/* Streaming tokens */}
             <Box flexDirection="column">
-              <Text color="magenta" dimColor>Raw LLM Output:</Text>
+              <Text color="#C084FC" dimColor>Raw LLM Output:</Text>
               {tokens.slice(-10).map((token) => (
-                <Text key={token.id} color="gray" dimColor>
+                <Text key={token.id} color="#94A3B8" dimColor>
                   {token.text}
                 </Text>
               ))}
@@ -121,8 +121,8 @@ export const XRayPanel: React.FC<XRayPanelProps> = ({
       </Box>
 
       {/* Footer */}
-      <Box paddingX={1} paddingY={0} borderStyle="single" borderColor="gray">
-        <Text dimColor>[ESC] Exit  Real-time Mercury output stream</Text>
+      <Box paddingX={1} paddingY={0} borderStyle="single" borderColor="#334155">
+        <Text dimColor>[ESC] Exit  Real-time LLM output stream</Text>
       </Box>
     </Box>
   );

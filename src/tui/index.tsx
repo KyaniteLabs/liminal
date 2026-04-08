@@ -43,9 +43,20 @@ interface Iteration {
 }
 
 const COLORS = {
-  primary: "cyan", success: "green", warning: "yellow", error: "red",
-  muted: "gray", border: "gray", code: "green", info: "blue",
-  highlight: "magenta", llm: "yellow",
+  // Design system — matches Bubble Tea 256-color + GUI Atelier dark OLED palette
+  primary: "#22C55E",      // Accent green (CTA, active)
+  success: "#22C55E",      // Same green for pass/success
+  warning: "#EAB308",      // Amber for caution
+  error:   "#EF4444",      // Red for failures
+  muted:   "#94A3B8",      // Slate gray for secondary text
+  dim:     "#475569",      // Dimmer slate for borders/hints
+  border:  "#334155",      // Slate border
+  code:    "#22C55E",      // Green for code text
+  info:    "#93C5FD",      // Soft blue for info
+  highlight: "#C084FC",    // Purple for system events
+  llm:     "#EAB308",      // Amber for LLM activity
+  bg:      "#020617",      // Deep navy background
+  surface: "#1E293B",      // Slate surface
 };
 
 async function loadGallery(): Promise<GalleryEntry[]> {
@@ -345,7 +356,7 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
       <PromptBar value={prompt} onChange={setPrompt} onSubmit={handleGenerate} disabled={isGenerating} />
       <Box marginBottom={1}>
         <Text color={COLORS.muted}>Seed (optional): </Text>
-        <Text color="white">{seedCode || "(none)"}</Text>
+        <Text color="#F8FAFC">{seedCode || "(none)"}</Text>
         <Text color={COLORS.muted}> — type in prompt bar then [Enter] to Run</Text>
       </Box>
       <Box flexDirection="row" gap={1}>

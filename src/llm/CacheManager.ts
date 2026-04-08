@@ -26,10 +26,12 @@ interface CacheEntry {
   timestamp: number;
 }
 
-function hashKey(system: string, user: string): string {
+function hashKey(system: string | null | undefined, user: string | null | undefined): string {
   // Simple hash for cache key — doesn't need crypto security
+  const safeSystem = system ?? '';
+  const safeUser = user ?? '';
   let hash = 0;
-  const data = system + '|||' + user;
+  const data = safeSystem + '|||' + safeUser;
   for (let i = 0; i < data.length; i++) {
     const char = data.charCodeAt(i);
     hash = ((hash << 5) - hash) + char;
@@ -52,8 +54,9 @@ export class CacheManager {
     this.options = { ...DEFAULT_CACHE_OPTIONS, ...options };
   }
 
-  get(system: string, user: string): string | null {
+  get(system: string | null | undefined, user: string | null | undefined): string | null {
     if (!this.options.enabled) return null;
+    if (system == null || user == null) return null;
 
     const key = hashKey(system, user);
     const entry = this.cache.get(key);
@@ -73,8 +76,9 @@ export class CacheManager {
     return entry.value;
   }
 
-  set(system: string, user: string, value: string): void {
+  set(system: string | null | undefined, user: string | null | undefined, value: string | null | undefined): void {
     if (!this.options.enabled) return;
+    if (system == null || user == null || value == null) return;
 
     const key = hashKey(system, user);
 

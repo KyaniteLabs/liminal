@@ -40,6 +40,7 @@ export interface SecurityLoggerConfig {
  */
 export class SecurityLogger {
   private config: SecurityLoggerConfig;
+  private siemFailureCount = 0;
 
   constructor(config?: SecurityLoggerConfig) {
     this.config = config ?? {};
@@ -75,7 +76,8 @@ export class SecurityLogger {
     // Send to SIEM if enabled
     if (this.config.enableSIEM && this.config.siemEndpoint) {
       this.sendToSIEM(fullEvent).catch((err) => {
-        console.error('Failed to send to SIEM:', err); // eslint-disable-line no-console
+        this.siemFailureCount++;
+        Logger.error('SecurityLogger', `SIEM delivery failed (consecutive: ${this.siemFailureCount}): ${err instanceof Error ? err.message : err}`);
       });
     }
   }

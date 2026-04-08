@@ -226,7 +226,9 @@ export class TelemetryCollector {
     
     // Persist if file storage configured
     if (this.config.storage === 'file' && this.config.logPath) {
-      void this.persistToFile(taskId);
+      this.persistToFile(taskId).catch((err) => {
+        Logger.error('TelemetryCollector', `Telemetry persistence failed for task ${taskId}: ${err instanceof Error ? err.message : err}`);
+      });
     }
   }
   

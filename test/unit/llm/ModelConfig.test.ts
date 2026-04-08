@@ -31,8 +31,11 @@ import {
 import type { SplitModelConfig, ModelConfig } from '../../../src/llm/ModelConfig.js';
 
 describe('ModelConfig', () => {
-  // Snapshot of env vars to restore after each test
-  let savedEnv: Record<string, string | undefined>;
+  // Snapshot of env vars to restore after each test.
+  // We use a Symbol marker to distinguish "never set" (undefined) from "set to empty string".
+  // process.env[key] = undefined creates the STRING 'undefined', so we must delete instead.
+  const UNSET = Symbol('UNSET');
+  let savedEnv: Record<string, string | typeof UNSET>;
 
   beforeEach(() => {
     savedEnv = {};
@@ -67,7 +70,12 @@ describe('ModelConfig', () => {
 
     for (const key of envVars) {
       if (key in savedEnv) {
-        process.env[key] = savedEnv[key];
+        // UNSET means the env var was never set — delete it rather than restoring the string 'undefined'
+        if (savedEnv[key] === UNSET) {
+          delete process.env[key];
+        } else {
+          process.env[key] = savedEnv[key] as string;
+        }
       } else {
         delete process.env[key];
       }
@@ -77,7 +85,8 @@ describe('ModelConfig', () => {
   // Helper to set env vars (tracks originals for cleanup)
   function setEnv(key: string, value: string | undefined) {
     if (!(key in savedEnv)) {
-      savedEnv[key] = process.env[key];
+      // Distinguish "never set" from "set to empty string" so afterEach can restore correctly
+      savedEnv[key] = key in process.env ? process.env[key] ?? '' : UNSET;
     }
     if (value === undefined) {
       delete process.env[key];

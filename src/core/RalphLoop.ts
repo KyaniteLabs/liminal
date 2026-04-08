@@ -544,13 +544,13 @@ export class RalphLoop {
 
         // Render-based scoring: if enabled, render code and blend with syntactic score
         if (normalizedOptions.useRenderScoring && candidates.length > 0) {
+          const { RenderAndScorePipeline } = await import('../render/RenderAndScorePipeline.js');
+          const pipeline = new RenderAndScorePipeline(normalizedOptions.renderScoringOptions);
+          
           try {
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Running render-based quality analysis...');
             }
-            
-            const { RenderAndScorePipeline } = await import('../render/RenderAndScorePipeline.js');
-            const pipeline = new RenderAndScorePipeline(normalizedOptions.renderScoringOptions);
             
             const renderResult = await pipeline.process(currentCode);
             
@@ -589,13 +589,17 @@ export class RalphLoop {
                 normalizedOptions.onThought?.(`Render analysis skipped: ${renderResult.error}`);
               }
             }
-            
-            // Clean up resources
-            await pipeline.close();
           } catch (renderError) {
             Logger.warn('RalphLoop', 'Render scoring error:', renderError);
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Render analysis unavailable');
+            }
+          } finally {
+            // Always clean up resources, even on error
+            try {
+              await pipeline.close();
+            } catch (closeError) {
+              Logger.error('RalphLoop', 'Failed to close render pipeline:', closeError);
             }
           }
         }

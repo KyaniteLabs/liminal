@@ -14,3 +14,4 @@ export { CompostError, CompostDigestError, CompostSoupError, CompostStoreError }
 export { PersistenceError } from './PersistenceError.js';
 export { FileDiscoveryError } from './FileDiscoveryError.js';
 export { LLMGenerationError } from './LLMGenerationError.js';
+export { ExportError, SecurityError } from './ExportError.js';

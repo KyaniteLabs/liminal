@@ -19,6 +19,7 @@ import { eventBus } from '../core/EventBus.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
 import { validateCode } from '../utils/validation.js';
+import { ServerError } from '../errors/ServerError.js';
 import type { BusEvent } from '../core/EventBus.js';
 import {
   standardLimiter,
@@ -368,10 +369,10 @@ export class PreviewServer {
 
   async start(port: number = this.DEFAULT_PORT): Promise<boolean> {
     if (port < 1 || port > 65535) {
-      throw new Error(`Invalid port number: ${port}`);
+      throw new ServerError(`Invalid port number: ${port}`, { port });
     }
     if (this.server) {
-      throw new Error('Server is already running');
+      throw new ServerError('Server is already running');
     }
 
     this.server = this.app.listen(port);
@@ -381,9 +382,9 @@ export class PreviewServer {
         .on('error', (error: Error & { code?: string }) => {
           this.server = null;
           if (error.code === 'EADDRINUSE') {
-            reject(new Error(`Port ${port} is already in use`));
+            reject(new ServerError(`Port ${port} is already in use`, { port, cause: error }));
           } else {
-            reject(error);
+            reject(new ServerError(`Server error: ${error.message}`, { port, cause: error }));
           }
         })
         .on('listening', () => {

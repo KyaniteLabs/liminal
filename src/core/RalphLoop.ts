@@ -39,6 +39,7 @@ import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 import { metaHarness } from '../harness/MetaHarnessIntegration.js';
+import { LLMGenerationError } from '../errors/LLMGenerationError.js';
 
 // Extracted modules
 import {
@@ -163,7 +164,7 @@ export class RalphLoop {
         clearTimeout(timeout);
 
         if (exitCode !== 0) {
-          throw new Error(`ffmpeg exited with code ${exitCode}`);
+          throw new LLMGenerationError(`ffmpeg exited with code ${exitCode}`, { model: 'ffmpeg' });
         }
 
         const pcmBuffer = Buffer.concat(chunks);

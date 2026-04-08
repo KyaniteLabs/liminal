@@ -5,6 +5,8 @@
  */
 
 import { Status } from '../types/status.js';
+import { ProcessorError } from '../errors/ProcessorError.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Represents a single job in the batch processing queue.
@@ -120,7 +122,7 @@ export class BatchProcessor<TInput, TOutput> {
    */
   submit(input: TInput, priority: number = 0): string {
     if (!this.processor) {
-      throw new Error('No processor function set. Call setProcessor() first.');
+      throw new ProcessorError('No processor function set. Call setProcessor() first.');
     }
     const id = this.generateId();
     const job: BatchJob<TInput, TOutput> = {
@@ -160,7 +162,7 @@ export class BatchProcessor<TInput, TOutput> {
    */
   async process(): Promise<BatchJob<TInput, TOutput>[]> {
     if (!this.processor) {
-      throw new Error('No processor function set. Call setProcessor() first.');
+      throw new ProcessorError('No processor function set. Call setProcessor() first.');
     }
 
     const pending = this.queue.filter((job) => job.status === Status.PENDING);
@@ -190,6 +192,7 @@ export class BatchProcessor<TInput, TOutput> {
         } catch (err) {
           this.activeCount--;
           lastError = err instanceof Error ? err.message : String(err);
+          Logger.warn('BatchProcessor', `Job ${job.id} failed (attempt ${attempt + 1}/${maxRetries + 1}):`, lastError);
 
           if (attempt < maxRetries) {
             await this.delay(retryDelay);

@@ -2,11 +2,27 @@ import type { AudioFeatures } from './types.js';
 import { Logger } from '../utils/Logger.js';
 
 /**
+ * Meyda extraction result with known feature types
+ */
+interface MeydaExtractResult {
+  rms?: unknown;
+  energy?: unknown;
+  spectralCentroid?: unknown;
+  spectralFlatness?: unknown;
+  zcr?: unknown;
+  mfcc?: unknown;
+  loudness?: unknown;
+  chroma?: unknown;
+  perceptualSharpness?: unknown;
+  [key: string]: unknown;
+}
+
+/**
  * Meyda module interface for type-safe access
  */
 interface MeydaModule {
   bufferSize: number;
-  extract: (features: readonly string[], buffer: Float32Array) => Record<string, unknown> | null;
+  extract: (features: readonly string[], buffer: Float32Array) => MeydaExtractResult | null;
 }
 
 /**
@@ -15,6 +31,21 @@ interface MeydaModule {
 interface LoudnessResult {
   total?: number;
   specific?: number[];
+}
+
+/** Type guard for LoudnessResult */
+function isLoudnessResult(value: unknown): value is LoudnessResult {
+  return typeof value === 'object' && value !== null && 'total' in value;
+}
+
+/** Safely extract number from unknown value */
+function extractNumber(value: unknown, defaultValue = 0): number {
+  return typeof value === 'number' ? value : defaultValue;
+}
+
+/** Safely extract number array from unknown value */
+function extractNumberArray(value: unknown): number[] {
+  return Array.isArray(value) ? value.filter((v): v is number => typeof v === 'number') : [];
 }
 
 /**
@@ -100,10 +131,12 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
     // loudness is an object { total, specific } — extract the total value
     // and convert to a dB-like negative scale (Meyda returns positive loudness).
     const loudnessRaw = result.loudness;
-    const loudnessTotal =
-      typeof loudnessRaw === 'object' && loudnessRaw !== null
-        ? (loudnessRaw as LoudnessResult).total ?? 0
-        : (loudnessRaw as number) ?? 0;
+    let loudnessTotal = 0;
+    if (isLoudnessResult(loudnessRaw)) {
+      loudnessTotal = loudnessRaw.total ?? 0;
+    } else if (typeof loudnessRaw === 'number') {
+      loudnessTotal = loudnessRaw;
+    }
     // Convert to approximate dB scale.
     // Meyda's loudness.total is a sone-like positive value. We convert to a
     // dB-like scale relative to a reference that keeps typical signals negative,
@@ -113,22 +146,21 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
       ? 20 * Math.log10(loudnessTotal / LOUDNESS_REFERENCE)
       : -100;
 
-    const chromaRaw = result.chroma;
-    const chromaArray = Array.isArray(chromaRaw) ? chromaRaw as number[] : [];
+    const chromaArray = extractNumberArray(result.chroma);
 
     return {
-      rms: (result.rms as number) ?? 0,
-      energy: (result.energy as number) ?? 0,
-      spectralCentroid: (result.spectralCentroid as number) ?? 0,
-      spectralFlatness: (result.spectralFlatness as number) ?? 0,
-      zcr: (result.zcr as number) ?? 0,
-      mfcc: Array.isArray(result.mfcc) ? (result.mfcc as number[]) : [],
+      rms: extractNumber(result.rms),
+      energy: extractNumber(result.energy),
+      spectralCentroid: extractNumber(result.spectralCentroid),
+      spectralFlatness: extractNumber(result.spectralFlatness),
+      zcr: extractNumber(result.zcr),
+      mfcc: extractNumberArray(result.mfcc),
       loudness: loudnessDb,
       spectralFlux: 0, // requires inter-frame state, not available in single-frame extraction
       chroma: chromaArray.length > 0
         ? new Float32Array(chromaArray)
         : new Float32Array(12),
-      perceptualSharpness: (result.perceptualSharpness as number) ?? 0,
+      perceptualSharpness: extractNumber(result.perceptualSharpness),
     };
   } catch (err) {
     Logger.warn('AudioExtractor', 'Feature extraction failed, returning defaults:', err instanceof Error ? err.message : err);

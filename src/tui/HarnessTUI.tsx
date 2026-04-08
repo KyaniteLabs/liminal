@@ -27,18 +27,20 @@ import { tuiDebugger } from './TuiDebugger.js';
 import { eventBus } from '../core/EventBus.js';
 
 const C = {
-  primary: 'cyan',
-  success: 'green', 
-  warning: 'yellow',
-  error: 'red',
-  muted: 'gray',
-  code: 'green',
-  audio: 'magenta',
+  primary: '#22C55E',
+  success: '#22C55E',
+  warning: '#EAB308',
+  error: '#EF4444',
+  muted: '#94A3B8',
+  dim: '#475569',
+  code: '#22C55E',
+  audio: '#C084FC',
+  text: '#F8FAFC',
 };
 
 const Header = () => (
   <Box borderStyle="double" borderColor={C.primary} paddingX={2}>
-    <Text bold color={C.primary}>🎨 LIMINAL</Text>
+    <Text bold color={C.primary}>LIMINAL</Text>
     <Spacer />
     <Text color={C.muted}>Natural Interface</Text>
   </Box>
@@ -54,13 +56,13 @@ interface ActivityState {
 }
 
 const StatusBar = ({ status, message, activity, modelName, providerLabel }: { status: any; message: string; activity: ActivityState; modelName?: string; providerLabel?: string }) => {
-  const phaseEmoji = {
-    idle: '⏸️',
-    thinking: '🤔',
-    generating: '✨',
-    executing: '🔧',
-    validating: '✅',
-    retrying: '🔄',
+  const phaseTag = {
+    idle: '[IDLE]',
+    thinking: '[THINK]',
+    generating: '[GEN]',
+    executing: '[EXEC]',
+    validating: '[CHECK]',
+    retrying: '[RETRY]',
   }[activity.phase];
   
   const progress = activity.step && activity.totalSteps 
@@ -68,13 +70,13 @@ const StatusBar = ({ status, message, activity, modelName, providerLabel }: { st
     : '';
   
   const tool = activity.currentTool ? `→ ${activity.currentTool}` : '';
-  const thinking = activity.thinkingChars ? `(💭 ${activity.thinkingChars})` : '';
-  
+  const thinking = activity.thinkingChars ? `(${activity.thinkingChars} chars)` : '';
+
   return (
-    <Box borderStyle="single" borderColor={activity.phase === 'idle' ? C.muted : C.primary} paddingX={1}>
+    <Box borderStyle="single" borderColor={activity.phase === 'idle' ? C.dim : C.primary} paddingX={1}>
       <Text color={activity.phase === 'idle' ? C.muted : C.primary}>
-        {status?.initialized ? '🟢' : '🔴'} {providerLabel || status?.activeProvider || 'offline'}{modelName ? `/${modelName}` : ''} |
-        {phaseEmoji} {message} {progress} {tool} {thinking}
+        {status?.initialized ? '[ON]' : '[OFF]'} {providerLabel || status?.activeProvider || 'offline'}{modelName ? `/${modelName}` : ''} |
+        {phaseTag} {message} {progress} {tool} {thinking}
       </Text>
     </Box>
   );
@@ -138,7 +140,7 @@ const DebugPanel = ({ logs, activity, debuggerActive, logFilePath }: {
     width={60}
   >
     <Text bold color={C.primary}>
-      {'🔍 DEBUG'} {debuggerActive && <Text color={C.warning}> VERBOSE</Text>}
+      {'DEBUG'} {debuggerActive && <Text color={C.warning}> VERBOSE</Text>}
     </Text>
     <Text color={C.muted}>Phase: {activity.phase}</Text>
     <Text color={C.muted}>Last Activity: {Math.floor((Date.now() - activity.lastActivity) / 1000)}s ago</Text>

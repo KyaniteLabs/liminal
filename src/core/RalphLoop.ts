@@ -119,7 +119,8 @@ export class RalphLoop {
     const gitIntegration = new GitIntegration(normalizedOptions.git ?? {});
     await gitIntegration.startRun(normalizedOptions.project ?? `run-${Date.now()}`);
 
-    // Voice-driven visual mapping: analyze audio file if provided
+    try {
+      // Voice-driven visual mapping: analyze audio file if provided
     if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
       try {
         const { AudioAnalyzer } = await import('../audio/index.js');
@@ -766,14 +767,16 @@ export class RalphLoop {
         }
 
         // Record routing outcome for dynamic routing
-        recordRoutingOutcome({
-          domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
-          model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
-          qualityScore: evaluation.score,
-          timestamp: new Date().toISOString(),
-        }).catch((err) => {
+        try {
+          await recordRoutingOutcome({
+            domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
+            model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
+            qualityScore: evaluation.score,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
           Logger.warn('RalphLoop', 'Failed to record routing outcome:', err instanceof Error ? err.message : err);
-        });
+        }
 
         // Store previous code before saving current iteration
         previousCode = currentCode;
@@ -895,10 +898,12 @@ export class RalphLoop {
       }
     }
 
-    const duration = Date.now() - startTime;
+    } finally {
+      // Git: end run, restore original branch (always cleanup)
+      await gitIntegration.endRun(reason || 'loop ended');
+    }
 
-    // Git: end run, restore original branch
-    await gitIntegration.endRun(reason || 'loop ended');
+    const duration = Date.now() - startTime;
 
     // Report final result to Meta-Harness (skip during tests to avoid log pollution)
     if (process.env.NODE_ENV !== 'test') {

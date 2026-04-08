@@ -3,14 +3,16 @@ import { Box, Text } from "ink";
 import { EventType, type ProcessEvent } from "../../ui/TransparencyViewer.js";
 
 const COLORS = {
-  primary: "cyan",
-  muted: "gray",
-  border: "gray",
-  success: "green",
-  warning: "yellow",
-  highlight: "magenta",
-  error: "red",
-  info: "blue",
+  // Unified design tokens — matches Bubble Tea 256-color + GUI Atelier dark OLED palette
+  primary: "#22C55E",
+  muted: "#94A3B8",
+  dim: "#475569",
+  border: "#334155",
+  success: "#22C55E",
+  warning: "#EAB308",
+  highlight: "#C084FC",
+  error: "#EF4444",
+  info: "#93C5FD",
 };
 
 interface TransparencyPanelProps {

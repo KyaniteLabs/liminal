@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Liminal — I/O Catalog &amp; Reference Gallery</title>
+    <link rel="stylesheet" href="styles/docs.css">
+    <style>
+        /* Page-specific styles */
+        .io-hero { text-align: center; padding: 3rem 2rem 2rem; }
+        .io-hero h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple), var(--accent-blue));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .io-hero p { color: var(--text-secondary); max-width: 700px; margin: 1rem auto 0; }
+
+        .stats-bar {
+            display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;
+            margin: 2rem auto; max-width: 900px;
+        }
+        .stat { text-align: center; padding: 1rem 1.5rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color); min-width: 140px; }
+        .stat-num { font-size: 2rem; font-weight: 700; display: block; }
+        .stat-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+
+        /* Section layout */
+        .catalog-section { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .section-title { font-size: 1.6rem; margin-bottom: 0.5rem; border-bottom: 2px solid var(--accent-purple); display: inline-block; padding-bottom: 0.25rem; }
+        .section-desc { color: var(--text-secondary); margin-bottom: 1.5rem; }
+
+        /* Tables */
+        .io-table { width: 100%; border-collapse: collapse; margin-bottom: 2rem; font-size: 0.9rem; }
+        .io-table th { text-align: left; padding: 0.75rem 1rem; background: var(--bg-tertiary); color: var(--accent-cyan); font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.04em; }
+        .io-table td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border-color); }
+        .io-table tr:hover td { background: rgba(88, 166, 255, 0.05); }
+        .io-table code { background: var(--bg-tertiary); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85rem; color: var(--accent-blue); }
+
+        /* Status badges */
+        .badge { display: inline-block; padding: 0.15rem 0.55rem; border-radius: 99px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+        .badge-done { background: rgba(35, 134, 54, 0.2); color: #3fb950; }
+        .badge-partial { background: rgba(210, 153, 34, 0.2); color: #d29922; }
+        .badge-stub { background: rgba(218, 54, 51, 0.2); color: #f85149; }
+
+        /* Infrastructure layer styles */
+        .infra-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; margin-bottom: 2rem; }
+        .infra-card {
+            background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 10px;
+            padding: 1.25rem 1.5rem; border-left: 4px solid var(--accent-purple);
+        }
+        .infra-card h4 { font-size: 1rem; margin-bottom: 0.5rem; color: var(--accent-cyan); }
+        .infra-card ul { list-style: none; padding: 0; }
+        .infra-card li { font-size: 0.85rem; color: var(--text-secondary); padding: 0.2rem 0; line-height: 1.5; }
+        .infra-card li strong { color: var(--text-primary); font-weight: 600; }
+        .infra-card code { background: var(--bg-tertiary); padding: 0.1rem 0.35rem; border-radius: 3px; font-size: 0.8rem; color: var(--accent-blue); }
+        .dep-badge { display: inline-block; padding: 0.1rem 0.4rem; border-radius: 4px; font-size: 0.7rem; font-weight: 600; margin-left: 0.3rem; }
+        .dep-runtime { background: rgba(57, 197, 207, 0.15); color: #39c5cf; }
+        .dep-external { background: rgba(210, 153, 34, 0.15); color: #d29922; }
+        .dep-optional { background: rgba(139, 148, 158, 0.15); color: #8b949e; }
+
+        .arch-flow {
+            display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
+            padding: 1.5rem; background: var(--bg-secondary); border-radius: 10px; border: 1px solid var(--border-color);
+            margin-bottom: 2rem; justify-content: center;
+        }
+        .arch-node {
+            padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem; font-weight: 600;
+            text-align: center; min-width: 90px;
+        }
+        .arch-node.input { background: rgba(57, 197, 207, 0.15); color: #39c5cf; border: 1px solid rgba(57, 197, 207, 0.3); }
+        .arch-node.engine { background: rgba(137, 87, 229, 0.15); color: #8957e5; border: 1px solid rgba(137, 87, 229, 0.3); }
+        .arch-node.output { background: rgba(88, 166, 255, 0.15); color: #58a6ff; border: 1px solid rgba(88, 166, 255, 0.3); }
+        .arch-node.external { background: rgba(210, 153, 34, 0.15); color: #d29922; border: 1px solid rgba(210, 153, 34, 0.3); }
+        .arch-arrow { color: var(--text-muted); font-size: 1.2rem; }
+
+        /* Gallery section */
+        .gallery-section { max-width: 1200px; margin: 0 auto; padding: 2rem; }
+        .domain-title { font-size: 1.4rem; margin-bottom: 0.25rem; }
+        .domain-desc { color: var(--text-secondary); margin-bottom: 1rem; font-size: 0.9rem; }
+
+        /* Link preview cards */
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.25rem; margin-bottom: 3rem; }
+        .link-card {
+            display: flex; flex-direction: column; background: var(--bg-secondary); border: 1px solid var(--border-color);
+            border-radius: 10px; overflow: hidden; transition: border-color 0.2s, transform 0.15s;
+            text-decoration: none; color: inherit;
+        }
+        .link-card:hover { border-color: var(--accent-blue); transform: translateY(-2px); }
+        .link-card:focus-visible { outline: 2px solid var(--accent-blue); outline-offset: 2px; }
+
+        .card-thumb {
+            height: 160px; background-size: cover; background-position: top center;
+            position: relative; flex-shrink: 0;
+        }
+        .card-thumb-fallback {
+            height: 160px; display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; flex-shrink: 0;
+        }
+
+        .card-body { padding: 1rem 1.25rem; flex: 1; display: flex; flex-direction: column; }
+        .card-domain-tag {
+            display: inline-block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.05em;
+            padding: 0.15rem 0.5rem; border-radius: 4px; margin-bottom: 0.5rem; font-weight: 600;
+        }
+        .card-title { font-size: 1.05rem; font-weight: 600; margin-bottom: 0.35rem; line-height: 1.3; }
+        .card-desc { color: var(--text-secondary); font-size: 0.85rem; line-height: 1.5; flex: 1; }
+        .card-meta { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color); }
+        .card-favicon { width: 16px; height: 16px; border-radius: 2px; flex-shrink: 0; }
+        .card-url { color: var(--text-muted); font-size: 0.78rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .card-arrow { color: var(--accent-blue); font-size: 1.1rem; margin-left: auto; }
+
+        /* Domain color accents */
+        .tag-p5 { background: rgba(237, 34, 91, 0.15); color: #ed225d; }
+        .tag-three { background: rgba(0, 172, 212, 0.15); color: #00acd4; }
+        .tag-glsl { background: rgba(255, 165, 0, 0.15); color: #ffa500; }
+        .tag-hydra { background: rgba(137, 87, 229, 0.15); color: #8957e5; }
+        .tag-strudel { background: rgba(57, 197, 207, 0.15); color: #39c5cf; }
+        .tag-tone { background: rgba(210, 153, 34, 0.15); color: #d29922; }
+        .tag-remotion { background: rgba(88, 166, 255, 0.15); color: #58a6ff; }
+        .tag-ascii { background: rgba(63, 185, 80, 0.15); color: #3fb950; }
+        .tag-textgen { background: rgba(219, 171, 255, 0.15); color: #dbabff; }
+        .tag-image { background: rgba(255, 123, 114, 0.15); color: #ff7b72; }
+        .tag-gif { background: rgba(255, 215, 0, 0.15); color: #ffd700; }
+        .tag-video { background: rgba(199, 92, 255, 0.15); color: #c75cff; }
+
+        /* Thumb accent colors */
+        .thumb-p5 { background: linear-gradient(135deg, #1a0a10, #2d0a1a); }
+        .thumb-three { background: linear-gradient(135deg, #0a1a1f, #0a2d3a); }
+        .thumb-glsl { background: linear-gradient(135deg, #1a1500, #2d2000); }
+        .thumb-hydra { background: linear-gradient(135deg, #150a2d, #200a3d); }
+        .thumb-strudel { background: linear-gradient(135deg, #0a1f1f, #0a2d2d); }
+        .thumb-tone { background: linear-gradient(135deg, #1a1500, #2d1f00); }
+        .thumb-remotion { background: linear-gradient(135deg, #0a1520, #0a2035); }
+        .thumb-ascii { background: linear-gradient(135deg, #0a1a0a, #0a2d0a); }
+        .thumb-textgen { background: linear-gradient(135deg, #1a0a2d, #2d0a3d); }
+        .thumb-image { background: linear-gradient(135deg, #1f0a0a, #2d0a0a); }
+        .thumb-gif { background: linear-gradient(135deg, #1a1a0a, #2d2d0a); }
+        .thumb-video { background: linear-gradient(135deg, #150a20, #200a30); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .card-grid { grid-template-columns: 1fr; }
+            .stats-bar { gap: 1rem; }
+            .io-hero h1 { font-size: 1.8rem; }
+            .io-table { font-size: 0.8rem; }
+            .io-table th, .io-table td { padding: 0.5rem 0.6rem; }
+        }
+
+        /* Accessibility */
+        @media (prefers-reduced-motion: reduce) {
+            .link-card:hover { transform: none; }
+        }
+
+        /* Separator */
+        .divider { border: none; border-top: 1px solid var(--border-color); margin: 3rem auto; max-width: 600px; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="index.html" class="navbar-brand">
+            <span>🎨</span>
+            <span>Liminal</span>
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="index.html">Home</a></li>
+            <li><a href="features.html">Features</a></li>
+            <li><a href="io-catalog.html" class="active">I/O Catalog</a></li>
+            <li><a href="architecture.html">Architecture</a></li>
+            <li><a href="cli-reference.html">CLI</a></li>
+        </ul>
+    </nav>
+
+    <header class="io-hero">
+        <h1>I/O Catalog &amp; Reference Gallery</h1>
+        <p>Every input format Liminal accepts, every output format it produces, and real-world examples of each creative coding domain from across the internet.</p>
+        <div class="stats-bar">
+            <div class="stat"><span class="stat-num" style="color:var(--accent-cyan)">13</span><span class="stat-label">Input Formats</span></div>
+            <div class="stat"><span class="stat-num" style="color:var(--accent-purple)">22</span><span class="stat-label">Output Formats</span></div>
+            <div class="stat"><span class="stat-num" style="color:var(--accent-green)">9</span><span class="stat-label">Code Domains</span></div>
+            <div class="stat"><span class="stat-num" style="color:var(--accent-yellow)">3</span><span class="stat-label">Stubbed</span></div>
+        </div>
+    </header>
+
+    <main>
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- INPUTS -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="catalog-section">
+            <h2 class="section-title">Input Formats</h2>
+            <p class="section-desc">All the data formats Liminal can ingest, from text prompts to binary blobs.</p>
+            <table class="io-table">
+                <thead><tr><th>#</th><th>Format</th><th>Description</th><th>Handler</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>Text</td><td>Prompts via <code>--prompt</code>, TUI, chat mode</td><td><code>src/index.ts</code>, <code>src/tui/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>2</td><td>JSON</td><td>Config files (<code>~/.liminal/config.json</code>)</td><td><code>src/config/ConfigLoader.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>3</td><td>JSON (legacy)</td><td><code>~/.atelier/config.json</code> — auto-migrated</td><td><code>ConfigLoader.migrateLegacyConfig()</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>4</td><td>.env</td><td>Key-value environment variables</td><td><code>dotenv</code> in <code>bin/liminal</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>5</td><td>JSON (spec)</td><td>Composition layer specs</td><td><code>src/composite/Compositor.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>6</td><td>Audio</td><td>MP3, WAV, OGG, M4A, FLAC</td><td><code>src/audio/</code></td><td><span class="badge badge-partial">Partial</span></td></tr>
+                    <tr><td>7</td><td>JSON (aesthetic)</td><td>Aesthetic preset config</td><td><code>src/aesthetic/</code></td><td><span class="badge badge-partial">Partial</span></td></tr>
+                    <tr><td>8</td><td>Markdown</td><td>Narrative video scripts</td><td><code>src/narrative/BlogToVideoPipeline.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>9</td><td>Multi-format</td><td>Compost heap: code, images, audio, video, 3D, text</td><td><code>src/compost/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>10</td><td>SQLite</td><td>Event store databases</td><td><code>src/compost/EventStore.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>11</td><td>ZIP</td><td>Project archive imports</td><td><code>src/composition/ProjectSerializer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>12</td><td>URL</td><td>Remote project JSON</td><td><code>ProjectSerializer.importFromURL()</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>13</td><td>Float32Array</td><td>Raw audio sample buffers</td><td><code>src/audio/AudioExtractor.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- OUTPUTS -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="catalog-section">
+            <h2 class="section-title">Output Formats</h2>
+            <p class="section-desc">Every format Liminal can produce — code, images, audio, video, data, and text.</p>
+            <table class="io-table">
+                <thead><tr><th>#</th><th>Format</th><th>Description</th><th>Producer</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>1</td><td>p5.js JS</td><td>Creative coding canvas sketches</td><td><code>src/generators/p5/</code> (6 generators)</td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>2</td><td>Three.js HTML</td><td>3D WebGL scenes</td><td><code>src/generators/three/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>3</td><td>GLSL</td><td>Fragment shader source code</td><td><code>src/generators/glsl/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>4</td><td>Hydra JS</td><td>Analog video synth code</td><td><code>src/generators/hydra/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>5</td><td>Strudel JS</td><td>Live music patterns (TidalCycles)</td><td><code>src/generators/strudel/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>6</td><td>Tone.js JS</td><td>Web Audio synthesis code</td><td><code>src/generators/tone/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>7</td><td>Remotion TSX</td><td>React video components</td><td><code>src/generators/remotion/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>8</td><td>HTML</td><td>Standalone wrapped docs (9 templates)</td><td><code>src/utils/htmlWrapper.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>9</td><td>ASCII</td><td>Character-based visual art</td><td><code>src/generators/ascii/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>10</td><td>Gen. Text</td><td>Concrete poetry, word art</td><td><code>src/generators/textgen/</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>11</td><td>Markdown</td><td>Digest reports, video scripts</td><td><code>src/compost/DigestGenerator.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>12</td><td>PNG</td><td>Canvas screenshots</td><td><code>src/render/Renderer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>13</td><td>JPEG</td><td>Canvas screenshots</td><td><code>src/render/Renderer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>14</td><td>MP4</td><td>Rendered video (FFmpeg / Remotion)</td><td><code>src/render/CanvasRecorder.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>15</td><td>WebM</td><td>Video export (FFmpeg)</td><td><code>src/export/VideoExporter.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>16</td><td>GIF</td><td>Animated GIF (FFmpeg)</td><td><code>src/export/VideoExporter.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>17</td><td>ZIP</td><td>Project bundles</td><td><code>src/export/Exporter.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>18</td><td>JSON</td><td>API responses, metadata, organisms</td><td><code>src/render/PreviewServer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>19</td><td>SSE</td><td>Server-Sent Events (live preview)</td><td><code>src/render/PreviewServer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>20</td><td>Scores</td><td>Visual &amp; audio quality (0–1)</td><td><code>src/render/VisualScorer.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>21</td><td>Embeddings</td><td>Float32Array semantic vectors</td><td><code>src/embeddings/EmbeddingService.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                    <tr><td>22</td><td>SQLite</td><td>Event &amp; project databases</td><td><code>src/compost/EventStore.ts</code></td><td><span class="badge badge-done">Done</span></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- STUBBED -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="catalog-section">
+            <h2 class="section-title">Stubbed / Not Yet Implemented</h2>
+            <p class="section-desc">Started but blocked on external dependencies.</p>
+            <table class="io-table">
+                <thead><tr><th>Module</th><th>What's Missing</th><th>Blocker</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td><code>SemanticExtractor.extractImage()</code></td><td>Image &rarr; text from compost</td><td>Needs vision-capable LLM</td><td><span class="badge badge-stub">Stub</span></td></tr>
+                    <tr><td><code>SemanticExtractor.extractAudio()</code></td><td>Audio &rarr; text transcription</td><td>Needs Whisper or similar STT</td><td><span class="badge badge-stub">Stub</span></td></tr>
+                    <tr><td><code>SemanticExtractor.extractVideo()</code></td><td>Video &rarr; text extraction</td><td>Needs frame sampling + vision model</td><td><span class="badge badge-stub">Stub</span></td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <hr class="divider">
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- INFRASTRUCTURE & ARCHITECTURE -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="catalog-section">
+            <h2 class="section-title">Infrastructure &amp; Architecture Map</h2>
+            <p class="section-desc">What each I/O format means in terms of runtime dependencies, external services, and system architecture. Every format carries infrastructure weight.</p>
+
+            <!-- Architecture Flow Diagram -->
+            <div class="arch-flow">
+                <div class="arch-node input">Text Prompt</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">ConfigLoader</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">LLMClient</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">Generator</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node output">Code Output</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node external">Renderer</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node output">PNG / MP4 / GIF</div>
+            </div>
+            <div class="arch-flow">
+                <div class="arch-node input">Audio File</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">AudioAnalyzer</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">VisualMapper</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">Generator</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node output">Hydra / p5.js</div>
+            </div>
+            <div class="arch-flow">
+                <div class="arch-node input">Compost Files</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">Shredder</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">CollisionEngine</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node engine">SeedBank</div>
+                <span class="arch-arrow">&rarr;</span>
+                <div class="arch-node output">Seeds / Digest</div>
+            </div>
+
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; color: var(--accent-cyan);">Dependency Map by I/O Format</h3>
+
+            <div class="infra-grid">
+                <!-- p5.js -->
+                <div class="infra-card">
+                    <h4>p5.js JavaScript</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call to generate code</li>
+                        <li><strong>Output rendering:</strong> Puppeteer or Playwright headless browser</li>
+                        <li><strong>Screenshot:</strong> Canvas <code>.toBuffer()</code> &rarr; PNG/JPEG</li>
+                        <li><strong>Dependencies:</strong> <code>p5</code> (CDN in HTML wrapper) <span class="dep-badge dep-external">CDN</span></li>
+                        <li><strong>Video:</strong> Frame sequence &rarr; FFmpeg <span class="dep-badge dep-external">FFmpeg</span></li>
+                        <li><strong>Infrastructure weight:</strong> Medium — needs headless browser + optional FFmpeg</li>
+                    </ul>
+                </div>
+
+                <!-- Three.js -->
+                <div class="infra-card">
+                    <h4>Three.js HTML</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call</li>
+                        <li><strong>Output:</strong> Complete standalone HTML with import maps</li>
+                        <li><strong>Rendering:</strong> WebGL via Playwright (GPU-accelerated headless)</li>
+                        <li><strong>Dependencies:</strong> <code>three</code> (import map / CDN) <span class="dep-badge dep-external">CDN</span></li>
+                        <li><strong>Infrastructure weight:</strong> Medium-High — WebGL requires GPU-capable headless browser</li>
+                    </ul>
+                </div>
+
+                <!-- GLSL -->
+                <div class="infra-card">
+                    <h4>GLSL Shaders</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call (shader source generation)</li>
+                        <li><strong>Output:</strong> Plain text <code>.frag</code> / <code>.glsl</code> files</li>
+                        <li><strong>Rendering:</strong> WebGL2 via HTML wrapper — requires GPU for preview</li>
+                        <li><strong>Dependencies:</strong> None for generation; WebGL2 for rendering</li>
+                        <li><strong>Infrastructure weight:</strong> Low for generation, High for rendering (GPU)</li>
+                    </ul>
+                </div>
+
+                <!-- Hydra -->
+                <div class="infra-card">
+                    <h4>Hydra JavaScript</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call</li>
+                        <li><strong>Output:</strong> JavaScript source for <code>hydra-synth</code></li>
+                        <li><strong>Live execution:</strong> Browser-only — Hydra uses WebRTC + Canvas</li>
+                        <li><strong>Dependencies:</strong> <code>hydra-synth</code> npm or CDN <span class="dep-badge dep-external">CDN</span></li>
+                        <li><strong>Infrastructure weight:</strong> Low for code gen; Live preview needs browser</li>
+                    </ul>
+                </div>
+
+                <!-- Strudel -->
+                <div class="infra-card">
+                    <h4>Strudel JavaScript</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call</li>
+                        <li><strong>Output:</strong> JavaScript pattern code (TidalCycles mini-notation)</li>
+                        <li><strong>Audio rendering:</strong> Web Audio API via Strudel REPL in browser</li>
+                        <li><strong>Dependencies:</strong> <code>@strudel/repl</code> or embedded REPL <span class="dep-badge dep-external">npm</span></li>
+                        <li><strong>Headless audio:</strong> Playwright + WebAudio capture &rarr; Float32Array <span class="dep-badge dep-optional">Optional</span></li>
+                        <li><strong>Infrastructure weight:</strong> Low for code gen; Medium for headless audio capture</li>
+                    </ul>
+                </div>
+
+                <!-- Tone.js -->
+                <div class="infra-card">
+                    <h4>Tone.js JavaScript</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call</li>
+                        <li><strong>Output:</strong> JavaScript using Tone.js scheduling + synthesis API</li>
+                        <li><strong>Audio rendering:</strong> Web Audio API in browser or headless Playwright</li>
+                        <li><strong>Dependencies:</strong> <code>tone</code> npm or CDN <span class="dep-badge dep-external">CDN</span></li>
+                        <li><strong>Headless audio:</strong> Playwright captures Float32Array from AudioContext <span class="dep-badge dep-optional">Optional</span></li>
+                        <li><strong>Infrastructure weight:</strong> Low for code gen; Medium for audio capture</li>
+                    </ul>
+                </div>
+
+                <!-- Remotion -->
+                <div class="infra-card">
+                    <h4>Remotion TSX + MP4</h4>
+                    <ul>
+                        <li><strong>Runtime:</strong> Node.js + LLM API call + Remotion bundler</li>
+                        <li><strong>Output:</strong> React TSX components + rendered MP4 video</li>
+                        <li><strong>Build pipeline:</strong> <code>@remotion/bundler</code> (Webpack) &rarr; <code>@remotion/renderer</code> (headless Chrome)</li>
+                        <li><strong>Dependencies:</strong> <code>remotion</code>, <code>@remotion/cli</code>, Chrome/Chromium <span class="dep-badge dep-external">Heavy</span></li>
+                        <li><strong>Infrastructure weight:</strong> Heavy — requires full Remotion stack + headless Chrome + FFmpeg fallback</li>
+                    </ul>
+                </div>
+
+                <!-- PNG/JPEG -->
+                <div class="infra-card">
+                    <h4>PNG / JPEG Screenshots</h4>
+                    <ul>
+                        <li><strong>Rendering:</strong> Puppeteer or Playwright headless browser</li>
+                        <li><strong>Process:</strong> Load HTML wrapper &rarr; wait for canvas render &rarr; screenshot</li>
+                        <li><strong>Scoring:</strong> Pixel analysis via <code>png-js</code> or sharp (color variety, edges, contrast)</li>
+                        <li><strong>Dependencies:</strong> Puppeteer or Playwright <span class="dep-badge dep-external">Binary</span></li>
+                        <li><strong>Infrastructure weight:</strong> Medium — headless browser is the main cost</li>
+                    </ul>
+                </div>
+
+                <!-- MP4/WebM/GIF -->
+                <div class="infra-card">
+                    <h4>MP4 / WebM / GIF Video</h4>
+                    <ul>
+                        <li><strong>Pipeline A (Canvas):</strong> Puppeteer frame capture &rarr; PNG sequence &rarr; FFmpeg</li>
+                        <li><strong>Pipeline B (Remotion):</strong> React component &rarr; Remotion bundler &rarr; Remotion renderer</li>
+                        <li><strong>Transcoding:</strong> FFmpeg handles MP4, WebM, GIF conversion + resize + audio merge</li>
+                        <li><strong>Dependencies:</strong> <code>ffmpeg</code> binary, <code>fluent-ffmpeg</code> npm <span class="dep-badge dep-external">Binary</span></li>
+                        <li><strong>Infrastructure weight:</strong> Heavy — FFmpeg binary + headless browser + large temp storage for frames</li>
+                    </ul>
+                </div>
+
+                <!-- Audio Input -->
+                <div class="infra-card">
+                    <h4>Audio Input (MP3, WAV, OGG...)</h4>
+                    <ul>
+                        <li><strong>Analysis:</strong> <code>meyda</code> for MFCC, spectral centroid, chroma <span class="dep-badge dep-optional">Optional</span></li>
+                        <li><strong>Pitch detection:</strong> <code>pitchfinder</code> for frequency + clarity <span class="dep-badge dep-optional">Optional</span></li>
+                        <li><strong>Metadata:</strong> <code>music-metadata</code> for BPM, key, duration <span class="dep-badge dep-optional">Optional</span></li>
+                        <li><strong>Formant analysis:</strong> Custom DSP for vowel/consonant classification</li>
+                        <li><strong>Infrastructure weight:</strong> Low — pure JS DSP, no external services. Optional deps increase install size.</li>
+                    </ul>
+                </div>
+
+                <!-- Compost Pipeline -->
+                <div class="infra-card">
+                    <h4>Compost Pipeline (Multi-format)</h4>
+                    <ul>
+                        <li><strong>Storage:</strong> Filesystem heap + SQLite (<code>better-sqlite3</code>) for events/assets</li>
+                        <li><strong>Text extraction:</strong> Direct file read + LLM summarization</li>
+                        <li><strong>Code parsing:</strong> AST analysis via tree-sitter or regex heuristics</li>
+                        <li><strong>Binary processing:</strong> SHA256 hash + hex dump + base64 (files &lt; 100KB)</li>
+                        <li><strong>LLM collision:</strong> Semantic merging of cross-domain fragments via LLMClient</li>
+                        <li><strong>Infrastructure weight:</strong> Medium — SQLite + filesystem + LLM API calls for collisions</li>
+                    </ul>
+                </div>
+
+                <!-- Embeddings -->
+                <div class="infra-card">
+                    <h4>Embeddings &amp; Semantic Search</h4>
+                    <ul>
+                        <li><strong>Model:</strong> <code>@xenova/transformers</code> (local SBERT, no API needed)</li>
+                        <li><strong>Output:</strong> Float32Array vectors (384-dim typical)</li>
+                        <li><strong>Operations:</strong> Cosine similarity, Euclidean distance, KNN search</li>
+                        <li><strong>First run:</strong> Downloads ~30MB model weights (cached locally after)</li>
+                        <li><strong>Infrastructure weight:</strong> Low-Medium — runs locally, one-time model download, CPU-bound</li>
+                    </ul>
+                </div>
+
+                <!-- SSE + Preview Server -->
+                <div class="infra-card">
+                    <h4>SSE + Preview Server</h4>
+                    <ul>
+                        <li><strong>Transport:</strong> HTTP server (Express or native <code>http</code>)</li>
+                        <li><strong>Live updates:</strong> Server-Sent Events (<code>text/event-stream</code>)</li>
+                        <li><strong>Endpoints:</strong> Gallery API, sandbox execution, export, CSRF tokens</li>
+                        <li><strong>Sandbox:</strong> Isolated code execution in sandboxed iframe or VM</li>
+                        <li><strong>Infrastructure weight:</strong> Low — standard Node.js HTTP server, no external deps</li>
+                    </ul>
+                </div>
+
+                <!-- ZIP -->
+                <div class="infra-card">
+                    <h4>ZIP Archives</h4>
+                    <ul>
+                        <li><strong>Export:</strong> <code>archiver</code> npm — bundles project.json + iterations + HTML</li>
+                        <li><strong>Import:</strong> <code>JSZip</code> — parses uploaded project archives</li>
+                        <li><strong>Contents:</strong> <code>project.json</code>, <code>iterations/*.js</code>, <code>index.html</code>, <code>sketch.js</code></li>
+                        <li><strong>Infrastructure weight:</strong> Minimal — pure JS compression, no binaries</li>
+                    </ul>
+                </div>
+
+                <!-- Scores -->
+                <div class="infra-card">
+                    <h4>Visual &amp; Audio Scores (0–1)</h4>
+                    <ul>
+                        <li><strong>Visual scoring:</strong> Pixel-level analysis — color variety, edge complexity, composition balance, contrast</li>
+                        <li><strong>Audio scoring:</strong> Signal analysis — frequency variety, dynamics, rhythm detection, harmonic richness</li>
+                        <li><strong>Output:</strong> JSON score objects used by RalphLoop and quality gates</li>
+                        <li><strong>Infrastructure weight:</strong> Minimal — pure JS computation on existing render buffers</li>
+                    </ul>
+                </div>
+
+                <!-- SQLite -->
+                <div class="infra-card">
+                    <h4>SQLite Persistence</h4>
+                    <ul>
+                        <li><strong>Library:</strong> <code>better-sqlite3</code> (native binding, synchronous API)</li>
+                        <li><strong>Tables:</strong> events, snapshots, branches, assets (content-addressable blobs)</li>
+                        <li><strong>File:</strong> <code>project.liminal</code> in project root</li>
+                        <li><strong>Infrastructure weight:</strong> Low — single file DB, native binding requires build toolchain</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 2rem; margin-bottom: 1rem; font-size: 1.2rem; color: var(--accent-cyan);">Infrastructure Dependency Summary</h3>
+            <table class="io-table">
+                <thead><tr><th>Dependency</th><th>Type</th><th>Used By</th><th>Install Impact</th></tr></thead>
+                <tbody>
+                    <tr><td><code>LLM API</code></td><td><span class="dep-badge dep-external">External</span></td><td>All generators, SemanticExtractor, CompostSoup collisions</td><td>API key + network</td></tr>
+                    <tr><td><code>Puppeteer / Playwright</code></td><td><span class="dep-badge dep-external">Binary</span></td><td>Renderer, HeadlessRenderer, CanvasRecorder, VisualScorer</td><td>~300MB Chromium download</td></tr>
+                    <tr><td><code>FFmpeg</code></td><td><span class="dep-badge dep-external">Binary</span></td><td>VideoExporter, CanvasRecorder, all video/GIF output</td><td>System binary via brew/apt</td></tr>
+                    <tr><td><code>Remotion</code></td><td><span class="dep-badge dep-runtime">Runtime</span></td><td>RemotionGenerator, RemotionRenderer, narrative pipeline</td><td>~200MB (bundler + renderer)</td></tr>
+                    <tr><td><code>better-sqlite3</code></td><td><span class="dep-badge dep-runtime">Runtime</span></td><td>EventStore, AssetStore, ProjectStore</td><td>Native build (node-gyp)</td></tr>
+                    <tr><td><code>@xenova/transformers</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>EmbeddingService</td><td>~30MB model on first run</td></tr>
+                    <tr><td><code>meyda</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>AudioExtractor (MFCC, spectral features)</td><td>Pure JS, no binary</td></tr>
+                    <tr><td><code>pitchfinder</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>PitchExtractor (frequency, clarity)</td><td>Pure JS, no binary</td></tr>
+                    <tr><td><code>music-metadata</code></td><td><span class="dep-badge dep-optional">Optional</span></td><td>BPMKeyDetector</td><td>Pure JS, no binary</td></tr>
+                </tbody>
+            </table>
+        </section>
+
+        <hr class="divider">
+
+        <!-- ═══════════════════════════════════════════ -->
+        <!-- REFERENCE GALLERY -->
+        <!-- ═══════════════════════════════════════════ -->
+        <section class="catalog-section">
+            <h2 class="section-title">Reference Gallery</h2>
+            <p class="section-desc">Real-world examples of each creative coding output domain from across the internet.</p>
+        </section>
+
+        <!-- ── p5.js ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-p5">p5.js</span> Creative Coding Sketches</h3>
+            <p class="domain-desc">JavaScript canvas library for generative art, interactive installations, and data visualization. Liminal has 6 p5 generators including ParticleSystem, CellularAutomata, and FlowField.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://p5js.org" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-p5">🎨</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-p5">p5.js</span>
+                        <div class="card-title">Lauren McCarthy — p5.js Itself</div>
+                        <div class="card-desc">Created in 2013 as a reinterpretation of Processing for the web. Won a Golden Nica at Ars Electronica. Designed with an explicit focus on accessibility and reaching beyond traditional CS audiences.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=p5js.org&sz=32" alt="" loading="lazy">
+                            <span class="card-url">p5js.org</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://thecodingtrain.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-p5">🚂</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-p5">p5.js</span>
+                        <div class="card-title">Daniel Shiffman — The Coding Train</div>
+                        <div class="card-desc">The largest creative coding educational resource on the internet. Millions of views covering genetic algorithms, flocking, fractal trees, and more — all built in p5.js.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=thecodingtrain.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">thecodingtrain.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="http://www.aaronkoblin.com/work/flightpatterns/" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-p5">✈️</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-p5">p5.js / Processing</span>
+                        <div class="card-title">Aaron Koblin — Flight Patterns</div>
+                        <div class="card-desc">FAA flight trajectory data visualized over the US, revealing hidden patterns in air traffic. Exhibited at MoMA and the V&amp;A. A landmark in data-driven generative art.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=aaronkoblin.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">aaronkoblin.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.instagram.com/zach.lieberman/" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-p5">🔤</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-p5">p5.js / openFrameworks</span>
+                        <div class="card-title">Zach Lieberman — Daily Sketches</div>
+                        <div class="card-desc">Year-long daily coding experiments exploring typography, optical illusions, and computational poetry. Co-creator of openFrameworks and MIT Media Lab professor. Inspired thousands to start daily creative coding practices.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=instagram.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">instagram.com/zach.lieberman</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── GLSL Shaders ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-glsl">GLSL</span> Fragment Shaders</h3>
+            <p class="domain-desc">GPU-accelerated visual art written in GLSL fragment shaders. Liminal's ShaderGenerator produces standalone WebGL2 shader code.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://www.shadertoy.com/view/4dsGD2" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-glsl">⛰️</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-glsl">GLSL</span>
+                        <div class="card-title">Inigo Quilez — "Elevated"</div>
+                        <div class="card-desc">Co-creator of Shadertoy. "Elevated" is legendary — a fully procedural 3D terrain with lighting, atmosphere, and water, computed entirely in a single fragment shader. The canonical reference for raymarching and SDFs.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=shadertoy.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">shadertoy.com/view/4dsGD2</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.shadertoy.com/user/Kali" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-glsl">🔮</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-glsl">GLSL</span>
+                        <div class="card-title">Kali — Fractal Explorations</div>
+                        <div class="card-desc">Extraordinarily complex fractal shaders rendering alien landscapes and recursive geometries in real-time at 60fps. Pushes the mathematical limits of per-pixel GPU computation.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=shadertoy.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">shadertoy.com/user/Kali</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.shadertoy.com/user/BigWIngs" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-glsl">🌊</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-glsl">GLSL</span>
+                        <div class="card-title">BigWIngs — "Painting with Math"</div>
+                        <div class="card-desc">The best shader tutorial content available. Covers raymarching, voronoi patterns, fluid simulation, and organic motion. His YouTube channel "Art of Code" is the go-to curriculum for learning GLSL.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=shadertoy.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">shadertoy.com/user/BigWIngs</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── Hydra ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-hydra">Hydra</span> Analog Video Synthesis</h3>
+            <p class="domain-desc">Browser-based visual synthesis inspired by analog video mixers. Functional chaining syntax for real-time live-coded visuals. Liminal's HydraGenerator produces hydra-synth compatible code.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://hydra.ojack.xyz" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-hydra">📺</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-hydra">Hydra</span>
+                        <div class="card-title">Olivia Jack — Hydra Itself</div>
+                        <div class="card-desc">Created in 2018, inspired by the Sandin Image Processor and Rutt-Etra analog synthesizers. Democratized live coding visuals worldwide. A staple of Algoraves, transmediale, MUTEK, and STRP.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=hydra.ojack.xyz&sz=32" alt="" loading="lazy">
+                            <span class="card-url">hydra.ojack.xyz</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://naotohieda.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-hydra">🤸</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-hydra">Hydra</span>
+                        <div class="card-title">Naoto Hieda — Hydra + Body Tracking</div>
+                        <div class="card-desc">Live-coded visuals combined with PoseNet/MoveNet body tracking. The performer's movements directly shape the visuals — expanding Hydra into full-body live performance art.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=naotohieda.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">naotohieda.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://tremens.lvctrl.net" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-hydra">🎵</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-hydra">Hydra</span>
+                        <div class="card-title">Alexandra Cardenas — Algorave Visuals</div>
+                        <div class="card-desc">Prominent live coder using Hydra for real-time visuals alongside TidalCycles audio. Performances at MUTEK, Network Music Festival, and ICLC showcase Hydra as a live instrument.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=tremens.lvctrl.net&sz=32" alt="" loading="lazy">
+                            <span class="card-url">tremens.lvctrl.net</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── Strudel ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-strudel">Strudel</span> Live Coding Music</h3>
+            <p class="domain-desc">Browser-based live music coding with TidalCycles mini-notation. Liminal's StrudelGenerator produces pattern code compatible with the Strudel REPL.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://strudel.cc" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-strudel">🎶</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-strudel">Strudel</span>
+                        <div class="card-title">Strudel REPL — Official Playground</div>
+                        <div class="card-desc">The main interactive environment. All examples are immediately playable in the browser — from simple beats to Euclidean rhythms, scale transformations, and complex algorithmic compositions.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=strudel.cc&sz=32" alt="" loading="lazy">
+                            <span class="card-url">strudel.cc</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://yaxu.org" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-strudel">🎹</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-strudel">Strudel / TidalCycles</span>
+                        <div class="card-title">Alex McLean (yaxu) — Creator</div>
+                        <div class="card-desc">Originator of TidalCycles and Strudel. Live performances showcase the most advanced pattern mutation, polyrhythms, and sample manipulation. Coined the term "Algorave."</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=yaxu.org&sz=32" alt="" loading="lazy">
+                            <span class="card-url">yaxu.org</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://algorave.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-strudel">🕺</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-strudel">Live Coding</span>
+                        <div class="card-title">Algorave — Global Live Coding Festival</div>
+                        <div class="card-desc">Global movement of live-coded music performances. Artists use Strudel, TidalCycles, and Sonic Pi in front of audiences. Dozens of recorded performances on YouTube and Twitch.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=algorave.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">algorave.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://kindohm.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-strudel">🎛️</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-strudel">TidalCycles / Strudel</span>
+                        <div class="card-title">Kindohm (Mike Hodnick) — Algorithmic Techno</div>
+                        <div class="card-desc">Notable live coder known for algorithmic techno performances. Pushes the rhythmic complexity of live-coded music with dense, evolving pattern structures.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=kindohm.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">kindohm.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-three">Three.js</span> 3D WebGL Scenes</h3>
+            <p class="domain-desc">Complete HTML documents with WebGL 3D rendering. Liminal's ThreeGenerator produces full standalone HTML pages with import maps and Three.js setup.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://threejs.org" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-three">🧊</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-three">Three.js</span>
+                        <div class="card-title">Mr.doob — Three.js + "The Wilderness Downtown"</div>
+                        <div class="card-desc">Ricardo Cabello created Three.js, the dominant WebGL library. His Arcade Fire Chrome experiment was a watershed for interactive web 3D — won a Cannes Lions Grand Prix.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=threejs.org&sz=32" alt="" loading="lazy">
+                            <span class="card-url">threejs.org</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://mattdesl.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-three">🌌</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-three">Three.js</span>
+                        <div class="card-title">Matt DesLauriers — Generative Art + 3D</div>
+                        <div class="card-desc">Bridges generative art and interactive 3D. Art Blocks projects, real-time event visuals, and the canvas-sketch tooling. Conference talks at React Europe and Full Stack Fest.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=mattdesl.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">mattdesl.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://codepen.io/ge1doot" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-three">🏔️</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-three">Three.js</span>
+                        <div class="card-title">Gerard Ferrandez — Procedural Landscapes</div>
+                        <div class="card-desc">Intricate procedural 3D scenes — fractal landscapes, particle systems, organic forms. Consistently among the most technically impressive pure Three.js demos on CodePen.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=codepen.io&sz=32" alt="" loading="lazy">
+                            <span class="card-url">codepen.io/ge1doot</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── Tone.js ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-tone">Tone.js</span> Web Audio Synthesis</h3>
+            <p class="domain-desc">Browser-based audio synthesis with scheduling, transport, effects chains, and polyphonic instruments. Liminal's ToneGenerator produces Tone.js code for generative music.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://tonejs.github.io/examples/" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-tone">🎹</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-tone">Tone.js</span>
+                        <div class="card-title">Tone.js Official Examples</div>
+                        <div class="card-desc">Built-in demos: browser synth, step sequencer, multi-player, envelope shaping. The definitive starting point for understanding the framework's range.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=tonejs.github.io&sz=32" alt="" loading="lazy">
+                            <span class="card-url">tonejs.github.io/examples</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://tero.parviainen.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-tone">🌊</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-tone">Tone.js</span>
+                        <div class="card-title">Tero Parviainen — Generative Music</div>
+                        <div class="card-desc">Widely cited as the best educational resource for Tone.js generative music. Covers probability, Markov chains, and self-evolving ambient systems.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=tero.parviainen.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">tero.parviainen.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── Remotion ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-remotion">Remotion</span> Programmatic Video</h3>
+            <p class="domain-desc">React components rendered frame-by-frame to MP4. Liminal's RemotionGenerator produces TSX video components.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://www.remotion.dev" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-remotion">🎬</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-remotion">Remotion</span>
+                        <div class="card-title">Jonny Burger — Remotion Creator</div>
+                        <div class="card-desc">Opened video production to the React ecosystem. Pure React with full DOM/CSS/SVG access per frame. The demo videos are a masterclass in programmatic motion design.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=remotion.dev&sz=32" alt="" loading="lazy">
+                            <span class="card-url">remotion.dev</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://github.com/remotion-dev/awesome-remotion" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-remotion">📊</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-remotion">Remotion</span>
+                        <div class="card-title">Awesome Remotion — Community Gallery</div>
+                        <div class="card-desc">Curated community projects: automated social media video generation, API-driven chart rendering, personalized video at scale.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=github.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">github.com/remotion-dev/awesome-remotion</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.remotion.dev/showcase" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-remotion">🏢</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-remotion">Remotion</span>
+                        <div class="card-title">Remotion Showcase — Enterprise Adoptions</div>
+                        <div class="card-desc">Vercel uses Remotion for Next.js Conf animated diagrams. Enterprise adoption validates the tool for production-grade video automation.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=remotion.dev&sz=32" alt="" loading="lazy">
+                            <span class="card-url">remotion.dev/showcase</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── ASCII Art ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-ascii">ASCII</span> Character-Based Visuals</h3>
+            <p class="domain-desc">Text art using character density to represent images. Liminal's ASCIIArtGenerator produces character art from prompts.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://www.ascii-art-generator.org" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-ascii">🖼️</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-ascii">ASCII</span>
+                        <div class="card-title">ASCII Art Generator — Image to Characters</div>
+                        <div class="card-desc">Image-to-ASCII conversion with adjustable density, width, and inversion. A benchmark for conversion quality.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=ascii-art-generator.org&sz=32" alt="" loading="lazy">
+                            <span class="card-url">ascii-art-generator.org</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.text-image.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-ascii">🔤</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-ascii">ASCII</span>
+                        <div class="card-title">Text-Image.com — Reference Converter</div>
+                        <div class="card-desc">High-quality image-to-ASCII with colored HTML output and various character sets. A long-standing reference implementation.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=text-image.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">text-image.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://github.com/kr15h" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-ascii">🐢</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-ascii">ASCII</span>
+                        <div class="card-title">kr15h — Generative ASCII Landscapes</div>
+                        <div class="card-desc">Procedural generation combined with character rendering to create animated, evolving ASCII landscapes. Open-source experiments on GitHub.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=github.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">github.com/kr15h</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── Generative Text ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-textgen">Gen. Text</span> Concrete Poetry &amp; Word Art</h3>
+            <p class="domain-desc">Algorithmic text art, generative poetry, and typographic experiments. Liminal's TextGenerativeGenerator produces concrete poetry from prompts.</p>
+            <div class="card-grid">
+                <a class="link-card" href="http://nickm.com/taroko_gorge/" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-textgen">🌿</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-textgen">Gen. Text</span>
+                        <div class="card-title">Nick Montfort — "Taroko Gorge" (2009)</div>
+                        <div class="card-desc">One of the most well-known generative poetry generators. Produces endless nature poetry in the browser. Remixed dozens of times. A foundational reference for computational poetry.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=nickm.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">nickm.com/taroko_gorge</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.decontextualize.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-textgen">📝</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-textgen">Gen. Text</span>
+                        <div class="card-title">Allison Parrish — Word-Vector Poetry</div>
+                        <div class="card-desc">Computational linguistics art using word embeddings for poetic generation. "Articulations" and the Pronouncing library are landmark achievements in computational literature.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=decontextualize.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">decontextualize.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://github.com/NaNoGenMo" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-textgen">📖</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-textgen">Gen. Text</span>
+                        <div class="card-title">NaNoGenMo — National Novel Generation Month</div>
+                        <div class="card-desc">Annual community event generating novels algorithmically. Founded by Darius Kazemi. Hundreds of novel-length outputs from Markov chains, LSTMs, and constraint systems.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=github.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">github.com/NaNoGenMo</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── PNG/JPEG — Generative Still Images ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-image">PNG / JPEG</span> Generative Art as Still Images</h3>
+            <p class="domain-desc">Generative art minted and experienced as static images on platforms like Art Blocks and fxhash. Liminal renders PNG/JPEG screenshots via Puppeteer and Playwright.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://tylerhobbs.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-image">🎨</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-image">PNG / Art Blocks</span>
+                        <div class="card-title">Tyler Hobbs — "Fidenza"</div>
+                        <div class="card-desc">Flow field compositions with painterly quality achieved entirely through algorithms. Over $50M in sales. A landmark in generative art history — each output is a unique still image.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=tylerhobbs.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">tylerhobbs.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://dmitricherniak.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-image">🦢</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-image">PNG / Art Blocks</span>
+                        <div class="card-title">Dmitri Cherniak — "Ringers"</div>
+                        <div class="card-desc">"Ringers #109" ("The Goose") sold for over $5M. Masterful constrained randomness — unique geometric compositions from limited parameters, each a static image of stunning variety.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=dmitricherniak.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">dmitricherniak.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.fxhash.xyz" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-image">🏔️</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-image">PNG / fxhash</span>
+                        <div class="card-title">fxhash Platform — Generative Art Gallery</div>
+                        <div class="card-desc">The largest Tezos-based generative art platform. Thousands of projects viewable as galleries of still images, each generated on-chain. William Mapan, Zancan, and more.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=fxhash.xyz&sz=32" alt="" loading="lazy">
+                            <span class="card-url">fxhash.xyz</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── GIF ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-gif">GIF</span> Generative Looping Animations</h3>
+            <p class="domain-desc">Generative art shared as looping animated GIFs. Liminal exports GIF via FFmpeg from canvas frame sequences.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://www.saskiafreeke.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-gif">🔁</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-gif">GIF</span>
+                        <div class="card-title">Saskia Freeke — Daily Generative GIFs</div>
+                        <div class="card-desc">Years-long daily generative art practice. Geometric transformations, rotation, and color theory in tight looping format. A model of creative consistency.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=saskiafreeke.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">saskiafreeke.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://www.are.na" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-gif">📚</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-gif">GIF</span>
+                        <div class="card-title">Are.na — Generative GIF Collection</div>
+                        <div class="card-desc">Curated collection of generative and experimental GIF art from dozens of artists. Public, browseable reference. Free platform, no login required.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=are.na&sz=32" alt="" loading="lazy">
+                            <span class="card-url">are.na</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+        <!-- ── MP4 / WebM ── -->
+        <section class="gallery-section">
+            <h3 class="domain-title"><span class="card-domain-tag tag-video">MP4 / WebM</span> Creative Coding Video</h3>
+            <p class="domain-desc">Generative art rendered to video — from real-time visualizations to fully computed films. Liminal produces MP4 via Remotion or CanvasRecorder+FFmpeg, and WebM via FFmpeg.</p>
+            <div class="card-grid">
+                <a class="link-card" href="https://www.memo.tv/works/simple-harmonic-motion/" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-video"> pendulum</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-video">MP4 / Video</span>
+                        <div class="card-title">Memo Akten — "Simple Harmonic Motion"</div>
+                        <div class="card-desc">Pioneer of real-time generative visuals and ML art. Pendulum wave physics as mesmerizing visual compositions. Exhibited globally at museums and festivals.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=memo.tv&sz=32" alt="" loading="lazy">
+                            <span class="card-url">memo.tv</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://refikanadol.com" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-video">🌌</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-video">MP4 / Video</span>
+                        <div class="card-title">Refik Anadol — "Unsupervised" at MoMA</div>
+                        <div class="card-desc">Large-scale generative installations projected onto buildings. Machine hallucination series processing vast datasets into flowing, dreamlike video landscapes.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=refikanadol.com&sz=32" alt="" loading="lazy">
+                            <span class="card-url">refikanadol.com</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+                <a class="link-card" href="https://inconvergent.net" target="_blank" rel="noopener noreferrer">
+                    <div class="card-thumb-fallback thumb-video">🌿</div>
+                    <div class="card-body">
+                        <span class="card-domain-tag tag-video">MP4 / Video</span>
+                        <div class="card-title">Inconvergent (Anders Hoff) — Algorithmic Simulations</div>
+                        <div class="card-desc">Algorithmic drawings and simulations recorded as video. Mathematical rigor behind organic growth algorithms, recursion, and natural systems.</div>
+                        <div class="card-meta">
+                            <img class="card-favicon" src="https://www.google.com/s2/favicons?domain=inconvergent.net&sz=32" alt="" loading="lazy">
+                            <span class="card-url">inconvergent.net</span>
+                            <span class="card-arrow">&rarr;</span>
+                        </div>
+                    </div>
+                </a>
+            </div>
+        </section>
+
+    </main>
+</body>
+</html>

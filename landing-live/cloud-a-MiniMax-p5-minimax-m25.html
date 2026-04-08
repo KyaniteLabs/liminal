@@ -1,0 +1,55 @@
+let particles = [];
+const numParticles = 200;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  background(10, 20, 40, 50); // deep blue background with a slight trail
+  for (let p of particles) {
+    p.update();
+    p.display();
+  }
+}
+
+class Particle {
+  constructor() {
+    this.pos = createVector(random(width), random(height));
+    this.vel = p5.Vector.random2D().mult(random(0.2, 0.5));
+    this.acc = createVector(0, 0);
+    this.size = random(2, 5);
+    // calming blue shades
+    this.color = color(random(100, 180), random(150, 220), random(220, 255), random(100, 200));
+  }
+
+  update() {
+    // gentle flow using Perlin noise
+    let angle = noise(this.pos.x * 0.005, this.pos.y * 0.005, frameCount * 0.001) * TWO_PI;
+    let force = p5.Vector.fromAngle(angle).mult(0.05);
+    this.acc.add(force);
+    this.vel.add(this.acc);
+    this.vel.limit(1.5);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+
+    // wrap around edges
+    if (this.pos.x < 0) this.pos.x = width;
+    if (this.pos.x > width) this.pos.x = 0;
+    if (this.pos.y < 0) this.pos.y = height;
+    if (this.pos.y > height) this.pos.y = 0;
+  }
+
+  display() {
+    noStroke();
+    fill(this.color);
+    ellipse(this.pos.x, this.pos.y, this.size);
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}

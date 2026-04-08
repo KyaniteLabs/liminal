@@ -138,7 +138,7 @@ async function runTest(domain: typeof DOMAINS[0], modelConfig: typeof CLOUD_MODE
     const code = await generator.generate(domain.prompt);
     const duration = Date.now() - startTime;
 
-    fs.writeFileSync(path.join(PROJECT_ROOT, `landing-live/${testId}.html`), code);
+    fs.writeFileSync(path.join(PROJECT_ROOT, `landing-live/${testId}.html`), generator.wrapForGallery(code));
     console.log(`✅ (${duration}ms)`);
     
     return { testId, success: true, duration };

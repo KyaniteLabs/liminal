@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://unpkg.com/hydra-synth@1.3.29/dist/hydra-synth.js"></script>
+  <style>body { margin: 0; background: #000; overflow: hidden; }</style>
+</head>
+<body>
+  <canvas id="hydra-canvas"></canvas>
+  <script>
+    // Initialize Hydra properly
+    const canvas = document.getElementById('hydra-canvas');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    
+    const hydra = new Hydra({
+      canvas: canvas,
+      makeGlobal: true,
+      detectAudio: false
+    }).synth;
+    
+    // Make hydra functions global
+    window.hydra = hydra;
+    window.src = hydra.src;
+    window.osc = hydra.osc;
+    window.shape = hydra.shape;
+    window.gradient = hydra.gradient;
+    window.noise = hydra.noise;
+    window.voronoi = hydra.voronoi;
+    window.kaleid = hydra.kaleid;
+    window.pixelate = hydra.pixelate;
+    window.repeat = hydra.repeat;
+    window.modulate = hydra.modulate;
+    window.modulateScale = hydra.modulateScale;
+    window.modulateRotate = hydra.modulateRotate;
+    window.color = hydra.color;
+    window.saturate = hydra.saturate;
+    window.brightness = hydra.brightness;
+    window.contrast = hydra.contrast;
+    window.hue = hydra.hue;
+    window.luma = hydra.luma;
+    window.thresh = hydra.thresh;
+    window.out = hydra.out;
+    window.render = hydra.render;
+    window.blend = hydra.blend;
+    window.mult = hydra.mult;
+    window.add = hydra.add;
+    window.diff = hydra.diff;
+    window.layer = hydra.layer;
+    window.mask = hydra.mask;
+    
+    try {
+      osc(128, 64, 0.5, 0.2).rotate(() => time * 0.5).scale(0.8).feedback(0.9).color(() => [Math.sin(time) * 0.5 + 0.5, Math.cos(time * 0.7) * 0.5 + 0.5, Math.sin(time * 1.3) * 0.5 + 0.5]).out(o0)
+      // Auto-render if not explicitly called
+      if (!hydra.rendered) {
+        hydra.render();
+      }
+    } catch(e) {
+      console.error('Hydra error:', e);
+      document.body.innerHTML += '<div style="color:red;position:absolute;top:10px;left:10px;">Error: ' + e.message + '</div>';
+    }
+  </script>
+</body>
+</html>

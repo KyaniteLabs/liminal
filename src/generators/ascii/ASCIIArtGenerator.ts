@@ -53,4 +53,28 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
     
     return cleanLines.join('\n');
   }
+
+  /**
+   * Wrap ASCII art for gallery iframe display.
+   * Uses a monospace pre block with dark background.
+   */
+  wrapForGallery(code: string): string {
+    const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ASCII Art</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0d1117;color:#c9d1d9;font-family:monospace;min-height:100vh;display:flex;align-items:center;justify-content:center}
+pre{font-size:clamp(8px,1.5vw,16px);line-height:1.2;white-space:pre}
+</style>
+</head>
+<body>
+<pre>${escaped}</pre>
+</body>
+</html>`;
+  }
 }

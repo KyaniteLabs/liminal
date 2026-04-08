@@ -82,4 +82,33 @@ export class HydraGenerator extends TierBasedGenerator {
     
     return clean.trim();
   }
+
+  /**
+   * Wrap Hydra code for gallery iframe display.
+   * Uses Hydra-synth CDN with a self-contained harness.
+   */
+  wrapForGallery(code: string): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hydra Synth</title>
+<style>
+*{margin:0;padding:0;overflow:hidden}
+body{background:#000}
+canvas{display:block;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script type="module">
+import{hydra}from'https://unpkg.com/hydra-synth@1.3.10/dist/hydra.module.js';
+window._hydra=hydra;
+const h=new hydra({canvas:document.getElementById('c'),width:innerWidth,height:innerHeight});
+${code}
+</script>
+</body>
+</html>`;
+  }
 }

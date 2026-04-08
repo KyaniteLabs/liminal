@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <style>
+    body { margin: 0; background: #1a1a2e; color: #fff; font-family: monospace; padding: 20px; }
+    .code { background: #0a0a0f; padding: 15px; border-radius: 8px; margin: 10px 0; font-size: 12px; overflow: auto; white-space: pre; }
+    .controls { margin: 15px 0; }
+    button { background: #8b5cf6; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 14px; }
+    button:hover { background: #7c3aed; }
+    .info { color: #888; font-size: 12px; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h3>🔊 Strudel Pattern</h3>
+  <div class="code">s('hihat')</div>
+  <div class="controls">
+    <button onclick="openStrudel()">▶ Open in Strudel REPL</button>
+  </div>
+  <div class="info">Click to open pattern in official Strudel editor with audio</div>
+  
+  <script>
+    function openStrudel() {
+      const code = encodeURIComponent(`s('hihat')`);
+      window.open('https://strudel.cc/?c=' + code, '_blank');
+    }
+  </script>
+</body>
+</html>

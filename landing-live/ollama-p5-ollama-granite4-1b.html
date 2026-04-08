@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>body { margin: 0; overflow: hidden; background: #000; }</style>
+</head>
+<body>
+  <script>function setup() {
+  createCanvas(800, 600);
+  pixelDensity(1);
+}
+
+function draw() {
+  background(220);
+  
+  noStroke();
+  fill('black');
+  ellipse(mouseX, mouseY, 20, 20);
+
+  var particleCount = 100;
+  for (var i = 0; i < particleCount; i++) {
+    var x = random(width);
+    var y = random(height);
+    
+    var vx = noise(x * 0.01) * 5 - 10;
+    var vy = noise(y * 0.01) * 5 - 10;
+
+    var r = color('white');
+    var g = color('blue');
+    var b = color('green');
+
+    push();
+    fill(r, g, b);
+    ellipse(x, y, 4);
+    pop();
+
+    x += vx;
+    y += vy;
+
+    if (y > height) {
+      i--;
+      continue;
+    }
+
+    r = lerpColor(color(255), color(0), 0.5 * smooth(y));
+    g = lerpColor(color(255), color(0), 0.5 * smooth(x));
+    b = lerpColor(color(255), color(0), 0.5 * smooth(width - x));
+
+    fill(r, g, b);
+    ellipse(x, y, 4);
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}</script>
+</body>
+</html>

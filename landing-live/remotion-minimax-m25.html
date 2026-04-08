@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { margin: 0; background: #1a1a2e; color: #fff; font-family: monospace; padding: 20px; }
+    pre { background: #0a0a0f; padding: 15px; border-radius: 8px; overflow: auto; font-size: 11px; line-height: 1.4; }
+    .badge { background: #f97316; color: #000; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="badge">REMOTION</div>
+  <h3>Video Component Code</h3>
+  <pre>import React from 'react';
+import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion';
+
+export const TypingTextWithSubtitle: React.FC = () => {
+  const frame = useCurrentFrame();
+  
+  const fullText = "Hello, World!";
+  const subtitleText = "Welcome to Remotion";
+  
+  const typingSpeed = 5;
+  const charsToShow = interpolate(frame, [0, fullText.length * typingSpeed], [0, fullText.length], {
+    extrapolateRight: 'clamp',
+  });
+  const displayedText = fullText.substring(0, Math.floor(charsToShow));
+  
+  const cursorBlink = Math.floor(frame / 15) % 2 === 0 ? 1 : 0;
+  
+  const typingCompleteFrame = fullText.length * typingSpeed;
+  
+  const subtitleOpacity = interpolate(
+    frame,
+    [typingCompleteFrame + 20, typingCompleteFrame + 70],
+    [0, 1],
+    {
+      extrapolateLeft: 'clamp',
+      extrapolateRight: 'clamp',
+    }
+  );
+  
+  return (
+    &lt;AbsoluteFill style={{backgroundColor: '#1a1a2e', justifyContent: 'center', alignItems: 'center'}}>
+      &lt;div style={{
+        fontFamily: 'monospace',
+        fontSize: 80,
+        color: '#00ff88',
+        fontWeight: 'bold',
+        display: 'flex',
+        alignItems: 'center',
+      }}>
+        {displayedText}
+        &lt;span style={{
+          opacity: cursorBlink,
+          backgroundColor: '#00ff88',
+          marginLeft: 4,
+          width: 6,
+          height: 80,
+          display: 'inline-block',
+        }} />
+      &lt;/div>
+      
+      &lt;div style={{
+        fontFamily: 'Arial, sans-serif',
+        fontSize: 36,
+        color: '#ffffff',
+        marginTop: 50,
+        opacity: subtitleOpacity,
+        letterSpacing: 2,
+      }}>
+        {subtitleText}
+      &lt;/div>
+    &lt;/AbsoluteFill>
+  );
+};</pre>
+</body>
+</html>

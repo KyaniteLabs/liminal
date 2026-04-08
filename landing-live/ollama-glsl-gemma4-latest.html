@@ -1,0 +1,77 @@
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+
+// Simple pseudo-random function (used for turbulence/noise approximation)
+float random(vec2 p) {
+    return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453);
+}
+
+// Smoother noise function (simple 2D value noise approximation)
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+
+    // Interpolation factors
+    vec2 u = f * f * (3.0 - 2.0 * f);
+
+    // Sample corners and interpolate (Simplified smooth interpolation)
+    float a = random(i + vec2(0.0, 0.0));
+    float b = random(i + vec2(1.0, 0.0));
+    float c = random(i + vec2(0.0, 1.0));
+    float d = random(i + vec2(1.0, 1.0));
+
+    float interp = mix(mix(a, b, u.x), mix(c, d, u.x), u.y);
+    return interp;
+}
+
+void main() {
+    // Normalize coordinates to [-0.5, 0.5] and scale by time/resolution for panning/movement
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    vec2 p = uv * 2.0 - 1.0;
+
+    // Time-based pulsing and panning
+    float time_scale = 0.5;
+    vec2 offset = vec2(u_time * 0.1, u_time * 0.05) * time_scale;
+
+    // Core Plasma Effect Calculation
+    float plasma_val = 0.0;
+    vec2 noise_coord = p * 3.0 + offset;
+
+    // Layer 1: Large scale turbulence (slow movement)
+    float noise1 = noise(noise_coord * 0.5);
+    
+    // Layer 2: Mid scale detail (faster oscillation)
+    float noise2 = noise(noise_coord * 2.0 + u_time * 1.5);
+    
+    // Layer 3: High frequency detail (fine structure)
+    float noise3 = sin(noise_coord.x * 10.0 + u_time * 3.0) * 0.5 + 0.5;
+
+    // Combine noise layers using weighted addition and multiplication for complexity
+    plasma_val = (noise1 * 0.4 + noise2 * 0.4 + noise3 * 0.2);
+    
+    // Enhance plasma look: Use the combination of structured waves and noise
+    float plasma_intensity = sin(plasma_val * 10.0 + u_time * 2.0) * 0.5 + 0.5;
+    plasma_intensity = pow(plasma_intensity, 1.5); // Sharpen contrast
+
+    // Color Mapping (Plasma colors often involve blues, purples, and bright cores)
+    
+    // Hue shift based on position and time
+    vec3 color_base = 0.5 + 0.5 * cos(p.x * 2.0 + u_time * 0.5);
+    vec3 color_shift = 0.5 + 0.5 * cos(p.y * 2.0 + u_time * 0.5);
+    
+    // Mix colors based on the calculated intensity
+    vec3 final_color_rgb = vec3(
+        0.1 + 0.3 * plasma_intensity + color_base.r * 0.5, // R: Blue/Cyan dominant
+        0.0 + 0.3 * plasma_intensity + color_shift.g * 0.5, // G: Green/Cyan dominant
+        0.1 + 0.2 * plasma_intensity + color_shift.b * 0.5  // B: Purple/Blue dominant
+    );
+    
+    // Add a central glow effect
+    float center_glow = exp(-length(p) * 1.5);
+    final_color_rgb += center_glow * 0.8;
+    
+    // Final output color
+    gl_FragColor = vec4(final_color_rgb, 1.0);
+}

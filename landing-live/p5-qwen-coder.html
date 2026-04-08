@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+  <style>body { margin: 0; overflow: hidden; background: #000; }</style>
+</head>
+<body>
+  <script>let particles = [];
+const GRAVITY = 0.15;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  pixelDensity(1);
+  background(0);
+}
+
+function draw() {
+  // Create fading trails by drawing semi-transparent black over the canvas
+  fill(0, 20);
+  noStroke();
+  rect(0, 0, width, height);
+
+  // Add new fireworks periodically
+  if (random() < 0.05) {
+    createExplosion(random(width * 0.1, width * 0.9), random(height * 0.1, height * 0.6));
+  }
+
+  // Update and draw particles
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.show();
+
+    if (p.isDead()) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+function createExplosion(x, y) {
+  let particleCount = floor(random(80, 150));
+  
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle(x, y));
+  }
+}
+
+class Particle {
+  constructor(x, y) {
+    this.pos = createVector(x, y);
+    let angle = random(TWO_PI);
+    let speed = random(2, 12);
+    this.vel = p5.Vector.fromAngle(angle);
+    this.vel.mult(speed);
+    
+    // Random bright color for each explosion
+    this.hue = random(0, 360);
+    this.color = color(
+      map(sin(this.hue * TWO_PI), -1, 1, 0, 255),
+      map(cos(this.hue * TWO_PI), -1, 1, 0, 255),
+      255,
+      random(150, 255)
+    );
+    
+    this.alpha = 255;
+    this.decayRate = random(1.5, 3);
+  }
+
+  update() {
+    // Apply gravity
+    this.vel.y += GRAVITY;
+    
+    // Update position
+    this.pos.add(this.vel);
+    
+    // Reduce alpha (fade out)
+    this.alpha -= this.decayRate;
+    
+    // Slight drag effect
+    this.vel.mult(0.98);
+  }
+
+  show() {
+    noStroke();
+    fill(red(this.color), green(this.color), blue(this.color), this.alpha);
+    circle(this.pos.x, this.pos.y, 4);
+  }
+
+  isDead() {
+    return this.alpha <= 0;
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}</script>
+</body>
+</html>

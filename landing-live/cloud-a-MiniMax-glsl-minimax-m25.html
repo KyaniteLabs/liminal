@@ -1,0 +1,35 @@
+#version 330 core
+
+out vec4 fragColor;
+uniform float u_time;
+uniform vec2 u_resolution;
+
+void main()
+{
+    vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+    // Correct aspect ratio
+    uv.x *= u_resolution.x / u_resolution.y;
+
+    float t = u_time * 0.5;
+
+    // Three overlapping sine waves
+    float v = 0.0;
+    v += sin(uv.x * 10.0 + t);
+    v += sin(uv.y * 10.0 + t);
+    v += sin((uv.x + uv.y) * 10.0 + t);
+
+    // Additional wave based on distance from centre
+    float d = length(uv - 0.5);
+    v += sin(d * 20.0 - t * 2.0);
+
+    // Normalize to -1..1 range
+    v *= 0.4;
+
+    // Color palette based on the combined wave value
+    vec3 col = 0.5 + 0.5 * cos(t + v + vec3(0.0, 2.0, 4.0));
+
+    // Slight brightening for contrast
+    col = pow(col, vec3(0.9));
+
+    fragColor = vec4(col, 1.0);
+}

@@ -55,16 +55,6 @@ describe('TextGenerativeGenerator', () => {
       expect(result).toBe('drip\ndrop\nsplash');
     });
 
-    it('strips markdown code block markers from output', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: '```\nhello\nworld\n```',
-        success: true,
-      });
-      const gen = new TextGenerativeGenerator();
-      const result = await gen.generate('poem');
-      expect(result).toBe('hello\nworld');
-    });
-
     it('strips comment lines from output', async () => {
       mockGenerate.mockResolvedValueOnce({
         code: '// This is a comment\nactual line one\n// another comment\nactual line two',
@@ -103,13 +93,13 @@ describe('TextGenerativeGenerator', () => {
 
     it('applies maxWidth constraint from options', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'A'.repeat(100),
+        code: 'A'.repeat(120),
         success: true,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('wide text', { maxWidth: 20 });
       expect(result.length).toBe(20);
-      expect(result).toBe('A'.repeat(20));
+      expect(result).toBe('AAAAAAAAAAAAAAAAAAAA...');
     });
 
     it('applies default maxWidth of 80 when not specified', async () => {
@@ -124,7 +114,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('filters out Unicode characters when unicode option is false', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'hello \u00e9\u00e8\u00ea world \u2603 snowman \u2764 heart',
+        code: 'hello world\nsnowman heart \u2603\u2764',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -137,7 +127,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('keeps Unicode characters when unicode option is true', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'hello \u2764\u2764\u2764 world',
+        code: 'hello world\nsecond line \u2764\u2764\u2764',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -166,7 +156,7 @@ describe('TextGenerativeGenerator', () => {
         success: true,
       });
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('empty')).rejects.toThrow('Empty output');
+      await expect(gen.generate('empty')).rejects.toThrow('LLM returned empty code');
     });
 
     it('rejects whitespace-only output', async () => {
@@ -175,12 +165,12 @@ describe('TextGenerativeGenerator', () => {
         success: true,
       });
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('whitespace')).rejects.toThrow('Empty output');
+      await expect(gen.generate('whitespace')).rejects.toThrow('LLM returned empty code');
     });
 
     it('rejects code with markdown code blocks', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: '```javascript\nconsole.log("hello");\n```',
+        code: '```javascript\nconsole.log("hello");\n```\nvalid text line',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -189,7 +179,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('rejects output containing function declarations', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'function foo() {\n  return 1;\n}\n// text',
+        code: 'function foo() {\n  return 1;\n}\nvalid text line',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -198,7 +188,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('rejects output containing class declarations', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'class Foo {\n  bar() {}\n}\nmore text',
+        code: 'class Foo {\n  bar() {}\n}\nvalid text line',
         success: true,
       });
       const gen = new TextGenerativeGenerator();

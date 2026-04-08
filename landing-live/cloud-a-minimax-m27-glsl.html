@@ -1,0 +1,63 @@
+#ifdef GL_ES
+precision mediump float;
+#endif
+
+uniform float iTime;
+uniform vec2  iResolution;
+uniform vec2  iMouse;
+
+// ---------- Vertex Shader ----------
+void mainVertexShader(
+    in  vec2 aPosition,
+    out vec2 vUV
+){
+    vUV = aPosition * 0.5 + 0.5;
+    gl_Position = vec4(aPosition, 0.0, 1.0);
+}
+
+// ---------- Fragment Shader ----------
+float plasma(vec2 p, float t){
+    float v = 0.0;
+    v += sin(p.x*10.0 + t);
+    v += sin(p.y*10.0 + t)*0.5;
+    v += sin(p.x*10.0 + p.y*10.0 + t)*0.5;
+    float cx = p.x*10.0 + t;
+    float cy = p.y*10.0 + t;
+    v += sin(sqrt(cx*cx + cy*cy) + t)*0.5;
+    return v;
+}
+
+vec3 palette(float x){
+    // Cosine palette for vibrant colours
+    return 0.5 + 0.5*cos(6.2831*(x + vec3(0.0,0.33,0.67)));
+}
+
+void mainFragmentShader(
+    in  vec2  fragCoord,
+    out vec4  fragColor
+){
+    // Normalised coordinates (0..1)
+    vec2 uv = fragCoord.xy / iResolution.xy;
+    // Keep aspect ratio to avoid stretching
+    uv.x *= iResolution.x / iResolution.y;
+
+    float t = iTime;
+
+    // Plasma value
+    float p = plasma(uv, t);
+
+    // Map plasma to a [0,1] range and feed into palette
+    float col = sin(p * 3.14159265) * 0.5 + 0.5;
+    vec3 colour = palette(col);
+
+    // Optional subtle vignette
+    float vignette = smoothstep(1.2, 0.4, length(uv - vec2(0.5)));
+    colour *= vignette;
+
+    fragColor = vec4(colour, 1.0);
+}
+
+// ---------- Wrapper for Shadertoy ----------
+void mainImage(out vec4 fragColor, in vec2 fragCoord){
+    mainFragmentShader(fragCoord, fragColor);
+}

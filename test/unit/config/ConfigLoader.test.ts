@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import fs from 'fs/promises';
 import path from 'path';
@@ -46,22 +47,24 @@ describe('ConfigLoader', () => {
 
       const loaded = await loadConfig(TEST_CONFIG_PATH);
 
-      expect(loaded).not.toBeNull();
-      expect(loaded!.defaultProvider).toBe('minimax');
-      expect(loaded!.providers.minimax.baseUrl).toBe('https://api.minimax.io/v1');
-      expect(loaded!.providers.minimax.model).toBe('minimax-m2.7');
-      expect(loaded!.providers.minimax.apiKey).toBe('test-key-abc');
+      expect(loaded.isOk()).toBe(true);
+      if (loaded.isOk()) {
+        expect(loaded.value.defaultProvider).toBe('minimax');
+        expect(loaded.value.providers.minimax.baseUrl).toBe('https://api.minimax.io/v1');
+        expect(loaded.value.providers.minimax.model).toBe('minimax-m2.7');
+        expect(loaded.value.providers.minimax.apiKey).toBe('test-key-abc');
+      }
     });
 
-    it('returns null if config file does not exist', async () => {
+    it('returns err if config file does not exist', async () => {
       const loaded = await loadConfig('/nonexistent/path/config.json');
-      expect(loaded).toBeNull();
+      expect(loaded.isErr()).toBe(true);
     });
 
-    it('returns null if config file contains invalid JSON', async () => {
+    it('returns err if config file contains invalid JSON', async () => {
       await fs.writeFile(TEST_CONFIG_PATH, '{ invalid json }');
       const loaded = await loadConfig(TEST_CONFIG_PATH);
-      expect(loaded).toBeNull();
+      expect(loaded.isErr()).toBe(true);
     });
 
     it('loads config with optional loop settings', async () => {
@@ -74,8 +77,11 @@ describe('ConfigLoader', () => {
 
       const loaded = await loadConfig(TEST_CONFIG_PATH);
 
-      expect(loaded!.loop!.maxIterations).toBe(20);
-      expect(loaded!.loop!.timeoutMinutes).toBe(30);
+      expect(loaded.isOk()).toBe(true);
+      if (loaded.isOk()) {
+        expect(loaded.value.loop!.maxIterations).toBe(20);
+        expect(loaded.value.loop!.timeoutMinutes).toBe(30);
+      }
     });
 
     it('loads config with optional creative settings', async () => {
@@ -88,7 +94,10 @@ describe('ConfigLoader', () => {
 
       const loaded = await loadConfig(TEST_CONFIG_PATH);
 
-      expect(loaded!.creative!.minQualityScore).toBe(0.8);
+      expect(loaded.isOk()).toBe(true);
+      if (loaded.isOk()) {
+        expect(loaded.value.creative!.minQualityScore).toBe(0.8);
+      }
     });
   });
 
@@ -159,10 +168,12 @@ describe('ConfigLoader', () => {
 
       const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
 
-      expect(loaded).not.toBeNull();
-      expect(loaded!.name).toBe('test-project');
-      expect(loaded!.llm!.model).toBe('project-model');
-      expect(loaded!.llm!.baseUrl).toBe('https://project.example/v1');
+      expect(loaded.isOk()).toBe(true);
+      if (loaded.isOk()) {
+        expect(loaded.value.name).toBe('test-project');
+        expect(loaded.value.llm!.model).toBe('project-model');
+        expect(loaded.value.llm!.baseUrl).toBe('https://project.example/v1');
+      }
     });
 
     it('loads config when given direct file path', async () => {
@@ -175,8 +186,10 @@ describe('ConfigLoader', () => {
 
       const loaded = await loadProjectConfig(filePath);
 
-      expect(loaded).not.toBeNull();
-      expect(loaded!.name).toBe('direct-path-project');
+      expect(loaded.isOk()).toBe(true);
+      if (loaded.isOk()) {
+        expect(loaded.value.name).toBe('direct-path-project');
+      }
     });
 
     it('falls back to legacy atelier.json when liminal.json not found', async () => {
@@ -198,12 +211,12 @@ describe('ConfigLoader', () => {
       }
     });
 
-    it('returns null when no config file exists', async () => {
+    it('returns err when no config file exists', async () => {
       const loaded = await loadProjectConfig('/tmp/nonexistent-project-' + process.pid);
       expect(loaded.isErr()).toBe(true);
     });
 
-    it('returns null when config contains invalid JSON', async () => {
+    it('returns err when config contains invalid JSON', async () => {
       await fs.writeFile(
         path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
         '{ broken }',

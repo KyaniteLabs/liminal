@@ -14,6 +14,7 @@ import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrlSync, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
+import { LLMGenerationError } from '../errors/LLMGenerationError.js';
 import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
 import { Provider } from '../types/providers.js';
@@ -655,11 +656,11 @@ export class LLMClient {
         duration: Date.now() - llmStartTime,
       });
 
-      return {
-        code: `// LLM generation failed: ${errMsg}`,
-        success: false,
-        error: errMsg,
-      };
+      throw new LLMGenerationError(`LLM generation failed: ${errMsg}`, {
+        cause: error instanceof Error ? error : undefined,
+        model: this.config.model,
+        duration: Date.now() - llmStartTime,
+      });
     }
   }
 

@@ -522,7 +522,11 @@ export class LLMClient {
           signal,
         };
 
-        const response = await provider.generate(req);
+        const genResult = await provider.generate(req);
+        if (genResult.isErr()) {
+          throw genResult.error;
+        }
+        const response = genResult.value;
         return this.mapProviderResponse(response);
       }).catch(async (primaryError: unknown) => {
         // Only attempt fallbacks on network/auth errors
@@ -549,8 +553,11 @@ export class LLMClient {
         for (const fallback of fallbacks) {
           try {
             Logger.info('LLMClient.fallback', `Trying fallback: ${fallback.getModel()}`);
-            const response = await fallback.generate(req);
-            const mapped = this.mapProviderResponse(response);
+            const fbResult = await fallback.generate(req);
+            if (fbResult.isErr()) {
+              throw fbResult.error;
+            }
+            const mapped = this.mapProviderResponse(fbResult.value);
             Logger.info('LLMClient.fallback', `Fallback succeeded: ${fallback.getModel()}`);
             return mapped;
           } catch (fallbackErr) {
@@ -693,7 +700,11 @@ Rules:
           signal,
         };
 
-        const response = await provider.generate(req);
+        const genResult = await provider.generate(req);
+        if (genResult.isErr()) {
+          throw genResult.error;
+        }
+        const response = genResult.value;
 
         if (!response.success) {
           throw new LLMError(
@@ -729,10 +740,13 @@ Rules:
         for (const fallback of fallbacks) {
           try {
             Logger.info('LLMClient.fallback', `complete() trying fallback: ${fallback.getModel()}`);
-            const response = await fallback.generate(req);
-            if (response.success) {
+            const fbResult = await fallback.generate(req);
+            if (fbResult.isErr()) {
+              throw fbResult.error;
+            }
+            if (fbResult.value.success) {
               Logger.info('LLMClient.fallback', `complete() fallback succeeded: ${fallback.getModel()}`);
-              return { text: response.content, success: true as const };
+              return { text: fbResult.value.content, success: true as const };
             }
           } catch (err) {
             Logger.debug('LLMClient', 'Fallback provider failed in complete():', err);
@@ -823,7 +837,11 @@ Rules:
         signal: options.signal,
       };
 
-      const response = await provider.generate(req);
+      const genResult = await provider.generate(req);
+      if (genResult.isErr()) {
+        throw genResult.error;
+      }
+      const response = genResult.value;
 
       return {
         content: response.content,

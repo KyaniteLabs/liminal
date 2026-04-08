@@ -17,6 +17,7 @@
  * @see https://platform.minimax.io/docs/guides/text-ai-coding-tools
  */
 
+import { Result, ok, err } from 'neverthrow';
 import type {
   ProviderRequest,
   ProviderResponse,
@@ -30,6 +31,7 @@ import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { normalizeThinking, extractAnthropicThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream, parseAnthropicStream } from '../StreamParser.js';
 import { Logger } from '../../utils/Logger.js';
+import { LLMError } from '../errors.js';
 
 export class MiniMaxProvider extends BaseProvider {
   readonly name = 'minimax';
@@ -48,7 +50,7 @@ export class MiniMaxProvider extends BaseProvider {
     return caps;
   }
 
-  async generate(req: ProviderRequest): Promise<ProviderResponse> {
+  async generate(req: ProviderRequest): Promise<Result<ProviderResponse, LLMError>> {
     if (this.isAnthropicMode) {
       return this.generateAnthropic(req);
     }
@@ -65,7 +67,7 @@ export class MiniMaxProvider extends BaseProvider {
 
   // ── OpenAI-compatible mode ──
 
-  private async generateOpenAI(req: ProviderRequest): Promise<ProviderResponse> {
+  private async generateOpenAI(req: ProviderRequest): Promise<Result<ProviderResponse, LLMError>> {
     const url = `${this.config.baseUrl}/chat/completions`;
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -121,12 +123,13 @@ export class MiniMaxProvider extends BaseProvider {
       if (!response.ok) {
         const errorText = await response.text().catch(() => response.statusText);
         Logger.error('MiniMaxProvider', `API error ${response.status}: ${errorText}`);
-        return {
-          content: '',
-          model: this.config.model,
-          success: false,
-          error: `MiniMax API error ${response.status}: ${errorText}`,
-        };
+        const retryable = response.status === 429 || response.status >= 500;
+        return err(new LLMError(
+          `MiniMax API error ${response.status}: ${errorText}`,
+          this.name,
+          response.status,
+          retryable,
+        ));
       }
 
       const data = await response.json();
@@ -198,7 +201,7 @@ export class MiniMaxProvider extends BaseProvider {
         Logger.warn('MiniMaxProvider', `Empty response from model ${this.config.model}. Response: ${JSON.stringify(data).slice(0, 200)}`);
       }
 
-      return {
+      return ok({
         content,
         thinking: thinking.source !== 'none' ? thinking : undefined,
         model: data.model || this.config.model,
@@ -209,23 +212,22 @@ export class MiniMaxProvider extends BaseProvider {
         } : undefined,
         toolCalls,
         finishReason,
-      };
+      });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       Logger.error('MiniMaxProvider', `Request failed: ${errorMsg}`);
-      return {
-        content: '',
-        model: this.config.model,
-        success: false,
-        error: `MiniMax request failed: ${errorMsg}`,
-        finishReason: 'error',
-      };
+      return err(new LLMError(
+        `MiniMax request failed: ${errorMsg}`,
+        this.name,
+        undefined,
+        true,
+      ));
     }
   }
 
   // ── Anthropic-compatible mode ──
 
-  private async generateAnthropic(req: ProviderRequest): Promise<ProviderResponse> {
+  private async generateAnthropic(req: ProviderRequest): Promise<Result<ProviderResponse, LLMError>> {
     // MiniMax Anthropic endpoint: baseUrl already contains /anthropic
     const url = `${this.config.baseUrl}/v1/messages`;
     const headers: Record<string, string> = {
@@ -276,12 +278,13 @@ export class MiniMaxProvider extends BaseProvider {
       if (!response.ok) {
         const errorText = await response.text().catch(() => response.statusText);
         Logger.error('MiniMaxProvider', `Anthropic-mode API error ${response.status}: ${errorText}`);
-        return {
-          content: '',
-          model: this.config.model,
-          success: false,
-          error: `MiniMax Anthropic API error ${response.status}: ${errorText}`,
-        };
+        const retryable = response.status === 429 || response.status >= 500;
+        return err(new LLMError(
+          `MiniMax Anthropic API error ${response.status}: ${errorText}`,
+          this.name,
+          response.status,
+          retryable,
+        ));
       }
 
       const data = await response.json();
@@ -294,7 +297,7 @@ export class MiniMaxProvider extends BaseProvider {
 
       const usage = data.usage as { input_tokens?: number; output_tokens?: number } | undefined;
 
-      return {
+      return ok({
         content,
         thinking: thinking.source !== 'none' ? thinking : undefined,
         model: data.model || this.config.model,
@@ -303,17 +306,16 @@ export class MiniMaxProvider extends BaseProvider {
           inputTokens: usage.input_tokens || 0,
           outputTokens: usage.output_tokens || 0,
         } : undefined,
-      };
+      });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       Logger.error('MiniMaxProvider', `Anthropic-mode request failed: ${errorMsg}`);
-      return {
-        content: '',
-        model: this.config.model,
-        success: false,
-        error: `MiniMax Anthropic request failed: ${errorMsg}`,
-        finishReason: 'error',
-      };
+      return err(new LLMError(
+        `MiniMax Anthropic request failed: ${errorMsg}`,
+        this.name,
+        undefined,
+        true,
+      ));
     }
   }
 

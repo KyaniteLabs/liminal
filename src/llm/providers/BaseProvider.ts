@@ -6,6 +6,7 @@
  * common configuration and capability checking.
  */
 
+import { Result } from 'neverthrow';
 import type {
   ProviderConfig,
   ProviderRequest,
@@ -13,6 +14,7 @@ import type {
   ProviderCapabilities,
   StreamEvent,
 } from '../ProviderTypes.js';
+import { LLMError } from '../errors.js';
 
 export abstract class BaseProvider {
   abstract readonly name: string;
@@ -26,7 +28,7 @@ export abstract class BaseProvider {
   /**
    * Generate a completion (non-streaming).
    */
-  abstract generate(req: ProviderRequest): Promise<ProviderResponse>;
+  abstract generate(req: ProviderRequest): Promise<Result<ProviderResponse, LLMError>>;
 
   /**
    * Stream tokens as they arrive.

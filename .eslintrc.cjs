@@ -35,6 +35,12 @@ module.exports = {
       files: ['*.ts', '*.tsx'],
       parser: '@typescript-eslint/parser',
     },
+    {
+      files: ['src/tui/sanitizeTerminalText.ts'],
+      rules: {
+        'no-control-regex': 'off',
+      },
+    },
   ],
   ignorePatterns: ['dist/', 'node_modules/', 'gallery/', 'gui/', 'docs/', '*.cjs', 'src/**/archive/'],
 };

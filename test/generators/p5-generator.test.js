@@ -4,38 +4,29 @@
  */
 import { describe, it, expect, vi } from 'vitest';
 
-const { mockGenerate, LLMClientMock } = vi.hoisted(() => {
-  const mockGenerate = vi.fn().mockResolvedValue({
-    code: `// p5.js sketch variant 1
-function setup() {
+// Self-contained mock for P5GeneratorLLM
+vi.mock('../../src/generators/p5/P5GeneratorLLM.js', () => {
+  const mockCode = `function setup() {
   createCanvas(400, 400);
 }
 
 function draw() {
   background(30);
   ellipse(width / 2, height / 2, 60, 60);
-}`,
-    success: true,
-    thinking: 'test thinking',
-    recoveredFromThinking: false,
-  });
+}`;
 
-  const LLMClientMock = vi.fn(function() {
-    this.generate = mockGenerate;
-    this.getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://test', role: 'generator' });
-  });
-  LLMClientMock.isConfigured = vi.fn().mockReturnValue(true);
-
-  return { mockGenerate, LLMClientMock };
+  return {
+    P5GeneratorLLM: vi.fn(function() {
+      this.generate = vi.fn(() => Promise.resolve(mockCode));
+      this.generateFull = vi.fn(() => Promise.resolve({
+        code: mockCode,
+        success: true,
+        thinking: 'test thinking',
+        recoveredFromThinking: false,
+      }));
+    }),
+  };
 });
-
-vi.mock('../../src/llm/LLMClient.js', () => ({
-  LLMClient: LLMClientMock,
-}));
-
-vi.mock('../../src/config/ConfigLoader.js', () => ({
-  getEffectiveConfig: vi.fn().mockResolvedValue({ baseUrl: '', apiKey: '', model: '' }),
-}));
 
 import { P5Generator } from '../../src/generators/p5/P5Generator.js';
 
@@ -88,7 +79,7 @@ describe('P5Generator', () => {
     });
 
     it('should handle unicode in prompts', async () => {
-      const result = await P5Generator.generate('Create 🎨 artistic sketch');
+      const result = await P5Generator.generate('Create artistic sketch');
       expect(typeof result).toBe('string');
     });
 

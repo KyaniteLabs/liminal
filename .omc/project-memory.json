@@ -593,8 +593,8 @@
   "hotPaths": [
     {
       "path": "src/tui/NaturalInterface.ts",
-      "accessCount": 71,
-      "lastAccessed": 1775435852317,
+      "accessCount": 72,
+      "lastAccessed": 1775609461286,
       "type": "file"
     },
     {

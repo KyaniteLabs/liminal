@@ -1,0 +1,10 @@
+{
+  "id": "dep-plugin",
+  "name": "Dependent Plugin",
+  "version": "1.0.0",
+  "description": "Depends on good-plugin",
+  "entry": "index.js",
+  "domains": ["test"],
+  "keywords": ["dependent"],
+  "dependencies": ["good-plugin"]
+}

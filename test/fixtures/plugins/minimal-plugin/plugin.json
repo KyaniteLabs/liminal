@@ -1,0 +1,9 @@
+{
+  "id": "minimal-plugin",
+  "name": "Minimal Plugin",
+  "version": "0.1.0",
+  "description": "A plugin with only required fields",
+  "entry": "index.js",
+  "domains": ["canvas"],
+  "keywords": ["minimal"]
+}

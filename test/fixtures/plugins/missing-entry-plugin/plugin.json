@@ -1,0 +1,9 @@
+{
+  "id": "missing-entry-plugin",
+  "name": "Missing Entry",
+  "version": "1.0.0",
+  "description": "Has entry pointing to nonexistent file",
+  "entry": "nonexistent.js",
+  "domains": ["test"],
+  "keywords": ["missing"]
+}

@@ -6,6 +6,7 @@
 
 import { Status } from '../types/status.js';
 import { ProcessorError } from '../errors/ProcessorError.js';
+import { Logger } from '../utils/Logger.js';
 
 /**
  * Represents a single job in the batch processing queue.
@@ -191,6 +192,7 @@ export class BatchProcessor<TInput, TOutput> {
         } catch (err) {
           this.activeCount--;
           lastError = err instanceof Error ? err.message : String(err);
+          Logger.warn('BatchProcessor', `Job ${job.id} failed (attempt ${attempt + 1}/${maxRetries + 1}):`, lastError);
 
           if (attempt < maxRetries) {
             await this.delay(retryDelay);

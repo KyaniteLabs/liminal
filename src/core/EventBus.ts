@@ -8,6 +8,7 @@
 
 import { EventEmitter } from 'node:events';
 import { sanitizeTerminalText } from '../tui/sanitizeTerminalText.js';
+import { Logger } from '../utils/Logger.js';
 
 // ── Event schema ──
 
@@ -149,6 +150,8 @@ class Bus extends EventEmitter {
   private static _tuiMode = false;
   /** Lock for TUI mode changes to prevent race conditions. */
   private static _tuiModeLock = false;
+  /** Map to track wrapped listeners for safe removal */
+  private listenerMap = new Map<(event: BusEvent) => void, (event: BusEvent) => void>();
 
   constructor() {
     super();
@@ -198,16 +201,46 @@ class Bus extends EventEmitter {
     // Log to console (replaces scattered console.log calls)
     this.logToConsole(event);
 
-    return super.emit('event', event);
+    try {
+      return super.emit('event', event);
+    } catch (err) {
+      Logger.error('EventBus', 'Error emitting event:', err);
+      return false;
+    }
   }
 
   /** Subscribe to all events. */
   onEvent(listener: (event: BusEvent) => void): this {
-    return super.on('event', listener);
+    if (!listener || typeof listener !== 'function') {
+      Logger.error('EventBus', 'Attempted to register null/undefined listener');
+      return this;
+    }
+    
+    const wrappedListener = (event: BusEvent) => {
+      try {
+        listener(event);
+      } catch (err) {
+        Logger.error('EventBus', 'Handler failed:', err);
+      }
+    };
+    
+    this.listenerMap.set(listener, wrappedListener);
+    return super.on('event', wrappedListener);
   }
 
   /** Remove event listener. */
   offEvent(listener: (event: BusEvent) => void): this {
+    if (!listener) {
+      return this;
+    }
+    
+    const wrappedListener = this.listenerMap.get(listener);
+    if (wrappedListener) {
+      this.listenerMap.delete(listener);
+      return super.off('event', wrappedListener);
+    }
+    
+    // Fallback: try to remove the original listener directly
     return super.off('event', listener);
   }
 

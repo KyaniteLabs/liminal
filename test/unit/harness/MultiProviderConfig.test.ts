@@ -9,9 +9,12 @@ import {
   getActiveProviderConfig,
   getHarnessLLMConfig,
   getHarnessProviderConfig,
+  _resetConfigCache,
   PROVIDER_TEMPLATES,
   type ProviderType,
 } from '../../../src/harness/MultiProviderConfig.js';
+
+import os from 'node:os';
 
 // ---------------------------------------------------------------------------
 // Helpers – save & restore process.env around each test
@@ -36,6 +39,7 @@ const KEYS_PRESERVED = [
 ] as const;
 
 let savedEnv: Record<string, string | undefined>;
+let homedirSpy: ReturnType<typeof vi.spyOn>;
 
 beforeEach(() => {
   savedEnv = {};
@@ -43,6 +47,9 @@ beforeEach(() => {
     savedEnv[key] = process.env[key];
     delete process.env[key];
   }
+  // Isolate from ~/.liminal/config.json: clear cache and redirect homedir
+  _resetConfigCache();
+  homedirSpy = vi.spyOn(os, 'homedir').mockReturnValue('/nonexistent-test-home');
 });
 
 afterEach(() => {
@@ -53,6 +60,8 @@ afterEach(() => {
       process.env[key] = savedEnv[key];
     }
   }
+  homedirSpy.mockRestore();
+  _resetConfigCache();
 });
 
 // ===========================================================================
@@ -319,10 +328,10 @@ describe('getHarnessLLMConfig', () => {
   it('returns defaults when no harness env vars are set', () => {
     const config = getHarnessLLMConfig();
     expect(config.temperature).toBeCloseTo(0.2);
-    expect(config.maxTokens).toBe(4096);
-    expect(config.timeoutMs).toBe(60000);
+    expect(config.maxTokens).toBe(16384);
+    expect(config.timeoutMs).toBe(120000);
     expect(config.maxRetries).toBe(3);
-    expect(config.contextWindow).toBe(8192);
+    expect(config.contextWindow).toBe(32768);
   });
 
   it('reads LIMINAL_HARNESS_TEMPERATURE from env', () => {
@@ -363,7 +372,7 @@ describe('getHarnessProviderConfig', () => {
     expect(config!.baseUrl).toBe('http://localhost:11434');
     // Harness overrides temperature
     expect(config!.temperature).toBeCloseTo(0.2);
-    expect(config!.maxTokens).toBe(4096);
+    expect(config!.maxTokens).toBe(16384);
   });
 
   it('uses harness-specific config when LIMINAL_HARNESS_BASE_URL and MODEL are set', () => {

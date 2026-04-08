@@ -43,6 +43,13 @@ function loadConfigFile(): ProviderFileConfig | null {
   return _cachedConfig;
 }
 
+/** @internal Reset config file cache for test isolation */
+export function _resetConfigCache(): void {
+  _cachedDefault = null;
+  _cachedConfig = null;
+  _configLoaded = false;
+}
+
 function getDefaultProviderFromConfig(): string | null {
   if (!_configLoaded) loadConfigFile();
   return _cachedDefault;

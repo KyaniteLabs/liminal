@@ -127,8 +127,14 @@ export class PreviewServer {
     // CSRF Protection using double-submit cookie pattern (disabled in test environment)
     const isTestEnv = process.env.NODE_ENV === 'test';
 
+    // SECURITY: CSRF_SECRET is required in production, no fallback
+    const csrfSecret = process.env.CSRF_SECRET;
+    if (!isTestEnv && !csrfSecret) {
+      throw new Error('CSRF_SECRET environment variable is required');
+    }
+
     const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
-      getSecret: () => process.env.CSRF_SECRET || 'liminal-csrf-secret-change-in-production',
+      getSecret: () => csrfSecret || 'test-secret',
       getSessionIdentifier: () => 'liminal-preview',
       cookieName: 'x-csrf-token',
       cookieOptions: {

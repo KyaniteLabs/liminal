@@ -149,8 +149,13 @@ export class OpenRouterProvider extends BaseProvider {
         return;
       }
 
-      // OpenRouter uses standard SSE with extra reasoning fields
-      yield* parseOpenAIStream(response.body);
+      try {
+        // OpenRouter uses standard SSE with extra reasoning fields
+        yield* parseOpenAIStream(response.body);
+      } finally {
+        // Cancel the stream to release resources
+        await response.body.cancel().catch(() => {});
+      }
     } finally {
       if (timeoutId) {
         clearTimeout(timeoutId);

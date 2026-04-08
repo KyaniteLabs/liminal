@@ -169,7 +169,12 @@ export class AnthropicProvider extends BaseProvider {
         return;
       }
 
-      yield* parseAnthropicStream(response.body);
+      try {
+        yield* parseAnthropicStream(response.body);
+      } finally {
+        // Cancel the stream to release resources
+        await response.body.cancel().catch(() => {});
+      }
     } finally {
       if (timeoutId) {
         clearTimeout(timeoutId);

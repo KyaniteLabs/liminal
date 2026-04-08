@@ -371,8 +371,13 @@ export class MiniMaxProvider extends BaseProvider {
         return;
       }
 
-      // MiniMax uses standard OpenAI-style SSE streaming
-      yield* parseOpenAIStream(response.body);
+      try {
+        // MiniMax uses standard OpenAI-style SSE streaming
+        yield* parseOpenAIStream(response.body);
+      } finally {
+        // Cancel the stream to release resources
+        await response.body.cancel().catch(() => {});
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       yield { type: 'error', error: `MiniMax stream failed: ${errorMsg}` };
@@ -438,8 +443,13 @@ export class MiniMaxProvider extends BaseProvider {
         return;
       }
 
-      // MiniMax Anthropic mode uses Anthropic SSE format
-      yield* parseAnthropicStream(response.body);
+      try {
+        // MiniMax Anthropic mode uses Anthropic SSE format
+        yield* parseAnthropicStream(response.body);
+      } finally {
+        // Cancel the stream to release resources
+        await response.body.cancel().catch(() => {});
+      }
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
       yield { type: 'error', error: `MiniMax Anthropic stream failed: ${errorMsg}` };

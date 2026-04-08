@@ -215,7 +215,12 @@ export class OpenAIProvider extends BaseProvider {
         return;
       }
 
-      yield* parseOpenAIStream(response.body);
+      try {
+        yield* parseOpenAIStream(response.body);
+      } finally {
+        // Cancel the stream to release resources
+        await response.body.cancel().catch(() => {});
+      }
     } finally {
       if (timeoutId) {
         clearTimeout(timeoutId);

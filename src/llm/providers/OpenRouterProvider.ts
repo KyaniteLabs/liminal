@@ -60,26 +60,29 @@ export class OpenRouterProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || TIMEOUT_DEFAULT_MS) : undefined;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => response.statusText);
-      return {
-        content: '',
-        model: this.config.model,
-        success: false,
-        error: `OpenRouter API error ${response.status}: ${errorText}`,
-      };
-    }
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        return {
+          content: '',
+          model: this.config.model,
+          success: false,
+          error: `OpenRouter API error ${response.status}: ${errorText}`,
+        };
+      }
 
-    const data = await response.json();
+      const data = await response.json();
     const thinking = extractOpenRouterThinking(data);
     const choices = data.choices as Array<{ message?: { content?: string } }> | undefined;
     const content = choices?.[0]?.message?.content || '';
@@ -96,6 +99,11 @@ export class OpenRouterProvider extends BaseProvider {
         outputTokens: usage.completion_tokens || 0,
       } : undefined,
     };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   async *stream(req: ProviderRequest): AsyncGenerator<StreamEvent> {
@@ -119,26 +127,34 @@ export class OpenRouterProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || TIMEOUT_DEFAULT_MS) : undefined;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      yield { type: 'error', error: `OpenRouter API error ${response.status}` };
-      return;
+      if (!response.ok) {
+        yield { type: 'error', error: `OpenRouter API error ${response.status}` };
+        return;
+      }
+
+      if (!response.body) {
+        yield { type: 'error', error: 'No response body' };
+        return;
+      }
+
+      // OpenRouter uses standard SSE with extra reasoning fields
+      yield* parseOpenAIStream(response.body);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
-
-    if (!response.body) {
-      yield { type: 'error', error: 'No response body' };
-      return;
-    }
-
-    // OpenRouter uses standard SSE with extra reasoning fields
-    yield* parseOpenAIStream(response.body);
   }
 }

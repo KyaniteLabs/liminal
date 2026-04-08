@@ -149,11 +149,18 @@ export class GitIntegration {
       }
     }
 
-    // Auto-push if configured
+    // Auto-push if configured — failure is an error, not a warning
+    // (unpushed commits on a cleaned-up worktree = lost work per CLAUDE.md)
     if (this.config.autoPush) {
-      await this.git.push().catch((pushErr) => {
-        Logger.warn('GitIntegration', `Auto-push failed: ${pushErr instanceof Error ? pushErr.message : pushErr}`);
-      });
+      try {
+        await this.git.push();
+      } catch (pushErr) {
+        Logger.error('GitIntegration', `Auto-push failed for commit ${commit.hash.slice(0, 7)}: ${pushErr instanceof Error ? pushErr.message : pushErr}`);
+        return err(new GitError(
+          `Auto-push failed (commit ${commit.hash.slice(0, 7)} saved locally but NOT pushed)`,
+          { cause: pushErr instanceof Error ? pushErr : undefined, retryable: true },
+        ));
+      }
     }
 
     return ok(commit);

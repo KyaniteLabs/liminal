@@ -6,6 +6,7 @@ import { VideoExporter } from '../export/VideoExporter.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Domain } from '../types/domains.js';
 import { Logger } from '../utils/Logger.js';
+import { ValidationError } from '../errors/ValidationError.js';
 
 export interface RecordingOptions {
   fps: number;
@@ -23,10 +24,10 @@ export class CanvasRecorder {
   private readonly exporter: VideoExporter;
 
   constructor(options: RecordingOptions) {
-    if (options.fps <= 0) throw new Error('fps must be a positive number');
-    if (options.duration <= 0) throw new Error('duration must be a positive number');
-    if (options.width <= 0) throw new Error('width must be a positive number');
-    if (options.height <= 0) throw new Error('height must be a positive number');
+    if (options.fps <= 0) throw new ValidationError('fps must be a positive number');
+    if (options.duration <= 0) throw new ValidationError('duration must be a positive number');
+    if (options.width <= 0) throw new ValidationError('width must be a positive number');
+    if (options.height <= 0) throw new ValidationError('height must be a positive number');
 
     this.config = {
       fps: options.fps,

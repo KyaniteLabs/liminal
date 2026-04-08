@@ -63,26 +63,29 @@ export class AnthropicProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || TIMEOUT_DEFAULT_MS) : undefined;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => response.statusText);
-      return {
-        content: '',
-        model: this.config.model,
-        success: false,
-        error: `Anthropic API error ${response.status}: ${errorText}`,
-      };
-    }
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        return {
+          content: '',
+          model: this.config.model,
+          success: false,
+          error: `Anthropic API error ${response.status}: ${errorText}`,
+        };
+      }
 
-    const data = await response.json();
+      const data = await response.json();
 
     // Extract thinking from content blocks
     const thinking: NormalizedThinking | undefined = extractAnthropicThinking(data);
@@ -102,6 +105,11 @@ export class AnthropicProvider extends BaseProvider {
         outputTokens: usage.output_tokens || 0,
       } : undefined,
     };
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    }
   }
 
   async *stream(req: ProviderRequest): AsyncGenerator<StreamEvent> {
@@ -139,25 +147,33 @@ export class AnthropicProvider extends BaseProvider {
       };
     }
 
-    const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+    const localController = !req.signal ? new AbortController() : undefined;
+    const signal = req.signal || localController!.signal;
+    const timeoutId = localController ? setTimeout(() => localController.abort(), this.config.timeout || TIMEOUT_DEFAULT_MS) : undefined;
 
-    const response = await fetch(url, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(body),
-      signal,
-    });
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
 
-    if (!response.ok) {
-      yield { type: 'error', error: `Anthropic API error ${response.status}` };
-      return;
+      if (!response.ok) {
+        yield { type: 'error', error: `Anthropic API error ${response.status}` };
+        return;
+      }
+
+      if (!response.body) {
+        yield { type: 'error', error: 'No response body' };
+        return;
+      }
+
+      yield* parseAnthropicStream(response.body);
+    } finally {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
-
-    if (!response.body) {
-      yield { type: 'error', error: 'No response body' };
-      return;
-    }
-
-    yield* parseAnthropicStream(response.body);
   }
 }

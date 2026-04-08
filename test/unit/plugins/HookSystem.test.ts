@@ -1,61 +1,51 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { HookSystem } from '../../../src/plugins/HookSystem.js';
-import type { HookContext, HookType } from '../../../src/plugins/HookSystem.js';
+import type { HookType, HookContext } from '../../../src/plugins/HookSystem.js';
 
 // ---------------------------------------------------------------------------
-// Logger mock (required because HookSystem.execute catches and logs errors)
+// Hoisted mocks
 // ---------------------------------------------------------------------------
+const mockLoggerError = vi.hoisted(() => vi.fn());
 
 vi.mock('../../../src/utils/Logger.js', () => ({
   Logger: {
+    error: mockLoggerError,
     warn: vi.fn(),
     info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
   },
 }));
 
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function baseContext(overrides?: Partial<HookContext>): HookContext {
-  return {
-    prompt: 'draw a circle',
-    domain: 'p5',
-    ...overrides,
-  };
-}
-
 // ===========================================================================
-// HookSystem — comprehensive tests
+// HookSystem
 // ===========================================================================
 
 describe('HookSystem', () => {
-  let hs: HookSystem;
+  let system: HookSystem;
 
   beforeEach(() => {
-    hs = new HookSystem();
+    system = new HookSystem();
+    mockLoggerError.mockClear();
   });
 
-  // ─── register ─────────────────────────────────────────────────────────
+  // ─── register ────────────────────────────────────────────────────────
 
   describe('register()', () => {
-    it('returns a unique subscription id with "hook_" prefix', () => {
-      const id1 = hs.register('preGeneration', async (ctx) => ctx);
-      const id2 = hs.register('preGeneration', async (ctx) => ctx);
-
-      expect(id1).toMatch(/^hook_\d+$/);
-      expect(id2).toMatch(/^hook_\d+$/);
-      expect(id1).not.toBe(id2);
-    });
-
-    it('increments ids sequentially starting from 1', () => {
-      const id1 = hs.register('postGeneration', async (ctx) => ctx);
-      const id2 = hs.register('postGeneration', async (ctx) => ctx);
+    it('returns a unique subscription ID starting with hook_', () => {
+      const id1 = system.register('preGeneration', async (ctx) => ctx);
+      const id2 = system.register('preGeneration', async (ctx) => ctx);
 
       expect(id1).toBe('hook_1');
       expect(id2).toBe('hook_2');
+    });
+
+    it('increments counter across different hook types', () => {
+      const id1 = system.register('preGeneration', async (ctx) => ctx);
+      const id2 = system.register('postGeneration', async (ctx) => ctx);
+      const id3 = system.register('onFailure', async (ctx) => ctx);
+
+      expect(id1).toBe('hook_1');
+      expect(id2).toBe('hook_2');
+      expect(id3).toBe('hook_3');
     });
 
     it('accepts all five hook types', () => {
@@ -66,497 +56,482 @@ describe('HookSystem', () => {
         'postValidation',
         'onFailure',
       ];
-      const ids = types.map((t) => hs.register(t, async (ctx) => ctx));
+      const ids = types.map((t) => system.register(t, async (ctx) => ctx));
 
-      expect(ids).toHaveLength(5);
-      expect(hs.getRegisteredTypes()).toHaveLength(5);
+      expect(ids).toEqual([
+        'hook_1',
+        'hook_2',
+        'hook_3',
+        'hook_4',
+        'hook_5',
+      ]);
+      expect(system.getRegisteredTypes()).toEqual(types);
     });
 
-    it('registers handler with default priority 0', () => {
-      hs.register('preGeneration', async (ctx) => ctx);
-      expect(hs.getHookCount('preGeneration')).toBe(1);
-    });
+    it('sorts hooks by priority descending (higher runs first)', async () => {
+      const order: string[] = [];
 
-    it('registers handler with custom priority', () => {
-      hs.register('preGeneration', async (ctx) => ctx, 10);
-      expect(hs.getHookCount('preGeneration')).toBe(1);
-    });
-  });
-
-  // ─── unregister ───────────────────────────────────────────────────────
-
-  describe('unregister()', () => {
-    it('removes a registered hook and returns true', () => {
-      const id = hs.register('preGeneration', async (ctx) => ctx);
-      expect(hs.unregister(id)).toBe(true);
-      expect(hs.getHookCount('preGeneration')).toBe(0);
-    });
-
-    it('returns false for non-existent id', () => {
-      expect(hs.unregister('hook_999')).toBe(false);
-    });
-
-    it('removes the hook type from registered types when last hook is removed', () => {
-      const id = hs.register('onFailure', async (ctx) => ctx);
-      expect(hs.getRegisteredTypes()).toContain('onFailure');
-
-      hs.unregister(id);
-      expect(hs.getRegisteredTypes()).not.toContain('onFailure');
-    });
-
-    it('only removes the targeted hook, leaving others intact', () => {
-      const id1 = hs.register('preGeneration', async (ctx) => ctx);
-      const id2 = hs.register('preGeneration', async (ctx) => ctx);
-
-      hs.unregister(id1);
-      expect(hs.getHookCount('preGeneration')).toBe(1);
-    });
-  });
-
-  // ─── execute — basic propagation ──────────────────────────────────────
-
-  describe('execute()', () => {
-    it('returns the original context unchanged when no hooks are registered', async () => {
-      const ctx = baseContext();
-      const result = await hs.execute('preGeneration', ctx);
-
-      expect(result).toEqual(ctx);
-    });
-
-    it('returns a shallow copy, not the original object', async () => {
-      const ctx = baseContext();
-      const result = await hs.execute('preGeneration', ctx);
-
-      expect(result).toEqual(ctx);
-      expect(result).not.toBe(ctx);
-    });
-
-    it('applies a single handler modification to context', async () => {
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: ctx.prompt + ' with color',
-      }));
-
-      const result = await hs.execute('preGeneration', baseContext());
-      expect(result.prompt).toBe('draw a circle with color');
-    });
-
-    it('chains multiple handler modifications in sequence', async () => {
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: ctx.prompt + ' step1',
-      }));
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: ctx.prompt + ' step2',
-      }));
-
-      const result = await hs.execute('preGeneration', baseContext());
-      // Both handlers run; order depends on priority (both 0, so insertion order)
-      expect(result.prompt).toContain('step1');
-      expect(result.prompt).toContain('step2');
-    });
-
-    it('handler returning void does not overwrite context', async () => {
-      hs.register('postGeneration', async (_ctx) => {
-        // Side-effect only, no return
-      });
-
-      const ctx = baseContext({ code: 'function setup() {}' });
-      const result = await hs.execute('postGeneration', ctx);
-      expect(result.code).toBe('function setup() {}');
-    });
-
-    it('handler returning partial context merges into current context', async () => {
-      hs.register('postValidation', async () => ({
-        score: 0.85,
-      } as Partial<HookContext>));
-
-      const ctx = baseContext({ code: 'x' });
-      const result = await hs.execute('postValidation', ctx);
-      expect(result.score).toBe(0.85);
-      expect(result.prompt).toBe('draw a circle');
-    });
-
-    it('propagates context through three handlers with successive transforms', async () => {
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: `[A]${ctx.prompt}`,
-      }));
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: `${ctx.prompt}[B]`,
-      }));
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: `${ctx.prompt}[C]`,
-      }));
-
-      const result = await hs.execute('preGeneration', baseContext());
-      // All three should be applied in priority order (all 0 → insertion order)
-      expect(result.prompt).toContain('[A]');
-      expect(result.prompt).toContain('[B]');
-      expect(result.prompt).toContain('[C]');
-    });
-  });
-
-  // ─── execute — priority ordering ──────────────────────────────────────
-
-  describe('execute() — priority ordering', () => {
-    it('executes higher priority handlers first', async () => {
-      const order: number[] = [];
-
-      hs.register('preGeneration', async (ctx) => {
-        order.push(1);
+      system.register('preGeneration', async (ctx) => {
+        order.push('low');
         return ctx;
-      }, 0);
-      hs.register('preGeneration', async (ctx) => {
-        order.push(2);
+      }, 1);
+
+      system.register('preGeneration', async (ctx) => {
+        order.push('high');
         return ctx;
       }, 10);
-      hs.register('preGeneration', async (ctx) => {
-        order.push(3);
+
+      system.register('preGeneration', async (ctx) => {
+        order.push('mid');
         return ctx;
       }, 5);
 
-      await hs.execute('preGeneration', baseContext());
+      await system.execute('preGeneration', {
+        prompt: 'test',
+        domain: 'p5',
+      });
 
-      expect(order).toEqual([2, 3, 1]);
+      expect(order).toEqual(['high', 'mid', 'low']);
     });
 
-    it('executes same-priority handlers in insertion order', async () => {
+    it('uses default priority 0 when not specified', async () => {
       const order: string[] = [];
 
-      hs.register('preGeneration', async (ctx) => {
-        order.push('first');
+      system.register('preGeneration', async (ctx) => {
+        order.push('first-registered');
+        return ctx;
+      });
+
+      system.register('preGeneration', async (ctx) => {
+        order.push('priority-0');
         return ctx;
       }, 0);
-      hs.register('preGeneration', async (ctx) => {
-        order.push('second');
-        return ctx;
-      }, 0);
 
-      await hs.execute('preGeneration', baseContext());
-      expect(order).toEqual(['first', 'second']);
-    });
+      await system.execute('preGeneration', {
+        prompt: 'test',
+        domain: 'p5',
+      });
 
-    it('high priority handler sees original context, low priority sees modified context', async () => {
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: ctx.prompt + ' [HIGH]',
-      }), 10);
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: ctx.prompt + ' [LOW]',
-      }), 0);
-
-      const result = await hs.execute('preGeneration', baseContext());
-      // High runs first: "draw a circle [HIGH]"
-      // Low runs second: "draw a circle [HIGH] [LOW]"
-      expect(result.prompt).toBe('draw a circle [HIGH] [LOW]');
-    });
-
-    it('negative priority runs after default', async () => {
-      const order: number[] = [];
-
-      hs.register('preGeneration', async (ctx) => {
-        order.push(0);
-        return ctx;
-      }, 0);
-      hs.register('preGeneration', async (ctx) => {
-        order.push(-1);
-        return ctx;
-      }, -5);
-
-      await hs.execute('preGeneration', baseContext());
-      expect(order).toEqual([0, -1]);
+      // Both at priority 0 — insertion order preserved by stable sort
+      expect(order).toEqual(['first-registered', 'priority-0']);
     });
   });
 
-  // ─── execute — error handling ─────────────────────────────────────────
+  // ─── unregister ──────────────────────────────────────────────────────
 
-  describe('execute() — error handling', () => {
-    it('continues execution after a handler throws', async () => {
+  describe('unregister()', () => {
+    it('returns true and removes a registered hook', () => {
+      const id = system.register('preGeneration', async (ctx) => ctx);
+      expect(system.getHookCount('preGeneration')).toBe(1);
+
+      const result = system.unregister(id);
+      expect(result).toBe(true);
+      expect(system.getHookCount('preGeneration')).toBe(0);
+    });
+
+    it('returns false for non-existent hook ID', () => {
+      const result = system.unregister('hook_999');
+      expect(result).toBe(false);
+    });
+
+    it('cleans up the hook type from the Map when last hook is removed', () => {
+      const id = system.register('preGeneration', async (ctx) => ctx);
+      system.unregister(id);
+
+      expect(system.hasHooks('preGeneration')).toBe(false);
+      expect(system.getRegisteredTypes()).toEqual([]);
+    });
+
+    it('does not remove other hooks when unregistering one', () => {
+      const id1 = system.register('preGeneration', async (ctx) => ctx);
+      const id2 = system.register('preGeneration', async (ctx) => ctx);
+      const id3 = system.register('postGeneration', async (ctx) => ctx);
+
+      system.unregister(id1);
+
+      expect(system.getHookCount('preGeneration')).toBe(1);
+      expect(system.getHookCount('postGeneration')).toBe(1);
+      expect(system.getRegisteredTypes()).toContain('preGeneration');
+      expect(system.getRegisteredTypes()).toContain('postGeneration');
+    });
+  });
+
+  // ─── execute ─────────────────────────────────────────────────────────
+
+  describe('execute()', () => {
+    it('returns a shallow copy of the original context when no hooks exist', async () => {
+      const input: HookContext = { prompt: 'hello', domain: 'shader' };
+      const result = await system.execute('preGeneration', input);
+
+      expect(result).toEqual({ prompt: 'hello', domain: 'shader' });
+      expect(result).not.toBe(input); // shallow copy
+    });
+
+    it('passes context through a single handler', async () => {
+      system.register('preGeneration', async (ctx) => ({
+        ...ctx,
+        prompt: ctx.prompt.toUpperCase(),
+      }));
+
+      const result = await system.execute('preGeneration', {
+        prompt: 'hello',
+        domain: 'p5',
+      });
+
+      expect(result.prompt).toBe('HELLO');
+    });
+
+    it('chains multiple handlers sequentially, propagating mutations', async () => {
+      system.register('preGeneration', async (ctx) => ({
+        ...ctx,
+        prompt: ctx.prompt + ' world',
+      }));
+
+      system.register('preGeneration', async (ctx) => ({
+        ...ctx,
+        prompt: ctx.prompt + '!',
+      }));
+
+      const result = await system.execute('preGeneration', {
+        prompt: 'hello',
+        domain: 'p5',
+      });
+
+      expect(result.prompt).toBe('hello world!');
+    });
+
+    it('preserves fields from previous handlers when later ones return partial updates', async () => {
+      system.register('preGeneration', async (ctx) => ({
+        ...ctx,
+        prompt: 'enhanced',
+        metadata: { step: 1 },
+      }));
+
+      system.register('preGeneration', async (ctx) => ({
+        ...ctx,
+        domain: 'three',
+      }));
+
+      const result = await system.execute('preGeneration', {
+        prompt: 'original',
+        domain: 'p5',
+      });
+
+      // First handler set prompt + metadata, second changed domain only
+      expect(result.prompt).toBe('enhanced');
+      expect(result.domain).toBe('three');
+      expect(result.metadata).toEqual({ step: 1 });
+    });
+
+    it('continues execution when a handler throws, logging the error', async () => {
+      const handlerError = new Error('boom');
       const order: string[] = [];
 
-      hs.register('preGeneration', async (_ctx) => {
+      system.register('preGeneration', async (ctx) => {
         order.push('before');
-        throw new Error('boom');
-      }, 5);
-      hs.register('preGeneration', async (ctx) => {
-        order.push('after');
-        return { ...ctx, prompt: ctx.prompt + ' recovered' };
-      }, 0);
-
-      const result = await hs.execute('preGeneration', baseContext());
-
-      expect(order).toEqual(['before', 'after']);
-      expect(result.prompt).toBe('draw a circle recovered');
-    });
-
-    it('returns last good context when final handler throws', async () => {
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: ctx.prompt + ' modified',
-      }), 5);
-      hs.register('preGeneration', async (_ctx) => {
-        throw new Error('final handler error');
-      }, 0);
-
-      const result = await hs.execute('preGeneration', baseContext());
-
-      // The first handler's modification should survive
-      expect(result.prompt).toBe('draw a circle modified');
-    });
-
-    it('returns original context when only handler throws', async () => {
-      hs.register('preGeneration', async (_ctx) => {
-        throw new Error('sole handler error');
-      });
-
-      const result = await hs.execute('preGeneration', baseContext());
-      expect(result.prompt).toBe('draw a circle');
-    });
-  });
-
-  // ─── execute — for different hook types ───────────────────────────────
-
-  describe('execute() — hook type isolation', () => {
-    it('preGeneration hooks do not fire for postGeneration', async () => {
-      let fired = false;
-      hs.register('preGeneration', async (ctx) => {
-        fired = true;
         return ctx;
       });
 
-      await hs.execute('postGeneration', baseContext());
-      expect(fired).toBe(false);
+      system.register('preGeneration', async () => {
+        order.push('failing');
+        throw handlerError;
+      });
+
+      system.register('preGeneration', async (ctx) => {
+        order.push('after');
+        return ctx;
+      });
+
+      const result = await system.execute('preGeneration', {
+        prompt: 'test',
+        domain: 'p5',
+      });
+
+      expect(order).toEqual(['before', 'failing', 'after']);
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        'HookSystem',
+        expect.stringContaining('hook_2'),
+        handlerError,
+      );
+      // Context still returned (last successful handler's result)
+      expect(result.prompt).toBe('test');
     });
 
-    it('onFailure hooks receive error context', async () => {
-      hs.register('onFailure', async (ctx) => ({
+    it('does not mutate the original input context', async () => {
+      const input: HookContext = { prompt: 'original', domain: 'p5' };
+
+      system.register('preGeneration', async (ctx) => ({
         ...ctx,
-        metadata: { handled: true },
+        prompt: 'modified',
       }));
 
-      const ctx = baseContext({ error: new Error('generation failed') });
-      const result = await hs.execute('onFailure', ctx);
+      await system.execute('preGeneration', input);
 
-      expect(result.metadata).toEqual({ handled: true });
+      expect(input.prompt).toBe('original');
     });
 
-    it('postValidation hooks receive score and errors', async () => {
-      hs.register('postValidation', async (ctx) => ({
-        ...ctx,
-        metadata: { reviewed: true },
-      }));
+    it('returns original context copy when handler returns void/undefined', async () => {
+      system.register('preGeneration', async () => {
+        // Returns undefined (void)
+      });
 
-      const ctx = baseContext({ code: 'x', score: 0.6, errors: ['low quality'] });
-      const result = await hs.execute('postValidation', ctx);
+      const result = await system.execute('preGeneration', {
+        prompt: 'test',
+        domain: 'shader',
+      });
 
-      expect(result.metadata).toEqual({ reviewed: true });
-      expect(result.score).toBe(0.6);
+      expect(result).toEqual({ prompt: 'test', domain: 'shader' });
     });
   });
 
-  // ─── hasHooks / getHookCount ──────────────────────────────────────────
+  // ─── hasHooks / getHookCount ────────────────────────────────────────
 
-  describe('hasHooks() / getHookCount()', () => {
-    it('hasHooks returns false for unregistered type', () => {
-      expect(hs.hasHooks('preGeneration')).toBe(false);
+  describe('hasHooks()', () => {
+    it('returns false when no hooks registered for a type', () => {
+      expect(system.hasHooks('preGeneration')).toBe(false);
     });
 
-    it('hasHooks returns true after registering', () => {
-      hs.register('preGeneration', async (ctx) => ctx);
-      expect(hs.hasHooks('preGeneration')).toBe(true);
-    });
-
-    it('getHookCount returns 0 for unregistered type', () => {
-      expect(hs.getHookCount('preValidation')).toBe(0);
-    });
-
-    it('getHookCount returns correct count after multiple registrations', () => {
-      hs.register('postGeneration', async (ctx) => ctx);
-      hs.register('postGeneration', async (ctx) => ctx);
-      hs.register('postGeneration', async (ctx) => ctx);
-
-      expect(hs.getHookCount('postGeneration')).toBe(3);
+    it('returns true after registering a hook', () => {
+      system.register('preGeneration', async (ctx) => ctx);
+      expect(system.hasHooks('preGeneration')).toBe(true);
     });
   });
 
-  // ─── getRegisteredTypes ───────────────────────────────────────────────
+  describe('getHookCount()', () => {
+    it('returns 0 when no hooks registered', () => {
+      expect(system.getHookCount('postGeneration')).toBe(0);
+    });
+
+    it('returns the number of registered hooks for a type', () => {
+      system.register('postGeneration', async (ctx) => ctx);
+      system.register('postGeneration', async (ctx) => ctx);
+      system.register('postGeneration', async (ctx) => ctx);
+
+      expect(system.getHookCount('postGeneration')).toBe(3);
+    });
+  });
+
+  // ─── getRegisteredTypes ────────────────────────────────────────────
 
   describe('getRegisteredTypes()', () => {
-    it('returns empty array when nothing is registered', () => {
-      expect(hs.getRegisteredTypes()).toEqual([]);
+    it('returns empty array when no hooks registered', () => {
+      expect(system.getRegisteredTypes()).toEqual([]);
     });
 
-    it('returns only types that have hooks', () => {
-      hs.register('preGeneration', async (ctx) => ctx);
-      hs.register('postGeneration', async (ctx) => ctx);
+    it('returns all types that have at least one hook', () => {
+      system.register('preGeneration', async (ctx) => ctx);
+      system.register('onFailure', async (ctx) => ctx);
 
-      const types = hs.getRegisteredTypes();
+      const types = system.getRegisteredTypes();
       expect(types).toContain('preGeneration');
-      expect(types).toContain('postGeneration');
+      expect(types).toContain('onFailure');
       expect(types).toHaveLength(2);
     });
 
-    it('does not include types after all hooks are removed', () => {
-      const id = hs.register('onFailure', async (ctx) => ctx);
-      hs.unregister(id);
+    it('does not duplicate types with multiple hooks', () => {
+      system.register('preGeneration', async (ctx) => ctx);
+      system.register('preGeneration', async (ctx) => ctx);
 
-      expect(hs.getRegisteredTypes()).toEqual([]);
+      expect(system.getRegisteredTypes()).toEqual(['preGeneration']);
     });
   });
 
-  // ─── clear ────────────────────────────────────────────────────────────
+  // ─── clear ──────────────────────────────────────────────────────────
 
   describe('clear()', () => {
-    it('removes all hooks', () => {
-      hs.register('preGeneration', async (ctx) => ctx);
-      hs.register('postGeneration', async (ctx) => ctx);
-      hs.register('onFailure', async (ctx) => ctx);
+    it('removes all hooks and resets the ID counter', () => {
+      system.register('preGeneration', async (ctx) => ctx);
+      system.register('postGeneration', async (ctx) => ctx);
 
-      hs.clear();
+      system.clear();
 
-      expect(hs.getRegisteredTypes()).toEqual([]);
-      expect(hs.hasHooks('preGeneration')).toBe(false);
-      expect(hs.hasHooks('postGeneration')).toBe(false);
-      expect(hs.hasHooks('onFailure')).toBe(false);
-    });
+      expect(system.getRegisteredTypes()).toEqual([]);
+      expect(system.getHookCount('preGeneration')).toBe(0);
 
-    it('resets the id counter to 0', () => {
-      hs.register('preGeneration', async (ctx) => ctx);
-      hs.clear();
-
-      const id = hs.register('preGeneration', async (ctx) => ctx);
-      expect(id).toBe('hook_1');
-    });
-
-    it('allows re-registration after clearing', async () => {
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: 'old',
-      }));
-      hs.clear();
-
-      hs.register('preGeneration', async (ctx) => ({
-        ...ctx,
-        prompt: ctx.prompt + ' new',
-      }));
-
-      const result = await hs.execute('preGeneration', baseContext());
-      expect(result.prompt).toBe('draw a circle new');
+      // Counter reset: next ID should be hook_1
+      const newId = system.register('preGeneration', async (ctx) => ctx);
+      expect(newId).toBe('hook_1');
     });
   });
 
-  // ─── static createPromptEnhancer ──────────────────────────────────────
+  // ─── createPromptEnhancer ───────────────────────────────────────────
 
   describe('static createPromptEnhancer()', () => {
-    it('returns a hook handler that modifies the prompt', async () => {
-      const handler = HookSystem.createPromptEnhancer(
-        (prompt, domain) => `[${domain}] ${prompt}`,
-      );
-
-      const ctx = baseContext();
-      const result = await handler(ctx);
-
-      expect(result.prompt).toBe('[p5] draw a circle');
-    });
-
-    it('passes domain correctly to the enhancer', async () => {
-      const enhancer = vi.fn((_prompt: string, domain: string) =>
-        `${domain}-enhanced`);
+    it('wraps a simple enhancer function into a HookHandler', async () => {
+      const enhancer = (prompt: string, domain: string) =>
+        `[${domain}] ${prompt}`;
 
       const handler = HookSystem.createPromptEnhancer(enhancer);
-      await handler(baseContext({ domain: 'shader' }));
+      const result = await handler({
+        prompt: 'draw circles',
+        domain: 'p5',
+      });
 
-      expect(enhancer).toHaveBeenCalledWith('draw a circle', 'shader');
+      expect(result).toEqual({
+        prompt: '[p5] draw circles',
+        domain: 'p5',
+        code: undefined,
+        score: undefined,
+        errors: undefined,
+        error: undefined,
+        metadata: undefined,
+      });
     });
 
-    it('supports async enhancer functions', async () => {
-      const handler = HookSystem.createPromptEnhancer(
-        async (prompt, domain) => {
-          await Promise.resolve();
-          return `${domain}:${prompt}`;
-        },
-      );
+    it('handles async enhancer functions', async () => {
+      const asyncEnhancer = async (prompt: string) =>
+        Promise.resolve(`enhanced: ${prompt}`);
 
-      const result = await handler(baseContext({ domain: 'three' }));
-      expect(result.prompt).toBe('three:draw a circle');
-    });
+      const handler = HookSystem.createPromptEnhancer(asyncEnhancer);
+      const result = await handler({
+        prompt: 'test',
+        domain: 'shader',
+      });
 
-    it('preserves other context fields', async () => {
-      const handler = HookSystem.createPromptEnhancer(
-        (prompt) => prompt.toUpperCase(),
-      );
-
-      const ctx = baseContext({ metadata: { foo: 'bar' } });
-      const result = await handler(ctx);
-
-      expect(result.prompt).toBe('DRAW A CIRCLE');
-      expect(result.metadata).toEqual({ foo: 'bar' });
+      expect(result.prompt).toBe('enhanced: test');
     });
   });
 
-  // ─── static createCodeTransformer ─────────────────────────────────────
+  // ─── createCodeTransformer ──────────────────────────────────────────
 
   describe('static createCodeTransformer()', () => {
-    it('returns a handler that transforms the code field', async () => {
-      const handler = HookSystem.createCodeTransformer(
-        (code, domain) => `// ${domain}\n${code}`,
-      );
+    it('wraps a simple transformer function into a HookHandler', async () => {
+      const transformer = (code: string, domain: string) =>
+        `/* ${domain} */\n${code}`;
 
-      const ctx = baseContext({ code: 'function setup() {}' });
-      const result = await handler(ctx);
+      const handler = HookSystem.createCodeTransformer(transformer);
+      const result = await handler({
+        prompt: 'test',
+        domain: 'p5',
+        code: 'function setup() {}',
+      });
 
-      expect(result.code).toBe('// p5\nfunction setup() {}');
+      expect(result.code).toBe('/* p5 */\nfunction setup() {}');
+    });
+
+    it('returns context unchanged when code field is missing', async () => {
+      const transformer = vi.fn((code: string) => code.toUpperCase());
+
+      const handler = HookSystem.createCodeTransformer(transformer);
+      const result = await handler({
+        prompt: 'test',
+        domain: 'p5',
+      });
+
+      // Transformer should NOT be called when no code is present
+      expect(transformer).not.toHaveBeenCalled();
+      expect(result.code).toBeUndefined();
     });
 
     it('returns context unchanged when code is undefined', async () => {
       const handler = HookSystem.createCodeTransformer(
-        (code) => code.toUpperCase(),
+        (code: string) => code,
       );
-
-      const ctx = baseContext(); // no code
-      const result = await handler(ctx);
+      const result = await handler({
+        prompt: 'test',
+        domain: 'p5',
+        code: undefined,
+      });
 
       expect(result.code).toBeUndefined();
-      expect(result.prompt).toBe('draw a circle');
     });
 
-    it('passes domain correctly to the transformer', async () => {
-      const transformer = vi.fn((code: string, domain: string) =>
-        `/* ${domain} */ ${code}`);
+    it('handles async transformer functions', async () => {
+      const asyncTransformer = async (code: string) =>
+        Promise.resolve(code.replace(/var /g, 'const '));
 
-      const handler = HookSystem.createCodeTransformer(transformer);
-      await handler(baseContext({ code: 'x = 1', domain: 'glsl' }));
+      const handler = HookSystem.createCodeTransformer(asyncTransformer);
+      const result = await handler({
+        prompt: 'test',
+        domain: 'three',
+        code: 'var x = 1; var y = 2;',
+      });
 
-      expect(transformer).toHaveBeenCalledWith('x = 1', 'glsl');
+      expect(result.code).toBe('const x = 1; const y = 2;');
     });
+  });
 
-    it('supports async transformer functions', async () => {
-      const handler = HookSystem.createCodeTransformer(
-        async (code) => {
-          await Promise.resolve();
-          return code + '// async';
-        },
+  // ─── integration: full pipeline ─────────────────────────────────────
+
+  describe('integration: pre → post pipeline', () => {
+    it('enhances prompt, then transforms code in sequence', async () => {
+      // Step 1: Enhance prompt before generation
+      system.register(
+        'preGeneration',
+        HookSystem.createPromptEnhancer((prompt) => `make it pretty: ${prompt}`),
       );
 
-      const result = await handler(baseContext({ code: 'gl_FragColor' }));
-      expect(result.code).toBe('gl_FragColor// async');
-    });
-
-    it('preserves other context fields', async () => {
-      const handler = HookSystem.createCodeTransformer(
-        (code) => code.trim(),
+      // Step 2: Transform code after generation
+      system.register(
+        'postGeneration',
+        HookSystem.createCodeTransformer((code) => `// enhanced\n${code}`),
       );
 
-      const ctx = baseContext({ code: ' x ', prompt: 'test' });
-      const result = await handler(ctx);
+      // Execute pre-generation
+      const preResult = await system.execute('preGeneration', {
+        prompt: 'circles',
+        domain: 'p5',
+      });
+      expect(preResult.prompt).toBe('make it pretty: circles');
 
-      expect(result.code).toBe('x');
-      expect(result.prompt).toBe('test');
+      // Simulate generation producing code
+      const code = 'function setup() { createCanvas(400, 400); }';
+
+      // Execute post-generation with the code
+      const postResult = await system.execute('postGeneration', {
+        ...preResult,
+        code,
+      });
+      expect(postResult.code).toBe('// enhanced\n' + code);
+    });
+  });
+
+  // ─── error paths ────────────────────────────────────────────────────
+
+  describe('error handling', () => {
+    it('logs all handler errors with correct hook ID', async () => {
+      const err1 = new Error('fail-1');
+      const err2 = new Error('fail-2');
+
+      system.register('onFailure', async () => { throw err1; });
+      system.register('onFailure', async () => { throw err2; });
+
+      await system.execute('onFailure', {
+        prompt: 'test',
+        domain: 'p5',
+        error: new Error('original'),
+      });
+
+      expect(mockLoggerError).toHaveBeenCalledTimes(2);
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        'HookSystem',
+        'Handler hook_1 failed:',
+        err1,
+      );
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        'HookSystem',
+        'Handler hook_2 failed:',
+        err2,
+      );
+    });
+
+    it('returns last successfully modified context even when later handlers fail', async () => {
+      system.register('preValidation', async (ctx) => ({
+        ...ctx,
+        score: 0.9,
+      }));
+
+      system.register('preValidation', async () => {
+        throw new Error('validation crash');
+      });
+
+      const result = await system.execute('preValidation', {
+        prompt: 'test',
+        domain: 'shader',
+        code: 'shader code',
+      });
+
+      expect(result.score).toBe(0.9);
     });
   });
 });

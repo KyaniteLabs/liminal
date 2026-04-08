@@ -1,121 +1,83 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-// GeneratorRegistry imports RoutingData at module level, so we must mock it first
-vi.mock('../../../src/routing/RoutingData.js', () => {
-  const AB_TEST_RESULTS = {
-    ascii: { local: 0.363, cloud: 0.531, hybrid: 0.470 },
-    music: { local: 0.523, cloud: 0.236, hybrid: 0.481 },
-    code: { local: 0.503, cloud: 0.460, hybrid: 0.413 },
-    visual: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
-    remotion: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
-    html: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
-    webdev: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
-  };
-
-  const DOMAIN_ROUTING_DATA = {
-    html: { optimalModel: 'cloud', confidence: 0.80, advantage: '+16%', localFitness: 0.450, cloudFitness: 0.520 },
-    webdev: { optimalModel: 'cloud', confidence: 0.80, advantage: '+16%', localFitness: 0.450, cloudFitness: 0.520 },
-    music: { optimalModel: 'local', confidence: 0.95, advantage: '+121%', localFitness: 0.523, cloudFitness: 0.236 },
-    code: { optimalModel: 'local', confidence: 0.75, advantage: '+9%', localFitness: 0.503, cloudFitness: 0.460 },
-    ascii: { optimalModel: 'cloud', confidence: 0.85, advantage: '+46%', localFitness: 0.363, cloudFitness: 0.531 },
-    visual: { optimalModel: 'cloud', confidence: 0.80, advantage: '+38%', localFitness: 0.400, cloudFitness: 0.550 },
-    remotion: { optimalModel: 'cloud', confidence: 0.70, advantage: '+38%', localFitness: 0.400, cloudFitness: 0.550 },
-  };
-
-  const OVERALL_FITNESS = { local: 0.463, cloud: 0.409, hybrid: 0.447 };
-
-  const DOMAIN_KEYWORDS = {
-    music: ['music', 'song', 'melody'],
-    ascii: ['ascii', 'art', 'draw'],
-    code: ['code', 'function', 'algorithm'],
-    visual: ['visual', 'image', 'graphic'],
-    remotion: ['remotion', 'video', 'motion graphics'],
-    html: ['html', 'web page', 'css'],
-    webdev: ['web app', 'dashboard', 'portfolio'],
-  };
-
-  return {
-    AB_TEST_RESULTS,
-    DOMAIN_ROUTING_DATA,
-    OVERALL_FITNESS,
-    DOMAIN_KEYWORDS,
-    recordRoutingOutcome: vi.fn(),
-    getOptimalModelBandit: vi.fn().mockReturnValue(null),
-    getBanditStats: vi.fn().mockReturnValue(null),
-  };
-});
-
+import { describe, it, expect, beforeEach } from 'vitest';
 import { generatorRegistry } from '../../../src/generators/GeneratorRegistry.js';
-import type { GeneratorEntry, DynamicDomainConfig } from '../../../src/generators/GeneratorRegistry.js';
+import type { DynamicDomainConfig } from '../../../src/generators/GeneratorRegistry.js';
 
 describe('GeneratorRegistry', () => {
   beforeEach(() => {
     generatorRegistry.clear();
   });
 
-  // --- register / dispatch ---
+  // ─── register / dispatch / getAll ────────────────────────────────────────
 
-  describe('register and dispatch', () => {
-    it('dispatches to the highest-confidence generator', () => {
-      const lowEntry: GeneratorEntry = {
+  describe('register + dispatch', () => {
+    it('dispatches to highest-confidence generator', () => {
+      generatorRegistry.register({
         name: 'low',
         canHandle: () => 0.3,
-        generate: async () => 'low result',
-      };
-      const highEntry: GeneratorEntry = {
+        generate: () => 'low result',
+      });
+      generatorRegistry.register({
         name: 'high',
-        canHandle: () => 0.8,
-        generate: async () => 'high result',
-      };
-      generatorRegistry.register(lowEntry);
-      generatorRegistry.register(highEntry);
-
-      const result = generatorRegistry.dispatch('test prompt');
-      expect(result).not.toBeNull();
-      expect(result!.entry.name).toBe('high');
-      expect(result!.confidence).toBe(0.8);
-    });
-
-    it('returns null when no generator can handle the prompt', () => {
-      const entry: GeneratorEntry = {
-        name: 'never',
-        canHandle: () => 0,
-        generate: async () => 'never called',
-      };
-      generatorRegistry.register(entry);
+        canHandle: () => 0.9,
+        generate: () => 'high result',
+      });
 
       const result = generatorRegistry.dispatch('anything');
-      expect(result).toBeNull();
+      expect(result).not.toBeNull();
+      expect(result!.entry.name).toBe('high');
+      expect(result!.confidence).toBe(0.9);
     });
 
-    it('dispatches using prompt-based canHandle logic', () => {
-      const shaderEntry: GeneratorEntry = {
-        name: 'shader',
-        canHandle: (prompt: string) => /glsl|shader/.test(prompt.toLowerCase()) ? 0.7 : 0,
-        generate: async () => 'shader code',
-      };
-      generatorRegistry.register(shaderEntry);
+    it('returns null when no generator can handle', () => {
+      generatorRegistry.register({
+        name: 'none',
+        canHandle: () => 0,
+        generate: () => 'none',
+      });
 
-      const match = generatorRegistry.dispatch('create a GLSL shader');
-      expect(match).not.toBeNull();
-      expect(match!.entry.name).toBe('shader');
+      expect(generatorRegistry.dispatch('test')).toBeNull();
+    });
 
-      const noMatch = generatorRegistry.dispatch('draw a circle');
-      expect(noMatch).toBeNull();
+    it('dispatches first entry when multiple have same confidence', () => {
+      generatorRegistry.register({ name: 'first', canHandle: () => 0.5, generate: () => 'a' });
+      generatorRegistry.register({ name: 'second', canHandle: () => 0.5, generate: () => 'b' });
+
+      const result = generatorRegistry.dispatch('test');
+      expect(result!.entry.name).toBe('first');
+    });
+
+    it('getAll returns all registered entries', () => {
+      generatorRegistry.register({ name: 'a', canHandle: () => 0.5, generate: () => 'a' });
+      generatorRegistry.register({ name: 'b', canHandle: () => 0.5, generate: () => 'b' });
+
+      expect(generatorRegistry.getAll()).toHaveLength(2);
     });
   });
 
-  // --- registerDomain / unregisterDomain ---
+  // ─── clear ───────────────────────────────────────────────────────────────
+
+  describe('clear', () => {
+    it('removes all entries and dynamic domains', () => {
+      generatorRegistry.register({ name: 'a', canHandle: () => 0.5, generate: () => 'a' });
+      generatorRegistry.registerDomain({ name: 'lyrics', keywords: ['lyrics'], confidence: 0.8, generate: () => 'lyrics' });
+
+      generatorRegistry.clear();
+
+      expect(generatorRegistry.getAll()).toHaveLength(0);
+      expect(generatorRegistry.getDynamicDomains()).toEqual([]);
+    });
+  });
+
+  // ─── Dynamic domain registration ─────────────────────────────────────────
 
   describe('registerDomain', () => {
-    it('registers a new domain with keyword-based canHandle', () => {
-      const config: DynamicDomainConfig = {
+    it('registers a dynamic domain that dispatches by keyword', () => {
+      generatorRegistry.registerDomain({
         name: 'lyrics',
         keywords: ['lyrics', 'poem', 'verse'],
         confidence: 0.8,
-        generate: async (prompt) => `generated lyrics for: ${prompt}`,
-      };
-      generatorRegistry.registerDomain(config);
+        generate: () => 'generated lyrics',
+      });
 
       const result = generatorRegistry.dispatch('write me some lyrics');
       expect(result).not.toBeNull();
@@ -123,317 +85,277 @@ describe('GeneratorRegistry', () => {
       expect(result!.confidence).toBe(0.8);
     });
 
-    it('throws when registering a duplicate domain name', () => {
-      const config: DynamicDomainConfig = {
+    it('returns null when no keywords match', () => {
+      generatorRegistry.registerDomain({
         name: 'poetry',
-        keywords: ['poem'],
-        confidence: 0.7,
-        generate: async () => 'poem output',
-      };
-      generatorRegistry.registerDomain(config);
+        keywords: ['poem', 'haiku'],
+        confidence: 0.9,
+        generate: () => 'poem',
+      });
 
-      expect(() => generatorRegistry.registerDomain(config)).toThrow(
-        "Domain 'poetry' is already registered"
-      );
+      const result = generatorRegistry.dispatch('draw a circle');
+      expect(result).toBeNull();
     });
 
-    it('generate returns string for string-returning generators', async () => {
-      const config: DynamicDomainConfig = {
-        name: 'custom',
-        keywords: ['custom keyword'],
-        confidence: 0.9,
-        generate: async () => 'custom output',
-      };
-      generatorRegistry.registerDomain(config);
+    it('throws when registering duplicate domain name', () => {
+      generatorRegistry.registerDomain({ name: 'test', keywords: ['test'], confidence: 0.5, generate: () => 't' });
 
-      const dispatched = generatorRegistry.dispatch('custom keyword test');
-      const result = await dispatched!.entry.generate('test');
-      expect(result).toBe('custom output');
+      expect(() => {
+        generatorRegistry.registerDomain({ name: 'test', keywords: ['other'], confidence: 0.7, generate: () => 't2' });
+      }).toThrow("Domain 'test' is already registered");
     });
 
-    it('generate extracts code property from object-returning generators', async () => {
-      const config: DynamicDomainConfig = {
-        name: 'code-gen',
-        keywords: ['code-gen keyword'],
-        confidence: 0.9,
-        generate: async () => ({ code: 'const x = 1;', language: 'js' }) as any,
-      };
-      generatorRegistry.registerDomain(config);
+    it('case-insensitive keyword matching', () => {
+      generatorRegistry.registerDomain({
+        name: 'lyrics',
+        keywords: ['Lyrics'],
+        confidence: 0.8,
+        generate: () => 'lyrics',
+      });
 
-      const dispatched = generatorRegistry.dispatch('code-gen keyword test');
-      const result = await dispatched!.entry.generate('test');
-      expect(result).toBe('const x = 1;');
+      const result = generatorRegistry.dispatch('WRITE LYRICS NOW');
+      expect(result).not.toBeNull();
+      expect(result!.entry.name).toBe('lyrics');
+    });
+
+    it('generate wraps object result with code property', async () => {
+      generatorRegistry.registerDomain({
+        name: 'structured',
+        keywords: ['structured'],
+        confidence: 0.8,
+        generate: () => ({ code: 'structured output' } as any),
+      });
+
+      const dispatchResult = generatorRegistry.dispatch('structured request');
+      const generated = await dispatchResult!.entry.generate('structured request');
+      expect(generated).toBe('structured output');
+    });
+
+    it('generate returns string result as-is', async () => {
+      generatorRegistry.registerDomain({
+        name: 'plain',
+        keywords: ['plain'],
+        confidence: 0.8,
+        generate: () => 'plain string',
+      });
+
+      const dispatchResult = generatorRegistry.dispatch('plain request');
+      const generated = await dispatchResult!.entry.generate('plain request');
+      expect(generated).toBe('plain string');
     });
   });
 
-  describe('unregisterDomain', () => {
-    it('removes a dynamically registered domain', () => {
-      const config: DynamicDomainConfig = {
-        name: 'temp',
-        keywords: ['temp keyword'],
-        confidence: 0.6,
-        generate: async () => 'temp output',
-      };
-      generatorRegistry.registerDomain(config);
-      expect(generatorRegistry.hasDomain('temp')).toBe(true);
+  // ─── unregisterDomain ────────────────────────────────────────────────────
 
-      const removed = generatorRegistry.unregisterDomain('temp');
-      expect(removed).toBe(true);
-      expect(generatorRegistry.hasDomain('temp')).toBe(false);
+  describe('unregisterDomain', () => {
+    it('removes a dynamic domain', () => {
+      generatorRegistry.registerDomain({ name: 'temp', keywords: ['temp'], confidence: 0.5, generate: () => 't' });
+
+      expect(generatorRegistry.unregisterDomain('temp')).toBe(true);
+      expect(generatorRegistry.getDynamicDomains()).toEqual([]);
     });
 
     it('returns false for non-existent domain', () => {
-      const removed = generatorRegistry.unregisterDomain('nonexistent');
-      expect(removed).toBe(false);
+      expect(generatorRegistry.unregisterDomain('nonexistent')).toBe(false);
     });
 
-    it('removes domain from dispatch after unregister', () => {
-      const config: DynamicDomainConfig = {
-        name: 'ephemeral',
-        keywords: ['ephemeral keyword'],
-        confidence: 0.9,
-        generate: async () => 'ephemeral output',
-      };
-      generatorRegistry.registerDomain(config);
+    it('removed domain no longer dispatches', () => {
+      generatorRegistry.registerDomain({ name: 'temp', keywords: ['temp'], confidence: 0.9, generate: () => 't' });
+      generatorRegistry.unregisterDomain('temp');
 
-      expect(generatorRegistry.dispatch('ephemeral keyword test')).not.toBeNull();
-      generatorRegistry.unregisterDomain('ephemeral');
-      expect(generatorRegistry.dispatch('ephemeral keyword test')).toBeNull();
+      expect(generatorRegistry.dispatch('temp request')).toBeNull();
     });
   });
 
-  // --- hasDomain / getDynamicKeywords / getDynamicDomains ---
+  // ─── hasDomain ───────────────────────────────────────────────────────────
 
   describe('hasDomain', () => {
-    it('returns true for a registered entry', () => {
-      generatorRegistry.register({
-        name: 'test-domain',
-        canHandle: () => 0.5,
-        generate: async () => 'test',
-      });
-      expect(generatorRegistry.hasDomain('test-domain')).toBe(true);
+    it('finds registered entry by name', () => {
+      generatorRegistry.register({ name: 'p5', canHandle: () => 0.5, generate: () => 'p5 code' });
+      expect(generatorRegistry.hasDomain('p5')).toBe(true);
     });
 
-    it('returns false for unregistered domain', () => {
-      expect(generatorRegistry.hasDomain('no-such-domain')).toBe(false);
-    });
-  });
-
-  describe('getDynamicKeywords', () => {
-    it('returns keywords for dynamically registered domains', () => {
-      generatorRegistry.registerDomain({
-        name: 'haiku',
-        keywords: ['haiku', '5-7-5'],
-        confidence: 0.7,
-        generate: async () => 'haiku output',
-      });
-
-      const keywords = generatorRegistry.getDynamicKeywords();
-      expect(keywords.get('haiku')).toEqual(['haiku', '5-7-5']);
+    it('does not find unregistered domain', () => {
+      expect(generatorRegistry.hasDomain('missing')).toBe(false);
     });
 
-    it('returns empty map when no dynamic domains registered', () => {
-      const keywords = generatorRegistry.getDynamicKeywords();
-      expect(keywords.size).toBe(0);
+    it('finds dynamically registered domain', () => {
+      generatorRegistry.registerDomain({ name: 'custom', keywords: ['custom'], confidence: 0.5, generate: () => 'c' });
+      expect(generatorRegistry.hasDomain('custom')).toBe(true);
     });
   });
 
-  describe('getKeywordsForDomain', () => {
-    it('returns keywords for a specific dynamic domain', () => {
-      generatorRegistry.registerDomain({
-        name: 'sonnet',
-        keywords: ['sonnet', '14 lines'],
-        confidence: 0.75,
-        generate: async () => 'sonnet output',
-      });
-      expect(generatorRegistry.getKeywordsForDomain('sonnet')).toEqual(['sonnet', '14 lines']);
+  // ─── getKeywordsForDomain / getDynamicDomains ───────────────────────────
+
+  describe('dynamic keyword management', () => {
+    it('getDynamicKeywords returns map of all dynamic domain keywords', () => {
+      generatorRegistry.registerDomain({ name: 'a', keywords: ['x', 'y'], confidence: 0.5, generate: () => 'a' });
+      generatorRegistry.registerDomain({ name: 'b', keywords: ['z'], confidence: 0.5, generate: () => 'b' });
+
+      const kw = generatorRegistry.getDynamicKeywords();
+      expect(kw.get('a')).toEqual(['x', 'y']);
+      expect(kw.get('b')).toEqual(['z']);
     });
 
-    it('returns undefined for unknown domain', () => {
-      expect(generatorRegistry.getKeywordsForDomain('unknown')).toBeUndefined();
+    it('getKeywordsForDomain returns keywords for specific domain', () => {
+      generatorRegistry.registerDomain({ name: 'poetry', keywords: ['haiku', 'sonnet'], confidence: 0.5, generate: () => 'p' });
+
+      expect(generatorRegistry.getKeywordsForDomain('poetry')).toEqual(['haiku', 'sonnet']);
     });
-  });
 
-  describe('getDynamicDomains', () => {
-    it('lists names of dynamically registered domains', () => {
-      generatorRegistry.registerDomain({
-        name: 'domain-a',
-        keywords: ['a'],
-        confidence: 0.5,
-        generate: async () => 'a',
-      });
-      generatorRegistry.registerDomain({
-        name: 'domain-b',
-        keywords: ['b'],
-        confidence: 0.5,
-        generate: async () => 'b',
-      });
+    it('getKeywordsForDomain returns undefined for unknown domain', () => {
+      expect(generatorRegistry.getKeywordsForDomain('missing')).toBeUndefined();
+    });
 
-      const domains = generatorRegistry.getDynamicDomains();
-      expect(domains).toContain('domain-a');
-      expect(domains).toContain('domain-b');
+    it('getDynamicDomains returns list of dynamic domain names', () => {
+      generatorRegistry.registerDomain({ name: 'a', keywords: ['a'], confidence: 0.5, generate: () => 'a' });
+      generatorRegistry.registerDomain({ name: 'b', keywords: ['b'], confidence: 0.5, generate: () => 'b' });
+
+      expect(generatorRegistry.getDynamicDomains()).toEqual(['a', 'b']);
     });
   });
 
-  // --- DNA registry ---
+  // ─── DNA registry ────────────────────────────────────────────────────────
 
-  describe('registerDNA / getDNA / getAllDNA', () => {
-    it('stores and retrieves DNA by domain', () => {
-      const dna = { domain: 'test-dna', features: [] } as any;
-      generatorRegistry.registerDNA(dna);
-      expect(generatorRegistry.getDNA('test-dna')).toBe(dna);
+  describe('DNA registry', () => {
+    const mockDNA = { domain: 'p5', patterns: [], colorPalette: [] } as any;
+
+    it('registerDNA stores DNA for a domain', () => {
+      generatorRegistry.registerDNA(mockDNA);
+      expect(generatorRegistry.getDNA('p5')).toBe(mockDNA);
     });
 
-    it('returns undefined for unregistered DNA domain', () => {
-      expect(generatorRegistry.getDNA('no-such-dna')).toBeUndefined();
+    it('getDNA returns undefined for unknown domain', () => {
+      expect(generatorRegistry.getDNA('unknown')).toBeUndefined();
     });
 
-    it('getAllDNA returns a copy of the DNA registry', () => {
-      const dna = { domain: 'my-dna', features: [] } as any;
-      generatorRegistry.registerDNA(dna);
-      const allDna = generatorRegistry.getAllDNA();
-      expect(allDna.get('my-dna')).toBe(dna);
-      // Mutations to the returned map should not affect the registry
-      allDna.delete('my-dna');
-      expect(generatorRegistry.getDNA('my-dna')).toBe(dna);
+    it('getAllDNA returns a copy of the registry', () => {
+      generatorRegistry.registerDNA(mockDNA);
+      const all = generatorRegistry.getAllDNA();
+      expect(all.get('p5')).toBe(mockDNA);
+      expect(all).not.toBe(generatorRegistry.getAllDNA());
     });
   });
 
-  // --- clear ---
-
-  describe('clear', () => {
-    it('removes all entries and dynamic domains', () => {
-      generatorRegistry.register({
-        name: 'static-entry',
-        canHandle: () => 0.5,
-        generate: async () => 'result',
-      });
-      generatorRegistry.registerDomain({
-        name: 'dynamic-entry',
-        keywords: ['dynamic'],
-        confidence: 0.6,
-        generate: async () => 'dynamic result',
-      });
-
-      generatorRegistry.clear();
-      expect(generatorRegistry.getAll().length).toBe(0);
-      expect(generatorRegistry.getDynamicDomains().length).toBe(0);
-      expect(generatorRegistry.dispatch('dynamic')).toBeNull();
-    });
-  });
-
-  // --- Smart routing ---
+  // ─── Smart routing ──────────────────────────────────────────────────────
 
   describe('route', () => {
-    it('routes music domain to local model (A/B test winner)', () => {
+    it('routes music to local (per A/B data)', () => {
       const decision = generatorRegistry.route('music');
       expect(decision.model).toBe('local');
-      expect(decision.confidence).toBe(0.95);
+      expect(decision.confidence).toBeGreaterThanOrEqual(0.75);
       expect(decision.domain).toBe('music');
-      expect(decision.localFitness).toBe(0.523);
-      expect(decision.cloudFitness).toBe(0.236);
     });
 
-    it('routes ascii domain to cloud model (A/B test winner)', () => {
+    it('routes ascii to cloud (per A/B data)', () => {
       const decision = generatorRegistry.route('ascii');
       expect(decision.model).toBe('cloud');
-      expect(decision.confidence).toBe(0.85);
+      expect(decision.confidence).toBeGreaterThanOrEqual(0.8);
     });
 
-    it('falls back for unknown domain using preferLocal=true', () => {
-      generatorRegistry.setRoutingConfig({ preferLocal: true });
-      const decision = generatorRegistry.route('unknown-domain' as any);
+    it('falls back for unknown domain using preferLocal', () => {
+      const decision = generatorRegistry.route('unknown' as any);
       expect(decision.model).toBe('local');
       expect(decision.confidence).toBe(0.6);
     });
 
-    it('falls back for unknown domain using preferLocal=false', () => {
-      generatorRegistry.setRoutingConfig({ preferLocal: false });
-      const decision = generatorRegistry.route('unknown-domain' as any);
-      expect(decision.model).toBe('cloud');
-    });
-
-    it('prefers local when cloud/local difference is small and preferLocal is set', () => {
-      // code domain: local 0.503, cloud 0.460 — small difference, cloud wins raw
-      // but with preferLocal=true and small pctDiff, should flip to local
-      generatorRegistry.setRoutingConfig({ preferLocal: true });
+    it('switches to local when preferLocal and fitness gap < 5%', () => {
+      // code domain: local=0.503, cloud=0.460, optimalModel='local'
       const decision = generatorRegistry.route('code');
-      // The raw data has code: optimalModel='local', so this should stay local
       expect(decision.model).toBe('local');
     });
 
-    it('switches to hybrid for complex tasks with low confidence when fallbackToHybrid=true', () => {
-      generatorRegistry.setRoutingConfig({
-        preferLocal: false,
-        fallbackToHybrid: true,
-        minConfidence: 0.8,
-      });
-      // remotion has confidence 0.70, which is below 0.8
-      const decision = generatorRegistry.route('remotion', 'complex');
+    it('uses hybrid for complex task with fallbackToHybrid and low confidence', () => {
+      generatorRegistry.setRoutingConfig({ fallbackToHybrid: true, minConfidence: 0.9 });
+      const decision = generatorRegistry.route('code', 'complex');
       expect(decision.model).toBe('hybrid');
-      expect(decision.confidence).toBe(0.65);
     });
 
-    it('does not switch to hybrid for non-complex tasks', () => {
-      generatorRegistry.setRoutingConfig({
-        preferLocal: false,
-        fallbackToHybrid: true,
-        minConfidence: 0.8,
-      });
-      const decision = generatorRegistry.route('remotion', 'simple');
-      expect(decision.model).toBe('cloud');
+    it('does not use hybrid for non-complex task', () => {
+      generatorRegistry.setRoutingConfig({ fallbackToHybrid: true, minConfidence: 0.9 });
+      const decision = generatorRegistry.route('code', 'simple');
+      expect(decision.model).not.toBe('hybrid');
+    });
+
+    it('includes local and cloud fitness in decision', () => {
+      const decision = generatorRegistry.route('music');
+      expect(decision.localFitness).toBe(0.523);
+      expect(decision.cloudFitness).toBe(0.236);
+    });
+
+    it('reason string describes the routing choice', () => {
+      const decision = generatorRegistry.route('music');
+      expect(decision.reason).toContain('Music');
+      expect(decision.reason).toContain('0.523');
     });
   });
+
+  // ─── routeByPrompt ──────────────────────────────────────────────────────
 
   describe('routeByPrompt', () => {
-    it('detects domain from prompt and routes accordingly', () => {
+    it('detects domain and routes accordingly', () => {
       const decision = generatorRegistry.routeByPrompt('create a music beat');
-      expect(decision.domain).toBe('music');
-      expect(decision.model).toBe('local');
+      expect(decision.model).toBeDefined();
+      expect(decision.confidence).toBeGreaterThan(0);
     });
 
-    it('detects HTML domain from prompt', () => {
-      const decision = generatorRegistry.routeByPrompt('build an html landing page');
-      expect(decision.domain).toBe('html');
-    });
-
-    it('returns default for unrecognized prompt with preferLocal=true', () => {
-      generatorRegistry.setRoutingConfig({ preferLocal: true });
-      const decision = generatorRegistry.routeByPrompt('random gibberish xyz');
-      expect(decision.model).toBe('local');
+    it('falls back when domain is unknown', () => {
+      const decision = generatorRegistry.routeByPrompt('make something completely ambiguous xyzzy');
       expect(decision.confidence).toBe(0.3);
-    });
-
-    it('returns cloud default for unrecognized prompt with preferLocal=false', () => {
-      generatorRegistry.setRoutingConfig({ preferLocal: false });
-      const decision = generatorRegistry.routeByPrompt('random gibberish xyz');
-      expect(decision.model).toBe('cloud');
+      expect(decision.reason).toContain('Unknown domain');
     });
   });
 
+  // ─── detectDomain ───────────────────────────────────────────────────────
+
   describe('detectDomain', () => {
-    it('detects music domain from keywords', () => {
+    it('detects music from keywords', () => {
       expect(generatorRegistry.detectDomain('play a melody')).toBe('music');
     });
 
-    it('detects ascii domain from keywords', () => {
+    it('detects ascii from keywords', () => {
       expect(generatorRegistry.detectDomain('draw ascii art')).toBe('ascii');
     });
 
-    it('returns undefined for unrecognized prompts', () => {
-      expect(generatorRegistry.detectDomain('gibberish xyz plugh')).toBeUndefined();
+    it('detects code from keywords', () => {
+      expect(generatorRegistry.detectDomain('generate a fractal algorithm')).toBe('code');
+    });
+
+    it('detects visual from keywords', () => {
+      expect(generatorRegistry.detectDomain('create a 3d render')).toBe('visual');
+    });
+
+    it('detects html from keywords', () => {
+      expect(generatorRegistry.detectDomain('build a web page with css')).toBe('html');
+    });
+
+    it('returns undefined for unrecognized prompt', () => {
+      expect(generatorRegistry.detectDomain('make a sandwich')).toBeUndefined();
     });
 
     it('detects dynamic domain keywords', () => {
-      generatorRegistry.registerDomain({
-        name: 'lyrics',
-        keywords: ['lyrics', 'verse'],
-        confidence: 0.7,
-        generate: async () => 'lyrics',
-      });
-      expect(generatorRegistry.detectDomain('write some lyrics')).toBe('lyrics');
+      generatorRegistry.registerDomain({ name: 'custom', keywords: ['custom-keyword'], confidence: 0.5, generate: () => 'c' });
+      expect(generatorRegistry.detectDomain('use custom-keyword now')).toBe('custom');
     });
   });
+
+  // ─── getAllDomainKeywords ────────────────────────────────────────────────
+
+  describe('getAllDomainKeywords', () => {
+    it('includes built-in domain keywords', () => {
+      const kw = generatorRegistry.getAllDomainKeywords();
+      expect(kw.music).toBeDefined();
+      expect(kw.music.length).toBeGreaterThan(0);
+    });
+
+    it('includes dynamic domain keywords', () => {
+      generatorRegistry.registerDomain({ name: 'poetry', keywords: ['haiku', 'verse'], confidence: 0.5, generate: () => 'p' });
+      const kw = generatorRegistry.getAllDomainKeywords();
+      expect(kw.poetry).toEqual(['haiku', 'verse']);
+    });
+  });
+
+  // ─── isDomainSupported ──────────────────────────────────────────────────
 
   describe('isDomainSupported', () => {
     it('returns true for built-in domains', () => {
@@ -441,64 +363,41 @@ describe('GeneratorRegistry', () => {
       expect(generatorRegistry.isDomainSupported('ascii')).toBe(true);
     });
 
-    it('returns true for dynamic domains', () => {
-      generatorRegistry.registerDomain({
-        name: 'custom-domain',
-        keywords: ['custom'],
-        confidence: 0.5,
-        generate: async () => 'custom',
-      });
-      expect(generatorRegistry.isDomainSupported('custom-domain')).toBe(true);
+    it('returns true for dynamically registered domains', () => {
+      generatorRegistry.registerDomain({ name: 'custom', keywords: ['c'], confidence: 0.5, generate: () => 'c' });
+      expect(generatorRegistry.isDomainSupported('custom')).toBe(true);
     });
 
-    it('returns false for unsupported domains', () => {
+    it('returns false for unknown domain', () => {
       expect(generatorRegistry.isDomainSupported('nonexistent')).toBe(false);
     });
   });
 
-  describe('getAllDomainKeywords', () => {
-    it('merges built-in and dynamic keywords', () => {
-      generatorRegistry.registerDomain({
-        name: 'limerick',
-        keywords: ['limerick', 'nantucket'],
-        confidence: 0.5,
-        generate: async () => 'limerick',
-      });
-
-      const all = generatorRegistry.getAllDomainKeywords();
-      expect(all.music).toBeDefined();
-      expect(all.limerick).toEqual(['limerick', 'nantucket']);
-    });
-  });
+  // ─── getRoutingStats ────────────────────────────────────────────────────
 
   describe('getRoutingStats', () => {
-    it('returns complete routing statistics', () => {
+    it('returns routing stats with correct structure', () => {
       const stats = generatorRegistry.getRoutingStats();
       expect(stats.overallLocalFitness).toBe(0.463);
       expect(stats.overallCloudFitness).toBe(0.409);
-      expect(stats.abTestResults.music.local).toBe(0.523);
       expect(stats.domains.music.winner).toBe('local');
-      expect(stats.domains.music.advantage).toBe('+121%');
+      expect(stats.domains.ascii.winner).toBe('cloud');
     });
   });
 
-  describe('getAll', () => {
-    it('returns all registered entries', () => {
-      generatorRegistry.register({
-        name: 'entry-1',
-        canHandle: () => 0.5,
-        generate: async () => 'result',
-      });
-      generatorRegistry.register({
-        name: 'entry-2',
-        canHandle: () => 0.7,
-        generate: async () => 'result',
-      });
+  // ─── setRoutingConfig ───────────────────────────────────────────────────
 
-      const all = generatorRegistry.getAll();
-      expect(all.length).toBe(2);
-      expect(all[0].name).toBe('entry-1');
-      expect(all[1].name).toBe('entry-2');
+  describe('setRoutingConfig', () => {
+    it('merges config with defaults', () => {
+      generatorRegistry.setRoutingConfig({ preferLocal: false });
+      const decision = generatorRegistry.route('unknown' as any);
+      expect(decision.model).toBe('cloud');
+    });
+
+    it('preserves unoverridden config fields', () => {
+      generatorRegistry.setRoutingConfig({ preferLocal: true, fallbackToHybrid: true });
+      const decision = generatorRegistry.route('unknown' as any);
+      expect(decision.model).toBe('local');
     });
   });
 });

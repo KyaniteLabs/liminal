@@ -1,17 +1,13 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// --- Mocks ---
-
-const { mockExecFileAsync } = vi.hoisted(() => ({
-  mockExecFileAsync: vi.fn(),
-}));
+const mockExecFile = vi.hoisted(() => vi.fn());
 
 vi.mock('node:child_process', () => ({
-  execFile: 'not-used-directly',
+  execFile: mockExecFile,
 }));
 
 vi.mock('node:util', () => ({
-  promisify: vi.fn().mockReturnValue(mockExecFileAsync),
+  promisify: () => mockExecFile,
 }));
 
 import { SearchTool } from '../../../src/harness/tools/SearchTool.js';
@@ -20,220 +16,282 @@ describe('SearchTool', () => {
   let tool: SearchTool;
 
   beforeEach(() => {
-    vi.clearAllMocks();
     tool = new SearchTool();
+    mockExecFile.mockReset();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
+  it('exposes correct name and description', () => {
+    expect(tool.name).toBe('search');
+    expect(tool.description).toBe('Search for patterns in codebase using ripgrep');
   });
-
-  // --- Basic properties ---
-
-  describe('properties', () => {
-    it('has name "search"', () => {
-      expect(tool.name).toBe('search');
-    });
-
-    it('has a non-empty description', () => {
-      expect(tool.description.length).toBeGreaterThan(0);
-    });
-  });
-
-  // --- Missing pattern ---
 
   describe('missing pattern', () => {
-    it('returns failure when pattern is empty string', async () => {
+    it('returns error when pattern is empty string', async () => {
       const result = await tool.execute({ pattern: '' });
+
       expect(result.success).toBe(false);
       expect(result.error).toBe('pattern is required');
     });
 
-    it('returns failure when pattern is missing', async () => {
-      const result = await tool.execute({});
+    it('returns error when pattern is undefined', async () => {
+      const result = await tool.execute({ pattern: undefined as unknown as string });
+
       expect(result.success).toBe(false);
       expect(result.error).toBe('pattern is required');
     });
 
-    it('returns failure when pattern is null', async () => {
-      const result = await tool.execute({ pattern: null });
-      // null is falsy so it hits the !pattern check
+    it('returns error when pattern is null', async () => {
+      const result = await tool.execute({ pattern: null as unknown as string });
+
       expect(result.success).toBe(false);
       expect(result.error).toBe('pattern is required');
     });
   });
-
-  // --- Path validation ---
 
   describe('path validation', () => {
-    it('returns failure for path outside allowed directories', async () => {
-      const result = await tool.execute({ pattern: 'hello', path: '/etc/passwd' });
+    it('rejects paths outside project directory', async () => {
+      const result = await tool.execute({ pattern: 'test', path: '/etc/passwd' });
+
       expect(result.success).toBe(false);
       expect(result.error).toBe('Path not allowed');
     });
 
-    it('returns failure for path traversing above project', async () => {
-      const result = await tool.execute({ pattern: 'hello', path: '../../etc' });
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Path not allowed');
-    });
-  });
+    it('accepts paths within src/ directory', async () => {
+      mockExecFile.mockResolvedValue({ stdout: '', stderr: '' });
 
-  // --- Successful search with ripgrep ---
-
-  describe('successful ripgrep search', () => {
-    it('parses rg output correctly', async () => {
-      const rgOutput = 'src/utils/Logger.ts:10:export const LOG_LEVEL = "debug";\nsrc/core/index.ts:25:const level = LOG_LEVEL;\n';
-      mockExecFileAsync.mockResolvedValue({ stdout: rgOutput, stderr: '' });
-
-      const result = await tool.execute({ pattern: 'LOG_LEVEL', path: 'src' });
+      const result = await tool.execute({ pattern: 'hello', path: 'src' });
 
       expect(result.success).toBe(true);
-      if (!result.success) return; // type guard
-      expect(result.data!.matches).toHaveLength(2);
-      expect(result.data!.matches[0]).toEqual({
-        file: 'src/utils/Logger.ts',
-        line: 10,
-        content: 'export const LOG_LEVEL = "debug";',
-      });
-      expect(result.data!.matches[1]).toEqual({
-        file: 'src/core/index.ts',
-        line: 25,
-        content: 'const level = LOG_LEVEL;',
-      });
-      expect(result.data!.totalMatches).toBe(2);
+      expect(result.data!.matches).toEqual([]);
+      expect(result.data!.totalMatches).toBe(0);
       expect(result.data!.truncated).toBe(false);
     });
 
-    it('handles no matches (rg exit code 1)', async () => {
-      const rgError = Object.assign(new Error('rg exited with code 1'), { exitCode: 1 });
-      mockExecFileAsync.mockRejectedValue(rgError);
+    it('rejects absolute paths outside allowed prefixes', async () => {
+      const result = await tool.execute({ pattern: 'test', path: '/tmp/evil' });
 
-      const result = await tool.execute({ pattern: 'NONEXISTENT_PATTERN_XYZ', path: 'src' });
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Path not allowed');
+    });
+  });
+
+  describe('ripgrep results parsing', () => {
+    it('parses ripgrep output into structured matches', async () => {
+      const ripgrepOutput = [
+        'src/main.ts:10:const greeting = "hello";',
+        'src/utils.ts:25:export const hello = "world";',
+      ].join('\n');
+
+      mockExecFile.mockResolvedValue({ stdout: ripgrepOutput, stderr: '' });
+
+      const result = await tool.execute({ pattern: 'hello', path: 'src' });
 
       expect(result.success).toBe(true);
-      if (!result.success) return;
-      expect(result.data!.matches).toEqual([]);
-      expect(result.data!.totalMatches).toBe(0);
+      expect(result.data!.totalMatches).toBe(2);
+      expect(result.data!.truncated).toBe(false);
+      expect(result.data!.matches).toHaveLength(2);
+
+      expect(result.data!.matches[0]).toEqual({
+        file: 'src/main.ts',
+        line: 10,
+        content: 'const greeting = "hello";',
+      });
+      expect(result.data!.matches[1]).toEqual({
+        file: 'src/utils.ts',
+        line: 25,
+        content: 'export const hello = "world";',
+      });
     });
 
-    it('truncates results when more than maxResults', async () => {
-      const lines = Array.from({ length: 10 }, (_, i) => `src/file.ts:${i + 1}:match line ${i + 1}`);
-      mockExecFileAsync.mockResolvedValue({ stdout: lines.join('\n'), stderr: '' });
+    it('limits results to maxResults and sets truncated flag', async () => {
+      const lines = Array.from({ length: 15 }, (_, i) => `src/file.ts:${i + 1}:match text ${i}`);
+      mockExecFile.mockResolvedValue({ stdout: lines.join('\n'), stderr: '' });
 
       const result = await tool.execute({ pattern: 'match', path: 'src', maxResults: 5 });
 
       expect(result.success).toBe(true);
-      if (!result.success) return;
       expect(result.data!.matches).toHaveLength(5);
-      expect(result.data!.totalMatches).toBe(10);
+      expect(result.data!.totalMatches).toBe(15);
       expect(result.data!.truncated).toBe(true);
     });
 
-    it('passes glob flag when provided', async () => {
-      mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: '' });
+    it('uses default maxResults of 20 when not specified', async () => {
+      const lines = Array.from({ length: 30 }, (_, i) => `src/file.ts:${i + 1}:line ${i}`);
+      mockExecFile.mockResolvedValue({ stdout: lines.join('\n'), stderr: '' });
+
+      const result = await tool.execute({ pattern: 'line', path: 'src' });
+
+      expect(result.data!.matches).toHaveLength(20);
+      expect(result.data!.truncated).toBe(true);
+    });
+
+    it('handles no matches (rg exit code 1)', async () => {
+      const rgError = new Error('no matches') as Error & { exitCode: number };
+      rgError.exitCode = 1;
+      mockExecFile.mockRejectedValue(rgError);
+
+      const result = await tool.execute({ pattern: 'nonexistent', path: 'src' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.matches).toEqual([]);
+      expect(result.data!.totalMatches).toBe(0);
+      expect(result.data!.truncated).toBe(false);
+    });
+
+    it('handles malformed ripgrep output lines gracefully', async () => {
+      const mixedOutput = [
+        'src/main.ts:10:good line',
+        'not a valid line',
+        '',
+        'src/other.ts:5:another good line',
+      ].join('\n');
+
+      mockExecFile.mockResolvedValue({ stdout: mixedOutput, stderr: '' });
+
+      const result = await tool.execute({ pattern: 'good', path: 'src' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.matches).toHaveLength(2);
+      expect(result.data!.matches[0].file).toBe('src/main.ts');
+      expect(result.data!.matches[1].file).toBe('src/other.ts');
+    });
+
+    it('returns error when ripgrep writes to stderr', async () => {
+      mockExecFile.mockResolvedValue({ stdout: '', stderr: 'ripgrep error: invalid regex' });
+
+      const result = await tool.execute({ pattern: '[invalid', path: 'src' });
+
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('ripgrep error: invalid regex');
+    });
+  });
+
+  describe('glob parameter', () => {
+    it('passes glob argument to ripgrep when specified', async () => {
+      mockExecFile.mockResolvedValue({ stdout: '', stderr: '' });
 
       await tool.execute({ pattern: 'hello', path: 'src', glob: '*.ts' });
 
-      const callArgs = mockExecFileAsync.mock.calls[0];
-      expect(callArgs[1]).toContain('--glob');
-      expect(callArgs[1]).toContain('*.ts');
+      expect(mockExecFile).toHaveBeenCalled();
+      const args = mockExecFile.mock.calls[0][1] as string[];
+      expect(args).toContain('--glob');
+      const globIndex = args.indexOf('--glob');
+      expect(args[globIndex + 1]).toBe('*.ts');
     });
 
-    it('uses default maxResults of 20', async () => {
-      mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: '' });
+    it('omits glob argument when not specified', async () => {
+      mockExecFile.mockResolvedValue({ stdout: '', stderr: '' });
 
       await tool.execute({ pattern: 'hello', path: 'src' });
 
-      const callArgs = mockExecFileAsync.mock.calls[0];
-      // maxResults+5 buffer = 25
-      expect(callArgs[1]).toContain('--max-count');
-      const maxCountIdx = callArgs[1].indexOf('--max-count');
-      expect(callArgs[1][maxCountIdx + 1]).toBe('25');
+      const args = mockExecFile.mock.calls[0][1] as string[];
+      expect(args).not.toContain('--glob');
     });
+  });
 
-    it('skips lines that do not match file:line:content format', async () => {
-      const mixedOutput = 'src/file.ts:10:real match\nbinary file matches\nsrc/other.ts:20:another match\n';
-      mockExecFileAsync.mockResolvedValue({ stdout: mixedOutput, stderr: '' });
+  describe('ripgrep not available (fallback to grep)', () => {
+    it('falls back to grep when rg is not installed', async () => {
+      const rgError = new Error('command not found: rg');
+      mockExecFile.mockRejectedValueOnce(rgError);
 
-      const result = await tool.execute({ pattern: 'match', path: 'src' });
+      // Mock grep success
+      const grepOutput = 'src/main.ts:10:const greeting = "hello";';
+      mockExecFile.mockResolvedValueOnce({ stdout: grepOutput, stderr: '' });
+
+      const result = await tool.execute({ pattern: 'hello', path: 'src' });
 
       expect(result.success).toBe(true);
-      if (!result.success) return;
-      expect(result.data!.matches).toHaveLength(2);
-      // The "binary file matches" line is filtered out
+      expect(result.data!.matches).toHaveLength(1);
+      expect(result.data!.matches[0]).toEqual({
+        file: 'src/main.ts',
+        line: 10,
+        content: 'const greeting = "hello";',
+      });
     });
 
-    it('returns error when stderr is non-empty', async () => {
-      mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: 'ripgrep error: invalid pattern' });
+    it('returns error when both rg and grep fail', async () => {
+      const rgError = new Error('command not found: rg');
+      const grepError = new Error('command not found: grep');
+      mockExecFile.mockRejectedValueOnce(rgError);
+      mockExecFile.mockRejectedValueOnce(grepError);
 
       const result = await tool.execute({ pattern: 'hello', path: 'src' });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('ripgrep error: invalid pattern');
+      expect(result.error).toBe('Search failed. Install ripgrep: brew install ripgrep');
+    });
+
+    it('handles grep results with truncation', async () => {
+      const rgError = new Error('no rg');
+      mockExecFile.mockRejectedValueOnce(rgError);
+
+      const lines = Array.from({ length: 30 }, (_, i) => `src/file.ts:${i + 1}:line ${i}`);
+      mockExecFile.mockResolvedValueOnce({ stdout: lines.join('\n') });
+
+      const result = await tool.execute({ pattern: 'line', path: 'src', maxResults: 5 });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.matches).toHaveLength(5);
+      expect(result.data!.truncated).toBe(true);
     });
   });
 
-  // --- Fallback to grep ---
+  describe('grep fallback malformed lines', () => {
+    it('handles malformed lines in grep fallback output', async () => {
+      const rgError = new Error('no rg');
+      mockExecFile.mockRejectedValueOnce(rgError);
 
-  describe('fallback to grep', () => {
-    it('falls back to grep when ripgrep throws (not exit code 1)', async () => {
-      // First call (rg) throws, second call (grep) succeeds
-      const rgError = new Error('rg: command not found');
-      mockExecFileAsync
-        .mockRejectedValueOnce(rgError)
-        .mockResolvedValueOnce({ stdout: 'src/file.ts:5:found it\n' });
+      const grepOutput = [
+        'src/main.ts:10:good line',
+        'not a valid line',
+        'src/other.ts:5:another good line',
+      ].join('\n');
+      mockExecFile.mockResolvedValueOnce({ stdout: grepOutput });
+
+      const result = await tool.execute({ pattern: 'good', path: 'src' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.matches).toHaveLength(2);
+      expect(result.data!.matches[0].file).toBe('src/main.ts');
+      expect(result.data!.matches[1].file).toBe('src/other.ts');
+    });
+
+    it('grep fallback sets truncated when results exceed maxResults', async () => {
+      const rgError = new Error('no rg');
+      mockExecFile.mockRejectedValueOnce(rgError);
+
+      const lines = Array.from({ length: 25 }, (_, i) => `src/f.ts:${i + 1}:line ${i}`);
+      mockExecFile.mockResolvedValueOnce({ stdout: lines.join('\n') });
+
+      const result = await tool.execute({ pattern: 'line', path: 'src', maxResults: 10 });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.matches).toHaveLength(10);
+      expect(result.data!.truncated).toBe(true);
+      expect(result.data!.totalMatches).toBe(25);
+    });
+  });
+
+  describe('rg non-exit-code-1 error propagates to grep fallback', () => {
+    it('falls back to grep when rg throws non-exit-code-1 error', async () => {
+      const rgError = new Error('permission denied') as Error & { exitCode: number };
+      rgError.exitCode = 2;
+      mockExecFile.mockRejectedValueOnce(rgError);
+
+      mockExecFile.mockResolvedValueOnce({ stdout: 'src/a.ts:1:found' });
 
       const result = await tool.execute({ pattern: 'found', path: 'src' });
 
       expect(result.success).toBe(true);
-      if (!result.success) return;
       expect(result.data!.matches).toHaveLength(1);
-      expect(result.data!.matches[0].content).toBe('found it');
-    });
-
-    it('returns failure when both rg and grep fail', async () => {
-      mockExecFileAsync
-        .mockRejectedValueOnce(new Error('rg: not found'))
-        .mockRejectedValueOnce(new Error('grep: not found'));
-
-      const result = await tool.execute({ pattern: 'hello', path: 'src' });
-
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Search failed');
-      expect(result.error).toContain('Install ripgrep');
     });
   });
 
-  // --- Custom maxResults ---
-
-  describe('custom maxResults', () => {
-    it('respects custom maxResults parameter', async () => {
-      const lines = Array.from({ length: 8 }, (_, i) => `src/file.ts:${i + 1}:line ${i + 1}`);
-      mockExecFileAsync.mockResolvedValue({ stdout: lines.join('\n'), stderr: '' });
-
-      const result = await tool.execute({ pattern: 'line', path: 'src', maxResults: 3 });
-
-      expect(result.success).toBe(true);
-      if (!result.success) return;
-      expect(result.data!.matches).toHaveLength(3);
-      expect(result.data!.truncated).toBe(true);
-    });
-  });
-
-  // --- Empty output ---
-
-  describe('empty output', () => {
-    it('handles empty stdout gracefully', async () => {
-      mockExecFileAsync.mockResolvedValue({ stdout: '', stderr: '' });
-
-      const result = await tool.execute({ pattern: 'nothing', path: 'src' });
-
-      expect(result.success).toBe(true);
-      if (!result.success) return;
-      expect(result.data!.matches).toEqual([]);
-      expect(result.data!.totalMatches).toBe(0);
-      expect(result.data!.truncated).toBe(false);
+  describe('singleton export', () => {
+    it('searchTool is an instance of SearchTool', async () => {
+      const { searchTool } = await import('../../../src/harness/tools/SearchTool.js');
+      expect(searchTool).toBeInstanceOf(SearchTool);
+      expect(searchTool.name).toBe('search');
     });
   });
 });

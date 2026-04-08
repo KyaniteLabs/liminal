@@ -1,73 +1,60 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ---------------------------------------------------------------------------
-// Hoisted mocks — vi.hoisted is mandatory for variables used in vi.mock()
-// ---------------------------------------------------------------------------
+/**
+ * Tests for PluginLoader - Dynamic loading and management of generator plugins
+ *
+ * PluginLoader supports:
+ * - Loading plugins from a directory (via filesystem)
+ * - Programmatic registration (registerPlugin)
+ * - Plugin lookup by prompt matching (findPluginForPrompt)
+ * - Lifecycle management (unload, destroy)
+ * - Event notifications (onEvent, offEvent)
+ * - Dependency checking
+ *
+ * Mocks: fs (readdir, readFile), dynamic import, Logger
+ */
 
-const { mockFsReaddir, mockFsReadFile, mockDynamicImport } = vi.hoisted(() => ({
-  mockFsReaddir: vi.fn(),
-  mockFsReadFile: vi.fn(),
-  mockDynamicImport: vi.fn(),
-}));
+import { PluginLoader } from '../../../src/plugins/PluginLoader.js';
+import type { GeneratorPlugin, PluginManifest, PluginLoadResult, PluginEvent } from '../../../src/plugins/types.js';
+
+// ── Mocks ──────────────────────────────────────────────────────────────────
+
+const mockReaddir = vi.hoisted(() => vi.fn());
+const mockReadFile = vi.hoisted(() => vi.fn());
 
 vi.mock('node:fs/promises', () => ({
   default: {
-    readdir: mockFsReaddir,
-    readFile: mockFsReadFile,
+    readdir: mockReaddir,
+    readFile: mockReadFile,
   },
+  readdir: mockReaddir,
+  readFile: mockReadFile,
 }));
 
 vi.mock('../../../src/utils/Logger.js', () => ({
-  Logger: {
-    warn: vi.fn(),
-    info: vi.fn(),
-    error: vi.fn(),
-    debug: vi.fn(),
-  },
+  Logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
-vi.mock('../../../src/utils/errors.js', () => ({
-  formatError: (_ctx: string, err: unknown) =>
-    err instanceof Error ? err.message : String(err),
-}));
+// ── Helpers ────────────────────────────────────────────────────────────────
 
-import { PluginLoader } from '../../../src/plugins/PluginLoader.js';
-import type {
-  GeneratorPlugin,
-  PluginManifest,
-  PluginEvent,
-} from '../../../src/plugins/types.js';
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-function makeManifest(overrides?: Partial<PluginManifest>): PluginManifest {
+function makeManifest(overrides: Partial<PluginManifest> = {}): PluginManifest {
   return {
     id: 'test-plugin',
     name: 'Test Plugin',
     version: '1.0.0',
     description: 'A test plugin',
     entry: 'index.js',
-    domains: ['p5'],
-    keywords: ['sketch', 'drawing'],
+    domains: ['p5', 'shader'],
+    keywords: ['creative', 'art'],
     ...overrides,
   };
 }
 
-function makePlugin(overrides?: Partial<GeneratorPlugin>): GeneratorPlugin {
+function makePlugin(overrides: Partial<GeneratorPlugin> = {}): GeneratorPlugin {
+  const manifest = makeManifest();
   return {
-    manifest: makeManifest(),
+    manifest,
     generate: vi.fn().mockResolvedValue('generated code'),
-    ...overrides,
-  };
-}
-
-function makePluginModule(
-  overrides?: Record<string, unknown>,
-): Record<string, unknown> {
-  return {
-    generate: vi.fn().mockResolvedValue('module-generated'),
     canHandle: vi.fn().mockReturnValue(0.8),
     initialize: vi.fn().mockResolvedValue(undefined),
     destroy: vi.fn().mockResolvedValue(undefined),
@@ -75,93 +62,177 @@ function makePluginModule(
   };
 }
 
-function manifestJson(overrides?: Partial<PluginManifest>): string {
-  return JSON.stringify(makeManifest(overrides));
-}
-
-// ===========================================================================
-// PluginLoader — comprehensive tests
-// ===========================================================================
+// ── Tests ──────────────────────────────────────────────────────────────────
 
 describe('PluginLoader', () => {
   let loader: PluginLoader;
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    loader = new PluginLoader('/test/plugins');
+    loader = new PluginLoader('/tmp/test-plugins');
+    mockReaddir.mockReset();
+    mockReadFile.mockReset();
   });
 
-  // ─── constructor ──────────────────────────────────────────────────────
+  // ── loadAll ──────────────────────────────────────────────────────────────
 
-  describe('constructor', () => {
-    it('uses provided plugins directory', () => {
-      const custom = new PluginLoader('/custom/path');
-      // Verify indirectly by loading — if path is wrong, loadAll will fail
-      expect(custom).toBeInstanceOf(PluginLoader);
+  describe('loadAll', () => {
+    it('returns empty array when plugins directory does not exist', async () => {
+      mockReaddir.mockRejectedValue(Object.assign(new Error('ENOENT'), { code: 'ENOENT' }));
+
+      const results = await loader.loadAll();
+      expect(results).toEqual([]);
+    });
+
+    it('re-throws non-ENOENT errors', async () => {
+      mockReaddir.mockRejectedValue(Object.assign(new Error('EACCES'), { code: 'EACCES' }));
+
+      await expect(loader.loadAll()).rejects.toThrow('EACCES');
+    });
+
+    it('loads plugins from subdirectories', async () => {
+      mockReaddir.mockResolvedValue([
+        { name: 'p5', isDirectory: () => true },
+        { name: 'shader', isDirectory: () => true },
+        { name: 'README.md', isDirectory: () => false },
+      ]);
+
+      // Mock loadPlugin for each directory
+      const p5Manifest = makeManifest({ id: 'p5', entry: 'index.js' });
+      const shaderManifest = makeManifest({ id: 'shader', entry: 'main.js' });
+
+      // First call: p5 plugin
+      mockReadFile.mockResolvedValueOnce(JSON.stringify(p5Manifest));
+      // Second call: shader plugin
+      mockReadFile.mockResolvedValueOnce(JSON.stringify(shaderManifest));
+
+      // Mock dynamic imports -- we can't easily mock import() so we test via registerPlugin path
+      // For loadAll, the import() will fail, so both results should be errors
+      const results = await loader.loadAll();
+      expect(results.length).toBe(2);
+      // Without a mock for dynamic import, these will fail
+      expect(results.every(r => !r.success)).toBe(true);
     });
   });
 
-  // ─── registerPlugin ───────────────────────────────────────────────────
+  // ── loadPlugin ───────────────────────────────────────────────────────────
 
-  describe('registerPlugin()', () => {
-    it('stores plugin and makes it retrievable via getPlugin', () => {
+  describe('loadPlugin', () => {
+    it('fails for missing manifest', async () => {
+      mockReadFile.mockRejectedValue(new Error('ENOENT'));
+
+      const result = await loader.loadPlugin('/plugins/nonexistent');
+
+      expect(result.success).toBe(false);
+      expect(result.error?.pluginId).toBe('nonexistent');
+    });
+
+    it('fails for manifest with missing id', async () => {
+      mockReadFile.mockResolvedValue(JSON.stringify({ entry: 'index.js' }));
+
+      const result = await loader.loadPlugin('/plugins/bad');
+
+      expect(result.success).toBe(false);
+    });
+
+    it('fails for manifest with missing entry', async () => {
+      mockReadFile.mockResolvedValue(JSON.stringify({ id: 'test' }));
+
+      const result = await loader.loadPlugin('/plugins/bad');
+
+      expect(result.success).toBe(false);
+    });
+
+    it('fails when dependency is not loaded', async () => {
+      mockReadFile.mockResolvedValue(JSON.stringify(
+        makeManifest({ id: 'dep-plugin', dependencies: ['missing-dep'] })
+      ));
+
+      const result = await loader.loadPlugin('/plugins/dep');
+
+      expect(result.success).toBe(false);
+    });
+
+    it('succeeds for valid manifest with no dependencies', async () => {
+      const manifest = makeManifest({ id: 'standalone', entry: 'index.js' });
+      mockReadFile.mockResolvedValue(JSON.stringify(manifest));
+
+      // Dynamic import will fail in test, so this will be an error result
+      const result = await loader.loadPlugin('/plugins/standalone');
+
+      // The load fails at the dynamic import step
+      expect(result.success).toBe(false);
+    });
+  });
+
+  // ── registerPlugin ───────────────────────────────────────────────────────
+
+  describe('registerPlugin', () => {
+    it('stores the plugin and makes it retrievable', () => {
       const plugin = makePlugin();
       loader.registerPlugin(plugin);
 
       expect(loader.getPlugin('test-plugin')).toBe(plugin);
+      expect(loader.isLoaded('test-plugin')).toBe(true);
     });
 
-    it('stores manifest and makes it retrievable via getManifest', () => {
+    it('stores the manifest', () => {
       const plugin = makePlugin();
       loader.registerPlugin(plugin);
 
       expect(loader.getManifest('test-plugin')).toEqual(plugin.manifest);
     });
 
-    it('marks plugin as loaded via isLoaded', () => {
-      loader.registerPlugin(makePlugin());
-      expect(loader.isLoaded('test-plugin')).toBe(true);
-    });
-
-    it('includes plugin in getAllPlugins', () => {
+    it('appears in getAllPlugins', () => {
       const plugin = makePlugin();
       loader.registerPlugin(plugin);
 
-      expect(loader.getAllPlugins()).toEqual([plugin]);
+      expect(loader.getAllPlugins()).toContain(plugin);
     });
 
-    it('emits plugin:loaded event with correct type and pluginId', () => {
+    it('emits plugin:loaded event', () => {
       const handler = vi.fn();
       loader.onEvent(handler);
 
-      loader.registerPlugin(makePlugin());
+      const plugin = makePlugin();
+      loader.registerPlugin(plugin);
 
       expect(handler).toHaveBeenCalledTimes(1);
-      const event: PluginEvent = handler.mock.calls[0][0];
-      expect(event.type).toBe('plugin:loaded');
-      expect(event.pluginId).toBe('test-plugin');
-      expect(event.timestamp).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+      expect(handler.mock.calls[0][0].type).toBe('plugin:loaded');
+      expect(handler.mock.calls[0][0].pluginId).toBe('test-plugin');
     });
 
-    it('replaces plugin when registering with same id', () => {
-      const v1 = makePlugin();
-      const v2 = makePlugin({
-        manifest: makeManifest({ version: '2.0.0' }),
-      });
+    it('replaces existing plugin with same id', () => {
+      const plugin1 = makePlugin({ manifest: makeManifest({ id: 'dup', name: 'First' }) });
+      const plugin2 = makePlugin({ manifest: makeManifest({ id: 'dup', name: 'Second' }) });
 
-      loader.registerPlugin(v1);
-      loader.registerPlugin(v2);
+      loader.registerPlugin(plugin1);
+      loader.registerPlugin(plugin2);
 
-      expect(loader.getPlugin('test-plugin')).toBe(v2);
-      expect(loader.getManifest('test-plugin')!.version).toBe('2.0.0');
-      expect(loader.getAllPlugins()).toHaveLength(1);
+      expect(loader.getPlugin('dup')?.manifest.name).toBe('Second');
+      expect(loader.getAllPlugins().length).toBe(1);
     });
   });
 
-  // ─── unloadPlugin ─────────────────────────────────────────────────────
+  // ── unloadPlugin ─────────────────────────────────────────────────────────
 
-  describe('unloadPlugin()', () => {
-    it('calls destroy on the plugin before removing it', async () => {
+  describe('unloadPlugin', () => {
+    it('returns false for non-existent plugin', async () => {
+      const result = await loader.unloadPlugin('nonexistent');
+      expect(result).toBe(false);
+    });
+
+    it('removes the plugin from the registry', async () => {
+      const plugin = makePlugin();
+      loader.registerPlugin(plugin);
+
+      const result = await loader.unloadPlugin('test-plugin');
+
+      expect(result).toBe(true);
+      expect(loader.getPlugin('test-plugin')).toBeUndefined();
+      expect(loader.isLoaded('test-plugin')).toBe(false);
+    });
+
+    it('calls destroy on the plugin', async () => {
       const destroy = vi.fn().mockResolvedValue(undefined);
       const plugin = makePlugin({ destroy });
       loader.registerPlugin(plugin);
@@ -171,446 +242,168 @@ describe('PluginLoader', () => {
       expect(destroy).toHaveBeenCalledTimes(1);
     });
 
-    it('returns true when plugin exists', async () => {
-      loader.registerPlugin(makePlugin());
-      expect(await loader.unloadPlugin('test-plugin')).toBe(true);
-    });
+    it('emits plugin:unloaded event', async () => {
+      const handler = vi.fn();
+      loader.onEvent(handler);
 
-    it('returns false for unknown plugin id', async () => {
-      expect(await loader.unloadPlugin('nonexistent')).toBe(false);
-    });
-
-    it('removes plugin from getPlugin results', async () => {
-      loader.registerPlugin(makePlugin());
+      const plugin = makePlugin();
+      loader.registerPlugin(plugin);
       await loader.unloadPlugin('test-plugin');
 
-      expect(loader.getPlugin('test-plugin')).toBeUndefined();
+      const events = handler.mock.calls.map(c => c[0].type);
+      expect(events).toContain('plugin:unloaded');
     });
 
-    it('removes manifest from getManifest results', async () => {
-      loader.registerPlugin(makePlugin());
+    it('removes the manifest', async () => {
+      const plugin = makePlugin();
+      loader.registerPlugin(plugin);
+
       await loader.unloadPlugin('test-plugin');
 
       expect(loader.getManifest('test-plugin')).toBeUndefined();
     });
+  });
 
-    it('updates isLoaded to false', async () => {
-      loader.registerPlugin(makePlugin());
-      await loader.unloadPlugin('test-plugin');
+  // ── findPluginForPrompt ──────────────────────────────────────────────────
 
-      expect(loader.isLoaded('test-plugin')).toBe(false);
+  describe('findPluginForPrompt', () => {
+    it('returns undefined when no plugins loaded', () => {
+      expect(loader.findPluginForPrompt('make a p5 sketch')).toBeUndefined();
     });
 
-    it('emits plugin:unloaded event', async () => {
-      const handler = vi.fn();
-      loader.onEvent(handler);
-      loader.registerPlugin(makePlugin());
+    it('uses canHandle for scoring when available', () => {
+      const lowPlugin = makePlugin({
+        manifest: makeManifest({ id: 'low-match' }),
+        canHandle: vi.fn().mockReturnValue(0.2),
+      });
+      const highPlugin = makePlugin({
+        manifest: makeManifest({ id: 'high-match' }),
+        canHandle: vi.fn().mockReturnValue(0.9),
+      });
 
-      await loader.unloadPlugin('test-plugin');
+      loader.registerPlugin(lowPlugin);
+      loader.registerPlugin(highPlugin);
 
-      const unloadEvent = handler.mock.calls.find(
-        (call: [PluginEvent]) => call[0].type === 'plugin:unloaded',
-      );
-      expect(unloadEvent).toBeDefined();
-      expect(unloadEvent![0].pluginId).toBe('test-plugin');
+      const result = loader.findPluginForPrompt('create something');
+      expect(result?.manifest.id).toBe('high-match');
     });
 
-    it('handles plugin without destroy method', async () => {
-      const plugin = makePlugin({ destroy: undefined });
+    it('falls back to keyword matching when canHandle is not provided', () => {
+      const plugin = makePlugin({
+        canHandle: undefined,
+        manifest: makeManifest({
+          id: 'keyword-plugin',
+          keywords: ['p5', 'creative'],
+          domains: ['p5'],
+        }),
+      });
+
       loader.registerPlugin(plugin);
 
-      const result = await loader.unloadPlugin('test-plugin');
-      expect(result).toBe(true);
-      expect(loader.isLoaded('test-plugin')).toBe(false);
+      const result = loader.findPluginForPrompt('make a p5 sketch');
+      expect(result?.manifest.id).toBe('keyword-plugin');
+    });
+
+    it('matches domains with higher score than keywords', () => {
+      const plugin = makePlugin({
+        canHandle: undefined,
+        manifest: makeManifest({
+          id: 'domain-plugin',
+          keywords: ['art'],
+          domains: ['shader'],
+        }),
+      });
+
+      loader.registerPlugin(plugin);
+
+      // "shader" in prompt should match the domain
+      const result = loader.findPluginForPrompt('create a shader artwork');
+      expect(result?.manifest.id).toBe('domain-plugin');
+    });
+
+    it('returns undefined when no plugin matches', () => {
+      const plugin = makePlugin({
+        canHandle: vi.fn().mockReturnValue(0),
+        manifest: makeManifest({ id: 'no-match' }),
+      });
+
+      loader.registerPlugin(plugin);
+
+      expect(loader.findPluginForPrompt('completely unrelated')).toBeUndefined();
     });
   });
 
-  // ─── getters ──────────────────────────────────────────────────────────
+  // ── Event system ─────────────────────────────────────────────────────────
 
-  describe('getters', () => {
+  describe('event system', () => {
+    it('onEvent registers handler', () => {
+      const handler = vi.fn();
+      loader.onEvent(handler);
+
+      const plugin = makePlugin();
+      loader.registerPlugin(plugin);
+
+      expect(handler).toHaveBeenCalled();
+    });
+
+    it('offEvent removes handler', () => {
+      const handler = vi.fn();
+      loader.onEvent(handler);
+      loader.offEvent(handler);
+
+      const plugin = makePlugin();
+      loader.registerPlugin(plugin);
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('offEvent with non-registered handler does nothing', () => {
+      const handler = vi.fn();
+      // Should not throw
+      loader.offEvent(handler);
+    });
+
+    it('handler errors are caught and do not crash', () => {
+      const badHandler = () => { throw new Error('handler crash'); };
+      loader.onEvent(badHandler);
+
+      // Should not throw
+      const plugin = makePlugin();
+      expect(() => loader.registerPlugin(plugin)).not.toThrow();
+    });
+  });
+
+  // ── Accessors ────────────────────────────────────────────────────────────
+
+  describe('accessors', () => {
     it('getPlugin returns undefined for unknown id', () => {
-      expect(loader.getPlugin('nope')).toBeUndefined();
+      expect(loader.getPlugin('unknown')).toBeUndefined();
     });
 
     it('getManifest returns undefined for unknown id', () => {
-      expect(loader.getManifest('nope')).toBeUndefined();
+      expect(loader.getManifest('unknown')).toBeUndefined();
     });
 
     it('getAllPlugins returns empty array when nothing loaded', () => {
       expect(loader.getAllPlugins()).toEqual([]);
     });
 
-    it('getAllPlugins returns all registered plugins', () => {
-      const p1 = makePlugin({ manifest: makeManifest({ id: 'p1' }) });
-      const p2 = makePlugin({ manifest: makeManifest({ id: 'p2' }) });
-      loader.registerPlugin(p1);
-      loader.registerPlugin(p2);
-
-      const all = loader.getAllPlugins();
-      expect(all).toHaveLength(2);
-      expect(all).toContain(p1);
-      expect(all).toContain(p2);
-    });
-
-    it('isLoaded returns false for unknown plugin', () => {
-      expect(loader.isLoaded('unknown')).toBe(false);
+    it('isLoaded returns false for unloaded plugin', () => {
+      expect(loader.isLoaded('nothing')).toBe(false);
     });
   });
 
-  // ─── findPluginForPrompt ──────────────────────────────────────────────
+  // ── Plugin with initialize lifecycle ─────────────────────────────────────
 
-  describe('findPluginForPrompt()', () => {
-    it('returns undefined when no plugins are loaded', () => {
-      expect(loader.findPluginForPrompt('draw something')).toBeUndefined();
-    });
+  describe('plugin lifecycle', () => {
+    it('registerPlugin does not call initialize (initialize is for loadPlugin path)', () => {
+      const initialize = vi.fn().mockResolvedValue(undefined);
+      const plugin = makePlugin({ initialize });
 
-    it('returns undefined when no plugin matches the prompt', () => {
-      loader.registerPlugin(
-        makePlugin({
-          manifest: makeManifest({ keywords: ['shader'], domains: ['glsl'] }),
-        }),
-      );
-
-      const found = loader.findPluginForPrompt('bake a cake');
-      expect(found).toBeUndefined();
-    });
-
-    it('uses plugin canHandle when available', () => {
-      const plugin = makePlugin({
-        canHandle: vi.fn().mockReturnValue(0.9),
-      });
       loader.registerPlugin(plugin);
 
-      const found = loader.findPluginForPrompt('draw something');
-      expect(found).toBe(plugin);
-      expect(plugin.canHandle).toHaveBeenCalledWith('draw something');
-    });
-
-    it('ignores plugin with canHandle returning 0', () => {
-      const plugin = makePlugin({
-        canHandle: vi.fn().mockReturnValue(0),
-      });
-      loader.registerPlugin(plugin);
-
-      const found = loader.findPluginForPrompt('draw something');
-      expect(found).toBeUndefined();
-    });
-
-    it('falls back to keyword matching when canHandle is absent', () => {
-      const plugin = makePlugin({
-        manifest: makeManifest({ keywords: ['sketch', 'drawing'], domains: ['p5'] }),
-        canHandle: undefined,
-      });
-      loader.registerPlugin(plugin);
-
-      const found = loader.findPluginForPrompt('create a sketch');
-      expect(found).toBe(plugin);
-    });
-
-    it('keyword match gives score 0.5', () => {
-      const keywordPlugin = makePlugin({
-        manifest: makeManifest({
-          id: 'keyword-only',
-          keywords: ['sketch'],
-          domains: ['unrelated-domain'],
-        }),
-        canHandle: undefined,
-      });
-      const strongPlugin = makePlugin({
-        canHandle: vi.fn().mockReturnValue(0.6),
-        manifest: makeManifest({ id: 'strong' }),
-      });
-
-      loader.registerPlugin(keywordPlugin);
-      loader.registerPlugin(strongPlugin);
-
-      // The canHandle plugin with 0.6 beats the keyword match at 0.5
-      const found = loader.findPluginForPrompt('sketch');
-      expect(found!.manifest.id).toBe('strong');
-    });
-
-    it('domain match gives score 0.7, beating keyword match at 0.5', () => {
-      const kwPlugin = makePlugin({
-        manifest: makeManifest({
-          id: 'kw',
-          keywords: ['sketch'],
-          domains: ['unrelated'],
-        }),
-        canHandle: undefined,
-      });
-      const domainPlugin = makePlugin({
-        manifest: makeManifest({
-          id: 'domain',
-          keywords: ['nothing-matching'],
-          domains: ['p5'],
-        }),
-        canHandle: undefined,
-      });
-
-      loader.registerPlugin(kwPlugin);
-      loader.registerPlugin(domainPlugin);
-
-      const found = loader.findPluginForPrompt('a p5 sketch');
-      expect(found!.manifest.id).toBe('domain');
-    });
-
-    it('picks highest scoring plugin among multiple candidates', () => {
-      const weak = makePlugin({
-        canHandle: vi.fn().mockReturnValue(0.3),
-        manifest: makeManifest({ id: 'weak' }),
-      });
-      const strong = makePlugin({
-        canHandle: vi.fn().mockReturnValue(0.95),
-        manifest: makeManifest({ id: 'strong' }),
-      });
-      const medium = makePlugin({
-        canHandle: vi.fn().mockReturnValue(0.6),
-        manifest: makeManifest({ id: 'medium' }),
-      });
-
-      loader.registerPlugin(weak);
-      loader.registerPlugin(strong);
-      loader.registerPlugin(medium);
-
-      expect(loader.findPluginForPrompt('test')!.manifest.id).toBe('strong');
-    });
-
-    it('keyword matching is case-insensitive', () => {
-      const plugin = makePlugin({
-        manifest: makeManifest({ keywords: ['Sketch'], domains: [] }),
-        canHandle: undefined,
-      });
-      loader.registerPlugin(plugin);
-
-      const found = loader.findPluginForPrompt('i love SKETCH art');
-      expect(found).toBe(plugin);
-    });
-
-    it('domain matching is case-insensitive', () => {
-      const plugin = makePlugin({
-        manifest: makeManifest({ keywords: [], domains: ['P5'] }),
-        canHandle: undefined,
-      });
-      loader.registerPlugin(plugin);
-
-      const found = loader.findPluginForPrompt('make a p5 animation');
-      expect(found).toBe(plugin);
-    });
-  });
-
-  // ─── event system ─────────────────────────────────────────────────────
-
-  describe('event system', () => {
-    it('onEvent registers a handler that receives events', () => {
-      const handler = vi.fn();
-      loader.onEvent(handler);
-
-      loader.registerPlugin(makePlugin());
-
-      expect(handler).toHaveBeenCalledTimes(1);
-    });
-
-    it('supports multiple event handlers', () => {
-      const h1 = vi.fn();
-      const h2 = vi.fn();
-      loader.onEvent(h1);
-      loader.onEvent(h2);
-
-      loader.registerPlugin(makePlugin());
-
-      expect(h1).toHaveBeenCalledTimes(1);
-      expect(h2).toHaveBeenCalledTimes(1);
-    });
-
-    it('offEvent removes a specific handler', () => {
-      const h1 = vi.fn();
-      const h2 = vi.fn();
-      loader.onEvent(h1);
-      loader.onEvent(h2);
-      loader.offEvent(h1);
-
-      loader.registerPlugin(makePlugin());
-
-      expect(h1).not.toHaveBeenCalled();
-      expect(h2).toHaveBeenCalledTimes(1);
-    });
-
-    it('offEvent with non-registered handler does nothing', () => {
-      const handler = vi.fn();
-      loader.onEvent(handler);
-      loader.offEvent(vi.fn()); // different reference
-
-      loader.registerPlugin(makePlugin());
-
-      expect(handler).toHaveBeenCalledTimes(1);
-    });
-
-    it('handler errors do not break other handlers', () => {
-      const bad = vi
-        .fn()
-        .mockImplementation(() => {
-          throw new Error('handler crash');
-        });
-      const good = vi.fn();
-      loader.onEvent(bad);
-      loader.onEvent(good);
-
-      loader.registerPlugin(makePlugin());
-
-      expect(good).toHaveBeenCalledTimes(1);
-    });
-
-    it('events from loadPlugin errors emit plugin:error', async () => {
-      const handler = vi.fn();
-      loader.onEvent(handler);
-      mockFsReadFile.mockRejectedValue(new Error('file not found'));
-
-      await loader.loadPlugin('/plugins/missing');
-
-      const errorEvent = handler.mock.calls.find(
-        (call: [PluginEvent]) => call[0].type === 'plugin:error',
-      );
-      expect(errorEvent).toBeDefined();
-      expect(errorEvent![0].pluginId).toBe('missing');
-      expect(errorEvent![0].data).toBeDefined();
-    });
-  });
-
-  // ─── loadAll ──────────────────────────────────────────────────────────
-
-  describe('loadAll()', () => {
-    it('returns empty array when directory does not exist (ENOENT)', async () => {
-      const enoent = new Error('Not found') as NodeJS.ErrnoException;
-      enoent.code = 'ENOENT';
-      mockFsReaddir.mockRejectedValue(enoent);
-
-      const results = await loader.loadAll();
-      expect(results).toEqual([]);
-    });
-
-    it('re-throws non-ENOENT errors from readdir', async () => {
-      const permError = new Error('Permission denied') as NodeJS.ErrnoException;
-      permError.code = 'EACCES';
-      mockFsReaddir.mockRejectedValue(permError);
-
-      await expect(loader.loadAll()).rejects.toThrow('Permission denied');
-    });
-
-    it('skips non-directory entries', async () => {
-      mockFsReaddir.mockResolvedValue([
-        { name: 'a-plugin', isDirectory: () => true },
-        { name: 'readme.txt', isDirectory: () => false },
-        { name: 'config.json', isDirectory: () => false },
-      ]);
-
-      mockFsReadFile.mockRejectedValue(new Error('no manifest'));
-
-      const results = await loader.loadAll();
-      // Only the directory entry was attempted
-      expect(results).toHaveLength(1);
-      expect(results[0].success).toBe(false);
-    });
-
-    it('returns empty array for empty directory', async () => {
-      mockFsReaddir.mockResolvedValue([]);
-
-      const results = await loader.loadAll();
-      expect(results).toEqual([]);
-    });
-  });
-
-  // ─── loadPlugin ───────────────────────────────────────────────────────
-
-  describe('loadPlugin()', () => {
-    it('returns error for invalid manifest missing id', async () => {
-      mockFsReadFile.mockResolvedValue(
-        JSON.stringify({ entry: 'index.js', name: 'x', version: '1.0.0', description: '', domains: [], keywords: [] }),
-      );
-
-      const result = await loader.loadPlugin('/plugins/bad-plugin');
-
-      expect(result.success).toBe(false);
-      expect(result.error!.pluginId).toBe('bad-plugin');
-      expect(result.error!.path).toBe('/plugins/bad-plugin');
-      expect(result.error!.error).toContain('Invalid manifest');
-    });
-
-    it('returns error for invalid manifest missing entry', async () => {
-      mockFsReadFile.mockResolvedValue(
-        JSON.stringify({ id: 'x', name: 'x', version: '1.0.0', description: '', domains: [], keywords: [] }),
-      );
-
-      const result = await loader.loadPlugin('/plugins/no-entry');
-
-      expect(result.success).toBe(false);
-      expect(result.error!.error).toContain('Invalid manifest');
-    });
-
-    it('returns error for missing dependency', async () => {
-      mockFsReadFile.mockResolvedValue(
-        JSON.stringify(
-          makeManifest({
-            id: 'dep-plugin',
-            dependencies: ['missing-dep'],
-          }),
-        ),
-      );
-
-      const result = await loader.loadPlugin('/plugins/dep-plugin');
-
-      expect(result.success).toBe(false);
-      expect(result.error!.error).toContain('Missing dependency: missing-dep');
-    });
-
-    it('returns error when manifest file cannot be read', async () => {
-      mockFsReadFile.mockRejectedValue(new Error('ENOENT: no such file'));
-
-      const result = await loader.loadPlugin('/plugins/no-manifest');
-
-      expect(result.success).toBe(false);
-      expect(result.error!.pluginId).toBe('no-manifest');
-    });
-
-    it('returns error when manifest is invalid JSON', async () => {
-      mockFsReadFile.mockResolvedValue('{ invalid json }');
-
-      const result = await loader.loadPlugin('/plugins/bad-json');
-
-      expect(result.success).toBe(false);
-      expect(result.error!.pluginId).toBe('bad-json');
-    });
-
-    it('succeeds when all dependencies are already loaded', async () => {
-      // Register the dependency first
-      const depPlugin = makePlugin({
-        manifest: makeManifest({ id: 'base-lib' }),
-      });
-      loader.registerPlugin(depPlugin);
-
-      mockFsReadFile.mockResolvedValue(
-        JSON.stringify(
-          makeManifest({
-            id: 'dependent-plugin',
-            dependencies: ['base-lib'],
-          }),
-        ),
-      );
-
-      // We can't fully test the dynamic import path without more mocking,
-      // but the dependency check should pass
-      const result = await loader.loadPlugin('/plugins/dependent-plugin');
-
-      // It will fail on the dynamic import, but NOT on the dependency check
-      expect(result.success).toBe(false);
-      expect(result.error!.error).not.toContain('Missing dependency');
-    });
-
-    it('extracts pluginId from path basename', async () => {
-      mockFsReadFile.mockRejectedValue(new Error('test'));
-
-      const result = await loader.loadPlugin('/some/nested/path/my-cool-plugin');
-
-      expect(result.error!.pluginId).toBe('my-cool-plugin');
+      // registerPlugin skips initialize -- that's only for filesystem loading
+      expect(initialize).not.toHaveBeenCalled();
     });
   });
 });

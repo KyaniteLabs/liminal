@@ -1,453 +1,335 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import fs from 'fs/promises';
-import path from 'path';
-import os from 'os';
-import {
-  loadConfig,
-  loadProjectConfig,
-  getEffectiveConfig,
-  saveConfig,
-} from '../../../src/config/ConfigLoader.js';
+import { loadConfig, saveConfig, getEffectiveConfig, loadProjectConfig } from '../../../src/config/ConfigLoader.js';
 
-const TEST_CONFIG_DIR = path.join(os.tmpdir(), 'liminal-config-test-' + process.pid);
-const TEST_CONFIG_PATH = path.join(TEST_CONFIG_DIR, 'config.json');
-const TEST_PROJECT_DIR = path.join(os.tmpdir(), 'liminal-project-test-' + process.pid);
-const TEST_PROJECT_CONFIG_DIR = path.join(TEST_PROJECT_DIR, 'config');
+// ---------------------------------------------------------------------------
+// Hoisted mocks — required for vi.mock() factory references
+// ---------------------------------------------------------------------------
 
-describe('ConfigLoader', () => {
-  beforeEach(async () => {
-    await fs.mkdir(TEST_CONFIG_DIR, { recursive: true });
-    await fs.mkdir(TEST_PROJECT_CONFIG_DIR, { recursive: true });
-    try { await fs.unlink(TEST_CONFIG_PATH); } catch {}
+const { mockReadFile, mockWriteFile, mockMkdir, mockStat, mockAccess, mockCopyFile } = vi.hoisted(() => ({
+  mockReadFile: vi.fn(),
+  mockWriteFile: vi.fn(),
+  mockMkdir: vi.fn(),
+  mockStat: vi.fn(),
+  mockAccess: vi.fn(),
+  mockCopyFile: vi.fn(),
+}));
+
+vi.mock('fs/promises', () => ({
+  default: {
+    readFile: mockReadFile,
+    writeFile: mockWriteFile,
+    mkdir: mockMkdir,
+    stat: mockStat,
+    access: mockAccess,
+    copyFile: mockCopyFile,
+  },
+  readFile: mockReadFile,
+  writeFile: mockWriteFile,
+  mkdir: mockMkdir,
+  stat: mockStat,
+  access: mockAccess,
+  copyFile: mockCopyFile,
+}));
+
+vi.mock('../../../src/utils/Logger.js', () => ({
+  Logger: {
+    warn: vi.fn(),
+    info: vi.fn(),
+    error: vi.fn(),
+  },
+}));
+
+vi.mock('../../../src/config/RoleConfig.js', () => ({
+  loadRoleConfig: vi.fn().mockResolvedValue({}),
+}));
+
+// ===========================================================================
+// loadConfig
+// ===========================================================================
+
+describe('loadConfig', () => {
+  beforeEach(() => {
+    vi.restoreAllMocks();
+    mockAccess.mockImplementation(async () => {});
   });
 
-  afterEach(async () => {
-    vi.unstubAllEnvs();
-    try { await fs.rm(TEST_CONFIG_DIR, { recursive: true, force: true }); } catch {}
-    try { await fs.rm(TEST_PROJECT_DIR, { recursive: true, force: true }); } catch {}
+  it('returns parsed config from JSON file', async () => {
+    const configJson = JSON.stringify({
+      defaultProvider: 'openai',
+      providers: { openai: { apiKey: 'sk-test-openai-key' } },
+    });
+    mockReadFile.mockResolvedValue(configJson);
+
+    const config = await loadConfig('/test/config.json');
+    expect(config).toEqual({
+      defaultProvider: 'openai',
+      providers: { openai: { apiKey: 'sk-test-openai-key' } },
+    });
   });
 
-  // ---------------------------------------------------------------------------
-  // loadConfig
-  // ---------------------------------------------------------------------------
-  describe('loadConfig', () => {
-    it('loads a valid config from file', async () => {
-      const config = {
-        defaultProvider: 'minimax',
-        providers: {
-          minimax: {
-            baseUrl: 'https://api.minimax.io/v1',
-            model: 'minimax-m2.7',
-            apiKey: 'test-key-abc',
-          },
+  it('returns null when file does not exist', async () => {
+    mockReadFile.mockRejectedValue(new Error('ENOENT'));
+    const config = await loadConfig('/nonexistent/config.json');
+    expect(config).toBeNull();
+  });
+
+  it('returns null for invalid JSON', async () => {
+    mockReadFile.mockResolvedValue('not valid json {{{');
+    const config = await loadConfig('/bad/config.json');
+    expect(config).toBeNull();
+  });
+
+  it('returns null for empty file content', async () => {
+    mockReadFile.mockResolvedValue('');
+    const config = await loadConfig('/empty/config.json');
+    expect(config).toBeNull();
+  });
+});
+
+// ===========================================================================
+// saveConfig
+// ===========================================================================
+
+describe('saveConfig', () => {
+  beforeEach(() => {
+    mockMkdir.mockResolvedValue(undefined);
+    mockWriteFile.mockResolvedValue(undefined);
+  });
+
+  it('writes config as JSON creating directory', async () => {
+    const config = { defaultProvider: 'test', providers: {} };
+    await saveConfig(config, '/tmp/test-config.json');
+
+    expect(mockMkdir).toHaveBeenCalledWith(
+      expect.any(String),
+      { recursive: true },
+    );
+    expect(mockWriteFile).toHaveBeenCalledWith(
+      '/tmp/test-config.json',
+      JSON.stringify(config, null, 2),
+      'utf-8',
+    );
+  });
+
+  it('serializes config with 2-space indentation', async () => {
+    const config = { defaultProvider: 'ollama', providers: { ollama: {} } };
+    await saveConfig(config, '/tmp/nested/path/config.json');
+
+    const writtenContent = mockWriteFile.mock.calls[0][1] as string;
+    expect(writtenContent).toContain('  "defaultProvider"');
+    expect(writtenContent).toContain('  "providers"');
+  });
+});
+
+// ===========================================================================
+// loadProjectConfig
+// ===========================================================================
+
+describe('loadProjectConfig', () => {
+  beforeEach(() => {
+    mockStat.mockResolvedValue({ isDirectory: () => true });
+  });
+
+  it('loads project config from directory', async () => {
+    const configJson = JSON.stringify({
+      name: 'test-project',
+      llm: { provider: 'ollama', model: 'qwen:7b' },
+    });
+    mockReadFile.mockResolvedValue(configJson);
+
+    const config = await loadProjectConfig('/project/dir');
+    expect(config).toEqual({
+      name: 'test-project',
+      llm: { provider: 'ollama', model: 'qwen:7b' },
+    });
+  });
+
+  it('loads project config from file path directly', async () => {
+    mockStat.mockResolvedValue({ isDirectory: () => false });
+    const configJson = JSON.stringify({ name: 'direct-path-test' });
+    mockReadFile.mockResolvedValue(configJson);
+    const config = await loadProjectConfig('/path/to/liminal.json');
+    expect(config).toEqual({ name: 'direct-path-test' });
+  });
+
+  it('returns null when file does not exist', async () => {
+    mockReadFile.mockRejectedValue(new Error('ENOENT'));
+    const config = await loadProjectConfig('/nonexistent/dir');
+    expect(config).toBeNull();
+  });
+
+  it('falls back to legacy atelier.json filename', async () => {
+    const legacyJson = JSON.stringify({ name: 'legacy-project' });
+    mockReadFile
+      .mockRejectedValueOnce(new Error('ENOENT'))
+      .mockResolvedValueOnce(legacyJson);
+    const config = await loadProjectConfig('/project/dir');
+    expect(config).toEqual({ name: 'legacy-project' });
+  });
+
+  it('returns null when both config files fail', async () => {
+    mockReadFile.mockRejectedValue(new Error('ENOENT'));
+    const config = await loadProjectConfig('/project/dir');
+    expect(config).toBeNull();
+  });
+});
+
+// ===========================================================================
+// getEffectiveConfig
+// ===========================================================================
+
+describe('getEffectiveConfig', () => {
+  const envVarsToClean = [
+    'LIMINAL_LLM_PROVIDER',
+    'LIMINAL_LLM_BASE_URL',
+    'LIMINAL_LLM_MODEL',
+    'LIMINAL_LLM_API_KEY',
+    'OPENAI_API_KEY',
+    'MINIMAX_API_KEY',
+  ];
+
+  let savedEnv: Record<string, string | undefined>;
+
+  beforeEach(() => {
+    savedEnv = {};
+    for (const key of envVarsToClean) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+    mockReadFile.mockResolvedValue('{}');
+    mockAccess.mockImplementation(async () => {});
+    mockStat.mockResolvedValue({ isDirectory: () => true });
+  });
+
+  afterEach(() => {
+    for (const key of envVarsToClean) {
+      if (savedEnv[key] !== undefined) {
+        process.env[key] = savedEnv[key];
+      } else {
+        delete process.env[key];
+      }
+    }
+  });
+
+  it('returns defaults when no env vars and no file config', async () => {
+    const config = await getEffectiveConfig();
+    expect(config.model).toBe('auto');
+    expect(config.provider).toBe('lmstudio');
+  });
+
+  it('uses file config for model and base URL', async () => {
+    const fileConfig = JSON.stringify({
+      defaultProvider: 'file-provider',
+      providers: {
+        'file-provider': {
+          baseUrl: 'http://file-url',
+          model: 'file-model',
+          apiKey: 'file-key',
         },
-      };
-      await fs.writeFile(TEST_CONFIG_PATH, JSON.stringify(config, null, 2));
-
-      const loaded = await loadConfig(TEST_CONFIG_PATH);
-
-      expect(loaded.isOk()).toBe(true);
-      if (loaded.isOk()) {
-        expect(loaded.value.defaultProvider).toBe('minimax');
-        expect(loaded.value.providers.minimax.baseUrl).toBe('https://api.minimax.io/v1');
-        expect(loaded.value.providers.minimax.model).toBe('minimax-m2.7');
-        expect(loaded.value.providers.minimax.apiKey).toBe('test-key-abc');
-      }
+      },
     });
+    mockReadFile.mockResolvedValue(fileConfig);
 
-    it('returns err if config file does not exist', async () => {
-      const loaded = await loadConfig('/nonexistent/path/config.json');
-      expect(loaded.isErr()).toBe(true);
-    });
-
-    it('returns err if config file contains invalid JSON', async () => {
-      await fs.writeFile(TEST_CONFIG_PATH, '{ invalid json }');
-      const loaded = await loadConfig(TEST_CONFIG_PATH);
-      expect(loaded.isErr()).toBe(true);
-    });
-
-    it('loads config with optional loop settings', async () => {
-      const config = {
-        defaultProvider: 'lmstudio',
-        providers: { lmstudio: { baseUrl: 'http://localhost:1234/v1' } },
-        loop: { maxIterations: 20, timeoutMinutes: 30 },
-      };
-      await fs.writeFile(TEST_CONFIG_PATH, JSON.stringify(config, null, 2));
-
-      const loaded = await loadConfig(TEST_CONFIG_PATH);
-
-      expect(loaded.isOk()).toBe(true);
-      if (loaded.isOk()) {
-        expect(loaded.value.loop!.maxIterations).toBe(20);
-        expect(loaded.value.loop!.timeoutMinutes).toBe(30);
-      }
-    });
-
-    it('loads config with optional creative settings', async () => {
-      const config = {
-        defaultProvider: 'lmstudio',
-        providers: { lmstudio: {} },
-        creative: { minQualityScore: 0.8 },
-      };
-      await fs.writeFile(TEST_CONFIG_PATH, JSON.stringify(config, null, 2));
-
-      const loaded = await loadConfig(TEST_CONFIG_PATH);
-
-      expect(loaded.isOk()).toBe(true);
-      if (loaded.isOk()) {
-        expect(loaded.value.creative!.minQualityScore).toBe(0.8);
-      }
-    });
+    const config = await getEffectiveConfig();
+    expect(config.model).toBe('file-model');
+    expect(config.baseUrl).toBe('http://file-url');
+    expect(config.apiKey).toBe('file-key');
   });
 
-  // ---------------------------------------------------------------------------
-  // saveConfig
-  // ---------------------------------------------------------------------------
-  describe('saveConfig', () => {
-    it('writes config to a new file, creating directories', async () => {
-      const newPath = path.join(TEST_CONFIG_DIR, 'subdir', 'config.json');
-      const config = {
-        defaultProvider: 'ollama',
-        providers: { ollama: { baseUrl: 'http://localhost:11434' } },
-      };
-
-      await saveConfig(config, newPath);
-
-      const content = await fs.readFile(newPath, 'utf-8');
-      const parsed = JSON.parse(content);
-      expect(parsed.defaultProvider).toBe('ollama');
+  it('uses project config when no file config overrides', async () => {
+    const projectJson = JSON.stringify({
+      llm: { baseUrl: 'http://project-url', model: 'project-model', apiKey: 'project-key' },
     });
+    mockReadFile
+      .mockResolvedValueOnce('{}')
+      .mockResolvedValueOnce(projectJson);
 
-    it('overwrites existing config file', async () => {
-      const config1 = {
-        defaultProvider: 'lmstudio',
-        providers: { lmstudio: {} },
-      };
-      const config2 = {
-        defaultProvider: 'minimax',
-        providers: { minimax: {} },
-      };
-
-      await saveConfig(config1, TEST_CONFIG_PATH);
-      await saveConfig(config2, TEST_CONFIG_PATH);
-
-      const content = await fs.readFile(TEST_CONFIG_PATH, 'utf-8');
-      const parsed = JSON.parse(content);
-      expect(parsed.defaultProvider).toBe('minimax');
-    });
-
-    it('writes pretty-printed JSON', async () => {
-      const config = {
-        defaultProvider: 'lmstudio',
-        providers: { lmstudio: { model: 'test' } },
-      };
-
-      await saveConfig(config, TEST_CONFIG_PATH);
-
-      const content = await fs.readFile(TEST_CONFIG_PATH, 'utf-8');
-      expect(content).toContain('\n'); // pretty printed
-      expect(content).toContain('  '); // indented
-    });
+    const config = await getEffectiveConfig(undefined, '/project/dir');
+    expect(config.model).toBe('project-model');
+    expect(config.baseUrl).toBe('http://project-url');
+    expect(config.apiKey).toBe('project-key');
   });
 
-  // ---------------------------------------------------------------------------
-  // loadProjectConfig
-  // ---------------------------------------------------------------------------
-  describe('loadProjectConfig', () => {
-    it('loads config from config/liminal.json when given directory path', async () => {
-      const projectConfig = {
-        name: 'test-project',
-        version: '1.0.0',
-        llm: { model: 'project-model', baseUrl: 'https://project.example/v1' },
-      };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
+  it('env vars take precedence over file config', async () => {
+    process.env.LIMINAL_LLM_MODEL = 'env-model';
+    process.env.LIMINAL_LLM_API_KEY = 'env-key';
 
-      const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
-
-      expect(loaded.isOk()).toBe(true);
-      if (loaded.isOk()) {
-        expect(loaded.value.name).toBe('test-project');
-        expect(loaded.value.llm!.model).toBe('project-model');
-        expect(loaded.value.llm!.baseUrl).toBe('https://project.example/v1');
-      }
+    const fileConfig = JSON.stringify({
+      defaultProvider: 'file-provider',
+      providers: { 'file-provider': { model: 'file-model' } },
     });
-
-    it('loads config when given direct file path', async () => {
-      const projectConfig = {
-        name: 'direct-path-project',
-        llm: { model: 'direct-model' },
-      };
-      const filePath = path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json');
-      await fs.writeFile(filePath, JSON.stringify(projectConfig, null, 2));
-
-      const loaded = await loadProjectConfig(filePath);
-
-      expect(loaded.isOk()).toBe(true);
-      if (loaded.isOk()) {
-        expect(loaded.value.name).toBe('direct-path-project');
-      }
+    const projectJson = JSON.stringify({
+      llm: { model: 'project-model', baseUrl: 'http://project-url' },
     });
+    mockReadFile
+      .mockResolvedValueOnce(fileConfig)
+      .mockResolvedValueOnce(projectJson);
 
-    it('falls back to legacy atelier.json when liminal.json not found', async () => {
-      const legacyConfig = {
-        name: 'legacy-project',
-        llm: { model: 'legacy-model' },
-      };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'atelier.json'),
-        JSON.stringify(legacyConfig, null, 2),
-      );
-
-      const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
-
-      expect(loaded.isOk()).toBe(true);
-      if (loaded.isOk()) {
-        expect(loaded.value.name).toBe('legacy-project');
-        expect(loaded.value.llm!.model).toBe('legacy-model');
-      }
-    });
-
-    it('returns err when no config file exists', async () => {
-      const loaded = await loadProjectConfig('/tmp/nonexistent-project-' + process.pid);
-      expect(loaded.isErr()).toBe(true);
-    });
-
-    it('returns err when config contains invalid JSON', async () => {
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        '{ broken }',
-      );
-
-      // Both liminal.json and atelier.json fallback will fail
-      const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
-      expect(loaded.isErr()).toBe(true);
-    });
-
-    it('prefers liminal.json over atelier.json when both exist', async () => {
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify({ name: 'new-project' }),
-      );
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'atelier.json'),
-        JSON.stringify({ name: 'old-project' }),
-      );
-
-      const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
-      expect(loaded.isOk()).toBe(true);
-      if (loaded.isOk()) {
-        expect(loaded.value.name).toBe('new-project');
-      }
-    });
-
-    it('defaults to cwd when no argument given', async () => {
-      // This test just verifies the function doesn't throw when called with no args.
-      // It may return Err if cwd has no config, which is fine.
-      const loaded = await loadProjectConfig();
-      // Either Ok or Err — both are valid outcomes
-      expect(loaded.isOk() || loaded.isErr()).toBe(true);
-    });
+    const config = await getEffectiveConfig(undefined, '/project/dir');
+    expect(config.model).toBe('env-model');
+    expect(config.apiKey).toBe('env-key');
+    expect(config.baseUrl).toBe('http://project-url');
   });
 
-  // ---------------------------------------------------------------------------
-  // getEffectiveConfig
-  // ---------------------------------------------------------------------------
-  describe('getEffectiveConfig', () => {
-    it('uses LLM env vars when set (highest priority)', async () => {
-      vi.stubEnv('LIMINAL_LLM_BASE_URL', 'http://env-host:9999/v1');
-      vi.stubEnv('LIMINAL_LLM_MODEL', 'env-model');
-      vi.stubEnv('LIMINAL_LLM_API_KEY', 'env-key-789');
+  it('maps legacy provider name inception to lmstudio', async () => {
+    process.env.LIMINAL_LLM_PROVIDER = 'inception';
+    mockReadFile.mockResolvedValue('{}');
 
-      const effective = await getEffectiveConfig();
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('lmstudio');
+  });
 
-      expect(effective.baseUrl).toBe('http://env-host:9999/v1');
-      expect(effective.model).toBe('env-model');
-      expect(effective.apiKey).toBe('env-key-789');
-    });
+  it('maps anthropic to openai', async () => {
+    process.env.LIMINAL_LLM_PROVIDER = 'anthropic';
+    mockReadFile.mockResolvedValue('{}');
 
-    it('uses project config when env vars absent', async () => {
-      const projectConfig = {
-        llm: { model: 'project-model', baseUrl: 'https://project.example/v1' },
-      };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('openai');
+  });
 
-      const effective = await getEffectiveConfig(undefined, TEST_PROJECT_DIR);
+  it('uses OPENAI_API_KEY as fallback when no LLM_API_KEY', async () => {
+    process.env.OPENAI_API_KEY = 'sk-openai-fallback';
 
-      expect(effective.model).toBe('project-model');
-      expect(effective.baseUrl).toBe('https://project.example/v1');
-    });
+    const config = await getEffectiveConfig();
+    expect(config.apiKey).toBe('sk-openai-fallback');
+  });
 
-    it('env vars override project config', async () => {
-      vi.stubEnv('LIMINAL_LLM_MODEL', 'env-override-model');
+  it('uses MINIMAX_API_KEY as fallback', async () => {
+    process.env.MINIMAX_API_KEY = 'sk-minimax-fallback';
 
-      const projectConfig = {
-        llm: { model: 'project-model', baseUrl: 'https://project.example/v1' },
-      };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
+    const config = await getEffectiveConfig();
+    expect(config.apiKey).toBe('sk-minimax-fallback');
+  });
 
-      const effective = await getEffectiveConfig(undefined, TEST_PROJECT_DIR);
+  it('prefers LLM_API_KEY over OPENAI_API_KEY', async () => {
+    process.env.LIMINAL_LLM_API_KEY = 'llm-key';
+    process.env.OPENAI_API_KEY = 'openai-key';
 
-      expect(effective.model).toBe('env-override-model');
-      expect(effective.baseUrl).toBe('https://project.example/v1'); // from project
-    });
+    const config = await getEffectiveConfig();
+    expect(config.apiKey).toBe('llm-key');
+  });
 
-    it('uses file config when no env vars or project config', async () => {
-      const fileConfig = {
-        defaultProvider: 'lmstudio',
-        providers: {
-          lmstudio: {
-            baseUrl: 'http://file-host:1234/v1',
-            model: 'file-model',
-            apiKey: 'file-key',
-          },
-        },
-      };
-      await fs.writeFile(TEST_CONFIG_PATH, JSON.stringify(fileConfig, null, 2));
+  it('uses env base URL when set', async () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'http://env-url:8080';
+    mockReadFile.mockResolvedValue('{}');
 
-      const effective = await getEffectiveConfig(TEST_CONFIG_PATH);
+    const config = await getEffectiveConfig();
+    expect(config.baseUrl).toBe('http://env-url:8080');
+  });
 
-      expect(effective.model).toBe('file-model');
-      expect(effective.baseUrl).toBe('http://file-host:1234/v1');
-      expect(effective.apiKey).toBe('file-key');
-    });
+  it('uses ollama provider when configured via env', async () => {
+    process.env.LIMINAL_LLM_PROVIDER = 'ollama';
+    mockReadFile.mockResolvedValue('{}');
 
-    it('returns default model "auto" when nothing is configured', async () => {
-      const effective = await getEffectiveConfig('/nonexistent/path/config.json');
-      expect(effective.model).toBe('auto');
-    });
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('ollama');
+  });
 
-    it('returns provider "lmstudio" as default when nothing is configured', async () => {
-      const effective = await getEffectiveConfig('/nonexistent/path/config.json');
-      expect(effective.provider).toBe('lmstudio');
-    });
+  it('uses minimax provider when configured via env', async () => {
+    process.env.LIMINAL_LLM_PROVIDER = 'minimax';
+    mockReadFile.mockResolvedValue('{}');
 
-    it('maps legacy "inception" provider to "lmstudio"', async () => {
-      const projectConfig = { llm: { provider: 'inception', model: 'local-model' } };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
-
-      const effective = await getEffectiveConfig(undefined, TEST_PROJECT_DIR);
-      expect(effective.provider).toBe('lmstudio');
-    });
-
-    it('maps legacy "anthropic" provider to "openai"', async () => {
-      const projectConfig = { llm: { provider: 'anthropic', model: 'claude-test' } };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
-
-      const effective = await getEffectiveConfig(undefined, TEST_PROJECT_DIR);
-      expect(effective.provider).toBe('openai');
-    });
-
-    it('maps "minimax" provider correctly', async () => {
-      const projectConfig = { llm: { provider: 'minimax', model: 'minimax-m2.7' } };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
-
-      const effective = await getEffectiveConfig(undefined, TEST_PROJECT_DIR);
-      expect(effective.provider).toBe('minimax');
-    });
-
-    it('maps "hybrid" provider correctly', async () => {
-      const projectConfig = { llm: { provider: 'hybrid', model: 'test-model' } };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
-
-      const effective = await getEffectiveConfig(undefined, TEST_PROJECT_DIR);
-      expect(effective.provider).toBe('hybrid');
-    });
-
-    it('falls back to OPENAI_API_KEY when LLM_API_KEY not set', async () => {
-      vi.stubEnv('OPENAI_API_KEY', 'openai-fallback-key');
-
-      const effective = await getEffectiveConfig('/nonexistent/path/config.json');
-
-      expect(effective.apiKey).toBe('openai-fallback-key');
-    });
-
-    it('falls back to MINIMAX_API_KEY when LLM_API_KEY and OPENAI_API_KEY not set', async () => {
-      vi.stubEnv('MINIMAX_API_KEY', 'minimax-fallback-key');
-
-      const effective = await getEffectiveConfig('/nonexistent/path/config.json');
-
-      expect(effective.apiKey).toBe('minimax-fallback-key');
-    });
-
-    it('prefers LLM_API_KEY over OPENAI_API_KEY and MINIMAX_API_KEY', async () => {
-      vi.stubEnv('LIMINAL_LLM_API_KEY', 'llm-key');
-      vi.stubEnv('OPENAI_API_KEY', 'openai-key');
-      vi.stubEnv('MINIMAX_API_KEY', 'minimax-key');
-
-      const effective = await getEffectiveConfig('/nonexistent/path/config.json');
-
-      expect(effective.apiKey).toBe('llm-key');
-    });
-
-    it('uses file provider config matching provider name', async () => {
-      const fileConfig = {
-        defaultProvider: 'minimax',
-        providers: {
-          minimax: {
-            baseUrl: 'https://api.minimax.io/v1',
-            model: 'minimax-m2.5',
-            apiKey: 'minimax-file-key',
-          },
-        },
-      };
-      await fs.writeFile(TEST_CONFIG_PATH, JSON.stringify(fileConfig, null, 2));
-
-      const effective = await getEffectiveConfig(TEST_CONFIG_PATH);
-
-      expect(effective.baseUrl).toBe('https://api.minimax.io/v1');
-      expect(effective.model).toBe('minimax-m2.5');
-      expect(effective.apiKey).toBe('minimax-file-key');
-      expect(effective.provider).toBe('minimax');
-    });
-
-    it('uses project llm.apiKey over file config apiKey', async () => {
-      const fileConfig = {
-        defaultProvider: 'lmstudio',
-        providers: { lmstudio: { apiKey: 'file-key' } },
-      };
-      await fs.writeFile(TEST_CONFIG_PATH, JSON.stringify(fileConfig, null, 2));
-
-      const projectConfig = { llm: { apiKey: 'project-key' } };
-      await fs.writeFile(
-        path.join(TEST_PROJECT_CONFIG_DIR, 'liminal.json'),
-        JSON.stringify(projectConfig, null, 2),
-      );
-
-      const effective = await getEffectiveConfig(TEST_CONFIG_PATH, TEST_PROJECT_DIR);
-
-      expect(effective.apiKey).toBe('project-key');
-    });
-
-    it('returns undefined apiKey when no source provides one', async () => {
-      const effective = await getEffectiveConfig('/nonexistent/path/config.json');
-      expect(effective.apiKey).toBeUndefined();
-    });
-
-    it('returns undefined baseUrl when no source provides one', async () => {
-      const effective = await getEffectiveConfig('/nonexistent/path/config.json');
-      expect(effective.baseUrl).toBeUndefined();
-    });
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('minimax');
   });
 });

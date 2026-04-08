@@ -92,6 +92,41 @@ export class CircuitBreaker {
   /** Number of requests already attempted during the current half-open window. */
   private halfOpenAttempts = 0;
 
+  /** 
+   * Lock for atomic state transitions.
+   * Prevents race conditions when multiple concurrent calls modify state.
+   */
+  private lock: Promise<void> = Promise.resolve();
+
+  /**
+   * Acquire the circuit breaker lock.
+   * Ensures state transitions are atomic across concurrent calls.
+   */
+  private async acquireLock(): Promise<() => void> {
+    const releasePromise = this.lock;
+    let releaseFn: () => void = () => {};
+    
+    this.lock = new Promise((resolve) => {
+      releaseFn = resolve;
+    });
+    
+    await releasePromise;
+    return releaseFn;
+  }
+
+  /**
+   * Execute a function with the circuit breaker lock held.
+   * Ensures atomic state transitions.
+   */
+  private async withLock<T>(fn: () => T): Promise<T> {
+    const release = await this.acquireLock();
+    try {
+      return fn();
+    } finally {
+      release();
+    }
+  }
+
   /**
    * Create a new CircuitBreaker.
    *
@@ -109,20 +144,28 @@ export class CircuitBreaker {
    * Returns `true` when the breaker is **closed** (healthy) or **half-open**
    * (probing).  Returns `false` when the breaker is **open** (tripped) and
    * the reset timeout has not yet elapsed.
+   * 
+   * This method is async to ensure atomic state transitions.
    */
-  canExecute(): boolean {
-    this.checkStateTransition();
+  async canExecute(): Promise<boolean> {
+    return this.withLock(() => {
+      this.checkStateTransition();
 
-    if (this.state === 'closed') {
-      return true;
-    }
+      if (this.state === 'closed') {
+        return true;
+      }
 
-    if (this.state === 'half-open') {
-      return this.halfOpenAttempts < this.config.halfOpenMaxAttempts;
-    }
+      if (this.state === 'half-open') {
+        const canAttempt = this.halfOpenAttempts < this.config.halfOpenMaxAttempts;
+        if (canAttempt) {
+          this.halfOpenAttempts++;
+        }
+        return canAttempt;
+      }
 
-    // open
-    return false;
+      // open
+      return false;
+    });
   }
 
   /**
@@ -130,15 +173,19 @@ export class CircuitBreaker {
    *
    * Increments the lifetime success counter, resets the consecutive-failure
    * streak, and — if the breaker was half-open — closes the circuit.
+   * 
+   * This method is async to ensure atomic state transitions.
    */
-  recordSuccess(): void {
-    this.successCount++;
-    this.failureCount = 0;
-    this.halfOpenAttempts = 0;
+  async recordSuccess(): Promise<void> {
+    await this.withLock(() => {
+      this.successCount++;
+      this.failureCount = 0;
+      this.halfOpenAttempts = 0;
 
-    if (this.state === 'half-open') {
-      this.transitionTo('closed');
-    }
+      if (this.state === 'half-open') {
+        this.transitionTo('closed');
+      }
+    });
   }
 
   /**
@@ -147,20 +194,24 @@ export class CircuitBreaker {
    * Increments the consecutive-failure counter and trips the breaker open if
    * the threshold is reached.  In the half-open state a single failure is
    * enough to re-open the circuit immediately.
+   * 
+   * This method is async to ensure atomic state transitions.
    */
-  recordFailure(): void {
-    this.failureCount++;
-    this.lastFailureAt = Date.now();
+  async recordFailure(): Promise<void> {
+    await this.withLock(() => {
+      this.failureCount++;
+      this.lastFailureAt = Date.now();
 
-    if (this.state === 'half-open') {
-      // A single failure in half-open is enough to re-open.
-      this.transitionTo('open');
-      return;
-    }
+      if (this.state === 'half-open') {
+        // A single failure in half-open is enough to re-open.
+        this.transitionTo('open');
+        return;
+      }
 
-    if (this.failureCount >= this.config.failureThreshold) {
-      this.transitionTo('open');
-    }
+      if (this.failureCount >= this.config.failureThreshold) {
+        this.transitionTo('open');
+      }
+    });
   }
 
   /**
@@ -194,11 +245,15 @@ export class CircuitBreaker {
    *
    * Clears the failure counter and resets the half-open probe window.
    * Useful for administrative overrides or health-check endpoints.
+   * 
+   * This method is async to ensure atomic state transitions.
    */
-  reset(): void {
-    this.failureCount = 0;
-    this.halfOpenAttempts = 0;
-    this.transitionTo('closed');
+  async reset(): Promise<void> {
+    await this.withLock(() => {
+      this.failureCount = 0;
+      this.halfOpenAttempts = 0;
+      this.transitionTo('closed');
+    });
   }
 
   // ── Private helpers ──

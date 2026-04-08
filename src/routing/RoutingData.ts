@@ -43,24 +43,19 @@ const PERF_DIR = `${process.env.HOME}/.liminal/routing`;
  * Also feeds the online Thompson Sampling bandit for continuous learning.
  */
 export async function recordRoutingOutcome(record: RoutingRecord): Promise<void> {
-  try {
-    const records = await loadRoutingRecords(record.domain);
-    records.push(record);
-    // Keep only the last PERFORMANCE_WINDOW records
-    if (records.length > PERFORMANCE_WINDOW) {
-      records.splice(0, records.length - PERFORMANCE_WINDOW);
-    }
-    const filePath = path.join(PERF_DIR, `${record.domain}.json`);
-    await fs.mkdir(PERF_DIR, { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify(records), 'utf-8');
+  const records = await loadRoutingRecords(record.domain);
+  records.push(record);
+  // Keep only the last PERFORMANCE_WINDOW records
+  if (records.length > PERFORMANCE_WINDOW) {
+    records.splice(0, records.length - PERFORMANCE_WINDOW);
+  }
+  const filePath = path.join(PERF_DIR, `${record.domain}.json`);
+  await fs.mkdir(PERF_DIR, { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(records), 'utf-8');
 
-    // Feed the online bandit
-    if (record.qualityScore > 0) {
-      generatorBanditRouter.recordOutcome(record.domain, record.model, record.qualityScore);
-    }
-  } catch (err) {
-    // Best-effort recording
-    Logger.warn('RoutingData', 'Failed to record routing outcome:', err);
+  // Feed the online bandit
+  if (record.qualityScore > 0) {
+    generatorBanditRouter.recordOutcome(record.domain, record.model, record.qualityScore);
   }
 }
 

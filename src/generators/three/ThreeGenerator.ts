@@ -32,4 +32,33 @@ export class ThreeGenerator extends TierBasedGenerator {
 
     return { valid: true };
   }
+
+  /**
+   * Wrap Three.js scene for gallery iframe display.
+   * Injects Three.js CDN and creates a self-contained scene harness.
+   */
+  wrapForGallery(code: string): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Three.js Scene</title>
+<style>
+*{margin:0;padding:0;overflow:hidden}
+body{background:#000}
+canvas{display:block}
+</style>
+</head>
+<body>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}
+</script>
+<script type="module">
+import*as THREE from'three';
+${code}
+</script>
+</body>
+</html>`;
+  }
 }

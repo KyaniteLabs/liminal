@@ -35,4 +35,29 @@ export class RemotionGenerator extends TierBasedGenerator {
     }
     return { valid: true };
   }
+
+  /**
+   * Wrap Remotion component for gallery iframe display.
+   * Since Remotion requires compilation, shows code with syntax highlighting.
+   */
+  wrapForGallery(code: string): string {
+    const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Remotion Component</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1e1e2e;color:#cdd6f4;font-family:monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+pre{font-size:clamp(9px,1.5vw,14px);line-height:1.5;white-space:pre-wrap;max-width:95vw;overflow:auto}
+.kw{color:#cba6f7}.fn{color:#89b4fa}.str{color:#a6e3a1}.cm{color:#6c7086}
+</style>
+</head>
+<body>
+<pre>${escaped}</pre>
+</body>
+</html>`;
+  }
 }

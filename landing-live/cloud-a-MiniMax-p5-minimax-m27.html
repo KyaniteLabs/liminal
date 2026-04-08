@@ -1,0 +1,67 @@
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.min.js"></script>
+</head>
+<body>
+<script>
+let particles = [];
+const numParticles = 200;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  background(10, 20, 40);
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  background(10, 20, 40, 30);
+  for (let p of particles) {
+    p.update();
+    p.display();
+  }
+}
+
+class Particle {
+  constructor() {
+    this.pos = createVector(random(width), random(height));
+    this.vel = createVector(0, 0);
+    this.acc = createVector(0, 0);
+    this.noiseOffset = random(1000);
+    this.maxSpeed = 0.5;
+    this.size = random(2, 5);
+    this.alpha = random(150, 255);
+    this.col = color(100, 150, 255, this.alpha);
+  }
+
+  update() {
+    let angle = map(noise(this.noiseOffset), 0, 1, 0, TWO_PI);
+    let force = p5.Vector.fromAngle(angle);
+    force.mult(0.05);
+    this.acc.add(force);
+    this.vel.add(this.acc);
+    this.vel.limit(this.maxSpeed);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+    this.noiseOffset += 0.005;
+    if (this.pos.x < 0) this.pos.x = width;
+    if (this.pos.x > width) this.pos.x = 0;
+    if (this.pos.y < 0) this.pos.y = height;
+    if (this.pos.y > height) this.pos.y = 0;
+  }
+
+  display() {
+    noStroke();
+    fill(this.col);
+    ellipse(this.pos.x, this.pos.y, this.size, this.size);
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+  background(10, 20, 40);
+}
+</script>
+</body>
+</html>

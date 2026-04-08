@@ -45,7 +45,7 @@ async function main() {
         });
         const generator = new domain.Generator(llm);
         const code = await generator.generate(domain.prompt);
-        fs.writeFileSync('landing-live/' + testId + '.html', code);
+        fs.writeFileSync('landing-live/' + testId + '.html', generator.wrapForGallery(code));
         console.log('✅ ' + testId);
         successCount++;
       } catch (e: any) {

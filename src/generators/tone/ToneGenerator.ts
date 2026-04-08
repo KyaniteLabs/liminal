@@ -55,4 +55,30 @@ export class ToneGenerator extends TierBasedGenerator {
     
     return clean.trim();
   }
+
+  /**
+   * Wrap Tone.js code for gallery iframe display.
+   * Shows code as display-only (audio not available in sandboxed iframe).
+   */
+  wrapForGallery(code: string): string {
+    const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tone.js</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#1e1e2e;color:#cdd6f4;font-family:monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px}
+pre{font-size:clamp(9px,1.5vw,14px);line-height:1.5;white-space:pre-wrap;max-width:95vw;overflow:auto}
+.msg{color:#888;font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<pre>${escaped}</pre>
+<p class="msg">Tone.js — audio not available in iframe</p>
+</body>
+</html>`;
+  }
 }

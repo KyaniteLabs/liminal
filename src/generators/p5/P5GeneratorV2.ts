@@ -57,4 +57,30 @@ export class P5GeneratorV2 extends TierBasedGenerator {
     const soundKeywords = ['sound', 'audio', 'music', 'beep', 'tone'];
     return soundKeywords.some((kw) => lowerPrompt.includes(kw));
   }
+
+  /**
+   * Wrap p5.js sketch for gallery iframe display.
+   * Injects p5.js CDN and creates a self-contained sketch harness.
+   */
+  wrapForGallery(code: string): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>p5.js Sketch</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+<style>
+*{margin:0;padding:0;overflow:hidden}
+body{background:#fff}
+canvas{display:block}
+</style>
+</head>
+<body>
+<script>
+${code}
+</script>
+</body>
+</html>`;
+  }
 }

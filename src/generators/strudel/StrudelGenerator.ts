@@ -78,4 +78,35 @@ export class StrudelGenerator extends TierBasedGenerator {
     
     return clean.trim();
   }
+
+  /**
+   * Wrap Strudel code for gallery iframe display.
+   * Uses Strudel REPL embed with audio-enabled harness.
+   */
+  wrapForGallery(code: string): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Strudel</title>
+<script type="module">
+import { repl } from 'https://unpkg.com/@strudel/repl@1.1.0';
+const { evaluate } = repl({
+  core: { getCurrentTime: () => 0 },
+  AudioProvider: () => ({ destination: { _isNode: true } }),
+});
+window._strudel_evaluate = evaluate;
+</script>
+<style>
+body{background:#1a1a2e;color:#eee;font-family:monospace;min-height:100vh;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+pre{font-size:clamp(10px,2vw,18px);line-height:1.4;white-space:pre-wrap;max-width:90vw}
+</style>
+</head>
+<body>
+<pre id="code">${code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
+<p style="color:#888;font-size:12px;margin-top:20px">Strudel pattern — audio not available in iframe</p>
+</body>
+</html>`;
+  }
 }

@@ -1,0 +1,68 @@
+let particles = [];
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  noStroke();
+}
+
+function draw() {
+  // Deep calming blue background with slight trail effect
+  background(10, 20, 40, 50);
+
+  // Add a few new particles each frame
+  for (let i = 0; i < 5; i++) {
+    particles.push(new Particle());
+  }
+
+  // Update and display particles, remove dead ones
+  for (let i = particles.length - 1; i >= 0; i--) {
+    let p = particles[i];
+    p.update();
+    p.show();
+    if (p.isDead()) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+class Particle {
+  constructor() {
+    this.x = random(width);
+    this.y = random(height);
+    // Slow gentle movement
+    this.vx = random(-0.5, 0.5);
+    this.vy = random(-0.5, 0.5);
+    this.size = random(2, 6);
+    this.life = random(100, 300);
+    this.alpha = random(100, 255);
+    // Calming blue hues
+    this.r = random(100, 200);
+    this.g = random(150, 220);
+    this.b = 255;
+  }
+
+  update() {
+    // Slight random drift
+    this.vx += random(-0.02, 0.02);
+    this.vy += random(-0.02, 0.02);
+    // Limit speed
+    this.vx = constrain(this.vx, -1, 1);
+    this.vy = constrain(this.vy, -1, 1);
+
+    this.x += this.vx;
+    this.y += this.vy;
+
+    this.life--;
+    // Fade out as life decreases
+    this.alpha = map(this.life, 0, 300, 0, 255);
+  }
+
+  show() {
+    fill(this.r, this.g, this.b, this.alpha);
+    ellipse(this.x, this.y, this.size);
+  }
+
+  isDead() {
+    return this.life <= 0;
+  }
+}

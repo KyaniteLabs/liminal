@@ -325,4 +325,12 @@ export abstract class TierBasedGenerator {
       domain: this.domain,
     };
   }
+
+  /**
+   * Wrap generated code for gallery iframe display.
+   * Base class returns code unchanged — subclasses override with domain-specific harnesses.
+   */
+  wrapForGallery(_code: string): string {
+    return _code;
+  }
 }

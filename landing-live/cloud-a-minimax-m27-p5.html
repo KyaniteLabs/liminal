@@ -1,0 +1,64 @@
+// Calming blue particle system (p5.js)
+let particles = [];
+const numParticles = 200;
+
+function setup() {
+  createCanvas(windowWidth, windowHeight);
+  colorMode(RGB, 255, 255, 255, 100);
+  for (let i = 0; i < numParticles; i++) {
+    particles.push(new Particle());
+  }
+}
+
+function draw() {
+  // Soft trail effect
+  background(10, 20, 40, 20);
+  for (let p of particles) {
+    p.update();
+    p.display();
+  }
+}
+
+function windowResized() {
+  resizeCanvas(windowWidth, windowHeight);
+}
+
+class Particle {
+  constructor() {
+    this.pos = createVector(random(width), random(height));
+    this.vel = createVector(random(-0.2, 0.2), random(-0.2, 0.2));
+    this.acc = createVector(0, 0);
+    this.maxSpeed = 0.5;
+    this.noiseScale = 0.001;
+    this.size = random(2, 6);
+    this.color = color(
+      random(50, 150),   // bluish range
+      random(150, 220),  // greenish tint
+      255,               // full blue
+      random(30, 80)     // low alpha for calmness
+    );
+  }
+
+  update() {
+    let angle = noise(this.pos.x * this.noiseScale, this.pos.y * this.noiseScale) * TWO_PI * 2;
+    let force = p5.Vector.fromAngle(angle);
+    force.setMag(0.05);
+    this.acc.add(force);
+    this.vel.add(this.acc);
+    this.vel.limit(this.maxSpeed);
+    this.pos.add(this.vel);
+    this.acc.mult(0);
+
+    // Wrap around edges softly
+    if (this.pos.x < 0) this.pos.x = width;
+    if (this.pos.x > width) this.pos.x = 0;
+    if (this.pos.y < 0) this.pos.y = height;
+    if (this.pos.y > height) this.pos.y = 0;
+  }
+
+  display() {
+    noStroke();
+    fill(this.color);
+    ellipse(this.pos.x, this.pos.y, this.size, this.size);
+  }
+}

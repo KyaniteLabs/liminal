@@ -12,6 +12,8 @@
  */
 
 import simpleGit, { type SimpleGit, type StatusResult as GitStatusResult } from 'simple-git';
+import { Result, ok, err } from 'neverthrow';
+import { GitError } from '../errors/GitError.js';
 import { Logger } from '../utils/Logger.js';
 import type { CommitInfo, BranchInfo, DiffResult, DiffFile, LogOptions } from './types.js';
 
@@ -47,8 +49,12 @@ export class GitService {
   }
 
   /** Get working tree status */
-  async status(): Promise<GitStatusResult> {
-    return this.git.status();
+  async status(): Promise<Result<GitStatusResult, GitError>> {
+    try {
+      return ok(await this.git.status());
+    } catch (e) {
+      return err(new GitError('status failed', { cause: e instanceof Error ? e : undefined, retryable: true }));
+    }
   }
 
   // ── Commit operations ──────────────────────────────
@@ -137,8 +143,11 @@ export class GitService {
 
   /** Get the current branch name */
   async currentBranch(): Promise<string> {
-    const status = await this.status();
-    return status.current ?? 'main';
+    const result = await this.status();
+    return result.match(
+      (s) => s.current ?? 'main',
+      () => 'main',
+    );
   }
 
   /** List all branches */

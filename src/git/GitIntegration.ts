@@ -15,8 +15,10 @@
  *   await git.endRun('quality achieved');        // commits final + restores branch
  */
 
+import { Result, ok, err } from 'neverthrow';
 import { GitService } from './GitService.js';
 import { Logger } from '../utils/Logger.js';
+import { GitError } from '../errors/GitError.js';
 import type { GitConfig, IterationCommitContext, CommitInfo } from './types.js';
 import { DEFAULT_GIT_CONFIG } from './types.js';
 import type { CompostBridge } from './CompostBridge.js';
@@ -50,96 +52,105 @@ export class GitIntegration {
    * 2. Create a branch named `{prefix}{name}-{timestamp}`
    * 3. Record branch creation via CompostBridge
    */
-  async startRun(name: string): Promise<string | null> {
-    if (!this.config.enabled) return null;
-    if (!this.config.branchPerRun) return null;
+  async startRun(name: string): Promise<Result<string, GitError>> {
+    if (!this.config.enabled) return ok('');
+    if (!this.config.branchPerRun) return ok('');
 
-    try {
-      // Ensure we're in a git repo
-      const isRepo = await this.git.isRepo();
-      if (!isRepo) {
-        Logger.warn('GitIntegration', 'Not a git repo — skipping branch creation');
-        return null;
-      }
-
-      // Save current branch to restore later
-      this.originalBranch = await this.git.currentBranch();
-
-
-      // Stash dirty working tree if needed
-      const status = await this.git.status();
-      if (!status.isClean()) {
-        await this.git.stash(`liminal: auto-stash before run ${name}`);
-        Logger.info('GitIntegration', 'Stashed uncommitted changes before run');
-      }
-
-      // Create run branch
-      const timestamp = Date.now();
-      const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40);
-      const branchName = `${this.config.branchPrefix}${safeName}-${timestamp}`;
-      await this.git.branch(branchName);
-      this.runBranch = branchName;
-
-      Logger.info('GitIntegration', `Started run on branch: ${branchName}`);
-
-      // Bridge to compost
-      if (this.config.bridgeToCompost && this.compostBridge) {
-        await this.compostBridge.onBranch({
-          name: branchName,
-          current: true,
-          commit: (await this.git.getLastCommit())?.hash ?? '',
-        });
-      }
-
-      return branchName;
-    } catch (error) {
-      Logger.error('GitIntegration', `Failed to start run: ${error instanceof Error ? error.message : error}`);
-      return null;
+    // Ensure we're in a git repo
+    const isRepo = await this.git.isRepo();
+    if (!isRepo) {
+      return err(new GitError('Not a git repo', { retryable: false }));
     }
+
+    // Save current branch to restore later
+    this.originalBranch = await this.git.currentBranch();
+
+    // Stash dirty working tree if needed
+    const statusResult = await this.git.status();
+    if (statusResult.isErr()) {
+      return err(new GitError('Failed to get status before stash', { cause: statusResult.error, retryable: true }));
+    }
+    const status = statusResult.value;
+    if (!status.isClean()) {
+      await this.git.stash(`liminal: auto-stash before run ${name}`);
+      Logger.info('GitIntegration', 'Stashed uncommitted changes before run');
+    }
+
+    // Create run branch
+    const timestamp = Date.now();
+    const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40);
+    const branchName = `${this.config.branchPrefix}${safeName}-${timestamp}`;
+    try {
+      await this.git.branch(branchName);
+    } catch (e) {
+      return err(new GitError(`Failed to create branch: ${branchName}`, { cause: e instanceof Error ? e : undefined, retryable: false }));
+    }
+    this.runBranch = branchName;
+
+    Logger.info('GitIntegration', `Started run on branch: ${branchName}`);
+
+    // Bridge to compost
+    if (this.config.bridgeToCompost && this.compostBridge) {
+      await this.compostBridge.onBranch({
+        name: branchName,
+        current: true,
+        commit: (await this.git.getLastCommit())?.hash ?? '',
+      });
+    }
+
+    return ok(branchName);
   }
 
   /**
    * Commit a single RalphLoop iteration.
    * Writes the code to filePath, stages it, and commits.
    */
-  async commitIteration(ctx: IterationCommitContext): Promise<CommitInfo | null> {
-    if (!this.config.enabled || !this.config.autoCommit) return null;
+  async commitIteration(ctx: IterationCommitContext): Promise<Result<CommitInfo, GitError>> {
+    if (!this.config.enabled || !this.config.autoCommit) {
+      return err(new GitError('Git integration disabled', { retryable: false }));
+    }
 
+    const isRepo = await this.git.isRepo();
+    if (!isRepo) {
+      return err(new GitError('Not a git repo', { retryable: false }));
+    }
+
+    // Write code to file
     try {
-      const isRepo = await this.git.isRepo();
-      if (!isRepo) return null;
-
-      // Write code to file
       const fs = await import('node:fs/promises');
       const path = await import('node:path');
       const dir = path.dirname(ctx.filePath);
       await fs.mkdir(dir, { recursive: true });
       await fs.writeFile(ctx.filePath, ctx.code, 'utf-8');
+    } catch (e) {
+      return err(new GitError(`Failed to write file: ${ctx.filePath}`, { cause: e instanceof Error ? e : undefined, retryable: true }));
+    }
 
-      // Stage and commit
+    // Stage and commit
+    let commit: CommitInfo;
+    try {
       await this.git.add([ctx.filePath]);
       const message = this.formatCommitMessage(ctx);
-      const commit = await this.git.commit(message);
-
-      Logger.info('GitIntegration', `Committed iteration ${ctx.iteration} (${commit.hash.slice(0, 7)})`);
-
-      // Bridge to compost
-      if (this.config.bridgeToCompost && this.compostBridge) {
-        await this.compostBridge.onCommit(commit);
-      }
-
-      // Auto-push if configured
-      if (this.config.autoPush) {
-        await this.git.push().catch((err) => {
-          Logger.warn('GitIntegration', `Auto-push failed: ${err instanceof Error ? err.message : err}`);
-        });
-      }
-
-      return commit;
-    } catch (error) {
-      Logger.error('GitIntegration', `Failed to commit iteration: ${error instanceof Error ? error.message : error}`);
-      return null;
+      commit = await this.git.commit(message);
+    } catch (e) {
+      return err(new GitError(`Failed to commit iteration ${ctx.iteration}`, { cause: e instanceof Error ? e : undefined, retryable: false }));
     }
+
+    Logger.info('GitIntegration', `Committed iteration ${ctx.iteration} (${commit.hash.slice(0, 7)})`);
+
+    // Bridge to compost
+    if (this.config.bridgeToCompost && this.compostBridge) {
+      await this.compostBridge.onCommit(commit);
+    }
+
+    // Auto-push if configured
+    if (this.config.autoPush) {
+      await this.git.push().catch((pushErr) => {
+        Logger.warn('GitIntegration', `Auto-push failed: ${pushErr instanceof Error ? pushErr.message : pushErr}`);
+      });
+    }
+
+    return ok(commit);
   }
 
   /**
@@ -153,8 +164,10 @@ export class GitIntegration {
 
     try {
       // Commit any remaining changes
-      const status = await this.git.status();
-      if (!status.isClean()) {
+      const statusResult = await this.git.status();
+      if (statusResult.isErr()) {
+        Logger.warn('GitIntegration', `Failed to get status at end of run: ${statusResult.error.message}`);
+      } else if (!statusResult.value.isClean()) {
         await this.git.addAllAndCommit(`liminal: run complete — ${reason}`);
         Logger.info('GitIntegration', 'Committed final changes before restoring branch');
       }

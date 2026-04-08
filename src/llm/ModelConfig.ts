@@ -60,7 +60,8 @@ function validateBaseUrl(url: string): void {
     if (error instanceof Error && error.message.includes('Local/private URL detected')) {
       throw error;
     }
-    throw new Error(`Invalid base URL "${url}": ${error instanceof Error ? error.message : 'Unknown error'}`);
+    throw new Error(`Invalid base URL "${url}": ${error instanceof Error ? error.message : 'Unknown error'}`,
+      { cause: error instanceof Error ? error : undefined });
   }
 }
 

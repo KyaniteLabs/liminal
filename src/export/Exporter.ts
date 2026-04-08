@@ -68,14 +68,16 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`, 
+        { cause: error instanceof Error ? error : undefined });
     }
 
     // Write HTML file
     try {
       await fs.writeFile(outputPath, html, 'utf-8');
     } catch (error) {
-      throw new Error(`Failed to export HTML: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to export HTML: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined });
     }
   }
 
@@ -102,7 +104,8 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined });
     }
 
     // Write JavaScript file
@@ -126,7 +129,8 @@ export class Exporter {
     try {
       await fs.writeFile(outputPath, jsContent, 'utf-8');
     } catch (error) {
-      throw new Error(`Failed to export JS: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to export JS: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined });
     }
   }
 
@@ -151,7 +155,8 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined });
     }
 
     // Create ZIP archive
@@ -163,12 +168,12 @@ export class Exporter {
 
       // Handle archive errors
       archive.on('error', (err) => {
-        reject(new Error(`Failed to create ZIP: ${err.message}`));
+        reject(new Error(`Failed to create ZIP: ${err.message}`, { cause: err }));
       });
 
       // Handle output stream errors
       output.on('error', (err) => {
-        reject(new Error(`Failed to write ZIP: ${err.message}`));
+        reject(new Error(`Failed to write ZIP: ${err.message}`, { cause: err }));
       });
 
       // Finalize the archive when done
@@ -243,7 +248,8 @@ export class Exporter {
     try {
       await fs.mkdir(dir, { recursive: true });
     } catch (error) {
-      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      throw new Error(`Failed to create directory: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        { cause: error instanceof Error ? error : undefined });
     }
 
     if (domain === 'remotion') {

@@ -450,16 +450,16 @@
       "type": "directory"
     },
     {
+      "path": "src",
+      "accessCount": 32,
+      "lastAccessed": 1775627835285,
+      "type": "directory"
+    },
+    {
       "path": "src/tui/HarnessTUI.tsx",
       "accessCount": 31,
       "lastAccessed": 1775434141405,
       "type": "file"
-    },
-    {
-      "path": "src",
-      "accessCount": 29,
-      "lastAccessed": 1775604425644,
-      "type": "directory"
     },
     {
       "path": "bin/liminal",
@@ -469,8 +469,8 @@
     },
     {
       "path": "src/config/ConfigLoader.ts",
-      "accessCount": 11,
-      "lastAccessed": 1775433443548,
+      "accessCount": 14,
+      "lastAccessed": 1775627827124,
       "type": "directory"
     },
     {
@@ -510,16 +510,16 @@
       "type": "file"
     },
     {
+      "path": "test",
+      "accessCount": 6,
+      "lastAccessed": 1775627840884,
+      "type": "directory"
+    },
+    {
       "path": "src/llm/CapabilityRegistry.ts",
       "accessCount": 5,
       "lastAccessed": 1775435248859,
       "type": "file"
-    },
-    {
-      "path": "test",
-      "accessCount": 5,
-      "lastAccessed": 1775604406816,
-      "type": "directory"
     },
     {
       "path": "src/constants.ts",

@@ -202,8 +202,9 @@ describe('MiniMaxProvider dual-mode', () => {
       userPrompt: 'usr',
     });
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('function setup() {}');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('function setup() {}');
   });
 
   it('uses Anthropic mode when URL contains /anthropic', async () => {
@@ -227,8 +228,9 @@ describe('MiniMaxProvider dual-mode', () => {
       userPrompt: 'usr',
     });
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('function setup() {}');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('function setup() {}');
   });
 
   it('extracts thinking blocks in Anthropic mode', async () => {
@@ -253,10 +255,11 @@ describe('MiniMaxProvider dual-mode', () => {
       userPrompt: 'usr',
     });
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('function setup() {}');
-    expect(result.thinking?.text).toBe('Let me reason about this...');
-    expect(result.thinking?.source).toBe('thinking_blocks');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('function setup() {}');
+    expect(result.value.thinking?.text).toBe('Let me reason about this...');
+    expect(result.value.thinking?.source).toBe('thinking_blocks');
   });
 
   it('reports toolUse=true in Anthropic mode', () => {

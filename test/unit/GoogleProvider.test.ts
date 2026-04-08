@@ -43,7 +43,8 @@ describe('GoogleProvider', () => {
     const res = await provider.generate({
       systemPrompt: 'sys', userPrompt: 'usr',
     });
-    expect(res.success).toBe(true);
-    expect(res.content).toBe('hello world');
+    expect(res.isOk()).toBe(true);
+    expect(res.value.success).toBe(true);
+    expect(res.value.content).toBe('hello world');
   });
 });

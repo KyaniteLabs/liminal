@@ -874,6 +874,12 @@ a:focus:not(:focus-visible) {
 
 <script src="gallery-data.js"></script>
 <script>
+// Expose globals for the gallery renderer (after data loads)
+window.GALLERY_CARDS = window.GALLERY_DATA.GALLERY_CARDS;
+window.GALLERY_STATS = window.GALLERY_DATA.GALLERY_STATS;
+window.DOMAIN_META = window.GALLERY_DATA.DOMAIN_META;
+</script>
+<script>
 (function() {
   'use strict';
 

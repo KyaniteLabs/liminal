@@ -72,10 +72,11 @@ describe('MiniMaxProvider', () => {
         userPrompt: 'Generate a p5.js sketch',
       });
 
-      expect(result.success).toBe(true);
-      expect(result.content).toBe('function setup() { createCanvas(400, 400); }');
-      expect(result.model).toBe('MiniMax-M2.7');
-      expect(result.usage).toEqual({
+      expect(result.isOk()).toBe(true);
+      expect(result.value.success).toBe(true);
+      expect(result.value.content).toBe('function setup() { createCanvas(400, 400); }');
+      expect(result.value.model).toBe('MiniMax-M2.7');
+      expect(result.value.usage).toEqual({
         inputTokens: 10,
         outputTokens: 20,
       });
@@ -106,8 +107,9 @@ describe('MiniMaxProvider', () => {
         userPrompt: 'Generate a p5.js sketch',
       });
 
-      expect(result.success).toBe(true);
-      expect(result.content).toBe('function setup() { createCanvas(400, 400); }');
+      expect(result.isOk()).toBe(true);
+      expect(result.value.success).toBe(true);
+      expect(result.value.content).toBe('function setup() { createCanvas(400, 400); }');
     });
 
     it('should mark response as failed when content is empty and no reasoning_content', async () => {
@@ -130,8 +132,9 @@ describe('MiniMaxProvider', () => {
         userPrompt: 'Generate a p5.js sketch',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.content).toBe('');
+      expect(result.isOk()).toBe(true);
+      expect(result.value.success).toBe(false);
+      expect(result.value.content).toBe('');
     });
 
     it('should handle API error response', async () => {
@@ -147,9 +150,9 @@ describe('MiniMaxProvider', () => {
         userPrompt: 'Generate a p5.js sketch',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('401');
-      expect(result.error).toContain('Invalid API key');
+      expect(result.isErr()).toBe(true);
+      expect(result.error.message).toContain('401');
+      expect(result.error.message).toContain('Invalid API key');
     });
 
     it('should handle network error', async () => {
@@ -160,8 +163,8 @@ describe('MiniMaxProvider', () => {
         userPrompt: 'Generate a p5.js sketch',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toContain('Network error');
+      expect(result.isErr()).toBe(true);
+      expect(result.error.message).toContain('Network error');
     });
 
     it('should include Authorization header with Bearer token', async () => {
@@ -238,10 +241,11 @@ describe('MiniMaxProvider', () => {
         userPrompt: 'Generate code',
       });
 
-      expect(result.success).toBe(true);
-      expect(result.content).toBe('function setup() {}');
-      expect(result.thinking?.text).toBe('Let me create a simple setup function');
-      expect(result.thinking?.source).toBe('reasoning_content');
+      expect(result.isOk()).toBe(true);
+      expect(result.value.success).toBe(true);
+      expect(result.value.content).toBe('function setup() {}');
+      expect(result.value.thinking?.text).toBe('Let me create a simple setup function');
+      expect(result.value.thinking?.source).toBe('reasoning_content');
     });
   });
 

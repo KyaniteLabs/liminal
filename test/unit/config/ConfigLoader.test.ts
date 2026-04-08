@@ -191,14 +191,16 @@ describe('ConfigLoader', () => {
 
       const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
 
-      expect(loaded).not.toBeNull();
-      expect(loaded!.name).toBe('legacy-project');
-      expect(loaded!.llm!.model).toBe('legacy-model');
+      expect(loaded.isOk()).toBe(true);
+      if (loaded.isOk()) {
+        expect(loaded.value.name).toBe('legacy-project');
+        expect(loaded.value.llm!.model).toBe('legacy-model');
+      }
     });
 
     it('returns null when no config file exists', async () => {
       const loaded = await loadProjectConfig('/tmp/nonexistent-project-' + process.pid);
-      expect(loaded).toBeNull();
+      expect(loaded.isErr()).toBe(true);
     });
 
     it('returns null when config contains invalid JSON', async () => {
@@ -209,7 +211,7 @@ describe('ConfigLoader', () => {
 
       // Both liminal.json and atelier.json fallback will fail
       const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
-      expect(loaded).toBeNull();
+      expect(loaded.isErr()).toBe(true);
     });
 
     it('prefers liminal.json over atelier.json when both exist', async () => {
@@ -223,15 +225,18 @@ describe('ConfigLoader', () => {
       );
 
       const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
-      expect(loaded!.name).toBe('new-project');
+      expect(loaded.isOk()).toBe(true);
+      if (loaded.isOk()) {
+        expect(loaded.value.name).toBe('new-project');
+      }
     });
 
     it('defaults to cwd when no argument given', async () => {
       // This test just verifies the function doesn't throw when called with no args.
-      // It may return null if cwd has no config, which is fine.
+      // It may return Err if cwd has no config, which is fine.
       const loaded = await loadProjectConfig();
-      // Either a config object or null — both are valid outcomes
-      expect(loaded === null || typeof loaded === 'object').toBe(true);
+      // Either Ok or Err — both are valid outcomes
+      expect(loaded.isOk() || loaded.isErr()).toBe(true);
     });
   });
 

@@ -48,7 +48,8 @@ describe('OpenRouterProvider', () => {
     const res = await provider.generate({
       systemPrompt: 'sys', userPrompt: 'usr',
     });
-    expect(res.success).toBe(true);
-    expect(res.content).toBe('response text');
+    expect(res.isOk()).toBe(true);
+    expect(res.value.success).toBe(true);
+    expect(res.value.content).toBe('response text');
   });
 });

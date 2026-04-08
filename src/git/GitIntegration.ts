@@ -91,11 +91,14 @@ export class GitIntegration {
 
     // Bridge to compost
     if (this.config.bridgeToCompost && this.compostBridge) {
-      await this.compostBridge.onBranch({
+      const bridgeResult = await this.compostBridge.onBranch({
         name: branchName,
         current: true,
         commit: (await this.git.getLastCommit())?.hash ?? '',
       });
+      if (bridgeResult.isErr()) {
+        Logger.warn('GitIntegration', `Compost bridge failed to record branch: ${bridgeResult.error.message}`);
+      }
     }
 
     return ok(branchName);
@@ -140,7 +143,10 @@ export class GitIntegration {
 
     // Bridge to compost
     if (this.config.bridgeToCompost && this.compostBridge) {
-      await this.compostBridge.onCommit(commit);
+      const bridgeResult = await this.compostBridge.onCommit(commit);
+      if (bridgeResult.isErr()) {
+        Logger.warn('GitIntegration', `Compost bridge failed to record commit: ${bridgeResult.error.message}`);
+      }
     }
 
     // Auto-push if configured

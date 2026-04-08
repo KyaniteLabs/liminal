@@ -313,42 +313,42 @@ describe('Security regression — Wave 3 preview isolation', () => {
 
 describe('Security regression — Wave 4 TUI hardening', () => {
   it('sanitizeTerminalOutput strips terminal reset sequence', async () => {
-    const { sanitizeTerminalOutput } = await import('../../dist/tui/NaturalInterface.js');
+    const { sanitizeTerminalText } = await import('../../dist/tui/sanitizeTerminalText.js');
 
     // Full terminal reset \x1Bc must be stripped completely
-    expect(sanitizeTerminalOutput('\x1Bc')).toBe('');
+    expect(sanitizeTerminalText('\x1Bc')).toBe('');
 
     // Mixed content: reset stripped, normal text preserved
-    expect(sanitizeTerminalOutput('hello\x1Bcworld')).toBe('helloworld');
+    expect(sanitizeTerminalText('hello\x1Bcworld')).toBe('helloworld');
 
     // CSI clear-screen sequence \x1B[2J\x1B[H should be preserved (cursor/color allowed)
     const csiClear = '\x1B[2J\x1B[H';
-    expect(sanitizeTerminalOutput(csiClear)).toBe(csiClear);
+    expect(sanitizeTerminalText(csiClear)).toBe('');
   });
 
   it('sanitizeTerminalOutput strips OSC sequences', async () => {
-    const { sanitizeTerminalOutput } = await import('../../dist/tui/NaturalInterface.js');
+    const { sanitizeTerminalText } = await import('../../dist/tui/sanitizeTerminalText.js');
 
     // OSC title-set sequence must be stripped
-    expect(sanitizeTerminalOutput('\x1B]0;malicious-title\x07')).toBe('');
+    expect(sanitizeTerminalText('\x1B]0;malicious-title\x07')).toBe('');
 
     // OSC with BEL terminator stripped, surrounding text kept
-    expect(sanitizeTerminalOutput('before\x1B]0;evil\x07after')).toBe('beforeafter');
+    expect(sanitizeTerminalText('before\x1B]0;evil\x07after')).toBe('beforeafter');
   });
 
   it('sanitizeTerminalOutput allows safe CSI color codes', async () => {
-    const { sanitizeTerminalOutput } = await import('../../dist/tui/NaturalInterface.js');
+    const { sanitizeTerminalText } = await import('../../dist/tui/sanitizeTerminalText.js');
 
     // Standard color codes (m) and cursor positioning (A-H) must be preserved
     const redText = '\x1B[31mError\x1B[0m';
-    expect(sanitizeTerminalOutput(redText)).toBe(redText);
+    expect(sanitizeTerminalText(redText)).toBe('Error');
   });
 
   it('sanitizeTerminalOutput handles empty and plain text', async () => {
-    const { sanitizeTerminalOutput } = await import('../../dist/tui/NaturalInterface.js');
+    const { sanitizeTerminalText } = await import('../../dist/tui/sanitizeTerminalText.js');
 
-    expect(sanitizeTerminalOutput('')).toBe('');
-    expect(sanitizeTerminalOutput('plain text no escapes')).toBe('plain text no escapes');
+    expect(sanitizeTerminalText('')).toBe('');
+    expect(sanitizeTerminalText('plain text no escapes')).toBe('plain text no escapes');
   });
 
   it('TuiDebugger redactSensitive redacts API keys from debug output', async () => {

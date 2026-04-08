@@ -63,6 +63,7 @@ import { runOrganismMode } from './OrganismLoop.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
 import { env } from '../utils/env.js';
 import { Provider } from '../types/providers.js';
+import { LiminalError } from '../errors/index.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
 
@@ -252,6 +253,7 @@ export class RalphLoop {
         // Best-of-N: Generate multiple candidates and select the best
         const numCandidates = adjustedNumCandidates;
         const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string }> = [];
+        let lastGenerationError: Error | undefined;
 
         for (let i = 0; i < numCandidates; i++) {
           try {
@@ -300,6 +302,7 @@ export class RalphLoop {
             });
           } catch (candidateError) {
             Logger.warn('RalphLoop', `Candidate ${i} generation failed: ${formatError('RalphLoop', candidateError)}`);
+            lastGenerationError = candidateError instanceof Error ? candidateError : new Error(String(candidateError));
             // Continue to next candidate
             if (!normalizedOptions.tolerateErrors) {
               throw candidateError;
@@ -309,10 +312,14 @@ export class RalphLoop {
 
         // Select the best candidate or fail if none valid
         if (candidates.length === 0) {
-          Logger.warn('RalphLoop', `All ${numCandidates} candidates failed validation`);
-          currentCode = '// All candidates failed validation';
-          // Force a low score to trigger quality gate break
-          finalScore = 0;
+          throw new LiminalError(
+            'All generation candidates failed',
+            'ERR_ALL_CANDIDATES_FAILED',
+            {
+              attempts: numCandidates,
+              lastError: lastGenerationError?.message,
+            }
+          );
         } else {
           // For single candidate (default), just use it
           // For multiple candidates, we need to fully evaluate each to find the best

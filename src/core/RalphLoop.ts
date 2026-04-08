@@ -759,14 +759,16 @@ export class RalphLoop {
         }
 
         // Record routing outcome for dynamic routing
-        recordRoutingOutcome({
-          domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
-          model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
-          qualityScore: evaluation.score,
-          timestamp: new Date().toISOString(),
-        }).catch((err) => {
+        try {
+          await recordRoutingOutcome({
+            domain: (normalizedOptions.collabDomain || 'p5') as 'ascii' | 'music' | 'code' | 'visual' | 'remotion',
+            model: normalizedOptions.useSwarm ? 'hybrid' : 'local',
+            qualityScore: evaluation.score,
+            timestamp: new Date().toISOString(),
+          });
+        } catch (err) {
           Logger.warn('RalphLoop', 'Failed to record routing outcome:', err instanceof Error ? err.message : err);
-        });
+        }
 
         // Store previous code before saving current iteration
         previousCode = currentCode;

@@ -2,6 +2,22 @@ import type { AudioFeatures } from './types.js';
 import { Logger } from '../utils/Logger.js';
 
 /**
+ * Meyda module interface for type-safe access
+ */
+interface MeydaModule {
+  bufferSize: number;
+  extract: (features: readonly string[], buffer: Float32Array) => Record<string, unknown> | null;
+}
+
+/**
+ * Loudness result from Meyda extract
+ */
+interface LoudnessResult {
+  total?: number;
+  specific?: number[];
+}
+
+/**
  * Synchronous Meyda access. On first call this performs a dynamic
  * import and caches the result. Subsequent calls are synchronous
  * because the module is already cached by Node's module system.
@@ -10,18 +26,18 @@ import { Logger } from '../utils/Logger.js';
  * but for the synchronous `extractFeatures` API we fall back to a
  * require-based path.
  */
-let MeydaSync: any = null;
+let MeydaSync: MeydaModule | null = null;
 let meydaLoaded = false;
 
-function getMeydaSync(): any {
+function getMeydaSync(): MeydaModule | null {
   if (meydaLoaded) return MeydaSync;
   try {
     // Dynamic require via createRequire for ESM compatibility
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const { createRequire } = require('module') as any;
+    const { createRequire } = require('module') as { createRequire: (url: string) => (id: string) => unknown };
     const req = createRequire(import.meta.url);
-    const mod = req('meyda');
-    MeydaSync = mod.default || mod;
+    const mod = req('meyda') as { default?: MeydaModule } & MeydaModule;
+    MeydaSync = mod.default ?? mod;
     meydaLoaded = true;
     return MeydaSync;
   } catch (err) {
@@ -44,6 +60,19 @@ const DEFAULTS: AudioFeatures = {
   perceptualSharpness: 0,
 };
 
+/** Feature names for Meyda extraction */
+const FEATURES = [
+  'rms',
+  'energy',
+  'spectralCentroid',
+  'spectralFlatness',
+  'zcr',
+  'mfcc',
+  'loudness',
+  'chroma',
+  'perceptualSharpness',
+] as const;
+
 /**
  * Extract audio features from a mono Float32Array sample buffer using Meyda.
  *
@@ -64,28 +93,17 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
 
     // spectralFlux requires previous spectrum state, so we exclude it
     // from the single-frame extraction and default to 0.
-    const features = [
-      'rms',
-      'energy',
-      'spectralCentroid',
-      'spectralFlatness',
-      'zcr',
-      'mfcc',
-      'loudness',
-      'chroma',
-      'perceptualSharpness',
-    ] as const;
-
-    const result = M.extract(features, buffer);
+    const result = M.extract(FEATURES, buffer);
 
     if (!result) return { ...DEFAULTS, chroma: new Float32Array(12) };
 
     // loudness is an object { total, specific } — extract the total value
     // and convert to a dB-like negative scale (Meyda returns positive loudness).
+    const loudnessRaw = result.loudness;
     const loudnessTotal =
-      typeof result.loudness === 'object' && result.loudness !== null
-        ? (result.loudness as any).total ?? 0
-        : (result.loudness as number) ?? 0;
+      typeof loudnessRaw === 'object' && loudnessRaw !== null
+        ? (loudnessRaw as LoudnessResult).total ?? 0
+        : (loudnessRaw as number) ?? 0;
     // Convert to approximate dB scale.
     // Meyda's loudness.total is a sone-like positive value. We convert to a
     // dB-like scale relative to a reference that keeps typical signals negative,
@@ -94,6 +112,9 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
     const loudnessDb = loudnessTotal > 0
       ? 20 * Math.log10(loudnessTotal / LOUDNESS_REFERENCE)
       : -100;
+
+    const chromaRaw = result.chroma;
+    const chromaArray = Array.isArray(chromaRaw) ? chromaRaw as number[] : [];
 
     return {
       rms: (result.rms as number) ?? 0,
@@ -104,8 +125,8 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
       mfcc: Array.isArray(result.mfcc) ? (result.mfcc as number[]) : [],
       loudness: loudnessDb,
       spectralFlux: 0, // requires inter-frame state, not available in single-frame extraction
-      chroma: result.chroma
-        ? new Float32Array(result.chroma as number[])
+      chroma: chromaArray.length > 0
+        ? new Float32Array(chromaArray)
         : new Float32Array(12),
       perceptualSharpness: (result.perceptualSharpness as number) ?? 0,
     };

@@ -13,6 +13,7 @@ import { failureLogger } from '../FailureLogger.js';
 import { Status } from '../../types/status.js';
 import { rateLimiter } from '../tools/RateLimiter.js';
 import { formatError } from '../../utils/errors.js';
+import { SecurityError } from '../errors.js';
 import { selfEvaluation } from '../SelfEvaluation.js';
 import { telemetryWrapper } from '../tools/TelemetryWrapper.js';
 import {
@@ -348,6 +349,7 @@ export class HarnessAgent {
 
   /**
    * Run verification command
+   * SECURITY: Uses allowlist validation to prevent command injection
    */
   private async runVerification(command: string): Promise<{ success: boolean; error?: string }> {
     try {
@@ -355,7 +357,14 @@ export class HarnessAgent {
       const { promisify } = await import('node:util');
       const execFileAsync = promisify(execFile);
       
-      await execFileAsync('sh', ['-c', command], { timeout: 30000 });
+      // SECURITY: Allowlist validation to prevent command injection
+      const ALLOWED_COMMANDS = ['npm run build', 'npm run test', 'npm run typecheck', 'npm run lint'];
+      if (!ALLOWED_COMMANDS.includes(command)) {
+        throw new SecurityError(`Command not in allowlist: ${command}`);
+      }
+      
+      const [cmd, ...args] = command.split(' ');
+      await execFileAsync(cmd, args, { timeout: 30000 });
       return { success: true };
     } catch (error) {
       return { 

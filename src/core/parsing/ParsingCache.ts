@@ -220,8 +220,9 @@ export class ParsingCache {
 
       await Promise.all(
         cacheFiles.map((file) =>
-          fs.unlink(path.join(this.cacheDir, file)).catch(() => {
-            // Ignore errors when deleting files
+          fs.unlink(path.join(this.cacheDir, file)).catch((err) => {
+            // Log but don't fail if individual file deletion fails
+            Logger.debug('ParsingCache', `Failed to delete cache file ${file}:`, err);
           })
         )
       );

@@ -120,6 +120,18 @@ export class HTMLValidator {
       }
     }
 
+    // SECURITY: Check for HTML event handler attributes (XSS prevention)
+    const EVENT_HANDLER_PATTERN = /\son\w+\s*=/i;
+    const JAVASCRIPT_URL_PATTERN = /javascript:/i;
+    
+    if (EVENT_HANDLER_PATTERN.test(code)) {
+      errors.push('HTML Security: Event handler attributes (on*) are not allowed');
+    }
+    
+    if (JAVASCRIPT_URL_PATTERN.test(code)) {
+      errors.push('HTML Security: javascript: URLs are not allowed');
+    }
+
     // Check for script tags with external sources
     const scriptMatches = code.matchAll(/<script[^>]+src\s*=\s*["']([^"']+)["']/gi);
     for (const match of scriptMatches) {

@@ -237,16 +237,22 @@ class Bus extends EventEmitter {
     const msg = sanitizeTerminalText(`\x1b[${colorCode}m[${ts}]\x1b[0m \x1b[2m${src}\x1b[0m ${type}`, { maxLength: 160, singleLine: true });
 
     if (event.type === EventTypes.PROCESS_PROGRESS) {
-      const d = event.data as unknown as ProcessProgressData;
-      const bar = this.progressBar(d.current, d.total, 20);
-      process.stdout.write(`${sanitizeTerminalText(`${msg} ${bar} ${d.current}/${d.total} ${d.stage}`, { maxLength: 180, singleLine: true })}\n`);
+      const d = this.asProcessProgressData(event.data);
+      if (d) {
+        const bar = this.progressBar(d.current, d.total, 20);
+        process.stdout.write(`${sanitizeTerminalText(`${msg} ${bar} ${d.current}/${d.total} ${d.stage}`, { maxLength: 180, singleLine: true })}\n`);
+      }
     } else if (event.type === EventTypes.LLM_RESPONSE) {
-      const d = event.data as unknown as LLMResponseData;
-      const status = d.success ? 'ok' : `err: ${d.error}`;
-      process.stdout.write(`${sanitizeTerminalText(`${msg} ${d.provider}/${d.model} ${d.latencyMs}ms ${status}`, { maxLength: 180, singleLine: true })}\n`);
+      const d = this.asLLMResponseData(event.data);
+      if (d) {
+        const status = d.success ? 'ok' : `err: ${d.error}`;
+        process.stdout.write(`${sanitizeTerminalText(`${msg} ${d.provider}/${d.model} ${d.latencyMs}ms ${status}`, { maxLength: 180, singleLine: true })}\n`);
+      }
     } else if (event.type === EventTypes.LOOP_ITERATION) {
-      const d = event.data as unknown as LoopIterationData;
-      process.stdout.write(`${sanitizeTerminalText(`${msg} iter=${d.iteration} score=${d.score.toFixed(2)}${d.promiseDetected ? ' PROMISE' : ''}`, { maxLength: 180, singleLine: true })}\n`);
+      const d = this.asLoopIterationData(event.data);
+      if (d) {
+        process.stdout.write(`${sanitizeTerminalText(`${msg} iter=${d.iteration} score=${d.score.toFixed(2)}${d.promiseDetected ? ' PROMISE' : ''}`, { maxLength: 180, singleLine: true })}\n`);
+      }
     } else {
       // Generic: show a summary message from data
       const summary = (event.data as Record<string, unknown>).message ?? '';
@@ -269,6 +275,56 @@ class Bus extends EventEmitter {
     const pct = total > 0 ? current / total : 0;
     const filled = Math.round(pct * width);
     return `[${'█'.repeat(filled)}${'░'.repeat(width - filled)}]`;
+  }
+
+  // Type guard functions for safe data casting
+  private asProcessProgressData(data: Record<string, unknown>): ProcessProgressData | null {
+    if (
+      typeof data.process === 'string' &&
+      typeof data.current === 'number' &&
+      typeof data.total === 'number' &&
+      typeof data.stage === 'string'
+    ) {
+      return {
+        process: data.process,
+        current: data.current,
+        total: data.total,
+        stage: data.stage,
+      };
+    }
+    return null;
+  }
+
+  private asLLMResponseData(data: Record<string, unknown>): LLMResponseData | null {
+    if (
+      typeof data.provider === 'string' &&
+      typeof data.model === 'string' &&
+      typeof data.success === 'boolean' &&
+      typeof data.latencyMs === 'number'
+    ) {
+      return {
+        provider: data.provider,
+        model: data.model,
+        success: data.success,
+        latencyMs: data.latencyMs,
+      };
+    }
+    return null;
+  }
+
+  private asLoopIterationData(data: Record<string, unknown>): LoopIterationData | null {
+    if (
+      typeof data.iteration === 'number' &&
+      typeof data.score === 'number' &&
+      typeof data.promiseDetected === 'boolean'
+    ) {
+      return {
+        iteration: data.iteration,
+        score: data.score,
+        promiseDetected: data.promiseDetected,
+      };
+    }
+    return null;
   }
 }
 

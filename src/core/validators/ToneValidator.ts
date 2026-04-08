@@ -12,31 +12,55 @@ export interface ToneValidationResult {
 
 export class ToneValidator {
   /**
-   * Valid Tone.js classes
+   * Valid Tone.js classes - comprehensive whitelist of all Tone.js API classes
    */
   private static readonly VALID_TONE_CLASSES = new Set([
     // Core
-    'Transport', 'Destination', 'Master', 'Listener', 'Context', 'Draw',
-    // Sources
-    'Oscillator', 'PulseOscillator', 'PWMOscillator', 'FatOscillator',
+    'Transport', 'Destination', 'Master', 'Listener', 'Context', 'Draw', 'Tone',
+    // Sources - Oscillators
+    'Oscillator', 'PulseOscillator', 'PWMOscillator', 'FatOscillator', 'AMOscillator', 'FMOscillator',
+    // Sources - Synths
     'AMSynth', 'FMSynth', 'MonoSynth', 'PolySynth', 'Synth', 'MembraneSynth',
-    'MetalSynth', 'NoiseSynth', 'DuoSynth', 'PluckSynth', 'GrainSynth',
-    // Effects
-    'Reverb', 'Delay', 'FeedbackDelay', 'PingPongDelay',
-    'Distortion', 'Chorus', 'Phaser', 'Tremolo', 'Vibrato',
-    'Filter', 'EQ3', 'Compressor', 'Limiter', 'Gate',
-    'AutoFilter', 'AutoPanner', 'AutoWah', 'BitCrusher', 'Chebyshev',
-    'Convolver', 'JCReverb', 'StereoWidener', 'PitchShift', 'FrequencyShifter',
-    // Components
-    'Envelope', 'LFO', 'AmplitudeEnvelope', 'FrequencyEnvelope', 'ScaledEnvelope',
-    'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter',
-    'Gain', 'Signal', 'Multiply', 'Add', 'Subtract', 'Abs', 'Negate', 'Pow',
+    'MetalSynth', 'NoiseSynth', 'DuoSynth', 'PluckSynth', 'GrainSynth', 'Sampler', 'Player',
+    // Sources - Noise
+    'Noise', 'Microphone', 'UserMedia',
+    // Effects - Time
+    'Reverb', 'Delay', 'FeedbackDelay', 'PingPongDelay', 'PreDelay',
+    // Effects - Distortion
+    'Distortion', 'Chebyshev', 'BitCrusher', 'WaveShaper',
+    // Effects - Modulation
+    'Chorus', 'Phaser', 'Tremolo', 'Vibrato', 'Tremolo', 'AutoPanner',
+    // Effects - Filters
+    'Filter', 'EQ3', 'AutoFilter', 'LowpassCombFilter', 'HighpassCombFilter',
+    // Effects - Dynamics
+    'Compressor', 'Limiter', 'Gate', 'MultibandCompressor', 'MidSideCompressor',
+    // Effects - Spatial
+    'Panner', 'Panner3D', 'StereoWidener', 'JCReverb', 'Convolver',
+    // Effects - Pitch/Spectral
+    'PitchShift', 'FrequencyShifter',
+    // Effects - Utility
+    'Gain', 'Volume', 'StereoFeedbackEffect', 'StereoEffect', 'Effect',
+    // Components - Envelopes
+    'Envelope', 'AmplitudeEnvelope', 'FrequencyEnvelope', 'ScaledEnvelope',
+    // Components - Analysis
+    'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter', 'Scope',
+    // Components - Math
+    'Signal', 'Multiply', 'Add', 'Subtract', 'Abs', 'Negate', 'Pow', 'Divide', 'Modulo', 'Max', 'Min', 'Clip', 'Scale', 'Pow',
+    // Components - Core
+    'Param', 'Timeline', 'Clock', 'Emitter', 'TimelineState',
+    // Instruments
+    'Instrument', 'Monophonic', 'Polyphonic',
     // Events
-    'Loop', 'Part', 'Pattern', 'Sequence', 'Event',
+    'Loop', 'Part', 'Pattern', 'Sequence', 'Event', 'ToneEvent',
+    // Transport
+    'Transport', 'TransportTime', 'Ticks', 'Time', 'Frequency', 'Midi', 'BarsBeatsSixteenths',
     // Routing
-    'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo',
+    'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo', 'Channel', 'Master',
     // Utilities
-    'ToneAudioBuffer', 'ToneAudioBuffers', 'Time', 'Frequency', 'Midi'
+    'ToneAudioBuffer', 'ToneAudioBuffers', 'Buffer', 'Buffers',
+    'Interval', 'Timeout', 'Draw', 'Context', 'OfflineContext',
+    // Type conversion
+    'TimeBase', 'FrequencyClass', 'TransportTimeClass',
   ]);
 
   /**

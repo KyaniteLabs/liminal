@@ -1,8 +1,10 @@
 // ── Config & Response ──
 
 import { LLMError, LLMTimeoutError, LLMAuthError, LLMRateLimitError } from './errors.js';
-export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './errors.js';
 import { LLMGenerationError } from '../errors/LLMGenerationError.js';
+export { LLMError, LLMTimeoutError, LLMRateLimitError, LLMAuthError } from './errors.js';
+
+import { CircuitBreaker } from './CircuitBreaker.js';
 
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { PromptLibrary } from '../prompts/index.js';
@@ -11,7 +13,7 @@ import { RetryManager } from './RetryManager.js';
 import { TIMEOUT_OLLAMA_MS, TRUNCATE_SHORT, TRUNCATE_LONG, TOKEN_LIMIT_XL } from '../constants/limits.js';
 import { CacheManager } from './CacheManager.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
-import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
+import { validateUrlSync, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
@@ -115,6 +117,8 @@ export class LLMClient {
   private static roleConfigFile: RoleConfigFile | null = null;
   /** Resolved fallback providers — lazily populated */
   private fallbackProviders: BaseProvider[] | null = null;
+  /** Circuit breakers per provider for fault isolation */
+  private breakers = new Map<string, CircuitBreaker>();
 
   constructor(config?: Partial<LLMConfig>) {
     this.role = config?.role;
@@ -346,6 +350,48 @@ export class LLMClient {
     return false;
   }
 
+  // ── Circuit Breaker integration ──
+
+  /**
+   * Get or create circuit breaker for a provider
+   */
+  private getBreaker(provider: string): CircuitBreaker {
+    if (!this.breakers.has(provider)) {
+      this.breakers.set(provider, new CircuitBreaker({
+        failureThreshold: 5,
+        resetTimeoutMs: 30000,
+        halfOpenMaxAttempts: 1,
+      }));
+    }
+    return this.breakers.get(provider)!;
+  }
+
+  /**
+   * Execute LLM call with circuit breaker protection
+   * Prevents cascading failures when a provider is down
+   */
+  private async generateWithBreaker<T>(provider: string, fn: () => Promise<T>): Promise<T> {
+    const breaker = this.getBreaker(provider);
+    
+    if (!breaker.canExecute()) {
+      throw new LLMError(
+        `Circuit breaker open for provider: ${provider}. Too many recent failures.`,
+        provider,
+        undefined,
+        false
+      );
+    }
+
+    try {
+      const result = await fn();
+      breaker.recordSuccess();
+      return result;
+    } catch (error) {
+      breaker.recordFailure();
+      throw error;
+    }
+  }
+
   // ── Provider delegation ──
 
   /** Get or create the provider instance */
@@ -357,7 +403,7 @@ export class LLMClient {
       const allowedHosts = getAllowedHostsFromEnv();
 
       try {
-        validateUrl(this.config.baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
+        validateUrlSync(this.config.baseUrl, { allowedHosts, allowPrivateIPs, allowLocalhost });
       } catch (err) {
         if (err instanceof SSRFError) {
           throw new LLMError(`SSRF Protection: ${err.message}`, 'llm', undefined, false);
@@ -512,15 +558,18 @@ export class LLMClient {
         promptPreview: userPrompt.slice(0, TRUNCATE_SHORT)
       });
 
+      const providerName = this.detectProvider();
+      
       const result = await RetryManager.executeWithRetry(async () => {
-        const provider = this.getProvider();
-        const req: ProviderRequest = {
-          systemPrompt,
-          userPrompt,
-          temperature: this.config.temperature,
-          maxTokens: this.config.maxTokens,
-          signal,
-        };
+        return this.generateWithBreaker(providerName, async () => {
+          const provider = this.getProvider();
+          const req: ProviderRequest = {
+            systemPrompt,
+            userPrompt,
+            temperature: this.config.temperature,
+            maxTokens: this.config.maxTokens,
+            signal,
+          };
 
         const genResult = await provider.generate(req);
         if (genResult.isErr()) {
@@ -528,6 +577,7 @@ export class LLMClient {
         }
         const response = genResult.value;
         return this.mapProviderResponse(response);
+      });
       }).catch(async (primaryError: unknown) => {
         // Only attempt fallbacks on network/auth errors
         if (!this.isFallbackableError(primaryError)) {

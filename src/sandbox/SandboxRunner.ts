@@ -8,6 +8,7 @@
 import puppeteer, { Browser } from 'puppeteer';
 import { generateHTML } from '../utils/generateHTML.js';
 import { getChromeArgs } from '../security/SandboxConfig.js';
+import { Logger } from '../utils/Logger.js';
 
 
 export interface SandboxResult {
@@ -37,12 +38,15 @@ function forceKillBrowser(browser: Browser): void {
   if (proc?.pid) {
     try {
       process.kill(proc.pid, 'SIGKILL');
-    } catch {
-      // Process may already be dead
+    } catch (err) {
+      // Process may already be dead - log for debugging
+      Logger.debug('SandboxRunner', 'Failed to kill browser process:', err);
     }
   } else {
     // Fallback: try graceful close (may hang, but no PID available)
-    void browser.close().catch(() => {});
+    void browser.close().catch((err) => {
+      Logger.debug('SandboxRunner', 'Failed to close browser:', err);
+    });
   }
 }
 
@@ -98,7 +102,9 @@ export async function runInSandbox(
     // timeout may not fire. The manual timeout guarantees we always return.
     const loadPromise = page.setContent(html, { waitUntil: 'load', timeout: timeoutMs });
     // Prevent unhandled rejection if the browser is killed before loadPromise settles.
-    loadPromise.catch(() => {});
+    loadPromise.catch((err) => {
+      Logger.debug('SandboxRunner', 'Load promise rejected (browser may have been killed):', err);
+    });
 
     const manualTimeout = new Promise<never>((_, reject) => {
       setTimeout(() => reject(new Error(`Sandbox timeout: execution exceeded ${timeoutMs}ms`)), timeoutMs);

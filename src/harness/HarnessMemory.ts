@@ -40,7 +40,7 @@ export interface AdaptationRecord {
   id: string;
   patternName: string;
   patternSeverity: 'low' | 'medium' | 'high' | 'critical';
-  fixType: 'prompt' | 'template' | 'guardrail' | 'config' | 'code';
+  fixType: 'prompt' | 'template' | 'guardrail' | 'config' | 'code' | 'manual';
   targetFile?: string;
   description: string;
   appliedAt: string;

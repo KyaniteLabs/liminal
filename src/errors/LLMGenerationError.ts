@@ -2,32 +2,28 @@ import { LiminalError } from './base.js';
 
 /**
  * Error for LLM generation failures.
- * Used when the LLM fails to generate valid code.
+ * Includes context about the model and request duration for debugging.
  */
 export class LLMGenerationError extends LiminalError {
-  public model?: string;
-  public duration?: number;
+  public readonly model?: string;
+  public readonly duration?: number;
+  public readonly cause?: Error;
 
   constructor(
     message: string,
-    options?: { cause?: Error; model?: string; duration?: number }
+    options?: ErrorOptions & { model?: string; duration?: number }
   ) {
-    const context: Record<string, unknown> = {};
-    if (options?.model) {
-      context.model = options.model;
-    }
-    if (options?.duration !== undefined) {
-      context.duration = options.duration;
-    }
-
     super(
       message,
       'ERR_LLM_GENERATION',
-      Object.keys(context).length > 0 ? context : undefined,
-      { cause: options?.cause }
+      {
+        ...(options?.model && { model: options.model }),
+        ...(options?.duration && { duration: options.duration }),
+        ...(options?.cause instanceof Error && { causeMessage: options.cause.message }),
+      }
     );
-
     this.model = options?.model;
     this.duration = options?.duration;
+    this.cause = options?.cause instanceof Error ? options.cause : undefined;
   }
 }

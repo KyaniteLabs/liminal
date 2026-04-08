@@ -185,8 +185,10 @@ export class ProjectSerializer {
     if (typeof window !== 'undefined') {
       try {
         // Dynamic import of optional jszip dependency
+        // SECURITY: Module path constructed to avoid compile-time resolution while preventing code injection
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const JSZip: any = await eval("import('jszip')").then((m: { default: unknown }) => m.default || m).catch(() => null);
+        const moduleName = 'js' + 'zip';
+        const JSZip: any = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
         if (!JSZip) throw new Error('JSZip not available');
         const zip = new JSZip();
 
@@ -223,8 +225,10 @@ export class ProjectSerializer {
     if (typeof window !== 'undefined') {
       try {
         // Dynamic import of optional jszip dependency
+        // SECURITY: Module path constructed to avoid compile-time resolution while preventing code injection
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const JSZip: any = await eval("import('jszip')").then((m: { default: unknown }) => m.default || m).catch(() => null);
+        const moduleName = 'js' + 'zip';
+        const JSZip: any = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
         if (!JSZip) throw new Error('JSZip not available');
         const zipContent = await JSZip.loadAsync(zip);
 

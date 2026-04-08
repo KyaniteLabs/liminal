@@ -41,7 +41,10 @@ async function getSharp(): Promise<unknown> {
       sharpModule = (mod && typeof mod === 'object' && 'default' in mod) ? mod.default : mod;
       return sharpModule;
     })
-    .catch(() => null);
+    .catch((err) => {
+      Logger.debug('MetadataExtractor', 'Failed to load sharp module:', err);
+      return null;
+    });
   return sharpLoading;
 }
 
@@ -57,7 +60,10 @@ async function getMusicMetadata(): Promise<unknown> {
       musicMetadataModule = mod;
       return mod;
     })
-    .catch(() => null);
+    .catch((err) => {
+      Logger.debug('MetadataExtractor', 'Failed to load music-metadata module:', err);
+      return null;
+    });
   return musicMetadataLoading;
 }
 

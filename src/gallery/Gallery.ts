@@ -157,7 +157,10 @@ export class Gallery {
 
     // Also save the final output as the latest version
     if (result.finalOutput) {
-      const history = await this.loadHistory(project).catch(() => []);
+      const history = await this.loadHistory(project).catch((err) => {
+        Logger.debug('Gallery', 'Failed to load history:', err);
+        return [];
+      });
       const nextVersion = history.length + 1;
       await this.saveIteration(project, nextVersion, result.finalOutput);
     }

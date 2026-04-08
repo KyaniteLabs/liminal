@@ -36,11 +36,22 @@ export class ToneGenerator extends TierBasedGenerator {
   }
 
   private sanitizeCode(code: string): string {
-    // Strip markdown fences
-    let clean = code.replace(/```(?:javascript|js)?\n/g, '').replace(/```/g, '');
+    if (!code || code.trim().length === 0) {
+      return '';
+    }
     
-    // Strip <think> tags
+    let clean = code;
+    
+    // Strip markdown code fences (only at start/end, preserve code inside)
+    clean = clean.replace(/^```(?:javascript|js|typescript|ts)?\n?/gm, '');
+    clean = clean.replace(/\n?```$/gm, '');
+    clean = clean.replace(/^```$/gm, '');
+    
+    // Strip <think> tags and their content (LLM reasoning contamination)
     clean = clean.replace(/<think>[\s\S]*?<\/think>/gi, '');
+    
+    // Strip HTML-style comments
+    clean = clean.replace(/<!--[\s\S]*?-->/g, '');
     
     return clean.trim();
   }

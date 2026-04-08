@@ -21,36 +21,49 @@ export class HydraGenerator extends TierBasedGenerator {
   }
 
   private sanitizeCode(code: string): string {
+    if (!code || code.trim().length === 0) {
+      return '';
+    }
+    
     let clean = code;
+    
+    // Strip markdown code fences (only at start/end, preserve code inside)
+    clean = clean.replace(/^```(?:javascript|js)?\n?/gm, '');
+    clean = clean.replace(/\n?```$/gm, '');
+    clean = clean.replace(/^```$/gm, '');
     
     // Strip <think> tags and their content (LLM reasoning contamination)
     clean = clean.replace(/<think>[\s\S]*?<\/think>/gi, '');
     
-    // Strip markdown fences
-    clean = clean.replace(/```(?:javascript|js)?\n/g, '').replace(/```/g, '');
-    
-    // Remove HTML comments
+    // Strip HTML-style comments
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
     
-    // Split into lines and filter
+    // Only filter out lines that are pure explanation (no code patterns at all)
     const lines = clean.split('\n');
     const codeLines: string[] = [];
+    let foundCode = false;
     
     for (const line of lines) {
       const trimmed = line.trim();
       
       // Skip empty lines at start
-      if (trimmed === '' && codeLines.length === 0) continue;
+      if (trimmed === '' && !foundCode) continue;
       
-      // Skip explanation lines (that don't look like code)
-      if (trimmed && !trimmed.startsWith('//') && !/[()=.,;]/.test(trimmed)) {
-        // Might be an explanation - check if it has Hydra syntax
-        if (!/\b(osc|shape|noise|voronoi|src|render|out)\b/.test(trimmed)) {
-          continue;
+      // Keep lines that:
+      // 1. Are comments (start with //)
+      // 2. Have code-like patterns (parentheses, method chains, operators)
+      // 3. Have Hydra-specific syntax
+      const isComment = trimmed.startsWith('//');
+      const hasCodePattern = /[()=.,;]/.test(trimmed);
+      const hasHydraSyntax = /\b(osc|shape|noise|voronoi|src|render|out|speed|scale|color|blend|modulate|pixelate|rotate|scroll|post|fast|slow|mask)\b/.test(trimmed);
+      
+      if (isComment || hasCodePattern || hasHydraSyntax) {
+        codeLines.push(line);
+        if (hasHydraSyntax || hasCodePattern) {
+          foundCode = true;
         }
       }
-      
-      codeLines.push(line);
+      // Skip pure explanation lines (natural language without code patterns)
     }
     
     clean = codeLines.join('\n');

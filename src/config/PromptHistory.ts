@@ -24,12 +24,44 @@ export class PromptHistory {
   }
 
   /**
+   * Validate that data conforms to HistoryData structure
+   */
+  private isValidHistoryData(data: unknown): data is HistoryData {
+    if (typeof data !== 'object' || data === null) return false;
+    const obj = data as Record<string, unknown>;
+    
+    // Check recent array
+    if (!Array.isArray(obj.recent)) return false;
+    for (const entry of obj.recent) {
+      if (typeof entry !== 'object' || entry === null) return false;
+      const entryObj = entry as Record<string, unknown>;
+      if (typeof entryObj.prompt !== 'string') return false;
+      if (typeof entryObj.timestamp !== 'number') return false;
+    }
+    
+    // Check favorites array
+    if (!Array.isArray(obj.favorites)) return false;
+    for (const fav of obj.favorites) {
+      if (typeof fav !== 'string') return false;
+    }
+    
+    return true;
+  }
+
+  /**
    * Load history from file
    */
   private async loadData(): Promise<HistoryData> {
     try {
       const content = await fs.readFile(this.filePath, 'utf-8');
-      return JSON.parse(content) as HistoryData;
+      const parsed = JSON.parse(content) as unknown;
+      
+      if (!this.isValidHistoryData(parsed)) {
+        Logger.warn('PromptHistory', 'Invalid history data structure, using defaults');
+        return { recent: [], favorites: [] };
+      }
+      
+      return parsed;
     } catch (err) {
       Logger.warn('PromptHistory', 'Failed to load history, using defaults:', err);
       return { recent: [], favorites: [] };

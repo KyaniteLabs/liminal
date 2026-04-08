@@ -55,13 +55,15 @@ export class P5Validator {
   private static validateRawJS(code: string): string[] {
     const errors: string[] = [];
 
-    // Raw p5.js must have setup/draw/createCanvas
+    // Raw p5.js must have setup/draw/createCanvas (traditional or arrow functions)
     const hasSetup = /function\s+setup\s*\(/.test(code);
+    const hasArrowSetup = /(?:const|let|var)\s+setup\s*=\s*(?:\([^)]*\)|\w+)\s*=>/.test(code);
     const hasDraw = /function\s+draw\s*\(/.test(code);
+    const hasArrowDraw = /(?:const|let|var)\s+draw\s*=\s*(?:\([^)]*\)|\w+)\s*=>/.test(code);
     const hasCreateCanvas = /createCanvas\s*\(/.test(code);
 
-    if (!hasSetup && !hasDraw && !hasCreateCanvas) {
-      errors.push('p5.js code must contain at least one of: function setup(), function draw(), or createCanvas()');
+    if (!hasSetup && !hasArrowSetup && !hasDraw && !hasArrowDraw && !hasCreateCanvas) {
+      errors.push('p5.js code must contain at least one of: function setup(), const setup = () =>..., function draw(), const draw = () =>..., or createCanvas()');
     }
 
     // Raw JS should not start with <!DOCTYPE

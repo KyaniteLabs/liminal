@@ -123,19 +123,49 @@ export class RalphLoop {
     if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
       try {
         const { AudioAnalyzer } = await import('../audio/index.js');
-        const { execFile } = await import('child_process');
-        const { promisify } = await import('util');
-        const execFileAsync = promisify(execFile);
+        const { spawn } = await import('child_process');
 
         // Decode audio file to raw PCM (s16le, mono, 44100Hz) via ffmpeg
-        const { stdout: pcmBuffer } = await execFileAsync('ffmpeg', [
+        // Use spawn with timeout to prevent zombie processes
+        const ffmpegProcess = spawn('ffmpeg', [
           '-i', normalizedOptions.voiceFile,
           '-f', 's16le',
           '-ac', '1',
           '-ar', '44100',
           '-v', 'quiet',
           'pipe:1',
-        ], { maxBuffer: 50 * 1024 * 1024, encoding: 'buffer' });
+        ], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+        // Set up timeout to kill hanging processes
+        const FFMPEG_TIMEOUT_MS = 30000; // 30 seconds
+        const timeout = setTimeout(() => {
+          Logger.warn('RalphLoop', 'ffmpeg timeout reached, killing process');
+          ffmpegProcess.kill('SIGTERM');
+          // Force kill after grace period
+          setTimeout(() => {
+            if (!ffmpegProcess.killed) {
+              ffmpegProcess.kill('SIGKILL');
+            }
+          }, 5000);
+        }, FFMPEG_TIMEOUT_MS);
+
+        // Collect stdout data
+        const chunks: Buffer[] = [];
+        ffmpegProcess.stdout?.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+        // Wait for process to complete
+        const exitCode = await new Promise<number | null>((resolve) => {
+          ffmpegProcess.on('close', (code) => resolve(code));
+          ffmpegProcess.on('error', () => resolve(null));
+        });
+
+        clearTimeout(timeout);
+
+        if (exitCode !== 0) {
+          throw new Error(`ffmpeg exited with code ${exitCode}`);
+        }
+
+        const pcmBuffer = Buffer.concat(chunks);
 
         // Convert Int16 PCM to Float32 (-1.0 to 1.0)
         const int16 = new Int16Array(pcmBuffer.buffer, pcmBuffer.byteOffset, pcmBuffer.byteLength / 2);

@@ -108,16 +108,15 @@ export class GLSLValidator {
       'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4', 'int', 'float', 'bool'
     ]);
 
-    // Extract all function calls
-    const funcCallMatches = trimmed.matchAll(/(\w+)\s*\(/g);
+    // Extract all function calls (but not variable declarations like 'float x = ...')
+    // Match: functionName( but exclude: void/return/if/for/while/variable declarations
+    const funcCallPattern = /\b(?!(?:void|float|vec2|vec3|vec4|int|bool|return|if|for|while|switch|case|default)\b)(\w+)\s*(?=\()/g;
+    const funcCallMatches = trimmed.matchAll(funcCallPattern);
     for (const match of funcCallMatches) {
       const funcName = match[1];
-      // Skip if it's a definition, a builtin, or a type constructor
+      // Skip if it's a definition or a builtin
       if (!functionDefs.has(funcName) && !builtInFunctions.has(funcName)) {
-        // Check if it's actually a macro or keyword
-        if (!['if', 'for', 'while', 'return', 'switch', 'case', 'default'].includes(funcName)) {
-          errors.push(`GLSL: Undefined function '${funcName}()' - must be defined before use or is a built-in`);
-        }
+        errors.push(`GLSL: Undefined function '${funcName}()' - must be defined before use or is a built-in`);
       }
     }
 

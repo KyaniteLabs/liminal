@@ -11,6 +11,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { formatError } from '../../utils/errors.js';
+import { PathTraversalError } from '../errors.js';
 
 export interface ValidationResult {
   valid: boolean;
@@ -44,10 +45,70 @@ export class ValidationGuard {
 
   /**
    * Validate file path is within allowed directories
+   * SECURITY: Checks traversal BEFORE resolve, uses realpath for canonicalization
    */
-  validatePath(filePath: string, options?: PathValidationOptions): ValidationResult {
+  async validatePath(filePath: string, options?: PathValidationOptions): Promise<ValidationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
+
+    // SECURITY: Check traversal BEFORE resolve to prevent bypasses
+    if (filePath.includes('..')) {
+      throw new PathTraversalError(`Path '${filePath}' contains '..' which is not allowed`);
+    }
+    
+    if (filePath.includes('~')) {
+      throw new PathTraversalError(`Path '${filePath}' contains '~' which is not allowed`);
+    }
+
+    // Check for absolute paths
+    if (path.isAbsolute(filePath) && !options?.allowAbsolute) {
+      warnings.push(`Path '${filePath}' is absolute - prefer relative paths`);
+    }
+
+    const resolved = path.resolve(filePath);
+    
+    // SECURITY: Use realpath to resolve any symlinks and get canonical path
+    const realPath = await fs.realpath(resolved).catch(() => resolved);
+    
+    const prefixes = options?.allowedPrefixes || this.allowedPrefixes;
+
+    // Check if path is within allowed prefixes
+    const isAllowed = prefixes.some(prefix => realPath.startsWith(prefix));
+    
+    if (!isAllowed) {
+      throw new PathTraversalError(`Path '${filePath}' is outside allowed directories (${prefixes.join(', ')})`);
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
+  }
+
+  /**
+   * Synchronous path validation (for backward compatibility)
+   * SECURITY: Checks traversal BEFORE any path operations
+   */
+  validatePathSync(filePath: string, options?: PathValidationOptions): ValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    // SECURITY: Check traversal BEFORE resolve to prevent bypasses
+    if (filePath.includes('..')) {
+      errors.push(`Path '${filePath}' contains '..' which is not allowed`);
+      return { valid: false, errors, warnings };
+    }
+    
+    if (filePath.includes('~')) {
+      errors.push(`Path '${filePath}' contains '~' which is not allowed`);
+      return { valid: false, errors, warnings };
+    }
+
+    // Check for absolute paths
+    if (path.isAbsolute(filePath) && !options?.allowAbsolute) {
+      warnings.push(`Path '${filePath}' is absolute - prefer relative paths`);
+    }
 
     const resolved = path.resolve(filePath);
     const prefixes = options?.allowedPrefixes || this.allowedPrefixes;
@@ -59,16 +120,6 @@ export class ValidationGuard {
       errors.push(`Path '${filePath}' is outside allowed directories (${prefixes.join(', ')})`);
     }
 
-    // Check for path traversal attempts
-    if (filePath.includes('..')) {
-      errors.push(`Path '${filePath}' contains '..' which is not allowed`);
-    }
-
-    // Check for absolute paths
-    if (path.isAbsolute(filePath) && !options?.allowAbsolute) {
-      warnings.push(`Path '${filePath}' is absolute - prefer relative paths`);
-    }
-
     return {
       valid: errors.length === 0,
       errors,
@@ -78,10 +129,16 @@ export class ValidationGuard {
 
   /**
    * Validate file content meets constraints
+   * SECURITY: Detects forbidden imports and requires
    */
   async validateContent(filePath: string, options?: ContentValidationOptions): Promise<ValidationResult> {
     const errors: string[] = [];
     const warnings: string[] = [];
+    
+    // SECURITY: Forbidden modules that could compromise security
+    const FORBIDDEN_MODULES = ['fs', 'child_process', 'path', 'os', 'net', 'http', 'https', 'cluster', 'dgram', 'repl', 'vm'];
+    const IMPORT_PATTERN = /(?:import|require)\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+    
     const opts = {
       maxLines: 1000,
       maxLineLength: 500,
@@ -116,6 +173,15 @@ export class ValidationGuard {
           errors.push(`Forbidden pattern detected: ${pattern.source}`);
         }
       });
+
+      // SECURITY: Check for forbidden imports/requires
+      let importMatch;
+      while ((importMatch = IMPORT_PATTERN.exec(content)) !== null) {
+        const importedModule = importMatch[1];
+        if (FORBIDDEN_MODULES.some(m => importedModule === m || importedModule.startsWith(`${m}/`))) {
+          errors.push(`Security: Import of '${importedModule}' is not allowed`);
+        }
+      }
 
       return {
         valid: errors.length === 0,
@@ -177,8 +243,44 @@ export class ValidationGuard {
    * Quick path validation (for frequent checks)
    */
   isPathAllowed(filePath: string): boolean {
+    // SECURITY: Check for prototype pollution attempts
+    if (filePath === '__proto__' || filePath === 'constructor') {
+      return false;
+    }
     const resolved = path.resolve(filePath);
     return this.allowedPrefixes.some(prefix => resolved.startsWith(prefix));
+  }
+
+  /**
+   * Validate object keys to prevent prototype pollution
+   * SECURITY: Blocks __proto__, constructor, and prototype keys
+   */
+  validateObjectKeys(obj: Record<string, unknown>, path = ''): ValidationResult {
+    const errors: string[] = [];
+    const warnings: string[] = [];
+
+    for (const key of Object.keys(obj)) {
+      const fullPath = path ? `${path}.${key}` : key;
+      
+      // SECURITY: Block prototype pollution keys
+      if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+        errors.push(`Security: Prototype pollution attempt detected at '${fullPath}'`);
+        continue;
+      }
+
+      const value = obj[key];
+      if (value && typeof value === 'object' && !Array.isArray(value)) {
+        const nested = this.validateObjectKeys(value as Record<string, unknown>, fullPath);
+        errors.push(...nested.errors);
+        warnings.push(...nested.warnings);
+      }
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      warnings,
+    };
   }
 }
 

@@ -13,3 +13,4 @@ export { GitError, GitRepoError, GitCommitError, GitPushError, GitStashError } f
 export { CompostError, CompostDigestError, CompostSoupError, CompostStoreError } from './CompostError.js';
 export { PersistenceError } from './PersistenceError.js';
 export { FileDiscoveryError } from './FileDiscoveryError.js';
+export { LLMGenerationError } from './LLMGenerationError.js';

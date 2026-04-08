@@ -330,7 +330,7 @@ export function createApp(configPath, port = 5174) {
   <meta http-equiv="Permissions-Policy" content="accelerometer=(), gyroscope=(), magnetometer=(), deviceorientation=(), devicemotion=()">
   <title>Preview v${version}</title>
   <style>body { margin: 0; padding: 0; overflow: hidden; } canvas { display: block; }</style>
-  <script src="${P5_CDN}" integrity="sha384-o9oK6m6zKQo5V8HQC3S1hT8H9pUxJ8p6N+vJ1cS8J+7VNY2gK9Jg8zP3w" crossorigin="anonymous"></script>
+  <script src="${P5_CDN}" integrity="sha384-bOv+b6RV+dlZvdQAx6+cJ+FK9ab8JCSVWyJ1JPhMVQjPW+4C8V2cOKK+qZDfnRnx" crossorigin="anonymous"></script>
 </head>
 <body>
   <script>

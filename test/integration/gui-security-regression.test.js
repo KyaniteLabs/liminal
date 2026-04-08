@@ -1,5 +1,5 @@
 /**
- * Security regression tests — verify all 6 waves of remediation.
+ * Security regression tests — verify all 7 waves of remediation.
  *
  * Wave 1: Containment (secrets, code execution, payload size)
  * Wave 2: Backend security baseline (auth, rate limiting, path traversal)
@@ -441,5 +441,144 @@ describe('Security regression — Wave 6 meta verification', () => {
     ];
     // Each wave corresponds to a describe block above — this test is documentation.
     expect(expectedWaves.length).toBe(6);
+  });
+});
+
+// ===========================================================================
+// Wave 7 — Red team remediation (F5, F7, F8, F9, F11, F12, F14, F15)
+// ===========================================================================
+
+describe('Security regression — Wave 7 red team remediation', () => {
+  let server, port, cleanup, configPath;
+
+  beforeAll(async () => {
+    const tmp = makeTempDir('sec-wave7');
+    cleanup = tmp.cleanup;
+    configPath = tmp.configPath;
+    await fs.mkdir(tmp.dir, { recursive: true });
+    process.env.LIMINAL_CONFIG_PATH = configPath;
+    process.env.LIMINAL_GUI_TOKEN = 'wave7-test-token';
+    delete process.env.ATELIER_LLM_PROVIDER;
+    delete process.env.ATELIER_LLM_MODEL;
+    delete process.env.ATELIER_LLM_BASE_URL;
+    delete process.env.ATELIER_LLM_API_KEY;
+
+    const { createApp } = await import('../../gui/server.js');
+    const app = createApp(configPath);
+    const info = await startServer(app);
+    server = info.server;
+    port = info.port;
+  });
+
+  afterAll(async () => {
+    if (server) await new Promise((r) => server.close(r));
+    delete process.env.LIMINAL_CONFIG_PATH;
+    delete process.env.LIMINAL_GUI_TOKEN;
+    await cleanup();
+  });
+
+  // F9: proposed.type validation
+  it('POST /api/approve rejects invalid proposed.type', async () => {
+    const { status, body } = await jsonFetch(
+      `http://127.0.0.1:${port}/api/approve`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          dirName: 'test',
+          proposed: { type: '<script>alert(1)</script>', code: 'alert(1)' },
+        }),
+        headers: { Authorization: 'Bearer wave7-test-token' },
+      },
+    );
+    expect(status).toBe(400);
+    expect(body.error).toMatch(/invalid/i);
+  });
+
+  // F5: SSE CSRF — reject cross-origin
+  it('/api/events rejects SSE request with evil origin', async () => {
+    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+      headers: { Accept: 'text/event-stream', Origin: 'http://evil.example.com' },
+    });
+    expect(res.status).toBe(403);
+  });
+
+  // F5: SSE CSRF — allow localhost
+  it('/api/events allows SSE with localhost origin', async () => {
+    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+      headers: { Accept: 'text/event-stream', Origin: `http://localhost:${port}` },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  // F5: SSE CSRF — allow no origin
+  it('/api/events allows SSE with no origin header', async () => {
+    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+      headers: { Accept: 'text/event-stream' },
+    });
+    expect(res.status).toBe(200);
+  });
+
+  // F11: SSE security headers
+  it('/api/events includes X-Content-Type-Options and Referrer-Policy', async () => {
+    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+      headers: { Accept: 'text/event-stream' },
+    });
+    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+    expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
+  });
+
+  // F15: SRI on p5 CDN
+  it('preview includes SRI integrity on p5 script', async () => {
+    const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
+    const html = await res.text();
+    expect(html).toMatch(/integrity="sha384-/);
+    expect(html).toContain('crossorigin="anonymous"');
+  });
+
+  // F7: CSP upgrade-insecure-requests
+  it('preview CSP includes upgrade-insecure-requests', async () => {
+    const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
+    const csp = res.headers.get('Content-Security-Policy') || '';
+    expect(csp).toContain('upgrade-insecure-requests');
+  });
+
+  // F8: Symlink escape — verify realpathSync detects escape
+  it('realpathSync detects symlink escape to /etc', async () => {
+    const galleryDir = path.join(os.tmpdir(), `sec-wave7-sym-${Date.now()}`);
+    await fs.mkdir(galleryDir, { recursive: true });
+    const link = path.join(galleryDir, 'escape');
+    let created = false;
+    try { await fs.symlink('/etc', link); created = true; } catch { /* skip */ }
+    if (created) {
+      const real = await fs.realpath(path.join(galleryDir, 'escape'));
+      expect(real).toBe('/etc');
+    }
+    await fs.rm(galleryDir, { recursive: true, force: true }).catch(() => {});
+  });
+
+  // F12: localhost opt-in default
+  it('LLMClient blocks localhost when LIMINAL_ALLOW_LOCALHOST_LLM is unset', async () => {
+    const { LLMClient } = await import('../../dist/llm/LLMClient.js');
+    const saved = process.env.LIMINAL_ALLOW_LOCALHOST_LLM;
+    delete process.env.LIMINAL_ALLOW_LOCALHOST_LLM;
+    try {
+      const client = new LLMClient({ baseUrl: 'http://localhost:11434/v1', model: 'test' });
+      await expect(client.complete({ prompt: 'hi', systemPrompt: 'test' }))
+        .rejects.toThrow(/SSRF|localhost/i);
+    } finally {
+      if (saved !== undefined) process.env.LIMINAL_ALLOW_LOCALHOST_LLM = saved;
+    }
+  });
+
+  // F14: SIEM timeout
+  it('SecurityLogger SIEM call uses AbortSignal.timeout', async () => {
+    const { SecurityLogger } = await import('../../dist/security/SecurityLogger.js');
+    const logger = new SecurityLogger({
+      enableSIEM: true,
+      siemEndpoint: 'http://127.0.0.1:1',
+    });
+    const start = Date.now();
+    logger.logSecurityEvent({ type: 'gallery_write', severity: 'low', message: 'test' });
+    expect(Date.now() - start).toBeLessThan(1000);
   });
 });

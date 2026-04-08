@@ -196,7 +196,8 @@ export class PreviewServer {
         const projects = await gallery.listProjectDirs();
         return res.json({ projects });
       } catch (err) {
-        return res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to list gallery' });
+        Logger.error('PreviewServer', 'Failed to list gallery:', err);
+        return res.status(500).json({ error: 'Failed to list gallery' });
       }
     });
 
@@ -210,7 +211,8 @@ export class PreviewServer {
         const iterations = await gallery.loadHistoryFromDir(projectDirName);
         return res.json({ iterations });
       } catch (err) {
-        return res.status(500).json({ error: err instanceof Error ? err.message : 'Failed to load project' });
+        Logger.error('PreviewServer', 'Failed to load project:', err);
+        return res.status(500).json({ error: 'Failed to load project' });
       }
     });
 
@@ -286,7 +288,8 @@ export class PreviewServer {
           recentEvents: eventBus.getRecentEvents().slice(-20),
         });
       } catch (err) {
-        res.json({ error: err instanceof Error ? err.message : 'Status unavailable' });
+        Logger.error('PreviewServer', 'Status endpoint error:', err);
+        res.status(500).json({ error: 'Status unavailable' });
       }
     });
 
@@ -299,7 +302,8 @@ export class PreviewServer {
         const seeds = await mill.listSeeds();
         res.json({ seeds: seeds.slice(0, 50), total: seeds.length });
       } catch (err) {
-        res.json({ error: err instanceof Error ? err.message : 'Seed query failed' });
+        Logger.error('PreviewServer', 'Seed query failed:', err);
+        res.status(500).json({ error: 'Seed query failed' });
       }
     });
 

@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll, test } from 'vitest';
+import { describe, it, expect, beforeEach, beforeAll, afterEach, afterAll, test, vi } from 'vitest';
 /**
  * Generator-Renderer Integration Tests
  *
@@ -19,6 +19,30 @@ import { fileURLToPath } from 'url';
 import { LLMClient } from '../../src/llm/LLMClient.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// ---------------------------------------------------------------------------
+// Mock LLMClient so isConfigured() returns true
+// ---------------------------------------------------------------------------
+vi.mock('../../src/llm/LLMClient.js', async () => {
+  const actual = await vi.importActual('../../src/llm/LLMClient.js');
+  return {
+    ...actual,
+    LLMClient: {
+      ...actual.LLMClient,
+      isConfigured: () => true,
+    },
+  };
+});
+
+// ---------------------------------------------------------------------------
+// Mock P5Generator to return fixed output
+// ---------------------------------------------------------------------------
+vi.mock('../../src/generators/p5/P5Generator.js', () => ({
+  P5Generator: {
+    generate: () => `function setup() { createCanvas(400, 400); }
+function draw() { background(220); }`,
+  },
+}));
 
 // Increase timeout for integration tests involving browser automation and generation
 const GENERATION_RENDER_TIMEOUT = 60000; // 60 seconds

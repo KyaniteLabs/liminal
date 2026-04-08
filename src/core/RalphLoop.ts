@@ -39,7 +39,6 @@ import { eventBus, EventTypes } from './EventBus.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { Logger } from '../utils/Logger.js';
 import { metaHarness } from '../harness/MetaHarnessIntegration.js';
-import { LiminalError } from '../errors/base.js';
 
 // Extracted modules
 import {
@@ -123,19 +122,49 @@ export class RalphLoop {
     if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
       try {
         const { AudioAnalyzer } = await import('../audio/index.js');
-        const { execFile } = await import('child_process');
-        const { promisify } = await import('util');
-        const execFileAsync = promisify(execFile);
+        const { spawn } = await import('child_process');
 
         // Decode audio file to raw PCM (s16le, mono, 44100Hz) via ffmpeg
-        const { stdout: pcmBuffer } = await execFileAsync('ffmpeg', [
+        // Use spawn with timeout to prevent zombie processes
+        const ffmpegProcess = spawn('ffmpeg', [
           '-i', normalizedOptions.voiceFile,
           '-f', 's16le',
           '-ac', '1',
           '-ar', '44100',
           '-v', 'quiet',
           'pipe:1',
-        ], { maxBuffer: 50 * 1024 * 1024, encoding: 'buffer' });
+        ], { stdio: ['ignore', 'pipe', 'pipe'] });
+
+        // Set up timeout to kill hanging processes
+        const FFMPEG_TIMEOUT_MS = 30000; // 30 seconds
+        const timeout = setTimeout(() => {
+          Logger.warn('RalphLoop', 'ffmpeg timeout reached, killing process');
+          ffmpegProcess.kill('SIGTERM');
+          // Force kill after grace period
+          setTimeout(() => {
+            if (!ffmpegProcess.killed) {
+              ffmpegProcess.kill('SIGKILL');
+            }
+          }, 5000);
+        }, FFMPEG_TIMEOUT_MS);
+
+        // Collect stdout data
+        const chunks: Buffer[] = [];
+        ffmpegProcess.stdout?.on('data', (chunk: Buffer) => chunks.push(chunk));
+
+        // Wait for process to complete
+        const exitCode = await new Promise<number | null>((resolve) => {
+          ffmpegProcess.on('close', (code) => resolve(code));
+          ffmpegProcess.on('error', () => resolve(null));
+        });
+
+        clearTimeout(timeout);
+
+        if (exitCode !== 0) {
+          throw new Error(`ffmpeg exited with code ${exitCode}`);
+        }
+
+        const pcmBuffer = Buffer.concat(chunks);
 
         // Convert Int16 PCM to Float32 (-1.0 to 1.0)
         const int16 = new Int16Array(pcmBuffer.buffer, pcmBuffer.byteOffset, pcmBuffer.byteLength / 2);
@@ -310,12 +339,10 @@ export class RalphLoop {
 
         // Select the best candidate or fail if none valid
         if (candidates.length === 0) {
-          Logger.error('RalphLoop', `All ${numCandidates} candidates failed validation`);
-          throw new LiminalError(
-            `All ${numCandidates} generation candidates failed`,
-            'ERR_ALL_CANDIDATES_FAILED',
-            { attempts: numCandidates }
-          );
+          Logger.warn('RalphLoop', `All ${numCandidates} candidates failed validation`);
+          currentCode = '// All candidates failed validation';
+          // Force a low score to trigger quality gate break
+          finalScore = 0;
         } else {
           // For single candidate (default), just use it
           // For multiple candidates, we need to fully evaluate each to find the best
@@ -544,13 +571,13 @@ export class RalphLoop {
 
         // Render-based scoring: if enabled, render code and blend with syntactic score
         if (normalizedOptions.useRenderScoring && candidates.length > 0) {
-          const { RenderAndScorePipeline } = await import('../render/RenderAndScorePipeline.js');
-          const pipeline = new RenderAndScorePipeline(normalizedOptions.renderScoringOptions);
-          
           try {
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Running render-based quality analysis...');
             }
+            
+            const { RenderAndScorePipeline } = await import('../render/RenderAndScorePipeline.js');
+            const pipeline = new RenderAndScorePipeline(normalizedOptions.renderScoringOptions);
             
             const renderResult = await pipeline.process(currentCode);
             
@@ -589,17 +616,13 @@ export class RalphLoop {
                 normalizedOptions.onThought?.(`Render analysis skipped: ${renderResult.error}`);
               }
             }
+            
+            // Clean up resources
+            await pipeline.close();
           } catch (renderError) {
             Logger.warn('RalphLoop', 'Render scoring error:', renderError);
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Render analysis unavailable');
-            }
-          } finally {
-            // Always clean up resources, even on error
-            try {
-              await pipeline.close();
-            } catch (closeError) {
-              Logger.error('RalphLoop', 'Failed to close render pipeline:', closeError);
             }
           }
         }

@@ -579,15 +579,23 @@ if (typeof process !== 'undefined' && process.stdout?.isTTY) {
 
 // Ensure shutdown on exit
 if (typeof process !== 'undefined') {
-  // Note: process.on('exit') is synchronous - async operations may not complete
-  // Use beforeExit for async cleanup if needed, but for now we fire-and-forget
-  process.on('exit', () => {
-    void metaHarness.shutdown().catch((err) => {
-      Logger.error('MetaHarnessIntegration', 'Shutdown failed on exit:', err);
-    });
-  });
-  
   const SHUTDOWN_TIMEOUT_MS = 5000;
+  
+  // Use beforeExit for async cleanup with proper timeout and error handling
+  process.on('beforeExit', () => {
+    void (async () => {
+      try {
+        await Promise.race([
+          metaHarness.shutdown(),
+          new Promise<void>((_, reject) =>
+            setTimeout(() => reject(new Error('Shutdown timeout')), SHUTDOWN_TIMEOUT_MS)
+          ),
+        ]);
+      } catch (err) {
+        Logger.error('MetaHarnessIntegration', 'Shutdown failed on beforeExit:', err);
+      }
+    })();
+  });
   
   process.on('SIGINT', () => {
     void (async () => {

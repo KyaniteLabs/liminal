@@ -500,7 +500,7 @@ export class LLMClient {
 
     try {
       // Check cache
-      const cached = bypassCache ? null : this.cache.get(systemPrompt, userPrompt);
+      const cached = bypassCache ? null : await this.cache.get(systemPrompt, userPrompt);
       if (cached) {
         return { code: cached, success: true, fromCache: true };
       }
@@ -565,7 +565,7 @@ export class LLMClient {
 
       // Write to cache on success
       if (result.success && result.code && !bypassCache) {
-        this.cache.set(systemPrompt, userPrompt, result.code);
+        await this.cache.set(systemPrompt, userPrompt, result.code);
       }
 
       eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {

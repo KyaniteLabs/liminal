@@ -78,6 +78,11 @@ func (m Model) renderHeader() string {
 	provider := ui.ProviderStyle.Render(m.Provider + " / " + m.ModelName)
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)
 
+	// DEBUG: show block count and active response length
+	debugInfo := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#ff9e64")).
+		Render(fmt.Sprintf("blk:%d resp:%d", len(m.ChatBlocks), len(m.ActiveResponse)))
+
 	// Spacing between elements
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
@@ -86,7 +91,7 @@ func (m Model) renderHeader() string {
 		Foreground(ui.FgText).
 		Padding(0, 1).
 		Width(m.Width).
-		Render(brand + spacer + mode + spacer + provider + spacer + connDot)
+		Render(brand + spacer + mode + spacer + provider + spacer + connDot + spacer + debugInfo)
 
 	return header
 }

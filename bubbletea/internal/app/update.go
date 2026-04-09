@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -164,7 +166,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case bridgeEventMsg:
+		fmt.Fprintf(os.Stderr, "[update] bridgeEvent: type=%s delta=%d content=%d blocks=%d activeLen=%d\n",
+			msg.event.Type, len(msg.event.Delta), len(msg.event.Content), len(m.ChatBlocks), len(m.ActiveResponse))
 		m.ApplyEvent(msg.event)
+		fmt.Fprintf(os.Stderr, "[update] after apply: blocks=%d activeLen=%d\n", len(m.ChatBlocks), len(m.ActiveResponse))
 		m.refreshViewports()
 		return m, nil
 

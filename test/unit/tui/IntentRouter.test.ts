@@ -35,28 +35,14 @@ describe('IntentRouter', () => {
       expect(mockReadFile).toHaveBeenCalledTimes(1);
     });
 
-    it('falls back to second candidate when first fails', async () => {
-      const secondContent = 'fallback content from cwd';
-      // First call (candidate 0) fails, second call (candidate 1) succeeds
-      mockReadFile
-        .mockRejectedValueOnce(new Error('ENOENT'))
-        .mockResolvedValueOnce(secondContent);
-
-      const result = await loadSoul();
-      expect(result).toBe(secondContent);
-      expect(mockReadFile).toHaveBeenCalledTimes(2);
-    });
-
-    it('returns DEFAULT_SOUL when both candidates fail', async () => {
-      mockReadFile
-        .mockRejectedValueOnce(new Error('ENOENT'))
-        .mockRejectedValueOnce(new Error('ENOENT'));
+    it('returns DEFAULT_SOUL when candidate fails', async () => {
+      mockReadFile.mockRejectedValueOnce(new Error('ENOENT'));
 
       const result = await loadSoul();
       // DEFAULT_SOUL is the inline constant from IntentRouter.ts
       expect(result).toContain('Liminal, a creative coding partner');
       expect(result).toContain('TypeScript');
-      expect(mockReadFile).toHaveBeenCalledTimes(2);
+      expect(mockReadFile).toHaveBeenCalledTimes(1);
     });
 
     it('DEFAULT_SOUL contains expected key phrases', async () => {

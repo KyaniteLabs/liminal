@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * SandboxRunner - Runs p5.js code in a safe, isolated headless browser
  *

@@ -1,3 +1,4 @@
+/* eslint-disable no-console */
 /**
  * GitCLI — CLI handler for `liminal git <subcommand>`
  *

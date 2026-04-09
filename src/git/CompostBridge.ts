@@ -30,6 +30,7 @@ export class CompostBridge {
    * Record a git commit as a compost event.
    * Stores the commit hash, message, and metadata in the unified timeline.
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async onCommit(commit: CommitInfo): Promise<Result<CompostEvent, CompostError>> {
     try {
       const event = this.eventStore.append('git_commit', {
@@ -53,6 +54,7 @@ export class CompostBridge {
   /**
    * Record a git branch creation as a compost event.
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async onBranch(branch: BranchInfo): Promise<Result<CompostEvent, CompostError>> {
     try {
       const event = this.eventStore.append('git_branch', {

@@ -67,6 +67,25 @@ vi.mock('../../../src/utils/Logger.js', () => ({
   Logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn() },
 }));
 
+vi.mock('../../../src/core/AmbiguityDetector.js', () => ({
+  AmbiguityDetector: vi.fn(function(this: any) {
+    this.detect = vi.fn((prompt: string) =>
+      prompt.includes('cool')
+        ? [
+            {
+              type: 'vague' as const,
+              severity: 'medium' as const,
+              description: 'Vague term "cool" found',
+              suggestedQuestion: 'Describe the specific aesthetic or interaction you find "cool".',
+            },
+          ]
+        : []
+    );
+    this.getDomainHints = vi.fn((_prompt: string) => ['p5']);
+    this.isAmbiguous = vi.fn((prompt: string) => prompt.includes('cool'));
+  }),
+}));
+
 // ── Import after mocks ───────────────────────────────────────────────
 import { LLMClient } from '../../../src/llm/LLMClient.js';
 import { NaturalInterface } from '../../../src/tui/NaturalInterface.js';

@@ -75,14 +75,10 @@ export async function captureMicAudio(): Promise<Float32Array> {
   });
 
   return new Promise<Float32Array>((resolve, reject) => {
-    let timeoutId: NodeJS.Timeout;
-
-    const clearTimer = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
+    const clearTimer = () => clearTimeout(timeoutId);
 
     // 60-second recording timeout
-    timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       ffmpegProcess.kill('SIGTERM');
       reject(new Error('Microphone recording timed out after 60 seconds'));
     }, 60_000);

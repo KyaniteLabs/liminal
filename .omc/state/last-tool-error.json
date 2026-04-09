@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"sed -i 's/result\\\\.thinking\\\\?/result.value.thinking/g' test/unit/llm/provider-adapters.test.ts\",\"description\":\"Fix result.thinking patterns\"}",
-  "error": "Exit code 1\nsed: 2: \"test/unit/llm/provider- ...\": undefined label 'est/unit/llm/provider-adapters.test.ts'",
-  "timestamp": "2026-04-08T23:56:57.145Z",
+  "tool_input_preview": "{\"command\":\"git merge origin/liminal/meta-test-3-1775703796315 --no-edit\",\"description\":\"Merge PR #62 branch into clean branch\"}",
+  "error": "Exit code 1\nCONFLICT (modify/delete): .omc/state/idle-notif-cooldown.json deleted in HEAD and modified in origin/liminal/meta-test-3-1775703796315.  Version origin/liminal/meta-test-3-1775703796315 of .omc/state/idle-notif-cooldown.json left in tree.\nAuto-merging src/tui-bridge/TuiBridgeService.ts\nAuto-merging test/integration/generator-renderer.test.js\nAuto-merging test/security/url-validator.test.ts\nCONFLICT (content): Merge conflict in test/security/url-validator.test.ts\nAuto-merging test/uni...",
+  "timestamp": "2026-04-09T03:29:00.461Z",
   "retry_count": 1
 }

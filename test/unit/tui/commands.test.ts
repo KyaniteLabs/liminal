@@ -117,7 +117,6 @@ function makeCtx(overrides?: Partial<{
   logs: string[];
 }>) {
   const logs: string[] = [];
-  const pendingActions: Array<{ id: string; type: string; data: unknown }> = [];
   return {
     agent: {
       executeTask: vi.fn(),
@@ -127,11 +126,9 @@ function makeCtx(overrides?: Partial<{
     addLog: vi.fn((msg: string) => logs.push(msg)),
     setStatusMessage: vi.fn(),
     addOutput: vi.fn(),
-    createPendingAction: vi.fn((type: string, data: unknown) => {
-      const pending = { id: 'p-' + (pendingActions.length + 1), type, data };
-      pendingActions.push(pending);
-      return pending;
-    }),
+    createPendingAction: vi.fn().mockReturnValue({ id: 'pending-1' }),
+    confirmPendingAction: vi.fn().mockResolvedValue('Approved'),
+    cancelPendingAction: vi.fn().mockReturnValue(true),
   };
 }
 
@@ -268,45 +265,25 @@ describe('commands', () => {
       expect(result).toContain('not found');
     });
 
-    it('creates pending action for task execution', async () => {
+    it('creates pending action and returns awaiting approval message', async () => {
       const task = { id: 't1', title: 'Test task', description: '', targetFile: '/tmp/out.html', approved: true };
       const ctx = makeCtx({ tasks: [task] });
-      ctx.agent.executeTask.mockResolvedValue({ status: 'success', steps: [{}, {}] });
 
       const result = await commands.run.execute(['t1'], ctx);
 
-      expect(ctx.createPendingAction).toHaveBeenCalled();
-      expect(result).toContain('created and awaiting approval');
+      expect(ctx.createPendingAction).toHaveBeenCalledWith('structured', task);
+      expect(result).toContain('awaiting approval');
+      expect(result).toContain('pending-1');
+      expect(ctx.setStatusMessage).toHaveBeenCalledWith('Task awaiting approval');
     });
 
-    it.skip('logs auto-preview hint when task succeeds with targetFile', async () => {
-      const task = { id: 't2', title: 'Preview task', description: '', targetFile: '/tmp/visual.html', approved: true };
-      const ctx = makeCtx({ tasks: [task] });
-      ctx.agent.executeTask.mockResolvedValue({ status: 'success', steps: [] });
+    it('returns error when task is not found', async () => {
+      const ctx = makeCtx({ tasks: [] });
 
-      await commands.run.execute(['t2'], ctx);
+      const result = await commands.run.execute(['nonexistent'], ctx);
 
-      expect(ctx.addLog).toHaveBeenCalledWith('Run /preview /tmp/visual.html to see result');
-    });
-
-    it.skip('does not log preview hint when task has no targetFile', async () => {
-      const task = { id: 't3', title: 'No target', description: '', approved: true };
-      const ctx = makeCtx({ tasks: [task] });
-      ctx.agent.executeTask.mockResolvedValue({ status: 'success', steps: [] });
-
-      await commands.run.execute(['t3'], ctx);
-
-      const previewCalls = ctx.addLog.mock.calls.filter((c: string[]) => c[0]?.includes('/preview'));
-      expect(previewCalls).toHaveLength(0);
-    });
-
-    it.skip('reports failure status from task execution', async () => {
-      const task = { id: 't4', title: 'Failing task', description: '', approved: true };
-      const ctx = makeCtx({ tasks: [task] });
-      ctx.agent.executeTask.mockResolvedValue({ status: 'failed', steps: [{}] });
-
-      const result = await commands.run.execute(['t4'], ctx);
-      expect(result).toContain('FAILED');
+      expect(result).toContain('not found');
+      expect(ctx.createPendingAction).not.toHaveBeenCalled();
     });
   });
 
@@ -335,73 +312,35 @@ describe('commands', () => {
       expect(result).toContain('LLM client not initialized');
     });
 
-    it('creates pending action for LLM task', async () => {
+    it('creates pending LLM task and returns awaiting approval message', async () => {
       mockLLMClientStatic.isConfigured.mockReturnValue(true);
       mockMetaHarness.getLLMClient.mockReturnValue({ generate: vi.fn() });
-
-      const mockSession = {
-        status: 'success',
-        stepCount: 5,
-        messages: [
-          { role: 'assistant', toolCall: { tool: 'readFile', thought: 'Reading the main file to understand the structure' } },
-          { role: 'tool', toolResult: { success: true } },
-          { role: 'assistant', content: 'Planning next step' },
-        ],
-      };
-      mockLLMModeAgent.executeTask.mockResolvedValue(mockSession);
 
       const ctx = makeCtx();
-      const result = await commands.agent.execute(['Fix', 'validation', 'bug'], ctx);
+      const result = await commands.agent.execute(['Fix validation bug'], ctx);
 
-      expect(ctx.createPendingAction).toHaveBeenCalled();
-      expect(result).toContain('created but not auto-approved');
-      expect(result).toContain('/confirm');
+      expect(ctx.createPendingAction).toHaveBeenCalledWith('llm', expect.objectContaining({
+        title: 'Fix validation bug',
+        description: 'Fix validation bug',
+        approved: false,
+      }));
+      expect(result).toContain('not auto-approved');
+      expect(result).toContain('pending-1');
+      expect(ctx.setStatusMessage).toHaveBeenCalledWith('Task awaiting approval');
     });
 
-    it.skip('handles rolled_back status from LLM agent', async () => {
-      mockLLMClientStatic.isConfigured.mockReturnValue(true);
-      mockMetaHarness.getLLMClient.mockReturnValue({ generate: vi.fn() });
-
-      mockLLMModeAgent.executeTask.mockResolvedValue({
-        status: 'rolled_back',
-        stepCount: 3,
-        messages: [],
-      });
-
-      const result = await commands.agent.execute(['bad task'], makeCtx());
-      expect(result).toContain('ROLLED_BACK');
-      expect(result).toContain('Changes were rolled back');
+    it('returns error when LLM is not configured', async () => {
+      mockLLMClientStatic.isConfigured.mockReturnValue(false);
+      const result = await commands.agent.execute(['fix', 'something'], makeCtx());
+      expect(result).toContain('No LLM configured');
     });
 
-    it.skip('handles exception from LLM agent execution', async () => {
+    it('returns error when metaHarness LLM client is null', async () => {
       mockLLMClientStatic.isConfigured.mockReturnValue(true);
-      mockMetaHarness.getLLMClient.mockReturnValue({ generate: vi.fn() });
-      mockLLMModeAgent.executeTask.mockRejectedValue(new Error('LLM timeout'));
+      mockMetaHarness.getLLMClient.mockReturnValue(null);
 
-      const result = await commands.agent.execute(['causes error'], makeCtx());
-      expect(result).toContain('Command: LLM timeout');
-    });
-
-    it.skip('logs tool calls with thought and tool results', async () => {
-      mockLLMClientStatic.isConfigured.mockReturnValue(true);
-      mockMetaHarness.getLLMClient.mockReturnValue({ generate: vi.fn() });
-
-      mockLLMModeAgent.executeTask.mockResolvedValue({
-        status: 'success',
-        stepCount: 1,
-        messages: [
-          { role: 'assistant', toolCall: { tool: 'writeFile', thought: 'Writing the fixed output to disk now' } },
-          { role: 'tool', toolResult: { success: false, error: 'Permission denied' } },
-        ],
-      });
-
-      const ctx = makeCtx();
-      await commands.agent.execute(['fix perms'], ctx);
-
-      // Should log the tool call with truncated thought
-      const logCalls = ctx.addLog.mock.calls.map((c: string[]) => c[0]);
-      expect(logCalls.some((l: string) => l.includes('writeFile'))).toBe(true);
-      expect(logCalls.some((l: string) => l.includes('Permission denied'))).toBe(true);
+      const result = await commands.agent.execute(['fix bug'], makeCtx());
+      expect(result).toContain('LLM client not initialized');
     });
   });
 
@@ -557,7 +496,7 @@ describe('commands', () => {
   describe('clear', () => {
     it('returns the terminal escape code', async () => {
       const result = await commands.clear.execute([], makeCtx());
-      expect(result).toBe('\x1b[2J\x1b[H');
+      expect(result).toBe('\x1B[2J\x1B[H');
     });
   });
 
@@ -589,18 +528,18 @@ describe('commands', () => {
       expect(keys).toHaveLength(14);
       expect(keys).toContain('help');
       expect(keys).toContain('status');
+      expect(keys).toContain('provider');
       expect(keys).toContain('tasks');
       expect(keys).toContain('run');
       expect(keys).toContain('agent');
+      expect(keys).toContain('confirm');
+      expect(keys).toContain('cancel');
       expect(keys).toContain('preview');
       expect(keys).toContain('play');
       expect(keys).toContain('stop');
       expect(keys).toContain('browser');
       expect(keys).toContain('clear');
       expect(keys).toContain('exit');
-      expect(keys).toContain('provider');
-      expect(keys).toContain('confirm');
-      expect(keys).toContain('cancel');
     });
 
     it('every command has name, description, usage, and execute', () => {

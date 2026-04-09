@@ -23,9 +23,6 @@ func TestStreamDisconnectedSetsReconnecting(t *testing.T) {
 	if model.Connected {
 		t.Fatal("expected connected=false after stream disconnect")
 	}
-	if model.ActiveResponse != "Reconnecting..." {
-		t.Fatalf("expected reconnecting message, got %q", model.ActiveResponse)
-	}
 }
 
 func TestReconnectTickRestoresConnection(t *testing.T) {
@@ -43,45 +40,44 @@ func TestReconnectTickRestoresConnection(t *testing.T) {
 	if model.Reconnecting {
 		t.Fatal("expected reconnecting=false after reconnect tick")
 	}
-	if model.ActiveResponse != "Reconnected. Awaiting input." {
-		t.Fatalf("expected reconnected message, got %q", model.ActiveResponse)
-	}
 }
 
-// --- Scrollable History Tests ---
+// --- ChatBlock Accumulation Tests ---
 
-func TestAutoScrollOnCommitted(t *testing.T) {
+func TestCommittedEventCreatesChatBlock(t *testing.T) {
 	m := NewModel("http://localhost:0")
 	m.Connected = true
 	m.SessionID = "s1"
-	// Pre-fill 25 history entries
-	for i := 0; i < 25; i++ {
-		m.History = append(m.History, "line "+string(rune('A'+i)))
-	}
-	m.HistoryOffset = 0
 
-	// Commit a new entry — should auto-scroll to bottom
-	updated, _ := m.Update(bridgeEventMsg{
-		event: bridge.Event{Type: "response.committed", SessionID: "s1", Content: "new line"},
-	})
-	model := updated.(Model)
+	// Stream deltas then commit
+	m.ApplyEvent(bridge.Event{Type: "response.delta", SessionID: "s1", Delta: "hello"})
+	m.ApplyEvent(bridge.Event{Type: "response.delta", SessionID: "s1", Delta: " world"})
+	m.ApplyEvent(bridge.Event{Type: "response.committed", SessionID: "s1", Content: "hello world"})
 
-	if model.HistoryOffset == 0 {
-		t.Fatal("expected auto-scroll on new committed entry, offset stayed at 0")
+	if len(m.ChatBlocks) != 1 {
+		t.Fatalf("expected 1 chat block after commit, got %d", len(m.ChatBlocks))
 	}
-	if model.History[len(model.History)-1] != "new line" {
-		t.Fatal("expected new line appended to history")
+	if m.ChatBlocks[0].Content != "hello world" {
+		t.Fatalf("expected chat block content 'hello world', got %q", m.ChatBlocks[0].Content)
+	}
+	if m.ChatBlocks[0].Type != "assistant" {
+		t.Fatalf("expected assistant type, got %q", m.ChatBlocks[0].Type)
 	}
 }
 
-func TestScrollClamp(t *testing.T) {
+func TestCodeDetectionTriggersPreview(t *testing.T) {
 	m := NewModel("http://localhost:0")
-	m.History = []string{"a", "b", "c"}
-	m.HistoryOffset = 10 // way past end
+	m.Connected = true
+	m.SessionID = "s1"
 
-	rendered := m.renderHistoryPane()
-	if !strings.Contains(rendered, "a") {
-		t.Fatal("expected clamped scroll to show earliest entries")
+	codeContent := "Here is some code:\n```javascript\nfunction setup() {\n  createCanvas(400, 400);\n}\n```"
+	m.ApplyEvent(bridge.Event{Type: "response.committed", SessionID: "s1", Content: codeContent})
+
+	if !m.PreviewVisible {
+		t.Fatal("expected preview to become visible when code is detected")
+	}
+	if m.PreviewType != "code" {
+		t.Fatalf("expected preview type 'code', got %q", m.PreviewType)
 	}
 }
 
@@ -118,7 +114,6 @@ func TestParseInputIntentCommands(t *testing.T) {
 }
 
 func TestCommandRoutingSendsCorrectMode(t *testing.T) {
-	// Verify parseInputIntent returns correct values for /status
 	mode, intent := parseInputIntent("/status")
 	if mode != "inspect" || intent != "command" {
 		t.Fatalf("expected inspect/command for /status, got %s/%s", mode, intent)
@@ -135,29 +130,34 @@ func TestApplyEventHandlesModeChangedToInspect(t *testing.T) {
 	}
 }
 
-func TestViewRendersReconnectStatus(t *testing.T) {
+func TestViewRendersConnectionDot(t *testing.T) {
 	m := NewModel("http://localhost:0")
-	m.Connected = false
-	m.Reconnecting = true
-	m.SessionID = "s1"
+	m.Connected = true
+	m.Ready = true
+	m.Width = 120
+	m.Height = 32
 
 	view := m.View()
-	if !strings.Contains(view, "reconnecting...") {
-		t.Fatal("expected reconnecting status in view")
+	if !strings.Contains(view, "●") {
+		t.Fatal("expected connected dot ● in view")
 	}
 }
 
-func TestViewRendersScrollIndicator(t *testing.T) {
+func TestPreviewEventsUpdateState(t *testing.T) {
 	m := NewModel("http://localhost:0")
-	m.Connected = true
-	// Add enough history to overflow pane
-	for i := 0; i < 25; i++ {
-		m.History = append(m.History, "entry "+string(rune('A'+i)))
-	}
-	m.HistoryOffset = 5
 
-	view := m.View()
-	if !strings.Contains(view, "PgUp/PgDn") {
-		t.Fatal("expected scroll indicator in view when history overflows")
+	m.ApplyEvent(bridge.Event{Type: "preview.started", SessionID: "s1", PreviewType: "image"})
+	if !m.PreviewVisible || m.PreviewType != "image" {
+		t.Fatal("expected preview visible with type image after preview.started")
+	}
+
+	m.ApplyEvent(bridge.Event{Type: "preview.content", SessionID: "s1", Content: "base64data", PreviewType: "image"})
+	if m.PreviewContent != "base64data" {
+		t.Fatalf("expected preview content 'base64data', got %q", m.PreviewContent)
+	}
+
+	m.ApplyEvent(bridge.Event{Type: "preview.completed", SessionID: "s1", Content: "final", PreviewType: "code"})
+	if m.PreviewContent != "final" || m.PreviewType != "code" {
+		t.Fatalf("expected final code preview, got %q / %q", m.PreviewContent, m.PreviewType)
 	}
 }

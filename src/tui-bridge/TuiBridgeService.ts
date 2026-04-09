@@ -136,6 +136,15 @@ export class TuiBridgeService {
 
       this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
       this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
+
+      // Detect code in response and emit preview events for TUI
+      const codeContent = this.extractCodeContent(fullContent);
+      if (codeContent) {
+        this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'code' });
+        this.emit(sessionId, { type: 'preview.content', sessionId, content: codeContent, previewType: 'code' });
+        this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
+      }
+
       this.emit(sessionId, {
         type: 'status.updated',
         sessionId,
@@ -155,6 +164,20 @@ export class TuiBridgeService {
       controller.abort();
       this.activeStreams.delete(sessionId);
     }
+  }
+
+  /** Extract code from markdown fences or detect raw code patterns */
+  private extractCodeContent(content: string): string | null {
+    // Try markdown fence extraction
+    const fenceMatch = content.match(/```[\w]*\n([\s\S]*?)```/);
+    if (fenceMatch) return fenceMatch[1].trim();
+
+    // Detect raw code patterns (function declarations, const assignments)
+    if (/\bfunction\s+\w+/.test(content) || /\bconst\s+\w+\s*=\s*\(.*\)\s*=>/.test(content)) {
+      return content.trim();
+    }
+
+    return null;
   }
 
   private emit(sessionId: string, event: TuiBridgeEvent): void {

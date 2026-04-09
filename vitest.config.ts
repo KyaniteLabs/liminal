@@ -4,7 +4,19 @@ export default defineConfig({
   test: {
     setupFiles: ['test/setup.ts'],
     include: ['**/test/**/*.test.(js|ts)', '**/test/**/*.e2e.test.(js|ts)'],
-    exclude: ['node_modules/**', '.claude/**', '.worktrees/**', 'artifacts/**', 'dist/**', 'gui/node_modules/**'],
+    exclude: [
+      'node_modules/**',
+      'dist/**',
+      'gui/node_modules/**',
+      'artifacts/**',
+      // ━━━ Worktree decontamination ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      // .claude/worktrees/ — agents' worktrees inside .claude
+      '**/.claude/worktrees/**',
+      // Root-level worktree (OMC naming convention)
+      '**/worktree-polymorphic-growing-quiche/**',
+      // Legacy .worktrees (pre-.claude convention)
+      '**/.worktrees/**',
+    ],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.ts', 'src/**/*.tsx'],

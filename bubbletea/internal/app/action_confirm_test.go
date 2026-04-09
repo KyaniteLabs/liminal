@@ -121,6 +121,10 @@ func TestViewShowsReviewCardHintsInActionMode(t *testing.T) {
 	m := NewModel("http://localhost:0")
 	m.Connected = true
 	m.Mode = "ACTION"
+	m.Ready = true
+	m.Width = 120
+	m.Height = 32
+	m.PreviewVisible = false // compact status shows action card
 	m.PendingAction = &bridge.PendingAction{ID: "a1", Title: "Delete file", Kind: "llm", RequiresConfirmation: true}
 
 	view := m.View()

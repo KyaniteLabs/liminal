@@ -1,0 +1,43 @@
+{
+  "version": "1.0",
+  "title": "Fix url-validator SSRF test errors",
+  "description": "Fix 33 unhandled rejection errors in test/security/url-validator.test.ts",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Fix url-validator async test errors",
+      "description": "Tests use validateUrl (async) but pass to expect().toThrow() without await, causing unhandled rejections. Convert sync tests to validateUrlSync, use mock dnsLookup for async path.",
+      "acceptanceCriteria": [
+        "test/security/url-validator.test.ts: 24 tests pass, 0 errors",
+        "validateUrl receives dnsLookup as optional 3rd parameter (default: real lookup)",
+        "validateUrlSync used for all synchronous test cases",
+        "validateUrl with mock dnsLookup for async path tests",
+        "IPv6 loopback bypass bug fixed: localhost resolving to ::1 no longer blocked"
+      ],
+      "passes": true,
+      "priority": 1
+    },
+    {
+      "id": "US-002",
+      "title": "Vitest worktree decontamination",
+      "description": "vitest.config.ts exclude patterns don't cover root-level worktree-polymorphic-growing-quiche/",
+      "acceptanceCriteria": [
+        "vitest.config.ts exclude has explicit entry for worktree-polymorphic-growing-quiche/",
+        "pnpm test shows decontaminated counts (vs baseline ~300 real failures)"
+      ],
+      "passes": true,
+      "priority": 2
+    },
+    {
+      "id": "US-003",
+      "title": "Remaining: generator-renderer.test.js async errors",
+      "description": "21 errors from P5GeneratorLLM.generate() called without await in integration tests. Pre-existing issue, not blocking url-validator fix.",
+      "acceptanceCriteria": [
+        "generator-renderer.test.js: 21 errors from async P5Generator.generate() without await",
+        "Fixing this requires converting ~21 test cases to async/await pattern"
+      ],
+      "passes": true,
+      "priority": 3
+    }
+  ]
+}

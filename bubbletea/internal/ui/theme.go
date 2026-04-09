@@ -2,95 +2,208 @@ package ui
 
 import "github.com/charmbracelet/lipgloss"
 
-// Design tokens — 256-color palette matching the dark OLED design system.
-// Background: deep navy (#020617 → 17), Surface: slate (#1E293B → 236)
-// Accent: vivid green (#22C55E → 40), Text: near-white (#F8FAFC → 231)
-// Muted: slate gray (#334155 → 60), Error: red (#EF4444 → 203)
-const (
-	CBackground   = "17"   // Deep navy black
-	CSurface      = "236"  // Slate surface
-	CSurfaceHi    = "239"  // Raised surface
-	CText         = "231"  // Near-white foreground
-	CTextMuted    = "145"  // Muted slate
-	CTextDim      = "60"   // Dim border gray
-	CAccent       = "40"   // Vivid green (CTA, active state)
-	CAccentDim    = "28"   // Dimmer green for secondary accent
-	CError        = "203"  // Red for errors
-	CWarn         = "220"  // Amber for warnings
-	CInfo         = "117"  // Soft blue for info/connection
-	CTrustOk      = "35"   // Green trust label
-	CTrustCaution = "220"  // Amber trust label
-	CTrustWarn    = "203"  // Red trust label
+// ── Color Palette (Tokyo Night + Dracula inspired) ──
+// True-color hex values for maximum visual fidelity.
+var (
+	// Backgrounds
+	BgBase    = lipgloss.Color("#1a1b26") // Deep space navy
+	BgSurface = lipgloss.Color("#24283b") // Elevated surface
+	BgOverlay = lipgloss.Color("#414868") // Overlay elements
+	BgMuted   = lipgloss.Color("#565f89") // Muted elements
+
+	// Foregrounds
+	FgText   = lipgloss.Color("#c0caf5") // Primary text
+	FgSubtle = lipgloss.Color("#a9b1d6") // Secondary text
+	FgMuted  = lipgloss.Color("#565f89") // Dimmed text
+
+	// Accents
+	AccentGreen  = lipgloss.Color("#9ece6a") // Success, user input
+	AccentBlue   = lipgloss.Color("#7aa2f7") // Assistant, links
+	AccentPurple = lipgloss.Color("#bb9af7") // Code, highlights, brand
+	AccentCyan   = lipgloss.Color("#7dcfff") // Info, tags, mode
+	AccentOrange = lipgloss.Color("#ff9e64") // Warnings
+	AccentRed    = lipgloss.Color("#f7768e") // Errors
+	AccentYellow = lipgloss.Color("#e0af68") // System messages
 )
+
+// ── 256-color fallback constants (for terminals without true-color) ──
+const (
+	CBackground = "17"  // Deep navy black
+	CSurface    = "236" // Slate surface
+	CSurfaceHi  = "239" // Raised surface
+	CText       = "231" // Near-white foreground
+	CTextMuted  = "145" // Muted slate
+	CTextDim    = "60"  // Dim border gray
+	CAccent     = "40"  // Vivid green
+	CAccentDim  = "28"  // Dimmer green
+	CError      = "203" // Red
+	CWarn       = "220" // Amber
+	CInfo       = "117" // Soft blue
+)
+
+// ── Style Tokens ──
 
 var (
-	// Header — bold title with accent foreground
+	// Header bar — spans full width
 	HeaderStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color(CAccent)).
-			Background(lipgloss.Color(CSurface)).
+			Background(BgSurface).
+			Foreground(FgText).
 			Padding(0, 1)
 
-	// ModeBadge — high-contrast mode indicator
-	ModeBadgeStyle = lipgloss.NewStyle().
-			Bold(true).
-			Foreground(lipgloss.Color(CText)).
-			Background(lipgloss.Color(CAccent)).
+	// Brand — "◆ LIMINAL" logo
+	BrandStyle = lipgloss.NewStyle().
+			Foreground(AccentPurple).
+			Bold(true)
+
+	// Mode badge — current mode indicator
+	ModeStyle = lipgloss.NewStyle().
+			Foreground(AccentCyan).
+			Bold(true)
+
+	// Provider pill — model/provider identity
+	ProviderStyle = lipgloss.NewStyle().
+			Foreground(FgSubtle).
+			Background(BgOverlay).
 			Padding(0, 1)
 
-	// TrustBadge — provider/model identity pill
-	TrustBadgeStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(CTextMuted)).
-			Background(lipgloss.Color(CSurfaceHi)).
-			Padding(0, 1)
+	// Connection dot — ● or ○
+	ConnectedStyle = lipgloss.NewStyle().
+			Foreground(AccentGreen)
 
-	// ConnStyle — connection status (uses dynamic color in view.go)
-	ConnStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(CInfo)).
-			Padding(0, 1)
+	DisconnectedStyle = lipgloss.NewStyle().
+			Foreground(AccentRed)
 
-	// PaneStyle — bordered content panes
-	PaneStyle = lipgloss.NewStyle().
+	ReconnectingStyle = lipgloss.NewStyle().
+			Foreground(AccentYellow)
+
+	// ── Chat pane ──
+	ChatPaneStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(CTextDim)).
-			Background(lipgloss.Color(CBackground)).
-			Padding(1)
+			BorderForeground(lipgloss.Color("#414868")).
+			Padding(0, 1)
 
-	// Footer — input bar
+	// ── Preview pane ──
+	PreviewPaneStyle = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(AccentPurple).
+				Padding(0, 1)
+
+	// ── Chat message styles ──
+	UserMsgStyle = lipgloss.NewStyle().
+			Foreground(AccentGreen).
+			Bold(true)
+
+	AssistantMsgStyle = lipgloss.NewStyle().
+				Foreground(AccentBlue)
+
+	CodeBlockStyle = lipgloss.NewStyle().
+			Foreground(AccentPurple).
+			Background(BgOverlay).
+			Padding(0, 1)
+
+	ErrorStyle = lipgloss.NewStyle().
+			Foreground(AccentRed).
+			Bold(true)
+
+	SystemStyle = lipgloss.NewStyle().
+			Foreground(AccentYellow)
+
+	StreamingStyle = lipgloss.NewStyle().
+			Foreground(FgSubtle)
+
+	// ── Footer / input ──
 	FooterStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(CText)).
-			Background(lipgloss.Color(CSurface)).
+			Background(BgSurface).
+			Foreground(FgText).
 			Padding(0, 1)
 
-	// RowStyle — horizontal layout container
-	RowStyle = lipgloss.NewStyle().Align(lipgloss.Top)
+	// ── Preview tabs ──
+	ActiveTabStyle = lipgloss.NewStyle().
+			Foreground(AccentPurple).
+			Bold(true).
+			Background(BgOverlay).
+			Padding(0, 2)
 
-	// ModeHint — keyboard shortcut hints
-	ModeHintStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(CTextDim)).
+	InactiveTabStyle = lipgloss.NewStyle().
+				Foreground(FgMuted).
+				Padding(0, 2)
+
+	TabBarStyle = lipgloss.NewStyle().
+			Background(BgSurface).
 			Padding(0, 1)
+
+	// ── Inline preview badge ──
+	PreviewBadgeStyle = lipgloss.NewStyle().
+				Foreground(AccentCyan).
+				Background(BgOverlay).
+				Padding(0, 1)
+
+	// ── Status items ──
+	StatusLabelStyle = lipgloss.NewStyle().
+				Foreground(FgMuted)
+
+	StatusValueStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	// ── Pending action card ──
+	ActionCardStyle = lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(AccentOrange).
+			Padding(0, 1)
+
+	ActionTitleStyle = lipgloss.NewStyle().
+				Foreground(AccentOrange).
+				Bold(true)
+
+	// ── Keybinding hints in footer ──
+	KeyStyle = lipgloss.NewStyle().
+			Foreground(AccentPurple).
+			Bold(true)
+
+	HintStyle = lipgloss.NewStyle().
+			Foreground(FgMuted)
+
+	// ── Separator ──
+	SeparatorStyle = lipgloss.NewStyle().
+			Foreground(BgOverlay)
 )
 
+// Separator returns a horizontal divider line.
+func Separator(width int) string {
+	return SeparatorStyle.Render(lipgloss.NewStyle().Width(width).Render("─"))
+}
+
 // ConnColor returns the appropriate color for connection state.
-func ConnColor(status string) string {
+func ConnColor(status string) lipgloss.Color {
 	switch status {
 	case "connected":
-		return CAccent
+		return AccentGreen
 	case "error":
-		return CError
+		return AccentRed
 	default: // "connecting...", "reconnecting..."
-		return CWarn
+		return AccentYellow
 	}
 }
 
 // TrustColor returns the appropriate color for a trust label.
-func TrustColor(label string) string {
+func TrustColor(label string) lipgloss.Color {
 	switch {
 	case len(label) > 0 && label[0] == 'T': // Trusted
-		return CTrustOk
+		return AccentGreen
 	case len(label) > 0 && label[0] == 'U': // Untrusted
-		return CTrustWarn
+		return AccentRed
 	default:
-		return CTrustCaution
+		return AccentYellow
 	}
+}
+
+// StatusDot returns a colored connection indicator.
+func StatusDot(connected bool, reconnecting bool) string {
+	if connected {
+		return ConnectedStyle.Render("●")
+	}
+	if reconnecting {
+		return ReconnectingStyle.Render("●")
+	}
+	return DisconnectedStyle.Render("○")
 }

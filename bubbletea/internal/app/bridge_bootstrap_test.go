@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
 )
 
@@ -24,14 +25,27 @@ func TestInitCreatesSessionAndUpdatesState(t *testing.T) {
 
 	m := NewModel(server.URL)
 	cmd := m.Init()
-	msg := cmd()
 
-	created, ok := msg.(sessionCreatedMsg)
+	// Init returns tea.Batch(textinput.Focus, createSession) — extract session cmd
+	batchMsg := cmd()
+	batch, ok := batchMsg.(tea.BatchMsg)
 	if !ok {
-		t.Fatalf("expected sessionCreatedMsg, got %T", msg)
+		t.Fatalf("expected tea.BatchMsg from Init, got %T", batchMsg)
 	}
-	if created.status.SessionID != sessionID {
-		t.Fatalf("expected session ID %s, got %s", sessionID, created.status.SessionID)
+
+	// Find the sessionCreatedMsg among the batch results
+	var found bool
+	for _, c := range batch {
+		msg := c()
+		if created, ok := msg.(sessionCreatedMsg); ok {
+			found = true
+			if created.status.SessionID != sessionID {
+				t.Fatalf("expected session ID %s, got %s", sessionID, created.status.SessionID)
+			}
+		}
+	}
+	if !found {
+		t.Fatal("expected sessionCreatedMsg in batch results")
 	}
 }
 
@@ -57,9 +71,6 @@ func TestUpdateHandlesSessionCreatedMsg(t *testing.T) {
 	if !model.Connected {
 		t.Fatal("expected connected=true after session created")
 	}
-	if model.ActiveResponse != "Connected. Awaiting input." {
-		t.Fatalf("expected connected message, got %q", model.ActiveResponse)
-	}
 }
 
 func TestUpdateHandlesSessionErrorMsg(t *testing.T) {
@@ -75,8 +86,8 @@ func TestUpdateHandlesSessionErrorMsg(t *testing.T) {
 	if model.Connected {
 		t.Fatal("expected connected=false after session error")
 	}
-	if model.ActiveResponse != "Bridge error: connection refused" {
-		t.Fatalf("expected error message in active response, got %q", model.ActiveResponse)
+	if model.Err != "connection refused" {
+		t.Fatalf("expected error message in Err field, got %q", model.Err)
 	}
 }
 
@@ -133,7 +144,7 @@ func TestUpdateHandlesBridgeEventCommitHistory(t *testing.T) {
 	})
 
 	model := updated.(Model)
-	if len(model.History) != 1 || model.History[0] != "final answer" {
-		t.Fatalf("expected committed history [final answer], got %v", model.History)
+	if len(model.ChatBlocks) != 1 || model.ChatBlocks[0].Content != "final answer" {
+		t.Fatalf("expected committed chat block [final answer], got %v", model.ChatBlocks)
 	}
 }

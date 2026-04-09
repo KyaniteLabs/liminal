@@ -8,7 +8,6 @@ import (
 
 func TestApplyEventSeparatesActiveResponseFromCommittedHistory(t *testing.T) {
 	m := NewModel("http://localhost:0")
-	m.History = []string{}
 
 	m.ApplyEvent(bridge.Event{Type: "response.started", SessionID: "s1"})
 	if m.ActiveResponse != "" {
@@ -20,13 +19,16 @@ func TestApplyEventSeparatesActiveResponseFromCommittedHistory(t *testing.T) {
 	if m.ActiveResponse != "hello" {
 		t.Fatalf("expected active response hello, got %q", m.ActiveResponse)
 	}
-	if len(m.History) != 0 {
-		t.Fatalf("expected no committed history before commit, got %d entries", len(m.History))
+	if len(m.ChatBlocks) != 0 {
+		t.Fatalf("expected no chat blocks before commit, got %d entries", len(m.ChatBlocks))
 	}
 
 	m.ApplyEvent(bridge.Event{Type: "response.completed", SessionID: "s1", Content: "hello"})
 	m.ApplyEvent(bridge.Event{Type: "response.committed", SessionID: "s1", Content: "hello"})
-	if len(m.History) != 1 || m.History[0] != "hello" {
-		t.Fatalf("expected committed history to contain hello, got %#v", m.History)
+	if len(m.ChatBlocks) != 1 || m.ChatBlocks[0].Content != "hello" {
+		t.Fatalf("expected committed chat block [hello], got %#v", m.ChatBlocks)
+	}
+	if m.ChatBlocks[0].Type != "assistant" {
+		t.Fatalf("expected chat block type assistant, got %q", m.ChatBlocks[0].Type)
 	}
 }

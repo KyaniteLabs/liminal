@@ -13,7 +13,13 @@ func main() {
 	if bridgeURL == "" {
 		bridgeURL = "http://localhost:3000"
 	}
-	program := tea.NewProgram(app.NewModel(bridgeURL), tea.WithAltScreen())
+
+	model := app.NewModel(bridgeURL)
+	program := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+
+	// Pass program reference to model so SSE goroutines can send events
+	model.Program = program
+
 	if _, err := program.Run(); err != nil {
 		log.Fatal(err)
 	}

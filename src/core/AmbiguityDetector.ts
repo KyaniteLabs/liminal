@@ -369,12 +369,12 @@ export class AmbiguityDetector {
     }
 
     // GLSL / shaders
-    if (/shader|glsl|ray\s*march|sdf|fragment|kaleid/i.test(lower)) {
+    if (/shader|glsl|ray\s*march|sdf|fragment/i.test(lower)) {
       hints.push('shader');
     }
 
     // Hydra
-    if (/hydra|video\s*synth|visual\s*synthesis/i.test(lower)) {
+    if (/hydra|video\s*synth|visual\s*synthesis|kaleid/i.test(lower)) {
       hints.push('hydra');
     }
 

@@ -1,6 +1,7 @@
 // Barrel exports for the audio analysis module.
 
 export { AudioAnalyzer } from './AudioAnalyzer.js';
+export { captureMicAudio } from './MicCapture.js';
 
 export type {
   AudioFeatures,

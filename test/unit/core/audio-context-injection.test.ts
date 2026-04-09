@@ -20,6 +20,14 @@ describe('Audio context injection', () => {
     expect(ctx).not.toContain('Audio-derived visual parameters');
   });
 
+  it('does not append audio context when voice === true without visualMappingParams', () => {
+    // RalphLoop handles --voice by calling captureMicAudio → AudioAnalyzer → visualMappingParams
+    // buildContextForInjection only cares about visualMappingParams
+    // So with voice: true but no visualMappingParams, no audio context is appended
+    const ctx = buildContextForInjection(1, { voice: true } as any);
+    expect(ctx).not.toContain('Audio-derived visual parameters');
+  });
+
   it('formats all parameter sections', () => {
     const params = {
       palette: { hues: [0.1, 0.3], saturations: [0.5], lightness: [0.6] },

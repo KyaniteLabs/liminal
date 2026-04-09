@@ -112,7 +112,7 @@ export interface LoopOptions {
   visualMappingParams?: Record<string, unknown>;
   /** Path to audio file for voice-driven visual mapping. Analyzed by AudioAnalyzer to produce visualMappingParams. */
   voiceFile?: string;
-  /** Enable voice-driven visual mapping (microphone input, not file-based). Requires voiceFile OR runtime audio capture. */
+  /** Enable voice-driven visual mapping via microphone capture. Press Enter to start/stop recording. */
   voice?: boolean;
   /** Enable LIR-based evaluation — parses generated code into structured tokens for critics and evaluator */
   lirEnabled?: boolean;

@@ -37,4 +37,15 @@ type Event struct {
 	Trust       *TrustState    `json:"trust,omitempty"`
 	PreviewType string         `json:"previewType,omitempty"`
 	ImageUrl    string         `json:"imageUrl,omitempty"`
+
+	// Event fields for generation.iteration
+	Iteration int     `json:"iteration,omitempty"`
+	Score     float64 `json:"score,omitempty"`
+
+	// Event fields for generation.complete
+	Iterations int     `json:"iterations,omitempty"`
+	FinalScore float64 `json:"finalScore,omitempty"`
+	Duration   int64   `json:"duration,omitempty"`
+	Model      string  `json:"model,omitempty"`
+	Reason     string  `json:"reason,omitempty"`
 }

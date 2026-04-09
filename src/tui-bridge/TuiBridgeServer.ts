@@ -2,9 +2,14 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 import { TuiBridgeService } from './TuiBridgeService.js';
 import type { TuiInputRequest } from './types.js';
 
+interface LLMStreamer {
+  stream(systemPrompt: string, userPrompt: string, signal?: AbortSignal): AsyncGenerator<string>;
+}
+
 interface BridgeServerOptions {
   port?: number;
   host?: string;
+  llm?: LLMStreamer;
 }
 
 export class TuiBridgeServer {
@@ -12,8 +17,10 @@ export class TuiBridgeServer {
   private server: Server;
   private port: number;
   private host: string;
+  private llm?: LLMStreamer;
 
   constructor(bridge: TuiBridgeService, options: BridgeServerOptions = {}) {
+    this.llm = options.llm;
     this.bridge = bridge;
     this.port = options.port ?? 3000;
     this.host = options.host ?? 'localhost';
@@ -89,7 +96,7 @@ export class TuiBridgeServer {
         const sessionId = inputMatch[1];
         const body = await this.readBody(req);
         const input: TuiInputRequest = JSON.parse(body);
-        const result = await this.bridge.submitInput(sessionId, input);
+        const result = await this.bridge.submitInput(sessionId, input, this.llm);
         this.json(res, 200, result);
         return;
       }

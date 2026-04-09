@@ -2,9 +2,12 @@ import { TuiEventStream } from './TuiEventStream.js';
 import { TuiSessionStore } from './TuiSessionStore.js';
 import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatus } from './types.js';
 
+const SYSTEM_PROMPT = `You are Liminal, a creative coding partner. You help users generate p5.js sketches, Strudel music patterns, and other creative code. Be concise, helpful, and creative. When users describe what they want, respond with encouragement and relevant code or ideas.`;
+
 export class TuiBridgeService {
   private sessions = new TuiSessionStore();
   private stream = new TuiEventStream();
+  private activeStreams = new Map<string, AbortController>();
 
   createSession(): TuiSessionStatus {
     const sessionId = `tui-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -29,7 +32,10 @@ export class TuiBridgeService {
     return this.stream.subscribe(sessionId, listener);
   }
 
-  async submitInput(sessionId: string, input: TuiInputRequest): Promise<{ reviewRequired: boolean }> {
+  async submitInput(sessionId: string, input: TuiInputRequest, llm?: { stream(systemPrompt: string, userPrompt: string, signal?: AbortSignal): AsyncGenerator<string> }): Promise<{ reviewRequired: boolean }> {
+    // Cancel any in-flight stream for this session
+    this.cancelStream(sessionId);
+
     this.sessions.update(sessionId, { mode: input.mode });
 
     if (input.clientIntent === 'action' || input.mode === 'action') {
@@ -51,7 +57,22 @@ export class TuiBridgeService {
       return { reviewRequired: true };
     }
 
+    // Chat mode — stream LLM response if available, otherwise echo
     this.emit(sessionId, { type: 'response.started', sessionId });
+
+    if (llm) {
+      // Fire-and-forget streaming — the SSE events carry the chunks
+      this.streamLlmResponse(sessionId, input.text, llm).catch((err) => {
+        this.emit(sessionId, {
+          type: 'error',
+          sessionId,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      });
+      return { reviewRequired: false };
+    }
+
+    // Fallback: echo without LLM
     this.emit(sessionId, { type: 'response.delta', sessionId, delta: input.text });
     this.emit(sessionId, { type: 'response.completed', sessionId, content: input.text });
     this.emit(sessionId, { type: 'response.committed', sessionId, content: input.text });
@@ -91,6 +112,40 @@ export class TuiBridgeService {
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
     this.emit(sessionId, { type: 'action.cancelled', sessionId, actionId });
+  }
+
+  private async streamLlmResponse(sessionId: string, userText: string, llm: { stream(systemPrompt: string, userPrompt: string, signal?: AbortSignal): AsyncGenerator<string> }): Promise<void> {
+    const controller = new AbortController();
+    this.activeStreams.set(sessionId, controller);
+
+    let fullContent = '';
+    try {
+      for await (const chunk of llm.stream(SYSTEM_PROMPT, userText, controller.signal)) {
+        fullContent += chunk;
+        this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
+      }
+
+      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+      this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
+      this.emit(sessionId, {
+        type: 'status.updated',
+        sessionId,
+        status: this.sessions.update(sessionId, {
+          mode: 'chat',
+          activeTask: fullContent.slice(0, 60),
+        }),
+      });
+    } finally {
+      this.activeStreams.delete(sessionId);
+    }
+  }
+
+  private cancelStream(sessionId: string): void {
+    const controller = this.activeStreams.get(sessionId);
+    if (controller) {
+      controller.abort();
+      this.activeStreams.delete(sessionId);
+    }
   }
 
   private emit(sessionId: string, event: TuiBridgeEvent): void {

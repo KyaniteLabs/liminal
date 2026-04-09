@@ -738,11 +738,19 @@ else if (cmd === 'bridge') {
   import('../dist/tui-bridge/TuiBridgeServer.js').then(async ({ TuiBridgeServer }) => {
     const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
     const bridge = new TuiBridgeService();
-    const server = new TuiBridgeServer(bridge, { port });
+
+    // Create LLM client for streaming responses
+    const llm = new LLMClient({ role: 'generator' });
+    await LLMClient.loadRoles();
+    const llmModel = process.env.LIMINAL_LLM_MODEL || 'auto';
+    const llmProvider = process.env.LIMINAL_LLM_BASE_URL || 'config';
+
+    const server = new TuiBridgeServer(bridge, { port, llm });
     await server.start();
     console.log('');
     console.log('Liminal TUI Bridge');
     console.log(`  Listening: ${server.address}`);
+    console.log(`  LLM: ${llmProvider} / ${llmModel}`);
     console.log('  Endpoints:');
     console.log('    POST /api/tui/session             — create session');
     console.log('    GET  /api/tui/session/:id/status   — session status');

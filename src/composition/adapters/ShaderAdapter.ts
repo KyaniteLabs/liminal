@@ -476,7 +476,7 @@ export class ShaderAdapter implements LayerAdapter {
   const canvas = document.getElementById('shader-${layer.id}');
   const gl = canvas.getContext('webgl');
   if (!gl) {
-    console.error('WebGL not supported');
+    console.error('[shader]', 'WebGL not supported');
     return;
   }
 
@@ -493,7 +493,7 @@ ${fragmentSource.replace(/`/g, '\\`')}\`;
     gl.shaderSource(shader, source);
     gl.compileShader(shader);
     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-      console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+      console.error('[shader]', 'Shader compile error:', gl.getShaderInfoLog(shader));
       gl.deleteShader(shader);
       return null;
     }
@@ -512,7 +512,7 @@ ${fragmentSource.replace(/`/g, '\\`')}\`;
   gl.linkProgram(program);
 
   if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-    console.error('Program link error:', gl.getProgramInfoLog(program));
+    console.error('[shader]', 'Program link error:', gl.getProgramInfoLog(program));
     return;
   }
 

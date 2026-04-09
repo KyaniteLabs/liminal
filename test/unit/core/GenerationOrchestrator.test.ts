@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock all external dependencies before importing
 vi.mock('../../../src/generators/GeneratorRegistry.js', () => {
@@ -103,6 +103,9 @@ describe('GenerationOrchestrator', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no ambiguity detected (disambiguation tests override these per-test)
+    mockDetect.mockReturnValue([]);
+    mockGetDomainHints.mockReturnValue([]);
     gallery = new Gallery({} as any);
     archiveLearning = { addFragment: vi.fn() };
   });

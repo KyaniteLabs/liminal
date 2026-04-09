@@ -39,6 +39,22 @@ vi.mock('../../../src/harness/tools/index.js', () => ({
   readFileTool: mockReadFile,
 }));
 
+vi.mock('../../../src/fix/TestFailureDetector.js', () => ({
+  TestFailureDetector: class {
+    detect = vi.fn(() => ({
+      success: true,
+      failures: [],
+      failingFileCount: 0,
+      totalFailedTests: 0,
+    }));
+    getSourceFiles = vi.fn(() => []);
+  },
+}));
+
+vi.mock('child_process', () => ({
+  execSync: vi.fn(() => Buffer.from('success')),
+}));
+
 import { AutoFixOrchestrator } from '../../../src/fix/AutoFixOrchestrator.js';
 import { Status } from '../../../src/types/status.js';
 

@@ -6,6 +6,7 @@
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
+import { safeSetHTML } from '../../core/validators/DOMSanitizer.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 import { Logger } from '../../utils/Logger.js';
@@ -65,10 +66,10 @@ export class ToneAdapter implements LayerAdapter {
     controls.style.bottom = '10px';
     controls.style.left = '10px';
     controls.style.zIndex = '1000';
-    controls.innerHTML = `
+    safeSetHTML(controls, `
       <button id="tone-start-${layer.id}">Start Audio</button>
       <button id="tone-stop-${layer.id}">Stop</button>
-    `;
+    `);
     container.appendChild(controls);
 
     // Track synths created by this layer

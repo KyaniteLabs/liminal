@@ -1,0 +1,236 @@
+name: Scheduled 12-Agent Review
+
+on:
+  schedule:
+    - cron: '7,37 * * * *'  # Every 30 minutes at :07 and :37
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  # ──────────────────────────────────────────────────
+  # Agent 1: Security review
+  # ──────────────────────────────────────────────────
+  security:
+    name: "Agent 1/12: Security"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Scan for secrets in history
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Check for dangerous patterns
+        run: |
+          grep -rn 'eval(' src/ --include="*.py" 2>/dev/null && echo "WARN: eval() in Python" || true
+          grep -rn 'innerHTML\s*=' src/ --include="*.ts" --include="*.js" 2>/dev/null && echo "WARN: innerHTML assignments" || true
+          grep -rn 'os\.system(' src/ --include="*.py" 2>/dev/null && echo "WARN: os.system in Python" || true
+          echo "Security scan complete."
+
+  # ──────────────────────────────────────────────────
+  # Agent 2: Performance review
+  # ──────────────────────────────────────────────────
+  performance:
+    name: "Agent 2/12: Performance"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for performance anti-patterns
+        run: |
+          grep -rn '\.forEach(' src/ --include="*.ts" 2>/dev/null | head -5 || true
+          grep -rn 'JSON\.parse(JSON\.stringify' src/ --include="*.ts" 2>/dev/null && echo "WARN: Deep clone via JSON" || true
+          grep -rn 'new RegExp(' src/ --include="*.ts" 2>/dev/null | head -5 || true
+          echo "Performance review complete."
+
+  # ──────────────────────────────────────────────────
+  # Agent 3: Test quality review
+  # ──────────────────────────────────────────────────
+  test-quality:
+    name: "Agent 3/12: Test Quality"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Run test quality checker
+        run: pnpm test:quality || true
+      - name: Run coverage
+        run: pnpm test:coverage || true
+
+  # ──────────────────────────────────────────────────
+  # Agent 4: Dead code detection
+  # ──────────────────────────────────────────────────
+  dead-code:
+    name: "Agent 4/12: Dead Code"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Find unused exports and dead code
+        run: |
+          # Find exported functions/types that are never imported
+          echo "=== Potentially unused exports ==="
+          grep -rn 'export ' src/ --include="*.ts" | grep -v 'export default' | grep -v 'export {' | grep -v '.test.' | head -20 || true
+          echo "Dead code review complete."
+
+  # ──────────────────────────────────────────────────
+  # Agent 5: Slop/placeholder check
+  # ──────────────────────────────────────────────────
+  slop-check:
+    name: "Agent 5/12: Slop Check"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for placeholder code
+        run: |
+          BLOCKED=false
+          grep -rn '// Your code here' src/ --include="*.ts" 2>/dev/null && BLOCKED=true || true
+          grep -rn '// TODO: implement' src/ --include="*.ts" 2>/dev/null && BLOCKED=true || true
+          grep -rn '// ... existing code' src/ --include="*.ts" 2>/dev/null && BLOCKED=true || true
+          grep -rn 'raise NotImplementedError' src/ --include="*.py" 2>/dev/null && BLOCKED=true || true
+          grep -rn 'NotImplementedError()' src/ --include="*.ts" 2>/dev/null && BLOCKED=true || true
+          if [ "$BLOCKED" = true ]; then
+            echo "FAIL: Placeholder/slop code detected."
+            exit 1
+          fi
+          echo "No slop detected."
+
+  # ──────────────────────────────────────────────────
+  # Agent 6: License compliance
+  # ──────────────────────────────────────────────────
+  license:
+    name: "Agent 6/12: License"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check licenses
+        run: |
+          npx license-checker --failOn "GPL-3.0;AGPL-3.0" 2>/dev/null || echo "License check complete (some warnings)."
+
+  # ──────────────────────────────────────────────────
+  # Agent 7: Dependency audit
+  # ──────────────────────────────────────────────────
+  dependencies:
+    name: "Agent 7/12: Dependencies"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Audit for vulnerabilities
+        run: pnpm audit --audit-level=high || true
+      - name: Check for outdated lockfile
+        run: pnpm install --frozen-lockfile 2>&1 | grep -q "ERR_PNPM_LOCKFILE_MISSING" && echo "WARN: Lockfile out of date" || echo "Lockfile OK"
+
+  # ──────────────────────────────────────────────────
+  # Agent 8: API surface review
+  # ──────────────────────────────────────────────────
+  api-surface:
+    name: "Agent 8/12: API Surface"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check exported API surface
+        run: |
+          echo "=== Public API exports ==="
+          grep -rn 'export function\|export class\|export interface\|export type\|export const' src/ --include="*.ts" | grep -v '.test.' | grep -v 'internal' | wc -l
+          echo "API surface review complete."
+
+  # ──────────────────────────────────────────────────
+  # Agent 9: Type safety review
+  # ──────────────────────────────────────────────────
+  typing:
+    name: "Agent 9/12: Type Safety"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: TypeScript strict check
+        run: pnpm typecheck
+
+  # ──────────────────────────────────────────────────
+  # Agent 10: Documentation review
+  # ──────────────────────────────────────────────────
+  docs:
+    name: "Agent 10/12: Documentation"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check documentation coverage
+        run: |
+          TOTAL=$(find src/ -name "*.ts" -not -name "*.test.ts" -not -name "*.d.ts" | wc -l | tr -d ' ')
+          WITH_DOCS=$(grep -rl '@param\|@returns\|@throws\|/**' src/ --include="*.ts" | grep -v '.test.' | wc -l | tr -d ' ')
+          echo "Files with JSDoc: $WITH_DOCS / $TOTAL"
+          echo "Documentation review complete."
+
+  # ──────────────────────────────────────────────────
+  # Agent 11: Coverage gate
+  # ──────────────────────────────────────────────────
+  coverage:
+    name: "Agent 11/12: Coverage"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:coverage
+      - name: Coverage gap detection
+        if: always()
+        run: npx tsx scripts/ci/check-coverage-gaps.ts --warn || true
+
+  # ──────────────────────────────────────────────────
+  # Agent 12: Architecture consistency
+  # ──────────────────────────────────────────────────
+  architecture:
+    name: "Agent 12/12: Architecture"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check architecture patterns
+        run: |
+          echo "=== Source directory structure ==="
+          find src/ -maxdepth 1 -type d | sort
+          echo ""
+          echo "=== Module sizes (lines) ==="
+          for dir in src/*/; do
+            lines=$(find "$dir" -name "*.ts" -not -name "*.test.ts" -exec cat {} + 2>/dev/null | wc -l | tr -d ' ')
+            echo "  $(basename $dir): $lines lines"
+          done
+          echo "Architecture review complete."

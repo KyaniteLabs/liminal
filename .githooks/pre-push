@@ -1,0 +1,92 @@
+#!/bin/bash
+# Pre-push hook — Layer 1 of the quality pipeline
+# Blocks: direct push to main, high/critical CVEs, merge conflict markers
+
+set -euo pipefail
+
+REMOTE="$1"
+URL="$2"
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BLOCKED=false
+
+echo "Running pre-push checks..."
+
+# ──────────────────────────────────────────────────
+# 1. Block direct push to main
+# ──────────────────────────────────────────────────
+if [ "$BRANCH" = "main" ] || [ "$BRANCH" = "master" ]; then
+  echo "BLOCKED: Direct push to $BRANCH is not allowed."
+  echo "  Use a feature branch and create a pull request."
+  exit 1
+fi
+
+# ──────────────────────────────────────────────────
+# 2. Merge conflict marker detection
+# ──────────────────────────────────────────────────
+CONFLICT_FILES=$(git diff --name-only --diff-filter=ACM HEAD 2>/dev/null | while read -r file; do
+  if file "$file" 2>/dev/null | grep -q "text"; then
+    if grep -qE '^(<<<<<<<|=======|>>>>>>>)' "$file" 2>/dev/null; then
+      echo "$file"
+    fi
+  fi
+done || true)
+
+if [ -n "$CONFLICT_FILES" ]; then
+  echo "BLOCKED: Unresolved merge conflict markers found in:"
+  echo "$CONFLICT_FILES" | while read -r f; do echo "  - $f"; done
+  BLOCKED=true
+fi
+
+# ──────────────────────────────────────────────────
+# 3. Dependency CVE audit
+# ──────────────────────────────────────────────────
+if [ -f "package.json" ]; then
+  echo "Running dependency audit..."
+  if command -v pnpm &>/dev/null; then
+    AUDIT_OUTPUT=$(pnpm audit --audit-level=high 2>&1 || true)
+    if echo "$AUDIT_OUTPUT" | grep -qE "(high|critical)"; then
+      echo "BLOCKED: High or critical CVEs found in dependencies."
+      echo "$AUDIT_OUTPUT" | grep -E "(high|critical)" | head -10
+      echo ""
+      echo "Fix with: pnpm update <package> or add override in package.json"
+      BLOCKED=true
+    else
+      echo "Dependency audit passed."
+    fi
+  elif command -v npm &>/dev/null; then
+    AUDIT_OUTPUT=$(npm audit --audit-level=high 2>&1 || true)
+    if echo "$AUDIT_OUTPUT" | grep -qE "(high|critical)"; then
+      echo "BLOCKED: High or critical CVEs found in dependencies."
+      echo "$AUDIT_OUTPUT" | grep -E "(high|critical)" | head -10
+      BLOCKED=true
+    else
+      echo "Dependency audit passed."
+    fi
+  fi
+fi
+
+# ──────────────────────────────────────────────────
+# 4. Verify branch is up to date with remote main
+# ──────────────────────────────────────────────────
+REMOTE_MAIN=$(git ls-remote --heads origin main 2>/dev/null | awk '{print $1}' || true)
+if [ -n "$REMOTE_MAIN" ]; then
+  LOCAL_MAIN=$(git merge-base main HEAD 2>/dev/null || echo "")
+  if [ -n "$LOCAL_MAIN" ]; then
+    if ! git merge-base --is-ancestor "$REMOTE_MAIN" "$LOCAL_MAIN" 2>/dev/null; then
+      echo "WARNING: Your branch is behind origin/main."
+      echo "  Consider rebasing: git fetch origin && git rebase origin/main"
+    fi
+  fi
+fi
+
+# ──────────────────────────────────────────────────
+# Final verdict
+# ──────────────────────────────────────────────────
+if [ "$BLOCKED" = true ]; then
+  echo ""
+  echo "PRE-PUSH BLOCKED. Fix the issues above before pushing."
+  exit 1
+fi
+
+echo "All pre-push checks passed"

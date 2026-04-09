@@ -6,6 +6,7 @@
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
+import { safeSetHTML } from '../../core/validators/DOMSanitizer.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 import { getCSSBlendMode } from '../utils/blendModes.js';
@@ -62,7 +63,7 @@ export class HTMLAdapter implements LayerAdapter {
     const { html, styles } = this.parseHTML(layer.code);
     
     // Set innerHTML (sanitized)
-    wrapper.innerHTML = html;
+    safeSetHTML(wrapper, html);
 
     // Collect element references
     const elements = new Map<string, Element>();

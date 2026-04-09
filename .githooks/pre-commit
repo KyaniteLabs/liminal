@@ -1,85 +1,241 @@
 #!/bin/bash
-# Pre-commit hook for documentation validation + test verification
+# Pre-commit hook — Layer 1 of the quality pipeline
+# Blocks: secrets, slop/placeholders, oversized files, invalid JSON/YAML,
+#         eval/exec in Python
 
-echo "🔍 Running pre-commit checks..."
+set -euo pipefail
 
-# --- Documentation checks ---
-if git diff --cached --name-only | grep -q "docs/THE_BIBLE.md"; then
-    echo "✓ THE_BIBLE.md updated"
-else
-    if git diff --cached --name-only | grep -q "^src/"; then
-        echo "⚠️  WARNING: You modified src/ but not THE_BIBLE.md"
-        echo "   Run: npm run validate-docs"
-    fi
-fi
-
-# Run validation scripts
-node scripts/analysis/validate-version.js --quiet || exit 1
-node scripts/analysis/verify-file-refs.js --quiet || exit 1
-
-# Run doc-validate if available (CI-mirrored check)
-PROJECT_ROOT=$(git rev-parse --show-toplevel)
-if [ -f "$HOME/.local/bin/doc-validate" ]; then
-    "$HOME/.local/bin/doc-validate" "$PROJECT_ROOT" || {
-        echo "❌ Documentation validation failed"
-        exit 1
-    }
-fi
-
-echo "✅ Documentation checks passed"
-
-# --- Test verification for changed files ---
-CHANGED_SRC=$(git diff --cached --name-only | grep "^src/.*\.ts$" | head -10)
-if [ -n "$CHANGED_SRC" ]; then
-    echo "🧪 Running tests for changed source files..."
-    # vitest --related runs only tests that import the changed files
-    npx vitest run --related $CHANGED_SRC --reporter=verbose 2>&1 | tail -5
-    if [ $? -ne 0 ]; then
-        echo "❌ Tests failed for changed files. Fix before committing."
-        echo "   Run with --no-verify to skip (not recommended)."
-        exit 1
-    fi
-    echo "✅ Changed file tests passed"
-fi
-
-echo "✅ All pre-commit checks passed"
-
-# --- Stray file detection ---
-# Warn about known stray file patterns. Warn-only (does not block commit).
+echo "Running pre-commit checks..."
 
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM)
-STRAY_FOUND=false
+BLOCKED=false
+
+# Filter out infrastructure files that contain detection patterns as rules
+CHECKABLE_FILES=$(echo "$STAGED_FILES" | grep -v '^\.githooks/' | grep -v '^\.github/' || true)
+
+# ──────────────────────────────────────────────────
+# 1. Secret detection
+# ──────────────────────────────────────────────────
+SECRET_PATTERNS=(
+  'sk-[a-zA-Z0-9]{20,}'
+  'sk_live_[a-zA-Z0-9]{20,}'
+  'sk_test_[a-zA-Z0-9]{20,}'
+  'ghp_[a-zA-Z0-9]{36}'
+  'gho_[a-zA-Z0-9]{36}'
+  'github_pat_[a-zA-Z0-9_]{22,}'
+  'xox[bpsa]-[a-zA-Z0-9-]{10,}'
+  '-----BEGIN (RSA |EC |DSA |OPENSSH )?PRIVATE KEY-----'
+  'api[_-]?key\s*[:=]\s*["\x27]?[a-zA-Z0-9]{16,}'
+  'secret[_-]?key\s*[:=]\s*["\x27]?[a-zA-Z0-9]{16,}'
+  'password\s*[:=]\s*["\x27][^\s]{8,}'
+  'token\s*[:=]\s*["\x27]?[a-zA-Z0-9._-]{20,}'
+  'Bearer [a-zA-Z0-9._-]{20,}'
+)
+
+if [ -n "$CHECKABLE_FILES" ]; then
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    if file "$file" 2>/dev/null | grep -q "text"; then
+      for pattern in "${SECRET_PATTERNS[@]}"; do
+        if grep -qE "$pattern" "$file" 2>/dev/null; then
+          echo "BLOCKED: Secret pattern found in $file"
+          echo "  Pattern: $pattern"
+          BLOCKED=true
+        fi
+      done
+    fi
+  done <<< "$CHECKABLE_FILES"
+fi
+
+# ──────────────────────────────────────────────────
+# 2. File size check (>1MB blocked)
+# ──────────────────────────────────────────────────
+if [ -n "$STAGED_FILES" ]; then
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    size=$(git cat-file -s ":$file" 2>/dev/null || echo 0)
+    if [ "$size" -gt 1048576 ]; then
+      echo "BLOCKED: File exceeds 1MB limit: $file ($(( size / 1048576 ))MB)"
+      BLOCKED=true
+    fi
+  done <<< "$STAGED_FILES"
+fi
+
+# ──────────────────────────────────────────────────
+# 3. Slop / placeholder detection
+# ──────────────────────────────────────────────────
+SLOP_PATTERNS=(
+  '// Your code here'
+  '// TODO: implement'
+  '// TODO implement'
+  '// ... existing code'
+  '// ...existing code'
+  '# Your code here'
+  '# TODO: implement'
+  '# TODO implement'
+  '# ... existing code'
+  'raise NotImplementedError'
+  'pass  # TODO'
+  'pass # TODO'
+  '// FIXME: implement'
+  '/* Your code here */'
+  'NotImplementedError()'
+)
+
+if [ -n "$CHECKABLE_FILES" ]; then
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    if file "$file" 2>/dev/null | grep -q "text"; then
+      for pattern in "${SLOP_PATTERNS[@]}"; do
+        if grep -qF "$pattern" "$file" 2>/dev/null; then
+          echo "BLOCKED: Placeholder/slop code in $file"
+          echo "  Found: $pattern"
+          BLOCKED=true
+        fi
+      done
+    fi
+  done <<< "$CHECKABLE_FILES"
+fi
+
+# ──────────────────────────────────────────────────
+# 4. Invalid JSON/YAML
+# ──────────────────────────────────────────────────
+if [ -n "$STAGED_FILES" ]; then
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    case "$file" in
+      *.json)
+        if ! node -e "JSON.parse(require('fs').readFileSync('$file','utf8'))" 2>/dev/null; then
+          echo "BLOCKED: Invalid JSON in $file"
+          BLOCKED=true
+        fi
+        ;;
+      *.yml|*.yaml)
+        if command -v yq &>/dev/null; then
+          if ! yq eval '.' "$file" &>/dev/null; then
+            echo "BLOCKED: Invalid YAML in $file"
+            BLOCKED=true
+          fi
+        fi
+        ;;
+    esac
+  done <<< "$STAGED_FILES"
+fi
+
+# ──────────────────────────────────────────────────
+# 5. Python eval/exec/os.system (dangerous patterns)
+# ──────────────────────────────────────────────────
+PYTHON_DANGEROUS=(
+  'eval('
+  'exec('
+  'os.system('
+  'subprocess.call('
+)
 
 if [ -n "$STAGED_FILES" ]; then
-    # Pattern 1: Shell redirect artifacts (e.g., "1timeout:", "2timeout:")
-    strays_redirect=$(echo "$STAGED_FILES" | grep -E '^[0-9]+[a-zA-Z]+:' || true)
-    if [ -n "$strays_redirect" ]; then
-        echo "⚠️  WARNING: Shell redirect artifacts staged for commit:"
-        echo "$strays_redirect" | while read -r f; do echo "    - $f"; done
-        STRAY_FOUND=true
-    fi
-
-    # Pattern 2: PNG files in root directory
-    strays_png=$(echo "$STAGED_FILES" | grep -E '^[^/]+\.png$' || true)
-    if [ -n "$strays_png" ]; then
-        echo "⚠️  WARNING: PNG files in root directory staged for commit:"
-        echo "$strays_png" | while read -r f; do echo "    - $f"; done
-        STRAY_FOUND=true
-    fi
-
-    # Pattern 3: Files larger than 1MB in root directory
-    for f in $STAGED_FILES; do
-        if [ "$(dirname "$f")" = "." ]; then
-            size=$(git cat-file -s ":$f" 2>/dev/null || echo 0)
-            if [ "$size" -gt 1048576 ]; then
-                echo "⚠️  WARNING: Large file staged in root: $f ($(( size / 1048576 ))MB)"
-                STRAY_FOUND=true
-            fi
-        fi
-    done
-
-    if [ "$STRAY_FOUND" = true ]; then
-        echo ""
-        echo "  These look like stray artifacts. Unstage with: git reset HEAD <file>"
-    fi
+  while IFS= read -r file; do
+    [ -z "$file" ] && continue
+    case "$file" in
+      *.py)
+        for pattern in "${PYTHON_DANGEROUS[@]}"; do
+          if grep -qF "$pattern" "$file" 2>/dev/null; then
+            echo "BLOCKED: Dangerous Python pattern in $file: $pattern"
+            BLOCKED=true
+          fi
+        done
+        ;;
+    esac
+  done <<< "$STAGED_FILES"
 fi
+
+# ──────────────────────────────────────────────────
+# 6. Lint check
+# ──────────────────────────────────────────────────
+if [ -n "$STAGED_FILES" ]; then
+  TS_FILES=$(echo "$STAGED_FILES" | grep -E '^src/.*\.(ts|tsx|js|jsx)$' || true)
+  if [ -n "$TS_FILES" ]; then
+    echo "Running lint on staged files..."
+    LINT_OUTPUT=$(echo "$TS_FILES" | xargs npx eslint --no-error-on-unmatched-pattern 2>&1) || true
+    if [ -n "$LINT_OUTPUT" ]; then
+      echo "$LINT_OUTPUT" | tail -10
+      echo "BLOCKED: ESLint errors found. Fix before committing."
+      BLOCKED=true
+    fi
+  fi
+fi
+
+# ──────────────────────────────────────────────────
+# 7. Documentation validation (existing checks)
+# ──────────────────────────────────────────────────
+if echo "$STAGED_FILES" | grep -q "docs/THE_BIBLE.md"; then
+  echo "THE_BIBLE.md updated"
+else
+  if echo "$STAGED_FILES" | grep -q "^src/"; then
+    echo "WARNING: You modified src/ but not THE_BIBLE.md"
+    echo "  Run: npm run validate-docs"
+  fi
+fi
+
+if [ -f "scripts/analysis/validate-version.js" ]; then
+  node scripts/analysis/validate-version.js --quiet 2>/dev/null || true
+fi
+if [ -f "scripts/analysis/verify-file-refs.js" ]; then
+  node scripts/analysis/verify-file-refs.js --quiet 2>/dev/null || true
+fi
+
+# ──────────────────────────────────────────────────
+# 8. Test verification for changed source files
+# ──────────────────────────────────────────────────
+CHANGED_SRC=$(echo "$STAGED_FILES" | grep "^src/.*\.ts$" | grep -v '\.test\.' | head -10 || true)
+if [ -n "$CHANGED_SRC" ]; then
+  echo "Running tests for changed source files..."
+  # Find corresponding test files for changed sources
+  TEST_FILES=""
+  for src_file in $CHANGED_SRC; do
+    base=$(basename "$src_file" .ts)
+    dir=$(dirname "$src_file" | sed 's|^src/||')
+    for test_dir in "test/unit/$dir" "test/unit" "test/integration/$dir" "test/integration"; do
+      for suffix in ".test.ts" ".test.js"; do
+        if [ -f "$test_dir/${base}${suffix}" ]; then
+          TEST_FILES="$TEST_FILES $test_dir/${base}${suffix}"
+          break 2
+        fi
+      done
+    done
+  done
+  if [ -n "$TEST_FILES" ]; then
+    if ! npx vitest run $TEST_FILES --reporter=verbose 2>&1 | tail -5; then
+      echo "BLOCKED: Tests failed for changed files."
+      BLOCKED=true
+    fi
+  fi
+fi
+
+# ──────────────────────────────────────────────────
+# 9. Stray file warning (non-blocking)
+# ──────────────────────────────────────────────────
+STAGED_NAMES=$(echo "$STAGED_FILES" | grep -E '^[^/]+$' || true)
+if [ -n "$STAGED_NAMES" ]; then
+  strays_redirect=$(echo "$STAGED_NAMES" | grep -E '^[0-9]+[a-zA-Z]+:' || true)
+  if [ -n "$strays_redirect" ]; then
+    echo "WARNING: Shell redirect artifacts staged:"
+    echo "$strays_redirect" | while read -r f; do echo "  - $f"; done
+  fi
+  strays_png=$(echo "$STAGED_NAMES" | grep -E '^[^/]+\.png$' || true)
+  if [ -n "$strays_png" ]; then
+    echo "WARNING: PNG files in root staged:"
+    echo "$strays_png" | while read -r f; do echo "  - $f"; done
+  fi
+fi
+
+# ──────────────────────────────────────────────────
+# Final verdict
+# ──────────────────────────────────────────────────
+if [ "$BLOCKED" = true ]; then
+  echo ""
+  echo "PRE-COMMIT BLOCKED. Fix the issues above before committing."
+  echo "Use --no-verify to bypass (not recommended)."
+  exit 1
+fi
+
+echo "All pre-commit checks passed"

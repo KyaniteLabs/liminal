@@ -189,7 +189,7 @@ export class CompositionEngine {
     };
 
     // Clear container
-    this.container.innerHTML = '';
+    while (this.container.firstChild) this.container.removeChild(this.container.firstChild);
     
     // Set up container styles for layering
     this.container.style.position = 'relative';

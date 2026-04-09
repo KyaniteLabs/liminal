@@ -1,0 +1,106 @@
+name: Security Scan
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  # ──────────────────────────────────────────────────
+  # 1. Gitleaks — secret detection in full git history
+  # ──────────────────────────────────────────────────
+  gitleaks:
+    name: Secret Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ──────────────────────────────────────────────────
+  # 2. License compliance — block GPL-3.0 / AGPL-3.0
+  # ──────────────────────────────────────────────────
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Check for blocked licenses
+        run: |
+          npx license-checker --failOn "GPL-3.0;AGPL-3.0;GPL-2.0;AGPL-1.0" --summary 2>&1
+          echo "License compliance check passed."
+
+  # ──────────────────────────────────────────────────
+  # 3. XSS detection — innerHTML = assignments
+  # ──────────────────────────────────────────────────
+  xss-check:
+    name: XSS Vector Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for innerHTML assignments
+        run: |
+          VIOLATIONS=$(grep -rn '\.innerHTML\s*=' src/ --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 2>/dev/null | grep -v 'DOMSanitizer.ts' | grep -v 'GenericWrapper.ts' || true)
+          if [ -n "$VIOLATIONS" ]; then
+            echo "BLOCKED: innerHTML assignments found (XSS vector):"
+            echo "$VIOLATIONS"
+            echo ""
+            echo "Use safeSetHTML() from DOMSanitizer.ts, textContent, or a templating library."
+            exit 1
+          fi
+          echo "No XSS vectors (innerHTML assignments) detected."
+
+  # ──────────────────────────────────────────────────
+  # 4. Missing tests check
+  # ──────────────────────────────────────────────────
+  missing-tests:
+    name: Missing Test Detection
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for src/ files without corresponding tests
+        run: |
+          MISSING=""
+          for src_file in $(find src/ -name "*.ts" -not -name "*.d.ts" -not -name "*.test.ts" -not -name "index.ts" 2>/dev/null); do
+            base=$(basename "$src_file" .ts)
+            dir=$(dirname "$src_file" | sed 's|^src/||')
+            # Check common test locations
+            found=false
+            for test_dir in "test/unit/$dir" "test/unit" "test/integration/$dir" "test/integration"; do
+              for suffix in ".test.ts" ".test.js"; do
+                if [ -f "$test_dir/${base}${suffix}" ]; then
+                  found=true
+                  break 2
+                fi
+              done
+            done
+            if [ "$found" = false ]; then
+              MISSING="$MISSING\n  $src_file"
+            fi
+          done
+
+          if [ -n "$MISSING" ]; then
+            COUNT=$(echo -e "$MISSINGS" | wc -l)
+            echo "WARNING: $COUNT src/ files without corresponding tests:"
+            echo -e "$MISSING"
+            echo ""
+            echo "This is a warning. New files MUST include tests."
+          else
+            echo "All src/ files have corresponding test files."
+          fi

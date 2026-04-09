@@ -13,6 +13,7 @@
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
+import { safeSetHTML } from '../../core/validators/DOMSanitizer.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 import { Logger } from '../../utils/Logger.js';
@@ -100,10 +101,10 @@ export class StrudelAdapter implements LayerAdapter {
     controls.style.bottom = '10px';
     controls.style.left = '10px';
     controls.style.zIndex = '1000';
-    controls.innerHTML = `
+    safeSetHTML(controls, `
       <button id="strudel-start-${layer.id}">Start Pattern</button>
       <button id="strudel-stop-${layer.id}">Stop</button>
-    `;
+    `);
     container.appendChild(controls);
 
     // Set up import proxy if context exists

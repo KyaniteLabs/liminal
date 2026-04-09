@@ -203,7 +203,8 @@ export class GenericWrapper {
             .replace(new RegExp('\\b(\\d+\\.?\\d*)\\b', 'g'), '<span class="number">$1</span>')
             .replace(new RegExp('(\\w+)\\s*\\(', 'g'), '<span class="function">$1</span>(');
         
-        document.getElementById('code-display').innerHTML = highlighted;
+        const codeDisplay = document.getElementById('code-display');
+        if (codeDisplay) codeDisplay.innerHTML = highlighted; // safe: highlighted is generated from regex on safeCode
         
         const statusEl = document.getElementById('status');
         const playBtn = document.getElementById('playBtn');
@@ -338,7 +339,7 @@ export class GenericWrapper {
         } catch (err) {
             Logger.error('GenericWrapper', 'Hydra error:', err);
             errorDiv.style.display = 'block';
-            errorDiv.innerHTML = '<strong>Hydra Error:</strong><br>' + err.message;
+            errorDiv.textContent = 'Hydra Error: ' + err.message;
         }
     </script>
 </body>
@@ -398,7 +399,11 @@ export class GenericWrapper {
 
         if (!vertexShader || !fragmentShader) {
             Logger.error('GenericWrapper', 'Shader compilation failed');
-            document.body.innerHTML = '<div style="color:#f66;padding:2rem;font-family:monospace;">Shader compile error — see console</div>';
+            const errorDiv = document.createElement('div');
+            errorDiv.style.cssText = 'color:#f66;padding:2rem;font-family:monospace;';
+            errorDiv.textContent = 'Shader compile error — see console';
+            document.body.textContent = '';
+            document.body.appendChild(errorDiv);
         } else {
             const shaderProgram = gl.createProgram();
             gl.attachShader(shaderProgram, vertexShader);

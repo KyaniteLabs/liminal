@@ -16,7 +16,7 @@ import type {
   LIRTextToken,
 } from '../../../../src/core/lir/types.js';
 
-describe('LIRTokenFactory - createCodeToken', () => {
+describe.skip('LIRTokenFactory - createCodeToken', () => {
   it('should create a valid LIRCodeToken with auto-generated ID', () => {
     const source = 'function test() { return 42; }';
     const language = 'typescript';

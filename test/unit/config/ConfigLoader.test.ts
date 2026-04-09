@@ -221,6 +221,11 @@ describe('getEffectiveConfig', () => {
         delete process.env[key];
       }
     }
+    // Clean up API key env vars that tests may set
+    delete process.env.GLM_API_KEY;
+    delete process.env.MOONSHOT_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
+    delete process.env.OPENAI_API_KEY;
   });
 
   it('returns defaults when no env vars and no file config', async () => {

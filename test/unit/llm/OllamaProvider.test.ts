@@ -237,11 +237,12 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('the output');
-    expect(result.usage?.inputTokens).toBe(10);
-    expect(result.usage?.outputTokens).toBe(42);
-    expect(result.model).toBe('llama3');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('the output');
+    expect(result.value.usage?.inputTokens).toBe(10);
+    expect(result.value.usage?.outputTokens).toBe(42);
+    expect(result.value.model).toBe('llama3');
   });
 
   it('returns success=false when response content is empty', async () => {
@@ -250,8 +251,11 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.content).toBe('');
+    expect(result.isOk()).toBe(true);
+
+    expect(result.value.success).toBe(false);
+
+    expect(result.value.content).toBe('');
   });
 
   it('omits usage when eval_count is absent', async () => {
@@ -260,7 +264,7 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.usage).toBeUndefined();
+    expect(result.value.usage).toBeUndefined();
   });
 
   it('defaults to 0 for prompt_eval_count when missing', async () => {
@@ -269,8 +273,8 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.usage?.inputTokens).toBe(0);
-    expect(result.usage?.outputTokens).toBe(5);
+    expect(result.value.usage?.inputTokens).toBe(0);
+    expect(result.value.usage?.outputTokens).toBe(5);
   });
 
   // ── Thinking extraction ───────────────────────────────────────────────────
@@ -284,7 +288,7 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.thinking).toEqual({
+    expect(result.value.thinking).toEqual({
       source: 'think_tags',
       text: 'internal reasoning',
     });
@@ -296,7 +300,7 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.thinking).toBeUndefined();
+    expect(result.value.thinking).toBeUndefined();
   });
 
   it('falls back to stripThinkTags when response contains <think in content', async () => {
@@ -309,8 +313,8 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.content).toBe('actual output');
-    expect(result.thinking).toEqual({
+    expect(result.value.content).toBe('actual output');
+    expect(result.value.thinking).toEqual({
       text: 'thoughts',
       source: 'think_tags',
     });
@@ -324,7 +328,7 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
     const result = await provider.generate(makeRequest());
 
     expect(mockStripThinkTags).not.toHaveBeenCalled();
-    expect(result.thinking).toBeUndefined();
+    expect(result.value.thinking).toBeUndefined();
   });
 
   // ── Error paths ───────────────────────────────────────────────────────────
@@ -334,9 +338,9 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('Ollama API error 500');
-    expect(result.content).toBe('');
+    expect(result.isErr()).toBe(true);
+
+    expect(result.error.message).toBe('Ollama API error 500');
   });
 
   it('returns error on HTTP 404 (model not found)', async () => {
@@ -344,8 +348,9 @@ describe('OllamaProvider — Native Mode (no /v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('Ollama API error 404');
+    expect(result.isErr()).toBe(true);
+
+    expect(result.error.message).toBe('Ollama API error 404');
   });
 
   // ── Streaming ─────────────────────────────────────────────────────────────
@@ -476,8 +481,9 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(true);
-    expect(result.content).toBe('compat output');
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toBe('compat output');
   });
 
   it('returns success=false when choices content is empty', async () => {
@@ -487,8 +493,11 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.content).toBe('');
+    expect(result.isOk()).toBe(true);
+
+    expect(result.value.success).toBe(false);
+
+    expect(result.value.content).toBe('');
   });
 
   it('returns success=false when choices array is empty', async () => {
@@ -498,7 +507,10 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
+    expect(result.isOk()).toBe(true);
+
+    expect(result.value.success).toBe(false);
+
   });
 
   it('returns success=false when choices is undefined', async () => {
@@ -506,7 +518,10 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
+    expect(result.isOk()).toBe(true);
+
+    expect(result.value.success).toBe(false);
+
   });
 
   it('includes thinking when normalizeThinking returns non-none', async () => {
@@ -520,7 +535,7 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.thinking).toEqual({
+    expect(result.value.thinking).toEqual({
       source: 'reasoning_content',
       text: 'chain of thought',
     });
@@ -531,8 +546,9 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.success).toBe(false);
-    expect(result.error).toBe('Ollama OpenAI-compat error 503');
+    expect(result.isErr()).toBe(true);
+
+    expect(result.error.message).toBe('Ollama OpenAI-compat error 503');
   });
 
   it('uses model from config in response', async () => {
@@ -542,7 +558,7 @@ describe('OllamaProvider — OpenAI-Compatible Mode (/v1 suffix)', () => {
 
     const result = await provider.generate(makeRequest());
 
-    expect(result.model).toBe('qwen2.5-coder');
+    expect(result.value.model).toBe('qwen2.5-coder');
   });
 
   // ── Streaming ─────────────────────────────────────────────────────────────

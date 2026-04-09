@@ -326,8 +326,8 @@ class Particle {
    */
   private static generateColor(config: ParticleSystemConfig): string {
     if (config.colors.length > 0) {
-      const colorIndex = Math.floor(Math.random() * config.colors.length);
-      return config.colors[colorIndex];
+      // Emit all custom colors as a palette
+      return config.colors.join(', ');
     }
 
     switch (config.palette) {

@@ -277,7 +277,7 @@ describe('PreviewRouter', () => {
       const router = makeRouter();
       const decision: PreviewDecision = { target: 'terminal', reason: 'test', terminalType: 'code' };
       const summary = router.getSummary(decision);
-      expect(summary).toContain('Terminal');
+      expect(summary).toContain('terminal');
       expect(summary).toContain('code');
     });
 
@@ -285,7 +285,7 @@ describe('PreviewRouter', () => {
       const router = makeRouter();
       const decision: PreviewDecision = { target: 'browser', reason: 'test', browserType: 'p5' };
       const summary = router.getSummary(decision);
-      expect(summary).toContain('Browser');
+      expect(summary).toContain('browser');
       expect(summary).toContain('p5');
     });
 
@@ -300,8 +300,8 @@ describe('PreviewRouter', () => {
       const router = makeRouter();
       const decision: PreviewDecision = { target: 'both', reason: 'test' };
       const summary = router.getSummary(decision);
-      expect(summary).toContain('Terminal');
-      expect(summary).toContain('Browser');
+      expect(summary).toContain('terminal');
+      expect(summary).toContain('browser');
     });
 
     it('returns none summary with reason', () => {

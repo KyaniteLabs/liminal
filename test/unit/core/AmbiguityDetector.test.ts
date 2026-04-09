@@ -268,4 +268,67 @@ describe('AmbiguityDetector', () => {
       expect(highIssues.every((i) => i.severity === 'high')).toBe(true);
     });
   });
+
+  // ── Domain hint detection ────────────────────────────────────────
+
+  describe('getDomainHints()', () => {
+    it('returns p5 for visual/generative art terms', () => {
+      const hints = detector.getDomainHints('make something beautiful with circles and colors');
+      expect(hints).toContain('p5');
+    });
+
+    it('returns multiple hints for mixed requests', () => {
+      const hints = detector.getDomainHints('make a 3d scene with music');
+      expect(hints).toContain('three');
+      expect(hints).toContain('music');
+    });
+
+    it('returns empty array when no domain signals found', () => {
+      const hints = detector.getDomainHints('help me with my code');
+      expect(hints).toEqual([]);
+    });
+
+    it('returns three for three.js/3d keywords', () => {
+      expect(detector.getDomainHints('create a three.js 3d cube')).toContain('three');
+      expect(detector.getDomainHints('webgl scene with geometry')).toContain('three');
+    });
+
+    it('returns html for web page keywords', () => {
+      expect(detector.getDomainHints('build a landing page for my portfolio')).toContain('html');
+      expect(detector.getDomainHints('make a responsive dashboard')).toContain('html');
+    });
+
+    it('returns music for audio keywords', () => {
+      expect(detector.getDomainHints('generate a melody with piano notes')).toContain('music');
+      expect(detector.getDomainHints('create a beat and rhythm pattern')).toContain('music');
+    });
+
+    it('returns shader for glsl/ray march keywords', () => {
+      expect(detector.getDomainHints('ray march a shader with sdf')).toContain('shader');
+      expect(detector.getDomainHints('fragment shader with glsl')).toContain('shader');
+    });
+
+    it('returns hydra for video synth keywords', () => {
+      expect(detector.getDomainHints('hydra video synth with kaleid')).toContain('hydra');
+    });
+
+    it('returns strudel for pattern music keywords', () => {
+      expect(detector.getDomainHints('strudel techno beat pattern')).toContain('music');
+    });
+
+    it('returns tone for tone.js keywords', () => {
+      expect(detector.getDomainHints('tone.js synth with delay')).toContain('tone');
+    });
+
+    it('returns ascii for text art keywords', () => {
+      expect(detector.getDomainHints('create ascii art of a cat')).toContain('ascii');
+    });
+
+    it('deduplicates hints when multiple keywords match same domain', () => {
+      // Both "circles" and "particles" match p5
+      const hints = detector.getDomainHints('circles and particles animation');
+      const p5Count = hints.filter(h => h === 'p5').length;
+      expect(p5Count).toBe(1);
+    });
+  });
 });

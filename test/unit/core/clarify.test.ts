@@ -1,6 +1,6 @@
 // test/unit/core/clarify.test.ts
 import { describe, it, expect } from 'vitest';
-import type { ClarifyResult } from '../../../src/core/clarify.js';
+import type { ClarifyResult, GenerationSuccess, GenerationOutcome } from '../../../src/core/clarify.js';
 
 describe('ClarifyResult', () => {
   it('has correct shape for clarification needed', () => {
@@ -20,11 +20,27 @@ describe('ClarifyResult', () => {
   });
 
   it('has correct shape for generation result', () => {
-    const result = {
+    const result: GenerationSuccess = {
       needsClarification: false,
       code: 'console.log("hello")',
     };
     expect(result.needsClarification).toBe(false);
-    expect(result.code).toBeDefined();
+    expect(result.code).toBe('console.log("hello")');
+  });
+
+  it('GenerationOutcome can be narrowed to either branch', () => {
+    const ambiguousResult: GenerationOutcome = {
+      needsClarification: true,
+      clarifyingQuestions: [],
+      suggestions: ['p5'],
+    };
+    const successResult: GenerationOutcome = {
+      needsClarification: false,
+      code: 'some code',
+    };
+
+    // Type narrowing should work
+    expect(ambiguousResult.needsClarification).toBe(true);
+    expect(successResult.needsClarification).toBe(false);
   });
 });

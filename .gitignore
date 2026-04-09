@@ -116,3 +116,4 @@ ISSUE-REPORT.md
 # Agent memory (local runtime)
 memory/
 .omc/state/
+bubbletea/

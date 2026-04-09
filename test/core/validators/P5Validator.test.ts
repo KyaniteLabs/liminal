@@ -52,7 +52,7 @@ describe('P5Validator', () => {
 
       const result = P5Validator.validate(code);
       expect(result.valid).toBe(false);
-      expect(result.errors).toContain('p5.js code must contain at least one of: function setup(), function draw(), or createCanvas()');
+      expect(result.errors).toContain('p5.js code must contain at least one of: function setup(), const setup = () =>..., function draw(), const draw = () =>..., or createCanvas()');
     });
 
     it('should reject empty code', () => {

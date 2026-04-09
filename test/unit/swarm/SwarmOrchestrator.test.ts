@@ -58,19 +58,23 @@ vi.mock('../../../src/swarm/VotingEngine.js', () => ({
   },
 }));
 
+const mockHeuristicScore = vi.hoisted(() => vi.fn((outputs: Map<string, any>) => {
+  const entries = [...outputs.entries()];
+  console.log('HeuristicScorer called with outputs keys:', [...outputs.keys()]);
+  const winnerId = entries[0]?.[0] ?? null;
+  console.log('HeuristicScorer returning winnerId:', winnerId);
+  const scores = new Map<string, number>();
+  const votes = new Map<string, any>();
+  for (const [id] of entries) {
+    scores.set(id, 0.75);
+    votes.set(id, { voterId: id, firstChoice: winnerId ?? '', secondChoice: '', reasoning: 'heuristic' });
+  }
+  return { scores, winnerId, votes };
+}));
+
 vi.mock('../../../src/swarm/HeuristicScorer.js', () => ({
   HeuristicScorer: {
-    score: vi.fn((outputs: Map<string, any>) => {
-      const entries = [...outputs.entries()];
-      const winnerId = entries[0]?.[0] ?? null;
-      const scores = new Map<string, number>();
-      const votes = new Map<string, any>();
-      for (const [id] of entries) {
-        scores.set(id, 0.75);
-        votes.set(id, { voterId: id, firstChoice: winnerId ?? '', secondChoice: '', reasoning: 'heuristic' });
-      }
-      return { scores, winnerId, votes };
-    }),
+    score: mockHeuristicScore,
   },
 }));
 
@@ -199,7 +203,7 @@ describe('SwarmOrchestrator', () => {
 
   beforeEach(() => {
     tempDir = mkdtempSync(join(tmpdir(), 'liminal-swarm-test-'));
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   afterEach(() => {

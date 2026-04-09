@@ -728,6 +728,9 @@ describe('RalphLoop', () => {
 
       mockScoringEngineScoreReliable.mockResolvedValue({ score: 0.92, issues: [] });
 
+      // Override successRateTracker to not interfere with numCandidates
+      mockSuccessRateTrackerGetRecommended.mockReturnValue(2);
+
       const result = await RalphLoop.run('create a sketch', {
         maxIterations: 2,
         numCandidates: 2,

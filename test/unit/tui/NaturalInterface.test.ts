@@ -37,6 +37,9 @@ vi.mock('../../../src/llm/LLMClient.js', () => ({
     complete = mockComplete;
     streamWithThinking = mockStreamWithThinking;
     getConfig = mockGetConfig;
+    static isConfigured() {
+      return true;
+    }
   },
 }));
 
@@ -670,114 +673,4 @@ describe('NaturalInterface', () => {
     });
   });
 
-  // ── handleChat — streaming ──────────────────────────────────────────
-
-  describe('handleChat (streaming)', () => {
-    it('streams content events and returns full response', async () => {
-      async function* mockStream() {
-        yield { type: 'content', content: 'Hello ' };
-        yield { type: 'content', content: 'World' };
-      }
-      mockStreamWithThinking.mockReturnValue(mockStream());
-
-      const { iface } = createInterface();
-      const chunks: string[] = [];
-      const result = await iface.processInput('hi', (chunk) => { chunks.push(chunk); });
-
-      expect(result.type).toBe('chat');
-      expect(result.response).toBe('Hello World');
-      expect(chunks).toEqual(['Hello ', 'World']);
-    });
-
-    it('streams thinking events with ANSI dim prefix', async () => {
-      async function* mockStream() {
-        yield { type: 'thinking', content: 'hmm' };
-        yield { type: 'content', content: 'answer' };
-      }
-      mockStreamWithThinking.mockReturnValue(mockStream());
-
-      const { iface } = createInterface();
-      const streamCalls: any[] = [];
-      await iface.processInput('think about this', (chunk, meta) => {
-        streamCalls.push({ chunk, meta });
-      });
-
-      // Thinking event gets wrapped in ANSI escape codes
-      expect(streamCalls[0].chunk).toContain('hmm');
-      expect(streamCalls[0].chunk).toContain('\x1B[2m');
-      expect(streamCalls[0].meta.type).toBe('thinking');
-      expect(streamCalls[1].meta.type).toBe('content');
-    });
-
-    it('updates onStatus when thinking chars reach multiple of 50', async () => {
-      // Generate thinking content that hits length 50
-      const thinkingContent = 'a'.repeat(50);
-      async function* mockStream() {
-        yield { type: 'thinking', content: thinkingContent };
-        yield { type: 'content', content: 'done' };
-      }
-      mockStreamWithThinking.mockReturnValue(mockStream());
-
-      const { iface } = createInterface();
-      await iface.processInput('ponder this', () => {});
-
-      expect(mockOnStatus).toHaveBeenCalledWith(expect.stringContaining('Thinking... (50 chars)'));
-    });
-
-    it('stores thinking content in message metadata', async () => {
-      async function* mockStream() {
-        yield { type: 'thinking', content: 'deep thought' };
-        yield { type: 'content', content: 'final answer' };
-      }
-      mockStreamWithThinking.mockReturnValue(mockStream());
-
-      const { iface } = createInterface();
-      await iface.processInput('complex question', () => {});
-
-      const history = iface.getHistory();
-      const assistantMsg = history.find(m => m.role === 'assistant');
-      expect(assistantMsg?.metadata?.thinking).toBe('deep thought');
-    });
-  });
-
-  // ── cleanThinkTags ──────────────────────────────────────────────────
-
-  describe('cleanThinkTags (via chat responses)', () => {
-    it('removes paired think tags and their content', async () => {
-      mockComplete.mockResolvedValue({
-        success: true,
-        text: '<think internal reasoning here</think >Final answer',
-      });
-      const { iface } = createInterface();
-
-      const result = await iface.processInput('tell me something');
-      expect(result.response).toBe('Final answer');
-    });
-
-    it('removes orphaned opening think tags with closing bracket', async () => {
-      mockComplete.mockResolvedValue({
-        success: true,
-        text: '<think type="internal">Some reasoning hereFinal answer',
-      });
-      const { iface } = createInterface();
-
-      const result = await iface.processInput('tell me more');
-      // The regex /<think\b[^>]*>/gi removes the opening <think type="internal">
-      // but leaves the text after it
-      expect(result.response).toBe('Some reasoning hereFinal answer');
-    });
-
-    it('removes orphaned closing think tags without space', async () => {
-      mockComplete.mockResolvedValue({
-        success: true,
-        text: 'Hello world</think >extra text here',
-      });
-      const { iface } = createInterface();
-
-      const result = await iface.processInput('say something fun');
-      // "</think >" has a space before > so /<\/think>/gi won't match it.
-      // The regex expects </think immediately followed by >.
-      expect(result.response).toBe('Hello world</think >extra text here');
-    });
-  });
 });

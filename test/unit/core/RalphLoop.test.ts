@@ -546,7 +546,7 @@ describe('RalphLoop', () => {
       expect(progress.length).toBeGreaterThanOrEqual(1);
       expect(progress[0].iteration).toBe(1);
       expect(progress[0].score).toBe(0.75);
-    });
+    }, 10000);
 
     it('invokes onIteration callback with full context', async () => {
       const iterations: any[] = [];

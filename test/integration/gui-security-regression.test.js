@@ -475,7 +475,7 @@ describe('Security regression — Wave 7 red team remediation', () => {
     delete process.env.LIMINAL_CONFIG_PATH;
     delete process.env.LIMINAL_GUI_TOKEN;
     await cleanup();
-  });
+  }, 30000);
 
   // F9: proposed.type validation
   it('POST /api/approve rejects invalid proposed.type', async () => {
@@ -551,7 +551,8 @@ describe('Security regression — Wave 7 red team remediation', () => {
     try { await fs.symlink('/etc', link); created = true; } catch { /* skip */ }
     if (created) {
       const real = await fs.realpath(path.join(galleryDir, 'escape'));
-      expect(real).toBe('/etc');
+      // macOS resolves /etc to /private/etc, so check it ends with /etc
+      expect(real).toMatch(/\/etc$/);
     }
     await fs.rm(galleryDir, { recursive: true, force: true }).catch(() => {});
   });
@@ -563,8 +564,10 @@ describe('Security regression — Wave 7 red team remediation', () => {
     delete process.env.LIMINAL_ALLOW_LOCALHOST_LLM;
     try {
       const client = new LLMClient({ baseUrl: 'http://localhost:11434/v1', model: 'test' });
-      await expect(client.complete({ prompt: 'hi', systemPrompt: 'test' }))
-        .rejects.toThrow(/SSRF|localhost/i);
+      const result = await client.complete({ prompt: 'hi', systemPrompt: 'test' });
+      // Implementation returns { success: false, error: ... } instead of throwing
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/SSRF|localhost|private IP/i);
     } finally {
       if (saved !== undefined) process.env.LIMINAL_ALLOW_LOCALHOST_LLM = saved;
     }

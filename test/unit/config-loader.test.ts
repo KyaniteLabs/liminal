@@ -33,16 +33,18 @@ describe('ConfigLoader', () => {
       };
       await fs.writeFile(TEST_CONFIG_PATH, JSON.stringify(config, null, 2));
 
-      const loaded = await loadConfig(TEST_CONFIG_PATH);
+      const result = await loadConfig(TEST_CONFIG_PATH);
 
-      expect(loaded).not.toBeNull();
-      expect(loaded!.defaultProvider).toBe('lmstudio');
-      expect(loaded!.providers.lmstudio.baseUrl).toBe('http://localhost:1234/v1');
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.defaultProvider).toBe('lmstudio');
+        expect(result.value.providers.lmstudio.baseUrl).toBe('http://localhost:1234/v1');
+      }
     });
 
-    it('should return null if config file does not exist', async () => {
-      const loaded = await loadConfig('/nonexistent/path/config.json');
-      expect(loaded).toBeNull();
+    it('should return Err if config file does not exist', async () => {
+      const result = await loadConfig('/nonexistent/path/config.json');
+      expect(result.isErr()).toBe(true);
     });
   });
 
@@ -64,12 +66,14 @@ describe('ConfigLoader', () => {
         JSON.stringify(projectConfig, null, 2)
       );
 
-      const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
+      const result = await loadProjectConfig(TEST_PROJECT_DIR);
 
-      expect(loaded).not.toBeNull();
-      expect(loaded!.name).toBe('test-project');
-      expect(loaded!.llm?.model).toBe('test-model');
-      expect(loaded!.llm?.baseUrl).toBe('https://test.example/v1');
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.name).toBe('test-project');
+        expect(result.value.llm?.model).toBe('test-model');
+        expect(result.value.llm?.baseUrl).toBe('https://test.example/v1');
+      }
     });
 
     it('loads optional live config (midiOutput, oscHost, oscPort, syncMode) from project config', async () => {
@@ -86,13 +90,15 @@ describe('ConfigLoader', () => {
         JSON.stringify(projectConfig, null, 2)
       );
 
-      const loaded = await loadProjectConfig(TEST_PROJECT_DIR);
+      const result = await loadProjectConfig(TEST_PROJECT_DIR);
 
-      expect(loaded).not.toBeNull();
-      expect(loaded!.live?.midiOutput).toBe('Virtual MIDI');
-      expect(loaded!.live?.oscHost).toBe('127.0.0.1');
-      expect(loaded!.live?.oscPort).toBe(57120);
-      expect(loaded!.live?.syncMode).toBe('link');
+      expect(result.isOk()).toBe(true);
+      if (result.isOk()) {
+        expect(result.value.live?.midiOutput).toBe('Virtual MIDI');
+        expect(result.value.live?.oscHost).toBe('127.0.0.1');
+        expect(result.value.live?.oscPort).toBe(57120);
+        expect(result.value.live?.syncMode).toBe('link');
+      }
     });
   });
 

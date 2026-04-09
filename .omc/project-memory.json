@@ -715,6 +715,18 @@
       "type": "file"
     },
     {
+      "path": "src/compost/FragmentScorer.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775698627234,
+      "type": "directory"
+    },
+    {
+      "path": "test/compost/FragmentScorer.test.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775698668161,
+      "type": "file"
+    },
+    {
       "path": "src/llm/ModelConfig.ts",
       "accessCount": 1,
       "lastAccessed": 1775684597709,

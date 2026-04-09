@@ -1,0 +1,7 @@
+[allowlist]
+  description = "Global allow list — docs, test fixtures, and dev scripts"
+  paths = [
+    '''docs/''',
+    '''scripts/''',
+    '''test/''',
+  ]

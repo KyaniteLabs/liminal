@@ -108,3 +108,32 @@ describe('ToneGenerator', () => {
     expect(result).toContain('Tone');
   });
 });
+
+describe('ToneGenerator.wrapForGallery', () => {
+  it('returns valid HTML with escaped code content', () => {
+    const gen = new ToneGenerator();
+    const code = 'new Tone.Synth().triggerAttackRelease("C4", "8n")';
+    const wrapped = gen.wrapForGallery(code);
+
+    expect(wrapped).toContain('<!DOCTYPE html>');
+    expect(wrapped).toContain('Tone.js');
+  });
+
+  it('escapes HTML entities in code', () => {
+    const gen = new ToneGenerator();
+    const code = 'new Tone.Synth().gain(0.5 && 1.0)';
+    const wrapped = gen.wrapForGallery(code);
+
+    expect(wrapped).toContain('&amp;&amp;');
+    expect(wrapped).not.toContain('&&');
+  });
+
+  it('includes Tone.js styling and message', () => {
+    const gen = new ToneGenerator();
+    const wrapped = gen.wrapForGallery('const synth = new Tone.Synth();');
+
+    expect(wrapped).toContain('Tone.js');
+    expect(wrapped).toContain('audio not available in iframe');
+    expect(wrapped).toContain('monospace');
+  });
+});

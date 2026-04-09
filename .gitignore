@@ -115,4 +115,9 @@ ISSUE-REPORT.md
 
 # Agent memory (local runtime)
 memory/
+
+# Test temp artifacts (tracked files causing git merge conflicts in test mocks)
+test-export-temp/
+test-api-export-temp/
+test-api-gallery-temp/
 .omc/state/

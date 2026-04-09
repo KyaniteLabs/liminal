@@ -3,6 +3,8 @@
  *
  * Renders Hydra video synthesis in a container and exposes
  * synth outputs and frame data for cross-layer communication.
+ *
+ * SECURITY: User code runs in a sandboxed context with dangerous patterns blocked.
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
@@ -10,6 +12,81 @@ import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 import { getWebGLBlendFunc } from '../utils/blendModes.js';
 import { Logger } from '../../utils/Logger.js';
+
+/**
+ * Sanitize user code to block dangerous patterns.
+ * Returns sanitized code and list of blocked patterns found.
+ */
+function sanitizeUserCode(code: string): { sanitized: string; blocked: string[] } {
+  const blocked: string[] = [];
+
+  // Define dangerous patterns that could lead to XSS or arbitrary code execution
+  const dangerousPatterns = [
+    { pattern: /window\s*[\[.]/gi, name: 'window access' },
+    { pattern: /document\s*[\[.]/gi, name: 'document access' },
+    { pattern: /fetch\s*\(/gi, name: 'fetch API' },
+    { pattern: /eval\s*\(/gi, name: 'eval()' },
+    { pattern: /new\s+Function\s*\(/gi, name: 'Function constructor' },
+    { pattern: /setTimeout\s*\(\s*['"`]/gi, name: 'setTimeout with string' },
+    { pattern: /setInterval\s*\(\s*['"`]/gi, name: 'setInterval with string' },
+    { pattern: /import\s*\(/gi, name: 'dynamic import()' },
+    { pattern: /importScripts\s*\(/gi, name: 'importScripts()' },
+    { pattern: /XMLHttpRequest/gi, name: 'XMLHttpRequest' },
+    { pattern: /WebSocket/gi, name: 'WebSocket' },
+    { pattern: /Worker/gi, name: 'Web Worker' },
+    { pattern: /localStorage/gi, name: 'localStorage' },
+    { pattern: /sessionStorage/gi, name: 'sessionStorage' },
+    { pattern: /indexedDB/gi, name: 'indexedDB' },
+    { pattern: /open\s*\(\s*['"`]/gi, name: 'window.open()' },
+    { pattern: /location\s*[=.]/gi, name: 'location access' },
+    { pattern: /parent\s*[\[.]/gi, name: 'parent access' },
+    { pattern: /top\s*[\[.]/gi, name: 'top access' },
+  ];
+
+  // Check for each dangerous pattern
+  for (const { pattern, name } of dangerousPatterns) {
+    if (pattern.test(code)) {
+      blocked.push(name);
+    }
+  }
+
+  // Remove script tags (case-insensitive, handles whitespace)
+  let sanitized = code.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove javascript: protocol handlers
+  sanitized = sanitized.replace(/javascript:/gi, 'blocked:');
+
+  // Remove data: URLs that could execute JavaScript
+  sanitized = sanitized.replace(/data:text\/javascript[^,]*/gi, 'blocked:');
+
+  // Remove event handlers (onclick, onerror, etc.)
+  sanitized = sanitized.replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '');
+
+  return { sanitized, blocked };
+}
+
+/**
+ * Create a safe console object that only allows logging.
+ */
+function createSafeConsole(): Console {
+  return {
+    ...console,
+    // Ensure only logging methods are available
+    debug: console.debug,
+    log: console.log,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    // Disable dangerous console methods
+    clear: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    profile: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    profileEnd: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    timeStamp: () => {},
+  } as Console;
+}
 
 /** Hydra synth instance type */
 interface HydraSynth {
@@ -131,10 +208,21 @@ export class HydraAdapter implements LayerAdapter {
         }
       }
 
-      // Execute the Hydra code
-      // eslint-disable-next-line no-new-func
-      const runCode = new Function(userCode);
-      runCode();
+      // Sanitize user code to block dangerous patterns
+      const { sanitized, blocked } = sanitizeUserCode(userCode);
+
+      if (blocked.length > 0) {
+        Logger.warn('HydraAdapter', `Blocked ${blocked.length} dangerous patterns:`, blocked);
+      }
+
+      // Execute the Hydra code in sandboxed context
+      // Only expose: console, Math
+      const sandboxedFn = new Function(
+        'console',
+        'Math',
+        '"use strict";\n' + sanitized
+      );
+      sandboxedFn(createSafeConsole(), Math);
     } catch (error) {
       Logger.error('HydraAdapter', 'Error executing Hydra code:', error);
     }

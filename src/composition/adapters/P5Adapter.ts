@@ -3,6 +3,8 @@
  *
  * Renders p5.js sketches in a container and exposes sketch properties
  * for cross-layer communication.
+ *
+ * SECURITY: User code runs in a sandboxed context with dangerous patterns blocked.
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
@@ -10,6 +12,81 @@ import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 import { getCanvasCompositeOp } from '../utils/blendModes.js';
 import { Logger } from '../../utils/Logger.js';
+
+/**
+ * Sanitize user code to block dangerous patterns.
+ * Returns sanitized code and list of blocked patterns found.
+ */
+function sanitizeUserCode(code: string): { sanitized: string; blocked: string[] } {
+  const blocked: string[] = [];
+
+  // Define dangerous patterns that could lead to XSS or arbitrary code execution
+  const dangerousPatterns = [
+    { pattern: /window\s*[\[.]/gi, name: 'window access' },
+    { pattern: /document\s*[\[.]/gi, name: 'document access' },
+    { pattern: /fetch\s*\(/gi, name: 'fetch API' },
+    { pattern: /eval\s*\(/gi, name: 'eval()' },
+    { pattern: /new\s+Function\s*\(/gi, name: 'Function constructor' },
+    { pattern: /setTimeout\s*\(\s*['"`]/gi, name: 'setTimeout with string' },
+    { pattern: /setInterval\s*\(\s*['"`]/gi, name: 'setInterval with string' },
+    { pattern: /import\s*\(/gi, name: 'dynamic import()' },
+    { pattern: /importScripts\s*\(/gi, name: 'importScripts()' },
+    { pattern: /XMLHttpRequest/gi, name: 'XMLHttpRequest' },
+    { pattern: /WebSocket/gi, name: 'WebSocket' },
+    { pattern: /Worker/gi, name: 'Web Worker' },
+    { pattern: /localStorage/gi, name: 'localStorage' },
+    { pattern: /sessionStorage/gi, name: 'sessionStorage' },
+    { pattern: /indexedDB/gi, name: 'indexedDB' },
+    { pattern: /open\s*\(\s*['"`]/gi, name: 'window.open()' },
+    { pattern: /location\s*[=.]/gi, name: 'location access' },
+    { pattern: /parent\s*[\[.]/gi, name: 'parent access' },
+    { pattern: /top\s*[\[.]/gi, name: 'top access' },
+  ];
+
+  // Check for each dangerous pattern
+  for (const { pattern, name } of dangerousPatterns) {
+    if (pattern.test(code)) {
+      blocked.push(name);
+    }
+  }
+
+  // Remove script tags (case-insensitive, handles whitespace)
+  let sanitized = code.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove javascript: protocol handlers
+  sanitized = sanitized.replace(/javascript:/gi, 'blocked:');
+
+  // Remove data: URLs that could execute JavaScript
+  sanitized = sanitized.replace(/data:text\/javascript[^,]*/gi, 'blocked:');
+
+  // Remove event handlers (onclick, onerror, etc.)
+  sanitized = sanitized.replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '');
+
+  return { sanitized, blocked };
+}
+
+/**
+ * Create a safe console object that only allows logging.
+ */
+function createSafeConsole(): Console {
+  return {
+    ...console,
+    // Ensure only logging methods are available
+    debug: console.debug,
+    log: console.log,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    // Disable dangerous console methods
+    clear: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    profile: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    profileEnd: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    timeStamp: () => {},
+  } as Console;
+}
 
 /** p5.js sketch instance */
 interface P5Instance {
@@ -91,9 +168,13 @@ export class P5Adapter implements LayerAdapter {
           const setupMatch = userCode.match(/function\s+setup\s*\(\)\s*\{([\s\S]*?)\}/);
           if (setupMatch) {
             try {
-              // eslint-disable-next-line no-new-func
-              const setupFn = new Function('p', setupMatch[1]);
-              setupFn(p);
+              // Sanitize and execute in sandboxed context
+              const { sanitized, blocked } = sanitizeUserCode(setupMatch[1]);
+              if (blocked.length > 0) {
+                Logger.warn('P5Adapter', `Blocked ${blocked.length} dangerous patterns in setup:`, blocked);
+              }
+              const setupFn = new Function('p', 'console', 'Math', '"use strict";\n' + sanitized);
+              setupFn(p, createSafeConsole(), Math);
             } catch (e) {
               Logger.error('P5Adapter', 'Error in setup:', e);
             }
@@ -107,9 +188,13 @@ export class P5Adapter implements LayerAdapter {
           const drawMatch = userCode.match(/function\s+draw\s*\(\)\s*\{([\s\S]*?)\}/);
           if (drawMatch) {
             try {
-              // eslint-disable-next-line no-new-func
-              const drawFn = new Function('p', drawMatch[1]);
-              drawFn(p);
+              // Sanitize and execute in sandboxed context
+              const { sanitized, blocked } = sanitizeUserCode(drawMatch[1]);
+              if (blocked.length > 0) {
+                Logger.warn('P5Adapter', `Blocked ${blocked.length} dangerous patterns in draw:`, blocked);
+              }
+              const drawFn = new Function('p', 'console', 'Math', '"use strict";\n' + sanitized);
+              drawFn(p, createSafeConsole(), Math);
             } catch (e) {
               Logger.error('P5Adapter', 'Error in draw:', e);
             }

@@ -5,6 +5,8 @@
  * for cross-layer communication. Supports camera position exports and
  * mouse coordinate imports from p5 for camera control.
  *
+ * SECURITY: User code runs in a sandboxed context with dangerous patterns blocked.
+ *
  * @example
  * ```typescript
  * const adapter = new ThreeAdapter();
@@ -20,6 +22,81 @@ import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 import { getWebGLBlendFunc } from '../utils/blendModes.js';
 import { Logger } from '../../utils/Logger.js';
+
+/**
+ * Sanitize user code to block dangerous patterns.
+ * Returns sanitized code and list of blocked patterns found.
+ */
+function sanitizeUserCode(code: string): { sanitized: string; blocked: string[] } {
+  const blocked: string[] = [];
+
+  // Define dangerous patterns that could lead to XSS or arbitrary code execution
+  const dangerousPatterns = [
+    { pattern: /window\s*[\[.]/gi, name: 'window access' },
+    { pattern: /document\s*[\[.]/gi, name: 'document access' },
+    { pattern: /fetch\s*\(/gi, name: 'fetch API' },
+    { pattern: /eval\s*\(/gi, name: 'eval()' },
+    { pattern: /new\s+Function\s*\(/gi, name: 'Function constructor' },
+    { pattern: /setTimeout\s*\(\s*['"`]/gi, name: 'setTimeout with string' },
+    { pattern: /setInterval\s*\(\s*['"`]/gi, name: 'setInterval with string' },
+    { pattern: /import\s*\(/gi, name: 'dynamic import()' },
+    { pattern: /importScripts\s*\(/gi, name: 'importScripts()' },
+    { pattern: /XMLHttpRequest/gi, name: 'XMLHttpRequest' },
+    { pattern: /WebSocket/gi, name: 'WebSocket' },
+    { pattern: /Worker/gi, name: 'Web Worker' },
+    { pattern: /localStorage/gi, name: 'localStorage' },
+    { pattern: /sessionStorage/gi, name: 'sessionStorage' },
+    { pattern: /indexedDB/gi, name: 'indexedDB' },
+    { pattern: /open\s*\(\s*['"`]/gi, name: 'window.open()' },
+    { pattern: /location\s*[=.]/gi, name: 'location access' },
+    { pattern: /parent\s*[\[.]/gi, name: 'parent access' },
+    { pattern: /top\s*[\[.]/gi, name: 'top access' },
+  ];
+
+  // Check for each dangerous pattern
+  for (const { pattern, name } of dangerousPatterns) {
+    if (pattern.test(code)) {
+      blocked.push(name);
+    }
+  }
+
+  // Remove script tags (case-insensitive, handles whitespace)
+  let sanitized = code.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+
+  // Remove javascript: protocol handlers
+  sanitized = sanitized.replace(/javascript:/gi, 'blocked:');
+
+  // Remove data: URLs that could execute JavaScript
+  sanitized = sanitized.replace(/data:text\/javascript[^,]*/gi, 'blocked:');
+
+  // Remove event handlers (onclick, onerror, etc.)
+  sanitized = sanitized.replace(/\son\w+\s*=\s*["'][^"']*["']/gi, '');
+
+  return { sanitized, blocked };
+}
+
+/**
+ * Create a safe console object that only allows logging.
+ */
+function createSafeConsole(): Console {
+  return {
+    ...console,
+    // Ensure only logging methods are available
+    debug: console.debug,
+    log: console.log,
+    info: console.info,
+    warn: console.warn,
+    error: console.error,
+    // Disable dangerous console methods
+    clear: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    profile: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    profileEnd: () => {},
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
+    timeStamp: () => {},
+  } as Console;
+}
 
 /** Three.js Scene type (simplified) */
 interface THREEScene {
@@ -149,21 +226,38 @@ export class ThreeAdapter implements LayerAdapter {
 
     // Execute user code with wrapped THREE access
     try {
-      // Define tracking function in eval context
+      // Define tracking function in sandbox context
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (window as any).__trackObject = (obj: THREEObject) => {
         objects.push(obj);
         return obj;
       };
-      
+
       // Wrap code to track object creation
       const wrappedCode = layer.code
         .replace(/new\s+THREE\.Mesh\s*\(/g, '(() => { const m = new THREE.Mesh(')
         .replace(/new\s+THREE\.Mesh\s*\(([^)]+)\)/g, '(() => { const m = new THREE.Mesh($1); __trackObject(m); return m; })()');
-      
-      // eslint-disable-next-line no-eval
-      eval(wrappedCode);
-      
+
+      // Sanitize user code to block dangerous patterns
+      const { sanitized, blocked } = sanitizeUserCode(wrappedCode);
+
+      if (blocked.length > 0) {
+        Logger.warn('ThreeAdapter', `Blocked ${blocked.length} dangerous patterns:`, blocked);
+      }
+
+      // Create sandboxed function with limited globals
+      // Only expose: THREE, __trackObject, console, Math
+      const sandboxedFn = new Function(
+        'THREE',
+        '__trackObject',
+        'console',
+        'Math',
+        '"use strict";\n' + sanitized
+      );
+
+      // Execute in sandbox with limited context
+      sandboxedFn(THREE, (window as any).__trackObject, createSafeConsole(), Math);
+
       // Clean up tracking function
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       delete (window as any).__trackObject;

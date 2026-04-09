@@ -163,6 +163,61 @@ describe('AudioScorer', () => {
     // White noise should have high frequency variety
     expect(result.frequencyVariety).toBeGreaterThan(0.3);
   });
+
+  it('white noise yields low harmonic score', () => {
+    const scorer = new AudioScorer();
+    const samples = new Float32Array(4096);
+    for (let i = 0; i < 4096; i++) {
+      samples[i] = Math.random() * 2 - 1;
+    }
+    const result = scorer.score(samples, 44100);
+    // White noise is broadband/aperiodic → low harmonic content
+    expect(result.harmonic).toBeLessThan(0.4);
+  });
+
+  it('alternating loud/quiet yields high dynamics score', () => {
+    const scorer = new AudioScorer();
+    // Alternating loud (0.8) / quiet (0.05) every 1024 samples
+    const samples = new Float32Array(8192);
+    for (let i = 0; i < 8192; i++) {
+      samples[i] = (Math.floor(i / 1024) % 2 === 0) ? 0.8 : 0.05;
+    }
+    const result = scorer.score(samples, 44100);
+    expect(result.dynamics).toBeGreaterThan(0.5);
+  });
+
+  it('regular onset pattern yields high rhythm score', () => {
+    const scorer = new AudioScorer();
+    // Impulse train: a burst of samples every 4410 samples (10 bursts/sec at 44100Hz)
+    const samples = new Float32Array(44100);
+    for (let burst = 0; burst < 10; burst++) {
+      const start = burst * 4410;
+      for (let j = 0; j < 200 && start + j < 44100; j++) {
+        samples[start + j] = 0.9;
+      }
+    }
+    const result = scorer.score(samples, 44100);
+    expect(result.rhythm).toBeGreaterThan(0.5);
+  });
+
+  it('all score outputs are clamped to [0, 1]', () => {
+    const scorer = new AudioScorer();
+    const samples = new Float32Array(4096);
+    for (let i = 0; i < 4096; i++) {
+      samples[i] = Math.sin(i * 0.3) * 0.5;
+    }
+    const result = scorer.score(samples, 44100);
+    expect(result.score).toBeGreaterThanOrEqual(0);
+    expect(result.score).toBeLessThanOrEqual(1);
+    expect(result.frequencyVariety).toBeGreaterThanOrEqual(0);
+    expect(result.frequencyVariety).toBeLessThanOrEqual(1);
+    expect(result.dynamics).toBeGreaterThanOrEqual(0);
+    expect(result.dynamics).toBeLessThanOrEqual(1);
+    expect(result.rhythm).toBeGreaterThanOrEqual(0);
+    expect(result.rhythm).toBeLessThanOrEqual(1);
+    expect(result.harmonic).toBeGreaterThanOrEqual(0);
+    expect(result.harmonic).toBeLessThanOrEqual(1);
+  });
 });
 
 // ─── VisualScorer ───────────────────────────────────────────────────

@@ -78,6 +78,25 @@ func (m Model) renderHeader() string {
 	provider := ui.ProviderStyle.Render(m.Provider + " / " + m.ModelName)
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)
 
+	// Generation telemetry display
+	var telemetry string
+	if m.GenerationScore > 0 || m.CurrentIteration > 0 {
+		scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)
+		iterStr := fmt.Sprintf("%d", m.CurrentIteration)
+		if m.GenerationIterations > 0 {
+			iterStr = fmt.Sprintf("%d/%d", m.CurrentIteration, m.GenerationIterations)
+		}
+		telemetry = lipgloss.NewStyle().
+			Foreground(ui.AccentCyan).
+			Render("Score:" + scoreStr + " Iter:" + iterStr)
+		if m.GenerationDuration > 0 {
+			durationStr := fmt.Sprintf("%.1fs", float64(m.GenerationDuration)/1000.0)
+			telemetry = lipgloss.NewStyle().
+				Foreground(ui.AccentCyan).
+				Render("Score:" + scoreStr + " Iter:" + iterStr + " " + durationStr)
+		}
+	}
+
 	// DEBUG: show block count and active response length
 	debugInfo := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#ff9e64")).
@@ -86,12 +105,18 @@ func (m Model) renderHeader() string {
 	// Spacing between elements
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
+	headerContent := brand + spacer + mode + spacer + provider + spacer + connDot
+	if telemetry != "" {
+		headerContent += spacer + telemetry
+	}
+	headerContent += spacer + debugInfo
+
 	header := lipgloss.NewStyle().
 		Background(ui.BgSurface).
 		Foreground(ui.FgText).
 		Padding(0, 1).
 		Width(m.Width).
-		Render(brand + spacer + mode + spacer + provider + spacer + connDot + spacer + debugInfo)
+		Render(headerContent)
 
 	return header
 }
@@ -181,10 +206,29 @@ func (m Model) renderStatusLine(width int) string {
 	mode := ui.StatusLabelStyle.Render("Mode: ") + ui.StatusValueStyle.Render(m.Mode)
 	model := ui.StatusLabelStyle.Render("Model: ") + ui.StatusValueStyle.Render(m.Provider+"/"+m.ModelName)
 
+	statusLine := model + "  " + mode + "  " + trust
+
+	// Add generation telemetry if available
+	if m.GenerationScore > 0 || m.CurrentIteration > 0 {
+		scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)
+		iterStr := fmt.Sprintf("%d", m.CurrentIteration)
+		if m.GenerationIterations > 0 {
+			iterStr = fmt.Sprintf("%d/%d", m.CurrentIteration, m.GenerationIterations)
+		}
+		genInfo := ui.StatusLabelStyle.Render("Gen: ") +
+			ui.StatusValueStyle.Render("iter:" + iterStr + " score:" + scoreStr)
+		if m.GenerationDuration > 0 {
+			durationStr := fmt.Sprintf("%.1fs", float64(m.GenerationDuration)/1000.0)
+			genInfo = ui.StatusLabelStyle.Render("Gen: ") +
+				ui.StatusValueStyle.Render("iter:" + iterStr + " score:" + scoreStr + " " + durationStr)
+		}
+		statusLine += "  " + genInfo
+	}
+
 	return lipgloss.NewStyle().
 		Width(width-4).
 		Foreground(ui.FgMuted).
-		Render(model + "  " + mode + "  " + trust)
+		Render(statusLine)
 }
 
 // ── Compact status when preview is hidden ──
@@ -250,7 +294,20 @@ func (m Model) renderChatContent() string {
 		sb.WriteString("\n")
 		rendered := m.renderMarkdown(m.ActiveResponse)
 		sb.WriteString(rendered)
-		sb.WriteString(ui.StreamingStyle.Render("▌"))
+		// Show live iteration progress during generation
+		if m.CurrentIteration > 0 {
+			scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)
+			iterStr := fmt.Sprintf("%d", m.CurrentIteration)
+			if m.GenerationIterations > 0 {
+				iterStr = fmt.Sprintf("%d/%d", m.CurrentIteration, m.GenerationIterations)
+			}
+			progress := lipgloss.NewStyle().
+				Foreground(ui.AccentGreen).
+				Render("▌ iter:" + iterStr + " score:" + scoreStr)
+			sb.WriteString(progress)
+		} else {
+			sb.WriteString(ui.StreamingStyle.Render("▌"))
+		}
 	}
 
 	if len(m.ChatBlocks) == 0 && m.ActiveResponse == "" {

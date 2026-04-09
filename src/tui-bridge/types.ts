@@ -42,6 +42,8 @@ export type TuiBridgeEvent =
   | { type: 'response.delta'; sessionId: string; delta: string }
   | { type: 'response.completed'; sessionId: string; content: string }
   | { type: 'response.committed'; sessionId: string; content: string }
+  // Telemetry: emitted after every response with metadata
+  | { type: 'response.metadata'; sessionId: string; model: string; duration: number; tokenCount?: number }
   | { type: 'mode.changed'; sessionId: string; mode: TuiMode }
   | { type: 'action.review_required'; sessionId: string; action: TuiPendingAction }
   | { type: 'action.confirmed'; sessionId: string; actionId: string }
@@ -52,4 +54,7 @@ export type TuiBridgeEvent =
   | { type: 'preview.started'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }
+  // Generation telemetry: emitted during RalphLoop generation
+  | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string }
+  | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string }
   | { type: 'error'; sessionId: string; message: string };

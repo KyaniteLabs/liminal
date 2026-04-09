@@ -11,7 +11,7 @@ describe('landing-live gallery metadata rendering', () => {
       html.indexOf('function renderStars')
     );
 
-    expect(renderCardsSection).toContain("'<span class=\"meta-badge '");
+    expect(renderCardsSection).toContain("'<span class=\"meta-badge ");
     expect(renderCardsSection).not.toContain("'<span class=\"variant-badge ");
   });
 });

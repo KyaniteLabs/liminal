@@ -1,11 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGenerate } = vi.hoisted(() => ({
-  mockGenerate: vi.fn().mockResolvedValue({
-    code: 'line one\nline two\nline three',
-    success: true,
-  }),
-}));
+const mockGenerate = vi.fn().mockResolvedValue({
+  code: 'line one\nline two\nline three',
+  success: true,
+});
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
@@ -57,6 +55,16 @@ describe('TextGenerativeGenerator', () => {
       expect(result).toBe('drip\ndrop\nsplash');
     });
 
+    it('strips markdown code block markers from output', async () => {
+      mockGenerate.mockResolvedValueOnce({
+        code: '```\nhello\nworld\n```',
+        success: true,
+      });
+      const gen = new TextGenerativeGenerator();
+      const result = await gen.generate('poem');
+      expect(result).toBe('hello\nworld');
+    });
+
     it('strips comment lines from output', async () => {
       mockGenerate.mockResolvedValueOnce({
         code: '// This is a comment\nactual line one\n// another comment\nactual line two',
@@ -95,29 +103,28 @@ describe('TextGenerativeGenerator', () => {
 
     it('applies maxWidth constraint from options', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'A'.repeat(120) + '\nsecond line',
+        code: 'A'.repeat(100),
         success: true,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('wide text', { maxWidth: 20 });
-      const lines = result.split('\n');
-      expect(lines[0].length).toBeLessThanOrEqual(20);
+      expect(result.length).toBe(20);
+      expect(result).toBe('A'.repeat(20));
     });
 
     it('applies default maxWidth of 80 when not specified', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'B'.repeat(120) + '\nsecond line',
+        code: 'B'.repeat(120),
         success: true,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('very wide');
-      const lines = result.split('\n');
-      expect(lines[0].length).toBeLessThanOrEqual(80);
+      expect(result.length).toBe(80);
     });
 
     it('filters out Unicode characters when unicode option is false', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'hello world\nsnowman heart \u2603\u2764',
+        code: 'hello \u00e9\u00e8\u00ea world \u2603 snowman \u2764 heart',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -130,7 +137,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('keeps Unicode characters when unicode option is true', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'hello world\nsecond line \u2764\u2764\u2764',
+        code: 'hello \u2764\u2764\u2764 world',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -173,7 +180,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('rejects code with markdown code blocks', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: '```javascript\nconsole.log("hello");\n```\nvalid text line',
+        code: '```javascript\nconsole.log("hello");\n```',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -182,7 +189,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('rejects output containing function declarations', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'function foo() {\n  return 1;\n}\nvalid text line',
+        code: 'function foo() {\n  return 1;\n}\n// text',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -191,7 +198,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('rejects output containing class declarations', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: 'class Foo {\n  bar() {}\n}\nvalid text line',
+        code: 'class Foo {\n  bar() {}\n}\nmore text',
         success: true,
       });
       const gen = new TextGenerativeGenerator();

@@ -47,22 +47,28 @@ export interface PersistedLoopState {
  */
 const contextStorage = new AsyncLocalStorage<ContextAccumulation>();
 
+// Singleton fallback for backward compatibility with synchronous code
+let singletonInstance: ContextAccumulation | null = null;
+
 export class ContextAccumulation {
   private history: State[] = [];
   private static readonly MAX_HISTORY_SIZE = 50;
 
-  /** 
+  /**
    * Get the current context instance for this async context.
-   * Creates a new instance if none exists in the current async context.
+   * Returns async context instance if available, otherwise singleton fallback.
    */
   private static getCurrentInstance(): ContextAccumulation {
     const existing = contextStorage.getStore();
     if (existing) {
       return existing;
     }
-    // Fallback: create isolated instance for backward compatibility
-    // This prevents the singleton race condition
-    return new ContextAccumulation();
+    // Fallback: use singleton for backward compatibility
+    // This allows synchronous code to share state
+    if (!singletonInstance) {
+      singletonInstance = new ContextAccumulation();
+    }
+    return singletonInstance;
   }
 
   /**
@@ -123,6 +129,13 @@ export class ContextAccumulation {
    */
   clear(): void {
     this.history = [];
+  }
+
+  /**
+   * Reset the singleton instance (for testing)
+   */
+  static resetSingleton(): void {
+    singletonInstance = null;
   }
 
   /**

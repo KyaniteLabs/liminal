@@ -4,6 +4,7 @@ import { ContextAccumulation } from '../../src/core/ContextAccumulation.js';
 describe('ContextAccumulation', () => {
   beforeEach(() => {
     ContextAccumulation.clear();
+    ContextAccumulation.resetSingleton?.();
   });
 
   describe('save(state)', () => {

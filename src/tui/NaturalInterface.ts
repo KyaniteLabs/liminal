@@ -211,8 +211,9 @@ export class NaturalInterface {
       const lines = ['\uD83D\uDD0A Clarifying questions:'];
       for (let i = 0; i < questions.length; i++) {
         lines.push(`\n${i + 1}. ${questions[i].question}`);
-        if (questions[i].options) {
-          lines.push(`   Options: ${questions[i].options.join(', ')}`);
+        const opts = questions[i].options;
+        if (opts) {
+          lines.push(`   Options: ${opts.join(', ')}`);
         }
       }
       if (hints.length > 0) {

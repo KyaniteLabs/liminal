@@ -80,6 +80,9 @@ export class RalphLoop {
     const startTime = Date.now();
     const normalizedOptions = normalizeOptions(options);
 
+    // Generate session ID once per run for git branch reuse and stash namespacing
+    const sessionId = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
     eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', maxIterations: normalizedOptions.maxIterations });
 
     // Ambiguity pre-check: warn if prompt has unresolved ambiguities
@@ -118,7 +121,7 @@ export class RalphLoop {
 
     // Git integration — auto-on, agent manages version control behind the scenes
     const gitIntegration = new GitIntegration(normalizedOptions.git ?? {});
-    await gitIntegration.startRun(normalizedOptions.project ?? `run-${Date.now()}`);
+    await gitIntegration.startRun(normalizedOptions.project ?? `run-${Date.now()}`, sessionId);
 
     // Voice-driven visual mapping: analyze audio file if provided
     if (normalizedOptions.voiceFile && !normalizedOptions.visualMappingParams) {
@@ -916,7 +919,7 @@ export class RalphLoop {
 
     } finally {
       // Git: end run, restore original branch (always cleanup)
-      await gitIntegration.endRun(reason || 'loop ended');
+      await gitIntegration.endRun(reason || 'loop ended', sessionId);
     }
 
     const duration = Date.now() - startTime;

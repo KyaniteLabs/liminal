@@ -228,8 +228,8 @@ export class TuiBridgeService {
           await new Promise(r => setTimeout(r, 10));
         }
 
-        this.emit(sessionId, { type: 'response.completed', sessionId, content: result.code });
-        this.emit(sessionId, { type: 'response.committed', sessionId, content: result.code });
+        this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+        this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
 
         // Step 4: Emit generation.complete telemetry
         this.emit(sessionId, {

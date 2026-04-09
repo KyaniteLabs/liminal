@@ -18,7 +18,7 @@ import { type DebugOptions, normalizeDebugOptions } from '../types/options/Debug
 import { type RenderOptions, normalizeRenderOptions } from '../types/options/RenderOptions.js';
 import type { Suggestion, GenerationContext } from '../chat/types.js';
 
-/** Minimal interface matching GuidanceEngine public contract */
+/** Minimal interface matching GuidanceEngine's public contract */
 export interface GuidanceEngineLike {
   suggestNextAction(context: GenerationContext): Suggestion[];
   updateIteration(iteration: number, score: number): void;

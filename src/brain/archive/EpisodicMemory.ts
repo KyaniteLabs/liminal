@@ -244,14 +244,14 @@ export class EpisodicMemory {
     const data = JSON.parse(content);
 
     // Restore episodes
-    this.episodes = data.episodes.map((ep: any) => ({
+    this.episodes = data.episodes.map((ep: Omit<Episode, 'timestamp'> & { timestamp: string }) => ({
       ...ep,
       timestamp: new Date(ep.timestamp)
     }));
 
     // Restore conversations
     this.conversations = new Map(
-      data.conversations.map(([id, conv]: [string, any]) => [
+      data.conversations.map(([id, conv]: [string, Omit<Conversation, 'createdAt' | 'updatedAt'> & { createdAt: string; updatedAt: string }]) => [
         id,
         {
           ...conv,

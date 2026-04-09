@@ -151,3 +151,33 @@ describe('StrudelGenerator', () => {
     expect(result).toContain('s("bd")');
   });
 });
+
+describe('StrudelGenerator.wrapForGallery', () => {
+  it('returns valid HTML with escaped code content', () => {
+    const gen = new StrudelGenerator();
+    const code = 's("bd <sd>").out()';
+    const wrapped = gen.wrapForGallery(code);
+
+    expect(wrapped).toContain('<!DOCTYPE html>');
+    expect(wrapped).toContain('s("bd &lt;sd&gt;").out()');
+    expect(wrapped).toContain('Strudel');
+    expect(wrapped).toContain('audio not available in iframe');
+  });
+
+  it('escapes HTML entities in code', () => {
+    const gen = new StrudelGenerator();
+    const code = 's("bd").gain(0.5 && 1.0)';
+    const wrapped = gen.wrapForGallery(code);
+
+    expect(wrapped).toContain('&amp;&amp;');
+    expect(wrapped).not.toContain('&&');
+  });
+
+  it('includes Strudel REPL embed script', () => {
+    const gen = new StrudelGenerator();
+    const wrapped = gen.wrapForGallery('s("bd").out()');
+
+    expect(wrapped).toContain('@strudel/repl');
+    expect(wrapped).toContain('unpkg.com');
+  });
+});

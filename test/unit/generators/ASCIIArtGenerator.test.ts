@@ -130,3 +130,32 @@ describe('ASCIIArtGenerator', () => {
     expect(lines[0].length).toBe(6);
   });
 });
+
+describe('ASCIIArtGenerator.wrapForGallery', () => {
+  it('returns valid HTML with escaped code content', () => {
+    const gen = new ASCIIArtGenerator();
+    const code = '***\n*<*\n***';
+    const wrapped = gen.wrapForGallery(code);
+
+    expect(wrapped).toContain('<!DOCTYPE html>');
+    expect(wrapped).toContain('ASCII Art');
+    expect(wrapped).toContain('&lt;');
+  });
+
+  it('escapes HTML entities in art', () => {
+    const gen = new ASCIIArtGenerator();
+    const code = '<div>***</div>';
+    const wrapped = gen.wrapForGallery(code);
+
+    expect(wrapped).toContain('&lt;div&gt;');
+    expect(wrapped).not.toContain('<div>');
+  });
+
+  it('includes monospace styling', () => {
+    const gen = new ASCIIArtGenerator();
+    const wrapped = gen.wrapForGallery('***');
+
+    expect(wrapped).toContain('monospace');
+    expect(wrapped).toContain('pre');
+  });
+});

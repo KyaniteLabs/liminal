@@ -185,6 +185,21 @@ export class RalphLoop {
       }
     }
 
+    // Mic-driven visual mapping
+    if (normalizedOptions.voice && !normalizedOptions.visualMappingParams) {
+      try {
+        const { captureMicAudio } = await import('../audio/MicCapture.js');
+        const { AudioAnalyzer } = await import('../audio/index.js');
+        const float32 = await captureMicAudio();
+        const analyzer = new AudioAnalyzer();
+        const result = analyzer.analyze(float32);
+        normalizedOptions.visualMappingParams = analyzer.getVisualMapping(result) as unknown as Record<string, unknown>;
+        Logger.info('RalphLoop', `Mic capture analysis complete: mapped audio features to visual params`);
+      } catch (err) {
+        Logger.warn('RalphLoop', `Mic capture failed, continuing without visual mapping: ${err instanceof Error ? err.message : err}`);
+      }
+    }
+
     let archiveLearning: ArchiveLearning | null = null;
     let qualityArchive: QualityArchive | null = null;
     let aestheticModel: AestheticModel | null = null;

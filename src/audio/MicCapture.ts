@@ -1,5 +1,7 @@
 import { spawn, ChildProcess } from 'child_process';
 
+const GRACE_PERIOD_MS = 5_000;
+
 /** Platform-specific ffmpeg input arguments. */
 function getFfmpegArgs(platform: string): string[] {
   if (platform === 'darwin') {
@@ -62,24 +64,21 @@ export async function captureMicAudio(): Promise<Float32Array> {
   });
 
   const chunks: Buffer[] = [];
+  const stderrChunks: Buffer[] = [];
 
   ffmpegProcess.stdout?.on('data', (chunk: Buffer) => {
     chunks.push(chunk);
   });
 
-  ffmpegProcess.stderr?.on('data', () => {
-    // Suppress stderr — '-v quiet' already suppresses most output
+  ffmpegProcess.stderr?.on('data', (chunk: Buffer) => {
+    stderrChunks.push(chunk);
   });
 
   return new Promise<Float32Array>((resolve, reject) => {
-    let timeoutId: NodeJS.Timeout;
-
-    const clearTimer = () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
+    const clearTimer = () => clearTimeout(timeoutId);
 
     // 60-second recording timeout
-    timeoutId = setTimeout(() => {
+    const timeoutId = setTimeout(() => {
       ffmpegProcess.kill('SIGTERM');
       reject(new Error('Microphone recording timed out after 60 seconds'));
     }, 60_000);
@@ -100,7 +99,7 @@ export async function captureMicAudio(): Promise<Float32Array> {
         process.stdin.removeListener('data', onEnter);
         ffmpegProcess.kill('SIGTERM');
         // SIGKILL fallback after 5s if ffmpeg doesn't exit cleanly
-        setTimeout(killWithSigkill, 5_000);
+        setTimeout(killWithSigkill, GRACE_PERIOD_MS);
       }
     };
 
@@ -119,9 +118,11 @@ export async function captureMicAudio(): Promise<Float32Array> {
         const audio = pcmToFloat32(Buffer.concat(chunks));
         resolve(audio);
       } else {
+        const stderrLine = Buffer.concat(stderrChunks).toString('utf8').split('\n')[0] ?? '';
+        const stderrSuffix = stderrLine ? ` ${stderrLine}.` : '';
         reject(
           new Error(
-            `ffmpeg exited with code ${code}. Check that your microphone is connected and accessible.`
+            `ffmpeg exited with code ${code}.${stderrSuffix} Check that your microphone is connected and accessible.`
           )
         );
       }

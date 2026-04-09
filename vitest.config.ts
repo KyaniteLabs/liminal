@@ -16,6 +16,8 @@ export default defineConfig({
       '**/worktree-polymorphic-growing-quiche/**',
       // Legacy .worktrees (pre-.claude convention)
       '**/.worktrees/**',
+      // Coverage worktree (cov70 agent)
+      '**/worktrees/cov70/**',
     ],
     coverage: {
       provider: 'v8',

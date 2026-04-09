@@ -154,6 +154,13 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		if event.Trust != nil {
 			m.TrustLabel = event.Trust.Label
 		}
+	case "error":
+		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
+			Type:    "error",
+			Content: event.Message,
+			Time:    time.Now(),
+		})
+		m.ActiveResponse = ""
 	case "preview.started":
 		m.PreviewType = event.PreviewType
 		m.PreviewVisible = true

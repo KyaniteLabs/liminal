@@ -211,7 +211,6 @@ func (m Model) renderChatContent() string {
 		case "user":
 			sb.WriteString(ui.UserMsgStyle.Render("You:"))
 			sb.WriteString("\n")
-			sb.WriteString(string(ui.FgText))
 			sb.WriteString(block.Content)
 			sb.WriteString("\n\n")
 

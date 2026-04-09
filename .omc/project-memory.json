@@ -679,6 +679,12 @@
       "type": "file"
     },
     {
+      "path": "src/tui-bridge/TuiBridgeService.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775751451053,
+      "type": "file"
+    },
+    {
       "path": "test/integration/gui-security-regression.test.js",
       "accessCount": 4,
       "lastAccessed": 1775699589659,
@@ -731,6 +737,12 @@
       "accessCount": 2,
       "lastAccessed": 1775698668161,
       "type": "file"
+    },
+    {
+      "path": "src/core/RalphLoop.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775751767742,
+      "type": "directory"
     },
     {
       "path": "src/llm/ModelConfig.ts",
@@ -803,6 +815,126 @@
       "accessCount": 1,
       "lastAccessed": 1775708838239,
       "type": "file"
+    },
+    {
+      "path": "src/audio/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751692164,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/types.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751692760,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/AudioAnalyzer.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751693195,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/AudioExtractor.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751693466,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/PitchExtractor.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751707592,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/TimbreExtractor.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751708222,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/AudioToVisualMapper.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751709043,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/VoiceToShapeMapper.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751709456,
+      "type": "file"
+    },
+    {
+      "path": "src/prompts/audio.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751721804,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/PitchColorMapper.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751722453,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/FormantAnalyzer.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751722864,
+      "type": "file"
+    },
+    {
+      "path": "src/audio/BPMKeyDetector.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751723388,
+      "type": "file"
+    },
+    {
+      "path": "src/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751736864,
+      "type": "directory"
+    },
+    {
+      "path": "src/core/LoopConfig.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751738563,
+      "type": "directory"
+    },
+    {
+      "path": "test/unit/audio/audio-extractor.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751753966,
+      "type": "file"
+    },
+    {
+      "path": "test/unit/audio/audio-analyzer.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751754074,
+      "type": "file"
+    },
+    {
+      "path": "test/unit/audio/audio-to-visual-mapper.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751754466,
+      "type": "file"
+    },
+    {
+      "path": "src/render/AudioScorer.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751766609,
+      "type": "file"
+    },
+    {
+      "path": "src/render/RenderAndScorePipeline.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751766777,
+      "type": "directory"
+    },
+    {
+      "path": "src/render/HeadlessRenderer.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775751783310,
+      "type": "directory"
     }
   ],
   "userDirectives": []

@@ -1,0 +1,11 @@
+# Known CVEs — pre-existing vulnerabilities acknowledged by the team
+# Format: CVE identifier or advisory description (one per line)
+# These are excluded from the pre-push CVE audit
+# Last reviewed: 2026-04-09
+
+# Vite dev server vulnerabilities (dev-only, not production risk)
+# GHSA-xxxx - Vite: server.fs.deny bypassed with queries
+# GHSA-xxxx - Vite: Arbitrary File Read via Vite Dev Server
+
+# basic-ftp CRLF injection (transitive dep via puppeteer > proxy-agent > pac-proxy-agent > get-uri)
+# GHSA-chqc-8p9q-pq6q - basic-ftp FTP Command Injection via CRLF

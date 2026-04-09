@@ -45,6 +45,13 @@ if [ -f "package.json" ]; then
   echo "Running dependency audit..."
   if command -v pnpm &>/dev/null; then
     AUDIT_OUTPUT=$(pnpm audit --audit-level=high 2>&1 || true)
+    # Filter out known CVEs listed in .known-cves
+    if [ -f ".known-cves" ]; then
+      KNOWN_PATTERNS=$(grep -v '^#' .known-cves | grep -v '^$' | tr '\n' '|' | sed 's/|$//')
+      if [ -n "$KNOWN_PATTERNS" ]; then
+        AUDIT_OUTPUT=$(echo "$AUDIT_OUTPUT" | grep -vE "$KNOWN_PATTERNS" || true)
+      fi
+    fi
     if echo "$AUDIT_OUTPUT" | grep -qE "(high|critical)"; then
       echo "BLOCKED: High or critical CVEs found in dependencies."
       echo "$AUDIT_OUTPUT" | grep -E "(high|critical)" | head -10

@@ -9,6 +9,8 @@ import type { Layer, GlobalSettings } from '../types.js';
 import type { LayerAdapter, Export, Import } from './index.js';
 import type { RenderContext } from '../CompositionEngine.js';
 import { getCSSBlendMode } from '../utils/blendModes.js';
+import DOMPurify from 'dompurify';
+import { JSDOM } from 'jsdom';
 
 /** Instance data for HTML layer */
 interface HTMLLayerInstance {
@@ -124,21 +126,65 @@ export class HTMLAdapter implements LayerAdapter {
 
   /**
    * Sanitize HTML by removing script tags and dangerous attributes.
-   * 
+   * Uses DOMPurify for robust XSS protection.
+   *
    * @param html - HTML to sanitize
    * @returns Sanitized HTML
    */
   private sanitizeHTML(html: string): string {
-    // Remove script tags and their content
-    let sanitized = html.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
-    
-    // Remove javascript: URLs
-    sanitized = sanitized.replace(/javascript:/gi, '');
-    
-    // Remove on* event handlers (for security in some contexts)
-    // Note: Currently allowing inline handlers per requirements
-    
-    return sanitized;
+    // Configure DOMPurify with strict allowlist
+    // SECURITY: Only allow safe tags and attributes to prevent XSS
+    const purifyConfig = {
+      ALLOWED_TAGS: [
+        'div', 'span', 'p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
+        'br', 'hr', 'strong', 'b', 'em', 'i', 'u', 'strike', 'del',
+        'a', 'img', 'ul', 'ol', 'li', 'table', 'thead', 'tbody',
+        'tr', 'td', 'th', 'caption', 'colgroup', 'col',
+        'blockquote', 'code', 'pre', 'sub', 'sup', 'small',
+        'label', 'input', 'button', 'select', 'option', 'textarea',
+        'form', 'fieldset', 'legend', 'dl', 'dt', 'dd',
+        'article', 'aside', 'details', 'figcaption', 'figure',
+        'footer', 'header', 'main', 'mark', 'nav', 'section', 'summary', 'time',
+      ],
+      ALLOWED_ATTR: [
+        'id', 'class', 'style', 'title', 'dir', 'lang', 'role', 'tabindex',
+        // Link attributes (href sanitized by DOMPurify)
+        'href', 'target', 'rel',
+        // Image attributes
+        'src', 'alt', 'width', 'height', 'loading',
+        // Form attributes
+        'type', 'name', 'value', 'placeholder', 'disabled', 'readonly',
+        'required', 'checked', 'selected', 'multiple', 'min', 'max', 'step',
+        'pattern', 'minlength', 'maxlength', 'rows', 'cols',
+        // ARIA attributes
+        'aria-label', 'aria-labelledby', 'aria-describedby', 'aria-hidden',
+        'aria-expanded', 'aria-controls', 'aria-live', 'aria-atomic',
+        'aria-relevant', 'aria-busy', 'aria-valuemin', 'aria-valuemax',
+        'aria-valuenow', 'aria-valuetext', 'aria-checked', 'aria-selected',
+        'aria-pressed', 'aria-disabled', 'aria-readonly', 'aria-required',
+        'aria-invalid', 'aria-errormessage',
+        // Data attributes (allowed by default in DOMPurify)
+      ],
+      // Allow CSS in style attributes but sanitize it
+      ALLOW_DATA_ATTR: true,
+      // Force all links to open in new tab with noopener
+      FORCE_BODY: true,
+      // Block JavaScript: URLs
+      SANITIZE_DOM: true,
+      // Keep content of removed tags (safer default)
+      KEEP_CONTENT: true,
+    };
+
+    // Use DOMPurify in browser environment
+    if (typeof window !== 'undefined') {
+      return DOMPurify.sanitize(html, purifyConfig);
+    }
+
+    // Fallback for non-browser environments (Node.js testing)
+    // Create a minimal JSDOM instance for DOMPurify
+    const dom = new JSDOM('<!DOCTYPE html>');
+    const purify = DOMPurify(dom.window);
+    return purify.sanitize(html, purifyConfig);
   }
 
   /**

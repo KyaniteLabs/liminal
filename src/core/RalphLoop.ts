@@ -62,6 +62,7 @@ import { SuccessRateTracker } from './SuccessRateTracker.js';
 import { GitIntegration } from '../git/GitIntegration.js';
 import { runOrganismMode } from './OrganismLoop.js';
 import { AmbiguityDetector } from './AmbiguityDetector.js';
+import { validateFilePath, PathSanitizationError } from '../security/PathSanitizer.js';
 import { env } from '../utils/env.js';
 import { Provider } from '../types/providers.js';
 import { LiminalError } from '../errors/index.js';
@@ -129,10 +130,22 @@ export class RalphLoop {
         const { AudioAnalyzer } = await import('../audio/index.js');
         const { spawn } = await import('child_process');
 
+        // SECURITY: Validate voice file path before passing to ffmpeg
+        // Prevents command injection via malicious file paths
+        let sanitizedVoiceFile: string;
+        try {
+          sanitizedVoiceFile = validateFilePath(normalizedOptions.voiceFile, process.cwd());
+        } catch (pathError) {
+          if (pathError instanceof PathSanitizationError) {
+            Logger.warn('RalphLoop', "Voice file path validation failed - possible path traversal attempt", pathError.message);
+          }
+          throw new LLMGenerationError(`Invalid voice file path: ${normalizedOptions.voiceFile}`, { model: 'ffmpeg' });
+        }
+
         // Decode audio file to raw PCM (s16le, mono, 44100Hz) via ffmpeg
         // Use spawn with timeout to prevent zombie processes
         const ffmpegProcess = spawn('ffmpeg', [
-          '-i', normalizedOptions.voiceFile,
+          '-i', sanitizedVoiceFile,
           '-f', 's16le',
           '-ac', '1',
           '-ar', '44100',

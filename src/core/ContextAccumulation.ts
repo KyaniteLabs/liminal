@@ -51,18 +51,21 @@ export class ContextAccumulation {
   private history: State[] = [];
   private static readonly MAX_HISTORY_SIZE = 50;
 
-  /** 
+  /** Shared default instance for backward compatibility (sync code, tests). */
+  static readonly default = new ContextAccumulation();
+
+  /**
    * Get the current context instance for this async context.
    * Creates a new instance if none exists in the current async context.
+   * Falls back to the shared default instance for non-async contexts.
    */
   private static getCurrentInstance(): ContextAccumulation {
     const existing = contextStorage.getStore();
     if (existing) {
       return existing;
     }
-    // Fallback: create isolated instance for backward compatibility
-    // This prevents the singleton race condition
-    return new ContextAccumulation();
+    // Fallback to shared default instance for backward compatibility
+    return ContextAccumulation.default;
   }
 
   /**

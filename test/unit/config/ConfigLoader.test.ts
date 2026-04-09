@@ -344,4 +344,143 @@ describe('getEffectiveConfig', () => {
     const config = await getEffectiveConfig();
     expect(config.provider).toBe('minimax');
   });
+
+  it('uses GLM_API_KEY as fallback when no LLM_API_KEY', async () => {
+    process.env.GLM_API_KEY = 'sk-glm-fallback';
+
+    const config = await getEffectiveConfig();
+    expect(config.apiKey).toBe('sk-glm-fallback');
+  });
+
+  it('uses MOONSHOT_API_KEY as fallback', async () => {
+    process.env.MOONSHOT_API_KEY = 'sk-moonshot-fallback';
+
+    const config = await getEffectiveConfig();
+    expect(config.apiKey).toBe('sk-moonshot-fallback');
+  });
+
+  it('prefers env vars in correct priority order for api keys', async () => {
+    process.env.LIMINAL_LLM_API_KEY = 'llm-primary';
+    process.env.OPENAI_API_KEY = 'openai-secondary';
+    process.env.GLM_API_KEY = 'glm-tertiary';
+
+    const config = await getEffectiveConfig();
+    expect(config.apiKey).toBe('llm-primary');
+  });
+
+  it('returns undefined baseUrl when no config source provides one', async () => {
+    mockReadFile.mockResolvedValue('{}');
+
+    const config = await getEffectiveConfig();
+    expect(config.baseUrl).toBeUndefined();
+  });
+});
+
+// ===========================================================================
+// Migration tests
+// ===========================================================================
+
+describe('migrateLegacyConfig', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('attempts migration when loading config (legacy path checked)', async () => {
+    // Migration checks legacy path first - this verifies the code path is exercised
+    mockAccess.mockRejectedValue(new Error('ENOENT'));  // Nothing exists
+    mockReadFile.mockRejectedValue(new Error('ENOENT'));
+
+    await loadConfig('/test/config.json');
+
+    // Verify the access was called to check legacy path
+    expect(mockAccess).toHaveBeenCalled();
+  });
+});
+
+// ===========================================================================
+// Error handling edge cases
+// ===========================================================================
+
+describe('loadProjectConfig edge cases', () => {
+  beforeEach(() => {
+    mockStat.mockResolvedValue({ isDirectory: () => true });
+  });
+
+  it('returns Err for invalid JSON structure in liminal.json', async () => {
+    mockReadFile.mockResolvedValue('{"invalid json');
+    const result = await loadProjectConfig('/project/dir');
+    expect(result.isErr()).toBe(true);
+  });
+
+  it('returns Err when liminal.json exists but has parse error', async () => {
+    mockReadFile.mockRejectedValueOnce(new Error('SyntaxError'));
+    const result = await loadProjectConfig('/project/dir');
+    expect(result.isErr()).toBe(true);
+  });
+
+  it('falls back to atelier.json when liminal.json does not exist', async () => {
+    const legacyConfig = JSON.stringify({ name: 'legacy-project' });
+    mockReadFile
+      .mockRejectedValueOnce(new Error('ENOENT'))  // liminal.json not found
+      .mockResolvedValueOnce(legacyConfig);        // atelier.json found
+
+    const result = await loadProjectConfig('/project/dir');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.name).toBe('legacy-project');
+    }
+  });
+
+  it('handles direct file path (non-directory)', async () => {
+    mockStat.mockResolvedValue({ isDirectory: () => false });
+    const configJson = JSON.stringify({ name: 'direct-file' });
+    mockReadFile.mockResolvedValue(configJson);
+
+    const result = await loadProjectConfig('/path/to/custom-config.json');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value.name).toBe('direct-file');
+    }
+  });
+});
+
+// ===========================================================================
+// Provider mapping edge cases
+// ===========================================================================
+
+describe('getEffectiveConfig provider mappings', () => {
+  let savedEnv: Record<string, string | undefined>;
+  const envVarsToClean = ['LIMINAL_LLM_PROVIDER', 'LIMINAL_LLM_MODEL'];
+
+  beforeEach(() => {
+    savedEnv = {};
+    for (const key of envVarsToClean) {
+      savedEnv[key] = process.env[key];
+      delete process.env[key];
+    }
+    mockReadFile.mockResolvedValue('{}');
+    mockAccess.mockImplementation(async () => {});
+    mockStat.mockResolvedValue({ isDirectory: () => true });
+  });
+
+  afterEach(() => {
+    for (const key of envVarsToClean) {
+      if (savedEnv[key] !== undefined) {
+        process.env[key] = savedEnv[key];
+      } else {
+        delete process.env[key];
+      }
+    }
+  });
+
+  it('maps unknown provider names to lmstudio default', async () => {
+    process.env.LIMINAL_LLM_PROVIDER = 'unknown-provider';
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('lmstudio');
+  });
+
+  it('uses lmstudio as default when no provider specified', async () => {
+    const config = await getEffectiveConfig();
+    expect(config.provider).toBe('lmstudio');
+  });
 });

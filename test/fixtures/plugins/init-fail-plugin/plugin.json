@@ -1,0 +1,9 @@
+{
+  "id": "init-fail-plugin",
+  "name": "Init Fail Plugin",
+  "version": "1.0.0",
+  "description": "A plugin whose initialize() throws",
+  "entry": "index.js",
+  "domains": ["test"],
+  "keywords": ["fail"]
+}

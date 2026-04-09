@@ -1,0 +1,10 @@
+{
+  "id": "good-plugin",
+  "name": "Good Plugin",
+  "version": "1.0.0",
+  "description": "A test plugin with all lifecycle methods",
+  "entry": "index.js",
+  "domains": ["p5", "shader"],
+  "keywords": ["creative", "art", "test"],
+  "author": "Test Author"
+}

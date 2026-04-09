@@ -310,6 +310,15 @@ export class RalphLoop {
             // Generate code (bypass cache to ensure fresh generation each iteration)
             // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
             const generationResult = await generator.generate(usedPrompt, loadedPrompt, true);
+
+            if (generationResult.needsClarification) {
+              const msgs = generationResult.clarifyingQuestions.map(q => q.question).join('; ');
+              throw new Error(
+                `Ambiguous prompt — please clarify before running RalphLoop:\n${msgs}\n\n` +
+                `Detected intent: ${generationResult.suggestions.join(', ') || 'unknown'}`
+              );
+            }
+
             const { code, thinking, model } = generationResult;
 
             // Validate generated code before accepting it

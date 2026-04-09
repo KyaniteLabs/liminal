@@ -59,6 +59,8 @@ export class DocParser {
     let linkCount = 0;
     let codeBlockCount = 0;
     let hasSeenHeading = false;
+    // Track cumulative newlines to assign accurate line numbers
+    let cumNewlines = 0;
 
     const flushContent = () => {
       if (currentSection) {
@@ -66,6 +68,12 @@ export class DocParser {
         currentSection.metrics.linkCount = linkCount;
         currentSection.metrics.codeBlockCount = codeBlockCount;
         this.computeWordCount(currentSection);
+        // endLine is the last line of content in this section
+        currentSection.location = {
+          ...currentSection.location,
+          startLine: currentSection.location?.startLine ?? 1,
+          endLine: cumNewlines,
+        };
         sections.push(currentSection);
         contentBuffer = [];
         linkCount = 0;
@@ -92,12 +100,12 @@ export class DocParser {
             linkCount: linkCount,
             depth: 0,
           },
+          location: { startLine: 1, endLine: cumNewlines },
         };
 
         // Set content and compute metrics
         currentSection = preambleSection;
         flushContent();
-
         // Reset for the actual heading section
         contentBuffer = [];
         linkCount = 0;
@@ -106,6 +114,9 @@ export class DocParser {
 
       hasSeenHeading = true;
       flushContent();
+
+      // The heading line is the current cumulative newline count (before heading text is counted)
+      const headingLine = cumNewlines + 1;
 
       // Pop stack to find parent
       while (stack.length > 0 && stack[stack.length - 1].level >= level) {
@@ -130,6 +141,7 @@ export class DocParser {
           linkCount: 0,
           depth,
         },
+        location: { startLine: headingLine, endLine: cumNewlines },
       };
 
       stack.push({ id, level });
@@ -137,8 +149,8 @@ export class DocParser {
 
     const addContent = (text: string) => {
       contentBuffer.push(text);
+      cumNewlines += (text.match(/\n/g) || []).length;
     };
-
     // Walk the tree
     const visit = (node: Root | Content) => {
       if (node.type === 'heading') {

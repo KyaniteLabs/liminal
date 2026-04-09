@@ -688,6 +688,18 @@ export class LayerManager {
     return null;
   }
 
+  /**
+   * Export all animations across all layers.
+   * @returns Flat array of all animations
+   */
+  exportAnimations(): Animation[] {
+    const all: Animation[] = [];
+    for (const animations of this.layerAnimations.values()) {
+      all.push(...animations);
+    }
+    return all;
+  }
+
   // ==================== PRIVATE HELPERS ====================
 
   private emitChange(): void {

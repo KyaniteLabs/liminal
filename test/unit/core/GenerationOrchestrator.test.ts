@@ -45,6 +45,19 @@ vi.mock('../../../src/learning/index.js', () => ({
   }),
 }));
 
+// Hoist mock functions so they can be reconfigured per-test via mockImplementation
+const { mockDetect, mockGetDomainHints } = vi.hoisted(() => ({
+  mockDetect: vi.fn(() => [
+    {
+      type: 'vague' as const,
+      severity: 'medium' as const,
+      description: 'Vague term "cooler" found',
+      suggestedQuestion: 'Describe the specific aesthetic or interaction you find "cool".',
+    },
+  ]),
+  mockGetDomainHints: vi.fn(() => ['p5']),
+}));
+
 vi.mock('../../../src/utils/Logger.js', () => ({
   Logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
@@ -52,6 +65,13 @@ vi.mock('../../../src/utils/Logger.js', () => ({
 vi.mock('../../../src/generators/p5/P5GeneratorLLM.js', () => ({
   P5GeneratorLLM: vi.fn(function(this: any) {
     this.generate = vi.fn(async () => 'fallback-code');
+  }),
+}));
+
+vi.mock('../../../src/core/AmbiguityDetector.js', () => ({
+  AmbiguityDetector: vi.fn(function(this: any) {
+    this.detect = mockDetect;
+    this.getDomainHints = mockGetDomainHints;
   }),
 }));
 
@@ -247,5 +267,58 @@ describe('GenerationOrchestrator', () => {
     const orchestrator = new GenerationOrchestrator(options, gallery, null);
     await orchestrator.generate('prompt', 'prompt');
     expect(registerAllGenerators).toHaveBeenCalledTimes(1);
+  });
+
+  // ── Disambiguation path ────────────────────────────────────────────
+
+  describe('disambiguation', () => {
+    it('returns needsClarification when no dispatch match and prompt is ambiguous', async () => {
+      (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue(null);
+      const options = makeOptions();
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      const result = await orchestrator.generate('make it cooler', 'make it cooler') as any;
+      expect(result.needsClarification).toBe(true);
+      expect(result.clarifyingQuestions).toBeDefined();
+      expect(result.clarifyingQuestions.length).toBeGreaterThan(0);
+    });
+
+    it('falls through to P5 when no dispatch match and prompt is NOT ambiguous', async () => {
+      // Mock AmbiguityDetector to return empty issues for this specific test
+      const { AmbiguityDetector } = await import('../../../src/core/AmbiguityDetector.js');
+      (AmbiguityDetector as any).mockImplementation(function(this: any) {
+        this.detect = vi.fn(() => []); // no ambiguity
+        this.getDomainHints = vi.fn(() => []);
+      });
+      (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue(null);
+      const options = makeOptions();
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      const result = await orchestrator.generate(
+        'blue circle at 200 200 radius 50',
+        'blue circle at 200 200 radius 50'
+      ) as any;
+      expect(result.needsClarification ?? false).toBe(false);
+      expect(result.code).toBe('fallback-code');
+    });
+
+    it('includes domain hints in clarification result', async () => {
+      (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue(null);
+      const options = makeOptions();
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      const result = await orchestrator.generate(
+        'make a 3d animation with circles',
+        'make a 3d animation with circles'
+      ) as any;
+      expect(result.needsClarification).toBe(true);
+      expect(result.suggestions).toContain('three');
+      expect(result.suggestions).toContain('p5');
+    });
+
+    it('skips disambiguation when useSwarm is true', async () => {
+      const options = makeOptions({ useSwarm: true });
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      const result = await orchestrator.generate('make it cooler', 'make it cooler') as any;
+      // Swarm bypasses disambiguation
+      expect(result.code).toBe('swarm-code');
+    });
   });
 });

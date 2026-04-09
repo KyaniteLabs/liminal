@@ -16,6 +16,7 @@ import { FixRequest, FixResult, FileChange } from './types.js';
 import { createLLMModeAgent, LLMTask } from '../harness/agent/index.js';
 import { Status } from '../types/status.js';
 import { readFileTool } from '../harness/tools/index.js';
+import { execSync } from 'child_process';
 
 /**
  * Orchestrates the auto-fix workflow for the `liminal fix` command.
@@ -286,15 +287,21 @@ export class AutoFixOrchestrator {
 
   /**
    * Verifies that the project builds successfully.
-   *
-   * TODO: Implement build verification logic.
+   * Runs `pnpm build` (or `npm run build`) and returns success/failure.
    *
    * @returns Promise resolving to true if build passes, false otherwise
    */
   async verifyBuild(): Promise<boolean> {
-    // TODO: Run build and return success/failure
-    Logger.debug('AutoFixOrchestrator', 'Build verification not yet implemented');
-    return false;
+    try {
+      Logger.debug('AutoFixOrchestrator', 'Running build verification...');
+      execSync('pnpm build', { stdio: 'pipe', timeout: 120_000 });
+      Logger.info('AutoFixOrchestrator', 'Build verification passed');
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.split('\n')[0] : String(err);
+      Logger.warn('AutoFixOrchestrator', `Build verification failed: ${msg}`);
+      return false;
+    }
   }
 
   /**

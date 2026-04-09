@@ -163,7 +163,7 @@ vi.mock('../../src/utils/Logger.js', () => ({
 describe('RalphLoop Best-of-N', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    ContextAccumulation.getCurrentInstance?.()?.clear?.() ?? new ContextAccumulation().clear();
+    ContextAccumulation.default.clear();
     
     // Reset trackers
     callTracker.generateCalls = 0;
@@ -181,7 +181,7 @@ describe('RalphLoop Best-of-N', () => {
 
   afterEach(() => {
     vi.resetAllMocks();
-    ContextAccumulation.getCurrentInstance?.()?.clear?.() ?? new ContextAccumulation().clear();
+    ContextAccumulation.default.clear();
   });
 
   it('should generate multiple candidates when numCandidates > 1', async () => {

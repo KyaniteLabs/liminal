@@ -852,18 +852,59 @@ else if (cmd === 'fix') {
     confirm: confirmLevel,
   };
 
-  // For now, just print the parsed configuration
-  console.log('Fix configuration:');
-  console.log('  Target:', fixTarget || '(natural language description)');
-  console.log('  Error:', flags.error || '(not specified)');
-  console.log('  Test failures:', flags.testFailures ? 'yes' : 'no');
-  console.log('  Test file:', flags.testFile || '(not specified)');
-  console.log('  Dry run:', flags.dryRun ? 'yes' : 'no');
-  console.log('  Confirm:', confirmLevel);
+  // Determine fix type based on arguments
+  let fixType = 'natural-language';
+  if (flags.testFailures) {
+    fixType = 'test-failures';
+  } else if (flags.testFile || flags.error || (fixTarget && fixTarget.match(/\.(ts|js|tsx|jsx)$/))) {
+    fixType = 'file-error';
+  }
+
+  // Import and use AutoFixOrchestrator
+  const { AutoFixOrchestrator } = await import('../dist/fix/index.js');
+  const llmClient = new LLMClient({ role: 'generator' });
+  const orchestrator = new AutoFixOrchestrator(llmClient);
+
+  // Build and execute the fix request
+  const fixRequest = {
+    type: fixType,
+    target: fixTarget || flags.testFile,
+    errorDescription: flags.error || fixTarget, // For natural language, use target as description
+    dryRun: flags.dryRun,
+    confirmLevel: confirmLevel,
+  };
+
+  console.log('Starting fix...');
+  console.log('  Type:', fixType);
+  console.log('  Target:', fixRequest.target || '(none)');
   console.log('');
-  console.log('(Fix orchestrator not yet implemented - this is argument parsing only)');
-  console.log('');
-  process.exit(0);
+
+  try {
+    const result = await orchestrator.executeFix(fixRequest);
+
+    console.log('');
+    if (result.success) {
+      console.log('✅ Fix completed successfully!');
+    } else {
+      console.log('❌ Fix failed');
+      if (result.error) {
+        console.log('   Error:', result.error);
+      }
+    }
+    console.log('   Task ID:', result.taskId);
+    console.log('   Changes:', result.changes.length);
+    console.log('   Build passed:', result.buildPassed);
+    console.log('   Tests passed:', result.testsPassed);
+    if (result.rolledBack) {
+      console.log('   ⚠️  Changes were rolled back');
+    }
+    console.log('');
+
+    process.exit(result.success ? 0 : 1);
+  } catch (error) {
+    console.error('❌ Fix execution error:', error.message);
+    process.exit(1);
+  }
 }
 else {
   console.error('Error: --prompt is required');

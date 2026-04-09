@@ -194,7 +194,7 @@ export class GenerationOrchestrator {
       }
     }
 
-    return { code: swarmResult.finalOutput, warnings: warnings.length > 0 ? warnings : undefined };
+    return { needsClarification: false as const, code: swarmResult.finalOutput, warnings: warnings.length > 0 ? warnings : undefined };
   }
 
   /**

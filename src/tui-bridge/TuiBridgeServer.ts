@@ -24,7 +24,7 @@ export class TuiBridgeServer {
     this.bridge = bridge;
     this.port = options.port ?? 3000;
     this.host = options.host ?? 'localhost';
-    this.server = createServer((req, res) => this.handleRequest(req, res));
+    this.server = createServer((req, res) => { void this.handleRequest(req, res); });
   }
 
   async start(): Promise<void> {

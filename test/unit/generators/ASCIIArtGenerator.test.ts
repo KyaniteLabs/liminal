@@ -48,7 +48,7 @@ describe('ASCIIArtGenerator', () => {
 
   it('formats output to the specified width and height', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '**\n**',
+      code: '##++##\n%%**%%',
       success: true,
     });
     const gen = new ASCIIArtGenerator();

@@ -1,15 +1,12 @@
 import { createServer, type IncomingMessage, type ServerResponse, type Server } from 'http';
 import { TuiBridgeService } from './TuiBridgeService.js';
+import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiInputRequest } from './types.js';
-
-interface LLMStreamer {
-  stream(systemPrompt: string, userPrompt: string, signal?: AbortSignal): AsyncGenerator<string>;
-}
 
 interface BridgeServerOptions {
   port?: number;
   host?: string;
-  llm?: LLMStreamer;
+  llm?: LLMClient;
 }
 
 export class TuiBridgeServer {
@@ -17,7 +14,7 @@ export class TuiBridgeServer {
   private server: Server;
   private port: number;
   private host: string;
-  private llm?: LLMStreamer;
+  private llm?: LLMClient;
 
   constructor(bridge: TuiBridgeService, options: BridgeServerOptions = {}) {
     this.llm = options.llm;
@@ -96,6 +93,7 @@ export class TuiBridgeServer {
         const sessionId = inputMatch[1];
         const body = await this.readBody(req);
         const input: TuiInputRequest = JSON.parse(body);
+        // Pass the full LLMClient (not just stream function)
         const result = await this.bridge.submitInput(sessionId, input, this.llm);
         this.json(res, 200, result);
         return;

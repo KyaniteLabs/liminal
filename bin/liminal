@@ -130,6 +130,7 @@ if (flags.help) {
   console.log('COMMANDS:');
   console.log('  generate, gen, g <prompt>   Create p5.js art from prompt');
   console.log('  tui                         Launch natural language TUI (Meta-Harness)');
+  console.log('  bridge [port]               Start TUI bridge server for Bubble Tea client (default: 3000)');
   console.log('  serve, s [port]             Start preview server (default: 3456)');
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
@@ -728,6 +729,42 @@ else if (cmd === 'narrative') {
   }).catch(err => {
     console.error('TUI error:', err.message);
     console.error('Make sure to run `npm run build` first.');
+    process.exit(1);
+  });
+}
+else if (cmd === 'bridge') {
+  // Start the TUI Bridge HTTP server for Bubble Tea and other external clients
+  const port = parseInt(cmdArgs[0]) || 3000;
+  import('../dist/tui-bridge/TuiBridgeServer.js').then(async ({ TuiBridgeServer }) => {
+    const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
+    const bridge = new TuiBridgeService();
+    const server = new TuiBridgeServer(bridge, { port });
+    await server.start();
+    console.log('');
+    console.log('Liminal TUI Bridge');
+    console.log(`  Listening: ${server.address}`);
+    console.log('  Endpoints:');
+    console.log('    POST /api/tui/session             — create session');
+    console.log('    GET  /api/tui/session/:id/status   — session status');
+    console.log('    GET  /api/tui/session/:id/events   — SSE event stream');
+    console.log('    POST /api/tui/session/:id/input    — submit input');
+    console.log('    POST /api/tui/session/:id/actions/:actionId/confirm');
+    console.log('    POST /api/tui/session/:id/actions/:actionId/cancel');
+    console.log('    GET  /health                       — health check');
+    console.log('');
+    console.log('  Connect Bubble Tea: LIMINAL_BRIDGE_URL=http://localhost:' + port + ' ./dist/bubbletea');
+    console.log('');
+    // Graceful shutdown
+    const shutdown = async () => {
+      console.log('\nShutting down bridge...');
+      await server.stop();
+      process.exit(0);
+    };
+    process.on('SIGINT', shutdown);
+    process.on('SIGTERM', shutdown);
+  }).catch(err => {
+    console.error('Bridge error:', err.message);
+    console.error('Make sure to run `pnpm build` first.');
     process.exit(1);
   });
 }

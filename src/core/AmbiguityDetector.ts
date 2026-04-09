@@ -334,4 +334,65 @@ export class AmbiguityDetector {
   getHighPriorityIssues(request: string): AmbiguityIssue[] {
     return this.detect(request).filter((issue) => issue.severity === 'high');
   }
+
+  /**
+   * Detect likely domain(s) from partial intent signals in the prompt.
+   *
+   * Returns domain names (p5, three, html, music, shader, hydra, tone, ascii)
+   * for any keywords that don't rise to the level of a full canHandle() match
+   * but suggest the user's intent.
+   *
+   * Used to pre-populate clarifying question options and suggestions.
+   */
+  getDomainHints(prompt: string): string[] {
+    const hints: string[] = [];
+    const lower = prompt.toLowerCase();
+
+    // Visual/generative art — core p5 domain
+    if (/circles?|particles?|sketch|draw|paint|animation/i.test(lower)) {
+      hints.push('p5');
+    }
+
+    // 3D / WebGL — three.js
+    if (/three\.js|threejs|\bthree\b|\b3d\b|webgl|cube|sphere|mesh|geometry/i.test(lower)) {
+      hints.push('three');
+    }
+
+    // Web/HTML
+    if (/landing\s*page|portfolio|dashboard|website|web\s*page|html|css|responsive/i.test(lower)) {
+      hints.push('html');
+    }
+
+    // Music / audio
+    if (/music|melody|rhythm|beat|chord|piano|guitar|harmony|tempo|audio|drum/i.test(lower)) {
+      hints.push('music');
+    }
+
+    // GLSL / shaders
+    if (/shader|glsl|ray\s*march|sdf|fragment/i.test(lower)) {
+      hints.push('shader');
+    }
+
+    // Hydra
+    if (/hydra|video\s*synth|visual\s*synthesis|kaleid/i.test(lower)) {
+      hints.push('hydra');
+    }
+
+    // Strudel / Tidal
+    if (/strudel|tidal|live\s*coding\s*music|sequencer/i.test(lower)) {
+      hints.push('music');
+    }
+
+    // Tone.js
+    if (/tone\.?js|tonejs|synthesizer|synth|arp|drone/i.test(lower)) {
+      hints.push('tone');
+    }
+
+    // ASCII
+    if (/ascii|text\s*art|character\s*art/i.test(lower)) {
+      hints.push('ascii');
+    }
+
+    return [...new Set(hints)]; // deduplicate
+  }
 }

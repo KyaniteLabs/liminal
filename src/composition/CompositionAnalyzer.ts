@@ -224,43 +224,17 @@ export class CompositionAnalyzer {
   }
 
   /**
-   * Analyze prompt using LLM for complex cases
-   * This is a placeholder implementation - actual LLM integration would be added
+   * Analyze prompt using LLM for complex cases.
    *
-   * @param prompt - The user prompt to analyze
-   * @returns Array of domain recommendations
+   * Note: LLM-based analysis is not yet wired — llmConfig is accepted but no LLMClient
+   * is injected into this class. Delegates to keyword-based detectComplexPatterns.
+   * TODO: Inject LLMClient and wire to call it for actual LLM analysis.
    */
   // eslint-disable-next-line @typescript-eslint/require-await
   async analyzeWithLLM(prompt: string): Promise<DomainRecommendation[]> {
-    // In a real implementation, this would call an LLM
-    // For now, return a reasonable default based on prompt analysis
-    const recommendations: DomainRecommendation[] = [];
-
-    // Check for complex multi-domain patterns
-    const complexPatterns = this.detectComplexPatterns(prompt);
-    if (complexPatterns.length > 0) {
-      return complexPatterns;
-    }
-
-    // Default: return p5 as fallback for simple prompts
-    if (recommendations.length === 0) {
-      recommendations.push({
-        domain: 'p5',
-        confidence: 0.6,
-        reason: 'Default fallback - no specific domain detected',
-        dependencies: [],
-      });
-    }
-
-    return recommendations;
+    return this.detectComplexPatterns(prompt);
   }
 
-  /**
-   * Detect complex multi-domain patterns in prompts
-   *
-   * @param prompt - The user prompt
-   * @returns Domain recommendations for complex patterns
-   */
   private detectComplexPatterns(prompt: string): DomainRecommendation[] {
     const promptLower = prompt.toLowerCase();
     const recommendations: DomainRecommendation[] = [];

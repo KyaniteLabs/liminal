@@ -4,6 +4,7 @@
  */
 
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { PromptLibrary } from '../prompts/PromptLibrary.js';
 import { CompostParser } from '../core/parsing/CompostParser.js';
@@ -74,27 +75,88 @@ export class SemanticExtractor {
   }
 
   /** Extract semantic info from images using vision model.
-   *  @todo Implement when LLM client supports multimodal (image) inputs.
-   *  Currently returns a stub since the LLMClientLike interface does not support image data.
+   *  Returns file metadata until a vision-capable LLM client is available.
+   *  Warns so callers know the data is not semantically meaningful.
    */
   extractImage(filePath: string): string {
-    return `[Image file: ${path.basename(filePath)} — multimodal extraction requires vision-capable LLM client]`;
+    const basename = path.basename(filePath);
+    try {
+      const stat = fsSync.statSync(filePath);
+      Logger.warn('SemanticExtractor', `extractImage called for ${basename} — vision LLM not available, returning metadata only`);
+      return `[Image: ${basename} — ${(stat.size / 1024).toFixed(1)}KB — vision extraction requires multimodal LLM client]`;
+    } catch {
+      return `[Image: ${basename} — unreadable]`;
+    }
   }
 
   /** Extract semantic info from audio files.
-   *  @todo Implement using Whisper API or similar for transcription + LLM summarization.
-   *  @deprecated Stub — returns placeholder text, not real transcription.
+   *  Returns file metadata (size, duration) with LLM summarization if available.
+   *  Notes to caller: (1) Duration requires music-metadata to be installed.
+   *                    (2) LLM summarization requires an audio-description prompt template.
    */
-  extractAudio(filePath: string): string {
-    return `[Audio file: ${path.basename(filePath)} — transcription/summary not yet implemented]`;
+  async extractAudio(filePath: string): Promise<string> {
+    const basename = path.basename(filePath);
+    try {
+      const stat = fsSync.statSync(filePath);
+      // Try to get audio duration via MetadataExtractor (music-metadata package)
+      let durationStr = '';
+      try {
+        const { MetadataExtractor } = await import('./MetadataExtractor.js');
+        const meta = await MetadataExtractor.extractAudioMetadata(filePath);
+        if (meta?.duration) {
+          durationStr = `, ${Math.round(meta.duration)}s`;
+        }
+      } catch {
+        // music-metadata not available — duration unknown
+      }
+      const sizeMB = (stat.size / (1024 * 1024)).toFixed(2);
+      const meta = `Audio: ${basename} — ${sizeMB}MB${durationStr}`;
+      // Attempt LLM summarization via audio analysis prompt if client supports it
+      try {
+        const { system, user } = PromptLibrary.render('compost.describe-audio', {
+          filename: basename,
+          size: sizeMB,
+          duration: durationStr ? `${durationStr.replace(', ', '')}` : 'unknown',
+        });
+        const result = await this.llm.generate(system, user);
+        if (result.success) return result.code;
+      } catch {
+        // LLM failed, fall through to metadata-only
+      }
+      Logger.warn('SemanticExtractor', `extractAudio for ${basename} — using metadata fallback (LLM audio description not available)`);
+      return meta;
+    } catch {
+      return `[Audio: ${basename} — unreadable]`;
+    }
   }
 
   /** Extract semantic info from video files.
-   *  @todo Implement using frame sampling + vision model for scene description.
-   *  @deprecated Stub — returns placeholder text, not real scene descriptions.
+   *  Returns file metadata (size) with LLM scene description if available.
+   *  Notes to caller: Duration extraction requires ffprobe. LLM scene description
+   *                   requires a video-description prompt template.
    */
-  extractVideo(filePath: string): string {
-    return `[Video file: ${path.basename(filePath)} — frame description not yet implemented]`;
+  async extractVideo(filePath: string): Promise<string> {
+    const basename = path.basename(filePath);
+    try {
+      const stat = fsSync.statSync(filePath);
+      const sizeMB = (stat.size / (1024 * 1024)).toFixed(2);
+      const meta = `Video: ${basename} — ${sizeMB}MB`;
+      // Attempt LLM scene description
+      try {
+        const { system, user } = PromptLibrary.render('compost.describe-video', {
+          filename: basename,
+          size: sizeMB,
+        });
+        const result = await this.llm.generate(system, user);
+        if (result.success) return result.code;
+      } catch {
+        // LLM failed, fall through to metadata-only
+      }
+      Logger.warn('SemanticExtractor', `extractVideo for ${basename} — using metadata fallback (LLM video description not available)`);
+      return meta;
+    } catch {
+      return `[Video: ${basename} — unreadable]`;
+    }
   }
 
   /**
@@ -168,10 +230,10 @@ export class SemanticExtractor {
       return this.extractImage(filePath);
     }
     if (audioExts.includes(ext)) {
-      return this.extractAudio(filePath);
+      return await this.extractAudio(filePath);
     }
     if (videoExts.includes(ext)) {
-      return this.extractVideo(filePath);
+      return await this.extractVideo(filePath);
     }
 
     return null; // Unsupported format

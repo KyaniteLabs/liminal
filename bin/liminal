@@ -109,6 +109,18 @@ for (let i = 0; i < args.length; i++) {
     flags.intuition = true;
   } else if (arg === '--consolidate') {
     flags.consolidate = true;
+  } else if (arg === '--error') {
+    flags.error = args[++i];
+  } else if (arg === '--test-failures') {
+    flags.testFailures = true;
+  } else if (arg === '--test-file') {
+    flags.testFile = args[++i];
+  } else if (arg === '--dry-run') {
+    flags.dryRun = true;
+  } else if (arg === '--confirm') {
+    flags.confirm = args[++i];
+  } else if (arg.startsWith('--confirm=')) {
+    flags.confirm = arg.split('=')[1];
   } else if (arg === '--verbose' || arg === '-v') {
     flags.verbose = true;
   } else if (arg === '--script-only') {
@@ -139,6 +151,7 @@ if (flags.help) {
   console.log('  composite                   Compose video layers from a JSON spec');
   console.log('  chat                        Start conversational creative coding mode');
   console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
+  console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
   console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
   console.log('');
   console.log('OPTIONS:');
@@ -167,6 +180,11 @@ if (flags.help) {
   console.log('  --aesthetic-config <json>   Aesthetic guardrail configuration');
   console.log('  --intuition                 Enable intuition scoring dimension');
   console.log('  --consolidate               Run memory consolidation (L3→L2 compression)');
+  console.log('  --error <text>              Error description for fix command');
+  console.log('  --test-failures             Auto-detect and fix test failures');
+  console.log('  --test-file <path>          Fix based on specific test file pattern');
+  console.log('  --dry-run                   Show what would be fixed without making changes');
+  console.log('  --confirm <auto|ask|never>  Confirmation level for fix command (default: ask)');
   console.log('  --help, -h                  Show this help message');
   console.log('  --version                   Show version');
   console.log('');
@@ -808,6 +826,85 @@ else if (cmd === 'bubbletea') {
     await server.stop();
     process.exit(1);
   });
+}
+else if (cmd === 'fix') {
+  // Fix command - auto-fix code issues with LLM assistance
+  const fixTarget = cmdArgs[0];
+
+  console.log('');
+  console.log('🔧 Liminal Fix');
+  console.log('');
+
+  // Validate and normalize confirm option
+  const confirmLevel = flags.confirm || 'ask';
+  if (!['auto', 'ask', 'never'].includes(confirmLevel)) {
+    console.error('Error: --confirm must be one of: auto, ask, never');
+    process.exit(1);
+  }
+
+  // Build fix configuration from parsed arguments
+  const fixConfig = {
+    target: fixTarget,
+    error: flags.error,
+    testFailures: flags.testFailures,
+    testFile: flags.testFile,
+    dryRun: flags.dryRun,
+    confirm: confirmLevel,
+  };
+
+  // Determine fix type based on arguments
+  let fixType = 'natural-language';
+  if (flags.testFailures) {
+    fixType = 'test-failures';
+  } else if (flags.testFile || flags.error || (fixTarget && fixTarget.match(/\.(ts|js|tsx|jsx)$/))) {
+    fixType = 'file-error';
+  }
+
+  // Import and use AutoFixOrchestrator
+  const { AutoFixOrchestrator } = await import('../dist/fix/index.js');
+  const llmClient = new LLMClient({ role: 'generator' });
+  const orchestrator = new AutoFixOrchestrator(llmClient);
+
+  // Build and execute the fix request
+  const fixRequest = {
+    type: fixType,
+    target: fixTarget || flags.testFile,
+    errorDescription: flags.error || fixTarget, // For natural language, use target as description
+    dryRun: flags.dryRun,
+    confirmLevel: confirmLevel,
+  };
+
+  console.log('Starting fix...');
+  console.log('  Type:', fixType);
+  console.log('  Target:', fixRequest.target || '(none)');
+  console.log('');
+
+  try {
+    const result = await orchestrator.executeFix(fixRequest);
+
+    console.log('');
+    if (result.success) {
+      console.log('✅ Fix completed successfully!');
+    } else {
+      console.log('❌ Fix failed');
+      if (result.error) {
+        console.log('   Error:', result.error);
+      }
+    }
+    console.log('   Task ID:', result.taskId);
+    console.log('   Changes:', result.changes.length);
+    console.log('   Build passed:', result.buildPassed);
+    console.log('   Tests passed:', result.testsPassed);
+    if (result.rolledBack) {
+      console.log('   ⚠️  Changes were rolled back');
+    }
+    console.log('');
+
+    process.exit(result.success ? 0 : 1);
+  } catch (error) {
+    console.error('❌ Fix execution error:', error.message);
+    process.exit(1);
+  }
 }
 else {
   console.error('Error: --prompt is required');

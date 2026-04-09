@@ -24,33 +24,34 @@ import { ArchiveLearning } from '../learning/index.js';
 import type { NormalizedLoopOptions } from './LoopConfig.js';
 import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { Logger } from '../utils/Logger.js';
+import { AmbiguityDetector } from './AmbiguityDetector.js';
+import type { ClarifyResult, GenerationSuccess } from './clarify.js';
 
 type DispatchResult = { entry: GeneratorEntry; confidence: number } | null;
 
-export interface GenerationResult {
-  code: string;
-  thinking?: string;
-  model?: string;
-  recoveredFromThinking?: boolean;
-  /** Non-fatal errors from side-effects (gallery save, mining, etc.) */
-  warnings?: string[];
-}
+/**
+ * Union type for all generate() return values.
+ * Backward-compatible: existing callers reading .code still work via GenerationSuccess.
+ */
+export type GenerationResult = ClarifyResult | GenerationSuccess;
 
 /**
- * Normalize generator result to GenerationResult format.
+ * Normalize generator result to GenerationSuccess format.
  * Handles backward compatibility with string returns.
  */
 function normalizeGeneratorResult(
   result: string | GeneratorResultType
-): GenerationResult {
+): GenerationSuccess {
   if (typeof result === 'string') {
-    return { code: result };
+    return { needsClarification: false, code: result };
   }
   return {
+    needsClarification: false,
     code: result.code,
     thinking: result.thinking,
     model: result.model,
     recoveredFromThinking: result.recoveredFromThinking,
+    warnings: [],
   };
 }
 
@@ -127,6 +128,26 @@ export class GenerationOrchestrator {
       return normalizeGeneratorResult(result);
     }
 
+    // NO specialized generator matched — check for ambiguity before falling back to P5
+    const ambiguityDetector = new AmbiguityDetector();
+    const issues = ambiguityDetector.detect(usedPrompt);
+
+    if (issues.length > 0) {
+      const hints = ambiguityDetector.getDomainHints(usedPrompt);
+      // Format questions for the user — limit to 4
+      const questions = issues.slice(0, 4).map((issue) => ({
+        question: issue.suggestedQuestion,
+        options: null, // free-text answer
+        default: '',
+      }));
+
+      return {
+        needsClarification: true,
+        clarifyingQuestions: questions,
+        suggestions: hints,
+      } as ClarifyResult;
+    }
+
     const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
     const config = await getEffectiveConfig(undefined, process.cwd());
     const generator = new P5GeneratorLLM(config.baseUrl ? { baseUrl: config.baseUrl, model: config.model, apiKey: config.apiKey, role: 'generator' } : undefined, { bypassCache });
@@ -173,7 +194,7 @@ export class GenerationOrchestrator {
       }
     }
 
-    return { code: swarmResult.finalOutput, warnings: warnings.length > 0 ? warnings : undefined };
+    return { needsClarification: false as const, code: swarmResult.finalOutput, warnings: warnings.length > 0 ? warnings : undefined };
   }
 
   /**

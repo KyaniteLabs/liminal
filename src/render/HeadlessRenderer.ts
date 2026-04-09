@@ -223,9 +223,15 @@ export class HeadlessRenderer {
       // Detect domain if not specified
       const domain = opts.domain === 'unknown' ? HeadlessRenderer.detectDomain(code) : opts.domain;
 
+      // Inject audio capture instrumentation BEFORE setContent for audio domains
+      // This intercepts AudioContext creation to capture real audio output
+      if (domain === 'tone' || domain === 'strudel') {
+        await this.injectAudioCapture(page);
+      }
+
       // Wrap code in HTML
-      const html = HTMLWrapper.wrap(code, { 
-        domain: domain === 'glsl' ? 'shader' : domain === 'unknown' ? undefined : domain 
+      const html = HTMLWrapper.wrap(code, {
+        domain: domain === 'glsl' ? 'shader' : domain === 'unknown' ? undefined : domain
       });
 
       // Load the HTML
@@ -233,6 +239,11 @@ export class HeadlessRenderer {
 
       // Wait for canvas to be ready
       await this.waitForCanvas(page, opts.timeout);
+
+      // Trigger audio playback for audio domains so we capture actual sound
+      if (domain === 'tone' || domain === 'strudel') {
+        await this.triggerAudioPlayback(page, domain);
+      }
 
       // Wait for stabilization if requested
       if (opts.waitForStabilization) {
@@ -243,7 +254,7 @@ export class HeadlessRenderer {
       const screenshot = await this.captureScreenshot(page, opts);
 
       // Capture audio if applicable
-      const audio = domain === 'tone' || domain === 'strudel' 
+      const audio = domain === 'tone' || domain === 'strudel'
         ? await this.captureAudio(page, opts)
         : undefined;
 
@@ -325,52 +336,222 @@ export class HeadlessRenderer {
   }
 
   /**
+   * Injects audio capture instrumentation into the page.
+   * This must be called BEFORE setContent to intercept AudioContext creation.
+   */
+  private async injectAudioCapture(page: Page): Promise<void> {
+    await page.addInitScript(() => {
+      // Store for captured audio data
+      const audioCaptureData: number[] = [];
+      (window as unknown as { __audioCaptureData: number[] }).__audioCaptureData = audioCaptureData;
+
+      // Intercept AudioContext creation
+      const OriginalAudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!OriginalAudioContext) return;
+
+      // Track all created contexts and their capture destinations
+      const captureDestinations: MediaStreamAudioDestinationNode[] = [];
+      (window as unknown as { __audioCaptureDestinations: MediaStreamAudioDestinationNode[] }).__audioCaptureDestinations = captureDestinations;
+
+      // Replace AudioContext constructor
+      (window as unknown as { AudioContext: typeof AudioContext }).AudioContext = class extends OriginalAudioContext {
+        private _captureDestination: MediaStreamAudioDestinationNode | null = null;
+        private _scriptProcessor: ScriptProcessorNode | null = null;
+
+        constructor(contextOptions?: AudioContextOptions) {
+          super(contextOptions);
+          this._setupCapture();
+        }
+
+        private _setupCapture(): void {
+          try {
+            // Create destination to capture audio
+            this._captureDestination = this.createMediaStreamDestination();
+            captureDestinations.push(this._captureDestination);
+
+            // Use ScriptProcessorNode to capture PCM data
+            // Buffer size 4096 gives good balance of latency and performance
+            this._scriptProcessor = this.createScriptProcessor(4096, 1, 1);
+
+            const captureData = audioCaptureData;
+            this._scriptProcessor.onaudioprocess = (event: AudioProcessingEvent) => {
+              const inputData = event.inputBuffer.getChannelData(0);
+              // Copy samples to our capture array
+              for (let i = 0; i < inputData.length; i++) {
+                captureData.push(inputData[i]);
+              }
+            };
+
+            // Connect processor to destination (required for onaudioprocess to fire)
+            this._scriptProcessor.connect(this.destination);
+          } catch (e) {
+            // Capture setup failed, but don't break the audio context
+          }
+        }
+
+        // Override createGain to auto-connect to capture destination
+        createGain(): GainNode {
+          const gain = super.createGain();
+          this._connectToCapture(gain);
+          return gain;
+        }
+
+        // Override createOscillator to auto-connect to capture destination
+        createOscillator(): OscillatorNode {
+          const osc = super.createOscillator();
+          this._connectToCapture(osc);
+          return osc;
+        }
+
+        // Override createBufferSource to auto-connect to capture destination
+        createBufferSource(): AudioBufferSourceNode {
+          const source = super.createBufferSource();
+          this._connectToCapture(source);
+          return source;
+        }
+
+        private _connectToCapture(node: AudioNode): void {
+          // Store original connect method
+          const originalConnect = node.connect.bind(node);
+
+          // Override connect to also capture the audio
+          node.connect = (destination: AudioNode | AudioParam, outputIndex?: number, inputIndex?: number) => {
+            // Call original connect
+            const result = originalConnect(destination as AudioNode, outputIndex, inputIndex);
+
+            // Also connect to our capture destination if it's an AudioNode
+            if (this._captureDestination && destination !== this._captureDestination && destination instanceof AudioNode) {
+              try {
+                originalConnect(this._captureDestination);
+              } catch {
+                // Ignore connection errors
+              }
+            }
+
+            return result;
+          };
+        }
+      };
+
+      // Also intercept webkitAudioContext if it exists
+      if ((window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext) {
+        (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext = (window as unknown as { AudioContext: typeof AudioContext }).AudioContext;
+      }
+
+      // Hook into Tone.js if it loads later
+      const hookTone = () => {
+        const Tone = (window as unknown as { Tone?: { context: { rawContext: AudioContext } } }).Tone;
+        if (Tone?.context?.rawContext) {
+          // Tone.js uses its own context, replace it with our intercepted version
+          const NewContext = (window as unknown as { AudioContext: typeof AudioContext }).AudioContext;
+          const newCtx = new NewContext();
+          Tone.context.rawContext = newCtx;
+        }
+      };
+
+      // Try to hook now and also set up a periodic check
+      hookTone();
+      setInterval(hookTone, 100);
+    });
+  }
+
+  /**
+   * Trigger audio playback for Tone.js or Strudel content.
+   * This clicks the play button or calls play functions to ensure audio is actually playing.
+   */
+  private async triggerAudioPlayback(page: Page, domain: RenderDomain): Promise<void> {
+    try {
+      // Wait a short time for the page to initialize
+      await page.waitForTimeout(500);
+
+      if (domain === 'tone') {
+        // For Tone.js: try to find and click the play button, or call play()/Tone.start()
+        await page.evaluate(async () => {
+          // Try to find and click a play button
+          const playBtn = document.getElementById('playBtn') ||
+                          document.querySelector('button');
+          if (playBtn) {
+            (playBtn as HTMLButtonElement).click();
+            return;
+          }
+
+          // Try to call play() if it exists globally
+          const w = window as unknown as { play?: () => void; Tone?: { start: () => Promise<void> } };
+          if (typeof w.play === 'function') {
+            await w.play();
+          } else if (w.Tone?.start) {
+            await w.Tone.start();
+          }
+        });
+      } else if (domain === 'strudel') {
+        // For Strudel: try to start playback via the global controls or click play button
+        await page.evaluate(async () => {
+          // Try to click play button
+          const playBtn = document.getElementById('playBtn') ||
+                          document.querySelector('button');
+          if (playBtn) {
+            (playBtn as HTMLButtonElement).click();
+            return;
+          }
+
+          // Try to use Strudel's global controls if available
+          const w = window as unknown as { controls?: { start: () => Promise<void> } };
+          if (w.controls?.start) {
+            await w.controls.start();
+          }
+        });
+      }
+
+      // Wait for audio to actually start
+      await page.waitForTimeout(500);
+    } catch (error) {
+      Logger.debug('HeadlessRenderer', 'Failed to trigger audio playback:', error);
+      // Non-fatal - audio might auto-play or not be needed
+    }
+  }
+
+  /**
    * Capture audio output from the page
-   * Uses Web Audio API to capture audio data
+   * Uses Web Audio API to capture real audio data
    */
   private async captureAudio(page: Page, opts: Required<RenderOptions>): Promise<AudioCaptureResult> {
     try {
-      // Inject audio capture code
-      const audioData = await page.evaluate(async (duration: number) => {
-        const audioContext = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
-        
-        // Wait a bit for audio to start
-        await new Promise(resolve => setTimeout(resolve, 500));
-        
-        // Create a destination to capture audio
-        const destination = audioContext.createMediaStreamDestination();
-        
-        // Capture silence for analysis (we'll analyze what's playing)
-        const analyser = audioContext.createAnalyser();
-        analyser.fftSize = 2048;
-        
-        // Connect analyser to destination
-        analyser.connect(destination);
-        
-        // Collect samples
-        const sampleRate = audioContext.sampleRate;
-        const numSamples = Math.floor(sampleRate * (duration / 1000));
-        const samples = new Float32Array(numSamples);
-        
-        // Fill with synthetic data based on frequency analysis
-        const frequencyData = new Uint8Array(analyser.frequencyBinCount);
-        analyser.getByteFrequencyData(frequencyData);
-        
-        // Generate synthetic waveform based on frequency content
-        for (let i = 0; i < numSamples; i++) {
-          let sample = 0;
-          for (let f = 0; f < frequencyData.length && f < 100; f++) {
-            const amplitude = frequencyData[f] / 255;
-            const frequency = (f / frequencyData.length) * (sampleRate / 2);
-            sample += amplitude * Math.sin(2 * Math.PI * frequency * i / sampleRate);
-          }
-          samples[i] = sample / 100; // Normalize
+      // Wait for audio to be captured during the stabilization period
+      await page.waitForTimeout(opts.stabilizationTime);
+
+      // Retrieve the captured audio data
+      const audioData = await page.evaluate((duration: number) => {
+        const captureData = (window as unknown as { __audioCaptureData?: number[] }).__audioCaptureData;
+
+        if (!captureData || captureData.length === 0) {
+          // No audio captured - return empty result
+          return {
+            samples: [] as number[],
+            sampleRate: 44100,
+            duration: duration / 1000,
+            hasAudio: false,
+          };
         }
-        
+
+        // Calculate actual duration based on sample rate
+        const sampleRate = 44100; // Standard Web Audio sample rate
+        const durationSec = duration / 1000;
+        const expectedSamples = Math.floor(sampleRate * durationSec);
+
+        // Trim or pad to expected length
+        let samples: number[];
+        if (captureData.length >= expectedSamples) {
+          samples = captureData.slice(0, expectedSamples);
+        } else {
+          // Pad with zeros if we didn't get enough samples
+          samples = [...captureData, ...new Array(expectedSamples - captureData.length).fill(0)];
+        }
+
         return {
-          samples: Array.from(samples.slice(0, 4096)), // Limit to first 4096 samples for transfer
+          samples,
           sampleRate,
-          duration: duration / 1000,
+          duration: durationSec,
+          hasAudio: true,
         };
       }, opts.stabilizationTime);
 

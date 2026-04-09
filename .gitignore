@@ -115,5 +115,12 @@ ISSUE-REPORT.md
 
 # Agent memory (local runtime)
 memory/
+
+# Test temp artifacts (tracked files causing git merge conflicts)
+test-export-temp/
+test-api-export-temp/
+test-api-gallery-temp/
+
+# Worktree state files
 .omc/state/
 bubbletea/

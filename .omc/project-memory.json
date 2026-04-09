@@ -703,6 +703,12 @@
       "type": "file"
     },
     {
+      "path": "test/unit/core/ContextAccumulation.test.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775696690409,
+      "type": "file"
+    },
+    {
       "path": "src/llm/ModelConfig.ts",
       "accessCount": 1,
       "lastAccessed": 1775684597709,

@@ -166,9 +166,11 @@ describe('ContextAccumulation', () => {
   });
 
   describe('loadState', () => {
-    it('returns null when file does not exist', () => {
+    it('returns error Result when file does not exist', () => {
       mockExistsSync.mockReturnValue(false);
-      expect(accumulation.loadState('/nonexistent.json')).toBeNull();
+      const result = accumulation.loadState('/nonexistent.json');
+      expect(result.isErr()).toBe(true);
+      expect(result.error.message).toBe('Loop state file does not exist');
     });
 
     it('loads valid state from file', () => {
@@ -177,14 +179,16 @@ describe('ContextAccumulation', () => {
       const parsed = { bestFitness: 0.9, iterationsSinceLastImprovement: 0, budgetUsed: 0.3, totalIterations: 5, savedAt: '2024-01-01' };
       mockSafeJsonParse.mockReturnValue(parsed);
       const result = accumulation.loadState('/valid-state.json');
-      expect(result).toEqual(parsed);
+      expect(result.isOk()).toBe(true);
+      expect(result.value).toEqual(parsed);
     });
 
-    it('returns null on parse failure', () => {
+    it('returns error Result on parse failure', () => {
       mockExistsSync.mockReturnValue(true);
       mockReadFileSync.mockReturnValue('invalid json');
       mockSafeJsonParse.mockImplementation(() => { throw new Error('parse error'); });
-      expect(accumulation.loadState('/bad.json')).toBeNull();
+      const result = accumulation.loadState('/bad.json');
+      expect(result.isErr()).toBe(true);
     });
   });
 

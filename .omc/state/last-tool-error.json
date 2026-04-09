@@ -1,7 +1,0 @@
-{
-  "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"cd /Users/simongonzalezdecruz/workspaces/worktree-fix-85 && git checkout --ours .omc/state/idle-notif-cooldown.json bubbletea/internal/app/view.go && git add .omc/state/idle-notif-cooldown...",
-  "error": "Exit code 1\nUpdated 2 paths from the index\nThe following paths are ignored by one of your .gitignore files:\n.omc\nhint: Use -f if you really want to add them.\nhint: Disable this message with \"git config set advice.addIgnoredFile false\"",
-  "timestamp": "2026-04-09T04:18:33.575Z",
-  "retry_count": 1
-}

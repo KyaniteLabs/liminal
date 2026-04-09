@@ -3,22 +3,61 @@ package app
 import (
 	"context"
 	"strings"
+	"time"
 
+	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/glamour"
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
 )
 
+// ChatBlock represents a single structured entry in the chat history.
+type ChatBlock struct {
+	Type    string    // "user" | "assistant" | "code" | "system" | "error"
+	Content string
+	Time    time.Time
+	Preview string // Optional inline preview (base64 image or code snippet)
+}
+
+// FocusPane tracks which pane has keyboard focus.
+type FocusPane int
+
+const (
+	FocusChat FocusPane = iota
+	FocusPreview
+)
+
 type Model struct {
-	Mode           string
-	History        []string
+	// Layout dimensions
+	Width  int
+	Height int
+
+	// Two-column viewports
+	ChatViewport    viewport.Model
+	PreviewViewport viewport.Model
+	TextInput       textinput.Model
+	Program         *tea.Program
+	Ready           bool
+	FocusPane       FocusPane
+
+	// Chat state
+	ChatBlocks     []ChatBlock
 	ActiveResponse string
 	Input          string
-	Width          int
-	Height         int
-	Provider       string
-	ModelName      string
-	TrustLabel     string
-	PendingAction  *bridge.PendingAction
+
+	// Preview state
+	PreviewContent string // Current preview content
+	PreviewType    string // "code" | "image" | "html" | "music" | ""
+	PreviewTab     string // "code" | "output" | "log"
+	PreviewVisible bool
+
+	// Session metadata
+	Mode          string
+	Provider      string
+	ModelName     string
+	TrustLabel    string
+	PendingAction *bridge.PendingAction
 
 	// Live bridge state
 	Bridge       *bridge.Client
@@ -27,22 +66,42 @@ type Model struct {
 	Reconnecting bool
 	Err          string
 
-	// Scroll state
-	HistoryOffset int
+	// Glamour markdown renderer
+	Renderer *glamour.TermRenderer
 }
 
 func NewModel(bridgeURL string) Model {
+	ti := textinput.New()
+	ti.Placeholder = "Type your message..."
+	ti.Prompt = "> "
+	ti.CharLimit = 2000
+	ti.Width = 80
+
+	// Create glamour renderer for markdown + syntax highlighting
+	renderer, err := glamour.NewTermRenderer(
+		glamour.WithStandardStyle("dark"),
+		glamour.WithWordWrap(80),
+	)
+	if err != nil {
+		renderer = nil
+	}
+
 	return Model{
 		Mode:           "CHAT",
-		History:        []string{},
-		ActiveResponse: "Connecting to bridge...",
-		Input: "",
-		Width:  120,
-		Height: 32,
-		Provider: "pending",
-		ModelName: "bridge",
-		TrustLabel: "Generated code is untrusted by default",
-		Bridge:    bridge.NewClient(bridgeURL),
+		ChatBlocks:     []ChatBlock{},
+		ActiveResponse: "",
+		Input:          "",
+		Width:          120,
+		Height:         32,
+		Provider:       "pending",
+		ModelName:      "bridge",
+		TrustLabel:     "Generated code is untrusted by default",
+		Bridge:         bridge.NewClient(bridgeURL),
+		TextInput:      ti,
+		Renderer:       renderer,
+		FocusPane:      FocusChat,
+		PreviewTab:     "code",
+		PreviewVisible: true,
 	}
 }
 
@@ -55,7 +114,19 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 	case "response.completed":
 		m.ActiveResponse = event.Content
 	case "response.committed":
-		m.History = append(m.History, event.Content)
+		// Add assistant block to chat history
+		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
+			Type:    "assistant",
+			Content: event.Content,
+			Time:    time.Now(),
+		})
+		// Check for code content to show in preview
+		if containsCode(event.Content) {
+			m.PreviewContent = extractCode(event.Content)
+			m.PreviewType = "code"
+			m.PreviewVisible = true
+		}
+		m.ActiveResponse = ""
 	case "action.review_required":
 		m.Mode = "ACTION"
 		m.PendingAction = event.Action
@@ -83,6 +154,28 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		if event.Trust != nil {
 			m.TrustLabel = event.Trust.Label
 		}
+	case "error":
+		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
+			Type:    "error",
+			Content: event.Message,
+			Time:    time.Now(),
+		})
+		m.ActiveResponse = ""
+	case "preview.started":
+		m.PreviewType = event.PreviewType
+		m.PreviewVisible = true
+	case "preview.content":
+		m.PreviewContent = event.Content
+		m.PreviewType = event.PreviewType
+		m.PreviewVisible = true
+	case "preview.completed":
+		m.PreviewContent = event.Content
+		m.PreviewType = event.PreviewType
+		if event.ImageUrl != "" {
+			m.PreviewContent = event.ImageUrl
+			m.PreviewType = "image"
+		}
+		m.PreviewVisible = true
 	}
 }
 
@@ -99,7 +192,6 @@ func (m Model) StatusLines() []string {
 }
 
 // ConfirmPendingAction sends a confirm request to the bridge.
-// Returns nil if not in ACTION mode, no pending action, or not connected.
 func (m Model) ConfirmPendingAction() tea.Cmd {
 	if m.Mode != "ACTION" || m.PendingAction == nil || !m.Connected {
 		return nil
@@ -117,7 +209,6 @@ func (m Model) ConfirmPendingAction() tea.Cmd {
 }
 
 // CancelPendingAction sends a cancel request to the bridge.
-// Returns nil if not in ACTION mode, no pending action, or not connected.
 func (m Model) CancelPendingAction() tea.Cmd {
 	if m.Mode != "ACTION" || m.PendingAction == nil || !m.Connected {
 		return nil
@@ -132,4 +223,28 @@ func (m Model) CancelPendingAction() tea.Cmd {
 		}
 		return actionConfirmedMsg{}
 	}
+}
+
+// containsCode checks if content has code blocks.
+func containsCode(content string) bool {
+	return strings.Contains(content, "```") ||
+		strings.Contains(content, "function ") ||
+		strings.Contains(content, "const ") && strings.Contains(content, " = ")
+}
+
+// extractCode pulls code from markdown fences or raw code.
+func extractCode(content string) string {
+	// Try markdown fence extraction
+	if idx := strings.Index(content, "```"); idx >= 0 {
+		rest := content[idx+3:]
+		// Skip language tag line
+		if nlIdx := strings.Index(rest, "\n"); nlIdx >= 0 {
+			rest = rest[nlIdx+1:]
+		}
+		if endIdx := strings.Index(rest, "```"); endIdx >= 0 {
+			return strings.TrimSpace(rest[:endIdx])
+		}
+		return strings.TrimSpace(rest)
+	}
+	return content
 }

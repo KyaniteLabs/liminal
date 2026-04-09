@@ -33,6 +33,8 @@ type Event struct {
 	ActionID  string         `json:"actionId,omitempty"`
 	Action    *PendingAction `json:"action,omitempty"`
 	Status    *SessionStatus `json:"status,omitempty"`
-	Message   string         `json:"message,omitempty"`
-	Trust     *TrustState    `json:"trust,omitempty"`
+	Message     string         `json:"message,omitempty"`
+	Trust       *TrustState    `json:"trust,omitempty"`
+	PreviewType string         `json:"previewType,omitempty"`
+	ImageUrl    string         `json:"imageUrl,omitempty"`
 }

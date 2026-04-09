@@ -49,4 +49,7 @@ export type TuiBridgeEvent =
   | { type: 'status.updated'; sessionId: string; status: TuiSessionStatus }
   | { type: 'activity.updated'; sessionId: string; message: string }
   | { type: 'trust.updated'; sessionId: string; trust: TuiTrustState; provenance?: TuiProvenance }
+  | { type: 'preview.started'; sessionId: string; previewType: 'code' | 'image' | 'html' | 'music' }
+  | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
+  | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }
   | { type: 'error'; sessionId: string; message: string };

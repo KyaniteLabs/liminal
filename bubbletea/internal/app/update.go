@@ -70,10 +70,10 @@ func (m Model) createSessionCmd() tea.Cmd {
 func (m Model) startStreamCmd() tea.Cmd {
 	return func() tea.Msg {
 		ctx := context.Background()
-		program := m.Program
+		// GlobalProgram fix (m.Program is nil inside Bubble Tea event loop)
 		err := m.Bridge.StreamEvents(ctx, m.SessionID, func(e bridge.Event) {
-			if program != nil {
-				program.Send(bridgeEventMsg{event: e})
+			if GlobalProgram != nil {
+				GlobalProgram.Send(bridgeEventMsg{event: e})
 			}
 		})
 		if err != nil && ctx.Err() == nil {

@@ -326,6 +326,38 @@ describe('NaturalInterface', () => {
       expect(result.response).toContain('Agent crashed');
       expect(mockFormatError).toHaveBeenCalledWith('Agent', expect.any(Error));
     });
+
+    it('returns type ambiguous without calling agent when prompt is vague', async () => {
+      const { iface, llmAgent } = createInterface();
+      // "make it cooler" triggers AmbiguityDetector mock (contains "cool")
+      const result = await iface.processInput('make it cooler');
+      expect(llmAgent.executeTask).not.toHaveBeenCalled();
+      expect(result.type).toBe('ambiguous');
+      expect(result.clarifyingQuestions).toBeDefined();
+      expect(result.clarifyingQuestions!.length).toBeGreaterThan(0);
+    });
+
+    it('calls the agent for unambiguous prompts', async () => {
+      const { iface, llmAgent } = createInterface();
+      // "fix the auth bug" — no "cool", "better", etc. — unambiguous
+      llmAgent.executeTask.mockResolvedValue({ status: 'success', stepCount: 1, messages: [] });
+      const result = await iface.processInput('fix the auth bug');
+      expect(llmAgent.executeTask).toHaveBeenCalledTimes(1);
+      expect(result.type).toBe('agent');
+    });
+
+    it('includes domain suggestions in ambiguous result', async () => {
+      const { iface } = createInterface();
+      const result = await iface.processInput('make it cooler');
+      expect(result.suggestions).toContain('p5');
+    });
+
+    it('returns clarifying questions text in response for vague prompts', async () => {
+      const { iface } = createInterface();
+      const result = await iface.processInput('make it cooler');
+      expect(result.response).toContain('Clarifying questions');
+      expect(result.response).toContain('Describe');
+    });
   });
 
 });

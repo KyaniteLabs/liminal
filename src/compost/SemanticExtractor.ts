@@ -4,6 +4,7 @@
  */
 
 import fs from 'node:fs/promises';
+import fsSync from 'node:fs';
 import path from 'node:path';
 import { PromptLibrary } from '../prompts/PromptLibrary.js';
 import { CompostParser } from '../core/parsing/CompostParser.js';
@@ -80,7 +81,7 @@ export class SemanticExtractor {
   extractImage(filePath: string): string {
     const basename = path.basename(filePath);
     try {
-      const stat = fs.statSync(filePath);
+      const stat = fsSync.statSync(filePath);
       Logger.warn('SemanticExtractor', `extractImage called for ${basename} — vision LLM not available, returning metadata only`);
       return `[Image: ${basename} — ${(stat.size / 1024).toFixed(1)}KB — vision extraction requires multimodal LLM client]`;
     } catch {
@@ -96,7 +97,7 @@ export class SemanticExtractor {
   async extractAudio(filePath: string): Promise<string> {
     const basename = path.basename(filePath);
     try {
-      const stat = fs.statSync(filePath);
+      const stat = fsSync.statSync(filePath);
       // Try to get audio duration via MetadataExtractor (music-metadata package)
       let durationStr = '';
       try {
@@ -137,7 +138,7 @@ export class SemanticExtractor {
   async extractVideo(filePath: string): Promise<string> {
     const basename = path.basename(filePath);
     try {
-      const stat = fs.statSync(filePath);
+      const stat = fsSync.statSync(filePath);
       const sizeMB = (stat.size / (1024 * 1024)).toFixed(2);
       const meta = `Video: ${basename} — ${sizeMB}MB`;
       // Attempt LLM scene description

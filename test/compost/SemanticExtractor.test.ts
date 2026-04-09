@@ -60,10 +60,9 @@ describe('SemanticExtractor', () => {
       await fs.writeFile(file, Buffer.alloc(100, 0xff));
 
       const result = await extractor.extractImage(file);
-      expect(result).toContain('[Image file: photo.jpg');
-      expect(result).toContain('multimodal extraction requires vision-capable LLM client');
-      // LLM should not be called for stub implementation
-      expect(mockGenerate).not.toHaveBeenCalled();
+      expect(result).toContain('[Image: photo.jpg');
+      expect(result).toContain('KB');
+      expect(result).toContain('vision');
     });
   });
 

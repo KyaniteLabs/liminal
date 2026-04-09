@@ -201,17 +201,17 @@ export class NaturalInterface {
 
     if (issues.length > 0) {
       const hints = ambiguityDetector.getDomainHints(input);
-      const questions = issues.slice(0, 4).map((issue: { suggestedQuestion: string }) => ({
+      const questions: Array<{ question: string; options: string[] | null; default: string }> = issues.slice(0, 4).map((issue: { suggestedQuestion: string }) => ({
         question: issue.suggestedQuestion,
         options: null, // free-text answer
         default: '',
       }));
 
       const lines = ['\uD83D\uDD0A Clarifying questions:'];
-      for (let i = 0; i < questions.length; i++) {
-        lines.push(`\n${i + 1}. ${questions[i].question}`);
-        if (questions[i].options) {
-          lines.push(`   Options: ${questions[i].options!.join(', ')}`);
+      for (const q of questions) {
+        lines.push(`\n${lines.length + 1}. ${q.question}`);
+        if (q.options) {
+          lines.push(`   Options: ${q.options.join(', ')}`);
         }
       }
       if (hints.length > 0) {

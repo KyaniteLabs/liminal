@@ -52,9 +52,11 @@ if [ -f "package.json" ]; then
         AUDIT_OUTPUT=$(echo "$AUDIT_OUTPUT" | grep -vE "$KNOWN_PATTERNS" || true)
       fi
     fi
-    if echo "$AUDIT_OUTPUT" | grep -qE "(high|critical)"; then
+    # Remove summary lines (e.g. "Severity: 1 moderate | 3 high") before checking
+    REMAINING=$(echo "$AUDIT_OUTPUT" | grep -vE '^(Severity:|#)' || true)
+    if echo "$REMAINING" | grep -qE "(high|critical)"; then
       echo "BLOCKED: High or critical CVEs found in dependencies."
-      echo "$AUDIT_OUTPUT" | grep -E "(high|critical)" | head -10
+      echo "$REMAINING" | grep -E "(high|critical)" | head -10
       echo ""
       echo "Fix with: pnpm update <package> or add override in package.json"
       BLOCKED=true
@@ -63,9 +65,10 @@ if [ -f "package.json" ]; then
     fi
   elif command -v npm &>/dev/null; then
     AUDIT_OUTPUT=$(npm audit --audit-level=high 2>&1 || true)
-    if echo "$AUDIT_OUTPUT" | grep -qE "(high|critical)"; then
+    REMAINING=$(echo "$AUDIT_OUTPUT" | grep -vE '^(Severity:|#)' || true)
+    if echo "$REMAINING" | grep -qE "(high|critical)"; then
       echo "BLOCKED: High or critical CVEs found in dependencies."
-      echo "$AUDIT_OUTPUT" | grep -E "(high|critical)" | head -10
+      echo "$REMAINING" | grep -E "(high|critical)" | head -10
       BLOCKED=true
     else
       echo "Dependency audit passed."

@@ -583,7 +583,7 @@ describe('commands', () => {
   describe('registry shape', () => {
     it('has all 11 commands registered', () => {
       const keys = Object.keys(commands);
-      expect(keys).toHaveLength(11);
+      expect(keys).toHaveLength(14);
       expect(keys).toContain('help');
       expect(keys).toContain('status');
       expect(keys).toContain('tasks');
@@ -595,6 +595,9 @@ describe('commands', () => {
       expect(keys).toContain('browser');
       expect(keys).toContain('clear');
       expect(keys).toContain('exit');
+      expect(keys).toContain('provider');
+      expect(keys).toContain('confirm');
+      expect(keys).toContain('cancel');
     });
 
     it('every command has name, description, usage, and execute', () => {

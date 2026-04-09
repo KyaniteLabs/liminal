@@ -14,6 +14,7 @@ import { ModelRouter } from '../dist/compost/ModelRouter.js';
 import { chatCommand } from '../dist/chat/commands/chat.js';
 import fs from 'fs';
 import path from 'path';
+import os from 'os';
 import { fileURLToPath } from 'url';
 
 // Initialize Meta-Harness
@@ -810,10 +811,19 @@ else if (cmd === 'bubbletea') {
     process.exit(1);
   }
 
+  // Suppress Node stdout/stderr — bridge logs must NOT corrupt the TUI terminal
+  const logPath = path.join(os.tmpdir(), `liminal-bridge-${Date.now()}.log`);
+  const logFd = fs.openSync(logPath, 'w');
+  process.stdout.write = () => true;
+  process.stderr.write = () => true;
+  console.log = () => {};
+  console.error = () => {};
+  console.warn = () => {};
+
   // Launch the Go TUI — it connects back to our bridge server
   const tui = spawn(binPath, [], {
     env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
-    stdio: 'inherit',
+    stdio: ['inherit', logFd, logFd],
   });
 
   tui.on('exit', async (code) => {

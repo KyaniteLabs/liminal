@@ -292,8 +292,8 @@ func (m Model) renderChatContent() string {
 	if m.ActiveResponse != "" {
 		sb.WriteString(ui.AssistantMsgStyle.Render("◆"))
 		sb.WriteString("\n")
-		rendered := m.renderMarkdown(m.ActiveResponse)
-		sb.WriteString(rendered)
+		// Skip glamour on streaming — partial markdown breaks rendering
+		sb.WriteString(m.ActiveResponse)
 		// Show live iteration progress during generation
 		if m.CurrentIteration > 0 {
 			scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)

@@ -258,8 +258,8 @@ function buildArchiveContext(
     }
   }
 
-  // Retrieve from SeedBank (async but we can't await here - so this is a placeholder)
   // SeedBank retrieval is handled separately via injectSeedBankContext()
+  // (async seed bank ops are injected after initial context assembly)
 
   return parts.length > 0 ? parts.join('\n') : null;
 }

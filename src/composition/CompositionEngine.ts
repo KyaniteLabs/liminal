@@ -297,10 +297,10 @@ export class CompositionEngine {
 
   /**
    * Get all animations from the keyframe animation system.
-   * This is a placeholder - animations should be managed by the caller.
+   * Delegates to LayerManager which tracks animations per layer.
    */
   getAnimations(): Animation[] {
-    return [];
+    return this.layerManager.exportAnimations();
   }
 
   /**

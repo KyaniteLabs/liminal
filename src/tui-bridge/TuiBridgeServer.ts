@@ -46,8 +46,14 @@ export class TuiBridgeServer {
   }
 
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
-    // CORS headers for local dev
-    res.setHeader('Access-Control-Allow-Origin', '*');
+    // CORS headers - restrict to localhost origins only
+    const origin = req.headers.origin;
+    const allowedOrigins = ['http://localhost:3000', 'http://localhost:4200', 'http://localhost:5173', 'http://127.0.0.1:3000'];
+    if (origin && allowedOrigins.includes(origin)) {
+      res.setHeader('Access-Control-Allow-Origin', origin);
+    } else {
+      res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+    }
     res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
 

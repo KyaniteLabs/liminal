@@ -134,17 +134,21 @@ export class AutoFixOrchestrator {
     // Create the LLMModeAgent
     const agent = createLLMModeAgent(this._llmClient);
 
-    // Create the task with auto-approval for CLI-driven fixes
+    const autoApprove = request.confirmLevel === 'auto' || request.confirmLevel === 'never';
+
     const task: LLMTask = {
       id: taskId,
       title: `Fix error in ${path.basename(request.target)}`,
       description: this.buildFileErrorDescription(request, fileContent),
       fileHint: request.target,
       maxSteps: 15,
-      approved: true, // Auto-approved for CLI
+      approved: autoApprove,
     };
 
-    Logger.info('AutoFixOrchestrator', `Executing LLMModeAgent task: ${task.title}`);
+    Logger.info('AutoFixOrchestrator', `Executing LLMModeAgent task: ${task.title}`, {
+      autoApprove,
+      confirmLevel: request.confirmLevel,
+    });
 
     // Execute the task
     const session = await agent.executeTask(task);
@@ -158,21 +162,37 @@ export class AutoFixOrchestrator {
       });
     }
 
+    // Verify the fix if it succeeded
+    let buildPassed = false;
+    let testsPassed = false;
+    let rolledBack = session.status === Status.ROLLED_BACK;
+
+    if (session.status === Status.SUCCESS) {
+      buildPassed = await this.verifyBuild();
+      testsPassed = await this.verifyTests();
+
+      if (!buildPassed) {
+        Logger.warn('AutoFixOrchestrator', `Build failed after fix — reporting failure`);
+      }
+    }
+
     const result: FixResult = {
-      success: session.status === Status.SUCCESS,
+      success: session.status === Status.SUCCESS && buildPassed,
       taskId,
       changes,
-      buildPassed: session.status === Status.SUCCESS,
-      testsPassed: session.status === Status.SUCCESS,
-      rolledBack: session.status === Status.ROLLED_BACK,
-      error: this.getSessionError(session.status, session.stepCount),
+      buildPassed,
+      testsPassed,
+      rolledBack,
+      error: this.getSessionError(session.status, session.stepCount) ?? (!buildPassed ? 'Fix applied but build verification failed' : undefined),
     };
 
     Logger.info('AutoFixOrchestrator', `Fix task ${taskId} completed`, {
       success: result.success,
       status: session.status,
       steps: session.stepCount,
-      rolledBack: result.rolledBack,
+      buildPassed,
+      testsPassed,
+      rolledBack,
     });
 
     return result;
@@ -208,17 +228,21 @@ export class AutoFixOrchestrator {
     // Create the LLMModeAgent
     const agent = createLLMModeAgent(this._llmClient);
 
-    // Create the task with the natural language description
+    const autoApprove = request.confirmLevel === 'auto' || request.confirmLevel === 'never';
+
     const task: LLMTask = {
       id: taskId,
       title: request.target || 'Natural language fix request',
       description: request.errorDescription || 'No description provided',
       fileHint: request.target,
       maxSteps: 15,
-      approved: true, // Auto-approved for CLI
+      approved: autoApprove,
     };
 
-    Logger.info('AutoFixOrchestrator', `Executing LLMModeAgent task: ${task.title}`);
+    Logger.info('AutoFixOrchestrator', `Executing LLMModeAgent task: ${task.title}`, {
+      autoApprove,
+      confirmLevel: request.confirmLevel,
+    });
 
     // Execute the task
     const session = await agent.executeTask(task);
@@ -232,21 +256,32 @@ export class AutoFixOrchestrator {
       });
     }
 
+    let buildPassed = false;
+    let testsPassed = false;
+    let rolledBack = session.status === Status.ROLLED_BACK;
+
+    if (session.status === Status.SUCCESS) {
+      buildPassed = await this.verifyBuild();
+      testsPassed = await this.verifyTests();
+    }
+
     const result: FixResult = {
-      success: session.status === Status.SUCCESS,
+      success: session.status === Status.SUCCESS && buildPassed,
       taskId,
       changes,
-      buildPassed: session.status === Status.SUCCESS,
-      testsPassed: session.status === Status.SUCCESS,
-      rolledBack: session.status === Status.ROLLED_BACK,
-      error: this.getSessionError(session.status, session.stepCount),
+      buildPassed,
+      testsPassed,
+      rolledBack,
+      error: this.getSessionError(session.status, session.stepCount) ?? (!buildPassed ? 'Fix applied but build verification failed' : undefined),
     };
 
     Logger.info('AutoFixOrchestrator', `Fix task ${taskId} completed`, {
       success: result.success,
       status: session.status,
       steps: session.stepCount,
-      rolledBack: result.rolledBack,
+      buildPassed,
+      testsPassed,
+      rolledBack,
     });
 
     return result;
@@ -312,9 +347,16 @@ export class AutoFixOrchestrator {
    * @returns Promise resolving to true if tests pass, false otherwise
    */
   async verifyTests(): Promise<boolean> {
-    // TODO: Run tests and return success/failure
-    Logger.debug('AutoFixOrchestrator', 'Test verification not yet implemented');
-    return false;
+    try {
+      Logger.debug('AutoFixOrchestrator', 'Running test verification...');
+      execSync('pnpm test --run', { stdio: 'pipe', timeout: 180_000 });
+      Logger.info('AutoFixOrchestrator', 'Test verification passed');
+      return true;
+    } catch (err) {
+      const msg = err instanceof Error ? err.message.split('\n')[0] : String(err);
+      Logger.warn('AutoFixOrchestrator', `Test verification failed: ${msg}`);
+      return false;
+    }
   }
 
   /**

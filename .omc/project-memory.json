@@ -725,6 +725,18 @@
       "accessCount": 1,
       "lastAccessed": 1775692371302,
       "type": "file"
+    },
+    {
+      "path": "test/core/RalphLoop.best-of-n.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775694477224,
+      "type": "directory"
+    },
+    {
+      "path": "src/core/ContextAccumulation.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775694490000,
+      "type": "directory"
     }
   ],
   "userDirectives": []

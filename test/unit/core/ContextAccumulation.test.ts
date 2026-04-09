@@ -190,11 +190,11 @@ describe('ContextAccumulation', () => {
 
   describe('static methods (backward compat)', () => {
     beforeEach(() => {
-      ContextAccumulation.default.clear();
+      ContextAccumulation.getCurrentInstance?.()?.clear?.() ?? new ContextAccumulation().clear();
     });
 
     afterEach(() => {
-      ContextAccumulation.default.clear();
+      ContextAccumulation.getCurrentInstance?.()?.clear?.() ?? new ContextAccumulation().clear();
     });
 
     it('static save delegates to default instance', () => {

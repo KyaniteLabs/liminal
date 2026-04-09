@@ -28,6 +28,7 @@ const mockExecAsync = vi.hoisted(() => vi.fn());
 
 vi.mock('child_process', () => ({
   exec: () => { /* promisify wraps this */ },
+  execFile: () => { /* promisify wraps this */ },
 }));
 vi.mock('util', () => ({
   promisify: () => mockExecAsync,

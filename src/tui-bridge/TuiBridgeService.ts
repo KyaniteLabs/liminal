@@ -8,12 +8,21 @@ export class TuiBridgeService {
   private sessions = new TuiSessionStore();
   private stream = new TuiEventStream();
   private activeStreams = new Map<string, AbortController>();
+  private provider?: string;
+  private model?: string;
+
+  constructor(options?: { provider?: string; model?: string }) {
+    this.provider = options?.provider;
+    this.model = options?.model;
+  }
 
   createSession(): TuiSessionStatus {
     const sessionId = `tui-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     return this.sessions.create({
       sessionId,
       mode: 'chat',
+      provider: this.provider,
+      model: this.model,
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
   }

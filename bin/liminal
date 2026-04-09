@@ -775,10 +775,16 @@ else if (cmd === 'bubbletea') {
 
   const { TuiBridgeServer } = await import('../dist/tui-bridge/TuiBridgeServer.js');
   const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
-  const bridge = new TuiBridgeService();
 
   const llm = new LLMClient({ role: 'generator' });
   await LLMClient.loadRoles();
+
+  // Detect provider and model for display in the TUI
+  const { detectProviderFromUrl } = await import('../dist/harness/MultiProviderConfig.js');
+  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || '';
+  const providerName = baseUrl ? detectProviderFromUrl(baseUrl) : 'config';
+  const modelName = process.env.LIMINAL_LLM_MODEL || 'auto';
+  const bridge = new TuiBridgeService({ provider: providerName, model: modelName });
 
   const server = new TuiBridgeServer(bridge, { port, llm });
   await server.start();
@@ -786,11 +792,15 @@ else if (cmd === 'bubbletea') {
   // Find the Bubble Tea binary
   const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
   if (!fs.existsSync(binPath)) {
-    console.error('Bubble Tea binary not found at ' + binPath);
-    console.error('Build it first: cd bubbletea && go build -o ../dist/bubbletea .');
+    process.stderr.write('Bubble Tea binary not found at ' + binPath + '\n');
+    process.stderr.write('Build it first: cd bubbletea && go build -o ../dist/bubbletea .\n');
     await server.stop();
     process.exit(1);
   }
+
+  // Suppress all stdout — Bubble Tea owns the terminal now
+  const originalWrite = process.stdout.write;
+  process.stdout.write = () => true;
 
   // Launch the Go TUI — it connects back to our bridge server
   const tui = spawn(binPath, [], {
@@ -799,12 +809,14 @@ else if (cmd === 'bubbletea') {
   });
 
   tui.on('exit', async (code) => {
+    process.stdout.write = originalWrite;
     await server.stop();
     process.exit(code ?? 0);
   });
 
   tui.on('error', async (err) => {
-    console.error('Failed to launch Bubble Tea:', err.message);
+    process.stdout.write = originalWrite;
+    process.stderr.write('Failed to launch Bubble Tea: ' + err.message + '\n');
     await server.stop();
     process.exit(1);
   });

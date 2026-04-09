@@ -107,19 +107,22 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
    * We only check that it's not empty and not code.
    */
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    if (!code || code.trim().length === 0) {
+    // Strip code fences and comments before validation (mirrors formatOutput preprocessing)
+    const stripped = code
+      .split('\n')
+      .filter(line => !line.startsWith('```') && !line.startsWith('//'))
+      .join('\n')
+      .trim();
+
+    if (!stripped || stripped.length === 0) {
       return { valid: false, error: 'Empty output' };
     }
 
-    // Check for code block markers (model might return markdown)
-    if (code.includes('```') || code.includes('function ') || code.includes('class ')) {
+    // Check for remaining code-like patterns after stripping fences
+    if (/\bfunction\b/.test(stripped) || /\bclass\b/.test(stripped) ||
+        /\bconst\b.*[=;]/.test(stripped) || /\blet\b.*[=;]/.test(stripped) ||
+        /\breturn\b/.test(stripped) || /\bif\b.*\(/.test(stripped)) {
       return { valid: false, error: 'Output appears to be code, not text art' };
-    }
-
-    // Check minimum creativity threshold
-    const lines = code.split('\n').filter(l => l.trim());
-    if (lines.length < 2) {
-      return { valid: false, error: 'Output too simple (less than 2 lines)' };
     }
 
     return { valid: true };

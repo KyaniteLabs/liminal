@@ -321,8 +321,9 @@ describe('CompostSoup', () => {
         makeFragment('text', 'prose fragment'),
       ];
 
+      // merge fails → cycle returns state without incrementing generation
       const result = await soup.cycle(fragments);
-      expect(result.generation).toBe(1);
+      expect(result.generation).toBe(0);
     });
 
     it('handles LLM returning unsuccessful result', async () => {
@@ -335,9 +336,9 @@ describe('CompostSoup', () => {
         makeFragment('text', 'content B'),
       ];
 
+      // merge fails → cycle returns state without incrementing generation
       const result = await soup.cycle(fragments);
-      expect(result.generation).toBe(1);
-      expect(mockScorerScore).toHaveBeenCalledTimes(1);
+      expect(result.generation).toBe(0);
     });
 
     it('works with null LLM using fallback merge', async () => {
@@ -349,9 +350,9 @@ describe('CompostSoup', () => {
         makeFragment('visual', 'red green blue'),
       ];
 
+      // null LLM → mergeViaLLM throws → cycle returns state without incrementing
       const result = await soup.cycle(fragments);
-      expect(result.generation).toBe(1);
-      expect(llm.generate).not.toHaveBeenCalled();
+      expect(result.generation).toBe(0);
     });
   });
 

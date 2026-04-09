@@ -692,8 +692,8 @@
     },
     {
       "path": "test",
-      "accessCount": 2,
-      "lastAccessed": 1775692356137,
+      "accessCount": 3,
+      "lastAccessed": 1775708838201,
       "type": "directory"
     },
     {
@@ -796,6 +796,12 @@
       "path": "src/security/UrlValidator.ts",
       "accessCount": 1,
       "lastAccessed": 1775696950218,
+      "type": "file"
+    },
+    {
+      "path": "src/core/ContextBuilder.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775708838239,
       "type": "file"
     }
   ],

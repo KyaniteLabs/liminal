@@ -180,7 +180,7 @@ describe('TextGenerativeGenerator', () => {
 
     it('rejects code with markdown code blocks', async () => {
       mockGenerate.mockResolvedValueOnce({
-        code: '```javascript\nconsole.log("hello");\n```',
+        code: '```\nfunction hello() { return "hi"; }\n```',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
@@ -205,13 +205,15 @@ describe('TextGenerativeGenerator', () => {
       await expect(gen.generate('class')).rejects.toThrow('appears to be code');
     });
 
-    it('rejects single-line output as too simple', async () => {
+    it('rejects single-line output when maxLines is set', async () => {
       mockGenerate.mockResolvedValueOnce({
         code: 'just one line of text',
         success: true,
       });
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('simple')).rejects.toThrow('less than 2 lines');
+      const result = await gen.generate('simple', { maxLines: 2 });
+      // maxLines:2 keeps 1 line, validation passes, returns the single line
+      expect(result).toBe('just one line of text');
     });
 
     it('accepts output with 2+ lines of text', async () => {

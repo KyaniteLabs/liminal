@@ -344,19 +344,14 @@ export class RalphLoop {
 
         // Select the best candidate or fail if none valid
         if (candidates.length === 0) {
-          // Return gracefully when all candidates fail (Best-of-N mode)
-          return {
-            code: '',
-            iterations: iteration,
-            completed: false,
-            reason: `All ${numCandidates} candidates failed validation`,
-            timestamp: new Date().toISOString(),
-            duration: Date.now() - startTime,
-            finalScore: 0,
-            project: normalizedOptions.project,
-            thinking: lastThinking,
-            model: lastModel,
-          };
+          throw new LiminalError(
+            'All generation candidates failed',
+            'ERR_ALL_CANDIDATES_FAILED',
+            {
+              attempts: numCandidates,
+              lastError: lastGenerationError?.message,
+            }
+          );
         } else {
           // For single candidate (default), just use it
           // For multiple candidates, we need to fully evaluate each to find the best

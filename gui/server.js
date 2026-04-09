@@ -607,7 +607,9 @@ export function createApp(configPath, port = 5174) {
   app.get('/api/compost/status', async (_req, res) => {
     try {
       const { CompostMill } = await import('../dist/compost/CompostMill.js');
-      const mill = new CompostMill();
+      const { LLMClient } = await import('../dist/llm/LLMClient.js');
+      const llm = new LLMClient({ role: 'generator' });
+      const mill = new CompostMill(llm);
       const status = await mill.statusAsync();
       res.json(status);
     } catch (err) {
@@ -651,7 +653,9 @@ export function createApp(configPath, port = 5174) {
     try {
       const { CompostMill } = await import('../dist/compost/CompostMill.js');
       const { mergeConfig } = await import('../dist/compost/defaults.js');
-      const mill = new CompostMill(mergeConfig());
+      const { LLMClient } = await import('../dist/llm/LLMClient.js');
+      const llm = new LLMClient({ role: 'generator' });
+      const mill = new CompostMill(llm, mergeConfig());
       const millStatus = await mill.statusAsync();
       res.json({
         heapSize: millStatus.heapSize,
@@ -671,7 +675,9 @@ export function createApp(configPath, port = 5174) {
     try {
       const { CompostMill } = await import('../dist/compost/CompostMill.js');
       const { mergeConfig } = await import('../dist/compost/defaults.js');
-      const mill = new CompostMill(mergeConfig());
+      const { LLMClient } = await import('../dist/llm/LLMClient.js');
+      const llm = new LLMClient({ role: 'generator' });
+      const mill = new CompostMill(llm, mergeConfig());
       const [millStatus, topSeeds, seedCount] = await Promise.all([
         mill.statusAsync(),
         mill.getTopSeeds(10),
@@ -709,7 +715,9 @@ export function createApp(configPath, port = 5174) {
 
       const { CompostMill } = await import('../dist/compost/CompostMill.js');
       const { mergeConfig } = await import('../dist/compost/defaults.js');
-      const mill = new CompostMill(mergeConfig());
+      const { LLMClient } = await import('../dist/llm/LLMClient.js');
+      const llm = new LLMClient({ role: 'generator' });
+      const mill = new CompostMill(llm, mergeConfig());
       const code = 'code' in iter ? iter.code : (iter.musicCode + '\n' + iter.visualCode);
       // Write to temp file and add to heap
       const fs = await import('fs/promises');

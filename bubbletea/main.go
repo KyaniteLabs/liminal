@@ -18,7 +18,7 @@ func main() {
 	program := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
 
 	// Pass program reference to model so SSE goroutines can send events
-	model.Program = program
+	app.GlobalProgram = program
 
 	if _, err := program.Run(); err != nil {
 		log.Fatal(err)

@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"os"
 	"strings"
 	"time"
 
@@ -61,10 +63,8 @@ func (m Model) createSessionCmd() tea.Cmd {
 	}
 }
 
-// ── SSE Streaming — FIXED: uses program.Send for real-time events ──
+// ── SSE Streaming — uses program.Send for real-time events ──
 
-// startStreamCmd opens the SSE stream and sends each event via program.Send()
-// as it arrives. This fixes the critical bug where only the last event was returned.
 func (m Model) startStreamCmd() tea.Cmd {
 	return func() tea.Msg {
 		ctx := context.Background()
@@ -105,10 +105,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Height = msg.Height
 
 		if !m.Ready {
-			// Initialize viewports on first resize
-			chatWidth := msg.Width*3/5 - 4    // 60% minus borders
-			previewWidth := msg.Width*2/5 - 4  // 40% minus borders
-			paneHeight := msg.Height - 6       // minus header + footer + borders
+			chatWidth := msg.Width*3/5 - 4
+			previewWidth := msg.Width*2/5 - 4
+			paneHeight := msg.Height - 6
 
 			if chatWidth < 20 {
 				chatWidth = 20
@@ -164,12 +163,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case bridgeEventMsg:
+		fmt.Fprintf(os.Stderr, "[update] bridgeEvent: type=%s delta=%d content=%d blocks=%d activeLen=%d\n",
+			msg.event.Type, len(msg.event.Delta), len(msg.event.Content), len(m.ChatBlocks), len(m.ActiveResponse))
 		m.ApplyEvent(msg.event)
+		fmt.Fprintf(os.Stderr, "[update] after apply: blocks=%d activeLen=%d\n", len(m.ChatBlocks), len(m.ActiveResponse))
 		m.refreshViewports()
 		return m, nil
 
 	case streamDoneMsg:
-		// Stream ended normally — restart it
 		if m.Connected {
 			return m, m.startStreamCmd()
 		}
@@ -202,7 +203,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
-		// If textinput is focused and it's a regular key, pass to textinput first
 		if m.FocusPane == FocusChat {
 			switch msg.String() {
 			case "ctrl+c":
@@ -214,7 +214,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.TextInput.SetValue("")
 
-				// Add user block to chat
 				m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
 					Type:    "user",
 					Content: input,
@@ -238,13 +237,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case "tab":
-				// Switch focus to preview pane
 				m.FocusPane = FocusPreview
 				m.TextInput.Blur()
 				return m, nil
 
 			case "ctrl+e":
-				// Toggle preview visibility
 				m.PreviewVisible = !m.PreviewVisible
 				return m, nil
 
@@ -254,7 +251,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return m, cmd
 					}
 				}
-				// Fall through to textinput for normal typing
 				var cmd tea.Cmd
 				m.TextInput, cmd = m.TextInput.Update(msg)
 				return m, cmd
@@ -276,7 +272,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 		}
 
-		// Preview pane focus
 		if m.FocusPane == FocusPreview {
 			switch msg.String() {
 			case "ctrl+c", "q":
@@ -291,7 +286,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.TextInput.Focus()
 				return m, nil
 			case "ctrl+t":
-				// Cycle tabs
 				switch m.PreviewTab {
 				case "code":
 					m.PreviewTab = "output"
@@ -319,7 +313,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // ── Viewport helpers ──
 
-// updateChatViewport sets the chat content and scrolls to bottom.
 func (m *Model) updateChatViewport(content string) {
 	if m.Ready {
 		m.ChatViewport.SetContent(content)
@@ -327,25 +320,18 @@ func (m *Model) updateChatViewport(content string) {
 	}
 }
 
-// refreshViewports rebuilds both viewport contents from model state.
 func (m *Model) refreshViewports() {
 	if !m.Ready {
 		return
 	}
-
-	// Rebuild chat content
 	chatContent := m.renderChatContent()
 	m.ChatViewport.SetContent(chatContent)
 	m.ChatViewport.GotoBottom()
-
-	// Rebuild preview content
 	if m.PreviewVisible {
 		previewContent := m.renderPreviewContent()
 		m.PreviewViewport.SetContent(previewContent)
 	}
 }
-
-// ── Input parsing ──
 
 func parseInputIntent(input string) (mode, intent string) {
 	if strings.HasPrefix(input, "/") {

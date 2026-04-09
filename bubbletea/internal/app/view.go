@@ -19,10 +19,9 @@ func (m Model) View() string {
 	header := m.renderHeader()
 	footer := m.renderFooter()
 
-	// ── Calculate column widths ──
-	chatWidth := m.Width * 3 / 5       // 60% for chat
-	previewWidth := m.Width * 2 / 5    // 40% for preview
-	paneHeight := m.Height - 6         // minus header(2) + footer(2) + borders(2)
+	chatWidth := m.Width * 3 / 5
+	previewWidth := m.Width * 2 / 5
+	paneHeight := m.Height - 6
 
 	if chatWidth < 30 {
 		chatWidth = 30
@@ -34,13 +33,11 @@ func (m Model) View() string {
 		paneHeight = 5
 	}
 
-	// ── Chat pane (left) ──
 	chatPane := ui.ChatPaneStyle.
 		Width(chatWidth).
 		Height(paneHeight).
 		Render(m.ChatViewport.View())
 
-	// ── Right column ──
 	var rightPane string
 	if m.PreviewVisible {
 		rightPane = ui.PreviewPaneStyle.
@@ -54,7 +51,6 @@ func (m Model) View() string {
 			Render(m.renderCompactStatus())
 	}
 
-	// ── Focus indicator ──
 	if m.FocusPane == FocusPreview {
 		rightPane = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
@@ -64,13 +60,10 @@ func (m Model) View() string {
 			Render(m.renderPreviewSection(previewWidth, paneHeight))
 	}
 
-	// ── Join columns ──
 	body := lipgloss.JoinHorizontal(lipgloss.Top, chatPane, rightPane)
 
 	return lipgloss.JoinVertical(lipgloss.Left, header, body, footer)
 }
-
-// ── Header ──
 
 func (m Model) renderHeader() string {
 	brand := ui.BrandStyle.Render("◆ LIMINAL")
@@ -78,7 +71,11 @@ func (m Model) renderHeader() string {
 	provider := ui.ProviderStyle.Render(m.Provider + " / " + m.ModelName)
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)
 
-	// Spacing between elements
+	// DEBUG: show block count and active response length
+	debugInfo := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#ff9e64")).
+		Render(fmt.Sprintf("blk:%d resp:%d", len(m.ChatBlocks), len(m.ActiveResponse)))
+
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
 	header := lipgloss.NewStyle().
@@ -86,18 +83,14 @@ func (m Model) renderHeader() string {
 		Foreground(ui.FgText).
 		Padding(0, 1).
 		Width(m.Width).
-		Render(brand + spacer + mode + spacer + provider + spacer + connDot)
+		Render(brand + spacer + mode + spacer + provider + spacer + connDot + spacer + debugInfo)
 
 	return header
 }
 
-// ── Footer with textinput ──
-
 func (m Model) renderFooter() string {
-	// Input field
 	inputView := m.TextInput.View()
 
-	// Keybinding hints
 	var hints []string
 	if m.FocusPane == FocusChat {
 		switch m.Mode {
@@ -136,10 +129,7 @@ func (m Model) renderFooter() string {
 	return footer
 }
 
-// ── Preview section (right column) ──
-
 func (m Model) renderPreviewSection(width, height int) string {
-	// Tab bar
 	codeTab := ui.InactiveTabStyle.Render("Code")
 	outputTab := ui.InactiveTabStyle.Render("Output")
 	logTab := ui.InactiveTabStyle.Render("Log")
@@ -155,16 +145,11 @@ func (m Model) renderPreviewSection(width, height int) string {
 
 	tabBar := ui.TabBarStyle.Width(width - 4).Render(codeTab + outputTab + logTab)
 
-	// Preview content viewport
 	previewView := m.PreviewViewport.View()
-
-	// Status at bottom
 	statusLine := m.renderStatusLine(width)
 
 	return lipgloss.JoinVertical(lipgloss.Left, tabBar, previewView, statusLine)
 }
-
-// ── Status line in preview pane ──
 
 func (m Model) renderStatusLine(width int) string {
 	trustColor := ui.TrustColor(m.TrustLabel)
@@ -182,8 +167,6 @@ func (m Model) renderStatusLine(width int) string {
 		Render(model + "  " + mode + "  " + trust)
 }
 
-// ── Compact status when preview is hidden ──
-
 func (m Model) renderCompactStatus() string {
 	var lines []string
 	lines = append(lines, ui.StatusLabelStyle.Render("Provider: ")+ui.StatusValueStyle.Render(m.Provider+"/"+m.ModelName))
@@ -200,12 +183,9 @@ func (m Model) renderCompactStatus() string {
 	return strings.Join(lines, "\n")
 }
 
-// ── Chat content rendering ──
-
 func (m Model) renderChatContent() string {
 	var sb strings.Builder
 
-	// Render structured chat blocks
 	for _, block := range m.ChatBlocks {
 		switch block.Type {
 		case "user":
@@ -239,7 +219,6 @@ func (m Model) renderChatContent() string {
 		}
 	}
 
-	// Append active streaming response
 	if m.ActiveResponse != "" {
 		sb.WriteString(ui.AssistantMsgStyle.Render("◆"))
 		sb.WriteString("\n")
@@ -257,7 +236,6 @@ func (m Model) renderChatContent() string {
 	return sb.String()
 }
 
-// renderPreviewContent returns content for the preview viewport.
 func (m Model) renderPreviewContent() string {
 	if m.PreviewContent == "" {
 		return lipgloss.NewStyle().
@@ -284,7 +262,6 @@ func (m Model) renderPreviewContent() string {
 	}
 }
 
-// renderMarkdown uses glamour to render markdown with syntax highlighting.
 func (m Model) renderMarkdown(content string) string {
 	if m.Renderer == nil {
 		return content
@@ -296,8 +273,6 @@ func (m Model) renderMarkdown(content string) string {
 	return rendered
 }
 
-// ── Viewport style helpers ──
-
 func chatViewportStyle() lipgloss.Style {
 	return lipgloss.NewStyle()
 }
@@ -306,7 +281,6 @@ func previewViewportStyle() lipgloss.Style {
 	return lipgloss.NewStyle()
 }
 
-// max returns the larger of a and b.
 func max(a, b int) int {
 	if a > b {
 		return a
@@ -314,7 +288,6 @@ func max(a, b int) int {
 	return b
 }
 
-// min returns the smaller of a and b.
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -322,7 +295,6 @@ func min(a, b int) int {
 	return b
 }
 
-// Format intentionally kept as a helper for future use.
 func formatBytes(n int) string {
 	if n < 1024 {
 		return fmt.Sprintf("%d B", n)

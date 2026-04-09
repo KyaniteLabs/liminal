@@ -73,7 +73,8 @@ describe('FragmentScorer', () => {
         code: JSON.stringify({ score: 8.5, reasoning: 'High quality' }),
       });
       const frag = makeFragment();
-      const score = await scorer.scoreLLM(frag);
+      const scoreResult = await scorer.scoreLLM(frag);
+      const score = scoreResult.match(s => s, () => -1);
       expect(score).toBeGreaterThanOrEqual(0);
       expect(mockLLM.generate).toHaveBeenCalled();
     });

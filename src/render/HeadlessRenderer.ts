@@ -478,7 +478,7 @@ export class HeadlessRenderer {
           // Try to call play() if it exists globally
           const w = window as unknown as { play?: () => void; Tone?: { start: () => Promise<void> } };
           if (typeof w.play === 'function') {
-            await w.play();
+            w.play();
           } else if (w.Tone?.start) {
             await w.Tone.start();
           }

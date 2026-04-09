@@ -226,7 +226,7 @@ export class HarnessMemory {
   /**
    * Migrate old memory formats
    */
-  private migrate(loaded: any): HarnessMemoryState {
+  private migrate(loaded: Partial<HarnessMemoryState>): HarnessMemoryState {
     if (!loaded.version || loaded.version < MEMORY_VERSION) {
       // Migration logic for future versions
       loaded.version = MEMORY_VERSION;

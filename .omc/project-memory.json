@@ -655,16 +655,16 @@
       "type": "file"
     },
     {
+      "path": "src/core/ContextAccumulation.ts",
+      "accessCount": 7,
+      "lastAccessed": 1775776596994,
+      "type": "directory"
+    },
+    {
       "path": "test/unit/harness/RateLimiter.test.ts",
       "accessCount": 6,
       "lastAccessed": 1775696148319,
       "type": "file"
-    },
-    {
-      "path": "src/core/ContextAccumulation.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775695837193,
-      "type": "directory"
     },
     {
       "path": "test/unit/context-accumulation.test.js",

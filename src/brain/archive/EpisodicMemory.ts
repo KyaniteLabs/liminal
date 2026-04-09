@@ -263,7 +263,7 @@ export class EpisodicMemory {
 
     // Restore generations
     this.generations = new Map(
-      data.generations.map(([id, gen]: [string, any]) => [
+      data.generations.map(([id, gen]: [string, Omit<GenerationSession, 'timestamp'> & { timestamp: string }]) => [
         id,
         {
           ...gen,

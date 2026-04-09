@@ -16,6 +16,13 @@ import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
 import type { SwarmOptions } from '../types/options/SwarmOptions.js';
 import { type DebugOptions, normalizeDebugOptions } from '../types/options/DebugOptions.js';
 import { type RenderOptions, normalizeRenderOptions } from '../types/options/RenderOptions.js';
+import type { Suggestion, GenerationContext } from '../chat/types.js';
+
+/** Minimal interface matching GuidanceEngine public contract */
+export interface GuidanceEngineLike {
+  suggestNextAction(context: GenerationContext): Suggestion[];
+  updateIteration(iteration: number, score: number): void;
+}
 
 
 export const DEFAULT_MAX_ITERATIONS = 20;
@@ -99,9 +106,9 @@ export interface LoopOptions {
   /** Callback called with thought strings during generation for chat display */
   onThought?: (thought: string) => void;
   /** Callback called with suggestions during generation */
-  onSuggestion?: (suggestion: any) => void;
+  onSuggestion?: (suggestion: Suggestion) => void;
   /** Guidance engine for proactive suggestions during generation */
-  guidanceEngine?: any;
+  guidanceEngine?: GuidanceEngineLike;
   /** Enable aesthetic guardrails in the quality gate */
   useAestheticGuardrails?: boolean;
   /** Enable intuition-based quality scoring from compressed experience */
@@ -184,8 +191,8 @@ export interface NormalizedLoopOptions extends LoopOptions {
   chatMode: boolean;
   onIteration?: (iteration: IterationContext) => void;
   onThought?: (thought: string) => void;
-  onSuggestion?: (suggestion: any) => void;
-  guidanceEngine?: any;
+  onSuggestion?: (suggestion: Suggestion) => void;
+  guidanceEngine?: GuidanceEngineLike;
   useAestheticGuardrails: boolean;
   useIntuition: boolean;
   aestheticConfig: Record<string, unknown>;

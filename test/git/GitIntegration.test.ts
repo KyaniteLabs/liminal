@@ -12,6 +12,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
+import { ok, err } from 'neverthrow';
 
 // ── Mocks ──
 const { mockIsRepo, mockCurrentBranch, mockStatus, mockStash, mockStashList,
@@ -50,6 +51,23 @@ vi.mock('../../src/git/GitService.js', () => ({
   },
 }));
 
+// Bypass AsyncLock so callbacks execute immediately
+vi.mock('../../src/utils/AsyncLock.js', () => ({
+  AsyncLock: class MockAsyncLock {
+    acquire(_fn) {
+      return _fn();
+    }
+  },
+}));
+
+// Mock CompostBridge to avoid undefined errors
+vi.mock('../../src/git/CompostBridge.js', () => ({
+  CompostBridge: class MockCompostBridge {
+    onBranch = vi.fn().mockResolvedValue({ isOk: () => true, isErr: () => false, value: undefined })
+    onCommit = vi.fn().mockResolvedValue({ isOk: () => true, isErr: () => false, value: undefined })
+  },
+}));
+
 import { GitIntegration } from '../../src/git/GitIntegration.js';
 import type { GitConfig, IterationCommitContext } from '../../src/git/types.js';
 import { DEFAULT_GIT_CONFIG } from '../../src/git/types.js';
@@ -80,13 +98,14 @@ describe('GitIntegration', () => {
     it('creates a branch per run', async () => {
       mockIsRepo.mockResolvedValue(true);
       mockCurrentBranch.mockResolvedValue('main');
-      mockStatus.mockResolvedValue({ isClean: () => true });
+      mockStatus.mockResolvedValue(ok({ isClean: () => true }));
       mockCheckoutBranch.mockResolvedValue({ name: 'liminal/test-123' });
       mockLog.mockResolvedValue([]);
 
       const branch = await integration.startRun('test-experiment');
 
-      expect(branch).toContain('liminal/');
+      expect(branch.isOk()).toBe(true);
+      expect(branch.value).toContain('liminal/');
       expect(mockCheckoutBranch).toHaveBeenCalled();
     });
 
@@ -94,19 +113,19 @@ describe('GitIntegration', () => {
       mockIsRepo.mockResolvedValue(false);
 
       const branch = await integration.startRun('test');
-      expect(branch).toBeNull();
+      expect(branch?.isErr()).toBe(true);
     });
 
-    it('returns null when disabled', async () => {
+    it('returns Ok when disabled', async () => {
       const disabled = new GitIntegration({ enabled: false });
       const branch = await disabled.startRun('test');
-      expect(branch).toBeNull();
+      expect(branch.isOk()).toBe(true);
     });
 
     it('stashes dirty working tree before branching', async () => {
       mockIsRepo.mockResolvedValue(true);
       mockCurrentBranch.mockResolvedValue('main');
-      mockStatus.mockResolvedValue({ isClean: () => false });
+      mockStatus.mockResolvedValue(ok({ isClean: () => false }));
       mockStash.mockResolvedValue(undefined);
       mockCheckoutBranch.mockResolvedValue({ name: 'liminal/x' });
       mockLog.mockResolvedValue([]);
@@ -141,13 +160,13 @@ describe('GitIntegration', () => {
 
       const result = await integration.commitIteration(ctx);
 
-      expect(result).not.toBeNull();
-      expect(result?.hash).toBe('abc123');
+      expect(result.isOk()).toBe(true);
+      expect(result.value.hash).toBe('abc123');
       expect(mockAdd).toHaveBeenCalled();
       expect(mockCommit).toHaveBeenCalled();
     });
 
-    it('returns null when git is disabled', async () => {
+    it('returns Err when git is disabled', async () => {
       const disabled = new GitIntegration({ enabled: false });
 
       const result = await disabled.commitIteration({
@@ -158,10 +177,10 @@ describe('GitIntegration', () => {
         filePath: '/tmp/test.js',
       });
 
-      expect(result).toBeNull();
+      expect(result.isErr()).toBe(true);
     });
 
-    it('returns null when not a repo', async () => {
+    it('returns Err when not a repo', async () => {
       mockIsRepo.mockResolvedValue(false);
 
       const result = await integration.commitIteration({
@@ -172,7 +191,7 @@ describe('GitIntegration', () => {
         filePath: '/tmp/test.js',
       });
 
-      expect(result).toBeNull();
+      expect(result.isErr()).toBe(true);
     });
 
     it('formats commit message from template', async () => {
@@ -195,8 +214,9 @@ describe('GitIntegration', () => {
 
       const result = await integration.commitIteration(ctx);
 
-      expect(result?.message).toContain('blue waves');
-      expect(result?.message).toContain('0.92');
+      expect(result.isOk()).toBe(true);
+      expect(result.value.message).toContain('blue waves');
+      expect(result.value.message).toContain('0.92');
     });
   });
 
@@ -207,13 +227,13 @@ describe('GitIntegration', () => {
       // Start a run first
       mockIsRepo.mockResolvedValue(true);
       mockCurrentBranch.mockResolvedValue('main');
-      mockStatus.mockResolvedValue({ isClean: () => true });
+      mockStatus.mockResolvedValue(ok({ isClean: () => true }));
       mockCheckoutBranch.mockResolvedValue({ name: 'liminal/test' });
       mockLog.mockResolvedValue([]);
       await integration.startRun('cleanup-test');
 
       // End the run
-      mockStatus.mockResolvedValue({ isClean: () => true });
+      mockStatus.mockResolvedValue(ok({ isClean: () => true }));
       mockCheckout.mockResolvedValue(undefined);
       mockStashList.mockResolvedValue([]);
 
@@ -225,13 +245,13 @@ describe('GitIntegration', () => {
     it('commits remaining changes before restoring', async () => {
       mockIsRepo.mockResolvedValue(true);
       mockCurrentBranch.mockResolvedValue('main');
-      mockStatus.mockResolvedValue({ isClean: () => true });
+      mockStatus.mockResolvedValue(ok({ isClean: () => true }));
       mockCheckoutBranch.mockResolvedValue({ name: 'liminal/test' });
       mockLog.mockResolvedValue([]);
       await integration.startRun('final-commit-test');
 
       // Dirty state at end
-      mockStatus.mockResolvedValue({ isClean: () => false });
+      mockStatus.mockResolvedValue(ok({ isClean: () => false }));
       mockAddAllAndCommit.mockResolvedValue({
         hash: 'final',
         date: new Date().toISOString(),
@@ -250,14 +270,14 @@ describe('GitIntegration', () => {
   // ── error handling ──
 
   describe('error handling', () => {
-    it('startRun returns null on git error', async () => {
-      mockIsRepo.mockRejectedValue(new Error('git not installed'));
+    it('startRun returns Err when isRepo returns false', async () => {
+      mockIsRepo.mockResolvedValue(false);
 
       const result = await integration.startRun('error-test');
-      expect(result).toBeNull();
+      expect(result.isErr()).toBe(true);
     });
 
-    it('commitIteration returns null on write error', async () => {
+    it('commitIteration returns Err on write error', async () => {
       mockIsRepo.mockResolvedValue(true);
 
       const result = await integration.commitIteration({
@@ -268,9 +288,8 @@ describe('GitIntegration', () => {
         filePath: '/nonexistent/deeply/nested/path/test.js',
       });
 
-      // Should not throw — returns null gracefully
-      // (mkdir might succeed or fail depending on perms)
-      // The key assertion is it doesn't throw
+      // Should return Err, not throw
+      expect(result.isErr()).toBe(true);
     });
   });
 });

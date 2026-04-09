@@ -80,10 +80,17 @@
       "status": "failed",
       "error": "Agent crashed - recovery wave triggered",
       "failed_at": "2026-04-08T21:00:00.000Z"
+    },
+    {
+      "agent_id": "acc40c33f4eb0db94",
+      "agent_type": "general-purpose",
+      "started_at": "2026-04-09T03:36:23.653Z",
+      "parent_mode": "none",
+      "status": "running"
     }
   ],
-  "total_spawned": 8,
+  "total_spawned": 9,
   "total_completed": 6,
   "total_failed": 3,
-  "last_updated": "2026-04-08T15:44:35.305Z"
+  "last_updated": "2026-04-09T03:36:23.755Z"
 }

@@ -1,7 +1,7 @@
 {
   "tool_name": "Bash",
-  "tool_input_preview": "{\"command\":\"git merge origin/liminal/meta-test-3-1775703796315 --no-edit\",\"description\":\"Merge PR #62 branch into clean branch\"}",
-  "error": "Exit code 1\nCONFLICT (modify/delete): .omc/state/idle-notif-cooldown.json deleted in HEAD and modified in origin/liminal/meta-test-3-1775703796315.  Version origin/liminal/meta-test-3-1775703796315 of .omc/state/idle-notif-cooldown.json left in tree.\nAuto-merging src/tui-bridge/TuiBridgeService.ts\nAuto-merging test/integration/generator-renderer.test.js\nAuto-merging test/security/url-validator.test.ts\nCONFLICT (content): Merge conflict in test/security/url-validator.test.ts\nAuto-merging test/uni...",
-  "timestamp": "2026-04-09T03:29:00.461Z",
-  "retry_count": 1
+  "tool_input_preview": "{\"command\":\"git worktree add ../worktree-coverage liminal/strudel-test-1775705500092 2>&1\"}",
+  "error": "Exit code 128\nPreparing worktree (checking out 'liminal/strudel-test-1775705500092')\nfatal: 'liminal/strudel-test-1775705500092' is already used by worktree at '/Users/simongonzalezdecruz/workspaces/liminal'",
+  "timestamp": "2026-04-09T03:36:49.388Z",
+  "retry_count": 2
 }

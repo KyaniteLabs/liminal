@@ -70,6 +70,18 @@ describe('detectProviderType', () => {
   it('handles empty model string', () => {
     expect(detectProviderType('http://localhost:1234/v1', '')).toBe('openai');
   });
+
+  it('returns openai for bigmodel.cn (ZhipuAI GLM) URLs', () => {
+    expect(detectProviderType('https://bigmodel.cn/api/v1')).toBe('openai');
+  });
+
+  it('returns openai for moonshot URLs', () => {
+    expect(detectProviderType('https://api.moonshot.cn/v1')).toBe('openai');
+  });
+
+  it('detects ollama from URL containing "ollama" in hostname', () => {
+    expect(detectProviderType('http://my-ollama-server.local:11434/v1')).toBe('ollama');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -117,6 +129,40 @@ describe('loadRoleConfig with env vars', () => {
 
     expect(config.harness.baseUrl).toBe('http://generic-host:8080/v1');
     expect(config.harness.model).toBe('generic-model');
+  });
+
+  it('uses EVALUATOR_* env vars with fallbacks to LLM_*', async () => {
+    vi.stubEnv('LIMINAL_EVALUATOR_BASE_URL', 'http://eval-specific:7070/v1');
+    vi.stubEnv('LIMINAL_EVALUATOR_MODEL', 'eval-specific-model');
+    vi.stubEnv('LIMINAL_EVALUATOR_API_KEY', 'eval-specific-key');
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    expect(config.evaluator.baseUrl).toBe('http://eval-specific:7070/v1');
+    expect(config.evaluator.model).toBe('eval-specific-model');
+    expect(config.evaluator.apiKey).toBe('eval-specific-key');
+  });
+
+  it('evaluator falls back to LLM_* when EVALUATOR_* not set', async () => {
+    vi.stubEnv('LIMINAL_LLM_BASE_URL', 'http://llm-fallback:8080/v1');
+    vi.stubEnv('LIMINAL_LLM_MODEL', 'llm-fallback-model');
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    expect(config.evaluator.baseUrl).toBe('http://llm-fallback:8080/v1');
+    expect(config.evaluator.model).toBe('llm-fallback-model');
+  });
+
+  it('uses HARNESS_* env vars with fallbacks to LLM_*', async () => {
+    vi.stubEnv('LIMINAL_HARNESS_BASE_URL', 'http://harness-specific:9090/v1');
+    vi.stubEnv('LIMINAL_HARNESS_MODEL', 'harness-specific-model');
+    vi.stubEnv('LIMINAL_HARNESS_API_KEY', 'harness-specific-key');
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    expect(config.harness.baseUrl).toBe('http://harness-specific:9090/v1');
+    expect(config.harness.model).toBe('harness-specific-model');
+    expect(config.harness.apiKey).toBe('harness-specific-key');
   });
 
   it('evaluator uses evaluator-specific env vars', async () => {
@@ -320,6 +366,24 @@ describe('getFallbacks', () => {
       },
     };
     expect(getFallbacks('generator', config)).toEqual([]);
+  });
+
+  it('returns multiple fallback configs when defined', () => {
+    const config: RoleConfigFile = {
+      roles: {
+        generator: { baseUrl: 'http://primary:1234/v1', model: 'primary-model' },
+      },
+      fallbacks: {
+        generator: [
+          { baseUrl: 'http://fallback1:1234/v1', model: 'fallback-1' },
+          { baseUrl: 'http://fallback2:1234/v1', model: 'fallback-2' },
+        ],
+      },
+    };
+    const fallbacks = getFallbacks('generator', config);
+    expect(fallbacks.length).toBe(2);
+    expect(fallbacks[0].model).toBe('fallback-1');
+    expect(fallbacks[1].model).toBe('fallback-2');
   });
 });
 

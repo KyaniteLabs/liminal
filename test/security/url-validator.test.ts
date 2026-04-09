@@ -1,5 +1,8 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { validateUrl, SSRFError, getAllowedHostsFromEnv } from '../../src/security/UrlValidator.js';
+import { validateUrlSync, SSRFError, getAllowedHostsFromEnv } from '../../src/security/UrlValidator.js';
+
+// Use sync version for tests to avoid async/await boilerplate
+const validateUrl = validateUrlSync;
 
 describe('UrlValidator', () => {
   describe('validateUrl', () => {

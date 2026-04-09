@@ -709,6 +709,12 @@
       "type": "file"
     },
     {
+      "path": "test/security/url-validator.test.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775696977528,
+      "type": "file"
+    },
+    {
       "path": "src/llm/ModelConfig.ts",
       "accessCount": 1,
       "lastAccessed": 1775684597709,
@@ -767,6 +773,12 @@
       "accessCount": 1,
       "lastAccessed": 1775694477224,
       "type": "directory"
+    },
+    {
+      "path": "src/security/UrlValidator.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775696950218,
+      "type": "file"
     }
   ],
   "userDirectives": []

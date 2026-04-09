@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -58,6 +59,14 @@ type Model struct {
 	ModelName     string
 	TrustLabel    string
 	PendingAction *bridge.PendingAction
+
+	// Generation telemetry
+	GenerationModel      string
+	GenerationDuration   int64  // ms
+	GenerationIterations int
+	GenerationScore      float64
+	GenerationReason     string
+	CurrentIteration     int
 
 	// Live bridge state
 	Bridge       *bridge.Client
@@ -176,6 +185,30 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			m.PreviewType = "image"
 		}
 		m.PreviewVisible = true
+	case "generation.iteration":
+		m.CurrentIteration = event.Iteration
+		m.GenerationScore = event.Score
+	case "generation.complete":
+		m.GenerationIterations = event.Iterations
+		m.GenerationScore = event.FinalScore
+		m.GenerationDuration = event.Duration
+		m.GenerationModel = event.Model
+		m.GenerationReason = event.Reason
+		// Add generation summary as a system block
+		summary := fmt.Sprintf("Generation complete: %d iterations, score %.2f, model %s (%s)",
+			event.Iterations, event.FinalScore, event.Model, event.Reason)
+		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
+			Type:    "system",
+			Content: summary,
+			Time:    time.Now(),
+		})
+	case "response.metadata":
+		if event.Model != "" {
+			m.ModelName = event.Model
+		}
+		if event.Duration > 0 {
+			m.GenerationDuration = event.Duration
+		}
 	}
 }
 

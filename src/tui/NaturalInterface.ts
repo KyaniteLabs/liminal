@@ -72,6 +72,7 @@ export class NaturalInterface {
   private onLog: (msg: string) => void;
   // SOUL loading promise to avoid fire-and-forget
   private soulLoadPromise: Promise<void>;
+  private ambiguityDetector: AmbiguityDetector;
 
   constructor(options: {
     harnessAgent: HarnessAgent;
@@ -98,6 +99,7 @@ export class NaturalInterface {
 
     // Load SOUL.md - store promise to avoid fire-and-forget
     this.soulLoadPromise = this.loadSoul();
+    this.ambiguityDetector = new AmbiguityDetector();
   }
 
   private async loadSoul(): Promise<void> {
@@ -196,11 +198,10 @@ export class NaturalInterface {
     this.onLog(`Agent task: ${input.slice(0, 60)}...`);
 
     // ── Disambiguation gate ──────────────────────────────────────
-    const ambiguityDetector = new AmbiguityDetector();
-    const issues = ambiguityDetector.detect(input);
+    const issues = this.ambiguityDetector.detect(input);
 
     if (issues.length > 0) {
-      const hints = ambiguityDetector.getDomainHints(input);
+      const hints = this.ambiguityDetector.getDomainHints(input);
       const questions: Array<{ question: string; options: string[] | null; default: string }> = issues.slice(0, 4).map((issue: { suggestedQuestion: string }) => ({
         question: issue.suggestedQuestion,
         options: null, // free-text answer
@@ -208,10 +209,10 @@ export class NaturalInterface {
       }));
 
       const lines = ['\uD83D\uDD0A Clarifying questions:'];
-      for (const q of questions) {
-        lines.push(`\n${lines.length + 1}. ${q.question}`);
-        if (q.options) {
-          lines.push(`   Options: ${q.options.join(', ')}`);
+      for (let i = 0; i < questions.length; i++) {
+        lines.push(`\n${i + 1}. ${questions[i].question}`);
+        if (questions[i].options) {
+          lines.push(`   Options: ${questions[i].options.join(', ')}`);
         }
       }
       if (hints.length > 0) {

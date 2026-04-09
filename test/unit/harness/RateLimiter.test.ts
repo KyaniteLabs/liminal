@@ -25,66 +25,66 @@ describe('RateLimiter', () => {
   // checkBurst
   // ---------------------------------------------------------------------------
   describe('checkBurst', () => {
-    it('allows calls within burst limit', () => {
+    it('allows calls within burst limit', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 5 } });
 
       for (let i = 0; i < 4; i++) {
-        limiter.recordCall('llmCall');
+        await limiter.recordCall('llmCall');
       }
 
-      const result = limiter.checkBurst('llmCall');
+      const result = await limiter.checkBurst('llmCall');
 
       expect(result.allowed).toBe(true);
       expect(result.retryAfterMs).toBeUndefined();
     });
 
-    it('blocks calls that exceed burst limit', () => {
+    it('blocks calls that exceed burst limit', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 3 } });
 
       for (let i = 0; i < 3; i++) {
-        limiter.recordCall('llmCall');
+        await limiter.recordCall('llmCall');
       }
 
-      const result = limiter.checkBurst('llmCall');
+      const result = await limiter.checkBurst('llmCall');
 
       expect(result.allowed).toBe(false);
       expect(result.retryAfterMs).toBeGreaterThan(0);
     });
 
-    it('allows unknown operations (no config = unlimited)', () => {
+    it('allows unknown operations (no config = unlimited)', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 1 } });
 
       // No config registered for 'unknownOp'
-      const result = limiter.checkBurst('unknownOp');
+      const result = await limiter.checkBurst('unknownOp');
 
       expect(result.allowed).toBe(true);
     });
 
-    it('releases block after time window passes', () => {
+    it('releases block after time window passes', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 2 } });
 
-      limiter.recordCall('llmCall');
-      limiter.recordCall('llmCall');
+      await limiter.recordCall('llmCall');
+      await limiter.recordCall('llmCall');
 
       // Blocked now
-      expect(limiter.checkBurst('llmCall').allowed).toBe(false);
+      expect((await limiter.checkBurst('llmCall')).allowed).toBe(false);
 
       // Advance past the 1-minute window
       vi.advanceTimersByTime(60_000 + 1);
 
       // Should be allowed again — old calls are outside the window
-      const result = limiter.checkBurst('llmCall');
+      const result = await limiter.checkBurst('llmCall');
       expect(result.allowed).toBe(true);
     });
 
-    it('reports retryAfterMs as time until oldest call exits the window', () => {
+    it('reports retryAfterMs as time until oldest call exits the window', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 1 } });
 
-      limiter.recordCall('llmCall');
+      await limiter.recordCall('llmCall');
       // Elapse 10 seconds so the retry time is ~50s
       vi.advanceTimersByTime(10_000);
 
-      const result = limiter.checkBurst('llmCall');
+      const result = await limiter.checkBurst('llmCall');
       expect(result.allowed).toBe(false);
       // Should be roughly 50 seconds (60 - 10 = 50), allow ±2s for rounding
       expect(result.retryAfterMs!).toBeGreaterThanOrEqual(49_000);
@@ -191,7 +191,7 @@ describe('RateLimiter', () => {
       const limiter = new RateLimiter({ op: { minDelayMs: 0, maxPerMinute: 10 } });
 
       await limiter.execute('op', async () => 'ok');
-      const status = limiter.getStatus('op');
+      const status = await limiter.getStatus('op');
 
       expect(status.callsLastMinute).toBe(1);
     });
@@ -201,10 +201,10 @@ describe('RateLimiter', () => {
   // getStatus
   // ---------------------------------------------------------------------------
   describe('getStatus', () => {
-    it('returns zero counts for an untracked operation', () => {
+    it('returns zero counts for an untracked operation', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 5 } });
 
-      const status = limiter.getStatus('llmCall');
+      const status = await limiter.getStatus('llmCall');
 
       expect(status.callsLastMinute).toBe(0);
       expect(status.limit).toBe(5);
@@ -212,37 +212,37 @@ describe('RateLimiter', () => {
       expect(status.timeUntilReset).toBe(0);
     });
 
-    it('returns correct counts after recorded calls', () => {
+    it('returns correct counts after recorded calls', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 5 } });
 
-      limiter.recordCall('llmCall');
-      limiter.recordCall('llmCall');
-      limiter.recordCall('llmCall');
+      await limiter.recordCall('llmCall');
+      await limiter.recordCall('llmCall');
+      await limiter.recordCall('llmCall');
 
-      const status = limiter.getStatus('llmCall');
+      const status = await limiter.getStatus('llmCall');
 
       expect(status.callsLastMinute).toBe(3);
       expect(status.limit).toBe(5);
       expect(status.remaining).toBe(2);
     });
 
-    it('returns Infinity for unknown operations', () => {
+    it('returns Infinity for unknown operations', async () => {
       const limiter = new RateLimiter({ llmCall: { minDelayMs: 0, maxPerMinute: 5 } });
 
-      const status = limiter.getStatus('mystery');
+      const status = await limiter.getStatus('mystery');
 
       expect(status.callsLastMinute).toBe(0);
       expect(status.limit).toBe(Infinity);
       expect(status.remaining).toBe(Infinity);
     });
 
-    it('reports timeUntilReset based on oldest call in window', () => {
+    it('reports timeUntilReset based on oldest call in window', async () => {
       const limiter = new RateLimiter({ op: { minDelayMs: 0, maxPerMinute: 10 } });
 
-      limiter.recordCall('op');
+      await limiter.recordCall('op');
       vi.advanceTimersByTime(15_000);
 
-      const status = limiter.getStatus('op');
+      const status = await limiter.getStatus('op');
 
       // Oldest call was 15s ago, so reset in ~45s
       expect(status.timeUntilReset!).toBeGreaterThanOrEqual(44_000);
@@ -254,44 +254,44 @@ describe('RateLimiter', () => {
   // Independent operation tracking
   // ---------------------------------------------------------------------------
   describe('multiple operations tracked independently', () => {
-    it('tracks separate operations without interference', () => {
+    it('tracks separate operations without interference', async () => {
       const limiter = new RateLimiter({
         opA: { minDelayMs: 0, maxPerMinute: 2 },
         opB: { minDelayMs: 0, maxPerMinute: 5 },
       });
 
       // Fill opA to its limit
-      limiter.recordCall('opA');
-      limiter.recordCall('opA');
+      await limiter.recordCall('opA');
+      await limiter.recordCall('opA');
 
       // opA is blocked, opB is still allowed
-      expect(limiter.checkBurst('opA').allowed).toBe(false);
-      expect(limiter.checkBurst('opB').allowed).toBe(true);
+      expect((await limiter.checkBurst('opA')).allowed).toBe(false);
+      expect((await limiter.checkBurst('opB')).allowed).toBe(true);
 
       // Statuses are independent
-      expect(limiter.getStatus('opA').callsLastMinute).toBe(2);
-      expect(limiter.getStatus('opB').callsLastMinute).toBe(0);
+      expect((await limiter.getStatus('opA')).callsLastMinute).toBe(2);
+      expect((await limiter.getStatus('opB')).callsLastMinute).toBe(0);
     });
 
-    it('resets one operation without affecting another', () => {
+    it('resets one operation without affecting another', async () => {
       const limiter = new RateLimiter({
         opA: { minDelayMs: 0, maxPerMinute: 1 },
         opB: { minDelayMs: 0, maxPerMinute: 1 },
       });
 
-      limiter.recordCall('opA');
-      limiter.recordCall('opB');
+      await limiter.recordCall('opA');
+      await limiter.recordCall('opB');
 
       // Both blocked
-      expect(limiter.checkBurst('opA').allowed).toBe(false);
-      expect(limiter.checkBurst('opB').allowed).toBe(false);
+      expect((await limiter.checkBurst('opA')).allowed).toBe(false);
+      expect((await limiter.checkBurst('opB')).allowed).toBe(false);
 
       // Advance past window
       vi.advanceTimersByTime(60_001);
 
       // Both unblocked
-      expect(limiter.checkBurst('opA').allowed).toBe(true);
-      expect(limiter.checkBurst('opB').allowed).toBe(true);
+      expect((await limiter.checkBurst('opA')).allowed).toBe(true);
+      expect((await limiter.checkBurst('opB')).allowed).toBe(true);
     });
   });
 });

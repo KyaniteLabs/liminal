@@ -655,6 +655,12 @@
       "type": "file"
     },
     {
+      "path": "test/unit/harness/RateLimiter.test.ts",
+      "accessCount": 6,
+      "lastAccessed": 1775696148319,
+      "type": "file"
+    },
+    {
       "path": "src/core/ContextAccumulation.ts",
       "accessCount": 5,
       "lastAccessed": 1775695837193,
@@ -677,6 +683,12 @@
       "accessCount": 2,
       "lastAccessed": 1775692356137,
       "type": "directory"
+    },
+    {
+      "path": "src/harness/tools/RateLimiter.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775696057688,
+      "type": "file"
     },
     {
       "path": "src/llm/ModelConfig.ts",

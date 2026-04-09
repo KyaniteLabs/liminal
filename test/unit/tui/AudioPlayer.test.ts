@@ -42,6 +42,11 @@ vi.mock('../../../src/utils/errors.js', () => ({
   formatError: mockFormatError,
 }));
 
+// Mock previewSafety to allow test paths through
+vi.mock('../../../src/tui/preview/previewSafety.js', () => ({
+  validateAudioPreviewPath: vi.fn(() => null), // null = no error
+}));
+
 // ---------------------------------------------------------------------------
 // Import SUT after mocks
 // ---------------------------------------------------------------------------
@@ -182,22 +187,20 @@ describe('AudioPlayer', () => {
       );
     });
 
-    it('uses execFile for win32 start command', async () => {
+    it('uses spawn for win32 start command', async () => {
       setPlatform('win32');
-      // On win32, play() calls execFile('start', ...) directly (not promisified one)
-      // The mock for node:child_process provides execFile as vi.fn()
-      const childProcess = await import('node:child_process');
-      const mockExecFile = childProcess.execFile as ReturnType<typeof vi.fn>;
-      mockExecFile.mockImplementation((_cmd: string, _args: string[], _opts: object) => {});
+      // On win32, play() uses spawn('cmd.exe', ['/c', 'start', '""', filepath])
+      const proc = mockChildProcess();
+      mockSpawn.mockReturnValue(proc);
 
       const player = new AudioPlayer();
       const result = await player.play('/tmp/song.mp3');
 
       expect(result.success).toBe(true);
-      expect(mockExecFile).toHaveBeenCalledWith(
-        'start',
-        ['/tmp/song.mp3'],
-        expect.objectContaining({ shell: true, windowsHide: true }),
+      expect(mockSpawn).toHaveBeenCalledWith(
+        'cmd.exe',
+        ['/c', 'start', '""', '/tmp/song.mp3'],
+        expect.objectContaining({ windowsHide: true, stdio: 'ignore' }),
       );
     });
 

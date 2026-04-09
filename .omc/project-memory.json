@@ -673,6 +673,12 @@
       "type": "file"
     },
     {
+      "path": "test/unit/tui/AudioPlayer.test.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775696498585,
+      "type": "file"
+    },
+    {
       "path": "test/unit/llm/ModelConfig.test.ts",
       "accessCount": 3,
       "lastAccessed": 1775692260443,
@@ -688,6 +694,12 @@
       "path": "src/harness/tools/RateLimiter.ts",
       "accessCount": 2,
       "lastAccessed": 1775696057688,
+      "type": "file"
+    },
+    {
+      "path": "src/tui/preview/AudioPlayer.ts",
+      "accessCount": 2,
+      "lastAccessed": 1775696483585,
       "type": "file"
     },
     {

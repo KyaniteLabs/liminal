@@ -63,7 +63,7 @@ describe('LLMClient Configuration', () => {
   });
 
   test('isConfigured returns true when LIMINAL_LLM_API_KEY is set', () => {
-    process.env.LIMINAL_LLM_API_KEY = 'test-sk-key';
+    process.env.LIMINAL_LLM_API_KEY = 'test-key-not-real';
     expect(LLMClient.isConfigured()).toBe(true);
   });
 
@@ -74,7 +74,7 @@ describe('LLMClient Configuration', () => {
   });
 
   test('isConfigured returns true when OPENAI_API_KEY is set', () => {
-    process.env.OPENAI_API_KEY = 'sk-test';
+    process.env.OPENAI_API_KEY = 'test-api-key-not-real';
     expect(LLMClient.isConfigured()).toBe(true);
     delete process.env.OPENAI_API_KEY;
   });
@@ -91,7 +91,7 @@ describe('LLMClient OpenAI (W0-L)', () => {
 
     const client = new LLMClient({
       provider: 'openai',
-      apiKey: 'test-sk-key',
+      apiKey: 'test-key-not-real',
       model: 'gpt-4o-mini',
     });
 
@@ -102,7 +102,7 @@ describe('LLMClient OpenAI (W0-L)', () => {
     expect(getLastUrl()).toMatch(/openai\.com.*chat\/completions|.*\/v1\/chat\/completions/);
     const opts = getLastOpts();
     expect(opts?.method).toBe('POST');
-    expect((opts?.headers as Record<string, string>)?.['Authorization']).toBe('Bearer test-sk-key');
+    expect((opts?.headers as Record<string, string>)?.['Authorization']).toBe('Bearer test-key-not-real');
     expect((opts?.headers as Record<string, string>)?.['Content-Type']).toBe('application/json');
     const body = JSON.parse((opts?.body as string) ?? '{}');
     expect(body.model).toBe('gpt-4o-mini');

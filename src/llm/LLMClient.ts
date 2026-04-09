@@ -16,6 +16,7 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import { validateUrl, getAllowedHostsFromEnv, SSRFError } from '../security/UrlValidator.js';
 import { failureLogger } from '../harness/FailureLogger.js';
 import { env } from '../utils/env.js';
+import { timeoutFetch } from '../utils/timeoutFetch.js';
 import { Logger } from '../utils/Logger.js';
 import { Provider } from '../types/providers.js';
 
@@ -511,7 +512,7 @@ export class LLMClient {
     }
 
     try {
-      const response = await fetch(`${baseUrl}/models`);
+      const response = await timeoutFetch(`${baseUrl}/models`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
       const data = await response.json() as { data?: Array<{ id: string }> };

@@ -32,6 +32,7 @@ import { normalizeThinking, extractAnthropicThinking } from '../ThinkingNormaliz
 import { parseOpenAIStream, parseAnthropicStream } from '../StreamParser.js';
 import { Logger } from '../../utils/Logger.js';
 import { LLMError } from '../errors.js';
+import { timeoutFetch } from '../../utils/timeoutFetch.js';
 
 export class MiniMaxProvider extends BaseProvider {
   readonly name = 'minimax';
@@ -113,7 +114,7 @@ export class MiniMaxProvider extends BaseProvider {
     Logger.debug('MiniMaxProvider', `Request to ${url} with model ${this.config.model}`);
 
     try {
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -268,7 +269,7 @@ export class MiniMaxProvider extends BaseProvider {
     Logger.debug('MiniMaxProvider', `Anthropic-mode request to ${url} with model ${this.config.model}`);
 
     try {
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -342,7 +343,7 @@ export class MiniMaxProvider extends BaseProvider {
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
 
     try {
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -403,7 +404,7 @@ export class MiniMaxProvider extends BaseProvider {
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
 
     try {
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),

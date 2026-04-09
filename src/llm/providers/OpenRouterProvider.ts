@@ -20,6 +20,7 @@ import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { extractOpenRouterThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
+import { timeoutFetch } from '../../utils/timeoutFetch.js';
 
 export class OpenRouterProvider extends BaseProvider {
   readonly name = 'openrouter';
@@ -65,7 +66,7 @@ export class OpenRouterProvider extends BaseProvider {
 
       const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
 
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -129,7 +130,7 @@ export class OpenRouterProvider extends BaseProvider {
 
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
 
-    const response = await fetch(url, {
+    const response = await timeoutFetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),

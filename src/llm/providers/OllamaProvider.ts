@@ -19,6 +19,7 @@ import { TIMEOUT_DEFAULT_MS, TIMEOUT_OLLAMA_MS } from '../../constants/limits.js
 import { normalizeThinking, stripThinkTags } from '../ThinkingNormalizer.js';
 import { parseOllamaStream, parseOpenAIStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
+import { timeoutFetch } from '../../utils/timeoutFetch.js';
 
 export class OllamaProvider extends BaseProvider {
   readonly name = 'ollama';
@@ -60,7 +61,7 @@ export class OllamaProvider extends BaseProvider {
 
       const signal = req.signal || AbortSignal.timeout(TIMEOUT_OLLAMA_MS);
 
-      const response = await fetch(`${baseUrl}/api/generate`, {
+      const response = await timeoutFetch(`${baseUrl}/api/generate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -131,7 +132,7 @@ export class OllamaProvider extends BaseProvider {
 
       const signal = req.signal || AbortSignal.timeout(TIMEOUT_DEFAULT_MS);
 
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
@@ -192,7 +193,7 @@ export class OllamaProvider extends BaseProvider {
 
     const signal = req.signal || AbortSignal.timeout(TIMEOUT_OLLAMA_MS);
 
-    const response = await fetch(`${baseUrl}/api/generate`, {
+    const response = await timeoutFetch(`${baseUrl}/api/generate`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -228,7 +229,7 @@ export class OllamaProvider extends BaseProvider {
 
     const signal = req.signal || AbortSignal.timeout(300000);
 
-    const response = await fetch(url, {
+    const response = await timeoutFetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),

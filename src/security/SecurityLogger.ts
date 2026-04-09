@@ -3,6 +3,7 @@
  */
 
 import { Logger } from '../utils/Logger.js';
+import { timeoutFetch } from '../utils/timeoutFetch.js';
 
 export type SecurityEventType = 
   | 'ssrf_blocked'
@@ -89,7 +90,7 @@ export class SecurityLogger {
   private async sendToSIEM(event: SecurityEvent): Promise<void> {
     if (!this.config.siemEndpoint) return;
 
-    const response = await fetch(this.config.siemEndpoint, {
+    const response = await timeoutFetch(this.config.siemEndpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

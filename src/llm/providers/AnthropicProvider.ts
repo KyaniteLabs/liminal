@@ -20,6 +20,7 @@ import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { extractAnthropicThinking } from '../ThinkingNormalizer.js';
 import { parseAnthropicStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
+import { timeoutFetch } from '../../utils/timeoutFetch.js';
 
 export class AnthropicProvider extends BaseProvider {
   readonly name = 'anthropic';
@@ -68,7 +69,7 @@ export class AnthropicProvider extends BaseProvider {
 
       const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
 
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers,
         body: JSON.stringify(body),
@@ -149,7 +150,7 @@ export class AnthropicProvider extends BaseProvider {
 
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
 
-    const response = await fetch(url, {
+    const response = await timeoutFetch(url, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),

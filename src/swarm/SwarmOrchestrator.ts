@@ -15,6 +15,7 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { Logger } from '../utils/Logger.js';
+import { timeoutFetch } from '../utils/timeoutFetch.js';
 
 /** Default config for SwarmOrchestrator — single source of truth for all defaults. */
 const DEFAULT_SWARM_CONFIG: SwarmConfig = {
@@ -330,7 +331,7 @@ export class SwarmOrchestrator {
     options?: { temperature?: number; num_predict?: number }
   ): Promise<string> {
     const url = `${this.config.ollamaHost}/api/chat`;
-    const response = await fetch(url, {
+    const response = await timeoutFetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

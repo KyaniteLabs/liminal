@@ -6,6 +6,7 @@
 
 import { pipeline, type FeatureExtractionPipeline } from '@xenova/transformers';
 import { Logger } from '../utils/Logger.js';
+import { timeoutFetch } from '../utils/timeoutFetch.js';
 
 /** Configuration for embedding service */
 export interface EmbeddingConfig {
@@ -207,7 +208,7 @@ export class EmbeddingService {
   }
 
   private async embedOpenAI(text: string): Promise<EmbeddingResult> {
-    const response = await fetch(
+    const response = await timeoutFetch(
       'https://api.openai.com/v1/embeddings',
       {
         method: 'POST',

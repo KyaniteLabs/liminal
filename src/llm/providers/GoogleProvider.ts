@@ -19,6 +19,7 @@ import { BaseProvider } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { LLMError } from '../errors.js';
+import { timeoutFetch } from '../../utils/timeoutFetch.js';
 
 export class GoogleProvider extends BaseProvider {
   readonly name = 'google';
@@ -78,7 +79,7 @@ export class GoogleProvider extends BaseProvider {
 
       const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
 
-      const response = await fetch(url, {
+      const response = await timeoutFetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),

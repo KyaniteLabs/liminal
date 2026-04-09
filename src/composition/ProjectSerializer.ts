@@ -21,6 +21,7 @@ import {
   AssetType,
 } from './types.js';
 import { validateUrl, getAllowedHostsFromEnv } from '../security/UrlValidator.js';
+import { timeoutFetch } from '../utils/timeoutFetch.js';
 
 /** Export options for project serialization */
 export interface ExportOptions {
@@ -278,7 +279,7 @@ export class ProjectSerializer {
       allowLocalhost: process.env.LIMINAL_ALLOW_LOCALHOST_LLM === 'true'
     });
 
-    const response = await fetch(url);
+    const response = await timeoutFetch(url);
     if (!response.ok) {
       throw new Error(`Failed to fetch project: ${response.status} ${response.statusText}`);
     }

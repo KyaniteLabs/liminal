@@ -179,7 +179,6 @@ export class TuiBridgeService {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
 
-    const startTime = Date.now();
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
 

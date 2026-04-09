@@ -73,12 +73,8 @@ describe('FragmentScorer', () => {
         code: JSON.stringify({ score: 8.5, reasoning: 'High quality' }),
       });
       const frag = makeFragment();
-      const result = await scorer.scoreLLM(frag);
-      // scoreLLM returns Result<number, LLMError> - need to unwrap
-      expect(result.isOk()).toBe(true);
-      if (result.isOk()) {
-        expect(result.value).toBeGreaterThanOrEqual(0);
-      }
+      const score = await scorer.scoreLLM(frag);
+      expect(score).toBeGreaterThanOrEqual(0);
       expect(mockLLM.generate).toHaveBeenCalled();
     });
   });

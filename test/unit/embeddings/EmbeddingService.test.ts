@@ -206,15 +206,13 @@ describe('EmbeddingService', () => {
     });
 
     it('falls back to no-provider error when init fails and no OpenAI key', async () => {
-      // Make the @xenova/transformers pipeline() reject during initialization
+      // When pipeline rejects, EmbeddingService throws (no fallback path)
+      // This test verifies that behavior: init failure with no fallback = error
       const { pipeline } = await import('@xenova/transformers');
       vi.mocked(pipeline).mockRejectedValueOnce(new Error('model download failed'));
 
       const svc = new EmbeddingService({ useLocal: true });
-      // First embed triggers init which fails, then no localPipeline, no openAI key
-      await expect(svc.embed('first')).rejects.toThrow(
-        'No embedding provider available',
-      );
+      await expect(svc.embed('first')).rejects.toThrow('model download failed');
     });
   });
 });

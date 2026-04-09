@@ -64,8 +64,14 @@ export class CompostSoup {
     const fragA = fragsA[Math.floor(Math.random() * fragsA.length)];
     const fragB = fragsB[Math.floor(Math.random() * fragsB.length)];
 
-    // Merge via LLM
-    const offspringContent = await this.mergeViaLLM(fragA, fragB);
+    // Merge via LLM — graceful degradation if LLM fails
+    let offspringContent: string;
+    try {
+      offspringContent = await this.mergeViaLLM(fragA, fragB);
+    } catch (mergeErr) {
+      Logger.warn('CompostSoup', `LLM merge failed, skipping offspring: ${mergeErr instanceof Error ? mergeErr.message : String(mergeErr)}`);
+      return state;
+    }
 
     // Create offspring fragment
     const offspring: CompostFragment = {

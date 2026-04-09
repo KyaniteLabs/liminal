@@ -37,6 +37,7 @@ test-output/
 
 # Test session logs
 test-stream/
+benchmark-output/
 
 # Claude Code
 .claude/
@@ -122,3 +123,6 @@ test-api-export-temp/
 test-api-gallery-temp/
 .omc/state/
 bubbletea/
+
+# Archives
+*.zip

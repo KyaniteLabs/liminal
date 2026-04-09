@@ -50,11 +50,11 @@ export class GitIntegration {
 
   /**
    * Start a RalphLoop run:
-   * 1. Stash any uncommitted changes
-   * 2. Create a branch named `{prefix}{name}-{timestamp}`
+   * 1. Stash any uncommitted changes (namespaced to session)
+   * 2. Reuse existing session branch or create a new one
    * 3. Record branch creation via CompostBridge
    */
-  async startRun(name: string): Promise<Result<string, GitError>> {
+  async startRun(name: string, sessionId?: string): Promise<Result<string, GitError>> {
     if (!this.config.enabled) return ok('');
     if (!this.config.branchPerRun) return ok('');
     return this.lock.acquire(async () => {
@@ -68,25 +68,48 @@ export class GitIntegration {
     // Save current branch to restore later
     this.originalBranch = await this.git.currentBranch();
 
-    // Stash dirty working tree if needed
+    // Stash dirty working tree if needed (namespaced by session)
     const statusResult = await this.git.status();
     if (statusResult.isErr()) {
       return err(new GitError('Failed to get status before stash', { cause: statusResult.error, retryable: true }));
     }
     const status = statusResult.value;
     if (!status.isClean()) {
-      await this.git.stash(`liminal: auto-stash before run ${name}`);
+      const stashMsg = sessionId
+        ? `agent:${sessionId}:stash before run ${name}`
+        : `liminal: auto-stash before run ${name}`;
+      await this.git.stash(stashMsg);
       Logger.info('GitIntegration', 'Stashed uncommitted changes before run');
     }
 
-    // Create run branch
-    const timestamp = Date.now();
-    const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40);
-    const branchName = `${this.config.branchPrefix}${safeName}-${timestamp}`;
-    try {
-      await this.git.branch(branchName);
-    } catch (e) {
-      return err(new GitError(`Failed to create branch: ${branchName}`, { cause: e instanceof Error ? e : undefined, retryable: false }));
+    // Create or reuse session branch
+    // Branch name format: liminal/<sessionId> (session-scoped, no timestamp-per-iteration)
+    let branchName: string;
+    if (sessionId) {
+      branchName = `${this.config.branchPrefix}${sessionId}`;
+      // Check if branch already exists — reuse it
+      const existingBranches = await this.git.branchList();
+      if (existingBranches.includes(branchName)) {
+        await this.git.checkout(branchName);
+        Logger.info('GitIntegration', `Reused existing session branch: ${branchName}`);
+      } else {
+        try {
+          await this.git.branch(branchName);
+          Logger.info('GitIntegration', `Created session branch: ${branchName}`);
+        } catch (e) {
+          return err(new GitError(`Failed to create branch: ${branchName}`, { cause: e instanceof Error ? e : undefined, retryable: false }));
+        }
+      }
+    } else {
+      // Legacy fallback: timestamp-based branch name (for non-session calls)
+      const timestamp = Date.now();
+      const safeName = name.replace(/[^a-zA-Z0-9_-]/g, '-').slice(0, 40);
+      branchName = `${this.config.branchPrefix}${safeName}-${timestamp}`;
+      try {
+        await this.git.branch(branchName);
+      } catch (e) {
+        return err(new GitError(`Failed to create branch: ${branchName}`, { cause: e instanceof Error ? e : undefined, retryable: false }));
+      }
     }
     this.runBranch = branchName;
 
@@ -174,16 +197,17 @@ export class GitIntegration {
 
   /**
    * End a RalphLoop run:
-   * 1. Optionally commit final state
-   * 2. Restore the original branch
-   * 3. Pop stash if we stashed earlier
+   * 1. Commit final state only if dirty
+   * 2. Clean up session-scoped stashes
+   * 3. Restore the original branch
+   * 4. Pop stash if we stashed earlier
    */
-  async endRun(reason: string): Promise<void> {
+  async endRun(reason: string, sessionId?: string): Promise<void> {
     if (!this.config.enabled || !this.runBranch) return;
 
     return this.lock.acquire(async () => {
     try {
-      // Commit any remaining changes
+      // Commit any remaining changes only if dirty
       const statusResult = await this.git.status();
       if (statusResult.isErr()) {
         Logger.warn('GitIntegration', `Failed to get status at end of run: ${statusResult.error.message}`);
@@ -192,13 +216,28 @@ export class GitIntegration {
         Logger.info('GitIntegration', 'Committed final changes before restoring branch');
       }
 
+      // Clean up session-scoped stashes for this agent session
+      if (sessionId) {
+        try {
+          const allStashes = await this.git.stashListFull();
+          for (const stash of allStashes) {
+            if (stash.message?.includes(`agent:${sessionId}:`)) {
+              await this.git.stashDrop(stash.hash);
+              Logger.info('GitIntegration', `Cleaned up session stash: ${stash.hash}`);
+            }
+          }
+        } catch {
+          // Stash cleanup failures are non-fatal
+        }
+      }
+
       // Restore original branch
       if (this.originalBranch) {
         await this.git.checkout(this.originalBranch);
         Logger.info('GitIntegration', `Restored branch: ${this.originalBranch}`);
       }
 
-      // Pop stash if we had one
+      // Pop stash if we had one (legacy — non-session stashes)
       try {
         const stashes = await this.git.stashList();
         if (stashes.length > 0) {

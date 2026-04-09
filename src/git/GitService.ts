@@ -160,6 +160,12 @@ export class GitService {
     }));
   }
 
+  /** List all local branch names (for checking existence) */
+  async branchList(): Promise<string[]> {
+    const result = await this.git.branch();
+    return result.all;
+  }
+
   /** Delete a branch */
   async deleteBranch(name: string, force = false): Promise<void> {
     const flag = force ? '-D' : '-d';
@@ -195,6 +201,18 @@ export class GitService {
   async stashPop(): Promise<void> {
     await this.git.stash(['pop']);
     Logger.info('GitService', 'Popped stash');
+  }
+
+  /** List all stashes with full hash + message */
+  async stashListFull(): Promise<Array<{ hash: string; message?: string }>> {
+    const result = await this.git.stashList();
+    return result.all.map((entry) => ({ hash: entry.hash, message: entry.message }));
+  }
+
+  /** Drop a specific stash by hash */
+  async stashDrop(stashRef: string): Promise<void> {
+    await this.git.stash(['drop', stashRef]);
+    Logger.info('GitService', `Dropped stash: ${stashRef}`);
   }
 
   /** List all stashes */

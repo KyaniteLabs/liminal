@@ -91,7 +91,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a simple p5.js sketch with a red circle on white background';
 
       // Generate p5.js sketch
-      const generatedCode = P5Generator.generate(prompt, {});
+      const generatedCode = await P5Generator.generate(prompt, {});
 
       expect(typeof generatedCode).toBe('string');
       expect(generatedCode.length).toBeGreaterThan(0);
@@ -117,7 +117,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a p5.js sketch with a blue rectangle on black background';
 
       // Generate p5.js sketch
-      const generatedCode = P5Generator.generate(prompt, {});
+      const generatedCode = await P5Generator.generate(prompt, {});
 
       // Define output path for screenshot
       const screenshotPath = path.join(testOutputDir, 'blue-rectangle-screenshot.png');
@@ -142,7 +142,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a p5.js sketch with multiple colored shapes';
 
       // Generate p5.js sketch
-      const generatedCode = P5Generator.generate(prompt, {});
+      const generatedCode = await P5Generator.generate(prompt, {});
 
       // Verify code structure
       expect(generatedCode).toContain('function setup');
@@ -168,7 +168,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a p5.js particle system with 50 particles';
 
       // Generate particle system
-      const particleCode = P5Generator.generate(prompt, {});
+      const particleCode = await P5Generator.generate(prompt, {});
 
       // Verify particle-specific content
       expect(particleCode.toLowerCase()).toMatch(/particle|class|system/);
@@ -191,7 +191,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create an animated p5.js sketch with moving elements';
 
       // Generate animated sketch
-      const animatedCode = P5Generator.generate(prompt, {});
+      const animatedCode = await P5Generator.generate(prompt, {});
 
       // Verify animation-related content
       expect(animatedCode).toContain('function draw');
@@ -214,7 +214,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a p5.js sketch that responds to mouse interaction';
 
       // Generate interactive sketch
-      const interactiveCode = P5Generator.generate(prompt, {});
+      const interactiveCode = await P5Generator.generate(prompt, {});
 
       // Verify interaction-specific content
       expect(interactiveCode.toLowerCase()).toMatch(/(mouse|mousex|mousey|mousepressed|mousemoved)/);
@@ -236,7 +236,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a p5.js cellular automata simulation';
 
       // Generate cellular automata
-      const caCode = P5Generator.generate(prompt, {});
+      const caCode = await P5Generator.generate(prompt, {});
 
       // Verify CA-related content
       expect(caCode.toLowerCase()).toMatch(/(cellular|automata|grid|cells)/);
@@ -260,7 +260,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a high-quality p5.js visualization';
 
       // Generate sketch
-      const sketchCode = P5Generator.generate(prompt, {});
+      const sketchCode = await P5Generator.generate(prompt, {});
 
       // Render and capture screenshot
       const screenshotPath = path.join(testOutputDir, 'high-quality-screenshot.png');
@@ -289,7 +289,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
         const prompt = `Create a p5.js sketch with canvas size ${size.width}x${size.height}`;
 
         // Generate sketch with specific canvas size
-        const sketchCode = P5Generator.generate(prompt, {});
+        const sketchCode = await P5Generator.generate(prompt, {});
 
         // Verify canvas size in generated code
         expect(sketchCode).toMatch(/\d+/); // Should contain numbers
@@ -320,7 +320,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a p5.js sketch with 600x400 canvas';
 
       // Generate sketch
-      const sketchCode = P5Generator.generate(prompt, {});
+      const sketchCode = await P5Generator.generate(prompt, {});
 
       // Render and capture screenshot
       const screenshotPath = path.join(testOutputDir, 'dimension-test-screenshot.png');
@@ -349,7 +349,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
       for (const prompt of edgeCasePrompts) {
         // Generate sketch (should handle gracefully)
-        const sketchCode = P5Generator.generate(prompt, {});
+        const sketchCode = await P5Generator.generate(prompt, {});
 
         expect(typeof sketchCode).toBe('string');
         expect(sketchCode.length).toBeGreaterThan(0);
@@ -387,7 +387,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
       for (const prompt of unicodePrompts) {
         // Generate sketch
-        const sketchCode = P5Generator.generate(prompt, {});
+        const sketchCode = await P5Generator.generate(prompt, {});
 
         expect(typeof sketchCode).toBe('string');
         expect(sketchCode.length).toBeGreaterThan(0);
@@ -417,7 +417,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
         const prompt = `Create iteration ${i} p5.js sketch`;
 
         // Generate
-        const sketchCode = P5Generator.generate(prompt, {});
+        const sketchCode = await P5Generator.generate(prompt, {});
 
         // Render
         const screenshotPath = path.join(testOutputDir, `rapid-cycle-${i}-screenshot.png`);
@@ -448,7 +448,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
         const prompt = 'Improve the sketch';
 
         // Generate with context
-        const sketchCode = P5Generator.generate(prompt, context);
+        const sketchCode = await P5Generator.generate(prompt, context);
 
         expect(typeof sketchCode).toBe('string');
         expect(sketchCode.length).toBeGreaterThan(0);
@@ -486,7 +486,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
         };
 
         // Generate
-        const sketchCode = P5Generator.generate(prompt, context);
+        const sketchCode = await P5Generator.generate(prompt, context);
 
         // Render
         const screenshotPath = path.join(testOutputDir, `evolution-${i}-screenshot.png`);
@@ -518,7 +518,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       const prompt = 'Create a simple p5.js sketch';
 
       // Generate
-      const sketchCode = P5Generator.generate(prompt, {});
+      const sketchCode = await P5Generator.generate(prompt, {});
 
       // Render
       const screenshotPath = path.join(testOutputDir, 'performance-test-screenshot.png');
@@ -543,7 +543,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
       for (let i = 0; i < iterations; i++) {
         const prompt = `Create sketch ${i}`;
-        const sketchCode = P5Generator.generate(prompt, {});
+        const sketchCode = await P5Generator.generate(prompt, {});
         const screenshotPath = path.join(testOutputDir, `memory-test-${i}-screenshot.png`);
         screenshotPaths.push(screenshotPath);
 
@@ -572,7 +572,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       ];
 
       for (const prompt of prompts) {
-        const sketchCode = P5Generator.generate(prompt, {});
+        const sketchCode = await P5Generator.generate(prompt, {});
 
         // Verify basic syntax
         expect(() => {
@@ -604,7 +604,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
     test('should include proper p5.js structure in generated code', async () => {
       const prompt = 'Create a complete p5.js sketch';
-      const sketchCode = P5Generator.generate(prompt, {});
+      const sketchCode = await P5Generator.generate(prompt, {});
 
       // Verify required p5.js elements
       expect(sketchCode).toContain('function setup');
@@ -637,7 +637,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
       for (const step of workflow) {
         try {
           // Generate
-          const sketchCode = P5Generator.generate(step.prompt, {});
+          const sketchCode = await P5Generator.generate(step.prompt, {});
 
           // Verify generation
           expect(typeof sketchCode).toBe('string');
@@ -681,7 +681,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
         const prompt = i === 0 ? basePrompt : `Refine the generative art, iteration ${i}`;
 
         // Generate rapidly
-        const sketchCode = P5Generator.generate(prompt, { iteration: i + 1 });
+        const sketchCode = await P5Generator.generate(prompt, { iteration: i + 1 });
 
         // Quick render check
         const screenshotPath = path.join(testOutputDir, `prototype-${i}-screenshot.png`);

@@ -194,7 +194,7 @@ export class GenerationOrchestrator {
       }
     }
 
-    return { needsClarification: false as const, code: swarmResult.finalOutput, warnings: warnings.length > 0 ? warnings : undefined };
+    return { needsClarification: false, code: swarmResult.finalOutput, warnings: warnings.length > 0 ? warnings : undefined };
   }
 
   /**
@@ -236,6 +236,6 @@ export class GenerationOrchestrator {
     });
 
     const collabResult = await engine.run(usedPrompt);
-    return { code: collabResult.output };
+    return { needsClarification: false, code: collabResult.output };
   }
 }

@@ -39,6 +39,22 @@ vi.mock('../../../src/harness/tools/index.js', () => ({
   readFileTool: mockReadFile,
 }));
 
+vi.mock('../../../src/fix/TestFailureDetector.js', () => ({
+  TestFailureDetector: class {
+    detect = vi.fn(() => ({
+      success: true,
+      failures: [],
+      failingFileCount: 0,
+      totalFailedTests: 0,
+    }));
+    getSourceFiles = vi.fn(() => []);
+  },
+}));
+
+vi.mock('child_process', () => ({
+  execSync: vi.fn(() => Buffer.from('success')),
+}));
+
 import { AutoFixOrchestrator } from '../../../src/fix/AutoFixOrchestrator.js';
 import { Status } from '../../../src/types/status.js';
 
@@ -250,14 +266,14 @@ describe('AutoFixOrchestrator', () => {
       expect(mockReadFile.execute).toHaveBeenCalledWith({ path: 'src/failing.ts' });
     });
 
-    it('returns not implemented error when no target provided', async () => {
+    it('returns success when no target and no failures detected', async () => {
       const orchestrator = new AutoFixOrchestrator(mockLLM as any);
       const result = await orchestrator.executeFix({
         type: 'test-failures',
       });
 
-      expect(result.success).toBe(false);
-      expect(result.error).toBe('Test failure fix without target not yet implemented - specify a target file');
+      expect(result.success).toBe(true);
+      expect(result.error).toBe('No test failures detected - all tests pass');
     });
   });
 
@@ -392,10 +408,10 @@ describe('AutoFixOrchestrator', () => {
 
   // ── Build and test verification (TODO methods) ─────────────────────
   describe('verification methods (TODO)', () => {
-    it('verifyBuild returns false (not implemented)', async () => {
+    it('verifyBuild returns true when build passes', async () => {
       const orchestrator = new AutoFixOrchestrator(mockLLM as any);
       const result = await orchestrator.verifyBuild();
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
 
     it('verifyTests returns false (not implemented)', async () => {

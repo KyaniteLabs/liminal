@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock all external dependencies before importing
 vi.mock('../../../src/generators/GeneratorRegistry.js', () => {
@@ -103,6 +103,9 @@ describe('GenerationOrchestrator', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no ambiguity detected (disambiguation tests override these per-test)
+    mockDetect.mockReturnValue([]);
+    mockGetDomainHints.mockReturnValue([]);
     gallery = new Gallery({} as any);
     archiveLearning = { addFragment: vi.fn() };
   });
@@ -273,6 +276,16 @@ describe('GenerationOrchestrator', () => {
 
   describe('disambiguation', () => {
     it('returns needsClarification when no dispatch match and prompt is ambiguous', async () => {
+      // Per-test override of the hoisted mock — must use mockImplementation
+      mockDetect.mockImplementation(() => [
+        {
+          type: 'vague' as const,
+          severity: 'medium' as const,
+          description: 'Vague term "cooler" found',
+          suggestedQuestion: 'Describe the specific aesthetic or interaction you find "cool".',
+        },
+      ]);
+      mockGetDomainHints.mockImplementation(() => ['p5']);
       (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue(null);
       const options = makeOptions();
       const orchestrator = new GenerationOrchestrator(options, gallery, null);
@@ -283,12 +296,9 @@ describe('GenerationOrchestrator', () => {
     });
 
     it('falls through to P5 when no dispatch match and prompt is NOT ambiguous', async () => {
-      // Mock AmbiguityDetector to return empty issues for this specific test
-      const { AmbiguityDetector } = await import('../../../src/core/AmbiguityDetector.js');
-      (AmbiguityDetector as any).mockImplementation(function(this: any) {
-        this.detect = vi.fn(() => []); // no ambiguity
-        this.getDomainHints = vi.fn(() => []);
-      });
+      // Ensure detector finds nothing — beforeEach already sets these to [], but be explicit
+      mockDetect.mockImplementation(() => []);
+      mockGetDomainHints.mockImplementation(() => []);
       (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue(null);
       const options = makeOptions();
       const orchestrator = new GenerationOrchestrator(options, gallery, null);
@@ -301,6 +311,15 @@ describe('GenerationOrchestrator', () => {
     });
 
     it('includes domain hints in clarification result', async () => {
+      mockDetect.mockImplementation(() => [
+        {
+          type: 'vague' as const,
+          severity: 'medium' as const,
+          description: '"3d" is ambiguous',
+          suggestedQuestion: 'Do you want WebGL/Three.js or a p5 sketch pretending to be 3D?',
+        },
+      ]);
+      mockGetDomainHints.mockImplementation(() => ['three', 'p5']);
       (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue(null);
       const options = makeOptions();
       const orchestrator = new GenerationOrchestrator(options, gallery, null);

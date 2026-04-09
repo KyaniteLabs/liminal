@@ -139,7 +139,7 @@ export class MetadataExtractor {
    * Extract audio metadata using music-metadata (if available).
    * Returns null if music-metadata is not installed or extraction fails.
    */
-  static async extractAudioMetadata(filePath: string): Promise<{ duration: number; sampleRate?: number; bitrate?: number } | null> {
+  public static async extractAudioMetadata(filePath: string): Promise<{ duration: number; sampleRate?: number; bitrate?: number } | null> {
     const mm = await getMusicMetadata();
     if (!mm || typeof mm !== 'object' || !('parseFile' in mm)) {
       return null;

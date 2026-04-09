@@ -9,6 +9,7 @@
  */
 
 import { LLMClient } from '../llm/LLMClient.js';
+import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { loadSoul } from './IntentRouter.js';
 import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
@@ -39,6 +40,12 @@ interface NaturalInputResult {
   response: string;
   actionTaken?: string;
   shouldContinue: boolean;
+  clarifyingQuestions?: Array<{
+    question: string;
+    options: string[] | null;
+    default: string;
+  }>;
+  suggestions?: string[];
 }
 
 /**
@@ -65,6 +72,7 @@ export class NaturalInterface {
   private onLog: (msg: string) => void;
   // SOUL loading promise to avoid fire-and-forget
   private soulLoadPromise: Promise<void>;
+  private ambiguityDetector: AmbiguityDetector;
 
   constructor(options: {
     harnessAgent: HarnessAgent;
@@ -91,6 +99,7 @@ export class NaturalInterface {
 
     // Load SOUL.md - store promise to avoid fire-and-forget
     this.soulLoadPromise = this.loadSoul();
+    this.ambiguityDetector = new AmbiguityDetector();
   }
 
   private async loadSoul(): Promise<void> {
@@ -187,6 +196,40 @@ export class NaturalInterface {
   private async handleAgentRequest(input: string): Promise<NaturalInputResult> {
     this.onStatus('Thinking...');
     this.onLog(`Agent task: ${input.slice(0, 60)}...`);
+
+    // ── Disambiguation gate ──────────────────────────────────────
+    const issues = this.ambiguityDetector.detect(input);
+
+    if (issues.length > 0) {
+      const hints = this.ambiguityDetector.getDomainHints(input);
+      const questions: Array<{ question: string; options: string[] | null; default: string }> = issues.slice(0, 4).map((issue: { suggestedQuestion: string }) => ({
+        question: issue.suggestedQuestion,
+        options: null, // free-text answer
+        default: '',
+      }));
+
+      const lines = ['\uD83D\uDD0A Clarifying questions:'];
+      for (let i = 0; i < questions.length; i++) {
+        lines.push(`\n${i + 1}. ${questions[i].question}`);
+        if (questions[i].options) {
+          lines.push(`   Options: ${questions[i].options.join(', ')}`);
+        }
+      }
+      if (hints.length > 0) {
+        lines.push(`\n   Detected intent: ${hints.join(', ')}`);
+      }
+      lines.push('\nType your answer(s) to continue, or rephrase your request.');
+
+      return {
+        type: 'ambiguous',
+        response: lines.join('\n'),
+        actionTaken: `${questions.length} question(s) asked`,
+        shouldContinue: true,
+        clarifyingQuestions: questions,
+        suggestions: hints,
+      };
+    }
+    // ── End disambiguation gate ─────────────────────────────────
 
     try {
       const task: LLMTask = {

@@ -935,6 +935,18 @@
       "accessCount": 1,
       "lastAccessed": 1775751783310,
       "type": "directory"
+    },
+    {
+      "path": "vitest.config.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775761270577,
+      "type": "file"
+    },
+    {
+      "path": "src/compost/MetadataExtractor.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775761273108,
+      "type": "file"
     }
   ],
   "userDirectives": []

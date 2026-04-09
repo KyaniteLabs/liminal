@@ -21,6 +21,7 @@ interface ParsedSection {
   parentId: string | null;
   children: string[];
   depth: number;
+  location?: { startLine: number; endLine: number };
   metrics: {
     wordCount: number;
     codeBlockCount: number;
@@ -69,11 +70,12 @@ export class DocParser {
         currentSection.metrics.codeBlockCount = codeBlockCount;
         this.computeWordCount(currentSection);
         // endLine is the last line of content in this section
-        currentSection.location = {
-          ...currentSection.location,
-          startLine: currentSection.location?.startLine ?? 1,
-          endLine: cumNewlines,
-        };
+        if (currentSection.location) {
+          currentSection.location.startLine = currentSection.location.startLine || 1;
+          currentSection.location.endLine = cumNewlines;
+        } else {
+          currentSection.location = { startLine: 1, endLine: cumNewlines };
+        }
         sections.push(currentSection);
         contentBuffer = [];
         linkCount = 0;
@@ -330,8 +332,8 @@ export class DocParser {
         metrics: section.metrics,
         location: {
           file,
-          startLine: 1, // TODO: Track line numbers from AST
-          endLine: 1,
+          startLine: section.location?.startLine ?? 1,
+          endLine: section.location?.endLine ?? 1,
         },
       };
     });

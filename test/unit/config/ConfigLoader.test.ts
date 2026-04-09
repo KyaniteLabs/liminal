@@ -60,29 +60,32 @@ describe('loadConfig', () => {
     });
     mockReadFile.mockResolvedValue(configJson);
 
-    const config = await loadConfig('/test/config.json');
-    expect(config).toEqual({
-      defaultProvider: 'openai',
-      providers: { openai: { apiKey: 'sk-test-openai-key' } },
-    });
+    const result = await loadConfig('/test/config.json');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value).toEqual({
+        defaultProvider: 'openai',
+        providers: { openai: { apiKey: 'sk-test-openai-key' } },
+      });
+    }
   });
 
-  it('returns null when file does not exist', async () => {
+  it('returns Err when file does not exist', async () => {
     mockReadFile.mockRejectedValue(new Error('ENOENT'));
-    const config = await loadConfig('/nonexistent/config.json');
-    expect(config).toBeNull();
+    const result = await loadConfig('/nonexistent/config.json');
+    expect(result.isErr()).toBe(true);
   });
 
-  it('returns null for invalid JSON', async () => {
+  it('returns Err for invalid JSON', async () => {
     mockReadFile.mockResolvedValue('not valid json {{{');
-    const config = await loadConfig('/bad/config.json');
-    expect(config).toBeNull();
+    const result = await loadConfig('/bad/config.json');
+    expect(result.isErr()).toBe(true);
   });
 
-  it('returns null for empty file content', async () => {
+  it('returns Err for empty file content', async () => {
     mockReadFile.mockResolvedValue('');
-    const config = await loadConfig('/empty/config.json');
-    expect(config).toBeNull();
+    const result = await loadConfig('/empty/config.json');
+    expect(result.isErr()).toBe(true);
   });
 });
 
@@ -137,25 +140,31 @@ describe('loadProjectConfig', () => {
     });
     mockReadFile.mockResolvedValue(configJson);
 
-    const config = await loadProjectConfig('/project/dir');
-    expect(config).toEqual({
-      name: 'test-project',
-      llm: { provider: 'ollama', model: 'qwen:7b' },
-    });
+    const result = await loadProjectConfig('/project/dir');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value).toEqual({
+        name: 'test-project',
+        llm: { provider: 'ollama', model: 'qwen:7b' },
+      });
+    }
   });
 
   it('loads project config from file path directly', async () => {
     mockStat.mockResolvedValue({ isDirectory: () => false });
     const configJson = JSON.stringify({ name: 'direct-path-test' });
     mockReadFile.mockResolvedValue(configJson);
-    const config = await loadProjectConfig('/path/to/liminal.json');
-    expect(config).toEqual({ name: 'direct-path-test' });
+    const result = await loadProjectConfig('/path/to/liminal.json');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value).toEqual({ name: 'direct-path-test' });
+    }
   });
 
-  it('returns null when file does not exist', async () => {
+  it('returns Err when file does not exist', async () => {
     mockReadFile.mockRejectedValue(new Error('ENOENT'));
-    const config = await loadProjectConfig('/nonexistent/dir');
-    expect(config).toBeNull();
+    const result = await loadProjectConfig('/nonexistent/dir');
+    expect(result.isErr()).toBe(true);
   });
 
   it('falls back to legacy atelier.json filename', async () => {
@@ -163,14 +172,17 @@ describe('loadProjectConfig', () => {
     mockReadFile
       .mockRejectedValueOnce(new Error('ENOENT'))
       .mockResolvedValueOnce(legacyJson);
-    const config = await loadProjectConfig('/project/dir');
-    expect(config).toEqual({ name: 'legacy-project' });
+    const result = await loadProjectConfig('/project/dir');
+    expect(result.isOk()).toBe(true);
+    if (result.isOk()) {
+      expect(result.value).toEqual({ name: 'legacy-project' });
+    }
   });
 
-  it('returns null when both config files fail', async () => {
+  it('returns Err when both config files fail', async () => {
     mockReadFile.mockRejectedValue(new Error('ENOENT'));
-    const config = await loadProjectConfig('/project/dir');
-    expect(config).toBeNull();
+    const result = await loadProjectConfig('/project/dir');
+    expect(result.isErr()).toBe(true);
   });
 });
 

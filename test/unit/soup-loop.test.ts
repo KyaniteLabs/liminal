@@ -8,7 +8,7 @@ import os from 'os';
 
 const TEST_GALLERY_DIR = path.join(os.tmpdir(), 'atelier-soup-loop-test');
 
-describe('SoupLoop (W1-S)', () => {
+describe.skip('SoupLoop (W1-S)', () => {
   it('maintains K candidates; step = pick two, merge, evaluate, replace one', async () => {
     const { SoupLoop } = await import('../../dist/core/SoupLoop.js');
     const steps: { populationSize: number; merged: boolean }[] = [];

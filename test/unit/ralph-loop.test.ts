@@ -103,6 +103,14 @@ vi.mock('../../src/generators/registerGenerators.js', () => ({
   registerAllGenerators: vi.fn(),
 }));
 
+vi.mock('../../src/git/GitIntegration.js', () => ({
+  GitIntegration: class {
+    startRun = vi.fn(async () => {});
+    commitIteration = vi.fn(async () => {});
+    endRun = vi.fn(async () => {});
+  },
+}));
+
 vi.mock('../../src/gallery/Gallery.js', () => ({
   Gallery: class MockGallery {
     private dir: string;

@@ -96,6 +96,14 @@ vi.mock('../../../src/core/ContextAccumulation.js', () => ({
   },
 }));
 
+vi.mock('../../../src/git/GitIntegration.js', () => ({
+  GitIntegration: class {
+    startRun = vi.fn(async () => {});
+    commitIteration = vi.fn(async () => {});
+    endRun = vi.fn(async () => {});
+  },
+}));
+
 vi.mock('../../../src/core/EventBus.js', () => ({
   eventBus: { emit: mockEventBusEmit },
   EventTypes: {

@@ -47,6 +47,9 @@ export interface PersistedLoopState {
  */
 const contextStorage = new AsyncLocalStorage<ContextAccumulation>();
 
+/** Default singleton used when no async context is active */
+let defaultInstance: ContextAccumulation | null = null;
+
 export class ContextAccumulation {
   private history: State[] = [];
   private static readonly MAX_HISTORY_SIZE = 50;
@@ -60,9 +63,18 @@ export class ContextAccumulation {
     if (existing) {
       return existing;
     }
-    // Fallback: create isolated instance for backward compatibility
-    // This prevents the singleton race condition
-    return new ContextAccumulation();
+    // Fallback: reuse a default singleton for backward compatibility
+    if (!defaultInstance) {
+      defaultInstance = new ContextAccumulation();
+    }
+    return defaultInstance;
+  }
+
+  /**
+   * Reset the default singleton (for test isolation).
+   */
+  static resetSingleton(): void {
+    defaultInstance = null;
   }
 
   /**

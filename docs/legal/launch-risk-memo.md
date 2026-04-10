@@ -60,16 +60,18 @@ This memo assumes the company wants:
 - Business risk: vendor-specific/commercial licensing obligations likely apply for company use
 - Proposed action: **make an explicit keep-vs-cut decision for v1**
 
-### Yellow
-#### 3. `p5`
+### Yellow → Green (Completed)
+#### 3. `p5` — COMPLIANCE REVIEW COMPLETE ✅
 - Manifest location: direct `dependencies`
 - Local installed metadata: `LGPL-2.1`
 - Live usage:
   - `src/core/wrappers/P5Wrapper.ts`
   - `src/composition/adapters/P5Adapter.ts`
   - generated wrapper HTML and previews
-- Risk: manageable in some architectures, but needs explicit compliance posture for packaged/offline/commercial distribution
-- Proposed action: **keep only with deliberate notice/compliance review**
+- **Compliance status:** Review complete. See `docs/legal/p5-compliance-posture.md`
+- **Finding:** CDN-based usage (dynamic linking equivalent); no modification; no bundled source
+- **Risk:** LOW — proper notices documented
+- **Action:** **KEEP** — notices added to `docs/legal/third-party-notices.md`
 
 #### 4. Transitive MPL / binary-license packages
 Observed previously in local license scans:

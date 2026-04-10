@@ -36,7 +36,7 @@ Legend:
 | lodash | 4.18.0 | direct | MIT | utility | Green | keep |
 | neverthrow | 8.2.0 | direct | MIT | result types | Green | keep |
 | open | 11.0.0 | direct | MIT | local OS integration | Green | keep |
-| p5 | 1.11.12 | direct | LGPL-2.1 | wrappers/previews/generative p5 workflows | **Yellow** | compliance review |
+| p5 | 1.11.12 | direct | LGPL-2.1 | wrappers/previews/generative p5 workflows | **Green** | keep - compliance review complete, see `docs/legal/p5-compliance-posture.md` |
 | path-to-regexp | 8.4.0 | direct | MIT | routing/util | Green | keep |
 | picomatch | 4.0.4 | direct | MIT | matching/util | Green | keep |
 | puppeteer | 24.40.0 | direct | Apache-2.0 | browser rendering/testing | Green | keep |

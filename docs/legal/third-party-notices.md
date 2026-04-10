@@ -17,13 +17,23 @@ This product includes third-party software components. This file is a working dr
   - These packages are actively referenced by the current codebase.
   - Commercial/license terms must be reviewed before launch.
 
-### p5
+### p5.js
 - Package: `p5`
-- Version: `1.11.12`
-- Installed package metadata: `LGPL-2.1`
+- Version: `1.9.0` (runtime CDN), `1.11.12` (npm types)
+- License: **LGPL-2.1** (GNU Lesser General Public License v2.1)
+- Copyright: p5.js contributors
+- Usage:
+  - Loaded dynamically via CDN in generated HTML wrappers and previews
+  - Not modified, not bundled into distributed code
+  - See `docs/legal/p5-compliance-posture.md` for full compliance analysis
+- Source: https://github.com/processing/p5.js
+- License text: https://www.gnu.org/licenses/old-licenses/lgpl-2.1.html
 - Notes:
-  - Used in wrappers/previews and part of the product story.
-  - Requires explicit compliance review before packaged/commercial launch.
+  - p5.js is used as a runtime library for executing user-generated creative coding sketches.
+  - The application generates HTML that loads p5.js from CDN (cdnjs.cloudflare.com).
+  - This is equivalent to dynamic linking under LGPL terms.
+  - No proprietary code is combined with p5.js source.
+  - Compliance posture: LOW RISK for proprietary launch.
 
 ### pitchfinder
 - Package: `pitchfinder`

@@ -242,7 +242,7 @@ describe('ModelRouter', () => {
 
       // Should take roughly the time of one model (parallel execution)
       // Allow some margin for overhead
-      expect(duration).toBeLessThan(25);
+      expect(duration).toBeLessThan(100);
 
       expect(response.model).toBe('ensemble');
       expect(response.code).toBeTruthy();

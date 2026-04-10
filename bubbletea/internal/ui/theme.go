@@ -55,10 +55,33 @@ var (
 			Foreground(AccentPurple).
 			Bold(true)
 
-	// Mode badge — current mode indicator
+	// Mode badge — current mode indicator (cyan pill)
 	ModeStyle = lipgloss.NewStyle().
-			Foreground(AccentCyan).
-			Bold(true)
+			Foreground(BgBase).
+			Background(AccentCyan).
+			Bold(true).
+			Padding(0, 1)
+
+	// INSPECT mode badge — blue tint
+	InspectModeStyle = lipgloss.NewStyle().
+			Foreground(BgBase).
+			Background(AccentBlue).
+			Bold(true).
+			Padding(0, 1)
+
+	// ACTION mode badge — amber/warning tint
+	ActionModeStyle = lipgloss.NewStyle().
+			Foreground(BgBase).
+			Background(AccentOrange).
+			Bold(true).
+			Padding(0, 1)
+
+	// CONFIRM mode badge — green/approved tint
+	ConfirmModeStyle = lipgloss.NewStyle().
+			Foreground(BgBase).
+			Background(AccentGreen).
+			Bold(true).
+			Padding(0, 1)
 
 	// Provider pill — model/provider identity
 	ProviderStyle = lipgloss.NewStyle().

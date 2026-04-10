@@ -83,7 +83,18 @@ func (m Model) View() string {
 
 func (m Model) renderHeader() string {
 	brand := ui.BrandStyle.Render("◆ LIMINAL")
-	mode := ui.ModeStyle.Render(strings.ToLower(m.Mode))
+	// ── Mode badge — mode-specific color per semantic system ──
+	var modeBadge string
+	switch m.Mode {
+	case "INSPECT":
+		modeBadge = ui.InspectModeStyle.Render(strings.ToLower(m.Mode))
+	case "ACTION":
+		modeBadge = ui.ActionModeStyle.Render(strings.ToLower(m.Mode))
+	case "CONFIRM":
+		modeBadge = ui.ConfirmModeStyle.Render(strings.ToLower(m.Mode))
+	default:
+		modeBadge = ui.ModeStyle.Render(strings.ToLower(m.Mode))
+	}
 	provider := ui.ProviderStyle.Render(m.Provider + " / " + m.ModelName)
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)
 
@@ -109,7 +120,7 @@ func (m Model) renderHeader() string {
 	// Spacing between elements
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
-	headerContent := brand + spacer + mode + spacer + provider + spacer + connDot
+	headerContent := brand + spacer + modeBadge + spacer + provider + spacer + connDot
 	if telemetry != "" {
 		headerContent += spacer + telemetry
 	}
@@ -142,8 +153,7 @@ func (m Model) renderFooter() string {
 			}
 		case "ACTION":
 			hints = []string{
-				ui.KeyStyle.Render("y") + ui.HintStyle.Render(":confirm"),
-				ui.KeyStyle.Render("n") + ui.HintStyle.Render(":cancel"),
+				ui.KeyStyle.Render("y") + ui.HintStyle.Render(":confirm") + "  ·  " + ui.KeyStyle.Render("n") + ui.HintStyle.Render(":cancel"),
 			}
 		default:
 			hints = []string{

@@ -486,25 +486,22 @@ export function canHandle(prompt: string): number {
   // Generator-specific domain keywords
   const domainKeywords: [string, number][] = [
     // Visual / 3D
-    // eslint-disable-next-line no-useless-escape
-    [/three\.js|threejs|\bthree\b/i, 0.95],
+    [/three.js|threejs|\bthree\b/i, 0.95],
     [/\b3d\b.*\b(scene|cube|sphere|model|mesh)/i, 0.90],
-    // eslint-disable-next-line no-useless-escape
-    [/hydra|video\s*synth|kaleid|oscillator.*video/i, 0.90],
-    [/glsl|shader|ray\s*march|sdf|fragment/i, 0.90],
-    // eslint-disable-next-line no-useless-escape
-    [/p5\.?js|particle|flow\s*field/i, 0.95],
-    [/ascii\s*art/i, 0.95],
-    [/html\s*generator|landing\s*page|dashboard/i, 0.90],
+    [/hydra|video synth|kaleid|oscillator.*video/i, 0.90],
+    [/glsl|shader|ray march|sdf|fragment/i, 0.90],
+    [/p5.?js|particle|flow field/i, 0.95],
+    [/ascii art/i, 0.95],
+    [/html generator|landing page|dashboard/i, 0.90],
     // Audio / Music
-    [/tone\.?js|synthesizer|synth/i, 0.95],
-    [/strudel|tidal|drum\s*sequencer|beat/i, 0.95],
+    [/tone.?js|synthesizer|synth/i, 0.95],
+    [/strudel|tidal|drum sequencer|beat/i, 0.95],
     // Code / Analysis
-    [/typescript|ts-|\.ts\b/i, 0.85],
+    [/typescript|ts-|.ts\b/i, 0.85],
     [/javascript|js\b/i, 0.80],
     [/\blsp\b|diagnostic|autocomplete|tsserver/i, 0.90],
     // Narrative / Content
-    [/blog|article|content|narrative|video\s*script/i, 0.85],
+    [/blog|article|content|narrative|video script/i, 0.85],
     [/\bredwood\b|\bprisma\b|\bpostgres\b/i, 0.80],
   ];
 

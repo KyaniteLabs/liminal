@@ -170,7 +170,6 @@ export abstract class TierBasedGenerator {
     Logger.info('TierBasedGenerator', `Using ${this.tier} tier (${budget} token budget)`);
 
     // 4. Generate with tool support (validate_syntax, check_imports)
-    let response: LLMResponse;
     const toolResult = await this.llm.generateWithToolLoop({
       systemPrompt: this.tier === 'tiny' ? '' : builtPrompt.system,
       userPrompt: this.tier === 'tiny' ? (builtPrompt.combined || builtPrompt.user) : builtPrompt.user,
@@ -179,7 +178,7 @@ export abstract class TierBasedGenerator {
       maxIterations: 3,
       signal: options?.signal,
     });
-    response = { code: toolResult.content, success: toolResult.success, error: toolResult.error };
+    const response: LLMResponse = { code: toolResult.content, success: toolResult.success, error: toolResult.error };
 
     // Try to extract code from thinking if code is empty but thinking has content
     if (!response.code || response.code.trim() === '') {

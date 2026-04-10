@@ -19,7 +19,7 @@ const { mockCreativeEvaluatorAssess, mockAestheticCriticInstance, mockHeuristicS
   const criticInstance = { critique: vi.fn(), setLLMClient: vi.fn() };
   const scoreOutput = vi.fn();
   const quickScoreFn = vi.fn();
-  const llmInstance = { generate: vi.fn() };
+  const llmInstance = { generate: vi.fn(), generateWithToolLoop: vi.fn() };
   const warn = vi.fn();
   return {
     mockCreativeEvaluatorAssess: assess,
@@ -65,6 +65,7 @@ vi.mock('../../../src/llm/LLMClient.js', () => {
   return {
     LLMClient: vi.fn(function (this: any, _config?: any) {
       this.generate = mockLLMClientInstance.generate;
+      this.generateWithToolLoop = mockLLMClientInstance.generateWithToolLoop;
       return this;
     }),
   };
@@ -138,9 +139,9 @@ describe('ScoringEngine', () => {
     mockAestheticCriticInstance.critique.mockReturnValue(AESTHETIC_REPORT);
     mockHeuristicScoreOutput.mockReturnValue(HEURISTIC_DIMS);
     mockQuickScore.mockReturnValue(0.65);
-    mockLLMClientInstance.generate.mockResolvedValue({
+    mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
       success: true,
-      code: '{"score":0.85,"technical":0.9,"creative":0.8,"novelty":0.7,"reasoning":"Strong output","suggestions":["Add comments"]}',
+      content: '{"score":0.85,"technical":0.9,"creative":0.8,"novelty":0.7,"reasoning":"Strong output","suggestions":["Add comments"]}',
     });
   });
 
@@ -627,9 +628,9 @@ describe('ScoringEngine', () => {
 
   describe('LLMScoringStrategy', () => {
     it('parses LLM JSON response into ScoringResult', async () => {
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: '{"score":0.85,"technical":0.9,"creative":0.8,"novelty":0.7,"reasoning":"Strong","suggestions":["Add docs"]}',
+        content: '{"score":0.85,"technical":0.9,"creative":0.8,"novelty":0.7,"reasoning":"Strong","suggestions":["Add docs"]}',
       });
       const engine = new ScoringEngine('llm');
       const result = await engine.score(DEFAULT_INPUT);
@@ -644,9 +645,9 @@ describe('ScoringEngine', () => {
     });
 
     it('returns 0.5 fallback when LLM call fails', async () => {
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: false,
-        code: null,
+        content: null,
       });
       const engine = new ScoringEngine('llm');
       const result = await engine.score(DEFAULT_INPUT);
@@ -656,9 +657,9 @@ describe('ScoringEngine', () => {
     });
 
     it('returns 0.5 fallback when LLM response has no JSON object', async () => {
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: 'No JSON here, just plain text.',
+        content: 'No JSON here, just plain text.',
       });
       const engine = new ScoringEngine('llm');
       const result = await engine.score(DEFAULT_INPUT);
@@ -668,9 +669,9 @@ describe('ScoringEngine', () => {
     });
 
     it('returns 0.5 fallback when JSON.parse throws', async () => {
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: '{invalid json}',
+        content: '{invalid json}',
       });
       const engine = new ScoringEngine('llm');
       const result = await engine.score(DEFAULT_INPUT);
@@ -681,9 +682,9 @@ describe('ScoringEngine', () => {
     });
 
     it('clamps LLM scores and dimensions to 0-1', async () => {
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: '{"score":1.5,"technical":2.0,"creative":-0.5,"novelty":0.3}',
+        content: '{"score":1.5,"technical":2.0,"creative":-0.5,"novelty":0.3}',
       });
       const engine = new ScoringEngine('llm');
       const result = await engine.score(DEFAULT_INPUT);
@@ -695,9 +696,9 @@ describe('ScoringEngine', () => {
     });
 
     it('defaults score to 0.5 when parsed.score is not a number', async () => {
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: '{"score":"high","technical":0.7}',
+        content: '{"score":"high","technical":0.7}',
       });
       const engine = new ScoringEngine('llm');
       const result = await engine.score(DEFAULT_INPUT);
@@ -707,14 +708,14 @@ describe('ScoringEngine', () => {
     });
 
     it('defaults criteria when none provided', async () => {
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: '{"score":0.6}',
+        content: '{"score":0.6}',
       });
       const engine = new ScoringEngine('llm');
       await engine.score({ output: 'code' });
 
-      const userPrompt = mockLLMClientInstance.generate.mock.calls[0][1];
+      const userPrompt = mockLLMClientInstance.generateWithToolLoop.mock.calls[0][0].userPrompt;
       expect(userPrompt).toContain('Criteria: technical quality, creativity, novelty');
     });
 
@@ -807,22 +808,22 @@ describe('ScoringEngine', () => {
       expect(result.strategy).toBe('comprehensive');
       expect(result.score).toBe(0.78);
       // Should NOT have called LLM
-      expect(mockLLMClientInstance.generate).not.toHaveBeenCalled();
+      expect(mockLLMClientInstance.generateWithToolLoop).not.toHaveBeenCalled();
     });
 
     it('boosts with LLM when comprehensive has fewer than 6 dimensions', async () => {
       // Minimal result has only 2 dimensions (technical, creative)
       mockCreativeEvaluatorAssess.mockReturnValue(CREATIVE_ASSESS_RESULT_MINIMAL);
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: '{"score":0.6,"technical":0.7,"creative":0.5,"novelty":0.4}',
+        content: '{"score":0.6,"technical":0.7,"creative":0.5,"novelty":0.4}',
       });
 
       const engine = new ScoringEngine();
       const result = await engine.scoreReliable(DEFAULT_INPUT);
 
       expect(result.strategy).toBe('comprehensive+llm');
-      expect(mockLLMClientInstance.generate).toHaveBeenCalledTimes(1);
+      expect(mockLLMClientInstance.generateWithToolLoop).toHaveBeenCalledTimes(1);
       // Dimensions should merge: comprehensive's 2 + LLM's contributions
       expect(result.dimensions.technical).toBe(0.7);
       expect(result.dimensions.creative).toBe(0.5);
@@ -834,9 +835,9 @@ describe('ScoringEngine', () => {
         ...CREATIVE_ASSESS_RESULT_MINIMAL,
         issues: ['issue from comprehensive'],
       });
-      mockLLMClientInstance.generate.mockResolvedValue({
+      mockLLMClientInstance.generateWithToolLoop.mockResolvedValue({
         success: true,
-        code: '{"score":0.6,"technical":0.5,"suggestions":["LLM suggestion"]}',
+        content: '{"score":0.6,"technical":0.5,"suggestions":["LLM suggestion"]}',
       });
 
       const engine = new ScoringEngine();

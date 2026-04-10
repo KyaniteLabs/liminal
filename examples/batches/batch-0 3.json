@@ -1,0 +1,76 @@
+[
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.7",
+    "domain": "p5",
+    "success": false,
+    "duration": 1022,
+    "result": {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "p5",
+      "iterations": 2,
+      "duration": 27,
+      "codeLength": 1565,
+      "outputDir": "examples/generated/minimax/MiniMax-M2.7/p5"
+    }
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.7",
+    "domain": "glsl",
+    "success": false,
+    "duration": 290183,
+    "result": {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "glsl",
+      "iterations": 4,
+      "duration": 289209,
+      "codeLength": 5704,
+      "outputDir": "examples/generated/minimax/MiniMax-M2.7/glsl"
+    }
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.7",
+    "domain": "three",
+    "success": false,
+    "duration": 358475,
+    "result": {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "three",
+      "iterations": 6,
+      "duration": 357464,
+      "codeLength": 8746,
+      "outputDir": "examples/generated/minimax/MiniMax-M2.7/three"
+    },
+    "error": "[RalphLoop] Prompt has 1 high-priority ambiguity issues:\n[RalphLoop]   [missing_context] Pronoun \"that\" used without a clear referent in a short request.\n"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.7",
+    "domain": "strudel",
+    "success": false,
+    "duration": 250759,
+    "error": "LLMClient.generate failed: The operation was aborted due to timeout \n[RalphLoop] Code validation failed: p5.js code must contain at least one of: function setup(), function draw(), or createCanvas()\n[RalphLoop] Code validation failed: Music code must contain Strudel patterns ($: s(...)) or Hydra functions (osc(), src(), render())\n[RalphLoop] Code validation failed: Music code must contain Strudel patterns ($: s(...)) or Hydra functions (osc(), src(), render())\nRESULT: {\"provider\":\"minimax\",\"model\":\"MiniMax-M2.7\",\"domain\":\"strudel\",\"success\":false,\"error\":\"Liminal run failed: Generation failed validation: Music code must contain Strudel patterns ($: s(...)) or Hydra functions (osc(), src(), render()). Reason: max iterations reached (3)\"}\n"
+  },
+  {
+    "provider": "minimax",
+    "model": "MiniMax-M2.7",
+    "domain": "hydra",
+    "success": false,
+    "duration": 150561,
+    "result": {
+      "provider": "minimax",
+      "model": "MiniMax-M2.7",
+      "domain": "hydra",
+      "iterations": 2,
+      "duration": 149608,
+      "codeLength": 8523,
+      "outputDir": "examples/generated/minimax/MiniMax-M2.7/hydra"
+    },
+    "error": "[RalphLoop] Prompt has 1 high-priority ambiguity issues:\n[RalphLoop]   [missing_context] Pronoun \"it\" used without a clear referent in a short request.\n"
+  }
+]

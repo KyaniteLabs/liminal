@@ -58,7 +58,9 @@ const DOGFOOD_TIMEOUT = 600_000;   // 10 minutes
 const DOGFOOD_MAX_TOKENS = 32_768;
 
 // LM Studio base URL
-const LM_STUDIO_URL = 'http://localhost:1234/v1';
+const LM_STUDIO_URL = process.argv.find((arg) => arg.startsWith('--lmstudio-base-url='))?.split('=')[1]
+  ?? process.env.LIMINAL_LLM_BASE_URL
+  ?? 'http://localhost:1234/v1';
 
 // ─── Model / Provider Types ────────────────────────────────────────────────────
 
@@ -94,7 +96,7 @@ async function detectLMStudioModels(): Promise<{
   try {
     res = await fetch(`${LM_STUDIO_URL}/models`, { signal: AbortSignal.timeout(5000) });
   } catch {
-    throw new Error('LM Studio not available at localhost:1234');
+    throw new Error(`LM Studio not available at ${LM_STUDIO_URL}`);
   }
   const data = await res.json() as { data: Array<{ id: string }> };
   const available = data.data.map((m) => m.id);
@@ -103,10 +105,15 @@ async function detectLMStudioModels(): Promise<{
   const qwen2b = available.find((id) => /qwen3[._-]?5[._-]?2b/i.test(id)) ?? null;
   // Find Gemma 4B for generator B
   const gemma4b = available.find((id) => /gemma[_-]?4b/i.test(id)) ?? null;
-  // Find Qwen instruction-tuned for evaluator (prefer 2b-it, fall back to any qwen it)
-  const evaluator = available.find((id) => /qwen3[._-]?5[._-]?2b[_-]?it/i.test(id))
+  const requestedEvaluator = process.argv.find((arg) => arg.startsWith('--evaluators='))?.split('=')[1]
+    ?.split(',')
+    .map((id) => id.trim())
+    .find((id) => available.includes(id));
+  // Find Qwen instruction-tuned for evaluator (prefer explicit arg, then 2b-it, any qwen-it, then base qwen2b)
+  const evaluator = requestedEvaluator
+    ?? available.find((id) => /qwen3[._-]?5[._-]?2b[_-]?it/i.test(id))
     ?? available.find((id) => /qwen.*it$/i.test(id))
-    ?? null;
+    ?? qwen2b;
 
   return {
     generator: qwen2b ? { id: qwen2b, name: `lmstudio-${qwen2b.replace(/[/:]/g, '-')}`, provider: 'lmstudio' } : null,

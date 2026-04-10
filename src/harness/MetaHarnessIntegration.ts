@@ -486,10 +486,13 @@ export function canHandle(prompt: string): number {
   // Generator-specific domain keywords
   const domainKeywords: [string, number][] = [
     // Visual / 3D
+    // eslint-disable-next-line no-useless-escape
     [/three\.js|threejs|\bthree\b/i, 0.95],
     [/\b3d\b.*\b(scene|cube|sphere|model|mesh)/i, 0.90],
+    // eslint-disable-next-line no-useless-escape
     [/hydra|video\s*synth|kaleid|oscillator.*video/i, 0.90],
     [/glsl|shader|ray\s*march|sdf|fragment/i, 0.90],
+    // eslint-disable-next-line no-useless-escape
     [/p5\.?js|particle|flow\s*field/i, 0.95],
     [/ascii\s*art/i, 0.95],
     [/html\s*generator|landing\s*page|dashboard/i, 0.90],

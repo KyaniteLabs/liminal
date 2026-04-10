@@ -173,4 +173,92 @@ void main() {
       expect(typeof info.budget).toBe('number');
     });
   });
+
+  // ---------------------------------------------------------------------------
+  // wrapForGallery - Shader contract fix
+  // ---------------------------------------------------------------------------
+  describe('wrapForGallery', () => {
+    it('generates wrapper calling mainImage for Shadertoy-style shaders', () => {
+      const gen = new ShaderGenerator();
+      const shaderWithMainImage = `precision highp float;
+uniform vec2 u_resolution;
+uniform float u_time;
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+  vec2 uv = fragCoord / u_resolution;
+  fragColor = vec4(uv, 0.0, 1.0);
+}`;
+      const wrapped = gen.wrapForGallery(shaderWithMainImage);
+
+      // Should call mainImage for Shadertoy-style shaders
+      expect(wrapped).toContain('void main(){mainImage(gl_FragColor,gl_FragCoord.xy);}');
+      expect(wrapped).toContain('<!DOCTYPE html>');
+      expect(wrapped).toContain('canvas');
+    });
+
+    it('generates wrapper calling main() for standard GLSL shaders', () => {
+      const gen = new ShaderGenerator();
+      const shaderWithMain = `precision highp float;
+uniform vec2 u_resolution;
+uniform float u_time;
+void main() {
+  vec2 uv = gl_FragCoord.xy / u_resolution;
+  gl_FragColor = vec4(uv, 0.0, 1.0);
+}`;
+      const wrapped = gen.wrapForGallery(shaderWithMain);
+
+      // Should call main() directly for standard shaders (not mainImage)
+      expect(wrapped).toContain('void main(){main();}');
+      expect(wrapped).not.toContain('mainImage');
+      expect(wrapped).toContain('<!DOCTYPE html>');
+    });
+
+    it('defaults to main() wrapper when neither mainImage nor main detected', () => {
+      const gen = new ShaderGenerator();
+      const incompleteShader = `precision highp float;
+uniform vec2 u_resolution;
+uniform float u_time;`;
+      const wrapped = gen.wrapForGallery(incompleteShader);
+
+      // Should default to main() wrapper
+      expect(wrapped).toContain('void main(){main();}');
+    });
+
+    it('escapes backticks in shader code to prevent template injection', () => {
+      const gen = new ShaderGenerator();
+      const shaderWithBacktick = `void main() {
+        float x = 1.0; // \`comment\`
+        gl_FragColor = vec4(1.0);
+      }`;
+      const wrapped = gen.wrapForGallery(shaderWithBacktick);
+
+      // Backticks should be escaped with backslash: \` (shown as \` in source, but \\` in JS string)
+      expect(wrapped).toContain('\\`');
+      // The backtick in the comment should be escaped, not appear as raw backtick
+      // In the HTML output, we should see: // \`comment\` (with backslash escaping)
+      expect(wrapped).not.toMatch(/float x = 1\.0;[^\\]\`comment/); // Should not have unescaped backtick
+    });
+
+    it('includes required uniforms in the wrapper', () => {
+      const gen = new ShaderGenerator();
+      const shader = `void main() { gl_FragColor = vec4(1.0); }`;
+      const wrapped = gen.wrapForGallery(shader);
+
+      // Wrapper should declare uniforms after the shader code
+      expect(wrapped).toContain('uniform float u_time');
+      expect(wrapped).toContain('uniform vec2 u_resolution');
+    });
+
+    it('produces valid HTML structure', () => {
+      const gen = new ShaderGenerator();
+      const shader = `void main() { gl_FragColor = vec4(1.0); }`;
+      const wrapped = gen.wrapForGallery(shader);
+
+      // HTML structure checks
+      expect(wrapped).toContain('<!DOCTYPE html>');
+      expect(wrapped).toContain('<html>');
+      expect(wrapped).toContain('</html>');
+      expect(wrapped).toContain('<canvas id="c">');
+      expect(wrapped).toContain('getContext("webgl2")||canvas.getContext("webgl")');
+    });
+  });
 });

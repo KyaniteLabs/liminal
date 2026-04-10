@@ -31,7 +31,7 @@ This product includes third-party software components. This file is a working dr
 - Notes:
   - p5.js is used as a runtime library for executing user-generated creative coding sketches.
   - The application generates HTML that loads p5.js from CDN (cdnjs.cloudflare.com).
-  - This is equivalent to dynamic linking under LGPL terms.
+  - This usage pattern represents a low-risk posture similar to dynamic linking.
   - No proprietary code is combined with p5.js source.
   - Compliance posture: LOW RISK for proprietary launch.
 

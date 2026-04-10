@@ -69,7 +69,7 @@ This memo assumes the company wants:
   - `src/composition/adapters/P5Adapter.ts`
   - generated wrapper HTML and previews
 - **Compliance status:** Review complete. See `docs/legal/p5-compliance-posture.md`
-- **Finding:** CDN-based usage (dynamic linking equivalent); no modification; no bundled source
+- **Finding:** CDN-based usage (low-risk posture similar to dynamic linking); no modification; no bundled source
 - **Risk:** LOW — proper notices documented
 - **Action:** **KEEP** — notices added to `docs/legal/third-party-notices.md`
 
@@ -137,8 +137,8 @@ Before calling the product launch-ready, complete:
 - [ ] dependency inventory
 - [ ] provenance review
 - [ ] third-party notices draft
-- [ ] Remotion keep/cut decision
-- [ ] `pitchfinder` replacement or removal plan
+- [x] Remotion keep/cut decision — **Cut from active surface (stubbed, 2026-04-09)**
+- [x] `pitchfinder` replacement or removal plan — **Done: replaced with in-repo autocorrelation (2026-04-09)**
 - [ ] trademark/name shortlist and preliminary clearance
 
 ## Outside counsel questions

@@ -11,7 +11,7 @@ Status: COMPLIANT
 Runtime: Loaded dynamically via CDN
 CDN: cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js
 Files: P5Wrapper.ts, generateHTML.ts, P5Adapter.ts, SandboxRunner.ts
-npm: Type definitions only
+npm package: Used primarily for TypeScript definitions at build time; runtime uses CDN
 
 ## 2. Is p5.js Modified?
 
@@ -22,7 +22,7 @@ NO. No source modifications, forks, or bundling.
 CDN-loaded: PRIMARY
 Bundled: No
 npm: Types only
-This is dynamic linking equivalent under LGPL.
+CDN loading represents a low-risk posture similar to dynamic linking.
 
 ## 4. Provenance Review
 

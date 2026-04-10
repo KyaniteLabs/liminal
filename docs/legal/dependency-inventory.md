@@ -17,9 +17,9 @@ Legend:
 | @babel/parser | 7.29.2 | direct | MIT | parsing/internals | Green | keep |
 | @babel/traverse | 7.29.0 | direct | MIT | parsing/internals | Green | keep |
 | @babel/types | 7.29.0 | direct | MIT | parsing/internals | Green | keep |
-| @remotion/bundler | 4.0.445 | direct | SEE LICENSE IN LICENSE.md | used in `src/render/RemotionRenderer.ts` | **Red** | decide keep/cut |
+| @remotion/bundler | 4.0.445 | direct | SEE LICENSE IN LICENSE.md | **Stubbed** — `src/render/RemotionRenderer.ts` throws clear error | Yellow | see motion-canvas-research.md |
 | @remotion/cli | 4.0.445 | direct | SEE LICENSE IN LICENSE.md | remotion workflows / generated projects | **Red** | decide keep/cut |
-| @remotion/renderer | 4.0.445 | direct | SEE LICENSE IN LICENSE.md | used in `src/render/RemotionRenderer.ts` | **Red** | decide keep/cut |
+| @remotion/renderer | 4.0.445 | direct | SEE LICENSE IN LICENSE.md | **Stubbed** — throws clear error, not functional | Yellow | see motion-canvas-research.md |
 | @types/babel__traverse | 7.28.0 | direct | MIT | typings | Green | keep |
 | @xenova/transformers | 2.17.2 | direct | Apache-2.0 | model/runtime support | Green | keep |
 | archiver | 7.0.1 | direct | MIT | export/archive support | Green | keep |
@@ -56,11 +56,11 @@ Legend:
 |---|---:|---|---|---|---|---|
 | meyda | 5.6.3 | optional | MIT | audio analysis | Green | keep |
 | music-metadata | 11.12.3 | optional | MIT | media metadata/audio | Green | keep |
-| pitchfinder | 2.3.4 | optional | GNU v3 | lazy-required in `src/audio/PitchExtractor.ts` | **Red** | replace/remove |
+| pitchfinder | — | **removed** | — | **Replaced** with in-repo autocorrelation in `src/audio/PitchDetector.ts` | Green | **Done** |
 | sharp | 0.34.5 | optional | Apache-2.0 | image processing | Green | keep |
 
 ## Immediate follow-ups
-1. Remove or replace `pitchfinder`
-2. Decide whether Remotion ships in v1
+1. ~~Remove or replace `pitchfinder`~~ — **Done: replaced with in-repo autocorrelation (2026-04-09)**
+2. ~~Decide whether Remotion ships in v1~~ — **Done: cut from active surface, stubbed (2026-04-09)**. See `docs/motion-canvas-research.md`
 3. Write a compliance posture for `p5`
 4. Expand this file with transitive packages that carry yellow/red risk

@@ -1,6 +1,6 @@
 # Naming Shortlist
 
-_Last updated: 2026-04-09_
+_Last updated: 2026-04-10_
 
 ## Status
 This is a **working naming worksheet**, not a legal clearance memo.
@@ -54,13 +54,21 @@ This does **not** replace a proper trademark clearance search, but it is enough 
 | Virell | compact / memorable | okay |
 | Oryndra | distinctive, more dramatic | okay |
 
-## Current shortlist
+## Current shortlist (Sprint 2)
 ### Best five to carry into clearance
-1. Frameweave
-2. Fluxloom
-3. Chromaforge
-4. Signalloom
-5. Aftermesh
+1. **Askew** — Experimental, off-center, distinctive, LOW RISK
+2. **Vestige** — Trace/remnant, poetic, elegant, LOW RISK
+3. **Tessera** — Mosaic tile, tessellation, beautiful, LOW-MEDIUM RISK
+4. **Stasis** — Equilibrium, controlled, technical, LOW-MEDIUM RISK
+5. **Diverge** — Branch/explore, active, generative, LOW-MEDIUM RISK
+
+### Top 2 recommendations
+| Rank | Name | Why | Risk |
+|------|------|-----|------|
+| 1 | **Askew** | Captures experimental creative coding spirit; punchy; no conflicts | 🟢 Low |
+| 2 | **Tessera** | Mosaic→complex from simple; elegant; serious company potential | 🟡 Low-Medium |
+
+See `naming-sprint-2.md` for full analysis and clearance details.
 
 ## Recommended next step
 For the top five, run:
@@ -72,6 +80,25 @@ For the top five, run:
 - adjacent software/company search
 
 ## Rejections / concerns
+
+### Round 1 (rejected for creative inadequacy)
 | Name | Reason |
 |---|---|
+| Aftermesh | Clunky compound, not beautiful enough |
+| Chromaforge | Overused "forge" construction |
+| Fluxloom | Risky due to FLUX.1 collision, generic "loom" |
+| Signalloom | Active AI company (signal-loom.com), generic |
+| Frameweave | Active company (frameweave.com), clunky |
+
+### Round 2 (rejected during clearance)
+| Name | Reason |
+|---|---|
+| Spline | Spline.design is well-funded 3D tool, direct conflict |
+| Field | Field.io is established creative coding platform (OpenEndedGroup) |
+| Verse | Epic Games' metaverse platform + Verse language |
+| Fathom | Active AI company (fathom.video) in transcription |
+| Cipher | Overloaded in security/crypto space |
+| Raster | Adobe rasterization tech, too fundamental/generic |
+| Phase | Phase One cameras, too generic |
+| Trace | COVID tracing, AI debugging, overloaded |
 | Liminal | already crowded in adjacent software/AI markets |

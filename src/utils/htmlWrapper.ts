@@ -17,8 +17,9 @@
 import { P5Wrapper } from '../core/wrappers/P5Wrapper.js';
 import { ThreeWrapper } from '../core/wrappers/ThreeWrapper.js';
 import { GenericWrapper } from '../core/wrappers/GenericWrapper.js';
+import { KineticWrapper } from '../generators/kinetic/KineticWrapper.js';
 
-export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'remotion' | 'html' | 'ascii';
+export type Domain = 'p5' | 'shader' | 'three' | 'strudel' | 'hydra' | 'tone' | 'remotion' | 'html' | 'ascii' | 'kinetic';
 
 export interface WrapOptions {
   domain?: Domain;
@@ -96,6 +97,7 @@ export class HTMLWrapper {
         const bodyMatch = code.match(/<pre[^>]*>([\s\S]*?)<\/pre>/);
         if (bodyMatch && /[█▓▒░@#%]/.test(bodyMatch[1])) return 'ascii';
       }
+      if (/<style[^>]*>[\s\S]*@keyframes/.test(code) && !code.includes('p5.js')) return 'kinetic';
       if (code.includes('p5.js') || code.includes('p5.min.js')) return 'p5';
       return 'html';
     }
@@ -174,6 +176,9 @@ export class HTMLWrapper {
       case 'ascii':
         wrapped = GenericWrapper.wrap(code, { domain: 'ascii', asciiWidth });
         break;
+      case 'kinetic':
+        wrapped = KineticWrapper.wrap(code, { title });
+        break;
       case 'html':
         return code;
       case 'p5':
@@ -190,7 +195,7 @@ export class HTMLWrapper {
    * Get all supported domains
    */
   static getSupportedDomains(): Domain[] {
-    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'remotion', 'html', 'ascii'];
+    return ['p5', 'shader', 'three', 'strudel', 'hydra', 'tone', 'remotion', 'html', 'ascii', 'kinetic'];
   }
 
   /**

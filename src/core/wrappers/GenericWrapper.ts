@@ -9,7 +9,7 @@ const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@latest';
 const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
 const TONE_CDN = 'https://unpkg.com/tone@14.8.49/build/Tone.js';
 
-export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'remotion' | 'ascii';
+export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'remotion' | 'ascii' | 'kinetic';
 
 export interface GenericWrapOptions {
   domain: GenericDomain;
@@ -31,6 +31,7 @@ export class GenericWrapper {
     if (this.isShaderCode(code)) return 'shader';
     if (this.isRemotionCode(code)) return 'remotion';
     if (this.isASCIICode(code)) return 'ascii';
+    if (this.isKineticCode(code)) return 'kinetic';
     return null;
   }
 
@@ -104,8 +105,12 @@ export class GenericWrapper {
     const hasSpecialChars = /[█▓▒░@#%*+=\-~^]/.test(code);
     const noJSFunctions = !code.includes('function ') && !code.includes('const ') && !code.includes('let ');
     const noHTMLTags = !/<[a-z][\s\S]*>/i.test(code);
-    
+
     return hasMultipleLines && hasSpecialChars && noJSFunctions && noHTMLTags;
+  }
+
+  private static isKineticCode(code: string): boolean {
+    return code.includes('@keyframes') && !code.includes('p5.js') && !code.includes('function setup()');
   }
 
   /**

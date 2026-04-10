@@ -29,9 +29,9 @@ _Scope: 7 seed names evaluated. No expanded shortlist. Force convergence._
 | Domain .dev/.io | Unclear |
 | npm | sigil.ts (7yr old, inactive), sigil-cli (Parenscript compiler), @sigiljs/sigil (HTTP framework), @tlon/sigil-js (Urbit identity) |
 | USPTO | SIGIL registered to Sigil Scent Inc. (perfume — Registration #6365737, different class) |
-| Common law | **Sigil ePub editor** — well-known open-source eBook editor since 2009 (Wikipedia article, GitHub Sigil-Ebook org). Sigil Engine — occult sigil generator. |
+| Common law | **Sigil ePub editor** — well-known open-source eBook editor since 2009 (Wikipedia article, GitHub Sigil-Ebook org). **SIGIL AI** (sigilai.io) — decentralized AI security platform, active. Sigil Engine — occult sigil generator. sigil.org — personal blog. |
 
-**Risk: MEDIUM** — ePub editor is well-known but in a completely different domain (book publishing vs creative coding). npm namespace has several old packages but no dominant one.
+**Risk: MEDIUM** — ePub editor is well-known but in a completely different domain (book publishing vs creative coding). SIGIL AI is in the broader tech/AI space but focuses on security, not creative tools. npm namespace has several old packages but no dominant one. sigil.io and sigil.app availability unconfirmed — may require sigildev.io or similar.
 
 #### 3. Motif (carried from Sprint 3)
 
@@ -49,10 +49,10 @@ _Scope: 7 seed names evaluated. No expanded shortlist. Force convergence._
 | Check | Result |
 | Domain .com | glyphic.design — active brand strategy consultancy |
 | npm | No direct "glyphic" package; glyphic-co org on GitHub |
-| USPTO | Not specifically checked — likely clean |
-| Common law | Glyphic (glyphic.design) — brand consultancy for publishing/LMA markets. HubSpot integration exists. |
+| USPTO | **GLYPHIC** — registered to Glyphic Software, Inc. (USPTO TM 88687616) |
+| Common law | Glyphic (glyphic.design) — brand consultancy for publishing/LMA markets. HubSpot integration exists. Glyphic Software, Inc. holds trademark. |
 
-**Risk: MEDIUM** — Active design-adjacent brand. Not a software product conflict, but in the design space.
+**Risk: MEDIUM-HIGH** — Active USPTO registration by Glyphic Software, Inc. plus active brand consultancy. More conflicted than initial assessment.
 
 #### 5. Tessra (carried from Sprint 3)
 
@@ -94,7 +94,7 @@ _Scope: 7 seed names evaluated. No expanded shortlist. Force convergence._
 | **Sigil** | MEDIUM | 5/5 | 5/5 | 3/5 | 3/5 | **16/20** |
 | **Limen** | LOW | 5/5 | 4/5 | 5/5 | 5/5 | **19/20** |
 | Motif | MEDIUM | 5/5 | 4/5 | 3/5 | 3/5 | 15/20 |
-| Glyphic | MEDIUM | 4/5 | 3/5 | 3/5 | 3/5 | 13/20 |
+| Glyphic | MED-HIGH | 4/5 | 3/5 | 2/5 | 2/5 | 11/20 |
 | Tessra | LOW | 3/5 | 2/5 | 5/5 | 5/5 | 15/20 |
 | Forma | HIGH | 3/5 | 4/5 | 1/5 | 1/5 | 9/20 |
 | Motive | HIGH | 3/5 | 3/5 | 1/5 | 1/5 | 8/20 |
@@ -159,12 +159,15 @@ Sigil ePub editor (since 2009) will clutter search results. But: completely diff
 
 **Why Limen:** Cleanest legal path in the set. limen.com is for sale. Zero conflicts. Deep conceptual resonance (threshold of perception — where code becomes visible).
 
-**Pivot trigger:** If Sigil's ePub editor association causes persistent SEO confusion in the creative coding community, or if sigil.io/sigil.app domains are unobtainable, pivot to Limen. Buy limen.com and launch clean.
+**Pivot trigger:** If ANY of these conditions are met within 60 days of launch decision, pivot to Limen:
+- sigil.io or sigil.app domain acquisition exceeds $500 or is unavailable
+- "sigil creative coding" does not achieve top-3 organic search result within 6 months of launch
+- SIGIL AI (sigilai.io) expands into creative tools or raises a round >$10M
 
 ## Rejected Names
 
 - **Motif** — Good semantic fit, but less exciting than Sigil or Limen. Already the Sprint 3 winner but superseded by stronger candidates.
-- **Glyphic** — The -ic suffix weakens it vs base Glyph. glyphic.design is an active brand consultancy. Dilutive.
+- **Glyphic** — The -ic suffix weakens it vs base Glyph. glyphic.design is an active brand consultancy. Glyphic Software, Inc. holds USPTO trademark (TM 88687616). Too conflicted.
 - **Tessra** — Phonetically awkward (TESS-ruh, ssr cluster). Feels manufactured, not discovered. No digital presence.
 - **Forma** — Autodesk Forma is a major live product from a $230B company. Unlaunchable.
 - **Motive** — Three active Motive software companies (Motive Technologies, Motive Inc, Motive Software). Unlaunchable.

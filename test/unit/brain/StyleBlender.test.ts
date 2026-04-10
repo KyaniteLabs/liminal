@@ -40,7 +40,7 @@ describe('StyleBlender', () => {
     const at0 = interpolateProfiles(profileA, profileB, 0);
     expect(at0.weights.complexity).toBe(0.2);
     const at1 = interpolateProfiles(profileA, profileB, 1);
-    expect(at1.weights.complexity).toBe(0.9);
+    expect(at1.weights.complexity).toBeCloseTo(0.9, 10);
   });
 
   it('exports canonical style attributes', () => {

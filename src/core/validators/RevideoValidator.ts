@@ -60,7 +60,9 @@ export class RevideoValidator {
       if (namedImports) {
         const imports = namedImports[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
         for (const imp of imports) {
-          if (!this.VALID_REVIDEO_IMPORTS.has(imp) && !this.isReactImport(imp)) {}
+          if (!this.VALID_REVIDEO_IMPORTS.has(imp) && !this.isReactImport(imp)) {
+            errors.push(`Unknown Revideo import: ${imp}`);
+          }
         }
       }
     }

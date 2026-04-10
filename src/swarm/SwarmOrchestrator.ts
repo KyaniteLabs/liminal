@@ -457,6 +457,22 @@ export class SwarmOrchestrator {
         this.creativeLanguage.recordOutcome(winnerSymbolIds, 0.8);
       }
 
+      // Compose winning symbols into a reusable expression for the next round (P0.1)
+      const composedExpression =
+        result.winnerId && winnerSymbolIds.length > 0
+          ? this.creativeLanguage.composeFromSymbols(winnerSymbolIds, 'parallel')
+          : null;
+      if (composedExpression) {
+        result.composedExpression = {
+          expression: composedExpression.expression,
+          estimatedEffectiveness: composedExpression.estimatedEffectiveness,
+          strategy: composedExpression.strategy,
+          symbolCount: composedExpression.symbols.length,
+        };
+        // Feed the composed expression into novelty scoring for future rounds
+        prevWinnerOutputs.push(composedExpression.expression);
+      }
+
       // Prune vocabulary if it exceeds bounds
       this.creativeLanguage.pruneVocabulary();
 

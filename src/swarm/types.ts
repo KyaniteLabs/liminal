@@ -60,6 +60,12 @@ export interface RoundResult {
   winnerId: string | null;
   winnerContent: string;
   constraint: string;
+  composedExpression?: {
+    expression: string;
+    estimatedEffectiveness: number;
+    strategy: string;
+    symbolCount: number;
+  };
 }
 
 export interface SwarmResult {

@@ -92,3 +92,14 @@ The following first-order packages currently appear to use commercially routine 
   - `docs/legal/dependency-inventory.md`
   - transitive dependency review
   - final counsel guidance
+
+### Revideo family
+- Packages:
+  - `@revideo/core`
+  - `@revideo/2d`
+  - `@revideo/renderer`
+- License: **MIT**
+- Notes:
+  - MIT-licensed alternative to Remotion (Motion Canvas fork)
+  - Used for programmatic video generation
+  - Added as replacement for proprietary Remotion packages

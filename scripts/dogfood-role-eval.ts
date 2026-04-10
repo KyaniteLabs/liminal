@@ -167,3 +167,143 @@ function buildHarnessConfigs(cloudConfig: ReturnType<typeof loadCloudConfig>): P
 
   return configs;
 }
+
+// ─── Telemetry Wrapper ────────────────────────────────────────────────────────
+
+/**
+ * Wraps LLMClient to capture all request/response data to disk.
+ * Each call gets a unique callId for traceability.
+ */
+class TelemetryLLMClient {
+  private testId: string;
+
+  constructor(private inner: LLMClient, testId: string) {
+    this.testId = testId;
+  }
+
+  async generate(systemPrompt: string, userPrompt: string): Promise<LLMResponse> {
+    const callId = `${this.testId}-${Date.now()}`;
+    const requestStart = Date.now();
+
+    // Log request
+    const requestData = {
+      timestamp: new Date().toISOString(),
+      callId,
+      testId: this.testId,
+      model: (this.inner as any).config?.model ?? 'unknown',
+      baseUrl: (this.inner as any).config?.baseUrl ?? 'unknown',
+      systemPromptLength: systemPrompt.length,
+      userPromptLength: userPrompt.length,
+      temperature: (this.inner as any).config?.temperature,
+      maxTokens: (this.inner as any).config?.maxTokens,
+    };
+    fs.writeFileSync(
+      path.join(TRACES_DIR, `${callId}-request.json`),
+      JSON.stringify(requestData, null, 2)
+    );
+
+    try {
+      const response = await this.inner.generate(systemPrompt, userPrompt);
+      const duration = Date.now() - requestStart;
+
+      const responseData = {
+        timestamp: new Date().toISOString(),
+        callId,
+        testId: this.testId,
+        duration,
+        success: response.success,
+        codeLength: response.code?.length ?? 0,
+        hasThinking: !!response.thinking,
+        hasReasoning: !!response.reasoning,
+        recoveredFromThinking: response.recoveredFromThinking,
+        model: response.model,
+        error: response.error,
+        code: response.code,
+        thinking: response.thinking,
+        reasoning: response.reasoning,
+        explanation: response.explanation,
+      };
+      fs.writeFileSync(
+        path.join(RESPONSES_DIR, `${callId}-response.json`),
+        JSON.stringify(responseData, null, 2)
+      );
+
+      // Reasoning trace markdown
+      if (response.thinking || response.reasoning) {
+        const traceMd = [
+          `# Reasoning Trace: ${this.testId}`,
+          `**Model:** ${response.model ?? 'unknown'}`,
+          `**Duration:** ${duration}ms`,
+          `**Recovered from thinking:** ${response.recoveredFromThinking ?? false}`,
+          `## Prompt`,
+          userPrompt.slice(0, 1000),
+          `## Reasoning/Thinking`,
+          response.thinking || response.reasoning || '',
+          `## Generated Code`,
+          '```\n' + (response.code ?? '// No code').slice(0, 2000) + '\n```',
+        ].join('\n\n');
+        fs.writeFileSync(path.join(REASONING_DIR, `${callId}-reasoning.md`), traceMd);
+      }
+
+      return response;
+    } catch (error) {
+      const duration = Date.now() - requestStart;
+      fs.writeFileSync(
+        path.join(TRACES_DIR, `${callId}-error.json`),
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          callId,
+          testId: this.testId,
+          duration,
+          success: false,
+          error: error instanceof Error ? error.message : String(error),
+        }, null, 2)
+      );
+      throw error;
+    }
+  }
+}
+
+// ─── Harness System Prompts ──────────────────────────────────────────────────
+
+/**
+ * Builds the harness system prompt that instructs the harness to:
+ * 1. Call the Generator with the user prompt
+ * 2. Call the Evaluator to score the result
+ * 3. Return final code + score
+ *
+ * The harness (GLM or MiniMax) orchestrates the local models via structured output.
+ */
+function buildHarnessSystemPrompt(domainName: string, domainPrompt: string): string {
+  return `You are orchestrating a code generation pipeline for the "${domainName}" creative domain.
+
+Your task is to:
+1. Generate code for: "${domainPrompt}"
+2. Evaluate the generated code for correctness and domain relevance
+3. Return the final code with a confidence score 0-1
+
+Respond in this JSON format only:
+{
+  "generatedCode": "... the full code ...",
+  "score": 0.85,
+  "reasoning": "... brief evaluation notes ..."
+}
+
+Do not include any text outside this JSON structure.`;
+}
+
+const EVALUATOR_SYSTEM_PROMPT = `You are a precise code evaluator. Score generated code 0-1 for:
+- Correctness (0.4 weight): Does it run without errors?
+- Domain relevance (0.3 weight): Does it match the requested creative domain?
+- Code quality (0.3 weight): Is it well-structured and complete?
+
+Respond ONLY with a JSON object:
+{
+  "score": 0.85,
+  "correctness": 0.9,
+  "relevance": 0.8,
+  "quality": 0.85,
+  "notes": "..."
+}`;
+
+const GENERATOR_SYSTEM_PROMPT = `You are an expert creative code generator. Generate the best possible code for the requested creative domain. Output ONLY the raw code, no explanation, no markdown fences, no comments outside the code.`;

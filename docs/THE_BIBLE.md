@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
+Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Revideo/Hydra), and more. The system features:
 
 - **21 Subsystems** (8 core + 14 supporting)
 - **18 Guardrails** (M1-M11 implemented, M12-M18 planned)

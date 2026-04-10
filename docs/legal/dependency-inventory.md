@@ -58,6 +58,7 @@ Legend:
 | music-metadata | 11.12.3 | optional | MIT | media metadata/audio | Green | keep |
 | pitchfinder | — | **removed** | — | **Replaced** with in-repo autocorrelation in `src/audio/PitchDetector.ts` | Green | **Done** |
 | sharp | 0.34.5 | optional | Apache-2.0 | image processing | Green | keep |
+| @revideo/core | ^0.5.0 | optional | MIT | Video generation via Revideo (Motion Canvas fork) | Green | added as alternative |
 
 ## Immediate follow-ups
 1. ~~Remove or replace `pitchfinder`~~ — **Done: replaced with in-repo autocorrelation (2026-04-09)**

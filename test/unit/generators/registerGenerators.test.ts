@@ -185,7 +185,7 @@ describe('registerGenerators', () => {
       await registerAllGenerators();
 
       // Should register all static generators
-      expect(mockRegister).toHaveBeenCalledTimes(11);
+      expect(mockRegister).toHaveBeenCalledTimes(10);
     });
 
     it('is idempotent - skips if generators already registered', async () => {

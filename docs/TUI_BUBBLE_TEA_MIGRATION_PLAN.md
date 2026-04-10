@@ -1,11 +1,10 @@
 # TUI Bubble Tea Migration Plan
 
-## Decision
+**Status Date:** 2026-04-09
+**Last Updated:** 2026-04-09 — Bridge contract defined. TS bridge service built and wired. Bubble Tea shell connected to bridge via SSE. Happy-path parity achieved. Ink containment complete.
 Use a shared TypeScript bridge with:
 - local HTTP request endpoints
 - SSE event streaming
-
-## Why not WebSocket first
 HTTP + SSE fits the current backend shape, is simpler to audit, and is enough for the MVP's pane-first response flow.
 
 ## Migration sequence

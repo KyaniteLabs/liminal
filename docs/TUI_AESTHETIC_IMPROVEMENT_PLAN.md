@@ -1,5 +1,8 @@
 # TUI Aesthetic Improvement Plan
 
+**Status Date:** 2026-04-09
+**Last Updated:** 2026-04-09 — Lip Gloss semantic palette implemented in `theme.go`. Tokyo Night + Dracula inspired. Full semantic color system: cyan=info, green=safe, amber=caution, red=error, purple=code/brand, muted=chrome. Bubble Tea Wave 4 beauty pass pending (only after functional gate passes).
+
 ## Shell principles
 - pane-first architecture
 - explicit mode identity

@@ -1,6 +1,15 @@
 #!/bin/bash
-# post-merge hook: Clean up merged branches and worktrees
-# Enforces CLAUDE.md Rule #2: "Clean up your worktree when done"
+# post-merge hook: optionally clean up merged branches and worktrees.
+#
+# Cleanup is intentionally opt-in. During multi-agent work, automatic branch or
+# worktree deletion can make active sessions look like their edits were
+# reverted. Set LIMINAL_AUTO_CLEAN_WORKTREES=1 when you explicitly want this
+# hook to prune merged work.
+
+if [ "${LIMINAL_AUTO_CLEAN_WORKTREES:-}" != "1" ]; then
+    echo "  post-merge: worktree cleanup skipped (set LIMINAL_AUTO_CLEAN_WORKTREES=1 to enable)."
+    exit 0
+fi
 
 # Only run for merges into main/master
 current_branch=$(git symbolic-ref --short HEAD 2>/dev/null)
@@ -51,7 +60,7 @@ for branch in $merged_branches; do
         ((removed_worktrees++))
     fi
 
-    # Claude Code managed worktrees use "worktree-" prefix on branch name
+    # Claude Code managed worktrees use .claude/worktrees
     if [ -d "$repo_root/.claude/worktrees/$branch" ]; then
         git worktree remove "$repo_root/.claude/worktrees/$branch" --force 2>/dev/null
         echo "  Removed worktree: .claude/worktrees/$branch"

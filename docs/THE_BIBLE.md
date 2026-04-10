@@ -531,7 +531,7 @@ Failures:   0 critical
 
 ### 14. Composite System
 
-**Location:** `src/composite/`
+**Location:** `src/composition/`
 
 **Purpose:** Composition utilities for combining creative elements.
 
@@ -924,6 +924,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Mock LLM Provider**: `test/mocks/MockLLMProvider.ts` - Deterministic LLM responses for testing
 - **Enhanced TUI**: Task loading with M1-M8 support via `/run <task-id>` command
 - **Worktree Isolation**: Full multi-agent development workflow with `git wt` commands
+- **Agent Worktree Guard**: `scripts/utils/assert-agent-worktree.sh <branch>` prevents agents from editing in the root checkout or wrong branch
 
 ---
 

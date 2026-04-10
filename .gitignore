@@ -111,6 +111,9 @@ audit-*.png
 # oh-my-claudecode runtime state
 .omc/
 
+# oh-my-codex runtime state
+.omx/
+
 # Agent session artifacts
 ISSUE-REPORT.md
 
@@ -121,6 +124,7 @@ memory/
 test-export-temp/
 test-api-export-temp/
 test-api-gallery-temp/
+test-gallery-temp/
 .omc/state/
 bubbletea/
 

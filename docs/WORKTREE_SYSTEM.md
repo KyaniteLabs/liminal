@@ -617,3 +617,48 @@ git worktree move .worktrees/old-name .worktrees/new-name
 
 *Last updated: 2026-04-02*
 *For issues: See Troubleshooting section or check git-worktree documentation*
+
+---
+
+## Agent Guardrails (2026-04-10)
+
+During multi-agent work, branch/worktree churn can look like linters reverted
+changes. The repository now treats agent runtime files as local state and makes
+worktree cleanup opt-in.
+
+### Required preflight for agents
+
+Run this before editing:
+
+```bash
+scripts/utils/assert-agent-worktree.sh <expected-branch>
+```
+
+The guard fails when:
+- the agent is in the repository root instead of an isolated worktree
+- the current branch does not match the expected branch
+- merge conflicts are present
+- a git index lock exists
+- the branch is checked out in multiple worktrees
+
+### Runtime state policy
+
+Do not stage runtime state or generated dogfood artifacts unless explicitly
+requested. These paths are local-only agent/session artifacts:
+
+- `.omx/`
+- `.omc/`
+- `dogfood-output*/`
+- `test-gallery-temp/`
+
+### Worktree cleanup policy
+
+The `post-merge` hook no longer removes merged branches/worktrees by default.
+Automatic cleanup is opt-in:
+
+```bash
+LIMINAL_AUTO_CLEAN_WORKTREES=1 git merge <branch>
+```
+
+This prevents active agent sessions from losing worktrees while other branches
+are being reconciled.

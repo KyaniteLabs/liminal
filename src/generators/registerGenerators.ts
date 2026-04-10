@@ -157,8 +157,8 @@ const threeEntry: GeneratorEntry = {
   },
 };
 
-const remotionEntry: GeneratorEntry = {
-  name: 'remotion',
+const revideoEntry: GeneratorEntry = {
+  name: 'revideo',
   canHandle: (prompt: string) => {
     const gen = new RemotionGenerator();
     return gen.canHandle(prompt);
@@ -284,7 +284,7 @@ function registerStaticGenerators(): void {
   // Domain-specific generators for non-p5 domains
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
-  generatorRegistry.register(remotionEntry);
+  generatorRegistry.register(revideoEntry);
   generatorRegistry.register(htmlEntry);
   generatorRegistry.register(asciiEntry);
   generatorRegistry.register(textgenEntry);  // textgen before strudel for priority

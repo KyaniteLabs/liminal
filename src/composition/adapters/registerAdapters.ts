@@ -63,7 +63,9 @@ export const allAdapters = {
   /** HTML adapter for DOM-based layers */
   html: htmlAdapter,
 
-  /** Remotion adapter for video compositions */
+  /** Revideo adapter for video compositions */
+  revideo: remotionAdapter,
+  /** @deprecated Use 'revideo' instead - remotion is a legacy alias */
   remotion: remotionAdapter,
 } as const;
 
@@ -79,7 +81,7 @@ export const allAdapters = {
  * - hydra (Hydra visuals)
  * - ascii (ASCII art)
  * - html (HTML/DOM)
- * - video (Remotion video)
+ * - video (Revideo video)
  *
  * @param engine - The CompositionEngine to register adapters with
  *
@@ -108,6 +110,6 @@ export function registerAllAdapters(engine: CompositionEngine): void {
 
   // Content adapters
   engine.registerAdapter('html', allAdapters.html);
-  engine.registerAdapter('video', allAdapters.remotion);
-  engine.registerAdapter('remotion', allAdapters.remotion);
+  engine.registerAdapter('video', allAdapters.revideo);
+  engine.registerAdapter('remotion', allAdapters.revideo);
 }

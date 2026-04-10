@@ -464,7 +464,22 @@ When the task is complete and build passes, respond with tool "complete".`;
             }
             return result;
           }
-          
+
+          case 'search':
+            return searchTool.execute(params);
+          case 'listDir':
+            return listDirTool.execute(params);
+          case 'typeCheck':
+            return typeCheckTool.execute(params);
+          case 'npm':
+            return npmTool.execute(params);
+          case 'lsp':
+            return lspTool.execute(params);
+          case 'astValidate':
+            return astValidatorTool.execute(params);
+          case 'importGuard':
+            return importGuardTool.execute(params);
+
           default:
             return { success: false, error: `Unknown tool: ${tool}` };
         }

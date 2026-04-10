@@ -16,6 +16,8 @@ export enum Domain {
   ASCII = 'ascii',
   MUSIC = 'music',
   CODE = 'code',
+  REVIEWD = 'revideo', // Revideo v0.12+ active video composition framework
+  /** @deprecated Use REVIEWD instead - kept as legacy alias only */
   REMOTION = 'remotion',
   EMPTY = ''
 }
@@ -48,3 +50,8 @@ export const SHADER_DOMAINS = [Domain.GLSL, Domain.SHADER, Domain.WEBGL];
  * Domains for music generation
  */
 export const MUSIC_DOMAINS = [Domain.TONE, Domain.STRUDEL, Domain.HYDRA];
+
+/**
+ * Domains for video composition (active: revideo, legacy alias: remotion)
+ */
+export const VIDEO_DOMAINS = [Domain.REVIEWD];

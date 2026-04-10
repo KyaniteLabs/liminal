@@ -1,20 +1,73 @@
+import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { KINETIC_SYSTEM_PROMPT, buildKineticPrompt } from './kineticPrompt.js';
+import { Logger } from '../../utils/Logger.js';
+
+export interface KineticGeneratorOptions extends TierBasedGeneratorOptions {}
+
 /**
- * Kinetic — CSS-native generative art domain (FUTURE, NOT YET WIRED)
+ * Kinetic — CSS-native generative art domain.
  *
  * Generates autonomous, perpetually-animated visual compositions using
- * CSS keyframes and SVG. Zero JavaScript required at runtime.
- *
- * Status: Stub. Generation prompt and routing NOT implemented.
- * See docs/CREATIVE_DOMAIN_TYPES.md for design.
+ * CSS @keyframes and SVG. Zero JavaScript required at runtime.
  */
-import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
-
 export class KineticGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
     super('kinetic', llmOrConfig);
   }
 
-  generate(_prompt: string, _options?: TierBasedGeneratorOptions): Promise<string> {
-    throw new Error('KineticGenerator: generation not yet implemented. See docs/CREATIVE_DOMAIN_TYPES.md');
+  async generate(prompt: string, options?: KineticGeneratorOptions): Promise<string> {
+    const response = await this.generateInternal(prompt, options);
+    return response.code;
+  }
+
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    // Must be valid HTML
+    if (!code.includes('<!DOCTYPE html>') && !code.includes('<html')) {
+      return { valid: false, error: 'Generated code is not valid HTML' };
+    }
+    // Must have @keyframes (the defining characteristic)
+    if (!code.includes('@keyframes')) {
+      return { valid: false, error: 'Generated code contains no @keyframes — not a kinetic artwork' };
+    }
+    // Must not contain <script> tags
+    if (/<script/i.test(code)) {
+      return { valid: false, error: 'Generated code contains JavaScript — kinetic art is pure CSS/SVG' };
+    }
+    return { valid: true };
+  }
+
+  private async generateInternal(
+    prompt: string,
+    options?: KineticGeneratorOptions
+  ) {
+    await this.resolveConfigIfNeeded?.();
+
+    if (!this.llm) {
+      throw new Error('KineticGenerator: LLM not initialized');
+    }
+
+    const systemPrompt = KINETIC_SYSTEM_PROMPT;
+    const userPrompt = buildKineticPrompt(prompt);
+
+    Logger.info('KineticGenerator', 'Generating CSS-kinetic artwork');
+
+    const response = await this.llm.generate(
+      systemPrompt,
+      userPrompt,
+      options?.signal,
+      options?.bypassCache
+    );
+
+    const code = response.code;
+    if (!code || code.trim().length === 0) {
+      throw new Error('KineticGenerator: LLM returned empty code');
+    }
+
+    const validated = this.validateOutput(code);
+    if (!validated.valid) {
+      throw new Error(`KineticGenerator: ${validated.error}`);
+    }
+
+    return response;
   }
 }

@@ -121,10 +121,30 @@ export function summarizeMemos(memos: EvaluationMemo[]): MemoSummary {
   const approved = memos.filter((m) => m.finalVerdict === 'approve').length;
   const avgScore = memos.reduce((sum, m) => sum + m.score, 0) / memos.length;
 
+  // Extract common issues from non-approved memos with high-priority sections
+  const nonApprovedMemos = memos.filter((m) => m.finalVerdict !== 'approve');
+  const sectionCounts = new Map<string, number>();
+
+  for (const memo of nonApprovedMemos) {
+    for (const section of memo.sections) {
+      if (section.priority === 'high') {
+        sectionCounts.set(section.title, (sectionCounts.get(section.title) || 0) + 1);
+      }
+    }
+  }
+
+  // Include section titles that appear in 2+ non-approved memos
+  const commonIssues: string[] = [];
+  for (const [title, count] of sectionCounts) {
+    if (count >= 2) {
+      commonIssues.push(title);
+    }
+  }
+
   return {
     totalEvaluations: memos.length,
     approveRate: approved / memos.length,
     avgScore,
-    commonIssues: [],
+    commonIssues,
   };
 }

@@ -66,6 +66,13 @@ function toPositiveInt(value: string | undefined, fallback: number): number {
   return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : fallback;
 }
 
+function parseDomainFilter(): Set<string> | null {
+  const raw = getArg("domains");
+  if (!raw) return null;
+  const values = raw.split(",").map(v => v.trim()).filter(Boolean);
+  return values.length ? new Set(values) : null;
+}
+
 function nowStamp(): string {
   return new Date().toISOString().replace(/[:.]/g, "-");
 }
@@ -199,7 +206,8 @@ function writeMarkdown(report: Report, outDir: string): string {
 async function main(): Promise<void> {
   await registerAllGenerators();
   const activeGenerators = getActiveGeneratorNames();
-  const scenarios = buildScenarios(activeGenerators);
+  const domainFilter = parseDomainFilter();
+  const scenarios = buildScenarios(activeGenerators).filter(s => !domainFilter || domainFilter.has(s.domain));
   const runsPerScenario = toPositiveInt(getArg("runs"), 2);
   const maxIterations = toPositiveInt(getArg("iterations"), 3);
   const outDir = path.join(PROJECT_ROOT, "dogfood-output", `founder-dogfood-${nowStamp()}`);
@@ -209,6 +217,7 @@ async function main(): Promise<void> {
   console.log(`Branch: ${branchName()}`);
   console.log(`Active generators: ${activeGenerators.join(", ")}`);
   console.log(`Scenarios: ${scenarios.map(s => s.domain).join(", ")}`);
+  if (domainFilter) console.log(`Domain filter: ${Array.from(domainFilter).join(", ")}`);
   console.log(`Runs per scenario: ${runsPerScenario}`);
   console.log(`Max iterations per run: ${maxIterations}`);
   console.log(`Output dir: ${outDir}`);

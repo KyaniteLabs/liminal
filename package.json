@@ -43,7 +43,8 @@
     "dogfood:report": "npx tsx scripts/generate-dogfood-report.ts",
     "prepare": "git config core.hooksPath .githooks",
     "git:hygiene": "bash scripts/utils/git-hygiene.sh",
-    "git:hygiene:dry": "bash scripts/utils/git-hygiene.sh --dry-run"
+    "git:hygiene:dry": "bash scripts/utils/git-hygiene.sh --dry-run",
+    "dogfood:founder": "npx tsx scripts/dogfood/run-founder-dogfood.ts"
   },
   "keywords": [
     "generative-art",

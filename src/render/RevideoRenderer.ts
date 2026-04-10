@@ -62,13 +62,13 @@ export class RevideoRenderer {
    * Generate the project configuration file.
    */
   private generateProjectConfig(code: string): string {
-    const _sceneName = this.parseSceneName(code) ?? 'Scene';
+    const sceneName = this.parseSceneName(code) ?? 'Scene';
 
     return `import {makeProject} from '@revideo/core';
-import scene from './scene';
+import ${sceneName} from './scene';
 
 export default makeProject({
-  scenes: [scene],
+  scenes: [${sceneName}],
   settings: {
     shared: {
       size: {width: 1920, height: 1080},

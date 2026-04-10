@@ -71,14 +71,6 @@ export function createCodeToken(
     metadata: {},
     tags: [],
     location: mainSymbol.location,
-    symbols: symbols.slice(0, 200).map(s => ({
-      name: s.name,
-      kind: s.kind,
-      signature: s.signature,
-      summary: s.summary,
-      location: s.location,
-    })),
-    imports,
     relationships: {
       calls: relationships.calls,
       imports: relationships.imports,

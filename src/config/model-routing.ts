@@ -224,7 +224,7 @@ export function getPreferredModels(domain: string): ModelId[] {
   return Object.values(MODEL_IDS);
 }
 
-export function shouldAvoidModel(domain: string, modelId: string): boolean {
+export function shouldAvoidModel(domain: string, modelId: ModelId): boolean {
   const normalizedDomain = domain.toLowerCase();
   const routing = DOMAIN_ROUTING[normalizedDomain];
   if (!routing) return false;

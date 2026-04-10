@@ -8,11 +8,11 @@ export const SERVICE_DEFAULTS = {
   /** Preview server port for live sketch viewing */
   PREVIEW_PORT: 3456,
   /** LM Studio / local LLM API base URL */
-  LOCAL_LLM_URL: 'http://localhost:1234/v1',
+  LOCAL_LLM_URL: process.env.LOCAL_LLM_URL || 'http://localhost:1234/v1',
   /** Ollama API base URL */
-  OLLAMA_URL: 'http://localhost:11434',
+  OLLAMA_URL: process.env.OLLAMA_URL || 'http://localhost:11434',
   /** Reasoning service base URL */
-  REASONING_URL: 'http://localhost:8000',
+  REASONING_URL: process.env.REASONING_URL || 'http://localhost:8000',
   /** MiniMax M2.7 cloud API base URL (international Token Plan: api.minimax.io; Chinese domestic: api.minimaxi.com) */
   MINIMAX_URL: 'https://api.minimax.io/v1',
   /** p5.js CDN version */

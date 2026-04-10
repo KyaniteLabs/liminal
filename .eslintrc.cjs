@@ -42,5 +42,5 @@ module.exports = {
       },
     },
   ],
-  ignorePatterns: ['dist/', 'node_modules/', 'gallery/', 'gui/', 'docs/', '*.cjs', 'src/**/archive/'],
+  ignorePatterns: ['dist/', 'node_modules/', 'gallery/', '/gui/', 'docs/', '*.cjs', 'src/**/archive/'],
 };

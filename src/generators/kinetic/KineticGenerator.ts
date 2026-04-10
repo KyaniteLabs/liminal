@@ -16,7 +16,7 @@ export class KineticGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: KineticGeneratorOptions): Promise<string> {
-    const response = await this.generateInternal(prompt, options);
+    const response = await this.generateFull(prompt, options);
     return response.code;
   }
 
@@ -36,12 +36,7 @@ export class KineticGenerator extends TierBasedGenerator {
     return { valid: true };
   }
 
-  private async generateInternal(
-    prompt: string,
-    options?: KineticGeneratorOptions
-  ) {
-    await this.resolveConfigIfNeeded?.();
-
+  async generateFull(prompt: string, options?: KineticGeneratorOptions) {
     if (!this.llm) {
       throw new Error('KineticGenerator: LLM not initialized');
     }

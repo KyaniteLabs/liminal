@@ -57,10 +57,10 @@ export class RunTestsTool extends Tool {
           passed,
           failed: failed || 1,
           stdout: stdout.slice(-2000),
-          stderr: (error.stderr || error.message).slice(-2000),
+          stderr: (String((execErr as Record<string, unknown>).stderr || (execErr as Record<string, unknown>).message || "")).slice(-2000),
           success: false,
         },
-        error: `Tests failed with exit code ${error.code || 1}`,
+        error: `Tests failed with exit code ${(execErr.code as number) || 1}`,
         duration: Date.now() - startTime,
       };
     }

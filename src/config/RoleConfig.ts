@@ -240,13 +240,13 @@ async function loadProjectConfig(projectDir?: string): Promise<RoleConfigFile | 
  * The existing project config has `llm` and `multiModel` fields
  * that map to generator and harness roles.
  */
-function projectToRoleConfig(project: { llm?: { baseUrl?: string; model?: string; apiKey?: string; temperature?: number; maxTokens?: number }; multiModel?: { primary?: { baseUrl?: string; model?: string; temperature?: number; maxTokens?: number } } }): RoleConfigFile | null {
+function projectToRoleConfig(project: { llm?: { baseUrl?: string; model?: string; apiKey?: string; temperature?: number; maxTokens?: number }; multiModel?: { primary?: { baseUrl?: string; model?: string; temperature?: number; maxTokens?: number }; secondary?: { baseUrl?: string; model?: string; temperature?: number; maxTokens?: number } } }): RoleConfigFile | null {
   if (!project.llm && !project.multiModel) return null;
 
   const roles: RoleConfigFile['roles'] = {
     generator: {
-      baseUrl: project.llm?.baseUrl || project.multiModel?.primary?.baseUrl,
-      model: project.llm?.model || project.multiModel?.primary?.model,
+      baseUrl: project.llm?.baseUrl || project.multiModel?.primary?.baseUrl || "",
+      model: project.llm?.model || project.multiModel?.primary?.model || "",
       apiKey: project.llm?.apiKey,
       temperature: project.llm?.temperature || project.multiModel?.primary?.temperature,
       maxTokens: project.llm?.maxTokens || project.multiModel?.primary?.maxTokens,
@@ -255,8 +255,8 @@ function projectToRoleConfig(project: { llm?: { baseUrl?: string; model?: string
 
   if (project.multiModel?.secondary) {
     roles.harness = {
-      baseUrl: project.multiModel.secondary.baseUrl,
-      model: project.multiModel.secondary.model,
+      baseUrl: project.multiModel.secondary.baseUrl || "",
+      model: project.multiModel.secondary.model || "",
       temperature: project.multiModel.secondary.temperature,
       maxTokens: project.multiModel.secondary.maxTokens,
     };

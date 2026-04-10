@@ -61,7 +61,7 @@ export class Compositor {
 
     for (let i = 1; i < visualLayers.length; i++) {
       const layer = visualLayers[i];
-      const opacity = layer.opacity ?? 1.0;
+      
       const x = layer.x ?? 0;
       const y = layer.y ?? 0;
 
@@ -125,7 +125,7 @@ export class Compositor {
       l => l.type === 'video' || l.type === 'image'
     );
 
-    const layerComponents = visualLayers.map((layer, i) => {
+    const layerComponents = visualLayers.map((layer, _i) => {
       const blendMode = this.blendToCSS(layer.blend);
       const x = layer.x ?? 0;
       const y = layer.y ?? 0;

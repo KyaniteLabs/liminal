@@ -34,6 +34,7 @@ import {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  kineticConfidence,
 } from '../../../src/generators/registerGenerators.js';
 
 describe('registerGenerators', () => {
@@ -85,15 +86,15 @@ describe('registerGenerators', () => {
     });
 
     describe('htmlConfidence', () => {
-      it('returns 0.95 for portfolio/landing page patterns', () => {
-        expect(htmlConfidence('create a portfolio')).toBe(0.95);
-        expect(htmlConfidence('landing page design')).toBe(0.95);
-        expect(htmlConfidence('dashboard ui')).toBe(0.95);
+      it('returns 0 for SaaS patterns (HTML is infrastructure-only, not creative)', () => {
+        expect(htmlConfidence('create a portfolio')).toBe(0);
+        expect(htmlConfidence('landing page design')).toBe(0);
+        expect(htmlConfidence('dashboard ui')).toBe(0);
       });
 
-      it('returns 0.90 for explicit HTML/CSS mentions', () => {
-        expect(htmlConfidence('html page')).toBe(0.90);
-        expect(htmlConfidence('css styling')).toBe(0.90);
+      it('returns 0.50 for explicit HTML generator mentions (composition adapters)', () => {
+        expect(htmlConfidence('html generator')).toBe(0.50);
+        expect(htmlConfidence('generate html')).toBe(0.50);
       });
 
       it('returns 0 for unrelated prompts', () => {
@@ -175,6 +176,38 @@ describe('registerGenerators', () => {
         expect(toneConfidence('draw a circle')).toBe(0);
       });
     });
+
+    describe('kineticConfidence', () => {
+      it('returns 0.95 for explicit kinetic typography/art/type mentions', () => {
+        expect(kineticConfidence('kinetic typography')).toBe(0.95);
+        expect(kineticConfidence('kinetic art')).toBe(0.95);
+        expect(kineticConfidence('kinetic type')).toBe(0.95);
+      });
+
+      it('returns 0.90 for kinetic + css patterns', () => {
+        expect(kineticConfidence('kinetic css animation')).toBe(0.90);
+        expect(kineticConfidence('css kinetic design')).toBe(0.90);
+        expect(kineticConfidence('kinetic style with css')).toBe(0.90);
+      });
+
+      it('returns 0.85 for perpetually animated / autonomous animation', () => {
+        expect(kineticConfidence('perpetually animated')).toBe(0.85);
+        expect(kineticConfidence('autonomous animation')).toBe(0.85);
+        expect(kineticConfidence('css keyframes art')).toBe(0.85);
+        expect(kineticConfidence('keyframes generative')).toBe(0.85);
+      });
+
+      it('returns 0.75 for kinetic typography signals', () => {
+        expect(kineticConfidence('type in motion')).toBe(0.75);
+        expect(kineticConfidence('animated typography')).toBe(0.75);
+        expect(kineticConfidence('css animation art')).toBe(0.75);
+      });
+
+      it('returns 0 for unrelated prompts', () => {
+        expect(kineticConfidence('draw a circle')).toBe(0);
+        expect(kineticConfidence('three.js scene')).toBe(0);
+      });
+    });
   });
 
   describe('registerAllGenerators', () => {
@@ -184,8 +217,8 @@ describe('registerGenerators', () => {
 
       await registerAllGenerators();
 
-      // Should register all static generators
-      expect(mockRegister).toHaveBeenCalledTimes(10);
+      // Should register all static generators (10 domain + 1 p5 fallback)
+      expect(mockRegister).toHaveBeenCalledTimes(11);
     });
 
     it('is idempotent - skips if generators already registered', async () => {

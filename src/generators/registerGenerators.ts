@@ -23,6 +23,7 @@ import { StrudelGenerator } from './strudel/StrudelGenerator.js';
 import { HydraGenerator } from './hydra/HydraGenerator.js';
 import { ToneGenerator } from './tone/ToneGenerator.js';
 import { TextGenerativeGenerator } from './textgen/TextGenerativeGenerator.js';
+import { KineticGenerator } from './kinetic/KineticGenerator.js';
 import { pluginLoader } from '../plugins/PluginLoader.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -136,6 +137,20 @@ const toneConfidence = (prompt: string): number => {
   return 0;
 };
 
+/** Confidence for CSS-kinetic / kinetic typography patterns */
+const kineticConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  // Highly specific CSS-kinetic mentions
+  if (/\bkinetic\s+(typography|art|type)\b/.test(lower)) return 0.95;
+  if (/\bkinetic\b.*\bcss\b|\bcss\b.*\bkinetic\b/.test(lower)) return 0.90;
+  if (/\bkinetic\s+type\b/.test(lower)) return 0.90;
+  // Perpetually animated / CSS keyframes
+  if (/perpetually\s*animated|autonomous\s*animation|css\s+keyframes.*art|keyframes.*generative/.test(lower)) return 0.85;
+  // Strong kinetic typography signals
+  if (/kinetic\s+typography|type\s+in\s+motion|animated\s+typography|css\s+animation\s+art/.test(lower)) return 0.75;
+  return 0;
+};
+
 // --- Generator entries ---
 
 
@@ -245,17 +260,17 @@ const textgenEntry: GeneratorEntry = {
 };
 
 /**
- * Kinetic — CSS-native generative art (FUTURE, NOT YET WIRED)
+ * Kinetic — CSS-native generative art
  *
  * Generates autonomous, perpetually-animated visual compositions using
  * CSS keyframes and SVG. Zero JavaScript required at runtime.
- * See docs/CREATIVE_DOMAIN_TYPES.md for design.
  */
 const kineticEntry: GeneratorEntry = {
   name: 'kinetic',
-  canHandle: () => 0, // Stub: not yet wired to routing
-  generate: (_prompt: string) => {
-    throw new Error('KineticGenerator: generation not yet implemented');
+  canHandle: kineticConfidence,
+  generate: async (prompt: string) => {
+    const gen = new KineticGenerator();
+    return gen.generate(prompt);
   },
 };
 
@@ -307,7 +322,7 @@ function registerStaticGenerators(): void {
   generatorRegistry.register(strudelEntry);
   generatorRegistry.register(hydraEntry);
   generatorRegistry.register(toneEntry);
-  generatorRegistry.register(kineticEntry);  // Stub: future domain, not yet wired
+  generatorRegistry.register(kineticEntry);
 
   // P5 generator with tier-based prompting (fallback for all p5 sketches)
   generatorRegistry.register(p5Entry);
@@ -344,4 +359,5 @@ export {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  kineticConfidence,
 };

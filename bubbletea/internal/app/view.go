@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) View() string {
@@ -20,9 +20,9 @@ func (m Model) View() string {
 	footer := m.renderFooter()
 
 	// ── Calculate column widths ──
-	chatWidth := m.Width * 3 / 5       // 60% for chat
-	previewWidth := m.Width * 2 / 5    // 40% for preview
-	paneHeight := m.Height - 6         // minus header(2) + footer(2) + borders(2)
+	chatWidth := m.Width * 3 / 5    // 60% for chat
+	previewWidth := m.Width * 2 / 5 // 40% for preview
+	paneHeight := m.Height - 6      // minus header(2) + footer(2) + borders(2)
 
 	if chatWidth < 30 {
 		chatWidth = 30
@@ -97,11 +97,6 @@ func (m Model) renderHeader() string {
 		}
 	}
 
-	// DEBUG: show block count and active response length
-	debugInfo := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#ff9e64")).
-		Render(fmt.Sprintf("blk:%d resp:%d", len(m.ChatBlocks), len(m.ActiveResponse)))
-
 	// Spacing between elements
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
@@ -109,7 +104,6 @@ func (m Model) renderHeader() string {
 	if telemetry != "" {
 		headerContent += spacer + telemetry
 	}
-	headerContent += spacer + debugInfo
 
 	header := lipgloss.NewStyle().
 		Background(ui.BgSurface).
@@ -216,17 +210,17 @@ func (m Model) renderStatusLine(width int) string {
 			iterStr = fmt.Sprintf("%d/%d", m.CurrentIteration, m.GenerationIterations)
 		}
 		genInfo := ui.StatusLabelStyle.Render("Gen: ") +
-			ui.StatusValueStyle.Render("iter:" + iterStr + " score:" + scoreStr)
+			ui.StatusValueStyle.Render("iter:"+iterStr+" score:"+scoreStr)
 		if m.GenerationDuration > 0 {
 			durationStr := fmt.Sprintf("%.1fs", float64(m.GenerationDuration)/1000.0)
 			genInfo = ui.StatusLabelStyle.Render("Gen: ") +
-				ui.StatusValueStyle.Render("iter:" + iterStr + " score:" + scoreStr + " " + durationStr)
+				ui.StatusValueStyle.Render("iter:"+iterStr+" score:"+scoreStr+" "+durationStr)
 		}
 		statusLine += "  " + genInfo
 	}
 
 	return lipgloss.NewStyle().
-		Width(width-4).
+		Width(width - 4).
 		Foreground(ui.FgMuted).
 		Render(statusLine)
 }

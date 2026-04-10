@@ -655,16 +655,22 @@
       "type": "file"
     },
     {
+      "path": "test/core/RalphLoop.best-of-n.test.ts",
+      "accessCount": 9,
+      "lastAccessed": 1775765923579,
+      "type": "directory"
+    },
+    {
+      "path": "src/core/ContextAccumulation.ts",
+      "accessCount": 8,
+      "lastAccessed": 1775765847272,
+      "type": "directory"
+    },
+    {
       "path": "test/unit/harness/RateLimiter.test.ts",
       "accessCount": 6,
       "lastAccessed": 1775696148319,
       "type": "file"
-    },
-    {
-      "path": "src/core/ContextAccumulation.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775695837193,
-      "type": "directory"
     },
     {
       "path": "test/unit/context-accumulation.test.js",
@@ -685,9 +691,27 @@
       "type": "file"
     },
     {
+      "path": "src/render/HeadlessRenderer.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775765581295,
+      "type": "directory"
+    },
+    {
+      "path": "src/compost/FragmentScorer.ts",
+      "accessCount": 5,
+      "lastAccessed": 1775765868098,
+      "type": "directory"
+    },
+    {
       "path": "test/integration/gui-security-regression.test.js",
       "accessCount": 4,
       "lastAccessed": 1775699589659,
+      "type": "file"
+    },
+    {
+      "path": "test/compost/FragmentScorer.test.ts",
+      "accessCount": 4,
+      "lastAccessed": 1775765893815,
       "type": "file"
     },
     {
@@ -724,18 +748,6 @@
       "path": "test/security/url-validator.test.ts",
       "accessCount": 2,
       "lastAccessed": 1775696977528,
-      "type": "file"
-    },
-    {
-      "path": "src/compost/FragmentScorer.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775698627234,
-      "type": "directory"
-    },
-    {
-      "path": "test/compost/FragmentScorer.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775698668161,
       "type": "file"
     },
     {
@@ -797,12 +809,6 @@
       "accessCount": 1,
       "lastAccessed": 1775692371302,
       "type": "file"
-    },
-    {
-      "path": "test/core/RalphLoop.best-of-n.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775694477224,
-      "type": "directory"
     },
     {
       "path": "src/security/UrlValidator.ts",
@@ -928,12 +934,6 @@
       "path": "src/render/RenderAndScorePipeline.ts",
       "accessCount": 1,
       "lastAccessed": 1775751766777,
-      "type": "directory"
-    },
-    {
-      "path": "src/render/HeadlessRenderer.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751783310,
       "type": "directory"
     },
     {

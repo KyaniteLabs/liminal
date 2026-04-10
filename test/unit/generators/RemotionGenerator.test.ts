@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   const generate = vi.fn().mockResolvedValue({
-    code: 'import { useCurrentFrame, AbsoluteFill } from "remotion";\n\nexport const MyVideoComponent = () => {\n  const frame = useCurrentFrame();\n  return (\n    <AbsoluteFill>\n      <div style={{ fontSize: 64 }}>Frame {frame}</div>\n    </AbsoluteFill>\n  );\n};',
+    code: 'import { makeScene, useTime } from "@revideo/core";\n\nexport default () => {\n  const time = useTime();\n  return <text>Time: {time}</text>;\n};',
     success: true,
   });
   class MockLLMClient {
@@ -16,9 +16,10 @@ vi.mock('../../../src/llm/LLMClient.js', () => {
 import { RemotionGenerator } from '../../../src/generators/remotion/RemotionGenerator.js';
 
 describe('RemotionGenerator', () => {
-  it('canHandle returns 0.9 for remotion/video keywords', () => {
+  it('canHandle returns 0.95 for remotion/revideo keywords', () => {
     const gen = new RemotionGenerator();
-    expect(gen.canHandle('create a remotion video')).toBe(0.9);
+    expect(gen.canHandle('create a remotion video')).toBe(0.95);
+    expect(gen.canHandle('create a revideo animation')).toBe(0.95);
     expect(gen.canHandle('animated video with particles')).toBe(0.8);
     expect(gen.canHandle('motion graphics title sequence')).toBe(0.8);
   });
@@ -29,10 +30,10 @@ describe('RemotionGenerator', () => {
     expect(gen.canHandle('GLSL shader with ray marching')).toBe(0);
   });
 
-  it('generate returns valid Remotion code via LLM mock', async () => {
+  it('generate returns valid Revideo code via LLM mock', async () => {
     const gen = new RemotionGenerator();
     const code = await gen.generate('particle animation');
-    expect(code).toContain('useCurrentFrame');
-    expect(code).toContain('AbsoluteFill');
+    expect(code).toContain('makeScene');
+    expect(code).toContain('useTime');
   });
 });

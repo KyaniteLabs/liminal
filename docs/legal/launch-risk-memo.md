@@ -51,9 +51,9 @@ This memo assumes the company wants:
 #### 2. `remotion`, `@remotion/bundler`, `@remotion/cli`, `@remotion/renderer`
 - Manifest location: direct `dependencies`
 - Live code usage:
-  - `src/render/RemotionRenderer.ts`
-  - `src/generators/remotion/*`
-  - `src/composition/adapters/RemotionAdapter.ts`
+  - ~~`src/render/RemotionRenderer.ts`~~ **Replaced with RevideoRenderer (partially integrated)**
+- ~~`src/generators/remotion/*`~~ **Replaced with `src/generators/revideo/*`**
+- ~~`src/composition/adapters/RemotionAdapter.ts`~~ **Replaced with RevideoAdapter**
 - Local installed metadata: `SEE LICENSE IN LICENSE.md`
 - Business risk: vendor-specific/commercial licensing obligations likely apply for company use
 - Proposed action: **make an explicit keep-vs-cut decision for v1** — **Cut from active surface (stubbed, 2026-04-09)**
@@ -145,3 +145,20 @@ Before calling the product launch-ready, complete:
 3. What exact commercial/license obligations apply to the current Remotion usage model?
 4. ~~Is keeping `pitchfinder` in optionalDependencies...~~ — **N/A: pitchfinder removed (2026-04-09)**
 5. Is `Liminal` too risky to adopt as the commercial brand for software/AI tooling?
+
+---
+
+## Revideo Replacement Status (2026-04-10)
+
+Revideo (MIT-licensed Motion Canvas fork) has been implemented as the Remotion replacement:
+
+- **Location:** `src/generators/revideo/`, `src/render/RevideoRenderer.ts`, `src/composition/adapters/RevideoAdapter.ts`
+- **Integration:** Wired into prompts, generator routing, validation, and render surface
+- **Status:** Partially integrated
+  - ✅ Code generation: Active
+  - ✅ Project scaffolding: Active
+  - ⚠️ Rendering: Not yet turnkey (needs build infrastructure for temp projects)
+- **Dependencies:** `@revideo/core`, `@revideo/2d`, `@revideo/renderer`, `@revideo/vite-plugin`, `@revideo/ui`
+- **Limitation:** Scaffolded temp projects do not yet have a turnkey installed/renderable environment. Rendering fails when @revideo/* imports cannot be resolved inside the temp project.
+
+See PR #114 for implementation details.

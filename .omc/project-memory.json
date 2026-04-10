@@ -669,6 +669,25 @@
       "keyFiles": []
     }
   },
-  "hotPaths": [],
+  "hotPaths": [
+    {
+      "path": "docs/brand/naming-shortlist.md",
+      "accessCount": 4,
+      "lastAccessed": 1775793573360,
+      "type": "file"
+    },
+    {
+      "path": "test/unit/generators/RemotionGenerator.test.ts",
+      "accessCount": 1,
+      "lastAccessed": 1775793517222,
+      "type": "file"
+    },
+    {
+      "path": "docs/brand/naming-sprint-2.md",
+      "accessCount": 1,
+      "lastAccessed": 1775793540419,
+      "type": "file"
+    }
+  ],
   "userDirectives": []
 }

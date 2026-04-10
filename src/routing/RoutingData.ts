@@ -120,7 +120,7 @@ export function getBanditStats(domain: DomainType) {
 /**
  * Domain types supported by the smart router.
  */
-export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'remotion' | 'html' | 'webdev';
+export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'remotion' | 'revideo' | 'html' | 'webdev';
 
 /**
  * Model choice for routing.
@@ -145,6 +145,7 @@ export const AB_TEST_RESULTS: Record<DomainType, DomainFitness> = {
   code: { local: 0.503, cloud: 0.460, hybrid: 0.413 },
   visual: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
   remotion: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
+  revideo: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
   html: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
   webdev: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
 };
@@ -218,6 +219,13 @@ export const DOMAIN_ROUTING_DATA: Record<DomainType, DomainRoutingConfig> = {
     localFitness: 0.400,
     cloudFitness: 0.550,
   },
+  revideo: {
+    optimalModel: 'cloud',
+    confidence: 0.70,
+    advantage: '+38%',
+    localFitness: 0.400,
+    cloudFitness: 0.550,
+  },
 };
 
 /**
@@ -240,6 +248,7 @@ export const DOMAIN_KEYWORDS: Record<DomainType, string[]> = {
   code: ['code', 'function', 'class', 'algorithm', 'generate', 'fractal', 'animation', 'script', 'program'],
   visual: ['visual', 'image', 'graphic', 'design', 'color', 'shape', 'pattern', 'render', 'shader', '3d', 'scene'],
   remotion: ['remotion', 'video', 'motion graphics', 'title sequence', 'animation', 'composition'],
+  revideo: ['revideo', 'video', 'motion graphics', 'title sequence', 'animation', 'composition', 'programmatic video'],
   html: ['html', 'web page', 'landing page', 'website', 'css', 'responsive', 'web design'],
   webdev: ['web app', 'dashboard', 'portfolio', 'spa', 'single page', 'ui component', 'form', 'web dev'],
 };

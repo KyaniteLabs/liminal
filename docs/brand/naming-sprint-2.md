@@ -465,3 +465,29 @@ Creative-coding product for creative technologists, design engineers, artists, e
 - `docs/brand/naming-sprint-2.md` (this file)
 - `docs/brand/naming-shortlist.md` (updated to reflect new shortlist)
 - `docs/brand/naming-decision-memo.md` (to be updated with final selection)
+
+---
+
+## Sprint 3 — Final 5 Clearance (2026-04-09)
+
+**Constraint:** Exactly 5 names evaluated. No expanded shortlist. Force convergence.
+
+### Candidates: Praxis, Glyph, Rune, Motif, Tessra
+
+| Name | .com | .dev | npm | USPTO | Key Collision |
+| Praxis | praxis.com → Praxis Technologies Inc. | praxis.dev → PraxisLIVE (creative coding IDE) | Flux mini-framework | Live TM: Praxis Technologies | **PraxisLIVE is active creative coding IDE** |
+| Glyph | glyph.com → Google (defensive) | 000 clear | Node.js static site tool | None found | npm tool non-competing |
+| Rune | rune.com → Rune Technologies Inc. | 000 clear | CLI for multiplayer platform | Filed Jan 2025 | **Rune AI Inc. 10M+ installs, same creative-dev audience** |
+| Motif | motif.com → likely consumer brand | motif.dev → live dev project | JS pattern mini-language | None found | npm package non-competing |
+| Tessra | tessra.com → forwarding domain | 000 clear | Empty | None found | Low presence, phonetically awkward |
+
+### Outcome
+
+| Rank | Name | Risk | Verdict |
+| 1 | **Motif** | MEDIUM | **WINNER** |
+| 2 | **Glyph** | MEDIUM | **BACKUP** |
+| 3 | Tessra | LOW | Reject |
+| 4 | Rune | HIGH | Reject |
+| 5 | Praxis | HIGH | Reject |
+
+**Full analysis:** `naming-decision-memo.md`

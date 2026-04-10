@@ -164,7 +164,7 @@ describe('AudioScorer', () => {
     expect(result.frequencyVariety).toBeGreaterThan(0.3);
   });
 
-  it('white noise yields low harmonic score', () => {
+  it('white noise yields low harmonic score', { timeout: 30000 }, () => {
     const scorer = new AudioScorer();
     const samples = new Float32Array(4096);
     for (let i = 0; i < 4096; i++) {

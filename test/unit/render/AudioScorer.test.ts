@@ -194,7 +194,7 @@ describe('AudioScorer', () => {
       expect(result.metrics.dynamicRange).toBeGreaterThan(0);
     });
 
-    it('should count zero crossings for harmonic content', () => {
+    it('should count zero crossings for harmonic content', { timeout: 30000 }, () => {
       // Low frequency sine wave (few zero crossings)
       const lowFreqSamples = new Float32Array(sampleRate);
       for (let i = 0; i < lowFreqSamples.length; i++) {

@@ -31,10 +31,10 @@ As of **2026-04-09**, launch-readiness planning has been formalized in:
 - `docs/launch/v1-scope.md`
 - `docs/launch/positioning.md`
 
-These planning docs are grounded in the live repo/package state and currently highlight three commercial-launch-sensitive areas:
+These planning docs are grounded in the live repo/package state and currently highlight two commercial-launch-sensitive areas:
 
-1. `pitchfinder` remains present under `optionalDependencies` and is still referenced by `src/audio/PitchExtractor.ts`
-2. `remotion` and related `@remotion/*` packages remain direct dependencies and require an explicit keep/cut or licensing decision
+1. `pitchfinder` — **Done**: replaced with in-repo autocorrelation in `src/audio/PitchDetector.ts`. Frequency range is narrower (50–2000 Hz vs 20–8000 Hz). Functionality practically preserved for creative-coding use cases.
+2. `remotion` and related `@remotion/*` packages — **Done**: cut from active surface, all code paths stubbed to throw clear errors. Motion Canvas research doc added.
 3. `p5` remains a direct dependency with LGPL-2.1 metadata and should ship only with an explicit compliance posture
 
 Brand note: `Liminal` should currently be treated as a **working/internal name**, not a presumed final commercial brand, pending proper clearance.

@@ -22,7 +22,7 @@ Assess whether `liminal-ai` can launch as a proprietary / closed-source product 
 **Go only with conditions.**
 
 A proprietary launch still looks feasible, but the current repo has three launch-sensitive licensing/business-risk areas:
-1. `pitchfinder` remains present as an **optional dependency** under `GNU v3`
+1. `pitchfinder` — **Done**: replaced with in-repo autocorrelation. See pitchfinder section below.
 2. `remotion` and related `@remotion/*` packages remain **direct dependencies** with custom/commercial licensing implications
 3. `p5` remains a **direct LGPL-2.1 dependency** and is used in generated wrappers / previews
 
@@ -39,16 +39,14 @@ This memo assumes the company wants:
 
 ## Current dependency risk summary
 
-### Red
-#### 1. `pitchfinder` (optional dependency)
-- Manifest location: `optionalDependencies.pitchfinder`
-- Runtime reference: `src/audio/PitchExtractor.ts`
-- Local installed metadata: `GNU v3`
-- Risk: strong copyleft / high diligence burden if shipped as part of a commercial product distribution
-- Notes:
-  - This package is **not mandatory** for baseline install/runtime
-  - The repo still references it and encourages install in logs/docs
-- Proposed action: **replace or remove from launch-critical feature set**
+### Red → Yellow → Green (Completed)
+#### 1. `pitchfinder` — REPLACED ✅
+- Previous manifest location: `optionalDependencies.pitchfinder`; **removed from package.json (2026-04-09)**
+- Previous runtime reference: `src/audio/PitchExtractor.ts`
+- Replacement: in-repo autocorrelation detector in `src/audio/PitchDetector.ts`; wired in `src/audio/PitchExtractor.ts`
+- **Verification (2026-04-09):** 17 pitch tests pass. Functionality practically preserved for creative-coding use cases — 440Hz, 880Hz, C4 (261.63Hz) all confirmed working.
+- **Caveat:** Narrower frequency range (50–2000 Hz) vs pitchfinder's YIN (~20–8000 Hz). Greater buffer-size sensitivity — low frequencies need 8192+ samples for reliable detection.
+- **Action:** **Done** — pitchfinder removed from manifest, replacement implemented and verified.
 
 #### 2. `remotion`, `@remotion/bundler`, `@remotion/cli`, `@remotion/renderer`
 - Manifest location: direct `dependencies`
@@ -58,7 +56,7 @@ This memo assumes the company wants:
   - `src/composition/adapters/RemotionAdapter.ts`
 - Local installed metadata: `SEE LICENSE IN LICENSE.md`
 - Business risk: vendor-specific/commercial licensing obligations likely apply for company use
-- Proposed action: **make an explicit keep-vs-cut decision for v1**
+- Proposed action: **make an explicit keep-vs-cut decision for v1** — **Cut from active surface (stubbed, 2026-04-09)**
 
 ### Yellow → Green (Completed)
 #### 3. `p5` — COMPLIANCE REVIEW COMPLETE ✅
@@ -100,7 +98,7 @@ Current caution points:
 ## Documentation quality note
 Some internal docs/plans do **not** reflect the current live package reality.
 Examples:
-- older voice-aesthetic docs describe `pitchfinder` as MIT
+- older voice-aesthetic docs describe `pitchfinder` as MIT (superseded — pitchfinder removed 2026-04-09)
 - older docs describe Remotion more simply than the current package/vendor reality warrants
 
 For legal and launch work, prefer:
@@ -123,8 +121,8 @@ Reason:
 
 ## Launch recommendation
 ### Recommended path
-1. **Replace or drop `pitchfinder` from launch scope**
-2. **Decide whether Remotion is core enough to pay/license for**
+1. ~~Replace or drop `pitchfinder`~~ — **Done (2026-04-09)**
+2. ~~Decide whether Remotion is core enough to pay/license for~~ — **Done: cut from active surface (2026-04-09)**
 3. **Keep p5 only with explicit compliance plan**
 4. **Rebrand away from `Liminal` before public launch**
 5. Launch with a narrower v1 wedge focused on:
@@ -145,5 +143,5 @@ Before calling the product launch-ready, complete:
 1. Given the current direct + optional dependency surface, can the product ship closed-source as planned?
 2. Does the current `p5` usage pattern create extra obligations for a packaged/commercial product?
 3. What exact commercial/license obligations apply to the current Remotion usage model?
-4. Is keeping `pitchfinder` in optionalDependencies acceptable if the related feature is disabled by default?
+4. ~~Is keeping `pitchfinder` in optionalDependencies...~~ — **N/A: pitchfinder removed (2026-04-09)**
 5. Is `Liminal` too risky to adopt as the commercial brand for software/AI tooling?

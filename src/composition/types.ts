@@ -18,6 +18,7 @@ export type DomainType =
   | 'hydra'
   | 'ascii'
   | 'remotion'
+  | 'revideo'
   | 'video'
   | 'html'
   | 'textgen'

@@ -17,6 +17,7 @@ export enum Domain {
   MUSIC = 'music',
   CODE = 'code',
   REMOTION = 'remotion',
+  REVIDEO = 'revideo',
   EMPTY = ''
 }
 

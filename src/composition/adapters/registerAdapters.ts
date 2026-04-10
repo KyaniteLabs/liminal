@@ -10,7 +10,7 @@
  * import { registerAllAdapters } from './adapters/registerAdapters.js';
  *
  * const engine = new CompositionEngine();
- * registerAllAdapters(engine); // Registers all 9 adapters
+ * registerAllAdapters(engine); // Registers all adapters
  * ```
  */
 
@@ -24,6 +24,7 @@ import { hydraAdapter } from './HydraAdapter.js';
 import { asciiArtAdapter } from './ASCIIArtAdapter.js';
 import { htmlAdapter } from './HTMLAdapter.js';
 import { remotionAdapter } from './RemotionAdapter.js';
+import { revideoAdapter } from './RevideoAdapter.js';
 
 /**
  * Singleton object containing all pre-registered adapter instances.
@@ -65,10 +66,13 @@ export const allAdapters = {
 
   /** Remotion adapter for video compositions */
   remotion: remotionAdapter,
+
+  /** Revideo adapter for video compositions */
+  revideo: revideoAdapter,
 } as const;
 
 /**
- * Registers all 9 adapters with a CompositionEngine.
+ * Registers all adapters with a CompositionEngine.
  *
  * This function registers the following adapters:
  * - p5 (p5.js creative coding)
@@ -79,7 +83,7 @@ export const allAdapters = {
  * - hydra (Hydra visuals)
  * - ascii (ASCII art)
  * - html (HTML/DOM)
- * - video (Remotion video)
+ * - video (Remotion/Revideo video)
  *
  * @param engine - The CompositionEngine to register adapters with
  *
@@ -110,4 +114,5 @@ export function registerAllAdapters(engine: CompositionEngine): void {
   engine.registerAdapter('html', allAdapters.html);
   engine.registerAdapter('video', allAdapters.remotion);
   engine.registerAdapter('remotion', allAdapters.remotion);
+  engine.registerAdapter('revideo', allAdapters.revideo);
 }

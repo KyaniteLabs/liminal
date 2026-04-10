@@ -4,6 +4,7 @@
  */
 
 import { execSync } from 'child_process';
+import { existsSync } from 'node:fs';
 import { Logger } from '../utils/Logger.js';
 
 /**
@@ -114,8 +115,7 @@ export class TestFailureDetector {
    */
   private static fileExists(filePath: string): boolean {
     try {
-      const fs = require('fs');
-      return fs.existsSync(filePath);
+      return existsSync(filePath);
     } catch {
       return false;
     }

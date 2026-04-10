@@ -10,12 +10,7 @@ import { createInterface } from 'readline';
 import { Logger } from '../utils/Logger.js';
 import { ConversationManager } from './ConversationManager.js';
 import type { Parameter, Domain } from './types.js';
-
-/**
- * Guidance Engine stub for Phase 1
- * Will be replaced with real implementation in Phase 2
- */
-interface GuidanceEngineStub {}
+import { GuidanceEngine } from './GuidanceEngine.js';
 
 /**
  * Preview state for the preview panel
@@ -33,7 +28,7 @@ interface PreviewState {
  */
 export class ChatCLI {
   conversation: ConversationManager;
-  guidance: GuidanceEngineStub;
+  guidance: GuidanceEngine;
 
   // Internal state for UI
   private previewState: PreviewState | null = null;
@@ -44,7 +39,7 @@ export class ChatCLI {
 
   constructor(conversation: ConversationManager) {
     this.conversation = conversation;
-    this.guidance = {}; // Stub for Phase 1
+    this.guidance = conversation.guidance;
   }
 
   /**

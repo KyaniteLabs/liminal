@@ -48,4 +48,14 @@ type Event struct {
 	Duration   int64   `json:"duration,omitempty"`
 	Model      string  `json:"model,omitempty"`
 	Reason     string  `json:"reason,omitempty"`
+
+	// Event fields for swarm.round
+	Round          int    `json:"round,omitempty"`
+	TotalRounds    int    `json:"totalRounds,omitempty"`
+	VocabularySize int    `json:"vocabularySize,omitempty"`
+	Winner         string `json:"winner,omitempty"`
+	Converged      bool   `json:"converged,omitempty"`
+	Outputs        map[string]any `json:"outputs,omitempty"`
+	Votes          map[string]any `json:"votes,omitempty"`
+	Timestamp      int64  `json:"timestamp,omitempty"`
 }

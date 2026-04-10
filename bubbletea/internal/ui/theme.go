@@ -21,9 +21,10 @@ var (
 	AccentBlue   = lipgloss.Color("#7aa2f7") // Assistant, links
 	AccentPurple = lipgloss.Color("#bb9af7") // Code, highlights, brand
 	AccentCyan   = lipgloss.Color("#7dcfff") // Info, tags, mode
-	AccentOrange = lipgloss.Color("#ff9e64") // Warnings
-	AccentRed    = lipgloss.Color("#f7768e") // Errors
-	AccentYellow = lipgloss.Color("#e0af68") // System messages
+	AccentOrange  = lipgloss.Color("#ff9e64") // Warnings
+	AccentRed     = lipgloss.Color("#f7768e") // Errors
+	AccentYellow  = lipgloss.Color("#e0af68") // System messages
+	AccentMagenta = lipgloss.Color("#ff007c") // Swarm / creative language
 )
 
 // ── 256-color fallback constants (for terminals without true-color) ──

@@ -68,6 +68,11 @@ type Model struct {
 	GenerationReason     string
 	CurrentIteration     int
 
+	// Swarm round telemetry
+	SwarmRound          int
+	SwarmTotalRounds    int
+	SwarmVocabularySize int
+
 	// Live bridge state
 	Bridge       *bridge.Client
 	SessionID    string
@@ -209,6 +214,10 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		if event.Duration > 0 {
 			m.GenerationDuration = event.Duration
 		}
+	case "swarm.round":
+		m.SwarmRound = event.Round
+		m.SwarmTotalRounds = event.TotalRounds
+		m.SwarmVocabularySize = event.VocabularySize
 	}
 }
 

@@ -5,6 +5,7 @@ import { RalphLoop } from '../core/RalphLoop.js';
 import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatus } from './types.js';
 import { Domain } from '../types/domains.js';
+import { eventBus, EventTypes } from '../core/EventBus.js';
 
 const SYSTEM_PROMPT = `You are Liminal, a creative coding partner. You help users generate p5.js sketches, Strudel music patterns, and other creative code. Be concise, helpful, and creative. When users describe what they want, respond with encouragement and relevant code or ideas.`;
 
@@ -27,6 +28,40 @@ export class TuiBridgeService {
   private activeStreams = new Map<string, AbortController>();
   // Step 1: Conversation memory - one ConversationManager per session
   private conversations = new Map<string, ConversationManager>();
+
+  constructor() {
+    // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
+    // External consumers (Bubble Tea client, gallery) receive these via SSE
+    // through the existing TuiEventStream subscription mechanism.
+    eventBus.onEvent((event) => {
+      if (event.type !== EventTypes.SWARM_ROUND) return;
+      const data = event.data as {
+        round: number;
+        totalRounds: number;
+        vocabularySize: number;
+        winner: string | null;
+        converged: boolean;
+        outputs: Record<string, unknown>;
+        votes: Record<string, unknown>;
+        timestamp: number;
+      };
+      // Broadcast to every active session
+      for (const sessionId of this.sessions.list()) {
+        this.stream.emit(sessionId, {
+          type: 'swarm.round',
+          sessionId,
+          round: data.round,
+          totalRounds: data.totalRounds,
+          vocabularySize: data.vocabularySize,
+          winner: data.winner,
+          converged: data.converged,
+          outputs: data.outputs,
+          votes: data.votes,
+          timestamp: data.timestamp,
+        });
+      }
+    });
+  }
 
   createSession(): TuiSessionStatus {
     const sessionId = `tui-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;

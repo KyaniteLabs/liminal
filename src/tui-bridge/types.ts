@@ -37,6 +37,17 @@ export interface TuiInputRequest {
   clientIntent?: 'chat' | 'inspect' | 'action';
 }
 
+export interface SwarmRoundEvent {
+  round: number;
+  totalRounds: number;
+  vocabularySize: number;
+  winner: string | null;
+  converged: boolean;
+  outputs: Record<string, unknown>;
+  votes: Record<string, unknown>;
+  timestamp: number;
+}
+
 export type TuiBridgeEvent =
   | { type: 'response.started'; sessionId: string }
   | { type: 'response.delta'; sessionId: string; delta: string }
@@ -57,4 +68,5 @@ export type TuiBridgeEvent =
   // Generation telemetry: emitted during RalphLoop generation
   | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string }
   | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string }
+  | ({ type: 'swarm.round'; sessionId: string } & SwarmRoundEvent)
   | { type: 'error'; sessionId: string; message: string };

@@ -13,6 +13,7 @@ import type { CompostMill } from './CompostMill.js';
 import type { ProjectStore } from './ProjectStore.js';
 import { formatSeedForDisplay } from '../core/lir/LIRPromptFormatter.js';
 import { Logger } from '../utils/Logger.js';
+import { ArchiveLearning } from '../learning/ArchiveLearning.js';
 
 export type CLIAction =
   | { command: 'add'; paths: string[] }
@@ -23,7 +24,8 @@ export type CLIAction =
   | { command: 'log'; limit?: number }
   | { command: 'undo' }
   | { command: 'branch'; subcommand: 'create' | 'list' | 'switch' | 'delete'; args?: string[]; description?: string }
-  | { command: 'history' };
+  | { command: 'history' }
+  | { command: 'export-finetuning'; domain?: string; minQuality?: number; outputPath?: string };
 
 /** Parse CLI arguments into a typed action. */
 export function parseArgs(args: string[]): CLIAction {
@@ -74,6 +76,25 @@ export function parseArgs(args: string[]): CLIAction {
 
   if (argv[0] === 'history') {
     return { command: 'history' };
+  }
+
+  if (argv[0] === 'export-finetuning') {
+    let domain: string | undefined;
+    let minQuality: number | undefined;
+    let outputPath: string | undefined;
+    for (let i = 1; i < argv.length; i++) {
+      if (argv[i] === '--domain' && argv[i + 1] && !argv[i + 1]?.startsWith('--')) {
+        domain = argv[++i];
+      } else if (argv[i] === '--min-quality' && argv[i + 1]) {
+        const parsed = parseFloat(argv[++i]);
+        if (!isNaN(parsed)) minQuality = parsed;
+      } else if (argv[i] === '--output' && argv[i + 1] && !argv[i + 1]?.startsWith('--')) {
+        outputPath = argv[++i];
+      } else if (!argv[i].startsWith('--')) {
+        domain = argv[i];
+      }
+    }
+    return { command: 'export-finetuning', domain, minQuality, outputPath };
   }
 
   return { command: 'status' };
@@ -295,6 +316,30 @@ export async function execute(action: CLIAction, mill: CompostMill): Promise<voi
       if (!store) break;
 
       Logger.info('CompostCLI', store.getStatusSummary());
+      break;
+    }
+
+    case 'export-finetuning': {
+      const archive = new ArchiveLearning();
+      const examples = archive.exportForFinetuning(
+        action.domain,
+        action.minQuality ?? 0.75,
+      );
+
+      if (examples.length === 0) {
+        Logger.info('CompostCLI', 'No fine-tuning examples found matching the criteria.');
+        break;
+      }
+
+      const jsonl = examples.map(e => JSON.stringify(e)).join('\n');
+
+      if (action.outputPath) {
+        const fs = await import('node:fs/promises');
+        await fs.writeFile(action.outputPath, jsonl + '\n', 'utf-8');
+        Logger.info('CompostCLI', `Exported ${examples.length} example(s) to ${action.outputPath}`);
+      } else {
+        process.stdout.write(jsonl + '\n');
+      }
       break;
     }
   }

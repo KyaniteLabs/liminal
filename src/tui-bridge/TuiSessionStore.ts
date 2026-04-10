@@ -19,4 +19,9 @@ export class TuiSessionStore {
     this.sessions.set(sessionId, next);
     return next;
   }
+
+  /** Return all active session IDs. */
+  list(): string[] {
+    return [...this.sessions.keys()];
+  }
 }

@@ -102,12 +102,23 @@ func (m Model) renderHeader() string {
 		Foreground(lipgloss.Color("#ff9e64")).
 		Render(fmt.Sprintf("blk:%d resp:%d", len(m.ChatBlocks), len(m.ActiveResponse)))
 
+	// Swarm round progress display
+	var swarmTelemetry string
+	if m.SwarmRound > 0 {
+		swarmTelemetry = lipgloss.NewStyle().
+			Foreground(ui.AccentMagenta).
+			Render(fmt.Sprintf("Swarm %d/%d — %d sym", m.SwarmRound, m.SwarmTotalRounds, m.SwarmVocabularySize))
+	}
+
 	// Spacing between elements
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
 	headerContent := brand + spacer + mode + spacer + provider + spacer + connDot
 	if telemetry != "" {
 		headerContent += spacer + telemetry
+	}
+	if swarmTelemetry != "" {
+		headerContent += spacer + swarmTelemetry
 	}
 	headerContent += spacer + debugInfo
 

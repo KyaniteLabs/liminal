@@ -240,7 +240,7 @@ async function loadProjectConfig(projectDir?: string): Promise<RoleConfigFile | 
  * The existing project config has `llm` and `multiModel` fields
  * that map to generator and harness roles.
  */
-function projectToRoleConfig(project: any): RoleConfigFile | null {
+function projectToRoleConfig(project: { llm?: { baseUrl?: string; model?: string; apiKey?: string; temperature?: number; maxTokens?: number }; multiModel?: { primary?: { baseUrl?: string; model?: string; temperature?: number; maxTokens?: number } } }): RoleConfigFile | null {
   if (!project.llm && !project.multiModel) return null;
 
   const roles: RoleConfigFile['roles'] = {

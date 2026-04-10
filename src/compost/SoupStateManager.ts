@@ -34,7 +34,7 @@ export class SoupStateManager {
         return { ...DEFAULT_STATE };
       }
       return parsed;
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err?.code === 'ENOENT') {
         Logger.debug('SoupStateManager', 'No saved state found, starting fresh');
       } else {

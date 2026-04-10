@@ -153,7 +153,7 @@ export class HarnessMemory {
         // Migrate if needed
         this.state = this.migrate(loaded);
         Logger.debug('HarnessMemory', `Loaded ${this.state.tasks.length} tasks, ${this.state.adaptations.length} adaptations, ${this.state.episodes.length} episodes, ${this.state.calibration.length} calibrations`);
-      } catch (err: any) {
+      } catch (err: unknown) {
         if (err?.code === 'ENOENT') {
           // File doesn't exist — expected on first run
           Logger.debug('HarnessMemory', 'No previous memory found, starting fresh');
@@ -226,7 +226,7 @@ export class HarnessMemory {
   /**
    * Migrate old memory formats
    */
-  private migrate(loaded: any): HarnessMemoryState {
+  private migrate(loaded: Partial<HarnessMemoryState>): HarnessMemoryState {
     if (!loaded.version || loaded.version < MEMORY_VERSION) {
       // Migration logic for future versions
       loaded.version = MEMORY_VERSION;

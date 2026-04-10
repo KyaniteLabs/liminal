@@ -72,7 +72,7 @@ export class SeedBank {
       const raw = await fs.readFile(this.seedsPath, 'utf-8');
       this.seeds =
         safeJsonParse(raw, SeedSchema.array(), 'SeedBank') ?? [];
-    } catch (err: any) {
+    } catch (err: unknown) {
       if (err?.code === 'ENOENT') {
         Logger.debug('SeedBank', 'No saved seeds found, starting empty');
       } else {

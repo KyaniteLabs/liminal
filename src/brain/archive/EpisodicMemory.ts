@@ -244,7 +244,7 @@ export class EpisodicMemory {
     const data = JSON.parse(content);
 
     // Restore episodes
-    this.episodes = data.episodes.map((ep: any) => ({
+    this.episodes = data.episodes.map(((ep: Record<string, unknown> & { timestamp: string })) => ({
       ...ep,
       timestamp: new Date(ep.timestamp)
     }));

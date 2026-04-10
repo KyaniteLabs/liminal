@@ -34,7 +34,7 @@ export class RunBuildTool extends Tool {
         },
         duration: Date.now() - startTime,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Build failed
       return {
         success: false,

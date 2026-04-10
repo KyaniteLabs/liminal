@@ -188,7 +188,7 @@ export class ProjectSerializer {
         // SECURITY: Module path constructed to avoid compile-time resolution while preventing code injection
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const moduleName = 'js' + 'zip';
-        const JSZip: any = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
+        const JSZip = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
         if (!JSZip) throw new Error('JSZip not available');
         const zip = new JSZip();
 
@@ -228,7 +228,7 @@ export class ProjectSerializer {
         // SECURITY: Module path constructed to avoid compile-time resolution while preventing code injection
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const moduleName = 'js' + 'zip';
-        const JSZip: any = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
+        const JSZip = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
         if (!JSZip) throw new Error('JSZip not available');
         const zipContent = await JSZip.loadAsync(zip);
 

@@ -603,6 +603,32 @@ function buildMarkdownReport(report: {
 // ─── Main Execution Loop ───────────────────────────────────────────────────────
 
 async function main() {
+  // Check for --smoke flag
+  const SMOKE_MODE = process.argv.includes('--smoke');
+  if (SMOKE_MODE) {
+    console.log('🔥 SMOKE TEST MODE — running single domain\n');
+
+    const cloudConfig = loadCloudConfig();
+    const harnessConfigs = buildHarnessConfigs(cloudConfig);
+    if (!harnessConfigs.length) throw new Error('No cloud providers');
+
+    const lmModels = await detectLMStudioModels();
+    const generator = lmModels.generator ?? lmModels.gemma;
+    if (!generator) throw new Error('No LM Studio generator model available');
+    if (!lmModels.evaluator) throw new Error('No evaluator model in LM Studio');
+
+    const domain = DOMAINS[0]; // p5 first
+    const harness = harnessConfigs[0];
+
+    console.log(`🔥 ${harness.name} × ${generator.name} × ${domain.name}\n`);
+    const result = await runHarnessTest(domain, harness, generator, lmModels.evaluator);
+    console.log(result.success
+      ? `✅ Smoke test PASSED — score: ${result.harnessScore}, duration: ${result.duration}ms`
+      : `❌ Smoke test FAILED: ${result.error}`
+    );
+    process.exit(result.success ? 0 : 1);
+  }
+
   console.log('🔬 DOGFOOD ROLE EVALUATION\n');
   console.log('Providers: GLM-5.1 (harness) | MiniMax-M2.7 (harness)');
   console.log('Generators: Qwen 3.5 2B (LM Studio) | Gemma 4B (LM Studio)');

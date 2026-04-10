@@ -18,7 +18,6 @@ import {
   validateOutputPath,
   validateProjectName,
 } from '../utils/validation.js';
-import { RemotionRenderer } from '../render/RemotionRenderer.js';
 import { ValidationError } from '../errors/ValidationError.js';
 import { ExportError } from '../errors/index.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
@@ -230,7 +229,7 @@ export class Exporter {
 
   /**
    * Export creative code as a video file.
-   * Uses RemotionRenderer for the 'remotion' domain, CanvasRecorder for all others.
+   * Uses CanvasRecorder for all domains (Revideo, Remotion deprecated).
    * @param code - Creative code to render (must be non-empty string)
    * @param outputPath - Path where video file will be saved
    * @param options - Video export options including domain, fps, duration, width, height
@@ -265,14 +264,8 @@ export class Exporter {
       );
     }
 
-    if (domain === 'remotion') {
-      const renderer = new RemotionRenderer();
-      const projectDir = await renderer.writeEntryPoint(code);
-      await renderer.renderToVideo({ projectDir, outputPath, codec: 'h264' });
-    } else {
-      const recorder = new CanvasRecorder({ fps, duration, width, height });
-      await recorder.record(code, domain as any, outputPath);
-    }
+    const recorder = new CanvasRecorder({ fps, duration, width, height });
+    await recorder.record(code, domain as any, outputPath);
   }
 
   /**

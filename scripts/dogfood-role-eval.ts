@@ -59,3 +59,111 @@ const DOGFOOD_MAX_TOKENS = 32_768;
 
 // LM Studio base URL
 const LM_STUDIO_URL = 'http://localhost:1234/v1';
+
+// ─── Model / Provider Types ────────────────────────────────────────────────────
+
+interface ModelInfo {
+  id: string;       // e.g. "qwen3.5-2b"
+  name: string;      // e.g. "lmstudio-qwen3.5-2b"
+  provider: 'lmstudio';
+}
+
+interface ProviderConfig {
+  name: string;       // display name e.g. "glm-5.1"
+  baseUrl: string;
+  model: string;
+  apiKey?: string;
+  timeout: number;
+  maxTokens: number;
+  temperature: number;
+  type: 'cloud';
+}
+
+// ─── LM Studio Model Detection ────────────────────────────────────────────────
+
+/**
+ * Detect available LM Studio models and filter for qwen/gemma.
+ * Returns { generator: ModelInfo, gemma: ModelInfo, evaluator: ModelInfo }
+ */
+async function detectLMStudioModels(): Promise<{
+  generator: ModelInfo | null;
+  gemma: ModelInfo | null;
+  evaluator: ModelInfo | null;
+}> {
+  let res: Response;
+  try {
+    res = await fetch(`${LM_STUDIO_URL}/models`, { signal: AbortSignal.timeout(5000) });
+  } catch {
+    throw new Error('LM Studio not available at localhost:1234');
+  }
+  const data = await res.json() as { data: Array<{ id: string }> };
+  const available = data.data.map((m) => m.id);
+
+  // Find Qwen 3.5 2B for generator
+  const qwen2b = available.find((id) => /qwen3[._-]?5[._-]?2b/i.test(id)) ?? null;
+  // Find Gemma 4B for generator B
+  const gemma4b = available.find((id) => /gemma[_-]?4b/i.test(id)) ?? null;
+  // Find Qwen instruction-tuned for evaluator (prefer 2b-it, fall back to any qwen it)
+  const evaluator = available.find((id) => /qwen3[._-]?5[._-]?2b[_-]?it/i.test(id))
+    ?? available.find((id) => /qwen.*it$/i.test(id))
+    ?? null;
+
+  return {
+    generator: qwen2b ? { id: qwen2b, name: `lmstudio-${qwen2b.replace(/[/:]/g, '-')}`, provider: 'lmstudio' } : null,
+    gemma:     gemma4b  ? { id: gemma4b,  name: `lmstudio-${gemma4b.replace(/[/:]/g, '-')}`,  provider: 'lmstudio' } : null,
+    evaluator: evaluator ? { id: evaluator, name: `lmstudio-${evaluator.replace(/[/:]/g, '-')}`, provider: 'lmstudio' } : null,
+  };
+}
+
+// ─── Cloud Config Loader ──────────────────────────────────────────────────────
+
+/**
+ * Load API keys from config file
+ */
+function loadCloudConfig(): { glm?: { apiKey: string }, minimax?: { apiKey: string } } {
+  const configPath = path.join(process.env.HOME ?? '', '.liminal/config.json');
+  if (!fs.existsSync(configPath)) return {};
+  try {
+    return JSON.parse(fs.readFileSync(configPath, 'utf-8'));
+  } catch {
+    return {};
+  }
+}
+
+// ─── Harness Provider Configs ────────────────────────────────────────────────
+
+function buildHarnessConfigs(cloudConfig: ReturnType<typeof loadCloudConfig>): ProviderConfig[] {
+  const configs: ProviderConfig[] = [];
+
+  // GLM-5.1 harness
+  const glmApiKey = cloudConfig.glm?.apiKey ?? process.env.GLM_API_KEY;
+  if (glmApiKey) {
+    configs.push({
+      name: 'glm-5.1',
+      baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+      model: 'glm-5.1',
+      apiKey: glmApiKey,
+      timeout: DOGFOOD_TIMEOUT,
+      maxTokens: DOGFOOD_MAX_TOKENS,
+      temperature: 0.5,
+      type: 'cloud',
+    });
+  }
+
+  // MiniMax-M2.7 harness
+  const minimaxApiKey = cloudConfig.minimax?.apiKey ?? process.env.MINIMAX_API_KEY;
+  if (minimaxApiKey) {
+    configs.push({
+      name: 'MiniMax-M2.7',
+      baseUrl: 'https://api.minimaxi.chat/v1',
+      model: 'MiniMax-M2.7',
+      apiKey: minimaxApiKey,
+      timeout: DOGFOOD_TIMEOUT,
+      maxTokens: DOGFOOD_MAX_TOKENS,
+      temperature: 0.5,
+      type: 'cloud',
+    });
+  }
+
+  return configs;
+}

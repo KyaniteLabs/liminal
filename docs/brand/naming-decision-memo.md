@@ -1,19 +1,195 @@
 # Naming Decision Memo — Final
 
-_Status: CONVERGED. Sprint 4 is the final pass._
-_Seeds: Limen, Tessra, Motive, Forma, Glyphic, Motif, Sigil_
+_Status: CONVERGED. Sprint 5 is the final pass._
+_Sprint 5 seeds: Prism, Lattice, Aperture, Facet, Spectra, Lumen, Quartz, Axis, Vector, Plane, Helix, Arc, Lamina, Refraction, Crystal + alternatives Refract, Diffract, Focal, Vertex_
 
 ---
 
-## Sprint 4 — Final Convergence (2026-04-10)
+## Sprint 5 — Optics/Geometry Final (2026-04-11)
 
-_Scope: 7 seed names evaluated. No expanded shortlist. Force convergence._
+_Direction: Optics, geometry, crystallography, structure, light, rendering._
+_Taste anchors: Prism, Lattice._
+_Scope: 15 seed names + 4 alternatives. Full clearance pass._
 
 ### Clearance Results
 
-#### 1. Limen
+#### 1. Refract (alternative — introduced, WINNER)
 
 | Check | Result |
+|-------|--------|
+| Domain .com | refract.com — likely taken |
+| Domain .dev/.io | refract.dev — likely available; refract.io — uncertain |
+| npm | No dominant "refract" package |
+| USPTO | No active Refract mark in software/creative classes |
+| Common law | REFRACT Tool (antlii.work) — personal p5.js project, v0.24, no company. Refract Software (UK) — acquired by Allego ~2018, dormant. refraction.dev — AI code tool (different name). Refract Technologies — games/XR (different domain). |
+
+**Risk: MEDIUM** — REFRACT Tool is in creative coding but is a personal project with no commercial presence. Refract Software mark is dormant post-acquisition. Cleanest viable option in the optics family.
+
+**Product narrative:** Light refracts through a medium, bending and splitting into new patterns. Code refracts through the harness — bending into visual form, splitting into generative output. Active verb energy: "I built this with Refract" / "Refract your code into visual art."
+
+**Aesthetic:** R-E-F-R-A-C-T (7 letters, 2 syllables). Double-R symmetry. Angular wordmark. Same energy as Figma, Framer.
+
+---
+
+#### 2. Facet (BACKUP)
+
+| Check | Result |
+|-------|--------|
+| Domain .com | facet.com — likely taken |
+| Domain .dev/.io | facet.dev — uncertain; facet.io — likely available |
+| npm | No dominant creative-coding package |
+| USPTO | Multiple Facet marks in software (Facet.ai active) |
+| Common law | **Facet.ai** — funded AI image generation tool (real-time collaborative). PitchBook-listed. "Facet Compose empowers creatives to refine their vision in real-time." Facet Digital — outsourced dev. facets.cloud — DevOps. |
+
+**Risk: MEDIUM-HIGH** — Facet.ai is the key concern. Funded AI creative tool in the visual space. Not identical to creative coding (image editing/compositing) but adjacent enough to cause confusion. If Facet.ai is acquired/pivots, risk drops to LOW.
+
+**Product narrative:** A facet is one face of a cut gem — geometric precision revealing hidden visual properties. The harness "facets" raw code into visual output. Best pure metaphor in the entire set.
+
+**Aesthetic:** F-A-C-E-T (5 letters, 2 syllables). Punchy, iconic. Stunning wordmark potential.
+
+---
+
+#### 3. Prism (founder taste anchor)
+
+| Check | Result |
+|-------|--------|
+| Domain .com | prism.com — taken (major entity) |
+| Domain .dev/.io | prism.dev — uncertain; prism.io — likely taken |
+| npm | @prism (various, no dominant one) |
+| USPTO | Multiple Prism marks across software classes |
+| Common law | Prism Software (India, US — multiple). Samsung PRISM (Tizen UX tool, SDC22). Prism Software (enterprise content management). No dominant Prism in creative coding. |
+
+**Risk: HIGH** — Very crowded namespace. Multiple companies using "Prism" in software. No single dominant creative-tool conflict, but aggregate crowding makes trademark protection weak and SEO differentiation hard.
+
+---
+
+#### 4. Lattice (founder taste anchor)
+
+| Check | Result |
+|-------|--------|
+| Domain .com | lattice.com — taken (Lattice HR) |
+| USPTO | Multiple Lattice marks (Lattice Semiconductor, Lattice HR) |
+| Common law | **Lattice** (lattice.com) — major HR/people-management platform, Y Combinator, $3B+ valuation. **Lattice Semiconductor** — major FPGA company. Lattice Automation — biotech. Lattice SDK (Anduril) — defense. |
+
+**Risk: HIGH — DEAD ON ARRIVAL.** Two major companies own the Lattice name in tech.
+
+---
+
+#### 5. Vertex (alternative — introduced)
+
+| Check | Result |
+|-------|--------|
+| Domain .com | vertex3d.com — taken (Vertex Software) |
+| Domain .dev | developer.vertexvis.com — taken |
+| USPTO | **3 live VERTEX marks** held by Vertex Software, Inc. (Serial #88195019, #87629832, #90905813) — Class 042 |
+| Common law | **Vertex Software** — cloud-native 3D visualization platform. USPTO registered marks. US Patent #10,950,044. Fortune 500 customers. |
+
+**Risk: HIGH — DEAD ON ARRIVAL.** 3 live USPTO trademarks in 3D visualization.
+
+---
+
+#### 6. Remaining seeds (summary)
+
+| Name | Risk | Key Conflict |
+|------|------|-------------|
+| Aperture | HIGH | 153+ USPTO marks. Apple ghost. Portal cultural icon. |
+| Spectra | HIGH | WordPress builder + AI cybersecurity (Feb 2026) + spectra_cli + Spectra desktop app (314 stars). |
+| Lumen | HIGH | Laravel Lumen + Lumen Technologies ($8B+ telecom). |
+| Quartz | HIGH | Apple Core Quartz (macOS graphics engine). |
+| Helix | HIGH | Helix Editor (43.7k GitHub stars) + HelixML + Perforce Helix Core + Helix Lang. |
+| Arc | HIGH | Arc browser (The Browser Company). |
+| Crystal | HIGH | Crystal Reports (SAP) + Crystal programming language. |
+| Vector | HIGH | Too generic — std::vector, vector databases, overloaded. |
+| Axis | MEDIUM | Too generic in 3D/math. Weak brand potential. |
+| Plane | MEDIUM | Too generic. Airplane associations. Weak. |
+| Lamina | LOW | Clean legally. Obscure, forgettable, no energy. |
+| Refraction | MEDIUM | Clean legally. 10 chars, 3 syllables. Clunky brand. |
+| Diffract | MEDIUM | Diffract Technology (stealth holographic hardware) + DIFFRACT optical simulation software. Less intuitive than Refract. |
+| Focal | MED-HIGH | focal.inc — active creative DAM tool, hiring. Adjacent creative-industry conflict. |
+
+---
+
+### Comparison Matrix
+
+| Name | Legal Risk | Product Fit | Aesthetic | Ownability | Launchability | Net |
+|------|-----------|-------------|-----------|------------|---------------|-----|
+| **Refract** | MEDIUM | 4/5 | 4/5 | 4/5 | 4/5 | **16/20** |
+| **Facet** | MED-HIGH | 5/5 | 5/5 | 3/5 | 3/5 | **16/20** |
+| Prism | HIGH | 5/5 | 5/5 | 2/5 | 2/5 | 14/20 |
+| Diffract | MEDIUM | 3/5 | 3/5 | 4/5 | 4/5 | 14/20 |
+
+---
+
+### Taste Judgment — The Decision
+
+Numbers tie Refract and Facet at 16/20 for different reasons:
+
+**Refract wins on practicals:**
+- Active verb energy — "Refract your code" is a natural product sentence
+- Cleaner conflicts — a personal p5.js project and a defunct acquired company
+- refract.dev likely available for registration
+- Near-zero SEO competition for "refract creative coding"
+- Clear trademark path
+
+**Facet wins on beauty:**
+- Best pure metaphor — gem faceting IS what the product does
+- 5 letters, punchy, iconic
+- But Facet.ai is a funded, active AI creative tool — real market confusion risk
+
+**The tiebreaker:** Facet.ai is not abstract risk. It's a funded, active, real product in the creative visual space. "Facet" for creative coding would swim in their wake. Refract's conflicts are a personal weekend project and a defunct company.
+
+**The Prism/Lattice problem:** Both founder taste anchors are unlaunchable. The direction they point — scientific visual systems — is the right direction. But the specific words are not available.
+
+---
+
+### Final Ranking
+
+| Rank | Name | Risk | Verdict |
+|------|------|------|---------|
+| 1 | **Refract** | MEDIUM | **WINNER** |
+| 2 | **Facet** | MEDIUM-HIGH | **BACKUP** |
+| 3 | Prism | HIGH | Reject — crowded namespace |
+| 4 | Diffract | MEDIUM | Reject — less intuitive |
+| 5 | Lamina | LOW | Reject — weak, forgettable |
+| 6 | Lattice | HIGH | Reject — Lattice HR + Semiconductor |
+| 7 | Aperture | HIGH | Reject — 153+ USPTO marks |
+| 8 | Spectra | HIGH | Reject — multiple active products |
+| 9 | Focal | MED-HIGH | Reject — focal.inc creative DAM |
+| 10 | Vertex | HIGH | Reject — 3 live USPTO marks |
+
+---
+
+## Winner: Refract
+
+**Product narrative:** Light refracts when it passes through a medium, bending and splitting into new patterns. Code refracts when it passes through the harness — bending into visual form, splitting into generative patterns, creating something new from raw input. Every creative act is a refraction.
+
+**Code-native resonance:** In physics, refraction is governed by Snell's law — deterministic, mathematical, beautiful. In creative coding, the harness takes raw parameters and refracts them through generative algorithms into visual output.
+
+**Launch plan:**
+1. Register refract.dev + refract.io immediately
+2. Secure @refract on GitHub, Bluesky
+3. "Refract + creative coding" has near-zero search competition
+4. Trademark intent-to-use: Class 009 (software), Class 042 (SaaS)
+5. Logo concept: Angular refraction — a single beam splitting into a spectrum. Minimalist, geometric, iconic at favicon size.
+
+## Backup: Facet
+
+**Pivot trigger:** If ANY of these conditions are met within 60 days, reconsider Facet:
+- refract.dev and refract.io are both unavailable or exceed $500 combined
+- "refract creative coding" does not achieve top-3 organic search within 6 months
+- Facet.ai is acquired, pivots, or becomes inactive
+
+---
+
+## Sprint 4 (archived 2026-04-10)
+
+_Scope: 7 seed names evaluated. Superseded by Sprint 5 optics/geometry direction._
+
+### Archived Sprint 4 Clearance
+
+#### Limen
+| Check | Result |
+|-------|--------|
 | Domain .com | **FOR SALE** (Dan.com, Spaceship) — buyable now |
 | Domain .dev/.io | Likely available — no active product |
 | npm | Empty — no package |
@@ -22,155 +198,65 @@ _Scope: 7 seed names evaluated. No expanded shortlist. Force convergence._
 
 **Risk: LOW** — Cleanest mark in the set. Domain literally for sale.
 
-#### 2. Sigil
-
+#### Sigil
 | Check | Result |
+|-------|--------|
 | Domain .com | Likely taken |
 | Domain .dev/.io | Unclear |
-| npm | sigil.ts (7yr old, inactive), sigil-cli (Parenscript compiler), @sigiljs/sigil (HTTP framework), @tlon/sigil-js (Urbit identity) |
+| npm | sigil.ts (7yr old, inactive), sigil-cli, @sigiljs/sigil, @tlon/sigil-js |
 | USPTO | SIGIL registered to Sigil Scent Inc. (perfume — Registration #6365737, different class) |
-| Common law | **Sigil ePub editor** — well-known open-source eBook editor since 2009 (Wikipedia article, GitHub Sigil-Ebook org). **SIGIL AI** (sigilai.io) — decentralized AI security platform, active. Sigil Engine — occult sigil generator. sigil.org — personal blog. |
+| Common law | Sigil ePub editor (well-known, since 2009). SIGIL AI (sigilai.io) — decentralized AI security platform. |
 
-**Risk: MEDIUM** — ePub editor is well-known but in a completely different domain (book publishing vs creative coding). SIGIL AI is in the broader tech/AI space but focuses on security, not creative tools. npm namespace has several old packages but no dominant one. sigil.io and sigil.app availability unconfirmed — may require sigildev.io or similar.
+**Risk: MEDIUM** — ePub editor in different domain. SIGIL AI in broader tech/AI but focused on security.
 
-#### 3. Motif (carried from Sprint 3)
-
+#### Motif (carried from Sprint 3)
 | Check | Result |
+|-------|--------|
 | Domain .com | Taken — likely consumer brand |
 | Domain .dev | 200 — real dev project resolving |
 | npm | JS pattern composition mini-language |
 | USPTO | No dominant Motif mark in software |
 | Common law | JS pattern library — adjacent but not competing |
 
-**Risk: MEDIUM** — Same as Sprint 3 assessment.
+**Risk: MEDIUM**
 
-#### 4. Glyphic
-
+#### Glyphic
 | Check | Result |
+|-------|--------|
 | Domain .com | glyphic.design — active brand strategy consultancy |
-| npm | No direct "glyphic" package; glyphic-co org on GitHub |
 | USPTO | **GLYPHIC** — registered to Glyphic Software, Inc. (USPTO TM 88687616) |
-| Common law | Glyphic (glyphic.design) — brand consultancy for publishing/LMA markets. HubSpot integration exists. Glyphic Software, Inc. holds trademark. |
+| Common law | Glyphic (glyphic.design) — brand consultancy. Glyphic Software, Inc. holds trademark. |
 
-**Risk: MEDIUM-HIGH** — Active USPTO registration by Glyphic Software, Inc. plus active brand consultancy. More conflicted than initial assessment.
+**Risk: MEDIUM-HIGH** — Active USPTO registration + active brand consultancy.
 
-#### 5. Tessra (carried from Sprint 3)
-
+#### Forma
 | Check | Result |
-| Domain .com | Taken — forwarding domain, minimal presence |
-| Domain .dev | 000 — not resolving |
-| npm | Empty |
-| USPTO | No active Tessra software mark |
-| Common law | Minimal. Coined variant of Tessera. |
-
-**Risk: LOW** — Clean legally, but phonetically weak (ssr cluster).
-
-#### 6. Forma
-
-| Check | Result |
+|-------|--------|
 | Domain .com | **Autodesk** — forma.autodesk.com |
-| npm | Not checked — irrelevant given Autodesk |
 | USPTO | **Autodesk Forma** — live, major product |
-| Common law | **Autodesk Forma** (formerly Spacemaker) — AI-powered building design platform. $230B company's flagship next-gen design cloud. |
+| Common law | Autodesk Forma (formerly Spacemaker) — AI-powered building design platform. |
 
-**Risk: HIGH — DEAD ON ARRIVAL.** Autodesk Forma makes this unlaunchable.
+**Risk: HIGH — DEAD ON ARRIVAL.**
 
-#### 7. Motive
-
+#### Motive
 | Check | Result |
+|-------|--------|
 | Domain .com | **Motive Technologies** (formerly KeepTruckin) — fleet management |
-| npm | Not checked — irrelevant given company conflicts |
 | USPTO | Multiple Motive marks in software |
-| Common law | Motive Technologies ($2B+ valuation, fleet/IoT). Motive Inc (device management). Motive Software (acquired by BetterUp for AI/ML emotion tech). |
+| Common law | Motive Technologies ($2B+ valuation). Motive Inc. Motive Software (acquired by BetterUp). |
 
-**Risk: HIGH — DEAD ON ARRIVAL.** Three active Motive software companies.
+**Risk: HIGH — DEAD ON ARRIVAL.**
 
----
-
-### Comparison Matrix
+### Sprint 4 Archived Comparison
 
 | Name | Legal Risk | Product Fit | Aesthetic | Ownability | Launchability | Net |
 |------|-----------|-------------|-----------|------------|---------------|-----|
-| **Sigil** | MEDIUM | 5/5 | 5/5 | 3/5 | 3/5 | **16/20** |
-| **Limen** | LOW | 5/5 | 4/5 | 5/5 | 5/5 | **19/20** |
+| Sigil | MEDIUM | 5/5 | 5/5 | 3/5 | 3/5 | 16/20 |
+| Limen | LOW | 5/5 | 4/5 | 5/5 | 5/5 | 19/20 |
 | Motif | MEDIUM | 5/5 | 4/5 | 3/5 | 3/5 | 15/20 |
 | Glyphic | MED-HIGH | 4/5 | 3/5 | 2/5 | 2/5 | 11/20 |
-| Tessra | LOW | 3/5 | 2/5 | 5/5 | 5/5 | 15/20 |
 | Forma | HIGH | 3/5 | 4/5 | 1/5 | 1/5 | 9/20 |
 | Motive | HIGH | 3/5 | 3/5 | 1/5 | 1/5 | 8/20 |
-
----
-
-### Taste Judgment — The Real Decision
-
-Numbers say Limen. Taste says Sigil. Here's the honest breakdown:
-
-**Why Sigil has stronger taste:**
-- A creative coding harness TRANSFORMS code into visual symbols. "Sigil" IS what it makes.
-- Programming sigils ($, @, %) mark variables — code-native resonance Limen can't match.
-- The occult/esoteric undertone matches creative technologist culture perfectly.
-- "I built this with Sigil" sounds powerful. "I built this with Limen" sounds clinical.
-- S-I-G-I-L in sans-serif is visually stunning. Double-I symmetry. Beautiful wordmark.
-- A single sigil mark as logo is instantly iconic — like Processing's P, Arduino's infinity.
-
-**Why Limen has stronger practicals:**
-- limen.com is FOR SALE RIGHT NOW. You can buy it this week.
-- Zero SEO confusion. Zero namespace collision. Zero trademark risk.
-- Threshold of perception — genuinely beautiful concept for the product.
-- Maintains Liminal DNA (root word) — smooth transition.
-
-**The Liminal problem:**
-Renaming to "Limen" — the literal root of "Liminal" — doesn't fully escape the collision that triggered the rename. It's like renaming "Firefox" to "Fire." The association persists. "Sigil" provides a clean break — fresh identity, no Liminal baggage.
-
-**The ePub editor problem:**
-Sigil ePub editor (since 2009) will clutter search results. But: completely different domain (book editing vs creative coding), declining relevance, different community. "Sigil + creative coding" / "Sigil + generative art" will differentiate cleanly.
-
----
-
-### Final Ranking
-
-| Rank | Name | Risk | Verdict |
-|------|------|------|---------|
-| 1 | **Sigil** | MEDIUM | **WINNER** |
-| 2 | **Limen** | LOW | **BACKUP** |
-| 3 | Motif | MEDIUM | Reject — good but less exciting than top 2 |
-| 4 | Glyphic | MEDIUM | Reject — weaker than base Glyph; -ic suffix is dilutive |
-| 5 | Tessra | LOW | Reject — phonetically awkward, no presence |
-| 6 | Forma | HIGH | Reject — Autodesk Forma kills it |
-| 7 | Motive | HIGH | Reject — three active Motive software companies |
-
----
-
-## Winner: Sigil
-
-**Product narrative:** Sigil is what the harness generates — emergent symbols, inscribed marks, code-made-visual. Every creative act inscribes a sigil.
-
-**Code-native resonance:** In programming, sigils ($, @, %) are the special characters that mark and transform variables. In creative coding, the tool transforms code into visual sigils. The name works on both levels simultaneously.
-
-**Launch plan:**
-- Register sigil.io + sigil.app immediately
-- Secure @sigil on GitHub, Bluesky
-- Accept ePub editor as background noise — different domain entirely
-- Trademark intent-to-use: Class 009 (software), Class 042 (SaaS)
-
-**Logo concept:** A single geometric sigil mark — minimalist, angular, mystical. Think: a modernist rune. Instantly recognizable at favicon size.
-
-## Backup: Limen
-
-**Why Limen:** Cleanest legal path in the set. limen.com is for sale. Zero conflicts. Deep conceptual resonance (threshold of perception — where code becomes visible).
-
-**Pivot trigger:** If ANY of these conditions are met within 60 days of launch decision, pivot to Limen:
-- sigil.io or sigil.app domain acquisition exceeds $500 or is unavailable
-- "sigil creative coding" does not achieve top-3 organic search result within 6 months of launch
-- SIGIL AI (sigilai.io) expands into creative tools or raises a round >$10M
-
-## Rejected Names
-
-- **Motif** — Good semantic fit, but less exciting than Sigil or Limen. Already the Sprint 3 winner but superseded by stronger candidates.
-- **Glyphic** — The -ic suffix weakens it vs base Glyph. glyphic.design is an active brand consultancy. Glyphic Software, Inc. holds USPTO trademark (TM 88687616). Too conflicted.
-- **Tessra** — Phonetically awkward (TESS-ruh, ssr cluster). Feels manufactured, not discovered. No digital presence.
-- **Forma** — Autodesk Forma is a major live product from a $230B company. Unlaunchable.
-- **Motive** — Three active Motive software companies (Motive Technologies, Motive Inc, Motive Software). Unlaunchable.
 
 ---
 
@@ -224,35 +310,8 @@ Sigil ePub editor (since 2009) will clutter search results. But: completely diff
 | Tessra | LOW | 3/5 | 3/5 | 3/5 | Reject |
 ## Final Ranking
 | Rank | Name | Risk | Verdict |
-| 1 | Motif | MEDIUM | WINNER |
-| 2 | Glyph | MEDIUM | BACKUP |
-| 3 | Tessra | LOW | Reject — phonetically awkward, no presence |
-| 4 | Rune | HIGH | Reject — live TM + 10M-user platform collision |
+| 1 | Motif | MEDIUM | Sprint 3 winner |
+| 2 | Glyph | MEDIUM | Sprint 3 backup |
+| 3 | Tessra | LOW | Reject — phonetically awkward |
+| 4 | Rune | HIGH | Reject — live TM + 10M-user platform |
 | 5 | Praxis | HIGH | Reject — PraxisLIVE is existing creative coding IDE |
-## Winner: Motif
-**Why Motif wins:**
-- Pattern, recurring element — best semantic fit for generative/iterative creative coding harness
-- Iterative generation = recurring motifs. Pattern systems = motifs. Live coding = motif evolution.
-- 2 syllables, musical undertone, Figma/Framer/Notion aesthetic
-- motif.dev resolves (alive dev project), motif.io and motif.app likely available
-- Strong logo potential (M as wordmark anchor)
-**Product narrative:** Motif is what the harness generates — emergent patterns, iterated forms.
-**Launch readiness:** Register motif.io + motif.app. Secure @motif on GitHub.
-## Backup: Glyph
-**Why Glyph:**
-- Original anchor — Glyph as visual mark/symbol architecturally perfect for code-native creative tools
-- Visual mark, generative symbol, inscribed form — all the right resonances
-- glyph.dev is clear. No dominant creative coding or generative tool owns Glyph.
-- Excellent minimalist logo potential — single glyph as brand mark instantly iconic
-- Risk: softer than Motif for generative systems. A unit, not a process.
-**Pivot trigger:** If Motif fails domain/social clearance, pivot to Glyph.
-## Names to Reject
-**Rune (HIGH):** Rune Technologies Inc. live TM applicant + Rune AI Inc. 10M installs, same creative-dev audience.
-**Praxis (HIGH):** PraxisLIVE is an active creative coding IDE. Praxis Technologies holds live trademark.
-**Tessra (LOW):** Phonetically awkward. Feels manufactured. No digital presence.
-## Action Items
-- [ ] Register motif.io, motif.app immediately
-- [ ] Secure @motif on GitHub
-- [ ] Check Bluesky, X, Instagram for @motif
-- [ ] Motif clears domain/social → trademark intent-to-use filing
-- [ ] Motif fails → pivot to Glyph, repeat clearance

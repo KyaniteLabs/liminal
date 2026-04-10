@@ -55,6 +55,7 @@ interface Report {
 
 const DEFAULT_RUNS_PER_SCENARIO = 2;
 const DEFAULT_MAX_ITERATIONS = 3;
+const DEFAULT_LMSTUDIO_MODEL = "qwen3.5-9b";
 
 function getArg(name: string, fallback?: string): string | undefined {
   const match = process.argv.find(arg => arg.startsWith(`--${name}=`));
@@ -69,8 +70,57 @@ function toPositiveInt(value: string | undefined, fallback: number): number {
 function parseDomainFilter(): Set<string> | null {
   const raw = getArg("domains");
   if (!raw) return null;
-  const values = raw.split(",").map(v => v.trim()).filter(Boolean);
+  const values = raw
+    .split(",")
+    .map(v => v.trim())
+    .filter(Boolean)
+    .map(v => (v === "glsl" ? "shader" : v));
   return values.length ? new Set(values) : null;
+}
+
+function getLMStudioBaseUrl(): string {
+  return (
+    getArg("base-url") ||
+    process.env.LIMINAL_LLM_BASE_URL ||
+    process.env.LLM_BASE_URL ||
+    process.env.LIMINAL_EVALUATOR_BASE_URL ||
+    process.env.LIMINAL_HARNESS_BASE_URL ||
+    "http://localhost:1234/v1"
+  );
+}
+
+function getLMStudioModel(): string {
+  return (
+    getArg("model") ||
+    process.env.LIMINAL_LLM_MODEL ||
+    process.env.LLM_MODEL ||
+    process.env.LIMINAL_EVALUATOR_MODEL ||
+    process.env.LIMINAL_HARNESS_MODEL ||
+    DEFAULT_LMSTUDIO_MODEL
+  );
+}
+
+function applyLMStudioEnvironment(baseUrl: string, model: string): void {
+  // Canonical LIMINAL_* vars
+  process.env.LIMINAL_LLM_PROVIDER = "lmstudio";
+  process.env.LIMINAL_LLM_BASE_URL = baseUrl;
+  process.env.LIMINAL_LLM_MODEL = model;
+  process.env.LIMINAL_EVALUATOR_BASE_URL = baseUrl;
+  process.env.LIMINAL_EVALUATOR_MODEL = model;
+  process.env.LIMINAL_HARNESS_BASE_URL = baseUrl;
+  process.env.LIMINAL_HARNESS_MODEL = model;
+
+  // Legacy/non-prefixed compatibility vars still referenced in some paths
+  process.env.LLM_PROVIDER = "lmstudio";
+  process.env.LLM_BASE_URL = baseUrl;
+  process.env.LLM_MODEL = model;
+  process.env.EVALUATOR_BASE_URL = baseUrl;
+  process.env.EVALUATOR_MODEL = model;
+  process.env.HARNESS_BASE_URL = baseUrl;
+  process.env.HARNESS_MODEL = model;
+
+  // Founder dogfood should not be blocked by LAN-hosted LM Studio boxes
+  process.env.LIMINAL_ALLOW_PRIVATE_IP_LLM = "true";
 }
 
 function nowStamp(): string {
@@ -136,6 +186,15 @@ async function runScenario(scenario: Scenario, runIndex: number, maxIterations: 
       collabDomain: scenario.collabDomain,
       tolerateErrors: false,
       minQualityScore: 0.4,
+      git: {
+        enabled: false,
+        autoCommit: false,
+        branchPerRun: false,
+        branchPrefix: "liminal/",
+        autoPush: false,
+        commitMessageTemplate: "founder dogfood",
+        bridgeToCompost: false,
+      },
     });
     fs.writeFileSync(codePath, result.code, "utf8");
     fs.writeFileSync(htmlPath, safeWrap(scenario.domain, result.code), "utf8");
@@ -204,6 +263,10 @@ function writeMarkdown(report: Report, outDir: string): string {
 }
 
 async function main(): Promise<void> {
+  const lmStudioBaseUrl = getLMStudioBaseUrl();
+  const lmStudioModel = getLMStudioModel();
+  applyLMStudioEnvironment(lmStudioBaseUrl, lmStudioModel);
+
   await registerAllGenerators();
   const activeGenerators = getActiveGeneratorNames();
   const domainFilter = parseDomainFilter();
@@ -215,6 +278,9 @@ async function main(): Promise<void> {
 
   console.log("🚀 Founder dogfood starting");
   console.log(`Branch: ${branchName()}`);
+  console.log(`Provider: lmstudio`);
+  console.log(`Base URL: ${lmStudioBaseUrl}`);
+  console.log(`Model: ${lmStudioModel}`);
   console.log(`Active generators: ${activeGenerators.join(", ")}`);
   console.log(`Scenarios: ${scenarios.map(s => s.domain).join(", ")}`);
   if (domainFilter) console.log(`Domain filter: ${Array.from(domainFilter).join(", ")}`);

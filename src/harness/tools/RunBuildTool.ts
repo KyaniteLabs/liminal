@@ -34,17 +34,18 @@ export class RunBuildTool extends Tool {
         },
         duration: Date.now() - startTime,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Build failed
+      const execErr = error as Record<string, unknown>;
       return {
         success: false,
         data: {
-          exitCode: error.code || 1,
-          stdout: error.stdout?.slice(-2000) || '',
-          stderr: error.stderr?.slice(-2000) || error.message,
+          exitCode: (execErr.code as number) || 1,
+          stdout: (execErr.stdout as string)?.slice(-2000) || '',
+          stderr: (execErr.stderr as string)?.slice(-2000) || (error instanceof Error ? error.message : String(error)),
           success: false,
         },
-        error: `Build failed with exit code ${error.code || 1}`,
+        error: `Build failed with exit code ${(execErr.code as number) || 1}`,
         duration: Date.now() - startTime,
       };
     }

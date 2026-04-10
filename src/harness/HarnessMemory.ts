@@ -153,8 +153,8 @@ export class HarnessMemory {
         // Migrate if needed
         this.state = this.migrate(loaded);
         Logger.debug('HarnessMemory', `Loaded ${this.state.tasks.length} tasks, ${this.state.adaptations.length} adaptations, ${this.state.episodes.length} episodes, ${this.state.calibration.length} calibrations`);
-      } catch (err: any) {
-        if (err?.code === 'ENOENT') {
+      } catch (err: unknown) {
+        if ((err as Record<string, unknown>)?.code === 'ENOENT') {
           // File doesn't exist — expected on first run
           Logger.debug('HarnessMemory', 'No previous memory found, starting fresh');
         } else {

@@ -43,16 +43,17 @@ export class RunTestsTool extends Tool {
         },
         duration: Date.now() - startTime,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Tests failed or error occurred
-      const stdout = error.stdout || '';
+      const execErr = error as Record<string, unknown>;
+      const stdout = (execErr.stdout as string) || '';
       const passed = (stdout.match(/✓|PASS|passed/gi) || []).length;
       const failed = (stdout.match(/✗|FAIL|failed/gi) || []).length;
-      
+
       return {
         success: false,
         data: {
-          exitCode: error.code || 1,
+          exitCode: (execErr.code as number) || 1,
           passed,
           failed: failed || 1,
           stdout: stdout.slice(-2000),

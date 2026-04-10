@@ -122,6 +122,7 @@
     "@revideo/2d": "^0.5.10",
     "@revideo/core": "^0.5.10",
     "@revideo/renderer": "^0.5.10",
+    "@revideo/ui": "^0.10.4",
     "@revideo/vite-plugin": "^0.10.4",
     "meyda": "^5.6.3",
     "music-metadata": "^11.12.3",

@@ -53,13 +53,13 @@ async function isOllamaReachable(): Promise<boolean> {
     clearTimeout(timeout);
     if (!response.success) {
       const reason = response.error || 'unknown';
-      if (/connection|refused|unreachable|timeout|404/i.test(reason)) return false;
+      if (/connection|refused|unreachable|timeout|404|not found|model not found/i.test(reason)) return false;
     }
     return response.success === true;
   } catch (err) {
     clearTimeout(timeout);
     const msg = err instanceof Error ? err.message : String(err);
-    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|AbortError/i.test(msg)) return false;
+    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|AbortError|404|not found/i.test(msg)) return false;
     throw err;
   }
 }

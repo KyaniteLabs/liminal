@@ -102,7 +102,6 @@ export class MetaHarnessIntegration {
   }
 
   /**
-  /**
    * Reset cached state for provider isolation.
    * Call when switching LLM providers at runtime (e.g. triad dogfood)
    * to prevent a stale llmClient from leaking across provider switches.
@@ -114,6 +113,7 @@ export class MetaHarnessIntegration {
     Logger.debug('MetaHarnessIntegration', 'Reset for provider isolation');
   }
 
+  /**
    * Shutdown - save all persistent state
    */
   async shutdown(): Promise<void> {

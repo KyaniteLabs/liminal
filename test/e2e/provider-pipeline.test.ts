@@ -169,7 +169,7 @@ describe('OpenAI provider pipeline', () => {
   it('reports failure on API error', async () => {
     mockFetch
       .mockResolvedValueOnce(mockModelsResponse(['gpt-4o']))
-      .mockResolvedValueOnce(mockJsonResponse(
+      .mockResolvedValue(mockJsonResponse(
         { error: { message: 'Rate limited', type: 'rate_limit_error' } },
         false,
         429,
@@ -181,10 +181,7 @@ describe('OpenAI provider pipeline', () => {
       apiKey: 'test-key',
     });
 
-    const result = await client.generate('system', 'user');
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    await expect(client.generate('system', 'user')).rejects.toThrow(/429|Rate limited/);
   });
 });
 

@@ -17,13 +17,18 @@ class TestGenerator extends TierBasedGenerator {
 }
 
 describe('TierBasedGenerator', () => {
-  let mockGenerate: ReturnType<typeof vi.spyOn>;
+  let mockLLM: LLMClient;
+
+  let isConfiguredSpy: ReturnType<typeof vi.spyOn>;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    // Source calls LLMClient.isConfigured() as a static method and LLMClient.prototype.generate
-    vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
-    mockGenerate = vi.spyOn(LLMClient.prototype, 'generate');
+    // Source calls LLMClient.isConfigured() as a static method — must mock that
+    isConfiguredSpy = vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(true);
+    mockLLM = {
+      generate: vi.fn(),
+      getConfig: vi.fn(() => ({ model: 'test-model', baseUrl: 'http://test', role: 'generator' as const })),
+    } as unknown as LLMClient;
   });
 
   afterEach(() => {
@@ -32,40 +37,40 @@ describe('TierBasedGenerator', () => {
 
   describe('generate', () => {
     it('should return code for valid prompt', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: 'function setup() { createCanvas(400, 400); }',
         success: true,
         thinking: '',
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       const result = await generator.generate('create a canvas');
 
       expect(result).toContain('createCanvas');
-      expect(mockGenerate).toHaveBeenCalled();
+      expect(mockLLM.generate).toHaveBeenCalled();
     });
 
     it('should throw GenerationError for empty response', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: '',
         success: true,
         thinking: '',
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       await expect(generator.generate('test prompt')).rejects.toThrow(/empty code/);
     });
 
     it('should extract code from thinking when code block is present', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: '',
         success: true,
         thinking: `Here's my thinking:\n\`\`\`javascript\nfunction setup() {\n  createCanvas(400, 400);\n}\n\`\`\``,
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       // The generator extracts code from thinking when code is empty
       const result = await generator.generate('test prompt');
@@ -73,8 +78,8 @@ describe('TierBasedGenerator', () => {
     });
 
     it('should throw when LLM is not configured', async () => {
-      vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(false);
       const generator = new TestGenerator('p5');
+      vi.spyOn(LLMClient, 'isConfigured').mockReturnValue(false);
 
       await expect(generator.generate('test prompt')).rejects.toThrow(/No LLM configured/);
     });
@@ -82,14 +87,14 @@ describe('TierBasedGenerator', () => {
 
   describe('generateFull', () => {
     it('should return full LLMResponse including thinking', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: 'function draw() { ellipse(50, 50, 80, 80); }',
         success: true,
         thinking: 'I will draw a circle at the center',
         recoveredFromThinking: false,
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       const result = await generator.generateFull('draw a circle');
 
@@ -101,47 +106,48 @@ describe('TierBasedGenerator', () => {
 
   describe('generateLayer', () => {
     it('should create a Layer with proper metadata', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: 'function setup() { createCanvas(400, 400); }',
         success: true,
         thinking: 'test thinking',
         recoveredFromThinking: false,
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       const layer = await generator.generateLayer('create canvas layer');
 
-      expect(layer.type).toBe('p5');
+      expect(layer.domain).toBe('p5');
       expect(layer.code).toBe(mockResponse.code);
-      expect(layer.metadata.prompt).toBe('create canvas layer');
+      expect(layer.prompt).toBe('create canvas layer');
       expect(layer.metadata.generator).toBe('TestGenerator');
+      expect(layer.metadata.model).toBe('test-model');
       expect(layer.metadata.thinking).toBe('test thinking');
       expect(layer.metadata.recoveredFromThinking).toBe(false);
     });
 
     it('should include timestamp in layer metadata', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const beforeTimestamp = new Date().toISOString();
-
+      
       const mockResponse: LLMResponse = {
         code: 'function setup() {}',
         success: true,
         thinking: '',
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       const layer = await generator.generateLayer('test');
       const afterTimestamp = new Date().toISOString();
 
-      expect(layer.metadata.generatedAt >= beforeTimestamp).toBe(true);
-      expect(layer.metadata.generatedAt <= afterTimestamp).toBe(true);
+      expect(layer.metadata.generatedAt).toBeGreaterThanOrEqual(beforeTimestamp);
+      expect(layer.metadata.generatedAt).toBeLessThanOrEqual(afterTimestamp);
     });
   });
 
   describe('getTierInfo', () => {
     it('should return tier information', () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const info = generator.getTierInfo();
 
       expect(info).toHaveProperty('tier');
@@ -153,28 +159,30 @@ describe('TierBasedGenerator', () => {
     });
 
     it('should have different budgets for different tiers', () => {
+      // Create generators with different model configs to test tier detection
       const localConfig = { model: 'qwen2.5-coder-7b', baseUrl: 'http://localhost:1234/v1', role: 'generator' as const };
       const flagshipConfig = { model: 'claude-3-5-sonnet', baseUrl: 'https://api.anthropic.com', apiKey: 'test', role: 'generator' as const };
-
+      
       const localGenerator = new TestGenerator('p5', new LLMClient(localConfig));
       const flagshipGenerator = new TestGenerator('p5', new LLMClient(flagshipConfig));
 
       const localInfo = localGenerator.getTierInfo();
       const flagshipInfo = flagshipGenerator.getTierInfo();
 
+      // Flagship should have higher budget than local
       expect(flagshipInfo.budget).toBeGreaterThan(localInfo.budget);
     });
   });
 
   describe('domain validation', () => {
     it('should validate output through domain-specific validation', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: 'INVALID CODE FOR TESTING',
         success: true,
         thinking: '',
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       await expect(generator.generate('test')).rejects.toThrow(/Test validation failed/);
     });
@@ -182,7 +190,7 @@ describe('TierBasedGenerator', () => {
 
   describe('configuration resolution', () => {
     it('should accept LLMClient instance', () => {
-      const generator = new TestGenerator('p5', new LLMClient({ model: 'test', baseUrl: 'http://test', role: 'generator' }));
+      const generator = new TestGenerator('p5', mockLLM);
       expect(generator.getTierInfo().domain).toBe('p5');
     });
 
@@ -200,49 +208,52 @@ describe('TierBasedGenerator', () => {
 
   describe('options handling', () => {
     it('should respect bypassCache option', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: 'function setup() {}',
         success: true,
         thinking: '',
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       await generator.generate('test', { bypassCache: true });
 
-      const generateCall = mockGenerate.mock.calls[0];
+      // Verify that generate was called with bypassCache
+      const generateCall = vi.mocked(mockLLM.generate).mock.calls[0];
       expect(generateCall[3]).toBe(true); // bypassCache is 4th parameter
     });
 
     it('should respect AbortSignal', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const controller = new AbortController();
-
+      
       const mockResponse: LLMResponse = {
         code: 'function setup() {}',
         success: true,
         thinking: '',
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       await generator.generate('test', { signal: controller.signal });
 
-      const generateCall = mockGenerate.mock.calls[0];
+      // Verify that generate was called with the signal
+      const generateCall = vi.mocked(mockLLM.generate).mock.calls[0];
       expect(generateCall[2]).toBe(controller.signal); // signal is 3rd parameter
     });
 
     it('should respect contextBudget option', async () => {
-      const generator = new TestGenerator('p5');
+      const generator = new TestGenerator('p5', mockLLM);
       const mockResponse: LLMResponse = {
         code: 'function setup() {}',
         success: true,
         thinking: '',
       };
-      mockGenerate.mockResolvedValueOnce(mockResponse);
+      vi.mocked(mockLLM.generate).mockResolvedValueOnce(mockResponse);
 
       await generator.generate('test', { contextBudget: 5000 });
 
-      expect(mockGenerate).toHaveBeenCalled();
+      // Should not throw and should complete successfully
+      expect(mockLLM.generate).toHaveBeenCalled();
     });
   });
 });

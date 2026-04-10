@@ -206,6 +206,7 @@ class TelemetryLLMClient {
       const response = await this.inner.generate(systemPrompt, userPrompt);
       const duration = Date.now() - requestStart;
 
+      const modelName = this.inner.getConfig().model;
       const responseData = {
         timestamp: new Date().toISOString(),
         callId,
@@ -216,7 +217,7 @@ class TelemetryLLMClient {
         hasThinking: !!response.thinking,
         hasReasoning: !!response.reasoning,
         recoveredFromThinking: response.recoveredFromThinking,
-        model: response.model,
+        model: modelName,
         error: response.error,
         code: response.code,
         thinking: response.thinking,
@@ -232,7 +233,7 @@ class TelemetryLLMClient {
       if (response.thinking || response.reasoning) {
         const traceMd = [
           `# Reasoning Trace: ${this.testId}`,
-          `**Model:** ${response.model ?? 'unknown'}`,
+          `**Model:** ${modelName ?? 'unknown'}`,
           `**Duration:** ${duration}ms`,
           `**Recovered from thinking:** ${response.recoveredFromThinking ?? false}`,
           `## Prompt`,
@@ -307,3 +308,166 @@ Respond ONLY with a JSON object:
 }`;
 
 const GENERATOR_SYSTEM_PROMPT = `You are an expert creative code generator. Generate the best possible code for the requested creative domain. Output ONLY the raw code, no explanation, no markdown fences, no comments outside the code.`;
+
+// ─── Harness Result Interface ──────────────────────────────────────────────────
+
+interface HarnessResult {
+  success: boolean;
+  finalCode: string;
+  harnessScore: number;
+  generatorModel: string;
+  harnessModel: string;
+  evaluatorModel: string;
+  domain: string;
+  harnessCallId: string;
+  generatorCallId: string;
+  evaluatorCallId: string;
+  duration: number;
+  error?: string;
+  reasoning?: string;
+}
+
+// ─── Harness Test Orchestration ────────────────────────────────────────────────
+
+/**
+ * Runs a single test: Harness → Generator → Evaluator → Score
+ * Returns the harness decision with telemetry IDs for traceability.
+ */
+async function runHarnessTest(
+  domain: typeof DOMAINS[number],
+  harnessCfg: ProviderConfig,
+  generatorModel: ModelInfo,
+  evaluatorModel: ModelInfo,
+): Promise<HarnessResult> {
+  const testId = `role-eval-${harnessCfg.name}-${generatorModel.name}-${domain.name}`;
+  const startTime = Date.now();
+
+  const harnessLLM = new LLMClient({
+    role: 'harness',
+    baseUrl: harnessCfg.baseUrl,
+    model: harnessCfg.model,
+    apiKey: harnessCfg.apiKey,
+    temperature: harnessCfg.temperature,
+    maxTokens: harnessCfg.maxTokens,
+  });
+
+  const generatorLLM = new LLMClient({
+    role: 'generator',
+    baseUrl: LM_STUDIO_URL,
+    model: generatorModel.id,
+    temperature: 0.7,
+    maxTokens: DOGFOOD_MAX_TOKENS,
+  });
+
+  const evaluatorLLM = new LLMClient({
+    role: 'evaluator',
+    baseUrl: LM_STUDIO_URL,
+    model: evaluatorModel.id,
+    temperature: 0.2,
+    maxTokens: DOGFOOD_MAX_TOKENS,
+  });
+
+  const tHarness = new TelemetryLLMClient(harnessLLM, `${testId}-harness`);
+  const tGenerator = new TelemetryLLMClient(generatorLLM, `${testId}-generator`);
+  const tEvaluator = new TelemetryLLMClient(evaluatorLLM, `${testId}-evaluator`);
+
+  try {
+    // Step 1: Ask harness to orchestrate
+    const harnessResponse = await tHarness.generate(
+      buildHarnessSystemPrompt(domain.name, domain.prompt),
+      domain.prompt,
+    );
+
+    if (!harnessResponse.success || !harnessResponse.code) {
+      throw new Error(harnessResponse.error ?? 'Harness returned no code');
+    }
+
+    // Parse harness JSON response
+    let harnessData: { generatedCode: string; score: number; reasoning?: string };
+    try {
+      // Try to extract JSON from response
+      const jsonMatch = harnessResponse.code.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) throw new Error('No JSON found in harness response');
+      harnessData = JSON.parse(jsonMatch[0]);
+    } catch {
+      throw new Error('Harness did not return valid JSON: ' + harnessResponse.code.slice(0, 200));
+    }
+
+    // Step 2: Evaluate the generated code
+    const evalResponse = await tEvaluator.generate(
+      EVALUATOR_SYSTEM_PROMPT,
+      `Domain: ${domain.name}\nPrompt: ${domain.prompt}\n\nGenerated code:\n${harnessData.generatedCode}`,
+    );
+
+    let evalScore = harnessData.score;
+    if (evalResponse.success && evalResponse.code) {
+      try {
+        const evalMatch = evalResponse.code.match(/\{[\s\S]*\}/);
+        if (evalMatch) {
+          const evalData = JSON.parse(evalMatch[0]);
+          evalScore = evalData.score ?? harnessData.score;
+        }
+      } catch { /* use harness score as fallback */ }
+    }
+
+    const duration = Date.now() - startTime;
+
+    // Save the generated code to landing-live
+    const outputFile = path.join(
+      LANDING_DIR,
+      `dogfood-role-eval-${harnessCfg.name}-${generatorModel.name}-${domain.name}.html`,
+    );
+    fs.writeFileSync(outputFile, harnessData.generatedCode);
+
+    // Save score
+    const scoreData = {
+      timestamp: new Date().toISOString(),
+      testId,
+      domain: domain.name,
+      harness: harnessCfg.name,
+      generator: generatorModel.name,
+      evaluator: evaluatorModel.name,
+      harnessScore: harnessData.score,
+      evaluatorScore: evalScore,
+      finalScore: (harnessData.score + evalScore) / 2,
+      duration,
+      generatorCallId: `${testId}-generator-${Date.now()}`,
+      evaluatorCallId: `${testId}-evaluator-${Date.now()}`,
+    };
+    fs.writeFileSync(
+      path.join(SCORES_DIR, `${testId}-score.json`),
+      JSON.stringify(scoreData, null, 2),
+    );
+
+    return {
+      success: true,
+      finalCode: harnessData.generatedCode,
+      harnessScore: evalScore,
+      generatorModel: generatorModel.name,
+      harnessModel: harnessCfg.name,
+      evaluatorModel: evaluatorModel.name,
+      domain: domain.name,
+      harnessCallId: `${testId}-harness`,
+      generatorCallId: `${testId}-generator`,
+      evaluatorCallId: `${testId}-evaluator`,
+      duration,
+      reasoning: harnessData.reasoning,
+    };
+  } catch (error) {
+    const duration = Date.now() - startTime;
+    return {
+      success: false,
+      finalCode: '',
+      harnessScore: 0,
+      generatorModel: generatorModel.name,
+      harnessModel: harnessCfg.name,
+      evaluatorModel: evaluatorModel.name,
+      domain: domain.name,
+      harnessCallId: `${testId}-harness`,
+      generatorCallId: `${testId}-generator`,
+      evaluatorCallId: `${testId}-evaluator`,
+      duration,
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+}

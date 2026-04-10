@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 /**
  * Integration tests for RalphLoop with Deep Collaboration
  *
@@ -10,6 +10,16 @@ import { describe, it, expect, beforeEach } from 'vitest';
  * uses SwarmOrchestrator which requires Ollama. These tests need to be rewritten
  * to use the new SwarmOrchestrator API or mock at a different layer.
  */
+
+// Mock GitIntegration to avoid git state issues in test environment
+vi.mock('../../src/git/GitIntegration.js', () => ({
+  GitIntegration: class {
+    constructor() {}
+    async startRun() {}
+    async commitIteration() {}
+    async endRun() {}
+  },
+}));
 
 import { RalphLoop } from '../../src/core/RalphLoop.js';
 import path from 'path';

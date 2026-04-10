@@ -309,7 +309,11 @@ describe('RalphLoop Thinking Trace Propagation', () => {
   });
 
   describe('RED phase: Tests expecting thinking propagation (will fail initially)', () => {
+<<<<<<< Updated upstream
     it.skip('Test 1: Generator returns thinking → RalphLoop.run() result includes thinking (TDD RED phase - feature not yet implemented)', async () => {
+=======
+    it.skip('Test 1: Generator returns thinking → RalphLoop.run() result includes thinking - TDD RED phase', async () => {
+>>>>>>> Stashed changes
       const result = await RalphLoop.run('create thinking test sketch', {
         maxIterations: 1,
         galleryDir: TEST_GALLERY_DIR,
@@ -323,7 +327,11 @@ describe('RalphLoop Thinking Trace Propagation', () => {
       expect(result.model).toBe('test-model-v1');
     });
 
+<<<<<<< Updated upstream
     it.skip('Test 2: Generator returns plain string → RalphLoop.run() still works, no thinking (TDD RED phase - feature not yet implemented)', async () => {
+=======
+    it.skip('Test 2: Generator returns plain string → RalphLoop.run() still works, no thinking - TDD RED phase', async () => {
+>>>>>>> Stashed changes
       const result = await RalphLoop.run('create legacy test sketch', {
         maxIterations: 1,
         galleryDir: TEST_GALLERY_DIR,
@@ -336,7 +344,11 @@ describe('RalphLoop Thinking Trace Propagation', () => {
       expect(result.model).toBeUndefined();
     });
 
+<<<<<<< Updated upstream
     it.skip('Test 3: RalphLoop passes thinking to metaHarness → verify onGenerationComplete receives thinking (TDD RED phase - feature not yet implemented)', async () => {
+=======
+    it.skip('Test 3: RalphLoop passes thinking to metaHarness → verify onGenerationComplete receives thinking - TDD RED phase', async () => {
+>>>>>>> Stashed changes
       // Set NODE_ENV to something other than 'test' so metaHarness is called
       const originalEnv = process.env.NODE_ENV;
       process.env.NODE_ENV = 'not-test';
@@ -364,7 +376,11 @@ describe('RalphLoop Thinking Trace Propagation', () => {
       }
     });
 
+<<<<<<< Updated upstream
     it.skip('Test 4: Generator with recovered thinking → recoveredFromThinking flag is propagated (TDD RED phase - feature not yet implemented)', async () => {
+=======
+    it.skip('Test 4: Generator with recovered thinking → recoveredFromThinking flag is propagated - TDD RED phase', async () => {
+>>>>>>> Stashed changes
       const result = await RalphLoop.run('create recovered test sketch', {
         maxIterations: 1,
         galleryDir: TEST_GALLERY_DIR,

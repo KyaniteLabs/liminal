@@ -191,6 +191,15 @@ vi.mock('../../src/routing/RoutingData.js', () => ({
   recordRoutingOutcome: async () => {},
 }));
 
+vi.mock('../../src/git/GitIntegration.js', () => ({
+  GitIntegration: class {
+    constructor() {}
+    async startRun() {}
+    async commitIteration() {}
+    async endRun() {}
+  },
+}));
+
 vi.mock('../../src/harness/MetaHarnessIntegration.js', () => ({
   metaHarness: {
     onGenerationComplete: async () => {},

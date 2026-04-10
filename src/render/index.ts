@@ -22,3 +22,4 @@ export { CanvasRecorder } from './CanvasRecorder.js';
 export { PreviewServer } from './PreviewServer.js';
 
 export { RemotionRenderer } from './RemotionRenderer.js';
+export { RevideoRenderer, type RevideoCompositionConfig } from './RevideoRenderer.js';

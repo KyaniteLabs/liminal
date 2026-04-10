@@ -345,7 +345,7 @@ Failures:   0 critical
 | HydraGenerator | Video | `hydra/HydraGenerator.ts` | Hydra syntax validation |
 | StrudelGenerator | Music | `strudel/StrudelGenerator.ts` | Pattern validation |
 | ToneGenerator | Audio | `tone/ToneGenerator.ts` | Synth validation |
-| RevideoGenerator | Video | `revideo/RevideoGenerator.ts` | Revideo scene validation (scaffolding active, rendering needs build infra) |
+| RevideoGenerator | Video | `revideo/RevideoGenerator.ts` | Revideo scene generation + rendering via @revideo/renderer |
 | HTMLWebGenerator | Web | `html/HTMLWebGenerator.ts` | HTML structure validation |
 | ASCIIArtGenerator | ASCII | `ascii/ASCIIArtGenerator.ts` | Character validation |
 
@@ -1121,4 +1121,4 @@ const recorder = new CanvasRecorder({ fps: 30, duration: 5 });
 await recorder.record(code, 'p5', 'output.mp4');
 ```
 
-**Status:** Partially integrated - Revideo scaffolding and generation active; MP4 rendering needs build infrastructure for temp projects.
+**Status:** Fully integrated - Revideo scaffolding, generation, and MP4 rendering via @revideo/renderer renderVideo().

@@ -163,8 +163,8 @@ vi.mock('../../src/utils/Logger.js', () => ({
 describe('RalphLoop Best-of-N', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    ContextAccumulation.default.clear();
-    
+    ContextAccumulation.clear();
+
     // Reset trackers
     callTracker.generateCalls = 0;
     callTracker.scoreCalls = 0;
@@ -181,7 +181,7 @@ describe('RalphLoop Best-of-N', () => {
 
   afterEach(() => {
     vi.resetAllMocks();
-    ContextAccumulation.default.clear();
+    ContextAccumulation.clear();
   });
 
   it('should generate multiple candidates when numCandidates > 1', async () => {
@@ -316,15 +316,12 @@ describe('RalphLoop Best-of-N', () => {
     validateFailures.add(2);
     validateFailures.add(3);
 
-    const result = await RalphLoop.run('test prompt', {
+    await expect(RalphLoop.run('test prompt', {
       maxIterations: 1,
       numCandidates: 3,
       minQualityScore: 0.5,
       _disableIterationExtension: true,
-    });
-
-    expect(result.iterations).toBe(1);
-    expect(result.completed).toBe(false);
+    })).rejects.toThrow('All generation candidates failed');
   });
 
   it('should respect numCandidates limit and not exceed it', async () => {

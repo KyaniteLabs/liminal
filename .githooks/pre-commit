@@ -1,14 +1,14 @@
 #!/bin/bash
 # Pre-commit hook for documentation validation + test verification
 
-echo "🔍 Running pre-commit checks..."
+echo "Running pre-commit checks..."
 
 # --- Documentation checks ---
 if git diff --cached --name-only | grep -q "docs/THE_BIBLE.md"; then
-    echo "✓ THE_BIBLE.md updated"
+    echo "THE_BIBLE.md updated"
 else
     if git diff --cached --name-only | grep -q "^src/"; then
-        echo "⚠️  WARNING: You modified src/ but not THE_BIBLE.md"
+        echo "WARNING: You modified src/ but not THE_BIBLE.md"
         echo "   Run: npm run validate-docs"
     fi
 fi
@@ -21,28 +21,48 @@ node scripts/analysis/verify-file-refs.js --quiet || exit 1
 PROJECT_ROOT=$(git rev-parse --show-toplevel)
 if [ -f "$HOME/.local/bin/doc-validate" ]; then
     "$HOME/.local/bin/doc-validate" "$PROJECT_ROOT" || {
-        echo "❌ Documentation validation failed"
+        echo "Documentation validation failed"
         exit 1
     }
 fi
 
-echo "✅ Documentation checks passed"
+echo "Documentation checks passed"
 
 # --- Test verification for changed files ---
 CHANGED_SRC=$(git diff --cached --name-only | grep "^src/.*\.ts$" | head -10)
 if [ -n "$CHANGED_SRC" ]; then
-    echo "🧪 Running tests for changed source files..."
-    # vitest --related runs only tests that import the changed files
-    npx vitest run --related $CHANGED_SRC --reporter=verbose 2>&1 | tail -5
-    if [ $? -ne 0 ]; then
-        echo "❌ Tests failed for changed files. Fix before committing."
+    echo "Running tests for changed source files..."
+    # Infer test files from changed source paths (vitest --related not available)
+    TEST_FILES=""
+    for src_file in $CHANGED_SRC; do
+      # src/foo/bar/Baz.ts -> test/foo/bar/Baz.test.ts
+      test_path=$(echo "$src_file" | sed 's|^src/|test/;s|\.ts$|.test.ts|')
+      if [ -f "$test_path" ]; then
+        TEST_FILES="$TEST_FILES $test_path"
+      fi
+      # Also check for direct test counterpart in test/unit or test/core
+      basename_no_ext=$(basename "$src_file" .ts)
+      for dir in test test/unit test/core test/integration; do
+        candidate="$dir/${basename_no_ext}.test.ts"
+        if [ -f "$candidate" ]; then
+          TEST_FILES="$TEST_FILES $candidate"
+        fi
+      done
+    done
+    if [ -n "$TEST_FILES" ]; then
+      npx vitest run $TEST_FILES --reporter=verbose 2>&1 | tail -10
+      if [ $? -ne 0 ]; then
+        echo "Tests failed for changed files. Fix before committing."
         echo "   Run with --no-verify to skip (not recommended)."
         exit 1
+      fi
+      echo "Changed file tests passed"
+    else
+      echo "No matching test files found — skipping test run"
     fi
-    echo "✅ Changed file tests passed"
 fi
 
-echo "✅ All pre-commit checks passed"
+echo "All pre-commit checks passed"
 
 # --- Stray file detection ---
 # Warn about known stray file patterns. Warn-only (does not block commit).
@@ -54,7 +74,7 @@ if [ -n "$STAGED_FILES" ]; then
     # Pattern 1: Shell redirect artifacts (e.g., "1timeout:", "2timeout:")
     strays_redirect=$(echo "$STAGED_FILES" | grep -E '^[0-9]+[a-zA-Z]+:' || true)
     if [ -n "$strays_redirect" ]; then
-        echo "⚠️  WARNING: Shell redirect artifacts staged for commit:"
+        echo "WARNING: Shell redirect artifacts staged for commit:"
         echo "$strays_redirect" | while read -r f; do echo "    - $f"; done
         STRAY_FOUND=true
     fi
@@ -62,7 +82,7 @@ if [ -n "$STAGED_FILES" ]; then
     # Pattern 2: PNG files in root directory
     strays_png=$(echo "$STAGED_FILES" | grep -E '^[^/]+\.png$' || true)
     if [ -n "$strays_png" ]; then
-        echo "⚠️  WARNING: PNG files in root directory staged for commit:"
+        echo "WARNING: PNG files in root directory staged for commit:"
         echo "$strays_png" | while read -r f; do echo "    - $f"; done
         STRAY_FOUND=true
     fi
@@ -72,7 +92,7 @@ if [ -n "$STAGED_FILES" ]; then
         if [ "$(dirname "$f")" = "." ]; then
             size=$(git cat-file -s ":$f" 2>/dev/null || echo 0)
             if [ "$size" -gt 1048576 ]; then
-                echo "⚠️  WARNING: Large file staged in root: $f ($(( size / 1048576 ))MB)"
+                echo "WARNING: Large file staged in root: $f ($(( size / 1048576 ))MB)"
                 STRAY_FOUND=true
             fi
         fi

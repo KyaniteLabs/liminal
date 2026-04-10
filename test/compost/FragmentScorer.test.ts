@@ -74,7 +74,8 @@ describe('FragmentScorer', () => {
       });
       const frag = makeFragment();
       const score = await scorer.scoreLLM(frag);
-      expect(score).toBeGreaterThanOrEqual(0);
+      expect(score.isOk()).toBe(true);
+      expect(score.value).toBeGreaterThanOrEqual(0);
       expect(mockLLM.generate).toHaveBeenCalled();
     });
   });

@@ -34,11 +34,20 @@ func (m Model) View() string {
 		paneHeight = 5
 	}
 
+	// ── Pane labels ──
+	chatLabel := lipgloss.NewStyle().
+		Foreground(ui.FgMuted).
+		Render("HISTORY")
+
+	previewLabel := lipgloss.NewStyle().
+		Foreground(ui.FgMuted).
+		Render("PREVIEW")
+
 	// ── Chat pane (left) ──
 	chatPane := ui.ChatPaneStyle.
 		Width(chatWidth).
 		Height(paneHeight).
-		Render(m.ChatViewport.View())
+		Render(chatLabel + "\n" + m.ChatViewport.View())
 
 	// ── Right column ──
 	var rightPane string
@@ -46,22 +55,22 @@ func (m Model) View() string {
 		rightPane = ui.PreviewPaneStyle.
 			Width(previewWidth).
 			Height(paneHeight).
-			Render(m.renderPreviewSection(previewWidth, paneHeight))
+			Render(previewLabel + "\n" + m.renderPreviewSection(previewWidth, paneHeight))
 	} else {
 		rightPane = ui.ChatPaneStyle.
 			Width(previewWidth).
 			Height(paneHeight).
-			Render(m.renderCompactStatus())
+			Render(previewLabel + "\n" + m.renderCompactStatus())
 	}
 
-	// ── Focus indicator ──
+	// ── Focus indicator — green border on focused pane ──
 	if m.FocusPane == FocusPreview {
 		rightPane = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(ui.AccentGreen).
+			BorderForeground(ui.FocusGreen).
 			Width(previewWidth).
 			Height(paneHeight).
-			Render(m.renderPreviewSection(previewWidth, paneHeight))
+			Render(previewLabel + "\n" + m.renderPreviewSection(previewWidth, paneHeight))
 	}
 
 	// ── Join columns ──
@@ -225,19 +234,18 @@ func (m Model) renderStatusLine(width int) string {
 		Render(statusLine)
 }
 
-// ── Compact status when preview is hidden ──
-
+// renderCompactStatus returns a compact vertical layout when preview is hidden.
 func (m Model) renderCompactStatus() string {
 	var lines []string
 	lines = append(lines, ui.StatusLabelStyle.Render("Provider: ")+ui.StatusValueStyle.Render(m.Provider+"/"+m.ModelName))
 	lines = append(lines, ui.StatusLabelStyle.Render("Mode: ")+ui.StatusValueStyle.Render(m.Mode))
-	lines = append(lines, ui.StatusLabelStyle.Render("Trust: ")+ui.StatusValueStyle.Render(m.TrustLabel))
+	lines = append(lines, ui.StatusLabelStyle.Render("Trust: ")+ui.TrustColorStyle(m.TrustLabel).Render(m.TrustLabel))
 
 	if m.PendingAction != nil {
 		lines = append(lines, "")
-		lines = append(lines, ui.ActionTitleStyle.Render("⚠ Pending Action"))
-		lines = append(lines, ui.ActionCardStyle.Render(m.PendingAction.Title))
-		lines = append(lines, ui.HintStyle.Render("[y] confirm  [n] cancel"))
+		lines = append(lines, ui.ActionTitleStyle.Render("⚠ Operator Action Required"))
+		lines = append(lines, ui.ActionCardStyle.Width(m.Width*2/5-6).Render(m.PendingAction.Title))
+		lines = append(lines, ui.HintStyle.Render("[y] confirm  ·  [n] cancel"))
 	}
 
 	return strings.Join(lines, "\n")

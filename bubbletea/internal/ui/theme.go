@@ -71,10 +71,13 @@ var (
 			Foreground(AccentGreen)
 
 	DisconnectedStyle = lipgloss.NewStyle().
-			Foreground(AccentRed)
+				Foreground(AccentRed)
 
 	ReconnectingStyle = lipgloss.NewStyle().
-			Foreground(AccentYellow)
+				Foreground(AccentYellow)
+
+	// Focus indicator — bright green when preview pane has keyboard focus
+	FocusGreen = lipgloss.Color("#9ece6a")
 
 	// ── Chat pane ──
 	ChatPaneStyle = lipgloss.NewStyle().
@@ -109,7 +112,7 @@ var (
 			Foreground(AccentYellow)
 
 	StreamingStyle = lipgloss.NewStyle().
-			Foreground(FgSubtle)
+			Foreground(AccentCyan)
 
 	// ── Footer / input ──
 	FooterStyle = lipgloss.NewStyle().
@@ -195,6 +198,11 @@ func TrustColor(label string) lipgloss.Color {
 	default:
 		return AccentYellow
 	}
+}
+
+// TrustColorStyle returns a style colored by trust label semantics.
+func TrustColorStyle(label string) lipgloss.Style {
+	return lipgloss.NewStyle().Foreground(TrustColor(label))
 }
 
 // StatusDot returns a colored connection indicator.

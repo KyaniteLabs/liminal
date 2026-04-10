@@ -26,7 +26,12 @@ jobs:
         run: pnpm test:quality
       - name: Check coverage gaps
         if: always()
-        run: npx tsx scripts/ci/check-coverage-gaps.ts --warn
+        run: |
+          if [ -f coverage/coverage-final.json ]; then
+            npx tsx scripts/ci/check-coverage-gaps.ts --warn
+          else
+            echo "⚠️ coverage/coverage-final.json not found — skipping coverage gap check (test step may have failed)"
+          fi
       - name: Coverage target progress
         if: always()
         run: |

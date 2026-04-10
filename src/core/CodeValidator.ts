@@ -20,6 +20,7 @@ import { StrudelValidator } from './validators/StrudelValidator.js';
 import { HydraValidator } from './validators/HydraValidator.js';
 import { ToneValidator } from './validators/ToneValidator.js';
 import { RemotionValidator } from './validators/RemotionValidator.js';
+import { RevideoValidator } from './validators/RevideoValidator.js';
 import { HTMLValidator } from './validators/HTMLValidator.js';
 import { ASCIIValidator } from './validators/ASCIIValidator.js';
 import {
@@ -43,6 +44,7 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'hydra': HydraValidator.getMinSize(),
   'tone': ToneValidator.getMinSize(),
   'remotion': RemotionValidator.getMinSize(),
+  'revideo': RevideoValidator.getMinSize(),
   'html': HTMLValidator.getMinSize(),
   'ascii': ASCIIValidator.getMinSize(),
   'music': 100,
@@ -91,6 +93,9 @@ function detectDomain(code: string): Domain {
   const hasUniforms = /uniform\s+(vec2|vec3|vec4|float|int|mat)/.test(code);
   const glslCount = [hasVoidMain, hasFragColor, hasUniforms].filter(Boolean).length;
   if (glslCount >= 2 && !code.includes('function setup()') && !code.includes('function draw()')) return 'shader';
+
+  // Check for Revideo (before Remotion)
+  if (/\bmakeScene|@revideo\/core/.test(code)) return 'revideo';
 
   // Check for Remotion
   if (/useCurrentFrame|AbsoluteFill|<Composition|from\s+['"]remotion['"]/.test(code)) return 'remotion';
@@ -169,6 +174,11 @@ function validateStructure(code: string, domain: Domain): string[] {
       errors.push(...result.errors);
       break;
     }
+    case 'revideo': {
+      const result = RevideoValidator.validate(trimmed);
+      errors.push(...result.errors);
+      break;
+    }
     case 'html': {
       const result = HTMLValidator.validate(trimmed);
       errors.push(...result.errors);
@@ -216,6 +226,10 @@ function validateSelfContained(code: string, domain: Domain): string[] {
       if (!/tone\.js|from\s+['"]tone['"]/.test(code)) {
         errors.push('HTML-wrapped Tone.js should include Tone.js CDN or module import');
       }
+      break;
+    }
+    case 'revideo': {
+      // Revideo is JSX source, not HTML-wrapped
       break;
     }
     case 'html': {

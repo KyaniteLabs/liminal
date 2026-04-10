@@ -43,7 +43,7 @@ const threeConfidence = (prompt: string): number => {
   // High confidence for explicit three.js mentions
   if (/three\.js|threejs|\bthree\b/.test(lower)) return 0.95;
   // Strong confidence for 3D with specific keywords
-  if (/\b3d\b.*\b(scene|cube|sphere|model|mesh|geometry|import|webgl|camera|light|rotation)/.test(lower)) return 0.90;
+  if (/\b3d\b.*\b(scene|cube|sphere|model|mesh|geometry|import|webgl|camera|light|rotation|composition|depth)/.test(lower)) return 0.90;
   // Moderate for generic 3D
   if (/\b3d\b|webgl/.test(lower)) return 0.75;
   return 0;
@@ -131,7 +131,7 @@ const toneConfidence = (prompt: string): number => {
   // Audio effect indicators
   if (/\bbass\b|\bdrone\b|\barp\b|\bsequencer\b|\bdelay\b|\breverb\b/.test(lower)) return 0.80;
   // Generic synthesis
-  if (/synth|synthesizer/.test(lower)) return 0.70;
+  if (/\bsynth\b|\bsynthesizer\b/.test(lower)) return 0.70;
   return 0;
 };
 

@@ -331,8 +331,9 @@ describe('ParticleSystem pushMatrix', () => {
 describe('ParticleSystem custom colors and effects', () => {
   it('custom colors array is used when provided', () => {
     const result = ParticleSystem.generate({ colors: ['255,0,0', '0,255,0'] });
-    // With colors provided, the generateColor method picks from the array
-    expect(result).toContain('255,0,0');
+    // With colors provided, generateColor picks from the array — check one of them appears
+    const hasColor = result.includes('255,0,0') || result.includes('0,255,0');
+    expect(hasColor).toBe(true);
   });
 
   it('custom effect is included in constructor extras', () => {

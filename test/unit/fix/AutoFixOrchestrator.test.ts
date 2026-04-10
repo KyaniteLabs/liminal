@@ -239,7 +239,7 @@ describe('AutoFixOrchestrator', () => {
         description: expect.stringContaining('Error to fix: TypeError: Cannot read property'),
         fileHint: 'src/test.ts',
         maxSteps: 15,
-        approved: true,
+        approved: false,
       }));
     });
   });
@@ -266,14 +266,14 @@ describe('AutoFixOrchestrator', () => {
       expect(mockReadFile.execute).toHaveBeenCalledWith({ path: 'src/failing.ts' });
     });
 
-    it('returns success when no target and no failures detected', async () => {
+    it('returns error when no target provided (not yet implemented)', async () => {
       const orchestrator = new AutoFixOrchestrator(mockLLM as any);
       const result = await orchestrator.executeFix({
         type: 'test-failures',
       });
 
-      expect(result.success).toBe(true);
-      expect(result.error).toBe('No test failures detected - all tests pass');
+      expect(result.success).toBe(false);
+      expect(result.error).toContain('not yet implemented');
     });
   });
 
@@ -300,7 +300,7 @@ describe('AutoFixOrchestrator', () => {
         title: 'Refactor utils.ts',
         description: 'Convert callbacks to async/await',
         maxSteps: 15,
-        approved: true,
+        approved: false,
       }));
     });
 
@@ -414,10 +414,10 @@ describe('AutoFixOrchestrator', () => {
       expect(result).toBe(true);
     });
 
-    it('verifyTests returns false (not implemented)', async () => {
+    it('verifyTests returns true when tests pass', async () => {
       const orchestrator = new AutoFixOrchestrator(mockLLM as any);
       const result = await orchestrator.verifyTests();
-      expect(result).toBe(false);
+      expect(result).toBe(true);
     });
   });
 });

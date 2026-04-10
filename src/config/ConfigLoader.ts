@@ -165,7 +165,7 @@ export interface ModelConfig {
 
 /** Type guard for ProjectConfig */
 function isValidProjectConfig(value: unknown): value is ProjectConfig {
-  if (typeof value !== 'object' || value === null) return false;
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
 
   // Basic structure validation - allow empty object as valid minimal config
   return true;

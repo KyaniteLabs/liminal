@@ -72,6 +72,8 @@ export interface IntuitionAssessment {
   explanation: string;
 }
 
+import type { LLMClient } from '../llm/LLMClient.js';
+
 /** Configuration for the IntuitionEngine. */
 export interface IntuitionEngineConfig {
   /** Weight for Thompson confidence signal. Default: 0.3 */
@@ -88,6 +90,8 @@ export interface IntuitionEngineConfig {
   dreamingEnabled?: boolean;
   /** Domains to explore in dreams. Default: ['p5'] */
   dreamDomains?: string[];
+  /** LLM client for DreamEngine callbacks. When present, Stage 1 and Stage 2 use real LLM generation. */
+  llm?: LLMClient;
 }
 
 /** Engine health report. */
@@ -126,7 +130,7 @@ export interface IntuitionEngineState {
 // IntuitionEngine
 // ---------------------------------------------------------------------------
 
-const DEFAULT_CONFIG: Required<IntuitionEngineConfig> = {
+const DEFAULT_CONFIG: Required<Omit<IntuitionEngineConfig, 'llm'>> = {
   thompsonWeight: 0.3,
   prototypeWeight: 0.25,
   worldModelWeight: 0.25,
@@ -150,9 +154,11 @@ export class IntuitionEngine {
   private readonly memoryBudget: MemoryBudget;
   private readonly proceduralTier: ProceduralTier;
 
-  private readonly config: Required<IntuitionEngineConfig>;
+  private readonly config: Required<Omit<IntuitionEngineConfig, 'llm'>> & { llm?: LLMClient };
+  private readonly llm?: LLMClient;
 
   constructor(config?: IntuitionEngineConfig) {
+    this.llm = config?.llm;
     this.config = { ...DEFAULT_CONFIG, ...config };
 
     // Initialize core components
@@ -191,7 +197,21 @@ export class IntuitionEngine {
         cache: this.cache,
         consolidator: this.consolidator,
       },
-      { domains: this.config.dreamDomains },
+      {
+        domains: this.config.dreamDomains,
+        generatePrompt: this.llm
+          ? (prompt) => this.llm!.generate(
+              'You are a creative visual concept generator. Given a creative brief, generate a vivid, evocative visual concept description suitable for code generation.',
+              prompt,
+            ).then((r) => r.success ? r.code : Promise.reject(new Error(r.error ?? 'LLM generation failed')))
+          : undefined,
+        generateCode: this.llm
+          ? (prompt, domain) => this.llm!.generate(
+              'You are a creative coding engine. Given a visual concept and target domain, generate complete, runnable code.',
+              `Domain: ${domain}\n${prompt}`,
+            ).then((r) => r.success ? r.code : Promise.reject(new Error(r.error ?? 'LLM generation failed')))
+          : undefined,
+      },
     );
 
     this.sleepScheduler = new SleepScheduler();

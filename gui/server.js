@@ -219,8 +219,10 @@ export function createApp(configPath, port = 5174) {
   app.get('/api/config', async (_req, res) => {
     try {
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
-      const projectConfig = await loadProjectConfig(process.cwd());
+      const userConfigResult = await loadConfig(cfgPath);
+      const userConfig = userConfigResult.match(c => c, () => null);
+      const projectConfigResult = await loadProjectConfig(process.cwd());
+      const projectConfig = projectConfigResult?.match?.(c => c, () => null) ?? null;
       const effective = await getEffectiveConfig(cfgPath, process.cwd());
 
       const loop = {
@@ -285,7 +287,8 @@ export function createApp(configPath, port = 5174) {
     try {
       const cfgPath = getConfigPath();
       const body = req.body || {};
-      const existing = await loadConfig(cfgPath);
+      const existingResult = await loadConfig(cfgPath);
+      const existing = existingResult.match(c => c, () => null);
 
       const defaultProvider = body.defaultProvider ?? existing?.defaultProvider ?? 'lmstudio';
       const providers = { ...(existing?.providers || {}), ...(body.providers || {}) };

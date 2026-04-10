@@ -6,7 +6,7 @@
 import { describe, it, expect, beforeEach, beforeAll, afterAll } from 'vitest';
 /**
  * Integration tests for GUI backend config API.
- * GET /api/config returns effective + loop + creative + galleryPath + userConfig.
+ * GET /api/config returns effective + loop + creative + galleryPath.
  * POST /api/config persists and GET returns the saved shape.
  * Uses real temp dir for config path; starts server on random port and uses fetch.
  */
@@ -19,15 +19,12 @@ const TEST_DIR = path.join(os.tmpdir(), `atelier-gui-config-${Date.now()}`);
 const TEST_CONFIG_PATH = path.join(TEST_DIR, 'config.json');
 
 describe('GUI config API', () => {
-  /** @type {import('http').Server} */
   let server;
-  /** @type {number} */
   let port;
 
   beforeAll(async () => {
     await fs.mkdir(TEST_DIR, { recursive: true });
     process.env.LIMINAL_CONFIG_PATH = TEST_CONFIG_PATH;
-    // Unset LLM env so saved file config is used
     delete process.env.ATELIER_LLM_PROVIDER;
     delete process.env.ATELIER_LLM_MODEL;
     delete process.env.ATELIER_LLM_BASE_URL;
@@ -72,7 +69,7 @@ describe('GUI config API', () => {
   }
 
   describe('GET /api/config', () => {
-    it('returns effective config, loop options, min quality, gallery path, and userConfig', async () => {
+    it('returns effective config, loop options, min quality, gallery path', async () => {
       const body = await get('/api/config');
       expect(body).toHaveProperty('effective');
       expect(body.effective).toMatchObject({
@@ -80,7 +77,8 @@ describe('GUI config API', () => {
         model: expect.any(String),
       });
       expect(body.effective).toHaveProperty('baseUrl');
-      expect(body.effective).toHaveProperty('apiKey');
+      expect(body.effective).toHaveProperty('apiKeyStored');
+      expect(typeof body.effective.apiKeyStored).toBe('boolean');
       expect(body).toHaveProperty('loop');
       expect(body.loop).toMatchObject({
         maxIterations: expect.any(Number),
@@ -90,7 +88,6 @@ describe('GUI config API', () => {
       expect(body.creative).toMatchObject({ minQualityScore: expect.any(Number) });
       expect(body).toHaveProperty('galleryPath');
       expect(typeof body.galleryPath).toBe('string');
-      expect(body).toHaveProperty('userConfig');
     });
 
     it('returns saved values after POST', async () => {
@@ -105,17 +102,12 @@ describe('GUI config API', () => {
       });
 
       const res = await get('/api/config');
-      // effective may be overridden by project config (config/atelier.json); assert saved userConfig and loop/gallery
-      expect(res.userConfig).not.toBeNull();
-      expect(res.userConfig.defaultProvider).toBe('ollama');
-      expect(res.userConfig.providers.ollama.model).toBe('codellama');
-      expect(res.userConfig.providers.ollama.baseUrl).toBe('http://localhost:11434/v1');
-      expect(res.userConfig.providers.ollama.apiKey).toBe('secret');
       expect(res.loop.maxIterations).toBe(5);
       expect(res.loop.timeoutMinutes).toBe(10);
       expect(res.creative.minQualityScore).toBe(0.8);
       expect(res.galleryPath).toBe('my-gallery');
       expect(res.effective).toMatchObject({ provider: expect.any(String), model: expect.any(String) });
+      expect(res.effective.apiKeyStored).toBe(true);
     });
   });
 

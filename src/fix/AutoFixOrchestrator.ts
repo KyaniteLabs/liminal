@@ -165,7 +165,7 @@ export class AutoFixOrchestrator {
     // Verify the fix if it succeeded
     let buildPassed = false;
     let testsPassed = false;
-    let rolledBack = session.status === Status.ROLLED_BACK;
+    const rolledBack = session.status === Status.ROLLED_BACK;
 
     if (session.status === Status.SUCCESS) {
       buildPassed = await this.verifyBuild();
@@ -258,7 +258,7 @@ export class AutoFixOrchestrator {
 
     let buildPassed = false;
     let testsPassed = false;
-    let rolledBack = session.status === Status.ROLLED_BACK;
+    const rolledBack = session.status === Status.ROLLED_BACK;
 
     if (session.status === Status.SUCCESS) {
       buildPassed = await this.verifyBuild();

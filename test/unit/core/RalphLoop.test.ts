@@ -222,6 +222,14 @@ vi.mock('../../../src/types/providers.js', () => ({
   Provider: { LMSTUDIO: 'lmstudio', OLLAMA: 'ollama' },
 }));
 
+vi.mock('../../../src/git/GitIntegration.js', () => ({
+  GitIntegration: class {
+    startRun = vi.fn(async () => {});
+    endRun = vi.fn(async () => {});
+    commitIteration = vi.fn(async () => {});
+  },
+}));
+
 // ─── Import after mocks ────────────────────────────────────────────────────
 
 import { RalphLoop } from '../../../src/core/RalphLoop.js';

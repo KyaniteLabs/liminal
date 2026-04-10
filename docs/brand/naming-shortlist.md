@@ -1,10 +1,8 @@
 # Naming Shortlist
 _Last updated: 2026-04-10_
 ## Status
-This is a **working naming worksheet**, not a legal clearance memo.
-Current conclusion:
-- `Liminal` should be treated as a **legacy/internal project name**, not the default commercial launch brand
-- reason: current market already shows adjacent software/AI companies using the same mark, creating avoidable collision risk
+CONVERGED — Sprint 4 final pass complete.
+`Liminal` is a **legacy/internal project name**, not the commercial launch brand.
 ## Brand criteria
 We want a name that is:
 - distinctive
@@ -12,20 +10,27 @@ We want a name that is:
 - ownable in software/creative-tooling markets
 - compatible with developer + artist audiences
 - broad enough for visuals, motion, code, and live performance
-## Current shortlist (Sprint 3 — FINAL)
-**Scope:** Exactly 5 names evaluated. No expanded shortlist.
-### Final Ranked 5
+## Current shortlist (Sprint 4 — FINAL CONVERGENCE)
+**Scope:** 7 seed names evaluated (Limen, Tessra, Motive, Forma, Glyphic, Motif, Sigil). No expanded shortlist.
+
+### Final Ranking
 | Rank | Name | Risk | Status |
-| 1 | **Motif** | MEDIUM | **WINNER** |
-| 2 | **Glyph** | MEDIUM | **BACKUP** |
-| 3 | Tessra | LOW | Reject — phonetically awkward, no presence |
-| 4 | Rune | HIGH | Reject — live trademark + 10M-user platform collision |
-| 5 | Praxis | HIGH | Reject — PraxisLIVE is existing creative coding IDE |
+|------|------|------|--------|
+| 1 | **Sigil** | MEDIUM | **WINNER** |
+| 2 | **Limen** | LOW | **BACKUP** |
+| 3 | Motif | MEDIUM | Reject — good but superseded by stronger candidates |
+| 4 | Glyphic | MEDIUM | Reject — -ic suffix dilutive; glyphic.design is active |
+| 5 | Tessra | LOW | Reject — phonetically awkward, no presence |
+| 6 | Forma | HIGH | Reject — Autodesk Forma kills it |
+| 7 | Motive | HIGH | Reject — three active Motive software companies |
+
 ### Top 2 recommendations
 | Rank | Name | Why | Risk |
-| 1 | **Motif** | Best semantic fit for generative/iterative creative coding; pattern/recurring element; elegant; no dominant creative-coding brand | MEDIUM |
-| 2 | **Glyph** | Original anchor; visual mark; iconic minimalist logo potential; no dominant creative-coding brand | MEDIUM |
-See `naming-decision-memo.md` for full Sprint 3 clearance details.
+|------|------|-----|------|
+| 1 | **Sigil** | Code-native ($, @, % sigils), creative resonance (magical symbols), extraordinary logo potential, active energy | MEDIUM |
+| 2 | **Limen** | Cleanest legal path, limen.com for sale, threshold-of-perception concept, zero conflicts | LOW |
+
+See `naming-decision-memo.md` for full Sprint 4 clearance details and taste analysis.
 ## Rejections / concerns
 ### Round 1 (rejected for creative inadequacy)
 | Name | Reason |

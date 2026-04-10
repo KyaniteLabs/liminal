@@ -1,7 +1,177 @@
-# Naming Decision Memo — Sprint 3 Finalists
-_Date: 2026-04-09_
-_Status: FINAL. Do not reopen without major new information._
-_Constraint: Exactly 5 names evaluated. No expanded shortlist._
+# Naming Decision Memo — Final
+
+_Status: CONVERGED. Sprint 4 is the final pass._
+_Seeds: Limen, Tessra, Motive, Forma, Glyphic, Motif, Sigil_
+
+---
+
+## Sprint 4 — Final Convergence (2026-04-10)
+
+_Scope: 7 seed names evaluated. No expanded shortlist. Force convergence._
+
+### Clearance Results
+
+#### 1. Limen
+
+| Check | Result |
+| Domain .com | **FOR SALE** (Dan.com, Spaceship) — buyable now |
+| Domain .dev/.io | Likely available — no active product |
+| npm | Empty — no package |
+| USPTO | No software marks found |
+| Common law | Limen Group (engineering/construction — not software). LIMEN Brand (wellness/clarity — not software). Zero software conflicts. |
+
+**Risk: LOW** — Cleanest mark in the set. Domain literally for sale.
+
+#### 2. Sigil
+
+| Check | Result |
+| Domain .com | Likely taken |
+| Domain .dev/.io | Unclear |
+| npm | sigil.ts (7yr old, inactive), sigil-cli (Parenscript compiler), @sigiljs/sigil (HTTP framework), @tlon/sigil-js (Urbit identity) |
+| USPTO | SIGIL registered to Sigil Scent Inc. (perfume — Registration #6365737, different class) |
+| Common law | **Sigil ePub editor** — well-known open-source eBook editor since 2009 (Wikipedia article, GitHub Sigil-Ebook org). Sigil Engine — occult sigil generator. |
+
+**Risk: MEDIUM** — ePub editor is well-known but in a completely different domain (book publishing vs creative coding). npm namespace has several old packages but no dominant one.
+
+#### 3. Motif (carried from Sprint 3)
+
+| Check | Result |
+| Domain .com | Taken — likely consumer brand |
+| Domain .dev | 200 — real dev project resolving |
+| npm | JS pattern composition mini-language |
+| USPTO | No dominant Motif mark in software |
+| Common law | JS pattern library — adjacent but not competing |
+
+**Risk: MEDIUM** — Same as Sprint 3 assessment.
+
+#### 4. Glyphic
+
+| Check | Result |
+| Domain .com | glyphic.design — active brand strategy consultancy |
+| npm | No direct "glyphic" package; glyphic-co org on GitHub |
+| USPTO | Not specifically checked — likely clean |
+| Common law | Glyphic (glyphic.design) — brand consultancy for publishing/LMA markets. HubSpot integration exists. |
+
+**Risk: MEDIUM** — Active design-adjacent brand. Not a software product conflict, but in the design space.
+
+#### 5. Tessra (carried from Sprint 3)
+
+| Check | Result |
+| Domain .com | Taken — forwarding domain, minimal presence |
+| Domain .dev | 000 — not resolving |
+| npm | Empty |
+| USPTO | No active Tessra software mark |
+| Common law | Minimal. Coined variant of Tessera. |
+
+**Risk: LOW** — Clean legally, but phonetically weak (ssr cluster).
+
+#### 6. Forma
+
+| Check | Result |
+| Domain .com | **Autodesk** — forma.autodesk.com |
+| npm | Not checked — irrelevant given Autodesk |
+| USPTO | **Autodesk Forma** — live, major product |
+| Common law | **Autodesk Forma** (formerly Spacemaker) — AI-powered building design platform. $230B company's flagship next-gen design cloud. |
+
+**Risk: HIGH — DEAD ON ARRIVAL.** Autodesk Forma makes this unlaunchable.
+
+#### 7. Motive
+
+| Check | Result |
+| Domain .com | **Motive Technologies** (formerly KeepTruckin) — fleet management |
+| npm | Not checked — irrelevant given company conflicts |
+| USPTO | Multiple Motive marks in software |
+| Common law | Motive Technologies ($2B+ valuation, fleet/IoT). Motive Inc (device management). Motive Software (acquired by BetterUp for AI/ML emotion tech). |
+
+**Risk: HIGH — DEAD ON ARRIVAL.** Three active Motive software companies.
+
+---
+
+### Comparison Matrix
+
+| Name | Legal Risk | Product Fit | Aesthetic | Ownability | Launchability | Net |
+|------|-----------|-------------|-----------|------------|---------------|-----|
+| **Sigil** | MEDIUM | 5/5 | 5/5 | 3/5 | 3/5 | **16/20** |
+| **Limen** | LOW | 5/5 | 4/5 | 5/5 | 5/5 | **19/20** |
+| Motif | MEDIUM | 5/5 | 4/5 | 3/5 | 3/5 | 15/20 |
+| Glyphic | MEDIUM | 4/5 | 3/5 | 3/5 | 3/5 | 13/20 |
+| Tessra | LOW | 3/5 | 2/5 | 5/5 | 5/5 | 15/20 |
+| Forma | HIGH | 3/5 | 4/5 | 1/5 | 1/5 | 9/20 |
+| Motive | HIGH | 3/5 | 3/5 | 1/5 | 1/5 | 8/20 |
+
+---
+
+### Taste Judgment — The Real Decision
+
+Numbers say Limen. Taste says Sigil. Here's the honest breakdown:
+
+**Why Sigil has stronger taste:**
+- A creative coding harness TRANSFORMS code into visual symbols. "Sigil" IS what it makes.
+- Programming sigils ($, @, %) mark variables — code-native resonance Limen can't match.
+- The occult/esoteric undertone matches creative technologist culture perfectly.
+- "I built this with Sigil" sounds powerful. "I built this with Limen" sounds clinical.
+- S-I-G-I-L in sans-serif is visually stunning. Double-I symmetry. Beautiful wordmark.
+- A single sigil mark as logo is instantly iconic — like Processing's P, Arduino's infinity.
+
+**Why Limen has stronger practicals:**
+- limen.com is FOR SALE RIGHT NOW. You can buy it this week.
+- Zero SEO confusion. Zero namespace collision. Zero trademark risk.
+- Threshold of perception — genuinely beautiful concept for the product.
+- Maintains Liminal DNA (root word) — smooth transition.
+
+**The Liminal problem:**
+Renaming to "Limen" — the literal root of "Liminal" — doesn't fully escape the collision that triggered the rename. It's like renaming "Firefox" to "Fire." The association persists. "Sigil" provides a clean break — fresh identity, no Liminal baggage.
+
+**The ePub editor problem:**
+Sigil ePub editor (since 2009) will clutter search results. But: completely different domain (book editing vs creative coding), declining relevance, different community. "Sigil + creative coding" / "Sigil + generative art" will differentiate cleanly.
+
+---
+
+### Final Ranking
+
+| Rank | Name | Risk | Verdict |
+|------|------|------|---------|
+| 1 | **Sigil** | MEDIUM | **WINNER** |
+| 2 | **Limen** | LOW | **BACKUP** |
+| 3 | Motif | MEDIUM | Reject — good but less exciting than top 2 |
+| 4 | Glyphic | MEDIUM | Reject — weaker than base Glyph; -ic suffix is dilutive |
+| 5 | Tessra | LOW | Reject — phonetically awkward, no presence |
+| 6 | Forma | HIGH | Reject — Autodesk Forma kills it |
+| 7 | Motive | HIGH | Reject — three active Motive software companies |
+
+---
+
+## Winner: Sigil
+
+**Product narrative:** Sigil is what the harness generates — emergent symbols, inscribed marks, code-made-visual. Every creative act inscribes a sigil.
+
+**Code-native resonance:** In programming, sigils ($, @, %) are the special characters that mark and transform variables. In creative coding, the tool transforms code into visual sigils. The name works on both levels simultaneously.
+
+**Launch plan:**
+- Register sigil.io + sigil.app immediately
+- Secure @sigil on GitHub, Bluesky
+- Accept ePub editor as background noise — different domain entirely
+- Trademark intent-to-use: Class 009 (software), Class 042 (SaaS)
+
+**Logo concept:** A single geometric sigil mark — minimalist, angular, mystical. Think: a modernist rune. Instantly recognizable at favicon size.
+
+## Backup: Limen
+
+**Why Limen:** Cleanest legal path in the set. limen.com is for sale. Zero conflicts. Deep conceptual resonance (threshold of perception — where code becomes visible).
+
+**Pivot trigger:** If Sigil's ePub editor association causes persistent SEO confusion in the creative coding community, or if sigil.io/sigil.app domains are unobtainable, pivot to Limen. Buy limen.com and launch clean.
+
+## Rejected Names
+
+- **Motif** — Good semantic fit, but less exciting than Sigil or Limen. Already the Sprint 3 winner but superseded by stronger candidates.
+- **Glyphic** — The -ic suffix weakens it vs base Glyph. glyphic.design is an active brand consultancy. Dilutive.
+- **Tessra** — Phonetically awkward (TESS-ruh, ssr cluster). Feels manufactured, not discovered. No digital presence.
+- **Forma** — Autodesk Forma is a major live product from a $230B company. Unlaunchable.
+- **Motive** — Three active Motive software companies (Motive Technologies, Motive Inc, Motive Software). Unlaunchable.
+
+---
+
+## Sprint 3 (archived 2026-04-09)
 ## The 5 Candidates — Clearance Results
 ### Praxis
 | Check | Result |

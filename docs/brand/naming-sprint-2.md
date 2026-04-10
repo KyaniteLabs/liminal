@@ -491,3 +491,52 @@ Creative-coding product for creative technologists, design engineers, artists, e
 | 5 | Praxis | HIGH | Reject |
 
 **Full analysis:** `naming-decision-memo.md`
+
+---
+
+## Sprint 4 — Final Convergence (2026-04-10)
+
+**Constraint:** 7 seed names. Force convergence. No expanded shortlist.
+
+### Candidates: Limen, Tessra, Motive, Forma, Glyphic, Motif, Sigil
+
+| Name | .com | .dev/.io | npm | USPTO | Key Collision |
+|------|------|----------|-----|-------|---------------|
+| Limen | FOR SALE (buyable) | Likely available | Empty | No software marks | None — zero software conflicts |
+| Sigil | Likely taken | Unclear | sigil.ts (inactive), sigil-cli, @sigiljs/sigil | Sigil Scent Inc (perfume, diff class) | Sigil ePub editor (well-known, different domain) |
+| Motif | Taken | motif.dev alive | JS pattern mini-language | No dominant mark | npm package non-competing |
+| Glyphic | glyphic.design (active) | Unclear | No direct package | Not checked | glyphic.design is active brand consultancy |
+| Tessra | Taken (forwarding) | 000 clear | Empty | No marks | Minimal presence, phonetically awkward |
+| Forma | Autodesk | N/A — blocked | N/A | Autodesk Forma live | **Autodesk Forma — major product, dead** |
+| Motive | Motive Technologies | N/A — blocked | N/A | Multiple marks | **Three Motive software companies, dead** |
+
+### Outcome
+
+| Rank | Name | Risk | Verdict |
+|------|------|------|---------|
+| 1 | **Sigil** | MEDIUM | **WINNER** |
+| 2 | **Limen** | LOW | **BACKUP** |
+| 3 | Motif | MEDIUM | Reject — superseded by stronger candidates |
+| 4 | Glyphic | MEDIUM | Reject — -ic suffix dilutive, active design brand |
+| 5 | Tessra | LOW | Reject — phonetically awkward |
+| 6 | Forma | HIGH | Reject — Autodesk Forma |
+| 7 | Motive | HIGH | Reject — three Motive companies |
+
+### Why Sigil Won
+
+Taste judgment, not risk minimization. Sigil has more creative energy than any other candidate:
+- **Code-native**: Programming sigils ($, @, %) mark variables — the tool marks code into visual symbols
+- **Aesthetic power**: S-I-G-I-L in sans-serif is beautiful. Double-I symmetry. Stunning wordmark potential.
+- **Cultural fit**: Occult/esoteric undertone matches creative technologist culture (Processing, Hydra, Strudel community)
+- **Active energy**: "I built this with Sigil" sounds powerful. "Sigil" is what the harness generates.
+- **Logo concept**: Single geometric sigil mark — minimalist, angular, mystical. Iconic at favicon size.
+
+The ePub editor is the main concern — well-known but in a completely different domain. Manageable.
+
+### Why Limen Is Backup
+
+Best practicals in the set: limen.com is FOR SALE, zero conflicts, clean SEO.
+But: renaming to the root word of "Liminal" doesn't fully escape the collision that triggered the rename.
+If Sigil's ePub association proves problematic, pivot to Limen and buy the domain.
+
+**Full analysis:** `naming-decision-memo.md`

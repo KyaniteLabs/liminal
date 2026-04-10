@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1775684566294,
+  "lastScanned": 1775789660244,
   "projectRoot": "/Users/simongonzalezdecruz/workspaces/liminal",
   "techStack": {
     "languages": [
@@ -113,7 +113,7 @@
       "path": "artifacts",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775684566275,
+      "lastAccessed": 1775789658587,
       "keyFiles": [
         "campaign-dashboard.html",
         "dogfood-campaign-dashboard.html"
@@ -123,7 +123,7 @@
       "path": "bin",
       "purpose": "Executable scripts",
       "fileCount": 1,
-      "lastAccessed": 1775684566276,
+      "lastAccessed": 1775789658663,
       "keyFiles": [
         "liminal"
       ]
@@ -132,7 +132,7 @@
       "path": "bubbletea",
       "purpose": null,
       "fileCount": 4,
-      "lastAccessed": 1775684566277,
+      "lastAccessed": 1775789658855,
       "keyFiles": [
         "README.md",
         "go.mod",
@@ -144,7 +144,7 @@
       "path": "compost",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775684566277,
+      "lastAccessed": 1775789658863,
       "keyFiles": [
         "soup-state.json"
       ]
@@ -153,16 +153,29 @@
       "path": "config",
       "purpose": "Configuration files",
       "fileCount": 1,
-      "lastAccessed": 1775684566277,
+      "lastAccessed": 1775789658888,
       "keyFiles": [
         "liminal.json"
+      ]
+    },
+    "coverage": {
+      "path": "coverage",
+      "purpose": null,
+      "fileCount": 10,
+      "lastAccessed": 1775789659022,
+      "keyFiles": [
+        "base.css",
+        "block-navigation.js",
+        "clover.xml",
+        "coverage-final.json",
+        "favicon.png"
       ]
     },
     "dist": {
       "path": "dist",
       "purpose": "Distribution/build output",
       "fileCount": 12,
-      "lastAccessed": 1775684566278,
+      "lastAccessed": 1775789659077,
       "keyFiles": [
         "constants.d.ts",
         "constants.d.ts.map",
@@ -175,7 +188,7 @@
       "path": "docker",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775684566278,
+      "lastAccessed": 1775789659099,
       "keyFiles": [
         "seccomp-chrome.json"
       ]
@@ -183,8 +196,8 @@
     "docs": {
       "path": "docs",
       "purpose": "Documentation",
-      "fileCount": 53,
-      "lastAccessed": 1775684566278,
+      "fileCount": 55,
+      "lastAccessed": 1775789659136,
       "keyFiles": [
         "AGENT_GENERATOR_ARCHITECTURE.md",
         "ARCHITECTURE_AND_PHILOSOPHY.md",
@@ -197,7 +210,7 @@
       "path": "dogfood-campaign",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1775684566278,
+      "lastAccessed": 1775789659191,
       "keyFiles": [
         "REPORT.md",
         "results-lmstudio.json",
@@ -210,7 +223,7 @@
       "path": "dogfood-campaign-2026-04-04T07-21-29",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659210,
       "keyFiles": [
         "report.json",
         "results.jsonl"
@@ -220,7 +233,7 @@
       "path": "dogfood-campaign-2026-04-04T07-57-51",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659267,
       "keyFiles": [
         "report.json",
         "results.jsonl"
@@ -230,7 +243,7 @@
       "path": "dogfood-campaign-local-2026-04-04T07-59-30",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659294,
       "keyFiles": [
         "results.jsonl"
       ]
@@ -239,7 +252,7 @@
       "path": "dogfood-campaign-ollama-2026-04-04T07-47-00",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659320,
       "keyFiles": [
         "report.json",
         "results.jsonl"
@@ -249,7 +262,7 @@
       "path": "dogfood-output",
       "purpose": null,
       "fileCount": 5,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659333,
       "keyFiles": [
         "cli-project-archive.zip",
         "cli-project-final.html",
@@ -262,7 +275,7 @@
       "path": "dogfood-output-gemma",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659341,
       "keyFiles": [
         "cli-project-archive.zip",
         "cli-project-final.html",
@@ -273,7 +286,7 @@
       "path": "dogfood-output-gemma2",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659350,
       "keyFiles": [
         "cli-project-archive.zip",
         "cli-project-final.html",
@@ -284,7 +297,7 @@
       "path": "dogfood-output-gemma4",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659358,
       "keyFiles": [
         "cli-project-final.js",
         "reasoning.txt"
@@ -294,7 +307,7 @@
       "path": "dogfood-output-lfm",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659395,
       "keyFiles": [
         "cli-project-archive.zip",
         "cli-project-final.html",
@@ -305,7 +318,7 @@
       "path": "dogfood-output-qwen",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1775684566279,
+      "lastAccessed": 1775789659407,
       "keyFiles": [
         "cli-project-archive.zip",
         "cli-project-final.html",
@@ -316,7 +329,7 @@
       "path": "dogfood-output-qwen2",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1775684566280,
+      "lastAccessed": 1775789659409,
       "keyFiles": [
         "cli-project-archive.zip",
         "cli-project-final.html",
@@ -327,14 +340,14 @@
       "path": "dogfood-telemetry",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775684566280,
+      "lastAccessed": 1775789659417,
       "keyFiles": []
     },
     "dogfood-temp": {
       "path": "dogfood-temp",
       "purpose": null,
       "fileCount": 6,
-      "lastAccessed": 1775684566280,
+      "lastAccessed": 1775789659428,
       "keyFiles": [
         "cloud-b-html-minimax-m25.html",
         "cloud-b-hydra-minimax-m25.html",
@@ -347,7 +360,7 @@
       "path": "dogfood-test",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1775684566280,
+      "lastAccessed": 1775789659441,
       "keyFiles": [
         "cli-project-archive.zip",
         "cli-project-final.html",
@@ -358,7 +371,7 @@
       "path": "examples",
       "purpose": "Example code",
       "fileCount": 8,
-      "lastAccessed": 1775684566280,
+      "lastAccessed": 1775789659446,
       "keyFiles": [
         "composition-basic.ts",
         "composition-programmatic.ts",
@@ -371,14 +384,14 @@
       "path": "gallery",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775684566282,
+      "lastAccessed": 1775789659507,
       "keyFiles": []
     },
     "gui": {
       "path": "gui",
       "purpose": null,
       "fileCount": 8,
-      "lastAccessed": 1775684566282,
+      "lastAccessed": 1775789659523,
       "keyFiles": [
         "index.html",
         "package-lock.json",
@@ -391,7 +404,7 @@
       "path": "harness-tasks",
       "purpose": null,
       "fileCount": 14,
-      "lastAccessed": 1775684566282,
+      "lastAccessed": 1775789659575,
       "keyFiles": [
         "CONVERT_P5_TO_PLUGIN.md",
         "CONVERT_P5_TO_PLUGIN_EVAL.md",
@@ -404,7 +417,7 @@
       "path": "landing-archive",
       "purpose": null,
       "fileCount": 4,
-      "lastAccessed": 1775684566282,
+      "lastAccessed": 1775789659593,
       "keyFiles": [
         "landing-dual-mode.html",
         "landing-honest.html",
@@ -416,7 +429,7 @@
       "path": "landing-assets",
       "purpose": null,
       "fileCount": 70,
-      "lastAccessed": 1775684566282,
+      "lastAccessed": 1775789659602,
       "keyFiles": [
         "TRUE-DOGFOOD-SECTION.html",
         "dogfood-hydra-geometric.html",
@@ -429,7 +442,7 @@
       "path": "landing-live",
       "purpose": null,
       "fileCount": 164,
-      "lastAccessed": 1775684566283,
+      "lastAccessed": 1775789659604,
       "keyFiles": [
         "ascii-gemma.html",
         "ascii-kimi.html",
@@ -441,25 +454,27 @@
     "memory": {
       "path": "memory",
       "purpose": null,
-      "fileCount": 2,
-      "lastAccessed": 1775684566283,
+      "fileCount": 4,
+      "lastAccessed": 1775789659627,
       "keyFiles": [
         "feedback_omc-architecture-explained.md",
-        "git-monitor-log.md"
+        "git-monitor-log.md",
+        "git-orchestration-remediation.md",
+        "session-2026-04-08-ssrf-test-fixes.md"
       ]
     },
     "narrative": {
       "path": "narrative",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775684566283,
+      "lastAccessed": 1775789659628,
       "keyFiles": []
     },
     "output": {
       "path": "output",
       "purpose": null,
       "fileCount": 27,
-      "lastAccessed": 1775684566283,
+      "lastAccessed": 1775789659641,
       "keyFiles": [
         "2026-03-01--test-prompt-export.js",
         "default-archive.txt",
@@ -472,14 +487,14 @@
       "path": "plugins",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775684566283,
+      "lastAccessed": 1775789659649,
       "keyFiles": []
     },
     "scripts": {
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 29,
-      "lastAccessed": 1775684566283,
+      "lastAccessed": 1775789659675,
       "keyFiles": [
         "campaign-cloud.ts",
         "campaign-combined-report.ts",
@@ -492,7 +507,7 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 3,
-      "lastAccessed": 1775684566283,
+      "lastAccessed": 1775789659682,
       "keyFiles": [
         "constants.ts",
         "generateVisuals.ts",
@@ -502,8 +517,8 @@
     "stream": {
       "path": "stream",
       "purpose": null,
-      "fileCount": 942,
-      "lastAccessed": 1775684566286,
+      "fileCount": 1545,
+      "lastAccessed": 1775789659755,
       "keyFiles": [
         "evolution_20260403173900..json",
         "evolution_20260403173915..json",
@@ -516,24 +531,17 @@
       "path": "test",
       "purpose": "Test files",
       "fileCount": 2,
-      "lastAccessed": 1775684566286,
+      "lastAccessed": 1775789659774,
       "keyFiles": [
         "console-usage.test.ts",
         "setup.ts"
       ]
     },
-    "test-gen-output": {
-      "path": "test-gen-output",
-      "purpose": null,
-      "fileCount": 0,
-      "lastAccessed": 1775684566286,
-      "keyFiles": []
-    },
     "test-output": {
       "path": "test-output",
       "purpose": null,
       "fileCount": 50,
-      "lastAccessed": 1775684566286,
+      "lastAccessed": 1775789659792,
       "keyFiles": [
         "MASTER-REPORT.md",
         "cli-project-archive.zip",
@@ -546,14 +554,14 @@
       "path": "test-results",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1775684566286,
+      "lastAccessed": 1775789659808,
       "keyFiles": []
     },
     "test-stream": {
       "path": "test-stream",
       "purpose": null,
-      "fileCount": 1102,
-      "lastAccessed": 1775684566288,
+      "fileCount": 1503,
+      "lastAccessed": 1775789659850,
       "keyFiles": [
         "evolution_20260322065635..json",
         "evolution_20260322065903..json",
@@ -566,16 +574,30 @@
       "path": "tmp-e2e",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1775684566288,
+      "lastAccessed": 1775789659873,
       "keyFiles": [
         "test_status_update.md"
       ]
+    },
+    "worktree-ralph-tests": {
+      "path": "worktree-ralph-tests",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775789659908,
+      "keyFiles": []
+    },
+    "worktrees": {
+      "path": "worktrees",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1775789659942,
+      "keyFiles": []
     },
     "compost/seeds": {
       "path": "compost/seeds",
       "purpose": "Database seeds",
       "fileCount": 1,
-      "lastAccessed": 1775684566289,
+      "lastAccessed": 1775789659946,
       "keyFiles": [
         "seeds.json"
       ]
@@ -583,8 +605,8 @@
     "dist/config": {
       "path": "dist/config",
       "purpose": "Configuration files",
-      "fileCount": 24,
-      "lastAccessed": 1775684566289,
+      "fileCount": 20,
+      "lastAccessed": 1775789659953,
       "keyFiles": [
         "ConfigLoader.d.ts",
         "ConfigLoader.d.ts.map",
@@ -595,7 +617,7 @@
       "path": "gui/dist",
       "purpose": "Distribution/build output",
       "fileCount": 1,
-      "lastAccessed": 1775684566290,
+      "lastAccessed": 1775789659970,
       "keyFiles": [
         "index.html"
       ]
@@ -604,14 +626,14 @@
       "path": "gui/node_modules",
       "purpose": "Dependencies",
       "fileCount": 2,
-      "lastAccessed": 1775684566291,
+      "lastAccessed": 1775789659971,
       "keyFiles": []
     },
     "gui/src": {
       "path": "gui/src",
       "purpose": "Source code",
       "fileCount": 3,
-      "lastAccessed": 1775684566291,
+      "lastAccessed": 1775789659973,
       "keyFiles": [
         "App.tsx",
         "index.css",
@@ -622,7 +644,7 @@
       "path": "narrative/data",
       "purpose": "Data files",
       "fileCount": 2,
-      "lastAccessed": 1775684566292,
+      "lastAccessed": 1775789660021,
       "keyFiles": [
         "archaeology.db",
         "archaeology.db.bak"
@@ -631,8 +653,8 @@
     "src/config": {
       "path": "src/config",
       "purpose": "Configuration files",
-      "fileCount": 6,
-      "lastAccessed": 1775684566292,
+      "fileCount": 5,
+      "lastAccessed": 1775789660054,
       "keyFiles": [
         "ConfigLoader.ts",
         "PromptHistory.ts",
@@ -643,311 +665,10 @@
       "path": "test-results/models",
       "purpose": "Data models",
       "fileCount": 0,
-      "lastAccessed": 1775684566293,
+      "lastAccessed": 1775789660192,
       "keyFiles": []
     }
   },
-  "hotPaths": [
-    {
-      "path": "test/unit/llm/provider-adapters.test.ts",
-      "accessCount": 10,
-      "lastAccessed": 1775692586065,
-      "type": "file"
-    },
-    {
-      "path": "src/core/ContextAccumulation.ts",
-      "accessCount": 7,
-      "lastAccessed": 1775776596994,
-      "type": "directory"
-    },
-    {
-      "path": "test/unit/harness/RateLimiter.test.ts",
-      "accessCount": 6,
-      "lastAccessed": 1775696148319,
-      "type": "file"
-    },
-    {
-      "path": "test/unit/context-accumulation.test.js",
-      "accessCount": 5,
-      "lastAccessed": 1775695844125,
-      "type": "file"
-    },
-    {
-      "path": "test/unit/tui/AudioPlayer.test.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775696498585,
-      "type": "file"
-    },
-    {
-      "path": "src/tui-bridge/TuiBridgeService.ts",
-      "accessCount": 5,
-      "lastAccessed": 1775751451053,
-      "type": "file"
-    },
-    {
-      "path": "test/integration/gui-security-regression.test.js",
-      "accessCount": 4,
-      "lastAccessed": 1775699589659,
-      "type": "file"
-    },
-    {
-      "path": "test/unit/llm/ModelConfig.test.ts",
-      "accessCount": 3,
-      "lastAccessed": 1775692260443,
-      "type": "file"
-    },
-    {
-      "path": "test",
-      "accessCount": 3,
-      "lastAccessed": 1775708838201,
-      "type": "directory"
-    },
-    {
-      "path": "src/harness/tools/RateLimiter.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775696057688,
-      "type": "file"
-    },
-    {
-      "path": "src/tui/preview/AudioPlayer.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775696483585,
-      "type": "file"
-    },
-    {
-      "path": "test/unit/core/ContextAccumulation.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775696690409,
-      "type": "file"
-    },
-    {
-      "path": "test/security/url-validator.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775696977528,
-      "type": "file"
-    },
-    {
-      "path": "src/compost/FragmentScorer.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775698627234,
-      "type": "directory"
-    },
-    {
-      "path": "test/compost/FragmentScorer.test.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775698668161,
-      "type": "file"
-    },
-    {
-      "path": "src/core/RalphLoop.ts",
-      "accessCount": 2,
-      "lastAccessed": 1775751767742,
-      "type": "directory"
-    },
-    {
-      "path": "src/llm/ModelConfig.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775684597709,
-      "type": "file"
-    },
-    {
-      "path": "src/llm/LLMClient.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775684607707,
-      "type": "directory"
-    },
-    {
-      "path": "test/helpers/mockLLM.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775692139348,
-      "type": "file"
-    },
-    {
-      "path": "src/llm/providers/MiniMaxProvider.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775692286858,
-      "type": "file"
-    },
-    {
-      "path": "src/llm/providers/BaseProvider.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775692297960,
-      "type": "file"
-    },
-    {
-      "path": "test/unit/llm",
-      "accessCount": 1,
-      "lastAccessed": 1775692307287,
-      "type": "directory"
-    },
-    {
-      "path": "test/unit/llm/OllamaProvider.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775692328326,
-      "type": "file"
-    },
-    {
-      "path": "src/llm/providers/OllamaProvider.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775692338494,
-      "type": "file"
-    },
-    {
-      "path": "test/llm/minimax-provider.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775692371302,
-      "type": "file"
-    },
-    {
-      "path": "test/core/RalphLoop.best-of-n.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775694477224,
-      "type": "directory"
-    },
-    {
-      "path": "src/security/UrlValidator.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775696950218,
-      "type": "file"
-    },
-    {
-      "path": "src/core/ContextBuilder.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775708838239,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/index.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751692164,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/types.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751692760,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/AudioAnalyzer.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751693195,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/AudioExtractor.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751693466,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/PitchExtractor.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751707592,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/TimbreExtractor.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751708222,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/AudioToVisualMapper.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751709043,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/VoiceToShapeMapper.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751709456,
-      "type": "file"
-    },
-    {
-      "path": "src/prompts/audio.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751721804,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/PitchColorMapper.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751722453,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/FormantAnalyzer.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751722864,
-      "type": "file"
-    },
-    {
-      "path": "src/audio/BPMKeyDetector.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751723388,
-      "type": "file"
-    },
-    {
-      "path": "src/index.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751736864,
-      "type": "directory"
-    },
-    {
-      "path": "src/core/LoopConfig.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751738563,
-      "type": "directory"
-    },
-    {
-      "path": "test/unit/audio/audio-extractor.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751753966,
-      "type": "file"
-    },
-    {
-      "path": "test/unit/audio/audio-analyzer.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751754074,
-      "type": "file"
-    },
-    {
-      "path": "test/unit/audio/audio-to-visual-mapper.test.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751754466,
-      "type": "file"
-    },
-    {
-      "path": "src/render/AudioScorer.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751766609,
-      "type": "file"
-    },
-    {
-      "path": "src/render/RenderAndScorePipeline.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751766777,
-      "type": "directory"
-    },
-    {
-      "path": "src/render/HeadlessRenderer.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775751783310,
-      "type": "directory"
-    },
-    {
-      "path": "vitest.config.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775761270577,
-      "type": "file"
-    },
-    {
-      "path": "src/compost/MetadataExtractor.ts",
-      "accessCount": 1,
-      "lastAccessed": 1775761273108,
-      "type": "file"
-    }
-  ],
+  "hotPaths": [],
   "userDirectives": []
 }

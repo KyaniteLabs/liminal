@@ -9,7 +9,7 @@ const STRUDEL_CDN = 'https://unpkg.com/@strudel/repl@latest';
 const HYDRA_CDN = 'https://unpkg.com/hydra-synth';
 const TONE_CDN = 'https://unpkg.com/tone@14.8.49/build/Tone.js';
 
-export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'remotion' | 'ascii';
+export type GenericDomain = 'strudel' | 'hydra' | 'tone' | 'shader' | 'revideo' | 'remotion' | 'ascii';
 
 export interface GenericWrapOptions {
   domain: GenericDomain;
@@ -125,6 +125,8 @@ export class GenericWrapper {
         return this.wrapShader(code);
       case 'remotion':
         return this.wrapRemotion(code, options.showPreview ?? false);
+      case 'revideo':
+        return this.wrapRevideo(code, options.showPreview ?? false);
       case 'ascii':
         return this.wrapASCII(code, options.asciiWidth ?? 60);
       default:
@@ -541,6 +543,107 @@ export class GenericWrapper {
     <p class="note">
         💡 <strong>Note:</strong> Remotion compositions require the Remotion CLI or bundler to render. 
         Use <code>npx remotion render</code> to generate the video from this code.
+    </p>
+</body>
+</html>`;
+  }
+
+  private static wrapRevideo(code: string, _showPreview = false): string {
+    const escaped = code
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+
+    const durationMatch = code.match(/durationInFrames[=:]\s*(\d+)/);
+    const fpsMatch = code.match(/fps[=:]\s*(\d+)/);
+    const widthMatch = code.match(/width[=:]\s*(\d+)/);
+    const heightMatch = code.match(/height[=:]\s*(\d+)/);
+
+    const duration = durationMatch ? parseInt(durationMatch[1]) : 150;
+    const fps = fpsMatch ? parseInt(fpsMatch[1]) : 30;
+    const width = widthMatch ? parseInt(widthMatch[1]) : 1920;
+    const height = heightMatch ? parseInt(heightMatch[1]) : 1080;
+    const durationSec = (duration / fps).toFixed(1);
+
+    return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    ${SECURITY_HEADERS.trim()}
+    <title>Revideo Composition</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 2rem;
+            background: #0a0a0f;
+            color: #e0e0e0;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.85rem;
+            line-height: 1.6;
+        }
+        .header {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2), rgba(236, 72, 153, 0.2));
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1.5rem;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 6px;
+            background: rgba(59, 130, 246, 0.3);
+            color: #60a5fa;
+            font-size: 0.8rem;
+            margin-right: 0.5rem;
+        }
+        .meta {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        .meta-item {
+            color: #94a3b8;
+        }
+        .meta-value {
+            color: #e2e8f0;
+            font-weight: 600;
+        }
+        pre {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            background: #0f0f1a;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #1e293b;
+            overflow-x: auto;
+        }
+        .note {
+            color: #94a3b8;
+            font-size: 0.8rem;
+            margin-top: 1rem;
+            padding: 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 6px;
+            border-left: 3px solid #3b82f6;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <span class="badge">Revideo</span>
+        <span class="badge">TypeScript</span>
+        <div class="meta">
+            <div class="meta-item">Duration: <span class="meta-value">${durationSec}s</span> (${duration} frames @ ${fps}fps)</div>
+            <div class="meta-item">Resolution: <span class="meta-value">${width}×${height}</span></div>
+        </div>
+    </div>
+    <pre><code>${escaped}</code></pre>
+    <p class="note">
+        💡 <strong>Note:</strong> Revideo compositions require the Revideo CLI to render.
+        Use <code>npx revideo render</code> to generate the video from this code.
     </p>
 </body>
 </html>`;

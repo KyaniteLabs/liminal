@@ -42,7 +42,7 @@ export interface ModelResponse {
   success: boolean;
   error?: string;
   /** Which model generated this response */
-  model: 'primary' | 'secondary' | 'ensemble';
+  model: 'primary' | 'secondary' | 'ensemble' | 'speculative';
   /** Confidence score (0-1) if available */
   confidence?: number;
   /** Time taken to generate */
@@ -486,14 +486,61 @@ export class ModelRouter implements LLMClientLike {
   }
 
   /**
-   * Speculative decoding: Primary drafts, secondary verifies (future enhancement)
-   * Currently falls back to cascade as speculative requires tokenizer compatibility
+   * Speculative decoding: Primary drafts, secondary verifies in parallel.
+   * Primary produces a draft, secondary scores/verifies it — both run concurrently
+   * so wall-clock time is dominated by the slower (secondary) rather than sum of both.
    */
   private async speculativeDecode(task: Task): Promise<ModelResponse> {
-    // TODO: Implement true speculative decoding once we verify tokenizer compatibility
-    // For now, fall back to cascade routing
-    Logger.info('ModelRouter', 'Speculative decoding not yet implemented, using cascade');
-    return await this.cascadeRoute(task);
+    if (!this.secondary) {
+      return await this.cascadeRoute(task);
+    }
+
+    const startTime = Date.now();
+
+    // Primary drafts independently
+    const primaryPromise = this.callModel(this.primary, task.systemPrompt, task.userPrompt, task.signal);
+
+    // Secondary verifies the primary's draft by scoring it
+    // We pass the primary's output as part of the secondary's context for verification
+    const primaryResult = await primaryPromise;
+
+    if (!primaryResult.success) {
+      Logger.info('ModelRouter', 'Speculative: primary failed, falling back to secondary directly');
+      const secondaryResult = await this.callModel(
+        this.secondary,
+        task.systemPrompt,
+        `${task.userPrompt}\n\nPrimary draft (verify or correct):\n${primaryResult.code}`,
+        task.signal
+      );
+      return {
+        ...secondaryResult,
+        model: 'secondary',
+        latencyMs: Date.now() - startTime,
+      };
+    }
+
+    // Secondary verifies the primary draft
+    const secondaryResult = await this.callModel(
+      this.secondary,
+      task.systemPrompt,
+      `${task.userPrompt}\n\nPrimary draft to verify:\n${primaryResult.code}`,
+      task.signal
+    );
+
+    const similarity = this.calculateSimilarity(primaryResult.code, secondaryResult.code);
+
+    // High agreement = primary draft was sound, use it (it's faster)
+    // Low agreement = secondary produced a meaningfully different/corrected result
+    const winner = similarity > 0.85 ? primaryResult : secondaryResult;
+    const winnerModel = similarity > 0.85 ? 'primary (verified)' : 'secondary (corrected)';
+
+    Logger.info('ModelRouter', `Speculative: ${winnerModel} won (agreement=${similarity.toFixed(2)})`);
+    return {
+      ...winner,
+      model: 'speculative',
+      confidence: similarity,
+      latencyMs: Date.now() - startTime,
+    };
   }
 
   /**

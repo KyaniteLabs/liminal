@@ -18,10 +18,10 @@ import {
   validateOutputPath,
   validateProjectName,
 } from '../utils/validation.js';
-import { RemotionRenderer } from '../render/RemotionRenderer.js';
 import { ValidationError } from '../errors/ValidationError.js';
 import { ExportError } from '../errors/index.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
+import { RevideoRenderer } from '../render/RevideoRenderer.js';
 
 export interface ProjectIteration {
   version: number;
@@ -230,7 +230,8 @@ export class Exporter {
 
   /**
    * Export creative code as a video file.
-   * Uses RemotionRenderer for the 'remotion' domain, CanvasRecorder for all others.
+   * Revideo: RevideoRenderer writes entry point then renders via Revideo CLI.
+   * All other domains: CanvasRecorder captures headless browser output.
    * @param code - Creative code to render (must be non-empty string)
    * @param outputPath - Path where video file will be saved
    * @param options - Video export options including domain, fps, duration, width, height
@@ -265,10 +266,11 @@ export class Exporter {
       );
     }
 
-    if (domain === 'remotion') {
-      const renderer = new RemotionRenderer();
+    // Revideo: write entry point then render via Revideo CLI
+    if (domain === 'revideo') {
+      const renderer = new RevideoRenderer();
       const projectDir = await renderer.writeEntryPoint(code);
-      await renderer.renderToVideo({ projectDir, outputPath, codec: 'h264' });
+      await renderer.renderToVideo({ projectDir, outputPath, fps, width, height });
     } else {
       const recorder = new CanvasRecorder({ fps, duration, width, height });
       await recorder.record(code, domain as any, outputPath);

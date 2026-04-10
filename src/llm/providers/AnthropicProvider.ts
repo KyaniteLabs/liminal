@@ -58,6 +58,34 @@ export class AnthropicProvider extends BaseProvider {
         body.temperature = req.temperature ?? this.config.temperature;
       }
 
+      // Tool definitions — Anthropic format
+      if (req.tools && req.tools.length > 0) {
+        body.tools = req.tools.map(t => ({
+          name: t.name,
+          description: t.description,
+          input_schema: t.parameters as Record<string, unknown>,
+        }));
+      }
+
+      // Tool results from previous calls
+      if (req.toolResults && req.toolResults.length > 0) {
+        const toolContent: Array<{ type: string; tool_use_id: string; content: string }> = req.toolResults.map(tr => ({
+          type: 'tool_result',
+          tool_use_id: tr.toolCallId,
+          content: tr.result,
+        }));
+        (body.messages as Array<{ role: string; content: unknown }>).push({
+          role: 'assistant',
+          content: (req.tools && req.tools.length > 0)
+            ? req.toolResults.map(tr => ({ type: 'tool_use' as const, id: tr.toolCallId, name: 'tool', input: {} }))
+            : [],
+        });
+        (body.messages as Array<{ role: string; content: unknown }>).push({
+          role: 'user',
+          content: toolContent,
+        });
+      }
+
       // Extended thinking
       if (thinkingEnabled) {
         body.thinking = {
@@ -90,9 +118,19 @@ export class AnthropicProvider extends BaseProvider {
 
       // Extract thinking from content blocks
       const thinking: NormalizedThinking | undefined = extractAnthropicThinking(data);
-      const contentBlocks = data.content as Array<{ type: string; text?: string }> | undefined;
+      const contentBlocks = data.content as Array<{ type: string; text?: string; id?: string; name?: string; input?: unknown }> | undefined;
       const textBlocks = contentBlocks?.filter(b => b.type === 'text') || [];
       const content = textBlocks.map(b => b.text || '').join('');
+
+      // Extract tool_use blocks
+      const toolUseBlocks = contentBlocks?.filter(b => b.type === 'tool_use') || [];
+      const toolCalls = toolUseBlocks.map(b => ({
+        id: b.id || '',
+        name: b.name || '',
+        arguments: typeof b.input === 'string' ? b.input : JSON.stringify(b.input || {}),
+      }));
+      const finishReason = toolCalls.length > 0 ? 'tool_calls' as const
+        : (data.stop_reason === 'end_turn' ? 'stop' as const : 'stop' as const);
 
       const usage = data.usage as { input_tokens?: number; output_tokens?: number } | undefined;
 
@@ -100,11 +138,13 @@ export class AnthropicProvider extends BaseProvider {
         content,
         thinking: thinking?.source !== 'none' ? thinking : undefined,
         model: data.model || this.config.model,
-        success: content.length > 0,
+        success: content.length > 0 || toolCalls.length > 0,
         usage: usage ? {
           inputTokens: usage.input_tokens || 0,
           outputTokens: usage.output_tokens || 0,
         } : undefined,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        finishReason,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

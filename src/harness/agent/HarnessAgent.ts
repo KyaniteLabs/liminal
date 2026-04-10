@@ -29,6 +29,7 @@ import {
   lspTool,
   astValidatorTool,
   importGuardTool,
+  createBackupTool,
   restoreBackupTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
@@ -323,6 +324,7 @@ export class HarnessAgent {
       case 'lsp': return lspTool;
       case 'astValidate': return astValidatorTool;
       case 'importGuard': return importGuardTool;
+      case 'createBackup': return createBackupTool;
       case 'restoreBackup': return restoreBackupTool;
       default: return null;
     }

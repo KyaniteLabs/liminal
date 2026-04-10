@@ -2,6 +2,7 @@ import { LLMClient, LLMConfig, LLMResponse } from '../../llm/LLMClient.js';
 import { GenerationError } from '../../errors/GenerationError.js';
 import { Layer, createLayer } from '../../composition/types.js';
 import { getEffectiveConfig } from '../../config/ConfigLoader.js';
+import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../../harness/tools/generator-tools.js';
 
 export interface P5GeneratorOptions {
   maxIterations?: number;
@@ -98,7 +99,17 @@ export class P5GeneratorLLM {
       ? '\nNote: The user wants sound/audio. Include Web Audio API (AudioContext, createOscillator) or p5.sound.'
       : '';
     const context = soundContext || undefined;
-    const llmResponse = await this.llm.generateP5Sketch(prompt, context, options?.signal, options?.bypassCache);
+    const systemPrompt = 'You are a creative coder. Generate p5.js code.\nRules:\n- Output ONLY JavaScript code\n- Use function setup() and function draw()\n- Include createCanvas()\n- NO explanations, NO markdown';
+    const userPrompt = `Create a p5.js sketch: ${prompt}${context ? '\\nContext: ' + context : ''}`;
+    const toolLoopResult = await this.llm.generateWithToolLoop({
+      systemPrompt,
+      userPrompt,
+      tools: GENERATOR_TOOLS,
+      toolExecutor: createGeneratorToolExecutor('p5'),
+      maxIterations: 3,
+      signal: options?.signal,
+    });
+    const llmResponse: LLMResponse = { code: toolLoopResult.content, success: toolLoopResult.success, error: toolLoopResult.error };
 
     if (!llmResponse.code || llmResponse.code.trim() === '') {
       throw new GenerationError(

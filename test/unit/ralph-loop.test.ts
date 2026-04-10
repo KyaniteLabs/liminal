@@ -12,6 +12,14 @@ import os from 'os';
 const TEST_GALLERY_DIR = path.join(os.tmpdir(), 'atelier-ralph-loop-test');
 
 // --- Mock LLMClient so isConfigured() returns true and generate returns code ---
+vi.mock('../../src/git/GitIntegration.js', () => ({
+  GitIntegration: class MockGitIntegration {
+    startRun = vi.fn().mockResolvedValue(undefined);
+    endRun = vi.fn().mockResolvedValue(undefined);
+    commitIteration = vi.fn().mockResolvedValue(undefined);
+  },
+}));
+
 vi.mock('../../src/llm/LLMClient.js', () => {
   return {
     LLMClient: class MockLLMClient {

@@ -109,7 +109,6 @@ func (m Model) renderHeader() string {
 	if telemetry != "" {
 		headerContent += spacer + telemetry
 	}
-	headerContent += spacer + debugInfo
 
 	header := lipgloss.NewStyle().
 		Background(ui.BgSurface).

@@ -119,6 +119,10 @@
     "lim": "bin/liminal"
   },
   "optionalDependencies": {
+    "@revideo/2d": "^0.5.10",
+    "@revideo/core": "^0.5.10",
+    "@revideo/renderer": "^0.5.10",
+    "@revideo/vite-plugin": "^0.10.4",
     "meyda": "^5.6.3",
     "music-metadata": "^11.12.3",
     "pitchfinder": "^2.3.4",

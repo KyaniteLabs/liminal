@@ -4,7 +4,7 @@
 
 **Architecture:** Two new modules (`src/audio/` and `src/aesthetic/`) wired into the existing RalphLoop as pre-generation context (audio features → visual parameters) and post-generation quality gates (aesthetic critic → violation feedback). Both integrate with CLI flags, chat/TUI interview flow, and the prompt library.
 
-**Tech Stack:** Meyda.js (MIT, audio features), pitchfinder (MIT, pitch detection), chroma-js (Apache-2.0, color science), naudiodon (MIT, Node.js mic capture), color-thief (MIT, palette extraction from rendered output)
+**Tech Stack:** Meyda.js (MIT, audio features), pitchfinder (license needs re-verification for launch use; older docs assumed MIT), chroma-js (Apache-2.0, color science), naudiodon (MIT, Node.js mic capture), color-thief (MIT, palette extraction from rendered output)
 
 ---
 
@@ -332,7 +332,7 @@ After each generation iteration:
 | Package | License | Purpose |
 |---------|---------|---------|
 | `meyda` | MIT | Audio feature extraction (spectral, MFCC, chroma, loudness) |
-| `pitchfinder` | MIT | Pitch detection (YIN algorithm) |
+| `pitchfinder` | _Needs re-verification_ | Pitch detection (YIN algorithm). Current live repo/package review on 2026-04-09 records installed metadata as `GNU v3`; do not rely on this older table for launch decisions. |
 | `chroma-js` | Apache-2.0 | Color science, harmony checks, contrast ratios |
 | `naudiodon` | MIT | Node.js microphone capture (native, PortAudio binding) |
 | `color-thief` | MIT | Palette extraction from rendered canvas (runtime pass) |

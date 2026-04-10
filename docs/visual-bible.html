@@ -195,12 +195,16 @@
         <section class="section">
             <h1 class="section-title">📖 Visual Bible</h1>
             <p class="section-subtitle">Visual representation of THE_BIBLE.md - Real-time system status</p>
-            <p class="meta-info">Last updated: April 7, 2026 | Branch: main | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
+            <p class="meta-info">Last updated: April 9, 2026 | Branch: liminal/sess-1775786525942-f19gzr | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
         </section>
 
         <!-- Critical Alerts -->
         <section class="section">
             <h2 class="section-title">🚨 Critical Items</h2>
+            <div class="alert warning">
+                <h4>⚠️ Commercial Launch Review Active</h4>
+                <p><strong>New legal/brand/launch docs added on April 9, 2026.</strong> Current live-repo review flags three pre-launch decision areas: <code>pitchfinder</code> (optional, GNU v3), active Remotion dependencies, and <code>p5</code> (LGPL-2.1). Naming review also treats <strong>Liminal</strong> as a high-risk commercial mark pending proper clearance.</p>
+            </div>
             <div class="alert success">
                 <h4>✅ DGF Phase 3 Complete</h4>
                 <p><strong>31 guardrail tests passing.</strong> Deterministic Guardrails Framework: 3 phases, 17 components, 15 error taxonomy types. Constitution learning active.</p>
@@ -253,7 +257,7 @@
                     </div>
                     <div class="metric" class="mt-1">
                         <span class="metric-label">M12-M18</span>
-                        <span class="metric-value" class="text-green">✅ 7/7 Complete</span>
+                        <span class="metric-value" class="text-yellow">⚠️ Verify against THE_BIBLE</span>
                     </div>
                 </div>
 
@@ -261,11 +265,11 @@
                     <h3>🔧 Subsystems</h3>
                     <div class="metric">
                         <span class="metric-label">Total</span>
-                        <span class="metric-value">18</span>
+                        <span class="metric-value">21+</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Active</span>
-                        <span class="metric-value" class="text-green">18/18</span>
+                        <span class="metric-label">Tracked in THE_BIBLE</span>
+                        <span class="metric-value" class="text-green">✅ current source of truth</span>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" class="w-full bg-green"></div>
@@ -280,11 +284,11 @@
                     <h3>📚 Documentation</h3>
                     <div class="metric">
                         <span class="metric-label">THE_BIBLE.md</span>
-                        <span class="metric-value" class="text-green">✅ 937 lines</span>
+                        <span class="metric-value" class="text-green">✅ Updated Apr 9</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">19 Subsystems</span>
-                        <span class="metric-value" class="text-green">✅ Complete</span>
+                        <span class="metric-label">Launch docs</span>
+                        <span class="metric-value" class="text-green">✅ legal + brand + launch</span>
                     </div>
                     <div class="metric">
                         <span class="metric-label">Status</span>
@@ -427,10 +431,10 @@
 
         <!-- Task Board -->
         <section class="section">
-            <h2 class="section-title">📋 Task Board (19 Subsystems)</h2>
+            <h2 class="section-title">📋 Task Board</h2>
             <div class="task-board">
                 <div class="task-column">
-                    <h4>✅ Complete (19/19)</h4>
+                    <h4>✅ Complete (core systems online)</h4>
                     <div class="task-item critical"><div class="task-id">1</div>Meta-Harness (7 tools)</div>
                     <div class="task-item critical"><div class="task-id">2</div>Ralph Loop</div>
                     <div class="task-item critical"><div class="task-id">3</div>Generators (9)</div>
@@ -453,7 +457,9 @@
                 </div>
                 <div class="task-column">
                     <h4>🟡 In Progress</h4>
-                    <div class="meta-info">None</div>
+                    <div class="task-item high"><div class="task-id">L1</div>Replace/remove pitchfinder before launch</div>
+                    <div class="task-item high"><div class="task-id">L2</div>Decide Remotion keep/cut + licensing path</div>
+                    <div class="task-item medium"><div class="task-id">L3</div>Run naming clearance on top 5 shortlist</div>
                 </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
@@ -613,17 +619,13 @@
                 </ul>
             </div>
 
-            <div class="alert" style="background: rgba(34, 197, 94, 0.1); border-color: var(--accent-green);">
-                <h4 style="color: var(--accent-green);">✅ M12-M18 Compliance Guardrails Complete</h4>
+            <div class="alert warning">
+                <h4>⚠️ M12-M18 Status Needs Single-Source Reconciliation</h4>
                 <p>All 7 compliance guardrails implemented and tested:</p>
                 <ul class="ml-lg text-secondary">
-                    <li><strong>M12: Privacy</strong> - PII detection & anonymization ✅</li>
-                    <li><strong>M13: Prompt Injection Defense</strong> - Jailbreak detection ✅</li>
-                    <li><strong>M14: Supply Chain</strong> - Dependency audit, SBOM ✅</li>
-                    <li><strong>M15: Audit & Compliance</strong> - Non-repudiation logging ✅</li>
-                    <li><strong>M16: Fairness & Bias</strong> - Output diversity checks ✅</li>
-                    <li><strong>M17: Explainability</strong> - Decision tracing, attribution ✅</li>
-                    <li><strong>M18: Resilience</strong> - Circuit breakers, fallbacks ✅</li>
+                    <li><strong>Action:</strong> verify implementation status against the current codebase before treating M12-M18 as complete</li>
+                    <li><strong>Reason:</strong> older dashboard text and current THE_BIBLE snapshot diverged during recent repo activity</li>
+                    <li><strong>Interim rule:</strong> use THE_BIBLE + code inspection as the authoritative source</li>
                 </ul>
             </div>
 
@@ -703,20 +705,20 @@
                 <div class="dashboard-card">
                     <h3>📋 M12-M18 Status</h3>
                     <div class="metric">
-                        <span class="metric-label">M12 Privacy</span>
-                        <span class="metric-value text-green">✅ Complete</span>
+                        <span class="metric-label">Launch/legal docs</span>
+                        <span class="metric-value text-green">✅ Added Apr 9</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">M13 Injection</span>
-                        <span class="metric-value text-green">✅ Complete</span>
+                        <span class="metric-label">Naming review</span>
+                        <span class="metric-value text-yellow">⚠️ In progress</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">M14 Supply Chain</span>
-                        <span class="metric-value text-green">✅ Complete</span>
+                        <span class="metric-label">Dependency review</span>
+                        <span class="metric-value text-yellow">⚠️ In progress</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">M15-M18</span>
-                        <span class="metric-value text-green">✅ 4/4 Complete</span>
+                        <span class="metric-label">Commercial blockers</span>
+                        <span class="metric-value text-yellow">3 active</span>
                     </div>
                 </div>
             </div>
@@ -745,8 +747,8 @@
                 <tbody>
                     <tr>
                         <td><code>latest</code></td>
-                        <td>fix(landing): recover gallery metadata UI, stable dogfood asset paths, and single metadata badge row</td>
-                        <td>Landing gallery no longer depends on a live worktree and each card now shows variant metadata only once</td>
+                        <td>docs: add launch-risk memo, dependency inventory, notices/provenance drafts, naming shortlist, v1 scope, and positioning</td>
+                        <td>Commercial launch planning now reflects the live repo/package state instead of relying on older planning docs</td>
                     </tr>
                     <tr>
                         <td><code>bb67f67</code></td>
@@ -781,10 +783,10 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>✅ Landing gallery stabilized</strong> - April 6 recovery cards now point at repo-owned assets instead of a transient worktree</li>
-                <li><strong>🔎 Review preserved recovery branches</strong> - evaluator fix, harness readiness tests, and TierBasedGenerator/Hydra coverage remain next</li>
-                <li><strong>🧩 Split preserved stash batches</strong> - replay broader crash-era stashes into atomic branches instead of applying wholesale</li>
-                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
+                <li><strong>⚖️ Resolve launch blockers</strong> - replace/remove <code>pitchfinder</code>, decide Remotion licensing path, and document p5 compliance posture</li>
+                <li><strong>🏷️ Rebrand prep</strong> - run quick clearance on Frameweave / Fluxloom / Chromaforge / Signalloom / Aftermesh</li>
+                <li><strong>📦 Draft final notices packet</strong> - expand third-party notices and provenance review from first-order dependencies to launch-ready docs</li>
+                <li><strong>🔄 Keep product wedge narrow</strong> - launch around prompt → code → preview → iterate for creative-coding workflows</li>
             </ol>
         </section>
     </main>

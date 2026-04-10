@@ -338,7 +338,7 @@ Liminal integrates a significant number of external libraries. Each has its own 
 | `commander` | MIT | CLI parsing | License notice |
 | `ink` | MIT | Terminal UI | License notice |
 | `react` | MIT | UI framework | License notice |
-| `remotion` | MIT | Programmatic video | License notice (Remotion itself is MIT) |
+| `remotion` | Custom / vendor license review required | Programmatic video | Do not rely on older “MIT” assumptions here. Current live repo/package review on 2026-04-09 flags Remotion as a launch decision item requiring explicit licensing/business review. |
 | `playwright` | Apache-2.0 | Headless browser | License notice |
 | `puppeteer` | Apache-2.0 | Headless browser | License notice |
 

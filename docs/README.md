@@ -9,7 +9,7 @@
 **[THE_BIBLE.md](./THE_BIBLE.md)** - Comprehensive system documentation covering:
 - Complete architecture overview
 - All subsystems (Meta-Harness, Ralph Loop, Generators, Guardrails)
-- Test status (1741 tests passing)
+- Current test/status snapshot
 - Recent fixes and cleanup
 - API exports
 - Configuration
@@ -51,9 +51,9 @@
 ## System Status
 
 ```
-Tests:      1741 passing, 0 failures
-Files:      262 source files, 224 test files
-Guardrails: M1-M11 implemented, M12-M18 planned
+Tests:      See THE_BIBLE.md for live counts
+Files:      See THE_BIBLE.md for live counts
+Guardrails: See THE_BIBLE.md / Visual Bible for current status
 Memory:     Persistent (HarnessMemory)
 Generators: Model-aware (TierBasedGenerator)
 ```
@@ -62,9 +62,13 @@ Generators: Model-aware (TierBasedGenerator)
 
 ## What's New
 
+### 2026-04-09
+- ✅ **Launch-readiness docs added** - legal, brand, and launch planning docs now reflect the live repo/package state
+- ⚠️ **Commercial review active** - `pitchfinder`, Remotion, and `p5` remain explicit launch review areas
+
 ### 2026-04-01
 - ✅ **THE BIBLE** - Complete system documentation
-- ✅ **Test Suite Fixed** - 1741 tests passing (fixture sizes, mocks, async fixes)
+- ✅ **Test Suite Fixed** - historical milestone entry; check THE_BIBLE for current live counts
 - ✅ **All Generators Migrated** - TierBasedGenerator base class
 - ✅ **M9-M11 Guardrails** - Semantic, Runtime Health, Accessibility
 - ✅ **Persistent Memory** - HarnessMemory with auto-save
@@ -78,7 +82,7 @@ Generators: Model-aware (TierBasedGenerator)
 
 1. **NO DUPLICATION** - Check existing code before writing new
 2. **THE BIBLE IS SOURCE OF TRUTH** - Update docs before code
-3. **Tests Must Pass** - 1741 tests, 0 failures
+3. **Tests Must Pass** - verify against the current live repo state, not stale historical counts
 
 ---
 

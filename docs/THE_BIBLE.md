@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-08  
-**Status:** 330+ commits, forensic audit fixes complete  
-**Branch:** main
+**Date:** 2026-04-09  
+**Status:** 330+ commits, forensic audit fixes complete, launch-readiness docs added  
+**Branch:** liminal/sess-1775786525942-f19gzr
 
 ---
 
@@ -18,6 +18,26 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
 - **Worktree Isolation** - Multi-agent development workflow
+
+### Launch Readiness & Commercial Planning Snapshot
+
+As of **2026-04-09**, launch-readiness planning has been formalized in:
+
+- `docs/legal/launch-risk-memo.md`
+- `docs/legal/dependency-inventory.md`
+- `docs/legal/third-party-notices.md`
+- `docs/legal/provenance-review.md`
+- `docs/brand/naming-shortlist.md`
+- `docs/launch/v1-scope.md`
+- `docs/launch/positioning.md`
+
+These planning docs are grounded in the live repo/package state and currently highlight three commercial-launch-sensitive areas:
+
+1. `pitchfinder` remains present under `optionalDependencies` and is still referenced by `src/audio/PitchExtractor.ts`
+2. `remotion` and related `@remotion/*` packages remain direct dependencies and require an explicit keep/cut or licensing decision
+3. `p5` remains a direct dependency with LGPL-2.1 metadata and should ship only with an explicit compliance posture
+
+Brand note: `Liminal` should currently be treated as a **working/internal name**, not a presumed final commercial brand, pending proper clearance.
 
 ---
 
@@ -747,7 +767,7 @@ liminal/
 │   ├── swarm/              # Swarm mode
 │   ├── tui/                # Terminal UI
 │   └── utils/              # Utilities
-├── test/                   # Test suite (1741 tests)
+├── test/                   # Test suite (see current live counts above)
 ├── docs/                   # Documentation (THE BIBLE)
 ├── landing-live/           # Public dogfood gallery and recovered April 6 showcase assets
 │   └── recovered-dogfood/  # Stable repo-owned iframe assets copied out of transient worktrees

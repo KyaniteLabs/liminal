@@ -189,7 +189,7 @@ Failures:   0 critical
 │  │  ├── HydraGenerator         - Video synthesis                       │    │
 │  │  ├── StrudelGenerator       - Live coding music                    │    │
 │  │  ├── ToneGenerator          - Web Audio API                        │    │
-│  │  ├── RemotionGenerator      - Video components                     │    │
+│  │  ├── RevideoGenerator       - Video scenes (partially integrated)                     │    │
 │  │  ├── HTMLWebGenerator       - Web pages                            │    │
 │  │  └── ASCIIArtGenerator      - ASCII art                            │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
@@ -345,7 +345,7 @@ Failures:   0 critical
 | HydraGenerator | Video | `hydra/HydraGenerator.ts` | Hydra syntax validation |
 | StrudelGenerator | Music | `strudel/StrudelGenerator.ts` | Pattern validation |
 | ToneGenerator | Audio | `tone/ToneGenerator.ts` | Synth validation |
-| RemotionGenerator | Video | `remotion/RemotionGenerator.ts` | React component validation |
+| RevideoGenerator | Video | `revideo/RevideoGenerator.ts` | Revideo scene validation (scaffolding active, rendering needs build infra) |
 | HTMLWebGenerator | Web | `html/HTMLWebGenerator.ts` | HTML structure validation |
 | ASCIIArtGenerator | ASCII | `ascii/ASCIIArtGenerator.ts` | Character validation |
 
@@ -791,7 +791,7 @@ export { RalphLoop, type LoopOptions, type LoopResult };
 export { TierBasedGenerator, type TierBasedGeneratorOptions };
 export { P5GeneratorV2, type P5GeneratorV2Options };
 export { ShaderGenerator, ThreeGenerator, HydraGenerator };
-export { StrudelGenerator, ToneGenerator, RemotionGenerator };
+export { StrudelGenerator, ToneGenerator, RevideoGenerator };
 export { HTMLWebGenerator, ASCIIArtGenerator };
 
 // Model Tiers
@@ -1121,4 +1121,4 @@ const recorder = new CanvasRecorder({ fps: 30, duration: 5 });
 await recorder.record(code, 'p5', 'output.mp4');
 ```
 
-**Status:** Active - Uses Remotion for video rendering.
+**Status:** Partially integrated - Revideo scaffolding and generation active; MP4 rendering needs build infrastructure for temp projects.

@@ -120,7 +120,7 @@ export function getBanditStats(domain: DomainType) {
 /**
  * Domain types supported by the smart router.
  */
-export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'remotion' | 'revideo' | 'html' | 'webdev';
+export type DomainType = 'ascii' | 'music' | 'code' | 'visual' | 'remotion' | 'revideo' | 'html' | 'webdev' | 'kinetic';
 
 /**
  * Model choice for routing.
@@ -148,6 +148,7 @@ export const AB_TEST_RESULTS: Record<DomainType, DomainFitness> = {
   revideo: { local: 0.400, cloud: 0.550, hybrid: 0.475 },
   html: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
   webdev: { local: 0.450, cloud: 0.520, hybrid: 0.485 },
+  kinetic: { local: 0.400, cloud: 0.400, hybrid: 0.400 },
 };
 
 /**
@@ -176,7 +177,15 @@ export const DOMAIN_ROUTING_DATA: Record<DomainType, DomainRoutingConfig> = {
     advantage: '+16%',
     localFitness: 0.450,
     cloudFitness: 0.520,
-  },
+  }, // NOTE: html domain is infrastructure-only (HTMLWrapper).
+  // HTMLWebGenerator is no longer in creative routing — see docs/CREATIVE_DOMAIN_TYPES.md
+  kinetic: {
+    optimalModel: 'cloud',
+    confidence: 0.0,
+    advantage: 'N/A',
+    localFitness: 0.0,
+    cloudFitness: 0.0,
+  }, // FUTURE: CSS-native generative art. Not yet wired. See docs/CREATIVE_DOMAIN_TYPES.md
   webdev: {
     optimalModel: 'cloud',
     confidence: 0.80,
@@ -249,6 +258,7 @@ export const DOMAIN_KEYWORDS: Record<DomainType, string[]> = {
   visual: ['visual', 'image', 'graphic', 'design', 'color', 'shape', 'pattern', 'render', 'shader', '3d', 'scene'],
   remotion: ['remotion', 'video', 'motion graphics', 'title sequence', 'animation', 'composition'],
   revideo: ['revideo', 'video', 'motion graphics', 'title sequence', 'animation', 'composition', 'programmatic video'],
-  html: ['html', 'web page', 'landing page', 'website', 'css', 'responsive', 'web design'],
-  webdev: ['web app', 'dashboard', 'portfolio', 'spa', 'single page', 'ui component', 'form', 'web dev'],
+  html: ['html', 'css'], // Narrowed to technical mentions only — infrastructure role, not creative
+  webdev: ['dom', 'browser api', 'window.innerwidth'], // Narrowed: was duplicate of html collapse
+  kinetic: ['kinetic', 'css art', 'css animation', 'kinetic typography'], // FUTURE
 };

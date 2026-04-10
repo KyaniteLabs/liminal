@@ -89,9 +89,9 @@ export default makeProject({
         private: true,
         type: 'module',
         dependencies: {
-          '@revideo/core': '^0.1.0',
-          '@revideo/2d': '^0.1.0',
-          '@revideo/renderer': '^0.1.0',
+          '@revideo/core': '^0.5.10',
+          '@revideo/2d': '^0.5.10',
+          '@revideo/renderer': '^0.5.10',
         },
       },
       null,
@@ -125,39 +125,39 @@ export default makeProject({
 
   /**
    * Write a complete Revideo project to disk with the given scene code.
+   *
+   * Uses RevideoTemplateSetup for pre-installed dependencies when available,
+   * falling back to generating package.json from scratch.
    */
   async writeEntryPoint(code: string): Promise<string> {
     const projectDir = path.join(
       this.tempDir,
       `revideo-project-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`
     );
+
+    // Try to use the persistent template (avoids npm install on every render)
+    try {
+      const { revideoTemplate } = await import('./RevideoTemplateSetup.js');
+      const ready = await revideoTemplate.ensureTemplate();
+      if (ready) {
+        await revideoTemplate.copyToWorkDir(projectDir);
+        const srcDir = path.join(projectDir, 'src');
+        await fs.mkdir(srcDir, { recursive: true });
+        await fs.writeFile(path.join(srcDir, 'scene.ts'), code, 'utf-8');
+        await fs.writeFile(path.join(srcDir, 'project.ts'), this.generateProjectConfig(code), 'utf-8');
+        return projectDir;
+      }
+    } catch {
+      // Template setup failed, fall through to manual scaffolding
+    }
+
+    // Fallback: create project from scratch
     const srcDir = path.join(projectDir, 'src');
-
     await fs.mkdir(srcDir, { recursive: true });
-
-    await fs.writeFile(
-      path.join(srcDir, 'scene.ts'),
-      code,
-      'utf-8'
-    );
-
-    await fs.writeFile(
-      path.join(srcDir, 'project.ts'),
-      this.generateProjectConfig(code),
-      'utf-8'
-    );
-
-    await fs.writeFile(
-      path.join(projectDir, 'package.json'),
-      this.generatePackageJson(),
-      'utf-8'
-    );
-
-    await fs.writeFile(
-      path.join(projectDir, 'tsconfig.json'),
-      this.generateTsConfig(),
-      'utf-8'
-    );
+    await fs.writeFile(path.join(srcDir, 'scene.ts'), code, 'utf-8');
+    await fs.writeFile(path.join(srcDir, 'project.ts'), this.generateProjectConfig(code), 'utf-8');
+    await fs.writeFile(path.join(projectDir, 'package.json'), this.generatePackageJson(), 'utf-8');
+    await fs.writeFile(path.join(projectDir, 'tsconfig.json'), this.generateTsConfig(), 'utf-8');
 
     return projectDir;
   }
@@ -165,12 +165,13 @@ export default makeProject({
   /**
    * Render a Revideo project to a video file.
    *
-   * Note: This is a placeholder implementation. Actual Revideo rendering
-   * would require the Revideo renderer package to be installed and configured.
-   * For now, this creates the project structure and returns the path.
+   * Uses @revideo/renderer's renderVideo() to produce an MP4.
+   * Requires the project to be scaffolded via writeEntryPoint() first.
    */
   async renderToVideo(options: RenderToVideoOptions): Promise<string> {
     const { projectDir, outputPath, codec = DEFAULT_CODEC } = options;
+
+    void codec; // Revideo v0.5 only supports H.264; kept for API consistency
 
     try {
       await fs.access(projectDir);
@@ -181,13 +182,13 @@ export default makeProject({
       );
     }
 
-    const entryPoint = path.join(projectDir, 'src', 'project.ts');
+    const projectFile = path.join(projectDir, 'src', 'project.ts');
 
     try {
-      await fs.access(entryPoint);
+      await fs.access(projectFile);
     } catch {
       throw new Error(
-        `Entry point does not exist: ${entryPoint}. ` +
+        `Project file does not exist: ${projectFile}. ` +
           `The project directory may be corrupted.`
       );
     }
@@ -195,15 +196,22 @@ export default makeProject({
     const outputDir = path.dirname(outputPath);
     await fs.mkdir(outputDir, { recursive: true });
 
-    // Placeholder: Revideo rendering would be done here
-    // For now, create a placeholder file indicating rendering is not yet implemented
-    await fs.writeFile(
-      outputPath + '.placeholder',
-      `Revideo rendering placeholder.\nCodec: ${codec}\nProject: ${projectDir}\n`,
-      'utf-8'
-    );
+    // Dynamic import: @revideo/renderer is CJS, this project is ESM
+    const { renderVideo } = await import('@revideo/renderer');
 
-    return outputPath;
+    const resultPath = await renderVideo({
+      projectFile,
+      settings: {
+        outFile: path.basename(outputPath) as `${string}.mp4`,
+        outDir: outputDir,
+        logProgress: false,
+        puppeteer: {
+          args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        },
+      },
+    });
+
+    return resultPath;
   }
 
   /**

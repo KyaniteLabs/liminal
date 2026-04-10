@@ -49,15 +49,16 @@ const threeConfidence = (prompt: string): number => {
   return 0;
 };
 
-/** Confidence for HTML/web patterns */
+/** Confidence for HTML as infrastructure-only domain (not a creative domain). */
+// Formerly routed to generic SaaS patterns (portfolio, landing page, dashboard).
+// HTML is now infrastructure-only: wrapping, export, embedding, preview.
+// Creative generation for browser-native art = "kinetic" domain (future).
 const htmlConfidence = (prompt: string): number => {
   const lower = prompt.toLowerCase();
-  // Portfolio, landing page, dashboard are specific -> higher confidence
-  if (/portfolio|landing\s*page|dashboard|web\s*app/.test(lower)) return 0.95;
-  // Explicit HTML/CSS mentions
-  if (/\bhtml\b|\bcss\b|\bweb\s+(component|page|widget)/.test(lower)) return 0.90;
-  if (/web\s*page|website|css\s*design/.test(lower)) return 0.75;
-  if (/web\s*dev|ui\s*component|form|spa/.test(lower)) return 0.65;
+  // Explicit HTML/CSS technical mentions — used by composition adapters
+  if (/\bhtml\b.*\bgenerator\b|\bgenerate\b.*\bhtml\b/.test(lower)) return 0.50;
+  // Generic SaaS patterns — NOT creative domains, route to no domain
+  if (/portfolio|landing\s*page|dashboard|web\s*app|website|css\s*design|web\s*dev|ui\s*component|form|spa/.test(lower)) return 0;
   return 0;
 };
 
@@ -243,6 +244,21 @@ const textgenEntry: GeneratorEntry = {
   },
 };
 
+/**
+ * Kinetic — CSS-native generative art (FUTURE, NOT YET WIRED)
+ *
+ * Generates autonomous, perpetually-animated visual compositions using
+ * CSS keyframes and SVG. Zero JavaScript required at runtime.
+ * See docs/CREATIVE_DOMAIN_TYPES.md for design.
+ */
+const kineticEntry: GeneratorEntry = {
+  name: 'kinetic',
+  canHandle: () => 0, // Stub: not yet wired to routing
+  generate: (_prompt: string) => {
+    throw new Error('KineticGenerator: generation not yet implemented');
+  },
+};
+
 const p5Entry: GeneratorEntry = {
   name: 'p5',
   canHandle: () => 0.1, // fallback: low confidence but always available
@@ -291,7 +307,8 @@ function registerStaticGenerators(): void {
   generatorRegistry.register(strudelEntry);
   generatorRegistry.register(hydraEntry);
   generatorRegistry.register(toneEntry);
-  
+  generatorRegistry.register(kineticEntry);  // Stub: future domain, not yet wired
+
   // P5 generator with tier-based prompting (fallback for all p5 sketches)
   generatorRegistry.register(p5Entry);
 }

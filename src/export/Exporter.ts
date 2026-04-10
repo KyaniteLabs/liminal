@@ -19,6 +19,7 @@ import {
   validateProjectName,
 } from '../utils/validation.js';
 import { RemotionRenderer } from '../render/RemotionRenderer.js';
+import { RevideoRenderer } from '../render/RevideoRenderer.js';
 import { ValidationError } from '../errors/ValidationError.js';
 import { ExportError } from '../errors/index.js';
 import { CanvasRecorder } from '../render/CanvasRecorder.js';
@@ -267,6 +268,10 @@ export class Exporter {
 
     if (domain === 'remotion') {
       const renderer = new RemotionRenderer();
+      const projectDir = await renderer.writeEntryPoint(code);
+      await renderer.renderToVideo({ projectDir, outputPath, codec: 'h264' });
+    } else if (domain === 'revideo') {
+      const renderer = new RevideoRenderer();
       const projectDir = await renderer.writeEntryPoint(code);
       await renderer.renderToVideo({ projectDir, outputPath, codec: 'h264' });
     } else {

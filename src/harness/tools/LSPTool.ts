@@ -9,6 +9,7 @@
  * - Code actions (quick fixes)
  */
 
+import { readFileSync } from 'fs';
 import { Tool, type ToolResult } from './types.js';
 
 export interface LSPDiagnosticsParams {
@@ -126,7 +127,6 @@ export class LSPTool extends Tool {
     // This mimics LSP completion by scanning for identifiers that match the
     // prefix at the given line/character position.
     try {
-      const { readFileSync } = require('fs');
       const content = readFileSync(params.path, 'utf-8');
       const lines = content.split('\n');
 
@@ -159,7 +159,6 @@ export class LSPTool extends Tool {
   private getDefinition(params: LSPDefinitionParams): ToolResult {
     // Go-to-definition via source grep for the identifier at cursor.
     try {
-      const { readFileSync } = require('fs');
       const content = readFileSync(params.path, 'utf-8');
       const lines = content.split('\n');
 
@@ -169,7 +168,7 @@ export class LSPTool extends Tool {
 
       const line = lines[params.line];
       const beforeCursor = line.slice(0, params.character);
-      const identifier = beforeCursor.split(/[\s\[\]{}();,.=:+@]/).pop() || '';
+      const identifier = beforeCursor.split(/[\s[\]{}();,.=:+@]/).pop() || '';
 
       if (!identifier || identifier.length < 2) {
         return { success: false, error: 'No identifier at cursor' };

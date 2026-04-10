@@ -155,6 +155,7 @@ export const commands: Record<string, Command> = {
     name: 'run',
     description: 'Execute a task by ID',
     usage: '/run <task-id>',
+    // eslint-disable-next-line @typescript-eslint/require-await
     execute: async (args, ctx) => {
       const taskId = args[0];
       if (!taskId) return 'Error: Task ID required. Usage: /run <task-id>';
@@ -238,6 +239,7 @@ export const commands: Record<string, Command> = {
     name: 'cancel',
     description: 'Cancel a pending action',
     usage: '/cancel <pending-id>',
+    // eslint-disable-next-line @typescript-eslint/require-await
     execute: async (args, ctx) => {
       const actionId = args[0];
       if (!actionId) return 'Error: Pending action ID required. Usage: /cancel <pending-id>';

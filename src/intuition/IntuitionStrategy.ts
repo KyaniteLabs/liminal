@@ -110,6 +110,7 @@ export class IntuitionStrategy implements ScoringStrategy {
    * Score input using intuition signals.
    * Implements ScoringStrategy.score().
    */
+  // eslint-disable-next-line @typescript-eslint/require-await
   async score(input: ScoringInput): Promise<ScoringResult> {
     const domain = input.domain ?? 'p5';
 

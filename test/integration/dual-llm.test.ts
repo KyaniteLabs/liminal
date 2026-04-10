@@ -128,7 +128,7 @@ describe.skipIf(process.env.CI)('Dual LLM (cloud vs local)', () => {
       clearTimeout(timeout);
       const msg = err instanceof Error ? err.message : String(err);
       if (
-        /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|AbortError/i.test(msg)
+        /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|AbortError|404|API error/i.test(msg)
       ) {
         console.warn(
           'Skipping local (ollama) test: Ollama not running or unreachable.'

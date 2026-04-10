@@ -181,10 +181,8 @@ describe('OpenAI provider pipeline', () => {
       apiKey: 'test-key',
     });
 
-    const result = await client.generate('system', 'user');
-
-    expect(result.success).toBe(false);
-    expect(result.error).toBeDefined();
+    // LLMClient throws on API errors — verify it throws with error details
+    await expect(client.generate('system', 'user')).rejects.toThrow(/rate.limit|429/i);
   });
 });
 

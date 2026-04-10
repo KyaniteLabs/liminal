@@ -471,3 +471,216 @@ async function runHarnessTest(
     };
   }
 }
+
+// ─── Report Builders ───────────────────────────────────────────────────────────
+
+type ReportMeta = {
+  harnessConfigs: ProviderConfig[];
+  generators: ModelInfo[];
+  lmModels: Awaited<ReturnType<typeof detectLMStudioModels>>;
+};
+
+function buildReport(results: HarnessResult[], meta: ReportMeta) {
+  const successResults = results.filter((r) => r.success);
+  const avgScore = successResults.length > 0
+    ? successResults.reduce((s, r) => s + r.harnessScore, 0) / successResults.length
+    : 0;
+
+  // By harness
+  const byHarness: Record<string, { total: number; success: number; avgScore: number; avgDuration: number }> = {};
+  for (const h of meta.harnessConfigs) {
+    const harnessResults = results.filter((r) => r.harnessModel === h.name);
+    const successes = harnessResults.filter((r) => r.success);
+    byHarness[h.name] = {
+      total: harnessResults.length,
+      success: successes.length,
+      avgScore: successes.length > 0 ? successes.reduce((s, r) => s + r.harnessScore, 0) / successes.length : 0,
+      avgDuration: Math.round(harnessResults.reduce((s, r) => s + r.duration, 0) / harnessResults.length),
+    };
+  }
+
+  // By generator
+  const byGenerator: Record<string, { total: number; success: number; avgScore: number }> = {};
+  for (const g of meta.generators) {
+    const genResults = results.filter((r) => r.generatorModel === g.name);
+    const successes = genResults.filter((r) => r.success);
+    byGenerator[g.name] = {
+      total: genResults.length,
+      success: successes.length,
+      avgScore: successes.length > 0 ? successes.reduce((s, r) => s + r.harnessScore, 0) / successes.length : 0,
+    };
+  }
+
+  // By domain
+  const byDomain: Record<string, { total: number; success: number; avgScore: number }> = {};
+  for (const d of DOMAINS) {
+    const domResults = results.filter((r) => r.domain === d.name);
+    const successes = domResults.filter((r) => r.success);
+    byDomain[d.name] = {
+      total: domResults.length,
+      success: successes.length,
+      avgScore: successes.length > 0 ? successes.reduce((s, r) => s + r.harnessScore, 0) / successes.length : 0,
+    };
+  }
+
+  // Determine winners
+  const harnessWinners = Object.entries(byHarness).sort((a, b) => b[1].avgScore - a[1].avgScore);
+  const generatorWinners = Object.entries(byGenerator).sort((a, b) => b[1].avgScore - a[1].avgScore);
+
+  return {
+    timestamp: new Date().toISOString(),
+    matrix: {
+      total: results.length,
+      harnesses: meta.harnessConfigs.map((h) => h.name),
+      generators: meta.generators.map((g) => g.name),
+      domains: DOMAINS.map((d) => d.name),
+    },
+    summary: {
+      total: results.length,
+      success: successResults.length,
+      failed: results.filter((r) => !r.success).length,
+      avgScore: +avgScore.toFixed(3),
+      byHarness,
+      byGenerator,
+      byDomain,
+      harnessWinner: harnessWinners[0]?.[0] ?? 'tie',
+      generatorWinner: generatorWinners[0]?.[0] ?? 'tie',
+    },
+    results,
+  };
+}
+
+function buildMarkdownReport(report: {
+  timestamp: string;
+  summary: {
+    total: number;
+    success: number;
+    failed: number;
+    avgScore: number;
+    byHarness: Record<string, { total: number; success: number; avgScore: number; avgDuration: number }>;
+    byGenerator: Record<string, { total: number; success: number; avgScore: number }>;
+    byDomain: Record<string, { total: number; success: number; avgScore: number }>;
+    harnessWinner: string;
+    generatorWinner: string;
+  };
+}): string {
+  const { summary } = report;
+  let md = `# Dogfood Role Evaluation Report\n\n`;
+  md += `**Generated:** ${report.timestamp}\n\n`;
+  md += `## Summary\n\n`;
+  md += `| Metric | Value |\n|--------|-------|\n`;
+  md += `| Total Runs | ${summary.total} |\n`;
+  md += `| ✅ Success | ${summary.success} |\n`;
+  md += `| ❌ Failed | ${summary.failed} |\n`;
+  md += `| 📈 Avg Score | ${summary.avgScore} |\n`;
+  md += `| 🏆 Harness Winner | ${summary.harnessWinner} |\n`;
+  md += `| 🏆 Generator Winner | ${summary.generatorWinner} |\n\n`;
+
+  md += `## By Harness\n\n`;
+  md += `| Harness | Total | Success | Avg Score | Avg Duration |\n`;
+  md += `|---------|-------|---------|-----------|-------------|\n`;
+  for (const [name, stats] of Object.entries(summary.byHarness)) {
+    md += `| ${name} | ${stats.total} | ${stats.success} | ${stats.avgScore.toFixed(3)} | ${stats.avgDuration}ms |\n`;
+  }
+
+  md += `\n## By Generator\n\n`;
+  md += `| Generator | Total | Success | Avg Score |\n`;
+  md += `|----------|-------|---------|----------|\n`;
+  for (const [name, stats] of Object.entries(summary.byGenerator)) {
+    md += `| ${name} | ${stats.total} | ${stats.success} | ${stats.avgScore.toFixed(3)} |\n`;
+  }
+
+  md += `\n## By Domain\n\n`;
+  md += `| Domain | Total | Success | Avg Score |\n`;
+  md += `|-------|-------|---------|----------|\n`;
+  for (const [name, stats] of Object.entries(summary.byDomain)) {
+    md += `| ${name} | ${stats.total} | ${stats.success} | ${stats.avgScore.toFixed(3)} |\n`;
+  }
+
+  return md;
+}
+
+// ─── Main Execution Loop ───────────────────────────────────────────────────────
+
+async function main() {
+  console.log('🔬 DOGFOOD ROLE EVALUATION\n');
+  console.log('Providers: GLM-5.1 (harness) | MiniMax-M2.7 (harness)');
+  console.log('Generators: Qwen 3.5 2B (LM Studio) | Gemma 4B (LM Studio)');
+  console.log('Evaluator: Qwen 3.5 2B-it (LM Studio)');
+  console.log('Domains: 9 | Total runs: 36\n');
+
+  // Detect LM Studio models
+  console.log('🔍 Detecting LM Studio models...');
+  const lmModels = await detectLMStudioModels();
+  if (!lmModels.generator && !lmModels.gemma) {
+    throw new Error('No Qwen or Gemma models found in LM Studio. Please load models first.');
+  }
+  console.log(`  Generator (Qwen): ${lmModels.generator?.id ?? 'NOT FOUND'}`);
+  console.log(`  Generator (Gemma): ${lmModels.gemma?.id ?? 'NOT FOUND'}`);
+  console.log(`  Evaluator (Qwen-it): ${lmModels.evaluator?.id ?? 'NOT FOUND'}`);
+
+  const cloudConfig = loadCloudConfig();
+  const harnessConfigs = buildHarnessConfigs(cloudConfig);
+  if (harnessConfigs.length === 0) {
+    throw new Error('No cloud providers configured. Set GLM_API_KEY or MINIMAX_API_KEY in ~/.liminal/config.json');
+  }
+  console.log(`  Harnesses: ${harnessConfigs.map((h) => h.name).join(', ')}\n`);
+
+  const generators: ModelInfo[] = [];
+  if (lmModels.generator) generators.push(lmModels.generator);
+  if (lmModels.gemma) generators.push(lmModels.gemma);
+  if (!lmModels.evaluator) {
+    throw new Error('Evaluator model (qwen3.5-2b-it or similar) not found in LM Studio');
+  }
+
+  // Build test matrix
+  type TestConfig = { harness: ProviderConfig; generator: ModelInfo; domain: typeof DOMAINS[number] };
+  const testMatrix: TestConfig[] = [];
+  for (const harness of harnessConfigs) {
+    for (const generator of generators) {
+      for (const domain of DOMAINS) {
+        testMatrix.push({ harness, generator, domain });
+      }
+    }
+  }
+
+  console.log(`📊 Test matrix: ${testMatrix.length} runs`);
+  console.log(`   ${harnessConfigs.length} harnesses × ${generators.length} generators × ${DOMAINS.length} domains\n`);
+
+  // Run all tests
+  const results: HarnessResult[] = [];
+  let completed = 0;
+
+  for (const config of testMatrix) {
+    const { harness, generator, domain } = config;
+    process.stdout.write(
+      `  [${++completed}/${testMatrix.length}] ${harness.name} × ${generator.name} × ${domain.name}... `
+    );
+    const result = await runHarnessTest(domain, harness, generator, lmModels.evaluator!);
+    results.push(result);
+    process.stdout.write(result.success ? `✅ (${result.duration}ms, score=${result.harnessScore})\n` : `❌ (${result.duration}ms)\n`);
+  }
+
+  // Generate reports
+  const report = buildReport(results, { harnessConfigs, generators, lmModels });
+  fs.writeFileSync(
+    path.join(PROJECT_ROOT, 'dogfood-report-role-eval.json'),
+    JSON.stringify(report, null, 2)
+  );
+  fs.writeFileSync(
+    path.join(PROJECT_ROOT, 'dogfood-report-role-eval.md'),
+    buildMarkdownReport(report)
+  );
+
+  console.log('\n' + '='.repeat(70));
+  console.log('🔬 DOGFOOD ROLE EVALUATION COMPLETE');
+  console.log('='.repeat(70));
+  console.log(`📊 Total: ${results.length} | ✅ ${results.filter((r) => r.success).length} | ❌ ${results.filter((r) => !r.success).length}`);
+  console.log(`📁 Telemetry: ${TELEMETRY_DIR}`);
+  console.log(`📄 Reports: dogfood-report-role-eval.json|md`);
+}
+
+main().catch((error) => {
+  console.error('\n❌ Fatal:', error.message);
+  process.exit(1);
+});

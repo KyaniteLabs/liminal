@@ -286,6 +286,7 @@ Failures:   0 critical
 | RalphLoop | `RalphLoop.ts` | Main orchestration |
 | GenerationOrchestrator | `GenerationOrchestrator.ts` | Swarm/Collab/Standard modes |
 | ContextAccumulation | `ContextAccumulation.ts` | Builds iteration context |
+| Prompt handoff | `GenerationOrchestrator.ts` | Dispatched generators receive Ralph's iteration-enriched prompt, not only the raw user prompt |
 | CompostHeap | `CompostHeap.ts` | Learns from failures |
 | ScoringEngine | `ScoringEngine.ts` | Multi-strategy scoring |
 | PromiseDetector | `PromiseDetector.ts` | Detects convergence |

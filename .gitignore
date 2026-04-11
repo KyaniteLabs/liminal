@@ -128,5 +128,11 @@ test-gallery-temp/
 .omc/state/
 bubbletea/
 
+# Duplicate " 2" files (copy artifacts from agents/tools)
+* 2.*
+
+# Test backup files
+*.bak
+
 # Archives
 *.zip

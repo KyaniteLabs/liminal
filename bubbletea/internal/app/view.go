@@ -16,19 +16,7 @@ func (m Model) View() string {
 	header := m.renderHeader()
 	footer := m.renderFooter()
 
-	chatWidth := m.Width * 55 / 100
-	rightWidth := m.Width - chatWidth
-	paneHeight := m.Height - 6
-
-	if chatWidth < 30 {
-		chatWidth = 30
-	}
-	if rightWidth < 28 {
-		rightWidth = 28
-	}
-	if paneHeight < 5 {
-		paneHeight = 5
-	}
+	metrics := m.layoutMetrics()
 
 	chatContent := m.ChatViewport.View()
 	if strings.TrimSpace(chatContent) == "" {
@@ -40,8 +28,10 @@ func (m Model) View() string {
 		chatContent,
 	)
 	chatPane := ui.ChatPaneStyle.
-		Width(chatWidth).
-		Height(paneHeight).
+		Width(metrics.chatContentWidth).
+		MaxWidth(metrics.chatContentWidth).
+		Height(metrics.paneContentHeight).
+		MaxHeight(metrics.paneContentHeight).
 		Render(chatPaneContent)
 
 	rightStyle := ui.OperatorPaneStyle
@@ -53,7 +43,7 @@ func (m Model) View() string {
 	if m.PreviewVisible {
 		operatorContent := m.PreviewViewport.View()
 		if strings.TrimSpace(operatorContent) == "" {
-			operatorContent = m.renderOperatorSurface(max(rightWidth-6, 24))
+			operatorContent = m.renderOperatorSurface(max(metrics.operatorContentWidth, 24))
 		}
 		rightContent = lipgloss.JoinVertical(
 			lipgloss.Left,
@@ -65,8 +55,10 @@ func (m Model) View() string {
 	}
 
 	rightPane := rightStyle.
-		Width(rightWidth).
-		Height(paneHeight).
+		Width(metrics.operatorContentWidth).
+		MaxWidth(metrics.operatorContentWidth).
+		Height(metrics.paneContentHeight).
+		MaxHeight(metrics.paneContentHeight).
 		Render(rightContent)
 
 	body := lipgloss.JoinHorizontal(lipgloss.Top, chatPane, rightPane)

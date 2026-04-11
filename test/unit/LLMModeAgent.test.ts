@@ -8,6 +8,7 @@ const {
   mockApplyEdit,
   mockRunBuild,
   mockRunTests,
+  mockGitStatus,
   mockRestoreBackup,
   mockCreateBackup,
 } = vi.hoisted(() => {
@@ -23,6 +24,7 @@ const {
     mockApplyEdit: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
     mockRunBuild: { execute: vi.fn(async () => ({ success: true })) },
     mockRunTests: { execute: vi.fn(async () => ({ success: true })) },
+    mockGitStatus: { execute: vi.fn(async () => ({ success: true, data: { branch: 'fix/tui', short: '' } })) },
     mockRestoreBackup: { execute: vi.fn(async () => ({ success: true })) },
     mockCreateBackup: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
   };
@@ -46,6 +48,7 @@ vi.mock('../../src/harness/tools/index.js', () => ({
   applyEditTool: mockApplyEdit,
   runBuildTool: mockRunBuild,
   runTestsTool: mockRunTests,
+  gitStatusTool: mockGitStatus,
   restoreBackupTool: mockRestoreBackup,
   createBackupTool: mockCreateBackup,
 }));
@@ -74,6 +77,7 @@ describe('LLMModeAgent', () => {
     mockApplyEdit.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
     mockRunBuild.execute.mockResolvedValue({ success: true });
     mockRunTests.execute.mockResolvedValue({ success: true });
+    mockGitStatus.execute.mockResolvedValue({ success: true, data: { branch: 'fix/tui', short: '' } });
     mockRestoreBackup.execute.mockResolvedValue({ success: true });
     mockCreateBackup.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
   });
@@ -245,6 +249,26 @@ describe('LLMModeAgent', () => {
     expect(mockApplyEdit.execute).toHaveBeenCalled();
     expect(mockRunBuild.execute).toHaveBeenCalled();
     expect(mockRunTests.execute).toHaveBeenCalled();
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('treats Bubble Tea inspection-only parse failure as success when no mutations were made', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"gitStatus","params":{},"thought":"inspect repo"}' })
+      .mockResolvedValueOnce({ text: 'done inspecting; no safe change warranted' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-inspection-only',
+      title: 'Inspection only',
+      description: 'desc',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalled();
+    expect(session.backups).toHaveLength(0);
     expect(session.status).toBe(Status.SUCCESS);
   });
 

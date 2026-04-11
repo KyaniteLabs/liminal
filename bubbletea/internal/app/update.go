@@ -104,42 +104,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Width = msg.Width
 		m.Height = msg.Height
 
+		metrics := m.layoutMetrics()
 		if !m.Ready {
-			chatWidth := msg.Width*55/100 - 4
-			previewWidth := msg.Width - msg.Width*55/100 - 4
-			paneHeight := msg.Height - 6
-
-			if chatWidth < 20 {
-				chatWidth = 20
-			}
-			if previewWidth < 20 {
-				previewWidth = 20
-			}
-			if paneHeight < 5 {
-				paneHeight = 5
-			}
-
-			m.ChatViewport = viewport.New(chatWidth, paneHeight)
+			m.ChatViewport = viewport.New(metrics.chatContentWidth, metrics.chatViewportHeight)
 			m.ChatViewport.Style = chatViewportStyle()
 			m.ChatViewport.SetContent("Welcome to Liminal. Type a message to begin.")
 
-			m.PreviewViewport = viewport.New(previewWidth, paneHeight-2)
+			m.PreviewViewport = viewport.New(metrics.operatorContentWidth, metrics.operatorViewportHeight)
 			m.PreviewViewport.Style = previewViewportStyle()
-			m.PreviewViewport.SetContent(m.renderOperatorSurface(previewWidth))
+			m.PreviewViewport.SetContent(m.renderOperatorSurface(metrics.operatorContentWidth))
 
-			m.TextInput.SetWidth(chatWidth - 4)
+			m.TextInput.SetWidth(metrics.chatContentWidth)
 			m.TextInput.SetHeight(ChatInputHeight)
 			m.Ready = true
 		} else {
-			chatWidth := msg.Width*55/100 - 4
-			previewWidth := msg.Width - msg.Width*55/100 - 4
-			paneHeight := msg.Height - 6
-
-			m.ChatViewport.Width = chatWidth
-			m.ChatViewport.Height = paneHeight
-			m.PreviewViewport.Width = previewWidth
-			m.PreviewViewport.Height = paneHeight - 2
-			m.TextInput.SetWidth(chatWidth - 4)
+			m.ChatViewport.Width = metrics.chatContentWidth
+			m.ChatViewport.Height = metrics.chatViewportHeight
+			m.PreviewViewport.Width = metrics.operatorContentWidth
+			m.PreviewViewport.Height = metrics.operatorViewportHeight
+			m.TextInput.SetWidth(metrics.chatContentWidth)
 			m.TextInput.SetHeight(ChatInputHeight)
 			m.refreshViewports()
 		}

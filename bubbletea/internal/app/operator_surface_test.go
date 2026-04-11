@@ -14,7 +14,7 @@ import (
 func readyOperatorModel(t *testing.T) Model {
 	t.Helper()
 	m := NewModel("http://localhost:0")
-	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 36})
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 48})
 	model := updated.(Model)
 	model.Connected = true
 	model.Provider = "glm"

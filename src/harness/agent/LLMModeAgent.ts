@@ -267,8 +267,31 @@ When the task is complete and build passes, respond with tool "complete".`;
       }
 
       // Loop ended without explicit completion via 'complete' tool.
-      // Distinguish between parse failure (always FAILED) and natural completion.
+      // Bubble Tea inspection-only runs should not surface as generic failures
+      // when no mutations were made, regardless of whether the loop ended via
+      // parse failure or simple step exhaustion.
+      const tuiInspectionOnly =
+        session.task.id.startsWith('tui-self-') &&
+        session.backups.length === 0;
+      if (tuiInspectionOnly) {
+        Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
+        session.status = Status.SUCCESS;
+        session.endTime = new Date().toISOString();
+
+        eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+          process: 'agent-task',
+          success: true,
+          reason: 'Inspection complete, no mutations needed',
+          iterations: session.stepCount,
+          durationMs: Date.now() - new Date(session.startTime).getTime(),
+        });
+
+        return session;
+      }
+
+      // Distinguish between parse failure (FAILED) and natural completion.
       if (parseFailure) {
+
         // LLM response couldn't be parsed - this is a real failure
         Logger.error('LLMModeAgent', `Failed to parse LLM response after ${session.stepCount} steps`);
         session.status = Status.FAILED;

@@ -592,6 +592,7 @@ Failures:   0 critical
 - `NaturalInterface` preview/audio/browser commands now delegate to the shared `commands.ts` implementations to reduce future drift
 - `NaturalInterface` `/run` now also delegates to the shared `commands.ts` queueing path while preserving the existing response copy
 - `NaturalInterface` `/agent` now also delegates to the shared `commands.ts` queueing path while preserving the existing response copy
+- `NaturalInterface` `/confirm` and `/cancel` now also delegate to the shared `commands.ts` queueing path while preserving the existing response copy
 - CWD-based prompt loading removed from PromptBuilder
 - Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
 - Preview/audio path hardening added (`previewSafety.ts`)

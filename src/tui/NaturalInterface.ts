@@ -170,7 +170,7 @@ export class NaturalInterface {
         return this.handleConfirm(args[0] || '');
 
       case 'cancel':
-        return this.handleCancel(args[0] || '');
+        return this.executeSharedCancelCommand(args[0] || '');
 
       case 'preview':
         return this.handlePreview(args[0] || '');
@@ -346,6 +346,10 @@ export class NaturalInterface {
   }
 
   private async handleConfirm(actionId: string): Promise<NaturalInputResult> {
+    return this.executeSharedConfirmCommand(actionId);
+  }
+
+  private async performConfirm(actionId: string): Promise<NaturalInputResult> {
     if (!actionId) {
       return { type: 'command', response: 'Please specify a pending action ID. Usage: confirm <pending-id>', shouldContinue: true };
     }
@@ -380,20 +384,6 @@ export class NaturalInterface {
           : 'The task could not be completed.',
       ].join('\n'),
       actionTaken: `Executed ${session.stepCount} steps`,
-      shouldContinue: true,
-    };
-  }
-
-  private handleCancel(actionId: string): NaturalInputResult {
-    if (!actionId) {
-      return { type: 'command', response: 'Please specify a pending action ID. Usage: cancel <pending-id>', shouldContinue: true };
-    }
-
-    return {
-      type: 'command',
-      response: this.pendingActions.cancel(actionId)
-        ? `Pending action ${actionId} cancelled.`
-        : `Pending action ${actionId} not found.`,
       shouldContinue: true,
     };
   }
@@ -657,6 +647,58 @@ export class NaturalInterface {
         'created and awaiting approval.\nConfirm with /confirm',
       )
       .replace('Usage: /agent <description>', 'Usage: agent <description>');
+
+    return {
+      type: 'command',
+      response,
+      shouldContinue: true,
+    };
+  }
+
+  private async executeSharedConfirmCommand(actionId: string): Promise<NaturalInputResult> {
+    let response = await commands.confirm.execute(actionId ? [actionId] : [], {
+      agent: this.harnessAgent,
+      tasks: this.tasks,
+      logs: [],
+      addLog: this.onLog,
+      setStatusMessage: this.onStatus,
+      addOutput: (_type, content) => {
+        this.addMessage('assistant', content);
+      },
+      createPendingAction: (kind, task) => ({ id: this.pendingActions.create(kind, task as AgentTask | LLMTask).id }),
+      confirmPendingAction: async (id) => this.performConfirm(id).then((result) => result.response),
+      cancelPendingAction: (id) => this.pendingActions.cancel(id),
+    });
+
+    response = response
+      .replace('Error: Pending action ID required. ', 'Please specify a pending action ID. ')
+      .replace('Usage: /confirm <pending-id>', 'Usage: confirm <pending-id>');
+
+    return {
+      type: 'command',
+      response,
+      shouldContinue: true,
+    };
+  }
+
+  private async executeSharedCancelCommand(actionId: string): Promise<NaturalInputResult> {
+    let response = await commands.cancel.execute(actionId ? [actionId] : [], {
+      agent: this.harnessAgent,
+      tasks: this.tasks,
+      logs: [],
+      addLog: this.onLog,
+      setStatusMessage: this.onStatus,
+      addOutput: (_type, content) => {
+        this.addMessage('assistant', content);
+      },
+      createPendingAction: (kind, task) => ({ id: this.pendingActions.create(kind, task as AgentTask | LLMTask).id }),
+      confirmPendingAction: async (id) => this.performConfirm(id).then((result) => result.response),
+      cancelPendingAction: (id) => this.pendingActions.cancel(id),
+    });
+
+    response = response
+      .replace('Error: Pending action ID required. ', 'Please specify a pending action ID. ')
+      .replace('Usage: /cancel <pending-id>', 'Usage: cancel <pending-id>');
 
     return {
       type: 'command',

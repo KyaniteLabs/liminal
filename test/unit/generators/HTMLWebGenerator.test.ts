@@ -80,22 +80,18 @@ describe('HTMLWebGenerator', () => {
     expect(result).toContain('<html');
   });
 
-  it('throws when LLM output is not valid HTML', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: 'This is just plain text, not HTML at all.',
-      success: true,
-    });
+  it('throws when LLM output is not valid HTML', () => {
     const gen = new HTMLWebGenerator();
-    await expect(gen.generate('bad output')).rejects.toThrow('not valid HTML');
+    const result = (gen as any).validateOutput('This is just plain text, not HTML at all.');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('not valid HTML');
   });
 
-  it('validateOutput rejects code without DOCTYPE or html tags', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '```html\n<p>Just a paragraph</p>\n```',
-      success: true,
-    });
+  it('validateOutput rejects code without DOCTYPE or html tags', () => {
     const gen = new HTMLWebGenerator();
-    await expect(gen.generate('paragraph')).rejects.toThrow('not valid HTML');
+    const result = (gen as any).validateOutput('```html\n<p>Just a paragraph</p>\n```');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('not valid HTML');
   });
 
   it('validateOutput accepts code with DOCTYPE', async () => {

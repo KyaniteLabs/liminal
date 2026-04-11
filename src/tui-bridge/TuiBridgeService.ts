@@ -657,6 +657,15 @@ export class TuiBridgeService {
     this.stream.emit(sessionId, event);
   }
 
+  /**
+   * Publish a typed operator event into a session stream.
+   * Used by the Bubble Tea operator-surface tests and by future explicit
+   * operator instrumentation publishers.
+   */
+  publishEvent(sessionId: string, event: Omit<TuiBridgeEvent, 'sessionId'>): void {
+    this.emit(sessionId, { ...event, sessionId } as TuiBridgeEvent);
+  }
+
   private emitLiveNarration(sessionId: string, message: string): void {
     if (!message.trim()) return;
     this.emit(sessionId, {

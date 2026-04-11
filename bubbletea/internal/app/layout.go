@@ -184,7 +184,7 @@ func (m Model) renderActivityLog(width int) string {
 
 func (m Model) renderHelpDrawer(width int) string {
 	lines := []string{
-		ui.PanelTitleStyle.Render("Shortcuts"),
+		ui.PanelTitleStyle.Render("Help / Shortcuts"),
 		helpRow("Enter", "send message"),
 		helpRow("Tab", "focus operator column"),
 		helpRow("Ctrl+T", "toggle timeline"),

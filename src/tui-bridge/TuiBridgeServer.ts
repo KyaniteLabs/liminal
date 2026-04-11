@@ -150,6 +150,8 @@ export class TuiBridgeServer {
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
+    res.flushHeaders?.();
+    res.write(': connected\n\n');
 
     // Send any existing events first
     const existing = this.bridge.getEvents(sessionId);

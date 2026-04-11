@@ -646,7 +646,7 @@ Failures:   0 critical
 | Layout | `internal/app/layout.go` | Task card, timeline, changed files, verification, artifacts, help rendering |
 | Event Types | `internal/bridge/events.go` | Event, SessionStatus, PendingAction structs |
 
-**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, and shortcut behavior.
+**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, and shortcut behavior. Vitest coverage now includes typed operator-event publication plus real SSE delivery through the TS bridge server.
 
 ---
 

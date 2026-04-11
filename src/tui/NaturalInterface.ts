@@ -366,6 +366,8 @@ export class NaturalInterface {
       '  \u2022 test   - Run diagnostic tests',
       '  \u2022 clear  - Clear screen',
       '  \u2022 exit   - Quit',
+      '',
+      'Note: this command surface does not support /agent, /confirm, /cancel, /play, or /browser.',
     ].join('\n');
 
     return { type: 'command', response, shouldContinue: true };

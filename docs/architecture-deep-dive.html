@@ -252,8 +252,8 @@ assistant: {
 │  2. PatternDetector.analyze()           │
 │     └── Look for recurring patterns     │
 │                                         │
-│  3. HarnessUpdater.applyAdaptation()    │
-│     └── Generate fix, create task       │
+│  3. Adaptation/task logging             │
+│     └── Record insight, create task     │
 │                                         │
 │  4. Task executed by HarnessAgent       │
 │     └── Build verified, committed       │
@@ -281,7 +281,7 @@ assistant: {
 │   └── index.ts
 ├── FailureLogger.ts              # Failure persistence
 ├── PatternDetector.ts            # Pattern analysis
-├── HarnessUpdater.ts             # Auto-fix generation
+├── HarnessUpdater.ts             # Removed no-op (historical)
 └── MetaHarnessIntegration.ts     # Central coordinator
 
 src/tui/

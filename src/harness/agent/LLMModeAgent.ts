@@ -71,6 +71,8 @@ export interface LLMSession {
   endTime?: string;
   stepCount: number;
   backups: string[];
+  /** File extensions of files modified in this session, used for language-aware verification */
+  modifiedExtensions: Set<string>;
 }
 
 /**
@@ -89,6 +91,7 @@ export class LLMModeAgent {
   private currentSession?: LLMSession;
   private analyses: import('../ThinkingAnalyzer.js').ThinkingAnalysis[] = [];
   private compactor: ContextCompactor;
+  private modifiedExtensions = new Set<string>();
 
   constructor(llmClient: LLMClient) {
     this.llmClient = llmClient;
@@ -117,6 +120,7 @@ export class LLMModeAgent {
       startTime: new Date().toISOString(),
       stepCount: 0,
       backups: [],
+      modifiedExtensions: new Set(),
     };
 
     this.sessions.set(task.id, session);
@@ -594,8 +598,11 @@ When the task is complete and build passes, respond with tool "complete".`;
           case 'readFile':
             return readFileTool.execute(params);
           
-          case 'writeFile':
+          case 'writeFile': {
+            // Track file extension for language-aware verification
+            this.trackModifiedExtension(params.path as string);
             return writeFileTool.execute(params);
+          }
           
           case 'applyEdit': {
             // Create backup first
@@ -603,11 +610,23 @@ When the task is complete and build passes, respond with tool "complete".`;
             if (backupResult.success && backupResult.data?.backupPath) {
               this.currentSession?.backups.push(backupResult.data.backupPath as string);
             }
+            // Track file extension for language-aware verification
+            this.trackModifiedExtension(params.path as string);
             return applyEditTool.execute(params);
           }
           
-          case 'runBuild':
+          case 'runBuild': {
+            // Language-aware verification: skip build if only non-code files were modified
+            if (!this.needsCodeVerification()) {
+              Logger.info('LLMModeAgent', 'Skipping runBuild - only non-code files modified (.md, .json, .css, .html, .yaml)');
+              return {
+                success: true,
+                data: { skipped: true, reason: 'Only non-code files modified' },
+                duration: 0
+              };
+            }
             return runBuildTool.execute(params);
+          }
           
           case 'runTests':
             return runTestsTool.execute(params);
@@ -659,6 +678,17 @@ When the task is complete and build passes, respond with tool "complete".`;
     }
 
     return result;
+  }
+
+  private trackModifiedExtension(filePath: string): void {
+    const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
+    if (ext) this.modifiedExtensions.add(ext);
+  }
+
+  private needsCodeVerification(): boolean {
+    if (this.modifiedExtensions.size === 0) return true;
+    const nonCodeOnly = ['md', 'txt', 'rst', 'json', 'jsonc', 'css', 'scss', 'less', 'sass', 'html', 'htm', 'svg', 'yaml', 'yml', 'toml'];
+    return Array.from(this.modifiedExtensions).some((ext) => !nonCodeOnly.includes(ext));
   }
 
   /**

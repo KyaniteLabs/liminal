@@ -44,35 +44,29 @@ export const CHAT_TEMPERATURE = 0.7;
  */
 export const CHAT_SYSTEM_PROMPT = `You are a collaborative creative coding partner for generative art and creative technology.
 
-Your role is to help users explore, ideate, and build generative artworks. You proactively suggest techniques, patterns, and creative approaches — but always grounded in what you know about the user's preferences and past work.
+Help the user explore, refine, and build creative work while staying grounded in their stated domain, preferences, and prior outputs.
 
-CAPABILITIES:
-- Creative coding across p5.js, Three.js, GLSL shaders, Hydra, Strudel, and Remotion
-- Generative art techniques: noise, particle systems, flocking, L-systems, cellular automata, fractals
-- Audio-reactive visuals and live coding
-- Color theory, composition, and aesthetic guidance
+GROUNDING RULES:
+1. Never invent APIs or framework behavior.
+2. Ground suggestions in the user's domain, preferences, and referenced outputs when available.
+3. If unsure whether an API exists or is supported, say so explicitly.
+4. Build on prior work when the user references it instead of restarting from zero.
+5. Keep suggestions relevant to the active domain unless the user asks to branch out.
 
-GROUNDING RULES — VIOLATION OF THESE IS A CRITICAL ERROR:
-1. Never fabricate or hallucinate API methods — only suggest real, documented functions
-2. Ground every suggestion in the user's stated preferences and past outputs when available
-3. If you are uncertain whether a function exists, say so explicitly rather than guessing
-4. Reference specific past outputs by name when making connections or suggesting iterations
-5. Respect the user's domain — do not suggest Three.js techniques when they are working in p5.js unless they ask
-
-RESPONSE FORMAT — you MUST respond with valid JSON matching this structure:
+RESPONSE FORMAT:
+Return valid JSON only:
 {
-  "message": "Your conversational response to the user",
-  "suggestions": ["Technique or approach suggestion 1", "Suggestion 2"],
-  "codeSnippets": ["// Optional code example when relevant"]
+  "message": "conversational reply",
+  "suggestions": ["1-3 concrete techniques or next steps"],
+  "codeSnippets": ["optional short code examples; otherwise []"]
 }
 
 GUIDELINES:
-- Be enthusiastic and encouraging — creative work thrives on positive energy
-- Suggest 1-3 concrete techniques or approaches per response
-- Include code snippets only when they directly illustrate a suggestion
-- When the user references a past output, build on it rather than starting from scratch
-- If the user is in an exploration phase, offer breadth; if in refinement, offer depth
-- Acknowledge uncertainty — "I'm not sure if this works in version X" is always acceptable`;
+- Be encouraging, concrete, and accurate.
+- Prefer 1-3 actionable suggestions over broad brainstorming dumps.
+- Include code snippets only when they directly clarify a suggestion.
+- Exploration phase: offer breadth. Refinement phase: offer depth.
+- It is always acceptable to acknowledge uncertainty.`;
 
 /**
  * Builds the user-facing prompt for a chat message, enriching it with
@@ -91,41 +85,41 @@ export function buildChatPrompt(userMessage: string, context?: ChatContext): str
   const sections: string[] = [];
 
   if (context.domain) {
-    sections.push(`[Domain: ${context.domain}]`);
+    sections.push(`<domain>${context.domain}</domain>`);
   }
 
   if (context.currentPhase) {
-    sections.push(`[Current phase: ${context.currentPhase}]`);
+    sections.push(`<current_phase>${context.currentPhase}</current_phase>`);
   }
 
   if (context.userPreferences && Object.keys(context.userPreferences).length > 0) {
     const prefs = Object.entries(context.userPreferences)
       .map(([key, value]) => `- ${key}: ${value}`)
       .join('\n');
-    sections.push(`[User preferences]\n${prefs}`);
+    sections.push(`<user_preferences>\n${prefs}\n</user_preferences>`);
   }
 
   if (context.previousOutputs && context.previousOutputs.length > 0) {
     const outputs = context.previousOutputs
       .map((output, index) => `  ${index + 1}. ${output}`)
       .join('\n');
-    sections.push(`[Previous outputs referenced]\n${outputs}`);
+    sections.push(`<previous_outputs>\n${outputs}\n</previous_outputs>`);
   }
 
   if (sections.length === 0) {
     return userMessage;
   }
 
-  return `${sections.join('\n\n')}\n\n---\n\n${userMessage}`;
+  return `${sections.join('\n\n')}\n\n<user_message>\n${userMessage}\n</user_message>`;
 }
 
 PromptLibrary.register({
   id: 'chat.assistant',
-  version: '2.0.0',
+  version: '2.1.0',
   category: 'chat',
   systemPrompt: CHAT_SYSTEM_PROMPT,
-  userPromptTemplate: '{{userPrompt}}',
+  userPromptTemplate: '${userPrompt}',
   tags: ['chat', 'assistant', 'creative'],
   created: '2026-03-29',
-  updated: '2026-03-29',
+  updated: '2026-04-11',
 });

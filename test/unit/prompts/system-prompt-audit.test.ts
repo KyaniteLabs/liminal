@@ -53,4 +53,28 @@ describe('system prompt audit guardrails', () => {
     expect(SELF_IMPROVE_SYSTEM_PROMPT).toContain('Use tool "complete" only');
     expect(SELF_IMPROVE_SYSTEM_PROMPT).not.toContain('## Example Session');
   });
+
+  it('chat.assistant uses explicit context tags instead of ad-hoc separators', () => {
+    const chatPrompt = PromptLibrary.get('chat.assistant');
+    expect(chatPrompt).toBeDefined();
+
+    const rendered = PromptLibrary.render('chat.assistant', { userPrompt: 'hello' });
+    expect(chatPrompt?.systemPrompt).toContain('Return valid JSON only');
+    expect(rendered.user).toBe('hello');
+  });
+
+  it('collaboration critic prompts avoid step-by-step wording and ask for evidence', () => {
+    const criticIds = [
+      'collab.role.technical-critic',
+      'collab.role.artistic-critic',
+      'collab.role.domain-expert',
+    ];
+
+    for (const id of criticIds) {
+      const prompt = PromptLibrary.get(id);
+      expect(prompt).toBeDefined();
+      expect(prompt?.systemPrompt).not.toContain('Think step by step');
+      expect(prompt?.systemPrompt).toContain('evidence-backed');
+    }
+  });
 });

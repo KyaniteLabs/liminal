@@ -399,6 +399,7 @@ Failures:   0 critical
 **Prompt Quality Notes (2026-04-11):**
 - High-leverage prompt surfaces were audited in `docs/plans/2026-04-11-system-prompt-audit.md`.
 - The highest-ROI fixes removed contradictory code-format instructions, corrected Three.js module guidance, and compressed the harness self-improvement system prompt while preserving its tool contract.
+- A follow-up slice structured chat/evaluation prompts with explicit tags, removed step-by-step wording from collaboration critics, and fixed a real `chat.assistant` interpolation bug.
 
 **Multi-Provider Support:**
 - OpenAI

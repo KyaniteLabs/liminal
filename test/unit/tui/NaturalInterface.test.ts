@@ -173,6 +173,31 @@ describe('NaturalInterface', () => {
     });
   });
 
+  describe('handleExplicitAgent', () => {
+    it('returns usage error when /agent has no description', async () => {
+      const { iface } = createInterface();
+      const result = await iface.processInput('/agent');
+      expect(result.response).toBe('Please specify a task description. Usage: agent <description>');
+    });
+
+    it('routes /agent descriptions through the llm agent path', async () => {
+      const { iface, llmAgent } = createInterface();
+      llmAgent.executeTask.mockResolvedValue({
+        status: 'success',
+        verificationPassed: false,
+        stepCount: 1,
+        messages: [],
+      });
+
+      const result = await iface.processInput('/agent fix the import path');
+      expect(llmAgent.executeTask).toHaveBeenCalledWith(expect.objectContaining({
+        description: 'fix the import path',
+        approved: true,
+      }));
+      expect(result.type).toBe('agent');
+    });
+  });
+
 
   // ── handleDiagnostic ────────────────────────────────────────────────
 
@@ -226,8 +251,8 @@ describe('NaturalInterface', () => {
       const result = await iface.processInput('/help');
 
       expect(result.response).toContain('status - Show harness status');
+      expect(result.response).toContain('Note: this command surface does not support /confirm, /cancel, /play, or /browser.');
       expect(result.response).toContain('preview <file> - Preview a file');
-      expect(result.response).toContain('does not support /agent, /confirm, /cancel, /play, or /browser');
     });
   });
 

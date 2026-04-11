@@ -160,6 +160,9 @@ export class NaturalInterface {
       case 'run':
         return this.handleRun(args[0] || '');
 
+      case 'agent':
+        return this.handleExplicitAgent(args);
+
       case 'preview':
         return this.handlePreview(args[0] || '');
 
@@ -336,6 +339,19 @@ export class NaturalInterface {
     };
   }
 
+  private async handleExplicitAgent(args: string[]): Promise<NaturalInputResult> {
+    const description = args.join(' ').trim();
+    if (!description) {
+      return {
+        type: 'command',
+        response: 'Please specify a task description. Usage: agent <description>',
+        shouldContinue: true,
+      };
+    }
+
+    return this.handleAgentRequest(description);
+  }
+
   private async handlePreview(filePath: string): Promise<NaturalInputResult> {
     if (!filePath) {
       return { type: 'command', response: 'Please specify a file path. Usage: preview <file>', shouldContinue: true };
@@ -371,7 +387,7 @@ export class NaturalInterface {
       '  \u2022 clear  - Clear screen',
       '  \u2022 exit   - Quit',
       '',
-      'Note: this command surface does not support /agent, /confirm, /cancel, /play, or /browser.',
+      'Note: this command surface does not support /confirm, /cancel, /play, or /browser.',
     ].join('\n');
 
     return { type: 'command', response, shouldContinue: true };

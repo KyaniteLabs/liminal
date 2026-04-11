@@ -15,6 +15,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **18 Guardrails** (M1-M18 implemented)
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
+- **Prompt surfaces audited** for contradiction, token efficiency, and framework accuracy
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
 - **Worktree Isolation** - Multi-agent development workflow
@@ -394,6 +395,10 @@ Failures:   0 critical
 | CacheManager | `CacheManager.ts` | Response caching |
 | CircuitBreaker | `CircuitBreaker.ts` | Failure handling |
 | RetryManager | `RetryManager.ts` | Retry logic |
+
+**Prompt Quality Notes (2026-04-11):**
+- High-leverage prompt surfaces were audited in `docs/plans/2026-04-11-system-prompt-audit.md`.
+- The highest-ROI fixes removed contradictory code-format instructions, corrected Three.js module guidance, and compressed the harness self-improvement system prompt while preserving its tool contract.
 
 **Multi-Provider Support:**
 - OpenAI

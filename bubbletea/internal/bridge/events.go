@@ -24,6 +24,14 @@ type SessionStatus struct {
 	PendingAction *PendingAction `json:"pendingAction,omitempty"`
 }
 
+// FileChange represents a single changed file from an agent mutation.
+type FileChange struct {
+	Path     string `json:"path"`
+	Status   string `json:"status"`   // "modified" | "created" | "deleted"
+	IsLatest bool   `json:"isLatest"` // true for the most recent change
+}
+
+// Event is the universal SSE event envelope for TUI → Bubble Tea communication.
 type Event struct {
 	Type      string         `json:"type"`
 	SessionID string         `json:"sessionId"`
@@ -58,4 +66,23 @@ type Event struct {
 	Outputs        map[string]any `json:"outputs,omitempty"`
 	Votes          map[string]any `json:"votes,omitempty"`
 	Timestamp      int64  `json:"timestamp,omitempty"`
+
+	// Operator surface event fields
+	ToolName     string       `json:"toolName,omitempty"`
+	Thought      string       `json:"thought,omitempty"`
+	ArgsSummary  string       `json:"argsSummary,omitempty"`
+	StepNum      int          `json:"stepNum,omitempty"`
+	ResultSummary string      `json:"resultSummary,omitempty"`
+	Success      bool         `json:"success,omitempty"`
+	Phase        string       `json:"phase,omitempty"`
+	StepCurrent  int          `json:"stepCurrent,omitempty"`
+	StepTotal    int          `json:"stepTotal,omitempty"`
+	ActiveFile   string       `json:"activeFile,omitempty"`
+	Objective    string       `json:"objective,omitempty"`
+	Files        []FileChange `json:"files,omitempty"`
+	Command      string       `json:"command,omitempty"`
+	OutputTail   string       `json:"outputTail,omitempty"`
+	JobID        string       `json:"jobId,omitempty"`
+	ArtifactLabel string      `json:"artifactLabel,omitempty"`
+	ArtifactPath  string      `json:"artifactPath,omitempty"`
 }

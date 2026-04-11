@@ -69,7 +69,11 @@ export class TuiBridgeServer {
     try {
       // POST /api/tui/session — create a new session
       if (req.method === 'POST' && path === '/api/tui/session') {
-        const status = this.bridge.createSession();
+        const cfg = this.llm?.getConfig();
+        const status = this.bridge.createSession({
+          provider: cfg ? this.providerLabel(cfg.baseUrl) : undefined,
+          model: cfg?.model,
+        });
         this.json(res, 201, status);
         return;
       }
@@ -146,6 +150,8 @@ export class TuiBridgeServer {
       'Cache-Control': 'no-cache',
       Connection: 'keep-alive',
     });
+    res.flushHeaders?.();
+    res.write(': connected\n\n');
 
     // Send any existing events first
     const existing = this.bridge.getEvents(sessionId);
@@ -167,6 +173,16 @@ export class TuiBridgeServer {
     req.on('close', () => {
       unsubscribe();
     });
+  }
+
+  private providerLabel(baseUrl: string): string {
+    const lower = baseUrl.toLowerCase();
+    if (lower.includes('z.ai') || lower.includes('bigmodel') || lower.includes('glm')) return 'glm';
+    if (lower.includes('minimax')) return 'minimax';
+    if (lower.includes('openrouter')) return 'openrouter';
+    if (lower.includes('kimi')) return 'kimi';
+    if (lower.includes('localhost') || lower.includes('127.0.0.1')) return 'lmstudio';
+    return 'llm';
   }
 
   private json(res: ServerResponse, status: number, body: unknown): void {

@@ -1,0 +1,286 @@
+package app
+
+import (
+	"errors"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
+	tea "github.com/charmbracelet/bubbletea"
+)
+
+func readyOperatorModel(t *testing.T) Model {
+	t.Helper()
+	m := NewModel("http://localhost:0")
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 36})
+	model := updated.(Model)
+	model.Connected = true
+	model.Provider = "glm"
+	model.ModelName = "m2.7"
+	return model
+}
+
+func TestViewRendersOperatorSurface(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "latest response", Time: nowForTest()}}
+	m.Task = TaskCard{
+		Objective:   "Build login page",
+		Phase:       PhaseEdit,
+		StepCurrent: 3,
+		StepTotal:   8,
+		ActiveFile:  "src/auth.ts",
+	}
+	m.ToolTimeline = []ToolStep{
+		{StepNum: 1, ToolName: "readFile", Status: "success", ResultSummary: "loaded src/auth.ts", StartedAt: nowForTest(), CompletedAt: nowForTest()},
+		{StepNum: 2, ToolName: "editFile", Status: "running", ArgsSummary: "src/auth.ts", StartedAt: nowForTest()},
+	}
+	m.ChangedFiles = []ChangedFile{{Path: "src/auth.ts", Status: "modified", IsLatest: true}}
+	m.VerificationJobs = []VerificationJob{{JobID: "job-1", Command: "vitest auth", Status: "running", StartedAt: nowForTest()}}
+	m.Artifacts = []ArtifactRef{{Label: "Transcript", Path: ".omx/logs/session.log", UpdatedAt: nowForTest()}}
+	m.ArtifactsVisible = true
+	m.HelpVisible = true
+	m.refreshViewports()
+
+	view := m.View()
+	for _, want := range []string{"Conversation", "Operator surface", "Task", "Build login page", "Phase", "Edit", "readFile", "Changed: 1 file", "src/auth.ts", "Verification", "Status", "Path", "Ctrl+T", "Ctrl+A", "Ctrl+Y"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("expected view to contain %q\n%s", want, view)
+		}
+	}
+}
+
+func TestUpdateTogglesOperatorPanelsAndHelp(t *testing.T) {
+	m := readyOperatorModel(t)
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlT})
+	m = updated.(Model)
+	if m.TimelineVisible {
+		t.Fatal("expected ctrl+t to hide timeline")
+	}
+
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlA})
+	m = updated.(Model)
+	if !m.ArtifactsVisible {
+		t.Fatal("expected ctrl+a to show artifacts drawer")
+	}
+
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}})
+	m = updated.(Model)
+	if !m.HelpVisible {
+		t.Fatal("expected ? to toggle help on")
+	}
+
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}})
+	m = updated.(Model)
+	if m.HelpVisible {
+		t.Fatal("expected ? to toggle help off")
+	}
+}
+
+func TestCtrlYCopiesLastAssistantResponseFromAnyPane(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "copy me", Time: nowForTest()}}
+
+	copied := ""
+	prev := copyToClipboard
+	copyToClipboard = func(v string) error {
+		copied = v
+		return nil
+	}
+	defer func() { copyToClipboard = prev }()
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlY})
+	m = updated.(Model)
+	if copied != "copy me" {
+		t.Fatalf("expected copied assistant response, got %q", copied)
+	}
+	if len(m.ActivityLog) == 0 || !strings.Contains(m.ActivityLog[len(m.ActivityLog)-1].Message, "Copied") {
+		t.Fatalf("expected copy activity log, got %#v", m.ActivityLog)
+	}
+
+	m.FocusPane = FocusPreview
+	updated, _ = m.Update(tea.KeyMsg{Type: tea.KeyCtrlY})
+	m = updated.(Model)
+	if copied != "copy me" {
+		t.Fatalf("expected ctrl+y to work in preview/operator pane too, got %q", copied)
+	}
+}
+
+func TestCtrlYCopyErrorIsReported(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "copy me", Time: nowForTest()}}
+
+	prev := copyToClipboard
+	copyToClipboard = func(string) error {
+		return errors.New("clipboard down")
+	}
+	defer func() { copyToClipboard = prev }()
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyCtrlY})
+	m = updated.(Model)
+	if len(m.ActivityLog) == 0 || !strings.Contains(m.ActivityLog[len(m.ActivityLog)-1].Message, "clipboard down") {
+		t.Fatalf("expected clipboard error in activity log, got %#v", m.ActivityLog)
+	}
+}
+
+func TestApplyEventOperatorSurfaceRefreshesView(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ApplyEvent(bridge.Event{Type: "phase.changed", Phase: "Verify", StepCurrent: 4, StepTotal: 5, ActiveFile: "bubbletea/internal/app/view.go", Objective: "Polish operator layout"})
+	m.ApplyEvent(bridge.Event{Type: "tool.started", StepNum: 4, ToolName: "go test", Thought: "Verify the surface", ArgsSummary: "./internal/app"})
+	m.ApplyEvent(bridge.Event{Type: "verification.started", JobID: "verify-1", Command: "go test ./internal/app"})
+	m.ApplyEvent(bridge.Event{Type: "files.changed", Files: []bridge.FileChange{{Path: "bubbletea/internal/app/view.go", Status: "modified", IsLatest: true}}})
+	m.refreshViewports()
+
+	view := m.View()
+	for _, want := range []string{"Polish operator layout", "Verify", "go test", "bubbletea/internal/app/view.go"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("expected operator view to contain %q\n%s", want, view)
+		}
+	}
+}
+
+func nowForTest() time.Time {
+	return time.Unix(1710000000, 0)
+}
+
+func TestTaskCardShowsProgressPercentage(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.Task = TaskCard{
+		Objective:   "Polish Bubble Tea operator UI",
+		Phase:       PhaseEdit,
+		StepCurrent: 3,
+		StepTotal:   8,
+	}
+
+	card := m.renderTaskCard(52)
+	for _, want := range []string{"Progress", "38%"} {
+		if !strings.Contains(card, want) {
+			t.Fatalf("expected task card to contain %q\n%s", want, card)
+		}
+	}
+}
+
+func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.CurrentIteration = 2
+	m.GenerationIterations = 4
+	m.GenerationScore = 0.82
+	m.GenerationModel = "glm-5.1"
+	m.GenerationReason = "Best convergence"
+	m.GenerationDuration = 4200
+
+	surface := m.renderOperatorSurface(56)
+	for _, want := range []string{"Generation", "50%", "glm-5.1", "0.82"} {
+		if !strings.Contains(surface, want) {
+			t.Fatalf("expected operator surface to contain %q\n%s", want, surface)
+		}
+	}
+}
+
+func TestWindowResizeKeepsTextareaWidthInSync(t *testing.T) {
+	m := NewModel("http://localhost:0")
+
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 36})
+	m = updated.(Model)
+	initialWidth := m.TextInput.Width()
+	if initialWidth <= 0 {
+		t.Fatalf("expected positive initial textarea width, got %d", initialWidth)
+	}
+
+	updated, _ = m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = updated.(Model)
+	resizedWidth := m.TextInput.Width()
+	if resizedWidth <= 0 {
+		t.Fatalf("expected positive resized textarea width, got %d", resizedWidth)
+	}
+	if resizedWidth >= initialWidth {
+		t.Fatalf("expected resized textarea width to shrink (initial=%d resized=%d)", initialWidth, resizedWidth)
+	}
+}
+
+func TestAltEnterAddsNewlineWithoutSubmitting(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.TextInput.SetValue("hello")
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter, Alt: true})
+	m = updated.(Model)
+
+	if got := m.TextInput.Value(); !strings.Contains(got, "\n") {
+		t.Fatalf("expected alt+enter to insert newline, got %q", got)
+	}
+	if len(m.ChatBlocks) != 0 {
+		t.Fatalf("expected alt+enter not to submit chat, got %d chat blocks", len(m.ChatBlocks))
+	}
+}
+
+func TestFooterExplainsMultilineShortcut(t *testing.T) {
+	m := readyOperatorModel(t)
+
+	footer := m.renderFooter()
+	for _, want := range []string{"Enter:send", "Alt+Enter:newline"} {
+		if !strings.Contains(footer, want) {
+			t.Fatalf("expected footer to contain %q\n%s", want, footer)
+		}
+	}
+}
+
+func TestNewModelUsesLiminalTextareaStyles(t *testing.T) {
+	m := NewModel("http://localhost:0")
+
+	if got, want := m.TextInput.FocusedStyle.Prompt.Render(">"), ui.TextareaPromptFocusedStyle.Render(">"); got != want {
+		t.Fatalf("expected focused prompt style to match theme")
+	}
+	if got, want := m.TextInput.BlurredStyle.Prompt.Render(">"), ui.TextareaPromptBlurredStyle.Render(">"); got != want {
+		t.Fatalf("expected blurred prompt style to match theme")
+	}
+}
+
+func TestChangedFilesRenderAsTable(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChangedFiles = []ChangedFile{
+		{Path: "src/auth.ts", Status: "modified", IsLatest: true},
+		{Path: "src/new.ts", Status: "created"},
+	}
+
+	panel := m.renderChangedFiles(56)
+	for _, want := range []string{"Status", "Path", "Latest", "src/auth.ts", "src/new.ts"} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("expected changed-files table to contain %q\n%s", want, panel)
+		}
+	}
+}
+
+func TestVerificationJobsRenderAsTable(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.VerificationJobs = []VerificationJob{
+		{JobID: "job-1", Command: "go test ./...", Status: "running", OutputTail: "still running"},
+	}
+
+	panel := m.renderVerificationJobs(56)
+	for _, want := range []string{"Status", "Command", "Output", "go test ./...", "still running"} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("expected verification table to contain %q\n%s", want, panel)
+		}
+	}
+}
+
+func TestArtifactsDrawerAndHelpDrawerStillRenderKeyContent(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.Artifacts = []ArtifactRef{{Label: "Transcript", Path: ".omx/logs/session.log", UpdatedAt: nowForTest()}}
+
+	artifacts := m.renderArtifactsDrawer(56)
+	for _, want := range []string{"Artifacts", "Transcript", ".omx/logs/session.log"} {
+		if !strings.Contains(artifacts, want) {
+			t.Fatalf("expected artifacts drawer to contain %q\n%s", want, artifacts)
+		}
+	}
+
+	help := m.renderHelpDrawer(56)
+	for _, want := range []string{"Help / Shortcuts", "Alt+Enter", "insert newline"} {
+		if !strings.Contains(help, want) {
+			t.Fatalf("expected help drawer to contain %q\n%s", want, help)
+		}
+	}
+}

@@ -87,16 +87,16 @@ describe('VoiceInput Logic', () => {
       onAnalysis: () => {},
       onPause: () => {},
     };
-    
-    expect(props.isCapturing).toBeDefined();
+
+    expect(props.isCapturing).toBe(false);
     expect(typeof props.onAnalysis).toBe('function');
     expect(typeof props.onPause).toBe('function');
   });
 
   test('audio context initialization', () => {
-    // Check that Web Audio API is available
+    // Check that Web Audio API type is a valid string type
     const audioContext = typeof AudioContext;
-    expect(audioContext).toBeDefined();
+    expect(audioContext).toMatch(/^(undefined|function)$/);
   });
 
   test('pitch range validation', () => {

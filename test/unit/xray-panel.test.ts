@@ -20,11 +20,11 @@ describe('XRayPanel Logic', () => {
       rawOutput: ['token1', 'token2'],
       isStreaming: true,
     };
-    
-    expect(props.iterations).toBeDefined();
-    expect(props.currentIndex).toBeDefined();
-    expect(props.rawOutput).toBeDefined();
-    expect(props.isStreaming).toBeDefined();
+
+    expect(props.iterations).toEqual(mockIterations);
+    expect(props.currentIndex).toBe(0);
+    expect(props.rawOutput).toEqual(['token1', 'token2']);
+    expect(props.isStreaming).toBe(true);
   });
 
   test('handles empty iterations array', () => {
@@ -46,11 +46,11 @@ describe('XRayPanel Logic', () => {
       timestamp: Date.now(),
       type: 'raw',
     };
-    
-    expect(token.id).toBeDefined();
-    expect(token.text).toBeDefined();
-    expect(token.timestamp).toBeDefined();
-    expect(token.type).toBeDefined();
+
+    expect(token.id).toBe('token-123');
+    expect(token.text).toBe('some text');
+    expect(token.timestamp).toBeGreaterThan(0);
+    expect(token.type).toBe('raw');
   });
 
   test('raw output processing generates unique IDs', () => {

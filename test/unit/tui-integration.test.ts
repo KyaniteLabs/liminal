@@ -35,14 +35,14 @@ describe('TUI Integration v2.0', () => {
       { id: 1, code: 'setup()', timestamp: 1000 },
       { id: 2, code: 'draw()', timestamp: 2000 },
     ];
-    
+
     const props = {
       iterations,
       currentIndex: 0,
       isPlaying: false,
     };
-    
-    expect(props.iterations).toBeDefined();
+
+    expect(props.iterations).toEqual(iterations);
     expect(props.iterations.length).toBe(2);
     expect(props.currentIndex).toBeGreaterThanOrEqual(0);
     expect(props.currentIndex).toBeLessThan(iterations.length);
@@ -50,15 +50,15 @@ describe('TUI Integration v2.0', () => {
 
   test('X-Ray panel receives LLM output', () => {
     const rawOutput = ['token1', 'token2', 'token3'];
-    
+
     const props = {
       iterations: [],
       currentIndex: 0,
       rawOutput,
       isStreaming: true,
     };
-    
-    expect(props.rawOutput).toBeDefined();
+
+    expect(props.rawOutput).toEqual(['token1', 'token2', 'token3']);
     expect(props.rawOutput.length).toBe(3);
     expect(props.isStreaming).toBe(true);
   });
@@ -125,9 +125,9 @@ describe('TUI Integration v2.0', () => {
       code: 'function setup() {}',
       timestamp: Date.now(),
     };
-    
-    expect(iteration.id).toBeDefined();
-    expect(iteration.code).toBeDefined();
-    expect(iteration.timestamp).toBeDefined();
+
+    expect(iteration.id).toBe(1);
+    expect(iteration.code).toBe('function setup() {}');
+    expect(iteration.timestamp).toBeGreaterThan(0);
   });
 });

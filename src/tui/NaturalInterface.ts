@@ -16,6 +16,7 @@ import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
 import { Logger } from '../utils/Logger.js';
 import { PendingActionStore } from './PendingActionStore.js';
+import { commands } from './commands.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -434,61 +435,19 @@ export class NaturalInterface {
   }
 
   private async handlePreview(filePath: string): Promise<NaturalInputResult> {
-    if (!filePath) {
-      return { type: 'command', response: 'Please specify a file path. Usage: preview <file>', shouldContinue: true };
-    }
-
-    // Route to preview system
-    const { browserLauncher } = await import('./preview/BrowserLauncher.js');
-    const url = await browserLauncher.previewFile(filePath);
-
-    return {
-      type: 'command',
-      response: `\uD83C\uDF10 Opened in browser: ${url}`,
-      shouldContinue: true,
-    };
+    return this.executeSharedCommand('preview', filePath ? [filePath] : []);
   }
 
   private async handlePlay(filePath: string): Promise<NaturalInputResult> {
-    if (!filePath) {
-      return { type: 'command', response: 'Please specify an audio file. Usage: play <audio-file>', shouldContinue: true };
-    }
-
-    const { audioPlayer } = await import('./preview/AudioPlayer.js');
-    const result = await audioPlayer.play(filePath);
-    if (!result.success) {
-      return { type: 'command', response: `Error: ${result.error}`, shouldContinue: true };
-    }
-
-    return {
-      type: 'command',
-      response: `Playing ${audioPlayer.getAudioInfo(filePath).format} audio...`,
-      shouldContinue: true,
-    };
+    return this.executeSharedCommand('play', filePath ? [filePath] : []);
   }
 
   private async handleStop(): Promise<NaturalInputResult> {
-    const { audioPlayer } = await import('./preview/AudioPlayer.js');
-    if (!audioPlayer.isPlaying()) {
-      return { type: 'command', response: 'No audio playing', shouldContinue: true };
-    }
-    audioPlayer.stop();
-    return { type: 'command', response: '⏹️ Audio stopped', shouldContinue: true };
+    return this.executeSharedCommand('stop', []);
   }
 
   private async handleBrowser(filePath: string): Promise<NaturalInputResult> {
-    const { browserLauncher } = await import('./preview/BrowserLauncher.js');
-    if (filePath) {
-      const url = await browserLauncher.previewFile(filePath);
-      return { type: 'command', response: `🌐 Opened: ${url}`, shouldContinue: true };
-    }
-
-    const url = await browserLauncher.reopenLast();
-    if (!url) {
-      return { type: 'command', response: 'No previous preview. Use /preview <file> first.', shouldContinue: true };
-    }
-
-    return { type: 'command', response: `🌐 Reopened: ${url}`, shouldContinue: true };
+    return this.executeSharedCommand('browser', filePath ? [filePath] : []);
   }
 
   private handleHelp(): NaturalInputResult {
@@ -653,5 +612,30 @@ export class NaturalInterface {
 
   getPendingActions() {
     return this.pendingActions.list();
+  }
+
+  private async executeSharedCommand(
+    commandName: 'preview' | 'play' | 'stop' | 'browser',
+    args: string[],
+  ): Promise<NaturalInputResult> {
+    const response = await commands[commandName].execute(args, {
+      agent: this.harnessAgent,
+      tasks: this.tasks,
+      logs: [],
+      addLog: this.onLog,
+      setStatusMessage: this.onStatus,
+      addOutput: (_type, content) => {
+        this.addMessage('assistant', content);
+      },
+      createPendingAction: (kind, task) => ({ id: this.pendingActions.create(kind, task as AgentTask | LLMTask).id }),
+      confirmPendingAction: async (id) => this.handleConfirm(id).then((result) => result.response),
+      cancelPendingAction: (id) => this.pendingActions.cancel(id),
+    });
+
+    return {
+      type: 'command',
+      response,
+      shouldContinue: true,
+    };
   }
 }

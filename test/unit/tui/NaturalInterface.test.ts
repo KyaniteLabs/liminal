@@ -14,6 +14,7 @@ const {
   mockAudioIsPlaying,
   mockAudioStop,
   mockAudioInfo,
+  mockAudioWaveform,
   mockOnStatus,
   mockOnLog,
 } = vi.hoisted(() => ({
@@ -37,6 +38,7 @@ const {
   mockAudioIsPlaying: vi.fn(() => false),
   mockAudioStop: vi.fn(),
   mockAudioInfo: vi.fn((filePath: string) => ({ name: filePath, format: 'MP3' })),
+  mockAudioWaveform: vi.fn(() => '▃▅▇█'),
   mockOnStatus: vi.fn(),
   mockOnLog: vi.fn(),
 }));
@@ -76,6 +78,7 @@ vi.mock('../../../src/tui/preview/AudioPlayer.js', () => ({
     isPlaying: mockAudioIsPlaying,
     stop: mockAudioStop,
     getAudioInfo: mockAudioInfo,
+    getWaveform: mockAudioWaveform,
   },
 }));
 

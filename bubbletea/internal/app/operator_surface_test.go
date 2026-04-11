@@ -43,7 +43,7 @@ func TestViewRendersOperatorSurface(t *testing.T) {
 	m.refreshViewports()
 
 	view := m.View()
-	for _, want := range []string{"Task", "Build login page", "Phase", "Edit", "readFile", "Changed: 1 file", "src/auth.ts", "Verification", "vitest auth", "Artifacts", "Transcript", "Help", "Ctrl+T", "Ctrl+A", "Ctrl+Y"} {
+	for _, want := range []string{"Conversation", "Operator surface", "Task", "Build login page", "Phase", "Edit", "readFile", "Changed: 1 file", "src/auth.ts", "Verification", "vitest auth", "Artifacts", "Transcript", "Help", "Ctrl+T", "Ctrl+A", "Ctrl+Y"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("expected view to contain %q\n%s", want, view)
 		}
@@ -175,5 +175,26 @@ func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
 		if !strings.Contains(surface, want) {
 			t.Fatalf("expected operator surface to contain %q\n%s", want, surface)
 		}
+	}
+}
+
+func TestWindowResizeKeepsTextareaWidthInSync(t *testing.T) {
+	m := NewModel("http://localhost:0")
+
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 36})
+	m = updated.(Model)
+	initialWidth := m.TextInput.Width()
+	if initialWidth <= 0 {
+		t.Fatalf("expected positive initial textarea width, got %d", initialWidth)
+	}
+
+	updated, _ = m.Update(tea.WindowSizeMsg{Width: 100, Height: 30})
+	m = updated.(Model)
+	resizedWidth := m.TextInput.Width()
+	if resizedWidth <= 0 {
+		t.Fatalf("expected positive resized textarea width, got %d", resizedWidth)
+	}
+	if resizedWidth >= initialWidth {
+		t.Fatalf("expected resized textarea width to shrink (initial=%d resized=%d)", initialWidth, resizedWidth)
 	}
 }

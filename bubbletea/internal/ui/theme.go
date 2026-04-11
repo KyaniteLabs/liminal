@@ -195,6 +195,16 @@ var (
 			Foreground(FgText).
 			Bold(true)
 
+	PaneTitleStyle = lipgloss.NewStyle().
+			Foreground(FgText).
+			Bold(true)
+
+	PaneStatusPillStyle = lipgloss.NewStyle().
+				Foreground(BgBase).
+				Background(AccentCyan).
+				Bold(true).
+				Padding(0, 1)
+
 	PanelMetaStyle = lipgloss.NewStyle().
 			Foreground(FgMuted)
 

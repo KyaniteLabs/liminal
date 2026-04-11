@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-08  
+**Date:** 2026-04-11  
 **Status:** 330+ commits, forensic audit fixes complete  
-**Branch:** main
+**Branch:** fix/bubbletea-operator-surface
 
 ---
 
@@ -11,8 +11,8 @@
 
 Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
 
-- **21 Subsystems** (8 core + 14 supporting)
-- **18 Guardrails** (M1-M11 implemented, M12-M18 planned)
+- **28 Documented Systems** across core runtime, operator surfaces, and support infrastructure
+- **18 Guardrails** (M1-M18 implemented)
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
 - **Meta-Harness** self-improvement system
@@ -187,7 +187,7 @@ Failures:   0 critical
 │  │  M9:  ✅ Semantic Alignment         - SemanticValidator             │    │
 │  │  M10: ✅ Runtime Health             - RuntimeHealthMonitor          │    │
 │  │  M11: ✅ Accessibility              - AccessibilityGuardrails       │    │
-│  │  M12-M18: ⚪ Planned/Future                                         │    │
+│  │  M12-M18: ✅ Compliance (Privacy → Resilience)                      │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    ↓                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
@@ -893,7 +893,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 
 ## Known Limitations
 
-1. **M12-M18:** Not yet implemented (M1-M11 complete)
+1. **M12-M18 Coverage:** Guardrails are implemented, but broader dogfood and operational validation is still ongoing
 2. **Template Removal:** All template-based generation removed (pure LLM now)
 3. **Browser Dependency:** M9-M11 require Puppeteer/Playwright
 4. **Local Models:** 16k context limit (tier detection respects this)
@@ -942,7 +942,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 ### Remaining Work
 4. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
 5. 🔄 Cloud provider testing (requires API keys)
-6. 🔄 Implement M12-M18 guardrails (future)
+6. 🔄 Bubble Tea operator-surface rollout and broader operator-event emission coverage
 7. 🔄 Community plugins (future)
 
 ### Metrics

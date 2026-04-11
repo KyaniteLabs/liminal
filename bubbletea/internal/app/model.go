@@ -8,7 +8,7 @@ import (
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
 	"github.com/atotto/clipboard"
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
@@ -107,6 +107,8 @@ const (
 	MaxActivityLog = 100
 	// MaxChangedFiles bounds the changed files list.
 	MaxChangedFiles = 100
+	// ChatInputHeight keeps the textarea compact while supporting multiline input.
+	ChatInputHeight = 3
 )
 
 type Model struct {
@@ -117,7 +119,7 @@ type Model struct {
 	// Two-column viewports
 	ChatViewport    viewport.Model
 	PreviewViewport viewport.Model
-	TextInput       textinput.Model
+	TextInput       textarea.Model
 	Program         *tea.Program
 	Ready           bool
 	FocusPane       FocusPane
@@ -191,11 +193,14 @@ type Model struct {
 }
 
 func NewModel(bridgeURL string) Model {
-	ti := textinput.New()
+	ti := textarea.New()
 	ti.Placeholder = "Type your message..."
 	ti.Prompt = "> "
 	ti.CharLimit = 2000
-	ti.Width = 80
+	ti.ShowLineNumbers = false
+	ti.SetHeight(ChatInputHeight)
+	ti.SetWidth(80)
+	_ = ti.Focus()
 
 	// Create glamour renderer for markdown + syntax highlighting
 	renderer, err := glamour.NewTermRenderer(

@@ -34,10 +34,15 @@ func (m Model) View() string {
 	if strings.TrimSpace(chatContent) == "" {
 		chatContent = m.renderChatContent()
 	}
+	chatPaneContent := lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.renderPaneHeader("Conversation", m.chatPaneStatus()),
+		chatContent,
+	)
 	chatPane := ui.ChatPaneStyle.
 		Width(chatWidth).
 		Height(paneHeight).
-		Render(chatContent)
+		Render(chatPaneContent)
 
 	rightStyle := ui.OperatorPaneStyle
 	if m.FocusPane == FocusPreview {
@@ -52,7 +57,7 @@ func (m Model) View() string {
 		}
 		rightContent = lipgloss.JoinVertical(
 			lipgloss.Left,
-			ui.PanelTitleStyle.Render("Operator surface"),
+			m.renderPaneHeader("Operator surface", m.operatorPaneStatus()),
 			operatorContent,
 		)
 	} else {
@@ -66,6 +71,39 @@ func (m Model) View() string {
 
 	body := lipgloss.JoinHorizontal(lipgloss.Top, chatPane, rightPane)
 	return lipgloss.JoinVertical(lipgloss.Left, header, body, footer)
+}
+
+func (m Model) renderPaneHeader(title string, status string) string {
+	header := ui.PaneTitleStyle.Render(title)
+	if strings.TrimSpace(status) == "" {
+		return header
+	}
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		header,
+		" ",
+		ui.PaneStatusPillStyle.Render(status),
+	)
+}
+
+func (m Model) chatPaneStatus() string {
+	if strings.TrimSpace(m.ActiveResponse) != "" {
+		return "Streaming"
+	}
+	if !m.Connected {
+		return "Offline"
+	}
+	return "Live"
+}
+
+func (m Model) operatorPaneStatus() string {
+	if m.Mode == "ACTION" {
+		return "Review first"
+	}
+	if m.FocusPane == FocusPreview {
+		return "Focused"
+	}
+	return "Live state"
 }
 
 func (m Model) renderHeader() string {

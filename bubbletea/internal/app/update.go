@@ -127,7 +127,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.PreviewViewport.Style = previewViewportStyle()
 			m.PreviewViewport.SetContent(m.renderOperatorSurface(previewWidth))
 
-			m.TextInput.Width = chatWidth - 4
+			m.TextInput.SetWidth(chatWidth - 4)
+			m.TextInput.SetHeight(ChatInputHeight)
 			m.Ready = true
 		} else {
 			chatWidth := msg.Width*55/100 - 4
@@ -138,7 +139,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ChatViewport.Height = paneHeight
 			m.PreviewViewport.Width = previewWidth
 			m.PreviewViewport.Height = paneHeight - 2
-			m.TextInput.Width = chatWidth - 4
+			m.TextInput.SetWidth(chatWidth - 4)
+			m.TextInput.SetHeight(ChatInputHeight)
 			m.refreshViewports()
 		}
 		return m, nil
@@ -229,10 +231,13 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// If textinput is focused and it's a regular key, pass to textinput first
 		if m.FocusPane == FocusChat {
-			switch msg.String() {
-			case "ctrl+c":
-				return m, tea.Quit
-			case "enter":
+			if msg.Type == tea.KeyEnter {
+				if msg.Alt {
+					var cmd tea.Cmd
+					m.TextInput, cmd = m.TextInput.Update(tea.KeyMsg{Type: tea.KeyEnter})
+					return m, cmd
+				}
+
 				input := m.TextInput.Value()
 				if input == "" {
 					return m, nil
@@ -261,7 +266,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.refreshViewports()
 				return m, cmd
+			}
 
+			switch msg.String() {
+			case "ctrl+c":
+				return m, tea.Quit
 			case "tab":
 				m.FocusPane = FocusPreview
 				m.TextInput.Blur()

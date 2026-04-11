@@ -90,6 +90,28 @@ export interface GitStatusResult {
   short: string;
 }
 
+export interface LocalCheckpointParams {
+  /** Short description of what was accomplished */
+  message: string;
+  /** Task ID for traceability */
+  taskId?: string;
+  /** Whether to run build verification before committing (default: true) */
+  verifyBuild?: boolean;
+}
+
+export interface LocalCheckpointResult {
+  /** The commit hash of the checkpoint */
+  commitHash: string;
+  /** Short commit hash */
+  shortHash: string;
+  /** Branch the checkpoint was created on */
+  branch: string;
+  /** Number of files changed */
+  filesChanged: number;
+  /** Whether build verification was run and passed */
+  buildVerified: boolean;
+}
+
 export interface CreateBackupParams {
   path: string;
 }

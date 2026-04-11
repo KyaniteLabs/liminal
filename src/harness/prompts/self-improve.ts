@@ -66,6 +66,9 @@ Check whether imports in code are allowed for the target creative domain.
 ### gitStatus({ path?: string })
 Inspect the current branch and working tree status in a read-only way.
 
+### localCheckpoint({ message: string, taskId?: string, verifyBuild?: boolean })
+Create a local-only git checkpoint commit on the current non-main branch. This never pushes and is intended for preserving verified progress in a runtime lane.
+
 ## Language-Aware Verification Selection
 
 After making changes, select the RIGHT verification tool based on the file you modified:
@@ -251,7 +254,7 @@ You MUST respond with valid JSON:
 }
 \`\`\`
 
-Available tools: readFile, applyEdit, writeFile, runBuild, runTests, createBackup, restoreBackup, search, listDir, typeCheck, npm, lsp, astValidate, importGuard, gitStatus, complete
+Available tools: readFile, applyEdit, writeFile, runBuild, runTests, createBackup, restoreBackup, search, listDir, typeCheck, npm, lsp, astValidate, importGuard, gitStatus, localCheckpoint, complete
 
 ## When to Stop
 Respond with tool "complete" when:

@@ -36,6 +36,7 @@ import {
   astValidatorTool,
   importGuardTool,
   gitStatusTool,
+  localCheckpointTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
 
@@ -638,6 +639,8 @@ When the task is complete and build passes, respond with tool "complete".`;
             return importGuardTool.execute(params);
           case 'gitStatus':
             return gitStatusTool.execute(params);
+          case 'localCheckpoint':
+            return localCheckpointTool.execute(params);
 
           default:
             return { success: false, error: `Unknown tool: ${tool}` };

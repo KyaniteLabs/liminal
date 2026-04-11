@@ -7,6 +7,7 @@ import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatu
 import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import { previewRouter } from '../tui/preview/PreviewRouter.js';
 import { browserLauncher } from '../tui/preview/BrowserLauncher.js';
 import { audioPlayer } from '../tui/preview/AudioPlayer.js';
@@ -469,6 +470,8 @@ export class TuiBridgeService {
         await this.executeBrowserAction(sessionId, args);
         return;
       case '/run':
+        await this.executeRunAction(sessionId, args, llm);
+        return;
       case '/agent':
         this.emit(sessionId, {
           type: 'error',
@@ -585,6 +588,35 @@ export class TuiBridgeService {
     this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'html' });
     this.emit(sessionId, { type: 'preview.completed', sessionId, content: url, previewType: 'html' });
     this.emitChatStatus(sessionId, 'browser');
+  }
+
+  private async executeRunAction(sessionId: string, args: string[], llm?: LLMClient): Promise<void> {
+    const taskId = args[0]?.trim();
+    if (!taskId) {
+      this.emit(sessionId, { type: 'error', sessionId, message: 'Run requires a task ID.' });
+      this.emitChatStatus(sessionId, 'run');
+      return;
+    }
+    if (!llm) {
+      this.emit(sessionId, { type: 'error', sessionId, message: 'No LLM available for task execution.' });
+      this.emitChatStatus(sessionId, `run ${taskId}`);
+      return;
+    }
+
+    const taskPath = path.join(process.cwd(), 'harness-tasks', `${taskId}.json`);
+    const task = JSON.parse(await fs.readFile(taskPath, 'utf-8'));
+    const { createHarnessAgent } = await import('../harness/index.js');
+    const agent = createHarnessAgent(llm);
+
+    this.emit(sessionId, { type: 'response.started', sessionId });
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Running task ${taskId}...` });
+
+    const session = await agent.executeTask({ ...task, approved: true });
+    const summary = `Task ${taskId}: ${String(session.status).toUpperCase()}`;
+
+    this.emit(sessionId, { type: 'response.completed', sessionId, content: summary });
+    this.emit(sessionId, { type: 'response.committed', sessionId, content: summary });
+    this.emitChatStatus(sessionId, `run ${taskId}`);
   }
 
   private emitChatStatus(sessionId: string, activeTask: string): void {

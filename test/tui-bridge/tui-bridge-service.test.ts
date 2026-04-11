@@ -22,6 +22,10 @@ const { mockPreviewRoute, mockPreviewFile, mockReopenLast, mockAudioPlay, mockWa
   mockWaveform: vi.fn(() => '▁▂▃▄'),
 }));
 
+const { mockHarnessExecuteTask } = vi.hoisted(() => ({
+  mockHarnessExecuteTask: vi.fn(async () => ({ status: 'success' })),
+}));
+
 vi.mock('../../src/core/RalphLoop.js', () => ({
   RalphLoop: {
     run: mockRalphRun,
@@ -46,6 +50,12 @@ vi.mock('../../src/tui/preview/AudioPlayer.js', () => ({
     play: mockAudioPlay,
     getWaveform: mockWaveform,
   },
+}));
+
+vi.mock('../../src/harness/index.js', () => ({
+  createHarnessAgent: () => ({
+    executeTask: mockHarnessExecuteTask,
+  }),
 }));
 
 import { TuiBridgeService } from '../../src/tui-bridge/TuiBridgeService.js';
@@ -178,7 +188,7 @@ describe('TuiBridgeService', () => {
 
     await service.submitInput(session.sessionId, {
       mode: 'action',
-      text: '/run M1',
+      text: '/agent fix this',
       clientIntent: 'action',
     });
 
@@ -186,7 +196,30 @@ describe('TuiBridgeService', () => {
     await service.confirmAction(session.sessionId, pending.id);
 
     expect(service.getEvents(session.sessionId).some(
-      (event) => event.type === 'error' && event.message.includes('/run is not yet executable')
+      (event) => event.type === 'error' && event.message.includes('/agent is not yet executable')
+    )).toBe(true);
+  });
+
+  it('executes confirmed run actions after approval', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const llm = { getConfig: () => ({ model: 'glm-5.1' }) } as any;
+
+    await service.submitInput(session.sessionId, {
+      mode: 'action',
+      text: '/run M1',
+      clientIntent: 'action',
+    });
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id, llm);
+
+    expect(mockHarnessExecuteTask).toHaveBeenCalledWith(expect.objectContaining({
+      id: 'M1',
+      approved: true,
+    }));
+    expect(service.getEvents(session.sessionId).some(
+      (event) => event.type === 'response.completed' && event.content.includes('Task M1: SUCCESS')
     )).toBe(true);
   });
 

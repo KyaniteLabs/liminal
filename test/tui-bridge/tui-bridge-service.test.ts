@@ -26,6 +26,10 @@ const { mockHarnessExecuteTask } = vi.hoisted(() => ({
   mockHarnessExecuteTask: vi.fn(async () => ({ status: 'success' })),
 }));
 
+const { mockAgentExecuteTask } = vi.hoisted(() => ({
+  mockAgentExecuteTask: vi.fn(async () => ({ status: 'success' })),
+}));
+
 vi.mock('../../src/core/RalphLoop.js', () => ({
   RalphLoop: {
     run: mockRalphRun,
@@ -55,6 +59,9 @@ vi.mock('../../src/tui/preview/AudioPlayer.js', () => ({
 vi.mock('../../src/harness/index.js', () => ({
   createHarnessAgent: () => ({
     executeTask: mockHarnessExecuteTask,
+  }),
+  createLLMModeAgent: () => ({
+    executeTask: mockAgentExecuteTask,
   }),
 }));
 
@@ -182,9 +189,10 @@ describe('TuiBridgeService', () => {
     )).toBe(true);
   });
 
-  it('surfaces an explicit error for unsupported confirmed bridge actions', async () => {
+  it('executes confirmed agent actions after approval', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();
+    const llm = { getConfig: () => ({ model: 'glm-5.1' }) } as any;
 
     await service.submitInput(session.sessionId, {
       mode: 'action',
@@ -193,10 +201,15 @@ describe('TuiBridgeService', () => {
     });
 
     const pending = service.getStatus(session.sessionId).pendingAction!;
-    await service.confirmAction(session.sessionId, pending.id);
+    await service.confirmAction(session.sessionId, pending.id, llm);
 
+    expect(mockAgentExecuteTask).toHaveBeenCalledWith(expect.objectContaining({
+      description: 'fix this',
+      approved: true,
+      maxSteps: 15,
+    }));
     expect(service.getEvents(session.sessionId).some(
-      (event) => event.type === 'error' && event.message.includes('/agent is not yet executable')
+      (event) => event.type === 'response.completed' && event.content.includes('Agent task SUCCESS')
     )).toBe(true);
   });
 

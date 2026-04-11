@@ -473,12 +473,7 @@ export class TuiBridgeService {
         await this.executeRunAction(sessionId, args, llm);
         return;
       case '/agent':
-        this.emit(sessionId, {
-          type: 'error',
-          sessionId,
-          message: `${rawCommand} is not yet executable from the bridge confirmation surface.`,
-        });
-        this.emitChatStatus(sessionId, trimmed);
+        await this.executeAgentAction(sessionId, args, llm);
         return;
       default:
         if (isGenerationRequest(trimmed) && llm) {
@@ -617,6 +612,40 @@ export class TuiBridgeService {
     this.emit(sessionId, { type: 'response.completed', sessionId, content: summary });
     this.emit(sessionId, { type: 'response.committed', sessionId, content: summary });
     this.emitChatStatus(sessionId, `run ${taskId}`);
+  }
+
+  private async executeAgentAction(sessionId: string, args: string[], llm?: LLMClient): Promise<void> {
+    const description = args.join(' ').trim();
+    if (!description) {
+      this.emit(sessionId, { type: 'error', sessionId, message: 'Agent requires a task description.' });
+      this.emitChatStatus(sessionId, 'agent');
+      return;
+    }
+    if (!llm) {
+      this.emit(sessionId, { type: 'error', sessionId, message: 'No LLM available for agent execution.' });
+      this.emitChatStatus(sessionId, `agent ${description}`);
+      return;
+    }
+
+    const { createLLMModeAgent } = await import('../harness/index.js');
+    const agent = createLLMModeAgent(llm);
+    const task = {
+      id: `bridge-agent-${Date.now()}`,
+      title: description.slice(0, 50),
+      description,
+      approved: true,
+      maxSteps: 15,
+    };
+
+    this.emit(sessionId, { type: 'response.started', sessionId });
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Running agent task: ${task.title}` });
+
+    const session = await agent.executeTask(task);
+    const summary = `Agent task ${String(session.status).toUpperCase()}: ${task.title}`;
+
+    this.emit(sessionId, { type: 'response.completed', sessionId, content: summary });
+    this.emit(sessionId, { type: 'response.committed', sessionId, content: summary });
+    this.emitChatStatus(sessionId, `agent ${task.title}`);
   }
 
   private emitChatStatus(sessionId: string, activeTask: string): void {

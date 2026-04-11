@@ -132,6 +132,35 @@ All prompt surfaces below were reviewed in this audit.
 | Compost | `compost.extract-code`, `compost.extract-image`, `compost.collision-merge`, `compost.offspring-scoring`, `compost.digest-narrative`, `compost.seed-extraction`, `compost.synthesis` | Low | Audited; concise and fit-for-purpose |
 | Supporting prompt builders | `PromptBuilder`, `LLMClient.generateP5Sketch()` fallback prompt | Medium | Audited; note future opportunity to unify fallback wording and stable-prefix caching patterns |
 
+## Ranked ROI view after the audit
+
+This is the final ranking view I used after the code changes above were landed and verified.
+
+| Rank | Surface | Why it ranked here | Outcome |
+|---:|---|---|---|
+| 1 | `src/harness/prompts/self-improve.ts` | Central autonomous harness path; highest leverage prompt in repo | **Fixed** |
+| 2 | `src/prompts/p5.ts` | Core generation path with direct contradiction risk | **Fixed** |
+| 3 | `src/prompts/three.ts` | Core generation path with framework-accuracy risk | **Fixed** |
+| 4 | `src/prompts/glsl.ts` | Core generation path with contradiction + prompt bloat | **Fixed** |
+| 5 | `src/prompts/remotion.ts` | Core generation path; weaker prior-code separation | **Fixed** |
+| 6 | `src/prompts/specialized/chat.ts` | General assistant path; real template bug + weak structure | **Fixed** |
+| 7 | `src/prompts/specialized/evaluation.ts` | Downstream scoring stability surface | **Fixed** |
+| 8 | `src/prompts/collaboration.ts` / `src/prompts/collab-internal.ts` | Repeated critique surfaces in collaboration flow | **Fixed** |
+| 9 | `src/prompts/audio.ts` / `src/prompts/aesthetic.ts` | Real PromptLibrary interpolation bugs | **Fixed** |
+| 10 | `src/llm/PromptBuilder.ts` / `src/llm/LLMClient.ts` fallback prompts | High leverage for lower-capability / fallback model paths | **Fixed** |
+| 11 | `src/prompts/hydra.ts` | Large, domain-heavy, but no concrete contradiction or wiring defect found | **Audited; deferred** |
+| 12 | `src/prompts/blog-to-video.ts` | Very large prompt surfaces, but structure appears intentionally spec-heavy; needs eval-led changes, not taste edits | **Audited; deferred** |
+| 13 | `src/prompts/music.ts` | Strong syntax grounding; only one contradiction was fixed in the first slice | **Partially fixed; otherwise stable** |
+| 14 | compost / swarm / persona micro-prompts | Small surfaces, low token cost, low defect risk | **Audited; no change needed** |
+
+## Final remaining-surface finding
+
+After the fourth slice, a stricter prompt sweep did **not** reveal any additional high-ROI bugs on the remaining prompt surfaces. The unresolved opportunities are now mostly architectural or eval-driven:
+
+- move more JSON-shaped prompts to schema-native structured outputs
+- add prompt-lint / eval automation across the full PromptLibrary
+- run targeted evals before trimming the large narrative/Hydra prompts
+
 ## Repo-level findings
 
 ### A. Most valuable bug class found: **prompt self-contradiction**

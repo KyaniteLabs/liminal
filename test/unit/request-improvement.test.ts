@@ -23,7 +23,6 @@ describe('requestImprovement', () => {
 
   test('requestImprovement(validP5Code) returns object with code string when unconfigured', async () => {
     const result = await requestImprovement(validP5Code);
-    expect(result).toBeDefined();
     expect(typeof result.code).toBe('string');
     expect(result.code.length).toBeGreaterThan(0);
     expect(typeof result.improved).toBe('boolean');
@@ -37,13 +36,13 @@ describe('requestImprovement', () => {
 
   test('accepts optional state and still returns code', async () => {
     const result = await requestImprovement(validP5Code, {});
-    expect(result.code).toBeDefined();
     expect(typeof result.code).toBe('string');
+    expect(result.code.length).toBeGreaterThan(0);
   });
 
   test('returns improved=false and error when LLM not configured', async () => {
     const result = await requestImprovement(validP5Code);
     expect(result.improved).toBe(false);
-    expect(result.error).toBeDefined();
+    expect(typeof result.error).toBe('string');
   });
 });

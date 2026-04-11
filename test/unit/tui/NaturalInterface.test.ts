@@ -8,6 +8,7 @@ const {
   mockLoadSoul,
   mockFormatError,
   mockMetaHarnessGetStatus,
+  mockMetaHarnessGetLLMClient,
   mockBrowserLauncherPreview,
   mockBrowserLauncherReopenLast,
   mockAudioPlay,
@@ -32,6 +33,7 @@ const {
     appliedAdaptations: [],
     memory: {},
   })),
+  mockMetaHarnessGetLLMClient: vi.fn(() => ({ getConfig: () => ({ model: 'test-model' }) })),
   mockBrowserLauncherPreview: vi.fn(async (filePath: string) => `http://localhost:3000/${filePath}`),
   mockBrowserLauncherReopenLast: vi.fn(async () => 'http://localhost:3000/last.html'),
   mockAudioPlay: vi.fn(async () => ({ success: true })),
@@ -62,6 +64,7 @@ vi.mock('../../../src/tui/IntentRouter.js', () => ({
 vi.mock('../../../src/harness/index.js', () => ({
   metaHarness: {
     getStatus: mockMetaHarnessGetStatus,
+    getLLMClient: mockMetaHarnessGetLLMClient,
   },
 }));
 

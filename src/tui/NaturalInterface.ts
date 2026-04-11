@@ -342,28 +342,7 @@ export class NaturalInterface {
   }
 
   private async handleExplicitAgent(args: string[]): Promise<NaturalInputResult> {
-    const description = args.join(' ').trim();
-    if (!description) {
-      return {
-        type: 'command',
-        response: 'Please specify a task description. Usage: agent <description>',
-        shouldContinue: true,
-      };
-    }
-
-    const task: LLMTask = {
-      id: `agent-${Date.now()}`,
-      title: description.slice(0, 50),
-      description,
-      maxSteps: 15,
-      approved: false,
-    };
-    const pending = this.pendingActions.create('llm', task);
-    return {
-      type: 'command',
-      response: `Task "${task.title}" created and awaiting approval.\nConfirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`,
-      shouldContinue: true,
-    };
+    return this.executeSharedAgentCommand(args);
   }
 
   private async handleConfirm(actionId: string): Promise<NaturalInputResult> {
@@ -647,6 +626,37 @@ export class NaturalInterface {
     if (!taskId) {
       return { type: 'command', response, shouldContinue: true };
     }
+
+    return {
+      type: 'command',
+      response,
+      shouldContinue: true,
+    };
+  }
+
+  private async executeSharedAgentCommand(args: string[]): Promise<NaturalInputResult> {
+    let response = await commands.agent.execute(args, {
+      agent: this.harnessAgent,
+      tasks: this.tasks,
+      logs: [],
+      addLog: this.onLog,
+      setStatusMessage: this.onStatus,
+      addOutput: (_type, content) => {
+        this.addMessage('assistant', content);
+      },
+      createPendingAction: (kind, task) => ({ id: this.pendingActions.create(kind, task as AgentTask | LLMTask).id }),
+      confirmPendingAction: async (id) => this.handleConfirm(id).then((result) => result.response),
+      cancelPendingAction: (id) => this.pendingActions.cancel(id),
+    });
+
+    response = response
+      .replace('Error: Task description required. ', 'Please specify a task description. ')
+      .replace('\n\nExample: /agent "Fix the Tone.js validation to also check music domain"', '')
+      .replace(
+        'created but not auto-approved.\nThis is a safety containment measure.\nUse /confirm',
+        'created and awaiting approval.\nConfirm with /confirm',
+      )
+      .replace('Usage: /agent <description>', 'Usage: agent <description>');
 
     return {
       type: 'command',

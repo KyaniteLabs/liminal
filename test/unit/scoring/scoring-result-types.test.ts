@@ -45,7 +45,7 @@ vi.mock('../../../src/utils/Logger.js', () => ({
 }));
 
 vi.mock('../../../src/llm/LLMClient.js', () => ({
-  LLMClient: vi.fn().mockImplementation(() => ({ generate: mockGenerate })),
+  LLMClient: vi.fn().mockImplementation(() => ({ generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) }),
 }));
 
 // ── Imports ────────────────────────────────────────────────────────────
@@ -100,7 +100,7 @@ function makeConfig(): CompostConfig {
 }
 
 function makeMockLLM() {
-  return { generate: mockGenerate };
+  return { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) };
 }
 
 // ── LLMScoringStrategy.scoreWithResult() ──────────────────────────────
@@ -223,6 +223,7 @@ describe('FragmentScorer.scoreLLM()', () => {
         success: false,
         code: '',
       }),
+    generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }),
     };
 
     const scorer = new FragmentScorer(makeConfig(), mockLLM as any);
@@ -247,7 +248,8 @@ describe('FragmentScorer.scoreLLM()', () => {
 
   it('returns err when LLM throws', async () => {
     const mockLLM = {
-      generate: vi.fn().mockRejectedValue(new Error('connection refused')),
+      generate: vi.fn().mockRejectedValue(new Error('connection refused'),
+            generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true })),
     };
 
     const scorer = new FragmentScorer(makeConfig(), mockLLM as any);

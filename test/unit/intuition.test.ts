@@ -1849,7 +1849,7 @@ describe('IntuitionEngine', () => {
     mockGenerate.mockResolvedValue({ success: true, code: 'mocked result' });
 
     // Mock LLMClient — shape matches LLMClient.generate() return type
-    const mockLlm = { generate: mockGenerate } as unknown as import('../../src/llm/LLMClient.js').LLMClient;
+    const mockLlm = { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as unknown as import('../../src/llm/LLMClient.js').LLMClient;
 
     const engine = new IntuitionEngine({ llm: mockLlm });
     const dreamEntry = await engine.getDreamEngine().dream('micro');

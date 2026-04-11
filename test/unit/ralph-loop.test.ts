@@ -41,6 +41,7 @@ vi.mock('../../src/llm/LLMClient.js', () => {
           success: true,
         };
       });
+      generateWithToolLoop = vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true });
       generateP5Sketch = vi.fn(async (prompt: string) => {
         const p = prompt.toLowerCase();
         if (p.includes('particle')) {

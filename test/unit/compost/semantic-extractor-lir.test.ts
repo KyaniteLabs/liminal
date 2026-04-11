@@ -18,6 +18,7 @@ const createMockLLM = (): LLMClientLike => ({
     code: 'Mock LLM response',
     success: true,
   }),
+    generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }),
 });
 
 // Test TypeScript file content

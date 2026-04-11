@@ -247,7 +247,7 @@ describe('LLM generation path', () => {
     const result = await generateMusic({
       prompt: 'dreamy pad',
       platform: 'strudel',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(result.code).toBe('s("c3 e3 g3").sound("sawtooth").lpf(800)');
@@ -266,7 +266,7 @@ describe('LLM generation path', () => {
     const result = await generateMusic({
       prompt: 'chiptune',
       platform: 'p5-webaudio',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(result.code).toContain('createCanvas');
@@ -283,7 +283,7 @@ describe('LLM generation path', () => {
       prompt: 'test',
       bpm: 80,
       platform: 'strudel',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(mockRender).toHaveBeenCalledWith('music.strudel', {
@@ -318,7 +318,7 @@ describe('LLM fallback to template', () => {
     const result = await generateMusic({
       prompt: 'empty result',
       platform: 'strudel',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(result.code).toContain('setcps');
@@ -330,7 +330,7 @@ describe('LLM fallback to template', () => {
     const result = await generateMusic({
       prompt: 'whitespace',
       platform: 'strudel',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(result.code).toContain('setcps');
@@ -342,7 +342,7 @@ describe('LLM fallback to template', () => {
     const result = await generateMusic({
       prompt: 'failed',
       platform: 'strudel',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(result.code).toContain('setcps');
@@ -354,7 +354,7 @@ describe('LLM fallback to template', () => {
     const result = await generateMusic({
       prompt: 'error case',
       platform: 'strudel',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(result.code).toContain('setcps');
@@ -367,7 +367,7 @@ describe('LLM fallback to template', () => {
     const result = await generateMusic({
       prompt: 'error',
       platform: 'p5-webaudio',
-      llm: { generate: mockGenerate } as never,
+      llm: { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as never,
     });
 
     expect(result.code).toContain('createOscillator');

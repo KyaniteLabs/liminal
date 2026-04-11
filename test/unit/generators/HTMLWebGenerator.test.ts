@@ -1,18 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGenerate } = vi.hoisted(() => ({
+const { mockGenerate, mockGenerateWithToolLoop } = vi.hoisted(() => ({
   mockGenerate: vi.fn().mockResolvedValue({
     code: '<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>',
     success: true,
+  }),
+  mockGenerateWithToolLoop: vi.fn().mockImplementation(async () => {
+    const r = await mockGenerate();
+    return { content: r.code, toolCalls: [], success: r.success, error: r.error };
   }),
 }));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
-    generateWithToolLoop = vi.fn().mockImplementation(() =>
-      mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
-    );
+    generateWithToolLoop = mockGenerateWithToolLoop;
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -47,6 +49,10 @@ import { HTMLWebGenerator } from '../../../src/generators/html/HTMLWebGenerator.
 describe('HTMLWebGenerator', () => {
   beforeEach(() => {
     mockGenerate.mockClear();
+    mockGenerateWithToolLoop.mockImplementation(async () => {
+      const r = await mockGenerate();
+      return { content: r.code, toolCalls: [], success: r.success, error: r.error };
+    });
   });
 
   it('extracts HTML from markdown code fences', async () => {
@@ -81,20 +87,24 @@ describe('HTMLWebGenerator', () => {
   });
 
   it('throws when LLM output is not valid HTML', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: 'This is just plain text, not HTML at all.',
-      success: true,
-    });
     const gen = new HTMLWebGenerator();
+    const llmClient = (gen as any).llm;
+    llmClient.generateWithToolLoop.mockImplementation(async () => ({
+      content: 'This is just plain text, not HTML at all.',
+      toolCalls: [],
+      success: true,
+    }));
     await expect(gen.generate('bad output')).rejects.toThrow('not valid HTML');
   });
 
   it('validateOutput rejects code without DOCTYPE or html tags', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '```html\n<p>Just a paragraph</p>\n```',
-      success: true,
-    });
     const gen = new HTMLWebGenerator();
+    const llmClient = (gen as any).llm;
+    llmClient.generateWithToolLoop.mockImplementation(async () => ({
+      content: '```html\n<p>Just a paragraph</p>\n```',
+      toolCalls: [],
+      success: true,
+    }));
     await expect(gen.generate('paragraph')).rejects.toThrow('not valid HTML');
   });
 

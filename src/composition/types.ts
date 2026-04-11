@@ -34,6 +34,9 @@ export type BlendMode =
   | 'difference'
   | 'exclusion';
 
+/** Semantic role of a layer within a composition */
+export type LayerRole = 'background' | 'overlay' | 'mask' | 'standalone';
+
 /** Mask modes for layer masking */
 export type MaskMode = 'alpha' | 'luminance' | 'inverse-alpha';
 
@@ -110,6 +113,12 @@ export interface LayerConfig {
 
   /** Size multiplier */
   scale: number;
+
+  /** Semantic role within the composition */
+  role: LayerRole;
+
+  /** Whether this layer renders with a transparent background */
+  transparentBackground: boolean;
 }
 
 /** Metadata about a layer's generation */
@@ -152,6 +161,8 @@ export const DEFAULT_LAYER_CONFIG: LayerConfig = {
   opacity: 1.0,
   position: { x: 0, y: 0 },
   scale: 1.0,
+  role: 'standalone',
+  transparentBackground: false,
 };
 
 /** A complete composition of multiple layers */

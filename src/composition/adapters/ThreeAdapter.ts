@@ -40,6 +40,7 @@ interface THREERenderer {
   render: (scene: THREEScene, camera: THREECamera) => void;
   domElement: HTMLCanvasElement;
   dispose: () => void;
+  setClearColor: (color: number, alpha: number) => void;
 }
 
 /** Three.js Object3D type (simplified) */
@@ -51,7 +52,7 @@ interface THREEObject {
 interface THREEModule {
   Scene: new () => THREEScene;
   PerspectiveCamera: new (fov: number, aspect: number, near: number, far: number) => THREECamera;
-  WebGLRenderer: new () => THREERenderer;
+  WebGLRenderer: new (params?: { alpha?: boolean }) => THREERenderer;
   BoxGeometry: new () => unknown;
   MeshBasicMaterial: new (params: { color: number }) => unknown;
   Mesh: new (geometry: unknown, material: unknown) => THREEObject;
@@ -124,12 +125,21 @@ export class ThreeAdapter implements LayerAdapter {
     const width = settings?.width || 800;
     const height = settings?.height || 600;
 
+    // Transparent background support
+    const isTransparent = layer.config.transparentBackground;
+
     // Create Three.js scene, camera, and renderer
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer();
-    
+    const renderer = new THREE.WebGLRenderer({ alpha: isTransparent });
+
     renderer.setSize(width, height);
+
+    // Transparent background: set clear color with alpha 0
+    if (isTransparent) {
+      renderer.setClearColor(0x000000, 0);
+    }
+
     canvasContainer.appendChild(renderer.domElement);
 
     // Track objects created by this layer
@@ -353,6 +363,13 @@ export class ThreeAdapter implements LayerAdapter {
    * @returns HTML script string
    */
   generateScript(layer: Layer, _settings: GlobalSettings): string {
+    const transparentStyle = layer.config.transparentBackground
+      ? "  container.style.background = 'transparent';\n"
+      : '';
+    const blendStyle = layer.config.blendMode !== 'normal'
+      ? `  container.style.mixBlendMode = '${layer.config.blendMode}';\n`
+      : '';
+
     return `
 <!-- Three.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -361,8 +378,9 @@ export class ThreeAdapter implements LayerAdapter {
   const container = document.createElement('div');
   container.className = 'layer';
   container.style.zIndex = ${layer.config.zIndex};
-  document.getElementById('composition').appendChild(container);
-  
+  container.style.opacity = ${layer.config.opacity};
+${transparentStyle}${blendStyle}  document.getElementById('composition').appendChild(container);
+
 ${layer.code.split('\n').map(line => '  ' + line).join('\n')}
 })();
 </script>`;

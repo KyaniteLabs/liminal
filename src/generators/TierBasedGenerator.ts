@@ -14,15 +14,20 @@ import { detectModelTier, trimContext, type ModelTier } from '../llm/ModelTier.j
 import { harnessMemory } from '../harness/HarnessMemory.js';
 import { metaHarness } from '../harness/MetaHarnessIntegration.js';
 import { GenerationError } from '../errors/GenerationError.js';
-import { Layer, createLayer, DomainType } from '../composition/types.js';
+import { Layer, createLayer, DomainType, LayerRole } from '../composition/types.js';
 import { Logger } from '../utils/Logger.js';
 import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
+import { GeneratorHarnessTools } from './GeneratorHarnessTools.js';
 
 export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;
   bypassCache?: boolean;
   contextBudget?: number;
+  /** Layer role hint — influences prompt and created Layer config */
+  layerRole?: LayerRole;
+  /** Whether this layer should render with a transparent background */
+  transparentBackground?: boolean;
 }
 
 export abstract class TierBasedGenerator {
@@ -30,6 +35,8 @@ export abstract class TierBasedGenerator {
   protected promptBuilder: PromptBuilder;
   protected tier: ModelTier;
   protected domain: string;
+  /** Harness tools for bounded domain-contract sampling and failure-guided repair */
+  protected harnessTools: GeneratorHarnessTools;
   private _configNeedsResolution: boolean;
   private _configResolutionPromise: Promise<void> | null = null;
 
@@ -53,6 +60,7 @@ export abstract class TierBasedGenerator {
 
     this.tier = detectModelTier(this.llm.getConfig());
     this.promptBuilder = new PromptBuilder(this.llm.getConfig());
+    this.harnessTools = new GeneratorHarnessTools();
   }
 
   /**
@@ -112,7 +120,7 @@ export abstract class TierBasedGenerator {
    */
   async generateLayer(prompt: string, options?: TierBasedGeneratorOptions): Promise<Layer> {
     const response = await this.generateInternal(prompt, options);
-    
+
     return createLayer(
       this.domain as DomainType,
       response.code,
@@ -124,6 +132,10 @@ export abstract class TierBasedGenerator {
         thinking: response.thinking,
         recoveredFromThinking: response.recoveredFromThinking,
         validation: { passed: true },
+      },
+      {
+        role: options?.layerRole,
+        transparentBackground: options?.transparentBackground,
       }
     );
   }
@@ -167,18 +179,35 @@ export abstract class TierBasedGenerator {
     // 3. Build tier-appropriate prompt
     const builtPrompt = this.promptBuilder.build(context);
 
+    // 4. Gather domain harness hints (skeleton + API + hardening)
+    //    These are additive rails — the model gets better context without static fallback.
+    const harnessCtx = this.harnessTools.prepare(this.domain);
+    const harnessHint = this.buildHarnessHint(harnessCtx);
+
     Logger.info('TierBasedGenerator', `Using ${this.tier} tier (${budget} token budget)`);
 
-    // 4. Generate with tool support (validate_syntax, check_imports)
+    // 5. Generate with tool support (validate_syntax, check_imports)
+    const systemPrompt = this.tier === 'tiny'
+      ? ''
+      : (builtPrompt.system + (harnessHint ? `\n\n${harnessHint}` : ''));
+    const userPrompt = this.tier === 'tiny'
+      ? (builtPrompt.combined || builtPrompt.user)
+      : builtPrompt.user;
+
     const toolResult = await this.llm.generateWithToolLoop({
-      systemPrompt: this.tier === 'tiny' ? '' : builtPrompt.system,
-      userPrompt: this.tier === 'tiny' ? (builtPrompt.combined || builtPrompt.user) : builtPrompt.user,
+      systemPrompt,
+      userPrompt,
       tools: GENERATOR_TOOLS,
       toolExecutor: createGeneratorToolExecutor(this.domain),
       maxIterations: 3,
       signal: options?.signal,
     });
-    const response: LLMResponse = { code: toolResult.content, success: toolResult.success, error: toolResult.error };
+
+    let response: LLMResponse = {
+      code: toolResult.content,
+      success: toolResult.success,
+      error: toolResult.error,
+    };
 
     // Try to extract code from thinking if code is empty but thinking has content
     if (!response.code || response.code.trim() === '') {
@@ -189,13 +218,13 @@ export abstract class TierBasedGenerator {
           response.recoveredFromThinking = true;
         }
       }
-      
+
       // Still empty after extraction attempt
       if (!response.code || response.code.trim() === '') {
         throw new GenerationError(`${this.constructor.name}: LLM returned empty code`, this.domain);
       }
     }
-    
+
     // Post-generation validation: check for minimum viable code
     const strippedCode = response.code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').trim();
     if (strippedCode.length < 10) {
@@ -206,15 +235,141 @@ export abstract class TierBasedGenerator {
       );
     }
 
-    // 5. Domain-specific validation
+    // 6. Domain-specific validation
     const validated = this.validateOutput(response.code);
     if (!validated.valid) {
-      throw new GenerationError(`${this.constructor.name}: ${validated.error}`, this.domain, {
-        validationError: validated.error
-      });
+      // Attempt one recovery round using harness-guided repair prompt
+      const recoveryResult = await this.attemptRecovery(
+        prompt,
+        response.code,
+        validated.error ?? 'Validation failed',
+        systemPrompt,
+        userPrompt,
+        options?.signal
+      );
+
+      if (recoveryResult) {
+        response = recoveryResult;
+      } else {
+        throw new GenerationError(`${this.constructor.name}: ${validated.error}`, this.domain, {
+          validationError: validated.error,
+        });
+      }
     }
 
-    // 6. Report to meta-harness with thinking trace for analysis
+    // 7. Record successful generation to harness memory
+    if (process.env.NODE_ENV !== 'test') {
+      await metaHarness.onGenerationComplete({
+        success: true,
+        model: this.llm.getConfig().model || 'unknown',
+        domain: this.domain,
+        prompt,
+        code: response.code,
+        duration: 0,
+        thinking: response.thinking,
+        recoveredFromThinking: response.recoveredFromThinking,
+      });
+
+      harnessMemory.recordEpisode({
+        type: 'generation',
+        domain: this.domain,
+        prompt,
+        code: response.code,
+      });
+
+      this.harnessTools.recordSuccess(this.domain, response.code);
+    }
+
+    return response;
+  }
+
+  /**
+   * Build a harness hint string from a GeneratorHarnessContext.
+   * Combines skeleton, sampled APIs, and hardening hints into a compact
+   * advisory block that is prepended to the system prompt.
+   */
+  private buildHarnessHint(ctx: ReturnType<GeneratorHarnessTools['prepare']>): string {
+    if (!ctx.hintsWereSampled) return '';
+
+    const parts: string[] = [];
+
+    if (ctx.skeletonHint) {
+      parts.push(`// Domain scaffold\n${ctx.skeletonHint}`);
+    }
+
+    if (ctx.sampledApis.length > 0) {
+      parts.push(`// Required API tokens (at least 2 must appear): ${ctx.sampledApis.join(', ')}`);
+    }
+
+    if (ctx.hardeningHints.length > 0) {
+      parts.push(`// Hardening hints:\n${ctx.hardeningHints.map((h: string) => `// - ${h}`).join('\n')}`);
+    }
+
+    return parts.join('\n\n');
+  }
+
+  /**
+   * Attempt one recovery generation using harness-guided repair prompt.
+   * Returns the corrected LLMResponse, or null if recovery also fails.
+   */
+  private async attemptRecovery(
+    originalPrompt: string,
+    failedCode: string,
+    errorMessage: string,
+    systemPrompt: string,
+    userPrompt: string,
+    signal?: AbortSignal
+  ): Promise<LLMResponse | null> {
+    const failure = this.harnessTools.classifyFailure(errorMessage, failedCode);
+    const repairPrompt = this.harnessTools.buildRepairPrompt(
+      this.domain,
+      originalPrompt,
+      failedCode,
+      failure
+    );
+
+    if (!repairPrompt) return null;
+
+    Logger.info('TierBasedGenerator', `Attempting recovery for ${failure.failureClass}: ${errorMessage}`);
+
+    const recoveryUserPrompt =
+      `${userPrompt}\n\n` +
+      `The previous output failed validation.\n` +
+      `Validation error: ${errorMessage}\n` +
+      `Failure classification: ${failure.failureClass}\n\n` +
+      `${repairPrompt}\n\n` +
+      `Original prompt: ${originalPrompt}`;
+
+    const recoveryResult = await this.llm.generateWithToolLoop({
+      systemPrompt,
+      userPrompt: recoveryUserPrompt,
+      tools: GENERATOR_TOOLS,
+      toolExecutor: createGeneratorToolExecutor(this.domain),
+      maxIterations: 2,
+      signal,
+    });
+
+    const recoveryCode = recoveryResult.content.trim();
+
+    if (!recoveryCode || recoveryCode.length < 10) return null;
+
+    // Re-validate recovered code
+    const revalidated = this.validateOutput(recoveryCode);
+    if (!revalidated.valid) {
+      Logger.info('TierBasedGenerator', `Recovery validation failed: ${revalidated.error}`);
+      return null;
+    }
+
+    return {
+      code: recoveryCode,
+      success: true,
+      error: undefined,
+    };
+  }
+
+  /**
+   * Extract code from thinking/reasoning text when LLM puts code in fences
+   * but not in the main response.
     if (process.env.NODE_ENV !== 'test') {
       await metaHarness.onGenerationComplete({
         success: true,

@@ -38,6 +38,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'interactive circles following mouse',
@@ -75,6 +77,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'dark background',
@@ -96,6 +100,8 @@ describe('PromptEnhancer', () => {
           opacity: 0.8,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: '3d rotating cube',
@@ -133,6 +139,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'interactive circles following mouse',
@@ -163,6 +171,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'simple synth melody',
@@ -192,6 +202,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'green cube scene',
@@ -221,6 +233,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'gradient shader',
@@ -250,6 +264,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'export mouse position',
@@ -315,6 +331,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'mouse-following circles',
@@ -349,6 +367,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: '3d scene with objects',
@@ -383,6 +403,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'visual animation',
@@ -434,6 +456,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: '',
@@ -462,6 +486,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'long code test',
@@ -490,6 +516,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'enabled layer',
@@ -511,6 +539,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'disabled layer',
@@ -589,6 +619,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'mouse circles',
@@ -626,6 +658,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'test',
@@ -660,6 +694,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'test',
@@ -694,6 +730,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'canvas setup',
@@ -730,6 +768,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'visuals',
@@ -751,6 +791,8 @@ describe('PromptEnhancer', () => {
           opacity: 1,
           position: { x: 0, y: 0 },
           scale: 1,
+          role: 'standalone',
+          transparentBackground: false,
         },
         metadata: {
           prompt: 'audio',

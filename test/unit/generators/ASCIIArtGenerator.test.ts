@@ -1,18 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGenerate } = vi.hoisted(() => ({
+// Use a variable to control what generateWithToolLoop returns
+let toolLoopOverride: { content: string; toolCalls: any[]; success: boolean } | null = null;
+let useOverrideForAllCalls = false;
+
+const { mockGenerate, mockGenerateWithToolLoop } = vi.hoisted(() => ({
   mockGenerate: vi.fn().mockResolvedValue({
     code: '  ***\n *****\n*******\n *****\n  ***',
     success: true,
+  }),
+  mockGenerateWithToolLoop: vi.fn().mockImplementation(async () => {
+    if (toolLoopOverride) {
+      const result = toolLoopOverride;
+      if (!useOverrideForAllCalls) {
+        toolLoopOverride = null;
+      }
+      return result;
+    }
+    const result = await mockGenerate();
+    return { content: result.code, toolCalls: [], success: result.success };
   }),
 }));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
-    generateWithToolLoop = vi.fn().mockImplementation(() =>
-      mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
-    );
+    generateWithToolLoop = mockGenerateWithToolLoop;
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -47,6 +60,7 @@ import { ASCIIArtGenerator } from '../../../src/generators/ascii/ASCIIArtGenerat
 describe('ASCIIArtGenerator', () => {
   beforeEach(() => {
     mockGenerate.mockClear();
+    mockGenerateWithToolLoop.mockClear();
   });
 
   it('formats output to the specified width and height', async () => {
@@ -102,12 +116,20 @@ describe('ASCIIArtGenerator', () => {
   });
 
   it('validateOutput rejects code with non-ASCII art characters', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: 'Hello World!',
+    // Set the override to return invalid code for both initial and recovery attempts
+    useOverrideForAllCalls = true;
+    toolLoopOverride = {
+      content: 'Hello World!',  // Contains letters which are invalid ASCII art characters
+      toolCalls: [],
       success: true,
-    });
+    };
+
     const gen = new ASCIIArtGenerator();
     await expect(gen.generate('text art')).rejects.toThrow('invalid characters');
+
+    // Reset for other tests
+    useOverrideForAllCalls = false;
+    toolLoopOverride = null;
   });
 
   it('validateOutput accepts code with only allowed ASCII art characters', async () => {

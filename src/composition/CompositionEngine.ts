@@ -9,6 +9,7 @@ import { Layer, Composition, DomainType, GlobalSettings, DEFAULT_GLOBAL_SETTINGS
 import { LayerManager } from './LayerManager.js';
 import { LayerAdapter, Import } from './adapters/index.js';
 import { LayerMaskManager } from './LayerMask.js';
+import { getCSSBlendMode } from './utils/blendModes.js';
 import { Logger } from '../utils/Logger.js';
 
 export interface CompositionEngineOptions {
@@ -233,6 +234,16 @@ export class CompositionEngine {
       layerContainer.style.opacity = String(layer.config.opacity);
       layerContainer.style.transform = `translate(${layer.config.position.x}px, ${layer.config.position.y}px) scale(${layer.config.scale})`;
       layerContainer.style.pointerEvents = layer.type === 'p5' || layer.type === 'three' ? 'auto' : 'none';
+
+      // Apply blend mode
+      if (layer.config.blendMode !== 'normal') {
+        layerContainer.style.mixBlendMode = getCSSBlendMode(layer.config.blendMode);
+      }
+
+      // Apply transparent background
+      if (layer.config.transparentBackground) {
+        layerContainer.style.background = 'transparent';
+      }
       
       this.container.appendChild(layerContainer);
 

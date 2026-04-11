@@ -92,6 +92,7 @@ export class TuiBridgeService {
     return this.stream.subscribe(sessionId, listener);
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async submitInput(
     sessionId: string,
     input: TuiInputRequest,
@@ -176,6 +177,7 @@ export class TuiBridgeService {
     return { reviewRequired: false };
   }
 
+  // eslint-disable-next-line @typescript-eslint/require-await
   async confirmAction(sessionId: string, actionId: string): Promise<void> {
     const status = this.getStatus(sessionId);
     if (!status.pendingAction || status.pendingAction.id !== actionId) {

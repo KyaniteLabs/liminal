@@ -314,7 +314,7 @@ describe('commands', () => {
 
     it('creates pending LLM task and returns awaiting approval message', async () => {
       mockLLMClientStatic.isConfigured.mockReturnValue(true);
-      mockMetaHarness.getLLMClient.mockReturnValue({ generate: vi.fn() });
+      mockMetaHarness.getLLMClient.mockReturnValue({ generate: vi.fn(), generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) });
 
       const ctx = makeCtx();
       const result = await commands.agent.execute(['Fix validation bug'], ctx);

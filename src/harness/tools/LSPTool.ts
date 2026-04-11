@@ -9,6 +9,7 @@
  * - Code actions (quick fixes)
  */
 
+import { readFileSync } from 'fs';
 import { Tool, type ToolResult } from './types.js';
 
 export interface LSPDiagnosticsParams {
@@ -121,20 +122,80 @@ export class LSPTool extends Tool {
     }
   }
 
-  private getAutocomplete(_params: LSPAutocompleteParams): ToolResult {
-    // Stub - full LSP autocomplete requires maintaining tsserver connection
-    return {
-      success: false,
-      error: 'Autocomplete requires persistent LSP connection - use search tool instead'
-    };
+  private getAutocomplete(params: LSPAutocompleteParams): ToolResult {
+    // Autocomplete via pattern matching on the file at the cursor position.
+    // This mimics LSP completion by scanning for identifiers that match the
+    // prefix at the given line/character position.
+    try {
+      const content = readFileSync(params.path, 'utf-8');
+      const lines = content.split('\n');
+
+      if (params.line < 0 || params.line >= lines.length) {
+        return { success: false, error: `Line ${params.line} out of range` };
+      }
+
+      const line = lines[params.line];
+      const prefix = line.slice(0, params.character);
+      const partial = prefix.split(/\s+/).pop() || '';
+
+      if (partial.length === 0) {
+        return { success: true, data: { completions: [] } };
+      }
+
+      // Find all identifier-like words in the file that start with the partial
+      const allWords = (content.match(/[a-zA-Z_][a-zA-Z0-9_]*/g) || []) as string[];
+      const unique = [...new Set(allWords)];
+      const matches = unique
+        .filter(w => w.startsWith(partial) && w !== partial)
+        .slice(0, 20)
+        .map(w => ({ label: w, kind: 'identifier' }));
+
+      return { success: true, data: { completions: matches } };
+    } catch (error) {
+      return { success: false, error: this.formatError(error) };
+    }
   }
 
-  private getDefinition(_params: LSPDefinitionParams): ToolResult {
-    // Use grep as fallback for go-to-definition
-    return {
-      success: false,
-      error: 'Use search tool with pattern to find definitions'
-    };
+  private getDefinition(params: LSPDefinitionParams): ToolResult {
+    // Go-to-definition via source grep for the identifier at cursor.
+    try {
+      const content = readFileSync(params.path, 'utf-8');
+      const lines = content.split('\n');
+
+      if (params.line < 0 || params.line >= lines.length) {
+        return { success: false, error: `Line ${params.line} out of range` };
+      }
+
+      const line = lines[params.line];
+      const beforeCursor = line.slice(0, params.character);
+      const identifier = beforeCursor.split(/[\s[\]{}();,.=:+@]/).pop() || '';
+
+      if (!identifier || identifier.length < 2) {
+        return { success: false, error: 'No identifier at cursor' };
+      }
+
+      // Search for definition lines: "export const/let/function/async function X"
+      const definitionPattern = new RegExp(
+        `(?:export\\s+)?(?:const|let|var|function|async\\s+function)\\s+${identifier}\\s*[=(]`,
+        'g'
+      );
+      const results: { file: string; line: number; text: string }[] = [];
+      let match;
+
+      while ((match = definitionPattern.exec(content)) !== null) {
+        const lineNum = content.slice(0, match.index).split('\n').length;
+        const defLine = lines[lineNum - 1] || '';
+        results.push({ file: params.path, line: lineNum, text: defLine.trim() });
+      }
+
+      if (results.length === 0) {
+        return { success: false, error: `No definition found for '${identifier}'` };
+      }
+
+      return { success: true, data: { definitions: results } };
+    } catch (error) {
+      return { success: false, error: this.formatError(error) };
+    }
   }
 }
 

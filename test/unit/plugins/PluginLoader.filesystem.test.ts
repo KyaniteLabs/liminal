@@ -31,7 +31,7 @@ describe('PluginLoader filesystem loading', () => {
       const result = await loader.loadPlugin(pluginPath);
 
       expect(result.success).toBe(true);
-      expect(result.plugin).toBeDefined();
+      expect(result.plugin).not.toBeNull();
       expect(result.plugin!.manifest.id).toBe('good-plugin');
       expect(result.plugin!.manifest.name).toBe('Good Plugin');
       expect(result.plugin!.manifest.version).toBe('1.0.0');
@@ -45,8 +45,8 @@ describe('PluginLoader filesystem loading', () => {
       await loader.loadPlugin(pluginPath);
 
       expect(loader.isLoaded('good-plugin')).toBe(true);
-      expect(loader.getPlugin('good-plugin')).toBeDefined();
-      expect(loader.getManifest('good-plugin')).toBeDefined();
+      expect(loader.getPlugin('good-plugin')).not.toBeNull();
+      expect(loader.getManifest('good-plugin')).not.toBeNull();
       expect(loader.getManifest('good-plugin')!.name).toBe('Good Plugin');
     });
 
@@ -69,7 +69,7 @@ describe('PluginLoader filesystem loading', () => {
       await loader.loadPlugin(pluginPath);
 
       const found = loader.findPluginForPrompt('create a test animation');
-      expect(found).toBeDefined();
+      expect(found).not.toBeNull();
       expect(found!.manifest.id).toBe('good-plugin');
     });
 
@@ -78,7 +78,7 @@ describe('PluginLoader filesystem loading', () => {
       const result = await loader.loadPlugin(pluginPath);
 
       expect(result.success).toBe(true);
-      expect(result.plugin).toBeDefined();
+      expect(result.plugin).not.toBeNull();
       expect(result.plugin!.manifest.id).toBe('minimal-plugin');
       expect(result.plugin!.canHandle).toBeUndefined();
       expect(result.plugin!.initialize).toBeUndefined();
@@ -94,7 +94,7 @@ describe('PluginLoader filesystem loading', () => {
       const result = await loader.loadPlugin(pluginPath);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).not.toBeNull();
       expect(result.error!.pluginId).toBe('bad-json-plugin');
       expect(result.error!.error).toContain('PluginLoader');
     });
@@ -104,7 +104,7 @@ describe('PluginLoader filesystem loading', () => {
       const result = await loader.loadPlugin(pluginPath);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).not.toBeNull();
       expect(result.error!.pluginId).toBe('missing-entry-plugin');
     });
 
@@ -113,7 +113,7 @@ describe('PluginLoader filesystem loading', () => {
       const result = await loader.loadPlugin(pluginPath);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBeDefined();
+      expect(result.error).not.toBeNull();
       expect(result.error!.pluginId).toBe('init-fail-plugin');
       expect(result.error!.error).toContain('initialize failed on purpose');
     });
@@ -129,7 +129,7 @@ describe('PluginLoader filesystem loading', () => {
       const event: PluginEvent = handler.mock.calls[0][0];
       expect(event.type).toBe('plugin:error');
       expect(event.pluginId).toBe('bad-json-plugin');
-      expect(event.data).toBeDefined();
+      expect(event.data).not.toBeNull();
     });
 
     it('does not store plugin in registry on failure', async () => {
@@ -229,7 +229,7 @@ describe('PluginLoader filesystem loading', () => {
       await loader.loadPlugin(path.join(FIXTURES_DIR, 'minimal-plugin'));
 
       const found = loader.findPluginForPrompt('test something');
-      expect(found).toBeDefined();
+      expect(found).not.toBeNull();
 
       const code = await found!.generate('test prompt');
       expect(code).toBeTruthy();

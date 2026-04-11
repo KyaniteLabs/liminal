@@ -19,7 +19,7 @@ export class RemotionGenerator extends TierBasedGenerator {
    */
   canHandle(prompt: string): number {
     const lower = prompt.toLowerCase();
-    if (/\b(remotion)\b/.test(lower)) return 0.9;
+    if (/\b(remotion|revideo)\b/.test(lower)) return 0.95;
     if (/\b(video|animation|motion\s*graphics|title\s*sequence|intro\s*video)\b/.test(lower)) return 0.8;
     return 0;
   }
@@ -29,9 +29,11 @@ export class RemotionGenerator extends TierBasedGenerator {
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    // Basic Remotion validation - should be React component
-    if (!code.includes('export') || !code.includes('Component')) {
-      return { valid: false, error: 'Generated code does not appear to be a valid Remotion component' };
+    const hasMakeScene = /makeScene/.test(code);
+    const hasUseCurrentFrame = /useCurrentFrame/.test(code);
+    const hasExport = /export\s+default/.test(code);
+    if (!hasExport || (!hasMakeScene && !hasUseCurrentFrame)) {
+      return { valid: false, error: 'Generated code does not appear to be a valid Revideo/Remotion component' };
     }
     return { valid: true };
   }

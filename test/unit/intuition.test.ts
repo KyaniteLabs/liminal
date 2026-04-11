@@ -1844,6 +1844,31 @@ describe('IntuitionEngine', () => {
     expect(engine.getProceduralTier()).toBeDefined();
   });
 
+  it('should wire LLM callbacks to DreamEngine when llm is provided', async () => {
+    const mockGenerate = vi.fn<() => Promise<{ success: true; code: string; error?: string }>>();
+    mockGenerate.mockResolvedValue({ success: true, code: 'mocked result' });
+
+    // Mock LLMClient — shape matches LLMClient.generate() return type
+    const mockLlm = { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as unknown as import('../../src/llm/LLMClient.js').LLMClient;
+
+    const engine = new IntuitionEngine({ llm: mockLlm });
+    const dreamEntry = await engine.getDreamEngine().dream('micro');
+
+    // Verify LLM was called at least once (covers both Stage 1 generatePrompt and Stage 2 generateCode)
+    expect(mockGenerate).toHaveBeenCalled();
+    // Verify at least one call used the creative prompt system message
+    const calls = mockGenerate.mock.calls;
+    const hasPromptCall = calls.some(([sys]) =>
+      typeof sys === 'string' && sys.includes('creative visual concept generator'),
+    );
+    const hasCodeCall = calls.some(([sys]) =>
+      typeof sys === 'string' && sys.includes('creative coding engine'),
+    );
+    expect(hasPromptCall || hasCodeCall).toBe(true);
+    // DreamEngine should have produced real (non-stub) concepts when LLM is wired
+    expect(dreamEntry.conceptsGenerated).toBeGreaterThan(0);
+  });
+
   it('should consolidate episodes', () => {
     const episodes: ConsolidationEpisode[] = [
       { domain: 'p5', output: 'code1', qualityScore: 0.85, model: 'local', strategy: 'solo', timestamp: new Date().toISOString() },

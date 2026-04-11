@@ -923,6 +923,80 @@ Rules:
   }
 
   /**
+   * Agentic tool-calling loop. Calls generateWithTools() in a cycle:
+   * generate -> if tool calls, execute them -> feed results back -> repeat.
+   * Stops when the model returns content (no tool calls) or max iterations reached.
+   */
+  async generateWithToolLoop(options: {
+    systemPrompt: string;
+    userPrompt: string;
+    tools: import('./ProviderTypes.js').ToolDefinition[];
+    toolExecutor: (name: string, args: Record<string, unknown>) => Promise<string>;
+    maxIterations?: number;
+    maxTokens?: number;
+    temperature?: number;
+    signal?: AbortSignal;
+  }): Promise<{
+    content: string;
+    iterations: number;
+    toolCallsMade: number;
+    success: boolean;
+    error?: string;
+  }> {
+    const maxIterations = options.maxIterations ?? 5;
+    let toolResults: import('./ProviderTypes.js').ToolResultMessage[] | undefined;
+    let iterations = 0;
+    let toolCallsMade = 0;
+    const conversationMessages: { role: string; content: string }[] = [];
+
+    for (let i = 0; i < maxIterations; i++) {
+      iterations++;
+      const result = await this.generateWithTools({
+        systemPrompt: options.systemPrompt,
+        userPrompt: i === 0 ? options.userPrompt : JSON.stringify(conversationMessages),
+        tools: options.tools,
+        toolResults,
+        maxTokens: options.maxTokens,
+        temperature: options.temperature,
+        signal: options.signal,
+      });
+
+      if (!result.success) {
+        return { content: result.content || '', iterations, toolCallsMade, success: false, error: result.error };
+      }
+      if (!result.toolCalls || result.toolCalls.length === 0 || result.finishReason === 'stop') {
+        return { content: result.content, iterations, toolCallsMade, success: true };
+      }
+
+      toolResults = [];
+      for (const tc of result.toolCalls) {
+        toolCallsMade++;
+        try {
+          let args: Record<string, unknown>;
+          try { args = JSON.parse(tc.arguments); } catch { args = {}; }
+          const toolResult = await options.toolExecutor(tc.name, args);
+          toolResults.push({ toolCallId: tc.id, result: toolResult });
+          conversationMessages.push({ role: 'assistant', content: `Called ${tc.name}(${tc.arguments})` });
+          conversationMessages.push({ role: 'tool', content: toolResult });
+        } catch (err) {
+          const errMsg = err instanceof Error ? err.message : String(err);
+          toolResults.push({ toolCallId: tc.id, result: errMsg, isError: true });
+        }
+      }
+    }
+
+    const lastResult = await this.generateWithTools({
+      systemPrompt: options.systemPrompt,
+      userPrompt: JSON.stringify(conversationMessages),
+      tools: [],
+      maxTokens: options.maxTokens,
+      temperature: options.temperature,
+      signal: options.signal,
+    });
+    return { content: lastResult.content || '', iterations, toolCallsMade, success: lastResult.success, error: 'Max iterations reached' };
+  }
+
+  /**
    * Stream tokens in real-time for chat interfaces
    * Yields partial content as it arrives from the LLM
    */

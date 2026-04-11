@@ -19,6 +19,7 @@ import { getSelfImprovePrompt, createReflectionPrompt } from '../prompts/self-im
 import { thinkingRepository } from '../ThinkingSeparation.js';
 import { thinkingAnalyzer } from '../ThinkingAnalyzer.js';
 import { eventBus, EventTypes } from '../../core/EventBus.js';
+import { telemetryWrapper } from '../tools/TelemetryWrapper.js';
 import {
   readFileTool,
   writeFileTool,
@@ -27,6 +28,13 @@ import {
   runTestsTool,
   restoreBackupTool,
   createBackupTool,
+  searchTool,
+  listDirTool,
+  typeCheckTool,
+  npmTool,
+  lspTool,
+  astValidatorTool,
+  importGuardTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
 
@@ -410,9 +418,14 @@ When the task is complete and build passes, respond with tool "complete".`;
    */
   private async executeTool(toolCall: ToolCall): Promise<ToolResult> {
     const { tool, params, thought } = toolCall;
-    
+
     Logger.debug('LLMModeAgent', `${thought}`);
     Logger.debug('LLMModeAgent', `Executing: ${tool}(${JSON.stringify(params)})`);
+
+    telemetryWrapper.setContext({
+      taskId: this.currentSession?.task.id,
+      iteration: this.currentSession?.stepCount,
+    });
 
     const rateLimitResult = await rateLimiter.execute(
       tool === 'readFile' ? 'fileRead' :
@@ -451,7 +464,22 @@ When the task is complete and build passes, respond with tool "complete".`;
             }
             return result;
           }
-          
+
+          case 'search':
+            return searchTool.execute(params);
+          case 'listDir':
+            return listDirTool.execute(params);
+          case 'typeCheck':
+            return typeCheckTool.execute(params);
+          case 'npm':
+            return npmTool.execute(params);
+          case 'lsp':
+            return lspTool.execute(params);
+          case 'astValidate':
+            return astValidatorTool.execute(params);
+          case 'importGuard':
+            return importGuardTool.execute(params);
+
           default:
             return { success: false, error: `Unknown tool: ${tool}` };
         }

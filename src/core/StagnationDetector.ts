@@ -48,11 +48,23 @@ export class StagnationDetector {
     iteration: number,
     evaluationScore: number,
     noveltyScore: number,
-    prompt: string
+    prompt: string,
+    domain?: string,
   ): StagnationCheckResult {
     // Record this attempt for success rate tracking
     const isSuccess = evaluationScore > 0.7;
     this.successRateTracker.recordAttempt(isSuccess);
+
+    // Feed quality data into self-reflection for trend analysis
+    this.selfReflection.recordScore({
+      iteration,
+      timestamp: Date.now(),
+      overallScore: evaluationScore,
+      technicalScore: evaluationScore,
+      aestheticScore: 0,
+      noveltyScore,
+      domain: domain ?? 'p5',
+    });
 
     // High novelty resets stagnation
     if (noveltyScore > 0.5) {

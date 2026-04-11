@@ -90,11 +90,11 @@ export async function runInSandbox(
         url.includes('p5')
       ) {
         void req.continue().catch((err) => {
-          console.error('Request continue failed:', err);
+          Logger.debug('SandboxRunner', 'Request continue failed:', err);
         });
       } else {
         void req.abort().catch((err) => {
-          console.error('Request abort failed:', err);
+          Logger.debug('SandboxRunner', 'Request abort failed:', err);
         });
       }
     });

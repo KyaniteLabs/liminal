@@ -56,6 +56,22 @@ export class OpenRouterProvider extends BaseProvider {
         max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
 
+      // Tool definitions — OpenAI-compatible format
+      if (req.tools && req.tools.length > 0) {
+        body.tools = req.tools.map(t => ({
+          type: 'function' as const,
+          function: { name: t.name, description: t.description, parameters: t.parameters as Record<string, unknown> },
+        }));
+      }
+
+      // Tool results from previous calls
+      if (req.toolResults && req.toolResults.length > 0) {
+        for (const tr of req.toolResults) {
+          (body.messages as Array<Record<string, unknown>>).push({ role: 'assistant', content: '', tool_calls: [{ id: tr.toolCallId, type: 'function', function: { name: 'tool', arguments: '{}' } }] });
+          (body.messages as Array<Record<string, unknown>>).push({ role: 'tool', content: tr.result, tool_call_id: tr.toolCallId });
+        }
+      }
+
       // OpenRouter unified reasoning parameter
       if (req.thinking?.enabled) {
         body.reasoning = {
@@ -85,8 +101,13 @@ export class OpenRouterProvider extends BaseProvider {
 
       const data = await response.json();
       const thinking = extractOpenRouterThinking(data);
-      const choices = data.choices as Array<{ message?: { content?: string } }> | undefined;
-      const content = choices?.[0]?.message?.content || '';
+      const choices = data.choices as Array<{ message?: { content?: string; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish_reason?: string }> | undefined;
+      const message = choices?.[0]?.message;
+      const content = message?.content || '';
+
+      const rawToolCalls = message?.tool_calls || [];
+      const toolCalls = rawToolCalls.map(tc => ({ id: tc.id, name: tc.function.name, arguments: tc.function.arguments }));
+      const finishReason = toolCalls.length > 0 ? 'tool_calls' as const : 'stop' as const;
 
       const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
 
@@ -94,7 +115,9 @@ export class OpenRouterProvider extends BaseProvider {
         content,
         thinking: thinking.source !== 'none' ? thinking : undefined,
         model: data.model || this.config.model,
-        success: content.length > 0,
+        success: content.length > 0 || toolCalls.length > 0,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        finishReason,
         usage: usage ? {
           inputTokens: usage.prompt_tokens || 0,
           outputTokens: usage.completion_tokens || 0,

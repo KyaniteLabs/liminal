@@ -479,8 +479,41 @@ export async function generate(
 }
 
 export function canHandle(prompt: string): number {
-  // TODO: Implement domain-specific detection
-  return 0.5;
+  // Domain-specific detection using keyword scoring
+  // Matches the pattern used by all plugin canHandle implementations
+  const lower = prompt.toLowerCase();
+
+  // Generator-specific domain keywords
+  const domainKeywords: [string, number][] = [
+    // Visual / 3D
+    [/three.js|threejs|\bthree\b/i, 0.95],
+    [/\b3d\b.*\b(scene|cube|sphere|model|mesh)/i, 0.90],
+    [/hydra|video synth|kaleid|oscillator.*video/i, 0.90],
+    [/glsl|shader|ray march|sdf|fragment/i, 0.90],
+    [/p5.?js|particle|flow field/i, 0.95],
+    [/ascii art/i, 0.95],
+    [/html generator|landing page|dashboard/i, 0.90],
+    // Audio / Music
+    [/tone.?js|synthesizer|synth/i, 0.95],
+    [/strudel|tidal|drum sequencer|beat/i, 0.95],
+    // Code / Analysis
+    [/typescript|ts-|.ts\b/i, 0.85],
+    [/javascript|js\b/i, 0.80],
+    [/\blsp\b|diagnostic|autocomplete|tsserver/i, 0.90],
+    // Narrative / Content
+    [/blog|article|content|narrative|video script/i, 0.85],
+    [/\bredwood\b|\bprisma\b|\bpostgres\b/i, 0.80],
+  ];
+
+  let bestScore = 0.0;
+  for (const [pattern, score] of domainKeywords) {
+    if (pattern.test(lower) && score > bestScore) {
+      bestScore = score;
+    }
+  }
+
+  // No strong match — use default low confidence
+  return bestScore;
 }
 `;
 

@@ -65,6 +65,26 @@ export class GoogleProvider extends BaseProvider {
         };
       }
 
+      // Tool definitions — Google Gemini format
+      if (req.tools && req.tools.length > 0) {
+        body.tools = [{
+          functionDeclarations: req.tools.map(t => ({
+            name: t.name,
+            description: t.description,
+            parameters: t.parameters as Record<string, unknown>,
+          })),
+        }];
+      }
+
+      // Tool results from previous calls
+      if (req.toolResults && req.toolResults.length > 0) {
+        const contents = body.contents as Array<Record<string, unknown>>;
+        for (const tr of req.toolResults) {
+          contents.push({ role: 'model', parts: [{ functionCall: { name: 'tool', args: {} } }] });
+          contents.push({ role: 'user', parts: [{ functionResponse: { name: 'tool', response: { result: tr.result } } }] });
+        }
+      }
+
       // Thinking configuration
       if (req.thinking?.enabled && this.capabilities.thinking) {
         if (req.thinking.budgetTokens) {
@@ -106,10 +126,14 @@ export class GoogleProvider extends BaseProvider {
       const parts = candidates?.[0]?.content?.parts || [];
       let content = '';
       let thinkingText = '';
+      const toolCalls: Array<{ id: string; name: string; arguments: string }> = [];
 
       for (const part of parts) {
         if (part.thought) {
           thinkingText += (part.text || '') + '\n';
+        } else if ((part as Record<string, unknown>).functionCall) {
+          const fc = (part as Record<string, unknown>).functionCall as { name?: string; args?: unknown };
+          toolCalls.push({ id: `gc_${toolCalls.length}`, name: fc.name || '', arguments: typeof fc.args === 'string' ? fc.args : JSON.stringify(fc.args || {}) });
         } else {
           content += (part.text || '') + '\n';
         }
@@ -121,18 +145,22 @@ export class GoogleProvider extends BaseProvider {
         thoughtsTokenCount?: number;
       } | undefined;
 
+      const finishReason = toolCalls.length > 0 ? 'tool_calls' as const : 'stop' as const;
+
       return ok({
         content: content.trim(),
         thinking: thinkingText.trim()
           ? { text: thinkingText.trim(), source: 'thinking_blocks', budgetUsed: usageMeta?.thoughtsTokenCount }
           : undefined,
         model: data.modelVersion || this.config.model,
-        success: content.trim().length > 0,
+        success: content.trim().length > 0 || toolCalls.length > 0,
         usage: usageMeta ? {
           inputTokens: usageMeta.promptTokenCount || 0,
           outputTokens: usageMeta.candidatesTokenCount || 0,
           thinkingTokens: usageMeta.thoughtsTokenCount,
         } : undefined,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        finishReason,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

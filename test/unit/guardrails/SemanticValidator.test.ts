@@ -11,6 +11,7 @@ const { MockLLMClient } = vi.hoisted(() => {
   return {
     MockLLMClient: vi.fn(function (this: { generate: ReturnType<typeof vi.fn> }) {
       this.generate = mockGenerate;
+    this.generateWithToolLoop = vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true });
     }) as unknown as import('../../../src/llm/LLMClient.js').LLMClient & { new(): { generate: ReturnType<typeof vi.fn> } },
   };
 });
@@ -72,7 +73,7 @@ describe('SemanticValidator', () => {
     });
 
     it('uses custom LLM client from options', async () => {
-      const customLlm = { generate: mockGenerate } as unknown as import('../../../src/llm/LLMClient.js').LLMClient;
+      const customLlm = { generate: mockGenerate, generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }) } as unknown as import('../../../src/llm/LLMClient.js').LLMClient;
       mockGenerate.mockResolvedValue({ code: JSON.stringify({ aligned: true, score: 0.9, issues: [], explanation: 'yes' }) });
 
       const validator = new SemanticValidator({ llm: customLlm });

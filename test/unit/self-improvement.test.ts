@@ -84,7 +84,7 @@ describe('SelfImprovement', () => {
         requestImprovement('improve this', context, options, generator)
       ).rejects.toMatchObject({ name: 'AbortError' });
 
-      expect(capturedSignal).toBeDefined();
+      expect(capturedSignal).toBeInstanceOf(AbortSignal);
     });
   });
 

@@ -16,6 +16,8 @@ import type { LIRCodeToken, LIRDocToken, LIRTextToken } from '../../src/core/lir
 
 const createMockLLM = (): LLMClientLike => ({
   generate: vi.fn().mockResolvedValue({ code: 'mock', success: true }),
+    generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }),
+    generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }),
 });
 
 const TS_CODE = `export function fibonacci(n: number): number {

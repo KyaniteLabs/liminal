@@ -1,13 +1,26 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const mockGenerate = vi.fn().mockResolvedValue({
-  code: 'line one\nline two\nline three',
-  success: true,
-});
+const mockGenerate = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    code: 'line one\nline two\nline three',
+    success: true,
+  })
+);
+
+const mockGenerateWithToolLoop = vi.hoisted(() =>
+  vi.fn().mockResolvedValue({
+    content: 'line one\nline two\nline three',
+    iterations: 1,
+    toolCallsMade: 0,
+    success: true,
+    error: undefined,
+  })
+);
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
+    generateWithToolLoop = mockGenerateWithToolLoop;
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -42,13 +55,17 @@ import { TextGenerativeGenerator } from '../../../src/generators/textgen/TextGen
 describe('TextGenerativeGenerator', () => {
   beforeEach(() => {
     mockGenerate.mockClear();
+    mockGenerateWithToolLoop.mockClear();
   });
 
   describe('generate', () => {
     it('returns formatted text output from LLM', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'drip\ndrop\nsplash',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'drip\ndrop\nsplash',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('dripping water');
@@ -56,9 +73,12 @@ describe('TextGenerativeGenerator', () => {
     });
 
     it('strips markdown code block markers from output', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: '```\nhello\nworld\n```',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: '```\nhello\nworld\n```',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('poem');
@@ -66,9 +86,12 @@ describe('TextGenerativeGenerator', () => {
     });
 
     it('strips comment lines from output', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: '// This is a comment\nactual line one\n// another comment\nactual line two',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: '// This is a comment\nactual line one\n// another comment\nactual line two',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('text art');
@@ -77,9 +100,12 @@ describe('TextGenerativeGenerator', () => {
 
     it('applies maxLines constraint from options', async () => {
       const lines = Array.from({ length: 50 }, (_, i) => `line ${i + 1}`);
-      mockGenerate.mockResolvedValueOnce({
-        code: lines.join('\n'),
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: lines.join('\n'),
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('many lines', { maxLines: 5 });
@@ -91,9 +117,12 @@ describe('TextGenerativeGenerator', () => {
 
     it('applies default maxLines of 40 when not specified', async () => {
       const lines = Array.from({ length: 50 }, (_, i) => `line ${i + 1}`);
-      mockGenerate.mockResolvedValueOnce({
-        code: lines.join('\n'),
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: lines.join('\n'),
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('long output');
@@ -102,9 +131,12 @@ describe('TextGenerativeGenerator', () => {
     });
 
     it('applies maxWidth constraint from options', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'A'.repeat(100),
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'A'.repeat(100),
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('wide text', { maxWidth: 20 });
@@ -113,9 +145,12 @@ describe('TextGenerativeGenerator', () => {
     });
 
     it('applies default maxWidth of 80 when not specified', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'B'.repeat(120),
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'B'.repeat(120),
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('very wide');
@@ -123,9 +158,12 @@ describe('TextGenerativeGenerator', () => {
     });
 
     it('filters out Unicode characters when unicode option is false', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'hello \u00e9\u00e8\u00ea world \u2603 snowman \u2764 heart',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'hello \u00e9\u00e8\u00ea world \u2603 snowman \u2764 heart',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('ascii only', { unicode: false });
@@ -136,9 +174,12 @@ describe('TextGenerativeGenerator', () => {
     });
 
     it('keeps Unicode characters when unicode option is true', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'hello \u2764\u2764\u2764 world',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'hello \u2764\u2764\u2764 world',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('unicode art', { unicode: true });
@@ -146,9 +187,12 @@ describe('TextGenerativeGenerator', () => {
     });
 
     it('trims trailing whitespace from each line', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'line one   \nline two   \nline three',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'line one   \nline two   \nline three',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('trimmed');
@@ -161,65 +205,85 @@ describe('TextGenerativeGenerator', () => {
 
   describe('validateOutput', () => {
     it('rejects empty output', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: '',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: '',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       await expect(gen.generate('empty')).rejects.toThrow('LLM returned empty code');
     });
 
     it('rejects whitespace-only output', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: '   \n   \n   ',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: '   \n   \n   ',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       await expect(gen.generate('whitespace')).rejects.toThrow('LLM returned empty code');
     });
 
     it('rejects code with markdown code blocks', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: '```\nfunction hello() { return "hi"; }\n```',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: '```\nfunction hello() { return "hi"; }\n```',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       await expect(gen.generate('code block')).rejects.toThrow('appears to be code');
     });
 
     it('rejects output containing function declarations', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'function foo() {\n  return 1;\n}\n// text',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'function foo() {\n  return 1;\n}\n// text',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       await expect(gen.generate('function')).rejects.toThrow('appears to be code');
     });
 
     it('rejects output containing class declarations', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'class Foo {\n  bar() {}\n}\nmore text',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'class Foo {\n  bar() {}\n}\nmore text',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       await expect(gen.generate('class')).rejects.toThrow('appears to be code');
     });
 
     it('rejects single-line output when maxLines is set', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'just one line of text',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'just one line of text',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('simple', { maxLines: 2 });
-      // maxLines:2 keeps 1 line, validation passes, returns the single line
       expect(result).toBe('just one line of text');
     });
 
     it('accepts output with 2+ lines of text', async () => {
-      mockGenerate.mockResolvedValueOnce({
-        code: 'first line\nsecond line',
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: 'first line\nsecond line',
+        iterations: 1,
+        toolCallsMade: 0,
         success: true,
+        error: undefined,
       });
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('valid text art');

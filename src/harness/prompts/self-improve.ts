@@ -41,6 +41,27 @@ Create a backup of a file. Usually automatic, but can be called explicitly.
 ### restoreBackup({ backupPath: string })
 Restore a file from backup if changes fail.
 
+### search({ pattern: string, path?: string, glob?: string, maxResults?: number })
+Search the codebase for a pattern. Returns matching file paths and line content.
+
+### listDir({ path: string, recursive?: boolean })
+List directory contents. Use to explore project structure.
+
+### typeCheck({ path?: string })
+Run TypeScript type checking without a full build. Faster than runBuild for verifying types.
+
+### npm({ packages: string[], dev?: boolean })
+Install npm packages. Use dev=true for devDependencies.
+
+### lsp({ operation: string })
+Get LSP diagnostics, autocomplete, or go-to-definition for a file.
+
+### astValidate({ code: string, filename?: string })
+Validate JavaScript/TypeScript AST syntax without executing code.
+
+### importGuard({ code: string, domain: string })
+Check whether imports in code are allowed for the target creative domain.
+
 ## Workflow for Each Fix
 
 1. **READ**: Use readFile to see current code
@@ -208,7 +229,7 @@ You MUST respond with valid JSON:
 }
 \`\`\`
 
-Available tools: readFile, applyEdit, writeFile, runBuild, runTests, createBackup, restoreBackup, complete
+Available tools: readFile, applyEdit, writeFile, runBuild, runTests, createBackup, restoreBackup, search, listDir, typeCheck, npm, lsp, astValidate, importGuard, complete
 
 ## When to Stop
 Respond with tool "complete" when:

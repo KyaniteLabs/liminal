@@ -20,6 +20,8 @@ import type { LIRCodeToken, LIRDocToken, LIRTextToken } from '../../src/core/lir
 // Mock LLM that always returns success
 const createMockLLM = (): LLMClientLike => ({
   generate: vi.fn().mockResolvedValue({ code: 'mock summary', success: true }),
+    generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }),
+    generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }),
 });
 
 // Sample files

@@ -827,7 +827,7 @@ export class RalphLoop {
         scoreHistory.push(evaluation.score);
 
         // Check stagnation
-        const stagnationResult = stagnation.check(iteration, evaluation.score, noveltyScore, prompt);
+        const stagnationResult = stagnation.check(iteration, evaluation.score, noveltyScore, prompt, domain);
 
         // Log exploration mode changes
         if (stagnationResult.exploreAggressively !== undefined) {

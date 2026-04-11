@@ -18,6 +18,7 @@ import { Domain } from '../types/domains.js';
 import type { SwarmPersona } from '../swarm/types.js';
 import type { DesignConstraints, CriticConfig, LIREvaluationContext } from '../aesthetic/types.js';
 import { LLMClient } from '../llm/LLMClient.js';
+import { EVALUATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
 
@@ -349,13 +350,20 @@ export class LLMScoringStrategy implements ScoringStrategy {
     const userPrompt = `Criteria: ${criteria}\nDomain: ${input.domain ?? 'general'}\n${input.prompt ? `Prompt: ${input.prompt}\n` : ''}Artifact:\n${input.output}`;
 
     try {
-      const response = await this.llm.generate(systemPrompt, userPrompt);
+      const toolResult = await this.llm.generateWithToolLoop({
+        systemPrompt,
+        userPrompt,
+        tools: EVALUATOR_TOOLS,
+        toolExecutor: createGeneratorToolExecutor(String(input.domain ?? 'general')),
+        maxIterations: 2,
+      });
+      const responseText = toolResult.content;
 
-      if (!response.success || !response.code) {
+      if (!toolResult.success || !responseText) {
         return err(new LLMError('LLM evaluation failed: no successful response', 'scoring-engine', undefined, true));
       }
 
-      const jsonMatch = response.code.match(/\{[\s\S]*\}/);
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         return err(new LLMError('LLM evaluation failed: could not parse LLM response', 'scoring-engine', undefined, true));
       }

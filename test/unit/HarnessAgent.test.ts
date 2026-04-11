@@ -2,9 +2,10 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // ── Hoisted mocks (only for external I/O) ─────────────────────────
 const { mockLLM } = vi.hoisted(() => ({
-  mockLLM: { 
+  mockLLM: {
     getConfig: vi.fn(() => ({ model: 'test' })),
     generate: vi.fn(),
+    generateWithToolLoop: vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true }),
   },
 }));
 

@@ -17,6 +17,7 @@ import { GenerationError } from '../errors/GenerationError.js';
 import { Layer, createLayer, DomainType } from '../composition/types.js';
 import { Logger } from '../utils/Logger.js';
 import { getEffectiveConfig } from '../config/ConfigLoader.js';
+import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 
 export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;
@@ -168,23 +169,16 @@ export abstract class TierBasedGenerator {
 
     Logger.info('TierBasedGenerator', `Using ${this.tier} tier (${budget} token budget)`);
 
-    // 4. Generate based on tier capabilities
-    let response: LLMResponse;
-    if (this.tier === 'tiny') {
-      response = await this.llm.generate(
-        '',
-        builtPrompt.combined || builtPrompt.user,
-        options?.signal,
-        options?.bypassCache
-      );
-    } else {
-      response = await this.llm.generate(
-        builtPrompt.system,
-        builtPrompt.user,
-        options?.signal,
-        options?.bypassCache
-      );
-    }
+    // 4. Generate with tool support (validate_syntax, check_imports)
+    const toolResult = await this.llm.generateWithToolLoop({
+      systemPrompt: this.tier === 'tiny' ? '' : builtPrompt.system,
+      userPrompt: this.tier === 'tiny' ? (builtPrompt.combined || builtPrompt.user) : builtPrompt.user,
+      tools: GENERATOR_TOOLS,
+      toolExecutor: createGeneratorToolExecutor(this.domain),
+      maxIterations: 3,
+      signal: options?.signal,
+    });
+    const response: LLMResponse = { code: toolResult.content, success: toolResult.success, error: toolResult.error };
 
     // Try to extract code from thinking if code is empty but thinking has content
     if (!response.code || response.code.trim() === '') {

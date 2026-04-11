@@ -58,6 +58,14 @@ export class OllamaProvider extends BaseProvider {
         },
       };
 
+      // Tool definitions — Ollama native format
+      if (req.tools && req.tools.length > 0) {
+        body.tools = req.tools.map(t => ({
+          type: 'function' as const,
+          function: { name: t.name, description: t.description, parameters: t.parameters as Record<string, unknown> },
+        }));
+      }
+
       const signal = req.signal || AbortSignal.timeout(TIMEOUT_OLLAMA_MS);
 
       const response = await fetch(`${baseUrl}/api/generate`, {
@@ -81,6 +89,15 @@ export class OllamaProvider extends BaseProvider {
       let content = (data as Record<string, unknown>).response as string || '';
       const thinking = normalizeThinking(data, 'ollama');
 
+      // Extract tool_calls from Ollama response
+      const msgData = (data as Record<string, unknown>).message as { tool_calls?: Array<{ function: { name: string; arguments: string } }> } | undefined;
+      const ollamaToolCalls = (msgData?.tool_calls || []).map(tc => ({
+        id: `ollama_${Math.random().toString(36).slice(2, 8)}`,
+        name: tc.function.name,
+        arguments: typeof tc.function.arguments === 'string' ? tc.function.arguments : JSON.stringify(tc.function.arguments),
+      }));
+      const nativeFinish = ollamaToolCalls.length > 0 ? 'tool_calls' as const : 'stop' as const;
+
       // Fallback: check for <think/> tags in response
       if (thinking.source === 'none' && content.includes('<think')) {
         const stripped = stripThinkTags(content);
@@ -90,11 +107,13 @@ export class OllamaProvider extends BaseProvider {
             content,
             thinking: { text: stripped.thinking, source: 'think_tags' },
             model: this.config.model,
-            success: content.length > 0,
+            success: content.length > 0 || ollamaToolCalls.length > 0,
             usage: (data as Record<string, unknown>).eval_count ? {
               inputTokens: ((data as Record<string, unknown>).prompt_eval_count as number) || 0,
               outputTokens: ((data as Record<string, unknown>).eval_count as number) || 0,
             } : undefined,
+            toolCalls: ollamaToolCalls.length > 0 ? ollamaToolCalls : undefined,
+            finishReason: nativeFinish,
           });
         }
       }
@@ -103,11 +122,13 @@ export class OllamaProvider extends BaseProvider {
         content,
         thinking: thinking.source !== 'none' ? thinking : undefined,
         model: this.config.model,
-        success: content.length > 0,
+        success: content.length > 0 || ollamaToolCalls.length > 0,
         usage: (data as Record<string, unknown>).eval_count ? {
           inputTokens: ((data as Record<string, unknown>).prompt_eval_count as number) || 0,
           outputTokens: ((data as Record<string, unknown>).eval_count as number) || 0,
         } : undefined,
+        toolCalls: ollamaToolCalls.length > 0 ? ollamaToolCalls : undefined,
+        finishReason: nativeFinish,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
@@ -128,6 +149,20 @@ export class OllamaProvider extends BaseProvider {
         temperature: req.temperature ?? this.config.temperature,
         max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
+
+      // Tool definitions — OpenAI-compatible format
+      if (req.tools && req.tools.length > 0) {
+        body.tools = req.tools.map(t => ({
+          type: 'function' as const,
+          function: { name: t.name, description: t.description, parameters: t.parameters as Record<string, unknown> },
+        }));
+      }
+      if (req.toolResults && req.toolResults.length > 0) {
+        for (const tr of req.toolResults) {
+          (body.messages as Array<Record<string, unknown>>).push({ role: 'assistant', content: '', tool_calls: [{ id: tr.toolCallId, type: 'function', function: { name: 'tool', arguments: '{}' } }] });
+          (body.messages as Array<Record<string, unknown>>).push({ role: 'tool', content: tr.result, tool_call_id: tr.toolCallId });
+        }
+      }
 
       const signal = req.signal || AbortSignal.timeout(TIMEOUT_DEFAULT_MS);
 
@@ -150,14 +185,20 @@ export class OllamaProvider extends BaseProvider {
 
       const data = await response.json();
       const thinking = normalizeThinking(data, 'openai');
-      const choices = (data as Record<string, unknown>).choices as Array<{ message?: { content?: string } }> | undefined;
-      const content = choices?.[0]?.message?.content || '';
+      const choices = (data as Record<string, unknown>).choices as Array<{ message?: { content?: string; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish_reason?: string }> | undefined;
+      const message = choices?.[0]?.message;
+      const content = message?.content || '';
+
+      const compatToolCalls = (message?.tool_calls || []).map(tc => ({ id: tc.id, name: tc.function.name, arguments: tc.function.arguments }));
+      const compatFinish = compatToolCalls.length > 0 ? 'tool_calls' as const : 'stop' as const;
 
       return ok({
         content,
         thinking: thinking.source !== 'none' ? thinking : undefined,
         model: this.config.model,
-        success: content.length > 0,
+        success: content.length > 0 || compatToolCalls.length > 0,
+        toolCalls: compatToolCalls.length > 0 ? compatToolCalls : undefined,
+        finishReason: compatFinish,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';

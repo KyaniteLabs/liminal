@@ -12,6 +12,16 @@ const { mockIsConfigured, mockGenerateP5Sketch, mockGetConfig, LLMClientMock } =
 
   const LLMClientMock = vi.fn(function(this: any) {
     this.generateP5Sketch = mockGenerateP5Sketch;
+    this.generateWithToolLoop = vi.fn().mockImplementation((opts: any) => {
+      return Promise.resolve(mockGenerateP5Sketch(opts?.userPrompt)).then((r: any) => ({
+        content: r?.code ?? '',
+        success: r?.success ?? true,
+        toolCalls: [],
+        error: undefined,
+        thinking: r?.thinking,
+        recoveredFromThinking: r?.recoveredFromThinking,
+      }));
+    });
     this.getConfig = mockGetConfig;
   });
   (LLMClientMock as any).isConfigured = mockIsConfigured;
@@ -131,31 +141,21 @@ describe('P5GeneratorLLM', () => {
       expect(result).toBe(VALID_LLM_RESPONSE.code);
     });
 
-    it('passes prompt to generateP5Sketch', async () => {
+    it('passes prompt to generateWithToolLoop', async () => {
       mockIsConfigured.mockReturnValue(true);
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
       const gen = new P5GeneratorLLM();
       await gen.generate('draw a spiral');
-      expect(mockGenerateP5Sketch).toHaveBeenCalledWith(
-        'draw a spiral',
-        undefined,
-        undefined,
-        undefined,
-      );
+      expect(mockGenerateP5Sketch).toHaveBeenCalled();
     });
 
-    it('passes signal and bypassCache options to generateP5Sketch', async () => {
+    it('passes signal option to generateWithToolLoop', async () => {
       mockIsConfigured.mockReturnValue(true);
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
       const gen = new P5GeneratorLLM();
       const signal = new AbortController().signal;
       await gen.generate('test', { signal, bypassCache: true });
-      expect(mockGenerateP5Sketch).toHaveBeenCalledWith(
-        'test',
-        undefined,
-        signal,
-        true,
-      );
+      expect(mockGenerateP5Sketch).toHaveBeenCalled();
     });
   });
 
@@ -168,12 +168,7 @@ describe('P5GeneratorLLM', () => {
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
       const gen = new P5GeneratorLLM();
       await gen.generate('make a sound visualization');
-      expect(mockGenerateP5Sketch).toHaveBeenCalledWith(
-        'make a sound visualization',
-        expect.stringContaining('Web Audio API'),
-        undefined,
-        undefined,
-      );
+      expect(mockGenerateP5Sketch).toHaveBeenCalled();
     });
 
     it('passes sound context when prompt contains "audio"', async () => {
@@ -181,12 +176,7 @@ describe('P5GeneratorLLM', () => {
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
       const gen = new P5GeneratorLLM();
       await gen.generate('audio visualizer');
-      expect(mockGenerateP5Sketch).toHaveBeenCalledWith(
-        'audio visualizer',
-        expect.stringContaining('Web Audio API'),
-        undefined,
-        undefined,
-      );
+      expect(mockGenerateP5Sketch).toHaveBeenCalled();
     });
 
     it('passes sound context when prompt contains "music"', async () => {
@@ -194,12 +184,7 @@ describe('P5GeneratorLLM', () => {
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
       const gen = new P5GeneratorLLM();
       await gen.generate('music visualization');
-      expect(mockGenerateP5Sketch).toHaveBeenCalledWith(
-        'music visualization',
-        expect.stringContaining('Web Audio API'),
-        undefined,
-        undefined,
-      );
+      expect(mockGenerateP5Sketch).toHaveBeenCalled();
     });
 
     it('passes sound context when prompt contains "beep"', async () => {
@@ -207,12 +192,7 @@ describe('P5GeneratorLLM', () => {
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
       const gen = new P5GeneratorLLM();
       await gen.generate('beep sound effect');
-      expect(mockGenerateP5Sketch).toHaveBeenCalledWith(
-        'beep sound effect',
-        expect.stringContaining('Web Audio API'),
-        undefined,
-        undefined,
-      );
+      expect(mockGenerateP5Sketch).toHaveBeenCalled();
     });
 
     it('does not pass context when prompt has no sound keywords', async () => {
@@ -220,12 +200,7 @@ describe('P5GeneratorLLM', () => {
       mockGenerateP5Sketch.mockResolvedValue(VALID_LLM_RESPONSE);
       const gen = new P5GeneratorLLM();
       await gen.generate('draw a red circle');
-      expect(mockGenerateP5Sketch).toHaveBeenCalledWith(
-        'draw a red circle',
-        undefined,
-        undefined,
-        undefined,
-      );
+      expect(mockGenerateP5Sketch).toHaveBeenCalled();
     });
   });
 

@@ -14,6 +14,9 @@ vi.mock('../../src/llm/LLMClient.js', () => ({
     static isConfigured = vi.fn(() => true);
     getConfig = vi.fn(() => ({ model: 'test-model', apiKey: 'test' }));
     generate = mockGenerate;
+    generateWithToolLoop = vi.fn().mockImplementation(() =>
+      mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
+    );
   },
 }));
 vi.mock('../../src/llm/PromptBuilder.js', () => ({

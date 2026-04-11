@@ -19,6 +19,9 @@ vi.mock('../../src/llm/LLMClient.js', () => {
   });
   class MockLLMClient {
     generate = generate;
+    generateWithToolLoop = vi.fn().mockImplementation((opts: any) =>
+      generate(opts?.systemPrompt, opts?.userPrompt).then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
+    );
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);

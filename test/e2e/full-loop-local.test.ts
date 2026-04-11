@@ -59,7 +59,7 @@ async function isOllamaReachable(): Promise<boolean> {
   } catch (err) {
     clearTimeout(timeout);
     const msg = err instanceof Error ? err.message : String(err);
-    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|AbortError/i.test(msg)) return false;
+    if (/ECONNREFUSED|ENOTFOUND|ETIMEDOUT|fetch failed|AbortError|404/i.test(msg)) return false;
     throw err;
   }
 }

@@ -10,6 +10,9 @@ const { mockGenerate } = vi.hoisted(() => ({
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
+    generateWithToolLoop = vi.fn().mockImplementation(() =>
+      mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
+    );
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);

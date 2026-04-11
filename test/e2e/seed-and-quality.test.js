@@ -16,7 +16,7 @@ const E2E_GALLERY_DIR = path.join(process.cwd(), 'test-e2e-seed-quality-gallery'
 function isLLMUnavailable(err) {
   const msg = err instanceof Error ? err.message : String(err);
   return (
-    /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|401|403|network|fetch failed|AbortError|No LLM configured/i.test(msg)
+    /ECONNREFUSED|ENOTFOUND|ETIMEDOUT|401|403|404|network|fetch failed|AbortError|No LLM configured/i.test(msg)
   );
 }
 

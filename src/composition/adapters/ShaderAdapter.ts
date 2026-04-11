@@ -467,14 +467,31 @@ export class ShaderAdapter implements LayerAdapter {
 
     const width = settings.width;
     const height = settings.height;
+    const isTransparent = layer.config.transparentBackground;
+    const clearColor = isTransparent ? '0, 0, 0, 0' : '0, 0, 0, 1';
+    const canvasStyles = [
+      'position: absolute',
+      'top: 0',
+      'left: 0',
+      'width: 100%',
+      'height: 100%',
+      `z-index: ${layer.config.zIndex}`,
+      `opacity: ${layer.config.opacity}`,
+    ];
+    if (layer.config.blendMode !== 'normal') {
+      canvasStyles.push(`mix-blend-mode: ${layer.config.blendMode}`);
+    }
+    if (isTransparent) {
+      canvasStyles.push("background: transparent");
+    }
 
     return `
 <!-- Shader Layer: ${layer.id} -->
-<canvas id="shader-${layer.id}" width="${width}" height="${height}" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></canvas>
+<canvas id="shader-${layer.id}" width="${width}" height="${height}" style="${canvasStyles.join('; ')}"></canvas>
 <script>
 (function() {
   const canvas = document.getElementById('shader-${layer.id}');
-  const gl = canvas.getContext('webgl');
+  const gl = canvas.getContext('webgl', { alpha: ${isTransparent}, premultipliedAlpha: false });
   if (!gl) {
     console.error('WebGL not supported');
     return;
@@ -538,7 +555,7 @@ ${fragmentSource.replace(/`/g, '\\`')}\`;
     const time = (Date.now() - startTime) / 1000;
 
     gl.viewport(0, 0, ${width}, ${height});
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(${clearColor});
     gl.clear(gl.COLOR_BUFFER_BIT);
 
     if (timeLocation) gl.uniform1f(timeLocation, time);

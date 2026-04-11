@@ -284,4 +284,51 @@ describe('Layer Role Composition', () => {
       expect(SHADER_CODE).toMatch(/vec4\(col,\s*1\.0\)/);
     });
   });
+
+  // ===========================================================================
+  // 7. ShaderAdapter transparent + blend mode in HTML export
+  // ===========================================================================
+
+  describe('ShaderAdapter HTML export', () => {
+    it('background shader includes opacity and z-index on canvas', () => {
+      const adapter = new ShaderAdapter();
+      const layer = makeShaderBackground();
+      const script = adapter.generateScript(layer, {
+        width: 800,
+        height: 600,
+        frameRate: 60,
+        backgroundColor: '#000000',
+      });
+
+      expect(script).toContain('z-index: 0');
+      expect(script).toContain('opacity: 1');
+      expect(script).toContain('gl.clearColor(0, 0, 0, 1)');
+    });
+
+    it('transparent shader overlay uses clearColor with alpha 0', () => {
+      const adapter = new ShaderAdapter();
+      const layer = createLayer('shader', SHADER_CODE, 'transparent shader overlay', {
+        generator: 'ShaderGenerator',
+        model: 'test',
+        generatedAt: new Date().toISOString(),
+      }, {
+        role: 'overlay',
+        transparentBackground: true,
+        zIndex: 1,
+        blendMode: 'screen',
+      });
+
+      const script = adapter.generateScript(layer, {
+        width: 800,
+        height: 600,
+        frameRate: 60,
+        backgroundColor: '#000000',
+      });
+
+      expect(script).toContain('gl.clearColor(0, 0, 0, 0)');
+      expect(script).toContain("background: transparent");
+      expect(script).toContain("mix-blend-mode: screen");
+      expect(script).toContain('alpha: true');
+    });
+  });
 });

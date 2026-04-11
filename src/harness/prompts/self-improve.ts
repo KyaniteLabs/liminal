@@ -85,7 +85,6 @@ After making changes, select the RIGHT verification tool based on the file you m
 
 **CRITICAL**: If you modified files in bubbletea/ (Go code), runBuild will NOT verify them. Use astValidate or run go-specific checks.
 **CRITICAL**: If you modified only non-code files (.md, .json, .css), skip runBuild to save time and rate limits.
-
 ## Workflow for Each Fix
 
 1. **READ**: Use readFile to see current code

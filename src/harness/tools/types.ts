@@ -111,7 +111,6 @@ export interface LocalCheckpointResult {
   /** Whether build verification was run and passed */
   buildVerified: boolean;
 }
-
 export interface CreateBackupParams {
   path: string;
 }

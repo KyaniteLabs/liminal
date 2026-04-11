@@ -97,4 +97,16 @@ describe('TuiBridgeService', () => {
     expect(service.getStatus(session.sessionId).pendingAction).toBeUndefined();
     expect(service.getEvents(session.sessionId).map(e => e.type)).toContain('action.cancelled');
   });
+
+  it('chunks streamed reports on natural boundaries when possible', () => {
+    const service = new TuiBridgeService() as any;
+    const chunks = service.chunkString(
+      'Line one wraps neatly here.\nLine two also wraps neatly here.\nFinal bit.',
+      30,
+    );
+
+    expect(chunks.length).toBeGreaterThan(1);
+    expect(chunks[0].endsWith('\n') || chunks[0].endsWith(' ')).toBe(true);
+    expect(chunks.join('')).toBe('Line one wraps neatly here.\nLine two also wraps neatly here.\nFinal bit.');
+  });
 });

@@ -647,8 +647,34 @@ export class TuiBridgeService {
   /** Split string into chunks for streaming effect */
   private chunkString(str: string, chunkSize: number): string[] {
     const chunks: string[] = [];
-    for (let i = 0; i < str.length; i += chunkSize) {
-      chunks.push(str.slice(i, i + chunkSize));
+    let index = 0;
+
+    while (index < str.length) {
+      const remaining = str.length - index;
+      if (remaining <= chunkSize) {
+        chunks.push(str.slice(index));
+        break;
+      }
+
+      const window = str.slice(index, index + chunkSize);
+      const newline = window.lastIndexOf('\n');
+      if (newline >= Math.floor(chunkSize * 0.4)) {
+        const end = index + newline + 1;
+        chunks.push(str.slice(index, end));
+        index = end;
+        continue;
+      }
+
+      const whitespace = Math.max(window.lastIndexOf(' '), window.lastIndexOf('\t'));
+      if (whitespace >= Math.floor(chunkSize * 0.6)) {
+        const end = index + whitespace + 1;
+        chunks.push(str.slice(index, end));
+        index = end;
+        continue;
+      }
+
+      chunks.push(str.slice(index, index + chunkSize));
+      index += chunkSize;
     }
     return chunks;
   }

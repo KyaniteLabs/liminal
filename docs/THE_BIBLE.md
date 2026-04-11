@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-08  
+**Date:** 2026-04-11  
 **Status:** 330+ commits, forensic audit fixes complete  
-**Branch:** main
+**Branch:** fix/bubbletea-operator-surface
 
 ---
 
@@ -11,8 +11,8 @@
 
 Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
 
-- **21 Subsystems** (8 core + 14 supporting)
-- **18 Guardrails** (M1-M11 implemented, M12-M18 planned)
+- **28 Documented Systems** across core runtime, operator surfaces, and support infrastructure
+- **18 Guardrails** (M1-M18 implemented)
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
 - **Meta-Harness** self-improvement system
@@ -23,7 +23,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 
 ## Test Status
 
-**Date:** 2026-04-08
+**Date:** 2026-04-11
 
 | Category | Before | After |
 |----------|--------|-------|
@@ -187,7 +187,7 @@ Failures:   0 critical
 │  │  M9:  ✅ Semantic Alignment         - SemanticValidator             │    │
 │  │  M10: ✅ Runtime Health             - RuntimeHealthMonitor          │    │
 │  │  M11: ✅ Accessibility              - AccessibilityGuardrails       │    │
-│  │  M12-M18: ⚪ Planned/Future                                         │    │
+│  │  M12-M18: ✅ Compliance (Privacy → Resilience)                      │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    ↓                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
@@ -625,11 +625,15 @@ Failures:   0 critical
 **Purpose:** Operator-grade terminal UI with pane-first architecture, explicit modes, and confirmation-first mutation UX.
 
 **Architecture:**
-- Pane-first layout: history, active response, status/trust
+- Pane-first layout: chat history on the left, operator surface on the right
 - Explicit modes: Chat, Inspect, Action, Confirm
+- Multiline operator composer: textarea input with Liminal-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
 - Active-response pane: streaming responses don't touch committed history
 - Confirmation-first: no state mutation without operator approval
 - Trust/provenance labels: provider, model, trust-level badges
+- Operator surface cards: task/phase card with progress bar, generation progress card, tool timeline, Bubbles-based changed-files / verification tables, artifacts, help drawer
+- Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
+- Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
 - Generated code: untrusted by default
 
 **Go Components:**
@@ -637,12 +641,13 @@ Failures:   0 critical
 |-----------|---------|---------|
 | Model | `internal/app/model.go` | UI state, event application, confirm/cancel |
 | Update | `internal/app/update.go` | Bubble Tea Update loop with bridge wiring |
-| View | `internal/app/view.go` | Pane rendering with Lip Gloss styles |
-| Theme | `internal/ui/theme.go` | Style definitions |
+| View | `internal/app/view.go` | 55/45 chat + operator layout with header/footer shortcuts |
+| Theme | `internal/ui/theme.go` | Operator-surface style tokens, badges, panel chrome |
 | Bridge Client | `internal/bridge/client.go` | HTTP + SSE client for TS bridge |
+| Layout | `internal/app/layout.go` | Task card, generation progress card, timeline, changed files, verification, artifacts, help rendering |
 | Event Types | `internal/bridge/events.go` | Event, SessionStatus, PendingAction structs |
 
-**Test Coverage:** 16 Go tests passing across bridge client, bootstrap, event handling, action modes, and view rendering.
+**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, shortcut behavior, and visible progress instrumentation. Vitest coverage now includes typed operator-event publication plus real SSE delivery through the TS bridge server.
 
 ---
 
@@ -889,7 +894,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 
 ## Known Limitations
 
-1. **M12-M18:** Not yet implemented (M1-M11 complete)
+1. **M12-M18 Coverage:** Guardrails are implemented, but broader dogfood and operational validation is still ongoing
 2. **Template Removal:** All template-based generation removed (pure LLM now)
 3. **Browser Dependency:** M9-M11 require Puppeteer/Playwright
 4. **Local Models:** 16k context limit (tier detection respects this)
@@ -938,7 +943,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 ### Remaining Work
 4. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
 5. 🔄 Cloud provider testing (requires API keys)
-6. 🔄 Implement M12-M18 guardrails (future)
+6. 🔄 Bubble Tea operator-surface rollout and broader operator-event emission coverage
 7. 🔄 Community plugins (future)
 
 ### Metrics

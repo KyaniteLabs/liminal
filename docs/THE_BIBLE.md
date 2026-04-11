@@ -403,6 +403,7 @@ Failures:   0 critical
 - A third slice fixed the same PromptLibrary interpolation bug class in `audio.voice-to-visual` and `aesthetic.constraints`.
 - A fourth slice aligned `PromptBuilder` and the small-model p5 fallback with the same structured prompt style used by the audited primary prompt surfaces.
 - A final narrow slice corrected Hydra API guidance so the prompt no longer misstates `speed` as a chain method or `color()` as a source.
+- The narrative blog-to-video prompts were also upgraded to use explicit tagged input sections for better long-context structure without changing their core creative contract.
 
 **Multi-Provider Support:**
 - OpenAI

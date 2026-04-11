@@ -13,12 +13,17 @@ import (
 )
 
 type Client struct {
-	BaseURL string
-	HTTP    *http.Client
+	BaseURL     string
+	HTTP        *http.Client
+	streamHTTP  *http.Client
 }
 
 func NewClient(baseURL string) *Client {
-	return &Client{BaseURL: strings.TrimRight(baseURL, "/"), HTTP: &http.Client{Timeout: 30 * time.Second}}
+	return &Client{
+		BaseURL:    strings.TrimRight(baseURL, "/"),
+		HTTP:       &http.Client{Timeout: 30 * time.Second},
+		streamHTTP: &http.Client{}, // no overall timeout; SSE streams are long-lived
+	}
 }
 
 func (c *Client) CreateSession(ctx context.Context) (SessionStatus, error) {
@@ -91,7 +96,7 @@ func (c *Client) CancelAction(ctx context.Context, sessionID, actionID string) e
 
 func (c *Client) StreamEvents(ctx context.Context, sessionID string, onEvent func(Event)) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s/api/tui/session/%s/events", c.BaseURL, sessionID), nil)
-	resp, err := c.HTTP.Do(req)
+	resp, err := c.streamHTTP.Do(req)
 	if err != nil {
 		return err
 	}

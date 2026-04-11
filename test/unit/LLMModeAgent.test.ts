@@ -7,6 +7,7 @@ const {
   mockReadFile,
   mockApplyEdit,
   mockRunBuild,
+  mockRunTests,
   mockRestoreBackup,
   mockCreateBackup,
 } = vi.hoisted(() => {
@@ -21,6 +22,7 @@ const {
     mockReadFile: { execute: vi.fn(async () => ({ success: true, data: { content: 'const x = 1;' } })) },
     mockApplyEdit: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
     mockRunBuild: { execute: vi.fn(async () => ({ success: true })) },
+    mockRunTests: { execute: vi.fn(async () => ({ success: true })) },
     mockRestoreBackup: { execute: vi.fn(async () => ({ success: true })) },
     mockCreateBackup: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
   };
@@ -43,7 +45,7 @@ vi.mock('../../src/harness/tools/index.js', () => ({
   writeFileTool: { execute: vi.fn(async () => ({ success: true })) },
   applyEditTool: mockApplyEdit,
   runBuildTool: mockRunBuild,
-  runTestsTool: { execute: vi.fn(async () => ({ success: true })) },
+  runTestsTool: mockRunTests,
   restoreBackupTool: mockRestoreBackup,
   createBackupTool: mockCreateBackup,
 }));
@@ -62,6 +64,7 @@ vi.mock('../../src/harness/ThinkingAnalyzer.js', () => ({
 }));
 
 import { LLMModeAgent, createLLMModeAgent } from '../../src/harness/agent/LLMModeAgent.js';
+import { rateLimiter } from '../../src/harness/tools/RateLimiter.js';
 import { Status } from '../../src/types/status.js';
 
 describe('LLMModeAgent', () => {
@@ -70,6 +73,7 @@ describe('LLMModeAgent', () => {
     mockReadFile.execute.mockResolvedValue({ success: true, data: { content: 'const x = 1;' } });
     mockApplyEdit.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
     mockRunBuild.execute.mockResolvedValue({ success: true });
+    mockRunTests.execute.mockResolvedValue({ success: true });
     mockRestoreBackup.execute.mockResolvedValue({ success: true });
     mockCreateBackup.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
   });
@@ -151,6 +155,22 @@ describe('LLMModeAgent', () => {
     expect(session.endTime).toBeDefined();
   });
 
+  it('parses the first complete JSON object when model adds trailing braces', async () => {
+    mockComplete
+      .mockResolvedValueOnce({
+        text: '{"thought":"read first","tool":"readFile","params":{"path":"src/tui-bridge/TuiBridgeService.ts"},"expectedResult":"read file"}\\n}',
+      })
+      .mockResolvedValueOnce({ text: '{"thought":"done","tool":"complete","params":{},"expectedResult":"finish"}' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-json', title: 'Parse GLM JSON', description: 'desc', approved: true, maxSteps: 3,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalledWith({ path: 'src/tui-bridge/TuiBridgeService.ts' });
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   it('executeTask sets FAILED when LLM returns no response', async () => {
     mockComplete.mockResolvedValue({ text: '' });
     const agent = new LLMModeAgent(mockLLM as any);
@@ -189,6 +209,43 @@ describe('LLMModeAgent', () => {
     const callArg = mockComplete.mock.calls[0][0];
     expect(callArg.prompt).toContain('Read foo.ts');
     expect(callArg.prompt).toContain('src/foo.ts');
+  });
+
+  it('uses the tui-specific LLM rate limit bucket for Bubble Tea self-improvement tasks', async () => {
+    mockComplete.mockResolvedValue({ text: '{"tool":"complete","params":{},"thought":"done"}' });
+    const agent = new LLMModeAgent(mockLLM as any);
+
+    await agent.executeTask({
+      id: 'tui-self-123',
+      title: 'Bubble Tea self-improvement',
+      description: 'desc',
+      approved: true,
+    });
+
+    expect(rateLimiter.execute).toHaveBeenCalledWith('tuiLlmCall:tui-self-123', expect.any(Function));
+  });
+
+  it('treats late-stage plain-text completion as complete after successful verification', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"src/tui-bridge/TuiBridgeService.ts"},"thought":"inspect"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"applyEdit","params":{"path":"src/tui-bridge/TuiBridgeService.ts","oldString":"const x = 1;","newString":"const x = 2;"},"thought":"fix"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"runBuild","params":{},"thought":"verify build"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"runTests","params":{"pattern":"LLMModeAgent"},"thought":"verify tests"}' })
+      .mockResolvedValueOnce({ text: 'Task complete. Build passes, all 16 tests pass. Providing final report.' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-implicit-complete',
+      title: 'Implicit completion',
+      description: 'desc',
+      approved: true,
+      maxSteps: 6,
+    });
+
+    expect(mockApplyEdit.execute).toHaveBeenCalled();
+    expect(mockRunBuild.execute).toHaveBeenCalled();
+    expect(mockRunTests.execute).toHaveBeenCalled();
+    expect(session.status).toBe(Status.SUCCESS);
   });
 
   // ── Report generation ──────────────────────────────────────────────

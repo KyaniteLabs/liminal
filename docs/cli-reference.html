@@ -38,7 +38,7 @@
             <h2 class="section-title">🚀 Commands</h2>
             
             <h3 style="color: var(--accent-cyan);">liminal tui</h3>
-            <p>Launch the interactive TUI with natural language interface.</p>
+            <p>Launch the interactive Bubble Tea operator TUI via the GLM-backed bridge bootstrap script.</p>
             <pre><code>$ liminal tui
 
 # Or use the shorthand alias:
@@ -61,7 +61,7 @@ $ liminal --prompt "Generate a shader with Perlin noise" --domain glsl</code></p
 # Server starts on http://localhost:3000</code></pre>
 
             <h3 style="color: var(--accent-purple); margin-top: 2rem;">Bubble Tea TUI (Go)</h3>
-            <p>Next-generation operator-grade terminal UI. Requires the bridge server running (<code>liminal serve</code>).</p>
+            <p>Next-generation operator-grade terminal UI. The recommended entrypoint is <code>pnpm tui</code>, which builds the repo, starts the TS bridge, and launches Bubble Tea.</p>
             <pre><code>$ cd bubbletea && go run .
 
 # Or with a custom bridge URL:
@@ -75,8 +75,9 @@ $ LIMINAL_BRIDGE_URL=http://localhost:3000 go run .</code></pre>
                     <tr><td><code>Tab</code></td><td>Switch focus between chat and operator column</td></tr>
                     <tr><td><code>Ctrl+T</code></td><td>Toggle the live tool timeline panel</td></tr>
                     <tr><td><code>Ctrl+A</code></td><td>Toggle the artifacts drawer</td></tr>
-                    <tr><td><code>Ctrl+Y</code></td><td>Copy the last assistant response to the clipboard</td></tr>
+                    <tr><td><code>Ctrl+Y</code></td><td>Copy the last assistant response to the clipboard and persist a fallback copy artifact</td></tr>
                     <tr><td><code>?</code></td><td>Toggle the operator shortcuts/help drawer</td></tr>
+                    <tr><td><code>fn</code>+<code>↑</code> / <code>fn</code>+<code>↓</code></td><td>Page up/down in the chat viewport on Mac laptops</td></tr>
                     <tr><td><code>y</code></td><td>Confirm pending action (ACTION mode)</td></tr>
                     <tr><td><code>n</code></td><td>Cancel pending action (ACTION mode)</td></tr>
                     <tr><td><code>q</code> / <code>Ctrl+C</code></td><td>Quit</td></tr>
@@ -185,7 +186,7 @@ OPENAI_API_KEY=sk-...</code></pre>
                 <tbody>
                     <tr><td><code>build</code></td><td><code>tsc</code></td><td>Compile TypeScript</td></tr>
                     <tr><td><code>test</code></td><td><code>vitest run</code></td><td>Run tests</td></tr>
-                    <tr><td><code>tui</code></td><td><code>tsx src/tui/HarnessTUI.tsx</code></td><td>Launch TUI</td></tr>
+                    <tr><td><code>tui</code></td><td><code>npm run build && node scripts/start-bubbletea-tui.mjs</code></td><td>Launch Bubble Tea + bridge</td></tr>
                     <tr><td><code>lint</code></td><td><code>eslint src/</code></td><td>Lint code</td></tr>
                     <tr><td><code>typecheck</code></td><td><code>tsc --noEmit</code></td><td>Type check only</td></tr>
                 </tbody>

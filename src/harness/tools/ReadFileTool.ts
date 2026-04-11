@@ -11,7 +11,7 @@ export class ReadFileTool extends Tool {
   
   async execute(params: unknown): Promise<ToolResult<ReadFileResult>> {
     const startTime = Date.now();
-    const { path: filePath, maxLines = 1000 } = params as ReadFileParams;
+    const { path: filePath, maxLines = 1000, offset = 0, limit } = params as ReadFileParams;
     
     try {
       // Security validation
@@ -38,14 +38,21 @@ export class ReadFileTool extends Tool {
       const content = await fs.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       const lineCount = lines.length;
-      
-      // Truncate if needed
-      let truncatedContent = content;
+      const safeOffset = Math.max(0, offset);
+      const pageSize = Math.max(1, limit ?? maxLines);
+      const page = lines.slice(safeOffset, safeOffset + pageSize);
+      const startLine = lineCount === 0 ? 0 : Math.min(safeOffset + 1, lineCount);
+      const endLine = safeOffset + page.length;
+
+      let truncatedContent = page.join('\n');
       let truncated = false;
-      if (lines.length > maxLines) {
-        truncatedContent = lines.slice(0, maxLines).join('\n');
-        truncatedContent += `\n\n... [truncated: ${lines.length - maxLines} more lines] ...`;
+      if (safeOffset > 0 || endLine < lineCount) {
         truncated = true;
+        const before = safeOffset;
+        const after = Math.max(0, lineCount - endLine);
+        const prefix = before > 0 ? `... [truncated: ${before} lines before] ...\n` : '';
+        const suffix = after > 0 ? `\n... [truncated: ${after} more lines] ...` : '';
+        truncatedContent = `${prefix}${truncatedContent}${suffix}`;
       }
       
       return {
@@ -55,6 +62,8 @@ export class ReadFileTool extends Tool {
           exists: true,
           lineCount,
           truncated,
+          startLine,
+          endLine,
         },
         duration: Date.now() - startTime,
       };

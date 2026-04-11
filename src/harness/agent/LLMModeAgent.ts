@@ -35,6 +35,7 @@ import {
   lspTool,
   astValidatorTool,
   importGuardTool,
+  gitStatusTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
 
@@ -151,6 +152,7 @@ When the task is complete and build passes, respond with tool "complete".`;
     });
 
     try {
+      let parseFailure = false;
       while (session.stepCount < maxSteps) {
         session.stepCount++;
         Logger.debug('LLMModeAgent', `Step ${session.stepCount}/${maxSteps}`);
@@ -161,6 +163,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           current: session.stepCount,
           total: maxSteps,
           stage: `planning step ${session.stepCount}`,
+          message: 'asking GLM for next tool call',
         });
 
         // Get LLM's plan
@@ -168,6 +171,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         
         if (!toolCall) {
           Logger.error('LLMModeAgent', 'Failed to parse LLM response');
+          parseFailure = true;
           break;
         }
 
@@ -176,6 +180,14 @@ When the task is complete and build passes, respond with tool "complete".`;
           role: 'assistant',
           content: JSON.stringify(toolCall),
           toolCall,
+        });
+
+        eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+          process: 'agent-task',
+          current: session.stepCount,
+          total: maxSteps,
+          stage: `planned ${toolCall.tool}`,
+          message: `${toolCall.tool}: ${toolCall.thought}`,
         });
 
         // Check for completion
@@ -254,21 +266,55 @@ When the task is complete and build passes, respond with tool "complete".`;
         await new Promise(r => setTimeout(r, 100));
       }
 
-      // Max steps reached
-        Logger.error('LLMModeAgent', `Max steps (${maxSteps}) reached`);
-      session.status = Status.FAILED;
-      session.endTime = new Date().toISOString();
+      // Loop ended without explicit completion via 'complete' tool.
+      // Distinguish between parse failure (always FAILED) and natural completion.
+      if (parseFailure) {
+        // LLM response couldn't be parsed - this is a real failure
+        Logger.error('LLMModeAgent', `Failed to parse LLM response after ${session.stepCount} steps`);
+        session.status = Status.FAILED;
+        session.endTime = new Date().toISOString();
 
-      eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
-        process: 'agent-task',
-        success: false,
-        reason: `Max steps (${maxSteps}) reached`,
-        iterations: session.stepCount,
-        durationMs: Date.now() - new Date(session.startTime).getTime(),
-      });
-      
-      // Rollback if needed
-      if (session.backups.length > 0) {
+        eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+          process: 'agent-task',
+          success: false,
+          reason: 'Failed to parse LLM response',
+          iterations: session.stepCount,
+          durationMs: Date.now() - new Date(session.startTime).getTime(),
+        });
+
+        // Rollback if needed
+        if (session.backups.length > 0) {
+          await this.rollback(session);
+          session.status = Status.ROLLED_BACK;
+        }
+      } else if (session.backups.length === 0) {
+        // Natural loop completion with no mutations - inspection-only success
+        Logger.debug('LLMModeAgent', `Inspection complete after ${session.stepCount} steps, no mutations needed`);
+        session.status = Status.SUCCESS;
+        session.endTime = new Date().toISOString();
+
+        eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+          process: 'agent-task',
+          success: true,
+          reason: 'Inspection complete, no mutations needed',
+          iterations: session.stepCount,
+          durationMs: Date.now() - new Date(session.startTime).getTime(),
+        });
+      } else {
+        // Mutations were made but task didn't complete - this is a failure
+        Logger.error('LLMModeAgent', `Max steps (${maxSteps}) reached with incomplete changes`);
+        session.status = Status.FAILED;
+        session.endTime = new Date().toISOString();
+
+        eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+          process: 'agent-task',
+          success: false,
+          reason: `Max steps (${maxSteps}) reached with incomplete changes`,
+          iterations: session.stepCount,
+          durationMs: Date.now() - new Date(session.startTime).getTime(),
+        });
+        
+        // Rollback incomplete changes
         await this.rollback(session);
         session.status = Status.ROLLED_BACK;
       }
@@ -309,7 +355,7 @@ When the task is complete and build passes, respond with tool "complete".`;
    * Get LLM's planned tool call
    */
   private async getLLMPlan(session: LLMSession): Promise<ToolCall | null> {
-    const rateLimitResult = await rateLimiter.execute('llmCall', async () => {
+    const rateLimitResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async () => {
       // Build conversation context
       let messages = session.messages.map(m => ({
         role: m.role as 'system' | 'user' | 'assistant',
@@ -361,13 +407,17 @@ When the task is complete and build passes, respond with tool "complete".`;
                         [null, text];
       const jsonStr = jsonMatch[1] || text;
 
-      // Find the first '{' and try to parse from there — handles leading text before JSON
-      const jsonStart = jsonStr.indexOf('{');
-      if (jsonStart === -1) {
+      const jsonText = this.extractFirstJsonObject(jsonStr);
+      if (!jsonText) {
+        const implicitComplete = this.tryImplicitCompletion(session, text);
+        if (implicitComplete) {
+          Logger.debug('LLMModeAgent', 'Using implicit completion fallback for late-stage plain-text response');
+          return implicitComplete;
+        }
         Logger.error('LLMModeAgent', 'No JSON object found in response');
         return null;
       }
-      const parsed = JSON.parse(jsonStr.slice(jsonStart));
+      const parsed = JSON.parse(jsonText);
       
       const toolCall = {
         thought: parsed.thought || 'No thought provided',
@@ -411,6 +461,84 @@ When the task is complete and build passes, respond with tool "complete".`;
       Logger.error('LLMModeAgent', `Raw response: ${rateLimitResult.result}`);
       return null;
     }
+  }
+
+  private llmRateLimitOperation(session: LLMSession): string {
+    return session.task.id.startsWith('tui-self-')
+      ? `tuiLlmCall:${session.task.id}`
+      : 'llmCall';
+  }
+
+  private extractFirstJsonObject(text: string): string | null {
+    const start = text.indexOf('{');
+    if (start === -1) return null;
+
+    let depth = 0;
+    let inString = false;
+    let escaped = false;
+
+    for (let i = start; i < text.length; i++) {
+      const ch = text[i];
+
+      if (escaped) {
+        escaped = false;
+        continue;
+      }
+      if (ch === '\\' && inString) {
+        escaped = true;
+        continue;
+      }
+      if (ch === '"') {
+        inString = !inString;
+        continue;
+      }
+      if (inString) continue;
+
+      if (ch === '{') depth++;
+      if (ch === '}') {
+        depth--;
+        if (depth === 0) {
+          return text.slice(start, i + 1);
+        }
+      }
+    }
+
+    return null;
+  }
+
+  private tryImplicitCompletion(session: LLMSession, text: string): ToolCall | null {
+    const trimmed = text.trim();
+    if (!trimmed) return null;
+
+    const hasMutation = session.backups.length > 0;
+    if (!hasMutation) return null;
+
+    const buildPassed = this.hasSuccessfulTool(session, 'runBuild');
+    if (!buildPassed) return null;
+
+    const testsPassed = this.hasSuccessfulTool(session, 'runTests');
+    const completionLike = /(?:task\s+complete|fix\s+is\s+complete|providing\s+final\s+report|all\s+\d*\s*tests?\s+pass|tests?\s+pass(?:ed)?|done\b)/i.test(trimmed);
+
+    if (!completionLike) return null;
+    if (!testsPassed && !/tests?\s+pass(?:ed)?/i.test(trimmed)) return null;
+
+    return {
+      thought: trimmed.slice(0, 400),
+      tool: 'complete',
+      params: {},
+      expectedResult: 'Finish the verified task',
+    };
+  }
+
+  private hasSuccessfulTool(session: LLMSession, toolName: string): boolean {
+    for (let i = 0; i < session.messages.length - 1; i++) {
+      const message = session.messages[i];
+      const next = session.messages[i + 1];
+      if (message.toolCall?.tool === toolName && next.toolResult?.success) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -479,6 +607,8 @@ When the task is complete and build passes, respond with tool "complete".`;
             return astValidatorTool.execute(params);
           case 'importGuard':
             return importGuardTool.execute(params);
+          case 'gitStatus':
+            return gitStatusTool.execute(params);
 
           default:
             return { success: false, error: `Unknown tool: ${tool}` };

@@ -21,6 +21,8 @@ describe('harness/tools/types', () => {
     const tool = new TestTool();
     expect(tool.callValidate('/etc/passwd')).toBe(false);
     expect(tool.callValidate('src/index.ts')).toBe(true);
+    expect(tool.callValidate('.omx/self-improvement-prompt.md')).toBe(true);
+    expect(tool.callValidate('harness-tasks/M1.json')).toBe(true);
   });
 
   it('Tool formatError handles Error and non-Error', () => {

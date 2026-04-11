@@ -2,7 +2,7 @@
  * Validation Guard for Meta-Harness
  * 
  * Safety checks before applying changes:
- * - Path validation (only src/, test/, docs/, scripts/)
+ * - Path validation (only active project implementation/test/doc surfaces)
  * - File size limits
  * - Change size limits
  * - Forbidden patterns
@@ -40,6 +40,12 @@ export class ValidationGuard {
       path.join(cwd, 'test'),
       path.join(cwd, 'docs'),
       path.join(cwd, 'scripts'),
+      path.join(cwd, 'bubbletea'),
+      path.join(cwd, 'harness-tasks'),
+      path.join(cwd, '.omx'),
+      path.join(cwd, 'package.json'),
+      path.join(cwd, 'package-lock.json'),
+      path.join(cwd, 'pnpm-lock.yaml'),
     ];
   }
 

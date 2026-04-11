@@ -634,6 +634,8 @@ Failures:   0 critical
 - Operator surface cards: task/phase card with progress bar, generation progress card, tool timeline, Bubbles-based changed-files / verification tables, artifacts, help drawer
 - Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
 - Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
+- Meta-Harness bridge routing: self-improvement prompts route through the TS bridge into the tool-using harness agent rather than the creative-generation loop
+- Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 
 **Go Components:**

@@ -692,13 +692,16 @@ When the task is complete and build passes, respond with tool "complete".`;
 
   private trackModifiedExtension(filePath: string): void {
     const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
-    if (ext) this.modifiedExtensions.add(ext);
+    if (ext) {
+      this.currentSession?.modifiedExtensions.add(ext);
+    }
   }
 
   private needsCodeVerification(): boolean {
-    if (this.modifiedExtensions.size === 0) return true;
+    const modifiedExtensions = this.currentSession?.modifiedExtensions;
+    if (!modifiedExtensions || modifiedExtensions.size === 0) return true;
     const nonCodeOnly = ['md', 'txt', 'rst', 'json', 'jsonc', 'css', 'scss', 'less', 'sass', 'html', 'htm', 'svg', 'yaml', 'yml', 'toml'];
-    return Array.from(this.modifiedExtensions).some((ext) => !nonCodeOnly.includes(ext));
+    return Array.from(modifiedExtensions).some((ext) => !nonCodeOnly.includes(ext));
   }
 
   /**

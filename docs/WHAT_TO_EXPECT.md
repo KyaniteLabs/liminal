@@ -179,7 +179,7 @@ src/core/CodeValidator.ts          (M1)
 src/llm/LLMClient.ts               (M4)
 src/harness/FailureLogger.ts       (M6)
 src/harness/PatternDetector.ts     (M7)
-src/harness/HarnessUpdater.ts      (M8)
+src/harness/HarnessUpdater.ts      (M8, historical file removed in B6)
 ```
 
 **Each change:**

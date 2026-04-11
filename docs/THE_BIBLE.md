@@ -143,7 +143,7 @@ Failures:   0 critical
 │  │  ├── HarnessMemory          - Persistent tasks/adaptations          │    │
 │  │  ├── FailureLogger          - Logs to ~/.liminal/failures/          │    │
 │  │  ├── PatternDetector        - Detects failure patterns              │    │
-│  │  ├── HarnessUpdater         - Applies adaptations                   │    │
+│  │  ├── HarnessUpdater         - Removed no-op (historical reference)  │    │
 │  │  ├── HarnessAgent           - 7 tools for self-repair               │    │
 │  │  ├── ValidationGuard        - Prevents bad edits                    │    │
 │  │  └── RateLimiter            - Prevents runaway execution            │    │
@@ -218,7 +218,7 @@ Failures:   0 critical
 | HarnessMemory | `HarnessMemory.ts` | Persistent storage for tasks, adaptations, episodes | 🟢 Active |
 | FailureLogger | `FailureLogger.ts` | Logs failures to ~/.liminal/failures/ | 🟢 Active |
 | PatternDetector | `PatternDetector.ts` | Detects patterns in failures | 🟢 Active |
-| HarnessUpdater | `HarnessUpdater.ts` | Applies adaptations to fix issues | 🟢 Active |
+| HarnessUpdater | `HarnessUpdater.ts` | Removed historical no-op; kept here only as migration history | ⚫ Removed |
 | HarnessAgent | `agent/HarnessAgent.ts` | 7 tools for self-repair | 🟢 Active |
 | ValidationGuard | `tools/ValidationGuard.ts` | Prevents invalid edits | 🟢 Active |
 | RateLimiter | `tools/RateLimiter.ts` | Limits execution rate | 🟢 Active |
@@ -271,7 +271,7 @@ Failures:   0 critical
 
 *Note: M2 (Domain Routing) and M3 (Budget/Rate Limit) were implemented directly during initial development without separate task files.*
 
-**Task File Location:** `harness-tasks/archive/*.json`
+**Task File Location:** `harness-tasks/*.json`
 
 ---
 

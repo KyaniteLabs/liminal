@@ -107,7 +107,7 @@ Duration:    59.05s
 | MetaHarnessIntegration | `MetaHarnessIntegration.ts` | Central coordinator |
 | FailureLogger | `FailureLogger.ts` | Captures failures |
 | PatternDetector | `PatternDetector.ts` | Detects patterns |
-| HarnessUpdater | `HarnessUpdater.ts` | Applies adaptations |
+| HarnessUpdater | `HarnessUpdater.ts` | Historical reference only; no-op removed |
 | HarnessMemory | `HarnessMemory.ts` | Persistent memory |
 | MultiProviderConfig | `MultiProviderConfig.ts` | Provider management |
 

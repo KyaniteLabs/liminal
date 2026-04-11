@@ -58,7 +58,7 @@ Failures:   0
 │  MetaHarnessIntegration 🟢    (Receives failure reports)           │
 │  ├── FailureLogger 🟢         (Persistent to ~/.liminal/failures/) │
 │  ├── PatternDetector 🟢                                            │
-│  ├── HarnessUpdater 🟡        (Creates tasks, no auto-exec)        │
+│  ├── HarnessUpdater ⚫        (removed no-op; historical reference) │
 │  ├── HarnessAgent 🟢          (7 tools, rollback)                  │
 │  ├── HarnessMemory 🟢         (NEW: Persistent memory)             │
 │  ├── ValidationGuard 🟢                                            │
@@ -225,7 +225,7 @@ liminal/
 │   │   ├── MetaHarnessIntegration.ts
 │   │   ├── FailureLogger.ts
 │   │   ├── PatternDetector.ts
-│   │   ├── HarnessUpdater.ts
+│   │   ├── HarnessUpdater.ts       ← removed/no-op (historical)
 │   │   └── agent/       # HarnessAgent with 7 tools
 │   ├── learning/        # Quality/Novelty archives
 │   ├── llm/             # LLM infrastructure

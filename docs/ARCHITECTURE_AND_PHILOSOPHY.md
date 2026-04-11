@@ -50,7 +50,7 @@ The Meta-Harness implements the **Ralph Wiggum Principle**: the harness (agent m
 ┌─────────────────────────────────────────────────────────────────────┐
 │                      META-HARNESS (Outer Loop)                       │
 │  ┌──────────────┐  ┌────────────────┐  ┌──────────────────┐          │
-│  │ FailureLogger │──▶│ PatternDetector │──▶│ HarnessUpdater  │          │
+│  │ FailureLogger │──▶│ PatternDetector │──▶│ Task/insight logs │         │
 │  └──────────────┘  └────────────────┘  └──────────────────┘          │
 │         │                   │                     │                  │
 │         ▼                   ▼                     ▼                  │

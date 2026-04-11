@@ -1,8 +1,8 @@
 # System Prompt Audit — Liminal
 
-**Date:** April 11, 2026  
-**Scope:** `liminal` repository only  
-**Worktree:** `.worktrees/agent-prompt-audit-20260411`  
+**Date:** April 11, 2026
+**Scope:** `liminal` repository only
+**Worktree:** `.worktrees/agent-prompt-audit-20260411`
 **Branch:** `agent-prompt-audit-20260411`
 
 ## Why this audit exists
@@ -47,34 +47,54 @@ Each surface was scored informally on:
 ## Highest-ROI fixes landed in this pass
 
 ### 1) `src/harness/prompts/self-improve.ts`
-**Surface(s):** `SELF_IMPROVE_SYSTEM_PROMPT`, `createAgentSystemPrompt()`  
-**Why high leverage:** central harness prompt; affects autonomous repair behavior.  
-**Issues found:** oversized examples, repeated tool prose, weaker failure/verification contract.  
+**Surface(s):** `SELF_IMPROVE_SYSTEM_PROMPT`, `createAgentSystemPrompt()`
+**Why high leverage:** central harness prompt; affects autonomous repair behavior.
+**Issues found:** oversized examples, repeated tool prose, weaker failure/verification contract.
 **Action:** compressed prompt, preserved tool contract, made verification and rollback expectations sharper.
 
 ### 2) `src/prompts/p5.ts`
-**Surface(s):** `p5.generate`, `p5.improve`  
-**Why high leverage:** core creative domain; frequent generation path.  
-**Issues found:** direct contradiction between “raw JS only / no markdown” and “must be wrapped in a markdown code block”.  
+**Surface(s):** `p5.generate`, `p5.improve`
+**Why high leverage:** core creative domain; frequent generation path.
+**Issues found:** direct contradiction between “raw JS only / no markdown” and “must be wrapped in a markdown code block”.
 **Action:** removed contradiction, reduced duplication, kept core p5 constraints.
 
 ### 3) `src/prompts/three.ts`
-**Surface(s):** `three.generate`  
-**Why high leverage:** core domain + accuracy bug.  
-**Issues found:** prompt mixed legacy global-script guidance with `examples/jsm` OrbitControls path, which is a modern module path.  
+**Surface(s):** `three.generate`
+**Why high leverage:** core domain + accuracy bug.
+**Issues found:** prompt mixed legacy global-script guidance with `examples/jsm` OrbitControls path, which is a modern module path.
 **Action:** switched guidance to one consistent modern module/import-map pattern with `three/addons/controls/OrbitControls.js`.
 
 ### 4) `src/prompts/glsl.ts`
-**Surface(s):** `glsl.generate`  
-**Why high leverage:** core domain + repeated prompt bloat.  
-**Issues found:** “raw code only” vs “single code block” conflict; oversized inline example code; arbitrary 1000-char requirement stronger than validator.  
+**Surface(s):** `glsl.generate`
+**Why high leverage:** core domain + repeated prompt bloat.
+**Issues found:** “raw code only” vs “single code block” conflict; oversized inline example code; arbitrary 1000-char requirement stronger than validator.
 **Action:** removed contradiction, trimmed prompt, aligned minimum complexity guidance with validator floor (`800`).
 
 ### 5) `src/prompts/remotion.ts`
-**Surface(s):** `remotion.generate`, `remotion.improve`  
-**Why high leverage:** core generation path; structured code transformations.  
-**Issues found:** code-block wording drift and weaker separation of prior code in the improve prompt.  
+**Surface(s):** `remotion.generate`, `remotion.improve`
+**Why high leverage:** core generation path; structured code transformations.
+**Issues found:** code-block wording drift and weaker separation of prior code in the improve prompt.
 **Action:** cleaned output contract and replaced fenced prior-code block with XML-style tags.
+
+## Follow-up slice landed after initial pass
+
+### 6) `src/prompts/specialized/chat.ts`
+**Surface(s):** `CHAT_SYSTEM_PROMPT`, `buildChatPrompt()`, `chat.assistant`
+**Why medium/high leverage:** general assistant surface; reused across chat interactions.
+**Issues found:** unstructured ad-hoc context formatting and a real PromptLibrary interpolation bug (`{{userPrompt}}` instead of `${userPrompt}`).
+**Action:** switched to explicit XML-style context tags, tightened the system prompt, and fixed prompt-template interpolation.
+
+### 7) `src/prompts/specialized/evaluation.ts`
+**Surface(s):** `buildEvaluationPrompt()`
+**Why medium leverage:** evaluation stability matters for downstream scoring and prompt iteration.
+**Issues found:** less structured prompt framing around code/context.
+**Action:** moved the user-facing evaluation payload to explicit `<evaluation_context>` and `<generated_code>` sections for better parser/model stability.
+
+### 8) `src/prompts/collaboration.ts` and `src/prompts/collab-internal.ts`
+**Surface(s):** critic and domain-expert role prompts
+**Why medium leverage:** repeated analysis prompts in collaborative pipelines.
+**Issues found:** “Think step by step” phrasing added token cost and invited hidden reasoning without improving the output contract.
+**Action:** replaced that wording with concise, evidence-backed analysis requirements and kept the rubric intact.
 
 ## Full inventory coverage
 
@@ -114,6 +134,9 @@ The harness self-improvement prompt carried too much example/tutorial mass relat
 ### D. Biggest remaining opportunity: **schema-native outputs instead of prompt-only JSON promises**
 Several prompts still ask for JSON in prose. The next highest-ROI follow-up is to move more of those surfaces to native structured output or stricter parser-backed schemas where runtime architecture allows it.
 
+### E. Verification surfaced a real prompt wiring bug
+The second audit slice found a production bug rather than a style issue: `chat.assistant` was registered with `{{userPrompt}}`, but `PromptLibrary.render()` only interpolates `${...}` placeholders. The audit fixed that bug and added a guardrail test so it cannot regress silently.
+
 ## Follow-up backlog after this pass
 
 1. Add a prompt-lint/eval layer for all PromptLibrary surfaces, not just targeted tests.
@@ -126,4 +149,3 @@ Several prompts still ask for JSON in prose. The next highest-ROI follow-up is t
 - Prompt-focused unit tests
 - TypeScript build / typecheck
 - Prompt inventory review in this worktree only
-

@@ -58,14 +58,14 @@ describe('chat prompt', () => {
     it('includes domain in the prompt', () => {
       const context: ChatContext = { domain: 'visual' };
       const result = buildChatPrompt('Draw something', context);
-      expect(result).toContain('[Domain: visual]');
+      expect(result).toContain('<domain>visual</domain>');
       expect(result).toContain('Draw something');
     });
 
     it('includes currentPhase in the prompt', () => {
       const context: ChatContext = { currentPhase: 'exploration' };
       const result = buildChatPrompt('Try something', context);
-      expect(result).toContain('[Current phase: exploration]');
+      expect(result).toContain('<current_phase>exploration</current_phase>');
     });
 
     it('includes userPreferences as bullet list', () => {
@@ -73,15 +73,16 @@ describe('chat prompt', () => {
         userPreferences: { color: 'warm', style: 'abstract' },
       };
       const result = buildChatPrompt('Make art', context);
-      expect(result).toContain('[User preferences]');
+      expect(result).toContain('<user_preferences>');
       expect(result).toContain('- color: warm');
       expect(result).toContain('- style: abstract');
+      expect(result).toContain('</user_preferences>');
     });
 
     it('omits userPreferences when empty record', () => {
       const context: ChatContext = { userPreferences: {} };
       const result = buildChatPrompt('Make art', context);
-      expect(result).not.toContain('[User preferences]');
+      expect(result).not.toContain('<user_preferences>');
     });
 
     it('includes previousOutputs as numbered list', () => {
@@ -89,15 +90,16 @@ describe('chat prompt', () => {
         previousOutputs: ['sketch-001', 'sketch-002'],
       };
       const result = buildChatPrompt('Iterate', context);
-      expect(result).toContain('[Previous outputs referenced]');
+      expect(result).toContain('<previous_outputs>');
       expect(result).toContain('1. sketch-001');
       expect(result).toContain('2. sketch-002');
+      expect(result).toContain('</previous_outputs>');
     });
 
     it('omits previousOutputs when empty array', () => {
       const context: ChatContext = { previousOutputs: [] };
       const result = buildChatPrompt('Iterate', context);
-      expect(result).not.toContain('[Previous outputs referenced]');
+      expect(result).not.toContain('<previous_outputs>');
     });
 
     it('includes all context sections together', () => {
@@ -109,18 +111,20 @@ describe('chat prompt', () => {
       };
       const result = buildChatPrompt('Add reverb', context);
 
-      expect(result).toContain('[Domain: audio]');
-      expect(result).toContain('[Current phase: refinement]');
+      expect(result).toContain('<domain>audio</domain>');
+      expect(result).toContain('<current_phase>refinement</current_phase>');
       expect(result).toContain('- tempo: 120');
       expect(result).toContain('1. beat-v1');
-      expect(result).toContain('---');
+      expect(result).toContain('<user_message>');
       expect(result).toContain('Add reverb');
     });
 
-    it('separates context from message with ---', () => {
+    it('wraps the user message in explicit tags', () => {
       const context: ChatContext = { domain: 'p5.js' };
       const result = buildChatPrompt('Draw circles', context);
-      expect(result).toContain('\n\n---\n\n');
+      expect(result).toContain('<user_message>');
+      expect(result).toContain('Draw circles');
+      expect(result).toContain('</user_message>');
     });
   });
 });
@@ -303,7 +307,9 @@ describe('evaluation prompt', () => {
     it('includes the code to evaluate', () => {
       const code = 'function setup() { createCanvas(400, 400); }';
       const result = buildEvaluationPrompt(code, 'p5.js');
+      expect(result).toContain('<generated_code>');
       expect(result).toContain(code);
+      expect(result).toContain('</generated_code>');
     });
 
     it('replaces scale placeholders with default values', () => {
@@ -364,6 +370,12 @@ describe('evaluation prompt', () => {
     it('includes anti-hallucination instruction', () => {
       const result = buildEvaluationPrompt('code', 'p5.js');
       expect(result).toContain('every score requires concrete evidence');
+    });
+
+    it('uses explicit evaluation context tags', () => {
+      const result = buildEvaluationPrompt('code', 'p5.js');
+      expect(result).toContain('<evaluation_context>');
+      expect(result).toContain('</evaluation_context>');
     });
   });
 });

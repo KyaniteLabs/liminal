@@ -1,10 +1,11 @@
 #!/usr/bin/env node
-/** Start the Bubble Tea TUI with a GLM-backed bridge. */
+/** Start the Bubble Tea TUI with the active configured bridge provider. */
 import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LLMClient } from '../dist/llm/LLMClient.js';
+import { applyBridgeProviderEnv, resolveBridgeProviderConfig } from '../dist/tui-bridge/BridgeLauncherConfig.js';
 import { TuiBridgeServer } from '../dist/tui-bridge/TuiBridgeServer.js';
 import { TuiBridgeService } from '../dist/tui-bridge/TuiBridgeService.js';
 
@@ -47,50 +48,14 @@ function routeBridgeConsoleToFile(logFile) {
   return stream;
 }
 
-function loadGlmConfig() {
-  const configPath = path.join(process.env.HOME || '', '.liminal', 'config.json');
-  const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
-  const glm = config.providers?.glm;
-  if (!glm?.apiKey) throw new Error('Missing providers.glm.apiKey in ~/.liminal/config.json');
-  return {
-    baseUrl: glm.baseUrl || 'https://api.z.ai/api/coding/paas/v4',
-    model: glm.model || 'glm-5.1',
-    apiKey: glm.apiKey,
-  };
-}
-
-const glm = loadGlmConfig();
-for (const [key, value] of Object.entries({
-  GLM_API_KEY: glm.apiKey,
-  LLM_PROVIDER: 'glm',
-  LLM_BASE_URL: glm.baseUrl,
-  LLM_MODEL: glm.model,
-  LLM_API_KEY: glm.apiKey,
-  HARNESS_BASE_URL: glm.baseUrl,
-  HARNESS_MODEL: glm.model,
-  HARNESS_API_KEY: glm.apiKey,
-  EVALUATOR_BASE_URL: glm.baseUrl,
-  EVALUATOR_MODEL: glm.model,
-  EVALUATOR_API_KEY: glm.apiKey,
-  LIMINAL_LLM_PROVIDER: 'glm',
-  LIMINAL_LLM_BASE_URL: glm.baseUrl,
-  LIMINAL_LLM_MODEL: glm.model,
-  LIMINAL_LLM_API_KEY: glm.apiKey,
-  LIMINAL_HARNESS_BASE_URL: glm.baseUrl,
-  LIMINAL_HARNESS_MODEL: glm.model,
-  LIMINAL_HARNESS_API_KEY: glm.apiKey,
-  LIMINAL_EVALUATOR_BASE_URL: glm.baseUrl,
-  LIMINAL_EVALUATOR_MODEL: glm.model,
-  LIMINAL_EVALUATOR_API_KEY: glm.apiKey,
-})) {
-  process.env[key] = value;
-}
+const providerConfig = resolveBridgeProviderConfig();
+applyBridgeProviderEnv(process.env, providerConfig);
 
 const llm = new LLMClient({
   role: 'harness',
-  baseUrl: glm.baseUrl,
-  model: glm.model,
-  apiKey: glm.apiKey,
+  baseUrl: providerConfig.baseUrl,
+  model: providerConfig.model,
+  apiKey: providerConfig.apiKey,
   temperature: 0.5,
   maxTokens: 4096,
 });
@@ -100,7 +65,7 @@ const server = new TuiBridgeServer(bridge, { port, host: '127.0.0.1', llm });
 await server.start();
 const bridgeLogFile = path.join(ROOT, '.omx', 'logs', 'bubbletea-bridge.log');
 originalConsole.log(`Bubble Tea bridge: ${server.address}`);
-originalConsole.log(`Harness provider/model: glm/${glm.model}`);
+originalConsole.log(`Harness provider/model: ${providerConfig.provider}/${providerConfig.model}`);
 originalConsole.log(`Bridge logs: ${bridgeLogFile}`);
 
 let child;

@@ -614,6 +614,8 @@ Failures:   0 critical
 | Component | File | Purpose |
 |-----------|------|---------|
 | TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel |
+| BridgeLauncherConfig | `tui-bridge/BridgeLauncherConfig.ts` | Resolves the active provider for Bubble Tea bridge startup instead of assuming GLM |
+| TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel, and approved bridge action execution |
 | TuiSessionStore | `TuiSessionStore.ts` | In-memory session state |
 | TuiEventStream | `TuiEventStream.ts` | Pub/sub SSE event stream |
 | Types | `types.ts` | Mode, trust, provenance, event types |

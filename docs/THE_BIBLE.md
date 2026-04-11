@@ -23,7 +23,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 
 ## Test Status
 
-**Date:** 2026-04-08
+**Date:** 2026-04-11
 
 | Category | Before | After |
 |----------|--------|-------|
@@ -625,11 +625,14 @@ Failures:   0 critical
 **Purpose:** Operator-grade terminal UI with pane-first architecture, explicit modes, and confirmation-first mutation UX.
 
 **Architecture:**
-- Pane-first layout: history, active response, status/trust
+- Pane-first layout: chat history on the left, operator surface on the right
 - Explicit modes: Chat, Inspect, Action, Confirm
 - Active-response pane: streaming responses don't touch committed history
 - Confirmation-first: no state mutation without operator approval
 - Trust/provenance labels: provider, model, trust-level badges
+- Operator surface cards: task/phase card, tool timeline, changed files, verification jobs, artifacts, help drawer
+- Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
+- Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
 - Generated code: untrusted by default
 
 **Go Components:**
@@ -637,12 +640,13 @@ Failures:   0 critical
 |-----------|---------|---------|
 | Model | `internal/app/model.go` | UI state, event application, confirm/cancel |
 | Update | `internal/app/update.go` | Bubble Tea Update loop with bridge wiring |
-| View | `internal/app/view.go` | Pane rendering with Lip Gloss styles |
-| Theme | `internal/ui/theme.go` | Style definitions |
+| View | `internal/app/view.go` | 55/45 chat + operator layout with header/footer shortcuts |
+| Theme | `internal/ui/theme.go` | Operator-surface style tokens, badges, panel chrome |
 | Bridge Client | `internal/bridge/client.go` | HTTP + SSE client for TS bridge |
+| Layout | `internal/app/layout.go` | Task card, timeline, changed files, verification, artifacts, help rendering |
 | Event Types | `internal/bridge/events.go` | Event, SessionStatus, PendingAction structs |
 
-**Test Coverage:** 16 Go tests passing across bridge client, bootstrap, event handling, action modes, and view rendering.
+**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, and shortcut behavior.
 
 ---
 

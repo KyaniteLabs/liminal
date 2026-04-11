@@ -17,10 +17,10 @@ var (
 	FgMuted  = lipgloss.Color("#565f89") // Dimmed text
 
 	// Accents
-	AccentGreen  = lipgloss.Color("#9ece6a") // Success, user input
-	AccentBlue   = lipgloss.Color("#7aa2f7") // Assistant, links
-	AccentPurple = lipgloss.Color("#bb9af7") // Code, highlights, brand
-	AccentCyan   = lipgloss.Color("#7dcfff") // Info, tags, mode
+	AccentGreen   = lipgloss.Color("#9ece6a") // Success, user input
+	AccentBlue    = lipgloss.Color("#7aa2f7") // Assistant, links
+	AccentPurple  = lipgloss.Color("#bb9af7") // Code, highlights, brand
+	AccentCyan    = lipgloss.Color("#7dcfff") // Info, tags, mode
 	AccentOrange  = lipgloss.Color("#ff9e64") // Warnings
 	AccentRed     = lipgloss.Color("#f7768e") // Errors
 	AccentYellow  = lipgloss.Color("#e0af68") // System messages
@@ -43,7 +43,6 @@ const (
 )
 
 // ── Style Tokens ──
-
 var (
 	// Header bar — spans full width
 	HeaderStyle = lipgloss.NewStyle().
@@ -72,22 +71,31 @@ var (
 			Foreground(AccentGreen)
 
 	DisconnectedStyle = lipgloss.NewStyle().
-			Foreground(AccentRed)
+				Foreground(AccentRed)
 
 	ReconnectingStyle = lipgloss.NewStyle().
-			Foreground(AccentYellow)
+				Foreground(AccentYellow)
 
-	// ── Chat pane ──
+	// ── Primary panes ──
 	ChatPaneStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#414868")).
+			BorderForeground(BgOverlay).
 			Padding(0, 1)
 
-	// ── Preview pane ──
 	PreviewPaneStyle = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(AccentPurple).
 				Padding(0, 1)
+
+	OperatorPaneStyle = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(AccentPurple).
+				Padding(0, 1)
+
+	OperatorPaneFocusedStyle = lipgloss.NewStyle().
+					Border(lipgloss.RoundedBorder()).
+					BorderForeground(AccentGreen).
+					Padding(0, 1)
 
 	// ── Chat message styles ──
 	UserMsgStyle = lipgloss.NewStyle().
@@ -139,12 +147,29 @@ var (
 				Background(BgOverlay).
 				Padding(0, 1)
 
+	PreviewCardStyle = lipgloss.NewStyle().
+				Border(lipgloss.NormalBorder()).
+				BorderForeground(BgOverlay).
+				Padding(0, 1)
+
+	PreviewLabelStyle = lipgloss.NewStyle().
+				Foreground(AccentCyan).
+				Bold(true)
+
+	PreviewContentStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
 	// ── Status items ──
 	StatusLabelStyle = lipgloss.NewStyle().
 				Foreground(FgMuted)
 
 	StatusValueStyle = lipgloss.NewStyle().
 				Foreground(FgSubtle)
+
+	StatusPillStyle = lipgloss.NewStyle().
+			Foreground(FgSubtle).
+			Background(BgOverlay).
+			Padding(0, 1)
 
 	// ── Pending action card ──
 	ActionCardStyle = lipgloss.NewStyle().
@@ -155,6 +180,168 @@ var (
 	ActionTitleStyle = lipgloss.NewStyle().
 				Foreground(AccentOrange).
 				Bold(true)
+
+	// ── Operator panels ──
+	PanelStyle = lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(BgOverlay).
+			Padding(0, 1)
+
+	PanelDimStyle = lipgloss.NewStyle().
+			Border(lipgloss.HiddenBorder()).
+			Foreground(FgMuted)
+
+	PanelTitleStyle = lipgloss.NewStyle().
+			Foreground(FgText).
+			Bold(true)
+
+	PanelMetaStyle = lipgloss.NewStyle().
+			Foreground(FgMuted)
+
+	PanelLabelStyle = lipgloss.NewStyle().
+			Foreground(FgMuted)
+
+	PanelValueStyle = lipgloss.NewStyle().
+			Foreground(FgSubtle)
+
+	EmptyStateStyle = lipgloss.NewStyle().
+			Foreground(FgMuted).
+			Italic(true)
+
+	TaskCardStyle = lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(AccentCyan).
+			Padding(0, 1)
+
+	TaskTitleStyle = lipgloss.NewStyle().
+			Foreground(FgText).
+			Bold(true)
+
+	TaskObjectiveStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	TaskFileStyle = lipgloss.NewStyle().
+			Foreground(AccentBlue)
+
+	TaskProgressStyle = lipgloss.NewStyle().
+				Foreground(AccentCyan)
+
+	TaskPendingStyle = lipgloss.NewStyle().
+				Foreground(AccentOrange)
+
+	TaskHintStyle = lipgloss.NewStyle().
+			Foreground(FgMuted)
+
+	PhaseBadgeStyle = lipgloss.NewStyle().
+			Foreground(BgBase).
+			Bold(true).
+			Padding(0, 1)
+
+	TimelineStepStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	TimelineIndexStyle = lipgloss.NewStyle().
+				Foreground(AccentCyan).
+				Bold(true)
+
+	TimelineThoughtStyle = lipgloss.NewStyle().
+				Foreground(FgMuted)
+
+	TimelineArgsStyle = lipgloss.NewStyle().
+				Foreground(FgMuted)
+
+	TimelineResultStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	TimelineRunningStyle = lipgloss.NewStyle().
+				Foreground(AccentYellow).
+				Bold(true)
+
+	TimelineSuccessStyle = lipgloss.NewStyle().
+				Foreground(AccentGreen).
+				Bold(true)
+
+	TimelineFailedStyle = lipgloss.NewStyle().
+				Foreground(AccentRed).
+				Bold(true)
+
+	FileSummaryStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	FileRowStyle = lipgloss.NewStyle().
+			Foreground(FgSubtle)
+
+	FileModifiedStyle = lipgloss.NewStyle().
+				Foreground(AccentYellow)
+
+	FileCreatedStyle = lipgloss.NewStyle().
+				Foreground(AccentGreen)
+
+	FileDeletedStyle = lipgloss.NewStyle().
+				Foreground(AccentRed)
+
+	FileLatestBadgeStyle = lipgloss.NewStyle().
+				Foreground(BgBase).
+				Background(AccentCyan).
+				Padding(0, 1)
+
+	VerificationJobStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	VerificationCommandStyle = lipgloss.NewStyle().
+					Foreground(FgText)
+
+	VerificationOutputStyle = lipgloss.NewStyle().
+				Foreground(FgMuted)
+
+	VerificationRunningStyle = lipgloss.NewStyle().
+					Foreground(AccentYellow).
+					Bold(true)
+
+	VerificationPassStyle = lipgloss.NewStyle().
+				Foreground(AccentGreen).
+				Bold(true)
+
+	VerificationFailStyle = lipgloss.NewStyle().
+				Foreground(AccentRed).
+				Bold(true)
+
+	ArtifactRowStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	ArtifactLabelStyle = lipgloss.NewStyle().
+				Foreground(AccentPurple).
+				Bold(true)
+
+	ArtifactPathStyle = lipgloss.NewStyle().
+				Foreground(AccentBlue)
+
+	ActivityLogStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	ActivityTimeStyle = lipgloss.NewStyle().
+				Foreground(FgMuted)
+
+	HelpCardStyle = lipgloss.NewStyle().
+			Border(lipgloss.NormalBorder()).
+			BorderForeground(AccentPurple).
+			Padding(0, 1)
+
+	HelpShortcutStyle = lipgloss.NewStyle().
+				Foreground(AccentPurple).
+				Bold(true)
+
+	HelpDescriptionStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
+	MetricGoodStyle = lipgloss.NewStyle().
+			Foreground(AccentGreen)
+
+	MetricWarnStyle = lipgloss.NewStyle().
+			Foreground(AccentYellow)
+
+	MetricBadStyle = lipgloss.NewStyle().
+			Foreground(AccentRed)
 
 	// ── Keybinding hints in footer ──
 	KeyStyle = lipgloss.NewStyle().
@@ -196,6 +383,57 @@ func TrustColor(label string) lipgloss.Color {
 	default:
 		return AccentYellow
 	}
+}
+
+// PhaseColor returns the badge color for an agent phase label.
+func PhaseColor(phase string) lipgloss.Color {
+	switch phase {
+	case "Plan":
+		return AccentCyan
+	case "Inspect":
+		return AccentBlue
+	case "Edit":
+		return AccentPurple
+	case "Verify":
+		return AccentGreen
+	case "Report":
+		return AccentOrange
+	default:
+		return BgMuted
+	}
+}
+
+// ToolStatusColor returns the color for a tool timeline status.
+func ToolStatusColor(status string) lipgloss.Color {
+	switch status {
+	case "success", "pass":
+		return AccentGreen
+	case "failed", "fail":
+		return AccentRed
+	case "running":
+		return AccentYellow
+	default:
+		return FgMuted
+	}
+}
+
+// FileStatusColor returns the color for a file mutation label.
+func FileStatusColor(status string) lipgloss.Color {
+	switch status {
+	case "created":
+		return AccentGreen
+	case "deleted":
+		return AccentRed
+	case "modified":
+		return AccentYellow
+	default:
+		return FgMuted
+	}
+}
+
+// VerificationStatusColor returns the color for a verification state label.
+func VerificationStatusColor(status string) lipgloss.Color {
+	return ToolStatusColor(status)
 }
 
 // StatusDot returns a colored connection indicator.

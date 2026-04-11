@@ -195,7 +195,7 @@
         <section class="section">
             <h1 class="section-title">📖 Visual Bible</h1>
             <p class="section-subtitle">Visual representation of THE_BIBLE.md - Real-time system status</p>
-            <p class="meta-info">Last updated: April 7, 2026 | Branch: main | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
+            <p class="meta-info">Last updated: April 11, 2026 | Branch: fix/bubbletea-operator-surface | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
         </section>
 
         <!-- Critical Alerts -->
@@ -208,6 +208,10 @@
             <div class="alert success">
                 <h4>✅ 19 Subsystems Complete</h4>
                 <p>All 19 major subsystems documented in THE_BIBLE.md and operational. M1-M11 + DGF + TUI + Chat + Swarm + Thinking-Trace + Compost + Aesthetic + Plugins + SOUL + LLM Mode + Routing + Scavenger.</p>
+            </div>
+            <div class="alert warning">
+                <h4>🟡 Bubble Tea Operator Surface In Progress</h4>
+                <p>The Go Bubble Tea client now tracks task cards, live tool timelines, changed files, verification jobs, artifacts, and operator shortcuts. Layout polish and bridge-driven rendering are active on <code>fix/bubbletea-operator-surface</code>.</p>
             </div>
         </section>
 
@@ -334,8 +338,8 @@
                     <tr>
                         <td><strong>Hybrid TUI</strong></td>
                         <td><span class="badge badge-success">✅ Active</span></td>
-                        <td><code>HarnessTUI.tsx</code></td>
-                        <td>Terminal + browser</td>
+                        <td><code>HarnessTUI.tsx</code> + <code>bubbletea/</code></td>
+                        <td>Ink + Bubble Tea operator surfaces with live task/timeline/file/artifact cards</td>
                     </tr>
                     <tr>
                         <td><strong>Ralph-Wiggum Loop</strong></td>
@@ -453,7 +457,7 @@
                 </div>
                 <div class="task-column">
                     <h4>🟡 In Progress</h4>
-                    <div class="meta-info">None</div>
+                    <div class="task-item high"><div class="task-id">BT-OPS</div>Bubble Tea operator surface polish (task card, timeline, artifacts, verification)</div>
                 </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
@@ -746,7 +750,7 @@
                     <tr>
                         <td><code>latest</code></td>
                         <td>fix(landing): recover gallery metadata UI, stable dogfood asset paths, and single metadata badge row</td>
-                        <td>Landing gallery no longer depends on a live worktree and each card now shows variant metadata only once</td>
+                        <td>Bubble Tea operator surface now shows live task progress, tool timeline, changed files, verification jobs, and clipboard/help shortcuts in the right column</td>
                     </tr>
                     <tr>
                         <td><code>bb67f67</code></td>
@@ -782,7 +786,7 @@
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
                 <li><strong>✅ Landing gallery stabilized</strong> - April 6 recovery cards now point at repo-owned assets instead of a transient worktree</li>
-                <li><strong>🔎 Review preserved recovery branches</strong> - evaluator fix, harness readiness tests, and TierBasedGenerator/Hydra coverage remain next</li>
+                <li><strong>🔎 Wire bridge emissions into the Bubble Tea operator surface</strong> - the Go shell now renders task/timeline/file/verification/artifact cards, but TS-side event producers still need broader rollout</li>
                 <li><strong>🧩 Split preserved stash batches</strong> - replay broader crash-era stashes into atomic branches instead of applying wholesale</li>
                 <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
             </ol>

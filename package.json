@@ -39,11 +39,14 @@
     "test:quality": "node scripts/testing/test-quality-check.mjs",
     "typecheck": "tsc --noEmit",
     "docs": "typedoc --out docs src/",
-    "tui": "npx tsx src/tui/HarnessTUI.tsx",
+    "tui": "npm run build && node scripts/start-bubbletea-tui.mjs",
     "dogfood:report": "npx tsx scripts/generate-dogfood-report.ts",
     "prepare": "git config core.hooksPath .githooks",
     "git:hygiene": "bash scripts/utils/git-hygiene.sh",
-    "git:hygiene:dry": "bash scripts/utils/git-hygiene.sh --dry-run"
+    "git:hygiene:dry": "bash scripts/utils/git-hygiene.sh --dry-run",
+    "tui:ink": "npx tsx src/tui/HarnessTUI.tsx",
+    "tui:bridge": "npm run build && node scripts/start-bubbletea-tui.mjs --bridge-only",
+    "tui:bubbletea": "npm run tui"
   },
   "keywords": [
     "generative-art",

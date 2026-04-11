@@ -63,7 +63,7 @@ export class TuiBridgeService {
     });
   }
 
-  createSession(): TuiSessionStatus {
+  createSession(patch: Partial<Pick<TuiSessionStatus, 'provider' | 'model'>> = {}): TuiSessionStatus {
     const sessionId = `tui-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     // Initialize conversation manager for this session
@@ -74,6 +74,8 @@ export class TuiBridgeService {
     return this.sessions.create({
       sessionId,
       mode: 'chat',
+      provider: patch.provider,
+      model: patch.model,
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
   }

@@ -188,8 +188,9 @@ describe('NaturalInterface', () => {
       harnessAgent.executeTask.mockResolvedValue({ status: 'failed', stepCount: 2 });
 
       const result = await iface.processInput('/run job-x');
-      expect(result.response).toBe('Task job-x: FAILED');
-      expect(harnessAgent.executeTask).toHaveBeenCalledWith(task);
+      expect(result.response).toContain('awaiting approval');
+      expect(harnessAgent.executeTask).not.toHaveBeenCalled();
+      expect(iface.getPendingActions()).toHaveLength(1);
     });
   });
 
@@ -202,19 +203,62 @@ describe('NaturalInterface', () => {
 
     it('routes /agent descriptions through the llm agent path', async () => {
       const { iface, llmAgent } = createInterface();
+
+      const result = await iface.processInput('/agent fix the import path');
+      expect(llmAgent.executeTask).not.toHaveBeenCalled();
+      expect(result.type).toBe('command');
+      expect(result.response).toContain('awaiting approval');
+      expect(iface.getPendingActions()).toHaveLength(1);
+    });
+  });
+
+  describe('confirm/cancel flow', () => {
+    it('confirms a queued structured action and executes it', async () => {
+      const task = { id: 'job-x', title: 'Run me', description: 'Do it' };
+      const { iface, harnessAgent } = createInterface([task]);
+      harnessAgent.executeTask.mockResolvedValue({ status: 'failed', stepCount: 2 });
+
+      await iface.processInput('/run job-x');
+      const [pending] = iface.getPendingActions();
+
+      const result = await iface.processInput(`/confirm ${pending.id}`);
+      expect(harnessAgent.executeTask).toHaveBeenCalledWith(expect.objectContaining({ id: 'job-x', approved: true }));
+      expect(result.response).toBe('Task job-x: FAILED');
+      expect(iface.getPendingActions()).toHaveLength(0);
+    });
+
+    it('confirms a queued llm action and executes it', async () => {
+      const { iface, llmAgent } = createInterface();
       llmAgent.executeTask.mockResolvedValue({
         status: 'success',
-        verificationPassed: false,
+        verificationPassed: true,
         stepCount: 1,
         messages: [],
       });
 
-      const result = await iface.processInput('/agent fix the import path');
+      await iface.processInput('/agent fix the import path');
+      const [pending] = iface.getPendingActions();
+
+      const result = await iface.processInput(`/confirm ${pending.id}`);
       expect(llmAgent.executeTask).toHaveBeenCalledWith(expect.objectContaining({
         description: 'fix the import path',
         approved: true,
       }));
-      expect(result.type).toBe('agent');
+      expect(result.response).toContain('Task success');
+      expect(iface.getPendingActions()).toHaveLength(0);
+    });
+
+    it('cancels a queued action without executing it', async () => {
+      const task = { id: 'job-x', title: 'Run me', description: 'Do it' };
+      const { iface, harnessAgent } = createInterface([task]);
+
+      await iface.processInput('/run job-x');
+      const [pending] = iface.getPendingActions();
+
+      const result = await iface.processInput(`/cancel ${pending.id}`);
+      expect(result.response).toContain('cancelled');
+      expect(harnessAgent.executeTask).not.toHaveBeenCalled();
+      expect(iface.getPendingActions()).toHaveLength(0);
     });
   });
 
@@ -271,7 +315,8 @@ describe('NaturalInterface', () => {
       const result = await iface.processInput('/help');
 
       expect(result.response).toContain('status - Show harness status');
-      expect(result.response).toContain('Note: this command surface does not support /confirm or /cancel.');
+      expect(result.response).toContain('confirm <pending-id>');
+      expect(result.response).toContain('cancel <pending-id>');
       expect(result.response).toContain('preview <file> - Preview a file');
       expect(result.response).toContain('play <audio-file>');
       expect(result.response).toContain('browser');

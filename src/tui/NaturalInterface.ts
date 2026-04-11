@@ -15,6 +15,7 @@ import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
 import { Logger } from '../utils/Logger.js';
+import { PendingActionStore } from './PendingActionStore.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -73,6 +74,7 @@ export class NaturalInterface {
   // SOUL loading promise to avoid fire-and-forget
   private soulLoadPromise: Promise<void>;
   private ambiguityDetector: AmbiguityDetector;
+  private pendingActions = new PendingActionStore();
 
   constructor(options: {
     harnessAgent: HarnessAgent;
@@ -162,6 +164,12 @@ export class NaturalInterface {
 
       case 'agent':
         return this.handleExplicitAgent(args);
+
+      case 'confirm':
+        return this.handleConfirm(args[0] || '');
+
+      case 'cancel':
+        return this.handleCancel(args[0] || '');
 
       case 'preview':
         return this.handlePreview(args[0] || '');
@@ -338,12 +346,11 @@ export class NaturalInterface {
       return { type: 'command', response: `Task ${taskId} not found`, shouldContinue: true };
     }
 
-    this.onStatus(`Running ${taskId}...`);
-    const session = await this.harnessAgent.executeTask(task);
+    const pending = this.pendingActions.create('structured', task);
 
     return {
       type: 'command',
-      response: `Task ${taskId}: ${session.status.toUpperCase()}`,
+      response: `Task "${task.title}" created and awaiting approval.\nConfirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`,
       shouldContinue: true,
     };
   }
@@ -358,7 +365,72 @@ export class NaturalInterface {
       };
     }
 
-    return this.handleAgentRequest(description);
+    const task: LLMTask = {
+      id: `agent-${Date.now()}`,
+      title: description.slice(0, 50),
+      description,
+      maxSteps: 15,
+      approved: false,
+    };
+    const pending = this.pendingActions.create('llm', task);
+    return {
+      type: 'command',
+      response: `Task "${task.title}" created and awaiting approval.\nConfirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`,
+      shouldContinue: true,
+    };
+  }
+
+  private async handleConfirm(actionId: string): Promise<NaturalInputResult> {
+    if (!actionId) {
+      return { type: 'command', response: 'Please specify a pending action ID. Usage: confirm <pending-id>', shouldContinue: true };
+    }
+
+    const record = this.pendingActions.confirm(actionId);
+    if (!record) {
+      return { type: 'command', response: `Pending action ${actionId} not found.`, shouldContinue: true };
+    }
+
+    if (record.kind === 'structured') {
+      const session = await this.harnessAgent.executeTask({ ...(record.task as AgentTask), approved: true });
+      return {
+        type: 'command',
+        response: `Task ${record.task.id}: ${session.status.toUpperCase()}`,
+        shouldContinue: true,
+      };
+    }
+
+    const session = await this.llmAgent.executeTask({ ...(record.task as LLMTask), approved: true });
+    const verificationMessage =
+      (session as { verificationPassed?: boolean }).verificationPassed === true
+        ? 'The changes have been applied and verified.'
+        : 'The task completed, but verification was not run.';
+    return {
+      type: 'agent',
+      response: [
+        `${session.status === 'success' ? '✅' : session.status === 'rolled_back' ? '⏮️' : '❌'} Task ${session.status}`,
+        session.status === 'success'
+          ? verificationMessage
+          : session.status === 'rolled_back'
+          ? 'Changes were rolled back due to errors.'
+          : 'The task could not be completed.',
+      ].join('\n'),
+      actionTaken: `Executed ${session.stepCount} steps`,
+      shouldContinue: true,
+    };
+  }
+
+  private handleCancel(actionId: string): NaturalInputResult {
+    if (!actionId) {
+      return { type: 'command', response: 'Please specify a pending action ID. Usage: cancel <pending-id>', shouldContinue: true };
+    }
+
+    return {
+      type: 'command',
+      response: this.pendingActions.cancel(actionId)
+        ? `Pending action ${actionId} cancelled.`
+        : `Pending action ${actionId} not found.`,
+      shouldContinue: true,
+    };
   }
 
   private async handlePreview(filePath: string): Promise<NaturalInputResult> {
@@ -432,6 +504,9 @@ export class NaturalInterface {
       '  \u2022 status - Show harness status',
       '  \u2022 tasks  - List pending tasks',
       '  \u2022 run <id> - Execute a task',
+      '  \u2022 agent <description> - Queue an LLM-driven task for approval',
+      '  \u2022 confirm <pending-id> - Confirm a pending action',
+      '  \u2022 cancel <pending-id> - Cancel a pending action',
       '  \u2022 provider [list|<name>|<url> <model>] - Switch LLM provider',
       '  \u2022 preview <file> - Preview a file',
       '  \u2022 play <audio-file> - Play audio file',
@@ -440,8 +515,6 @@ export class NaturalInterface {
       '  \u2022 test   - Run diagnostic tests',
       '  \u2022 clear  - Clear screen',
       '  \u2022 exit   - Quit',
-      '',
-      'Note: this command surface does not support /confirm or /cancel.',
     ].join('\n');
 
     return { type: 'command', response, shouldContinue: true };
@@ -576,5 +649,9 @@ export class NaturalInterface {
 
   setTasks(tasks: AgentTask[]): void {
     this.tasks = tasks;
+  }
+
+  getPendingActions() {
+    return this.pendingActions.list();
   }
 }

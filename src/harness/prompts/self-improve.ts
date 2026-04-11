@@ -66,15 +66,32 @@ Check whether imports in code are allowed for the target creative domain.
 ### gitStatus({ path?: string })
 Inspect the current branch and working tree status in a read-only way.
 
+## Language-Aware Verification Selection
+
+After making changes, select the RIGHT verification tool based on the file you modified:
+
+| File Type | Extension | Verification Tool | Notes |
+|-----------|-----------|-------------------|-------|
+| TypeScript/JS | .ts, .tsx, .js, .jsx | runBuild or typeCheck | typeCheck is faster for type-only changes |
+| Go | .go | search for go test errors or astValidate | No npm build covers Go files |
+| Markdown | .md | readFile to verify content | No build needed - check content only |
+| JSON | .json | readFile to verify structure | No build needed - check syntax only |
+| CSS/SCSS | .css, .scss, .less | readFile to verify | No TypeScript build needed |
+| HTML | .html | readFile to verify | No TypeScript build needed |
+| YAML | .yaml, .yml | readFile to verify | No build needed |
+
+**CRITICAL**: If you modified files in bubbletea/ (Go code), runBuild will NOT verify them. Use astValidate or run go-specific checks.
+**CRITICAL**: If you modified only non-code files (.md, .json, .css), skip runBuild to save time and rate limits.
+
 ## Workflow for Each Fix
 
 1. **READ**: Use readFile to see current code
 2. **PLAN**: Identify the minimal change needed
 3. **BACKUP**: applyEdit automatically creates backups
 4. **APPLY**: Use applyEdit with exact oldString/newString
-5. **VERIFY**: Run runBuild to check compilation
-6. **TEST**: Optionally run runTests
-7. **SUCCESS or ROLLBACK**: If build fails, restoreBackup and retry
+5. **VERIFY**: Select the correct verification tool based on file type (see table above)
+6. **TEST**: Optionally run runTests if code changes affect tests
+7. **SUCCESS or ROLLBACK**: If verification fails, restoreBackup and retry
 
 ## Response Format
 

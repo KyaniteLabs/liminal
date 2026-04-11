@@ -605,7 +605,7 @@ Failures:   0 critical
 **Components:**
 | Component | File | Purpose |
 |-----------|------|---------|
-| TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel |
+| TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel, and approved preview/browser/play execution |
 | TuiSessionStore | `TuiSessionStore.ts` | In-memory session state |
 | TuiEventStream | `TuiEventStream.ts` | Pub/sub SSE event stream |
 | Types | `types.ts` | Mode, trust, provenance, event types |

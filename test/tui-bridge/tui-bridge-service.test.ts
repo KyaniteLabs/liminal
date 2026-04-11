@@ -1,4 +1,7 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 
 const { mockRalphRun } = vi.hoisted(() => ({
   mockRalphRun: vi.fn(async () => ({
@@ -11,9 +14,37 @@ const { mockRalphRun } = vi.hoisted(() => ({
   })),
 }));
 
+const { mockPreviewRoute, mockPreviewFile, mockReopenLast, mockAudioPlay, mockWaveform } = vi.hoisted(() => ({
+  mockPreviewRoute: vi.fn(async () => ({ target: 'terminal', reason: 'code file', terminalType: 'code' })),
+  mockPreviewFile: vi.fn(async (filePath: string) => `http://localhost:3456/preview/${filePath.split('/').pop()}`),
+  mockReopenLast: vi.fn(async () => 'http://localhost:3456/preview/last.html'),
+  mockAudioPlay: vi.fn(async () => ({ success: true })),
+  mockWaveform: vi.fn(() => '▁▂▃▄'),
+}));
+
 vi.mock('../../src/core/RalphLoop.js', () => ({
   RalphLoop: {
     run: mockRalphRun,
+  },
+}));
+
+vi.mock('../../src/tui/preview/PreviewRouter.js', () => ({
+  previewRouter: {
+    route: mockPreviewRoute,
+  },
+}));
+
+vi.mock('../../src/tui/preview/BrowserLauncher.js', () => ({
+  browserLauncher: {
+    previewFile: mockPreviewFile,
+    reopenLast: mockReopenLast,
+  },
+}));
+
+vi.mock('../../src/tui/preview/AudioPlayer.js', () => ({
+  audioPlayer: {
+    play: mockAudioPlay,
+    getWaveform: mockWaveform,
   },
 }));
 
@@ -80,6 +111,83 @@ describe('TuiBridgeService', () => {
 
     expect(service.getStatus(session.sessionId).pendingAction).toBeUndefined();
     expect(service.getEvents(session.sessionId).map(e => e.type)).toContain('action.confirmed');
+  });
+
+  it('executes confirmed preview actions after approval', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const tempFile = path.join(os.tmpdir(), `tui-bridge-preview-${Date.now()}.ts`);
+    await fs.writeFile(tempFile, 'const value = 1;\nconsole.log(value);\n', 'utf-8');
+
+    await service.submitInput(session.sessionId, {
+      mode: 'action',
+      text: `/preview ${tempFile}`,
+      clientIntent: 'action',
+    });
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id);
+
+    const events = service.getEvents(session.sessionId);
+    expect(mockPreviewRoute).toHaveBeenCalledWith(tempFile);
+    expect(events.map(e => e.type)).toContain('preview.started');
+    expect(events.map(e => e.type)).toContain('preview.completed');
+  });
+
+  it('executes confirmed browser actions after approval', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(session.sessionId, {
+      mode: 'action',
+      text: '/browser test/preview.html',
+      clientIntent: 'action',
+    });
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id);
+
+    expect(mockPreviewFile).toHaveBeenCalledWith('test/preview.html');
+    expect(service.getEvents(session.sessionId).some(
+      (event) => event.type === 'activity.updated' && event.message.includes('Opened in browser')
+    )).toBe(true);
+  });
+
+  it('executes confirmed play actions after approval', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(session.sessionId, {
+      mode: 'action',
+      text: '/play test/song.mp3',
+      clientIntent: 'action',
+    });
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id);
+
+    expect(mockAudioPlay).toHaveBeenCalledWith('test/song.mp3');
+    expect(service.getEvents(session.sessionId).some(
+      (event) => event.type === 'preview.completed' && event.previewType === 'music'
+    )).toBe(true);
+  });
+
+  it('surfaces an explicit error for unsupported confirmed bridge actions', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(session.sessionId, {
+      mode: 'action',
+      text: '/run M1',
+      clientIntent: 'action',
+    });
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id);
+
+    expect(service.getEvents(session.sessionId).some(
+      (event) => event.type === 'error' && event.message.includes('/run is not yet executable')
+    )).toBe(true);
   });
 
   it('cancels a pending action and clears it', async () => {

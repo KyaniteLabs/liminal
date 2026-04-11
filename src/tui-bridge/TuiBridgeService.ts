@@ -6,6 +6,10 @@ import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatus } from './types.js';
 import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes } from '../core/EventBus.js';
+import fs from 'node:fs/promises';
+import { previewRouter } from '../tui/preview/PreviewRouter.js';
+import { browserLauncher } from '../tui/preview/BrowserLauncher.js';
+import { audioPlayer } from '../tui/preview/AudioPlayer.js';
 
 const SYSTEM_PROMPT = `You are Liminal, a creative coding partner. You help users generate p5.js sketches, Strudel music patterns, and other creative code. Be concise, helpful, and creative. When users describe what they want, respond with encouragement and relevant code or ideas.`;
 
@@ -193,17 +197,19 @@ export class TuiBridgeService {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async confirmAction(sessionId: string, actionId: string): Promise<void> {
+  async confirmAction(sessionId: string, actionId: string, llm?: LLMClient): Promise<void> {
     const status = this.getStatus(sessionId);
     if (!status.pendingAction || status.pendingAction.id !== actionId) {
       throw new Error(`Pending action ${actionId} not found`);
     }
+    const pendingAction = status.pendingAction;
     this.sessions.update(sessionId, {
       mode: 'confirm',
       pendingAction: undefined,
       trust: { level: 'confirmed', label: 'Operator confirmed mutation' },
     });
     this.emit(sessionId, { type: 'action.confirmed', sessionId, actionId });
+    await this.executeConfirmedAction(sessionId, pendingAction, llm);
   }
 
   cancelAction(sessionId: string, actionId: string): void {
@@ -442,5 +448,153 @@ export class TuiBridgeService {
 
   private emit(sessionId: string, event: TuiBridgeEvent): void {
     this.stream.emit(sessionId, event);
+  }
+
+  private async executeConfirmedAction(
+    sessionId: string,
+    action: TuiPendingAction,
+    llm?: LLMClient,
+  ): Promise<void> {
+    const trimmed = action.description.trim();
+    const [rawCommand = '', ...args] = trimmed.split(/\s+/);
+
+    switch (rawCommand) {
+      case '/preview':
+        await this.executePreviewAction(sessionId, args);
+        return;
+      case '/play':
+        await this.executePlayAction(sessionId, args);
+        return;
+      case '/browser':
+        await this.executeBrowserAction(sessionId, args);
+        return;
+      case '/run':
+      case '/agent':
+        this.emit(sessionId, {
+          type: 'error',
+          sessionId,
+          message: `${rawCommand} is not yet executable from the bridge confirmation surface.`,
+        });
+        this.emitChatStatus(sessionId, trimmed);
+        return;
+      default:
+        if (isGenerationRequest(trimmed) && llm) {
+          const conversation = this.conversations.get(sessionId) ?? new ConversationManager();
+          if (!this.conversations.has(sessionId)) {
+            conversation.startNewSession();
+            this.conversations.set(sessionId, conversation);
+          }
+          await this.streamRalphGeneration(sessionId, trimmed, conversation, llm);
+          return;
+        }
+
+        this.emit(sessionId, {
+          type: 'error',
+          sessionId,
+          message: `Unsupported confirmed action: ${trimmed}`,
+        });
+        this.emitChatStatus(sessionId, trimmed);
+    }
+  }
+
+  private async executePreviewAction(sessionId: string, args: string[]): Promise<void> {
+    const filePath = args.join(' ').trim();
+    if (!filePath) {
+      this.emit(sessionId, { type: 'error', sessionId, message: 'Preview requires a file path.' });
+      this.emitChatStatus(sessionId, 'preview');
+      return;
+    }
+
+    const decision = await previewRouter.route(filePath);
+    switch (decision.target) {
+      case 'terminal': {
+        const content = await fs.readFile(filePath, 'utf-8');
+        const preview = content.split('\n').slice(0, 50).join('\n');
+        this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'code' });
+        this.emit(sessionId, { type: 'preview.content', sessionId, content: preview, previewType: 'code' });
+        this.emit(sessionId, { type: 'preview.completed', sessionId, content: preview, previewType: 'code' });
+        break;
+      }
+      case 'browser': {
+        const url = await browserLauncher.previewFile(filePath);
+        this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Opened in browser: ${url}` });
+        this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'html' });
+        this.emit(sessionId, { type: 'preview.completed', sessionId, content: url, previewType: 'html' });
+        break;
+      }
+      case 'both': {
+        const result = await audioPlayer.play(filePath);
+        if (!result.success) {
+          this.emit(sessionId, { type: 'error', sessionId, message: result.error || 'Audio playback failed.' });
+          break;
+        }
+        const waveform = audioPlayer.getWaveform();
+        this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Playing audio: ${filePath}` });
+        this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'music' });
+        this.emit(sessionId, { type: 'preview.content', sessionId, content: waveform, previewType: 'music' });
+        this.emit(sessionId, { type: 'preview.completed', sessionId, content: waveform, previewType: 'music' });
+        break;
+      }
+      case 'none':
+      default:
+        this.emit(sessionId, {
+          type: 'error',
+          sessionId,
+          message: `Cannot preview ${filePath}: ${decision.reason}`,
+        });
+    }
+
+    this.emitChatStatus(sessionId, `preview ${filePath}`);
+  }
+
+  private async executePlayAction(sessionId: string, args: string[]): Promise<void> {
+    const filePath = args.join(' ').trim();
+    if (!filePath) {
+      this.emit(sessionId, { type: 'error', sessionId, message: 'Play requires an audio file path.' });
+      this.emitChatStatus(sessionId, 'play');
+      return;
+    }
+
+    const result = await audioPlayer.play(filePath);
+    if (!result.success) {
+      this.emit(sessionId, { type: 'error', sessionId, message: result.error || 'Audio playback failed.' });
+      this.emitChatStatus(sessionId, `play ${filePath}`);
+      return;
+    }
+
+    const waveform = audioPlayer.getWaveform();
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Playing audio: ${filePath}` });
+    this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'music' });
+    this.emit(sessionId, { type: 'preview.content', sessionId, content: waveform, previewType: 'music' });
+    this.emit(sessionId, { type: 'preview.completed', sessionId, content: waveform, previewType: 'music' });
+    this.emitChatStatus(sessionId, `play ${filePath}`);
+  }
+
+  private async executeBrowserAction(sessionId: string, args: string[]): Promise<void> {
+    const url = args.length > 0
+      ? await browserLauncher.previewFile(args.join(' ').trim())
+      : await browserLauncher.reopenLast();
+
+    if (!url) {
+      this.emit(sessionId, { type: 'error', sessionId, message: 'No previous preview. Use /preview <file> first.' });
+      this.emitChatStatus(sessionId, 'browser');
+      return;
+    }
+
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Opened in browser: ${url}` });
+    this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'html' });
+    this.emit(sessionId, { type: 'preview.completed', sessionId, content: url, previewType: 'html' });
+    this.emitChatStatus(sessionId, 'browser');
+  }
+
+  private emitChatStatus(sessionId: string, activeTask: string): void {
+    this.emit(sessionId, {
+      type: 'status.updated',
+      sessionId,
+      status: this.sessions.update(sessionId, {
+        mode: 'chat',
+        activeTask: activeTask.slice(0, 60),
+      }),
+    });
   }
 }

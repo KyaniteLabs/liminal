@@ -4,12 +4,25 @@ import http from 'http';
 
 describe('PreviewServer Integration Tests', () => {
   let previewServer;
-  const getTestPort = () => 50000 + (process.pid % 5000) + Math.floor(Math.random() * 1000);
   let TEST_PORT;
+
+  const getListeningPort = (server = previewServer) => {
+    const port = server.getPort();
+    if (port == null) {
+      throw new Error('PreviewServer did not expose a listening port');
+    }
+    return port;
+  };
+
+  const startPreviewServer = async (port = 0) => {
+    const result = await previewServer.start(port);
+    TEST_PORT = port === 0 ? getListeningPort() : port;
+    return result;
+  };
 
   beforeEach(() => {
     previewServer = new PreviewServer();
-    TEST_PORT = getTestPort();
+    TEST_PORT = null;
   });
 
   afterEach(async () => {
@@ -24,20 +37,20 @@ describe('PreviewServer Integration Tests', () => {
 
   describe('start(port)', () => {
     it('should start Express server on configured port', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
 
       const response = await fetch(`http://localhost:${TEST_PORT}/`);
       expect(response.status).toBe(200);
     });
 
     it('should return true when successfully started', async () => {
-      const result = await previewServer.start(TEST_PORT);
+      const result = await startPreviewServer();
       expect(result).toBe(true);
     });
 
 
     it('should handle multiple start calls gracefully', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
       await expect(previewServer.start(TEST_PORT)).rejects.toThrow('Server is already running');
     });
 
@@ -51,8 +64,9 @@ describe('PreviewServer Integration Tests', () => {
       const server2 = new PreviewServer();
 
       try {
-        await server1.start(TEST_PORT);
-        await expect(server2.start(TEST_PORT)).rejects.toThrow();
+        await server1.start(0);
+        const inUsePort = getListeningPort(server1);
+        await expect(server2.start(inUsePort)).rejects.toThrow();
       } finally {
         await server1.stop();
         await server2.stop();
@@ -62,7 +76,7 @@ describe('PreviewServer Integration Tests', () => {
 
   describe('stop()', () => {
     it('should stop running server', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
       await previewServer.stop();
 
       // Server should no longer be accessible
@@ -70,7 +84,7 @@ describe('PreviewServer Integration Tests', () => {
     });
 
     it('should return true when successfully stopped', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
       const result = await previewServer.stop();
       expect(result).toBe(true);
     });
@@ -81,7 +95,7 @@ describe('PreviewServer Integration Tests', () => {
     });
 
     it('should handle multiple stop calls gracefully', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
       await previewServer.stop();
       const secondStop = await previewServer.stop();
 
@@ -91,7 +105,7 @@ describe('PreviewServer Integration Tests', () => {
 
   describe('serveSketch(code)', () => {
     beforeEach(async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
     });
 
     it('should serve p5.js sketch code', async () => {
@@ -312,7 +326,7 @@ describe('PreviewServer Integration Tests', () => {
   describe('end-to-end workflow', () => {
     it('should start, serve sketch, and stop', async () => {
       // Start
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
 
       // Serve sketch
       const sketchCode = 'function setup() { createCanvas(400, 400); }';
@@ -330,7 +344,7 @@ describe('PreviewServer Integration Tests', () => {
     });
 
     it('should handle multiple sketch updates in session', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
 
       const sketches = [
         'function setup() { createCanvas(400, 400); }',
@@ -350,7 +364,7 @@ describe('PreviewServer Integration Tests', () => {
 
   describe('error handling', () => {
     it('should handle network errors gracefully', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
 
       // Try to connect to wrong port
       await expect(fetch('http://localhost:9999/')).rejects.toThrow();
@@ -359,7 +373,7 @@ describe('PreviewServer Integration Tests', () => {
     });
 
     it('should handle malformed sketch code', async () => {
-      await previewServer.start(TEST_PORT);
+      await startPreviewServer();
 
       // Should not crash on malformed code
       previewServer.serveSketch('function setup { missing parenthesis }');

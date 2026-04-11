@@ -43,8 +43,10 @@ describe('PreviewServer Characterization', () => {
       expect(result).toBe(true);
     });
 
-    it('should throw error when starting with invalid port (0)', async () => {
-      await expect(server.start(0)).rejects.toThrow('Invalid port number');
+    it('should allow ephemeral port selection when starting with port 0', async () => {
+      const result = await server.start(0);
+      expect(result).toBe(true);
+      expect(server.getPort()).toBeGreaterThan(0);
     });
 
     it('should throw error when starting with invalid port (negative)', async () => {

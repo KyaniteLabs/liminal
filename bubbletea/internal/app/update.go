@@ -163,7 +163,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case streamDisconnectedMsg:
 		m.Connected = false
 		m.Reconnecting = true
-		m.updateChatViewport("Reconnecting to bridge...")
+		reason := "unknown error"
+		if msg.err != nil {
+			reason = msg.err.Error()
+		}
+		m.updateChatViewport("Disconnected: " + reason + " — reconnecting...")
 		return m, m.reconnectCmd()
 
 	case reconnectTickMsg:

@@ -5,8 +5,14 @@ vi.mock('../../../src/llm/LLMClient.js', () => {
     code: 'import { makeScene, useTime } from "@revideo/core";\n\nexport default () => {\n  const time = useTime();\n  return <text>Time: {time}</text>;\n};',
     success: true,
   });
+  const generateWithToolLoop = vi.fn().mockResolvedValue({
+    content: 'import { makeScene, useTime } from "@revideo/core";\n\nexport default () => {\n  const time = useTime();\n  return <text>Time: {time}</text>;\n};',
+    success: true,
+    error: undefined,
+  });
   class MockLLMClient {
     generate = generate;
+    generateWithToolLoop = generateWithToolLoop;
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);

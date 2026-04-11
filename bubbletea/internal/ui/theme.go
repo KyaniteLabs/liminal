@@ -232,6 +232,22 @@ var (
 	TaskHintStyle = lipgloss.NewStyle().
 			Foreground(FgMuted)
 
+	GenerationCardStyle = lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(AccentMagenta).
+				Padding(0, 1)
+
+	GenerationTitleStyle = lipgloss.NewStyle().
+				Foreground(AccentMagenta).
+				Bold(true)
+
+	GenerationValueStyle = lipgloss.NewStyle().
+				Foreground(AccentCyan).
+				Bold(true)
+
+	GenerationMetaStyle = lipgloss.NewStyle().
+				Foreground(FgSubtle)
+
 	PhaseBadgeStyle = lipgloss.NewStyle().
 			Foreground(BgBase).
 			Bold(true).

@@ -630,7 +630,7 @@ Failures:   0 critical
 - Active-response pane: streaming responses don't touch committed history
 - Confirmation-first: no state mutation without operator approval
 - Trust/provenance labels: provider, model, trust-level badges
-- Operator surface cards: task/phase card, tool timeline, changed files, verification jobs, artifacts, help drawer
+- Operator surface cards: task/phase card with progress bar, generation progress card, tool timeline, changed files, verification jobs, artifacts, help drawer
 - Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
 - Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
 - Generated code: untrusted by default
@@ -643,10 +643,10 @@ Failures:   0 critical
 | View | `internal/app/view.go` | 55/45 chat + operator layout with header/footer shortcuts |
 | Theme | `internal/ui/theme.go` | Operator-surface style tokens, badges, panel chrome |
 | Bridge Client | `internal/bridge/client.go` | HTTP + SSE client for TS bridge |
-| Layout | `internal/app/layout.go` | Task card, timeline, changed files, verification, artifacts, help rendering |
+| Layout | `internal/app/layout.go` | Task card, generation progress card, timeline, changed files, verification, artifacts, help rendering |
 | Event Types | `internal/bridge/events.go` | Event, SessionStatus, PendingAction structs |
 
-**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, and shortcut behavior. Vitest coverage now includes typed operator-event publication plus real SSE delivery through the TS bridge server.
+**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, shortcut behavior, and visible progress instrumentation. Vitest coverage now includes typed operator-event publication plus real SSE delivery through the TS bridge server.
 
 ---
 

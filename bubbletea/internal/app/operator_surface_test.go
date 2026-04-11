@@ -143,3 +143,37 @@ func TestApplyEventOperatorSurfaceRefreshesView(t *testing.T) {
 func nowForTest() time.Time {
 	return time.Unix(1710000000, 0)
 }
+
+func TestTaskCardShowsProgressPercentage(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.Task = TaskCard{
+		Objective:   "Polish Bubble Tea operator UI",
+		Phase:       PhaseEdit,
+		StepCurrent: 3,
+		StepTotal:   8,
+	}
+
+	card := m.renderTaskCard(52)
+	for _, want := range []string{"Progress", "38%"} {
+		if !strings.Contains(card, want) {
+			t.Fatalf("expected task card to contain %q\n%s", want, card)
+		}
+	}
+}
+
+func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.CurrentIteration = 2
+	m.GenerationIterations = 4
+	m.GenerationScore = 0.82
+	m.GenerationModel = "glm-5.1"
+	m.GenerationReason = "Best convergence"
+	m.GenerationDuration = 4200
+
+	surface := m.renderOperatorSurface(56)
+	for _, want := range []string{"Generation", "50%", "glm-5.1", "0.82"} {
+		if !strings.Contains(surface, want) {
+			t.Fatalf("expected operator surface to contain %q\n%s", want, surface)
+		}
+	}
+}

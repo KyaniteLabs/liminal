@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
+	"github.com/charmbracelet/bubbles/progress"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -13,6 +14,9 @@ func (m Model) renderOperatorSurface(width int) string {
 	contentWidth := max(20, width)
 	panels := []string{m.renderTaskCard(contentWidth)}
 
+	if m.hasGenerationTelemetry() {
+		panels = append(panels, m.renderGenerationCard(contentWidth))
+	}
 	if m.TimelineVisible {
 		panels = append(panels, m.renderToolTimeline(contentWidth))
 	}
@@ -42,6 +46,7 @@ func (m Model) renderTaskCard(width int) string {
 	phase := m.renderPhaseBadge(m.Task.Phase)
 	progress := ui.TaskProgressStyle.Render(formatStepProgress(m.Task.StepCurrent, m.Task.StepTotal))
 	header := lipgloss.JoinHorizontal(lipgloss.Left, title, "  ", phase, "  ", progress)
+	progressBar := renderGradientProgressBar(max(width-10, 16), taskProgressPercent(m.Task.StepCurrent, m.Task.StepTotal), string(ui.AccentCyan), string(ui.AccentMagenta))
 
 	objective := strings.TrimSpace(m.Task.Objective)
 	if objective == "" {
@@ -51,6 +56,8 @@ func (m Model) renderTaskCard(width int) string {
 	lines := []string{
 		header,
 		ui.TaskObjectiveStyle.Render(objective),
+		ui.PanelLabelStyle.Render("Progress"),
+		progressBar,
 	}
 	if strings.TrimSpace(m.Task.ActiveFile) != "" {
 		lines = append(lines, ui.PanelLabelStyle.Render("File:")+" "+ui.TaskFileStyle.Render(m.Task.ActiveFile))
@@ -65,6 +72,31 @@ func (m Model) renderTaskCard(width int) string {
 	}
 
 	return ui.TaskCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) renderGenerationCard(width int) string {
+	ratio := generationProgressPercent(m.CurrentIteration, m.GenerationIterations)
+	bar := renderGradientProgressBar(max(width-10, 16), ratio, string(ui.AccentGreen), string(ui.AccentPurple))
+
+	lines := []string{
+		ui.GenerationTitleStyle.Render("Generation"),
+		bar,
+	}
+
+	if m.GenerationModel != "" {
+		lines = append(lines, ui.PanelLabelStyle.Render("Model:")+" "+ui.GenerationValueStyle.Render(m.GenerationModel))
+	}
+	if m.GenerationScore > 0 {
+		lines = append(lines, ui.PanelLabelStyle.Render("Score:")+" "+ui.GenerationValueStyle.Render(fmt.Sprintf("%.2f", m.GenerationScore)))
+	}
+	if m.GenerationDuration > 0 {
+		lines = append(lines, ui.PanelLabelStyle.Render("Duration:")+" "+ui.GenerationMetaStyle.Render(formatDurationMs(m.GenerationDuration)))
+	}
+	if strings.TrimSpace(m.GenerationReason) != "" {
+		lines = append(lines, ui.GenerationMetaStyle.Render(trimToWidth(m.GenerationReason, width-6)))
+	}
+
+	return ui.GenerationCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
 func (m Model) renderToolTimeline(width int) string {
@@ -282,3 +314,59 @@ func formatRelativeTime(ts time.Time) string {
 }
 
 var _ = formatRelativeTime
+
+func (m Model) hasGenerationTelemetry() bool {
+	return m.CurrentIteration > 0 || m.GenerationIterations > 0 || m.GenerationScore > 0 || strings.TrimSpace(m.GenerationModel) != ""
+}
+
+func taskProgressPercent(current, total int) float64 {
+	if total <= 0 {
+		return 0
+	}
+	if current < 0 {
+		current = 0
+	}
+	if current > total {
+		current = total
+	}
+	return float64(current) / float64(total)
+}
+
+func generationProgressPercent(current, total int) float64 {
+	if total <= 0 {
+		return 0
+	}
+	if current < 0 {
+		current = 0
+	}
+	if current > total {
+		current = total
+	}
+	return float64(current) / float64(total)
+}
+
+func renderGradientProgressBar(width int, percent float64, startColor, endColor string) string {
+	bar := progress.New(
+		progress.WithWidth(max(width, 12)),
+		progress.WithScaledGradient(startColor, endColor),
+	)
+	bar.PercentFormat = "%3.0f%%"
+	return bar.ViewAs(clampPercent(percent))
+}
+
+func clampPercent(percent float64) float64 {
+	if percent < 0 {
+		return 0
+	}
+	if percent > 1 {
+		return 1
+	}
+	return percent
+}
+
+func formatDurationMs(ms int64) string {
+	if ms < 1000 {
+		return fmt.Sprintf("%dms", ms)
+	}
+	return fmt.Sprintf("%.1fs", float64(ms)/1000.0)
+}

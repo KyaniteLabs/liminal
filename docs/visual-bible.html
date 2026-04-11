@@ -211,7 +211,7 @@
             </div>
             <div class="alert warning">
                 <h4>🟡 Bubble Tea Operator Surface In Progress</h4>
-                <p>The Go Bubble Tea client now tracks task cards, live tool timelines, changed files, verification jobs, artifacts, and operator shortcuts. Layout polish is active on <code>fix/bubbletea-operator-surface</code>, and the TS bridge now has end-to-end SSE coverage for operator event emission.</p>
+                <p>The Go Bubble Tea client now tracks task cards, live tool timelines, changed files, verification jobs, artifacts, operator shortcuts, and new gradient progress instrumentation for task and generation state. Layout polish is active on <code>fix/bubbletea-operator-surface</code>, and the TS bridge now has end-to-end SSE coverage for operator event emission.</p>
             </div>
         </section>
 
@@ -457,7 +457,7 @@
                 </div>
                 <div class="task-column">
                     <h4>🟡 In Progress</h4>
-                    <div class="task-item high"><div class="task-id">BT-OPS</div>Bubble Tea operator surface polish (task card, timeline, artifacts, verification)</div>
+                    <div class="task-item high"><div class="task-id">BT-OPS</div>Bubble Tea operator surface polish (task/generation progress, timeline, artifacts, verification)</div>
                 </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
@@ -750,7 +750,7 @@
                     <tr>
                         <td><code>latest</code></td>
                         <td>fix(landing): recover gallery metadata UI, stable dogfood asset paths, and single metadata badge row</td>
-                        <td>Bubble Tea operator surface now shows live task progress, tool timeline, changed files, verification jobs, and clipboard/help shortcuts in the right column</td>
+                        <td>Bubble Tea operator surface now shows live task progress, generation progress cards, tool timeline, changed files, verification jobs, and clipboard/help shortcuts in the right column</td>
                     </tr>
                     <tr>
                         <td><code>bb67f67</code></td>
@@ -786,7 +786,7 @@
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
                 <li><strong>✅ Landing gallery stabilized</strong> - April 6 recovery cards now point at repo-owned assets instead of a transient worktree</li>
-                <li><strong>🔎 Wire bridge emissions into the Bubble Tea operator surface</strong> - the Go shell now renders task/timeline/file/verification/artifact cards, but TS-side event producers still need broader rollout</li>
+                <li><strong>🔎 Wire bridge emissions into the Bubble Tea operator surface</strong> - the Go shell now renders task + generation progress cards alongside timeline/file/verification/artifact cards, but TS-side event producers still need broader rollout</li>
                 <li><strong>🧩 Split preserved stash batches</strong> - replay broader crash-era stashes into atomic branches instead of applying wholesale</li>
                 <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
             </ol>

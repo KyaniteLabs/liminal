@@ -627,7 +627,7 @@ Failures:   0 critical
 **Architecture:**
 - Pane-first layout: chat history on the left, operator surface on the right
 - Explicit modes: Chat, Inspect, Action, Confirm
-- Multiline operator composer: textarea input with `Enter` to send and `Alt+Enter` to insert a newline
+- Multiline operator composer: textarea input with Liminal-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
 - Active-response pane: streaming responses don't touch committed history
 - Confirmation-first: no state mutation without operator approval
 - Trust/provenance labels: provider, model, trust-level badges

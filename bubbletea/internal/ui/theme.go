@@ -1,6 +1,9 @@
 package ui
 
-import "github.com/charmbracelet/lipgloss"
+import (
+	"github.com/charmbracelet/bubbles/textarea"
+	"github.com/charmbracelet/lipgloss"
+)
 
 // ── Color Palette (Tokyo Night + Dracula inspired) ──
 // True-color hex values for maximum visual fidelity.
@@ -125,6 +128,29 @@ var (
 			Background(BgSurface).
 			Foreground(FgText).
 			Padding(0, 1)
+
+	TextareaPromptFocusedStyle = lipgloss.NewStyle().
+					Foreground(AccentCyan).
+					Bold(true)
+
+	TextareaPromptBlurredStyle = lipgloss.NewStyle().
+					Foreground(FgMuted)
+
+	TextareaTextFocusedStyle = lipgloss.NewStyle().
+					Foreground(FgText)
+
+	TextareaTextBlurredStyle = lipgloss.NewStyle().
+					Foreground(FgSubtle)
+
+	TextareaPlaceholderStyle = lipgloss.NewStyle().
+					Foreground(FgMuted).
+					Italic(true)
+
+	TextareaBaseFocusedStyle = lipgloss.NewStyle().
+					Background(BgBase)
+
+	TextareaBaseBlurredStyle = lipgloss.NewStyle().
+					Background(BgBase)
 
 	// ── Preview tabs ──
 	ActiveTabStyle = lipgloss.NewStyle().
@@ -381,6 +407,26 @@ var (
 	SeparatorStyle = lipgloss.NewStyle().
 			Foreground(BgOverlay)
 )
+
+func TextareaStyles() (textarea.Style, textarea.Style) {
+	focused, blurred := textarea.DefaultStyles()
+
+	focused.Base = TextareaBaseFocusedStyle
+	focused.Prompt = TextareaPromptFocusedStyle
+	focused.Text = TextareaTextFocusedStyle
+	focused.Placeholder = TextareaPlaceholderStyle
+	focused.CursorLine = lipgloss.NewStyle()
+	focused.EndOfBuffer = lipgloss.NewStyle().Foreground(FgMuted)
+
+	blurred.Base = TextareaBaseBlurredStyle
+	blurred.Prompt = TextareaPromptBlurredStyle
+	blurred.Text = TextareaTextBlurredStyle
+	blurred.Placeholder = TextareaPlaceholderStyle
+	blurred.CursorLine = lipgloss.NewStyle()
+	blurred.EndOfBuffer = lipgloss.NewStyle().Foreground(FgMuted)
+
+	return focused, blurred
+}
 
 // Separator returns a horizontal divider line.
 func Separator(width int) string {

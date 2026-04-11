@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
 	"github.com/atotto/clipboard"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -200,6 +201,7 @@ func NewModel(bridgeURL string) Model {
 	ti.ShowLineNumbers = false
 	ti.SetHeight(ChatInputHeight)
 	ti.SetWidth(80)
+	ti.FocusedStyle, ti.BlurredStyle = ui.TextareaStyles()
 	_ = ti.Focus()
 
 	// Create glamour renderer for markdown + syntax highlighting

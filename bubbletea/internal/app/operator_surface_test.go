@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -222,5 +223,16 @@ func TestFooterExplainsMultilineShortcut(t *testing.T) {
 		if !strings.Contains(footer, want) {
 			t.Fatalf("expected footer to contain %q\n%s", want, footer)
 		}
+	}
+}
+
+func TestNewModelUsesLiminalTextareaStyles(t *testing.T) {
+	m := NewModel("http://localhost:0")
+
+	if got, want := m.TextInput.FocusedStyle.Prompt.Render(">"), ui.TextareaPromptFocusedStyle.Render(">"); got != want {
+		t.Fatalf("expected focused prompt style to match theme")
+	}
+	if got, want := m.TextInput.BlurredStyle.Prompt.Render(">"), ui.TextareaPromptBlurredStyle.Render(">"); got != want {
+		t.Fatalf("expected blurred prompt style to match theme")
 	}
 }

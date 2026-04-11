@@ -590,6 +590,7 @@ Failures:   0 critical
 - Autonomous success claims now require a successful verification step (`runBuild`, `runTests`, or `typeCheck`) before mutation tasks can finish cleanly
 - `NaturalInterface` now supports explicit `/agent <description>`, direct preview/audio/browser commands, and local `/confirm` / `/cancel` handling for queued explicit actions
 - `NaturalInterface` preview/audio/browser commands now delegate to the shared `commands.ts` implementations to reduce future drift
+- `NaturalInterface` `/run` now also delegates to the shared `commands.ts` queueing path while preserving the existing response copy
 - CWD-based prompt loading removed from PromptBuilder
 - Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
 - Preview/audio path hardening added (`previewSafety.ts`)

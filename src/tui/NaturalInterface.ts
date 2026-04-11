@@ -338,22 +338,7 @@ export class NaturalInterface {
   }
 
   private async handleRun(taskId: string): Promise<NaturalInputResult> {
-    if (!taskId) {
-      return { type: 'command', response: 'Please specify a task ID. Usage: run <task-id>', shouldContinue: true };
-    }
-
-    const task = this.tasks.find(t => t.id === taskId);
-    if (!task) {
-      return { type: 'command', response: `Task ${taskId} not found`, shouldContinue: true };
-    }
-
-    const pending = this.pendingActions.create('structured', task);
-
-    return {
-      type: 'command',
-      response: `Task "${task.title}" created and awaiting approval.\nConfirm with /confirm ${pending.id} or cancel with /cancel ${pending.id}.`,
-      shouldContinue: true,
-    };
+    return this.executeSharedRunCommand(taskId);
   }
 
   private async handleExplicitAgent(args: string[]): Promise<NaturalInputResult> {
@@ -631,6 +616,37 @@ export class NaturalInterface {
       confirmPendingAction: async (id) => this.handleConfirm(id).then((result) => result.response),
       cancelPendingAction: (id) => this.pendingActions.cancel(id),
     });
+
+    return {
+      type: 'command',
+      response,
+      shouldContinue: true,
+    };
+  }
+
+  private async executeSharedRunCommand(taskId: string): Promise<NaturalInputResult> {
+    let response = await commands.run.execute(taskId ? [taskId] : [], {
+      agent: this.harnessAgent,
+      tasks: this.tasks,
+      logs: [],
+      addLog: this.onLog,
+      setStatusMessage: this.onStatus,
+      addOutput: (_type, content) => {
+        this.addMessage('assistant', content);
+      },
+      createPendingAction: (kind, task) => ({ id: this.pendingActions.create(kind, task as AgentTask | LLMTask).id }),
+      confirmPendingAction: async (id) => this.handleConfirm(id).then((result) => result.response),
+      cancelPendingAction: (id) => this.pendingActions.cancel(id),
+    });
+
+    response = response
+      .replace('Error: Task ID required. ', 'Please specify a task ID. ')
+      .replace('Usage: /run <task-id>', 'Usage: run <task-id>')
+      .replace(/^Error: Task /, 'Task ');
+
+    if (!taskId) {
+      return { type: 'command', response, shouldContinue: true };
+    }
 
     return {
       type: 'command',

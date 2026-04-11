@@ -52,6 +52,19 @@ export function isGenerationRequest(text: string): boolean {
   return GENERATION_KEYWORDS.some(kw => lower.includes(kw));
 }
 
+function detectGenerationDomain(text: string): Domain {
+  const lower = text.toLowerCase();
+
+  if (/\bthree(?:\.js|js)?\b|\b3d\b|\bwebgl\b/.test(lower)) return Domain.THREE;
+  if (/\bshader\b|\bglsl\b/.test(lower)) return Domain.SHADER;
+  if (/\bhydra\b/.test(lower)) return Domain.HYDRA;
+  if (/\bstrudel\b/.test(lower)) return Domain.STRUDEL;
+  if (/\btone(?:\.js|js)?\b|\bsynth(?:esizer)?\b|\bweb audio\b/.test(lower)) return Domain.TONE;
+  if (/\bascii\b|\btext art\b/.test(lower)) return Domain.ASCII;
+  if (/\brevideo\b|\bremotion\b|\bvideo\b|\bmotion graphics\b|\btitle sequence\b/.test(lower)) return Domain.REVIEWD;
+  return Domain.P5;
+}
+
 function logBridge(event: string, fields: Record<string, unknown>): void {
   console.info(`[TuiBridgeService] ${event} ${JSON.stringify(fields)}`); // eslint-disable-line no-console
 }
@@ -432,7 +445,7 @@ export class TuiBridgeService {
         },
         maxIterations: 10,
         timeoutMinutes: 5,
-        collabDomain: Domain.P5,
+        collabDomain: detectGenerationDomain(userText),
         signal: controller.signal,
       });
 

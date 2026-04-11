@@ -194,7 +194,7 @@ export abstract class TierBasedGenerator {
       ? (builtPrompt.combined || builtPrompt.user)
       : builtPrompt.user;
 
-    let toolResult = await this.llm.generateWithToolLoop({
+    const toolResult = await this.llm.generateWithToolLoop({
       systemPrompt,
       userPrompt,
       tools: GENERATOR_TOOLS,

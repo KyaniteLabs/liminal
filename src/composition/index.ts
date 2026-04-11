@@ -48,6 +48,7 @@ export type {
   DomainType,
   BlendMode,
   MaskMode,
+  LayerRole,
   AssetType,
 
   // Core interfaces

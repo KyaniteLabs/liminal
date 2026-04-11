@@ -1,6 +1,6 @@
 import { LLMClient, LLMConfig, LLMResponse } from '../../llm/LLMClient.js';
 import { GenerationError } from '../../errors/GenerationError.js';
-import { Layer, createLayer } from '../../composition/types.js';
+import { Layer, createLayer, LayerRole } from '../../composition/types.js';
 import { getEffectiveConfig } from '../../config/ConfigLoader.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../../harness/tools/generator-tools.js';
 
@@ -11,6 +11,10 @@ export interface P5GeneratorOptions {
   signal?: AbortSignal;
   /** Bypass LLM cache for this generation */
   bypassCache?: boolean;
+  /** Layer role hint — when 'overlay', prompt avoids opaque background() */
+  layerRole?: LayerRole;
+  /** Whether this layer should render with a transparent background */
+  transparentBackground?: boolean;
 }
 
 export class P5GeneratorLLM {
@@ -76,6 +80,9 @@ export class P5GeneratorLLM {
       thinking: response.thinking,
       recoveredFromThinking: response.recoveredFromThinking,
       validation: { passed: true },
+    }, {
+      role: options?.layerRole,
+      transparentBackground: options?.transparentBackground,
     });
   }
 
@@ -99,7 +106,14 @@ export class P5GeneratorLLM {
       ? '\nNote: The user wants sound/audio. Include Web Audio API (AudioContext, createOscillator) or p5.sound.'
       : '';
     const context = soundContext || undefined;
-    const systemPrompt = 'You are a creative coder. Generate p5.js code.\nRules:\n- Output ONLY JavaScript code\n- Use function setup() and function draw()\n- Include createCanvas()\n- NO explanations, NO markdown';
+
+    // Build system prompt with optional overlay rules
+    let systemRules = '- Output ONLY JavaScript code\n- Use function setup() and function draw()\n- Include createCanvas()\n- NO explanations, NO markdown';
+    if (options?.layerRole === 'overlay') {
+      systemRules += '\n- This is a TRANSPARENT OVERLAY layer — do NOT call background() in draw()\n- Use clear() at the start of draw() to keep the canvas transparent\n- Only draw elements that should appear on top of the background layer';
+    }
+
+    const systemPrompt = `You are a creative coder. Generate p5.js code.\nRules:\n${systemRules}`;
     const userPrompt = `Create a p5.js sketch: ${prompt}${context ? '\\nContext: ' + context : ''}`;
     const toolLoopResult = await this.llm.generateWithToolLoop({
       systemPrompt,

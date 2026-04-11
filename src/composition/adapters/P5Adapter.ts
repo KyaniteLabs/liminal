@@ -65,27 +65,35 @@ export class P5Adapter implements LayerAdapter {
     const width = settings?.width || 800;
     const height = settings?.height || 600;
 
+    // Transparent background support
+    const isTransparent = layer.config.transparentBackground;
+
     // Create p5 instance
     let instance: P5Instance | undefined;
-    
+
     const sketch = (p: P5Instance) => {
       instance = p;
-      
+
       // Store reference for exports
       this.instances.set(layer.id, p);
-      
+
       // Wrap user's code in a function that sets up p5 globals
       const userCode = layer.code;
-      
+
       p.setup = () => {
         p.canvas = p.createCanvas(width, height).elt as HTMLCanvasElement;
-        
+
+        // Transparent background: set canvas CSS background to transparent
+        if (isTransparent && p.canvas) {
+          p.canvas.style.background = 'transparent';
+        }
+
         // Apply blend mode to canvas context
         const ctx = p.canvas.getContext('2d');
         if (ctx && layer.config.blendMode !== 'normal') {
           ctx.globalCompositeOperation = getCanvasCompositeOp(layer.config.blendMode);
         }
-        
+
         // Execute user setup code if present
         if (userCode.includes('function setup')) {
           const setupMatch = userCode.match(/function\s+setup\s*\(\)\s*\{([\s\S]*?)\}/);
@@ -100,8 +108,16 @@ export class P5Adapter implements LayerAdapter {
           }
         }
       };
-      
+
       p.draw = () => {
+        // Transparent overlay: clear canvas each frame instead of filling background
+        if (isTransparent) {
+          const ctx = p.canvas?.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, width, height);
+          }
+        }
+
         // Execute user draw code if present
         if (userCode.includes('function draw')) {
           const drawMatch = userCode.match(/function\s+draw\s*\(\)\s*\{([\s\S]*?)\}/);
@@ -120,7 +136,7 @@ export class P5Adapter implements LayerAdapter {
 
     // Create p5 instance
     new p5(sketch, canvasContainer);
-    
+
     return instance!;
   }
 
@@ -216,6 +232,13 @@ export class P5Adapter implements LayerAdapter {
   }
 
   generateScript(layer: Layer, _settings: GlobalSettings): string {
+    const transparentStyle = layer.config.transparentBackground
+      ? "  container.style.background = 'transparent';\n"
+      : '';
+    const blendStyle = layer.config.blendMode !== 'normal'
+      ? `  container.style.mixBlendMode = '${layer.config.blendMode}';\n`
+      : '';
+
     return `
 <!-- p5.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
@@ -224,8 +247,9 @@ export class P5Adapter implements LayerAdapter {
   const container = document.createElement('div');
   container.className = 'layer';
   container.style.zIndex = ${layer.config.zIndex};
-  document.getElementById('composition').appendChild(container);
-  
+  container.style.opacity = ${layer.config.opacity};
+${transparentStyle}${blendStyle}  document.getElementById('composition').appendChild(container);
+
   new p5(function(sketch) {
 ${layer.code.split('\n').map(line => '    ' + line).join('\n')}
   }, container);

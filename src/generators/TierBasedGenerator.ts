@@ -14,7 +14,7 @@ import { detectModelTier, trimContext, type ModelTier } from '../llm/ModelTier.j
 import { harnessMemory } from '../harness/HarnessMemory.js';
 import { metaHarness } from '../harness/MetaHarnessIntegration.js';
 import { GenerationError } from '../errors/GenerationError.js';
-import { Layer, createLayer, DomainType } from '../composition/types.js';
+import { Layer, createLayer, DomainType, LayerRole } from '../composition/types.js';
 import { Logger } from '../utils/Logger.js';
 import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
@@ -24,6 +24,10 @@ export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;
   bypassCache?: boolean;
   contextBudget?: number;
+  /** Layer role hint — influences prompt and created Layer config */
+  layerRole?: LayerRole;
+  /** Whether this layer should render with a transparent background */
+  transparentBackground?: boolean;
 }
 
 export abstract class TierBasedGenerator {
@@ -116,7 +120,7 @@ export abstract class TierBasedGenerator {
    */
   async generateLayer(prompt: string, options?: TierBasedGeneratorOptions): Promise<Layer> {
     const response = await this.generateInternal(prompt, options);
-    
+
     return createLayer(
       this.domain as DomainType,
       response.code,
@@ -128,6 +132,10 @@ export abstract class TierBasedGenerator {
         thinking: response.thinking,
         recoveredFromThinking: response.recoveredFromThinking,
         validation: { passed: true },
+      },
+      {
+        role: options?.layerRole,
+        transparentBackground: options?.transparentBackground,
       }
     );
   }

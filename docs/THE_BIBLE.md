@@ -319,7 +319,7 @@ Failures:   0 critical
 
 | Generator | Domain | File | Features |
 |-----------|--------|------|----------|
-| P5GeneratorV2 | p5.js | `p5/P5GeneratorV2.ts` | Sound detection, setup/draw validation |
+| P5GeneratorV2 | p5.js | `p5/P5GeneratorV2.ts` | Sound detection, setup/draw validation, explicit p5 routing |
 | ShaderGenerator | GLSL | `glsl/ShaderGenerator.ts` | Truncation detection, main() validation |
 | ThreeGenerator | Three.js | `three/ThreeGenerator.ts` | Scene/camera validation |
 | HydraGenerator | Video | `hydra/HydraGenerator.ts` | Hydra syntax validation |

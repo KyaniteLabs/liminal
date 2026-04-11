@@ -124,7 +124,7 @@ Key design decisions:
 
 Creative intelligence modules operate on *prompts and conversations* rather than generated code. Their role is to understand user intent before generation begins, improving the first-iteration quality ceiling.
 
-- **AmbiguityDetector** surfaces unclear prompts before generation, reducing wasted iterations on misunderstood intent.
+- **AmbiguityDetector** surfaces unclear prompts before generation, reducing wasted iterations on misunderstood intent. When no specialized generator matches, ambiguity is checked before any generic p5 fallback runs.
 - **CreativePreferenceExtractor** learns user style preferences from natural language, building a profile that persists across sessions.
 - **CrossDomainCrossover** maps techniques between domains (e.g., "canon" in music → "iteration" in visual → "recursion" in code), enabling cross-pollination of creative ideas.
 - **SymbolicCreativeLanguage** develops an emergent vocabulary of effective creative moves, tracking which discovered techniques lead to high-quality output.
@@ -145,4 +145,3 @@ Output, project name, gallery paths, and seed identifiers are validated so paths
 ## Persistence
 
 MAP-Elites grid and AestheticModel training data persist across runs via JSON files in `~/.liminal/`. Dynamic routing performance data accumulates in `~/.liminal/routing/`. Archive learning data persists in `~/.liminal/archive/`. This means the system genuinely improves over time — each run builds on accumulated knowledge from all previous runs.
-

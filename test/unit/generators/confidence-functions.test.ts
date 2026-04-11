@@ -8,6 +8,7 @@ import {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  p5Confidence,
 } from '../../../src/generators/registerGenerators.js';
 
 // ---------------------------------------------------------------------------
@@ -234,6 +235,34 @@ describe('textgenConfidence', () => {
 
   it('returns 0 for empty string', () => {
     expect(textgenConfidence('')).toBe(0);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// p5Confidence
+// ---------------------------------------------------------------------------
+describe('p5Confidence', () => {
+  it('returns 0.95 for explicit p5 mentions', () => {
+    expect(p5Confidence('build a p5.js sketch')).toBe(0.95);
+    expect(p5Confidence('p5js particle sketch')).toBe(0.95);
+  });
+
+  it('returns 0.95 for processing mention', () => {
+    expect(p5Confidence('processing sketch with noise')).toBe(0.95);
+  });
+
+  it('returns 0.9 for explicit lifecycle api mentions', () => {
+    expect(p5Confidence('use createCanvas and draw()')).toBe(0.9);
+  });
+
+  it('returns 0.75 for explicit sketch/canvas art prompts', () => {
+    expect(p5Confidence('interactive sketch art')).toBe(0.75);
+    expect(p5Confidence('canvas generative art')).toBe(0.75);
+  });
+
+  it('returns 0 for vague requests so ambiguity handling can run', () => {
+    expect(p5Confidence('make it cooler')).toBe(0);
+    expect(p5Confidence('something interesting')).toBe(0);
   });
 });
 

@@ -133,10 +133,10 @@ describe('Prompt Library Validation', () => {
       }
     });
 
-    it('all prompts should be at version 2.0.0, 2.1.0, or 3.0.0', () => {
+    it('all prompts should use an allowed semver family', () => {
       const all = PromptLibrary.list();
       for (const template of all) {
-        expect(['1.0.0', '2.0.0', '2.1.0', '3.0.0']).toContain(template.version);
+        expect(template.version).toMatch(/^(1\.0\.0|2\.0\.0|2\.1\.\d+|3\.0\.0)$/);
       }
     });
   });

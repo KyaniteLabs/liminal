@@ -2,7 +2,7 @@ import { PromptLibrary } from './PromptLibrary.js';
 
 PromptLibrary.register({
   id: 'hydra.generate',
-  version: '2.1.0',
+  version: '2.1.1',
   category: 'generator',
   systemPrompt: `You are an expert Hydra live-coder specializing in real-time visual synthesis.
 
@@ -57,6 +57,10 @@ TRANSFORMATION METHODS (chain after sources):
 OUTPUT METHOD (MUST END WITH THIS):
 - .out(output) - render to output (o0, o1, o2, o3 or omit for o0)
 
+GLOBAL SETTINGS:
+- speed = 1  // global time multiplier
+- bpm = 30   // global sequencing tempo for arrays
+
 VALID CODE EXAMPLES:
 
 Example 1 - Oscillating Kaleidoscope:
@@ -83,21 +87,21 @@ INVALID CODE (DO NOT USE):
 
 DOMAIN RULES:
 - Every source chain MUST end with .out()
-- Use sources: osc(), src(), noise(), shape(), color(), gradient(), solid()
+- Use sources: osc(), src(), noise(), shape(), gradient(), solid()
 - Chain transformations for rich visuals: .modulate(), .rotate(), .scale(), .scrollX/Y()
-- Use .speed(), .scale(), .scrollX/Y() for animation
+- Use dynamic arguments, rotation speed parameters, scrollX/Y, or the global speed variable for animation
 - Use .modulate(), .blend(), .layer() for combining sources
 - CODE MUST BE at least 200 characters
 
 SHOULD:
 - Use feedback loops: src(o0).scale(1.1) or src(o0).rotate(0.1)
 - Use color manipulation: .color(), .saturate(), .hue(), .contrast()
-- Use timing: .speed(), .scrollX(), .scrollY() for motion
+- Use timing through dynamic arguments, scrollX(), scrollY(), rotate(..., speed), or the global speed variable
 - Create visually complex outputs with multiple chained methods`,
   userPromptTemplate: 'Generate ${platform} visuals: ${prompt}',
   tags: ['generator', 'hydra', 'code-only', 'no-markdown'],
   created: '2026-03-20',
-  updated: '2026-03-31',
+  updated: '2026-04-11',
   metadata: {
     description: 'Generate Hydra live-coding visual synthesis code',
   },

@@ -745,13 +745,13 @@
                 <tbody>
                     <tr>
                         <td><code>latest</code></td>
-                        <td>docs(prompts): record final ROI ranking and remaining-surface decisions for the system-prompt audit</td>
-                        <td>Captures which prompt surfaces were fixed, which were deferred, and why no further high-ROI defects remain in the current audit</td>
+                        <td>audit(prompts): correct Hydra API guidance and relax prompt-version validation to allow patch releases</td>
+                        <td>Fixes a source-backed Hydra prompt accuracy issue and keeps prompt validation compatible with atomic patch-version bumps</td>
                     </tr>
                     <tr>
-                        <td><code>8436598</code></td>
-                        <td>audit(prompts): align PromptBuilder and small-model fallback prompts with the structured audit style</td>
-                        <td>Makes medium/local/tiny prompt paths and the simplified p5 fallback use explicit sections and a cleaner code-only contract</td>
+                        <td><code>1c37ade</code></td>
+                        <td>docs(prompts): record final ROI ranking and remaining-surface decisions for the system-prompt audit</td>
+                        <td>Captures which prompt surfaces were fixed, which were deferred, and why no further high-ROI defects remain in the current audit</td>
                     </tr>
                     <tr>
                         <td><code>bb67f67</code></td>
@@ -786,7 +786,7 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>🧠 Review prompt-audit PR</strong> - draft PR <code>#140</code> now includes the final ROI ranking and all landed prompt-fix slices</li>
+                <li><strong>🧠 Review prompt-audit PR</strong> - draft PR <code>#140</code> now includes the Hydra accuracy fix and all landed prompt-audit slices</li>
                 <li><strong>📏 Add prompt eval coverage</strong> - extend prompt-lint beyond high-ROI surfaces into the full PromptLibrary and large narrative prompts</li>
                 <li><strong>🔎 Review preserved recovery branches</strong> - evaluator fix, harness readiness tests, and TierBasedGenerator/Hydra coverage remain next</li>
                 <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>

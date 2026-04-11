@@ -402,6 +402,7 @@ Failures:   0 critical
 - A follow-up slice structured chat/evaluation prompts with explicit tags, removed step-by-step wording from collaboration critics, and fixed a real `chat.assistant` interpolation bug.
 - A third slice fixed the same PromptLibrary interpolation bug class in `audio.voice-to-visual` and `aesthetic.constraints`.
 - A fourth slice aligned `PromptBuilder` and the small-model p5 fallback with the same structured prompt style used by the audited primary prompt surfaces.
+- A final narrow slice corrected Hydra API guidance so the prompt no longer misstates `speed` as a chain method or `color()` as a source.
 
 **Multi-Provider Support:**
 - OpenAI

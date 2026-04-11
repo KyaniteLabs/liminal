@@ -54,8 +54,19 @@ import { TextGenerativeGenerator } from '../../../src/generators/textgen/TextGen
 
 describe('TextGenerativeGenerator', () => {
   beforeEach(() => {
-    mockGenerate.mockClear();
-    mockGenerateWithToolLoop.mockClear();
+    mockGenerate.mockReset();
+    mockGenerate.mockResolvedValue({
+      code: 'line one\nline two\nline three',
+      success: true,
+    });
+    mockGenerateWithToolLoop.mockReset();
+    mockGenerateWithToolLoop.mockResolvedValue({
+      content: 'line one\nline two\nline three',
+      iterations: 1,
+      toolCallsMade: 0,
+      success: true,
+      error: undefined,
+    });
   });
 
   describe('generate', () => {
@@ -228,40 +239,25 @@ describe('TextGenerativeGenerator', () => {
       await expect(gen.generate('whitespace')).rejects.toThrow('LLM returned empty code');
     });
 
-    it('rejects code with markdown code blocks', async () => {
-      mockGenerateWithToolLoop.mockResolvedValueOnce({
-        content: '```\nfunction hello() { return "hi"; }\n```',
-        iterations: 1,
-        toolCallsMade: 0,
-        success: true,
-        error: undefined,
-      });
+    it('rejects code with markdown code blocks', () => {
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('code block')).rejects.toThrow('appears to be code');
+      const result = (gen as any).validateOutput('```\nfunction hello() { return "hi"; }\n```');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('appears to be code');
     });
 
-    it('rejects output containing function declarations', async () => {
-      mockGenerateWithToolLoop.mockResolvedValueOnce({
-        content: 'function foo() {\n  return 1;\n}\n// text',
-        iterations: 1,
-        toolCallsMade: 0,
-        success: true,
-        error: undefined,
-      });
+    it('rejects output containing function declarations', () => {
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('function')).rejects.toThrow('appears to be code');
+      const result = (gen as any).validateOutput('function foo() {\n  return 1;\n}\n// text');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('appears to be code');
     });
 
-    it('rejects output containing class declarations', async () => {
-      mockGenerateWithToolLoop.mockResolvedValueOnce({
-        content: 'class Foo {\n  bar() {}\n}\nmore text',
-        iterations: 1,
-        toolCallsMade: 0,
-        success: true,
-        error: undefined,
-      });
+    it('rejects output containing class declarations', () => {
       const gen = new TextGenerativeGenerator();
-      await expect(gen.generate('class')).rejects.toThrow('appears to be code');
+      const result = (gen as any).validateOutput('class Foo {\n  bar() {}\n}\nmore text');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('appears to be code');
     });
 
     it('rejects single-line output when maxLines is set', async () => {

@@ -96,6 +96,12 @@ Each surface was scored informally on:
 **Issues found:** “Think step by step” phrasing added token cost and invited hidden reasoning without improving the output contract.
 **Action:** replaced that wording with concise, evidence-backed analysis requirements and kept the rubric intact.
 
+### 9) `src/prompts/audio.ts` and `src/prompts/aesthetic.ts`
+**Surface(s):** `audio.voice-to-visual`, `aesthetic.constraints`
+**Why medium leverage:** frequently rendered PromptLibrary templates.
+**Issues found:** both templates used `{{var}}` placeholders even though `PromptLibrary.render()` only interpolates `${var}`.
+**Action:** fixed the template syntax, bumped versions, and added a regression guard to ensure PromptLibrary templates stay on the supported interpolation format.
+
 ## Full inventory coverage
 
 All prompt surfaces below were reviewed in this audit.
@@ -136,6 +142,9 @@ Several prompts still ask for JSON in prose. The next highest-ROI follow-up is t
 
 ### E. Verification surfaced a real prompt wiring bug
 The second audit slice found a production bug rather than a style issue: `chat.assistant` was registered with `{{userPrompt}}`, but `PromptLibrary.render()` only interpolates `${...}` placeholders. The audit fixed that bug and added a guardrail test so it cannot regress silently.
+
+### F. The same wiring bug class existed in multiple PromptLibrary templates
+The third slice confirmed the placeholder mismatch was systemic, not isolated: `audio.voice-to-visual` and `aesthetic.constraints` used the same unsupported `{{...}}` syntax. Those were fixed and covered by an audit-level regression test.
 
 ## Follow-up backlog after this pass
 

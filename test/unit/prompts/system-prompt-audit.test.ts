@@ -77,4 +77,13 @@ describe('system prompt audit guardrails', () => {
       expect(prompt?.systemPrompt).toContain('evidence-backed');
     }
   });
+
+  it('prompt-library templates use the renderer-supported ${var} interpolation style', () => {
+    const promptsWithTemplates = PromptLibrary.list().filter((prompt) => prompt.userPromptTemplate);
+
+    for (const prompt of promptsWithTemplates) {
+      expect(prompt.userPromptTemplate).not.toContain('{{');
+      expect(prompt.userPromptTemplate).not.toContain('}}');
+    }
+  });
 });

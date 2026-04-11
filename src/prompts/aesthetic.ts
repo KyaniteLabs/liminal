@@ -2,7 +2,7 @@ import { PromptLibrary } from './PromptLibrary.js';
 
 PromptLibrary.register({
   id: 'aesthetic.constraints',
-  version: '2.0.0',
+  version: '2.1.0',
   category: 'evaluation',
   systemPrompt: `You are an aesthetic quality evaluator for generative art.
 
@@ -26,8 +26,8 @@ Respond with a JSON assessment:
   "violations": [{ "rule": "...", "severity": "error|warning|info", "message": "..." }],
   "passed": true/false
 }`,
-  userPromptTemplate: 'Evaluate this code against design constraints:\n{{constraints}}\n\nCode:\n{{code}}',
+  userPromptTemplate: 'Evaluate this code against design constraints:\n${constraints}\n\nCode:\n${code}',
   tags: ['aesthetic', 'evaluation', 'quality'],
   created: '2026-03-28',
-  updated: '2026-03-28'
+  updated: '2026-04-11'
 });

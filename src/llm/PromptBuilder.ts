@@ -108,19 +108,24 @@ export class PromptBuilder {
     const system = [
       ctx.soul || 'You are a creative coding assistant.',
       '',
-      'RULES:',
+      '<rules>',
       '1. ' + (ctx.rules || 'Output valid code only.'),
-      '2. No explanations outside code comments.',
-      '3. Include all necessary imports/setup.',
+      '2. Output code only unless the caller explicitly asks for explanation.',
+      '3. Include necessary imports and setup.',
+      '</rules>',
       '',
-      ctx.domainDocs ? `DOMAIN KNOWLEDGE (${ctx.domain}):\n${ctx.domainDocs}` : '',
+      ctx.domainDocs ? `<domain_knowledge name="${ctx.domain}">\n${ctx.domainDocs}\n</domain_knowledge>` : '',
     ].filter(Boolean).join('\n');
 
     const user = [
-      'REQUEST:',
+      '<request>',
       ctx.userRequest,
+      '</request>',
       '',
-      'OUTPUT: Valid ' + ctx.domain + ' code.',
+      '<instruction>',
+      'Generate valid ' + ctx.domain + ' code.',
+      'Return code only.',
+      '</instruction>',
     ].join('\n');
 
     return { system, user };
@@ -136,20 +141,27 @@ export class PromptBuilder {
     const system = [
       'You generate code.',
       '',
-      'RULES:',
+      '<rules>',
       '- Output ONLY code',
       '- No explanations',
       '- Valid ' + ctx.domain + ' code',
+      '</rules>',
       '',
-      ctx.domainDocs ? `ABOUT ${ctx.domain.toUpperCase()}:\n${this.summarizeDocs(ctx.domainDocs, 500)}` : '',
+      ctx.domainDocs ? `<domain_summary name="${ctx.domain}">\n${this.summarizeDocs(ctx.domainDocs, 500)}\n</domain_summary>` : '',
     ].filter(Boolean).join('\n');
 
     const user = [
-      'EXAMPLE:',
+      '<example>',
       example,
+      '</example>',
       '',
-      'NOW GENERATE:',
+      '<request>',
       ctx.userRequest,
+      '</request>',
+      '',
+      '<instruction>',
+      'Return executable code only.',
+      '</instruction>',
     ].join('\n');
 
     return { system, user };
@@ -161,11 +173,10 @@ export class PromptBuilder {
   private buildTinyPrompt(ctx: PromptContext): BuiltPrompt {
     // No system prompt for tiny models - combine everything
     const combined = [
-      `Generate ${ctx.domain} code for:`,
-      '',
+      `<task domain="${ctx.domain}">`,
       ctx.userRequest,
-      '',
-      'RULES: code only, no explanations.',
+      '</task>',
+      '<rules>code only; no explanations</rules>',
     ].join('\n');
 
     return {

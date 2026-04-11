@@ -102,6 +102,12 @@ Each surface was scored informally on:
 **Issues found:** both templates used `{{var}}` placeholders even though `PromptLibrary.render()` only interpolates `${var}`.
 **Action:** fixed the template syntax, bumped versions, and added a regression guard to ensure PromptLibrary templates stay on the supported interpolation format.
 
+### 10) `src/llm/PromptBuilder.ts` and `src/llm/LLMClient.ts`
+**Surface(s):** medium/local/tiny tier prompt builders and the small-model `generateP5Sketch()` fallback
+**Why medium/high leverage:** these are the non-PromptLibrary fallback paths used when model capability is limited.
+**Issues found:** prompt structure was less consistent than the audited primary prompt surfaces and used looser ad-hoc section formatting.
+**Action:** standardized those fallback prompts around explicit tags and a tighter code-only contract so lower-capability paths follow the same structured guidance pattern as the main prompt library.
+
 ## Full inventory coverage
 
 All prompt surfaces below were reviewed in this audit.
@@ -145,6 +151,9 @@ The second audit slice found a production bug rather than a style issue: `chat.a
 
 ### F. The same wiring bug class existed in multiple PromptLibrary templates
 The third slice confirmed the placeholder mismatch was systemic, not isolated: `audio.voice-to-visual` and `aesthetic.constraints` used the same unsupported `{{...}}` syntax. Those were fixed and covered by an audit-level regression test.
+
+### G. The fallback path now matches the primary prompt strategy more closely
+After the first three slices, the remaining quality gap was not a direct bug but an architectural inconsistency: fallback prompts in `PromptBuilder` and `LLMClient` were less structured than the main audited prompt surfaces. The fourth slice aligned them with the same explicit-tag, code-only style for better stability across model tiers.
 
 ## Follow-up backlog after this pass
 

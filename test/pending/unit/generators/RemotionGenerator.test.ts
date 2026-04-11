@@ -12,7 +12,11 @@ vi.mock('../../../src/llm/LLMClient.js', () => {
   });
   class MockLLMClient {
     generate = generate;
+<<<<<<< Updated upstream
     generateWithToolLoop = generateWithToolLoop;
+=======
+    generateWithToolLoop = vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true });
+>>>>>>> Stashed changes
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);

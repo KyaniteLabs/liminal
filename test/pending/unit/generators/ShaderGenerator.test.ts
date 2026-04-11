@@ -11,9 +11,13 @@ const { mockIsConfigured, mockGenerate, mockGetConfig, LLMClientMock } = vi.hois
 
   const LLMClientMock = vi.fn(function(this: any) {
     this.generate = mockGenerate;
+<<<<<<< Updated upstream
     this.generateWithToolLoop = vi.fn().mockImplementation(() =>
   mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
 );
+=======
+    this.generateWithToolLoop = vi.fn().mockResolvedValue({ content: 'mock', toolCalls: [], success: true });
+>>>>>>> Stashed changes
     this.getConfig = mockGetConfig;
   });
   (LLMClientMock as any).isConfigured = mockIsConfigured;

@@ -9,6 +9,8 @@ export default defineConfig({
       'dist/**',
       'gui/node_modules/**',
       'artifacts/**',
+      // Tests for unimplemented modules — move back when source is built
+      '**/test/pending/**',
       // ━━━ Worktree decontamination ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       // .claude/worktrees/ — agents' worktrees inside .claude
       '**/.claude/worktrees/**',

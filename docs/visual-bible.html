@@ -745,13 +745,13 @@
                 <tbody>
                     <tr>
                         <td><code>latest</code></td>
-                        <td>audit(prompts): fix PromptLibrary interpolation bugs in audio/aesthetic templates and add template-syntax guardrails</td>
-                        <td>Repairs broken `${...}` rendering paths that had been registered with unsupported `{{...}}` placeholders</td>
+                        <td>audit(prompts): align PromptBuilder and small-model fallback prompts with the structured audit style</td>
+                        <td>Makes medium/local/tiny prompt paths and the simplified p5 fallback use explicit sections and a cleaner code-only contract</td>
                     </tr>
                     <tr>
-                        <td><code>e0bbab7</code></td>
-                        <td>audit(prompts): structured chat/evaluation follow-up, collaboration critic tightening, and chat template bug fix</td>
-                        <td>Adds tagged prompt context, replaces step-by-step critic wording with evidence-backed guidance, and fixes `chat.assistant` interpolation</td>
+                        <td><code>91016e8</code></td>
+                        <td>audit(prompts): fix PromptLibrary interpolation bugs in audio/aesthetic templates and add template-syntax guardrails</td>
+                        <td>Repairs broken `${...}` rendering paths that had been registered with unsupported `{{...}}` placeholders</td>
                     </tr>
                     <tr>
                         <td><code>bb67f67</code></td>
@@ -786,7 +786,7 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>🧠 Review prompt-audit PR</strong> - draft PR <code>#140</code> now includes prompt-structure cleanup plus PromptLibrary interpolation bug fixes</li>
+                <li><strong>🧠 Review prompt-audit PR</strong> - draft PR <code>#140</code> now includes core prompts, PromptLibrary fixes, and the fallback-path alignment pass</li>
                 <li><strong>📏 Add prompt eval coverage</strong> - extend prompt-lint beyond high-ROI surfaces into the full PromptLibrary</li>
                 <li><strong>🔎 Review preserved recovery branches</strong> - evaluator fix, harness readiness tests, and TierBasedGenerator/Hydra coverage remain next</li>
                 <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>

@@ -401,6 +401,7 @@ Failures:   0 critical
 - The highest-ROI fixes removed contradictory code-format instructions, corrected Three.js module guidance, and compressed the harness self-improvement system prompt while preserving its tool contract.
 - A follow-up slice structured chat/evaluation prompts with explicit tags, removed step-by-step wording from collaboration critics, and fixed a real `chat.assistant` interpolation bug.
 - A third slice fixed the same PromptLibrary interpolation bug class in `audio.voice-to-visual` and `aesthetic.constraints`.
+- A fourth slice aligned `PromptBuilder` and the small-model p5 fallback with the same structured prompt style used by the audited primary prompt surfaces.
 
 **Multi-Provider Support:**
 - OpenAI

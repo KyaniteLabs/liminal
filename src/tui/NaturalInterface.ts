@@ -166,6 +166,15 @@ export class NaturalInterface {
       case 'preview':
         return this.handlePreview(args[0] || '');
 
+      case 'play':
+        return this.handlePlay(args[0] || '');
+
+      case 'stop':
+        return this.handleStop();
+
+      case 'browser':
+        return this.handleBrowser(args[0] || '');
+
       case 'help':
         return this.handleHelp();
 
@@ -368,6 +377,48 @@ export class NaturalInterface {
     };
   }
 
+  private async handlePlay(filePath: string): Promise<NaturalInputResult> {
+    if (!filePath) {
+      return { type: 'command', response: 'Please specify an audio file. Usage: play <audio-file>', shouldContinue: true };
+    }
+
+    const { audioPlayer } = await import('./preview/AudioPlayer.js');
+    const result = await audioPlayer.play(filePath);
+    if (!result.success) {
+      return { type: 'command', response: `Error: ${result.error}`, shouldContinue: true };
+    }
+
+    return {
+      type: 'command',
+      response: `Playing ${audioPlayer.getAudioInfo(filePath).format} audio...`,
+      shouldContinue: true,
+    };
+  }
+
+  private async handleStop(): Promise<NaturalInputResult> {
+    const { audioPlayer } = await import('./preview/AudioPlayer.js');
+    if (!audioPlayer.isPlaying()) {
+      return { type: 'command', response: 'No audio playing', shouldContinue: true };
+    }
+    audioPlayer.stop();
+    return { type: 'command', response: '⏹️ Audio stopped', shouldContinue: true };
+  }
+
+  private async handleBrowser(filePath: string): Promise<NaturalInputResult> {
+    const { browserLauncher } = await import('./preview/BrowserLauncher.js');
+    if (filePath) {
+      const url = await browserLauncher.previewFile(filePath);
+      return { type: 'command', response: `🌐 Opened: ${url}`, shouldContinue: true };
+    }
+
+    const url = await browserLauncher.reopenLast();
+    if (!url) {
+      return { type: 'command', response: 'No previous preview. Use /preview <file> first.', shouldContinue: true };
+    }
+
+    return { type: 'command', response: `🌐 Reopened: ${url}`, shouldContinue: true };
+  }
+
   private handleHelp(): NaturalInputResult {
     const response = [
       'I\'m Liminal, your creative coding partner.',
@@ -383,11 +434,14 @@ export class NaturalInterface {
       '  \u2022 run <id> - Execute a task',
       '  \u2022 provider [list|<name>|<url> <model>] - Switch LLM provider',
       '  \u2022 preview <file> - Preview a file',
+      '  \u2022 play <audio-file> - Play audio file',
+      '  \u2022 stop - Stop audio playback',
+      '  \u2022 browser [file] - Open or reopen browser preview',
       '  \u2022 test   - Run diagnostic tests',
       '  \u2022 clear  - Clear screen',
       '  \u2022 exit   - Quit',
       '',
-      'Note: this command surface does not support /confirm, /cancel, /play, or /browser.',
+      'Note: this command surface does not support /confirm or /cancel.',
     ].join('\n');
 
     return { type: 'command', response, shouldContinue: true };

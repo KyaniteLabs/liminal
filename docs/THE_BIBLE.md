@@ -588,7 +588,7 @@ Failures:   0 critical
 - Agent approval enforcement: tasks default to `approved: false`, agents reject unapproved tasks
 - Pending action review: `/confirm <id>` and `/cancel <id>` implemented
 - Autonomous success claims now require a successful verification step (`runBuild`, `runTests`, or `typeCheck`) before mutation tasks can finish cleanly
-- `NaturalInterface` now supports explicit `/agent <description>` while keeping pending-action commands on the separate command palette / bridge surfaces
+- `NaturalInterface` now supports explicit `/agent <description>` plus direct preview/audio/browser commands while keeping pending-action commands on the separate command palette / bridge surfaces
 - CWD-based prompt loading removed from PromptBuilder
 - Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
 - Preview/audio path hardening added (`previewSafety.ts`)

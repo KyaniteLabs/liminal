@@ -9,6 +9,11 @@ const {
   mockFormatError,
   mockMetaHarnessGetStatus,
   mockBrowserLauncherPreview,
+  mockBrowserLauncherReopenLast,
+  mockAudioPlay,
+  mockAudioIsPlaying,
+  mockAudioStop,
+  mockAudioInfo,
   mockOnStatus,
   mockOnLog,
 } = vi.hoisted(() => ({
@@ -27,6 +32,11 @@ const {
     memory: {},
   })),
   mockBrowserLauncherPreview: vi.fn(async (filePath: string) => `http://localhost:3000/${filePath}`),
+  mockBrowserLauncherReopenLast: vi.fn(async () => 'http://localhost:3000/last.html'),
+  mockAudioPlay: vi.fn(async () => ({ success: true })),
+  mockAudioIsPlaying: vi.fn(() => false),
+  mockAudioStop: vi.fn(),
+  mockAudioInfo: vi.fn((filePath: string) => ({ name: filePath, format: 'MP3' })),
   mockOnStatus: vi.fn(),
   mockOnLog: vi.fn(),
 }));
@@ -56,6 +66,16 @@ vi.mock('../../../src/harness/index.js', () => ({
 vi.mock('../../../src/tui/preview/BrowserLauncher.js', () => ({
   browserLauncher: {
     previewFile: mockBrowserLauncherPreview,
+    reopenLast: mockBrowserLauncherReopenLast,
+  },
+}));
+
+vi.mock('../../../src/tui/preview/AudioPlayer.js', () => ({
+  audioPlayer: {
+    play: mockAudioPlay,
+    isPlaying: mockAudioIsPlaying,
+    stop: mockAudioStop,
+    getAudioInfo: mockAudioInfo,
   },
 }));
 
@@ -251,8 +271,34 @@ describe('NaturalInterface', () => {
       const result = await iface.processInput('/help');
 
       expect(result.response).toContain('status - Show harness status');
-      expect(result.response).toContain('Note: this command surface does not support /confirm, /cancel, /play, or /browser.');
+      expect(result.response).toContain('Note: this command surface does not support /confirm or /cancel.');
       expect(result.response).toContain('preview <file> - Preview a file');
+      expect(result.response).toContain('play <audio-file>');
+      expect(result.response).toContain('browser');
+    });
+  });
+
+  describe('preview/audio/browser commands', () => {
+    it('routes /play to audio player', async () => {
+      const { iface } = createInterface();
+      const result = await iface.processInput('/play /tmp/song.mp3');
+      expect(mockAudioPlay).toHaveBeenCalledWith('/tmp/song.mp3');
+      expect(result.response).toContain('Playing MP3 audio');
+    });
+
+    it('routes /stop to audio player stop', async () => {
+      mockAudioIsPlaying.mockReturnValue(true);
+      const { iface } = createInterface();
+      const result = await iface.processInput('/stop');
+      expect(mockAudioStop).toHaveBeenCalled();
+      expect(result.response).toContain('Audio stopped');
+    });
+
+    it('routes /browser to reopen last preview', async () => {
+      const { iface } = createInterface();
+      const result = await iface.processInput('/browser');
+      expect(mockBrowserLauncherReopenLast).toHaveBeenCalled();
+      expect(result.response).toContain('Reopened');
     });
   });
 

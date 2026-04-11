@@ -21,3 +21,33 @@ Auto-generated: git monitor log. Updated every session start.
 
  No lost work. Worktree cleanup: monitoring continues.
  C cycle.
+
+## Scan - 2026-04-10 17:09
+
+Found 5 violation(s):
+
+- **MEDIUM** — Worktree `audio-test-coverage` idle for 20h
+- **MEDIUM** — Worktree `liminal/sess-1775788680361-byvz3n` idle for 19h
+- **MEDIUM** — Worktree `liminal/sess-1775765798875-yc2157` idle for 27h
+- **MEDIUM** — Worktree `generator-retry-fix` idle for 7h
+- **LOW** — 2592 total branches - consider cleanup if many are merged
+
+## Scan - 2026-04-10 17:10
+
+Found 5 violation(s):
+
+- **MEDIUM** — Worktree `audio-test-coverage` idle for 20h
+- **MEDIUM** — Worktree `liminal/sess-1775788680361-byvz3n` idle for 19h
+- **MEDIUM** — Worktree `liminal/sess-1775765798875-yc2157` idle for 27h
+- **MEDIUM** — Worktree `generator-retry-fix` idle for 7h
+- **LOW** — 2592 total branches - consider cleanup if many are merged
+
+## Scan - 2026-04-10 17:10
+
+Found 5 violation(s):
+
+- **MEDIUM** — Worktree `audio-test-coverage` idle for 20h
+- **MEDIUM** — Worktree `liminal/sess-1775788680361-byvz3n` idle for 19h
+- **MEDIUM** — Worktree `liminal/sess-1775765798875-yc2157` idle for 27h
+- **MEDIUM** — Worktree `generator-retry-fix` idle for 7h
+- **LOW** — 2592 total branches - consider cleanup if many are merged

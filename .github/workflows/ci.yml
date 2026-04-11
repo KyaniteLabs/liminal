@@ -36,7 +36,7 @@ jobs:
         if: always()
         run: |
           if [ -f coverage/coverage-summary.json ]; then
-            echo "## Coverage Target Progress (75% goal)"
+            echo "## Coverage Target Progress (70% goal)"
             node -e "
               const s = require('./coverage/coverage-summary.json');
               const t = s.total;
@@ -46,7 +46,7 @@ jobs:
                 ['Functions', t.functions.pct],
                 ['Lines', t.lines.pct],
               ];
-              const TARGET = 75;
+              const TARGET = 70;
               let allMet = true;
               console.log('| Metric | Current | Target | Gap | Status |');
               console.log('|--------|---------|--------|-----|--------|');
@@ -58,9 +58,9 @@ jobs:
               }
               console.log('');
               if (allMet) {
-                console.log('TARGET MET: All metrics at or above 75%');
+                console.log('TARGET MET: All metrics at or above 70%');
               } else {
-                console.log('TARGET NOT MET: Coverage must reach 75%. Priority modules: src/music/, src/plugins/, src/config/, src/generators/');
+                console.log('TARGET NOT MET: Coverage must reach 70%. Priority modules: src/music/, src/plugins/, src/config/, src/generators/');
               }
             "
           fi

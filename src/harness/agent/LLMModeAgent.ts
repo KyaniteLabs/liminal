@@ -493,8 +493,13 @@ When the task is complete and build passes, respond with tool "complete".`;
           case 'readFile':
             return readFileTool.execute(params);
           
-          case 'writeFile':
+          case 'writeFile': {
+            const backupResult = await createBackupTool.execute({ path: params.path });
+            if (backupResult.success && backupResult.data?.backupPath) {
+              this.currentSession?.backups.push(backupResult.data.backupPath as string);
+            }
             return writeFileTool.execute(params);
+          }
           
           case 'applyEdit': {
             // Create backup first

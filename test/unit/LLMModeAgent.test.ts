@@ -5,8 +5,10 @@ const {
   mockComplete,
   mockLLM,
   mockReadFile,
+  mockWriteFile,
   mockApplyEdit,
   mockRunBuild,
+  mockTypeCheck,
   mockRestoreBackup,
   mockCreateBackup,
 } = vi.hoisted(() => {
@@ -19,8 +21,10 @@ const {
     mockComplete: complete,
     mockLLM: llm,
     mockReadFile: { execute: vi.fn(async () => ({ success: true, data: { content: 'const x = 1;' } })) },
+    mockWriteFile: { execute: vi.fn(async () => ({ success: true })) },
     mockApplyEdit: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
     mockRunBuild: { execute: vi.fn(async () => ({ success: true })) },
+    mockTypeCheck: { execute: vi.fn(async () => ({ success: true })) },
     mockRestoreBackup: { execute: vi.fn(async () => ({ success: true })) },
     mockCreateBackup: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
   };
@@ -40,10 +44,11 @@ vi.mock('../../src/harness/tools/RateLimiter.js', () => ({
 }));
 vi.mock('../../src/harness/tools/index.js', () => ({
   readFileTool: mockReadFile,
-  writeFileTool: { execute: vi.fn(async () => ({ success: true })) },
+  writeFileTool: mockWriteFile,
   applyEditTool: mockApplyEdit,
   runBuildTool: mockRunBuild,
   runTestsTool: { execute: vi.fn(async () => ({ success: true })) },
+  typeCheckTool: mockTypeCheck,
   restoreBackupTool: mockRestoreBackup,
   createBackupTool: mockCreateBackup,
 }));
@@ -67,9 +72,12 @@ import { Status } from '../../src/types/status.js';
 describe('LLMModeAgent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockComplete.mockReset();
     mockReadFile.execute.mockResolvedValue({ success: true, data: { content: 'const x = 1;' } });
+    mockWriteFile.execute.mockResolvedValue({ success: true });
     mockApplyEdit.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
     mockRunBuild.execute.mockResolvedValue({ success: true });
+    mockTypeCheck.execute.mockResolvedValue({ success: true });
     mockRestoreBackup.execute.mockResolvedValue({ success: true });
     mockCreateBackup.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
   });
@@ -210,6 +218,30 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
     expect(session.verificationPassed).toBe(true);
     expect(mockRunBuild.execute).toHaveBeenCalledTimes(1);
+    expect(session.messages.some(
+      (message) => message.toolResult?.error?.includes('Completion blocked')
+    )).toBe(true);
+  });
+
+  it('treats writeFile as a mutation requiring verification before completion', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: '{"tool":"writeFile","params":{"path":"src/foo.ts","content":"const y = 2;"},"thought":"rewrite file"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done too early"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"typeCheck","params":{},"thought":"verify types"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done after verification"}' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-write-verify',
+      title: 'Rewrite with verification',
+      description: 'Rewrite a file then verify',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(session.status).toBe(Status.SUCCESS);
+    expect(session.verificationPassed).toBe(true);
+    expect(mockCreateBackup.execute).toHaveBeenCalledWith({ path: 'src/foo.ts' });
     expect(session.messages.some(
       (message) => message.toolResult?.error?.includes('Completion blocked')
     )).toBe(true);

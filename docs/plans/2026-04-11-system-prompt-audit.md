@@ -108,6 +108,12 @@ Each surface was scored informally on:
 **Issues found:** prompt structure was less consistent than the audited primary prompt surfaces and used looser ad-hoc section formatting.
 **Action:** standardized those fallback prompts around explicit tags and a tighter code-only contract so lower-capability paths follow the same structured guidance pattern as the main prompt library.
 
+### 11) `src/prompts/hydra.ts`
+**Surface(s):** `hydra.generate`
+**Why medium leverage:** large domain prompt with dense API guidance.
+**Issues found:** prompt text treated `.speed()` like a chain method and listed `color()` as a source, which does not match current Hydra docs.
+**Action:** corrected the API guidance, added a `GLOBAL SETTINGS` section for `speed`/`bpm`, and added a regression guard test.
+
 ## Full inventory coverage
 
 All prompt surfaces below were reviewed in this audit.
@@ -183,6 +189,9 @@ The third slice confirmed the placeholder mismatch was systemic, not isolated: `
 
 ### G. The fallback path now matches the primary prompt strategy more closely
 After the first three slices, the remaining quality gap was not a direct bug but an architectural inconsistency: fallback prompts in `PromptBuilder` and `LLMClient` were less structured than the main audited prompt surfaces. The fourth slice aligned them with the same explicit-tag, code-only style for better stability across model tiers.
+
+### H. One remaining domain prompt still had an accuracy bug
+The stricter final sweep found one more concrete issue in `hydra.generate`: the prompt described `.speed()` as though it were a chain method and misclassified `color()` as a source function. That was fixed with a narrow, source-backed patch instead of a broad stylistic rewrite.
 
 ## Follow-up backlog after this pass
 

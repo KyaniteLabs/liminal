@@ -86,4 +86,13 @@ describe('system prompt audit guardrails', () => {
       expect(prompt.userPromptTemplate).not.toContain('}}');
     }
   });
+
+  it('hydra.generate does not describe .speed() as a chain method or color() as a source', () => {
+    const hydraPrompt = PromptLibrary.get('hydra.generate');
+    expect(hydraPrompt).toBeDefined();
+    expect(hydraPrompt?.systemPrompt).toContain('GLOBAL SETTINGS:');
+    expect(hydraPrompt?.systemPrompt).not.toContain('Use .speed(), .scale(), .scrollX/Y() for animation');
+    expect(hydraPrompt?.systemPrompt).not.toContain('Use timing: .speed(), .scrollX(), .scrollY() for motion');
+    expect(hydraPrompt?.systemPrompt).not.toContain('Use sources: osc(), src(), noise(), shape(), color(), gradient(), solid()');
+  });
 });

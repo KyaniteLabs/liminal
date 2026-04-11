@@ -21,7 +21,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm lint
       - run: pnpm build
-      - run: pnpm test:coverage
+      - run: pnpm vitest run --coverage --pool=forks
       - name: Test quality check
         run: pnpm test:quality
       - name: Check coverage gaps

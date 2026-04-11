@@ -36,7 +36,6 @@ export function resolveBridgeProviderConfig(): BridgeProviderConfig {
     apiKey: config.apiKey,
   };
 }
-
 export function applyBridgeProviderEnv(
   env: NodeJS.ProcessEnv,
   config: BridgeProviderConfig,

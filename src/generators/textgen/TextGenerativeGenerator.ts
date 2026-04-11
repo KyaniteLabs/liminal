@@ -97,6 +97,10 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
    */
   async generate(prompt: string, options?: TextGenOptions): Promise<string> {
     const raw = await super.generate(prompt, options);
+    const validation = this.validateOutput(raw);
+    if (!validation.valid) {
+      throw new Error(validation.error);
+    }
     return this.formatOutput(raw, options);
   }
 

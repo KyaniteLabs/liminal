@@ -33,5 +33,17 @@ describe('ContextCompactor', () => {
     const stats = compactor.getStats(original, compacted);
     expect(stats.reduction).toBe(5);
     expect(stats.reductionPercent).toBe(50);
+    expect(stats.originalEstimatedTokens).toBeGreaterThan(0);
+    expect(stats.compactedEstimatedTokens).toBeGreaterThan(0);
+  });
+
+  it('triggers compaction at 65 percent of context window when llmClient is provided', () => {
+    const llmClient = {
+      getConfig: () => ({ model: 'qwen2.5-7b' }),
+    } as any;
+    const compactor = new ContextCompactor({ maxMessages: 999, llmClient, tokenThresholdRatio: 0.65 });
+    const chars = 'x'.repeat(90000); // ~22500 tokens, above 65% of 32768
+    const msgs = [{ role: 'user' as const, content: chars }];
+    expect(compactor.needsCompaction(msgs)).toBe(true);
   });
 });

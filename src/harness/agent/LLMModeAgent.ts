@@ -87,10 +87,16 @@ export class LLMModeAgent {
   private sessions: Map<string, LLMSession> = new Map();
   private currentSession?: LLMSession;
   private analyses: import('../ThinkingAnalyzer.js').ThinkingAnalysis[] = [];
-  private compactor = new ContextCompactor({ maxMessages: 40, recentThreshold: 14 });
+  private compactor: ContextCompactor;
 
   constructor(llmClient: LLMClient) {
     this.llmClient = llmClient;
+    this.compactor = new ContextCompactor({
+      maxMessages: 40,
+      recentThreshold: 14,
+      llmClient,
+      tokenThresholdRatio: 0.65,
+    });
   }
 
   /**

@@ -54,6 +54,9 @@ func (c *Client) SubmitInput(ctx context.Context, sessionID, mode, text, clientI
 	}
 	defer resp.Body.Close()
 	_, _ = io.Copy(io.Discard, resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("submit input returned status %d", resp.StatusCode)
+	}
 	return nil
 }
 

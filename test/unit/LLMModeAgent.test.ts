@@ -11,6 +11,9 @@ const {
   mockGitStatus,
   mockRestoreBackup,
   mockCreateBackup,
+  mockSaveRunState,
+  mockReadRunState,
+  mockClearRunState,
 } = vi.hoisted(() => {
   const complete = vi.fn();
   const llm = {
@@ -27,6 +30,9 @@ const {
     mockGitStatus: { execute: vi.fn(async () => ({ success: true, data: { branch: 'fix/tui', short: '' } })) },
     mockRestoreBackup: { execute: vi.fn(async () => ({ success: true })) },
     mockCreateBackup: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
+    mockSaveRunState: vi.fn(async () => {}),
+    mockReadRunState: vi.fn(async () => null),
+    mockClearRunState: vi.fn(async () => {}),
   };
 });
 
@@ -66,6 +72,22 @@ vi.mock('../../src/harness/ThinkingAnalyzer.js', () => ({
   thinkingAnalyzer: { analyze: vi.fn(() => ({ learning: 'test', suggestedFix: null })) },
 }));
 
+vi.mock('../../src/harness/RunStateStore.js', () => ({
+  saveRunState: mockSaveRunState,
+  readRunState: mockReadRunState,
+  clearRunState: mockClearRunState,
+  formatResumeContext: vi.fn(() => 'resume context'),
+  SemanticBoundary: {
+    RUN_CREATED: 'run_created',
+    PLAN_COMMITTED: 'plan_committed',
+    MUTATION_APPLIED: 'mutation_applied',
+    VERIFICATION_STARTED: 'verification_started',
+    VERIFICATION_FINISHED: 'verification_finished',
+    INTERRUPTED: 'interrupted',
+    COMPLETED: 'completed',
+    FAILED: 'failed',
+  },
+}));
 import { LLMModeAgent, createLLMModeAgent } from '../../src/harness/agent/LLMModeAgent.js';
 import { rateLimiter } from '../../src/harness/tools/RateLimiter.js';
 import { Status } from '../../src/types/status.js';
@@ -80,6 +102,9 @@ describe('LLMModeAgent', () => {
     mockGitStatus.execute.mockResolvedValue({ success: true, data: { branch: 'fix/tui', short: '' } });
     mockRestoreBackup.execute.mockResolvedValue({ success: true });
     mockCreateBackup.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
+    mockSaveRunState.mockResolvedValue(undefined);
+    mockReadRunState.mockResolvedValue(null);
+    mockClearRunState.mockResolvedValue(undefined);
   });
 
   // ── Factory ────────────────────────────────────────────────────────
@@ -195,6 +220,28 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.FAILED);
     // With null plan, the loop breaks on first iteration (stepCount = 1)
     expect(session.stepCount).toBeGreaterThanOrEqual(1);
+  });
+
+
+  it('suspends and saves run state when max steps reached after a mutation', async () => {
+    mockComplete.mockResolvedValue({
+      text: '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}',
+    });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-suspend', title: 'Suspend', description: 'desc', maxSteps: 1, approved: true,
+    });
+
+    expect(session.status).toBe(Status.SUSPENDED);
+    expect(mockSaveRunState).toHaveBeenCalledTimes(1);
+    expect(mockSaveRunState.mock.calls[0][0]).toMatchObject({
+      taskId: 't-suspend',
+      status: Status.SUSPENDED,
+      phase: 'mutation_applied',
+      hadMutations: true,
+      mutationApplied: true,
+    });
   });
 
   it('executeTask calls llmClient.complete with conversation context', async () => {

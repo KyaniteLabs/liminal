@@ -39,6 +39,14 @@ import {
   localCheckpointTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
+import {
+  saveRunState,
+  readRunState,
+  formatResumeContext,
+  clearRunState,
+  SemanticBoundary,
+  type RunState,
+} from '../RunStateStore.js';
 
 export interface LLMTask {
   id: string;
@@ -66,13 +74,19 @@ export interface AgentMessage {
 export interface LLMSession {
   task: LLMTask;
   messages: AgentMessage[];
-  status: Status.PENDING | Status.RUNNING | Status.SUCCESS | Status.FAILED | Status.ROLLED_BACK;
+  status: Status.PENDING | Status.RUNNING | Status.SUSPENDED | Status.SUCCESS | Status.FAILED | Status.ROLLED_BACK;
   startTime: string;
   endTime?: string;
   stepCount: number;
   backups: string[];
   /** File extensions of files modified in this session, used for language-aware verification */
   modifiedExtensions: Set<string>;
+  /** Files that were read during this session, for resume context */
+  exploredPaths: Set<string>;
+  /** Files that were mutated (applyEdit/writeFile) during this session */
+  mutatedFiles: Set<string>;
+  /** Last verification result (build/test) for resume context */
+  lastVerification?: import('../RunStateStore.js').VerificationState;
 }
 
 /**
@@ -121,10 +135,20 @@ export class LLMModeAgent {
       stepCount: 0,
       backups: [],
       modifiedExtensions: new Set(),
+      exploredPaths: new Set(),
+      mutatedFiles: new Set(),
     };
 
     this.sessions.set(task.id, session);
     this.currentSession = session;
+
+    // Resume detection: check for a suspended run
+    const existingRunState = await readRunState();
+    const isResume = existingRunState !== null && existingRunState.taskId === task.id;
+
+    if (isResume) {
+      Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
+    }
 
     Logger.debug('LLMModeAgent', `Starting autonomous task: ${task.title}`);
     Logger.debug('LLMModeAgent', `Budget: ${maxSteps} LLM calls`);
@@ -133,7 +157,7 @@ export class LLMModeAgent {
     eventBus.emit(EventTypes.PROCESS_START, 'LLMModeAgent', {
       process: 'agent-task',
       stage: 'planning',
-      metadata: { taskId: task.id, title: task.title, maxSteps },
+      metadata: { taskId: task.id, title: task.title, maxSteps, isResume },
     });
 
     // Initialize conversation with system prompt
@@ -142,15 +166,20 @@ export class LLMModeAgent {
       content: getSelfImprovePrompt(),
     });
 
+    // Build task prompt with optional resume context
+    const resumeSection = isResume && existingRunState
+      ? '\n' + formatResumeContext(existingRunState)
+      : '';
+
     // Add task description
     const taskPrompt = `## Current Task
 
 Task ID: ${task.id}
 Title: ${task.title}
 Description: ${task.description}
-${task.fileHint ? `Hint: Start by looking in ${task.fileHint}` : ''}
+${task.fileHint ? `Hint: Start by looking in ${task.fileHint}` : ''}${resumeSection}
 
-You are in LLM-driven mode. Plan your own steps. Start by reading the relevant file(s).
+You are in LLM-driven mode. Plan your own steps. ${isResume ? 'Continue from where the previous run left off.' : 'Start by reading the relevant file(s).'}
 
 Respond with a JSON object containing your tool call:
 {\n  "thought": "What you're doing and why",\n  "tool": "toolName",\n  "params": { ... },\n  "expectedResult": "What you expect"\n}
@@ -204,6 +233,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Check for completion
         if (toolCall.tool === 'complete') {
           Logger.debug('LLMModeAgent', 'Task completed by LLM');
+          await clearRunState();
           session.status = Status.SUCCESS;
           session.endTime = new Date().toISOString();
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
@@ -286,6 +316,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         session.backups.length === 0;
       if (tuiInspectionOnly) {
         Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
+        await clearRunState();
         session.status = Status.SUCCESS;
         session.endTime = new Date().toISOString();
 
@@ -324,6 +355,7 @@ When the task is complete and build passes, respond with tool "complete".`;
       } else if (session.backups.length === 0) {
         // Natural loop completion with no mutations - inspection-only success
         Logger.debug('LLMModeAgent', `Inspection complete after ${session.stepCount} steps, no mutations needed`);
+        await clearRunState();
         session.status = Status.SUCCESS;
         session.endTime = new Date().toISOString();
 
@@ -335,22 +367,56 @@ When the task is complete and build passes, respond with tool "complete".`;
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
       } else {
-        // Mutations were made but task didn't complete - this is a failure
-        Logger.error('LLMModeAgent', `Max steps (${maxSteps}) reached with incomplete changes`);
-        session.status = Status.FAILED;
+        // Mutations were made but task didn't complete - checkpoint and suspend for resume
+        Logger.warn('LLMModeAgent', `Max steps (${maxSteps}) reached with incomplete changes - suspending for resume`);
+
+        // Determine the semantic boundary phase based on what was accomplished
+        const phase = session.lastVerification
+          ? (session.lastVerification.passed
+            ? SemanticBoundary.VERIFICATION_FINISHED
+            : SemanticBoundary.VERIFICATION_STARTED)
+          : (session.mutatedFiles.size > 0
+            ? SemanticBoundary.MUTATION_APPLIED
+            : SemanticBoundary.INTERRUPTED);
+
+        // Save run state for potential resume with authoritative tracking data
+        const runState: RunState = {
+          runId: `run-${task.id}-${Date.now()}`,
+          taskId: task.id,
+          taskTitle: task.title,
+          taskDescription: task.description,
+          status: Status.SUSPENDED,
+          phase,
+          stepsCompleted: session.stepCount,
+          maxSteps,
+          continueUntilDone: false,
+          startedAt: session.startTime,
+          suspendedAt: new Date().toISOString(),
+          exploredPaths: Array.from(session.exploredPaths),
+          progressSummary: `Completed ${session.stepCount} steps. ${session.mutatedFiles.size} files mutated. Phase: ${phase}`,
+          hadMutations: session.mutatedFiles.size > 0,
+          mutationApplied: session.mutatedFiles.size > 0,
+          mutatedFiles: Array.from(session.mutatedFiles),
+          lastVerification: session.lastVerification,
+        };
+
+        try {
+          await saveRunState(runState);
+          Logger.info('LLMModeAgent', 'Run state saved for potential resume');
+        } catch (saveErr) {
+          Logger.error('LLMModeAgent', `Failed to save run state: ${saveErr}`);
+        }
+
+        session.status = Status.SUSPENDED;
         session.endTime = new Date().toISOString();
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: false,
-          reason: `Max steps (${maxSteps}) reached with incomplete changes`,
+          reason: `Suspended after ${session.stepCount} steps - run can be resumed`,
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
-        
-        // Rollback incomplete changes
-        await this.rollback(session);
-        session.status = Status.ROLLED_BACK;
       }
 
       return session;
@@ -595,12 +661,21 @@ When the task is complete and build passes, respond with tool "complete".`;
       tool === 'runBuild' ? 'buildRun' : 'testRun',
       async () => {
         switch (tool) {
-          case 'readFile':
+          case 'readFile': {
+            // Track explored path for resume context
+            if (params.path && typeof params.path === 'string') {
+              this.currentSession?.exploredPaths.add(params.path);
+            }
             return readFileTool.execute(params);
+          }
           
           case 'writeFile': {
             // Track file extension for language-aware verification
             this.trackModifiedExtension(params.path as string);
+            // Track mutated file for resume context
+            if (params.path && typeof params.path === 'string') {
+              this.currentSession?.mutatedFiles.add(params.path);
+            }
             return writeFileTool.execute(params);
           }
           
@@ -612,6 +687,10 @@ When the task is complete and build passes, respond with tool "complete".`;
             }
             // Track file extension for language-aware verification
             this.trackModifiedExtension(params.path as string);
+            // Track mutated file for resume context
+            if (params.path && typeof params.path === 'string') {
+              this.currentSession?.mutatedFiles.add(params.path);
+            }
             return applyEditTool.execute(params);
           }
           
@@ -625,11 +704,32 @@ When the task is complete and build passes, respond with tool "complete".`;
                 duration: 0
               };
             }
-            return runBuildTool.execute(params);
+            const buildResult = await runBuildTool.execute(params);
+            // Capture verification state for resume context
+            if (this.currentSession) {
+              this.currentSession.lastVerification = {
+                passed: buildResult.success,
+                type: 'build',
+                error: buildResult.error,
+                timestamp: new Date().toISOString(),
+              };
+            }
+            return buildResult;
           }
           
-          case 'runTests':
-            return runTestsTool.execute(params);
+          case 'runTests': {
+            const testResult = await runTestsTool.execute(params);
+            // Capture verification state for resume context
+            if (this.currentSession) {
+              this.currentSession.lastVerification = {
+                passed: testResult.success,
+                type: 'test',
+                error: testResult.error,
+                timestamp: new Date().toISOString(),
+              };
+            }
+            return testResult;
+          }
           
           case 'restoreBackup':
             return restoreBackupTool.execute(params);

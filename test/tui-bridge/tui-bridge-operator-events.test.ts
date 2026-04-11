@@ -24,6 +24,7 @@ async function readSSEEventsOverHttp(
   port: number,
   sessionId: string,
   expectedCount: number,
+  headers: Record<string, string> = {},
 ): Promise<Record<string, unknown>[]> {
   return await new Promise((resolve, reject) => {
     const events: Record<string, unknown>[] = [];
@@ -34,7 +35,7 @@ async function readSSEEventsOverHttp(
       port,
       path: `/api/tui/session/${sessionId}/events`,
       method: 'GET',
-      headers: { Accept: 'text/event-stream' },
+      headers: { Accept: 'text/event-stream', ...headers },
     });
 
     req.on('response', (res) => {
@@ -198,6 +199,52 @@ describe('TuiBridge operator events', () => {
         sessionId: session.sessionId,
         type: 'artifact.found',
         artifactLabel: 'Transcript',
+      });
+    } finally {
+      await server.stop();
+    }
+  }, 10000);
+
+  it('reconnects without replaying events older than Last-Event-ID', async () => {
+    const port = await getFreePort();
+    const server = new TuiBridgeServer(service, { host: '127.0.0.1', port });
+    await server.start();
+
+    try {
+      const createRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+      const session = await createRes.json() as { sessionId: string };
+
+      service.publishEvent(session.sessionId, {
+        type: 'tool.started',
+        toolName: 'readFile',
+        thought: 'first',
+        argsSummary: 'a.ts',
+        stepNum: 1,
+      });
+      service.publishEvent(session.sessionId, {
+        type: 'artifact.found',
+        artifactLabel: 'Transcript',
+        artifactPath: '.omx/logs/one.log',
+      });
+
+      const initial = await readSSEEventsOverHttp(port, session.sessionId, 2);
+      expect(initial).toHaveLength(2);
+
+      service.publishEvent(session.sessionId, {
+        type: 'verification.completed',
+        command: 'npm run build',
+        success: true,
+        outputTail: 'ok',
+        jobId: 'job-9',
+        duration: 1200,
+      });
+
+      const resumed = await readSSEEventsOverHttp(port, session.sessionId, 1, { 'Last-Event-ID': '2' });
+      expect(resumed).toHaveLength(1);
+      expect(resumed[0]).toMatchObject({
+        type: 'verification.completed',
+        command: 'npm run build',
+        jobId: 'job-9',
       });
     } finally {
       await server.stop();

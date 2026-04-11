@@ -164,6 +164,7 @@ func (m Model) renderFooter() string {
 	if m.FocusPane == FocusChat {
 		hints = []string{
 			ui.KeyStyle.Render("Enter") + ui.HintStyle.Render(":send"),
+			ui.KeyStyle.Render("Alt+Enter") + ui.HintStyle.Render(":newline"),
 			ui.KeyStyle.Render("Tab") + ui.HintStyle.Render(":operator"),
 			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),

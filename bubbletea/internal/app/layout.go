@@ -218,6 +218,7 @@ func (m Model) renderHelpDrawer(width int) string {
 	lines := []string{
 		ui.PanelTitleStyle.Render("Help / Shortcuts"),
 		helpRow("Enter", "send message"),
+		helpRow("Alt+Enter", "insert newline"),
 		helpRow("Tab", "focus operator column"),
 		helpRow("Ctrl+T", "toggle timeline"),
 		helpRow("Ctrl+A", "toggle artifacts"),

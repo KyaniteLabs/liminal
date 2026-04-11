@@ -198,3 +198,29 @@ func TestWindowResizeKeepsTextareaWidthInSync(t *testing.T) {
 		t.Fatalf("expected resized textarea width to shrink (initial=%d resized=%d)", initialWidth, resizedWidth)
 	}
 }
+
+func TestAltEnterAddsNewlineWithoutSubmitting(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.TextInput.SetValue("hello")
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyEnter, Alt: true})
+	m = updated.(Model)
+
+	if got := m.TextInput.Value(); !strings.Contains(got, "\n") {
+		t.Fatalf("expected alt+enter to insert newline, got %q", got)
+	}
+	if len(m.ChatBlocks) != 0 {
+		t.Fatalf("expected alt+enter not to submit chat, got %d chat blocks", len(m.ChatBlocks))
+	}
+}
+
+func TestFooterExplainsMultilineShortcut(t *testing.T) {
+	m := readyOperatorModel(t)
+
+	footer := m.renderFooter()
+	for _, want := range []string{"Enter:send", "Alt+Enter:newline"} {
+		if !strings.Contains(footer, want) {
+			t.Fatalf("expected footer to contain %q\n%s", want, footer)
+		}
+	}
+}

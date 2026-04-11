@@ -4,25 +4,24 @@ import type { ChildProcess } from 'child_process';
 // -----------------------------------------------------------------------
 // Mock child_process — hoisted above all imports by Vitest
 // -----------------------------------------------------------------------
-const _closeListeners: Array<(code: number | null) => void> = [];
-
-const mockFfmpegProcess = {
-  kill: vi.fn(),
-  stdout: {
-    on: vi.fn(() => mockFfmpegProcess.stdout),
-    removeListener: vi.fn(),
-  },
-  stderr: {
-    on: vi.fn(() => mockFfmpegProcess.stderr),
-    removeListener: vi.fn(),
-  },
-  on: vi.fn((event: string, cb: (...args: unknown[]) => void) => {
+const { mockFfmpegProcess, _closeListeners } = vi.hoisted(() => {
+  const closeListeners: Array<(code: number | null) => void> = [];
+  const proc: any = {
+    kill: vi.fn(),
+    stdout: { on: vi.fn(), removeListener: vi.fn() },
+    stderr: { on: vi.fn(), removeListener: vi.fn() },
+    on: vi.fn(),
+  };
+  proc.stdout.on = vi.fn(() => proc.stdout);
+  proc.stderr.on = vi.fn(() => proc.stderr);
+  proc.on = vi.fn((event: string, cb: (...args: unknown[]) => void) => {
     if (event === 'close' || event === 'error') {
-      _closeListeners.push(cb as (code: number | null) => void);
+      closeListeners.push(cb as (code: number | null) => void);
     }
-    return mockFfmpegProcess;
-  }),
-} as unknown as ChildProcess;
+    return proc;
+  });
+  return { mockFfmpegProcess: proc as ChildProcess, _closeListeners: closeListeners };
+});
 
 vi.mock('child_process', () => ({
   spawn: vi.fn(() => mockFfmpegProcess),

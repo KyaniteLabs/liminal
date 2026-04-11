@@ -52,6 +52,8 @@ export interface ApplyEditParams {
 export interface ApplyEditResult {
   replacements: number;
   backupPath?: string;
+  /** Hint for which verification tool to use based on file extension */
+  verificationHint?: string;
 }
 
 export interface RunBuildParams {

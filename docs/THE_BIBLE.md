@@ -576,6 +576,7 @@ Failures:   0 critical
 | NaturalInterface | `NaturalInterface.ts` | No-prefix command parsing |
 | IntentRouter | `IntentRouter.ts` | Routes natural language to commands |
 | Commands | `commands.ts` | /run, /status, /tasks, etc. |
+| TuiBridgeService | `tui-bridge/TuiBridgeService.ts` | Preserves requested generation domain when routing bridge-originated Ralph runs |
 
 **Features:**
 - Streaming output with think tag handling

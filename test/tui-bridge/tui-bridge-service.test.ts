@@ -1,7 +1,30 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
+
+const { mockRalphRun } = vi.hoisted(() => ({
+  mockRalphRun: vi.fn(async () => ({
+    code: 'generated output',
+    iterations: 1,
+    finalScore: 0.9,
+    duration: 100,
+    reason: 'ok',
+    model: 'test-model',
+  })),
+}));
+
+vi.mock('../../src/core/RalphLoop.js', () => ({
+  RalphLoop: {
+    run: mockRalphRun,
+  },
+}));
+
 import { TuiBridgeService } from '../../src/tui-bridge/TuiBridgeService.js';
+import { Domain } from '../../src/types/domains.js';
 
 describe('TuiBridgeService', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it('creates a session with default chat mode', () => {
     const service = new TuiBridgeService();
     const status = service.createSession();
@@ -74,5 +97,39 @@ describe('TuiBridgeService', () => {
 
     expect(service.getStatus(session.sessionId).pendingAction).toBeUndefined();
     expect(service.getEvents(session.sessionId).map(e => e.type)).toContain('action.cancelled');
+  });
+
+  it('routes three.js generation requests with three domain instead of p5', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const llm = { getConfig: () => ({ model: 'glm-5.1' }) } as any;
+
+    await service.submitInput(session.sessionId, {
+      mode: 'chat',
+      text: 'create a three.js particle scene',
+      clientIntent: 'chat',
+    }, llm);
+
+    expect(mockRalphRun).toHaveBeenCalledWith(
+      'create a three.js particle scene',
+      expect.objectContaining({ collabDomain: Domain.THREE }),
+    );
+  });
+
+  it('routes shader generation requests with shader domain instead of p5', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const llm = { getConfig: () => ({ model: 'glm-5.1' }) } as any;
+
+    await service.submitInput(session.sessionId, {
+      mode: 'chat',
+      text: 'generate a glsl shader with plasma noise',
+      clientIntent: 'chat',
+    }, llm);
+
+    expect(mockRalphRun).toHaveBeenCalledWith(
+      'generate a glsl shader with plasma noise',
+      expect.objectContaining({ collabDomain: Domain.SHADER }),
+    );
   });
 });

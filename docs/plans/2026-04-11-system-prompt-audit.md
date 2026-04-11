@@ -114,6 +114,12 @@ Each surface was scored informally on:
 **Issues found:** prompt text treated `.speed()` like a chain method and listed `color()` as a source, which does not match current Hydra docs.
 **Action:** corrected the API guidance, added a `GLOBAL SETTINGS` section for `speed`/`bpm`, and added a regression guard test.
 
+### 12) `src/prompts/blog-to-video.ts`
+**Surface(s):** `blog.script`, `blog.spec`
+**Why medium leverage:** long-context narrative prompts with large structured user inputs.
+**Issues found:** the prompts were not obviously incorrect, but they passed large user payloads as loose markdown instead of explicit labeled sections.
+**Action:** wrapped the variable input payloads in explicit XML-style tags so theme/context/script/options are easier for the model to segment and for future evals to reason about.
+
 ## Full inventory coverage
 
 All prompt surfaces below were reviewed in this audit.
@@ -192,6 +198,9 @@ After the first three slices, the remaining quality gap was not a direct bug but
 
 ### H. One remaining domain prompt still had an accuracy bug
 The stricter final sweep found one more concrete issue in `hydra.generate`: the prompt described `.speed()` as though it were a chain method and misclassified `color()` as a source function. That was fixed with a narrow, source-backed patch instead of a broad stylistic rewrite.
+
+### I. The narrative prompts benefited from structure, not content churn
+For `blog.script` and `blog.spec`, the best improvement was not to rewrite the prompt philosophy but to make the long user-provided inputs more legible with explicit tags. This keeps the intent stable while improving long-context segmentation and future evalability.
 
 ## Follow-up backlog after this pass
 

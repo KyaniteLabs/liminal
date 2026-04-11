@@ -317,7 +317,7 @@
                         <td><strong>LLMModeAgent</strong></td>
                         <td><span class="badge badge-success">✅ Complete</span></td>
                         <td><code>LLMModeAgent.ts</code></td>
-                        <td>Planning + reflection</td>
+                        <td>Planning + reflection + verification gate before success</td>
                     </tr>
                     <tr>
                         <td><strong>Meta-Harness</strong></td>
@@ -781,9 +781,9 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>🟡 ROI fix lane in progress</strong> - restore ambiguity gating so unclear prompts clarify before any generic p5 fallback</li>
-                <li><strong>▶ Next after ambiguity gating</strong> - make confirmed TUI actions actually execute after approval</li>
-                <li><strong>🔎 Verification hardening</strong> - require real build/test proof before autonomous success claims</li>
+                <li><strong>✅ Ambiguity gating restored</strong> - explicit p5 routing no longer masks unclear prompts before clarification</li>
+                <li><strong>🟡 Verification hardening in progress</strong> - mutation tasks now require successful build/test/typecheck before autonomous success</li>
+                <li><strong>▶ Next after verification hardening</strong> - make confirmed TUI actions actually execute after approval</li>
                 <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
             </ol>
         </section>

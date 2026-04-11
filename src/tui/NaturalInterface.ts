@@ -252,11 +252,15 @@ export class NaturalInterface {
 
       const statusEmoji = session.status === 'success' ? '\u2705' :
                          session.status === 'rolled_back' ? '\u23EE\uFE0F' : '\u274C';
+      const verificationMessage =
+        (session as { verificationPassed?: boolean }).verificationPassed === true
+          ? 'The changes have been applied and verified.'
+          : 'The task completed, but verification was not run.';
 
       const response = [
         `${statusEmoji} Task ${session.status}`,
         session.status === 'success'
-          ? 'The changes have been applied and verified.'
+          ? verificationMessage
           : session.status === 'rolled_back'
           ? 'Changes were rolled back due to errors.'
           : 'The task could not be completed.',

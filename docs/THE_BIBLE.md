@@ -585,6 +585,7 @@ Failures:   0 critical
 **Ink Containment Status (complete 2026-04-06):**
 - Agent approval enforcement: tasks default to `approved: false`, agents reject unapproved tasks
 - Pending action review: `/confirm <id>` and `/cancel <id>` implemented
+- Autonomous success claims now require a successful verification step (`runBuild`, `runTests`, or `typeCheck`) before mutation tasks can finish cleanly
 - CWD-based prompt loading removed from PromptBuilder
 - Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
 - Preview/audio path hardening added (`previewSafety.ts`)

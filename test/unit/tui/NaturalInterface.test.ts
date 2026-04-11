@@ -266,6 +266,7 @@ describe('NaturalInterface', () => {
       const { iface, llmAgent } = createInterface();
       llmAgent.executeTask.mockResolvedValue({
         status: 'success',
+        verificationPassed: true,
         stepCount: 4,
         messages: [
           { role: 'assistant', toolCall: { tool: 'readFile', thought: 'reading' } },
@@ -276,8 +277,22 @@ describe('NaturalInterface', () => {
       const result = await iface.processInput('fix the broken test');
       expect(result.type).toBe('agent');
       expect(result.response).toContain('Task success');
-      expect(result.response).toContain('changes have been applied');
+      expect(result.response).toContain('changes have been applied and verified');
       expect(result.actionTaken).toBe('Executed 4 steps');
+    });
+
+    it('returns an honest success message when verification did not run', async () => {
+      const { iface, llmAgent } = createInterface();
+      llmAgent.executeTask.mockResolvedValue({
+        status: 'success',
+        verificationPassed: false,
+        stepCount: 1,
+        messages: [],
+      });
+
+      const result = await iface.processInput('summarize the current status');
+      expect(result.response).toContain('Task success');
+      expect(result.response).toContain('verification was not run');
     });
 
     it('returns rolled_back message for rolled back session', async () => {

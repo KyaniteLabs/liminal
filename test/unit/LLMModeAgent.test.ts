@@ -191,6 +191,30 @@ describe('LLMModeAgent', () => {
     expect(callArg.prompt).toContain('src/foo.ts');
   });
 
+  it('blocks completion until verification succeeds for mutation tasks', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"edit file"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done too early"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"runBuild","params":{},"thought":"verify build"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done after verification"}' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-verify',
+      title: 'Fix with verification',
+      description: 'Mutate a file then verify',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(session.status).toBe(Status.SUCCESS);
+    expect(session.verificationPassed).toBe(true);
+    expect(mockRunBuild.execute).toHaveBeenCalledTimes(1);
+    expect(session.messages.some(
+      (message) => message.toolResult?.error?.includes('Completion blocked')
+    )).toBe(true);
+  });
+
   // ── Report generation ──────────────────────────────────────────────
   it('generateReport includes session data after tasks', async () => {
     mockComplete.mockResolvedValue({ text: 'not json' });

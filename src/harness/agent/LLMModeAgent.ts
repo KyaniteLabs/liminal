@@ -65,6 +65,7 @@ export interface LLMSession {
   task: LLMTask;
   messages: AgentMessage[];
   status: Status.PENDING | Status.RUNNING | Status.SUCCESS | Status.FAILED | Status.ROLLED_BACK;
+  verificationPassed?: boolean;
   startTime: string;
   endTime?: string;
   stepCount: number;
@@ -180,8 +181,32 @@ When the task is complete and build passes, respond with tool "complete".`;
 
         // Check for completion
         if (toolCall.tool === 'complete') {
+          const verificationCheck = this.checkCompletionReadiness(session);
+          if (!verificationCheck.ready) {
+            const toolResult: ToolResult = {
+              success: false,
+              error: verificationCheck.reason,
+            };
+
+            session.messages.push({
+              role: 'tool',
+              content: JSON.stringify(toolResult),
+              toolResult,
+            });
+
+            eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+              process: 'agent-task',
+              current: session.stepCount,
+              total: maxSteps,
+              stage: 'completion-blocked',
+              message: verificationCheck.reason,
+            });
+            continue;
+          }
+
           Logger.debug('LLMModeAgent', 'Task completed by LLM');
           session.status = Status.SUCCESS;
+          session.verificationPassed = verificationCheck.verified;
           session.endTime = new Date().toISOString();
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
@@ -411,6 +436,38 @@ When the task is complete and build passes, respond with tool "complete".`;
       Logger.error('LLMModeAgent', `Raw response: ${rateLimitResult.result}`);
       return null;
     }
+  }
+
+  private checkCompletionReadiness(session: LLMSession): { ready: boolean; verified: boolean; reason?: string } {
+    const hasMutation = session.backups.length > 0;
+    if (!hasMutation) {
+      return { ready: true, verified: false };
+    }
+
+    const buildPassed = this.hasSuccessfulTool(session, 'runBuild');
+    const testsPassed = this.hasSuccessfulTool(session, 'runTests');
+    const typecheckPassed = this.hasSuccessfulTool(session, 'typeCheck');
+
+    if (!buildPassed && !testsPassed && !typecheckPassed) {
+      return {
+        ready: false,
+        verified: false,
+        reason: 'Completion blocked: run build, tests, or typecheck successfully before claiming success.',
+      };
+    }
+
+    return { ready: true, verified: true };
+  }
+
+  private hasSuccessfulTool(session: LLMSession, toolName: string): boolean {
+    for (let i = 0; i < session.messages.length - 1; i++) {
+      const message = session.messages[i];
+      const next = session.messages[i + 1];
+      if (message.toolCall?.tool === toolName && next.toolResult?.success) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

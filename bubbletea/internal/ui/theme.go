@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -368,6 +369,21 @@ var (
 	ArtifactPathStyle = lipgloss.NewStyle().
 				Foreground(AccentBlue)
 
+	TableHeaderStyle = lipgloss.NewStyle().
+				Foreground(AccentCyan).
+				Bold(true).
+				BorderStyle(lipgloss.NormalBorder()).
+				BorderForeground(BgOverlay).
+				BorderBottom(true)
+
+	TableCellStyle = lipgloss.NewStyle().
+			Foreground(FgSubtle)
+
+	TableSelectedStyle = lipgloss.NewStyle().
+				Foreground(FgText).
+				Background(BgOverlay).
+				Bold(true)
+
 	ActivityLogStyle = lipgloss.NewStyle().
 				Foreground(FgSubtle)
 
@@ -426,6 +442,14 @@ func TextareaStyles() (textarea.Style, textarea.Style) {
 	blurred.EndOfBuffer = lipgloss.NewStyle().Foreground(FgMuted)
 
 	return focused, blurred
+}
+
+func DataTableStyles() table.Styles {
+	styles := table.DefaultStyles()
+	styles.Header = TableHeaderStyle
+	styles.Cell = TableCellStyle
+	styles.Selected = TableSelectedStyle
+	return styles
 }
 
 // Separator returns a horizontal divider line.

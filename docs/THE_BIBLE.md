@@ -631,7 +631,7 @@ Failures:   0 critical
 - Active-response pane: streaming responses don't touch committed history
 - Confirmation-first: no state mutation without operator approval
 - Trust/provenance labels: provider, model, trust-level badges
-- Operator surface cards: task/phase card with progress bar, generation progress card, tool timeline, changed files, verification jobs, artifacts, help drawer
+- Operator surface cards: task/phase card with progress bar, generation progress card, tool timeline, Bubbles-based changed-files / verification tables, artifacts, help drawer
 - Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
 - Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
 - Generated code: untrusted by default

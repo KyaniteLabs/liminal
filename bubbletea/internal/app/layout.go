@@ -7,6 +7,7 @@ import (
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
 	"github.com/charmbracelet/bubbles/progress"
+	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
 )
 
@@ -141,27 +142,48 @@ func (m Model) renderChangedFiles(width int) string {
 		return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 	}
 
+	rows := make([]table.Row, 0, len(m.ChangedFiles))
 	for _, file := range m.ChangedFiles {
-		row := fmt.Sprintf("%s %s", fileStatusToken(file.Status), file.Path)
+		latest := ""
 		if file.IsLatest {
-			row += " ← latest"
+			latest = "latest"
 		}
-		lines = append(lines, ui.FileRowStyle.Render(row))
+		rows = append(rows, table.Row{strings.ToUpper(file.Status[:1]), trimToWidth(file.Path, width-24), latest})
 	}
 
+	lines = append(lines, renderDataTable(
+		width-4,
+		min(max(len(rows)+1, 3), 6),
+		[]table.Column{
+			{Title: "Status", Width: 8},
+			{Title: "Path", Width: max(width-24, 18)},
+			{Title: "Latest", Width: 8},
+		},
+		rows,
+	))
 	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
 func (m Model) renderVerificationJobs(width int) string {
 	lines := []string{ui.PanelTitleStyle.Render("Verification")}
+	rows := make([]table.Row, 0, len(m.VerificationJobs))
 	for _, job := range m.VerificationJobs {
-		status := verificationStatusToken(job.Status)
-		command := trimToWidth(job.Command, width-10)
-		lines = append(lines, ui.VerificationJobStyle.Render(fmt.Sprintf("%s %s", status, command)))
-		if strings.TrimSpace(job.OutputTail) != "" {
-			lines = append(lines, ui.VerificationOutputStyle.Render("  ↳ "+trimToWidth(job.OutputTail, width-8)))
-		}
+		rows = append(rows, table.Row{
+			strings.ToUpper(job.Status),
+			trimToWidth(job.Command, max(width/2-4, 12)),
+			trimToWidth(job.OutputTail, max(width/2-6, 12)),
+		})
 	}
+	lines = append(lines, renderDataTable(
+		width-4,
+		min(max(len(rows)+1, 3), 6),
+		[]table.Column{
+			{Title: "Status", Width: 10},
+			{Title: "Command", Width: max(width/2-4, 12)},
+			{Title: "Output", Width: max(width/2-6, 12)},
+		},
+		rows,
+	))
 	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
@@ -245,6 +267,18 @@ func formatStepProgress(current, total int) string {
 		current = 1
 	}
 	return fmt.Sprintf("Step:%d/%d", current, total)
+}
+
+func renderDataTable(width int, height int, columns []table.Column, rows []table.Row) string {
+	t := table.New(
+		table.WithColumns(columns),
+		table.WithRows(rows),
+		table.WithFocused(false),
+		table.WithHeight(height),
+		table.WithWidth(max(width, 20)),
+	)
+	t.SetStyles(ui.DataTableStyles())
+	return t.View()
 }
 
 func timelineStatusToken(status string) string {

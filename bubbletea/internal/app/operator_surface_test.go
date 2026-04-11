@@ -44,7 +44,7 @@ func TestViewRendersOperatorSurface(t *testing.T) {
 	m.refreshViewports()
 
 	view := m.View()
-	for _, want := range []string{"Conversation", "Operator surface", "Task", "Build login page", "Phase", "Edit", "readFile", "Changed: 1 file", "src/auth.ts", "Verification", "vitest auth", "Artifacts", "Transcript", "Help", "Ctrl+T", "Ctrl+A", "Ctrl+Y"} {
+	for _, want := range []string{"Conversation", "Operator surface", "Task", "Build login page", "Phase", "Edit", "readFile", "Changed: 1 file", "src/auth.ts", "Verification", "Status", "Path", "Ctrl+T", "Ctrl+A", "Ctrl+Y"} {
 		if !strings.Contains(view, want) {
 			t.Fatalf("expected view to contain %q\n%s", want, view)
 		}
@@ -234,5 +234,53 @@ func TestNewModelUsesLiminalTextareaStyles(t *testing.T) {
 	}
 	if got, want := m.TextInput.BlurredStyle.Prompt.Render(">"), ui.TextareaPromptBlurredStyle.Render(">"); got != want {
 		t.Fatalf("expected blurred prompt style to match theme")
+	}
+}
+
+func TestChangedFilesRenderAsTable(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChangedFiles = []ChangedFile{
+		{Path: "src/auth.ts", Status: "modified", IsLatest: true},
+		{Path: "src/new.ts", Status: "created"},
+	}
+
+	panel := m.renderChangedFiles(56)
+	for _, want := range []string{"Status", "Path", "Latest", "src/auth.ts", "src/new.ts"} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("expected changed-files table to contain %q\n%s", want, panel)
+		}
+	}
+}
+
+func TestVerificationJobsRenderAsTable(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.VerificationJobs = []VerificationJob{
+		{JobID: "job-1", Command: "go test ./...", Status: "running", OutputTail: "still running"},
+	}
+
+	panel := m.renderVerificationJobs(56)
+	for _, want := range []string{"Status", "Command", "Output", "go test ./...", "still running"} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("expected verification table to contain %q\n%s", want, panel)
+		}
+	}
+}
+
+func TestArtifactsDrawerAndHelpDrawerStillRenderKeyContent(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.Artifacts = []ArtifactRef{{Label: "Transcript", Path: ".omx/logs/session.log", UpdatedAt: nowForTest()}}
+
+	artifacts := m.renderArtifactsDrawer(56)
+	for _, want := range []string{"Artifacts", "Transcript", ".omx/logs/session.log"} {
+		if !strings.Contains(artifacts, want) {
+			t.Fatalf("expected artifacts drawer to contain %q\n%s", want, artifacts)
+		}
+	}
+
+	help := m.renderHelpDrawer(56)
+	for _, want := range []string{"Help / Shortcuts", "Alt+Enter", "insert newline"} {
+		if !strings.Contains(help, want) {
+			t.Fatalf("expected help drawer to contain %q\n%s", want, help)
+		}
 	}
 }

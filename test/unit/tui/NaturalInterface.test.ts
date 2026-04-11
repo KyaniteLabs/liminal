@@ -220,6 +220,17 @@ describe('NaturalInterface', () => {
     });
   });
 
+  describe('handleHelp', () => {
+    it('lists only commands supported by NaturalInterface', async () => {
+      const { iface } = createInterface();
+      const result = await iface.processInput('/help');
+
+      expect(result.response).toContain('status - Show harness status');
+      expect(result.response).toContain('preview <file> - Preview a file');
+      expect(result.response).toContain('does not support /agent, /confirm, /cancel, /play, or /browser');
+    });
+  });
+
   // ── isAgentRequest ──────────────────────────────────────────────────
 
   describe('isAgentRequest (via processInput)', () => {

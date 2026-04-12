@@ -644,6 +644,7 @@ Failures:   0 critical
 - Resume-safe self-improvement now also has a workspace-drift proof test: if the persisted fingerprint no longer matches the local worktree, the resumed run clears stale state and fails closed before any new tool call or mutation executes
 - Bounded self-improvement runs now auto-stop after successful post-mutation verification instead of spending leftover budget exploring unrelated follow-up work
 - Bounded self-improvement runs also terminate reconnaissance-only sessions once they spend over half the budget without any mutation, preventing open-ended pre-fix drift
+- First shared-runtime extraction slice landed: Bubble Tea bridge code now delegates self-improvement task policy (task id/title/max steps/completion policy) to a tiny headless runtime-core facade instead of owning those semantics inline
 - Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 

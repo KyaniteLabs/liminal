@@ -6,7 +6,8 @@ import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatus } from './types.js';
 import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
-import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
+import type { LLMSession } from '../harness/agent/index.js';
+import { LLMModeSelfImprovementRuntime, type SelfImprovementRuntime } from '../runtime-core/SelfImprovementRuntime.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -73,10 +74,12 @@ export class TuiBridgeService {
   private sessions = new TuiSessionStore();
   private stream = new TuiEventStream();
   private activeStreams = new Map<string, AbortController>();
+  private selfImprovementRuntime: SelfImprovementRuntime;
   // Step 1: Conversation memory - one ConversationManager per session
   private conversations = new Map<string, ConversationManager>();
 
-  constructor() {
+  constructor(options: { selfImprovementRuntime?: SelfImprovementRuntime } = {}) {
+    this.selfImprovementRuntime = options.selfImprovementRuntime ?? new LLMModeSelfImprovementRuntime();
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
     // External consumers (Bubble Tea client, gallery) receive these via SSE
     // through the existing TuiEventStream subscription mechanism.
@@ -271,11 +274,11 @@ export class TuiBridgeService {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
 
-    const config = llm.getConfig();
-    const modelName = config.model || 'unknown';
-    const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
-    const agent = createLLMModeAgent(llm);
-    const taskId = `tui-self-${Date.now()}`;
+    const preparedRun = this.selfImprovementRuntime.prepare({
+      llm,
+      description: userText,
+    });
+    const { modelName, maxSteps, taskId } = preparedRun;
 
     const listener = (event: BusEvent) => {
       if (event.source !== 'LLMModeAgent') return;
@@ -327,14 +330,7 @@ export class TuiBridgeService {
     logBridge('agent.started', { sessionId, taskId, model: modelName, maxSteps });
 
     try {
-      const session = await agent.executeTask({
-        id: taskId,
-        title: 'Bubble Tea TUI self-improvement request',
-        description: userText,
-        maxSteps,
-        approved: true,
-        completionPolicy: 'stop_after_verification',
-      });
+      const session = await preparedRun.execute();
 
       const fullContent = this.formatAgentSession(session);
       for (const chunk of this.chunkString(fullContent, 80)) {

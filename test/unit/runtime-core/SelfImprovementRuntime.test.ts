@@ -1,0 +1,57 @@
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { mockExecuteTask, mockCreateLLMModeAgent } = vi.hoisted(() => {
+  const executeTask = vi.fn();
+  return {
+    mockExecuteTask: executeTask,
+    mockCreateLLMModeAgent: vi.fn(() => ({ executeTask })),
+  };
+});
+
+vi.mock('../../../src/harness/agent/index.js', () => ({
+  createLLMModeAgent: mockCreateLLMModeAgent,
+}));
+
+import { LLMModeSelfImprovementRuntime } from '../../../src/runtime-core/SelfImprovementRuntime.js';
+
+describe('LLMModeSelfImprovementRuntime', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('runs self-improvement requests with the bounded runtime task policy', async () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = {
+      getConfig: vi.fn(() => ({ model: 'glm-5.1' })),
+    } as any;
+    const session = {
+      status: 'success',
+      startTime: '2026-04-11T18:00:00.000Z',
+      endTime: '2026-04-11T18:00:01.000Z',
+      stepCount: 2,
+    } as any;
+
+    mockExecuteTask.mockResolvedValue(session);
+
+    const result = await runtime.run({
+      llm,
+      description: 'Fix the Bubble Tea runtime lane',
+    });
+
+    expect(mockCreateLLMModeAgent).toHaveBeenCalledWith(llm);
+    expect(mockExecuteTask).toHaveBeenCalledWith({
+      id: expect.stringMatching(/^tui-self-/),
+      title: 'Bubble Tea TUI self-improvement request',
+      description: 'Fix the Bubble Tea runtime lane',
+      maxSteps: 20,
+      approved: true,
+      completionPolicy: 'stop_after_verification',
+    });
+    expect(result).toEqual({
+      modelName: 'glm-5.1',
+      maxSteps: 20,
+      session,
+      taskId: expect.stringMatching(/^tui-self-/),
+    });
+  });
+});

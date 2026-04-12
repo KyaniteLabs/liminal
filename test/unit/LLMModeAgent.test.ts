@@ -572,18 +572,11 @@ describe('LLMModeAgent', () => {
   });
 
   it('still classifies meaningful successful inspection with no safe mutation as bounded-no-change success', async () => {
-<<<<<<< HEAD
-    mockComplete
-      .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}' })
-      .mockResolvedValueOnce({ text: '{"tool":"gitStatus","params":{},"thought":"inspect repo"}' })
-      .mockResolvedValueOnce({ text: 'done inspecting; no safe change warranted' });
-=======
     queuePlans(
       '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}',
       '{"tool":"gitStatus","params":{},"thought":"inspect repo"}',
       'done inspecting; no safe change warranted',
     );
->>>>>>> 70c345dc (Harden resume confidence at verification boundaries)
 
     const agent = new LLMModeAgent(mockLLM as any);
     const session = await agent.executeTask({
@@ -599,8 +592,6 @@ describe('LLMModeAgent', () => {
     expect(session.backups).toHaveLength(0);
     expect(session.status).toBe(Status.SUCCESS);
     expect(session.exitReason).toBe('bounded-no-change');
-<<<<<<< HEAD
-=======
   });
 
   it('suspends with verification_started when verification fails after a mutation', async () => {
@@ -725,7 +716,6 @@ describe('LLMModeAgent', () => {
     expect(mockComplete.mock.calls[0][0].prompt).toContain('resume context');
     expect(Array.from(session.exploredPaths)).toEqual(workingSet);
     expect(session.status).toBe(Status.SUCCESS);
->>>>>>> 70c345dc (Harden resume confidence at verification boundaries)
   });
 
   // ── Report generation ──────────────────────────────────────────────

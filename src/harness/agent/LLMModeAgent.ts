@@ -61,11 +61,11 @@ export interface LLMTask {
   primaryFiles?: string[];
   /** Optional secondary files the runtime has already budgeted for bounded expansion */
   secondaryFiles?: string[];
-  /** Deterministic overflow candidates withheld until a later bounded-expansion step */
+  /** Secondary candidates intentionally left outside the active working set until bounded expansion is allowed */
   deferredSecondaryFiles?: string[];
   /** Number of files the bounded packet allows beyond the seeded lists before broader exploration */
   expansionBudget?: number;
-  /** Whether bounded expansion still has deferred candidates available */
+  /** Whether bounded expansion is still available or already exhausted */
   expansionStatus?: 'allowed' | 'exhausted';
   /** Runtime-core confidence in the current bounded localization packet */
   localizationConfidence?: 'high' | 'medium' | 'low';
@@ -99,6 +99,8 @@ export interface LLMSession {
   endTime?: string;
   stepCount: number;
   backups: string[];
+  /** Count of successful inspection-style tool calls completed in this run */
+  successfulInspectionCalls: number;
   /** File extensions of files modified in this session, used for language-aware verification */
   modifiedExtensions: Set<string>;
   /** Files that were read during this session, for resume context */
@@ -156,6 +158,7 @@ export class LLMModeAgent {
       startTime: new Date().toISOString(),
       stepCount: 0,
       backups: [],
+      successfulInspectionCalls: 0,
       modifiedExtensions: new Set(),
       exploredPaths: new Set(),
       mutatedFiles: new Set(),
@@ -364,13 +367,6 @@ When the task is complete and build passes, respond with tool "complete".`;
           toolResult: result,
         });
 
-<<<<<<< HEAD
-        if (result.success && this.isMeaningfulInspectionTool(toolCall.tool)) {
-          session.successfulInspectionCalls++;
-        }
-
-=======
->>>>>>> 70c345dc (Harden resume confidence at verification boundaries)
         if (this.shouldStopAfterSuccessfulVerification(session, toolCall.tool, result)) {
           Logger.info('LLMModeAgent', `Auto-completing bounded run after successful ${toolCall.tool}`);
           await clearRunState();
@@ -898,7 +894,13 @@ When the task is complete and build passes, respond with tool "complete".`;
   }
 
   private hasMeaningfulSuccessfulInspection(session: LLMSession): boolean {
-    return session.successfulInspectionCalls > 0;
+    for (let i = 0; i < session.messages.length - 1; i++) {
+      const message = session.messages[i];
+      const next = session.messages[i + 1];
+      if (!message.toolCall || !this.isMeaningfulInspectionTool(message.toolCall.tool)) continue;
+      if (next.toolResult?.success) return true;
+    }
+    return false;
   }
 
   private shouldClassifyAsBoundedNoChangeSuccess(session: LLMSession): boolean {

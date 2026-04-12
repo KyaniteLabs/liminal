@@ -22,10 +22,15 @@ import {
   applyEditTool,
   runBuildTool,
   runTestsTool,
+  executeSkillTool,
   searchTool,
+  searchCodeTool,
+  searchDocsTool,
   listDirTool,
   typeCheckTool,
   npmTool,
+  runLintTool,
+  runFocusedTestsTool,
   lspTool,
   astValidatorTool,
   importGuardTool,
@@ -267,9 +272,13 @@ export class HarnessAgent {
    * Call a tool with rate limiting and telemetry
    */
   private async callTool(toolName: string, params: unknown): Promise<ToolResult> {
-    const operation = toolName === 'readFile' ? 'fileRead' : 
-                      toolName === 'writeFile' || toolName === 'applyEdit' ? 'fileWrite' :
-                      toolName === 'runBuild' ? 'buildRun' : 'testRun';
+    const operation = toolName === 'readFile' || toolName === 'executeSkill' || toolName === 'searchCode' || toolName === 'searchDocs'
+      ? 'fileRead'
+      : toolName === 'writeFile' || toolName === 'applyEdit'
+        ? 'fileWrite'
+        : toolName === 'runBuild'
+          ? 'buildRun'
+          : 'testRun';
     
     // Update context with current session info
     telemetryWrapper.setContext({
@@ -317,10 +326,15 @@ export class HarnessAgent {
       case 'applyEdit': return applyEditTool;
       case 'runBuild': return runBuildTool;
       case 'runTests': return runTestsTool;
+      case 'executeSkill': return executeSkillTool;
       case 'search': return searchTool;
+      case 'searchCode': return searchCodeTool;
+      case 'searchDocs': return searchDocsTool;
       case 'listDir': return listDirTool;
       case 'typeCheck': return typeCheckTool;
       case 'npm': return npmTool;
+      case 'runLint': return runLintTool;
+      case 'runFocusedTests': return runFocusedTestsTool;
       case 'lsp': return lspTool;
       case 'astValidate': return astValidatorTool;
       case 'importGuard': return importGuardTool;

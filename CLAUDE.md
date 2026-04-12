@@ -1,5 +1,15 @@
 # Liminal — Project Instructions
 
+## Mandatory Coding Skill
+
+All coding, review, and refactor work in this repo must follow `karpathy-guidelines`.
+
+If the runtime supports local skills, load and apply `karpathy-guidelines` directly. If it does not, still follow the same rules:
+1. Think before coding and surface assumptions/tradeoffs.
+2. Prefer the simplest sufficient change.
+3. Make surgical edits only.
+4. Define concrete verification criteria before claiming success.
+
 ## Git Hygiene (mandatory for all agents)
 
 This repo has multiple agents working simultaneously in worktrees. Breaking these rules causes data loss and merge conflicts.

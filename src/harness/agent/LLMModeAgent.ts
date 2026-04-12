@@ -168,6 +168,16 @@ export class LLMModeAgent {
     });
   }
 
+  private stampSession(
+    session: LLMSession,
+    patch: Partial<Pick<LLMSession, 'status' | 'endTime' | 'exitReason'>>,
+  ): LLMSession {
+    const nextSession = { ...session, ...patch };
+    this.sessions.set(nextSession.task.id, nextSession);
+    this.currentSession = nextSession;
+    return nextSession;
+  }
+
   /**
    * Execute a task using LLM-driven planning
    */
@@ -178,7 +188,7 @@ export class LLMModeAgent {
 
     const maxSteps = task.maxSteps || 15;
     
-    const session: LLMSession = {
+    let session: LLMSession = {
       task,
       messages: [],
       status: Status.RUNNING,
@@ -214,8 +224,10 @@ export class LLMModeAgent {
         if (!validation.valid) {
           Logger.error('LLMModeAgent', `Resume blocked - workspace identity drifted: ${validation.reason}`);
           await clearRunState();
-          session.status = Status.FAILED;
-          session.endTime = new Date().toISOString();
+          session = this.stampSession(session, {
+            status: Status.FAILED,
+            endTime: new Date().toISOString(),
+          });
           return session;
         }
       }
@@ -334,9 +346,11 @@ When the task is complete and build passes, respond with tool "complete".`;
         if (this.shouldStopForBoundedInspection(session, maxSteps)) {
           Logger.info('LLMModeAgent', `Bounded-inspection guardrail triggered at step ${session.stepCount}/${maxSteps} - no mutations after 50% budget`);
           await clearRunState();
-          session.status = Status.SUCCESS;
-          session.exitReason = 'bounded-inspection';
-          session.endTime = new Date().toISOString();
+          session = this.stampSession(session, {
+            status: Status.SUCCESS,
+            exitReason: 'bounded-inspection',
+            endTime: new Date().toISOString(),
+          });
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
             success: true,
@@ -401,8 +415,10 @@ When the task is complete and build passes, respond with tool "complete".`;
           }
           Logger.debug('LLMModeAgent', 'Task completed by LLM');
           await clearRunState();
-          session.status = Status.SUCCESS;
-          session.endTime = new Date().toISOString();
+          session = this.stampSession(session, {
+            status: Status.SUCCESS,
+            endTime: new Date().toISOString(),
+          });
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
             success: true,
@@ -434,8 +450,10 @@ When the task is complete and build passes, respond with tool "complete".`;
         if (this.shouldStopAfterSuccessfulVerification(session, toolCall, result)) {
           Logger.info('LLMModeAgent', `Auto-completing bounded run after successful ${toolCall.tool}`);
           await clearRunState();
-          session.status = Status.SUCCESS;
-          session.endTime = new Date().toISOString();
+          session = this.stampSession(session, {
+            status: Status.SUCCESS,
+            endTime: new Date().toISOString(),
+          });
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
             success: true,
@@ -458,9 +476,9 @@ When the task is complete and build passes, respond with tool "complete".`;
             if (session.backups.length > 0) {
               Logger.debug('LLMModeAgent', 'Rolling back changes...');
               await this.rollback(session);
-              session.status = Status.ROLLED_BACK;
+              session = this.stampSession(session, { status: Status.ROLLED_BACK });
             } else {
-              session.status = Status.FAILED;
+              session = this.stampSession(session, { status: Status.FAILED });
             }
             
             // Log failure
@@ -495,9 +513,11 @@ When the task is complete and build passes, respond with tool "complete".`;
       if (!parseFailure && this.shouldClassifyAsBoundedNoChangeSuccess(session)) {
         Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
         await clearRunState();
-        session.status = Status.SUCCESS;
-        session.exitReason = 'bounded-no-change';
-        session.endTime = new Date().toISOString();
+        session = this.stampSession(session, {
+          status: Status.SUCCESS,
+          exitReason: 'bounded-no-change',
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
@@ -515,8 +535,10 @@ When the task is complete and build passes, respond with tool "complete".`;
 
         // LLM response couldn't be parsed - this is a real failure
         Logger.error('LLMModeAgent', session.lastPlanError ? `${session.lastPlanError} after ${session.stepCount} steps` : `Failed to parse LLM response after ${session.stepCount} steps`);
-        session.status = Status.FAILED;
-        session.endTime = new Date().toISOString();
+        session = this.stampSession(session, {
+          status: Status.FAILED,
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
@@ -529,13 +551,15 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Rollback if needed
         if (session.backups.length > 0) {
           await this.rollback(session);
-          session.status = Status.ROLLED_BACK;
+          session = this.stampSession(session, { status: Status.ROLLED_BACK });
         }
       } else if (session.backups.length === 0) {
         if (this.isBoundedInspectionRun(session)) {
           Logger.error('LLMModeAgent', `Bounded run ended before meaningful successful inspection after ${session.stepCount} steps`);
-          session.status = Status.FAILED;
-          session.endTime = new Date().toISOString();
+          session = this.stampSession(session, {
+            status: Status.FAILED,
+            endTime: new Date().toISOString(),
+          });
 
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
@@ -551,9 +575,11 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Natural loop completion with no mutations - inspection-only success
         Logger.debug('LLMModeAgent', `Inspection complete after ${session.stepCount} steps, no mutations needed`);
         await clearRunState();
-        session.status = Status.SUCCESS;
-        session.exitReason = 'bounded-no-change';
-        session.endTime = new Date().toISOString();
+        session = this.stampSession(session, {
+          status: Status.SUCCESS,
+          exitReason: 'bounded-no-change',
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
@@ -581,8 +607,10 @@ When the task is complete and build passes, respond with tool "complete".`;
           Logger.error('LLMModeAgent', `Failed to save run state: ${saveErr}`);
         }
 
-        session.status = Status.SUSPENDED;
-        session.endTime = new Date().toISOString();
+        session = this.stampSession(session, {
+          status: Status.SUSPENDED,
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
@@ -597,8 +625,10 @@ When the task is complete and build passes, respond with tool "complete".`;
 
     } catch (error) {
       Logger.error('LLMModeAgent', `Unexpected error: ${error}`);
-      session.status = Status.FAILED;
-      session.endTime = new Date().toISOString();
+      session = this.stampSession(session, {
+        status: Status.FAILED,
+        endTime: new Date().toISOString(),
+      });
 
       eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
         process: 'agent-task',
@@ -609,7 +639,7 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       if (session.backups.length > 0) {
         await this.rollback(session);
-        session.status = Status.ROLLED_BACK;
+        session = this.stampSession(session, { status: Status.ROLLED_BACK });
       }
 
       failureLogger.log({

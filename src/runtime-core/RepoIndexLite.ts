@@ -5,7 +5,9 @@ export interface RepoIndexLiteContext {
   workingSet: string[];
   primaryFiles: string[];
   secondaryFiles: string[];
+  deferredSecondaryFiles: string[];
   expansionBudget: number;
+  expansionStatus: 'allowed' | 'exhausted';
   localizationConfidence: 'high' | 'medium' | 'low';
 }
 
@@ -13,7 +15,8 @@ interface RepoIndexLiteProfile {
   domain: string;
   intro: string;
   primaryFiles: string[];
-  secondaryFiles: string[];
+  secondaryCandidates: string[];
+  expansionBudget: number;
   localizationConfidence: 'high' | 'medium' | 'low';
 }
 
@@ -24,10 +27,11 @@ const DEFAULT_RUNTIME_PROFILE: RepoIndexLiteProfile = {
     'src/runtime-core/SelfImprovementRuntime.ts',
     'src/harness/agent/LLMModeAgent.ts',
   ],
-  secondaryFiles: [
+  secondaryCandidates: [
     'src/harness/RunStateStore.ts',
     'test/unit/LLMModeAgent.test.ts',
   ],
+  expansionBudget: 2,
   localizationConfidence: 'medium',
 };
 
@@ -38,10 +42,11 @@ const CHECKPOINT_RESUME_PROFILE: RepoIndexLiteProfile = {
     'src/harness/RunStateStore.ts',
     'src/harness/agent/LLMModeAgent.ts',
   ],
-  secondaryFiles: [
+  secondaryCandidates: [
     'test/unit/LLMModeAgent.test.ts',
     'test/harness/RunStateStore.test.ts',
   ],
+  expansionBudget: 2,
   localizationConfidence: 'high',
 };
 
@@ -52,10 +57,12 @@ const LOCALIZATION_PACKET_PROFILE: RepoIndexLiteProfile = {
     'src/runtime-core/RepoIndexLite.ts',
     'src/runtime-core/SelfImprovementRuntime.ts',
   ],
-  secondaryFiles: [
+  secondaryCandidates: [
     'test/unit/runtime-core/RepoIndexLite.test.ts',
     'test/unit/runtime-core/SelfImprovementRuntime.test.ts',
+    'src/harness/agent/LLMModeAgent.ts',
   ],
+  expansionBudget: 2,
   localizationConfidence: 'high',
 };
 
@@ -65,7 +72,9 @@ function dedupeFiles(files: string[]): string[] {
 
 function buildContext(profile: RepoIndexLiteProfile): RepoIndexLiteContext {
   const primaryFiles = dedupeFiles(profile.primaryFiles);
-  const secondaryFiles = dedupeFiles(profile.secondaryFiles).filter((file) => !primaryFiles.includes(file));
+  const boundedCandidates = dedupeFiles(profile.secondaryCandidates).filter((file) => !primaryFiles.includes(file));
+  const secondaryFiles = boundedCandidates.slice(0, profile.expansionBudget);
+  const deferredSecondaryFiles = boundedCandidates.slice(profile.expansionBudget);
   const workingSet = [...primaryFiles, ...secondaryFiles];
 
   return {
@@ -75,7 +84,9 @@ function buildContext(profile: RepoIndexLiteProfile): RepoIndexLiteContext {
     workingSet,
     primaryFiles,
     secondaryFiles,
-    expansionBudget: secondaryFiles.length,
+    deferredSecondaryFiles,
+    expansionBudget: profile.expansionBudget,
+    expansionStatus: deferredSecondaryFiles.length > 0 ? 'allowed' : 'exhausted',
     localizationConfidence: profile.localizationConfidence,
   };
 }

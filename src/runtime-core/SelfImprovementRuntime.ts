@@ -12,7 +12,9 @@ interface TaskPacket {
   workingSet: string[];
   primaryFiles: string[];
   secondaryFiles: string[];
+  deferredSecondaryFiles: string[];
   expansionBudget: number;
+  expansionStatus: 'allowed' | 'exhausted';
   localizationConfidence: 'high' | 'medium' | 'low';
   domain: string;
   description: string;
@@ -46,10 +48,12 @@ function buildTaskPacket(description: string): TaskPacket {
     workingSet: context.workingSet,
     primaryFiles: context.primaryFiles,
     secondaryFiles: context.secondaryFiles,
+    deferredSecondaryFiles: context.deferredSecondaryFiles,
     expansionBudget: context.expansionBudget,
+    expansionStatus: context.expansionStatus,
     localizationConfidence: context.localizationConfidence,
     domain: context.domain,
-    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\nPrimary files:\n- ${context.primaryFiles.join('\n- ')}\nSecondary files:\n- ${context.secondaryFiles.join('\n- ')}\nExpansion budget: ${context.expansionBudget} additional files before broadening beyond this packet\nLocalization confidence: ${context.localizationConfidence}\nDomain: ${context.domain}`,
+    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\nPrimary files:\n- ${context.primaryFiles.join('\n- ')}\nSecondary files:\n- ${context.secondaryFiles.join('\n- ')}${context.deferredSecondaryFiles.length > 0 ? `\nDeferred secondary files:\n- ${context.deferredSecondaryFiles.join('\n- ')}` : ''}\nExpansion budget: ${context.expansionBudget} additional files before broadening beyond this packet\nExpansion status: ${context.expansionStatus}\nLocalization confidence: ${context.localizationConfidence}\nDomain: ${context.domain}`,
   };
 }
 
@@ -68,7 +72,9 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
       workingSet: taskPacket.workingSet,
       primaryFiles: taskPacket.primaryFiles,
       secondaryFiles: taskPacket.secondaryFiles,
+      deferredSecondaryFiles: taskPacket.deferredSecondaryFiles,
       expansionBudget: taskPacket.expansionBudget,
+      expansionStatus: taskPacket.expansionStatus,
       localizationConfidence: taskPacket.localizationConfidence,
       domain: taskPacket.domain,
       maxSteps,

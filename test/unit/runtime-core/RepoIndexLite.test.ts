@@ -25,8 +25,10 @@ describe('RepoIndexLite', () => {
       expect(context.workingSet.length).toBe(context.primaryFiles.length + context.secondaryFiles.length);
       expect(new Set(context.workingSet).size).toBe(context.workingSet.length);
       expect(context.primaryFiles.every((file) => !context.secondaryFiles.includes(file))).toBe(true);
+      expect(context.secondaryFiles.every((file) => !context.deferredSecondaryFiles.includes(file))).toBe(true);
       expect(context.workingSet.includes(context.fileHint)).toBe(true);
-      expect(context.expansionBudget).toBe(context.secondaryFiles.length);
+      expect(context.secondaryFiles.length).toBeLessThanOrEqual(context.expansionBudget);
+      expect(context.expansionStatus).toBe(context.deferredSecondaryFiles.length > 0 ? 'allowed' : 'exhausted');
     }
   });
 
@@ -52,9 +54,11 @@ describe('RepoIndexLite', () => {
       'test/unit/LLMModeAgent.test.ts',
       'test/harness/RunStateStore.test.ts',
     ]);
+    expect(first.deferredSecondaryFiles).toEqual([]);
     expect(first.expansionBudget).toBe(2);
+    expect(first.expansionStatus).toBe('exhausted');
     expect(first.localizationConfidence).toBe('high');
-    expect(first.expansionBudget).toBe(first.secondaryFiles.length);
+    expect(first.secondaryFiles.length).toBe(first.expansionBudget);
     expect(first.workingSet).toEqual([...first.primaryFiles, ...first.secondaryFiles]);
     expect(first.workingSet).toHaveLength(4);
   });
@@ -77,9 +81,11 @@ describe('RepoIndexLite', () => {
       'src/harness/RunStateStore.ts',
       'test/unit/LLMModeAgent.test.ts',
     ]);
+    expect(context.deferredSecondaryFiles).toEqual([]);
     expect(context.expansionBudget).toBe(2);
+    expect(context.expansionStatus).toBe('exhausted');
     expect(context.localizationConfidence).toBe('medium');
-    expect(context.expansionBudget).toBe(context.secondaryFiles.length);
+    expect(context.secondaryFiles.length).toBe(context.expansionBudget);
     expect(context.workingSet).toEqual([...context.primaryFiles, ...context.secondaryFiles]);
     expect(context.workingSet).toHaveLength(4);
   });
@@ -97,9 +103,28 @@ describe('RepoIndexLite', () => {
       'test/unit/runtime-core/RepoIndexLite.test.ts',
       'test/unit/runtime-core/SelfImprovementRuntime.test.ts',
     ]);
+    expect(context.deferredSecondaryFiles).toEqual([
+      'src/harness/agent/LLMModeAgent.ts',
+    ]);
     expect(context.workingSet).toEqual([...context.primaryFiles, ...context.secondaryFiles]);
     expect(new Set(context.workingSet).size).toBe(context.workingSet.length);
-    expect(context.expansionBudget).toBe(context.secondaryFiles.length);
+    expect(context.secondaryFiles.length).toBe(context.expansionBudget);
+    expect(context.expansionStatus).toBe('allowed');
+    expect(context.workingSet).not.toContain('src/harness/agent/LLMModeAgent.ts');
     expect(context.localizationConfidence).toBe('high');
+  });
+
+  it('keeps localization expansion overflow deterministic across repeated similar prompts', () => {
+    const first = localizeBoundedSelfImprovement('Tighten RepoIndexLite task packet shaping and expansion budget determinism');
+    const second = localizeBoundedSelfImprovement('Improve localization confidence and packet shaping in SelfImprovementRuntime');
+
+    expect(first.primaryFiles).toEqual([
+      'src/runtime-core/RepoIndexLite.ts',
+      'src/runtime-core/SelfImprovementRuntime.ts',
+    ]);
+    expect(second.primaryFiles).toEqual(first.primaryFiles);
+    expect(second.secondaryFiles).toEqual(first.secondaryFiles);
+    expect(second.deferredSecondaryFiles).toEqual(first.deferredSecondaryFiles);
+    expect(second.expansionStatus).toBe('allowed');
   });
 });

@@ -61,8 +61,12 @@ export interface LLMTask {
   primaryFiles?: string[];
   /** Optional secondary files the runtime has already budgeted for bounded expansion */
   secondaryFiles?: string[];
+  /** Deterministic overflow candidates withheld until a later bounded-expansion step */
+  deferredSecondaryFiles?: string[];
   /** Number of files the bounded packet allows beyond the seeded lists before broader exploration */
   expansionBudget?: number;
+  /** Whether bounded expansion still has deferred candidates available */
+  expansionStatus?: 'allowed' | 'exhausted';
   /** Runtime-core confidence in the current bounded localization packet */
   localizationConfidence?: 'high' | 'medium' | 'low';
   /** Domain tag for the bounded run (e.g. 'runtime-core', 'runstate') */

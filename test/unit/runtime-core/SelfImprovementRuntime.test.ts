@@ -47,11 +47,13 @@ describe('LLMModeSelfImprovementRuntime', () => {
       ]);
       expect(new Set(prepared.task.workingSet || []).size).toBe(prepared.task.workingSet?.length);
       expect(prepared.task.domain).toBe(testCase.expectedDomain);
-      expect(prepared.task.expansionBudget).toBe(prepared.task.secondaryFiles?.length);
+      expect((prepared.task.secondaryFiles || []).length).toBeLessThanOrEqual(prepared.task.expansionBudget || 0);
+      expect(prepared.task.expansionStatus).toBe(((prepared.task.deferredSecondaryFiles || []).length > 0) ? 'allowed' : 'exhausted');
       expect(prepared.task.description).toContain('## Deterministic Task Packet');
       expect(prepared.task.description).toContain(`Primary files:\n- ${(prepared.task.primaryFiles || []).join('\n- ')}`);
       expect(prepared.task.description).toContain(`Secondary files:\n- ${(prepared.task.secondaryFiles || []).join('\n- ')}`);
       expect(prepared.task.description).toContain(`Expansion budget: ${prepared.task.expansionBudget} additional files before broadening beyond this packet`);
+      expect(prepared.task.description).toContain(`Expansion status: ${prepared.task.expansionStatus}`);
       expect(prepared.task.description).toContain(`Localization confidence: ${prepared.task.localizationConfidence}`);
       expect(prepared.task.description).toContain(`Domain: ${prepared.task.domain}`);
     }
@@ -163,12 +165,19 @@ describe('LLMModeSelfImprovementRuntime', () => {
         'test/unit/runtime-core/RepoIndexLite.test.ts',
         'test/unit/runtime-core/SelfImprovementRuntime.test.ts',
       ],
+      deferredSecondaryFiles: [
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
       expansionBudget: 2,
+      expansionStatus: 'allowed',
       localizationConfidence: 'high',
       domain: 'runtime-core',
     }));
     const task = mockExecuteTask.mock.calls[0][0];
     expect(task.workingSet).toEqual([...task.primaryFiles, ...task.secondaryFiles]);
+    expect(task.workingSet).not.toContain('src/harness/agent/LLMModeAgent.ts');
+    expect(task.description).toContain('Deferred secondary files:');
+    expect(task.description).toContain('Expansion status: allowed');
     expect(task.description).toContain('Localization confidence: high');
     expect(task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
   });
@@ -214,6 +223,8 @@ describe('LLMModeSelfImprovementRuntime', () => {
     }));
     expect(firstTask.expansionBudget).toBe(firstTask.secondaryFiles.length);
     expect(secondTask.expansionBudget).toBe(secondTask.secondaryFiles.length);
+    expect(firstTask.expansionStatus).toBe('exhausted');
+    expect(secondTask.expansionStatus).toBe('exhausted');
     expect(firstTask.workingSet).toEqual([...firstTask.primaryFiles, ...firstTask.secondaryFiles]);
     expect(secondTask.workingSet).toEqual([...secondTask.primaryFiles, ...secondTask.secondaryFiles]);
     expect({ ...firstTask, id: 'stable-id' }).toEqual({ ...secondTask, id: 'stable-id' });
@@ -236,6 +247,8 @@ describe('LLMModeSelfImprovementRuntime', () => {
     expect(first.task.id).not.toBe(second.task.id);
     expect(first.task.expansionBudget).toBe(2);
     expect(second.task.expansionBudget).toBe(2);
+    expect(first.task.expansionStatus).toBe('exhausted');
+    expect(second.task.expansionStatus).toBe('exhausted');
     expect(first.task.workingSet).toEqual([
       ...(first.task.primaryFiles || []),
       ...(first.task.secondaryFiles || []),
@@ -287,7 +300,9 @@ describe('LLMModeSelfImprovementRuntime', () => {
           'test/unit/LLMModeAgent.test.ts',
           'test/harness/RunStateStore.test.ts',
         ],
+        deferredSecondaryFiles: [],
         expansionBudget: 2,
+        expansionStatus: 'exhausted',
         localizationConfidence: 'high',
         domain: 'runstate',
         maxSteps: 7,
@@ -297,6 +312,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.maxSteps).toBe(7);
       expect(prepared.task.description).toContain('Primary files:');
       expect(prepared.task.description).toContain('Secondary files:');
+      expect(prepared.task.description).toContain('Expansion status: exhausted');
       expect(prepared.task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
       expect(prepared.task.description).toContain('Localization confidence: high');
 

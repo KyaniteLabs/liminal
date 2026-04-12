@@ -11,6 +11,11 @@ const {
   mockGitStatus,
   mockRestoreBackup,
   mockCreateBackup,
+  mockExecuteSkill,
+  mockSearchCode,
+  mockSearchDocs,
+  mockRunLint,
+  mockRunFocusedTests,
 } = vi.hoisted(() => {
   const complete = vi.fn();
   const llm = {
@@ -27,6 +32,11 @@ const {
     mockGitStatus: { execute: vi.fn(async () => ({ success: true, data: { branch: 'fix/tui', short: '' } })) },
     mockRestoreBackup: { execute: vi.fn(async () => ({ success: true })) },
     mockCreateBackup: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
+    mockExecuteSkill: { execute: vi.fn(async () => ({ success: true, data: { skill: { name: 'sample-skill' } } })) },
+    mockSearchCode: { execute: vi.fn(async () => ({ success: true, data: { resultCount: 1, results: [] } })) },
+    mockSearchDocs: { execute: vi.fn(async () => ({ success: true, data: { resultCount: 1, results: [] } })) },
+    mockRunLint: { execute: vi.fn(async () => ({ success: true, data: { command: 'npm run lint' } })) },
+    mockRunFocusedTests: { execute: vi.fn(async () => ({ success: true, data: { command: 'npx vitest run test/example.test.ts' } })) },
   };
 });
 
@@ -49,6 +59,18 @@ vi.mock('../../src/harness/tools/index.js', () => ({
   runBuildTool: mockRunBuild,
   runTestsTool: mockRunTests,
   gitStatusTool: mockGitStatus,
+  executeSkillTool: mockExecuteSkill,
+  searchTool: { execute: vi.fn(async () => ({ success: true })) },
+  searchCodeTool: mockSearchCode,
+  searchDocsTool: mockSearchDocs,
+  listDirTool: { execute: vi.fn(async () => ({ success: true })) },
+  typeCheckTool: { execute: vi.fn(async () => ({ success: true })) },
+  npmTool: { execute: vi.fn(async () => ({ success: true })) },
+  runLintTool: mockRunLint,
+  runFocusedTestsTool: mockRunFocusedTests,
+  lspTool: { execute: vi.fn(async () => ({ success: true })) },
+  astValidatorTool: { execute: vi.fn(async () => ({ success: true })) },
+  importGuardTool: { execute: vi.fn(async () => ({ success: true })) },
   restoreBackupTool: mockRestoreBackup,
   createBackupTool: mockCreateBackup,
 }));
@@ -296,6 +318,22 @@ describe('LLMModeAgent', () => {
   it('getAnalyses returns empty array initially', () => {
     const agent = new LLMModeAgent(mockLLM as any);
     expect(agent.getAnalyses()).toEqual([]);
+  });
+
+  it('executeTool dispatches new skill and coding tools', async () => {
+    const agent = new LLMModeAgent(mockLLM as any);
+
+    await (agent as any).executeTool({ tool: 'executeSkill', params: { name: 'sample-skill' }, thought: 'load skill' });
+    await (agent as any).executeTool({ tool: 'searchCode', params: { query: 'TuiBridgeService' }, thought: 'search code' });
+    await (agent as any).executeTool({ tool: 'searchDocs', params: { query: 'visual bible' }, thought: 'search docs' });
+    await (agent as any).executeTool({ tool: 'runLint', params: {}, thought: 'lint' });
+    await (agent as any).executeTool({ tool: 'runFocusedTests', params: { targets: ['test/unit/LLMModeAgent.test.ts'] }, thought: 'tests' });
+
+    expect(mockExecuteSkill.execute).toHaveBeenCalled();
+    expect(mockSearchCode.execute).toHaveBeenCalled();
+    expect(mockSearchDocs.execute).toHaveBeenCalled();
+    expect(mockRunLint.execute).toHaveBeenCalled();
+    expect(mockRunFocusedTests.execute).toHaveBeenCalled();
   });
 
   // ── Edge cases ─────────────────────────────────────────────────────

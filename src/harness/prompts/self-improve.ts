@@ -36,6 +36,9 @@ Run 'npm run build' to verify TypeScript compiles. ALWAYS run this after changes
 ### runTests({ pattern?: string, timeoutMs?: number })
 Run tests to verify changes work correctly.
 
+### executeSkill({ name: string })
+Load a local SKILL.md and use its instructions to guide your next steps.
+
 ### createBackup({ path: string })
 Create a backup of a file. Usually automatic, but can be called explicitly.
 
@@ -45,6 +48,12 @@ Restore a file from backup if changes fail.
 ### search({ pattern: string, path?: string, glob?: string, maxResults?: number })
 Search the codebase for a pattern. Returns matching file paths and line content.
 
+### searchCode({ query: string, repo?: string, filePattern?: string, maxResults?: number, contextLines?: number })
+Search the indexed codebase using jcodemunch. Prefer this over plain search when you need code-aware retrieval.
+
+### searchDocs({ query: string, repo?: string, docPath?: string, maxResults?: number })
+Search indexed documentation using jdocmunch.
+
 ### listDir({ path: string, recursive?: boolean })
 List directory contents. Use to explore project structure.
 
@@ -53,6 +62,12 @@ Run TypeScript type checking without a full build. Faster than runBuild for veri
 
 ### npm({ packages: string[], dev?: boolean })
 Install npm packages. Use dev=true for devDependencies.
+
+### runLint({ files?: string[], timeoutMs?: number })
+Run project lint or eslint on a focused set of files.
+
+### runFocusedTests({ targets: string[], timeoutMs?: number })
+Run a focused Vitest slice for specific files or patterns.
 
 ### lsp({ operation: string })
 Get LSP diagnostics, autocomplete, or go-to-definition for a file.
@@ -234,7 +249,7 @@ You MUST respond with valid JSON:
 }
 \`\`\`
 
-Available tools: readFile, applyEdit, writeFile, runBuild, runTests, createBackup, restoreBackup, search, listDir, typeCheck, npm, lsp, astValidate, importGuard, gitStatus, complete
+Available tools: readFile, applyEdit, writeFile, runBuild, runTests, executeSkill, createBackup, restoreBackup, search, searchCode, searchDocs, listDir, typeCheck, npm, runLint, runFocusedTests, lsp, astValidate, importGuard, gitStatus, complete
 
 ## When to Stop
 Respond with tool "complete" when:

@@ -69,6 +69,13 @@ export interface LLMTask {
   expansionStatus?: 'allowed' | 'exhausted';
   /** Runtime-core confidence in the current bounded localization packet */
   localizationConfidence?: 'high' | 'medium' | 'low';
+  /** Preferred first verification actions for this bounded packet */
+  verificationTargets?: Array<{
+    tool: 'runBuild' | 'runTests' | 'typeCheck';
+    reason: string;
+    pattern?: string;
+    priority: number;
+  }>;
   /** Domain tag for the bounded run (e.g. 'runtime-core', 'runstate') */
   domain?: string;
   maxSteps?: number;
@@ -249,6 +256,7 @@ Description: ${task.description}${preflightSection}${resumeSection}
 You are in LLM-driven mode. Plan your own steps. ${isResume ? 'Continue from where the previous run left off.' : 'Start by reading the relevant file(s).'}
 If readFile returns truncated=true with startLine/endLine, continue that file with offset=endLine rather than rereading from the top.
 If you need a specific method, symbol, or error location inside a large file, use search with the current file path before reading more pages.
+${this.formatVerificationTargetPrompt(task)}
 
 Respond with a JSON object containing your tool call:
 {\n  "thought": "What you're doing and why",\n  "tool": "toolName",\n  "params": { ... },\n  "expectedResult": "What you expect"\n}
@@ -881,7 +889,8 @@ When the task is complete and build passes, respond with tool "complete".`;
   private appendFocusStatusHint(content: string, session: LLMSession): string {
     if (!this.isFocusGateActive(session) || !session.activeFocusFile) return content;
     const nextPrimary = this.nextPrimaryFile(session);
-    return `${content}\n\nFocus gate: active focus=${session.activeFocusFile}; remaining focus reads=${session.focusInspectionBudgetRemaining}; focus status=${session.focusStatus}.${nextPrimary ? ` If you reject this focus, move to next primary file: ${nextPrimary}.` : ' No additional primary files remain after this focus.'}`;
+    const verificationHint = this.formatPreferredVerificationHint(session.task);
+    return `${content}\n\nFocus gate: active focus=${session.activeFocusFile}; remaining focus reads=${session.focusInspectionBudgetRemaining}; focus status=${session.focusStatus}.${nextPrimary ? ` If you reject this focus, move to next primary file: ${nextPrimary}.` : ' No additional primary files remain after this focus.'}${verificationHint ? ` ${verificationHint}` : ''}`;
   }
 
   private isFocusGateActive(session: LLMSession): boolean {
@@ -962,6 +971,22 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (toolCall.tool === 'applyEdit' || toolCall.tool === 'writeFile' || toolCall.tool === 'runBuild' || toolCall.tool === 'runTests' || toolCall.tool === 'typeCheck' || toolCall.tool === 'complete') {
       session.focusStatus = 'committed';
     }
+  }
+
+  private formatVerificationTargetPrompt(task: LLMTask): string {
+    if (!task.verificationTargets?.length) return '';
+    const preferred = task.verificationTargets
+      .slice()
+      .sort((a, b) => a.priority - b.priority)
+      .map((target) => `${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`)
+      .join('\n- ');
+    return `\nPreferred verification targets after a mutation:\n- ${preferred}\nPrefer the first applicable verification target before broader verification discovery.`;
+  }
+
+  private formatPreferredVerificationHint(task: LLMTask): string {
+    if (!task.verificationTargets?.length) return '';
+    const target = task.verificationTargets.slice().sort((a, b) => a.priority - b.priority)[0];
+    return `Preferred next verification: ${target.tool}${target.pattern ? ` (${target.pattern})` : ''}.`;
   }
 
   /**

@@ -9,6 +9,14 @@ export interface RepoIndexLiteContext {
   expansionBudget: number;
   expansionStatus: 'allowed' | 'exhausted';
   localizationConfidence: 'high' | 'medium' | 'low';
+  verificationTargets: VerificationTarget[];
+}
+
+export interface VerificationTarget {
+  tool: 'runBuild' | 'runTests' | 'typeCheck';
+  reason: string;
+  pattern?: string;
+  priority: number;
 }
 
 interface RepoIndexLiteProfile {
@@ -18,6 +26,7 @@ interface RepoIndexLiteProfile {
   secondaryCandidates: string[];
   expansionBudget: number;
   localizationConfidence: 'high' | 'medium' | 'low';
+  verificationTargets: VerificationTarget[];
 }
 
 const DEFAULT_RUNTIME_PROFILE: RepoIndexLiteProfile = {
@@ -33,6 +42,10 @@ const DEFAULT_RUNTIME_PROFILE: RepoIndexLiteProfile = {
   ],
   expansionBudget: 2,
   localizationConfidence: 'medium',
+  verificationTargets: [
+    { tool: 'typeCheck', reason: 'Fast first-pass verification for runtime-core TypeScript changes', priority: 1 },
+    { tool: 'runBuild', reason: 'Full TypeScript build after runtime-core edits', priority: 2 },
+  ],
 };
 
 const CHECKPOINT_RESUME_PROFILE: RepoIndexLiteProfile = {
@@ -48,6 +61,10 @@ const CHECKPOINT_RESUME_PROFILE: RepoIndexLiteProfile = {
   ],
   expansionBudget: 2,
   localizationConfidence: 'high',
+  verificationTargets: [
+    { tool: 'runTests', pattern: 'LLMModeAgent|RunStateStore', reason: 'Checkpoint/resume regressions should hit focused runtime tests first', priority: 1 },
+    { tool: 'runBuild', reason: 'Full TypeScript build after resume/checkpoint changes', priority: 2 },
+  ],
 };
 
 const LOCALIZATION_PACKET_PROFILE: RepoIndexLiteProfile = {
@@ -64,6 +81,10 @@ const LOCALIZATION_PACKET_PROFILE: RepoIndexLiteProfile = {
   ],
   expansionBudget: 2,
   localizationConfidence: 'high',
+  verificationTargets: [
+    { tool: 'runTests', pattern: 'runtime-core', reason: 'Runtime-core packet shaping changes should hit focused runtime tests first', priority: 1 },
+    { tool: 'runBuild', reason: 'Full TypeScript build after packet-shaping edits', priority: 2 },
+  ],
 };
 
 function dedupeFiles(files: string[]): string[] {
@@ -88,6 +109,7 @@ function buildContext(profile: RepoIndexLiteProfile): RepoIndexLiteContext {
     expansionBudget: profile.expansionBudget,
     expansionStatus: deferredSecondaryFiles.length > 0 ? 'allowed' : 'exhausted',
     localizationConfidence: profile.localizationConfidence,
+    verificationTargets: profile.verificationTargets,
   };
 }
 

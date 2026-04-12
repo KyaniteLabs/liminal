@@ -862,6 +862,39 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('surfaces preferred verification targets in the planner prompt', async () => {
+    queuePlans('{"tool":"complete","params":{},"thought":"verification targets are visible","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-verification-targets',
+      title: 'Verification targets visible',
+      description: 'Improve startup flow',
+      primaryFiles: ['src/runtime-core/SelfImprovementRuntime.ts'],
+      verificationTargets: [
+        {
+          tool: 'runTests',
+          pattern: 'runtime-core',
+          reason: 'Hit focused runtime-core tests first',
+          priority: 1,
+        },
+        {
+          tool: 'runBuild',
+          reason: 'Full build after runtime-core edits',
+          priority: 2,
+        },
+      ],
+      approved: true,
+      maxSteps: 3,
+    });
+
+    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+    expect(firstPrompt).toContain('Preferred verification targets after a mutation:');
+    expect(firstPrompt).toContain('runTests (runtime-core): Hit focused runtime-core tests first');
+    expect(firstPrompt).toContain('Prefer the first applicable verification target before broader verification discovery.');
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   it('adds a pagination hint to truncated readFile tool results', async () => {
     mockReadFile.execute.mockResolvedValue({
       success: true,

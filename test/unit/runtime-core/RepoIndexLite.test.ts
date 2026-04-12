@@ -29,6 +29,8 @@ describe('RepoIndexLite', () => {
       expect(context.workingSet.includes(context.fileHint)).toBe(true);
       expect(context.secondaryFiles.length).toBeLessThanOrEqual(context.expansionBudget);
       expect(context.expansionStatus).toBe(context.deferredSecondaryFiles.length > 0 ? 'allowed' : 'exhausted');
+      expect(context.verificationTargets.length).toBeGreaterThan(0);
+      expect(context.verificationTargets[0].priority).toBe(1);
     }
   });
 
@@ -58,6 +60,19 @@ describe('RepoIndexLite', () => {
     expect(first.expansionBudget).toBe(2);
     expect(first.expansionStatus).toBe('exhausted');
     expect(first.localizationConfidence).toBe('high');
+    expect(first.verificationTargets).toEqual([
+      {
+        tool: 'runTests',
+        pattern: 'LLMModeAgent|RunStateStore',
+        reason: 'Checkpoint/resume regressions should hit focused runtime tests first',
+        priority: 1,
+      },
+      {
+        tool: 'runBuild',
+        reason: 'Full TypeScript build after resume/checkpoint changes',
+        priority: 2,
+      },
+    ]);
     expect(first.secondaryFiles.length).toBe(first.expansionBudget);
     expect(first.workingSet).toEqual([...first.primaryFiles, ...first.secondaryFiles]);
     expect(first.workingSet).toHaveLength(4);
@@ -85,6 +100,18 @@ describe('RepoIndexLite', () => {
     expect(context.expansionBudget).toBe(2);
     expect(context.expansionStatus).toBe('exhausted');
     expect(context.localizationConfidence).toBe('medium');
+    expect(context.verificationTargets).toEqual([
+      {
+        tool: 'typeCheck',
+        reason: 'Fast first-pass verification for runtime-core TypeScript changes',
+        priority: 1,
+      },
+      {
+        tool: 'runBuild',
+        reason: 'Full TypeScript build after runtime-core edits',
+        priority: 2,
+      },
+    ]);
     expect(context.secondaryFiles.length).toBe(context.expansionBudget);
     expect(context.workingSet).toEqual([...context.primaryFiles, ...context.secondaryFiles]);
     expect(context.workingSet).toHaveLength(4);
@@ -112,6 +139,19 @@ describe('RepoIndexLite', () => {
     expect(context.expansionStatus).toBe('allowed');
     expect(context.workingSet).not.toContain('src/harness/agent/LLMModeAgent.ts');
     expect(context.localizationConfidence).toBe('high');
+    expect(context.verificationTargets).toEqual([
+      {
+        tool: 'runTests',
+        pattern: 'runtime-core',
+        reason: 'Runtime-core packet shaping changes should hit focused runtime tests first',
+        priority: 1,
+      },
+      {
+        tool: 'runBuild',
+        reason: 'Full TypeScript build after packet-shaping edits',
+        priority: 2,
+      },
+    ]);
   });
 
   it('keeps localization expansion overflow deterministic across repeated similar prompts', () => {

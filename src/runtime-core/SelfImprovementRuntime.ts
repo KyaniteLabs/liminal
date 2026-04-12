@@ -1,6 +1,6 @@
 import type { LLMClient } from '../llm/LLMClient.js';
 import { createLLMModeAgent, type LLMSession, type LLMTask } from '../harness/agent/index.js';
-import { localizeBoundedSelfImprovement } from './RepoIndexLite.js';
+import { localizeBoundedSelfImprovement, type VerificationTarget } from './RepoIndexLite.js';
 
 export interface SelfImprovementRuntimeInput {
   llm: LLMClient;
@@ -16,6 +16,7 @@ interface TaskPacket {
   expansionBudget: number;
   expansionStatus: 'allowed' | 'exhausted';
   localizationConfidence: 'high' | 'medium' | 'low';
+  verificationTargets: VerificationTarget[];
   domain: string;
   description: string;
 }
@@ -52,8 +53,9 @@ function buildTaskPacket(description: string): TaskPacket {
     expansionBudget: context.expansionBudget,
     expansionStatus: context.expansionStatus,
     localizationConfidence: context.localizationConfidence,
+    verificationTargets: context.verificationTargets,
     domain: context.domain,
-    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\nPrimary files:\n- ${context.primaryFiles.join('\n- ')}\nSecondary files:\n- ${context.secondaryFiles.join('\n- ')}${context.deferredSecondaryFiles.length > 0 ? `\nDeferred secondary files:\n- ${context.deferredSecondaryFiles.join('\n- ')}` : ''}\nExpansion budget: ${context.expansionBudget} additional files before broadening beyond this packet\nExpansion status: ${context.expansionStatus}\nLocalization confidence: ${context.localizationConfidence}\nDomain: ${context.domain}`,
+    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\nPrimary files:\n- ${context.primaryFiles.join('\n- ')}\nSecondary files:\n- ${context.secondaryFiles.join('\n- ')}${context.deferredSecondaryFiles.length > 0 ? `\nDeferred secondary files:\n- ${context.deferredSecondaryFiles.join('\n- ')}` : ''}\nVerification targets:\n- ${context.verificationTargets.map((target) => `${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`).join('\n- ')}\nExpansion budget: ${context.expansionBudget} additional files before broadening beyond this packet\nExpansion status: ${context.expansionStatus}\nLocalization confidence: ${context.localizationConfidence}\nDomain: ${context.domain}`,
   };
 }
 
@@ -76,6 +78,7 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
       expansionBudget: taskPacket.expansionBudget,
       expansionStatus: taskPacket.expansionStatus,
       localizationConfidence: taskPacket.localizationConfidence,
+      verificationTargets: taskPacket.verificationTargets,
       domain: taskPacket.domain,
       maxSteps,
       approved: true,

@@ -49,9 +49,12 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.task.domain).toBe(testCase.expectedDomain);
       expect((prepared.task.secondaryFiles || []).length).toBeLessThanOrEqual(prepared.task.expansionBudget || 0);
       expect(prepared.task.expansionStatus).toBe(((prepared.task.deferredSecondaryFiles || []).length > 0) ? 'allowed' : 'exhausted');
+      expect(prepared.task.verificationTargets?.length).toBeGreaterThan(0);
+      expect(prepared.task.verificationTargets?.[0].priority).toBe(1);
       expect(prepared.task.description).toContain('## Deterministic Task Packet');
       expect(prepared.task.description).toContain(`Primary files:\n- ${(prepared.task.primaryFiles || []).join('\n- ')}`);
       expect(prepared.task.description).toContain(`Secondary files:\n- ${(prepared.task.secondaryFiles || []).join('\n- ')}`);
+      expect(prepared.task.description).toContain(`Verification targets:\n- ${(prepared.task.verificationTargets || []).map((target) => `${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`).join('\n- ')}`);
       expect(prepared.task.description).toContain(`Expansion budget: ${prepared.task.expansionBudget} additional files before broadening beyond this packet`);
       expect(prepared.task.description).toContain(`Expansion status: ${prepared.task.expansionStatus}`);
       expect(prepared.task.description).toContain(`Localization confidence: ${prepared.task.localizationConfidence}`);
@@ -171,6 +174,19 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expansionBudget: 2,
       expansionStatus: 'allowed',
       localizationConfidence: 'high',
+      verificationTargets: [
+        {
+          tool: 'runTests',
+          pattern: 'runtime-core',
+          reason: 'Runtime-core packet shaping changes should hit focused runtime tests first',
+          priority: 1,
+        },
+        {
+          tool: 'runBuild',
+          reason: 'Full TypeScript build after packet-shaping edits',
+          priority: 2,
+        },
+      ],
       domain: 'runtime-core',
     }));
     const task = mockExecuteTask.mock.calls[0][0];
@@ -304,6 +320,19 @@ describe('LLMModeSelfImprovementRuntime', () => {
         expansionBudget: 2,
         expansionStatus: 'exhausted',
         localizationConfidence: 'high',
+        verificationTargets: [
+          {
+            tool: 'runTests',
+            pattern: 'LLMModeAgent|RunStateStore',
+            reason: 'Checkpoint/resume regressions should hit focused runtime tests first',
+            priority: 1,
+          },
+          {
+            tool: 'runBuild',
+            reason: 'Full TypeScript build after resume/checkpoint changes',
+            priority: 2,
+          },
+        ],
         domain: 'runstate',
         maxSteps: 7,
         approved: true,
@@ -312,6 +341,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.maxSteps).toBe(7);
       expect(prepared.task.description).toContain('Primary files:');
       expect(prepared.task.description).toContain('Secondary files:');
+      expect(prepared.task.description).toContain('Verification targets:');
       expect(prepared.task.description).toContain('Expansion status: exhausted');
       expect(prepared.task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
       expect(prepared.task.description).toContain('Localization confidence: high');

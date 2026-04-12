@@ -369,6 +369,87 @@ describe('HeadlessRenderer', () => {
     expect(result.errors).toContain('Canvas not found or timed out for three render');
   });
 
+  it('closes render pages by default after capture', async () => {
+    const fakePage = {
+      setViewportSize: vi.fn(async () => {}),
+      setContent: vi.fn(async () => {}),
+      on: vi.fn(),
+      waitForFunction: vi.fn(async () => {}),
+      waitForTimeout: vi.fn(async () => {}),
+      $: vi.fn(async () => null),
+      screenshot: vi.fn(async () => Buffer.alloc(100)),
+      evaluate: vi.fn(async () => ({ samples: [], sampleRate: 44100, duration: 0.1, hasAudio: false, warnings: [] })),
+      close: vi.fn(async () => {}),
+    };
+
+    const renderer = HeadlessRenderer.getInstance() as unknown as {
+      browser: Record<string, unknown>;
+      context: { newPage: () => Promise<unknown> };
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<unknown>;
+    };
+
+    renderer.browser = {} as never;
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(true);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      success: true,
+      buffer: Buffer.alloc(100),
+      width: 100,
+      height: 100,
+    });
+
+    const result = await HeadlessRenderer.getInstance().render('function setup(){createCanvas(100,100)}', { domain: 'p5' });
+
+    expect(result.success).toBe(true);
+    expect(result.page).toBeUndefined();
+    expect(fakePage.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps render pages open when explicitly requested', async () => {
+    const fakePage = {
+      setViewportSize: vi.fn(async () => {}),
+      setContent: vi.fn(async () => {}),
+      on: vi.fn(),
+      waitForFunction: vi.fn(async () => {}),
+      waitForTimeout: vi.fn(async () => {}),
+      $: vi.fn(async () => null),
+      screenshot: vi.fn(async () => Buffer.alloc(100)),
+      evaluate: vi.fn(async () => ({ samples: [], sampleRate: 44100, duration: 0.1, hasAudio: false, warnings: [] })),
+      close: vi.fn(async () => {}),
+    };
+
+    const renderer = HeadlessRenderer.getInstance() as unknown as {
+      browser: Record<string, unknown>;
+      context: { newPage: () => Promise<unknown> };
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<unknown>;
+    };
+
+    renderer.browser = {} as never;
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(true);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      success: true,
+      buffer: Buffer.alloc(100),
+      width: 100,
+      height: 100,
+    });
+
+    const result = await HeadlessRenderer.getInstance().render('function setup(){createCanvas(100,100)}', {
+      domain: 'p5',
+      keepPageOpen: true,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.page).toBe(fakePage);
+    expect(fakePage.close).not.toHaveBeenCalled();
+  });
+
   it('propagates screenshot failure reasons to the top-level render result', async () => {
     const renderer = new HeadlessRenderer() as HeadlessRenderer & {
       context: { newPage: () => Promise<unknown> };

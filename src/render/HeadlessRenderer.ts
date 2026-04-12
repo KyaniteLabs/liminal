@@ -25,6 +25,8 @@ export interface RenderOptions {
   stabilizationTime?: number;
   /** Domain hint for specialized rendering */
   domain?: RenderDomain;
+  /** Keep the Playwright page open for advanced callers */
+  keepPageOpen?: boolean;
 }
 
 export interface ScreenshotResult {
@@ -79,6 +81,7 @@ const DEFAULT_OPTIONS: Required<RenderOptions> = {
   waitForStabilization: true,
   stabilizationTime: 2000,
   domain: 'unknown',
+  keepPageOpen: false,
 };
 
 function domainRequiresCanvas(domain: RenderDomain): boolean {
@@ -199,6 +202,7 @@ export class HeadlessRenderer {
     const opts = { ...DEFAULT_OPTIONS, ...options };
     const logs: string[] = [];
     const errors: string[] = [];
+    let page: Page | undefined;
 
     try {
       await this.initialize();
@@ -207,7 +211,7 @@ export class HeadlessRenderer {
         throw new Error('Browser context not initialized');
       }
 
-      const page = await this.context.newPage();
+      page = await this.context.newPage();
       
       // Set viewport size
       await page.setViewportSize({ width: opts.width, height: opts.height });
@@ -289,7 +293,7 @@ export class HeadlessRenderer {
       }
 
       return {
-        page,
+        page: opts.keepPageOpen ? page : undefined,
         screenshot,
         audio,
         success: screenshot.success,
@@ -305,6 +309,14 @@ export class HeadlessRenderer {
         logs,
         errors,
       };
+    } finally {
+      if (page && !opts.keepPageOpen) {
+        try {
+          await page.close();
+        } catch (closeError) {
+          Logger.debug('HeadlessRenderer', 'Failed to close render page:', closeError);
+        }
+      }
     }
   }
 

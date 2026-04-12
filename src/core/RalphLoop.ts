@@ -631,6 +631,12 @@ export class RalphLoop {
               
               if (normalizedOptions.chatMode) {
                 normalizedOptions.onThought?.(`Render score: ${renderResult.score.toFixed(2)}, blended: ${blendedScore.toFixed(2)} (was ${oldScore.toFixed(2)})`);
+                if (renderResult.warnings?.length) {
+                  normalizedOptions.onThought?.(`Render warnings: ${renderResult.warnings.join(' | ')}`);
+                }
+              }
+              if (renderResult.warnings?.length) {
+                Logger.warn('RalphLoop', `Render scoring warnings: ${renderResult.warnings.join(' | ')}`);
               }
               
               // Add render score info to dimensions

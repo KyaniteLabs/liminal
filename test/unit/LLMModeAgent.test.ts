@@ -211,6 +211,21 @@ describe('LLMModeAgent', () => {
     expect(mockRunBuild.execute).not.toHaveBeenCalled();
   });
 
+  it('surfaces the actual upstream LLM call failure instead of mislabeling it as a rate limit', async () => {
+    vi.mocked(rateLimiter.execute).mockResolvedValueOnce({ error: 'OpenAI upstream 502' } as any);
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-upstream-error',
+      title: 'Upstream error',
+      description: 'desc',
+      approved: true,
+    });
+
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.lastPlanError).toBe('OpenAI upstream 502');
+  });
+
   it('executeTask sets FAILED when LLM response is unparseable', async () => {
     mockComplete.mockResolvedValue({ text: 'This is not JSON at all' });
     const agent = new LLMModeAgent(mockLLM as any);

@@ -111,6 +111,8 @@ export interface LLMSession {
   lastVerification?: import('../RunStateStore.js').VerificationState;
   /** Deterministic exit reason for bounded runs (e.g. 'bounded-inspection', 'bounded-no-change') */
   exitReason?: string;
+  /** Most recent planning-stage failure reason for operator diagnostics */
+  lastPlanError?: string;
 }
 
 /**
@@ -313,7 +315,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         const toolCall = await this.getLLMPlan(session);
         
         if (!toolCall) {
-          Logger.error('LLMModeAgent', 'Failed to parse LLM response');
+          Logger.error('LLMModeAgent', session.lastPlanError || 'Failed to parse LLM response');
           parseFailure = true;
           break;
         }
@@ -450,14 +452,14 @@ When the task is complete and build passes, respond with tool "complete".`;
       if (parseFailure) {
 
         // LLM response couldn't be parsed - this is a real failure
-        Logger.error('LLMModeAgent', `Failed to parse LLM response after ${session.stepCount} steps`);
+        Logger.error('LLMModeAgent', session.lastPlanError ? `${session.lastPlanError} after ${session.stepCount} steps` : `Failed to parse LLM response after ${session.stepCount} steps`);
         session.status = Status.FAILED;
         session.endTime = new Date().toISOString();
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: false,
-          reason: 'Failed to parse LLM response',
+          reason: session.lastPlanError || 'Failed to parse LLM response',
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
@@ -594,8 +596,18 @@ When the task is complete and build passes, respond with tool "complete".`;
     });
 
     if (!rateLimitResult.result) {
-      Logger.error('LLMModeAgent', 'Rate limit hit for LLM call');
+      const failureReason = rateLimitResult.rateLimited
+        ? (rateLimitResult.error || 'Rate limit hit for LLM call')
+        : (rateLimitResult.error || 'LLM call failed before producing a response');
+      if (this.currentSession) {
+        this.currentSession.lastPlanError = failureReason;
+      }
+      Logger.error('LLMModeAgent', failureReason);
       return null;
+    }
+
+    if (this.currentSession) {
+      this.currentSession.lastPlanError = undefined;
     }
 
     // Parse JSON response
@@ -623,6 +635,9 @@ When the task is complete and build passes, respond with tool "complete".`;
         if (implicitComplete) {
           Logger.debug('LLMModeAgent', 'Using implicit completion fallback for late-stage plain-text response');
           return implicitComplete;
+        }
+        if (this.currentSession) {
+          this.currentSession.lastPlanError = 'Failed to parse LLM response';
         }
         Logger.error('LLMModeAgent', 'No JSON object found in response');
         return null;
@@ -667,6 +682,9 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       return toolCall;
     } catch (e) {
+      if (this.currentSession) {
+        this.currentSession.lastPlanError = `Failed to parse LLM response: ${String(e)}`;
+      }
       Logger.error('LLMModeAgent', `Failed to parse LLM response: ${e}`);
       Logger.error('LLMModeAgent', `Raw response: ${rateLimitResult.result}`);
       return null;

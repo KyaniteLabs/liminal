@@ -122,6 +122,10 @@ export interface RunState {
   focusStatus?: 'unresolved' | 'committed' | 'rejected';
   /** Whether the one-off adjacent read allowance has been used */
   focusAdjacentFileUsed?: boolean;
+  /** Last explicit focus decision */
+  focusDecision?: 'reject' | 'resolve';
+  /** When the last explicit focus decision was made */
+  focusDecisionAt?: string;
 }
 
 const RUN_STATE_DIR = '.omx';
@@ -273,6 +277,7 @@ export function formatResumeContext(state: RunState): string {
     state.exploredPaths.length > 0 ? `Paths already explored: ${state.exploredPaths.join(', ')}` : '',
     state.activeFocusFile ? `Active focus file: ${state.activeFocusFile}` : '',
     typeof state.focusInspectionBudgetRemaining === 'number' ? `Focus inspection reads remaining: ${state.focusInspectionBudgetRemaining}` : '',
+    state.focusDecision ? `Last focus decision: ${state.focusDecision}${state.focusDecisionAt ? ` at ${state.focusDecisionAt}` : ''}` : '',
     verificationSummary ?? '',
     ``,
     `Progress: ${state.progressSummary}`,

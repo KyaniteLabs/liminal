@@ -130,6 +130,10 @@ export interface LLMSession {
   focusStatus: 'unresolved' | 'committed' | 'rejected';
   /** Whether the one-off adjacent file allowance has been consumed */
   focusAdjacentFileUsed: boolean;
+  /** Last explicit focus decision */
+  focusDecision?: 'reject' | 'resolve';
+  /** When the last explicit focus decision was made */
+  focusDecisionAt?: string;
 }
 
 /**
@@ -186,6 +190,8 @@ export class LLMModeAgent {
       focusInspectionBudgetRemaining: 0,
       focusStatus: 'rejected',
       focusAdjacentFileUsed: false,
+      focusDecision: undefined,
+      focusDecisionAt: undefined,
     };
 
     this.sessions.set(task.id, session);
@@ -901,6 +907,8 @@ When the task is complete and build passes, respond with tool "complete".`;
     session.focusInspectionBudgetRemaining = 2;
     session.focusStatus = 'unresolved';
     session.focusAdjacentFileUsed = false;
+    session.focusDecision = undefined;
+    session.focusDecisionAt = undefined;
   }
 
   private appendFocusStatusHint(content: string, session: LLMSession): string {
@@ -928,6 +936,8 @@ When the task is complete and build passes, respond with tool "complete".`;
     session.focusInspectionBudgetRemaining = 1;
     session.focusStatus = 'unresolved';
     session.focusAdjacentFileUsed = false;
+    session.focusDecision = 'reject';
+    session.focusDecisionAt = new Date().toISOString();
   }
 
   private validateFocusGate(toolCall: ToolCall): string | null {
@@ -987,6 +997,8 @@ When the task is complete and build passes, respond with tool "complete".`;
 
     if (toolCall.tool === 'applyEdit' || toolCall.tool === 'writeFile' || toolCall.tool === 'runBuild' || toolCall.tool === 'runTests' || toolCall.tool === 'typeCheck' || toolCall.tool === 'complete') {
       session.focusStatus = 'committed';
+      session.focusDecision = 'resolve';
+      session.focusDecisionAt = new Date().toISOString();
     }
   }
 
@@ -1253,6 +1265,8 @@ When the task is complete and build passes, respond with tool "complete".`;
       session.focusInspectionBudgetRemaining = existingRunState.focusInspectionBudgetRemaining ?? 0;
       session.focusStatus = existingRunState.focusStatus ?? 'unresolved';
       session.focusAdjacentFileUsed = existingRunState.focusAdjacentFileUsed ?? false;
+      session.focusDecision = existingRunState.focusDecision;
+      session.focusDecisionAt = existingRunState.focusDecisionAt;
     }
     session.stepCount = existingRunState.stepsCompleted;
   }
@@ -1309,6 +1323,8 @@ When the task is complete and build passes, respond with tool "complete".`;
       focusInspectionBudgetRemaining: session.focusInspectionBudgetRemaining,
       focusStatus: session.focusStatus,
       focusAdjacentFileUsed: session.focusAdjacentFileUsed,
+      focusDecision: session.focusDecision,
+      focusDecisionAt: session.focusDecisionAt,
       workspaceFingerprint,
     };
   }

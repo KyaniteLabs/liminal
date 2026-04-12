@@ -1064,6 +1064,8 @@ describe('LLMModeAgent', () => {
       focusInspectionBudgetRemaining: 1,
       focusStatus: 'unresolved',
       focusAdjacentFileUsed: true,
+      focusDecision: 'reject',
+      focusDecisionAt: '2026-04-12T09:00:00.000Z',
     }));
     queuePlans('{"tool":"complete","params":{},"thought":"restored focus state is enough to continue","expectedResult":"done"}');
 
@@ -1086,6 +1088,8 @@ describe('LLMModeAgent', () => {
     expect(session.focusInspectionBudgetRemaining).toBe(0);
     expect(session.focusStatus).toBe('unresolved');
     expect(session.focusAdjacentFileUsed).toBe(true);
+    expect(session.focusDecision).toBe('reject');
+    expect(session.focusDecisionAt).toBe('2026-04-12T09:00:00.000Z');
     expect(session.status).toBe(Status.SUCCESS);
   });
 
@@ -1120,6 +1124,7 @@ describe('LLMModeAgent', () => {
     expect(session.activeFocusFile).toBe('src/runtime-core/SelfImprovementRuntime.ts');
     expect(session.activeFocusIndex).toBe(1);
     expect(session.focusInspectionBudgetRemaining).toBe(0);
+    expect(session.focusDecision).toBe('reject');
     expect(session.status).toBe(Status.SUCCESS);
   });
 

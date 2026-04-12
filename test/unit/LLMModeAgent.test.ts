@@ -6,6 +6,7 @@ const {
   mockLLM,
   mockReadFile,
   mockApplyEdit,
+  mockSearch,
   mockRunBuild,
   mockRunTests,
   mockGitStatus,
@@ -32,6 +33,7 @@ const {
     mockLLM: llm,
     mockReadFile: { execute: vi.fn(async () => ({ success: true, data: { content: 'const x = 1;' } })) },
     mockApplyEdit: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
+    mockSearch: { execute: vi.fn(async () => ({ success: true, data: { resultCount: 1, results: [] } })) },
     mockRunBuild: { execute: vi.fn(async () => ({ success: true })) },
     mockRunTests: { execute: vi.fn(async () => ({ success: true })) },
     mockGitStatus: { execute: vi.fn(async () => ({ success: true, data: { branch: 'fix/tui', short: '' } })) },
@@ -70,7 +72,7 @@ vi.mock('../../src/harness/tools/index.js', () => ({
   runTestsTool: mockRunTests,
   gitStatusTool: mockGitStatus,
   executeSkillTool: mockExecuteSkill,
-  searchTool: { execute: vi.fn(async () => ({ success: true })) },
+  searchTool: mockSearch,
   searchCodeTool: mockSearchCode,
   searchDocsTool: mockSearchDocs,
   listDirTool: { execute: vi.fn(async () => ({ success: true })) },
@@ -1014,7 +1016,7 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
-  it('blocks broad search while the primary focus is still unresolved', async () => {
+  it('auto-scopes a bare search to the active focus file while the primary focus is unresolved', async () => {
     queuePlans(
       '{"tool":"search","params":{"pattern":"executeTask"},"thought":"search the whole repo","expectedResult":"find the method"}',
       '{"tool":"complete","params":{},"thought":"focus gate error received","expectedResult":"done"}',
@@ -1039,10 +1041,106 @@ describe('LLMModeAgent', () => {
       maxSteps: 3,
     });
 
-    expect(session.messages.some((message) =>
-      message.role === 'tool' && message.content.includes('Focus gate: search must stay inside the active focus file'),
-    )).toBe(true);
+    expect(mockSearch.execute).toHaveBeenCalledWith(expect.objectContaining({
+      pattern: 'executeTask',
+      path: 'src/runtime-core/RepoIndexLite.ts',
+    }));
     expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('auto-scopes bare search calls to the active focus file during bounded runs', async () => {
+    queuePlans(
+      '{"tool":"search","params":{"pattern":"buildTaskPacket"},"thought":"search for the packet builder","expectedResult":"find the symbol inside the active focus file"}',
+      '{"tool":"complete","params":{},"thought":"scoped search is enough for this test","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-search-scope',
+      title: 'Auto-scope bare search',
+      description: 'Keep bare search calls inside the active focus file during bounded inspection',
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      workingSet: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    expect(session.status).toBe(Status.SUCCESS);
+    expect(mockSearch.execute).toHaveBeenCalledWith(expect.objectContaining({
+      pattern: 'buildTaskPacket',
+      path: 'src/runtime-core/SelfImprovementRuntime.ts',
+    }));
+  });
+
+  it('rewrites broad search paths back to the active focus file while focus is unresolved', async () => {
+    queuePlans(
+      '{"tool":"search","params":{"pattern":"completionPolicy","path":"src/harness/agent/LLMModeAgent.ts"},"thought":"search another file too early","expectedResult":"find the symbol"}',
+      '{"tool":"complete","params":{},"thought":"scoped search is enough for this test","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-search-rewrite',
+      title: 'Rewrite broad search to active focus',
+      description: 'Keep unresolved bounded searches inside the active focus file even if the planner names another path too early',
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      workingSet: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    expect(session.status).toBe(Status.SUCCESS);
+    expect(mockSearch.execute).toHaveBeenCalledWith(expect.objectContaining({
+      pattern: 'completionPolicy',
+      path: 'src/runtime-core/SelfImprovementRuntime.ts',
+    }));
+  });
+
+  it('rewrites premature readFile calls back to the active focus file while focus reads remain', async () => {
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts"},"thought":"jump to a related file too early","expectedResult":"inspect the helper"}',
+      '{"tool":"complete","params":{},"thought":"rewritten readFile is enough for this test","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-readfile-rewrite',
+      title: 'Rewrite premature readFile',
+      description: 'Keep unresolved bounded reads on the active focus file until the loop has earned an advance',
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      workingSet: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/runtime-core/RepoIndexLite.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/runtime-core/RepoIndexLite.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    expect(session.status).toBe(Status.SUCCESS);
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(2, {
+      path: 'src/runtime-core/SelfImprovementRuntime.ts',
+    });
   });
 
   it('adds a focus recovery hint when a readFile tries to skip ahead too early', async () => {
@@ -1070,10 +1168,9 @@ describe('LLMModeAgent', () => {
       maxSteps: 3,
     });
 
-    const toolMessage = session.messages.find((message) =>
-      message.role === 'tool' && message.content.includes('Focus recovery hint: stay on src/runtime-core/SelfImprovementRuntime.ts'),
-    );
-    expect(toolMessage?.content).toContain('call readFile with path=src/harness/agent/LLMModeAgent.ts to advance intentionally');
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(2, {
+      path: 'src/runtime-core/SelfImprovementRuntime.ts',
+    });
     expect(session.status).toBe(Status.SUCCESS);
   });
 

@@ -959,6 +959,41 @@ When the task is complete and build passes, respond with tool "complete".`;
     return this.isBoundedInspectionRun(session) && !!session.task.primaryFiles?.length;
   }
 
+  private normalizeToolCallForFocusGate(toolCall: ToolCall): ToolCall {
+    const session = this.currentSession;
+    if (!session || !this.isFocusGateActive(session) || session.focusStatus !== 'unresolved') {
+      return toolCall;
+    }
+
+    if (toolCall.tool === 'readFile' && session.activeFocusFile) {
+      const requestedPath = typeof toolCall.params?.path === 'string' ? toolCall.params.path : undefined;
+      const nextPrimary = this.nextPrimaryFile(session);
+      const canAdvanceToNextPrimary = !!requestedPath && !!nextPrimary && requestedPath === nextPrimary && session.focusInspectionBudgetRemaining <= 0;
+      const isAllowedSecondary = !!requestedPath && !!session.task.secondaryFiles?.includes(requestedPath) && !session.focusAdjacentFileUsed;
+      if (!requestedPath || (!canAdvanceToNextPrimary && !isAllowedSecondary && requestedPath !== session.activeFocusFile)) {
+        return {
+          ...toolCall,
+          params: {
+            ...(toolCall.params || {}),
+            path: session.activeFocusFile,
+          },
+        };
+      }
+    }
+
+    if (toolCall.tool === 'search' && session.activeFocusFile) {
+      return {
+        ...toolCall,
+        params: {
+          ...(toolCall.params || {}),
+          path: session.activeFocusFile,
+        },
+      };
+    }
+
+    return toolCall;
+  }
+
   private nextPrimaryFile(session: LLMSession): string | undefined {
     const primaryFiles = session.task.primaryFiles || [];
     return primaryFiles[session.activeFocusIndex + 1];
@@ -1059,6 +1094,7 @@ When the task is complete and build passes, respond with tool "complete".`;
    * Execute a tool call
    */
   private async executeTool(toolCall: ToolCall): Promise<ToolResult> {
+    toolCall = this.normalizeToolCallForFocusGate(toolCall);
     const { tool, params, thought } = toolCall;
 
     Logger.debug('LLMModeAgent', `${thought}`);

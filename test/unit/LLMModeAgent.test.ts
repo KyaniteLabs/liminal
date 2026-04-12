@@ -898,7 +898,7 @@ describe('LLMModeAgent', () => {
       maxSteps: 5,
     });
 
-    expect(mockReadFile.execute).toHaveBeenCalledTimes(3); // 1 preflight + 2 allowed explicit reads
+    expect(mockReadFile.execute).toHaveBeenCalledTimes(2); // 1 preflight + 1 allowed explicit read, then gate blocks the next reread
     expect(session.messages.some((message) =>
       message.role === 'tool' && message.content.includes('Focus gate: inspection budget exhausted'),
     )).toBe(true);
@@ -936,6 +936,40 @@ describe('LLMModeAgent', () => {
     expect(session.focusInspectionBudgetRemaining).toBe(1);
     expect(session.focusStatus).toBe('unresolved');
     expect(session.focusAdjacentFileUsed).toBe(true);
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('allows advancing to the next primary file after one explicit focused read', async () => {
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts"},"thought":"inspect the current primary file","expectedResult":"understand it"}',
+      '{"tool":"readFile","params":{"path":"src/runtime-core/SelfImprovementRuntime.ts"},"thought":"advance to the next primary file after finishing the first one","expectedResult":"inspect next focus"}',
+      '{"tool":"complete","params":{},"thought":"advanced focus is enough for this test","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-advance',
+      title: 'Advance primary focus',
+      description: 'Allow the loop to move from one primary file to the next after bounded inspection',
+      primaryFiles: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      workingSet: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalledTimes(4); // 2 preflight reads + 1 explicit reread + next primary
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(3, { path: 'src/runtime-core/RepoIndexLite.ts' });
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(4, { path: 'src/runtime-core/SelfImprovementRuntime.ts' });
+    expect(session.activeFocusFile).toBe('src/runtime-core/SelfImprovementRuntime.ts');
+    expect(session.activeFocusIndex).toBe(1);
+    expect(session.focusInspectionBudgetRemaining).toBe(0);
     expect(session.status).toBe(Status.SUCCESS);
   });
 

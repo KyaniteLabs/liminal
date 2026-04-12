@@ -857,7 +857,7 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (!this.isBoundedInspectionRun(session) || !session.task.primaryFiles?.length) return;
     session.activeFocusIndex = 0;
     session.activeFocusFile = session.task.primaryFiles[0];
-    session.focusInspectionBudgetRemaining = 2;
+    session.focusInspectionBudgetRemaining = 1;
     session.focusStatus = 'unresolved';
     session.focusAdjacentFileUsed = false;
   }
@@ -883,7 +883,7 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (nextIndex === -1) return;
     session.activeFocusIndex = nextIndex;
     session.activeFocusFile = filePath;
-    session.focusInspectionBudgetRemaining = 2;
+    session.focusInspectionBudgetRemaining = 1;
     session.focusStatus = 'unresolved';
     session.focusAdjacentFileUsed = false;
   }

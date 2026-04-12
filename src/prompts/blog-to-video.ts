@@ -133,24 +133,28 @@ Every script must have:
 - The narration must work as spoken audio. Read it out loud.
 - All numbers must be real and specific. No "thousands" when the real number is 12,437.
 - Durations are approximate. Do not lock to exact frames.`,
-  userPromptTemplate: `Write a short-form video script for this blog theme:
+  userPromptTemplate: `Write a short-form video script for this blog theme.
 
-**Theme:** \${theme}
-**Era:** \${era}
-**Template:** \${template}
-**Format:** \${format}
-**Platform:** \${platform}
+<theme_brief>
+  <theme>\${theme}</theme>
+  <era>\${era}</era>
+  <template>\${template}</template>
+  <format>\${format}</format>
+  <platform>\${platform}</platform>
+</theme_brief>
 
-Key quotes from source material:
+<key_quotes>
 \${keyQuotes}
+</key_quotes>
 
-Key data points:
+<data_points>
 \${dataPoints}
+</data_points>
 
 Write the complete script with metadata header, beat map, and full narration.`,
   tags: ['narrative', 'blog', 'video', 'script'],
   created: '2026-04-01',
-  updated: '2026-04-01',
+  updated: '2026-04-11',
 });
 
 // ─── Spec format reference (from script-to-animation workspace) ───
@@ -280,19 +284,21 @@ Write the complete spec as structured markdown with:
 - Describe visual concepts, not implementation. "Energy radiates outward" not "TapRipple with expandTo: 1.5"
 - Durations are approximate. Do not lock to exact frames.
 - Spec contains ZERO component names, frame numbers, or prop definitions.`,
-  userPromptTemplate: `Convert this video script into an animation specification:
+  userPromptTemplate: `Convert this video script into an animation specification.
 
-## Script
+<video_script>
 \${script}
+</video_script>
 
-## Options
-- Resolution: \${resolution}
-- FPS: \${fps}
-- Brand colors: \${brandColors}
-- Brand fonts: \${brandFonts}
+<options>
+  <resolution>\${resolution}</resolution>
+  <fps>\${fps}</fps>
+  <brand_colors>\${brandColors}</brand_colors>
+  <brand_fonts>\${brandFonts}</brand_fonts>
+</options>
 
 Write the complete animation specification.`,
   tags: ['narrative', 'blog', 'video', 'spec'],
   created: '2026-04-01',
-  updated: '2026-04-01',
+  updated: '2026-04-11',
 });

@@ -128,7 +128,7 @@ Focus on artistic merit and creativity. Output executable code directly.`;
  * Role: Analyze technical quality and execution
  * Used by: Cloud model in phaseAnalysis()
  */
-export const TECHNICAL_CRITIC_ROLE_PROMPT = `You are a TECHNICAL CRITIC. Analyze this output for technical quality. Think step by step.
+export const TECHNICAL_CRITIC_ROLE_PROMPT = `You are a TECHNICAL CRITIC. Analyze this output for technical quality.
 
 Rate each dimension on a 1-5 scale:
 1. Correctness — Does the code work as intended?
@@ -136,7 +136,8 @@ Rate each dimension on a 1-5 scale:
 3. Performance — Are there unnecessary computations or inefficiencies?
 4. Best practices — Does it follow domain conventions?
 
-DO NOT give generic praise. Reference specific lines or patterns.
+DO NOT give generic praise. Reference specific lines, identifiers, or patterns.
+Keep the analysis concise and evidence-backed.
 
 Request: \${prompt}
 Domain: \${domain}
@@ -152,7 +153,7 @@ Provide your analysis with ratings for each dimension (1-5) and specific actiona
  * Role: Analyze aesthetic and creative quality
  * Used by: Cloud model in phaseAnalysis()
  */
-export const ARTISTIC_CRITIC_ROLE_PROMPT = `You are an ARTISTIC CRITIC. Analyze this output for aesthetic and creative quality. Think step by step.
+export const ARTISTIC_CRITIC_ROLE_PROMPT = `You are an ARTISTIC CRITIC. Analyze this output for aesthetic and creative quality.
 
 Rate each dimension on a 1-5 scale:
 1. Creativity — Is it original or derivative?
@@ -160,7 +161,8 @@ Rate each dimension on a 1-5 scale:
 3. Emotional impact — Does it evoke a feeling or response?
 4. Artistic ambition — Does it go beyond the minimum request?
 
-DO NOT give generic praise. Reference specific creative choices.
+DO NOT give generic praise. Reference specific creative choices, motifs, or visual decisions.
+Keep the analysis concise and evidence-backed.
 
 Request: \${prompt}
 Domain: \${domain}
@@ -185,6 +187,7 @@ Compare against professional examples in this domain. Rate on a 1-5 scale:
 4. Innovation — Does it use domain features in interesting ways?
 
 DO NOT give generic feedback. Reference specific domain features, APIs, or patterns.
+Keep the analysis concise and evidence-backed.
 
 Request: \${prompt}
 Domain: \${domain}

@@ -240,10 +240,11 @@ describe('PromptBuilder.build() — medium tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.system).toContain('RULES:');
+    expect(result.system).toContain('<rules>');
+    expect(result.system).toContain('</rules>');
     expect(result.system).toContain('1. Always output valid code.');
-    expect(result.system).toContain('2. No explanations outside code comments.');
-    expect(result.system).toContain('3. Include all necessary imports/setup.');
+    expect(result.system).toContain('2. Output code only unless the caller explicitly asks for explanation.');
+    expect(result.system).toContain('3. Include necessary imports and setup.');
   });
 
   it('includes domain docs under DOMAIN KNOWLEDGE header', () => {
@@ -252,7 +253,8 @@ describe('PromptBuilder.build() — medium tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.system).toContain('DOMAIN KNOWLEDGE (p5):');
+    expect(result.system).toContain('<domain_knowledge name="p5">');
+    expect(result.system).toContain('</domain_knowledge>');
     expect(result.system).toContain('p5.js is a JavaScript library for creative coding.');
   });
 
@@ -262,9 +264,13 @@ describe('PromptBuilder.build() — medium tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.user).toContain('REQUEST:');
+    expect(result.user).toContain('<request>');
+    expect(result.user).toContain('</request>');
     expect(result.user).toContain('Create a bouncing ball animation');
-    expect(result.user).toContain('OUTPUT: Valid p5 code.');
+    expect(result.user).toContain('<instruction>');
+    expect(result.user).toContain('Generate valid p5 code.');
+    expect(result.user).toContain('Return code only.');
+    expect(result.user).toContain('</instruction>');
   });
 
   it('uses default soul when absent', () => {
@@ -291,7 +297,7 @@ describe('PromptBuilder.build() — medium tier', () => {
 
     const result = builder.build(MINIMAL_CONTEXT);
 
-    expect(result.system).not.toContain('DOMAIN KNOWLEDGE');
+    expect(result.system).not.toContain('<domain_knowledge');
   });
 
   it('does not set combined field', () => {
@@ -322,9 +328,11 @@ describe('PromptBuilder.build() — local tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
+    expect(result.system).toContain('<rules>');
     expect(result.system).toContain('- Output ONLY code');
     expect(result.system).toContain('- No explanations');
     expect(result.system).toContain('- Valid p5 code');
+    expect(result.system).toContain('</rules>');
   });
 
   it('includes domain docs under ABOUT header (summarized)', () => {
@@ -333,7 +341,8 @@ describe('PromptBuilder.build() — local tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.system).toContain('ABOUT P5:');
+    expect(result.system).toContain('<domain_summary name="p5">');
+    expect(result.system).toContain('</domain_summary>');
     expect(result.system).toContain('p5.js is a JavaScript library for creative coding.');
   });
 
@@ -343,9 +352,10 @@ describe('PromptBuilder.build() — local tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.user).toContain('EXAMPLE:');
+    expect(result.user).toContain('<example>');
     expect(result.user).toContain('function setup()');
     expect(result.user).toContain('function draw()');
+    expect(result.user).toContain('</example>');
   });
 
   it('includes NOW GENERATE section in user prompt', () => {
@@ -354,8 +364,12 @@ describe('PromptBuilder.build() — local tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.user).toContain('NOW GENERATE:');
+    expect(result.user).toContain('<request>');
     expect(result.user).toContain('Create a bouncing ball animation');
+    expect(result.user).toContain('</request>');
+    expect(result.user).toContain('<instruction>');
+    expect(result.user).toContain('Return executable code only.');
+    expect(result.user).toContain('</instruction>');
   });
 
   it('omits ABOUT section when no domainDocs', () => {
@@ -364,7 +378,7 @@ describe('PromptBuilder.build() — local tier', () => {
 
     const result = builder.build(MINIMAL_CONTEXT);
 
-    expect(result.system).not.toContain('ABOUT');
+    expect(result.system).not.toContain('<domain_summary');
   });
 
   it('uses default code example for unknown domain', () => {
@@ -404,9 +418,10 @@ describe('PromptBuilder.build() — tiny tier', () => {
 
     const result = builder.build(FULL_CONTEXT);
 
-    expect(result.user).toContain('Generate p5 code for:');
+    expect(result.user).toContain('<task domain="p5">');
     expect(result.user).toContain('Create a bouncing ball animation');
-    expect(result.user).toContain('RULES: code only, no explanations.');
+    expect(result.user).toContain('</task>');
+    expect(result.user).toContain('<rules>code only; no explanations</rules>');
   });
 
   it('sets combined field equal to user field', () => {
@@ -424,7 +439,7 @@ describe('PromptBuilder.build() — tiny tier', () => {
 
     const result = builder.build(MINIMAL_CONTEXT);
 
-    expect(result.user).toContain('Generate unknown code for:');
+    expect(result.user).toContain('<task domain="unknown">');
   });
 });
 

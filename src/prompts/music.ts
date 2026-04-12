@@ -86,7 +86,7 @@ CONSTRAINTS:
 - DO NOT use deprecated Web Audio API methods
 
 OUTPUT FORMAT:
-- Output a single JavaScript code block with setup(), draw(), and mousePressed()/keyPressed()
+- Output raw JavaScript only, with setup(), draw(), and mousePressed()/keyPressed()
 - The code MUST be self-contained and immediately runnable
 
 DOMAIN RULES:

@@ -67,9 +67,9 @@ Focus on artistic merit and creativity. Output executable code directly.`,
  */
 PromptLibrary.register({
   id: 'collab.role.technical-critic',
-  version: '2.0.0',
+  version: '2.1.0',
   category: 'collab',
-  systemPrompt: `You are a TECHNICAL CRITIC. Analyze the output for technical quality. Think step by step.
+  systemPrompt: `You are a TECHNICAL CRITIC. Analyze the output for technical quality.
 
 Rate each dimension on a 1-5 scale:
 1. Correctness — Does the code work as intended?
@@ -77,7 +77,8 @@ Rate each dimension on a 1-5 scale:
 3. Performance — Are there unnecessary computations or inefficiencies?
 4. Best practices — Does it follow domain conventions?
 
-DO NOT give generic praise. Reference specific lines or patterns.`,
+DO NOT give generic praise. Reference specific lines, identifiers, or patterns.
+Keep the analysis concise and evidence-backed.`,
   userPromptTemplate: `Request: \${prompt}
 Domain: \${domain}
 
@@ -87,7 +88,7 @@ Output to analyze:
 Provide your analysis with ratings for each dimension (1-5) and specific actionable improvements.`,
   tags: ['role', 'collab', 'analysis'],
   created: '2026-03-20',
-  updated: '2026-03-20',
+  updated: '2026-04-11',
   metadata: { role: 'technical-critic', phase: 'analysis' },
 });
 
@@ -96,9 +97,9 @@ Provide your analysis with ratings for each dimension (1-5) and specific actiona
  */
 PromptLibrary.register({
   id: 'collab.role.artistic-critic',
-  version: '2.0.0',
+  version: '2.1.0',
   category: 'collab',
-  systemPrompt: `You are an ARTISTIC CRITIC. Analyze the output for aesthetic and creative quality. Think step by step.
+  systemPrompt: `You are an ARTISTIC CRITIC. Analyze the output for aesthetic and creative quality.
 
 Rate each dimension on a 1-5 scale:
 1. Creativity — Is it original or derivative?
@@ -106,7 +107,8 @@ Rate each dimension on a 1-5 scale:
 3. Emotional impact — Does it evoke a feeling or response?
 4. Artistic ambition — Does it go beyond the minimum request?
 
-DO NOT give generic praise. Reference specific creative choices.`,
+DO NOT give generic praise. Reference specific creative choices, motifs, or visual decisions.
+Keep the analysis concise and evidence-backed.`,
   userPromptTemplate: `Request: \${prompt}
 Domain: \${domain}
 
@@ -116,7 +118,7 @@ Output to analyze:
 Provide your analysis with ratings for each dimension (1-5) and specific artistic improvements.`,
   tags: ['role', 'collab', 'analysis'],
   created: '2026-03-20',
-  updated: '2026-03-20',
+  updated: '2026-04-11',
   metadata: { role: 'artistic-critic', phase: 'analysis' },
 });
 
@@ -125,7 +127,7 @@ Provide your analysis with ratings for each dimension (1-5) and specific artisti
  */
 PromptLibrary.register({
   id: 'collab.role.domain-expert',
-  version: '2.0.0',
+  version: '2.1.0',
   category: 'collab',
   systemPrompt: `You are a DOMAIN EXPERT in \${domain}. Analyze this output against professional standards.
 
@@ -135,7 +137,8 @@ Compare against professional examples in this domain. Rate on a 1-5 scale:
 3. Feature completeness — Does it fully address the request?
 4. Innovation — Does it use domain features in interesting ways?
 
-DO NOT give generic feedback. Reference specific domain features, APIs, or patterns.`,
+DO NOT give generic feedback. Reference specific domain features, APIs, or patterns.
+Keep the analysis concise and evidence-backed.`,
   userPromptTemplate: `Request: \${prompt}
 Domain: \${domain}
 
@@ -147,7 +150,7 @@ Output to analyze:
 Provide domain-specific quality assessment with ratings (1-5) and expert recommendations.`,
   tags: ['role', 'collab', 'analysis', 'domain-specific'],
   created: '2026-03-20',
-  updated: '2026-03-20',
+  updated: '2026-04-11',
   metadata: { role: 'domain-expert', phase: 'analysis' },
 });
 

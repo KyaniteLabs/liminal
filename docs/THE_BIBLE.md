@@ -15,6 +15,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **18 Guardrails** (M1-M18 implemented)
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
+- **Prompt surfaces audited** for contradiction, token efficiency, and framework accuracy
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
 - **Worktree Isolation** - Multi-agent development workflow
@@ -394,6 +395,15 @@ Failures:   0 critical
 | CacheManager | `CacheManager.ts` | Response caching |
 | CircuitBreaker | `CircuitBreaker.ts` | Failure handling |
 | RetryManager | `RetryManager.ts` | Retry logic |
+
+**Prompt Quality Notes (2026-04-11):**
+- High-leverage prompt surfaces were audited in `docs/plans/2026-04-11-system-prompt-audit.md`.
+- The highest-ROI fixes removed contradictory code-format instructions, corrected Three.js module guidance, and compressed the harness self-improvement system prompt while preserving its tool contract.
+- A follow-up slice structured chat/evaluation prompts with explicit tags, removed step-by-step wording from collaboration critics, and fixed a real `chat.assistant` interpolation bug.
+- A third slice fixed the same PromptLibrary interpolation bug class in `audio.voice-to-visual` and `aesthetic.constraints`.
+- A fourth slice aligned `PromptBuilder` and the small-model p5 fallback with the same structured prompt style used by the audited primary prompt surfaces.
+- A final narrow slice corrected Hydra API guidance so the prompt no longer misstates `speed` as a chain method or `color()` as a source.
+- The narrative blog-to-video prompts were also upgraded to use explicit tagged input sections for better long-context structure without changing their core creative contract.
 
 **Multi-Provider Support:**
 - OpenAI

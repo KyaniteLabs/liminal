@@ -207,7 +207,7 @@ export class TuiBridgeService {
     // Step 2: Detect generation requests and route to RalphLoop or chat
     this.emit(sessionId, { type: 'response.started', sessionId });
 
-    if (selfImprovement && llm) {
+    if (llm && !creativeGeneration) {
       logBridge('input.routed', { sessionId, route: 'meta-harness.tools' });
       this.streamHarnessSelfImprovement(sessionId, input.text, conversation, llm).catch((err) => {
         this.emit(sessionId, {
@@ -234,7 +234,7 @@ export class TuiBridgeService {
 
     // Chat mode - use LLM with conversation history
     if (llm) {
-      logBridge('input.routed', { sessionId, route: selfImprovement ? 'meta-harness.chat' : 'chat' });
+      logBridge('input.routed', { sessionId, route: 'chat' });
       this.streamChatResponse(sessionId, input.text, conversation, llm).catch((err) => {
         this.emit(sessionId, {
           type: 'error',

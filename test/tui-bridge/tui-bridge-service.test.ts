@@ -44,6 +44,49 @@ describe('TuiBridgeService', () => {
     expect(isGenerationRequest(prompt)).toBe(false);
   });
 
+  it('routes ordinary non-creative Bubble Tea input into the tool-using harness by default', async () => {
+    const mockRuntime = {
+      prepare: vi.fn(() => ({
+        task: { id: 'tui-self-1', maxSteps: 3 },
+        taskId: 'tui-self-1',
+        modelName: 'glm-5.1',
+        maxSteps: 3,
+        execute: vi.fn(async () => ({
+          status: 'success',
+          startTime: '2026-04-12T00:00:00.000Z',
+          endTime: '2026-04-12T00:00:01.000Z',
+          stepCount: 1,
+          messages: [],
+          task: { id: 'tui-self-1', title: 'Task', description: 'desc', approved: true },
+          backups: [],
+          modifiedExtensions: new Set(),
+          exploredPaths: new Set(),
+          mutatedFiles: new Set(),
+          successfulInspectionCalls: 0,
+          activeFocusIndex: 0,
+          focusInspectionBudgetRemaining: 0,
+          focusStatus: 'rejected',
+          focusAdjacentFileUsed: false,
+        })),
+      })),
+    } as any;
+
+    const service = new TuiBridgeService({ selfImprovementRuntime: mockRuntime });
+    const session = service.createSession();
+    const llm = { getConfig: () => ({ model: 'glm-5.1' }) } as any;
+
+    await service.submitInput(session.sessionId, {
+      mode: 'chat',
+      text: 'Hello there',
+      clientIntent: 'chat',
+    }, llm);
+
+    expect(mockRuntime.prepare).toHaveBeenCalledWith(expect.objectContaining({
+      description: 'Hello there',
+      llm,
+    }));
+  });
+
   it('still routes explicit creative prompts to generation', () => {
     expect(isGenerationRequest('create a p5 shader sketch')).toBe(true);
   });

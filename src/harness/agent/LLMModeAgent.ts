@@ -136,7 +136,7 @@ export interface LLMSession {
  * 5. Repeat until success or max steps
  */
 export class LLMModeAgent {
-  private static readonly PREFLIGHT_EXCERPT_LIMIT = 1200;
+  private static readonly PREFLIGHT_EXCERPT_LIMIT = 8000;
   private llmClient: LLMClient;
   private sessions: Map<string, LLMSession> = new Map();
   private currentSession?: LLMSession;
@@ -231,7 +231,7 @@ export class LLMModeAgent {
       ? '\n' + formatResumeContext(existingRunState)
       : '';
 
-    const initialPreflightFiles = this.getInitialPreflightFiles(task);
+    const initialPreflightFiles = this.getInitialPreflightFiles(session);
 
     // Build deterministic preflight section from the bounded packet
     const descriptionHasDeterministicPacket = task.description.includes('## Deterministic Task Packet');
@@ -863,9 +863,10 @@ When the task is complete and build passes, respond with tool "complete".`;
     );
   }
 
-  private getInitialPreflightFiles(task: LLMTask): string[] {
-    if (task.primaryFiles && task.primaryFiles.length > 0) return task.primaryFiles;
-    return task.workingSet || [];
+  private getInitialPreflightFiles(session: LLMSession): string[] {
+    if (session.activeFocusFile) return [session.activeFocusFile];
+    if (session.task.primaryFiles && session.task.primaryFiles.length > 0) return [session.task.primaryFiles[0]];
+    return session.task.workingSet ? [session.task.workingSet[0]] : [];
   }
 
   private initializeFocusState(session: LLMSession): void {

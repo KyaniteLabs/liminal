@@ -765,7 +765,7 @@ describe('LLMModeAgent', () => {
   });
 
   it('truncates bounded preflight file contents before the first planning call', async () => {
-    const hugeContent = `header\\n${'A'.repeat(1400)}TAIL-SHOULD-NOT-APPEAR`;
+    const hugeContent = `header\\n${'A'.repeat(9000)}TAIL-SHOULD-NOT-APPEAR`;
     mockReadFile.execute.mockResolvedValue({ success: true, data: { content: hugeContent } });
     queuePlans('{"tool":"complete","params":{},"thought":"bounded excerpt is enough to start","expectedResult":"done"}');
 
@@ -846,9 +846,9 @@ describe('LLMModeAgent', () => {
       maxSteps: 3,
     });
 
-    expect(mockReadFile.execute).toHaveBeenCalledTimes(2);
+    expect(mockReadFile.execute).toHaveBeenCalledTimes(1);
     expect(mockReadFile.execute).toHaveBeenNthCalledWith(1, { path: 'src/runtime-core/RepoIndexLite.ts' });
-    expect(mockReadFile.execute).toHaveBeenNthCalledWith(2, { path: 'src/runtime-core/SelfImprovementRuntime.ts' });
+    expect(mockReadFile.execute).not.toHaveBeenCalledWith({ path: 'src/runtime-core/SelfImprovementRuntime.ts' });
     expect(mockReadFile.execute).not.toHaveBeenCalledWith({ path: 'test/unit/runtime-core/RepoIndexLite.test.ts' });
 
     const firstPrompt = mockComplete.mock.calls[0][0].prompt;
@@ -858,7 +858,6 @@ describe('LLMModeAgent', () => {
     expect(firstPrompt).toContain('use search with the current file path before reading more pages');
     expect(Array.from(session.exploredPaths)).toEqual([
       'src/runtime-core/RepoIndexLite.ts',
-      'src/runtime-core/SelfImprovementRuntime.ts',
     ]);
     expect(session.status).toBe(Status.SUCCESS);
   });
@@ -1019,9 +1018,9 @@ describe('LLMModeAgent', () => {
       maxSteps: 4,
     });
 
-    expect(mockReadFile.execute).toHaveBeenCalledTimes(4); // 2 preflight reads + 1 explicit reread + next primary
-    expect(mockReadFile.execute).toHaveBeenNthCalledWith(3, { path: 'src/runtime-core/RepoIndexLite.ts' });
-    expect(mockReadFile.execute).toHaveBeenNthCalledWith(4, { path: 'src/runtime-core/SelfImprovementRuntime.ts' });
+    expect(mockReadFile.execute).toHaveBeenCalledTimes(3); // 1 preflight read + 1 explicit reread + next primary
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(2, { path: 'src/runtime-core/RepoIndexLite.ts' });
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(3, { path: 'src/runtime-core/SelfImprovementRuntime.ts' });
     expect(session.activeFocusFile).toBe('src/runtime-core/SelfImprovementRuntime.ts');
     expect(session.activeFocusIndex).toBe(1);
     expect(session.focusInspectionBudgetRemaining).toBe(0);
@@ -1052,7 +1051,7 @@ describe('LLMModeAgent', () => {
       maxSteps: 3,
     });
 
-    expect(mockReadFile.execute).toHaveBeenNthCalledWith(3, { path: 'src/runtime-core/RepoIndexLite.ts' });
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(2, { path: 'src/runtime-core/RepoIndexLite.ts' });
     expect(session.activeFocusFile).toBe('src/runtime-core/RepoIndexLite.ts');
     expect(session.focusInspectionBudgetRemaining).toBe(0);
     expect(session.status).toBe(Status.SUCCESS);

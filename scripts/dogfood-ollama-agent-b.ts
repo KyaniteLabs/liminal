@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * 🦙 OLLAMA DOGFOOD - AGENT B (hydra, tone, remotion, html, ascii)
+ * 🦙 OLLAMA DOGFOOD - AGENT B (hydra, tone, revideo, html, ascii)
  */
 
 import { LLMClient } from '../dist/llm/LLMClient.js';
@@ -16,11 +16,11 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, '..');
 
-// Agent B domains: hydra, tone, remotion, html, ascii
+// Agent B domains: hydra, tone, revideo, html, ascii
 const DOMAINS = [
   { name: 'hydra', prompt: 'Create a kaleidoscope effect', Generator: HydraGenerator },
   { name: 'tone', prompt: 'Create ambient drone', Generator: ToneGenerator },
-  { name: 'remotion', prompt: 'Create typing animation', Generator: RemotionGenerator },
+  { name: 'revideo', prompt: 'Create a Revideo typing animation scene', Generator: RemotionGenerator },
   { name: 'html', prompt: 'Create landing page', Generator: HTMLWebGenerator },
   { name: 'ascii', prompt: 'Create mountain ASCII art', Generator: ASCIIArtGenerator },
 ];
@@ -104,7 +104,7 @@ async function runTest(domain: typeof DOMAINS[0], model: { name: string; model: 
 
 async function main() {
   console.log('🦙 OLLAMA DOGFOOD - AGENT B\n');
-  console.log('Domains: hydra, tone, remotion, html, ascii\n');
+  console.log('Domains: hydra, tone, revideo, html, ascii\n');
   
   const models = await getOllamaModels();
   console.log(`Models: ${models.map(m => m.model).join(', ')}`);

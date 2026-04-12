@@ -30,7 +30,7 @@ const DOMAIN_PROMPTS: Record<string, string> = {
   three: `Create a Three.js scene with a rotating wireframe torus knot that changes colors. Include orbit controls and animated lighting.`,
   strudel: `Create a Strudel pattern that plays a techno beat with kick, snare, hi-hat, and a bassline. Use pattern functions and effects.`,
   hydra: `Create a Hydra video synth patch with feedback effects, color shifting, and geometric patterns. Make it visually striking.`,
-  remotion: `Create a Remotion video component that animates text typing with a cursor blink, then fades in a subtitle.`,
+  revideo: `Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle.`,
   html: `Create a responsive landing page for a creative coding portfolio. Include a hero section with animated gradient background, project cards, and contact form.`,
   ascii: `Create simple ASCII art of a mountain landscape. Use only basic characters like @ # % * + = - . and spaces.`,
   tone: `Create a Tone.js synthesizer patch that plays an ambient drone with reverb and delay effects. Use multiple oscillators and LFOs for rich sound.`,
@@ -159,6 +159,7 @@ async function generateWithLLM(
       const gen = new HydraGenerator(llm);
       return toTelemetry(await gen.generateFull(prompt));
     }
+    case 'revideo':
     case 'remotion': {
       const gen = new RemotionGenerator();
       (gen as any).llm = llm;

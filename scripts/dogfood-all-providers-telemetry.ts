@@ -45,7 +45,7 @@ const DOMAINS = [
   { name: 'strudel', prompt: 'Create a simple techno beat pattern with drums', Generator: StrudelGenerator },
   { name: 'hydra', prompt: 'Create a geometric video synth pattern with kaleidoscope effect', Generator: HydraGenerator },
   { name: 'tone', prompt: 'Create an ambient drone synthesizer with reverb', Generator: ToneGenerator },
-  { name: 'remotion', prompt: 'Create a typing text animation video component', Generator: RemotionGenerator },
+  { name: 'revideo', prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle', Generator: RemotionGenerator },
   { name: 'html', prompt: 'Create a landing page with hero section and call to action', Generator: HTMLWebGenerator },
   { name: 'ascii', prompt: 'Create ASCII art of a mountain landscape', Generator: ASCIIArtGenerator },
 ];

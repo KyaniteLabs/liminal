@@ -93,7 +93,7 @@ All generators from `registerGenerators.ts`:
 | p5 | `P5GeneratorV2` | "Create a calming blue particle system with flowing movement" |
 | glsl | `ShaderGenerator` | "Create an abstract plasma shader with animated colors" |
 | three | `ThreeGenerator` | "Create a rotating 3D cube with interesting lighting" |
-| revideo | `RemotionGenerator` | "Create a typing text animation video component" |
+| revideo | `RemotionGenerator` (compatibility class for the active Revideo domain) | "Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle" |
 | strudel | `StrudelGenerator` | "Create a simple techno beat pattern with drums" |
 | hydra | `HydraGenerator` | "Create a geometric video synth pattern with kaleidoscope effect" |
 | tone | `ToneGenerator` | "Create an ambient drone synthesizer with reverb" |

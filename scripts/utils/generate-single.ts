@@ -24,7 +24,7 @@ const PROMPTS: Record<string, string> = {
   
   hydra: `Create a Hydra video synth patch with feedback effects, color shifting, and geometric patterns. Make it visually striking.`,
   
-  remotion: `Create a Remotion video component that animates text typing with a cursor blink, then fades in a subtitle.`,
+  revideo: `Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle.`,
   
   html: `Create a responsive landing page for a creative coding portfolio. Include a hero section with animated gradient background, project cards, and contact form.`,
   
@@ -64,7 +64,12 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9.-]/g, '_');
 }
 
+function normalizeDomain(domain: string): string {
+  return domain === 'remotion' ? 'revideo' : domain;
+}
+
 async function generateWithLLM(prompt: string, domain: string, llmConfig: { baseUrl: string; apiKey: string; model: string; modelId?: string }): Promise<string> {
+  const normalizedDomain = normalizeDomain(domain);
   const llm = new LLMClient({
     baseUrl: llmConfig.baseUrl,
     apiKey: llmConfig.apiKey,
@@ -76,7 +81,7 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
   
   llm.disableCache();
   
-  switch (domain) {
+  switch (normalizedDomain) {
     case 'p5': {
       const gen = new P5GeneratorLLM(llm);
       return gen.generate(prompt);
@@ -99,7 +104,7 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
       const gen = new HydraGenerator(llm);
       return gen.generate(prompt);
     }
-    case 'remotion': {
+    case 'revideo': {
       const { RemotionGenerator } = await import('../src/generators/remotion/RemotionGenerator.js');
       const gen = new RemotionGenerator();
       (gen as any).llm = llm;
@@ -126,9 +131,10 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
 }
 
 async function main() {
-  const [provider, modelName, domain] = process.argv.slice(2);
+  const [provider, modelName, rawDomain] = process.argv.slice(2);
+  const domain = normalizeDomain(rawDomain ?? '');
   
-  if (!provider || !modelName || !domain) {
+  if (!provider || !modelName || !rawDomain) {
     console.error('Usage: tsx generate-single.ts <provider> <model> <domain>');
     process.exit(1);
   }

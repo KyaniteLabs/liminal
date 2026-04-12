@@ -47,9 +47,9 @@ const DOMAINS = [
     check: (code: string) => code.includes('Tone.') || code.includes('Synth'),
   },
   {
-    name: 'remotion',
-    prompt: 'Create a typing text animation video component',
-    check: (code: string) => code.includes('useCurrentFrame') || code.includes('AbsoluteFill'),
+    name: 'revideo',
+    prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle',
+    check: (code: string) => code.includes('makeScene') || code.includes('@revideo/core'),
   },
   {
     name: 'html',

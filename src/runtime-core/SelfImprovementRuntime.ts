@@ -1,5 +1,6 @@
 import type { LLMClient } from '../llm/LLMClient.js';
 import { createLLMModeAgent, type LLMSession, type LLMTask } from '../harness/agent/index.js';
+import { localizeBoundedSelfImprovement } from './RepoIndexLite.js';
 
 export interface SelfImprovementRuntimeInput {
   llm: LLMClient;
@@ -31,13 +32,6 @@ export interface SelfImprovementRuntime {
   run(input: SelfImprovementRuntimeInput): Promise<SelfImprovementRuntimeResult>;
 }
 
-const DEFAULT_WORKING_SET = [
-  'src/runtime-core/SelfImprovementRuntime.ts',
-  'src/harness/agent/LLMModeAgent.ts',
-  'src/harness/RunStateStore.ts',
-  'test/unit/LLMModeAgent.test.ts',
-];
-
 function formatWorkingSet(description: string, intro: string, workingSet: string[]): TaskPacket {
   return {
     fileHint: workingSet[0],
@@ -46,26 +40,8 @@ function formatWorkingSet(description: string, intro: string, workingSet: string
 }
 
 function buildTaskPacket(description: string): TaskPacket {
-  const normalized = description.toLowerCase();
-
-  if (/checkpoint|resume|fingerprint|workspace drift|suspend|run state/.test(normalized)) {
-    return formatWorkingSet(
-      description,
-      'Work in these files first before exploring elsewhere:',
-      [
-        'src/harness/RunStateStore.ts',
-        'src/harness/agent/LLMModeAgent.ts',
-        'test/unit/LLMModeAgent.test.ts',
-        'test/harness/RunStateStore.test.ts',
-      ],
-    );
-  }
-
-  return formatWorkingSet(
-    description,
-    'Start in these runtime-core files before any broader reconnaissance. Only expand beyond this working set if the requested fix cannot be completed there:',
-    DEFAULT_WORKING_SET,
-  );
+  const context = localizeBoundedSelfImprovement(description);
+  return formatWorkingSet(description, context.intro, context.workingSet);
 }
 
 export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {

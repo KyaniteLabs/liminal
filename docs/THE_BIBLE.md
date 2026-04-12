@@ -651,6 +651,7 @@ Failures:   0 critical
 - First shared-runtime extraction slice landed: Bubble Tea bridge code now delegates self-improvement task policy (task id/title/max steps/completion policy) to a tiny headless runtime-core facade instead of owning those semantics inline
 - The headless SelfImprovementRuntime boundary now has repeatability proof coverage: the same checkpoint/resume description produces the same bounded task packet and working-set mapping on every preparation, with only the generated task id changing
 - The next runtime-core prep bundle landed inside that boundary: SelfImprovementRuntime now materializes the full bounded `LLMTask` packet during preparation and reuses that exact packet at execution time, further reducing Bubble Tea ownership of runtime-prep semantics
+- The first RepoIndexLite preflight slice now exists for bounded self-improvement runs: a narrow headless localization helper deterministically selects bounded startup working sets and file hints before task-packet shaping
 - Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 

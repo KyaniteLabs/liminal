@@ -172,6 +172,7 @@ const HARDENING_HINTS: HardeningHint[] = [
   { id: 'ascii_no_fences', text: 'Output raw ASCII only. No code fences, no triple-backtick, no markdown markers.', domains: ['ascii'] },
   { id: 'three_scene_camera_renderer', text: 'Include THREE.Scene, THREE.PerspectiveCamera, THREE.WebGLRenderer, and a mesh in scene. Call renderer.render in a loop.', domains: ['three'] },
   { id: 'three_module_import', text: 'Use ES module import: import * as THREE from "three". Use importmap or CDN URL for three.js.', domains: ['three'] },
+  { id: 'three_no_nested_html', text: 'If you return HTML, include exactly one HTML document. Never place a second <!DOCTYPE html> or <html> document inside a <script> block.', domains: ['three'] },
   { id: 'glsl_precision', text: 'Always start with precision mediump float; and declare all uniforms (u_time, u_resolution).', domains: ['glsl'] },
   { id: 'glsl_main_or_mainimage', text: 'Use either void main() with gl_FragColor, or void mainImage(out vec4, in vec2) -- not both mixed.', domains: ['glsl'] },
   { id: 'no_contamination', text: 'Do not mix frameworks. For Three.js, use only THREE namespace. For GLSL, use only WebGL/GLSL conventions.', domains: 'all' },

@@ -51,12 +51,6 @@ function decodeHtmlEntities(text) {
 
 function extractCodeFromHTML(htmlPath) {
   const content = fs.readFileSync(htmlPath, 'utf-8');
-  
-  // Extract code between <script> tags
-  const scriptMatch = content.match(/<script>([\s\S]*?)<\/script>/);
-  if (scriptMatch) {
-    return scriptMatch[1].trim();
-  }
 
   // Many historical gallery artifacts render generated code inside <pre>.
   // Decode that code before evaluation so the evaluator judges the artifact,
@@ -64,6 +58,19 @@ function extractCodeFromHTML(htmlPath) {
   const preMatch = content.match(/<pre>([\s\S]*?)<\/pre>/i);
   if (preMatch) {
     return decodeHtmlEntities(preMatch[1]).trim();
+  }
+
+  // Strudel and similar wrappers often place the visible artifact in a code div
+  // while reserving <script> for helper UI like "open in REPL".
+  const codeDivMatch = content.match(/<div[^>]*class=["'][^"']*code[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+  if (codeDivMatch) {
+    return decodeHtmlEntities(codeDivMatch[1]).trim();
+  }
+
+  // Extract code between <script> tags only after trying visible code containers.
+  const scriptMatch = content.match(/<script>([\s\S]*?)<\/script>/);
+  if (scriptMatch) {
+    return scriptMatch[1].trim();
   }
   
   return null;

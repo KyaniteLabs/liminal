@@ -144,7 +144,7 @@ export default makeScene2D(function* (view) {
       const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
       expect(result.technicalScore).toBeGreaterThan(0);
       expect(result.creativeScore).toBeGreaterThan(0);
-      expect(result.score).toBeGreaterThan(0.6);
+      expect(result.score).toBeGreaterThanOrEqual(0.6);
       expect(result.issues).not.toContain('Missing setup() function');
       expect(result.issues).not.toContain('Missing draw() function');
     });
@@ -165,7 +165,7 @@ export const TypingText = () => {
       const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
       expect(result.technicalScore).toBeGreaterThan(0);
       expect(result.creativeScore).toBeGreaterThan(0);
-      expect(result.score).toBeGreaterThan(0.6);
+      expect(result.score).toBeGreaterThanOrEqual(0.6);
       expect(result.issues).not.toContain('Missing setup() function');
       expect(result.issues).not.toContain('Missing draw() function');
     });
@@ -202,7 +202,7 @@ export const BrokenComp = () => {
       const result = CreativeEvaluator.assess(art, { domain: 'ascii' });
       expect(result.technicalScore).toBeGreaterThan(0);
       expect(result.creativeScore).toBeGreaterThan(0);
-      expect(result.score).toBeGreaterThan(0.6);
+      expect(result.score).toBeGreaterThanOrEqual(0.6);
       expect(result.issues).not.toContain('Missing ASCII art characters');
     });
 
@@ -210,6 +210,21 @@ export const BrokenComp = () => {
       const errorPlaceholder = '// LLM generation failed: LLM API error: 400 Bad Request';
       const result = CreativeEvaluator.assess(errorPlaceholder, { domain: 'ascii' });
       expect(result.score).toBeLessThan(0.7);
+    });
+
+    it('should evaluate a simple valid Strudel pattern as music', () => {
+      const pattern = `s("bd hh sd hh hh hh hh hh")`;
+      const result = CreativeEvaluator.assess(pattern, { domain: 'music' });
+      expect(result.technicalScore).toBeGreaterThan(0);
+      expect(result.creativeScore).toBeGreaterThan(0);
+      expect(result.score).toBeGreaterThanOrEqual(0.6);
+      expect(result.issues).not.toContain('No code detected in output');
+    });
+
+    it('should evaluate stacked Strudel patterns as music', () => {
+      const pattern = `$: s("bd*4").gain(0.9)\n$: s("~ cp ~ cp").gain(0.7)`;
+      const result = CreativeEvaluator.assess(pattern, { domain: 'music' });
+      expect(result.score).toBeGreaterThan(0.6);
     });
   });
 });

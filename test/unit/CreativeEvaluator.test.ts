@@ -131,5 +131,58 @@ void main() { gl_FragColor = vec4(1.0, 0.0, 0.0, 1.0); }`;
 const scene = new THREE.Scene();`;
       expect(CreativeEvaluator.detectsThreeUsage(code)).toBe(true);
     });
+
+    it('should evaluate Revideo scene code without falling back to p5 issues', () => {
+      const code = `import {makeScene2D, Txt} from '@revideo/2d';
+import {createRef} from '@revideo/core';
+
+export default makeScene2D(function* (view) {
+  const title = createRef();
+  view.add(<Txt ref={title} text="Hello Revideo" />);
+  yield* title().opacity(1, 0.6);
+});`;
+      const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
+      expect(result.technicalScore).toBeGreaterThan(0);
+      expect(result.creativeScore).toBeGreaterThan(0);
+      expect(result.score).toBeGreaterThan(0.6);
+      expect(result.issues).not.toContain('Missing setup() function');
+      expect(result.issues).not.toContain('Missing draw() function');
+    });
+
+    it('should evaluate legacy Remotion component code with specialized video scoring', () => {
+      const code = `import React from 'react';
+import {useCurrentFrame, interpolate, AbsoluteFill} from 'remotion';
+
+export const TypingText = () => {
+  const frame = useCurrentFrame();
+  const opacity = interpolate(frame, [0, 30], [0, 1]);
+  return (
+    <AbsoluteFill style={{ backgroundColor: 'black', opacity }}>
+      <div>Hello Video</div>
+    </AbsoluteFill>
+  );
+};`;
+      const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
+      expect(result.technicalScore).toBeGreaterThan(0);
+      expect(result.creativeScore).toBeGreaterThan(0);
+      expect(result.score).toBeGreaterThan(0.6);
+      expect(result.issues).not.toContain('Missing setup() function');
+      expect(result.issues).not.toContain('Missing draw() function');
+    });
+
+    it('should keep obviously broken video-component code below the pass threshold', () => {
+      const code = `import {useCurrentFrame, AbsoluteFill} from 'remotion';
+
+export const BrokenComp = () => {
+  const frame = useCurrentFrame();
+  return (
+    <AbsoluteFill duration={150}>
+      <Video frame={frame.value} />
+    </AbsoluteFill>
+  );
+};`;
+      const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
+      expect(result.score).toBeLessThan(0.7);
+    });
   });
 });

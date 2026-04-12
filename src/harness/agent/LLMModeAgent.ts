@@ -629,8 +629,11 @@ When the task is complete and build passes, respond with tool "complete".`;
             return runBuildTool.execute(params);
           }
           
-          case 'runTests':
-            return runTestsTool.execute(params);
+          case 'runTests': {
+            const testResult = await runTestsTool.execute(params);
+            this.recordVerificationResult('test', testResult);
+            return testResult;
+          }
 
           case 'executeSkill':
             return executeSkillTool.execute(params);

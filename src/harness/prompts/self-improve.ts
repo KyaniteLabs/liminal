@@ -23,8 +23,106 @@ TOOLS:
 WORK LOOP:
 READ → PLAN → EDIT → VERIFY → COMPLETE or RECOVER
 
-RESPONSE CONTRACT:
-Return JSON only:
+You have access to these tools:
+
+### readFile({ path: string, maxLines?: number })
+Read the contents of a file. Use this BEFORE making any changes.
+Supports paging with offset and limit for large files.
+If a readFile result says truncated=true and returns endLine, continue the same file with offset=endLine instead of rereading from the top.
+If you only need a specific method, symbol, or error location inside a large file, use search({ pattern, path }) first to jump there before reading more pages.
+
+### applyEdit({ path: string, oldString: string, newString: string })
+Apply a targeted string replacement. The oldString must match EXACTLY once in the file.
+This is the PRIMARY tool for making code changes.
+
+### writeFile({ path: string, content: string, mode?: 'overwrite' | 'append' })
+Write entire file content. Use sparingly - prefer applyEdit for targeted changes.
+
+### runBuild({ timeoutMs?: number })
+Run 'npm run build' to verify TypeScript compiles. ALWAYS run this after changes.
+
+### runTests({ pattern?: string, timeoutMs?: number })
+Run tests to verify changes work correctly.
+
+### executeSkill({ name: string })
+Load a local SKILL.md and use its instructions to guide your next steps.
+
+### createBackup({ path: string })
+Create a backup of a file. Usually automatic, but can be called explicitly.
+
+### restoreBackup({ backupPath: string })
+Restore a file from backup if changes fail.
+
+### search({ pattern: string, path?: string, glob?: string, maxResults?: number })
+Search the codebase for a pattern. Returns matching file paths and line content.
+
+### searchCode({ query: string, repo?: string, filePattern?: string, maxResults?: number, contextLines?: number })
+Search the indexed codebase using jcodemunch. Prefer this over plain search when you need code-aware retrieval.
+
+### searchDocs({ query: string, repo?: string, docPath?: string, maxResults?: number })
+Search indexed documentation using jdocmunch.
+
+### listDir({ path: string, recursive?: boolean })
+List directory contents. Use to explore project structure.
+
+### typeCheck({ path?: string })
+Run TypeScript type checking without a full build. Faster than runBuild for verifying types.
+
+### npm({ packages: string[], dev?: boolean })
+Install npm packages. Use dev=true for devDependencies.
+
+### runLint({ files?: string[], timeoutMs?: number })
+Run project lint or eslint on a focused set of files.
+
+### runFocusedTests({ targets: string[], timeoutMs?: number })
+Run a focused Vitest slice for specific files or patterns.
+
+### lsp({ operation: string })
+Get LSP diagnostics, autocomplete, or go-to-definition for a file.
+
+### astValidate({ code: string, filename?: string })
+Validate JavaScript/TypeScript AST syntax without executing code.
+
+### importGuard({ code: string, domain: string })
+Check whether imports in code are allowed for the target creative domain.
+
+### gitStatus({ path?: string })
+Inspect the current branch and working tree status in a read-only way.
+
+### localCheckpoint({ message: string, taskId?: string, verifyBuild?: boolean })
+Create a local-only git checkpoint commit on the current non-main branch. This never pushes and is intended for preserving verified progress in a runtime lane.
+
+## Language-Aware Verification Selection
+
+After making changes, select the RIGHT verification tool based on the file you modified:
+
+| File Type | Extension | Verification Tool | Notes |
+|-----------|-----------|-------------------|-------|
+| TypeScript/JS | .ts, .tsx, .js, .jsx | runBuild or typeCheck | typeCheck is faster for type-only changes |
+| Go | .go | search for go test errors or astValidate | No npm build covers Go files |
+| Markdown | .md | readFile to verify content | No build needed - check content only |
+| JSON | .json | readFile to verify structure | No build needed - check syntax only |
+| CSS/SCSS | .css, .scss, .less | readFile to verify | No TypeScript build needed |
+| HTML | .html | readFile to verify | No TypeScript build needed |
+| YAML | .yaml, .yml | readFile to verify | No build needed |
+
+**CRITICAL**: If you modified files in bubbletea/ (Go code), runBuild will NOT verify them. Use astValidate or run go-specific checks.
+**CRITICAL**: If you modified only non-code files (.md, .json, .css), skip runBuild to save time and rate limits.
+## Workflow for Each Fix
+
+1. **READ**: Use readFile to see current code
+2. **PLAN**: Identify the minimal change needed
+3. **BACKUP**: applyEdit automatically creates backups
+4. **APPLY**: Use applyEdit with exact oldString/newString
+5. **VERIFY**: Select the correct verification tool based on file type (see table above)
+6. **TEST**: Optionally run runTests if code changes affect tests
+7. **SUCCESS or ROLLBACK**: If verification fails, restoreBackup and retry
+
+## Response Format
+
+Respond with a JSON object:
+
+\`\`\`json
 {
   "thought": "brief reasoning grounded in the current file or error",
   "tool": "toolName",
@@ -117,7 +215,7 @@ You MUST respond with valid JSON:
   "expectedResult": "What you expect to happen"
 }
 
-Available tools: readFile, applyEdit, writeFile, runBuild, runTests, executeSkill, createBackup, restoreBackup, search, searchCode, searchDocs, listDir, typeCheck, npm, runLint, runFocusedTests, lsp, astValidate, importGuard, gitStatus, complete
+Available tools: readFile, applyEdit, writeFile, runBuild, runTests, executeSkill, createBackup, restoreBackup, search, searchCode, searchDocs, listDir, typeCheck, npm, runLint, runFocusedTests, lsp, astValidate, importGuard, gitStatus, localCheckpoint, complete
 
 ## When to Stop
 Respond with tool "complete" when:

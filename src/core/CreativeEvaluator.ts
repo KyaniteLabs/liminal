@@ -1188,6 +1188,7 @@ export class CreativeEvaluator {
 
     // Remove <think> tags for evaluation
     const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const soundCallCount = (codeOnly.match(/\bs\s*\(\s*["'][^"']+["']\s*\)/g) || []).length;
 
     // Technical checks
     if (/\bsetc\s*\(/.test(codeOnly) || /\bbpm\s*:/.test(codeOnly)) technicalScore += 0.1;
@@ -1197,6 +1198,7 @@ export class CreativeEvaluator {
     if (/\.s\(|\.n\(|\.cut\(|\.resonance\(/.test(codeOnly)) technicalScore += 0.15;
     if (/\bs\s*\(\s*["'][^"']+\s+[^"']+["']\s*\)/.test(codeOnly)) technicalScore += 0.15;
     if (/\bs\s*\(\s*["'][^"']*(\s+[^"'\s]+){3,}["']\s*\)/.test(codeOnly)) technicalScore += 0.05;
+    if (soundCallCount >= 3) technicalScore += 0.1;
     if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.1;
     if (codeOnly.length > 25) technicalScore += 0.05;
     if (codeOnly.length > 80) technicalScore += 0.05;
@@ -1214,9 +1216,11 @@ export class CreativeEvaluator {
     if (/\bstack\s*\(/.test(codeOnly) || /\$:/.test(codeOnly)) creativeScore += 0.15;
     if (/\bs\s*\(\s*["'][^"']+\s+[^"']+["']\s*\)/.test(codeOnly)) creativeScore += 0.1;
     if (/\bs\s*\(\s*["'][^"']*(\s+[^"'\s]+){3,}["']\s*\)/.test(codeOnly)) creativeScore += 0.1;
+    if (soundCallCount >= 3) creativeScore += 0.15;
 
     if (codeOnly.length < 20) issues.push('Strudel code too short');
     if (!/\bs\s*\(/.test(codeOnly) && !/\.s\(/.test(codeOnly)) issues.push('Missing sound() call');
+    if (/\bs\s*\(\s*\d+\s*\)/.test(codeOnly)) issues.push('Strudel sound() call should use pattern strings');
 
     let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
     let calibratedScore: number | undefined;

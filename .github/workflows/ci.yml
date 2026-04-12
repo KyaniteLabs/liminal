@@ -5,6 +5,9 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   build-and-test:
     runs-on: self-hosted
@@ -15,12 +18,11 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: pnpm install
-      - run: pnpm exec playwright install chromium || true
-      - run: pnpm typecheck
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm build
-      - run: pnpm vitest run --coverage --pool=forks
+      - run: pnpm test:ci:fast
       - name: Test quality check
         run: pnpm test:quality
       - name: Check coverage gaps
@@ -84,3 +86,18 @@ jobs:
           name: coverage-report
           path: coverage/
           retention-days: 7
+
+  slow-browser-and-e2e:
+    if: github.event_name != 'pull_request'
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify pnpm
+        run: pnpm --version
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install chromium
+      - run: pnpm test:ci:slow

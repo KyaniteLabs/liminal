@@ -15,6 +15,12 @@ pnpm run build
 
 # Run tests
 pnpm test
+
+# Fast PR-gating suite (coverage + stable tests)
+pnpm run test:ci:fast
+
+# Slow browser / render / e2e / provider suite
+pnpm run test:ci:slow
 ```
 
 ### Requirements
@@ -49,15 +55,16 @@ chore: update dependencies
 1. Create a feature branch from `main`
 2. Make your changes with tests
 3. Ensure all checks pass:
-   - `pnpm run typecheck` — zero errors
    - `pnpm run lint` — zero warnings
-   - `pnpm test` — all tests pass
-   - `pnpm run test:coverage` — coverage not decreased
+   - `pnpm run build` — compile + typecheck succeeds
+   - `pnpm run test:ci:fast` — PR-gating coverage suite passes
+   - `pnpm run test:ci:slow` — browser / render / e2e / provider suite passes before landing changes that touch those surfaces
+   - `pnpm run test:quality` — assertion hygiene stays within policy
 4. Open a PR with a clear description of the change and motivation
 
 ### Test Coverage
 
-The project maintains a **70% coverage threshold** across lines, branches, functions, and statements. New code must include corresponding tests. See [CLAUDE.md](./CLAUDE.md#coverage-target-mandatory--all-agents) for current metrics.
+The project maintains a **70% coverage threshold** across lines, branches, functions, and statements. New code must include corresponding tests. The fast CI suite owns the coverage gate; the slow suite exists to exercise browser, render, e2e, and provider-dependent paths without turning every PR into a long-running full-system burn. See [CLAUDE.md](./CLAUDE.md#coverage-target-mandatory--all-agents) for current metrics.
 
 ## Architecture
 

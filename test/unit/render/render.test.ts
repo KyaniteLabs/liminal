@@ -324,6 +324,48 @@ describe('HeadlessRenderer', () => {
     expect(renderer.isInitialized()).toBe(false);
     HeadlessRenderer.instance = null;
   });
+
+  it('surfaces missing canvas warnings for visual domains without failing the render outright', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+      }>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(false);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.from([1]),
+      width: 100,
+      height: 100,
+      success: true,
+    });
+
+    const result = await renderer.render('const scene = new THREE.Scene();', {
+      domain: 'three',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain('[warn] Canvas not found or timed out for three render');
+    expect(result.errors).toContain('Canvas not found or timed out for three render');
+  });
 });
 
 // ─── RenderAndScorePipeline ─────────────────────────────────────────

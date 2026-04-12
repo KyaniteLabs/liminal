@@ -79,6 +79,10 @@ const DEFAULT_OPTIONS: Required<RenderOptions> = {
   domain: 'unknown',
 };
 
+function domainRequiresCanvas(domain: RenderDomain): boolean {
+  return domain === 'p5' || domain === 'three' || domain === 'glsl' || domain === 'hydra';
+}
+
 /**
  * Headless renderer for creative coding outputs
  */
@@ -238,7 +242,12 @@ export class HeadlessRenderer {
       await page.setContent(html, { waitUntil: 'networkidle', timeout: opts.timeout });
 
       // Wait for canvas to be ready
-      await this.waitForCanvas(page, opts.timeout);
+      const canvasReady = await this.waitForCanvas(page, opts.timeout);
+      if (!canvasReady && domainRequiresCanvas(domain)) {
+        const warning = `Canvas not found or timed out for ${domain} render`;
+        logs.push(`[warn] ${warning}`);
+        errors.push(warning);
+      }
 
       // Trigger audio playback for audio domains so we capture actual sound
       if (domain === 'tone' || domain === 'strudel') {
@@ -280,7 +289,7 @@ export class HeadlessRenderer {
   /**
    * Wait for canvas element to be ready
    */
-  private async waitForCanvas(page: Page, timeout: number): Promise<void> {
+  private async waitForCanvas(page: Page, timeout: number): Promise<boolean> {
     try {
       await page.waitForFunction(
         () => {
@@ -289,9 +298,11 @@ export class HeadlessRenderer {
         },
         { timeout: Math.min(timeout, 5000) }
       );
+      return true;
     } catch {
       // Canvas might not be required for all domains (e.g., audio-only)
       Logger.debug('HeadlessRenderer', 'No canvas found or timeout waiting for canvas');
+      return false;
     }
   }
 

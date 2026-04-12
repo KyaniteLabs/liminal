@@ -43,14 +43,49 @@ import {
   gitStatusTool,
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
+import {
+  saveRunState,
+  readRunState,
+  formatResumeContext,
+  clearRunState,
+  captureWorkspaceFingerprint,
+  validateWorkspaceFingerprint,
+  SemanticBoundary,
+  type RunState,
+} from '../RunStateStore.js';
 
 export interface LLMTask {
   id: string;
   title: string;
   description: string;
   fileHint?: string;
+  /** Deterministic working set for bounded runs - agent should read these first */
+  workingSet?: string[];
+  /** Ordered first-pass files for bounded localization */
+  primaryFiles?: string[];
+  /** Optional secondary files the runtime has already budgeted for bounded expansion */
+  secondaryFiles?: string[];
+  /** Secondary candidates intentionally left outside the active working set until bounded expansion is allowed */
+  deferredSecondaryFiles?: string[];
+  /** Number of files the bounded packet allows beyond the seeded lists before broader exploration */
+  expansionBudget?: number;
+  /** Whether bounded expansion is still available or already exhausted */
+  expansionStatus?: 'allowed' | 'exhausted';
+  /** Runtime-core confidence in the current bounded localization packet */
+  localizationConfidence?: 'high' | 'medium' | 'low';
+  /** Preferred first verification actions for this bounded packet */
+  verificationTargets?: Array<{
+    tool: 'runBuild' | 'runTests' | 'typeCheck';
+    reason: string;
+    pattern?: string;
+    priority: number;
+  }>;
+  /** Domain tag for the bounded run (e.g. 'runtime-core', 'runstate') */
+  domain?: string;
   maxSteps?: number;
   approved: boolean;
+  /** Deterministic completion policy for bounded runs */
+  completionPolicy?: 'manual' | 'stop_after_verification';
 }
 
 export interface ToolCall {
@@ -70,13 +105,39 @@ export interface AgentMessage {
 export interface LLMSession {
   task: LLMTask;
   messages: AgentMessage[];
-  status: Status.PENDING | Status.RUNNING | Status.SUCCESS | Status.FAILED | Status.ROLLED_BACK;
+  status: Status.PENDING | Status.RUNNING | Status.SUSPENDED | Status.SUCCESS | Status.FAILED | Status.ROLLED_BACK;
   startTime: string;
   endTime?: string;
   stepCount: number;
   backups: string[];
+  /** Count of successful inspection-style tool calls completed in this run */
+  successfulInspectionCalls: number;
   /** File extensions of files modified in this session, used for language-aware verification */
   modifiedExtensions: Set<string>;
+  /** Files that were read during this session, for resume context */
+  exploredPaths: Set<string>;
+  /** Files that were mutated (applyEdit/writeFile) during this session */
+  mutatedFiles: Set<string>;
+  /** Last verification result (build/test) for resume context */
+  lastVerification?: import('../RunStateStore.js').VerificationState;
+  /** Deterministic exit reason for bounded runs (e.g. 'bounded-inspection', 'bounded-no-change') */
+  exitReason?: string;
+  /** Most recent planning-stage failure reason for operator diagnostics */
+  lastPlanError?: string;
+  /** Current bounded focus file from the task packet's primary files */
+  activeFocusFile?: string;
+  /** Index of the active focus inside task.primaryFiles */
+  activeFocusIndex: number;
+  /** Remaining inspection reads before the focus must advance or commit */
+  focusInspectionBudgetRemaining: number;
+  /** Current bounded-focus status */
+  focusStatus: 'unresolved' | 'committed' | 'rejected';
+  /** Whether the one-off adjacent file allowance has been consumed */
+  focusAdjacentFileUsed: boolean;
+  /** Last explicit focus decision */
+  focusDecision?: 'reject' | 'resolve';
+  /** When the last explicit focus decision was made */
+  focusDecisionAt?: string;
 }
 
 /**
@@ -90,14 +151,31 @@ export interface LLMSession {
  * 5. Repeat until success or max steps
  */
 export class LLMModeAgent {
+  private static readonly PREFLIGHT_EXCERPT_LIMIT = 8000;
   private llmClient: LLMClient;
   private sessions: Map<string, LLMSession> = new Map();
   private currentSession?: LLMSession;
   private analyses: import('../ThinkingAnalyzer.js').ThinkingAnalysis[] = [];
-  private compactor = new ContextCompactor({ maxMessages: 40, recentThreshold: 14 });
+  private compactor: ContextCompactor;
+  private modifiedExtensions = new Set<string>();
 
   constructor(llmClient: LLMClient) {
     this.llmClient = llmClient;
+    this.compactor = new ContextCompactor({
+      maxMessages: 40,
+      recentThreshold: 14,
+      llmClient,
+    });
+  }
+
+  private stampSession(
+    session: LLMSession,
+    patch: Partial<Pick<LLMSession, 'status' | 'endTime' | 'exitReason'>>,
+  ): LLMSession {
+    const nextSession = { ...session, ...patch };
+    this.sessions.set(nextSession.task.id, nextSession);
+    this.currentSession = nextSession;
+    return nextSession;
   }
 
   /**
@@ -110,18 +188,55 @@ export class LLMModeAgent {
 
     const maxSteps = task.maxSteps || 15;
     
-    const session: LLMSession = {
+    let session: LLMSession = {
       task,
       messages: [],
       status: Status.RUNNING,
       startTime: new Date().toISOString(),
       stepCount: 0,
       backups: [],
+      successfulInspectionCalls: 0,
       modifiedExtensions: new Set(),
+      exploredPaths: new Set(),
+      mutatedFiles: new Set(),
+      activeFocusIndex: 0,
+      focusInspectionBudgetRemaining: 0,
+      focusStatus: 'rejected',
+      focusAdjacentFileUsed: false,
+      focusDecision: undefined,
+      focusDecisionAt: undefined,
     };
 
     this.sessions.set(task.id, session);
     this.currentSession = session;
+    this.initializeFocusState(session);
+
+    // Resume detection: check for a suspended run
+    const existingRunState = await readRunState();
+    const isResume = existingRunState !== null && existingRunState.taskId === task.id;
+
+    if (isResume) {
+      // ── Workspace identity guard ─────────────────────────────────
+      // If the suspended run captured a fingerprint, validate that the
+      // workspace (same machine, same worktree) has not drifted.
+      if (existingRunState.workspaceFingerprint) {
+        const validation = await validateWorkspaceFingerprint(existingRunState.workspaceFingerprint);
+        if (!validation.valid) {
+          Logger.error('LLMModeAgent', `Resume blocked - workspace identity drifted: ${validation.reason}`);
+          await clearRunState();
+          session = this.stampSession(session, {
+            status: Status.FAILED,
+            endTime: new Date().toISOString(),
+          });
+          return session;
+        }
+      }
+
+      this.restoreSessionFromRunState(session, existingRunState);
+
+      Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
+      Logger.debug('LLMModeAgent', `Restored ${session.exploredPaths.size} explored paths, ${session.mutatedFiles.size} mutated files`);
+    }
 
     Logger.debug('LLMModeAgent', `Starting autonomous task: ${task.title}`);
     Logger.debug('LLMModeAgent', `Budget: ${maxSteps} LLM calls`);
@@ -130,7 +245,7 @@ export class LLMModeAgent {
     eventBus.emit(EventTypes.PROCESS_START, 'LLMModeAgent', {
       process: 'agent-task',
       stage: 'planning',
-      metadata: { taskId: task.id, title: task.title, maxSteps },
+      metadata: { taskId: task.id, title: task.title, maxSteps, isResume },
     });
 
     // Initialize conversation with system prompt
@@ -139,15 +254,30 @@ export class LLMModeAgent {
       content: getSelfImprovePrompt(),
     });
 
+    // Build task prompt with optional resume context
+    const resumeSection = isResume && existingRunState
+      ? '\n' + formatResumeContext(existingRunState)
+      : '';
+
+    const initialPreflightFiles = this.getInitialPreflightFiles(session);
+
+    // Build deterministic preflight section from the bounded packet
+    const descriptionHasDeterministicPacket = task.description.includes('## Deterministic Task Packet');
+    const preflightSection = !descriptionHasDeterministicPacket && task.workingSet && task.workingSet.length > 0
+      ? `\n\n## Deterministic Task Packet\nStart in these primary files before any broader reconnaissance:\n${(task.primaryFiles && task.primaryFiles.length > 0 ? task.primaryFiles : task.workingSet).map((f, i) => `${i === 0 ? '→' : '-'} ${f}`).join('\n')}${task.secondaryFiles && task.secondaryFiles.length > 0 ? `\nSecondary files (use only if the primary files are insufficient):\n${task.secondaryFiles.map(f => `- ${f}`).join('\n')}` : ''}\nHint: Start by looking in ${task.fileHint || task.workingSet[0]}`
+      : (task.fileHint ? `\nHint: Start by looking in ${task.fileHint}` : '');
+
     // Add task description
     const taskPrompt = `## Current Task
 
 Task ID: ${task.id}
 Title: ${task.title}
-Description: ${task.description}
-${task.fileHint ? `Hint: Start by looking in ${task.fileHint}` : ''}
+Description: ${task.description}${preflightSection}${resumeSection}
 
-You are in LLM-driven mode. Plan your own steps. Start by reading the relevant file(s).
+You are in LLM-driven mode. Plan your own steps. ${isResume ? 'Continue from where the previous run left off.' : 'Start by reading the relevant file(s).'}
+If readFile returns truncated=true with startLine/endLine, continue that file with offset=endLine rather than rereading from the top.
+If you need a specific method, symbol, or error location inside a large file, use search with the current file path before reading more pages.
+${this.formatVerificationTargetPrompt(task)}
 
 Respond with a JSON object containing your tool call:
 {\n  "thought": "What you're doing and why",\n  "tool": "toolName",\n  "params": { ... },\n  "expectedResult": "What you expect"\n}
@@ -159,11 +289,77 @@ When the task is complete and build passes, respond with tool "complete".`;
       content: taskPrompt,
     });
 
+    // ── Deterministic preflight read for bounded runs ──────────────
+    // For bounded runs with a packet, read the primary files NOW before
+    // the LLM planning loop begins. This injects file contents into
+    // session context deterministically, reducing early blind reads.
+    if (initialPreflightFiles.length > 0) {
+      const unreadFiles = initialPreflightFiles.filter(f => !session.exploredPaths.has(f));
+      if (unreadFiles.length > 0) {
+        Logger.debug('LLMModeAgent', `Preflight: reading ${unreadFiles.length} primary packet files`);
+        const preflightContents: string[] = [];
+        for (const filePath of unreadFiles) {
+          try {
+            const fileResult = await readFileTool.execute({ path: filePath });
+            if (fileResult.success && fileResult.data) {
+              session.exploredPaths.add(filePath);
+              const content = typeof fileResult.data === 'object' && fileResult.data.content
+                ? fileResult.data.content
+                : typeof fileResult.data === 'string'
+                  ? fileResult.data
+                  : JSON.stringify(fileResult.data);
+              preflightContents.push(`=== ${filePath} ===\n${this.formatPreflightExcerpt(content)}`);
+            } else {
+              Logger.warn('LLMModeAgent', `Preflight read failed for ${filePath}: ${fileResult.error || 'unknown error'}`);
+            }
+          } catch (err) {
+            Logger.warn('LLMModeAgent', `Preflight read error for ${filePath}: ${err}`);
+          }
+        }
+        if (preflightContents.length > 0) {
+          session.messages.push({
+            role: 'tool',
+            content: `Preflight file contents loaded:\n\n${preflightContents.join('\n\n')}`,
+          });
+          Logger.debug('LLMModeAgent', `Preflight complete: ${preflightContents.length} files loaded into session context`);
+          // Count the preflighted active focus as one inspection read, but still
+          // leave room for one explicit follow-up read before the gate forces
+          // edit / verify / advance behavior.
+          if (session.activeFocusFile && session.exploredPaths.has(session.activeFocusFile) && session.focusInspectionBudgetRemaining > 0) {
+            session.focusInspectionBudgetRemaining -= 1;
+            Logger.debug('LLMModeAgent', `Preflight consumed one focus read for ${session.activeFocusFile}; remaining=${session.focusInspectionBudgetRemaining}`);
+          }
+        }
+      }
+    }
+
     try {
       let parseFailure = false;
       while (session.stepCount < maxSteps) {
         session.stepCount++;
         Logger.debug('LLMModeAgent', `Step ${session.stepCount}/${maxSteps}`);
+
+        // ── Bounded-inspection guardrail ─────────────────────────────
+        // For bounded runs (tui-self-* or stop_after_verification), if
+        // more than half the step budget is spent with no mutations,
+        // terminate deterministically instead of open-ended reconnaissance.
+        if (this.shouldStopForBoundedInspection(session, maxSteps)) {
+          Logger.info('LLMModeAgent', `Bounded-inspection guardrail triggered at step ${session.stepCount}/${maxSteps} - no mutations after 50% budget`);
+          await clearRunState();
+          session = this.stampSession(session, {
+            status: Status.SUCCESS,
+            exitReason: 'bounded-inspection',
+            endTime: new Date().toISOString(),
+          });
+          eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+            process: 'agent-task',
+            success: true,
+            reason: 'bounded-inspection: no mutation warranted within budget',
+            iterations: session.stepCount,
+            durationMs: Date.now() - new Date(session.startTime).getTime(),
+          });
+          return session;
+        }
 
         // Emit progress event for TUI
         eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
@@ -178,7 +374,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         const toolCall = await this.getLLMPlan(session);
         
         if (!toolCall) {
-          Logger.error('LLMModeAgent', 'Failed to parse LLM response');
+          Logger.error('LLMModeAgent', session.lastPlanError || 'Failed to parse LLM response');
           parseFailure = true;
           break;
         }
@@ -200,9 +396,29 @@ When the task is complete and build passes, respond with tool "complete".`;
 
         // Check for completion
         if (toolCall.tool === 'complete') {
+          const verificationGateError = this.getVerificationGateError(session);
+          if (verificationGateError) {
+            const gateResult: ToolResult = { success: false, error: verificationGateError };
+            session.messages.push({
+              role: 'tool',
+              content: JSON.stringify(gateResult),
+              toolResult: gateResult,
+            });
+            eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+              process: 'agent-task',
+              current: session.stepCount,
+              total: maxSteps,
+              stage: 'executed complete',
+              message: `complete failed: ${verificationGateError.slice(0, 100)}`,
+            });
+            continue;
+          }
           Logger.debug('LLMModeAgent', 'Task completed by LLM');
-          session.status = Status.SUCCESS;
-          session.endTime = new Date().toISOString();
+          await clearRunState();
+          session = this.stampSession(session, {
+            status: Status.SUCCESS,
+            endTime: new Date().toISOString(),
+          });
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
             success: true,
@@ -221,15 +437,32 @@ When the task is complete and build passes, respond with tool "complete".`;
           current: session.stepCount,
           total: maxSteps,
           stage: `executed ${toolCall.tool}`,
-          message: result.success ? `${toolCall.tool} succeeded` : `${toolCall.tool} failed: ${(result.error || '').slice(0, 100)}`,
+          message: this.formatToolProgressMessage(toolCall.tool, result),
         });
         
         // Record tool result
         session.messages.push({
           role: 'tool',
-          content: JSON.stringify(result),
+          content: this.formatToolResultMessage(toolCall.tool, result),
           toolResult: result,
         });
+
+        if (this.shouldStopAfterSuccessfulVerification(session, toolCall, result)) {
+          Logger.info('LLMModeAgent', `Auto-completing bounded run after successful ${toolCall.tool}`);
+          await clearRunState();
+          session = this.stampSession(session, {
+            status: Status.SUCCESS,
+            endTime: new Date().toISOString(),
+          });
+          eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+            process: 'agent-task',
+            success: true,
+            reason: `Verified success reached via ${toolCall.tool}` ,
+            iterations: session.stepCount,
+            durationMs: Date.now() - new Date(session.startTime).getTime(),
+          });
+          return session;
+        }
 
         // Check for critical failures
         if (toolCall.tool === 'runBuild' && !result.success) {
@@ -243,9 +476,9 @@ When the task is complete and build passes, respond with tool "complete".`;
             if (session.backups.length > 0) {
               Logger.debug('LLMModeAgent', 'Rolling back changes...');
               await this.rollback(session);
-              session.status = Status.ROLLED_BACK;
+              session = this.stampSession(session, { status: Status.ROLLED_BACK });
             } else {
-              session.status = Status.FAILED;
+              session = this.stampSession(session, { status: Status.FAILED });
             }
             
             // Log failure
@@ -275,21 +508,21 @@ When the task is complete and build passes, respond with tool "complete".`;
       }
 
       // Loop ended without explicit completion via 'complete' tool.
-      // Bubble Tea inspection-only runs should not surface as generic failures
-      // when no mutations were made, regardless of whether the loop ended via
-      // parse failure or simple step exhaustion.
-      const tuiInspectionOnly =
-        session.task.id.startsWith('tui-self-') &&
-        session.backups.length === 0;
-      if (tuiInspectionOnly) {
+      // Only bounded runs that actually completed meaningful successful
+      // inspection work should classify as bounded-no-change successes.
+      if (!parseFailure && this.shouldClassifyAsBoundedNoChangeSuccess(session)) {
         Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
-        session.status = Status.SUCCESS;
-        session.endTime = new Date().toISOString();
+        await clearRunState();
+        session = this.stampSession(session, {
+          status: Status.SUCCESS,
+          exitReason: 'bounded-no-change',
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: true,
-          reason: 'Inspection complete, no mutations needed',
+          reason: 'bounded-no-change: inspection complete, no mutations needed',
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
@@ -301,14 +534,16 @@ When the task is complete and build passes, respond with tool "complete".`;
       if (parseFailure) {
 
         // LLM response couldn't be parsed - this is a real failure
-        Logger.error('LLMModeAgent', `Failed to parse LLM response after ${session.stepCount} steps`);
-        session.status = Status.FAILED;
-        session.endTime = new Date().toISOString();
+        Logger.error('LLMModeAgent', session.lastPlanError ? `${session.lastPlanError} after ${session.stepCount} steps` : `Failed to parse LLM response after ${session.stepCount} steps`);
+        session = this.stampSession(session, {
+          status: Status.FAILED,
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: false,
-          reason: 'Failed to parse LLM response',
+          reason: session.lastPlanError || 'Failed to parse LLM response',
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
@@ -316,46 +551,84 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Rollback if needed
         if (session.backups.length > 0) {
           await this.rollback(session);
-          session.status = Status.ROLLED_BACK;
+          session = this.stampSession(session, { status: Status.ROLLED_BACK });
         }
       } else if (session.backups.length === 0) {
+        if (this.isBoundedInspectionRun(session)) {
+          Logger.error('LLMModeAgent', `Bounded run ended before meaningful successful inspection after ${session.stepCount} steps`);
+          session = this.stampSession(session, {
+            status: Status.FAILED,
+            endTime: new Date().toISOString(),
+          });
+
+          eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+            process: 'agent-task',
+            success: false,
+            reason: 'Bounded run ended before meaningful successful inspection',
+            iterations: session.stepCount,
+            durationMs: Date.now() - new Date(session.startTime).getTime(),
+          });
+
+          return session;
+        }
+
         // Natural loop completion with no mutations - inspection-only success
         Logger.debug('LLMModeAgent', `Inspection complete after ${session.stepCount} steps, no mutations needed`);
-        session.status = Status.SUCCESS;
-        session.endTime = new Date().toISOString();
+        await clearRunState();
+        session = this.stampSession(session, {
+          status: Status.SUCCESS,
+          exitReason: 'bounded-no-change',
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: true,
-          reason: 'Inspection complete, no mutations needed',
+          reason: 'bounded-no-change: inspection complete, no mutations needed',
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
       } else {
-        // Mutations were made but task didn't complete - this is a failure
-        Logger.error('LLMModeAgent', `Max steps (${maxSteps}) reached with incomplete changes`);
-        session.status = Status.FAILED;
-        session.endTime = new Date().toISOString();
+        // Mutations were made but task didn't complete - checkpoint and suspend for resume
+        Logger.warn('LLMModeAgent', `Max steps (${maxSteps}) reached with incomplete changes - suspending for resume`);
+
+        // Capture workspace fingerprint for safe resume validation
+        let workspaceFingerprint;
+        try {
+          workspaceFingerprint = await captureWorkspaceFingerprint();
+        } catch (fpErr) {
+          Logger.warn('LLMModeAgent', `Could not capture workspace fingerprint: ${fpErr}`);
+        }
+
+        try {
+          await saveRunState(this.buildSuspendedRunState(session, maxSteps, workspaceFingerprint));
+          Logger.info('LLMModeAgent', 'Run state saved for potential resume');
+        } catch (saveErr) {
+          Logger.error('LLMModeAgent', `Failed to save run state: ${saveErr}`);
+        }
+
+        session = this.stampSession(session, {
+          status: Status.SUSPENDED,
+          endTime: new Date().toISOString(),
+        });
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: false,
-          reason: `Max steps (${maxSteps}) reached with incomplete changes`,
+          reason: `Suspended after ${session.stepCount} steps - run can be resumed`,
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
-        
-        // Rollback incomplete changes
-        await this.rollback(session);
-        session.status = Status.ROLLED_BACK;
       }
 
       return session;
 
     } catch (error) {
       Logger.error('LLMModeAgent', `Unexpected error: ${error}`);
-      session.status = Status.FAILED;
-      session.endTime = new Date().toISOString();
+      session = this.stampSession(session, {
+        status: Status.FAILED,
+        endTime: new Date().toISOString(),
+      });
 
       eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
         process: 'agent-task',
@@ -366,7 +639,7 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       if (session.backups.length > 0) {
         await this.rollback(session);
-        session.status = Status.ROLLED_BACK;
+        session = this.stampSession(session, { status: Status.ROLLED_BACK });
       }
 
       failureLogger.log({
@@ -387,14 +660,16 @@ When the task is complete and build passes, respond with tool "complete".`;
    */
   private async getLLMPlan(session: LLMSession): Promise<ToolCall | null> {
     const rateLimitResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async () => {
+      const systemPrompt = session.messages.find(m => m.role === 'system')?.content || getSelfImprovePrompt();
       // Build conversation context
-      let messages = session.messages.map(m => ({
-        role: m.role as 'system' | 'user' | 'assistant',
-        content: m.role === 'system' ? m.content :
-                 m.role === 'user' ? m.content :
-                 m.role === 'assistant' ? JSON.stringify(m.toolCall) :
-                 JSON.stringify(m.toolResult),
-      }));
+      let messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = session.messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({
+          role: m.role as 'system' | 'user' | 'assistant',
+          content: m.role === 'user' ? m.content :
+                   m.role === 'assistant' ? JSON.stringify(m.toolCall) :
+                   (m.toolResult ? JSON.stringify(m.toolResult) : m.content),
+        }));
 
       // Compact if conversation is getting long
       if (this.compactor.needsCompaction(messages)) {
@@ -406,17 +681,72 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       // Call LLM
       const response = await this.llmClient.complete({
+        systemPrompt,
         prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',
         maxTokens: 2000,
         temperature: 0.2, // Low temperature for deterministic tool calls
       });
 
+      if (response.success === false) {
+        throw new Error(response.error || 'LLM call failed before producing a response');
+      }
+
       return response.text;
     });
 
     if (!rateLimitResult.result) {
-      Logger.error('LLMModeAgent', 'Rate limit hit for LLM call');
-      return null;
+      const failureReason = rateLimitResult.rateLimited
+        ? (rateLimitResult.error || 'Rate limit hit for LLM call')
+        : (rateLimitResult.error || 'LLM call failed before producing a response');
+      if (this.currentSession) {
+        this.currentSession.lastPlanError = failureReason;
+      }
+      Logger.error('LLMModeAgent', failureReason);
+
+      const retryable = /rate limit|429|timeout|502|503|504|upstream|temporar/i.test(failureReason);
+      if (retryable) {
+        Logger.warn('LLMModeAgent', `Retrying transient planning failure once: ${failureReason}`);
+        await new Promise(resolve => setTimeout(resolve, 750));
+        const retryResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async () => {
+          const systemPrompt = session.messages.find(m => m.role === 'system')?.content || getSelfImprovePrompt();
+          let messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = session.messages
+            .filter(m => m.role !== 'system')
+            .map(m => ({
+              role: m.role as 'system' | 'user' | 'assistant',
+              content: m.role === 'user' ? m.content :
+                       m.role === 'assistant' ? JSON.stringify(m.toolCall) :
+                       (m.toolResult ? JSON.stringify(m.toolResult) : m.content),
+            }));
+          if (this.compactor.needsCompaction(messages)) {
+            messages = await this.compactor.compact(messages);
+          }
+          const conversation = messages.map(m => `${m.role}: ${m.content}`).join('\n\n---\n\n');
+          const response = await this.llmClient.complete({
+            systemPrompt,
+            prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',
+            maxTokens: 2000,
+            temperature: 0.2,
+          });
+          if (response.success === false) {
+            throw new Error(response.error || 'LLM call failed before producing a response');
+          }
+          return response.text;
+        });
+        if (retryResult.result) {
+          if (this.currentSession) this.currentSession.lastPlanError = undefined;
+          rateLimitResult.result = retryResult.result;
+        } else {
+          const retryReason = retryResult.error || failureReason;
+          if (this.currentSession) this.currentSession.lastPlanError = retryReason;
+          return null;
+        }
+      } else {
+        return null;
+      }
+    }
+
+    if (this.currentSession) {
+      this.currentSession.lastPlanError = undefined;
     }
 
     // Parse JSON response
@@ -444,6 +774,9 @@ When the task is complete and build passes, respond with tool "complete".`;
         if (implicitComplete) {
           Logger.debug('LLMModeAgent', 'Using implicit completion fallback for late-stage plain-text response');
           return implicitComplete;
+        }
+        if (this.currentSession) {
+          this.currentSession.lastPlanError = 'Failed to parse LLM response';
         }
         Logger.error('LLMModeAgent', 'No JSON object found in response');
         return null;
@@ -488,6 +821,9 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       return toolCall;
     } catch (e) {
+      if (this.currentSession) {
+        this.currentSession.lastPlanError = `Failed to parse LLM response: ${String(e)}`;
+      }
       Logger.error('LLMModeAgent', `Failed to parse LLM response: ${e}`);
       Logger.error('LLMModeAgent', `Raw response: ${rateLimitResult.result}`);
       return null;
@@ -572,10 +908,221 @@ When the task is complete and build passes, respond with tool "complete".`;
     return false;
   }
 
+  private formatPreflightExcerpt(content: string): string {
+    if (content.length <= LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT) return content;
+    return `${content.slice(0, LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT)}\n... [truncated preflight excerpt; call readFile for full contents]`;
+  }
+
+  private formatToolResultMessage(tool: string, result: ToolResult): string {
+    const base = JSON.stringify(result);
+    if (!this.currentSession) return base;
+    if (!result.success) {
+      const focusGateRecoveryHint = this.formatFocusGateRecoveryHint(tool, result, this.currentSession);
+      const message = focusGateRecoveryHint ? `${base}\n\n${focusGateRecoveryHint}` : base;
+      return this.appendFocusStatusHint(message, this.currentSession);
+    }
+    if (tool !== 'readFile') return this.appendFocusStatusHint(base, this.currentSession);
+
+    const data = result.data as { truncated?: boolean; endLine?: number } | undefined;
+    if (!data?.truncated || typeof data.endLine !== 'number') return this.appendFocusStatusHint(base, this.currentSession);
+
+    return this.appendFocusStatusHint(
+      `${base}\n\nPagination hint: this readFile result is truncated. Continue the same file with offset=${data.endLine} instead of rereading from the top. If you only need a specific method, symbol, or error location inside this file, use search with path set to the current file before reading more pages.`,
+      this.currentSession,
+    );
+  }
+
+  private formatFocusGateRecoveryHint(tool: string, result: ToolResult, session: LLMSession): string | null {
+    if (!result.error?.startsWith('Focus gate:') || !this.isFocusGateActive(session) || !session.activeFocusFile) {
+      return null;
+    }
+
+    const nextPrimary = this.nextPrimaryFile(session);
+    if (tool === 'readFile' && nextPrimary) {
+      if (session.focusInspectionBudgetRemaining > 0) {
+        return `Focus recovery hint: stay on ${session.activeFocusFile} for ${session.focusInspectionBudgetRemaining} more explicit read${session.focusInspectionBudgetRemaining === 1 ? '' : 's'} before advancing. If you decide this focus is wrong after that, call readFile with path=${nextPrimary} to advance intentionally.`;
+      }
+      return `Focus recovery hint: if you reject ${session.activeFocusFile}, call readFile with path=${nextPrimary} to advance to the next primary file.`;
+    }
+
+    if (tool === 'search') {
+      return `Focus recovery hint: keep search pinned to path=${session.activeFocusFile}. If you need another primary file, advance there first with readFile.`;
+    }
+
+    return null;
+  }
+
+  private formatToolProgressMessage(tool: string, result: ToolResult): string {
+    if (result.success) return `${tool} succeeded`;
+    const full = this.currentSession ? this.formatToolResultMessage(tool, result) : JSON.stringify(result);
+    const compact = full.replace(/\s+/g, ' ').trim();
+    return `${tool} failed: ${compact.slice(0, 220)}`;
+  }
+
+  private getInitialPreflightFiles(session: LLMSession): string[] {
+    if (session.activeFocusFile) return [session.activeFocusFile];
+    if (session.task.primaryFiles && session.task.primaryFiles.length > 0) return [session.task.primaryFiles[0]];
+    return session.task.workingSet ? [session.task.workingSet[0]] : [];
+  }
+
+  private initializeFocusState(session: LLMSession): void {
+    if (!this.isBoundedInspectionRun(session) || !session.task.primaryFiles?.length) return;
+    session.activeFocusIndex = 0;
+    session.activeFocusFile = session.task.primaryFiles[0];
+    session.focusInspectionBudgetRemaining = 2;
+    session.focusStatus = 'unresolved';
+    session.focusAdjacentFileUsed = false;
+    session.focusDecision = undefined;
+    session.focusDecisionAt = undefined;
+  }
+
+  private appendFocusStatusHint(content: string, session: LLMSession): string {
+    if (!this.isFocusGateActive(session) || !session.activeFocusFile) return content;
+    const nextPrimary = this.nextPrimaryFile(session);
+    const verificationHint = this.formatPreferredVerificationHint(session.task);
+    return `${content}\n\nFocus gate: active focus=${session.activeFocusFile}; remaining focus reads=${session.focusInspectionBudgetRemaining}; focus status=${session.focusStatus}.${nextPrimary ? ` If you reject this focus, move to next primary file: ${nextPrimary}.` : ' No additional primary files remain after this focus.'}${verificationHint ? ` ${verificationHint}` : ''}`;
+  }
+
+  private isFocusGateActive(session: LLMSession): boolean {
+    return this.isBoundedInspectionRun(session) && !!session.task.primaryFiles?.length;
+  }
+
+  private normalizeToolCallForFocusGate(toolCall: ToolCall): ToolCall {
+    const session = this.currentSession;
+    if (!session || !this.isFocusGateActive(session) || session.focusStatus !== 'unresolved') {
+      return toolCall;
+    }
+
+    if (toolCall.tool === 'readFile' && session.activeFocusFile) {
+      const requestedPath = typeof toolCall.params?.path === 'string' ? toolCall.params.path : undefined;
+      const nextPrimary = this.nextPrimaryFile(session);
+      const canAdvanceToNextPrimary = !!requestedPath && !!nextPrimary && requestedPath === nextPrimary && session.focusInspectionBudgetRemaining <= 0;
+      const isAllowedSecondary = !!requestedPath && !!session.task.secondaryFiles?.includes(requestedPath) && !session.focusAdjacentFileUsed;
+      if (!requestedPath || (!canAdvanceToNextPrimary && !isAllowedSecondary && requestedPath !== session.activeFocusFile)) {
+        return {
+          ...toolCall,
+          params: {
+            ...(toolCall.params || {}),
+            path: session.activeFocusFile,
+          },
+        };
+      }
+    }
+
+    if (toolCall.tool === 'search' && session.activeFocusFile) {
+      return {
+        ...toolCall,
+        params: {
+          ...(toolCall.params || {}),
+          path: session.activeFocusFile,
+        },
+      };
+    }
+
+    return toolCall;
+  }
+
+  private nextPrimaryFile(session: LLMSession): string | undefined {
+    const primaryFiles = session.task.primaryFiles || [];
+    return primaryFiles[session.activeFocusIndex + 1];
+  }
+
+  private advanceFocus(session: LLMSession, filePath: string): void {
+    const primaryFiles = session.task.primaryFiles || [];
+    const nextIndex = primaryFiles.indexOf(filePath);
+    if (nextIndex === -1) return;
+    session.activeFocusIndex = nextIndex;
+    session.activeFocusFile = filePath;
+    session.focusInspectionBudgetRemaining = 1;
+    session.focusStatus = 'unresolved';
+    session.focusAdjacentFileUsed = false;
+    session.focusDecision = 'reject';
+    session.focusDecisionAt = new Date().toISOString();
+  }
+
+  private validateFocusGate(toolCall: ToolCall): string | null {
+    const session = this.currentSession;
+    if (!session || !this.isFocusGateActive(session) || session.focusStatus !== 'unresolved') return null;
+
+    const tool = toolCall.tool;
+    if (tool === 'applyEdit' || tool === 'writeFile' || tool === 'runBuild' || tool === 'runTests' || tool === 'typeCheck' || tool === 'complete') {
+      return null;
+    }
+
+    const requestedPath = typeof toolCall.params?.path === 'string' ? toolCall.params.path : undefined;
+    const nextPrimary = this.nextPrimaryFile(session);
+
+    if (tool === 'readFile') {
+      if (requestedPath === session.activeFocusFile) {
+        if (session.focusInspectionBudgetRemaining > 0) return null;
+        return `Focus gate: inspection budget exhausted for ${session.activeFocusFile}. Apply an edit, run verification, or move to the next primary file${nextPrimary ? `: ${nextPrimary}` : ''}.`;
+      }
+      if (requestedPath && nextPrimary && requestedPath === nextPrimary && session.focusInspectionBudgetRemaining <= 0) {
+        this.advanceFocus(session, requestedPath);
+        return null;
+      }
+      if (requestedPath && session.task.secondaryFiles?.includes(requestedPath) && !session.focusAdjacentFileUsed) {
+        session.focusAdjacentFileUsed = true;
+        return null;
+      }
+      return `Focus gate: stay on ${session.activeFocusFile} until you edit, verify, or explicitly advance to the next primary file${nextPrimary ? ` (${nextPrimary})` : ''}.`;
+    }
+
+    if (tool === 'search') {
+      if (requestedPath === session.activeFocusFile) return null;
+      if (requestedPath && session.task.secondaryFiles?.includes(requestedPath) && !session.focusAdjacentFileUsed) {
+        session.focusAdjacentFileUsed = true;
+        return null;
+      }
+      return `Focus gate: search must stay inside the active focus file ${session.activeFocusFile}${nextPrimary ? ` or advance to ${nextPrimary} after exhausting focus reads` : ''}.`;
+    }
+
+    if (tool === 'listDir') {
+      return `Focus gate: broad repo exploration is blocked while focus remains unresolved on ${session.activeFocusFile}.`;
+    }
+
+    return null;
+  }
+
+  private updateFocusStateAfterTool(toolCall: ToolCall, result: ToolResult): void {
+    const session = this.currentSession;
+    if (!session || !this.isFocusGateActive(session)) return;
+
+    if (!result.success) return;
+
+    if (toolCall.tool === 'readFile' && typeof toolCall.params?.path === 'string' && toolCall.params.path === session.activeFocusFile && session.focusInspectionBudgetRemaining > 0) {
+      session.focusInspectionBudgetRemaining -= 1;
+      return;
+    }
+
+    if (toolCall.tool === 'applyEdit' || toolCall.tool === 'writeFile' || toolCall.tool === 'runBuild' || toolCall.tool === 'runTests' || toolCall.tool === 'typeCheck' || toolCall.tool === 'complete') {
+      session.focusStatus = 'committed';
+      session.focusDecision = 'resolve';
+      session.focusDecisionAt = new Date().toISOString();
+    }
+  }
+
+  private formatVerificationTargetPrompt(task: LLMTask): string {
+    if (!task.verificationTargets?.length) return '';
+    const preferred = task.verificationTargets
+      .slice()
+      .sort((a, b) => a.priority - b.priority)
+      .map((target) => `${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`)
+      .join('\n- ');
+    return `\nPreferred verification targets after a mutation:\n- ${preferred}\nPrefer the first applicable verification target before broader verification discovery.`;
+  }
+
+  private formatPreferredVerificationHint(task: LLMTask): string {
+    if (!task.verificationTargets?.length) return '';
+    const target = task.verificationTargets.slice().sort((a, b) => a.priority - b.priority)[0];
+    return `Preferred next verification: ${target.tool}${target.pattern ? ` (${target.pattern})` : ''}.`;
+  }
+
   /**
    * Execute a tool call
    */
   private async executeTool(toolCall: ToolCall): Promise<ToolResult> {
+    toolCall = this.normalizeToolCallForFocusGate(toolCall);
     const { tool, params, thought } = toolCall;
 
     Logger.debug('LLMModeAgent', `${thought}`);
@@ -585,6 +1132,12 @@ When the task is complete and build passes, respond with tool "complete".`;
       taskId: this.currentSession?.task.id,
       iteration: this.currentSession?.stepCount,
     });
+
+    const focusGateError = this.validateFocusGate(toolCall);
+    if (focusGateError) {
+      Logger.warn('LLMModeAgent', focusGateError);
+      return { success: false, error: focusGateError };
+    }
 
     const rateLimitResult = await rateLimiter.execute(
       tool === 'readFile' || tool === 'executeSkill' || tool === 'searchCode' || tool === 'searchDocs'
@@ -596,12 +1149,21 @@ When the task is complete and build passes, respond with tool "complete".`;
             : 'testRun',
       async () => {
         switch (tool) {
-          case 'readFile':
+          case 'readFile': {
+            // Track explored path for resume context
+            if (params.path && typeof params.path === 'string') {
+              this.currentSession?.exploredPaths.add(params.path);
+            }
             return readFileTool.execute(params);
+          }
           
           case 'writeFile': {
             // Track file extension for language-aware verification
             this.trackModifiedExtension(params.path as string);
+            // Track mutated file for resume context
+            if (params.path && typeof params.path === 'string') {
+              this.currentSession?.mutatedFiles.add(params.path);
+            }
             return writeFileTool.execute(params);
           }
           
@@ -613,6 +1175,10 @@ When the task is complete and build passes, respond with tool "complete".`;
             }
             // Track file extension for language-aware verification
             this.trackModifiedExtension(params.path as string);
+            // Track mutated file for resume context
+            if (params.path && typeof params.path === 'string') {
+              this.currentSession?.mutatedFiles.add(params.path);
+            }
             return applyEditTool.execute(params);
           }
           
@@ -626,11 +1192,16 @@ When the task is complete and build passes, respond with tool "complete".`;
                 duration: 0
               };
             }
-            return runBuildTool.execute(params);
+            const buildResult = await runBuildTool.execute(params);
+            this.recordVerificationResult('build', buildResult);
+            return buildResult;
           }
           
-          case 'runTests':
-            return runTestsTool.execute(params);
+          case 'runTests': {
+            const testResult = await runTestsTool.execute(params);
+            this.recordVerificationResult('test', testResult);
+            return testResult;
+          }
 
           case 'executeSkill':
             return executeSkillTool.execute(params);
@@ -687,21 +1258,202 @@ When the task is complete and build passes, respond with tool "complete".`;
       Logger.debug('LLMModeAgent', `Error: ${result.error.substring(0, 200)}`);
     }
 
+    this.updateFocusStateAfterTool(toolCall, result);
+
     return result;
+  }
+
+  private isVerificationTool(tool: string): boolean {
+    return tool === 'runBuild' || tool === 'runTests' || tool === 'typeCheck';
+  }
+
+  private isBoundedInspectionRun(session: LLMSession): boolean {
+    return session.task.id.startsWith('tui-self-') ||
+      session.task.completionPolicy === 'stop_after_verification';
+  }
+
+  private isMeaningfulInspectionTool(tool: string): boolean {
+    return tool === 'readFile' ||
+      tool === 'listDir' ||
+      tool === 'search' ||
+      tool === 'gitStatus' ||
+      tool === 'lsp' ||
+      tool === 'astValidate' ||
+      tool === 'importGuard';
+  }
+
+  private hasConcreteSuccessfulInspection(session: LLMSession): boolean {
+    for (let i = 0; i < session.messages.length - 1; i++) {
+      const message = session.messages[i];
+      const next = session.messages[i + 1];
+      if (!message.toolCall || !next.toolResult?.success) continue;
+      if (message.toolCall.tool === 'search') continue;
+      if (!this.isMeaningfulInspectionTool(message.toolCall.tool)) continue;
+      return true;
+    }
+    return false;
+  }
+
+  private shouldClassifyAsBoundedNoChangeSuccess(session: LLMSession): boolean {
+    if (!this.isBoundedInspectionRun(session)) return false;
+    if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
+    return this.hasConcreteSuccessfulInspection(session);
+  }
+
+  private shouldStopAfterSuccessfulVerification(session: LLMSession, toolCall: ToolCall, result: ToolResult): boolean {
+    const tool = toolCall.tool;
+    if (session.task.completionPolicy !== 'stop_after_verification') return false;
+    if (!this.isVerificationTool(tool)) return false;
+    if (!result.success) return false;
+    if ((result.data as { skipped?: boolean } | undefined)?.skipped) return false;
+    const required = this.getRequiredVerificationTarget(session.task);
+    if (required && !this.matchesVerificationTarget(toolCall, required)) return false;
+    return session.backups.length > 0 || session.mutatedFiles.size > 0;
+  }
+
+  private getRequiredVerificationTarget(task: LLMTask): NonNullable<LLMTask['verificationTargets']>[number] | undefined {
+    return task.verificationTargets?.slice().sort((a, b) => a.priority - b.priority)[0];
+  }
+
+  private matchesVerificationTarget(toolCall: Pick<ToolCall, 'tool' | 'params'>, target: NonNullable<LLMTask['verificationTargets']>[number]): boolean {
+    if (toolCall.tool !== target.tool) return false;
+    if (!target.pattern) return true;
+    if (target.tool === 'runTests') {
+      const pattern = typeof toolCall.params?.pattern === 'string' ? toolCall.params.pattern : '';
+      return pattern.includes(target.pattern);
+    }
+    return true;
+  }
+
+  private hasSatisfiedRequiredVerification(session: LLMSession): boolean {
+    const target = this.getRequiredVerificationTarget(session.task);
+    if (!target) return true;
+    for (let i = 0; i < session.messages.length - 1; i++) {
+      const message = session.messages[i];
+      const next = session.messages[i + 1];
+      if (!message.toolCall || !next.toolResult?.success) continue;
+      if (this.matchesVerificationTarget(message.toolCall, target)) return true;
+    }
+    return false;
+  }
+
+  private getVerificationGateError(session: LLMSession): string | null {
+    if (session.mutatedFiles.size === 0 && session.backups.length === 0) return null;
+    if (this.hasSatisfiedRequiredVerification(session)) return null;
+    const target = this.getRequiredVerificationTarget(session.task);
+    if (!target) return null;
+    return `Verification gate: run ${target.tool}${target.pattern ? ` (${target.pattern})` : ''} before completing this task.`;
+  }
+
+  /**
+   * Bounded-inspection guardrail: for bounded Bubble Tea self-improvement runs,
+   * terminate deterministically if no mutation has happened after spending
+   * more than 50% of the step budget on reconnaissance.
+   */
+  private shouldStopForBoundedInspection(session: LLMSession, maxSteps: number): boolean {
+    if (!this.isBoundedInspectionRun(session)) return false;
+
+    // Must have spent more than half the budget
+    if (session.stepCount <= Math.ceil(maxSteps / 2)) return false;
+
+    // Must have no mutations at all
+    if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
+
+    // Must have already completed meaningful successful inspection work
+    if (!this.hasConcreteSuccessfulInspection(session)) return false;
+
+    return true;
+  }
+
+  private restoreSessionFromRunState(session: LLMSession, existingRunState: RunState): void {
+    for (const path of existingRunState.exploredPaths) {
+      session.exploredPaths.add(path);
+    }
+    for (const file of existingRunState.mutatedFiles) {
+      session.mutatedFiles.add(file);
+    }
+    if (existingRunState.lastVerification) {
+      session.lastVerification = existingRunState.lastVerification;
+    }
+    if (existingRunState.activeFocusFile) {
+      session.activeFocusFile = existingRunState.activeFocusFile;
+      session.activeFocusIndex = existingRunState.activeFocusIndex ?? 0;
+      session.focusInspectionBudgetRemaining = existingRunState.focusInspectionBudgetRemaining ?? 0;
+      session.focusStatus = existingRunState.focusStatus ?? 'unresolved';
+      session.focusAdjacentFileUsed = existingRunState.focusAdjacentFileUsed ?? false;
+      session.focusDecision = existingRunState.focusDecision;
+      session.focusDecisionAt = existingRunState.focusDecisionAt;
+    }
+    session.stepCount = existingRunState.stepsCompleted;
+  }
+
+  private recordVerificationResult(type: 'build' | 'test', result: ToolResult): void {
+    if (!this.currentSession) return;
+    this.currentSession.lastVerification = {
+      passed: result.success,
+      type,
+      error: result.error,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private deriveSuspensionPhase(session: LLMSession): SemanticBoundary {
+    if (session.lastVerification) {
+      return session.lastVerification.passed
+        ? SemanticBoundary.VERIFICATION_FINISHED
+        : SemanticBoundary.VERIFICATION_STARTED;
+    }
+
+    return session.mutatedFiles.size > 0
+      ? SemanticBoundary.MUTATION_APPLIED
+      : SemanticBoundary.INTERRUPTED;
+  }
+
+  private buildSuspendedRunState(
+    session: LLMSession,
+    maxSteps: number,
+    workspaceFingerprint?: RunState['workspaceFingerprint'],
+  ): RunState {
+    const phase = this.deriveSuspensionPhase(session);
+
+    return {
+      runId: `run-${session.task.id}-${Date.now()}`,
+      taskId: session.task.id,
+      taskTitle: session.task.title,
+      taskDescription: session.task.description,
+      status: Status.SUSPENDED,
+      phase,
+      stepsCompleted: session.stepCount,
+      maxSteps,
+      continueUntilDone: false,
+      startedAt: session.startTime,
+      suspendedAt: new Date().toISOString(),
+      exploredPaths: Array.from(session.exploredPaths),
+      progressSummary: `Completed ${session.stepCount} steps. ${session.mutatedFiles.size} files mutated. Phase: ${phase}`,
+      hadMutations: session.mutatedFiles.size > 0,
+      mutationApplied: session.mutatedFiles.size > 0,
+      mutatedFiles: Array.from(session.mutatedFiles),
+      lastVerification: session.lastVerification,
+      activeFocusFile: session.activeFocusFile,
+      activeFocusIndex: session.activeFocusIndex,
+      focusInspectionBudgetRemaining: session.focusInspectionBudgetRemaining,
+      focusStatus: session.focusStatus,
+      focusAdjacentFileUsed: session.focusAdjacentFileUsed,
+      focusDecision: session.focusDecision,
+      focusDecisionAt: session.focusDecisionAt,
+      workspaceFingerprint,
+    };
   }
 
   private trackModifiedExtension(filePath: string): void {
     const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
-    if (ext) {
-      this.currentSession?.modifiedExtensions.add(ext);
-    }
+    if (ext) this.modifiedExtensions.add(ext);
   }
 
   private needsCodeVerification(): boolean {
-    const modifiedExtensions = this.currentSession?.modifiedExtensions;
-    if (!modifiedExtensions || modifiedExtensions.size === 0) return true;
+    if (this.modifiedExtensions.size === 0) return true;
     const nonCodeOnly = ['md', 'txt', 'rst', 'json', 'jsonc', 'css', 'scss', 'less', 'sass', 'html', 'htm', 'svg', 'yaml', 'yml', 'toml'];
-    return Array.from(modifiedExtensions).some((ext) => !nonCodeOnly.includes(ext));
+    return Array.from(this.modifiedExtensions).some((ext) => !nonCodeOnly.includes(ext));
   }
 
   /**
@@ -812,7 +1564,7 @@ Generated: ${new Date().toISOString()}
 ## Sessions
 ${sessions.map(s => `
 ### ${s.task.id}: ${s.task.title}
-- Status: ${s.status}
+- Status: ${s.status}${s.exitReason ? ` (${s.exitReason})` : ''}
 - Steps: ${s.stepCount}
 - LLM Calls: ${s.messages.filter(m => m.role === 'assistant').length}
 - Backups: ${s.backups.length}

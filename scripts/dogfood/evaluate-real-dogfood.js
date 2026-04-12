@@ -70,7 +70,17 @@ function extractCodeFromHTML(htmlPath) {
   // Extract code between <script> tags only after trying visible code containers.
   const scriptMatch = content.match(/<script>([\s\S]*?)<\/script>/);
   if (scriptMatch) {
-    return scriptMatch[1].trim();
+    const scriptContent = scriptMatch[1].trim();
+
+    // Some wrapper pages embed an entire generated HTML document inside a helper
+    // script block (for example Three.js wrappers). Prefer the nested artifact
+    // body over the wrapper control script when present.
+    const nestedHtmlIndex = scriptContent.indexOf('<!DOCTYPE html>');
+    if (nestedHtmlIndex >= 0) {
+      return scriptContent.slice(nestedHtmlIndex).trim();
+    }
+
+    return scriptContent;
   }
   
   return null;

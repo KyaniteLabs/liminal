@@ -320,6 +320,11 @@ export class CreativeEvaluator {
       return this.assessThree(output, options);
     }
 
+    // Video component / scene evaluation (Revideo + legacy Remotion)
+    if (this.detectsVideoComponentUsage(output)) {
+      return this.assessVideoComponent(output, options);
+    }
+
     // Hydra visual synth evaluation
     if (this.detectsHydraUsage(output)) {
       return this.assessHydra(output, options);
@@ -870,6 +875,14 @@ export class CreativeEvaluator {
   }
 
   /**
+   * Detect Revideo or legacy Remotion video-component code
+   */
+  static detectsVideoComponentUsage(code: string): boolean {
+    return /@revideo\/(core|2d)|\bmakeScene2D?\b|\bcreateSignal\b|\byield\*/.test(code) ||
+      /from\s+['"]remotion['"]|\buseCurrentFrame\b|\bAbsoluteFill\b|\bSequence\b|\bComposition\b/.test(code);
+  }
+
+  /**
    * Detect Hydra visual synth code
    */
   static detectsHydraUsage(code: string): boolean {
@@ -1007,6 +1020,68 @@ export class CreativeEvaluator {
     let calibratedScore: number | undefined;
 
     // Apply calibration if requested
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: 0,
+      interestingnessScore: 0,
+      calibratedScore,
+    };
+  }
+
+  /**
+   * Assess Revideo / Remotion video-component quality
+   */
+  private static assessVideoComponent(output: string, options?: AssessOptions): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const isRevideo = /@revideo\/(core|2d)|\bmakeScene2D?\b|\bcreateSignal\b|\byield\*/.test(codeOnly);
+    const isRemotion = /from\s+['"]remotion['"]|\buseCurrentFrame\b|\bAbsoluteFill\b|\bSequence\b|\bComposition\b/.test(codeOnly);
+
+    // Technical checks
+    if (isRevideo || isRemotion) technicalScore += 0.15;
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.15;
+    if (isRevideo && /@revideo\/2d|Txt|Rect|Circle|Node/.test(codeOnly)) technicalScore += 0.15;
+    if (isRevideo && /\bmakeScene2D?\b|\bview\.add\b/.test(codeOnly)) technicalScore += 0.1;
+    if (isRemotion && /AbsoluteFill|Sequence|Composition/.test(codeOnly)) technicalScore += 0.15;
+    if (/export\s+(default\s+)?(const|function|class)|React\.FC|=>\s*\{/.test(codeOnly)) technicalScore += 0.1;
+    if (/useCurrentFrame|useVideoConfig|useTime|createSignal|interpolate|spring/.test(codeOnly)) technicalScore += 0.1;
+    if (codeOnly.length > 200) technicalScore += 0.1;
+    if (codeOnly.length > 500) technicalScore += 0.1;
+
+    // Creative checks
+    if (/interpolate|spring|ease|opacity|fade|scale|rotate|translate|position/.test(codeOnly)) creativeScore += 0.2;
+    if (isRevideo && /\byield\*|\.\s*opacity\s*\(|\.\s*scale\s*\(|\.\s*position\s*\(/.test(codeOnly)) creativeScore += 0.15;
+    if (/frame|fps|durationInFrames|useCurrentFrame|useTime/.test(codeOnly)) creativeScore += 0.15;
+    if (/style=\{\{|background|gradient|color|fontSize|textShadow/.test(codeOnly)) creativeScore += 0.15;
+    if (/Txt|Rect|Circle|AbsoluteFill|div|span|h1|h2/.test(codeOnly)) creativeScore += 0.1;
+    if (/typing|cursor|subtitle|title|word|text/i.test(codeOnly)) creativeScore += 0.1;
+    if (/createRef|createSignal|yield\*|map\(|for\s*\(/.test(codeOnly)) creativeScore += 0.1;
+    if (codeOnly.split('\n').length > 10) creativeScore += 0.1;
+
+    // Penalties for patterns that commonly indicate broken video output
+    if (/frame\.value\b/.test(codeOnly)) technicalScore -= 0.15;
+    if (/AbsoluteFill[^>]*duration=/.test(codeOnly)) technicalScore -= 0.1;
+    if (/\b<Video\b/.test(codeOnly) && !/from\s+['"][^'"]*Video[^'"]*['"]/.test(codeOnly)) technicalScore -= 0.1;
+    if (!isRevideo && !isRemotion) issues.push('Missing video-component imports or APIs');
+    if (!/interpolate|spring|useCurrentFrame|useTime|yield\*/.test(codeOnly)) issues.push('Missing animation timing logic');
+    if (codeOnly.length < 120) issues.push('Video component code too short');
+
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
     if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
       calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
       overallScore = calibratedScore;

@@ -40,6 +40,15 @@ function findByBasename(...names) {
 }
 
 // Extract inline code from HTML files
+function decodeHtmlEntities(text) {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 function extractCodeFromHTML(htmlPath) {
   const content = fs.readFileSync(htmlPath, 'utf-8');
   
@@ -47,6 +56,14 @@ function extractCodeFromHTML(htmlPath) {
   const scriptMatch = content.match(/<script>([\s\S]*?)<\/script>/);
   if (scriptMatch) {
     return scriptMatch[1].trim();
+  }
+
+  // Many historical gallery artifacts render generated code inside <pre>.
+  // Decode that code before evaluation so the evaluator judges the artifact,
+  // not just the wrapper page around it.
+  const preMatch = content.match(/<pre>([\s\S]*?)<\/pre>/i);
+  if (preMatch) {
+    return decodeHtmlEntities(preMatch[1]).trim();
   }
   
   return null;

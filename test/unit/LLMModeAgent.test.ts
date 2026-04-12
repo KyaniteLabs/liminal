@@ -481,6 +481,23 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('does not classify zero-tool startup failure as bounded no-change success', async () => {
+    mockComplete.mockResolvedValue({ text: '' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-empty-start',
+      title: 'Startup failure',
+      description: 'desc',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(mockReadFile.execute).not.toHaveBeenCalled();
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.exitReason).toBeUndefined();
+  });
+
   it('treats Bubble Tea inspection-only parse failure as success when no mutations were made', async () => {
     mockComplete
       .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}' })
@@ -499,6 +516,7 @@ describe('LLMModeAgent', () => {
     expect(mockReadFile.execute).toHaveBeenCalled();
     expect(session.backups).toHaveLength(0);
     expect(session.status).toBe(Status.SUCCESS);
+    expect(session.exitReason).toBe('bounded-inspection');
   });
 
   // ── Report generation ──────────────────────────────────────────────

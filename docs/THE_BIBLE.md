@@ -646,6 +646,7 @@ Failures:   0 critical
 - Bounded self-improvement runs now auto-stop after successful post-mutation verification instead of spending leftover budget exploring unrelated follow-up work
 - Bounded self-improvement runs also terminate reconnaissance-only sessions once they spend over half the budget without any mutation, preventing open-ended pre-fix drift
 - Bounded run outcomes now carry deterministic exit reasons (`bounded-inspection`, `bounded-no-change`) so reports and operator summaries can distinguish why a no-change run ended
+- Bounded no-change success now requires at least one successful inspection-style tool call, preventing zero-tool startup failures (for example rate limits or empty plans) from being misreported as successful no-change runs
 - Self-improvement runtime prep now injects a deterministic working set and file hint for bounded runs so the model starts from the relevant runtime/checkpoint files instead of rediscovering the repo each turn
 - Prepared self-improvement task packets now carry a bounded working set plus a domain tag into LLMModeAgent so the runtime can preserve structured startup context instead of only a loose file hint
 - Bounded runs now pre-read their working-set files before the LLM loop starts, turning startup localization from prompt-only guidance into deterministic runtime behavior

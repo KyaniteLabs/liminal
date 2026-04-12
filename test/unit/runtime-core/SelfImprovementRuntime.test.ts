@@ -80,4 +80,46 @@ describe('LLMModeSelfImprovementRuntime', () => {
     expect(task.description).toContain('src/harness/agent/LLMModeAgent.ts');
     expect(task.description).toContain('test/harness/RunStateStore.test.ts');
   });
+
+  it('prepares repeatable bounded checkpoint-resume task packets for the same description', async () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
+    const session = {
+      status: 'success',
+      startTime: '2026-04-11T18:00:00.000Z',
+      endTime: '2026-04-11T18:00:01.000Z',
+      stepCount: 1,
+    } as any;
+    mockExecuteTask.mockResolvedValue(session);
+
+    const description = 'Resume checkpoint state after workspace fingerprint drift';
+    vi.spyOn(Date, 'now')
+      .mockReturnValueOnce(1_775_960_625_337)
+      .mockReturnValueOnce(1_775_960_625_338);
+    const first = runtime.prepare({ llm, description });
+    const second = runtime.prepare({ llm, description });
+
+    expect(mockCreateLLMModeAgent).not.toHaveBeenCalled();
+
+    await first.execute();
+    await second.execute();
+
+    const firstTask = mockExecuteTask.mock.calls[0][0];
+    const secondTask = mockExecuteTask.mock.calls[1][0];
+
+    expect(firstTask.id).not.toBe(secondTask.id);
+    expect(firstTask).toEqual(expect.objectContaining({
+      fileHint: 'src/harness/RunStateStore.ts',
+      maxSteps: 20,
+      approved: true,
+      completionPolicy: 'stop_after_verification',
+    }));
+    expect(secondTask).toEqual(expect.objectContaining({
+      fileHint: 'src/harness/RunStateStore.ts',
+      maxSteps: 20,
+      approved: true,
+      completionPolicy: 'stop_after_verification',
+    }));
+    expect({ ...firstTask, id: 'stable-id' }).toEqual({ ...secondTask, id: 'stable-id' });
+  });
 });

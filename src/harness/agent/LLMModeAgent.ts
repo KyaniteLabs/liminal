@@ -888,7 +888,12 @@ When the task is complete and build passes, respond with tool "complete".`;
   private formatToolResultMessage(tool: string, result: ToolResult): string {
     const base = JSON.stringify(result);
     if (!this.currentSession) return base;
-    if (tool !== 'readFile' || !result.success) return this.appendFocusStatusHint(base, this.currentSession);
+    if (!result.success) {
+      const focusGateRecoveryHint = this.formatFocusGateRecoveryHint(tool, result, this.currentSession);
+      const message = focusGateRecoveryHint ? `${base}\n\n${focusGateRecoveryHint}` : base;
+      return this.appendFocusStatusHint(message, this.currentSession);
+    }
+    if (tool !== 'readFile') return this.appendFocusStatusHint(base, this.currentSession);
 
     const data = result.data as { truncated?: boolean; endLine?: number } | undefined;
     if (!data?.truncated || typeof data.endLine !== 'number') return this.appendFocusStatusHint(base, this.currentSession);
@@ -897,6 +902,26 @@ When the task is complete and build passes, respond with tool "complete".`;
       `${base}\n\nPagination hint: this readFile result is truncated. Continue the same file with offset=${data.endLine} instead of rereading from the top. If you only need a specific method, symbol, or error location inside this file, use search with path set to the current file before reading more pages.`,
       this.currentSession,
     );
+  }
+
+  private formatFocusGateRecoveryHint(tool: string, result: ToolResult, session: LLMSession): string | null {
+    if (!result.error?.startsWith('Focus gate:') || !this.isFocusGateActive(session) || !session.activeFocusFile) {
+      return null;
+    }
+
+    const nextPrimary = this.nextPrimaryFile(session);
+    if (tool === 'readFile' && nextPrimary) {
+      if (session.focusInspectionBudgetRemaining > 0) {
+        return `Focus recovery hint: stay on ${session.activeFocusFile} for ${session.focusInspectionBudgetRemaining} more explicit read${session.focusInspectionBudgetRemaining === 1 ? '' : 's'} before advancing. If you decide this focus is wrong after that, call readFile with path=${nextPrimary} to advance intentionally.`;
+      }
+      return `Focus recovery hint: if you reject ${session.activeFocusFile}, call readFile with path=${nextPrimary} to advance to the next primary file.`;
+    }
+
+    if (tool === 'search') {
+      return `Focus recovery hint: keep search pinned to path=${session.activeFocusFile}. If you need another primary file, advance there first with readFile.`;
+    }
+
+    return null;
   }
 
   private getInitialPreflightFiles(session: LLMSession): string[] {

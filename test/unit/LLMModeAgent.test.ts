@@ -1045,6 +1045,38 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('adds a focus recovery hint when a readFile tries to skip ahead too early', async () => {
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"src/harness/agent/LLMModeAgent.ts"},"thought":"jump straight to the next primary file","expectedResult":"inspect the next focus"}',
+      '{"tool":"complete","params":{},"thought":"focus recovery hint received","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-recovery',
+      title: 'Focus recovery hint',
+      description: 'Give the planner a concrete next action when it tries to skip the active focus too early',
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      workingSet: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    const toolMessage = session.messages.find((message) =>
+      message.role === 'tool' && message.content.includes('Focus recovery hint: stay on src/runtime-core/SelfImprovementRuntime.ts'),
+    );
+    expect(toolMessage?.content).toContain('call readFile with path=src/harness/agent/LLMModeAgent.ts to advance intentionally');
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   it('forces a decision after the primary focus inspection budget is exhausted', async () => {
     queuePlans(
       '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts"},"thought":"read first page","expectedResult":"inspect"}',

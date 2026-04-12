@@ -55,6 +55,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.task.description).toContain(`Primary files:\n- ${(prepared.task.primaryFiles || []).join('\n- ')}`);
       expect(prepared.task.description).toContain(`Secondary files:\n- ${(prepared.task.secondaryFiles || []).join('\n- ')}`);
       expect(prepared.task.description).toContain(`Verification targets:\n- ${(prepared.task.verificationTargets || []).map((target) => `${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`).join('\n- ')}`);
+      expect(prepared.task.description).toContain(`Preferred verification targets after a mutation:\n- ${(prepared.task.verificationTargets || []).map((target) => `${target.tool}${target.pattern ? ` (${target.pattern})` : ''}: ${target.reason}`).join('\n- ')}`);
       expect(prepared.task.description).toContain(`Expansion budget: ${prepared.task.expansionBudget} additional files before broadening beyond this packet`);
       expect(prepared.task.description).toContain(`Expansion status: ${prepared.task.expansionStatus}`);
       expect(prepared.task.description).toContain(`Localization confidence: ${prepared.task.localizationConfidence}`);
@@ -343,6 +344,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.task.description).toContain('Primary files:');
       expect(prepared.task.description).toContain('Secondary files:');
       expect(prepared.task.description).toContain('Verification targets:');
+      expect(prepared.task.description).toContain('Preferred verification targets after a mutation:');
       expect(prepared.task.description).toContain('Expansion status: exhausted');
       expect(prepared.task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
       expect(prepared.task.description).toContain('Localization confidence: high');

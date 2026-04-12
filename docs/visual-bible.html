@@ -793,7 +793,7 @@
                 <li><strong>✅ Ambiguity gating restored</strong> - explicit p5 routing no longer masks unclear prompts before clarification</li>
                 <li><strong>✅ Verification hardening landed</strong> - mutation tasks now require successful build/test/typecheck before autonomous success</li>
                 <li><strong>✅ Iteration-context handoff landed</strong> - dispatched generators now receive Ralph's enriched prompt context</li>
-                <li><strong>✅ Prove trustworthy local resume</strong> - end-to-end harness coverage now shows resumed runs either continue from saved mutation state without re-applying the same edit or fail closed immediately when the workspace fingerprint drifts</li>
+                <li><strong>✅ Prove trustworthy local resume</strong> - harness coverage now shows resumed runs restore saved working-set + verification state into the live session, continue from saved mutation state without re-applying the same edit, and fail closed immediately when the workspace fingerprint drifts</li>
                 <li><strong>✅ Bound repair runs deterministically</strong> - Bubble Tea self-improvement tasks now stop once a mutation has been verified, and reconnaissance-only runs now terminate after burning half their budget without a safe edit</li>
                 <li><strong>✅ Seed bounded runs with a working set</strong> - the self-improvement runtime now hands Bubble Tea repair runs a deterministic file map for checkpoint/runtime work before the first LLM step</li>
 <li><strong>✅ Tighten fail-closed resume safety</strong> - checkpoint resume now rejects a dirty working tree when the suspended run fingerprint expected a clean workspace</li>

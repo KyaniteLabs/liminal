@@ -642,6 +642,7 @@ Failures:   0 critical
 - Resume-safe self-improvement is now being hardened in-place: suspended runs persist semantic run state, workspace fingerprints, and remaining-step budget continuity for same-worktree recovery
 - Resume-safe self-improvement now has an end-to-end proof test: a suspended run resumes from persisted mutation state, verifies the saved edit, and completes without duplicating mutation work
 - Resume-safe self-improvement now also has a workspace-drift proof test: if the persisted fingerprint no longer matches the local worktree, the resumed run clears stale state and fails closed before any new tool call or mutation executes
+- Resume-safe self-improvement now also proves live session restoration: resumed runs hydrate explored paths, mutated files, last verification state, and remaining-step continuity from persisted run state before continuing
 - Bounded self-improvement runs now auto-stop after successful post-mutation verification instead of spending leftover budget exploring unrelated follow-up work
 - Bounded self-improvement runs also terminate reconnaissance-only sessions once they spend over half the budget without any mutation, preventing open-ended pre-fix drift
 - Self-improvement runtime prep now injects a deterministic working set and file hint for bounded runs so the model starts from the relevant runtime/checkpoint files instead of rediscovering the repo each turn

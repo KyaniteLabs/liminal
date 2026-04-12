@@ -355,6 +355,53 @@ describe('LLMModeAgent', () => {
     expect(Array.from(session.mutatedFiles)).toEqual([]);
   });
 
+  it('restores saved session tracking state into the resumed live run', async () => {
+    const savedVerification = {
+      passed: false,
+      type: 'build',
+      error: 'src/foo.ts(12,3): missing semicolon',
+      timestamp: '2026-04-11T18:00:00.000Z',
+    } as const;
+
+    mockReadRunState.mockResolvedValue({
+      taskId: 't-resume-state',
+      stepsCompleted: 4,
+      maxSteps: 5,
+      exploredPaths: ['src/foo.ts', 'src/bar.ts'],
+      mutatedFiles: ['src/foo.ts'],
+      lastVerification: savedVerification,
+      workspaceFingerprint: {
+        host: 'local',
+        repoRoot: '/tmp/repo',
+        gitDir: '/tmp/repo/.git',
+        worktreePath: '/tmp/repo',
+      },
+    });
+    mockComplete.mockResolvedValue({
+      text: '{"tool":"complete","params":{},"thought":"resume context is enough to finish","expectedResult":"done"}',
+    });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const resumedSession = await agent.executeTask({
+      id: 't-resume-state',
+      title: 'Resume state restoration',
+      description: 'Resume using the persisted working set and verification snapshot',
+      maxSteps: 5,
+      approved: true,
+    });
+
+    expect(mockValidateWorkspaceFingerprint).toHaveBeenCalledTimes(1);
+    expect(mockComplete).toHaveBeenCalledTimes(1);
+    expect(mockComplete.mock.calls[0][0].prompt).toContain('resume context');
+    expect(mockReadFile.execute).not.toHaveBeenCalled();
+    expect(mockApplyEdit.execute).not.toHaveBeenCalled();
+    expect(resumedSession.status).toBe(Status.SUCCESS);
+    expect(resumedSession.stepCount).toBe(5);
+    expect(Array.from(resumedSession.exploredPaths)).toEqual(['src/foo.ts', 'src/bar.ts']);
+    expect(Array.from(resumedSession.mutatedFiles)).toEqual(['src/foo.ts']);
+    expect(resumedSession.lastVerification).toEqual(savedVerification);
+  });
+
   it('auto-completes bounded runs after verified success instead of exploring unrelated follow-up work', async () => {
     mockComplete
       .mockResolvedValueOnce({ text: '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}' })

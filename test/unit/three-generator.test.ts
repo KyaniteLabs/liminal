@@ -53,6 +53,22 @@ describe('ThreeGenerator', () => {
     const terrain = await gen.generate('wireframe terrain landscape');
     expect(galaxy).not.toBe(terrain);
   });
+
+  it('wrapForGallery passes through complete HTML without nesting a second document', () => {
+    const gen = new ThreeGenerator();
+    const html = `<!DOCTYPE html><html><head><title>Scene</title></head><body><script>const scene = new THREE.Scene();</script></body></html>`;
+    const wrapped = gen.wrapForGallery(html);
+    expect(wrapped).toBe(html);
+  });
+
+  it('wrapForGallery still wraps raw Three scene code in a gallery harness', () => {
+    const gen = new ThreeGenerator();
+    const code = `const scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();`;
+    const wrapped = gen.wrapForGallery(code);
+    expect(wrapped).toContain('<!DOCTYPE html>');
+    expect(wrapped).toContain('import*as THREE');
+    expect(wrapped).toContain(code);
+  });
 });
 
 describe('selectThreeTemplate', () => {

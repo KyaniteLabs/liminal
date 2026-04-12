@@ -131,12 +131,14 @@ export class RenderAndScorePipeline {
       }
 
       // Score visual output
+      const warnings = [...renderResult.errors];
       let visualScore: VisualScoreResult | undefined;
       if (shouldScoreVisual && renderResult.screenshot?.success) {
         try {
           visualScore = await this.visualScorer.score(renderResult.screenshot.buffer);
         } catch (error) {
           Logger.warn('RenderAndScorePipeline', 'Visual scoring failed:', error);
+          warnings.push(`Visual scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
         }
       }
 
@@ -150,6 +152,7 @@ export class RenderAndScorePipeline {
           );
         } catch (error) {
           Logger.warn('RenderAndScorePipeline', 'Audio scoring failed:', error);
+          warnings.push(`Audio scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
         }
       }
 
@@ -157,7 +160,6 @@ export class RenderAndScorePipeline {
       const score = this.calculateCombinedScore(visualScore, audioScore, shouldScoreVisual, shouldScoreAudio);
 
       const duration = Date.now() - startTime;
-      const warnings = [...renderResult.errors];
 
       Logger.info('RenderAndScorePipeline', `Completed in ${duration}ms with score ${score.toFixed(3)}`);
 

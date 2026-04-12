@@ -57,6 +57,8 @@ export interface LLMTask {
   fileHint?: string;
   maxSteps?: number;
   approved: boolean;
+  /** Deterministic completion policy for bounded runs */
+  completionPolicy?: 'manual' | 'stop_after_verification';
 }
 
 export interface ToolCall {
@@ -297,6 +299,21 @@ When the task is complete and build passes, respond with tool "complete".`;
           content: JSON.stringify(result),
           toolResult: result,
         });
+
+        if (this.shouldStopAfterSuccessfulVerification(session, toolCall.tool, result)) {
+          Logger.info('LLMModeAgent', `Auto-completing bounded run after successful ${toolCall.tool}`);
+          await clearRunState();
+          session.status = Status.SUCCESS;
+          session.endTime = new Date().toISOString();
+          eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+            process: 'agent-task',
+            success: true,
+            reason: `Verified success reached via ${toolCall.tool}` ,
+            iterations: session.stepCount,
+            durationMs: Date.now() - new Date(session.startTime).getTime(),
+          });
+          return session;
+        }
 
         // Check for critical failures
         if (toolCall.tool === 'runBuild' && !result.success) {
@@ -821,6 +838,18 @@ When the task is complete and build passes, respond with tool "complete".`;
     }
 
     return result;
+  }
+
+  private isVerificationTool(tool: string): boolean {
+    return tool === 'runBuild' || tool === 'runTests' || tool === 'typeCheck';
+  }
+
+  private shouldStopAfterSuccessfulVerification(session: LLMSession, tool: string, result: ToolResult): boolean {
+    if (session.task.completionPolicy !== 'stop_after_verification') return false;
+    if (!this.isVerificationTool(tool)) return false;
+    if (!result.success) return false;
+    if ((result.data as { skipped?: boolean } | undefined)?.skipped) return false;
+    return session.backups.length > 0 || session.mutatedFiles.size > 0;
   }
 
   private trackModifiedExtension(filePath: string): void {

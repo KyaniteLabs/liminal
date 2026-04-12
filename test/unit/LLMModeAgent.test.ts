@@ -40,7 +40,7 @@ vi.mock('../../src/llm/LLMClient.js', () => ({
   LLMClient: class { constructor() { return mockLLM; } },
 }));
 vi.mock('../../src/utils/Logger.js', () => ({
-  Logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn() },
+  Logger: { debug: vi.fn(), error: vi.fn(), warn: vi.fn(), info: vi.fn() },
 }));
 vi.mock('../../src/harness/FailureLogger.js', () => ({
   failureLogger: { log: vi.fn() },
@@ -242,6 +242,30 @@ describe('LLMModeAgent', () => {
       hadMutations: true,
       mutationApplied: true,
     });
+  });
+
+  it('auto-completes bounded runs after verified success instead of exploring unrelated follow-up work', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"runBuild","params":{},"thought":"verify","expectedResult":"build passes"}' })
+      .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"src/extra.ts"},"thought":"look for more work","expectedResult":"more context"}' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-bounded',
+      title: 'Bounded run',
+      description: 'desc',
+      approved: true,
+      maxSteps: 6,
+      completionPolicy: 'stop_after_verification',
+    });
+
+    expect(mockApplyEdit.execute).toHaveBeenCalledTimes(1);
+    expect(mockRunBuild.execute).toHaveBeenCalledTimes(1);
+    expect(mockRunTests.execute).not.toHaveBeenCalled();
+    expect(mockReadFile.execute).not.toHaveBeenCalledWith({ path: 'src/extra.ts' });
+    expect(session.status).toBe(Status.SUCCESS);
+    expect(mockClearRunState).toHaveBeenCalled();
   });
 
   it('executeTask calls llmClient.complete with conversation context', async () => {

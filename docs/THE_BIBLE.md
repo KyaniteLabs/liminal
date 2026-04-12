@@ -640,6 +640,7 @@ Failures:   0 critical
 - Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
 - Meta-Harness bridge routing: self-improvement prompts route through the TS bridge into the tool-using harness agent rather than the creative-generation loop
 - Resume-safe self-improvement is now being hardened in-place: suspended runs persist semantic run state, workspace fingerprints, and remaining-step budget continuity for same-worktree recovery
+- Bounded self-improvement runs now auto-stop after successful post-mutation verification instead of spending leftover budget exploring unrelated follow-up work
 - Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 

@@ -333,6 +333,7 @@ export class TuiBridgeService {
         description: userText,
         maxSteps,
         approved: true,
+        completionPolicy: 'stop_after_verification',
       });
 
       const fullContent = this.formatAgentSession(session);

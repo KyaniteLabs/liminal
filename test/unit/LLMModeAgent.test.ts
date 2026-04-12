@@ -14,6 +14,8 @@ const {
   mockSaveRunState,
   mockReadRunState,
   mockClearRunState,
+  mockCaptureWorkspaceFingerprint,
+  mockValidateWorkspaceFingerprint,
 } = vi.hoisted(() => {
   const complete = vi.fn();
   const llm = {
@@ -33,6 +35,8 @@ const {
     mockSaveRunState: vi.fn(async () => {}),
     mockReadRunState: vi.fn(async () => null),
     mockClearRunState: vi.fn(async () => {}),
+    mockCaptureWorkspaceFingerprint: vi.fn(async () => ({ host: 'local', repoRoot: '/tmp/repo', gitDir: '/tmp/repo/.git', worktreePath: '/tmp/repo' })),
+    mockValidateWorkspaceFingerprint: vi.fn(async () => ({ valid: true })),
   };
 });
 
@@ -76,6 +80,8 @@ vi.mock('../../src/harness/RunStateStore.js', () => ({
   saveRunState: mockSaveRunState,
   readRunState: mockReadRunState,
   clearRunState: mockClearRunState,
+  captureWorkspaceFingerprint: mockCaptureWorkspaceFingerprint,
+  validateWorkspaceFingerprint: mockValidateWorkspaceFingerprint,
   formatResumeContext: vi.fn(() => 'resume context'),
   SemanticBoundary: {
     RUN_CREATED: 'run_created',
@@ -105,6 +111,8 @@ describe('LLMModeAgent', () => {
     mockSaveRunState.mockResolvedValue(undefined);
     mockReadRunState.mockResolvedValue(null);
     mockClearRunState.mockResolvedValue(undefined);
+    mockCaptureWorkspaceFingerprint.mockResolvedValue({ host: 'local', repoRoot: '/tmp/repo', gitDir: '/tmp/repo/.git', worktreePath: '/tmp/repo' });
+    mockValidateWorkspaceFingerprint.mockResolvedValue({ valid: true });
   });
 
   // ── Factory ────────────────────────────────────────────────────────
@@ -304,6 +312,47 @@ describe('LLMModeAgent', () => {
     expect(Array.from(resumedSession.mutatedFiles)).toEqual(['src/foo.ts']);
     expect(Array.from(resumedSession.exploredPaths)).toEqual([]);
     expect(persistedRunState).toBeNull();
+  });
+
+  it('blocks resume safely when the workspace fingerprint has drifted', async () => {
+    const fingerprint = {
+      host: 'host-a',
+      repoRoot: '/repo',
+      gitDir: '/repo/.git/worktrees/old',
+      worktreePath: '/repo/.worktrees/old',
+    };
+
+    mockReadRunState.mockResolvedValue({
+      taskId: 't-resume-drift',
+      stepsCompleted: 2,
+      maxSteps: 5,
+      exploredPaths: ['src/foo.ts'],
+      mutatedFiles: ['src/foo.ts'],
+      workspaceFingerprint: fingerprint,
+    });
+    mockValidateWorkspaceFingerprint.mockResolvedValue({
+      valid: false,
+      reason: 'worktree path changed',
+    });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-resume-drift',
+      title: 'Resume drift guard',
+      description: 'Do not resume if the worktree fingerprint no longer matches',
+      approved: true,
+    });
+
+    expect(mockValidateWorkspaceFingerprint).toHaveBeenCalledWith(fingerprint);
+    expect(mockClearRunState).toHaveBeenCalledTimes(1);
+    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockReadFile.execute).not.toHaveBeenCalled();
+    expect(mockApplyEdit.execute).not.toHaveBeenCalled();
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.endTime).toBeDefined();
+    expect(session.stepCount).toBe(0);
+    expect(Array.from(session.exploredPaths)).toEqual([]);
+    expect(Array.from(session.mutatedFiles)).toEqual([]);
   });
 
   it('auto-completes bounded runs after verified success instead of exploring unrelated follow-up work', async () => {

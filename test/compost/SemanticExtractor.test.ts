@@ -52,6 +52,19 @@ describe('SemanticExtractor', () => {
       const result = await extractor.extractCode(file);
       expect(result).toContain('factorial');
     });
+
+    it('returns an explicit llm-unsuccessful fallback when the LLM reports failure', async () => {
+      mockGenerate.mockResolvedValue({
+        success: false,
+        code: '',
+      });
+      const file = path.join(tmpDir, 'code.ts');
+      await fs.writeFile(file, 'function x() { return 1; }');
+
+      const result = await extractor.extractCode(file);
+      expect(result).toContain('[Code llm-unsuccessful: code.ts');
+      expect(result).toContain('extension=ts');
+    });
   });
 
   describe('extractImage()', () => {
@@ -60,7 +73,7 @@ describe('SemanticExtractor', () => {
       await fs.writeFile(file, Buffer.alloc(100, 0xff));
 
       const result = await extractor.extractImage(file);
-      expect(result).toContain('[Image: photo.jpg');
+      expect(result).toContain('[Image metadata-only: photo.jpg');
       expect(result).toContain('KB');
       expect(result).toContain('vision');
     });
@@ -72,7 +85,7 @@ describe('SemanticExtractor', () => {
       await fs.writeFile(file, Buffer.alloc(100));
 
       const result = await extractor.extractAudio(file);
-      expect(result).toContain('audio');
+      expect(result).toContain('[Audio metadata-only: audio.m4a');
     });
   });
 
@@ -82,7 +95,7 @@ describe('SemanticExtractor', () => {
       await fs.writeFile(file, Buffer.alloc(100));
 
       const result = await extractor.extractVideo(file);
-      expect(result).toContain('video');
+      expect(result).toContain('[Video metadata-only: video.mp4');
     });
   });
 

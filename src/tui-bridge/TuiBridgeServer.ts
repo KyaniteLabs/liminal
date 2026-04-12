@@ -2,6 +2,9 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 import { TuiBridgeService } from './TuiBridgeService.js';
 import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiInputRequest } from './types.js';
+import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.js';
+import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
+import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
 
 interface BridgeServerOptions {
   port?: number;
@@ -114,6 +117,10 @@ export class TuiBridgeServer {
         const sessionId = inputMatch[1];
         const body = await this.readBody(req);
         const input: TuiInputRequest = JSON.parse(body);
+        if (await this.handleOpenRouterPicker(sessionId, input)) {
+          this.json(res, 200, { reviewRequired: false });
+          return;
+        }
         // Pass the full LLMClient (not just stream function)
         const result = await this.bridge.submitInput(sessionId, input, this.llm);
         this.json(res, 200, result);
@@ -205,6 +212,68 @@ export class TuiBridgeServer {
   private json(res: ServerResponse, status: number, body: unknown): void {
     res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
+  }
+
+  private async handleOpenRouterPicker(sessionId: string, input: TuiInputRequest): Promise<boolean> {
+    const text = input.text.trim();
+    if (!text.startsWith('/provider openrouter')) return false;
+
+    const parts = text.split(/\s+/).slice(2);
+    if (parts.length === 0) {
+      const current = this.llm?.getConfig().model;
+      const lines = ['OpenRouter models:'];
+      for (const entry of OPENROUTER_MODEL_CATALOG) {
+        const marker = entry.model === current ? ' (current)' : '';
+        lines.push(`- ${entry.alias.padEnd(12)} ${entry.model}${marker}`);
+      }
+      this.bridge.emitCommandResponse(sessionId, lines.join('\n'));
+      return true;
+    }
+
+    const selection = parts.join(' ');
+    const alias = resolveOpenRouterModelAlias(selection);
+    const model = alias?.model || selection;
+    const label = alias?.label || selection;
+
+    const loaded = await loadConfig();
+    const config = loaded.isErr()
+      ? ({ defaultProvider: 'openrouter', providers: {} } as UserConfig)
+      : (loaded.value as UserConfig);
+
+    const apiKey = config.providers?.openrouter?.apiKey
+      || this.llm?.getConfig().apiKey
+      || process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      this.bridge.emitCommandResponse(sessionId, 'OpenRouter API key not found. Set it in ~/.liminal/config.json or OPENROUTER_API_KEY before switching models.');
+      return true;
+    }
+
+    config.defaultProvider = 'openrouter';
+    config.providers = config.providers || {};
+    config.providers.openrouter = {
+      ...config.providers.openrouter,
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model,
+      apiKey,
+    };
+    await saveConfig(config);
+
+    this.llm = new RuntimeLLMClient({
+      role: 'harness',
+      baseUrl: config.providers.openrouter.baseUrl,
+      model,
+      apiKey,
+      temperature: 0.5,
+      maxTokens: 4096,
+    });
+
+    this.bridge.updateStatus(sessionId, {
+      provider: 'openrouter',
+      model,
+      activeTask: `Provider switched to ${label}`,
+    });
+    this.bridge.emitCommandResponse(sessionId, `Switched OpenRouter model to ${label} (${model})`);
+    return true;
   }
 
   private readBody(req: IncomingMessage): Promise<string> {

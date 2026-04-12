@@ -59,6 +59,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.task.description).toContain(`Expansion status: ${prepared.task.expansionStatus}`);
       expect(prepared.task.description).toContain(`Localization confidence: ${prepared.task.localizationConfidence}`);
       expect(prepared.task.description).toContain(`Domain: ${prepared.task.domain}`);
+      expect(prepared.task.description).toContain(`Hint: ${prepared.task.fileHint}`);
     }
   });
 
@@ -345,6 +346,7 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.task.description).toContain('Expansion status: exhausted');
       expect(prepared.task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
       expect(prepared.task.description).toContain('Localization confidence: high');
+      expect(prepared.task.description).toContain(`Hint: ${prepared.task.fileHint}`);
 
       process.env.LIMINAL_TUI_AGENT_MAX_STEPS = '99';
       await prepared.execute();

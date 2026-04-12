@@ -481,15 +481,6 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
-<<<<<<< HEAD
-  it('does not classify zero-tool startup failure as bounded no-change success', async () => {
-    mockComplete.mockResolvedValue({ text: '' });
-
-    const agent = new LLMModeAgent(mockLLM as any);
-    const session = await agent.executeTask({
-      id: 'tui-self-empty-start',
-      title: 'Startup failure',
-=======
   it('does not classify zero-inspection bounded startup failures as bounded-no-change success', async () => {
     mockComplete.mockResolvedValue({
       text: '{"thought":"startup failed before a useful tool plan existed","expectedResult":"recover later"}',
@@ -518,25 +509,18 @@ describe('LLMModeAgent', () => {
     const session = await agent.executeTask({
       id: 'tui-self-parse-before-inspection',
       title: 'Parse failure before inspection',
->>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
       description: 'desc',
       approved: true,
       maxSteps: 4,
     });
 
     expect(mockReadFile.execute).not.toHaveBeenCalled();
-<<<<<<< HEAD
-=======
     expect(mockGitStatus.execute).not.toHaveBeenCalled();
     expect(mockClearRunState).not.toHaveBeenCalled();
->>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
     expect(session.status).toBe(Status.FAILED);
     expect(session.exitReason).toBeUndefined();
   });
 
-<<<<<<< HEAD
-  it('treats Bubble Tea inspection-only parse failure as success when no mutations were made', async () => {
-=======
   it('does not classify an early Bubble Tea LLM rate-limit failure as bounded-no-change success', async () => {
     vi.mocked(rateLimiter.execute).mockImplementationOnce(async () => ({ error: 'Rate limit exceeded' } as any));
 
@@ -558,7 +542,6 @@ describe('LLMModeAgent', () => {
   });
 
   it('still classifies meaningful successful inspection with no safe mutation as bounded-no-change success', async () => {
->>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
     mockComplete
       .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}' })
       .mockResolvedValueOnce({ text: '{"tool":"gitStatus","params":{},"thought":"inspect repo"}' })
@@ -577,11 +560,7 @@ describe('LLMModeAgent', () => {
     expect(mockGitStatus.execute).toHaveBeenCalled();
     expect(session.backups).toHaveLength(0);
     expect(session.status).toBe(Status.SUCCESS);
-<<<<<<< HEAD
-    expect(session.exitReason).toBe('bounded-inspection');
-=======
     expect(session.exitReason).toBe('bounded-no-change');
->>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
   });
 
   // ── Report generation ──────────────────────────────────────────────

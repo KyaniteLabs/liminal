@@ -378,7 +378,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           toolResult: result,
         });
 
-        if (result.success && this.isInspectionTool(toolCall.tool)) {
+        if (result.success && this.isMeaningfulInspectionTool(toolCall.tool)) {
           session.successfulInspectionCalls++;
         }
 
@@ -441,20 +441,9 @@ When the task is complete and build passes, respond with tool "complete".`;
       }
 
       // Loop ended without explicit completion via 'complete' tool.
-<<<<<<< HEAD
-      // Bubble Tea inspection-only runs should not surface as generic failures
-      // when no mutations were made, regardless of whether the loop ended via
-      // parse failure or simple step exhaustion.
-      const tuiInspectionOnly =
-        session.task.id.startsWith('tui-self-') &&
-        session.backups.length === 0 &&
-        this.hasMeaningfulInspection(session);
-      if (tuiInspectionOnly) {
-=======
       // Only bounded runs that actually completed meaningful successful
       // inspection work should classify as bounded-no-change successes.
       if (this.shouldClassifyAsBoundedNoChangeSuccess(session)) {
->>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
         Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
         await clearRunState();
         session.status = Status.SUCCESS;
@@ -951,14 +940,6 @@ When the task is complete and build passes, respond with tool "complete".`;
     return tool === 'runBuild' || tool === 'runTests' || tool === 'typeCheck';
   }
 
-<<<<<<< HEAD
-  private isInspectionTool(tool: string): boolean {
-    return tool === 'readFile' || tool === 'search' || tool === 'listDir' || tool === 'gitStatus' || tool === 'lsp' || tool === 'astValidate' || tool === 'importGuard';
-  }
-
-  private hasMeaningfulInspection(session: LLMSession): boolean {
-    return session.successfulInspectionCalls > 0;
-=======
   private isBoundedInspectionRun(session: LLMSession): boolean {
     return session.task.id.startsWith('tui-self-') ||
       session.task.completionPolicy === 'stop_after_verification';
@@ -975,20 +956,13 @@ When the task is complete and build passes, respond with tool "complete".`;
   }
 
   private hasMeaningfulSuccessfulInspection(session: LLMSession): boolean {
-    for (let i = 0; i < session.messages.length - 1; i++) {
-      const message = session.messages[i];
-      const next = session.messages[i + 1];
-      if (!message.toolCall || !this.isMeaningfulInspectionTool(message.toolCall.tool)) continue;
-      if (next.toolResult?.success) return true;
-    }
-    return false;
+    return session.successfulInspectionCalls > 0;
   }
 
   private shouldClassifyAsBoundedNoChangeSuccess(session: LLMSession): boolean {
     if (!this.isBoundedInspectionRun(session)) return false;
     if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
     return this.hasMeaningfulSuccessfulInspection(session);
->>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
   }
 
   private shouldStopAfterSuccessfulVerification(session: LLMSession, tool: string, result: ToolResult): boolean {

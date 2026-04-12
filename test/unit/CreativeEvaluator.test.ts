@@ -284,5 +284,84 @@ export const BrokenComp = () => {
       const result = CreativeEvaluator.assess(html, { domain: 'html' });
       expect(result.score).toBeLessThan(0.7);
     });
+
+    it('should pass a valid Tone.js synth patch', () => {
+      const code = `const reverb = new Tone.Reverb({ decay: 12, wet: 0.8 }).toDestination();
+const filter = new Tone.Filter(800, 'lowpass').connect(reverb);
+const synth = new Tone.PolySynth(Tone.Synth, {
+  oscillator: { type: 'sine' },
+  envelope: { attack: 2, decay: 1, sustain: 0.6, release: 8 }
+}).connect(filter);
+
+Tone.Transport.start();
+synth.triggerAttackRelease(['C2', 'G2', 'D3'], '4n');`;
+      const result = CreativeEvaluator.assess(code, { domain: 'tone' });
+      expect(result.technicalScore).toBeGreaterThan(0.6);
+      expect(result.creativeScore).toBeGreaterThan(0.4);
+      expect(result.score).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('should pass a valid Tone.js HTML wrapper page', () => {
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Ambient Drone</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+  <button id="start">Start Drone</button>
+  <script>
+    document.getElementById("start").addEventListener("click", async () => {
+      await Tone.start();
+      Tone.Transport.start();
+      const reverb = new Tone.Reverb({ decay: 12, wet: 0.8 }).toDestination();
+      const chorus = new Tone.Chorus({ frequency: 0.5, delayTime: 10, depth: 1, wet: 0.3 }).start().connect(reverb);
+      const drone = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "sine" },
+        envelope: { attack: 4, decay: 1, sustain: 0.8, release: 10 }
+      }).connect(chorus);
+      drone.triggerAttackRelease(["C1","G1","D2"], "8n");
+    });
+  </script>
+</body>
+</html>`;
+      const result = CreativeEvaluator.assess(html, { domain: 'tone' });
+      expect(result.score).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('should pass an ambient drone Tone.js page driven by oscillators and LFOs', () => {
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Ambient Drone</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+<script>
+(async () => {
+  await Tone.start();
+  const reverb = new Tone.Reverb({ decay: 15, wet: 0.9 }).toDestination();
+  const filter = new Tone.Filter(300, 'lowpass').toDestination();
+  const osc1 = new Tone.Oscillator('C2', 'sine').connect(filter);
+  const osc2 = new Tone.Oscillator('G2', 'sine').connect(filter);
+  const osc3 = new Tone.Oscillator('C3', 'sine').connect(filter);
+  const gain = new Tone.Gain(0.4).connect(reverb);
+  const lfo = new Tone.LFO({ frequency: 0.1, min: 0.3, max: 1 }).start();
+  lfo.connect(gain.gain);
+  osc1.connect(gain); osc2.connect(gain); osc3.connect(gain);
+  osc1.start(); osc2.start(); osc3.start();
+})();
+</script>
+</body>
+</html>`;
+      const result = CreativeEvaluator.assess(html, { domain: 'tone' });
+      expect(result.score).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('should keep tone error placeholders below the pass threshold', () => {
+      const html = `<!DOCTYPE html><html><head><title>ERROR</title></head><body><h1>❌ tone × model</h1><p>ToneGenerator: Generated code does not use Tone.js</p></body></html>`;
+      const result = CreativeEvaluator.assess(html, { domain: 'tone' });
+      expect(result.score).toBeLessThan(0.7);
+    });
   });
 });

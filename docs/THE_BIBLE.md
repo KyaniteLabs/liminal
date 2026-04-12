@@ -642,6 +642,7 @@ Failures:   0 critical
 - Resume-safe self-improvement is now being hardened in-place: suspended runs persist semantic run state, workspace fingerprints, and remaining-step budget continuity for same-worktree recovery
 - Resume-safe self-improvement now has an end-to-end proof test: a suspended run resumes from persisted mutation state, verifies the saved edit, and completes without duplicating mutation work
 - Bounded self-improvement runs now auto-stop after successful post-mutation verification instead of spending leftover budget exploring unrelated follow-up work
+- Bounded self-improvement runs also terminate reconnaissance-only sessions once they spend over half the budget without any mutation, preventing open-ended pre-fix drift
 - Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 

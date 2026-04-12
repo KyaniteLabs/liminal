@@ -233,6 +233,25 @@ When the task is complete and build passes, respond with tool "complete".`;
         session.stepCount++;
         Logger.debug('LLMModeAgent', `Step ${session.stepCount}/${maxSteps}`);
 
+        // ── Bounded-inspection guardrail ─────────────────────────────
+        // For bounded runs (tui-self-* or stop_after_verification), if
+        // more than half the step budget is spent with no mutations,
+        // terminate deterministically instead of open-ended reconnaissance.
+        if (this.shouldStopForBoundedInspection(session, maxSteps)) {
+          Logger.info('LLMModeAgent', `Bounded-inspection guardrail triggered at step ${session.stepCount}/${maxSteps} - no mutations after 50% budget`);
+          await clearRunState();
+          session.status = Status.SUCCESS;
+          session.endTime = new Date().toISOString();
+          eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+            process: 'agent-task',
+            success: true,
+            reason: 'Bounded inspection complete - no mutation warranted within budget',
+            iterations: session.stepCount,
+            durationMs: Date.now() - new Date(session.startTime).getTime(),
+          });
+          return session;
+        }
+
         // Emit progress event for TUI
         eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
           process: 'agent-task',
@@ -850,6 +869,26 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (!result.success) return false;
     if ((result.data as { skipped?: boolean } | undefined)?.skipped) return false;
     return session.backups.length > 0 || session.mutatedFiles.size > 0;
+  }
+
+  /**
+   * Bounded-inspection guardrail: for bounded Bubble Tea self-improvement runs,
+   * terminate deterministically if no mutation has happened after spending
+   * more than 50% of the step budget on reconnaissance.
+   */
+  private shouldStopForBoundedInspection(session: LLMSession, maxSteps: number): boolean {
+    // Only applies to bounded runs (tui-self-* prefix or explicit bounded policy)
+    const isBoundedRun = session.task.id.startsWith('tui-self-') ||
+      session.task.completionPolicy === 'stop_after_verification';
+    if (!isBoundedRun) return false;
+
+    // Must have spent more than half the budget
+    if (session.stepCount <= Math.ceil(maxSteps / 2)) return false;
+
+    // Must have no mutations at all
+    if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
+
+    return true;
   }
 
   private trackModifiedExtension(filePath: string): void {

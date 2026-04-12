@@ -124,6 +124,18 @@ export class TuiBridgeService {
     return this.stream.subscribeWithId(sessionId, listener);
   }
 
+  updateStatus(sessionId: string, patch: Partial<TuiSessionStatus>): TuiSessionStatus {
+    const status = this.sessions.update(sessionId, patch);
+    this.emit(sessionId, { type: 'status.updated', sessionId, status });
+    return status;
+  }
+
+  emitCommandResponse(sessionId: string, content: string): void {
+    this.emit(sessionId, { type: 'response.started', sessionId });
+    this.emit(sessionId, { type: 'response.delta', sessionId, delta: content });
+    this.emit(sessionId, { type: 'response.completed', sessionId, content });
+    this.emit(sessionId, { type: 'response.committed', sessionId, content });
+  }
   // eslint-disable-next-line @typescript-eslint/require-await
   async submitInput(
     sessionId: string,

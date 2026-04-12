@@ -51,6 +51,8 @@ export interface AudioCaptureResult {
   success: boolean;
   /** Error message if capture failed */
   error?: string;
+  /** Non-fatal capture warnings surfaced from browser instrumentation */
+  warnings?: string[];
 }
 
 export interface RenderResult {
@@ -275,6 +277,12 @@ export class HeadlessRenderer {
         logs.push(`[warn] ${audio.error}`);
         errors.push(audio.error);
       }
+      if (audio?.warnings?.length) {
+        for (const warning of audio.warnings) {
+          logs.push(`[warn] ${warning}`);
+          errors.push(warning);
+        }
+      }
 
       return {
         page,
@@ -364,6 +372,8 @@ export class HeadlessRenderer {
       // Store for captured audio data
       const audioCaptureData: number[] = [];
       (window as unknown as { __audioCaptureData: number[] }).__audioCaptureData = audioCaptureData;
+      const audioCaptureWarnings: string[] = [];
+      (window as unknown as { __audioCaptureWarnings: string[] }).__audioCaptureWarnings = audioCaptureWarnings;
 
       // Intercept AudioContext creation
       const OriginalAudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -406,6 +416,7 @@ export class HeadlessRenderer {
             this._scriptProcessor.connect(this.destination);
           } catch (e) {
             // Capture setup failed, but don't break the audio context
+            audioCaptureWarnings.push(`Audio capture setup failed: ${e instanceof Error ? e.message : String(e)}`);
           }
         }
 
@@ -443,8 +454,8 @@ export class HeadlessRenderer {
             if (this._captureDestination && destination !== this._captureDestination && destination instanceof AudioNode) {
               try {
                 originalConnect(this._captureDestination);
-              } catch {
-                // Ignore connection errors
+              } catch (e) {
+                audioCaptureWarnings.push(`Audio capture connection failed: ${e instanceof Error ? e.message : String(e)}`);
               }
             }
 
@@ -544,6 +555,7 @@ export class HeadlessRenderer {
       // Retrieve the captured audio data
       const audioData = await page.evaluate((duration: number) => {
         const captureData = (window as unknown as { __audioCaptureData?: number[] }).__audioCaptureData;
+        const captureWarnings = (window as unknown as { __audioCaptureWarnings?: string[] }).__audioCaptureWarnings || [];
 
         if (!captureData || captureData.length === 0) {
           // No audio captured - return empty result
@@ -552,6 +564,7 @@ export class HeadlessRenderer {
             sampleRate: 44100,
             duration: duration / 1000,
             hasAudio: false,
+            warnings: captureWarnings,
           };
         }
 
@@ -574,6 +587,7 @@ export class HeadlessRenderer {
           sampleRate,
           duration: durationSec,
           hasAudio: true,
+          warnings: captureWarnings,
         };
       }, opts.stabilizationTime);
 
@@ -583,6 +597,7 @@ export class HeadlessRenderer {
         duration: audioData.duration,
         success: audioData.hasAudio,
         error: audioData.hasAudio ? undefined : 'No audio captured during render window',
+        warnings: audioData.warnings,
       };
     } catch (error) {
       return {
@@ -591,6 +606,7 @@ export class HeadlessRenderer {
         duration: 0,
         success: false,
         error: error instanceof Error ? error.message : 'Audio capture failed',
+        warnings: [],
       };
     }
   }

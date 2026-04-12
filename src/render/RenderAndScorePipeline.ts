@@ -50,6 +50,8 @@ export interface PipelineResult {
   domain: RenderDomain;
   /** Error message if failed */
   error?: string;
+  /** Non-fatal degradation warnings propagated from rendering/scoring */
+  warnings?: string[];
   /** Processing time in milliseconds */
   duration: number;
 }
@@ -155,6 +157,7 @@ export class RenderAndScorePipeline {
       const score = this.calculateCombinedScore(visualScore, audioScore, shouldScoreVisual, shouldScoreAudio);
 
       const duration = Date.now() - startTime;
+      const warnings = [...renderResult.errors];
 
       Logger.info('RenderAndScorePipeline', `Completed in ${duration}ms with score ${score.toFixed(3)}`);
 
@@ -165,6 +168,7 @@ export class RenderAndScorePipeline {
         audio: audioScore,
         render: renderResult,
         domain,
+        warnings: warnings.length > 0 ? warnings : undefined,
         duration,
       };
     } catch (error) {

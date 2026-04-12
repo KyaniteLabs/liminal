@@ -2,6 +2,10 @@ export interface RepoIndexLiteContext {
   fileHint: string;
   intro: string;
   workingSet: string[];
+  primaryFiles: string[];
+  secondaryFiles: string[];
+  expansionBudget: number;
+  localizationConfidence: 'high' | 'medium' | 'low';
 }
 
 const DEFAULT_WORKING_SET = [
@@ -26,6 +30,10 @@ export function localizeBoundedSelfImprovement(description: string): RepoIndexLi
       fileHint: CHECKPOINT_RESUME_WORKING_SET[0],
       intro: 'Work in these files first before exploring elsewhere:',
       workingSet: CHECKPOINT_RESUME_WORKING_SET,
+      primaryFiles: CHECKPOINT_RESUME_WORKING_SET.slice(0, 2),
+      secondaryFiles: CHECKPOINT_RESUME_WORKING_SET.slice(2),
+      expansionBudget: 2,
+      localizationConfidence: 'high',
     };
   }
 
@@ -33,5 +41,9 @@ export function localizeBoundedSelfImprovement(description: string): RepoIndexLi
     fileHint: DEFAULT_WORKING_SET[0],
     intro: 'Start in these runtime-core files before any broader reconnaissance. Only expand beyond this working set if the requested fix cannot be completed there:',
     workingSet: DEFAULT_WORKING_SET,
+    primaryFiles: DEFAULT_WORKING_SET.slice(0, 2),
+    secondaryFiles: DEFAULT_WORKING_SET.slice(2),
+    expansionBudget: 2,
+    localizationConfidence: 'medium',
   };
 }

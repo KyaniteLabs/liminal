@@ -16,6 +16,16 @@ describe('RepoIndexLite', () => {
       'test/unit/LLMModeAgent.test.ts',
       'test/harness/RunStateStore.test.ts',
     ]);
+    expect(first.primaryFiles).toEqual([
+      'src/harness/RunStateStore.ts',
+      'src/harness/agent/LLMModeAgent.ts',
+    ]);
+    expect(first.secondaryFiles).toEqual([
+      'test/unit/LLMModeAgent.test.ts',
+      'test/harness/RunStateStore.test.ts',
+    ]);
+    expect(first.expansionBudget).toBe(2);
+    expect(first.localizationConfidence).toBe('high');
     expect(first.workingSet).toHaveLength(4);
   });
 
@@ -29,6 +39,16 @@ describe('RepoIndexLite', () => {
       'src/harness/RunStateStore.ts',
       'test/unit/LLMModeAgent.test.ts',
     ]);
+    expect(context.primaryFiles).toEqual([
+      'src/runtime-core/SelfImprovementRuntime.ts',
+      'src/harness/agent/LLMModeAgent.ts',
+    ]);
+    expect(context.secondaryFiles).toEqual([
+      'src/harness/RunStateStore.ts',
+      'test/unit/LLMModeAgent.test.ts',
+    ]);
+    expect(context.expansionBudget).toBe(2);
+    expect(context.localizationConfidence).toBe('medium');
     expect(context.workingSet).toHaveLength(4);
   });
 });

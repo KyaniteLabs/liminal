@@ -10,6 +10,10 @@ export interface SelfImprovementRuntimeInput {
 interface TaskPacket {
   fileHint: string;
   workingSet: string[];
+  primaryFiles: string[];
+  secondaryFiles: string[];
+  expansionBudget: number;
+  localizationConfidence: 'high' | 'medium' | 'low';
   domain: string;
   description: string;
 }
@@ -44,8 +48,12 @@ function buildTaskPacket(description: string): TaskPacket {
   return {
     fileHint: context.fileHint,
     workingSet: context.workingSet,
+    primaryFiles: context.primaryFiles,
+    secondaryFiles: context.secondaryFiles,
+    expansionBudget: context.expansionBudget,
+    localizationConfidence: context.localizationConfidence,
     domain,
-    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\n- ${context.workingSet.join('\n- ')}\n\nDomain: ${domain}`,
+    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\nPrimary files:\n- ${context.primaryFiles.join('\n- ')}\nSecondary files:\n- ${context.secondaryFiles.join('\n- ')}\nExpansion budget: ${context.expansionBudget} additional files before broadening beyond this packet\nLocalization confidence: ${context.localizationConfidence}\nDomain: ${domain}`,
   };
 }
 
@@ -62,6 +70,10 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
       description: taskPacket.description,
       fileHint: taskPacket.fileHint,
       workingSet: taskPacket.workingSet,
+      primaryFiles: taskPacket.primaryFiles,
+      secondaryFiles: taskPacket.secondaryFiles,
+      expansionBudget: taskPacket.expansionBudget,
+      localizationConfidence: taskPacket.localizationConfidence,
       domain: taskPacket.domain,
       maxSteps,
       approved: true,

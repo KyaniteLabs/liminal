@@ -173,12 +173,26 @@ describe('LLMModeSelfImprovementRuntime', () => {
           'test/unit/LLMModeAgent.test.ts',
           'test/harness/RunStateStore.test.ts',
         ],
+        primaryFiles: [
+          'src/harness/RunStateStore.ts',
+          'src/harness/agent/LLMModeAgent.ts',
+        ],
+        secondaryFiles: [
+          'test/unit/LLMModeAgent.test.ts',
+          'test/harness/RunStateStore.test.ts',
+        ],
+        expansionBudget: 2,
+        localizationConfidence: 'high',
         domain: 'runstate',
         maxSteps: 7,
         approved: true,
         completionPolicy: 'stop_after_verification',
       }));
       expect(prepared.maxSteps).toBe(7);
+      expect(prepared.task.description).toContain('Primary files:');
+      expect(prepared.task.description).toContain('Secondary files:');
+      expect(prepared.task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
+      expect(prepared.task.description).toContain('Localization confidence: high');
 
       process.env.LIMINAL_TUI_AGENT_MAX_STEPS = '99';
       await prepared.execute();

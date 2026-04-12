@@ -57,6 +57,14 @@ export interface LLMTask {
   fileHint?: string;
   /** Deterministic working set for bounded runs - agent should read these first */
   workingSet?: string[];
+  /** Ordered first-pass files for bounded localization */
+  primaryFiles?: string[];
+  /** Optional secondary files the runtime has already budgeted for bounded expansion */
+  secondaryFiles?: string[];
+  /** Number of files the bounded packet allows beyond the seeded lists before broader exploration */
+  expansionBudget?: number;
+  /** Runtime-core confidence in the current bounded localization packet */
+  localizationConfidence?: 'high' | 'medium' | 'low';
   /** Domain tag for the bounded run (e.g. 'runtime-core', 'runstate') */
   domain?: string;
   maxSteps?: number;

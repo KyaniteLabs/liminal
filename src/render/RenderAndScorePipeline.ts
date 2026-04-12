@@ -140,6 +140,8 @@ export class RenderAndScorePipeline {
           Logger.warn('RenderAndScorePipeline', 'Visual scoring failed:', error);
           warnings.push(`Visual scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
         }
+      } else if (shouldScoreVisual) {
+        warnings.push(`Visual scoring skipped: ${renderResult.screenshot?.error || 'screenshot unavailable'}`);
       }
 
       // Score audio output
@@ -154,6 +156,8 @@ export class RenderAndScorePipeline {
           Logger.warn('RenderAndScorePipeline', 'Audio scoring failed:', error);
           warnings.push(`Audio scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
         }
+      } else if (shouldScoreAudio) {
+        warnings.push(`Audio scoring skipped: ${renderResult.audio?.error || 'audio capture unavailable'}`);
       }
 
       // Calculate combined score

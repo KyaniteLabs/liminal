@@ -701,4 +701,30 @@ describe('RenderAndScorePipeline', () => {
     expect(result.success).toBe(true);
     expect(result.warnings).toEqual(['Visual scoring failed: sharp decode failed']);
   });
+
+  it('reports when expected visual scoring is skipped because screenshot capture is unavailable', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: true,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: [],
+        errors: [],
+        screenshot: {
+          success: false,
+          error: 'Screenshot failed: target page closed',
+        },
+      }),
+    };
+
+    const result = await pipeline.process('function setup(){createCanvas(10,10)}', 'p5');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Visual scoring skipped: Screenshot failed: target page closed']);
+  });
 });

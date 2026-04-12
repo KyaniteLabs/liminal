@@ -60,6 +60,24 @@ const MODEL_CONFIGS: Record<string, ModelConfig> = {
   'LFM2.5-Thinking': { baseUrl: 'http://localhost:11434/v1', apiKeyEnv: 'OLLAMA_API_KEY', modelId: 'lfm2.5-thinking:1.2b' }
 };
 
+function resolveModelConfig(provider: string, modelName: string): ModelConfig | undefined {
+  const direct = MODEL_CONFIGS[modelName];
+  if (direct) return direct;
+
+  // LM Studio frequently exposes raw model ids that are not friendly aliases.
+  // Allow callers to pass the model id directly so local comparison work does
+  // not require touching this script for every newly loaded model.
+  if (provider === 'lmstudio') {
+    return {
+      baseUrl: 'http://localhost:1234/v1',
+      apiKeyEnv: 'LMSTUDIO_API_KEY',
+      modelId: modelName,
+    };
+  }
+
+  return undefined;
+}
+
 function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9.-]/g, '_');
 }
@@ -148,7 +166,7 @@ async function main() {
     process.exit(1);
   }
   
-  const config = MODEL_CONFIGS[modelName];
+  const config = resolveModelConfig(provider, modelName);
   if (!config) {
     console.error(`Unknown model: ${modelName}`);
     process.exit(1);

@@ -639,6 +639,7 @@ Failures:   0 critical
 - Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
 - Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
 - Meta-Harness bridge routing: self-improvement prompts route through the TS bridge into the tool-using harness agent rather than the creative-generation loop
+- Resume-safe self-improvement is now being hardened in-place: suspended runs persist semantic run state, workspace fingerprints, and remaining-step budget continuity for same-worktree recovery
 - Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 
@@ -888,6 +889,10 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 29. `1d22dc50` - security(composition): A3 - Fix eval() code injection in ProjectSerializer
 30. `4216d0bc` - security(harness): A2 - Fix path traversal bypass in ValidationGuard
 31. `b38cbdb4` - security(harness): A1 - Fix command injection in HarnessAgent
+
+### Post-Operator Runtime Follow-ups (2 commits)
+1. `c1b4d46e` - runtime(harness): Capture workspace fingerprints for safe local resume validation
+2. `5f97b1ce` - runtime(harness): Preserve resume step budgets across suspended self-improvement runs
 
 ### Pre-Audit Infrastructure (5 commits)
 32. `18520cfd` - feat(errors): Result types for Tier 1 silent failures (9 of 12)

@@ -176,6 +176,10 @@ export class LLMModeAgent {
         session.lastVerification = existingRunState.lastVerification;
       }
 
+      // Restore step count so budget tracking continues from where it left off.
+      // This ensures the resumed run uses the REMAINING budget, not a fresh one.
+      session.stepCount = existingRunState.stepsCompleted;
+
       Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
       Logger.debug('LLMModeAgent', `Restored ${session.exploredPaths.size} explored paths, ${session.mutatedFiles.size} mutated files`);
     }

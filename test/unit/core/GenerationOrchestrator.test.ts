@@ -198,7 +198,7 @@ describe('GenerationOrchestrator', () => {
       expect(result.code).toBe('fallback-code');
     });
 
-    it('dispatches to matched generator entry', async () => {
+    it('dispatches enriched prompt to matched generator entry', async () => {
       const mockGenerate = vi.fn(async () => 'dispatched-code');
       (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue({
         entry: { name: 'custom', generate: mockGenerate },
@@ -206,9 +206,9 @@ describe('GenerationOrchestrator', () => {
       });
       const options = makeOptions();
       const orchestrator = new GenerationOrchestrator(options, gallery, null);
-      const result = await orchestrator.generate('used', 'loaded');
+      const result = await orchestrator.generate('used with context', 'loaded');
       expect(result.code).toBe('dispatched-code');
-      expect(mockGenerate).toHaveBeenCalledWith('used');
+      expect(mockGenerate).toHaveBeenCalledWith('used with context');
     });
 
     it('uses usedPrompt for LLM generator entries', async () => {

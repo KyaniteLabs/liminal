@@ -423,7 +423,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           current: session.stepCount,
           total: maxSteps,
           stage: `executed ${toolCall.tool}`,
-          message: result.success ? `${toolCall.tool} succeeded` : `${toolCall.tool} failed: ${(result.error || '').slice(0, 100)}`,
+          message: this.formatToolProgressMessage(toolCall.tool, result),
         });
         
         // Record tool result
@@ -922,6 +922,13 @@ When the task is complete and build passes, respond with tool "complete".`;
     }
 
     return null;
+  }
+
+  private formatToolProgressMessage(tool: string, result: ToolResult): string {
+    if (result.success) return `${tool} succeeded`;
+    const full = this.currentSession ? this.formatToolResultMessage(tool, result) : JSON.stringify(result);
+    const compact = full.replace(/\s+/g, ' ').trim();
+    return `${tool} failed: ${compact.slice(0, 220)}`;
   }
 
   private getInitialPreflightFiles(session: LLMSession): string[] {

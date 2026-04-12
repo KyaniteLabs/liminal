@@ -1,5 +1,5 @@
 import type { LLMClient } from '../llm/LLMClient.js';
-import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
+import { createLLMModeAgent, type LLMSession, type LLMTask } from '../harness/agent/index.js';
 
 export interface SelfImprovementRuntimeInput {
   llm: LLMClient;
@@ -12,6 +12,7 @@ interface TaskPacket {
 }
 
 export interface PreparedSelfImprovementRun {
+  task: LLMTask;
   taskId: string;
   modelName: string;
   maxSteps: number;
@@ -74,22 +75,24 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
     const modelName = llm.getConfig().model || 'unknown';
     const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
     const taskId = `tui-self-${Date.now()}`;
+    const task: LLMTask = {
+      id: taskId,
+      title: 'Bubble Tea TUI self-improvement request',
+      description: taskPacket.description,
+      fileHint: taskPacket.fileHint,
+      maxSteps,
+      approved: true,
+      completionPolicy: 'stop_after_verification',
+    };
 
     return {
+      task,
       taskId,
       modelName,
       maxSteps,
       execute: async () => {
         const agent = createLLMModeAgent(llm);
-        return agent.executeTask({
-          id: taskId,
-          title: 'Bubble Tea TUI self-improvement request',
-          description: taskPacket.description,
-          fileHint: taskPacket.fileHint,
-          maxSteps,
-          approved: true,
-          completionPolicy: 'stop_after_verification',
-        });
+        return agent.executeTask(task);
       },
     };
   }

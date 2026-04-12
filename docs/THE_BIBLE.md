@@ -650,6 +650,7 @@ Failures:   0 critical
 - Resume fingerprint validation now rejects a dirty working tree when the suspended run was captured from a clean workspace, tightening fail-closed resume safety
 - First shared-runtime extraction slice landed: Bubble Tea bridge code now delegates self-improvement task policy (task id/title/max steps/completion policy) to a tiny headless runtime-core facade instead of owning those semantics inline
 - The headless SelfImprovementRuntime boundary now has repeatability proof coverage: the same checkpoint/resume description produces the same bounded task packet and working-set mapping on every preparation, with only the generated task id changing
+- The next runtime-core prep bundle landed inside that boundary: SelfImprovementRuntime now materializes the full bounded `LLMTask` packet during preparation and reuses that exact packet at execution time, further reducing Bubble Tea ownership of runtime-prep semantics
 - Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 

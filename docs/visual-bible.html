@@ -799,6 +799,7 @@
 <li><strong>✅ Label bounded no-change exits clearly</strong> - self-improvement reports now distinguish bounded inspection exits from ordinary no-change successes</li>
 <li><strong>✅ Tighten fail-closed resume safety</strong> - checkpoint resume now rejects a dirty working tree when the suspended run fingerprint expected a clean workspace</li>
                 <li><strong>✅ Prove runtime packet repeatability</strong> - the headless SelfImprovementRuntime now has proof coverage that repeated checkpoint/resume preparations keep the same bounded task packet and working-set mapping, with only the task id varying</li>
+                <li><strong>🟡 Materialize runtime task packets in headless core</strong> - SelfImprovementRuntime now prepares and reuses the full bounded `LLMTask` packet itself, so Bubble Tea no longer owns that runtime-prep shape inline</li>
                 <li><strong>🟡 Start headless runtime-core extraction</strong> - Bubble Tea bridge self-improvement flow now delegates bounded task policy to a tiny runtime-core facade, reducing direct UI ownership of runtime semantics without changing behavior</li>
                 <li><strong>✅ Docs reconciliation landed</strong> - source-of-truth pages now treat HarnessUpdater as historical and use the live task path</li>
                 <li><strong>✅ Bridge domain routing landed</strong> - preserve three/shader/etc. when bridge-triggered generation enters Ralph</li>

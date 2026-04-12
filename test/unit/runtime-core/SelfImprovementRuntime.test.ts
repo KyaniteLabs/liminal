@@ -54,6 +54,10 @@ describe('LLMModeSelfImprovementRuntime', () => {
       session,
       taskId: expect.stringMatching(/^tui-self-/),
     });
+    expect(mockExecuteTask).toHaveBeenCalledWith(result.session ? expect.objectContaining({
+      id: result.taskId,
+      maxSteps: result.maxSteps,
+    }) : expect.anything());
   });
 
   it('preloads checkpoint/resume runs with a deterministic working set', async () => {
@@ -121,5 +125,51 @@ describe('LLMModeSelfImprovementRuntime', () => {
       completionPolicy: 'stop_after_verification',
     }));
     expect({ ...firstTask, id: 'stable-id' }).toEqual({ ...secondTask, id: 'stable-id' });
+  });
+
+  it('prepares a concrete bounded runtime task packet once and reuses it for execution', async () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
+    const session = {
+      status: 'success',
+      startTime: '2026-04-11T18:00:00.000Z',
+      endTime: '2026-04-11T18:00:01.000Z',
+      stepCount: 1,
+    } as any;
+    mockExecuteTask.mockResolvedValue(session);
+
+    const originalMaxSteps = process.env.LIMINAL_TUI_AGENT_MAX_STEPS;
+    process.env.LIMINAL_TUI_AGENT_MAX_STEPS = '7';
+    vi.spyOn(Date, 'now').mockReturnValue(1_775_960_700_000);
+
+    try {
+      const prepared = runtime.prepare({
+        llm,
+        description: 'Fix checkpoint resume handoff behavior',
+      });
+
+      expect(prepared.task).toEqual({
+        id: 'tui-self-1775960700000',
+        title: 'Bubble Tea TUI self-improvement request',
+        description: expect.stringContaining('Fix checkpoint resume handoff behavior'),
+        fileHint: 'src/harness/RunStateStore.ts',
+        maxSteps: 7,
+        approved: true,
+        completionPolicy: 'stop_after_verification',
+      });
+      expect(prepared.maxSteps).toBe(7);
+
+      process.env.LIMINAL_TUI_AGENT_MAX_STEPS = '99';
+      await prepared.execute();
+
+      expect(mockExecuteTask).toHaveBeenCalledWith(prepared.task);
+      expect(prepared.task.maxSteps).toBe(7);
+    } finally {
+      if (originalMaxSteps === undefined) {
+        delete process.env.LIMINAL_TUI_AGENT_MAX_STEPS;
+      } else {
+        process.env.LIMINAL_TUI_AGENT_MAX_STEPS = originalMaxSteps;
+      }
+    }
   });
 });

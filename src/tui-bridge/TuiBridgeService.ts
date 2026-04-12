@@ -278,7 +278,9 @@ export class TuiBridgeService {
       llm,
       description: userText,
     });
-    const { modelName, maxSteps, taskId } = preparedRun;
+    const { modelName, task } = preparedRun;
+    const taskId = task.id;
+    const maxSteps = task.maxSteps ?? preparedRun.maxSteps;
 
     const listener = (event: BusEvent) => {
       if (event.source !== 'LLMModeAgent') return;

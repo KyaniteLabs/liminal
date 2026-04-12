@@ -764,6 +764,35 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('does not duplicate the deterministic task packet when the description already includes it', async () => {
+    queuePlans('{"tool":"complete","params":{},"thought":"single packet is enough","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-no-duplicate-packet',
+      title: 'Avoid duplicate packet text',
+      description: 'Improve startup efficiency\n\n## Deterministic Task Packet\nPrimary files:\n- src/runtime-core/SelfImprovementRuntime.ts',
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      workingSet: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      secondaryFiles: [
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+    expect(firstPrompt.match(/## Deterministic Task Packet/g)?.length).toBe(1);
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   it('preloads primary packet files before secondary files', async () => {
     queuePlans('{"tool":"complete","params":{},"thought":"primary files were enough to start","expectedResult":"done"}');
 

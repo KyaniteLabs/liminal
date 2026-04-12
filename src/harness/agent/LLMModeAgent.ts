@@ -234,7 +234,8 @@ export class LLMModeAgent {
     const initialPreflightFiles = this.getInitialPreflightFiles(task);
 
     // Build deterministic preflight section from the bounded packet
-    const preflightSection = task.workingSet && task.workingSet.length > 0
+    const descriptionHasDeterministicPacket = task.description.includes('## Deterministic Task Packet');
+    const preflightSection = !descriptionHasDeterministicPacket && task.workingSet && task.workingSet.length > 0
       ? `\n\n## Deterministic Task Packet\nStart in these primary files before any broader reconnaissance:\n${(task.primaryFiles && task.primaryFiles.length > 0 ? task.primaryFiles : task.workingSet).map((f, i) => `${i === 0 ? '→' : '-'} ${f}`).join('\n')}${task.secondaryFiles && task.secondaryFiles.length > 0 ? `\nSecondary files (use only if the primary files are insufficient):\n${task.secondaryFiles.map(f => `- ${f}`).join('\n')}` : ''}\nHint: Start by looking in ${task.fileHint || task.workingSet[0]}`
       : (task.fileHint ? `\nHint: Start by looking in ${task.fileHint}` : '');
 

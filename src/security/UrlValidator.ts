@@ -4,7 +4,7 @@
  */
 
 import { lookup as defaultDnsLookup } from 'dns/promises';
-import { logSSRFAttempt } from './SecurityLogger.js';
+import { logSSRFAttempt, logSSRFResolutionDegraded } from './SecurityLogger.js';
 
 export type DnsLookupFn = typeof defaultDnsLookup;
 
@@ -87,8 +87,15 @@ export async function validateUrl(
   try {
     const lookupResult = await dnsLookup(hostname);
     resolvedIP = lookupResult.address;
-  } catch {
-    // If lookup fails, continue with hostname checks (may be a non-DNS hostname)
+  } catch (error) {
+    // If lookup fails, continue with hostname checks (may be a non-DNS hostname),
+    // but emit an explicit signal that DNS rebinding protection is degraded.
+    logSSRFResolutionDegraded(urlString, {
+      details: {
+        hostname,
+        reason: error instanceof Error ? error.message : String(error),
+      },
+    });
   }
 
   // Check resolved IP against private IP rules — allow localhost to resolve to

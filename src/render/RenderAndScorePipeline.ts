@@ -286,10 +286,18 @@ export class RenderAndScorePipeline {
     // Find best result by score
     let bestIndex = 0;
     let bestScore = results[0]?.score ?? 0;
+    let bestWarningCount = results[0]?.warnings?.length ?? 0;
 
     for (let i = 1; i < results.length; i++) {
-      if (results[i].score > bestScore) {
-        bestScore = results[i].score;
+      const candidateScore = results[i].score;
+      const candidateWarningCount = results[i].warnings?.length ?? 0;
+
+      if (
+        candidateScore > bestScore ||
+        (candidateScore === bestScore && candidateWarningCount < bestWarningCount)
+      ) {
+        bestScore = candidateScore;
+        bestWarningCount = candidateWarningCount;
         bestIndex = i;
       }
     }

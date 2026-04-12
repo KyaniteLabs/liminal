@@ -413,6 +413,7 @@ describe('HeadlessRenderer', () => {
       duration: 1,
       success: false,
       error: 'No audio captured during render window',
+      warnings: [],
     });
     renderer.injectAudioCapture = vi.fn().mockResolvedValue(undefined);
     renderer.triggerAudioPlayback = vi.fn().mockResolvedValue(undefined);
@@ -472,6 +473,7 @@ describe('HeadlessRenderer', () => {
       sampleRate: 44100,
       duration: 1,
       success: true,
+      warnings: [],
     });
     renderer.injectAudioCapture = vi.fn().mockResolvedValue(undefined);
     renderer.triggerAudioPlayback = vi.fn().mockResolvedValue('Audio playback trigger failed for tone: user gesture required');
@@ -484,6 +486,66 @@ describe('HeadlessRenderer', () => {
     expect(result.success).toBe(true);
     expect(result.logs).toContain('[warn] Audio playback trigger failed for tone: user gesture required');
     expect(result.errors).toContain('Audio playback trigger failed for tone: user gesture required');
+  });
+
+  it('surfaces browser-side audio capture instrumentation warnings', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+      }>;
+      captureAudio: () => Promise<{
+        samples: Float32Array;
+        sampleRate: number;
+        duration: number;
+        success: boolean;
+        warnings: string[];
+      }>;
+      injectAudioCapture: () => Promise<void>;
+      triggerAudioPlayback: () => Promise<null>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(false);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.from([1]),
+      width: 100,
+      height: 100,
+      success: true,
+    });
+    renderer.captureAudio = vi.fn().mockResolvedValue({
+      samples: new Float32Array([0.1]),
+      sampleRate: 44100,
+      duration: 1,
+      success: true,
+      warnings: ['Audio capture setup failed: NotSupportedError'],
+    });
+    renderer.injectAudioCapture = vi.fn().mockResolvedValue(undefined);
+    renderer.triggerAudioPlayback = vi.fn().mockResolvedValue(null);
+
+    const result = await renderer.render('const synth = new Tone.Synth();', {
+      domain: 'tone',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain('[warn] Audio capture setup failed: NotSupportedError');
+    expect(result.errors).toContain('Audio capture setup failed: NotSupportedError');
   });
 });
 

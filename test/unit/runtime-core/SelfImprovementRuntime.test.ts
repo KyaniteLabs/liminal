@@ -39,15 +39,22 @@ describe('LLMModeSelfImprovementRuntime', () => {
     });
 
     expect(mockCreateLLMModeAgent).toHaveBeenCalledWith(llm);
-    expect(mockExecuteTask).toHaveBeenCalledWith({
+    expect(mockExecuteTask).toHaveBeenCalledWith(expect.objectContaining({
       id: expect.stringMatching(/^tui-self-/),
       title: 'Bubble Tea TUI self-improvement request',
       description: expect.stringContaining('Fix the Bubble Tea runtime lane'),
       fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      workingSet: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+        'src/harness/RunStateStore.ts',
+        'test/unit/LLMModeAgent.test.ts',
+      ],
+      domain: 'runtime-core',
       maxSteps: 20,
       approved: true,
       completionPolicy: 'stop_after_verification',
-    });
+    }));
     expect(result).toEqual({
       modelName: 'glm-5.1',
       maxSteps: 20,
@@ -78,6 +85,13 @@ describe('LLMModeSelfImprovementRuntime', () => {
 
     expect(mockExecuteTask).toHaveBeenCalledWith(expect.objectContaining({
       fileHint: 'src/harness/RunStateStore.ts',
+      workingSet: [
+        'src/harness/RunStateStore.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+        'test/unit/LLMModeAgent.test.ts',
+        'test/harness/RunStateStore.test.ts',
+      ],
+      domain: 'runstate',
       description: expect.stringContaining('Deterministic Task Packet'),
     }));
     const task = mockExecuteTask.mock.calls[0][0];
@@ -148,15 +162,22 @@ describe('LLMModeSelfImprovementRuntime', () => {
         description: 'Fix checkpoint resume handoff behavior',
       });
 
-      expect(prepared.task).toEqual({
+      expect(prepared.task).toEqual(expect.objectContaining({
         id: 'tui-self-1775960700000',
         title: 'Bubble Tea TUI self-improvement request',
         description: expect.stringContaining('Fix checkpoint resume handoff behavior'),
         fileHint: 'src/harness/RunStateStore.ts',
+        workingSet: [
+          'src/harness/RunStateStore.ts',
+          'src/harness/agent/LLMModeAgent.ts',
+          'test/unit/LLMModeAgent.test.ts',
+          'test/harness/RunStateStore.test.ts',
+        ],
+        domain: 'runstate',
         maxSteps: 7,
         approved: true,
         completionPolicy: 'stop_after_verification',
-      });
+      }));
       expect(prepared.maxSteps).toBe(7);
 
       process.env.LIMINAL_TUI_AGENT_MAX_STEPS = '99';

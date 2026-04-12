@@ -9,6 +9,8 @@ export interface SelfImprovementRuntimeInput {
 
 interface TaskPacket {
   fileHint: string;
+  workingSet: string[];
+  domain: string;
   description: string;
 }
 
@@ -32,16 +34,19 @@ export interface SelfImprovementRuntime {
   run(input: SelfImprovementRuntimeInput): Promise<SelfImprovementRuntimeResult>;
 }
 
-function formatWorkingSet(description: string, intro: string, workingSet: string[]): TaskPacket {
-  return {
-    fileHint: workingSet[0],
-    description: `${description}\n\n## Deterministic Task Packet\n${intro}\n- ${workingSet.join('\n- ')}`,
-  };
-}
-
 function buildTaskPacket(description: string): TaskPacket {
   const context = localizeBoundedSelfImprovement(description);
-  return formatWorkingSet(description, context.intro, context.workingSet);
+  const normalized = description.toLowerCase();
+  const domain = /checkpoint|resume|fingerprint|workspace drift|suspend|run state/.test(normalized)
+    ? 'runstate'
+    : 'runtime-core';
+
+  return {
+    fileHint: context.fileHint,
+    workingSet: context.workingSet,
+    domain,
+    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\n- ${context.workingSet.join('\n- ')}\n\nDomain: ${domain}`,
+  };
 }
 
 export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
@@ -56,6 +61,8 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
       title: 'Bubble Tea TUI self-improvement request',
       description: taskPacket.description,
       fileHint: taskPacket.fileHint,
+      workingSet: taskPacket.workingSet,
+      domain: taskPacket.domain,
       maxSteps,
       approved: true,
       completionPolicy: 'stop_after_verification',

@@ -55,6 +55,10 @@ export interface LLMTask {
   title: string;
   description: string;
   fileHint?: string;
+  /** Deterministic working set for bounded runs - agent should read these first */
+  workingSet?: string[];
+  /** Domain tag for the bounded run (e.g. 'runtime-core', 'runstate') */
+  domain?: string;
   maxSteps?: number;
   approved: boolean;
   /** Deterministic completion policy for bounded runs */
@@ -209,13 +213,17 @@ export class LLMModeAgent {
       ? '\n' + formatResumeContext(existingRunState)
       : '';
 
+    // Build deterministic preflight section from workingSet
+    const preflightSection = task.workingSet && task.workingSet.length > 0
+      ? `\n\n## Deterministic Task Packet\nStart in these runtime-core files before any broader reconnaissance. Only expand beyond this working set if the requested fix cannot be completed there:\n${task.workingSet.map((f, i) => `${i === 0 ? '→' : '-'} ${f}`).join('\n')}\nHint: Start by looking in ${task.fileHint || task.workingSet[0]}`
+      : (task.fileHint ? `\nHint: Start by looking in ${task.fileHint}` : '');
+
     // Add task description
     const taskPrompt = `## Current Task
 
 Task ID: ${task.id}
 Title: ${task.title}
-Description: ${task.description}
-${task.fileHint ? `Hint: Start by looking in ${task.fileHint}` : ''}${resumeSection}
+Description: ${task.description}${preflightSection}${resumeSection}
 
 You are in LLM-driven mode. Plan your own steps. ${isResume ? 'Continue from where the previous run left off.' : 'Start by reading the relevant file(s).'}
 

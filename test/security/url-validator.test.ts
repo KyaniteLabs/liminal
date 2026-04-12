@@ -1,5 +1,6 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { validateUrl, validateUrlSync, SSRFError, getAllowedHostsFromEnv } from '../../src/security/UrlValidator.js';
+import * as SecurityLogger from '../../src/security/SecurityLogger.js';
 
 // For tests that need the async validateUrl, provide a safe mock dnsLookup.
 // This avoids real DNS calls while allowing validateUrl to be properly tested.
@@ -127,6 +128,23 @@ describe('UrlValidator', () => {
       // via the isLocalhost hostname check and allowLocalhost=true default
       await expect(validateUrl('http://localhost:11434/api/generate', {}, mockDnsLookup))
         .resolves.toBeUndefined();
+    });
+
+    it('should log degraded SSRF protection when DNS lookup fails', async () => {
+      const spy = vi.spyOn(SecurityLogger, 'logSSRFResolutionDegraded');
+      const failingLookup = async (): Promise<{ address: string; family: number }> => {
+        throw new Error('getaddrinfo ENOTFOUND api.example.com');
+      };
+
+      await expect(validateUrl('https://api.example.com/v1', {}, failingLookup))
+        .resolves.toBeUndefined();
+
+      expect(spy).toHaveBeenCalledWith('https://api.example.com/v1', {
+        details: {
+          hostname: 'api.example.com',
+          reason: 'getaddrinfo ENOTFOUND api.example.com',
+        },
+      });
     });
   });
 

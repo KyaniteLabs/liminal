@@ -6,6 +6,7 @@ import { Logger } from '../utils/Logger.js';
 
 export type SecurityEventType = 
   | 'ssrf_blocked'
+  | 'ssrf_resolution_degraded'
   | 'path_traversal_blocked'
   | 'command_injection_blocked'
   | 'rate_limit_violation'
@@ -117,6 +118,19 @@ export class SecurityLogger {
   }
 
   /**
+   * Log degraded SSRF protection when DNS resolution fails and validation
+   * must continue using hostname-only checks.
+   */
+  logSSRFResolutionDegraded(url: string, context?: SecurityEvent['context']): void {
+    this.logSecurityEvent({
+      type: 'ssrf_resolution_degraded',
+      severity: 'low',
+      message: `SSRF DNS resolution degraded: ${url}`,
+      context,
+    });
+  }
+
+  /**
    * Log path traversal attempt
    */
   logPathTraversalAttempt(path: string, context?: SecurityEvent['context']): void {
@@ -182,6 +196,13 @@ export function logSecurityEvent(event: Omit<SecurityEvent, 'timestamp'>): void 
  */
 export function logSSRFAttempt(url: string, context?: SecurityEvent['context']): void {
   getDefaultLogger().logSSRFAttempt(url, context);
+}
+
+/**
+ * Log degraded SSRF validation when DNS lookup fails
+ */
+export function logSSRFResolutionDegraded(url: string, context?: SecurityEvent['context']): void {
+  getDefaultLogger().logSSRFResolutionDegraded(url, context);
 }
 
 /**

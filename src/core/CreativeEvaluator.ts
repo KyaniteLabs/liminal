@@ -343,6 +343,11 @@ export class CreativeEvaluator {
       return this.assessStrudel(output, options);
     }
 
+    // Tone.js / Web Audio evaluation
+    if (this.detectsToneUsage(output)) {
+      return this.assessTone(output, options);
+    }
+
     // HTML/CSS evaluation
     if (this.detectsHTMLUsage(output)) {
       return this.assessHTML(output);
@@ -907,6 +912,16 @@ export class CreativeEvaluator {
   }
 
   /**
+   * Detect Tone.js / Web Audio code
+   */
+  static detectsToneUsage(code: string): boolean {
+    return /\bTone\./.test(code) ||
+      /from\s+['"]tone['"]/.test(code) ||
+      /cdnjs\.cloudflare\.com\/ajax\/libs\/tone\//.test(code) ||
+      /\bAudioContext\b|\bcreateOscillator\b/.test(code);
+  }
+
+  /**
    * Detect HTML/CSS code (standalone HTML pages, not p5.js)
    */
   static detectsHTMLUsage(code: string): boolean {
@@ -1207,6 +1222,74 @@ export class CreativeEvaluator {
     let calibratedScore: number | undefined;
 
     // Apply calibration if requested
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: 0,
+      interestingnessScore: 0,
+      calibratedScore,
+    };
+  }
+
+  /**
+   * Assess Tone.js / Web Audio code quality
+   */
+  private static assessTone(output: string, options?: AssessOptions): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+    // Technical checks
+    if (/\bTone\./.test(codeOnly) || /from\s+['"]tone['"]/.test(codeOnly)) technicalScore += 0.25;
+    if (/Tone\.start|AudioContext|createOscillator/.test(codeOnly)) technicalScore += 0.1;
+    if (/Synth|PolySynth|MonoSynth|Sampler|Oscillator|Filter|Reverb|Chorus|Delay|LFO/.test(codeOnly)) technicalScore += 0.2;
+    if (/toDestination|connect\(/.test(codeOnly)) technicalScore += 0.1;
+    if (/triggerAttackRelease|triggerAttack|triggerRelease|Transport\.start/.test(codeOnly)) technicalScore += 0.15;
+    if ((codeOnly.match(/\bTone\.Oscillator\b/g) || []).length >= 2) technicalScore += 0.1;
+    if (/\.start\(\)/.test(codeOnly)) technicalScore += 0.05;
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.1;
+    if (codeOnly.length > 200) technicalScore += 0.05;
+    if (codeOnly.length > 500) technicalScore += 0.05;
+
+    // Creative checks
+    if (/Reverb|Chorus|Delay|Filter|LFO/.test(codeOnly)) creativeScore += 0.2;
+    if (/sine|square|sawtooth|triangle/.test(codeOnly)) creativeScore += 0.1;
+    if (/attack|decay|sustain|release/.test(codeOnly)) creativeScore += 0.15;
+    if (/\[[^\]]+,[^\]]+\]/.test(codeOnly) || /\["[^"]+","[^"]+"/.test(codeOnly)) creativeScore += 0.1;
+    if (/triggerAttackRelease|Transport\.start/.test(codeOnly)) creativeScore += 0.15;
+    if (/ambient|drone|reverb|delay|chorus/i.test(codeOnly)) creativeScore += 0.1;
+    if (/onclick|addEventListener|button/i.test(codeOnly)) creativeScore += 0.05;
+    if (codeOnly.split('\n').length > 10) creativeScore += 0.05;
+    if ((codeOnly.match(/\bTone\.Oscillator\b/g) || []).length >= 2) creativeScore += 0.1;
+    if (/Tone\.LFO|\.connect\(gain\.gain\)|Tone\.Gain/.test(codeOnly)) creativeScore += 0.1;
+
+    // Penalize obvious placeholders / non-Tone failures
+    if (/LLM generation failed|API error|Generated code does not use Tone\.js|❌/i.test(codeOnly)) {
+      creativeScore -= 0.35;
+      technicalScore -= 0.15;
+    }
+
+    if (!/\bTone\./.test(codeOnly) && !/from\s+['"]tone['"]/.test(codeOnly) && !/\bAudioContext\b|\bcreateOscillator\b/.test(codeOnly)) {
+      issues.push('Missing Tone.js or Web Audio APIs');
+    }
+    if (!/triggerAttackRelease|triggerAttack|Transport\.start|start\(\)/.test(codeOnly)) {
+      issues.push('Missing playback or transport trigger');
+    }
+
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
     if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
       calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
       overallScore = calibratedScore;

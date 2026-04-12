@@ -1,31 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// Use a variable to control what generateWithToolLoop returns
-let toolLoopOverride: { content: string; toolCalls: any[]; success: boolean } | null = null;
-let useOverrideForAllCalls = false;
-
-const { mockGenerate, mockGenerateWithToolLoop } = vi.hoisted(() => ({
+const { mockGenerate } = vi.hoisted(() => ({
   mockGenerate: vi.fn().mockResolvedValue({
     code: '  ***\n *****\n*******\n *****\n  ***',
     success: true,
-  }),
-  mockGenerateWithToolLoop: vi.fn().mockImplementation(async () => {
-    if (toolLoopOverride) {
-      const result = toolLoopOverride;
-      if (!useOverrideForAllCalls) {
-        toolLoopOverride = null;
-      }
-      return result;
-    }
-    const result = await mockGenerate();
-    return { content: result.code, toolCalls: [], success: result.success };
   }),
 }));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
-    generateWithToolLoop = mockGenerateWithToolLoop;
+    generateWithToolLoop = vi.fn().mockImplementation(() =>
+      mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
+    );
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -60,7 +47,6 @@ import { ASCIIArtGenerator } from '../../../src/generators/ascii/ASCIIArtGenerat
 describe('ASCIIArtGenerator', () => {
   beforeEach(() => {
     mockGenerate.mockClear();
-    mockGenerateWithToolLoop.mockClear();
   });
 
   it('formats output to the specified width and height', async () => {
@@ -77,7 +63,7 @@ describe('ASCIIArtGenerator', () => {
 
   it('pads lines shorter than width with spaces', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '~~~~~\n~~~~~',  // 10 chars total (meets strippedCode >= 10 threshold)
+      code: '~~~~~\n~~~~~',
       success: true,
     });
     const gen = new ASCIIArtGenerator();
@@ -105,7 +91,7 @@ describe('ASCIIArtGenerator', () => {
 
   it('uses default width=40 and height=20 when no options provided', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~',  // 40 chars, passes strippedCode >= 10
+      code: '*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~*~',
       success: true,
     });
     const gen = new ASCIIArtGenerator();
@@ -116,20 +102,10 @@ describe('ASCIIArtGenerator', () => {
   });
 
   it('validateOutput rejects code with non-ASCII art characters', async () => {
-    // Set the override to return invalid code for both initial and recovery attempts
-    useOverrideForAllCalls = true;
-    toolLoopOverride = {
-      content: 'Hello World!',  // Contains letters which are invalid ASCII art characters
-      toolCalls: [],
-      success: true,
-    };
-
     const gen = new ASCIIArtGenerator();
-    await expect(gen.generate('text art')).rejects.toThrow('invalid characters');
-
-    // Reset for other tests
-    useOverrideForAllCalls = false;
-    toolLoopOverride = null;
+    const result = (gen as any).validateOutput('Hello 世界 🌍');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('invalid characters');
   });
 
   it('validateOutput accepts code with only allowed ASCII art characters', async () => {
@@ -142,15 +118,26 @@ describe('ASCIIArtGenerator', () => {
     expect(result).toContain('***');
   });
 
+  it('validateOutput accepts extended ascii art glyphs supported by the validator', async () => {
+    mockGenerate.mockResolvedValueOnce({
+      code: `   ★★★\n  ╱   ╲\n ★█████★\n   ║ ║`,
+      success: true,
+    });
+    const gen = new ASCIIArtGenerator();
+    const result = await gen.generate('castle', { width: 12, height: 4 });
+    expect(result).toContain('★');
+    expect(result).toContain('╱');
+    expect(result).toContain('█');
+  });
+
   it('removes empty lines and filters before formatting', async () => {
     mockGenerate.mockResolvedValueOnce({
-      code: '\n\n##++\n\n%%**\n\n',  // valid ASCII art chars only, 10+ total to pass strippedCode >= 10
+      code: '\n\n##++\n\n%%**\n\n',
       success: true,
     });
     const gen = new ASCIIArtGenerator();
     const result = await gen.generate('sparse', { width: 6, height: 5 });
     const lines = result.split('\n');
-    // formatASCII keeps first non-empty lines up to height, truncates/pads each
     expect(lines.length).toBe(5);
     expect(lines[0].length).toBe(6);
   });

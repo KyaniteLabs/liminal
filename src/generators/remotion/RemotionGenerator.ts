@@ -1,16 +1,20 @@
 /**
- * RemotionGenerator - Generates Remotion React video components
+ * RemotionGenerator - legacy class name for active Revideo scene generation
  * 
  * Uses TierBasedGenerator for model-aware prompt adaptation
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { RevideoValidator } from '../../core/validators/RevideoValidator.js';
 
 export interface RemotionGeneratorOptions extends TierBasedGeneratorOptions {}
 
 export class RemotionGenerator extends TierBasedGenerator {
   constructor(llmOrConfig?: ConstructorParameters<typeof TierBasedGenerator>[1]) {
-    super('remotion', llmOrConfig);
+    // Class name is kept for compatibility, but the active video generation
+    // contract is Revideo. This ensures GeneratorHarnessTools supplies Revideo
+    // rails instead of legacy Remotion hints.
+    super('revideo', llmOrConfig);
   }
 
   /**
@@ -29,18 +33,16 @@ export class RemotionGenerator extends TierBasedGenerator {
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    const hasMakeScene = /makeScene/.test(code);
-    const hasUseCurrentFrame = /useCurrentFrame/.test(code);
-    const hasExport = /export\s+default/.test(code);
-    if (!hasExport || (!hasMakeScene && !hasUseCurrentFrame)) {
-      return { valid: false, error: 'Generated code does not appear to be a valid Revideo/Remotion component' };
+    const result = RevideoValidator.validate(code);
+    if (!result.valid) {
+      return { valid: false, error: result.errors.join('; ') };
     }
     return { valid: true };
   }
 
   /**
-   * Wrap Remotion component for gallery iframe display.
-   * Since Remotion requires compilation, shows code with syntax highlighting.
+   * Wrap Revideo scene for gallery iframe display.
+   * Since Revideo requires compilation/rendering, show code with syntax highlighting.
    */
   wrapForGallery(code: string): string {
     const escaped=code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -49,7 +51,7 @@ export class RemotionGenerator extends TierBasedGenerator {
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Remotion Component</title>
+<title>Revideo Scene</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 body{background:#1e1e2e;color:#cdd6f4;font-family:monospace;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}

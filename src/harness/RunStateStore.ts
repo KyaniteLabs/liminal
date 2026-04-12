@@ -21,8 +21,12 @@
 
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
+import { execFile } from 'node:child_process';
+import { promisify } from 'node:util';
 import { Logger } from '../utils/Logger.js';
 import { Status } from '../types/status.js';
+
+const execFileAsync = promisify(execFile);
 
 /**
  * Semantic boundaries for run state.
@@ -158,6 +162,58 @@ export async function clearRunState(cwd?: string): Promise<void> {
   } catch {
     // Ignore - file may not exist
   }
+}
+
+/**
+ * Capture a workspace fingerprint for later identity verification.
+ *
+ * The fingerprint records git HEAD, branch, and working-tree cleanliness
+ * so that a subsequent resume can detect if the workspace has drifted.
+ */
+export async function captureWorkspaceFingerprint(cwd?: string): Promise<WorkspaceFingerprint> {
+  const repoPath = cwd ?? process.cwd();
+
+  const [{ stdout: head }, { stdout: branch }, { stdout: short }] = await Promise.all([
+    execFileAsync('git', ['rev-parse', 'HEAD'], { cwd: repoPath, timeout: 10_000 }),
+    execFileAsync('git', ['branch', '--show-current'], { cwd: repoPath, timeout: 10_000 }),
+    execFileAsync('git', ['status', '--short'], { cwd: repoPath, timeout: 10_000 }),
+  ]);
+
+  return {
+    gitHead: head.trim(),
+    gitBranch: branch.trim(),
+    workingTreeClean: short.trim().length === 0,
+    timestamp: new Date().toISOString(),
+  };
+}
+
+/**
+ * Validate that the current workspace matches a previously captured fingerprint.
+ *
+ * Returns { valid: true } if the workspace identity has not drifted,
+ * or { valid: false, reason } explaining the mismatch.
+ */
+export async function validateWorkspaceFingerprint(
+  saved: WorkspaceFingerprint,
+  cwd?: string,
+): Promise<{ valid: true } | { valid: false; reason: string }> {
+  const current = await captureWorkspaceFingerprint(cwd);
+
+  if (current.gitHead !== saved.gitHead) {
+    return {
+      valid: false,
+      reason: `HEAD mismatch: saved=${saved.gitHead.slice(0, 8)}, current=${current.gitHead.slice(0, 8)}`,
+    };
+  }
+
+  if (current.gitBranch !== saved.gitBranch) {
+    return {
+      valid: false,
+      reason: `Branch mismatch: saved=${saved.gitBranch}, current=${current.gitBranch}`,
+    };
+  }
+
+  return { valid: true };
 }
 
 /**

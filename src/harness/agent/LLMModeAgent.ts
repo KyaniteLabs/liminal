@@ -44,6 +44,8 @@ import {
   readRunState,
   formatResumeContext,
   clearRunState,
+  captureWorkspaceFingerprint,
+  validateWorkspaceFingerprint,
   SemanticBoundary,
   type RunState,
 } from '../RunStateStore.js';
@@ -147,7 +149,35 @@ export class LLMModeAgent {
     const isResume = existingRunState !== null && existingRunState.taskId === task.id;
 
     if (isResume) {
+      // ── Workspace identity guard ─────────────────────────────────
+      // If the suspended run captured a fingerprint, validate that the
+      // workspace (same machine, same worktree) has not drifted.
+      if (existingRunState.workspaceFingerprint) {
+        const validation = await validateWorkspaceFingerprint(existingRunState.workspaceFingerprint);
+        if (!validation.valid) {
+          Logger.error('LLMModeAgent', `Resume blocked - workspace identity drifted: ${validation.reason}`);
+          await clearRunState();
+          session.status = Status.FAILED;
+          session.endTime = new Date().toISOString();
+          return session;
+        }
+      }
+
+      // ── Restore persisted run-state into live Sets ────────────────
+      // This gives the resumed session access to what was already explored
+      // and mutated so the LLM can avoid re-doing work.
+      for (const p of existingRunState.exploredPaths) {
+        session.exploredPaths.add(p);
+      }
+      for (const f of existingRunState.mutatedFiles) {
+        session.mutatedFiles.add(f);
+      }
+      if (existingRunState.lastVerification) {
+        session.lastVerification = existingRunState.lastVerification;
+      }
+
       Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
+      Logger.debug('LLMModeAgent', `Restored ${session.exploredPaths.size} explored paths, ${session.mutatedFiles.size} mutated files`);
     }
 
     Logger.debug('LLMModeAgent', `Starting autonomous task: ${task.title}`);
@@ -379,6 +409,14 @@ When the task is complete and build passes, respond with tool "complete".`;
             ? SemanticBoundary.MUTATION_APPLIED
             : SemanticBoundary.INTERRUPTED);
 
+        // Capture workspace fingerprint for safe resume validation
+        let workspaceFingerprint;
+        try {
+          workspaceFingerprint = await captureWorkspaceFingerprint();
+        } catch (fpErr) {
+          Logger.warn('LLMModeAgent', `Could not capture workspace fingerprint: ${fpErr}`);
+        }
+
         // Save run state for potential resume with authoritative tracking data
         const runState: RunState = {
           runId: `run-${task.id}-${Date.now()}`,
@@ -398,6 +436,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           mutationApplied: session.mutatedFiles.size > 0,
           mutatedFiles: Array.from(session.mutatedFiles),
           lastVerification: session.lastVerification,
+          workspaceFingerprint,
         };
 
         try {

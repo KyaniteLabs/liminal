@@ -19,6 +19,44 @@ describe('LLMModeSelfImprovementRuntime', () => {
     vi.clearAllMocks();
   });
 
+  it('preserves bounded packet contracts across runtime-core and runstate preparations', () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
+    const cases = [
+      {
+        description: 'Tighten the bounded runtime-core self-improvement facade',
+        expectedDomain: 'runtime-core',
+      },
+      {
+        description: 'Resume checkpoint state after WORKSPACE fingerprint drift',
+        expectedDomain: 'runstate',
+      },
+    ] as const;
+
+    vi.spyOn(Date, 'now')
+      .mockReturnValueOnce(1_775_960_625_337)
+      .mockReturnValueOnce(1_775_960_625_338)
+      .mockReturnValueOnce(1_775_960_625_339);
+
+    for (const testCase of cases) {
+      const prepared = runtime.prepare({ llm, description: testCase.description });
+      expect(prepared.task.fileHint).toBe(prepared.task.primaryFiles?.[0]);
+      expect(prepared.task.workingSet).toEqual([
+        ...(prepared.task.primaryFiles || []),
+        ...(prepared.task.secondaryFiles || []),
+      ]);
+      expect(new Set(prepared.task.workingSet || []).size).toBe(prepared.task.workingSet?.length);
+      expect(prepared.task.domain).toBe(testCase.expectedDomain);
+      expect(prepared.task.expansionBudget).toBe(prepared.task.secondaryFiles?.length);
+      expect(prepared.task.description).toContain('## Deterministic Task Packet');
+      expect(prepared.task.description).toContain(`Primary files:\n- ${(prepared.task.primaryFiles || []).join('\n- ')}`);
+      expect(prepared.task.description).toContain(`Secondary files:\n- ${(prepared.task.secondaryFiles || []).join('\n- ')}`);
+      expect(prepared.task.description).toContain(`Expansion budget: ${prepared.task.expansionBudget} additional files before broadening beyond this packet`);
+      expect(prepared.task.description).toContain(`Localization confidence: ${prepared.task.localizationConfidence}`);
+      expect(prepared.task.description).toContain(`Domain: ${prepared.task.domain}`);
+    }
+  });
+
   it('runs self-improvement requests with the bounded runtime task policy', async () => {
     const runtime = new LLMModeSelfImprovementRuntime();
     const llm = {
@@ -99,6 +137,42 @@ describe('LLMModeSelfImprovementRuntime', () => {
     expect(task.description).toContain('test/harness/RunStateStore.test.ts');
   });
 
+  it('prepares RepoIndexLite-first packets for localization-focused bounded-runtime work', async () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
+    const session = {
+      status: 'success',
+      startTime: '2026-04-11T18:00:00.000Z',
+      endTime: '2026-04-11T18:00:01.000Z',
+      stepCount: 1,
+    } as any;
+    mockExecuteTask.mockResolvedValue(session);
+
+    await runtime.run({
+      llm,
+      description: 'Tighten RepoIndexLite task packet shaping and expansion budget determinism',
+    });
+
+    expect(mockExecuteTask).toHaveBeenCalledWith(expect.objectContaining({
+      fileHint: 'src/runtime-core/RepoIndexLite.ts',
+      primaryFiles: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      secondaryFiles: [
+        'test/unit/runtime-core/RepoIndexLite.test.ts',
+        'test/unit/runtime-core/SelfImprovementRuntime.test.ts',
+      ],
+      expansionBudget: 2,
+      localizationConfidence: 'high',
+      domain: 'runtime-core',
+    }));
+    const task = mockExecuteTask.mock.calls[0][0];
+    expect(task.workingSet).toEqual([...task.primaryFiles, ...task.secondaryFiles]);
+    expect(task.description).toContain('Localization confidence: high');
+    expect(task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
+  });
+
   it('prepares repeatable bounded checkpoint-resume task packets for the same description', async () => {
     const runtime = new LLMModeSelfImprovementRuntime();
     const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
@@ -138,7 +212,39 @@ describe('LLMModeSelfImprovementRuntime', () => {
       approved: true,
       completionPolicy: 'stop_after_verification',
     }));
+    expect(firstTask.expansionBudget).toBe(firstTask.secondaryFiles.length);
+    expect(secondTask.expansionBudget).toBe(secondTask.secondaryFiles.length);
+    expect(firstTask.workingSet).toEqual([...firstTask.primaryFiles, ...firstTask.secondaryFiles]);
+    expect(secondTask.workingSet).toEqual([...secondTask.primaryFiles, ...secondTask.secondaryFiles]);
     expect({ ...firstTask, id: 'stable-id' }).toEqual({ ...secondTask, id: 'stable-id' });
+  });
+
+  it('prepares repeatable bounded runtime-core task packets for the same description', () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
+    const description = 'Tighten the bounded runtime-core self-improvement facade';
+
+    vi.spyOn(Date, 'now')
+      .mockReturnValueOnce(1_775_960_800_000)
+      .mockReturnValueOnce(1_775_960_800_001);
+
+    const first = runtime.prepare({ llm, description });
+    const second = runtime.prepare({ llm, description });
+
+    expect(first.task.domain).toBe('runtime-core');
+    expect(second.task.domain).toBe('runtime-core');
+    expect(first.task.id).not.toBe(second.task.id);
+    expect(first.task.expansionBudget).toBe(2);
+    expect(second.task.expansionBudget).toBe(2);
+    expect(first.task.workingSet).toEqual([
+      ...(first.task.primaryFiles || []),
+      ...(first.task.secondaryFiles || []),
+    ]);
+    expect(second.task.workingSet).toEqual([
+      ...(second.task.primaryFiles || []),
+      ...(second.task.secondaryFiles || []),
+    ]);
+    expect({ ...first.task, id: 'stable-id' }).toEqual({ ...second.task, id: 'stable-id' });
   });
 
   it('prepares a concrete bounded runtime task packet once and reuses it for execution', async () => {

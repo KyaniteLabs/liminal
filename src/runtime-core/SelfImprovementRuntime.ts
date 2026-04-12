@@ -40,10 +40,6 @@ export interface SelfImprovementRuntime {
 
 function buildTaskPacket(description: string): TaskPacket {
   const context = localizeBoundedSelfImprovement(description);
-  const normalized = description.toLowerCase();
-  const domain = /checkpoint|resume|fingerprint|workspace drift|suspend|run state/.test(normalized)
-    ? 'runstate'
-    : 'runtime-core';
 
   return {
     fileHint: context.fileHint,
@@ -52,8 +48,8 @@ function buildTaskPacket(description: string): TaskPacket {
     secondaryFiles: context.secondaryFiles,
     expansionBudget: context.expansionBudget,
     localizationConfidence: context.localizationConfidence,
-    domain,
-    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\nPrimary files:\n- ${context.primaryFiles.join('\n- ')}\nSecondary files:\n- ${context.secondaryFiles.join('\n- ')}\nExpansion budget: ${context.expansionBudget} additional files before broadening beyond this packet\nLocalization confidence: ${context.localizationConfidence}\nDomain: ${domain}`,
+    domain: context.domain,
+    description: `${description}\n\n## Deterministic Task Packet\n${context.intro}\nPrimary files:\n- ${context.primaryFiles.join('\n- ')}\nSecondary files:\n- ${context.secondaryFiles.join('\n- ')}\nExpansion budget: ${context.expansionBudget} additional files before broadening beyond this packet\nLocalization confidence: ${context.localizationConfidence}\nDomain: ${context.domain}`,
   };
 }
 

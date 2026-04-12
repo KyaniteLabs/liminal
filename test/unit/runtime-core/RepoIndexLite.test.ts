@@ -2,6 +2,34 @@ import { describe, expect, it } from 'vitest';
 import { localizeBoundedSelfImprovement } from '../../../src/runtime-core/RepoIndexLite.js';
 
 describe('RepoIndexLite', () => {
+  it('keeps bounded packet contracts internally consistent across runtime-core and runstate lanes', () => {
+    const cases = [
+      {
+        description: 'Tighten the bounded runtime-core self-improvement facade',
+        expectedDomain: 'runtime-core',
+        expectedConfidence: 'medium',
+      },
+      {
+        description: 'Resume checkpoint state after WORKSPACE fingerprint drift',
+        expectedDomain: 'runstate',
+        expectedConfidence: 'high',
+      },
+    ] as const;
+
+    for (const testCase of cases) {
+      const context = localizeBoundedSelfImprovement(testCase.description);
+      expect(context.domain).toBe(testCase.expectedDomain);
+      expect(context.localizationConfidence).toBe(testCase.expectedConfidence);
+      expect(context.fileHint).toBe(context.primaryFiles[0]);
+      expect(context.workingSet).toEqual([...context.primaryFiles, ...context.secondaryFiles]);
+      expect(context.workingSet.length).toBe(context.primaryFiles.length + context.secondaryFiles.length);
+      expect(new Set(context.workingSet).size).toBe(context.workingSet.length);
+      expect(context.primaryFiles.every((file) => !context.secondaryFiles.includes(file))).toBe(true);
+      expect(context.workingSet.includes(context.fileHint)).toBe(true);
+      expect(context.expansionBudget).toBe(context.secondaryFiles.length);
+    }
+  });
+
   it('produces deterministic bounded startup context for checkpoint-resume work', () => {
     const description = 'Add a checkpoint resume proof for workspace fingerprint drift';
 
@@ -26,6 +54,8 @@ describe('RepoIndexLite', () => {
     ]);
     expect(first.expansionBudget).toBe(2);
     expect(first.localizationConfidence).toBe('high');
+    expect(first.expansionBudget).toBe(first.secondaryFiles.length);
+    expect(first.workingSet).toEqual([...first.primaryFiles, ...first.secondaryFiles]);
     expect(first.workingSet).toHaveLength(4);
   });
 
@@ -49,6 +79,27 @@ describe('RepoIndexLite', () => {
     ]);
     expect(context.expansionBudget).toBe(2);
     expect(context.localizationConfidence).toBe('medium');
+    expect(context.expansionBudget).toBe(context.secondaryFiles.length);
+    expect(context.workingSet).toEqual([...context.primaryFiles, ...context.secondaryFiles]);
     expect(context.workingSet).toHaveLength(4);
+  });
+
+  it('selects a RepoIndexLite-first bounded packet for localization-oriented prompts', () => {
+    const context = localizeBoundedSelfImprovement('Tighten RepoIndexLite task packet shaping and working set localization confidence');
+
+    expect(context.domain).toBe('runtime-core');
+    expect(context.fileHint).toBe('src/runtime-core/RepoIndexLite.ts');
+    expect(context.primaryFiles).toEqual([
+      'src/runtime-core/RepoIndexLite.ts',
+      'src/runtime-core/SelfImprovementRuntime.ts',
+    ]);
+    expect(context.secondaryFiles).toEqual([
+      'test/unit/runtime-core/RepoIndexLite.test.ts',
+      'test/unit/runtime-core/SelfImprovementRuntime.test.ts',
+    ]);
+    expect(context.workingSet).toEqual([...context.primaryFiles, ...context.secondaryFiles]);
+    expect(new Set(context.workingSet).size).toBe(context.workingSet.length);
+    expect(context.expansionBudget).toBe(context.secondaryFiles.length);
+    expect(context.localizationConfidence).toBe('high');
   });
 });

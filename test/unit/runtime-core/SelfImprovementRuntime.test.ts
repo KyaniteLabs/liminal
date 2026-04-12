@@ -61,6 +61,9 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.task.description).toContain(`Localization confidence: ${prepared.task.localizationConfidence}`);
       expect(prepared.task.description).toContain(`Domain: ${prepared.task.domain}`);
       expect(prepared.task.description).toContain(`Hint: ${prepared.task.fileHint}`);
+      expect(prepared.task.description).toContain('You are in LLM-driven mode. Plan your own steps. Start by reading the relevant file(s).');
+      expect(prepared.task.description).toContain('If readFile returns truncated=true with startLine/endLine, continue that file with offset=endLine rather than rereading from the top.');
+      expect(prepared.task.description).toContain('If you need a specific method, symbol, or error location inside a large file, use search with the current file path before reading more pages.');
     }
   });
 
@@ -349,6 +352,8 @@ describe('LLMModeSelfImprovementRuntime', () => {
       expect(prepared.task.description).toContain('Expansion budget: 2 additional files before broadening beyond this packet');
       expect(prepared.task.description).toContain('Localization confidence: high');
       expect(prepared.task.description).toContain(`Hint: ${prepared.task.fileHint}`);
+      expect(prepared.task.description).toContain('You are in LLM-driven mode. Plan your own steps. Start by reading the relevant file(s).');
+      expect(prepared.task.description).toContain('Preferred verification targets after a mutation:');
 
       process.env.LIMINAL_TUI_AGENT_MAX_STEPS = '99';
       await prepared.execute();

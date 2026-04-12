@@ -31,6 +31,12 @@ vi.mock('../../src/llm/LLMClient.js', () => {
 import { ThreeGenerator } from '../../src/generators/three/ThreeGenerator.js';
 import { selectThreeTemplate } from '../../src/generators/three/ThreeTemplates.js';
 
+class TestableThreeGenerator extends ThreeGenerator {
+  public testValidateOutput(code: string) {
+    return this.validateOutput(code);
+  }
+}
+
 describe('ThreeGenerator', () => {
   it('generate() returns valid Three.js HTML', async () => {
     const gen = new ThreeGenerator();
@@ -45,6 +51,22 @@ describe('ThreeGenerator', () => {
     const code = await gen.generate('procedural geometry');
     expect(code).toContain('THREE.Scene');
     expect(code).toContain('THREE.WebGLRenderer');
+  });
+
+  it('validateOutput rejects nested HTML documents inside script tags', () => {
+    const gen = new TestableThreeGenerator();
+    const nested = `<!DOCTYPE html>
+<html>
+<body>
+  <script>
+    <!DOCTYPE html>
+    <html><body><script>const scene = new THREE.Scene();</script></body></html>
+  </script>
+</body>
+</html>`;
+    const result = gen.testValidateOutput(nested);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('must not embed a second HTML document');
   });
 
   it('generate() selects different templates based on keywords', async () => {

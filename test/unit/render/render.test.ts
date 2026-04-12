@@ -327,6 +327,26 @@ describe('HeadlessRenderer', () => {
     HeadlessRenderer.instance = null;
   });
 
+  it('recreates browser context when browser exists but context is missing', async () => {
+    HeadlessRenderer.instance = null;
+    const renderer = HeadlessRenderer.getInstance() as HeadlessRenderer & {
+      browser: { newContext: () => Promise<unknown> };
+      context: unknown;
+    };
+
+    const newContext = { close: vi.fn().mockResolvedValue(undefined) };
+    renderer.browser = {
+      newContext: vi.fn().mockResolvedValue(newContext),
+    } as unknown as { newContext: () => Promise<unknown> };
+    renderer.context = null;
+
+    await renderer.initialize();
+
+    expect(renderer.browser.newContext).toHaveBeenCalled();
+    expect(renderer.context).toBe(newContext);
+    HeadlessRenderer.instance = null;
+  });
+
   it('surfaces missing canvas warnings for visual domains without failing the render outright', async () => {
     const renderer = new HeadlessRenderer() as HeadlessRenderer & {
       context: { newPage: () => Promise<unknown> };

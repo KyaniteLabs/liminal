@@ -60,6 +60,7 @@ function getCode(fileName) {
   if (htmlPath && fs.existsSync(htmlPath)) {
     const inline = extractCodeFromHTML(htmlPath);
     if (inline) return { code: inline, source: 'html-inline' };
+    return { code: fs.readFileSync(htmlPath, 'utf-8'), source: 'html-file' };
   }
   
   if (jsPath && fs.existsSync(jsPath)) {
@@ -79,11 +80,15 @@ function getCode(fileName) {
 // Keep historical file names like `dogfood-remotion-title`, but evaluate them
 // using the active Revideo domain hint.
 function getDomain(fileName) {
+  if (fileName.includes('ascii')) return 'ascii';
+  if (fileName.includes('html')) return 'html';
+  if (fileName.includes('tone')) return 'tone';
+  if (fileName.includes('p5')) return 'p5';
   if (fileName.includes('shader')) return 'glsl';
   if (fileName.includes('three')) return 'three';
   if (fileName.includes('hydra')) return 'hydra';
   if (fileName.includes('strudel') || fileName.includes('music')) return 'music';
-  if (fileName.includes('remotion')) return 'revideo';
+  if (fileName.includes('revideo') || fileName.includes('remotion')) return 'revideo';
   return 'p5';
 }
 

@@ -4,14 +4,14 @@
  * Usage: tsx generate-single.ts <provider> <model> <domain>
  */
 
-import { P5GeneratorLLM } from '../src/generators/p5/P5GeneratorLLM.js';
-import { ShaderGenerator } from '../src/generators/glsl/ShaderGenerator.js';
-import { ThreeGenerator } from '../src/generators/three/ThreeGenerator.js';
-import { StrudelGenerator } from '../src/generators/strudel/StrudelGenerator.js';
-import { HydraGenerator } from '../src/generators/hydra/HydraGenerator.js';
+import { P5GeneratorLLM } from '../../src/generators/p5/P5GeneratorLLM.js';
+import { ShaderGenerator } from '../../src/generators/glsl/ShaderGenerator.js';
+import { ThreeGenerator } from '../../src/generators/three/ThreeGenerator.js';
+import { StrudelGenerator } from '../../src/generators/strudel/StrudelGenerator.js';
+import { HydraGenerator } from '../../src/generators/hydra/HydraGenerator.js';
 import { writeFileSync } from 'fs';
-import { ensureDir } from '../src/utils/fs.js';
-import { LLMClient } from '../src/llm/LLMClient.js';
+import { ensureDir } from '../../src/utils/fs.js';
+import { LLMClient } from '../../src/llm/LLMClient.js';
 
 const PROMPTS: Record<string, string> = {
   p5: `Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include particle physics, gravity, and fading trails.`,
@@ -68,6 +68,11 @@ function normalizeDomain(domain: string): string {
   return domain === 'remotion' ? 'revideo' : domain;
 }
 
+function formatError(context: string, error: unknown): string {
+  if (error instanceof Error) return `${context}: ${error.message}`;
+  return `${context}: ${String(error)}`;
+}
+
 async function generateWithLLM(prompt: string, domain: string, llmConfig: { baseUrl: string; apiKey: string; model: string; modelId?: string }): Promise<string> {
   const normalizedDomain = normalizeDomain(domain);
   const llm = new LLMClient({
@@ -105,23 +110,23 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
       return gen.generate(prompt);
     }
     case 'revideo': {
-      const { RemotionGenerator } = await import('../src/generators/remotion/RemotionGenerator.js');
+      const { RemotionGenerator } = await import('../../src/generators/remotion/RemotionGenerator.js');
       const gen = new RemotionGenerator();
       (gen as any).llm = llm;
       return gen.generate(prompt);
     }
     case 'html': {
-      const { HTMLWebGenerator } = await import('../src/generators/html/HTMLWebGenerator.js');
+      const { HTMLWebGenerator } = await import('../../src/generators/html/HTMLWebGenerator.js');
       const gen = new HTMLWebGenerator(llm);
       return gen.generate(prompt, { responsive: true, includeAnimations: true });
     }
     case 'ascii': {
-      const { ASCIIArtGenerator } = await import('../src/generators/ascii/ASCIIArtGenerator.js');
+      const { ASCIIArtGenerator } = await import('../../src/generators/ascii/ASCIIArtGenerator.js');
       const gen = new ASCIIArtGenerator(llm);
       return gen.generate(prompt, { style: 'abstract', width: 60, height: 30 });
     }
     case 'tone': {
-      const { ToneGenerator } = await import('../src/generators/tone/ToneGenerator.js');
+      const { ToneGenerator } = await import('../../src/generators/tone/ToneGenerator.js');
       const gen = new ToneGenerator(llm);
       return gen.generate(prompt);
     }

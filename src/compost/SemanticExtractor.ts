@@ -19,6 +19,10 @@ export interface LLMClientLike {
   generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<{ code: string; success: boolean }>;
 }
 
+function formatFallback(kind: 'Code' | 'Image' | 'Audio' | 'Video' | 'Text', mode: string, basename: string, detail?: string): string {
+  return `[${kind} ${mode}: ${basename}${detail ? ` — ${detail}` : ''}]`;
+}
+
 export class SemanticExtractor {
   private llm: LLMClientLike;
   private config: CompostConfig;
@@ -52,7 +56,14 @@ export class SemanticExtractor {
     const cached = this.cache.get(cacheKey);
     if (cached) return cached;
 
-    const content = await fs.readFile(filePath, 'utf-8');
+    let content: string;
+    try {
+      content = await fs.readFile(filePath, 'utf-8');
+    } catch (err) {
+      const fallback = formatFallback('Code', 'unreadable', path.basename(filePath), err instanceof Error ? err.message : String(err));
+      this.cache.set(cacheKey, fallback);
+      return fallback;
+    }
     const ext = path.extname(filePath).replace('.', '');
 
     try {
@@ -63,12 +74,14 @@ export class SemanticExtractor {
       });
       const result = await this.llm.generate(system, user);
 
-      const summary = result.success ? result.code : `[Code file: ${ext}]`;
+      const summary = result.success
+        ? result.code
+        : formatFallback('Code', 'llm-unsuccessful', path.basename(filePath), `extension=${ext}`);
       this.cache.set(cacheKey, summary);
       return summary;
     } catch (err) {
       Logger.warn('SemanticExtractor', 'extractCode failed:', err);
-      const fallback = `[Code file: ${path.basename(filePath)}]`;
+      const fallback = formatFallback('Code', 'llm-error', path.basename(filePath), err instanceof Error ? err.message : String(err));
       this.cache.set(cacheKey, fallback);
       return fallback;
     }
@@ -83,9 +96,9 @@ export class SemanticExtractor {
     try {
       const stat = fsSync.statSync(filePath);
       Logger.warn('SemanticExtractor', `extractImage called for ${basename} — vision LLM not available, returning metadata only`);
-      return `[Image: ${basename} — ${(stat.size / 1024).toFixed(1)}KB — vision extraction requires multimodal LLM client]`;
+      return formatFallback('Image', 'metadata-only', basename, `${(stat.size / 1024).toFixed(1)}KB — vision extraction requires multimodal LLM client`);
     } catch {
-      return `[Image: ${basename} — unreadable]`;
+      return formatFallback('Image', 'unreadable', basename);
     }
   }
 
@@ -110,23 +123,33 @@ export class SemanticExtractor {
         // music-metadata not available — duration unknown
       }
       const sizeMB = (stat.size / (1024 * 1024)).toFixed(2);
-      const meta = `Audio: ${basename} — ${sizeMB}MB${durationStr}`;
+      const meta = `${sizeMB}MB${durationStr}`;
       // Attempt LLM summarization via audio analysis prompt if client supports it
+      let renderedAudioPrompt:
+        | { system: string; user: string }
+        | null = null;
       try {
-        const { system, user } = PromptLibrary.render('compost.describe-audio', {
+        renderedAudioPrompt = PromptLibrary.render('compost.describe-audio', {
           filename: basename,
           size: sizeMB,
           duration: durationStr ? `${durationStr.replace(', ', '')}` : 'unknown',
         });
-        const result = await this.llm.generate(system, user);
-        if (result.success) return result.code;
       } catch {
-        // LLM failed, fall through to metadata-only
+        Logger.warn('SemanticExtractor', `extractAudio for ${basename} — prompt unavailable, using metadata fallback`);
+        return formatFallback('Audio', 'prompt-unavailable', basename, meta);
+      }
+      try {
+        const result = await this.llm.generate(renderedAudioPrompt.system, renderedAudioPrompt.user);
+        if (result.success) return result.code;
+        return formatFallback('Audio', 'llm-unsuccessful', basename, meta);
+      } catch {
+        Logger.warn('SemanticExtractor', `extractAudio for ${basename} — LLM error, using metadata fallback`);
+        return formatFallback('Audio', 'llm-error', basename, meta);
       }
       Logger.warn('SemanticExtractor', `extractAudio for ${basename} — using metadata fallback (LLM audio description not available)`);
-      return meta;
+      return formatFallback('Audio', 'metadata-only', basename, meta);
     } catch {
-      return `[Audio: ${basename} — unreadable]`;
+      return formatFallback('Audio', 'unreadable', basename);
     }
   }
 
@@ -140,22 +163,32 @@ export class SemanticExtractor {
     try {
       const stat = fsSync.statSync(filePath);
       const sizeMB = (stat.size / (1024 * 1024)).toFixed(2);
-      const meta = `Video: ${basename} — ${sizeMB}MB`;
+      const meta = `${sizeMB}MB`;
       // Attempt LLM scene description
+      let renderedVideoPrompt:
+        | { system: string; user: string }
+        | null = null;
       try {
-        const { system, user } = PromptLibrary.render('compost.describe-video', {
+        renderedVideoPrompt = PromptLibrary.render('compost.describe-video', {
           filename: basename,
           size: sizeMB,
         });
-        const result = await this.llm.generate(system, user);
-        if (result.success) return result.code;
       } catch {
-        // LLM failed, fall through to metadata-only
+        Logger.warn('SemanticExtractor', `extractVideo for ${basename} — prompt unavailable, using metadata fallback`);
+        return formatFallback('Video', 'prompt-unavailable', basename, meta);
+      }
+      try {
+        const result = await this.llm.generate(renderedVideoPrompt.system, renderedVideoPrompt.user);
+        if (result.success) return result.code;
+        return formatFallback('Video', 'llm-unsuccessful', basename, meta);
+      } catch {
+        Logger.warn('SemanticExtractor', `extractVideo for ${basename} — LLM error, using metadata fallback`);
+        return formatFallback('Video', 'llm-error', basename, meta);
       }
       Logger.warn('SemanticExtractor', `extractVideo for ${basename} — using metadata fallback (LLM video description not available)`);
-      return meta;
+      return formatFallback('Video', 'metadata-only', basename, meta);
     } catch {
-      return `[Video: ${basename} — unreadable]`;
+      return formatFallback('Video', 'unreadable', basename);
     }
   }
 
@@ -219,8 +252,9 @@ export class SemanticExtractor {
     if (textExts.includes(ext)) {
       const content = await fs.readFile(filePath, 'utf-8').catch((err) => {
         Logger.warn('SemanticExtractor', `Failed to read ${filePath}:`, err instanceof Error ? err.message : err);
-        return '';
+        return formatFallback('Text', 'unreadable', path.basename(filePath), err instanceof Error ? err.message : String(err));
       });
+      if (content.startsWith('[Text unreadable:')) return content;
       return this.extractText(content, filePath);
     }
     if (codeExts.includes(ext)) {

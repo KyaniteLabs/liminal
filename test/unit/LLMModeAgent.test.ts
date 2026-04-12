@@ -244,6 +244,68 @@ describe('LLMModeAgent', () => {
     });
   });
 
+  it('resumes a suspended run without duplicating mutation work', async () => {
+    let persistedRunState: Record<string, unknown> | null = null;
+
+    mockReadRunState.mockImplementation(async () => persistedRunState);
+    mockSaveRunState.mockImplementation(async (state: Record<string, unknown>) => {
+      persistedRunState = structuredClone(state);
+    });
+    mockClearRunState.mockImplementation(async () => {
+      persistedRunState = null;
+    });
+
+    mockComplete
+      .mockResolvedValueOnce({
+        text: '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"apply the fix","expectedResult":"mutation applied"}',
+      })
+      .mockResolvedValueOnce({
+        text: '{"tool":"runBuild","params":{},"thought":"resume from the saved mutation and verify it","expectedResult":"build passes"}',
+      })
+      .mockResolvedValueOnce({
+        text: '{"tool":"complete","params":{},"thought":"verification already covered the saved edit","expectedResult":"task finished"}',
+      });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const task = {
+      id: 't-resume-proof',
+      title: 'Resume proof',
+      description: 'Apply one fix, suspend, then resume without re-applying the same edit',
+      approved: true,
+    } as const;
+
+    const suspendedSession = await agent.executeTask({
+      ...task,
+      maxSteps: 1,
+    });
+
+    expect(suspendedSession.status).toBe(Status.SUSPENDED);
+    expect(mockApplyEdit.execute).toHaveBeenCalledTimes(1);
+    expect(persistedRunState).toMatchObject({
+      taskId: 't-resume-proof',
+      status: Status.SUSPENDED,
+      mutationApplied: true,
+      hadMutations: true,
+      stepsCompleted: 1,
+      mutatedFiles: ['src/foo.ts'],
+    });
+
+    const resumedSession = await agent.executeTask({
+      ...task,
+      maxSteps: 3,
+    });
+
+    expect(mockApplyEdit.execute).toHaveBeenCalledTimes(1);
+    expect(mockRunBuild.execute).toHaveBeenCalledTimes(1);
+    expect(mockClearRunState).toHaveBeenCalledTimes(1);
+    expect(mockComplete.mock.calls[1][0].prompt).toContain('resume context');
+    expect(resumedSession.status).toBe(Status.SUCCESS);
+    expect(resumedSession.stepCount).toBe(3);
+    expect(Array.from(resumedSession.mutatedFiles)).toEqual(['src/foo.ts']);
+    expect(Array.from(resumedSession.exploredPaths)).toEqual([]);
+    expect(persistedRunState).toBeNull();
+  });
+
   it('auto-completes bounded runs after verified success instead of exploring unrelated follow-up work', async () => {
     mockComplete
       .mockResolvedValueOnce({ text: '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}' })

@@ -42,7 +42,8 @@ describe('LLMModeSelfImprovementRuntime', () => {
     expect(mockExecuteTask).toHaveBeenCalledWith({
       id: expect.stringMatching(/^tui-self-/),
       title: 'Bubble Tea TUI self-improvement request',
-      description: 'Fix the Bubble Tea runtime lane',
+      description: expect.stringContaining('Fix the Bubble Tea runtime lane'),
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
       maxSteps: 20,
       approved: true,
       completionPolicy: 'stop_after_verification',
@@ -53,5 +54,30 @@ describe('LLMModeSelfImprovementRuntime', () => {
       session,
       taskId: expect.stringMatching(/^tui-self-/),
     });
+  });
+
+  it('preloads checkpoint/resume runs with a deterministic working set', async () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
+    const session = {
+      status: 'success',
+      startTime: '2026-04-11T18:00:00.000Z',
+      endTime: '2026-04-11T18:00:01.000Z',
+      stepCount: 1,
+    } as any;
+    mockExecuteTask.mockResolvedValue(session);
+
+    await runtime.run({
+      llm,
+      description: 'Add a checkpoint resume proof for workspace fingerprint drift',
+    });
+
+    expect(mockExecuteTask).toHaveBeenCalledWith(expect.objectContaining({
+      fileHint: 'src/harness/RunStateStore.ts',
+      description: expect.stringContaining('Deterministic Task Packet'),
+    }));
+    const task = mockExecuteTask.mock.calls[0][0];
+    expect(task.description).toContain('src/harness/agent/LLMModeAgent.ts');
+    expect(task.description).toContain('test/harness/RunStateStore.test.ts');
   });
 });

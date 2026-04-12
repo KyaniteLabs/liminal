@@ -157,7 +157,11 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
 /**
  * Get provider configuration with API key from environment
  */
-export function getProviderConfig(provider: ProviderType): ProviderConfig | null {
+function getProviderConfigInternal(
+  provider: ProviderType,
+  options: { respectGenericEnvOverrides?: boolean } = {},
+): ProviderConfig | null {
+  const { respectGenericEnvOverrides = true } = options;
   const template = PROVIDER_TEMPLATES[provider];
   
   // Get API key: env var first, then config file
@@ -193,8 +197,8 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
   // Read baseUrl and model: env var → config file → template default
   const fileProviders = loadConfigFile();
   const fileProvider = fileProviders?.[provider];
-  const baseUrl = process.env.LIMINAL_LLM_BASE_URL || fileProvider?.baseUrl || template.baseUrl;
-  const model = process.env.LIMINAL_LLM_MODEL || fileProvider?.model || template.model;
+  const baseUrl = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_BASE_URL : undefined) || fileProvider?.baseUrl || template.baseUrl;
+  const model = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_MODEL : undefined) || fileProvider?.model || template.model;
   
   return {
     ...template,
@@ -202,6 +206,10 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
     model,
     apiKey,
   };
+}
+
+export function getProviderConfig(provider: ProviderType): ProviderConfig | null {
+  return getProviderConfigInternal(provider);
 }
 
 /**
@@ -357,7 +365,11 @@ export function getHarnessProviderConfig(): LLMConfig | null {
   }
   
   // Otherwise fall back to active provider with harness overrides
-  const baseConfig = getActiveProviderConfig();
+  const activeProvider = getActiveProvider();
+  const selectedProvider = activeProvider === 'openrouter' ? 'lmstudio' : activeProvider;
+  const baseConfig = selectedProvider === activeProvider
+    ? getActiveProviderConfig()
+    : getProviderConfigInternal(selectedProvider, { respectGenericEnvOverrides: false });
   if (!baseConfig) return null;
   
   const harnessConfig = getHarnessLLMConfig();

@@ -423,6 +423,16 @@ describe('getHarnessProviderConfig', () => {
     // Should be ollama (default active provider), not harness-specific
     expect(config!.baseUrl).toBe('http://localhost:11434');
   });
+
+  it('avoids OpenRouter for harness fallback and prefers LM Studio until explicitly overridden', () => {
+    process.env.OPENROUTER_API_KEY = 'or-key';
+
+    const config = getHarnessProviderConfig();
+
+    expect(config).not.toBeNull();
+    expect(config!.baseUrl).toBe('http://localhost:1234/v1');
+    expect(config!.model).toBe('local-model');
+  });
 });
 
 // ===========================================================================

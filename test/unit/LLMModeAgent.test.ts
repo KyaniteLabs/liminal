@@ -211,8 +211,9 @@ describe('LLMModeAgent', () => {
     expect(mockRunBuild.execute).not.toHaveBeenCalled();
   });
 
-  it('surfaces the actual upstream LLM call failure instead of mislabeling it as a rate limit', async () => {
+  it('retries a transient upstream planning failure once before failing', async () => {
     vi.mocked(rateLimiter.execute).mockResolvedValueOnce({ error: 'OpenAI upstream 502' } as any);
+    mockComplete.mockResolvedValueOnce({ text: '' });
 
     const agent = new LLMModeAgent(mockLLM as any);
     const session = await agent.executeTask({
@@ -222,6 +223,7 @@ describe('LLMModeAgent', () => {
       approved: true,
     });
 
+    expect(mockComplete).toHaveBeenCalledTimes(1);
     expect(session.status).toBe(Status.FAILED);
     expect(session.lastPlanError).toBe('OpenAI upstream 502');
   });
@@ -578,7 +580,7 @@ describe('LLMModeAgent', () => {
       maxSteps: 4,
     });
 
-    expect(mockComplete).not.toHaveBeenCalled();
+    expect(mockComplete).toHaveBeenCalledTimes(1);
     expect(mockReadFile.execute).not.toHaveBeenCalled();
     expect(mockApplyEdit.execute).not.toHaveBeenCalled();
     expect(mockClearRunState).not.toHaveBeenCalled();

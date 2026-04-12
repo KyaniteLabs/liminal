@@ -568,14 +568,16 @@ When the task is complete and build passes, respond with tool "complete".`;
    */
   private async getLLMPlan(session: LLMSession): Promise<ToolCall | null> {
     const rateLimitResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async () => {
+      const systemPrompt = session.messages.find(m => m.role === 'system')?.content || getSelfImprovePrompt();
       // Build conversation context
-      let messages = session.messages.map(m => ({
-        role: m.role as 'system' | 'user' | 'assistant',
-        content: m.role === 'system' ? m.content :
-                 m.role === 'user' ? m.content :
-                 m.role === 'assistant' ? JSON.stringify(m.toolCall) :
-                 JSON.stringify(m.toolResult),
-      }));
+      let messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = session.messages
+        .filter(m => m.role !== 'system')
+        .map(m => ({
+          role: m.role as 'system' | 'user' | 'assistant',
+          content: m.role === 'user' ? m.content :
+                   m.role === 'assistant' ? JSON.stringify(m.toolCall) :
+                   (m.toolResult ? JSON.stringify(m.toolResult) : m.content),
+        }));
 
       // Compact if conversation is getting long
       if (this.compactor.needsCompaction(messages)) {
@@ -587,6 +589,7 @@ When the task is complete and build passes, respond with tool "complete".`;
 
       // Call LLM
       const response = await this.llmClient.complete({
+        systemPrompt,
         prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',
         maxTokens: 2000,
         temperature: 0.2, // Low temperature for deterministic tool calls
@@ -603,7 +606,44 @@ When the task is complete and build passes, respond with tool "complete".`;
         this.currentSession.lastPlanError = failureReason;
       }
       Logger.error('LLMModeAgent', failureReason);
-      return null;
+
+      const retryable = /rate limit|429|timeout|502|503|504|upstream|temporar/i.test(failureReason);
+      if (retryable) {
+        Logger.warn('LLMModeAgent', `Retrying transient planning failure once: ${failureReason}`);
+        await new Promise(resolve => setTimeout(resolve, 750));
+        const retryResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async () => {
+          const systemPrompt = session.messages.find(m => m.role === 'system')?.content || getSelfImprovePrompt();
+          let messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = session.messages
+            .filter(m => m.role !== 'system')
+            .map(m => ({
+              role: m.role as 'system' | 'user' | 'assistant',
+              content: m.role === 'user' ? m.content :
+                       m.role === 'assistant' ? JSON.stringify(m.toolCall) :
+                       (m.toolResult ? JSON.stringify(m.toolResult) : m.content),
+            }));
+          if (this.compactor.needsCompaction(messages)) {
+            messages = await this.compactor.compact(messages);
+          }
+          const conversation = messages.map(m => `${m.role}: ${m.content}`).join('\n\n---\n\n');
+          const response = await this.llmClient.complete({
+            systemPrompt,
+            prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',
+            maxTokens: 2000,
+            temperature: 0.2,
+          });
+          return response.text;
+        });
+        if (retryResult.result) {
+          if (this.currentSession) this.currentSession.lastPlanError = undefined;
+          rateLimitResult.result = retryResult.result;
+        } else {
+          const retryReason = retryResult.error || failureReason;
+          if (this.currentSession) this.currentSession.lastPlanError = retryReason;
+          return null;
+        }
+      } else {
+        return null;
+      }
     }
 
     if (this.currentSession) {

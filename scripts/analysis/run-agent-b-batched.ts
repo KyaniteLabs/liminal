@@ -25,7 +25,7 @@ const DOMAINS = [
   { name: 'strudel', prompt: 'Create a simple techno beat pattern with drums', complexity: 'medium' },
   { name: 'hydra', prompt: 'Create a geometric video synth pattern with kaleidoscope effect', complexity: 'medium' },
   { name: 'tone', prompt: 'Create an ambient drone synthesizer with reverb', complexity: 'medium' },
-  { name: 'remotion', prompt: 'Create a typing text animation video component', complexity: 'medium' },
+  { name: 'revideo', prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle', complexity: 'medium' },
   { name: 'glsl', prompt: 'Create an abstract plasma shader with animated colors', complexity: 'high' },
   { name: 'three', prompt: 'Create a rotating 3D cube with interesting lighting', complexity: 'high' },
 ];

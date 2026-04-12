@@ -16,7 +16,7 @@ const WAVES = [
     { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'three' },
     { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'strudel' },
     { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'hydra' },
-    { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'remotion' },
+    { provider: 'minimax', model: 'MiniMax-M2.7', domain: 'revideo' },
   ],
   // Wave 2: MiniMax-M2.7 last 2 + M2.5 first 4
   [
@@ -30,7 +30,7 @@ const WAVES = [
   // Wave 3: MiniMax-M2.5 last 4
   [
     { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'hydra' },
-    { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'remotion' },
+    { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'revideo' },
     { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'html' },
     { provider: 'minimax', model: 'MiniMax-M2.5', domain: 'ascii' },
   ],
@@ -41,7 +41,7 @@ const WAVES = [
     { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'three' },
     { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'strudel' },
     { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'hydra' },
-    { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'remotion' },
+    { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'revideo' },
     { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'html' },
     { provider: 'lmstudio', model: 'Qwen3.5-9B', domain: 'ascii' },
   ],
@@ -52,7 +52,7 @@ const WAVES = [
     { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'three' },
     { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'strudel' },
     { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'hydra' },
-    { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'remotion' },
+    { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'revideo' },
     { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'html' },
     { provider: 'lmstudio', model: 'Qwen3-Coder-40B', domain: 'ascii' },
   ],
@@ -63,7 +63,7 @@ const WAVES = [
     { provider: 'ollama', model: 'Gemma3-4B', domain: 'three' },
     { provider: 'ollama', model: 'Gemma3-4B', domain: 'strudel' },
     { provider: 'ollama', model: 'Gemma3-4B', domain: 'hydra' },
-    { provider: 'ollama', model: 'Gemma3-4B', domain: 'remotion' },
+    { provider: 'ollama', model: 'Gemma3-4B', domain: 'revideo' },
     { provider: 'ollama', model: 'Gemma3-4B', domain: 'html' },
     { provider: 'ollama', model: 'Gemma3-4B', domain: 'ascii' },
   ],
@@ -74,7 +74,7 @@ const WAVES = [
     { provider: 'ollama', model: 'Kimi-K2.5', domain: 'three' },
     { provider: 'ollama', model: 'Kimi-K2.5', domain: 'strudel' },
     { provider: 'ollama', model: 'Kimi-K2.5', domain: 'hydra' },
-    { provider: 'ollama', model: 'Kimi-K2.5', domain: 'remotion' },
+    { provider: 'ollama', model: 'Kimi-K2.5', domain: 'revideo' },
   ],
   // Wave 8: Ollama Kimi-K2.5 last 2 + any missing
   [

@@ -19,7 +19,7 @@ const DOMAINS = [
   { name: 'tone', prompt: 'Create an ambient drone synthesizer with reverb' },
   { name: 'html', prompt: 'Create a landing page with hero section and call to action' },
   { name: 'ascii', prompt: 'Create ASCII art of a mountain landscape' },
-  { name: 'remotion', prompt: 'Create a typing text animation video component' },
+  { name: 'revideo', prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle' },
 ];
 
 const MODELS = [

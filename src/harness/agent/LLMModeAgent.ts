@@ -216,9 +216,11 @@ export class LLMModeAgent {
       ? '\n' + formatResumeContext(existingRunState)
       : '';
 
-    // Build deterministic preflight section from workingSet
+    const initialPreflightFiles = this.getInitialPreflightFiles(task);
+
+    // Build deterministic preflight section from the bounded packet
     const preflightSection = task.workingSet && task.workingSet.length > 0
-      ? `\n\n## Deterministic Task Packet\nStart in these runtime-core files before any broader reconnaissance. Only expand beyond this working set if the requested fix cannot be completed there:\n${task.workingSet.map((f, i) => `${i === 0 ? '→' : '-'} ${f}`).join('\n')}\nHint: Start by looking in ${task.fileHint || task.workingSet[0]}`
+      ? `\n\n## Deterministic Task Packet\nStart in these primary files before any broader reconnaissance:\n${(task.primaryFiles && task.primaryFiles.length > 0 ? task.primaryFiles : task.workingSet).map((f, i) => `${i === 0 ? '→' : '-'} ${f}`).join('\n')}${task.secondaryFiles && task.secondaryFiles.length > 0 ? `\nSecondary files (use only if the primary files are insufficient):\n${task.secondaryFiles.map(f => `- ${f}`).join('\n')}` : ''}\nHint: Start by looking in ${task.fileHint || task.workingSet[0]}`
       : (task.fileHint ? `\nHint: Start by looking in ${task.fileHint}` : '');
 
     // Add task description
@@ -229,6 +231,7 @@ Title: ${task.title}
 Description: ${task.description}${preflightSection}${resumeSection}
 
 You are in LLM-driven mode. Plan your own steps. ${isResume ? 'Continue from where the previous run left off.' : 'Start by reading the relevant file(s).'}
+If readFile returns truncated=true with startLine/endLine, continue that file with offset=endLine rather than rereading from the top.
 
 Respond with a JSON object containing your tool call:
 {\n  "thought": "What you're doing and why",\n  "tool": "toolName",\n  "params": { ... },\n  "expectedResult": "What you expect"\n}
@@ -241,13 +244,13 @@ When the task is complete and build passes, respond with tool "complete".`;
     });
 
     // ── Deterministic preflight read for bounded runs ──────────────
-    // For bounded runs with a workingSet, read those files NOW before
+    // For bounded runs with a packet, read the primary files NOW before
     // the LLM planning loop begins. This injects file contents into
     // session context deterministically, reducing early blind reads.
-    if (task.workingSet && task.workingSet.length > 0) {
-      const unreadFiles = task.workingSet.filter(f => !session.exploredPaths.has(f));
+    if (initialPreflightFiles.length > 0) {
+      const unreadFiles = initialPreflightFiles.filter(f => !session.exploredPaths.has(f));
       if (unreadFiles.length > 0) {
-        Logger.debug('LLMModeAgent', `Preflight: reading ${unreadFiles.length} workingSet files`);
+        Logger.debug('LLMModeAgent', `Preflight: reading ${unreadFiles.length} primary packet files`);
         const preflightContents: string[] = [];
         for (const filePath of unreadFiles) {
           try {
@@ -813,6 +816,11 @@ When the task is complete and build passes, respond with tool "complete".`;
   private formatPreflightExcerpt(content: string): string {
     if (content.length <= LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT) return content;
     return `${content.slice(0, LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT)}\n... [truncated preflight excerpt; call readFile for full contents]`;
+  }
+
+  private getInitialPreflightFiles(task: LLMTask): string[] {
+    if (task.primaryFiles && task.primaryFiles.length > 0) return task.primaryFiles;
+    return task.workingSet || [];
   }
 
   /**

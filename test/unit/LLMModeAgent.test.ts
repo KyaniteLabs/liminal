@@ -761,6 +761,49 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('preloads primary packet files before secondary files', async () => {
+    queuePlans('{"tool":"complete","params":{},"thought":"primary files were enough to start","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-primary-first',
+      title: 'Primary packet first',
+      description: 'Start from primary files and keep secondary files in reserve',
+      fileHint: 'src/runtime-core/RepoIndexLite.ts',
+      workingSet: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'test/unit/runtime-core/RepoIndexLite.test.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      secondaryFiles: [
+        'test/unit/runtime-core/RepoIndexLite.test.ts',
+      ],
+      expansionBudget: 1,
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalledTimes(2);
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(1, { path: 'src/runtime-core/RepoIndexLite.ts' });
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(2, { path: 'src/runtime-core/SelfImprovementRuntime.ts' });
+    expect(mockReadFile.execute).not.toHaveBeenCalledWith({ path: 'test/unit/runtime-core/RepoIndexLite.test.ts' });
+
+    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+    expect(firstPrompt).toContain('Start in these primary files before any broader reconnaissance');
+    expect(firstPrompt).toContain('Secondary files (use only if the primary files are insufficient):');
+    expect(firstPrompt).toContain('continue that file with offset=endLine rather than rereading from the top');
+    expect(Array.from(session.exploredPaths)).toEqual([
+      'src/runtime-core/RepoIndexLite.ts',
+      'src/runtime-core/SelfImprovementRuntime.ts',
+    ]);
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   // ── Report generation ──────────────────────────────────────────────
   it('generateReport includes session data after tasks', async () => {
     mockComplete.mockResolvedValue({ text: 'not json' });

@@ -22,6 +22,7 @@ You have access to these tools:
 ### readFile({ path: string, maxLines?: number })
 Read the contents of a file. Use this BEFORE making any changes.
 Supports paging with offset and limit for large files.
+If a readFile result says truncated=true and returns endLine, continue the same file with offset=endLine instead of rereading from the top.
 
 ### applyEdit({ path: string, oldString: string, newString: string })
 Apply a targeted string replacement. The oldString must match EXACTLY once in the file.

@@ -933,7 +933,7 @@ describe('LLMModeAgent', () => {
 
     expect(session.activeFocusFile).toBe('src/runtime-core/SelfImprovementRuntime.ts');
     expect(session.activeFocusIndex).toBe(1);
-    expect(session.focusInspectionBudgetRemaining).toBe(1);
+    expect(session.focusInspectionBudgetRemaining).toBe(0);
     expect(session.focusStatus).toBe('unresolved');
     expect(session.focusAdjacentFileUsed).toBe(true);
     expect(session.status).toBe(Status.SUCCESS);
@@ -969,6 +969,36 @@ describe('LLMModeAgent', () => {
     expect(mockReadFile.execute).toHaveBeenNthCalledWith(4, { path: 'src/runtime-core/SelfImprovementRuntime.ts' });
     expect(session.activeFocusFile).toBe('src/runtime-core/SelfImprovementRuntime.ts');
     expect(session.activeFocusIndex).toBe(1);
+    expect(session.focusInspectionBudgetRemaining).toBe(0);
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('allows one explicit follow-up read on the initial primary file after preflight', async () => {
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts"},"thought":"use one explicit post-preflight read on the first primary file","expectedResult":"inspect more deeply"}',
+      '{"tool":"complete","params":{},"thought":"confirmed the first primary still gets one real read after preflight","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-first-primary-followup',
+      title: 'Initial primary follow-up read',
+      description: 'Allow one explicit read after the preflighted first primary file',
+      primaryFiles: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      workingSet: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenNthCalledWith(3, { path: 'src/runtime-core/RepoIndexLite.ts' });
+    expect(session.activeFocusFile).toBe('src/runtime-core/RepoIndexLite.ts');
     expect(session.focusInspectionBudgetRemaining).toBe(0);
     expect(session.status).toBe(Status.SUCCESS);
   });

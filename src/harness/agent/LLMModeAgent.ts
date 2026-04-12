@@ -292,6 +292,13 @@ When the task is complete and build passes, respond with tool "complete".`;
             content: `Preflight file contents loaded:\n\n${preflightContents.join('\n\n')}`,
           });
           Logger.debug('LLMModeAgent', `Preflight complete: ${preflightContents.length} files loaded into session context`);
+          // Count the preflighted active focus as one inspection read, but still
+          // leave room for one explicit follow-up read before the gate forces
+          // edit / verify / advance behavior.
+          if (session.activeFocusFile && session.exploredPaths.has(session.activeFocusFile) && session.focusInspectionBudgetRemaining > 0) {
+            session.focusInspectionBudgetRemaining -= 1;
+            Logger.debug('LLMModeAgent', `Preflight consumed one focus read for ${session.activeFocusFile}; remaining=${session.focusInspectionBudgetRemaining}`);
+          }
         }
       }
     }
@@ -857,7 +864,7 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (!this.isBoundedInspectionRun(session) || !session.task.primaryFiles?.length) return;
     session.activeFocusIndex = 0;
     session.activeFocusFile = session.task.primaryFiles[0];
-    session.focusInspectionBudgetRemaining = 1;
+    session.focusInspectionBudgetRemaining = 2;
     session.focusStatus = 'unresolved';
     session.focusAdjacentFileUsed = false;
   }

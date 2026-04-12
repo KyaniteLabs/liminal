@@ -99,8 +99,6 @@ export interface LLMSession {
   endTime?: string;
   stepCount: number;
   backups: string[];
-  /** Number of successful inspection-style tool calls completed inside the main loop */
-  successfulInspectionCalls: number;
   /** File extensions of files modified in this session, used for language-aware verification */
   modifiedExtensions: Set<string>;
   /** Files that were read during this session, for resume context */
@@ -158,7 +156,6 @@ export class LLMModeAgent {
       startTime: new Date().toISOString(),
       stepCount: 0,
       backups: [],
-      successfulInspectionCalls: 0,
       modifiedExtensions: new Set(),
       exploredPaths: new Set(),
       mutatedFiles: new Set(),
@@ -186,22 +183,7 @@ export class LLMModeAgent {
         }
       }
 
-      // ── Restore persisted run-state into live Sets ────────────────
-      // This gives the resumed session access to what was already explored
-      // and mutated so the LLM can avoid re-doing work.
-      for (const p of existingRunState.exploredPaths) {
-        session.exploredPaths.add(p);
-      }
-      for (const f of existingRunState.mutatedFiles) {
-        session.mutatedFiles.add(f);
-      }
-      if (existingRunState.lastVerification) {
-        session.lastVerification = existingRunState.lastVerification;
-      }
-
-      // Restore step count so budget tracking continues from where it left off.
-      // This ensures the resumed run uses the REMAINING budget, not a fresh one.
-      session.stepCount = existingRunState.stepsCompleted;
+      this.restoreSessionFromRunState(session, existingRunState);
 
       Logger.debug('LLMModeAgent', `Resuming suspended run: ${existingRunState.stepsCompleted}/${existingRunState.maxSteps} steps completed`);
       Logger.debug('LLMModeAgent', `Restored ${session.exploredPaths.size} explored paths, ${session.mutatedFiles.size} mutated files`);
@@ -382,10 +364,13 @@ When the task is complete and build passes, respond with tool "complete".`;
           toolResult: result,
         });
 
+<<<<<<< HEAD
         if (result.success && this.isMeaningfulInspectionTool(toolCall.tool)) {
           session.successfulInspectionCalls++;
         }
 
+=======
+>>>>>>> 70c345dc (Harden resume confidence at verification boundaries)
         if (this.shouldStopAfterSuccessfulVerification(session, toolCall.tool, result)) {
           Logger.info('LLMModeAgent', `Auto-completing bounded run after successful ${toolCall.tool}`);
           await clearRunState();
@@ -521,15 +506,6 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Mutations were made but task didn't complete - checkpoint and suspend for resume
         Logger.warn('LLMModeAgent', `Max steps (${maxSteps}) reached with incomplete changes - suspending for resume`);
 
-        // Determine the semantic boundary phase based on what was accomplished
-        const phase = session.lastVerification
-          ? (session.lastVerification.passed
-            ? SemanticBoundary.VERIFICATION_FINISHED
-            : SemanticBoundary.VERIFICATION_STARTED)
-          : (session.mutatedFiles.size > 0
-            ? SemanticBoundary.MUTATION_APPLIED
-            : SemanticBoundary.INTERRUPTED);
-
         // Capture workspace fingerprint for safe resume validation
         let workspaceFingerprint;
         try {
@@ -538,30 +514,8 @@ When the task is complete and build passes, respond with tool "complete".`;
           Logger.warn('LLMModeAgent', `Could not capture workspace fingerprint: ${fpErr}`);
         }
 
-        // Save run state for potential resume with authoritative tracking data
-        const runState: RunState = {
-          runId: `run-${task.id}-${Date.now()}`,
-          taskId: task.id,
-          taskTitle: task.title,
-          taskDescription: task.description,
-          status: Status.SUSPENDED,
-          phase,
-          stepsCompleted: session.stepCount,
-          maxSteps,
-          continueUntilDone: false,
-          startedAt: session.startTime,
-          suspendedAt: new Date().toISOString(),
-          exploredPaths: Array.from(session.exploredPaths),
-          progressSummary: `Completed ${session.stepCount} steps. ${session.mutatedFiles.size} files mutated. Phase: ${phase}`,
-          hadMutations: session.mutatedFiles.size > 0,
-          mutationApplied: session.mutatedFiles.size > 0,
-          mutatedFiles: Array.from(session.mutatedFiles),
-          lastVerification: session.lastVerification,
-          workspaceFingerprint,
-        };
-
         try {
-          await saveRunState(runState);
+          await saveRunState(this.buildSuspendedRunState(session, maxSteps, workspaceFingerprint));
           Logger.info('LLMModeAgent', 'Run state saved for potential resume');
         } catch (saveErr) {
           Logger.error('LLMModeAgent', `Failed to save run state: ${saveErr}`);
@@ -865,29 +819,13 @@ When the task is complete and build passes, respond with tool "complete".`;
               };
             }
             const buildResult = await runBuildTool.execute(params);
-            // Capture verification state for resume context
-            if (this.currentSession) {
-              this.currentSession.lastVerification = {
-                passed: buildResult.success,
-                type: 'build',
-                error: buildResult.error,
-                timestamp: new Date().toISOString(),
-              };
-            }
+            this.recordVerificationResult('build', buildResult);
             return buildResult;
           }
           
           case 'runTests': {
             const testResult = await runTestsTool.execute(params);
-            // Capture verification state for resume context
-            if (this.currentSession) {
-              this.currentSession.lastVerification = {
-                passed: testResult.success,
-                type: 'test',
-                error: testResult.error,
-                timestamp: new Date().toISOString(),
-              };
-            }
+            this.recordVerificationResult('test', testResult);
             return testResult;
           }
           
@@ -995,6 +933,70 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (!this.hasMeaningfulSuccessfulInspection(session)) return false;
 
     return true;
+  }
+
+  private restoreSessionFromRunState(session: LLMSession, existingRunState: RunState): void {
+    for (const path of existingRunState.exploredPaths) {
+      session.exploredPaths.add(path);
+    }
+    for (const file of existingRunState.mutatedFiles) {
+      session.mutatedFiles.add(file);
+    }
+    if (existingRunState.lastVerification) {
+      session.lastVerification = existingRunState.lastVerification;
+    }
+    session.stepCount = existingRunState.stepsCompleted;
+  }
+
+  private recordVerificationResult(type: 'build' | 'test', result: ToolResult): void {
+    if (!this.currentSession) return;
+    this.currentSession.lastVerification = {
+      passed: result.success,
+      type,
+      error: result.error,
+      timestamp: new Date().toISOString(),
+    };
+  }
+
+  private deriveSuspensionPhase(session: LLMSession): SemanticBoundary {
+    if (session.lastVerification) {
+      return session.lastVerification.passed
+        ? SemanticBoundary.VERIFICATION_FINISHED
+        : SemanticBoundary.VERIFICATION_STARTED;
+    }
+
+    return session.mutatedFiles.size > 0
+      ? SemanticBoundary.MUTATION_APPLIED
+      : SemanticBoundary.INTERRUPTED;
+  }
+
+  private buildSuspendedRunState(
+    session: LLMSession,
+    maxSteps: number,
+    workspaceFingerprint?: RunState['workspaceFingerprint'],
+  ): RunState {
+    const phase = this.deriveSuspensionPhase(session);
+
+    return {
+      runId: `run-${session.task.id}-${Date.now()}`,
+      taskId: session.task.id,
+      taskTitle: session.task.title,
+      taskDescription: session.task.description,
+      status: Status.SUSPENDED,
+      phase,
+      stepsCompleted: session.stepCount,
+      maxSteps,
+      continueUntilDone: false,
+      startedAt: session.startTime,
+      suspendedAt: new Date().toISOString(),
+      exploredPaths: Array.from(session.exploredPaths),
+      progressSummary: `Completed ${session.stepCount} steps. ${session.mutatedFiles.size} files mutated. Phase: ${phase}`,
+      hadMutations: session.mutatedFiles.size > 0,
+      mutationApplied: session.mutatedFiles.size > 0,
+      mutatedFiles: Array.from(session.mutatedFiles),
+      lastVerification: session.lastVerification,
+      workspaceFingerprint,
+    };
   }
 
   private trackModifiedExtension(filePath: string): void {

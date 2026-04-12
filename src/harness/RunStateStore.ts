@@ -237,19 +237,31 @@ export async function hasResumableRun(taskId?: string, cwd?: string): Promise<Ru
   return state;
 }
 
+function formatVerificationSummary(lastVerification?: VerificationState): string | null {
+  if (!lastVerification) return null;
+
+  const outcome = lastVerification.passed ? 'passed' : 'failed';
+  const errorSuffix = lastVerification.error ? ` — ${lastVerification.error}` : '';
+  return `Last verification: ${lastVerification.type} ${outcome} at ${lastVerification.timestamp}${errorSuffix}`;
+}
+
 /**
  * Format a progress summary from a session for resume context
  */
 export function formatResumeContext(state: RunState): string {
+  const verificationSummary = formatVerificationSummary(state.lastVerification);
   const lines = [
     `## Resume Context`,
     ``,
     `A previous run of this task was suspended after ${state.stepsCompleted}/${state.maxSteps} steps.`,
     `Started: ${state.startedAt}`,
     `Suspended: ${state.suspendedAt}`,
+    `Phase at suspension: ${state.phase}`,
     state.lastCheckpointHash ? `Last checkpoint: ${state.lastCheckpointHash.slice(0, 8)}` : 'No checkpoint was created',
     state.hadMutations ? 'Mutations were made and checkpointed.' : 'No mutations were made.',
+    state.mutatedFiles.length > 0 ? `Files already mutated: ${state.mutatedFiles.join(', ')}` : '',
     state.exploredPaths.length > 0 ? `Paths already explored: ${state.exploredPaths.join(', ')}` : '',
+    verificationSummary ?? '',
     ``,
     `Progress: ${state.progressSummary}`,
     ``,

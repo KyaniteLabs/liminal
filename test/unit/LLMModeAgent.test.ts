@@ -98,6 +98,36 @@ import { LLMModeAgent, createLLMModeAgent } from '../../src/harness/agent/LLMMod
 import { rateLimiter } from '../../src/harness/tools/RateLimiter.js';
 import { Status } from '../../src/types/status.js';
 
+function queuePlans(...responses: string[]): void {
+  for (const text of responses) {
+    mockComplete.mockResolvedValueOnce({ text });
+  }
+}
+
+function makeSuspendedState(overrides: Record<string, unknown> = {}): Record<string, unknown> {
+  return {
+    taskId: 't-resume-state',
+    stepsCompleted: 2,
+    maxSteps: 5,
+    status: Status.SUSPENDED,
+    phase: 'mutation_applied',
+    exploredPaths: ['src/foo.ts'],
+    mutatedFiles: ['src/foo.ts'],
+    hadMutations: true,
+    mutationApplied: true,
+    progressSummary: 'Saved runtime progress',
+    startedAt: '2026-04-11T18:00:00.000Z',
+    suspendedAt: '2026-04-11T18:05:00.000Z',
+    workspaceFingerprint: {
+      gitHead: 'abc1234567890',
+      gitBranch: 'checkpoint/resume-confidence-bundle-20260411',
+      workingTreeClean: true,
+      timestamp: '2026-04-11T18:05:00.000Z',
+    },
+    ...overrides,
+  };
+}
+
 describe('LLMModeAgent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -542,10 +572,18 @@ describe('LLMModeAgent', () => {
   });
 
   it('still classifies meaningful successful inspection with no safe mutation as bounded-no-change success', async () => {
+<<<<<<< HEAD
     mockComplete
       .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}' })
       .mockResolvedValueOnce({ text: '{"tool":"gitStatus","params":{},"thought":"inspect repo"}' })
       .mockResolvedValueOnce({ text: 'done inspecting; no safe change warranted' });
+=======
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}',
+      '{"tool":"gitStatus","params":{},"thought":"inspect repo"}',
+      'done inspecting; no safe change warranted',
+    );
+>>>>>>> 70c345dc (Harden resume confidence at verification boundaries)
 
     const agent = new LLMModeAgent(mockLLM as any);
     const session = await agent.executeTask({
@@ -561,6 +599,133 @@ describe('LLMModeAgent', () => {
     expect(session.backups).toHaveLength(0);
     expect(session.status).toBe(Status.SUCCESS);
     expect(session.exitReason).toBe('bounded-no-change');
+<<<<<<< HEAD
+=======
+  });
+
+  it('suspends with verification_started when verification fails after a mutation', async () => {
+    queuePlans(
+      '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"apply fix","expectedResult":"changed"}',
+      '{"tool":"runTests","params":{"pattern":"LLMModeAgent"},"thought":"verify tests","expectedResult":"tests pass"}',
+    );
+    mockRunTests.execute.mockResolvedValueOnce({ success: false, error: 'LLMModeAgent tests failed' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-resume-verification-started',
+      title: 'Verification failed before suspend',
+      description: 'desc',
+      approved: true,
+      maxSteps: 2,
+    });
+
+    expect(session.status).toBe(Status.SUSPENDED);
+    expect(mockSaveRunState).toHaveBeenCalledWith(expect.objectContaining({
+      taskId: 't-resume-verification-started',
+      phase: 'verification_started',
+      mutatedFiles: ['src/foo.ts'],
+      lastVerification: expect.objectContaining({
+        passed: false,
+        type: 'test',
+        error: 'LLMModeAgent tests failed',
+      }),
+    }));
+  });
+
+  it('suspends with verification_finished and resumes without re-verifying or re-inspecting', async () => {
+    let persistedRunState: Record<string, unknown> | null = null;
+
+    mockReadRunState.mockImplementation(async () => persistedRunState);
+    mockSaveRunState.mockImplementation(async (state: Record<string, unknown>) => {
+      persistedRunState = structuredClone(state);
+    });
+    mockClearRunState.mockImplementation(async () => {
+      persistedRunState = null;
+    });
+
+    queuePlans(
+      '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"apply fix","expectedResult":"changed"}',
+      '{"tool":"runBuild","params":{},"thought":"verify build","expectedResult":"build passes"}',
+      '{"tool":"complete","params":{},"thought":"verification already passed before suspension","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const task = {
+      id: 't-resume-verification-finished',
+      title: 'Resume after verification finished',
+      description: 'desc',
+      approved: true,
+    } as const;
+
+    const suspendedSession = await agent.executeTask({ ...task, maxSteps: 2 });
+
+    expect(suspendedSession.status).toBe(Status.SUSPENDED);
+    expect(persistedRunState).toMatchObject({
+      taskId: 't-resume-verification-finished',
+      phase: 'verification_finished',
+      mutatedFiles: ['src/foo.ts'],
+      lastVerification: expect.objectContaining({
+        passed: true,
+        type: 'build',
+      }),
+    });
+
+    const resumedSession = await agent.executeTask({ ...task, maxSteps: 3 });
+
+    expect(mockRunBuild.execute).toHaveBeenCalledTimes(1);
+    expect(mockRunTests.execute).not.toHaveBeenCalled();
+    expect(mockReadFile.execute).not.toHaveBeenCalled();
+    expect(mockClearRunState).toHaveBeenCalledTimes(1);
+    expect(mockComplete.mock.calls[2][0].prompt).toContain('resume context');
+    expect(resumedSession.status).toBe(Status.SUCCESS);
+    expect(resumedSession.stepCount).toBe(3);
+    expect(resumedSession.lastVerification).toEqual(expect.objectContaining({
+      passed: true,
+      type: 'build',
+    }));
+  });
+
+  it('skips preflight reconnaissance when a resumed bounded run already restored its working set', async () => {
+    const workingSet = [
+      'src/runtime-core/SelfImprovementRuntime.ts',
+      'src/runtime-core/RepoIndexLite.ts',
+    ];
+
+    mockReadRunState.mockResolvedValue(makeSuspendedState({
+      taskId: 'tui-self-resume-working-set',
+      stepsCompleted: 2,
+      maxSteps: 4,
+      phase: 'verification_finished',
+      exploredPaths: workingSet,
+      mutatedFiles: ['src/harness/agent/LLMModeAgent.ts'],
+      lastVerification: {
+        passed: true,
+        type: 'build',
+        timestamp: '2026-04-11T18:04:00.000Z',
+      },
+    }));
+    queuePlans('{"tool":"complete","params":{},"thought":"saved state already covers the bounded packet","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-resume-working-set',
+      title: 'Resume bounded packet without blind reconnaissance',
+      description: 'Continue from restored runtime packet state',
+      fileHint: workingSet[0],
+      workingSet,
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(mockReadFile.execute).not.toHaveBeenCalled();
+    expect(mockGitStatus.execute).not.toHaveBeenCalled();
+    expect(mockRunBuild.execute).not.toHaveBeenCalled();
+    expect(mockRunTests.execute).not.toHaveBeenCalled();
+    expect(mockComplete.mock.calls[0][0].prompt).toContain('resume context');
+    expect(Array.from(session.exploredPaths)).toEqual(workingSet);
+    expect(session.status).toBe(Status.SUCCESS);
+>>>>>>> 70c345dc (Harden resume confidence at verification boundaries)
   });
 
   // ── Report generation ──────────────────────────────────────────────

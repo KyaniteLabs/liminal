@@ -106,18 +106,28 @@ describe('RunStateStore', () => {
     expect(found).toBeNull();
   });
 
-  it('formats resume context with key information', () => {
+  it('formats resume context with phase and verification continuity details', () => {
     const state = makeRunState({
       lastCheckpointHash: 'abcdef1234567890',
+      phase: SemanticBoundary.VERIFICATION_STARTED,
+      lastVerification: {
+        passed: false,
+        type: 'test',
+        error: 'LLMModeAgent tests failed',
+        timestamp: '2026-04-11T10:04:30.000Z',
+      },
     });
 
     const context = formatResumeContext(state);
 
     expect(context).toContain('Resume Context');
     expect(context).toContain('3/10 steps');
+    expect(context).toContain('Phase at suspension: verification_started');
+    expect(context).toContain('Files already mutated: src/foo.ts');
     expect(context).toContain('src/foo.ts');
     expect(context).toContain('src/bar.ts');
     expect(context).toContain('abcdef12');
+    expect(context).toContain('Last verification: test failed at 2026-04-11T10:04:30.000Z — LLMModeAgent tests failed');
     expect(context).toContain('Do NOT re-explore');
   });
 

@@ -4,11 +4,40 @@
  * Get REAL quality scores (not estimates)
  */
 
-import { CreativeEvaluator } from '../dist/core/CreativeEvaluator.js';
+import { CreativeEvaluator } from '../../dist/core/CreativeEvaluator.js';
 import fs from 'fs';
 import path from 'path';
 
-const LANDING_ASSETS = path.join(process.cwd(), 'landing-assets');
+const CANDIDATE_DIRS = [
+  path.join(process.cwd(), 'landing-assets'),
+  path.join(process.cwd(), 'landing-live'),
+  path.join(process.cwd(), 'artifacts', 'landing-live'),
+];
+
+const OUTPUT_DIR = CANDIDATE_DIRS.find((dir) => fs.existsSync(dir)) ?? path.join(process.cwd(), 'landing-live');
+
+function walkFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  const results = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...walkFiles(fullPath));
+    } else {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
+function findByBasename(...names) {
+  for (const dir of CANDIDATE_DIRS) {
+    for (const file of walkFiles(dir)) {
+      if (names.includes(path.basename(file))) return file;
+    }
+  }
+  return null;
+}
 
 // Extract inline code from HTML files
 function extractCodeFromHTML(htmlPath) {
@@ -25,21 +54,21 @@ function extractCodeFromHTML(htmlPath) {
 
 // Get code from file (HTML inline or JS file)
 function getCode(fileName) {
-  const htmlPath = path.join(LANDING_ASSETS, fileName + '.html');
-  const jsPath = path.join(LANDING_ASSETS, fileName + '.js');
+  const htmlPath = findByBasename(fileName + '.html');
+  const jsPath = findByBasename(fileName + '.js');
   
-  if (fs.existsSync(htmlPath)) {
+  if (htmlPath && fs.existsSync(htmlPath)) {
     const inline = extractCodeFromHTML(htmlPath);
     if (inline) return { code: inline, source: 'html-inline' };
   }
   
-  if (fs.existsSync(jsPath)) {
+  if (jsPath && fs.existsSync(jsPath)) {
     return { code: fs.readFileSync(jsPath, 'utf-8'), source: 'js-file' };
   }
   
   // Check for .strudel.js files
-  const strudelPath = path.join(LANDING_ASSETS, fileName + '.strudel.js');
-  if (fs.existsSync(strudelPath)) {
+  const strudelPath = findByBasename(fileName + '.strudel.js');
+  if (strudelPath && fs.existsSync(strudelPath)) {
     return { code: fs.readFileSync(strudelPath, 'utf-8'), source: 'strudel' };
   }
   
@@ -58,25 +87,28 @@ function getDomain(fileName) {
   return 'p5';
 }
 
-// Examples to evaluate
-const examples = [
-  'dogfood-p5-jellyfish',
-  'dogfood-p5-neon-cyberpunk',
-  'dogfood-p5-ocean-final',
-  'dogfood-shader-fractal',
-  'dogfood-shader-warp',
-  'dogfood-shader-nebula-final',
-  'dogfood-shader-plasma-final',
-  'dogfood-three-crystal',
-  'dogfood-three-rotating',
-  'dogfood-three-abstract-final',
-  'dogfood-hydra-liquid',
-  'dogfood-hydra-geometric',
-  'dogfood-music-techno-driving',
-  'dogfood-music-ambient-drone',
-  'dogfood-remotion-title',
-];
+function discoverExamples() {
+  const stems = new Set();
+  const ignored = new Set(['index', 'gallery-data', 'real-evaluation-results']);
+  for (const dir of CANDIDATE_DIRS) {
+    for (const file of walkFiles(dir)) {
+      const base = path.basename(file);
+      let stem = null;
+      if (base.endsWith('.strudel.js')) stem = base.slice(0, -'.strudel.js'.length);
+      else if (base.endsWith('.html')) stem = base.slice(0, -'.html'.length);
+      else if (base.endsWith('.js')) stem = base.slice(0, -'.js'.length);
+      if (!stem || ignored.has(stem)) continue;
+      if (!/(p5|glsl|shader|three|hydra|strudel|music|tone|html|ascii|remotion|revideo)/.test(stem)) continue;
+      stems.add(stem);
+    }
+  }
+  return [...stems].sort();
+}
 
+const examples = discoverExamples();
+
+console.log(`Asset roots: ${CANDIDATE_DIRS.filter((dir) => fs.existsSync(dir)).join(', ')}`);
+console.log(`Discovered examples: ${examples.length}`);
 console.log('='.repeat(60));
 console.log('REAL DOGFOOD QUALITY EVALUATION');
 console.log('Using CreativeEvaluator.assess() on actual outputs');
@@ -138,7 +170,7 @@ console.log(`Average Score: ${avgScore.toFixed(2)}`);
 console.log('');
 
 // Save results
-const outputPath = path.join(LANDING_ASSETS, 'real-evaluation-results.json');
+const outputPath = path.join(OUTPUT_DIR, 'real-evaluation-results.json');
 fs.writeFileSync(outputPath, JSON.stringify({
   timestamp: new Date().toISOString(),
   evaluator: 'CreativeEvaluator.assess()',

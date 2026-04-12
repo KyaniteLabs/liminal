@@ -128,13 +128,14 @@ describe('M12-M18 Compliance Guardrails', () => {
       expect(SupplyChainGuardrail.category).toBe('compliance');
     });
 
-    it('should evaluate (stub returns passing for now)', async () => {
+    it('should evaluate and report supply chain audit status', async () => {
       const context = createContext();
       const result = await SupplyChainGuardrail.evaluate(context);
 
-      // Currently stubbed - will implement npm audit integration
       expect(result.guardrailId).toBe('guardrail-m14-supply-chain');
-    });
+      expect(typeof result.passed).toBe('boolean');
+      expect(result.message.length).toBeGreaterThan(0);
+    }, 30000);
   });
 
   describe('M15: Audit Guardrail', () => {

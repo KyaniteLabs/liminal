@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { 
   logSecurityEvent, 
   logSSRFAttempt, 
+  logSSRFResolutionDegraded,
   logPathTraversalAttempt,
   logRateLimitViolation,
   logCSRFFailure
@@ -89,5 +90,15 @@ describe('SecurityLogger', () => {
     expect(context).toHaveProperty('ip', '10.0.0.1');
     expect(context).toHaveProperty('endpoint', '/api/fetch');
     expect(context).toHaveProperty('details.blockedHost', '169.254.169.254');
+  });
+
+  it('should log DNS resolution degradation as low severity', () => {
+    const spy = vi.spyOn(Logger, 'info');
+    logSSRFResolutionDegraded('https://api.example.com/v1', {
+      details: { hostname: 'api.example.com', reason: 'ENOTFOUND' },
+    });
+    expect(spy).toHaveBeenCalled();
+    expect(spy.mock.calls[0][1]).toContain('DNS resolution degraded');
+    expect(spy.mock.calls[0][2]).toHaveProperty('details.reason', 'ENOTFOUND');
   });
 });

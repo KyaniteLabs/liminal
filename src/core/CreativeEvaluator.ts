@@ -915,10 +915,18 @@ export class CreativeEvaluator {
    * Detect Tone.js / Web Audio code
    */
   static detectsToneUsage(code: string): boolean {
-    return /\bTone\./.test(code) ||
+    const isP5Wrapped = /function\s+setup\s*\(\s*\)/.test(code) && /createCanvas/.test(code);
+    const hasToneApi = /\bTone\./.test(code) ||
       /from\s+['"]tone['"]/.test(code) ||
-      /cdnjs\.cloudflare\.com\/ajax\/libs\/tone\//.test(code) ||
-      /\bAudioContext\b|\bcreateOscillator\b/.test(code);
+      /cdnjs\.cloudflare\.com\/ajax\/libs\/tone\//.test(code);
+    const hasGenericWebAudio = /\bAudioContext\b|\bcreateOscillator\b/.test(code);
+
+    // Let p5/Web Audio sketches stay on the generic path unless they explicitly
+    // use Tone.js. Tone scoring is for Tone artifacts, not any sketch that
+    // happens to touch Web Audio APIs.
+    if (isP5Wrapped && !hasToneApi) return false;
+
+    return hasToneApi || hasGenericWebAudio;
   }
 
   /**

@@ -267,6 +267,11 @@ export class HeadlessRenderer {
         ? await this.captureAudio(page, opts)
         : undefined;
 
+      if (audio && !audio.success && audio.error) {
+        logs.push(`[warn] ${audio.error}`);
+        errors.push(audio.error);
+      }
+
       return {
         page,
         screenshot,
@@ -570,7 +575,8 @@ export class HeadlessRenderer {
         samples: new Float32Array(audioData.samples),
         sampleRate: audioData.sampleRate,
         duration: audioData.duration,
-        success: true,
+        success: audioData.hasAudio,
+        error: audioData.hasAudio ? undefined : 'No audio captured during render window',
       };
     } catch (error) {
       return {

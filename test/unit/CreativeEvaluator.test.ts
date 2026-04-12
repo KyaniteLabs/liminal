@@ -227,6 +227,18 @@ export const BrokenComp = () => {
       expect(result.score).toBeGreaterThanOrEqual(0.6);
     });
 
+    it('should pass a richer multiline Strudel groove', () => {
+      const pattern = `s("bd*4")\ns("~ ~ sn ~")\ns("hh*8")\ns("sub ~ sub ~")`;
+      const result = CreativeEvaluator.assess(pattern, { domain: 'music' });
+      expect(result.score).toBeGreaterThanOrEqual(0.7);
+    });
+
+    it('should keep obviously invalid Strudel placeholders below the pass threshold', () => {
+      const pattern = `s(100)`;
+      const result = CreativeEvaluator.assess(pattern, { domain: 'music' });
+      expect(result.score).toBeLessThan(0.7);
+    });
+
     it('should pass a substantial landing page as html', () => {
       const html = `<!DOCTYPE html>
 <html lang="en">

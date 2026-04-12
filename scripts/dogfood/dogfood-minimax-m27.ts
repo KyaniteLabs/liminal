@@ -40,8 +40,8 @@ const STRESS_TESTS = [
     prompt: 'Create a polysynth arpeggiator with reverb, delay, filter LFO, and sidechain compression. Add a generative melody that changes every 4 bars using a scale quantizer.',
   },
   {
-    name: 'remotion',
-    prompt: 'Create a kinetic typography animation with word-by-word reveal, elastic easing, gradient text fill, and a progress bar. Sync to a 120bpm beat grid.',
+    name: 'revideo',
+    prompt: 'Create a Revideo kinetic typography scene with word-by-word reveal, elastic easing, gradient text fill, and a progress bar synced to a 120bpm beat grid.',
   },
   {
     name: 'html',

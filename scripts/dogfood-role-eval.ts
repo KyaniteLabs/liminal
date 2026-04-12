@@ -43,7 +43,7 @@ const DOMAINS = [
   { name: 'p5',      prompt: 'Create a calming blue particle system with flowing movement',         Generator: P5GeneratorV2 },
   { name: 'glsl',     prompt: 'Create an abstract plasma shader with animated colors',               Generator: ShaderGenerator },
   { name: 'three',    prompt: 'Create a rotating 3D cube with interesting lighting',               Generator: ThreeGenerator },
-  { name: 'revideo',  prompt: 'Create a typing text animation video component',                     Generator: RemotionGenerator },
+  { name: 'revideo',  prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle', Generator: RemotionGenerator },
   { name: 'strudel',  prompt: 'Create a simple techno beat pattern with drums',                    Generator: StrudelGenerator },
   { name: 'hydra',    prompt: 'Create a geometric video synth pattern with kaleidoscope effect',    Generator: HydraGenerator },
   { name: 'tone',     prompt: 'Create an ambient drone synthesizer with reverb',                    Generator: ToneGenerator },

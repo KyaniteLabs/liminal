@@ -626,4 +626,34 @@ describe('RenderAndScorePipeline', () => {
     expect(result.success).toBe(true);
     expect(result.warnings).toEqual(['Canvas not found or timed out for three render']);
   });
+
+  it('propagates non-fatal scoring failures to pipeline callers', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: true,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+      visualScorer: { score: (buffer: Buffer) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: [],
+        errors: [],
+        screenshot: {
+          success: true,
+          buffer: Buffer.from([1, 2, 3]),
+        },
+      }),
+    };
+    pipeline.visualScorer = {
+      score: vi.fn().mockRejectedValue(new Error('sharp decode failed')),
+    };
+
+    const result = await pipeline.process('function setup(){createCanvas(10,10)}', 'p5');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Visual scoring failed: sharp decode failed']);
+  });
 });

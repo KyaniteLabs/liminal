@@ -427,6 +427,64 @@ describe('HeadlessRenderer', () => {
     expect(result.logs).toContain('[warn] No audio captured during render window');
     expect(result.errors).toContain('No audio captured during render window');
   });
+
+  it('surfaces audio playback trigger failures for audio domains', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+      }>;
+      captureAudio: () => Promise<{
+        samples: Float32Array;
+        sampleRate: number;
+        duration: number;
+        success: boolean;
+      }>;
+      injectAudioCapture: () => Promise<void>;
+      triggerAudioPlayback: () => Promise<string>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(false);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.from([1]),
+      width: 100,
+      height: 100,
+      success: true,
+    });
+    renderer.captureAudio = vi.fn().mockResolvedValue({
+      samples: new Float32Array([0.1]),
+      sampleRate: 44100,
+      duration: 1,
+      success: true,
+    });
+    renderer.injectAudioCapture = vi.fn().mockResolvedValue(undefined);
+    renderer.triggerAudioPlayback = vi.fn().mockResolvedValue('Audio playback trigger failed for tone: user gesture required');
+
+    const result = await renderer.render('const synth = new Tone.Synth();', {
+      domain: 'tone',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain('[warn] Audio playback trigger failed for tone: user gesture required');
+    expect(result.errors).toContain('Audio playback trigger failed for tone: user gesture required');
+  });
 });
 
 // ─── RenderAndScorePipeline ─────────────────────────────────────────

@@ -147,11 +147,12 @@ export class TuiBridgeService {
 
     this.sessions.update(sessionId, { mode: input.mode });
     const creativeGeneration = isGenerationRequest(input.text);
+    const selfImprovement = !creativeGeneration;
     logBridge('input.received', {
       sessionId,
       mode: input.mode,
       intent: input.clientIntent,
-      selfImprovement: !creativeGeneration,
+      selfImprovement,
       creativeGeneration,
       chars: input.text.length,
     });

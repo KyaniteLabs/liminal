@@ -537,5 +537,16 @@ describe('GeneratorHarnessTools', () => {
         expect(ctx.skeletonHint).toContain('.out()');
       }
     });
+
+    it('Strudel hardening hints mention quoted pattern strings or complete stack structure', () => {
+      const seen = new Set<string>();
+      for (let seed = 0; seed < 12; seed++) {
+        const seededTools = new GeneratorHarnessTools(makeSeededRng(seed));
+        const ctx = seededTools.prepare('strudel');
+        for (const hint of ctx.hardeningHints) seen.add(hint);
+      }
+      const joined = [...seen].join(' ');
+      expect(joined).toMatch(/quoted pattern strings|truncated stack|close it and include complete child patterns/);
+    });
   });
 });

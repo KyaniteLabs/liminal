@@ -17,6 +17,8 @@ export interface ToolResult<T = unknown> {
 export interface ReadFileParams {
   path: string;
   maxLines?: number;
+  offset?: number;
+  limit?: number;
 }
 
 export interface ReadFileResult {
@@ -24,6 +26,8 @@ export interface ReadFileResult {
   exists: boolean;
   lineCount: number;
   truncated?: boolean;
+  startLine?: number;
+  endLine?: number;
 }
 
 export interface WriteFileParams {
@@ -75,6 +79,15 @@ export interface RunTestsResult {
   success: boolean;
 }
 
+export interface GitStatusParams {
+  path?: string;
+}
+
+export interface GitStatusResult {
+  branch: string;
+  short: string;
+}
+
 export interface CreateBackupParams {
   path: string;
 }
@@ -116,15 +129,27 @@ export abstract class Tool {
     const resolved = path.resolve(filePath);
     const cwd = process.cwd();
     
-    // Allow src/, test/, docs/, scripts/ directories
+    // Allow project implementation and verification surfaces. Bubble Tea is
+    // part of the active TUI, so the meta-harness must be able to inspect and
+    // patch it instead of falsely reporting that tools cannot touch the UI.
     const allowedPrefixes = [
       path.join(cwd, 'src'),
       path.join(cwd, 'test'),
       path.join(cwd, 'docs'),
       path.join(cwd, 'scripts'),
+      path.join(cwd, 'bubbletea'),
+      path.join(cwd, 'harness-tasks'),
+      path.join(cwd, '.omx'),
     ];
-    
-    return allowedPrefixes.some(prefix => resolved.startsWith(prefix));
+    const allowedFiles = [
+      path.join(cwd, 'package.json'),
+      path.join(cwd, 'package-lock.json'),
+      path.join(cwd, 'pnpm-lock.yaml'),
+    ];
+
+    return resolved === cwd ||
+      allowedFiles.includes(resolved) ||
+      allowedPrefixes.some(prefix => resolved.startsWith(prefix));
   }
   
   protected formatError(error: unknown): string {

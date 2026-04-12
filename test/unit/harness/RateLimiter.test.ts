@@ -294,4 +294,26 @@ describe('RateLimiter', () => {
       expect((await limiter.checkBurst('opB')).allowed).toBe(true);
     });
   });
+
+  describe('namespaced operations', () => {
+    it('uses the base config key for namespaced operations while keeping histories isolated', async () => {
+      const limiter = new RateLimiter({
+        tuiLlmCall: { minDelayMs: 0, maxPerMinute: 1 },
+      });
+
+      expect((await limiter.checkBurst('tuiLlmCall:session-a')).allowed).toBe(true);
+      await limiter.recordCall('tuiLlmCall:session-a');
+      expect((await limiter.checkBurst('tuiLlmCall:session-a')).allowed).toBe(false);
+
+      // Separate namespaced key should still have fresh capacity
+      expect((await limiter.checkBurst('tuiLlmCall:session-b')).allowed).toBe(true);
+
+      const statusA = await limiter.getStatus('tuiLlmCall:session-a');
+      const statusB = await limiter.getStatus('tuiLlmCall:session-b');
+      expect(statusA.callsLastMinute).toBe(1);
+      expect(statusB.callsLastMinute).toBe(0);
+      expect(statusA.limit).toBe(1);
+      expect(statusB.limit).toBe(1);
+    });
+  });
 });

@@ -17,6 +17,7 @@ interface RateLimitConfig {
 
 const DEFAULT_LIMITS: Record<string, RateLimitConfig> = {
   llmCall: { minDelayMs: 2000, maxPerMinute: 5 },
+  tuiLlmCall: { minDelayMs: 500, maxPerMinute: 30 },
   fileWrite: { minDelayMs: 500, maxPerMinute: 10 },
   fileRead: { minDelayMs: 0, maxPerMinute: 1000 },
   buildRun: { minDelayMs: 5000, maxPerMinute: 12 },
@@ -33,12 +34,16 @@ export class RateLimiter {
     this.limits = new Map(Object.entries(customLimits || DEFAULT_LIMITS));
   }
 
+  private resolveConfig(operation: string): RateLimitConfig | undefined {
+    return this.limits.get(operation) ?? this.limits.get(operation.split(':')[0]);
+  }
+
   /**
    * Check if operation is allowed (within burst limit)
    * Thread-safe: uses locking for history access
    */
   async checkBurst(operation: string): Promise<{ allowed: boolean; retryAfterMs?: number }> {
-    const config = this.limits.get(operation);
+    const config = this.resolveConfig(operation);
     if (!config) return { allowed: true };
 
     return this.lock.acquire(() => {
@@ -67,7 +72,7 @@ export class RateLimiter {
    * Thread-safe: uses locking for lastCall updates
    */
   async throttle(operation: string): Promise<void> {
-    const config = this.limits.get(operation);
+    const config = this.resolveConfig(operation);
     if (!config || config.minDelayMs === 0) return;
 
     // Read lastCall under lock
@@ -140,7 +145,7 @@ export class RateLimiter {
     remaining: number;
     timeUntilReset?: number;
   }> {
-    const config = this.limits.get(operation);
+    const config = this.resolveConfig(operation);
     if (!config) {
       return { callsLastMinute: 0, limit: Infinity, remaining: Infinity };
     }

@@ -502,6 +502,69 @@ describe('LLMModeAgent', () => {
     expect(mockClearRunState).toHaveBeenCalled();
   });
 
+  it('blocks complete until the required verification target has passed', async () => {
+    queuePlans(
+      '{"tool":"applyEdit","params":{"path":"src/runtime-core/SelfImprovementRuntime.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}',
+      '{"tool":"complete","params":{},"thought":"done","expectedResult":"finish"}',
+      '{"tool":"runTests","params":{"pattern":"runtime-core"},"thought":"run the required focused tests","expectedResult":"tests pass"}',
+      '{"tool":"complete","params":{},"thought":"verification target passed","expectedResult":"finish"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-verification-gate',
+      title: 'Verification gate',
+      description: 'desc',
+      approved: true,
+      maxSteps: 6,
+      completionPolicy: 'stop_after_verification',
+      verificationTargets: [
+        {
+          tool: 'runTests',
+          pattern: 'runtime-core',
+          reason: 'Focused runtime-core verification must pass first',
+          priority: 1,
+        },
+      ],
+    });
+
+    expect(session.messages.some((message) =>
+      message.role === 'tool' && message.content.includes('Verification gate: run runTests (runtime-core) before completing this task.'),
+    )).toBe(true);
+    expect(mockRunTests.execute).toHaveBeenCalledWith({ pattern: 'runtime-core' });
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('auto-completes when the required verification target succeeds after mutation', async () => {
+    queuePlans(
+      '{"tool":"applyEdit","params":{"path":"src/runtime-core/SelfImprovementRuntime.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}',
+      '{"tool":"runTests","params":{"pattern":"runtime-core"},"thought":"run focused tests","expectedResult":"tests pass"}',
+      '{"tool":"runBuild","params":{},"thought":"would be next if needed","expectedResult":"build passes"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-targeted-auto-complete',
+      title: 'Targeted verification auto-complete',
+      description: 'desc',
+      approved: true,
+      maxSteps: 6,
+      completionPolicy: 'stop_after_verification',
+      verificationTargets: [
+        {
+          tool: 'runTests',
+          pattern: 'runtime-core',
+          reason: 'Focused runtime-core verification must pass first',
+          priority: 1,
+        },
+      ],
+    });
+
+    expect(mockRunTests.execute).toHaveBeenCalledWith({ pattern: 'runtime-core' });
+    expect(mockRunBuild.execute).not.toHaveBeenCalled();
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   it('executeTask calls llmClient.complete with conversation context', async () => {
     mockComplete.mockResolvedValue({ text: 'not json' });
     const agent = new LLMModeAgent(mockLLM as any);

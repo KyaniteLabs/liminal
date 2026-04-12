@@ -373,6 +373,23 @@ When the task is complete and build passes, respond with tool "complete".`;
 
         // Check for completion
         if (toolCall.tool === 'complete') {
+          const verificationGateError = this.getVerificationGateError(session);
+          if (verificationGateError) {
+            const gateResult: ToolResult = { success: false, error: verificationGateError };
+            session.messages.push({
+              role: 'tool',
+              content: JSON.stringify(gateResult),
+              toolResult: gateResult,
+            });
+            eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+              process: 'agent-task',
+              current: session.stepCount,
+              total: maxSteps,
+              stage: 'executed complete',
+              message: `complete failed: ${verificationGateError.slice(0, 100)}`,
+            });
+            continue;
+          }
           Logger.debug('LLMModeAgent', 'Task completed by LLM');
           await clearRunState();
           session.status = Status.SUCCESS;
@@ -405,7 +422,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           toolResult: result,
         });
 
-        if (this.shouldStopAfterSuccessfulVerification(session, toolCall.tool, result)) {
+        if (this.shouldStopAfterSuccessfulVerification(session, toolCall, result)) {
           Logger.info('LLMModeAgent', `Auto-completing bounded run after successful ${toolCall.tool}`);
           await clearRunState();
           session.status = Status.SUCCESS;
@@ -1155,12 +1172,49 @@ When the task is complete and build passes, respond with tool "complete".`;
     return this.hasMeaningfulSuccessfulInspection(session);
   }
 
-  private shouldStopAfterSuccessfulVerification(session: LLMSession, tool: string, result: ToolResult): boolean {
+  private shouldStopAfterSuccessfulVerification(session: LLMSession, toolCall: ToolCall, result: ToolResult): boolean {
+    const tool = toolCall.tool;
     if (session.task.completionPolicy !== 'stop_after_verification') return false;
     if (!this.isVerificationTool(tool)) return false;
     if (!result.success) return false;
     if ((result.data as { skipped?: boolean } | undefined)?.skipped) return false;
+    const required = this.getRequiredVerificationTarget(session.task);
+    if (required && !this.matchesVerificationTarget(toolCall, required)) return false;
     return session.backups.length > 0 || session.mutatedFiles.size > 0;
+  }
+
+  private getRequiredVerificationTarget(task: LLMTask): NonNullable<LLMTask['verificationTargets']>[number] | undefined {
+    return task.verificationTargets?.slice().sort((a, b) => a.priority - b.priority)[0];
+  }
+
+  private matchesVerificationTarget(toolCall: Pick<ToolCall, 'tool' | 'params'>, target: NonNullable<LLMTask['verificationTargets']>[number]): boolean {
+    if (toolCall.tool !== target.tool) return false;
+    if (!target.pattern) return true;
+    if (target.tool === 'runTests') {
+      const pattern = typeof toolCall.params?.pattern === 'string' ? toolCall.params.pattern : '';
+      return pattern.includes(target.pattern);
+    }
+    return true;
+  }
+
+  private hasSatisfiedRequiredVerification(session: LLMSession): boolean {
+    const target = this.getRequiredVerificationTarget(session.task);
+    if (!target) return true;
+    for (let i = 0; i < session.messages.length - 1; i++) {
+      const message = session.messages[i];
+      const next = session.messages[i + 1];
+      if (!message.toolCall || !next.toolResult?.success) continue;
+      if (this.matchesVerificationTarget(message.toolCall, target)) return true;
+    }
+    return false;
+  }
+
+  private getVerificationGateError(session: LLMSession): string | null {
+    if (session.mutatedFiles.size === 0 && session.backups.length === 0) return null;
+    if (this.hasSatisfiedRequiredVerification(session)) return null;
+    const target = this.getRequiredVerificationTarget(session.task);
+    if (!target) return null;
+    return `Verification gate: run ${target.tool}${target.pattern ? ` (${target.pattern})` : ''} before completing this task.`;
   }
 
   /**

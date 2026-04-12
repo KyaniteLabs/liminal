@@ -251,7 +251,11 @@ export class HeadlessRenderer {
 
       // Trigger audio playback for audio domains so we capture actual sound
       if (domain === 'tone' || domain === 'strudel') {
-        await this.triggerAudioPlayback(page, domain);
+        const playbackWarning = await this.triggerAudioPlayback(page, domain);
+        if (playbackWarning) {
+          logs.push(`[warn] ${playbackWarning}`);
+          errors.push(playbackWarning);
+        }
       }
 
       // Wait for stabilization if requested
@@ -475,7 +479,7 @@ export class HeadlessRenderer {
    * Trigger audio playback for Tone.js or Strudel content.
    * This clicks the play button or calls play functions to ensure audio is actually playing.
    */
-  private async triggerAudioPlayback(page: Page, domain: RenderDomain): Promise<void> {
+  private async triggerAudioPlayback(page: Page, domain: RenderDomain): Promise<string | null> {
     try {
       // Wait a short time for the page to initialize
       await page.waitForTimeout(500);
@@ -520,9 +524,11 @@ export class HeadlessRenderer {
 
       // Wait for audio to actually start
       await page.waitForTimeout(500);
+      return null;
     } catch (error) {
       Logger.debug('HeadlessRenderer', 'Failed to trigger audio playback:', error);
       // Non-fatal - audio might auto-play or not be needed
+      return `Audio playback trigger failed for ${domain}: ${error instanceof Error ? error.message : 'unknown error'}`;
     }
   }
 

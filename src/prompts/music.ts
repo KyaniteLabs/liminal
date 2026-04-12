@@ -22,8 +22,6 @@ DOMAIN RULES:
 - MUST use Strudel mini-notation syntax (JavaScript-based)
 - MUST include at least one sound source (s, sound, or samples)
 - MUST prefix patterns with $: (e.g., $: s("bd*4"))
-- MUST pass quoted pattern strings to s(), sound(), and note() — never raw numbers like s(100)
-- MUST close every stack( ... ) expression and include complete child patterns when using stack
 - Use rich patterns: stack, s, n, sometimes, every, struct, fast, slow, rev, chop
 - SHOULD use effects: gain, speed, pan, room, delay, distort, shape
 - SHOULD use layering for depth: multiple concurrent patterns
@@ -57,8 +55,6 @@ ANTI-PATTERNS (NEVER DO):
 - NEVER use Haskell $ or # operators — these don't exist in Strudel
 - NEVER write "d1 $" — Strudel doesn't use d1, d2, etc.
 - NEVER use bare s("bd") without $: prefix
-- NEVER write s(100) or sound(100) — Strudel sound sources must be quoted pattern strings
-- NEVER leave stack( incomplete or return a truncated pattern line
 - NEVER write patterns like "s1 [c4, c3]" — this is not valid syntax
 - NEVER use TidalCycles syntax like "sound" without proper structure`,
   userPromptTemplate: 'Generate Strudel music at ${bpm} BPM: ${prompt}',

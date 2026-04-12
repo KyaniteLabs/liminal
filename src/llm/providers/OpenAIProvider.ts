@@ -104,6 +104,7 @@ export class OpenAIProvider extends BaseProvider {
 
       const data = await response.json();
       const thinking = normalizeThinking(data, 'openai');
+      const thinkingText = typeof thinking.text === 'string' ? thinking.text : '';
 
       const choices = data.choices as Array<{
         message?: {
@@ -141,12 +142,12 @@ export class OpenAIProvider extends BaseProvider {
 
       // Some providers (e.g. MiniMax) return code in reasoning_content with empty content
       const hasToolCalls = !!(toolCalls && toolCalls.length > 0);
-      const hasContent = content.length > 0 || (thinking.source !== 'none' && thinking.text.length > 0)
+      const hasContent = content.length > 0 || (thinking.source !== 'none' && thinkingText.length > 0)
         || hasToolCalls;
 
       return ok({
         content,
-        thinking: thinking.source !== 'none' ? thinking : undefined,
+        thinking: thinking.source !== 'none' ? { ...thinking, text: thinkingText } : undefined,
         model: data.model || this.config.model,
         success: hasContent,
         usage: usage ? {

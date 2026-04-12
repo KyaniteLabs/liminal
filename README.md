@@ -40,14 +40,14 @@ liminal --prompt "Create a calming blue particle system"
 # Chat-driven creative session
 liminal chat
 
-# Fast CI-equivalent validation
-pnpm run lint && pnpm run build && pnpm run test:ci:fast
-
-# Slow browser / render / provider / e2e validation
-pnpm run test:ci:slow
+# Bubble Tea coding/operator harness
+cd /Users/simongonzalezdecruz/workspaces/liminal/.worktrees/tui-main-integration
+npm run tui
 ```
 
-Liminal is model-agnostic. It works with any OpenAI-compatible API (MiniMax, OpenAI, OpenRouter), Ollama, LM Studio, or Anthropic. Configure via `~/.liminal/config.json`, environment variables, or `liminal --configure`.
+Liminal is model-agnostic. It works with any OpenAI-compatible API (MiniMax, OpenAI, OpenRouter, GLM), Ollama, LM Studio, or Anthropic. Configure via `~/.liminal/config.json`, environment variables, or `liminal --configure`.
+
+Bubble Tea is now the main **tools-first coding/operator harness**. Non-creative input routes into the tool-using harness/runtime lane by default; creative generation remains a separate lane.
 
 ## What It Does
 
@@ -94,6 +94,9 @@ liminal --prompt "ambient glitch set" --mode live-music --output ./set
 # Chat mode (interview-driven creative session)
 liminal chat
 
+# Bubble Tea harness with a one-off model override
+LIMINAL_LLM_MODEL=google/gemini-3.1-pro-preview npm run tui
+
 # Compost system
 liminal compost add <path>          # Feed material to heap
 liminal compost digest              # Run digestion pipeline
@@ -122,6 +125,18 @@ liminal --interactive               # TUI mode
 | `--voice` | Use microphone for audio input |
 | `--voice-file <path>` | Use audio file for input |
 | `--aesthetic <preset>` | Aesthetic guardrail preset (minimalist/vibrant/cinematic/playful/free) |
+
+### Provider/model notes
+
+- Bubble Tea reads the active provider/model from `~/.liminal/config.json` or `LIMINAL_LLM_*` environment overrides.
+- For OpenRouter, the simplest way to swap models is:
+
+```bash
+LIMINAL_LLM_MODEL='anthropic/claude-sonnet-4-6' npm run tui
+LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' npm run tui
+```
+
+- Bubble Tea now routes ordinary non-creative input into the **tool-using harness** by default.
 
 ## Compost Mill
 

@@ -264,12 +264,13 @@ Route to:
                 <ul class="feature-list">
                     <li><strong>Pane-first architecture:</strong> committed history, active response, and status/trust panes</li>
                     <li><strong>Explicit modes:</strong> Chat, Inspect, Action, Confirm</li>
+                    <li><strong>Tools-first coding harness:</strong> non-creative input routes into the tool-using harness/runtime lane by default</li>
                     <li><strong>Confirmation-first mutation:</strong> no state changes without explicit operator approval</li>
                     <li><strong>Active-response streaming:</strong> responses stream into a dedicated pane, not into transcript history</li>
                     <li><strong>Trust/provenance labels:</strong> provider, model, and trust-level badges always visible</li>
                     <li><strong>Generated code untrusted by default:</strong> visual badge and behavioral guard</li>
                 </ul>
-                <p style="margin-top: 0.75rem;"><span class="badge badge-warning">MVP Active</span> Connected to TS bridge via HTTP + SSE. 16 Go tests passing.</p>
+                <p style="margin-top: 0.75rem;"><span class="badge badge-warning">MVP Active</span> Connected to the TS bridge via HTTP + SSE, with bounded self-improvement packets, focus gating, resume safety, and active provider/model selection from runtime config or env overrides.</p>
             </div>
         </section>
     </main>

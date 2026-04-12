@@ -56,6 +56,11 @@ export class OpenRouterProvider extends BaseProvider {
         max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
 
+      const jsonOnlyPrompt = /respond with json only/i.test(req.userPrompt);
+      if (jsonOnlyPrompt && this.capabilities.jsonMode && !(req.tools && req.tools.length > 0)) {
+        body.response_format = { type: 'json_object' };
+      }
+
       // Tool definitions — OpenAI-compatible format
       if (req.tools && req.tools.length > 0) {
         body.tools = req.tools.map(t => ({

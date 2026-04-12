@@ -65,7 +65,7 @@ export class SearchTool extends Tool {
         cwd: process.cwd(),
       }).catch(err => {
         // No matches is not an error for ripgrep
-        if (err.exitCode === 1) return { stdout: '', stderr: '' };
+        if (this.isNoMatchesError(err)) return { stdout: '', stderr: '' };
         throw err;
       });
 
@@ -107,10 +107,18 @@ export class SearchTool extends Tool {
         '--include=*.js',
         '--include=*.tsx',
         '--include=*.jsx',
+        '--include=*.go',
+        '--include=*.json',
+        '--include=*.md',
+        '--include=*.yaml',
+        '--include=*.yml',
         '-m', String(maxResults + 5),
         pattern,
         searchPath,
-      ], { timeout: 30000 });
+      ], { timeout: 30000 }).catch((err) => {
+        if (this.isNoMatchesError(err)) return { stdout: '' };
+        throw err;
+      });
 
       const lines = stdout.split('\n').filter(Boolean);
       const matches = lines.slice(0, maxResults).map(line => {
@@ -131,9 +139,17 @@ export class SearchTool extends Tool {
           truncated: lines.length > maxResults,
         },
       };
-    } catch {
-      return { success: false, error: 'Search failed. Install ripgrep: brew install ripgrep' };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      return { success: false, error: `Search failed: ${message}` };
     }
+  }
+
+  private isNoMatchesError(error: unknown): boolean {
+    if (!error || typeof error !== 'object') return false;
+    const code = (error as { code?: unknown }).code;
+    const exitCode = (error as { exitCode?: unknown }).exitCode;
+    return code === 1 || exitCode === 1;
   }
 }
 

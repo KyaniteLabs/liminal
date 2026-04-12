@@ -75,6 +75,20 @@ describe('SearchTool', () => {
     });
   });
 
+  describe('no-match exit handling', () => {
+    it('treats ripgrep code=1 as an empty successful search', async () => {
+      const error = Object.assign(new Error('no matches'), { code: 1, stdout: '', stderr: '' });
+      mockExecFile.mockRejectedValue(error);
+
+      const result = await tool.execute({ pattern: 'does-not-exist', path: 'src' });
+
+      expect(result.success).toBe(true);
+      expect(result.data!.matches).toEqual([]);
+      expect(result.data!.totalMatches).toBe(0);
+      expect(result.data!.truncated).toBe(false);
+    });
+  });
+
   describe('ripgrep results parsing', () => {
     it('parses ripgrep output into structured matches', async () => {
       const ripgrepOutput = [
@@ -218,7 +232,7 @@ describe('SearchTool', () => {
       const result = await tool.execute({ pattern: 'hello', path: 'src' });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe('Search failed. Install ripgrep: brew install ripgrep');
+      expect(result.error).toBe('Search failed: command not found: grep');
     });
 
     it('handles grep results with truncation', async () => {

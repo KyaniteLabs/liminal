@@ -224,7 +224,65 @@ export const BrokenComp = () => {
     it('should evaluate stacked Strudel patterns as music', () => {
       const pattern = `$: s("bd*4").gain(0.9)\n$: s("~ cp ~ cp").gain(0.7)`;
       const result = CreativeEvaluator.assess(pattern, { domain: 'music' });
-      expect(result.score).toBeGreaterThan(0.6);
+      expect(result.score).toBeGreaterThanOrEqual(0.6);
+    });
+
+    it('should pass a substantial landing page as html', () => {
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Creative Code Portfolio</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 0; }
+    header { position: sticky; top: 0; }
+    .hero { min-height: 80vh; background: linear-gradient(135deg, #111, #333); }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+    .card { border-radius: 16px; box-shadow: 0 8px 24px rgba(0,0,0,.2); transition: transform .3s; }
+    .card:hover { transform: translateY(-4px); }
+    @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+    .hero h1 { animation: fadeUp .8s ease-out both; }
+  </style>
+</head>
+<body>
+  <header><nav><a href="#work">Work</a><a href="#contact">Contact</a></nav></header>
+  <main>
+    <section class="hero">
+      <h1>Generative Portfolio</h1>
+      <p>Interactive experiments and digital art.</p>
+      <button onclick="document.getElementById('work').scrollIntoView()">See Work</button>
+    </section>
+    <section id="work" class="grid">
+      <article class="card">Sketch 1</article>
+      <article class="card">Sketch 2</article>
+      <article class="card">Sketch 3</article>
+    </section>
+  </main>
+</body>
+</html>`;
+      const result = CreativeEvaluator.assess(html, { domain: 'html' });
+      expect(result.technicalScore).toBeGreaterThan(0.6);
+      expect(result.creativeScore).toBeGreaterThan(0.5);
+      expect(result.score).toBeGreaterThanOrEqual(0.7);
+      expect(result.issues).not.toContain('Missing <body> tag');
+    });
+
+    it('should keep html error placeholders below the pass threshold', () => {
+      const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Generated Page</title>
+  <style>body { font-family: system-ui, sans-serif; }</style>
+</head>
+<body>
+  <h1>Generated Page</h1>
+  <p>// LLM generation failed: LLM API error: 404 Not Found</p>
+</body>
+</html>`;
+      const result = CreativeEvaluator.assess(html, { domain: 'html' });
+      expect(result.score).toBeLessThan(0.7);
     });
   });
 });

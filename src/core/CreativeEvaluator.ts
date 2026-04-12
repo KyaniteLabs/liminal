@@ -1255,6 +1255,7 @@ export class CreativeEvaluator {
     // Code length (substantial HTML pages)
     if (codeOnly.length > 500) technicalScore += 0.05;
     if (codeOnly.length > 1000) technicalScore += 0.05;
+    if (codeOnly.length > 2000) technicalScore += 0.05;
 
     // Creative checks
     // Animation via CSS
@@ -1271,6 +1272,18 @@ export class CreativeEvaluator {
     if (/addEventListener|onclick|onmousemove/i.test(codeOnly)) creativeScore += 0.1;
     // Typography/Fonts
     if (/@font-face|font-family/i.test(codeOnly)) creativeScore += 0.1;
+    // Landing page structure / composition
+    if (/<header|<nav/i.test(codeOnly)) creativeScore += 0.15;
+    if (/<main|<section/i.test(codeOnly)) creativeScore += 0.15;
+    if (/hero|cta|call-to-action/i.test(codeOnly)) creativeScore += 0.1;
+    if (/display:\s*grid|grid-template-columns|display:\s*flex/i.test(codeOnly)) creativeScore += 0.1;
+    if (/<article|class=["'][^"']*(card|feature|project)/i.test(codeOnly)) creativeScore += 0.15;
+    if (/<button|class=["'][^"']*btn/i.test(codeOnly)) creativeScore += 0.1;
+
+    // Penalize obvious placeholder / failure pages
+    if (/LLM generation failed|API error|Generated Page|<title>ERROR<\/title>|❌/i.test(codeOnly)) {
+      creativeScore -= 0.3;
+    }
 
     // Issues
     if (!/<html/i.test(codeOnly)) issues.push('Missing <html> tag');

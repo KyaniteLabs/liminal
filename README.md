@@ -39,6 +39,12 @@ liminal --prompt "Create a calming blue particle system"
 
 # Chat-driven creative session
 liminal chat
+
+# Fast CI-equivalent validation
+pnpm run lint && pnpm run build && pnpm run test:ci:fast
+
+# Slow browser / render / provider / e2e validation
+pnpm run test:ci:slow
 ```
 
 Liminal is model-agnostic. It works with any OpenAI-compatible API (MiniMax, OpenAI, OpenRouter), Ollama, LM Studio, or Anthropic. Configure via `~/.liminal/config.json`, environment variables, or `liminal --configure`.

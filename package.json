@@ -23,7 +23,7 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "postinstall": "npm run build",
+    "postinstall": "node -e \"const fs=require('node:fs'); const cp=require('node:child_process'); const isCi=process.env.CI==='true'||process.env.CI==='1'; if(isCi){console.log('[postinstall] skipping build: CI install detected'); process.exit(0)} if(fs.existsSync('dist/index.js')){console.log('[postinstall] skipping build: dist/index.js already exists'); process.exit(0)} console.log('[postinstall] dist missing; building once for local/git install'); const r=cp.spawnSync('pnpm',['build'],{stdio:'inherit',shell:process.platform==='win32'}); process.exit(r.status ?? 1);\"",
     "prepack": "npm run build",
     "build": "tsc",
     "test": "vitest run",
@@ -46,7 +46,9 @@
     "git:hygiene:dry": "bash scripts/utils/git-hygiene.sh --dry-run",
     "tui:ink": "npx tsx src/tui/HarnessTUI.tsx",
     "tui:bridge": "npm run build && node scripts/start-bubbletea-tui.mjs --bridge-only",
-    "tui:bubbletea": "npm run tui"
+    "tui:bubbletea": "npm run tui",
+    "test:ci:fast": "LIMINAL_CI_FAST=1 vitest run --coverage --pool=forks",
+    "test:ci:slow": "LIMINAL_CI_SLOW=1 vitest run --pool=forks"
   },
   "keywords": [
     "generative-art",

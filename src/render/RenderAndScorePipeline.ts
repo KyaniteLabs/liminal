@@ -136,6 +136,9 @@ export class RenderAndScorePipeline {
       if (shouldScoreVisual && renderResult.screenshot?.success) {
         try {
           visualScore = await this.visualScorer.score(renderResult.screenshot.buffer);
+          if (visualScore.warnings?.length) {
+            warnings.push(...visualScore.warnings);
+          }
         } catch (error) {
           Logger.warn('RenderAndScorePipeline', 'Visual scoring failed:', error);
           warnings.push(`Visual scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
@@ -152,6 +155,9 @@ export class RenderAndScorePipeline {
             renderResult.audio.samples,
             renderResult.audio.sampleRate
           );
+          if (audioScore.warnings?.length) {
+            warnings.push(...audioScore.warnings);
+          }
         } catch (error) {
           Logger.warn('RenderAndScorePipeline', 'Audio scoring failed:', error);
           warnings.push(`Audio scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);

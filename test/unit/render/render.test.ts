@@ -90,6 +90,7 @@ describe('AudioScorer', () => {
     expect(result.metrics.dynamicRange).toBe(0);
     expect(result.metrics.onsetCount).toBe(0);
     expect(result.metrics.zeroCrossingRate).toBe(0);
+    expect(result.warnings).toEqual(['Audio scoring skipped: no samples provided']);
   });
 
   it('returns valid scores for a sine wave', () => {
@@ -232,6 +233,7 @@ describe('VisualScorer', () => {
     expect(result.composition).toBe(0);
     expect(result.contrast).toBe(0);
     expect(result.metrics.uniqueColors).toBe(0);
+    expect(result.warnings).toEqual(['Visual scoring skipped: screenshot buffer too small']);
   });
 
   it('returns zero scores for empty buffer', async () => {
@@ -726,5 +728,43 @@ describe('RenderAndScorePipeline', () => {
 
     expect(result.success).toBe(true);
     expect(result.warnings).toEqual(['Visual scoring skipped: Screenshot failed: target page closed']);
+  });
+
+  it('propagates scorer-provided warnings to pipeline callers', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: true,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+      visualScorer: { score: (buffer: Buffer) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: [],
+        errors: [],
+        screenshot: {
+          success: true,
+          buffer: Buffer.from([1, 2, 3]),
+        },
+      }),
+    };
+    pipeline.visualScorer = {
+      score: vi.fn().mockResolvedValue({
+        score: 0,
+        colorVariety: 0,
+        edgeComplexity: 0,
+        composition: 0,
+        contrast: 0,
+        metrics: { uniqueColors: 0, edgeDensity: 0, brightnessMean: 0, brightnessStd: 0 },
+        warnings: ['Visual scoring skipped: screenshot buffer too small'],
+      }),
+    };
+
+    const result = await pipeline.process('function setup(){createCanvas(10,10)}', 'p5');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Visual scoring skipped: screenshot buffer too small']);
   });
 });

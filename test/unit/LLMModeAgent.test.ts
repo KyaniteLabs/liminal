@@ -131,6 +131,9 @@ function makeSuspendedState(overrides: Record<string, unknown> = {}): Record<str
 describe('LLMModeAgent', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockComplete.mockReset();
+    mockLLM.getConfig.mockReset();
+    mockLLM.getConfig.mockReturnValue({ model: 'test-model' });
     mockReadFile.execute.mockResolvedValue({ success: true, data: { content: 'const x = 1;' } });
     mockApplyEdit.execute.mockResolvedValue({ success: true, data: { backupPath: '/tmp/bak-123' } });
     mockRunBuild.execute.mockResolvedValue({ success: true });
@@ -797,6 +800,7 @@ describe('LLMModeAgent', () => {
     expect(firstPrompt).toContain('Start in these primary files before any broader reconnaissance');
     expect(firstPrompt).toContain('Secondary files (use only if the primary files are insufficient):');
     expect(firstPrompt).toContain('continue that file with offset=endLine rather than rereading from the top');
+    expect(firstPrompt).toContain('use search with the current file path before reading more pages');
     expect(Array.from(session.exploredPaths)).toEqual([
       'src/runtime-core/RepoIndexLite.ts',
       'src/runtime-core/SelfImprovementRuntime.ts',
@@ -834,6 +838,104 @@ describe('LLMModeAgent', () => {
       message.role === 'tool' && message.content.includes('Pagination hint: this readFile result is truncated.'),
     );
     expect(toolMessage?.content).toContain('offset=100');
+    expect(toolMessage?.content).toContain('use search with path set to the current file');
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('blocks broad search while the primary focus is still unresolved', async () => {
+    queuePlans(
+      '{"tool":"search","params":{"pattern":"executeTask"},"thought":"search the whole repo","expectedResult":"find the method"}',
+      '{"tool":"complete","params":{},"thought":"focus gate error received","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-gate-search',
+      title: 'Focus gate search block',
+      description: 'Keep search inside the active primary focus before broader exploration',
+      fileHint: 'src/runtime-core/RepoIndexLite.ts',
+      workingSet: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    expect(session.messages.some((message) =>
+      message.role === 'tool' && message.content.includes('Focus gate: search must stay inside the active focus file'),
+    )).toBe(true);
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('forces a decision after the primary focus inspection budget is exhausted', async () => {
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts"},"thought":"read first page","expectedResult":"inspect"}',
+      '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts","offset":100},"thought":"read second page","expectedResult":"inspect more"}',
+      '{"tool":"readFile","params":{"path":"src/runtime-core/RepoIndexLite.ts","offset":200},"thought":"read third page","expectedResult":"inspect even more"}',
+      '{"tool":"complete","params":{},"thought":"focus gate blocked further inspection","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-budget',
+      title: 'Focus budget exhaustion',
+      description: 'Do not allow unlimited rereads of the active primary file',
+      fileHint: 'src/runtime-core/RepoIndexLite.ts',
+      workingSet: [
+        'src/runtime-core/RepoIndexLite.ts',
+      ],
+      primaryFiles: [
+        'src/runtime-core/RepoIndexLite.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 5,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalledTimes(3); // 1 preflight + 2 allowed explicit reads
+    expect(session.messages.some((message) =>
+      message.role === 'tool' && message.content.includes('Focus gate: inspection budget exhausted'),
+    )).toBe(true);
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('restores bounded focus state from suspended run state', async () => {
+    mockReadRunState.mockResolvedValue(makeSuspendedState({
+      taskId: 'tui-self-focus-resume',
+      exploredPaths: ['src/runtime-core/RepoIndexLite.ts'],
+      activeFocusFile: 'src/runtime-core/SelfImprovementRuntime.ts',
+      activeFocusIndex: 1,
+      focusInspectionBudgetRemaining: 1,
+      focusStatus: 'unresolved',
+      focusAdjacentFileUsed: true,
+    }));
+    queuePlans('{"tool":"complete","params":{},"thought":"restored focus state is enough to continue","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-focus-resume',
+      title: 'Restore focus state',
+      description: 'Resume a bounded run without losing the current primary focus',
+      primaryFiles: [
+        'src/runtime-core/RepoIndexLite.ts',
+        'src/runtime-core/SelfImprovementRuntime.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(session.activeFocusFile).toBe('src/runtime-core/SelfImprovementRuntime.ts');
+    expect(session.activeFocusIndex).toBe(1);
+    expect(session.focusInspectionBudgetRemaining).toBe(1);
+    expect(session.focusStatus).toBe('unresolved');
+    expect(session.focusAdjacentFileUsed).toBe(true);
     expect(session.status).toBe(Status.SUCCESS);
   });
 

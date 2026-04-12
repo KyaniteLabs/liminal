@@ -112,6 +112,16 @@ export interface RunState {
   interruptionReason?: string;
   /** Files that were mutated in this run */
   mutatedFiles: string[];
+  /** Active bounded-focus file when the run was suspended */
+  activeFocusFile?: string;
+  /** Index into primaryFiles for the active focus */
+  activeFocusIndex?: number;
+  /** Remaining inspection reads for the active focus */
+  focusInspectionBudgetRemaining?: number;
+  /** Current focus status */
+  focusStatus?: 'unresolved' | 'committed' | 'rejected';
+  /** Whether the one-off adjacent read allowance has been used */
+  focusAdjacentFileUsed?: boolean;
 }
 
 const RUN_STATE_DIR = '.omx';
@@ -261,6 +271,8 @@ export function formatResumeContext(state: RunState): string {
     state.hadMutations ? 'Mutations were made and checkpointed.' : 'No mutations were made.',
     state.mutatedFiles.length > 0 ? `Files already mutated: ${state.mutatedFiles.join(', ')}` : '',
     state.exploredPaths.length > 0 ? `Paths already explored: ${state.exploredPaths.join(', ')}` : '',
+    state.activeFocusFile ? `Active focus file: ${state.activeFocusFile}` : '',
+    typeof state.focusInspectionBudgetRemaining === 'number' ? `Focus inspection reads remaining: ${state.focusInspectionBudgetRemaining}` : '',
     verificationSummary ?? '',
     ``,
     `Progress: ${state.progressSummary}`,

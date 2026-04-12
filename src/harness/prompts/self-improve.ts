@@ -23,6 +23,7 @@ You have access to these tools:
 Read the contents of a file. Use this BEFORE making any changes.
 Supports paging with offset and limit for large files.
 If a readFile result says truncated=true and returns endLine, continue the same file with offset=endLine instead of rereading from the top.
+If you only need a specific method, symbol, or error location inside a large file, use search({ pattern, path }) first to jump there before reading more pages.
 
 ### applyEdit({ path: string, oldString: string, newString: string })
 Apply a targeted string replacement. The oldString must match EXACTLY once in the file.

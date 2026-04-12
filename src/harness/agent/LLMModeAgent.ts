@@ -113,6 +113,16 @@ export interface LLMSession {
   exitReason?: string;
   /** Most recent planning-stage failure reason for operator diagnostics */
   lastPlanError?: string;
+  /** Current bounded focus file from the task packet's primary files */
+  activeFocusFile?: string;
+  /** Index of the active focus inside task.primaryFiles */
+  activeFocusIndex: number;
+  /** Remaining inspection reads before the focus must advance or commit */
+  focusInspectionBudgetRemaining: number;
+  /** Current bounded-focus status */
+  focusStatus: 'unresolved' | 'committed' | 'rejected';
+  /** Whether the one-off adjacent file allowance has been consumed */
+  focusAdjacentFileUsed: boolean;
 }
 
 /**
@@ -165,10 +175,15 @@ export class LLMModeAgent {
       modifiedExtensions: new Set(),
       exploredPaths: new Set(),
       mutatedFiles: new Set(),
+      activeFocusIndex: 0,
+      focusInspectionBudgetRemaining: 0,
+      focusStatus: 'rejected',
+      focusAdjacentFileUsed: false,
     };
 
     this.sessions.set(task.id, session);
     this.currentSession = session;
+    this.initializeFocusState(session);
 
     // Resume detection: check for a suspended run
     const existingRunState = await readRunState();
@@ -232,6 +247,7 @@ Description: ${task.description}${preflightSection}${resumeSection}
 
 You are in LLM-driven mode. Plan your own steps. ${isResume ? 'Continue from where the previous run left off.' : 'Start by reading the relevant file(s).'}
 If readFile returns truncated=true with startLine/endLine, continue that file with offset=endLine rather than rereading from the top.
+If you need a specific method, symbol, or error location inside a large file, use search with the current file path before reading more pages.
 
 Respond with a JSON object containing your tool call:
 {\n  "thought": "What you're doing and why",\n  "tool": "toolName",\n  "params": { ... },\n  "expectedResult": "What you expect"\n}
@@ -820,17 +836,116 @@ When the task is complete and build passes, respond with tool "complete".`;
 
   private formatToolResultMessage(tool: string, result: ToolResult): string {
     const base = JSON.stringify(result);
-    if (tool !== 'readFile' || !result.success) return base;
+    if (!this.currentSession) return base;
+    if (tool !== 'readFile' || !result.success) return this.appendFocusStatusHint(base, this.currentSession);
 
     const data = result.data as { truncated?: boolean; endLine?: number } | undefined;
-    if (!data?.truncated || typeof data.endLine !== 'number') return base;
+    if (!data?.truncated || typeof data.endLine !== 'number') return this.appendFocusStatusHint(base, this.currentSession);
 
-    return `${base}\n\nPagination hint: this readFile result is truncated. Continue the same file with offset=${data.endLine} instead of rereading from the top.`;
+    return this.appendFocusStatusHint(
+      `${base}\n\nPagination hint: this readFile result is truncated. Continue the same file with offset=${data.endLine} instead of rereading from the top. If you only need a specific method, symbol, or error location inside this file, use search with path set to the current file before reading more pages.`,
+      this.currentSession,
+    );
   }
 
   private getInitialPreflightFiles(task: LLMTask): string[] {
     if (task.primaryFiles && task.primaryFiles.length > 0) return task.primaryFiles;
     return task.workingSet || [];
+  }
+
+  private initializeFocusState(session: LLMSession): void {
+    if (!this.isBoundedInspectionRun(session) || !session.task.primaryFiles?.length) return;
+    session.activeFocusIndex = 0;
+    session.activeFocusFile = session.task.primaryFiles[0];
+    session.focusInspectionBudgetRemaining = 2;
+    session.focusStatus = 'unresolved';
+    session.focusAdjacentFileUsed = false;
+  }
+
+  private appendFocusStatusHint(content: string, session: LLMSession): string {
+    if (!this.isFocusGateActive(session) || !session.activeFocusFile) return content;
+    const nextPrimary = this.nextPrimaryFile(session);
+    return `${content}\n\nFocus gate: active focus=${session.activeFocusFile}; remaining focus reads=${session.focusInspectionBudgetRemaining}; focus status=${session.focusStatus}.${nextPrimary ? ` If you reject this focus, move to next primary file: ${nextPrimary}.` : ' No additional primary files remain after this focus.'}`;
+  }
+
+  private isFocusGateActive(session: LLMSession): boolean {
+    return this.isBoundedInspectionRun(session) && !!session.task.primaryFiles?.length;
+  }
+
+  private nextPrimaryFile(session: LLMSession): string | undefined {
+    const primaryFiles = session.task.primaryFiles || [];
+    return primaryFiles[session.activeFocusIndex + 1];
+  }
+
+  private advanceFocus(session: LLMSession, filePath: string): void {
+    const primaryFiles = session.task.primaryFiles || [];
+    const nextIndex = primaryFiles.indexOf(filePath);
+    if (nextIndex === -1) return;
+    session.activeFocusIndex = nextIndex;
+    session.activeFocusFile = filePath;
+    session.focusInspectionBudgetRemaining = 2;
+    session.focusStatus = 'unresolved';
+    session.focusAdjacentFileUsed = false;
+  }
+
+  private validateFocusGate(toolCall: ToolCall): string | null {
+    const session = this.currentSession;
+    if (!session || !this.isFocusGateActive(session) || session.focusStatus !== 'unresolved') return null;
+
+    const tool = toolCall.tool;
+    if (tool === 'applyEdit' || tool === 'writeFile' || tool === 'runBuild' || tool === 'runTests' || tool === 'typeCheck' || tool === 'complete') {
+      return null;
+    }
+
+    const requestedPath = typeof toolCall.params?.path === 'string' ? toolCall.params.path : undefined;
+    const nextPrimary = this.nextPrimaryFile(session);
+
+    if (tool === 'readFile') {
+      if (requestedPath === session.activeFocusFile) {
+        if (session.focusInspectionBudgetRemaining > 0) return null;
+        return `Focus gate: inspection budget exhausted for ${session.activeFocusFile}. Apply an edit, run verification, or move to the next primary file${nextPrimary ? `: ${nextPrimary}` : ''}.`;
+      }
+      if (requestedPath && nextPrimary && requestedPath === nextPrimary && session.focusInspectionBudgetRemaining <= 0) {
+        this.advanceFocus(session, requestedPath);
+        return null;
+      }
+      if (requestedPath && session.task.secondaryFiles?.includes(requestedPath) && !session.focusAdjacentFileUsed) {
+        session.focusAdjacentFileUsed = true;
+        return null;
+      }
+      return `Focus gate: stay on ${session.activeFocusFile} until you edit, verify, or explicitly advance to the next primary file${nextPrimary ? ` (${nextPrimary})` : ''}.`;
+    }
+
+    if (tool === 'search') {
+      if (requestedPath === session.activeFocusFile) return null;
+      if (requestedPath && session.task.secondaryFiles?.includes(requestedPath) && !session.focusAdjacentFileUsed) {
+        session.focusAdjacentFileUsed = true;
+        return null;
+      }
+      return `Focus gate: search must stay inside the active focus file ${session.activeFocusFile}${nextPrimary ? ` or advance to ${nextPrimary} after exhausting focus reads` : ''}.`;
+    }
+
+    if (tool === 'listDir') {
+      return `Focus gate: broad repo exploration is blocked while focus remains unresolved on ${session.activeFocusFile}.`;
+    }
+
+    return null;
+  }
+
+  private updateFocusStateAfterTool(toolCall: ToolCall, result: ToolResult): void {
+    const session = this.currentSession;
+    if (!session || !this.isFocusGateActive(session)) return;
+
+    if (!result.success) return;
+
+    if (toolCall.tool === 'readFile' && typeof toolCall.params?.path === 'string' && toolCall.params.path === session.activeFocusFile && session.focusInspectionBudgetRemaining > 0) {
+      session.focusInspectionBudgetRemaining -= 1;
+      return;
+    }
+
+    if (toolCall.tool === 'applyEdit' || toolCall.tool === 'writeFile' || toolCall.tool === 'runBuild' || toolCall.tool === 'runTests' || toolCall.tool === 'typeCheck' || toolCall.tool === 'complete') {
+      session.focusStatus = 'committed';
+    }
   }
 
   /**
@@ -846,6 +961,12 @@ When the task is complete and build passes, respond with tool "complete".`;
       taskId: this.currentSession?.task.id,
       iteration: this.currentSession?.stepCount,
     });
+
+    const focusGateError = this.validateFocusGate(toolCall);
+    if (focusGateError) {
+      Logger.warn('LLMModeAgent', focusGateError);
+      return { success: false, error: focusGateError };
+    }
 
     const rateLimitResult = await rateLimiter.execute(
       tool === 'readFile' ? 'fileRead' :
@@ -953,6 +1074,8 @@ When the task is complete and build passes, respond with tool "complete".`;
       Logger.debug('LLMModeAgent', `Error: ${result.error.substring(0, 200)}`);
     }
 
+    this.updateFocusStateAfterTool(toolCall, result);
+
     return result;
   }
 
@@ -1029,6 +1152,13 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (existingRunState.lastVerification) {
       session.lastVerification = existingRunState.lastVerification;
     }
+    if (existingRunState.activeFocusFile) {
+      session.activeFocusFile = existingRunState.activeFocusFile;
+      session.activeFocusIndex = existingRunState.activeFocusIndex ?? 0;
+      session.focusInspectionBudgetRemaining = existingRunState.focusInspectionBudgetRemaining ?? 0;
+      session.focusStatus = existingRunState.focusStatus ?? 'unresolved';
+      session.focusAdjacentFileUsed = existingRunState.focusAdjacentFileUsed ?? false;
+    }
     session.stepCount = existingRunState.stepsCompleted;
   }
 
@@ -1079,6 +1209,11 @@ When the task is complete and build passes, respond with tool "complete".`;
       mutationApplied: session.mutatedFiles.size > 0,
       mutatedFiles: Array.from(session.mutatedFiles),
       lastVerification: session.lastVerification,
+      activeFocusFile: session.activeFocusFile,
+      activeFocusIndex: session.activeFocusIndex,
+      focusInspectionBudgetRemaining: session.focusInspectionBudgetRemaining,
+      focusStatus: session.focusStatus,
+      focusAdjacentFileUsed: session.focusAdjacentFileUsed,
       workspaceFingerprint,
     };
   }

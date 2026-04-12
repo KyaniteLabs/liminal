@@ -15,7 +15,7 @@ import { writeFileSync } from 'fs';
 import { ensureDir } from '../src/utils/fs.js';
 import path from 'path';
 
-const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'html', 'ascii', 'remotion', 'tone'];
+const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'html', 'ascii', 'revideo', 'tone'];
 
 const PROMPTS: Record<string, string> = {
   p5: 'Create a calming blue particle system with flowing movement',
@@ -25,9 +25,13 @@ const PROMPTS: Record<string, string> = {
   hydra: 'Create geometric patterns with feedback effects',
   html: 'Create a modern landing page with hero section',
   ascii: 'Create ASCII art of a mountain landscape',
-  remotion: 'Create a title card animation with fade in',
+  revideo: 'Create a Revideo title card scene with fade in',
   tone: 'Create an ambient drone with reverb and delay'
 };
+
+function normalizeDomain(domain: string): string {
+  return domain === 'remotion' ? 'revideo' : domain;
+}
 
 const QWEN_MODELS = [
   { name: 'Qwen3.5-0.8b', modelId: 'qwen3.5:0.8b' },
@@ -45,9 +49,10 @@ const RESULTS: Array<{
 }> = [];
 
 async function generateWithDomain(domain: string, prompt: string, llm: LLMClient): Promise<{ code: string; errors: string[] }> {
+  const normalizedDomain = normalizeDomain(domain);
   let code: string;
   
-  switch (domain) {
+  switch (normalizedDomain) {
     case 'p5': {
       const gen = new P5GeneratorLLM(llm);
       code = await gen.generate(prompt);
@@ -90,7 +95,7 @@ async function generateWithDomain(domain: string, prompt: string, llm: LLMClient
       code = await gen.generate(prompt, { style: 'abstract', width: 60, height: 30 });
       break;
     }
-    case 'remotion': {
+    case 'revideo': {
       const { RemotionGenerator } = await import('../src/generators/remotion/RemotionGenerator.js');
       const gen = new RemotionGenerator(llm);
       code = await gen.generate(prompt);
@@ -100,7 +105,7 @@ async function generateWithDomain(domain: string, prompt: string, llm: LLMClient
       throw new Error(`Unknown domain: ${domain}`);
   }
   
-  const validation = CodeValidator.validate(code, domain);
+  const validation = CodeValidator.validate(code, normalizedDomain);
   return { code, errors: validation.errors };
 }
 

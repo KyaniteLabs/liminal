@@ -19,7 +19,7 @@ const DOMAINS = [
   { name: 'tone', prompt: 'Create an ambient drone synthesizer with reverb', complexity: 'medium' },
   { name: 'html', prompt: 'Create a landing page with hero section and call to action', complexity: 'low' },
   { name: 'ascii', prompt: 'Create ASCII art of a mountain landscape', complexity: 'low' },
-  { name: 'remotion', prompt: 'Create a typing text animation video component', complexity: 'medium' },
+  { name: 'revideo', prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle', complexity: 'medium' },
 ];
 
 // Agent A Models configuration

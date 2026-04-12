@@ -102,12 +102,10 @@ describe('ASCIIArtGenerator', () => {
   });
 
   it('validateOutput rejects code with non-ASCII art characters', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: 'Hello World!',
-      success: true,
-    });
     const gen = new ASCIIArtGenerator();
-    await expect(gen.generate('text art')).rejects.toThrow('invalid characters');
+    const result = (gen as any).validateOutput('Hello 世界 🌍');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('invalid characters');
   });
 
   it('validateOutput accepts code with only allowed ASCII art characters', async () => {
@@ -118,6 +116,18 @@ describe('ASCIIArtGenerator', () => {
     const gen = new ASCIIArtGenerator();
     const result = await gen.generate('star');
     expect(result).toContain('***');
+  });
+
+  it('validateOutput accepts extended ascii art glyphs supported by the validator', async () => {
+    mockGenerate.mockResolvedValueOnce({
+      code: `   ★★★\n  ╱   ╲\n ★█████★\n   ║ ║`,
+      success: true,
+    });
+    const gen = new ASCIIArtGenerator();
+    const result = await gen.generate('castle', { width: 12, height: 4 });
+    expect(result).toContain('★');
+    expect(result).toContain('╱');
+    expect(result).toContain('█');
   });
 
   it('removes empty lines and filters before formatting', async () => {

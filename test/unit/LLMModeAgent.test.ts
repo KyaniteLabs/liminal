@@ -727,6 +727,30 @@ describe('LLMModeAgent', () => {
     expect(session.exitReason).toBe('bounded-no-change');
   });
 
+  it('does not classify search-only bounded inspection as bounded-no-change success', async () => {
+    queuePlans(
+      '{"tool":"search","params":{"pattern":"buildTaskPacket"},"thought":"inspect symbol usage"}',
+      'done inspecting; no safe change warranted',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-search-only-inspection',
+      title: 'Search only inspection',
+      description: 'desc',
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      primaryFiles: ['src/runtime-core/SelfImprovementRuntime.ts'],
+      workingSet: ['src/runtime-core/SelfImprovementRuntime.ts'],
+      approved: true,
+      maxSteps: 6,
+    });
+
+    expect(mockSearch.execute).toHaveBeenCalled();
+    expect(mockClearRunState).not.toHaveBeenCalled();
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.exitReason).toBeUndefined();
+  });
+
   it('suspends with verification_started when verification fails after a mutation', async () => {
     queuePlans(
       '{"tool":"applyEdit","params":{"path":"src/foo.ts","search":"x","replace":"y"},"thought":"apply fix","expectedResult":"changed"}',

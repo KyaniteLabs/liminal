@@ -1256,12 +1256,14 @@ When the task is complete and build passes, respond with tool "complete".`;
       tool === 'importGuard';
   }
 
-  private hasMeaningfulSuccessfulInspection(session: LLMSession): boolean {
+  private hasConcreteSuccessfulInspection(session: LLMSession): boolean {
     for (let i = 0; i < session.messages.length - 1; i++) {
       const message = session.messages[i];
       const next = session.messages[i + 1];
-      if (!message.toolCall || !this.isMeaningfulInspectionTool(message.toolCall.tool)) continue;
-      if (next.toolResult?.success) return true;
+      if (!message.toolCall || !next.toolResult?.success) continue;
+      if (message.toolCall.tool === 'search') continue;
+      if (!this.isMeaningfulInspectionTool(message.toolCall.tool)) continue;
+      return true;
     }
     return false;
   }
@@ -1269,7 +1271,7 @@ When the task is complete and build passes, respond with tool "complete".`;
   private shouldClassifyAsBoundedNoChangeSuccess(session: LLMSession): boolean {
     if (!this.isBoundedInspectionRun(session)) return false;
     if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
-    return this.hasMeaningfulSuccessfulInspection(session);
+    return this.hasConcreteSuccessfulInspection(session);
   }
 
   private shouldStopAfterSuccessfulVerification(session: LLMSession, toolCall: ToolCall, result: ToolResult): boolean {
@@ -1332,7 +1334,7 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
 
     // Must have already completed meaningful successful inspection work
-    if (!this.hasMeaningfulSuccessfulInspection(session)) return false;
+    if (!this.hasConcreteSuccessfulInspection(session)) return false;
 
     return true;
   }

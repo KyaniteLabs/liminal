@@ -367,6 +367,51 @@ describe('HeadlessRenderer', () => {
     expect(result.errors).toContain('Canvas not found or timed out for three render');
   });
 
+  it('propagates screenshot failure reasons to the top-level render result', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+        error: string;
+      }>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(true);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.alloc(0),
+      width: 0,
+      height: 0,
+      success: false,
+      error: 'Screenshot failed: target page closed',
+    });
+
+    const result = await renderer.render('function setup(){createCanvas(10,10)}', {
+      domain: 'p5',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Screenshot failed: target page closed');
+    expect(result.logs).toContain('[warn] Screenshot failed: target page closed');
+    expect(result.errors).toContain('Screenshot failed: target page closed');
+  });
+
   it('surfaces missing audio captures for audio domains', async () => {
     const renderer = new HeadlessRenderer() as HeadlessRenderer & {
       context: { newPage: () => Promise<unknown> };

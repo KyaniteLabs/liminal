@@ -267,6 +267,10 @@ export class HeadlessRenderer {
 
       // Capture screenshot
       const screenshot = await this.captureScreenshot(page, opts);
+      if (!screenshot.success && screenshot.error) {
+        logs.push(`[warn] ${screenshot.error}`);
+        errors.push(screenshot.error);
+      }
 
       // Capture audio if applicable
       const audio = domain === 'tone' || domain === 'strudel'
@@ -289,6 +293,7 @@ export class HeadlessRenderer {
         screenshot,
         audio,
         success: screenshot.success,
+        error: screenshot.success ? undefined : screenshot.error || 'Screenshot failed',
         logs,
         errors,
       };

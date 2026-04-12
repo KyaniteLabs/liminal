@@ -131,6 +131,26 @@ describe('RunStateStore', () => {
     }
   });
 
+  it('preserves workspace fingerprint in round-trip', async () => {
+    const state = makeRunState({
+      workspaceFingerprint: {
+        gitHead: 'abc1234567890',
+        gitBranch: 'feature/test',
+        workingTreeClean: true,
+        timestamp: '2026-04-11T10:05:00.000Z',
+      },
+    });
+    await saveRunState(state, tempDir);
+
+    const loaded = await readRunState(tempDir);
+    expect(loaded!.workspaceFingerprint).toEqual({
+      gitHead: 'abc1234567890',
+      gitBranch: 'feature/test',
+      workingTreeClean: true,
+      timestamp: '2026-04-11T10:05:00.000Z',
+    });
+  });
+
   it('preserves verification state in round-trip', async () => {
     const state = makeRunState({
       lastVerification: {

@@ -213,6 +213,17 @@ export async function validateWorkspaceFingerprint(
     };
   }
 
+  // Working-tree cleanliness guard: if the workspace was clean at
+  // suspension time, it must still be clean on resume.  A dirty tree
+  // on resume when the saved state expected cleanliness indicates
+  // external modifications that could conflict with the resumed run.
+  if (saved.workingTreeClean && !current.workingTreeClean) {
+    return {
+      valid: false,
+      reason: 'Working tree was clean at suspension but is now dirty - external modifications detected',
+    };
+  }
+
   return { valid: true };
 }
 

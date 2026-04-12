@@ -135,6 +135,16 @@ const toneConfidence = (prompt: string): number => {
   return 0;
 };
 
+/** Confidence for explicit p5.js / Processing-style sketch requests */
+const p5Confidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  if (/\bp5(?:\.js)?\b|\bp5js\b|\bprocessing\b/.test(lower)) return 0.95;
+  if (/\b(createcanvas|setup\(\)|draw\(\)|mousepressed|keypressed)\b/.test(lower)) return 0.9;
+  if (/\b(sketch|canvas)\b.*\b(generative|interactive|animated|art)\b/.test(lower)) return 0.75;
+  if (/\bgenerative\s+sketch\b|\binteractive\s+sketch\b/.test(lower)) return 0.75;
+  return 0;
+};
+
 // --- Generator entries ---
 
 
@@ -245,7 +255,7 @@ const textgenEntry: GeneratorEntry = {
 
 const p5Entry: GeneratorEntry = {
   name: 'p5',
-  canHandle: () => 0.1, // fallback: low confidence but always available
+  canHandle: p5Confidence,
   generate: async (prompt: string) => {
     const gen = new P5GeneratorV2();
     return gen.generate(prompt);
@@ -327,4 +337,5 @@ export {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  p5Confidence,
 };

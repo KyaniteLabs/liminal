@@ -68,6 +68,7 @@ func TestClientSessionStatusAndSSE(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/api/tui/session":
+			w.WriteHeader(http.StatusCreated)
 			w.Header().Set("Content-Type", "application/json")
 			fmt.Fprint(w, `{"sessionId":"s1","mode":"chat","trust":{"level":"untrusted","label":"u"}}`)
 		case "/api/tui/session/s1/status":
@@ -105,4 +106,50 @@ func TestClientSessionStatusAndSSE(t *testing.T) {
 	if len(events) != 2 { t.Fatalf("expected 2 events, got %d", len(events)) }
 	if events[0].Delta != "hello" { t.Fatalf("expected delta hello, got %q", events[0].Delta) }
 	if events[1].Content != "hello" { t.Fatalf("expected committed hello, got %q", events[1].Content) }
+}
+
+func TestClientStreamEventsResumesFromLastEventID(t *testing.T) {
+	sessionID := "s1"
+	lastEventIDSeen := ""
+	requestCount := 0
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/tui/session/s1/events" {
+			http.NotFound(w, r)
+			return
+		}
+		requestCount++
+		lastEventIDSeen = r.Header.Get("Last-Event-ID")
+		w.Header().Set("Content-Type", "text/event-stream")
+		if requestCount == 1 {
+			fmt.Fprint(w, "id: 1\n")
+			fmt.Fprint(w, "data: {\"type\":\"response.delta\",\"sessionId\":\"s1\",\"delta\":\"hello\"}\n\n")
+			return
+		}
+		fmt.Fprint(w, "id: 2\n")
+		fmt.Fprint(w, "data: {\"type\":\"response.committed\",\"sessionId\":\"s1\",\"content\":\"world\"}\n\n")
+	}))
+	defer server.Close()
+
+	client := NewClient(server.URL)
+	ctx := context.Background()
+
+	var events []Event
+	if err := client.StreamEvents(ctx, sessionID, func(e Event) { events = append(events, e) }); err != nil {
+		t.Fatal(err)
+	}
+	if len(events) != 1 || events[0].Delta != "hello" {
+		t.Fatalf("expected first stream to receive hello delta, got %#v", events)
+	}
+
+	events = nil
+	if err := client.StreamEvents(ctx, sessionID, func(e Event) { events = append(events, e) }); err != nil {
+		t.Fatal(err)
+	}
+	if lastEventIDSeen != "1" {
+		t.Fatalf("expected Last-Event-ID=1 on reconnect, got %q", lastEventIDSeen)
+	}
+	if len(events) != 1 || events[0].Content != "world" {
+		t.Fatalf("expected resumed stream to receive world committed event, got %#v", events)
+	}
 }

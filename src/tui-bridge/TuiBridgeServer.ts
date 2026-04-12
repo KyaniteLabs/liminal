@@ -162,15 +162,18 @@ export class TuiBridgeServer {
       Connection: 'keep-alive',
     });
 
+    const lastEventId = Number(req.headers['last-event-id'] || 0) || 0;
+
     // Send any existing events first
-    const existing = this.bridge.getEvents(sessionId);
-    for (const event of existing) {
-      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    const existing = this.bridge.getEventsSince(sessionId, lastEventId);
+    for (const stored of existing) {
+      res.write(`id: ${stored.id}\n`);
+      res.write(`data: ${JSON.stringify(stored.event)}\n\n`);
     }
 
     // Subscribe to new events
-    const unsubscribe = this.bridge.subscribe(sessionId, (event) => {
-      const payload = `data: ${JSON.stringify(event)}\n\n`;
+    const unsubscribe = this.bridge.subscribeWithId(sessionId, (stored) => {
+      const payload = `id: ${stored.id}\ndata: ${JSON.stringify(stored.event)}\n\n`;
       const flushed = res.write(payload);
       // Handle backpressure: if the buffer is full, pause and resume
       if (!flushed) {
@@ -178,8 +181,13 @@ export class TuiBridgeServer {
       }
     });
 
+    const heartbeat = setInterval(() => {
+      res.write(': ping\n\n');
+    }, 15000);
+
     // Clean up on client disconnect
     req.on('close', () => {
+      clearInterval(heartbeat);
       unsubscribe();
     });
   }

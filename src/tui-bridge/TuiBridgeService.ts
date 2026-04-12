@@ -124,8 +124,16 @@ export class TuiBridgeService {
     return this.stream.getEvents(sessionId);
   }
 
+  getEventsSince(sessionId: string, lastEventId: number) {
+    return this.stream.getEventsSince(sessionId, lastEventId);
+  }
+
   subscribe(sessionId: string, listener: (event: TuiBridgeEvent) => void): () => void {
     return this.stream.subscribe(sessionId, listener);
+  }
+
+  subscribeWithId(sessionId: string, listener: (stored: { id: number; event: TuiBridgeEvent }) => void): () => void {
+    return this.stream.subscribeWithId(sessionId, listener);
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await

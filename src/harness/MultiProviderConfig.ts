@@ -235,6 +235,11 @@ export function getActiveProvider(): ProviderType {
     return detectProviderFromUrl(baseUrl);
   }
 
+  const explicitProvider = process.env.LIMINAL_LLM_PROVIDER;
+  if (explicitProvider && PROVIDER_TEMPLATES[explicitProvider as keyof typeof PROVIDER_TEMPLATES]) {
+    return explicitProvider as ProviderType;
+  }
+
   // Check config file defaultProvider before env var sniffing
   const fileDefault = getDefaultProviderFromConfig();
   if (fileDefault && PROVIDER_TEMPLATES[fileDefault as keyof typeof PROVIDER_TEMPLATES]) {

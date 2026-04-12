@@ -21,6 +21,7 @@ import os from 'node:os';
 // ---------------------------------------------------------------------------
 
 const KEYS_PRESERVED = [
+  'LIMINAL_LLM_PROVIDER',
   'LIMINAL_LLM_BASE_URL',
   'LIMINAL_LLM_MODEL',
   'LIMINAL_LLM_API_KEY',
@@ -131,9 +132,20 @@ describe('getActiveProvider', () => {
     expect(getActiveProvider()).toBe('openrouter');
   });
 
+  it('honors LIMINAL_LLM_PROVIDER when base URL is not set', () => {
+    process.env.LIMINAL_LLM_PROVIDER = 'glm';
+    expect(getActiveProvider()).toBe('glm');
+  });
+
   it('prefers LIMINAL_LLM_BASE_URL over individual API keys', () => {
     process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
     process.env.MINIMAX_API_KEY = 'test-key';
+    expect(getActiveProvider()).toBe('lmstudio');
+  });
+
+  it('prefers LIMINAL_LLM_BASE_URL over LIMINAL_LLM_PROVIDER', () => {
+    process.env.LIMINAL_LLM_PROVIDER = 'glm';
+    process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:1234/v1';
     expect(getActiveProvider()).toBe('lmstudio');
   });
 });

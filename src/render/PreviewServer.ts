@@ -7,6 +7,7 @@
 import express, { Express } from 'express';
 import path from 'path';
 import { Server } from 'http';
+import type { AddressInfo } from 'node:net';
 import helmet from 'helmet';
 import { doubleCsrf } from 'csrf-csrf';
 import cookieParser from 'cookie-parser';
@@ -368,7 +369,7 @@ export class PreviewServer {
   }
 
   async start(port: number = this.DEFAULT_PORT): Promise<boolean> {
-    if (port < 1 || port > 65535) {
+    if (port < 0 || port > 65535) {
       throw new ServerError(`Invalid port number: ${port}`, { port });
     }
     if (this.server) {
@@ -393,6 +394,13 @@ export class PreviewServer {
     });
     
     return true;
+  }
+
+  getPort(): number | null {
+    const address = this.server?.address();
+    return address && typeof address === 'object'
+      ? (address as AddressInfo).port
+      : null;
   }
 
   async stop(): Promise<boolean> {

@@ -68,6 +68,10 @@ function normalizeDomain(domain: string): string {
   return domain === 'remotion' ? 'revideo' : domain;
 }
 
+function isLocalBaseUrl(baseUrl: string): boolean {
+  return /localhost|127\.0\.0\.1|::1/.test(baseUrl);
+}
+
 function formatError(context: string, error: unknown): string {
   if (error instanceof Error) return `${context}: ${error.message}`;
   return `${context}: ${String(error)}`;
@@ -163,6 +167,10 @@ async function main() {
   process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;
   process.env.LIMINAL_LLM_API_KEY = apiKey;
   process.env.LIMINAL_LLM_MODEL = modelName;
+  if (isLocalBaseUrl(config.baseUrl)) {
+    process.env.LIMINAL_ALLOW_LOCALHOST_LLM = 'true';
+    process.env.LIMINAL_ALLOW_LOCALHOST = 'true';
+  }
   
   try {
     const startTime = Date.now();

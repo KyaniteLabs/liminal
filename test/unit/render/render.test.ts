@@ -604,4 +604,26 @@ describe('RenderAndScorePipeline', () => {
     });
     expect(result).toBeCloseTo(0.9, 5);
   });
+
+  it('propagates non-fatal render degradation warnings to pipeline callers', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: false,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: ['[warn] Canvas not found or timed out for three render'],
+        errors: ['Canvas not found or timed out for three render'],
+      }),
+    };
+
+    const result = await pipeline.process('const scene = new THREE.Scene();', 'three');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Canvas not found or timed out for three render']);
+  });
 });

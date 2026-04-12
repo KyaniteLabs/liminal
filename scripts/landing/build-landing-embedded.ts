@@ -17,7 +17,10 @@ const MODELS = [
 const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'];
 const TITLES: Record<string, string> = {
   p5: 'p5.js Sketch', glsl: 'GLSL Shader', three: 'Three.js Scene', strudel: 'Strudel Pattern',
-  hydra: 'Hydra Synth', remotion: 'Remotion Video', html: 'HTML Page', ascii: 'ASCII Art'
+  hydra: 'Hydra Synth', remotion: 'Revideo Scene', html: 'HTML Page', ascii: 'ASCII Art'
+};
+const DOMAIN_DISPLAY: Record<string, string> = {
+  remotion: 'revideo',
 };
 
 const DURATIONS: Record<string, string> = {
@@ -64,7 +67,7 @@ for (const model of MODELS) {
     <div class="card">
       <div class="card-header">
         <div>
-          <span class="tag tag-${domain}">${domain}</span>
+          <span class="tag tag-${domain}">${DOMAIN_DISPLAY[domain] ?? domain}</span>
           <div style="font-weight:600;margin-top:0.5rem">${TITLES[domain]}</div>
           <div style="color:var(--text2);font-size:0.85rem">${model.name}</div>
         </div>

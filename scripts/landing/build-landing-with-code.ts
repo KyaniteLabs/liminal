@@ -86,6 +86,9 @@ const MODELS = [
 ];
 
 const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'];
+const DOMAIN_DISPLAY: Record<string, string> = {
+  remotion: 'revideo',
+};
 
 // Build the gallery items with actual code
 function buildGalleryItems(): string {
@@ -95,7 +98,7 @@ function buildGalleryItems(): string {
     three: 'Three.js Scene',
     strudel: 'Strudel Pattern',
     hydra: 'Hydra Synth',
-    remotion: 'Remotion Video',
+    remotion: 'Revideo Scene',
     html: 'HTML Page',
     ascii: 'ASCII Art'
   };
@@ -111,7 +114,7 @@ function buildGalleryItems(): string {
       <div class="example-card" data-model="${model.name}" data-domain="${domain}">
         <div class="example-header">
           <div class="example-meta">
-            <div class="example-tag domain-${domain}">${domain}</div>
+            <div class="example-tag domain-${domain}">${DOMAIN_DISPLAY[domain] ?? domain}</div>
             <div class="example-title">${domainTitles[domain]}</div>
             <div class="example-model">${model.name}</div>
           </div>

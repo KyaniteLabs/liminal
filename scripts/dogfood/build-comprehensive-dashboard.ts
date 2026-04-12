@@ -21,7 +21,7 @@ import { join } from 'path';
 const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii', 'tone'];
 const DOMAIN_LABELS: Record<string, string> = {
   p5: 'p5.js', glsl: 'GLSL', three: 'Three.js', strudel: 'Strudel',
-  hydra: 'Hydra', remotion: 'Remotion', html: 'HTML', ascii: 'ASCII', tone: 'Tone.js',
+  hydra: 'Hydra', remotion: 'Revideo', html: 'HTML', ascii: 'ASCII', tone: 'Tone.js',
 };
 
 const CAMPAIGN_DIRS = [

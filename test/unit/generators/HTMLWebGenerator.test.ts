@@ -99,33 +99,13 @@ describe('HTMLWebGenerator', () => {
 
   it('throws when LLM output is not valid HTML', async () => {
     const gen = new HTMLWebGenerator();
-<<<<<<< HEAD
-    const llmClient = (gen as any).llm;
-    llmClient.generateWithToolLoop.mockImplementation(async () => ({
-      content: 'This is just plain text, not HTML at all.',
-      toolCalls: [],
-      success: true,
-    }));
-    await expect(gen.generate('bad output')).rejects.toThrow('not valid HTML');
-=======
     expect(() => (gen as any).extractHTML('This is just plain text, not HTML at all.')).toThrow('not valid HTML');
->>>>>>> 317138d6 (Strip partial markdown fences from generated HTML before saving artifacts)
   });
 
   it('validateOutput rejects code without DOCTYPE or html tags', async () => {
     const gen = new HTMLWebGenerator();
-<<<<<<< HEAD
-    const llmClient = (gen as any).llm;
-    llmClient.generateWithToolLoop.mockImplementation(async () => ({
-      content: '```html\n<p>Just a paragraph</p>\n```',
-      toolCalls: [],
-      success: true,
-    }));
-    await expect(gen.generate('paragraph')).rejects.toThrow('not valid HTML');
-=======
     expect((gen as any).extractHTML('```html\n<p>Just a paragraph</p>\n```')).toBe('<p>Just a paragraph</p>');
     expect(gen.validateOutput('<p>Just a paragraph</p>').valid).toBe(false);
->>>>>>> 317138d6 (Strip partial markdown fences from generated HTML before saving artifacts)
   });
 
   it('validateOutput accepts code with DOCTYPE', async () => {

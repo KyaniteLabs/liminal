@@ -901,7 +901,9 @@ export class CreativeEvaluator {
    * Detect Strudel music code
    */
   static detectsStrudelUsage(code: string): boolean {
-    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) && /\bstack|\$:|#|\.\s\(|\.n\(/.test(code);
+    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) ||
+      /\$:\s*(s|n|note|sound)\s*\(/.test(code) ||
+      /\bstack\s*\(/.test(code);
   }
 
   /**
@@ -1173,22 +1175,32 @@ export class CreativeEvaluator {
     const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
     // Technical checks
-    if (/\bsetc\s*\(/.test(codeOnly) || /\bbpm\s*:/.test(codeOnly)) technicalScore += 0.15;
-    if (/\bn\s*\(/.test(codeOnly)) technicalScore += 0.15;
-    if (/\bs\s*\(/.test(codeOnly)) technicalScore += 0.15;
+    if (/\bsetc\s*\(/.test(codeOnly) || /\bbpm\s*:/.test(codeOnly)) technicalScore += 0.1;
+    if (/\bn\s*\(/.test(codeOnly)) technicalScore += 0.2;
+    if (/\bs\s*\(/.test(codeOnly)) technicalScore += 0.3;
     if (/\bstack\s*\(/.test(codeOnly)) technicalScore += 0.15;
     if (/\.s\(|\.n\(|\.cut\(|\.resonance\(/.test(codeOnly)) technicalScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']+\s+[^"']+["']\s*\)/.test(codeOnly)) technicalScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']*(\s+[^"'\s]+){3,}["']\s*\)/.test(codeOnly)) technicalScore += 0.05;
     if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.1;
+    if (codeOnly.length > 25) technicalScore += 0.05;
+    if (codeOnly.length > 80) technicalScore += 0.05;
 
     // Creative checks
-    if (/["'][^"']+["'].*\.s\(/.test(codeOnly)) creativeScore += 0.2; // Pattern mini-notation
-    if (/~|\*|\?|!|#/.test(codeOnly)) creativeScore += 0.2; // Rhythm modifiers
-    if (/\.delay|\.room|\.distort|\.cutoff/.test(codeOnly)) creativeScore += 0.2;
-    if (/\.add|\.sub|\.mul/.test(codeOnly)) creativeScore += 0.15;
-    if (codeOnly.split('\n').length > 5) creativeScore += 0.15;
+    if (/["'][^"']+["'].*\.s\(/.test(codeOnly)) creativeScore += 0.15; // Pattern mini-notation
+    if (/~|\*|\?|!|#/.test(codeOnly)) creativeScore += 0.15; // Rhythm modifiers
+    if (/\.delay|\.room|\.distort|\.cutoff/.test(codeOnly)) creativeScore += 0.15;
+    if (/\.add|\.sub|\.mul/.test(codeOnly)) creativeScore += 0.1;
+    if (codeOnly.split('\n').length > 5) creativeScore += 0.1;
     if (/\$:/.test(codeOnly)) creativeScore += 0.1; // Pattern sequencing
+    if (/\bs\s*\(\s*["'][^"']+["']\s*\)/.test(codeOnly)) creativeScore += 0.25;
+    if (/\b(note|n)\s*\(\s*["'][^"']+["']\s*\)/.test(codeOnly)) creativeScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']+["']\s*\)\s*(?:\.\w+\([^)]*\))*/.test(codeOnly)) creativeScore += 0.1;
+    if (/\bstack\s*\(/.test(codeOnly) || /\$:/.test(codeOnly)) creativeScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']+\s+[^"']+["']\s*\)/.test(codeOnly)) creativeScore += 0.1;
+    if (/\bs\s*\(\s*["'][^"']*(\s+[^"'\s]+){3,}["']\s*\)/.test(codeOnly)) creativeScore += 0.1;
 
-    if (codeOnly.length < 50) issues.push('Strudel code too short');
+    if (codeOnly.length < 20) issues.push('Strudel code too short');
     if (!/\bs\s*\(/.test(codeOnly) && !/\.s\(/.test(codeOnly)) issues.push('Missing sound() call');
 
     let overallScore = technicalScore * 0.5 + creativeScore * 0.5;

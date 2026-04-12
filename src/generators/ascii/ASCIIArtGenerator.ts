@@ -6,6 +6,7 @@
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { ASCIIValidator } from '../../core/validators/ASCIIValidator.js';
 
 export type ASCIIStyle = 'simple' | 'landscape' | 'abstract';
 
@@ -28,10 +29,9 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    // ASCII art should only contain specific characters
-    const allowedChars = /^[\s.\-~+=*#%@\n\r]*$/;
-    if (!allowedChars.test(code)) {
-      return { valid: false, error: 'Generated code contains invalid characters for ASCII art' };
+    const result = ASCIIValidator.validate(code);
+    if (!result.valid) {
+      return { valid: false, error: result.errors[0] ?? 'Generated code contains invalid characters for ASCII art' };
     }
     return { valid: true };
   }

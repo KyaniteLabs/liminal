@@ -34,6 +34,7 @@ import {
   strudelConfidence,
   hydraConfidence,
   toneConfidence,
+  p5Confidence,
 } from '../../../src/generators/registerGenerators.js';
 
 describe('registerGenerators', () => {
@@ -175,6 +176,21 @@ describe('registerGenerators', () => {
         expect(toneConfidence('draw a circle')).toBe(0);
       });
     });
+
+    describe('p5Confidence', () => {
+      it('returns 0.95 for explicit p5.js mentions', () => {
+        expect(p5Confidence('create a p5.js sketch')).toBe(0.95);
+        expect(p5Confidence('build this with p5js')).toBe(0.95);
+      });
+
+      it('returns 0.9 for p5 lifecycle APIs', () => {
+        expect(p5Confidence('use createCanvas and draw()')).toBe(0.9);
+      });
+
+      it('returns 0 for vague prompts so ambiguity can be evaluated first', () => {
+        expect(p5Confidence('make it cooler')).toBe(0);
+      });
+    });
   });
 
   describe('registerAllGenerators', () => {
@@ -186,6 +202,21 @@ describe('registerGenerators', () => {
 
       // Should register all static generators
       expect(mockRegister).toHaveBeenCalledTimes(10);
+    });
+
+    it('registers p5 with explicit-signal routing instead of always-on fallback confidence', async () => {
+      mockLoadAll.mockResolvedValueOnce([{ success: false }]);
+      mockGetAll.mockReturnValueOnce([]);
+
+      await registerAllGenerators();
+
+      const p5Entry = mockRegister.mock.calls
+        .map(([entry]) => entry)
+        .find((entry) => entry.name === 'p5');
+
+      expect(p5Entry).toBeDefined();
+      expect(p5Entry.canHandle('make it cooler')).toBe(0);
+      expect(p5Entry.canHandle('create a p5.js sketch with bouncing balls')).toBe(0.95);
     });
 
     it('is idempotent - skips if generators already registered', async () => {

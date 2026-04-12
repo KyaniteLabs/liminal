@@ -123,8 +123,7 @@ export class GenerationOrchestrator {
     }
 
     if (dispatched) {
-      const genPrompt = dispatched.entry.name === 'llm' ? usedPrompt : loadedPrompt;
-      const result = await dispatched.entry.generate(genPrompt);
+      const result = await dispatched.entry.generate(usedPrompt);
       return normalizeGeneratorResult(result);
     }
 

@@ -67,9 +67,16 @@ export {
   applyEditTool,
   runBuildTool,
   runTestsTool,
+  executeSkillTool,
+  searchCodeTool,
+  searchDocsTool,
+  runLintTool,
+  runFocusedTestsTool,
   rateLimiter,
   validationGuard,
 } from './tools/index.js';
+
+export { SkillLoader, type LoadedSkill } from './skills/SkillLoader.js';
 
 // Tool Telemetry
 export {

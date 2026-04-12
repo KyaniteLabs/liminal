@@ -144,7 +144,7 @@ Failures:   0 critical
 │  │  ├── FailureLogger          - Logs to ~/.liminal/failures/          │    │
 │  │  ├── PatternDetector        - Detects failure patterns              │    │
 │  │  ├── HarnessUpdater         - Applies adaptations                   │    │
-│  │  ├── HarnessAgent           - 7 tools for self-repair               │    │
+│  │  ├── HarnessAgent           - coding tool surface + skill loading   │    │
 │  │  ├── ValidationGuard        - Prevents bad edits                    │    │
 │  │  └── RateLimiter            - Prevents runaway execution            │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
@@ -219,7 +219,7 @@ Failures:   0 critical
 | FailureLogger | `FailureLogger.ts` | Logs failures to ~/.liminal/failures/ | 🟢 Active |
 | PatternDetector | `PatternDetector.ts` | Detects patterns in failures | 🟢 Active |
 | HarnessUpdater | `HarnessUpdater.ts` | Applies adaptations to fix issues | 🟢 Active |
-| HarnessAgent | `agent/HarnessAgent.ts` | 7 tools for self-repair | 🟢 Active |
+| HarnessAgent | `agent/HarnessAgent.ts` | coding tools, jmunch search, skill loading | 🟢 Active |
 | ValidationGuard | `tools/ValidationGuard.ts` | Prevents invalid edits | 🟢 Active |
 | RateLimiter | `tools/RateLimiter.ts` | Limits execution rate | 🟢 Active |
 
@@ -547,6 +547,8 @@ Failures:   0 critical
 **Location:** `src/plugins/`
 
 **Purpose:** Extensible plugin architecture for custom generators and behaviors.
+
+**Important distinction:** Plugin loading is runtime generator extension. It is separate from the harness skill layer. Generator plugins load from `plugins/<name>/plugin.json`, while harness skills load `SKILL.md` instructions for coding/refactor guidance and tool selection.
 
 **Components:**
 | Component | File | Purpose |
@@ -932,6 +934,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Enhanced TUI**: Task loading with M1-M8 support via `/run <task-id>` command
 - **Worktree Isolation**: Full multi-agent development workflow with `git wt` commands
 - **Agent Worktree Guard**: `scripts/utils/assert-agent-worktree.sh <branch>` prevents agents from editing in the root checkout or wrong branch
+- **Harness Skill Compatibility Layer**: `src/harness/skills/SkillLoader.ts` plus `executeSkill`, `searchCode`, `searchDocs`, `runLint`, and `runFocusedTests` extend harness-side coding workflows without requiring full Claude/Codex runtime parity
 
 ---
 
@@ -947,6 +950,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 5. 🔄 Cloud provider testing (requires API keys)
 6. 🔄 Bubble Tea operator-surface rollout and broader operator-event emission coverage
 7. 🔄 Community plugins (future)
+8. 🔄 Expand harness skill compatibility beyond the practical subset if the first pass proves stable
 
 ### Metrics
 - **Security issues:** 10 → 0 ✅

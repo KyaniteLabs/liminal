@@ -4,6 +4,16 @@
 
 **Cross-agent rules:** See `~/.agents/rules/UNIVERSAL.md` for the 10 golden principles shared across all agents.
 
+## Mandatory Coding Skill
+
+All agents working in this repo must follow `karpathy-guidelines` for coding, review, and refactor work.
+
+If the runtime supports local skills, load and apply `karpathy-guidelines` directly. If it does not, still follow the same rules:
+- think before coding and surface assumptions/tradeoffs
+- prefer the simplest sufficient change
+- make surgical edits only
+- define concrete verification criteria before claiming success
+
 ---
 
 ## Overview
@@ -177,7 +187,7 @@ Applies adaptations based on detected patterns.
 **Location:** `src/harness/HarnessUpdater.ts`
 
 ### 4. HarnessAgent
-Executes tasks using 7 tools with rollback capability.
+Executes tasks with rollback capability and an expanding coding-tool surface.
 
 **Location:** `src/harness/agent/HarnessAgent.ts`
 
@@ -187,6 +197,11 @@ Executes tasks using 7 tools with rollback capability.
 - `applyEdit` - Targeted string replacement (preferred)
 - `runBuild` - Run `npm run build`
 - `runTests` - Run test suite
+- `executeSkill` - Load local `SKILL.md` instructions for harness use
+- `searchCode` - Search indexed code via jcodemunch
+- `searchDocs` - Search indexed docs via jdocmunch
+- `runLint` - Run project lint or focused eslint
+- `runFocusedTests` - Run targeted vitest slices
 - `createBackup` - Create file backup
 - `restoreBackup` - Restore from backup
 

@@ -116,6 +116,17 @@ export interface ToolResponse {
   result: ToolResult;
 }
 
+export interface CommandRunnerResult {
+  stdout: string;
+  stderr: string;
+}
+
+export type CommandRunner = (
+  command: string,
+  args: string[],
+  options: { cwd: string; timeout: number },
+) => Promise<CommandRunnerResult>;
+
 import path from 'node:path';
 
 export abstract class Tool {

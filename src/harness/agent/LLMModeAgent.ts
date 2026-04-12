@@ -28,10 +28,15 @@ import {
   runTestsTool,
   restoreBackupTool,
   createBackupTool,
+  executeSkillTool,
   searchTool,
+  searchCodeTool,
+  searchDocsTool,
   listDirTool,
   typeCheckTool,
   npmTool,
+  runLintTool,
+  runFocusedTestsTool,
   lspTool,
   astValidatorTool,
   importGuardTool,
@@ -579,9 +584,13 @@ When the task is complete and build passes, respond with tool "complete".`;
     });
 
     const rateLimitResult = await rateLimiter.execute(
-      tool === 'readFile' ? 'fileRead' :
-      tool === 'writeFile' || tool === 'applyEdit' ? 'fileWrite' :
-      tool === 'runBuild' ? 'buildRun' : 'testRun',
+      tool === 'readFile' || tool === 'executeSkill' || tool === 'searchCode' || tool === 'searchDocs'
+        ? 'fileRead'
+        : tool === 'writeFile' || tool === 'applyEdit'
+          ? 'fileWrite'
+          : tool === 'runBuild'
+            ? 'buildRun'
+            : 'testRun',
       async () => {
         switch (tool) {
           case 'readFile':
@@ -604,6 +613,9 @@ When the task is complete and build passes, respond with tool "complete".`;
           
           case 'runTests':
             return runTestsTool.execute(params);
+
+          case 'executeSkill':
+            return executeSkillTool.execute(params);
           
           case 'restoreBackup':
             return restoreBackupTool.execute(params);
@@ -618,12 +630,20 @@ When the task is complete and build passes, respond with tool "complete".`;
 
           case 'search':
             return searchTool.execute(params);
+          case 'searchCode':
+            return searchCodeTool.execute(params);
+          case 'searchDocs':
+            return searchDocsTool.execute(params);
           case 'listDir':
             return listDirTool.execute(params);
           case 'typeCheck':
             return typeCheckTool.execute(params);
           case 'npm':
             return npmTool.execute(params);
+          case 'runLint':
+            return runLintTool.execute(params);
+          case 'runFocusedTests':
+            return runFocusedTestsTool.execute(params);
           case 'lsp':
             return lspTool.execute(params);
           case 'astValidate':

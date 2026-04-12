@@ -76,6 +76,17 @@ describe('HTMLWebGenerator', () => {
     expect(result).toBe('<!DOCTYPE html><html><body>Direct</body></html>');
   });
 
+  it('strips an opening html fence even when the closing fence is missing', async () => {
+    mockGenerate.mockResolvedValueOnce({
+      code: '```html\n<!DOCTYPE html><html><body>Unclosed fence</body></html>',
+      success: true,
+    });
+    const gen = new HTMLWebGenerator();
+    const result = await gen.generate('html with unclosed fence');
+    expect(result).toBe('<!DOCTYPE html><html><body>Unclosed fence</body></html>');
+    expect(result).not.toContain('```html');
+  });
+
   it('detects HTML with <html tag (no DOCTYPE)', async () => {
     mockGenerate.mockResolvedValueOnce({
       code: '<html lang="en"><body>No doctype</body></html>',
@@ -88,6 +99,7 @@ describe('HTMLWebGenerator', () => {
 
   it('throws when LLM output is not valid HTML', async () => {
     const gen = new HTMLWebGenerator();
+<<<<<<< HEAD
     const llmClient = (gen as any).llm;
     llmClient.generateWithToolLoop.mockImplementation(async () => ({
       content: 'This is just plain text, not HTML at all.',
@@ -95,10 +107,14 @@ describe('HTMLWebGenerator', () => {
       success: true,
     }));
     await expect(gen.generate('bad output')).rejects.toThrow('not valid HTML');
+=======
+    expect(() => (gen as any).extractHTML('This is just plain text, not HTML at all.')).toThrow('not valid HTML');
+>>>>>>> 317138d6 (Strip partial markdown fences from generated HTML before saving artifacts)
   });
 
   it('validateOutput rejects code without DOCTYPE or html tags', async () => {
     const gen = new HTMLWebGenerator();
+<<<<<<< HEAD
     const llmClient = (gen as any).llm;
     llmClient.generateWithToolLoop.mockImplementation(async () => ({
       content: '```html\n<p>Just a paragraph</p>\n```',
@@ -106,6 +122,10 @@ describe('HTMLWebGenerator', () => {
       success: true,
     }));
     await expect(gen.generate('paragraph')).rejects.toThrow('not valid HTML');
+=======
+    expect((gen as any).extractHTML('```html\n<p>Just a paragraph</p>\n```')).toBe('<p>Just a paragraph</p>');
+    expect(gen.validateOutput('<p>Just a paragraph</p>').valid).toBe(false);
+>>>>>>> 317138d6 (Strip partial markdown fences from generated HTML before saving artifacts)
   });
 
   it('validateOutput accepts code with DOCTYPE', async () => {

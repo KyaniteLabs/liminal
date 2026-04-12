@@ -10,16 +10,15 @@ permissions:
   pull-requests: write
   issues: write
 
+concurrency:
+  group: liminal-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   review:
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS, ARM64, light]
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
       - name: PR Review Summary
         run: |
           echo "PR Review check — automated review not yet implemented."

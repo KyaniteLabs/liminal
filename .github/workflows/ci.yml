@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: liminal-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build-and-test:
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS, ARM64, heavy]
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Verify pnpm
@@ -89,7 +94,8 @@ jobs:
 
   slow-browser-and-e2e:
     if: github.event_name != 'pull_request'
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS, ARM64, browser]
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - name: Verify pnpm

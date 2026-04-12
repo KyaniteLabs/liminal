@@ -5,18 +5,18 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: liminal-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate-docs:
-    runs-on: self-hosted
+    runs-on: [self-hosted, macOS, ARM64, light]
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      - name: Verify pnpm
-        run: pnpm --version
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - run: pnpm install
-
-      # Version Consistency Check
       - name: Check Version Consistency
         run: node -e "const pkg = require('./package.json'); console.log('Package version:', pkg.version); console.log('OK');"

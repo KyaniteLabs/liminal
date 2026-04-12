@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-11  
-**Status:** 330+ commits, forensic audit fixes complete  
-**Branch:** fix/bubbletea-operator-surface
+**Date:** 2026-04-12
+**Status:** 330+ commits, bounded-loop rescue branch prepared
+**Branch:** rescue/pr139-bounded-loop
 
 ---
 
@@ -18,6 +18,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **Prompt surfaces audited** for contradiction, token efficiency, and framework accuracy
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
+- **Bounded-loop runtime packets** with explicit focus, verification intent, and resumable no-change classification
 - **Worktree Isolation** - Multi-agent development workflow
 
 ---

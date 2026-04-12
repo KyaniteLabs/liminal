@@ -30,6 +30,15 @@ export class ThreeGenerator extends TierBasedGenerator {
       };
     }
 
+    // Reject nested HTML documents inside helper script blocks; these create
+    // malformed wrapper-on-wrapper artifacts instead of a single runnable scene.
+    if (/<script[\s\S]*?<!DOCTYPE\s+html/i.test(code) || /<script[\s\S]*?<html[\s>]/i.test(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output must not embed a second HTML document inside a <script> block',
+      };
+    }
+
     return { valid: true };
   }
 

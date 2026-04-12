@@ -12,6 +12,7 @@ CONSTRAINTS:
 - CRITICAL: Output ONLY the HTML file - NO markdown fences, NO code blocks
 - CRITICAL: DO NOT include any explanatory text, reasoning, or commentary before or within the code
 - CRITICAL: Start the HTML directly with <!DOCTYPE html>
+- CRITICAL: Never place a second <!DOCTYPE html> or <html> document inside a <script> tag
 - DO NOT use THREE.Geometry (deprecated since r125) — use BufferGeometry
 - DO NOT mix import styles (use global THREE from CDN, NOT ES modules)
 - DO NOT use MeshBasicMaterial for main objects — use MeshStandardMaterial or MeshPhysicalMaterial

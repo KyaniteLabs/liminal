@@ -46,13 +46,15 @@ function getCode(fileName) {
   return null;
 }
 
-// Determine domain from filename
+// Determine domain from filename.
+// Keep historical file names like `dogfood-remotion-title`, but evaluate them
+// using the active Revideo domain hint.
 function getDomain(fileName) {
   if (fileName.includes('shader')) return 'glsl';
   if (fileName.includes('three')) return 'three';
   if (fileName.includes('hydra')) return 'hydra';
   if (fileName.includes('strudel') || fileName.includes('music')) return 'music';
-  if (fileName.includes('remotion')) return 'remotion';
+  if (fileName.includes('remotion')) return 'revideo';
   return 'p5';
 }
 

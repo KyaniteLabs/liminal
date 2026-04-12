@@ -135,9 +135,9 @@
                         <td>User-editable personality via SOUL.md</td>
                     </tr>
                     <tr>
-                        <td><strong>Hybrid TUI</strong></td>
+                        <td><strong>Bubble Tea Operator TUI</strong></td>
                         <td><span class="badge badge-success">✅ Active</span></td>
-                        <td>Terminal + browser preview</td>
+                        <td>Tools-first coding/operator harness with TS bridge + Bubble Tea shell</td>
                     </tr>
                 </tbody>
             </table>
@@ -148,16 +148,18 @@
             <pre><code># Install dependencies
 pnpm install
 
-# Start the TUI with natural language interface
+# Start the Bubble Tea coding/operator harness
 liminal tui
 
 # Or use the alias
 lim tui
 
-# Inside the TUI, just type naturally:
+# Bubble Tea is tools-first by default for non-creative input:
 # → "Fix the Tone.js validation"
-# → "What's the status?"
-# → "Tell me about p5.js"</code></pre>
+# → "Debug the harness startup flow"
+# → "Reduce wasted startup steps"
+#
+# Use creative-generation language only when you actually want art/music/code generation.</code></pre>
         </section>
 
         <section class="section">
@@ -166,7 +168,8 @@ lim tui
 ├── src/
 │   ├── core/           # RalphLoop, GenerationOrchestrator
 │   ├── harness/        # Meta-Harness, Agents, Tools
-│   ├── tui/            # NaturalInterface, HarnessTUI
+│   ├── tui/            # Legacy/secondary TUI surfaces
+│   ├── tui-bridge/     # Bubble Tea bridge + tools-first operator routing
 │   ├── llm/            # LLMClient, providers
 │   ├── generators/     # p5, Three.js, GLSL, etc.
 │   └── prompts/        # System prompts, templates

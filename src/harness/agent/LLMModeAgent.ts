@@ -441,6 +441,7 @@ When the task is complete and build passes, respond with tool "complete".`;
       }
 
       // Loop ended without explicit completion via 'complete' tool.
+<<<<<<< HEAD
       // Bubble Tea inspection-only runs should not surface as generic failures
       // when no mutations were made, regardless of whether the loop ended via
       // parse failure or simple step exhaustion.
@@ -449,6 +450,11 @@ When the task is complete and build passes, respond with tool "complete".`;
         session.backups.length === 0 &&
         this.hasMeaningfulInspection(session);
       if (tuiInspectionOnly) {
+=======
+      // Only bounded runs that actually completed meaningful successful
+      // inspection work should classify as bounded-no-change successes.
+      if (this.shouldClassifyAsBoundedNoChangeSuccess(session)) {
+>>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
         Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
         await clearRunState();
         session.status = Status.SUCCESS;
@@ -488,6 +494,22 @@ When the task is complete and build passes, respond with tool "complete".`;
           session.status = Status.ROLLED_BACK;
         }
       } else if (session.backups.length === 0) {
+        if (this.isBoundedInspectionRun(session)) {
+          Logger.error('LLMModeAgent', `Bounded run ended before meaningful successful inspection after ${session.stepCount} steps`);
+          session.status = Status.FAILED;
+          session.endTime = new Date().toISOString();
+
+          eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
+            process: 'agent-task',
+            success: false,
+            reason: 'Bounded run ended before meaningful successful inspection',
+            iterations: session.stepCount,
+            durationMs: Date.now() - new Date(session.startTime).getTime(),
+          });
+
+          return session;
+        }
+
         // Natural loop completion with no mutations - inspection-only success
         Logger.debug('LLMModeAgent', `Inspection complete after ${session.stepCount} steps, no mutations needed`);
         await clearRunState();
@@ -929,12 +951,44 @@ When the task is complete and build passes, respond with tool "complete".`;
     return tool === 'runBuild' || tool === 'runTests' || tool === 'typeCheck';
   }
 
+<<<<<<< HEAD
   private isInspectionTool(tool: string): boolean {
     return tool === 'readFile' || tool === 'search' || tool === 'listDir' || tool === 'gitStatus' || tool === 'lsp' || tool === 'astValidate' || tool === 'importGuard';
   }
 
   private hasMeaningfulInspection(session: LLMSession): boolean {
     return session.successfulInspectionCalls > 0;
+=======
+  private isBoundedInspectionRun(session: LLMSession): boolean {
+    return session.task.id.startsWith('tui-self-') ||
+      session.task.completionPolicy === 'stop_after_verification';
+  }
+
+  private isMeaningfulInspectionTool(tool: string): boolean {
+    return tool === 'readFile' ||
+      tool === 'listDir' ||
+      tool === 'search' ||
+      tool === 'gitStatus' ||
+      tool === 'lsp' ||
+      tool === 'astValidate' ||
+      tool === 'importGuard';
+  }
+
+  private hasMeaningfulSuccessfulInspection(session: LLMSession): boolean {
+    for (let i = 0; i < session.messages.length - 1; i++) {
+      const message = session.messages[i];
+      const next = session.messages[i + 1];
+      if (!message.toolCall || !this.isMeaningfulInspectionTool(message.toolCall.tool)) continue;
+      if (next.toolResult?.success) return true;
+    }
+    return false;
+  }
+
+  private shouldClassifyAsBoundedNoChangeSuccess(session: LLMSession): boolean {
+    if (!this.isBoundedInspectionRun(session)) return false;
+    if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
+    return this.hasMeaningfulSuccessfulInspection(session);
+>>>>>>> 5e10b72f (Prevent startup failures from masquerading as bounded no-change successes)
   }
 
   private shouldStopAfterSuccessfulVerification(session: LLMSession, tool: string, result: ToolResult): boolean {
@@ -951,16 +1005,16 @@ When the task is complete and build passes, respond with tool "complete".`;
    * more than 50% of the step budget on reconnaissance.
    */
   private shouldStopForBoundedInspection(session: LLMSession, maxSteps: number): boolean {
-    // Only applies to bounded runs (tui-self-* prefix or explicit bounded policy)
-    const isBoundedRun = session.task.id.startsWith('tui-self-') ||
-      session.task.completionPolicy === 'stop_after_verification';
-    if (!isBoundedRun) return false;
+    if (!this.isBoundedInspectionRun(session)) return false;
 
     // Must have spent more than half the budget
     if (session.stepCount <= Math.ceil(maxSteps / 2)) return false;
 
     // Must have no mutations at all
     if (session.mutatedFiles.size > 0 || session.backups.length > 0) return false;
+
+    // Must have already completed meaningful successful inspection work
+    if (!this.hasMeaningfulSuccessfulInspection(session)) return false;
 
     return true;
   }

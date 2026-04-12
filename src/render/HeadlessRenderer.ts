@@ -147,15 +147,17 @@ export class HeadlessRenderer {
    * Initialize the browser (lazy initialization)
    */
   async initialize(): Promise<void> {
-    if (this.browser) return;
+    if (this.browser && this.context) return;
 
     try {
-      const executablePath = HeadlessRenderer.resolveChromiumExecutable();
-      this.browser = await chromium.launch({
-        headless: true,
-        executablePath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      });
+      if (!this.browser) {
+        const executablePath = HeadlessRenderer.resolveChromiumExecutable();
+        this.browser = await chromium.launch({
+          headless: true,
+          executablePath,
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        });
+      }
 
       this.context = await this.browser.newContext({
         viewport: { width: 1280, height: 720 },

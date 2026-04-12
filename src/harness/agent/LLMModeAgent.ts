@@ -623,6 +623,10 @@ When the task is complete and build passes, respond with tool "complete".`;
         temperature: 0.2, // Low temperature for deterministic tool calls
       });
 
+      if (response.success === false) {
+        throw new Error(response.error || 'LLM call failed before producing a response');
+      }
+
       return response.text;
     });
 
@@ -659,6 +663,9 @@ When the task is complete and build passes, respond with tool "complete".`;
             maxTokens: 2000,
             temperature: 0.2,
           });
+          if (response.success === false) {
+            throw new Error(response.error || 'LLM call failed before producing a response');
+          }
           return response.text;
         });
         if (retryResult.result) {

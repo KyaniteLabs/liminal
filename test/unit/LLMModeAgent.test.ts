@@ -267,6 +267,32 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.FAILED);
   });
 
+  it('preserves provider error details when a planning call returns unsuccessful', async () => {
+    vi.mocked(rateLimiter.execute).mockImplementationOnce(async (_op: string, fn: () => Promise<any>) => {
+      try {
+        return { result: await fn() };
+      } catch (error) {
+        return { error: String(error) };
+      }
+    });
+    mockComplete.mockResolvedValue({
+      text: '',
+      success: false,
+      error: 'OpenRouter API error 400: response_format not supported for this route',
+    });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-provider-error',
+      title: 'Provider error',
+      description: 'desc',
+      approved: true,
+    });
+
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.lastPlanError).toContain('OpenRouter API error 400');
+  });
+
   it('executeTask sets FAILED when max steps reached', async () => {
     // Each call to getLLMPlan fails to parse, so stepCount only increments once
     // before the loop breaks (getLLMPlan returns null)

@@ -652,6 +652,7 @@ Failures:   0 critical
 - Self-improvement runtime prep now injects a deterministic working set and file hint for bounded runs so the model starts from the relevant runtime/checkpoint files instead of rediscovering the repo each turn
 - Prepared self-improvement task packets now carry a bounded working set plus a domain tag into LLMModeAgent so the runtime can preserve structured startup context instead of only a loose file hint
 - Bounded runs now pre-read their working-set files before the LLM loop starts, turning startup localization from prompt-only guidance into deterministic runtime behavior
+- Bounded runs now cap preflight file-content injection to deterministic excerpts before the first planner call, preventing Bubble Tea self-improvement from stalling at step 1 on oversized startup context while preserving the bounded working-set hint
 - Resume fingerprint validation now rejects a dirty working tree when the suspended run was captured from a clean workspace, tightening fail-closed resume safety
 - First shared-runtime extraction slice landed: Bubble Tea bridge code now delegates self-improvement task policy (task id/title/max steps/completion policy) to a tiny headless runtime-core facade instead of owning those semantics inline
 - The headless SelfImprovementRuntime boundary now has repeatability proof coverage: the same checkpoint/resume description produces the same bounded task packet and working-set mapping on every preparation, with only the generated task id changing

@@ -735,6 +735,32 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('truncates bounded preflight file contents before the first planning call', async () => {
+    const hugeContent = `header\\n${'A'.repeat(1400)}TAIL-SHOULD-NOT-APPEAR`;
+    mockReadFile.execute.mockResolvedValue({ success: true, data: { content: hugeContent } });
+    queuePlans('{"tool":"complete","params":{},"thought":"bounded excerpt is enough to start","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-preflight-truncation',
+      title: 'Bounded preflight truncation',
+      description: 'Keep the first planning call bounded even when preflight files are large',
+      fileHint: 'src/runtime-core/SelfImprovementRuntime.ts',
+      workingSet: [
+        'src/runtime-core/SelfImprovementRuntime.ts',
+        'src/harness/agent/LLMModeAgent.ts',
+      ],
+      completionPolicy: 'stop_after_verification',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    const firstPrompt = mockComplete.mock.calls[0][0].prompt;
+    expect(firstPrompt).toContain('... [truncated preflight excerpt; call readFile for full contents]');
+    expect(firstPrompt).not.toContain('TAIL-SHOULD-NOT-APPEAR');
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   // ── Report generation ──────────────────────────────────────────────
   it('generateReport includes session data after tasks', async () => {
     mockComplete.mockResolvedValue({ text: 'not json' });

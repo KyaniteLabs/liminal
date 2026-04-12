@@ -126,6 +126,7 @@ export interface LLMSession {
  * 5. Repeat until success or max steps
  */
 export class LLMModeAgent {
+  private static readonly PREFLIGHT_EXCERPT_LIMIT = 1200;
   private llmClient: LLMClient;
   private sessions: Map<string, LLMSession> = new Map();
   private currentSession?: LLMSession;
@@ -258,7 +259,7 @@ When the task is complete and build passes, respond with tool "complete".`;
                 : typeof fileResult.data === 'string'
                   ? fileResult.data
                   : JSON.stringify(fileResult.data);
-              preflightContents.push(`=== ${filePath} ===\n${content}`);
+              preflightContents.push(`=== ${filePath} ===\n${this.formatPreflightExcerpt(content)}`);
             } else {
               Logger.warn('LLMModeAgent', `Preflight read failed for ${filePath}: ${fileResult.error || 'unknown error'}`);
             }
@@ -807,6 +808,11 @@ When the task is complete and build passes, respond with tool "complete".`;
       }
     }
     return false;
+  }
+
+  private formatPreflightExcerpt(content: string): string {
+    if (content.length <= LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT) return content;
+    return `${content.slice(0, LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT)}\n... [truncated preflight excerpt; call readFile for full contents]`;
   }
 
   /**

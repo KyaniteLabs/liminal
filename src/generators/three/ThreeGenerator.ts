@@ -38,6 +38,11 @@ export class ThreeGenerator extends TierBasedGenerator {
    * Injects Three.js CDN and creates a self-contained scene harness.
    */
   wrapForGallery(code: string): string {
+    const trimmed = code.trim();
+    if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) {
+      return code;
+    }
+
     return `<!DOCTYPE html>
 <html>
 <head>

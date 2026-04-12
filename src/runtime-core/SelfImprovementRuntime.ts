@@ -64,7 +64,8 @@ export class LLMModeSelfImprovementRuntime implements SelfImprovementRuntime {
     const { llm, description } = input;
     const taskPacket = buildTaskPacket(description);
     const modelName = llm.getConfig().model || 'unknown';
-    const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
+    const _maxStepsEnv = parseInt(process.env.LIMINAL_TUI_AGENT_MAX_STEPS ?? '', 10);
+    const maxSteps = Number.isFinite(_maxStepsEnv) && _maxStepsEnv > 0 ? _maxStepsEnv : 20;
     const taskId = `tui-self-${Date.now()}`;
     const task: LLMTask = {
       id: taskId,

@@ -361,4 +361,28 @@ describe('LLMModeSelfImprovementRuntime', () => {
       }
     }
   });
+
+  it('falls back to the default max steps when the env override is invalid', () => {
+    const runtime = new LLMModeSelfImprovementRuntime();
+    const llm = { getConfig: vi.fn(() => ({ model: 'glm-5.1' })) } as any;
+
+    const originalMaxSteps = process.env.LIMINAL_TUI_AGENT_MAX_STEPS;
+    process.env.LIMINAL_TUI_AGENT_MAX_STEPS = 'not-a-number';
+
+    try {
+      const prepared = runtime.prepare({
+        llm,
+        description: 'Improve Bubble Tea self-improvement startup and convergence',
+      });
+
+      expect(prepared.maxSteps).toBe(20);
+      expect(prepared.task.maxSteps).toBe(20);
+    } finally {
+      if (originalMaxSteps === undefined) {
+        delete process.env.LIMINAL_TUI_AGENT_MAX_STEPS;
+      } else {
+        process.env.LIMINAL_TUI_AGENT_MAX_STEPS = originalMaxSteps;
+      }
+    }
+  });
 });

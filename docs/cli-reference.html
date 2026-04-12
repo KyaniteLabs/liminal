@@ -38,7 +38,7 @@
             <h2 class="section-title">🚀 Commands</h2>
             
             <h3 style="color: var(--accent-cyan);">liminal tui</h3>
-            <p>Launch the interactive Bubble Tea operator TUI via the GLM-backed bridge bootstrap script.</p>
+            <p>Launch the interactive Bubble Tea operator TUI via the shared TypeScript bridge bootstrap script. Bubble Tea is now a <strong>tools-first coding/operator harness</strong> by default: non-creative input routes into the tool-using harness lane unless you are explicitly doing creative generation or action review.</p>
             <pre><code>$ liminal tui
 
 # Or use the shorthand alias:
@@ -61,7 +61,7 @@ $ liminal --prompt "Generate a shader with Perlin noise" --domain glsl</code></p
 # Server starts on http://localhost:3000</code></pre>
 
             <h3 style="color: var(--accent-purple); margin-top: 2rem;">Bubble Tea TUI (Go)</h3>
-            <p>Next-generation operator-grade terminal UI. The recommended entrypoint is <code>pnpm tui</code>, which builds the repo, starts the TS bridge, and launches Bubble Tea.</p>
+            <p>Next-generation operator-grade terminal UI. The recommended entrypoint is <code>pnpm tui</code>, which builds the repo, starts the TS bridge, and launches Bubble Tea with the currently active provider/model from <code>~/.liminal/config.json</code> or <code>LIMINAL_LLM_*</code> overrides.</p>
             <pre><code>$ cd bubbletea && go run .
 
 # Or with a custom bridge URL:
@@ -102,22 +102,32 @@ $ LIMINAL_BRIDGE_URL=http://localhost:3000 go run .</code></pre>
                 <tbody>
                     <tr>
                         <td><code>LIMINAL_LLM_PROVIDER</code></td>
-                        <td>LLM provider (lmstudio, ollama, openai)</td>
-                        <td>lmstudio</td>
+                        <td>LLM provider (lmstudio, ollama, openrouter, glm, custom)</td>
+                        <td>from <code>~/.liminal/config.json</code></td>
                     </tr>
                     <tr>
                         <td><code>LIMINAL_LLM_BASE_URL</code></td>
                         <td>Base URL for LLM API</td>
-                        <td>http://localhost:1234/v1</td>
+                        <td>from active provider config</td>
                     </tr>
                     <tr>
                         <td><code>LIMINAL_LLM_MODEL</code></td>
                         <td>Model name to use</td>
-                        <td>qwen2.5-coder-7b-instruct</td>
+                        <td>from active provider config</td>
                     </tr>
                     <tr>
                         <td><code>OPENAI_API_KEY</code></td>
-                        <td>OpenAI API key (if using OpenAI)</td>
+                        <td>OpenAI-compatible API key (used by custom/OpenAI endpoints)</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><code>OPENROUTER_API_KEY</code></td>
+                        <td>OpenRouter API key</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td><code>GLM_API_KEY</code></td>
+                        <td>GLM API key</td>
                         <td>-</td>
                     </tr>
                     <tr>
@@ -128,21 +138,21 @@ $ LIMINAL_BRIDGE_URL=http://localhost:3000 go run .</code></pre>
                 </tbody>
             </table>
 
-            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">Example .env</h3>
-            <pre><code># LM Studio (default)
-LIMINAL_LLM_PROVIDER=lmstudio
-LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
-LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
+            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">Example provider overrides</h3>
+            <pre><code># OpenRouter from ~/.liminal/config.json
+LIMINAL_LLM_PROVIDER=openrouter
+LIMINAL_LLM_BASE_URL=https://openrouter.ai/api/v1
+LIMINAL_LLM_MODEL=anthropic/claude-sonnet-4-6
+OPENROUTER_API_KEY=sk-or-...
 
-# Or Ollama
-LIMINAL_LLM_PROVIDER=ollama
-LIMINAL_LLM_BASE_URL=http://localhost:11434
-LIMINAL_LLM_MODEL=codellama:7b
+# One-off OpenRouter model swap while keeping the same provider
+LIMINAL_LLM_MODEL=google/gemini-3.1-pro-preview npm run tui
 
-# Or OpenAI
-LIMINAL_LLM_PROVIDER=openai
-LIMINAL_LLM_MODEL=gpt-4
-OPENAI_API_KEY=sk-...</code></pre>
+# Explicit GLM
+LIMINAL_LLM_PROVIDER=glm
+LIMINAL_LLM_BASE_URL=https://api.z.ai/api/coding/paas/v4
+LIMINAL_LLM_MODEL=glm-5.1
+GLM_API_KEY=...</code></pre>
         </section>
 
         <section class="section">

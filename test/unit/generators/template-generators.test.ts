@@ -191,6 +191,20 @@ describe('StrudelGenerator', () => {
       const sanitized = (gen as any).sanitizeCode(code);
       expect(sanitized).toContain('stack');
     });
+
+    it('extracts Strudel pattern from HTML wrapper code containers', () => {
+      const gen = new StrudelGenerator();
+      const code = `<!DOCTYPE html>
+<html><body>
+  <div class="code">stack(   s("bd*4")</div>
+  <script>function openStrudel(){}</script>
+</body></html>`;
+      const sanitized = (gen as any).sanitizeCode(code);
+      expect(sanitized).toContain('stack(');
+      expect(sanitized).toContain('s("bd*4")');
+      expect(sanitized).not.toContain('openStrudel');
+      expect(sanitized).not.toContain('<html>');
+    });
   });
 });
 
@@ -207,17 +221,16 @@ describe('ASCIIArtGenerator', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('rejects non-ASCII characters', () => {
+    it('accepts plain ASCII text characters allowed by the shared validator', () => {
       const gen = new ASCIIArtGenerator();
       const result = gen.validateOutput('Hello World!');
-      expect(result.valid).toBe(false);
-      expect(result.error).toContain('invalid characters');
+      expect(result.valid).toBe(true);
     });
 
-    it('accepts empty string as valid (spaces only)', () => {
+    it('rejects empty string / whitespace-only output', () => {
       const gen = new ASCIIArtGenerator();
       const result = gen.validateOutput('   ');
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
     });
 
     it('accepts special allowed characters like .-~+=*#%@', () => {

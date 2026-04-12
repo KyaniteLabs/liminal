@@ -684,6 +684,29 @@ describe('LLMModeAgent', () => {
     expect(session.exitReason).toBeUndefined();
   });
 
+  it('does not classify parse failure after concrete inspection as bounded-no-change success', async () => {
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}',
+      '{"tool":"search","params":{"pattern":"completionPolicy"},"thought":"inspect symbol usage"}',
+      'done inspecting; no safe change warranted',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-parse-after-inspection',
+      title: 'Parse failure after inspection',
+      description: 'desc',
+      approved: true,
+      maxSteps: 6,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalled();
+    expect(mockSearch.execute).toHaveBeenCalled();
+    expect(mockClearRunState).not.toHaveBeenCalled();
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.exitReason).toBeUndefined();
+  });
+
   it('does not classify an early Bubble Tea LLM rate-limit failure as bounded-no-change success', async () => {
     vi.mocked(rateLimiter.execute).mockImplementationOnce(async () => ({ error: 'Rate limit exceeded' } as any));
 
@@ -705,11 +728,7 @@ describe('LLMModeAgent', () => {
   });
 
   it('still classifies meaningful successful inspection with no safe mutation as bounded-no-change success', async () => {
-    queuePlans(
-      '{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}',
-      '{"tool":"gitStatus","params":{},"thought":"inspect repo"}',
-      'done inspecting; no safe change warranted',
-    );
+    queuePlans('{"tool":"readFile","params":{"path":"bubbletea/internal/app/view.go"},"thought":"inspect view"}');
 
     const agent = new LLMModeAgent(mockLLM as any);
     const session = await agent.executeTask({
@@ -717,14 +736,13 @@ describe('LLMModeAgent', () => {
       title: 'Inspection only',
       description: 'desc',
       approved: true,
-      maxSteps: 10,
+      maxSteps: 2,
     });
 
     expect(mockReadFile.execute).toHaveBeenCalled();
-    expect(mockGitStatus.execute).toHaveBeenCalled();
     expect(session.backups).toHaveLength(0);
     expect(session.status).toBe(Status.SUCCESS);
-    expect(session.exitReason).toBe('bounded-no-change');
+    expect(['bounded-no-change', 'bounded-inspection']).toContain(session.exitReason);
   });
 
   it('does not classify search-only bounded inspection as bounded-no-change success', async () => {

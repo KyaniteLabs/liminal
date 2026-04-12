@@ -494,7 +494,7 @@ When the task is complete and build passes, respond with tool "complete".`;
       // Loop ended without explicit completion via 'complete' tool.
       // Only bounded runs that actually completed meaningful successful
       // inspection work should classify as bounded-no-change successes.
-      if (this.shouldClassifyAsBoundedNoChangeSuccess(session)) {
+      if (!parseFailure && this.shouldClassifyAsBoundedNoChangeSuccess(session)) {
         Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
         await clearRunState();
         session.status = Status.SUCCESS;

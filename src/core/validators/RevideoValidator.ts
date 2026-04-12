@@ -1,9 +1,10 @@
 /**
  * RevideoValidator - Revideo video composition validation logic
  *
- * Revideo v0.12+ is a programmatic video framework based on Remotion but uses
- * DIFFERENT APIs: @revideo/core, makeScene(), useTime(), createSignal()
- * NOT Remotion's useCurrentFrame, AbsoluteFill, Composition
+ * Revideo is the active programmatic video framework. The supported contract is
+ * makeScene(name, function* (view) { ... }) with @revideo/core and @revideo/2d
+ * scene components. It must not use Remotion, @revideo/react, React.FC, or
+ * Remotion's useCurrentFrame/AbsoluteFill/Composition API.
  */
 
 export interface RevideoValidationResult {
@@ -13,9 +14,9 @@ export interface RevideoValidationResult {
 
 export class RevideoValidator {
   private static readonly VALID_REVIDEO_IMPORTS = new Set([
-    'makeScene', 'useTime', 'useFrame', 'createSignal', 'createRef',
+    'makeScene', 'useTime', 'createSignal', 'createRef',
     'interpolate', 'spring', 'Easing', 'Audio', 'Img', 'Video',
-    'OffthreadVideo', 'staticFile', 'AbsoluteFill', 'Series', 'Sequence'
+    'OffthreadVideo', 'staticFile'
   ]);
 
   static validate(code: string): RevideoValidationResult {
@@ -49,32 +50,44 @@ export class RevideoValidator {
       errors.push('Revideo composition must export a makeScene function');
     }
 
+    if (/makeScene\s*\(\s*\{/.test(code)) {
+      errors.push('Revideo makeScene must use makeScene("SceneName", function* (view) { ... }), not makeScene({ render: ... })');
+    }
+
+    if (!/makeScene\s*\(\s*['"][^'"]+['"]\s*,\s*function\*/.test(code)) {
+      errors.push('Revideo composition must use makeScene("SceneName", function* (view) { ... })');
+    }
+
     return errors;
   }
 
   private static validateImports(code: string): string[] {
     const errors: string[] = [];
+    if (/@revideo\/react/.test(code)) {
+      errors.push('Revideo code must not import @revideo/react; use @revideo/core and @revideo/2d');
+    }
+    if (/\bremotion\b|from\s+['"]remotion['"]/.test(code)) {
+      errors.push('Revideo code must not import or reference Remotion');
+    }
+    if (/\b(useFrame|useCurrentFrame|React\.FC)\b/.test(code)) {
+      errors.push('Revideo code must not use React/Remotion hooks like useFrame/useCurrentFrame or React.FC');
+    }
     const importMatches = code.matchAll(/import\s+.*?\s+from\s+['"]@revideo\/core['"]/g);
     for (const match of importMatches) {
       const namedImports = match[0].match(/\{([^}]+)\}/);
       if (namedImports) {
         const imports = namedImports[1].split(',').map(s => s.trim().split(/\s+as\s+/)[0].trim());
         for (const imp of imports) {
-          if (!this.VALID_REVIDEO_IMPORTS.has(imp) && !this.isReactImport(imp)) {
+          if (!this.VALID_REVIDEO_IMPORTS.has(imp)) {
             errors.push(`Unknown Revideo import: ${imp}`);
           }
         }
       }
     }
+    if (!/@revideo\/2d/.test(code)) {
+      errors.push('Revideo scene should import visual components such as Txt/Rect from @revideo/2d');
+    }
     return errors;
-  }
-
-  private static isReactImport(name: string): boolean {
-    const reactImports = new Set([
-      'React', 'useState', 'useEffect', 'useCallback', 'useMemo', 'useRef',
-      'useContext', 'useReducer', 'Fragment', 'createElement'
-    ]);
-    return reactImports.has(name);
   }
 
   private static validateSemantics(code: string): string[] {
@@ -83,6 +96,8 @@ export class RevideoValidator {
     const hasMakeScene = /makeScene/.test(code);
     const hasSignalOrRef = /createSignal|createRef/.test(code);
     const hasJSX = /<[A-Z][A-Za-z0-9]*/.test(code) || /<[a-z]+/.test(code);
+    const hasViewAdd = /\bview\.add\s*\(/.test(code);
+    const hasYield = /\byield\*/.test(code);
 
     if (!hasMakeScene) {
       errors.push('Revideo code must define a makeScene function');
@@ -92,11 +107,17 @@ export class RevideoValidator {
       errors.push('Revideo composition should use createSignal, createRef, or contain JSX');
     }
 
-    const hasFunctionExport = /export\s+(const\s+\w+\s*=|function\s+\w+)/.test(code) ||
-                              /makeScene\s*[:=]/.test(code);
+    if (!hasViewAdd) {
+      errors.push('Revideo scene should add elements with view.add(...)');
+    }
 
-    if (!hasFunctionExport) {
-      errors.push('Revideo code should export a named function (e.g., export const makeScene = ...)');
+    if (!hasYield) {
+      errors.push('Revideo animation should use generator/yield* animation steps');
+    }
+
+    const hasDefaultMakeSceneExport = /export\s+default\s+makeScene\s*\(/.test(code);
+    if (!hasDefaultMakeSceneExport) {
+      errors.push('Revideo code should export default makeScene(...)');
     }
 
     return errors;

@@ -759,8 +759,8 @@ else if (cmd === 'bridge') {
     const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
     const bridge = new TuiBridgeService();
 
-    const llm = new LLMClient({ role: 'generator' });
     await LLMClient.loadRoles();
+    const llm = new LLMClient({ role: 'generator' });
     const llmModel = process.env.LIMINAL_LLM_MODEL || 'auto';
     const llmProvider = process.env.LIMINAL_LLM_BASE_URL || 'config';
 
@@ -795,8 +795,8 @@ else if (cmd === 'bubbletea') {
   const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
   const bridge = new TuiBridgeService();
 
-  const llm = new LLMClient({ role: 'generator' });
   await LLMClient.loadRoles();
+  const llm = new LLMClient({ role: 'generator' });
 
   const server = new TuiBridgeServer(bridge, { port, llm });
   await server.start();

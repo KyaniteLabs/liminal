@@ -645,6 +645,7 @@ Failures:   0 critical
 - Resume-safe self-improvement now also proves live session restoration: resumed runs hydrate explored paths, mutated files, last verification state, and remaining-step continuity from persisted run state before continuing
 - Bounded self-improvement runs now auto-stop after successful post-mutation verification instead of spending leftover budget exploring unrelated follow-up work
 - Bounded self-improvement runs also terminate reconnaissance-only sessions once they spend over half the budget without any mutation, preventing open-ended pre-fix drift
+- Bounded run outcomes now carry deterministic exit reasons (`bounded-inspection`, `bounded-no-change`) so reports and operator summaries can distinguish why a no-change run ended
 - Self-improvement runtime prep now injects a deterministic working set and file hint for bounded runs so the model starts from the relevant runtime/checkpoint files instead of rediscovering the repo each turn
 - Resume fingerprint validation now rejects a dirty working tree when the suspended run was captured from a clean workspace, tightening fail-closed resume safety
 - First shared-runtime extraction slice landed: Bubble Tea bridge code now delegates self-improvement task policy (task id/title/max steps/completion policy) to a tiny headless runtime-core facade instead of owning those semantics inline

@@ -91,6 +91,8 @@ export interface LLMSession {
   mutatedFiles: Set<string>;
   /** Last verification result (build/test) for resume context */
   lastVerification?: import('../RunStateStore.js').VerificationState;
+  /** Deterministic exit reason for bounded runs (e.g. 'bounded-inspection', 'bounded-no-change') */
+  exitReason?: string;
 }
 
 /**
@@ -241,11 +243,12 @@ When the task is complete and build passes, respond with tool "complete".`;
           Logger.info('LLMModeAgent', `Bounded-inspection guardrail triggered at step ${session.stepCount}/${maxSteps} - no mutations after 50% budget`);
           await clearRunState();
           session.status = Status.SUCCESS;
+          session.exitReason = 'bounded-inspection';
           session.endTime = new Date().toISOString();
           eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
             process: 'agent-task',
             success: true,
-            reason: 'Bounded inspection complete - no mutation warranted within budget',
+            reason: 'bounded-inspection: no mutation warranted within budget',
             iterations: session.stepCount,
             durationMs: Date.now() - new Date(session.startTime).getTime(),
           });
@@ -388,12 +391,13 @@ When the task is complete and build passes, respond with tool "complete".`;
         Logger.debug('LLMModeAgent', `Treating TUI inspection-only run as no-change success after ${session.stepCount} steps`);
         await clearRunState();
         session.status = Status.SUCCESS;
+        session.exitReason = 'bounded-no-change';
         session.endTime = new Date().toISOString();
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: true,
-          reason: 'Inspection complete, no mutations needed',
+          reason: 'bounded-no-change: inspection complete, no mutations needed',
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
@@ -427,12 +431,13 @@ When the task is complete and build passes, respond with tool "complete".`;
         Logger.debug('LLMModeAgent', `Inspection complete after ${session.stepCount} steps, no mutations needed`);
         await clearRunState();
         session.status = Status.SUCCESS;
+        session.exitReason = 'bounded-no-change';
         session.endTime = new Date().toISOString();
 
         eventBus.emit(EventTypes.PROCESS_END, 'LLMModeAgent', {
           process: 'agent-task',
           success: true,
-          reason: 'Inspection complete, no mutations needed',
+          reason: 'bounded-no-change: inspection complete, no mutations needed',
           iterations: session.stepCount,
           durationMs: Date.now() - new Date(session.startTime).getTime(),
         });
@@ -1010,7 +1015,7 @@ Generated: ${new Date().toISOString()}
 ## Sessions
 ${sessions.map(s => `
 ### ${s.task.id}: ${s.task.title}
-- Status: ${s.status}
+- Status: ${s.status}${s.exitReason ? ` (${s.exitReason})` : ''}
 - Steps: ${s.stepCount}
 - LLM Calls: ${s.messages.filter(m => m.role === 'assistant').length}
 - Backups: ${s.backups.length}

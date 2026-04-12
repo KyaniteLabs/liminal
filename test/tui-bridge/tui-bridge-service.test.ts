@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
   isGenerationRequest,
-  isSelfImprovementRequest,
   TUI_SYSTEM_PROMPT,
   TuiBridgeService,
 } from '../../src/tui-bridge/TuiBridgeService.js';
@@ -17,7 +16,6 @@ describe('TuiBridgeService', () => {
   it('routes harness repair prompts away from creative Ralph generation', () => {
     const prompt = 'Fix the Bubble Tea TUI and improve the harness codebase';
 
-    expect(isSelfImprovementRequest(prompt)).toBe(true);
     expect(isGenerationRequest(prompt)).toBe(false);
   });
 

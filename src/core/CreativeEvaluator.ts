@@ -296,7 +296,15 @@ export class CreativeEvaluator {
     // scoring 0.3-1.0 through the creative/technical heuristics.
     const codeIndicators = /(?:function\s|const\s|let\s|var\s|class\s|import\s|=>|setup\(|draw\(|createElement|\.push\(|\.map\(|\.log\(|console\.|return\s|if\s*\(|for\s*\(|void\s+main|uniform\s|varying\s|attribute\s|gl_Position|gl_FragColor|gl_FragCoord|precision\s|vec[234]\s|mat[234]\s|sampler2D|float\s|ivec[234]|uvec[234]|#define|#ifdef|#endif|#version|out\s+vec|in\s+vec|layout\s*\()/;
     const hasCodeStructure = codeIndicators.test(output);
-    if (!hasCodeStructure && output.length < 500) {
+    const isSpecializedArtifact =
+      this.detectsASCIIUsage(output) ||
+      this.detectsShaderUsage(output) ||
+      this.detectsThreeUsage(output) ||
+      this.detectsHydraUsage(output) ||
+      this.detectsStrudelUsage(output) ||
+      this.detectsHTMLUsage(output) ||
+      this.detectsVideoComponentUsage(output);
+    if (!hasCodeStructure && output.length < 500 && !isSpecializedArtifact) {
       // Short non-code text — likely conversational response, not a creative artifact
       return {
         passed: false,
@@ -1280,24 +1288,26 @@ export class CreativeEvaluator {
 
     // Remove <think> tags for evaluation
     const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const lines = codeOnly.split('\n').map((line) => line.replace(/\s+$/g, '')).filter((line) => line.trim().length > 0);
+    const asciiCharMatches = codeOnly.match(/[\u2580-\u259F█▓▒░@#%*+=\-\\/|_.()<>^]/g) || [];
+    const densityMatches = codeOnly.match(/[█▓▒░@#%*+=-]/g) || [];
+    const hasRawAsciiArt = lines.length >= 4 && asciiCharMatches.length >= 20;
+    const widths = lines.map((line) => line.length).filter((n) => n > 0);
+    const widthSpread = widths.length ? Math.max(...widths) - Math.min(...widths) : 0;
 
     // Technical checks
-    // Has function structure
-    if (/function\s+\w+\s*\(/.test(codeOnly)) technicalScore += 0.2;
-    if (/console\.log|print|process\.stdout\.write/.test(codeOnly)) technicalScore += 0.15;
-    
-    // Has loops for generating patterns
-    if (/\b(for|while)\s*\(/.test(codeOnly)) technicalScore += 0.15;
-    
-    // Has string/array manipulation
-    if (/\.repeat\(|\.join\(|\.map\(/.test(codeOnly)) technicalScore += 0.15;
-    
-    // Basic syntax
-    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.15;
-    
-    // Code length
-    if (codeOnly.length > 100) technicalScore += 0.1;
-    if (codeOnly.length > 300) technicalScore += 0.1;
+    if (hasRawAsciiArt) technicalScore += 0.3;
+    if (lines.length >= 6) technicalScore += 0.15;
+    if (densityMatches.length >= 10) technicalScore += 0.15;
+    if (widthSpread <= 30 && widths.length >= 4) technicalScore += 0.1;
+    // Also support generator-style ASCII code
+    if (/function\s+\w+\s*\(/.test(codeOnly)) technicalScore += 0.15;
+    if (/console\.log|print|process\.stdout\.write/.test(codeOnly)) technicalScore += 0.1;
+    if (/\b(for|while)\s*\(/.test(codeOnly)) technicalScore += 0.1;
+    if (/\.repeat\(|\.join\(|\.map\(/.test(codeOnly)) technicalScore += 0.1;
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.05;
+    if (codeOnly.length > 100) technicalScore += 0.05;
+    if (codeOnly.length > 300) technicalScore += 0.05;
 
     // Creative checks
     // Box-drawing characters
@@ -1312,6 +1322,10 @@ export class CreativeEvaluator {
     if (/Math\.random|random|noise/.test(codeOnly)) creativeScore += 0.15;
     // Complex patterns (nested loops, recursion)
     if ((codeOnly.match(/\b(for|while)\s*\(/g) || []).length >= 2) creativeScore += 0.15;
+    // Structured silhouette / scene composition in raw art
+    if (hasRawAsciiArt && /[\\/|_]/.test(codeOnly)) creativeScore += 0.2;
+    if (hasRawAsciiArt && lines.length >= 8) creativeScore += 0.1;
+    if (hasRawAsciiArt && densityMatches.length >= 25) creativeScore += 0.1;
 
     // Issues
     if (codeOnly.length < 50) issues.push('ASCII code too short');

@@ -184,5 +184,32 @@ export const BrokenComp = () => {
       const result = CreativeEvaluator.assess(code, { domain: 'revideo' });
       expect(result.score).toBeLessThan(0.7);
     });
+
+    it('should evaluate raw multiline ASCII art as an artifact instead of code', () => {
+      const art = `
+        .    *         .       .    *    .          .
+           *         .    *         .          .    *         .
+                .          .    *         .          .    *     .
+             .         *          .    *         .          .       *
+                  *         .          .    *         .
+                 /\\
+                /  \\
+               /____\\
+              | [] [] |
+              |  __  |
+              |______|
+      `;
+      const result = CreativeEvaluator.assess(art, { domain: 'ascii' });
+      expect(result.technicalScore).toBeGreaterThan(0);
+      expect(result.creativeScore).toBeGreaterThan(0);
+      expect(result.score).toBeGreaterThan(0.6);
+      expect(result.issues).not.toContain('Missing ASCII art characters');
+    });
+
+    it('should keep ascii error placeholders below the pass threshold', () => {
+      const errorPlaceholder = '// LLM generation failed: LLM API error: 400 Bad Request';
+      const result = CreativeEvaluator.assess(errorPlaceholder, { domain: 'ascii' });
+      expect(result.score).toBeLessThan(0.7);
+    });
   });
 });

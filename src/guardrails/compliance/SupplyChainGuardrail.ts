@@ -29,6 +29,46 @@ interface AuditResult {
   vulnerabilities: Vulnerability[];
   totalDependencies: number;
   outdatedDependencies: string[];
+  status: 'ok' | 'project-root-unresolved' | 'audit-command-unavailable' | 'audit-output-invalid';
+  reason?: string;
+  projectRoot?: string;
+}
+
+type SBOMResult = Record<string, unknown> & {
+  specVersion: string;
+  components: Array<Record<string, unknown>>;
+  generationStatus: 'ok' | 'project-root-unresolved' | 'sbom-command-unavailable' | 'sbom-output-invalid';
+  generationReason?: string;
+  projectRoot?: string;
+};
+
+function makeAuditFallback(
+  status: AuditResult['status'],
+  reason?: string,
+  projectRoot?: string,
+): AuditResult {
+  return {
+    vulnerabilities: [],
+    totalDependencies: 0,
+    outdatedDependencies: [],
+    status,
+    reason,
+    projectRoot,
+  };
+}
+
+function makeSBOMFallback(
+  status: SBOMResult['generationStatus'],
+  reason?: string,
+  projectRoot?: string,
+): SBOMResult {
+  return {
+    specVersion: '1.4',
+    components: [],
+    generationStatus: status,
+    generationReason: reason,
+    projectRoot,
+  };
 }
 
 /**
@@ -93,18 +133,15 @@ const AUDIT_TIMEOUT_MS = 30_000;
  * Returns a safe default if npm is unavailable or the command fails.
  */
 async function runNpmAudit(): Promise<AuditResult> {
-  const empty: AuditResult = {
-    vulnerabilities: [],
-    totalDependencies: 0,
-    outdatedDependencies: [],
-  };
-
   let projectRoot: string;
   try {
     projectRoot = await findProjectRoot();
   } catch (err) {
     Logger.warn('SupplyChainGuardrail', 'Failed to find project root for npm audit:', err);
-    return empty;
+    return makeAuditFallback(
+      'project-root-unresolved',
+      err instanceof Error ? err.message : String(err),
+    );
   }
 
   let stdout: string;
@@ -123,7 +160,11 @@ async function runNpmAudit(): Promise<AuditResult> {
       stdout = execErr.stdout;
     } else {
       // npm not installed or other unrecoverable error
-      return empty;
+      return makeAuditFallback(
+        'audit-command-unavailable',
+        err instanceof Error ? err.message : String(err),
+        projectRoot,
+      );
     }
   }
 
@@ -132,7 +173,11 @@ async function runNpmAudit(): Promise<AuditResult> {
     parsed = JSON.parse(stdout);
   } catch (err) {
     Logger.warn('SupplyChainGuardrail', 'Failed to parse npm audit JSON output:', err);
-    return empty;
+    return makeAuditFallback(
+      'audit-output-invalid',
+      err instanceof Error ? err.message : String(err),
+      projectRoot,
+    );
   }
 
   // Extract vulnerabilities from the `vulnerabilities` map
@@ -200,7 +245,13 @@ async function runNpmAudit(): Promise<AuditResult> {
     }
   }
 
-  return { vulnerabilities, totalDependencies, outdatedDependencies };
+  return {
+    vulnerabilities,
+    totalDependencies,
+    outdatedDependencies,
+    status: 'ok',
+    projectRoot,
+  };
 }
 
 /**
@@ -208,18 +259,16 @@ async function runNpmAudit(): Promise<AuditResult> {
  * Runs `npm ls --json --all` in the project root and transforms the dependency
  * tree into a flat SBOM format.  Returns a minimal skeleton on failure.
  */
-async function generateSBOM(): Promise<Record<string, unknown>> {
-  const skeleton: Record<string, unknown> = {
-    specVersion: '1.4',
-    components: [],
-  };
-
+async function generateSBOM(): Promise<SBOMResult> {
   let projectRoot: string;
   try {
     projectRoot = await findProjectRoot();
   } catch (err) {
     Logger.warn('SupplyChainGuardrail', 'Failed to find project root for SBOM generation:', err);
-    return skeleton;
+    return makeSBOMFallback(
+      'project-root-unresolved',
+      err instanceof Error ? err.message : String(err),
+    );
   }
 
   let stdout: string;
@@ -237,7 +286,11 @@ async function generateSBOM(): Promise<Record<string, unknown>> {
     if (execErr.stdout) {
       stdout = execErr.stdout;
     } else {
-      return skeleton;
+      return makeSBOMFallback(
+        'sbom-command-unavailable',
+        err instanceof Error ? err.message : String(err),
+        projectRoot,
+      );
     }
   }
 
@@ -246,7 +299,11 @@ async function generateSBOM(): Promise<Record<string, unknown>> {
     parsed = JSON.parse(stdout);
   } catch (err) {
     Logger.warn('SupplyChainGuardrail', 'Failed to parse npm ls JSON output for SBOM:', err);
-    return skeleton;
+    return makeSBOMFallback(
+      'sbom-output-invalid',
+      err instanceof Error ? err.message : String(err),
+      projectRoot,
+    );
   }
 
   // Walk the dependency tree and flatten into a component list
@@ -293,6 +350,8 @@ async function generateSBOM(): Promise<Record<string, unknown>> {
   return {
     specVersion: '1.4',
     components,
+    generationStatus: 'ok',
+    projectRoot,
   };
 }
 
@@ -308,6 +367,22 @@ export const SupplyChainGuardrail: GuardrailRule = {
   async evaluate(_context: ExecutionContext): Promise<GuardrailResult> {
     // Run audit
     const audit = await runNpmAudit();
+
+    if (audit.status !== 'ok') {
+      return {
+        passed: false,
+        guardrailId: this.id,
+        severity: 'warning',
+        message: 'Supply chain audit could not complete',
+        details: {
+          auditStatus: audit.status,
+          reason: audit.reason,
+          projectRoot: audit.projectRoot,
+          totalDependencies: audit.totalDependencies,
+        },
+        suggestion: 'Verify npm audit --json runs in the project root and that dependency metadata is accessible',
+      };
+    }
 
     // Check for critical/high vulnerabilities
     const criticalVulns = audit.vulnerabilities.filter(
@@ -333,6 +408,8 @@ export const SupplyChainGuardrail: GuardrailRule = {
       guardrailId: this.id,
       message: 'Supply chain check passed',
       details: {
+        auditStatus: audit.status,
+        projectRoot: audit.projectRoot,
         totalDependencies: audit.totalDependencies,
         vulnerabilities: audit.vulnerabilities.length,
       },
@@ -341,4 +418,4 @@ export const SupplyChainGuardrail: GuardrailRule = {
 };
 
 export { runNpmAudit, generateSBOM };
-export type { Vulnerability, AuditResult };
+export type { Vulnerability, AuditResult, SBOMResult };

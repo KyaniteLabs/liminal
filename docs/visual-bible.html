@@ -744,6 +744,11 @@
                 </thead>
                 <tbody>
                     <tr>
+                        <td><code>pending</code></td>
+                        <td>chore: remove orphaned dashboard residue and conflicted quarantined tests</td>
+                        <td>Tracked repo sludge is reduced without affecting active GUI or Vitest coverage</td>
+                    </tr>
+                    <tr>
                         <td><code>latest</code></td>
                         <td>fix(landing): recover gallery metadata UI, stable dogfood asset paths, and single metadata badge row</td>
                         <td>Landing gallery no longer depends on a live worktree and each card now shows variant metadata only once</td>
@@ -781,9 +786,9 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>✅ Landing gallery stabilized</strong> - April 6 recovery cards now point at repo-owned assets instead of a transient worktree</li>
-                <li><strong>🔎 Review preserved recovery branches</strong> - evaluator fix, harness readiness tests, and TierBasedGenerator/Hydra coverage remain next</li>
-                <li><strong>🧩 Split preserved stash batches</strong> - replay broader crash-era stashes into atomic branches instead of applying wholesale</li>
+                <li><strong>✅ Tracked residue trimmed</strong> - orphaned GUI dashboard code, one tracked log artifact, and six conflicted quarantined tests are queued for removal</li>
+                <li><strong>🔎 Review remaining quarantined tests</strong> - decide which of the 35 non-conflicted pending tests should be restored vs archived permanently</li>
+                <li><strong>🧩 Audit compatibility shims</strong> - keep only deprecated wrappers with live callers and remove the rest intentionally</li>
                 <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
             </ol>
         </section>

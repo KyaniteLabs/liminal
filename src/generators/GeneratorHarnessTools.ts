@@ -166,6 +166,8 @@ const HARDENING_HINTS: HardeningHint[] = [
   { id: 'tone_synth_chain', text: 'Chain: Synth -> Channel/Effects -> toDestination(). Include Tone.Transport.start().', domains: ['tone'] },
   { id: 'strudel_stack', text: 'Wrap patterns in stack() to combine multiple voices. Use .out() at the end.', domains: ['strudel'] },
   { id: 'strudel_sound_note', text: 'Use s() for samples and note() for synthesized notes.', domains: ['strudel'] },
+  { id: 'strudel_pattern_strings', text: 'Pass quoted pattern strings to s(), sound(), and note() — never raw numbers like s(100).', domains: ['strudel'] },
+  { id: 'strudel_complete_structure', text: 'If you open stack(, close it and include complete child patterns; do not leave truncated stack(...) output.', domains: ['strudel'] },
   { id: 'ascii_monospace', text: 'ASCII art must be fixed-width monospace. Prefer standard ASCII symbols, but extended art glyphs like box drawing, block elements, stars, and diagonal strokes are allowed when they improve the piece.', domains: ['ascii'] },
   { id: 'ascii_no_fences', text: 'Output raw ASCII only. No code fences, no triple-backtick, no markdown markers.', domains: ['ascii'] },
   { id: 'three_scene_camera_renderer', text: 'Include THREE.Scene, THREE.PerspectiveCamera, THREE.WebGLRenderer, and a mesh in scene. Call renderer.render in a loop.', domains: ['three'] },

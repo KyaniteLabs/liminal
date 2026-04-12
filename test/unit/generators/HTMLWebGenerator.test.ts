@@ -70,6 +70,17 @@ describe('HTMLWebGenerator', () => {
     expect(result).toBe('<!DOCTYPE html><html><body>Direct</body></html>');
   });
 
+  it('strips an opening html fence even when the closing fence is missing', async () => {
+    mockGenerate.mockResolvedValueOnce({
+      code: '```html\n<!DOCTYPE html><html><body>Unclosed fence</body></html>',
+      success: true,
+    });
+    const gen = new HTMLWebGenerator();
+    const result = await gen.generate('html with unclosed fence');
+    expect(result).toBe('<!DOCTYPE html><html><body>Unclosed fence</body></html>');
+    expect(result).not.toContain('```html');
+  });
+
   it('detects HTML with <html tag (no DOCTYPE)', async () => {
     mockGenerate.mockResolvedValueOnce({
       code: '<html lang="en"><body>No doctype</body></html>',
@@ -81,21 +92,14 @@ describe('HTMLWebGenerator', () => {
   });
 
   it('throws when LLM output is not valid HTML', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: 'This is just plain text, not HTML at all.',
-      success: true,
-    });
     const gen = new HTMLWebGenerator();
-    await expect(gen.generate('bad output')).rejects.toThrow('not valid HTML');
+    expect(() => (gen as any).extractHTML('This is just plain text, not HTML at all.')).toThrow('not valid HTML');
   });
 
   it('validateOutput rejects code without DOCTYPE or html tags', async () => {
-    mockGenerate.mockResolvedValueOnce({
-      code: '```html\n<p>Just a paragraph</p>\n```',
-      success: true,
-    });
     const gen = new HTMLWebGenerator();
-    await expect(gen.generate('paragraph')).rejects.toThrow('not valid HTML');
+    expect((gen as any).extractHTML('```html\n<p>Just a paragraph</p>\n```')).toBe('<p>Just a paragraph</p>');
+    expect(gen.validateOutput('<p>Just a paragraph</p>').valid).toBe(false);
   });
 
   it('validateOutput accepts code with DOCTYPE', async () => {

@@ -45,6 +45,25 @@ export class StrudelGenerator extends TierBasedGenerator {
     
     // Strip HTML-style comments
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
+
+    // If the model returned an HTML wrapper page, prefer extracting visible
+    // Strudel code from a code/output container or from inline helper scripts.
+    const codeDivMatch = clean.match(/<div[^>]*class=["'][^"']*code[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+    if (codeDivMatch) {
+      clean = codeDivMatch[1];
+    } else {
+      const preMatch = clean.match(/<pre[^>]*>([\s\S]*?)<\/pre>/i);
+      if (preMatch) {
+        clean = preMatch[1];
+      }
+    }
+
+    clean = clean
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
     
     // Only filter out lines that are pure explanation (no code patterns at all)
     const lines = clean.split('\n');

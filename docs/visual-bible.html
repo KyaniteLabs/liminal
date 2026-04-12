@@ -797,6 +797,7 @@
                 <li><strong>✅ Bound repair runs deterministically</strong> - Bubble Tea self-improvement tasks now stop once a mutation has been verified, and reconnaissance-only runs now terminate after burning half their budget without a safe edit</li>
                 <li><strong>✅ Seed bounded runs with a working set</strong> - the self-improvement runtime now hands Bubble Tea repair runs a deterministic file map for checkpoint/runtime work before the first LLM step</li>
 <li><strong>✅ Carry structured task packets into the agent loop</strong> - bounded runs now pass a working set and domain tag through the runtime boundary so LLMModeAgent starts from structured startup context instead of only a file hint</li>
+<li><strong>✅ Pre-read bounded working sets deterministically</strong> - the self-improvement runtime now loads the packet files into session context before the first planning step, reducing blind startup reads</li>
                 <li><strong>🟡 Start RepoIndexLite preflight</strong> - bounded self-improvement runs now have a headless RepoIndexLite helper that deterministically selects the startup working set and file hint before task-packet shaping</li>
 <li><strong>✅ Label bounded no-change exits clearly</strong> - self-improvement reports now distinguish bounded inspection exits from ordinary no-change successes</li>
 <li><strong>✅ Tighten fail-closed resume safety</strong> - checkpoint resume now rejects a dirty working tree when the suspended run fingerprint expected a clean workspace</li>

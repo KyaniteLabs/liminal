@@ -237,6 +237,43 @@ When the task is complete and build passes, respond with tool "complete".`;
       content: taskPrompt,
     });
 
+    // ── Deterministic preflight read for bounded runs ──────────────
+    // For bounded runs with a workingSet, read those files NOW before
+    // the LLM planning loop begins. This injects file contents into
+    // session context deterministically, reducing early blind reads.
+    if (task.workingSet && task.workingSet.length > 0) {
+      const unreadFiles = task.workingSet.filter(f => !session.exploredPaths.has(f));
+      if (unreadFiles.length > 0) {
+        Logger.debug('LLMModeAgent', `Preflight: reading ${unreadFiles.length} workingSet files`);
+        const preflightContents: string[] = [];
+        for (const filePath of unreadFiles) {
+          try {
+            const fileResult = await readFileTool.execute({ path: filePath });
+            if (fileResult.success && fileResult.data) {
+              session.exploredPaths.add(filePath);
+              const content = typeof fileResult.data === 'object' && fileResult.data.content
+                ? fileResult.data.content
+                : typeof fileResult.data === 'string'
+                  ? fileResult.data
+                  : JSON.stringify(fileResult.data);
+              preflightContents.push(`=== ${filePath} ===\n${content}`);
+            } else {
+              Logger.warn('LLMModeAgent', `Preflight read failed for ${filePath}: ${fileResult.error || 'unknown error'}`);
+            }
+          } catch (err) {
+            Logger.warn('LLMModeAgent', `Preflight read error for ${filePath}: ${err}`);
+          }
+        }
+        if (preflightContents.length > 0) {
+          session.messages.push({
+            role: 'tool',
+            content: `Preflight file contents loaded:\n\n${preflightContents.join('\n\n')}`,
+          });
+          Logger.debug('LLMModeAgent', `Preflight complete: ${preflightContents.length} files loaded into session context`);
+        }
+      }
+    }
+
     try {
       let parseFailure = false;
       while (session.stepCount < maxSteps) {

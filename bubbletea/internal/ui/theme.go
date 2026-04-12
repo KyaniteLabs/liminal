@@ -10,6 +10,7 @@ var (
 	BgSurface = lipgloss.Color("#24283b") // Elevated surface
 	BgOverlay = lipgloss.Color("#414868") // Overlay elements
 	BgMuted   = lipgloss.Color("#565f89") // Muted elements
+	BgAccent  = lipgloss.Color("#2f354f") // Focused elevated surface
 
 	// Foregrounds
 	FgText   = lipgloss.Color("#c0caf5") // Primary text
@@ -17,10 +18,10 @@ var (
 	FgMuted  = lipgloss.Color("#565f89") // Dimmed text
 
 	// Accents
-	AccentGreen  = lipgloss.Color("#9ece6a") // Success, user input
-	AccentBlue   = lipgloss.Color("#7aa2f7") // Assistant, links
-	AccentPurple = lipgloss.Color("#bb9af7") // Code, highlights, brand
-	AccentCyan   = lipgloss.Color("#7dcfff") // Info, tags, mode
+	AccentGreen   = lipgloss.Color("#9ece6a") // Success, user input
+	AccentBlue    = lipgloss.Color("#7aa2f7") // Assistant, links
+	AccentPurple  = lipgloss.Color("#bb9af7") // Code, highlights, brand
+	AccentCyan    = lipgloss.Color("#7dcfff") // Info, tags, mode
 	AccentOrange  = lipgloss.Color("#ff9e64") // Warnings
 	AccentRed     = lipgloss.Color("#f7768e") // Errors
 	AccentYellow  = lipgloss.Color("#e0af68") // System messages
@@ -63,8 +64,9 @@ var (
 
 	// Provider pill — model/provider identity
 	ProviderStyle = lipgloss.NewStyle().
-			Foreground(FgSubtle).
+			Foreground(AccentCyan).
 			Background(BgOverlay).
+			Bold(true).
 			Padding(0, 1)
 
 	// Connection dot — ● or ○
@@ -72,21 +74,25 @@ var (
 			Foreground(AccentGreen)
 
 	DisconnectedStyle = lipgloss.NewStyle().
-			Foreground(AccentRed)
+				Foreground(AccentRed)
 
 	ReconnectingStyle = lipgloss.NewStyle().
-			Foreground(AccentYellow)
+				Foreground(AccentYellow)
 
 	// ── Chat pane ──
 	ChatPaneStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color("#414868")).
+			BorderForeground(AccentBlue).
+			Background(BgBase).
+			Foreground(FgText).
 			Padding(0, 1)
 
 	// ── Preview pane ──
 	PreviewPaneStyle = lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
 				BorderForeground(AccentPurple).
+				Background(BgBase).
+				Foreground(FgText).
 				Padding(0, 1)
 
 	// ── Chat message styles ──
@@ -95,7 +101,8 @@ var (
 			Bold(true)
 
 	AssistantMsgStyle = lipgloss.NewStyle().
-				Foreground(AccentBlue)
+				Foreground(AccentCyan).
+				Bold(true)
 
 	CodeBlockStyle = lipgloss.NewStyle().
 			Foreground(AccentPurple).
@@ -110,7 +117,19 @@ var (
 			Foreground(AccentYellow)
 
 	StreamingStyle = lipgloss.NewStyle().
-			Foreground(FgSubtle)
+			Foreground(AccentMagenta).
+			Bold(true)
+
+	TypingPillStyle = lipgloss.NewStyle().
+			Foreground(BgBase).
+			Background(AccentMagenta).
+			Bold(true).
+			Padding(0, 1)
+
+	ActivityStyle = lipgloss.NewStyle().
+			Foreground(AccentYellow).
+			Background(BgAccent).
+			Padding(0, 1)
 
 	// ── Footer / input ──
 	FooterStyle = lipgloss.NewStyle().

@@ -3,19 +3,24 @@ package app
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
+	"github.com/atotto/clipboard"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/textinput"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
-	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
 )
 
 // ChatBlock represents a single structured entry in the chat history.
 type ChatBlock struct {
-	Type    string    // "user" | "assistant" | "code" | "system" | "error"
+	Type    string // "user" | "assistant" | "code" | "system" | "error"
 	Content string
 	Time    time.Time
 	Preview string // Optional inline preview (base64 image or code snippet)
@@ -38,14 +43,21 @@ type Model struct {
 	ChatViewport    viewport.Model
 	PreviewViewport viewport.Model
 	TextInput       textinput.Model
+	Spinner         spinner.Model
 	Program         *tea.Program
 	Ready           bool
 	FocusPane       FocusPane
 
 	// Chat state
-	ChatBlocks     []ChatBlock
-	ActiveResponse string
-	Input          string
+	ChatBlocks      []ChatBlock
+	ActiveResponse  string
+	Input           string
+	IsStreaming     bool
+	ActivityMessage string
+	ActivityLog     []string
+	LastNotice      string
+	TranscriptPath  string
+	LastCopy        string // tracks what was last copied so user can re-copy
 
 	// Preview state
 	PreviewContent string // Current preview content
@@ -62,7 +74,7 @@ type Model struct {
 
 	// Generation telemetry
 	GenerationModel      string
-	GenerationDuration   int64  // ms
+	GenerationDuration   int64 // ms
 	GenerationIterations int
 	GenerationScore      float64
 	GenerationReason     string
@@ -88,7 +100,7 @@ func NewModel(bridgeURL string) Model {
 	ti := textinput.New()
 	ti.Placeholder = "Type your message..."
 	ti.Prompt = "> "
-	ti.CharLimit = 2000
+	ti.CharLimit = 16000 // generous limit for pasted content
 	ti.Width = 80
 
 	// Create glamour renderer for markdown + syntax highlighting
@@ -99,23 +111,33 @@ func NewModel(bridgeURL string) Model {
 	if err != nil {
 		renderer = nil
 	}
+	spin := spinner.New(
+		spinner.WithSpinner(spinner.MiniDot),
+		spinner.WithStyle(ui.StreamingStyle),
+	)
 
 	return Model{
-		Mode:           "CHAT",
-		ChatBlocks:     []ChatBlock{},
-		ActiveResponse: "",
-		Input:          "",
-		Width:          120,
-		Height:         32,
-		Provider:       "pending",
-		ModelName:      "bridge",
-		TrustLabel:     "Generated code is untrusted by default",
-		Bridge:         bridge.NewClient(bridgeURL),
-		TextInput:      ti,
-		Renderer:       renderer,
-		FocusPane:      FocusChat,
-		PreviewTab:     "code",
-		PreviewVisible: true,
+		Mode:            "CHAT",
+		ChatBlocks:      []ChatBlock{},
+		ActiveResponse:  "",
+		Input:           "",
+		IsStreaming:     false,
+		ActivityMessage: "",
+		ActivityLog:     []string{},
+		LastNotice:      "",
+		TranscriptPath:  os.Getenv("LIMINAL_TUI_TRANSCRIPT_PATH"),
+		Width:           120,
+		Height:          32,
+		Provider:        "pending",
+		ModelName:       "bridge",
+		TrustLabel:      "Generated code is untrusted by default",
+		Bridge:          bridge.NewClient(bridgeURL),
+		TextInput:       ti,
+		Spinner:         spin,
+		Renderer:        renderer,
+		FocusPane:       FocusChat,
+		PreviewTab:      "code",
+		PreviewVisible:  true,
 	}
 }
 
@@ -123,10 +145,14 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 	switch event.Type {
 	case "response.started":
 		m.ActiveResponse = ""
+		m.IsStreaming = true
+		m.ActivityMessage = "GLM is thinking"
 	case "response.delta":
 		m.ActiveResponse += event.Delta
+		m.IsStreaming = true
 	case "response.completed":
 		m.ActiveResponse = event.Content
+		m.ActivityMessage = "finalizing response"
 	case "response.committed":
 		// Add assistant block to chat history
 		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
@@ -134,6 +160,7 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			Content: event.Content,
 			Time:    time.Now(),
 		})
+		m.appendTranscript("assistant", event.Content)
 		// Check for code content to show in preview
 		if containsCode(event.Content) {
 			m.PreviewContent = extractCode(event.Content)
@@ -141,6 +168,8 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			m.PreviewVisible = true
 		}
 		m.ActiveResponse = ""
+		m.IsStreaming = false
+		m.ActivityMessage = ""
 	case "action.review_required":
 		m.Mode = "ACTION"
 		m.PendingAction = event.Action
@@ -174,7 +203,14 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			Content: event.Message,
 			Time:    time.Now(),
 		})
+		m.appendTranscript("error", event.Message)
 		m.ActiveResponse = ""
+		m.IsStreaming = false
+		m.ActivityMessage = ""
+	case "activity.updated":
+		m.ActivityMessage = event.Message
+		m.addActivity(event.Message)
+		m.IsStreaming = true
 	case "preview.started":
 		m.PreviewType = event.PreviewType
 		m.PreviewVisible = true
@@ -207,6 +243,9 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			Content: summary,
 			Time:    time.Now(),
 		})
+		m.appendTranscript("system", summary)
+		m.IsStreaming = false
+		m.ActivityMessage = ""
 	case "response.metadata":
 		if event.Model != "" {
 			m.ModelName = event.Model
@@ -219,6 +258,84 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		m.SwarmTotalRounds = event.TotalRounds
 		m.SwarmVocabularySize = event.VocabularySize
 	}
+}
+
+func (m Model) lastAssistantResponse() string {
+	for i := len(m.ChatBlocks) - 1; i >= 0; i-- {
+		if m.ChatBlocks[i].Type == "assistant" {
+			return m.ChatBlocks[i].Content
+		}
+	}
+	return m.ActiveResponse
+}
+
+func (m *Model) addActivity(message string) {
+	message = strings.TrimSpace(message)
+	if message == "" {
+		return
+	}
+	m.ActivityLog = append(m.ActivityLog, message)
+	if len(m.ActivityLog) > 8 {
+		m.ActivityLog = m.ActivityLog[len(m.ActivityLog)-8:]
+	}
+	m.appendTranscript("activity", message)
+}
+
+func (m *Model) saveLastResponse() {
+	content := m.lastAssistantResponse()
+	if strings.TrimSpace(content) == "" {
+		m.LastNotice = "nothing to copy yet"
+		return
+	}
+	path, fileErr := m.writeLastResponseFile(content)
+	clipErr := clipboard.WriteAll(content)
+	m.LastCopy = content
+	switch {
+	case clipErr == nil && fileErr == nil:
+		m.LastNotice = "copied to clipboard and saved to " + path
+	case clipErr == nil:
+		m.LastNotice = "copied to clipboard; file save failed: " + fileErr.Error()
+	case fileErr == nil:
+		m.LastNotice = "clipboard failed: " + clipErr.Error() + "; saved to " + path
+	default:
+		m.LastNotice = "copy failed: " + clipErr.Error() + "; file save failed: " + fileErr.Error()
+	}
+}
+
+func (m *Model) writeLastResponseFile(content string) (string, error) {
+	root := os.Getenv("LIMINAL_ROOT")
+	if root == "" {
+		root = "."
+	}
+	path := filepath.Join(root, ".omx", "logs", "bubbletea-last-response.md")
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return path, err
+	}
+	return path, os.WriteFile(path, []byte(content), 0o644)
+}
+
+func (m *Model) appendTranscript(role, content string) {
+	if m.TranscriptPath == "" || strings.TrimSpace(content) == "" {
+		return
+	}
+	if err := os.MkdirAll(filepath.Dir(m.TranscriptPath), 0o755); err != nil {
+		m.LastNotice = "transcript failed: " + err.Error()
+		return
+	}
+	entry := fmt.Sprintf("\n\n## %s — %s\n\n%s\n", role, time.Now().Format(time.RFC3339), content)
+	if err := appendFile(m.TranscriptPath, entry); err != nil {
+		m.LastNotice = "transcript failed: " + err.Error()
+	}
+}
+
+func appendFile(path, content string) error {
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+	_, err = f.WriteString(content)
+	return err
 }
 
 func (m Model) StatusLines() []string {

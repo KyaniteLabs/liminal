@@ -1,7 +1,29 @@
 import { describe, expect, it } from 'vitest';
-import { TuiBridgeService } from '../../src/tui-bridge/TuiBridgeService.js';
+import {
+  isGenerationRequest,
+  isSelfImprovementRequest,
+  TUI_SYSTEM_PROMPT,
+  TuiBridgeService,
+} from '../../src/tui-bridge/TuiBridgeService.js';
 
 describe('TuiBridgeService', () => {
+  it('uses a meta-harness system prompt instead of creative-only identity', () => {
+    expect(TUI_SYSTEM_PROMPT).toContain('Meta-Harness');
+    expect(TUI_SYSTEM_PROMPT).toContain('self-improvement');
+    expect(TUI_SYSTEM_PROMPT).toContain('Do not refuse self-improvement work');
+    expect(TUI_SYSTEM_PROMPT).not.toContain('only a creative assistant');
+  });
+
+  it('routes harness repair prompts away from creative Ralph generation', () => {
+    const prompt = 'Fix the Bubble Tea TUI and improve the harness codebase';
+
+    expect(isSelfImprovementRequest(prompt)).toBe(true);
+    expect(isGenerationRequest(prompt)).toBe(false);
+  });
+
+  it('still routes explicit creative prompts to generation', () => {
+    expect(isGenerationRequest('create a p5 shader sketch')).toBe(true);
+  });
   it('creates a session with default chat mode', () => {
     const service = new TuiBridgeService();
     const status = service.createSession();

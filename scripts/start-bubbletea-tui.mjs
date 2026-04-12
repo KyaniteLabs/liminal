@@ -13,6 +13,39 @@ const ROOT = path.resolve(__dirname, '..');
 const bridgeOnly = process.argv.includes('--bridge-only');
 const portArg = process.argv.find((arg) => arg.startsWith('--port='));
 const port = Number(portArg?.split('=')[1] || process.env.LIMINAL_BRIDGE_PORT || 3000);
+const originalConsole = {
+  log: console.log.bind(console),
+  info: console.info.bind(console),
+  warn: console.warn.bind(console),
+  error: console.error.bind(console),
+  debug: console.debug.bind(console),
+};
+
+function inspectArg(arg) {
+  if (arg instanceof Error) return arg.stack || arg.message;
+  if (typeof arg === 'string') return arg;
+  try {
+    return JSON.stringify(arg);
+  } catch {
+    return String(arg);
+  }
+}
+
+function routeBridgeConsoleToFile(logFile) {
+  fs.mkdirSync(path.dirname(logFile), { recursive: true });
+  const stream = fs.createWriteStream(logFile, { flags: 'a' });
+  const write = (level, args) => {
+    stream.write(`[${new Date().toISOString()}] ${level} ${args.map(inspectArg).join(' ')}\n`);
+  };
+
+  console.log = (...args) => write('INFO', args);
+  console.info = (...args) => write('INFO', args);
+  console.warn = (...args) => write('WARN', args);
+  console.error = (...args) => write('ERROR', args);
+  console.debug = (...args) => write('DEBUG', args);
+
+  return stream;
+}
 
 function loadGlmConfig() {
   const configPath = path.join(process.env.HOME || '', '.liminal', 'config.json');
@@ -63,22 +96,32 @@ const llm = new LLMClient({
 });
 
 const bridge = new TuiBridgeService();
-const server = new TuiBridgeServer(bridge, { port, host: 'localhost', llm });
+const server = new TuiBridgeServer(bridge, { port, host: '127.0.0.1', llm });
 await server.start();
-console.log(`Bubble Tea bridge: ${server.address}`);
-console.log(`Harness provider/model: glm/${glm.model}`);
+const bridgeLogFile = path.join(ROOT, '.omx', 'logs', 'bubbletea-bridge.log');
+originalConsole.log(`Bubble Tea bridge: ${server.address}`);
+originalConsole.log(`Harness provider/model: glm/${glm.model}`);
+originalConsole.log(`Bridge logs: ${bridgeLogFile}`);
 
 let child;
+let bridgeLogStream;
 if (!bridgeOnly) {
+  bridgeLogStream = routeBridgeConsoleToFile(bridgeLogFile);
   const binary = path.join(ROOT, 'bubbletea', 'liminal-tui');
-  const env = { ...process.env, LIMINAL_BRIDGE_URL: server.address };
-  if (fs.existsSync(binary)) {
+  const env = {
+    ...process.env,
+    LIMINAL_ROOT: ROOT,
+    LIMINAL_BRIDGE_URL: server.address,
+    LIMINAL_TUI_TRANSCRIPT_PATH: path.join(ROOT, '.omx', 'logs', 'bubbletea-transcript.md'),
+  };
+  if (process.env.LIMINAL_TUI_USE_BINARY === '1' && fs.existsSync(binary)) {
     child = spawn(binary, { cwd: path.join(ROOT, 'bubbletea'), env, stdio: 'inherit' });
   } else {
     child = spawn('go', ['run', '.'], { cwd: path.join(ROOT, 'bubbletea'), env, stdio: 'inherit' });
   }
   child.on('exit', async (code) => {
     await server.stop().catch(() => {});
+    bridgeLogStream?.end();
     process.exit(code ?? 0);
   });
 }
@@ -86,6 +129,7 @@ if (!bridgeOnly) {
 async function shutdown() {
   if (child && !child.killed) child.kill('SIGTERM');
   await server.stop().catch(() => {});
+  bridgeLogStream?.end();
   process.exit(0);
 }
 process.on('SIGINT', () => { void shutdown(); });

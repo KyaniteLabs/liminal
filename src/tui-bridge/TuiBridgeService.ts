@@ -5,9 +5,25 @@ import { RalphLoop } from '../core/RalphLoop.js';
 import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatus } from './types.js';
 import { Domain } from '../types/domains.js';
-import { eventBus, EventTypes } from '../core/EventBus.js';
+import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
+import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
 
-const SYSTEM_PROMPT = `You are Liminal, a creative coding partner. You help users generate p5.js sketches, Strudel music patterns, and other creative code. Be concise, helpful, and creative. When users describe what they want, respond with encouragement and relevant code or ideas.`;
+export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
+
+Primary role:
+- Help inspect, debug, repair, and improve the Liminal codebase and harness.
+- Treat self-improvement, CI fixes, dogfood diagnostics, TUI fixes, generator hardening, and repo maintenance as first-class tasks.
+- You are allowed and expected to discuss how the system should improve itself.
+
+Secondary role:
+- Support creative coding requests when the user explicitly asks for art/music/code generation.
+
+Operating rules:
+- Be direct and technical.
+- Do not refuse self-improvement work or narrow your identity to creative-only help.
+- If you do not have tool execution in the current path, say what needs to be inspected or changed rather than pretending it is impossible.
+- Prefer root cause, exact files, verification steps, and small patches.
+- Generated code is untrusted until verified.`;
 
 /** Keywords that indicate a generation request */
 const GENERATION_KEYWORDS = [
@@ -16,10 +32,28 @@ const GENERATION_KEYWORDS = [
   'visualization', 'animation', 'pattern', 'art',
 ];
 
+const SELF_IMPROVEMENT_KEYWORDS = [
+  'self-improve', 'self improve', 'self-improvement', 'improve itself',
+  'fix', 'debug', 'diagnose', 'repair', 'refactor', 'cleanup',
+  'harness', 'meta-harness', 'bubble tea', 'tui', 'ci', 'build',
+  'test', 'dogfood', 'repo', 'codebase', 'generator hardening',
+];
+
+/** Check if input indicates repo/harness repair rather than creative generation. */
+export function isSelfImprovementRequest(text: string): boolean {
+  const lower = text.toLowerCase();
+  return SELF_IMPROVEMENT_KEYWORDS.some(kw => lower.includes(kw));
+}
+
 /** Check if input indicates creative generation intent */
-function isGenerationRequest(text: string): boolean {
+export function isGenerationRequest(text: string): boolean {
+  if (isSelfImprovementRequest(text)) return false;
   const lower = text.toLowerCase();
   return GENERATION_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+function logBridge(event: string, fields: Record<string, unknown>): void {
+  console.info(`[TuiBridgeService] ${event} ${JSON.stringify(fields)}`); // eslint-disable-line no-console
 }
 
 export class TuiBridgeService {
@@ -104,6 +138,16 @@ export class TuiBridgeService {
     this.cancelStream(sessionId);
 
     this.sessions.update(sessionId, { mode: input.mode });
+    const selfImprovement = isSelfImprovementRequest(input.text);
+    const creativeGeneration = isGenerationRequest(input.text);
+    logBridge('input.received', {
+      sessionId,
+      mode: input.mode,
+      intent: input.clientIntent,
+      selfImprovement,
+      creativeGeneration,
+      chars: input.text.length,
+    });
 
     if (input.clientIntent === 'action' || input.mode === 'action') {
       const pendingAction: TuiPendingAction = {
@@ -121,6 +165,7 @@ export class TuiBridgeService {
       });
       this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
       this.emit(sessionId, { type: 'status.updated', sessionId, status });
+      logBridge('input.routed', { sessionId, route: 'action.review_required' });
       return { reviewRequired: true };
     }
 
@@ -138,8 +183,21 @@ export class TuiBridgeService {
     // Step 2: Detect generation requests and route to RalphLoop or chat
     this.emit(sessionId, { type: 'response.started', sessionId });
 
-    if (isGenerationRequest(input.text) && llm) {
+    if (selfImprovement && llm) {
+      logBridge('input.routed', { sessionId, route: 'meta-harness.tools' });
+      this.streamHarnessSelfImprovement(sessionId, input.text, conversation, llm).catch((err) => {
+        this.emit(sessionId, {
+          type: 'error',
+          sessionId,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      });
+      return { reviewRequired: false };
+    }
+
+    if (creativeGeneration && llm) {
       // Route to RalphLoop for generation
+      logBridge('input.routed', { sessionId, route: 'creative.ralph' });
       this.streamRalphGeneration(sessionId, input.text, conversation, llm).catch((err) => {
         this.emit(sessionId, {
           type: 'error',
@@ -152,6 +210,7 @@ export class TuiBridgeService {
 
     // Chat mode - use LLM with conversation history
     if (llm) {
+      logBridge('input.routed', { sessionId, route: selfImprovement ? 'meta-harness.chat' : 'chat' });
       this.streamChatResponse(sessionId, input.text, conversation, llm).catch((err) => {
         this.emit(sessionId, {
           type: 'error',
@@ -177,6 +236,119 @@ export class TuiBridgeService {
     });
 
     return { reviewRequired: false };
+  }
+
+  /**
+   * Run a self-improvement request through the actual tool-using harness agent.
+   */
+  private async streamHarnessSelfImprovement(
+    sessionId: string,
+    userText: string,
+    conversation: ConversationManager,
+    llm: LLMClient,
+  ): Promise<void> {
+    const controller = new AbortController();
+    this.activeStreams.set(sessionId, controller);
+
+    const config = llm.getConfig();
+    const modelName = config.model || 'unknown';
+    const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
+    const agent = createLLMModeAgent(llm);
+    const taskId = `tui-self-${Date.now()}`;
+
+    const listener = (event: BusEvent) => {
+      if (event.source !== 'LLMModeAgent') return;
+      if (event.type === EventTypes.PROCESS_START) {
+        logBridge('agent.event', { sessionId, type: event.type, stage: event.data.stage });
+        const message = `tool agent started: ${String(event.data.stage || 'planning')}`;
+        this.emit(sessionId, {
+          type: 'activity.updated',
+          sessionId,
+          message,
+        });
+        this.emitLiveNarration(sessionId, message);
+      }
+      if (event.type === EventTypes.PROCESS_PROGRESS) {
+        const message = event.data.message || event.data.stage || 'working';
+        logBridge('agent.event', {
+          sessionId,
+          type: event.type,
+          current: event.data.current,
+          total: event.data.total,
+          stage: event.data.stage,
+          message,
+        });
+        this.emit(sessionId, {
+          type: 'activity.updated',
+          sessionId,
+          message: String(message),
+        });
+        this.emitLiveNarration(sessionId, String(message));
+      }
+      if (event.type === EventTypes.PROCESS_END) {
+        logBridge('agent.event', {
+          sessionId,
+          type: event.type,
+          success: event.data.success,
+          reason: event.data.reason,
+        });
+        const message = event.data.success ? 'tool agent complete' : `tool agent failed: ${String(event.data.reason || 'unknown')}`;
+        this.emit(sessionId, {
+          type: 'activity.updated',
+          sessionId,
+          message,
+        });
+        this.emitLiveNarration(sessionId, message);
+      }
+    };
+
+    eventBus.onEvent(listener);
+    logBridge('agent.started', { sessionId, taskId, model: modelName, maxSteps });
+
+    try {
+      const session = await agent.executeTask({
+        id: taskId,
+        title: 'Bubble Tea TUI self-improvement request',
+        description: userText,
+        maxSteps,
+        approved: true,
+      });
+
+      const fullContent = this.formatAgentSession(session);
+      for (const chunk of this.chunkString(fullContent, 80)) {
+        this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
+        await new Promise(r => setTimeout(r, 5));
+      }
+      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+      this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
+      conversation['recordMessage']('assistant', fullContent);
+
+      this.emit(sessionId, {
+        type: 'response.metadata',
+        sessionId,
+        model: modelName,
+        duration: new Date(session.endTime || new Date().toISOString()).getTime() - new Date(session.startTime).getTime(),
+      });
+      this.emit(sessionId, {
+        type: 'status.updated',
+        sessionId,
+        status: this.sessions.update(sessionId, {
+          mode: 'chat',
+          activeTask: `Tool agent ${session.status}`,
+          model: modelName,
+        }),
+      });
+      logBridge('agent.completed', {
+        sessionId,
+        taskId,
+        status: session.status,
+        steps: session.stepCount,
+        tools: this.agentToolsUsed(session),
+      });
+    } finally {
+      eventBus.offEvent(listener);
+      this.activeStreams.delete(sessionId);
+    }
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -220,6 +392,7 @@ export class TuiBridgeService {
 
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
+    logBridge('generation.started', { sessionId, model: modelName, chars: userText.length });
 
     try {
       // Emit initial activity
@@ -300,6 +473,13 @@ export class TuiBridgeService {
         // Record in conversation
         conversation['recordMessage']('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
       }
+      logBridge('generation.completed', {
+        sessionId,
+        model: result.model || modelName,
+        iterations: result.iterations,
+        score: result.finalScore,
+        duration: result.duration,
+      });
 
       this.emit(sessionId, {
         type: 'status.updated',
@@ -330,6 +510,7 @@ export class TuiBridgeService {
     const startTime = Date.now();
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
+    logBridge('chat.started', { sessionId, model: modelName, chars: userText.length });
 
     try {
       // Build conversation context from history
@@ -353,7 +534,7 @@ export class TuiBridgeService {
         : userText;
 
       let fullContent = '';
-      for await (const chunk of llm.stream(SYSTEM_PROMPT, fullPrompt, controller.signal)) {
+      for await (const chunk of llm.stream(TUI_SYSTEM_PROMPT, fullPrompt, controller.signal)) {
         fullContent += chunk;
         this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
       }
@@ -391,6 +572,7 @@ export class TuiBridgeService {
           model: modelName,
         }),
       });
+      logBridge('chat.completed', { sessionId, model: modelName, duration, chars: fullContent.length });
     } finally {
       this.activeStreams.delete(sessionId);
     }
@@ -418,6 +600,50 @@ export class TuiBridgeService {
     return null;
   }
 
+  private formatAgentSession(session: LLMSession): string {
+    const duration = session.endTime
+      ? new Date(session.endTime).getTime() - new Date(session.startTime).getTime()
+      : Date.now() - new Date(session.startTime).getTime();
+    const toolLines = session.messages
+      .filter((m) => m.toolCall)
+      .map((m) => {
+        // Find the tool result that corresponds to this specific tool call.
+        // Tool results appear in session.messages after their respective assistant messages.
+        const mIndex = session.messages.indexOf(m);
+        const result = mIndex >= 0
+          ? session.messages.slice(mIndex + 1).find((candidate) => candidate.role === 'tool' && candidate.toolResult)
+          : undefined;
+        return `- ${m.toolCall?.tool}: ${m.toolCall?.thought}${result?.toolResult ? ` (${result.toolResult.success ? 'ok' : 'failed'})` : ''}`;
+      })
+      .slice(-12);
+
+    return [
+      `# Meta-Harness Tool Run`,
+      ``,
+      `Status: ${session.status}`,
+      `Task: ${session.task.title}`,
+      `Steps: ${session.stepCount}`,
+      `Duration: ${duration}ms`,
+      `Tools used: ${this.agentToolsUsed(session).join(', ') || 'none'}`,
+      ``,
+      `## Tool trace`,
+      toolLines.length > 0 ? toolLines.join('\n') : '- no tool calls recorded',
+      ``,
+      `## Notes`,
+      session.status === 'success'
+        ? 'The harness agent reported completion.'
+        : 'The harness agent did not report success. Check .omx/logs/bubbletea-bridge.log and working tree diff before trusting changes.',
+    ].join('\n');
+  }
+
+  private agentToolsUsed(session: LLMSession): string[] {
+    return Array.from(new Set(
+      session.messages
+        .map((m) => m.toolCall?.tool)
+        .filter((tool): tool is string => Boolean(tool))
+    ));
+  }
+
   /** Split string into chunks for streaming effect */
   private chunkString(str: string, chunkSize: number): string[] {
     const chunks: string[] = [];
@@ -429,5 +655,14 @@ export class TuiBridgeService {
 
   private emit(sessionId: string, event: TuiBridgeEvent): void {
     this.stream.emit(sessionId, event);
+  }
+
+  private emitLiveNarration(sessionId: string, message: string): void {
+    if (!message.trim()) return;
+    this.emit(sessionId, {
+      type: 'response.delta',
+      sessionId,
+      delta: `${message}\n`,
+    });
   }
 }

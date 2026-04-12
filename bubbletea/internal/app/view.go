@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/charmbracelet/lipgloss"
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
+	"github.com/charmbracelet/lipgloss"
 )
 
 func (m Model) View() string {
@@ -19,38 +19,31 @@ func (m Model) View() string {
 	header := m.renderHeader()
 	footer := m.renderFooter()
 
-	// ── Calculate column widths ──
-	chatWidth := m.Width * 3 / 5       // 60% for chat
-	previewWidth := m.Width * 2 / 5    // 40% for preview
-	paneHeight := m.Height - 6         // minus header(2) + footer(2) + borders(2)
-
-	if chatWidth < 30 {
-		chatWidth = 30
-	}
-	if previewWidth < 24 {
-		previewWidth = 24
-	}
-	if paneHeight < 5 {
-		paneHeight = 5
-	}
+	metrics := m.layoutMetrics()
 
 	// ── Chat pane (left) ──
 	chatPane := ui.ChatPaneStyle.
-		Width(chatWidth).
-		Height(paneHeight).
+		Width(metrics.chatContentWidth).
+		MaxWidth(metrics.chatContentWidth).
+		Height(metrics.paneContentHeight).
+		MaxHeight(metrics.paneContentHeight).
 		Render(m.ChatViewport.View())
 
 	// ── Right column ──
 	var rightPane string
 	if m.PreviewVisible {
 		rightPane = ui.PreviewPaneStyle.
-			Width(previewWidth).
-			Height(paneHeight).
-			Render(m.renderPreviewSection(previewWidth, paneHeight))
+			Width(metrics.previewContentWidth).
+			MaxWidth(metrics.previewContentWidth).
+			Height(metrics.paneContentHeight).
+			MaxHeight(metrics.paneContentHeight).
+			Render(m.renderPreviewSection(metrics.previewContentWidth, metrics.paneContentHeight))
 	} else {
 		rightPane = ui.ChatPaneStyle.
-			Width(previewWidth).
-			Height(paneHeight).
+			Width(metrics.previewContentWidth).
+			MaxWidth(metrics.previewContentWidth).
+			Height(metrics.paneContentHeight).
+			MaxHeight(metrics.paneContentHeight).
 			Render(m.renderCompactStatus())
 	}
 
@@ -59,9 +52,12 @@ func (m Model) View() string {
 		rightPane = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(ui.AccentGreen).
-			Width(previewWidth).
-			Height(paneHeight).
-			Render(m.renderPreviewSection(previewWidth, paneHeight))
+			Padding(0, 1).
+			Width(metrics.previewContentWidth).
+			MaxWidth(metrics.previewContentWidth).
+			Height(metrics.paneContentHeight).
+			MaxHeight(metrics.paneContentHeight).
+			Render(m.renderPreviewSection(metrics.previewContentWidth, metrics.paneContentHeight))
 	}
 
 	// ── Join columns ──
@@ -97,11 +93,6 @@ func (m Model) renderHeader() string {
 		}
 	}
 
-	// DEBUG: show block count and active response length
-	debugInfo := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#ff9e64")).
-		Render(fmt.Sprintf("blk:%d resp:%d", len(m.ChatBlocks), len(m.ActiveResponse)))
-
 	// Swarm round progress display
 	var swarmTelemetry string
 	if m.SwarmRound > 0 {
@@ -114,13 +105,15 @@ func (m Model) renderHeader() string {
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
 	headerContent := brand + spacer + mode + spacer + provider + spacer + connDot
+	if m.shouldSpin() {
+		headerContent += spacer + ui.ActivityStyle.Render(m.Spinner.View()+" "+m.currentActivityText())
+	}
 	if telemetry != "" {
 		headerContent += spacer + telemetry
 	}
 	if swarmTelemetry != "" {
 		headerContent += spacer + swarmTelemetry
 	}
-	headerContent += spacer + debugInfo
 
 	header := lipgloss.NewStyle().
 		Background(ui.BgSurface).
@@ -147,6 +140,8 @@ func (m Model) renderFooter() string {
 				ui.KeyStyle.Render("Tab") + ui.HintStyle.Render(":preview"),
 				ui.KeyStyle.Render("Enter") + ui.HintStyle.Render(":send"),
 				ui.KeyStyle.Render("Ctrl+E") + ui.HintStyle.Render(":toggle"),
+				ui.KeyStyle.Render("PgUp/PgDn") + ui.HintStyle.Render(":scroll"),
+				ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			}
 		case "ACTION":
 			hints = []string{
@@ -227,17 +222,17 @@ func (m Model) renderStatusLine(width int) string {
 			iterStr = fmt.Sprintf("%d/%d", m.CurrentIteration, m.GenerationIterations)
 		}
 		genInfo := ui.StatusLabelStyle.Render("Gen: ") +
-			ui.StatusValueStyle.Render("iter:" + iterStr + " score:" + scoreStr)
+			ui.StatusValueStyle.Render("iter:"+iterStr+" score:"+scoreStr)
 		if m.GenerationDuration > 0 {
 			durationStr := fmt.Sprintf("%.1fs", float64(m.GenerationDuration)/1000.0)
 			genInfo = ui.StatusLabelStyle.Render("Gen: ") +
-				ui.StatusValueStyle.Render("iter:" + iterStr + " score:" + scoreStr + " " + durationStr)
+				ui.StatusValueStyle.Render("iter:"+iterStr+" score:"+scoreStr+" "+durationStr)
 		}
 		statusLine += "  " + genInfo
 	}
 
 	return lipgloss.NewStyle().
-		Width(width-4).
+		Width(width - 4).
 		Foreground(ui.FgMuted).
 		Render(statusLine)
 }
@@ -248,13 +243,21 @@ func (m Model) renderCompactStatus() string {
 	var lines []string
 	lines = append(lines, ui.StatusLabelStyle.Render("Provider: ")+ui.StatusValueStyle.Render(m.Provider+"/"+m.ModelName))
 	lines = append(lines, ui.StatusLabelStyle.Render("Mode: ")+ui.StatusValueStyle.Render(m.Mode))
-	lines = append(lines, ui.StatusLabelStyle.Render("Trust: ")+ui.StatusValueStyle.Render(m.TrustLabel))
+	trustColor := ui.TrustColor(m.TrustLabel)
+	lines = append(lines, ui.StatusLabelStyle.Render("Trust: ")+lipgloss.NewStyle().Foreground(trustColor).Render(m.TrustLabel))
+	if m.TranscriptPath != "" {
+		lines = append(lines, ui.StatusLabelStyle.Render("Transcript: ")+ui.StatusValueStyle.Render(m.TranscriptPath))
+	}
 
 	if m.PendingAction != nil {
 		lines = append(lines, "")
 		lines = append(lines, ui.ActionTitleStyle.Render("⚠ Pending Action"))
 		lines = append(lines, ui.ActionCardStyle.Render(m.PendingAction.Title))
 		lines = append(lines, ui.HintStyle.Render("[y] confirm  [n] cancel"))
+	}
+	if m.LastNotice != "" {
+		lines = append(lines, "")
+		lines = append(lines, ui.ActivityStyle.Render(m.LastNotice))
 	}
 
 	return strings.Join(lines, "\n")
@@ -298,10 +301,29 @@ func (m Model) renderChatContent() string {
 			sb.WriteString("\n\n")
 		}
 	}
+	if m.LastNotice != "" {
+		sb.WriteString(ui.ActivityStyle.Render(m.LastNotice))
+		sb.WriteString("\n\n")
+	}
+	if len(m.ActivityLog) > 0 && (m.IsStreaming || m.ActivityMessage != "") {
+		sb.WriteString(ui.ActivityStyle.Render("Live tool/thought trace"))
+		sb.WriteString("\n")
+		start := 0
+		if len(m.ActivityLog) > 6 {
+			start = len(m.ActivityLog) - 6
+		}
+		for _, line := range m.ActivityLog[start:] {
+			sb.WriteString(ui.StreamingStyle.Render("• " + line))
+			sb.WriteString("\n")
+		}
+		sb.WriteString("\n")
+	}
 
 	// Append active streaming response
 	if m.ActiveResponse != "" {
 		sb.WriteString(ui.AssistantMsgStyle.Render("◆"))
+		sb.WriteString(" ")
+		sb.WriteString(ui.TypingPillStyle.Render(m.Spinner.View() + " streaming"))
 		sb.WriteString("\n")
 		rendered := m.renderMarkdown(m.ActiveResponse)
 		sb.WriteString(rendered)
@@ -317,8 +339,13 @@ func (m Model) renderChatContent() string {
 				Render("▌ iter:" + iterStr + " score:" + scoreStr)
 			sb.WriteString(progress)
 		} else {
-			sb.WriteString(ui.StreamingStyle.Render("▌"))
+			sb.WriteString("\n")
+			sb.WriteString(ui.StreamingStyle.Render(m.Spinner.View() + " GLM is typing"))
 		}
+	} else if m.IsStreaming || m.ActivityMessage != "" {
+		sb.WriteString(ui.AssistantMsgStyle.Render("◆"))
+		sb.WriteString(" ")
+		sb.WriteString(ui.TypingPillStyle.Render(m.Spinner.View() + " " + m.currentActivityText()))
 	}
 
 	if len(m.ChatBlocks) == 0 && m.ActiveResponse == "" {
@@ -328,6 +355,19 @@ func (m Model) renderChatContent() string {
 	}
 
 	return sb.String()
+}
+
+func (m Model) currentActivityText() string {
+	if m.ActivityMessage != "" {
+		return m.ActivityMessage
+	}
+	if m.Reconnecting {
+		return "reconnecting"
+	}
+	if m.IsStreaming {
+		return "GLM is typing"
+	}
+	return "idle"
 }
 
 // renderPreviewContent returns content for the preview viewport.

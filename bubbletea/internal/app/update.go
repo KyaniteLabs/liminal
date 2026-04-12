@@ -2,14 +2,13 @@ package app
 
 import (
 	"context"
-	"fmt"
-	"os"
 	"strings"
 	"time"
 
+	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
+	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
 )
 
 // ── Messages for async bridge operations ──
@@ -49,7 +48,7 @@ type reconnectTickMsg struct{}
 // ── Init ──
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.TextInput.Focus(), m.createSessionCmd())
+	return tea.Batch(m.TextInput.Focus(), m.createSessionCmd(), m.Spinner.Tick)
 }
 
 func (m Model) createSessionCmd() tea.Cmd {
@@ -106,42 +105,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.Width = msg.Width
 		m.Height = msg.Height
 
+		metrics := m.layoutMetrics()
 		if !m.Ready {
-			// Initialize viewports on first resize
-			chatWidth := msg.Width*3/5 - 4    // 60% minus borders
-			previewWidth := msg.Width*2/5 - 4  // 40% minus borders
-			paneHeight := msg.Height - 6       // minus header + footer + borders
-
-			if chatWidth < 20 {
-				chatWidth = 20
-			}
-			if previewWidth < 20 {
-				previewWidth = 20
-			}
-			if paneHeight < 5 {
-				paneHeight = 5
-			}
-
-			m.ChatViewport = viewport.New(chatWidth, paneHeight)
+			// Initialize viewports on first resize. Viewport sizes are content sizes,
+			// not outer pane sizes. This keeps streamed responses inside panes.
+			m.ChatViewport = viewport.New(metrics.chatContentWidth, metrics.paneContentHeight)
 			m.ChatViewport.Style = chatViewportStyle()
 			m.ChatViewport.SetContent("Welcome to Liminal. Type a message to begin.")
 
-			m.PreviewViewport = viewport.New(previewWidth, paneHeight-4)
+			m.PreviewViewport = viewport.New(metrics.previewContentWidth, metrics.previewViewHeight)
 			m.PreviewViewport.Style = previewViewportStyle()
 			m.PreviewViewport.SetContent("(no preview)")
 
-			m.TextInput.Width = chatWidth - 4
+			m.TextInput.Width = metrics.chatContentWidth
 			m.Ready = true
 		} else {
-			chatWidth := msg.Width*3/5 - 4
-			previewWidth := msg.Width*2/5 - 4
-			paneHeight := msg.Height - 6
-
-			m.ChatViewport.Width = chatWidth
-			m.ChatViewport.Height = paneHeight
-			m.PreviewViewport.Width = previewWidth
-			m.PreviewViewport.Height = paneHeight - 4
-			m.TextInput.Width = chatWidth - 4
+			m.ChatViewport.Width = metrics.chatContentWidth
+			m.ChatViewport.Height = metrics.paneContentHeight
+			m.PreviewViewport.Width = metrics.previewContentWidth
+			m.PreviewViewport.Height = metrics.previewViewHeight
+			m.TextInput.Width = metrics.chatContentWidth
 		}
 		return m, nil
 
@@ -166,11 +149,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case bridgeEventMsg:
-		fmt.Fprintf(os.Stderr, "[update] bridgeEvent: type=%s delta=%d content=%d blocks=%d activeLen=%d\n",
-			msg.event.Type, len(msg.event.Delta), len(msg.event.Content), len(m.ChatBlocks), len(m.ActiveResponse))
 		m.ApplyEvent(msg.event)
-		fmt.Fprintf(os.Stderr, "[update] after apply: blocks=%d activeLen=%d\n", len(m.ChatBlocks), len(m.ActiveResponse))
 		m.refreshViewports()
+		if m.shouldSpin() {
+			var cmd tea.Cmd
+			m.Spinner, cmd = m.Spinner.Update(m.Spinner.Tick())
+			return m, cmd
+		}
+		return m, nil
+
+	case spinner.TickMsg:
+		var cmd tea.Cmd
+		m.Spinner, cmd = m.Spinner.Update(msg)
+		if m.shouldSpin() {
+			return m, cmd
+		}
 		return m, nil
 
 	case streamDoneMsg:
@@ -225,6 +218,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					Content: input,
 					Time:    time.Now(),
 				})
+				m.appendTranscript("user", input)
 
 				if !m.Connected {
 					m.updateChatViewport("Not connected to bridge.")
@@ -251,6 +245,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			case "ctrl+e":
 				// Toggle preview visibility
 				m.PreviewVisible = !m.PreviewVisible
+				return m, nil
+			case "pgup", "ctrl+up":
+				m.ChatViewport.HalfViewUp()
+				return m, nil
+			case "pgdown", "ctrl+down":
+				m.ChatViewport.HalfViewDown()
+				return m, nil
+			case "home":
+				m.ChatViewport.GotoTop()
+				return m, nil
+			case "end":
+				m.ChatViewport.GotoBottom()
+				return m, nil
+
+			case "ctrl+y":
+				m.saveLastResponse()
+				m.refreshViewports()
 				return m, nil
 
 			case "y":
@@ -320,6 +331,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
+}
+
+func (m Model) shouldSpin() bool {
+	return m.IsStreaming || m.Reconnecting || m.ActivityMessage != ""
 }
 
 // ── Viewport helpers ──

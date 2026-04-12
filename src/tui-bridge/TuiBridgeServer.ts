@@ -25,9 +25,20 @@ export class TuiBridgeServer {
   }
 
   async start(): Promise<void> {
-    return new Promise((resolve) => {
-      this.server.listen(this.port, this.host, () => {
+    return new Promise((resolve, reject) => {
+      const onError = (err: Error) => {
+        this.server.off('listening', onListening);
+        reject(err);
+      };
+      const onListening = () => {
+        this.server.off('error', onError);
         resolve();
+      };
+      this.server.once('error', onError);
+      this.server.once('listening', onListening);
+      this.server.listen(this.port, this.host, () => {
+        // The explicit listening listener above resolves the promise. Keep this
+        // callback empty so older Node versions still use the same listen path.
       });
     });
   }

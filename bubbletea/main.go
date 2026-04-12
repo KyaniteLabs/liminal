@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
-	tea "github.com/charmbracelet/bubbletea"
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/app"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func main() {
@@ -15,7 +15,7 @@ func main() {
 	}
 
 	model := app.NewModel(bridgeURL)
-	program := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion())
+	program := tea.NewProgram(model, tea.WithAltScreen())
 
 	// Pass program reference to model so SSE goroutines can send events
 	app.GlobalProgram = program

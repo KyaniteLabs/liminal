@@ -804,6 +804,39 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('adds a pagination hint to truncated readFile tool results', async () => {
+    mockReadFile.execute.mockResolvedValue({
+      success: true,
+      data: {
+        content: 'line 1\\n... [truncated: 950 more lines] ...',
+        exists: true,
+        lineCount: 1050,
+        truncated: true,
+        startLine: 1,
+        endLine: 100,
+      },
+    });
+    queuePlans(
+      '{"tool":"readFile","params":{"path":"src/harness/agent/LLMModeAgent.ts"},"thought":"inspect the file","expectedResult":"see the first chunk"}',
+      '{"tool":"complete","params":{},"thought":"pagination hint is present","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-pagination-hint',
+      title: 'Pagination hint',
+      description: 'Surface an actionable follow-up when readFile returns a truncated page',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    const toolMessage = session.messages.find((message) =>
+      message.role === 'tool' && message.content.includes('Pagination hint: this readFile result is truncated.'),
+    );
+    expect(toolMessage?.content).toContain('offset=100');
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
   // ── Report generation ──────────────────────────────────────────────
   it('generateReport includes session data after tasks', async () => {
     mockComplete.mockResolvedValue({ text: 'not json' });

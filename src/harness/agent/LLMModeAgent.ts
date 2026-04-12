@@ -369,7 +369,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         // Record tool result
         session.messages.push({
           role: 'tool',
-          content: JSON.stringify(result),
+          content: this.formatToolResultMessage(toolCall.tool, result),
           toolResult: result,
         });
 
@@ -816,6 +816,16 @@ When the task is complete and build passes, respond with tool "complete".`;
   private formatPreflightExcerpt(content: string): string {
     if (content.length <= LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT) return content;
     return `${content.slice(0, LLMModeAgent.PREFLIGHT_EXCERPT_LIMIT)}\n... [truncated preflight excerpt; call readFile for full contents]`;
+  }
+
+  private formatToolResultMessage(tool: string, result: ToolResult): string {
+    const base = JSON.stringify(result);
+    if (tool !== 'readFile' || !result.success) return base;
+
+    const data = result.data as { truncated?: boolean; endLine?: number } | undefined;
+    if (!data?.truncated || typeof data.endLine !== 'number') return base;
+
+    return `${base}\n\nPagination hint: this readFile result is truncated. Continue the same file with offset=${data.endLine} instead of rereading from the top.`;
   }
 
   private getInitialPreflightFiles(task: LLMTask): string[] {

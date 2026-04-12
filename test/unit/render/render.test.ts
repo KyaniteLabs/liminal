@@ -767,4 +767,31 @@ describe('RenderAndScorePipeline', () => {
     expect(result.success).toBe(true);
     expect(result.warnings).toEqual(['Visual scoring skipped: screenshot buffer too small']);
   });
+
+  it('prefers fewer warnings when batch scores tie', async () => {
+    const pipeline = new RenderAndScorePipeline() as RenderAndScorePipeline & {
+      process: (code: string, domainHint?: unknown) => Promise<unknown>;
+    };
+
+    pipeline.process = vi
+      .fn()
+      .mockResolvedValueOnce({
+        success: true,
+        score: 0.8,
+        domain: 'p5',
+        duration: 10,
+        warnings: ['Visual scoring skipped: screenshot buffer too small'],
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        score: 0.8,
+        domain: 'p5',
+        duration: 12,
+      });
+
+    const result = await pipeline.processBatch(['first', 'second'], 'p5');
+
+    expect(result.bestIndex).toBe(1);
+    expect(result.bestResult.warnings).toBeUndefined();
+  });
 });

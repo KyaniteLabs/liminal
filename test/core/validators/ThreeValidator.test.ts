@@ -86,6 +86,29 @@ describe('ThreeValidator', () => {
       expect(result.errors).toContain('Three.js code must reference THREE object or import from "three"');
     });
 
+    it('should reject duplicate THREE imports in raw scene code', () => {
+      const code = `
+        import * as THREE from 'three';
+        import * as THREE from "https://unpkg.com/three@0.162.0/build/three.module.js";
+        const scene = new THREE.Scene();
+      `;
+
+      const result = ThreeValidator.validate(code);
+      expect(result.errors).toContain('Three.js code must not declare multiple THREE imports');
+    });
+
+    it('should reject redeclaring wrapper-owned canvas in raw scene code', () => {
+      const code = `
+        import * as THREE from 'three';
+        const scene = new THREE.Scene();
+        const canvas = document.createElement('canvas');
+        const renderer = new THREE.WebGLRenderer({ canvas });
+      `;
+
+      const result = ThreeValidator.validate(code);
+      expect(result.errors).toContain('Three.js raw scene must use wrapper-provided canvas instead of redeclaring canvas');
+    });
+
     it('should reject empty code', () => {
       const result = ThreeValidator.validate('');
       expect(result.valid).toBe(false);
@@ -115,6 +138,44 @@ describe('ThreeValidator', () => {
 
       const result = ThreeValidator.validate(code);
       expect(result.errors).toContain('Three.js code mixing importmap with global THREE - use one style consistently');
+    });
+
+    it('should reject an animation loop that is defined but never started', () => {
+      const code = `
+        import * as THREE from 'three';
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        const cube = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial());
+        scene.add(cube);
+        function animate() {
+          requestAnimationFrame(animate);
+          cube.rotation.y += 0.01;
+          renderer.render(scene, camera);
+        }
+      `;
+
+      const result = ThreeValidator.validate(code);
+      expect(result.errors).toContain('Three.js animation loop is defined but never started with animate()');
+    });
+
+    it('should reject an animation loop that only renders without changing scene state', () => {
+      const code = `
+        import * as THREE from 'three';
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        const cube = new THREE.Mesh(new THREE.BoxGeometry(), new THREE.MeshBasicMaterial());
+        scene.add(cube);
+        function animate() {
+          requestAnimationFrame(animate);
+          renderer.render(scene, camera);
+        }
+        animate();
+      `;
+
+      const result = ThreeValidator.validate(code);
+      expect(result.errors).toContain('Three.js animation loop should mutate scene state before rendering');
     });
   });
 
@@ -197,8 +258,8 @@ describe('ThreeValidator', () => {
   });
 
   describe('getMinSize', () => {
-    it('should return 800 bytes as minimum size', () => {
-      expect(ThreeValidator.getMinSize()).toBe(800);
+    it('should return 500 bytes as minimum size', () => {
+      expect(ThreeValidator.getMinSize()).toBe(500);
     });
   });
 });

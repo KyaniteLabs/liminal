@@ -53,6 +53,20 @@ describe('ThreeGenerator', () => {
     const terrain = await gen.generate('wireframe terrain landscape');
     expect(galaxy).not.toBe(terrain);
   });
+
+  it('wrapForGallery does not duplicate THREE import when generated code imports three', () => {
+    const gen = new ThreeGenerator();
+    const wrapped = gen.wrapForGallery(`import * as THREE from 'three';
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, w / h);
+const renderer = new THREE.WebGLRenderer({ canvas });`);
+
+    expect(wrapped.match(/import\s*\*\s*as\s*THREE/g)).toHaveLength(1);
+    expect(wrapped).toContain("const canvas=document.getElementById('three-canvas');");
+    expect(wrapped).toContain('let w=innerWidth;');
+    expect(wrapped).toContain('let h=innerHeight;');
+    expect(wrapped).toContain('document.body.appendChild(renderer.domElement)');
+  });
 });
 
 describe('selectThreeTemplate', () => {

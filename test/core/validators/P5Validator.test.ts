@@ -55,6 +55,61 @@ describe('P5Validator', () => {
       expect(result.errors).toContain('p5.js code must contain at least one of: function setup(), const setup = () =>..., function draw(), const draw = () =>..., or createCanvas()');
     });
 
+    it('should reject p5-shaped output that is not valid JavaScript', () => {
+      const code = `
+        function setup() {
+          createCanvas(windowWidth, windowHeight);
+        }
+
+        function draw() {
+          background(183, 236, 248);
+          for (let i = 0; i < particles.length; i++) {
+            let particle = particles[i];
+            vector v = particle.velocity;
+            magnitude(v) *= 0.96;
+          }
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(error => error.includes('invalid JavaScript syntax'))).toBe(true);
+    });
+
+    it('should reject ES module imports in raw global-mode p5.js', () => {
+      const code = `
+        import * as p5 from 'p5';
+
+        function setup() {
+          createCanvas(400, 400);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(error => error.includes('invalid JavaScript syntax'))).toBe(true);
+    });
+
+    it('should reject undeclared sketch state references before runtime', () => {
+      const code = `
+        function setup() {
+          createCanvas(windowWidth, windowHeight);
+        }
+
+        function draw() {
+          background(240);
+          particleCount = 15;
+          for (let i = 0; i < particleCount; i++) {
+            particles[i].show();
+          }
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('p5.js code references undeclared identifier: particles');
+    });
+
     it('should reject empty code', () => {
       const result = P5Validator.validate('');
       expect(result.valid).toBe(false);
@@ -125,6 +180,24 @@ describe('P5Validator', () => {
       const result = P5Validator.validate(code);
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('HTML-wrapped p5.js must include p5.js CDN');
+    });
+
+    it('should reject incomplete HTML-wrapped p5.js documents', () => {
+      const code = `<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+  <script>
+    function setup() {
+      createCanvas(400, 400);
+    }
+  </script>`;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('HTML-wrapped p5.js must include closing </body> and </html> tags');
     });
 
     it('should validate p5.js with instance mode', () => {

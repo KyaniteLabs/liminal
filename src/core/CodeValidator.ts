@@ -43,6 +43,7 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'strudel': StrudelValidator.getMinSize(),
   'hydra': HydraValidator.getMinSize(),
   'tone': ToneValidator.getMinSize(),
+  'kinetic': 180,
   'remotion': RemotionValidator.getMinSize(),
   'revideo': RevideoValidator.getMinSize(),
   'html': HTMLValidator.getMinSize(),
@@ -169,6 +170,17 @@ function validateStructure(code: string, domain: Domain): string[] {
       errors.push(...result.errors);
       break;
     }
+    case 'kinetic': {
+      const result = HTMLValidator.validate(trimmed);
+      errors.push(...result.errors);
+      if (!/@keyframes\b/.test(trimmed)) {
+        errors.push('Kinetic HTML must contain CSS @keyframes animation');
+      }
+      if (/<script\b/i.test(trimmed)) {
+        errors.push('Kinetic HTML must not contain JavaScript <script> tags');
+      }
+      break;
+    }
     case 'remotion': {
       const result = RemotionValidator.validate(trimmed);
       errors.push(...result.errors);
@@ -236,6 +248,10 @@ function validateSelfContained(code: string, domain: Domain): string[] {
       // HTML validation already checks structure
       break;
     }
+    case 'kinetic': {
+      // Kinetic validation is handled as HTML plus animation constraints.
+      break;
+    }
   }
   return errors;
 }
@@ -258,12 +274,15 @@ export class CodeValidator {
       return { valid: false, cleanedCode: '', errors: ['No code provided'] };
     }
 
-    const cleaned = stripReasoningText(stripContamination(code));
+    const withoutContamination = stripContamination(code);
+    const requestedDomain = domain as Domain | undefined;
+    const preserveAscii = requestedDomain === 'ascii';
+    const cleaned = preserveAscii ? withoutContamination.trim() : stripReasoningText(withoutContamination);
     if (!cleaned.trim()) {
       return { valid: false, cleanedCode: '', errors: ['Code is empty after stripping LLM reasoning text'] };
     }
 
-    const detectedDomain = (domain as Domain) || detectDomain(cleaned);
+    const detectedDomain = requestedDomain || detectDomain(cleaned);
 
     const allErrors = [
       ...validateStructure(cleaned, detectedDomain),

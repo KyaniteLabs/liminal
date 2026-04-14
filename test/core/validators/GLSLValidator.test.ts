@@ -130,6 +130,23 @@ describe('GLSLValidator', () => {
       expect(result.errors.some(e => e.includes("undefinedFunc"))).toBe(true);
     });
 
+    it('should require hash helpers to be defined before use', () => {
+      const code = `
+        precision mediump float;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+        void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+          vec2 uv = fragCoord / u_resolution.xy;
+          float n = hash(floor(uv * 12.0 + u_time));
+          fragColor = vec4(vec3(n), 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors.some(e => e.includes("hash"))).toBe(true);
+    });
+
+
     it('should allow built-in functions', () => {
       const code = `
         uniform float u_time;
@@ -181,6 +198,35 @@ describe('GLSLValidator', () => {
       const result = GLSLValidator.validate(code);
       expect(result.errors).not.toContain('GLSL: texture2D() used but no sampler2D uniform declared');
     });
+
+    it('should reject assigning vec3 directly to fragment output', () => {
+      const code = `
+        precision mediump float;
+        uniform float u_time;
+        void main() {
+          vec3 color = vec3(sin(u_time), 0.5, 1.0);
+          gl_FragColor = color;
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors).toContain("GLSL: Fragment output must be vec4; wrap vec3 'color' as vec4(color, 1.0)");
+    });
+
+    it('should reject assigning vec2 expressions to float variables', () => {
+      const code = `
+        precision mediump float;
+        uniform float u_time;
+        uniform vec2 u_mouse;
+        void main() {
+          float glowIntensity = smoothstep(0.5, 0.0, abs(u_mouse.xy - vec2(0.5, 0.5)));
+          gl_FragColor = vec4(vec3(glowIntensity + sin(u_time)), 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors).toContain("GLSL: float 'glowIntensity' is assigned a vec2 expression; reduce it with length(), .x, or .y");
+    });
   });
 
   describe('validateHTMLWrapped', () => {
@@ -215,8 +261,8 @@ describe('GLSLValidator', () => {
   });
 
   describe('getMinSize', () => {
-    it('should return 800 bytes as minimum size', () => {
-      expect(GLSLValidator.getMinSize()).toBe(800);
+    it('should return 300 bytes as minimum size', () => {
+      expect(GLSLValidator.getMinSize()).toBe(300);
     });
   });
 });

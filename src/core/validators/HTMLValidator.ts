@@ -90,7 +90,7 @@ export class HTMLValidator {
     // Basic balance check for main structural tags
     const criticalTags = ['html', 'head', 'body'];
     for (const tag of criticalTags) {
-      const opens = (code.match(new RegExp(`<${tag}[^>]*>`, 'gi')) || []).length;
+      const opens = (code.match(new RegExp(`<${tag}\\b[^>]*>`, 'gi')) || []).length;
       const closes = (code.match(new RegExp(`</${tag}>`, 'gi')) || []).length;
       if (opens !== closes) {
         errors.push(`HTML document has mismatched <${tag}> tags: ${opens} opening, ${closes} closing`);

@@ -41,6 +41,7 @@
     "docs": "typedoc --out docs src/",
     "tui": "npm run build && node scripts/start-bubbletea-tui.mjs",
     "dogfood:report": "npx tsx scripts/generate-dogfood-report.ts",
+    "dogfood:df1": "npx tsx scripts/dogfood/df1-app-dogfood.ts",
     "prepare": "git config core.hooksPath .githooks",
     "git:hygiene": "bash scripts/utils/git-hygiene.sh",
     "git:hygiene:dry": "bash scripts/utils/git-hygiene.sh --dry-run",

@@ -253,6 +253,7 @@ export abstract class TierBasedGenerator {
       } else {
         throw new GenerationError(`${this.constructor.name}: ${validated.error}`, this.domain, {
           validationError: validated.error,
+          failedCode: response.code,
         });
       }
     }

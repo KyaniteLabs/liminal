@@ -123,8 +123,8 @@ stack(
   });
 
   describe('getMinSize', () => {
-    it('should return 100 bytes as minimum size', () => {
-      expect(StrudelValidator.getMinSize()).toBe(100);
+    it('should return 80 bytes as minimum size', () => {
+      expect(StrudelValidator.getMinSize()).toBe(80);
     });
   });
 });

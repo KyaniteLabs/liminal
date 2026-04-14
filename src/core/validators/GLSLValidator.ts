@@ -102,8 +102,6 @@ export class GLSLValidator {
       'length', 'distance', 'dot', 'cross', 'normalize', 'faceforward', 'reflect', 'refract',
       // Texture
       'texture2D', 'texture', 'textureLod',
-      // Noise (if defined in shader)
-      'noise', 'hash', 'fbm', 'snoise',
       // Constructor-like
       'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4', 'int', 'float', 'bool'
     ]);
@@ -137,6 +135,23 @@ export class GLSLValidator {
       errors.push('GLSL: texture2D() used but no sampler2D uniform declared');
     }
 
+    const vec3Variables = new Set<string>();
+    for (const match of trimmed.matchAll(/\bvec3\s+(\w+)\s*=/g)) {
+      vec3Variables.add(match[1]);
+    }
+
+    for (const variable of vec3Variables) {
+      const directFragAssign = new RegExp(`\\b(?:gl_FragColor|fragColor)\\s*=\\s*${variable}\\s*;`);
+      if (directFragAssign.test(trimmed)) {
+        errors.push(`GLSL: Fragment output must be vec4; wrap vec3 '${variable}' as vec4(${variable}, 1.0)`);
+      }
+    }
+
+    const vec2ToFloatPattern = /\bfloat\s+(\w+)\s*=\s*smoothstep\([^;]*\babs\s*\([^;]*\.(?:xy|yx|rg|st)\b[^;]*\)\s*[^;]*;/g;
+    for (const match of trimmed.matchAll(vec2ToFloatPattern)) {
+      errors.push(`GLSL: float '${match[1]}' is assigned a vec2 expression; reduce it with length(), .x, or .y`);
+    }
+
     return errors;
   }
 
@@ -157,6 +172,6 @@ export class GLSLValidator {
    * Get minimum size requirement for GLSL code
    */
   static getMinSize(): number {
-    return 800; // GLSL needs uniforms, main(), and shader logic
+    return 300; // GLSL needs uniforms, main/mainImage, and enough shader logic
   }
 }

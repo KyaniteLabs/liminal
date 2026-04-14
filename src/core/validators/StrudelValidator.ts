@@ -141,6 +141,6 @@ export class StrudelValidator {
    * Get minimum size requirement for Strudel code
    */
   static getMinSize(): number {
-    return 100; // Strudel patterns can be concise
+    return 80; // Strudel patterns can be very concise but still complete
   }
 }

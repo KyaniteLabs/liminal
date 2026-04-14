@@ -455,6 +455,28 @@ export default function MyComp() {
     });
   });
 
+  describe('Kinetic structural validation', () => {
+    it('should validate CSS-kinetic HTML with keyframes and no scripts', () => {
+      const code = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>K</title><style>@keyframes drift { to { opacity: 0; } } .x { animation: drift 1s infinite; }</style></head><body><div class="x"></div></body></html>`;
+      const result = CodeValidator.validate(code, 'kinetic');
+      expect(result.valid).toBe(true);
+    });
+
+    it('should reject kinetic HTML without keyframes', () => {
+      const code = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>K</title></head><body><div class="x"></div></body></html>`;
+      const result = CodeValidator.validate(code, 'kinetic');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Kinetic HTML must contain CSS @keyframes animation');
+    });
+
+    it('should reject kinetic HTML with scripts', () => {
+      const code = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>K</title><style>@keyframes x { to { opacity: 0; } }</style></head><body><script></script></body></html>`;
+      const result = CodeValidator.validate(code, 'kinetic');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Kinetic HTML must not contain JavaScript <script> tags');
+    });
+  });
+
   describe('ASCII structural validation', () => {
     it('should validate valid ASCII art', () => {
       const code = `/* ASCII Art */
@@ -473,6 +495,20 @@ export default function MyComp() {
     `;
       const result = CodeValidator.validate(code, 'ascii');
       expect(result.valid).toBe(true);
+    });
+
+    it('should preserve bare ASCII art instead of stripping it as reasoning text', () => {
+      const code = `        /\\
+       /  \\
+      /____\\
+     /\\    /\\
+    /  \\  /  \\
+   /____\\/____\\
+      ||  ||`;
+
+      const result = CodeValidator.validate(code, 'ascii');
+      expect(result.valid).toBe(true);
+      expect(result.cleanedCode).toContain('||  ||');
     });
 
     it('should reject ASCII art with Unicode', () => {
@@ -652,11 +688,12 @@ function setup() {
 
     it('should get minimum sizes for all domains', () => {
       expect(CodeValidator.getMinSize('p5')).toBe(120);
-      expect(CodeValidator.getMinSize('shader')).toBe(800);
-      expect(CodeValidator.getMinSize('three')).toBe(800);
-      expect(CodeValidator.getMinSize('strudel')).toBe(100);
+      expect(CodeValidator.getMinSize('shader')).toBe(300);
+      expect(CodeValidator.getMinSize('three')).toBe(500);
+      expect(CodeValidator.getMinSize('strudel')).toBe(80);
       expect(CodeValidator.getMinSize('hydra')).toBe(150);
       expect(CodeValidator.getMinSize('tone')).toBe(100);
+      expect(CodeValidator.getMinSize('kinetic')).toBe(180);
       expect(CodeValidator.getMinSize('remotion')).toBe(500);
       expect(CodeValidator.getMinSize('html')).toBe(200);
       expect(CodeValidator.getMinSize('ascii')).toBe(50);

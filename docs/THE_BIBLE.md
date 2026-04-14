@@ -23,7 +23,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 
 ## Test Status
 
-**Date:** 2026-04-08
+**Date:** 2026-04-14
 
 | Category | Before | After |
 |----------|--------|-------|
@@ -40,6 +40,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 | Dog Food Tests | ✅ Ready | 9 domains × 6 models |
 | HTML Security | ✅ Fixed | 7/7 tests passing |
 | Preview Server | ✅ Fixed | 28/28 tests passing |
+| DF1 Tri-Role Dogfood | 🔄 Active | 7/7 functional, 6/7 launch-ready with GLM 4.5 Air generator |
 
 ```
 Test Files: ~250
@@ -50,6 +51,7 @@ Failures:   0 critical
 ### Running Tests
 - Unit Tests: Run with `npm test -- --run` (requires `--run` flag to avoid timeout)
 - Dog Food Tests: Run with `npm run dogfood` or via TUI `/dogfood` command
+- DF1 Tri-Role Dogfood: Run with `npm run dogfood:df1`; artifacts must preserve generator, evaluator, and harness roles separately
 - Note: Tests frequently timeout on first run without `--run` flag
 
 ### Remediation Progress (Forensic Audit Fixes)
@@ -925,6 +927,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Enhanced TUI**: Task loading with M1-M8 support via `/run <task-id>` command
 - **Worktree Isolation**: Full multi-agent development workflow with `git wt` commands
 - **Agent Worktree Guard**: `scripts/utils/assert-agent-worktree.sh <branch>` prevents agents from editing in the root checkout or wrong branch
+- **DF1 Tri-Role Dogfood**: `scripts/dogfood/df1-app-dogfood.ts` captures generator output, deterministic validation/runtime evidence, evaluator score, and harness analysis as separate artifacts. Per-domain results now record explicit runtime applicability (`completed`, `skipped`, or `error`) so skipped audio/text runtime is not mistaken for missing telemetry.
 
 ---
 
@@ -936,7 +939,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 3. ✅ Plan C - Test infrastructure (C1-C14) - DONE
 
 ### Remaining Work
-4. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
+4. 🔄 DF1 → DF2 dogfood loop: move from single-pass tri-role evidence to iterative generate/evaluate/select/harness adjudication
 5. 🔄 Cloud provider testing (requires API keys)
 6. 🔄 Implement M12-M18 guardrails (future)
 7. 🔄 Community plugins (future)
@@ -945,7 +948,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Security issues:** 10 → 0 ✅
 - **Type errors:** 48 → 0 ✅
 - **Test coverage:** 30% → 60%+ ✅
-- **Dogfood pass rate:** 0% → 30.4% ✅
+- **DF1 dogfood:** GLM 4.5 Air generator reached 7/7 functional and 6/7 launch-ready in tri-role DF1; Strudel quality and DF2 loop proof remain active
 
 ---
 

@@ -451,10 +451,10 @@
                     <div class="task-item medium"><div class="task-id">18</div>Routing System</div>
                     <div class="task-item medium"><div class="task-id">19</div>Scavenger System</div>
                 </div>
-                <div class="task-column">
-                    <h4>🟡 In Progress</h4>
-                    <div class="meta-info">None</div>
-                </div>
+	                <div class="task-column">
+	                    <h4>🟡 In Progress</h4>
+	                    <div class="task-item high"><div class="task-id">DF1</div>Tri-role dogfood telemetry hardening</div>
+	                </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
                     <div class="task-item high"><div class="task-id">M12</div>Privacy Guardrail</div>
@@ -479,28 +479,28 @@
             <div class="dashboard-grid">
                 <div class="dashboard-card">
                     <h3>📅 Last Run</h3>
-                    <div class="metric">
-                        <span class="metric-label">Date</span>
-                        <span class="metric-value">Apr 3, 2026</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Status</span>
-                        <span class="metric-value text-yellow">Partial</span>
-                    </div>
+	                    <div class="metric">
+	                        <span class="metric-label">Date</span>
+	                        <span class="metric-value">Apr 14, 2026</span>
+	                    </div>
+	                    <div class="metric">
+	                        <span class="metric-label">Status</span>
+	                        <span class="metric-value text-green">DF1 7/7 functional</span>
+	                    </div>
                 </div>
 
                 <div class="dashboard-card">
                     <h3>📊 Success Rate</h3>
-                    <div class="metric">
-                        <span class="metric-label">Rate</span>
-                        <span class="metric-value text-yellow">66.7%</span>
-                    </div>
-                    <div class="metric">
-                        <span class="metric-label">Tests</span>
-                        <span class="metric-value">12 / 18 passed</span>
-                    </div>
-                    <div class="progress-bar">
-                        <div class="progress-fill" style="width: 66.7%; background: var(--accent-yellow);"></div>
+	                    <div class="metric">
+	                        <span class="metric-label">Rate</span>
+	                        <span class="metric-value text-yellow">85.7% launch-ready</span>
+	                    </div>
+	                    <div class="metric">
+	                        <span class="metric-label">Tests</span>
+	                        <span class="metric-value">6 / 7 launch-ready</span>
+	                    </div>
+	                    <div class="progress-bar">
+	                        <div class="progress-fill" style="width: 85.7%; background: var(--accent-yellow);"></div>
                     </div>
                 </div>
 
@@ -742,10 +742,15 @@
                         <th>Impact</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <tr>
-                        <td><code>pending</code></td>
-                        <td>chore: remove orphaned dashboard residue and conflicted quarantined tests</td>
+	                <tbody>
+	                    <tr>
+	                        <td><code>pending</code></td>
+	                        <td>Record explicit DF1 runtime applicability in per-domain artifacts</td>
+	                        <td>Harness analysis no longer confuses intentionally skipped Tone/Strudel runtime with missing telemetry</td>
+	                    </tr>
+	                    <tr>
+	                        <td><code>pending</code></td>
+	                        <td>chore: remove orphaned dashboard residue and conflicted quarantined tests</td>
                         <td>Tracked repo sludge is reduced without affecting active GUI or Vitest coverage</td>
                     </tr>
                     <tr>
@@ -785,12 +790,12 @@
         <!-- Next Steps -->
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
-            <ol class="ml-lg text-secondary lh-2">
-                <li><strong>✅ Tracked residue trimmed</strong> - orphaned GUI dashboard code, one tracked log artifact, and six conflicted quarantined tests are queued for removal</li>
-                <li><strong>🔎 Review remaining quarantined tests</strong> - decide which of the 35 non-conflicted pending tests should be restored vs archived permanently</li>
-                <li><strong>🧩 Audit compatibility shims</strong> - keep only deprecated wrappers with live callers and remove the rest intentionally</li>
-                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
-            </ol>
+	            <ol class="ml-lg text-secondary lh-2">
+	                <li><strong>🐕 DF1 telemetry hardening</strong> - keep runtime applicability explicit before moving the same contract into DF2 iterations</li>
+	                <li><strong>🔁 DF2 loop implementation</strong> - generate multiple candidates, evaluate each, select the best candidate, then ask the harness for final adjudication</li>
+	                <li><strong>🧪 Model scout integration</strong> - fold compatibility-lane generator/evaluator findings into routing without weakening deterministic validators</li>
+	                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
+	            </ol>
         </section>
     </main>
 

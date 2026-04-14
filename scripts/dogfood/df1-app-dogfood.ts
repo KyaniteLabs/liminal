@@ -63,7 +63,9 @@ interface DomainResult {
   domain: DomainName;
   success: boolean;
   validationPassed: boolean;
+  runtimeStatus: 'completed' | 'skipped' | 'error';
   runtimePassed?: boolean;
+  runtimeReason?: string;
   evaluatorScore?: number;
   qualityPassed?: boolean;
   launchReady: boolean;
@@ -400,25 +402,29 @@ function renderDomainFor(domain: DomainName): RenderDomain | undefined {
 }
 
 async function validateRuntime(domain: DomainName, preview: string, domainDir: string, dryRun: boolean): Promise<{
+  status: 'completed' | 'skipped' | 'error';
   passed?: boolean;
+  reason?: string;
   error?: string;
 }> {
   const renderDomain = renderDomainFor(domain);
 
   if (!renderDomain) {
+    const reason = `Runtime render is not part of DF1 ${domain} validation yet.`;
     await writeJson(path.join(domainDir, 'runtime.json'), {
       status: 'skipped',
-      reason: `Runtime render is not part of DF1 ${domain} validation yet.`,
+      reason,
     });
-    return {};
+    return { status: 'skipped', reason };
   }
 
   if (dryRun) {
+    const reason = 'Dry-run fixture output does not count as product runtime evidence.';
     await writeJson(path.join(domainDir, 'runtime.json'), {
       status: 'skipped',
-      reason: 'Dry-run fixture output does not count as product runtime evidence.',
+      reason,
     });
-    return {};
+    return { status: 'skipped', reason };
   }
 
   const renderer = new HeadlessRenderer();
@@ -461,6 +467,7 @@ async function validateRuntime(domain: DomainName, preview: string, domainDir: s
     });
 
     return {
+      status: 'completed',
       passed,
       error: passed ? undefined : runtimeErrors.join('; ') || 'Runtime render failed',
     };
@@ -473,7 +480,7 @@ async function validateRuntime(domain: DomainName, preview: string, domainDir: s
       passed: false,
       error: message,
     });
-    return { passed: false, error: message };
+    return { status: 'error', passed: false, error: message };
   } finally {
     await renderer.close();
   }
@@ -505,6 +512,8 @@ async function runEvaluator(
 Prompt: ${spec.prompt}
 Validation passed: ${result.validationPassed}
 Runtime passed: ${result.runtimePassed}
+Runtime status: ${result.runtimeStatus}
+Runtime reason: ${result.runtimeReason || ''}
 Error: ${result.error || ''}
 
 Generated code:
@@ -637,7 +646,9 @@ async function runDomain(
       domain: spec.name,
       success,
       validationPassed: validation.valid,
+      runtimeStatus: runtime.status,
       runtimePassed: runtime.passed,
+      runtimeReason: runtime.reason,
       artifactDir: domainDir,
       codeLength: code.length,
       error: success ? undefined : [validation.errors.join('; '), runtime.error].filter(Boolean).join('; '),
@@ -676,6 +687,7 @@ async function runDomain(
       domain: spec.name,
       success: false,
       validationPassed,
+      runtimeStatus: 'error',
       runtimePassed: false,
       artifactDir: domainDir,
       codeLength: failedCode.length,
@@ -707,7 +719,7 @@ function summaryMarkdown(runId: string, results: DomainResult[], dryRun: boolean
     '| Domain | Result | Static | Runtime | Evaluator | Quality | Launch | Code chars | Duration ms | Error |',
     '| --- | --- | --- | --- | ---: | --- | --- | ---: | ---: | --- |',
     ...results.map((result) =>
-      `| ${result.domain} | ${result.success ? 'PASS' : 'FAIL'} | ${result.validationPassed ? 'PASS' : 'FAIL'} | ${result.runtimePassed === undefined ? 'SKIP' : result.runtimePassed ? 'PASS' : 'FAIL'} | ${result.evaluatorScore ?? ''} | ${result.qualityPassed === undefined ? 'UNKNOWN' : result.qualityPassed ? 'PASS' : 'WARN'} | ${result.launchReady ? 'YES' : 'NO'} | ${result.codeLength} | ${result.durationMs} | ${(result.error || '').replace(/\|/g, '\\|')} |`
+      `| ${result.domain} | ${result.success ? 'PASS' : 'FAIL'} | ${result.validationPassed ? 'PASS' : 'FAIL'} | ${result.runtimeStatus}${result.runtimePassed === undefined ? '' : result.runtimePassed ? ':PASS' : ':FAIL'} | ${result.evaluatorScore ?? ''} | ${result.qualityPassed === undefined ? 'UNKNOWN' : result.qualityPassed ? 'PASS' : 'WARN'} | ${result.launchReady ? 'YES' : 'NO'} | ${result.codeLength} | ${result.durationMs} | ${(result.error || result.runtimeReason || '').replace(/\|/g, '\\|')} |`
     ),
     '',
   ];
@@ -727,8 +739,8 @@ ${JSON.stringify(summary, null, 2)}
 
 Task:
 1. Identify launch blockers.
-2. Identify which failures should be fixed in harness/validator/wrapper versus local generator prompt contract.
-3. Decide whether the local generator model is acceptable for DF1 launch.
+2. Identify which failures should be fixed in harness/validator/wrapper versus local generator prompt contract. Treat runtimeStatus="skipped" as explicit non-browser-domain evidence, not missing telemetry.
+3. Decide whether the actual generator model is acceptable for DF1 launch. The actual generator is manifest.generatorConfig; generatorRoutingPolicy is only the intended local routing baseline and may not be used in this run.
 4. List the next three highest-ROI fixes.
 5. Confirm whether provider/model provenance is sufficient using the manifest above.`;
 
@@ -790,7 +802,12 @@ async function main(): Promise<void> {
       warn: QUALITY_WARN_THRESHOLD,
       pass: QUALITY_PASS_THRESHOLD,
     },
+    generatorRoutingPolicy: GENERATOR_ROUTING_POLICY,
     promptHashes: Object.fromEntries(DOMAIN_SPECS.map((spec) => [spec.name, sha256(spec.prompt)])),
+    generatorConfig: llmConfig ? {
+      ...llmConfig,
+      apiKey: llmConfig.apiKey ? '[REDACTED]' : undefined,
+    } : undefined,
     llmConfig: llmConfig ? {
       ...llmConfig,
       apiKey: llmConfig.apiKey ? '[REDACTED]' : undefined,

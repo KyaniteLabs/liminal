@@ -21,7 +21,7 @@ Each domain has one stable prompt, one generator invocation, domain validation, 
 
 Each DF1 run emits:
 
-- `run.json`: run configuration, provider/model, domain list, timestamps
+- `run.json`: run configuration, actual `generatorConfig`, provider/model, domain list, timestamps
 - `summary.json`: machine-readable aggregate results
 - `summary.md`: human-readable report
 - `<domain>/prompt.json`: prompt and domain metadata
@@ -31,13 +31,13 @@ Each DF1 run emits:
 - `<domain>/validation.json`: `CodeValidator` result
 - `<domain>/runtime.json`: browser render/runtime status for visual domains, skipped only for dry-run or non-visual domains
 - `<domain>/screenshot.png`: captured browser output when runtime rendering reaches a drawable surface
-- `<domain>/result.json`: terminal per-domain result
+- `<domain>/result.json`: terminal per-domain result, including explicit `runtimeStatus` (`completed`, `skipped`, or `error`) and `runtimeReason` when runtime is intentionally not applicable
 
 Dry runs are allowed for runner verification but are explicitly marked `dryRun: true` and do not count as product dogfood evidence.
 
 ## Provider Policy
 
-DF1 treats `--provider` as the **generator provider**. The intended default product path is a smaller local model served by LM Studio, including a remote LM Studio server reached over Tailscale. Cloud models remain comparison or repair/escalation lanes, not the default generator lane.
+DF1 treats `--provider` as the **actual generator provider** for the run and records it as `generatorConfig` in `run.json`. The intended default product path is a smaller local model served by LM Studio, including a remote LM Studio server reached over Tailscale. Cloud models remain comparison or repair/escalation lanes, not the default generator lane.
 
 Current local generator routing policy:
 
@@ -46,7 +46,7 @@ Current local generator routing policy:
 - Quality fallback: `qwen3-coder-next-reap-40b-a3b-i1` for `p5`, `glsl`, `hydra`, and `strudel`
 - Avoid as default: `lfm2.5-1.2b-instruct`, `qwen3.5-4b`, `qwen3.5-9b`, and `gemma-4-e4b-claude-4.6-opus-reasoning-distilled`
 
-This policy came from remote-only direct prompt and actual generator-class bakeoffs. DF1 records the policy in `run.json` so later runs can be interpreted against the intended routing baseline.
+This policy came from remote-only direct prompt and actual generator-class bakeoffs. DF1 records the policy in `run.json` so later runs can be interpreted against the intended routing baseline. The policy is not itself evidence that those local models generated a specific run; `generatorConfig` is the source of truth for that.
 
 Actual generation is opt-in by provider:
 
@@ -93,6 +93,7 @@ DF1 follows the same proving principles learned in RT1-RT4:
 
 - Preserve failed candidates as artifacts. A generator validation failure must still emit `code.txt` and `validation.json` when a candidate exists.
 - Separate axes. Static validation, runtime rendering, provider/generator failure, and harness/infra failure are not the same outcome.
+- Make skipped evidence explicit. Audio/text domains that do not use browser runtime must emit `runtimeStatus: "skipped"` with a reason, not an absent `runtimePassed` field that a harness model can misread as missing telemetry.
 - Prefer deterministic gates before model repair. Syntax, wrapper completeness, undeclared identifiers, and browser runtime errors should be classified before asking another model to fix anything.
 - Do not count dry-run fixture success as product evidence.
 - Do not spend expensive models on opaque failures. First make the failure replayable, then repair.
@@ -147,6 +148,7 @@ DF2 success criteria:
 
 - At least 3 generator candidates are produced for one representative visual domain.
 - Each candidate has deterministic validation/runtime evidence.
+- Each candidate has explicit runtime applicability evidence: `completed`, `skipped`, or `error`.
 - Each candidate has evaluator score and notes.
 - The selected best candidate is not simply the last candidate unless it actually has the best score or harness-approved reason.
 - Harness final review references candidate artifacts by ID/path.

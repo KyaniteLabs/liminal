@@ -52,9 +52,14 @@ describe('MetabolicEntropyEngine', () => {
     const r4 = await engine.harvest();
     const r5 = await engine.harvest();
 
-    const results = [r3, r4, r5];
-    const emergency = results.find(r => r.quality === 'emergency');
-    expect(emergency).toBeDefined();
-    expect(emergency!.source).toBe('fallback');
+    expect(r3.quality).toBe('emergency');
+    expect(r3.source).toBe('fallback');
+  });
+
+  it('nextFloat returns a fallback value before harvest is called', () => {
+    const engine = makeEngine();
+    const v = engine.nextFloat();
+    expect(v).toBeGreaterThanOrEqual(0);
+    expect(v).toBeLessThan(1);
   });
 });

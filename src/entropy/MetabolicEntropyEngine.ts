@@ -66,7 +66,7 @@ export class MetabolicEntropyEngine {
   private genesis(): EntropyResult {
     let raw = '';
     try {
-      raw = execSync('git log --format="%H %s %ad" --date=iso --all', {
+      raw = execSync('git log --format="%H %s %ad" --date=iso --all --max-count=1000', {
         cwd: process.cwd(),
         maxBuffer: 10 * 1024 * 1024,
         encoding: 'utf-8',

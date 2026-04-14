@@ -3,6 +3,9 @@ import type { EntropyResult, CompressionConfig } from './types.js';
 
 export class EntropyCompressor {
   compress(input: string, rounds = 4): Pick<EntropyResult, 'seed' | 'phrase' | 'hashChain'> {
+    if (typeof rounds !== 'number' || rounds <= 0 || !Number.isInteger(rounds)) {
+      throw new Error('rounds must be a positive integer');
+    }
     let current = input;
     const hashChain: string[] = [];
 

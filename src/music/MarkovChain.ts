@@ -38,6 +38,8 @@ export interface MarkovGenerateOptions {
   length: number;
   /** Markov chain order (1-4). Must match the matrix's order. */
   order: number;
+  /** Optional entropy source (replaces Math.random). */
+  rng?: () => number;
 }
 
 /**
@@ -160,6 +162,7 @@ export function generateMarkovMelody(
   matrix: TransitionMatrix,
   length: number,
   order: number,
+  rng?: () => number,
 ): number[] {
   if (order < MIN_MARKOV_ORDER || order > MAX_MARKOV_ORDER) {
     throw new Error(
@@ -177,6 +180,8 @@ export function generateMarkovMelody(
     );
   }
 
+  const randomFunc = rng ?? Math.random;
+
   // Start with the initial state from the seed
   const melody: number[] = seed.slice(0, order);
 
@@ -186,12 +191,12 @@ export function generateMarkovMelody(
 
     // Fallback: no transition recorded for this state
     if (transitions === undefined || transitions.size === 0) {
-      melody.push(seed[Math.floor(Math.random() * seed.length)]);
+      melody.push(seed[Math.floor(randomFunc() * seed.length)]);
       continue;
     }
 
     // Pick next note via cumulative probability
-    const random = Math.random();
+    const random = randomFunc();
     let cumulative = 0;
     let nextNote = melody[melody.length - 1]; // default to last note
 

@@ -254,6 +254,20 @@ describe('generateMarkovMelody', () => {
         expect(uniqueSeed.has(note)).toBe(true);
       }
     });
+
+    it('uses injected rng instead of Math.random', () => {
+      const matrix: TransitionMatrix = new Map();
+      let callCount = 0;
+      const rng = () => [0.1, 0.3, 0.5, 0.7, 0.9][callCount++ % 5];
+
+      const melody = generateMarkovMelody(seed, matrix, 8, 1, rng);
+
+      expect(melody.length).toBe(8);
+      const uniqueSeed = new Set(seed);
+      for (const note of melody) {
+        expect(uniqueSeed.has(note)).toBe(true);
+      }
+    });
   });
 
   describe('error cases', () => {

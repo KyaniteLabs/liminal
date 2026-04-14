@@ -64,6 +64,11 @@ export class StrudelGenerator extends TierBasedGenerator {
       .replace(/&amp;/g, '&')
       .replace(/&quot;/g, '"')
       .replace(/&#39;/g, "'");
+
+    const expression = this.extractStrudelExpression(clean);
+    if (expression) {
+      return expression;
+    }
     
     // Only filter out lines that are pure explanation (no code patterns at all)
     const lines = clean.split('\n');
@@ -96,6 +101,22 @@ export class StrudelGenerator extends TierBasedGenerator {
     clean = codeLines.join('\n');
     
     return clean.trim();
+  }
+
+  private extractStrudelExpression(code: string): string | null {
+    const stackStart = code.search(/^\s*stack\s*\(/m);
+    const start = stackStart >= 0 ? stackStart : code.search(/\b(?:s|sound|note|n)\s*\(/);
+    if (start < 0) return null;
+
+    const outIndex = code.indexOf('.out()', start);
+    if (outIndex < 0) return null;
+
+    return code.slice(start, outIndex + '.out()'.length)
+      .split('\n')
+      .map((line) => line.replace(/\/\/.*$/, '').trimEnd())
+      .filter((line) => line.trim().length > 0)
+      .join('\n')
+      .trim();
   }
 
   /**

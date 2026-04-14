@@ -6,6 +6,13 @@ import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.
 import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
 import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
 
+const ALLOWED_ORIGINS: readonly string[] = [
+  'http://localhost:3000',
+  'http://localhost:4200',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+];
+
 interface BridgeServerOptions {
   port?: number;
   host?: string;
@@ -13,10 +20,10 @@ interface BridgeServerOptions {
 }
 
 export class TuiBridgeServer {
-  private bridge: TuiBridgeService;
-  private server: Server;
-  private port: number;
-  private host: string;
+  private readonly bridge: TuiBridgeService;
+  private readonly server: Server;
+  private readonly port: number;
+  private readonly host: string;
   private llm?: LLMClient;
 
   constructor(bridge: TuiBridgeService, options: BridgeServerOptions = {}) {
@@ -62,8 +69,7 @@ export class TuiBridgeServer {
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     // CORS headers - restrict to localhost origins only
     const origin = req.headers.origin;
-    const allowedOrigins = ['http://localhost:3000', 'http://localhost:4200', 'http://localhost:5173', 'http://127.0.0.1:3000'];
-    if (origin && allowedOrigins.includes(origin)) {
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     } else {
       res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -153,8 +159,7 @@ export class TuiBridgeServer {
         return;
       }
 
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not found' }));
+      this.json(res, 404, { error: 'Not found' });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const status = message.includes('not found') || message.includes('Unknown') ? 404 : 500;
@@ -180,12 +185,11 @@ export class TuiBridgeServer {
 
     // Subscribe to new events
     const unsubscribe = this.bridge.subscribeWithId(sessionId, (stored) => {
-      const payload = `id: ${stored.id}\ndata: ${JSON.stringify(stored.event)}\n\n`;
-      const flushed = res.write(payload);
-      // Handle backpressure: if the buffer is full, pause and resume
-      if (!flushed) {
-        res.once('drain', () => { /* resume */ });
-      }
+      const payload = `id: ${stored.id}
+data: ${JSON.stringify(stored.event)}
+
+`;
+      res.write(payload);
     });
 
     const heartbeat = setInterval(() => {

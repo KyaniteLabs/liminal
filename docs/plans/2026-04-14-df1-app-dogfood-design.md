@@ -101,6 +101,47 @@ Launch-readiness requires a provider-switching slice:
 - Summary compares model-specific failures without overwriting prior artifacts.
 - A failed local model is treated as generator compatibility evidence, not harness failure, unless provider/model provenance is missing.
 
+## DF2: Iterative Generator-Evaluator Loop
+
+DF1 proves the single-pass tri-role path:
+
+```text
+Generator -> deterministic validation/runtime -> Evaluator -> Harness analysis
+```
+
+DF2 must prove the actual looping behavior:
+
+```text
+Generator candidate 1 -> validation/runtime -> Evaluator score/critique
+Generator candidate 2, informed by candidate 1 critique -> validation/runtime -> Evaluator score/critique
+Generator candidate N -> validation/runtime -> Evaluator score/critique
+Best candidate selection -> Harness final adjudication
+```
+
+Required DF2 artifact contract:
+
+- `iterations/<n>/code.txt`
+- `iterations/<n>/validation.json`
+- `iterations/<n>/runtime.json`
+- `iterations/<n>/evaluator.json`
+- `iterations/<n>/prompt.json` with the critique/improvement prompt used for that iteration
+- `best-candidate.json` with selected iteration, score, and selection reason
+- `harness-final.json` and `harness-final.md`
+
+DF2 must separate loop purposes:
+
+- Generator loop: produce improved candidates.
+- Evaluator loop: score each candidate and provide critique.
+- Harness loop: adjudicate the best candidate and classify remaining launch risk.
+
+DF2 success criteria:
+
+- At least 3 generator candidates are produced for one representative visual domain.
+- Each candidate has deterministic validation/runtime evidence.
+- Each candidate has evaluator score and notes.
+- The selected best candidate is not simply the last candidate unless it actually has the best score or harness-approved reason.
+- Harness final review references candidate artifacts by ID/path.
+
 ## First Clean Local p5 Pass
 
 Run:

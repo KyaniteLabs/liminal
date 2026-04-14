@@ -11,6 +11,7 @@ import {
   decideNextAction,
   evaluatorSkipReasonFor,
   isRuntimeSupportedDomain,
+  normalizeScore100,
   rankScore,
   resolveDf2Preset,
   type CandidateSummary,
@@ -151,5 +152,12 @@ describe('DF2 minimal FSM', () => {
 
     expect(summary.finalBand).toBe('fail');
     expect(rankScore(90, 50)).toBe(82);
+  });
+
+  it('normalizes evaluator scores whether models return 0-1 or 0-100 scale', () => {
+    expect(normalizeScore100(0.97)).toBe(97);
+    expect(normalizeScore100(97)).toBe(97);
+    expect(normalizeScore100(0)).toBe(0);
+    expect(normalizeScore100(null)).toBeNull();
   });
 });

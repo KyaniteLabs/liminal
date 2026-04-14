@@ -1029,7 +1029,7 @@ function parseEvaluationJson(
   const json = raw.match(/\{[\s\S]*\}/)?.[0];
   if (!json) throw new Error('Evaluator returned no JSON');
   const parsed = JSON.parse(json) as Partial<CandidateEvaluation>;
-  const overallScore = clampNumber(parsed.overallScore, 0, 100);
+  const overallScore = normalizeScore100(parsed.overallScore);
   const confidence = clampNumber(parsed.confidence, 0, 1);
   return {
     schemaVersion: 'df2-eval-v1',
@@ -1047,11 +1047,11 @@ function parseEvaluationJson(
     failureClass: normalizeFailureClass(parsed.failureClass),
     agreementWithDeterministic: normalizeAgreement(parsed.agreementWithDeterministic),
     dimensionScores: {
-      domainFit: clampNumber(parsed.dimensionScores?.domainFit, 0, 100) ?? overallScore ?? 0,
-      polish: clampNumber(parsed.dimensionScores?.polish, 0, 100) ?? overallScore ?? 0,
-      completeness: clampNumber(parsed.dimensionScores?.completeness, 0, 100) ?? overallScore ?? 0,
-      responsiveness: clampNumber(parsed.dimensionScores?.responsiveness, 0, 100) ?? overallScore ?? 0,
-      creativity: clampNumber(parsed.dimensionScores?.creativity, 0, 100) ?? overallScore ?? 0,
+      domainFit: normalizeScore100(parsed.dimensionScores?.domainFit) ?? overallScore ?? 0,
+      polish: normalizeScore100(parsed.dimensionScores?.polish) ?? overallScore ?? 0,
+      completeness: normalizeScore100(parsed.dimensionScores?.completeness) ?? overallScore ?? 0,
+      responsiveness: normalizeScore100(parsed.dimensionScores?.responsiveness) ?? overallScore ?? 0,
+      creativity: normalizeScore100(parsed.dimensionScores?.creativity) ?? overallScore ?? 0,
     },
     concreteRepairAdvice: Array.isArray(parsed.concreteRepairAdvice) ? parsed.concreteRepairAdvice.slice(0, 3) as RepairAdvice[] : [],
     recommendation: normalizeRecommendation(parsed.recommendation),
@@ -1063,6 +1063,12 @@ function parseEvaluationJson(
 function clampNumber(value: unknown, min: number, max: number): number | null {
   if (typeof value !== 'number' || Number.isNaN(value)) return null;
   return Math.min(max, Math.max(min, value));
+}
+
+export function normalizeScore100(value: unknown): number | null {
+  const clamped = clampNumber(value, 0, 100);
+  if (clamped === null) return null;
+  return clamped > 0 && clamped <= 1 ? Math.round(clamped * 10000) / 100 : clamped;
 }
 
 function normalizeQualityBand(value: unknown, score: number | null): CandidateEvaluation['qualityBand'] {

@@ -54,7 +54,9 @@ export type EventType =
   | 'undo'              // The last event was rolled back
   | 'config_change'      // Compost config was changed
   | 'git_commit'         // A git commit was made via GitIntegration
-  | 'git_branch';        // A git branch was created via GitIntegration
+  | 'git_branch'         // A git branch was created via GitIntegration
+  | 'entropy_harvest'    // Entropy was harvested from metabolic state
+  | 'entropy_fallback';  // Entropy fallback was used
 
 /** An immutable event in the compost timeline. */
 export interface CompostEvent {
@@ -969,6 +971,10 @@ function describeEvent(event: CompostEvent): string {
       return `Undid ${(p.undoneType as string)} event #${p.undoneEventId}`;
     case 'config_change':
       return `Config changed: ${(p.field as string)} = ${JSON.stringify(p.newValue)}`;
+    case 'entropy_harvest':
+      return `Entropy harvested: quality=${p.quality}, source=${p.source}, phrase="${p.phrase}"`;
+    case 'entropy_fallback':
+      return `Entropy fallback triggered: quality=${p.quality}, source=${p.source}`;
     default:
       return `${event.type}: ${truncate(JSON.stringify(p), 80)}`;
   }

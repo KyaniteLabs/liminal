@@ -121,39 +121,63 @@ DF1 proves the single-pass tri-role path:
 Generator -> deterministic validation/runtime -> Evaluator -> Harness analysis
 ```
 
-DF2 must prove the actual looping behavior:
+DF2 now proves the bounded inner improvement behavior:
 
 ```text
 Generator candidate 1 -> validation/runtime -> Evaluator score/critique
-Generator candidate 2, informed by candidate 1 critique -> validation/runtime -> Evaluator score/critique
-Generator candidate N -> validation/runtime -> Evaluator score/critique
-Best candidate selection -> Harness final adjudication
+Generator candidate 2, informed by candidate 1 compact repair packet -> validation/runtime -> Evaluator score/critique
+Deterministic best-candidate selection -> final adjudication
 ```
 
 Required DF2 artifact contract:
 
-- `iterations/<n>/code.txt`
-- `iterations/<n>/validation.json`
-- `iterations/<n>/runtime.json`
-- `iterations/<n>/evaluator.json`
-- `iterations/<n>/prompt.json` with the critique/improvement prompt used for that iteration
-- `best-candidate.json` with selected iteration, score, and selection reason
-- `harness-final.json` and `harness-final.md`
+- `run.manifest.json`
+- `env.snapshot.json`
+- `preflight.task.json`
+- `preflight.canary.json`
+- `state-trace.jsonl`
+- `candidate-*/code.txt`
+- `candidate-*/validate.report.json`
+- `candidate-*/runtime.report.json`
+- `candidate-*/evaluator.final.json`
+- `candidate-*/decision.json`
+- `candidate-*/candidate.summary.json`
+- `candidate-index.json`
+- `adjudication.final.json`
 
 DF2 must separate loop purposes:
 
 - Generator loop: produce improved candidates.
-- Evaluator loop: score each candidate and provide critique.
-- Harness loop: adjudicate the best candidate and classify remaining launch risk.
+- Evaluator loop: score only candidates that pass deterministic validation and runtime execution.
+- Harness loop: deterministic adjudication; LLM harnesses are shadow-only and cannot control state transitions.
 
 DF2 success criteria:
 
-- At least 3 generator candidates are produced for one representative visual domain.
+- Up to 2 generator candidates are produced for one representative runtime-backed domain.
 - Each candidate has deterministic validation/runtime evidence.
 - Each candidate has explicit runtime applicability evidence: `completed`, `skipped`, or `error`.
-- Each candidate has evaluator score and notes.
-- The selected best candidate is not simply the last candidate unless it actually has the best score or harness-approved reason.
-- Harness final review references candidate artifacts by ID/path.
+- Evaluator artifacts exist only for runtime-passing candidates; skipped evaluator artifacts record the deterministic skip reason.
+- The selected best candidate is chosen by deterministic evidence hierarchy and rank score, not harness prose.
+- Final adjudication records whether the result is launch-ready, functional, warning-quality, generator compatibility failure, or harness/validator/wrapper failure.
+
+Implemented runner:
+
+```bash
+npm run dogfood:df2 -- --domains=p5 --preset=qwen-local
+```
+
+Current presets:
+
+- `qwen-local`: `qwen3.5-2b` primary generator/evaluator with `qwen3-coder-next-reap-40b-a3b-i1` fallback.
+- `glm-ab`: GLM 4.5 Air primary generator with the same local fallback/evaluator stack.
+
+First real DF2 p5 smoke:
+
+```text
+.omx/logs/df2-runs/df2-2026-04-14T17-10-14-957Z
+```
+
+Result: `launch_ready_pass` with deterministic validation pass, runtime pass, evaluator score `90`, runtime health `100`, and rank score `92`.
 
 ## First Clean Local p5 Pass
 

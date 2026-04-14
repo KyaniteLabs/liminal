@@ -41,6 +41,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 | HTML Security | ✅ Fixed | 7/7 tests passing |
 | Preview Server | ✅ Fixed | 28/28 tests passing |
 | DF1 Tri-Role Dogfood | 🔄 Active | 7/7 functional, 6/7 launch-ready with GLM 4.5 Air generator |
+| DF2 Minimal FSM Dogfood | ✅ Active | 2-candidate deterministic loop; p5 real smoke launch-ready |
 
 ```
 Test Files: ~250
@@ -52,6 +53,7 @@ Failures:   0 critical
 - Unit Tests: Run with `npm test -- --run` (requires `--run` flag to avoid timeout)
 - Dog Food Tests: Run with `npm run dogfood` or via TUI `/dogfood` command
 - DF1 Tri-Role Dogfood: Run with `npm run dogfood:df1`; artifacts must preserve generator, evaluator, and harness roles separately
+- DF2 Minimal FSM Dogfood: Run with `npm run dogfood:df2`; default preset is `qwen-local`, with `glm-ab` available as a comparison preset
 - Note: Tests frequently timeout on first run without `--run` flag
 
 ### Remediation Progress (Forensic Audit Fixes)
@@ -928,6 +930,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Worktree Isolation**: Full multi-agent development workflow with `git wt` commands
 - **Agent Worktree Guard**: `scripts/utils/assert-agent-worktree.sh <branch>` prevents agents from editing in the root checkout or wrong branch
 - **DF1 Tri-Role Dogfood**: `scripts/dogfood/df1-app-dogfood.ts` captures generator output, deterministic validation/runtime evidence, evaluator score, and harness analysis as separate artifacts. Per-domain results now record explicit runtime applicability (`completed`, `skipped`, or `error`) so skipped audio/text runtime is not mistaken for missing telemetry.
+- **DF2 Minimal FSM Dogfood**: `scripts/dogfood/df2-minimal-fsm.ts` implements the deterministic 2-candidate generate/validate/runtime/evaluate/adjudicate primitive. Harness LLMs are shadow-only; deterministic/runtime evidence controls final outcomes.
 
 ---
 
@@ -939,7 +942,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 3. ✅ Plan C - Test infrastructure (C1-C14) - DONE
 
 ### Remaining Work
-4. 🔄 DF1 → DF2 dogfood loop: move from single-pass tri-role evidence to iterative generate/evaluate/select/harness adjudication
+4. ✅ DF1 → DF2 dogfood loop: minimal deterministic 2-candidate FSM implemented; next loop is DF3/full Liminal repeated greatness cycles
 5. 🔄 Cloud provider testing (requires API keys)
 6. 🔄 Implement M12-M18 guardrails (future)
 7. 🔄 Community plugins (future)
@@ -949,6 +952,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Type errors:** 48 → 0 ✅
 - **Test coverage:** 30% → 60%+ ✅
 - **DF1 dogfood:** GLM 4.5 Air generator reached 7/7 functional and 6/7 launch-ready in tri-role DF1; Strudel quality and DF2 loop proof remain active
+- **DF2 dogfood:** real p5 smoke reached `launch_ready_pass` with `qwen-local`; artifact `.omx/logs/df2-runs/df2-2026-04-14T17-10-14-957Z`
 
 ---
 

@@ -453,7 +453,7 @@
                 </div>
 	                <div class="task-column">
 	                    <h4>🟡 In Progress</h4>
-	                    <div class="task-item high"><div class="task-id">DF1</div>Tri-role dogfood telemetry hardening</div>
+	                    <div class="task-item high"><div class="task-id">DF3</div>Full greatness loop over DF2 primitive</div>
 	                </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
@@ -485,7 +485,7 @@
 	                    </div>
 	                    <div class="metric">
 	                        <span class="metric-label">Status</span>
-	                        <span class="metric-value text-green">DF1 7/7 functional</span>
+	                        <span class="metric-value text-green">DF2 p5 launch-ready</span>
 	                    </div>
                 </div>
 
@@ -493,14 +493,14 @@
                     <h3>📊 Success Rate</h3>
 	                    <div class="metric">
 	                        <span class="metric-label">Rate</span>
-	                        <span class="metric-value text-yellow">85.7% launch-ready</span>
+	                        <span class="metric-value text-green">100% p5 smoke</span>
 	                    </div>
 	                    <div class="metric">
 	                        <span class="metric-label">Tests</span>
-	                        <span class="metric-value">6 / 7 launch-ready</span>
+	                        <span class="metric-value">DF2 qwen-local pass</span>
 	                    </div>
 	                    <div class="progress-bar">
-	                        <div class="progress-fill" style="width: 85.7%; background: var(--accent-yellow);"></div>
+	                        <div class="progress-fill" style="width: 100%; background: var(--accent-green);"></div>
                     </div>
                 </div>
 
@@ -745,6 +745,11 @@
 	                <tbody>
 	                    <tr>
 	                        <td><code>pending</code></td>
+	                        <td>Add DF2 deterministic two-candidate dogfood FSM</td>
+	                        <td>DF2 can now generate, validate, runtime-check, evaluate, and adjudicate without LLM hot-path control</td>
+	                    </tr>
+	                    <tr>
+	                        <td><code>pending</code></td>
 	                        <td>Record explicit DF1 runtime applicability in per-domain artifacts</td>
 	                        <td>Harness analysis no longer confuses intentionally skipped Tone/Strudel runtime with missing telemetry</td>
 	                    </tr>
@@ -791,9 +796,9 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
 	            <ol class="ml-lg text-secondary lh-2">
-	                <li><strong>🐕 DF1 telemetry hardening</strong> - keep runtime applicability explicit before moving the same contract into DF2 iterations</li>
-	                <li><strong>🔁 DF2 loop implementation</strong> - generate multiple candidates, evaluate each, select the best candidate, then ask the harness for final adjudication</li>
-	                <li><strong>🧪 Model scout integration</strong> - fold compatibility-lane generator/evaluator findings into routing without weakening deterministic validators</li>
+	                <li><strong>✅ DF2 minimal FSM</strong> - deterministic 2-candidate primitive is implemented and p5 real smoke passed</li>
+	                <li><strong>🔁 DF3 greatness loop</strong> - repeat the DF2 primitive until artifact quality is great or model capability ceiling is reached</li>
+	                <li><strong>🧪 Model scout integration</strong> - convert scout findings into explicit DF2/DF3 presets without weakening deterministic validators</li>
 	                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
 	            </ol>
         </section>

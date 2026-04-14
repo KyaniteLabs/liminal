@@ -30,6 +30,10 @@ function makeFragment(overrides: Partial<CompostFragment> = {}): CompostFragment
   };
 }
 
+const mockEntropy = {
+  nextInt: vi.fn((max: number) => 0 % max),
+};
+
 describe('CompostSoup', () => {
   let tmpDir: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -47,7 +51,7 @@ describe('CompostSoup', () => {
       soupPopulationSize: 10,
       soupSeedPromotionThreshold: 0.7,
     });
-    soup = new CompostSoup(config, mockLLM);
+    soup = new CompostSoup(config, mockLLM, mockEntropy as any);
   });
 
   afterEach(async () => {

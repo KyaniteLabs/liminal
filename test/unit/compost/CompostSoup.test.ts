@@ -74,8 +74,10 @@ const llm = {
   generate: vi.fn(),
 };
 
+let mockEntropyCounter = 0;
+const mockEntropySequence = [0, 1, 0, 0];
 const mockEntropy = {
-  nextInt: vi.fn((max: number) => Math.floor(Math.random() * max)),
+  nextInt: vi.fn((max: number) => mockEntropySequence[mockEntropyCounter++ % mockEntropySequence.length] % max),
 } as unknown as import('../../../src/entropy/MetabolicEntropyEngine.js').MetabolicEntropyEngine;
 
 // Mock SoupStateManager
@@ -165,6 +167,7 @@ import { CompostSoup } from '../../../src/compost/CompostSoup.js';
 
 describe('CompostSoup', () => {
   beforeEach(() => {
+    mockEntropyCounter = 0;
     vi.clearAllMocks();
     llm.generate.mockResolvedValue({ success: true, code: 'evolved offspring content' });
     mockScorerScore.mockResolvedValue({
@@ -178,6 +181,10 @@ describe('CompostSoup', () => {
     mockSeedBankAdd.mockResolvedValue(undefined);
     mockStateSave.mockResolvedValue(undefined);
     mockEmit.mockReturnValue(undefined);
+  });
+
+  it('throws when entropy engine is missing', () => {
+    expect(() => new CompostSoup(config, llm, undefined as any)).toThrow('CompostSoup: entropy engine is required');
   });
 
   describe('cycle()', () => {
@@ -229,6 +236,7 @@ describe('CompostSoup', () => {
       expect(mockScorerScore).toHaveBeenCalledTimes(1);
       expect(mockStateSave).toHaveBeenCalledTimes(1);
       expect(mockEmit).toHaveBeenCalled();
+      expect(mockEntropy.nextInt).toHaveBeenCalled();
     });
 
     it('creates offspring with cross-domain metadata', async () => {

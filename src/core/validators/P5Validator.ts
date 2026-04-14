@@ -19,8 +19,8 @@ export class P5Validator {
   private static readonly P5_GLOBALS = new Set([
     'Array', 'Boolean', 'Date', 'Error', 'JSON', 'Map', 'Math', 'Number', 'Object', 'Promise', 'Set', 'String',
     'console', 'document', 'p5', 'window',
-    'ADD', 'BLEND', 'MULTIPLY', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'HALF_PI', 'HSB', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'TWO_PI',
-    'draw', 'frameCount', 'height', 'mouseIsPressed', 'mouseX', 'mouseY', 'pmouseX', 'pmouseY', 'setup', 'windowHeight', 'windowWidth', 'width',
+    'ADD', 'BLEND', 'MULTIPLY', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'DOWN_ARROW', 'HALF_PI', 'HSB', 'LEFT', 'LEFT_ARROW', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'RIGHT_ARROW', 'TWO_PI', 'UP_ARROW',
+    'draw', 'frameCount', 'height', 'key', 'keyCode', 'keyIsPressed', 'mouseButton', 'mouseIsPressed', 'mouseX', 'mouseY', 'pmouseX', 'pmouseY', 'setup', 'windowHeight', 'windowWidth', 'width',
     'abs', 'acos', 'angleMode', 'asin', 'atan', 'atan2', 'background', 'beginShape', 'bezier', 'blendMode',
     'ceil', 'circle', 'color', 'colorMode', 'constrain', 'cos', 'createCanvas', 'createGraphics', 'curveVertex', 'dist', 'ellipse', 'endShape', 'exp',
     'fill', 'floor', 'frameRate', 'image', 'lerp', 'line', 'map', 'max', 'min', 'noFill', 'noise', 'noLoop',

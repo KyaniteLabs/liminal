@@ -32,6 +32,30 @@ describe('P5Validator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    it('should allow p5 keyboard globals in raw global-mode sketches', () => {
+      const code = `
+        function setup() {
+          createCanvas(windowWidth, windowHeight);
+        }
+
+        function draw() {
+          background(10);
+          if (keyIsPressed && key === 'r') {
+            fill(255, 40, 80);
+          } else if (keyCode === LEFT_ARROW || mouseButton === LEFT) {
+            fill(40, 120, 255);
+          } else {
+            fill(255);
+          }
+          circle(mouseX, mouseY, 36);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
     it('should validate valid raw p5.js with createCanvas only', () => {
       const code = `
         createCanvas(400, 400);

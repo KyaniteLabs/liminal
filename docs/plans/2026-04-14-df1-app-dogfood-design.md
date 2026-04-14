@@ -87,6 +87,8 @@ The first LM Studio p5 smoke used `qwen3.5-2b` at `http://100.66.225.85:1234/v1`
 
 DF1 now parses p5 code as browser-script JavaScript, rejects incomplete p5 HTML wrappers, and records runtime render errors separately from static validation errors. This keeps generator failures, validator gaps, and runtime preview failures distinct enough for a later harness repair loop.
 
+A later GPT-5.4-nano probe exposed a p5 false negative: keyboard globals such as `key`, `keyCode`, and `keyIsPressed` are valid p5 global-mode API surface and must not be treated as undeclared sketch state.
+
 ## RT1-RT4 Learnings Carried Forward
 
 DF1 follows the same proving principles learned in RT1-RT4:

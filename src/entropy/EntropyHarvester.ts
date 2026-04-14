@@ -34,4 +34,8 @@ export class EntropyHarvester {
 
     return `[EVENTS]${eventsJson}[/EVENTS][FRAGMENTS]${fragmentsText}[/FRAGMENTS][TELEMETRY]${telemetryJson}[/TELEMETRY]`;
   }
+
+  setGetTopSeeds(fn: (n: number) => Promise<{ id: string; content: string; score: number }[]>): void {
+    this.deps.getTopSeeds = fn;
+  }
 }

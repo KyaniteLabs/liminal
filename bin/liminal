@@ -565,7 +565,27 @@ else if (cmd === 'compost') {
   }
 
   const action = parseArgs(process.argv.slice(2));
-  const mill = new CompostMill(llm, { soupEnabled: true, fastLLM, modelRouter });
+
+  // Bootstrap metabolic entropy engine
+  const { EventStore } = await import('../dist/compost/EventStore.js');
+  const { MetabolicEntropyEngine } = await import('../dist/entropy/MetabolicEntropyEngine.js');
+  const { initializeTelemetry, getTelemetry } = await import('../dist/guardrails/observation/TelemetryCollector.js');
+
+  const eventStore = new EventStore({ projectRoot: process.cwd() });
+  eventStore.init();
+
+  let telemetry = getTelemetry();
+  if (!telemetry) {
+    telemetry = initializeTelemetry({ enabled: true, sampleRate: 1.0 });
+  }
+
+  const entropyEngine = new MetabolicEntropyEngine({
+    eventStore,
+    heap: { listFiles: async () => [] },
+    telemetry,
+  });
+
+  const mill = new CompostMill(llm, { soupEnabled: true, fastLLM, modelRouter, entropy: entropyEngine });
   await execute(action, mill).catch(err => {
     console.error('Compost error:', err.message);
     process.exit(1);

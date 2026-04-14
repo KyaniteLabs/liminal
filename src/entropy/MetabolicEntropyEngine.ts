@@ -63,6 +63,10 @@ export class MetabolicEntropyEngine {
     return Math.floor(this.nextFloat() * max);
   }
 
+  setGetTopSeeds(fn: (n: number) => Promise<{ id: string; content: string; score: number }[]>): void {
+    this.harvester.setGetTopSeeds(fn);
+  }
+
   private genesis(): EntropyResult {
     let raw = '';
     try {

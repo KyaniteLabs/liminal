@@ -91,6 +91,8 @@ export class CompostMill {
       }
       this.soup = new CompostSoup(config, soupLLM, this.entropy);
     }
+
+    this.entropy?.setGetTopSeeds(this.getTopSeeds.bind(this));
   }
 
   /** Set the CompostParser for LIR extraction (allows post-construction injection). */

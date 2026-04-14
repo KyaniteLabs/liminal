@@ -174,6 +174,7 @@ interface Df2ModelConfig {
   model: string;
   maxTokens?: number;
   temperature?: number;
+  timeout?: number;
 }
 
 export interface Df2Preset {
@@ -223,6 +224,7 @@ interface CliOptions {
   maxTokens?: number;
   evaluatorMaxTokens?: number;
   runtimeTimeoutMs: number;
+  localTimeoutMs: number;
 }
 
 interface DomainSpec {
@@ -256,6 +258,7 @@ interface RuntimeReport {
 const DF2_CONTRACT_VERSION = 'df2-minimal-fsm-v1';
 const SUPPORTED_DOMAINS: RuntimeDomain[] = ['p5', 'glsl', 'three', 'kinetic', 'html'];
 const DEFAULT_LMSTUDIO_BASE_URL = 'http://100.66.225.85:1234/v1';
+const DEFAULT_LOCAL_LLM_TIMEOUT_MS = 300000;
 
 const DOMAIN_SPECS: Record<RuntimeDomain, DomainSpec> = {
   p5: {
@@ -348,9 +351,9 @@ export function resolveDf2Preset(name: Df2PresetName): Df2Preset {
       preflightCanaryEnabled: true,
       harnessDecisionMode: 'deterministic',
       primaryGenerator: { provider: 'glm', baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-4.5-air', maxTokens: 8192 },
-      fallbackGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 8192 },
-      evaluatorPrimary: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 512, temperature: 0 },
-      evaluatorFallback: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 512, temperature: 0 },
+      fallbackGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 8192, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
+      evaluatorPrimary: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
+      evaluatorFallback: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
       shadowHarness: { provider: 'kimi', baseUrl: 'https://api.kimi.com/coding', model: 'kimi-for-coding', maxTokens: 4096 },
       evaluateOnlyAfterDeterministicAndRuntimePass: true,
       repairAdviceMaxItems: 3,
@@ -367,10 +370,10 @@ export function resolveDf2Preset(name: Df2PresetName): Df2Preset {
     maxCandidates: 2,
     preflightCanaryEnabled: true,
     harnessDecisionMode: 'deterministic',
-    primaryGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 8192 },
-    fallbackGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 8192 },
-    evaluatorPrimary: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 512, temperature: 0 },
-    evaluatorFallback: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 512, temperature: 0 },
+    primaryGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 8192, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
+    fallbackGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 8192, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
+    evaluatorPrimary: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
+    evaluatorFallback: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
     shadowHarness: { provider: 'kimi', baseUrl: 'https://api.kimi.com/coding', model: 'kimi-for-coding', maxTokens: 4096 },
     evaluateOnlyAfterDeterministicAndRuntimePass: true,
     repairAdviceMaxItems: 3,
@@ -655,20 +658,23 @@ function parseArgs(argv: string[]): CliOptions {
     maxTokens: typeof args.get('max-tokens') === 'string' ? Number(args.get('max-tokens')) : undefined,
     evaluatorMaxTokens: typeof args.get('evaluator-max-tokens') === 'string' ? Number(args.get('evaluator-max-tokens')) : undefined,
     runtimeTimeoutMs: typeof args.get('runtime-timeout-ms') === 'string' ? Number(args.get('runtime-timeout-ms')) : 15000,
+    localTimeoutMs: typeof args.get('local-timeout-ms') === 'string' ? Number(args.get('local-timeout-ms')) : DEFAULT_LOCAL_LLM_TIMEOUT_MS,
   };
 }
 
 export function applyModelOverride(
   base: Df2ModelConfig,
-  override: { provider?: Df2ProviderName; baseUrl?: string; model?: string; maxTokens?: number },
+  override: { provider?: Df2ProviderName; baseUrl?: string; model?: string; maxTokens?: number; timeout?: number },
 ): Df2ModelConfig {
   const providerChanged = Boolean(override.provider && override.provider !== base.provider);
+  const provider = override.provider || base.provider;
   return {
     ...base,
-    provider: override.provider || base.provider,
+    provider,
     baseUrl: override.baseUrl ?? (providerChanged ? undefined : base.baseUrl),
     model: override.model || base.model,
     maxTokens: override.maxTokens || base.maxTokens,
+    timeout: override.timeout ?? (provider === 'lmstudio' ? base.timeout ?? DEFAULT_LOCAL_LLM_TIMEOUT_MS : base.timeout),
   };
 }
 
@@ -678,6 +684,7 @@ function applyOverrides(preset: Df2Preset, options: CliOptions): Df2Preset {
     baseUrl: options.primaryBaseUrl,
     model: options.primaryModel,
     maxTokens: options.maxTokens,
+    timeout: options.primaryProvider === 'lmstudio' || (!options.primaryProvider && preset.primaryGenerator.provider === 'lmstudio') ? options.localTimeoutMs : undefined,
   });
   const fallbackGenerator = preset.fallbackGenerator
     ? applyModelOverride(preset.fallbackGenerator, {
@@ -685,6 +692,7 @@ function applyOverrides(preset: Df2Preset, options: CliOptions): Df2Preset {
         baseUrl: options.fallbackBaseUrl,
         model: options.fallbackModel,
         maxTokens: options.maxTokens,
+        timeout: options.fallbackProvider === 'lmstudio' || (!options.fallbackProvider && preset.fallbackGenerator.provider === 'lmstudio') ? options.localTimeoutMs : undefined,
       })
     : null;
   const evaluatorPrimary = applyModelOverride(preset.evaluatorPrimary, {
@@ -692,6 +700,7 @@ function applyOverrides(preset: Df2Preset, options: CliOptions): Df2Preset {
     baseUrl: options.evaluatorBaseUrl,
     model: options.evaluatorModel,
     maxTokens: options.evaluatorMaxTokens,
+    timeout: options.evaluatorProvider === 'lmstudio' || (!options.evaluatorProvider && preset.evaluatorPrimary.provider === 'lmstudio') ? options.localTimeoutMs : undefined,
   });
   const evaluatorFallback = preset.evaluatorFallback
     ? applyModelOverride(preset.evaluatorFallback, {
@@ -699,14 +708,15 @@ function applyOverrides(preset: Df2Preset, options: CliOptions): Df2Preset {
         baseUrl: options.fallbackEvaluatorBaseUrl,
         model: options.fallbackEvaluatorModel,
         maxTokens: options.evaluatorMaxTokens,
+        timeout: options.fallbackEvaluatorProvider === 'lmstudio' || (!options.fallbackEvaluatorProvider && preset.evaluatorFallback.provider === 'lmstudio') ? options.localTimeoutMs : undefined,
       })
     : null;
   const shadowHarness = preset.shadowHarness
     ? applyModelOverride(preset.shadowHarness, {
         provider: options.shadowHarnessProvider,
         baseUrl: options.shadowHarnessBaseUrl,
-        model: options.shadowHarnessModel,
-      })
+    model: options.shadowHarnessModel,
+  })
     : null;
 
   return {
@@ -741,6 +751,7 @@ async function loadProviderConfig(modelConfig: Df2ModelConfig): Promise<Partial<
     apiKey,
     temperature: modelConfig.temperature,
     maxTokens: modelConfig.maxTokens,
+    timeout: modelConfig.timeout ?? (modelConfig.provider === 'lmstudio' ? DEFAULT_LOCAL_LLM_TIMEOUT_MS : undefined),
   };
 }
 

@@ -142,6 +142,18 @@ describe('DF2 minimal FSM', () => {
     expect(overridden.baseUrl).toBeUndefined();
   });
 
+  it('gives local LM Studio models longer DF2 timeouts than generic provider defaults', () => {
+    expect(resolveDf2Preset('qwen-local').primaryGenerator.timeout).toBe(300000);
+    expect(resolveDf2Preset('qwen-local').fallbackGenerator?.timeout).toBe(300000);
+    expect(resolveDf2Preset('glm-ab').primaryGenerator.timeout).toBeUndefined();
+
+    const localOverride = applyModelOverride(
+      { provider: 'openai', model: 'gpt-5.4-mini' },
+      { provider: 'lmstudio', model: 'qwen3-coder-next-reap-40b-a3b-i1' },
+    );
+    expect(localOverride.timeout).toBe(300000);
+  });
+
   it('keeps all DF2 runtime-supported canaries validator-clean', () => {
     for (const [domain, code] of Object.entries(CANARY_CODE)) {
       const result = CodeValidator.validate(code, domain);

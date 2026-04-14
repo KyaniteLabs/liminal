@@ -37,6 +37,8 @@ export interface LLMConfig {
   temperature?: number;
   /** Maximum tokens to generate */
   maxTokens?: number;
+  /** Provider request timeout in milliseconds */
+  timeout?: number;
   /**
    * Optional role — when set, resolves config from RoleConfig system
    * (generator/evaluator/harness). Overrides baseUrl/model/apiKey from
@@ -129,6 +131,7 @@ export class LLMClient {
     let roleModel: string | undefined;
     let roleTemperature: number | undefined;
     let roleMaxTokens: number | undefined;
+    let roleTimeout: number | undefined;
 
     if (this.role) {
       const roleCfg = LLMClient.getRoleConfigSync(this.role);
@@ -138,6 +141,7 @@ export class LLMClient {
         roleModel = roleCfg.model;
         roleTemperature = roleCfg.temperature;
         roleMaxTokens = roleCfg.maxTokens;
+        roleTimeout = roleCfg.timeout;
       }
     }
 
@@ -149,6 +153,7 @@ export class LLMClient {
       model: config?.model || roleModel || env('LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL,
       temperature: config?.temperature ?? roleTemperature ?? 0.7,
       maxTokens: config?.maxTokens ?? roleMaxTokens ?? 4096,
+      timeout: config?.timeout ?? roleTimeout,
       role: this.role,
       // apiStyle is deprecated — silently accepted but ignored
       apiStyle: config?.apiStyle,
@@ -418,7 +423,7 @@ export class LLMClient {
         model: this.config.model,
         temperature: this.config.temperature,
         maxTokens: this.config.maxTokens,
-        timeout: TIMEOUT_OLLAMA_MS,
+        timeout: this.config.timeout ?? TIMEOUT_OLLAMA_MS,
         headers: this.config.headers,
       });
     }

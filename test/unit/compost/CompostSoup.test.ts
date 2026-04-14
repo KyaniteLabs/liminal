@@ -74,6 +74,10 @@ const llm = {
   generate: vi.fn(),
 };
 
+const mockEntropy = {
+  nextInt: vi.fn((max: number) => Math.floor(Math.random() * max)),
+} as unknown as import('../../../src/entropy/MetabolicEntropyEngine.js').MetabolicEntropyEngine;
+
 // Mock SoupStateManager
 vi.mock('../../../src/compost/SoupStateManager.js', () => ({
   SoupStateManager: class MockSoupStateManager {
@@ -178,7 +182,7 @@ describe('CompostSoup', () => {
 
   describe('cycle()', () => {
     it('returns unchanged state when fewer than 2 fragments', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const result = await soup.cycle([makeFragment('music', 'solo')]);
@@ -188,7 +192,7 @@ describe('CompostSoup', () => {
     });
 
     it('returns unchanged state when all fragments share same domain', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -202,7 +206,7 @@ describe('CompostSoup', () => {
     });
 
     it('returns unchanged state for empty fragment array', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const result = await soup.cycle([]);
@@ -210,7 +214,7 @@ describe('CompostSoup', () => {
     });
 
     it('runs a full cycle with multi-domain fragments', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -228,7 +232,7 @@ describe('CompostSoup', () => {
     });
 
     it('creates offspring with cross-domain metadata', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -255,7 +259,7 @@ describe('CompostSoup', () => {
         connectionStrength: 0.8,
       });
 
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -282,7 +286,7 @@ describe('CompostSoup', () => {
         connectionStrength: 0.3,
       });
 
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -301,7 +305,7 @@ describe('CompostSoup', () => {
       ];
       mockStateLoad.mockResolvedValue({ ...defaultState, population: existingPop });
 
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       const fragments = [
         makeFragment('music', 'new content A'),
         makeFragment('visual', 'new content B'),
@@ -313,7 +317,7 @@ describe('CompostSoup', () => {
 
     it('handles LLM merge failure gracefully', async () => {
       llm.generate.mockRejectedValue(new Error('LLM timeout'));
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -328,7 +332,7 @@ describe('CompostSoup', () => {
 
     it('handles LLM returning unsuccessful result', async () => {
       llm.generate.mockResolvedValue({ success: false, code: '' });
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -342,7 +346,7 @@ describe('CompostSoup', () => {
     });
 
     it('works with null LLM using fallback merge', async () => {
-      const soup = new CompostSoup(config, null as any);
+      const soup = new CompostSoup(config, null as any, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -358,7 +362,7 @@ describe('CompostSoup', () => {
 
   describe('run()', () => {
     it('runs cycles and stops when aborted via external signal', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const abortController = new AbortController();
@@ -380,7 +384,7 @@ describe('CompostSoup', () => {
     it('stops after MAX_CONSECUTIVE_FAILURES (5) failures', async () => {
       mockStateLoad.mockRejectedValue(new Error('disk error'));
 
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       const fragments = [
         makeFragment('music', 'failing content'),
         makeFragment('code', 'broken code'),
@@ -394,7 +398,7 @@ describe('CompostSoup', () => {
     });
 
     it('stops via internal stop() method', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -410,7 +414,7 @@ describe('CompostSoup', () => {
 
   describe('stop()', () => {
     it('clears the abort controller', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [
@@ -428,12 +432,12 @@ describe('CompostSoup', () => {
 
   describe('isRunning()', () => {
     it('returns false before run() is called', () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       expect(soup.isRunning()).toBe(false);
     });
 
     it('returns true while running and false after stop', async () => {
-      const soup = new CompostSoup(config, llm);
+      const soup = new CompostSoup(config, llm, mockEntropy);
       mockStateLoad.mockResolvedValue({ ...defaultState });
 
       const fragments = [

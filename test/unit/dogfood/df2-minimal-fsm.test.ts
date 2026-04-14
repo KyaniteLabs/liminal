@@ -156,6 +156,7 @@ describe('DF2 minimal FSM', () => {
 
   it('normalizes evaluator scores whether models return 0-1 or 0-100 scale', () => {
     expect(normalizeScore100(0.97)).toBe(97);
+    expect(normalizeScore100(9.7)).toBe(97);
     expect(normalizeScore100(97)).toBe(97);
     expect(normalizeScore100(0)).toBe(0);
     expect(normalizeScore100(null)).toBeNull();

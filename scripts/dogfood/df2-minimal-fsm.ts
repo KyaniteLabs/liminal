@@ -1068,7 +1068,9 @@ function clampNumber(value: unknown, min: number, max: number): number | null {
 export function normalizeScore100(value: unknown): number | null {
   const clamped = clampNumber(value, 0, 100);
   if (clamped === null) return null;
-  return clamped > 0 && clamped <= 1 ? Math.round(clamped * 10000) / 100 : clamped;
+  if (clamped > 0 && clamped <= 1) return Math.round(clamped * 10000) / 100;
+  if (clamped > 1 && clamped <= 10) return Math.round(clamped * 1000) / 100;
+  return clamped;
 }
 
 function normalizeQualityBand(value: unknown, score: number | null): CandidateEvaluation['qualityBand'] {

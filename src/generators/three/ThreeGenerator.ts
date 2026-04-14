@@ -65,7 +65,9 @@ export class ThreeGenerator extends TierBasedGenerator {
 
   private sanitizeSceneCode(code: string): string {
     return code
+      .replace(/^\s*(?:html|javascript|js)\s*\n(?=<!DOCTYPE|<html\b)/i, '')
       .replace(/^```(?:javascript|js)?\n?/gm, '')
+      .replace(/^```(?:html)?\n?/gm, '')
       .replace(/\n?```$/gm, '')
       .replace(/^\s*(?:const|let|var)\s+canvas\s*=\s*[^;]+;\s*$/gm, '')
       .replace(/^\s*(?:const|let|var)\s+w\s*=\s*[^;]+;\s*$/gm, '')
@@ -74,17 +76,35 @@ export class ThreeGenerator extends TierBasedGenerator {
       .trim();
   }
 
+  private prepareWrappedThreeHtml(html: string): string {
+    let prepared = html;
+    if (!/<script\s+type=["']importmap["']/i.test(prepared)) {
+      prepared = prepared.replace(
+        /<\/head>/i,
+        `<script type="importmap">\n{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"}}\n</script>\n</head>`,
+      );
+    }
+
+    prepared = prepared.replace(
+      /(<script\s+type=["']module["'][^>]*>\s*import\s+\*\s+as\s+THREE\s+from\s+["']three["'];?)/i,
+      `$1\nconst canvas=document.querySelector('canvas')||document.body.appendChild(document.createElement('canvas'));\nlet w=innerWidth;\nlet h=innerHeight;`,
+    );
+
+    return prepared;
+  }
+
   /**
    * Wrap Three.js scene for gallery iframe display.
    * Injects Three.js CDN and creates a self-contained scene harness.
    */
   wrapForGallery(code: string): string {
-    const trimmed = code.trim();
+    const prepared = this.sanitizeSceneCode(code);
+    const trimmed = prepared.trim();
     if (/^(?:<!DOCTYPE\s+html|<html\b)/i.test(trimmed)) {
-      return trimmed;
+      return this.prepareWrappedThreeHtml(trimmed);
     }
 
-    const hasThreeImport = /\bimport\s+\*\s+as\s+THREE\s+from\s+['"]three['"]/.test(code);
+    const hasThreeImport = /\bimport\s+\*\s+as\s+THREE\s+from\s+['"]three['"]/.test(prepared);
     const threeImport = hasThreeImport ? '' : "import*as THREE from'three';\n";
     return `<!DOCTYPE html>
 <html>
@@ -107,7 +127,7 @@ canvas{display:block}
 ${threeImport}const canvas=document.getElementById('three-canvas');
 let w=innerWidth;
 let h=innerHeight;
-${code}
+${prepared}
 if(typeof renderer!=='undefined'&&renderer.domElement){
   if(renderer.domElement!==canvas){
     canvas.remove();

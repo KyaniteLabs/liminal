@@ -67,6 +67,29 @@ const renderer = new THREE.WebGLRenderer({ canvas });`);
     expect(wrapped).toContain('let h=innerHeight;');
     expect(wrapped).toContain('document.body.appendChild(renderer.domElement)');
   });
+
+  it('wrapForGallery repairs already-wrapped Three HTML with bare imports and wrapper vars', () => {
+    const gen = new ThreeGenerator();
+    const wrapped = gen.wrapForGallery(`html
+<!DOCTYPE html>
+<html>
+<head><title>Three</title></head>
+<body>
+<canvas></canvas>
+<script type="module">
+import * as THREE from "three";
+const camera = new THREE.PerspectiveCamera(75, w / h, 0.1, 1000);
+const renderer = new THREE.WebGLRenderer({ canvas });
+</script>
+</body>
+</html>`);
+
+    expect(wrapped.trim().startsWith('<!DOCTYPE html>')).toBe(true);
+    expect(wrapped).toContain('<script type="importmap">');
+    expect(wrapped).toContain("const canvas=document.querySelector('canvas')");
+    expect(wrapped).toContain('let w=innerWidth;');
+    expect(wrapped).toContain('let h=innerHeight;');
+  });
 });
 
 describe('selectThreeTemplate', () => {

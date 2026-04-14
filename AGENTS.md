@@ -4,6 +4,16 @@
 
 **Cross-agent rules:** See `~/.agents/rules/UNIVERSAL.md` for the 10 golden principles shared across all agents.
 
+## Mandatory Coding Skill
+
+All agents working in this repo must follow `karpathy-guidelines` for coding, review, and refactor work.
+
+If the runtime supports local skills, load and apply `karpathy-guidelines` directly. If it does not, still follow the same rules:
+- think before coding and surface assumptions/tradeoffs
+- prefer the simplest sufficient change
+- make surgical edits only
+- define concrete verification criteria before claiming success
+
 ---
 
 ## Overview
@@ -91,6 +101,59 @@ npm run dogfood:report
 ## Development Workflow (Worktree Isolation Required)
 
 **Rule:** All feature work MUST be done in isolated git worktrees. No exceptions.
+
+## Start-of-Day Remote and Branch Hygiene Law
+
+**Binding law:** Every agent must refresh remote truth and inventory local residue before starting RT, DF, dogfood, generator, provider, compatibility, vanguard, or product-readiness work.
+
+This exists because local branch/worktree residue previously caused agents to rediscover solved work, waste paid model budget, burn tokens, and test against stale assumptions.
+
+### Required First Commands
+
+From the repo root, before new work:
+
+```bash
+git fetch --all --prune
+git status --short --branch
+git worktree list
+git branch -vv
+```
+
+For work involving generators, dogfood, providers, RT stages, or harness loops, also run:
+
+```bash
+git branch -vv | rg "gone|ahead|behind|dogfood|generator|compat|runtime|rt|df|tone|strudel|ascii|kinetic|provider"
+git worktree list | rg "dogfood|generator|compat|runtime|rt|df|tone|strudel|ascii|kinetic|provider"
+```
+
+### Required Classification
+
+Before coding, classify relevant local branches/worktrees as:
+
+- `MERGE_NOW`: already solved work that should be integrated before continuing.
+- `CHERRY_PICK_NARROW`: useful commits exist, but a full merge is too broad or conflicts with the current architecture.
+- `REFERENCE_ONLY`: useful context, but not safe to integrate.
+- `CLEANUP_CANDIDATE`: obsolete once its useful work is merged, rejected, or archived.
+
+Do not start a new implementation lane while a relevant `MERGE_NOW` or `CHERRY_PICK_NARROW` branch is unexamined.
+
+### Merge Discipline
+
+- Prefer merging/cherry-picking useful solved work over rediscovering it.
+- Do not blindly merge broad stale branches that replace active architecture; inspect overlap first.
+- If a branch is not merged, write the rejection reason in the active plan or coordination note.
+- If a branch is merged, run targeted tests before continuing.
+- If a branch is obsolete, preserve or clean it only after useful work is integrated or explicitly rejected.
+
+### Coordination
+
+For multi-agent work, update `.omx/coordination/lane-broadcast-*.md` with:
+
+- latest fetched remote state,
+- relevant local branch/worktree classifications,
+- accepted merges/cherry-picks,
+- rejected branches with reasons,
+- required tests before lane advancement.
 
 ### Why Worktrees?
 

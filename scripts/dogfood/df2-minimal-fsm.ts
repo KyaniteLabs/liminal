@@ -566,7 +566,8 @@ export function adjudicateFinal(
     rootCause = 'generator';
     stopReason = improvedSecond ? 'Candidate 2 improved but did not reach launch-ready.' : 'Best candidate is warning quality.';
   } else {
-    const crossGeneratorShared = candidates.length > 1 && sameFailureSignature(candidates[0].failureSignature, candidates[1].failureSignature);
+    const distinctGenerators = new Set(candidates.map((candidate) => candidate.generatorModel)).size > 1;
+    const crossGeneratorShared = distinctGenerators && candidates.length > 1 && sameFailureSignature(candidates[0].failureSignature, candidates[1].failureSignature);
     terminalOutcome = crossGeneratorShared ? 'harness_validator_wrapper_failure' : 'generator_compatibility_failure';
     rootCause = crossGeneratorShared ? 'validator' : 'generator';
     stopReason = crossGeneratorShared

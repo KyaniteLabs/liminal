@@ -96,6 +96,22 @@ describe('DF2 minimal FSM', () => {
     ], { canaryPassed: true }).terminalOutcome).toBe('generator_compatibility_failure');
   });
 
+  it('only treats repeated signatures as harness failures across distinct generators', () => {
+    const signature = buildFailureSignature({ stage: 'runtime', className: 'timeout', ruleId: 'timeout', domain: 'kinetic', evidence: 'timeout' });
+
+    const sameGenerator = adjudicateFinal([
+      candidate({ candidateId: 'candidate-01', attempt: 1, generatorModel: 'qwen-coder', status: 'generate_fail', runtime: 'not_run', finalBand: 'fail', rankScore: null, failureSignature: signature }),
+      candidate({ candidateId: 'candidate-02', attempt: 2, generatorModel: 'qwen-coder', status: 'generate_fail', runtime: 'not_run', finalBand: 'fail', rankScore: null, failureSignature: signature }),
+    ], { canaryPassed: true });
+    expect(sameGenerator.terminalOutcome).toBe('generator_compatibility_failure');
+
+    const crossGenerator = adjudicateFinal([
+      candidate({ candidateId: 'candidate-01', attempt: 1, generatorModel: 'model-a', status: 'runtime_fail', runtime: 'fail', finalBand: 'fail', rankScore: null, failureSignature: signature }),
+      candidate({ candidateId: 'candidate-02', attempt: 2, generatorModel: 'model-b', status: 'runtime_fail', runtime: 'fail', finalBand: 'fail', rankScore: null, failureSignature: signature }),
+    ], { canaryPassed: true });
+    expect(crossGenerator.terminalOutcome).toBe('harness_validator_wrapper_failure');
+  });
+
   it('marks improved second candidates as best observed for the config, not greatness', () => {
     const result = adjudicateFinal([
       candidate({ candidateId: 'candidate-01', attempt: 1, finalBand: 'warning', evaluatorOverall: 45, rankScore: 47 }),

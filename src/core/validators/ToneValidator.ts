@@ -44,7 +44,7 @@ export class ToneValidator {
     // Components - Envelopes
     'Envelope', 'AmplitudeEnvelope', 'FrequencyEnvelope', 'ScaledEnvelope',
     // Components - Analysis
-    'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter', 'Scope',
+    'Analyser', 'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter', 'Scope',
     // Components - Math
     'Signal', 'Multiply', 'Add', 'Subtract', 'Abs', 'Negate', 'Pow', 'Divide', 'Modulo', 'Max', 'Min', 'Clip', 'Scale', 'Pow',
     // Components - Core
@@ -58,7 +58,7 @@ export class ToneValidator {
     // Transport
     'Transport', 'TransportTime', 'Ticks', 'Time', 'Frequency', 'Midi', 'BarsBeatsSixteenths',
     // Routing
-    'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo', 'Channel', 'Master',
+    'AuxNode', 'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo', 'Channel', 'Master',
     // Utilities
     'ToneAudioBuffer', 'ToneAudioBuffers', 'Buffer', 'Buffers',
     'Interval', 'Timeout', 'Draw', 'Context', 'OfflineContext',

@@ -70,6 +70,7 @@ export class ThreeGenerator extends TierBasedGenerator {
       .replace(/^\s*(?:const|let|var)\s+canvas\s*=\s*[^;]+;\s*$/gm, '')
       .replace(/^\s*(?:const|let|var)\s+w\s*=\s*[^;]+;\s*$/gm, '')
       .replace(/^\s*(?:const|let|var)\s+h\s*=\s*[^;]+;\s*$/gm, '')
+      .replace(/^\s*scene\.add\s*\(\s*renderer\.domElement\s*\)\s*;\s*$/gm, '')
       .trim();
   }
 

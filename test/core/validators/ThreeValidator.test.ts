@@ -109,6 +109,18 @@ describe('ThreeValidator', () => {
       expect(result.errors).toContain('Three.js raw scene must use wrapper-provided canvas instead of redeclaring canvas');
     });
 
+    it('should reject adding renderer.domElement to the Three.js scene graph', () => {
+      const code = `
+        import * as THREE from 'three';
+        const scene = new THREE.Scene();
+        const renderer = new THREE.WebGLRenderer({ canvas });
+        scene.add(renderer.domElement);
+      `;
+
+      const result = ThreeValidator.validate(code);
+      expect(result.errors).toContain('Three.js scene.add() must receive Object3D instances, not renderer.domElement');
+    });
+
     it('should reject empty code', () => {
       const result = ThreeValidator.validate('');
       expect(result.valid).toBe(false);

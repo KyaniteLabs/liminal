@@ -188,6 +188,17 @@ Tone.Transport.start();
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should validate Tone.js code with AuxNode and Analyser', () => {
+      const code = `
+const aux = new Tone.AuxNode().toDestination();
+const analyser = new Tone.Analyser().connect(aux);
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   describe('getMinSize', () => {

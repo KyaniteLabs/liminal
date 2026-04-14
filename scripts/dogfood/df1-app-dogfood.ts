@@ -71,32 +71,32 @@ interface DomainResult {
 const DOMAIN_SPECS: DomainSpec[] = [
   {
     name: 'p5',
-    prompt: 'Create a calming blue particle system with flowing movement.',
+    prompt: 'Create a bioluminescent tide-pool particle ecosystem: blue organisms drift in currents, cluster around invisible nutrients, and leave soft fading trails.',
     createGenerator: (llm) => new P5GeneratorV2(llm),
   },
   {
     name: 'glsl',
-    prompt: 'Create an abstract plasma shader with animated colors.',
+    prompt: 'Create a living aurora plasma shader: ribbon-like magnetic waves, deep teal-to-magenta color shifts, and slow breathing motion.',
     createGenerator: (llm) => new ShaderGenerator(llm),
   },
   {
     name: 'three',
-    prompt: 'Create a rotating 3D cube with dramatic lighting and depth.',
+    prompt: 'Create a floating obsidian cube shrine in deep space: rotating cube, rim lights, starfield depth, and a subtle glowing aura.',
     createGenerator: (llm) => new ThreeGenerator(llm),
   },
   {
     name: 'strudel',
-    prompt: 'Create a simple techno beat pattern with drums and bass.',
+    prompt: 'Create a hypnotic warehouse techno loop: kick, offbeat hats, syncopated clap, and a pulsing acid bassline with filter movement.',
     createGenerator: (llm) => new StrudelGenerator(llm),
   },
   {
     name: 'tone',
-    prompt: 'Create an ambient drone synthesizer with reverb.',
+    prompt: 'Create an evolving midnight drone patch: layered synth voices, long reverb tail, slow filter/LFO movement, and a gentle repeating pulse.',
     createGenerator: (llm) => new ToneGenerator(llm),
   },
   {
     name: 'kinetic',
-    prompt: 'Create kinetic CSS art: floating geometric text forms with perpetual motion.',
+    prompt: 'Create kinetic CSS art: orbital typography fragments and geometric glyphs drifting like a neon mechanical clock with perpetual motion.',
     createGenerator: (llm) => new KineticGenerator(llm),
   },
   {
@@ -106,7 +106,7 @@ const DOMAIN_SPECS: DomainSpec[] = [
   },
   {
     name: 'ascii',
-    prompt: 'Create ASCII art of a mountain landscape.',
+    prompt: 'Create ASCII art of a mountain observatory at night, with peaks, a small dome telescope, and stars.',
     createGenerator: (llm) => new ASCIIArtGenerator(llm),
   },
 ];

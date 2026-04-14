@@ -235,7 +235,7 @@ function validateSelfContained(code: string, domain: Domain): string[] {
     }
     case 'tone': {
       // Tone.js should have its CDN or import
-      if (!/tone\.js|from\s+['"]tone['"]/.test(code)) {
+      if (!/tone\.js|tone\/|from\s+['"]tone['"]/i.test(code)) {
         errors.push('HTML-wrapped Tone.js should include Tone.js CDN or module import');
       }
       break;

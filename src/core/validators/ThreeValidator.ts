@@ -59,6 +59,10 @@ export class ThreeValidator {
       errors.push('Three.js raw scene must use wrapper-provided canvas instead of redeclaring canvas');
     }
 
+    if (/scene\.add\s*\(\s*renderer\.domElement\s*\)/.test(code)) {
+      errors.push('Three.js scene.add() must receive Object3D instances, not renderer.domElement');
+    }
+
     return errors;
   }
 

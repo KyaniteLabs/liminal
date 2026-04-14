@@ -477,6 +477,27 @@ export default function MyComp() {
     });
   });
 
+  describe('Tone self-contained validation', () => {
+    it('should accept HTML-wrapped Tone.js with uppercase CDN filename', () => {
+      const code = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tone</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+  <script>
+    const synth = new Tone.Synth().toDestination();
+  </script>
+</body>
+</html>`;
+
+      const result = CodeValidator.validate(code, 'tone');
+      expect(result.valid).toBe(true);
+    });
+  });
+
   describe('ASCII structural validation', () => {
     it('should validate valid ASCII art', () => {
       const code = `/* ASCII Art */

@@ -310,7 +310,8 @@ export class GeneratorHarnessTools {
     if (options?.seededRandom) {
       this.rng = options.seededRandom;
     } else if (options?.entropySource) {
-      this.rng = () => options.entropySource!.nextFloat();
+      const entropySource = options.entropySource;
+      this.rng = () => entropySource.nextFloat();
     } else {
       throw new Error('GeneratorHarnessTools: either seededRandom or entropySource must be provided');
     }

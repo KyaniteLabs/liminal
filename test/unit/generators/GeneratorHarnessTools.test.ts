@@ -35,13 +35,21 @@ describe('GeneratorHarnessTools', () => {
   });
 
   it('uses entropySource when provided', () => {
+    let callCount = 0;
     const mockEntropy = {
-      nextFloat: vi.fn().mockReturnValue(0.42),
+      nextFloat: () => [0.1, 0.5, 0.9, 0.3, 0.7][callCount++ % 5],
     } as unknown as import('../../../src/entropy/MetabolicEntropyEngine.js').MetabolicEntropyEngine;
-    const tools = new GeneratorHarnessTools({ entropySource: mockEntropy });
-    const ctx = tools.prepare('tone');
-    expect(mockEntropy.nextFloat).toHaveBeenCalled();
-    expect(ctx.domain).toBe('tone');
+
+    const tools1 = new GeneratorHarnessTools({ entropySource: mockEntropy });
+    const tools2 = new GeneratorHarnessTools({ entropySource: mockEntropy });
+
+    const ctx1 = tools1.prepare('tone');
+    callCount = 0;
+    const ctx2 = tools2.prepare('tone');
+
+    expect(ctx1.skeletonHint).toBe(ctx2.skeletonHint);
+    expect(ctx1.sampledApis).toEqual(ctx2.sampledApis);
+    expect(ctx1.hardeningHints).toEqual(ctx2.hardeningHints);
   });
 
   // -------------------------------------------------------------------------

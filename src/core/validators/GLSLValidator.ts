@@ -135,6 +135,16 @@ export class GLSLValidator {
       errors.push('GLSL: texture2D() used but no sampler2D uniform declared');
     }
 
+    const floatNames = new Set<string>();
+    for (const match of trimmed.matchAll(/\b(?:uniform\s+)?float\s+(\w+)\b/g)) {
+      floatNames.add(match[1]);
+    }
+    for (const name of floatNames) {
+      if (new RegExp(`\\b${name}\\.(?:xy|yx|rg|st)\\b`).test(trimmed)) {
+        errors.push(`GLSL: float '${name}' cannot use vector field selection like .xy`);
+      }
+    }
+
     const vec3Variables = new Set<string>();
     for (const match of trimmed.matchAll(/\bvec3\s+(\w+)\s*=/g)) {
       vec3Variables.add(match[1]);
@@ -150,6 +160,11 @@ export class GLSLValidator {
     const vec2ToFloatPattern = /\bfloat\s+(\w+)\s*=\s*smoothstep\([^;]*\babs\s*\([^;]*\.(?:xy|yx|rg|st)\b[^;]*\)\s*[^;]*;/g;
     for (const match of trimmed.matchAll(vec2ToFloatPattern)) {
       errors.push(`GLSL: float '${match[1]}' is assigned a vec2 expression; reduce it with length(), .x, or .y`);
+    }
+
+    const vec2Vec3MultiplyPattern = /\b(\w+)\s*\+=\s*sin\([^;]*\buv\b[^;]*\)\s*\*\s*vec3\s*\(/g;
+    for (const match of trimmed.matchAll(vec2Vec3MultiplyPattern)) {
+      errors.push(`GLSL: '${match[1]}' adds a vec2 expression multiplied by vec3; convert the sine result to vec3 first`);
     }
 
     return errors;

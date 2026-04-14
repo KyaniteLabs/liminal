@@ -12,27 +12,31 @@ export class ThreeGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
-    return super.generate(this.withThreeContract(prompt), options);
+    const code = await super.generate(this.withThreeContract(prompt), options);
+    return this.sanitizeSceneCode(code);
   }
 
   async generateFull(prompt: string, options?: TierBasedGeneratorOptions): Promise<LLMResponse> {
-    return super.generateFull(this.withThreeContract(prompt), options);
+    const response = await super.generateFull(this.withThreeContract(prompt), options);
+    response.code = this.sanitizeSceneCode(response.code);
+    return response;
   }
 
   /**
    * Three.js-specific validation
    */
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    const validation = CodeValidator.validate(code, 'three');
+    const sanitized = this.sanitizeSceneCode(code);
+    const validation = CodeValidator.validate(sanitized, 'three');
     if (!validation.valid) {
       return { valid: false, error: validation.errors.join('; ') };
     }
 
     // Three.js code should reference THREE
-    const hasThree = code.includes('THREE') || 
-                     code.includes('import * as THREE') ||
-                     code.includes('from "three"') ||
-                     code.includes("from 'three'");
+    const hasThree = sanitized.includes('THREE') ||
+                     sanitized.includes('import * as THREE') ||
+                     sanitized.includes('from "three"') ||
+                     sanitized.includes("from 'three'");
     
     if (!hasThree) {
       return {
@@ -57,6 +61,16 @@ export class ThreeGenerator extends TierBasedGenerator {
       '- Define and call `animate();`.',
       '- The animation loop must mutate scene state, e.g. `cube.rotation.x += 0.01;`, before rendering.',
     ].join('\n');
+  }
+
+  private sanitizeSceneCode(code: string): string {
+    return code
+      .replace(/^```(?:javascript|js)?\n?/gm, '')
+      .replace(/\n?```$/gm, '')
+      .replace(/^\s*(?:const|let|var)\s+canvas\s*=\s*[^;]+;\s*$/gm, '')
+      .replace(/^\s*(?:const|let|var)\s+w\s*=\s*[^;]+;\s*$/gm, '')
+      .replace(/^\s*(?:const|let|var)\s+h\s*=\s*[^;]+;\s*$/gm, '')
+      .trim();
   }
 
   /**

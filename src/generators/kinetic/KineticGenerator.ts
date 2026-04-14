@@ -5,6 +5,7 @@
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
 import type { LLMResponse } from '../../llm/LLMClient.js';
 import { CodeValidator } from '../../core/CodeValidator.js';
+import { GenerationError } from '../../errors/GenerationError.js';
 import { KINETIC_SYSTEM_PROMPT, buildKineticPrompt } from './kineticPrompt.js';
 import { KineticWrapper } from './KineticWrapper.js';
 import { Logger } from '../../utils/Logger.js';
@@ -27,7 +28,7 @@ export class KineticGenerator extends TierBasedGenerator {
     }
 
     Logger.info('KineticGenerator', 'Generating CSS-kinetic artwork');
-    const response = await this.llm.generate(
+    let response = await this.llm.generate(
       KINETIC_SYSTEM_PROMPT,
       buildKineticPrompt(prompt),
       options?.signal,
@@ -38,12 +39,45 @@ export class KineticGenerator extends TierBasedGenerator {
       throw new Error('KineticGenerator: LLM returned empty code');
     }
 
+    response.code = this.normalizeKineticHtml(response.code);
     const validated = this.validateOutput(response.code);
     if (!validated.valid) {
-      throw new Error(`KineticGenerator: ${validated.error}`);
+      response = await this.llm.generate(
+        KINETIC_SYSTEM_PROMPT,
+        this.buildRetryPrompt(prompt, response.code, validated.error ?? 'Validation failed'),
+        options?.signal,
+        true
+      );
+      response.code = this.normalizeKineticHtml(response.code ?? '');
+      const revalidated = this.validateOutput(response.code);
+      if (!revalidated.valid) {
+        throw new GenerationError(`KineticGenerator: ${revalidated.error}`, 'kinetic', {
+          validationError: revalidated.error,
+          failedCode: response.code,
+        });
+      }
     }
 
     return response;
+  }
+
+  private buildRetryPrompt(prompt: string, failedCode: string, error: string): string {
+    return `${buildKineticPrompt(prompt)}
+
+The previous output failed validation.
+Validation error: ${error}
+
+Previous output:
+\`\`\`html
+${failedCode}
+\`\`\`
+
+Regenerate a complete CSS-kinetic artwork:
+- include <!DOCTYPE html>, <html>, <head>, and <body>
+- include at least one CSS @keyframes block
+- use animation: ... infinite on visible elements
+- do not include JavaScript or <script>
+- output raw HTML only`;
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -52,6 +86,38 @@ export class KineticGenerator extends TierBasedGenerator {
       return { valid: false, error: validation.errors.join('; ') };
     }
     return { valid: true };
+  }
+
+  private normalizeKineticHtml(code: string): string {
+    let cleaned = code
+      .replace(/^```(?:html)?\n?/i, '')
+      .replace(/\n?```$/i, '')
+      .trim();
+
+    if (!/^<!DOCTYPE\s+html/i.test(cleaned) && /<html\b/i.test(cleaned)) {
+      cleaned = `<!DOCTYPE html>\n${cleaned}`;
+    }
+
+    const styleClose = cleaned.lastIndexOf('</style>');
+    const bodyOpen = cleaned.search(/<body\b/i);
+    if (styleClose >= 0 && bodyOpen >= 0 && styleClose < bodyOpen) {
+      const bodyStart = cleaned.slice(0, bodyOpen);
+      let rest = cleaned.slice(bodyOpen);
+      const orphanKeyframes = rest.match(/@keyframes[\s\S]*?(?=<\/style>|<\/head>|<\/body>|<div|<svg|$)/g);
+      if (orphanKeyframes?.length) {
+        rest = rest.replace(/@keyframes[\s\S]*?(?=<\/style>|<\/head>|<\/body>|<div|<svg|$)/g, '');
+        cleaned = `${bodyStart.replace('</style>', `${orphanKeyframes.join('\n')}\n</style>`)}${rest}`;
+      }
+    }
+
+    if (!/<\/body>/i.test(cleaned)) {
+      cleaned += '\n</body>';
+    }
+    if (!/<\/html>/i.test(cleaned)) {
+      cleaned += '\n</html>';
+    }
+
+    return cleaned;
   }
 
   wrapForGallery(code: string): string {

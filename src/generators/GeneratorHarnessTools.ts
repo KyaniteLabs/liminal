@@ -509,6 +509,23 @@ export class GeneratorHarnessTools {
         '- Use only real p5/browser JavaScript APIs.';
     }
 
+    if (domain === 'three') {
+      result += '\n\nThree.js repair requirements:\n' +
+        '- Return raw Three.js module scene code, not HTML and not Markdown.\n' +
+        '- Use exactly one `import * as THREE from "three";`.\n' +
+        '- Use wrapper-provided `canvas`, `w`, and `h`; do not redeclare them.\n' +
+        '- Define and call `animate();`.\n' +
+        '- Mutate scene state in animate(), for example rotate a mesh before rendering.';
+    }
+
+    if (domain === 'shader' || domain === 'glsl') {
+      result += '\n\nGLSL repair requirements:\n' +
+        '- Return fragment shader code only, not HTML or JavaScript.\n' +
+        '- Do not use `.xy` on float uniforms like `u_time`.\n' +
+        '- Fragment output must be vec4: `gl_FragColor = vec4(color, 1.0);`.\n' +
+        '- If a function returns vec2, reduce it before assigning to float or vec3.';
+    }
+
     return result;
   }
 

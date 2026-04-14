@@ -227,6 +227,40 @@ describe('GLSLValidator', () => {
       const result = GLSLValidator.validate(code);
       expect(result.errors).toContain("GLSL: float 'glowIntensity' is assigned a vec2 expression; reduce it with length(), .x, or .y");
     });
+
+    it('should reject vector field selection on float uniforms', () => {
+      const code = `
+        precision mediump float;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          float n = dot(uv * u_time.xy, vec2(1.0));
+          gl_FragColor = vec4(vec3(n), 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors).toContain("GLSL: float 'u_time' cannot use vector field selection like .xy");
+    });
+
+    it('should reject multiplying a vec2 sine result by vec3 into a vec3 accumulator', () => {
+      const code = `
+        precision mediump float;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          vec3 finalColor = vec3(0.1, 0.2, 0.3);
+          float n = length(finalColor) * u_time;
+          finalColor += sin(n * 4.0 + uv) * vec3(0.2, 0.8, 0.2);
+          gl_FragColor = vec4(finalColor, 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors).toContain("GLSL: 'finalColor' adds a vec2 expression multiplied by vec3; convert the sine result to vec3 first");
+    });
   });
 
   describe('validateHTMLWrapped', () => {

@@ -15,6 +15,7 @@ import type { HarnessAgent, AgentTask } from '../harness/index.js';
 import type { LLMModeAgent, LLMTask } from '../harness/agent/LLMModeAgent.js';
 import { formatError } from '../utils/errors.js';
 import { Logger } from '../utils/Logger.js';
+import { commands } from './commands.js';
 
 export interface ConversationMessage {
   role: 'user' | 'assistant' | 'system' | 'tool';
@@ -287,15 +288,16 @@ export class NaturalInterface {
 
   // Command handlers
   private async handleStatus(): Promise<NaturalInputResult> {
-    const { metaHarness } = await import('../harness/index.js');
-    const status = metaHarness.getStatus();
-
-    const response = [
-      `Harness: ${status.initialized ? '\uD83D\uDFE2 Online' : '\uD83D\uDD34 Offline'}`,
-      `Provider: ${status.activeProvider}`,
-      `Recent failures: ${status.recentFailures}`,
-      `Detected patterns: ${status.detectedPatterns.length}`,
-    ].join('\n');
+    const response = await commands.status.execute([], {
+      agent: this.harnessAgent,
+      tasks: this.tasks,
+      logs: [],
+      addLog: this.onLog,
+      setStatusMessage: this.onStatus,
+      addOutput: (_type, content) => {
+        this.addMessage('assistant', content);
+      },
+    });
 
     return { type: 'command', response, shouldContinue: true };
   }

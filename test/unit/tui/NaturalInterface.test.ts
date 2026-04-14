@@ -9,6 +9,8 @@ const {
   mockFormatError,
   mockMetaHarnessGetStatus,
   mockBrowserLauncherPreview,
+  mockBrowserLauncherGetInfo,
+  mockAudioIsPlaying,
   mockOnStatus,
   mockOnLog,
 } = vi.hoisted(() => ({
@@ -27,6 +29,8 @@ const {
     memory: {},
   })),
   mockBrowserLauncherPreview: vi.fn(async (filePath: string) => `http://localhost:3000/${filePath}`),
+  mockBrowserLauncherGetInfo: vi.fn(() => ({ running: false, port: null })),
+  mockAudioIsPlaying: vi.fn(() => false),
   mockOnStatus: vi.fn(),
   mockOnLog: vi.fn(),
 }));
@@ -56,6 +60,13 @@ vi.mock('../../../src/harness/index.js', () => ({
 vi.mock('../../../src/tui/preview/BrowserLauncher.js', () => ({
   browserLauncher: {
     previewFile: mockBrowserLauncherPreview,
+    getInfo: mockBrowserLauncherGetInfo,
+  },
+}));
+
+vi.mock('../../../src/tui/preview/AudioPlayer.js', () => ({
+  audioPlayer: {
+    isPlaying: mockAudioIsPlaying,
   },
 }));
 
@@ -217,6 +228,20 @@ describe('NaturalInterface', () => {
       expect(result.response).toContain('Provider: test-model');
       expect(result.response).toContain('Harness: openai');
       expect(result.response).toContain('Failures loaded: 2');
+    });
+  });
+
+  describe('handleStatus', () => {
+    it('includes browser and audio state from the shared status command', async () => {
+      mockBrowserLauncherGetInfo.mockReturnValue({ running: true, port: 3456 });
+      mockAudioIsPlaying.mockReturnValue(true);
+
+      const { iface } = createInterface();
+      const result = await iface.processInput('/status');
+
+      expect(result.response).toContain('Harness: 🟢 Online');
+      expect(result.response).toContain('Browser: 🟢 Port 3456');
+      expect(result.response).toContain('Audio: 🔊 Playing');
     });
   });
 

@@ -1,3 +1,5 @@
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
+
 /**
  * GeneratorHarnessTools - Thin domain-contract harness helpers
  *
@@ -294,8 +296,8 @@ export interface SuccessMetadata {
 /**
  * GeneratorHarnessTools - thin domain-contract harness helpers
  *
- * @param seededRandom - optional deterministic RNG for deterministic sampling in tests.
- *                       If omitted, uses Math.random() (non-deterministic).
+ * @param options - optional constructor options containing either a deterministic RNG
+ *                  or a MetabolicEntropyEngine entropy source.
  */
 export class GeneratorHarnessTools {
   private rng: () => number;
@@ -304,8 +306,14 @@ export class GeneratorHarnessTools {
   // Maximum artifacts kept in memory before eviction
   private static readonly MAX_MEMORY = 100;
 
-  constructor(seededRandom?: () => number) {
-    this.rng = seededRandom ?? Math.random;
+  constructor(options?: { seededRandom?: () => number; entropySource?: MetabolicEntropyEngine }) {
+    if (options?.seededRandom) {
+      this.rng = options.seededRandom;
+    } else if (options?.entropySource) {
+      this.rng = () => options.entropySource!.nextFloat();
+    } else {
+      throw new Error('GeneratorHarnessTools: either seededRandom or entropySource must be provided');
+    }
   }
 
   // -------------------------------------------------------------------------

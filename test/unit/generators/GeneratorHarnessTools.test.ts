@@ -25,7 +25,7 @@ describe('GeneratorHarnessTools', () => {
   let tools: GeneratorHarnessTools;
 
   beforeEach(() => {
-    tools = new GeneratorHarnessTools(makeSeededRng(0));
+    tools = new GeneratorHarnessTools({ seededRandom: makeSeededRng(0) });
   });
 
   // -------------------------------------------------------------------------
@@ -458,9 +458,9 @@ describe('GeneratorHarnessTools', () => {
 
   describe('determinism', () => {
     it('same seed produces same skeleton/API/hint selections', () => {
-      const tools1 = new GeneratorHarnessTools(makeSeededRng(0));
+      const tools1 = new GeneratorHarnessTools({ seededRandom: makeSeededRng(0) });
       const ctx1 = tools1.prepare('tone');
-      const tools2 = new GeneratorHarnessTools(makeSeededRng(0));
+      const tools2 = new GeneratorHarnessTools({ seededRandom: makeSeededRng(0) });
       const ctx2 = tools2.prepare('tone');
       expect(ctx1.skeletonHint).toBe(ctx2.skeletonHint);
       expect(ctx1.sampledApis).toEqual(ctx2.sampledApis);
@@ -468,7 +468,7 @@ describe('GeneratorHarnessTools', () => {
     });
 
     it('prepare with Math.random produces valid context', () => {
-      const randomTools = new GeneratorHarnessTools();
+      const randomTools = new GeneratorHarnessTools({ seededRandom: Math.random });
       const ctx = randomTools.prepare('tone');
       expect(ctx.domain).toBe('tone');
       expect(typeof ctx.skeletonHint).toBe('string');

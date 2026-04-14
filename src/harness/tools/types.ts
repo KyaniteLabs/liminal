@@ -94,11 +94,13 @@ export interface CreateBackupParams {
 
 export interface CreateBackupResult {
   backupPath: string;
+  originalPath: string;
   success: boolean;
 }
 
 export interface RestoreBackupParams {
   backupPath: string;
+  originalPath?: string;
 }
 
 export interface RestoreBackupResult {

@@ -13,6 +13,7 @@ const BACKUP_DIR = path.join(os.tmpdir(), 'liminal-harness-backups');
 export interface BackupResult {
   success: boolean;
   backupPath?: string;
+  originalPath?: string;
   error?: string;
 }
 
@@ -35,6 +36,7 @@ export async function createBackup(filePath: string): Promise<BackupResult> {
     return {
       success: true,
       backupPath,
+      originalPath: filePath,
     };
   } catch (error) {
     return {

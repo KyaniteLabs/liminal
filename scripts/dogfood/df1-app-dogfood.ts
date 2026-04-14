@@ -77,6 +77,27 @@ const DF1_CONTRACT_VERSION = 'df1-tri-role-v1';
 const QUALITY_WARN_THRESHOLD = 0.6;
 const QUALITY_PASS_THRESHOLD = 0.75;
 
+const GENERATOR_ROUTING_POLICY = {
+  default: 'qwen3.5-2b',
+  cheapDraft: {
+    p5: 'qwen3.5-0.8b',
+    three: 'qwen3.5-0.8b',
+    tone: 'qwen3.5-0.8b',
+  },
+  qualityFallback: {
+    p5: 'qwen3-coder-next-reap-40b-a3b-i1',
+    glsl: 'qwen3-coder-next-reap-40b-a3b-i1',
+    hydra: 'qwen3-coder-next-reap-40b-a3b-i1',
+    strudel: 'qwen3-coder-next-reap-40b-a3b-i1',
+  },
+  avoidAsDefault: [
+    'lfm2.5-1.2b-instruct',
+    'qwen3.5-4b',
+    'qwen3.5-9b',
+    'gemma-4-e4b-claude-4.6-opus-reasoning-distilled',
+  ],
+};
+
 const DOMAIN_SPECS: DomainSpec[] = [
   {
     name: 'p5',
@@ -334,7 +355,7 @@ async function loadProviderConfig(options: CliOptions, role: 'generator' | 'harn
       process.env.LIMINAL_LMSTUDIO_MODEL ||
       process.env.LMSTUDIO_MODEL ||
       providerConfig.model ||
-      (role === 'evaluator' ? 'qwen3.5-2b' : 'local-model');
+      (role === 'evaluator' ? 'qwen3.5-2b' : role === 'generator' ? GENERATOR_ROUTING_POLICY.default : 'local-model');
     config.apiKey = providerConfig.apiKey;
   }
   if (role === 'evaluator') {
@@ -579,6 +600,7 @@ async function runDomain(
     prompt: spec.prompt,
     promptHash: sha256(spec.prompt),
     contractVersion: DF1_CONTRACT_VERSION,
+    generatorRoutingPolicy: GENERATOR_ROUTING_POLICY,
     dryRun: options.dryRun,
     startedAt,
   });

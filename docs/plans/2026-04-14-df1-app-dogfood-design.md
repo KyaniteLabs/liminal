@@ -39,6 +39,15 @@ Dry runs are allowed for runner verification but are explicitly marked `dryRun: 
 
 DF1 treats `--provider` as the **generator provider**. The intended default product path is a smaller local model served by LM Studio, including a remote LM Studio server reached over Tailscale. Cloud models remain comparison or repair/escalation lanes, not the default generator lane.
 
+Current local generator routing policy:
+
+- Default generator: `qwen3.5-2b`
+- Cheap draft generator: `qwen3.5-0.8b` for `p5`, `three`, and `tone`
+- Quality fallback: `qwen3-coder-next-reap-40b-a3b-i1` for `p5`, `glsl`, `hydra`, and `strudel`
+- Avoid as default: `lfm2.5-1.2b-instruct`, `qwen3.5-4b`, `qwen3.5-9b`, and `gemma-4-e4b-claude-4.6-opus-reasoning-distilled`
+
+This policy came from remote-only direct prompt and actual generator-class bakeoffs. DF1 records the policy in `run.json` so later runs can be interpreted against the intended routing baseline.
+
 Actual generation is opt-in by provider:
 
 - `--provider=active`

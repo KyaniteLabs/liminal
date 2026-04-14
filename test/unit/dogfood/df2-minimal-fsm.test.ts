@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
+import { CodeValidator } from '../../../src/core/CodeValidator.js';
 import {
+  CANARY_CODE,
   assertLegalTransition,
   adjudicateFinal,
   buildFailureSignature,
@@ -109,6 +111,14 @@ describe('DF2 minimal FSM', () => {
     expect(isRuntimeSupportedDomain('p5')).toBe(true);
     expect(isRuntimeSupportedDomain('tone')).toBe(false);
     expect(isRuntimeSupportedDomain('ascii')).toBe(false);
+  });
+
+  it('keeps all DF2 runtime-supported canaries validator-clean', () => {
+    for (const [domain, code] of Object.entries(CANARY_CODE)) {
+      const result = CodeValidator.validate(code, domain);
+      expect(result.errors, `${domain}: ${result.errors.join('; ')}`).toHaveLength(0);
+      expect(result.valid).toBe(true);
+    }
   });
 
   it('classifies unsupported runtime domains as harness/wrapper failures', () => {

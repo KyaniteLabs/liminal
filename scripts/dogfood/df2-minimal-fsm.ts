@@ -285,18 +285,21 @@ const DOMAIN_SPECS: Record<RuntimeDomain, DomainSpec> = {
   },
 };
 
-const CANARY_CODE: Record<RuntimeDomain, string> = {
+export const CANARY_CODE: Record<RuntimeDomain, string> = {
   p5: `function setup(){createCanvas(320,240);noStroke();} function draw(){background(8,16,30);fill(80,180,255);circle(width/2,height/2,64);}`,
   glsl: `precision mediump float;
 uniform float u_time;
 uniform vec2 u_resolution;
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453123);}
 void mainImage(out vec4 fragColor, in vec2 fragCoord) {
   vec2 uv = fragCoord / u_resolution.xy;
-  vec3 color = vec3(uv.x, uv.y, 0.5 + 0.25 * sin(u_time));
+  float shimmer = hash(floor(uv * 8.0 + u_time));
+  vec3 color = mix(vec3(0.02,0.08,0.18), vec3(0.2,0.8,1.0), shimmer);
+  color += vec3(uv.x, uv.y, 0.5 + 0.25 * sin(u_time)) * 0.2;
   fragColor = vec4(color, 1.0);
 }`,
-  three: `const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,1000);const renderer=new THREE.WebGLRenderer();renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);const cube=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial({color:0x58a6ff}));scene.add(cube);camera.position.z=4;function animate(){requestAnimationFrame(animate);cube.rotation.y+=0.02;renderer.render(scene,camera);}animate();`,
-  kinetic: `<!DOCTYPE html><html><head><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07111f}.orb{width:120px;height:120px;border-radius:50%;background:#58a6ff;animation:pulse 2s infinite alternate}@keyframes pulse{from{transform:scale(.7)}to{transform:scale(1.2)}}</style></head><body><div class="orb"></div></body></html>`,
+  three: `const scene=new THREE.Scene();const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,1000);const renderer=new THREE.WebGLRenderer({antialias:true});renderer.setSize(innerWidth,innerHeight);document.body.appendChild(renderer.domElement);const cube=new THREE.Mesh(new THREE.BoxGeometry(),new THREE.MeshBasicMaterial({color:0x58a6ff}));scene.add(cube);const stars=new THREE.Points(new THREE.BufferGeometry(),new THREE.PointsMaterial({color:0xffffff,size:0.02}));scene.add(stars);camera.position.z=4;function animate(){requestAnimationFrame(animate);cube.rotation.y+=0.02;renderer.render(scene,camera);}animate();`,
+  kinetic: `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DF2 Kinetic Canary</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#07111f}.orb{width:120px;height:120px;border-radius:50%;background:#58a6ff;animation:pulse 2s infinite alternate}@keyframes pulse{from{transform:scale(.7)}to{transform:scale(1.2)}}</style></head><body><div class="orb"></div></body></html>`,
   html: `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Canary</title><style>body{font-family:sans-serif;margin:0;background:#101827;color:white}main{min-height:100vh;display:grid;place-items:center}</style></head><body><main><h1>DF2 Canary</h1></main></body></html>`,
 };
 

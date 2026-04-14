@@ -301,18 +301,18 @@ async function loadProviderConfig(options: CliOptions, role: 'generator' | 'harn
   };
 
   if (defaultProvider === 'kimi') {
-    config.baseUrl = options.baseUrl || 'https://api.kimi.com/coding';
-    config.model = options.model || 'kimi-for-coding';
+    config.baseUrl = (role === 'harness' ? options.harnessBaseUrl : role === 'evaluator' ? options.evaluatorBaseUrl : options.baseUrl) || 'https://api.kimi.com/coding';
+    config.model = (role === 'harness' ? options.harnessModel : role === 'evaluator' ? options.evaluatorModel : options.model) || 'kimi-for-coding';
     config.apiKey = providerConfig.apiKey || process.env.KIMI_API_KEY;
   }
   if (defaultProvider === 'minimax') {
-    config.baseUrl = options.baseUrl || 'https://api.minimax.io/anthropic';
-    config.model = options.model || 'MiniMax-M2.7';
+    config.baseUrl = (role === 'harness' ? options.harnessBaseUrl : role === 'evaluator' ? options.evaluatorBaseUrl : options.baseUrl) || 'https://api.minimax.io/anthropic';
+    config.model = (role === 'harness' ? options.harnessModel : role === 'evaluator' ? options.evaluatorModel : options.model) || 'MiniMax-M2.7';
     config.apiKey = providerConfig.apiKey || process.env.MINIMAX_API_KEY;
   }
   if (defaultProvider === 'glm') {
-    config.baseUrl = options.baseUrl || 'https://api.z.ai/api/anthropic';
-    config.model = options.model || providerConfig.model || 'glm-5.1';
+    config.baseUrl = (role === 'harness' ? options.harnessBaseUrl : role === 'evaluator' ? options.evaluatorBaseUrl : options.baseUrl) || 'https://api.z.ai/api/anthropic';
+    config.model = (role === 'harness' ? options.harnessModel : role === 'evaluator' ? options.evaluatorModel : options.model) || providerConfig.model || 'glm-5.1';
     config.apiKey = providerConfig.apiKey || process.env.GLM_API_KEY;
   }
   if (defaultProvider === 'openai') {

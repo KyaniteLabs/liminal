@@ -242,6 +242,7 @@ describe('P5Validator', () => {
         function setup() {
           createCanvas(400, 400);
           pixelDensity(1);
+          createGraphics(100, 100);
         }
 
         function draw() {
@@ -249,7 +250,9 @@ describe('P5Validator', () => {
           const b = color(40, 50, 60);
           const c = lerpColor(a, b, 0.5);
           blendMode(ADD);
-          background(red(c), green(c), blue(c));
+          blendMode(MULTIPLY);
+          background(constrain(red(c), 0, 255), green(c), blue(c));
+          circle(200, 200, exp(1.0));
         }
       `;
 

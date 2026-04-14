@@ -19,10 +19,10 @@ export class P5Validator {
   private static readonly P5_GLOBALS = new Set([
     'Array', 'Boolean', 'Date', 'Error', 'JSON', 'Map', 'Math', 'Number', 'Object', 'Promise', 'Set', 'String',
     'console', 'document', 'p5', 'window',
-    'ADD', 'BLEND', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'HALF_PI', 'HSB', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'TWO_PI',
+    'ADD', 'BLEND', 'MULTIPLY', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'HALF_PI', 'HSB', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'TWO_PI',
     'draw', 'frameCount', 'height', 'mouseIsPressed', 'mouseX', 'mouseY', 'pmouseX', 'pmouseY', 'setup', 'windowHeight', 'windowWidth', 'width',
     'abs', 'acos', 'angleMode', 'asin', 'atan', 'atan2', 'background', 'beginShape', 'bezier', 'blendMode',
-    'ceil', 'circle', 'color', 'colorMode', 'cos', 'createCanvas', 'curveVertex', 'dist', 'ellipse', 'endShape',
+    'ceil', 'circle', 'color', 'colorMode', 'constrain', 'cos', 'createCanvas', 'createGraphics', 'curveVertex', 'dist', 'ellipse', 'endShape', 'exp',
     'fill', 'floor', 'frameRate', 'image', 'lerp', 'line', 'map', 'max', 'min', 'noFill', 'noise', 'noLoop',
     'noStroke', 'pixelDensity', 'pop', 'pow', 'push', 'random', 'rect', 'red', 'green', 'blue', 'lerpColor',
     'resizeCanvas', 'rotate', 'round', 'sin', 'sqrt',

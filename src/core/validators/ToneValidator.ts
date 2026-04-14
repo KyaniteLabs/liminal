@@ -99,6 +99,9 @@ export class ToneValidator {
     // Check for hallucinations
     errors.push(...this.validateHallucinations(trimmed));
 
+    // Check for common graph/property mistakes found by evaluator dogfood.
+    errors.push(...this.validateGraphSemantics(trimmed));
+
     return {
       valid: errors.length === 0,
       errors
@@ -148,6 +151,28 @@ export class ToneValidator {
       if (pattern.test(code)) {
         errors.push(`Tone.js: Invalid API - did you mean '${suggestion}'?`);
       }
+    }
+
+    return errors;
+  }
+
+  private static validateGraphSemantics(code: string): string[] {
+    const errors: string[] = [];
+
+    if (/\.filter\b/.test(code)) {
+      errors.push('Tone.js: PolySynth/Synth instances do not expose .filter; create Tone.Filter and connect through it');
+    }
+
+    if (/\.detune\.value\b/.test(code)) {
+      errors.push('Tone.js: Do not mutate synth.detune.value directly on PolySynth; use supported oscillator/frequency parameters or an explicit LFO target');
+    }
+
+    if (/\.filter\.lfo\b/.test(code)) {
+      errors.push('Tone.js: Invalid LFO target .filter.lfo; connect LFO to an explicit Tone.Filter frequency parameter');
+    }
+
+    if (/new\s+Tone\.PolySynth\s*\(\s*["']/.test(code)) {
+      errors.push('Tone.js: Tone.PolySynth constructor should receive a synth class/config object, not an oscillator type string');
     }
 
     return errors;

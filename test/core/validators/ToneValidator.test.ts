@@ -199,6 +199,25 @@ const analyser = new Tone.Analyser().connect(aux);
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should reject invalid synth graph property assumptions', () => {
+      const code = `
+const droneVoices = [
+  new Tone.PolySynth("sawtooth").toDestination(),
+  new Tone.PolySynth(Tone.Synth).toDestination()
+];
+const filter = droneVoices[0].filter;
+const detune = droneVoices[1].detune.value;
+const lfo = new Tone.LFO("sine", { rate: 0.1, depth: 5 }).connect(droneVoices[0].filter.lfo);
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Tone.js: PolySynth/Synth instances do not expose .filter; create Tone.Filter and connect through it');
+      expect(result.errors).toContain('Tone.js: Do not mutate synth.detune.value directly on PolySynth; use supported oscillator/frequency parameters or an explicit LFO target');
+      expect(result.errors).toContain('Tone.js: Invalid LFO target .filter.lfo; connect LFO to an explicit Tone.Filter frequency parameter');
+      expect(result.errors).toContain('Tone.js: Tone.PolySynth constructor should receive a synth class/config object, not an oscillator type string');
+    });
   });
 
   describe('getMinSize', () => {

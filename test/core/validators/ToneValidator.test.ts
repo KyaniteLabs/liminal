@@ -158,6 +158,36 @@ Tone.Transport.start();
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should validate Tone.js code with LFO', () => {
+      const code = `
+const lfo = new Tone.LFO("4n", 200, 1000).start();
+const filter = new Tone.Filter(400, "lowpass").toDestination();
+lfo.connect(filter.frequency);
+const synth = new Tone.Synth().connect(filter);
+synth.triggerAttackRelease("C4", "2n");
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should validate Tone.js code with Pattern', () => {
+      const code = `
+const synth = new Tone.Synth().toDestination();
+const pattern = new Tone.Pattern((time, note) => {
+  synth.triggerAttackRelease(note, "8n", time);
+}, ["C4", "E4", "G4", "A4"], "upDown");
+pattern.interval = "4n";
+pattern.start(0);
+Tone.Transport.start();
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   describe('getMinSize', () => {

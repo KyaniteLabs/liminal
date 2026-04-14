@@ -19,6 +19,7 @@ export class ToneValidator {
     'Transport', 'Destination', 'Master', 'Listener', 'Context', 'Draw', 'Tone',
     // Sources - Oscillators
     'Oscillator', 'PulseOscillator', 'PWMOscillator', 'FatOscillator', 'AMOscillator', 'FMOscillator',
+    'LFO',
     // Sources - Synths
     'AMSynth', 'FMSynth', 'MonoSynth', 'PolySynth', 'Synth', 'MembraneSynth',
     'MetalSynth', 'NoiseSynth', 'DuoSynth', 'PluckSynth', 'GrainSynth', 'Sampler', 'Player',
@@ -52,6 +53,8 @@ export class ToneValidator {
     'Instrument', 'Monophonic', 'Polyphonic',
     // Events
     'Loop', 'Part', 'Pattern', 'Sequence', 'Event', 'ToneEvent',
+    // Patterns (alias for Pattern used in some Tone.js versions)
+    'Pattern',
     // Transport
     'Transport', 'TransportTime', 'Ticks', 'Time', 'Frequency', 'Midi', 'BarsBeatsSixteenths',
     // Routing

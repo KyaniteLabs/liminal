@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
 import { CodeValidator } from '../../../src/core/CodeValidator.js';
+import fs from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
+
 import {
   CANARY_CODE,
   applyModelOverride,
@@ -14,6 +18,8 @@ import {
   normalizeScore100,
   rankScore,
   resolveDf2Preset,
+  runVisionEvaluator,
+  visionSkipReasonFor,
   type CandidateSummary,
 } from '../../../scripts/dogfood/df2-minimal-fsm.js';
 
@@ -188,5 +194,69 @@ describe('DF2 minimal FSM', () => {
     expect(normalizeScore100(97)).toBe(97);
     expect(normalizeScore100(0)).toBe(0);
     expect(normalizeScore100(null)).toBeNull();
+  });
+
+  it('skips vision evaluation when deterministic validation or runtime fails or screenshot is missing', () => {
+    expect(visionSkipReasonFor({ validationPassed: false, runtimePassed: true, screenshotPresent: true })).toBe('deterministic_validation_fail');
+    expect(visionSkipReasonFor({ validationPassed: true, runtimePassed: false, screenshotPresent: true })).toBe('runtime_fail');
+    expect(visionSkipReasonFor({ validationPassed: true, runtimePassed: true, screenshotPresent: false })).toBe('missing_screenshot');
+    expect(visionSkipReasonFor({ validationPassed: true, runtimePassed: true, screenshotPresent: true })).toBeNull();
+  });
+
+  it('blends vision score into rankScore with lower weight when available', () => {
+    expect(rankScore(90, 50)).toBe(82);
+    expect(rankScore(90, 50, 80)).toBe(81);
+    expect(rankScore(90, 50, null)).toBe(82);
+  });
+
+  it('normalizes vision scores from 0-1, 0-10, and 0-100 scales', () => {
+    expect(normalizeScore100(0.88)).toBe(88);
+    expect(normalizeScore100(8.8)).toBe(88);
+    expect(normalizeScore100(88)).toBe(88);
+  });
+
+  it('produces vision artifacts in dry-run without overriding deterministic pass/fail', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'df2-vision-'));
+    const runtimeReport = { status: 'pass' as const, passed: true, runtimeHealthScore: 95, logs: [], errors: [], durationMs: 0, previewRef: 'runtime.preview.png' };
+    await fs.writeFile(path.join(tmpDir, 'runtime.preview.png'), Buffer.from('fake-png'), 'utf8');
+
+    const vision = await runVisionEvaluator('run-1', 'candidate-01', 1, 'p5', 'test prompt', tmpDir, true, runtimeReport, { baseUrl: 'dry', model: 'gpt-4o-mini' }, null, true, 'launch-ready');
+
+    expect(vision.eligible).toBe(true);
+    expect(vision.overallVisualScore).toBe(88);
+    expect(vision.visualBand).toBe('launch_ready');
+    expect(vision.visualFailureClass).toBe('none');
+
+    const input = JSON.parse(await fs.readFile(path.join(tmpDir, 'vision.input.json'), 'utf8'));
+    expect(input.schemaVersion).toBe('df2-vision-evaluator-input-v1');
+
+    const final = JSON.parse(await fs.readFile(path.join(tmpDir, 'vision.final.json'), 'utf8'));
+    expect(final.schemaVersion).toBe('df2-vision-eval-v1');
+    expect(final.overallVisualScore).toBe(88);
+
+    const raw = await fs.readFile(path.join(tmpDir, 'vision.primary.raw.txt'), 'utf8');
+    expect(raw).toContain('launch_ready');
+
+    // Deterministic pass/fail is independent: vision being present does not change runtime report
+    expect(runtimeReport.passed).toBe(true);
+    expect(runtimeReport.status).toBe('pass');
+
+    await fs.rm(tmpDir, { recursive: true, force: true });
+  });
+
+  it('produces deterministic skip vision artifact when screenshot is missing', async () => {
+    const tmpDir = await fs.mkdtemp(path.join(os.tmpdir(), 'df2-vision-skip-'));
+    const runtimeReport = { status: 'pass' as const, passed: true, runtimeHealthScore: 95, logs: [], errors: [], durationMs: 0 };
+
+    const vision = await runVisionEvaluator('run-1', 'candidate-01', 1, 'p5', 'test prompt', tmpDir, true, runtimeReport, { baseUrl: 'dry', model: 'gpt-4o-mini' }, null, false, 'launch-ready');
+
+    expect(vision.eligible).toBe(false);
+    expect(vision.skipReason).toBe('missing_screenshot');
+    expect(vision.overallVisualScore).toBeNull();
+
+    const final = JSON.parse(await fs.readFile(path.join(tmpDir, 'vision.final.json'), 'utf8'));
+    expect(final.skipReason).toBe('missing_screenshot');
+
+    await fs.rm(tmpDir, { recursive: true, force: true });
   });
 });

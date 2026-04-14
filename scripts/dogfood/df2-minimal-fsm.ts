@@ -77,6 +77,8 @@ export interface CandidateSummary {
   runtimeHealthScore: number | null;
   evaluatorOverall: number | null;
   evaluatorConfidence: number | null;
+  visionOverall: number | null;
+  visualBand: VisionEvaluation['visualBand'] | null;
   rankScore: number | null;
   finalBand: FinalBand;
   failureSignature: FailureSignature | null;
@@ -131,6 +133,36 @@ export interface CandidateEvaluation {
   evidenceRefs: string[];
 }
 
+export interface VisionEvaluation {
+  schemaVersion: 'df2-vision-eval-v1';
+  eligible: boolean;
+  skipReason: null | 'deterministic_validation_fail' | 'runtime_fail' | 'missing_screenshot';
+  visionModel: string;
+  fallbackVisionModel: string | null;
+  fallbackUsed: boolean;
+  overallVisualScore: number | null;
+  confidence: number | null;
+  visualBand: 'launch_ready' | 'functional' | 'warning' | 'reject' | 'abstain';
+  visualFailureClass:
+    | 'none'
+    | 'blank'
+    | 'low_contrast'
+    | 'off_prompt'
+    | 'unpolished'
+    | 'layout_broken'
+    | 'artifact_noise'
+    | 'insufficient_evidence';
+  dimensionScores: {
+    promptMatch: number;
+    composition: number;
+    polish: number;
+    legibility: number;
+    visualInterest: number;
+  };
+  concreteRepairAdvice: RepairAdvice[];
+  evidenceRefs: string[];
+}
+
 export interface FinalCandidateSummary extends Omit<CandidateSummary, 'concreteRepairAdvice'> {}
 
 export interface FinalAdjudication {
@@ -143,6 +175,8 @@ export interface FinalAdjudication {
     fallbackGenerator: string | null;
     evaluator: string;
     evaluatorFallback: string | null;
+    vision: string | null;
+    visionFallback: string | null;
     maxCandidates: 2;
     preflightCanaryEnabled: true;
     harnessDecisionMode: 'deterministic';
@@ -186,6 +220,8 @@ export interface Df2Preset {
   fallbackGenerator: Df2ModelConfig | null;
   evaluatorPrimary: Df2ModelConfig;
   evaluatorFallback: Df2ModelConfig | null;
+  visionPrimary: Df2ModelConfig | null;
+  visionFallback: Df2ModelConfig | null;
   shadowHarness: Df2ModelConfig | null;
   evaluateOnlyAfterDeterministicAndRuntimePass: true;
   repairAdviceMaxItems: 3;
@@ -217,12 +253,19 @@ interface CliOptions {
   fallbackEvaluatorProvider?: Df2ProviderName;
   fallbackEvaluatorBaseUrl?: string;
   fallbackEvaluatorModel?: string;
+  visionProvider?: Df2ProviderName;
+  visionBaseUrl?: string;
+  visionModel?: string;
+  fallbackVisionProvider?: Df2ProviderName;
+  fallbackVisionBaseUrl?: string;
+  fallbackVisionModel?: string;
   shadowHarnessProvider?: Df2ProviderName;
   shadowHarnessBaseUrl?: string;
   shadowHarnessModel?: string;
   shadowHarness: boolean;
   maxTokens?: number;
   evaluatorMaxTokens?: number;
+  visionMaxTokens?: number;
   runtimeTimeoutMs: number;
   localTimeoutMs: number;
 }
@@ -339,7 +382,10 @@ export function sha256(value: string | Buffer): string {
   return crypto.createHash('sha256').update(value).digest('hex');
 }
 
-export function rankScore(evaluatorOverall: number, runtimeHealthScore: number): number {
+export function rankScore(evaluatorOverall: number, runtimeHealthScore: number, visionScore?: number | null): number {
+  if (visionScore !== null && visionScore !== undefined) {
+    return Math.round((0.7 * evaluatorOverall + 0.2 * runtimeHealthScore + 0.1 * visionScore) * 100) / 100;
+  }
   return Math.round((0.8 * evaluatorOverall + 0.2 * runtimeHealthScore) * 100) / 100;
 }
 
@@ -354,6 +400,8 @@ export function resolveDf2Preset(name: Df2PresetName): Df2Preset {
       fallbackGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 8192, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
       evaluatorPrimary: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
       evaluatorFallback: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
+      visionPrimary: { provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini', maxTokens: 512, temperature: 0 },
+      visionFallback: { provider: 'glm', baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-4.5-air', maxTokens: 512, temperature: 0 },
       shadowHarness: { provider: 'kimi', baseUrl: 'https://api.kimi.com/coding', model: 'kimi-for-coding', maxTokens: 4096 },
       evaluateOnlyAfterDeterministicAndRuntimePass: true,
       repairAdviceMaxItems: 3,
@@ -374,6 +422,8 @@ export function resolveDf2Preset(name: Df2PresetName): Df2Preset {
     fallbackGenerator: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 8192, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
     evaluatorPrimary: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3.5-2b', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
     evaluatorFallback: { provider: 'lmstudio', baseUrl: DEFAULT_LMSTUDIO_BASE_URL, model: 'qwen3-coder-next-reap-40b-a3b-i1', maxTokens: 512, temperature: 0, timeout: DEFAULT_LOCAL_LLM_TIMEOUT_MS },
+    visionPrimary: { provider: 'openai', baseUrl: 'https://api.openai.com/v1', model: 'gpt-4o-mini', maxTokens: 512, temperature: 0 },
+    visionFallback: { provider: 'glm', baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-4.5-air', maxTokens: 512, temperature: 0 },
     shadowHarness: { provider: 'kimi', baseUrl: 'https://api.kimi.com/coding', model: 'kimi-for-coding', maxTokens: 4096 },
     evaluateOnlyAfterDeterministicAndRuntimePass: true,
     repairAdviceMaxItems: 3,
@@ -436,6 +486,250 @@ export function evaluatorSkipReasonFor(input: {
   if (!input.runtimePassed) return 'runtime_fail';
   if (!input.runtimeArtifactPresent) return 'missing_runtime_artifacts';
   return null;
+}
+
+export function visionSkipReasonFor(input: {
+  validationPassed: boolean;
+  runtimePassed: boolean;
+  screenshotPresent: boolean;
+}): VisionEvaluation['skipReason'] {
+  if (!input.validationPassed) return 'deterministic_validation_fail';
+  if (!input.runtimePassed) return 'runtime_fail';
+  if (!input.screenshotPresent) return 'missing_screenshot';
+  return null;
+}
+
+function normalizeVisualBand(value: unknown, score: number | null): VisionEvaluation['visualBand'] {
+  if (value === 'launch_ready' || value === 'functional' || value === 'warning' || value === 'reject' || value === 'abstain') return value;
+  if (score !== null && score >= 82) return 'launch_ready';
+  if (score !== null && score >= 60) return 'functional';
+  return 'warning';
+}
+
+function normalizeVisualFailureClass(value: unknown): VisionEvaluation['visualFailureClass'] {
+  const allowed = new Set(['none', 'blank', 'low_contrast', 'off_prompt', 'unpolished', 'layout_broken', 'artifact_noise', 'insufficient_evidence']);
+  return typeof value === 'string' && allowed.has(value) ? value as VisionEvaluation['visualFailureClass'] : 'none';
+}
+
+function dryVisionEvaluation(runId: string, candidateId: string, attempt: number, scenario: string, runtimeHealth: number): VisionEvaluation {
+  const score = scenario === 'quality-warning' ? 55 : scenario === 'improved-not-great' ? (attempt === 1 ? 45 : 58) : 88;
+  const confidence = scenario === 'quality-warning' ? 0.8 : 0.82;
+  const band = normalizeVisualBand(null, score);
+  return {
+    schemaVersion: 'df2-vision-eval-v1',
+    eligible: true,
+    skipReason: null,
+    visionModel: 'dry-run-vision-evaluator',
+    fallbackVisionModel: null,
+    fallbackUsed: false,
+    overallVisualScore: score,
+    confidence,
+    visualBand: band,
+    visualFailureClass: band === 'launch_ready' ? 'none' : 'unpolished',
+    dimensionScores: { promptMatch: score, composition: score, polish: score, legibility: score, visualInterest: score },
+    concreteRepairAdvice: band === 'launch_ready' ? [] : [{ priority: 1, target: 'visual', issue: 'Needs more visual polish.', change: 'Increase specificity and visual richness.', expectedCheck: 'Visual score improves.' }],
+    evidenceRefs: ['runtime.preview.png', 'runtime.report.json'],
+  };
+}
+
+function parseVisionEvaluationJson(
+  raw: string,
+  runId: string,
+  candidateId: string,
+  visionModel: string,
+  fallbackVisionModel: string | null,
+  fallbackUsed: boolean,
+): VisionEvaluation {
+  const json = raw.match(/\{[\s\S]*\}/)?.[0];
+  if (!json) throw new Error('Vision evaluator returned no JSON');
+  const parsed = JSON.parse(json) as Partial<VisionEvaluation>;
+  const overallVisualScore = normalizeScore100(parsed.overallVisualScore);
+  const confidence = clampNumber(parsed.confidence, 0, 1);
+  return {
+    schemaVersion: 'df2-vision-eval-v1',
+    eligible: true,
+    skipReason: null,
+    visionModel,
+    fallbackVisionModel,
+    fallbackUsed,
+    overallVisualScore,
+    confidence,
+    visualBand: normalizeVisualBand(parsed.visualBand, overallVisualScore),
+    visualFailureClass: normalizeVisualFailureClass(parsed.visualFailureClass),
+    dimensionScores: {
+      promptMatch: normalizeScore100(parsed.dimensionScores?.promptMatch) ?? overallVisualScore ?? 0,
+      composition: normalizeScore100(parsed.dimensionScores?.composition) ?? overallVisualScore ?? 0,
+      polish: normalizeScore100(parsed.dimensionScores?.polish) ?? overallVisualScore ?? 0,
+      legibility: normalizeScore100(parsed.dimensionScores?.legibility) ?? overallVisualScore ?? 0,
+      visualInterest: normalizeScore100(parsed.dimensionScores?.visualInterest) ?? overallVisualScore ?? 0,
+    },
+    concreteRepairAdvice: Array.isArray(parsed.concreteRepairAdvice) ? parsed.concreteRepairAdvice.slice(0, 3) as RepairAdvice[] : [],
+    evidenceRefs: Array.isArray(parsed.evidenceRefs) ? parsed.evidenceRefs.filter((ref): ref is string => typeof ref === 'string') : ['runtime.preview.png', 'runtime.report.json'],
+  };
+}
+
+const VISION_EVALUATOR_SYSTEM_PROMPT = `You are a strict visual quality evaluator for DF2 creative-code screenshots.
+Return JSON only. No markdown.
+Schema keys: schemaVersion, eligible, skipReason, overallVisualScore, confidence, visualBand, visualFailureClass, dimensionScores, concreteRepairAdvice, evidenceRefs.
+Evaluate only visual quality from the screenshot; deterministic validation and runtime pass/fail are authoritative.`;
+
+async function callVisionLLM(config: Partial<LLMConfig>, systemPrompt: string, userPrompt: string, imageBase64: string): Promise<string> {
+  const baseUrl = config.baseUrl || 'https://api.openai.com/v1';
+  const url = `${baseUrl}/chat/completions`;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  if (config.apiKey) {
+    headers['Authorization'] = `Bearer ${config.apiKey}`;
+  }
+  if (baseUrl.includes('kimi.com')) {
+    headers['User-Agent'] = 'claude-code/1.0';
+  }
+
+  const body: Record<string, unknown> = {
+    model: config.model,
+    messages: [
+      { role: 'system', content: systemPrompt },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: userPrompt },
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${imageBase64}` } },
+        ],
+      },
+    ],
+    temperature: config.temperature ?? 0,
+    max_tokens: config.maxTokens ?? 512,
+  };
+
+  const signal = AbortSignal.timeout(config.timeout || 60000);
+  const response = await fetch(url, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+    signal,
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => response.statusText);
+    throw new Error(`Vision API error ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json() as {
+    choices?: Array<{ message?: { content?: string } }>;
+  };
+  return data.choices?.[0]?.message?.content || '';
+}
+
+export async function runVisionEvaluator(
+  runId: string,
+  candidateId: string,
+  attempt: number,
+  domain: RuntimeDomain,
+  prompt: string,
+  candidateDir: string,
+  validationPassed: boolean,
+  runtimeReport: RuntimeReport,
+  visionConfig: Partial<LLMConfig> | null,
+  fallbackVisionConfig: Partial<LLMConfig> | null,
+  dryRun: boolean,
+  dryScenario: string,
+): Promise<VisionEvaluation> {
+  const screenshotPath = path.join(candidateDir, 'runtime.preview.png');
+  const skipReason = visionSkipReasonFor({
+    validationPassed,
+    runtimePassed: runtimeReport.passed,
+    screenshotPresent: fsSync.existsSync(screenshotPath),
+  });
+
+  const visionInput = {
+    schemaVersion: 'df2-vision-evaluator-input-v1',
+    runId,
+    candidateId,
+    attempt,
+    domain,
+    prompt,
+    validationPassed,
+    runtime: runtimeReport,
+    evidenceRefs: ['runtime.preview.png', 'runtime.report.json'],
+  };
+  await writeJson(path.join(candidateDir, 'vision.input.json'), visionInput);
+
+  if (skipReason || !visionConfig) {
+    const skipped: VisionEvaluation = {
+      schemaVersion: 'df2-vision-eval-v1',
+      eligible: false,
+      skipReason: skipReason || 'missing_screenshot',
+      visionModel: visionConfig?.model || 'none',
+      fallbackVisionModel: fallbackVisionConfig?.model || null,
+      fallbackUsed: false,
+      overallVisualScore: null,
+      confidence: null,
+      visualBand: 'abstain',
+      visualFailureClass: skipReason === 'deterministic_validation_fail' ? 'insufficient_evidence' : 'insufficient_evidence',
+      dimensionScores: { promptMatch: 0, composition: 0, polish: 0, legibility: 0, visualInterest: 0 },
+      concreteRepairAdvice: [],
+      evidenceRefs: ['runtime.preview.png', 'runtime.report.json'],
+    };
+    await writeJson(path.join(candidateDir, 'vision.final.json'), skipped);
+    return skipped;
+  }
+
+  if (dryRun) {
+    const evaluation = dryVisionEvaluation(runId, candidateId, attempt, dryScenario, runtimeReport.runtimeHealthScore ?? 95);
+    await writeJson(path.join(candidateDir, 'vision.primary.parsed.json'), evaluation);
+    await fs.writeFile(path.join(candidateDir, 'vision.primary.raw.txt'), JSON.stringify(evaluation), 'utf8');
+    await writeJson(path.join(candidateDir, 'vision.final.json'), evaluation);
+    return evaluation;
+  }
+
+  const userPrompt = `Evaluate the visual quality of this DF2 ${domain} screenshot. Return compact JSON only matching schema df2-vision-eval-v1.
+Domain: ${domain}
+Task prompt: ${prompt}
+Runtime status: ${runtimeReport.status}
+Runtime health: ${runtimeReport.runtimeHealthScore}`;
+
+  let imageBase64 = '';
+  try {
+    imageBase64 = await fs.readFile(screenshotPath, 'base64');
+  } catch {
+    const skipped: VisionEvaluation = {
+      schemaVersion: 'df2-vision-eval-v1',
+      eligible: false,
+      skipReason: 'missing_screenshot',
+      visionModel: visionConfig.model || 'unknown',
+      fallbackVisionModel: fallbackVisionConfig?.model || null,
+      fallbackUsed: false,
+      overallVisualScore: null,
+      confidence: null,
+      visualBand: 'abstain',
+      visualFailureClass: 'insufficient_evidence',
+      dimensionScores: { promptMatch: 0, composition: 0, polish: 0, legibility: 0, visualInterest: 0 },
+      concreteRepairAdvice: [],
+      evidenceRefs: ['runtime.preview.png', 'runtime.report.json'],
+    };
+    await writeJson(path.join(candidateDir, 'vision.final.json'), skipped);
+    return skipped;
+  }
+
+  const runOne = async (config: Partial<LLMConfig>, label: 'primary' | 'fallback') => {
+    const raw = await callVisionLLM(config, VISION_EVALUATOR_SYSTEM_PROMPT, userPrompt, imageBase64);
+    await fs.writeFile(path.join(candidateDir, `vision.${label}.raw.txt`), raw, 'utf8');
+    const parsed = parseVisionEvaluationJson(raw, visionConfig.model || 'unknown', fallbackVisionConfig?.model || null, label === 'fallback');
+    await writeJson(path.join(candidateDir, `vision.${label}.parsed.json`), parsed);
+    return parsed;
+  };
+
+  let evaluation: VisionEvaluation;
+  try {
+    evaluation = await runOne(visionConfig, 'primary');
+  } catch (error) {
+    if (!fallbackVisionConfig) throw error;
+    evaluation = await runOne(fallbackVisionConfig, 'fallback');
+  }
+
+  await writeJson(path.join(candidateDir, 'vision.final.json'), evaluation);
+  return evaluation;
 }
 
 export function buildFailureSignature(input: {
@@ -511,6 +805,8 @@ export function candidateToFinalSummary(candidate: CandidateSummary): FinalCandi
     runtimeHealthScore: candidate.runtimeHealthScore,
     evaluatorOverall: candidate.evaluatorOverall,
     evaluatorConfidence: candidate.evaluatorConfidence,
+    visionOverall: candidate.visionOverall,
+    visualBand: candidate.visualBand,
     rankScore: deterministicFailure ? null : candidate.rankScore,
     finalBand: deterministicFailure ? 'fail' : candidate.finalBand,
     failureSignature: candidate.failureSignature,
@@ -651,12 +947,19 @@ function parseArgs(argv: string[]): CliOptions {
     fallbackEvaluatorProvider: args.get('fallback-evaluator-provider') as Df2ProviderName | undefined,
     fallbackEvaluatorBaseUrl: typeof args.get('fallback-evaluator-base-url') === 'string' ? String(args.get('fallback-evaluator-base-url')) : undefined,
     fallbackEvaluatorModel: typeof args.get('fallback-evaluator-model') === 'string' ? String(args.get('fallback-evaluator-model')) : undefined,
+    visionProvider: args.get('vision-provider') as Df2ProviderName | undefined,
+    visionBaseUrl: typeof args.get('vision-base-url') === 'string' ? String(args.get('vision-base-url')) : undefined,
+    visionModel: typeof args.get('vision-model') === 'string' ? String(args.get('vision-model')) : undefined,
+    fallbackVisionProvider: args.get('fallback-vision-provider') as Df2ProviderName | undefined,
+    fallbackVisionBaseUrl: typeof args.get('fallback-vision-base-url') === 'string' ? String(args.get('fallback-vision-base-url')) : undefined,
+    fallbackVisionModel: typeof args.get('fallback-vision-model') === 'string' ? String(args.get('fallback-vision-model')) : undefined,
     shadowHarnessProvider: args.get('shadow-harness-provider') as Df2ProviderName | undefined,
     shadowHarnessBaseUrl: typeof args.get('shadow-harness-base-url') === 'string' ? String(args.get('shadow-harness-base-url')) : undefined,
     shadowHarnessModel: typeof args.get('shadow-harness-model') === 'string' ? String(args.get('shadow-harness-model')) : undefined,
     shadowHarness: args.get('shadow-harness') === true,
     maxTokens: typeof args.get('max-tokens') === 'string' ? Number(args.get('max-tokens')) : undefined,
     evaluatorMaxTokens: typeof args.get('evaluator-max-tokens') === 'string' ? Number(args.get('evaluator-max-tokens')) : undefined,
+    visionMaxTokens: typeof args.get('vision-max-tokens') === 'string' ? Number(args.get('vision-max-tokens')) : undefined,
     runtimeTimeoutMs: typeof args.get('runtime-timeout-ms') === 'string' ? Number(args.get('runtime-timeout-ms')) : 15000,
     localTimeoutMs: typeof args.get('local-timeout-ms') === 'string' ? Number(args.get('local-timeout-ms')) : DEFAULT_LOCAL_LLM_TIMEOUT_MS,
   };
@@ -711,12 +1014,30 @@ function applyOverrides(preset: Df2Preset, options: CliOptions): Df2Preset {
         timeout: options.fallbackEvaluatorProvider === 'lmstudio' || (!options.fallbackEvaluatorProvider && preset.evaluatorFallback.provider === 'lmstudio') ? options.localTimeoutMs : undefined,
       })
     : null;
+  const visionPrimary = preset.visionPrimary
+    ? applyModelOverride(preset.visionPrimary, {
+        provider: options.visionProvider,
+        baseUrl: options.visionBaseUrl,
+        model: options.visionModel,
+        maxTokens: options.visionMaxTokens,
+        timeout: options.visionProvider === 'lmstudio' || (!options.visionProvider && preset.visionPrimary.provider === 'lmstudio') ? options.localTimeoutMs : undefined,
+      })
+    : null;
+  const visionFallback = preset.visionFallback
+    ? applyModelOverride(preset.visionFallback, {
+        provider: options.fallbackVisionProvider,
+        baseUrl: options.fallbackVisionBaseUrl,
+        model: options.fallbackVisionModel,
+        maxTokens: options.visionMaxTokens,
+        timeout: options.fallbackVisionProvider === 'lmstudio' || (!options.fallbackVisionProvider && preset.visionFallback.provider === 'lmstudio') ? options.localTimeoutMs : undefined,
+      })
+    : null;
   const shadowHarness = preset.shadowHarness
     ? applyModelOverride(preset.shadowHarness, {
         provider: options.shadowHarnessProvider,
         baseUrl: options.shadowHarnessBaseUrl,
-    model: options.shadowHarnessModel,
-  })
+        model: options.shadowHarnessModel,
+      })
     : null;
 
   return {
@@ -725,6 +1046,8 @@ function applyOverrides(preset: Df2Preset, options: CliOptions): Df2Preset {
     fallbackGenerator,
     evaluatorPrimary,
     evaluatorFallback,
+    visionPrimary,
+    visionFallback,
     shadowHarnessEnabled: options.shadowHarness,
     shadowHarness: options.shadowHarness ? shadowHarness : null,
   };
@@ -1105,9 +1428,10 @@ function normalizeRecommendation(value: unknown): CandidateEvaluation['recommend
   return value === 'retry_same_generator' || value === 'switch_generator' || value === 'stop' ? value : 'accept';
 }
 
-function finalBandFor(evaluation: CandidateEvaluation, runtime: RuntimeReport): FinalBand {
+function finalBandFor(evaluation: CandidateEvaluation, runtime: RuntimeReport, vision?: VisionEvaluation | null): FinalBand {
   if (!evaluation.eligible || runtime.status !== 'pass' || runtime.runtimeHealthScore === null || evaluation.overallScore === null || evaluation.confidence === null) return 'fail';
-  const score = rankScore(evaluation.overallScore, runtime.runtimeHealthScore);
+  const visionScore = vision?.eligible ? vision.overallVisualScore : null;
+  const score = rankScore(evaluation.overallScore, runtime.runtimeHealthScore, visionScore);
   if (runtime.runtimeHealthScore >= 85 && evaluation.overallScore >= 82 && evaluation.confidence >= 0.7 && score >= 82 && evaluation.agreementWithDeterministic === 'agree') return 'launch_ready';
   if (runtime.runtimeHealthScore >= 70 && evaluation.overallScore >= 60 && evaluation.confidence >= 0.55 && score >= 60) return 'functional';
   return 'warning';
@@ -1130,6 +1454,8 @@ async function runCandidate(input: {
   generatorModel: string;
   evaluatorConfig: Partial<LLMConfig>;
   fallbackEvaluatorConfig: Partial<LLMConfig> | null;
+  visionConfig: Partial<LLMConfig> | null;
+  fallbackVisionConfig: Partial<LLMConfig> | null;
   preset: Df2Preset;
   repairPacket: unknown | null;
   dryRun: boolean;
@@ -1216,9 +1542,10 @@ async function runCandidate(input: {
 
   const runtime = await runRuntime(input.domain, preview, candidateDir, input.dryRun, input.runtimeTimeoutMs);
   const evaluation = await runEvaluator(input.runId, candidateId, input.attempt, input.domain, input.spec.prompt, validation.cleanedCode || normalized.code, candidateDir, true, runtime, input.evaluatorConfig, input.fallbackEvaluatorConfig, input.preset, input.dryRun, input.dryScenario);
-  const finalBand = finalBandFor(evaluation, runtime);
+  const vision = await runVisionEvaluator(input.runId, candidateId, input.attempt, input.domain, input.spec.prompt, candidateDir, true, runtime, input.visionConfig, input.fallbackVisionConfig, input.dryRun, input.dryScenario);
+  const finalBand = finalBandFor(evaluation, runtime, vision);
   const computedRank = evaluation.overallScore !== null && runtime.runtimeHealthScore !== null
-    ? rankScore(evaluation.overallScore, runtime.runtimeHealthScore)
+    ? rankScore(evaluation.overallScore, runtime.runtimeHealthScore, vision.eligible ? vision.overallVisualScore : null)
     : null;
   const signature = runtime.status === 'pass' ? null : classifyRuntimeError(runtime, input.domain);
   const summary: CandidateSummary = {
@@ -1231,6 +1558,8 @@ async function runCandidate(input: {
     runtimeHealthScore: runtime.runtimeHealthScore,
     evaluatorOverall: evaluation.overallScore,
     evaluatorConfidence: evaluation.confidence,
+    visionOverall: vision.eligible ? vision.overallVisualScore : null,
+    visualBand: vision.eligible ? vision.visualBand : null,
     rankScore: finalBand === 'fail' ? null : computedRank,
     finalBand,
     failureSignature: signature,
@@ -1253,6 +1582,8 @@ function makeFailureCandidate(candidateId: string, attempt: number, generatorMod
     runtimeHealthScore: null,
     evaluatorOverall: null,
     evaluatorConfidence: null,
+    visionOverall: null,
+    visualBand: null,
     rankScore: null,
     finalBand: 'fail',
     failureSignature,
@@ -1353,6 +1684,12 @@ async function main(): Promise<void> {
   const evaluatorFallbackConfig = preset.evaluatorFallback
     ? options.dryRun ? { baseUrl: 'dry-run', model: preset.evaluatorFallback.model, temperature: 0, maxTokens: 512 } : await loadProviderConfig(preset.evaluatorFallback)
     : null;
+  const visionConfig = preset.visionPrimary
+    ? options.dryRun ? { baseUrl: 'dry-run', model: preset.visionPrimary.model, temperature: 0, maxTokens: 512 } : await loadProviderConfig(preset.visionPrimary)
+    : null;
+  const visionFallbackConfig = preset.visionFallback
+    ? options.dryRun ? { baseUrl: 'dry-run', model: preset.visionFallback.model, temperature: 0, maxTokens: 512 } : await loadProviderConfig(preset.visionFallback)
+    : null;
   const shadowConfig = preset.shadowHarness && !options.dryRun ? await loadProviderConfig(preset.shadowHarness) : null;
 
   const manifest = {
@@ -1369,6 +1706,8 @@ async function main(): Promise<void> {
       fallbackGenerator: fallbackConfig ? redactedConfig(fallbackConfig) : null,
       evaluator: redactedConfig(evaluatorConfig),
       evaluatorFallback: evaluatorFallbackConfig ? redactedConfig(evaluatorFallbackConfig) : null,
+      vision: visionConfig ? redactedConfig(visionConfig) : null,
+      visionFallback: visionFallbackConfig ? redactedConfig(visionFallbackConfig) : null,
       shadowHarness: shadowConfig ? redactedConfig(shadowConfig) : null,
     },
   };
@@ -1451,6 +1790,8 @@ async function main(): Promise<void> {
         generatorModel: currentModel,
         evaluatorConfig,
         fallbackEvaluatorConfig: evaluatorFallbackConfig,
+        visionConfig,
+        fallbackVisionConfig: visionFallbackConfig,
         preset,
         repairPacket,
         dryRun: options.dryRun,
@@ -1506,6 +1847,8 @@ function finalConfig(preset: Df2Preset): FinalAdjudication['config'] {
     fallbackGenerator: preset.fallbackGenerator?.model ?? null,
     evaluator: preset.evaluatorPrimary.model,
     evaluatorFallback: preset.evaluatorFallback?.model ?? null,
+    vision: preset.visionPrimary?.model ?? null,
+    visionFallback: preset.visionFallback?.model ?? null,
     maxCandidates: 2,
     preflightCanaryEnabled: true,
     harnessDecisionMode: 'deterministic',

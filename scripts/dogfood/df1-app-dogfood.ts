@@ -354,8 +354,9 @@ async function loadProviderConfig(options: CliOptions, role: 'generator' | 'harn
       options.model ||
       process.env.LIMINAL_LMSTUDIO_MODEL ||
       process.env.LMSTUDIO_MODEL ||
+      (role === 'generator' ? GENERATOR_ROUTING_POLICY.default : undefined) ||
       providerConfig.model ||
-      (role === 'evaluator' ? 'qwen3.5-2b' : role === 'generator' ? GENERATOR_ROUTING_POLICY.default : 'local-model');
+      (role === 'evaluator' ? 'qwen3.5-2b' : 'local-model');
     config.apiKey = providerConfig.apiKey;
   }
   if (role === 'evaluator') {

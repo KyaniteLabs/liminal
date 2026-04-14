@@ -50,6 +50,8 @@ interface CliOptions {
   harnessModel?: string;
   evaluatorBaseUrl?: string;
   evaluatorModel?: string;
+  fallbackEvaluatorBaseUrl?: string;
+  fallbackEvaluatorModel?: string;
   lmstudioBaseUrl?: string;
   lmstudioModel?: string;
   maxTokens?: number;
@@ -260,6 +262,8 @@ function parseArgs(argv: string[]): CliOptions {
     harnessModel: typeof args.get('harness-model') === 'string' ? String(args.get('harness-model')) : undefined,
     evaluatorBaseUrl: typeof args.get('evaluator-base-url') === 'string' ? String(args.get('evaluator-base-url')) : undefined,
     evaluatorModel: typeof args.get('evaluator-model') === 'string' ? String(args.get('evaluator-model')) : undefined,
+    fallbackEvaluatorBaseUrl: typeof args.get('fallback-evaluator-base-url') === 'string' ? String(args.get('fallback-evaluator-base-url')) : undefined,
+    fallbackEvaluatorModel: typeof args.get('fallback-evaluator-model') === 'string' ? String(args.get('fallback-evaluator-model')) : undefined,
     lmstudioBaseUrl: typeof args.get('lmstudio-base-url') === 'string' ? String(args.get('lmstudio-base-url')) : undefined,
     lmstudioModel: typeof args.get('lmstudio-model') === 'string' ? String(args.get('lmstudio-model')) : undefined,
     maxTokens: typeof args.get('max-tokens') === 'string' ? Number(args.get('max-tokens')) : undefined,
@@ -292,7 +296,8 @@ async function loadProviderConfig(options: CliOptions, role: 'generator' | 'harn
     baseUrl: (role === 'harness' ? options.harnessBaseUrl : role === 'evaluator' ? options.evaluatorBaseUrl : options.baseUrl) || providerConfig.baseUrl,
     model: (role === 'harness' ? options.harnessModel : role === 'evaluator' ? options.evaluatorModel : options.model) || providerConfig.model,
     apiKey: providerConfig.apiKey,
-    maxTokens: (role === 'harness' ? options.harnessMaxTokens : role === 'evaluator' ? options.evaluatorMaxTokens : options.maxTokens) || 8192,
+    temperature: role === 'evaluator' ? 0 : undefined,
+    maxTokens: (role === 'harness' ? options.harnessMaxTokens : role === 'evaluator' ? options.evaluatorMaxTokens : options.maxTokens) || (role === 'evaluator' ? 512 : 8192),
   };
 
   if (defaultProvider === 'kimi') {
@@ -316,14 +321,14 @@ async function loadProviderConfig(options: CliOptions, role: 'generator' | 'harn
     config.apiKey = providerConfig.apiKey || process.env.OPENAI_API_KEY;
   }
   if (defaultProvider === 'lmstudio') {
-    config.baseUrl = (role === 'evaluator' ? options.evaluatorBaseUrl : undefined) ||
+    config.baseUrl = (role === 'harness' ? options.harnessBaseUrl : role === 'evaluator' ? options.evaluatorBaseUrl : undefined) ||
       options.lmstudioBaseUrl ||
       options.baseUrl ||
       process.env.LIMINAL_LMSTUDIO_BASE_URL ||
       process.env.LMSTUDIO_BASE_URL ||
       providerConfig.baseUrl ||
       'http://localhost:1234/v1';
-    config.model = (role === 'evaluator' ? options.evaluatorModel : undefined) ||
+    config.model = (role === 'harness' ? options.harnessModel : role === 'evaluator' ? options.evaluatorModel : undefined) ||
       options.lmstudioModel ||
       options.model ||
       process.env.LIMINAL_LMSTUDIO_MODEL ||
@@ -331,6 +336,10 @@ async function loadProviderConfig(options: CliOptions, role: 'generator' | 'harn
       providerConfig.model ||
       (role === 'evaluator' ? 'qwen3.5-2b' : 'local-model');
     config.apiKey = providerConfig.apiKey;
+  }
+  if (role === 'evaluator') {
+    config.temperature = 0;
+    config.maxTokens = options.evaluatorMaxTokens || 512;
   }
   if (defaultProvider === 'ollama') {
     config.baseUrl = options.baseUrl || providerConfig.baseUrl || 'http://localhost:11434';
@@ -448,13 +457,14 @@ async function validateRuntime(domain: DomainName, preview: string, domainDir: s
   }
 }
 
-const EVALUATOR_SYSTEM_PROMPT = `You are a precise code evaluator. Score generated creative code 0-1 for:
-- correctness: does it run or satisfy the domain contract?
-- relevance: does it match the requested creative domain?
-- quality: is it complete and well-structured?
-
-Respond only with JSON:
-{"score":0.85,"correctness":0.9,"relevance":0.8,"quality":0.85,"notes":"..."}`;
+const EVALUATOR_SYSTEM_PROMPT = `You are a deterministic domain-specific code evaluator.
+Return compact JSON only. No markdown. No prose outside JSON.
+Schema:
+{"score":0.85,"correctness":0.9,"relevance":0.8,"quality":0.85,"confidence":0.8,"notes":"short"}
+Rules:
+- Base correctness primarily on deterministic validation/runtime evidence.
+- Penalize code that passes syntax but is semantically weak.
+- For audio/text domains with no browser runtime, do not penalize only because runtime is not applicable.`;
 
 async function runEvaluator(
   spec: DomainSpec,
@@ -462,11 +472,11 @@ async function runEvaluator(
   code: string,
   result: Omit<DomainResult, 'evaluatorScore'>,
   evaluatorConfig?: Partial<LLMConfig>,
+  fallbackEvaluatorConfig?: Partial<LLMConfig>,
 ): Promise<number | undefined> {
   if (!evaluatorConfig || !code.trim()) return undefined;
-  const llm = new LLMClient({ ...evaluatorConfig, role: 'evaluator' });
-  const startedAt = new Date().toISOString();
-  try {
+  const runOne = async (config: Partial<LLMConfig>, reason: string) => {
+    const llm = new LLMClient({ ...config, role: 'evaluator' });
     const response = await llm.generate(
       EVALUATOR_SYSTEM_PROMPT,
       `Domain: ${spec.name}
@@ -478,29 +488,67 @@ Error: ${result.error || ''}
 Generated code:
 ${code.slice(0, 12000)}`,
     );
-    let parsed: { score?: number; correctness?: number; relevance?: number; quality?: number; notes?: string } = {};
     const json = response.code.match(/\{[\s\S]*\}/)?.[0];
-    if (json) {
-      parsed = JSON.parse(json);
+    if (!json) throw new Error('Evaluator returned no JSON');
+    const parsed = JSON.parse(json) as { score?: number; correctness?: number; relevance?: number; quality?: number; confidence?: number; notes?: string };
+    if (typeof parsed.score !== 'number') throw new Error('Evaluator JSON missing numeric score');
+    return { response, parsed, reason };
+  };
+
+  const startedAt = new Date().toISOString();
+  try {
+    let used = await runOne(evaluatorConfig, 'primary');
+    if (
+      fallbackEvaluatorConfig &&
+      (used.parsed.confidence !== undefined && used.parsed.confidence < 0.5)
+    ) {
+      used = await runOne(fallbackEvaluatorConfig, 'fallback-low-confidence');
     }
     await writeJson(path.join(domainDir, 'evaluator.json'), {
       startedAt,
       completedAt: new Date().toISOString(),
+      evaluatorReason: used.reason,
       evaluatorConfig: {
-        ...evaluatorConfig,
-        apiKey: evaluatorConfig.apiKey ? '[REDACTED]' : undefined,
+        ...(used.reason === 'primary' ? evaluatorConfig : fallbackEvaluatorConfig),
+        apiKey: (used.reason === 'primary' ? evaluatorConfig : fallbackEvaluatorConfig)?.apiKey ? '[REDACTED]' : undefined,
       },
       response: {
-        success: response.success,
-        model: response.model,
-        usage: response.usage,
-        error: response.error,
+        success: used.response.success,
+        model: used.response.model,
+        usage: used.response.usage,
+        error: used.response.error,
       },
-      parsed,
-      raw: response.code,
+      parsed: used.parsed,
+      raw: used.response.code,
     });
-    return typeof parsed.score === 'number' ? parsed.score : undefined;
+    return used.parsed.score;
   } catch (error) {
+    if (fallbackEvaluatorConfig) {
+      try {
+        const used = await runOne(fallbackEvaluatorConfig, 'fallback-parse-or-error');
+        await writeJson(path.join(domainDir, 'evaluator.json'), {
+          startedAt,
+          completedAt: new Date().toISOString(),
+          evaluatorReason: used.reason,
+          evaluatorConfig: {
+            ...fallbackEvaluatorConfig,
+            apiKey: fallbackEvaluatorConfig.apiKey ? '[REDACTED]' : undefined,
+          },
+          response: {
+            success: used.response.success,
+            model: used.response.model,
+            usage: used.response.usage,
+            error: used.response.error,
+          },
+          parsed: used.parsed,
+          raw: used.response.code,
+          primaryError: error,
+        });
+        return used.parsed.score;
+      } catch {
+        // Fall through to error artifact for the original evaluator failure.
+      }
+    }
     await writeJson(path.join(domainDir, 'evaluator.json'), {
       startedAt,
       completedAt: new Date().toISOString(),
@@ -520,6 +568,7 @@ async function runDomain(
   options: CliOptions,
   llmConfig?: Partial<LLMConfig>,
   evaluatorConfig?: Partial<LLMConfig>,
+  fallbackEvaluatorConfig?: Partial<LLMConfig>,
 ): Promise<DomainResult> {
   const startedAt = new Date().toISOString();
   const start = Date.now();
@@ -571,7 +620,7 @@ async function runDomain(
       error: success ? undefined : [validation.errors.join('; '), runtime.error].filter(Boolean).join('; '),
       durationMs: Date.now() - start,
     };
-    const evaluatorScore = await runEvaluator(spec, domainDir, validation.cleanedCode || code, resultWithoutEval, evaluatorConfig);
+    const evaluatorScore = await runEvaluator(spec, domainDir, validation.cleanedCode || code, resultWithoutEval, evaluatorConfig, fallbackEvaluatorConfig);
     const quality = qualityPassed(evaluatorScore);
     const result: DomainResult = {
       ...resultWithoutEval,
@@ -610,7 +659,7 @@ async function runDomain(
       error: validationError || (error instanceof Error ? error.message : String(error)),
       durationMs: Date.now() - start,
     };
-    const evaluatorScore = await runEvaluator(spec, domainDir, failedCode, resultWithoutEval, evaluatorConfig);
+    const evaluatorScore = await runEvaluator(spec, domainDir, failedCode, resultWithoutEval, evaluatorConfig, fallbackEvaluatorConfig);
     const quality = qualityPassed(evaluatorScore);
     const result: DomainResult = {
       ...resultWithoutEval,
@@ -696,6 +745,15 @@ async function main(): Promise<void> {
   const llmConfig = await loadProviderConfig(options, 'generator');
   const harnessConfig = await loadProviderConfig(options, 'harness');
   const evaluatorConfig = await loadProviderConfig(options, 'evaluator');
+  const fallbackEvaluatorConfig: Partial<LLMConfig> | undefined = evaluatorConfig
+    ? {
+        ...evaluatorConfig,
+        baseUrl: options.fallbackEvaluatorBaseUrl || 'http://100.66.225.85:1234/v1',
+        model: options.fallbackEvaluatorModel || 'qwen3-coder-next-reap-40b-a3b-i1',
+        maxTokens: options.evaluatorMaxTokens || 512,
+        temperature: 0,
+      }
+    : undefined;
   await writeJson(path.join(runDir, 'run.json'), {
     runId,
     dryRun: options.dryRun,
@@ -720,6 +778,10 @@ async function main(): Promise<void> {
       ...evaluatorConfig,
       apiKey: evaluatorConfig.apiKey ? '[REDACTED]' : undefined,
     } : undefined,
+    fallbackEvaluatorConfig: fallbackEvaluatorConfig ? {
+      ...fallbackEvaluatorConfig,
+      apiKey: fallbackEvaluatorConfig.apiKey ? '[REDACTED]' : undefined,
+    } : undefined,
     startedAt: new Date().toISOString(),
   });
 
@@ -727,7 +789,7 @@ async function main(): Promise<void> {
   const results: DomainResult[] = [];
   for (const spec of specs) {
     console.log(`DF1 ${options.dryRun ? 'dry-run' : 'run'}: ${spec.name}`);
-    results.push(await runDomain(spec, runDir, options, llmConfig, evaluatorConfig));
+    results.push(await runDomain(spec, runDir, options, llmConfig, evaluatorConfig, fallbackEvaluatorConfig));
   }
 
   const summary = {

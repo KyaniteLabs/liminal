@@ -691,12 +691,15 @@ function summaryMarkdown(runId: string, results: DomainResult[], dryRun: boolean
   return `${lines.join('\n')}\n`;
 }
 
-async function runHarnessAnalysis(runDir: string, summary: unknown, harnessConfig?: Partial<LLMConfig>): Promise<void> {
+async function runHarnessAnalysis(runDir: string, manifest: unknown, summary: unknown, harnessConfig?: Partial<LLMConfig>): Promise<void> {
   if (!harnessConfig) return;
 
   const llm = new LLMClient({ ...harnessConfig, role: 'harness' });
   const systemPrompt = 'You are the Liminal cloud harness model. Analyze DF1 local-generator dogfood artifacts. Be concrete, classify failures, identify whether each failure is generator compatibility, validator bug, runtime wrapper bug, or infra/provider issue. Do not write code.';
-  const userPrompt = `DF1 run summary:
+  const userPrompt = `DF1 run manifest:
+${JSON.stringify(manifest, null, 2)}
+
+DF1 run summary:
 ${JSON.stringify(summary, null, 2)}
 
 Task:
@@ -704,7 +707,7 @@ Task:
 2. Identify which failures should be fixed in harness/validator/wrapper versus local generator prompt contract.
 3. Decide whether the local generator model is acceptable for DF1 launch.
 4. List the next three highest-ROI fixes.
-5. Confirm whether provider/model provenance is sufficient.`;
+5. Confirm whether provider/model provenance is sufficient using the manifest above.`;
 
   const startedAt = new Date().toISOString();
   try {
@@ -754,7 +757,7 @@ async function main(): Promise<void> {
         temperature: 0,
       }
     : undefined;
-  await writeJson(path.join(runDir, 'run.json'), {
+  const manifest = {
     runId,
     dryRun: options.dryRun,
     provider: options.provider,
@@ -783,7 +786,8 @@ async function main(): Promise<void> {
       apiKey: fallbackEvaluatorConfig.apiKey ? '[REDACTED]' : undefined,
     } : undefined,
     startedAt: new Date().toISOString(),
-  });
+  };
+  await writeJson(path.join(runDir, 'run.json'), manifest);
 
   const specs = DOMAIN_SPECS.filter((spec) => options.domains.includes(spec.name));
   const results: DomainResult[] = [];
@@ -810,7 +814,7 @@ async function main(): Promise<void> {
   };
   await writeJson(path.join(runDir, 'summary.json'), summary);
   await fs.writeFile(path.join(runDir, 'summary.md'), summaryMarkdown(runId, results, options.dryRun), 'utf8');
-  await runHarnessAnalysis(runDir, summary, harnessConfig);
+  await runHarnessAnalysis(runDir, manifest, summary, harnessConfig);
 
   console.log(JSON.stringify({
     runDir,

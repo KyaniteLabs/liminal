@@ -70,7 +70,7 @@ The harvester mixes three sources in a fixed format:
 | Source | Amount |
 |--------|--------|
 | EventStore tail | Last 20 events, NDJSON |
-| Compost fragments | Top 3 highest-scoring fragments from last 24h |
+| Creative fragments | Top 3 highest-scoring seeds/fragments from the active fragment store (e.g., `SeedBank`, `FragmentArchive`, or digest output) |
 | Telemetry snapshot | `successRate`, `avgDurationMs`, `totalTasks`, `totalViolations` |
 
 ### Genesis Mode (Primordial Soup)

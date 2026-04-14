@@ -41,7 +41,7 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 | HTML Security | ✅ Fixed | 7/7 tests passing |
 | Preview Server | ✅ Fixed | 28/28 tests passing |
 | DF1 Tri-Role Dogfood | 🔄 Active | 7/7 functional, 6/7 launch-ready with GLM 4.5 Air generator |
-| DF2 Minimal FSM Dogfood | ✅ Active | 2-candidate deterministic loop; p5 real smoke launch-ready |
+| DF2 Minimal FSM Dogfood | ✅ Active | Cloud-first runs passing with GPT-5.4 Mini/Nano and GLM 4.5 Air |
 
 ```
 Test Files: ~250
@@ -54,6 +54,7 @@ Failures:   0 critical
 - Dog Food Tests: Run with `npm run dogfood` or via TUI `/dogfood` command
 - DF1 Tri-Role Dogfood: Run with `npm run dogfood:df1`; artifacts must preserve generator, evaluator, and harness roles separately
 - DF2 Minimal FSM Dogfood: Run with `npm run dogfood:df2`; default preset is `qwen-local`, with `glm-ab` available as a comparison preset
+- DF2/DF3 Run Policy: prove lightweight cloud models first (`gpt-5.4-mini`, `gpt-5.4-nano`, `glm-4.5-air`), then return to local-only and local-cloud combinations
 - Note: Tests frequently timeout on first run without `--run` flag
 
 ### Remediation Progress (Forensic Audit Fixes)
@@ -931,6 +932,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Agent Worktree Guard**: `scripts/utils/assert-agent-worktree.sh <branch>` prevents agents from editing in the root checkout or wrong branch
 - **DF1 Tri-Role Dogfood**: `scripts/dogfood/df1-app-dogfood.ts` captures generator output, deterministic validation/runtime evidence, evaluator score, and harness analysis as separate artifacts. Per-domain results now record explicit runtime applicability (`completed`, `skipped`, or `error`) so skipped audio/text runtime is not mistaken for missing telemetry.
 - **DF2 Minimal FSM Dogfood**: `scripts/dogfood/df2-minimal-fsm.ts` implements the deterministic 2-candidate generate/validate/runtime/evaluate/adjudicate primitive. Harness LLMs are shadow-only; deterministic/runtime evidence controls final outcomes.
+- **Cloud-first DF progression**: DF2/DF3 should be proven first with `gpt-5.4-mini`, `gpt-5.4-nano`, and `glm-4.5-air`; local model optimization happens after cloud correctness and telemetry are stable.
 
 ---
 
@@ -952,7 +954,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Type errors:** 48 → 0 ✅
 - **Test coverage:** 30% → 60%+ ✅
 - **DF1 dogfood:** GLM 4.5 Air generator reached 7/7 functional and 6/7 launch-ready in tri-role DF1; Strudel quality and DF2 loop proof remain active
-- **DF2 dogfood:** real p5 smoke reached `launch_ready_pass` with `qwen-local`; artifact `.omx/logs/df2-runs/df2-2026-04-14T17-10-14-957Z`
+- **DF2 dogfood:** `glm-4.5-air` reached launch-ready on p5, GLSL, Three, Kinetic, and HTML; `gpt-5.4-mini` reached launch-ready on p5, GLSL, Three, Kinetic, and focused HTML; `gpt-5.4-nano` reached launch-ready on Three, Kinetic, HTML, and focused p5, with GLSL rescued by fallback generator
 
 ---
 

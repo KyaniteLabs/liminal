@@ -171,6 +171,8 @@ Current presets:
 - `qwen-local`: `qwen3.5-2b` primary generator/evaluator with `qwen3-coder-next-reap-40b-a3b-i1` fallback.
 - `glm-ab`: GLM 4.5 Air primary generator with the same local fallback/evaluator stack.
 
+Current run policy is cloud-first for DF2/DF3 progression: prove lightweight cloud generators (`gpt-5.4-mini`, `gpt-5.4-nano`, and `glm-4.5-air`) before returning to local-only and local-cloud combination work. Local models remain the long-term cost target, but they should not block cloud-first DF2/DF3 correctness and telemetry.
+
 First real DF2 p5 smoke:
 
 ```text
@@ -178,6 +180,12 @@ First real DF2 p5 smoke:
 ```
 
 Result: `launch_ready_pass` with deterministic validation pass, runtime pass, evaluator score `90`, runtime health `100`, and rank score `92`.
+
+First cloud-first DF2 results:
+
+- `gpt-5.4-mini`: p5, GLSL, Three, and Kinetic passed launch-ready in the full runtime-backed batch; HTML passed launch-ready in a focused rerun after evaluator score-scale normalization.
+- `gpt-5.4-nano`: Three, Kinetic, and HTML passed launch-ready in the full batch; GLSL passed via fallback generator; p5 passed launch-ready in a focused rerun after 0-10 evaluator score normalization.
+- `glm-4.5-air`: p5, GLSL, Three, Kinetic, and HTML all passed launch-ready in the full runtime-backed batch.
 
 ## First Clean Local p5 Pass
 

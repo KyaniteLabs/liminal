@@ -485,7 +485,7 @@
 	                    </div>
 	                    <div class="metric">
 	                        <span class="metric-label">Status</span>
-	                        <span class="metric-value text-green">DF2 p5 launch-ready</span>
+	                        <span class="metric-value text-green">DF2 cloud-first passing</span>
 	                    </div>
                 </div>
 
@@ -493,11 +493,11 @@
                     <h3>📊 Success Rate</h3>
 	                    <div class="metric">
 	                        <span class="metric-label">Rate</span>
-	                        <span class="metric-value text-green">100% p5 smoke</span>
+	                        <span class="metric-value text-green">GLM 5/5 launch-ready</span>
 	                    </div>
 	                    <div class="metric">
 	                        <span class="metric-label">Tests</span>
-	                        <span class="metric-value">DF2 qwen-local pass</span>
+	                        <span class="metric-value">Mini/Nano/GLM verified</span>
 	                    </div>
 	                    <div class="progress-bar">
 	                        <div class="progress-fill" style="width: 100%; background: var(--accent-green);"></div>
@@ -745,6 +745,11 @@
 	                <tbody>
 	                    <tr>
 	                        <td><code>pending</code></td>
+	                        <td>Record DF2 cloud-first run policy and results</td>
+	                        <td>DF2/DF3 progression now prioritizes GPT-5.4 Mini, GPT-5.4 Nano, and GLM 4.5 Air before local combinations</td>
+	                    </tr>
+	                    <tr>
+	                        <td><code>pending</code></td>
 	                        <td>Add DF2 deterministic two-candidate dogfood FSM</td>
 	                        <td>DF2 can now generate, validate, runtime-check, evaluate, and adjudicate without LLM hot-path control</td>
 	                    </tr>
@@ -796,8 +801,8 @@
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
 	            <ol class="ml-lg text-secondary lh-2">
-	                <li><strong>✅ DF2 minimal FSM</strong> - deterministic 2-candidate primitive is implemented and p5 real smoke passed</li>
-	                <li><strong>🔁 DF3 greatness loop</strong> - repeat the DF2 primitive until artifact quality is great or model capability ceiling is reached</li>
+	                <li><strong>✅ DF2 cloud-first baseline</strong> - GLM 4.5 Air passed all runtime-backed domains; GPT-5.4 Mini/Nano are verified lightweight lanes</li>
+	                <li><strong>🔁 DF3 greatness loop</strong> - repeat the DF2 primitive with cloud-first models until artifact quality is great or model capability ceiling is reached</li>
 	                <li><strong>🧪 Model scout integration</strong> - convert scout findings into explicit DF2/DF3 presets without weakening deterministic validators</li>
 	                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
 	            </ol>

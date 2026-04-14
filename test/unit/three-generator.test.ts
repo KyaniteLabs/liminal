@@ -90,6 +90,16 @@ const renderer = new THREE.WebGLRenderer({ canvas });
     expect(wrapped).toContain('let w=innerWidth;');
     expect(wrapped).toContain('let h=innerHeight;');
   });
+
+  it('sanitizes implicit module-global camera and renderer assignments', () => {
+    const gen = new ThreeGenerator();
+    const sanitized = (gen as any).sanitizeSceneCode(`import * as THREE from "three";
+camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 300);
+renderer = new THREE.WebGLRenderer({ canvas });`);
+
+    expect(sanitized).toContain('const camera = new THREE.PerspectiveCamera');
+    expect(sanitized).toContain('const renderer = new THREE.WebGLRenderer');
+  });
 });
 
 describe('selectThreeTemplate', () => {

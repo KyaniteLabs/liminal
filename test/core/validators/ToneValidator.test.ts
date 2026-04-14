@@ -218,6 +218,19 @@ const lfo = new Tone.LFO("sine", { rate: 0.1, depth: 5 }).connect(droneVoices[0]
       expect(result.errors).toContain('Tone.js: Invalid LFO target .filter.lfo; connect LFO to an explicit Tone.Filter frequency parameter');
       expect(result.errors).toContain('Tone.js: Tone.PolySynth constructor should receive a synth class/config object, not an oscillator type string');
     });
+
+    it('should reject common LFO casing and method hallucinations', () => {
+      const code = `
+const lfo = new Tone.Lfo().startAttack(0.1).setFrequency(0.5);
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain("Tone.js: Invalid class 'Tone.Lfo'");
+      expect(result.errors).toContain("Tone.js: Invalid API - did you mean 'Tone.LFO'?");
+      expect(result.errors).toContain("Tone.js: Invalid API - did you mean 'lfo.start()'?");
+      expect(result.errors).toContain("Tone.js: Invalid API - did you mean 'lfo.frequency.value = ...'?");
+    });
   });
 
   describe('getMinSize', () => {

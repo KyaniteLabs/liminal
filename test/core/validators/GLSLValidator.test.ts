@@ -261,6 +261,26 @@ describe('GLSLValidator', () => {
       const result = GLSLValidator.validate(code);
       expect(result.errors).toContain("GLSL: 'finalColor' adds a vec2 expression multiplied by vec3; convert the sine result to vec3 first");
     });
+
+    it('should reject helper functions that reference uv out of scope', () => {
+      const code = `
+        precision mediump float;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+        vec3 colorFromHash(float t) {
+          float h = hash(floor(uv * 10.0 + t));
+          return vec3(h);
+        }
+        float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          gl_FragColor = vec4(colorFromHash(u_time), 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors).toContain("GLSL: helper function 'colorFromHash' references uv without receiving or declaring it");
+    });
   });
 
   describe('validateHTMLWrapped', () => {

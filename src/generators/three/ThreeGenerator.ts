@@ -73,6 +73,8 @@ export class ThreeGenerator extends TierBasedGenerator {
       .replace(/^\s*(?:const|let|var)\s+w\s*=\s*[^;]+;\s*$/gm, '')
       .replace(/^\s*(?:const|let|var)\s+h\s*=\s*[^;]+;\s*$/gm, '')
       .replace(/^\s*scene\.add\s*\(\s*renderer\.domElement\s*\)\s*;\s*$/gm, '')
+      .replace(/^\s*camera\s*=\s*new\s+THREE\.PerspectiveCamera/gm, 'const camera = new THREE.PerspectiveCamera')
+      .replace(/^\s*renderer\s*=\s*new\s+THREE\.WebGLRenderer/gm, 'const renderer = new THREE.WebGLRenderer')
       .trim();
   }
 

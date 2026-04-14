@@ -76,6 +76,9 @@ export class ToneValidator {
     { pattern: /Tone\.Echo/, suggestion: 'Tone.FeedbackDelay or Tone.PingPongDelay' },
     { pattern: /Tone\.Sound/, suggestion: 'Tone.Player or Tone.Synth' },
     { pattern: /Tone\.Play/, suggestion: 'Tone.Transport.start() or synth.triggerAttackRelease()' },
+    { pattern: /Tone\.Lfo\b/, suggestion: 'Tone.LFO' },
+    { pattern: /\.startAttack\s*\(/, suggestion: 'lfo.start()' },
+    { pattern: /\.setFrequency\s*\(/, suggestion: 'lfo.frequency.value = ...' },
   ];
 
   /**

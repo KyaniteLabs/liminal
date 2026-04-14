@@ -22,11 +22,24 @@ import { LLMError } from '../errors.js';
 export class OpenAIProvider extends BaseProvider {
   readonly name = 'openai';
 
+  private usesMaxCompletionTokens(): boolean {
+    return this.config.baseUrl.includes('api.openai.com') && this.config.model.startsWith('gpt-5');
+  }
+
+  private usesResponsesApi(): boolean {
+    return this.config.baseUrl.includes('api.openai.com') &&
+      (this.config.model.startsWith('gpt-5.4') || this.config.model.includes('codex'));
+  }
+
   get capabilities(): ProviderCapabilities {
     return CapabilityRegistry.getCapabilities(this.config.model);
   }
 
   async generate(req: ProviderRequest): Promise<Result<ProviderResponse, LLMError>> {
+    if (this.usesResponsesApi()) {
+      return this.generateWithResponsesApi(req);
+    }
+
     try {
       const url = `${this.config.baseUrl}/chat/completions`;
       const headers: Record<string, string> = {
@@ -48,8 +61,11 @@ export class OpenAIProvider extends BaseProvider {
           { role: 'user', content: req.userPrompt },
         ],
         temperature: req.temperature ?? this.config.temperature,
-        max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
+      const maxTokens = req.maxTokens ?? this.config.maxTokens;
+      if (maxTokens !== undefined) {
+        body[this.usesMaxCompletionTokens() ? 'max_completion_tokens' : 'max_tokens'] = maxTokens;
+      }
 
       // Add reasoning effort for thinking-capable models
       if (req.thinking?.enabled && this.capabilities.thinking) {
@@ -162,6 +178,87 @@ export class OpenAIProvider extends BaseProvider {
     }
   }
 
+  private async generateWithResponsesApi(req: ProviderRequest): Promise<Result<ProviderResponse, LLMError>> {
+    try {
+      const url = `${this.config.baseUrl}/responses`;
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      if (this.config.apiKey) {
+        headers['Authorization'] = `Bearer ${this.config.apiKey}`;
+      }
+
+      const body: Record<string, unknown> = {
+        model: this.config.model,
+        input: req.userPrompt,
+        instructions: req.systemPrompt,
+        text: {
+          format: { type: 'text' },
+        },
+      };
+
+      const maxTokens = req.maxTokens ?? this.config.maxTokens;
+      if (maxTokens !== undefined) {
+        body.max_output_tokens = maxTokens;
+      }
+
+      if (!this.config.model.startsWith('gpt-5.4-pro') && (req.temperature !== undefined || this.config.temperature !== undefined)) {
+        body.temperature = req.temperature ?? this.config.temperature;
+      }
+
+      if (req.thinking?.enabled && this.capabilities.thinking) {
+        body.reasoning = {
+          effort: req.thinking.effort || 'medium',
+        };
+      }
+
+      const signal = req.signal || AbortSignal.timeout(this.config.timeout || TIMEOUT_DEFAULT_MS);
+      const response = await fetch(url, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify(body),
+        signal,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => response.statusText);
+        const retryable = response.status === 429 || response.status >= 500;
+        return err(new LLMError(
+          `OpenAI Responses API error ${response.status}: ${errorText}`,
+          this.name,
+          response.status,
+          retryable,
+        ));
+      }
+
+      const data = await response.json();
+      const outputItems = Array.isArray(data.output) ? data.output : [];
+      const content = outputItems
+        .flatMap((item: any) => Array.isArray(item?.content) ? item.content : [])
+        .filter((chunk: any) => chunk?.type === 'output_text' && typeof chunk.text === 'string')
+        .map((chunk: any) => chunk.text)
+        .join('');
+
+      const usage = data.usage as { input_tokens?: number; output_tokens?: number; output_tokens_details?: { reasoning_tokens?: number } } | undefined;
+      const incompleteReason = data.incomplete_details?.reason as string | undefined;
+
+      return ok({
+        content,
+        model: data.model || this.config.model,
+        success: content.length > 0,
+        usage: usage ? {
+          inputTokens: usage.input_tokens || 0,
+          outputTokens: usage.output_tokens || 0,
+          thinkingTokens: usage.output_tokens_details?.reasoning_tokens || 0,
+        } : undefined,
+        finishReason: incompleteReason === 'max_output_tokens' ? 'length' : 'stop',
+      });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      return err(new LLMError(message, this.name, undefined, true));
+    }
+  }
+
   async *stream(req: ProviderRequest): AsyncGenerator<StreamEvent> {
     const url = `${this.config.baseUrl}/chat/completions`;
     const headers: Record<string, string> = {
@@ -183,9 +280,12 @@ export class OpenAIProvider extends BaseProvider {
         { role: 'user', content: req.userPrompt },
       ],
       temperature: req.temperature ?? this.config.temperature,
-      max_tokens: req.maxTokens ?? this.config.maxTokens,
       stream: true,
     };
+    const maxTokens = req.maxTokens ?? this.config.maxTokens;
+    if (maxTokens !== undefined) {
+      body[this.usesMaxCompletionTokens() ? 'max_completion_tokens' : 'max_tokens'] = maxTokens;
+    }
 
     if (req.thinking?.enabled && this.capabilities.thinking) {
       if (this.capabilities.thinkingStyle === 'effort_level') {

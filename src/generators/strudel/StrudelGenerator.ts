@@ -16,8 +16,22 @@ export class StrudelGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: StrudelGeneratorOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
+    const code = await super.generate(this.withStrudelContract(prompt), options);
     return this.sanitizeCode(code);
+  }
+
+  private withStrudelContract(prompt: string): string {
+    return [
+      prompt,
+      '',
+      'Output contract:',
+      '- Return only one complete Strudel expression, not HTML and not Markdown.',
+      '- The expression must end with `.out()`.',
+      '- Use `stack(...)` with at least four layers: kick, hats, clap/snare, bassline.',
+      '- Include filter movement on the bassline with `.cutoff(...)` or `.lpf(...)`.',
+      '- Keep parentheses balanced. Do not emit partial snippets.',
+      '- Do not include prose, comments, script tags, imports, or canvas code.',
+    ].join('\n');
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {

@@ -296,8 +296,8 @@ export interface SuccessMetadata {
 /**
  * GeneratorHarnessTools - thin domain-contract harness helpers
  *
- * @param options - optional constructor options containing either a deterministic RNG
- *                  or a MetabolicEntropyEngine entropy source.
+ * @param options - optional constructor options. Either `seededRandom` or `entropySource`
+ *                  must be provided; the constructor throws if neither is given.
  */
 export class GeneratorHarnessTools {
   private rng: () => number;

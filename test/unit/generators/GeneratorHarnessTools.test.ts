@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   GeneratorHarnessTools,
   type FailureClassification,
@@ -26,6 +26,22 @@ describe('GeneratorHarnessTools', () => {
 
   beforeEach(() => {
     tools = new GeneratorHarnessTools({ seededRandom: makeSeededRng(0) });
+  });
+
+  it('throws when neither seededRandom nor entropySource is provided', () => {
+    expect(() => new GeneratorHarnessTools()).toThrow(
+      'GeneratorHarnessTools: either seededRandom or entropySource must be provided'
+    );
+  });
+
+  it('uses entropySource when provided', () => {
+    const mockEntropy = {
+      nextFloat: vi.fn().mockReturnValue(0.42),
+    } as unknown as import('../../../src/entropy/MetabolicEntropyEngine.js').MetabolicEntropyEngine;
+    const tools = new GeneratorHarnessTools({ entropySource: mockEntropy });
+    const ctx = tools.prepare('tone');
+    expect(mockEntropy.nextFloat).toHaveBeenCalled();
+    expect(ctx.domain).toBe('tone');
   });
 
   // -------------------------------------------------------------------------

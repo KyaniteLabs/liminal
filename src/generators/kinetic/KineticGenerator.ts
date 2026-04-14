@@ -117,6 +117,19 @@ Regenerate a complete CSS-kinetic artwork:
       cleaned += '\n</html>';
     }
 
+    const bodyMatch = /<body\b[^>]*>/i.exec(cleaned);
+    if (bodyMatch) {
+      const bodyStart = bodyMatch.index + bodyMatch[0].length;
+      const beforeBody = cleaned.slice(0, bodyStart);
+      const body = cleaned.slice(bodyStart)
+        .replace(/<\/?style[^>]*>/gi, '')
+        .replace(/<\/head>/gi, '')
+        .replace(/<body\b[^>]*>/gi, '')
+        .replace(/<\/body>/gi, '')
+        .replace(/<\/html>/gi, '');
+      cleaned = `${beforeBody}${body}\n</body>\n</html>`;
+    }
+
     return cleaned;
   }
 

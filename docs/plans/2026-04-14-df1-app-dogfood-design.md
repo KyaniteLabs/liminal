@@ -88,6 +88,19 @@ DF1 follows the same proving principles learned in RT1-RT4:
 - Do not count dry-run fixture success as product evidence.
 - Do not spend expensive models on opaque failures. First make the failure replayable, then repair.
 
+## Cloud Harness / Local Generator Switching
+
+DF1 must prove not only that one local generator can pass, but that the cloud harness can intentionally switch among local LM Studio generator models without losing provenance or state.
+
+Launch-readiness requires a provider-switching slice:
+
+- Cloud harness model selects a local generator model ID.
+- DF1 runs the same domain set against that LM Studio model.
+- Artifacts record `provider`, `baseUrl`, `model`, domain, duration, validation outcome, runtime outcome, and error class.
+- Harness switches to another LM Studio model ID on the same server and reruns the same domain set.
+- Summary compares model-specific failures without overwriting prior artifacts.
+- A failed local model is treated as generator compatibility evidence, not harness failure, unless provider/model provenance is missing.
+
 ## First Clean Local p5 Pass
 
 Run:

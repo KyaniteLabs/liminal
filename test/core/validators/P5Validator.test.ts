@@ -236,6 +236,27 @@ describe('P5Validator', () => {
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should allow standard p5 color helpers and blend constants', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+          pixelDensity(1);
+        }
+
+        function draw() {
+          const a = color(10, 20, 30);
+          const b = color(40, 50, 60);
+          const c = lerpColor(a, b, 0.5);
+          blendMode(ADD);
+          background(red(c), green(c), blue(c));
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   describe('getMinSize', () => {

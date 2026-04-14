@@ -39,13 +39,21 @@ interface DomainSpec {
 interface CliOptions {
   dryRun: boolean;
   provider: ProviderName;
+  harnessProvider?: ProviderName;
+  evaluatorProvider?: ProviderName;
   domains: DomainName[];
   outputRoot: string;
   baseUrl?: string;
   model?: string;
+  harnessBaseUrl?: string;
+  harnessModel?: string;
+  evaluatorBaseUrl?: string;
+  evaluatorModel?: string;
   lmstudioBaseUrl?: string;
   lmstudioModel?: string;
   maxTokens?: number;
+  harnessMaxTokens?: number;
+  evaluatorMaxTokens?: number;
 }
 
 interface DomainResult {
@@ -53,6 +61,7 @@ interface DomainResult {
   success: boolean;
   validationPassed: boolean;
   runtimePassed?: boolean;
+  evaluatorScore?: number;
   artifactDir: string;
   codeLength: number;
   error?: string;
@@ -225,17 +234,25 @@ function parseArgs(argv: string[]): CliOptions {
   return {
     dryRun: args.get('dry-run') === true,
     provider: (args.get('provider') as ProviderName | undefined) || 'active',
+    harnessProvider: typeof args.get('harness-provider') === 'string' ? args.get('harness-provider') as ProviderName : undefined,
+    evaluatorProvider: typeof args.get('evaluator-provider') === 'string' ? args.get('evaluator-provider') as ProviderName : undefined,
     domains,
     outputRoot: String(args.get('output') || '.omx/logs/df1-runs'),
     baseUrl: typeof args.get('base-url') === 'string' ? String(args.get('base-url')) : undefined,
     model: typeof args.get('model') === 'string' ? String(args.get('model')) : undefined,
+    harnessBaseUrl: typeof args.get('harness-base-url') === 'string' ? String(args.get('harness-base-url')) : undefined,
+    harnessModel: typeof args.get('harness-model') === 'string' ? String(args.get('harness-model')) : undefined,
+    evaluatorBaseUrl: typeof args.get('evaluator-base-url') === 'string' ? String(args.get('evaluator-base-url')) : undefined,
+    evaluatorModel: typeof args.get('evaluator-model') === 'string' ? String(args.get('evaluator-model')) : undefined,
     lmstudioBaseUrl: typeof args.get('lmstudio-base-url') === 'string' ? String(args.get('lmstudio-base-url')) : undefined,
     lmstudioModel: typeof args.get('lmstudio-model') === 'string' ? String(args.get('lmstudio-model')) : undefined,
     maxTokens: typeof args.get('max-tokens') === 'string' ? Number(args.get('max-tokens')) : undefined,
+    harnessMaxTokens: typeof args.get('harness-max-tokens') === 'string' ? Number(args.get('harness-max-tokens')) : undefined,
+    evaluatorMaxTokens: typeof args.get('evaluator-max-tokens') === 'string' ? Number(args.get('evaluator-max-tokens')) : undefined,
   };
 }
 
-async function loadProviderConfig(options: CliOptions): Promise<Partial<LLMConfig> | undefined> {
+async function loadProviderConfig(options: CliOptions, role: 'generator' | 'harness' | 'evaluator' = 'generator'): Promise<Partial<LLMConfig> | undefined> {
   if (options.dryRun) return undefined;
 
   const configPath = path.join(os.homedir(), '.liminal', 'config.json');
@@ -243,16 +260,23 @@ async function loadProviderConfig(options: CliOptions): Promise<Partial<LLMConfi
     ? JSON.parse(await fs.readFile(configPath, 'utf8'))
     : {};
   const providers = fileConfig.providers || {};
-  const defaultProvider = options.provider === 'active'
-    ? (fileConfig.defaultProvider || 'lmstudio')
+  const selectedProvider = role === 'harness'
+    ? options.harnessProvider
+    : role === 'evaluator'
+      ? (options.evaluatorProvider || 'lmstudio')
     : options.provider;
+  if (role === 'harness' && !selectedProvider) return undefined;
+
+  const defaultProvider = selectedProvider === 'active'
+    ? (fileConfig.defaultProvider || 'lmstudio')
+    : selectedProvider;
   const providerConfig = providers[defaultProvider] || {};
 
   const config: Record<string, unknown> = {
-    baseUrl: options.baseUrl || providerConfig.baseUrl,
-    model: options.model || providerConfig.model,
+    baseUrl: (role === 'harness' ? options.harnessBaseUrl : role === 'evaluator' ? options.evaluatorBaseUrl : options.baseUrl) || providerConfig.baseUrl,
+    model: (role === 'harness' ? options.harnessModel : role === 'evaluator' ? options.evaluatorModel : options.model) || providerConfig.model,
     apiKey: providerConfig.apiKey,
-    maxTokens: options.maxTokens || 8192,
+    maxTokens: (role === 'harness' ? options.harnessMaxTokens : role === 'evaluator' ? options.evaluatorMaxTokens : options.maxTokens) || 8192,
   };
 
   if (defaultProvider === 'kimi') {
@@ -271,23 +295,25 @@ async function loadProviderConfig(options: CliOptions): Promise<Partial<LLMConfi
     config.apiKey = providerConfig.apiKey || process.env.GLM_API_KEY;
   }
   if (defaultProvider === 'openai') {
-    config.baseUrl = options.baseUrl || providerConfig.baseUrl || 'https://api.openai.com/v1';
-    config.model = options.model || 'gpt-5.4';
+    config.baseUrl = (role === 'harness' ? options.harnessBaseUrl : role === 'evaluator' ? options.evaluatorBaseUrl : options.baseUrl) || providerConfig.baseUrl || 'https://api.openai.com/v1';
+    config.model = (role === 'harness' ? options.harnessModel : role === 'evaluator' ? options.evaluatorModel : options.model) || 'gpt-5.4';
     config.apiKey = providerConfig.apiKey || process.env.OPENAI_API_KEY;
   }
   if (defaultProvider === 'lmstudio') {
-    config.baseUrl = options.lmstudioBaseUrl ||
+    config.baseUrl = (role === 'evaluator' ? options.evaluatorBaseUrl : undefined) ||
+      options.lmstudioBaseUrl ||
       options.baseUrl ||
       process.env.LIMINAL_LMSTUDIO_BASE_URL ||
       process.env.LMSTUDIO_BASE_URL ||
       providerConfig.baseUrl ||
       'http://localhost:1234/v1';
-    config.model = options.lmstudioModel ||
+    config.model = (role === 'evaluator' ? options.evaluatorModel : undefined) ||
+      options.lmstudioModel ||
       options.model ||
       process.env.LIMINAL_LMSTUDIO_MODEL ||
       process.env.LMSTUDIO_MODEL ||
       providerConfig.model ||
-      'local-model';
+      (role === 'evaluator' ? 'qwen3.5-2b' : 'local-model');
     config.apiKey = providerConfig.apiKey;
   }
   if (defaultProvider === 'ollama') {
@@ -406,7 +432,79 @@ async function validateRuntime(domain: DomainName, preview: string, domainDir: s
   }
 }
 
-async function runDomain(spec: DomainSpec, runDir: string, options: CliOptions, llmConfig?: Partial<LLMConfig>): Promise<DomainResult> {
+const EVALUATOR_SYSTEM_PROMPT = `You are a precise code evaluator. Score generated creative code 0-1 for:
+- correctness: does it run or satisfy the domain contract?
+- relevance: does it match the requested creative domain?
+- quality: is it complete and well-structured?
+
+Respond only with JSON:
+{"score":0.85,"correctness":0.9,"relevance":0.8,"quality":0.85,"notes":"..."}`;
+
+async function runEvaluator(
+  spec: DomainSpec,
+  domainDir: string,
+  code: string,
+  result: Omit<DomainResult, 'evaluatorScore'>,
+  evaluatorConfig?: Partial<LLMConfig>,
+): Promise<number | undefined> {
+  if (!evaluatorConfig || !code.trim()) return undefined;
+  const llm = new LLMClient({ ...evaluatorConfig, role: 'evaluator' });
+  const startedAt = new Date().toISOString();
+  try {
+    const response = await llm.generate(
+      EVALUATOR_SYSTEM_PROMPT,
+      `Domain: ${spec.name}
+Prompt: ${spec.prompt}
+Validation passed: ${result.validationPassed}
+Runtime passed: ${result.runtimePassed}
+Error: ${result.error || ''}
+
+Generated code:
+${code.slice(0, 12000)}`,
+    );
+    let parsed: { score?: number; correctness?: number; relevance?: number; quality?: number; notes?: string } = {};
+    const json = response.code.match(/\{[\s\S]*\}/)?.[0];
+    if (json) {
+      parsed = JSON.parse(json);
+    }
+    await writeJson(path.join(domainDir, 'evaluator.json'), {
+      startedAt,
+      completedAt: new Date().toISOString(),
+      evaluatorConfig: {
+        ...evaluatorConfig,
+        apiKey: evaluatorConfig.apiKey ? '[REDACTED]' : undefined,
+      },
+      response: {
+        success: response.success,
+        model: response.model,
+        usage: response.usage,
+        error: response.error,
+      },
+      parsed,
+      raw: response.code,
+    });
+    return typeof parsed.score === 'number' ? parsed.score : undefined;
+  } catch (error) {
+    await writeJson(path.join(domainDir, 'evaluator.json'), {
+      startedAt,
+      completedAt: new Date().toISOString(),
+      evaluatorConfig: {
+        ...evaluatorConfig,
+        apiKey: evaluatorConfig.apiKey ? '[REDACTED]' : undefined,
+      },
+      error,
+    });
+    return undefined;
+  }
+}
+
+async function runDomain(
+  spec: DomainSpec,
+  runDir: string,
+  options: CliOptions,
+  llmConfig?: Partial<LLMConfig>,
+  evaluatorConfig?: Partial<LLMConfig>,
+): Promise<DomainResult> {
   const startedAt = new Date().toISOString();
   const start = Date.now();
   const domainDir = path.join(runDir, spec.name);
@@ -445,7 +543,7 @@ async function runDomain(spec: DomainSpec, runDir: string, options: CliOptions, 
     const runtime = await validateRuntime(spec.name, preview, domainDir, options.dryRun);
     const success = validation.valid && runtime.passed !== false;
 
-    const result: DomainResult = {
+    const resultWithoutEval: Omit<DomainResult, 'evaluatorScore'> = {
       domain: spec.name,
       success,
       validationPassed: validation.valid,
@@ -455,6 +553,8 @@ async function runDomain(spec: DomainSpec, runDir: string, options: CliOptions, 
       error: success ? undefined : [validation.errors.join('; '), runtime.error].filter(Boolean).join('; '),
       durationMs: Date.now() - start,
     };
+    const evaluatorScore = await runEvaluator(spec, domainDir, validation.cleanedCode || code, resultWithoutEval, evaluatorConfig);
+    const result: DomainResult = { ...resultWithoutEval, evaluatorScore };
     await writeJson(path.join(domainDir, 'result.json'), result);
     return result;
   } catch (error) {
@@ -476,7 +576,7 @@ async function runDomain(spec: DomainSpec, runDir: string, options: CliOptions, 
       });
     }
 
-    const result: DomainResult = {
+    const resultWithoutEval: Omit<DomainResult, 'evaluatorScore'> = {
       domain: spec.name,
       success: false,
       validationPassed,
@@ -486,6 +586,8 @@ async function runDomain(spec: DomainSpec, runDir: string, options: CliOptions, 
       error: validationError || (error instanceof Error ? error.message : String(error)),
       durationMs: Date.now() - start,
     };
+    const evaluatorScore = await runEvaluator(spec, domainDir, failedCode, resultWithoutEval, evaluatorConfig);
+    const result: DomainResult = { ...resultWithoutEval, evaluatorScore };
     await writeJson(path.join(domainDir, 'error.json'), { error });
     await writeJson(path.join(domainDir, 'result.json'), result);
     return result;
@@ -500,14 +602,59 @@ function summaryMarkdown(runId: string, results: DomainResult[], dryRun: boolean
     `Dry run: ${dryRun}`,
     `Pass rate: ${passed}/${results.length}`,
     '',
-    '| Domain | Result | Static | Runtime | Code chars | Duration ms | Error |',
-    '| --- | --- | --- | --- | ---: | ---: | --- |',
+    '| Domain | Result | Static | Runtime | Evaluator | Code chars | Duration ms | Error |',
+    '| --- | --- | --- | --- | ---: | ---: | ---: | --- |',
     ...results.map((result) =>
-      `| ${result.domain} | ${result.success ? 'PASS' : 'FAIL'} | ${result.validationPassed ? 'PASS' : 'FAIL'} | ${result.runtimePassed === undefined ? 'SKIP' : result.runtimePassed ? 'PASS' : 'FAIL'} | ${result.codeLength} | ${result.durationMs} | ${(result.error || '').replace(/\|/g, '\\|')} |`
+      `| ${result.domain} | ${result.success ? 'PASS' : 'FAIL'} | ${result.validationPassed ? 'PASS' : 'FAIL'} | ${result.runtimePassed === undefined ? 'SKIP' : result.runtimePassed ? 'PASS' : 'FAIL'} | ${result.evaluatorScore ?? ''} | ${result.codeLength} | ${result.durationMs} | ${(result.error || '').replace(/\|/g, '\\|')} |`
     ),
     '',
   ];
   return `${lines.join('\n')}\n`;
+}
+
+async function runHarnessAnalysis(runDir: string, summary: unknown, harnessConfig?: Partial<LLMConfig>): Promise<void> {
+  if (!harnessConfig) return;
+
+  const llm = new LLMClient({ ...harnessConfig, role: 'harness' });
+  const systemPrompt = 'You are the Liminal cloud harness model. Analyze DF1 local-generator dogfood artifacts. Be concrete, classify failures, identify whether each failure is generator compatibility, validator bug, runtime wrapper bug, or infra/provider issue. Do not write code.';
+  const userPrompt = `DF1 run summary:
+${JSON.stringify(summary, null, 2)}
+
+Task:
+1. Identify launch blockers.
+2. Identify which failures should be fixed in harness/validator/wrapper versus local generator prompt contract.
+3. Decide whether the local generator model is acceptable for DF1 launch.
+4. List the next three highest-ROI fixes.
+5. Confirm whether provider/model provenance is sufficient.`;
+
+  const startedAt = new Date().toISOString();
+  try {
+    const response = await llm.generate(systemPrompt, userPrompt);
+    await writeJson(path.join(runDir, 'harness-analysis.json'), {
+      startedAt,
+      completedAt: new Date().toISOString(),
+      harnessConfig: {
+        ...harnessConfig,
+        apiKey: harnessConfig.apiKey ? '[REDACTED]' : undefined,
+      },
+      success: response.success,
+      model: response.model,
+      usage: response.usage,
+      error: response.error,
+    });
+    await fs.writeFile(path.join(runDir, 'harness-analysis.md'), response.code || response.error || '', 'utf8');
+  } catch (error) {
+    await writeJson(path.join(runDir, 'harness-analysis.json'), {
+      startedAt,
+      completedAt: new Date().toISOString(),
+      harnessConfig: {
+        ...harnessConfig,
+        apiKey: harnessConfig.apiKey ? '[REDACTED]' : undefined,
+      },
+      success: false,
+      error,
+    });
+  }
 }
 
 async function main(): Promise<void> {
@@ -516,7 +663,9 @@ async function main(): Promise<void> {
   const runDir = path.resolve(options.outputRoot, runId);
   await fs.mkdir(runDir, { recursive: true });
 
-  const llmConfig = await loadProviderConfig(options);
+  const llmConfig = await loadProviderConfig(options, 'generator');
+  const harnessConfig = await loadProviderConfig(options, 'harness');
+  const evaluatorConfig = await loadProviderConfig(options, 'evaluator');
   await writeJson(path.join(runDir, 'run.json'), {
     runId,
     dryRun: options.dryRun,
@@ -527,6 +676,14 @@ async function main(): Promise<void> {
       apiKey: llmConfig.apiKey ? '[REDACTED]' : undefined,
     } : undefined,
     generatorRole: options.dryRun ? 'dry-run' : 'generator',
+    harnessConfig: harnessConfig ? {
+      ...harnessConfig,
+      apiKey: harnessConfig.apiKey ? '[REDACTED]' : undefined,
+    } : undefined,
+    evaluatorConfig: evaluatorConfig ? {
+      ...evaluatorConfig,
+      apiKey: evaluatorConfig.apiKey ? '[REDACTED]' : undefined,
+    } : undefined,
     startedAt: new Date().toISOString(),
   });
 
@@ -534,7 +691,7 @@ async function main(): Promise<void> {
   const results: DomainResult[] = [];
   for (const spec of specs) {
     console.log(`DF1 ${options.dryRun ? 'dry-run' : 'run'}: ${spec.name}`);
-    results.push(await runDomain(spec, runDir, options, llmConfig));
+    results.push(await runDomain(spec, runDir, options, llmConfig, evaluatorConfig));
   }
 
   const summary = {
@@ -548,6 +705,7 @@ async function main(): Promise<void> {
   };
   await writeJson(path.join(runDir, 'summary.json'), summary);
   await fs.writeFile(path.join(runDir, 'summary.md'), summaryMarkdown(runId, results, options.dryRun), 'utf8');
+  await runHarnessAnalysis(runDir, summary, harnessConfig);
 
   console.log(JSON.stringify({
     runDir,

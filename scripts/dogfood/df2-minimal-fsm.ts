@@ -657,46 +657,55 @@ function parseArgs(argv: string[]): CliOptions {
   };
 }
 
+export function applyModelOverride(
+  base: Df2ModelConfig,
+  override: { provider?: Df2ProviderName; baseUrl?: string; model?: string; maxTokens?: number },
+): Df2ModelConfig {
+  const providerChanged = Boolean(override.provider && override.provider !== base.provider);
+  return {
+    ...base,
+    provider: override.provider || base.provider,
+    baseUrl: override.baseUrl ?? (providerChanged ? undefined : base.baseUrl),
+    model: override.model || base.model,
+    maxTokens: override.maxTokens || base.maxTokens,
+  };
+}
+
 function applyOverrides(preset: Df2Preset, options: CliOptions): Df2Preset {
-  const primaryGenerator = {
-    ...preset.primaryGenerator,
-    provider: options.primaryProvider || preset.primaryGenerator.provider,
-    baseUrl: options.primaryBaseUrl || preset.primaryGenerator.baseUrl,
-    model: options.primaryModel || preset.primaryGenerator.model,
-    maxTokens: options.maxTokens || preset.primaryGenerator.maxTokens,
-  };
+  const primaryGenerator = applyModelOverride(preset.primaryGenerator, {
+    provider: options.primaryProvider,
+    baseUrl: options.primaryBaseUrl,
+    model: options.primaryModel,
+    maxTokens: options.maxTokens,
+  });
   const fallbackGenerator = preset.fallbackGenerator
-    ? {
-        ...preset.fallbackGenerator,
-        provider: options.fallbackProvider || preset.fallbackGenerator.provider,
-        baseUrl: options.fallbackBaseUrl || preset.fallbackGenerator.baseUrl,
-        model: options.fallbackModel || preset.fallbackGenerator.model,
-        maxTokens: options.maxTokens || preset.fallbackGenerator.maxTokens,
-      }
+    ? applyModelOverride(preset.fallbackGenerator, {
+        provider: options.fallbackProvider,
+        baseUrl: options.fallbackBaseUrl,
+        model: options.fallbackModel,
+        maxTokens: options.maxTokens,
+      })
     : null;
-  const evaluatorPrimary = {
-    ...preset.evaluatorPrimary,
-    provider: options.evaluatorProvider || preset.evaluatorPrimary.provider,
-    baseUrl: options.evaluatorBaseUrl || preset.evaluatorPrimary.baseUrl,
-    model: options.evaluatorModel || preset.evaluatorPrimary.model,
-    maxTokens: options.evaluatorMaxTokens || preset.evaluatorPrimary.maxTokens,
-  };
+  const evaluatorPrimary = applyModelOverride(preset.evaluatorPrimary, {
+    provider: options.evaluatorProvider,
+    baseUrl: options.evaluatorBaseUrl,
+    model: options.evaluatorModel,
+    maxTokens: options.evaluatorMaxTokens,
+  });
   const evaluatorFallback = preset.evaluatorFallback
-    ? {
-        ...preset.evaluatorFallback,
-        provider: options.fallbackEvaluatorProvider || preset.evaluatorFallback.provider,
-        baseUrl: options.fallbackEvaluatorBaseUrl || preset.evaluatorFallback.baseUrl,
-        model: options.fallbackEvaluatorModel || preset.evaluatorFallback.model,
-        maxTokens: options.evaluatorMaxTokens || preset.evaluatorFallback.maxTokens,
-      }
+    ? applyModelOverride(preset.evaluatorFallback, {
+        provider: options.fallbackEvaluatorProvider,
+        baseUrl: options.fallbackEvaluatorBaseUrl,
+        model: options.fallbackEvaluatorModel,
+        maxTokens: options.evaluatorMaxTokens,
+      })
     : null;
   const shadowHarness = preset.shadowHarness
-    ? {
-        ...preset.shadowHarness,
-        provider: options.shadowHarnessProvider || preset.shadowHarness.provider,
-        baseUrl: options.shadowHarnessBaseUrl || preset.shadowHarness.baseUrl,
-        model: options.shadowHarnessModel || preset.shadowHarness.model,
-      }
+    ? applyModelOverride(preset.shadowHarness, {
+        provider: options.shadowHarnessProvider,
+        baseUrl: options.shadowHarnessBaseUrl,
+        model: options.shadowHarnessModel,
+      })
     : null;
 
   return {

@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { CodeValidator } from '../../../src/core/CodeValidator.js';
 import {
   CANARY_CODE,
+  applyModelOverride,
   assertLegalTransition,
   adjudicateFinal,
   buildFailureSignature,
@@ -111,6 +112,17 @@ describe('DF2 minimal FSM', () => {
     expect(isRuntimeSupportedDomain('p5')).toBe(true);
     expect(isRuntimeSupportedDomain('tone')).toBe(false);
     expect(isRuntimeSupportedDomain('ascii')).toBe(false);
+  });
+
+  it('clears inherited base URL when provider override changes provider', () => {
+    const overridden = applyModelOverride(
+      { provider: 'lmstudio', baseUrl: 'http://100.66.225.85:1234/v1', model: 'qwen3.5-2b' },
+      { provider: 'openai', model: 'gpt-5.4-mini' },
+    );
+
+    expect(overridden.provider).toBe('openai');
+    expect(overridden.model).toBe('gpt-5.4-mini');
+    expect(overridden.baseUrl).toBeUndefined();
   });
 
   it('keeps all DF2 runtime-supported canaries validator-clean', () => {

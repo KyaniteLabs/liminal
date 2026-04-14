@@ -8,6 +8,7 @@
 
 import fs from 'node:fs/promises';
 import fsSync from 'node:fs';
+import crypto from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 
@@ -62,11 +63,17 @@ interface DomainResult {
   validationPassed: boolean;
   runtimePassed?: boolean;
   evaluatorScore?: number;
+  qualityPassed?: boolean;
+  launchReady: boolean;
   artifactDir: string;
   codeLength: number;
   error?: string;
   durationMs: number;
 }
+
+const DF1_CONTRACT_VERSION = 'df1-tri-role-v1';
+const QUALITY_WARN_THRESHOLD = 0.6;
+const QUALITY_PASS_THRESHOLD = 0.75;
 
 const DOMAIN_SPECS: DomainSpec[] = [
   {
@@ -110,6 +117,15 @@ const DOMAIN_SPECS: DomainSpec[] = [
     createGenerator: (llm) => new ASCIIArtGenerator(llm),
   },
 ];
+
+function sha256(value: string): string {
+  return crypto.createHash('sha256').update(value).digest('hex');
+}
+
+function qualityPassed(score: number | undefined): boolean | undefined {
+  if (score === undefined) return undefined;
+  return score >= QUALITY_PASS_THRESHOLD;
+}
 
 const DRY_RUN_CODE: Record<DomainName, string> = {
   p5: `function setup() {
@@ -512,6 +528,8 @@ async function runDomain(
   await writeJson(path.join(domainDir, 'prompt.json'), {
     domain: spec.name,
     prompt: spec.prompt,
+    promptHash: sha256(spec.prompt),
+    contractVersion: DF1_CONTRACT_VERSION,
     dryRun: options.dryRun,
     startedAt,
   });
@@ -554,7 +572,13 @@ async function runDomain(
       durationMs: Date.now() - start,
     };
     const evaluatorScore = await runEvaluator(spec, domainDir, validation.cleanedCode || code, resultWithoutEval, evaluatorConfig);
-    const result: DomainResult = { ...resultWithoutEval, evaluatorScore };
+    const quality = qualityPassed(evaluatorScore);
+    const result: DomainResult = {
+      ...resultWithoutEval,
+      evaluatorScore,
+      qualityPassed: quality,
+      launchReady: resultWithoutEval.success && quality !== false,
+    };
     await writeJson(path.join(domainDir, 'result.json'), result);
     return result;
   } catch (error) {
@@ -587,7 +611,13 @@ async function runDomain(
       durationMs: Date.now() - start,
     };
     const evaluatorScore = await runEvaluator(spec, domainDir, failedCode, resultWithoutEval, evaluatorConfig);
-    const result: DomainResult = { ...resultWithoutEval, evaluatorScore };
+    const quality = qualityPassed(evaluatorScore);
+    const result: DomainResult = {
+      ...resultWithoutEval,
+      evaluatorScore,
+      qualityPassed: quality,
+      launchReady: false,
+    };
     await writeJson(path.join(domainDir, 'error.json'), { error });
     await writeJson(path.join(domainDir, 'result.json'), result);
     return result;
@@ -602,10 +632,10 @@ function summaryMarkdown(runId: string, results: DomainResult[], dryRun: boolean
     `Dry run: ${dryRun}`,
     `Pass rate: ${passed}/${results.length}`,
     '',
-    '| Domain | Result | Static | Runtime | Evaluator | Code chars | Duration ms | Error |',
-    '| --- | --- | --- | --- | ---: | ---: | ---: | --- |',
+    '| Domain | Result | Static | Runtime | Evaluator | Quality | Launch | Code chars | Duration ms | Error |',
+    '| --- | --- | --- | --- | ---: | --- | --- | ---: | ---: | --- |',
     ...results.map((result) =>
-      `| ${result.domain} | ${result.success ? 'PASS' : 'FAIL'} | ${result.validationPassed ? 'PASS' : 'FAIL'} | ${result.runtimePassed === undefined ? 'SKIP' : result.runtimePassed ? 'PASS' : 'FAIL'} | ${result.evaluatorScore ?? ''} | ${result.codeLength} | ${result.durationMs} | ${(result.error || '').replace(/\|/g, '\\|')} |`
+      `| ${result.domain} | ${result.success ? 'PASS' : 'FAIL'} | ${result.validationPassed ? 'PASS' : 'FAIL'} | ${result.runtimePassed === undefined ? 'SKIP' : result.runtimePassed ? 'PASS' : 'FAIL'} | ${result.evaluatorScore ?? ''} | ${result.qualityPassed === undefined ? 'UNKNOWN' : result.qualityPassed ? 'PASS' : 'WARN'} | ${result.launchReady ? 'YES' : 'NO'} | ${result.codeLength} | ${result.durationMs} | ${(result.error || '').replace(/\|/g, '\\|')} |`
     ),
     '',
   ];
@@ -671,6 +701,12 @@ async function main(): Promise<void> {
     dryRun: options.dryRun,
     provider: options.provider,
     domains: options.domains,
+    contractVersion: DF1_CONTRACT_VERSION,
+    qualityThresholds: {
+      warn: QUALITY_WARN_THRESHOLD,
+      pass: QUALITY_PASS_THRESHOLD,
+    },
+    promptHashes: Object.fromEntries(DOMAIN_SPECS.map((spec) => [spec.name, sha256(spec.prompt)])),
     llmConfig: llmConfig ? {
       ...llmConfig,
       apiKey: llmConfig.apiKey ? '[REDACTED]' : undefined,
@@ -698,8 +734,15 @@ async function main(): Promise<void> {
     runId,
     dryRun: options.dryRun,
     passed: results.filter((result) => result.success).length,
+    launchReady: results.filter((result) => result.launchReady).length,
     total: results.length,
     passRate: results.length === 0 ? 0 : results.filter((result) => result.success).length / results.length,
+    launchReadyRate: results.length === 0 ? 0 : results.filter((result) => result.launchReady).length / results.length,
+    qualityWarnings: results.filter((result) => result.success && result.qualityPassed === false).map((result) => ({
+      domain: result.domain,
+      evaluatorScore: result.evaluatorScore,
+      artifactDir: result.artifactDir,
+    })),
     results,
     completedAt: new Date().toISOString(),
   };

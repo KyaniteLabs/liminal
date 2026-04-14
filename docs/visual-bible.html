@@ -143,6 +143,79 @@
             font-size: 0.75rem;
             color: var(--text-muted);
         }
+        .flywheel-map {
+            display: grid;
+            grid-template-columns: repeat(5, minmax(150px, 1fr));
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            align-items: stretch;
+        }
+        .flywheel-node {
+            position: relative;
+            background: linear-gradient(145deg, rgba(88, 166, 255, 0.12), rgba(57, 197, 207, 0.06));
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem;
+            min-height: 150px;
+        }
+        .flywheel-node strong {
+            color: var(--text-primary);
+            display: block;
+            margin-bottom: 0.45rem;
+        }
+        .flywheel-node p {
+            color: var(--text-secondary);
+            font-size: 0.86rem;
+            line-height: 1.45;
+        }
+        .flywheel-node::after {
+            content: "→";
+            position: absolute;
+            right: -0.7rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--accent-cyan);
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+        .flywheel-node:last-child::after {
+            content: "";
+        }
+        .lane-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        .lane-card {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1rem;
+        }
+        .lane-card h4 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+        .lane-card ul {
+            margin-left: 1.1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        .evidence-strip {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+        .evidence-pill {
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            padding: 0.35rem 0.7rem;
+            background: rgba(88, 166, 255, 0.08);
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
         /* Utility classes */
         .text-green { color: var(--accent-green); }
         .text-yellow { color: var(--accent-yellow); }
@@ -165,6 +238,16 @@
         @media (max-width: 768px) {
             .task-board {
                 grid-template-columns: 1fr;
+            }
+            .flywheel-map {
+                grid-template-columns: 1fr;
+            }
+            .flywheel-node::after {
+                content: "↓";
+                right: 50%;
+                top: auto;
+                bottom: -1rem;
+                transform: translateX(50%);
             }
         }
     </style>
@@ -782,14 +865,90 @@
             </table>
         </section>
 
+        <!-- Runtime-to-Product Flywheel -->
+        <section class="section">
+            <h2 class="section-title">🗺️ Runtime-to-Product Flywheel</h2>
+            <p class="section-subtitle">How the RT1-RT4 harness proof turns into a working Liminal app, instead of becoming the goal by itself.</p>
+
+            <div class="alert success">
+                <h4>✅ Runtime Proving Gate</h4>
+                <p><strong>RT1-RT4 prove the self-repair lane can run safely.</strong> The next milestone is DF1: run the same repair loop against real creative generation, validation, and preview failures.</p>
+            </div>
+
+            <div class="flywheel-map">
+                <div class="flywheel-node">
+                    <strong>1. RT Suite</strong>
+                    <p>RT1-RT4 prove bounded mutation, drift rejection, resume focus, and honest no-change classification across multiple model families.</p>
+                </div>
+                <div class="flywheel-node">
+                    <strong>2. Lane Matrix</strong>
+                    <p>Vanguard validates newest stages with GPT/GLM/Codex. Compatibility validates Kimi and MiniMax before local-model trials.</p>
+                </div>
+                <div class="flywheel-node">
+                    <strong>3. Freeze Harness</strong>
+                    <p>Provider provenance, terminal verification, file-backed build transcripts, and frozen mutation surfaces become the baseline.</p>
+                </div>
+                <div class="flywheel-node">
+                    <strong>4. DF1 Dogfood</strong>
+                    <p>Run real generators across p5, GLSL, Three, Strudel/Tone, and HTML with validation plus preview/runtime artifacts.</p>
+                </div>
+                <div class="flywheel-node">
+                    <strong>5. Product Fix Loop</strong>
+                    <p>Mine failures, patch generator/validator/routing code, re-run the same dogfood slice, and measure pass-rate lift.</p>
+                </div>
+            </div>
+
+            <div class="lane-grid">
+                <div class="lane-card">
+                    <h4>Vanguard Lane</h4>
+                    <ul>
+                        <li>Proves newest RT stage first.</li>
+                        <li>RT4 has clean success artifacts for GLM 5.1, GPT 5.4, GPT 5.3 Codex, and GLM 4.5.</li>
+                        <li>Extra LLMModeAgent tests are canonical guardrails, not noise.</li>
+                    </ul>
+                </div>
+                <div class="lane-card">
+                    <h4>Compatibility Lane</h4>
+                    <ul>
+                        <li>Kimi and MiniMax clear stages together before advancing.</li>
+                        <li>RT1 and RT2 are cleared by artifact criteria.</li>
+                        <li>Next target is RT3, then RT4, then local LM Studio hardening.</li>
+                    </ul>
+                </div>
+                <div class="lane-card">
+                    <h4>Pro Diagnostic Lane</h4>
+                    <ul>
+                        <li>Use only when cheaper lanes cannot explain a blocker.</li>
+                        <li>Requires no fallback, Responses API, file-backed build transcripts, and spend/usage telemetry.</li>
+                        <li>Pro is for diagnosis, not routine iteration.</li>
+                    </ul>
+                </div>
+                <div class="lane-card">
+                    <h4>DF1 App Dogfood</h4>
+                    <ul>
+                        <li>First product-facing proof after RT4.</li>
+                        <li>Must validate generated code, render/runtime behavior, and failure reasoning.</li>
+                        <li>Success means measurable improvement in real creative outputs.</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="evidence-strip">
+                <span class="evidence-pill">RT artifacts: resolution / contract / surface</span>
+                <span class="evidence-pill">Provider provenance: model / endpoint / fallback</span>
+                <span class="evidence-pill">Build transcripts: stdout / stderr / result JSON</span>
+                <span class="evidence-pill">Next proof: DF1 product dogfood</span>
+            </div>
+        </section>
+
         <!-- Next Steps -->
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>✅ Tracked residue trimmed</strong> - orphaned GUI dashboard code, one tracked log artifact, and six conflicted quarantined tests are queued for removal</li>
-                <li><strong>🔎 Review remaining quarantined tests</strong> - decide which of the 35 non-conflicted pending tests should be restored vs archived permanently</li>
-                <li><strong>🧩 Audit compatibility shims</strong> - keep only deprecated wrappers with live callers and remove the rest intentionally</li>
-                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
+                <li><strong>🎨 Start DF1 app dogfood</strong> - use the proven harness on real creative generation across p5, GLSL, Three, Strudel/Tone, and HTML</li>
+                <li><strong>📊 Emit app-level artifacts</strong> - capture generated code, validation, render/runtime result, provider provenance, and failure reasoning</li>
+                <li><strong>🔁 Apply bounded fixes</strong> - let the harness fix real generator/validator/routing failures, then re-run the same dogfood slice</li>
+                <li><strong>🧩 Resume platform work</strong> - after DF1 shows improvement, return to plugin API and compatibility-shim cleanup</li>
             </ol>
         </section>
     </main>

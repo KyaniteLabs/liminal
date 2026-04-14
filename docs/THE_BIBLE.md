@@ -273,6 +273,18 @@ Failures:   0 critical
 
 **Task File Location:** `harness-tasks/archive/*.json`
 
+**Runtime-to-Product Flywheel (2026-04-14):**
+
+The RT proving suite is infrastructure, not the final product goal. The operating sequence is:
+
+1. **RT Suite:** RT1-RT4 prove bounded mutation, workspace drift rejection, resume focus continuity, and honest bounded-no-change classification.
+2. **Lane Matrix:** Vanguard proves newest stages first; Compatibility keeps Kimi and MiniMax stage-gated; Pro is reserved for expensive diagnostics.
+3. **Freeze Harness:** Provider provenance, terminal verification, failed verification, file-backed build transcripts, and frozen mutation surfaces become the baseline.
+4. **DF1 Dogfood:** Run real creative generation across p5, GLSL, Three, Strudel/Tone, and HTML with validation plus preview/runtime artifacts.
+5. **Product Fix Loop:** Mine failures, patch generator/validator/routing code, re-run the same dogfood slice, and measure pass-rate lift.
+
+**Current transition:** once Kimi and MiniMax finish RT4, stop expanding runtime proving unless a new RT directly protects app behavior. Move to DF1 app dogfood so the harness improves real Liminal outputs.
+
 ---
 
 ### 2. Ralph Loop (Core Engine)
@@ -936,9 +948,9 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 3. ✅ Plan C - Test infrastructure (C1-C14) - DONE
 
 ### Remaining Work
-4. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
-5. 🔄 Cloud provider testing (requires API keys)
-6. 🔄 Implement M12-M18 guardrails (future)
+4. 🔄 DF1 app dogfood: convert RT1-RT4 harness proof into real creative generation improvements
+5. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
+6. 🔄 Cloud provider testing (requires API keys)
 7. 🔄 Community plugins (future)
 
 ### Metrics

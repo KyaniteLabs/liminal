@@ -52,10 +52,16 @@ vi.mock('../../src/harness/tools/index.js', () => ({
 vi.mock('../../src/utils/errors.js', () => ({
   formatError: vi.fn((_ctx: string, err: unknown) => String(err)),
 }));
-vi.mock('../../src/harness/prompts/self-improve.js', () => ({
-  getSelfImprovePrompt: vi.fn(() => 'system prompt'),
-  createReflectionPrompt: vi.fn(() => 'reflect on error'),
-}));
+vi.mock('../../src/harness/prompts/self-improve.js', async () => {
+  const actual = await vi.importActual<typeof import('../../src/harness/prompts/self-improve.js')>(
+    '../../src/harness/prompts/self-improve.js',
+  );
+
+  return {
+    ...actual,
+    createReflectionPrompt: vi.fn(() => 'reflect on error'),
+  };
+});
 vi.mock('../../src/harness/ThinkingSeparation.js', () => ({
   thinkingRepository: { storeHarnessThinking: vi.fn() },
 }));
@@ -209,6 +215,65 @@ describe('LLMModeAgent', () => {
     const callArg = mockComplete.mock.calls[0][0];
     expect(callArg.prompt).toContain('Read foo.ts');
     expect(callArg.prompt).toContain('src/foo.ts');
+  });
+
+  it('includes the exact applyEdit schema contract in the planning prompt', async () => {
+    mockComplete.mockResolvedValue({ text: '{"tool":"complete","params":{},"thought":"done"}' });
+    const agent = new LLMModeAgent(mockLLM as any);
+
+    await agent.executeTask({
+      id: 't-applyedit-schema',
+      title: 'Lock applyEdit schema',
+      description: 'desc',
+      approved: true,
+    });
+
+    const callArg = mockComplete.mock.calls[0][0];
+    expect(callArg.prompt).toContain('### applyEdit({ path: string, oldString: string, newString: string })');
+    expect(callArg.prompt).toContain('The oldString must match EXACTLY once in the file.');
+    expect(callArg.prompt).toContain('"tool": "applyEdit"');
+    expect(callArg.prompt).toContain('"oldString"');
+    expect(callArg.prompt).toContain('"newString"');
+  });
+
+  it('surfaces applyEdit schema errors back into the next planning prompt before a successful retry', async () => {
+    mockComplete
+      .mockResolvedValueOnce({
+        text: '{"tool":"applyEdit","params":{"path":"src/tui-bridge/TuiBridgeService.ts","newString":"const x = 2;"},"thought":"patch it"}',
+      })
+      .mockResolvedValueOnce({
+        text: '{"tool":"applyEdit","params":{"path":"src/tui-bridge/TuiBridgeService.ts","oldString":"const x = 1;","newString":"const x = 2;"},"thought":"retry with exact schema","expectedResult":"apply targeted edit"}',
+      })
+      .mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done"}' });
+
+    mockApplyEdit.execute
+      .mockResolvedValueOnce({ success: false, error: 'oldString is required' })
+      .mockResolvedValueOnce({ success: true, data: { backupPath: '/tmp/bak-456' } });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-applyedit-retry',
+      title: 'Retry applyEdit with exact schema',
+      description: 'desc',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(mockApplyEdit.execute).toHaveBeenNthCalledWith(1, {
+      path: 'src/tui-bridge/TuiBridgeService.ts',
+      newString: 'const x = 2;',
+    });
+    expect(mockApplyEdit.execute).toHaveBeenNthCalledWith(2, {
+      path: 'src/tui-bridge/TuiBridgeService.ts',
+      oldString: 'const x = 1;',
+      newString: 'const x = 2;',
+    });
+
+    const retryPrompt = mockComplete.mock.calls[1][0].prompt;
+    expect(retryPrompt).toContain('"error":"oldString is required"');
+    expect(retryPrompt).toContain('### applyEdit({ path: string, oldString: string, newString: string })');
+
+    expect(session.status).toBe(Status.SUCCESS);
   });
 
   it('uses the tui-specific LLM rate limit bucket for Bubble Tea self-improvement tasks', async () => {

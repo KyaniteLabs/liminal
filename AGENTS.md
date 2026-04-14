@@ -106,7 +106,7 @@ npm run dogfood:report
 
 **Binding law:** Every agent must refresh remote truth and inventory local residue before starting RT, DF, dogfood, generator, provider, compatibility, vanguard, or product-readiness work.
 
-This exists because local branch/worktree residue previously caused agents to rediscover solved work, waste paid model budget, burn tokens, and test against stale assumptions.
+This exists because unintegrated useful work in local branches/worktrees previously caused agents to rediscover solved work, waste paid model budget, burn tokens, and test against outdated assumptions.
 
 ### Required First Commands
 
@@ -133,17 +133,17 @@ Before coding, classify relevant local branches/worktrees as:
 - `MERGE_NOW`: already solved work that should be integrated before continuing.
 - `CHERRY_PICK_NARROW`: useful commits exist, but a full merge is too broad or conflicts with the current architecture.
 - `REFERENCE_ONLY`: useful context, but not safe to integrate.
-- `CLEANUP_CANDIDATE`: obsolete once its useful work is merged, rejected, or archived.
+- `CLEANUP_CANDIDATE`: safe to clean only after useful work is merged, rejected with reason, or archived.
 
 Do not start a new implementation lane while a relevant `MERGE_NOW` or `CHERRY_PICK_NARROW` branch is unexamined.
 
 ### Merge Discipline
 
 - Prefer merging/cherry-picking useful solved work over rediscovering it.
-- Do not blindly merge broad stale branches that replace active architecture; inspect overlap first.
+- Do not blindly merge broad unintegrated branches that replace active architecture; inspect overlap first.
 - If a branch is not merged, write the rejection reason in the active plan or coordination note.
 - If a branch is merged, run targeted tests before continuing.
-- If a branch is obsolete, preserve or clean it only after useful work is integrated or explicitly rejected.
+- If a branch appears redundant, preserve or clean it only after useful work is integrated or explicitly rejected.
 
 ### Coordination
 

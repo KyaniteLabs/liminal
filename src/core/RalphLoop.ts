@@ -19,7 +19,7 @@
  */
 
 import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
-import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
+import type { GenerationEvaluation, ConcreteRepairAdvice } from '../core/types/GenerationEvaluation.js';
 import { GeneratorHarnessTools } from '../generators/GeneratorHarnessTools.js';
 import { Domain } from '../types/domains.js';
 import { PromptStore } from './PromptStore.js';
@@ -488,7 +488,7 @@ export class RalphLoop {
         // Evaluate quality
         // If we already evaluated multiple candidates, use the best candidate's score
         // Otherwise, run evaluation for the single candidate
-        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number> };
+        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice };
         let lirContext: LIREvaluationContext | undefined;
 
         // Handle case where all candidates failed validation
@@ -566,6 +566,7 @@ export class RalphLoop {
                 score: genEval.score,
                 issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
                 dimensions: {},
+                repairAdvice: genEval.repairAdvice,
               };
             }
           } else {
@@ -596,9 +597,9 @@ export class RalphLoop {
               score: evaluation.score,
               confidence: 1,
               failureClass: 'none',
-              repairAdvice: evaluation.issues && evaluation.issues.length > 0
+              repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
                 ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
-                : undefined,
+                : undefined),
             };
             const repairPacket = harness.buildRepairPacket(genEval, repairHistory);
 
@@ -612,7 +613,7 @@ export class RalphLoop {
                   const repairCode = repairValidation.cleanedCode;
 
                   // Evaluate repair candidate using the same path
-                  let repairEval: { score: number; issues?: string[]; dimensions?: Record<string, number> };
+                  let repairEval: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice };
                   let repairLirContext: LIREvaluationContext | undefined;
 
                   if (normalizedOptions.lirEnabled) {
@@ -659,6 +660,7 @@ export class RalphLoop {
                         score: genEvalRepair.score,
                         issues: genEvalRepair.repairAdvice ? [genEvalRepair.repairAdvice.issue] : [],
                         dimensions: {},
+                        repairAdvice: genEvalRepair.repairAdvice,
                       };
                     }
                   } else {
@@ -697,9 +699,9 @@ export class RalphLoop {
           score: evaluation.score,
           confidence: 1,
           failureClass: 'none',
-          repairAdvice: evaluation.issues && evaluation.issues.length > 0
+          repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
             ? { issue: evaluation.issues[0], fix: 'Address the reported issue.', constraint: 'Complete artifact.' }
-            : undefined,
+            : undefined),
         });
 
         // Aesthetic guardrails: run AestheticCritic if enabled

@@ -1,5 +1,5 @@
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
-
+import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
 
 /**
  * GeneratorHarnessTools - Thin domain-contract harness helpers
@@ -29,6 +29,55 @@ export type FailureClass =
   | 'wrapper_contract_mismatch'
   | 'runtime_error'
   | 'unknown';
+
+// ---------------------------------------------------------------------------
+// Failure Classification Normalization (DF3 Flywheel Unlock)
+// ---------------------------------------------------------------------------
+
+/**
+ * Map domain-specific FailureClass values to the shared GenerationEvaluation contract.
+ */
+export function classifyFailureForEvaluation(
+  failure: FailureClass | string,
+  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
+): GenerationEvaluation['failureClass'] {
+  if (context?.renderFailed) {
+    return 'render';
+  }
+  if (context?.validationFailed) {
+    return 'validator';
+  }
+  if (context?.scoreFailed) {
+    return 'scorer';
+  }
+
+  switch (failure) {
+    case 'runtime_error':
+    case 'wrapper_contract_mismatch':
+    case 'wrong_domain':
+    case 'missing_required_api':
+    case 'too_short':
+    case 'truncated':
+    case 'empty_after_reasoning_strip':
+      return 'validator';
+    default:
+      return 'none';
+  }
+}
+
+/**
+ * Build a minimal GenerationEvaluation pick from a classified failure.
+ */
+export function buildFailureEvaluation(
+  failure: FailureClass | string,
+  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
+): Pick<GenerationEvaluation, 'score' | 'confidence' | 'failureClass'> {
+  return {
+    score: 0,
+    confidence: 1,
+    failureClass: classifyFailureForEvaluation(failure, context),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Domain Skeleton & API Data

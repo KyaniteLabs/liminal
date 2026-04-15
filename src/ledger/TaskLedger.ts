@@ -129,8 +129,7 @@ export class TaskLedger {
     }
 
     const entries = readdirSync(attemptsDir)
-      .filter(f => f.endsWith('.json'))
-      .sort();
+      .filter(f => f.endsWith('.json'));
 
     const attempts: TaskAttempt[] = [];
     for (const entry of entries) {
@@ -141,6 +140,8 @@ export class TaskLedger {
       }
     }
 
+    // Sort by startedAt timestamp, not filename — IDs may not be chronologically ordered
+    attempts.sort((a, b) => a.startedAt.localeCompare(b.startedAt));
     return attempts;
   }
 
@@ -228,13 +229,22 @@ export class TaskLedger {
     }
 
     const entries = readdirSync(decisionsDir)
-      .filter(f => f.endsWith('.json'))
-      .sort();
+      .filter(f => f.endsWith('.json'));
 
     if (entries.length === 0) return null;
 
-    const latest = entries[entries.length - 1].replace('.json', '');
-    const data = this.fs.readManifest(`${TASK_PREFIX}/${taskId}/decision/${latest}`);
-    return data as unknown as TaskDecision | null;
+    // Load all decisions and sort by decidedAt timestamp, not filename lexicographic order
+    const decisions: TaskDecision[] = [];
+    for (const entry of entries) {
+      const decisionId = entry.replace('.json', '');
+      const data = this.fs.readManifest(`${TASK_PREFIX}/${taskId}/decision/${decisionId}`);
+      if (data) {
+        decisions.push(data as unknown as TaskDecision);
+      }
+    }
+
+    if (decisions.length === 0) return null;
+    decisions.sort((a, b) => a.decidedAt.localeCompare(b.decidedAt));
+    return decisions[decisions.length - 1];
   }
 }

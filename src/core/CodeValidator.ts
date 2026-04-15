@@ -47,6 +47,7 @@ const MIN_SIZE_REQUIREMENTS: Record<Domain, number> = {
   'revideo': RevideoValidator.getMinSize(),
   'html': HTMLValidator.getMinSize(),
   'ascii': ASCIIValidator.getMinSize(),
+  'kinetic': 100,
   'music': 100,
   'unknown': 100,
 };

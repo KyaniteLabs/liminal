@@ -5,6 +5,9 @@
  * Handles validation of p5.js code including raw JS and HTML-wrapped sketches.
  */
 
+import { parse } from '@babel/parser';
+import traverseModule from '@babel/traverse';
+
 // Note: ValidationResult type can be imported from CodeValidator if needed for integration
 
 export interface P5ValidationResult {
@@ -13,6 +16,32 @@ export interface P5ValidationResult {
 }
 
 export class P5Validator {
+  private static readonly P5_GLOBALS = new Set([
+    'Array', 'Boolean', 'Date', 'Error', 'JSON', 'Map', 'Math', 'Number', 'Object', 'Promise', 'Set', 'String',
+    'console', 'document', 'p5', 'window',
+    'ADD', 'BLEND', 'MULTIPLY', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'DOWN_ARROW', 'HALF_PI', 'HSB', 'LEFT', 'LEFT_ARROW', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'RIGHT_ARROW', 'TWO_PI', 'UP_ARROW',
+    'draw', 'frameCount', 'height', 'key', 'keyCode', 'keyIsPressed', 'mouseButton', 'mouseIsPressed', 'mouseX', 'mouseY', 'pmouseX', 'pmouseY', 'setup', 'windowHeight', 'windowWidth', 'width',
+    'abs', 'acos', 'angleMode', 'asin', 'atan', 'atan2', 'background', 'beginShape', 'bezier', 'blendMode',
+    'ceil', 'circle', 'color', 'colorMode', 'constrain', 'cos', 'createCanvas', 'createGraphics', 'curveVertex', 'dist', 'ellipse', 'endShape', 'exp',
+    'fill', 'floor', 'frameRate', 'image', 'lerp', 'line', 'map', 'max', 'min', 'noFill', 'noise', 'noLoop',
+    'noStroke', 'pixelDensity', 'pop', 'pow', 'push', 'random', 'rect', 'red', 'green', 'blue', 'lerpColor',
+    'resizeCanvas', 'rotate', 'round', 'sin', 'sqrt',
+    'stroke', 'strokeWeight', 'text', 'textAlign', 'textSize', 'translate', 'triangle', 'vertex',
+    // p5.sound
+    'loadSound', 'createAudio', 'getAudioContext', 'userStartAudio',
+    // Web Audio API
+    'AudioContext', 'OscillatorNode', 'AnalyserNode', 'GainNode',
+    'Float32Array', 'Float64Array', 'Int32Array', 'Uint8Array', 'Uint32Array', 'ArrayBuffer',
+    // Browser globals
+    'navigator', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'requestAnimationFrame',
+  ]);
+
+  private static readonly traverseAst = (
+    typeof traverseModule === 'function'
+      ? traverseModule
+      : (traverseModule as unknown as { default: typeof traverseModule }).default
+  ) as typeof traverseModule;
+
   /**
    * Validate p5.js code structure
    */
@@ -55,6 +84,11 @@ export class P5Validator {
   private static validateRawJS(code: string): string[] {
     const errors: string[] = [];
 
+    errors.push(...this.validateJavaScriptSyntax(code));
+    if (errors.length === 0) {
+      errors.push(...this.validateReferencedIdentifiers(code));
+    }
+
     // Raw p5.js must have setup/draw/createCanvas (traditional or arrow functions)
     const hasSetup = /function\s+setup\s*\(/.test(code);
     const hasArrowSetup = /(?:const|let|var)\s+setup\s*=\s*(?:\([^)]*\)|\w+)\s*=>/.test(code);
@@ -80,6 +114,10 @@ export class P5Validator {
   private static validateHTMLWrapped(code: string): string[] {
     const errors: string[] = [];
 
+    if (!/<\/body>\s*<\/html>\s*$/i.test(code)) {
+      errors.push('HTML-wrapped p5.js must include closing </body> and </html> tags');
+    }
+
     // HTML-wrapped p5 must include p5 CDN
     if (!/p5\.js|p5\.min\.js/.test(code)) {
       errors.push('HTML-wrapped p5.js must include p5.js CDN');
@@ -90,7 +128,80 @@ export class P5Validator {
       errors.push('HTML-wrapped p5.js should contain a <script> tag with the sketch code');
     }
 
+    for (const scriptBody of this.extractInlineScriptBodies(code)) {
+      errors.push(...this.validateJavaScriptSyntax(scriptBody));
+      errors.push(...this.validateReferencedIdentifiers(scriptBody));
+    }
+
     return errors;
+  }
+
+  /**
+   * Browser p5 sketches must be parseable JavaScript before semantic checks matter.
+   */
+  private static validateJavaScriptSyntax(code: string): string[] {
+    try {
+      parse(code, {
+        sourceType: 'script',
+        allowReturnOutsideFunction: false,
+        plugins: ['jsx'],
+      });
+      return [];
+    } catch (error) {
+      return [`p5.js code has invalid JavaScript syntax: ${this.formatParseError(error)}`];
+    }
+  }
+
+  private static validateReferencedIdentifiers(code: string): string[] {
+    const ast = parse(code, {
+      sourceType: 'script',
+      allowReturnOutsideFunction: false,
+      plugins: ['jsx'],
+    });
+    const missing = new Set<string>();
+    const assignedGlobals = new Set<string>();
+
+    this.traverseAst(ast, {
+      AssignmentExpression(path) {
+        const left = path.node.left;
+        if (left.type === 'Identifier' && !path.scope.hasBinding(left.name)) {
+          assignedGlobals.add(left.name);
+        }
+      },
+      ReferencedIdentifier(path) {
+        const name = path.node.name;
+        if (!path.scope.hasBinding(name) && !P5Validator.P5_GLOBALS.has(name) && !assignedGlobals.has(name)) {
+          missing.add(name);
+        }
+      },
+    });
+
+    return Array.from(missing)
+      .sort()
+      .map((name) => `p5.js code references undeclared identifier: ${name}`);
+  }
+
+  private static extractInlineScriptBodies(html: string): string[] {
+    const scripts: string[] = [];
+    const scriptPattern = /<script\b([^>]*)>([\s\S]*?)<\/script>/gi;
+    let match: RegExpExecArray | null;
+
+    while ((match = scriptPattern.exec(html)) !== null) {
+      const attributes = match[1] ?? '';
+      const body = match[2]?.trim() ?? '';
+      if (!/\bsrc\s*=/.test(attributes) && body) {
+        scripts.push(body);
+      }
+    }
+
+    return scripts;
+  }
+
+  private static formatParseError(error: unknown): string {
+    if (error instanceof Error) {
+      return error.message;
+    }
+    return String(error);
   }
 
   /**

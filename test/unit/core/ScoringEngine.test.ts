@@ -937,6 +937,11 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0);
       expect(result.confidence).toBe(1);
       expect(result.failureClass).toBe('render');
+      expect(result.repairAdvice).toEqual({
+        issue: 'Rendered output failed to produce a valid artifact (blank screen, compile error, or timeout)',
+        fix: 'Fix syntax errors, ensure all required imports/libraries are loaded, and verify the code runs without runtime exceptions.',
+        constraint: 'Return a complete, runnable artifact.',
+      });
     });
 
     it('returns fallback evaluation when no LLM is available', async () => {
@@ -965,6 +970,44 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.85);
       expect(result.confidence).toBe(0.9);
       expect(result.failureClass).toBe('none');
+    });
+
+    it('parses repairAdvice from LLM response when present', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{"score":0.4,"confidence":0.8,"reasoning":"Weak","repairAdvice":{"issue":"Missing setup()","fix":"Add setup and draw functions","constraint":"Use p5.js conventions"}}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        { timingMs: 200, infraUnavailable: false, candidateFailure: false },
+        'code',
+        'brief',
+        fakeLLM,
+      );
+      expect(result.score).toBe(0.4);
+      expect(result.confidence).toBe(0.8);
+      expect(result.repairAdvice).toEqual({
+        issue: 'Missing setup()',
+        fix: 'Add setup and draw functions',
+        constraint: 'Use p5.js conventions',
+      });
+    });
+
+    it('gracefully ignores malformed repairAdvice from LLM response', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{"score":0.6,"confidence":0.7,"reasoning":"OK","repairAdvice":"bad"}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        { timingMs: 200, infraUnavailable: false, candidateFailure: false },
+        'code',
+        'brief',
+        fakeLLM,
+      );
+      expect(result.score).toBe(0.6);
+      expect(result.confidence).toBe(0.7);
+      expect(result.repairAdvice).toBeUndefined();
     });
 
     it('clamps score and confidence to [0,1]', async () => {

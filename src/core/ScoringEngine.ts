@@ -21,7 +21,7 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { EVALUATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
-import type { RenderEvidence, GenerationEvaluation } from './types/GenerationEvaluation.js';
+import type { RenderEvidence, GenerationEvaluation, ConcreteRepairAdvice } from './types/GenerationEvaluation.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -618,6 +618,11 @@ export async function scoreRenderedEvidence(
       score: 0,
       confidence: 1,
       failureClass: 'render',
+      repairAdvice: {
+        issue: 'Rendered output failed to produce a valid artifact (blank screen, compile error, or timeout)',
+        fix: 'Fix syntax errors, ensure all required imports/libraries are loaded, and verify the code runs without runtime exceptions.',
+        constraint: 'Return a complete, runnable artifact.',
+      },
     };
   }
 
@@ -642,8 +647,14 @@ Return ONLY a JSON object with this exact structure:
 {
   "score": <number 0-1>,
   "confidence": <number 0-1>,
-  "reasoning": "<brief explanation>"
-}`;
+  "reasoning": "<brief explanation>",
+  "repairAdvice": {
+    "issue": "<one-sentence description of the problem>",
+    "fix": "<one-sentence instruction for how to fix it>",
+    "constraint": "<one-sentence boundary condition>"
+  }
+}
+Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omit repairAdvice or set it to null.`;
 
   const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms`;
 
@@ -661,10 +672,21 @@ Return ONLY a JSON object with this exact structure:
     const score = typeof parsed.score === 'number' ? Math.max(0, Math.min(1, parsed.score)) : 0.5;
     const confidence = typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5;
 
+    const rawAdvice = parsed.repairAdvice;
+    const repairAdvice =
+      rawAdvice && typeof rawAdvice === 'object' && rawAdvice !== null
+        ? {
+            issue: typeof rawAdvice.issue === 'string' ? rawAdvice.issue : 'The artifact did not meet the brief.',
+            fix: typeof rawAdvice.fix === 'string' ? rawAdvice.fix : 'Revise the code to better match the brief.',
+            constraint: typeof rawAdvice.constraint === 'string' ? rawAdvice.constraint : 'Return a complete, runnable artifact.',
+          }
+        : undefined;
+
     return {
       score,
       confidence,
       failureClass: 'none',
+      repairAdvice,
     };
   } catch (error) {
     Logger.warn('ScoringEngine', 'Rendered evidence LLM scoring failed:', error instanceof Error ? error.message : error);

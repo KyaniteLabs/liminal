@@ -138,4 +138,90 @@ describe('LiminalFS', () => {
   it('close — does not throw', () => {
     expect(() => liminalFs.close()).not.toThrow();
   });
+
+  it('writeRef — writes a ref and the file exists at .liminal/refs/<name>.json', () => {
+    const ref = {
+      uri: 'liminal://artifact/abc123',
+      hash: 'abc123',
+      kind: 'generated-code' as const,
+    };
+    liminalFs.writeRef('latest', ref);
+
+    expect(existsSync(join(tempDir, '.liminal', 'refs', 'latest.json'))).toBe(true);
+  });
+
+  it('writeRef — can read the ref back with matching uri, hash, kind', () => {
+    const ref = {
+      uri: 'liminal://artifact/def456',
+      hash: 'def456',
+      kind: 'seed' as const,
+      path: '/some/path',
+    };
+    liminalFs.writeRef('best-seed', ref);
+
+    const result = liminalFs.readRef('best-seed');
+    expect(result).toEqual(ref);
+  });
+
+  it('writeRef — throws on .. in name', () => {
+    expect(() =>
+      liminalFs.writeRef('../escape', { uri: 'liminal://artifact/x', kind: 'asset' }),
+    ).toThrow('path traversal');
+  });
+
+  it('writeRef — throws on absolute path in name', () => {
+    expect(() =>
+      liminalFs.writeRef('/etc/passwd', { uri: 'liminal://artifact/x', kind: 'asset' }),
+    ).toThrow('absolute paths');
+  });
+
+  it('writeRef — supports namespaced names with / (e.g., gallery/latest)', () => {
+    const ref = {
+      uri: 'liminal://artifact/gal123',
+      hash: 'gal123',
+      kind: 'gallery-version' as const,
+    };
+    liminalFs.writeRef('gallery/latest', ref);
+
+    expect(existsSync(join(tempDir, '.liminal', 'refs', 'gallery', 'latest.json'))).toBe(true);
+    expect(liminalFs.readRef('gallery/latest')).toEqual(ref);
+  });
+
+  it('writeRef — overwrites existing ref with same name', () => {
+    liminalFs.writeRef('overwrite', { uri: 'liminal://artifact/v1', kind: 'asset' });
+    liminalFs.writeRef('overwrite', { uri: 'liminal://artifact/v2', kind: 'asset' });
+
+    const result = liminalFs.readRef('overwrite');
+    expect(result?.uri).toBe('liminal://artifact/v2');
+  });
+
+  it('readRef — returns null for non-existent ref', () => {
+    expect(liminalFs.readRef('does-not-exist')).toBeNull();
+  });
+
+  it('writeManifest — writes a manifest and the file exists at .liminal/manifests/<name>.json', () => {
+    liminalFs.writeManifest('project', { name: 'Test', version: '1.0.0' });
+
+    expect(existsSync(join(tempDir, '.liminal', 'manifests', 'project.json'))).toBe(true);
+  });
+
+  it('writeManifest — can read the manifest back with matching data', () => {
+    const data = { name: 'MyProject', tags: ['creative', 'generative'] };
+    liminalFs.writeManifest('tags', data);
+
+    const result = liminalFs.readManifest('tags');
+    expect(result).toEqual(data);
+  });
+
+  it('writeManifest — throws on .. in name', () => {
+    expect(() => liminalFs.writeManifest('../escape', { data: 1 })).toThrow('path traversal');
+  });
+
+  it('writeManifest — throws on absolute path in name', () => {
+    expect(() => liminalFs.writeManifest('/root', { data: 1 })).toThrow('absolute paths');
+  });
+
+  it('readManifest — returns null for non-existent manifest', () => {
+    expect(liminalFs.readManifest('missing')).toBeNull();
+  });
 });

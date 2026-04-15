@@ -604,6 +604,58 @@ export class GeneratorHarnessTools {
   }
 
   // -------------------------------------------------------------------------
+  // Candidate ranking / selection hooks (DF3 Phase 5)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Normalize a GenerationEvaluation into a scalar comparable score.
+   * Applies penalties for non-'none' failure classes and down-weights low confidence.
+   */
+  scoreCandidateForSelection(evaluation: GenerationEvaluation): number {
+    let score = evaluation.score;
+    if (evaluation.failureClass !== 'none') {
+      score *= 0.5;
+    }
+    if (evaluation.confidence < 0.5) {
+      score *= 0.8;
+    }
+    return score;
+  }
+
+  /**
+   * Rank candidates by their selection score.
+   * Returns sorted indices (best first) and the winner index.
+   */
+  rankCandidates(_codes: string[], evaluations: GenerationEvaluation[]): { rankedIndices: number[]; winnerIndex: number } {
+    const indexed = evaluations.map((evalItem, idx) => ({
+      idx,
+      score: this.scoreCandidateForSelection(evalItem),
+    }));
+    indexed.sort((a, b) => b.score - a.score);
+    return {
+      rankedIndices: indexed.map(i => i.idx),
+      winnerIndex: indexed[0]?.idx ?? 0,
+    };
+  }
+
+  /**
+   * Build a perturbed variant of a prompt to encourage candidate diversity.
+   */
+  buildDiversityPrompt(basePrompt: string, index: number, total: number): string {
+    if (total <= 1) return basePrompt;
+    const perturbations = [
+      'Try a different creative approach.',
+      'Emphasize visual contrast and bold shapes.',
+      'Focus on subtle details and delicate patterns.',
+      'Use an unexpected color palette or rhythm.',
+      'Simplify the composition to its essential elements.',
+      'Add complexity through layered interactions.',
+    ];
+    const hint = perturbations[index % perturbations.length] ?? perturbations[0];
+    return `${basePrompt}\n\n---\nVariation hint: ${hint}`;
+  }
+
+  // -------------------------------------------------------------------------
   // buildRuntimeFeedbackHint() -- placeholder for future multimodal feedback
   // -------------------------------------------------------------------------
 

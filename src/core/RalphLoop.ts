@@ -239,6 +239,19 @@ export class RalphLoop {
     const persistence = new LoopPersistence(gallery, normalizedOptions);
     const generator = new GenerationOrchestrator(normalizedOptions, gallery, archiveLearning);
 
+    // DF3 Phase 4: Pre-digest compost for seed-aware initial generation
+    let compostMaterials: import('../compost/types.js').GenerationMaterials | undefined;
+    if (normalizedOptions.autoCompost || normalizedOptions.useCompostEnhancement) {
+      try {
+        const compostConfig = mergeCompostConfig();
+        const mill = new CompostMill(new LLMClient({ role: 'generator' }), compostConfig);
+        await mill.digest();
+        compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
+      } catch (err) {
+        Logger.warn('RalphLoop', 'Compost digest for generation failed:', err);
+      }
+    }
+
     let iteration = 0;
     let completed = false;
     let reason = '';
@@ -301,7 +314,7 @@ export class RalphLoop {
         }
 
         // Enhance with compost seed, DNA, and archive examples
-        usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning);
+        usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning, compostMaterials);
 
         // Adjust numCandidates based on success rate for high-exploration mode
         const adjustedNumCandidates = successRateTracker.getRecommendedCandidates(normalizedOptions.numCandidates ?? 1);
@@ -313,71 +326,93 @@ export class RalphLoop {
           normalizedOptions.onThought?.(`Generating ${adjustedNumCandidates} candidate(s)...`);
         }
 
-        // Best-of-N: Generate multiple candidates and select the best
+        // Best-of-N: Generate multiple candidates with bounded parallelism
         const numCandidates = adjustedNumCandidates;
-        const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string }> = [];
+        const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string; genEval?: GenerationEvaluation }> = [];
         let lastGenerationError: Error | undefined;
+        const harnessTools = new GeneratorHarnessTools({ seededRandom: Math.random });
+        const maxParallelism = normalizedOptions.maxParallelism ?? 3;
 
-        for (let i = 0; i < numCandidates; i++) {
-          try {
-            // Generate code (bypass cache to ensure fresh generation each iteration)
-            // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
-            const generationResult = await generator.generate(usedPrompt, loadedPrompt, true);
+        for (let batchStart = 0; batchStart < numCandidates; batchStart += maxParallelism) {
+          const batchEnd = Math.min(batchStart + maxParallelism, numCandidates);
+          const batchPromises: Promise<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string } | undefined>[] = [];
 
-            if (generationResult.needsClarification) {
-              const msgs = generationResult.clarifyingQuestions.map(q => q.question).join('; ');
-              throw new Error(
-                `Ambiguous prompt — please clarify before running RalphLoop:\n${msgs}\n\n` +
-                `Detected intent: ${generationResult.suggestions.join(', ') || 'unknown'}`
-              );
-            }
+          for (let i = batchStart; i < batchEnd; i++) {
+            batchPromises.push(
+              (async (index: number) => {
+                try {
+                  const diversityPrompt = normalizedOptions.swarmDiversify
+                    ? harnessTools.buildDiversityPrompt(usedPrompt, index, numCandidates)
+                    : usedPrompt;
+                  // Generate code (bypass cache to ensure fresh generation each iteration)
+                  // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
+                  const generationResult = await generator.generate(diversityPrompt, loadedPrompt, true);
 
-            const { code, thinking, model } = generationResult;
+                  if (generationResult.needsClarification) {
+                    const msgs = generationResult.clarifyingQuestions.map(q => q.question).join('; ');
+                    throw new Error(
+                      `Ambiguous prompt — please clarify before running RalphLoop:\n${msgs}\n\n` +
+                      `Detected intent: ${generationResult.suggestions.join(', ') || 'unknown'}`
+                    );
+                  }
 
-            // Validate generated code before accepting it
-            const validation = CodeValidator.validate(code);
+                  const { code, thinking, model } = generationResult;
 
-            if (!validation.valid) {
-              Logger.warn('RalphLoop', `Candidate ${i} validation failed: ${validation.errors.join('; ')}`);
-              // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
-              if (process.env.NODE_ENV !== 'test') {
-                await metaHarness.onGenerationComplete({
-                  success: false,
-                  model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-                  domain: normalizedOptions.collabDomain || 'p5',
-                  prompt: prompt,
-                  code: code,
-                  error: `Validation failed: ${validation.errors.join('; ')}`,
-                  duration: Date.now() - startTime,
-                });
-              }
-              // Skip this candidate - don't add to candidates list
-              continue;
-            }
+                  // Validate generated code before accepting it
+                  const validation = CodeValidator.validate(code);
 
-            const candidateCode = validation.cleanedCode;
+                  if (!validation.valid) {
+                    Logger.warn('RalphLoop', `Candidate ${index} validation failed: ${validation.errors.join('; ')}`);
+                    // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
+                    if (process.env.NODE_ENV !== 'test') {
+                      await metaHarness.onGenerationComplete({
+                        success: false,
+                        model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+                        domain: normalizedOptions.collabDomain || 'p5',
+                        prompt: prompt,
+                        code: code,
+                        error: `Validation failed: ${validation.errors.join('; ')}`,
+                        duration: Date.now() - startTime,
+                      });
+                    }
+                    // Skip this candidate - don't add to candidates list
+                    return undefined;
+                  }
 
-            // Check code completeness (structural - braces, parens balanced)
-            const isComplete = RalphLoop.isCodeComplete(candidateCode);
+                  const candidateCode = validation.cleanedCode;
 
-            // Quick score for candidate selection (simpler than full evaluation)
-            // We'll do full evaluation on the best candidate
-            const quickScore = isComplete ? 0.5 : 0.3; // Basic completeness bonus
+                  // Check code completeness (structural - braces, parens balanced)
+                  const isComplete = RalphLoop.isCodeComplete(candidateCode);
 
-            candidates.push({
-              code: candidateCode,
-              score: quickScore, // Will be replaced with full score
-              issues: [],
-              index: i,
-              thinking,
-              model,
-            });
-          } catch (candidateError) {
-            Logger.warn('RalphLoop', `Candidate ${i} generation failed: ${formatError('RalphLoop', candidateError)}`);
-            lastGenerationError = candidateError instanceof Error ? candidateError : new Error(String(candidateError));
-            // Continue to next candidate
-            if (!normalizedOptions.tolerateErrors) {
-              throw candidateError;
+                  // Quick score for candidate selection (simpler than full evaluation)
+                  // We'll do full evaluation on the best candidate
+                  const quickScore = isComplete ? 0.5 : 0.3; // Basic completeness bonus
+
+                  return {
+                    code: candidateCode,
+                    score: quickScore, // Will be replaced with full score
+                    issues: [],
+                    index,
+                    thinking,
+                    model,
+                  };
+                } catch (candidateError) {
+                  Logger.warn('RalphLoop', `Candidate ${index} generation failed: ${formatError('RalphLoop', candidateError)}`);
+                  lastGenerationError = candidateError instanceof Error ? candidateError : new Error(String(candidateError));
+                  // Continue to next candidate
+                  if (!normalizedOptions.tolerateErrors) {
+                    throw lastGenerationError;
+                  }
+                  return undefined;
+                }
+              })(i)
+            );
+          }
+
+          const batchResults = await Promise.all(batchPromises);
+          for (const result of batchResults) {
+            if (result) {
+              candidates.push(result);
             }
           }
         }
@@ -398,7 +433,8 @@ export class RalphLoop {
           let bestCandidate = candidates[0];
 
           if (candidates.length > 1) {
-            // Score all candidates fully to find the best
+            // Score all candidates fully to find the best using GenerationEvaluation contract
+            const candidateEvaluations: GenerationEvaluation[] = [];
             for (let i = 0; i < candidates.length; i++) {
               const candidate = candidates[i];
               try {
@@ -431,17 +467,36 @@ export class RalphLoop {
                   normalizedOptions.evaluationStrategy ?? 'detailed',
                 );
 
+                const genEval: GenerationEvaluation = {
+                  score: quickEvaluation.score,
+                  confidence: 1,
+                  failureClass: 'none',
+                  repairAdvice: quickEvaluation.issues?.[0]
+                    ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                    : undefined,
+                };
+
+                candidate.genEval = genEval;
                 candidate.score = quickEvaluation.score;
                 candidate.issues = quickEvaluation.issues ?? [];
-
-                if (candidate.score > bestCandidate.score) {
-                  bestCandidate = candidate;
-                }
+                candidateEvaluations.push(genEval);
               } catch (scoringError) {
                 Logger.warn('RalphLoop', `Failed to score candidate ${candidate.index}: ${formatError('RalphLoop', scoringError)}`);
-                // Keep the existing score, continue to next candidate
+                const fallbackEval: GenerationEvaluation = {
+                  score: candidate.score,
+                  confidence: 0,
+                  failureClass: 'scorer',
+                };
+                candidate.genEval = fallbackEval;
+                candidateEvaluations.push(fallbackEval);
               }
             }
+
+            const { winnerIndex } = harnessTools.rankCandidates(
+              candidates.map(c => c.code),
+              candidateEvaluations,
+            );
+            bestCandidate = candidates[winnerIndex] ?? candidates[0];
 
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.(`Selected candidate ${bestCandidate.index + 1}/${numCandidates} (score: ${bestCandidate.score.toFixed(2)})`);
@@ -500,6 +555,8 @@ export class RalphLoop {
           evaluation = {
             score: bestCandidate?.score ?? 0,
             issues: bestCandidate?.issues ?? [],
+            dimensions: {},
+            repairAdvice: bestCandidate?.genEval?.repairAdvice,
           };
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.(`Using pre-evaluated score: ${evaluation.score.toFixed(2)}`);
@@ -984,6 +1041,7 @@ export class RalphLoop {
             if (await heap.isOverCapacity()) {
               const mill = new CompostMill(new LLMClient({ role: 'generator' }), compostConfig);
               await mill.digest();
+              compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
               eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
                 stage: 'auto-digest',
                 message: 'Heap at capacity — triggered auto-digest',

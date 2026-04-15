@@ -120,6 +120,45 @@ export class LLMClient {
   /** Circuit breakers per provider for fault isolation */
   private breakers = new Map<string, CircuitBreaker>();
 
+  private formatFallbackFailure(model: string, error: unknown): string {
+    const reason = error instanceof Error ? error.message : String(error);
+    return `${model}: ${reason}`;
+  }
+
+  private withFallbackDiagnostics(primaryError: unknown, failures: string[]): Error {
+    const suffix = failures.length > 0
+      ? ` Fallbacks exhausted (${failures.join(' | ')})`
+      : '';
+
+    if (primaryError instanceof LLMError) {
+      return new LLMError(
+        `${primaryError.message}${suffix}`,
+        primaryError.provider,
+        primaryError.statusCode,
+        primaryError.retryable,
+      );
+    }
+
+    if (primaryError instanceof Error) {
+      return new Error(`${primaryError.message}${suffix}`, { cause: primaryError });
+    }
+
+    return new Error(`Unknown error${suffix}`);
+  }
+
+  private parseToolArguments(raw: string, toolName: string): Record<string, unknown> {
+    try {
+      const parsed = JSON.parse(raw);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+      throw new Error('arguments must be a JSON object');
+    } catch (error) {
+      const reason = error instanceof Error ? error.message : String(error);
+      throw new Error(`Tool ${toolName} arguments invalid: ${reason}`);
+    }
+  }
+
   constructor(config?: Partial<LLMConfig>) {
     this.role = config?.role;
 
@@ -611,6 +650,7 @@ export class LLMClient {
           signal,
         };
 
+        const fallbackFailures: string[] = [];
         for (const fallback of fallbacks) {
           try {
             Logger.info('LLMClient.fallback', `Trying fallback: ${fallback.getModel()}`);
@@ -622,14 +662,15 @@ export class LLMClient {
             Logger.info('LLMClient.fallback', `Fallback succeeded: ${fallback.getModel()}`);
             return mapped;
           } catch (fallbackErr) {
+            fallbackFailures.push(this.formatFallbackFailure(fallback.getModel(), fallbackErr));
             Logger.info('LLMClient.fallback',
               `Fallback ${fallback.getModel()} failed: ${fallbackErr instanceof Error ? fallbackErr.message : 'unknown'}`);
             continue;
           }
         }
 
-        // All fallbacks exhausted — throw original error
-        throw primaryError;
+        // All fallbacks exhausted — preserve the primary error and add fallback provenance.
+        throw this.withFallbackDiagnostics(primaryError, fallbackFailures);
       });
 
       // Write to cache on success
@@ -805,6 +846,7 @@ export class LLMClient {
           signal,
         };
 
+        const fallbackFailures: string[] = [];
         for (const fallback of fallbacks) {
           try {
             Logger.info('LLMClient.fallback', `complete() trying fallback: ${fallback.getModel()}`);
@@ -817,12 +859,13 @@ export class LLMClient {
               return { text: fbResult.value.content, success: true as const };
             }
           } catch (err) {
+            fallbackFailures.push(this.formatFallbackFailure(fallback.getModel(), err));
             Logger.debug('LLMClient', 'Fallback provider failed in complete():', err);
             continue;
           }
         }
 
-        throw primaryError;
+        throw this.withFallbackDiagnostics(primaryError, fallbackFailures);
       });
 
       eventBus.emit(EventTypes.LLM_RESPONSE, 'LLMClient', {
@@ -991,8 +1034,7 @@ export class LLMClient {
         }
 
         try {
-          let args: Record<string, unknown>;
-          try { args = JSON.parse(tc.arguments); } catch { args = {}; }
+          const args = this.parseToolArguments(tc.arguments, tc.name);
           const toolResult = await options.toolExecutor(tc.name, args);
           toolResults.push({ toolCallId: tc.id, result: toolResult });
           conversationMessages.push({ role: 'assistant', content: `Called ${tc.name}(${tc.arguments})` });

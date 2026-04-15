@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-12
-**Status:** 330+ commits, bounded-loop rescue branch prepared
-**Branch:** rescue/pr139-bounded-loop
+**Date:** 2026-04-15
+**Status:** Mainline clean; PR backlog closed; ROI salvage branch prepared
+**Branch:** salvage/roi-finish-20260415
 
 ---
 
@@ -20,6 +20,26 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **Ralph Loop** iterative refinement
 - **Bounded-loop runtime packets** with explicit focus, verification intent, and resumable no-change classification
 - **Worktree Isolation** - Multi-agent development workflow
+
+### Git Hygiene Finish Pass (2026-04-15)
+
+The repository was reduced to a simple finish-line model:
+
+| Bucket | Meaning | Action |
+|--------|---------|--------|
+| `main` | Shipping truth | Keep clean and synced with `origin/main` |
+| Merge candidates | Small, focused branches with non-main value | Cherry-pick into reviewed salvage branches |
+| Reference/archive | Broad experiments, compatibility matrices, rescue lanes | Keep only while they answer a current question |
+| Abandoned/stale | Run-complete `liminal/sess-*`, gone upstreams, superseded PRs | Delete after patch-equivalence or explicit rejection |
+
+High-ROI salvage applied in `salvage/roi-finish-20260415`:
+- `fix/ascii-generation-quality`: single-generation utility can target arbitrary LM Studio model IDs.
+- `fix/llm-fallback-observability`: fallback exhaustion now reports each failed fallback, and malformed tool-call arguments are surfaced instead of silently becoming `{}`.
+
+Security triage result:
+- `agent-security-hardening` A1-A9 patches are already patch-equivalent to `main`; no hidden security value remains there.
+- `tmp/free-main` URL-validator security slice is superseded by current `main`, which already has injectable DNS lookup, IPv6 localhost handling, and degraded-DNS logging.
+- `security/redteam-remediation-20260409` remains a broad security/adapters lane and should be reviewed separately, not mixed into the small ROI salvage branch.
 
 ---
 

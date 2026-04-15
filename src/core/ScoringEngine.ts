@@ -637,8 +637,13 @@ export async function scoreRenderedEvidence(
   if (!llm) {
     return {
       score: 0.5,
-      confidence: 0.5,
-      failureClass: 'none',
+      confidence: 0,
+      failureClass: 'scorer',
+      repairAdvice: {
+        issue: 'Evaluator LLM is unavailable for rendered-evidence scoring',
+        fix: 'Verify LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY are configured correctly, or switch to legacy evaluation mode',
+        constraint: 'Evaluator LLM must be reachable for rendered-evidence scoring',
+      },
     };
   }
 
@@ -664,8 +669,13 @@ Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omi
     if (!jsonMatch) {
       return {
         score: 0.5,
-        confidence: 0.5,
-        failureClass: 'none',
+        confidence: 0,
+        failureClass: 'scorer',
+        repairAdvice: {
+          issue: 'Evaluator LLM response could not be parsed',
+          fix: 'Retry the evaluation or verify the evaluator model returns valid JSON',
+          constraint: 'Evaluator must return a parseable JSON object',
+        },
       };
     }
     const parsed = JSON.parse(jsonMatch[0]);
@@ -692,8 +702,13 @@ Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omi
     Logger.warn('ScoringEngine', 'Rendered evidence LLM scoring failed:', error instanceof Error ? error.message : error);
     return {
       score: 0.5,
-      confidence: 0.5,
-      failureClass: 'none',
+      confidence: 0,
+      failureClass: 'scorer',
+      repairAdvice: {
+        issue: 'Evaluator LLM scoring failed during execution',
+        fix: 'Check network connectivity and evaluator credentials, or fall back to legacy evaluation mode',
+        constraint: 'Evaluator LLM must complete successfully for rendered-evidence scoring',
+      },
     };
   }
 }

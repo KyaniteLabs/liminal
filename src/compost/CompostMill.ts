@@ -435,6 +435,15 @@ export class CompostMill {
     return this.seedBank.count();
   }
 
+  /** Export normalized generation materials (seeds + DNA) for prompt enhancement. */
+  async getGenerationMaterials(domainHint?: string, topK = 5): Promise<import('./types.js').GenerationMaterials> {
+    const seeds = await this.getTopSeeds(topK);
+    const dna = [...generatorRegistry.getAllDNA().entries()]
+      .filter(([domain]) => !domainHint || domain.toLowerCase().includes(domainHint.toLowerCase()))
+      .map(([, value]) => value);
+    return { seeds, dna, seedCount: seeds.length, dnaCount: dna.length };
+  }
+
   /** Get current mill status. */
   async statusAsync(): Promise<MillStatus> {
     const [heapSize, heapFiles, seedCount] = await Promise.all([

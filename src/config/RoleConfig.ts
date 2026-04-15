@@ -303,6 +303,17 @@ export function getFallbacks(
 }
 
 /**
+ * Get a single role's resolved config from an already-loaded roles record.
+ * Returns undefined if the role was not configured.
+ */
+export function getRoleConfig(
+  role: ModelRole,
+  roles: Partial<Record<ModelRole, ResolvedRoleConfig>>,
+): ResolvedRoleConfig | undefined {
+  return roles[role];
+}
+
+/**
  * Format role config for display.
  */
 export function formatRoleConfig(roles: Record<ModelRole, ResolvedRoleConfig>): string {

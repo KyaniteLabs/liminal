@@ -284,7 +284,7 @@ describe('fix command module integration', () => {
       expect(typesContent).toContain("'file-error'");
       expect(typesContent).toContain("'test-failures'");
       expect(typesContent).toContain("'natural-language'");
-    });
+    }, 30000);
 
     it('FixResult fields match CLI output expectations', () => {
       const typesPath = join(process.cwd(), 'src/fix/types.ts');

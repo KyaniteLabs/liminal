@@ -1,0 +1,46 @@
+DF3 Verified Integration Program — Progress Log
+===============================================
+
+2026-04-14 — PHASE 1 COMPLETE
+-------------------------------
+Branch: df3-vip-p1-20260414
+Verification: npm run verify:integration — 25/25 test files, 304 passed, 1 skipped, 0 TS errors
+
+Commits:
+- 8989406a — HeadlessRenderer.renderWithEvidence normalization
+- c94a4d5b — ScoringEngine.scoreRenderedEvidence entrypoint
+- 228ce5f5 — GeneratorHarnessTools failure classification (classifyFailureForEvaluation, buildFailureEvaluation)
+- eea10e6f — RalphLoop eval modes (legacy / auto / strict-browser) with infraUnavailable fallback
+
+Fix applied during verification:
+- test/integration/generator-renderer.test.js had parse errors from literal \n characters and describe.skipIf evaluating before env vars were cleared. Replaced with runtime skipIfNoLLM() pattern.
+
+Key learnings:
+- Auto/strict-browser modes must fallback to legacy ONLY on infraUnavailable, not on candidateFailure.
+- RenderEvidence contract (infraUnavailable vs candidateFailure) is the critical boundary between harness and loop.
+- Integration tests need env-guard patterns that evaluate at test runtime, not module load time.
+
+Current focus: PHASE 2 — Single-Round DF3 Repair
+
+2026-04-14 — PHASE 2 COMPLETE
+-------------------------------
+Branch: df3-vip-p1-20260414
+Verification: npm run verify:integration — 25/25 test files, 304 passed, 1 skipped, 0 TS errors
+
+Commits:
+- cda7c6c2 — docs: add progress.txt and fix generator-renderer test skip pattern
+- f059d454 — feat(scoring): emit bounded concreteRepairAdvice from scoreRenderedEvidence
+- 8dca6879 — feat(harness): add buildRepairPacket with repeated-failure detection
+- 268e9905 — feat(loop): implement LIMINAL_REPAIR_MODE=single-round with incumbent preservation
+- 9fe57a13 — fix: resolve TypeScript build errors
+
+Key learnings:
+- ScoreRenderedEvidence now requests repairAdvice from LLM when score < 0.7 and provides
+  heuristic repairAdvice for candidateFailure fast path.
+- GeneratorHarnessTools.buildRepairPacket compacts evaluation into injectable prompt text
+  with escalation when the same failure class appears >= 2 times in history.
+- RalphLoop single-round repair runs after initial evaluation, only when score < threshold.
+  Incumbent preservation: repair candidate replaces original only when repairScore >= incumbentScore.
+- Repair evaluation uses the same eval path (legacy/auto/strict-browser) as the original candidate.
+
+Current focus: PHASE 3 — Make Auto Path the Production Default

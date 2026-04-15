@@ -1,6 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import {
   GeneratorHarnessTools,
+  classifyFailureForEvaluation,
+  buildFailureEvaluation,
   type FailureClassification,
 } from '../../../src/generators/GeneratorHarnessTools.js';
 
@@ -370,6 +372,74 @@ describe('GeneratorHarnessTools', () => {
   });
 
   // -------------------------------------------------------------------------
+  // buildRepairPacket()
+  // -------------------------------------------------------------------------
+
+  describe('buildRepairPacket', () => {
+    it('returns empty string when evaluation has no repairAdvice', () => {
+      const packet = tools.buildRepairPacket({ score: 0, confidence: 1, failureClass: 'render' });
+      expect(packet).toBe('');
+    });
+
+    it('builds compact repair packet from repairAdvice', () => {
+      const packet = tools.buildRepairPacket({
+        score: 0.3,
+        confidence: 0.8,
+        failureClass: 'validator',
+        repairAdvice: {
+          issue: 'Missing required API',
+          fix: 'Add the required API calls',
+          constraint: 'Keep it under 50 lines',
+        },
+      });
+      expect(packet).toContain('[repair] issue: Missing required API');
+      expect(packet).toContain('[repair] fix: Add the required API calls');
+      expect(packet).toContain('[repair] constraint: Keep it under 50 lines');
+    });
+
+    it('detects repeated failures and adds escalation hint', () => {
+      const history = [
+        { score: 0.2, confidence: 1, failureClass: 'validator' as const },
+        { score: 0.1, confidence: 1, failureClass: 'validator' as const },
+      ];
+      const packet = tools.buildRepairPacket(
+        {
+          score: 0,
+          confidence: 1,
+          failureClass: 'validator',
+          repairAdvice: {
+            issue: 'Missing API',
+            fix: 'Add API',
+            constraint: 'Complete artifact',
+          },
+        },
+        history
+      );
+      expect(packet).toContain('[repair] escalation: This failure has occurred 2 times');
+    });
+
+    it('does not escalate when repeated count is below threshold', () => {
+      const history = [
+        { score: 0.2, confidence: 1, failureClass: 'validator' as const },
+      ];
+      const packet = tools.buildRepairPacket(
+        {
+          score: 0,
+          confidence: 1,
+          failureClass: 'validator',
+          repairAdvice: {
+            issue: 'Missing API',
+            fix: 'Add API',
+            constraint: 'Complete artifact',
+          },
+        },
+        history
+      );
+      expect(packet).not.toContain('escalation');
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // recordSuccess / getSuccessSummary
   // -------------------------------------------------------------------------
 
@@ -558,6 +628,97 @@ describe('GeneratorHarnessTools', () => {
       }
       const joined = [...seen].join(' ');
       expect(joined).toMatch(/second <!DOCTYPE html>|inside a <script> block/);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // classifyFailureForEvaluation
+  // ---------------------------------------------------------------------------
+
+  describe('classifyFailureForEvaluation', () => {
+    it('returns render when context.renderFailed is true', () => {
+      expect(classifyFailureForEvaluation('unknown', { renderFailed: true })).toBe('render');
+    });
+
+    it('returns validator when context.validationFailed is true', () => {
+      expect(classifyFailureForEvaluation('unknown', { validationFailed: true })).toBe('validator');
+    });
+
+    it('returns scorer when context.scoreFailed is true', () => {
+      expect(classifyFailureForEvaluation('unknown', { scoreFailed: true })).toBe('scorer');
+    });
+
+    it('context precedence: render beats validation and score', () => {
+      expect(
+        classifyFailureForEvaluation('unknown', {
+          renderFailed: true,
+          validationFailed: true,
+          scoreFailed: true,
+        })
+      ).toBe('render');
+    });
+
+    it('maps runtime_error to validator', () => {
+      expect(classifyFailureForEvaluation('runtime_error')).toBe('validator');
+    });
+
+    it('maps wrapper_contract_mismatch to validator', () => {
+      expect(classifyFailureForEvaluation('wrapper_contract_mismatch')).toBe('validator');
+    });
+
+    it('maps wrong_domain to validator', () => {
+      expect(classifyFailureForEvaluation('wrong_domain')).toBe('validator');
+    });
+
+    it('maps missing_required_api to validator', () => {
+      expect(classifyFailureForEvaluation('missing_required_api')).toBe('validator');
+    });
+
+    it('maps too_short to validator', () => {
+      expect(classifyFailureForEvaluation('too_short')).toBe('validator');
+    });
+
+    it('maps truncated to validator', () => {
+      expect(classifyFailureForEvaluation('truncated')).toBe('validator');
+    });
+
+    it('maps empty_after_reasoning_strip to validator', () => {
+      expect(classifyFailureForEvaluation('empty_after_reasoning_strip')).toBe('validator');
+    });
+
+    it('returns none for unmapped failure without context', () => {
+      expect(classifyFailureForEvaluation('unknown')).toBe('none');
+    });
+
+    it('returns none for arbitrary string without context', () => {
+      expect(classifyFailureForEvaluation('some_random_failure')).toBe('none');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // buildFailureEvaluation
+  // ---------------------------------------------------------------------------
+
+  describe('buildFailureEvaluation', () => {
+    it('returns score 0, confidence 1, and mapped failureClass', () => {
+      const result = buildFailureEvaluation('too_short');
+      expect(result.score).toBe(0);
+      expect(result.confidence).toBe(1);
+      expect(result.failureClass).toBe('validator');
+    });
+
+    it('respects context flags', () => {
+      const result = buildFailureEvaluation('unknown', { scoreFailed: true });
+      expect(result.score).toBe(0);
+      expect(result.confidence).toBe(1);
+      expect(result.failureClass).toBe('scorer');
+    });
+
+    it('returns none for unmapped failures without context', () => {
+      const result = buildFailureEvaluation('unknown');
+      expect(result.failureClass).toBe('none');
+      expect(result.score).toBe(0);
+      expect(result.confidence).toBe(1);
     });
   });
 });

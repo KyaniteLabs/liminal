@@ -18,6 +18,9 @@
  * - OrganismLoop: organism mode
  */
 
+import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
+import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
+import { GeneratorHarnessTools } from '../generators/GeneratorHarnessTools.js';
 import { Domain } from '../types/domains.js';
 import { PromptStore } from './PromptStore.js';
 import path from 'node:path';
@@ -67,6 +70,11 @@ import { Provider } from '../types/providers.js';
 import { LiminalError } from '../errors/index.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
+
+// DF3 shared contracts: imported for downstream use, referenced to satisfy TS
+void getEvalMode;
+void getRepairMode;
+void 0 as unknown as GenerationEvaluation;
 
 export class RalphLoop {
   /**
@@ -244,6 +252,11 @@ export class RalphLoop {
     const scoreHistory: number[] = [];
     const CONVERGENCE_WINDOW = 3;
     const CONVERGENCE_THRESHOLD = 0.01;
+
+    // DF3 Phase 2: repair history for repeated-failure detection
+    const repairHistory: GenerationEvaluation[] = [];
+
+    const evalMode = getEvalMode();
 
     // Main loop
     try {
@@ -515,15 +528,179 @@ export class RalphLoop {
             }
           }
 
-          const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-          evaluation = await scoringEngine.scoreReliable(
-            {
-              output: currentCode,
-              criteria: normalizedOptions.evaluationCriteria,
-              lirContext,
-            },
-          );
+          // DF3 Phase 1: eval-mode-aware scoring with browser-render evidence
+          if (evalMode === 'auto' || evalMode === 'strict-browser') {
+            const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+            const renderer = HeadlessRenderer.getInstance();
+            const renderEvidence = await renderer.renderWithEvidence(currentCode, {
+              domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+              width: 400,
+              height: 400,
+            });
+
+            if (renderEvidence.infraUnavailable) {
+              if (evalMode === 'strict-browser') {
+                throw new LiminalError(
+                  'Browser rendering infrastructure is unavailable in strict-browser mode',
+                  'ERR_RENDER_INFRA_UNAVAILABLE',
+                );
+              }
+              Logger.warn('RalphLoop', 'Browser render infra unavailable, falling back to legacy scoring');
+              const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+              evaluation = await scoringEngine.scoreReliable(
+                {
+                  output: currentCode,
+                  criteria: normalizedOptions.evaluationCriteria,
+                  lirContext,
+                },
+              );
+            } else {
+              const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+              const genEval = await scoreRenderedEvidence(
+                renderEvidence,
+                currentCode,
+                prompt,
+                undefined,
+              );
+              evaluation = {
+                score: genEval.score,
+                issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
+                dimensions: {},
+              };
+            }
+          } else {
+            // legacy mode
+            const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+            evaluation = await scoringEngine.scoreReliable(
+              {
+                output: currentCode,
+                criteria: normalizedOptions.evaluationCriteria,
+                lirContext,
+              },
+            );
+          }
         }
+
+        // DF3 Phase 2: Single-Round Repair
+        const repairMode = getRepairMode();
+        if (repairMode === 'single-round' && evaluation.score < normalizedOptions.minQualityScore) {
+          if (normalizedOptions.chatMode) {
+            normalizedOptions.onThought?.('Attempting single-round repair...');
+          }
+
+          try {
+            const harness = new GeneratorHarnessTools({ seededRandom: Math.random });
+
+            // Build repair packet with repeated-failure detection
+            const genEval: GenerationEvaluation = {
+              score: evaluation.score,
+              confidence: 1,
+              failureClass: 'none',
+              repairAdvice: evaluation.issues && evaluation.issues.length > 0
+                ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                : undefined,
+            };
+            const repairPacket = harness.buildRepairPacket(genEval, repairHistory);
+
+            if (repairPacket) {
+              const repairPrompt = `${usedPrompt}\n\n---\n${repairPacket}`;
+              const repairResult = await generator.generate(repairPrompt, loadedPrompt, true);
+
+              if (!repairResult.needsClarification) {
+                const repairValidation = CodeValidator.validate(repairResult.code);
+                if (repairValidation.valid) {
+                  const repairCode = repairValidation.cleanedCode;
+
+                  // Evaluate repair candidate using the same path
+                  let repairEval: { score: number; issues?: string[]; dimensions?: Record<string, number> };
+                  let repairLirContext: LIREvaluationContext | undefined;
+
+                  if (normalizedOptions.lirEnabled) {
+                    try {
+                      const genParser = new GeneratedCodeParser();
+                      const lirTokens = genParser.parse(repairCode);
+                      if (lirTokens.length > 0) {
+                        repairLirContext = {
+                          lirTokens,
+                          visualIntent: normalizedOptions.visualMappingParams as any,
+                          lirEnabled: true,
+                        };
+                      }
+                    } catch {
+                      // ignore LIR parse errors for repair
+                    }
+                  }
+
+                  if (evalMode === 'auto' || evalMode === 'strict-browser') {
+                    const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+                    const renderer = HeadlessRenderer.getInstance();
+                    const renderEvidence = await renderer.renderWithEvidence(repairCode, {
+                      domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+                      width: 400,
+                      height: 400,
+                    });
+
+                    if (renderEvidence.infraUnavailable) {
+                      const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                      repairEval = await scoringEngine.scoreReliable({
+                        output: repairCode,
+                        criteria: normalizedOptions.evaluationCriteria,
+                        lirContext: repairLirContext,
+                      });
+                    } else {
+                      const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+                      const genEvalRepair = await scoreRenderedEvidence(
+                        renderEvidence,
+                        repairCode,
+                        prompt,
+                        undefined,
+                      );
+                      repairEval = {
+                        score: genEvalRepair.score,
+                        issues: genEvalRepair.repairAdvice ? [genEvalRepair.repairAdvice.issue] : [],
+                        dimensions: {},
+                      };
+                    }
+                  } else {
+                    const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                    repairEval = await scoringEngine.scoreReliable({
+                      output: repairCode,
+                      criteria: normalizedOptions.evaluationCriteria,
+                      lirContext: repairLirContext,
+                    });
+                  }
+
+                  // Incumbent preservation: only replace if repair is better or equal
+                  if (repairEval.score >= evaluation.score) {
+                    // eslint-disable-next-line require-atomic-updates -- sequential loop, no concurrent mutation
+                    currentCode = repairCode;
+                    evaluation = repairEval;
+                    if (normalizedOptions.chatMode) {
+                      normalizedOptions.onThought?.(`Repair improved score to ${evaluation.score.toFixed(2)}`);
+                    }
+                  } else if (normalizedOptions.chatMode) {
+                    normalizedOptions.onThought?.(`Repair did not improve (score ${repairEval.score.toFixed(2)}), keeping incumbent`);
+                  }
+                }
+              }
+            }
+          } catch (repairError) {
+            Logger.warn('RalphLoop', 'Single-round repair failed:', repairError instanceof Error ? repairError.message : repairError);
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.('Repair attempt failed, continuing with incumbent');
+            }
+          }
+        }
+
+        // Record evaluation for repeated-failure detection
+        repairHistory.push({
+          score: evaluation.score,
+          confidence: 1,
+          failureClass: 'none',
+          repairAdvice: evaluation.issues && evaluation.issues.length > 0
+            ? { issue: evaluation.issues[0], fix: 'Address the reported issue.', constraint: 'Complete artifact.' }
+            : undefined,
+        });
 
         // Aesthetic guardrails: run AestheticCritic if enabled
         if (normalizedOptions.useAestheticGuardrails) {
@@ -606,7 +783,8 @@ export class RalphLoop {
         }
 
         // Render-based scoring: if enabled, render code and blend with syntactic score
-        if (normalizedOptions.useRenderScoring && candidates.length > 0) {
+        // Skip the legacy RenderAndScorePipeline in auto/strict-browser modes to avoid double work
+        if (normalizedOptions.useRenderScoring && candidates.length > 0 && evalMode === 'legacy') {
           try {
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Running render-based quality analysis...');

@@ -1,5 +1,5 @@
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
-
+import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
 
 /**
  * GeneratorHarnessTools - Thin domain-contract harness helpers
@@ -29,6 +29,55 @@ export type FailureClass =
   | 'wrapper_contract_mismatch'
   | 'runtime_error'
   | 'unknown';
+
+// ---------------------------------------------------------------------------
+// Failure Classification Normalization (DF3 Flywheel Unlock)
+// ---------------------------------------------------------------------------
+
+/**
+ * Map domain-specific FailureClass values to the shared GenerationEvaluation contract.
+ */
+export function classifyFailureForEvaluation(
+  failure: FailureClass | string,
+  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
+): GenerationEvaluation['failureClass'] {
+  if (context?.renderFailed) {
+    return 'render';
+  }
+  if (context?.validationFailed) {
+    return 'validator';
+  }
+  if (context?.scoreFailed) {
+    return 'scorer';
+  }
+
+  switch (failure) {
+    case 'runtime_error':
+    case 'wrapper_contract_mismatch':
+    case 'wrong_domain':
+    case 'missing_required_api':
+    case 'too_short':
+    case 'truncated':
+    case 'empty_after_reasoning_strip':
+      return 'validator';
+    default:
+      return 'none';
+  }
+}
+
+/**
+ * Build a minimal GenerationEvaluation pick from a classified failure.
+ */
+export function buildFailureEvaluation(
+  failure: FailureClass | string,
+  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
+): Pick<GenerationEvaluation, 'score' | 'confidence' | 'failureClass'> {
+  return {
+    score: 0,
+    confidence: 1,
+    failureClass: classifyFailureForEvaluation(failure, context),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Domain Skeleton & API Data
@@ -516,6 +565,42 @@ export class GeneratorHarnessTools {
       return this.successMemory.filter(m => m.domain === domain);
     }
     return [...this.successMemory];
+  }
+
+  // -------------------------------------------------------------------------
+  // buildRepairPacket() -- compact repair packet with repeated-failure detection
+  // -------------------------------------------------------------------------
+
+  /**
+   * Build a compact repair packet from a GenerationEvaluation.
+   *
+   * @param evaluation - the evaluation containing repairAdvice
+   * @param history - optional prior evaluations to detect repeated failures
+   * @returns a compact string suitable for injection into a generation prompt
+   */
+  buildRepairPacket(
+    evaluation: GenerationEvaluation,
+    history?: GenerationEvaluation[]
+  ): string {
+    const advice = evaluation.repairAdvice;
+    if (!advice) return '';
+
+    const parts: string[] = [];
+    parts.push(`[repair] issue: ${advice.issue}`);
+    parts.push(`[repair] fix: ${advice.fix}`);
+    parts.push(`[repair] constraint: ${advice.constraint}`);
+
+    if (history && history.length > 0) {
+      const repeated = history.filter(
+        h => h.failureClass === evaluation.failureClass ||
+          (h.repairAdvice && advice.issue && h.repairAdvice.issue.toLowerCase() === advice.issue.toLowerCase())
+      ).length;
+      if (repeated >= 2) {
+        parts.push(`[repair] escalation: This failure has occurred ${repeated} times. Try a fundamentally different approach.`);
+      }
+    }
+
+    return parts.join('\n');
   }
 
   // -------------------------------------------------------------------------

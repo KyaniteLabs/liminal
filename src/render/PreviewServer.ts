@@ -8,12 +8,14 @@ import express, { Express } from 'express';
 import path from 'path';
 import { Server } from 'http';
 import type { AddressInfo } from 'node:net';
+import { readdirSync, statSync } from 'node:fs';
 import helmet from 'helmet';
 import { doubleCsrf } from 'csrf-csrf';
 import cookieParser from 'cookie-parser';
-import { Gallery } from '../gallery/Gallery.js';
+import { Gallery, type GalleryIteration } from '../gallery/Gallery.js';
+import { LiminalFS } from '../fs/LiminalFS.js';
 import { Exporter } from '../export/Exporter.js';
-import { normalizePath } from '../utils/normalizePath.js';
+import { normalizePath, assertSafeSegment } from '../utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { eventBus } from '../core/EventBus.js';
@@ -219,6 +221,74 @@ export class PreviewServer {
       }
     });
 
+    // ── LiminalFS-backed gallery endpoints ────────────────────────────
+
+    this.app.get('/api/liminal/gallery/:project', (req, res) => {
+      try {
+        const project = decodeURIComponent(req.params.project);
+        assertSafeSegment(project, 'Project name');
+        const liminalFs = LiminalFS.open(process.cwd());
+        try {
+          const refsDir = path.join(process.cwd(), '.liminal', 'refs', 'gallery', project);
+          const files = readdirSync(refsDir);
+          const versionFiles = files.filter(f => /^v(\d+)\.json$/.test(f));
+
+          const iterations: GalleryIteration[] = [];
+          for (const file of versionFiles) {
+            const match = file.match(/^v(\d+)\.json$/);
+            if (!match) continue;
+            const version = parseInt(match[1], 10);
+            const ref = liminalFs.readRef(`gallery/${project}/v${version}`);
+            if (!ref) continue;
+            const content = liminalFs.readArtifact(ref);
+            if (!content) continue;
+            const raw = content.toString('utf-8');
+            const stat = statSync(path.join(refsDir, file));
+            const timestamp = stat.mtime?.toISOString() ?? new Date().toISOString();
+            const parsed = this.parseGalleryContent(raw, version, timestamp);
+            if (parsed) iterations.push(parsed);
+          }
+
+          iterations.sort((a, b) => a.version - b.version);
+          return res.json({ iterations });
+        } finally {
+          liminalFs.close();
+        }
+      } catch (err) {
+        Logger.error('PreviewServer', 'Failed to load LiminalFS gallery:', err);
+        return res.status(500).json({ error: 'Failed to load gallery' });
+      }
+    });
+
+    this.app.get('/api/liminal/gallery/:project/:version', (req, res) => {
+      try {
+        const project = decodeURIComponent(req.params.project);
+        const versionParam = req.params.version;
+        const version = parseInt(versionParam, 10);
+        if (!Number.isInteger(version) || version <= 0) {
+          return res.status(400).json({ error: 'Invalid version' });
+        }
+        assertSafeSegment(project, 'Project name');
+        const liminalFs = LiminalFS.open(process.cwd());
+        try {
+          const ref = liminalFs.readRef(`gallery/${project}/v${version}`);
+          if (!ref) {
+            return res.status(404).json({ error: 'Version not found' });
+          }
+          const content = liminalFs.readArtifact(ref);
+          if (!content) {
+            return res.status(404).json({ error: 'Artifact not found' });
+          }
+          return res.setHeader('Content-Type', 'text/plain').send(content.toString('utf-8'));
+        } finally {
+          liminalFs.close();
+        }
+      } catch (err) {
+        Logger.error('PreviewServer', 'Failed to load LiminalFS version:', err);
+        return res.status(500).json({ error: 'Failed to load version' });
+      }
+    });
+
     this.app.post('/api/preview/versions', (req, res) => {
       const iterations = Array.isArray(req.body?.iterations) ? req.body.iterations : [];
       this.setAllVersions(iterations.map((it: { version?: number; code?: string; timestamp?: string }) => ({
@@ -375,6 +445,31 @@ export class PreviewServer {
 
   private generateHTML(sketchCode: string): string {
     return HTMLWrapper.wrap(sketchCode || '');
+  }
+
+  /**
+   * Parse raw artifact content into a GalleryIteration.
+   * Handles organism JSON and plain p5 code.
+   */
+  private parseGalleryContent(raw: string, version: number, timestamp: string): GalleryIteration | null {
+    const trimmed = raw.trim();
+    if (!trimmed) return null;
+    try {
+      const data = JSON.parse(trimmed);
+      if (data && typeof data === 'object' && data.type === 'organism' &&
+          data.musicCode != null && data.visualCode != null) {
+        return {
+          version,
+          type: 'organism',
+          musicCode: String(data.musicCode),
+          visualCode: String(data.visualCode),
+          timestamp,
+        };
+      }
+    } catch {
+      // Not JSON — treat as p5 code
+    }
+    return { version, code: trimmed, timestamp };
   }
 
   async start(port: number = this.DEFAULT_PORT): Promise<boolean> {

@@ -21,6 +21,8 @@
 import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
 import type { GenerationEvaluation, ConcreteRepairAdvice } from '../core/types/GenerationEvaluation.js';
 import { GeneratorHarnessTools } from '../generators/GeneratorHarnessTools.js';
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
+import type { EntropyResult } from '../entropy/types.js';
 import { Domain } from '../types/domains.js';
 import { PromptStore } from './PromptStore.js';
 import path from 'node:path';
@@ -339,10 +341,34 @@ export class RalphLoop {
         }
 
         // Best-of-N: Generate multiple candidates with bounded parallelism
-        const numCandidates = adjustedNumCandidates;
+        let numCandidates = adjustedNumCandidates;
         const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string; genEval?: GenerationEvaluation }> = [];
         let lastGenerationError: Error | undefined;
-        const harnessTools = new GeneratorHarnessTools({ seededRandom: Math.random });
+
+        // Harvest entropy before generation if enabled
+        let entropyEngine: MetabolicEntropyEngine | undefined;
+        let entropyResult: EntropyResult | undefined;
+        if (normalizedOptions.useEntropy) {
+          try {
+            entropyEngine = new MetabolicEntropyEngine({
+              eventStore: { getRecent: () => [] },
+              heap: { listFiles: async () => [] },
+              telemetry: { getSummary: () => ({ successRate: 0, avgDurationMs: 0, totalTasks: 0, totalViolations: 0 }) },
+            });
+            entropyResult = await entropyEngine.harvest();
+          } catch (err) {
+            Logger.warn('RalphLoop', 'Entropy harvest failed:', err);
+          }
+        }
+
+        // Use entropy for candidate search breadth (bounded)
+        if (entropyResult && entropyResult.seed % 2 === 0) {
+          numCandidates += 1;
+        }
+
+        const harnessTools = entropyEngine
+          ? new GeneratorHarnessTools({ entropySource: entropyEngine })
+          : new GeneratorHarnessTools({ seededRandom: Math.random });
         const maxParallelism = normalizedOptions.maxParallelism ?? 3;
 
         for (let batchStart = 0; batchStart < numCandidates; batchStart += maxParallelism) {
@@ -354,7 +380,7 @@ export class RalphLoop {
               (async (index: number) => {
                 try {
                   const diversityPrompt = normalizedOptions.swarmDiversify
-                    ? harnessTools.buildDiversityPrompt(usedPrompt, index, numCandidates)
+                    ? harnessTools.buildDiversityPrompt(usedPrompt, index, numCandidates, entropyResult?.phrase)
                     : usedPrompt;
                   // Generate code (bypass cache to ensure fresh generation each iteration)
                   // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
@@ -691,7 +717,10 @@ export class RalphLoop {
             const repairPacket = harness.buildRepairPacket(genEval, repairHistory);
 
             if (repairPacket) {
-              const repairPrompt = `${usedPrompt}\n\n---\n${repairPacket}`;
+              let repairPrompt = `${usedPrompt}\n\n---\n${repairPacket}`;
+              if (entropyResult) {
+                repairPrompt = harness.modulateRepairPrompt(repairPrompt, entropyResult.phrase);
+              }
               const repairResult = await generator.generate(repairPrompt, loadedPrompt, true);
 
               if (!repairResult.needsClarification) {

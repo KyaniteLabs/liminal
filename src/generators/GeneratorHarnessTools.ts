@@ -639,10 +639,23 @@ export class GeneratorHarnessTools {
   }
 
   /**
+   * Modulate a repair prompt with an optional entropy-driven exploration phrase.
+   */
+  modulateRepairPrompt(basePrompt: string, entropyPhrase?: string): string {
+    if (entropyPhrase && entropyPhrase.trim().length > 0) {
+      return `${basePrompt}\n\n---\nEntropy-driven exploration: consider ${entropyPhrase.trim()}`;
+    }
+    return basePrompt;
+  }
+
+  /**
    * Build a perturbed variant of a prompt to encourage candidate diversity.
    */
-  buildDiversityPrompt(basePrompt: string, index: number, total: number): string {
+  buildDiversityPrompt(basePrompt: string, index: number, total: number, entropyPhrase?: string): string {
     if (total <= 1) return basePrompt;
+    if (entropyPhrase && entropyPhrase.trim().length > 0) {
+      return `${basePrompt}\n\n---\nVariation hint: ${entropyPhrase.trim()}`;
+    }
     const perturbations = [
       'Try a different creative approach.',
       'Emphasize visual contrast and bold shapes.',

@@ -39,6 +39,13 @@ export interface RoleProviderConfig {
   streaming?: boolean;
 }
 
+export interface EvolutionTunables {
+  enabled?: boolean;
+  temperatureRange?: { min: number; max: number };
+  maxTokensRange?: { min: number; max: number };
+  mutationRate?: number;
+}
+
 export interface RoleConfigFile {
   roles: {
     generator: RoleProviderConfig;
@@ -49,6 +56,8 @@ export interface RoleConfigFile {
   fallbacks?: Partial<Record<ModelRole, RoleProviderConfig[]>>;
   /** Capability overrides — takes priority over static CapabilityRegistry */
   capabilities?: Record<string, Partial<ModelCapabilities>>;
+  /** Evolution tuning parameters */
+  evolution?: EvolutionTunables;
 }
 
 export interface ResolvedRoleConfig {
@@ -280,6 +289,7 @@ function mergeConfigs(base: RoleConfigFile | null, overlay: RoleConfigFile | nul
     },
     fallbacks: { ...base.fallbacks, ...overlay.fallbacks },
     capabilities: { ...base.capabilities, ...overlay.capabilities },
+    evolution: { ...base.evolution, ...overlay.evolution },
   };
 }
 
@@ -300,6 +310,18 @@ export function getFallbacks(
   config: RoleConfigFile | null,
 ): RoleProviderConfig[] {
   return config?.fallbacks?.[role] || [];
+}
+
+/**
+ * Get evolution tunables with sensible defaults.
+ */
+export function getEvolutionTunables(config: RoleConfigFile | null): EvolutionTunables {
+  return {
+    enabled: config?.evolution?.enabled ?? false,
+    temperatureRange: config?.evolution?.temperatureRange ?? { min: 0.0, max: 1.0 },
+    maxTokensRange: config?.evolution?.maxTokensRange ?? { min: 512, max: 8192 },
+    mutationRate: config?.evolution?.mutationRate ?? 0.1,
+  };
 }
 
 /**

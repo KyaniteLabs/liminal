@@ -479,6 +479,41 @@ export class IntuitionEngine {
   }
 
   // ---------------------------------------------------------------------------
+  // Hint API
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Generate a bounded, advisory hint string based on historical patterns.
+   * Suitable for injection into an LLM prompt.
+   */
+  generateHint(domain: string, maxLength = 200): string {
+    let hint = '';
+
+    // Procedural tier first
+    const shortcut = this.proceduralTier.lookup(domain);
+    if (shortcut && shortcut.confidence === 'high') {
+      hint = `Historical pattern: model=${shortcut.model}, strategy=${shortcut.strategy} tends to produce quality ~${shortcut.expectedQuality.toFixed(2)} for this domain.`;
+    } else if (this.modelSampler.isReady()) {
+      const bestModel = this.modelSampler.bestByMean();
+      const bestStrategy = this.strategySampler.bestByMean();
+      if (bestModel || bestStrategy) {
+        const parts: string[] = [];
+        if (bestModel) parts.push(`model=${bestModel}`);
+        if (bestStrategy) parts.push(`strategy=${bestStrategy}`);
+        hint = `Historical pattern: ${parts.join(', ')} shows the best mean performance for this domain.`;
+      }
+    }
+
+    if (!hint) return '';
+
+    if (hint.length > maxLength) {
+      hint = hint.slice(0, maxLength - 3) + '...';
+    }
+
+    return hint;
+  }
+
+  // ---------------------------------------------------------------------------
   // Component accessors
   // ---------------------------------------------------------------------------
 

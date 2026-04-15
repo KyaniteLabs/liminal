@@ -2,7 +2,7 @@ export type EvalMode = 'legacy' | 'auto' | 'strict-browser';
 export type RepairMode = 'off' | 'single-round';
 
 export function getEvalMode(): EvalMode {
-  return (process.env.LIMINAL_EVAL_MODE as EvalMode) || 'legacy';
+  return (process.env.LIMINAL_EVAL_MODE as EvalMode) || 'auto';
 }
 
 export function getRepairMode(): RepairMode {

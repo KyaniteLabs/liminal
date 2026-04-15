@@ -92,6 +92,8 @@ export interface LoopOptions {
   useAestheticModel?: boolean;
   /** Auto-feed quality outputs to compost heap and trigger digest when full */
   autoCompost?: boolean;
+  /** Enable compost-based prompt enhancement even when autoCompost is off */
+  useCompostEnhancement?: boolean;
   /** Enable chat mode - provides callbacks for real-time UI updates */
   chatMode?: boolean;
   /** Callback called after each iteration with full iteration context */
@@ -106,6 +108,10 @@ export interface LoopOptions {
   useAestheticGuardrails?: boolean;
   /** Enable intuition-based quality scoring from compressed experience */
   useIntuition?: boolean;
+  /** Enable entropy-based generation and scoring */
+  useEntropy?: boolean;
+  /** Enable evolution-based generation and scoring */
+  useEvolution?: boolean;
   /** Configuration for aesthetic critics */
   aestheticConfig?: { preset?: string; strictness?: 'lenient' | 'moderate' | 'strict'; constraints?: Record<string, unknown> };
   /** Audio-derived visual parameters for prompt injection */
@@ -124,6 +130,10 @@ export interface LoopOptions {
   render?: RenderOptions;
   /** Number of candidates to generate per iteration (Best-of-N). Default: 1 (disabled) */
   numCandidates?: number;
+  /** Maximum parallel candidates to generate at once (bounded concurrency). Default: 3 */
+  maxParallelism?: number;
+  /** Inject slight prompt/temperature jitter per candidate to increase diversity */
+  swarmDiversify?: boolean;
   /** Git integration configuration */
   git?: import('../git/types.js').GitConfig;
   /** Enable render-based scoring - renders code in headless browser and scores visual/audio output */
@@ -188,6 +198,8 @@ export interface NormalizedLoopOptions extends LoopOptions {
   guidanceEngine?: any;
   useAestheticGuardrails: boolean;
   useIntuition: boolean;
+  useEntropy: boolean;
+  useEvolution: boolean;
   aestheticConfig: Record<string, unknown>;
   visualMappingParams?: Record<string, unknown>;
   voiceFile?: string;
@@ -245,6 +257,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     archivePath: options?.archivePath,
     useAestheticModel: options?.useAestheticModel ?? false,
     autoCompost: options?.autoCompost ?? false,
+    useCompostEnhancement: options?.useCompostEnhancement ?? false,
     chatMode: options?.chatMode ?? false,
     onIteration: options?.onIteration,
     onThought: options?.onThought,
@@ -252,6 +265,8 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     guidanceEngine: options?.guidanceEngine,
     useAestheticGuardrails: options?.useAestheticGuardrails ?? false,
     useIntuition: options?.useIntuition ?? false,
+    useEntropy: options?.useEntropy ?? false,
+    useEvolution: options?.useEvolution ?? false,
     aestheticConfig: (options?.aestheticConfig ?? {}) as Record<string, unknown>,
     visualMappingParams: options?.visualMappingParams,
     voiceFile: options?.voiceFile,
@@ -263,6 +278,8 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     debug: normalizeDebugOptions(options?.debug),
     render: normalizeRenderOptions(options?.render),
     numCandidates: Math.max(1, options?.numCandidates ?? 1),
+    maxParallelism: Math.max(1, options?.maxParallelism ?? 3),
+    swarmDiversify: options?.swarmDiversify ?? false,
     useRenderScoring: options?.useRenderScoring ?? false,
     renderScoringOptions: options?.renderScoringOptions ?? {},
     git: options?.git ?? undefined,

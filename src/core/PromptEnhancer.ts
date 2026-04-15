@@ -26,15 +26,19 @@ export async function enhancePrompt(
   usedPrompt: string,
   loadedPrompt: string,
   options: NormalizedLoopOptions,
-  archiveLearning: ArchiveLearning | null
+  archiveLearning: ArchiveLearning | null,
+  compostMaterials?: import('../compost/types.js').GenerationMaterials,
+  intuitionHint?: string
 ): Promise<string> {
   let enhanced = usedPrompt;
 
-  // 1. Inject a random compost seed for creative cross-pollination
+  // 1. Inject a compost seed for creative cross-pollination
   try {
-    const compostConfig = mergeCompostConfig();
-    const seedBank = new SeedBank(compostConfig);
-    const seed = await seedBank.getRandomSeed();
+    const seed = compostMaterials?.seeds?.[0] ?? await (async () => {
+      const compostConfig = mergeCompostConfig();
+      const seedBank = new SeedBank(compostConfig);
+      return seedBank.getRandomSeed();
+    })();
     if (seed) {
       enhanced += '\n\n---\nCreative seed from compost:\n' + formatSeedForPrompt(seed, 500);
     }
@@ -82,6 +86,11 @@ export async function enhancePrompt(
     } catch (err) {
       Logger.warn('RalphLoop', 'Archive learning injection failed:', err);
     }
+  }
+
+  // 4. Inject intuition hint if available
+  if (intuitionHint) {
+    enhanced += '\n\n---\nIntuition hint (advisory): ' + intuitionHint;
   }
 
   return enhanced;

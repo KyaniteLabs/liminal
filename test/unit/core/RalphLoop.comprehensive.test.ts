@@ -1320,10 +1320,8 @@ describe('RalphLoop — comprehensive', () => {
         _disableIterationExtension: true,
       });
 
-      // buildDiversityPrompt should have been called
-      expect(result_final => {
-        // Just verify it doesn't throw — the mock handles diversity
-      });
+      // Verify the run completed with swarmDiversify — generator was called
+      expect(mockGeneratorGenerate).toHaveBeenCalledTimes(1);
     });
   });
 

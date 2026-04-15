@@ -267,8 +267,7 @@ export class ChatCLI {
           if (session && session.messages.length > 0) {
             const lastMessage = session.messages[session.messages.length - 1];
             if (lastMessage.role === 'assistant') {
-              // eslint-disable-next-line no-console
-              console.log(`\nAgent: ${lastMessage.content}\n`);
+                Logger.info('ChatCLI', `\nAgent: ${lastMessage.content}\n`);
             }
           }
         } catch (error) {

@@ -1,3 +1,4 @@
+import { Logger } from '../utils/Logger.js';
 import { TuiEventStream } from './TuiEventStream.js';
 import { TuiSessionStore } from './TuiSessionStore.js';
 import { ConversationManager } from '../chat/ConversationManager.js';
@@ -56,7 +57,7 @@ export function isGenerationRequest(text: string): boolean {
 }
 
 function logBridge(event: string, fields: Record<string, unknown>): void {
-  console.info(`[TuiBridgeService] ${event} ${JSON.stringify(fields)}`); // eslint-disable-line no-console
+  Logger.info('TuiBridgeService', `${event} ${JSON.stringify(fields)}`);
 }
 
 export class TuiBridgeService {

@@ -32,6 +32,30 @@ describe('P5Validator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    it('should allow p5 keyboard globals in raw global-mode sketches', () => {
+      const code = `
+        function setup() {
+          createCanvas(windowWidth, windowHeight);
+        }
+
+        function draw() {
+          background(10);
+          if (keyIsPressed && key === 'r') {
+            fill(255, 40, 80);
+          } else if (keyCode === LEFT_ARROW || mouseButton === LEFT) {
+            fill(40, 120, 255);
+          } else {
+            fill(255);
+          }
+          circle(mouseX, mouseY, 36);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
     it('should validate valid raw p5.js with createCanvas only', () => {
       const code = `
         createCanvas(400, 400);
@@ -53,6 +77,61 @@ describe('P5Validator', () => {
       const result = P5Validator.validate(code);
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('p5.js code must contain at least one of: function setup(), const setup = () =>..., function draw(), const draw = () =>..., or createCanvas()');
+    });
+
+    it('should reject p5-shaped output that is not valid JavaScript', () => {
+      const code = `
+        function setup() {
+          createCanvas(windowWidth, windowHeight);
+        }
+
+        function draw() {
+          background(183, 236, 248);
+          for (let i = 0; i < particles.length; i++) {
+            let particle = particles[i];
+            vector v = particle.velocity;
+            magnitude(v) *= 0.96;
+          }
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(error => error.includes('invalid JavaScript syntax'))).toBe(true);
+    });
+
+    it('should reject ES module imports in raw global-mode p5.js', () => {
+      const code = `
+        import * as p5 from 'p5';
+
+        function setup() {
+          createCanvas(400, 400);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors.some(error => error.includes('invalid JavaScript syntax'))).toBe(true);
+    });
+
+    it('should reject undeclared sketch state references before runtime', () => {
+      const code = `
+        function setup() {
+          createCanvas(windowWidth, windowHeight);
+        }
+
+        function draw() {
+          background(240);
+          particleCount = 15;
+          for (let i = 0; i < particleCount; i++) {
+            particles[i].show();
+          }
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('p5.js code references undeclared identifier: particles');
     });
 
     it('should reject empty code', () => {
@@ -127,6 +206,24 @@ describe('P5Validator', () => {
       expect(result.errors).toContain('HTML-wrapped p5.js must include p5.js CDN');
     });
 
+    it('should reject incomplete HTML-wrapped p5.js documents', () => {
+      const code = `<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+  <script>
+    function setup() {
+      createCanvas(400, 400);
+    }
+  </script>`;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('HTML-wrapped p5.js must include closing </body> and </html> tags');
+    });
+
     it('should validate p5.js with instance mode', () => {
       const code = `
         const myp5 = new p5((p) => {
@@ -156,6 +253,30 @@ describe('P5Validator', () => {
           rect(100, 100, 200, 150);
           fill(0, 0, 255);
           ellipse(400, 300, 100, 100);
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should allow standard p5 color helpers and blend constants', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+          pixelDensity(1);
+          createGraphics(100, 100);
+        }
+
+        function draw() {
+          const a = color(10, 20, 30);
+          const b = color(40, 50, 60);
+          const c = lerpColor(a, b, 0.5);
+          blendMode(ADD);
+          blendMode(MULTIPLY);
+          background(constrain(red(c), 0, 255), green(c), blue(c));
+          circle(200, 200, exp(1.0));
         }
       `;
 

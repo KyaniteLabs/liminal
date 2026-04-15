@@ -194,6 +194,6 @@ export class GLSLValidator {
    * Get minimum size requirement for GLSL code
    */
   static getMinSize(): number {
-    return 300; // GLSL needs uniforms, main/mainImage, and enough shader logic
+    return 800; // GLSL needs uniforms, main/mainImage, and enough shader logic
   }
 }

@@ -146,6 +146,6 @@ export class ThreeValidator {
    * Get minimum size requirement for Three.js code
    */
   static getMinSize(): number {
-    return 500; // Three.js needs scene setup, objects, and a render path
+    return 800; // Three.js needs scene setup, objects, camera, renderer, and animation loop
   }
 }

@@ -27,6 +27,13 @@ export class P5Validator {
     'noStroke', 'pixelDensity', 'pop', 'pow', 'push', 'random', 'rect', 'red', 'green', 'blue', 'lerpColor',
     'resizeCanvas', 'rotate', 'round', 'sin', 'sqrt',
     'stroke', 'strokeWeight', 'text', 'textAlign', 'textSize', 'translate', 'triangle', 'vertex',
+    // p5.sound
+    'loadSound', 'createAudio', 'getAudioContext', 'userStartAudio',
+    // Web Audio API
+    'AudioContext', 'OscillatorNode', 'AnalyserNode', 'GainNode',
+    'Float32Array', 'Float64Array', 'Int32Array', 'Uint8Array', 'Uint32Array', 'ArrayBuffer',
+    // Browser globals
+    'navigator', 'setTimeout', 'setInterval', 'clearTimeout', 'clearInterval', 'requestAnimationFrame',
   ]);
 
   private static readonly traverseAst = (

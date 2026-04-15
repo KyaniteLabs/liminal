@@ -179,10 +179,10 @@ ${P5_DRAW_BODY}}
 function setup() {
   createCanvas(400, 400);
   background(220);
-  // Initialize shapes array with special characters
-  shapes = [];
+  // Initialize particles array with special characters
+  particles = [];
   for (let i = 0; i < 30; i++) {
-    shapes.push({
+    particles.push({
       x: random(width),
       y: random(height),
       r: random(10, 50),
@@ -438,9 +438,9 @@ function draw() {
   // Special chars test: "quotes" and 'apostrophes'
   const str = "Hello \\"World\\"";
   const arr = ['a', 'b', 'c'];
-  shapes = [];
+  particles = [];
   for (let i = 0; i < 30; i++) {
-    shapes.push({
+    particles.push({
       x: random(width), y: random(height),
       size: random(5, 20), speed: random(1, 3),
       color: color(random(255), random(100, 200), random(255), 200)

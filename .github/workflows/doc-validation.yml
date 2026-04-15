@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   validate-docs:
-    runs-on: [self-hosted, macOS, ARM64, light]
+    runs-on: [self-hosted, macOS, ARM64]
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4

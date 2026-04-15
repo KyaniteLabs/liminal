@@ -1116,7 +1116,7 @@ export class RalphLoop {
           evaluation: { score: evaluation.score, issues: evaluation.issues ?? [] },
           timestamp: new Date().toISOString(),
           maxIterations: normalizedOptions.maxIterations,
-          selectedCandidateIndex: candidates.length > 0 ? winnerIndex : 0,
+          selectedCandidateIndex: candidates.length > 0 ? (candidates[winnerIndex]?.index ?? winnerIndex) : 0,
           numCandidatesGenerated: numCandidates,
         };
         ContextAccumulation.save(iterationContext);

@@ -21,6 +21,7 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { EVALUATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
+import type { RenderEvidence, GenerationEvaluation } from './types/GenerationEvaluation.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -582,5 +583,95 @@ export class ScoringEngine {
       Logger.warn('ScoringEngine', 'LLM score boost failed, returning heuristic result:', err instanceof Error ? err.message : err);
       return result;
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Rendered-evidence scoring entrypoint (DF3 Phase 1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score rendered evidence from a headless render pass.
+ *
+ * Fast paths:
+ *   - infraUnavailable → degraded evaluation (score 0, confidence 0, failureClass 'infra')
+ *   - candidateFailure → render failure (score 0, confidence 1, failureClass 'render')
+ *
+ * Otherwise, uses an LLM-based evaluator when available, or a neutral fallback.
+ */
+export async function scoreRenderedEvidence(
+  evidence: RenderEvidence,
+  code: string,
+  brief: string,
+  llmClient?: LLMClient,
+): Promise<GenerationEvaluation> {
+  if (evidence.infraUnavailable) {
+    return {
+      score: 0,
+      confidence: 0,
+      failureClass: 'infra',
+    };
+  }
+
+  if (evidence.candidateFailure) {
+    return {
+      score: 0,
+      confidence: 1,
+      failureClass: 'render',
+    };
+  }
+
+  const llm = llmClient ?? (() => {
+    try {
+      return new LLMClient({ role: 'evaluator' });
+    } catch {
+      return undefined;
+    }
+  })();
+
+  if (!llm) {
+    return {
+      score: 0.5,
+      confidence: 0.5,
+      failureClass: 'none',
+    };
+  }
+
+  const systemPrompt = `You are an expert creative artifact evaluator. Evaluate the rendered output of the provided code against the brief.
+Return ONLY a JSON object with this exact structure:
+{
+  "score": <number 0-1>,
+  "confidence": <number 0-1>,
+  "reasoning": "<brief explanation>"
+}`;
+
+  const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms`;
+
+  try {
+    const response = await llm.generate(systemPrompt, userPrompt);
+    const jsonMatch = response.code.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return {
+        score: 0.5,
+        confidence: 0.5,
+        failureClass: 'none',
+      };
+    }
+    const parsed = JSON.parse(jsonMatch[0]);
+    const score = typeof parsed.score === 'number' ? Math.max(0, Math.min(1, parsed.score)) : 0.5;
+    const confidence = typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5;
+
+    return {
+      score,
+      confidence,
+      failureClass: 'none',
+    };
+  } catch (error) {
+    Logger.warn('ScoringEngine', 'Rendered evidence LLM scoring failed:', error instanceof Error ? error.message : error);
+    return {
+      score: 0.5,
+      confidence: 0.5,
+      failureClass: 'none',
+    };
   }
 }

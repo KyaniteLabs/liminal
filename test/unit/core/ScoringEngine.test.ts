@@ -5,7 +5,7 @@
  * return values, specific assertions, and error-path coverage.
  */
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { ScoringEngine, LLMScoringStrategy } from '../../../src/core/ScoringEngine.js';
+import { ScoringEngine, LLMScoringStrategy, scoreRenderedEvidence } from '../../../src/core/ScoringEngine.js';
 import type { ScoringInput, ScoringStrategy, ScoringResult, FitnessInput } from '../../../src/core/ScoringEngine.js';
 import { Domain } from '../../../src/types/domains.js';
 
@@ -910,6 +910,117 @@ describe('ScoringEngine', () => {
         });
       }
       expect(engine.listStrategies().length).toBeGreaterThanOrEqual(27); // 7 built-in + 3 aliases + 20
+    });
+  });
+
+  // -------------------------------------------------------------------------
+  // scoreRenderedEvidence()
+  // -------------------------------------------------------------------------
+  describe('scoreRenderedEvidence()', () => {
+    it('returns infra failure when evidence.infraUnavailable is true', async () => {
+      const result = await scoreRenderedEvidence(
+        { timingMs: 0, infraUnavailable: true, candidateFailure: false },
+        'code',
+        'brief',
+      );
+      expect(result.score).toBe(0);
+      expect(result.confidence).toBe(0);
+      expect(result.failureClass).toBe('infra');
+    });
+
+    it('returns render failure when evidence.candidateFailure is true', async () => {
+      const result = await scoreRenderedEvidence(
+        { timingMs: 100, infraUnavailable: false, candidateFailure: true },
+        'code',
+        'brief',
+      );
+      expect(result.score).toBe(0);
+      expect(result.confidence).toBe(1);
+      expect(result.failureClass).toBe('render');
+    });
+
+    it('returns fallback evaluation when no LLM is available', async () => {
+      const result = await scoreRenderedEvidence(
+        { timingMs: 100, infraUnavailable: false, candidateFailure: false },
+        'code',
+        'brief',
+      );
+      expect(result.score).toBe(0.5);
+      expect(result.confidence).toBe(0.5);
+      expect(result.failureClass).toBe('none');
+    });
+
+    it('uses provided LLM and parses JSON response', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{"score":0.85,"confidence":0.9,"reasoning":"Good"}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        { timingMs: 200, infraUnavailable: false, candidateFailure: false },
+        'function setup() {}',
+        'make a sketch',
+        fakeLLM,
+      );
+      expect(result.score).toBe(0.85);
+      expect(result.confidence).toBe(0.9);
+      expect(result.failureClass).toBe('none');
+    });
+
+    it('clamps score and confidence to [0,1]', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{"score":1.5,"confidence":-0.2}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        { timingMs: 200, infraUnavailable: false, candidateFailure: false },
+        'code',
+        'brief',
+        fakeLLM,
+      );
+      expect(result.score).toBe(1);
+      expect(result.confidence).toBe(0);
+      expect(result.failureClass).toBe('none');
+    });
+
+    it('returns fallback evaluation when LLM response has no JSON object', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: 'No JSON here',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        { timingMs: 200, infraUnavailable: false, candidateFailure: false },
+        'code',
+        'brief',
+        fakeLLM,
+      );
+      expect(result.score).toBe(0.5);
+      expect(result.confidence).toBe(0.5);
+      expect(result.failureClass).toBe('none');
+    });
+
+    it('returns fallback evaluation when JSON.parse throws', async () => {
+      mockLLMClientInstance.generate.mockResolvedValue({
+        code: '{invalid json}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        { timingMs: 200, infraUnavailable: false, candidateFailure: false },
+        'code',
+        'brief',
+        fakeLLM,
+      );
+      expect(result.score).toBe(0.5);
+      expect(result.confidence).toBe(0.5);
+      expect(result.failureClass).toBe('none');
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
+        'ScoringEngine',
+        'Rendered evidence LLM scoring failed:',
+        expect.anything(),
+      );
     });
   });
 });

@@ -944,6 +944,86 @@ else if (cmd === 'fix') {
     process.exit(1);
   }
 }
+else if (cmd === 'fs') {
+  const subCmd = cmdArgs[0];
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const liminalFs = LiminalFS.open(process.cwd());
+
+  try {
+    if (subCmd === 'artifacts') {
+      // List all refs (which point to artifacts) from .liminal/refs/
+      const fs = await import('fs');
+      const refsDir = path.join(process.cwd(), '.liminal', 'refs');
+      if (!fs.existsSync(refsDir)) {
+        console.log('No artifacts found.');
+        process.exit(0);
+      }
+      const entries = fs.readdirSync(refsDir).filter(f => f.endsWith('.json'));
+      if (entries.length === 0) {
+        console.log('No artifacts found.');
+        process.exit(0);
+      }
+      console.log(`\n📦 Artifacts (${entries.length}):\n`);
+      for (const entry of entries) {
+        const ref = JSON.parse(fs.readFileSync(path.join(refsDir, entry), 'utf-8'));
+        const shortHash = ref.hash ? ref.hash.slice(0, 12) : '????';
+        console.log(`  ${entry.replace('.json', '')}  ${ref.kind}  ${shortHash}…`);
+      }
+      console.log('');
+    } else if (subCmd === 'refs') {
+      const refName = cmdArgs[1];
+      if (!refName) {
+        // List all refs
+        const fs = await import('fs');
+        const refsDir = path.join(process.cwd(), '.liminal', 'refs');
+        if (!fs.existsSync(refsDir)) {
+          console.log('No refs found.');
+          process.exit(0);
+        }
+        const entries = fs.readdirSync(refsDir).filter(f => f.endsWith('.json'));
+        console.log(`\n🔖 Refs (${entries.length}):\n`);
+        for (const entry of entries) {
+          console.log(`  ${entry.replace('.json', '')}`);
+        }
+        console.log('');
+      } else {
+        const ref = liminalFs.readRef(refName);
+        if (!ref) {
+          console.error(`Ref not found: ${refName}`);
+          process.exit(1);
+        }
+        console.log(JSON.stringify(ref, null, 2));
+      }
+    } else if (subCmd === 'runs') {
+      // Query EventStore for run_record events
+      const projectStore = liminalFs.getProjectStore();
+      const eventStore = projectStore.getEventStore();
+      // EventStore has queryEvents method — use it to filter run_record events
+      const events = eventStore.queryEvents({ type: 'run_record' });
+      if (!events || events.length === 0) {
+        console.log('No runs recorded.');
+        process.exit(0);
+      }
+      console.log(`\n🏃 Runs (${events.length}):\n`);
+      for (const event of events) {
+        const data = event.payload || event.data || event;
+        const runId = data.runId || 'unknown';
+        const status = data.status || 'unknown';
+        const project = data.project || '';
+        console.log(`  ${String(runId).slice(0, 12)}…  ${String(status).padEnd(10)}  ${project}`);
+      }
+      console.log('');
+    } else {
+      console.log('Usage: liminal fs <artifacts|refs|runs>');
+      console.log('  liminal fs artifacts          List all tracked artifacts');
+      console.log('  liminal fs refs [name]        List refs or show specific ref');
+      console.log('  liminal fs runs               List recorded runs');
+      process.exit(1);
+    }
+  } finally {
+    liminalFs.close();
+  }
+}
 else {
   console.error('Error: --prompt is required');
   console.error('');

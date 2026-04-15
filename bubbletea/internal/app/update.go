@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
-	"github.com/charmbracelet/bubbles/spinner"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -48,7 +47,7 @@ type reconnectTickMsg struct{}
 // ── Init ──
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.TextInput.Focus(), m.createSessionCmd(), m.Spinner.Tick)
+	return tea.Batch(m.TextInput.Focus(), m.createSessionCmd())
 }
 
 func (m Model) createSessionCmd() tea.Cmd {
@@ -107,24 +106,25 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		metrics := m.layoutMetrics()
 		if !m.Ready {
-			// Initialize viewports on first resize. Viewport sizes are content sizes,
-			// not outer pane sizes. This keeps streamed responses inside panes.
-			m.ChatViewport = viewport.New(metrics.chatContentWidth, metrics.paneContentHeight)
+			m.ChatViewport = viewport.New(metrics.chatContentWidth, metrics.chatViewportHeight)
 			m.ChatViewport.Style = chatViewportStyle()
 			m.ChatViewport.SetContent("Welcome to Liminal. Type a message to begin.")
 
-			m.PreviewViewport = viewport.New(metrics.previewContentWidth, metrics.previewViewHeight)
+			m.PreviewViewport = viewport.New(metrics.operatorContentWidth, metrics.operatorViewportHeight)
 			m.PreviewViewport.Style = previewViewportStyle()
-			m.PreviewViewport.SetContent("(no preview)")
+			m.PreviewViewport.SetContent(m.renderOperatorSurface(metrics.operatorContentWidth))
 
-			m.TextInput.Width = metrics.chatContentWidth
+			m.TextInput.SetWidth(metrics.chatContentWidth)
+			m.TextInput.SetHeight(ChatInputHeight)
 			m.Ready = true
 		} else {
 			m.ChatViewport.Width = metrics.chatContentWidth
-			m.ChatViewport.Height = metrics.paneContentHeight
-			m.PreviewViewport.Width = metrics.previewContentWidth
-			m.PreviewViewport.Height = metrics.previewViewHeight
-			m.TextInput.Width = metrics.chatContentWidth
+			m.ChatViewport.Height = metrics.chatViewportHeight
+			m.PreviewViewport.Width = metrics.operatorContentWidth
+			m.PreviewViewport.Height = metrics.operatorViewportHeight
+			m.TextInput.SetWidth(metrics.chatContentWidth)
+			m.TextInput.SetHeight(ChatInputHeight)
+			m.refreshViewports()
 		}
 		return m, nil
 
@@ -151,19 +151,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case bridgeEventMsg:
 		m.ApplyEvent(msg.event)
 		m.refreshViewports()
-		if m.shouldSpin() {
-			var cmd tea.Cmd
-			m.Spinner, cmd = m.Spinner.Update(m.Spinner.Tick())
-			return m, cmd
-		}
-		return m, nil
-
-	case spinner.TickMsg:
-		var cmd tea.Cmd
-		m.Spinner, cmd = m.Spinner.Update(msg)
-		if m.shouldSpin() {
-			return m, cmd
-		}
 		return m, nil
 
 	case streamDoneMsg:
@@ -176,7 +163,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case streamDisconnectedMsg:
 		m.Connected = false
 		m.Reconnecting = true
-		m.updateChatViewport("Reconnecting to bridge...")
+		reason := "unknown error"
+		if msg.err != nil {
+			reason = msg.err.Error()
+		}
+		m.updateChatViewport("Disconnected: " + reason + " — reconnecting...")
 		return m, m.reconnectCmd()
 
 	case reconnectTickMsg:
@@ -200,12 +191,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		switch msg.String() {
+		case "ctrl+y":
+			m.copyLastResponse()
+			m.refreshViewports()
+			return m, nil
+		case "ctrl+t":
+			m.TimelineVisible = !m.TimelineVisible
+			m.refreshViewports()
+			return m, nil
+		case "ctrl+a":
+			m.ArtifactsVisible = !m.ArtifactsVisible
+			m.refreshViewports()
+			return m, nil
+		case "ctrl+e":
+			m.PreviewVisible = !m.PreviewVisible
+			m.refreshViewports()
+			return m, nil
+		}
+
+		if msg.String() == "?" {
+			m.HelpVisible = !m.HelpVisible
+			m.refreshViewports()
+			return m, nil
+		}
+
 		// If textinput is focused and it's a regular key, pass to textinput first
 		if m.FocusPane == FocusChat {
-			switch msg.String() {
-			case "ctrl+c":
-				return m, tea.Quit
-			case "enter":
+			if msg.Type == tea.KeyEnter {
+				if msg.Alt {
+					var cmd tea.Cmd
+					m.TextInput, cmd = m.TextInput.Update(tea.KeyMsg{Type: tea.KeyEnter})
+					return m, cmd
+				}
+
 				input := m.TextInput.Value()
 				if input == "" {
 					return m, nil
@@ -218,7 +237,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					Content: input,
 					Time:    time.Now(),
 				})
-				m.appendTranscript("user", input)
 
 				if !m.Connected {
 					m.updateChatViewport("Not connected to bridge.")
@@ -235,33 +253,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				m.refreshViewports()
 				return m, cmd
+			}
 
+			switch msg.String() {
+			case "ctrl+c":
+				return m, tea.Quit
 			case "tab":
-				// Switch focus to preview pane
 				m.FocusPane = FocusPreview
 				m.TextInput.Blur()
-				return m, nil
-
-			case "ctrl+e":
-				// Toggle preview visibility
-				m.PreviewVisible = !m.PreviewVisible
-				return m, nil
-			case "pgup", "ctrl+up":
-				m.ChatViewport.HalfViewUp()
-				return m, nil
-			case "pgdown", "ctrl+down":
-				m.ChatViewport.HalfViewDown()
-				return m, nil
-			case "home":
-				m.ChatViewport.GotoTop()
-				return m, nil
-			case "end":
-				m.ChatViewport.GotoBottom()
-				return m, nil
-
-			case "ctrl+y":
-				m.saveLastResponse()
-				m.refreshViewports()
 				return m, nil
 
 			case "y":
@@ -301,23 +300,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.FocusPane = FocusChat
 				m.TextInput.Focus()
 				return m, nil
-			case "ctrl+e":
-				m.PreviewVisible = !m.PreviewVisible
-				m.FocusPane = FocusChat
-				m.TextInput.Focus()
-				return m, nil
-			case "ctrl+t":
-				// Cycle tabs
-				switch m.PreviewTab {
-				case "code":
-					m.PreviewTab = "output"
-				case "output":
-					m.PreviewTab = "log"
-				default:
-					m.PreviewTab = "code"
-				}
-				m.refreshViewports()
-				return m, nil
 			case "esc":
 				m.FocusPane = FocusChat
 				m.TextInput.Focus()
@@ -331,10 +313,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	return m, tea.Batch(cmds...)
-}
-
-func (m Model) shouldSpin() bool {
-	return m.IsStreaming || m.Reconnecting || m.ActivityMessage != ""
 }
 
 // ── Viewport helpers ──
@@ -358,11 +336,7 @@ func (m *Model) refreshViewports() {
 	m.ChatViewport.SetContent(chatContent)
 	m.ChatViewport.GotoBottom()
 
-	// Rebuild preview content
-	if m.PreviewVisible {
-		previewContent := m.renderPreviewContent()
-		m.PreviewViewport.SetContent(previewContent)
-	}
+	m.PreviewViewport.SetContent(m.renderOperatorSurface(m.PreviewViewport.Width))
 }
 
 // ── Input parsing ──

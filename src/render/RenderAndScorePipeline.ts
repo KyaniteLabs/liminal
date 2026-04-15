@@ -50,6 +50,8 @@ export interface PipelineResult {
   domain: RenderDomain;
   /** Error message if failed */
   error?: string;
+  /** Non-fatal degradation warnings propagated from rendering/scoring */
+  warnings?: string[];
   /** Processing time in milliseconds */
   duration: number;
 }
@@ -129,13 +131,20 @@ export class RenderAndScorePipeline {
       }
 
       // Score visual output
+      const warnings = [...renderResult.errors];
       let visualScore: VisualScoreResult | undefined;
       if (shouldScoreVisual && renderResult.screenshot?.success) {
         try {
           visualScore = await this.visualScorer.score(renderResult.screenshot.buffer);
+          if (visualScore.warnings?.length) {
+            warnings.push(...visualScore.warnings);
+          }
         } catch (error) {
           Logger.warn('RenderAndScorePipeline', 'Visual scoring failed:', error);
+          warnings.push(`Visual scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
         }
+      } else if (shouldScoreVisual) {
+        warnings.push(`Visual scoring skipped: ${renderResult.screenshot?.error || 'screenshot unavailable'}`);
       }
 
       // Score audio output
@@ -146,9 +155,15 @@ export class RenderAndScorePipeline {
             renderResult.audio.samples,
             renderResult.audio.sampleRate
           );
+          if (audioScore.warnings?.length) {
+            warnings.push(...audioScore.warnings);
+          }
         } catch (error) {
           Logger.warn('RenderAndScorePipeline', 'Audio scoring failed:', error);
+          warnings.push(`Audio scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
         }
+      } else if (shouldScoreAudio) {
+        warnings.push(`Audio scoring skipped: ${renderResult.audio?.error || 'audio capture unavailable'}`);
       }
 
       // Calculate combined score
@@ -165,6 +180,7 @@ export class RenderAndScorePipeline {
         audio: audioScore,
         render: renderResult,
         domain,
+        warnings: warnings.length > 0 ? warnings : undefined,
         duration,
       };
     } catch (error) {
@@ -270,10 +286,18 @@ export class RenderAndScorePipeline {
     // Find best result by score
     let bestIndex = 0;
     let bestScore = results[0]?.score ?? 0;
+    let bestWarningCount = results[0]?.warnings?.length ?? 0;
 
     for (let i = 1; i < results.length; i++) {
-      if (results[i].score > bestScore) {
-        bestScore = results[i].score;
+      const candidateScore = results[i].score;
+      const candidateWarningCount = results[i].warnings?.length ?? 0;
+
+      if (
+        candidateScore > bestScore ||
+        (candidateScore === bestScore && candidateWarningCount < bestWarningCount)
+      ) {
+        bestScore = candidateScore;
+        bestWarningCount = candidateWarningCount;
         bestIndex = i;
       }
     }

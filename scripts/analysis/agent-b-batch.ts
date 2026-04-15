@@ -16,8 +16,12 @@ const DOMAINS: Record<string, { prompt: string; minSize: number }> = {
   tone: { prompt: 'Create an ambient drone synthesizer with reverb', minSize: 300 },
   html: { prompt: 'Create a landing page with hero section and call to action', minSize: 300 },
   ascii: { prompt: 'Create ASCII art of a mountain landscape', minSize: 300 },
-  remotion: { prompt: 'Create a typing text animation video component', minSize: 500 },
+  revideo: { prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle', minSize: 500 },
 };
+
+function normalizeDomain(domainName: string): string {
+  return domainName === 'remotion' ? 'revideo' : domainName;
+}
 
 const MODELS: Record<string, { name: string; tag: string }> = {
   'granite-1b': { name: 'granite4:1b', tag: 'granite-1b' },
@@ -42,7 +46,8 @@ function saveResults(results: Array<any>) {
 }
 
 async function runTest(domainName: string, modelTag: string) {
-  const domain = DOMAINS[domainName];
+  const normalizedDomainName = normalizeDomain(domainName);
+  const domain = DOMAINS[normalizedDomainName];
   const model = MODELS[modelTag];
   
   if (!domain || !model) {
@@ -51,19 +56,19 @@ async function runTest(domainName: string, modelTag: string) {
   }
   
   const startTime = Date.now();
-  const outputPath = `./landing-live/b-${domainName}-${modelTag}.html`;
+  const outputPath = `./landing-live/b-${normalizedDomainName}-${modelTag}.html`;
   
   process.env.LIMINAL_LLM_BASE_URL = 'http://localhost:11434/v1';
   process.env.LIMINAL_LLM_MODEL = model.name;
   
-  console.log(`\n🧪 ${model.name} × ${domainName}`);
+  console.log(`\n🧪 ${model.name} × ${normalizedDomainName}`);
   console.log(`   Output: ${outputPath}`);
   
   try {
     const result = await run(domain.prompt, {
       maxIterations: 3,
       output: outputPath,
-      project: `b-${domainName}-${modelTag}`,
+      project: `b-${normalizedDomainName}-${modelTag}`,
     });
     
     const duration = Date.now() - startTime;

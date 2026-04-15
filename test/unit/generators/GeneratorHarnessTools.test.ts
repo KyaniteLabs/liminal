@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import {
   GeneratorHarnessTools,
   type FailureClassification,
@@ -25,31 +25,7 @@ describe('GeneratorHarnessTools', () => {
   let tools: GeneratorHarnessTools;
 
   beforeEach(() => {
-    tools = new GeneratorHarnessTools({ seededRandom: makeSeededRng(0) });
-  });
-
-  it('throws when neither seededRandom nor entropySource is provided', () => {
-    expect(() => new GeneratorHarnessTools()).toThrow(
-      'GeneratorHarnessTools: either seededRandom or entropySource must be provided'
-    );
-  });
-
-  it('uses entropySource when provided', () => {
-    let callCount = 0;
-    const mockEntropy = {
-      nextFloat: () => [0.1, 0.5, 0.9, 0.3, 0.7][callCount++ % 5],
-    } as unknown as import('../../../src/entropy/MetabolicEntropyEngine.js').MetabolicEntropyEngine;
-
-    const tools1 = new GeneratorHarnessTools({ entropySource: mockEntropy });
-    const tools2 = new GeneratorHarnessTools({ entropySource: mockEntropy });
-
-    const ctx1 = tools1.prepare('tone');
-    callCount = 0;
-    const ctx2 = tools2.prepare('tone');
-
-    expect(ctx1.skeletonHint).toBe(ctx2.skeletonHint);
-    expect(ctx1.sampledApis).toEqual(ctx2.sampledApis);
-    expect(ctx1.hardeningHints).toEqual(ctx2.hardeningHints);
+    tools = new GeneratorHarnessTools(makeSeededRng(0));
   });
 
   // -------------------------------------------------------------------------
@@ -482,9 +458,9 @@ describe('GeneratorHarnessTools', () => {
 
   describe('determinism', () => {
     it('same seed produces same skeleton/API/hint selections', () => {
-      const tools1 = new GeneratorHarnessTools({ seededRandom: makeSeededRng(0) });
+      const tools1 = new GeneratorHarnessTools(makeSeededRng(0));
       const ctx1 = tools1.prepare('tone');
-      const tools2 = new GeneratorHarnessTools({ seededRandom: makeSeededRng(0) });
+      const tools2 = new GeneratorHarnessTools(makeSeededRng(0));
       const ctx2 = tools2.prepare('tone');
       expect(ctx1.skeletonHint).toBe(ctx2.skeletonHint);
       expect(ctx1.sampledApis).toEqual(ctx2.sampledApis);
@@ -492,7 +468,7 @@ describe('GeneratorHarnessTools', () => {
     });
 
     it('prepare with Math.random produces valid context', () => {
-      const randomTools = new GeneratorHarnessTools({ seededRandom: Math.random });
+      const randomTools = new GeneratorHarnessTools();
       const ctx = randomTools.prepare('tone');
       expect(ctx.domain).toBe('tone');
       expect(typeof ctx.skeletonHint).toBe('string');
@@ -560,6 +536,28 @@ describe('GeneratorHarnessTools', () => {
         expect(ctx.skeletonHint).toContain('stack');
         expect(ctx.skeletonHint).toContain('.out()');
       }
+    });
+
+    it('Strudel hardening hints mention quoted pattern strings or complete stack structure', () => {
+      const seen = new Set<string>();
+      for (let seed = 0; seed < 12; seed++) {
+        const seededTools = new GeneratorHarnessTools(makeSeededRng(seed));
+        const ctx = seededTools.prepare('strudel');
+        for (const hint of ctx.hardeningHints) seen.add(hint);
+      }
+      const joined = [...seen].join(' ');
+      expect(joined).toMatch(/quoted pattern strings|truncated stack|close it and include complete child patterns/);
+    });
+
+    it('Three hardening hints mention avoiding nested HTML documents inside scripts', () => {
+      const seen = new Set<string>();
+      for (let seed = 0; seed < 12; seed++) {
+        const seededTools = new GeneratorHarnessTools(makeSeededRng(seed));
+        const ctx = seededTools.prepare('three');
+        for (const hint of ctx.hardeningHints) seen.add(hint);
+      }
+      const joined = [...seen].join(' ');
+      expect(joined).toMatch(/second <!DOCTYPE html>|inside a <script> block/);
     });
   });
 });

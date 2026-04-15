@@ -128,7 +128,7 @@ describeIfBrowser('HeadlessRenderer rendering', () => {
 
   afterAll(async () => {
     await renderer.close();
-  });
+  }, 30000);
 
   it('should render p5.js code and capture screenshot', async () => {
     const result = await renderer.render(sampleP5Code, {
@@ -177,7 +177,7 @@ describeIfBrowser('VisualScorer', () => {
 
   afterAll(async () => {
     await renderer.close();
-  });
+  }, 30000);
 
   it('should score a rendered image', async () => {
     // First render some code

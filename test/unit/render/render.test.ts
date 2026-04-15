@@ -90,6 +90,7 @@ describe('AudioScorer', () => {
     expect(result.metrics.dynamicRange).toBe(0);
     expect(result.metrics.onsetCount).toBe(0);
     expect(result.metrics.zeroCrossingRate).toBe(0);
+    expect(result.warnings).toEqual(['Audio scoring skipped: no samples provided']);
   });
 
   it('returns valid scores for a sine wave', () => {
@@ -232,6 +233,7 @@ describe('VisualScorer', () => {
     expect(result.composition).toBe(0);
     expect(result.contrast).toBe(0);
     expect(result.metrics.uniqueColors).toBe(0);
+    expect(result.warnings).toEqual(['Visual scoring skipped: screenshot buffer too small']);
   });
 
   it('returns zero scores for empty buffer', async () => {
@@ -324,6 +326,375 @@ describe('HeadlessRenderer', () => {
     expect(renderer.isInitialized()).toBe(false);
     HeadlessRenderer.instance = null;
   });
+
+  it('recreates browser context when browser exists but context is missing', async () => {
+    HeadlessRenderer.instance = null;
+    const renderer = HeadlessRenderer.getInstance() as HeadlessRenderer & {
+      browser: { newContext: () => Promise<unknown> };
+      context: unknown;
+    };
+
+    const newContext = { close: vi.fn().mockResolvedValue(undefined) };
+    renderer.browser = {
+      newContext: vi.fn().mockResolvedValue(newContext),
+    } as unknown as { newContext: () => Promise<unknown> };
+    renderer.context = null;
+
+    await renderer.initialize();
+
+    expect(renderer.browser.newContext).toHaveBeenCalled();
+    expect(renderer.context).toBe(newContext);
+    HeadlessRenderer.instance = null;
+  });
+
+  it('surfaces missing canvas warnings for visual domains without failing the render outright', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+      }>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(false);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.from([1]),
+      width: 100,
+      height: 100,
+      success: true,
+    });
+
+    const result = await renderer.render('const scene = new THREE.Scene();', {
+      domain: 'three',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain('[warn] Canvas not found or timed out for three render');
+    expect(result.errors).toContain('Canvas not found or timed out for three render');
+  });
+
+  it('closes render pages by default after capture', async () => {
+    const fakePage = {
+      setViewportSize: vi.fn(async () => {}),
+      setContent: vi.fn(async () => {}),
+      on: vi.fn(),
+      waitForFunction: vi.fn(async () => {}),
+      waitForTimeout: vi.fn(async () => {}),
+      $: vi.fn(async () => null),
+      screenshot: vi.fn(async () => Buffer.alloc(100)),
+      evaluate: vi.fn(async () => ({ samples: [], sampleRate: 44100, duration: 0.1, hasAudio: false, warnings: [] })),
+      close: vi.fn(async () => {}),
+    };
+
+    const renderer = HeadlessRenderer.getInstance() as unknown as {
+      browser: Record<string, unknown>;
+      context: { newPage: () => Promise<unknown> };
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<unknown>;
+    };
+
+    renderer.browser = {} as never;
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(true);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      success: true,
+      buffer: Buffer.alloc(100),
+      width: 100,
+      height: 100,
+    });
+
+    const result = await HeadlessRenderer.getInstance().render('function setup(){createCanvas(100,100)}', { domain: 'p5' });
+
+    expect(result.success).toBe(true);
+    expect(result.page).toBeUndefined();
+    expect(fakePage.close).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps render pages open when explicitly requested', async () => {
+    const fakePage = {
+      setViewportSize: vi.fn(async () => {}),
+      setContent: vi.fn(async () => {}),
+      on: vi.fn(),
+      waitForFunction: vi.fn(async () => {}),
+      waitForTimeout: vi.fn(async () => {}),
+      $: vi.fn(async () => null),
+      screenshot: vi.fn(async () => Buffer.alloc(100)),
+      evaluate: vi.fn(async () => ({ samples: [], sampleRate: 44100, duration: 0.1, hasAudio: false, warnings: [] })),
+      close: vi.fn(async () => {}),
+    };
+
+    const renderer = HeadlessRenderer.getInstance() as unknown as {
+      browser: Record<string, unknown>;
+      context: { newPage: () => Promise<unknown> };
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<unknown>;
+    };
+
+    renderer.browser = {} as never;
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(true);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      success: true,
+      buffer: Buffer.alloc(100),
+      width: 100,
+      height: 100,
+    });
+
+    const result = await HeadlessRenderer.getInstance().render('function setup(){createCanvas(100,100)}', {
+      domain: 'p5',
+      keepPageOpen: true,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.page).toBe(fakePage);
+    expect(fakePage.close).not.toHaveBeenCalled();
+  });
+
+  it('propagates screenshot failure reasons to the top-level render result', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+        error: string;
+      }>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(true);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.alloc(0),
+      width: 0,
+      height: 0,
+      success: false,
+      error: 'Screenshot failed: target page closed',
+    });
+
+    const result = await renderer.render('function setup(){createCanvas(10,10)}', {
+      domain: 'p5',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toBe('Screenshot failed: target page closed');
+    expect(result.logs).toContain('[warn] Screenshot failed: target page closed');
+    expect(result.errors).toContain('Screenshot failed: target page closed');
+  });
+
+  it('surfaces missing audio captures for audio domains', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+      }>;
+      captureAudio: () => Promise<{
+        samples: Float32Array;
+        sampleRate: number;
+        duration: number;
+        success: boolean;
+        error: string;
+      }>;
+      injectAudioCapture: () => Promise<void>;
+      triggerAudioPlayback: () => Promise<void>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(false);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.from([1]),
+      width: 100,
+      height: 100,
+      success: true,
+    });
+    renderer.captureAudio = vi.fn().mockResolvedValue({
+      samples: new Float32Array(0),
+      sampleRate: 44100,
+      duration: 1,
+      success: false,
+      error: 'No audio captured during render window',
+      warnings: [],
+    });
+    renderer.injectAudioCapture = vi.fn().mockResolvedValue(undefined);
+    renderer.triggerAudioPlayback = vi.fn().mockResolvedValue(undefined);
+
+    const result = await renderer.render('const synth = new Tone.Synth();', {
+      domain: 'tone',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.audio?.success).toBe(false);
+    expect(result.logs).toContain('[warn] No audio captured during render window');
+    expect(result.errors).toContain('No audio captured during render window');
+  });
+
+  it('surfaces audio playback trigger failures for audio domains', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+      }>;
+      captureAudio: () => Promise<{
+        samples: Float32Array;
+        sampleRate: number;
+        duration: number;
+        success: boolean;
+      }>;
+      injectAudioCapture: () => Promise<void>;
+      triggerAudioPlayback: () => Promise<string>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(false);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.from([1]),
+      width: 100,
+      height: 100,
+      success: true,
+    });
+    renderer.captureAudio = vi.fn().mockResolvedValue({
+      samples: new Float32Array([0.1]),
+      sampleRate: 44100,
+      duration: 1,
+      success: true,
+      warnings: [],
+    });
+    renderer.injectAudioCapture = vi.fn().mockResolvedValue(undefined);
+    renderer.triggerAudioPlayback = vi.fn().mockResolvedValue('Audio playback trigger failed for tone: user gesture required');
+
+    const result = await renderer.render('const synth = new Tone.Synth();', {
+      domain: 'tone',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain('[warn] Audio playback trigger failed for tone: user gesture required');
+    expect(result.errors).toContain('Audio playback trigger failed for tone: user gesture required');
+  });
+
+  it('surfaces browser-side audio capture instrumentation warnings', async () => {
+    const renderer = new HeadlessRenderer() as HeadlessRenderer & {
+      context: { newPage: () => Promise<unknown> };
+      initialize: () => Promise<void>;
+      waitForCanvas: () => Promise<boolean>;
+      captureScreenshot: () => Promise<{
+        buffer: Buffer;
+        width: number;
+        height: number;
+        success: boolean;
+      }>;
+      captureAudio: () => Promise<{
+        samples: Float32Array;
+        sampleRate: number;
+        duration: number;
+        success: boolean;
+        warnings: string[];
+      }>;
+      injectAudioCapture: () => Promise<void>;
+      triggerAudioPlayback: () => Promise<null>;
+    };
+
+    const fakePage = {
+      setViewportSize: vi.fn().mockResolvedValue(undefined),
+      on: vi.fn(),
+      setContent: vi.fn().mockResolvedValue(undefined),
+      waitForTimeout: vi.fn().mockResolvedValue(undefined),
+    };
+
+    renderer.context = {
+      newPage: vi.fn().mockResolvedValue(fakePage),
+    };
+    renderer.initialize = vi.fn().mockResolvedValue(undefined);
+    renderer.waitForCanvas = vi.fn().mockResolvedValue(false);
+    renderer.captureScreenshot = vi.fn().mockResolvedValue({
+      buffer: Buffer.from([1]),
+      width: 100,
+      height: 100,
+      success: true,
+    });
+    renderer.captureAudio = vi.fn().mockResolvedValue({
+      samples: new Float32Array([0.1]),
+      sampleRate: 44100,
+      duration: 1,
+      success: true,
+      warnings: ['Audio capture setup failed: NotSupportedError'],
+    });
+    renderer.injectAudioCapture = vi.fn().mockResolvedValue(undefined);
+    renderer.triggerAudioPlayback = vi.fn().mockResolvedValue(null);
+
+    const result = await renderer.render('const synth = new Tone.Synth();', {
+      domain: 'tone',
+      waitForStabilization: false,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.logs).toContain('[warn] Audio capture setup failed: NotSupportedError');
+    expect(result.errors).toContain('Audio capture setup failed: NotSupportedError');
+  });
 });
 
 // ─── RenderAndScorePipeline ─────────────────────────────────────────
@@ -380,5 +751,148 @@ describe('RenderAndScorePipeline', () => {
       mode: 'linear',
     });
     expect(result).toBeCloseTo(0.9, 5);
+  });
+
+  it('propagates non-fatal render degradation warnings to pipeline callers', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: false,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: ['[warn] Canvas not found or timed out for three render'],
+        errors: ['Canvas not found or timed out for three render'],
+      }),
+    };
+
+    const result = await pipeline.process('const scene = new THREE.Scene();', 'three');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Canvas not found or timed out for three render']);
+  });
+
+  it('propagates non-fatal scoring failures to pipeline callers', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: true,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+      visualScorer: { score: (buffer: Buffer) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: [],
+        errors: [],
+        screenshot: {
+          success: true,
+          buffer: Buffer.from([1, 2, 3]),
+        },
+      }),
+    };
+    pipeline.visualScorer = {
+      score: vi.fn().mockRejectedValue(new Error('sharp decode failed')),
+    };
+
+    const result = await pipeline.process('function setup(){createCanvas(10,10)}', 'p5');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Visual scoring failed: sharp decode failed']);
+  });
+
+  it('reports when expected visual scoring is skipped because screenshot capture is unavailable', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: true,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: [],
+        errors: [],
+        screenshot: {
+          success: false,
+          error: 'Screenshot failed: target page closed',
+        },
+      }),
+    };
+
+    const result = await pipeline.process('function setup(){createCanvas(10,10)}', 'p5');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Visual scoring skipped: Screenshot failed: target page closed']);
+  });
+
+  it('propagates scorer-provided warnings to pipeline callers', async () => {
+    const pipeline = new RenderAndScorePipeline({
+      scoreVisual: true,
+      scoreAudio: false,
+    }) as RenderAndScorePipeline & {
+      renderer: { render: (code: string, options?: unknown) => Promise<unknown> };
+      visualScorer: { score: (buffer: Buffer) => Promise<unknown> };
+    };
+
+    pipeline.renderer = {
+      render: vi.fn().mockResolvedValue({
+        success: true,
+        logs: [],
+        errors: [],
+        screenshot: {
+          success: true,
+          buffer: Buffer.from([1, 2, 3]),
+        },
+      }),
+    };
+    pipeline.visualScorer = {
+      score: vi.fn().mockResolvedValue({
+        score: 0,
+        colorVariety: 0,
+        edgeComplexity: 0,
+        composition: 0,
+        contrast: 0,
+        metrics: { uniqueColors: 0, edgeDensity: 0, brightnessMean: 0, brightnessStd: 0 },
+        warnings: ['Visual scoring skipped: screenshot buffer too small'],
+      }),
+    };
+
+    const result = await pipeline.process('function setup(){createCanvas(10,10)}', 'p5');
+
+    expect(result.success).toBe(true);
+    expect(result.warnings).toEqual(['Visual scoring skipped: screenshot buffer too small']);
+  });
+
+  it('prefers fewer warnings when batch scores tie', async () => {
+    const pipeline = new RenderAndScorePipeline() as RenderAndScorePipeline & {
+      process: (code: string, domainHint?: unknown) => Promise<unknown>;
+    };
+
+    pipeline.process = vi
+      .fn()
+      .mockResolvedValueOnce({
+        success: true,
+        score: 0.8,
+        domain: 'p5',
+        duration: 10,
+        warnings: ['Visual scoring skipped: screenshot buffer too small'],
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        score: 0.8,
+        domain: 'p5',
+        duration: 12,
+      });
+
+    const result = await pipeline.processBatch(['first', 'second'], 'p5');
+
+    expect(result.bestIndex).toBe(1);
+    expect(result.bestResult.warnings).toBeUndefined();
   });
 });

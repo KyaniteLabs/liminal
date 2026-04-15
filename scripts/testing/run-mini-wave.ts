@@ -14,13 +14,13 @@ const MODELS: Record<string, { provider: string; model: string; domains: string[
   m25: { provider: 'minimax', model: 'MiniMax-M2.5', 
     domains: [] }, // done
   q35: { provider: 'lmstudio', model: 'Qwen3.5-9B', 
-    domains: ['three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'] }, // remaining
+    domains: ['three', 'strudel', 'hydra', 'revideo', 'html', 'ascii'] }, // remaining
   qc4: { provider: 'lmstudio', model: 'Qwen3-Coder-40B', 
-    domains: ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'] },
+    domains: ['p5', 'glsl', 'three', 'strudel', 'hydra', 'revideo', 'html', 'ascii'] },
   g4: { provider: 'ollama', model: 'Gemma3-4B', 
-    domains: ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'] },
+    domains: ['p5', 'glsl', 'three', 'strudel', 'hydra', 'revideo', 'html', 'ascii'] },
   kk2: { provider: 'ollama', model: 'Kimi-K2.5', 
-    domains: ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'] },
+    domains: ['p5', 'glsl', 'three', 'strudel', 'hydra', 'revideo', 'html', 'ascii'] },
 };
 
 async function runTask(provider: string, model: string, domain: string): Promise<any> {

@@ -1,6 +1,6 @@
 # DF1 Model Role Analysis: Local, OpenRouter Free, GPT-5.4 Mini/Nano, and GLM 4.5 Air
 
-Date: 2026-04-14  
+Date: 2026-04-14
 Scope: Recovery and comparison artifact for evaluator/generator model selection after DF1 and OpenRouter free-model bakeoffs.
 
 ## Executive summary

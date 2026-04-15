@@ -26,6 +26,8 @@ export interface AudioScoreResult {
     onsetCount: number;
     zeroCrossingRate: number;
   };
+  /** Non-fatal warnings explaining degraded or skipped audio scoring */
+  warnings?: string[];
 }
 
 export interface AudioScorerOptions {
@@ -62,7 +64,7 @@ export class AudioScorer {
   score(samples: Float32Array, sampleRate: number = 44100): AudioScoreResult {
     try {
       if (samples.length === 0) {
-        return this.getEmptyResult();
+        return this.getEmptyResult('Audio scoring skipped: no samples provided');
       }
 
       // Calculate metrics
@@ -92,14 +94,14 @@ export class AudioScorer {
         },
       };
     } catch (error) {
-      return this.getEmptyResult();
+      return this.getEmptyResult(`Audio scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
   }
 
   /**
    * Get empty result (for silent or invalid audio)
    */
-  private getEmptyResult(): AudioScoreResult {
+  private getEmptyResult(warning?: string): AudioScoreResult {
     return {
       score: 0,
       frequencyVariety: 0,
@@ -112,6 +114,7 @@ export class AudioScorer {
         onsetCount: 0,
         zeroCrossingRate: 0,
       },
+      warnings: warning ? [warning] : undefined,
     };
   }
 

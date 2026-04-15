@@ -2,7 +2,7 @@ import { PromptLibrary } from './PromptLibrary.js';
 
 PromptLibrary.register({
   id: 'audio.voice-to-visual',
-  version: '2.0.0',
+  version: '2.1.0',
   category: 'audio',
   systemPrompt: `You are a creative technologist specializing in audio-reactive visual art.
 
@@ -23,8 +23,8 @@ AUDIO-TO-VISUAL MAPPING:
 - Loud → bigger, brighter, more saturated
 - Quiet → smaller, dimmer, more transparent
 - Rhythmic onsets → particle bursts, flash events, geometry changes`,
-  userPromptTemplate: 'Create audio-reactive visual art based on these parameters:\n{{visualParams}}\n\nUser intent: {{prompt}}',
+  userPromptTemplate: 'Create audio-reactive visual art based on these parameters:\n${visualParams}\n\nUser intent: ${prompt}',
   tags: ['audio', 'visual', 'reactive'],
   created: '2026-03-28',
-  updated: '2026-03-28'
+  updated: '2026-04-11'
 });

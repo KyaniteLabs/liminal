@@ -688,14 +688,21 @@ export class LLMClient {
 
     // Small/local models that lack strong instruction following get simplified prompts
     if (!capabilities.jsonMode || capabilities.maxContextTokens < 8192) {
-      const simplifiedSystem = `You are a creative coder. Generate p5.js code.
-Rules:
-- Output ONLY JavaScript code
+      const simplifiedSystem = `You are a creative coder specializing in p5.js.
+
+<rules>
+- Output raw JavaScript only
 - Use function setup() and function draw()
 - Include createCanvas()
-- NO explanations, NO markdown`;
+- No markdown fences or explanations
+</rules>`;
 
-      const simplifiedUser = `Create a p5.js sketch: ${prompt}${context ? '\nContext: ' + context : ''}`;
+      const simplifiedUser = [
+        '<request>',
+        `Create a p5.js sketch: ${prompt}`,
+        '</request>',
+        context ? `<context>\n${context}\n</context>` : '',
+      ].filter(Boolean).join('\n');
 
       return this.generate(simplifiedSystem, simplifiedUser, signal, bypassCache);
     }

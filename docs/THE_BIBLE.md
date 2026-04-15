@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-08  
-**Status:** 330+ commits, forensic audit fixes complete  
-**Branch:** main
+**Date:** 2026-04-12
+**Status:** 330+ commits, bounded-loop rescue branch prepared
+**Branch:** rescue/pr139-bounded-loop
 
 ---
 
@@ -11,19 +11,21 @@
 
 Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
 
-- **21 Subsystems** (8 core + 14 supporting)
-- **18 Guardrails** (M1-M11 implemented, M12-M18 planned)
+- **28 Documented Systems** across core runtime, operator surfaces, and support infrastructure
+- **18 Guardrails** (M1-M18 implemented)
 - **Persistent Memory** across sessions
 - **Model-Aware Generation** (flagship/medium/local/tiny tiers)
+- **Prompt surfaces audited** for contradiction, token efficiency, and framework accuracy
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
+- **Bounded-loop runtime packets** with explicit focus, verification intent, and resumable no-change classification
 - **Worktree Isolation** - Multi-agent development workflow
 
 ---
 
 ## Test Status
 
-**Date:** 2026-04-08
+**Date:** 2026-04-11
 
 | Category | Before | After |
 |----------|--------|-------|
@@ -144,7 +146,7 @@ Failures:   0 critical
 │  │  ├── FailureLogger          - Logs to ~/.liminal/failures/          │    │
 │  │  ├── PatternDetector        - Detects failure patterns              │    │
 │  │  ├── HarnessUpdater         - Applies adaptations                   │    │
-│  │  ├── HarnessAgent           - 7 tools for self-repair               │    │
+│  │  ├── HarnessAgent           - coding tool surface + skill loading   │    │
 │  │  ├── ValidationGuard        - Prevents bad edits                    │    │
 │  │  └── RateLimiter            - Prevents runaway execution            │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
@@ -187,7 +189,7 @@ Failures:   0 critical
 │  │  M9:  ✅ Semantic Alignment         - SemanticValidator             │    │
 │  │  M10: ✅ Runtime Health             - RuntimeHealthMonitor          │    │
 │  │  M11: ✅ Accessibility              - AccessibilityGuardrails       │    │
-│  │  M12-M18: ⚪ Planned/Future                                         │    │
+│  │  M12-M18: ✅ Compliance (Privacy → Resilience)                      │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
 │                                    ↓                                         │
 │  ┌─────────────────────────────────────────────────────────────────────┐    │
@@ -219,7 +221,7 @@ Failures:   0 critical
 | FailureLogger | `FailureLogger.ts` | Logs failures to ~/.liminal/failures/ | 🟢 Active |
 | PatternDetector | `PatternDetector.ts` | Detects patterns in failures | 🟢 Active |
 | HarnessUpdater | `HarnessUpdater.ts` | Applies adaptations to fix issues | 🟢 Active |
-| HarnessAgent | `agent/HarnessAgent.ts` | 7 tools for self-repair | 🟢 Active |
+| HarnessAgent | `agent/HarnessAgent.ts` | coding tools, jmunch search, skill loading | 🟢 Active |
 | ValidationGuard | `tools/ValidationGuard.ts` | Prevents invalid edits | 🟢 Active |
 | RateLimiter | `tools/RateLimiter.ts` | Limits execution rate | 🟢 Active |
 
@@ -272,18 +274,6 @@ Failures:   0 critical
 *Note: M2 (Domain Routing) and M3 (Budget/Rate Limit) were implemented directly during initial development without separate task files.*
 
 **Task File Location:** `harness-tasks/archive/*.json`
-
-**Runtime-to-Product Flywheel (2026-04-14):**
-
-The RT proving suite is infrastructure, not the final product goal. The operating sequence is:
-
-1. **RT Suite:** RT1-RT4 prove bounded mutation, workspace drift rejection, resume focus continuity, and honest bounded-no-change classification.
-2. **Lane Matrix:** Vanguard proves newest stages first; Compatibility keeps Kimi and MiniMax stage-gated; Pro is reserved for expensive diagnostics.
-3. **Freeze Harness:** Provider provenance, terminal verification, failed verification, file-backed build transcripts, and frozen mutation surfaces become the baseline.
-4. **DF1 Dogfood:** Run real creative generation across p5, GLSL, Three, Strudel/Tone, and HTML with validation plus preview/runtime artifacts.
-5. **Product Fix Loop:** Mine failures, patch generator/validator/routing code, re-run the same dogfood slice, and measure pass-rate lift.
-
-**Current transition:** once Kimi and MiniMax finish RT4, stop expanding runtime proving unless a new RT directly protects app behavior. Move to DF1 app dogfood so the harness improves real Liminal outputs.
 
 ---
 
@@ -406,6 +396,15 @@ The RT proving suite is infrastructure, not the final product goal. The operatin
 | CacheManager | `CacheManager.ts` | Response caching |
 | CircuitBreaker | `CircuitBreaker.ts` | Failure handling |
 | RetryManager | `RetryManager.ts` | Retry logic |
+
+**Prompt Quality Notes (2026-04-11):**
+- High-leverage prompt surfaces were audited in `docs/plans/2026-04-11-system-prompt-audit.md`.
+- The highest-ROI fixes removed contradictory code-format instructions, corrected Three.js module guidance, and compressed the harness self-improvement system prompt while preserving its tool contract.
+- A follow-up slice structured chat/evaluation prompts with explicit tags, removed step-by-step wording from collaboration critics, and fixed a real `chat.assistant` interpolation bug.
+- A third slice fixed the same PromptLibrary interpolation bug class in `audio.voice-to-visual` and `aesthetic.constraints`.
+- A fourth slice aligned `PromptBuilder` and the small-model p5 fallback with the same structured prompt style used by the audited primary prompt surfaces.
+- A final narrow slice corrected Hydra API guidance so the prompt no longer misstates `speed` as a chain method or `color()` as a source.
+- The narrative blog-to-video prompts were also upgraded to use explicit tagged input sections for better long-context structure without changing their core creative contract.
 
 **Multi-Provider Support:**
 - OpenAI
@@ -560,6 +559,8 @@ The RT proving suite is infrastructure, not the final product goal. The operatin
 
 **Purpose:** Extensible plugin architecture for custom generators and behaviors.
 
+**Important distinction:** Plugin loading is runtime generator extension. It is separate from the harness skill layer. Generator plugins load from `plugins/<name>/plugin.json`, while harness skills load `SKILL.md` instructions for coding/refactor guidance and tool selection.
+
 **Components:**
 | Component | File | Purpose |
 |-----------|------|---------|
@@ -597,6 +598,9 @@ The RT proving suite is infrastructure, not the final product goal. The operatin
 **Ink Containment Status (complete 2026-04-06):**
 - Agent approval enforcement: tasks default to `approved: false`, agents reject unapproved tasks
 - Pending action review: `/confirm <id>` and `/cancel <id>` implemented
+- Autonomous success claims now require a successful verification step (`runBuild`, `runTests`, or `typeCheck`) before mutation tasks can finish cleanly
+- `NaturalInterface` help now reflects only the commands that surface actually supports; richer pending-action commands live on the separate command palette / bridge surfaces
+- `NaturalInterface` `/status` now delegates to the shared `commands.ts` status implementation so browser/audio state stays in sync across command surfaces
 - CWD-based prompt loading removed from PromptBuilder
 - Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
 - Preview/audio path hardening added (`previewSafety.ts`)
@@ -614,6 +618,8 @@ The RT proving suite is infrastructure, not the final product goal. The operatin
 | Component | File | Purpose |
 |-----------|------|---------|
 | TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel |
+| BridgeLauncherConfig | `tui-bridge/BridgeLauncherConfig.ts` | Resolves the active provider for Bubble Tea bridge startup instead of assuming GLM |
+| TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel, and approved bridge action execution |
 | TuiSessionStore | `TuiSessionStore.ts` | In-memory session state |
 | TuiEventStream | `TuiEventStream.ts` | Pub/sub SSE event stream |
 | Types | `types.ts` | Mode, trust, provenance, event types |
@@ -637,11 +643,17 @@ The RT proving suite is infrastructure, not the final product goal. The operatin
 **Purpose:** Operator-grade terminal UI with pane-first architecture, explicit modes, and confirmation-first mutation UX.
 
 **Architecture:**
-- Pane-first layout: history, active response, status/trust
+- Pane-first layout: chat history on the left, operator surface on the right
 - Explicit modes: Chat, Inspect, Action, Confirm
+- Multiline operator composer: textarea input with Liminal-themed prompt/placeholder styling, `Enter` to send, and `Alt+Enter` to insert a newline
 - Active-response pane: streaming responses don't touch committed history
 - Confirmation-first: no state mutation without operator approval
 - Trust/provenance labels: provider, model, trust-level badges
+- Operator surface cards: task/phase card with progress bar, generation progress card, tool timeline, Bubbles-based changed-files / verification tables, artifacts, help drawer
+- Operator shortcuts: Ctrl+T timeline toggle, Ctrl+A artifacts toggle, Ctrl+Y copy last assistant response, `?` help drawer
+- Compact operator mode: `Ctrl+E` collapses the right column into status + approval hints without losing agent state
+- Meta-Harness bridge routing: self-improvement prompts route through the TS bridge into the tool-using harness agent rather than the creative-generation loop
+- Copy + transcript affordances: `Ctrl+Y` copies the last assistant response and the bridge/transcript artifacts are stored under `.omx/logs/`
 - Generated code: untrusted by default
 
 **Go Components:**
@@ -649,12 +661,13 @@ The RT proving suite is infrastructure, not the final product goal. The operatin
 |-----------|---------|---------|
 | Model | `internal/app/model.go` | UI state, event application, confirm/cancel |
 | Update | `internal/app/update.go` | Bubble Tea Update loop with bridge wiring |
-| View | `internal/app/view.go` | Pane rendering with Lip Gloss styles |
-| Theme | `internal/ui/theme.go` | Style definitions |
+| View | `internal/app/view.go` | 55/45 chat + operator layout with header/footer shortcuts |
+| Theme | `internal/ui/theme.go` | Operator-surface style tokens, badges, panel chrome |
 | Bridge Client | `internal/bridge/client.go` | HTTP + SSE client for TS bridge |
+| Layout | `internal/app/layout.go` | Task card, generation progress card, timeline, changed files, verification, artifacts, help rendering |
 | Event Types | `internal/bridge/events.go` | Event, SessionStatus, PendingAction structs |
 
-**Test Coverage:** 16 Go tests passing across bridge client, bootstrap, event handling, action modes, and view rendering.
+**Test Coverage:** Bubble Tea Go tests cover bridge client, bootstrap, event handling, action modes, operator surface rendering, shortcut behavior, and visible progress instrumentation. Vitest coverage now includes typed operator-event publication plus real SSE delivery through the TS bridge server.
 
 ---
 
@@ -901,7 +914,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 
 ## Known Limitations
 
-1. **M12-M18:** Not yet implemented (M1-M11 complete)
+1. **M12-M18 Coverage:** Guardrails are implemented, but broader dogfood and operational validation is still ongoing
 2. **Template Removal:** All template-based generation removed (pure LLM now)
 3. **Browser Dependency:** M9-M11 require Puppeteer/Playwright
 4. **Local Models:** 16k context limit (tier detection respects this)
@@ -937,6 +950,7 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 - **Enhanced TUI**: Task loading with M1-M8 support via `/run <task-id>` command
 - **Worktree Isolation**: Full multi-agent development workflow with `git wt` commands
 - **Agent Worktree Guard**: `scripts/utils/assert-agent-worktree.sh <branch>` prevents agents from editing in the root checkout or wrong branch
+- **Harness Skill Compatibility Layer**: `src/harness/skills/SkillLoader.ts` plus `executeSkill`, `searchCode`, `searchDocs`, `runLint`, and `runFocusedTests` extend harness-side coding workflows without requiring full Claude/Codex runtime parity
 
 ---
 
@@ -948,10 +962,11 @@ Bubble Tea replaces Ink when ALL of the following are true. No new strategic fea
 3. ✅ Plan C - Test infrastructure (C1-C14) - DONE
 
 ### Remaining Work
-4. 🔄 DF1 app dogfood: convert RT1-RT4 harness proof into real creative generation improvements
-5. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
-6. 🔄 Cloud provider testing (requires API keys)
+4. 🔄 Dogfood pass rate: 30.4% → target 70%+ (ongoing)
+5. 🔄 Cloud provider testing (requires API keys)
+6. 🔄 Bubble Tea operator-surface rollout and broader operator-event emission coverage
 7. 🔄 Community plugins (future)
+8. 🔄 Expand harness skill compatibility beyond the practical subset if the first pass proves stable
 
 ### Metrics
 - **Security issues:** 10 → 0 ✅

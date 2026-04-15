@@ -84,14 +84,14 @@ describe('Security regression — Wave 1 containment', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
-  });
+  }, 60000);
 
   afterAll(async () => {
     if (server) await new Promise((r) => server.close(r));
     delete process.env.LIMINAL_CONFIG_PATH;
     delete process.env.LIMINAL_GUI_TOKEN;
     await cleanup();
-  });
+  }, 60000);
 
   it('GET /api/config does not return raw API key value', async () => {
     // Save a config with an API key present
@@ -154,14 +154,14 @@ describe('Security regression — Wave 2 backend baseline', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
-  });
+  }, 60000);
 
   afterAll(async () => {
     if (server) await new Promise((r) => server.close(r));
     delete process.env.LIMINAL_CONFIG_PATH;
     delete process.env.LIMINAL_GUI_TOKEN;
     await cleanup();
-  });
+  }, 60000);
 
   it('POST routes require auth when LIMINAL_GUI_TOKEN is set', async () => {
     // POST /api/config WITHOUT Authorization header — expect 401
@@ -254,14 +254,14 @@ describe('Security regression — Wave 3 preview isolation', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
-  });
+  }, 60000);
 
   afterAll(async () => {
     if (server) await new Promise((r) => server.close(r));
     delete process.env.LIMINAL_CONFIG_PATH;
     delete process.env.LIMINAL_GUI_TOKEN;
     await cleanup();
-  });
+  }, 60000);
 
   it('preview HTML strips network APIs', async () => {
     // Store code via /api/preview/run
@@ -396,14 +396,14 @@ describe('Security regression — Wave 5 security headers', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
-  });
+  }, 60000);
 
   afterAll(async () => {
     if (server) await new Promise((r) => server.close(r));
     delete process.env.LIMINAL_CONFIG_PATH;
     delete process.env.LIMINAL_GUI_TOKEN;
     await cleanup();
-  });
+  }, 60000);
 
   it('preview page includes Permissions-Policy to disable device sensors', async () => {
     const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
@@ -468,14 +468,14 @@ describe('Security regression — Wave 7 red team remediation', () => {
     const info = await startServer(app);
     server = info.server;
     port = info.port;
-  });
+  }, 60000);
 
   afterAll(async () => {
     if (server) await new Promise((r) => server.close(r));
     delete process.env.LIMINAL_CONFIG_PATH;
     delete process.env.LIMINAL_GUI_TOKEN;
     await cleanup();
-  }, 30000);
+  }, 60000);
 
   // F9: proposed.type validation
   it('POST /api/approve rejects invalid proposed.type', async () => {

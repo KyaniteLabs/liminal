@@ -4,14 +4,14 @@
  * Usage: tsx generate-single.ts <provider> <model> <domain>
  */
 
-import { P5GeneratorLLM } from '../src/generators/p5/P5GeneratorLLM.js';
-import { ShaderGenerator } from '../src/generators/glsl/ShaderGenerator.js';
-import { ThreeGenerator } from '../src/generators/three/ThreeGenerator.js';
-import { StrudelGenerator } from '../src/generators/strudel/StrudelGenerator.js';
-import { HydraGenerator } from '../src/generators/hydra/HydraGenerator.js';
+import { P5GeneratorLLM } from '../../src/generators/p5/P5GeneratorLLM.js';
+import { ShaderGenerator } from '../../src/generators/glsl/ShaderGenerator.js';
+import { ThreeGenerator } from '../../src/generators/three/ThreeGenerator.js';
+import { StrudelGenerator } from '../../src/generators/strudel/StrudelGenerator.js';
+import { HydraGenerator } from '../../src/generators/hydra/HydraGenerator.js';
 import { writeFileSync } from 'fs';
-import { ensureDir } from '../src/utils/fs.js';
-import { LLMClient } from '../src/llm/LLMClient.js';
+import { ensureDir } from '../../src/utils/fs.js';
+import { LLMClient } from '../../src/llm/LLMClient.js';
 
 const PROMPTS: Record<string, string> = {
   p5: `Create an animated p5.js sketch featuring colorful fireworks exploding in the night sky. Include particle physics, gravity, and fading trails.`,
@@ -24,7 +24,7 @@ const PROMPTS: Record<string, string> = {
   
   hydra: `Create a Hydra video synth patch with feedback effects, color shifting, and geometric patterns. Make it visually striking.`,
   
-  remotion: `Create a Remotion video component that animates text typing with a cursor blink, then fades in a subtitle.`,
+  revideo: `Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle.`,
   
   html: `Create a responsive landing page for a creative coding portfolio. Include a hero section with animated gradient background, project cards, and contact form.`,
   
@@ -64,7 +64,21 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9.-]/g, '_');
 }
 
+function normalizeDomain(domain: string): string {
+  return domain === 'remotion' ? 'revideo' : domain;
+}
+
+function isLocalBaseUrl(baseUrl: string): boolean {
+  return /localhost|127\.0\.0\.1|::1/.test(baseUrl);
+}
+
+function formatError(context: string, error: unknown): string {
+  if (error instanceof Error) return `${context}: ${error.message}`;
+  return `${context}: ${String(error)}`;
+}
+
 async function generateWithLLM(prompt: string, domain: string, llmConfig: { baseUrl: string; apiKey: string; model: string; modelId?: string }): Promise<string> {
+  const normalizedDomain = normalizeDomain(domain);
   const llm = new LLMClient({
     baseUrl: llmConfig.baseUrl,
     apiKey: llmConfig.apiKey,
@@ -76,7 +90,7 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
   
   llm.disableCache();
   
-  switch (domain) {
+  switch (normalizedDomain) {
     case 'p5': {
       const gen = new P5GeneratorLLM(llm);
       return gen.generate(prompt);
@@ -99,24 +113,24 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
       const gen = new HydraGenerator(llm);
       return gen.generate(prompt);
     }
-    case 'remotion': {
-      const { RemotionGenerator } = await import('../src/generators/remotion/RemotionGenerator.js');
+    case 'revideo': {
+      const { RemotionGenerator } = await import('../../src/generators/remotion/RemotionGenerator.js');
       const gen = new RemotionGenerator();
       (gen as any).llm = llm;
       return gen.generate(prompt);
     }
     case 'html': {
-      const { HTMLWebGenerator } = await import('../src/generators/html/HTMLWebGenerator.js');
+      const { HTMLWebGenerator } = await import('../../src/generators/html/HTMLWebGenerator.js');
       const gen = new HTMLWebGenerator(llm);
       return gen.generate(prompt, { responsive: true, includeAnimations: true });
     }
     case 'ascii': {
-      const { ASCIIArtGenerator } = await import('../src/generators/ascii/ASCIIArtGenerator.js');
+      const { ASCIIArtGenerator } = await import('../../src/generators/ascii/ASCIIArtGenerator.js');
       const gen = new ASCIIArtGenerator(llm);
       return gen.generate(prompt, { style: 'abstract', width: 60, height: 30 });
     }
     case 'tone': {
-      const { ToneGenerator } = await import('../src/generators/tone/ToneGenerator.js');
+      const { ToneGenerator } = await import('../../src/generators/tone/ToneGenerator.js');
       const gen = new ToneGenerator(llm);
       return gen.generate(prompt);
     }
@@ -126,9 +140,10 @@ async function generateWithLLM(prompt: string, domain: string, llmConfig: { base
 }
 
 async function main() {
-  const [provider, modelName, domain] = process.argv.slice(2);
+  const [provider, modelName, rawDomain] = process.argv.slice(2);
+  const domain = normalizeDomain(rawDomain ?? '');
   
-  if (!provider || !modelName || !domain) {
+  if (!provider || !modelName || !rawDomain) {
     console.error('Usage: tsx generate-single.ts <provider> <model> <domain>');
     process.exit(1);
   }
@@ -152,6 +167,10 @@ async function main() {
   process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;
   process.env.LIMINAL_LLM_API_KEY = apiKey;
   process.env.LIMINAL_LLM_MODEL = modelName;
+  if (isLocalBaseUrl(config.baseUrl)) {
+    process.env.LIMINAL_ALLOW_LOCALHOST_LLM = 'true';
+    process.env.LIMINAL_ALLOW_LOCALHOST = 'true';
+  }
   
   try {
     const startTime = Date.now();

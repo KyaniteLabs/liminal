@@ -26,6 +26,8 @@ export interface VisualScoreResult {
     brightnessMean: number;
     brightnessStd: number;
   };
+  /** Non-fatal warnings explaining degraded or skipped visual scoring */
+  warnings?: string[];
 }
 
 export interface VisualScorerOptions {
@@ -64,7 +66,7 @@ export class VisualScorer {
     try {
       // Validate buffer
       if (!screenshotBuffer || screenshotBuffer.length < 100) {
-        return this.getEmptyResult();
+        return this.getEmptyResult('Visual scoring skipped: screenshot buffer too small');
       }
 
       // Parse PNG to raw pixel data
@@ -72,7 +74,7 @@ export class VisualScorer {
 
       // Validate parsed data
       if (!data || data.length === 0 || width === 0 || height === 0) {
-        return this.getEmptyResult();
+        return this.getEmptyResult('Visual scoring skipped: decoded image data unavailable');
       }
 
       // Calculate metrics
@@ -105,14 +107,14 @@ export class VisualScorer {
       };
     } catch (error) {
       // Return low score on error
-      return this.getEmptyResult();
+      return this.getEmptyResult(`Visual scoring failed: ${error instanceof Error ? error.message : 'unknown error'}`);
     }
   }
 
   /**
    * Get empty/default result
    */
-  private getEmptyResult(): VisualScoreResult {
+  private getEmptyResult(warning?: string): VisualScoreResult {
     return {
       score: 0,
       colorVariety: 0,
@@ -125,6 +127,7 @@ export class VisualScorer {
         brightnessMean: 0,
         brightnessStd: 0,
       },
+      warnings: warning ? [warning] : undefined,
     };
   }
 

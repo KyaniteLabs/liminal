@@ -296,7 +296,15 @@ export class CreativeEvaluator {
     // scoring 0.3-1.0 through the creative/technical heuristics.
     const codeIndicators = /(?:function\s|const\s|let\s|var\s|class\s|import\s|=>|setup\(|draw\(|createElement|\.push\(|\.map\(|\.log\(|console\.|return\s|if\s*\(|for\s*\(|void\s+main|uniform\s|varying\s|attribute\s|gl_Position|gl_FragColor|gl_FragCoord|precision\s|vec[234]\s|mat[234]\s|sampler2D|float\s|ivec[234]|uvec[234]|#define|#ifdef|#endif|#version|out\s+vec|in\s+vec|layout\s*\()/;
     const hasCodeStructure = codeIndicators.test(output);
-    if (!hasCodeStructure && output.length < 500) {
+    const isSpecializedArtifact =
+      this.detectsASCIIUsage(output) ||
+      this.detectsShaderUsage(output) ||
+      this.detectsThreeUsage(output) ||
+      this.detectsHydraUsage(output) ||
+      this.detectsStrudelUsage(output) ||
+      this.detectsHTMLUsage(output) ||
+      this.detectsVideoComponentUsage(output);
+    if (!hasCodeStructure && output.length < 500 && !isSpecializedArtifact) {
       // Short non-code text — likely conversational response, not a creative artifact
       return {
         passed: false,
@@ -320,6 +328,11 @@ export class CreativeEvaluator {
       return this.assessThree(output, options);
     }
 
+    // Video component / scene evaluation (Revideo + legacy Remotion)
+    if (this.detectsVideoComponentUsage(output)) {
+      return this.assessVideoComponent(output, options);
+    }
+
     // Hydra visual synth evaluation
     if (this.detectsHydraUsage(output)) {
       return this.assessHydra(output, options);
@@ -328,6 +341,11 @@ export class CreativeEvaluator {
     // Strudel music evaluation
     if (this.detectsStrudelUsage(output)) {
       return this.assessStrudel(output, options);
+    }
+
+    // Tone.js / Web Audio evaluation
+    if (this.detectsToneUsage(output)) {
+      return this.assessTone(output, options);
     }
 
     // HTML/CSS evaluation
@@ -870,6 +888,14 @@ export class CreativeEvaluator {
   }
 
   /**
+   * Detect Revideo or legacy Remotion video-component code
+   */
+  static detectsVideoComponentUsage(code: string): boolean {
+    return /@revideo\/(core|2d)|\bmakeScene2D?\b|\bcreateSignal\b|\byield\*/.test(code) ||
+      /from\s+['"]remotion['"]|\buseCurrentFrame\b|\bAbsoluteFill\b|\bSequence\b|\bComposition\b/.test(code);
+  }
+
+  /**
    * Detect Hydra visual synth code
    */
   static detectsHydraUsage(code: string): boolean {
@@ -880,7 +906,27 @@ export class CreativeEvaluator {
    * Detect Strudel music code
    */
   static detectsStrudelUsage(code: string): boolean {
-    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) && /\bstack|\$:|#|\.\s\(|\.n\(/.test(code);
+    return /\b(n|s|note|sound)\s*\(\s*["']/.test(code) ||
+      /\$:\s*(s|n|note|sound)\s*\(/.test(code) ||
+      /\bstack\s*\(/.test(code);
+  }
+
+  /**
+   * Detect Tone.js / Web Audio code
+   */
+  static detectsToneUsage(code: string): boolean {
+    const isP5Wrapped = /function\s+setup\s*\(\s*\)/.test(code) && /createCanvas/.test(code);
+    const hasToneApi = /\bTone\./.test(code) ||
+      /from\s+['"]tone['"]/.test(code) ||
+      /cdnjs\.cloudflare\.com\/ajax\/libs\/tone\//.test(code);
+    const hasGenericWebAudio = /\bAudioContext\b|\bcreateOscillator\b/.test(code);
+
+    // Let p5/Web Audio sketches stay on the generic path unless they explicitly
+    // use Tone.js. Tone scoring is for Tone artifacts, not any sketch that
+    // happens to touch Web Audio APIs.
+    if (isP5Wrapped && !hasToneApi) return false;
+
+    return hasToneApi || hasGenericWebAudio;
   }
 
   /**
@@ -1026,6 +1072,68 @@ export class CreativeEvaluator {
   }
 
   /**
+   * Assess Revideo / Remotion video-component quality
+   */
+  private static assessVideoComponent(output: string, options?: AssessOptions): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const isRevideo = /@revideo\/(core|2d)|\bmakeScene2D?\b|\bcreateSignal\b|\byield\*/.test(codeOnly);
+    const isRemotion = /from\s+['"]remotion['"]|\buseCurrentFrame\b|\bAbsoluteFill\b|\bSequence\b|\bComposition\b/.test(codeOnly);
+
+    // Technical checks
+    if (isRevideo || isRemotion) technicalScore += 0.15;
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.15;
+    if (isRevideo && /@revideo\/2d|Txt|Rect|Circle|Node/.test(codeOnly)) technicalScore += 0.15;
+    if (isRevideo && /\bmakeScene2D?\b|\bview\.add\b/.test(codeOnly)) technicalScore += 0.1;
+    if (isRemotion && /AbsoluteFill|Sequence|Composition/.test(codeOnly)) technicalScore += 0.15;
+    if (/export\s+(default\s+)?(const|function|class)|React\.FC|=>\s*\{/.test(codeOnly)) technicalScore += 0.1;
+    if (/useCurrentFrame|useVideoConfig|useTime|createSignal|interpolate|spring/.test(codeOnly)) technicalScore += 0.1;
+    if (codeOnly.length > 200) technicalScore += 0.1;
+    if (codeOnly.length > 500) technicalScore += 0.1;
+
+    // Creative checks
+    if (/interpolate|spring|ease|opacity|fade|scale|rotate|translate|position/.test(codeOnly)) creativeScore += 0.2;
+    if (isRevideo && /\byield\*|\.\s*opacity\s*\(|\.\s*scale\s*\(|\.\s*position\s*\(/.test(codeOnly)) creativeScore += 0.15;
+    if (/frame|fps|durationInFrames|useCurrentFrame|useTime/.test(codeOnly)) creativeScore += 0.15;
+    if (/style=\{\{|background|gradient|color|fontSize|textShadow/.test(codeOnly)) creativeScore += 0.15;
+    if (/Txt|Rect|Circle|AbsoluteFill|div|span|h1|h2/.test(codeOnly)) creativeScore += 0.1;
+    if (/typing|cursor|subtitle|title|word|text/i.test(codeOnly)) creativeScore += 0.1;
+    if (/createRef|createSignal|yield\*|map\(|for\s*\(/.test(codeOnly)) creativeScore += 0.1;
+    if (codeOnly.split('\n').length > 10) creativeScore += 0.1;
+
+    // Penalties for patterns that commonly indicate broken video output
+    if (/frame\.value\b/.test(codeOnly)) technicalScore -= 0.15;
+    if (/AbsoluteFill[^>]*duration=/.test(codeOnly)) technicalScore -= 0.1;
+    if (/\b<Video\b/.test(codeOnly) && !/from\s+['"][^'"]*Video[^'"]*['"]/.test(codeOnly)) technicalScore -= 0.1;
+    if (!isRevideo && !isRemotion) issues.push('Missing video-component imports or APIs');
+    if (!/interpolate|spring|useCurrentFrame|useTime|yield\*/.test(codeOnly)) issues.push('Missing animation timing logic');
+    if (codeOnly.length < 120) issues.push('Video component code too short');
+
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: 0,
+      interestingnessScore: 0,
+      calibratedScore,
+    };
+  }
+
+  /**
    * Assess Hydra visual synth code quality
    */
   private static assessHydra(output: string, options?: AssessOptions): AssessmentResult {
@@ -1088,30 +1196,112 @@ export class CreativeEvaluator {
 
     // Remove <think> tags for evaluation
     const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const soundCallCount = (codeOnly.match(/\bs\s*\(\s*["'][^"']+["']\s*\)/g) || []).length;
 
     // Technical checks
-    if (/\bsetc\s*\(/.test(codeOnly) || /\bbpm\s*:/.test(codeOnly)) technicalScore += 0.15;
-    if (/\bn\s*\(/.test(codeOnly)) technicalScore += 0.15;
-    if (/\bs\s*\(/.test(codeOnly)) technicalScore += 0.15;
+    if (/\bsetc\s*\(/.test(codeOnly) || /\bbpm\s*:/.test(codeOnly)) technicalScore += 0.1;
+    if (/\bn\s*\(/.test(codeOnly)) technicalScore += 0.2;
+    if (/\bs\s*\(/.test(codeOnly)) technicalScore += 0.3;
     if (/\bstack\s*\(/.test(codeOnly)) technicalScore += 0.15;
     if (/\.s\(|\.n\(|\.cut\(|\.resonance\(/.test(codeOnly)) technicalScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']+\s+[^"']+["']\s*\)/.test(codeOnly)) technicalScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']*(\s+[^"'\s]+){3,}["']\s*\)/.test(codeOnly)) technicalScore += 0.05;
+    if (soundCallCount >= 3) technicalScore += 0.1;
     if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.1;
+    if (codeOnly.length > 25) technicalScore += 0.05;
+    if (codeOnly.length > 80) technicalScore += 0.05;
 
     // Creative checks
-    if (/["'][^"']+["'].*\.s\(/.test(codeOnly)) creativeScore += 0.2; // Pattern mini-notation
-    if (/~|\*|\?|!|#/.test(codeOnly)) creativeScore += 0.2; // Rhythm modifiers
-    if (/\.delay|\.room|\.distort|\.cutoff/.test(codeOnly)) creativeScore += 0.2;
-    if (/\.add|\.sub|\.mul/.test(codeOnly)) creativeScore += 0.15;
-    if (codeOnly.split('\n').length > 5) creativeScore += 0.15;
+    if (/["'][^"']+["'].*\.s\(/.test(codeOnly)) creativeScore += 0.15; // Pattern mini-notation
+    if (/~|\*|\?|!|#/.test(codeOnly)) creativeScore += 0.15; // Rhythm modifiers
+    if (/\.delay|\.room|\.distort|\.cutoff/.test(codeOnly)) creativeScore += 0.15;
+    if (/\.add|\.sub|\.mul/.test(codeOnly)) creativeScore += 0.1;
+    if (codeOnly.split('\n').length > 5) creativeScore += 0.1;
     if (/\$:/.test(codeOnly)) creativeScore += 0.1; // Pattern sequencing
+    if (/\bs\s*\(\s*["'][^"']+["']\s*\)/.test(codeOnly)) creativeScore += 0.25;
+    if (/\b(note|n)\s*\(\s*["'][^"']+["']\s*\)/.test(codeOnly)) creativeScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']+["']\s*\)\s*(?:\.\w+\([^)]*\))*/.test(codeOnly)) creativeScore += 0.1;
+    if (/\bstack\s*\(/.test(codeOnly) || /\$:/.test(codeOnly)) creativeScore += 0.15;
+    if (/\bs\s*\(\s*["'][^"']+\s+[^"']+["']\s*\)/.test(codeOnly)) creativeScore += 0.1;
+    if (/\bs\s*\(\s*["'][^"']*(\s+[^"'\s]+){3,}["']\s*\)/.test(codeOnly)) creativeScore += 0.1;
+    if (soundCallCount >= 3) creativeScore += 0.15;
 
-    if (codeOnly.length < 50) issues.push('Strudel code too short');
+    if (codeOnly.length < 20) issues.push('Strudel code too short');
     if (!/\bs\s*\(/.test(codeOnly) && !/\.s\(/.test(codeOnly)) issues.push('Missing sound() call');
+    if (/\bs\s*\(\s*\d+\s*\)/.test(codeOnly)) issues.push('Strudel sound() call should use pattern strings');
 
     let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
     let calibratedScore: number | undefined;
 
     // Apply calibration if requested
+    if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
+      calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
+      overallScore = calibratedScore;
+    }
+
+    return {
+      passed: overallScore >= MIN_QUALITY_THRESHOLD,
+      score: Math.max(0, Math.min(1, overallScore)),
+      issues,
+      technicalScore: Math.max(0, Math.min(1, technicalScore)),
+      creativeScore: Math.max(0, Math.min(1, creativeScore)),
+      metrics: this.getEmptyMetrics(),
+      emergenceScore: 0,
+      interestingnessScore: 0,
+      calibratedScore,
+    };
+  }
+
+  /**
+   * Assess Tone.js / Web Audio code quality
+   */
+  private static assessTone(output: string, options?: AssessOptions): AssessmentResult {
+    const issues: string[] = [];
+    let technicalScore = 0;
+    let creativeScore = 0;
+
+    const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+
+    // Technical checks
+    if (/\bTone\./.test(codeOnly) || /from\s+['"]tone['"]/.test(codeOnly)) technicalScore += 0.25;
+    if (/Tone\.start|AudioContext|createOscillator/.test(codeOnly)) technicalScore += 0.1;
+    if (/Synth|PolySynth|MonoSynth|Sampler|Oscillator|Filter|Reverb|Chorus|Delay|LFO/.test(codeOnly)) technicalScore += 0.2;
+    if (/toDestination|connect\(/.test(codeOnly)) technicalScore += 0.1;
+    if (/triggerAttackRelease|triggerAttack|triggerRelease|Transport\.start/.test(codeOnly)) technicalScore += 0.15;
+    if ((codeOnly.match(/\bTone\.Oscillator\b/g) || []).length >= 2) technicalScore += 0.1;
+    if (/\.start\(\)/.test(codeOnly)) technicalScore += 0.05;
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.1;
+    if (codeOnly.length > 200) technicalScore += 0.05;
+    if (codeOnly.length > 500) technicalScore += 0.05;
+
+    // Creative checks
+    if (/Reverb|Chorus|Delay|Filter|LFO/.test(codeOnly)) creativeScore += 0.2;
+    if (/sine|square|sawtooth|triangle/.test(codeOnly)) creativeScore += 0.1;
+    if (/attack|decay|sustain|release/.test(codeOnly)) creativeScore += 0.15;
+    if (/\[[^\]]+,[^\]]+\]/.test(codeOnly) || /\["[^"]+","[^"]+"/.test(codeOnly)) creativeScore += 0.1;
+    if (/triggerAttackRelease|Transport\.start/.test(codeOnly)) creativeScore += 0.15;
+    if (/ambient|drone|reverb|delay|chorus/i.test(codeOnly)) creativeScore += 0.1;
+    if (/onclick|addEventListener|button/i.test(codeOnly)) creativeScore += 0.05;
+    if (codeOnly.split('\n').length > 10) creativeScore += 0.05;
+    if ((codeOnly.match(/\bTone\.Oscillator\b/g) || []).length >= 2) creativeScore += 0.1;
+    if (/Tone\.LFO|\.connect\(gain\.gain\)|Tone\.Gain/.test(codeOnly)) creativeScore += 0.1;
+
+    // Penalize obvious placeholders / non-Tone failures
+    if (/LLM generation failed|API error|Generated code does not use Tone\.js|❌/i.test(codeOnly)) {
+      creativeScore -= 0.35;
+      technicalScore -= 0.15;
+    }
+
+    if (!/\bTone\./.test(codeOnly) && !/from\s+['"]tone['"]/.test(codeOnly) && !/\bAudioContext\b|\bcreateOscillator\b/.test(codeOnly)) {
+      issues.push('Missing Tone.js or Web Audio APIs');
+    }
+    if (!/triggerAttackRelease|triggerAttack|Transport\.start|start\(\)/.test(codeOnly)) {
+      issues.push('Missing playback or transport trigger');
+    }
+
+    let overallScore = technicalScore * 0.5 + creativeScore * 0.5;
+    let calibratedScore: number | undefined;
+
     if (options?.useCalibration && options?.domain && this.isCalibrated(options.domain)) {
       calibratedScore = this.calculateCalibratedScore(technicalScore, creativeScore, options.domain, options);
       overallScore = calibratedScore;
@@ -1160,6 +1350,7 @@ export class CreativeEvaluator {
     // Code length (substantial HTML pages)
     if (codeOnly.length > 500) technicalScore += 0.05;
     if (codeOnly.length > 1000) technicalScore += 0.05;
+    if (codeOnly.length > 2000) technicalScore += 0.05;
 
     // Creative checks
     // Animation via CSS
@@ -1176,6 +1367,18 @@ export class CreativeEvaluator {
     if (/addEventListener|onclick|onmousemove/i.test(codeOnly)) creativeScore += 0.1;
     // Typography/Fonts
     if (/@font-face|font-family/i.test(codeOnly)) creativeScore += 0.1;
+    // Landing page structure / composition
+    if (/<header|<nav/i.test(codeOnly)) creativeScore += 0.15;
+    if (/<main|<section/i.test(codeOnly)) creativeScore += 0.15;
+    if (/hero|cta|call-to-action/i.test(codeOnly)) creativeScore += 0.1;
+    if (/display:\s*grid|grid-template-columns|display:\s*flex/i.test(codeOnly)) creativeScore += 0.1;
+    if (/<article|class=["'][^"']*(card|feature|project)/i.test(codeOnly)) creativeScore += 0.15;
+    if (/<button|class=["'][^"']*btn/i.test(codeOnly)) creativeScore += 0.1;
+
+    // Penalize obvious placeholder / failure pages
+    if (/LLM generation failed|API error|Generated Page|<title>ERROR<\/title>|❌/i.test(codeOnly)) {
+      creativeScore -= 0.3;
+    }
 
     // Issues
     if (!/<html/i.test(codeOnly)) issues.push('Missing <html> tag');
@@ -1205,24 +1408,26 @@ export class CreativeEvaluator {
 
     // Remove <think> tags for evaluation
     const codeOnly = output.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+    const lines = codeOnly.split('\n').map((line) => line.replace(/\s+$/g, '')).filter((line) => line.trim().length > 0);
+    const asciiCharMatches = codeOnly.match(/[\u2580-\u259F█▓▒░@#%*+=\-\\/|_.()<>^]/g) || [];
+    const densityMatches = codeOnly.match(/[█▓▒░@#%*+=-]/g) || [];
+    const hasRawAsciiArt = lines.length >= 4 && asciiCharMatches.length >= 20;
+    const widths = lines.map((line) => line.length).filter((n) => n > 0);
+    const widthSpread = widths.length ? Math.max(...widths) - Math.min(...widths) : 0;
 
     // Technical checks
-    // Has function structure
-    if (/function\s+\w+\s*\(/.test(codeOnly)) technicalScore += 0.2;
-    if (/console\.log|print|process\.stdout\.write/.test(codeOnly)) technicalScore += 0.15;
-    
-    // Has loops for generating patterns
-    if (/\b(for|while)\s*\(/.test(codeOnly)) technicalScore += 0.15;
-    
-    // Has string/array manipulation
-    if (/\.repeat\(|\.join\(|\.map\(/.test(codeOnly)) technicalScore += 0.15;
-    
-    // Basic syntax
-    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.15;
-    
-    // Code length
-    if (codeOnly.length > 100) technicalScore += 0.1;
-    if (codeOnly.length > 300) technicalScore += 0.1;
+    if (hasRawAsciiArt) technicalScore += 0.3;
+    if (lines.length >= 6) technicalScore += 0.15;
+    if (densityMatches.length >= 10) technicalScore += 0.15;
+    if (widthSpread <= 30 && widths.length >= 4) technicalScore += 0.1;
+    // Also support generator-style ASCII code
+    if (/function\s+\w+\s*\(/.test(codeOnly)) technicalScore += 0.15;
+    if (/console\.log|print|process\.stdout\.write/.test(codeOnly)) technicalScore += 0.1;
+    if (/\b(for|while)\s*\(/.test(codeOnly)) technicalScore += 0.1;
+    if (/\.repeat\(|\.join\(|\.map\(/.test(codeOnly)) technicalScore += 0.1;
+    if (this.checkBasicSyntax(codeOnly)) technicalScore += 0.05;
+    if (codeOnly.length > 100) technicalScore += 0.05;
+    if (codeOnly.length > 300) technicalScore += 0.05;
 
     // Creative checks
     // Box-drawing characters
@@ -1237,6 +1442,10 @@ export class CreativeEvaluator {
     if (/Math\.random|random|noise/.test(codeOnly)) creativeScore += 0.15;
     // Complex patterns (nested loops, recursion)
     if ((codeOnly.match(/\b(for|while)\s*\(/g) || []).length >= 2) creativeScore += 0.15;
+    // Structured silhouette / scene composition in raw art
+    if (hasRawAsciiArt && /[\\/|_]/.test(codeOnly)) creativeScore += 0.2;
+    if (hasRawAsciiArt && lines.length >= 8) creativeScore += 0.1;
+    if (hasRawAsciiArt && densityMatches.length >= 25) creativeScore += 0.1;
 
     // Issues
     if (codeOnly.length < 50) issues.push('ASCII code too short');

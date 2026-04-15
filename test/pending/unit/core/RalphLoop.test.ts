@@ -70,6 +70,11 @@ const mockSuccessRateTrackerGetRecommended = vi.hoisted(() => vi.fn(() => 1));
 const mockSuccessRateTrackerRecordAttempt = vi.hoisted(() => vi.fn());
 const mockSuccessRateTrackerShouldExplore = vi.hoisted(() => vi.fn(() => false));
 const mockSuccessRateTrackerGetSuccessRate = vi.hoisted(() => vi.fn(() => 0.5));
+const mockRenderPipelineProcess = vi.hoisted(() =>
+  vi.fn(async () => ({ success: true, score: 0.8, domain: 'p5', duration: 5, warnings: [] }))
+);
+const mockRenderPipelineClose = vi.hoisted(() => vi.fn(async () => {}));
+const mockRenderPipelineBlendScores = vi.hoisted(() => vi.fn(({ baseScore, renderScore, renderWeight = 0.5 }) => baseScore * (1 - renderWeight) + renderScore * renderWeight));
 
 // ─── Mock registrations ────────────────────────────────────────────────────
 
@@ -222,6 +227,14 @@ vi.mock('../../../src/types/providers.js', () => ({
   Provider: { LMSTUDIO: 'lmstudio', OLLAMA: 'ollama' },
 }));
 
+vi.mock('../../../src/render/RenderAndScorePipeline.js', () => ({
+  RenderAndScorePipeline: class {
+    static blendScores = mockRenderPipelineBlendScores;
+    process = mockRenderPipelineProcess;
+    close = mockRenderPipelineClose;
+  },
+}));
+
 // ─── Import after mocks ────────────────────────────────────────────────────
 
 import { RalphLoop } from '../../../src/core/RalphLoop.js';
@@ -250,6 +263,11 @@ function resetAllMocks(): void {
   mockPromptStoreInjectContext.mockReturnValue('prompt-with-context');
   mockAmbiguityDetect.mockReturnValue([]);
   mockContextAccumulationGetHistory.mockReturnValue([]);
+  mockRenderPipelineProcess.mockResolvedValue({ success: true, score: 0.8, domain: 'p5', duration: 5, warnings: [] });
+  mockRenderPipelineClose.mockResolvedValue(undefined);
+  mockRenderPipelineBlendScores.mockImplementation(({ baseScore, renderScore, renderWeight = 0.5 }) =>
+    baseScore * (1 - renderWeight) + renderScore * renderWeight,
+  );
 }
 
 // ─── Tests ─────────────────────────────────────────────────────────────────
@@ -531,6 +549,28 @@ describe('RalphLoop', () => {
 
       expect(thoughts.length).toBeGreaterThan(0);
       expect(thoughts[0]).toContain('Starting iteration');
+    });
+
+    it('surfaces render scoring warnings through onThought in chat mode', async () => {
+      const thoughts: string[] = [];
+      mockScoringEngineScoreReliable.mockResolvedValue({ score: 0.92, issues: [] });
+      mockRenderPipelineProcess.mockResolvedValue({
+        success: true,
+        score: 0.8,
+        domain: 'p5',
+        duration: 5,
+        warnings: ['Visual scoring skipped: screenshot buffer too small'],
+      });
+
+      await RalphLoop.run('create a sketch', {
+        maxIterations: 2,
+        chatMode: true,
+        useRenderScoring: true,
+        onThought: (t) => thoughts.push(t),
+        _disableIterationExtension: true,
+      });
+
+      expect(thoughts.some(t => t.includes('Render warnings: Visual scoring skipped: screenshot buffer too small'))).toBe(true);
     });
 
     it('invokes onProgress callback after each iteration', async () => {

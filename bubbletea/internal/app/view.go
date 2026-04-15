@@ -10,10 +10,7 @@ import (
 
 func (m Model) View() string {
 	if !m.Ready {
-		return lipgloss.NewStyle().
-			Foreground(ui.AccentPurple).
-			Bold(true).
-			Render("◆ LIMINAL") + "  Initializing..."
+		return ui.BrandStyle.Render("◆ LIMINAL") + "  Initializing..."
 	}
 
 	header := m.renderHeader()
@@ -21,60 +18,101 @@ func (m Model) View() string {
 
 	metrics := m.layoutMetrics()
 
-	// ── Chat pane (left) ──
+	chatContent := m.ChatViewport.View()
+	if strings.TrimSpace(chatContent) == "" {
+		chatContent = m.renderChatContent()
+	}
+	chatPaneContent := lipgloss.JoinVertical(
+		lipgloss.Left,
+		m.renderPaneHeader("Conversation", m.chatPaneStatus()),
+		chatContent,
+	)
 	chatPane := ui.ChatPaneStyle.
 		Width(metrics.chatContentWidth).
 		MaxWidth(metrics.chatContentWidth).
 		Height(metrics.paneContentHeight).
 		MaxHeight(metrics.paneContentHeight).
-		Render(m.ChatViewport.View())
+		Render(chatPaneContent)
 
-	// ── Right column ──
-	var rightPane string
-	if m.PreviewVisible {
-		rightPane = ui.PreviewPaneStyle.
-			Width(metrics.previewContentWidth).
-			MaxWidth(metrics.previewContentWidth).
-			Height(metrics.paneContentHeight).
-			MaxHeight(metrics.paneContentHeight).
-			Render(m.renderPreviewSection(metrics.previewContentWidth, metrics.paneContentHeight))
-	} else {
-		rightPane = ui.ChatPaneStyle.
-			Width(metrics.previewContentWidth).
-			MaxWidth(metrics.previewContentWidth).
-			Height(metrics.paneContentHeight).
-			MaxHeight(metrics.paneContentHeight).
-			Render(m.renderCompactStatus())
-	}
-
-	// ── Focus indicator ──
+	rightStyle := ui.OperatorPaneStyle
 	if m.FocusPane == FocusPreview {
-		rightPane = lipgloss.NewStyle().
-			Border(lipgloss.RoundedBorder()).
-			BorderForeground(ui.AccentGreen).
-			Padding(0, 1).
-			Width(metrics.previewContentWidth).
-			MaxWidth(metrics.previewContentWidth).
-			Height(metrics.paneContentHeight).
-			MaxHeight(metrics.paneContentHeight).
-			Render(m.renderPreviewSection(metrics.previewContentWidth, metrics.paneContentHeight))
+		rightStyle = ui.OperatorPaneFocusedStyle
 	}
 
-	// ── Join columns ──
-	body := lipgloss.JoinHorizontal(lipgloss.Top, chatPane, rightPane)
+	var rightContent string
+	if m.PreviewVisible {
+		operatorContent := m.PreviewViewport.View()
+		if strings.TrimSpace(operatorContent) == "" {
+			operatorContent = m.renderOperatorSurface(max(metrics.operatorContentWidth, 24))
+		}
+		rightContent = lipgloss.JoinVertical(
+			lipgloss.Left,
+			m.renderPaneHeader("Operator surface", m.operatorPaneStatus()),
+			operatorContent,
+		)
+	} else {
+		rightContent = m.renderCompactStatus()
+	}
 
+	rightPane := rightStyle.
+		Width(metrics.operatorContentWidth).
+		MaxWidth(metrics.operatorContentWidth).
+		Height(metrics.paneContentHeight).
+		MaxHeight(metrics.paneContentHeight).
+		Render(rightContent)
+
+	body := lipgloss.JoinHorizontal(lipgloss.Top, chatPane, rightPane)
 	return lipgloss.JoinVertical(lipgloss.Left, header, body, footer)
 }
 
-// ── Header ──
+func (m Model) renderPaneHeader(title string, status string) string {
+	header := ui.PaneTitleStyle.Render(title)
+	if strings.TrimSpace(status) == "" {
+		return header
+	}
+	return lipgloss.JoinHorizontal(
+		lipgloss.Left,
+		header,
+		" ",
+		ui.PaneStatusPillStyle.Render(status),
+	)
+}
+
+func (m Model) chatPaneStatus() string {
+	if strings.TrimSpace(m.ActiveResponse) != "" {
+		return "Streaming"
+	}
+	if !m.Connected {
+		return "Offline"
+	}
+	return "Live"
+}
+
+func (m Model) operatorPaneStatus() string {
+	if m.Mode == "ACTION" {
+		return "Review first"
+	}
+	if m.FocusPane == FocusPreview {
+		return "Focused"
+	}
+	return "Live state"
+}
 
 func (m Model) renderHeader() string {
 	brand := ui.BrandStyle.Render("◆ LIMINAL")
 	mode := ui.ModeStyle.Render(strings.ToLower(m.Mode))
-	provider := ui.ProviderStyle.Render(m.Provider + " / " + m.ModelName)
+	provider := ui.ProviderStyle.Render(m.Provider + "/" + m.ModelName)
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)
+	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
-	// Generation telemetry display
+	headerParts := []string{brand, mode, provider, connDot, m.renderPhaseBadge(m.Task.Phase)}
+	if m.Task.StepTotal > 0 {
+		headerParts = append(headerParts, ui.StatusPillStyle.Render(formatStepProgress(m.Task.StepCurrent, m.Task.StepTotal)))
+	}
+	if strings.TrimSpace(m.TrustLabel) != "" {
+		headerParts = append(headerParts, ui.StatusValueStyle.Render(trimToWidth(m.TrustLabel, 32)))
+	}
+
 	var telemetry string
 	if m.GenerationScore > 0 || m.CurrentIteration > 0 {
 		scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)
@@ -93,7 +131,6 @@ func (m Model) renderHeader() string {
 		}
 	}
 
-	// Swarm round progress display
 	var swarmTelemetry string
 	if m.SwarmRound > 0 {
 		swarmTelemetry = lipgloss.NewStyle().
@@ -101,13 +138,7 @@ func (m Model) renderHeader() string {
 			Render(fmt.Sprintf("Swarm %d/%d — %d sym", m.SwarmRound, m.SwarmTotalRounds, m.SwarmVocabularySize))
 	}
 
-	// Spacing between elements
-	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
-
-	headerContent := brand + spacer + mode + spacer + provider + spacer + connDot
-	if m.shouldSpin() {
-		headerContent += spacer + ui.ActivityStyle.Render(m.Spinner.View()+" "+m.currentActivityText())
-	}
+	headerContent := strings.Join(headerParts, spacer)
 	if telemetry != "" {
 		headerContent += spacer + telemetry
 	}
@@ -115,151 +146,67 @@ func (m Model) renderHeader() string {
 		headerContent += spacer + swarmTelemetry
 	}
 
-	header := lipgloss.NewStyle().
-		Background(ui.BgSurface).
-		Foreground(ui.FgText).
-		Padding(0, 1).
-		Width(m.Width).
-		Render(headerContent)
-
-	return header
+	return ui.HeaderStyle.Width(m.Width).Render(headerContent)
 }
 
-// ── Footer with textinput ──
-
 func (m Model) renderFooter() string {
-	// Input field
 	inputView := m.TextInput.View()
 
-	// Keybinding hints
 	var hints []string
 	if m.FocusPane == FocusChat {
-		switch m.Mode {
-		case "CHAT":
-			hints = []string{
-				ui.KeyStyle.Render("Tab") + ui.HintStyle.Render(":preview"),
-				ui.KeyStyle.Render("Enter") + ui.HintStyle.Render(":send"),
-				ui.KeyStyle.Render("Ctrl+E") + ui.HintStyle.Render(":toggle"),
-				ui.KeyStyle.Render("PgUp/PgDn") + ui.HintStyle.Render(":scroll"),
-				ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
-			}
-		case "ACTION":
-			hints = []string{
-				ui.KeyStyle.Render("y") + ui.HintStyle.Render(":confirm"),
-				ui.KeyStyle.Render("n") + ui.HintStyle.Render(":cancel"),
-			}
-		default:
-			hints = []string{
-				ui.KeyStyle.Render("Enter") + ui.HintStyle.Render(":send"),
-			}
+		hints = []string{
+			ui.KeyStyle.Render("Enter") + ui.HintStyle.Render(":send"),
+			ui.KeyStyle.Render("Alt+Enter") + ui.HintStyle.Render(":newline"),
+			ui.KeyStyle.Render("Tab") + ui.HintStyle.Render(":operator"),
+			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
+			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
+			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
+			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
+		}
+		if m.Mode == "ACTION" {
+			hints = append(hints,
+				ui.KeyStyle.Render("y")+ui.HintStyle.Render(":confirm"),
+				ui.KeyStyle.Render("n")+ui.HintStyle.Render(":cancel"),
+			)
 		}
 	} else {
 		hints = []string{
 			ui.KeyStyle.Render("Tab") + ui.HintStyle.Render(":chat"),
-			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":tab"),
+			ui.KeyStyle.Render("↑↓") + ui.HintStyle.Render(":scroll"),
+			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
+			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
+			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
+			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 			ui.KeyStyle.Render("Esc") + ui.HintStyle.Render(":back"),
 		}
 	}
-	hintStr := strings.Join(hints, "  ")
 
-	footer := lipgloss.NewStyle().
-		Background(ui.BgSurface).
-		Foreground(ui.FgText).
-		Padding(0, 1).
+	return ui.FooterStyle.
 		Width(m.Width).
-		Render(inputView + "  " + hintStr)
-
-	return footer
+		Render(inputView + "  " + strings.Join(hints, "  "))
 }
-
-// ── Preview section (right column) ──
-
-func (m Model) renderPreviewSection(width, height int) string {
-	// Tab bar
-	codeTab := ui.InactiveTabStyle.Render("Code")
-	outputTab := ui.InactiveTabStyle.Render("Output")
-	logTab := ui.InactiveTabStyle.Render("Log")
-
-	switch m.PreviewTab {
-	case "code":
-		codeTab = ui.ActiveTabStyle.Render("Code")
-	case "output":
-		outputTab = ui.ActiveTabStyle.Render("Output")
-	case "log":
-		logTab = ui.ActiveTabStyle.Render("Log")
-	}
-
-	tabBar := ui.TabBarStyle.Width(width - 4).Render(codeTab + outputTab + logTab)
-
-	// Preview content viewport
-	previewView := m.PreviewViewport.View()
-
-	// Status at bottom
-	statusLine := m.renderStatusLine(width)
-
-	return lipgloss.JoinVertical(lipgloss.Left, tabBar, previewView, statusLine)
-}
-
-// ── Status line in preview pane ──
-
-func (m Model) renderStatusLine(width int) string {
-	trustColor := ui.TrustColor(m.TrustLabel)
-
-	trust := lipgloss.NewStyle().
-		Foreground(trustColor).
-		Render(m.TrustLabel)
-
-	mode := ui.StatusLabelStyle.Render("Mode: ") + ui.StatusValueStyle.Render(m.Mode)
-	model := ui.StatusLabelStyle.Render("Model: ") + ui.StatusValueStyle.Render(m.Provider+"/"+m.ModelName)
-
-	statusLine := model + "  " + mode + "  " + trust
-
-	// Add generation telemetry if available
-	if m.GenerationScore > 0 || m.CurrentIteration > 0 {
-		scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)
-		iterStr := fmt.Sprintf("%d", m.CurrentIteration)
-		if m.GenerationIterations > 0 {
-			iterStr = fmt.Sprintf("%d/%d", m.CurrentIteration, m.GenerationIterations)
-		}
-		genInfo := ui.StatusLabelStyle.Render("Gen: ") +
-			ui.StatusValueStyle.Render("iter:"+iterStr+" score:"+scoreStr)
-		if m.GenerationDuration > 0 {
-			durationStr := fmt.Sprintf("%.1fs", float64(m.GenerationDuration)/1000.0)
-			genInfo = ui.StatusLabelStyle.Render("Gen: ") +
-				ui.StatusValueStyle.Render("iter:"+iterStr+" score:"+scoreStr+" "+durationStr)
-		}
-		statusLine += "  " + genInfo
-	}
-
-	return lipgloss.NewStyle().
-		Width(width - 4).
-		Foreground(ui.FgMuted).
-		Render(statusLine)
-}
-
-// ── Compact status when preview is hidden ──
 
 func (m Model) renderCompactStatus() string {
-	var lines []string
-	lines = append(lines, ui.StatusLabelStyle.Render("Provider: ")+ui.StatusValueStyle.Render(m.Provider+"/"+m.ModelName))
-	lines = append(lines, ui.StatusLabelStyle.Render("Mode: ")+ui.StatusValueStyle.Render(m.Mode))
-	trustColor := ui.TrustColor(m.TrustLabel)
-	lines = append(lines, ui.StatusLabelStyle.Render("Trust: ")+lipgloss.NewStyle().Foreground(trustColor).Render(m.TrustLabel))
-	if m.TranscriptPath != "" {
-		lines = append(lines, ui.StatusLabelStyle.Render("Transcript: ")+ui.StatusValueStyle.Render(m.TranscriptPath))
+	lines := []string{
+		ui.StatusLabelStyle.Render("Provider:") + " " + ui.StatusValueStyle.Render(m.Provider+"/"+m.ModelName),
+		ui.StatusLabelStyle.Render("Mode:") + " " + ui.StatusValueStyle.Render(strings.ToLower(m.Mode)),
+		ui.StatusLabelStyle.Render("Trust:") + " " + ui.StatusValueStyle.Render(m.TrustLabel),
 	}
-
+	if strings.TrimSpace(m.Task.Objective) != "" {
+		lines = append(lines, ui.StatusLabelStyle.Render("Task:")+" "+ui.StatusValueStyle.Render(m.Task.Objective))
+	}
+	if len(m.ChangedFiles) > 0 {
+		lines = append(lines, ui.StatusLabelStyle.Render("Changed:")+" "+ui.StatusValueStyle.Render(fmt.Sprintf("%d files", len(m.ChangedFiles))))
+	}
 	if m.PendingAction != nil {
-		lines = append(lines, "")
-		lines = append(lines, ui.ActionTitleStyle.Render("⚠ Pending Action"))
-		lines = append(lines, ui.ActionCardStyle.Render(m.PendingAction.Title))
-		lines = append(lines, ui.HintStyle.Render("[y] confirm  [n] cancel"))
+		lines = append(lines,
+			"",
+			ui.ActionTitleStyle.Render("Pending review"),
+			ui.ActionCardStyle.Render(m.PendingAction.Title),
+			ui.HintStyle.Render("[y] confirm  [n] cancel"),
+		)
 	}
-	if m.LastNotice != "" {
-		lines = append(lines, "")
-		lines = append(lines, ui.ActivityStyle.Render(m.LastNotice))
-	}
-
+	lines = append(lines, "", ui.HintStyle.Render("Ctrl+E operator  Ctrl+T timeline  Ctrl+A artifacts  ?:help"))
 	return strings.Join(lines, "\n")
 }
 
@@ -268,7 +215,6 @@ func (m Model) renderCompactStatus() string {
 func (m Model) renderChatContent() string {
 	var sb strings.Builder
 
-	// Render structured chat blocks
 	for _, block := range m.ChatBlocks {
 		switch block.Type {
 		case "user":
@@ -301,33 +247,12 @@ func (m Model) renderChatContent() string {
 			sb.WriteString("\n\n")
 		}
 	}
-	if m.LastNotice != "" {
-		sb.WriteString(ui.ActivityStyle.Render(m.LastNotice))
-		sb.WriteString("\n\n")
-	}
-	if len(m.ActivityLog) > 0 && (m.IsStreaming || m.ActivityMessage != "") {
-		sb.WriteString(ui.ActivityStyle.Render("Live tool/thought trace"))
-		sb.WriteString("\n")
-		start := 0
-		if len(m.ActivityLog) > 6 {
-			start = len(m.ActivityLog) - 6
-		}
-		for _, line := range m.ActivityLog[start:] {
-			sb.WriteString(ui.StreamingStyle.Render("• " + line))
-			sb.WriteString("\n")
-		}
-		sb.WriteString("\n")
-	}
 
-	// Append active streaming response
 	if m.ActiveResponse != "" {
 		sb.WriteString(ui.AssistantMsgStyle.Render("◆"))
-		sb.WriteString(" ")
-		sb.WriteString(ui.TypingPillStyle.Render(m.Spinner.View() + " streaming"))
 		sb.WriteString("\n")
 		rendered := m.renderMarkdown(m.ActiveResponse)
 		sb.WriteString(rendered)
-		// Show live iteration progress during generation
 		if m.CurrentIteration > 0 {
 			scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)
 			iterStr := fmt.Sprintf("%d", m.CurrentIteration)
@@ -339,13 +264,8 @@ func (m Model) renderChatContent() string {
 				Render("▌ iter:" + iterStr + " score:" + scoreStr)
 			sb.WriteString(progress)
 		} else {
-			sb.WriteString("\n")
-			sb.WriteString(ui.StreamingStyle.Render(m.Spinner.View() + " GLM is typing"))
+			sb.WriteString(ui.StreamingStyle.Render("▌"))
 		}
-	} else if m.IsStreaming || m.ActivityMessage != "" {
-		sb.WriteString(ui.AssistantMsgStyle.Render("◆"))
-		sb.WriteString(" ")
-		sb.WriteString(ui.TypingPillStyle.Render(m.Spinner.View() + " " + m.currentActivityText()))
 	}
 
 	if len(m.ChatBlocks) == 0 && m.ActiveResponse == "" {
@@ -357,20 +277,6 @@ func (m Model) renderChatContent() string {
 	return sb.String()
 }
 
-func (m Model) currentActivityText() string {
-	if m.ActivityMessage != "" {
-		return m.ActivityMessage
-	}
-	if m.Reconnecting {
-		return "reconnecting"
-	}
-	if m.IsStreaming {
-		return "GLM is typing"
-	}
-	return "idle"
-}
-
-// renderPreviewContent returns content for the preview viewport.
 func (m Model) renderPreviewContent() string {
 	if m.PreviewContent == "" {
 		return lipgloss.NewStyle().
@@ -397,7 +303,6 @@ func (m Model) renderPreviewContent() string {
 	}
 }
 
-// renderMarkdown uses glamour to render markdown with syntax highlighting.
 func (m Model) renderMarkdown(content string) string {
 	if m.Renderer == nil {
 		return content
@@ -409,8 +314,6 @@ func (m Model) renderMarkdown(content string) string {
 	return rendered
 }
 
-// ── Viewport style helpers ──
-
 func chatViewportStyle() lipgloss.Style {
 	return lipgloss.NewStyle()
 }
@@ -419,7 +322,6 @@ func previewViewportStyle() lipgloss.Style {
 	return lipgloss.NewStyle()
 }
 
-// max returns the larger of a and b.
 func max(a, b int) int {
 	if a > b {
 		return a
@@ -427,7 +329,6 @@ func max(a, b int) int {
 	return b
 }
 
-// min returns the smaller of a and b.
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -435,7 +336,6 @@ func min(a, b int) int {
 	return b
 }
 
-// Format intentionally kept as a helper for future use.
 func formatBytes(n int) string {
 	if n < 1024 {
 		return fmt.Sprintf("%d B", n)

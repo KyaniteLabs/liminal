@@ -29,7 +29,7 @@ const DOMAINS = [
   { name: 'strudel', prompt: 'Create a simple techno beat pattern with drums', Generator: StrudelGenerator, icon: '🎵' },
   { name: 'hydra', prompt: 'Create a geometric video synth pattern with kaleidoscope effect', Generator: HydraGenerator, icon: '📺' },
   { name: 'tone', prompt: 'Create an ambient drone synthesizer with reverb', Generator: ToneGenerator, icon: '🎹' },
-  { name: 'remotion', prompt: 'Create a typing text animation video component', Generator: RemotionGenerator, icon: '🎬' },
+  { name: 'revideo', prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle', Generator: RemotionGenerator, icon: '🎬' },
   { name: 'html', prompt: 'Create a landing page with hero section and call to action', Generator: HTMLWebGenerator, icon: '🌐' },
   { name: 'ascii', prompt: 'Create ASCII art of a mountain landscape', Generator: ASCIIArtGenerator, icon: '🏔️' },
 ];

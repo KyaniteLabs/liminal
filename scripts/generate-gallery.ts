@@ -34,8 +34,12 @@ const DOMAIN_META: Record<string, { icon: string; color: string; title: string }
   'strudel': { icon: '🎵', color: 'var(--accent-rose)', title: 'Strudel Patterns' },
   'tone': { icon: '🎹', color: 'var(--accent-cyan)', title: 'Tone.js' },
   'three': { icon: '🧊', color: 'var(--accent-blue)', title: 'Three.js Scenes' },
-  'remotion': { icon: '🎬', color: 'var(--accent-rose)', title: 'Remotion Videos' },
+  'remotion': { icon: '🎬', color: 'var(--accent-rose)', title: 'Revideo Scenes' },
   'ascii': { icon: '💻', color: 'var(--accent-violet)', title: 'ASCII Art' },
+};
+
+const DOMAIN_DISPLAY: Record<string, string> = {
+  remotion: 'revideo',
 };
 
 function parseFilename(filename: string): GalleryItem | null {
@@ -85,9 +89,9 @@ function generateGallery() {
     id: `card-${idx}`,
     domain: item.domain,
     model: `${item.provider}/${item.model}`,
-    label: item.domain.toUpperCase(),
+    label: (DOMAIN_DISPLAY[item.domain] ?? item.domain).toUpperCase(),
     iframeSrc: item.path,
-    prompt: `${item.domain} creative code output`,
+    prompt: `${DOMAIN_DISPLAY[item.domain] ?? item.domain} creative code output`,
     iterations: 1,
     variant: 'standard',
     generatedAt: new Date().toISOString().slice(0, 10),

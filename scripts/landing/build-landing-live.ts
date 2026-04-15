@@ -18,7 +18,10 @@ const MODELS = [
 const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'];
 const TITLES: Record<string, string> = {
   p5: 'p5.js Sketch', glsl: 'GLSL Shader', three: 'Three.js Scene', strudel: 'Strudel Pattern',
-  hydra: 'Hydra Synth', remotion: 'Remotion Video', html: 'HTML Page', ascii: 'ASCII Art'
+  hydra: 'Hydra Synth', remotion: 'Revideo Scene', html: 'HTML Page', ascii: 'ASCII Art'
+};
+const DOMAIN_DISPLAY: Record<string, string> = {
+  remotion: 'revideo',
 };
 
 const DURATIONS: Record<string, string> = {
@@ -209,9 +212,9 @@ function createRemotionWrapper(code: string): string {
   </style>
 </head>
 <body>
-  <h3>Remotion Video Component</h3>
+  <h3>Revideo Scene</h3>
   <pre>${code.replace(/</g, '&lt;')}</pre>
-  <p style="color: #888;">Remotion requires build step to preview</p>
+  <p style="color: #888;">Revideo requires a build step to preview</p>
 </body>
 </html>`;
 }
@@ -260,7 +263,7 @@ for (const model of MODELS) {
     galleryCards += `
     <div class="example-card">
       <div class="example-header">
-        <span class="tag tag-${domain}">${domain}</span>
+        <span class="tag tag-${domain}">${DOMAIN_DISPLAY[domain] ?? domain}</span>
         <span class="example-title">${TITLES[domain]}</span>
         <span class="example-model">${model.name}</span>
       </div>

@@ -240,7 +240,7 @@ Applies adaptations based on detected patterns.
 **Location:** `src/harness/HarnessUpdater.ts`
 
 ### 4. HarnessAgent
-Executes tasks using 7 tools with rollback capability.
+Executes tasks with rollback capability and an expanding coding-tool surface.
 
 **Location:** `src/harness/agent/HarnessAgent.ts`
 
@@ -250,6 +250,11 @@ Executes tasks using 7 tools with rollback capability.
 - `applyEdit` - Targeted string replacement (preferred)
 - `runBuild` - Run `npm run build`
 - `runTests` - Run test suite
+- `executeSkill` - Load local `SKILL.md` instructions for harness use
+- `searchCode` - Search indexed code via jcodemunch
+- `searchDocs` - Search indexed docs via jdocmunch
+- `runLint` - Run project lint or focused eslint
+- `runFocusedTests` - Run targeted vitest slices
 - `createBackup` - Create file backup
 - `restoreBackup` - Restore from backup
 

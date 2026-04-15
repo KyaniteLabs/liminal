@@ -10,6 +10,7 @@
  */
 
 import type { LLMClient } from './LLMClient.js';
+import { CapabilityRegistry } from './CapabilityRegistry.js';
 import { Logger } from '../utils/Logger.js';
 import { TRUNCATE_MEDIUM } from '../constants/limits.js';
 
@@ -23,17 +24,20 @@ interface CompactorOptions {
   maxMessages?: number;
   recentThreshold?: number;
   llmClient?: LLMClient;
+  tokenThresholdRatio?: number;
 }
 
 export class ContextCompactor {
   private maxMessages: number;
   private recentThreshold: number;
   private llmClient?: LLMClient;
+  private tokenThresholdRatio: number;
 
   constructor(options: CompactorOptions = {}) {
     this.maxMessages = options.maxMessages || 20;
     this.recentThreshold = options.recentThreshold || 10;
     this.llmClient = options.llmClient;
+    this.tokenThresholdRatio = options.tokenThresholdRatio || 0.65;
   }
 
   /**
@@ -144,18 +148,37 @@ export class ContextCompactor {
    * Check if compaction is needed
    */
   needsCompaction(messages: CompactorMessage[]): boolean {
-    return messages.length > this.maxMessages;
+    if (messages.length > this.maxMessages) {
+      return true;
+    }
+
+    if (this.llmClient) {
+      const estimatedTokens = this.estimateTokens(messages);
+      const contextWindow = CapabilityRegistry.getCapabilities(this.llmClient.getConfig().model).maxContextTokens;
+      return estimatedTokens >= Math.floor(contextWindow * this.tokenThresholdRatio);
+    }
+
+    return false;
   }
 
   /**
    * Get compaction stats
    */
   getStats(messages: CompactorMessage[], compacted: CompactorMessage[]) {
+    const originalEstimatedTokens = this.estimateTokens(messages);
+    const compactedEstimatedTokens = this.estimateTokens(compacted);
     return {
       originalCount: messages.length,
       compactedCount: compacted.length,
       reduction: messages.length - compacted.length,
       reductionPercent: Math.round(((messages.length - compacted.length) / messages.length) * 100),
+      originalEstimatedTokens,
+      compactedEstimatedTokens,
     };
+  }
+
+  private estimateTokens(messages: CompactorMessage[]): number {
+    const totalChars = messages.reduce((sum, m) => sum + m.content.length, 0);
+    return Math.ceil(totalChars / 4);
   }
 }

@@ -3,20 +3,23 @@ package app
 import (
 	"context"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
 	"github.com/atotto/clipboard"
-	"github.com/charmbracelet/bubbles/spinner"
-	"github.com/charmbracelet/bubbles/textinput"
+	"github.com/charmbracelet/bubbles/textarea"
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/glamour"
 )
+
+// GlobalProgram holds a reference to the Bubble Tea program so SSE goroutines
+// can send events via program.Send(). Set by main.go after program creation.
+var GlobalProgram *tea.Program
+
+var copyToClipboard = clipboard.WriteAll
 
 // ChatBlock represents a single structured entry in the chat history.
 type ChatBlock struct {
@@ -34,6 +37,81 @@ const (
 	FocusPreview
 )
 
+// AgentPhase represents the current phase of agent execution.
+type AgentPhase string
+
+const (
+	PhaseIdle    AgentPhase = "Idle"
+	PhasePlan    AgentPhase = "Plan"
+	PhaseInspect AgentPhase = "Inspect"
+	PhaseEdit    AgentPhase = "Edit"
+	PhaseVerify  AgentPhase = "Verify"
+	PhaseReport  AgentPhase = "Report"
+)
+
+// ToolStep represents a single tool invocation on the timeline.
+type ToolStep struct {
+	StepNum       int
+	ToolName      string
+	Thought       string // Sanitized operator-safe rationale
+	ArgsSummary   string // Short summary of arguments
+	Status        string // "running" | "success" | "failed"
+	ResultSummary string
+	StartedAt     time.Time
+	CompletedAt   time.Time
+}
+
+// ChangedFile tracks a file modified by the agent.
+type ChangedFile struct {
+	Path     string
+	Status   string // "modified" | "created" | "deleted"
+	IsLatest bool
+}
+
+// VerificationJob tracks a build/test/typecheck command.
+type VerificationJob struct {
+	JobID       string
+	Command     string
+	Status      string // "running" | "pass" | "fail"
+	OutputTail  string
+	StartedAt   time.Time
+	CompletedAt time.Time
+	Duration    int64 // ms
+}
+
+// ArtifactRef is a discoverable artifact path.
+type ArtifactRef struct {
+	Label     string
+	Path      string
+	UpdatedAt time.Time
+}
+
+// ActivityLogEntry is a timestamped operator-facing log message.
+type ActivityLogEntry struct {
+	Message   string
+	Timestamp time.Time
+}
+
+// TaskCard holds the current agent objective and progress.
+type TaskCard struct {
+	Objective   string
+	Phase       AgentPhase
+	StepCurrent int
+	StepTotal   int
+	ActiveFile  string
+}
+
+const (
+	// MaxTimelineEntries bounds the tool timeline display.
+	MaxTimelineEntries = 50
+	// MaxActivityLog bounds the activity log.
+	MaxActivityLog = 100
+	// MaxChangedFiles bounds the changed files list.
+	MaxChangedFiles = 100
+	// ChatInputHeight keeps the textarea compact while supporting multiline input.
+	ChatInputHeight = 3
+)
+
 type Model struct {
 	// Layout dimensions
 	Width  int
@@ -42,22 +120,15 @@ type Model struct {
 	// Two-column viewports
 	ChatViewport    viewport.Model
 	PreviewViewport viewport.Model
-	TextInput       textinput.Model
-	Spinner         spinner.Model
+	TextInput       textarea.Model
 	Program         *tea.Program
 	Ready           bool
 	FocusPane       FocusPane
 
 	// Chat state
-	ChatBlocks      []ChatBlock
-	ActiveResponse  string
-	Input           string
-	IsStreaming     bool
-	ActivityMessage string
-	ActivityLog     []string
-	LastNotice      string
-	TranscriptPath  string
-	LastCopy        string // tracks what was last copied so user can re-copy
+	ChatBlocks     []ChatBlock
+	ActiveResponse string
+	Input          string
 
 	// Preview state
 	PreviewContent string // Current preview content
@@ -85,6 +156,32 @@ type Model struct {
 	SwarmTotalRounds    int
 	SwarmVocabularySize int
 
+	// ── Operator surface state ──
+
+	// Task card: what the agent is trying to do
+	Task TaskCard
+
+	// Tool timeline: ordered list of tool invocations
+	ToolTimeline []ToolStep
+
+	// Changed files: files mutated by the agent
+	ChangedFiles  []ChangedFile
+	MutationCount int
+
+	// Verification jobs: running build/test/typecheck commands
+	VerificationJobs []VerificationJob
+
+	// Artifacts: discoverable output paths
+	Artifacts []ArtifactRef
+
+	// Activity log: recent operator-facing messages
+	ActivityLog []ActivityLogEntry
+
+	// Surface visibility toggles
+	TimelineVisible  bool
+	ArtifactsVisible bool
+	HelpVisible      bool
+
 	// Live bridge state
 	Bridge       *bridge.Client
 	SessionID    string
@@ -97,11 +194,15 @@ type Model struct {
 }
 
 func NewModel(bridgeURL string) Model {
-	ti := textinput.New()
+	ti := textarea.New()
 	ti.Placeholder = "Type your message..."
 	ti.Prompt = "> "
-	ti.CharLimit = 16000 // generous limit for pasted content
-	ti.Width = 80
+	ti.CharLimit = 2000
+	ti.ShowLineNumbers = false
+	ti.SetHeight(ChatInputHeight)
+	ti.SetWidth(80)
+	ti.FocusedStyle, ti.BlurredStyle = ui.TextareaStyles()
+	_ = ti.Focus()
 
 	// Create glamour renderer for markdown + syntax highlighting
 	renderer, err := glamour.NewTermRenderer(
@@ -111,33 +212,33 @@ func NewModel(bridgeURL string) Model {
 	if err != nil {
 		renderer = nil
 	}
-	spin := spinner.New(
-		spinner.WithSpinner(spinner.MiniDot),
-		spinner.WithStyle(ui.StreamingStyle),
-	)
 
 	return Model{
-		Mode:            "CHAT",
-		ChatBlocks:      []ChatBlock{},
-		ActiveResponse:  "",
-		Input:           "",
-		IsStreaming:     false,
-		ActivityMessage: "",
-		ActivityLog:     []string{},
-		LastNotice:      "",
-		TranscriptPath:  os.Getenv("LIMINAL_TUI_TRANSCRIPT_PATH"),
-		Width:           120,
-		Height:          32,
-		Provider:        "pending",
-		ModelName:       "bridge",
-		TrustLabel:      "Generated code is untrusted by default",
-		Bridge:          bridge.NewClient(bridgeURL),
-		TextInput:       ti,
-		Spinner:         spin,
-		Renderer:        renderer,
-		FocusPane:       FocusChat,
-		PreviewTab:      "code",
-		PreviewVisible:  true,
+		Mode:           "CHAT",
+		ChatBlocks:     []ChatBlock{},
+		ActiveResponse: "",
+		Input:          "",
+		Width:          120,
+		Height:         32,
+		Provider:       "pending",
+		ModelName:      "bridge",
+		TrustLabel:     "Generated code is untrusted by default",
+		Bridge:         bridge.NewClient(bridgeURL),
+		TextInput:      ti,
+		Renderer:       renderer,
+		FocusPane:      FocusChat,
+		PreviewTab:     "code",
+		PreviewVisible: true,
+		// Operator surface initial state
+		Task:             TaskCard{Phase: PhaseIdle},
+		ToolTimeline:     []ToolStep{},
+		ChangedFiles:     []ChangedFile{},
+		VerificationJobs: []VerificationJob{},
+		Artifacts:        []ArtifactRef{},
+		ActivityLog:      []ActivityLogEntry{},
+		TimelineVisible:  true,
+		ArtifactsVisible: false,
+		HelpVisible:      false,
 	}
 }
 
@@ -145,14 +246,11 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 	switch event.Type {
 	case "response.started":
 		m.ActiveResponse = ""
-		m.IsStreaming = true
-		m.ActivityMessage = "GLM is thinking"
+		m.addActivity("Response started")
 	case "response.delta":
 		m.ActiveResponse += event.Delta
-		m.IsStreaming = true
 	case "response.completed":
 		m.ActiveResponse = event.Content
-		m.ActivityMessage = "finalizing response"
 	case "response.committed":
 		// Add assistant block to chat history
 		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
@@ -160,7 +258,6 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			Content: event.Content,
 			Time:    time.Now(),
 		})
-		m.appendTranscript("assistant", event.Content)
 		// Check for code content to show in preview
 		if containsCode(event.Content) {
 			m.PreviewContent = extractCode(event.Content)
@@ -168,8 +265,6 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			m.PreviewVisible = true
 		}
 		m.ActiveResponse = ""
-		m.IsStreaming = false
-		m.ActivityMessage = ""
 	case "action.review_required":
 		m.Mode = "ACTION"
 		m.PendingAction = event.Action
@@ -203,14 +298,7 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			Content: event.Message,
 			Time:    time.Now(),
 		})
-		m.appendTranscript("error", event.Message)
 		m.ActiveResponse = ""
-		m.IsStreaming = false
-		m.ActivityMessage = ""
-	case "activity.updated":
-		m.ActivityMessage = event.Message
-		m.addActivity(event.Message)
-		m.IsStreaming = true
 	case "preview.started":
 		m.PreviewType = event.PreviewType
 		m.PreviewVisible = true
@@ -243,9 +331,6 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			Content: summary,
 			Time:    time.Now(),
 		})
-		m.appendTranscript("system", summary)
-		m.IsStreaming = false
-		m.ActivityMessage = ""
 	case "response.metadata":
 		if event.Model != "" {
 			m.ModelName = event.Model
@@ -257,85 +342,174 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		m.SwarmRound = event.Round
 		m.SwarmTotalRounds = event.TotalRounds
 		m.SwarmVocabularySize = event.VocabularySize
+
+	// ── Operator surface events ──
+
+	case "tool.started":
+		step := ToolStep{
+			StepNum:     event.StepNum,
+			ToolName:    event.ToolName,
+			Thought:     event.Thought,
+			ArgsSummary: event.ArgsSummary,
+			Status:      "running",
+			StartedAt:   time.Now(),
+		}
+		m.ToolTimeline = append(m.ToolTimeline, step)
+		if len(m.ToolTimeline) > MaxTimelineEntries {
+			m.ToolTimeline = m.ToolTimeline[len(m.ToolTimeline)-MaxTimelineEntries:]
+		}
+		m.addActivity(fmt.Sprintf("Tool #%d: %s", event.StepNum, event.ToolName))
+
+	case "tool.completed":
+		for i := len(m.ToolTimeline) - 1; i >= 0; i-- {
+			if m.ToolTimeline[i].StepNum == event.StepNum {
+				m.ToolTimeline[i].Status = "success"
+				if !event.Success {
+					m.ToolTimeline[i].Status = "failed"
+				}
+				m.ToolTimeline[i].ResultSummary = event.ResultSummary
+				m.ToolTimeline[i].CompletedAt = time.Now()
+				break
+			}
+		}
+		statusIcon := "✓"
+		if !event.Success {
+			statusIcon = "✗"
+		}
+		m.addActivity(fmt.Sprintf("%s %s: %s", statusIcon, event.ToolName, event.ResultSummary))
+
+	case "phase.changed":
+		m.Task.Phase = AgentPhase(event.Phase)
+		if event.StepCurrent > 0 {
+			m.Task.StepCurrent = event.StepCurrent
+		}
+		if event.StepTotal > 0 {
+			m.Task.StepTotal = event.StepTotal
+		}
+		if event.ActiveFile != "" {
+			m.Task.ActiveFile = event.ActiveFile
+		}
+		if event.Objective != "" {
+			m.Task.Objective = event.Objective
+		}
+		m.addActivity(fmt.Sprintf("Phase: %s", event.Phase))
+
+	case "files.changed":
+		m.ChangedFiles = make([]ChangedFile, 0, len(event.Files))
+		for _, f := range event.Files {
+			m.ChangedFiles = append(m.ChangedFiles, ChangedFile{
+				Path:     f.Path,
+				Status:   f.Status,
+				IsLatest: f.IsLatest,
+			})
+		}
+		if len(m.ChangedFiles) > MaxChangedFiles {
+			m.ChangedFiles = m.ChangedFiles[len(m.ChangedFiles)-MaxChangedFiles:]
+		}
+		m.MutationCount = len(m.ChangedFiles)
+		// Mark the last one as latest if none is explicitly marked
+		if len(m.ChangedFiles) > 0 {
+			hasLatest := false
+			for _, f := range m.ChangedFiles {
+				if f.IsLatest {
+					hasLatest = true
+					break
+				}
+			}
+			if !hasLatest {
+				m.ChangedFiles[len(m.ChangedFiles)-1].IsLatest = true
+			}
+		}
+		m.addActivity(fmt.Sprintf("Changed %d file(s)", len(m.ChangedFiles)))
+
+	case "verification.started":
+		job := VerificationJob{
+			JobID:     event.JobID,
+			Command:   event.Command,
+			Status:    "running",
+			StartedAt: time.Now(),
+		}
+		m.VerificationJobs = append(m.VerificationJobs, job)
+		m.addActivity(fmt.Sprintf("Running: %s", event.Command))
+
+	case "verification.completed":
+		for i := len(m.VerificationJobs) - 1; i >= 0; i-- {
+			if m.VerificationJobs[i].JobID == event.JobID {
+				m.VerificationJobs[i].Status = "pass"
+				if !event.Success {
+					m.VerificationJobs[i].Status = "fail"
+				}
+				m.VerificationJobs[i].OutputTail = event.OutputTail
+				m.VerificationJobs[i].CompletedAt = time.Now()
+				if event.Duration > 0 {
+					m.VerificationJobs[i].Duration = event.Duration
+				}
+				break
+			}
+		}
+		statusIcon := "PASS"
+		if !event.Success {
+			statusIcon = "FAIL"
+		}
+		m.addActivity(fmt.Sprintf("%s: %s", statusIcon, event.Command))
+
+	case "artifact.found":
+		// Update existing or add new
+		found := false
+		for i := range m.Artifacts {
+			if m.Artifacts[i].Label == event.ArtifactLabel {
+				m.Artifacts[i].Path = event.ArtifactPath
+				m.Artifacts[i].UpdatedAt = time.Now()
+				found = true
+				break
+			}
+		}
+		if !found {
+			m.Artifacts = append(m.Artifacts, ArtifactRef{
+				Label:     event.ArtifactLabel,
+				Path:      event.ArtifactPath,
+				UpdatedAt: time.Now(),
+			})
+		}
+		m.ArtifactsVisible = true
+		m.addActivity(fmt.Sprintf("Artifact: %s", event.ArtifactLabel))
+	}
+}
+
+// addActivity appends an operator-facing log entry, bounded by MaxActivityLog.
+func (m *Model) addActivity(message string) {
+	m.ActivityLog = append(m.ActivityLog, ActivityLogEntry{
+		Message:   message,
+		Timestamp: time.Now(),
+	})
+	if len(m.ActivityLog) > MaxActivityLog {
+		m.ActivityLog = m.ActivityLog[len(m.ActivityLog)-MaxActivityLog:]
 	}
 }
 
 func (m Model) lastAssistantResponse() string {
+	if strings.TrimSpace(m.ActiveResponse) != "" {
+		return m.ActiveResponse
+	}
 	for i := len(m.ChatBlocks) - 1; i >= 0; i-- {
-		if m.ChatBlocks[i].Type == "assistant" {
+		if m.ChatBlocks[i].Type == "assistant" && strings.TrimSpace(m.ChatBlocks[i].Content) != "" {
 			return m.ChatBlocks[i].Content
 		}
 	}
-	return m.ActiveResponse
+	return ""
 }
 
-func (m *Model) addActivity(message string) {
-	message = strings.TrimSpace(message)
-	if message == "" {
-		return
-	}
-	m.ActivityLog = append(m.ActivityLog, message)
-	if len(m.ActivityLog) > 8 {
-		m.ActivityLog = m.ActivityLog[len(m.ActivityLog)-8:]
-	}
-	m.appendTranscript("activity", message)
-}
-
-func (m *Model) saveLastResponse() {
+func (m *Model) copyLastResponse() {
 	content := m.lastAssistantResponse()
-	if strings.TrimSpace(content) == "" {
-		m.LastNotice = "nothing to copy yet"
+	if content == "" {
+		m.addActivity("Nothing to copy yet")
 		return
 	}
-	path, fileErr := m.writeLastResponseFile(content)
-	clipErr := clipboard.WriteAll(content)
-	m.LastCopy = content
-	switch {
-	case clipErr == nil && fileErr == nil:
-		m.LastNotice = "copied to clipboard and saved to " + path
-	case clipErr == nil:
-		m.LastNotice = "copied to clipboard; file save failed: " + fileErr.Error()
-	case fileErr == nil:
-		m.LastNotice = "clipboard failed: " + clipErr.Error() + "; saved to " + path
-	default:
-		m.LastNotice = "copy failed: " + clipErr.Error() + "; file save failed: " + fileErr.Error()
-	}
-}
-
-func (m *Model) writeLastResponseFile(content string) (string, error) {
-	root := os.Getenv("LIMINAL_ROOT")
-	if root == "" {
-		root = "."
-	}
-	path := filepath.Join(root, ".omx", "logs", "bubbletea-last-response.md")
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return path, err
-	}
-	return path, os.WriteFile(path, []byte(content), 0o644)
-}
-
-func (m *Model) appendTranscript(role, content string) {
-	if m.TranscriptPath == "" || strings.TrimSpace(content) == "" {
+	if err := copyToClipboard(content); err != nil {
+		m.addActivity("Copy failed: " + err.Error())
 		return
 	}
-	if err := os.MkdirAll(filepath.Dir(m.TranscriptPath), 0o755); err != nil {
-		m.LastNotice = "transcript failed: " + err.Error()
-		return
-	}
-	entry := fmt.Sprintf("\n\n## %s — %s\n\n%s\n", role, time.Now().Format(time.RFC3339), content)
-	if err := appendFile(m.TranscriptPath, entry); err != nil {
-		m.LastNotice = "transcript failed: " + err.Error()
-	}
-}
-
-func appendFile(path, content string) error {
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-	_, err = f.WriteString(content)
-	return err
+	m.addActivity("Copied last response to clipboard")
 }
 
 func (m Model) StatusLines() []string {

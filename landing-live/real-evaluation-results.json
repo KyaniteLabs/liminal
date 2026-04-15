@@ -1,0 +1,2147 @@
+{
+  "timestamp": "2026-04-12T07:53:11.406Z",
+  "evaluator": "CreativeEvaluator.assess()",
+  "summary": {
+    "total": 182,
+    "passed": 116,
+    "failed": 66,
+    "averageScore": 0.689478021978021
+  },
+  "results": [
+    {
+      "name": "ascii-gemma",
+      "domain": "ascii",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 60,
+      "source": "html-inline"
+    },
+    {
+      "name": "ascii-kimi",
+      "domain": "ascii",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 54,
+      "source": "html-inline"
+    },
+    {
+      "name": "ascii-minimax-m25",
+      "domain": "ascii",
+      "score": 0.875,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8500000000000001,
+      "creativeScore": 0.8999999999999999,
+      "codeLength": 1281,
+      "source": "html-inline"
+    },
+    {
+      "name": "ascii-minimax-m27",
+      "domain": "ascii",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8500000000000001,
+      "creativeScore": 0.5499999999999999,
+      "codeLength": 1453,
+      "source": "html-inline"
+    },
+    {
+      "name": "ascii-qwen-coder",
+      "domain": "ascii",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 56,
+      "source": "html-inline"
+    },
+    {
+      "name": "ascii-qwen35",
+      "domain": "ascii",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 56,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-glsl-gemma-final",
+      "domain": "p5",
+      "score": 0.8499999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 5570,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-p5-gemma-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1582,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-p5-granite-1b-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1583,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-p5-granite-350m-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1582,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-p5-lfm-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1583,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-p5-phi4-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1583,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-p5-qwen35-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1583,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-remotion-gemma-final",
+      "domain": "revideo",
+      "score": 0.825,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8499999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1055,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-remotion-granite-1b-final",
+      "domain": "revideo",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.5999999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 885,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-remotion-granite-350m-final",
+      "domain": "revideo",
+      "score": 0.75,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.7,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1018,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-remotion-phi4-final",
+      "domain": "revideo",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.7,
+      "creativeScore": 0.7,
+      "codeLength": 887,
+      "source": "html-inline"
+    },
+    {
+      "name": "b-tone-gemma-final",
+      "domain": "tone",
+      "score": 0.7250000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9000000000000001,
+      "creativeScore": 0.5499999999999999,
+      "codeLength": 2033,
+      "source": "html-inline"
+    },
+    {
+      "name": "cloud-a-MiniMax-glsl-minimax-m25",
+      "domain": "p5",
+      "score": 0.685,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.75,
+      "creativeScore": 0.62,
+      "codeLength": 800,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-a-MiniMax-p5-minimax-m25",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1417,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-a-MiniMax-p5-minimax-m27",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1391,
+      "source": "html-inline"
+    },
+    {
+      "name": "cloud-a-MiniMax-three-minimax-m25",
+      "domain": "three",
+      "score": 0.6749999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.35,
+      "codeLength": 1019,
+      "source": "html-inline"
+    },
+    {
+      "name": "cloud-a-MiniMax-three-minimax-m27",
+      "domain": "three",
+      "score": 0.6749999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.35,
+      "codeLength": 708,
+      "source": "html-inline"
+    },
+    {
+      "name": "cloud-a-minimax-m25-p5",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1454,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-a-minimax-m27-glsl",
+      "domain": "p5",
+      "score": 0.65,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7500000000000001,
+      "creativeScore": 0.5499999999999999,
+      "codeLength": 1514,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-a-minimax-m27-p5",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1622,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-a-minimax-m27-three",
+      "domain": "three",
+      "score": 0.6749999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.35,
+      "codeLength": 806,
+      "source": "html-inline"
+    },
+    {
+      "name": "cloud-glsl-minimax-m25",
+      "domain": "p5",
+      "score": 0.485,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.42000000000000004,
+      "codeLength": 841,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-glsl-minimax-m27",
+      "domain": "p5",
+      "score": 0.49999999999999994,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.44999999999999996,
+      "codeLength": 181,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-html-minimax-m25",
+      "domain": "html",
+      "score": 1,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8000000000000002,
+      "creativeScore": 1,
+      "codeLength": 7740,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-html-minimax-m27",
+      "domain": "html",
+      "score": 0.35,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.15,
+      "codeLength": 249,
+      "source": "html-inline"
+    },
+    {
+      "name": "cloud-hydra-minimax-m25",
+      "domain": "hydra",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 36,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-hydra-minimax-m27",
+      "domain": "hydra",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 35,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-minimax-glsl-minimax-m25",
+      "domain": "p5",
+      "score": 0.475,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.4,
+      "codeLength": 628,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-minimax-glsl-minimax-m27",
+      "domain": "p5",
+      "score": 0.65,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7500000000000001,
+      "creativeScore": 0.5499999999999999,
+      "codeLength": 729,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-minimax-p5-minimax-m25",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1355,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-minimax-p5-minimax-m27",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1448,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-p5-minimax-m25",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1435,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-p5-minimax-m27",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1389,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-strudel-minimax-m25",
+      "domain": "music",
+      "score": 0.8,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.75,
+      "creativeScore": 0.85,
+      "codeLength": 50,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-strudel-minimax-m27",
+      "domain": "music",
+      "score": 0.6,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.65,
+      "creativeScore": 0.5499999999999999,
+      "codeLength": 28,
+      "source": "html-file"
+    },
+    {
+      "name": "cloud-tone-minimax-m27",
+      "domain": "tone",
+      "score": 0.9,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8,
+      "codeLength": 921,
+      "source": "html-inline"
+    },
+    {
+      "name": "dogfood-html-final",
+      "domain": "html",
+      "score": 0.7250000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.6500000000000001,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1101,
+      "source": "html-file"
+    },
+    {
+      "name": "dogfood-p5-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 2627,
+      "source": "html-inline"
+    },
+    {
+      "name": "dogfood-p5-hard-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1180,
+      "source": "html-inline"
+    },
+    {
+      "name": "dogfood-p5-minimax-m25-final",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1612,
+      "source": "html-inline"
+    },
+    {
+      "name": "dogfood-p5-minimax-m27-final",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1650,
+      "source": "html-inline"
+    },
+    {
+      "name": "dogfood-p5-qwen35-final",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2186,
+      "source": "html-inline"
+    },
+    {
+      "name": "dogfood-strudel-final",
+      "domain": "music",
+      "score": 0.875,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.65,
+      "creativeScore": 1,
+      "codeLength": 5780,
+      "source": "html-file"
+    },
+    {
+      "name": "dogfood-tone-hard-final",
+      "domain": "tone",
+      "score": 0.775,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9000000000000001,
+      "creativeScore": 0.6499999999999999,
+      "codeLength": 1101,
+      "source": "html-inline"
+    },
+    {
+      "name": "glm-glsl-glm-5.1",
+      "domain": "p5",
+      "score": 0.7849999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.75,
+      "creativeScore": 0.8199999999999998,
+      "codeLength": 2265,
+      "source": "html-file"
+    },
+    {
+      "name": "glm-html-glm-5.1",
+      "domain": "html",
+      "score": 0.2,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.25,
+      "creativeScore": 0.15,
+      "codeLength": 133,
+      "source": "html-inline"
+    },
+    {
+      "name": "glm-hydra-glm-5.1",
+      "domain": "hydra",
+      "score": 0.375,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.25,
+      "creativeScore": 0.5,
+      "codeLength": 105,
+      "source": "html-file"
+    },
+    {
+      "name": "glm-p5-glm-5.1",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 2096,
+      "source": "html-file"
+    },
+    {
+      "name": "glm-strudel-glm-5.1",
+      "domain": "music",
+      "score": 1,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9500000000000001,
+      "creativeScore": 1,
+      "codeLength": 657,
+      "source": "html-file"
+    },
+    {
+      "name": "glsl-gemma",
+      "domain": "p5",
+      "score": 0.75,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.6,
+      "codeLength": 3132,
+      "source": "html-inline"
+    },
+    {
+      "name": "glsl-gemma3:4b",
+      "domain": "p5",
+      "score": 0.625,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.75,
+      "creativeScore": 0.5,
+      "codeLength": 1531,
+      "source": "html-inline"
+    },
+    {
+      "name": "glsl-gemma4",
+      "domain": "p5",
+      "score": 0.575,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.75,
+      "creativeScore": 0.4,
+      "codeLength": 1924,
+      "source": "html-file"
+    },
+    {
+      "name": "glsl-granite4:1b",
+      "domain": "p5",
+      "score": 0.7349999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.75,
+      "creativeScore": 0.7199999999999999,
+      "codeLength": 2851,
+      "source": "html-file"
+    },
+    {
+      "name": "glsl-kimi",
+      "domain": "p5",
+      "score": 0.9099999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.9199999999999998,
+      "codeLength": 4037,
+      "source": "html-inline"
+    },
+    {
+      "name": "glsl-lfm2.5",
+      "domain": "p5",
+      "score": 0.585,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.62,
+      "codeLength": 2264,
+      "source": "html-file"
+    },
+    {
+      "name": "glsl-minimax-m25",
+      "domain": "p5",
+      "score": 0.9099999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.9199999999999998,
+      "codeLength": 7214,
+      "source": "html-inline"
+    },
+    {
+      "name": "glsl-minimax-m27",
+      "domain": "p5",
+      "score": 0.9099999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.9199999999999998,
+      "codeLength": 9182,
+      "source": "html-inline"
+    },
+    {
+      "name": "glsl-phi4-mini",
+      "domain": "p5",
+      "score": 0.7999999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.7,
+      "codeLength": 2483,
+      "source": "html-file"
+    },
+    {
+      "name": "glsl-qwen-coder",
+      "domain": "p5",
+      "score": 0.9099999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.9199999999999998,
+      "codeLength": 4498,
+      "source": "html-inline"
+    },
+    {
+      "name": "glsl-qwen3.5:2b",
+      "domain": "p5",
+      "score": 0.75,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.6,
+      "codeLength": 2341,
+      "source": "html-inline"
+    },
+    {
+      "name": "glsl-qwen35",
+      "domain": "p5",
+      "score": 0.9099999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.9199999999999998,
+      "codeLength": 6013,
+      "source": "html-inline"
+    },
+    {
+      "name": "html-gemma",
+      "domain": "html",
+      "score": 0.30000000000000004,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7000000000000001,
+      "creativeScore": 0,
+      "codeLength": 645,
+      "source": "html-file"
+    },
+    {
+      "name": "html-kimi",
+      "domain": "html",
+      "score": 0.575,
+      "passed": false,
+      "issues": [
+        "Missing <body> tag"
+      ],
+      "technicalScore": 0.49999999999999994,
+      "creativeScore": 0.6499999999999999,
+      "codeLength": 12680,
+      "source": "html-file"
+    },
+    {
+      "name": "html-minimax-m25",
+      "domain": "html",
+      "score": 0.675,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7000000000000002,
+      "creativeScore": 0.6499999999999999,
+      "codeLength": 16717,
+      "source": "html-file"
+    },
+    {
+      "name": "html-minimax-m27",
+      "domain": "html",
+      "score": 0.675,
+      "passed": false,
+      "issues": [
+        "Missing <body> tag"
+      ],
+      "technicalScore": 0.7000000000000001,
+      "creativeScore": 0.6499999999999999,
+      "codeLength": 15890,
+      "source": "html-file"
+    },
+    {
+      "name": "html-qwen-coder",
+      "domain": "html",
+      "score": 0.30000000000000004,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7000000000000001,
+      "creativeScore": 0,
+      "codeLength": 645,
+      "source": "html-file"
+    },
+    {
+      "name": "html-qwen35",
+      "domain": "html",
+      "score": 0.30000000000000004,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7000000000000001,
+      "creativeScore": 0,
+      "codeLength": 645,
+      "source": "html-file"
+    },
+    {
+      "name": "hydra-gemma",
+      "domain": "hydra",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.7499999999999999,
+      "creativeScore": 0.6499999999999999,
+      "codeLength": 1901,
+      "source": "html-inline"
+    },
+    {
+      "name": "hydra-kimi",
+      "domain": "hydra",
+      "score": 0.8,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.6,
+      "creativeScore": 1,
+      "codeLength": 1815,
+      "source": "html-inline"
+    },
+    {
+      "name": "hydra-minimax-m25",
+      "domain": "hydra",
+      "score": 0.6499999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.6,
+      "creativeScore": 0.7,
+      "codeLength": 1724,
+      "source": "html-inline"
+    },
+    {
+      "name": "hydra-minimax-m27",
+      "domain": "hydra",
+      "score": 0.95,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 1,
+      "codeLength": 2019,
+      "source": "html-inline"
+    },
+    {
+      "name": "hydra-qwen-coder",
+      "domain": "hydra",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.6,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1784,
+      "source": "html-inline"
+    },
+    {
+      "name": "hydra-qwen35",
+      "domain": "hydra",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.6,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1709,
+      "source": "html-inline"
+    },
+    {
+      "name": "lmstudio-ascii-google-gemma-4-26b-a4b",
+      "domain": "ascii",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 197,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-ascii-qwen3.5-2b",
+      "domain": "ascii",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 185,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-glsl-google-gemma-4-26b-a4b",
+      "domain": "p5",
+      "score": 0.5349999999999999,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.52,
+      "codeLength": 970,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-glsl-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.425,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.30000000000000004,
+      "codeLength": 672,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-html-google-gemma-4-26b-a4b",
+      "domain": "html",
+      "score": 1,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8000000000000002,
+      "creativeScore": 1,
+      "codeLength": 6670,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-html-qwen3.5-2b",
+      "domain": "html",
+      "score": 0.5249999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.6,
+      "creativeScore": 0.44999999999999996,
+      "codeLength": 376,
+      "source": "html-inline"
+    },
+    {
+      "name": "lmstudio-hydra-google-gemma-4-26b-a4b",
+      "domain": "hydra",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 159,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-hydra-qwen3.5-2b",
+      "domain": "hydra",
+      "score": 0.15,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.3,
+      "creativeScore": 0,
+      "codeLength": 11591,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-p5-google-gemma-4-26b-a4b",
+      "domain": "p5",
+      "score": 0.76,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.4,
+      "codeLength": 1163,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-p5-lmstudio-google-gemma-4-26b-a4b",
+      "domain": "p5",
+      "score": 0.8200000000000001,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.55,
+      "codeLength": 1021,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-p5-lmstudio-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.8200000000000001,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.55,
+      "codeLength": 1117,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-p5-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.76,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.4,
+      "codeLength": 642,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-remotion-google-gemma-4-26b-a4b",
+      "domain": "revideo",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 207,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-remotion-qwen3.5-2b",
+      "domain": "revideo",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 195,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-strudel-google-gemma-4-26b-a4b",
+      "domain": "music",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 194,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-strudel-qwen3.5-2b",
+      "domain": "music",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 182,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-three-google-gemma-4-26b-a4b",
+      "domain": "three",
+      "score": 0.7999999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8499999999999999,
+      "creativeScore": 0.75,
+      "codeLength": 2703,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-three-qwen3.5-2b",
+      "domain": "three",
+      "score": 0.75,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.5,
+      "codeLength": 1341,
+      "source": "html-inline"
+    },
+    {
+      "name": "lmstudio-tone-google-gemma-4-26b-a4b",
+      "domain": "tone",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 171,
+      "source": "html-file"
+    },
+    {
+      "name": "lmstudio-tone-qwen3.5-2b",
+      "domain": "tone",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8500000000000001,
+      "creativeScore": 0.5499999999999999,
+      "codeLength": 4138,
+      "source": "html-inline"
+    },
+    {
+      "name": "local-lmstudio-glsl-google-gemma-4-26b-a4b",
+      "domain": "p5",
+      "score": 0.6349999999999999,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.7199999999999999,
+      "codeLength": 1456,
+      "source": "html-file"
+    },
+    {
+      "name": "local-lmstudio-glsl-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.485,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.42000000000000004,
+      "codeLength": 1257,
+      "source": "html-file"
+    },
+    {
+      "name": "local-lmstudio-p5-google-gemma-4-26b-a4b",
+      "domain": "p5",
+      "score": 0.8200000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.55,
+      "codeLength": 1203,
+      "source": "html-file"
+    },
+    {
+      "name": "local-lmstudio-p5-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.8200000000000001,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.55,
+      "codeLength": 1292,
+      "source": "html-file"
+    },
+    {
+      "name": "local-ollama-p5-gemma4-latest",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2337,
+      "source": "html-file"
+    },
+    {
+      "name": "local-ollama-p5-qwen3.5-0.8b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1878,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-glsl-minimax-m25",
+      "domain": "p5",
+      "score": 0.485,
+      "passed": false,
+      "issues": [
+        "Missing u_time uniform"
+      ],
+      "technicalScore": 0.5499999999999999,
+      "creativeScore": 0.42000000000000004,
+      "codeLength": 510,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-glsl-minimax-m27",
+      "domain": "p5",
+      "score": 0.6000000000000001,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7500000000000001,
+      "creativeScore": 0.44999999999999996,
+      "codeLength": 723,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-html-minimax-m25",
+      "domain": "html",
+      "score": 0.9000000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.6000000000000002,
+      "creativeScore": 1,
+      "codeLength": 4264,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-html-minimax-m27",
+      "domain": "html",
+      "score": 1,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8000000000000002,
+      "creativeScore": 1,
+      "codeLength": 6760,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-hydra-minimax-m25",
+      "domain": "hydra",
+      "score": 0.15000000000000002,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.15000000000000002,
+      "creativeScore": 0.15,
+      "codeLength": 76,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-hydra-minimax-m27",
+      "domain": "hydra",
+      "score": 0.45,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.65,
+      "creativeScore": 0.25,
+      "codeLength": 159,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-p5-minimax-m25",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1278,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-p5-minimax-m27",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1207,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-strudel-minimax-m27",
+      "domain": "music",
+      "score": 0.675,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.65,
+      "creativeScore": 0.7,
+      "codeLength": 245,
+      "source": "html-file"
+    },
+    {
+      "name": "minimax-three-minimax-m27",
+      "domain": "three",
+      "score": 0.6749999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.35,
+      "codeLength": 800,
+      "source": "html-inline"
+    },
+    {
+      "name": "minimax-tone-minimax-m27",
+      "domain": "tone",
+      "score": 0.9750000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.9000000000000001,
+      "codeLength": 754,
+      "source": "html-inline"
+    },
+    {
+      "name": "ollama-glsl-gemma4-latest",
+      "domain": "p5",
+      "score": 0.8099999999999998,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.7199999999999999,
+      "codeLength": 2757,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-glsl-granite4-350m",
+      "domain": "p5",
+      "score": 0.8099999999999998,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.7199999999999999,
+      "codeLength": 2583,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-glsl-kimi-k2.5-cloud",
+      "domain": "p5",
+      "score": 0.9099999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.9199999999999998,
+      "codeLength": 3691,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-glsl-qwen3.5-0.8b",
+      "domain": "p5",
+      "score": 0.7,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.5,
+      "codeLength": 1492,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-glsl-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.75,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8999999999999999,
+      "creativeScore": 0.6,
+      "codeLength": 2366,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-gemma3-4b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1925,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-gemma4-latest",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 2076,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-granite4-1b",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1916,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-granite4-350m",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2646,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-kimi-k2.5-cloud",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 2051,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-lfm2.5-thinking-1.2b",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1778,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-ollama-gemma4-latest",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2346,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-ollama-granite4-1b",
+      "domain": "p5",
+      "score": 0.8200000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.55,
+      "codeLength": 918,
+      "source": "html-inline"
+    },
+    {
+      "name": "ollama-p5-ollama-granite4-350m",
+      "domain": "p5",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 66,
+      "source": "html-inline"
+    },
+    {
+      "name": "ollama-p5-ollama-kimi-k2.5-cloud",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 2413,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-ollama-phi4-mini-latest",
+      "domain": "p5",
+      "score": 1,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 1,
+      "codeLength": 2384,
+      "source": "html-inline"
+    },
+    {
+      "name": "ollama-p5-ollama-qwen3.5-0.8b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2666,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-ollama-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 66,
+      "source": "html-inline"
+    },
+    {
+      "name": "ollama-p5-phi4-mini-latest",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2188,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-qwen3.5-0.8b",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1669,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-p5-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1950,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-three-gemma4",
+      "domain": "three",
+      "score": 0.6749999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.35,
+      "codeLength": 805,
+      "source": "html-file"
+    },
+    {
+      "name": "ollama-three-qwen3.5-0.8b",
+      "domain": "three",
+      "score": 0.6749999999999999,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.35,
+      "codeLength": 692,
+      "source": "html-file"
+    },
+    {
+      "name": "p5-gemma",
+      "domain": "p5",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 66,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-gemma3:4b",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 3722,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-gemma4",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2295,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-granite4:1b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1989,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-kimi",
+      "domain": "p5",
+      "score": 0.76,
+      "passed": true,
+      "issues": [
+        "Basic syntax issues",
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 0.8,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 2170,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-lfm2.5",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 3080,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-lmstudio-google-gemma-4-26b-a4b",
+      "domain": "p5",
+      "score": 0.8200000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.55,
+      "codeLength": 586,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-lmstudio-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1936,
+      "source": "html-file"
+    },
+    {
+      "name": "p5-minimax-m25",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 3061,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-minimax-m27",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 3213,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-ollama-gemma4-latest",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 3087,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-ollama-granite4-1b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2871,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-ollama-granite4-350m",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2424,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-ollama-kimi-k2.5-cloud",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2759,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-ollama-phi4-mini-latest",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 2312,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-ollama-qwen3.5-0.8b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2664,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-ollama-qwen3.5-2b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2175,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-phi4-mini",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 1736,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-qwen-coder",
+      "domain": "p5",
+      "score": 0.88,
+      "passed": true,
+      "issues": [
+        "Lacks animation or interactivity"
+      ],
+      "technicalScore": 1,
+      "creativeScore": 0.7000000000000001,
+      "codeLength": 1868,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-qwen3.5:2b",
+      "domain": "p5",
+      "score": 0.9400000000000001,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 0.8500000000000001,
+      "codeLength": 2225,
+      "source": "html-inline"
+    },
+    {
+      "name": "p5-qwen35",
+      "domain": "p5",
+      "score": 1,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 1,
+      "creativeScore": 1,
+      "codeLength": 4356,
+      "source": "html-inline"
+    },
+    {
+      "name": "remotion-gemma",
+      "domain": "revideo",
+      "score": 0.75,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.7,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1573,
+      "source": "html-inline"
+    },
+    {
+      "name": "remotion-kimi",
+      "domain": "revideo",
+      "score": 0.825,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8499999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1796,
+      "source": "html-inline"
+    },
+    {
+      "name": "remotion-minimax-m25",
+      "domain": "revideo",
+      "score": 0.825,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8499999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 1677,
+      "source": "html-inline"
+    },
+    {
+      "name": "remotion-minimax-m27",
+      "domain": "revideo",
+      "score": 0.825,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8499999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 2044,
+      "source": "html-inline"
+    },
+    {
+      "name": "remotion-qwen-coder",
+      "domain": "revideo",
+      "score": 0.825,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8499999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 2431,
+      "source": "html-inline"
+    },
+    {
+      "name": "remotion-qwen35",
+      "domain": "revideo",
+      "score": 0.825,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.8499999999999999,
+      "creativeScore": 0.7999999999999999,
+      "codeLength": 2174,
+      "source": "html-inline"
+    },
+    {
+      "name": "strudel-gemma",
+      "domain": "music",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 22,
+      "source": "html-inline"
+    },
+    {
+      "name": "strudel-kimi",
+      "domain": "music",
+      "score": 0.55,
+      "passed": false,
+      "issues": [
+        "Strudel code too short"
+      ],
+      "technicalScore": 0.44999999999999996,
+      "creativeScore": 0.65,
+      "codeLength": 18,
+      "source": "html-inline"
+    },
+    {
+      "name": "strudel-minimax-m25",
+      "domain": "music",
+      "score": 0.375,
+      "passed": false,
+      "issues": [
+        "Strudel code too short"
+      ],
+      "technicalScore": 0.4,
+      "creativeScore": 0.35,
+      "codeLength": 9,
+      "source": "html-inline"
+    },
+    {
+      "name": "strudel-minimax-m27",
+      "domain": "music",
+      "score": 0.475,
+      "passed": false,
+      "issues": [
+        "Strudel code too short"
+      ],
+      "technicalScore": 0.44999999999999996,
+      "creativeScore": 0.5,
+      "codeLength": 18,
+      "source": "html-inline"
+    },
+    {
+      "name": "strudel-qwen-coder",
+      "domain": "music",
+      "score": 0.1,
+      "passed": false,
+      "issues": [
+        "No code detected in output"
+      ],
+      "technicalScore": 0,
+      "creativeScore": 0,
+      "codeLength": 6,
+      "source": "html-inline"
+    },
+    {
+      "name": "strudel-qwen35",
+      "domain": "music",
+      "score": 0.375,
+      "passed": false,
+      "issues": [
+        "Strudel code too short"
+      ],
+      "technicalScore": 0.4,
+      "creativeScore": 0.35,
+      "codeLength": 10,
+      "source": "html-inline"
+    },
+    {
+      "name": "three-gemma",
+      "domain": "three",
+      "score": 0.35000000000000003,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7000000000000001,
+      "creativeScore": 0,
+      "codeLength": 485,
+      "source": "html-inline"
+    },
+    {
+      "name": "three-gemma3:4b",
+      "domain": "three",
+      "score": 0.7999999999999999,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.6,
+      "codeLength": 2168,
+      "source": "html-file"
+    },
+    {
+      "name": "three-granite4:1b",
+      "domain": "three",
+      "score": 0.875,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.75,
+      "codeLength": 1788,
+      "source": "html-file"
+    },
+    {
+      "name": "three-kimi",
+      "domain": "three",
+      "score": 0.37500000000000006,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7500000000000001,
+      "creativeScore": 0,
+      "codeLength": 570,
+      "source": "html-inline"
+    },
+    {
+      "name": "three-minimax-m25",
+      "domain": "three",
+      "score": 0.35000000000000003,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7000000000000001,
+      "creativeScore": 0,
+      "codeLength": 454,
+      "source": "html-inline"
+    },
+    {
+      "name": "three-minimax-m27",
+      "domain": "three",
+      "score": 0.37500000000000006,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7500000000000001,
+      "creativeScore": 0,
+      "codeLength": 553,
+      "source": "html-inline"
+    },
+    {
+      "name": "three-phi4-mini",
+      "domain": "three",
+      "score": 0.825,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.65,
+      "codeLength": 1672,
+      "source": "html-file"
+    },
+    {
+      "name": "three-qwen-coder",
+      "domain": "three",
+      "score": 0.35000000000000003,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7000000000000001,
+      "creativeScore": 0,
+      "codeLength": 411,
+      "source": "html-inline"
+    },
+    {
+      "name": "three-qwen3.5:2b",
+      "domain": "three",
+      "score": 0.875,
+      "passed": true,
+      "issues": [],
+      "technicalScore": 0.9999999999999999,
+      "creativeScore": 0.75,
+      "codeLength": 2177,
+      "source": "html-file"
+    },
+    {
+      "name": "three-qwen35",
+      "domain": "three",
+      "score": 0.5,
+      "passed": false,
+      "issues": [],
+      "technicalScore": 0.7500000000000001,
+      "creativeScore": 0.25,
+      "codeLength": 677,
+      "source": "html-inline"
+    }
+  ]
+}

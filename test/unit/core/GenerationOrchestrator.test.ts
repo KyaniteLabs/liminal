@@ -198,7 +198,7 @@ describe('GenerationOrchestrator', () => {
       expect(result.code).toBe('fallback-code');
     });
 
-    it('dispatches to matched generator entry', async () => {
+    it('dispatches enriched prompt to matched generator entry', async () => {
       const mockGenerate = vi.fn(async () => 'dispatched-code');
       (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue({
         entry: { name: 'custom', generate: mockGenerate },
@@ -206,10 +206,9 @@ describe('GenerationOrchestrator', () => {
       });
       const options = makeOptions();
       const orchestrator = new GenerationOrchestrator(options, gallery, null);
-      const result = await orchestrator.generate('used', 'loaded');
+      const result = await orchestrator.generate('used with context', 'loaded');
       expect(result.code).toBe('dispatched-code');
-      // For non-LLM generators, loaded prompt is used
-      expect(mockGenerate).toHaveBeenCalledWith('loaded');
+      expect(mockGenerate).toHaveBeenCalledWith('used with context');
     });
 
     it('uses usedPrompt for LLM generator entries', async () => {
@@ -224,6 +223,25 @@ describe('GenerationOrchestrator', () => {
       expect(result.code).toBe('llm-code');
       expect(result.thinking).toBe('thoughts');
       expect(mockGenerate).toHaveBeenCalledWith('used-prompt');
+    });
+
+    it('passes iteration-enriched prompt context to specialized generators', async () => {
+      const mockGenerate = vi.fn(async () => 'context-aware-code');
+      (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue({
+        entry: { name: 'shader', generate: mockGenerate },
+        confidence: 0.9,
+      });
+      const options = makeOptions();
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+      const result = await orchestrator.generate(
+        'user prompt\n\n---\nContext from previous iterations:\nkeep the nebula palette and preserve motion',
+        'user prompt',
+      );
+
+      expect(result.code).toBe('context-aware-code');
+      expect(mockGenerate).toHaveBeenCalledWith(
+        expect.stringContaining('Context from previous iterations:'),
+      );
     });
 
     it('normalizes string results from dispatched generators', async () => {

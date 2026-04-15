@@ -25,6 +25,8 @@ export interface RenderOptions {
   stabilizationTime?: number;
   /** Domain hint for specialized rendering */
   domain?: RenderDomain;
+  /** Keep the Playwright page open for advanced callers */
+  keepPageOpen?: boolean;
 }
 
 export interface ScreenshotResult {
@@ -51,6 +53,8 @@ export interface AudioCaptureResult {
   success: boolean;
   /** Error message if capture failed */
   error?: string;
+  /** Non-fatal capture warnings surfaced from browser instrumentation */
+  warnings?: string[];
 }
 
 export interface RenderResult {
@@ -77,7 +81,12 @@ const DEFAULT_OPTIONS: Required<RenderOptions> = {
   waitForStabilization: true,
   stabilizationTime: 2000,
   domain: 'unknown',
+  keepPageOpen: false,
 };
+
+function domainRequiresCanvas(domain: RenderDomain): boolean {
+  return domain === 'p5' || domain === 'three' || domain === 'glsl' || domain === 'hydra';
+}
 
 /**
  * Headless renderer for creative coding outputs
@@ -138,15 +147,17 @@ export class HeadlessRenderer {
    * Initialize the browser (lazy initialization)
    */
   async initialize(): Promise<void> {
-    if (this.browser) return;
+    if (this.browser && this.context) return;
 
     try {
-      const executablePath = HeadlessRenderer.resolveChromiumExecutable();
-      this.browser = await chromium.launch({
-        headless: true,
-        executablePath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-      });
+      if (!this.browser) {
+        const executablePath = HeadlessRenderer.resolveChromiumExecutable();
+        this.browser = await chromium.launch({
+          headless: true,
+          executablePath,
+          args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        });
+      }
 
       this.context = await this.browser.newContext({
         viewport: { width: 1280, height: 720 },
@@ -193,6 +204,7 @@ export class HeadlessRenderer {
     const opts = { ...DEFAULT_OPTIONS, ...options };
     const logs: string[] = [];
     const errors: string[] = [];
+    let page: Page | undefined;
 
     try {
       await this.initialize();
@@ -201,7 +213,7 @@ export class HeadlessRenderer {
         throw new Error('Browser context not initialized');
       }
 
-      const page = await this.context.newPage();
+      page = await this.context.newPage();
       
       // Set viewport size
       await page.setViewportSize({ width: opts.width, height: opts.height });
@@ -238,11 +250,20 @@ export class HeadlessRenderer {
       await page.setContent(html, { waitUntil: 'networkidle', timeout: opts.timeout });
 
       // Wait for canvas to be ready
-      await this.waitForCanvas(page, opts.timeout);
+      const canvasReady = await this.waitForCanvas(page, opts.timeout);
+      if (!canvasReady && domainRequiresCanvas(domain)) {
+        const warning = `Canvas not found or timed out for ${domain} render`;
+        logs.push(`[warn] ${warning}`);
+        errors.push(warning);
+      }
 
       // Trigger audio playback for audio domains so we capture actual sound
       if (domain === 'tone' || domain === 'strudel') {
-        await this.triggerAudioPlayback(page, domain);
+        const playbackWarning = await this.triggerAudioPlayback(page, domain);
+        if (playbackWarning) {
+          logs.push(`[warn] ${playbackWarning}`);
+          errors.push(playbackWarning);
+        }
       }
 
       // Wait for stabilization if requested
@@ -252,17 +273,33 @@ export class HeadlessRenderer {
 
       // Capture screenshot
       const screenshot = await this.captureScreenshot(page, opts);
+      if (!screenshot.success && screenshot.error) {
+        logs.push(`[warn] ${screenshot.error}`);
+        errors.push(screenshot.error);
+      }
 
       // Capture audio if applicable
       const audio = domain === 'tone' || domain === 'strudel'
         ? await this.captureAudio(page, opts)
         : undefined;
 
+      if (audio && !audio.success && audio.error) {
+        logs.push(`[warn] ${audio.error}`);
+        errors.push(audio.error);
+      }
+      if (audio?.warnings?.length) {
+        for (const warning of audio.warnings) {
+          logs.push(`[warn] ${warning}`);
+          errors.push(warning);
+        }
+      }
+
       return {
-        page,
+        page: opts.keepPageOpen ? page : undefined,
         screenshot,
         audio,
         success: screenshot.success,
+        error: screenshot.success ? undefined : screenshot.error || 'Screenshot failed',
         logs,
         errors,
       };
@@ -274,13 +311,21 @@ export class HeadlessRenderer {
         logs,
         errors,
       };
+    } finally {
+      if (page && !opts.keepPageOpen) {
+        try {
+          await page.close();
+        } catch (closeError) {
+          Logger.debug('HeadlessRenderer', 'Failed to close render page:', closeError);
+        }
+      }
     }
   }
 
   /**
    * Wait for canvas element to be ready
    */
-  private async waitForCanvas(page: Page, timeout: number): Promise<void> {
+  private async waitForCanvas(page: Page, timeout: number): Promise<boolean> {
     try {
       await page.waitForFunction(
         () => {
@@ -289,9 +334,11 @@ export class HeadlessRenderer {
         },
         { timeout: Math.min(timeout, 5000) }
       );
+      return true;
     } catch {
       // Canvas might not be required for all domains (e.g., audio-only)
       Logger.debug('HeadlessRenderer', 'No canvas found or timeout waiting for canvas');
+      return false;
     }
   }
 
@@ -344,6 +391,8 @@ export class HeadlessRenderer {
       // Store for captured audio data
       const audioCaptureData: number[] = [];
       (window as unknown as { __audioCaptureData: number[] }).__audioCaptureData = audioCaptureData;
+      const audioCaptureWarnings: string[] = [];
+      (window as unknown as { __audioCaptureWarnings: string[] }).__audioCaptureWarnings = audioCaptureWarnings;
 
       // Intercept AudioContext creation
       const OriginalAudioContext = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
@@ -386,6 +435,7 @@ export class HeadlessRenderer {
             this._scriptProcessor.connect(this.destination);
           } catch (e) {
             // Capture setup failed, but don't break the audio context
+            audioCaptureWarnings.push(`Audio capture setup failed: ${e instanceof Error ? e.message : String(e)}`);
           }
         }
 
@@ -423,8 +473,8 @@ export class HeadlessRenderer {
             if (this._captureDestination && destination !== this._captureDestination && destination instanceof AudioNode) {
               try {
                 originalConnect(this._captureDestination);
-              } catch {
-                // Ignore connection errors
+              } catch (e) {
+                audioCaptureWarnings.push(`Audio capture connection failed: ${e instanceof Error ? e.message : String(e)}`);
               }
             }
 
@@ -459,7 +509,7 @@ export class HeadlessRenderer {
    * Trigger audio playback for Tone.js or Strudel content.
    * This clicks the play button or calls play functions to ensure audio is actually playing.
    */
-  private async triggerAudioPlayback(page: Page, domain: RenderDomain): Promise<void> {
+  private async triggerAudioPlayback(page: Page, domain: RenderDomain): Promise<string | null> {
     try {
       // Wait a short time for the page to initialize
       await page.waitForTimeout(500);
@@ -504,9 +554,11 @@ export class HeadlessRenderer {
 
       // Wait for audio to actually start
       await page.waitForTimeout(500);
+      return null;
     } catch (error) {
       Logger.debug('HeadlessRenderer', 'Failed to trigger audio playback:', error);
       // Non-fatal - audio might auto-play or not be needed
+      return `Audio playback trigger failed for ${domain}: ${error instanceof Error ? error.message : 'unknown error'}`;
     }
   }
 
@@ -522,6 +574,7 @@ export class HeadlessRenderer {
       // Retrieve the captured audio data
       const audioData = await page.evaluate((duration: number) => {
         const captureData = (window as unknown as { __audioCaptureData?: number[] }).__audioCaptureData;
+        const captureWarnings = (window as unknown as { __audioCaptureWarnings?: string[] }).__audioCaptureWarnings || [];
 
         if (!captureData || captureData.length === 0) {
           // No audio captured - return empty result
@@ -530,6 +583,7 @@ export class HeadlessRenderer {
             sampleRate: 44100,
             duration: duration / 1000,
             hasAudio: false,
+            warnings: captureWarnings,
           };
         }
 
@@ -552,6 +606,7 @@ export class HeadlessRenderer {
           sampleRate,
           duration: durationSec,
           hasAudio: true,
+          warnings: captureWarnings,
         };
       }, opts.stabilizationTime);
 
@@ -559,7 +614,9 @@ export class HeadlessRenderer {
         samples: new Float32Array(audioData.samples),
         sampleRate: audioData.sampleRate,
         duration: audioData.duration,
-        success: true,
+        success: audioData.hasAudio,
+        error: audioData.hasAudio ? undefined : 'No audio captured during render window',
+        warnings: audioData.warnings,
       };
     } catch (error) {
       return {
@@ -568,6 +625,7 @@ export class HeadlessRenderer {
         duration: 0,
         success: false,
         error: error instanceof Error ? error.message : 'Audio capture failed',
+        warnings: [],
       };
     }
   }

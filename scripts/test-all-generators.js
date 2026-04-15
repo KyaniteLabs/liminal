@@ -307,10 +307,10 @@ if (threeParticleResult.success) {
   results.three.push({ type: 'particles', ...threeParticleResult });
 }
 
-// Test 9: Remotion Video Generator
+// Test 9: Revideo Scene Generator
 const remotionGen = new RemotionGenerator();
 const remotionResult = await testGenerator(
-  'Remotion Video (Title)',
+  'Revideo Scene (Title)',
   () => remotionGen.generate('animated title sequence with gradient')
 );
 if (remotionResult.success) {
@@ -321,9 +321,9 @@ if (remotionResult.success) {
   results.remotion.push({ type: 'title', ...remotionResult });
 }
 
-// Test 10: Remotion Lower Thirds
+// Test 10: Revideo Lower Thirds
 const remotionLowerResult = await testGenerator(
-  'Remotion Video (Lower Thirds)',
+  'Revideo Scene (Lower Thirds)',
   () => remotionGen.generate('lower thirds name badge animation')
 );
 if (remotionLowerResult.success) {

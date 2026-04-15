@@ -13,7 +13,9 @@ export enum Status {
   QUEUED = 'queued',
   IN_PROGRESS = 'in_progress',
   SUCCESS = 'success',
-  ROLLED_BACK = 'rolled_back'
+  ROLLED_BACK = 'rolled_back',
+  /** Run was checkpointed and suspended - can be resumed */
+  SUSPENDED = 'suspended'
 }
 
 /**
@@ -67,10 +69,24 @@ export function isWaitingStatus(status: Status): boolean {
 }
 
 /**
+ * Resumable statuses - jobs that were suspended and can be continued
+ */
+export const RESUMABLE_STATUSES = [
+  Status.SUSPENDED
+];
+
+/**
  * Check if a status is active (job currently processing)
  */
 export function isActiveStatus(status: Status): boolean {
   return ACTIVE_STATUSES.includes(status);
+}
+
+/**
+ * Check if a status is resumable (suspended with checkpoint)
+ */
+export function isResumableStatus(status: Status): boolean {
+  return RESUMABLE_STATUSES.includes(status);
 }
 
 

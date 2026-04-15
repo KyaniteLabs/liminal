@@ -143,79 +143,6 @@
             font-size: 0.75rem;
             color: var(--text-muted);
         }
-        .flywheel-map {
-            display: grid;
-            grid-template-columns: repeat(5, minmax(150px, 1fr));
-            gap: 0.75rem;
-            margin: 1.5rem 0;
-            align-items: stretch;
-        }
-        .flywheel-node {
-            position: relative;
-            background: linear-gradient(145deg, rgba(88, 166, 255, 0.12), rgba(57, 197, 207, 0.06));
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1rem;
-            min-height: 150px;
-        }
-        .flywheel-node strong {
-            color: var(--text-primary);
-            display: block;
-            margin-bottom: 0.45rem;
-        }
-        .flywheel-node p {
-            color: var(--text-secondary);
-            font-size: 0.86rem;
-            line-height: 1.45;
-        }
-        .flywheel-node::after {
-            content: "→";
-            position: absolute;
-            right: -0.7rem;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--accent-cyan);
-            font-weight: 700;
-            font-size: 1.2rem;
-        }
-        .flywheel-node:last-child::after {
-            content: "";
-        }
-        .lane-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
-        }
-        .lane-card {
-            background: var(--bg-tertiary);
-            border: 1px solid var(--border-color);
-            border-radius: 10px;
-            padding: 1rem;
-        }
-        .lane-card h4 {
-            color: var(--accent-blue);
-            margin-bottom: 0.5rem;
-        }
-        .lane-card ul {
-            margin-left: 1.1rem;
-            color: var(--text-secondary);
-            font-size: 0.9rem;
-        }
-        .evidence-strip {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-        .evidence-pill {
-            border: 1px solid var(--border-color);
-            border-radius: 999px;
-            padding: 0.35rem 0.7rem;
-            background: rgba(88, 166, 255, 0.08);
-            color: var(--text-secondary);
-            font-size: 0.8rem;
-        }
         /* Utility classes */
         .text-green { color: var(--accent-green); }
         .text-yellow { color: var(--accent-yellow); }
@@ -238,16 +165,6 @@
         @media (max-width: 768px) {
             .task-board {
                 grid-template-columns: 1fr;
-            }
-            .flywheel-map {
-                grid-template-columns: 1fr;
-            }
-            .flywheel-node::after {
-                content: "↓";
-                right: 50%;
-                top: auto;
-                bottom: -1rem;
-                transform: translateX(50%);
             }
         }
     </style>
@@ -278,7 +195,7 @@
         <section class="section">
             <h1 class="section-title">📖 Visual Bible</h1>
             <p class="section-subtitle">Visual representation of THE_BIBLE.md - Real-time system status</p>
-            <p class="meta-info">Last updated: April 7, 2026 | Branch: main | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
+            <p class="meta-info">Last updated: April 12, 2026 | Branch: rescue/pr139-bounded-loop | <a href="THE_BIBLE.md">📖 THE BIBLE</a> | <a href="RECOVERY_LEDGER.md">📋 Recovery Ledger</a></p>
         </section>
 
         <!-- Critical Alerts -->
@@ -289,8 +206,16 @@
                 <p><strong>31 guardrail tests passing.</strong> Deterministic Guardrails Framework: 3 phases, 17 components, 15 error taxonomy types. Constitution learning active.</p>
             </div>
             <div class="alert success">
-                <h4>✅ 19 Subsystems Complete</h4>
-                <p>All 19 major subsystems documented in THE_BIBLE.md and operational. M1-M11 + DGF + TUI + Chat + Swarm + Thinking-Trace + Compost + Aesthetic + Plugins + SOUL + LLM Mode + Routing + Scavenger.</p>
+                <h4>✅ 28 Documented Systems</h4>
+                <p>THE_BIBLE now documents 28 systems spanning the core runtime, Bubble Tea operator surfaces, creative tooling, and supporting infrastructure. The original 19-system platform remains intact while newer bridge, calibration, rendering, and support layers are tracked alongside it.</p>
+            </div>
+            <div class="alert warning">
+                <h4>🟡 Bubble Tea Operator Surface Active on Main</h4>
+                <p>The Go Bubble Tea client on <code>main</code> now tracks task cards, live tool timelines, changed-file and verification tables, artifacts, operator shortcuts, a multiline composer, and gradient task/generation progress. The current follow-up work is focused on harmonizing the later Meta-Harness tool-routing fixes with this merged operator surface.</p>
+            </div>
+            <div class="alert success">
+                <h4>✅ Bounded-Loop Rescue Prepared</h4>
+                <p>This rescue branch lifts the narrow runtime-core slice from <code>#139</code>: deterministic task packets, resumable focus state, verification intent, and stricter bounded no-change classification, without replaying the broader Bubble Tea bridge and prompt churn.</p>
             </div>
         </section>
 
@@ -343,19 +268,19 @@
                 <div class="dashboard-card">
                     <h3>🔧 Subsystems</h3>
                     <div class="metric">
-                        <span class="metric-label">Total</span>
-                        <span class="metric-value">18</span>
+                        <span class="metric-label">Documented</span>
+                        <span class="metric-value">28</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">Active</span>
-                        <span class="metric-value" class="text-green">18/18</span>
+                        <span class="metric-label">Major platform set</span>
+                        <span class="metric-value" class="text-green">19 stable</span>
                     </div>
                     <div class="progress-bar">
                         <div class="progress-fill" class="w-full bg-green"></div>
                     </div>
                     <div class="metric" class="mt-1">
-                        <span class="metric-label">Core + UI</span>
-                        <span class="metric-value" class="text-green">10</span>
+                        <span class="metric-label">Additional support layers</span>
+                        <span class="metric-value" class="text-green">9 tracked</span>
                     </div>
                 </div>
 
@@ -363,11 +288,11 @@
                     <h3>📚 Documentation</h3>
                     <div class="metric">
                         <span class="metric-label">THE_BIBLE.md</span>
-                        <span class="metric-value" class="text-green">✅ 937 lines</span>
+                        <span class="metric-value" class="text-green">✅ 1,100+ lines</span>
                     </div>
                     <div class="metric">
-                        <span class="metric-label">19 Subsystems</span>
-                        <span class="metric-value" class="text-green">✅ Complete</span>
+                        <span class="metric-label">28 Systems</span>
+                        <span class="metric-value" class="text-green">✅ Documented</span>
                     </div>
                     <div class="metric">
                         <span class="metric-label">Status</span>
@@ -390,6 +315,16 @@
                     </tr>
                 </thead>
                 <tbody>
+                    <tr>
+                        <td><code>pending</code></td>
+                        <td>docs: mine legacy dogfood telemetry into evidence-quality rules</td>
+                        <td>Old model-comparison failures are reclassified as isolation, routing, timeout, artifact, and timing-semantics lessons</td>
+                    </tr>
+                    <tr>
+                        <td><code>pending</code></td>
+                        <td>docs: mine preserved launch artifacts for DF2 trust-boundary lessons</td>
+                        <td>Ignored Claude launch-plan artifacts are converted into current invariants without touching active DF2 or compatibility lanes</td>
+                    </tr>
                     <tr>
                         <td><strong>Natural Language Interface</strong></td>
                         <td><span class="badge badge-success">✅ Complete</span></td>
@@ -417,8 +352,8 @@
                     <tr>
                         <td><strong>Hybrid TUI</strong></td>
                         <td><span class="badge badge-success">✅ Active</span></td>
-                        <td><code>HarnessTUI.tsx</code></td>
-                        <td>Terminal + browser</td>
+                        <td><code>HarnessTUI.tsx</code> + <code>bubbletea/</code></td>
+                        <td>Ink + Bubble Tea operator surfaces with live task/timeline/file/artifact cards</td>
                     </tr>
                     <tr>
                         <td><strong>Ralph-Wiggum Loop</strong></td>
@@ -451,13 +386,13 @@
                         <td>Intent matching via LLM</td>
                     </tr>
                     <tr>
-                        <td><strong>AccessibilityGuardrails (M10)</strong></td>
+                        <td><strong>AccessibilityGuardrails (M11)</strong></td>
                         <td><span class="badge badge-success">✅ Complete</span></td>
                         <td><code>guardrails/AccessibilityGuardrails.ts</code></td>
                         <td>Photosensitivity, WCAG</td>
                     </tr>
                     <tr>
-                        <td><strong>RuntimeHealthMonitor (M11)</strong></td>
+                        <td><strong>RuntimeHealthMonitor (M10)</strong></td>
                         <td><span class="badge badge-success">✅ Complete</span></td>
                         <td><code>guardrails/RuntimeHealthMonitor.ts</code></td>
                         <td>Memory/FPS monitoring</td>
@@ -490,7 +425,13 @@
                         <td><strong>Plugin System</strong></td>
                         <td><span class="badge badge-success">✅ Active</span></td>
                         <td><code>plugins/PluginLoader.ts</code></td>
-                        <td>Extension architecture</td>
+                        <td>Generator extension architecture</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Harness Skill Layer</strong></td>
+                        <td><span class="badge badge-success">✅ Active</span></td>
+                        <td><code>harness/skills/SkillLoader.ts</code></td>
+                        <td>Practical SKILL.md compatibility for coding workflows</td>
                     </tr>
                     <tr>
                         <td><strong>Routing System</strong></td>
@@ -510,11 +451,11 @@
 
         <!-- Task Board -->
         <section class="section">
-            <h2 class="section-title">📋 Task Board (19 Subsystems)</h2>
+            <h2 class="section-title">📋 Core Platform Systems (19 major systems)</h2>
             <div class="task-board">
                 <div class="task-column">
                     <h4>✅ Complete (19/19)</h4>
-                    <div class="task-item critical"><div class="task-id">1</div>Meta-Harness (7 tools)</div>
+                    <div class="task-item critical"><div class="task-id">1</div>Meta-Harness (coding tools + skills)</div>
                     <div class="task-item critical"><div class="task-id">2</div>Ralph Loop</div>
                     <div class="task-item critical"><div class="task-id">3</div>Generators (9)</div>
                     <div class="task-item critical"><div class="task-id">4</div>DGF (3 Phases)</div>
@@ -536,7 +477,7 @@
                 </div>
                 <div class="task-column">
                     <h4>🟡 In Progress</h4>
-                    <div class="meta-info">None</div>
+                    <div class="task-item high"><div class="task-id">BT-OPS</div>Bubble Tea operator surface polish (task/generation progress, timeline, artifacts, verification)</div>
                 </div>
                 <div class="task-column">
                     <h4>📅 Planned</h4>
@@ -686,8 +627,8 @@
             <h2 class="section-title">📊 System Status</h2>
             
             <div class="alert success">
-                <h4>✅ All 19 Subsystems Complete</h4>
-                <p>All major subsystems documented in THE_BIBLE.md and operational:</p>
+                <h4>✅ Core 19-System Platform Complete</h4>
+                <p>The original 19 major platform systems remain documented and operational. THE_BIBLE now tracks additional bridge, Bubble Tea, calibration, embeddings, rendering, and support systems on top of this base:</p>
                 <ul class="ml-lg text-secondary">
                     <li><strong>Core (5):</strong> Meta-Harness, Ralph Loop, Generators, DGF, Memory</li>
                     <li><strong>UI (3):</strong> TUI, Chat, SOUL</li>
@@ -827,24 +768,29 @@
                 </thead>
                 <tbody>
                     <tr>
-                        <td><code>pending</code></td>
-                        <td>chore: remove orphaned dashboard residue and conflicted quarantined tests</td>
-                        <td>Tracked repo sludge is reduced without affecting active GUI or Vitest coverage</td>
+                        <td><code>rescue139</code></td>
+                        <td>Rescue bounded-loop runtime-core and LLMModeAgent guidance from the active TUI lane</td>
+                        <td>Preserves deterministic task packets, focus-state resume, and no-change truthfulness on top of current <code>main</code></td>
                     </tr>
                     <tr>
-                        <td><code>latest</code></td>
-                        <td>fix(landing): recover gallery metadata UI, stable dogfood asset paths, and single metadata badge row</td>
-                        <td>Landing gallery no longer depends on a live worktree and each card now shows variant metadata only once</td>
+                        <td><code>8472f3e</code></td>
+                        <td>audit(prompts): high-ROI system-prompt corrections, prompt-lint guards, and repository-wide audit notes</td>
+                        <td>Removes contradictory code-format instructions, modernizes Three.js prompt guidance, and trims harness prompt overhead</td>
                     </tr>
                     <tr>
-                        <td><code>bb67f67</code></td>
-                        <td>docs: Update THE_BIBLE.md and create DEV dashboard for DGF</td>
-                        <td>18 subsystems documented</td>
+                        <td><code>76710307</code></td>
+                        <td>Make Bubble Tea progress feel alive and beautiful</td>
+                        <td>Adds a colorful task progress bar plus a dedicated generation progress card to the Bubble Tea operator surface</td>
                     </tr>
                     <tr>
-                        <td><code>a066b26</code></td>
-                        <td>docs: Final THE_BIBLE and architecture updates</td>
-                        <td>DGF Phase 3 complete</td>
+                        <td><code>370a64cf</code></td>
+                        <td>Prove operator events survive the TS bridge path</td>
+                        <td>Typed operator events now publish and flush through the real TS HTTP/SSE bridge path</td>
+                    </tr>
+                    <tr>
+                        <td><code>499a037f</code></td>
+                        <td>Expose live operator progress inside the Bubble Tea shell</td>
+                        <td>Right-column operator cards now render task/phase progress, tool timeline, changed files, verification jobs, artifacts, and shortcuts</td>
                     </tr>
                     <tr>
                         <td><code>ee57b32</code></td>
@@ -865,90 +811,22 @@
             </table>
         </section>
 
-        <!-- Runtime-to-Product Flywheel -->
-        <section class="section">
-            <h2 class="section-title">🗺️ Runtime-to-Product Flywheel</h2>
-            <p class="section-subtitle">How the RT1-RT4 harness proof turns into a working Liminal app, instead of becoming the goal by itself.</p>
-
-            <div class="alert success">
-                <h4>✅ Runtime Proving Gate</h4>
-                <p><strong>RT1-RT4 prove the self-repair lane can run safely.</strong> The next milestone is DF1: run the same repair loop against real creative generation, validation, and preview failures.</p>
-            </div>
-
-            <div class="flywheel-map">
-                <div class="flywheel-node">
-                    <strong>1. RT Suite</strong>
-                    <p>RT1-RT4 prove bounded mutation, drift rejection, resume focus, and honest no-change classification across multiple model families.</p>
-                </div>
-                <div class="flywheel-node">
-                    <strong>2. Lane Matrix</strong>
-                    <p>Vanguard validates newest stages with GPT/GLM/Codex. Compatibility validates Kimi and MiniMax before local-model trials.</p>
-                </div>
-                <div class="flywheel-node">
-                    <strong>3. Freeze Harness</strong>
-                    <p>Provider provenance, terminal verification, file-backed build transcripts, and frozen mutation surfaces become the baseline.</p>
-                </div>
-                <div class="flywheel-node">
-                    <strong>4. DF1 Dogfood</strong>
-                    <p>Run real generators across p5, GLSL, Three, Strudel/Tone, and HTML with validation plus preview/runtime artifacts.</p>
-                </div>
-                <div class="flywheel-node">
-                    <strong>5. Product Fix Loop</strong>
-                    <p>Mine failures, patch generator/validator/routing code, re-run the same dogfood slice, and measure pass-rate lift.</p>
-                </div>
-            </div>
-
-            <div class="lane-grid">
-                <div class="lane-card">
-                    <h4>Vanguard Lane</h4>
-                    <ul>
-                        <li>Proves newest RT stage first.</li>
-                        <li>RT4 has clean success artifacts for GLM 5.1, GPT 5.4, GPT 5.3 Codex, and GLM 4.5.</li>
-                        <li>Extra LLMModeAgent tests are canonical guardrails, not noise.</li>
-                    </ul>
-                </div>
-                <div class="lane-card">
-                    <h4>Compatibility Lane</h4>
-                    <ul>
-                        <li>Kimi and MiniMax clear stages together before advancing.</li>
-                        <li>RT1 and RT2 are cleared by artifact criteria.</li>
-                        <li>Next target is RT3, then RT4, then local LM Studio hardening.</li>
-                    </ul>
-                </div>
-                <div class="lane-card">
-                    <h4>Pro Diagnostic Lane</h4>
-                    <ul>
-                        <li>Use only when cheaper lanes cannot explain a blocker.</li>
-                        <li>Requires no fallback, Responses API, file-backed build transcripts, and spend/usage telemetry.</li>
-                        <li>Pro is for diagnosis, not routine iteration.</li>
-                    </ul>
-                </div>
-                <div class="lane-card">
-                    <h4>DF1 App Dogfood</h4>
-                    <ul>
-                        <li>First product-facing proof after RT4.</li>
-                        <li>Must validate generated code, render/runtime behavior, and failure reasoning.</li>
-                        <li>Success means measurable improvement in real creative outputs.</li>
-                    </ul>
-                </div>
-            </div>
-
-            <div class="evidence-strip">
-                <span class="evidence-pill">RT artifacts: resolution / contract / surface</span>
-                <span class="evidence-pill">Provider provenance: model / endpoint / fallback</span>
-                <span class="evidence-pill">Build transcripts: stdout / stderr / result JSON</span>
-                <span class="evidence-pill">Next proof: DF1 product dogfood</span>
-            </div>
-        </section>
-
         <!-- Next Steps -->
         <section class="section">
             <h2 class="section-title">🎯 Next Steps</h2>
             <ol class="ml-lg text-secondary lh-2">
-                <li><strong>🎨 Start DF1 app dogfood</strong> - use the proven harness on real creative generation across p5, GLSL, Three, Strudel/Tone, and HTML</li>
-                <li><strong>📊 Emit app-level artifacts</strong> - capture generated code, validation, render/runtime result, provider provenance, and failure reasoning</li>
-                <li><strong>🔁 Apply bounded fixes</strong> - let the harness fix real generator/validator/routing failures, then re-run the same dogfood slice</li>
-                <li><strong>🧩 Resume platform work</strong> - after DF1 shows improvement, return to plugin API and compatibility-shim cleanup</li>
+                <li><strong>✅ Landing gallery stabilized</strong> - April 6 recovery cards now point at repo-owned assets instead of a transient worktree</li>
+                <li><strong>✅ Bridge provider flexibility landed</strong> - Bubble Tea bridge startup now resolves the active configured provider instead of assuming GLM</li>
+                <li><strong>🧠 Land prompt-audit rescue branch</strong> - high-ROI prompt fixes are ready for a narrow replacement PR from the isolated rescue worktree</li>
+                <li><strong>✅ NaturalInterface help alignment landed</strong> - help text now stays honest about what that surface actually supports</li>
+                <li><strong>✅ Shared status execution landed</strong> - NaturalInterface now reuses the shared <code>/status</code> implementation so browser/audio state stays aligned</li>
+                <li><strong>🔎 Wire bridge emissions into the Bubble Tea operator surface</strong> - the Go shell now renders task + generation progress cards alongside timeline/file/verification/artifact cards, but TS-side event producers still need broader rollout</li>
+                <li><strong>✅ Harness skill layer shipped</strong> - repo/local skills can now be loaded by the harness and paired with jmunch-backed code/doc search</li>
+                <li><strong>🛟 Review bounded-loop rescue branch</strong> - narrow `#139` salvage is ready for targeted runtime-core / LLMModeAgent review on current <code>main</code></li>
+                <li><strong>📏 Add prompt eval coverage</strong> - extend prompt-lint beyond high-ROI surfaces into the full PromptLibrary</li>
+                <li><strong>🔎 Review preserved recovery branches</strong> - evaluator fix, harness readiness tests, and TierBasedGenerator/Hydra coverage remain next</li>
+                <li><strong>🧩 Split preserved stash batches</strong> - replay broader crash-era stashes into atomic branches instead of applying wholesale</li>
+                <li><strong>🔄 Community plugins</strong> - Extract generator plugin API</li>
             </ol>
         </section>
     </main>

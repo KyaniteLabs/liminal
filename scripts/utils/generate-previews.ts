@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { ensureDir } from '../src/utils/fs.js';
 import { join, dirname } from 'path';
 
-const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'remotion', 'html', 'ascii'];
+const DOMAINS = ['p5', 'glsl', 'three', 'strudel', 'hydra', 'revideo', 'html', 'ascii'];
 const MODELS = [
   'minimax/MiniMax-M2.7',
   'minimax/MiniMax-M2.5', 

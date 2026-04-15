@@ -4,20 +4,83 @@
  * Get REAL quality scores (not estimates)
  */
 
-import { CreativeEvaluator } from '../dist/core/CreativeEvaluator.js';
+import { CreativeEvaluator } from '../../dist/core/CreativeEvaluator.js';
 import fs from 'fs';
 import path from 'path';
 
-const LANDING_ASSETS = path.join(process.cwd(), 'landing-assets');
+const CANDIDATE_DIRS = [
+  path.join(process.cwd(), 'landing-assets'),
+  path.join(process.cwd(), 'landing-live'),
+  path.join(process.cwd(), 'artifacts', 'landing-live'),
+];
+
+const OUTPUT_DIR = CANDIDATE_DIRS.find((dir) => fs.existsSync(dir)) ?? path.join(process.cwd(), 'landing-live');
+
+function walkFiles(dir) {
+  if (!fs.existsSync(dir)) return [];
+  const results = [];
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    const fullPath = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      results.push(...walkFiles(fullPath));
+    } else {
+      results.push(fullPath);
+    }
+  }
+  return results;
+}
+
+function findByBasename(...names) {
+  for (const dir of CANDIDATE_DIRS) {
+    for (const file of walkFiles(dir)) {
+      if (names.includes(path.basename(file))) return file;
+    }
+  }
+  return null;
+}
 
 // Extract inline code from HTML files
+function decodeHtmlEntities(text) {
+  return text
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'");
+}
+
 function extractCodeFromHTML(htmlPath) {
   const content = fs.readFileSync(htmlPath, 'utf-8');
-  
-  // Extract code between <script> tags
+
+  // Many historical gallery artifacts render generated code inside <pre>.
+  // Decode that code before evaluation so the evaluator judges the artifact,
+  // not just the wrapper page around it.
+  const preMatch = content.match(/<pre>([\s\S]*?)<\/pre>/i);
+  if (preMatch) {
+    return decodeHtmlEntities(preMatch[1]).trim();
+  }
+
+  // Strudel and similar wrappers often place the visible artifact in a code div
+  // while reserving <script> for helper UI like "open in REPL".
+  const codeDivMatch = content.match(/<div[^>]*class=["'][^"']*code[^"']*["'][^>]*>([\s\S]*?)<\/div>/i);
+  if (codeDivMatch) {
+    return decodeHtmlEntities(codeDivMatch[1]).trim();
+  }
+
+  // Extract code between <script> tags only after trying visible code containers.
   const scriptMatch = content.match(/<script>([\s\S]*?)<\/script>/);
   if (scriptMatch) {
-    return scriptMatch[1].trim();
+    const scriptContent = scriptMatch[1].trim();
+
+    // Some wrapper pages embed an entire generated HTML document inside a helper
+    // script block (for example Three.js wrappers). Prefer the nested artifact
+    // body over the wrapper control script when present.
+    const nestedHtmlIndex = scriptContent.indexOf('<!DOCTYPE html>');
+    if (nestedHtmlIndex >= 0) {
+      return scriptContent.slice(nestedHtmlIndex).trim();
+    }
+
+    return scriptContent;
   }
   
   return null;
@@ -25,56 +88,66 @@ function extractCodeFromHTML(htmlPath) {
 
 // Get code from file (HTML inline or JS file)
 function getCode(fileName) {
-  const htmlPath = path.join(LANDING_ASSETS, fileName + '.html');
-  const jsPath = path.join(LANDING_ASSETS, fileName + '.js');
+  const htmlPath = findByBasename(fileName + '.html');
+  const jsPath = findByBasename(fileName + '.js');
   
-  if (fs.existsSync(htmlPath)) {
+  if (htmlPath && fs.existsSync(htmlPath)) {
     const inline = extractCodeFromHTML(htmlPath);
     if (inline) return { code: inline, source: 'html-inline' };
+    return { code: fs.readFileSync(htmlPath, 'utf-8'), source: 'html-file' };
   }
   
-  if (fs.existsSync(jsPath)) {
+  if (jsPath && fs.existsSync(jsPath)) {
     return { code: fs.readFileSync(jsPath, 'utf-8'), source: 'js-file' };
   }
   
   // Check for .strudel.js files
-  const strudelPath = path.join(LANDING_ASSETS, fileName + '.strudel.js');
-  if (fs.existsSync(strudelPath)) {
+  const strudelPath = findByBasename(fileName + '.strudel.js');
+  if (strudelPath && fs.existsSync(strudelPath)) {
     return { code: fs.readFileSync(strudelPath, 'utf-8'), source: 'strudel' };
   }
   
   return null;
 }
 
-// Determine domain from filename
+// Determine domain from filename.
+// Keep historical file names like `dogfood-remotion-title`, but evaluate them
+// using the active Revideo domain hint.
 function getDomain(fileName) {
+  if (fileName.includes('ascii')) return 'ascii';
+  if (fileName.includes('html')) return 'html';
+  if (fileName.includes('tone')) return 'tone';
+  if (fileName.includes('p5')) return 'p5';
   if (fileName.includes('shader')) return 'glsl';
   if (fileName.includes('three')) return 'three';
   if (fileName.includes('hydra')) return 'hydra';
   if (fileName.includes('strudel') || fileName.includes('music')) return 'music';
-  if (fileName.includes('remotion')) return 'remotion';
+  if (fileName.includes('revideo') || fileName.includes('remotion')) return 'revideo';
   return 'p5';
 }
 
-// Examples to evaluate
-const examples = [
-  'dogfood-p5-jellyfish',
-  'dogfood-p5-neon-cyberpunk',
-  'dogfood-p5-ocean-final',
-  'dogfood-shader-fractal',
-  'dogfood-shader-warp',
-  'dogfood-shader-nebula-final',
-  'dogfood-shader-plasma-final',
-  'dogfood-three-crystal',
-  'dogfood-three-rotating',
-  'dogfood-three-abstract-final',
-  'dogfood-hydra-liquid',
-  'dogfood-hydra-geometric',
-  'dogfood-music-techno-driving',
-  'dogfood-music-ambient-drone',
-  'dogfood-remotion-title',
-];
+function discoverExamples() {
+  const stems = new Set();
+  const ignored = new Set(['index', 'gallery-data', 'real-evaluation-results']);
+  for (const dir of CANDIDATE_DIRS) {
+    for (const file of walkFiles(dir)) {
+      const base = path.basename(file);
+      let stem = null;
+      if (base.endsWith('.strudel.js')) stem = base.slice(0, -'.strudel.js'.length);
+      else if (base.endsWith('.html')) stem = base.slice(0, -'.html'.length);
+      else if (base.endsWith('.js')) stem = base.slice(0, -'.js'.length);
+      if (!stem || ignored.has(stem)) continue;
+      if (!/(p5|glsl|shader|three|hydra|strudel|music|tone|html|ascii|remotion|revideo)/.test(stem)) continue;
+      stems.add(stem);
+    }
+  }
+  return [...stems].sort();
+}
 
+const examples = discoverExamples();
+
+console.log(`Asset roots: ${CANDIDATE_DIRS.filter((dir) => fs.existsSync(dir)).join(', ')}`);
+console.log(`Discovered examples: ${examples.length}`);
 console.log('='.repeat(60));
 console.log('REAL DOGFOOD QUALITY EVALUATION');
 console.log('Using CreativeEvaluator.assess() on actual outputs');
@@ -136,7 +209,7 @@ console.log(`Average Score: ${avgScore.toFixed(2)}`);
 console.log('');
 
 // Save results
-const outputPath = path.join(LANDING_ASSETS, 'real-evaluation-results.json');
+const outputPath = path.join(OUTPUT_DIR, 'real-evaluation-results.json');
 fs.writeFileSync(outputPath, JSON.stringify({
   timestamp: new Date().toISOString(),
   evaluator: 'CreativeEvaluator.assess()',

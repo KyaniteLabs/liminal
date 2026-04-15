@@ -18,8 +18,12 @@ const DOMAINS: Record<string, { prompt: string; complexity: string }> = {
   tone: { prompt: 'Create an ambient drone synthesizer with reverb', complexity: 'medium' },
   html: { prompt: 'Create a landing page with hero section and call to action', complexity: 'low' },
   ascii: { prompt: 'Create ASCII art of a mountain landscape', complexity: 'low' },
-  remotion: { prompt: 'Create a typing text animation video component', complexity: 'medium' },
+  revideo: { prompt: 'Create a Revideo scene that animates text typing with a cursor blink, then fades in a subtitle', complexity: 'medium' },
 };
+
+function normalizeDomain(domainName: string): string {
+  return domainName === 'remotion' ? 'revideo' : domainName;
+}
 
 // Model configurations
 const MODELS: Record<string, { baseUrl?: string; timeout: number; type: string; fullName: string }> = {
@@ -39,7 +43,8 @@ function timestamp() {
 }
 
 async function runSingleTest(domainName: string, modelTag: string) {
-  const domain = DOMAINS[domainName];
+  const normalizedDomainName = normalizeDomain(domainName);
+  const domain = DOMAINS[normalizedDomainName];
   const model = MODELS[modelTag];
   
   if (!domain || !model) {
@@ -48,8 +53,8 @@ async function runSingleTest(domainName: string, modelTag: string) {
   }
   
   const startTime = Date.now();
-  const outputDir = `./landing-live/${domainName}-${modelTag}`;
-  const finalOutputPath = `./landing-live/${domainName}-${modelTag}.html`;
+  const outputDir = `./landing-live/${normalizedDomainName}-${modelTag}`;
+  const finalOutputPath = `./landing-live/${normalizedDomainName}-${modelTag}.html`;
   
   // Clean up any existing directory to avoid conflicts
   if (fs.existsSync(outputDir)) {
@@ -64,7 +69,7 @@ async function runSingleTest(domainName: string, modelTag: string) {
   }
   process.env.LIMINAL_LLM_MODEL = model.fullName;
   
-  console.log(`\n🧪 Test: ${domainName} × ${modelTag}`);
+  console.log(`\n🧪 Test: ${normalizedDomainName} × ${modelTag}`);
   console.log(`   Output Dir: ${outputDir}`);
   console.log(`   Final Path: ${finalOutputPath}`);
   console.log(`   Model: ${process.env.LIMINAL_LLM_MODEL}`);
@@ -74,7 +79,7 @@ async function runSingleTest(domainName: string, modelTag: string) {
     const result = await run(domain.prompt, {
       maxIterations: 3,
       output: outputDir,
-      project: `dogfood-${domainName}-${modelTag}`,
+      project: `dogfood-${normalizedDomainName}-${modelTag}`,
     });
     
     const duration = Date.now() - startTime;
@@ -82,7 +87,7 @@ async function runSingleTest(domainName: string, modelTag: string) {
     
     // The run function creates files inside the output directory
     // Copy the final HTML file to the expected location
-    const generatedHtmlPath = path.join(outputDir, `dogfood-${domainName}-${modelTag}-final.html`);
+    const generatedHtmlPath = path.join(outputDir, `dogfood-${normalizedDomainName}-${modelTag}-final.html`);
     
     let size = 0;
     if (fs.existsSync(generatedHtmlPath)) {

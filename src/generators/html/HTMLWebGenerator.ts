@@ -36,7 +36,10 @@ export class HTMLWebGenerator extends TierBasedGenerator {
     const htmlMatch = code.match(/```html\s*([\s\S]*?)```/);
     if (htmlMatch) return htmlMatch[1].trim();
     if (code.includes('<!DOCTYPE html>') || code.includes('<html')) {
-      return code.trim();
+      let cleaned = code.trim();
+      cleaned = cleaned.replace(/^```(?:html)?\s*/i, '');
+      cleaned = cleaned.replace(/\s*```$/i, '');
+      return cleaned.trim();
     }
     throw new Error('HTMLWebGenerator: LLM output is not valid HTML');
   }

@@ -15,12 +15,22 @@ const {
   mockTelemetry,
   mockRateLimiter,
   mockFailureLogger,
+  mockExecuteSkill,
+  mockSearchCode,
+  mockSearchDocs,
+  mockRunLint,
+  mockRunFocusedTests,
 } = vi.hoisted(() => ({
   mockLLM: { getConfig: vi.fn(() => ({ model: 'test' })) },
   mockReadFile: { execute: vi.fn(async () => ({ success: true, data: { content: 'const x = 1;' } })) },
   mockApplyEdit: { execute: vi.fn(async () => ({ success: true, data: { backupPath: '/tmp/bak-123' } })) },
   mockRunBuild: { execute: vi.fn(async () => ({ success: true })) },
   mockRestoreBackup: { execute: vi.fn(async () => ({ success: true })) },
+  mockExecuteSkill: { execute: vi.fn(async () => ({ success: true, data: { skill: { name: 'sample-skill' } } })) },
+  mockSearchCode: { execute: vi.fn(async () => ({ success: true, data: { resultCount: 1, results: [] } })) },
+  mockSearchDocs: { execute: vi.fn(async () => ({ success: true, data: { resultCount: 1, results: [] } })) },
+  mockRunLint: { execute: vi.fn(async () => ({ success: true, data: { command: 'npm run lint' } })) },
+  mockRunFocusedTests: { execute: vi.fn(async () => ({ success: true, data: { command: 'npx vitest run test/example.test.ts' } })) },
   mockSelfEval: {
     recordOutcome: vi.fn(),
     shouldRetry: vi.fn(() => ({ shouldRetry: false, reason: 'no retry', newStrategy: 'direct' })),
@@ -65,10 +75,15 @@ vi.mock('../../../../src/harness/tools/index.js', () => ({
   applyEditTool: mockApplyEdit,
   runBuildTool: mockRunBuild,
   runTestsTool: { execute: vi.fn(async () => ({ success: true })) },
+  executeSkillTool: mockExecuteSkill,
   searchTool: { execute: vi.fn(async () => ({ success: true })) },
+  searchCodeTool: mockSearchCode,
+  searchDocsTool: mockSearchDocs,
   listDirTool: { execute: vi.fn(async () => ({ success: true })) },
   typeCheckTool: { execute: vi.fn(async () => ({ success: true })) },
   npmTool: { execute: vi.fn(async () => ({ success: true })) },
+  runLintTool: mockRunLint,
+  runFocusedTestsTool: mockRunFocusedTests,
   lspTool: { execute: vi.fn(async () => ({ success: true })) },
   astValidatorTool: { execute: vi.fn(async () => ({ success: true })) },
   importGuardTool: { execute: vi.fn(async () => ({ success: true })) },
@@ -253,6 +268,14 @@ describe('HarnessAgent', () => {
     agent.setReasoningContext('test', 'trace');
     agent.clearReasoningContext();
     expect(mockTelemetry.clearContext).toHaveBeenCalled();
+  });
+
+  it('getToolInstance resolves new skill and coding tool names', () => {
+    expect((agent as any).getToolInstance('executeSkill')).toBe(mockExecuteSkill);
+    expect((agent as any).getToolInstance('searchCode')).toBe(mockSearchCode);
+    expect((agent as any).getToolInstance('searchDocs')).toBe(mockSearchDocs);
+    expect((agent as any).getToolInstance('runLint')).toBe(mockRunLint);
+    expect((agent as any).getToolInstance('runFocusedTests')).toBe(mockRunFocusedTests);
   });
 });
 

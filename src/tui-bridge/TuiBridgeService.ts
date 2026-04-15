@@ -48,7 +48,10 @@ export function isSelfImprovementRequest(text: string): boolean {
 /** Check if input indicates creative generation intent */
 export function isGenerationRequest(text: string): boolean {
   if (isSelfImprovementRequest(text)) return false;
+
   const lower = text.toLowerCase();
+  const operatorLike = /\b(fix|debug|diagnose|repair|refactor|cleanup|harness|meta-harness|bubble tea|tui|ci|build|test|dogfood|repo|codebase)\b/.test(lower);
+  if (operatorLike) return false;
   return GENERATION_KEYWORDS.some(kw => lower.includes(kw));
 }
 
@@ -124,10 +127,30 @@ export class TuiBridgeService {
     return this.stream.getEvents(sessionId);
   }
 
+  getEventsSince(sessionId: string, lastEventId: number) {
+    return this.stream.getEventsSince(sessionId, lastEventId);
+  }
+
   subscribe(sessionId: string, listener: (event: TuiBridgeEvent) => void): () => void {
     return this.stream.subscribe(sessionId, listener);
   }
 
+  subscribeWithId(sessionId: string, listener: (stored: { id: number; event: TuiBridgeEvent }) => void): () => void {
+    return this.stream.subscribeWithId(sessionId, listener);
+  }
+
+  updateStatus(sessionId: string, patch: Partial<TuiSessionStatus>): TuiSessionStatus {
+    const status = this.sessions.update(sessionId, patch);
+    this.emit(sessionId, { type: 'status.updated', sessionId, status });
+    return status;
+  }
+
+  emitCommandResponse(sessionId: string, content: string): void {
+    this.emit(sessionId, { type: 'response.started', sessionId });
+    this.emit(sessionId, { type: 'response.delta', sessionId, delta: content });
+    this.emit(sessionId, { type: 'response.completed', sessionId, content });
+    this.emit(sessionId, { type: 'response.committed', sessionId, content });
+  }
   // eslint-disable-next-line @typescript-eslint/require-await
   async submitInput(
     sessionId: string,
@@ -140,6 +163,7 @@ export class TuiBridgeService {
     this.sessions.update(sessionId, { mode: input.mode });
     const selfImprovement = isSelfImprovementRequest(input.text);
     const creativeGeneration = isGenerationRequest(input.text);
+
     logBridge('input.received', {
       sessionId,
       mode: input.mode,
@@ -655,6 +679,16 @@ export class TuiBridgeService {
 
   private emit(sessionId: string, event: TuiBridgeEvent): void {
     this.stream.emit(sessionId, event);
+  }
+
+
+  /**
+   * Publish a typed operator event into a session stream.
+   * Used by the Bubble Tea operator-surface tests and by future explicit
+   * operator instrumentation publishers.
+   */
+  publishEvent(sessionId: string, event: Omit<TuiBridgeEvent, 'sessionId'>): void {
+    this.emit(sessionId, { ...event, sessionId } as TuiBridgeEvent);
   }
 
   private emitLiveNarration(sessionId: string, message: string): void {

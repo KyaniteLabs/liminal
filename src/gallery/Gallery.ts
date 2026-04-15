@@ -35,7 +35,7 @@ export type GalleryIteration = Iteration | OrganismIteration;
 /**
  * Parse raw file content: if valid JSON with type 'organism', return OrganismIteration; else p5 Iteration.
  */
-function parseVersionContent(raw: string, version: number, timestamp: string): GalleryIteration | null {
+export function parseVersionContent(raw: string, version: number, timestamp: string): GalleryIteration | null {
   const trimmed = raw.trim();
   if (!trimmed) return null;
   try {

@@ -8,11 +8,12 @@ import express, { Express } from 'express';
 import path from 'path';
 import { Server } from 'http';
 import type { AddressInfo } from 'node:net';
-import { readdirSync, statSync } from 'node:fs';
+import { existsSync } from 'node:fs';
+import { readdir, stat } from 'node:fs/promises';
 import helmet from 'helmet';
 import { doubleCsrf } from 'csrf-csrf';
 import cookieParser from 'cookie-parser';
-import { Gallery, type GalleryIteration } from '../gallery/Gallery.js';
+import { Gallery, parseVersionContent, type GalleryIteration } from '../gallery/Gallery.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
 import { Exporter } from '../export/Exporter.js';
 import { normalizePath, assertSafeSegment } from '../utils/normalizePath.js';
@@ -49,6 +50,7 @@ export class PreviewServer {
   private readonly DEFAULT_PORT = SERVICE_DEFAULTS.PREVIEW_PORT;
   private readonly galleryDir: string | null;
   private sseClients: Set<import('express').Response> = new Set();
+  private liminalFsInstance: LiminalFS | null = null;
 
   constructor(options: PreviewServerOptions | string | null = null) {
     this.app = express();
@@ -56,6 +58,12 @@ export class PreviewServer {
     this.galleryDir = opts.galleryDir ?? null;
     this.setupRoutes();
     this.setupEventBus();
+  }
+
+  /** Lazily open a singleton LiminalFS instance (avoids per-request open/close). */
+  private getLiminalFS(): LiminalFS {
+    if (!this.liminalFsInstance) this.liminalFsInstance = LiminalFS.open(process.cwd());
+    return this.liminalFsInstance;
   }
 
   /** Subscribe EventBus to forward events to SSE clients. */
@@ -223,37 +231,43 @@ export class PreviewServer {
 
     // ── LiminalFS-backed gallery endpoints ────────────────────────────
 
-    this.app.get('/api/liminal/gallery/:project', (req, res) => {
+    this.app.get('/api/liminal/gallery/:project', async (req, res) => {
+      const project = decodeURIComponent(req.params.project);
       try {
-        const project = decodeURIComponent(req.params.project);
         assertSafeSegment(project, 'Project name');
-        const liminalFs = LiminalFS.open(process.cwd());
-        try {
-          const refsDir = path.join(process.cwd(), '.liminal', 'refs', 'gallery', project);
-          const files = readdirSync(refsDir);
-          const versionFiles = files.filter(f => /^v(\d+)\.json$/.test(f));
+      } catch {
+        return res.status(400).json({ error: 'Invalid project name' });
+      }
+      try {
+        const liminalFs = this.getLiminalFS();
+        const refsDir = path.join(process.cwd(), '.liminal', 'refs', 'gallery', project);
 
-          const iterations: GalleryIteration[] = [];
-          for (const file of versionFiles) {
-            const match = file.match(/^v(\d+)\.json$/);
-            if (!match) continue;
-            const version = parseInt(match[1], 10);
-            const ref = liminalFs.readRef(`gallery/${project}/v${version}`);
-            if (!ref) continue;
-            const content = liminalFs.readArtifact(ref);
-            if (!content) continue;
-            const raw = content.toString('utf-8');
-            const stat = statSync(path.join(refsDir, file));
-            const timestamp = stat.mtime?.toISOString() ?? new Date().toISOString();
-            const parsed = this.parseGalleryContent(raw, version, timestamp);
-            if (parsed) iterations.push(parsed);
-          }
-
-          iterations.sort((a, b) => a.version - b.version);
-          return res.json({ iterations });
-        } finally {
-          liminalFs.close();
+        // Return empty if refs directory doesn't exist (graceful for new projects)
+        if (!existsSync(refsDir)) {
+          return res.json({ iterations: [] });
         }
+
+        const files = await readdir(refsDir);
+        const versionFiles = files.filter(f => /^v(\d+)\.json$/.test(f));
+
+        const iterations: GalleryIteration[] = [];
+        await Promise.all(versionFiles.map(async (file) => {
+          const match = file.match(/^v(\d+)\.json$/);
+          if (!match) return;
+          const version = parseInt(match[1], 10);
+          const ref = liminalFs.readRef(`gallery/${project}/v${version}`);
+          if (!ref) return;
+          const content = liminalFs.readArtifact(ref);
+          if (!content) return;
+          const raw = content.toString('utf-8');
+          const fileStat = await stat(path.join(refsDir, file));
+          const timestamp = fileStat.mtime?.toISOString() ?? new Date().toISOString();
+          const parsed = parseVersionContent(raw, version, timestamp);
+          if (parsed) iterations.push(parsed);
+        }));
+
+        iterations.sort((a, b) => a.version - b.version);
+        return res.json({ iterations });
       } catch (err) {
         Logger.error('PreviewServer', 'Failed to load LiminalFS gallery:', err);
         return res.status(500).json({ error: 'Failed to load gallery' });
@@ -261,28 +275,31 @@ export class PreviewServer {
     });
 
     this.app.get('/api/liminal/gallery/:project/:version', (req, res) => {
+      const project = decodeURIComponent(req.params.project);
+      const versionParam = req.params.version;
+      if (!/^\d+$/.test(versionParam)) {
+        return res.status(400).json({ error: 'Invalid version' });
+      }
+      const version = parseInt(versionParam, 10);
+      if (version <= 0) {
+        return res.status(400).json({ error: 'Invalid version' });
+      }
       try {
-        const project = decodeURIComponent(req.params.project);
-        const versionParam = req.params.version;
-        const version = parseInt(versionParam, 10);
-        if (!Number.isInteger(version) || version <= 0) {
-          return res.status(400).json({ error: 'Invalid version' });
-        }
         assertSafeSegment(project, 'Project name');
-        const liminalFs = LiminalFS.open(process.cwd());
-        try {
-          const ref = liminalFs.readRef(`gallery/${project}/v${version}`);
-          if (!ref) {
-            return res.status(404).json({ error: 'Version not found' });
-          }
-          const content = liminalFs.readArtifact(ref);
-          if (!content) {
-            return res.status(404).json({ error: 'Artifact not found' });
-          }
-          return res.setHeader('Content-Type', 'text/plain').send(content.toString('utf-8'));
-        } finally {
-          liminalFs.close();
+      } catch {
+        return res.status(400).json({ error: 'Invalid project name' });
+      }
+      try {
+        const liminalFs = this.getLiminalFS();
+        const ref = liminalFs.readRef(`gallery/${project}/v${version}`);
+        if (!ref) {
+          return res.status(404).json({ error: 'Version not found' });
         }
+        const content = liminalFs.readArtifact(ref);
+        if (!content) {
+          return res.status(404).json({ error: 'Artifact not found' });
+        }
+        return res.setHeader('Content-Type', 'text/plain').send(content.toString('utf-8'));
       } catch (err) {
         Logger.error('PreviewServer', 'Failed to load LiminalFS version:', err);
         return res.status(500).json({ error: 'Failed to load version' });
@@ -447,31 +464,6 @@ export class PreviewServer {
     return HTMLWrapper.wrap(sketchCode || '');
   }
 
-  /**
-   * Parse raw artifact content into a GalleryIteration.
-   * Handles organism JSON and plain p5 code.
-   */
-  private parseGalleryContent(raw: string, version: number, timestamp: string): GalleryIteration | null {
-    const trimmed = raw.trim();
-    if (!trimmed) return null;
-    try {
-      const data = JSON.parse(trimmed);
-      if (data && typeof data === 'object' && data.type === 'organism' &&
-          data.musicCode != null && data.visualCode != null) {
-        return {
-          version,
-          type: 'organism',
-          musicCode: String(data.musicCode),
-          visualCode: String(data.visualCode),
-          timestamp,
-        };
-      }
-    } catch {
-      // Not JSON — treat as p5 code
-    }
-    return { version, code: trimmed, timestamp };
-  }
-
   async start(port: number = this.DEFAULT_PORT): Promise<boolean> {
     if (port < 0 || port > 65535) {
       throw new ServerError(`Invalid port number: ${port}`, { port });
@@ -519,6 +511,10 @@ export class PreviewServer {
     });
     
     this.server = null;
+    if (this.liminalFsInstance) {
+      this.liminalFsInstance.close();
+      this.liminalFsInstance = null;
+    }
     return true;
   }
 

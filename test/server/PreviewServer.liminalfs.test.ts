@@ -122,4 +122,48 @@ describe('PreviewServer LiminalFS endpoints', () => {
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/99`);
     expect(res.status).toBe(404);
   });
+
+  // ── Security tests ──
+
+  it('rejects path traversal in project name', async () => {
+    const port = await getFreePort();
+    await server.start(port);
+
+    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/..%2Fsecret`);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects slash in project name', async () => {
+    const port = await getFreePort();
+    await server.start(port);
+
+    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/a%2Fb`);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects non-numeric version', async () => {
+    const port = await getFreePort();
+    await server.start(port);
+
+    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/abc`);
+    expect(res.status).toBe(400);
+  });
+
+  it('rejects negative version', async () => {
+    const port = await getFreePort();
+    await server.start(port);
+
+    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/-1`);
+    expect(res.status).toBe(400);
+  });
+
+  it('returns empty iterations for nonexistent project', async () => {
+    const port = await getFreePort();
+    await server.start(port);
+
+    const res = await fetch(`http://localhost:${port}/api/liminal/gallery/nonexistent`);
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.iterations).toEqual([]);
+  });
 });

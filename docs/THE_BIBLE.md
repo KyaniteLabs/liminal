@@ -21,6 +21,26 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **Bounded-loop runtime packets** with explicit focus, verification intent, and resumable no-change classification
 - **Worktree Isolation** - Multi-agent development workflow
 
+### Git Hygiene Finish Pass (2026-04-15)
+
+The repository was reduced to a simple finish-line model:
+
+| Bucket | Meaning | Action |
+|--------|---------|--------|
+| `main` | Shipping truth | Keep clean and synced with `origin/main` |
+| Merge candidates | Small, focused branches with non-main value | Cherry-pick into reviewed salvage branches |
+| Reference/archive | Broad experiments, compatibility matrices, rescue lanes | Keep only while they answer a current question |
+| Abandoned/stale | Run-complete `liminal/sess-*`, gone upstreams, superseded PRs | Delete after patch-equivalence or explicit rejection |
+
+High-ROI salvage applied in `salvage/roi-finish-20260415`:
+- `fix/ascii-generation-quality`: single-generation utility can target arbitrary LM Studio model IDs.
+- `fix/llm-fallback-observability`: fallback exhaustion now reports each failed fallback, and malformed tool-call arguments are surfaced instead of silently becoming `{}`.
+
+Security triage result:
+- `agent-security-hardening` A1-A9 patches are already patch-equivalent to `main`; no hidden security value remains there.
+- `tmp/free-main` URL-validator security slice is superseded by current `main`, which already has injectable DNS lookup, IPv6 localhost handling, and degraded-DNS logging.
+- `security/redteam-remediation-20260409` remains a broad security/adapters lane and should be reviewed separately, not mixed into the small ROI salvage branch.
+
 ### Security Redteam Salvage (2026-04-15)
 
 The stale `security/redteam-remediation-20260409` branch is being mined by security boundary rather than merged wholesale.

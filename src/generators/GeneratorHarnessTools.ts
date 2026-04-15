@@ -568,6 +568,42 @@ export class GeneratorHarnessTools {
   }
 
   // -------------------------------------------------------------------------
+  // buildRepairPacket() -- compact repair packet with repeated-failure detection
+  // -------------------------------------------------------------------------
+
+  /**
+   * Build a compact repair packet from a GenerationEvaluation.
+   *
+   * @param evaluation - the evaluation containing repairAdvice
+   * @param history - optional prior evaluations to detect repeated failures
+   * @returns a compact string suitable for injection into a generation prompt
+   */
+  buildRepairPacket(
+    evaluation: GenerationEvaluation,
+    history?: GenerationEvaluation[]
+  ): string {
+    const advice = evaluation.repairAdvice;
+    if (!advice) return '';
+
+    const parts: string[] = [];
+    parts.push(`[repair] issue: ${advice.issue}`);
+    parts.push(`[repair] fix: ${advice.fix}`);
+    parts.push(`[repair] constraint: ${advice.constraint}`);
+
+    if (history && history.length > 0) {
+      const repeated = history.filter(
+        h => h.failureClass === evaluation.failureClass ||
+          (h.repairAdvice && advice.issue && h.repairAdvice.issue.toLowerCase() === advice.issue.toLowerCase())
+      ).length;
+      if (repeated >= 2) {
+        parts.push(`[repair] escalation: This failure has occurred ${repeated} times. Try a fundamentally different approach.`);
+      }
+    }
+
+    return parts.join('\n');
+  }
+
+  // -------------------------------------------------------------------------
   // buildRuntimeFeedbackHint() -- placeholder for future multimodal feedback
   // -------------------------------------------------------------------------
 

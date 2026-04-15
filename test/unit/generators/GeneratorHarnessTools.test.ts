@@ -372,6 +372,74 @@ describe('GeneratorHarnessTools', () => {
   });
 
   // -------------------------------------------------------------------------
+  // buildRepairPacket()
+  // -------------------------------------------------------------------------
+
+  describe('buildRepairPacket', () => {
+    it('returns empty string when evaluation has no repairAdvice', () => {
+      const packet = tools.buildRepairPacket({ score: 0, confidence: 1, failureClass: 'render' });
+      expect(packet).toBe('');
+    });
+
+    it('builds compact repair packet from repairAdvice', () => {
+      const packet = tools.buildRepairPacket({
+        score: 0.3,
+        confidence: 0.8,
+        failureClass: 'validator',
+        repairAdvice: {
+          issue: 'Missing required API',
+          fix: 'Add the required API calls',
+          constraint: 'Keep it under 50 lines',
+        },
+      });
+      expect(packet).toContain('[repair] issue: Missing required API');
+      expect(packet).toContain('[repair] fix: Add the required API calls');
+      expect(packet).toContain('[repair] constraint: Keep it under 50 lines');
+    });
+
+    it('detects repeated failures and adds escalation hint', () => {
+      const history = [
+        { score: 0.2, confidence: 1, failureClass: 'validator' as const },
+        { score: 0.1, confidence: 1, failureClass: 'validator' as const },
+      ];
+      const packet = tools.buildRepairPacket(
+        {
+          score: 0,
+          confidence: 1,
+          failureClass: 'validator',
+          repairAdvice: {
+            issue: 'Missing API',
+            fix: 'Add API',
+            constraint: 'Complete artifact',
+          },
+        },
+        history
+      );
+      expect(packet).toContain('[repair] escalation: This failure has occurred 2 times');
+    });
+
+    it('does not escalate when repeated count is below threshold', () => {
+      const history = [
+        { score: 0.2, confidence: 1, failureClass: 'validator' as const },
+      ];
+      const packet = tools.buildRepairPacket(
+        {
+          score: 0,
+          confidence: 1,
+          failureClass: 'validator',
+          repairAdvice: {
+            issue: 'Missing API',
+            fix: 'Add API',
+            constraint: 'Complete artifact',
+          },
+        },
+        history
+      );
+      expect(packet).not.toContain('escalation');
+    });
+  });
+
+  // -------------------------------------------------------------------------
   // recordSuccess / getSuccessSummary
   // -------------------------------------------------------------------------
 

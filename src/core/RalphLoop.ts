@@ -20,6 +20,7 @@
 
 import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
 import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
+import { GeneratorHarnessTools } from '../generators/GeneratorHarnessTools.js';
 import { Domain } from '../types/domains.js';
 import { PromptStore } from './PromptStore.js';
 import path from 'node:path';
@@ -251,6 +252,9 @@ export class RalphLoop {
     const scoreHistory: number[] = [];
     const CONVERGENCE_WINDOW = 3;
     const CONVERGENCE_THRESHOLD = 0.01;
+
+    // DF3 Phase 2: repair history for repeated-failure detection
+    const repairHistory: GenerationEvaluation[] = [];
 
     const evalMode = getEvalMode();
 
@@ -576,6 +580,126 @@ export class RalphLoop {
             );
           }
         }
+
+        // DF3 Phase 2: Single-Round Repair
+        const repairMode = getRepairMode();
+        if (repairMode === 'single-round' && evaluation.score < normalizedOptions.minQualityScore) {
+          if (normalizedOptions.chatMode) {
+            normalizedOptions.onThought?.('Attempting single-round repair...');
+          }
+
+          try {
+            const harness = new GeneratorHarnessTools({ entropySource: new (await import('../entropy/MetabolicEntropyEngine.js')).MetabolicEntropyEngine() });
+
+            // Build repair packet with repeated-failure detection
+            const genEval: GenerationEvaluation = {
+              score: evaluation.score,
+              confidence: 1,
+              failureClass: 'none',
+              repairAdvice: evaluation.issues && evaluation.issues.length > 0
+                ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                : undefined,
+            };
+            const repairPacket = harness.buildRepairPacket(genEval, repairHistory);
+
+            if (repairPacket) {
+              const repairPrompt = `${usedPrompt}\n\n---\n${repairPacket}`;
+              const repairResult = await generator.generate(repairPrompt, loadedPrompt, true);
+
+              if (!repairResult.needsClarification) {
+                const repairValidation = CodeValidator.validate(repairResult.code);
+                if (repairValidation.valid) {
+                  const repairCode = repairValidation.cleanedCode;
+
+                  // Evaluate repair candidate using the same path
+                  let repairEval: { score: number; issues?: string[]; dimensions?: Record<string, number> };
+                  let repairLirContext: LIREvaluationContext | undefined;
+
+                  if (normalizedOptions.lirEnabled) {
+                    try {
+                      const genParser = new GeneratedCodeParser();
+                      const lirTokens = genParser.parse(repairCode);
+                      if (lirTokens.length > 0) {
+                        repairLirContext = {
+                          lirTokens,
+                          visualIntent: normalizedOptions.visualMappingParams as any,
+                          lirEnabled: true,
+                        };
+                      }
+                    } catch {
+                      // ignore LIR parse errors for repair
+                    }
+                  }
+
+                  if (evalMode === 'auto' || evalMode === 'strict-browser') {
+                    const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+                    const renderer = HeadlessRenderer.getInstance();
+                    const renderEvidence = await renderer.renderWithEvidence(repairCode, {
+                      domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+                      width: 400,
+                      height: 400,
+                    });
+
+                    if (renderEvidence.infraUnavailable) {
+                      const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                      repairEval = await scoringEngine.scoreReliable({
+                        output: repairCode,
+                        criteria: normalizedOptions.evaluationCriteria,
+                        lirContext: repairLirContext,
+                      });
+                    } else {
+                      const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+                      const genEvalRepair = await scoreRenderedEvidence(
+                        renderEvidence,
+                        repairCode,
+                        prompt,
+                        undefined,
+                      );
+                      repairEval = {
+                        score: genEvalRepair.score,
+                        issues: genEvalRepair.repairAdvice ? [genEvalRepair.repairAdvice.issue] : [],
+                        dimensions: {},
+                      };
+                    }
+                  } else {
+                    const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                    repairEval = await scoringEngine.scoreReliable({
+                      output: repairCode,
+                      criteria: normalizedOptions.evaluationCriteria,
+                      lirContext: repairLirContext,
+                    });
+                  }
+
+                  // Incumbent preservation: only replace if repair is better or equal
+                  if (repairEval.score >= evaluation.score) {
+                    currentCode = repairCode;
+                    evaluation = repairEval;
+                    if (normalizedOptions.chatMode) {
+                      normalizedOptions.onThought?.(`Repair improved score to ${evaluation.score.toFixed(2)}`);
+                    }
+                  } else if (normalizedOptions.chatMode) {
+                    normalizedOptions.onThought?.(`Repair did not improve (score ${repairEval.score.toFixed(2)}), keeping incumbent`);
+                  }
+                }
+              }
+            }
+          } catch (repairError) {
+            Logger.warn('RalphLoop', 'Single-round repair failed:', repairError instanceof Error ? repairError.message : repairError);
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.('Repair attempt failed, continuing with incumbent');
+            }
+          }
+        }
+
+        // Record evaluation for repeated-failure detection
+        repairHistory.push({
+          score: evaluation.score,
+          confidence: 1,
+          failureClass: 'none',
+          repairAdvice: evaluation.issues && evaluation.issues.length > 0
+            ? { issue: evaluation.issues[0], fix: 'Address the reported issue.', constraint: 'Complete artifact.' }
+            : undefined,
+        });
 
         // Aesthetic guardrails: run AestheticCritic if enabled
         if (normalizedOptions.useAestheticGuardrails) {

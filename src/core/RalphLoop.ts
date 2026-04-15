@@ -189,6 +189,7 @@ export class RalphLoop {
         const analyzer = new AudioAnalyzer();
         const result = analyzer.analyze(float32, 44100);
         const visualMapping = analyzer.getVisualMapping(result);
+        // eslint-disable-next-line require-atomic-updates
         normalizedOptions.visualMappingParams = visualMapping as unknown as Record<string, unknown>;
         Logger.info('RalphLoop', `Voice analysis complete: mapped audio features to visual params`);
       } catch (err) {
@@ -204,6 +205,7 @@ export class RalphLoop {
         const float32 = await captureMicAudio();
         const analyzer = new AudioAnalyzer();
         const result = analyzer.analyze(float32);
+        // eslint-disable-next-line require-atomic-updates
         normalizedOptions.visualMappingParams = analyzer.getVisualMapping(result) as unknown as Record<string, unknown>;
         Logger.info('RalphLoop', `Mic capture analysis complete: mapped audio features to visual params`);
       } catch (err) {
@@ -314,6 +316,7 @@ export class RalphLoop {
         }
 
         // Enhance with compost seed, DNA, and archive examples
+        // eslint-disable-next-line require-atomic-updates
         usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning, compostMaterials);
 
         // Adjust numCandidates based on success rate for high-exploration mode

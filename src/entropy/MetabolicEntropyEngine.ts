@@ -4,8 +4,10 @@ import type { EntropyResult, MetabolicEntropyEngineConfig } from './types.js';
 import { EntropyCompressor } from './EntropyCompressor.js';
 import { EntropyHarvester } from './EntropyHarvester.js';
 
+type Compressor = NonNullable<MetabolicEntropyEngineConfig['compressor']>;
+
 export class MetabolicEntropyEngine {
-  private compressor: EntropyCompressor;
+  private compressor: Compressor;
   private harvester: EntropyHarvester;
   private crashLog: number[] = [];
   private lastResult: EntropyResult | null = null;

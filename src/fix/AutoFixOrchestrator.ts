@@ -158,7 +158,7 @@ export class AutoFixOrchestrator {
     if (session.backups.length > 0) {
       changes.push({
         path: request.target,
-        backupPath: session.backups[0].backupPath,
+        backupPath: session.backups[0],
       });
     }
 
@@ -252,7 +252,7 @@ export class AutoFixOrchestrator {
     if (session.backups.length > 0) {
       changes.push({
         path: request.target || 'unknown',
-        backupPath: session.backups[0].backupPath,
+        backupPath: session.backups[0],
       });
     }
 

@@ -22,6 +22,20 @@ import {
 } from './types.js';
 import { validateUrl, getAllowedHostsFromEnv } from '../security/UrlValidator.js';
 
+/** Minimal JSZip interface for optional dynamic import */
+interface JSZipLike {
+  new (): {
+    file(name: string, data: string | Uint8Array): void;
+    generateAsync(options: { type: 'blob'; compression: 'DEFLATE' }): Promise<Blob>;
+  };
+  loadAsync(data: Blob): Promise<{
+    file(name: string): {
+      async(type: 'string'): Promise<string>;
+      async(type: 'uint8array'): Promise<Uint8Array>;
+    } | null;
+  }>;
+}
+
 /** Export options for project serialization */
 export interface ExportOptions {
   /** Include external assets as base64 data */
@@ -186,9 +200,10 @@ export class ProjectSerializer {
       try {
         // Dynamic import of optional jszip dependency
         // SECURITY: Module path constructed to avoid compile-time resolution while preventing code injection
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const moduleName = 'js' + 'zip';
-        const JSZip: any = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
+        const JSZip = await import(/* webpackIgnore: true */ moduleName)
+          .then((m) => (m.default || m) as JSZipLike)
+          .catch(() => null);
         if (!JSZip) throw new Error('JSZip not available');
         const zip = new JSZip();
 
@@ -226,9 +241,10 @@ export class ProjectSerializer {
       try {
         // Dynamic import of optional jszip dependency
         // SECURITY: Module path constructed to avoid compile-time resolution while preventing code injection
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const moduleName = 'js' + 'zip';
-        const JSZip: any = await import(/* webpackIgnore: true */ moduleName).then((m: { default: unknown }) => m.default || m).catch(() => null);
+        const JSZip = await import(/* webpackIgnore: true */ moduleName)
+          .then((m) => (m.default || m) as JSZipLike)
+          .catch(() => null);
         if (!JSZip) throw new Error('JSZip not available');
         const zipContent = await JSZip.loadAsync(zip);
 

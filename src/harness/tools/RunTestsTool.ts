@@ -43,23 +43,25 @@ export class RunTestsTool extends Tool {
         },
         duration: Date.now() - startTime,
       };
-    } catch (error: any) {
+    } catch (error: unknown) {
       // Tests failed or error occurred
-      const stdout = error.stdout || '';
+      const execError = error instanceof Error ? error : new Error(String(error));
+      const stdout = (error as { stdout?: string }).stdout || '';
       const passed = (stdout.match(/✓|PASS|passed/gi) || []).length;
       const failed = (stdout.match(/✗|FAIL|failed/gi) || []).length;
-      
+      const code = (error as { code?: number }).code || 1;
+
       return {
         success: false,
         data: {
-          exitCode: error.code || 1,
+          exitCode: code,
           passed,
           failed: failed || 1,
           stdout: stdout.slice(-2000),
-          stderr: (error.stderr || error.message).slice(-2000),
+          stderr: ((error as { stderr?: string }).stderr || execError.message).slice(-2000),
           success: false,
         },
-        error: `Tests failed with exit code ${error.code || 1}`,
+        error: `Tests failed with exit code ${code}`,
         duration: Date.now() - startTime,
       };
     }

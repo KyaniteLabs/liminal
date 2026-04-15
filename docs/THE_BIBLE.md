@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-12
-**Status:** 330+ commits, bounded-loop rescue branch prepared
-**Branch:** rescue/pr139-bounded-loop
+**Date:** 2026-04-15
+**Status:** Security redteam adapter salvage in progress
+**Branch:** security/redteam-salvage-20260415
 
 ---
 
@@ -20,6 +20,22 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **Ralph Loop** iterative refinement
 - **Bounded-loop runtime packets** with explicit focus, verification intent, and resumable no-change classification
 - **Worktree Isolation** - Multi-agent development workflow
+
+### Security Redteam Salvage (2026-04-15)
+
+The stale `security/redteam-remediation-20260409` branch is being mined by security boundary rather than merged wholesale.
+
+Merged into `security/redteam-salvage-20260415`:
+- Tone adapter: blocks browser escape hatches and string-based dynamic execution before legacy Tone code execution.
+- HTML adapter: strips script tags, inline event handlers, JavaScript URLs/data URLs, CSS imports, and CSS expression calls before render/export.
+- P5 adapter: blocks unsafe generated `setup()` and `draw()` bodies before the legacy function-constructor path.
+- Three adapter: blocks browser escape hatches before legacy Three code execution and cleans tracking globals in `finally`.
+- Hydra adapter: blocks browser escape hatches before legacy Hydra function-constructor execution.
+
+Explicit rejections:
+- The stale branch's `new Function` "sandbox" pattern was not adopted as a real sandbox.
+- DOMPurify/jsdom were not added because new dependencies require explicit approval.
+- `bin/liminal` changes in that branch were TUI log redirection, not a current command-injection fix.
 
 ---
 

@@ -627,6 +627,9 @@ export class GeneratorHarnessTools {
    * Returns sorted indices (best first) and the winner index.
    */
   rankCandidates(_codes: string[], evaluations: GenerationEvaluation[]): { rankedIndices: number[]; winnerIndex: number } {
+    if (evaluations.length === 0) {
+      return { rankedIndices: [], winnerIndex: -1 };
+    }
     const indexed = evaluations.map((evalItem, idx) => ({
       idx,
       score: this.scoreCandidateForSelection(evalItem),

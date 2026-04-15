@@ -36,8 +36,8 @@ interface ToneInstance {
 }
 
 const DANGEROUS_TONE_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
-  { pattern: /\bwindow\s*[\[.]/i, name: 'window access' },
-  { pattern: /\bdocument\s*[\[.]/i, name: 'document access' },
+  { pattern: /\bwindow\s*[[.]/i, name: 'window access' },
+  { pattern: /\bdocument\s*[[.]/i, name: 'document access' },
   { pattern: /\bfetch\s*\(/i, name: 'fetch API' },
   { pattern: /\beval\s*\(/i, name: 'eval()' },
   { pattern: /\bnew\s+Function\s*\(/i, name: 'Function constructor' },
@@ -54,8 +54,8 @@ const DANGEROUS_TONE_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /\bindexedDB\b/i, name: 'indexedDB' },
   { pattern: /\bopen\s*\(\s*['"`]/i, name: 'window.open()' },
   { pattern: /\blocation\s*[=.]/i, name: 'location access' },
-  { pattern: /\bparent\s*[\[.]/i, name: 'parent access' },
-  { pattern: /\btop\s*[\[.]/i, name: 'top access' },
+  { pattern: /\bparent\s*[[.]/i, name: 'parent access' },
+  { pattern: /\btop\s*[[.]/i, name: 'top access' },
   { pattern: /<script\b/i, name: 'script tag' },
   { pattern: /\son\w+\s*=/i, name: 'inline event handler' },
   { pattern: /javascript:/i, name: 'javascript URL' },

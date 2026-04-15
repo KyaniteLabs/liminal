@@ -35,8 +35,8 @@ interface P5Instance {
 type P5Constructor = new (sketch: (p: P5Instance) => void, container: HTMLElement) => P5Instance;
 
 const DANGEROUS_P5_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
-  { pattern: /\bwindow\s*[\[.]/i, name: 'window access' },
-  { pattern: /\bdocument\s*[\[.]/i, name: 'document access' },
+  { pattern: /\bwindow\s*[[.]/i, name: 'window access' },
+  { pattern: /\bdocument\s*[[.]/i, name: 'document access' },
   { pattern: /\bfetch\s*\(/i, name: 'fetch API' },
   { pattern: /\beval\s*\(/i, name: 'eval()' },
   { pattern: /\bnew\s+Function\s*\(/i, name: 'Function constructor' },
@@ -53,8 +53,8 @@ const DANGEROUS_P5_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
   { pattern: /\bindexedDB\b/i, name: 'indexedDB' },
   { pattern: /\bopen\s*\(\s*['"`]/i, name: 'window.open()' },
   { pattern: /\blocation\s*[=.]/i, name: 'location access' },
-  { pattern: /\bparent\s*[\[.]/i, name: 'parent access' },
-  { pattern: /\btop\s*[\[.]/i, name: 'top access' },
+  { pattern: /\bparent\s*[[.]/i, name: 'parent access' },
+  { pattern: /\btop\s*[[.]/i, name: 'top access' },
 ];
 
 function findDangerousP5CodePatterns(code: string): string[] {

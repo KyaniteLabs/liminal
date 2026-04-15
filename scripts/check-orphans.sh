@@ -4,7 +4,7 @@
 orphans=0
 for file in $(find src -name '*.ts' -not -name 'index.ts' -not -name '*.d.ts' 2>/dev/null || true); do
     basename=$(basename "$file" .ts)
-    imports=$(grep -rE "from\s+.*/$basename|from\s+$basename" src/ --include="*.ts" | grep -v "$file" | wc -l || true)
+    imports=$(grep -rE "from\s+.*/$basename|from\s+$basename|import\s+.*/$basename|import\s+$basename" src/ --include="*.ts" | grep -v "$file" | wc -l || true)
     if [ "$imports" -eq 0 ]; then
         echo "ORPHAN: $file"
         orphans=$((orphans + 1))

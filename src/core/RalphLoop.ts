@@ -135,7 +135,7 @@ export class RalphLoop {
     // Organism mode: delegate entirely to OrganismLoop
     if (normalizedOptions.mode === 'organism') {
       try {
-        return await runOrganismMode(prompt, normalizedOptions, startTime, liminalFs);
+        return await runOrganismMode(prompt, normalizedOptions, startTime, liminalFs, sessionId);
       } finally {
         try {
           liminalFs.close();

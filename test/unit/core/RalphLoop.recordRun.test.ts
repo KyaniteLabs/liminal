@@ -90,10 +90,12 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
     const eventStore = fs.getProjectStore().getEventStore();
     const runs = eventStore.queryEvents({ type: 'run_record', limit: 10 });
     expect(runs.length).toBeGreaterThanOrEqual(1);
-    expect(runs[0].payload.status).toBe('completed');
-    expect(runs[0].payload.project).toBe('test-project');
-    expect(runs[0].payload.artifacts.length).toBe(1);
-    expect(runs[0].payload.metadata.iterations).toBe(1);
+    const completedRun = runs.find((r: any) => r.payload.status === 'completed');
+    expect(completedRun).toBeDefined();
+    expect(completedRun!.payload.status).toBe('completed');
+    expect(completedRun!.payload.project).toBe('test-project');
+    expect(completedRun!.payload.artifacts.length).toBe(1);
+    expect(completedRun!.payload.metadata.iterations).toBe(1);
 
     fs.close();
   });

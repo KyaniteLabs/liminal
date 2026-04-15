@@ -30,11 +30,12 @@ export async function runOrganismMode(
   options: NormalizedLoopOptions,
   startTime: number,
   liminalFs?: LiminalFS,
+  sessionId?: string,
 ): Promise<LoopResult> {
   const gallery = new Gallery(options.galleryDir);
   const adapter = liminalFs ? new GalleryFSAdapter(gallery, liminalFs) : undefined;
   let runArtifact: LiminalObjectRef | undefined;
-  const runId = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  const runId = sessionId ?? `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', mode: 'organism' });
 

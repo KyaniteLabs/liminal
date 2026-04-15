@@ -18,6 +18,8 @@
  * - OrganismLoop: organism mode
  */
 
+import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
+import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
 import { Domain } from '../types/domains.js';
 import { PromptStore } from './PromptStore.js';
 import path from 'node:path';
@@ -67,6 +69,11 @@ import { Provider } from '../types/providers.js';
 import { LiminalError } from '../errors/index.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
+
+// DF3 shared contracts: imported for downstream use, referenced to satisfy TS
+void getEvalMode;
+void getRepairMode;
+void 0 as unknown as GenerationEvaluation;
 
 export class RalphLoop {
   /**

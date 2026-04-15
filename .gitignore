@@ -4,9 +4,13 @@ package-lock.json
 
 # Build output
 dist/
+.tsbuildinfo
 
 # Coverage
 coverage/
+
+# ESLint cache
+.eslintcache
 
 # E2E temp output
 tmp-e2e/

@@ -102,8 +102,6 @@ export class GLSLValidator {
       'length', 'distance', 'dot', 'cross', 'normalize', 'faceforward', 'reflect', 'refract',
       // Texture
       'texture2D', 'texture', 'textureLod',
-      // Noise (if defined in shader)
-      'noise', 'hash', 'fbm', 'snoise',
       // Constructor-like
       'vec2', 'vec3', 'vec4', 'mat2', 'mat3', 'mat4', 'int', 'float', 'bool'
     ]);
@@ -137,6 +135,45 @@ export class GLSLValidator {
       errors.push('GLSL: texture2D() used but no sampler2D uniform declared');
     }
 
+    for (const match of trimmed.matchAll(/\b(?:float|vec2|vec3|vec4)\s+(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)\}/g)) {
+      const [, funcName, body] = match;
+      if (funcName !== 'mainImage' && funcName !== 'main' && /\buv\b/.test(body) && !/\bvec2\s+uv\b/.test(body)) {
+        errors.push(`GLSL: helper function '${funcName}' references uv without receiving or declaring it`);
+      }
+    }
+
+    const floatNames = new Set<string>();
+    for (const match of trimmed.matchAll(/\b(?:uniform\s+)?float\s+(\w+)\b/g)) {
+      floatNames.add(match[1]);
+    }
+    for (const name of floatNames) {
+      if (new RegExp(`\\b${name}\\.(?:xy|yx|rg|st)\\b`).test(trimmed)) {
+        errors.push(`GLSL: float '${name}' cannot use vector field selection like .xy`);
+      }
+    }
+
+    const vec3Variables = new Set<string>();
+    for (const match of trimmed.matchAll(/\bvec3\s+(\w+)\s*=/g)) {
+      vec3Variables.add(match[1]);
+    }
+
+    for (const variable of vec3Variables) {
+      const directFragAssign = new RegExp(`\\b(?:gl_FragColor|fragColor)\\s*=\\s*${variable}\\s*;`);
+      if (directFragAssign.test(trimmed)) {
+        errors.push(`GLSL: Fragment output must be vec4; wrap vec3 '${variable}' as vec4(${variable}, 1.0)`);
+      }
+    }
+
+    const vec2ToFloatPattern = /\bfloat\s+(\w+)\s*=\s*smoothstep\([^;]*\babs\s*\([^;]*\.(?:xy|yx|rg|st)\b[^;]*\)\s*[^;]*;/g;
+    for (const match of trimmed.matchAll(vec2ToFloatPattern)) {
+      errors.push(`GLSL: float '${match[1]}' is assigned a vec2 expression; reduce it with length(), .x, or .y`);
+    }
+
+    const vec2Vec3MultiplyPattern = /\b(\w+)\s*\+=\s*sin\([^;]*\buv\b[^;]*\)\s*\*\s*vec3\s*\(/g;
+    for (const match of trimmed.matchAll(vec2Vec3MultiplyPattern)) {
+      errors.push(`GLSL: '${match[1]}' adds a vec2 expression multiplied by vec3; convert the sine result to vec3 first`);
+    }
+
     return errors;
   }
 
@@ -157,6 +194,6 @@ export class GLSLValidator {
    * Get minimum size requirement for GLSL code
    */
   static getMinSize(): number {
-    return 800; // GLSL needs uniforms, main(), and shader logic
+    return 800; // GLSL needs uniforms, main/mainImage, and enough shader logic
   }
 }

@@ -110,6 +110,8 @@ export interface LoopOptions {
   useIntuition?: boolean;
   /** Enable entropy-based generation and scoring */
   useEntropy?: boolean;
+  /** Enable evolution-based generation and scoring */
+  useEvolution?: boolean;
   /** Configuration for aesthetic critics */
   aestheticConfig?: { preset?: string; strictness?: 'lenient' | 'moderate' | 'strict'; constraints?: Record<string, unknown> };
   /** Audio-derived visual parameters for prompt injection */
@@ -197,6 +199,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   useAestheticGuardrails: boolean;
   useIntuition: boolean;
   useEntropy: boolean;
+  useEvolution: boolean;
   aestheticConfig: Record<string, unknown>;
   visualMappingParams?: Record<string, unknown>;
   voiceFile?: string;
@@ -263,6 +266,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     useAestheticGuardrails: options?.useAestheticGuardrails ?? false,
     useIntuition: options?.useIntuition ?? false,
     useEntropy: options?.useEntropy ?? false,
+    useEvolution: options?.useEvolution ?? false,
     aestheticConfig: (options?.aestheticConfig ?? {}) as Record<string, unknown>,
     visualMappingParams: options?.visualMappingParams,
     voiceFile: options?.voiceFile,

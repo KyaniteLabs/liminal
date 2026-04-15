@@ -61,6 +61,7 @@ import { buildContextForInjection } from './ContextBuilder.js';
 import { enhancePrompt } from './PromptEnhancer.js';
 import { GenerationOrchestrator } from './GenerationOrchestrator.js';
 import { EvolutionIntegration } from './EvolutionIntegration.js';
+import { EvolutionEngine, type EvolutionProposal } from '../evolution/EvolutionEngine.js';
 import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
 import { SuccessRateTracker } from './SuccessRateTracker.js';
@@ -241,6 +242,18 @@ export class RalphLoop {
     const persistence = new LoopPersistence(gallery, normalizedOptions);
     const generator = new GenerationOrchestrator(normalizedOptions, gallery, archiveLearning);
 
+    // DF3 Phase 8: EvolutionEngine for adaptive loop tuning
+    const recentScores: number[] = [];
+    const evolutionEngine = normalizedOptions.useEvolution
+      ? new EvolutionEngine({
+          recentScores,
+          currentPolicy: {
+            minQualityScore: normalizedOptions.minQualityScore,
+            maxIterations: normalizedOptions.maxIterations,
+          },
+        })
+      : undefined;
+
     // DF3 Phase 4: Pre-digest compost for seed-aware initial generation
     let compostMaterials: import('../compost/types.js').GenerationMaterials | undefined;
     if (normalizedOptions.autoCompost || normalizedOptions.useCompostEnhancement) {
@@ -313,6 +326,28 @@ export class RalphLoop {
 
         if (normalizedOptions.chatMode) {
           normalizedOptions.onThought?.('Enhancing prompt with context and compost...');
+        }
+
+        // DF3 Phase 8: Apply EvolutionEngine proposals for this iteration only
+        let evoProposal: EvolutionProposal | undefined;
+        const evoRestores: Array<() => void> = [];
+        if (evolutionEngine && recentScores.length > 2) {
+          const rawProposal = evolutionEngine.propose();
+          if (rawProposal) {
+            evoProposal = { ...rawProposal, delta: evolutionEngine.clamp(rawProposal.delta) };
+            Logger.info('RalphLoop', `Evolution proposal (${evoProposal.type}): ${evoProposal.description}`);
+            if (evoProposal.delta.promptPrefix) {
+              usedPrompt = evoProposal.delta.promptPrefix + usedPrompt;
+            }
+            if (evoProposal.delta.promptSuffix) {
+              usedPrompt = usedPrompt + evoProposal.delta.promptSuffix;
+            }
+            if (evoProposal.delta.minQualityScoreAdjustment !== undefined) {
+              const original = normalizedOptions.minQualityScore;
+              normalizedOptions.minQualityScore = Math.max(0, Math.min(1, normalizedOptions.minQualityScore + evoProposal.delta.minQualityScoreAdjustment));
+              evoRestores.push(() => { normalizedOptions.minQualityScore = original; });
+            }
+          }
         }
 
         // Generate intuition hint if enabled
@@ -1036,6 +1071,11 @@ export class RalphLoop {
         // Update evolution subsystems
         const { noveltyScore, hints } = evolution.update(iteration, currentCode, evaluation.score, prompt);
 
+        // DF3 Phase 8: Feed score into EvolutionEngine
+        if (evolutionEngine) {
+          recentScores.push(evaluation.score);
+        }
+
         // Append aesthetic hints to usedPrompt for next iteration's context
         if (hints) {
           usedPrompt += hints;
@@ -1202,6 +1242,11 @@ export class RalphLoop {
         if (elapsed > normalizedOptions.timeoutMinutes) {
           reason = `Timeout exceeded (${normalizedOptions.timeoutMinutes} minutes)`;
           break;
+        }
+
+        // DF3 Phase 8: Restore any temporarily mutated loop settings
+        for (const restore of evoRestores) {
+          restore();
         }
 
       } catch (error) {

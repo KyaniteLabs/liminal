@@ -193,12 +193,6 @@ const HARDENING_HINTS: HardeningHint[] = [
   { id: 'tone_synth_chain', text: 'Chain: Synth -> Channel/Effects -> toDestination(). Include Tone.Transport.start().', domains: ['tone'] },
   { id: 'strudel_stack', text: 'Wrap patterns in stack() to combine multiple voices. Use .out() at the end.', domains: ['strudel'] },
   { id: 'strudel_sound_note', text: 'Use s() for samples and note() for synthesized notes.', domains: ['strudel'] },
-<<<<<<< HEAD
-  { id: 'ascii_monospace', text: 'ASCII art must be fixed-width monospace. Allowed chars: . - ~ + = * # % @ / \\ | _ ( ) [ ] space newline only.', domains: ['ascii'] },
-  { id: 'ascii_no_fences', text: 'Output raw ASCII only. No code fences, no triple-backtick, no markdown markers.', domains: ['ascii'] },
-  { id: 'three_scene_camera_renderer', text: 'Include THREE.Scene, THREE.PerspectiveCamera, THREE.WebGLRenderer, and a mesh in scene. Call renderer.render in a loop.', domains: ['three'] },
-  { id: 'three_module_import', text: 'Use ES module import: import * as THREE from "three". Use importmap or CDN URL for three.js.', domains: ['three'] },
-=======
   { id: 'strudel_pattern_strings', text: 'Pass quoted pattern strings to s(), sound(), and note() — never raw numbers like s(100).', domains: ['strudel'] },
   { id: 'strudel_complete_structure', text: 'If you open stack(, close it and include complete child patterns; do not leave truncated stack(...) output.', domains: ['strudel'] },
   { id: 'ascii_monospace', text: 'ASCII art must be fixed-width monospace. Prefer standard ASCII symbols, but extended art glyphs like box drawing, block elements, stars, and diagonal strokes are allowed when they improve the piece.', domains: ['ascii'] },
@@ -206,7 +200,6 @@ const HARDENING_HINTS: HardeningHint[] = [
   { id: 'three_scene_camera_renderer', text: 'Include THREE.Scene, THREE.PerspectiveCamera, THREE.WebGLRenderer, and a mesh in scene. Call renderer.render in a loop.', domains: ['three'] },
   { id: 'three_module_import', text: 'Use ES module import: import * as THREE from "three". Use importmap or CDN URL for three.js.', domains: ['three'] },
   { id: 'three_no_nested_html', text: 'If you return HTML, include exactly one HTML document. Never place a second <!DOCTYPE html> or <html> document inside a <script> block.', domains: ['three'] },
->>>>>>> origin/main
   { id: 'glsl_precision', text: 'Always start with precision mediump float; and declare all uniforms (u_time, u_resolution).', domains: ['glsl'] },
   { id: 'glsl_main_or_mainimage', text: 'Use either void main() with gl_FragColor, or void mainImage(out vec4, in vec2) -- not both mixed.', domains: ['glsl'] },
   { id: 'revideo_makescene_shape', text: 'Use export default makeScene("SceneName", function* (view) { ... }). Do not use makeScene({ render: ... }).', domains: ['revideo'] },
@@ -307,13 +300,9 @@ export interface SuccessMetadata {
 /**
  * GeneratorHarnessTools - thin domain-contract harness helpers
  *
-<<<<<<< HEAD
  * @param options - optional constructor options. Either `seededRandom` or `entropySource`
  *                  must be provided; the constructor throws if neither is given.
-=======
- * @param seededRandom - optional deterministic RNG for deterministic sampling in tests.
- *                       If omitted, uses Math.random() (non-deterministic).
->>>>>>> origin/main
+
  */
 export class GeneratorHarnessTools {
   private rng: () => number;
@@ -322,7 +311,6 @@ export class GeneratorHarnessTools {
   // Maximum artifacts kept in memory before eviction
   private static readonly MAX_MEMORY = 100;
 
-<<<<<<< HEAD
   constructor(options?: { seededRandom?: () => number; entropySource?: MetabolicEntropyEngine }) {
     if (options?.seededRandom) {
       this.rng = options.seededRandom;
@@ -332,10 +320,6 @@ export class GeneratorHarnessTools {
     } else {
       throw new Error('GeneratorHarnessTools: either seededRandom or entropySource must be provided');
     }
-=======
-  constructor(seededRandom?: () => number) {
-    this.rng = seededRandom ?? Math.random;
->>>>>>> origin/main
   }
 
   // -------------------------------------------------------------------------

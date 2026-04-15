@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import type { EntropyResult, CompressionConfig } from './types.js';
+import type { EntropyResult } from './types.js';
 
 export class EntropyCompressor {
   compress(input: string, rounds = 4): Pick<EntropyResult, 'seed' | 'phrase' | 'hashChain'> {

@@ -70,7 +70,8 @@ const MODEL_CAPABILITIES: Record<string, Partial<ModelCapabilities>> = {
   'glm-4*':             { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
   'codegeex-4*':        { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },
 
-  // Moonshot AI KimiCode (api.moonshot.ai / api.moonshot.cn)
+  // Moonshot AI KimiCode (api.moonshot.ai / api.moonshot.cn / api.kimi.com/coding)
+  'kimi-for-coding*':    { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'none', streamingStyle: 'sse' },
   'kimi-k2-p5*':         { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'kimi-k2*':            { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 256000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'moonshot-v1*':        { thinking: false, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 128000, thinkingStyle: 'none', streamingStyle: 'sse' },

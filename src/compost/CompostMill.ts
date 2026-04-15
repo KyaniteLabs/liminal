@@ -29,6 +29,7 @@ import { CompostParser } from '../core/parsing/CompostParser.js';
 import type { LIRToken } from '../core/lir/types.js';
 import { formatSeedForPrompt } from '../core/lir/LIRPromptFormatter.js';
 import type { ProjectStore } from './ProjectStore.js';
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 
 export class CompostMill {
   private config: CompostConfig;
@@ -46,10 +47,18 @@ export class CompostMill {
   private modelRouter?: ModelRouter;
   /** Optional project store for event-sourced history tracking. */
   private projectStore?: ProjectStore;
+  private entropy?: MetabolicEntropyEngine;
 
   constructor(
     llm: LLMClientLike,
-    overrides?: Partial<CompostConfig> & { soupStatePath?: string; fastLLM?: LLMClientLike; parser?: CompostParser; modelRouter?: ModelRouter; projectStore?: ProjectStore },
+    overrides?: Partial<CompostConfig> & {
+      soupStatePath?: string;
+      fastLLM?: LLMClientLike;
+      parser?: CompostParser;
+      modelRouter?: ModelRouter;
+      projectStore?: ProjectStore;
+      entropy?: MetabolicEntropyEngine;
+    },
   ) {
     const config = mergeConfig(overrides as Partial<CompostConfig>);
     this.config = config;
@@ -57,6 +66,7 @@ export class CompostMill {
     this.fastLLM = overrides?.fastLLM ?? llm;
     this.modelRouter = overrides?.modelRouter;
     this.projectStore = overrides?.projectStore;
+    this.entropy = overrides?.entropy;
 
     this.heap = new CompostHeap(config);
     // Auto-create CompostParser when LIR is enabled and no parser was provided
@@ -76,8 +86,13 @@ export class CompostMill {
     this.digestGenerator = new DigestGenerator(config, digestLLM);
 
     if (config.soupEnabled) {
-      this.soup = new CompostSoup(config, soupLLM);
+      if (!this.entropy) {
+        throw new Error('CompostMill: entropy engine is required when soup is enabled');
+      }
+      this.soup = new CompostSoup(config, soupLLM, this.entropy);
     }
+
+    this.entropy?.setGetTopSeeds(this.getTopSeeds.bind(this));
   }
 
   /** Set the CompostParser for LIR extraction (allows post-construction injection). */
@@ -316,6 +331,16 @@ export class CompostMill {
     // Record digest_end event
     this.projectStore?.recordDigestEnd(stats, promotedSeeds);
 
+    // Harvest entropy from this digest cycle
+    if (this.entropy) {
+      const entropyResult = await this.entropy.harvest();
+      if (entropyResult.source === 'fallback') {
+        this.projectStore?.recordEntropyFallback?.(entropyResult);
+      } else {
+        this.projectStore?.recordEntropyHarvest?.(entropyResult);
+      }
+    }
+
     // Save a snapshot of the current state
     const allSeeds = await this.seedBank.getAll();
     this.projectStore?.saveSnapshot(allSeeds, 0);
@@ -351,7 +376,10 @@ export class CompostMill {
   /** Start the soup loop, feeding it seeds from the seed bank as fragments. */
   async startSoup(): Promise<void> {
     if (!this.soup) {
-      this.soup = new CompostSoup(this.config, this.llm);
+      if (!this.entropy) {
+        throw new Error('CompostMill: entropy engine is required when soup is enabled');
+      }
+      this.soup = new CompostSoup(this.config, this.llm, this.entropy);
     }
     // Record soup_start event
     this.projectStore?.recordSoupStart(this.config.soupPopulationSize);

@@ -46,10 +46,10 @@ export class RestoreBackupTool extends Tool {
   
   async execute(params: unknown): Promise<ToolResult<RestoreBackupResult>> {
     const startTime = Date.now();
-    const { backupPath } = params as RestoreBackupParams;
+    const { backupPath, originalPath } = params as RestoreBackupParams;
     
     try {
-      const result = await restoreBackup(backupPath);
+      const result = await restoreBackup(backupPath, originalPath);
       
       return {
         success: result.success,

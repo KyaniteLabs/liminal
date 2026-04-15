@@ -222,6 +222,32 @@ export class ProjectStore {
   }
 
   /**
+   * Record a successful entropy harvest.
+   */
+  recordEntropyHarvest(result: { seed: number; quality: string; source: string; phrase?: string }): CompostEvent {
+    this.ensureInit();
+    return this.eventStore.append('entropy_harvest', {
+      seed: result.seed,
+      quality: result.quality,
+      source: result.source,
+      phrase: result.phrase,
+    });
+  }
+
+  /**
+   * Record an entropy fallback (degraded or emergency).
+   */
+  recordEntropyFallback(result: { seed: number; quality: string; source: string; phrase?: string }): CompostEvent {
+    this.ensureInit();
+    return this.eventStore.append('entropy_fallback', {
+      seed: result.seed,
+      quality: result.quality,
+      source: result.source,
+      phrase: result.phrase,
+    });
+  }
+
+  /**
    * Record that a seed was consumed by a generator.
    */
   recordSeedUse(seedId: string, functionName: string, useCount: number): CompostEvent {

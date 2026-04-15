@@ -37,6 +37,7 @@ import type { MemoryHealthReport } from './MemoryBudget.js';
 import { ProceduralTier } from './ProceduralTier.js';
 import type { ProceduralTierState } from './ProceduralTier.js';
 import { Logger } from '../utils/Logger.js';
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -189,6 +190,12 @@ export class IntuitionEngine {
       { maxRoutines: 50 },
     );
 
+    const entropy = new MetabolicEntropyEngine({
+      eventStore: { getRecent: () => [] },
+      heap: { listFiles: async () => [] },
+      telemetry: { getSummary: () => ({ successRate: 0, avgDurationMs: 0, totalTasks: 0, totalViolations: 0 }) },
+    });
+
     this.dreamEngine = new DreamEngine(
       {
         modelSampler: this.modelSampler,
@@ -196,6 +203,7 @@ export class IntuitionEngine {
         prototype: this.prototype,
         cache: this.cache,
         consolidator: this.consolidator,
+        entropy,
       },
       {
         domains: this.config.dreamDomains,

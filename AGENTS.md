@@ -102,6 +102,59 @@ npm run dogfood:report
 
 **Rule:** All feature work MUST be done in isolated git worktrees. No exceptions.
 
+## Start-of-Day Remote and Branch Hygiene Law
+
+**Binding law:** Every agent must refresh remote truth and inventory local residue before starting RT, DF, dogfood, generator, provider, compatibility, vanguard, or product-readiness work.
+
+This exists because unintegrated useful work in local branches/worktrees previously caused agents to rediscover solved work, waste paid model budget, burn tokens, and test against outdated assumptions.
+
+### Required First Commands
+
+From the repo root, before new work:
+
+```bash
+git fetch --all --prune
+git status --short --branch
+git worktree list
+git branch -vv
+```
+
+For work involving generators, dogfood, providers, RT stages, or harness loops, also run:
+
+```bash
+git branch -vv | rg "gone|ahead|behind|dogfood|generator|compat|runtime|rt|df|tone|strudel|ascii|kinetic|provider"
+git worktree list | rg "dogfood|generator|compat|runtime|rt|df|tone|strudel|ascii|kinetic|provider"
+```
+
+### Required Classification
+
+Before coding, classify relevant local branches/worktrees as:
+
+- `MERGE_NOW`: already solved work that should be integrated before continuing.
+- `CHERRY_PICK_NARROW`: useful commits exist, but a full merge is too broad or conflicts with the current architecture.
+- `REFERENCE_ONLY`: useful context, but not safe to integrate.
+- `CLEANUP_CANDIDATE`: safe to clean only after useful work is merged, rejected with reason, or archived.
+
+Do not start a new implementation lane while a relevant `MERGE_NOW` or `CHERRY_PICK_NARROW` branch is unexamined.
+
+### Merge Discipline
+
+- Prefer merging/cherry-picking useful solved work over rediscovering it.
+- Do not blindly merge broad unintegrated branches that replace active architecture; inspect overlap first.
+- If a branch is not merged, write the rejection reason in the active plan or coordination note.
+- If a branch is merged, run targeted tests before continuing.
+- If a branch appears redundant, preserve or clean it only after useful work is integrated or explicitly rejected.
+
+### Coordination
+
+For multi-agent work, update `.omx/coordination/lane-broadcast-*.md` with:
+
+- latest fetched remote state,
+- relevant local branch/worktree classifications,
+- accepted merges/cherry-picks,
+- rejected branches with reasons,
+- required tests before lane advancement.
+
 ### Why Worktrees?
 
 - **Multi-Agent Safety:** Each agent has isolated workspace, no conflicts

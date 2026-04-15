@@ -96,6 +96,7 @@
     "express-rate-limit": "^8.3.2",
     "helmet": "^8.1.0",
     "ink": "^5.2.1",
+    "liminal-ai": "link:",
     "lodash": "4.18.1",
     "neverthrow": "^8.2.0",
     "open": "^11.0.0",

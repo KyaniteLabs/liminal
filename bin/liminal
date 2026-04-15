@@ -2,41 +2,9 @@
 import dotenv from "dotenv";
 dotenv.config();
 
-import { run, PreviewServer, generateMusic, generateVisuals, metaHarness } from '../dist/index.js';
-import { getEffectiveConfig, saveConfig, loadProjectConfig } from '../dist/config/ConfigLoader.js';
-import { PromptHistory } from '../dist/config/PromptHistory.js';
-import { InteractiveMode } from '../dist/tui/InteractiveMode.js';
-import { CompostMill } from '../dist/compost/CompostMill.js';
-import { parseArgs, execute } from '../dist/compost/cli.js';
-import { handleGitCommand } from '../dist/git/index.js';
-import { LLMClient } from '../dist/llm/LLMClient.js';
-import { ModelRouter } from '../dist/compost/ModelRouter.js';
-import { chatCommand } from '../dist/chat/commands/chat.js';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-// Initialize Meta-Harness
-metaHarness.initialize();
-
-// Load config and set env vars for LLMClient to pick up
-async function initializeConfig() {
-  const config = await getEffectiveConfig(undefined, process.cwd());
-  
-  // Set env vars so LLMClient picks them up
-  // Note: provider is no longer used - we use baseUrl + model directly
-  // Only set if not already set in environment (respect user env vars)
-  if (config.baseUrl && !process.env.LIMINAL_LLM_BASE_URL) process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;
-  // Propagate model — auto-detect from /v1/models only works for local LM Studio;
-  // remote providers (MiniMax, OpenRouter, etc.) need an explicit model name.
-  if (config.model && !process.env.LIMINAL_LLM_MODEL) process.env.LIMINAL_LLM_MODEL = config.model;
-  if (config.apiKey && !process.env.LIMINAL_LLM_API_KEY) process.env.LIMINAL_LLM_API_KEY = config.apiKey;
-  
-  return config;
-}
-
-// Initialize prompt history
-const history = new PromptHistory();
 
 const args = process.argv.slice(2);
 
@@ -132,8 +100,7 @@ for (let i = 0; i < args.length; i++) {
   }
 }
 
-// Handle --help flag (global)
-if (flags.help) {
+function printHelp() {
   console.log('');
   console.log('🎨 Liminal: Creative Coding Agent');
   console.log('');
@@ -195,6 +162,11 @@ if (flags.help) {
   console.log('  liminal serve 3456');
   console.log('  liminal list');
   console.log('');
+}
+
+// Handle --help flag (global)
+if (flags.help) {
+  printHelp();
   process.exit(0);
 }
 
@@ -203,6 +175,52 @@ if (flags.version) {
   console.log('Liminal v1.0.0');
   process.exit(0);
 }
+
+const [
+  { run, PreviewServer, generateMusic, generateVisuals, metaHarness },
+  { getEffectiveConfig, saveConfig, loadProjectConfig },
+  { PromptHistory },
+  { InteractiveMode },
+  { CompostMill },
+  { parseArgs, execute },
+  { handleGitCommand },
+  { LLMClient },
+  { ModelRouter },
+  { chatCommand },
+] = await Promise.all([
+  import('../dist/index.js'),
+  import('../dist/config/ConfigLoader.js'),
+  import('../dist/config/PromptHistory.js'),
+  import('../dist/tui/InteractiveMode.js'),
+  import('../dist/compost/CompostMill.js'),
+  import('../dist/compost/cli.js'),
+  import('../dist/git/index.js'),
+  import('../dist/llm/LLMClient.js'),
+  import('../dist/compost/ModelRouter.js'),
+  import('../dist/chat/commands/chat.js'),
+]);
+
+// Initialize Meta-Harness only after cheap help/version fast paths have exited.
+metaHarness.initialize();
+
+// Load config and set env vars for LLMClient to pick up
+async function initializeConfig() {
+  const config = await getEffectiveConfig(undefined, process.cwd());
+  
+  // Set env vars so LLMClient picks them up
+  // Note: provider is no longer used - we use baseUrl + model directly
+  // Only set if not already set in environment (respect user env vars)
+  if (config.baseUrl && !process.env.LIMINAL_LLM_BASE_URL) process.env.LIMINAL_LLM_BASE_URL = config.baseUrl;
+  // Propagate model — auto-detect from /v1/models only works for local LM Studio;
+  // remote providers (MiniMax, OpenRouter, etc.) need an explicit model name.
+  if (config.model && !process.env.LIMINAL_LLM_MODEL) process.env.LIMINAL_LLM_MODEL = config.model;
+  if (config.apiKey && !process.env.LIMINAL_LLM_API_KEY) process.env.LIMINAL_LLM_API_KEY = config.apiKey;
+  
+  return config;
+}
+
+// Initialize prompt history
+const history = new PromptHistory();
 
 // Handle --configure flag
 if (flags.configure) {
@@ -547,7 +565,27 @@ else if (cmd === 'compost') {
   }
 
   const action = parseArgs(process.argv.slice(2));
-  const mill = new CompostMill(llm, { soupEnabled: true, fastLLM, modelRouter });
+
+  // Bootstrap metabolic entropy engine
+  const { EventStore } = await import('../dist/compost/EventStore.js');
+  const { MetabolicEntropyEngine } = await import('../dist/entropy/MetabolicEntropyEngine.js');
+  const { initializeTelemetry, getTelemetry } = await import('../dist/guardrails/observation/TelemetryCollector.js');
+
+  const eventStore = new EventStore({ projectRoot: process.cwd() });
+  eventStore.init();
+
+  let telemetry = getTelemetry();
+  if (!telemetry) {
+    telemetry = initializeTelemetry({ enabled: true, sampleRate: 1.0 });
+  }
+
+  const entropyEngine = new MetabolicEntropyEngine({
+    eventStore,
+    heap: { listFiles: async () => [] },
+    telemetry,
+  });
+
+  const mill = new CompostMill(llm, { soupEnabled: true, fastLLM, modelRouter, entropy: entropyEngine });
   await execute(action, mill).catch(err => {
     console.error('Compost error:', err.message);
     process.exit(1);

@@ -21,6 +21,7 @@ import { IntuitionCache } from './IntuitionCache.js';
 import { MemoryConsolidator } from './MemoryConsolidator.js';
 import type { SleepDepth } from './SleepScheduler.js';
 import { Logger } from '../utils/Logger.js';
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -124,6 +125,7 @@ export class DreamEngine {
   private readonly prototype: DomainPrototype;
   private readonly cache: IntuitionCache;
   private readonly consolidator: MemoryConsolidator;
+  private readonly entropy: MetabolicEntropyEngine;
   private readonly config: Required<Omit<DreamEngineConfig, 'generatePrompt' | 'generateCode'>> & {
     generatePrompt?: DreamEngineConfig['generatePrompt'];
     generateCode?: DreamEngineConfig['generateCode'];
@@ -139,14 +141,19 @@ export class DreamEngine {
       prototype: DomainPrototype;
       cache: IntuitionCache;
       consolidator: MemoryConsolidator;
+      entropy: MetabolicEntropyEngine;
     },
     config?: DreamEngineConfig,
   ) {
+    if (!deps.entropy) {
+      throw new Error('DreamEngine: entropy engine is required');
+    }
     this.modelSampler = deps.modelSampler;
     this.strategySampler = deps.strategySampler;
     this.prototype = deps.prototype;
     this.cache = deps.cache;
     this.consolidator = deps.consolidator;
+    this.entropy = deps.entropy;
     this.config = { ...DEFAULT_CONFIG, ...config };
   }
 
@@ -333,7 +340,7 @@ export class DreamEngine {
     };
 
     const domainTemplates = templates[domain] ?? templates['p5'];
-    return domainTemplates[Math.floor(Math.random() * domainTemplates.length)];
+    return domainTemplates[this.entropy.nextInt(domainTemplates.length)];
   }
 
   // ---------------------------------------------------------------------------
@@ -348,7 +355,7 @@ export class DreamEngine {
     // Score each concept: expected quality * 0.7 + exploration bonus * 0.3
     const scored = concepts.map(c => ({
       concept: c,
-      score: c.expectedQuality * 0.7 + Math.random() * 0.3, // Exploration bonus (random)
+      score: c.expectedQuality * 0.7 + this.entropy.nextFloat() * 0.3, // Exploration bonus (random)
     }));
 
     // Sort descending, take top-K
@@ -475,7 +482,7 @@ export class DreamEngine {
     });
 
     const totalWeight = weights.reduce((a, b) => a + b, 0);
-    const r = Math.random() * totalWeight;
+    const r = this.entropy.nextFloat() * totalWeight;
 
     let cumulative = 0;
     for (let i = 0; i < domains.length; i++) {

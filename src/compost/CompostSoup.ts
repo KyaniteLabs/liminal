@@ -14,10 +14,12 @@ import { eventBus, EventTypes } from '../core/EventBus.js';
 import type { LLMClientLike } from './SemanticExtractor.js';
 import { Logger } from '../utils/Logger.js';
 import { SymbolicCreativeLanguage } from '../brain/SymbolicCreativeLanguage.js';
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
 
 export class CompostSoup {
   private config: CompostConfig;
   private llm: LLMClientLike;
+  private entropy: MetabolicEntropyEngine;
   private stateManager: SoupStateManager;
   private seedBank: SeedBank;
   private scorer: FragmentScorer;
@@ -26,9 +28,13 @@ export class CompostSoup {
   private abortController: AbortController | null = null;
   private notationLang: SymbolicCreativeLanguage;
 
-  constructor(config: CompostConfig, llm: LLMClientLike) {
+  constructor(config: CompostConfig, llm: LLMClientLike, entropy: MetabolicEntropyEngine) {
     this.config = config;
     this.llm = llm;
+    if (!entropy) {
+      throw new Error('CompostSoup: entropy engine is required');
+    }
+    this.entropy = entropy;
     this.stateManager = new SoupStateManager(config);
     this.seedBank = new SeedBank(config);
     this.scorer = new FragmentScorer(config, llm);
@@ -52,17 +58,17 @@ export class CompostSoup {
     }
 
     // Pick 2 random fragments from different domains
-    const domainA = domains[Math.floor(Math.random() * domains.length)];
+    const domainA = domains[this.entropy.nextInt(domains.length)];
     const otherDomains = domains.filter(d => d !== domainA);
-    const domainB = otherDomains[Math.floor(Math.random() * otherDomains.length)];
+    const domainB = otherDomains[this.entropy.nextInt(otherDomains.length)];
 
     const fragsA = fragments.filter(f => f.domain === domainA);
     const fragsB = fragments.filter(f => f.domain === domainB);
 
     if (fragsA.length === 0 || fragsB.length === 0) return state;
 
-    const fragA = fragsA[Math.floor(Math.random() * fragsA.length)];
-    const fragB = fragsB[Math.floor(Math.random() * fragsB.length)];
+    const fragA = fragsA[this.entropy.nextInt(fragsA.length)];
+    const fragB = fragsB[this.entropy.nextInt(fragsB.length)];
 
     // Merge via LLM — graceful degradation if LLM fails
     let offspringContent: string;

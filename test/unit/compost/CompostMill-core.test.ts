@@ -66,6 +66,13 @@ const mockSemanticExtractorInstance = vi.hoisted(() => ({
   setParser: vi.fn(),
 }));
 
+const mockEntropyInstance = vi.hoisted(() => ({
+  nextInt: vi.fn().mockReturnValue(0),
+  nextFloat: vi.fn().mockReturnValue(0.5),
+  harvest: vi.fn().mockResolvedValue({ seed: 123, phrase: 'mock', quality: 'harvested', source: 'metabolic', hashChain: [] }),
+  setGetTopSeeds: vi.fn(),
+}));
+
 const mockFsFunctions = vi.hoisted(() => ({
   stat: vi.fn().mockRejectedValue(new Error('ENOENT: file not found')),
   mkdir: vi.fn().mockResolvedValue(undefined),
@@ -141,6 +148,10 @@ vi.mock('../../../src/compost/RawByteProcessor.js', () => ({
 
 vi.mock('../../../src/compost/ModelRouter.js', () => ({
   ModelRouter: vi.fn(),
+}));
+
+vi.mock('../../../src/entropy/MetabolicEntropyEngine.js', () => ({
+  MetabolicEntropyEngine: vi.fn(function(_config: any) { return mockEntropyInstance; }),
 }));
 
 vi.mock('../../../src/llm/RetryManager.js', () => ({
@@ -301,6 +312,7 @@ describe('CompostMill', () => {
       heapDir: '/tmp/test-heap',
       digestDir: '/tmp/test-digest',
       seedDir: '/tmp/test-seeds',
+      entropy: mockEntropyInstance as any,
     });
   });
 
@@ -315,13 +327,17 @@ describe('CompostMill', () => {
     });
 
     it('creates a mill with default config', () => {
-      const defaultMill = new CompostMill(mockLLM);
+      const defaultMill = new CompostMill(mockLLM, { entropy: mockEntropyInstance as any });
       expect(defaultMill).toBeDefined();
     });
 
     it('uses fastLLM fallback when not provided', () => {
-      const noFastMill = new CompostMill(mockLLM, { fastLLM: undefined });
+      const noFastMill = new CompostMill(mockLLM, { fastLLM: undefined, entropy: mockEntropyInstance as any });
       expect(noFastMill).toBeDefined();
+    });
+
+    it('throws when entropy is missing and soup is enabled', () => {
+      expect(() => new CompostMill(mockLLM, { soupEnabled: true })).toThrow('CompostMill: entropy engine is required when soup is enabled');
     });
   });
 
@@ -504,6 +520,7 @@ describe('CompostMill', () => {
         heapDir: '/tmp/test-heap',
         digestDir: '/tmp/test-digest',
         seedDir: '/tmp/test-seeds',
+        entropy: mockEntropyInstance as any,
       });
       mockSeedBankInstance.getAll.mockResolvedValue([]);
       await noSoupMill.startSoup();

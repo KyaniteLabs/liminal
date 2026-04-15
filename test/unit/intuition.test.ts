@@ -21,6 +21,7 @@ import type { RoutineConfidence } from '../../src/intuition/ProceduralTier.js';
 import { IntuitionEngine } from '../../src/intuition/IntuitionEngine.js';
 import type { IntuitionAssessment, IntuitionSignal } from '../../src/intuition/IntuitionEngine.js';
 import type { ScoringInput } from '../../src/core/ScoringEngine.js';
+import { MetabolicEntropyEngine } from '../../src/entropy/MetabolicEntropyEngine.js';
 
 // ---------------------------------------------------------------------------
 // ThompsonSampler
@@ -1193,6 +1194,7 @@ describe('DreamEngine', () => {
   let prototype: DomainPrototype;
   let cache: IntuitionCache;
   let consolidator: MemoryConsolidator;
+  let entropy: MetabolicEntropyEngine;
 
   beforeEach(() => {
     modelSampler = new ThompsonSampler<string>({ minPulls: 1, successThreshold: 0.7 });
@@ -1203,11 +1205,23 @@ describe('DreamEngine', () => {
       { modelSampler, strategySampler, prototype },
       { minEpisodesForPattern: 1 },
     );
+    entropy = new MetabolicEntropyEngine({
+      eventStorePath: '/tmp/liminal-test/events',
+      compostHeapPath: '/tmp/liminal-test/compost',
+      telemetryCollectorPath: '/tmp/liminal-test/telemetry',
+    });
 
     engine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       { stage1Count: 3, stage2Count: 2, keeperThreshold: 0.5, domains: ['p5', 'glsl'] },
     );
+  });
+
+  it('throws when entropy engine is missing', () => {
+    expect(() => new DreamEngine(
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy: undefined as any },
+      { stage1Count: 1, stage2Count: 1 },
+    )).toThrow('DreamEngine: entropy engine is required');
   });
 
   it('should run a full dream cycle and return journal entry', async () => {
@@ -1285,7 +1299,7 @@ describe('DreamEngine', () => {
 
   it('should use LLM for prompt generation when configured', async () => {
     const llmEngine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       {
         stage1Count: 2,
         stage2Count: 1,
@@ -1299,7 +1313,7 @@ describe('DreamEngine', () => {
 
   it('should use LLM for code generation when configured', async () => {
     const llmEngine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       {
         stage1Count: 2,
         stage2Count: 1,
@@ -1315,7 +1329,7 @@ describe('DreamEngine', () => {
 
   it('should handle LLM failures gracefully', async () => {
     const failEngine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       {
         stage1Count: 2,
         stage2Count: 1,

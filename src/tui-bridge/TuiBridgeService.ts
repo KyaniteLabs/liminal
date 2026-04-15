@@ -32,8 +32,23 @@ const GENERATION_KEYWORDS = [
   'visualization', 'animation', 'pattern', 'art',
 ];
 
+const SELF_IMPROVEMENT_KEYWORDS = [
+  'self-improve', 'self improve', 'self-improvement', 'improve itself',
+  'fix', 'debug', 'diagnose', 'repair', 'refactor', 'cleanup',
+  'harness', 'meta-harness', 'bubble tea', 'tui', 'ci', 'build',
+  'test', 'dogfood', 'repo', 'codebase', 'generator hardening',
+];
+
+/** Check if input indicates repo/harness repair rather than creative generation. */
+export function isSelfImprovementRequest(text: string): boolean {
+  const lower = text.toLowerCase();
+  return SELF_IMPROVEMENT_KEYWORDS.some(kw => lower.includes(kw));
+}
+
 /** Check if input indicates creative generation intent */
 export function isGenerationRequest(text: string): boolean {
+  if (isSelfImprovementRequest(text)) return false;
+
   const lower = text.toLowerCase();
   const operatorLike = /\b(fix|debug|diagnose|repair|refactor|cleanup|harness|meta-harness|bubble tea|tui|ci|build|test|dogfood|repo|codebase)\b/.test(lower);
   if (operatorLike) return false;
@@ -146,8 +161,9 @@ export class TuiBridgeService {
     this.cancelStream(sessionId);
 
     this.sessions.update(sessionId, { mode: input.mode });
+    const selfImprovement = isSelfImprovementRequest(input.text);
     const creativeGeneration = isGenerationRequest(input.text);
-    const selfImprovement = !creativeGeneration;
+
     logBridge('input.received', {
       sessionId,
       mode: input.mode,
@@ -664,6 +680,7 @@ export class TuiBridgeService {
   private emit(sessionId: string, event: TuiBridgeEvent): void {
     this.stream.emit(sessionId, event);
   }
+
 
   /**
    * Publish a typed operator event into a session stream.

@@ -120,6 +120,7 @@ function printHelp() {
   console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
   console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
+  console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
   console.log('');
   console.log('OPTIONS:');
   console.log('  --prompt, -p <text>         Prompt for generation');
@@ -1020,6 +1021,21 @@ else if (cmd === 'fs') {
       console.log('  liminal fs runs               List recorded runs');
       process.exit(1);
     }
+  } finally {
+    liminalFs.close();
+  }
+}
+else if (cmd === 'ledger') {
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { TaskLedger } = await import('../dist/ledger/index.js');
+  const { parseArgs, execute } = await import('../dist/ledger/cli.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  const taskLedger = new TaskLedger(liminalFs);
+
+  try {
+    const action = parseArgs(cmdArgs);
+    await execute(action, taskLedger);
   } finally {
     liminalFs.close();
   }

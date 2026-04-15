@@ -641,6 +641,9 @@ export class RalphLoop {
               candidates.map(c => c.code),
               candidateEvaluations,
             );
+            if (winnerIndex === -1) {
+              Logger.warn('RalphLoop', 'Candidate evaluations are empty; falling back to first candidate');
+            }
             bestCandidate = candidates[winnerIndex] ?? candidates[0];
 
             if (normalizedOptions.chatMode) {

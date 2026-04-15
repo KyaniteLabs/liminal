@@ -1,0 +1,14 @@
+{
+  "id": "H001",
+  "title": "Add Jest/Vitest assertion pattern to TestFailureDetector",
+  "description": "Extend src/fix/TestFailureDetector.ts to recognize Vitest-style assertion failures (expect(received).toBe(expected), AssertionError: expected X, received Y). Add patterns for toEqual, toBe, toContain, toThrow. Update the failure classification to distinguish assertion failures from runtime errors.",
+  "taskClass": "harness-quality",
+  "files": {
+    "allowlist": ["src/fix/TestFailureDetector.ts"],
+    "denylist": ["src/core/*", "src/llm/*", "bin/*"]
+  },
+  "verifyCommand": "pnpm vitest run test/unit/fix/TestFailureDetector.test.ts --coverage=false",
+  "scoringCriteria": ["technical", "creative"],
+  "lane": 3,
+  "maxAttempts": 3
+}

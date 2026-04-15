@@ -1,0 +1,14 @@
+{
+  "id": "L001",
+  "title": "Add test for TraceFSAdapter.linkReasoningTrace",
+  "description": "Write a unit test in test/unit/fs/TraceFSAdapter.test.ts that verifies linkReasoningTrace stores a trace artifact via LiminalFS.writeArtifact and creates a ref at trace/<traceId>. Test that the traceId and runId are correctly recorded in the serialized content.",
+  "taskClass": "leaf",
+  "files": {
+    "allowlist": ["test/unit/fs/TraceFSAdapter.test.ts"],
+    "denylist": ["src/**", "test/unit/core/*", "test/unit/generators/*"]
+  },
+  "verifyCommand": "pnpm vitest run test/unit/fs/TraceFSAdapter.test.ts --coverage=false",
+  "scoringCriteria": ["technical", "codeStructure"],
+  "lane": 1,
+  "maxAttempts": 3
+}

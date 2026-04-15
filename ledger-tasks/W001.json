@@ -1,0 +1,14 @@
+{
+  "id": "W001",
+  "title": "Wire SeedFSAdapter into compost seed pipeline",
+  "description": "Connect src/fs/adapters/SeedFSAdapter.ts to the compost seed flow. When CompostMill.saveSeed() is called, also instantiate SeedFSAdapter (if LiminalFS is available) and call adapter.saveSeed(). Follow the dual-write pattern from GalleryFSAdapter — write to both original SeedArchive and LiminalFS.",
+  "taskClass": "wiring",
+  "files": {
+    "allowlist": ["src/compost/CompostMill.ts", "src/fs/adapters/SeedFSAdapter.ts"],
+    "denylist": ["src/core/*", "src/llm/*", "bin/*"]
+  },
+  "verifyCommand": "pnpm build",
+  "scoringCriteria": ["technical", "codeStructure"],
+  "lane": 2,
+  "maxAttempts": 3
+}

@@ -1,0 +1,14 @@
+{
+  "id": "O001",
+  "title": "Add domain-aware tie-breaking to GeneratorHarnessTools.rankCandidates",
+  "description": "When two candidates have equal scores (within 0.01), break the tie by preferring the candidate whose detected domain matches the prompt's intended domain. Use the existing detectDomain() logic in GeneratorHarnessTools. Only modify the ranking function, no other changes.",
+  "taskClass": "orchestrator",
+  "files": {
+    "allowlist": ["src/generators/GeneratorHarnessTools.ts"],
+    "denylist": ["src/core/RalphLoop.ts", "src/llm/*", "bin/*"]
+  },
+  "verifyCommand": "pnpm vitest run test/unit/generators/GeneratorHarnessTools* --coverage=false",
+  "scoringCriteria": ["technical", "creative"],
+  "lane": 4,
+  "maxAttempts": 3
+}

@@ -34,6 +34,7 @@ export async function runOrganismMode(
   const gallery = new Gallery(options.galleryDir);
   const adapter = liminalFs ? new GalleryFSAdapter(gallery, liminalFs) : undefined;
   let runArtifact: LiminalObjectRef | undefined;
+  const runId = `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', mode: 'organism' });
 
@@ -58,7 +59,7 @@ export async function runOrganismMode(
       if (liminalFs) {
         try {
           liminalFs.recordRun({
-            runId: `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+            runId,
             prompt,
             project: options.project,
             status: 'suspended',
@@ -155,7 +156,7 @@ export async function runOrganismMode(
   if (liminalFs) {
     try {
       liminalFs.recordRun({
-        runId: `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+        runId,
         prompt,
         project: options.project,
         status: 'completed',

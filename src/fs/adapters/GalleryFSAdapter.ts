@@ -48,7 +48,7 @@ export class GalleryFSAdapter {
     const ref = this.fs.writeArtifact({
       kind: 'organism',
       content: JSON.stringify(payload),
-      filename: `v${version}.js`,
+      filename: `v${version}.json`,
       metadata: { project, version, type: 'organism', savedAt: new Date().toISOString() },
     });
 

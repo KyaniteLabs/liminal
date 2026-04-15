@@ -30,6 +30,7 @@ import { ContextAccumulation } from './ContextAccumulation.js';
 import { ScoringEngine } from './ScoringEngine.js';
 import { PromiseDetector } from './PromiseDetector.js';
 import { Gallery } from '../gallery/Gallery.js';
+import { LiminalFS } from '../fs/LiminalFS.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
 import { formatError } from '../utils/errors.js';
@@ -123,6 +124,7 @@ export class RalphLoop {
 
     // Initialize subsystems
     const gallery = new Gallery(normalizedOptions.galleryDir);
+    const liminalFs = LiminalFS.open(process.cwd());
     const stagnation = new StagnationDetector(normalizedOptions.stagnationThreshold ?? 7);
     const successRateTracker = new SuccessRateTracker({
       windowSize: 20,
@@ -241,7 +243,7 @@ export class RalphLoop {
     }
 
     const evolution = new EvolutionIntegration(normalizedOptions, aestheticModel);
-    const persistence = new LoopPersistence(gallery, normalizedOptions);
+    const persistence = new LoopPersistence(gallery, normalizedOptions, liminalFs);
     const generator = new GenerationOrchestrator(normalizedOptions, gallery, archiveLearning);
 
     // DF3 Phase 8: EvolutionEngine for adaptive loop tuning
@@ -1403,6 +1405,8 @@ export class RalphLoop {
       iterations: iteration,
       finalScore,
     });
+
+    liminalFs.close();
 
     return {
       code: currentCode,

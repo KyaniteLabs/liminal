@@ -12,6 +12,7 @@ import { Gallery } from '../gallery/Gallery.js';
 import { mergeSketchCode } from '../utils/mergeSketchCode.js';
 import { ContextAccumulation } from './ContextAccumulation.js';
 import type { NormalizedLoopOptions, IterationContext } from './LoopConfig.js';
+import type { LiminalFS } from '../fs/LiminalFS.js';
 
 /**
  * Handles gallery persistence and merge operations within the loop.
@@ -19,7 +20,8 @@ import type { NormalizedLoopOptions, IterationContext } from './LoopConfig.js';
 export class LoopPersistence {
   constructor(
     private gallery: Gallery,
-    private options: NormalizedLoopOptions
+    private options: NormalizedLoopOptions,
+    private liminalFs?: LiminalFS,
   ) {}
 
   /**
@@ -33,6 +35,25 @@ export class LoopPersistence {
     } catch (error) {
       if (!this.options.tolerateErrors) {
         throw error;
+      }
+    }
+
+    if (this.liminalFs) {
+      try {
+        const ref = this.liminalFs.writeArtifact({
+          kind: 'gallery-version',
+          content: code,
+          filename: `v${iteration}.js`,
+          metadata: {
+            project: this.options.project,
+            version: iteration,
+            savedAt: new Date().toISOString(),
+          },
+        });
+        this.liminalFs.writeRef(`gallery/${this.options.project}/v${iteration}`, ref);
+        this.liminalFs.writeRef(`gallery/${this.options.project}/latest`, ref);
+      } catch {
+        // LiminalFS failure must not affect loop operation
       }
     }
   }
@@ -64,6 +85,25 @@ export class LoopPersistence {
         await this.gallery.saveIteration(this.options.project, iteration + 1, proposed);
       } catch (error) {
         if (!this.options.tolerateErrors) throw error;
+      }
+
+      if (this.liminalFs) {
+        try {
+          const ref = this.liminalFs.writeArtifact({
+            kind: 'gallery-version',
+            content: proposed,
+            filename: `v${iteration + 1}.js`,
+            metadata: {
+              project: this.options.project,
+              version: iteration + 1,
+              savedAt: new Date().toISOString(),
+            },
+          });
+          this.liminalFs.writeRef(`gallery/${this.options.project}/v${iteration + 1}`, ref);
+          this.liminalFs.writeRef(`gallery/${this.options.project}/latest`, ref);
+        } catch {
+          // LiminalFS failure must not affect loop operation
+        }
       }
     }
   }

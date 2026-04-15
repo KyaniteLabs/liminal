@@ -8,3 +8,7 @@ export function getEvalMode(): EvalMode {
 export function getRepairMode(): RepairMode {
   return (process.env.LIMINAL_REPAIR_MODE as RepairMode) || 'off';
 }
+
+export function isRepairEnabled(): boolean {
+  return getRepairMode() !== 'off';
+}

@@ -9,6 +9,7 @@
  */
 
 import { Gallery } from '../gallery/Gallery.js';
+import { GalleryFSAdapter } from '../fs/adapters/GalleryFSAdapter.js';
 import { mergeSketchCode } from '../utils/mergeSketchCode.js';
 import { ContextAccumulation } from './ContextAccumulation.js';
 import type { NormalizedLoopOptions, IterationContext } from './LoopConfig.js';
@@ -18,11 +19,17 @@ import type { LiminalFS } from '../fs/LiminalFS.js';
  * Handles gallery persistence and merge operations within the loop.
  */
 export class LoopPersistence {
+  private adapter?: GalleryFSAdapter;
+
   constructor(
     private gallery: Gallery,
     private options: NormalizedLoopOptions,
     private liminalFs?: LiminalFS,
-  ) {}
+  ) {
+    if (this.liminalFs) {
+      this.adapter = new GalleryFSAdapter(this.gallery, this.liminalFs);
+    }
+  }
 
   /**
    * Save an iteration to the gallery.
@@ -30,30 +37,20 @@ export class LoopPersistence {
   async saveIteration(iteration: number, code: string): Promise<void> {
     if (!this.options.project) return;
 
+    if (this.adapter) {
+      try {
+        await this.adapter.saveGalleryVersion(this.options.project, iteration, code);
+      } catch {
+        // GalleryFSAdapter failure must not affect loop operation
+      }
+      return;
+    }
+
     try {
       await this.gallery.saveIteration(this.options.project, iteration, code);
     } catch (error) {
       if (!this.options.tolerateErrors) {
         throw error;
-      }
-    }
-
-    if (this.liminalFs) {
-      try {
-        const ref = this.liminalFs.writeArtifact({
-          kind: 'gallery-version',
-          content: code,
-          filename: `v${iteration}.js`,
-          metadata: {
-            project: this.options.project,
-            version: iteration,
-            savedAt: new Date().toISOString(),
-          },
-        });
-        this.liminalFs.writeRef(`gallery/${this.options.project}/v${iteration}`, ref);
-        this.liminalFs.writeRef(`gallery/${this.options.project}/latest`, ref);
-      } catch {
-        // LiminalFS failure must not affect loop operation
       }
     }
   }
@@ -80,31 +77,21 @@ export class LoopPersistence {
     const proposed = mergeSketchCode(codeA, codeB);
     this.options.onMergeStep?.({ codeA, codeB, proposed });
 
-    if (this.options.project) {
-      try {
-        await this.gallery.saveIteration(this.options.project, iteration + 1, proposed);
-      } catch (error) {
-        if (!this.options.tolerateErrors) throw error;
-      }
+    if (!this.options.project) return;
 
-      if (this.liminalFs) {
-        try {
-          const ref = this.liminalFs.writeArtifact({
-            kind: 'gallery-version',
-            content: proposed,
-            filename: `v${iteration + 1}.js`,
-            metadata: {
-              project: this.options.project,
-              version: iteration + 1,
-              savedAt: new Date().toISOString(),
-            },
-          });
-          this.liminalFs.writeRef(`gallery/${this.options.project}/v${iteration + 1}`, ref);
-          this.liminalFs.writeRef(`gallery/${this.options.project}/latest`, ref);
-        } catch {
-          // LiminalFS failure must not affect loop operation
-        }
+    if (this.adapter) {
+      try {
+        await this.adapter.saveGalleryVersion(this.options.project, iteration + 1, proposed);
+      } catch {
+        // GalleryFSAdapter failure must not affect loop operation
       }
+      return;
+    }
+
+    try {
+      await this.gallery.saveIteration(this.options.project, iteration + 1, proposed);
+    } catch (error) {
+      if (!this.options.tolerateErrors) throw error;
     }
   }
 }

@@ -117,14 +117,24 @@ export class RalphLoop {
       }
     }
 
+    // Initialize LiminalFS once per run (used by all modes)
+    const liminalFs = LiminalFS.open(process.cwd());
+
     // Organism mode: delegate entirely to OrganismLoop
     if (normalizedOptions.mode === 'organism') {
-      return runOrganismMode(prompt, normalizedOptions, startTime);
+      try {
+        return await runOrganismMode(prompt, normalizedOptions, startTime, liminalFs);
+      } finally {
+        try {
+          liminalFs.close();
+        } catch {
+          // ignore close errors
+        }
+      }
     }
 
     // Initialize subsystems
     const gallery = new Gallery(normalizedOptions.galleryDir);
-    const liminalFs = LiminalFS.open(process.cwd());
     const projectStore = liminalFs.getProjectStore();
     const stagnation = new StagnationDetector(normalizedOptions.stagnationThreshold ?? 7);
     const successRateTracker = new SuccessRateTracker({
@@ -1406,6 +1416,46 @@ export class RalphLoop {
       iterations: iteration,
       finalScore,
     });
+
+    // Phase 5A: Record run in LiminalFS
+    let runArtifact: import('../fs/types.js').LiminalObjectRef | undefined;
+    if (currentCode) {
+      try {
+        runArtifact = liminalFs.writeArtifact({
+          kind: 'generated-code',
+          content: currentCode,
+          filename: 'final.js',
+          metadata: {
+            project: normalizedOptions.project,
+            iterations: iteration,
+            finalScore,
+            reason,
+            duration,
+            sessionId,
+          },
+        });
+      } catch {
+        // LiminalFS failure must not affect loop operation
+      }
+    }
+
+    try {
+      liminalFs.recordRun({
+        runId: sessionId,
+        prompt,
+        project: normalizedOptions.project,
+        status: completed ? 'completed' : 'suspended',
+        artifacts: runArtifact ? [runArtifact] : [],
+        metadata: {
+          iterations: iteration,
+          finalScore,
+          reason,
+          duration,
+        },
+      });
+    } catch {
+      // LiminalFS failure must not affect loop operation
+    }
 
     liminalFs.close();
 

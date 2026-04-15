@@ -589,7 +589,7 @@ export class RalphLoop {
           }
 
           try {
-            const harness = new GeneratorHarnessTools({ entropySource: new (await import('../entropy/MetabolicEntropyEngine.js')).MetabolicEntropyEngine() });
+            const harness = new GeneratorHarnessTools({ seededRandom: Math.random });
 
             // Build repair packet with repeated-failure detection
             const genEval: GenerationEvaluation = {

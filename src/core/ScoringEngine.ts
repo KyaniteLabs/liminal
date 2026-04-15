@@ -21,7 +21,7 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { EVALUATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
-import type { RenderEvidence, GenerationEvaluation, ConcreteRepairAdvice } from './types/GenerationEvaluation.js';
+import type { RenderEvidence, GenerationEvaluation } from './types/GenerationEvaluation.js';
 
 // ---------------------------------------------------------------------------
 // Types

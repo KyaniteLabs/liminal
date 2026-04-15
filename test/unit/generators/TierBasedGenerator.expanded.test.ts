@@ -144,6 +144,20 @@ class TestGenerator extends TierBasedGenerator {
   }
 }
 
+/** Subclass that returns valid:false without error property to test ?? branch */
+class NoErrorGenerator extends TierBasedGenerator {
+  constructor(domain: string, llmOrConfig?: any) {
+    super(domain, llmOrConfig);
+  }
+
+  protected validateOutput(code: string): { valid: boolean; error?: string } {
+    if (code.includes('FAILNOERROR')) {
+      return { valid: false };
+    }
+    return { valid: true };
+  }
+}
+
 // ── Helpers ────────────────────────────────────────────────────────────
 function makeToolResult(overrides: Partial<{ content: string; success: boolean; thinking: string; toolCalls: unknown[] }> = {}) {
   return {
@@ -823,6 +837,164 @@ describe('TierBasedGenerator (expanded)', () => {
 
       const ctxArg = mockLoadContext.mock.calls[0][2];
       expect(ctxArg.recentAdaptations).toEqual([]);
+    });
+  });
+
+  // ── Additional branch coverage: error guards ──────────────────────
+  describe('error guards for null llm and promptBuilder', () => {
+    it('throws GenerationError when llm is null after config resolution failure', async () => {
+      mockGetEffectiveConfig.mockResolvedValue(null);
+
+      // Create generator without config to trigger lazy resolution
+      const gen = new TestGenerator('p5');
+      // Sabotage llm to be null after construction
+      (gen as any).llm = null;
+
+      await expect(gen.generate('test')).rejects.toThrow('LLM not initialized');
+    });
+
+    it('throws GenerationError when promptBuilder is null', async () => {
+      const gen = new TestGenerator('p5', mockLLM);
+      // Sabotage promptBuilder to be null
+      (gen as any).promptBuilder = null;
+
+      await expect(gen.generate('test')).rejects.toThrow('PromptBuilder not initialized');
+    });
+  });
+
+  // ── Additional branch coverage: tiny tier with no combined prompt ──
+  describe('tiny tier fallback to user prompt when combined is absent', () => {
+    it('uses builtPrompt.user when builtPrompt.combined is undefined', async () => {
+      mockDetectModelTier.mockReturnValue('tiny');
+      mockPromptBuilderBuild.mockReturnValueOnce({ system: 'sys', user: 'user-only', combined: undefined });
+      mockHarnessPrepare.mockReturnValue(defaultHarnessContext());
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult());
+
+      const gen = new TestGenerator('p5', mockLLM);
+      await gen.generate('tiny no combined');
+
+      const call = mockGenerateWithToolLoop.mock.calls[0][0];
+      // Tiny tier: userPrompt = combined || user; combined is undefined so falls back to user
+      expect(call.userPrompt).toBe('user-only');
+    });
+
+    it('uses builtPrompt.user when builtPrompt.combined is empty string', async () => {
+      mockDetectModelTier.mockReturnValue('tiny');
+      mockPromptBuilderBuild.mockReturnValueOnce({ system: 'sys', user: 'user-fallback', combined: '' });
+      mockHarnessPrepare.mockReturnValue(defaultHarnessContext());
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult());
+
+      const gen = new TestGenerator('p5', mockLLM);
+      await gen.generate('tiny empty combined');
+
+      const call = mockGenerateWithToolLoop.mock.calls[0][0];
+      expect(call.userPrompt).toBe('user-fallback');
+    });
+  });
+
+  // ── Additional branch coverage: non-tiny with no harness hint ─────
+  describe('non-tiny tier with empty harness hint', () => {
+    it('uses just builtPrompt.system without harness hint appended', async () => {
+      mockDetectModelTier.mockReturnValue('flagship');
+      mockHarnessPrepare.mockReturnValue(defaultHarnessContext()); // hintsWereSampled: false -> empty hint
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult());
+
+      const gen = new TestGenerator('p5', mockLLM);
+      await gen.generate('no harness hint');
+
+      const call = mockGenerateWithToolLoop.mock.calls[0][0];
+      // buildHarnessHint returns '' when hintsWereSampled is false
+      // systemPrompt = builtPrompt.system + (harnessHint ? '\n\n' + harnessHint : '')
+      // Since harnessHint is '', the ternary takes the '' branch
+      expect(call.systemPrompt).toBe('sys');
+    });
+  });
+
+  // ── Additional branch coverage: whitespace-only code ──────────────
+  describe('whitespace-only code handling', () => {
+    it('throws empty code when response code is whitespace only', async () => {
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: '   \n\t  \n  ',
+      }));
+
+      const gen = new TestGenerator('p5', mockLLM);
+      await expect(gen.generate('test')).rejects.toThrow('empty code');
+    });
+  });
+
+  // ── Additional branch coverage: error from toolResult ─────────────
+  describe('toolResult error passthrough', () => {
+    it('includes error from toolResult in the response', async () => {
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'function setup() { createCanvas(200, 200); }',
+        success: false,
+        error: 'tool execution failed',
+      }));
+
+      const gen = new TestGenerator('p5', mockLLM);
+      const result = await gen.generateFull('test');
+      expect(result.code).toBe('function setup() { createCanvas(200, 200); }');
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('tool execution failed');
+    });
+  });
+
+  // ── Additional branch coverage: domainDocs as empty string ────────
+  describe('context with empty domainDocs', () => {
+    it('does not trim context when domainDocs is empty string', async () => {
+      mockLoadContext.mockResolvedValueOnce({ domainDocs: '' });
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult());
+
+      const gen = new TestGenerator('p5', mockLLM);
+      await gen.generate('test');
+
+      // Empty string is falsy, so the if(context.domainDocs) branch is not taken
+      expect(mockTrimContext).not.toHaveBeenCalled();
+    });
+  });
+
+  // ── Additional branch coverage: validation with undefined error ────
+  describe('validation failure with undefined error (?? branch)', () => {
+    it('falls back to "Validation failed" when error is undefined in recovery', async () => {
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'FAILNOERROR code here that is long enough',
+      }));
+
+      mockHarnessClassifyFailure.mockReturnValue({
+        failureClass: 'unknown',
+        evidence: '',
+      });
+      mockHarnessBuildRepairPrompt.mockReturnValue('');
+
+      const gen = new NoErrorGenerator('p5', mockLLM);
+      // validateOutput returns { valid: false } (no error property)
+      // Line 259 throws `${name}: ${validated.error}` => "NoErrorGenerator: undefined"
+      await expect(gen.generate('test')).rejects.toThrow('NoErrorGenerator: undefined');
+    });
+
+    it('passes undefined error message through recovery attempt', async () => {
+      // First call produces FAILNOERROR code
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'FAILNOERROR code here',
+      }));
+      // Recovery succeeds
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'function setup() { createCanvas(400, 400); }',
+      }));
+
+      mockHarnessClassifyFailure.mockReturnValue({
+        failureClass: 'too_short',
+        evidence: '',
+      });
+      mockHarnessBuildRepairPrompt.mockReturnValue('Fix it');
+
+      const gen = new NoErrorGenerator('p5', mockLLM);
+      const result = await gen.generate('test');
+      expect(result).toBe('function setup() { createCanvas(400, 400); }');
+
+      // Check recovery prompt contains the fallback error text
+      const recoveryCall = mockGenerateWithToolLoop.mock.calls[1][0];
+      expect(recoveryCall.userPrompt).toContain('Validation error: Validation failed');
     });
   });
 });

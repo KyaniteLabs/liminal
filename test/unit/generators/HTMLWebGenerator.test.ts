@@ -1,20 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockGenerate, mockGenerateWithToolLoop } = vi.hoisted(() => ({
+const { mockGenerate } = vi.hoisted(() => ({
   mockGenerate: vi.fn().mockResolvedValue({
     code: '<!DOCTYPE html><html><head><title>Test</title></head><body><h1>Hello</h1></body></html>',
     success: true,
-  }),
-  mockGenerateWithToolLoop: vi.fn().mockImplementation(async () => {
-    const r = await mockGenerate();
-    return { content: r.code, toolCalls: [], success: r.success, error: r.error };
   }),
 }));
 
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
-    generateWithToolLoop = mockGenerateWithToolLoop;
+    generateWithToolLoop = vi.fn().mockImplementation(() =>
+      mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
+    );
     getConfig = vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' });
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -49,10 +47,6 @@ import { HTMLWebGenerator } from '../../../src/generators/html/HTMLWebGenerator.
 describe('HTMLWebGenerator', () => {
   beforeEach(() => {
     mockGenerate.mockClear();
-    mockGenerateWithToolLoop.mockImplementation(async () => {
-      const r = await mockGenerate();
-      return { content: r.code, toolCalls: [], success: r.success, error: r.error };
-    });
   });
 
   it('extracts HTML from markdown code fences', async () => {
@@ -105,7 +99,7 @@ describe('HTMLWebGenerator', () => {
   it('validateOutput rejects code without DOCTYPE or html tags', async () => {
     const gen = new HTMLWebGenerator();
     expect((gen as any).extractHTML('```html\n<p>Just a paragraph</p>\n```')).toBe('<p>Just a paragraph</p>');
-    expect(gen.validateOutput('<p>Just a paragraph</p>').valid).toBe(false);
+    expect((gen as any).validateOutput('<p>Just a paragraph</p>').valid).toBe(false);
   });
 
   it('validateOutput accepts code with DOCTYPE', async () => {

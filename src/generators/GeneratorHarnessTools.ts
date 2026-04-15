@@ -1,6 +1,3 @@
-import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
-import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
-
 /**
  * GeneratorHarnessTools - Thin domain-contract harness helpers
  *
@@ -31,55 +28,6 @@ export type FailureClass =
   | 'unknown';
 
 // ---------------------------------------------------------------------------
-// Failure Classification Normalization (DF3 Flywheel Unlock)
-// ---------------------------------------------------------------------------
-
-/**
- * Map domain-specific FailureClass values to the shared GenerationEvaluation contract.
- */
-export function classifyFailureForEvaluation(
-  failure: FailureClass | string,
-  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
-): GenerationEvaluation['failureClass'] {
-  if (context?.renderFailed) {
-    return 'render';
-  }
-  if (context?.validationFailed) {
-    return 'validator';
-  }
-  if (context?.scoreFailed) {
-    return 'scorer';
-  }
-
-  switch (failure) {
-    case 'runtime_error':
-    case 'wrapper_contract_mismatch':
-    case 'wrong_domain':
-    case 'missing_required_api':
-    case 'too_short':
-    case 'truncated':
-    case 'empty_after_reasoning_strip':
-      return 'validator';
-    default:
-      return 'none';
-  }
-}
-
-/**
- * Build a minimal GenerationEvaluation pick from a classified failure.
- */
-export function buildFailureEvaluation(
-  failure: FailureClass | string,
-  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
-): Pick<GenerationEvaluation, 'score' | 'confidence' | 'failureClass'> {
-  return {
-    score: 0,
-    confidence: 1,
-    failureClass: classifyFailureForEvaluation(failure, context),
-  };
-}
-
-// ---------------------------------------------------------------------------
 // Domain Skeleton & API Data
 // ---------------------------------------------------------------------------
 
@@ -97,6 +45,37 @@ interface DomainApiVocab {
 }
 
 const PILOT_DOMAINS: DomainSkeleton[] = [
+  {
+    domain: 'p5',
+    skeletonText: `// p5.js global-mode browser sketch skeleton
+let particles = [];
+
+function setup() {
+  createCanvas(600, 400);
+  noStroke();
+  for (let i = 0; i < 80; i++) {
+    particles.push({
+      x: random(width),
+      y: random(height),
+      vx: random(-0.6, 0.6),
+      vy: random(-0.4, 0.4),
+      size: random(3, 8),
+    });
+  }
+}
+
+function draw() {
+  background(8, 24, 48, 30);
+  fill(120, 190, 255, 150);
+  for (const p of particles) {
+    p.x = (p.x + p.vx + width) % width;
+    p.y = (p.y + p.vy + height) % height;
+    circle(p.x, p.y, p.size);
+  }
+}`,
+    requiredApis: ['function setup', 'function draw', 'createCanvas', 'background', 'fill', 'circle', 'random'],
+    shapeNotes: 'Raw p5.js global-mode sketch code; JavaScript only, no Processing syntax',
+  },
   {
     domain: 'tone',
     skeletonText: `// Tone.js synthesis skeleton
@@ -193,6 +172,11 @@ export default makeScene('TypingScene', function* (view) {
 
 const DOMAIN_API_VOCAB: DomainApiVocab[] = [
   {
+    domain: 'p5',
+    apis: ['function setup', 'function draw', 'createCanvas', 'background', 'fill', 'stroke', 'noStroke', 'circle', 'ellipse', 'rect', 'line', 'random', 'noise', 'sin', 'cos', 'map', 'createVector'],
+    contaminationDomains: ['Processing Java syntax', 'float declarations', 'vector declarations', 'import p5', 'module syntax', 'invented velocity()/friction()/move() helpers'],
+  },
+  {
     domain: 'tone',
     apis: ['Tone.Synth', 'Tone.PolySynth', 'Tone.FMSynth', 'Tone.AMSynth', 'Tone.MembraneSynth', 'Tone.MetalSynth', 'Tone.LFO', 'Tone.Reverb', 'Tone.Delay', 'Tone.Chorus', 'Tone.Distortion', 'Tone.Phaser', 'Tone.Tremolo', 'Tone.Transport', 'Tone.Sequence', 'Tone.Part', 'Tone.Sampler', 'Tone.Channel', 'Tone.Filter', 'Tone.Panner', '.toDestination()', '.triggerAttackRelease('],
     contaminationDomains: ['p5.sound', 'Howler.js', 'Tone.js sync with seconds not 4n'],
@@ -236,19 +220,19 @@ interface HardeningHint {
 
 const HARDENING_HINTS: HardeningHint[] = [
   { id: 'raw_code_only', text: 'Output only raw code. No prose, no markdown fences, no explanation.', domains: 'all' },
-  { id: 'include_required_imports', text: 'Include all required import statements or CDN links for the target library.', domains: 'all' },
-  { id: 'full_html_shell', text: 'Wrap output in a complete, runnable HTML document (doctype + html + head + body).', domains: 'all' },
+  { id: 'include_required_imports', text: 'Include all required import statements or CDN links for the target library.', domains: ['tone', 'strudel', 'three', 'hydra', 'revideo'] },
+  { id: 'full_html_shell', text: 'Wrap output in a complete, runnable HTML document (doctype + html + head + body).', domains: ['tone', 'strudel', 'three', 'hydra'] },
+  { id: 'p5_raw_global_js', text: 'For p5, output raw global-mode JavaScript with function setup() and function draw(); the wrapper loads p5.js.', domains: ['p5'] },
+  { id: 'p5_no_processing_syntax', text: 'For p5, never use Processing/Java syntax such as float x, vector v, no(), or undeclared particle arrays.', domains: ['p5'] },
+  { id: 'p5_declare_state', text: 'For p5, declare arrays and variables before draw(), for example let particles = []; then fill it in setup().', domains: ['p5'] },
   { id: 'tone_transport_pattern', text: 'Use Tone.Transport.scheduleRepeat or Tone.Sequence for rhythmic patterns. Do not use Tone.start() without Transport.', domains: ['tone'] },
   { id: 'tone_synth_chain', text: 'Chain: Synth -> Channel/Effects -> toDestination(). Include Tone.Transport.start().', domains: ['tone'] },
   { id: 'strudel_stack', text: 'Wrap patterns in stack() to combine multiple voices. Use .out() at the end.', domains: ['strudel'] },
   { id: 'strudel_sound_note', text: 'Use s() for samples and note() for synthesized notes.', domains: ['strudel'] },
-  { id: 'strudel_pattern_strings', text: 'Pass quoted pattern strings to s(), sound(), and note() — never raw numbers like s(100).', domains: ['strudel'] },
-  { id: 'strudel_complete_structure', text: 'If you open stack(, close it and include complete child patterns; do not leave truncated stack(...) output.', domains: ['strudel'] },
   { id: 'ascii_monospace', text: 'ASCII art must be fixed-width monospace. Prefer standard ASCII symbols, but extended art glyphs like box drawing, block elements, stars, and diagonal strokes are allowed when they improve the piece.', domains: ['ascii'] },
   { id: 'ascii_no_fences', text: 'Output raw ASCII only. No code fences, no triple-backtick, no markdown markers.', domains: ['ascii'] },
   { id: 'three_scene_camera_renderer', text: 'Include THREE.Scene, THREE.PerspectiveCamera, THREE.WebGLRenderer, and a mesh in scene. Call renderer.render in a loop.', domains: ['three'] },
   { id: 'three_module_import', text: 'Use ES module import: import * as THREE from "three". Use importmap or CDN URL for three.js.', domains: ['three'] },
-  { id: 'three_no_nested_html', text: 'If you return HTML, include exactly one HTML document. Never place a second <!DOCTYPE html> or <html> document inside a <script> block.', domains: ['three'] },
   { id: 'glsl_precision', text: 'Always start with precision mediump float; and declare all uniforms (u_time, u_resolution).', domains: ['glsl'] },
   { id: 'glsl_main_or_mainimage', text: 'Use either void main() with gl_FragColor, or void mainImage(out vec4, in vec2) -- not both mixed.', domains: ['glsl'] },
   { id: 'revideo_makescene_shape', text: 'Use export default makeScene("SceneName", function* (view) { ... }). Do not use makeScene({ render: ... }).', domains: ['revideo'] },
@@ -294,7 +278,7 @@ const REPAIR_PROMPT_TEMPLATES: RepairPromptTemplate[] = [
   },
   {
     failureClass: 'runtime_error',
-    template: 'The output caused a runtime or compile error.\nMINIMAL REPAIR: include the exact error message and provide a corrected version of the failing section.\nError: {runtimeError}\nOutput only the corrected code, no explanation.',
+    template: 'The output caused a runtime or compile error.\nMINIMAL REPAIR: include the exact error message and provide a corrected complete artifact.\nError: {runtimeError}\nOutput only the corrected code, no explanation.',
   },
   {
     failureClass: 'unknown',
@@ -316,7 +300,7 @@ const WRAPPER_CONTRACTS: Record<string, string> = {
   hydra: 'Complete HTML page with Hydra loaded via CDN, visual synth code in <script type="module">.',
   kinetic: 'Complete HTML page with kineticjs or raw DOM animation, full document structure.',
   revideo: 'Revideo scene file using export default makeScene("SceneName", function* (view) { ... }), @revideo/core, @revideo/2d components, view.add(...), and yield* animations. No Remotion, @revideo/react, React.FC, useFrame, useCurrentFrame, or makeScene({ render: ... }).',
-  p5: 'Complete HTML page with p5.js loaded via CDN, draw() and setup() functions in <script>.',
+  p5: 'Raw p5.js global-mode browser JavaScript with function setup() and function draw(); no import/export/module syntax. If returning HTML, it must be a complete document with p5.js CDN and closing </body></html>.',
 };
 
 // ---------------------------------------------------------------------------
@@ -349,9 +333,8 @@ export interface SuccessMetadata {
 /**
  * GeneratorHarnessTools - thin domain-contract harness helpers
  *
- * @param options - optional constructor options. Either `seededRandom` or `entropySource`
- *                  must be provided; the constructor throws if neither is given.
-
+ * @param seededRandom - optional deterministic RNG for deterministic sampling in tests.
+ *                       If omitted, uses Math.random() (non-deterministic).
  */
 export class GeneratorHarnessTools {
   private rng: () => number;
@@ -360,15 +343,8 @@ export class GeneratorHarnessTools {
   // Maximum artifacts kept in memory before eviction
   private static readonly MAX_MEMORY = 100;
 
-  constructor(options?: { seededRandom?: () => number; entropySource?: MetabolicEntropyEngine }) {
-    if (options?.seededRandom) {
-      this.rng = options.seededRandom;
-    } else if (options?.entropySource) {
-      const entropySource = options.entropySource;
-      this.rng = () => entropySource.nextFloat();
-    } else {
-      throw new Error('GeneratorHarnessTools: either seededRandom or entropySource must be provided');
-    }
+  constructor(seededRandom?: () => number) {
+    this.rng = seededRandom ?? Math.random;
   }
 
   // -------------------------------------------------------------------------
@@ -487,7 +463,7 @@ export class GeneratorHarnessTools {
 
     // runtime_error: error message contains runtime/compile keywords
     if (
-      /\b(error|exception|undefined|cannot read|is not a|failed to|unexpected|syntax error|runtime)\b/i.test(error) &&
+      /\b(error|exception|undefined|undeclared|cannot read|is not a|failed to|unexpected|syntax error|runtime)\b/i.test(error) &&
       !/validation|valid/i.test(error)
     ) {
       return {
@@ -523,6 +499,32 @@ export class GeneratorHarnessTools {
     result = result.replace('{domain}', domain);
     result = result.replace('{wrapperExpectation}', WRAPPER_CONTRACTS[domain] ?? 'complete, runnable artifact');
     result = result.replace('{runtimeError}', failure.runtimeError ?? '');
+
+    if (domain === 'p5') {
+      result += '\n\np5 repair requirements:\n' +
+        '- Return raw global-mode p5.js, not HTML and not Markdown.\n' +
+        '- Include `let particles = [];` before setup if using particles.\n' +
+        '- Populate particles in setup() before draw() reads them.\n' +
+        '- Use JavaScript object fields like x, y, vx, vy; do not rely on undeclared globals.\n' +
+        '- Use only real p5/browser JavaScript APIs.';
+    }
+
+    if (domain === 'three') {
+      result += '\n\nThree.js repair requirements:\n' +
+        '- Return raw Three.js module scene code, not HTML and not Markdown.\n' +
+        '- Use exactly one `import * as THREE from "three";`.\n' +
+        '- Use wrapper-provided `canvas`, `w`, and `h`; do not redeclare them.\n' +
+        '- Define and call `animate();`.\n' +
+        '- Mutate scene state in animate(), for example rotate a mesh before rendering.';
+    }
+
+    if (domain === 'shader' || domain === 'glsl') {
+      result += '\n\nGLSL repair requirements:\n' +
+        '- Return fragment shader code only, not HTML or JavaScript.\n' +
+        '- Do not use `.xy` on float uniforms like `u_time`.\n' +
+        '- Fragment output must be vec4: `gl_FragColor = vec4(color, 1.0);`.\n' +
+        '- If a function returns vec2, reduce it before assigning to float or vec3.';
+    }
 
     return result;
   }
@@ -565,42 +567,6 @@ export class GeneratorHarnessTools {
       return this.successMemory.filter(m => m.domain === domain);
     }
     return [...this.successMemory];
-  }
-
-  // -------------------------------------------------------------------------
-  // buildRepairPacket() -- compact repair packet with repeated-failure detection
-  // -------------------------------------------------------------------------
-
-  /**
-   * Build a compact repair packet from a GenerationEvaluation.
-   *
-   * @param evaluation - the evaluation containing repairAdvice
-   * @param history - optional prior evaluations to detect repeated failures
-   * @returns a compact string suitable for injection into a generation prompt
-   */
-  buildRepairPacket(
-    evaluation: GenerationEvaluation,
-    history?: GenerationEvaluation[]
-  ): string {
-    const advice = evaluation.repairAdvice;
-    if (!advice) return '';
-
-    const parts: string[] = [];
-    parts.push(`[repair] issue: ${advice.issue}`);
-    parts.push(`[repair] fix: ${advice.fix}`);
-    parts.push(`[repair] constraint: ${advice.constraint}`);
-
-    if (history && history.length > 0) {
-      const repeated = history.filter(
-        h => h.failureClass === evaluation.failureClass ||
-          (h.repairAdvice && advice.issue && h.repairAdvice.issue.toLowerCase() === advice.issue.toLowerCase())
-      ).length;
-      if (repeated >= 2) {
-        parts.push(`[repair] escalation: This failure has occurred ${repeated} times. Try a fundamentally different approach.`);
-      }
-    }
-
-    return parts.join('\n');
   }
 
   // -------------------------------------------------------------------------

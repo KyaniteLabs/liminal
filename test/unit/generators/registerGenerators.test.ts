@@ -168,8 +168,8 @@ describe('registerGenerators', () => {
       });
 
       it('returns 0.80 for audio effect patterns', () => {
-        expect(toneConfidence('bass sound')).toBe(0.80);
-        expect(toneConfidence('sequencer pattern')).toBe(0.80);
+        expect(toneConfidence('drone sound')).toBe(0.80);
+        expect(toneConfidence('delay effect')).toBe(0.80);
       });
 
       it('returns 0 for unrelated prompts', () => {

@@ -158,6 +158,79 @@ Tone.Transport.start();
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should validate Tone.js code with LFO', () => {
+      const code = `
+const lfo = new Tone.LFO("4n", 200, 1000).start();
+const filter = new Tone.Filter(400, "lowpass").toDestination();
+lfo.connect(filter.frequency);
+const synth = new Tone.Synth().connect(filter);
+synth.triggerAttackRelease("C4", "2n");
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should validate Tone.js code with Pattern', () => {
+      const code = `
+const synth = new Tone.Synth().toDestination();
+const pattern = new Tone.Pattern((time, note) => {
+  synth.triggerAttackRelease(note, "8n", time);
+}, ["C4", "E4", "G4", "A4"], "upDown");
+pattern.interval = "4n";
+pattern.start(0);
+Tone.Transport.start();
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should validate Tone.js code with AuxNode and Analyser', () => {
+      const code = `
+const aux = new Tone.AuxNode().toDestination();
+const analyser = new Tone.Analyser().connect(aux);
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should reject invalid synth graph property assumptions', () => {
+      const code = `
+const droneVoices = [
+  new Tone.PolySynth("sawtooth").toDestination(),
+  new Tone.PolySynth(Tone.Synth).toDestination()
+];
+const filter = droneVoices[0].filter;
+const detune = droneVoices[1].detune.value;
+const lfo = new Tone.LFO("sine", { rate: 0.1, depth: 5 }).connect(droneVoices[0].filter.lfo);
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Tone.js: PolySynth/Synth instances do not expose .filter; create Tone.Filter and connect through it');
+      expect(result.errors).toContain('Tone.js: Do not mutate synth.detune.value directly on PolySynth; use supported oscillator/frequency parameters or an explicit LFO target');
+      expect(result.errors).toContain('Tone.js: Invalid LFO target .filter.lfo; connect LFO to an explicit Tone.Filter frequency parameter');
+      expect(result.errors).toContain('Tone.js: Tone.PolySynth constructor should receive a synth class/config object, not an oscillator type string');
+    });
+
+    it('should reject common LFO casing and method hallucinations', () => {
+      const code = `
+const lfo = new Tone.Lfo().startAttack(0.1).setFrequency(0.5);
+      `;
+
+      const result = ToneValidator.validate(code);
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain("Tone.js: Invalid class 'Tone.Lfo'");
+      expect(result.errors).toContain("Tone.js: Invalid API - did you mean 'Tone.LFO'?");
+      expect(result.errors).toContain("Tone.js: Invalid API - did you mean 'lfo.start()'?");
+      expect(result.errors).toContain("Tone.js: Invalid API - did you mean 'lfo.frequency.value = ...'?");
+    });
   });
 
   describe('getMinSize', () => {

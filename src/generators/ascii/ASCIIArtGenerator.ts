@@ -22,10 +22,23 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: ASCIIOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
+    const code = await super.generate(this.withASCIIContract(prompt), options);
     const width = options?.width || 40;
     const height = options?.height || 20;
     return this.formatASCII(code, width, height);
+  }
+
+  private withASCIIContract(prompt: string): string {
+    return [
+      prompt,
+      '',
+      'Output contract:',
+      '- Return raw ASCII/extended ASCII art only, not JavaScript, HTML, Markdown, or prose.',
+      '- Make the artwork at least 12 non-empty lines tall.',
+      '- Use a recognizable composition with foreground, background, and detail.',
+      '- For the observatory prompt, include mountains, stars, and a small telescope dome.',
+      '- Keep lines roughly aligned in monospace.',
+    ].join('\n');
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {

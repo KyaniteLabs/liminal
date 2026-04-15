@@ -23,8 +23,23 @@ export class ToneGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: ToneOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
+    const code = await super.generate(this.withToneContract(prompt), options);
     return this.sanitizeCode(code);
+  }
+
+  private withToneContract(prompt: string): string {
+    return [
+      prompt,
+      '',
+      'Output contract:',
+      '- Return only Tone.js code, not HTML and not Markdown.',
+      '- Use a simple reliable chain: synth voices -> Tone.Filter -> Tone.Reverb -> Tone.Destination.',
+      '- Use real Tone classes only: Synth, PolySynth, AMSynth, FMSynth, Filter, Reverb, FeedbackDelay, LFO, Loop, Sequence, Transport.',
+      '- Do not use Tone.Analyser, Tone.AuxNode, Tone.RampTo, raw AudioContext visualizers, or canvas code.',
+      '- Do not access `.filter`, `.filter.lfo`, or `.detune.value` on Synth/PolySynth instances.',
+      '- For LFO movement, create `const filter = new Tone.Filter(...); const lfo = new Tone.LFO(...).connect(filter.frequency);`.',
+      '- Include Tone.Transport.start() and at least one scheduled repeating pulse.',
+    ].join('\n');
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {

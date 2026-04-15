@@ -24,6 +24,7 @@ export type Domain =
   | 'hydra' 
   | 'strudel' 
   | 'tone'
+  | 'kinetic'
   | 'html'
   | 'ascii'
   | 'unknown';

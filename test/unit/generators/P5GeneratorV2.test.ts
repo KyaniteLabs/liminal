@@ -58,7 +58,16 @@ vi.mock('../../../src/harness/MetaHarnessIntegration.js', () => ({
 import { P5GeneratorV2 } from '../../../src/generators/p5/P5GeneratorV2.js';
 import { GenerationError } from '../../../src/errors/GenerationError.js';
 
-const VALID_P5_CODE = `function setup() { createCanvas(400, 400); } function draw() { background(0); }`;
+const VALID_P5_CODE = `function setup() {
+  createCanvas(400, 400);
+  noStroke();
+}
+
+function draw() {
+  background(0, 20);
+  fill(80, 160, 255, 180);
+  circle(width / 2 + sin(frameCount * 0.02) * 120, height / 2, 48);
+}`;
 const VALID_LLM_RESPONSE = {
   code: VALID_P5_CODE,
   success: true,
@@ -129,23 +138,69 @@ describe('P5GeneratorV2', () => {
       expect(result).toBe(VALID_P5_CODE);
     });
 
-    it('accepts code with bare setup() call', async () => {
+    it('rejects draw-only code even when the shared p5 validator accepts it', async () => {
       mockIsConfigured.mockReturnValue(true);
-      const bareSetupCode = 'setup(); function draw() {}';
+      const bareSetupCode = `setup();
+function draw() {
+  background(0, 20);
+  fill(80, 160, 255, 180);
+  circle(width / 2 + sin(frameCount * 0.02) * 120, height / 2, 48);
+}`;
       mockGenerate.mockResolvedValue({ code: bareSetupCode, success: true });
       const gen = new P5GeneratorV2();
-      const result = await gen.generate('test');
-      expect(result).toBe(bareSetupCode);
+      await expect(gen.generate('test')).rejects.toThrow('Generated code missing required setup() function');
     });
 
     it('rejects code missing setup() function', async () => {
       mockIsConfigured.mockReturnValue(true);
       mockGenerate.mockResolvedValue({
-        code: 'function draw() { background(0); }',
+        code: `function draw() {
+  background(0, 20);
+  fill(80, 160, 255, 180);
+  circle(width / 2 + sin(frameCount * 0.02) * 120, height / 2, 48);
+}`,
         success: true,
       });
       const gen = new P5GeneratorV2();
-      await expect(gen.generate('test')).rejects.toThrow('missing required setup()');
+      await expect(gen.generate('test')).rejects.toThrow('Generated code missing required setup() function');
+    });
+
+    it('rejects raw p5 code that uses module imports', async () => {
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerate.mockResolvedValue({
+        code: `import * as p5 from 'p5';
+
+function setup() {
+  createCanvas(400, 400);
+  background(0);
+}
+
+function draw() {
+  circle(width / 2, height / 2, 80);
+}`,
+        success: true,
+      });
+      const gen = new P5GeneratorV2();
+      await expect(gen.generate('test')).rejects.toThrow('invalid JavaScript syntax');
+    });
+
+    it('does not double-wrap already complete p5 HTML', () => {
+      const html = `<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+  <script>
+    function setup() {
+      createCanvas(400, 400);
+    }
+  </script>
+</body>
+</html>`;
+
+      const gen = new P5GeneratorV2();
+      expect(gen.wrapForGallery(html)).toBe(html);
     });
   });
 

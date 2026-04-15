@@ -128,8 +128,8 @@ const toneConfidence = (prompt: string): number => {
   if (/\btone\.?js\b|\btonejs\b|web\s*audio\s*api/.test(lower)) return 0.95;
   // Strong synthesis indicators
   if (/\bsynth\b|\bsynthesizer\b.*\bjs\b/.test(lower)) return 0.90;
-  // Audio effect indicators
-  if (/\bbass\b|\bdrone\b|\barp\b|\bsequencer\b|\bdelay\b|\breverb\b/.test(lower)) return 0.80;
+  // Audio effect indicators — removed 'bass' (too generic, conflicts with strudel drum patterns)
+  if (/\bdrone\b|\barp\b|\bsequencer\b|\bdelay\b|\breverb\b/.test(lower)) return 0.80;
   // Generic synthesis
   if (/\bsynth\b|\bsynthesizer\b/.test(lower)) return 0.70;
   return 0;

@@ -19,8 +19,6 @@ import { Logger } from '../utils/Logger.js';
 import { getEffectiveConfig } from '../config/ConfigLoader.js';
 import { GENERATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { GeneratorHarnessTools } from './GeneratorHarnessTools.js';
-import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
-
 
 export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;
@@ -44,8 +42,7 @@ export abstract class TierBasedGenerator {
 
   constructor(
     domain: string,
-    llmOrConfig?: LLMClient | Partial<LLMConfig>,
-    entropy?: MetabolicEntropyEngine
+    llmOrConfig?: LLMClient | Partial<LLMConfig>
   ) {
     this.domain = domain;
     this._configNeedsResolution = false;
@@ -63,9 +60,7 @@ export abstract class TierBasedGenerator {
 
     this.tier = detectModelTier(this.llm.getConfig());
     this.promptBuilder = new PromptBuilder(this.llm.getConfig());
-    this.harnessTools = new GeneratorHarnessTools(
-      entropy ? { entropySource: entropy } : { seededRandom: Math.random }
-    );
+    this.harnessTools = new GeneratorHarnessTools();
   }
 
   /**
@@ -258,6 +253,7 @@ export abstract class TierBasedGenerator {
       } else {
         throw new GenerationError(`${this.constructor.name}: ${validated.error}`, this.domain, {
           validationError: validated.error,
+          failedCode: response.code,
         });
       }
     }

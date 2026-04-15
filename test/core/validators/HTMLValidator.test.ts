@@ -246,6 +246,23 @@ describe('HTMLValidator', () => {
       expect(result.errors).not.toContain('HTML document must start with <!DOCTYPE html>');
       expect(result.errors).not.toContain('HTML document must contain <html> tag');
     });
+
+    it('should not count <header> as an opening <head> tag', () => {
+      const code = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Header Regression</title>
+</head>
+<body>
+  <header><h1>Hero</h1></header>
+</body>
+</html>`;
+
+      const result = HTMLValidator.validate(code);
+      expect(result.errors).not.toContain('HTML document has mismatched <head> tags: 2 opening, 1 closing');
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe('getMinSize', () => {

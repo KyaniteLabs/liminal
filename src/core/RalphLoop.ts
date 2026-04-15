@@ -407,6 +407,7 @@ export class RalphLoop {
         let numCandidates = adjustedNumCandidates;
         const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string; genEval?: GenerationEvaluation }> = [];
         let lastGenerationError: Error | undefined;
+        let winnerIndex = 0; // track winner index for evaluation phase
 
         // Harvest entropy before generation if enabled
         let entropyEngine: MetabolicEntropyEngine | undefined;
@@ -662,13 +663,14 @@ export class RalphLoop {
               }
             }
 
-            const { winnerIndex } = harnessTools.rankCandidates(
+            const { winnerIndex: rankedWinnerIndex } = harnessTools.rankCandidates(
               candidates.map(c => c.code),
               candidateEvaluations,
             );
-            if (winnerIndex === -1) {
+            if (rankedWinnerIndex === -1) {
               Logger.warn('RalphLoop', 'Candidate evaluations are empty; falling back to first candidate');
             }
+            winnerIndex = rankedWinnerIndex === -1 ? 0 : rankedWinnerIndex;
             bestCandidate = candidates[winnerIndex] ?? candidates[0];
 
             if (normalizedOptions.chatMode) {
@@ -724,12 +726,13 @@ export class RalphLoop {
           evaluation = { score: 0, issues: ['All candidates failed validation'] };
         } else if (candidates.length > 1) {
           // We already evaluated all candidates, use the best one's score
-          const bestCandidate = candidates.find(c => c.code === currentCode);
+          // bestCandidate already holds the winner from line 672 — no re-lookup needed
+          const winner = candidates[winnerIndex];
           evaluation = {
-            score: bestCandidate?.score ?? 0,
-            issues: bestCandidate?.issues ?? [],
+            score: winner?.score ?? 0,
+            issues: winner?.issues ?? [],
             dimensions: {},
-            repairAdvice: bestCandidate?.genEval?.repairAdvice,
+            repairAdvice: winner?.genEval?.repairAdvice,
           };
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.(`Using pre-evaluated score: ${evaluation.score.toFixed(2)}`);

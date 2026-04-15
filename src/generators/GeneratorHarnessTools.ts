@@ -755,7 +755,7 @@ export class GeneratorHarnessTools {
     const vocab = DOMAIN_API_VOCAB.find(v => {
       if (/tone|tonedot/.test(codeLower)) return v.domain === 'tone';
       if (/three/i.test(codeLower)) return v.domain === 'three';
-      if (/strudel|sound\(|\note\(/.test(codeLower)) return v.domain === 'strudel';
+      if (/strudel|sound\(|note\(/.test(codeLower)) return v.domain === 'strudel';
       if (/hydra|osc\(/.test(codeLower)) return v.domain === 'hydra';
       if (/glsl|shader|void main|precision/.test(codeLower)) return v.domain === 'glsl';
       if (/makeScene|revideo/.test(codeLower)) return v.domain === 'revideo';

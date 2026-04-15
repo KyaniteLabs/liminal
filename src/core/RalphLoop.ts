@@ -530,28 +530,97 @@ export class RalphLoop {
                   }
                 }
 
-                const quickScoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                const quickEvaluation = await quickScoringEngine.score(
-                  {
+                let genEval: GenerationEvaluation;
+                if (evalMode === 'auto' || evalMode === 'strict-browser') {
+                  const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+                  const renderer = HeadlessRenderer.getInstance();
+                  const renderEvidence = await renderer.renderWithEvidence(candidate.code, {
+                    domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+                    width: 400,
+                    height: 400,
+                  });
+
+                  if (renderEvidence.infraUnavailable) {
+                    if (evalMode === 'strict-browser') {
+                      throw new LiminalError(
+                        'Browser rendering infrastructure is unavailable in strict-browser mode',
+                        'ERR_RENDER_INFRA_UNAVAILABLE',
+                      );
+                    }
+                    Logger.warn('RalphLoop', 'Browser render infra unavailable, falling back to legacy scoring for candidate');
+                    const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                    const quickEvaluation = await scoringEngine.scoreReliable({
+                      output: candidate.code,
+                      criteria: normalizedOptions.evaluationCriteria,
+                      lirContext,
+                    });
+                    genEval = {
+                      score: quickEvaluation.score,
+                      confidence: 1,
+                      failureClass: 'none',
+                      repairAdvice: quickEvaluation.issues?.[0]
+                        ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                        : undefined,
+                    };
+                    candidate.score = quickEvaluation.score;
+                    candidate.issues = quickEvaluation.issues ?? [];
+                  } else {
+                    const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+                    genEval = await scoreRenderedEvidence(
+                      renderEvidence,
+                      candidate.code,
+                      prompt,
+                      undefined,
+                    );
+                    if (genEval.failureClass === 'scorer') {
+                      if (evalMode === 'strict-browser') {
+                        throw new LiminalError(
+                          'Evaluator LLM is unavailable in strict-browser mode',
+                          'ERR_EVALUATOR_UNAVAILABLE',
+                        );
+                      }
+                      Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring for candidate');
+                      const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                      const quickEvaluation = await scoringEngine.scoreReliable({
+                        output: candidate.code,
+                        criteria: normalizedOptions.evaluationCriteria,
+                        lirContext,
+                      });
+                      genEval = {
+                        score: quickEvaluation.score,
+                        confidence: 1,
+                        failureClass: 'none',
+                        repairAdvice: quickEvaluation.issues?.[0]
+                          ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                          : undefined,
+                      };
+                      candidate.score = quickEvaluation.score;
+                      candidate.issues = quickEvaluation.issues ?? [];
+                    } else {
+                      candidate.score = genEval.score;
+                      candidate.issues = genEval.repairAdvice ? [genEval.repairAdvice.issue] : [];
+                    }
+                  }
+                } else {
+                  const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                  const quickEvaluation = await scoringEngine.scoreReliable({
                     output: candidate.code,
                     criteria: normalizedOptions.evaluationCriteria,
                     lirContext,
-                  },
-                  normalizedOptions.evaluationStrategy ?? 'detailed',
-                );
-
-                const genEval: GenerationEvaluation = {
-                  score: quickEvaluation.score,
-                  confidence: 1,
-                  failureClass: 'none',
-                  repairAdvice: quickEvaluation.issues?.[0]
-                    ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
-                    : undefined,
-                };
+                  });
+                  genEval = {
+                    score: quickEvaluation.score,
+                    confidence: 1,
+                    failureClass: 'none',
+                    repairAdvice: quickEvaluation.issues?.[0]
+                      ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                      : undefined,
+                  };
+                  candidate.score = quickEvaluation.score;
+                  candidate.issues = quickEvaluation.issues ?? [];
+                }
 
                 candidate.genEval = genEval;
-                candidate.score = quickEvaluation.score;
-                candidate.issues = quickEvaluation.issues ?? [];
                 candidateEvaluations.push(genEval);
               } catch (scoringError) {
                 Logger.warn('RalphLoop', `Failed to score candidate ${candidate.index}: ${formatError('RalphLoop', scoringError)}`);

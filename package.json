@@ -50,8 +50,7 @@
     "tui:bubbletea": "npm run tui",
     "test:ci:fast": "LIMINAL_CI_FAST=1 vitest run --coverage --pool=forks",
     "test:ci:slow": "LIMINAL_CI_SLOW=1 vitest run --pool=forks",
-    "check:orphans": "bash scripts/check-orphans.sh",
-    "verify:integration": "npm run build && vitest run --run"
+    "check:orphans": "bash scripts/check-orphans.sh"
   },
   "keywords": [
     "generative-art",

@@ -37,6 +37,7 @@ import { formatError } from '../utils/errors.js';
 import { CodeValidator } from './CodeValidator.js';
 import { CompostMill } from '../compost/CompostMill.js';
 import { mergeConfig as mergeCompostConfig } from '../compost/defaults.js';
+import { ProjectStore } from '../compost/ProjectStore.js';
 import { ArchiveLearning } from '../learning/index.js';
 import { QualityArchive } from '../learning/index.js';
 import { AestheticModel } from '../evolution/AestheticModel.js';
@@ -125,6 +126,8 @@ export class RalphLoop {
     // Initialize subsystems
     const gallery = new Gallery(normalizedOptions.galleryDir);
     const liminalFs = LiminalFS.open(process.cwd());
+    const projectStore = new ProjectStore({ projectRoot: process.cwd() });
+    projectStore.init();
     const stagnation = new StagnationDetector(normalizedOptions.stagnationThreshold ?? 7);
     const successRateTracker = new SuccessRateTracker({
       windowSize: 20,
@@ -263,7 +266,7 @@ export class RalphLoop {
     if (normalizedOptions.autoCompost || normalizedOptions.useCompostEnhancement) {
       try {
         const compostConfig = mergeCompostConfig();
-        const mill = new CompostMill(new LLMClient({ role: 'generator' }), compostConfig);
+        const mill = new CompostMill(new LLMClient({ role: 'generator' }), { ...compostConfig, projectStore });
         await mill.digest();
         compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
       } catch (err) {
@@ -1184,7 +1187,7 @@ export class RalphLoop {
               message: `Auto-fed iteration ${iteration} (score: ${evaluation.score.toFixed(2)}) to compost heap`,
             });
             if (await heap.isOverCapacity()) {
-              const mill = new CompostMill(new LLMClient({ role: 'generator' }), compostConfig);
+              const mill = new CompostMill(new LLMClient({ role: 'generator' }), { ...compostConfig, projectStore });
               await mill.digest();
               compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
               eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
@@ -1407,6 +1410,7 @@ export class RalphLoop {
     });
 
     liminalFs.close();
+    projectStore.close();
 
     return {
       code: currentCode,

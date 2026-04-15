@@ -17,6 +17,7 @@ import { normalizePath } from '../utils/normalizePath.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { LLMClient } from '../llm/LLMClient.js';
 import { eventBus } from '../core/EventBus.js';
+import { ProjectStore } from '../compost/ProjectStore.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
 import { validateCode } from '../utils/validation.js';
@@ -272,11 +273,13 @@ export class PreviewServer {
     });
 
     this.app.get('/api/status', async (_req, res) => {
+      const projectStore = new ProjectStore({ projectRoot: process.cwd() });
+      projectStore.init();
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');
         const { mergeConfig } = await import('../compost/defaults.js');
         const llm = new LLMClient({ role: 'generator' });
-        const mill = new CompostMill(llm, mergeConfig());
+        const mill = new CompostMill(llm, { ...mergeConfig(), projectStore });
         const millStatus = await mill.statusAsync();
 
         const loopProgress = await import('../core/RalphLoop.js').then(m => m.RalphLoop.getProgress());
@@ -292,20 +295,26 @@ export class PreviewServer {
       } catch (err) {
         Logger.error('PreviewServer', 'Status endpoint error:', err);
         res.status(500).json({ error: 'Status unavailable' });
+      } finally {
+        projectStore.close();
       }
     });
 
     this.app.get('/api/compost/seeds', async (_req, res) => {
+      const projectStore = new ProjectStore({ projectRoot: process.cwd() });
+      projectStore.init();
       try {
         const { CompostMill } = await import('../compost/CompostMill.js');
         const { mergeConfig } = await import('../compost/defaults.js');
         const llm = new LLMClient({ role: 'generator' });
-        const mill = new CompostMill(llm, mergeConfig());
+        const mill = new CompostMill(llm, { ...mergeConfig(), projectStore });
         const seeds = await mill.listSeeds();
         res.json({ seeds: seeds.slice(0, 50), total: seeds.length });
       } catch (err) {
         Logger.error('PreviewServer', 'Seed query failed:', err);
         res.status(500).json({ error: 'Seed query failed' });
+      } finally {
+        projectStore.close();
       }
     });
 

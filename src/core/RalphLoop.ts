@@ -562,12 +562,30 @@ export class RalphLoop {
                 prompt,
                 undefined,
               );
-              evaluation = {
-                score: genEval.score,
-                issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
-                dimensions: {},
-                repairAdvice: genEval.repairAdvice,
-              };
+              if (genEval.failureClass === 'scorer') {
+                if (evalMode === 'strict-browser') {
+                  throw new LiminalError(
+                    'Evaluator LLM is unavailable in strict-browser mode',
+                    'ERR_EVALUATOR_UNAVAILABLE',
+                  );
+                }
+                Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring');
+                const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                evaluation = await scoringEngine.scoreReliable(
+                  {
+                    output: currentCode,
+                    criteria: normalizedOptions.evaluationCriteria,
+                    lirContext,
+                  },
+                );
+              } else {
+                evaluation = {
+                  score: genEval.score,
+                  issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
+                  dimensions: {},
+                  repairAdvice: genEval.repairAdvice,
+                };
+              }
             }
           } else {
             // legacy mode
@@ -656,12 +674,28 @@ export class RalphLoop {
                         prompt,
                         undefined,
                       );
-                      repairEval = {
-                        score: genEvalRepair.score,
-                        issues: genEvalRepair.repairAdvice ? [genEvalRepair.repairAdvice.issue] : [],
-                        dimensions: {},
-                        repairAdvice: genEvalRepair.repairAdvice,
-                      };
+                      if (genEvalRepair.failureClass === 'scorer') {
+                        if (evalMode === 'strict-browser') {
+                          throw new LiminalError(
+                            'Evaluator LLM is unavailable in strict-browser mode',
+                            'ERR_EVALUATOR_UNAVAILABLE',
+                          );
+                        }
+                        Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence repair scoring, falling back to legacy scoring');
+                        const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                        repairEval = await scoringEngine.scoreReliable({
+                          output: repairCode,
+                          criteria: normalizedOptions.evaluationCriteria,
+                          lirContext: repairLirContext,
+                        });
+                      } else {
+                        repairEval = {
+                          score: genEvalRepair.score,
+                          issues: genEvalRepair.repairAdvice ? [genEvalRepair.repairAdvice.issue] : [],
+                          dimensions: {},
+                          repairAdvice: genEvalRepair.repairAdvice,
+                        };
+                      }
                     }
                   } else {
                     const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');

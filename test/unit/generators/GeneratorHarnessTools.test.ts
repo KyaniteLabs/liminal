@@ -696,6 +696,29 @@ describe('GeneratorHarnessTools', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // rankCandidates
+  // ---------------------------------------------------------------------------
+
+  describe('rankCandidates', () => {
+    it('returns winnerIndex -1 when evaluations are empty', () => {
+      const result = tools.rankCandidates(['codeA', 'codeB'], []);
+      expect(result.rankedIndices).toEqual([]);
+      expect(result.winnerIndex).toBe(-1);
+    });
+
+    it('ranks candidates by selection score (highest first)', () => {
+      const evaluations = [
+        { score: 0.3, confidence: 1, failureClass: 'none' as const },
+        { score: 0.9, confidence: 1, failureClass: 'none' as const },
+        { score: 0.5, confidence: 1, failureClass: 'none' as const },
+      ];
+      const result = tools.rankCandidates(['a', 'b', 'c'], evaluations);
+      expect(result.rankedIndices).toEqual([1, 2, 0]);
+      expect(result.winnerIndex).toBe(1);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // buildFailureEvaluation
   // ---------------------------------------------------------------------------
 

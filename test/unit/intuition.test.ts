@@ -1891,4 +1891,63 @@ describe('IntuitionEngine', () => {
     const result = engine.consolidate(episodes);
     expect(result.episodesProcessed).toBe(2);
   });
+
+  it('generateHint returns non-empty hint after recording outcomes that promote a procedural routine', () => {
+    // Seed enough high-quality outcomes to satisfy procedural tier thresholds
+    for (let i = 0; i < 12; i++) {
+      engine.recordOutcome('code', 'p5', 0.85, 'local', 'solo');
+    }
+    // Build world model data for promotion
+    for (let i = 0; i < 5; i++) {
+      engine.getWorldModel().record(
+        { domain: 'p5', lineCount: 50, techniqueDiversity: 3, hasInteraction: 1, hasColor: 1, hasLoops: 1, hasFunctions: 0, hasClasses: 0, commentDensity: 0.1 },
+        0.85,
+      );
+    }
+    // Promote via consolidation
+    const episodes = Array.from({ length: 12 }, (_, i) => ({
+      domain: 'p5',
+      output: `out-${i}`,
+      qualityScore: 0.85,
+      model: 'local',
+      strategy: 'solo',
+      timestamp: new Date().toISOString(),
+    }));
+    engine.consolidate(episodes);
+
+    const hint = engine.generateHint('p5');
+    expect(hint.length).toBeGreaterThan(0);
+    expect(hint).toContain('Historical pattern');
+  });
+
+  it('generateHint returns empty string when engine has no data', () => {
+    const hint = engine.generateHint('p5');
+    expect(hint).toBe('');
+  });
+
+  it('generateHint respects maxLength', () => {
+    // Seed data so a hint is produced
+    for (let i = 0; i < 12; i++) {
+      engine.recordOutcome('code', 'p5', 0.85, 'local', 'solo');
+    }
+    for (let i = 0; i < 5; i++) {
+      engine.getWorldModel().record(
+        { domain: 'p5', lineCount: 50, techniqueDiversity: 3, hasInteraction: 1, hasColor: 1, hasLoops: 1, hasFunctions: 0, hasClasses: 0, commentDensity: 0.1 },
+        0.85,
+      );
+    }
+    const episodes = Array.from({ length: 12 }, (_, i) => ({
+      domain: 'p5',
+      output: `out-${i}`,
+      qualityScore: 0.85,
+      model: 'local',
+      strategy: 'solo',
+      timestamp: new Date().toISOString(),
+    }));
+    engine.consolidate(episodes);
+
+    const hint = engine.generateHint('p5', 30);
+    expect(hint.length).toBeLessThanOrEqual(30);
+    expect(hint.endsWith('...')).toBe(true);
+  });
 });

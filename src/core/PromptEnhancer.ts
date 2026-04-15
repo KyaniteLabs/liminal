@@ -27,7 +27,8 @@ export async function enhancePrompt(
   loadedPrompt: string,
   options: NormalizedLoopOptions,
   archiveLearning: ArchiveLearning | null,
-  compostMaterials?: import('../compost/types.js').GenerationMaterials
+  compostMaterials?: import('../compost/types.js').GenerationMaterials,
+  intuitionHint?: string
 ): Promise<string> {
   let enhanced = usedPrompt;
 
@@ -85,6 +86,11 @@ export async function enhancePrompt(
     } catch (err) {
       Logger.warn('RalphLoop', 'Archive learning injection failed:', err);
     }
+  }
+
+  // 4. Inject intuition hint if available
+  if (intuitionHint) {
+    enhanced += '\n\n---\nIntuition hint (advisory): ' + intuitionHint;
   }
 
   return enhanced;

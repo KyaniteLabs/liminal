@@ -313,8 +313,20 @@ export class RalphLoop {
           normalizedOptions.onThought?.('Enhancing prompt with context and compost...');
         }
 
+        // Generate intuition hint if enabled
+        let intuitionHint: string | undefined;
+        if (normalizedOptions.useIntuition) {
+          try {
+            const { IntuitionEngine } = await import('../intuition/index.js');
+            const intuitionEngine = new IntuitionEngine();
+            intuitionHint = intuitionEngine.generateHint(normalizedOptions.project ?? 'default', 200);
+          } catch (err) {
+            Logger.warn('RalphLoop', 'Intuition hint generation failed:', err);
+          }
+        }
+
         // Enhance with compost seed, DNA, and archive examples
-        usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning, compostMaterials);
+        usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning, compostMaterials, intuitionHint);
 
         // Adjust numCandidates based on success rate for high-exploration mode
         const adjustedNumCandidates = successRateTracker.getRecommendedCandidates(normalizedOptions.numCandidates ?? 1);
@@ -850,28 +862,15 @@ export class RalphLoop {
           });
         }
 
-        // Intuition-based scoring: blend experience-weighted quality signal
+        // Intuition-based scoring: advisory only, no score blending
         if (normalizedOptions.useIntuition && candidates.length > 0) {
           try {
             const { IntuitionEngine } = await import('../intuition/index.js');
             const intuitionEngine = new IntuitionEngine();
-            const intuitionAssessment = intuitionEngine.assess(
-              currentCode,
-              normalizedOptions.project ?? 'default',
-              candidates.map((c: { code: string }) => c.code),
-            );
-
-            // Blend: 70% analytical score + 30% intuition signal
-            evaluation.score = evaluation.score * 0.7 + intuitionAssessment.score * 0.3;
-
-            if (intuitionAssessment.usedProceduralShortcut) {
-              normalizedOptions.onThought?.(`[intuition] Procedural shortcut: ${intuitionAssessment.explanation}`);
-            }
-
-            // Record outcome for future learning
+            // Record outcome for future learning (advisory only, no score blending)
             intuitionEngine.recordOutcome(currentCode, normalizedOptions.project ?? 'default', evaluation.score);
           } catch (e) {
-            normalizedOptions.onThought?.(`Intuition analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
+            normalizedOptions.onThought?.(`Intuition recording skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
           }
         }
 

@@ -1,7 +1,28 @@
 #!/bin/bash
-# Pre-commit hook for documentation validation + test verification
+set -e
+
+# Pre-commit hook for documentation validation + test verification + integration enforcement
 
 echo "🔍 Running pre-commit checks..."
+
+# --- Orphaned-file gate: new src/ files must be imported somewhere ---
+for file in $(git diff --cached --name-only --diff-filter=A | grep '^src/.*\.ts$' || true); do
+    basename=$(basename "$file" .ts)
+    # Skip index.ts files and type definition files
+    if [[ "$basename" == "index" ]]; then continue; fi
+    if [[ "$basename" == *".d" ]]; then continue; fi
+
+    # Count imports of this file from other files in src/ (path-based only, avoids symbol-name false positives)
+    imports=$(grep -rE "from\s+.*/$basename|from\s+$basename|import\s+.*/$basename|import\s+$basename" src/ --include="*.ts" | grep -v "$file" | wc -l || true)
+
+    if [ "$imports" -eq 0 ]; then
+        echo ""
+        echo "ERROR: $file is not imported anywhere in src/."
+        echo "Orphaned files are not allowed. Wire it up or remove it before committing."
+        echo ""
+        exit 1
+    fi
+done
 
 # --- Documentation checks ---
 if git diff --cached --name-only | grep -q "docs/THE_BIBLE.md"; then

@@ -18,6 +18,7 @@ import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { normalizeThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
+import { Logger } from '../../utils/Logger.js';
 
 function normalizeMessageContent(content: unknown): string {
   if (typeof content === 'string') return content;
@@ -157,7 +158,14 @@ export class OpenAIProvider extends BaseProvider {
         finish_reason?: string;
       }> | undefined;
       const choice = choices?.[0];
-      const content = normalizeMessageContent(choice?.message?.content);
+      let content = normalizeMessageContent(choice?.message?.content);
+
+      // Fallback: use reasoning_content as content when content is empty
+      // (e.g. Kimi K2-Plus returns all output in reasoning_content with content: null)
+      if (!content && choice?.message?.reasoning_content) {
+        content = choice.message.reasoning_content;
+        Logger.debug('OpenAIProvider', 'Using reasoning_content as fallback');
+      }
 
       const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
 

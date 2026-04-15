@@ -1089,24 +1089,11 @@ const result = await generateMusicToVisual({
 
 ### 27. Narrative Archaeology System
 
-**Location:** `src/narrative/`
+**Location:** Extracted to `dev-archaeology` private repo (`~/workspaces/dev-archaeology/`)
 
 **Purpose:** Long-term narrative tracking and archaeological analysis of generated content.
 
-**Key Components:**
-- `NarrativeArchaeologist.ts` - Analyzes content evolution over time
-- `LineageTracker.ts` - Tracks code lineage and influences
-- `archaeology.db` - SQLite database for narrative storage
-
-**Usage:**
-```typescript
-import { NarrativeArchaeologist } from './src/narrative/NarrativeArchaeologist.js';
-
-const archaeologist = new NarrativeArchaeologist();
-await archaeologist.record({ id: 'gen-123', prompt, code, domain });
-```
-
-**Status:** Active - Stores data in `narrative/data/archaeology.db`.
+**Status:** Extracted — narrative pipeline no longer lives in this repo. Git history preserved on `narrative/liminal-archaeology` branch.
 
 ---
 

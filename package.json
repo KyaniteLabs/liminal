@@ -48,7 +48,9 @@
     "tui:bridge": "npm run build && node scripts/start-bubbletea-tui.mjs --bridge-only",
     "tui:bubbletea": "npm run tui",
     "test:ci:fast": "LIMINAL_CI_FAST=1 vitest run --coverage --pool=forks",
-    "test:ci:slow": "LIMINAL_CI_SLOW=1 vitest run --pool=forks"
+    "test:ci:slow": "LIMINAL_CI_SLOW=1 vitest run --pool=forks",
+    "check:orphans": "bash scripts/check-orphans.sh",
+    "verify:integration": "npm run build && vitest run --run"
   },
   "keywords": [
     "generative-art",

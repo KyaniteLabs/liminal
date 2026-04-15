@@ -29,7 +29,7 @@ const STRICT_MODE = process.argv.includes('--strict');
 const COVERAGE_PATH = resolve(ROOT, 'coverage/coverage-final.json');
 
 // Modules that are experimental/UI — deferred from enforcement
-const DEFERRED_MODULES = ['src/gui/', 'src/tui/', 'src/narrative/'];
+const DEFERRED_MODULES = ['src/gui/', 'src/tui/'];
 
 // ─── Main ────────────────────────────────────────────────────────────
 if (!existsSync(COVERAGE_PATH)) {
@@ -119,7 +119,7 @@ if (criticalZeros.length > 0) {
 
 // Deferred zeros
 if (deferredZeros.length > 0) {
-  console.log(`  .. ${deferredZeros.length} deferred files with 0% coverage (GUI/TUI/narrative):`);
+  console.log(`  .. ${deferredZeros.length} deferred files with 0% coverage (GUI/TUI):`);
   for (const f of deferredZeros.sort((a, b) => a.path.localeCompare(b.path))) {
     console.log(`     ${f.path}`);
   }

@@ -31,6 +31,33 @@ export class GalleryFSAdapter {
     return ref;
   }
 
+  async saveOrganism(
+    project: string,
+    version: number,
+    musicCode: string,
+    visualCode: string,
+  ): Promise<LiminalObjectRef> {
+    await this.gallery.saveOrganism(project, version, musicCode, visualCode);
+
+    const payload = {
+      type: 'organism',
+      musicCode: musicCode.trim() || musicCode,
+      visualCode: visualCode.trim() || visualCode,
+    };
+
+    const ref = this.fs.writeArtifact({
+      kind: 'organism',
+      content: JSON.stringify(payload),
+      filename: `v${version}.json`,
+      metadata: { project, version, type: 'organism', savedAt: new Date().toISOString() },
+    });
+
+    this.fs.writeRef(`gallery/${project}/v${version}`, ref);
+    this.fs.writeRef(`gallery/${project}/latest`, ref);
+
+    return ref;
+  }
+
   getGallery(): Gallery {
     return this.gallery;
   }

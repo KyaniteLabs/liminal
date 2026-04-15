@@ -1,6 +1,7 @@
 export type LiminalObjectKind =
   | 'generated-code'
   | 'gallery-version'
+  | 'organism'
   | 'seed'
   | 'compost-fragment'
   | 'run'

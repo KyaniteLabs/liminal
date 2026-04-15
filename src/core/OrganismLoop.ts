@@ -16,6 +16,9 @@ import { eventBus, EventTypes } from './EventBus.js';
 import type { LoopResult, NormalizedLoopOptions } from './LoopConfig.js';
 import { formatSeedForPrompt } from './lir/LIRPromptFormatter.js';
 import { Logger } from '../utils/Logger.js';
+import { GalleryFSAdapter } from '../fs/adapters/GalleryFSAdapter.js';
+import type { LiminalFS } from '../fs/LiminalFS.js';
+import type { LiminalObjectRef } from '../fs/types.js';
 
 /**
  * Run the Ralph-Wiggum Loop in organism mode.
@@ -25,9 +28,14 @@ import { Logger } from '../utils/Logger.js';
 export async function runOrganismMode(
   prompt: string,
   options: NormalizedLoopOptions,
-  startTime: number
+  startTime: number,
+  liminalFs?: LiminalFS,
+  sessionId?: string,
 ): Promise<LoopResult> {
   const gallery = new Gallery(options.galleryDir);
+  const adapter = liminalFs ? new GalleryFSAdapter(gallery, liminalFs) : undefined;
+  let runArtifact: LiminalObjectRef | undefined;
+  const runId = sessionId ?? `sess-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   eventBus.emit(EventTypes.PROCESS_START, 'RalphLoop', { process: 'ralph-loop', mode: 'organism' });
 
@@ -39,7 +47,7 @@ export async function runOrganismMode(
 
   for (let i = 1; i <= options.maxIterations; i++) {
     if (options.signal?.aborted) {
-      return {
+      const result: LoopResult = {
         code: lastMusic + '\n' + lastVisual,
         iterations: iteration,
         completed: false,
@@ -49,6 +57,21 @@ export async function runOrganismMode(
         finalScore: bestScore,
         project: options.project,
       };
+      if (liminalFs) {
+        try {
+          liminalFs.recordRun({
+            runId,
+            prompt,
+            project: options.project,
+            status: 'suspended',
+            artifacts: runArtifact ? [runArtifact] : [],
+            metadata: { mode: 'organism', iterations: iteration, finalScore: bestScore, reason: 'aborted by user' },
+          });
+        } catch {
+          // LiminalFS failure must not affect loop operation
+        }
+      }
+      return result;
     }
     iteration = i;
 
@@ -109,7 +132,15 @@ export async function runOrganismMode(
     }
 
     if (options.project) {
-      await gallery.saveOrganism(options.project, i, result.musicCode, result.visualCode);
+      if (adapter) {
+        try {
+          runArtifact = await adapter.saveOrganism(options.project, i, result.musicCode, result.visualCode);
+        } catch {
+          // GalleryFSAdapter failure must not affect loop operation
+        }
+      } else {
+        await gallery.saveOrganism(options.project, i, result.musicCode, result.visualCode);
+      }
     }
     options.onProgress?.({
       iteration: i,
@@ -122,6 +153,21 @@ export async function runOrganismMode(
   const duration = Date.now() - startTime;
 
   eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', { process: 'ralph-loop', success: true, durationMs: Date.now() - startTime, iterations: iteration });
+
+  if (liminalFs) {
+    try {
+      liminalFs.recordRun({
+        runId,
+        prompt,
+        project: options.project,
+        status: 'completed',
+        artifacts: runArtifact ? [runArtifact] : [],
+        metadata: { mode: 'organism', iterations: iteration, finalScore: bestScore },
+      });
+    } catch {
+      // LiminalFS failure must not affect loop operation
+    }
+  }
 
   return {
     code: lastMusic + '\n' + lastVisual,

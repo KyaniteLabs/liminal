@@ -117,14 +117,36 @@ export class RalphLoop {
       }
     }
 
+    // Initialize LiminalFS once per run (used by all modes)
+    const liminalFs = LiminalFS.open(process.cwd());
+
+    try {
+      liminalFs.recordRun({
+        runId: sessionId,
+        prompt,
+        project: normalizedOptions.project,
+        status: 'started',
+        metadata: { maxIterations: normalizedOptions.maxIterations, mode: normalizedOptions.mode },
+      });
+    } catch {
+      // LiminalFS run recording is non-critical
+    }
+
     // Organism mode: delegate entirely to OrganismLoop
     if (normalizedOptions.mode === 'organism') {
-      return runOrganismMode(prompt, normalizedOptions, startTime);
+      try {
+        return await runOrganismMode(prompt, normalizedOptions, startTime, liminalFs, sessionId);
+      } finally {
+        try {
+          liminalFs.close();
+        } catch {
+          // ignore close errors
+        }
+      }
     }
 
     // Initialize subsystems
     const gallery = new Gallery(normalizedOptions.galleryDir);
-    const liminalFs = LiminalFS.open(process.cwd());
     const projectStore = liminalFs.getProjectStore();
     const stagnation = new StagnationDetector(normalizedOptions.stagnationThreshold ?? 7);
     const successRateTracker = new SuccessRateTracker({
@@ -1350,6 +1372,7 @@ export class RalphLoop {
     if (!reason) {
       if (iteration >= normalizedOptions.maxIterations) {
         reason = `max iterations reached (${normalizedOptions.maxIterations})`;
+        completed = true;
       } else {
         reason = 'Loop terminated';
       }
@@ -1360,67 +1383,113 @@ export class RalphLoop {
       await gitIntegration.endRun(reason || 'loop ended', sessionId);
     }
 
-    const duration = Date.now() - startTime;
+    try {
+      const duration = Date.now() - startTime;
 
-    // Report final result to Meta-Harness (skip during tests to avoid log pollution)
-    if (process.env.NODE_ENV !== 'test') {
-      await metaHarness.onGenerationComplete({
-        success: completed,
-        model: lastModel || (normalizedOptions.useSwarm ? 'swarm' : 'local'),
-        domain: normalizedOptions.collabDomain || 'p5',
-        prompt: prompt,
-        code: currentCode,
-        error: completed ? undefined : reason,
-        duration: duration,
-        thinking: lastThinking,
-      });
-    }
-
-    // Persist archive learning data
-    if (qualityArchive) {
-      await qualityArchive.save();
-    }
-
-    // Persist MAP-Elites and AestheticModel across runs
-    if (normalizedOptions.useMapElites) {
-      const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
-      const mapElites = normalizedOptions._mapElites;
-      if (mapElites) {
-        await mapElites.save(mapElitesPath).catch((err) => {
-          Logger.warn('RalphLoop', 'Failed to save MAP-Elites:', err instanceof Error ? err.message : err);
+      // Report final result to Meta-Harness (skip during tests to avoid log pollution)
+      if (process.env.NODE_ENV !== 'test') {
+        await metaHarness.onGenerationComplete({
+          success: completed,
+          model: lastModel || (normalizedOptions.useSwarm ? 'swarm' : 'local'),
+          domain: normalizedOptions.collabDomain || 'p5',
+          prompt: prompt,
+          code: currentCode,
+          error: completed ? undefined : reason,
+          duration: duration,
+          thinking: lastThinking,
         });
       }
-    }
-    if (aestheticModel) {
-      const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
-      await aestheticModel.save(aestheticPath).catch((err) => {
-        Logger.warn('RalphLoop', 'Failed to save aesthetic model:', err instanceof Error ? err.message : err);
+
+      // Persist archive learning data
+      if (qualityArchive) {
+        await qualityArchive.save();
+      }
+
+      // Persist MAP-Elites and AestheticModel across runs
+      if (normalizedOptions.useMapElites) {
+        const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
+        const mapElites = normalizedOptions._mapElites;
+        if (mapElites) {
+          await mapElites.save(mapElitesPath).catch((err) => {
+            Logger.warn('RalphLoop', 'Failed to save MAP-Elites:', err instanceof Error ? err.message : err);
+          });
+        }
+      }
+      if (aestheticModel) {
+        const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
+        await aestheticModel.save(aestheticPath).catch((err) => {
+          Logger.warn('RalphLoop', 'Failed to save aesthetic model:', err instanceof Error ? err.message : err);
+        });
+      }
+
+      eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', {
+        process: 'ralph-loop',
+        success: completed,
+        durationMs: Date.now() - startTime,
+        reason,
+        iterations: iteration,
+        finalScore,
       });
+
+      // Phase 5A: Record run in LiminalFS
+      let runArtifact: import('../fs/types.js').LiminalObjectRef | undefined;
+      if (currentCode) {
+        try {
+          runArtifact = liminalFs.writeArtifact({
+            kind: 'generated-code',
+            content: currentCode,
+            filename: 'final.js',
+            metadata: {
+              project: normalizedOptions.project,
+              iterations: iteration,
+              finalScore,
+              reason,
+              duration,
+              sessionId,
+            },
+          });
+        } catch {
+          // LiminalFS failure must not affect loop operation
+        }
+      }
+
+      try {
+        liminalFs.recordRun({
+          runId: sessionId,
+          prompt,
+          project: normalizedOptions.project,
+          status: completed ? 'completed' : 'suspended',
+          artifacts: runArtifact ? [runArtifact] : [],
+          metadata: {
+            iterations: iteration,
+            finalScore,
+            reason,
+            duration,
+          },
+        });
+      } catch {
+        // LiminalFS failure must not affect loop operation
+      }
+
+      return {
+        code: currentCode,
+        iterations: iteration,
+        completed,
+        reason,
+        timestamp: new Date().toISOString(),
+        duration,
+        finalScore,
+        project: normalizedOptions.project,
+        thinking: lastThinking,
+        model: lastModel,
+      };
+    } finally {
+      try {
+        liminalFs.close();
+      } catch {
+        // ignore close errors
+      }
     }
-
-    eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', {
-      process: 'ralph-loop',
-      success: completed,
-      durationMs: Date.now() - startTime,
-      reason,
-      iterations: iteration,
-      finalScore,
-    });
-
-    liminalFs.close();
-
-    return {
-      code: currentCode,
-      iterations: iteration,
-      completed,
-      reason,
-      timestamp: new Date().toISOString(),
-      duration,
-      finalScore,
-      project: normalizedOptions.project,
-      thinking: lastThinking,
-      model: lastModel,
-    };
   }
 
   /**

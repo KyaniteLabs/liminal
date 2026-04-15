@@ -672,6 +672,7 @@ export class RalphLoop {
 
                   // Incumbent preservation: only replace if repair is better or equal
                   if (repairEval.score >= evaluation.score) {
+                    // eslint-disable-next-line require-atomic-updates -- sequential loop, no concurrent mutation
                     currentCode = repairCode;
                     evaluation = repairEval;
                     if (normalizedOptions.chatMode) {

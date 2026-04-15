@@ -16,7 +16,7 @@ interface RateLimitConfig {
 }
 
 const DEFAULT_LIMITS: Record<string, RateLimitConfig> = {
-  llmCall: { minDelayMs: 2000, maxPerMinute: 5 },
+  llmCall: { minDelayMs: 1000, maxPerMinute: 20 },
   tuiLlmCall: { minDelayMs: 500, maxPerMinute: 30 },
   fileWrite: { minDelayMs: 500, maxPerMinute: 10 },
   fileRead: { minDelayMs: 0, maxPerMinute: 1000 },

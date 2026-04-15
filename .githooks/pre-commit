@@ -53,9 +53,10 @@ echo "✅ Documentation checks passed"
 CHANGED_SRC=$(git diff --cached --name-only | grep "^src/.*\.ts$" | head -10)
 if [ -n "$CHANGED_SRC" ]; then
     echo "🧪 Running tests for changed source files..."
-    # vitest --related runs only tests that import the changed files
-    npx vitest run --related $CHANGED_SRC --reporter=verbose 2>&1 | tail -5
-    if [ $? -ne 0 ]; then
+    # vitest --changed runs only tests affected by changed files
+    npx vitest run --changed --reporter=verbose 2>&1 | tail -5
+    VITEST_EXIT=${PIPESTATUS[0]}
+    if [ $VITEST_EXIT -ne 0 ]; then
         echo "❌ Tests failed for changed files. Fix before committing."
         echo "   Run with --no-verify to skip (not recommended)."
         exit 1

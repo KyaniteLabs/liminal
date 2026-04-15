@@ -14,7 +14,7 @@ import type {
   ProviderCapabilities,
   StreamEvent,
 } from '../ProviderTypes.js';
-import { BaseProvider } from './BaseProvider.js';
+import { BaseProvider, usesMaxCompletionTokens } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { extractOpenRouterThinking } from '../ThinkingNormalizer.js';
@@ -81,6 +81,7 @@ export class OpenRouterProvider extends BaseProvider {
       const url = `${this.config.baseUrl}/chat/completions`;
       const headers = this.getHeaders();
 
+      const maxTokensValue = req.maxTokens ?? this.config.maxTokens;
       const body: Record<string, unknown> = {
         model: this.config.model,
         messages: [
@@ -88,8 +89,10 @@ export class OpenRouterProvider extends BaseProvider {
           { role: 'user', content: req.userPrompt },
         ],
         temperature: req.temperature ?? this.config.temperature,
-        max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
+      if (maxTokensValue !== undefined) {
+        body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValue;
+      }
 
       const jsonOnlyPrompt = /respond with json only/i.test(req.userPrompt);
       if (jsonOnlyPrompt && this.capabilities.jsonMode && !(req.tools && req.tools.length > 0)) {
@@ -190,6 +193,7 @@ export class OpenRouterProvider extends BaseProvider {
     const url = `${this.config.baseUrl}/chat/completions`;
     const headers = this.getHeaders();
 
+    const maxTokensValueStream = req.maxTokens ?? this.config.maxTokens;
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -197,9 +201,11 @@ export class OpenRouterProvider extends BaseProvider {
         { role: 'user', content: req.userPrompt },
       ],
       temperature: req.temperature ?? this.config.temperature,
-      max_tokens: req.maxTokens ?? this.config.maxTokens,
       stream: true,
     };
+    if (maxTokensValueStream !== undefined) {
+      body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValueStream;
+    }
 
     if (req.thinking?.enabled) {
       body.reasoning = {

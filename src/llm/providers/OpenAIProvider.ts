@@ -12,7 +12,7 @@ import type {
   ProviderCapabilities,
   StreamEvent,
 } from '../ProviderTypes.js';
-import { BaseProvider } from './BaseProvider.js';
+import { BaseProvider, usesMaxCompletionTokens } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { normalizeThinking } from '../ThinkingNormalizer.js';
@@ -81,6 +81,7 @@ export class OpenAIProvider extends BaseProvider {
         headers['User-Agent'] = 'claude-code/1.0';
       }
 
+      const maxTokensValue = req.maxTokens ?? this.config.maxTokens;
       const body: Record<string, unknown> = {
         model: this.config.model,
         messages: [
@@ -88,8 +89,10 @@ export class OpenAIProvider extends BaseProvider {
           { role: 'user', content: req.userPrompt },
         ],
         temperature: req.temperature ?? this.config.temperature,
-        max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
+      if (maxTokensValue !== undefined) {
+        body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValue;
+      }
 
       // Add reasoning effort for thinking-capable models
       if (req.thinking?.enabled && this.capabilities.thinking) {
@@ -241,6 +244,7 @@ export class OpenAIProvider extends BaseProvider {
       headers['User-Agent'] = 'claude-code/1.0';
     }
 
+    const maxTokensValueStream = req.maxTokens ?? this.config.maxTokens;
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -248,9 +252,11 @@ export class OpenAIProvider extends BaseProvider {
         { role: 'user', content: req.userPrompt },
       ],
       temperature: req.temperature ?? this.config.temperature,
-      max_tokens: req.maxTokens ?? this.config.maxTokens,
       stream: true,
     };
+    if (maxTokensValueStream !== undefined) {
+      body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValueStream;
+    }
 
     if (req.thinking?.enabled && this.capabilities.thinking) {
       if (this.capabilities.thinkingStyle === 'effort_level') {

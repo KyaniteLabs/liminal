@@ -36,7 +36,15 @@ async function safeStartServer(server, port) {
   }
 }
 
-describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests', () => {
+function skipIfNoLLM() {
+  if (!LLMClient.isConfigured()) {
+    console.warn('Skipping test: LLM not configured');
+    return true;
+  }
+  return false;
+}
+
+describe('Generator-Renderer Integration Tests', () => {
   let previewServer;
   let renderer;
   const TEST_PORT = 3457;
@@ -88,6 +96,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('Complete Generation-Render Workflow', () => {
     test('should generate p5.js sketch and render via PreviewServer', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a simple p5.js sketch with a red circle on white background';
 
       // Generate p5.js sketch
@@ -114,6 +123,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should generate sketch, render via PreviewServer, and capture screenshot', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a p5.js sketch with a blue rectangle on black background';
 
       // Generate p5.js sketch
@@ -139,6 +149,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should validate generated code renders correctly', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a p5.js sketch with multiple colored shapes';
 
       // Generate p5.js sketch
@@ -165,6 +176,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('P5.js Generation and Rendering', () => {
     test('should generate and render particle system sketch', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a p5.js particle system with 50 particles';
 
       // Generate particle system
@@ -188,6 +200,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should generate and render animated sketch', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create an animated p5.js sketch with moving elements';
 
       // Generate animated sketch
@@ -211,6 +224,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should generate and render interactive sketch', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a p5.js sketch that responds to mouse interaction';
 
       // Generate interactive sketch
@@ -233,6 +247,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should generate and render cellular automata sketch', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a p5.js cellular automata simulation';
 
       // Generate cellular automata
@@ -257,6 +272,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('Screenshot Quality and Validation', () => {
     test('should produce high-quality screenshots for generated sketches', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a high-quality p5.js visualization';
 
       // Generate sketch
@@ -279,6 +295,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should handle different canvas sizes in generated sketches', async () => {
+    if (skipIfNoLLM()) return;
       const sizes = [
         { width: 400, height: 400 },
         { width: 800, height: 600 },
@@ -317,6 +334,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should validate screenshot dimensions match canvas size', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a p5.js sketch with 600x400 canvas';
 
       // Generate sketch
@@ -338,6 +356,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('Error Handling and Edge Cases', () => {
     test('should handle generation errors gracefully', async () => {
+    if (skipIfNoLLM()) return;
       // Use edge case prompts that might cause issues
       const edgeCasePrompts = [
         '',
@@ -378,6 +397,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should handle unicode and special characters in prompts', async () => {
+    if (skipIfNoLLM()) return;
       const unicodePrompts = [
         'Create sketch with emoji 🎨 🖼️ ✨',
         'Create sketch with 中文 characters',
@@ -411,6 +431,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should handle multiple rapid generation-render cycles', async () => {
+    if (skipIfNoLLM()) return;
       const cycles = 5;
 
       for (let i = 0; i < cycles; i++) {
@@ -438,6 +459,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('Integration with Context and Iteration', () => {
     test('should generate and render sketches with iteration context', async () => {
+    if (skipIfNoLLM()) return;
       const contexts = [
         { iteration: 1, previousCode: '' },
         { iteration: 2, previousCode: 'function setup() { createCanvas(400, 400); }' },
@@ -472,6 +494,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should demonstrate evolution across multiple iterations', async () => {
+    if (skipIfNoLLM()) return;
       const iterations = 3;
       const screenshotPaths = [];
 
@@ -513,6 +536,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('Performance and Resource Management', () => {
     test('should complete generation and render within reasonable time', async () => {
+    if (skipIfNoLLM()) return;
       const startTime = Date.now();
 
       const prompt = 'Create a simple p5.js sketch';
@@ -538,6 +562,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should handle memory efficiently for multiple renders', async () => {
+    if (skipIfNoLLM()) return;
       const iterations = 3;
       const screenshotPaths = [];
 
@@ -564,6 +589,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('Code Quality and Validation', () => {
     test('should generate syntactically valid p5.js code', async () => {
+    if (skipIfNoLLM()) return;
       const prompts = [
         'Create a particle system',
         'Create an animation',
@@ -603,6 +629,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should include proper p5.js structure in generated code', async () => {
+    if (skipIfNoLLM()) return;
       const prompt = 'Create a complete p5.js sketch';
       const sketchCode = await P5Generator.generate(prompt, {});
 
@@ -626,6 +653,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
 
   describe('Real-World Scenarios', () => {
     test('should handle typical creative coding workflow', async () => {
+    if (skipIfNoLLM()) return;
       // Simulate a typical user workflow
       const workflow = [
         { prompt: 'Create a simple particle system', description: 'Initial creation' },
@@ -674,6 +702,7 @@ describe.skipIf(!LLMClient.isConfigured())('Generator-Renderer Integration Tests
     }, GENERATION_RENDER_TIMEOUT);
 
     test('should support rapid prototyping iterations', async () => {
+    if (skipIfNoLLM()) return;
       const prototypeIterations = 5;
       const basePrompt = 'Create a generative art sketch';
 

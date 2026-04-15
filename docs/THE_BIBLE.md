@@ -2,8 +2,8 @@
 
 **Version:** 2.1.0 - Beta  
 **Date:** 2026-04-15
-**Status:** Mainline clean; PR backlog closed; ROI salvage branch prepared
-**Branch:** salvage/roi-finish-20260415
+**Status:** Security redteam adapter salvage in progress
+**Branch:** security/redteam-salvage-20260415
 
 ---
 
@@ -40,6 +40,22 @@ Security triage result:
 - `agent-security-hardening` A1-A9 patches are already patch-equivalent to `main`; no hidden security value remains there.
 - `tmp/free-main` URL-validator security slice is superseded by current `main`, which already has injectable DNS lookup, IPv6 localhost handling, and degraded-DNS logging.
 - `security/redteam-remediation-20260409` remains a broad security/adapters lane and should be reviewed separately, not mixed into the small ROI salvage branch.
+
+### Security Redteam Salvage (2026-04-15)
+
+The stale `security/redteam-remediation-20260409` branch is being mined by security boundary rather than merged wholesale.
+
+Merged into `security/redteam-salvage-20260415`:
+- Tone adapter: blocks browser escape hatches and string-based dynamic execution before legacy Tone code execution.
+- HTML adapter: strips script tags, inline event handlers, JavaScript URLs/data URLs, CSS imports, and CSS expression calls before render/export.
+- P5 adapter: blocks unsafe generated `setup()` and `draw()` bodies before the legacy function-constructor path.
+- Three adapter: blocks browser escape hatches before legacy Three code execution and cleans tracking globals in `finally`.
+- Hydra adapter: blocks browser escape hatches before legacy Hydra function-constructor execution.
+
+Explicit rejections:
+- The stale branch's `new Function` "sandbox" pattern was not adopted as a real sandbox.
+- DOMPurify/jsdom were not added because new dependencies require explicit approval.
+- `bin/liminal` changes in that branch were TUI log redirection, not a current command-injection fix.
 
 ---
 

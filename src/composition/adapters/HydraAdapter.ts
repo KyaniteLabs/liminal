@@ -3,6 +3,9 @@
  *
  * Renders Hydra video synthesis in a container and exposes
  * synth outputs and frame data for cross-layer communication.
+ *
+ * SECURITY: generated Hydra code is untrusted. Block browser escape hatches
+ * before the legacy Function constructor path can execute.
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
@@ -42,6 +45,35 @@ type HydraConstructor = new (options: {
   width?: number;
   height?: number;
 }) => HydraSynth;
+
+const DANGEROUS_HYDRA_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
+  { pattern: /\bwindow\s*[[.]/i, name: 'window access' },
+  { pattern: /\bdocument\s*[[.]/i, name: 'document access' },
+  { pattern: /\bfetch\s*\(/i, name: 'fetch API' },
+  { pattern: /\beval\s*\(/i, name: 'eval()' },
+  { pattern: /\bnew\s+Function\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bFunction\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bsetTimeout\s*\(\s*['"`]/i, name: 'setTimeout string execution' },
+  { pattern: /\bsetInterval\s*\(\s*['"`]/i, name: 'setInterval string execution' },
+  { pattern: /\bimport\s*\(/i, name: 'dynamic import()' },
+  { pattern: /\bimportScripts\s*\(/i, name: 'importScripts()' },
+  { pattern: /\bXMLHttpRequest\b/i, name: 'XMLHttpRequest' },
+  { pattern: /\bWebSocket\b/i, name: 'WebSocket' },
+  { pattern: /\bWorker\b/i, name: 'Web Worker' },
+  { pattern: /\blocalStorage\b/i, name: 'localStorage' },
+  { pattern: /\bsessionStorage\b/i, name: 'sessionStorage' },
+  { pattern: /\bindexedDB\b/i, name: 'indexedDB' },
+  { pattern: /\bopen\s*\(\s*['"`]/i, name: 'window.open()' },
+  { pattern: /\blocation\s*[=.]/i, name: 'location access' },
+  { pattern: /\bparent\s*[[.]/i, name: 'parent access' },
+  { pattern: /\btop\s*[[.]/i, name: 'top access' },
+];
+
+function findDangerousHydraCodePatterns(code: string): string[] {
+  return DANGEROUS_HYDRA_CODE_PATTERNS
+    .filter(({ pattern }) => pattern.test(code))
+    .map(({ name }) => name);
+}
 
 /**
  * Adapter for Hydra video synthesis layers.
@@ -131,10 +163,15 @@ export class HydraAdapter implements LayerAdapter {
         }
       }
 
-      // Execute the Hydra code
-      // eslint-disable-next-line no-new-func
-      const runCode = new Function(userCode);
-      runCode();
+      const blockedPatterns = findDangerousHydraCodePatterns(userCode);
+      if (blockedPatterns.length > 0) {
+        Logger.warn('HydraAdapter', `Blocked unsafe Hydra layer code: ${blockedPatterns.join(', ')}`);
+      } else {
+        // Execute the Hydra code
+        // eslint-disable-next-line no-new-func
+        const runCode = new Function(userCode);
+        runCode();
+      }
     } catch (error) {
       Logger.error('HydraAdapter', 'Error executing Hydra code:', error);
     }

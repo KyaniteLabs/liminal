@@ -5,6 +5,9 @@
  * for cross-layer communication. Supports camera position exports and
  * mouse coordinate imports from p5 for camera control.
  *
+ * SECURITY: generated Three.js code is untrusted. Block browser escape
+ * hatches before the legacy eval path can execute.
+ *
  * @example
  * ```typescript
  * const adapter = new ThreeAdapter();
@@ -66,6 +69,35 @@ interface ThreeInstance {
   renderer: THREERenderer;
   animationId?: number;
   objects: THREEObject[];
+}
+
+const DANGEROUS_THREE_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
+  { pattern: /\bwindow\s*[[.]/i, name: 'window access' },
+  { pattern: /\bdocument\s*[[.]/i, name: 'document access' },
+  { pattern: /\bfetch\s*\(/i, name: 'fetch API' },
+  { pattern: /\beval\s*\(/i, name: 'eval()' },
+  { pattern: /\bnew\s+Function\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bFunction\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bsetTimeout\s*\(\s*['"`]/i, name: 'setTimeout string execution' },
+  { pattern: /\bsetInterval\s*\(\s*['"`]/i, name: 'setInterval string execution' },
+  { pattern: /\bimport\s*\(/i, name: 'dynamic import()' },
+  { pattern: /\bimportScripts\s*\(/i, name: 'importScripts()' },
+  { pattern: /\bXMLHttpRequest\b/i, name: 'XMLHttpRequest' },
+  { pattern: /\bWebSocket\b/i, name: 'WebSocket' },
+  { pattern: /\bWorker\b/i, name: 'Web Worker' },
+  { pattern: /\blocalStorage\b/i, name: 'localStorage' },
+  { pattern: /\bsessionStorage\b/i, name: 'sessionStorage' },
+  { pattern: /\bindexedDB\b/i, name: 'indexedDB' },
+  { pattern: /\bopen\s*\(\s*['"`]/i, name: 'window.open()' },
+  { pattern: /\blocation\s*[=.]/i, name: 'location access' },
+  { pattern: /\bparent\s*[[.]/i, name: 'parent access' },
+  { pattern: /\btop\s*[[.]/i, name: 'top access' },
+];
+
+function findDangerousThreeCodePatterns(code: string): string[] {
+  return DANGEROUS_THREE_CODE_PATTERNS
+    .filter(({ pattern }) => pattern.test(code))
+    .map(({ name }) => name);
 }
 
 /**
@@ -157,28 +189,34 @@ export class ThreeAdapter implements LayerAdapter {
       }
     }
 
+    // Wrap code to track object creation
+    const wrappedCode = layer.code
+      .replace(/new\s+THREE\.Mesh\s*\(/g, '(() => { const m = new THREE.Mesh(')
+      .replace(/new\s+THREE\.Mesh\s*\(([^)]+)\)/g, '(() => { const m = new THREE.Mesh($1); __trackObject(m); return m; })()');
+
+    const blockedPatterns = findDangerousThreeCodePatterns(wrappedCode);
+
     // Execute user code with wrapped THREE access
-    try {
-      // Define tracking function in eval context
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).__trackObject = (obj: THREEObject) => {
-        objects.push(obj);
-        return obj;
-      };
-      
-      // Wrap code to track object creation
-      const wrappedCode = layer.code
-        .replace(/new\s+THREE\.Mesh\s*\(/g, '(() => { const m = new THREE.Mesh(')
-        .replace(/new\s+THREE\.Mesh\s*\(([^)]+)\)/g, '(() => { const m = new THREE.Mesh($1); __trackObject(m); return m; })()');
-      
-      // eslint-disable-next-line no-eval
-      eval(wrappedCode);
-      
-      // Clean up tracking function
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (window as any).__trackObject;
-    } catch (error) {
-      Logger.error('ThreeAdapter', 'Error executing Three.js code:', error);
+    if (blockedPatterns.length > 0) {
+      Logger.warn('ThreeAdapter', `Blocked unsafe Three.js layer code: ${blockedPatterns.join(', ')}`);
+    } else {
+      try {
+        // Define tracking function in eval context
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).__trackObject = (obj: THREEObject) => {
+          objects.push(obj);
+          return obj;
+        };
+
+        // eslint-disable-next-line no-eval
+        eval(wrappedCode);
+      } catch (error) {
+        Logger.error('ThreeAdapter', 'Error executing Three.js code:', error);
+      } finally {
+        // Clean up tracking function
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (window as any).__trackObject;
+      }
     }
 
     // Apply WebGL blend mode if not normal

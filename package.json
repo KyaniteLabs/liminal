@@ -28,6 +28,7 @@
     "build": "tsc",
     "test": "vitest run",
     "test:integration": "vitest run test/integration",
+    "verify:integration": "npm run build && vitest run test/integration --coverage=false",
     "test:e2e": "vitest run test/e2e",
     "test:cloud": "RUN_CLOUD_MODEL_TESTS=1 vitest run test/e2e",
     "gui": "node gui/start.js",

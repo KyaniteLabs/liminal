@@ -978,6 +978,18 @@ export class LLMClient {
       toolResults = [];
       for (const tc of result.toolCalls) {
         toolCallsMade++;
+
+        // Coding-agent convention: models like Kimi K2-Plus return generated code
+        // via a 'submit_code' tool call instead of message content. Extract directly.
+        if (tc.name === 'submit_code') {
+          try {
+            const args = JSON.parse(tc.arguments);
+            if (typeof args.code === 'string' && args.code.length > 0) {
+              return { content: args.code, iterations, toolCallsMade, success: true };
+            }
+          } catch { /* fall through to normal tool execution */ }
+        }
+
         try {
           let args: Record<string, unknown>;
           try { args = JSON.parse(tc.arguments); } catch { args = {}; }

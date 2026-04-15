@@ -9,24 +9,42 @@
  */
 
 import { Gallery } from '../gallery/Gallery.js';
+import { GalleryFSAdapter } from '../fs/adapters/GalleryFSAdapter.js';
 import { mergeSketchCode } from '../utils/mergeSketchCode.js';
 import { ContextAccumulation } from './ContextAccumulation.js';
 import type { NormalizedLoopOptions, IterationContext } from './LoopConfig.js';
+import type { LiminalFS } from '../fs/LiminalFS.js';
 
 /**
  * Handles gallery persistence and merge operations within the loop.
  */
 export class LoopPersistence {
+  private adapter?: GalleryFSAdapter;
+
   constructor(
     private gallery: Gallery,
-    private options: NormalizedLoopOptions
-  ) {}
+    private options: NormalizedLoopOptions,
+    private liminalFs?: LiminalFS,
+  ) {
+    if (this.liminalFs) {
+      this.adapter = new GalleryFSAdapter(this.gallery, this.liminalFs);
+    }
+  }
 
   /**
    * Save an iteration to the gallery.
    */
   async saveIteration(iteration: number, code: string): Promise<void> {
     if (!this.options.project) return;
+
+    if (this.adapter) {
+      try {
+        await this.adapter.saveGalleryVersion(this.options.project, iteration, code);
+      } catch {
+        // GalleryFSAdapter failure must not affect loop operation
+      }
+      return;
+    }
 
     try {
       await this.gallery.saveIteration(this.options.project, iteration, code);
@@ -59,12 +77,21 @@ export class LoopPersistence {
     const proposed = mergeSketchCode(codeA, codeB);
     this.options.onMergeStep?.({ codeA, codeB, proposed });
 
-    if (this.options.project) {
+    if (!this.options.project) return;
+
+    if (this.adapter) {
       try {
-        await this.gallery.saveIteration(this.options.project, iteration + 1, proposed);
-      } catch (error) {
-        if (!this.options.tolerateErrors) throw error;
+        await this.adapter.saveGalleryVersion(this.options.project, iteration + 1, proposed);
+      } catch {
+        // GalleryFSAdapter failure must not affect loop operation
       }
+      return;
+    }
+
+    try {
+      await this.gallery.saveIteration(this.options.project, iteration + 1, proposed);
+    } catch (error) {
+      if (!this.options.tolerateErrors) throw error;
     }
   }
 }

@@ -1,9 +1,9 @@
 # THE BIBLE - Liminal System Documentation
 
 **Version:** 2.1.0 - Beta  
-**Date:** 2026-04-11  
-**Status:** 330+ commits, forensic audit fixes complete  
-**Branch:** fix/bubbletea-operator-surface
+**Date:** 2026-04-15
+**Status:** Security redteam adapter salvage in progress
+**Branch:** security/redteam-salvage-20260415
 
 ---
 
@@ -18,7 +18,44 @@ Liminal is a creative coding agent with self-improving capabilities. It generate
 - **Prompt surfaces audited** for contradiction, token efficiency, and framework accuracy
 - **Meta-Harness** self-improvement system
 - **Ralph Loop** iterative refinement
+- **Bounded-loop runtime packets** with explicit focus, verification intent, and resumable no-change classification
 - **Worktree Isolation** - Multi-agent development workflow
+
+### Git Hygiene Finish Pass (2026-04-15)
+
+The repository was reduced to a simple finish-line model:
+
+| Bucket | Meaning | Action |
+|--------|---------|--------|
+| `main` | Shipping truth | Keep clean and synced with `origin/main` |
+| Merge candidates | Small, focused branches with non-main value | Cherry-pick into reviewed salvage branches |
+| Reference/archive | Broad experiments, compatibility matrices, rescue lanes | Keep only while they answer a current question |
+| Abandoned/stale | Run-complete `liminal/sess-*`, gone upstreams, superseded PRs | Delete after patch-equivalence or explicit rejection |
+
+High-ROI salvage applied in `salvage/roi-finish-20260415`:
+- `fix/ascii-generation-quality`: single-generation utility can target arbitrary LM Studio model IDs.
+- `fix/llm-fallback-observability`: fallback exhaustion now reports each failed fallback, and malformed tool-call arguments are surfaced instead of silently becoming `{}`.
+
+Security triage result:
+- `agent-security-hardening` A1-A9 patches are already patch-equivalent to `main`; no hidden security value remains there.
+- `tmp/free-main` URL-validator security slice is superseded by current `main`, which already has injectable DNS lookup, IPv6 localhost handling, and degraded-DNS logging.
+- `security/redteam-remediation-20260409` remains a broad security/adapters lane and should be reviewed separately, not mixed into the small ROI salvage branch.
+
+### Security Redteam Salvage (2026-04-15)
+
+The stale `security/redteam-remediation-20260409` branch is being mined by security boundary rather than merged wholesale.
+
+Merged into `security/redteam-salvage-20260415`:
+- Tone adapter: blocks browser escape hatches and string-based dynamic execution before legacy Tone code execution.
+- HTML adapter: strips script tags, inline event handlers, JavaScript URLs/data URLs, CSS imports, and CSS expression calls before render/export.
+- P5 adapter: blocks unsafe generated `setup()` and `draw()` bodies before the legacy function-constructor path.
+- Three adapter: blocks browser escape hatches before legacy Three code execution and cleans tracking globals in `finally`.
+- Hydra adapter: blocks browser escape hatches before legacy Hydra function-constructor execution.
+
+Explicit rejections:
+- The stale branch's `new Function` "sandbox" pattern was not adopted as a real sandbox.
+- DOMPurify/jsdom were not added because new dependencies require explicit approval.
+- `bin/liminal` changes in that branch were TUI log redirection, not a current command-injection fix.
 
 ---
 
@@ -597,6 +634,9 @@ Failures:   0 critical
 **Ink Containment Status (complete 2026-04-06):**
 - Agent approval enforcement: tasks default to `approved: false`, agents reject unapproved tasks
 - Pending action review: `/confirm <id>` and `/cancel <id>` implemented
+- Autonomous success claims now require a successful verification step (`runBuild`, `runTests`, or `typeCheck`) before mutation tasks can finish cleanly
+- `NaturalInterface` help now reflects only the commands that surface actually supports; richer pending-action commands live on the separate command palette / bridge surfaces
+- `NaturalInterface` `/status` now delegates to the shared `commands.ts` status implementation so browser/audio state stays in sync across command surfaces
 - CWD-based prompt loading removed from PromptBuilder
 - Terminal/debug sanitization added (`sanitizeTerminalText.ts`)
 - Preview/audio path hardening added (`previewSafety.ts`)
@@ -614,6 +654,8 @@ Failures:   0 critical
 | Component | File | Purpose |
 |-----------|------|---------|
 | TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel |
+| BridgeLauncherConfig | `tui-bridge/BridgeLauncherConfig.ts` | Resolves the active provider for Bubble Tea bridge startup instead of assuming GLM |
+| TuiBridgeService | `TuiBridgeService.ts` | Session CRUD, input, confirm/cancel, and approved bridge action execution |
 | TuiSessionStore | `TuiSessionStore.ts` | In-memory session state |
 | TuiEventStream | `TuiEventStream.ts` | Pub/sub SSE event stream |
 | Types | `types.ts` | Mode, trust, provenance, event types |
@@ -1083,24 +1125,11 @@ const result = await generateMusicToVisual({
 
 ### 27. Narrative Archaeology System
 
-**Location:** `src/narrative/`
+**Location:** Extracted to `dev-archaeology` private repo (`~/workspaces/dev-archaeology/`)
 
 **Purpose:** Long-term narrative tracking and archaeological analysis of generated content.
 
-**Key Components:**
-- `NarrativeArchaeologist.ts` - Analyzes content evolution over time
-- `LineageTracker.ts` - Tracks code lineage and influences
-- `archaeology.db` - SQLite database for narrative storage
-
-**Usage:**
-```typescript
-import { NarrativeArchaeologist } from './src/narrative/NarrativeArchaeologist.js';
-
-const archaeologist = new NarrativeArchaeologist();
-await archaeologist.record({ id: 'gen-123', prompt, code, domain });
-```
-
-**Status:** Active - Stores data in `narrative/data/archaeology.db`.
+**Status:** Extracted — narrative pipeline no longer lives in this repo. Git history preserved on `narrative/liminal-archaeology` branch.
 
 ---
 

@@ -14,12 +14,47 @@ import type {
   ProviderCapabilities,
   StreamEvent,
 } from '../ProviderTypes.js';
-import { BaseProvider } from './BaseProvider.js';
+import { BaseProvider, usesMaxCompletionTokens } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { extractOpenRouterThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
+
+function normalizeOpenRouterContent(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object') {
+          const text = (part as { text?: unknown }).text;
+          if (typeof text === 'string') return text;
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+  if (content && typeof content === 'object') {
+    const text = (content as { text?: unknown }).text;
+    if (typeof text === 'string') return text;
+  }
+  return '';
+}
+
+function summarizeOpenRouterResponse(data: unknown): string {
+  if (!data || typeof data !== 'object') return 'non-object response';
+  const record = data as Record<string, unknown>;
+  const choices = Array.isArray(record.choices) ? record.choices : [];
+  const choice = choices[0] as Record<string, unknown> | undefined;
+  const message = choice?.message as Record<string, unknown> | undefined;
+  const rawContent = message?.content;
+  const contentKind = Array.isArray(rawContent) ? 'array' : typeof rawContent;
+  const finishReason = typeof choice?.finish_reason === 'string' ? choice.finish_reason : 'unknown';
+  const error = typeof record.error === 'object' ? JSON.stringify(record.error).slice(0, 200) : '';
+  return `choices=${choices.length}, finish_reason=${finishReason}, content_kind=${contentKind}, error_field=${error || 'none'}, snippet=${JSON.stringify(rawContent).slice(0, 200)}`;
+}
 
 export class OpenRouterProvider extends BaseProvider {
   readonly name = 'openrouter';
@@ -46,6 +81,7 @@ export class OpenRouterProvider extends BaseProvider {
       const url = `${this.config.baseUrl}/chat/completions`;
       const headers = this.getHeaders();
 
+      const maxTokensValue = req.maxTokens ?? this.config.maxTokens;
       const body: Record<string, unknown> = {
         model: this.config.model,
         messages: [
@@ -53,8 +89,15 @@ export class OpenRouterProvider extends BaseProvider {
           { role: 'user', content: req.userPrompt },
         ],
         temperature: req.temperature ?? this.config.temperature,
-        max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
+      if (maxTokensValue !== undefined) {
+        body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValue;
+      }
+
+      const jsonOnlyPrompt = /respond with json only/i.test(req.userPrompt);
+      if (jsonOnlyPrompt && this.capabilities.jsonMode && !(req.tools && req.tools.length > 0)) {
+        body.response_format = { type: 'json_object' };
+      }
 
       // Tool definitions — OpenAI-compatible format
       if (req.tools && req.tools.length > 0) {
@@ -101,9 +144,9 @@ export class OpenRouterProvider extends BaseProvider {
 
       const data = await response.json();
       const thinking = extractOpenRouterThinking(data);
-      const choices = data.choices as Array<{ message?: { content?: string; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish_reason?: string }> | undefined;
+      const choices = data.choices as Array<{ message?: { content?: unknown; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }; finish_reason?: string }> | undefined;
       const message = choices?.[0]?.message;
-      const content = message?.content || '';
+      const content = normalizeOpenRouterContent(message?.content);
 
       const rawToolCalls = message?.tool_calls || [];
       const toolCalls = rawToolCalls.map(tc => ({ id: tc.id, name: tc.function.name, arguments: tc.function.arguments }));
@@ -111,11 +154,28 @@ export class OpenRouterProvider extends BaseProvider {
 
       const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
 
+      const hasContent = content.length > 0 || toolCalls.length > 0;
+      if (!hasContent) {
+        return ok({
+          content,
+          thinking: thinking.source !== 'none' ? thinking : undefined,
+          model: data.model || this.config.model,
+          success: false,
+          error: `OpenRouter provider returned no usable content (${summarizeOpenRouterResponse(data)})`,
+          toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+          finishReason,
+          usage: usage ? {
+            inputTokens: usage.prompt_tokens || 0,
+            outputTokens: usage.completion_tokens || 0,
+          } : undefined,
+        });
+      }
+
       return ok({
         content,
         thinking: thinking.source !== 'none' ? thinking : undefined,
         model: data.model || this.config.model,
-        success: content.length > 0 || toolCalls.length > 0,
+        success: true,
         toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
         finishReason,
         usage: usage ? {
@@ -133,6 +193,7 @@ export class OpenRouterProvider extends BaseProvider {
     const url = `${this.config.baseUrl}/chat/completions`;
     const headers = this.getHeaders();
 
+    const maxTokensValueStream = req.maxTokens ?? this.config.maxTokens;
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -140,9 +201,11 @@ export class OpenRouterProvider extends BaseProvider {
         { role: 'user', content: req.userPrompt },
       ],
       temperature: req.temperature ?? this.config.temperature,
-      max_tokens: req.maxTokens ?? this.config.maxTokens,
       stream: true,
     };
+    if (maxTokensValueStream !== undefined) {
+      body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValueStream;
+    }
 
     if (req.thinking?.enabled) {
       body.reasoning = {

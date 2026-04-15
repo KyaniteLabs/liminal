@@ -21,6 +21,7 @@ import type { RoutineConfidence } from '../../src/intuition/ProceduralTier.js';
 import { IntuitionEngine } from '../../src/intuition/IntuitionEngine.js';
 import type { IntuitionAssessment, IntuitionSignal } from '../../src/intuition/IntuitionEngine.js';
 import type { ScoringInput } from '../../src/core/ScoringEngine.js';
+import { MetabolicEntropyEngine } from '../../src/entropy/MetabolicEntropyEngine.js';
 
 // ---------------------------------------------------------------------------
 // ThompsonSampler
@@ -1193,6 +1194,7 @@ describe('DreamEngine', () => {
   let prototype: DomainPrototype;
   let cache: IntuitionCache;
   let consolidator: MemoryConsolidator;
+  let entropy: MetabolicEntropyEngine;
 
   beforeEach(() => {
     modelSampler = new ThompsonSampler<string>({ minPulls: 1, successThreshold: 0.7 });
@@ -1203,11 +1205,23 @@ describe('DreamEngine', () => {
       { modelSampler, strategySampler, prototype },
       { minEpisodesForPattern: 1 },
     );
+    entropy = new MetabolicEntropyEngine({
+      eventStorePath: '/tmp/liminal-test/events',
+      compostHeapPath: '/tmp/liminal-test/compost',
+      telemetryCollectorPath: '/tmp/liminal-test/telemetry',
+    });
 
     engine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       { stage1Count: 3, stage2Count: 2, keeperThreshold: 0.5, domains: ['p5', 'glsl'] },
     );
+  });
+
+  it('throws when entropy engine is missing', () => {
+    expect(() => new DreamEngine(
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy: undefined as any },
+      { stage1Count: 1, stage2Count: 1 },
+    )).toThrow('DreamEngine: entropy engine is required');
   });
 
   it('should run a full dream cycle and return journal entry', async () => {
@@ -1285,7 +1299,7 @@ describe('DreamEngine', () => {
 
   it('should use LLM for prompt generation when configured', async () => {
     const llmEngine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       {
         stage1Count: 2,
         stage2Count: 1,
@@ -1299,7 +1313,7 @@ describe('DreamEngine', () => {
 
   it('should use LLM for code generation when configured', async () => {
     const llmEngine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       {
         stage1Count: 2,
         stage2Count: 1,
@@ -1315,7 +1329,7 @@ describe('DreamEngine', () => {
 
   it('should handle LLM failures gracefully', async () => {
     const failEngine = new DreamEngine(
-      { modelSampler, strategySampler, prototype, cache, consolidator },
+      { modelSampler, strategySampler, prototype, cache, consolidator, entropy },
       {
         stage1Count: 2,
         stage2Count: 1,
@@ -1876,5 +1890,64 @@ describe('IntuitionEngine', () => {
     ];
     const result = engine.consolidate(episodes);
     expect(result.episodesProcessed).toBe(2);
+  });
+
+  it('generateHint returns non-empty hint after recording outcomes that promote a procedural routine', () => {
+    // Seed enough high-quality outcomes to satisfy procedural tier thresholds
+    for (let i = 0; i < 12; i++) {
+      engine.recordOutcome('code', 'p5', 0.85, 'local', 'solo');
+    }
+    // Build world model data for promotion
+    for (let i = 0; i < 5; i++) {
+      engine.getWorldModel().record(
+        { domain: 'p5', lineCount: 50, techniqueDiversity: 3, hasInteraction: 1, hasColor: 1, hasLoops: 1, hasFunctions: 0, hasClasses: 0, commentDensity: 0.1 },
+        0.85,
+      );
+    }
+    // Promote via consolidation
+    const episodes = Array.from({ length: 12 }, (_, i) => ({
+      domain: 'p5',
+      output: `out-${i}`,
+      qualityScore: 0.85,
+      model: 'local',
+      strategy: 'solo',
+      timestamp: new Date().toISOString(),
+    }));
+    engine.consolidate(episodes);
+
+    const hint = engine.generateHint('p5');
+    expect(hint.length).toBeGreaterThan(0);
+    expect(hint).toContain('Historical pattern');
+  });
+
+  it('generateHint returns empty string when engine has no data', () => {
+    const hint = engine.generateHint('p5');
+    expect(hint).toBe('');
+  });
+
+  it('generateHint respects maxLength', () => {
+    // Seed data so a hint is produced
+    for (let i = 0; i < 12; i++) {
+      engine.recordOutcome('code', 'p5', 0.85, 'local', 'solo');
+    }
+    for (let i = 0; i < 5; i++) {
+      engine.getWorldModel().record(
+        { domain: 'p5', lineCount: 50, techniqueDiversity: 3, hasInteraction: 1, hasColor: 1, hasLoops: 1, hasFunctions: 0, hasClasses: 0, commentDensity: 0.1 },
+        0.85,
+      );
+    }
+    const episodes = Array.from({ length: 12 }, (_, i) => ({
+      domain: 'p5',
+      output: `out-${i}`,
+      qualityScore: 0.85,
+      model: 'local',
+      strategy: 'solo',
+      timestamp: new Date().toISOString(),
+    }));
+    engine.consolidate(episodes);
+
+    const hint = engine.generateHint('p5', 30);
+    expect(hint.length).toBeLessThanOrEqual(30);
+    expect(hint.endsWith('...')).toBe(true);
   });
 });

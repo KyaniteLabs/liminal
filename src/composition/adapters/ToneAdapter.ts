@@ -3,6 +3,9 @@
  *
  * Renders Tone.js audio in a composition and exposes audio parameters
  * for cross-layer communication.
+ *
+ * SECURITY: Tone layer code is untrusted generated code. Block browser escape
+ * hatches before the legacy eval path can execute.
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
@@ -30,6 +33,39 @@ interface ToneInstance {
   start: () => Promise<void>;
   Destination: { volume: { value: number } };
   getContext: () => { currentTime: number };
+}
+
+const DANGEROUS_TONE_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
+  { pattern: /\bwindow\s*[[.]/i, name: 'window access' },
+  { pattern: /\bdocument\s*[[.]/i, name: 'document access' },
+  { pattern: /\bfetch\s*\(/i, name: 'fetch API' },
+  { pattern: /\beval\s*\(/i, name: 'eval()' },
+  { pattern: /\bnew\s+Function\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bFunction\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bsetTimeout\s*\(\s*['"`]/i, name: 'setTimeout string execution' },
+  { pattern: /\bsetInterval\s*\(\s*['"`]/i, name: 'setInterval string execution' },
+  { pattern: /\bimport\s*\(/i, name: 'dynamic import()' },
+  { pattern: /\bimportScripts\s*\(/i, name: 'importScripts()' },
+  { pattern: /\bXMLHttpRequest\b/i, name: 'XMLHttpRequest' },
+  { pattern: /\bWebSocket\b/i, name: 'WebSocket' },
+  { pattern: /\bWorker\b/i, name: 'Web Worker' },
+  { pattern: /\blocalStorage\b/i, name: 'localStorage' },
+  { pattern: /\bsessionStorage\b/i, name: 'sessionStorage' },
+  { pattern: /\bindexedDB\b/i, name: 'indexedDB' },
+  { pattern: /\bopen\s*\(\s*['"`]/i, name: 'window.open()' },
+  { pattern: /\blocation\s*[=.]/i, name: 'location access' },
+  { pattern: /\bparent\s*[[.]/i, name: 'parent access' },
+  { pattern: /\btop\s*[[.]/i, name: 'top access' },
+  { pattern: /<script\b/i, name: 'script tag' },
+  { pattern: /\son\w+\s*=/i, name: 'inline event handler' },
+  { pattern: /javascript:/i, name: 'javascript URL' },
+  { pattern: /data:text\/javascript/i, name: 'javascript data URL' },
+];
+
+function findDangerousToneCodePatterns(code: string): string[] {
+  return DANGEROUS_TONE_CODE_PATTERNS
+    .filter(({ pattern }) => pattern.test(code))
+    .map(({ name }) => name);
 }
 
 export class ToneAdapter implements LayerAdapter {
@@ -76,7 +112,7 @@ export class ToneAdapter implements LayerAdapter {
     
     // Inject synth tracking into code
     const wrappedCode = layer.code.replace(
-      /new\s+Tone\.Synth/g,
+      /new\s+Tone\.Synth\s*\(\s*\)/g,
       '(() => { const s = new Tone.Synth(); __trackSynth(s); return s; })()'
     );
 
@@ -92,25 +128,31 @@ export class ToneAdapter implements LayerAdapter {
       }
     }
 
+    const blockedPatterns = findDangerousToneCodePatterns(wrappedCode);
+
     // Execute user code
     const startTime = Date.now();
     
-    try {
-      // Define tracking function in eval context
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      (window as any).__trackSynth = (s: ToneSynth) => {
-        synths.push(s);
-        return s;
-      };
-      
-      // eslint-disable-next-line no-eval
-      eval(wrappedCode);
-      
-      // Clean up tracking function
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      delete (window as any).__trackSynth;
-    } catch (error) {
-      Logger.error('ToneAdapter', 'Error executing Tone.js code:', error);
+    if (blockedPatterns.length > 0) {
+      Logger.warn('ToneAdapter', `Blocked unsafe Tone.js layer code: ${blockedPatterns.join(', ')}`);
+    } else {
+      try {
+        // Define tracking function in eval context
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (window as any).__trackSynth = (s: ToneSynth) => {
+          synths.push(s);
+          return s;
+        };
+
+        // eslint-disable-next-line no-eval
+        eval(wrappedCode);
+      } catch (error) {
+        Logger.error('ToneAdapter', 'Error executing Tone.js code:', error);
+      } finally {
+        // Clean up tracking function
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        delete (window as any).__trackSynth;
+      }
     }
 
     // Store instance info

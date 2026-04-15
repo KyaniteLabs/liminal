@@ -80,3 +80,11 @@ export abstract class BaseProvider {
     return { ...this.config };
   }
 }
+
+/**
+ * Detect whether a model requires `max_completion_tokens` instead of `max_tokens`.
+ * OpenAI reasoning models (o1, o3, o4) and GPT-5 family reject `max_tokens`.
+ */
+export function usesMaxCompletionTokens(model: string): boolean {
+  return /^(gpt-5|o1|o3|o4)/.test(model);
+}

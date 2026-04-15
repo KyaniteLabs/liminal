@@ -9,6 +9,7 @@ import { chromium, Browser, Page, BrowserContext, ConsoleMessage } from 'playwri
 import { existsSync, readdirSync } from 'node:fs';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { Logger } from '../utils/Logger.js';
+import { RenderEvidence } from '../core/types/GenerationEvaluation.js';
 
 export type RenderDomain = 'p5' | 'three' | 'glsl' | 'hydra' | 'strudel' | 'tone' | 'unknown';
 
@@ -320,6 +321,44 @@ export class HeadlessRenderer {
         }
       }
     }
+  }
+
+  /**
+   * Render code and capture normalized RenderEvidence.
+   *
+   * Backward-compatible wrapper around `render()` that classifies failures
+   * as infrastructure (browser unavailable) or candidate (code/JS error).
+   */
+  async renderWithEvidence(code: string, options: RenderOptions = {}): Promise<RenderEvidence> {
+    const startTime = Date.now();
+    const result = await this.render(code, options);
+    const timingMs = Date.now() - startTime;
+
+    const errorMessage = result.error || '';
+    const lowerError = errorMessage.toLowerCase();
+
+    // Infrastructure failures: browser cannot start, missing binary, system-level errors
+    const infraUnavailable = !result.success && (
+      lowerError.includes('failed to initialize headless browser') ||
+      lowerError.includes('browser context not initialized') ||
+      lowerError.includes('executable') ||
+      lowerError.includes('playwright') ||
+      lowerError.includes('chromium') ||
+      lowerError.includes('browser') ||
+      lowerError.includes('spawn') ||
+      lowerError.includes('econnrefused')
+    );
+
+    // Candidate failures: JS errors, timeouts, canvas issues caused by bad code
+    const candidateFailure = !result.success && !infraUnavailable;
+
+    return {
+      timingMs,
+      infraUnavailable,
+      candidateFailure,
+      screenshotRef: result.screenshot?.success ? 'screenshot' : undefined,
+      logRef: result.logs.length > 0 ? 'logs' : undefined,
+    };
   }
 
   /**

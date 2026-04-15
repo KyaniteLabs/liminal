@@ -12,6 +12,7 @@
  */
 
 import { GitService } from './GitService.js';
+import { Logger } from '../utils/Logger.js';
 
 const HELP_TEXT = `
 Git integration for Liminal
@@ -41,7 +42,7 @@ export async function handleGitCommand(subcmd: string | undefined, args: string[
   const git = new GitService();
 
   if (!subcmd || subcmd === 'help' || subcmd === '--help') {
-    console.log(HELP_TEXT);
+    Logger.info('GitCLI', HELP_TEXT);
     return;
   }
 
@@ -49,7 +50,7 @@ export async function handleGitCommand(subcmd: string | undefined, args: string[
   if (subcmd !== 'init') {
     const isRepo = await git.isRepo();
     if (!isRepo) {
-      console.error('Not a git repository. Run `liminal git init` first.');
+      Logger.error('GitCLI', 'Not a git repository. Run `liminal git init` first.');
       process.exit(1);
     }
   }
@@ -77,60 +78,60 @@ export async function handleGitCommand(subcmd: string | undefined, args: string[
       await handleTimeline(git, args);
       break;
     default:
-      console.error(`Unknown git subcommand: ${subcmd}`);
-      console.log(HELP_TEXT);
+      Logger.error('GitCLI', `Unknown git subcommand: ${subcmd}`);
+      Logger.info('GitCLI', HELP_TEXT);
       process.exit(1);
   }
 }
 
 async function handleInit(git: GitService): Promise<void> {
   await git.init();
-  console.log('Initialized git repository');
+  Logger.info('GitCLI', 'Initialized git repository');
 }
 
 async function handleStatus(git: GitService): Promise<void> {
   const result = await git.status();
   if (result.isErr()) {
-    console.error('Failed to get git status:', result.error.message);
+    Logger.error('GitCLI', 'Failed to get git status:', result.error.message);
     return;
   }
   const status = result.value;
 
   if (!status) {
-    console.log('Unable to get status - repository may have merge conflicts');
+    Logger.info('GitCLI', 'Unable to get status - repository may have merge conflicts');
     return;
   }
 
   const branch = status.current;
-  console.log(`On branch ${branch}`);
+  Logger.info('GitCLI', `On branch ${branch}`);
 
   if (status.isClean()) {
-    console.log('Working tree clean');
+    Logger.info('GitCLI', 'Working tree clean');
     return;
   }
 
   if (status.staged.length > 0) {
-    console.log('\nStaged:');
+    Logger.info('GitCLI', '\nStaged:');
     for (const f of status.staged) {
-      console.log(`  + ${f}`);
+      Logger.info('GitCLI', `  + ${f}`);
     }
   }
   if (status.modified.length > 0) {
-    console.log('\nModified:');
+    Logger.info('GitCLI', '\nModified:');
     for (const f of status.modified) {
-      console.log(`  M ${f}`);
+      Logger.info('GitCLI', `  M ${f}`);
     }
   }
   if (status.not_added.length > 0) {
-    console.log('\nUntracked:');
+    Logger.info('GitCLI', '\nUntracked:');
     for (const f of status.not_added) {
-      console.log(`  ? ${f}`);
+      Logger.info('GitCLI', `  ? ${f}`);
     }
   }
   if (status.deleted.length > 0) {
-    console.log('\nDeleted:');
+    Logger.info('GitCLI', '\nDeleted:');
     for (const f of status.deleted) {
-      console.log(`  D ${f}`);
+      Logger.info('GitCLI', `  D ${f}`);
     }
   }
 }
@@ -140,13 +141,13 @@ async function handleLog(git: GitService, args: string[]): Promise<void> {
   const commits = await git.log({ maxCount: count });
 
   if (commits.length === 0) {
-    console.log('No commits yet');
+    Logger.info('GitCLI', 'No commits yet');
     return;
   }
 
   for (const c of commits) {
     const short = c.hash.slice(0, 7);
-    console.log(`${short} ${c.date.slice(0, 10)} ${c.message}`);
+    Logger.info('GitCLI', `${short} ${c.date.slice(0, 10)} ${c.message}`);
   }
 }
 
@@ -156,15 +157,15 @@ async function handleDiff(git: GitService, args: string[]): Promise<void> {
   const diff = await git.diff(from, to);
 
   if (diff.filesChanged === 0) {
-    console.log('No differences');
+    Logger.info('GitCLI', 'No differences');
     return;
   }
 
-  console.log(`${diff.from}..${diff.to}: ${diff.filesChanged} files, +${diff.insertions}/-${diff.deletions}`);
-  console.log('');
+  Logger.info('GitCLI', `${diff.from}..${diff.to}: ${diff.filesChanged} files, +${diff.insertions}/-${diff.deletions}`);
+  Logger.info('GitCLI', '');
   for (const f of diff.files) {
     const indicator = f.binary ? '(binary)' : `+${f.insertions}/-${f.deletions}`;
-    console.log(`  ${f.path} ${indicator}`);
+    Logger.info('GitCLI', `  ${f.path} ${indicator}`);
   }
 }
 
@@ -174,25 +175,25 @@ async function handleBranch(git: GitService, args: string[]): Promise<void> {
     const branches = await git.listBranches();
     for (const b of branches) {
       const marker = b.current ? '* ' : '  ';
-      console.log(`${marker}${b.name}`);
+      Logger.info('GitCLI', `${marker}${b.name}`);
     }
   } else {
     // Create branch
     const name = args[0];
     const info = await git.branch(name);
-    console.log(`Created and switched to branch: ${info.name}`);
+    Logger.info('GitCLI', `Created and switched to branch: ${info.name}`);
   }
 }
 
 async function handleCommit(git: GitService, args: string[]): Promise<void> {
   const message = args[0];
   if (!message) {
-    console.error('Commit message required: liminal git commit "your message"');
+    Logger.error('GitCLI', 'Commit message required: liminal git commit "your message"');
     process.exit(1);
   }
 
   const commit = await git.addAllAndCommit(message);
-  console.log(`Committed: ${commit.hash.slice(0, 7)} ${commit.message}`);
+  Logger.info('GitCLI', `Committed: ${commit.hash.slice(0, 7)} ${commit.message}`);
 }
 
 async function handleTimeline(git: GitService, _args: string[]): Promise<void> {
@@ -201,17 +202,17 @@ async function handleTimeline(git: GitService, _args: string[]): Promise<void> {
   const commits = await git.log({ maxCount: 20 });
 
   if (commits.length === 0) {
-    console.log('No history yet');
+    Logger.info('GitCLI', 'No history yet');
     return;
   }
 
-  console.log('Git Timeline:');
-  console.log('');
+  Logger.info('GitCLI', 'Git Timeline:');
+  Logger.info('GitCLI', '');
   for (const c of commits) {
     const short = c.hash.slice(0, 7);
     const date = c.date.slice(0, 19);
-    console.log(`  ${date}  ${short}  ${c.message}`);
+    Logger.info('GitCLI', `  ${date}  ${short}  ${c.message}`);
   }
-  console.log('');
-  console.log('(Full compost+git timeline requires compost integration — use CompostBridge)');
+  Logger.info('GitCLI', '');
+  Logger.info('GitCLI', '(Full compost+git timeline requires compost integration — use CompostBridge)');
 }

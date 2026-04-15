@@ -402,6 +402,6 @@ const main = async () => {
 };
 
 main().catch((err) => {
-  console.error('Fatal error:', err); // eslint-disable-line no-console
+  Logger.error('TUI', 'Fatal error:', err);
   process.exit(1);
 });

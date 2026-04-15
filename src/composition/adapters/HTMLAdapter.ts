@@ -110,7 +110,7 @@ export class HTMLAdapter implements LayerAdapter {
     let match: RegExpExecArray | null;
     
     while ((match = styleRegex.exec(code)) !== null) {
-      styles.push(match[1].trim());
+      styles.push(this.sanitizeCSS(match[1].trim()));
     }
     
     // Remove style tags from HTML (they'll be handled separately)
@@ -134,11 +134,25 @@ export class HTMLAdapter implements LayerAdapter {
     
     // Remove javascript: URLs
     sanitized = sanitized.replace(/javascript:/gi, '');
-    
-    // Remove on* event handlers (for security in some contexts)
-    // Note: Currently allowing inline handlers per requirements
+
+    // Remove JavaScript data URLs
+    sanitized = sanitized.replace(/data:text\/javascript[^"'\s>)]+/gi, '');
+
+    // Remove on* event handlers, including quoted and unquoted values.
+    sanitized = sanitized.replace(/\s+on[a-z0-9_-]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
     
     return sanitized;
+  }
+
+  /**
+   * Sanitize CSS extracted from style tags.
+   */
+  private sanitizeCSS(css: string): string {
+    return css
+      .replace(/javascript:/gi, '')
+      .replace(/data:text\/javascript[^)"'\s;]+/gi, '')
+      .replace(/expression\s*\([^)]*\)/gi, '')
+      .replace(/@import[^;]+;/gi, '');
   }
 
   /**

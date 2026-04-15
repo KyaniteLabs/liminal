@@ -3,6 +3,9 @@
  *
  * Renders p5.js sketches in a container and exposes sketch properties
  * for cross-layer communication.
+ *
+ * SECURITY: setup/draw bodies are untrusted generated code. Block browser
+ * escape hatches before the legacy function-constructor path can execute.
  */
 
 import type { Layer, GlobalSettings } from '../types.js';
@@ -30,6 +33,35 @@ interface P5Instance {
 
 /** p5 constructor type */
 type P5Constructor = new (sketch: (p: P5Instance) => void, container: HTMLElement) => P5Instance;
+
+const DANGEROUS_P5_CODE_PATTERNS: Array<{ pattern: RegExp; name: string }> = [
+  { pattern: /\bwindow\s*[[.]/i, name: 'window access' },
+  { pattern: /\bdocument\s*[[.]/i, name: 'document access' },
+  { pattern: /\bfetch\s*\(/i, name: 'fetch API' },
+  { pattern: /\beval\s*\(/i, name: 'eval()' },
+  { pattern: /\bnew\s+Function\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bFunction\s*\(/i, name: 'Function constructor' },
+  { pattern: /\bsetTimeout\s*\(\s*['"`]/i, name: 'setTimeout string execution' },
+  { pattern: /\bsetInterval\s*\(\s*['"`]/i, name: 'setInterval string execution' },
+  { pattern: /\bimport\s*\(/i, name: 'dynamic import()' },
+  { pattern: /\bimportScripts\s*\(/i, name: 'importScripts()' },
+  { pattern: /\bXMLHttpRequest\b/i, name: 'XMLHttpRequest' },
+  { pattern: /\bWebSocket\b/i, name: 'WebSocket' },
+  { pattern: /\bWorker\b/i, name: 'Web Worker' },
+  { pattern: /\blocalStorage\b/i, name: 'localStorage' },
+  { pattern: /\bsessionStorage\b/i, name: 'sessionStorage' },
+  { pattern: /\bindexedDB\b/i, name: 'indexedDB' },
+  { pattern: /\bopen\s*\(\s*['"`]/i, name: 'window.open()' },
+  { pattern: /\blocation\s*[=.]/i, name: 'location access' },
+  { pattern: /\bparent\s*[[.]/i, name: 'parent access' },
+  { pattern: /\btop\s*[[.]/i, name: 'top access' },
+];
+
+function findDangerousP5CodePatterns(code: string): string[] {
+  return DANGEROUS_P5_CODE_PATTERNS
+    .filter(({ pattern }) => pattern.test(code))
+    .map(({ name }) => name);
+}
 
 export class P5Adapter implements LayerAdapter {
   private p5Module?: { default: P5Constructor };
@@ -99,6 +131,12 @@ export class P5Adapter implements LayerAdapter {
           const setupMatch = userCode.match(/function\s+setup\s*\(\)\s*\{([\s\S]*?)\}/);
           if (setupMatch) {
             try {
+              const blockedPatterns = findDangerousP5CodePatterns(setupMatch[1]);
+              if (blockedPatterns.length > 0) {
+                Logger.warn('P5Adapter', `Blocked unsafe setup code: ${blockedPatterns.join(', ')}`);
+                return;
+              }
+
               // eslint-disable-next-line no-new-func
               const setupFn = new Function('p', setupMatch[1]);
               setupFn(p);
@@ -123,6 +161,12 @@ export class P5Adapter implements LayerAdapter {
           const drawMatch = userCode.match(/function\s+draw\s*\(\)\s*\{([\s\S]*?)\}/);
           if (drawMatch) {
             try {
+              const blockedPatterns = findDangerousP5CodePatterns(drawMatch[1]);
+              if (blockedPatterns.length > 0) {
+                Logger.warn('P5Adapter', `Blocked unsafe draw code: ${blockedPatterns.join(', ')}`);
+                return;
+              }
+
               // eslint-disable-next-line no-new-func
               const drawFn = new Function('p', drawMatch[1]);
               drawFn(p);

@@ -196,6 +196,14 @@ export interface DigestResult {
   digestPath: string;
 }
 
+/** Normalized generation materials exported by CompostMill for prompt enhancement. */
+export interface GenerationMaterials {
+  seeds: Seed[];
+  dna: import('../scavenger/types.js').ProjectDNA[];
+  seedCount: number;
+  dnaCount: number;
+}
+
 /** Current mill status. */
 export interface MillStatus {
   heapSize: number;

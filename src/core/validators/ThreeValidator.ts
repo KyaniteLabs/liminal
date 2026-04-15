@@ -29,6 +29,9 @@ export class ThreeValidator {
     // Quality checks
     errors.push(...this.validateQuality(trimmed));
 
+    // Semantic checks
+    errors.push(...this.validateSemantics(trimmed));
+
     return {
       valid: errors.length === 0,
       errors
@@ -45,6 +48,19 @@ export class ThreeValidator {
 
     if (!hasTHREE) {
       errors.push('Three.js code must reference THREE object or import from "three"');
+    }
+
+    const threeImportCount = (code.match(/\bimport\s+\*\s+as\s+THREE\s+from\s+['"][^'"]+['"]/g) || []).length;
+    if (threeImportCount > 1) {
+      errors.push('Three.js code must not declare multiple THREE imports');
+    }
+
+    if (!/^<!DOCTYPE|^<html/i.test(code.trim()) && /\b(?:const|let|var)\s+canvas\b/.test(code)) {
+      errors.push('Three.js raw scene must use wrapper-provided canvas instead of redeclaring canvas');
+    }
+
+    if (/scene\.add\s*\(\s*renderer\.domElement\s*\)/.test(code)) {
+      errors.push('Three.js scene.add() must receive Object3D instances, not renderer.domElement');
     }
 
     return errors;
@@ -65,6 +81,39 @@ export class ThreeValidator {
     }
 
     return errors;
+  }
+
+  private static validateSemantics(code: string): string[] {
+    const errors: string[] = [];
+
+    if (/function\s+animate\s*\(/.test(code) && !/\banimate\s*\(\s*\)\s*;/.test(code)) {
+      errors.push('Three.js animation loop is defined but never started with animate()');
+    }
+
+    const animateBody = this.extractFunctionBody(code, 'animate');
+    if (animateBody && !/\.(?:rotation|position|scale)\.[xyz]\s*[+\-*/]?=|\.material\.|\.lookAt\s*\(/.test(animateBody)) {
+      errors.push('Three.js animation loop should mutate scene state before rendering');
+    }
+
+    return errors;
+  }
+
+  private static extractFunctionBody(code: string, name: string): string | null {
+    const match = new RegExp(`function\\s+${name}\\s*\\([^)]*\\)\\s*\\{`).exec(code);
+    if (!match) return null;
+
+    let depth = 1;
+    const start = match.index + match[0].length;
+    for (let i = start; i < code.length; i++) {
+      const char = code[i];
+      if (char === '{') depth++;
+      if (char === '}') depth--;
+      if (depth === 0) {
+        return code.slice(start, i);
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -97,6 +146,6 @@ export class ThreeValidator {
    * Get minimum size requirement for Three.js code
    */
   static getMinSize(): number {
-    return 800; // Three.js needs scene setup, objects, animation
+    return 800; // Three.js needs scene setup, objects, camera, renderer, and animation loop
   }
 }

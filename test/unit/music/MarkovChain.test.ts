@@ -254,6 +254,16 @@ describe('generateMarkovMelody', () => {
         expect(uniqueSeed.has(note)).toBe(true);
       }
     });
+
+    it('uses injected rng for deterministic output', () => {
+      const matrix: TransitionMatrix = new Map();
+      const rng = () => 0;
+
+      const melody = generateMarkovMelody(seed, matrix, 8, 1, rng);
+
+      // With rng always returning 0, fallback always picks seed[0]
+      expect(melody).toEqual([60, 60, 60, 60, 60, 60, 60, 60]);
+    });
   });
 
   describe('error cases', () => {

@@ -244,30 +244,30 @@ export class EpisodicMemory {
     const data = JSON.parse(content);
 
     // Restore episodes
-    this.episodes = data.episodes.map((ep: any) => ({
-      ...ep,
-      timestamp: new Date(ep.timestamp)
+    this.episodes = (data.episodes as Array<Record<string, unknown>>).map((ep) => ({
+      ...(ep as unknown as Episode),
+      timestamp: new Date(ep.timestamp as string)
     }));
 
     // Restore conversations
     this.conversations = new Map(
-      data.conversations.map(([id, conv]: [string, any]) => [
+      (data.conversations as Array<[string, Record<string, unknown>]>).map(([id, conv]) => [
         id,
         {
-          ...conv,
-          createdAt: new Date(conv.createdAt),
-          updatedAt: new Date(conv.updatedAt)
+          ...(conv as unknown as Conversation),
+          createdAt: new Date(conv.createdAt as string),
+          updatedAt: new Date(conv.updatedAt as string)
         }
       ])
     );
 
     // Restore generations
     this.generations = new Map(
-      data.generations.map(([id, gen]: [string, any]) => [
+      (data.generations as Array<[string, Record<string, unknown>]>).map(([id, gen]) => [
         id,
         {
-          ...gen,
-          timestamp: new Date(gen.timestamp)
+          ...(gen as unknown as GenerationSession),
+          timestamp: new Date(gen.timestamp as string)
         }
       ])
     );

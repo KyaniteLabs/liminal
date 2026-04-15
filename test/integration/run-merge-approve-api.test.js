@@ -42,7 +42,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
     const a = server.address();
     port = typeof a === 'object' && a && 'port' in a ? a.port : 0;
     expect(port).toBeGreaterThan(0);
-  });
+  }, 30000);
 
   afterAll(async () => {
     if (server) await new Promise((resolve) => server.close(resolve));

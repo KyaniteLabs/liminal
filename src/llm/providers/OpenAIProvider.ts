@@ -12,12 +12,52 @@ import type {
   ProviderCapabilities,
   StreamEvent,
 } from '../ProviderTypes.js';
-import { BaseProvider } from './BaseProvider.js';
+import { BaseProvider, usesMaxCompletionTokens } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { normalizeThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
+import { Logger } from '../../utils/Logger.js';
+
+function normalizeMessageContent(content: unknown): string {
+  if (typeof content === 'string') return content;
+  if (Array.isArray(content)) {
+    return content
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object') {
+          const text = (part as { text?: unknown }).text;
+          if (typeof text === 'string') return text;
+        }
+        return '';
+      })
+      .filter(Boolean)
+      .join('\n');
+  }
+  if (content && typeof content === 'object') {
+    const text = (content as { text?: unknown }).text;
+    if (typeof text === 'string') return text;
+  }
+  return '';
+}
+
+function summarizeOpenAIResponse(data: unknown): string {
+  if (!data || typeof data !== 'object') return 'non-object response';
+  const record = data as Record<string, unknown>;
+  const choices = Array.isArray(record.choices) ? record.choices : [];
+  const choice = choices[0] as Record<string, unknown> | undefined;
+  const message = choice?.message as Record<string, unknown> | undefined;
+  const rawContent = message?.content;
+  const contentKind = Array.isArray(rawContent) ? 'array' : typeof rawContent;
+  const finishReason = typeof choice?.finish_reason === 'string' ? choice.finish_reason : 'unknown';
+  const reasoningContent = typeof message?.reasoning_content === 'string'
+    ? message.reasoning_content.slice(0, 120)
+    : typeof record.reasoning_content === 'string'
+      ? record.reasoning_content.slice(0, 120)
+      : '';
+  return `choices=${choices.length}, finish_reason=${finishReason}, content_kind=${contentKind}, reasoning_present=${reasoningContent ? 'yes' : 'no'}, snippet=${JSON.stringify(rawContent).slice(0, 200)}`;
+}
 
 export class OpenAIProvider extends BaseProvider {
   readonly name = 'openai';
@@ -41,6 +81,7 @@ export class OpenAIProvider extends BaseProvider {
         headers['User-Agent'] = 'claude-code/1.0';
       }
 
+      const maxTokensValue = req.maxTokens ?? this.config.maxTokens;
       const body: Record<string, unknown> = {
         model: this.config.model,
         messages: [
@@ -48,8 +89,10 @@ export class OpenAIProvider extends BaseProvider {
           { role: 'user', content: req.userPrompt },
         ],
         temperature: req.temperature ?? this.config.temperature,
-        max_tokens: req.maxTokens ?? this.config.maxTokens,
       };
+      if (maxTokensValue !== undefined) {
+        body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValue;
+      }
 
       // Add reasoning effort for thinking-capable models
       if (req.thinking?.enabled && this.capabilities.thinking) {
@@ -104,10 +147,12 @@ export class OpenAIProvider extends BaseProvider {
 
       const data = await response.json();
       const thinking = normalizeThinking(data, 'openai');
+      const thinkingText = typeof thinking.text === 'string' ? thinking.text : '';
 
       const choices = data.choices as Array<{
         message?: {
-          content?: string;
+          content?: unknown;
+          reasoning_content?: string;
           tool_calls?: Array<{
             id: string;
             function: { name: string; arguments: string };
@@ -116,7 +161,14 @@ export class OpenAIProvider extends BaseProvider {
         finish_reason?: string;
       }> | undefined;
       const choice = choices?.[0];
-      const content = choice?.message?.content || '';
+      let content = normalizeMessageContent(choice?.message?.content);
+
+      // Fallback: use reasoning_content as content when content is empty
+      // (e.g. Kimi K2-Plus returns all output in reasoning_content with content: null)
+      if (!content && choice?.message?.reasoning_content) {
+        content = choice.message.reasoning_content;
+        Logger.debug('OpenAIProvider', 'Using reasoning_content as fallback');
+      }
 
       const usage = data.usage as { prompt_tokens?: number; completion_tokens?: number } | undefined;
 
@@ -141,12 +193,28 @@ export class OpenAIProvider extends BaseProvider {
 
       // Some providers (e.g. MiniMax) return code in reasoning_content with empty content
       const hasToolCalls = !!(toolCalls && toolCalls.length > 0);
-      const hasContent = content.length > 0 || (thinking.source !== 'none' && thinking.text.length > 0)
+      const hasContent = content.length > 0 || (thinking.source !== 'none' && thinkingText.length > 0)
         || hasToolCalls;
+
+      if (!hasContent) {
+        return ok({
+          content,
+          thinking: thinking.source !== 'none' ? { ...thinking, text: thinkingText } : undefined,
+          model: data.model || this.config.model,
+          success: false,
+          error: `OpenAI-compatible provider returned no usable content (${summarizeOpenAIResponse(data)})`,
+          usage: usage ? {
+            inputTokens: usage.prompt_tokens || 0,
+            outputTokens: usage.completion_tokens || 0,
+          } : undefined,
+          toolCalls,
+          finishReason,
+        });
+      }
 
       return ok({
         content,
-        thinking: thinking.source !== 'none' ? thinking : undefined,
+        thinking: thinking.source !== 'none' ? { ...thinking, text: thinkingText } : undefined,
         model: data.model || this.config.model,
         success: hasContent,
         usage: usage ? {
@@ -176,6 +244,7 @@ export class OpenAIProvider extends BaseProvider {
       headers['User-Agent'] = 'claude-code/1.0';
     }
 
+    const maxTokensValueStream = req.maxTokens ?? this.config.maxTokens;
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -183,9 +252,11 @@ export class OpenAIProvider extends BaseProvider {
         { role: 'user', content: req.userPrompt },
       ],
       temperature: req.temperature ?? this.config.temperature,
-      max_tokens: req.maxTokens ?? this.config.maxTokens,
       stream: true,
     };
+    if (maxTokensValueStream !== undefined) {
+      body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValueStream;
+    }
 
     if (req.thinking?.enabled && this.capabilities.thinking) {
       if (this.capabilities.thinkingStyle === 'effort_level') {

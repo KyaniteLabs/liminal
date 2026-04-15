@@ -14,6 +14,7 @@ import {
   LLMAuthError,
   LLMRateLimitError,
 } from '../../../src/llm/LLMClient.js';
+import { RetryManager } from '../../../src/llm/RetryManager.js';
 
 // The env() utility wraps process.env with LIMINAL_ prefix
 // env('LLM_BASE_URL') => process.env.LIMINAL_LLM_BASE_URL
@@ -450,6 +451,124 @@ describe('LLMClient clearGlobalCache', () => {
   it('clears global static caches without error', () => {
     LLMClient.clearGlobalCache();
     expect(true).toBe(true);
+  });
+});
+
+describe('LLMClient fallback diagnostics', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('includes exhausted fallback reasons in generate() failures', async () => {
+    const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
+    const internal = client as any;
+
+    vi.spyOn(RetryManager, 'executeWithRetry').mockImplementation(async (fn: () => Promise<unknown>) => fn());
+
+    internal.resolveModel = vi.fn(async () => 'primary-model');
+    internal.syncResolvedModel = vi.fn();
+    internal.detectProvider = vi.fn(() => 'lmstudio');
+    internal.generateWithBreaker = vi.fn(async (_provider: string, fn: () => Promise<unknown>) => fn());
+    internal.getProvider = vi.fn(async () => ({
+      generate: vi.fn(async () => ({
+        isErr: () => true,
+        error: new LLMTimeoutError('lmstudio'),
+      })),
+    }));
+    internal.getFallbackProviders = vi.fn(() => ([
+      {
+        getModel: () => 'glm-4.5',
+        generate: vi.fn(async () => ({ isErr: () => true, error: new Error('GLM offline') })),
+      },
+      {
+        getModel: () => 'local-backup',
+        generate: vi.fn(async () => ({ isErr: () => true, error: new Error('LM Studio busy') })),
+      },
+    ]));
+
+    await expect(client.generate('sys', 'user', undefined, true)).rejects.toThrow(
+      /Fallbacks exhausted \(glm-4.5: GLM offline \| local-backup: LM Studio busy\)/,
+    );
+  });
+
+  it('includes exhausted fallback reasons in complete() failure payloads', async () => {
+    const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
+    const internal = client as any;
+
+    vi.spyOn(RetryManager, 'executeWithRetry').mockImplementation(async (fn: () => Promise<unknown>) => fn());
+
+    internal.resolveModel = vi.fn(async () => 'primary-model');
+    internal.syncResolvedModel = vi.fn();
+    internal.detectProvider = vi.fn(() => 'lmstudio');
+    internal.generateWithBreaker = vi.fn(async (_provider: string, fn: () => Promise<unknown>) => fn());
+    internal.getProvider = vi.fn(async () => ({
+      generate: vi.fn(async () => ({
+        isErr: () => true,
+        error: new LLMTimeoutError('lmstudio'),
+      })),
+    }));
+    internal.getFallbackProviders = vi.fn(() => ([
+      {
+        getModel: () => 'glm-4.5',
+        generate: vi.fn(async () => ({ isErr: () => true, error: new Error('GLM offline') })),
+      },
+    ]));
+
+    const result = await client.complete({ prompt: 'user', systemPrompt: 'sys' });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Fallbacks exhausted (glm-4.5: GLM offline)');
+  });
+});
+
+describe('LLMClient tool loop diagnostics', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('surfaces invalid JSON tool arguments instead of silently calling tools with {}', async () => {
+    const client = new LLMClient({ provider: 'lmstudio', model: 'primary-model' } as any);
+    const internal = client as any;
+
+    internal.generateWithTools = vi
+      .fn()
+      .mockResolvedValueOnce({
+        success: true,
+        content: '',
+        toolCalls: [
+          { id: 'tool-1', name: 'searchDocs', arguments: '{not-json}' },
+        ],
+        finishReason: 'tool_calls',
+      })
+      .mockResolvedValueOnce({
+        success: true,
+        content: 'final answer',
+        toolCalls: [],
+        finishReason: 'stop',
+      });
+
+    const toolExecutor = vi.fn(async () => 'should not run');
+
+    const result = await client.generateWithToolLoop({
+      systemPrompt: 'sys',
+      userPrompt: 'user',
+      tools: [],
+      toolExecutor,
+      maxIterations: 2,
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.content).toBe('final answer');
+    expect(toolExecutor).not.toHaveBeenCalled();
+
+    const secondCall = internal.generateWithTools.mock.calls[1]?.[0];
+    expect(secondCall.toolResults).toEqual([
+      expect.objectContaining({
+        toolCallId: 'tool-1',
+        isError: true,
+        result: expect.stringContaining('Tool searchDocs arguments invalid:'),
+      }),
+    ]);
   });
 });
 

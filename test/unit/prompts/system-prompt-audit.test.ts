@@ -126,4 +126,33 @@ describe('system prompt audit guardrails', () => {
     expect(specUser).toContain('<brand_colors>');
     expect(specUser).toContain('</options>');
   });
+
+  describe('canonical source alignment', () => {
+    it('swarm persona prompts in PromptLibrary match the canonical catalog', async () => {
+      const { SWARM_PERSONA_PROMPTS } = await import('../../../src/prompts/personaCatalog.js');
+      const personaIds = ['kai', 'nova', 'rex', 'sam', 'max'] as const;
+      for (const id of personaIds) {
+        const registered = PromptLibrary.get(`swarm.persona.${id}`);
+        expect(registered?.systemPrompt).toBe(SWARM_PERSONA_PROMPTS[id]);
+      }
+    });
+
+    it('DEFAULT_PERSONAS systemPrompts match the canonical catalog', async () => {
+      const { SWARM_PERSONA_PROMPTS } = await import('../../../src/prompts/personaCatalog.js');
+      const { DEFAULT_PERSONAS } = await import('../../../src/swarm/personas.js');
+      for (const persona of DEFAULT_PERSONAS) {
+        expect(persona.systemPrompt).toBe(SWARM_PERSONA_PROMPTS[persona.id]);
+      }
+    });
+
+    it('CreativeBoard default agents match the canonical catalog', async () => {
+      const { DEFAULT_BOARD_AGENTS } = await import('../../../src/prompts/creativeBoardAgents.js');
+      const { CreativeBoard } = await import('../../../src/collab/CreativeBoard.js');
+      const agents = CreativeBoard.getDefaultAgents();
+      expect(agents).toHaveLength(DEFAULT_BOARD_AGENTS.length);
+      for (let i = 0; i < agents.length; i++) {
+        expect(agents[i]).toEqual(DEFAULT_BOARD_AGENTS[i]);
+      }
+    });
+  });
 });

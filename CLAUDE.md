@@ -104,3 +104,11 @@ The archaeology pipeline has been extracted to **`dev-archaeology`** (private re
 **DO NOT** create archaeology files, run archaeology scripts, or reference `narrative/data/` in this repo. All archaeology work happens in `dev-archaeology`.
 
 The `narrative/` directory has been removed. Git history is preserved on the `narrative/liminal-archaeology` branch.
+
+## Integration-First Rule (mandatory for all agents)
+
+1. No new module may be created without a specific call site in the existing CLI or loop.
+2. Every task must end with a verifiable CLI command or test run.
+3. Orphaned files (created but never imported) are defects — the pre-commit hook blocks them.
+4. Prefer surgical edits to existing files over creating new files.
+5. Before claiming completion, run the verification command and show the output.

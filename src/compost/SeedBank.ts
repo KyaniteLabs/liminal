@@ -72,8 +72,9 @@ export class SeedBank {
       const raw = await fs.readFile(this.seedsPath, 'utf-8');
       this.seeds =
         safeJsonParse(raw, SeedSchema.array(), 'SeedBank') ?? [];
-    } catch (err: any) {
-      if (err?.code === 'ENOENT') {
+    } catch (err: unknown) {
+      const code = err instanceof Error ? (err as NodeJS.ErrnoException).code : undefined;
+      if (code === 'ENOENT') {
         Logger.debug('SeedBank', 'No saved seeds found, starting empty');
       } else {
         Logger.error('SeedBank', 'Seed file corrupted or unreadable, starting empty:', err instanceof Error ? err.message : err);

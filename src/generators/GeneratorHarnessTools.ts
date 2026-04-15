@@ -1,3 +1,6 @@
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
+import type { GenerationEvaluation } from '../core/types/GenerationEvaluation.js';
+
 /**
  * GeneratorHarnessTools - Thin domain-contract harness helpers
  *
@@ -26,6 +29,55 @@ export type FailureClass =
   | 'wrapper_contract_mismatch'
   | 'runtime_error'
   | 'unknown';
+
+// ---------------------------------------------------------------------------
+// Failure Classification Normalization (DF3 Flywheel Unlock)
+// ---------------------------------------------------------------------------
+
+/**
+ * Map domain-specific FailureClass values to the shared GenerationEvaluation contract.
+ */
+export function classifyFailureForEvaluation(
+  failure: FailureClass | string,
+  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
+): GenerationEvaluation['failureClass'] {
+  if (context?.renderFailed) {
+    return 'render';
+  }
+  if (context?.validationFailed) {
+    return 'validator';
+  }
+  if (context?.scoreFailed) {
+    return 'scorer';
+  }
+
+  switch (failure) {
+    case 'runtime_error':
+    case 'wrapper_contract_mismatch':
+    case 'wrong_domain':
+    case 'missing_required_api':
+    case 'too_short':
+    case 'truncated':
+    case 'empty_after_reasoning_strip':
+      return 'validator';
+    default:
+      return 'none';
+  }
+}
+
+/**
+ * Build a minimal GenerationEvaluation pick from a classified failure.
+ */
+export function buildFailureEvaluation(
+  failure: FailureClass | string,
+  context?: { renderFailed?: boolean; validationFailed?: boolean; scoreFailed?: boolean }
+): Pick<GenerationEvaluation, 'score' | 'confidence' | 'failureClass'> {
+  return {
+    score: 0,
+    confidence: 1,
+    failureClass: classifyFailureForEvaluation(failure, context),
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Domain Skeleton & API Data
@@ -297,8 +349,9 @@ export interface SuccessMetadata {
 /**
  * GeneratorHarnessTools - thin domain-contract harness helpers
  *
- * @param seededRandom - optional deterministic RNG for deterministic sampling in tests.
- *                       If omitted, uses Math.random() (non-deterministic).
+ * @param options - optional constructor options. Either `seededRandom` or `entropySource`
+ *                  must be provided; the constructor throws if neither is given.
+
  */
 export class GeneratorHarnessTools {
   private rng: () => number;
@@ -307,8 +360,15 @@ export class GeneratorHarnessTools {
   // Maximum artifacts kept in memory before eviction
   private static readonly MAX_MEMORY = 100;
 
-  constructor(seededRandom?: () => number) {
-    this.rng = seededRandom ?? Math.random;
+  constructor(options?: { seededRandom?: () => number; entropySource?: MetabolicEntropyEngine }) {
+    if (options?.seededRandom) {
+      this.rng = options.seededRandom;
+    } else if (options?.entropySource) {
+      const entropySource = options.entropySource;
+      this.rng = () => entropySource.nextFloat();
+    } else {
+      throw new Error('GeneratorHarnessTools: either seededRandom or entropySource must be provided');
+    }
   }
 
   // -------------------------------------------------------------------------
@@ -505,6 +565,110 @@ export class GeneratorHarnessTools {
       return this.successMemory.filter(m => m.domain === domain);
     }
     return [...this.successMemory];
+  }
+
+  // -------------------------------------------------------------------------
+  // buildRepairPacket() -- compact repair packet with repeated-failure detection
+  // -------------------------------------------------------------------------
+
+  /**
+   * Build a compact repair packet from a GenerationEvaluation.
+   *
+   * @param evaluation - the evaluation containing repairAdvice
+   * @param history - optional prior evaluations to detect repeated failures
+   * @returns a compact string suitable for injection into a generation prompt
+   */
+  buildRepairPacket(
+    evaluation: GenerationEvaluation,
+    history?: GenerationEvaluation[]
+  ): string {
+    const advice = evaluation.repairAdvice;
+    if (!advice) return '';
+
+    const parts: string[] = [];
+    parts.push(`[repair] issue: ${advice.issue}`);
+    parts.push(`[repair] fix: ${advice.fix}`);
+    parts.push(`[repair] constraint: ${advice.constraint}`);
+
+    if (history && history.length > 0) {
+      const repeated = history.filter(
+        h => h.failureClass === evaluation.failureClass ||
+          (h.repairAdvice && advice.issue && h.repairAdvice.issue.toLowerCase() === advice.issue.toLowerCase())
+      ).length;
+      if (repeated >= 2) {
+        parts.push(`[repair] escalation: This failure has occurred ${repeated} times. Try a fundamentally different approach.`);
+      }
+    }
+
+    return parts.join('\n');
+  }
+
+  // -------------------------------------------------------------------------
+  // Candidate ranking / selection hooks (DF3 Phase 5)
+  // -------------------------------------------------------------------------
+
+  /**
+   * Normalize a GenerationEvaluation into a scalar comparable score.
+   * Applies penalties for non-'none' failure classes and down-weights low confidence.
+   */
+  scoreCandidateForSelection(evaluation: GenerationEvaluation): number {
+    let score = evaluation.score;
+    if (evaluation.failureClass !== 'none') {
+      score *= 0.5;
+    }
+    if (evaluation.confidence < 0.5) {
+      score *= 0.8;
+    }
+    return score;
+  }
+
+  /**
+   * Rank candidates by their selection score.
+   * Returns sorted indices (best first) and the winner index.
+   */
+  rankCandidates(_codes: string[], evaluations: GenerationEvaluation[]): { rankedIndices: number[]; winnerIndex: number } {
+    if (evaluations.length === 0) {
+      return { rankedIndices: [], winnerIndex: -1 };
+    }
+    const indexed = evaluations.map((evalItem, idx) => ({
+      idx,
+      score: this.scoreCandidateForSelection(evalItem),
+    }));
+    indexed.sort((a, b) => b.score - a.score);
+    return {
+      rankedIndices: indexed.map(i => i.idx),
+      winnerIndex: indexed[0]?.idx ?? 0,
+    };
+  }
+
+  /**
+   * Modulate a repair prompt with an optional entropy-driven exploration phrase.
+   */
+  modulateRepairPrompt(basePrompt: string, entropyPhrase?: string): string {
+    if (entropyPhrase && entropyPhrase.trim().length > 0) {
+      return `${basePrompt}\n\n---\nEntropy-driven exploration: consider ${entropyPhrase.trim()}`;
+    }
+    return basePrompt;
+  }
+
+  /**
+   * Build a perturbed variant of a prompt to encourage candidate diversity.
+   */
+  buildDiversityPrompt(basePrompt: string, index: number, total: number, entropyPhrase?: string): string {
+    if (total <= 1) return basePrompt;
+    if (entropyPhrase && entropyPhrase.trim().length > 0) {
+      return `${basePrompt}\n\n---\nVariation hint: ${entropyPhrase.trim()}`;
+    }
+    const perturbations = [
+      'Try a different creative approach.',
+      'Emphasize visual contrast and bold shapes.',
+      'Focus on subtle details and delicate patterns.',
+      'Use an unexpected color palette or rhythm.',
+      'Simplify the composition to its essential elements.',
+      'Add complexity through layered interactions.',
+    ];
+    const hint = perturbations[index % perturbations.length] ?? perturbations[0];
+    return `${basePrompt}\n\n---\nVariation hint: ${hint}`;
   }
 
   // -------------------------------------------------------------------------

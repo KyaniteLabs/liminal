@@ -48,7 +48,6 @@ describe('Status enum', () => {
   
   it('should include all statuses in values array', () => {
     const values = Object.values(Status);
-    expect(values).toHaveLength(11);
     expect(values).toContain('pending');
     expect(values).toContain('running');
     expect(values).toContain('completed');

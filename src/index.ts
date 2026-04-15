@@ -700,6 +700,14 @@ export type { ASCIIOptions, ASCIIStyle } from './generators/ascii/ASCIIArtGenera
 export type { TextGenOptions, TextGenForm, TextGenStyle } from './generators/textgen/TextGenerativeGenerator.js';
 // Note: ShaderGenerator, ThreeGenerator, HTMLWebGenerator, ASCIIArtGenerator, TextGenerativeGenerator exported below with TierBasedGenerator
 
+export { LiminalFS } from './fs/index.js';
+export type {
+  LiminalObjectKind,
+  LiminalObjectRef,
+  WriteArtifactInput,
+  LiminalRunRecord,
+} from './fs/index.js';
+
 // Meta-Harness - Failure observation and pattern detection
 export {
   failureLogger,

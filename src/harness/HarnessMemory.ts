@@ -153,8 +153,9 @@ export class HarnessMemory {
         // Migrate if needed
         this.state = this.migrate(loaded);
         Logger.debug('HarnessMemory', `Loaded ${this.state.tasks.length} tasks, ${this.state.adaptations.length} adaptations, ${this.state.episodes.length} episodes, ${this.state.calibration.length} calibrations`);
-      } catch (err: any) {
-        if (err?.code === 'ENOENT') {
+      } catch (err: unknown) {
+        const code = err instanceof Error ? (err as NodeJS.ErrnoException).code : undefined;
+        if (code === 'ENOENT') {
           // File doesn't exist — expected on first run
           Logger.debug('HarnessMemory', 'No previous memory found, starting fresh');
         } else {
@@ -226,27 +227,28 @@ export class HarnessMemory {
   /**
    * Migrate old memory formats
    */
-  private migrate(loaded: any): HarnessMemoryState {
-    if (!loaded.version || loaded.version < MEMORY_VERSION) {
+  private migrate(loaded: unknown): HarnessMemoryState {
+    const data = loaded as Partial<HarnessMemoryState> & { version?: number };
+    if (!data.version || data.version < MEMORY_VERSION) {
       // Migration logic for future versions
-      loaded.version = MEMORY_VERSION;
-      
+      data.version = MEMORY_VERSION;
+
       // Ensure calibration array exists
-      if (!loaded.calibration) {
-        loaded.calibration = [];
+      if (!data.calibration) {
+        data.calibration = [];
       }
-      
+
       // Ensure totalCalibrations stat exists
-      if (!loaded.stats) {
-        loaded.stats = { ...DEFAULT_STATE.stats };
+      if (!data.stats) {
+        data.stats = { ...DEFAULT_STATE.stats };
       }
-      if (loaded.stats.totalCalibrations === undefined) {
-        loaded.stats.totalCalibrations = 0;
+      if (data.stats.totalCalibrations === undefined) {
+        data.stats.totalCalibrations = 0;
       }
     }
     return {
       ...DEFAULT_STATE,
-      ...loaded,
+      ...data,
     };
   }
 

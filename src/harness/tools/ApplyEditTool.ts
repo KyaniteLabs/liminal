@@ -93,6 +93,7 @@ export class ApplyEditTool extends Tool {
         data: {
           replacements: 1,
           backupPath,
+          verificationHint: getVerificationHint(filePath),
         },
         duration: Date.now() - startTime,
       };
@@ -104,6 +105,45 @@ export class ApplyEditTool extends Tool {
       };
     }
   }
+}
+
+/**
+ * Returns a verification hint based on file extension.
+ * Guides the LLM to pick the right verification tool after an edit.
+ */
+function getVerificationHint(filePath: string): string {
+  const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
+  const base = filePath.split('/').pop()?.toLowerCase() ?? '';
+
+  // Go files - npm build won't cover these
+  if (ext === 'go') {
+    return 'Modified a Go file. runBuild will NOT verify this. Use astValidate or run go-specific checks.';
+  }
+
+  // Non-code files - no TypeScript build needed
+  if (['md', 'txt', 'rst'].includes(ext)) {
+    return 'Modified a Markdown/text file. No build needed - use readFile to verify content.';
+  }
+  if (['json', 'jsonc'].includes(ext) || base === 'package.json') {
+    return 'Modified a JSON file. No build needed - use readFile to verify structure.';
+  }
+  if (['css', 'scss', 'less', 'sass'].includes(ext)) {
+    return 'Modified a CSS/SCSS file. No TypeScript build needed - use readFile to verify.';
+  }
+  if (['html', 'htm', 'svg'].includes(ext)) {
+    return 'Modified an HTML file. No build needed - use readFile to verify.';
+  }
+  if (['yaml', 'yml', 'toml'].includes(ext)) {
+    return 'Modified a YAML/TOML file. No build needed - use readFile to verify.';
+  }
+
+  // TypeScript/JavaScript files - use typeCheck for type-only changes, runBuild for full verification
+  if (['ts', 'tsx', 'js', 'jsx', 'mts', 'cts'].includes(ext)) {
+    return 'Modified a TypeScript/JS file. Run typeCheck (fast) or runBuild (full) to verify.';
+  }
+
+  // Default: suggest build
+  return 'Run runBuild to verify changes compile correctly.';
 }
 
 export const applyEditTool = new ApplyEditTool();

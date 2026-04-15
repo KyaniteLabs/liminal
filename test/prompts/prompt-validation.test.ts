@@ -69,7 +69,7 @@ const EXPECTED_IDS = [
 
 describe('Prompt Library Validation', () => {
   describe('registration completeness', () => {
-    it('should have exactly 34 prompts registered', () => {
+    it('should have exactly 41 prompts registered', () => {
       const all = PromptLibrary.list();
       expect(all.length).toBe(EXPECTED_IDS.length);
     });

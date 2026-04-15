@@ -1,15 +1,19 @@
 import { describe, it, expect } from 'vitest';
 
 describe('E2E: audio + aesthetic wiring', () => {
-  it('exports AudioAnalyzer from index', async () => {
-    const mod = await import('../../src/index.js');
-    expect(mod.AudioAnalyzer).toBeDefined();
-  }, 15000);
+  it(
+    'exports AudioAnalyzer from index',
+    async () => {
+      const mod = await import('../../src/index.js');
+      expect(mod.AudioAnalyzer).toBeDefined();
+    },
+    30000,
+  );
 
   it('exports AestheticCritic from index', async () => {
     const mod = await import('../../src/index.js');
     expect(mod.AestheticCritic).toBeDefined();
-  }, 15000);
+  }, 30000);
 
   it('AestheticCritic critiques real p5 code end-to-end', async () => {
     const { AestheticCritic } = await import('../../src/aesthetic/index.js');

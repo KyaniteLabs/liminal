@@ -52,4 +52,29 @@ describe('OpenRouterProvider', () => {
     expect(res.value.success).toBe(true);
     expect(res.value.content).toBe('response text');
   });
+
+  it('requests json_object response format when the prompt explicitly asks for JSON only', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: () => Promise.resolve({
+        choices: [{ message: { content: '{"tool":"complete"}' } }],
+        model: 'google/gemini-3.1-pro-preview',
+      }),
+    });
+
+    const provider = new OpenRouterProvider({
+      baseUrl: 'https://openrouter.ai/api/v1',
+      apiKey: 'test-key',
+      model: 'google/gemini-3.1-pro-preview',
+    });
+
+    await provider.generate({
+      systemPrompt: 'sys',
+      userPrompt: 'What is your next tool call? Respond with JSON only.',
+    });
+
+    const [, options] = mockFetch.mock.calls[0];
+    const body = JSON.parse(options.body);
+    expect(body.response_format).toEqual({ type: 'json_object' });
+  });
 });

@@ -2,6 +2,16 @@ import { createServer, type IncomingMessage, type ServerResponse, type Server } 
 import { TuiBridgeService } from './TuiBridgeService.js';
 import type { LLMClient } from '../llm/LLMClient.js';
 import type { TuiInputRequest } from './types.js';
+import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.js';
+import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
+import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
+
+const ALLOWED_ORIGINS: readonly string[] = [
+  'http://localhost:3000',
+  'http://localhost:4200',
+  'http://localhost:5173',
+  'http://127.0.0.1:3000',
+];
 
 interface BridgeServerOptions {
   port?: number;
@@ -10,10 +20,10 @@ interface BridgeServerOptions {
 }
 
 export class TuiBridgeServer {
-  private bridge: TuiBridgeService;
-  private server: Server;
-  private port: number;
-  private host: string;
+  private readonly bridge: TuiBridgeService;
+  private readonly server: Server;
+  private readonly port: number;
+  private readonly host: string;
   private llm?: LLMClient;
 
   constructor(bridge: TuiBridgeService, options: BridgeServerOptions = {}) {
@@ -59,8 +69,7 @@ export class TuiBridgeServer {
   private async handleRequest(req: IncomingMessage, res: ServerResponse): Promise<void> {
     // CORS headers - restrict to localhost origins only
     const origin = req.headers.origin;
-    const allowedOrigins = ['http://localhost:3000', 'http://localhost:4200', 'http://localhost:5173', 'http://127.0.0.1:3000'];
-    if (origin && allowedOrigins.includes(origin)) {
+    if (origin && ALLOWED_ORIGINS.includes(origin)) {
       res.setHeader('Access-Control-Allow-Origin', origin);
     } else {
       res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
@@ -114,6 +123,10 @@ export class TuiBridgeServer {
         const sessionId = inputMatch[1];
         const body = await this.readBody(req);
         const input: TuiInputRequest = JSON.parse(body);
+        if (await this.handleOpenRouterPicker(sessionId, input)) {
+          this.json(res, 200, { reviewRequired: false });
+          return;
+        }
         // Pass the full LLMClient (not just stream function)
         const result = await this.bridge.submitInput(sessionId, input, this.llm);
         this.json(res, 200, result);
@@ -146,8 +159,7 @@ export class TuiBridgeServer {
         return;
       }
 
-      res.writeHead(404, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Not found' }));
+      this.json(res, 404, { error: 'Not found' });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       const status = message.includes('not found') || message.includes('Unknown') ? 404 : 500;
@@ -162,24 +174,31 @@ export class TuiBridgeServer {
       Connection: 'keep-alive',
     });
 
+    const lastEventId = Number(req.headers['last-event-id'] || 0) || 0;
+
     // Send any existing events first
-    const existing = this.bridge.getEvents(sessionId);
-    for (const event of existing) {
-      res.write(`data: ${JSON.stringify(event)}\n\n`);
+    const existing = this.bridge.getEventsSince(sessionId, lastEventId);
+    for (const stored of existing) {
+      res.write(`id: ${stored.id}\n`);
+      res.write(`data: ${JSON.stringify(stored.event)}\n\n`);
     }
 
     // Subscribe to new events
-    const unsubscribe = this.bridge.subscribe(sessionId, (event) => {
-      const payload = `data: ${JSON.stringify(event)}\n\n`;
-      const flushed = res.write(payload);
-      // Handle backpressure: if the buffer is full, pause and resume
-      if (!flushed) {
-        res.once('drain', () => { /* resume */ });
-      }
+    const unsubscribe = this.bridge.subscribeWithId(sessionId, (stored) => {
+      const payload = `id: ${stored.id}
+data: ${JSON.stringify(stored.event)}
+
+`;
+      res.write(payload);
     });
+
+    const heartbeat = setInterval(() => {
+      res.write(': ping\n\n');
+    }, 15000);
 
     // Clean up on client disconnect
     req.on('close', () => {
+      clearInterval(heartbeat);
       unsubscribe();
     });
   }
@@ -197,6 +216,68 @@ export class TuiBridgeServer {
   private json(res: ServerResponse, status: number, body: unknown): void {
     res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
+  }
+
+  private async handleOpenRouterPicker(sessionId: string, input: TuiInputRequest): Promise<boolean> {
+    const text = input.text.trim();
+    if (!text.startsWith('/provider openrouter')) return false;
+
+    const parts = text.split(/\s+/).slice(2);
+    if (parts.length === 0) {
+      const current = this.llm?.getConfig().model;
+      const lines = ['OpenRouter models:'];
+      for (const entry of OPENROUTER_MODEL_CATALOG) {
+        const marker = entry.model === current ? ' (current)' : '';
+        lines.push(`- ${entry.alias.padEnd(12)} ${entry.model}${marker}`);
+      }
+      this.bridge.emitCommandResponse(sessionId, lines.join('\n'));
+      return true;
+    }
+
+    const selection = parts.join(' ');
+    const alias = resolveOpenRouterModelAlias(selection);
+    const model = alias?.model || selection;
+    const label = alias?.label || selection;
+
+    const loaded = await loadConfig();
+    const config = loaded.isErr()
+      ? ({ defaultProvider: 'openrouter', providers: {} } as UserConfig)
+      : (loaded.value as UserConfig);
+
+    const apiKey = config.providers?.openrouter?.apiKey
+      || this.llm?.getConfig().apiKey
+      || process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      this.bridge.emitCommandResponse(sessionId, 'OpenRouter API key not found. Set it in ~/.liminal/config.json or OPENROUTER_API_KEY before switching models.');
+      return true;
+    }
+
+    config.defaultProvider = 'openrouter';
+    config.providers = config.providers || {};
+    config.providers.openrouter = {
+      ...config.providers.openrouter,
+      baseUrl: 'https://openrouter.ai/api/v1',
+      model,
+      apiKey,
+    };
+    await saveConfig(config);
+
+    this.llm = new RuntimeLLMClient({
+      role: 'harness',
+      baseUrl: config.providers.openrouter.baseUrl,
+      model,
+      apiKey,
+      temperature: 0.5,
+      maxTokens: 4096,
+    });
+
+    this.bridge.updateStatus(sessionId, {
+      provider: 'openrouter',
+      model,
+      activeTask: `Provider switched to ${label}`,
+    });
+    this.bridge.emitCommandResponse(sessionId, `Switched OpenRouter model to ${label} (${model})`);
+    return true;
   }
 
   private readBody(req: IncomingMessage): Promise<string> {

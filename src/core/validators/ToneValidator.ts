@@ -19,6 +19,7 @@ export class ToneValidator {
     'Transport', 'Destination', 'Master', 'Listener', 'Context', 'Draw', 'Tone',
     // Sources - Oscillators
     'Oscillator', 'PulseOscillator', 'PWMOscillator', 'FatOscillator', 'AMOscillator', 'FMOscillator',
+    'LFO',
     // Sources - Synths
     'AMSynth', 'FMSynth', 'MonoSynth', 'PolySynth', 'Synth', 'MembraneSynth',
     'MetalSynth', 'NoiseSynth', 'DuoSynth', 'PluckSynth', 'GrainSynth', 'Sampler', 'Player',
@@ -43,7 +44,7 @@ export class ToneValidator {
     // Components - Envelopes
     'Envelope', 'AmplitudeEnvelope', 'FrequencyEnvelope', 'ScaledEnvelope',
     // Components - Analysis
-    'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter', 'Scope',
+    'Analyser', 'Meter', 'FFT', 'Waveform', 'DCMeter', 'LevelMeter', 'Scope',
     // Components - Math
     'Signal', 'Multiply', 'Add', 'Subtract', 'Abs', 'Negate', 'Pow', 'Divide', 'Modulo', 'Max', 'Min', 'Clip', 'Scale', 'Pow',
     // Components - Core
@@ -52,10 +53,12 @@ export class ToneValidator {
     'Instrument', 'Monophonic', 'Polyphonic',
     // Events
     'Loop', 'Part', 'Pattern', 'Sequence', 'Event', 'ToneEvent',
+    // Patterns (alias for Pattern used in some Tone.js versions)
+    'Pattern',
     // Transport
     'Transport', 'TransportTime', 'Ticks', 'Time', 'Frequency', 'Midi', 'BarsBeatsSixteenths',
     // Routing
-    'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo', 'Channel', 'Master',
+    'AuxNode', 'PanVol', 'Panner', 'Panner3D', 'Merge', 'Split', 'Mono', 'Solo', 'Channel', 'Master',
     // Utilities
     'ToneAudioBuffer', 'ToneAudioBuffers', 'Buffer', 'Buffers',
     'Interval', 'Timeout', 'Draw', 'Context', 'OfflineContext',
@@ -73,6 +76,9 @@ export class ToneValidator {
     { pattern: /Tone\.Echo/, suggestion: 'Tone.FeedbackDelay or Tone.PingPongDelay' },
     { pattern: /Tone\.Sound/, suggestion: 'Tone.Player or Tone.Synth' },
     { pattern: /Tone\.Play/, suggestion: 'Tone.Transport.start() or synth.triggerAttackRelease()' },
+    { pattern: /Tone\.Lfo\b/, suggestion: 'Tone.LFO' },
+    { pattern: /\.startAttack\s*\(/, suggestion: 'lfo.start()' },
+    { pattern: /\.setFrequency\s*\(/, suggestion: 'lfo.frequency.value = ...' },
   ];
 
   /**
@@ -95,6 +101,9 @@ export class ToneValidator {
 
     // Check for hallucinations
     errors.push(...this.validateHallucinations(trimmed));
+
+    // Check for common graph/property mistakes found by evaluator dogfood.
+    errors.push(...this.validateGraphSemantics(trimmed));
 
     return {
       valid: errors.length === 0,
@@ -145,6 +154,28 @@ export class ToneValidator {
       if (pattern.test(code)) {
         errors.push(`Tone.js: Invalid API - did you mean '${suggestion}'?`);
       }
+    }
+
+    return errors;
+  }
+
+  private static validateGraphSemantics(code: string): string[] {
+    const errors: string[] = [];
+
+    if (/\.filter\b/.test(code)) {
+      errors.push('Tone.js: PolySynth/Synth instances do not expose .filter; create Tone.Filter and connect through it');
+    }
+
+    if (/\.detune\.value\b/.test(code)) {
+      errors.push('Tone.js: Do not mutate synth.detune.value directly on PolySynth; use supported oscillator/frequency parameters or an explicit LFO target');
+    }
+
+    if (/\.filter\.lfo\b/.test(code)) {
+      errors.push('Tone.js: Invalid LFO target .filter.lfo; connect LFO to an explicit Tone.Filter frequency parameter');
+    }
+
+    if (/new\s+Tone\.PolySynth\s*\(\s*["']/.test(code)) {
+      errors.push('Tone.js: Tone.PolySynth constructor should receive a synth class/config object, not an oscillator type string');
     }
 
     return errors;

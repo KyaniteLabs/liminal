@@ -39,6 +39,13 @@ export interface RoleProviderConfig {
   streaming?: boolean;
 }
 
+export interface EvolutionTunables {
+  enabled?: boolean;
+  temperatureRange?: { min: number; max: number };
+  maxTokensRange?: { min: number; max: number };
+  mutationRate?: number;
+}
+
 export interface RoleConfigFile {
   roles: {
     generator: RoleProviderConfig;
@@ -49,6 +56,8 @@ export interface RoleConfigFile {
   fallbacks?: Partial<Record<ModelRole, RoleProviderConfig[]>>;
   /** Capability overrides — takes priority over static CapabilityRegistry */
   capabilities?: Record<string, Partial<ModelCapabilities>>;
+  /** Evolution tuning parameters */
+  evolution?: EvolutionTunables;
 }
 
 export interface ResolvedRoleConfig {
@@ -235,18 +244,42 @@ async function loadProjectConfig(projectDir?: string): Promise<RoleConfigFile | 
   }
 }
 
+interface ProjectConfigLike {
+  llm?: {
+    baseUrl?: string;
+    model?: string;
+    apiKey?: string;
+    temperature?: number;
+    maxTokens?: number;
+  };
+  multiModel?: {
+    primary?: {
+      baseUrl?: string;
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+    };
+    secondary?: {
+      baseUrl?: string;
+      model?: string;
+      temperature?: number;
+      maxTokens?: number;
+    };
+  };
+}
+
 /**
  * Map existing ProjectConfig shape to RoleConfigFile.
  * The existing project config has `llm` and `multiModel` fields
  * that map to generator and harness roles.
  */
-function projectToRoleConfig(project: any): RoleConfigFile | null {
+function projectToRoleConfig(project: ProjectConfigLike): RoleConfigFile | null {
   if (!project.llm && !project.multiModel) return null;
 
   const roles: RoleConfigFile['roles'] = {
     generator: {
-      baseUrl: project.llm?.baseUrl || project.multiModel?.primary?.baseUrl,
-      model: project.llm?.model || project.multiModel?.primary?.model,
+      baseUrl: project.llm?.baseUrl || project.multiModel?.primary?.baseUrl || '',
+      model: project.llm?.model || project.multiModel?.primary?.model || '',
       apiKey: project.llm?.apiKey,
       temperature: project.llm?.temperature || project.multiModel?.primary?.temperature,
       maxTokens: project.llm?.maxTokens || project.multiModel?.primary?.maxTokens,
@@ -255,8 +288,8 @@ function projectToRoleConfig(project: any): RoleConfigFile | null {
 
   if (project.multiModel?.secondary) {
     roles.harness = {
-      baseUrl: project.multiModel.secondary.baseUrl,
-      model: project.multiModel.secondary.model,
+      baseUrl: project.multiModel.secondary.baseUrl || '',
+      model: project.multiModel.secondary.model || '',
       temperature: project.multiModel.secondary.temperature,
       maxTokens: project.multiModel.secondary.maxTokens,
     };
@@ -280,6 +313,7 @@ function mergeConfigs(base: RoleConfigFile | null, overlay: RoleConfigFile | nul
     },
     fallbacks: { ...base.fallbacks, ...overlay.fallbacks },
     capabilities: { ...base.capabilities, ...overlay.capabilities },
+    evolution: { ...base.evolution, ...overlay.evolution },
   };
 }
 
@@ -300,6 +334,29 @@ export function getFallbacks(
   config: RoleConfigFile | null,
 ): RoleProviderConfig[] {
   return config?.fallbacks?.[role] || [];
+}
+
+/**
+ * Get evolution tunables with sensible defaults.
+ */
+export function getEvolutionTunables(config: RoleConfigFile | null): EvolutionTunables {
+  return {
+    enabled: config?.evolution?.enabled ?? false,
+    temperatureRange: config?.evolution?.temperatureRange ?? { min: 0.0, max: 1.0 },
+    maxTokensRange: config?.evolution?.maxTokensRange ?? { min: 512, max: 8192 },
+    mutationRate: config?.evolution?.mutationRate ?? 0.1,
+  };
+}
+
+/**
+ * Get a single role's resolved config from an already-loaded roles record.
+ * Returns undefined if the role was not configured.
+ */
+export function getRoleConfig(
+  role: ModelRole,
+  roles: Partial<Record<ModelRole, ResolvedRoleConfig>>,
+): ResolvedRoleConfig | undefined {
+  return roles[role];
 }
 
 /**

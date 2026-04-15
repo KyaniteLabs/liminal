@@ -82,10 +82,21 @@ export class Renderer {
     }
 
     let page: Page | null = null;
+    const pageErrors: string[] = [];
+    const consoleErrors: string[] = [];
 
     try {
       const browser = await Renderer.getBrowser();
       page = await browser.newPage();
+
+      page.on('pageerror', (error) => {
+        pageErrors.push(error instanceof Error ? error.message : String(error));
+      });
+      page.on('console', (message) => {
+        if (message.type() === 'error') {
+          consoleErrors.push(message.text());
+        }
+      });
 
       await page.setViewport({
         width: this.DEFAULT_WIDTH,
@@ -104,7 +115,7 @@ export class Renderer {
 
       const canvas = await page.$('canvas');
       if (!canvas) {
-        throw new Error('No canvas element found. The sketch may have failed to initialize.');
+        throw new Error(`No canvas element found. The sketch may have failed to initialize.${this.formatDiagnostics(pageErrors, consoleErrors)}`);
       }
 
       await canvas.screenshot({
@@ -113,7 +124,10 @@ export class Renderer {
       });
     } catch (error) {
       if (error instanceof Error) {
-        throw new Error(`Failed to render sketch: ${error.message}`, { cause: error });
+        const message = error.message.includes('Diagnostics:')
+          ? error.message
+          : `${error.message}${this.formatDiagnostics(pageErrors, consoleErrors)}`;
+        throw new Error(`Failed to render sketch: ${message}`, { cause: error });
       }
       throw new Error('Failed to render sketch: Unknown error');
     } finally {
@@ -139,5 +153,16 @@ export class Renderer {
 
   private delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  private formatDiagnostics(pageErrors: string[], consoleErrors: string[]): string {
+    const parts: string[] = [];
+    if (pageErrors.length > 0) {
+      parts.push(`page errors: ${pageErrors.join(' | ')}`);
+    }
+    if (consoleErrors.length > 0) {
+      parts.push(`console errors: ${consoleErrors.join(' | ')}`);
+    }
+    return parts.length > 0 ? ` Diagnostics: ${parts.join(' ; ')}` : '';
   }
 }

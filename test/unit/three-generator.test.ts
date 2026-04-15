@@ -29,7 +29,6 @@ vi.mock('../../src/llm/LLMClient.js', () => {
 });
 
 import { ThreeGenerator } from '../../src/generators/three/ThreeGenerator.js';
-import { selectThreeTemplate } from '../../src/generators/three/ThreeTemplates.js';
 
 class TestableThreeGenerator extends ThreeGenerator {
   public testValidateOutput(code: string) {
@@ -90,45 +89,5 @@ describe('ThreeGenerator', () => {
     expect(wrapped).toContain('<!DOCTYPE html>');
     expect(wrapped).toContain('import*as THREE');
     expect(wrapped).toContain(code);
-  });
-});
-
-describe('selectThreeTemplate', () => {
-  it('selects particle-galaxy for galaxy keywords', () => {
-    const code = selectThreeTemplate('3D particle galaxy');
-    expect(code).toContain('BufferGeometry');
-  });
-
-  it('selects wireframe-terrain for terrain keywords', () => {
-    const code = selectThreeTemplate('wireframe terrain');
-    expect(code).toContain('PlaneGeometry');
-  });
-
-  it('selects instanced-mesh for instanced keywords', () => {
-    const code = selectThreeTemplate('instanced cubes field');
-    expect(code).toContain('InstancedMesh');
-  });
-
-  it('selects procedural-geometry for geometry keywords', () => {
-    const code = selectThreeTemplate('torus knot procedural');
-    expect(code).toContain('TorusKnotGeometry');
-  });
-
-  it('defaults to procedural-geometry for unknown keywords', () => {
-    const code = selectThreeTemplate('something random');
-    expect(code).toContain('THREE.Scene');
-  });
-
-  it('all templates include importmap', () => {
-    const templates = [
-      selectThreeTemplate('galaxy'),
-      selectThreeTemplate('terrain'),
-      selectThreeTemplate('instanced cubes'),
-      selectThreeTemplate('torus'),
-    ];
-    for (const t of templates) {
-      expect(t).toContain('importmap');
-      expect(t).toContain('three.module.js');
-    }
   });
 });

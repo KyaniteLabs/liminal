@@ -208,7 +208,7 @@ describe('OpenAIProvider', () => {
     mockCapabilities.thinkingStyle = 'none';
   });
 
-  it('returns success=false when content is empty and no thinking', async () => {
+  it('returns success=false with a diagnostic error when content is empty and no thinking', async () => {
     mockFetchResponse({
       choices: [{ message: { content: '' } }],
       model: 'gpt-4',
@@ -217,6 +217,29 @@ describe('OpenAIProvider', () => {
     const result = await provider.generate(makeRequest());
     expect(result.isOk()).toBe(true);
     expect(result.value.success).toBe(false);
+    expect(result.value.error).toContain('OpenAI-compatible provider returned no usable content');
+    expect(result.value.error).toContain('content_kind=string');
+  });
+
+  it('extracts text content from array-shaped message content', async () => {
+    mockFetchResponse({
+      choices: [{
+        message: {
+          content: [
+            { type: 'text', text: 'function setup() {' },
+            { type: 'text', text: '  createCanvas(400, 400);' },
+            { type: 'text', text: '}' },
+          ],
+        },
+      }],
+      model: 'glm-5.1',
+    });
+
+    const result = await provider.generate(makeRequest());
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(true);
+    expect(result.value.content).toContain('function setup() {');
+    expect(result.value.content).toContain('createCanvas(400, 400);');
   });
 
   it('falls back to model from config when response has no model', async () => {
@@ -531,6 +554,20 @@ describe('OpenRouterProvider', () => {
 
     expect(result.isErr()).toBe(true);
     expect(result.error.message).toContain('401');
+  });
+
+  it('returns success=false with a diagnostic error when content is empty', async () => {
+    mockFetchResponse({
+      choices: [{ message: { content: '' }, finish_reason: 'stop' }],
+      model: 'z-ai/glm-5.1:nitro',
+    });
+
+    const result = await provider.generate(makeRequest());
+
+    expect(result.isOk()).toBe(true);
+    expect(result.value.success).toBe(false);
+    expect(result.value.error).toContain('OpenRouter provider returned no usable content');
+    expect(result.value.error).toContain('content_kind=string');
   });
 });
 

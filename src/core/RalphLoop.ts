@@ -18,6 +18,11 @@
  * - OrganismLoop: organism mode
  */
 
+import { getEvalMode, getRepairMode } from '../config/FeatureFlags.js';
+import type { GenerationEvaluation, ConcreteRepairAdvice } from '../core/types/GenerationEvaluation.js';
+import { GeneratorHarnessTools } from '../generators/GeneratorHarnessTools.js';
+import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
+import type { EntropyResult } from '../entropy/types.js';
 import { Domain } from '../types/domains.js';
 import { PromptStore } from './PromptStore.js';
 import path from 'node:path';
@@ -25,6 +30,7 @@ import { ContextAccumulation } from './ContextAccumulation.js';
 import { ScoringEngine } from './ScoringEngine.js';
 import { PromiseDetector } from './PromiseDetector.js';
 import { Gallery } from '../gallery/Gallery.js';
+import { LiminalFS } from '../fs/LiminalFS.js';
 import { SafetyGuardrails } from './SafetyGuardrails.js';
 import { CompostHeap } from '../compost/CompostHeap.js';
 import { formatError } from '../utils/errors.js';
@@ -56,6 +62,7 @@ import { buildContextForInjection } from './ContextBuilder.js';
 import { enhancePrompt } from './PromptEnhancer.js';
 import { GenerationOrchestrator } from './GenerationOrchestrator.js';
 import { EvolutionIntegration } from './EvolutionIntegration.js';
+import { EvolutionEngine, type EvolutionProposal } from '../evolution/EvolutionEngine.js';
 import { LoopPersistence } from './LoopPersistence.js';
 import { StagnationDetector } from './StagnationDetector.js';
 import { SuccessRateTracker } from './SuccessRateTracker.js';
@@ -67,6 +74,11 @@ import { Provider } from '../types/providers.js';
 import { LiminalError } from '../errors/index.js';
 
 export type { LoopOptions, LoopResult, IterationContext, NormalizedLoopOptions };
+
+// DF3 shared contracts: imported for downstream use, referenced to satisfy TS
+void getEvalMode;
+void getRepairMode;
+void 0 as unknown as GenerationEvaluation;
 
 export class RalphLoop {
   /**
@@ -105,13 +117,37 @@ export class RalphLoop {
       }
     }
 
+    // Initialize LiminalFS once per run (used by all modes)
+    const liminalFs = LiminalFS.open(process.cwd());
+
+    try {
+      liminalFs.recordRun({
+        runId: sessionId,
+        prompt,
+        project: normalizedOptions.project,
+        status: 'started',
+        metadata: { maxIterations: normalizedOptions.maxIterations, mode: normalizedOptions.mode },
+      });
+    } catch {
+      // LiminalFS run recording is non-critical
+    }
+
     // Organism mode: delegate entirely to OrganismLoop
     if (normalizedOptions.mode === 'organism') {
-      return runOrganismMode(prompt, normalizedOptions, startTime);
+      try {
+        return await runOrganismMode(prompt, normalizedOptions, startTime, liminalFs, sessionId);
+      } finally {
+        try {
+          liminalFs.close();
+        } catch {
+          // ignore close errors
+        }
+      }
     }
 
     // Initialize subsystems
     const gallery = new Gallery(normalizedOptions.galleryDir);
+    const projectStore = liminalFs.getProjectStore();
     const stagnation = new StagnationDetector(normalizedOptions.stagnationThreshold ?? 7);
     const successRateTracker = new SuccessRateTracker({
       windowSize: 20,
@@ -181,6 +217,7 @@ export class RalphLoop {
         const analyzer = new AudioAnalyzer();
         const result = analyzer.analyze(float32, 44100);
         const visualMapping = analyzer.getVisualMapping(result);
+        // eslint-disable-next-line require-atomic-updates
         normalizedOptions.visualMappingParams = visualMapping as unknown as Record<string, unknown>;
         Logger.info('RalphLoop', `Voice analysis complete: mapped audio features to visual params`);
       } catch (err) {
@@ -196,6 +233,7 @@ export class RalphLoop {
         const float32 = await captureMicAudio();
         const analyzer = new AudioAnalyzer();
         const result = analyzer.analyze(float32);
+        // eslint-disable-next-line require-atomic-updates
         normalizedOptions.visualMappingParams = analyzer.getVisualMapping(result) as unknown as Record<string, unknown>;
         Logger.info('RalphLoop', `Mic capture analysis complete: mapped audio features to visual params`);
       } catch (err) {
@@ -228,8 +266,33 @@ export class RalphLoop {
     }
 
     const evolution = new EvolutionIntegration(normalizedOptions, aestheticModel);
-    const persistence = new LoopPersistence(gallery, normalizedOptions);
+    const persistence = new LoopPersistence(gallery, normalizedOptions, liminalFs);
     const generator = new GenerationOrchestrator(normalizedOptions, gallery, archiveLearning);
+
+    // DF3 Phase 8: EvolutionEngine for adaptive loop tuning
+    const recentScores: number[] = [];
+    const evolutionEngine = normalizedOptions.useEvolution
+      ? new EvolutionEngine({
+          recentScores,
+          currentPolicy: {
+            minQualityScore: normalizedOptions.minQualityScore,
+            maxIterations: normalizedOptions.maxIterations,
+          },
+        })
+      : undefined;
+
+    // DF3 Phase 4: Pre-digest compost for seed-aware initial generation
+    let compostMaterials: import('../compost/types.js').GenerationMaterials | undefined;
+    if (normalizedOptions.autoCompost || normalizedOptions.useCompostEnhancement) {
+      try {
+        const compostConfig = mergeCompostConfig();
+        const mill = new CompostMill(new LLMClient({ role: 'generator' }), { ...compostConfig, projectStore });
+        await mill.digest();
+        compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
+      } catch (err) {
+        Logger.warn('RalphLoop', 'Compost digest for generation failed:', err);
+      }
+    }
 
     let iteration = 0;
     let completed = false;
@@ -244,6 +307,11 @@ export class RalphLoop {
     const scoreHistory: number[] = [];
     const CONVERGENCE_WINDOW = 3;
     const CONVERGENCE_THRESHOLD = 0.01;
+
+    // DF3 Phase 2: repair history for repeated-failure detection
+    const repairHistory: GenerationEvaluation[] = [];
+
+    const evalMode = getEvalMode();
 
     // Main loop
     try {
@@ -287,8 +355,43 @@ export class RalphLoop {
           normalizedOptions.onThought?.('Enhancing prompt with context and compost...');
         }
 
+        // DF3 Phase 8: Apply EvolutionEngine proposals for this iteration only
+        let evoProposal: EvolutionProposal | undefined;
+        const evoRestores: Array<() => void> = [];
+        if (evolutionEngine && recentScores.length > 2) {
+          const rawProposal = evolutionEngine.propose();
+          if (rawProposal) {
+            evoProposal = { ...rawProposal, delta: evolutionEngine.clamp(rawProposal.delta) };
+            Logger.info('RalphLoop', `Evolution proposal (${evoProposal.type}): ${evoProposal.description}`);
+            if (evoProposal.delta.promptPrefix) {
+              usedPrompt = evoProposal.delta.promptPrefix + usedPrompt;
+            }
+            if (evoProposal.delta.promptSuffix) {
+              usedPrompt = usedPrompt + evoProposal.delta.promptSuffix;
+            }
+            if (evoProposal.delta.minQualityScoreAdjustment !== undefined) {
+              const original = normalizedOptions.minQualityScore;
+              normalizedOptions.minQualityScore = Math.max(0, Math.min(1, normalizedOptions.minQualityScore + evoProposal.delta.minQualityScoreAdjustment));
+              evoRestores.push(() => { normalizedOptions.minQualityScore = original; });
+            }
+          }
+        }
+
+        // Generate intuition hint if enabled
+        let intuitionHint: string | undefined;
+        if (normalizedOptions.useIntuition) {
+          try {
+            const { IntuitionEngine } = await import('../intuition/index.js');
+            const intuitionEngine = new IntuitionEngine();
+            intuitionHint = intuitionEngine.generateHint(normalizedOptions.project ?? 'default', 200);
+          } catch (err) {
+            Logger.warn('RalphLoop', 'Intuition hint generation failed:', err);
+          }
+        }
+
         // Enhance with compost seed, DNA, and archive examples
-        usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning);
+        // eslint-disable-next-line require-atomic-updates
+        usedPrompt = await enhancePrompt(usedPrompt, loadedPrompt, normalizedOptions, archiveLearning, compostMaterials, intuitionHint);
 
         // Adjust numCandidates based on success rate for high-exploration mode
         const adjustedNumCandidates = successRateTracker.getRecommendedCandidates(normalizedOptions.numCandidates ?? 1);
@@ -300,71 +403,117 @@ export class RalphLoop {
           normalizedOptions.onThought?.(`Generating ${adjustedNumCandidates} candidate(s)...`);
         }
 
-        // Best-of-N: Generate multiple candidates and select the best
-        const numCandidates = adjustedNumCandidates;
-        const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string }> = [];
+        // Best-of-N: Generate multiple candidates with bounded parallelism
+        let numCandidates = adjustedNumCandidates;
+        const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string; genEval?: GenerationEvaluation }> = [];
         let lastGenerationError: Error | undefined;
 
-        for (let i = 0; i < numCandidates; i++) {
+        // Harvest entropy before generation if enabled
+        let entropyEngine: MetabolicEntropyEngine | undefined;
+        let entropyResult: EntropyResult | undefined;
+        if (normalizedOptions.useEntropy) {
           try {
-            // Generate code (bypass cache to ensure fresh generation each iteration)
-            // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
-            const generationResult = await generator.generate(usedPrompt, loadedPrompt, true);
-
-            if (generationResult.needsClarification) {
-              const msgs = generationResult.clarifyingQuestions.map(q => q.question).join('; ');
-              throw new Error(
-                `Ambiguous prompt — please clarify before running RalphLoop:\n${msgs}\n\n` +
-                `Detected intent: ${generationResult.suggestions.join(', ') || 'unknown'}`
-              );
-            }
-
-            const { code, thinking, model } = generationResult;
-
-            // Validate generated code before accepting it
-            const validation = CodeValidator.validate(code);
-
-            if (!validation.valid) {
-              Logger.warn('RalphLoop', `Candidate ${i} validation failed: ${validation.errors.join('; ')}`);
-              // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
-              if (process.env.NODE_ENV !== 'test') {
-                await metaHarness.onGenerationComplete({
-                  success: false,
-                  model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-                  domain: normalizedOptions.collabDomain || 'p5',
-                  prompt: prompt,
-                  code: code,
-                  error: `Validation failed: ${validation.errors.join('; ')}`,
-                  duration: Date.now() - startTime,
-                });
-              }
-              // Skip this candidate - don't add to candidates list
-              continue;
-            }
-
-            const candidateCode = validation.cleanedCode;
-
-            // Check code completeness (structural - braces, parens balanced)
-            const isComplete = RalphLoop.isCodeComplete(candidateCode);
-
-            // Quick score for candidate selection (simpler than full evaluation)
-            // We'll do full evaluation on the best candidate
-            const quickScore = isComplete ? 0.5 : 0.3; // Basic completeness bonus
-
-            candidates.push({
-              code: candidateCode,
-              score: quickScore, // Will be replaced with full score
-              issues: [],
-              index: i,
-              thinking,
-              model,
+            entropyEngine = new MetabolicEntropyEngine({
+              eventStore: { getRecent: () => [] },
+              heap: { listFiles: async () => [] },
+              telemetry: { getSummary: () => ({ successRate: 0, avgDurationMs: 0, totalTasks: 0, totalViolations: 0 }) },
             });
-          } catch (candidateError) {
-            Logger.warn('RalphLoop', `Candidate ${i} generation failed: ${formatError('RalphLoop', candidateError)}`);
-            lastGenerationError = candidateError instanceof Error ? candidateError : new Error(String(candidateError));
-            // Continue to next candidate
-            if (!normalizedOptions.tolerateErrors) {
-              throw candidateError;
+            entropyResult = await entropyEngine.harvest();
+          } catch (err) {
+            Logger.warn('RalphLoop', 'Entropy harvest failed:', err);
+          }
+        }
+
+        // Use entropy for candidate search breadth (bounded)
+        if (entropyResult && entropyResult.seed % 2 === 0) {
+          numCandidates += 1;
+        }
+
+        const harnessTools = entropyEngine
+          ? new GeneratorHarnessTools({ entropySource: entropyEngine })
+          : new GeneratorHarnessTools({ seededRandom: Math.random });
+        const maxParallelism = normalizedOptions.maxParallelism ?? 3;
+
+        for (let batchStart = 0; batchStart < numCandidates; batchStart += maxParallelism) {
+          const batchEnd = Math.min(batchStart + maxParallelism, numCandidates);
+          const batchPromises: Promise<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string } | undefined>[] = [];
+
+          for (let i = batchStart; i < batchEnd; i++) {
+            batchPromises.push(
+              (async (index: number) => {
+                try {
+                  const diversityPrompt = normalizedOptions.swarmDiversify
+                    ? harnessTools.buildDiversityPrompt(usedPrompt, index, numCandidates, entropyResult?.phrase)
+                    : usedPrompt;
+                  // Generate code (bypass cache to ensure fresh generation each iteration)
+                  // Ralph Loop requires fresh LLM calls each iteration - caching would defeat the iterative improvement pattern
+                  const generationResult = await generator.generate(diversityPrompt, loadedPrompt, true);
+
+                  if (generationResult.needsClarification) {
+                    const msgs = generationResult.clarifyingQuestions.map(q => q.question).join('; ');
+                    throw new Error(
+                      `Ambiguous prompt — please clarify before running RalphLoop:\n${msgs}\n\n` +
+                      `Detected intent: ${generationResult.suggestions.join(', ') || 'unknown'}`
+                    );
+                  }
+
+                  const { code, thinking, model } = generationResult;
+
+                  // Validate generated code before accepting it
+                  const validation = CodeValidator.validate(code);
+
+                  if (!validation.valid) {
+                    Logger.warn('RalphLoop', `Candidate ${index} validation failed: ${validation.errors.join('; ')}`);
+                    // Report validation failure to Meta-Harness (skip during tests to avoid log pollution)
+                    if (process.env.NODE_ENV !== 'test') {
+                      await metaHarness.onGenerationComplete({
+                        success: false,
+                        model: normalizedOptions.useSwarm ? 'swarm' : 'local',
+                        domain: normalizedOptions.collabDomain || 'p5',
+                        prompt: prompt,
+                        code: code,
+                        error: `Validation failed: ${validation.errors.join('; ')}`,
+                        duration: Date.now() - startTime,
+                      });
+                    }
+                    // Skip this candidate - don't add to candidates list
+                    return undefined;
+                  }
+
+                  const candidateCode = validation.cleanedCode;
+
+                  // Check code completeness (structural - braces, parens balanced)
+                  const isComplete = RalphLoop.isCodeComplete(candidateCode);
+
+                  // Quick score for candidate selection (simpler than full evaluation)
+                  // We'll do full evaluation on the best candidate
+                  const quickScore = isComplete ? 0.5 : 0.3; // Basic completeness bonus
+
+                  return {
+                    code: candidateCode,
+                    score: quickScore, // Will be replaced with full score
+                    issues: [],
+                    index,
+                    thinking,
+                    model,
+                  };
+                } catch (candidateError) {
+                  Logger.warn('RalphLoop', `Candidate ${index} generation failed: ${formatError('RalphLoop', candidateError)}`);
+                  lastGenerationError = candidateError instanceof Error ? candidateError : new Error(String(candidateError));
+                  // Continue to next candidate
+                  if (!normalizedOptions.tolerateErrors) {
+                    throw lastGenerationError;
+                  }
+                  return undefined;
+                }
+              })(i)
+            );
+          }
+
+          const batchResults = await Promise.all(batchPromises);
+          for (const result of batchResults) {
+            if (result) {
+              candidates.push(result);
             }
           }
         }
@@ -385,7 +534,8 @@ export class RalphLoop {
           let bestCandidate = candidates[0];
 
           if (candidates.length > 1) {
-            // Score all candidates fully to find the best
+            // Score all candidates fully to find the best using GenerationEvaluation contract
+            const candidateEvaluations: GenerationEvaluation[] = [];
             for (let i = 0; i < candidates.length; i++) {
               const candidate = candidates[i];
               try {
@@ -408,27 +558,118 @@ export class RalphLoop {
                   }
                 }
 
-                const quickScoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-                const quickEvaluation = await quickScoringEngine.score(
-                  {
+                let genEval: GenerationEvaluation;
+                if (evalMode === 'auto' || evalMode === 'strict-browser') {
+                  const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+                  const renderer = HeadlessRenderer.getInstance();
+                  const renderEvidence = await renderer.renderWithEvidence(candidate.code, {
+                    domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+                    width: 400,
+                    height: 400,
+                  });
+
+                  if (renderEvidence.infraUnavailable) {
+                    if (evalMode === 'strict-browser') {
+                      throw new LiminalError(
+                        'Browser rendering infrastructure is unavailable in strict-browser mode',
+                        'ERR_RENDER_INFRA_UNAVAILABLE',
+                      );
+                    }
+                    Logger.warn('RalphLoop', 'Browser render infra unavailable, falling back to legacy scoring for candidate');
+                    const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                    const quickEvaluation = await scoringEngine.scoreReliable({
+                      output: candidate.code,
+                      criteria: normalizedOptions.evaluationCriteria,
+                      lirContext,
+                    });
+                    genEval = {
+                      score: quickEvaluation.score,
+                      confidence: 1,
+                      failureClass: 'none',
+                      repairAdvice: quickEvaluation.issues?.[0]
+                        ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                        : undefined,
+                    };
+                    candidate.score = quickEvaluation.score;
+                    candidate.issues = quickEvaluation.issues ?? [];
+                  } else {
+                    const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+                    genEval = await scoreRenderedEvidence(
+                      renderEvidence,
+                      candidate.code,
+                      prompt,
+                      undefined,
+                    );
+                    if (genEval.failureClass === 'scorer') {
+                      if (evalMode === 'strict-browser') {
+                        throw new LiminalError(
+                          'Evaluator LLM is unavailable in strict-browser mode',
+                          'ERR_EVALUATOR_UNAVAILABLE',
+                        );
+                      }
+                      Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring for candidate');
+                      const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                      const quickEvaluation = await scoringEngine.scoreReliable({
+                        output: candidate.code,
+                        criteria: normalizedOptions.evaluationCriteria,
+                        lirContext,
+                      });
+                      genEval = {
+                        score: quickEvaluation.score,
+                        confidence: 1,
+                        failureClass: 'none',
+                        repairAdvice: quickEvaluation.issues?.[0]
+                          ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                          : undefined,
+                      };
+                      candidate.score = quickEvaluation.score;
+                      candidate.issues = quickEvaluation.issues ?? [];
+                    } else {
+                      candidate.score = genEval.score;
+                      candidate.issues = genEval.repairAdvice ? [genEval.repairAdvice.issue] : [];
+                    }
+                  }
+                } else {
+                  const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                  const quickEvaluation = await scoringEngine.scoreReliable({
                     output: candidate.code,
                     criteria: normalizedOptions.evaluationCriteria,
                     lirContext,
-                  },
-                  normalizedOptions.evaluationStrategy ?? 'detailed',
-                );
-
-                candidate.score = quickEvaluation.score;
-                candidate.issues = quickEvaluation.issues ?? [];
-
-                if (candidate.score > bestCandidate.score) {
-                  bestCandidate = candidate;
+                  });
+                  genEval = {
+                    score: quickEvaluation.score,
+                    confidence: 1,
+                    failureClass: 'none',
+                    repairAdvice: quickEvaluation.issues?.[0]
+                      ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                      : undefined,
+                  };
+                  candidate.score = quickEvaluation.score;
+                  candidate.issues = quickEvaluation.issues ?? [];
                 }
+
+                candidate.genEval = genEval;
+                candidateEvaluations.push(genEval);
               } catch (scoringError) {
                 Logger.warn('RalphLoop', `Failed to score candidate ${candidate.index}: ${formatError('RalphLoop', scoringError)}`);
-                // Keep the existing score, continue to next candidate
+                const fallbackEval: GenerationEvaluation = {
+                  score: candidate.score,
+                  confidence: 0,
+                  failureClass: 'scorer',
+                };
+                candidate.genEval = fallbackEval;
+                candidateEvaluations.push(fallbackEval);
               }
             }
+
+            const { winnerIndex } = harnessTools.rankCandidates(
+              candidates.map(c => c.code),
+              candidateEvaluations,
+            );
+            if (winnerIndex === -1) {
+              Logger.warn('RalphLoop', 'Candidate evaluations are empty; falling back to first candidate');
+            }
+            bestCandidate = candidates[winnerIndex] ?? candidates[0];
 
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.(`Selected candidate ${bestCandidate.index + 1}/${numCandidates} (score: ${bestCandidate.score.toFixed(2)})`);
@@ -475,7 +716,7 @@ export class RalphLoop {
         // Evaluate quality
         // If we already evaluated multiple candidates, use the best candidate's score
         // Otherwise, run evaluation for the single candidate
-        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number> };
+        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice };
         let lirContext: LIREvaluationContext | undefined;
 
         // Handle case where all candidates failed validation
@@ -487,6 +728,8 @@ export class RalphLoop {
           evaluation = {
             score: bestCandidate?.score ?? 0,
             issues: bestCandidate?.issues ?? [],
+            dimensions: {},
+            repairAdvice: bestCandidate?.genEval?.repairAdvice,
           };
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.(`Using pre-evaluated score: ${evaluation.score.toFixed(2)}`);
@@ -515,15 +758,218 @@ export class RalphLoop {
             }
           }
 
-          const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-          evaluation = await scoringEngine.scoreReliable(
-            {
-              output: currentCode,
-              criteria: normalizedOptions.evaluationCriteria,
-              lirContext,
-            },
-          );
+          // DF3 Phase 1: eval-mode-aware scoring with browser-render evidence
+          if (evalMode === 'auto' || evalMode === 'strict-browser') {
+            const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+            const renderer = HeadlessRenderer.getInstance();
+            const renderEvidence = await renderer.renderWithEvidence(currentCode, {
+              domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+              width: 400,
+              height: 400,
+            });
+
+            if (renderEvidence.infraUnavailable) {
+              if (evalMode === 'strict-browser') {
+                throw new LiminalError(
+                  'Browser rendering infrastructure is unavailable in strict-browser mode',
+                  'ERR_RENDER_INFRA_UNAVAILABLE',
+                );
+              }
+              Logger.warn('RalphLoop', 'Browser render infra unavailable, falling back to legacy scoring');
+              const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+              evaluation = await scoringEngine.scoreReliable(
+                {
+                  output: currentCode,
+                  criteria: normalizedOptions.evaluationCriteria,
+                  lirContext,
+                },
+              );
+            } else {
+              const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+              const genEval = await scoreRenderedEvidence(
+                renderEvidence,
+                currentCode,
+                prompt,
+                undefined,
+              );
+              if (genEval.failureClass === 'scorer') {
+                if (evalMode === 'strict-browser') {
+                  throw new LiminalError(
+                    'Evaluator LLM is unavailable in strict-browser mode',
+                    'ERR_EVALUATOR_UNAVAILABLE',
+                  );
+                }
+                Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence scoring, falling back to legacy scoring');
+                const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                evaluation = await scoringEngine.scoreReliable(
+                  {
+                    output: currentCode,
+                    criteria: normalizedOptions.evaluationCriteria,
+                    lirContext,
+                  },
+                );
+              } else {
+                evaluation = {
+                  score: genEval.score,
+                  issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
+                  dimensions: {},
+                  repairAdvice: genEval.repairAdvice,
+                };
+              }
+            }
+          } else {
+            // legacy mode
+            const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+            evaluation = await scoringEngine.scoreReliable(
+              {
+                output: currentCode,
+                criteria: normalizedOptions.evaluationCriteria,
+                lirContext,
+              },
+            );
+          }
         }
+
+        // DF3 Phase 2: Single-Round Repair
+        const repairMode = getRepairMode();
+        if (repairMode === 'single-round' && evaluation.score < normalizedOptions.minQualityScore) {
+          if (normalizedOptions.chatMode) {
+            normalizedOptions.onThought?.('Attempting single-round repair...');
+          }
+
+          try {
+            const harness = new GeneratorHarnessTools({ seededRandom: Math.random });
+
+            // Build repair packet with repeated-failure detection
+            const genEval: GenerationEvaluation = {
+              score: evaluation.score,
+              confidence: 1,
+              failureClass: 'none',
+              repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
+                ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
+                : undefined),
+            };
+            const repairPacket = harness.buildRepairPacket(genEval, repairHistory);
+
+            if (repairPacket) {
+              let repairPrompt = `${usedPrompt}\n\n---\n${repairPacket}`;
+              if (entropyResult) {
+                repairPrompt = harness.modulateRepairPrompt(repairPrompt, entropyResult.phrase);
+              }
+              const repairResult = await generator.generate(repairPrompt, loadedPrompt, true);
+
+              if (!repairResult.needsClarification) {
+                const repairValidation = CodeValidator.validate(repairResult.code);
+                if (repairValidation.valid) {
+                  const repairCode = repairValidation.cleanedCode;
+
+                  // Evaluate repair candidate using the same path
+                  let repairEval: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice };
+                  let repairLirContext: LIREvaluationContext | undefined;
+
+                  if (normalizedOptions.lirEnabled) {
+                    try {
+                      const genParser = new GeneratedCodeParser();
+                      const lirTokens = genParser.parse(repairCode);
+                      if (lirTokens.length > 0) {
+                        repairLirContext = {
+                          lirTokens,
+                          visualIntent: normalizedOptions.visualMappingParams as any,
+                          lirEnabled: true,
+                        };
+                      }
+                    } catch {
+                      // ignore LIR parse errors for repair
+                    }
+                  }
+
+                  if (evalMode === 'auto' || evalMode === 'strict-browser') {
+                    const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+                    const renderer = HeadlessRenderer.getInstance();
+                    const renderEvidence = await renderer.renderWithEvidence(repairCode, {
+                      domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+                      width: 400,
+                      height: 400,
+                    });
+
+                    if (renderEvidence.infraUnavailable) {
+                      const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                      repairEval = await scoringEngine.scoreReliable({
+                        output: repairCode,
+                        criteria: normalizedOptions.evaluationCriteria,
+                        lirContext: repairLirContext,
+                      });
+                    } else {
+                      const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+                      const genEvalRepair = await scoreRenderedEvidence(
+                        renderEvidence,
+                        repairCode,
+                        prompt,
+                        undefined,
+                      );
+                      if (genEvalRepair.failureClass === 'scorer') {
+                        if (evalMode === 'strict-browser') {
+                          throw new LiminalError(
+                            'Evaluator LLM is unavailable in strict-browser mode',
+                            'ERR_EVALUATOR_UNAVAILABLE',
+                          );
+                        }
+                        Logger.warn('RalphLoop', 'Evaluator LLM unavailable for rendered-evidence repair scoring, falling back to legacy scoring');
+                        const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                        repairEval = await scoringEngine.scoreReliable({
+                          output: repairCode,
+                          criteria: normalizedOptions.evaluationCriteria,
+                          lirContext: repairLirContext,
+                        });
+                      } else {
+                        repairEval = {
+                          score: genEvalRepair.score,
+                          issues: genEvalRepair.repairAdvice ? [genEvalRepair.repairAdvice.issue] : [],
+                          dimensions: {},
+                          repairAdvice: genEvalRepair.repairAdvice,
+                        };
+                      }
+                    }
+                  } else {
+                    const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+                    repairEval = await scoringEngine.scoreReliable({
+                      output: repairCode,
+                      criteria: normalizedOptions.evaluationCriteria,
+                      lirContext: repairLirContext,
+                    });
+                  }
+
+                  // Incumbent preservation: only replace if repair is better or equal
+                  if (repairEval.score >= evaluation.score) {
+                    // eslint-disable-next-line require-atomic-updates -- sequential loop, no concurrent mutation
+                    currentCode = repairCode;
+                    evaluation = repairEval;
+                    if (normalizedOptions.chatMode) {
+                      normalizedOptions.onThought?.(`Repair improved score to ${evaluation.score.toFixed(2)}`);
+                    }
+                  } else if (normalizedOptions.chatMode) {
+                    normalizedOptions.onThought?.(`Repair did not improve (score ${repairEval.score.toFixed(2)}), keeping incumbent`);
+                  }
+                }
+              }
+            }
+          } catch (repairError) {
+            Logger.warn('RalphLoop', 'Single-round repair failed:', repairError instanceof Error ? repairError.message : repairError);
+            if (normalizedOptions.chatMode) {
+              normalizedOptions.onThought?.('Repair attempt failed, continuing with incumbent');
+            }
+          }
+        }
+
+        // Record evaluation for repeated-failure detection
+        repairHistory.push({
+          score: evaluation.score,
+          confidence: 1,
+          failureClass: 'none',
+          repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
+            ? { issue: evaluation.issues[0], fix: 'Address the reported issue.', constraint: 'Complete artifact.' }
+            : undefined),
+        });
 
         // Aesthetic guardrails: run AestheticCritic if enabled
         if (normalizedOptions.useAestheticGuardrails) {
@@ -580,33 +1026,21 @@ export class RalphLoop {
           });
         }
 
-        // Intuition-based scoring: blend experience-weighted quality signal
+        // Intuition-based scoring: advisory only, no score blending
         if (normalizedOptions.useIntuition && candidates.length > 0) {
           try {
             const { IntuitionEngine } = await import('../intuition/index.js');
             const intuitionEngine = new IntuitionEngine();
-            const intuitionAssessment = intuitionEngine.assess(
-              currentCode,
-              normalizedOptions.project ?? 'default',
-              candidates.map((c: { code: string }) => c.code),
-            );
-
-            // Blend: 70% analytical score + 30% intuition signal
-            evaluation.score = evaluation.score * 0.7 + intuitionAssessment.score * 0.3;
-
-            if (intuitionAssessment.usedProceduralShortcut) {
-              normalizedOptions.onThought?.(`[intuition] Procedural shortcut: ${intuitionAssessment.explanation}`);
-            }
-
-            // Record outcome for future learning
+            // Record outcome for future learning (advisory only, no score blending)
             intuitionEngine.recordOutcome(currentCode, normalizedOptions.project ?? 'default', evaluation.score);
           } catch (e) {
-            normalizedOptions.onThought?.(`Intuition analysis skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
+            normalizedOptions.onThought?.(`Intuition recording skipped: ${e instanceof Error ? e.message : 'unknown error'}`);
           }
         }
 
         // Render-based scoring: if enabled, render code and blend with syntactic score
-        if (normalizedOptions.useRenderScoring && candidates.length > 0) {
+        // Skip the legacy RenderAndScorePipeline in auto/strict-browser modes to avoid double work
+        if (normalizedOptions.useRenderScoring && candidates.length > 0 && evalMode === 'legacy') {
           try {
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Running render-based quality analysis...');
@@ -737,6 +1171,11 @@ export class RalphLoop {
         // Update evolution subsystems
         const { noveltyScore, hints } = evolution.update(iteration, currentCode, evaluation.score, prompt);
 
+        // DF3 Phase 8: Feed score into EvolutionEngine
+        if (evolutionEngine) {
+          recentScores.push(evaluation.score);
+        }
+
         // Append aesthetic hints to usedPrompt for next iteration's context
         if (hints) {
           usedPrompt += hints;
@@ -768,8 +1207,9 @@ export class RalphLoop {
               message: `Auto-fed iteration ${iteration} (score: ${evaluation.score.toFixed(2)}) to compost heap`,
             });
             if (await heap.isOverCapacity()) {
-              const mill = new CompostMill(new LLMClient({ role: 'generator' }), compostConfig);
+              const mill = new CompostMill(new LLMClient({ role: 'generator' }), { ...compostConfig, projectStore });
               await mill.digest();
+              compostMaterials = await mill.getGenerationMaterials(normalizedOptions.collabDomain || 'p5');
               eventBus.emit(EventTypes.COMPOST_STAGE, 'RalphLoop', {
                 stage: 'auto-digest',
                 message: 'Heap at capacity — triggered auto-digest',
@@ -904,6 +1344,11 @@ export class RalphLoop {
           break;
         }
 
+        // DF3 Phase 8: Restore any temporarily mutated loop settings
+        for (const restore of evoRestores) {
+          restore();
+        }
+
       } catch (error) {
         // Report error to Meta-Harness (skip during tests to avoid log pollution)
         if (process.env.NODE_ENV !== 'test') {
@@ -927,6 +1372,7 @@ export class RalphLoop {
     if (!reason) {
       if (iteration >= normalizedOptions.maxIterations) {
         reason = `max iterations reached (${normalizedOptions.maxIterations})`;
+        completed = true;
       } else {
         reason = 'Loop terminated';
       }
@@ -937,65 +1383,113 @@ export class RalphLoop {
       await gitIntegration.endRun(reason || 'loop ended', sessionId);
     }
 
-    const duration = Date.now() - startTime;
+    try {
+      const duration = Date.now() - startTime;
 
-    // Report final result to Meta-Harness (skip during tests to avoid log pollution)
-    if (process.env.NODE_ENV !== 'test') {
-      await metaHarness.onGenerationComplete({
-        success: completed,
-        model: lastModel || (normalizedOptions.useSwarm ? 'swarm' : 'local'),
-        domain: normalizedOptions.collabDomain || 'p5',
-        prompt: prompt,
-        code: currentCode,
-        error: completed ? undefined : reason,
-        duration: duration,
-        thinking: lastThinking,
-      });
-    }
-
-    // Persist archive learning data
-    if (qualityArchive) {
-      await qualityArchive.save();
-    }
-
-    // Persist MAP-Elites and AestheticModel across runs
-    if (normalizedOptions.useMapElites) {
-      const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
-      const mapElites = normalizedOptions._mapElites;
-      if (mapElites) {
-        await mapElites.save(mapElitesPath).catch((err) => {
-          Logger.warn('RalphLoop', 'Failed to save MAP-Elites:', err instanceof Error ? err.message : err);
+      // Report final result to Meta-Harness (skip during tests to avoid log pollution)
+      if (process.env.NODE_ENV !== 'test') {
+        await metaHarness.onGenerationComplete({
+          success: completed,
+          model: lastModel || (normalizedOptions.useSwarm ? 'swarm' : 'local'),
+          domain: normalizedOptions.collabDomain || 'p5',
+          prompt: prompt,
+          code: currentCode,
+          error: completed ? undefined : reason,
+          duration: duration,
+          thinking: lastThinking,
         });
       }
-    }
-    if (aestheticModel) {
-      const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
-      await aestheticModel.save(aestheticPath).catch((err) => {
-        Logger.warn('RalphLoop', 'Failed to save aesthetic model:', err instanceof Error ? err.message : err);
+
+      // Persist archive learning data
+      if (qualityArchive) {
+        await qualityArchive.save();
+      }
+
+      // Persist MAP-Elites and AestheticModel across runs
+      if (normalizedOptions.useMapElites) {
+        const mapElitesPath = `${process.env.HOME}/.liminal/map_elites.json`;
+        const mapElites = normalizedOptions._mapElites;
+        if (mapElites) {
+          await mapElites.save(mapElitesPath).catch((err) => {
+            Logger.warn('RalphLoop', 'Failed to save MAP-Elites:', err instanceof Error ? err.message : err);
+          });
+        }
+      }
+      if (aestheticModel) {
+        const aestheticPath = `${process.env.HOME}/.liminal/aesthetic_model.json`;
+        await aestheticModel.save(aestheticPath).catch((err) => {
+          Logger.warn('RalphLoop', 'Failed to save aesthetic model:', err instanceof Error ? err.message : err);
+        });
+      }
+
+      eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', {
+        process: 'ralph-loop',
+        success: completed,
+        durationMs: Date.now() - startTime,
+        reason,
+        iterations: iteration,
+        finalScore,
       });
+
+      // Phase 5A: Record run in LiminalFS
+      let runArtifact: import('../fs/types.js').LiminalObjectRef | undefined;
+      if (currentCode) {
+        try {
+          runArtifact = liminalFs.writeArtifact({
+            kind: 'generated-code',
+            content: currentCode,
+            filename: 'final.js',
+            metadata: {
+              project: normalizedOptions.project,
+              iterations: iteration,
+              finalScore,
+              reason,
+              duration,
+              sessionId,
+            },
+          });
+        } catch {
+          // LiminalFS failure must not affect loop operation
+        }
+      }
+
+      try {
+        liminalFs.recordRun({
+          runId: sessionId,
+          prompt,
+          project: normalizedOptions.project,
+          status: completed ? 'completed' : 'suspended',
+          artifacts: runArtifact ? [runArtifact] : [],
+          metadata: {
+            iterations: iteration,
+            finalScore,
+            reason,
+            duration,
+          },
+        });
+      } catch {
+        // LiminalFS failure must not affect loop operation
+      }
+
+      return {
+        code: currentCode,
+        iterations: iteration,
+        completed,
+        reason,
+        timestamp: new Date().toISOString(),
+        duration,
+        finalScore,
+        project: normalizedOptions.project,
+        thinking: lastThinking,
+        model: lastModel,
+      };
+    } finally {
+      try {
+        liminalFs.close();
+      } catch {
+        // ignore close errors
+      }
     }
-
-    eventBus.emit(EventTypes.PROCESS_END, 'RalphLoop', {
-      process: 'ralph-loop',
-      success: completed,
-      durationMs: Date.now() - startTime,
-      reason,
-      iterations: iteration,
-      finalScore,
-    });
-
-    return {
-      code: currentCode,
-      iterations: iteration,
-      completed,
-      reason,
-      timestamp: new Date().toISOString(),
-      duration,
-      finalScore,
-      project: normalizedOptions.project,
-      thinking: lastThinking,
-      model: lastModel,
-    };
   }
 
   /**

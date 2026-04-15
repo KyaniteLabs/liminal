@@ -26,7 +26,7 @@ import type {
 } from '../ProviderTypes.js';
 
 type ToolCallResult = import('../ProviderTypes.js').ToolCallResult;
-import { BaseProvider } from './BaseProvider.js';
+import { BaseProvider, usesMaxCompletionTokens } from './BaseProvider.js';
 import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { normalizeThinking, extractAnthropicThinking } from '../ThinkingNormalizer.js';
 import { parseOpenAIStream, parseAnthropicStream } from '../StreamParser.js';
@@ -74,6 +74,7 @@ export class MiniMaxProvider extends BaseProvider {
       'Authorization': `Bearer ${this.config.apiKey || ''}`,
     };
 
+    const maxTokensValue = req.maxTokens ?? this.config.maxTokens ?? 4096;
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -81,8 +82,8 @@ export class MiniMaxProvider extends BaseProvider {
         { role: 'user', content: req.userPrompt },
       ],
       temperature: req.temperature ?? this.config.temperature ?? 0.7,
-      max_tokens: req.maxTokens ?? this.config.maxTokens ?? 4096,
     };
+    body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValue;
 
     // Native tool calling (OpenAI-compatible format)
     if (req.tools && req.tools.length > 0 && this.capabilities.toolUse) {
@@ -328,6 +329,7 @@ export class MiniMaxProvider extends BaseProvider {
       'Authorization': `Bearer ${this.config.apiKey || ''}`,
     };
 
+    const maxTokensValueStream = req.maxTokens ?? this.config.maxTokens ?? 4096;
     const body: Record<string, unknown> = {
       model: this.config.model,
       messages: [
@@ -335,9 +337,9 @@ export class MiniMaxProvider extends BaseProvider {
         { role: 'user', content: req.userPrompt },
       ],
       temperature: req.temperature ?? this.config.temperature ?? 0.7,
-      max_tokens: req.maxTokens ?? this.config.maxTokens ?? 4096,
       stream: true,
     };
+    body[usesMaxCompletionTokens(this.config.model) ? 'max_completion_tokens' : 'max_tokens'] = maxTokensValueStream;
 
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
 

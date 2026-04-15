@@ -21,6 +21,7 @@ import { LLMClient } from '../llm/LLMClient.js';
 import { EVALUATOR_TOOLS, createGeneratorToolExecutor } from '../harness/tools/generator-tools.js';
 import { Result, ok, err } from 'neverthrow';
 import { LLMError } from '../llm/errors.js';
+import type { RenderEvidence, GenerationEvaluation } from './types/GenerationEvaluation.js';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -582,5 +583,132 @@ export class ScoringEngine {
       Logger.warn('ScoringEngine', 'LLM score boost failed, returning heuristic result:', err instanceof Error ? err.message : err);
       return result;
     }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Rendered-evidence scoring entrypoint (DF3 Phase 1)
+// ---------------------------------------------------------------------------
+
+/**
+ * Score rendered evidence from a headless render pass.
+ *
+ * Fast paths:
+ *   - infraUnavailable → degraded evaluation (score 0, confidence 0, failureClass 'infra')
+ *   - candidateFailure → render failure (score 0, confidence 1, failureClass 'render')
+ *
+ * Otherwise, uses an LLM-based evaluator when available, or a neutral fallback.
+ */
+export async function scoreRenderedEvidence(
+  evidence: RenderEvidence,
+  code: string,
+  brief: string,
+  llmClient?: LLMClient,
+): Promise<GenerationEvaluation> {
+  if (evidence.infraUnavailable) {
+    return {
+      score: 0,
+      confidence: 0,
+      failureClass: 'infra',
+    };
+  }
+
+  if (evidence.candidateFailure) {
+    return {
+      score: 0,
+      confidence: 1,
+      failureClass: 'render',
+      repairAdvice: {
+        issue: 'Rendered output failed to produce a valid artifact (blank screen, compile error, or timeout)',
+        fix: 'Fix syntax errors, ensure all required imports/libraries are loaded, and verify the code runs without runtime exceptions.',
+        constraint: 'Return a complete, runnable artifact.',
+      },
+    };
+  }
+
+  const llm = llmClient ?? (() => {
+    try {
+      return new LLMClient({ role: 'evaluator' });
+    } catch {
+      return undefined;
+    }
+  })();
+
+  if (!llm) {
+    return {
+      score: 0.5,
+      confidence: 0,
+      failureClass: 'scorer',
+      repairAdvice: {
+        issue: 'Evaluator LLM is unavailable for rendered-evidence scoring',
+        fix: 'Verify LLM_BASE_URL, LLM_MODEL, and LLM_API_KEY are configured correctly, or switch to legacy evaluation mode',
+        constraint: 'Evaluator LLM must be reachable for rendered-evidence scoring',
+      },
+    };
+  }
+
+  const systemPrompt = `You are an expert creative artifact evaluator. Evaluate the rendered output of the provided code against the brief.
+Return ONLY a JSON object with this exact structure:
+{
+  "score": <number 0-1>,
+  "confidence": <number 0-1>,
+  "reasoning": "<brief explanation>",
+  "repairAdvice": {
+    "issue": "<one-sentence description of the problem>",
+    "fix": "<one-sentence instruction for how to fix it>",
+    "constraint": "<one-sentence boundary condition>"
+  }
+}
+Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omit repairAdvice or set it to null.`;
+
+  const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms`;
+
+  try {
+    const response = await llm.generate(systemPrompt, userPrompt);
+    const jsonMatch = response.code.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return {
+        score: 0.5,
+        confidence: 0,
+        failureClass: 'scorer',
+        repairAdvice: {
+          issue: 'Evaluator LLM response could not be parsed',
+          fix: 'Retry the evaluation or verify the evaluator model returns valid JSON',
+          constraint: 'Evaluator must return a parseable JSON object',
+        },
+      };
+    }
+    const parsed = JSON.parse(jsonMatch[0]);
+    const score = typeof parsed.score === 'number' ? Math.max(0, Math.min(1, parsed.score)) : 0.5;
+    const confidence = typeof parsed.confidence === 'number' ? Math.max(0, Math.min(1, parsed.confidence)) : 0.5;
+
+    const rawAdvice = parsed.repairAdvice;
+    const repairAdvice =
+      rawAdvice && typeof rawAdvice === 'object' && rawAdvice !== null
+        ? {
+            issue: typeof rawAdvice.issue === 'string' ? rawAdvice.issue : 'The artifact did not meet the brief.',
+            fix: typeof rawAdvice.fix === 'string' ? rawAdvice.fix : 'Revise the code to better match the brief.',
+            constraint: typeof rawAdvice.constraint === 'string' ? rawAdvice.constraint : 'Return a complete, runnable artifact.',
+          }
+        : undefined;
+
+    return {
+      score,
+      confidence,
+      failureClass: 'none',
+      repairAdvice,
+    };
+  } catch (error) {
+    Logger.warn('ScoringEngine', 'Rendered evidence LLM scoring failed:', error instanceof Error ? error.message : error);
+    return {
+      score: 0.5,
+      confidence: 0,
+      failureClass: 'scorer',
+      repairAdvice: {
+        issue: 'Evaluator LLM scoring failed during execution',
+        fix: 'Check network connectivity and evaluator credentials, or fall back to legacy evaluation mode',
+        constraint: 'Evaluator LLM must complete successfully for rendered-evidence scoring',
+      },
+    };
   }
 }

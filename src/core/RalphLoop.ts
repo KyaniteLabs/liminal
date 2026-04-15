@@ -252,6 +252,8 @@ export class RalphLoop {
     const CONVERGENCE_WINDOW = 3;
     const CONVERGENCE_THRESHOLD = 0.01;
 
+    const evalMode = getEvalMode();
+
     // Main loop
     try {
     while (iteration < normalizedOptions.maxIterations) {
@@ -522,14 +524,57 @@ export class RalphLoop {
             }
           }
 
-          const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
-          evaluation = await scoringEngine.scoreReliable(
-            {
-              output: currentCode,
-              criteria: normalizedOptions.evaluationCriteria,
-              lirContext,
-            },
-          );
+          // DF3 Phase 1: eval-mode-aware scoring with browser-render evidence
+          if (evalMode === 'auto' || evalMode === 'strict-browser') {
+            const { HeadlessRenderer } = await import('../render/HeadlessRenderer.js');
+            const renderer = HeadlessRenderer.getInstance();
+            const renderEvidence = await renderer.renderWithEvidence(currentCode, {
+              domain: (normalizedOptions.collabDomain || 'p5') as import('../render/HeadlessRenderer.js').RenderDomain,
+              width: 400,
+              height: 400,
+            });
+
+            if (renderEvidence.infraUnavailable) {
+              if (evalMode === 'strict-browser') {
+                throw new LiminalError(
+                  'Browser rendering infrastructure is unavailable in strict-browser mode',
+                  'ERR_RENDER_INFRA_UNAVAILABLE',
+                );
+              }
+              Logger.warn('RalphLoop', 'Browser render infra unavailable, falling back to legacy scoring');
+              const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+              evaluation = await scoringEngine.scoreReliable(
+                {
+                  output: currentCode,
+                  criteria: normalizedOptions.evaluationCriteria,
+                  lirContext,
+                },
+              );
+            } else {
+              const { scoreRenderedEvidence } = await import('../core/ScoringEngine.js');
+              const genEval = await scoreRenderedEvidence(
+                renderEvidence,
+                currentCode,
+                prompt,
+                undefined,
+              );
+              evaluation = {
+                score: genEval.score,
+                issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
+                dimensions: {},
+              };
+            }
+          } else {
+            // legacy mode
+            const scoringEngine = new ScoringEngine(normalizedOptions.evaluationStrategy ?? 'detailed');
+            evaluation = await scoringEngine.scoreReliable(
+              {
+                output: currentCode,
+                criteria: normalizedOptions.evaluationCriteria,
+                lirContext,
+              },
+            );
+          }
         }
 
         // Aesthetic guardrails: run AestheticCritic if enabled
@@ -613,7 +658,8 @@ export class RalphLoop {
         }
 
         // Render-based scoring: if enabled, render code and blend with syntactic score
-        if (normalizedOptions.useRenderScoring && candidates.length > 0) {
+        // Skip the legacy RenderAndScorePipeline in auto/strict-browser modes to avoid double work
+        if (normalizedOptions.useRenderScoring && candidates.length > 0 && evalMode === 'legacy') {
           try {
             if (normalizedOptions.chatMode) {
               normalizedOptions.onThought?.('Running render-based quality analysis...');

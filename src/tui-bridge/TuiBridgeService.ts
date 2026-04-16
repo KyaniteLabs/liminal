@@ -1221,14 +1221,15 @@ export class TuiBridgeService {
     const snapshot = this.cortexBus.getSnapshot();
     const goals = this.getGoalStore()?.getActiveGoals() ?? [];
     const budget = this.cortexLoop?.getBudgetUsage() ?? { actionsTaken: 0, actionsLimit: 0, tokenEstimate: 0, tokenLimit: 0 };
+    const cortexState = this.cortexLoop?.getState() ?? { tickNumber: 0, decisions: [], stuckWorkers: [] };
     const explainer = new CortexExplainer();
     const dashboard = explainer.formatDashboard({
       snapshot,
       goals,
       budget,
-      stuckWorkers: [],
-      latestDecisions: [],
-      tickNumber: 0,
+      stuckWorkers: cortexState.stuckWorkers ?? [],
+      latestDecisions: cortexState.decisions ?? [],
+      tickNumber: cortexState.tickNumber ?? 0,
       autonomyLevel: TuiBridgeService.CORTEX_CONFIG.autonomyLevel,
     });
 

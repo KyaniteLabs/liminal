@@ -40,6 +40,8 @@ export class LiminalCortex {
   private running = false;
   private tickNumber = 0;
   private consecutiveFailures = 0;
+  private latestDecisions: ActionProposal[] = [];
+  private latestStuckWorkers: StuckWorker[] = [];
 
   constructor(private deps: LiminalCortexDeps) {
     this.budget = new BudgetTracker({
@@ -97,6 +99,14 @@ export class LiminalCortex {
     return this.budget.getUsage();
   }
 
+  getState() {
+    return {
+      tickNumber: this.tickNumber,
+      decisions: this.latestDecisions,
+      stuckWorkers: this.latestStuckWorkers,
+    };
+  }
+
   private supervise(snapshot: CortexSnapshot): SupervisionResult {
     // Check expired leases
     const expiredLeases = this.supervisor.checkExpired();
@@ -136,6 +146,7 @@ export class LiminalCortex {
         });
 
         // Emit supervision events — always emit stuck state so TUI clears when recovered
+        this.latestStuckWorkers = result.supervision.stuckWorkers;
         this.emit('cortex.stuck_detected', {
           stuckWorkers: result.supervision.stuckWorkers,
         });
@@ -146,6 +157,7 @@ export class LiminalCortex {
         }
 
         // Emit decision events for proposals
+        this.latestDecisions = result.proposals;
         for (const p of result.proposals) {
           this.emit('cortex.decision', {
             actionType: p.actionType,

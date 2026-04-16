@@ -217,6 +217,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.ReviewVisible = !m.ReviewVisible
 			m.refreshViewports()
 			return m, nil
+		case "ctrl+x":
+			m.CortexVisible = !m.CortexVisible
+			m.refreshViewports()
+			return m, nil
 		}
 
 		if msg.String() == "?" {

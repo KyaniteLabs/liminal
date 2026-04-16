@@ -949,6 +949,11 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 				}
 			}
 		}
+
+	case "cortex.dashboard":
+		m.CortexDashboard = event.Content
+		m.CortexVisible = true
+		m.addActivity("Cortex dashboard opened")
 	}
 }
 

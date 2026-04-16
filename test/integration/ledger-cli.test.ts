@@ -28,7 +28,7 @@ describe('Ledger CLI integration', () => {
 
   afterEach(() => {
     liminalFs.close();
-    rmSync(tempDir, { recursive: true, true: true });
+    rmSync(tempDir, { recursive: true, force: true });
   });
 
   it('load — creates tasks from JSON file', async () => {

@@ -30,7 +30,7 @@
 |----------|---------|
 | [EMERGENT_LANGUAGE_ARCHITECTURE.md](./EMERGENT_LANGUAGE_ARCHITECTURE.md) | Emergent creative vocabulary |
 | [MODEL_ROLES_FRAMEWORK.md](./MODEL_ROLES_FRAMEWORK.md) | Generator/Evaluator/Harness roles |
-| [COMPOSITION_IMPLEMENTATION_PLAN.md](./composition-api.md) | Composition API |
+| [COMPOSITION_IMPLEMENTATION_PLAN.md](./internal/COMPOSITION_IMPLEMENTATION_PLAN.md) | Composition API |
 | [WORKTREE_SYSTEM.md](./WORKTREE_SYSTEM.md) | Multi-agent worktree guide |
 
 ### System Planning
@@ -46,7 +46,7 @@
 ```
 docs/
 ├── README.md                          This file
-├── ARCHITECTURE_AND_PHILOPHY.md       Design principles
+├── ARCHITECTURE_AND_PHILOSOPHY.md     Design principles
 ├── ARCHITECTURE_QUICKREF.md           Quick visual overview
 ├── GENERATOR_ARCHITECTURE_V2.md       Generator design
 ├── GUARDRAIL_*.md                     Guardrail documentation

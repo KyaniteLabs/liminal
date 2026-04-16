@@ -30,9 +30,6 @@ liminal --prompt "Create a calming blue particle system"
 
 # Chat-driven creative session
 liminal chat
-
-# Terminal UI (Bubble Tea)
-liminal bubbletea
 ```
 
 ---

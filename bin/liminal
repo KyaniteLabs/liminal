@@ -1303,7 +1303,7 @@ else if (cmd === 'emergence') {
     try {
       const { readFileSync } = await import('fs');
       text = readFileSync(output, 'utf-8');
-    } catch { /* use as raw text */ }
+    } catch { /* not a file path, use as raw text */ }
 
     const extractor = new BehaviorDescriptorExtractor();
     const critic = new EmergenceCritic();
@@ -1333,7 +1333,7 @@ else if (cmd === 'emergence') {
     try {
       const { readFileSync } = await import('fs');
       text = readFileSync(output, 'utf-8');
-    } catch { /* use as raw text */ }
+    } catch { /* not a file path, use as raw text */ }
 
     const extractor = new BehaviorDescriptorExtractor();
     const probe = new PerturbationProbe();

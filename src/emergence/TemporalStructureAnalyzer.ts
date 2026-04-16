@@ -240,6 +240,6 @@ export class TemporalStructureAnalyzer {
     }
 
     const den = Math.sqrt(denX * denY);
-    return den === 0 ? 0 : num / den;
+    return den === 0 ? NaN : num / den;
   }
 }

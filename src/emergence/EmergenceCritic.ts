@@ -167,7 +167,7 @@ export class EmergenceCritic {
 
     // Lineage bonus: if this artifact has parents that were fertile
     let lineageBonus = 0;
-    if (lineage && lineage.parentIds.length > 0) {
+    if (lineage?.parentIds && lineage.parentIds.length > 0) {
       // Has parents — remix potential
       const parentEntries = archive.filter(e => lineage.parentIds.includes(e.lineage.artifactId));
       if (parentEntries.length > 0) {

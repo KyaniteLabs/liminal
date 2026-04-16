@@ -52,16 +52,19 @@ export class PerturbationProbe {
   ): PerturbationResult {
     const perturbations: Array<{ type: string; score: number }> = [];
 
+    // Seeded RNG for deterministic perturbations
+    const rng = this.seededRng(output);
+
     // 1. Value perturbation: shift numeric literals
-    const valueScore = this.valuePerturbation(output, descriptor, extractFn);
+    const valueScore = this.valuePerturbation(output, descriptor, extractFn, rng);
     perturbations.push({ type: 'value-shift', score: valueScore });
 
     // 2. Structure perturbation: reorder lines
-    const structureScore = this.structurePerturbation(output, descriptor, extractFn);
+    const structureScore = this.structurePerturbation(output, descriptor, extractFn, rng);
     perturbations.push({ type: 'line-reorder', score: structureScore });
 
     // 3. Noise injection: add random whitespace/comments
-    const noiseScore = this.noisePerturbation(output, descriptor, extractFn);
+    const noiseScore = this.noisePerturbation(output, descriptor, extractFn, rng);
     perturbations.push({ type: 'noise-injection', score: noiseScore });
 
     // 4. Truncation: remove tail content
@@ -105,11 +108,12 @@ export class PerturbationProbe {
     output: string,
     original: BehaviorDescriptor,
     extractFn: (output: string) => BehaviorDescriptor,
+    rng: () => number,
   ): number {
     // Shift numeric literals by the perturbation magnitude
     const perturbed = output.replace(/\b(\d+\.?\d*)\b/g, (match) => {
       const num = parseFloat(match);
-      const shift = num * (1 + (Math.random() - 0.5) * this.magnitude * 2);
+      const shift = num * (1 + (rng() - 0.5) * this.magnitude * 2);
       return shift.toFixed(2);
     });
 
@@ -123,6 +127,7 @@ export class PerturbationProbe {
     output: string,
     original: BehaviorDescriptor,
     extractFn: (output: string) => BehaviorDescriptor,
+    rng: () => number,
   ): number {
     const lines = output.split('\n');
     if (lines.length < 4) return 0.5;
@@ -131,9 +136,9 @@ export class PerturbationProbe {
     const perturbed = [...lines];
     const swapCount = Math.min(2, Math.floor(lines.length / 4));
     for (let i = 0; i < swapCount; i++) {
-      const a = Math.floor(Math.random() * lines.length);
-      let b = Math.floor(Math.random() * lines.length);
-      while (Math.abs(a - b) < 2) b = Math.floor(Math.random() * lines.length);
+      const a = Math.floor(rng() * lines.length);
+      let b = Math.floor(rng() * lines.length);
+      while (Math.abs(a - b) < 2) b = Math.floor(rng() * lines.length);
       [perturbed[a], perturbed[b]] = [perturbed[b], perturbed[a]];
     }
 
@@ -145,13 +150,14 @@ export class PerturbationProbe {
     output: string,
     original: BehaviorDescriptor,
     extractFn: (output: string) => BehaviorDescriptor,
+    rng: () => number,
   ): number {
     const lines = output.split('\n');
-    // Insert blank lines and comments at random positions
+    // Insert blank lines and comments at deterministic positions
     const perturbed = [...lines];
     const insertCount = Math.max(1, Math.floor(lines.length * 0.1));
     for (let i = 0; i < insertCount; i++) {
-      const pos = Math.floor(Math.random() * perturbed.length);
+      const pos = Math.floor(rng() * perturbed.length);
       perturbed.splice(pos, 0, '// perturbation', '');
     }
 
@@ -208,5 +214,23 @@ export class PerturbationProbe {
     const maxDist = Math.sqrt(b.values.length);
     const dist = Math.sqrt(sumSq);
     return maxDist > 0 ? 1 - (dist / maxDist) : 1;
+  }
+
+  /**
+   * Create a seeded PRNG from the output string for deterministic perturbations.
+   * Uses a simple mulberry32 implementation.
+   */
+  private seededRng(seed: string): () => number {
+    let h = 0;
+    for (let i = 0; i < seed.length; i++) {
+      h = Math.imul(31, h) + seed.charCodeAt(i) | 0;
+    }
+    return () => {
+      h |= 0;
+      h = h + 0x6D2B79F5 | 0;
+      let t = Math.imul(h ^ (h >>> 15), 1 | h);
+      t = t + Math.imul(t ^ (t >>> 7), 61 | t) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
   }
 }

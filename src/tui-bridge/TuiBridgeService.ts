@@ -214,12 +214,7 @@ export class TuiBridgeService {
     const selfImprovement = isSelfImprovementRequest(input.text);
     const creativeGeneration = isGenerationRequest(input.text);
 
-    // Handle /mode command: switch product mode for this session
-    if (input.text.startsWith('/mode')) {
-      return this.handleModeCommand(sessionId, input.text);
-    }
-
-    // Handle /modes command: list available modes
+    // Handle /modes command: list available modes (must check before /mode prefix)
     if (input.text.trim() === '/modes') {
       const modes = Object.entries(PRODUCT_MODES).map(([mode, info]) => ({
         mode,
@@ -230,6 +225,11 @@ export class TuiBridgeService {
       const content = modes.map(m => `  ${m.mode.padEnd(8)} ${m.label} — ${m.description}`).join('\n');
       this.emitCommandResponse(sessionId, `Available modes:\n${content}`);
       return { reviewRequired: false };
+    }
+
+    // Handle /mode command: switch product mode for this session
+    if (input.text.startsWith('/mode')) {
+      return this.handleModeCommand(sessionId, input.text);
     }
 
     // Handle /skills command: list available skills
@@ -554,7 +554,7 @@ export class TuiBridgeService {
     const parts = input.trim().split(/\s+/);
     const modeName = parts[1]?.toLowerCase();
 
-    if (!modeName || !(modeName in PRODUCT_MODES)) {
+    if (!modeName || !Object.hasOwn(PRODUCT_MODES, modeName)) {
       const available = Object.keys(PRODUCT_MODES).join(', ');
       this.emitCommandResponse(sessionId, `Unknown mode. Available: ${available}`);
       return { reviewRequired: false };

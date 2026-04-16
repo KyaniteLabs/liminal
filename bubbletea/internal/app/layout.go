@@ -18,6 +18,9 @@ func (m Model) renderOperatorSurface(width int) string {
 	if m.CortexSnapshot != nil {
 		panels = append(panels, m.renderCortexStatus(contentWidth))
 	}
+	if len(m.CortexGoals) > 0 {
+		panels = append(panels, m.renderCortexGoalPanel(contentWidth))
+	}
 
 	if m.hasGenerationTelemetry() {
 		panels = append(panels, m.renderGenerationCard(contentWidth))
@@ -603,6 +606,22 @@ func (m Model) renderCortexStatus(width int) string {
 		Width(width).
 		Padding(0, 1).
 		Render(line)
+}
+
+func (m Model) renderCortexGoalPanel(width int) string {
+	lines := []string{ui.PanelTitleStyle.Render("Cortex Goals")}
+	for _, g := range m.CortexGoals {
+		marker := "  "
+		if g.Priority == "critical" {
+			marker = "!!"
+		} else if g.Priority == "high" {
+			marker = " !"
+		}
+		line := fmt.Sprintf("%s %s", marker, trimToWidth(g.Text, width-6))
+		lines = append(lines, ui.TimelineStepStyle.Render(line))
+	}
+	lines = append(lines, ui.TaskHintStyle.Render("/goal add <text>  /goal done <id>  /goal remove <id>"))
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
 func (m Model) renderSessionList(width int) string {

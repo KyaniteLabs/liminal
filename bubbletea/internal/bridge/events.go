@@ -185,4 +185,21 @@ type Event struct {
 
 	// Cortex snapshot event fields
 	Snapshot *CortexSnapshotData `json:"snapshot,omitempty"`
+
+	// Cortex goal event fields
+	GoalID   string       `json:"goalId,omitempty"`
+	GoalText string       `json:"goalText,omitempty"`
+	Goal     *CortexGoal  `json:"goal,omitempty"`
+	Goals    []CortexGoal `json:"goals,omitempty"`
+}
+
+// CortexGoal represents a user-defined goal for the Cortex system.
+type CortexGoal struct {
+	ID        string `json:"id"`
+	Text      string `json:"text"`
+	Priority  string `json:"priority"`
+	Category  string `json:"category"`
+	Status    string `json:"status"`
+	CreatedAt string `json:"createdAt"`
+	UpdatedAt string `json:"updatedAt"`
 }

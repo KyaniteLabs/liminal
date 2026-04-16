@@ -30,6 +30,9 @@ liminal --prompt "Create a calming blue particle system"
 
 # Chat-driven creative session
 liminal chat
+
+# Terminal UI (Bubble Tea — requires Go >= 1.21)
+pnpm run tui
 ```
 
 ---

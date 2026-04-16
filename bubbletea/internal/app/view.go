@@ -105,7 +105,20 @@ func (m Model) renderHeader() string {
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
-	headerParts := []string{brand, mode, provider, connDot, m.renderPhaseBadge(m.Task.Phase)}
+	headerParts := []string{brand, mode, provider, connDot}
+	if strings.TrimSpace(m.ProductMode) != "" {
+		headerParts = append(headerParts, ui.ModeStyle.Render("⬡ "+m.ProductModeLabel))
+	}
+	if strings.TrimSpace(m.ActiveSkill) != "" {
+		headerParts = append(headerParts, lipgloss.NewStyle().Foreground(ui.AccentOrange).Render("⚡ "+m.ActiveSkill))
+	}
+	if strings.TrimSpace(m.ActiveWorkspace) != "" {
+		headerParts = append(headerParts, lipgloss.NewStyle().Foreground(ui.AccentPurple).Render("▣ "+m.ActiveWorkspace))
+	}
+	if strings.TrimSpace(m.AutonomyLevel) != "" && m.AutonomyLevel != "assist" {
+		headerParts = append(headerParts, lipgloss.NewStyle().Foreground(ui.AccentGreen).Render("⚡ "+m.AutonomyLabel))
+	}
+	headerParts = append(headerParts, m.renderPhaseBadge(m.Task.Phase))
 	if m.Task.StepTotal > 0 {
 		headerParts = append(headerParts, ui.StatusPillStyle.Render(formatStepProgress(m.Task.StepCurrent, m.Task.StepTotal)))
 	}
@@ -161,6 +174,7 @@ func (m Model) renderFooter() string {
 			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
 			ui.KeyStyle.Render("Ctrl+Q") + ui.HintStyle.Render(":queue"),
+				ui.KeyStyle.Render("Ctrl+R") + ui.HintStyle.Render(":review"),
 			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 		}
@@ -177,6 +191,7 @@ func (m Model) renderFooter() string {
 			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
 			ui.KeyStyle.Render("Ctrl+Q") + ui.HintStyle.Render(":queue"),
+			ui.KeyStyle.Render("Ctrl+R") + ui.HintStyle.Render(":review"),
 			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 			ui.KeyStyle.Render("Esc") + ui.HintStyle.Render(":back"),

@@ -9,6 +9,19 @@ import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
 import { IntentRouter } from '../agent/IntentRouter.js';
+import { ModeAwareRouter, PRODUCT_MODES } from '../agent/ProductMode.js';
+import type { ModeConfig, ProductMode } from '../agent/ProductMode.js';
+import { ModeRegistry } from '../agent/ModeRegistry.js';
+import { SkillRunner } from '../agent/SkillRunner.js';
+import { SkillCatalog } from '../agent/SkillCatalog.js';
+import { ReviewManager } from '../agent/ReviewManager.js';
+import { DiffRenderer } from '../agent/DiffRenderer.js';
+import { OnboardingWizard } from '../agent/OnboardingWizard.js';
+import { EnvironmentValidator } from '../agent/EnvironmentValidator.js';
+import { SessionResumer } from '../agent/SessionResumer.js';
+import { ReportGenerator } from '../agent/ReportGenerator.js';
+import { WorkspaceManager } from '../agent/WorkspaceManager.js';
+import { AutonomyController } from '../agent/AutonomyController.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 
@@ -73,6 +86,28 @@ export class TuiBridgeService {
   private router = new IntentRouter();
   // Session persistence: records every turn per session
   private sessionGraphs = new Map<string, SessionGraph>();
+  // Product mode registry: per-session mode biasing
+  private modeRegistry = new ModeRegistry();
+  // Skill runner: resolves and executes skill templates
+  private skillRunner = new SkillRunner();
+  // Skill catalog: lists skills with mode filtering
+  private skillCatalog = new SkillCatalog();
+  // Review manager: candidate lifecycle (accept/reject/pin)
+  private reviewManager = new ReviewManager();
+  // Diff renderer: unified diff between candidates
+  private diffRenderer = new DiffRenderer();
+  // Onboarding wizard: provider setup
+  private onboardingWizard = new OnboardingWizard();
+  // Environment validator: diagnostics
+  private envValidator = new EnvironmentValidator();
+  // Session resumer: session history
+  private sessionResumer = new SessionResumer();
+  // Report generator: session reports from SessionGraph data
+  private reportGenerator = new ReportGenerator();
+  // Workspace manager: workspace CRUD
+  private workspaceManager = new WorkspaceManager();
+  // Autonomy controller: approval gating per level
+  private autonomyController = new AutonomyController();
 
   constructor() {
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -117,7 +152,11 @@ export class TuiBridgeService {
     this.conversations.set(sessionId, conversation);
 
     // Initialize session graph for turn persistence
-    this.sessionGraphs.set(sessionId, new SessionGraph(sessionId));
+    const graph = new SessionGraph(sessionId);
+    this.sessionGraphs.set(sessionId, graph);
+
+    // Register with session resumer for /sessions command
+    this.sessionResumer.register(sessionId, graph);
 
     return this.sessions.create({
       sessionId,
@@ -175,8 +214,91 @@ export class TuiBridgeService {
     const selfImprovement = isSelfImprovementRequest(input.text);
     const creativeGeneration = isGenerationRequest(input.text);
 
-    // Studio routing: classify intent via IntentRouter
-    const classification = this.router.classify(input.text);
+    // Handle /modes command: list available modes (must check before /mode prefix)
+    if (input.text.trim() === '/modes') {
+      const modes = Object.entries(PRODUCT_MODES).map(([mode, info]) => ({
+        mode,
+        label: info.label,
+        description: info.description,
+      }));
+      this.emit(sessionId, { type: 'mode.list', sessionId, modes });
+      const content = modes.map(m => `  ${m.mode.padEnd(8)} ${m.label} — ${m.description}`).join('\n');
+      this.emitCommandResponse(sessionId, `Available modes:\n${content}`);
+      return { reviewRequired: false };
+    }
+
+    // Handle /mode command: switch product mode for this session
+    if (input.text.startsWith('/mode')) {
+      return this.handleModeCommand(sessionId, input.text);
+    }
+
+    // Handle /skills command: list available skills
+    if (input.text.trim() === '/skills') {
+      const modeConfig = this.modeRegistry.getMode(sessionId);
+      const entries = await this.skillCatalog.list({ mode: modeConfig?.mode });
+      this.emit(sessionId, {
+        type: 'skill.list',
+        sessionId,
+        skills: entries.map(e => ({ name: e.name, description: e.description, mode: e.mode })),
+      });
+      if (entries.length === 0) {
+        this.emitCommandResponse(sessionId, 'No skills available. Add .skills/<name>/SKILL.md files.');
+      } else {
+        const lines = entries.map(e => {
+          const modeTag = e.mode ? ` [${e.mode}]` : '';
+          return `  ${e.name.padEnd(20)} ${e.description}${modeTag}`;
+        });
+        this.emitCommandResponse(sessionId, `Available skills:\n${lines.join('\n')}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    // Handle /skill <name> command: run a skill
+    if (input.text.startsWith('/skill ')) {
+      return this.handleSkillCommand(sessionId, input.text, llm);
+    }
+
+    // Handle review commands: /accept, /reject, /pin, /diff, /candidates
+    if (input.text.startsWith('/accept') || input.text.startsWith('/reject') ||
+        input.text.startsWith('/pin') || input.text.startsWith('/diff') ||
+        input.text.trim() === '/candidates') {
+      return this.handleReviewCommand(sessionId, input.text);
+    }
+
+    // Handle /setup: run onboarding wizard
+    if (input.text.trim() === '/setup') {
+      return this.handleSetupCommand(sessionId);
+    }
+
+    // Handle /diagnostics: run environment validation
+    if (input.text.trim() === '/diagnostics') {
+      return this.handleDiagnosticsCommand(sessionId);
+    }
+
+    // Handle /sessions: list session history
+    if (input.text.trim() === '/sessions') {
+      return this.handleSessionsCommand(sessionId);
+    }
+
+    // Handle /report [json|markdown]: generate session report
+    if (input.text.trim() === '/report' || input.text.trim() === '/report markdown' || input.text.trim() === '/report json') {
+      return this.handleReportCommand(sessionId, input.text.trim());
+    }
+
+    // Handle /workspace create <name>|switch <name>|list
+    if (input.text.startsWith('/workspace')) {
+      return this.handleWorkspaceCommand(sessionId, input.text.trim());
+    }
+
+    // Handle /autonomy <assist|co-create|autopilot>
+    if (input.text.startsWith('/autonomy')) {
+      return this.handleAutonomyCommand(sessionId, input.text.trim());
+    }
+
+    // Studio routing: classify intent via IntentRouter with mode biasing
+    const modeConfig = this.modeRegistry.getMode(sessionId);
+    const classifier = new ModeAwareRouter(this.router, () => modeConfig);
+    const classification = classifier.classify(input.text);
 
     logBridge('input.received', {
       sessionId,
@@ -281,27 +403,88 @@ export class TuiBridgeService {
     }
 
     // Route based on StudioAgent intent classification
+    // Autonomy gating: check if the action kind requires review at current level
     switch (classification.intent) {
-      case 'creative':
+      case 'creative': {
+        const actionKind = 'creative' as const;
+        if (this.autonomyController.requiresReview(actionKind, sessionId)) {
+          const pendingAction: TuiPendingAction = {
+            id: `action-${Date.now()}`,
+            title: input.text.slice(0, 60),
+            description: `Creative: ${input.text}`,
+            kind: 'llm',
+            requiresConfirmation: true,
+            createdAt: new Date().toISOString(),
+          };
+          const status = this.sessions.update(sessionId, {
+            mode: 'action',
+            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — creative needs review` },
+            pendingAction,
+          });
+          this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
+          this.emit(sessionId, { type: 'status.updated', sessionId, status });
+          return { reviewRequired: true };
+        }
         logBridge('input.routed', { sessionId, route: 'studio.creative', confidence: classification.confidence });
         this.streamRalphGeneration(sessionId, input.text, conversation, llm)
           .then(() => emitSessionTurn('ralph-loop'))
           .catch(handleError);
         break;
+      }
 
-      case 'engineering':
+      case 'engineering': {
+        const actionKind = 'engineering' as const;
+        if (this.autonomyController.requiresReview(actionKind, sessionId)) {
+          const pendingAction: TuiPendingAction = {
+            id: `action-${Date.now()}`,
+            title: input.text.slice(0, 60),
+            description: `Engineering: ${input.text}`,
+            kind: 'structured',
+            requiresConfirmation: true,
+            createdAt: new Date().toISOString(),
+          };
+          const status = this.sessions.update(sessionId, {
+            mode: 'action',
+            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — engineering needs review` },
+            pendingAction,
+          });
+          this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
+          this.emit(sessionId, { type: 'status.updated', sessionId, status });
+          return { reviewRequired: true };
+        }
         logBridge('input.routed', { sessionId, route: 'studio.engineering', confidence: classification.confidence });
         this.streamEngineeringTask(sessionId, input.text, conversation, llm)
           .then(() => emitSessionTurn('conveyor'))
           .catch(handleError);
         break;
+      }
 
-      case 'hybrid':
+      case 'hybrid': {
+        const actionKind = 'engineering' as const;
+        if (this.autonomyController.requiresReview(actionKind, sessionId)) {
+          const pendingAction: TuiPendingAction = {
+            id: `action-${Date.now()}`,
+            title: input.text.slice(0, 60),
+            description: `Hybrid: ${input.text}`,
+            kind: 'llm',
+            requiresConfirmation: true,
+            createdAt: new Date().toISOString(),
+          };
+          const status = this.sessions.update(sessionId, {
+            mode: 'action',
+            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — hybrid needs review` },
+            pendingAction,
+          });
+          this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
+          this.emit(sessionId, { type: 'status.updated', sessionId, status });
+          return { reviewRequired: true };
+        }
         logBridge('input.routed', { sessionId, route: 'studio.hybrid', confidence: classification.confidence });
         this.streamHybridTask(sessionId, input.text, conversation, llm)
           .then(() => emitSessionTurn('ralph-loop'))
           .catch(handleError);
         break;
+      }
 
       case 'direct':
       default:
@@ -340,6 +523,465 @@ export class TuiBridgeService {
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
     this.emit(sessionId, { type: 'action.cancelled', sessionId, actionId });
+  }
+
+  /**
+   * Set the product mode for a session.
+   * Emits mode.product_changed event for the TUI to render the mode badge.
+   */
+  setProductMode(sessionId: string, mode: ProductMode): ModeConfig {
+    const config = this.modeRegistry.setMode(sessionId, mode);
+    const modeInfo = PRODUCT_MODES[mode];
+
+    logBridge('mode.changed', { sessionId, mode, label: modeInfo.label });
+
+    this.emit(sessionId, {
+      type: 'mode.product_changed',
+      sessionId,
+      mode,
+      label: modeInfo.label,
+      description: modeInfo.description,
+    });
+
+    return config;
+  }
+
+  /**
+   * Handle /mode <ask|make|remix|improve> command.
+   * Parses the mode name, sets it, and responds with confirmation.
+   */
+  private handleModeCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.trim().split(/\s+/);
+    const modeName = parts[1]?.toLowerCase();
+
+    if (!modeName || !Object.hasOwn(PRODUCT_MODES, modeName)) {
+      const available = Object.keys(PRODUCT_MODES).join(', ');
+      this.emitCommandResponse(sessionId, `Unknown mode. Available: ${available}`);
+      return { reviewRequired: false };
+    }
+
+    const config = this.setProductMode(sessionId, modeName as ProductMode);
+    const modeInfo = PRODUCT_MODES[config.mode];
+    this.emitCommandResponse(sessionId, `Mode switched to ${modeInfo.label} — ${modeInfo.description}`);
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /skill <name> [args] command.
+   * Resolves the skill template, emits skill.started, delegates to the
+   * appropriate route (creative/engineering/chat), then emits skill.completed.
+   */
+  private async handleSkillCommand(
+    sessionId: string,
+    input: string,
+    llm?: LLMClient,
+  ): Promise<{ reviewRequired: boolean }> {
+    const parts = input.trim().split(/\s+/);
+    const skillName = parts[1];
+
+    if (!skillName) {
+      this.emitCommandResponse(sessionId, 'Usage: /skill <name> [input text]');
+      return { reviewRequired: false };
+    }
+
+    const userInput = parts.slice(2).join(' ');
+    const result = await this.skillRunner.resolve(skillName, { input: userInput });
+
+    if (!result) {
+      this.emitCommandResponse(sessionId, `Unknown skill: ${skillName}. Use /skills to list available skills.`);
+      return { reviewRequired: false };
+    }
+
+    logBridge('skill.started', { sessionId, skillName, target: result.target, durationMs: result.durationMs });
+    this.emit(sessionId, { type: 'skill.started', sessionId, skillName });
+
+    // Get conversation for this session
+    let conversation = this.conversations.get(sessionId);
+    if (!conversation) {
+      conversation = new ConversationManager();
+      conversation.startNewSession();
+      this.conversations.set(sessionId, conversation);
+    }
+    conversation['recordMessage']('user', input);
+
+    if (!llm) {
+      this.emitCommandResponse(sessionId, result.prompt);
+      this.emit(sessionId, { type: 'skill.completed', sessionId, skillName, durationMs: result.durationMs });
+      return { reviewRequired: false };
+    }
+
+    // Route the expanded skill prompt through the existing delegation paths
+    const routeStart = Date.now();
+    const handleError = (err: unknown) => {
+      this.emit(sessionId, { type: 'error', sessionId, message: err instanceof Error ? err.message : String(err) });
+    };
+
+    const emitCompletion = () => {
+      this.emit(sessionId, {
+        type: 'skill.completed',
+        sessionId,
+        skillName,
+        durationMs: Date.now() - routeStart,
+      });
+    };
+
+    // Autonomy gating: check if the skill's action kind requires review
+    // Chat skills bypass gating (matching direct-chat behavior)
+    if (result.target !== 'chat') {
+      const skillActionKind = result.target === 'creative' ? 'creative' as const : 'engineering' as const;
+      if (this.autonomyController.requiresReview(skillActionKind, sessionId)) {
+      const pendingAction: TuiPendingAction = {
+        id: `skill-${skillName}-${Date.now()}`,
+        title: `Skill: ${skillName}`,
+        description: result.prompt.slice(0, 100),
+        kind: 'llm',
+        requiresConfirmation: true,
+        createdAt: new Date().toISOString(),
+      };
+      const status = this.sessions.update(sessionId, {
+        mode: 'action',
+        trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — skill "${skillName}" needs review` },
+        pendingAction,
+      });
+      this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
+      this.emit(sessionId, { type: 'status.updated', sessionId, status });
+      return { reviewRequired: true };
+      }
+    }
+
+    switch (result.target) {
+      case 'creative':
+        this.streamRalphGeneration(sessionId, result.prompt, conversation, llm)
+          .then(() => emitCompletion())
+          .catch(handleError);
+        break;
+      case 'engineering':
+        this.streamEngineeringTask(sessionId, result.prompt, conversation, llm)
+          .then(() => emitCompletion())
+          .catch(handleError);
+        break;
+      default:
+        this.streamChatResponse(sessionId, result.prompt, conversation, llm, STUDIO_SYSTEM_PROMPT)
+          .then(() => emitCompletion())
+          .catch(handleError);
+        break;
+    }
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle review commands: /accept <id>, /reject <id>, /pin <id>,
+   * /diff <idA> <idB>, /candidates
+   */
+  private handleReviewCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.trim().split(/\s+/);
+    const cmd = parts[0];
+
+    if (cmd === '/candidates') {
+      const candidates = this.reviewManager.list({ sessionId });
+      if (candidates.length === 0) {
+        this.emitCommandResponse(sessionId, 'No review candidates for this session.');
+      } else {
+        const lines = candidates.map(c => {
+          const statusTag = c.status === 'accepted' ? ' ✓' : c.status === 'rejected' ? ' ✗' : ' …';
+          return `  ${c.id.slice(0, 20).padEnd(22)} ${c.score.toFixed(2)}  ${c.label}${statusTag}`;
+        });
+        this.emitCommandResponse(sessionId, `Review candidates:\n${lines.join('\n')}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/accept') {
+      const candidateId = parts[1];
+      if (!candidateId) {
+        this.emitCommandResponse(sessionId, 'Usage: /accept <candidate-id>');
+        return { reviewRequired: false };
+      }
+      const candidate = this.reviewManager.accept(candidateId);
+      if (!candidate) {
+        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
+      } else {
+        this.emit(sessionId, { type: 'review.candidate_accepted', sessionId, candidateId });
+        this.emitCommandResponse(sessionId, `Accepted: ${candidate.label} (score: ${candidate.score.toFixed(2)})`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/reject') {
+      const candidateId = parts[1];
+      if (!candidateId) {
+        this.emitCommandResponse(sessionId, 'Usage: /reject <candidate-id>');
+        return { reviewRequired: false };
+      }
+      const candidate = this.reviewManager.reject(candidateId);
+      if (!candidate) {
+        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
+      } else {
+        this.emit(sessionId, { type: 'review.candidate_rejected', sessionId, candidateId });
+        this.emitCommandResponse(sessionId, `Rejected: ${candidate.label}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/pin') {
+      const candidateId = parts[1];
+      if (!candidateId) {
+        this.emitCommandResponse(sessionId, 'Usage: /pin <candidate-id>');
+        return { reviewRequired: false };
+      }
+      const ok = this.reviewManager.pin(candidateId);
+      if (!ok) {
+        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
+      } else {
+        this.emit(sessionId, { type: 'review.favorite_pinned', sessionId, candidateId });
+        this.emitCommandResponse(sessionId, `Pinned: ${candidateId}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/diff') {
+      const idA = parts[1];
+      const idB = parts[2];
+      if (!idA || !idB) {
+        this.emitCommandResponse(sessionId, 'Usage: /diff <candidateA-id> <candidateB-id>');
+        return { reviewRequired: false };
+      }
+      const candA = this.reviewManager.get(idA);
+      const candB = this.reviewManager.get(idB);
+      if (!candA || !candB) {
+        this.emitCommandResponse(sessionId, 'One or both candidates not found.');
+        return { reviewRequired: false };
+      }
+      const result = this.diffRenderer.diff(candA.content, candB.content);
+      const rendered = this.diffRenderer.render(result);
+      this.emit(sessionId, { type: 'review.diff_ready', sessionId, candidateA: idA, candidateB: idB, diff: rendered });
+      this.emitCommandResponse(sessionId, `Diff (${idA} vs ${idB}):\n${rendered}`);
+      return { reviewRequired: false };
+    }
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /setup: run the onboarding wizard with step-by-step events.
+   */
+  private async handleSetupCommand(sessionId: string): Promise<{ reviewRequired: boolean }> {
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Running setup wizard...' });
+
+    // Emit each step as an onboarding.step event for TUI rendering
+    const onStep = (step: { id: string; title: string; status: string; value?: string }) => {
+      this.emit(sessionId, {
+        type: 'onboarding.step',
+        sessionId,
+        stepId: step.id,
+        title: step.title,
+        stepStatus: step.status,
+        value: step.value,
+      });
+    };
+
+    const wizard = this.onboardingWizard;
+    const result = await wizard.run();
+
+    // Emit step events for each completed/failed step
+    for (const step of result.steps) {
+      onStep(step);
+    }
+
+    // Emit completion event
+    this.emit(sessionId, {
+      type: 'onboarding.complete',
+      sessionId,
+      configWritten: result.configWritten,
+      configPath: result.configPath,
+    });
+
+    if (result.configWritten) {
+      this.emitCommandResponse(sessionId, `Setup complete. Config written to ${result.configPath}`);
+    } else {
+      const failed = result.steps.filter(s => s.status === 'failed').map(s => s.title);
+      this.emitCommandResponse(sessionId, `Setup incomplete. Issues: ${failed.join(', ')}`);
+    }
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /diagnostics: run environment validation checks.
+   */
+  private async handleDiagnosticsCommand(sessionId: string): Promise<{ reviewRequired: boolean }> {
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Running diagnostics...' });
+
+    const validator = this.envValidator;
+    const report = await validator.validate();
+
+    this.emit(sessionId, {
+      type: 'diagnostics.result',
+      sessionId,
+      checks: report.checks.map(c => ({ name: c.name, status: c.status, message: c.message })),
+      allPassed: report.allPassed,
+    });
+
+    const statusIcons: Record<string, string> = { pass: '✓', fail: '✗', warn: '⚠' };
+    const lines = report.checks.map(c => `  ${statusIcons[c.status] || '?'} ${c.name}: ${c.message}`);
+    const summary = report.allPassed ? 'All checks passed.' : 'Some checks failed or need attention.';
+    this.emitCommandResponse(sessionId, `Diagnostics:\n${lines.join('\n')}\n\n${summary}`);
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /sessions: list resumable sessions.
+   */
+  private handleSessionsCommand(sessionId: string): { reviewRequired: boolean } {
+    const sessions = this.sessionResumer.listSessions();
+
+    this.emit(sessionId, {
+      type: 'session.list',
+      sessionId,
+      sessions: sessions.map(s => ({
+        sessionId: s.sessionId,
+        turnCount: s.turnCount,
+        lastIntent: s.lastIntent,
+        updatedAt: s.updatedAt,
+      })),
+    });
+
+    if (sessions.length === 0) {
+      this.emitCommandResponse(sessionId, 'No sessions recorded yet.');
+    } else {
+      const lines = sessions.map(s => {
+        const turns = `${s.turnCount} turns`;
+        const intent = s.lastIntent ? ` — ${s.lastIntent.slice(0, 40)}` : '';
+        return `  ${s.sessionId.slice(0, 24).padEnd(26)} ${turns.padEnd(10)} ${s.updatedAt.slice(0, 19)}${intent}`;
+      });
+      this.emitCommandResponse(sessionId, `Sessions:\n${lines.join('\n')}`);
+    }
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /report [json|markdown]: generate a session report.
+   */
+  private handleReportCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const graph = this.sessionGraphs.get(sessionId);
+    if (!graph) {
+      this.emitCommandResponse(sessionId, 'No session data available for this session.');
+      return { reviewRequired: false };
+    }
+
+    const format = input.endsWith('json') ? 'json' as const : 'markdown' as const;
+    const report = this.reportGenerator.generate(graph, format);
+    const manifest = report.manifest;
+
+    this.emit(sessionId, {
+      type: 'report.generated',
+      sessionId,
+      format: report.format,
+      content: report.content,
+      turns: manifest.turnCount,
+      durationMs: report.totalDurationMs,
+    });
+
+    this.emitCommandResponse(sessionId, report.content);
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /workspace create <name>|switch <name>|list
+   */
+  private handleWorkspaceCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.split(/\s+/);
+    const subcmd = parts[1]?.toLowerCase();
+
+    if (subcmd === 'create') {
+      const name = parts[2];
+      if (!name) {
+        this.emitCommandResponse(sessionId, 'Usage: /workspace create <name>');
+        return { reviewRequired: false };
+      }
+      const config = this.workspaceManager.create(name);
+      if (!config) {
+        this.emitCommandResponse(sessionId, `Workspace "${name}" already exists.`);
+        return { reviewRequired: false };
+      }
+      // Auto-switch to the new workspace
+      this.workspaceManager.switchTo(name);
+      this.emit(sessionId, { type: 'workspace.created', sessionId, workspaceName: name });
+      this.emit(sessionId, { type: 'workspace.switched', sessionId, workspaceName: name });
+      this.emitCommandResponse(sessionId, `Workspace "${name}" created and activated.`);
+      return { reviewRequired: false };
+    }
+
+    if (subcmd === 'switch') {
+      const name = parts[2];
+      if (!name) {
+        this.emitCommandResponse(sessionId, 'Usage: /workspace switch <name>');
+        return { reviewRequired: false };
+      }
+      const config = this.workspaceManager.switchTo(name);
+      if (!config) {
+        this.emitCommandResponse(sessionId, `Workspace "${name}" not found.`);
+        return { reviewRequired: false };
+      }
+      this.emit(sessionId, { type: 'workspace.switched', sessionId, workspaceName: name });
+      this.emitCommandResponse(sessionId, `Switched to workspace "${name}".`);
+      return { reviewRequired: false };
+    }
+
+    // Default: list workspaces
+    const names = this.workspaceManager.list();
+    this.emit(sessionId, { type: 'workspace.list', sessionId, workspaces: names });
+    if (names.length === 0) {
+      this.emitCommandResponse(sessionId, 'No workspaces. Use /workspace create <name>.');
+    } else {
+      const active = this.workspaceManager.activeName;
+      const lines = names.map(n => {
+        const marker = n === active ? ' *' : '';
+        return `  ${n}${marker}`;
+      });
+      this.emitCommandResponse(sessionId, `Workspaces:\n${lines.join('\n')}`);
+    }
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /autonomy <assist|co-create|autopilot>
+   */
+  private handleAutonomyCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.split(/\s+/);
+    const level = parts[1]?.toLowerCase();
+
+    if (!level) {
+      // Show current level and available options
+      const current = this.autonomyController.getConfig(sessionId);
+      const all = this.autonomyController.listLevels();
+      const lines = all.map(l => {
+        const marker = l.level === current.level ? ' ← current' : '';
+        return `  ${l.level.padEnd(12)} ${l.label} — ${l.description}${marker}`;
+      });
+      this.emitCommandResponse(sessionId, `Autonomy levels:\n${lines.join('\n')}`);
+      return { reviewRequired: false };
+    }
+
+    const config = this.autonomyController.setLevel(level, sessionId);
+    if (!config) {
+      const available = this.autonomyController.listLevels().map(l => l.level).join(', ');
+      this.emitCommandResponse(sessionId, `Unknown autonomy level. Available: ${available}`);
+      return { reviewRequired: false };
+    }
+
+    this.emit(sessionId, {
+      type: 'autonomy.changed',
+      sessionId,
+      level: config.level,
+      label: config.label,
+      description: config.description,
+    });
+    this.emitCommandResponse(sessionId, `Autonomy set to ${config.label} — ${config.description}`);
+    return { reviewRequired: false };
   }
 
   /**
@@ -436,6 +1078,21 @@ export class TuiBridgeService {
 
         // Record in conversation
         conversation['recordMessage']('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
+
+        // Create review candidate from generation result
+        const candidate = this.reviewManager.addCandidate(
+          sessionId,
+          `gen-iter-${result.iterations}`,
+          result.code,
+          result.finalScore,
+        );
+        this.emit(sessionId, {
+          type: 'review.candidate_added',
+          sessionId,
+          candidateId: candidate.id,
+          label: candidate.label,
+          score: candidate.score,
+        });
       }
       logBridge('generation.completed', {
         sessionId,

@@ -108,6 +108,38 @@ type SessionTurnEntry struct {
 	Timestamp   time.Time
 }
 
+// ReviewCandidate holds a generation candidate pending review.
+type ReviewCandidate struct {
+	ID        string
+	Label     string
+	Score     float64
+	Status    string // "pending" | "accepted" | "rejected"
+	CreatedAt time.Time
+}
+
+// OnboardingStep tracks a setup wizard step.
+type OnboardingStep struct {
+	StepID string
+	Title  string
+	Status string // "pending" | "in_progress" | "complete" | "failed"
+	Value  string
+}
+
+// DiagnosticCheckEntry holds a single diagnostic result.
+type DiagnosticCheckEntry struct {
+	Name    string
+	Status  string // "pass" | "fail" | "warn"
+	Message string
+}
+
+// SessionListEntry holds a resumable session summary.
+type SessionListEntry struct {
+	SessionID  string
+	TurnCount  int
+	LastIntent string
+	UpdatedAt  string
+}
+
 // TaskCard holds the current agent objective and progress.
 type TaskCard struct {
 	Objective   string
@@ -158,6 +190,39 @@ type Model struct {
 	ModelName     string
 	TrustLabel    string
 	PendingAction *bridge.PendingAction
+
+	// Product mode: ask/make/remix/improve
+	ProductMode      string // "ask" | "make" | "remix" | "improve" | ""
+	ProductModeLabel string
+
+	// Active skill: name of currently running skill
+	ActiveSkill string
+
+	// Review state: candidates, favorites, diff, visibility
+	ReviewCandidates    []ReviewCandidate
+	ReviewVisible       bool
+	SelectedCandidate   int
+	DiffContent         string
+	FavoriteIDs         map[string]bool
+
+	// Onboarding state: step tracking
+	OnboardingSteps    []OnboardingStep
+	OnboardingComplete bool
+	OnboardingConfigPath string
+
+	// Diagnostics state: check results
+	DiagnosticChecks []DiagnosticCheckEntry
+	DiagnosticsAllPassed bool
+
+	// Session list state: resumable sessions
+	SessionList []SessionListEntry
+
+	// Workspace state: active workspace name
+	ActiveWorkspace string
+
+	// Autonomy state: current autonomy level
+	AutonomyLevel string
+	AutonomyLabel string
 
 	// Generation telemetry
 	GenerationModel      string
@@ -307,6 +372,9 @@ func NewModel(bridgeURL string) Model {
 		ArtifactsVisible: false,
 		QueueVisible:     false,
 		HelpVisible:      false,
+		ReviewCandidates: []ReviewCandidate{},
+		ReviewVisible:    false,
+		FavoriteIDs:      make(map[string]bool),
 	}
 }
 
@@ -596,6 +664,147 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			statusIcon = "Fail"
 		}
 		m.addActivity(fmt.Sprintf("%s: %s", statusIcon, event.TaskID))
+
+	// ── Product mode events ──
+
+	case "mode.product_changed":
+		m.ProductMode = event.Mode
+		m.ProductModeLabel = event.Label
+		m.addActivity(fmt.Sprintf("Mode: %s", event.Label))
+
+	case "mode.list":
+		// Response handled in chat content; no model state change needed
+
+	// ── Skill events ──
+
+	case "skill.started":
+		m.ActiveSkill = event.SkillName
+		m.addActivity(fmt.Sprintf("Skill: %s", event.SkillName))
+
+	case "skill.completed":
+		if m.ActiveSkill == event.SkillName {
+			m.ActiveSkill = ""
+		}
+		m.addActivity(fmt.Sprintf("Skill done: %s", event.SkillName))
+
+	case "skill.list":
+		// Response handled in chat content; no model state change needed
+
+		// ── Review events ──
+
+		case "review.candidate_added":
+			m.ReviewCandidates = append(m.ReviewCandidates, ReviewCandidate{
+				ID:        event.CandidateID,
+				Label:     event.Label,
+				Score:     event.Score,
+				Status:    "pending",
+				CreatedAt: time.Now(),
+			})
+			m.ReviewVisible = true
+			m.addActivity(fmt.Sprintf("Candidate: %s (score %.2f)", event.Label, event.Score))
+
+		case "review.candidate_accepted":
+			for i := range m.ReviewCandidates {
+				if m.ReviewCandidates[i].ID == event.CandidateID {
+					m.ReviewCandidates[i].Status = "accepted"
+					break
+				}
+			}
+			m.addActivity("Accepted: " + event.CandidateID)
+
+		case "review.candidate_rejected":
+			for i := range m.ReviewCandidates {
+				if m.ReviewCandidates[i].ID == event.CandidateID {
+					m.ReviewCandidates[i].Status = "rejected"
+					break
+				}
+			}
+			m.addActivity("Rejected: " + event.CandidateID)
+
+		case "review.favorite_pinned":
+			if m.FavoriteIDs == nil {
+				m.FavoriteIDs = make(map[string]bool)
+			}
+			m.FavoriteIDs[event.CandidateID] = true
+			m.addActivity("Pinned: " + event.CandidateID)
+
+		case "review.diff_ready":
+			m.DiffContent = event.Diff
+			m.ReviewVisible = true
+			m.addActivity(fmt.Sprintf("Diff: %s vs %s", event.CandidateA, event.CandidateB))
+
+			// ── Onboarding events ──
+
+		case "onboarding.step":
+			m.OnboardingSteps = append(m.OnboardingSteps, OnboardingStep{
+				StepID: event.StepID,
+				Title:  event.Title,
+				Status: event.StepStatus,
+				Value:  event.Value,
+			})
+			m.addActivity(fmt.Sprintf("Setup: %s — %s", event.Title, event.StepStatus))
+
+		case "onboarding.complete":
+			m.OnboardingComplete = event.ConfigWritten
+			m.OnboardingConfigPath = event.ConfigPath
+			if event.ConfigWritten {
+				m.addActivity("Setup complete: " + event.ConfigPath)
+			} else {
+				m.addActivity("Setup incomplete")
+			}
+
+		// ── Diagnostics events ──
+
+		case "diagnostics.result":
+			m.DiagnosticChecks = make([]DiagnosticCheckEntry, 0, len(event.Checks))
+			for _, c := range event.Checks {
+				m.DiagnosticChecks = append(m.DiagnosticChecks, DiagnosticCheckEntry{
+					Name:    c.Name,
+					Status:  c.Status,
+					Message: c.Message,
+				})
+			}
+			m.DiagnosticsAllPassed = event.AllPassed
+			m.addActivity(fmt.Sprintf("Diagnostics: %d checks, passed=%v", len(event.Checks), event.AllPassed))
+
+		// ── Session list events ──
+
+		case "session.list":
+			m.SessionList = make([]SessionListEntry, 0, len(event.Sessions))
+			for _, s := range event.Sessions {
+				m.SessionList = append(m.SessionList, SessionListEntry{
+					SessionID:  s.SessionID,
+					TurnCount:  s.TurnCount,
+					LastIntent: s.LastIntent,
+					UpdatedAt:  s.UpdatedAt,
+				})
+			}
+			m.addActivity(fmt.Sprintf("Sessions: %d listed", len(event.Sessions)))
+
+		// ── Workspace events ──
+
+		case "workspace.created":
+			m.ActiveWorkspace = event.WorkspaceName
+			m.addActivity("Workspace created: " + event.WorkspaceName)
+
+		case "workspace.switched":
+			m.ActiveWorkspace = event.WorkspaceName
+			m.addActivity("Switched to: " + event.WorkspaceName)
+
+		case "workspace.list":
+			// Response handled in chat content; no model state change needed
+
+		// ── Report events ──
+
+		case "report.generated":
+			m.addActivity(fmt.Sprintf("Report: %s, %d turns", event.ReportFormat, event.TurnCount))
+
+		// ── Autonomy events ──
+
+		case "autonomy.changed":
+			m.AutonomyLevel = event.AutonomyLevel
+			m.AutonomyLabel = event.Label
+			m.addActivity("Autonomy: " + event.Label)
 	}
 }
 

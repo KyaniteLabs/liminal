@@ -111,6 +111,8 @@ export interface StudioAgentConfig {
   maxTokens?: number;
   /** Whether to stream responses */
   streaming?: boolean;
+  /** Default product mode for new sessions */
+  defaultMode?: import('./ProductMode.js').ProductMode;
 }
 
 // ── Intent Router Configuration ──

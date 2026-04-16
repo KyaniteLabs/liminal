@@ -31,6 +31,21 @@ type FileChange struct {
 	IsLatest bool   `json:"isLatest"` // true for the most recent change
 }
 
+// DiagnosticCheck represents a single diagnostic result.
+type DiagnosticCheck struct {
+	Name    string `json:"name"`
+	Status  string `json:"status"`  // "pass" | "fail" | "warn"
+	Message string `json:"message"`
+}
+
+// SessionEntry represents a resumable session summary.
+type SessionEntry struct {
+	SessionID   string `json:"sessionId"`
+	TurnCount   int    `json:"turnCount"`
+	LastIntent  string `json:"lastIntent,omitempty"`
+	UpdatedAt   string `json:"updatedAt"`
+}
+
 // Event is the universal SSE event envelope for TUI → Bubble Tea communication.
 type Event struct {
 	Type      string         `json:"type"`
@@ -42,6 +57,7 @@ type Event struct {
 	Action    *PendingAction `json:"action,omitempty"`
 	Status    *SessionStatus `json:"status,omitempty"`
 	Message     string         `json:"message,omitempty"`
+	Label       string         `json:"label,omitempty"`
 	Trust       *TrustState    `json:"trust,omitempty"`
 	PreviewType string         `json:"previewType,omitempty"`
 	ImageUrl    string         `json:"imageUrl,omitempty"`
@@ -85,6 +101,42 @@ type Event struct {
 	JobID        string       `json:"jobId,omitempty"`
 	ArtifactLabel string      `json:"artifactLabel,omitempty"`
 	ArtifactPath  string      `json:"artifactPath,omitempty"`
+
+	// Skill event fields
+	SkillName string `json:"skillName,omitempty"`
+
+	// Review event fields
+	CandidateID string  `json:"candidateId,omitempty"`
+	CandidateA string   `json:"candidateA,omitempty"`
+	CandidateB string   `json:"candidateB,omitempty"`
+	Diff       string   `json:"diff,omitempty"`
+
+	// Onboarding event fields
+	StepID       string `json:"stepId,omitempty"`
+	Title        string `json:"title,omitempty"`
+	Value        string `json:"value,omitempty"`
+	StepStatus   string `json:"stepStatus,omitempty"` // onboarding/diagnostic step status string
+	ConfigWritten bool  `json:"configWritten,omitempty"`
+	ConfigPath   string `json:"configPath,omitempty"`
+
+	// Diagnostics event fields
+	Checks    []DiagnosticCheck `json:"checks,omitempty"`
+	AllPassed bool              `json:"allPassed,omitempty"`
+
+	// Session list event fields
+	Sessions []SessionEntry `json:"sessions,omitempty"`
+
+	// Workspace event fields
+	WorkspaceName string   `json:"workspaceName,omitempty"`
+	Workspaces    []string `json:"workspaces,omitempty"`
+
+	// Report event fields
+	ReportFormat string `json:"format,omitempty"`
+	TurnCount    int    `json:"turns,omitempty"`
+
+	// Autonomy event fields
+	AutonomyLevel       string `json:"level,omitempty"`
+	AutonomyDescription string `json:"description,omitempty"`
 
 	// Session turn event fields
 	TurnID      string   `json:"turnId,omitempty"`

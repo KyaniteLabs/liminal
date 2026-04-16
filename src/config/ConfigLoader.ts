@@ -142,6 +142,15 @@ export interface ProjectConfig {
     /** Score threshold for Thompson success updates. Default: 0.7. */
     successThreshold?: number;
   };
+  /** Product mode configuration for Studio sessions. */
+  mode?: {
+    /** Default mode for new sessions. Default: 'ask' */
+    defaultMode?: 'ask' | 'make' | 'remix' | 'improve';
+    /** Default autonomy level. Default: 'assist' */
+    defaultAutonomy?: 'assist' | 'co-create' | 'autopilot';
+    /** Default workspace profile. Default: 'creative' */
+    defaultProfile?: 'creative' | 'engineering' | 'hybrid';
+  };
 }
 
 export interface EffectiveConfig {

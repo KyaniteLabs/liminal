@@ -105,7 +105,8 @@ describe('TaskRunner', () => {
     expect(attempt.completed).toBe(true);
     expect(attempt.reason).toBe('Quality threshold met');
     expect(attempt.runId).toBe('2026-04-15T10:05:00Z');
-    expect(attempt.artifactRef).toBeNull();
+    expect(attempt.artifactRef).not.toBeNull();
+    expect(attempt.artifactRef!.kind).toBe('task-attempt');
     expect(attempt.duration).toBeGreaterThanOrEqual(0);
 
     // Verify attempt was persisted in ledger

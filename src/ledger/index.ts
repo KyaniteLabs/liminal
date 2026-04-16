@@ -20,3 +20,9 @@ export type {
 
 // TaskLedger — core persistence layer
 export { TaskLedger } from './TaskLedger.js';
+
+// TaskRunner — executes tasks via RalphLoop
+export { TaskRunner } from './TaskRunner.js';
+
+// TaskVerifier — scores + test-verifies candidates
+export { TaskVerifier } from './TaskVerifier.js';

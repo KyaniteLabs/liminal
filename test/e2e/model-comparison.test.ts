@@ -103,7 +103,8 @@ const TEST_PROMPTS = [
 
 const TEST_TIMEOUT = 300000; // 5 minutes per test
 
-describe.skipIf(!LLMClient.isConfigured())('Model Comparison Suite', () => {
+const runModelComparison = process.env.RUN_MODEL_COMPARISON === 'true' && LLMClient.isConfigured();
+describe.skipIf(!runModelComparison)('Model Comparison Suite', () => {
   const results: TestResult[] = [];
   const outputDir = path.join(process.cwd(), 'test-results', 'model-comparison');
 

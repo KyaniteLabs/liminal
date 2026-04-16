@@ -27,6 +27,9 @@ func (m Model) renderOperatorSurface(width int) string {
 	if len(m.VerificationJobs) > 0 {
 		panels = append(panels, m.renderVerificationJobs(contentWidth))
 	}
+	if m.QueueVisible && len(m.TaskQueue) > 0 {
+		panels = append(panels, m.renderTaskQueue(contentWidth))
+	}
 	if m.ArtifactsVisible {
 		panels = append(panels, m.renderArtifactsDrawer(contentWidth))
 	}
@@ -187,6 +190,58 @@ func (m Model) renderVerificationJobs(width int) string {
 	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
+func (m Model) renderTaskQueue(width int) string {
+	queued, running, completed := 0, 0, 0
+	for _, t := range m.TaskQueue {
+		switch t.Status {
+		case "queued":
+			queued++
+		case "running":
+			running++
+		case "completed":
+			completed++
+		}
+	}
+	summary := fmt.Sprintf("Tasks: %d queued · %d running · %d done", queued, running, completed)
+	lines := []string{ui.PanelTitleStyle.Render(summary)}
+
+	rows := make([]table.Row, 0, len(m.TaskQueue))
+	for _, t := range m.TaskQueue {
+		statusIcon := queueStatusToken(t.Status)
+		desc := trimToWidth(t.Description, max(width-30, 12))
+		dur := ""
+		if t.DurationMs > 0 {
+			dur = formatDurationMs(t.DurationMs)
+		}
+		rows = append(rows, table.Row{statusIcon, desc, dur})
+	}
+
+	lines = append(lines, renderDataTable(
+		width-4,
+		min(max(len(rows)+1, 3), 8),
+		[]table.Column{
+			{Title: "Status", Width: 10},
+			{Title: "Task", Width: max(width-30, 12)},
+			{Title: "Time", Width: 8},
+		},
+		rows,
+	))
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func queueStatusToken(status string) string {
+	switch status {
+	case "completed":
+		return "Done"
+	case "running":
+		return "Run"
+	case "failed":
+		return "Fail"
+	default:
+		return "Wait"
+	}
+}
+
 func (m Model) renderArtifactsDrawer(width int) string {
 	lines := []string{ui.PanelTitleStyle.Render("Artifacts")}
 	if len(m.Artifacts) == 0 {
@@ -244,6 +299,7 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("Tab", "focus operator column"),
 		helpRow("Ctrl+T", "toggle timeline"),
 		helpRow("Ctrl+A", "toggle artifacts"),
+		helpRow("Ctrl+Q", "toggle task queue"),
 		helpRow("Ctrl+E", "toggle preview card"),
 		helpRow("Ctrl+Y", "copy last assistant response"),
 		helpRow("?", "toggle this help"),

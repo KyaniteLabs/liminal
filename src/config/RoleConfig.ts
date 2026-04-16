@@ -23,7 +23,7 @@ import { getEffectiveConfig } from './ConfigLoader.js';
 
 // ── Types ──
 
-export type ModelRole = 'generator' | 'evaluator' | 'harness';
+export type ModelRole = 'generator' | 'evaluator' | 'harness' | 'studio';
 export type ProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'google' | 'minimax';
 
 export interface RoleProviderConfig {
@@ -51,6 +51,7 @@ export interface RoleConfigFile {
     generator: RoleProviderConfig;
     evaluator?: RoleProviderConfig;
     harness?: RoleProviderConfig;
+    studio?: RoleProviderConfig;
   };
   /** Fallback chain per role — try these if primary fails */
   fallbacks?: Partial<Record<ModelRole, RoleProviderConfig[]>>;
@@ -79,6 +80,7 @@ const DEFAULT_TEMPERATURES: Record<ModelRole, number> = {
   generator: 0.7,   // Creative — needs variety
   evaluator: 0.2,   // Precise — needs consistency
   harness: 0.5,     // Balanced — reasoning + action
+  studio: 0.6,      // Conversational — creative-first, structured enough to delegate
 };
 const DEFAULT_MAX_TOKENS = 4096;
 const DEFAULT_TIMEOUT = 120000;
@@ -133,8 +135,9 @@ export async function loadRoleConfig(projectDir?: string): Promise<Record<ModelR
   const generator = resolveRole('generator', merged);
   const evaluator = resolveRole('evaluator', merged);
   const harness = resolveRole('harness', merged);
+  const studio = resolveRole('studio', merged);
 
-  return { generator, evaluator, harness };
+  return { generator, evaluator, harness, studio };
 }
 
 /**
@@ -160,6 +163,11 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
       model: ['HARNESS_MODEL', 'LLM_MODEL'],
       apiKey: ['HARNESS_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
     },
+    studio: {
+      baseUrl: ['STUDIO_BASE_URL', 'HARNESS_BASE_URL', 'LLM_BASE_URL'],
+      model: ['STUDIO_MODEL', 'HARNESS_MODEL', 'LLM_MODEL'],
+      apiKey: ['STUDIO_API_KEY', 'HARNESS_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
+    },
   };
 
   const envSources = envMap[role];
@@ -181,7 +189,7 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
     maxTokens: fileRole?.maxTokens ?? DEFAULT_MAX_TOKENS,
     timeout: fileRole?.timeout ?? DEFAULT_TIMEOUT,
     thinking: fileRole?.thinking ?? { enabled: false },
-    streaming: fileRole?.streaming ?? (role === 'harness'),
+    streaming: fileRole?.streaming ?? (role === 'harness' || role === 'studio'),
   };
 }
 
@@ -310,6 +318,7 @@ function mergeConfigs(base: RoleConfigFile | null, overlay: RoleConfigFile | nul
       generator: { ...base.roles.generator, ...overlay.roles.generator },
       evaluator: overlay.roles.evaluator || base.roles.evaluator,
       harness: overlay.roles.harness || base.roles.harness,
+      studio: overlay.roles.studio || base.roles.studio,
     },
     fallbacks: { ...base.fallbacks, ...overlay.fallbacks },
     capabilities: { ...base.capabilities, ...overlay.capabilities },

@@ -8,6 +8,9 @@ import type { TuiBridgeEvent, TuiInputRequest, TuiPendingAction, TuiSessionStatu
 import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
+import { IntentRouter } from '../agent/IntentRouter.js';
+import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
+import { SessionGraph } from '../agent/SessionGraph.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -66,6 +69,10 @@ export class TuiBridgeService {
   private activeStreams = new Map<string, AbortController>();
   // Step 1: Conversation memory - one ConversationManager per session
   private conversations = new Map<string, ConversationManager>();
+  // Studio routing: intelligent intent classification replaces keyword matching
+  private router = new IntentRouter();
+  // Session persistence: records every turn per session
+  private sessionGraphs = new Map<string, SessionGraph>();
 
   constructor() {
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -108,6 +115,9 @@ export class TuiBridgeService {
     const conversation = new ConversationManager();
     conversation.startNewSession();
     this.conversations.set(sessionId, conversation);
+
+    // Initialize session graph for turn persistence
+    this.sessionGraphs.set(sessionId, new SessionGraph(sessionId));
 
     return this.sessions.create({
       sessionId,
@@ -165,10 +175,16 @@ export class TuiBridgeService {
     const selfImprovement = isSelfImprovementRequest(input.text);
     const creativeGeneration = isGenerationRequest(input.text);
 
+    // Studio routing: classify intent via IntentRouter
+    const classification = this.router.classify(input.text);
+
     logBridge('input.received', {
       sessionId,
       mode: input.mode,
       intent: input.clientIntent,
+      studioIntent: classification.intent,
+      studioConfidence: classification.confidence,
+      topic: classification.topic,
       selfImprovement,
       creativeGeneration,
       chars: input.text.length,
@@ -205,175 +221,98 @@ export class TuiBridgeService {
     // Record user message in conversation history
     conversation['recordMessage']('user', input.text);
 
-    // Step 2: Detect generation requests and route to RalphLoop or chat
+    // Step 2: Route via StudioAgent classification
     this.emit(sessionId, { type: 'response.started', sessionId });
 
-    if (selfImprovement && llm) {
-      logBridge('input.routed', { sessionId, route: 'meta-harness.tools' });
-      this.streamHarnessSelfImprovement(sessionId, input.text, conversation, llm).catch((err) => {
-        this.emit(sessionId, {
-          type: 'error',
-          sessionId,
-          message: err instanceof Error ? err.message : String(err),
-        });
+    const routeStart = Date.now();
+    const handleError = (err: unknown) => {
+      this.emit(sessionId, {
+        type: 'error',
+        sessionId,
+        message: err instanceof Error ? err.message : String(err),
       });
-      return { reviewRequired: false };
-    }
+    };
 
-    if (creativeGeneration && llm) {
-      // Route to RalphLoop for generation
-      logBridge('input.routed', { sessionId, route: 'creative.ralph' });
-      this.streamRalphGeneration(sessionId, input.text, conversation, llm).catch((err) => {
-        this.emit(sessionId, {
-          type: 'error',
-          sessionId,
-          message: err instanceof Error ? err.message : String(err),
-        });
+    const emitSessionTurn = (delegatedTo: string, responseContent?: string, extras?: { artifactRefs?: string[]; taskRefs?: string[] }) => {
+      const turnId = `turn-${Date.now()}`;
+      const durationMs = Date.now() - routeStart;
+      this.emit(sessionId, {
+        type: 'session.turn',
+        sessionId,
+        turnId,
+        intent: classification.intent,
+        delegatedTo,
+        durationMs,
+        ...extras,
       });
-      return { reviewRequired: false };
-    }
 
-    // Chat mode - use LLM with conversation history
-    if (llm) {
-      logBridge('input.routed', { sessionId, route: selfImprovement ? 'meta-harness.chat' : 'chat' });
-      this.streamChatResponse(sessionId, input.text, conversation, llm).catch((err) => {
-        this.emit(sessionId, {
-          type: 'error',
-          sessionId,
-          message: err instanceof Error ? err.message : String(err),
+      // Record turn in session graph
+      const graph = this.sessionGraphs.get(sessionId);
+      if (graph) {
+        graph.recordTurn({
+          turnId,
+          input: input.text,
+          intent: classification.intent,
+          delegatedTo,
+          response: responseContent ?? '',
+          durationMs,
+          artifactRefs: extras?.artifactRefs,
+          taskRefs: extras?.taskRefs,
         });
-      });
-      return { reviewRequired: false };
-    }
-
-    // Fallback: echo without LLM
-    this.emit(sessionId, { type: 'response.delta', sessionId, delta: input.text });
-    this.emit(sessionId, { type: 'response.completed', sessionId, content: input.text });
-    this.emit(sessionId, { type: 'response.committed', sessionId, content: input.text });
-    conversation['recordMessage']('assistant', input.text);
-    this.emit(sessionId, {
-      type: 'status.updated',
-      sessionId,
-      status: this.sessions.update(sessionId, {
-        mode: input.mode,
-        activeTask: input.text.slice(0, 60),
-      }),
-    });
-
-    return { reviewRequired: false };
-  }
-
-  /**
-   * Run a self-improvement request through the actual tool-using harness agent.
-   */
-  private async streamHarnessSelfImprovement(
-    sessionId: string,
-    userText: string,
-    conversation: ConversationManager,
-    llm: LLMClient,
-  ): Promise<void> {
-    const controller = new AbortController();
-    this.activeStreams.set(sessionId, controller);
-
-    const config = llm.getConfig();
-    const modelName = config.model || 'unknown';
-    const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
-    const agent = createLLMModeAgent(llm);
-    const taskId = `tui-self-${Date.now()}`;
-
-    const listener = (event: BusEvent) => {
-      if (event.source !== 'LLMModeAgent') return;
-      if (event.type === EventTypes.PROCESS_START) {
-        logBridge('agent.event', { sessionId, type: event.type, stage: event.data.stage });
-        const message = `tool agent started: ${String(event.data.stage || 'planning')}`;
-        this.emit(sessionId, {
-          type: 'activity.updated',
-          sessionId,
-          message,
-        });
-        this.emitLiveNarration(sessionId, message);
-      }
-      if (event.type === EventTypes.PROCESS_PROGRESS) {
-        const message = event.data.message || event.data.stage || 'working';
-        logBridge('agent.event', {
-          sessionId,
-          type: event.type,
-          current: event.data.current,
-          total: event.data.total,
-          stage: event.data.stage,
-          message,
-        });
-        this.emit(sessionId, {
-          type: 'activity.updated',
-          sessionId,
-          message: String(message),
-        });
-        this.emitLiveNarration(sessionId, String(message));
-      }
-      if (event.type === EventTypes.PROCESS_END) {
-        logBridge('agent.event', {
-          sessionId,
-          type: event.type,
-          success: event.data.success,
-          reason: event.data.reason,
-        });
-        const message = event.data.success ? 'tool agent complete' : `tool agent failed: ${String(event.data.reason || 'unknown')}`;
-        this.emit(sessionId, {
-          type: 'activity.updated',
-          sessionId,
-          message,
-        });
-        this.emitLiveNarration(sessionId, message);
       }
     };
 
-    eventBus.onEvent(listener);
-    logBridge('agent.started', { sessionId, taskId, model: modelName, maxSteps });
-
-    try {
-      const session = await agent.executeTask({
-        id: taskId,
-        title: 'Bubble Tea TUI self-improvement request',
-        description: userText,
-        maxSteps,
-        approved: true,
-      });
-
-      const fullContent = this.formatAgentSession(session);
-      for (const chunk of this.chunkString(fullContent, 80)) {
-        this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
-        await new Promise(r => setTimeout(r, 5));
-      }
-      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
-      this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
-      conversation['recordMessage']('assistant', fullContent);
-
-      this.emit(sessionId, {
-        type: 'response.metadata',
-        sessionId,
-        model: modelName,
-        duration: new Date(session.endTime || new Date().toISOString()).getTime() - new Date(session.startTime).getTime(),
-      });
+    if (!llm) {
+      // Fallback: echo without LLM
+      this.emit(sessionId, { type: 'response.delta', sessionId, delta: input.text });
+      this.emit(sessionId, { type: 'response.completed', sessionId, content: input.text });
+      this.emit(sessionId, { type: 'response.committed', sessionId, content: input.text });
+      conversation['recordMessage']('assistant', input.text);
+      emitSessionTurn('echo', input.text);
       this.emit(sessionId, {
         type: 'status.updated',
         sessionId,
         status: this.sessions.update(sessionId, {
-          mode: 'chat',
-          activeTask: `Tool agent ${session.status}`,
-          model: modelName,
+          mode: input.mode,
+          activeTask: input.text.slice(0, 60),
         }),
       });
-      logBridge('agent.completed', {
-        sessionId,
-        taskId,
-        status: session.status,
-        steps: session.stepCount,
-        tools: this.agentToolsUsed(session),
-      });
-    } finally {
-      eventBus.offEvent(listener);
-      this.activeStreams.delete(sessionId);
+      return { reviewRequired: false };
     }
+
+    // Route based on StudioAgent intent classification
+    switch (classification.intent) {
+      case 'creative':
+        logBridge('input.routed', { sessionId, route: 'studio.creative', confidence: classification.confidence });
+        this.streamRalphGeneration(sessionId, input.text, conversation, llm)
+          .then(() => emitSessionTurn('ralph-loop'))
+          .catch(handleError);
+        break;
+
+      case 'engineering':
+        logBridge('input.routed', { sessionId, route: 'studio.engineering', confidence: classification.confidence });
+        this.streamEngineeringTask(sessionId, input.text, conversation, llm)
+          .then(() => emitSessionTurn('conveyor'))
+          .catch(handleError);
+        break;
+
+      case 'hybrid':
+        logBridge('input.routed', { sessionId, route: 'studio.hybrid', confidence: classification.confidence });
+        this.streamHybridTask(sessionId, input.text, conversation, llm)
+          .then(() => emitSessionTurn('ralph-loop'))
+          .catch(handleError);
+        break;
+
+      case 'direct':
+      default:
+        logBridge('input.routed', { sessionId, route: 'studio.chat', confidence: classification.confidence });
+        this.streamChatResponse(sessionId, input.text, conversation, llm, STUDIO_SYSTEM_PROMPT)
+          .then(() => emitSessionTurn('llm-chat'))
+          .catch(handleError);
+        break;
+    }
+
+    return { reviewRequired: false };
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
@@ -528,6 +467,7 @@ export class TuiBridgeService {
     userText: string,
     conversation: ConversationManager,
     llm: LLMClient,
+    systemPrompt?: string,
   ): Promise<void> {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
@@ -559,7 +499,8 @@ export class TuiBridgeService {
         : userText;
 
       let fullContent = '';
-      for await (const chunk of llm.stream(TUI_SYSTEM_PROMPT, fullPrompt, controller.signal)) {
+      const effectivePrompt = systemPrompt ?? TUI_SYSTEM_PROMPT;
+      for await (const chunk of llm.stream(effectivePrompt, fullPrompt, controller.signal)) {
         fullContent += chunk;
         this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
       }
@@ -601,6 +542,110 @@ export class TuiBridgeService {
     } finally {
       this.activeStreams.delete(sessionId);
     }
+  }
+
+  /**
+   * Stream an engineering task through the LLMModeAgent with task lifecycle events.
+   */
+  private async streamEngineeringTask(
+    sessionId: string,
+    userText: string,
+    conversation: ConversationManager,
+    llm: LLMClient,
+  ): Promise<void> {
+    const controller = new AbortController();
+    this.activeStreams.set(sessionId, controller);
+
+    const config = llm.getConfig();
+    const modelName = config.model || 'unknown';
+    const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
+    const agent = createLLMModeAgent(llm);
+    const taskId = `studio-eng-${Date.now()}`;
+
+    // Emit task lifecycle events
+    this.emit(sessionId, { type: 'task.queued', sessionId, taskId, description: userText.slice(0, 120) });
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Engineering task queued: ${userText.slice(0, 60)}` });
+
+    const listener = (event: BusEvent) => {
+      if (event.source !== 'LLMModeAgent') return;
+      if (event.type === EventTypes.PROCESS_START || event.type === EventTypes.PROCESS_PROGRESS) {
+        const message = event.data.message || event.data.stage || 'working';
+        this.emit(sessionId, { type: 'activity.updated', sessionId, message: String(message) });
+        this.emitLiveNarration(sessionId, String(message));
+      }
+      if (event.type === EventTypes.PROCESS_END) {
+        const message = event.data.success ? 'Task complete' : `Task failed: ${String(event.data.reason || 'unknown')}`;
+        this.emit(sessionId, { type: 'activity.updated', sessionId, message });
+        this.emitLiveNarration(sessionId, message);
+      }
+    };
+
+    eventBus.onEvent(listener);
+    logBridge('engineering.started', { sessionId, taskId, model: modelName, maxSteps });
+
+    try {
+      this.emit(sessionId, { type: 'task.started', sessionId, taskId });
+
+      const session = await agent.executeTask({
+        id: taskId,
+        title: `Studio engineering: ${userText.slice(0, 60)}`,
+        description: userText,
+        maxSteps,
+        approved: true,
+      });
+
+      const fullContent = this.formatAgentSession(session);
+      for (const chunk of this.chunkString(fullContent, 80)) {
+        this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
+        await new Promise(r => setTimeout(r, 5));
+      }
+      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+      this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
+      conversation['recordMessage']('assistant', fullContent);
+
+      const duration = new Date(session.endTime || new Date().toISOString()).getTime() - new Date(session.startTime).getTime();
+      this.emit(sessionId, { type: 'response.metadata', sessionId, model: modelName, duration });
+      this.emit(sessionId, { type: 'task.completed', sessionId, taskId, success: session.status === 'success', durationMs: duration });
+
+      this.emit(sessionId, {
+        type: 'status.updated',
+        sessionId,
+        status: this.sessions.update(sessionId, {
+          mode: 'chat',
+          activeTask: `Engineering ${session.status}`,
+          model: modelName,
+        }),
+      });
+
+      logBridge('engineering.completed', {
+        sessionId,
+        taskId,
+        status: session.status,
+        steps: session.stepCount,
+        tools: this.agentToolsUsed(session),
+      });
+    } finally {
+      eventBus.offEvent(listener);
+      this.activeStreams.delete(sessionId);
+    }
+  }
+
+  /**
+   * Stream a hybrid task: creative generation followed by engineering verification.
+   */
+  private async streamHybridTask(
+    sessionId: string,
+    userText: string,
+    conversation: ConversationManager,
+    llm: LLMClient,
+  ): Promise<void> {
+    // Phase 1: Creative generation
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Starting creative generation...' });
+    await this.streamRalphGeneration(sessionId, userText, conversation, llm);
+
+    // Phase 2: Engineering verification
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Verifying with engineering agent...' });
+    await this.streamEngineeringTask(sessionId, `Verify and improve the creative output for: ${userText}`, conversation, llm);
   }
 
   private cancelStream(sessionId: string): void {

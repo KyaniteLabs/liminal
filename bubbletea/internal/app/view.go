@@ -160,6 +160,7 @@ func (m Model) renderFooter() string {
 			ui.KeyStyle.Render("Tab") + ui.HintStyle.Render(":operator"),
 			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
+			ui.KeyStyle.Render("Ctrl+Q") + ui.HintStyle.Render(":queue"),
 			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 		}
@@ -175,6 +176,7 @@ func (m Model) renderFooter() string {
 			ui.KeyStyle.Render("↑↓") + ui.HintStyle.Render(":scroll"),
 			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
+			ui.KeyStyle.Render("Ctrl+Q") + ui.HintStyle.Render(":queue"),
 			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 			ui.KeyStyle.Render("Esc") + ui.HintStyle.Render(":back"),

@@ -208,6 +208,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.PreviewVisible = !m.PreviewVisible
 			m.refreshViewports()
 			return m, nil
+		case "ctrl+q":
+			m.QueueVisible = !m.QueueVisible
+			m.refreshViewports()
+			return m, nil
 		}
 
 		if msg.String() == "?" {

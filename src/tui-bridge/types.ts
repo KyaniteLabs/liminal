@@ -82,4 +82,10 @@ export type TuiBridgeEvent =
   | { type: 'verification.completed'; sessionId: string; command: string; success: boolean; outputTail?: string; jobId: string; duration?: number }
   | { type: 'artifact.found'; sessionId: string; artifactLabel: string; artifactPath: string }
   | ({ type: 'swarm.round'; sessionId: string } & SwarmRoundEvent)
+  // Session turn: recorded after every agent routing decision
+  | { type: 'session.turn'; sessionId: string; turnId: string; intent: string; delegatedTo: string; durationMs: number; artifactRefs?: string[]; taskRefs?: string[] }
+  // Task lifecycle: engineering delegation events
+  | { type: 'task.queued'; sessionId: string; taskId: string; description: string }
+  | { type: 'task.started'; sessionId: string; taskId: string }
+  | { type: 'task.completed'; sessionId: string; taskId: string; success: boolean; durationMs: number }
   | { type: 'error'; sessionId: string; message: string };

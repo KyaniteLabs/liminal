@@ -25,6 +25,17 @@ export class TuiEventStream {
       listener(stored);
     }
   }
+  /**
+   * Emit an ephemeral event — delivered to live listeners but NOT persisted
+   * in the event log. Use for high-frequency status updates (e.g. cortex.snapshot)
+   * that would grow the per-session array unbounded if stored every 5 seconds.
+   */
+  emitEphemeral(sessionId: string, event: TuiBridgeEvent): void {
+    for (const listener of this.listeners.get(sessionId) ?? []) {
+      listener(event);
+    }
+  }
+
 
   getEvents(sessionId: string): TuiBridgeEvent[] {
     return (this.events.get(sessionId) ?? []).map((stored) => stored.event);

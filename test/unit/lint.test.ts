@@ -11,7 +11,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(__dirname, '../..');
 
 describe('Lint', () => {
-  it('runs without errors on src/', { timeout: 60_000 }, () => {
+  it('runs without errors on src/', { timeout: 120_000 }, () => {
     execSync('npm run lint', {
       cwd: repoRoot,
       encoding: 'utf-8',

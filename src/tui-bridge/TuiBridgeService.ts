@@ -24,6 +24,7 @@ import { WorkspaceManager } from '../agent/WorkspaceManager.js';
 import { AutonomyController } from '../agent/AutonomyController.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
+import { CortexPerceptionBus } from '../cortex/CortexPerceptionBus.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -108,8 +109,26 @@ export class TuiBridgeService {
   private workspaceManager = new WorkspaceManager();
   // Autonomy controller: approval gating per level
   private autonomyController = new AutonomyController();
+  // Cortex perception bus: aggregates live system state from EventBus
+  private cortexBus = new CortexPerceptionBus(eventBus);
+  /** Interval in ms for cortex snapshot broadcasts (default: 5s) */
+  private static readonly CORTEX_BROADCAST_INTERVAL_MS = 5000;
+  /** Handle for the cortex broadcast interval (stored for cleanup) */
+  private cortexBroadcastTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
+    // Start the Cortex perception bus
+    this.cortexBus.start();
+    // Broadcast cortex snapshots to all active sessions periodically
+    // Uses emitEphemeral so these high-frequency status updates don't grow
+    // the per-session event log (codex P1 review feedback).
+    this.cortexBroadcastTimer = setInterval(() => {
+      const snapshot = this.cortexBus.getSnapshot();
+      for (const sessionId of this.sessions.list()) {
+        this.stream.emitEphemeral(sessionId, { type: 'cortex.snapshot', sessionId, snapshot });
+      }
+    }, TuiBridgeService.CORTEX_BROADCAST_INTERVAL_MS);
+
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
     // External consumers (Bubble Tea client, gallery) receive these via SSE
     // through the existing TuiEventStream subscription mechanism.
@@ -1401,5 +1420,13 @@ export class TuiBridgeService {
       sessionId,
       delta: `${message}\n`,
     });
+  }
+  /** Stop cortex broadcast timer and perception bus. Call on shutdown. */
+  destroy(): void {
+    if (this.cortexBroadcastTimer !== null) {
+      clearInterval(this.cortexBroadcastTimer);
+      this.cortexBroadcastTimer = null;
+    }
+    this.cortexBus.stop();
   }
 }

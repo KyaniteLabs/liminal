@@ -46,6 +46,40 @@ type SessionEntry struct {
 	UpdatedAt   string `json:"updatedAt"`
 }
 
+// CortexTaskPipeline holds task pipeline metrics from the perception bus.
+type CortexTaskPipeline struct {
+	Pending        int     `json:"pending"`
+	InProgress     int     `json:"inProgress"`
+	Completed      int     `json:"completed"`
+	Failed         int     `json:"failed"`
+	Skipped        int     `json:"skipped"`
+	AcceptanceRate float64 `json:"acceptanceRate"`
+}
+
+// CortexLLMHealth holds LLM health metrics from the perception bus.
+type CortexLLMHealth struct {
+	AvgLatencyMs     float64 `json:"avgLatencyMs"`
+	SuccessRate      float64 `json:"successRate"`
+	RecentErrorCount int     `json:"recentErrorCount"`
+	ActiveProvider   string  `json:"activeProvider,omitempty"`
+	ActiveModel      string  `json:"activeModel,omitempty"`
+}
+
+// CortexScoreTrend holds score trend data from the perception bus.
+type CortexScoreTrend struct {
+	Average float64 `json:"average"`
+	Count   int     `json:"count"`
+}
+
+// CortexSnapshotData holds the full perception snapshot emitted by CortexPerceptionBus.
+type CortexSnapshotData struct {
+	Timestamp       string            `json:"timestamp"`
+	TaskPipeline    CortexTaskPipeline `json:"taskPipeline"`
+	LLMHealth       CortexLLMHealth   `json:"llmHealth"`
+	ScoreTrend      CortexScoreTrend  `json:"scoreTrend"`
+	EventsProcessed int               `json:"eventsProcessed"`
+}
+
 // Event is the universal SSE event envelope for TUI → Bubble Tea communication.
 type Event struct {
 	Type      string         `json:"type"`
@@ -148,4 +182,7 @@ type Event struct {
 	TaskID      string `json:"taskId,omitempty"`
 	Description string `json:"description,omitempty"`
 	DurationMs  int64  `json:"durationMs,omitempty"`
+
+	// Cortex snapshot event fields
+	Snapshot *CortexSnapshotData `json:"snapshot,omitempty"`
 }

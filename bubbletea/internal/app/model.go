@@ -149,6 +149,22 @@ type TaskCard struct {
 	ActiveFile  string
 }
 
+// CortexDecision holds a single Cortex decision from a loop tick.
+type CortexDecision struct {
+	ActionType     string  `json:"actionType"`
+	Score          float64 `json:"score"`
+	Reasoning      string  `json:"reasoning"`
+	ReviewRequired bool    `json:"reviewRequired"`
+}
+
+// CortexBudgetUsage holds budget usage from the Cortex loop.
+type CortexBudgetUsage struct {
+	ActionsTaken  int `json:"actionsTaken"`
+	ActionsLimit  int `json:"actionsLimit"`
+	TokenEstimate int `json:"tokenEstimate"`
+	TokenLimit    int `json:"tokenLimit"`
+}
+
 const (
 	// MaxTimelineEntries bounds the tool timeline display.
 	MaxTimelineEntries = 50
@@ -242,6 +258,11 @@ type Model struct {
 
 	// Cortex goal state: active user goals
 	CortexGoals []bridge.CortexGoal
+
+	// Cortex loop state: background executive decisions
+	CortexTick      int
+	CortexDecisions []CortexDecision
+	CortexBudget    *CortexBudgetUsage
 
 	// ── Operator surface state ──
 
@@ -847,6 +868,50 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			}
 		}
 		m.addActivity("Goal completed: " + event.GoalID)
+
+	case "cortex.loop_tick":
+		if tn, ok := event.Data["tickNumber"].(float64); ok {
+			m.CortexTick = int(tn)
+		}
+		if bu, ok := event.Data["budgetUsage"].(map[string]any); ok {
+			usage := CortexBudgetUsage{}
+			if v, ok := bu["actionsTaken"].(float64); ok {
+				usage.ActionsTaken = int(v)
+			}
+			if v, ok := bu["actionsLimit"].(float64); ok {
+				usage.ActionsLimit = int(v)
+			}
+			if v, ok := bu["tokenEstimate"].(float64); ok {
+				usage.TokenEstimate = int(v)
+			}
+			if v, ok := bu["tokenLimit"].(float64); ok {
+				usage.TokenLimit = int(v)
+			}
+			m.CortexBudget = &usage
+		}
+
+	case "cortex.decision":
+		decision := CortexDecision{}
+		if v, ok := event.Data["actionType"].(string); ok {
+			decision.ActionType = v
+		}
+		if v, ok := event.Data["score"].(float64); ok {
+			decision.Score = v
+		}
+		if v, ok := event.Data["reasoning"].(string); ok {
+			decision.Reasoning = v
+		}
+		if v, ok := event.Data["reviewRequired"].(bool); ok {
+			decision.ReviewRequired = v
+		}
+		m.CortexDecisions = append(m.CortexDecisions, decision)
+		if len(m.CortexDecisions) > 10 {
+			m.CortexDecisions = m.CortexDecisions[len(m.CortexDecisions)-10:]
+		}
+		m.addActivity("Cortex: " + decision.Reasoning)
+
+	case "cortex.action_proposed":
+		// Handled via cortex.decision above; no additional model state needed.
 	}
 }
 

@@ -191,6 +191,10 @@ type Event struct {
 	GoalText string       `json:"goalText,omitempty"`
 	Goal     *CortexGoal  `json:"goal,omitempty"`
 	Goals    []CortexGoal `json:"goals,omitempty"`
+
+	// Cortex loop event fields
+	TickNumber int              `json:"tickNumber,omitempty"`
+	Data       map[string]any   `json:"data,omitempty"`
 }
 
 // CortexGoal represents a user-defined goal for the Cortex system.

@@ -599,13 +599,38 @@ func (m Model) renderCortexStatus(width int) string {
 		latency = fmt.Sprintf("%.0fms", s.LLMHealth.AvgLatencyMs)
 	}
 
-	line := fmt.Sprintf("Cortex: %d pending | %d done | %.0f%% accept | %s avg",
-		pending, s.TaskPipeline.Completed, acceptPct, latency)
+	lines := []string{fmt.Sprintf("Cortex: %d pending | %d done | %.0f%% accept | %s avg",
+		pending, s.TaskPipeline.Completed, acceptPct, latency)}
+
+	// Budget bar
+	if m.CortexBudget != nil {
+		actionPct := 0
+		if m.CortexBudget.ActionsLimit > 0 {
+			actionPct = m.CortexBudget.ActionsTaken * 100 / m.CortexBudget.ActionsLimit
+		}
+		barWidth := max(10, width-30)
+		filled := actionPct * barWidth / 100
+		bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
+		lines = append(lines, fmt.Sprintf("Budget: %s %d/%d actions", bar,
+			m.CortexBudget.ActionsTaken, m.CortexBudget.ActionsLimit))
+	}
+
+	// Latest decision reasoning
+	if len(m.CortexDecisions) > 0 {
+		latest := m.CortexDecisions[len(m.CortexDecisions)-1]
+		tag := "auto"
+		if latest.ReviewRequired {
+			tag = "review"
+		}
+		lines = append(lines, fmt.Sprintf("Decision [%s %.2f]: %s",
+			tag, latest.Score, trimToWidth(latest.Reasoning, width-25)))
+	}
+
 	return lipgloss.NewStyle().
 		Foreground(ui.AccentCyan).
 		Width(width).
 		Padding(0, 1).
-		Render(line)
+		Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
 func (m Model) renderCortexGoalPanel(width int) string {

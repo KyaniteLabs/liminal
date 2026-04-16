@@ -38,3 +38,7 @@ export type {
 // Engineering delegation
 export { TaskDelegator } from './TaskDelegator.js';
 export type { TaskExecutor, TaskExecutorResult, TaskDelegatorOptions } from './TaskDelegator.js';
+
+// Session persistence
+export { SessionGraph } from './SessionGraph.js';
+export type { SessionTurnRecord, SessionManifest } from './SessionGraph.js';

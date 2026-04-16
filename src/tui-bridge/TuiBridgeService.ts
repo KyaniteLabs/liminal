@@ -10,6 +10,7 @@ import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
 import { IntentRouter } from '../agent/IntentRouter.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
+import { SessionGraph } from '../agent/SessionGraph.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -70,6 +71,8 @@ export class TuiBridgeService {
   private conversations = new Map<string, ConversationManager>();
   // Studio routing: intelligent intent classification replaces keyword matching
   private router = new IntentRouter();
+  // Session persistence: records every turn per session
+  private sessionGraphs = new Map<string, SessionGraph>();
 
   constructor() {
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -112,6 +115,9 @@ export class TuiBridgeService {
     const conversation = new ConversationManager();
     conversation.startNewSession();
     this.conversations.set(sessionId, conversation);
+
+    // Initialize session graph for turn persistence
+    this.sessionGraphs.set(sessionId, new SessionGraph(sessionId));
 
     return this.sessions.create({
       sessionId,
@@ -227,16 +233,33 @@ export class TuiBridgeService {
       });
     };
 
-    const emitSessionTurn = (delegatedTo: string, extras?: { artifactRefs?: string[]; taskRefs?: string[] }) => {
+    const emitSessionTurn = (delegatedTo: string, responseContent?: string, extras?: { artifactRefs?: string[]; taskRefs?: string[] }) => {
+      const turnId = `turn-${Date.now()}`;
+      const durationMs = Date.now() - routeStart;
       this.emit(sessionId, {
         type: 'session.turn',
         sessionId,
-        turnId: `turn-${Date.now()}`,
+        turnId,
         intent: classification.intent,
         delegatedTo,
-        durationMs: Date.now() - routeStart,
+        durationMs,
         ...extras,
       });
+
+      // Record turn in session graph
+      const graph = this.sessionGraphs.get(sessionId);
+      if (graph) {
+        graph.recordTurn({
+          turnId,
+          input: input.text,
+          intent: classification.intent,
+          delegatedTo,
+          response: responseContent ?? '',
+          durationMs,
+          artifactRefs: extras?.artifactRefs,
+          taskRefs: extras?.taskRefs,
+        });
+      }
     };
 
     if (!llm) {
@@ -245,7 +268,7 @@ export class TuiBridgeService {
       this.emit(sessionId, { type: 'response.completed', sessionId, content: input.text });
       this.emit(sessionId, { type: 'response.committed', sessionId, content: input.text });
       conversation['recordMessage']('assistant', input.text);
-      emitSessionTurn('echo');
+      emitSessionTurn('echo', input.text);
       this.emit(sessionId, {
         type: 'status.updated',
         sessionId,

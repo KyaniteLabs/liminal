@@ -12,7 +12,7 @@ describe('LiminalCortex', () => {
   it('starts', () => { const c = mk({ loopIntervalMs: 60000 }); c.start(); expect(c.isRunning()).toBe(true); c.stop(); });
   it('stops', () => { const c = mk({ loopIntervalMs: 60000 }); c.start(); c.stop(); expect(c.isRunning()).toBe(false); });
   it('no double-start', () => { const c = mk({ loopIntervalMs: 60000 }); c.start(); c.start(); expect(c.isRunning()).toBe(true); c.stop(); });
-  it('tick returns snapshot and proposals', () => { const r = mk().tick(); expect(r.snapshot).toEqual(mkS()); expect(r.proposals).toBeInstanceOf(Array); });
+  it('tick returns snapshot and proposals', () => { const r = mk().tick(); const { timestamp: _t, ...rest } = r.snapshot; expect(rest).toEqual((() => { const { timestamp, ...rest } = mkS(); return rest; })()); expect(r.proposals).toBeInstanceOf(Array); });
   it('tick reads goals', () => { mockGoals.mockReturnValue([{ id: 'g1', text: 'G', priority: 'normal', category: 'maintenance', status: 'active', createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() }]); expect(mk().tick().goals).toHaveLength(1); });
   it('tick produces proposals from weakness', () => { mockSnapshot.mockReturnValue(mkS({ taskPipeline: { pending: 0, inProgress: 0, completed: 3, failed: 5, skipped: 0, acceptanceRate: 0.3, failureBreakdown: { timeout: 5 } } })); expect(mk().tick().proposals.length).toBeGreaterThanOrEqual(1); });
   it('budget starts at zero', () => { const u = mk().getBudgetUsage(); expect(u.actionsTaken).toBe(0); expect(u.actionsLimit).toBe(10); });

@@ -15,10 +15,6 @@ import (
 	"github.com/charmbracelet/glamour"
 )
 
-// GlobalProgram holds a reference to the Bubble Tea program so SSE goroutines
-// can send events via program.Send(). Set by main.go after program creation.
-var GlobalProgram *tea.Program
-
 var copyToClipboard = clipboard.WriteAll
 
 // ChatBlock represents a single structured entry in the chat history.
@@ -90,6 +86,26 @@ type ArtifactRef struct {
 type ActivityLogEntry struct {
 	Message   string
 	Timestamp time.Time
+}
+
+// TaskQueueEntry tracks an engineering task in the queue.
+type TaskQueueEntry struct {
+	TaskID      string
+	Description string
+	Status      string // "queued" | "running" | "completed" | "failed"
+	QueuedAt    time.Time
+	StartedAt   time.Time
+	CompletedAt time.Time
+	DurationMs  int64
+}
+
+// SessionTurnEntry records a StudioAgent routing decision.
+type SessionTurnEntry struct {
+	TurnID      string
+	Intent      string
+	DelegatedTo string
+	DurationMs  int64
+	Timestamp   time.Time
 }
 
 // TaskCard holds the current agent objective and progress.
@@ -177,9 +193,14 @@ type Model struct {
 	// Activity log: recent operator-facing messages
 	ActivityLog []ActivityLogEntry
 
+	// Task queue: engineering tasks tracked by ConveyorRunner
+	TaskQueue    []TaskQueueEntry
+	SessionTurns []SessionTurnEntry
+
 	// Surface visibility toggles
 	TimelineVisible  bool
 	ArtifactsVisible bool
+	QueueVisible     bool
 	HelpVisible      bool
 
 	// Live bridge state
@@ -191,6 +212,50 @@ type Model struct {
 
 	// Glamour markdown renderer
 	Renderer *glamour.TermRenderer
+}
+
+// layoutMetrics holds computed layout dimensions for the two-column view.
+type layoutMetrics struct {
+	chatContentWidth      int
+	chatOuterWidth        int
+	chatViewportHeight    int
+	previewContentWidth   int
+	previewOuterWidth     int
+	previewViewHeight     int
+	operatorContentWidth  int
+	operatorViewportHeight int
+	paneContentHeight     int
+	bodyHeight            int
+}
+
+const (
+	headerHeight = 1
+	footerHeight = 2
+	paneGap      = 2 // horizontal gap between panes
+)
+
+func (m Model) layoutMetrics() layoutMetrics {
+	bodyHeight := m.Height - headerHeight - footerHeight
+	chatOuterWidth := m.Width / 2
+	previewOuterWidth := m.Width - chatOuterWidth
+	chatContentWidth := max(chatOuterWidth-paneGap, 20)
+	operatorContentWidth := max(previewOuterWidth-paneGap, 20)
+	paneContentHeight := max(bodyHeight-2, 4) // minus pane header + border
+	chatViewportHeight := max(paneContentHeight-2, 4)
+	operatorViewportHeight := max(paneContentHeight-2, 4)
+
+	return layoutMetrics{
+		chatContentWidth:      chatContentWidth,
+		chatOuterWidth:        chatOuterWidth,
+		chatViewportHeight:    chatViewportHeight,
+		previewContentWidth:   operatorContentWidth,
+		previewOuterWidth:     previewOuterWidth,
+		previewViewHeight:     operatorViewportHeight,
+		operatorContentWidth:  operatorContentWidth,
+		operatorViewportHeight: operatorViewportHeight,
+		paneContentHeight:     paneContentHeight,
+		bodyHeight:            bodyHeight,
+	}
 }
 
 func NewModel(bridgeURL string) Model {
@@ -236,8 +301,11 @@ func NewModel(bridgeURL string) Model {
 		VerificationJobs: []VerificationJob{},
 		Artifacts:        []ArtifactRef{},
 		ActivityLog:      []ActivityLogEntry{},
+		TaskQueue:        []TaskQueueEntry{},
+		SessionTurns:     []SessionTurnEntry{},
 		TimelineVisible:  true,
 		ArtifactsVisible: false,
+		QueueVisible:     false,
 		HelpVisible:      false,
 	}
 }
@@ -473,6 +541,61 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		}
 		m.ArtifactsVisible = true
 		m.addActivity(fmt.Sprintf("Artifact: %s", event.ArtifactLabel))
+
+		// ── Task queue + session turn events ──
+
+	case "session.turn":
+		turn := SessionTurnEntry{
+			TurnID:      event.TurnID,
+			Intent:      event.Intent,
+			DelegatedTo: event.DelegatedTo,
+			DurationMs:  event.Duration,
+			Timestamp:   time.Now(),
+		}
+		m.SessionTurns = append(m.SessionTurns, turn)
+		m.addActivity(fmt.Sprintf("Turn: %s → %s", event.Intent, event.DelegatedTo))
+
+	case "task.queued":
+		entry := TaskQueueEntry{
+			TaskID:      event.TaskID,
+			Description: event.Description,
+			Status:      "queued",
+			QueuedAt:    time.Now(),
+		}
+		m.TaskQueue = append(m.TaskQueue, entry)
+		m.QueueVisible = true
+		m.addActivity(fmt.Sprintf("Queued: %s", event.Description))
+
+	case "task.started":
+		for i := range m.TaskQueue {
+			if m.TaskQueue[i].TaskID == event.TaskID {
+				m.TaskQueue[i].Status = "running"
+				m.TaskQueue[i].StartedAt = time.Now()
+				break
+			}
+		}
+		m.addActivity(fmt.Sprintf("Started: %s", event.TaskID))
+
+	case "task.completed":
+		for i := range m.TaskQueue {
+			if m.TaskQueue[i].TaskID == event.TaskID {
+				if event.Success {
+					m.TaskQueue[i].Status = "completed"
+				} else {
+					m.TaskQueue[i].Status = "failed"
+				}
+				m.TaskQueue[i].CompletedAt = time.Now()
+				if event.Duration > 0 {
+					m.TaskQueue[i].DurationMs = event.Duration
+				}
+				break
+			}
+		}
+		statusIcon := "Done"
+		if !event.Success {
+			statusIcon = "Fail"
+		}
+		m.addActivity(fmt.Sprintf("%s: %s", statusIcon, event.TaskID))
 	}
 }
 

@@ -85,4 +85,14 @@ type Event struct {
 	JobID        string       `json:"jobId,omitempty"`
 	ArtifactLabel string      `json:"artifactLabel,omitempty"`
 	ArtifactPath  string      `json:"artifactPath,omitempty"`
+
+	// Session turn event fields
+	TurnID      string   `json:"turnId,omitempty"`
+	Intent      string   `json:"intent,omitempty"`
+	DelegatedTo string   `json:"delegatedTo,omitempty"`
+	TaskRefs    []string `json:"taskRefs,omitempty"`
+
+	// Task lifecycle event fields
+	TaskID      string `json:"taskId,omitempty"`
+	Description string `json:"description,omitempty"`
 }

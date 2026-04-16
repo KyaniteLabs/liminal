@@ -121,6 +121,8 @@ function printHelp() {
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
   console.log('  consolidate                 Run memory consolidation (L3→L2 compression)');
   console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
+  console.log('  studio                     Launch Liminal Studio (Bubble Tea TUI + StudioAgent)');
+  console.log('  quality <subcommand>       Quality gate: run, gate');
   console.log('');
   console.log('OPTIONS:');
   console.log('  --prompt, -p <text>         Prompt for generation');
@@ -824,6 +826,106 @@ else if (cmd === 'bridge') {
     console.error('Make sure to run `pnpm build` first.');
     process.exit(1);
   });
+}
+else if (cmd === 'studio') {
+  // Studio mode: same as bubbletea but explicitly invokes StudioAgent routing
+  // Falls through to bubbletea flow (bridge + Go TUI)
+  const { spawn } = await import('child_process');
+  const port = parseInt(cmdArgs[0]) || 3000;
+
+  const { TuiBridgeServer } = await import('../dist/tui-bridge/TuiBridgeServer.js');
+  const { TuiBridgeService } = await import('../dist/tui-bridge/TuiBridgeService.js');
+  const bridge = new TuiBridgeService();
+
+  await LLMClient.loadRoles();
+  const llm = new LLMClient({ role: 'studio' });
+
+  const server = new TuiBridgeServer(bridge, { port, llm });
+  await server.start();
+
+  console.log('');
+  console.log('◆ Liminal Studio');
+  console.log(`  Bridge: http://localhost:${port}`);
+  console.log(`  Agent: StudioAgent (creative-first)`);
+  console.log('');
+
+  const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
+  if (!fs.existsSync(binPath)) {
+    console.error('Bubble Tea binary not found at ' + binPath);
+    console.error('Build it first: cd bubbletea && go build -o ../dist/bubbletea .');
+    await server.stop();
+    process.exit(1);
+  }
+
+  const tui = spawn(binPath, [], {
+    env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
+    stdio: 'inherit',
+  });
+
+  tui.on('exit', async (code) => {
+    await server.stop();
+    process.exit(code ?? 0);
+  });
+
+  tui.on('error', async (err) => {
+    console.error('Failed to launch Studio TUI:', err.message);
+    await server.stop();
+    process.exit(1);
+  });
+}
+else if (cmd === 'quality') {
+  const subCmd = cmdArgs[0];
+  if (!subCmd || (subCmd !== 'run' && subCmd !== 'gate')) {
+    console.error('Usage: liminal quality <run|gate>');
+    console.error('  run   --suite <path>   Run a golden suite');
+    console.error('  gate  --suite <path>   Block promotion on regression');
+    process.exit(1);
+  }
+
+  const { EvaluationFabric } = await import('../dist/evaluation/EvaluationFabric.js');
+  const { GoldenSuiteRunner } = await import('../dist/release/GoldenSuiteRunner.js');
+  const { PromotionGate } = await import('../dist/release/PromotionGate.js');
+
+  const suitePath = flags.spec;
+  if (!suitePath) {
+    console.error('Error: --spec <path> is required (path to golden suite JSON)');
+    process.exit(1);
+  }
+
+  const suiteJson = fs.readFileSync(suitePath, 'utf-8');
+  const suite = JSON.parse(suiteJson);
+
+  console.log('');
+  console.log('◆ Liminal Quality Gate');
+  console.log(`  Suite: ${suite.name} (${suite.cases.length} cases)`);
+  console.log('');
+
+  const runner = new GoldenSuiteRunner({
+    qualityThreshold: flags.confidenceThreshold,
+    onCaseComplete: (id, passed, score) => {
+      const icon = passed ? 'PASS' : 'FAIL';
+      console.log(`  ${icon} ${id}: ${score.toFixed(3)}`);
+    },
+  });
+
+  const result = await runner.run(suite);
+  console.log('');
+  console.log(`  Result: ${result.aggregate.passed}/${result.aggregate.total} passed`);
+  console.log(`  Average score: ${result.aggregate.averageScore.toFixed(3)}`);
+  console.log(`  Duration: ${result.durationMs}ms`);
+
+  if (subCmd === 'gate') {
+    console.log('');
+    const gate = new PromotionGate({ maxRegressions: 0 });
+    const gateResult = gate.check(result.aggregate);
+    console.log(gateResult.summary);
+    console.log('');
+    process.exit(gateResult.passed ? 0 : 1);
+  } else {
+    console.log(`  Suite passed: ${result.aggregate.suitePassed}`);
+    console.log('');
+    process.exit(result.aggregate.suitePassed ? 0 : 1);
+  }
 }
 else if (cmd === 'bubbletea') {
   // All-in-one: start bridge server, then launch Go Bubble Tea TUI

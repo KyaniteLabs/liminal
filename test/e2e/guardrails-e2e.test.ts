@@ -552,7 +552,7 @@ Output only the code, no explanation.`;
       // Check for rule effectiveness report
       const effectiveness = constitution.getEffectivenessReport();
       expect(effectiveness.totalRules).toBeGreaterThan(0);
-    });
+    }, E2E_TIMEOUT_MS);
 
     it('should export and import learned constitution', async () => {
       // Learn some rules
@@ -640,7 +640,7 @@ Output only the code, no explanation.`;
       // Check violation stats
       const stats = system.registry.getViolationStats();
       expect(Object.keys(stats).length).toBeGreaterThan(0);
-    });
+    }, 30000);
 
     it('should demonstrate tier progression', () => {
       // Document the tier progression rules

@@ -26,7 +26,7 @@ describe('Bubble Tea docs consistency', () => {
   });
 
   it('keeps the visual bible aligned with Bubble Tea operator-surface docs', () => {
-    const visualBible = readRepoFile('docs/visual-bible.html');
+    const visualBible = readRepoFile('docs/archive/html/visual-bible.html');
 
     expect(visualBible).toContain('28 Documented Systems');
     expect(visualBible).toContain('Core Platform Systems (19 major systems)');

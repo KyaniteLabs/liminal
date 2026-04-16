@@ -1,3 +1,5 @@
+import type { CortexSnapshot } from '../cortex/types.js';
+
 export type TuiMode = 'chat' | 'inspect' | 'action' | 'confirm';
 
 export interface TuiTrustState {
@@ -115,4 +117,6 @@ export type TuiBridgeEvent =
   | { type: 'report.generated'; sessionId: string; format: string; content: string; turns: number; durationMs: number }
   // Autonomy events: level changes
   | { type: 'autonomy.changed'; sessionId: string; level: string; label: string; description: string }
+  // Cortex events: background executive perception and decisions
+  | { type: 'cortex.snapshot'; sessionId: string; snapshot: CortexSnapshot }
   | { type: 'error'; sessionId: string; message: string };

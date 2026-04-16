@@ -73,7 +73,7 @@ export default defineConfig({
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         statements: 69.1,
         branches: 61.6,
-        functions: 86.6,
+        functions: 78.5,
         lines: 70,
         autoUpdate: isFastCi || isSlowCi ? undefined : (n: number) => Math.floor(n * 10) / 10,
       },

@@ -37,38 +37,59 @@ export const AUTONOMY_LEVELS: Record<AutonomyLevel, AutonomyConfig> = {
 };
 
 export class AutonomyController {
-  private currentLevel: AutonomyLevel = 'assist';
+  private defaultLevel: AutonomyLevel = 'assist';
+  private sessionLevels = new Map<string, AutonomyLevel>();
+
+  /**
+   * Resolve the effective level for a given session.
+   * Falls back to the default level if session has no override.
+   */
+  private resolveLevel(sessionId?: string): AutonomyLevel {
+    if (sessionId) return this.sessionLevels.get(sessionId) ?? this.defaultLevel;
+    return this.defaultLevel;
+  }
 
   /**
    * Get the current autonomy config.
+   * @param sessionId - optional session to look up; uses default if omitted
    */
-  getConfig(): AutonomyConfig {
-    return AUTONOMY_LEVELS[this.currentLevel];
+  getConfig(sessionId?: string): AutonomyConfig {
+    return AUTONOMY_LEVELS[this.resolveLevel(sessionId)];
   }
 
   /**
-   * Get the current level string.
+   * Get the current default level string (for backward compat / tests).
    */
   get level(): AutonomyLevel {
-    return this.currentLevel;
+    return this.defaultLevel;
   }
 
   /**
-   * Set the autonomy level. Returns the new config, or undefined if invalid.
+   * Set the autonomy level.
+   *
+   * @param level - one of 'assist', 'co-create', 'autopilot'
+   * @param sessionId - optional session scope; if provided, only affects that session
+   * @returns the new config, or undefined if level string is invalid
    */
-  setLevel(level: string): AutonomyConfig | undefined {
+  setLevel(level: string, sessionId?: string): AutonomyConfig | undefined {
     if (!AUTONOMY_LEVELS[level as AutonomyLevel]) return undefined;
-    this.currentLevel = level as AutonomyLevel;
-    return this.getConfig();
+    if (sessionId) {
+      this.sessionLevels.set(sessionId, level as AutonomyLevel);
+    } else {
+      this.defaultLevel = level as AutonomyLevel;
+    }
+    return AUTONOMY_LEVELS[level as AutonomyLevel];
   }
 
   /**
    * Check if a given action type requires user review at the current level.
    *
    * @param actionKind - 'creative' for LLM chat/generation, 'engineering' for task delegation
+   * @param sessionId - optional session to look up; uses default if omitted
    */
-  requiresReview(actionKind: 'creative' | 'engineering'): boolean {
-    switch (this.currentLevel) {
+  requiresReview(actionKind: 'creative' | 'engineering', sessionId?: string): boolean {
+    const level = this.resolveLevel(sessionId);
+    switch (level) {
       case 'assist':
         return true; // Everything requires review
       case 'co-create':

@@ -407,7 +407,7 @@ export class TuiBridgeService {
     switch (classification.intent) {
       case 'creative': {
         const actionKind = 'creative' as const;
-        if (this.autonomyController.requiresReview(actionKind)) {
+        if (this.autonomyController.requiresReview(actionKind, sessionId)) {
           const pendingAction: TuiPendingAction = {
             id: `action-${Date.now()}`,
             title: input.text.slice(0, 60),
@@ -418,7 +418,7 @@ export class TuiBridgeService {
           };
           const status = this.sessions.update(sessionId, {
             mode: 'action',
-            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig().label} — creative needs review` },
+            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — creative needs review` },
             pendingAction,
           });
           this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
@@ -434,7 +434,7 @@ export class TuiBridgeService {
 
       case 'engineering': {
         const actionKind = 'engineering' as const;
-        if (this.autonomyController.requiresReview(actionKind)) {
+        if (this.autonomyController.requiresReview(actionKind, sessionId)) {
           const pendingAction: TuiPendingAction = {
             id: `action-${Date.now()}`,
             title: input.text.slice(0, 60),
@@ -445,7 +445,7 @@ export class TuiBridgeService {
           };
           const status = this.sessions.update(sessionId, {
             mode: 'action',
-            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig().label} — engineering needs review` },
+            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — engineering needs review` },
             pendingAction,
           });
           this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
@@ -461,7 +461,7 @@ export class TuiBridgeService {
 
       case 'hybrid': {
         const actionKind = 'engineering' as const;
-        if (this.autonomyController.requiresReview(actionKind)) {
+        if (this.autonomyController.requiresReview(actionKind, sessionId)) {
           const pendingAction: TuiPendingAction = {
             id: `action-${Date.now()}`,
             title: input.text.slice(0, 60),
@@ -472,7 +472,7 @@ export class TuiBridgeService {
           };
           const status = this.sessions.update(sessionId, {
             mode: 'action',
-            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig().label} — hybrid needs review` },
+            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — hybrid needs review` },
             pendingAction,
           });
           this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
@@ -624,6 +624,27 @@ export class TuiBridgeService {
         durationMs: Date.now() - routeStart,
       });
     };
+
+    // Autonomy gating: check if the skill's action kind requires review
+    const skillActionKind = result.target === 'creative' ? 'creative' as const : 'engineering' as const;
+    if (this.autonomyController.requiresReview(skillActionKind, sessionId)) {
+      const pendingAction: TuiPendingAction = {
+        id: `skill-${skillName}-${Date.now()}`,
+        title: `Skill: ${skillName}`,
+        description: result.prompt.slice(0, 100),
+        kind: 'llm',
+        requiresConfirmation: true,
+        createdAt: new Date().toISOString(),
+      };
+      const status = this.sessions.update(sessionId, {
+        mode: 'action',
+        trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — skill "${skillName}" needs review` },
+        pendingAction,
+      });
+      this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
+      this.emit(sessionId, { type: 'status.updated', sessionId, status });
+      return { reviewRequired: true };
+    }
 
     switch (result.target) {
       case 'creative':
@@ -932,7 +953,7 @@ export class TuiBridgeService {
 
     if (!level) {
       // Show current level and available options
-      const current = this.autonomyController.getConfig();
+      const current = this.autonomyController.getConfig(sessionId);
       const all = this.autonomyController.listLevels();
       const lines = all.map(l => {
         const marker = l.level === current.level ? ' ← current' : '';
@@ -942,7 +963,7 @@ export class TuiBridgeService {
       return { reviewRequired: false };
     }
 
-    const config = this.autonomyController.setLevel(level);
+    const config = this.autonomyController.setLevel(level, sessionId);
     if (!config) {
       const available = this.autonomyController.listLevels().map(l => l.level).join(', ');
       this.emitCommandResponse(sessionId, `Unknown autonomy level. Available: ${available}`);

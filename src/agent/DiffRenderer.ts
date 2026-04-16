@@ -25,6 +25,9 @@ export interface DiffResult {
 }
 
 export class DiffRenderer {
+  /** Maximum number of lines per side before falling back to sequential diff */
+  private static readonly MAX_LCS_LINES = 5000;
+
   /**
    * Compute a unified diff between two strings.
    */
@@ -32,7 +35,12 @@ export class DiffRenderer {
     const oldLines = oldText.split('\n');
     const newLines = newText.split('\n');
 
-    const { editScript } = this.lcs(oldLines, newLines);
+    // Size guard: fall back to sequential diff for large inputs
+    const useLcs = oldLines.length <= DiffRenderer.MAX_LCS_LINES
+      && newLines.length <= DiffRenderer.MAX_LCS_LINES;
+    const { editScript } = useLcs
+      ? this.lcs(oldLines, newLines)
+      : this.sequentialDiff(oldLines, newLines);
 
     const lines: DiffLine[] = [];
     let added = 0;
@@ -112,6 +120,36 @@ export class DiffRenderer {
       } else if (i > 0) {
         editScript.unshift({ type: 'removed', content: oldLines[i - 1] });
         i--;
+      }
+    }
+
+    return { editScript };
+  }
+
+  /**
+   * O(n) sequential diff — used as fallback when inputs exceed MAX_LCS_LINES.
+   * Compares lines positionally: matching indices that differ are marked
+   * removed + added; trailing lines are added or removed wholesale.
+   */
+  private sequentialDiff(oldLines: string[], newLines: string[]): { editScript: DiffLine[] } {
+    const editScript: DiffLine[] = [];
+    const maxLen = Math.max(oldLines.length, newLines.length);
+
+    for (let i = 0; i < maxLen; i++) {
+      const oldLine = oldLines[i];
+      const newLine = newLines[i];
+
+      if (oldLine !== undefined && newLine !== undefined) {
+        if (oldLine === newLine) {
+          editScript.push({ type: 'unchanged', content: oldLine });
+        } else {
+          editScript.push({ type: 'removed', content: oldLine });
+          editScript.push({ type: 'added', content: newLine });
+        }
+      } else if (oldLine !== undefined) {
+        editScript.push({ type: 'removed', content: oldLine });
+      } else if (newLine !== undefined) {
+        editScript.push({ type: 'added', content: newLine });
       }
     }
 

@@ -107,4 +107,34 @@ describe('DiffRenderer', () => {
       expect(rendered).toContain('  line3');
     });
   });
+
+  describe('size guard', () => {
+    it('falls back to sequential diff for large inputs', () => {
+      const dr = new DiffRenderer();
+      // Generate inputs exceeding MAX_LCS_LINES (5000)
+      const oldLines = Array.from({ length: 5001 }, (_, i) => `old-${i}`);
+      const newLines = Array.from({ length: 5001 }, (_, i) => `new-${i}`);
+      const oldText = oldLines.join('\n');
+      const newText = newLines.join('\n');
+
+      const result = dr.diff(oldText, newText);
+      // Should not hang or crash; should produce meaningful output
+      expect(result.identical).toBe(false);
+      expect(result.lines.length).toBeGreaterThan(0);
+      // Sequential diff marks first differing line as removed+added
+      expect(result.removed).toBeGreaterThanOrEqual(1);
+      expect(result.added).toBeGreaterThanOrEqual(1);
+    });
+
+    it('still uses LCS for inputs within limit', () => {
+      const dr = new DiffRenderer();
+      // Small input — should use full LCS
+      const result = dr.diff('a\nb\nc', 'a\nx\nc');
+      // LCS correctly identifies only 'b' removed, 'x' added
+      expect(result.added).toBe(1);
+      expect(result.removed).toBe(1);
+      const addedLine = result.lines.find(l => l.type === 'added');
+      expect(addedLine?.content).toBe('x');
+    });
+  });
 });

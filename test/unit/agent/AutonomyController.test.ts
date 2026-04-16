@@ -82,4 +82,53 @@ describe('AutonomyController', () => {
       expect(val.description).toBeTruthy();
     }
   });
+
+  // Session-scoped autonomy tests
+  it('stores autonomy level per session', () => {
+    const ctrl = new AutonomyController();
+    const config = ctrl.setLevel('autopilot', 'session-A');
+
+    expect(config).toBeDefined();
+    expect(config!.level).toBe('autopilot');
+    // Default level unchanged
+    expect(ctrl.level).toBe('assist');
+    // Session A sees autopilot
+    expect(ctrl.getConfig('session-A').level).toBe('autopilot');
+    // Unknown session falls back to default
+    expect(ctrl.getConfig('session-B').level).toBe('assist');
+  });
+
+  it('session-scoped requiresReview respects per-session level', () => {
+    const ctrl = new AutonomyController();
+    ctrl.setLevel('co-create', 'session-A');
+    ctrl.setLevel('autopilot', 'session-B');
+
+    // Session A: co-create — creative auto, engineering gated
+    expect(ctrl.requiresReview('creative', 'session-A')).toBe(false);
+    expect(ctrl.requiresReview('engineering', 'session-A')).toBe(true);
+
+    // Session B: autopilot — everything auto
+    expect(ctrl.requiresReview('creative', 'session-B')).toBe(false);
+    expect(ctrl.requiresReview('engineering', 'session-B')).toBe(false);
+
+    // Unknown session: default (assist) — everything gated
+    expect(ctrl.requiresReview('creative', 'unknown')).toBe(true);
+    expect(ctrl.requiresReview('engineering', 'unknown')).toBe(true);
+  });
+
+  it('isolates sessions from each other', () => {
+    const ctrl = new AutonomyController();
+    ctrl.setLevel('autopilot', 'session-A');
+    ctrl.setLevel('assist', 'session-B');
+
+    // Changing session A does not affect session B
+    expect(ctrl.getConfig('session-A').level).toBe('autopilot');
+    expect(ctrl.getConfig('session-B').level).toBe('assist');
+
+    // Changing default does not affect sessions
+    ctrl.setLevel('co-create');
+    expect(ctrl.level).toBe('co-create');
+    expect(ctrl.getConfig('session-A').level).toBe('autopilot');
+    expect(ctrl.getConfig('session-B').level).toBe('assist');
+  });
 });

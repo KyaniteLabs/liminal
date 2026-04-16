@@ -1490,7 +1490,7 @@ else if (cmd === 'dream' && cmdArgs[0] === 'run') {
     const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
 
     const planner = new DreamPlanner();
-    const plan = planner.plan(cells, axes as any);
+    const plan = planner.plan(cells, axes);
 
     if (plan.tasks.length === 0) {
       console.error('No dream tasks to plan — archive may be empty.');
@@ -1529,7 +1529,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'status') {
     const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
 
     const policy = new GardenPolicy();
-    const decisions = policy.decide(cells, axes as any);
+    const decisions = policy.decide(cells, axes);
     const health = policy.getHealthMonitor().measure(cells);
     const stag = new StagnationDetector().detect(policy.getHealthMonitor().getHistory());
 
@@ -1565,7 +1565,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'rebalance') {
     const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
 
     const nichePolicy = new NicheQuotaPolicy();
-    const targets = nichePolicy.getTargetNiches(cells, axes as any, 10);
+    const targets = nichePolicy.getTargetNiches(cells, axes, 10);
     const balance = nichePolicy.getBalanceScore(cells);
 
     console.log('');

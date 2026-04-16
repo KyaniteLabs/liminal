@@ -3,8 +3,11 @@ import { GoalStore } from '../../../src/cortex/GoalStore.js';
 import type { CortexGoal } from '../../../src/cortex/types.js';
 
 // Mock node:fs so listGoals can traverse the in-memory store
-const mockExistsSync = vi.fn();
-const mockReaddirSync = vi.fn();
+// Must use vi.hoisted() because these are referenced inside vi.mock() factory
+const { mockExistsSync, mockReaddirSync } = vi.hoisted(() => ({
+  mockExistsSync: vi.fn(),
+  mockReaddirSync: vi.fn(),
+}));
 
 vi.mock('node:fs', () => ({
   existsSync: (...args: unknown[]) => mockExistsSync(...args),

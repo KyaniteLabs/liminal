@@ -28,3 +28,6 @@ export { HybridJudge } from './HybridJudge.js';
 
 // Orchestrator
 export { EvaluationFabric } from './EvaluationFabric.js';
+
+// Emergence scorecard
+export { EmergenceScorecard } from './EmergenceScorecard.js';

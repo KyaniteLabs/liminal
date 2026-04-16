@@ -14,6 +14,7 @@
 import { BehaviorDescriptorExtractor } from './BehaviorDescriptorExtractor.js';
 import { LineageTracker } from './LineageTracker.js';
 import { ArchivePlacement } from './ArchivePlacement.js';
+import { EmergenceCritic } from './EmergenceCritic.js';
 import { ArchiveEntriesFSAdapter } from '../fs/adapters/ArchiveEntries.js';
 import type { LiminalFS } from '../fs/LiminalFS.js';
 import type {
@@ -55,6 +56,7 @@ export class EmergenceHooks {
   private readonly extractor: BehaviorDescriptorExtractor;
   private readonly lineageTracker: LineageTracker;
   private readonly archive: ArchivePlacement;
+  private readonly critic: EmergenceCritic;
   private readonly fsAdapter: ArchiveEntriesFSAdapter;
 
   constructor(
@@ -72,6 +74,7 @@ export class EmergenceHooks {
       nearEliteCapacity: archiveConfig?.nearEliteCapacity,
       minQuality: archiveConfig?.minQuality,
     });
+    this.critic = new EmergenceCritic();
     this.fsAdapter = new ArchiveEntriesFSAdapter(liminalFs);
   }
 
@@ -93,8 +96,8 @@ export class EmergenceHooks {
       runId: input.runId,
     });
 
-    // 3. Compute emergence signals (v1: heuristic from descriptor + quality)
-    const signals = this.computeSignals(descriptor, input.qualityScore);
+    // 3. Compute emergence signals via EmergenceCritic ensemble
+    const signals = this.computeSignals(descriptor, input.qualityScore, input.output);
 
     // 4. Attempt archive placement
     const placeholderRef = {
@@ -144,58 +147,22 @@ export class EmergenceHooks {
   }
 
   /**
-   * v1 signal computation — heuristic from descriptor + quality.
-   * Phase 14 will replace this with EmergenceCritic ensemble.
+   * Signal computation via EmergenceCritic ensemble.
+   * Uses quick evaluation for high-throughput creative runs.
    */
-  private computeSignals(descriptor: BehaviorDescriptor, qualityScore: number): EmergenceSignals {
-    const values = new Map(descriptor.values.map(v => [v.axis, v.value]));
-
-    const orderChaos = values.get('order-chaos') ?? 0.5;
-    const sparseDense = values.get('sparse-dense') ?? 0.5;
-    const symmetryAsymmetry = values.get('symmetry-asymmetry') ?? 0.5;
-    const smoothBursty = values.get('smooth-bursty') ?? 0.5;
-    const staticEvolving = values.get('static-evolving') ?? 0.5;
-    const harmonicDissonant = values.get('harmonic-dissonant') ?? 0.5;
-
-    // Novelty: high when away from the center of descriptor space
-    const novelty = this.distanceFromCenter(descriptor.values);
-
-    // Structure: high when ordered + dense + symmetric
-    const structure = ((1 - orderChaos) * 0.4) + (sparseDense * 0.3) + ((1 - symmetryAsymmetry) * 0.3);
-
-    // Temporal richness: high when evolving + bursty
-    const temporalRichness = (staticEvolving * 0.5) + (smoothBursty * 0.5);
-
-    // Perturbation resilience: proxy from quality + structure
-    const perturbationResilience = (qualityScore * 0.6) + (structure * 0.4);
-
-    // Fertility: high when novel + high quality + diverse descriptors
-    const descriptorVariance = this.variance(descriptor.values.map(v => v.value));
-    const fertility = (novelty * 0.3) + (qualityScore * 0.3) + (Math.min(1, descriptorVariance * 4) * 0.2) + (temporalRichness * 0.2);
-
-    // Aesthetic: quality score + balance of harmony
-    const aesthetic = (qualityScore * 0.7) + ((1 - Math.abs(harmonicDissonant - 0.5) * 2) * 0.3);
-
-    return {
-      novelty: Math.min(1, Math.max(0, novelty)),
-      structure: Math.min(1, Math.max(0, structure)),
-      temporalRichness: Math.min(1, Math.max(0, temporalRichness)),
-      perturbationResilience: Math.min(1, Math.max(0, perturbationResilience)),
-      fertility: Math.min(1, Math.max(0, fertility)),
-      aesthetic: Math.min(1, Math.max(0, aesthetic)),
-    };
+  private computeSignals(descriptor: BehaviorDescriptor, qualityScore: number, output: string): EmergenceSignals {
+    const archive = this.archive.getAllElites();
+    const result = this.critic.evaluateQuick({
+      descriptor,
+      qualityScore,
+      archive,
+      output,
+    });
+    return result.signals;
   }
 
-  private distanceFromCenter(values: Array<{ value: number }>): number {
-    if (values.length === 0) return 0.5;
-    const sumSq = values.reduce((sum, v) => sum + (v.value - 0.5) ** 2, 0);
-    const maxDist = Math.sqrt(values.length * 0.25);
-    return Math.sqrt(sumSq) / maxDist;
-  }
-
-  private variance(values: number[]): number {
-    if (values.length < 2) return 0;
-    const mean = values.reduce((a, b) => a + b, 0) / values.length;
-    return values.reduce((sum, v) => sum + (v - mean) ** 2, 0) / values.length;
+  /** Get the EmergenceCritic for direct evaluation. */
+  getCritic(): EmergenceCritic {
+    return this.critic;
   }
 }

@@ -1285,6 +1285,119 @@ else if (cmd === 'preferences') {
     process.exit(1);
   }
 }
+else if (cmd === 'emergence') {
+  const subCmd = cmdArgs[0];
+
+  if (subCmd === 'score') {
+    const { EmergenceCritic, BehaviorDescriptorExtractor } = await import('../dist/emergence/index.js');
+    const { EmergenceScorecard } = await import('../dist/evaluation/EmergenceScorecard.js');
+
+    const output = cmdArgs[1] ? String(cmdArgs[1]) : null;
+    if (!output) {
+      console.error('Usage: liminal emergence score <text-or-file-path>');
+      process.exit(1);
+    }
+
+    // Check if it's a file path
+    let text = output;
+    try {
+      const { readFileSync } = await import('fs');
+      text = readFileSync(output, 'utf-8');
+    } catch { /* use as raw text */ }
+
+    const extractor = new BehaviorDescriptorExtractor();
+    const critic = new EmergenceCritic();
+    const scorecard = new EmergenceScorecard();
+
+    const descriptor = extractor.extract(text);
+    const result = critic.evaluateQuick({
+      descriptor,
+      qualityScore: 0.5,
+      archive: [],
+      output: text,
+    });
+
+    const card = scorecard.score(result.signals, result.composite);
+    console.log('');
+    console.log(scorecard.format(card));
+  } else if (subCmd === 'probe') {
+    const { PerturbationProbe, BehaviorDescriptorExtractor } = await import('../dist/emergence/index.js');
+
+    const output = cmdArgs[1] ? String(cmdArgs[1]) : null;
+    if (!output) {
+      console.error('Usage: liminal emergence probe <text-or-file-path> [--magnitude 0.1]');
+      process.exit(1);
+    }
+
+    let text = output;
+    try {
+      const { readFileSync } = await import('fs');
+      text = readFileSync(output, 'utf-8');
+    } catch { /* use as raw text */ }
+
+    const extractor = new BehaviorDescriptorExtractor();
+    const probe = new PerturbationProbe();
+
+    const descriptor = extractor.extract(text);
+    const result = probe.probe(text, descriptor, (t) => extractor.extract(t));
+
+    console.log('');
+    console.log(`Perturbation Resilience: ${result.resilience.toFixed(3)} [${result.classification}]`);
+    for (const p of result.perturbations) {
+      console.log(`  ${p.type}: ${p.score.toFixed(3)}`);
+    }
+    console.log('');
+  } else {
+    console.error('Usage: liminal emergence <score|probe> <text-or-file-path>');
+    process.exit(1);
+  }
+}
+else if (cmd === 'report' && cmdArgs[0] === 'archive') {
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+  const { EmergenceScorecard } = await import('../dist/evaluation/EmergenceScorecard.js');
+  const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(liminalFs);
+    const archive = hooks.getArchive();
+    const stats = archive.getStats();
+    const elites = archive.getAllElites();
+    const cells = archive.getAllCells();
+    const scorecard = new EmergenceScorecard();
+    const nichePolicy = new NicheQuotaPolicy();
+
+    console.log('');
+    console.log('=== Archive Report ===');
+    console.log(`  Cells: ${stats.totalCells}  Elites: ${stats.totalElites}  Near-elites: ${stats.totalNearElites}`);
+    console.log(`  Average quality: ${stats.avgQuality.toFixed(3)}`);
+
+    const balance = nichePolicy.getBalanceScore(cells);
+    console.log(`  Niche balance: ${(balance * 100).toFixed(1)}%`);
+
+    if (elites.length > 0) {
+      console.log('');
+      console.log('  Top artifacts by quality:');
+      const sorted = [...elites].sort((a, b) => b.qualityScore - a.qualityScore).slice(0, 5);
+      for (const e of sorted) {
+        const card = scorecard.score(e.signals);
+        console.log(`    ${e.id}  q=${e.qualityScore.toFixed(2)}  composite=${card.overall.score.toFixed(2)} [${card.overall.grade}]  ${e.lineage.provenance}`);
+      }
+
+      console.log('');
+      console.log('  Signal averages:');
+      const avgNovelty = elites.reduce((s, e) => s + e.signals.novelty, 0) / elites.length;
+      const avgStructure = elites.reduce((s, e) => s + e.signals.structure, 0) / elites.length;
+      const avgTemporal = elites.reduce((s, e) => s + e.signals.temporalRichness, 0) / elites.length;
+      const avgFertility = elites.reduce((s, e) => s + e.signals.fertility, 0) / elites.length;
+      console.log(`    Novelty: ${avgNovelty.toFixed(3)}  Structure: ${avgStructure.toFixed(3)}  Temporal: ${avgTemporal.toFixed(3)}  Fertility: ${avgFertility.toFixed(3)}`);
+    }
+    console.log('');
+  } finally {
+    liminalFs.close();
+  }
+}
 else {
   console.error('Error: --prompt is required');
   console.error('');

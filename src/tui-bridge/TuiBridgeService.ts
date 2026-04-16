@@ -26,6 +26,8 @@ import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 import { CortexPerceptionBus } from '../cortex/CortexPerceptionBus.js';
 import { GoalStore } from '../cortex/GoalStore.js';
+import { LiminalCortex } from '../cortex/LiminalCortex.js';
+import type { CortexConfig } from '../cortex/types.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
@@ -115,6 +117,16 @@ export class TuiBridgeService {
   private cortexBus = new CortexPerceptionBus(eventBus);
   // Cortex goal store: persists user goals via LiminalFS
   private goalStore: GoalStore | null = null;
+  // Cortex loop: background executive that fuses perception + goals into actions
+  private cortexLoop: LiminalCortex | null = null;
+  /** Default Cortex configuration */
+  private static readonly CORTEX_CONFIG: CortexConfig = {
+    loopIntervalMs: 30000,   // 30s tick
+    maxConsecutiveFailures: 5,
+    budgetActionsLimit: 10,
+    budgetTokenLimit: 50000,
+    autonomyLevel: 'assist',
+  };
   /** Interval in ms for cortex snapshot broadcasts (default: 5s) */
   private static readonly CORTEX_BROADCAST_INTERVAL_MS = 5000;
   /** Handle for the cortex broadcast interval (stored for cleanup) */
@@ -132,6 +144,29 @@ export class TuiBridgeService {
         this.stream.emitEphemeral(sessionId, { type: 'cortex.snapshot', sessionId, snapshot });
       }
     }, TuiBridgeService.CORTEX_BROADCAST_INTERVAL_MS);
+
+    // Start the Cortex background executive loop.
+    // Fuses perception + goals into priority-ranked actions, emitting
+    // cortex.loop_tick, cortex.decision, and cortex.action_proposed events.
+    this.cortexLoop = new LiminalCortex({
+      perceptionBus: this.cortexBus,
+      goalStore: {
+        getActiveGoals: () => this.getGoalStore()?.getActiveGoals() ?? [],
+      } as any,
+      config: TuiBridgeService.CORTEX_CONFIG,
+      onEvent: (evt) => {
+        // Broadcast cortex loop events to all active sessions
+        for (const sid of this.sessions.list()) {
+          this.stream.emitEphemeral(sid, {
+            type: evt.type,
+            sessionId: sid,
+            tickNumber: evt.tickNumber,
+            data: evt.data,
+          } as any);
+        }
+      },
+    });
+    this.cortexLoop.start();
 
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
     // External consumers (Bubble Tea client, gallery) receive these via SSE
@@ -1564,11 +1599,15 @@ export class TuiBridgeService {
       delta: `${message}\n`,
     });
   }
-  /** Stop cortex broadcast timer and perception bus. Call on shutdown. */
+  /** Stop cortex broadcast timer, loop, and perception bus. Call on shutdown. */
   destroy(): void {
     if (this.cortexBroadcastTimer !== null) {
       clearInterval(this.cortexBroadcastTimer);
       this.cortexBroadcastTimer = null;
+    }
+    if (this.cortexLoop) {
+      this.cortexLoop.stop();
+      this.cortexLoop = null;
     }
     this.cortexBus.stop();
   }

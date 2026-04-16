@@ -1,4 +1,5 @@
 import type { CortexGoal, CortexSnapshot } from '../cortex/types.js';
+import type { ActionProposal } from '../cortex/ActionProposer.js';
 
 export type TuiMode = 'chat' | 'inspect' | 'action' | 'confirm';
 
@@ -124,4 +125,8 @@ export type TuiBridgeEvent =
   | { type: 'cortex.goal_list'; sessionId: string; goals: CortexGoal[] }
   | { type: 'cortex.goal_removed'; sessionId: string; goalId: string }
   | { type: 'cortex.goal_completed'; sessionId: string; goalId: string }
+  // Cortex loop events: background executive decisions and actions
+  | { type: 'cortex.loop_tick'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
+  | { type: 'cortex.decision'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
+  | { type: 'cortex.action_proposed'; sessionId: string; tickNumber: number; data: { proposal: ActionProposal } }
   | { type: 'error'; sessionId: string; message: string };

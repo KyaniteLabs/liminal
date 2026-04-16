@@ -7,6 +7,13 @@
 
 export { CortexPerceptionBus } from './CortexPerceptionBus.js';
 export { GoalStore } from './GoalStore.js';
+export { BudgetTracker } from './BudgetTracker.js';
+export type { BudgetConfig, ActionCost } from './BudgetTracker.js';
+export { PriorityAllocator } from './PriorityAllocator.js';
+export { ActionProposer } from './ActionProposer.js';
+export type { ActionProposal } from './ActionProposer.js';
+export { LiminalCortex } from './LiminalCortex.js';
+export type { CortexEvent, LiminalCortexDeps } from './LiminalCortex.js';
 export type {
   CortexSnapshot,
   TaskPipelineSummary,

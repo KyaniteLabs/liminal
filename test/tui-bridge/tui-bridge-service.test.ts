@@ -95,4 +95,97 @@ describe('TuiBridgeService', () => {
     expect(service.getStatus(session.sessionId).pendingAction).toBeUndefined();
     expect(service.getEvents(session.sessionId).map(e => e.type)).toContain('action.cancelled');
   });
+
+  // ── StudioAgent Routing ──
+
+  describe('StudioAgent routing', () => {
+    it('emits session.turn event for direct input (no LLM)', async () => {
+      const service = new TuiBridgeService();
+      const session = service.createSession();
+
+      await service.submitInput(session.sessionId, {
+        mode: 'chat',
+        text: 'hello',
+      });
+
+      const events = service.getEvents(session.sessionId);
+      const turnEvent = events.find(e => e.type === 'session.turn');
+      expect(turnEvent).toBeDefined();
+      if (turnEvent && turnEvent.type === 'session.turn') {
+        expect(turnEvent.intent).toBe('direct');
+        expect(turnEvent.delegatedTo).toBe('echo');
+        expect(turnEvent.durationMs).toBeGreaterThanOrEqual(0);
+      }
+    });
+
+    it('emits session.turn with creative intent for generation input (no LLM)', async () => {
+      const service = new TuiBridgeService();
+      const session = service.createSession();
+
+      await service.submitInput(session.sessionId, {
+        mode: 'chat',
+        text: 'generate a p5 sketch',
+      });
+
+      const events = service.getEvents(session.sessionId);
+      const turnEvent = events.find(e => e.type === 'session.turn');
+      expect(turnEvent).toBeDefined();
+      if (turnEvent && turnEvent.type === 'session.turn') {
+        expect(turnEvent.intent).toBe('creative');
+        expect(turnEvent.delegatedTo).toBe('echo');
+      }
+    });
+
+    it('emits session.turn with engineering intent for fix input (no LLM)', async () => {
+      const service = new TuiBridgeService();
+      const session = service.createSession();
+
+      await service.submitInput(session.sessionId, {
+        mode: 'chat',
+        text: 'fix the test coverage',
+      });
+
+      const events = service.getEvents(session.sessionId);
+      const turnEvent = events.find(e => e.type === 'session.turn');
+      expect(turnEvent).toBeDefined();
+      if (turnEvent && turnEvent.type === 'session.turn') {
+        expect(turnEvent.intent).toBe('engineering');
+        expect(turnEvent.delegatedTo).toBe('echo');
+      }
+    });
+
+    it('emits session.turn with hybrid intent for mixed input (no LLM)', async () => {
+      const service = new TuiBridgeService();
+      const session = service.createSession();
+
+      await service.submitInput(session.sessionId, {
+        mode: 'chat',
+        text: 'improve the art quality',
+      });
+
+      const events = service.getEvents(session.sessionId);
+      const turnEvent = events.find(e => e.type === 'session.turn');
+      expect(turnEvent).toBeDefined();
+      if (turnEvent && turnEvent.type === 'session.turn') {
+        expect(turnEvent.intent).toBe('hybrid');
+        expect(turnEvent.delegatedTo).toBe('echo');
+      }
+    });
+
+    it('includes turnId in session.turn events', async () => {
+      const service = new TuiBridgeService();
+      const session = service.createSession();
+
+      await service.submitInput(session.sessionId, {
+        mode: 'chat',
+        text: 'hello',
+      });
+
+      const events = service.getEvents(session.sessionId);
+      const turnEvent = events.find(e => e.type === 'session.turn');
+      if (turnEvent && turnEvent.type === 'session.turn') {
+        expect(turnEvent.turnId).toMatch(/^turn-\d+$/);
+      }
+    });
+  });
 });

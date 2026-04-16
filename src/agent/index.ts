@@ -26,7 +26,7 @@ export { IntentRouter } from './IntentRouter.js';
 export { ResponseComposer } from './ResponseComposer.js';
 
 // Core agent (re-exports delegate types too)
-export { StudioAgent } from './StudioAgent.js';
+export { StudioAgent, STUDIO_SYSTEM_PROMPT } from './StudioAgent.js';
 export type {
   CreativeDelegate,
   EngineeringDelegate,
@@ -34,3 +34,7 @@ export type {
   CreativeResult,
   EngineeringResult,
 } from './StudioAgent.js';
+
+// Engineering delegation
+export { TaskDelegator } from './TaskDelegator.js';
+export type { TaskExecutor, TaskExecutorResult, TaskDelegatorOptions } from './TaskDelegator.js';

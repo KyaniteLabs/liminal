@@ -47,7 +47,7 @@ export interface EngineeringResult {
 
 // ── System Prompt ──
 
-const DEFAULT_SYSTEM_PROMPT = `You are Liminal Studio — a creative guide and artistic collaborator.
+export const STUDIO_SYSTEM_PROMPT = `You are Liminal Studio — a creative guide and artistic collaborator.
 
 You lead with creative sensibility. Even when discussing code, you frame it as craft.
 You see generative art as a conversation between intention and emergence.
@@ -93,7 +93,7 @@ export class StudioAgent {
    * Get the system prompt for the studio role.
    */
   get systemPrompt(): string {
-    return this.config.systemPrompt ?? DEFAULT_SYSTEM_PROMPT;
+    return this.config.systemPrompt ?? STUDIO_SYSTEM_PROMPT;
   }
 
   /**

@@ -113,15 +113,19 @@ export class TuiBridgeService {
   private cortexBus = new CortexPerceptionBus(eventBus);
   /** Interval in ms for cortex snapshot broadcasts (default: 5s) */
   private static readonly CORTEX_BROADCAST_INTERVAL_MS = 5000;
+  /** Handle for the cortex broadcast interval (stored for cleanup) */
+  private cortexBroadcastTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     // Start the Cortex perception bus
     this.cortexBus.start();
     // Broadcast cortex snapshots to all active sessions periodically
-    setInterval(() => {
+    // Uses emitEphemeral so these high-frequency status updates don't grow
+    // the per-session event log (codex P1 review feedback).
+    this.cortexBroadcastTimer = setInterval(() => {
       const snapshot = this.cortexBus.getSnapshot();
       for (const sessionId of this.sessions.list()) {
-        this.emit(sessionId, { type: 'cortex.snapshot', sessionId, snapshot });
+        this.stream.emitEphemeral(sessionId, { type: 'cortex.snapshot', sessionId, snapshot });
       }
     }, TuiBridgeService.CORTEX_BROADCAST_INTERVAL_MS);
 
@@ -1416,5 +1420,13 @@ export class TuiBridgeService {
       sessionId,
       delta: `${message}\n`,
     });
+  }
+  /** Stop cortex broadcast timer and perception bus. Call on shutdown. */
+  destroy(): void {
+    if (this.cortexBroadcastTimer !== null) {
+      clearInterval(this.cortexBroadcastTimer);
+      this.cortexBroadcastTimer = null;
+    }
+    this.cortexBus.stop();
   }
 }

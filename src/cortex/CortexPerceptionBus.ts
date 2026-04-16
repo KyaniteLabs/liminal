@@ -157,20 +157,26 @@ export class CortexPerceptionBus {
     if (this.activeProcesses.length > MAX_ACTIVE_PROCESSES) {
       this.activeProcesses = this.activeProcesses.slice(-MAX_ACTIVE_PROCESSES);
     }
+    // Update pipeline counters
+    this.taskCounts.inProgress++;
   }
 
   private handleProcessEnd(event: BusEvent): void {
     const processName = event.data.process as string ?? 'unknown';
     this.activeProcesses = this.activeProcesses.filter((p) => p.name !== processName);
 
-    // Track success/failure in task pipeline (ralph-loop end → task outcome)
-    if (processName === 'ralph-loop') {
-      const success = event.data.success as boolean;
-      if (success) {
-        this.taskCounts.completed++;
-      } else {
-        this.taskCounts.failed++;
-      }
+    // Decrement inProgress (guard against negative from late events)
+    this.taskCounts.inProgress = Math.max(0, this.taskCounts.inProgress - 1);
+
+    // Track success/failure for all processes
+    const success = event.data.success as boolean;
+    if (success === true) {
+      this.taskCounts.completed++;
+    } else if (success === false) {
+      this.taskCounts.failed++;
+      // Track failure class
+      const errorClass = (event.data.errorClass as string) ?? processName;
+      this.failureBreakdown[errorClass] = (this.failureBreakdown[errorClass] ?? 0) + 1;
     }
   }
 

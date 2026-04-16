@@ -59,22 +59,26 @@ describe('CortexPerceptionBus', () => {
     expect(mockEventBus.onEvent).toHaveBeenCalledTimes(1);
   });
 
-  it('tracks process start/end', () => {
+  it('tracks process start/end with inProgress counter', () => {
     bus.start();
     emit(makeEvent(EventTypes.PROCESS_START, { process: 'ralph-loop' }));
     expect(bus.getSnapshot().activeProcesses).toHaveLength(1);
     expect(bus.getSnapshot().activeProcesses[0].name).toBe('ralph-loop');
+    expect(bus.getSnapshot().taskPipeline.inProgress).toBe(1);
     emit(makeEvent(EventTypes.PROCESS_END, { process: 'ralph-loop', success: true }));
     expect(bus.getSnapshot().activeProcesses).toHaveLength(0);
     expect(bus.getSnapshot().taskPipeline.completed).toBe(1);
+    expect(bus.getSnapshot().taskPipeline.inProgress).toBe(0);
   });
 
-  it('tracks failed process end', () => {
+  it('tracks failed process end with failure breakdown', () => {
     bus.start();
     emit(makeEvent(EventTypes.PROCESS_START, { process: 'ralph-loop' }));
-    emit(makeEvent(EventTypes.PROCESS_END, { process: 'ralph-loop', success: false }));
+    emit(makeEvent(EventTypes.PROCESS_END, { process: 'ralph-loop', success: false, errorClass: 'timeout' }));
     expect(bus.getSnapshot().taskPipeline.failed).toBe(1);
     expect(bus.getSnapshot().taskPipeline.completed).toBe(0);
+    expect(bus.getSnapshot().taskPipeline.inProgress).toBe(0);
+    expect(bus.getSnapshot().taskPipeline.failureBreakdown.timeout).toBe(1);
   });
 
   it('computes acceptance rate', () => {
@@ -174,11 +178,19 @@ describe('CortexPerceptionBus', () => {
     expect(snapshot.timestamp <= after).toBe(true);
   });
 
-  it('ignores process end for non-ralph-loop processes', () => {
+  it('tracks all process outcomes, not just ralph-loop', () => {
     bus.start();
     emit(makeEvent(EventTypes.PROCESS_START, { process: 'compost-soup' }));
     emit(makeEvent(EventTypes.PROCESS_END, { process: 'compost-soup', success: true }));
     expect(bus.getSnapshot().activeProcesses).toHaveLength(0);
-    expect(bus.getSnapshot().taskPipeline.completed).toBe(0);
+    expect(bus.getSnapshot().taskPipeline.completed).toBe(1);
+    expect(bus.getSnapshot().taskPipeline.inProgress).toBe(0);
+  });
+
+  it('inProgress never goes negative from late end events', () => {
+    bus.start();
+    emit(makeEvent(EventTypes.PROCESS_END, { process: 'ghost', success: true }));
+    expect(bus.getSnapshot().taskPipeline.inProgress).toBe(0);
+    expect(bus.getSnapshot().taskPipeline.completed).toBe(1);
   });
 });

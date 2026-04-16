@@ -68,24 +68,31 @@ The project maintains a **70% coverage threshold** across lines, branches, funct
 
 ## Architecture
 
-See [Architecture & Philosophy](./docs/ARCHITECTURE_AND_PHILOSOPHY.md) for the system design. Key directories:
+See [Architecture & Philosophy](./docs/ARCHITECTURE_AND_PHILOSOPHY.md) for the system design and [Architecture Quick Reference](./docs/ARCHITECTURE_QUICKREF.md) for a visual overview. Key directories:
 
 | Directory | Purpose |
 |-----------|---------|
-| `src/core/` | Main loop, validation, domain detection |
-| `src/generators/` | p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js generators |
-| `src/harness/` | Meta-harness self-improvement (failure logging, pattern detection) |
-| `src/llm/` | LLM client, provider adapters, circuit breaker |
+| `src/core/` | Loop engine, validation, domain detection, LIR |
+| `src/generators/` | p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Remotion, HTML, ASCII, Kinetic, TextGen |
+| `src/harness/` | Meta-harness: failure logging, pattern detection, self-improvement, tools |
+| `src/llm/` | LLM client, provider adapters, circuit breaker, capability registry |
 | `src/brain/` | Artistic knowledge, prompt enhancement, creative preferences |
 | `src/compost/` | Compost Mill digestion pipeline |
 | `src/evolution/` | MAP-Elites, novelty archive, fitness combining |
 | `src/music/` | Music theory engine, rhythm, melody generation |
 | `src/audio/` | Audio analysis, pitch detection, visual mapping |
 | `src/aesthetic/` | Color theory, design tiers, aesthetic critics |
+| `src/guardrails/` | Multi-layer guardrail system (correctness, hygiene, compliance, remediation) |
+| `src/ledger/` | Self-hosting task ledger (corpus, runner, verifier) |
+| `src/fs/` | LiminalFS — unified filesystem substrate (ProjectStore, EventStore, AssetStore) |
 | `src/chat/` | Interview-driven creative sessions |
 | `src/collab/` | Multi-agent board, swarm, deep collaboration |
 | `src/config/` | Configuration loading, role-based model selection |
 | `src/tui/` | Terminal UI |
+| `src/tui-bridge/` | HTTP/SSE bridge for Bubble Tea runtime |
+| `src/security/` | SSRF protection, rate limiting, sandbox |
+| `src/render/` | Rendering pipeline |
+| `src/plugins/` | Plugin system |
 
 ## Questions?
 

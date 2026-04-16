@@ -87,6 +87,9 @@ type Event struct {
 	ArtifactLabel string      `json:"artifactLabel,omitempty"`
 	ArtifactPath  string      `json:"artifactPath,omitempty"`
 
+	// Skill event fields
+	SkillName string `json:"skillName,omitempty"`
+
 	// Session turn event fields
 	TurnID      string   `json:"turnId,omitempty"`
 	Intent      string   `json:"intent,omitempty"`

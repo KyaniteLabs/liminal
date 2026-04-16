@@ -358,6 +358,8 @@ func parseInputIntent(input string) (mode, intent string) {
 			return "action", "command"
 		case "/mode", "/modes":
 			return "chat", "command"
+		case "/skill", "/skills":
+			return "chat", "command"
 		case "/stop":
 			return "chat", "command"
 		default:

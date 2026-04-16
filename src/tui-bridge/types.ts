@@ -91,4 +91,8 @@ export type TuiBridgeEvent =
   // Product mode events: emitted when mode switches
   | { type: 'mode.product_changed'; sessionId: string; mode: string; label: string; description: string }
   | { type: 'mode.list'; sessionId: string; modes: Array<{ mode: string; label: string; description: string }> }
+  // Skill events: emitted during skill execution
+  | { type: 'skill.started'; sessionId: string; skillName: string }
+  | { type: 'skill.completed'; sessionId: string; skillName: string; durationMs: number }
+  | { type: 'skill.list'; sessionId: string; skills: Array<{ name: string; description: string; mode?: string }> }
   | { type: 'error'; sessionId: string; message: string };

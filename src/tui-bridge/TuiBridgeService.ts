@@ -9,6 +9,9 @@ import { Domain } from '../types/domains.js';
 import { eventBus, EventTypes, type BusEvent } from '../core/EventBus.js';
 import { createLLMModeAgent, type LLMSession } from '../harness/agent/index.js';
 import { IntentRouter } from '../agent/IntentRouter.js';
+import { ModeAwareRouter, PRODUCT_MODES } from '../agent/ProductMode.js';
+import type { ModeConfig, ProductMode } from '../agent/ProductMode.js';
+import { ModeRegistry } from '../agent/ModeRegistry.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 
@@ -73,6 +76,8 @@ export class TuiBridgeService {
   private router = new IntentRouter();
   // Session persistence: records every turn per session
   private sessionGraphs = new Map<string, SessionGraph>();
+  // Product mode registry: per-session mode biasing
+  private modeRegistry = new ModeRegistry();
 
   constructor() {
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -175,8 +180,28 @@ export class TuiBridgeService {
     const selfImprovement = isSelfImprovementRequest(input.text);
     const creativeGeneration = isGenerationRequest(input.text);
 
-    // Studio routing: classify intent via IntentRouter
-    const classification = this.router.classify(input.text);
+    // Handle /mode command: switch product mode for this session
+    if (input.text.startsWith('/mode')) {
+      return this.handleModeCommand(sessionId, input.text);
+    }
+
+    // Handle /modes command: list available modes
+    if (input.text.trim() === '/modes') {
+      const modes = Object.entries(PRODUCT_MODES).map(([mode, info]) => ({
+        mode,
+        label: info.label,
+        description: info.description,
+      }));
+      this.emit(sessionId, { type: 'mode.list', sessionId, modes });
+      const content = modes.map(m => `  ${m.mode.padEnd(8)} ${m.label} — ${m.description}`).join('\n');
+      this.emitCommandResponse(sessionId, `Available modes:\n${content}`);
+      return { reviewRequired: false };
+    }
+
+    // Studio routing: classify intent via IntentRouter with mode biasing
+    const modeConfig = this.modeRegistry.getMode(sessionId);
+    const classifier = new ModeAwareRouter(this.router, () => modeConfig);
+    const classification = classifier.classify(input.text);
 
     logBridge('input.received', {
       sessionId,
@@ -340,6 +365,47 @@ export class TuiBridgeService {
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
     this.emit(sessionId, { type: 'action.cancelled', sessionId, actionId });
+  }
+
+  /**
+   * Set the product mode for a session.
+   * Emits mode.product_changed event for the TUI to render the mode badge.
+   */
+  setProductMode(sessionId: string, mode: ProductMode): ModeConfig {
+    const config = this.modeRegistry.setMode(sessionId, mode);
+    const modeInfo = PRODUCT_MODES[mode];
+
+    logBridge('mode.changed', { sessionId, mode, label: modeInfo.label });
+
+    this.emit(sessionId, {
+      type: 'mode.product_changed',
+      sessionId,
+      mode,
+      label: modeInfo.label,
+      description: modeInfo.description,
+    });
+
+    return config;
+  }
+
+  /**
+   * Handle /mode <ask|make|remix|improve> command.
+   * Parses the mode name, sets it, and responds with confirmation.
+   */
+  private handleModeCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.trim().split(/\s+/);
+    const modeName = parts[1]?.toLowerCase();
+
+    if (!modeName || !(modeName in PRODUCT_MODES)) {
+      const available = Object.keys(PRODUCT_MODES).join(', ');
+      this.emitCommandResponse(sessionId, `Unknown mode. Available: ${available}`);
+      return { reviewRequired: false };
+    }
+
+    const config = this.setProductMode(sessionId, modeName as ProductMode);
+    const modeInfo = PRODUCT_MODES[config.mode];
+    this.emitCommandResponse(sessionId, `Mode switched to ${modeInfo.label} — ${modeInfo.description}`);
+    return { reviewRequired: false };
   }
 
   /**

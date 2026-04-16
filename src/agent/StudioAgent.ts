@@ -17,6 +17,8 @@ import type {
   DelegationDecision,
 } from './types.js';
 import { IntentRouter } from './IntentRouter.js';
+import { ModeAwareRouter } from './ProductMode.js';
+import type { ModeConfig } from './ProductMode.js';
 import { ResponseComposer } from './ResponseComposer.js';
 
 // ── Delegate Types ──
@@ -67,7 +69,7 @@ Be concise but evocative. Show, don't tell. Let the code speak.`;
 // ── Agent ──
 
 export class StudioAgent {
-  private readonly router: IntentRouter;
+  private readonly router: IntentRouter | ModeAwareRouter;
   private readonly composer: ResponseComposer;
   private readonly config: StudioAgentConfig;
   private readonly chatDelegate?: ChatDelegate;
@@ -80,12 +82,17 @@ export class StudioAgent {
     creativeDelegate?: CreativeDelegate;
     engineeringDelegate?: EngineeringDelegate;
     config?: StudioAgentConfig;
+    /** Returns the active mode config for routing bias. Called on every classify(). */
+    getActiveMode?: () => ModeConfig | undefined;
   }) {
     this.chatDelegate = deps.chatDelegate;
     this.creativeDelegate = deps.creativeDelegate;
     this.engineeringDelegate = deps.engineeringDelegate;
     this.config = deps.config ?? {};
-    this.router = new IntentRouter();
+    const baseRouter = new IntentRouter();
+    this.router = deps.getActiveMode
+      ? new ModeAwareRouter(baseRouter, deps.getActiveMode)
+      : baseRouter;
     this.composer = new ResponseComposer();
   }
 

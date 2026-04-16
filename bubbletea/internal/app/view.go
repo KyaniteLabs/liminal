@@ -105,7 +105,11 @@ func (m Model) renderHeader() string {
 	connDot := ui.StatusDot(m.Connected, m.Reconnecting)
 	spacer := lipgloss.NewStyle().Foreground(ui.FgMuted).Render(" ")
 
-	headerParts := []string{brand, mode, provider, connDot, m.renderPhaseBadge(m.Task.Phase)}
+	headerParts := []string{brand, mode, provider, connDot}
+	if strings.TrimSpace(m.ProductMode) != "" {
+		headerParts = append(headerParts, ui.ModeStyle.Render("⬡ "+m.ProductModeLabel))
+	}
+	headerParts = append(headerParts, m.renderPhaseBadge(m.Task.Phase))
 	if m.Task.StepTotal > 0 {
 		headerParts = append(headerParts, ui.StatusPillStyle.Render(formatStepProgress(m.Task.StepCurrent, m.Task.StepTotal)))
 	}

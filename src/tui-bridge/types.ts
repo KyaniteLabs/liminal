@@ -88,4 +88,7 @@ export type TuiBridgeEvent =
   | { type: 'task.queued'; sessionId: string; taskId: string; description: string }
   | { type: 'task.started'; sessionId: string; taskId: string }
   | { type: 'task.completed'; sessionId: string; taskId: string; success: boolean; durationMs: number }
+  // Product mode events: emitted when mode switches
+  | { type: 'mode.product_changed'; sessionId: string; mode: string; label: string; description: string }
+  | { type: 'mode.list'; sessionId: string; modes: Array<{ mode: string; label: string; description: string }> }
   | { type: 'error'; sessionId: string; message: string };

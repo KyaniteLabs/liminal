@@ -16,6 +16,8 @@ export { LiminalCortex } from './LiminalCortex.js';
 export type { CortexEvent, LiminalCortexDeps } from './LiminalCortex.js';
 export { CortexSupervisor } from './CortexSupervisor.js';
 export { StuckDetector } from './StuckDetector.js';
+export { CortexExplainer } from './CortexExplainer.js';
+export type { DashboardData } from './CortexExplainer.js';
 export type {
   CortexSnapshot,
   TaskPipelineSummary,

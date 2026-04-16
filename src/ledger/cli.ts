@@ -9,7 +9,7 @@
  */
 
 import type { TaskLedger } from './TaskLedger.js';
-import type { LedgerCLIAction } from './types.js';
+import type { LedgerCLIAction, TaskManifest } from './types.js';
 
 export function parseArgs(args: string[]): LedgerCLIAction {
   const argv = args[0] === 'ledger' ? args.slice(1) : args;
@@ -17,7 +17,7 @@ export function parseArgs(args: string[]): LedgerCLIAction {
   if (argv[0] === 'list') {
     const laneIdx = argv.indexOf('--lane');
     const lane = laneIdx !== -1 ? parseInt(argv[laneIdx + 1], 10) : undefined;
-    return { command: 'list', lane: lane && !isNaN(lane) ? lane : undefined };
+    return { command: 'list', lane: !isNaN(lane as number) ? lane : undefined };
   }
   if (argv[0] === 'show') {
     return { command: 'show', taskId: argv[1] ?? '' };
@@ -178,12 +178,18 @@ export async function execute(
         process.exit(1);
       }
       const content = fs.readFileSync(filePath, 'utf-8');
-      const defs = JSON.parse(content);
-      const tasks = Array.isArray(defs) ? defs : [defs];
+      let defs: unknown[];
+      try {
+        const parsed = JSON.parse(content);
+        defs = Array.isArray(parsed) ? parsed : [parsed];
+      } catch (err) {
+        console.error(`Invalid JSON in ${filePath}: ${(err as Error).message}`);
+        process.exit(1);
+      }
       let loaded = 0;
-      for (const def of tasks) {
+      for (const def of defs) {
         try {
-          ledger.createTask(def);
+          ledger.createTask(def as Omit<TaskManifest, 'status' | 'attemptCount' | 'createdAt' | 'updatedAt'>);
           loaded++;
         } catch (err) {
           console.error(`Failed to load task ${(def as Record<string, unknown>).id}: ${(err as Error).message}`);

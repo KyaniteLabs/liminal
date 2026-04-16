@@ -207,3 +207,11 @@ type CortexGoal struct {
 	CreatedAt string `json:"createdAt"`
 	UpdatedAt string `json:"updatedAt"`
 }
+
+// CortexStuckWorker represents a stuck process detected by the Cortex supervisor.
+type CortexStuckWorker struct {
+	ProcessName      string `json:"processName"`
+	DurationMs       int    `json:"durationMs"`
+	ThresholdMs      int    `json:"thresholdMs"`
+	SuggestedRecovery string `json:"suggestedRecovery"`
+}

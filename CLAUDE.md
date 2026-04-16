@@ -23,6 +23,18 @@ This repo has multiple agents working simultaneously in worktrees. Breaking thes
 5. **Commit incrementally.** Don't let 20+ files sit dirty. Commit in logical batches (every 5-10 files). Large uncommitted diffs make conflict resolution harder.
 6. **Clean up stashes at session end.** Git stashes are repo-global (not per-worktree). Test runners using `auto-stash` pile up fast — 90+ stashes from a single test session is typical. Before closing a session: `git stash list` → drop all `liminal: auto-stash` entries with `git stash drop stash@{N}`. Keep only stashes with meaningful WIP. If the stash list exceeds 10 entries, it's overdue for cleanup.
 
+### Parallel Agent Isolation (mandatory)
+
+When launching 2+ agents for parallel work, you MUST use the /team skill:
+```
+/oh-my-claudecode:team "description of parallel work"
+```
+
+`/team` creates isolated git worktrees per worker and handles merging.
+Never launch 2+ parallel Task() calls directly — they share the working directory and will collide.
+
+Single-agent tasks (one-off investigation, single-file edits) may use Task() directly.
+
 ### Convention Violation Monitor
 
 A cron job scans every 5 minutes and logs violations to `memory/git-monitor-log.md`. Violations are flagged as:

@@ -30,7 +30,7 @@ describe('LiminalError', () => {
   it('should capture stack trace', () => {
     const error = new LiminalError('Stack test', 'ERR_STACK');
 
-    expect(error.stack).toBeDefined();
+    expect(error.stack).toContain('Stack test');
     expect(error.stack).toContain('LiminalError');
   });
 });

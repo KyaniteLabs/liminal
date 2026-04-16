@@ -24,7 +24,7 @@ describe('LLMClient model-agnostic configuration', () => {
       model: 'qwen2.5-coder',
     };
     const client = new LLMClient(config);
-    expect(client).toBeDefined();
+    expect(client).toBeInstanceOf(LLMClient);
   });
 
   test('accepts apiKey for cloud providers', () => {
@@ -34,7 +34,7 @@ describe('LLMClient model-agnostic configuration', () => {
       model: 'gpt-4',
     };
     const client = new LLMClient(config);
-    expect(client).toBeDefined();
+    expect(client).toBeInstanceOf(LLMClient);
   });
 
   test('auto-detects Ollama API style', () => {
@@ -43,7 +43,7 @@ describe('LLMClient model-agnostic configuration', () => {
       model: 'llama3',
     };
     const client = new LLMClient(config);
-    expect(client).toBeDefined();
+    expect(client).toBeInstanceOf(LLMClient);
   });
 
   test('auto-detects OpenAI-compatible API style', () => {
@@ -52,7 +52,7 @@ describe('LLMClient model-agnostic configuration', () => {
       model: 'local-model',
     };
     const client = new LLMClient(config);
-    expect(client).toBeDefined();
+    expect(client).toBeInstanceOf(LLMClient);
   });
 
   test('accepts custom headers', () => {
@@ -64,7 +64,7 @@ describe('LLMClient model-agnostic configuration', () => {
       },
     };
     const client = new LLMClient(config);
-    expect(client).toBeDefined();
+    expect(client).toBeInstanceOf(LLMClient);
   });
 
   test('accepts custom endpoint path', () => {
@@ -74,7 +74,7 @@ describe('LLMClient model-agnostic configuration', () => {
       endpointPath: '/custom/completions',
     };
     const client = new LLMClient(config);
-    expect(client).toBeDefined();
+    expect(client).toBeInstanceOf(LLMClient);
   });
 });
 
@@ -90,7 +90,7 @@ describe('LLMClient environment configuration', () => {
     process.env.LIMINAL_LLM_MODEL = 'env-model';
 
     const client = new LLMClient();
-    expect(client).toBeDefined();
+    expect(client).toBeInstanceOf(LLMClient);
 
     // Restore env vars
     process.env.LIMINAL_LLM_BASE_URL = originalBaseUrl;

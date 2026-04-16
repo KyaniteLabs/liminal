@@ -240,6 +240,9 @@ type Model struct {
 	// Cortex perception state: latest snapshot from CortexPerceptionBus
 	CortexSnapshot *bridge.CortexSnapshotData
 
+	// Cortex goal state: active user goals
+	CortexGoals []bridge.CortexGoal
+
 	// ── Operator surface state ──
 
 	// Task card: what the agent is trying to do
@@ -813,6 +816,37 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 
 	case "cortex.snapshot":
 		m.CortexSnapshot = event.Snapshot
+
+	// ── Cortex goal events ──
+
+	case "cortex.goal_added":
+		if event.Goal != nil {
+			m.CortexGoals = append(m.CortexGoals, *event.Goal)
+			m.addActivity(fmt.Sprintf("Goal added: %s", event.Goal.Text))
+		}
+
+	case "cortex.goal_list":
+		m.CortexGoals = make([]bridge.CortexGoal, len(event.Goals))
+		copy(m.CortexGoals, event.Goals)
+		m.addActivity(fmt.Sprintf("Goals: %d listed", len(event.Goals)))
+
+	case "cortex.goal_removed":
+		for i, g := range m.CortexGoals {
+			if g.ID == event.GoalID {
+				m.CortexGoals = append(m.CortexGoals[:i], m.CortexGoals[i+1:]...)
+				break
+			}
+		}
+		m.addActivity("Goal removed: " + event.GoalID)
+
+	case "cortex.goal_completed":
+		for i, g := range m.CortexGoals {
+			if g.ID == event.GoalID {
+				m.CortexGoals = append(m.CortexGoals[:i], m.CortexGoals[i+1:]...)
+				break
+			}
+		}
+		m.addActivity("Goal completed: " + event.GoalID)
 	}
 }
 

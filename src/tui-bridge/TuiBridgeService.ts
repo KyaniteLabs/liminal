@@ -25,6 +25,8 @@ import { AutonomyController } from '../agent/AutonomyController.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 import { CortexPerceptionBus } from '../cortex/CortexPerceptionBus.js';
+import { GoalStore } from '../cortex/GoalStore.js';
+import { LiminalFS } from '../fs/LiminalFS.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -111,6 +113,8 @@ export class TuiBridgeService {
   private autonomyController = new AutonomyController();
   // Cortex perception bus: aggregates live system state from EventBus
   private cortexBus = new CortexPerceptionBus(eventBus);
+  // Cortex goal store: persists user goals via LiminalFS
+  private goalStore: GoalStore | null = null;
   /** Interval in ms for cortex snapshot broadcasts (default: 5s) */
   private static readonly CORTEX_BROADCAST_INTERVAL_MS = 5000;
   /** Handle for the cortex broadcast interval (stored for cleanup) */
@@ -312,6 +316,11 @@ export class TuiBridgeService {
     // Handle /autonomy <assist|co-create|autopilot>
     if (input.text.startsWith('/autonomy')) {
       return this.handleAutonomyCommand(sessionId, input.text.trim());
+    }
+
+    // Handle /goal add <text>|list|remove <id>|done <id>
+    if (input.text.startsWith('/goal')) {
+      return this.handleGoalCommand(sessionId, input.text.trim());
     }
 
     // Studio routing: classify intent via IntentRouter with mode biasing
@@ -1000,6 +1009,140 @@ export class TuiBridgeService {
       description: config.description,
     });
     this.emitCommandResponse(sessionId, `Autonomy set to ${config.label} — ${config.description}`);
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Lazy-initialize the GoalStore with LiminalFS.
+   * Returns null if LiminalFS cannot be opened (e.g. not in a project directory).
+   */
+  private getGoalStore(): GoalStore | null {
+    if (!this.goalStore) {
+      try {
+        const fs = LiminalFS.open(process.cwd());
+        this.goalStore = new GoalStore(fs);
+      } catch {
+        return null;
+      }
+    }
+    return this.goalStore;
+  }
+
+  /**
+   * Handle /goal add <text>|list|remove <id>|done <id>
+   */
+  private handleGoalCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.split(/\s+/);
+    const subcmd = parts[1]?.toLowerCase();
+
+    if (subcmd === 'add') {
+      const text = parts.slice(2).join(' ').trim();
+      if (!text) {
+        this.emitCommandResponse(sessionId, 'Usage: /goal add <text>');
+        return { reviewRequired: false };
+      }
+      const store = this.getGoalStore();
+      if (!store) {
+        this.emitCommandResponse(sessionId, 'Goal store unavailable. Run from a project directory.');
+        return { reviewRequired: false };
+      }
+
+      // Parse optional priority and category from text: /goal add [priority:high] [category:coverage] Fix tests
+      let priority: import('../cortex/types.js').GoalPriority = 'normal';
+      let category: import('../cortex/types.js').GoalCategory = 'maintenance';
+      let goalText = text;
+
+      const priorityMatch = goalText.match(/\[priority:(critical|high|normal|low)\]\s*/i);
+      if (priorityMatch) {
+        priority = priorityMatch[1].toLowerCase() as import('../cortex/types.js').GoalPriority;
+        goalText = goalText.replace(priorityMatch[0], '').trim();
+      }
+
+      const categoryMatch = goalText.match(/\[category:(coverage|performance|reliability|feature|maintenance)\]\s*/i);
+      if (categoryMatch) {
+        category = categoryMatch[1].toLowerCase() as import('../cortex/types.js').GoalCategory;
+        goalText = goalText.replace(categoryMatch[0], '').trim();
+      }
+
+      // Reject if goal text is empty after stripping optional tags
+      if (!goalText) {
+        this.emitCommandResponse(sessionId, 'Goal text is required. Usage: /goal add [priority:X] [category:Y] <text>');
+        return { reviewRequired: false };
+      }
+
+      const goal = store.addGoal({ text: goalText, priority, category });
+      this.emit(sessionId, { type: 'cortex.goal_added', sessionId, goal });
+      this.emitCommandResponse(sessionId, `Goal added: "${goal.text}" [${goal.priority}/${goal.category}]`);
+      return { reviewRequired: false };
+    }
+
+    if (subcmd === 'list') {
+      const store = this.getGoalStore();
+      if (!store) {
+        this.emitCommandResponse(sessionId, 'Goal store unavailable. Run from a project directory.');
+        return { reviewRequired: false };
+      }
+
+      const goals = store.getActiveGoals();
+      this.emit(sessionId, { type: 'cortex.goal_list', sessionId, goals });
+      if (goals.length === 0) {
+        this.emitCommandResponse(sessionId, 'No active goals. Use /goal add <text>.');
+      } else {
+        const lines = goals.map(g => {
+          const marker = g.priority === 'critical' ? '!!' : g.priority === 'high' ? ' !' : '  ';
+          return ` ${marker} ${g.id} ${g.text}`;
+        });
+        this.emitCommandResponse(sessionId, `Cortex Goals (${goals.length}):\n${lines.join('\n')}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (subcmd === 'remove') {
+      const goalId = parts[2];
+      if (!goalId) {
+        this.emitCommandResponse(sessionId, 'Usage: /goal remove <id>');
+        return { reviewRequired: false };
+      }
+      const store = this.getGoalStore();
+      if (!store) {
+        this.emitCommandResponse(sessionId, 'Goal store unavailable.');
+        return { reviewRequired: false };
+      }
+
+      const removed = store.removeGoal(goalId);
+      if (!removed) {
+        this.emitCommandResponse(sessionId, `Goal "${goalId}" not found.`);
+      } else {
+        this.emit(sessionId, { type: 'cortex.goal_removed', sessionId, goalId });
+        this.emitCommandResponse(sessionId, `Goal "${goalId}" removed.`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (subcmd === 'done') {
+      const goalId = parts[2];
+      if (!goalId) {
+        this.emitCommandResponse(sessionId, 'Usage: /goal done <id>');
+        return { reviewRequired: false };
+      }
+      const store = this.getGoalStore();
+      if (!store) {
+        this.emitCommandResponse(sessionId, 'Goal store unavailable.');
+        return { reviewRequired: false };
+      }
+
+      const completed = store.completeGoal(goalId);
+      if (!completed) {
+        this.emitCommandResponse(sessionId, `Goal "${goalId}" not found.`);
+      } else {
+        this.emit(sessionId, { type: 'cortex.goal_completed', sessionId, goalId });
+        this.emitCommandResponse(sessionId, `Goal completed: "${completed.text}"`);
+      }
+      return { reviewRequired: false };
+    }
+
+    // Default: show usage
+    this.emitCommandResponse(sessionId, 'Usage: /goal add <text> | list | remove <id> | done <id>\nOptions: [priority:high] [category:coverage] before text');
     return { reviewRequired: false };
   }
 

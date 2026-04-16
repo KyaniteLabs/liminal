@@ -50,11 +50,11 @@ describe('PlayerPiano Logic', () => {
       onTogglePlay: () => {},
     };
     
-    // All expected props should be present
-    expect(props.iterations).toBeDefined();
-    expect(props.currentIndex).toBeDefined();
-    expect(props.isPlaying).toBeDefined();
-    expect(props.speed).toBeDefined();
+    // All expected props should be present and correctly typed
+    expect(props.iterations).toEqual([{ id: 1, code: 'test', timestamp: 1000 }]);
+    expect(props.currentIndex).toBe(0);
+    expect(props.isPlaying).toBe(false);
+    expect(props.speed).toBe(100);
     expect(typeof props.onIndexChange).toBe('function');
     expect(typeof props.onTogglePlay).toBe('function');
   });

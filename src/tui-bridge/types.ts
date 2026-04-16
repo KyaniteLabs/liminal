@@ -1,4 +1,4 @@
-import type { CortexSnapshot } from '../cortex/types.js';
+import type { CortexGoal, CortexSnapshot } from '../cortex/types.js';
 
 export type TuiMode = 'chat' | 'inspect' | 'action' | 'confirm';
 
@@ -119,4 +119,9 @@ export type TuiBridgeEvent =
   | { type: 'autonomy.changed'; sessionId: string; level: string; label: string; description: string }
   // Cortex events: background executive perception and decisions
   | { type: 'cortex.snapshot'; sessionId: string; snapshot: CortexSnapshot }
+  // Cortex goal events: user goal CRUD
+  | { type: 'cortex.goal_added'; sessionId: string; goal: CortexGoal }
+  | { type: 'cortex.goal_list'; sessionId: string; goals: CortexGoal[] }
+  | { type: 'cortex.goal_removed'; sessionId: string; goalId: string }
+  | { type: 'cortex.goal_completed'; sessionId: string; goalId: string }
   | { type: 'error'; sessionId: string; message: string };

@@ -62,7 +62,9 @@ export function parseArgs(args: string[]): LedgerCLIAction {
     };
   }
   if (argv[0] === 'batch') {
-    return { command: 'batch', maxTasks: undefined, dryRun: argv.includes('--dry-run') };
+    const maxIdx = argv.indexOf('--max-tasks');
+    const maxTasks = maxIdx !== -1 ? parseInt(argv[maxIdx + 1], 10) : undefined;
+    return { command: 'batch', maxTasks: !isNaN(maxTasks as number) ? maxTasks : undefined, dryRun: argv.includes('--dry-run') };
   }
   if (argv[0] === 'dashboard') {
     const fmtIdx = argv.indexOf('--format');
@@ -270,19 +272,25 @@ export async function execute(
         console.log('No candidate tasks found. Ensure coverage data is available.');
         break;
       }
-      // Load specs into ledger
+      // Load specs into ledger (skip tasks that already exist to preserve progress)
       let loaded = 0;
+      let skipped = 0;
       for (const spec of specs) {
+        if (ledger.loadTask(spec.id)) {
+          skipped++;
+          continue;
+        }
         try {
           ledger.createTask(spec as Omit<TaskManifest, 'status' | 'attemptCount' | 'createdAt' | 'updatedAt'>);
           loaded++;
         } catch {
-          // Task already exists — skip
+          // Other write error — skip
         }
       }
       console.log(`\n  Task Intake\n`);
       console.log(`  Candidates:  ${specs.length}`);
       console.log(`  Loaded:       ${loaded}`);
+      if (skipped > 0) console.log(`  Skipped:      ${skipped} (already exist)`);
       // Summary by class
       const byClass: Record<string, number> = {};
       for (const s of specs) {
@@ -302,6 +310,14 @@ export async function execute(
     }
     case 'batch': {
       console.log(`\n  Conveyor Batch\n`);
+      const pendingTasks = ledger.listTasks().filter(t => t.status === 'pending');
+      if (action.dryRun) {
+        console.log(`  [DRY RUN] Would process ${pendingTasks.length} pending task(s)${action.maxTasks ? ` (max ${action.maxTasks})` : ''}`);
+        for (const task of pendingTasks.slice(0, action.maxTasks ?? pendingTasks.length)) {
+          console.log(`    ${task.id.padEnd(6)} ${task.taskClass.padEnd(18)} ${task.title}`);
+        }
+        break;
+      }
       const runner = new ConveyorRunner(ledger);
       const result = await runner.runBatch({ maxTasks: action.maxTasks });
       const monitor = new ConveyorMonitor(ledger);

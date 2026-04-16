@@ -160,7 +160,8 @@ export class TaskIntake {
     }
 
     // 2. TODO/FIXME tasks (only for items not already covered by a coverage-gap task)
-    const coveredFiles = new Set(specs.map(s => s.files.allowlist).flat());
+    // Track source file paths (not test files) for deduplication
+    const coveredFiles = new Set(coverage.map(f => f.path));
     for (const anno of annotations) {
       if (coveredFiles.has(anno.file)) continue;
       if (DEFERRED_MODULES.some(d => anno.file.startsWith(d))) continue;

@@ -115,6 +115,16 @@ describe('ledger parseArgs', () => {
     expect(result).toEqual({ command: 'batch', maxTasks: undefined, dryRun: true });
   });
 
+  it('parses "batch --max-tasks 5"', () => {
+    const result = parseArgs(['batch', '--max-tasks', '5']);
+    expect(result).toEqual({ command: 'batch', maxTasks: 5, dryRun: false });
+  });
+
+  it('parses "batch --max-tasks 10 --dry-run"', () => {
+    const result = parseArgs(['batch', '--max-tasks', '10', '--dry-run']);
+    expect(result).toEqual({ command: 'batch', maxTasks: 10, dryRun: true });
+  });
+
   it('parses "dashboard" with no options', () => {
     const result = parseArgs(['dashboard']);
     expect(result).toEqual({ command: 'dashboard', format: undefined });

@@ -11,6 +11,17 @@ import type { TaskManifest, TaskCandidate, TaskAttempt } from './types.js';
 import type { TaskLedger } from './TaskLedger.js';
 import { execSync } from 'node:child_process';
 
+const ALLOWED_COMMAND_PREFIXES = ['pnpm test', 'pnpm build', 'pnpm vitest', 'npx vitest'];
+
+function assertAllowedCommand(cmd: string): void {
+  const allowed = ALLOWED_COMMAND_PREFIXES.some(prefix => cmd.startsWith(prefix));
+  if (!allowed) {
+    throw new Error(
+      `Blocked: verifyCommand "${cmd}" does not match allowed prefixes: ${ALLOWED_COMMAND_PREFIXES.join(', ')}`,
+    );
+  }
+}
+
 export class TaskVerifier {
   private scoringEngine: ScoringEngine;
 
@@ -24,6 +35,8 @@ export class TaskVerifier {
       prompt: attempt.prompt,
       criteria: task.scoringCriteria,
     });
+
+    assertAllowedCommand(task.verifyCommand);
 
     let testPassed = false;
     try {

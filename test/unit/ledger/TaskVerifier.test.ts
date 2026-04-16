@@ -161,4 +161,15 @@ describe('TaskVerifier', () => {
     expect(candidate.testPassed).toBe(false);
     expect(candidate.semanticScore).toBe(0.4);
   });
+
+  it('verify — rejects disallowed verifyCommand (command injection guard)', async () => {
+    const task = makeTask({ verifyCommand: 'rm -rf /' });
+    const attempt = makeAttempt();
+    const code = 'const malicious = true;';
+
+    mockScore.mockResolvedValue({ score: 0.9, dimensions: {}, strategy: 'fast' });
+
+    await expect(verifier.verify(task, attempt, code)).rejects.toThrow('Blocked: verifyCommand');
+    expect(mockExecSync).not.toHaveBeenCalled();
+  });
 });

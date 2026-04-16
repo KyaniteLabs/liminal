@@ -626,6 +626,16 @@ func (m Model) renderCortexStatus(width int) string {
 			tag, latest.Score, trimToWidth(latest.Reasoning, width-25)))
 	}
 
+	// Stuck workers warning
+	if len(m.CortexStuckWorkers) > 0 {
+		details := make([]string, 0, len(m.CortexStuckWorkers))
+		for _, sw := range m.CortexStuckWorkers {
+			details = append(details, fmt.Sprintf("%s: %s", sw.ProcessName, formatDurationMs(int64(sw.DurationMs))))
+		}
+		warning := fmt.Sprintf("WARNING - %d stuck: %s", len(m.CortexStuckWorkers), strings.Join(details, ", "))
+		lines = append(lines, lipgloss.NewStyle().Foreground(ui.AccentYellow).Render(trimToWidth(warning, width-4)))
+	}
+
 	return lipgloss.NewStyle().
 		Foreground(ui.AccentCyan).
 		Width(width).

@@ -921,6 +921,30 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 
 	case "cortex.action_proposed":
 		// Handled via cortex.decision above; no additional model state needed.
+
+	case "cortex.stuck_detected":
+		if raw, ok := event.Data["stuckWorkers"]; ok {
+			if arr, ok := raw.([]any); ok {
+				m.CortexStuckWorkers = parseStuckWorkers(arr)
+				if len(m.CortexStuckWorkers) > 0 {
+					names := make([]string, 0, len(m.CortexStuckWorkers))
+					for _, sw := range m.CortexStuckWorkers {
+						names = append(names, sw.ProcessName)
+					}
+					m.addActivity(fmt.Sprintf("Cortex: %d stuck worker(s): %s", len(m.CortexStuckWorkers), strings.Join(names, ", ")))
+				}
+			}
+		}
+
+	case "cortex.lease_expired":
+		if raw, ok := event.Data["expiredLeases"]; ok {
+			if arr, ok := raw.([]any); ok {
+				count := len(arr)
+				if count > 0 {
+					m.addActivity(fmt.Sprintf("Cortex: %d lease(s) expired", count))
+				}
+			}
+		}
 	}
 }
 
@@ -933,6 +957,32 @@ func (m *Model) addActivity(message string) {
 	if len(m.ActivityLog) > MaxActivityLog {
 		m.ActivityLog = m.ActivityLog[len(m.ActivityLog)-MaxActivityLog:]
 	}
+}
+
+// parseStuckWorkers extracts CortexStuckWorker structs from raw JSON data.
+func parseStuckWorkers(arr []any) []CortexStuckWorker {
+	result := make([]CortexStuckWorker, 0, len(arr))
+	for _, item := range arr {
+		m, ok := item.(map[string]any)
+		if !ok {
+			continue
+		}
+		sw := CortexStuckWorker{}
+		if v, ok := m["processName"].(string); ok {
+			sw.ProcessName = v
+		}
+		if v, ok := m["durationMs"].(float64); ok {
+			sw.DurationMs = int(v)
+		}
+		if v, ok := m["thresholdMs"].(float64); ok {
+			sw.ThresholdMs = int(v)
+		}
+		if v, ok := m["suggestedRecovery"].(string); ok {
+			sw.SuggestedRecovery = v
+		}
+		result = append(result, sw)
+	}
+	return result
 }
 
 func (m Model) lastAssistantResponse() string {

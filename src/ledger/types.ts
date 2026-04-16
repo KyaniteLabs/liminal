@@ -115,6 +115,10 @@ export interface TaskCandidate {
   testPassed: boolean;
   /** ISO 8601 timestamp when the candidate was evaluated */
   evaluatedAt: string;
+  /** Captured stdout from the verify command */
+  verifyStdout?: string;
+  /** Captured stderr from the verify command */
+  verifyStderr?: string;
 }
 
 // ─── Task Decision ─────────────────────────────────────────────────
@@ -150,5 +154,5 @@ export type LedgerCLIAction =
   | { command: 'verify'; taskId: string }
   | { command: 'accept'; taskId: string; candidateId: string }
   | { command: 'reject'; taskId: string; candidateId: string; reason?: string }
-  | { command: 'status' }
+  | { command: 'status'; verbose?: boolean }
   | { command: 'load'; path: string };

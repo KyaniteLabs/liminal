@@ -10,6 +10,8 @@
 
 import type { TaskLedger } from './TaskLedger.js';
 import type { LedgerCLIAction, TaskManifest } from './types.js';
+import { TaskRunner } from './TaskRunner.js';
+import { TaskVerifier } from './TaskVerifier.js';
 
 export function parseArgs(args: string[]): LedgerCLIAction {
   const argv = args[0] === 'ledger' ? args.slice(1) : args;
@@ -44,7 +46,7 @@ export function parseArgs(args: string[]): LedgerCLIAction {
   if (argv[0] === 'load') {
     return { command: 'load', path: argv[1] ?? '' };
   }
-  return { command: 'status' };
+  return { command: 'status', verbose: argv.includes('--verbose') };
 }
 
 export async function execute(
@@ -64,6 +66,17 @@ export async function execute(
       console.log(`  In Progress: ${inProgress}`);
       console.log(`  Completed:   ${completed}`);
       console.log(`  Failed:      ${failed}`);
+      if (action.verbose && tasks.length > 0) {
+        console.log(`\n  Per-task breakdown:\n`);
+        for (const task of tasks) {
+          const attempts = ledger.loadAttempts(task.id).length;
+          const candidates = ledger.loadCandidates(task.id);
+          const latestScore = candidates.length > 0
+            ? candidates[candidates.length - 1].semanticScore.toFixed(3)
+            : '—';
+          console.log(`  ${task.id.padEnd(6)} ${task.status.padEnd(12)} attempts:${String(attempts).padEnd(3)} candidates:${String(candidates.length).padEnd(3)} latest:${latestScore}  ${task.title}`);
+        }
+      }
       console.log('');
       break;
     }
@@ -117,7 +130,14 @@ export async function execute(
         break;
       }
       console.log(`\n  Running task ${task.id}: ${task.title}...\n`);
-      console.log('  (TaskRunner execution not yet wired — use from code)');
+      const runner = new TaskRunner(ledger);
+      const attempt = await runner.runTask(task);
+      console.log(`  Attempt:     ${attempt.id}`);
+      console.log(`  Iterations:  ${attempt.iterations}`);
+      console.log(`  Score:       ${attempt.finalScore.toFixed(3)}`);
+      console.log(`  Completed:   ${attempt.completed}`);
+      console.log(`  Reason:      ${attempt.reason}`);
+      console.log(`  Duration:    ${attempt.duration}ms`);
       console.log('');
       break;
     }
@@ -127,9 +147,29 @@ export async function execute(
         console.error(`Task not found: ${action.taskId}`);
         process.exit(1);
       }
+      // Find latest attempt with code
+      const attempts = ledger.loadAttempts(action.taskId);
+      const latestAttempt = attempts[attempts.length - 1];
+      if (!latestAttempt || !latestAttempt.artifactRef) {
+        console.error('No attempt with generated code found. Run the task first.');
+        process.exit(1);
+      }
+      const code = ledger.getFs().readArtifact(latestAttempt.artifactRef)?.toString('utf-8');
+      if (!code) {
+        console.error('Could not read artifact code.');
+        process.exit(1);
+      }
+
       console.log(`\n  Verifying task ${task.id}...\n`);
-      console.log(`  Verify command: ${task.verifyCommand}`);
-      console.log('  (TaskVerifier execution not yet wired — use from code)');
+      console.log(`  Attempt:     ${latestAttempt.id}`);
+      console.log(`  Verify cmd:  ${task.verifyCommand}`);
+      console.log(`  Code length: ${code.length} chars`);
+
+      const verifier = new TaskVerifier(ledger);
+      const candidate = await verifier.verify(task, latestAttempt, code);
+      console.log(`  Candidate:   ${candidate.id}`);
+      console.log(`  Score:       ${candidate.semanticScore.toFixed(3)}`);
+      console.log(`  Tests pass:  ${candidate.testPassed}`);
       console.log('');
       break;
     }

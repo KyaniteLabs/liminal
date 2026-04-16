@@ -60,6 +60,8 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
   });
 
   it('writes run artifact and run record to LiminalFS', async () => {
+    // This test exercises real LiminalFS I/O; takes ~4s solo, needs headroom under parallel load
+    vi.setConfig({ testTimeout: 15000 });
     const result = await RalphLoop.run('p5 sketch with circle', {
       project: 'test-project',
       maxIterations: 1,

@@ -8,7 +8,8 @@ export type LiminalObjectKind =
   | 'trace'
   | 'evaluation'
   | 'asset'
-  | 'task-candidate';
+  | 'task-candidate'
+  | 'task-attempt';
 
 export interface LiminalObjectRef {
   uri: string;

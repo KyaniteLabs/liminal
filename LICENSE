@@ -1,21 +1,91 @@
-MIT License
+Business Source License 1.1
 
-Copyright (c) 2026 Simon Gonzalez de Cruz
+License copyright (c) 2026 Simon Gonzalez de Cruz
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+Parameters
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+Licensor:             Simon Gonzalez de Cruz
+Licensed Work:        Liminal
+                      The Licensed Work is (c) 2026 Simon Gonzalez de Cruz.
+Additional Use Grant: You may use the Licensed Work for non-production,
+                      educational, and personal purposes, including to develop
+                      and test applications that integrate with the Licensed
+                      Work. You may not use the Licensed Work in a commercial
+                      product or service, or offer the Licensed Work (or any
+                      derivative thereof) as a commercial product or service,
+                      including as a managed or hosted service, without a
+                      separate commercial license from the Licensor.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+Change Date:          2029-04-15
+
+Change License:       MIT License
+
+On the Change Date, this License will automatically convert to the
+Change License. For the avoidance of doubt, the Licensor may also
+separately offer the Licensed Work under a supplemental commercial
+license at any time before or after the Change Date.
+
+---
+
+Notice
+
+The Licensed Work is provided under this License on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied,
+including, without limitation, any warranties or conditions of TITLE,
+NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A PARTICULAR PURPOSE.
+You are solely responsible for determining the appropriateness of using
+or redistributing the Licensed Work and assume any risks associated with
+Your exercise of permissions under this License.
+
+---
+
+Business Source License 1.1
+
+Terms
+
+The Licensor hereby grants you the right to copy, modify, create derivative
+works, redistribute, and make non-production use of the Licensed Work.
+In exchange for this right, you agree to the following terms and conditions:
+
+1. You must give any other recipients of the Licensed Work a copy of this
+   License; and you must cause any modified files to carry prominent notices
+   stating that you changed the files; and you must retain all copyright,
+   patent, trademark, and attribution notices that are present in the
+   Licensed Work, except that you may remove the notices in the Documentation.
+
+2. You must cause any Derivative Works to carry prominent notices stating
+   that you changed the files.
+
+3. The name of the Licensor may not be used to endorse or promote products
+   derived from the Licensed Work without specific prior written permission.
+
+4. The Licensed Work may not be used in a commercial product or service,
+   nor offered as a commercial product or service (including as a managed
+   or hosted service), without a separate commercial license from the
+   Licensor, except as permitted under the Additional Use Grant above.
+
+5. This License does not grant any rights in any trademarks or service
+   marks of the Licensor.
+
+6. If you submit any changes or modifications to the Licensor for inclusion
+   in the Licensed Work, you grant the Licensor a non-exclusive, worldwide,
+   royalty-free, irrevocable license to use, reproduce, modify, sublicense,
+   and distribute those changes or modifications.
+
+7. If you institute patent litigation against any entity (including a
+   cross-claim or counterclaim in a lawsuit) alleging that the Licensed Work
+   or a Derivative Work constitutes direct or contributory patent infringement,
+   then any licenses granted to you under this License for that Licensed Work
+   shall terminate as of the date such litigation is filed.
+
+8. Disclaimer of Warranty. The Licensed Work is provided under this License
+   on an "AS IS" BASIS, WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESS OR
+   IMPLIED, INCLUDING, WITHOUT LIMITATION, WARRANTIES THAT THE LICENSED WORK
+   IS FREE OF DEFECTS, MERCHANTABLE, FIT FOR A PARTICULAR PURPOSE OR
+   NON-INFRINGING.
+
+9. Limitation of Liability. IN NO EVENT SHALL THE LICENSOR BE LIABLE TO YOU
+   FOR ANY DAMAGES OF ANY KIND, INCLUDING BUT NOT LIMITED TO ANY DIRECT,
+   SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL DAMAGES, WHETHER IN AN
+   ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+   OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THE LICENSED WORK.

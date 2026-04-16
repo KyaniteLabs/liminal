@@ -1,7 +1,7 @@
 # Liminal
 
 [![CI](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 
 > A creative coding agent that generates art, music, and shaders through iterative LLM-powered evolution.
 
@@ -180,7 +180,7 @@ See [docs/SECURITY.md](./docs/SECURITY.md) for the security model.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+Business Source License 1.1. Source code is available for viewing, learning, and non-commercial use. Commercial use requires a separate license. Converts to MIT on April 15, 2029. See [LICENSE](./LICENSE) for details.
 
 ---
 

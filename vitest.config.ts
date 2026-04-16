@@ -72,8 +72,8 @@ export default defineConfig({
         // Quality enforcement: scripts/testing/test-quality-check.mjs
         // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
         statements: 69.1,
-        branches: 59.1,
-        functions: 70.1,
+        branches: 61.6,
+        functions: 86.6,
         lines: 70,
         autoUpdate: isFastCi || isSlowCi ? undefined : (n: number) => Math.floor(n * 10) / 10,
       },

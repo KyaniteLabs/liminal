@@ -16,6 +16,11 @@ export type {
   TaskCandidate,
   TaskDecision,
   LedgerCLIAction,
+  FailureClass,
+  FileCoverage,
+  SourceAnnotation,
+  ConveyorTaskResult,
+  ConveyorBatchResult,
 } from './types.js';
 
 // TaskLedger — core persistence layer
@@ -26,3 +31,9 @@ export { TaskRunner } from './TaskRunner.js';
 
 // TaskVerifier — scores + test-verifies candidates
 export { TaskVerifier } from './TaskVerifier.js';
+
+// @architecture Phase 10 conveyor modules
+export { TaskIntake } from './TaskIntake.js';
+export { ConveyorRunner } from './ConveyorRunner.js';
+export { ReplayBundle } from './ReplayBundle.js';
+export { ConveyorMonitor } from './ConveyorMonitor.js';

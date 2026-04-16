@@ -17,8 +17,8 @@ const { mockScore } = vi.hoisted(() => ({
   mockScore: vi.fn(),
 }));
 
-const { mockExecSync } = vi.hoisted(() => ({
-  mockExecSync: vi.fn(),
+const { mockExecFileSync } = vi.hoisted(() => ({
+  mockExecFileSync: vi.fn(),
 }));
 
 vi.mock('../../../src/core/ScoringEngine.js', () => ({
@@ -28,7 +28,7 @@ vi.mock('../../../src/core/ScoringEngine.js', () => ({
 }));
 
 vi.mock('node:child_process', () => ({
-  execSync: mockExecSync,
+  execFileSync: mockExecFileSync,
 }));
 
 // Must import AFTER vi.mock setup
@@ -46,7 +46,7 @@ describe('TaskVerifier', () => {
     ledger = new TaskLedger(liminalFs);
     verifier = new TaskVerifier(ledger);
     mockScore.mockReset();
-    mockExecSync.mockReset();
+    mockExecFileSync.mockReset();
   });
 
   afterEach(() => {
@@ -101,7 +101,7 @@ describe('TaskVerifier', () => {
       dimensions: { technical: 0.9, errorHandling: 0.85 },
       strategy: 'comprehensive',
     });
-    mockExecSync.mockReturnValue('All tests passed');
+    mockExecFileSync.mockReturnValue('All tests passed');
 
     const candidate = await verifier.verify(task, attempt, code);
 
@@ -118,7 +118,7 @@ describe('TaskVerifier', () => {
     const code = 'const x = 42;';
 
     mockScore.mockResolvedValue({ score: 0.75, dimensions: {}, strategy: 'fast' });
-    mockExecSync.mockReturnValue('');
+    mockExecFileSync.mockReturnValue('');
 
     await verifier.verify(task, attempt, code);
 
@@ -134,13 +134,14 @@ describe('TaskVerifier', () => {
     const code = 'export const x = 1;';
 
     mockScore.mockResolvedValue({ score: 0.9, dimensions: {}, strategy: 'fast' });
-    mockExecSync.mockReturnValue('3 tests passed');
+    mockExecFileSync.mockReturnValue('3 tests passed');
 
     const candidate = await verifier.verify(task, attempt, code);
 
     expect(candidate.testPassed).toBe(true);
-    expect(mockExecSync).toHaveBeenCalledWith(
-      'pnpm test src/api/fetch.test.ts',
+    expect(mockExecFileSync).toHaveBeenCalledWith(
+      'pnpm',
+      ['test', 'src/api/fetch.test.ts'],
       expect.objectContaining({ timeout: 120000, encoding: 'utf-8', stdio: 'pipe' }),
     );
   });
@@ -151,7 +152,7 @@ describe('TaskVerifier', () => {
     const code = 'export const broken = undefined;';
 
     mockScore.mockResolvedValue({ score: 0.4, dimensions: {}, strategy: 'fast' });
-    mockExecSync.mockImplementation(() => {
+    mockExecFileSync.mockImplementation(() => {
       const err = new Error('Test suite failed: 2 failures');
       throw err;
     });
@@ -170,7 +171,7 @@ describe('TaskVerifier', () => {
     mockScore.mockResolvedValue({ score: 0.9, dimensions: {}, strategy: 'fast' });
 
     await expect(verifier.verify(task, attempt, code)).rejects.toThrow('Blocked: verifyCommand');
-    expect(mockExecSync).not.toHaveBeenCalled();
+    expect(mockExecFileSync).not.toHaveBeenCalled();
   });
 
   it('verify — rejects shell chaining via metacharacters', async () => {
@@ -181,6 +182,6 @@ describe('TaskVerifier', () => {
     mockScore.mockResolvedValue({ score: 0.9, dimensions: {}, strategy: 'fast' });
 
     await expect(verifier.verify(task, attempt, code)).rejects.toThrow('shell metacharacters');
-    expect(mockExecSync).not.toHaveBeenCalled();
+    expect(mockExecFileSync).not.toHaveBeenCalled();
   });
 });

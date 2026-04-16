@@ -9,7 +9,7 @@
 import { ScoringEngine } from '../core/ScoringEngine.js';
 import type { TaskManifest, TaskCandidate, TaskAttempt } from './types.js';
 import type { TaskLedger } from './TaskLedger.js';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const ALLOWED_COMMAND_PREFIXES = ['pnpm test', 'pnpm build', 'pnpm vitest', 'npx vitest'];
 
@@ -46,9 +46,11 @@ export class TaskVerifier {
 
     assertAllowedCommand(task.verifyCommand);
 
+    const [cmd, ...cmdArgs] = task.verifyCommand.split(' ');
+
     let testPassed = false;
     try {
-      execSync(task.verifyCommand, {
+      execFileSync(cmd, cmdArgs, {
         timeout: 120000,
         encoding: 'utf-8',
         stdio: 'pipe',

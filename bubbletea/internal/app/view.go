@@ -175,6 +175,7 @@ func (m Model) renderFooter() string {
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
 			ui.KeyStyle.Render("Ctrl+Q") + ui.HintStyle.Render(":queue"),
 				ui.KeyStyle.Render("Ctrl+R") + ui.HintStyle.Render(":review"),
+				ui.KeyStyle.Render("Ctrl+X") + ui.HintStyle.Render(":cortex"),
 			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 		}
@@ -192,6 +193,7 @@ func (m Model) renderFooter() string {
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
 			ui.KeyStyle.Render("Ctrl+Q") + ui.HintStyle.Render(":queue"),
 			ui.KeyStyle.Render("Ctrl+R") + ui.HintStyle.Render(":review"),
+			ui.KeyStyle.Render("Ctrl+X") + ui.HintStyle.Render(":cortex"),
 			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 			ui.KeyStyle.Render("Esc") + ui.HintStyle.Render(":back"),

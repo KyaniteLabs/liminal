@@ -27,6 +27,7 @@ import { SessionGraph } from '../agent/SessionGraph.js';
 import { CortexPerceptionBus } from '../cortex/CortexPerceptionBus.js';
 import { GoalStore } from '../cortex/GoalStore.js';
 import { LiminalCortex } from '../cortex/LiminalCortex.js';
+import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
 
@@ -356,6 +357,11 @@ export class TuiBridgeService {
     // Handle /goal add <text>|list|remove <id>|done <id>
     if (input.text.startsWith('/goal')) {
       return this.handleGoalCommand(sessionId, input.text.trim());
+    }
+
+    // Handle /cortex [start|stop]
+    if (input.text.trim() === '/cortex' || input.text.trim().startsWith('/cortex ')) {
+      return this.handleCortexCommand(sessionId, input.text.trim());
     }
 
     // Studio routing: classify intent via IntentRouter with mode biasing
@@ -1178,6 +1184,61 @@ export class TuiBridgeService {
 
     // Default: show usage
     this.emitCommandResponse(sessionId, 'Usage: /goal add <text> | list | remove <id> | done <id>\nOptions: [priority:high] [category:coverage] before text');
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /cortex [start|stop]
+   * Shows the Cortex dashboard, or starts/stops the background loop.
+   */
+  private handleCortexCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.split(/\s+/);
+    const subcmd = parts[1]?.toLowerCase();
+
+    if (subcmd === 'start') {
+      if (this.cortexLoop && !this.cortexLoop.isRunning()) {
+        this.cortexLoop.start();
+        this.emitCommandResponse(sessionId, 'Cortex loop started.');
+      } else if (this.cortexLoop?.isRunning()) {
+        this.emitCommandResponse(sessionId, 'Cortex loop is already running.');
+      } else {
+        this.emitCommandResponse(sessionId, 'Cortex loop not available.');
+      }
+      return { reviewRequired: false };
+    }
+
+    if (subcmd === 'stop') {
+      if (this.cortexLoop?.isRunning()) {
+        this.cortexLoop.stop();
+        this.emitCommandResponse(sessionId, 'Cortex loop stopped.');
+      } else {
+        this.emitCommandResponse(sessionId, 'Cortex loop is not running.');
+      }
+      return { reviewRequired: false };
+    }
+
+    // Default: show dashboard
+    const snapshot = this.cortexBus.getSnapshot();
+    const goals = this.getGoalStore()?.getActiveGoals() ?? [];
+    const budget = this.cortexLoop?.getBudgetUsage() ?? { actionsTaken: 0, actionsLimit: 0, tokenEstimate: 0, tokenLimit: 0 };
+    const cortexState = this.cortexLoop?.getState() ?? { tickNumber: 0, decisions: [], stuckWorkers: [] };
+    const explainer = new CortexExplainer();
+    const dashboard = explainer.formatDashboard({
+      snapshot,
+      goals,
+      budget,
+      stuckWorkers: cortexState.stuckWorkers ?? [],
+      latestDecisions: cortexState.decisions ?? [],
+      tickNumber: cortexState.tickNumber ?? 0,
+      autonomyLevel: TuiBridgeService.CORTEX_CONFIG.autonomyLevel,
+    });
+
+    this.emit(sessionId, {
+      type: 'cortex.dashboard',
+      sessionId,
+      content: dashboard,
+    });
+    this.emitCommandResponse(sessionId, dashboard);
     return { reviewRequired: false };
   }
 

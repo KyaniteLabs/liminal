@@ -21,6 +21,9 @@ func (m Model) renderOperatorSurface(width int) string {
 	if len(m.CortexGoals) > 0 {
 		panels = append(panels, m.renderCortexGoalPanel(contentWidth))
 	}
+	if m.CortexVisible {
+		panels = append(panels, m.renderCortexPanel(contentWidth))
+	}
 
 	if m.hasGenerationTelemetry() {
 		panels = append(panels, m.renderGenerationCard(contentWidth))
@@ -324,6 +327,7 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("Ctrl+Q", "toggle task queue"),
 			helpRow("Ctrl+R", "toggle review panel"),
 		helpRow("Ctrl+E", "toggle preview card"),
+			helpRow("Ctrl+X", "toggle cortex dashboard"),
 		helpRow("Ctrl+Y", "copy last assistant response"),
 		helpRow("/setup", "run setup wizard"),
 		helpRow("/diagnostics", "run env checks"),
@@ -331,6 +335,7 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("/workspace", "manage workspaces"),
 		helpRow("/report", "generate session report"),
 		helpRow("/autonomy", "set autonomy level"),
+			helpRow("/cortex", "cortex dashboard"),
 		helpRow("?", "toggle this help"),
 	}
 	return ui.HelpCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
@@ -656,6 +661,19 @@ func (m Model) renderCortexGoalPanel(width int) string {
 		lines = append(lines, ui.TimelineStepStyle.Render(line))
 	}
 	lines = append(lines, ui.TaskHintStyle.Render("/goal add <text>  /goal done <id>  /goal remove <id>"))
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) renderCortexPanel(width int) string {
+	lines := []string{ui.PanelTitleStyle.Render("Cortex Dashboard")}
+	if strings.TrimSpace(m.CortexDashboard) != "" {
+		for _, line := range strings.Split(m.CortexDashboard, "\n") {
+			lines = append(lines, trimToWidth(line, width-4))
+		}
+	} else {
+		lines = append(lines, ui.EmptyStateStyle.Render("No Cortex data yet. Use /cortex to generate a dashboard."))
+	}
+	lines = append(lines, ui.TaskHintStyle.Render("Ctrl+X close  /cortex refresh"))
 	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 

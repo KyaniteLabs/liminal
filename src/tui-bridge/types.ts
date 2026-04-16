@@ -132,4 +132,6 @@ export type TuiBridgeEvent =
   // Cortex supervision events: stuck workers and expired leases
   | { type: 'cortex.stuck_detected'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
   | { type: 'cortex.lease_expired'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
+  // Cortex dashboard: formatted explainability report from /cortex command
+  | { type: 'cortex.dashboard'; sessionId: string; content: string }
   | { type: 'error'; sessionId: string; message: string };

@@ -599,6 +599,7 @@ else if (cmd === 'compost') {
     console.error('Compost error:', err.message);
     process.exit(1);
   });
+  process.exit(0);
 }
 else if (cmd === 'list' || cmd === 'ls') {
   const outDir = path.join(process.env.HOME || '/tmp', '.liminal', 'output');
@@ -1670,6 +1671,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
 }
 else if (cmd === 'garden' && cmdArgs[0] === 'stop') {
   console.log('No garden running in this process. Use Ctrl+C on the running garden start process.');
+  process.exit(0);
 }
 else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
   const candidateRef = flags.candidate;
@@ -1706,6 +1708,7 @@ else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
     for (const reg of result.regressions) console.log(`    - ${reg}`);
   }
   console.log('');
+  process.exit(0);
 }
 else if (cmd === 'ship' && cmdArgs[0] === 'rollback') {
   const toRef = flags.to;
@@ -1723,6 +1726,7 @@ else if (cmd === 'ship' && cmdArgs[0] === 'rollback') {
   console.log('');
   console.log(`  Rollback ${rollbackResult.rolledBack ? 'succeeded' : 'failed'}: ${rollbackResult.reason}`);
   console.log('');
+  process.exit(0);
 }
 else if (cmd === 'demo' && cmdArgs[0] === 'creative-codex') {
   const { DemoScenarioRunner } = await import('../dist/product/DemoScenarioRunner.js');
@@ -1746,9 +1750,9 @@ else if (cmd === 'demo' && cmdArgs[0] === 'creative-codex') {
     }
   }
   console.log('');
+  process.exit(0);
 }
 else {
-  console.error('Error: --prompt is required');
   console.error('');
   console.error('Run "liminal --configure" to set up LM Studio');
   console.error('Or use: liminal --prompt "your idea"');

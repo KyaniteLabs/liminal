@@ -57,6 +57,10 @@ for (let i = 0; i < args.length; i++) {
     flags.swarmRounds = parseInt(args[++i]);
   } else if (arg === '--fast-model') {
     flags.fastModel = args[++i];
+  } else if (arg === '--candidate') {
+    flags.candidate = args[++i];
+  } else if (arg === '--to') {
+    flags.to = args[++i];
   } else if (arg === '--powerful-model') {
     flags.powerfulModel = args[++i];
   } else if (arg === '--routing-mode') {
@@ -1624,7 +1628,7 @@ else if (cmd === 'report' && cmdArgs[0] === 'garden') {
   }
 }
 else if (cmd === 'garden' && cmdArgs[0] === 'start') {
-  const mode = parsedArgs.mode || 'co-create';
+  const mode = flags.mode || 'co-create';
   if (!['assist', 'co-create', 'autopilot'].includes(mode)) {
     console.error(`Error: Invalid mode "${mode}". Use assist, co-create, or autopilot.`);
     process.exit(1);
@@ -1668,7 +1672,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'stop') {
   console.log('No garden running in this process. Use Ctrl+C on the running garden start process.');
 }
 else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
-  const candidateRef = parsedArgs.candidate;
+  const candidateRef = flags.candidate;
   const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
   const { CreativeRuntimeCandidateBuilder } = await import('../dist/release/CreativeRuntimeCandidateBuilder.js');
   const { GardenPromotionGate } = await import('../dist/release/GardenPromotionGate.js');
@@ -1704,7 +1708,7 @@ else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
   console.log('');
 }
 else if (cmd === 'ship' && cmdArgs[0] === 'rollback') {
-  const toRef = parsedArgs.to;
+  const toRef = flags.to;
   if (!toRef) {
     console.error('Error: --to <releaseRef> is required');
     process.exit(1);

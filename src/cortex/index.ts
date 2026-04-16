@@ -6,6 +6,7 @@
  */
 
 export { CortexPerceptionBus } from './CortexPerceptionBus.js';
+export { GoalStore } from './GoalStore.js';
 export type {
   CortexSnapshot,
   TaskPipelineSummary,

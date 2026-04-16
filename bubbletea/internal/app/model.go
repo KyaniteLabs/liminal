@@ -165,6 +165,14 @@ type CortexBudgetUsage struct {
 	TokenLimit    int `json:"tokenLimit"`
 }
 
+// CortexStuckWorker represents a stuck process detected by the Cortex supervisor.
+type CortexStuckWorker struct {
+	ProcessName       string
+	DurationMs        int
+	ThresholdMs       int
+	SuggestedRecovery string
+}
+
 const (
 	// MaxTimelineEntries bounds the tool timeline display.
 	MaxTimelineEntries = 50
@@ -262,7 +270,8 @@ type Model struct {
 	// Cortex loop state: background executive decisions
 	CortexTick      int
 	CortexDecisions []CortexDecision
-	CortexBudget    *CortexBudgetUsage
+	CortexBudget      *CortexBudgetUsage
+	CortexStuckWorkers []CortexStuckWorker
 
 	// ── Operator surface state ──
 

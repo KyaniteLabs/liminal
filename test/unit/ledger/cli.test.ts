@@ -93,4 +93,45 @@ describe('ledger parseArgs', () => {
     const result = parseArgs(['status', '--verbose']);
     expect(result).toEqual({ command: 'status', verbose: true });
   });
+
+  // Phase 10 commands
+  it('parses "intake" with no options', () => {
+    const result = parseArgs(['intake']);
+    expect(result).toEqual({ command: 'intake', coveragePath: undefined, outputPath: undefined, minTasks: undefined });
+  });
+
+  it('parses "intake --coverage cov.json --output out.json --min 10"', () => {
+    const result = parseArgs(['intake', '--coverage', 'cov.json', '--output', 'out.json', '--min', '10']);
+    expect(result).toEqual({ command: 'intake', coveragePath: 'cov.json', outputPath: 'out.json', minTasks: 10 });
+  });
+
+  it('parses "batch" with no options', () => {
+    const result = parseArgs(['batch']);
+    expect(result).toEqual({ command: 'batch', maxTasks: undefined, dryRun: false });
+  });
+
+  it('parses "batch --dry-run"', () => {
+    const result = parseArgs(['batch', '--dry-run']);
+    expect(result).toEqual({ command: 'batch', maxTasks: undefined, dryRun: true });
+  });
+
+  it('parses "batch --max-tasks 5"', () => {
+    const result = parseArgs(['batch', '--max-tasks', '5']);
+    expect(result).toEqual({ command: 'batch', maxTasks: 5, dryRun: false });
+  });
+
+  it('parses "batch --max-tasks 10 --dry-run"', () => {
+    const result = parseArgs(['batch', '--max-tasks', '10', '--dry-run']);
+    expect(result).toEqual({ command: 'batch', maxTasks: 10, dryRun: true });
+  });
+
+  it('parses "dashboard" with no options', () => {
+    const result = parseArgs(['dashboard']);
+    expect(result).toEqual({ command: 'dashboard', format: undefined });
+  });
+
+  it('parses "dashboard --format json"', () => {
+    const result = parseArgs(['dashboard', '--format', 'json']);
+    expect(result).toEqual({ command: 'dashboard', format: 'json' });
+  });
 });

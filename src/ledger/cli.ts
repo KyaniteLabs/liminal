@@ -12,6 +12,10 @@ import type { TaskLedger } from './TaskLedger.js';
 import type { LedgerCLIAction, TaskManifest } from './types.js';
 import { TaskRunner } from './TaskRunner.js';
 import { TaskVerifier } from './TaskVerifier.js';
+// @architecture Phase 10 conveyor imports
+import { TaskIntake } from './TaskIntake.js';
+import { ConveyorRunner } from './ConveyorRunner.js';
+import { ConveyorMonitor } from './ConveyorMonitor.js';
 
 export function parseArgs(args: string[]): LedgerCLIAction {
   const argv = args[0] === 'ledger' ? args.slice(1) : args;
@@ -45,6 +49,26 @@ export function parseArgs(args: string[]): LedgerCLIAction {
   }
   if (argv[0] === 'load') {
     return { command: 'load', path: argv[1] ?? '' };
+  }
+  if (argv[0] === 'intake') {
+    const coverageIdx = argv.indexOf('--coverage');
+    const outputIdx = argv.indexOf('--output');
+    const minIdx = argv.indexOf('--min');
+    return {
+      command: 'intake',
+      coveragePath: coverageIdx !== -1 ? argv[coverageIdx + 1] : undefined,
+      outputPath: outputIdx !== -1 ? argv[outputIdx + 1] : undefined,
+      minTasks: minIdx !== -1 ? parseInt(argv[minIdx + 1], 10) : undefined,
+    };
+  }
+  if (argv[0] === 'batch') {
+    const maxIdx = argv.indexOf('--max-tasks');
+    const maxTasks = maxIdx !== -1 ? parseInt(argv[maxIdx + 1], 10) : undefined;
+    return { command: 'batch', maxTasks: !isNaN(maxTasks as number) ? maxTasks : undefined, dryRun: argv.includes('--dry-run') };
+  }
+  if (argv[0] === 'dashboard') {
+    const fmtIdx = argv.indexOf('--format');
+    return { command: 'dashboard', format: fmtIdx !== -1 ? (argv[fmtIdx + 1] as 'text' | 'json') : undefined };
   }
   return { command: 'status', verbose: argv.includes('--verbose') };
 }
@@ -236,6 +260,91 @@ export async function execute(
         }
       }
       console.log(`Loaded ${loaded} task(s) from ${filePath}`);
+      break;
+    }
+    case 'intake': {
+      const intake = new TaskIntake({
+        coveragePath: action.coveragePath,
+        minTasks: action.minTasks,
+      });
+      const specs = intake.run();
+      if (specs.length === 0) {
+        console.log('No candidate tasks found. Ensure coverage data is available.');
+        break;
+      }
+      // Load specs into ledger (skip tasks that already exist to preserve progress)
+      let loaded = 0;
+      let skipped = 0;
+      for (const spec of specs) {
+        if (ledger.loadTask(spec.id)) {
+          skipped++;
+          continue;
+        }
+        try {
+          ledger.createTask(spec as Omit<TaskManifest, 'status' | 'attemptCount' | 'createdAt' | 'updatedAt'>);
+          loaded++;
+        } catch {
+          // Other write error — skip
+        }
+      }
+      console.log(`\n  Task Intake\n`);
+      console.log(`  Candidates:  ${specs.length}`);
+      console.log(`  Loaded:       ${loaded}`);
+      if (skipped > 0) console.log(`  Skipped:      ${skipped} (already exist)`);
+      // Summary by class
+      const byClass: Record<string, number> = {};
+      for (const s of specs) {
+        byClass[s.taskClass] = (byClass[s.taskClass] ?? 0) + 1;
+      }
+      console.log(`  By class:     ${Object.entries(byClass).map(([k, v]) => `${k}=${v}`).join(', ')}`);
+      // Optionally write to file
+      if (action.outputPath) {
+        const fs = await import('node:fs');
+        const path = await import('node:path');
+        const outputPath = path.resolve(action.outputPath);
+        fs.writeFileSync(outputPath, JSON.stringify(specs, null, 2));
+        console.log(`  Output:       ${outputPath}`);
+      }
+      console.log('');
+      break;
+    }
+    case 'batch': {
+      console.log(`\n  Conveyor Batch\n`);
+      const pendingTasks = ledger.listTasks().filter(t => t.status === 'pending');
+      if (action.dryRun) {
+        console.log(`  [DRY RUN] Would process ${pendingTasks.length} pending task(s)${action.maxTasks ? ` (max ${action.maxTasks})` : ''}`);
+        for (const task of pendingTasks.slice(0, action.maxTasks ?? pendingTasks.length)) {
+          console.log(`    ${task.id.padEnd(6)} ${task.taskClass.padEnd(18)} ${task.title}`);
+        }
+        break;
+      }
+      const runner = new ConveyorRunner(ledger);
+      const result = await runner.runBatch({ maxTasks: action.maxTasks });
+      const monitor = new ConveyorMonitor(ledger);
+      const dashboard = monitor.generateDashboard(result);
+      console.log(monitor.formatText(dashboard));
+      break;
+    }
+    case 'dashboard': {
+      // Dashboard shows latest batch result from ledger state
+      const tasks = ledger.listTasks();
+      const completed = tasks.filter(t => t.status === 'completed');
+      const failed = tasks.filter(t => t.status === 'failed');
+      const pending = tasks.filter(t => t.status === 'pending');
+      const inProgress = tasks.filter(t => t.status === 'in-progress');
+      console.log(`\n  Ledger Dashboard\n`);
+      console.log(`  Total:       ${tasks.length}`);
+      console.log(`  Pending:     ${pending.length}`);
+      console.log(`  In Progress: ${inProgress.length}`);
+      console.log(`  Completed:   ${completed.length}`);
+      console.log(`  Failed:      ${failed.length}`);
+      if (completed.length > 0) {
+        console.log(`\n  Acceptance rate: ${(completed.length / tasks.length * 100).toFixed(1)}%`);
+      }
+      if (action.format === 'json') {
+        console.log('\n' + JSON.stringify({ total: tasks.length, pending: pending.length, inProgress: inProgress.length, completed: completed.length, failed: failed.length }, null, 2));
+      }
+      console.log('');
       break;
     }
   }

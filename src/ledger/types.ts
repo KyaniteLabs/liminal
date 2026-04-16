@@ -144,6 +144,53 @@ export interface TaskDecision {
   decidedAt: string;
 }
 
+// ─── Phase 10: Autonomous Development Conveyor ─────────────────────
+
+/** @architecture Phase 10 conveyor types for autonomous task processing */
+export type FailureClass =
+  | 'generator-weakness' | 'verifier-opacity' | 'harness-issue'
+  | 'task-spec-issue' | 'provider-issue';
+
+export interface FileCoverage {
+  path: string;
+  statementPct: number;
+  branchPct: number;
+  functionPct: number;
+  statementTotal: number;
+}
+
+export interface SourceAnnotation {
+  file: string;
+  line: number;
+  kind: 'TODO' | 'FIXME' | 'HACK';
+  text: string;
+}
+
+export interface ConveyorTaskResult {
+  taskId: string;
+  status: 'accepted' | 'failed' | 'escalated';
+  attempts: number;
+  finalScore: number;
+  testPassed: boolean;
+  durationMs: number;
+  failureClass?: FailureClass;
+}
+
+export interface ConveyorBatchResult {
+  batchId: string;
+  startedAt: string;
+  completedAt: string;
+  tasksAttempted: number;
+  tasksAccepted: number;
+  tasksFailed: number;
+  tasksEscalated: number;
+  acceptanceRate: number;
+  coverageBefore: { statements: number; branches: number; functions: number; lines: number };
+  coverageAfter: { statements: number; branches: number; functions: number; lines: number };
+  failureBreakdown: Record<FailureClass, number>;
+  results: ConveyorTaskResult[];
+}
+
 // ─── CLI Action ────────────────────────────────────────────────────
 
 /** Discriminated union for CLI subcommand parsing */
@@ -155,4 +202,7 @@ export type LedgerCLIAction =
   | { command: 'accept'; taskId: string; candidateId: string }
   | { command: 'reject'; taskId: string; candidateId: string; reason?: string }
   | { command: 'status'; verbose?: boolean }
-  | { command: 'load'; path: string };
+  | { command: 'load'; path: string }
+  | { command: 'intake'; coveragePath?: string; outputPath?: string; minTasks?: number }
+  | { command: 'batch'; maxTasks?: number; dryRun?: boolean }
+  | { command: 'dashboard'; format?: 'text' | 'json' };

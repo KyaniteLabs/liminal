@@ -95,4 +95,10 @@ export type TuiBridgeEvent =
   | { type: 'skill.started'; sessionId: string; skillName: string }
   | { type: 'skill.completed'; sessionId: string; skillName: string; durationMs: number }
   | { type: 'skill.list'; sessionId: string; skills: Array<{ name: string; description: string; mode?: string }> }
+  // Review events: candidate lifecycle
+  | { type: 'review.candidate_added'; sessionId: string; candidateId: string; label: string; score: number }
+  | { type: 'review.candidate_accepted'; sessionId: string; candidateId: string }
+  | { type: 'review.candidate_rejected'; sessionId: string; candidateId: string }
+  | { type: 'review.favorite_pinned'; sessionId: string; candidateId: string }
+  | { type: 'review.diff_ready'; sessionId: string; candidateA: string; candidateB: string; diff: string }
   | { type: 'error'; sessionId: string; message: string };

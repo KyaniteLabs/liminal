@@ -212,6 +212,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.QueueVisible = !m.QueueVisible
 			m.refreshViewports()
 			return m, nil
+
+		case "ctrl+r":
+			m.ReviewVisible = !m.ReviewVisible
+			m.refreshViewports()
+			return m, nil
 		}
 
 		if msg.String() == "?" {
@@ -358,7 +363,7 @@ func parseInputIntent(input string) (mode, intent string) {
 			return "action", "command"
 		case "/mode", "/modes":
 			return "chat", "command"
-		case "/skill", "/skills":
+		case "/skill", "/skills", "/accept", "/reject", "/pin", "/diff", "/candidates":
 			return "chat", "command"
 		case "/stop":
 			return "chat", "command"

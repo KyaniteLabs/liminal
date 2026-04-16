@@ -108,6 +108,15 @@ type SessionTurnEntry struct {
 	Timestamp   time.Time
 }
 
+// ReviewCandidate holds a generation candidate pending review.
+type ReviewCandidate struct {
+	ID        string
+	Label     string
+	Score     float64
+	Status    string // "pending" | "accepted" | "rejected"
+	CreatedAt time.Time
+}
+
 // TaskCard holds the current agent objective and progress.
 type TaskCard struct {
 	Objective   string
@@ -165,6 +174,13 @@ type Model struct {
 
 	// Active skill: name of currently running skill
 	ActiveSkill string
+
+	// Review state: candidates, favorites, diff, visibility
+	ReviewCandidates    []ReviewCandidate
+	ReviewVisible       bool
+	SelectedCandidate   int
+	DiffContent         string
+	FavoriteIDs         map[string]bool
 
 	// Generation telemetry
 	GenerationModel      string
@@ -314,6 +330,9 @@ func NewModel(bridgeURL string) Model {
 		ArtifactsVisible: false,
 		QueueVisible:     false,
 		HelpVisible:      false,
+		ReviewCandidates: []ReviewCandidate{},
+		ReviewVisible:    false,
+		FavoriteIDs:      make(map[string]bool),
 	}
 }
 
@@ -628,6 +647,49 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 
 	case "skill.list":
 		// Response handled in chat content; no model state change needed
+
+		// ── Review events ──
+
+		case "review.candidate_added":
+			m.ReviewCandidates = append(m.ReviewCandidates, ReviewCandidate{
+				ID:        event.CandidateID,
+				Label:     event.Label,
+				Score:     event.Score,
+				Status:    "pending",
+				CreatedAt: time.Now(),
+			})
+			m.ReviewVisible = true
+			m.addActivity(fmt.Sprintf("Candidate: %s (score %.2f)", event.Label, event.Score))
+
+		case "review.candidate_accepted":
+			for i := range m.ReviewCandidates {
+				if m.ReviewCandidates[i].ID == event.CandidateID {
+					m.ReviewCandidates[i].Status = "accepted"
+					break
+				}
+			}
+			m.addActivity("Accepted: " + event.CandidateID)
+
+		case "review.candidate_rejected":
+			for i := range m.ReviewCandidates {
+				if m.ReviewCandidates[i].ID == event.CandidateID {
+					m.ReviewCandidates[i].Status = "rejected"
+					break
+				}
+			}
+			m.addActivity("Rejected: " + event.CandidateID)
+
+		case "review.favorite_pinned":
+			if m.FavoriteIDs == nil {
+				m.FavoriteIDs = make(map[string]bool)
+			}
+			m.FavoriteIDs[event.CandidateID] = true
+			m.addActivity("Pinned: " + event.CandidateID)
+
+		case "review.diff_ready":
+			m.DiffContent = event.Diff
+			m.ReviewVisible = true
+			m.addActivity(fmt.Sprintf("Diff: %s vs %s", event.CandidateA, event.CandidateB))
 	}
 }
 

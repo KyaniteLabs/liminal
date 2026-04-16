@@ -36,6 +36,12 @@ func (m Model) renderOperatorSurface(width int) string {
 	if m.PreviewVisible && strings.TrimSpace(m.PreviewContent) != "" {
 		panels = append(panels, m.renderPreviewCard(contentWidth))
 	}
+	if m.ReviewVisible && len(m.ReviewCandidates) > 0 {
+		panels = append(panels, m.renderReviewPanel(contentWidth))
+	}
+	if m.DiffContent != "" {
+		panels = append(panels, m.renderDiffView(contentWidth))
+	}
 	if m.HelpVisible {
 		panels = append(panels, m.renderHelpDrawer(contentWidth))
 	} else if len(m.ActivityLog) > 0 {
@@ -300,6 +306,7 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("Ctrl+T", "toggle timeline"),
 		helpRow("Ctrl+A", "toggle artifacts"),
 		helpRow("Ctrl+Q", "toggle task queue"),
+			helpRow("Ctrl+R", "toggle review panel"),
 		helpRow("Ctrl+E", "toggle preview card"),
 		helpRow("Ctrl+Y", "copy last assistant response"),
 		helpRow("?", "toggle this help"),
@@ -460,4 +467,55 @@ func formatDurationMs(ms int64) string {
 		return fmt.Sprintf("%dms", ms)
 	}
 	return fmt.Sprintf("%.1fs", float64(ms)/1000.0)
+}
+
+func (m Model) renderReviewPanel(width int) string {
+	lines := []string{ui.PanelTitleStyle.Render("Review Candidates")}
+	if len(m.ReviewCandidates) == 0 {
+		lines = append(lines, ui.EmptyStateStyle.Render("No candidates yet."))
+		return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+	}
+
+	start := 0
+	if len(m.ReviewCandidates) > 6 {
+		start = len(m.ReviewCandidates) - 6
+	}
+	for _, c := range m.ReviewCandidates[start:] {
+		statusIcon := "…"
+		switch c.Status {
+		case "accepted":
+			statusIcon = "✓"
+		case "rejected":
+			statusIcon = "✗"
+		}
+		favIcon := ""
+		if m.FavoriteIDs[c.ID] {
+			favIcon = " ★"
+		}
+		score := fmt.Sprintf("%.2f", c.Score)
+		line := fmt.Sprintf("%s %s  %s  %s%s", statusIcon, c.ID[:min(20, len(c.ID))], score, c.Label, favIcon)
+		lines = append(lines, ui.TimelineStepStyle.Render(line))
+	}
+	lines = append(lines, ui.TaskHintStyle.Render("/accept <id>  /reject <id>  /pin <id>  /diff <a> <b>"))
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) renderDiffView(width int) string {
+	lines := []string{ui.PanelTitleStyle.Render("Diff")}
+	diffLines := strings.Split(m.DiffContent, "\n")
+	start := 0
+	if len(diffLines) > 12 {
+		start = len(diffLines) - 12
+	}
+	for _, dl := range diffLines[start:] {
+		trimmed := trimToWidth(dl, width-4)
+		if strings.HasPrefix(dl, "+ ") {
+			lines = append(lines, lipgloss.NewStyle().Foreground(ui.AccentGreen).Render(trimmed))
+		} else if strings.HasPrefix(dl, "- ") {
+			lines = append(lines, lipgloss.NewStyle().Foreground(ui.AccentRed).Render(trimmed))
+		} else {
+			lines = append(lines, ui.PanelValueStyle.Render(trimmed))
+		}
+	}
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }

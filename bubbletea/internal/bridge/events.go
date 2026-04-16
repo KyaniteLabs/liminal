@@ -90,6 +90,12 @@ type Event struct {
 	// Skill event fields
 	SkillName string `json:"skillName,omitempty"`
 
+	// Review event fields
+	CandidateID string  `json:"candidateId,omitempty"`
+	CandidateA string   `json:"candidateA,omitempty"`
+	CandidateB string   `json:"candidateB,omitempty"`
+	Diff       string   `json:"diff,omitempty"`
+
 	// Session turn event fields
 	TurnID      string   `json:"turnId,omitempty"`
 	Intent      string   `json:"intent,omitempty"`

@@ -14,6 +14,8 @@ import type { ModeConfig, ProductMode } from '../agent/ProductMode.js';
 import { ModeRegistry } from '../agent/ModeRegistry.js';
 import { SkillRunner } from '../agent/SkillRunner.js';
 import { SkillCatalog } from '../agent/SkillCatalog.js';
+import { ReviewManager } from '../agent/ReviewManager.js';
+import { DiffRenderer } from '../agent/DiffRenderer.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 
@@ -84,6 +86,10 @@ export class TuiBridgeService {
   private skillRunner = new SkillRunner();
   // Skill catalog: lists skills with mode filtering
   private skillCatalog = new SkillCatalog();
+  // Review manager: candidate lifecycle (accept/reject/pin)
+  private reviewManager = new ReviewManager();
+  // Diff renderer: unified diff between candidates
+  private diffRenderer = new DiffRenderer();
 
   constructor() {
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -228,6 +234,13 @@ export class TuiBridgeService {
     // Handle /skill <name> command: run a skill
     if (input.text.startsWith('/skill ')) {
       return this.handleSkillCommand(sessionId, input.text, llm);
+    }
+
+    // Handle review commands: /accept, /reject, /pin, /diff, /candidates
+    if (input.text.startsWith('/accept') || input.text.startsWith('/reject') ||
+        input.text.startsWith('/pin') || input.text.startsWith('/diff') ||
+        input.text.trim() === '/candidates') {
+      return this.handleReviewCommand(sessionId, input.text);
     }
 
     // Studio routing: classify intent via IntentRouter with mode biasing
@@ -521,6 +534,99 @@ export class TuiBridgeService {
   }
 
   /**
+   * Handle review commands: /accept <id>, /reject <id>, /pin <id>,
+   * /diff <idA> <idB>, /candidates
+   */
+  private handleReviewCommand(sessionId: string, input: string): { reviewRequired: boolean } {
+    const parts = input.trim().split(/\s+/);
+    const cmd = parts[0];
+
+    if (cmd === '/candidates') {
+      const candidates = this.reviewManager.list({ sessionId });
+      if (candidates.length === 0) {
+        this.emitCommandResponse(sessionId, 'No review candidates for this session.');
+      } else {
+        const lines = candidates.map(c => {
+          const statusTag = c.status === 'accepted' ? ' ✓' : c.status === 'rejected' ? ' ✗' : ' …';
+          return `  ${c.id.slice(0, 20).padEnd(22)} ${c.score.toFixed(2)}  ${c.label}${statusTag}`;
+        });
+        this.emitCommandResponse(sessionId, `Review candidates:\n${lines.join('\n')}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/accept') {
+      const candidateId = parts[1];
+      if (!candidateId) {
+        this.emitCommandResponse(sessionId, 'Usage: /accept <candidate-id>');
+        return { reviewRequired: false };
+      }
+      const candidate = this.reviewManager.accept(candidateId);
+      if (!candidate) {
+        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
+      } else {
+        this.emit(sessionId, { type: 'review.candidate_accepted', sessionId, candidateId });
+        this.emitCommandResponse(sessionId, `Accepted: ${candidate.label} (score: ${candidate.score.toFixed(2)})`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/reject') {
+      const candidateId = parts[1];
+      if (!candidateId) {
+        this.emitCommandResponse(sessionId, 'Usage: /reject <candidate-id>');
+        return { reviewRequired: false };
+      }
+      const candidate = this.reviewManager.reject(candidateId);
+      if (!candidate) {
+        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
+      } else {
+        this.emit(sessionId, { type: 'review.candidate_rejected', sessionId, candidateId });
+        this.emitCommandResponse(sessionId, `Rejected: ${candidate.label}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/pin') {
+      const candidateId = parts[1];
+      if (!candidateId) {
+        this.emitCommandResponse(sessionId, 'Usage: /pin <candidate-id>');
+        return { reviewRequired: false };
+      }
+      const ok = this.reviewManager.pin(candidateId);
+      if (!ok) {
+        this.emitCommandResponse(sessionId, `Candidate ${candidateId} not found.`);
+      } else {
+        this.emit(sessionId, { type: 'review.favorite_pinned', sessionId, candidateId });
+        this.emitCommandResponse(sessionId, `Pinned: ${candidateId}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    if (cmd === '/diff') {
+      const idA = parts[1];
+      const idB = parts[2];
+      if (!idA || !idB) {
+        this.emitCommandResponse(sessionId, 'Usage: /diff <candidateA-id> <candidateB-id>');
+        return { reviewRequired: false };
+      }
+      const candA = this.reviewManager.get(idA);
+      const candB = this.reviewManager.get(idB);
+      if (!candA || !candB) {
+        this.emitCommandResponse(sessionId, 'One or both candidates not found.');
+        return { reviewRequired: false };
+      }
+      const result = this.diffRenderer.diff(candA.content, candB.content);
+      const rendered = this.diffRenderer.render(result);
+      this.emit(sessionId, { type: 'review.diff_ready', sessionId, candidateA: idA, candidateB: idB, diff: rendered });
+      this.emitCommandResponse(sessionId, `Diff (${idA} vs ${idB}):\n${rendered}`);
+      return { reviewRequired: false };
+    }
+
+    return { reviewRequired: false };
+  }
+
+  /**
    * Stream a RalphLoop generation with telemetry events
    */
   private async streamRalphGeneration(
@@ -614,6 +720,21 @@ export class TuiBridgeService {
 
         // Record in conversation
         conversation['recordMessage']('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
+
+        // Create review candidate from generation result
+        const candidate = this.reviewManager.addCandidate(
+          sessionId,
+          `gen-iter-${result.iterations}`,
+          result.code,
+          result.finalScore,
+        );
+        this.emit(sessionId, {
+          type: 'review.candidate_added',
+          sessionId,
+          candidateId: candidate.id,
+          label: candidate.label,
+          score: candidate.score,
+        });
       }
       logBridge('generation.completed', {
         sessionId,

@@ -34,7 +34,13 @@ export type { ModeChangeCallback } from './ModeRegistry.js'
 export { SkillRunner } from './SkillRunner.js'
 export type { SkillRunResult } from './SkillRunner.js'
 export { SkillCatalog } from './SkillCatalog.js'
-export type { CatalogEntry } from './SkillCatalog.js';
+export type { CatalogEntry } from './SkillCatalog.js'
+
+// Review and diff
+export { ReviewManager } from './ReviewManager.js'
+export type { ReviewCandidate, CandidateStatus } from './ReviewManager.js'
+export { DiffRenderer } from './DiffRenderer.js'
+export type { DiffLine, DiffResult } from './DiffRenderer.js'
 
 // Response formatting
 export { ResponseComposer } from './ResponseComposer.js';

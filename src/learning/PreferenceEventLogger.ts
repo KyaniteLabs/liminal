@@ -101,16 +101,24 @@ export class PreferenceEventLogger {
       sessionId,
     });
 
-    const allPairwise = [...pairwiseEvents, ...pairedB];
-
-    // Group by timestamp proximity to find pairs
     const comparisons: Array<{ winner: string; loser: string; capturedAt: string }> = [];
 
-    for (const event of allPairwise) {
+    // pairwise-a: artifactId won, comparedTo lost
+    for (const event of pairwiseEvents) {
       if (!event.comparedTo) continue;
       comparisons.push({
         winner: event.artifactId,
         loser: event.comparedTo,
+        capturedAt: event.capturedAt,
+      });
+    }
+
+    // pairwise-b: comparedTo won, artifactId lost
+    for (const event of pairedB) {
+      if (!event.comparedTo) continue;
+      comparisons.push({
+        winner: event.comparedTo,
+        loser: event.artifactId,
         capturedAt: event.capturedAt,
       });
     }

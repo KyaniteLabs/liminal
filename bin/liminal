@@ -877,8 +877,8 @@ else if (cmd === 'quality') {
   const subCmd = cmdArgs[0];
   if (!subCmd || (subCmd !== 'run' && subCmd !== 'gate')) {
     console.error('Usage: liminal quality <run|gate>');
-    console.error('  run   --suite <path>   Run a golden suite');
-    console.error('  gate  --suite <path>   Block promotion on regression');
+    console.error('  run   --spec <path>   Run a golden suite');
+    console.error('  gate  --spec <path>   Block promotion on regression');
     process.exit(1);
   }
 

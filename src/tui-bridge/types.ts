@@ -129,4 +129,7 @@ export type TuiBridgeEvent =
   | { type: 'cortex.loop_tick'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
   | { type: 'cortex.decision'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
   | { type: 'cortex.action_proposed'; sessionId: string; tickNumber: number; data: { proposal: ActionProposal } }
+  // Cortex supervision events: stuck workers and expired leases
+  | { type: 'cortex.stuck_detected'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
+  | { type: 'cortex.lease_expired'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
   | { type: 'error'; sessionId: string; message: string };

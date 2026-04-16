@@ -42,3 +42,20 @@ export type { TaskExecutor, TaskExecutorResult, TaskDelegatorOptions } from './T
 // Session persistence
 export { SessionGraph } from './SessionGraph.js';
 export type { SessionTurnRecord, SessionManifest } from './SessionGraph.js';
+
+// Evaluation fabric (re-exports from evaluation module)
+export { EvaluationFabric, HybridJudge, synthesize, isTrustworthy } from '../evaluation/index.js';
+export type {
+  EvaluationCandidate,
+  EvaluationFabricResult,
+  EvaluationFabricConfig,
+  ConfidenceReport,
+  ConfidenceDimension,
+  AgreementLevel,
+  HybridJudgment,
+  HybridWeights,
+  GoldenSuite,
+  GoldenCase,
+  GoldenCaseResult,
+  GoldenSuiteResult,
+} from '../evaluation/index.js';

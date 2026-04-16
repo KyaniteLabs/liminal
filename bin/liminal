@@ -123,6 +123,8 @@ function printHelp() {
   console.log('  ledger <subcommand>         Task ledger: list, show, run, verify, accept, reject, status');
   console.log('  studio                     Launch Liminal Studio (Bubble Tea TUI + StudioAgent)');
   console.log('  quality <subcommand>       Quality gate: run, gate');
+  console.log('  archive <subcommand>      Archive: inspect, lineage, branch, list');
+  console.log('  preferences <subcommand>  Preferences: export, stats');
   console.log('');
   console.log('OPTIONS:');
   console.log('  --prompt, -p <text>         Prompt for generation');
@@ -1140,6 +1142,147 @@ else if (cmd === 'ledger') {
     await execute(action, taskLedger);
   } finally {
     liminalFs.close();
+  }
+}
+else if (cmd === 'archive') {
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks, LineageTracker, ArchivePlacement } = await import('../dist/emergence/index.js');
+
+  const subCmd = cmdArgs[0];
+  const artifactRef = cmdArgs[1];
+
+  const liminalFs = LiminalFS.open(process.cwd());
+
+  try {
+    if (subCmd === 'inspect' && artifactRef) {
+      const hooks = new EmergenceHooks(liminalFs);
+      const cell = hooks.getArchive().findCellForArtifact(artifactRef);
+      if (!cell) {
+        console.error(`Artifact ${artifactRef} not found in archive.`);
+        process.exit(1);
+      }
+      const elite = cell.elite;
+      if (!elite) {
+        console.error(`No elite in cell for ${artifactRef}.`);
+        process.exit(1);
+      }
+      console.log('');
+      console.log(`Archive Entry: ${elite.id}`);
+      console.log(`  Cell: ${cell.cellId}`);
+      console.log(`  Quality: ${elite.qualityScore.toFixed(3)}`);
+      console.log(`  Provenance: ${elite.lineage.provenance}`);
+      console.log(`  Parents: ${elite.lineage.parentIds.length > 0 ? elite.lineage.parentIds.join(', ') : '(root)'}`);
+      console.log(`  Archived: ${elite.archivedAt}`);
+      console.log('');
+      console.log('  Descriptors:');
+      for (const dv of elite.descriptor.values) {
+        console.log(`    ${dv.axis}: ${dv.value.toFixed(3)}`);
+      }
+      console.log('');
+      console.log('  Emergence signals:');
+      console.log(`    Novelty: ${elite.signals.novelty.toFixed(3)}`);
+      console.log(`    Structure: ${elite.signals.structure.toFixed(3)}`);
+      console.log(`    Temporal richness: ${elite.signals.temporalRichness.toFixed(3)}`);
+      console.log(`    Fertility: ${elite.signals.fertility.toFixed(3)}`);
+      console.log(`    Aesthetic: ${elite.signals.aesthetic.toFixed(3)}`);
+      console.log('');
+    } else if (subCmd === 'lineage' && artifactRef) {
+      const tracker = new LineageTracker();
+      const ancestry = await tracker.getAncestry(artifactRef);
+      if (ancestry.length === 0) {
+        console.error(`No lineage found for ${artifactRef}.`);
+        process.exit(1);
+      }
+      console.log('');
+      console.log(`Lineage for ${artifactRef}:`);
+      for (const record of ancestry) {
+        const indent = '  ' + '  '.repeat(await tracker.getDepth(record.artifactId));
+        console.log(`${indent}${record.artifactId} [${record.provenance}] ${record.parentIds.length > 0 ? '<- ' + record.parentIds.join(', ') : '(root)'}`);
+      }
+      console.log('');
+    } else if (subCmd === 'branch' && artifactRef) {
+      console.log('');
+      console.log(`Branching from ${artifactRef}...`);
+      console.log('  (Branch action recorded. Use liminal gen with --parent to continue.)');
+      console.log('');
+    } else if (subCmd === 'list') {
+      const hooks = new EmergenceHooks(liminalFs);
+      const stats = hooks.getArchive().getStats();
+      const elites = hooks.getArchive().getAllElites();
+      console.log('');
+      console.log(`Archive: ${stats.totalCells} cells, ${stats.totalElites} elites, ${stats.totalNearElites} near-elites`);
+      console.log(`  Average quality: ${stats.avgQuality.toFixed(3)}`);
+      console.log('');
+      if (elites.length > 0) {
+        for (const e of elites.slice(0, 20)) {
+          console.log(`  ${e.id}  q=${e.qualityScore.toFixed(2)}  ${e.lineage.provenance}  novelty=${e.signals.novelty.toFixed(2)}`);
+        }
+        if (elites.length > 20) console.log(`  ... and ${elites.length - 20} more`);
+      }
+      console.log('');
+    } else {
+      console.error('Usage: liminal archive <inspect|lineage|branch|list> [artifactRef]');
+      process.exit(1);
+    }
+  } finally {
+    liminalFs.close();
+  }
+}
+else if (cmd === 'preferences') {
+  const { PreferenceEventLogger } = await import('../dist/learning/PreferenceEventLogger.js');
+
+  const subCmd = cmdArgs[0];
+  const logger = new PreferenceEventLogger();
+
+  if (subCmd === 'export') {
+    const sessionId = flags.prompt; // Reuse --prompt for --session
+    let records;
+    if (sessionId) {
+      records = await logger.exportSession(sessionId);
+      console.log('');
+      console.log(`Preference events for session ${sessionId}:`);
+    } else {
+      const dataset = await logger.exportDataset();
+      console.log('');
+      console.log('Preference Dataset Export:');
+      console.log(`  Total events: ${dataset.totalEvents}`);
+      console.log(`  Pairwise comparisons: ${dataset.pairwiseComparisons.length}`);
+      console.log(`  Positive feedback: ${dataset.positiveFeedback.length}`);
+      console.log(`  Negative feedback: ${dataset.negativeFeedback.length}`);
+      console.log('');
+      if (dataset.pairwiseComparisons.length > 0) {
+        console.log('  Pairwise:');
+        for (const c of dataset.pairwiseComparisons) {
+          console.log(`    winner: ${c.winner}  loser: ${c.loser}`);
+        }
+      }
+      console.log('');
+      process.exit(0);
+    }
+    if (records) {
+      for (const r of records) {
+        console.log(`  ${r.action} ${r.artifactId}${r.comparedTo ? ' vs ' + r.comparedTo : ''}  @${r.capturedAt}`);
+      }
+      console.log('');
+    }
+  } else if (subCmd === 'stats') {
+    const stats = await logger.getStats();
+    console.log('');
+    console.log('Preference Stats:');
+    console.log(`  Total events: ${stats.totalEvents}`);
+    console.log(`  Unique artifacts: ${stats.uniqueArtifacts}`);
+    console.log(`  Pairwise: ${stats.pairwiseCount}`);
+    console.log('');
+    if (Object.keys(stats.byAction).length > 0) {
+      console.log('  By action:');
+      for (const [action, count] of Object.entries(stats.byAction)) {
+        console.log(`    ${action}: ${count}`);
+      }
+    }
+    console.log('');
+  } else {
+    console.error('Usage: liminal preferences <export|stats> [--session <id>]');
+    process.exit(1);
   }
 }
 else {

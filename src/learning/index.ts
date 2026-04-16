@@ -11,3 +11,5 @@ export type {
   ArchiveEntry,
   QualityArchiveConfig,
 } from './QualityArchive.js';
+
+export { PreferenceEventLogger } from './PreferenceEventLogger.js';

@@ -10,7 +10,9 @@ export type LiminalObjectKind =
   | 'asset'
   | 'task-candidate'
   | 'task-attempt'
-  | 'session-turn';
+  | 'session-turn'
+  | 'archive-entry'
+  | 'preference-event';
 
 export interface LiminalObjectRef {
   uri: string;

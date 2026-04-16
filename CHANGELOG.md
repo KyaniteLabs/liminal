@@ -2,6 +2,58 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Added — Self-Hosting Task Ledger (Phase 9–10)
+- `src/ledger/` — Complete task management system with corpus, runner, and verifier
+- TaskRunner: Executes tasks from corpus with shell-free security (`execFileSync`)
+- TaskVerifier: Validates results with metacharacter guard + prefix whitelist
+- Task corpus: Curated task definitions with approval workflow
+- CLI: `liminal ledger list|show|run|verify|accept|reject|status`
+- Autonomous development conveyor: Phase 10 pipeline for self-directed task execution
+
+### Added — LiminalFS (Filesystem Substrate)
+- `src/fs/` — Unified filesystem facade over ProjectStore, EventStore, AssetStore
+- SeedFSAdapter, TraceFSAdapter, GalleryFSAdapter: Bridge existing modules to LiminalFS
+- LoopPersistence: RalphLoop writes generation runs to LiminalFS
+- OrganismLoop: Wired to LiminalFS for persistent organism state
+- CLI: `liminal fs artifacts|refs|runs` subcommands
+
+### Added — Guardrails M12–M18
+- Compliance guardrails layer (correctness, hygiene, observation, remediation)
+- `src/guardrails/` restructured into domain-specific subdirectories
+- 7 new guardrail rules covering runtime health, accessibility, and semantic checks
+
+### Added — Thinking-Trace Feedback Loop
+- ReasoningCapture: Extracts model thinking from LLM responses
+- ThinkingSeparation: Keeps generator and harness thinking in separate namespaces
+- MetaHarnessIntegration: Analyzes generator thinking to improve prompts and routing
+- ModelBehaviorPatterns: Long-term pattern detection across sessions
+
+### Added — DF3 Phases 6–8
+- Intuition scoring dimension (`--intuition` flag)
+- Entropy measurement for generation diversity
+- Evolution-based generation improvement
+
+### Changed
+- Structured logger replaces console.log throughout harness and core modules
+- CI pipeline optimized: removed setup-node, enabled caches, switched to thread pool
+- Bubble Tea TUI is now the primary interactive interface
+- Coverage ratchet targeting 70% across all metrics (currently ~68.6% statements)
+
+### Fixed
+- repairAdvice dropout in multi-candidate RalphLoop evaluation
+- Strudel regex typo causing false validation failures
+- Candidate telemetry using filtered-array position instead of original index
+- `rankCandidates` crash on empty evaluations
+- SQLite runtime DB accidentally tracked in git
+
+### Removed
+- Archaeology pipeline extracted to separate `dev-archaeology` repo
+- Stale root-level audit reports moved to `docs/internal/`
+
+---
+
 ## [2.1.0] - 2026-04-01
 
 ### Added — Meta-Harness (Self-Improving Infrastructure)

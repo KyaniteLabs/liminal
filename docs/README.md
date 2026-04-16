@@ -1,19 +1,5 @@
 # Liminal Documentation
 
-**The complete source of truth for the Liminal creative coding agent.**
-
----
-
-## 📖 THE BIBLE (Start Here)
-
-**[THE_BIBLE.md](./THE_BIBLE.md)** - Comprehensive system documentation covering:
-- Complete architecture overview
-- All subsystems (Meta-Harness, Ralph Loop, Generators, Guardrails)
-- Test status (1741 tests passing)
-- Recent fixes and cleanup
-- API exports
-- Configuration
-
 ---
 
 ## Quick Navigation
@@ -21,64 +7,37 @@
 ### Core Documentation
 | Document | Purpose |
 |----------|---------|
-| [THE_BIBLE.md](./THE_BIBLE.md) | **Complete system reference** |
-| [ARCHITECTURE_QUICKREF.md](./ARCHITECTURE_QUICKREF.md) | Quick visual overview |
+| [ARCHITECTURE_AND_PHILOSOPHY.md](./ARCHITECTURE_AND_PHILOSOPHY.md) | System design principles |
+| [ARCHITECTURE_QUICKREF.md](./ARCHITECTURE_QUICKREF.md) | Visual architecture overview |
 | [GENERATOR_ARCHITECTURE_V2.md](./GENERATOR_ARCHITECTURE_V2.md) | Generator design |
-
-### Guardrails & Safety
-| Document | Purpose |
-|----------|---------|
-| [GUARDRAIL_TAXONOMY.md](./GUARDRAIL_TAXONOMY.md) | M1-M18 definitions |
-| [GUARDRAIL_EXHAUSTIVE.md](./GUARDRAIL_EXHAUSTIVE.md) | Complete analysis |
-| [SECURITY.md](./SECURITY.md) | Security considerations |
+| [SECURITY.md](./SECURITY.md) | Security model and deployment checklist |
 
 ### Meta-Harness
 | Document | Purpose |
 |----------|---------|
-| [HARNESS_PREFLIGHT.md](./HARNESS_PREFLIGHT.md) | Task queue M1-M11 |
-| [WHAT_TO_EXPECT.md](./WHAT_TO_EXPECT.md) | Test outcomes |
-| [READY_TO_LAUNCH.md](./READY_TO_LAUNCH.md) | Launch checklist |
+| [HARNESS_PREFLIGHT.md](./HARNESS_PREFLIGHT.md) | Pre-flight checklist |
+| [WHAT_TO_EXPECT.md](./WHAT_TO_EXPECT.md) | Expected test outcomes |
+| [META_HARNESS_SELF_EVALUATION.md](./META_HARNESS_SELF_EVALUATION.md) | Harness self-evaluation |
 
-### Philosophy & Research
+### Guardrails & Validation
 | Document | Purpose |
 |----------|---------|
-| [ARCHITECTURE_AND_PHILOSOPHY.md](./ARCHITECTURE_AND_PHILOSOPHY.md) | Design principles |
-| [AGENT_GENERATOR_ARCHITECTURE.md](./AGENT_GENERATOR_ARCHITECTURE.md) | Generator vs Harness |
-| [PROJECT_RULES.md](./PROJECT_RULES.md) | Development rules |
+| [GUARDRAIL_TAXONOMY.md](./GUARDRAIL_TAXONOMY.md) | Guardrail definitions |
+| [GUARDRAIL_EXHAUSTIVE.md](./GUARDRAIL_EXHAUSTIVE.md) | Complete guardrail analysis |
 
----
+### Research & Design
+| Document | Purpose |
+|----------|---------|
+| [EMERGENT_LANGUAGE_ARCHITECTURE.md](./EMERGENT_LANGUAGE_ARCHITECTURE.md) | Emergent creative vocabulary |
+| [MODEL_ROLES_FRAMEWORK.md](./MODEL_ROLES_FRAMEWORK.md) | Generator/Evaluator/Harness roles |
+| [COMPOSITION_IMPLEMENTATION_PLAN.md](./internal/COMPOSITION_IMPLEMENTATION_PLAN.md) | Composition API |
+| [WORKTREE_SYSTEM.md](./WORKTREE_SYSTEM.md) | Multi-agent worktree guide |
 
-## System Status
-
-```
-Tests:      1741 passing, 0 failures
-Files:      262 source files, 224 test files
-Guardrails: M1-M11 implemented, M12-M18 planned
-Memory:     Persistent (HarnessMemory)
-Generators: Model-aware (TierBasedGenerator)
-```
-
----
-
-## What's New
-
-### 2026-04-01
-- ✅ **THE BIBLE** - Complete system documentation
-- ✅ **Test Suite Fixed** - 1741 tests passing (fixture sizes, mocks, async fixes)
-- ✅ **All Generators Migrated** - TierBasedGenerator base class
-- ✅ **M9-M11 Guardrails** - Semantic, Runtime Health, Accessibility
-- ✅ **Persistent Memory** - HarnessMemory with auto-save
-- ✅ **Model Tiers** - Flagship/Medium/Local/Tiny detection
-
----
-
-## Important Rules
-
-**From PROJECT_RULES.md:**
-
-1. **NO DUPLICATION** - Check existing code before writing new
-2. **THE BIBLE IS SOURCE OF TRUTH** - Update docs before code
-3. **Tests Must Pass** - 1741 tests, 0 failures
+### System Planning
+| Document | Purpose |
+|----------|---------|
+| [MASTER_PLAN.md](./MASTER_PLAN.md) | Phased development plan |
+| [RECOVERY_LEDGER.md](./RECOVERY_LEDGER.md) | Recovery tracking |
 
 ---
 
@@ -86,16 +45,28 @@ Generators: Model-aware (TierBasedGenerator)
 
 ```
 docs/
-├── THE_BIBLE.md                  ← START HERE
-├── README.md                     ← This file
-├── ARCHITECTURE_QUICKREF.md      ← Visual overview
-├── GENERATOR_ARCHITECTURE_V2.md  ← Generator design
-├── GUARDRAIL_*.md                ← Guardrail docs
-├── HARNESS_*.md                  ← Meta-harness docs
-├── *RESEARCH*.md                ← Background research
-└── archive/                      ← Old docs
+├── README.md                          This file
+├── ARCHITECTURE_AND_PHILOSOPHY.md     Design principles
+├── ARCHITECTURE_QUICKREF.md           Quick visual overview
+├── GENERATOR_ARCHITECTURE_V2.md       Generator design
+├── GUARDRAIL_*.md                     Guardrail documentation
+├── HARNESS_*.md                       Meta-harness documentation
+├── SECURITY.md                        Security model
+├── WORKTREE_SYSTEM.md                 Multi-agent worktree guide
+├── MASTER_PLAN.md                     Phased development plan
+│
+├── architecture/                      Architecture diagrams
+├── features/                          Feature specifications
+├── internal/                          Internal audit reports and historical docs
+├── archive/                           Archived documentation
+├── plans/                             Implementation plans
+├── research/                          Research notes and analysis
+├── styles/                            CSS for HTML docs
+└── tutorials/                         Tutorials (planned)
 ```
 
 ---
 
-**For complete information, see [THE_BIBLE.md](./THE_BIBLE.md)**
+## Status
+
+See the main [README.md](../README.md) for current project status, CI badges, and quick start.

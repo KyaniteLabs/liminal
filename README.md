@@ -1,35 +1,26 @@
 # Liminal
 
 [![CI](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml/badge.svg)](https://github.com/Pastorsimon1798/liminal/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node](https://img.shields.io/node/v/liminal-ai)](https://nodejs.org/)
+[![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 
-> The code evolves. You curate. The system learns.
+> A creative coding agent that generates art, music, and shaders through iterative LLM-powered evolution.
 
-A generative art system that creates p5.js sketches, GLSL shaders, Three.js scenes, live music (Strudel/Hydra), and more — through self-recursive iteration with LLM-powered evaluation and improvement.
+<!-- TODO: Add demo GIF showing a generation session in the terminal -->
 
-<!-- TODO: Add screenshot or GIF demo here -->
+Liminal is a model-agnostic creative coding system. You give it a prompt — "a calming blue particle system" or "glitch techno beats with feedback loops" — and it generates, evaluates, and iteratively improves p5.js sketches, GLSL shaders, Three.js scenes, Strudel live-coding music, Hydra visuals, and more. It works with any OpenAI-compatible API, Ollama, LM Studio, or Anthropic.
 
-## Table of Contents
-
-- [Quick Start](#quick-start)
-- [What It Does](#what-it-does)
-- [Generation Modes](#generation-modes)
-- [CLI Reference](#cli-reference)
-- [Compost Mill](#compost-mill)
-- [Architecture](#architecture)
-- [Contributing](#contributing)
-- [License](#license)
+---
 
 ## Quick Start
 
 ```bash
+# Install
 pnpm install
 
-# Configure an LLM provider (sets up ~/.liminal/config.json)
+# Configure (first time) — sets up ~/.liminal/config.json
 liminal --configure
 
-# Or set environment variables directly:
+# Or use environment variables:
 export LLM_API_KEY=your-key
 export LLM_MODEL=minimax/M2.7-0716
 export LLM_BASE_URL=https://api.minimaxi.chat/v1
@@ -40,141 +31,144 @@ liminal --prompt "Create a calming blue particle system"
 # Chat-driven creative session
 liminal chat
 
-# Bubble Tea coding/operator harness
-cd /Users/simongonzalezdecruz/workspaces/liminal/.worktrees/tui-main-integration
-npm run tui
+# Terminal UI (Bubble Tea — requires Go >= 1.21)
+pnpm run tui
 ```
 
-Liminal is model-agnostic. It works with any OpenAI-compatible API (MiniMax, OpenAI, OpenRouter, GLM), Ollama, LM Studio, or Anthropic. Configure via `~/.liminal/config.json`, environment variables, or `liminal --configure`.
-
-Bubble Tea is now the main **tools-first coding/operator harness**. Non-creative input routes into the tool-using harness/runtime lane by default; creative generation remains a separate lane.
+---
 
 ## What It Does
 
-**Core loop**: Generate → Evaluate → Accumulate → Enhance → Repeat
+**Core loop:** Generate → Evaluate → Iterate → Improve
 
 Each iteration, Liminal:
 1. Builds an enhanced prompt from artistic knowledge, compost seeds, and archive examples
-2. Generates code (p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, HTML, ASCII)
-3. Evaluates on technical + aesthetic dimensions
+2. Generates creative code in your chosen domain
+3. Evaluates output on technical and aesthetic dimensions
 4. Detects stagnation and adapts strategy
 5. Stops when quality threshold is met or max iterations reached
 
 **Key capabilities:**
-- **9 generators** — p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Remotion, HTML, ASCII
-- **Artistic knowledge** — 100+ techniques, design principles, color theory, composition rules
-- **Thinking-trace feedback** — Captures model reasoning to improve future generations
-- **Compost Mill** — Digests past work into reusable creative seeds
-- **Multi-agent critique** — 3-agent board (Minimalist/Expressionist/Technician) deliberates on output
-- **Voice/audio pipeline** — Maps audio features to visual parameters in real time
+
+- **11 generators** — p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Remotion, HTML, ASCII, Kinetic, TextGen
+- **Multi-agent critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
+- **Compost Mill** — Digests past work into reusable creative seeds that improve every generation
+- **Self-improving harness** — Observes failures, detects patterns, applies targeted fixes
 - **Music theory engine** — Euclidean rhythms, Markov chains, scales, chord progressions
-- **Circuit breaker + smart routing** — Automatic provider failover and model selection
+- **Voice/audio pipeline** — Maps audio features to visual parameters in real time
+- **Aesthetic guardrails** — Color harmony, layout, typography, and sound quality critics
+- **Model-agnostic** — Works with any provider: MiniMax, OpenAI, Anthropic, Ollama, LM Studio, OpenRouter, GLM
+- **Circuit breaker** — Automatic provider failover with smart routing
+
+---
 
 ## Generation Modes
 
 | Mode | Flag | Description |
 |------|------|-------------|
 | **Single** | default | One model generates, evaluates, iterates |
-| **Swarm** | `--use-swarm` | 5 personas generate in parallel, vote on best |
-| **Deep Collab** | `useDeepCollab` | 3-phase: Diverge → Analyze → Synthesize |
+| **Swarm** | `--use-swarm` | Multiple personas generate in parallel, vote on best |
+| **Deep Collab** | `--routing-mode` | Dual-model routing (fast + powerful) |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code |
-| **Organism** | `mode: 'organism'` | Music-to-visual pipeline with context accumulation |
 
-Swarm supports 4 strategies: `competitive`, `hybrid` (default), `ring`, `mesh`.
+---
 
 ## CLI Reference
 
 ```bash
 # Generation
-liminal --prompt "Create a particle system"
-liminal -p "sketch" -m 10 -o ./output
-liminal --prompt "idea" --use-swarm --swarm-mode hybrid
-liminal --prompt "ambient glitch set" --mode live-music --output ./set
+liminal -p "Create a particle system"              # Generate with prompt
+liminal -p "sketch" -m 10 -o ./output              # Custom iterations + output dir
+liminal -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
+liminal -p "ambient glitch set" --mode live-music  # Music mode
 
-# Chat mode (interview-driven creative session)
-liminal chat
+# Interactive
+liminal chat                                        # Conversational creative session
+liminal bubbletea                                   # Full Bubble Tea TUI
+liminal tui                                         # Legacy TUI mode
 
-# Bubble Tea harness with a one-off model override
-LIMINAL_LLM_MODEL=google/gemini-3.1-pro-preview npm run tui
+# Compost Mill — creative material digestion
+liminal compost add <path>                          # Feed material to heap
+liminal compost digest                              # Run digestion pipeline
+liminal compost soup start                          # Start evolutionary soup
+liminal compost soup stop                           # Stop soup
+liminal compost seeds list                          # Browse promoted seeds
+liminal compost status                              # Overview
 
-# Compost system
-liminal compost add <path>          # Feed material to heap
-liminal compost digest              # Run digestion pipeline
-liminal compost soup start          # Start evolutionary soup
-liminal compost soup stop           # Stop soup
-liminal compost seeds list          # Browse promoted seeds
-liminal compost status              # Overview
+# Self-hosting task ledger
+liminal ledger list                                 # List tasks
+liminal ledger show <id>                            # Show task details
+liminal ledger run <id>                             # Execute a task
+liminal ledger verify <id>                          # Verify task result
+liminal ledger status                               # Ledger overview
 
-# Project management
-liminal list                        # List saved sketches
-liminal serve 3456                  # Preview server
-liminal --configure                 # Setup config
-liminal --interactive               # TUI mode
+# Utilities
+liminal list                                        # List saved sketches
+liminal serve 3456                                  # Preview server
+liminal fix <file|description>                      # Auto-fix code with LLM
+liminal consolidate                                 # Memory consolidation
+liminal --configure                                 # Setup config
 ```
 
-### CLI Flags
+### Flags
 
 | Flag | Description |
 |------|-------------|
-| `--prompt`, `-p` | Generation prompt |
-| `--mode` | Generation mode (default, live-music) |
+| `-p, --prompt <text>` | Generation prompt |
+| `-m, --max-iterations <n>` | Max iterations (default: 3) |
+| `-o, --output <path>` | Output directory |
+| `--mode <mode>` | Mode: `live-music` |
 | `--use-swarm` | Enable swarm generation |
-| `--swarm-mode` | Swarm strategy (competitive/hybrid/ring/mesh) |
-| `-m`, `--max-iterations` | Max iterations (default: 5) |
-| `-o`, `--output` | Output directory |
+| `--swarm-mode <mode>` | Swarm strategy: `competitive`, `hybrid`, `ring`, `mesh` |
 | `--voice` | Use microphone for audio input |
 | `--voice-file <path>` | Use audio file for input |
-| `--aesthetic <preset>` | Aesthetic guardrail preset (minimalist/vibrant/cinematic/playful/free) |
+| `--aesthetic <preset>` | Guardrail preset: `lenient`, `moderate`, `strict` |
+| `--intuition` | Enable intuition scoring |
+| `-v, --verbose` | Verbose output |
 
-### Provider/model notes
+### Provider Configuration
 
-- Bubble Tea reads the active provider/model from `~/.liminal/config.json` or `LIMINAL_LLM_*` environment overrides.
-- For OpenRouter, the simplest way to swap models is:
-
-```bash
-LIMINAL_LLM_MODEL='anthropic/claude-sonnet-4-6' npm run tui
-LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' npm run tui
-```
-
-- Bubble Tea now routes ordinary non-creative input into the **tool-using harness** by default.
-
-## Compost Mill
-
-A living digestion system for creative material. Feed it files, previous outputs, or any creative content — it extracts fragments, scores them, and evolves them into reusable seeds injected into every generation.
-
-**Pipeline:** Feed → Extract → Shred → Collide (cross-domain) → Score → Promote → Seed Bank
+Liminal reads from `~/.liminal/config.json`, environment variables, or `--configure`:
 
 ```bash
-liminal compost add ./my-sketch.js     # Add material
-liminal compost digest                 # Process heap into seeds
-liminal compost soup start             # Start evolutionary loop
-liminal compost seeds list             # Browse seeds
+# Environment variables
+LLM_API_KEY=your-key
+LLM_MODEL=minimax/M2.7-0716
+LLM_BASE_URL=https://api.minimaxi.chat/v1
+
+# Or swap models on the fly
+LIMINAL_LLM_MODEL='google/gemini-3.1-pro-preview' liminal bubbletea
 ```
 
-See [Compost Mill docs](./docs/ARCHITECTURE_AND_PHILOSOPHY.md) for full pipeline details.
+---
 
 ## Architecture
 
 ```
 src/
-├── core/          Loop engine, validation, domain detection
-├── generators/    p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, etc.
-├── harness/       Meta-harness: failure logging, pattern detection, self-improvement
-├── llm/           LLM client, provider adapters, circuit breaker
-├── brain/         Artistic knowledge, prompt enhancement, creative preferences
-├── compost/       Compost Mill pipeline
-├── evolution/     MAP-Elites, novelty archive, cross-domain crossover
-├── music/         Theory engine, Euclidean rhythms, Markov chains
-├── audio/         Audio analysis, pitch detection, visual mapping
-├── aesthetic/     Color theory, design tiers, aesthetic critics
-├── chat/          Interview-driven creative sessions
-├── collab/        Multi-agent board, swarm, deep collaboration
-├── config/        Configuration loading, role-based model selection
-├── tui/           Terminal UI
-└── gui/           Web interface
+├── core/           Loop engine, validation, domain detection
+├── generators/     p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, etc.
+├── harness/        Meta-harness: failure logging, pattern detection, self-improvement
+├── llm/            LLM client, provider adapters, circuit breaker
+├── brain/          Artistic knowledge, prompt enhancement, creative preferences
+├── compost/        Compost Mill pipeline (digest, collide, score, promote)
+├── evolution/      MAP-Elites, novelty archive, cross-domain crossover
+├── music/          Theory engine, Euclidean rhythms, Markov chains
+├── audio/          Audio analysis, pitch detection, visual mapping
+├── aesthetic/      Color theory, design tiers, aesthetic critics
+├── guardrails/     Multi-layer guardrail system (correctness, hygiene, compliance)
+├── ledger/         Self-hosting task ledger (corpus, runner, verifier)
+├── chat/           Interview-driven creative sessions
+├── collab/         Multi-agent board, swarm, deep collaboration
+├── config/         Configuration loading, role-based model selection
+├── tui/            Terminal UI
+├── tui-bridge/     HTTP/SSE bridge for Bubble Tea runtime
+├── render/         Rendering pipeline
+├── security/       SSRF protection, rate limiting, sandbox
+└── plugins/        Plugin system
 ```
 
-For detailed architecture, see [Architecture & Philosophy](./docs/ARCHITECTURE_AND_PHILOSOPHY.md) and [Architecture Quick Reference](./docs/ARCHITECTURE_QUICKREF.md).
+---
 
 ## Contributing
 
@@ -182,12 +176,12 @@ See [CONTRIBUTING.md](./CONTRIBUTING.md) for development setup, code style, and 
 
 ## Security
 
-See [docs/SECURITY.md](./docs/SECURITY.md) for production deployment checklist, SSRF protection, rate limiting, and incident response.
+See [docs/SECURITY.md](./docs/SECURITY.md) for the security model.
 
 ## License
 
-MIT — see [LICENSE](./LICENSE).
+Business Source License 1.1. Source code is available for viewing, learning, and non-commercial use. Commercial use requires a separate license. Converts to MIT on April 15, 2029. See [LICENSE](./LICENSE) for details.
 
 ---
 
-**Liminal v2.1.0** — The code evolves. You curate. The system learns.
+**Liminal** — The code evolves. You curate. The system learns.

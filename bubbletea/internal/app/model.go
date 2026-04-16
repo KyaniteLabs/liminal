@@ -159,6 +159,10 @@ type Model struct {
 	TrustLabel    string
 	PendingAction *bridge.PendingAction
 
+	// Product mode: ask/make/remix/improve
+	ProductMode      string // "ask" | "make" | "remix" | "improve" | ""
+	ProductModeLabel string
+
 	// Generation telemetry
 	GenerationModel      string
 	GenerationDuration   int64 // ms
@@ -596,6 +600,16 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			statusIcon = "Fail"
 		}
 		m.addActivity(fmt.Sprintf("%s: %s", statusIcon, event.TaskID))
+
+	// ── Product mode events ──
+
+	case "mode.product_changed":
+		m.ProductMode = event.Mode
+		m.ProductModeLabel = event.Label
+		m.addActivity(fmt.Sprintf("Mode: %s", event.Label))
+
+	case "mode.list":
+		// Response handled in chat content; no model state change needed
 	}
 }
 

@@ -42,6 +42,7 @@ type Event struct {
 	Action    *PendingAction `json:"action,omitempty"`
 	Status    *SessionStatus `json:"status,omitempty"`
 	Message     string         `json:"message,omitempty"`
+	Label       string         `json:"label,omitempty"`
 	Trust       *TrustState    `json:"trust,omitempty"`
 	PreviewType string         `json:"previewType,omitempty"`
 	ImageUrl    string         `json:"imageUrl,omitempty"`

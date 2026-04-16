@@ -20,7 +20,15 @@ export type {
 } from './types.js';
 
 // Intent classification
-export { IntentRouter } from './IntentRouter.js';
+export { IntentRouter } from './IntentRouter.js'
+
+// Product modes
+export { ModeAwareRouter, PRODUCT_MODES } from './ProductMode.js'
+export type { ProductMode, AutonomyLevel, WorkspaceProfile, ModeConfig } from './ProductMode.js'
+
+// Mode registry
+export { ModeRegistry } from './ModeRegistry.js'
+export type { ModeChangeCallback } from './ModeRegistry.js';
 
 // Response formatting
 export { ResponseComposer } from './ResponseComposer.js';

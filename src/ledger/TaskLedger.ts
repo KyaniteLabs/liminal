@@ -231,7 +231,6 @@ export class TaskLedger {
 
     if (entries.length === 0) return null;
 
-    // Sort by decidedAt timestamp, not filename
     const decisions: TaskDecision[] = [];
     for (const entry of entries) {
       const decisionId = entry.replace('.json', '');

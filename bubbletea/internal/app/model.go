@@ -549,7 +549,7 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			TurnID:      event.TurnID,
 			Intent:      event.Intent,
 			DelegatedTo: event.DelegatedTo,
-			DurationMs:  event.Duration,
+			DurationMs:  event.DurationMs,
 			Timestamp:   time.Now(),
 		}
 		m.SessionTurns = append(m.SessionTurns, turn)
@@ -585,8 +585,8 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 					m.TaskQueue[i].Status = "failed"
 				}
 				m.TaskQueue[i].CompletedAt = time.Now()
-				if event.Duration > 0 {
-					m.TaskQueue[i].DurationMs = event.Duration
+				if event.DurationMs > 0 {
+					m.TaskQueue[i].DurationMs = event.DurationMs
 				}
 				break
 			}

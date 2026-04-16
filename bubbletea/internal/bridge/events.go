@@ -95,4 +95,5 @@ type Event struct {
 	// Task lifecycle event fields
 	TaskID      string `json:"taskId,omitempty"`
 	Description string `json:"description,omitempty"`
+	DurationMs  int64  `json:"durationMs,omitempty"`
 }

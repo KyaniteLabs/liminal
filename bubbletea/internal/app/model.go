@@ -273,6 +273,10 @@ type Model struct {
 	CortexBudget      *CortexBudgetUsage
 	CortexStuckWorkers []CortexStuckWorker
 
+	// Cortex dashboard state: toggled by Ctrl+X
+	CortexVisible bool
+	CortexDashboard string
+
 	// ── Operator surface state ──
 
 	// Task card: what the agent is trying to do

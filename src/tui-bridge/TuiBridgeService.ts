@@ -1064,6 +1064,12 @@ export class TuiBridgeService {
         goalText = goalText.replace(categoryMatch[0], '').trim();
       }
 
+      // Reject if goal text is empty after stripping optional tags
+      if (!goalText) {
+        this.emitCommandResponse(sessionId, 'Goal text is required. Usage: /goal add [priority:X] [category:Y] <text>');
+        return { reviewRequired: false };
+      }
+
       const goal = store.addGoal({ text: goalText, priority, category });
       this.emit(sessionId, { type: 'cortex.goal_added', sessionId, goal });
       this.emitCommandResponse(sessionId, `Goal added: "${goal.text}" [${goal.priority}/${goal.category}]`);
@@ -1084,7 +1090,7 @@ export class TuiBridgeService {
       } else {
         const lines = goals.map(g => {
           const marker = g.priority === 'critical' ? '!!' : g.priority === 'high' ? ' !' : '  ';
-          return ` ${marker} ${g.id.slice(0, 20).padEnd(22)} ${g.text}`;
+          return ` ${marker} ${g.id} ${g.text}`;
         });
         this.emitCommandResponse(sessionId, `Cortex Goals (${goals.length}):\n${lines.join('\n')}`);
       }

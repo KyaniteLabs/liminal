@@ -76,8 +76,8 @@ export class GoalStore {
       goals.push(goal);
     }
 
-    // Sort by creation time (oldest first)
-    return goals.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+    // Sort by creation time (oldest first) — spread to avoid in-place mutation
+    return [...goals].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
   }
 
   /**

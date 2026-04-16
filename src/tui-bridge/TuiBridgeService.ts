@@ -626,8 +626,10 @@ export class TuiBridgeService {
     };
 
     // Autonomy gating: check if the skill's action kind requires review
-    const skillActionKind = result.target === 'creative' ? 'creative' as const : 'engineering' as const;
-    if (this.autonomyController.requiresReview(skillActionKind, sessionId)) {
+    // Chat skills bypass gating (matching direct-chat behavior)
+    if (result.target !== 'chat') {
+      const skillActionKind = result.target === 'creative' ? 'creative' as const : 'engineering' as const;
+      if (this.autonomyController.requiresReview(skillActionKind, sessionId)) {
       const pendingAction: TuiPendingAction = {
         id: `skill-${skillName}-${Date.now()}`,
         title: `Skill: ${skillName}`,
@@ -644,6 +646,7 @@ export class TuiBridgeService {
       this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
       this.emit(sessionId, { type: 'status.updated', sessionId, status });
       return { reviewRequired: true };
+      }
     }
 
     switch (result.target) {

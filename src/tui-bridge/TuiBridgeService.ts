@@ -12,6 +12,8 @@ import { IntentRouter } from '../agent/IntentRouter.js';
 import { ModeAwareRouter, PRODUCT_MODES } from '../agent/ProductMode.js';
 import type { ModeConfig, ProductMode } from '../agent/ProductMode.js';
 import { ModeRegistry } from '../agent/ModeRegistry.js';
+import { SkillRunner } from '../agent/SkillRunner.js';
+import { SkillCatalog } from '../agent/SkillCatalog.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 
@@ -78,6 +80,10 @@ export class TuiBridgeService {
   private sessionGraphs = new Map<string, SessionGraph>();
   // Product mode registry: per-session mode biasing
   private modeRegistry = new ModeRegistry();
+  // Skill runner: resolves and executes skill templates
+  private skillRunner = new SkillRunner();
+  // Skill catalog: lists skills with mode filtering
+  private skillCatalog = new SkillCatalog();
 
   constructor() {
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -196,6 +202,32 @@ export class TuiBridgeService {
       const content = modes.map(m => `  ${m.mode.padEnd(8)} ${m.label} — ${m.description}`).join('\n');
       this.emitCommandResponse(sessionId, `Available modes:\n${content}`);
       return { reviewRequired: false };
+    }
+
+    // Handle /skills command: list available skills
+    if (input.text.trim() === '/skills') {
+      const modeConfig = this.modeRegistry.getMode(sessionId);
+      const entries = await this.skillCatalog.list({ mode: modeConfig?.mode });
+      this.emit(sessionId, {
+        type: 'skill.list',
+        sessionId,
+        skills: entries.map(e => ({ name: e.name, description: e.description, mode: e.mode })),
+      });
+      if (entries.length === 0) {
+        this.emitCommandResponse(sessionId, 'No skills available. Add .skills/<name>/SKILL.md files.');
+      } else {
+        const lines = entries.map(e => {
+          const modeTag = e.mode ? ` [${e.mode}]` : '';
+          return `  ${e.name.padEnd(20)} ${e.description}${modeTag}`;
+        });
+        this.emitCommandResponse(sessionId, `Available skills:\n${lines.join('\n')}`);
+      }
+      return { reviewRequired: false };
+    }
+
+    // Handle /skill <name> command: run a skill
+    if (input.text.startsWith('/skill ')) {
+      return this.handleSkillCommand(sessionId, input.text, llm);
     }
 
     // Studio routing: classify intent via IntentRouter with mode biasing
@@ -405,6 +437,86 @@ export class TuiBridgeService {
     const config = this.setProductMode(sessionId, modeName as ProductMode);
     const modeInfo = PRODUCT_MODES[config.mode];
     this.emitCommandResponse(sessionId, `Mode switched to ${modeInfo.label} — ${modeInfo.description}`);
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /skill <name> [args] command.
+   * Resolves the skill template, emits skill.started, delegates to the
+   * appropriate route (creative/engineering/chat), then emits skill.completed.
+   */
+  private async handleSkillCommand(
+    sessionId: string,
+    input: string,
+    llm?: LLMClient,
+  ): Promise<{ reviewRequired: boolean }> {
+    const parts = input.trim().split(/\s+/);
+    const skillName = parts[1];
+
+    if (!skillName) {
+      this.emitCommandResponse(sessionId, 'Usage: /skill <name> [input text]');
+      return { reviewRequired: false };
+    }
+
+    const userInput = parts.slice(2).join(' ');
+    const result = await this.skillRunner.resolve(skillName, { input: userInput });
+
+    if (!result) {
+      this.emitCommandResponse(sessionId, `Unknown skill: ${skillName}. Use /skills to list available skills.`);
+      return { reviewRequired: false };
+    }
+
+    logBridge('skill.started', { sessionId, skillName, target: result.target, durationMs: result.durationMs });
+    this.emit(sessionId, { type: 'skill.started', sessionId, skillName });
+
+    // Get conversation for this session
+    let conversation = this.conversations.get(sessionId);
+    if (!conversation) {
+      conversation = new ConversationManager();
+      conversation.startNewSession();
+      this.conversations.set(sessionId, conversation);
+    }
+    conversation['recordMessage']('user', input);
+
+    if (!llm) {
+      this.emitCommandResponse(sessionId, result.prompt);
+      this.emit(sessionId, { type: 'skill.completed', sessionId, skillName, durationMs: result.durationMs });
+      return { reviewRequired: false };
+    }
+
+    // Route the expanded skill prompt through the existing delegation paths
+    const routeStart = Date.now();
+    const handleError = (err: unknown) => {
+      this.emit(sessionId, { type: 'error', sessionId, message: err instanceof Error ? err.message : String(err) });
+    };
+
+    const emitCompletion = () => {
+      this.emit(sessionId, {
+        type: 'skill.completed',
+        sessionId,
+        skillName,
+        durationMs: Date.now() - routeStart,
+      });
+    };
+
+    switch (result.target) {
+      case 'creative':
+        this.streamRalphGeneration(sessionId, result.prompt, conversation, llm)
+          .then(() => emitCompletion())
+          .catch(handleError);
+        break;
+      case 'engineering':
+        this.streamEngineeringTask(sessionId, result.prompt, conversation, llm)
+          .then(() => emitCompletion())
+          .catch(handleError);
+        break;
+      default:
+        this.streamChatResponse(sessionId, result.prompt, conversation, llm, STUDIO_SYSTEM_PROMPT)
+          .then(() => emitCompletion())
+          .catch(handleError);
+        break;
+    }
+
     return { reviewRequired: false };
   }
 

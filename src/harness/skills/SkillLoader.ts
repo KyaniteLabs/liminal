@@ -9,11 +9,20 @@ export interface LoadedSkill {
   path: string;
   directory: string;
   source: 'repo' | 'agents' | 'codex';
+  /** Product mode this skill is designed for (ask/make/remix/improve) */
+  mode?: string;
+  /** Workspace profile this skill targets (creative/engineering/hybrid) */
+  profile?: string;
+  /** Arguments the skill accepts (descriptive, for display) */
+  args?: string;
 }
 
 interface SkillFrontmatter {
   name?: string;
   description?: string;
+  mode?: string;
+  profile?: string;
+  args?: string;
 }
 
 function parseFrontmatter(raw: string): { meta: SkillFrontmatter; body: string } {
@@ -34,7 +43,7 @@ function parseFrontmatter(raw: string): { meta: SkillFrontmatter; body: string }
     const match = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
     if (!match) continue;
     const [, key, value] = match;
-    if (key === 'name' || key === 'description') {
+    if (key === 'name' || key === 'description' || key === 'mode' || key === 'profile' || key === 'args') {
       meta[key] = value.replace(/^["']|["']$/g, '').trim();
     }
   }
@@ -90,6 +99,9 @@ export class SkillLoader {
       path: skillPath,
       directory: skillDir,
       source: this.detectSource(root),
+      mode: meta.mode,
+      profile: meta.profile,
+      args: meta.args,
     };
   }
 

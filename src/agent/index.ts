@@ -28,7 +28,13 @@ export type { ProductMode, AutonomyLevel, WorkspaceProfile, ModeConfig } from '.
 
 // Mode registry
 export { ModeRegistry } from './ModeRegistry.js'
-export type { ModeChangeCallback } from './ModeRegistry.js';
+export type { ModeChangeCallback } from './ModeRegistry.js'
+
+// Skill runner and catalog
+export { SkillRunner } from './SkillRunner.js'
+export type { SkillRunResult } from './SkillRunner.js'
+export { SkillCatalog } from './SkillCatalog.js'
+export type { CatalogEntry } from './SkillCatalog.js';
 
 // Response formatting
 export { ResponseComposer } from './ResponseComposer.js';

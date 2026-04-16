@@ -163,6 +163,9 @@ type Model struct {
 	ProductMode      string // "ask" | "make" | "remix" | "improve" | ""
 	ProductModeLabel string
 
+	// Active skill: name of currently running skill
+	ActiveSkill string
+
 	// Generation telemetry
 	GenerationModel      string
 	GenerationDuration   int64 // ms
@@ -609,6 +612,21 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		m.addActivity(fmt.Sprintf("Mode: %s", event.Label))
 
 	case "mode.list":
+		// Response handled in chat content; no model state change needed
+
+	// ── Skill events ──
+
+	case "skill.started":
+		m.ActiveSkill = event.SkillName
+		m.addActivity(fmt.Sprintf("Skill: %s", event.SkillName))
+
+	case "skill.completed":
+		if m.ActiveSkill == event.SkillName {
+			m.ActiveSkill = ""
+		}
+		m.addActivity(fmt.Sprintf("Skill done: %s", event.SkillName))
+
+	case "skill.list":
 		// Response handled in chat content; no model state change needed
 	}
 }

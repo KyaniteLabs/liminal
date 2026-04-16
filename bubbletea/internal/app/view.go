@@ -109,6 +109,9 @@ func (m Model) renderHeader() string {
 	if strings.TrimSpace(m.ProductMode) != "" {
 		headerParts = append(headerParts, ui.ModeStyle.Render("⬡ "+m.ProductModeLabel))
 	}
+	if strings.TrimSpace(m.ActiveSkill) != "" {
+		headerParts = append(headerParts, lipgloss.NewStyle().Foreground(ui.AccentOrange).Render("⚡ "+m.ActiveSkill))
+	}
 	headerParts = append(headerParts, m.renderPhaseBadge(m.Task.Phase))
 	if m.Task.StepTotal > 0 {
 		headerParts = append(headerParts, ui.StatusPillStyle.Render(formatStepProgress(m.Task.StepCurrent, m.Task.StepTotal)))

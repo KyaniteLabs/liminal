@@ -96,36 +96,6 @@ describe('system prompt audit guardrails', () => {
     expect(hydraPrompt?.systemPrompt).not.toContain('Use sources: osc(), src(), noise(), shape(), color(), gradient(), solid()');
   });
 
-  it('blog prompts wrap long structured inputs in explicit tags', () => {
-    const scriptUser = PromptLibrary.render('blog.script', {
-      theme: 'distributed systems',
-      era: '2020s',
-      template: 'Layered Reveal',
-      format: '60s',
-      platform: 'youtube shorts',
-      keyQuotes: 'quote 1\nquote 2',
-      dataPoints: 'point 1\npoint 2',
-    }).user;
-
-    expect(scriptUser).toContain('<theme_brief>');
-    expect(scriptUser).toContain('<key_quotes>');
-    expect(scriptUser).toContain('<data_points>');
-    expect(scriptUser).toContain('</data_points>');
-
-    const specUser = PromptLibrary.render('blog.spec', {
-      script: '# Script\nBeat 1',
-      resolution: '1920x1080',
-      fps: '30',
-      brandColors: 'indigo/amber',
-      brandFonts: 'Inter',
-    }).user;
-
-    expect(specUser).toContain('<video_script>');
-    expect(specUser).toContain('</video_script>');
-    expect(specUser).toContain('<options>');
-    expect(specUser).toContain('<brand_colors>');
-    expect(specUser).toContain('</options>');
-  });
 
   describe('canonical source alignment', () => {
     it('swarm persona prompts in PromptLibrary match the canonical catalog', async () => {

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 /**
- * Prompt validation tests — verify all 41 prompts are properly registered
+ * Prompt validation tests — verify all 39 prompts are properly registered
  * and meet quality standards.
  */
 import { PromptLibrary } from '../../src/prompts/index.js';
@@ -59,17 +59,15 @@ const EXPECTED_IDS = [
   'remotion.generate',
   'remotion.improve',
 
-  // Aesthetic / Audio / Blog / Chat (5)
+  // Aesthetic / Audio / Chat (3)
   'aesthetic.constraints',
   'audio.voice-to-visual',
-  'blog.script',
-  'blog.spec',
   'chat.assistant',
 ];
 
 describe('Prompt Library Validation', () => {
   describe('registration completeness', () => {
-    it('should have exactly 41 prompts registered', () => {
+    it('should have exactly 39 prompts registered', () => {
       const all = PromptLibrary.list();
       expect(all.length).toBe(EXPECTED_IDS.length);
     });

@@ -12,6 +12,16 @@ export type { NicheQuotaConfig, NicheAllocation } from './NicheQuotaPolicy.js';
 export { StagnationDetector } from './StagnationDetector.js';
 export type { StagnationResult, StagnationDetectorConfig } from './StagnationDetector.js';
 
+// Phase 14
+export { ArchiveTaskPlanner } from './ArchiveTaskPlanner.js';
+export type { ArchiveTaskPlannerConfig, ArchiveTaskPlan } from './ArchiveTaskPlanner.js';
+
+// Phase 15 — Learning feedback
+export { PromisingStateSelector } from './PromisingStateSelector.js';
+export type { PromisingStateSelectorConfig } from './PromisingStateSelector.js';
+export { ReplayBudgetPolicy } from './ReplayBudgetPolicy.js';
+export type { ReplayBudgetPolicyConfig } from './ReplayBudgetPolicy.js';
+
 // Phase 16
 export { AutonomousGardener } from './AutonomousGardener.js';
 export type { GardenerCycleResult, AutonomousGardenerConfig } from './AutonomousGardener.js';

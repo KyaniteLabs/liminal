@@ -341,8 +341,7 @@ export class AutoFixOrchestrator {
 
   /**
    * Verifies that all tests pass.
-   *
-   * TODO: Implement test verification logic.
+   * Runs `pnpm test --run` and returns success/failure.
    *
    * @returns Promise resolving to true if tests pass, false otherwise
    */

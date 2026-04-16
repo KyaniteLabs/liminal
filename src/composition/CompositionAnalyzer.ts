@@ -14,6 +14,7 @@
 
 import type { DomainType } from './types.js';
 import { Logger } from '../utils/Logger.js';
+import type { LLMClient } from '../llm/LLMClient.js';
 
 /**
  * A recommendation for a domain based on prompt analysis
@@ -129,6 +130,7 @@ export class CompositionAnalyzer {
   private keywordMappings: KeywordMapping;
   private dependencyRules: DependencyRule[];
   private options: Required<AnalyzerOptions>;
+  private llmClient?: LLMClient;
 
   /**
    * Creates a new CompositionAnalyzer
@@ -225,14 +227,67 @@ export class CompositionAnalyzer {
 
   /**
    * Analyze prompt using LLM for complex cases.
-   *
-   * Note: LLM-based analysis is not yet wired — llmConfig is accepted but no LLMClient
-   * is injected into this class. Delegates to keyword-based detectComplexPatterns.
-   * TODO: Inject LLMClient and wire to call it for actual LLM analysis.
+   * When an LLMClient is injected, calls the LLM with a structured prompt to
+   * determine domain recommendations. Falls back to keyword-based pattern
+   * detection when no client is available or the LLM call fails.
    */
-  // eslint-disable-next-line @typescript-eslint/require-await
   async analyzeWithLLM(prompt: string): Promise<DomainRecommendation[]> {
-    return this.detectComplexPatterns(prompt);
+    if (!this.llmClient) {
+      return this.detectComplexPatterns(prompt);
+    }
+
+    try {
+      const systemPrompt = [
+        'You are a creative coding domain analyzer.',
+        'Given a user prompt, determine which creative coding domains are needed.',
+        `Available domains: ${Object.keys(DEFAULT_KEYWORD_MAPPINGS).join(', ')}`,
+        'Respond with a JSON array of objects, each with:',
+        '- "domain": one of the available domain names',
+        '- "confidence": number between 0 and 1',
+        '- "reason": brief explanation',
+        '- "dependencies": array of domain names this domain depends on (empty array if none)',
+        'Return ONLY the JSON array, no other text.',
+      ].join('\n');
+
+      const userPrompt = `Analyze this creative prompt: "${prompt}"`;
+      const response = await this.llmClient.generate(systemPrompt, userPrompt);
+
+      if (!response.success || !response.code) {
+        Logger.warn('CompositionAnalyzer', 'LLM response unsuccessful, falling back to patterns');
+        return this.detectComplexPatterns(prompt);
+      }
+
+      const parsed = JSON.parse(response.code);
+      if (!Array.isArray(parsed)) {
+        Logger.warn('CompositionAnalyzer', 'LLM did not return an array, falling back to patterns');
+        return this.detectComplexPatterns(prompt);
+      }
+
+      return parsed
+        .filter((item: Record<string, unknown>) =>
+          typeof item.domain === 'string' && typeof item.confidence === 'number' && item.domain in DEFAULT_KEYWORD_MAPPINGS
+        )
+        .map((item: Record<string, unknown>) => ({
+          domain: item.domain as DomainType,
+          confidence: Math.max(0, Math.min(1, item.confidence as number)),
+          reason: (item.reason as string) || 'LLM analysis',
+          dependencies: Array.isArray(item.dependencies)
+            ? (item.dependencies as string[]).filter((d): d is DomainType => d in DEFAULT_KEYWORD_MAPPINGS)
+            : [],
+        }));
+    } catch (err) {
+      Logger.warn('CompositionAnalyzer', 'LLM analysis failed, falling back to patterns:', err);
+      return this.detectComplexPatterns(prompt);
+    }
+  }
+
+  /**
+   * Inject an LLMClient for LLM-powered domain analysis.
+   * Allows post-construction injection — the analyzer degrades gracefully
+   * to keyword matching when no client is set.
+   */
+  setLLMClient(client: LLMClient): void {
+    this.llmClient = client;
   }
 
   private detectComplexPatterns(prompt: string): DomainRecommendation[] {

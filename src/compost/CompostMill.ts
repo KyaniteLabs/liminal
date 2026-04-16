@@ -30,6 +30,10 @@ import type { LIRToken } from '../core/lir/types.js';
 import { formatSeedForPrompt } from '../core/lir/LIRPromptFormatter.js';
 import type { ProjectStore } from './ProjectStore.js';
 import { MetabolicEntropyEngine } from '../entropy/MetabolicEntropyEngine.js';
+import { MotifIndexer } from './MotifIndexer.js';
+import type { MotifIndexResult } from './MotifIndexer.js';
+import { CompostRehydrator } from './CompostRehydrator.js';
+import type { RehydratedCandidate } from './CompostRehydrator.js';
 
 export class CompostMill {
   private config: CompostConfig;
@@ -48,6 +52,10 @@ export class CompostMill {
   /** Optional project store for event-sourced history tracking. */
   private projectStore?: ProjectStore;
   private entropy?: MetabolicEntropyEngine;
+  private motifIndexer: MotifIndexer;
+  private rehydrator: CompostRehydrator;
+  private lastMotifIndex: MotifIndexResult | null = null;
+  private lastRehydratedCandidates: RehydratedCandidate[] = [];
 
   constructor(
     llm: LLMClientLike,
@@ -93,6 +101,9 @@ export class CompostMill {
     }
 
     this.entropy?.setGetTopSeeds(this.getTopSeeds.bind(this));
+
+    this.motifIndexer = new MotifIndexer();
+    this.rehydrator = new CompostRehydrator();
   }
 
   /** Set the CompostParser for LIR extraction (allows post-construction injection). */
@@ -224,6 +235,19 @@ export class CompostMill {
     }
     eventBus.emit(EventTypes.COMPOST_STAGE, 'CompostMill', { stage: 'promote', message: `Promoted ${promotedSeeds.length} seeds from scoring` });
     Logger.info('CompostMill', `Promoted ${promotedSeeds.length} seeds from scoring`);
+
+    // Phase 15: Motif indexing and rehydration
+    const scoredFragments = allFragments.map(f => ({ ...f, score: f.score ?? 0 }));
+    this.lastMotifIndex = this.motifIndexer.index(scoredFragments);
+    Logger.info('CompostMill', `Indexed ${this.lastMotifIndex.uniqueCount} motifs (top: ${this.lastMotifIndex.topPattern ?? 'none'})`);
+
+    const rehydratable = this.rehydrator.findRehydratable(scoredFragments);
+    if (rehydratable.length > 0) {
+      this.lastRehydratedCandidates = this.rehydrator.rehydrate(rehydratable);
+      Logger.info('CompostMill', `Rehydrated ${this.lastRehydratedCandidates.length} candidates from ${rehydratable.length} fragments`);
+    } else {
+      this.lastRehydratedCandidates = [];
+    }
 
     // Promote collision results too (score them first)
     const collisionFragments: CompostFragment[] = collisionResults.map(collision => ({
@@ -464,5 +488,15 @@ export class CompostMill {
   /** Check if auto-digestion should trigger. */
   async shouldAutoDigest(): Promise<boolean> {
     return this.heap.isOverCapacity();
+  }
+
+  /** Get the last motif index result from digest. */
+  getMotifIndex(): MotifIndexResult | null {
+    return this.lastMotifIndex;
+  }
+
+  /** Get rehydrated candidates from last digest. */
+  getRehydratedCandidates(): RehydratedCandidate[] {
+    return this.lastRehydratedCandidates;
   }
 }

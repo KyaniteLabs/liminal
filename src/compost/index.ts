@@ -78,6 +78,12 @@ export {
   type ThompsonConfig,
 } from './ModelRouter.js';
 
+// Phase 15 — Motif indexing & rehydration
+export { MotifIndexer } from './MotifIndexer.js';
+export type { MotifIndexerConfig, MotifIndexResult, MotifEntry } from './MotifIndexer.js';
+export { CompostRehydrator } from './CompostRehydrator.js';
+export type { CompostRehydratorConfig, RehydratedCandidate } from './CompostRehydrator.js';
+
 // Integration bridges
 export { FragmentArchiveBridge } from './integration/FragmentArchiveBridge.js';
 export { SwarmBridge } from './integration/SwarmBridge.js';

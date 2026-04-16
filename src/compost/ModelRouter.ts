@@ -655,21 +655,37 @@ export class ModelRouter implements LLMClientLike {
   }
 
   /**
-   * Calculate similarity between two texts (simple word overlap)
-   * TODO: Replace with more sophisticated semantic similarity
+   * Calculate similarity between two texts using bigram Jaccard similarity.
+   * More robust than single-word overlap — captures partial word matches
+   * and handles short texts better.
    */
   private calculateSimilarity(text1: string, text2: string): number {
     if (!text1 || !text2) return 0;
 
-    const words1 = new Set(text1.toLowerCase().split(/\s+/));
-    const words2 = new Set(text2.toLowerCase().split(/\s+/));
+    const bigrams1 = this.toBigrams(text1.toLowerCase());
+    const bigrams2 = this.toBigrams(text2.toLowerCase());
 
-    const words1Array = Array.from(words1);
-    const words2Array = Array.from(words2);
-    const intersection = new Set(words1Array.filter(x => words2.has(x)));
-    const union = new Set(words1Array.concat(words2Array));
+    if (bigrams1.size === 0 && bigrams2.size === 0) return 0;
 
-    return union.size > 0 ? intersection.size / union.size : 0;
+    let intersectionSize = 0;
+    for (const bigram of bigrams1) {
+      if (bigrams2.has(bigram)) intersectionSize++;
+    }
+    const unionSize = bigrams1.size + bigrams2.size - intersectionSize;
+
+    return unionSize > 0 ? intersectionSize / unionSize : 0;
+  }
+
+  /**
+   * Extract character bigrams from text after normalizing whitespace.
+   */
+  private toBigrams(text: string): Set<string> {
+    const normalized = text.replace(/\s+/g, ' ').trim();
+    const bigrams = new Set<string>();
+    for (let i = 0; i < normalized.length - 1; i++) {
+      bigrams.add(normalized[i] + normalized[i + 1]);
+    }
+    return bigrams;
   }
 
   /**

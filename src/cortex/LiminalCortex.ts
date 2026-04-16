@@ -135,12 +135,10 @@ export class LiminalCortex {
           budgetUsage: this.budget.getUsage(),
         });
 
-        // Emit supervision events
-        if (result.supervision.stuckWorkers.length > 0) {
-          this.emit('cortex.stuck_detected', {
-            stuckWorkers: result.supervision.stuckWorkers,
-          });
-        }
+        // Emit supervision events — always emit stuck state so TUI clears when recovered
+        this.emit('cortex.stuck_detected', {
+          stuckWorkers: result.supervision.stuckWorkers,
+        });
         if (result.supervision.expiredLeases.length > 0) {
           this.emit('cortex.lease_expired', {
             expiredLeases: result.supervision.expiredLeases,

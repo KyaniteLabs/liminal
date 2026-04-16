@@ -140,9 +140,7 @@ export class TaskLedger {
       }
     }
 
-    // Sort by startedAt timestamp, not filename — IDs may not be chronologically ordered
-    attempts.sort((a, b) => a.startedAt.localeCompare(b.startedAt));
-    return attempts;
+    return attempts.sort((a, b) => a.startedAt.localeCompare(b.startedAt));
   }
 
   // ─── Candidate Recording ───────────────────────────────────────
@@ -233,7 +231,7 @@ export class TaskLedger {
 
     if (entries.length === 0) return null;
 
-    // Load all decisions and sort by decidedAt timestamp, not filename lexicographic order
+    // Sort by decidedAt timestamp, not filename
     const decisions: TaskDecision[] = [];
     for (const entry of entries) {
       const decisionId = entry.replace('.json', '');
@@ -244,6 +242,7 @@ export class TaskLedger {
     }
 
     if (decisions.length === 0) return null;
+
     decisions.sort((a, b) => a.decidedAt.localeCompare(b.decidedAt));
     return decisions[decisions.length - 1];
   }

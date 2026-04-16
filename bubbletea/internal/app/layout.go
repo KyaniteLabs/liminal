@@ -15,6 +15,10 @@ func (m Model) renderOperatorSurface(width int) string {
 	contentWidth := max(20, width)
 	panels := []string{m.renderTaskCard(contentWidth)}
 
+	if m.CortexSnapshot != nil {
+		panels = append(panels, m.renderCortexStatus(contentWidth))
+	}
+
 	if m.hasGenerationTelemetry() {
 		panels = append(panels, m.renderGenerationCard(contentWidth))
 	}
@@ -578,6 +582,27 @@ func (m Model) renderDiagnosticsPanel(width int) string {
 	}
 	lines = append(lines, ui.PanelMetaStyle.Render(summary))
 	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) renderCortexStatus(width int) string {
+	s := m.CortexSnapshot
+	pending := s.TaskPipeline.Pending + s.TaskPipeline.InProgress
+	acceptPct := s.TaskPipeline.AcceptanceRate * 100
+
+	var latency string
+	if s.LLMHealth.AvgLatencyMs >= 1000 {
+		latency = fmt.Sprintf("%.1fs", s.LLMHealth.AvgLatencyMs/1000)
+	} else {
+		latency = fmt.Sprintf("%.0fms", s.LLMHealth.AvgLatencyMs)
+	}
+
+	line := fmt.Sprintf("Cortex: %d pending | %d done | %.0f%% accept | %s avg",
+		pending, s.TaskPipeline.Completed, acceptPct, latency)
+	return lipgloss.NewStyle().
+		Foreground(ui.AccentCyan).
+		Width(width).
+		Padding(0, 1).
+		Render(line)
 }
 
 func (m Model) renderSessionList(width int) string {

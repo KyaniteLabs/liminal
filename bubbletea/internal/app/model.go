@@ -237,6 +237,9 @@ type Model struct {
 	SwarmTotalRounds    int
 	SwarmVocabularySize int
 
+	// Cortex perception state: latest snapshot from CortexPerceptionBus
+	CortexSnapshot *bridge.CortexSnapshotData
+
 	// ── Operator surface state ──
 
 	// Task card: what the agent is trying to do
@@ -805,6 +808,11 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			m.AutonomyLevel = event.AutonomyLevel
 			m.AutonomyLabel = event.Label
 			m.addActivity("Autonomy: " + event.Label)
+
+		// ── Cortex events ──
+
+	case "cortex.snapshot":
+		m.CortexSnapshot = event.Snapshot
 	}
 }
 

@@ -172,4 +172,15 @@ describe('TaskVerifier', () => {
     await expect(verifier.verify(task, attempt, code)).rejects.toThrow('Blocked: verifyCommand');
     expect(mockExecSync).not.toHaveBeenCalled();
   });
+
+  it('verify — rejects shell chaining via metacharacters', async () => {
+    const task = makeTask({ verifyCommand: 'pnpm test && rm -rf /' });
+    const attempt = makeAttempt();
+    const code = 'const chained = true;';
+
+    mockScore.mockResolvedValue({ score: 0.9, dimensions: {}, strategy: 'fast' });
+
+    await expect(verifier.verify(task, attempt, code)).rejects.toThrow('shell metacharacters');
+    expect(mockExecSync).not.toHaveBeenCalled();
+  });
 });

@@ -13,7 +13,15 @@ import { execSync } from 'node:child_process';
 
 const ALLOWED_COMMAND_PREFIXES = ['pnpm test', 'pnpm build', 'pnpm vitest', 'npx vitest'];
 
+// Shell metacharacters that enable chaining, substitution, or redirection
+const SHELL_METACHAR_RE = /[&|;$`<>\n\\]/;
+
 function assertAllowedCommand(cmd: string): void {
+  if (SHELL_METACHAR_RE.test(cmd)) {
+    throw new Error(
+      `Blocked: verifyCommand "${cmd}" contains shell metacharacters (${cmd.match(SHELL_METACHAR_RE)![0]})`,
+    );
+  }
   const allowed = ALLOWED_COMMAND_PREFIXES.some(prefix => cmd.startsWith(prefix));
   if (!allowed) {
     throw new Error(

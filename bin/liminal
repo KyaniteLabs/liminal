@@ -1398,6 +1398,231 @@ else if (cmd === 'report' && cmdArgs[0] === 'archive') {
     liminalFs.close();
   }
 }
+else if (cmd === 'taste' && cmdArgs[0] === 'train') {
+  const { PreferenceDatasetBuilder, TasteModelTrainer } = await import('../dist/learning/index.js');
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(liminalFs);
+    const archive = hooks.getArchive();
+    const elites = archive.getAllElites();
+
+    if (elites.length < 2) {
+      console.error('Not enough archived entries for taste training (need ≥2).');
+      process.exit(1);
+    }
+
+    const builder = new PreferenceDatasetBuilder();
+    const dataset = builder.build(elites);
+
+    if (dataset.pairs.length === 0) {
+      console.error('No preference data available. Pin, favorite, or compare artifacts first.');
+      process.exit(1);
+    }
+
+    console.log(`Building taste model from ${dataset.pairs.length} preference pairs (${dataset.stats.uniqueArtifacts} artifacts)...`);
+
+    const trainer = new TasteModelTrainer();
+    const model = trainer.train(dataset.pairs);
+
+    console.log('');
+    console.log('=== Taste Model Training ===');
+    console.log(`  Pairs: ${model.pairCount}`);
+    console.log(`  Training agreement: ${(model.trainingAgreement * 100).toFixed(1)}%`);
+    console.log(`  Quality weight: ${model.qualityWeight.toFixed(3)}`);
+    console.log(`  Axis weights: ${model.axisWeights.map((w, i) => `[${i}]${w.toFixed(3)}`).join(' ')}`);
+    console.log('');
+  } finally {
+    liminalFs.close();
+  }
+}
+else if (cmd === 'taste' && cmdArgs[0] === 'eval') {
+  const { PreferenceDatasetBuilder, TasteModelTrainer, TasteModelEvaluator } = await import('../dist/learning/index.js');
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(liminalFs);
+    const archive = hooks.getArchive();
+    const elites = archive.getAllElites();
+
+    if (elites.length < 4) {
+      console.error('Not enough data for evaluation (need ≥4 archived entries).');
+      process.exit(1);
+    }
+
+    const builder = new PreferenceDatasetBuilder();
+    const dataset = builder.build(elites);
+
+    const trainer = new TasteModelTrainer();
+    const model = trainer.train(dataset.pairs);
+
+    const evaluator = new TasteModelEvaluator();
+    const result = evaluator.evaluate(dataset.pairs, model);
+
+    console.log('');
+    console.log('=== Taste Model Evaluation ===');
+    console.log(`  Agreement: ${(result.agreement * 100).toFixed(1)}%`);
+    console.log(`  Kendall tau: ${result.kendallTau.toFixed(3)}`);
+    console.log(`  Calibration: ${(result.calibration * 100).toFixed(1)}%`);
+    console.log(`  Pairs evaluated: ${result.pairCount}`);
+    console.log(`  Beats baseline: ${result.beatsBaseline ? 'YES' : 'NO'}`);
+    console.log('');
+  } finally {
+    liminalFs.close();
+  }
+}
+else if (cmd === 'dream' && cmdArgs[0] === 'run') {
+  const { DreamPlanner, RecombinationEngine } = await import('../dist/dreaming/index.js');
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const strategy = cmdArgs[1] || 'auto';
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(liminalFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+    const planner = new DreamPlanner();
+    const plan = planner.plan(cells, axes as any);
+
+    if (plan.tasks.length === 0) {
+      console.error('No dream tasks to plan — archive may be empty.');
+      process.exit(1);
+    }
+
+    const engine = new RecombinationEngine();
+
+    console.log('');
+    console.log(`=== Dream Run (strategy: ${strategy}) ===`);
+    console.log(`  Planned ${plan.tasks.length} dream tasks`);
+
+    for (const task of plan.tasks.slice(0, 5)) {
+      console.log(`  [${task.strategy}] priority=${task.priority.toFixed(1)} — ${task.reason}`);
+      if (task.sources.length >= 2) {
+        const result = engine.recombine(task.sources[0], task.sources[1]);
+        console.log(`    → novelty=${result.noveltyScore.toFixed(3)} strategy=${result.strategy}`);
+      }
+    }
+    console.log('');
+  } finally {
+    liminalFs.close();
+  }
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'status') {
+  const { GardenPolicy } = await import('../dist/autonomy/GardenPolicy.js');
+  const { StagnationDetector } = await import('../dist/autonomy/StagnationDetector.js');
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(liminalFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+    const policy = new GardenPolicy();
+    const decisions = policy.decide(cells, axes as any);
+    const health = policy.getHealthMonitor().measure(cells);
+    const stag = new StagnationDetector().detect(policy.getHealthMonitor().getHistory());
+
+    console.log('');
+    console.log('=== Garden Status ===');
+    console.log(`  Health: ${(health.healthScore * 100).toFixed(1)}% [${health.healthLevel}]`);
+    console.log(`  Entries: ${health.archiveSize}  Occupancy: ${(health.nicheOccupancy * 100).toFixed(1)}%`);
+    console.log(`  Fertility: ${health.fertilityYield.toFixed(3)}  Lineage depth: ${health.avgLineageDepth.toFixed(1)}`);
+    console.log(`  Stagnation: ${stag.isStagnant ? `YES (${(stag.severity * 100).toFixed(0)}%)` : 'NO'}`);
+
+    if (decisions.length > 0) {
+      console.log('');
+      console.log('  Next actions:');
+      for (const d of decisions.slice(0, 5)) {
+        console.log(`    ${d.action} (priority ${d.priority.toFixed(1)}) — ${d.reason}`);
+      }
+    }
+    console.log('');
+  } finally {
+    liminalFs.close();
+  }
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'rebalance') {
+  const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(liminalFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+    const nichePolicy = new NicheQuotaPolicy();
+    const targets = nichePolicy.getTargetNiches(cells, axes as any, 10);
+    const balance = nichePolicy.getBalanceScore(cells);
+
+    console.log('');
+    console.log('=== Garden Rebalance ===');
+    console.log(`  Current balance: ${(balance * 100).toFixed(1)}%`);
+    console.log(`  Target niches: ${targets.length}`);
+
+    for (const t of targets) {
+      console.log(`    ${t.cellId}: ${t.reason} (priority ${t.priority.toFixed(2)})`);
+    }
+    console.log('');
+  } finally {
+    liminalFs.close();
+  }
+}
+else if (cmd === 'report' && cmdArgs[0] === 'garden') {
+  const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
+  const { StagnationDetector } = await import('../dist/autonomy/StagnationDetector.js');
+  const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  try {
+    const hooks = new EmergenceHooks(liminalFs);
+    const archive = hooks.getArchive();
+    const cells = archive.getAllCells();
+    const healthMonitor = new GardenHealthMonitor();
+    const nichePolicy = new NicheQuotaPolicy();
+    const stagnation = new StagnationDetector();
+
+    console.log('');
+    console.log('=== Garden Report ===');
+
+    const health = healthMonitor.measure(cells);
+    console.log(`  Health: ${(health.healthScore * 100).toFixed(1)}% [${health.healthLevel}]`);
+    console.log(`  Archive: ${health.archiveSize} entries  Occupancy: ${(health.nicheOccupancy * 100).toFixed(1)}%`);
+    console.log(`  Avg lineage depth: ${health.avgLineageDepth.toFixed(1)}  Fertility yield: ${health.fertilityYield.toFixed(3)}`);
+    console.log(`  Taste alignment: ${(health.tasteAlignment * 100).toFixed(1)}%`);
+
+    const balance = nichePolicy.getBalanceScore(cells);
+    console.log(`  Niche balance: ${(balance * 100).toFixed(1)}%`);
+
+    const stagResult = stagnation.detect(healthMonitor.getHistory());
+    if (stagResult.isStagnant) {
+      console.log('');
+      console.log(`  WARNING: Stagnation detected (severity: ${(stagResult.severity * 100).toFixed(0)}%)`);
+      for (const r of stagResult.recommendations) {
+        console.log(`    → ${r}`);
+      }
+    }
+
+    console.log('');
+  } finally {
+    liminalFs.close();
+  }
+}
 else {
   console.error('Error: --prompt is required');
   console.error('');

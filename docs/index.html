@@ -3,188 +3,345 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Liminal - Creative Coding Agent Documentation</title>
+    <title>Liminal — Command Center</title>
     <link rel="stylesheet" href="styles/docs.css">
 </head>
 <body>
-    <nav class="navbar">
-        <a href="index.html" class="navbar-brand">
-            <span>🎨</span>
-            <h1>Liminal</h1>
-        </a>
-        <ul class="navbar-nav">
-            <li><a href="index.html" class="active">Home</a></li>
-            <li><a href="features.html">Features</a></li>
-            <li><a href="architecture.html">Architecture</a></li>
-            <li><a href="cli-reference.html">CLI</a></li>
-            <li><a href="soul-system.html">SOUL</a></li>
-            <li><a href="visual-bible.html">Visual Bible</a></li>
-        </ul>
-    </nav>
 
-    <header class="hero">
-        <h1>Liminal Documentation</h1>
-        <p>The creative coding agent with a Meta-Harness for self-improvement, natural language interface, and the Ralph-Wiggum Loop.</p>
-        <div style="margin-top: 2rem;">
-            <a href="features.html" class="btn btn-primary">Explore Features</a>
-            <a href="cli-reference.html" class="btn btn-secondary">CLI Reference</a>
+<nav class="navbar">
+    <a href="index.html" class="navbar-brand"><h1>Liminal</h1></a>
+    <div class="navbar-nav">
+        <a href="index.html" class="active">Home</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="features.html">Features</a>
+        <a href="cli-reference.html">CLI</a>
+        <a href="io-catalog.html">I/O Catalog</a>
+        <a href="soul-system.html">SOUL</a>
+    </div>
+</nav>
+
+<div class="breadcrumbs">
+    <a href="index.html">Home</a>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+    <h1>Liminal</h1>
+    <p>A creative coding agent that generates art, music, and shaders through iterative LLM-powered evolution.</p>
+    <div style="display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;">
+        <a href="https://github.com/Pastorsimon1798/liminal" class="btn btn-primary">GitHub Repository</a>
+        <a href="architecture.html" class="btn btn-secondary">Architecture</a>
+        <a href="cli-reference.html" class="btn btn-secondary">CLI Reference</a>
+    </div>
+</section>
+
+<div class="container">
+
+<!-- Project Metrics -->
+<section class="section">
+    <h2 class="section-title">Project Status</h2>
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-value">11</div>
+            <div class="stat-label">Generators</div>
         </div>
-    </header>
+        <div class="stat-card">
+            <div class="stat-value">482</div>
+            <div class="stat-label">Source Files</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">535</div>
+            <div class="stat-label">Test Files</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">48</div>
+            <div class="stat-label">Subsystems</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">25+</div>
+            <div class="stat-label">Guardrail Modules</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value">11</div>
+            <div class="stat-label">CLI Commands</div>
+        </div>
+    </div>
+</section>
 
-    <main class="container">
-        <section class="section">
-            <h2 class="section-title">🚀 What's New</h2>
-            <p class="section-subtitle">Latest features and improvements in Liminal</p>
-            
-            <div class="card-grid">
-                <div class="card">
-                    <span class="badge badge-success">NEW</span>
-                    <h3>Natural Language Interface</h3>
-                    <p>No more command prefixes! Just type naturally: "Fix the Tone.js validation" or "What's the status?" The system intelligently routes your request.</p>
-                    <p style="margin-top: 1rem;"><a href="features.html#natural-interface">Learn more →</a></p>
-                </div>
-                
-                <div class="card">
-                    <span class="badge badge-success">NEW</span>
-                    <h3>LLM Mode Agent</h3>
-                    <p>Autonomous agent with planning, reflection, and multi-turn conversations. The agent plans its own steps and adapts based on results.</p>
-                    <p style="margin-top: 1rem;"><a href="architecture-deep-dive.html">Learn more →</a></p>
-                </div>
-                
-                <div class="card">
-                    <span class="badge badge-success">ACTIVE</span>
-                    <h3>Meta-Harness System</h3>
-                    <p>Self-improving system with 18-type guardrail architecture. Monitors failures, detects patterns, and applies automatic fixes.</p>
-                    <p style="margin-top: 1rem;"><a href="architecture-all-guardrails.html">View guardrails →</a></p>
-                </div>
-            </div>
-        </section>
+<!-- Generators -->
+<section class="section">
+    <h2 class="section-title">Generators</h2>
+    <p class="section-subtitle">11 creative domains — from p5.js sketches to GLSL shaders to live-coded music.</p>
+    <div class="card-grid">
+        <div class="card">
+            <h3>p5.js</h3>
+            <p>2D creative coding sketches with iterative refinement.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>GLSL</h3>
+            <p>Fragment and vertex shaders with real-time preview.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>Three.js</h3>
+            <p>3D scenes, particle systems, and procedural geometry.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>Strudel</h3>
+            <p>Live-coded music with pattern combinators and Euclidean rhythms.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>Hydra</h3>
+            <p>Live-coded visual synthesizer with feedback and blending.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>Tone.js</h3>
+            <p>Web Audio synthesis, sequencing, and effects.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>Revideo</h3>
+            <p>Programmatic video generation with timeline and MP4 export.</p>
+            <span class="badge badge-info">Active</span>
+        </div>
+        <div class="card">
+            <h3>HTML</h3>
+            <p>Generative HTML/CSS pages with layout and animation.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>ASCII</h3>
+            <p>Terminal-ready ASCII art with character density mapping.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+        <div class="card">
+            <h3>Kinetic</h3>
+            <p>Motion-focused generative art with physics and easing.</p>
+            <span class="badge badge-info">Active</span>
+        </div>
+        <div class="card">
+            <h3>TextGen</h3>
+            <p>Generative text — poetry, narratives, creative writing.</p>
+            <span class="badge badge-success">Stable</span>
+        </div>
+    </div>
+</section>
 
-        <section class="section">
-            <h2 class="section-title">📚 Documentation</h2>
-            
-            <div class="card-grid">
-                <div class="card">
-                    <h3>🏗️ Architecture</h3>
-                    <p>Deep dive into Liminal's system design, component relationships, and data flow.</p>
-                    <ul class="feature-list" style="margin-top: 1rem;">
-                        <li><a href="architecture.html">System Overview</a></li>
-                        <li><a href="architecture-deep-dive.html">Technical Deep Dive</a></li>
-                        <li><a href="architecture-all-guardrails.html">Guardrail Taxonomy</a></li>
-                    </ul>
-                </div>
-                
-                <div class="card">
-                    <h3>⚡ Features</h3>
-                    <p>Explore Liminal's capabilities and how to use them effectively.</p>
-                    <ul class="feature-list" style="margin-top: 1rem;">
-                        <li><a href="features.html">Feature Overview</a></li>
-                        <li><a href="harness-tasks.html">Harness Tasks</a></li>
-                        <li><a href="soul-system.html">SOUL System</a></li>
-                    </ul>
-                </div>
-                
-                <div class="card">
-                    <h3>💻 CLI Reference</h3>
-                    <p>Complete command-line interface documentation.</p>
-                    <ul class="feature-list" style="margin-top: 1rem;">
-                        <li><a href="cli-reference.html">Commands</a></li>
-                        <li><a href="cli-reference.html#configuration">Configuration</a></li>
-                        <li><a href="api-reference.html">API Reference</a></li>
-                    </ul>
-                </div>
-            </div>
-        </section>
+<!-- Guardrail Architecture -->
+<section class="section">
+    <h2 class="section-title">Guardrail Architecture</h2>
+    <p class="section-subtitle">18-type multi-layer safety system spanning correctness, compliance, and creative quality.</p>
 
-        <section class="section">
-            <h2 class="section-title">✨ Key Capabilities</h2>
-            <p class="section-subtitle">What makes Liminal unique</p>
-            
+    <div class="two-col">
+        <div>
+            <h3>Core Guardrails (M1-M8)</h3>
             <table>
-                <thead>
-                    <tr>
-                        <th>Feature</th>
-                        <th>Status</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
+                <thead><tr><th>ID</th><th>Guardrail</th><th>Status</th></tr></thead>
                 <tbody>
-                    <tr>
-                        <td><strong>Natural Language Interface</strong></td>
-                        <td><span class="badge badge-success">✅ Active</span></td>
-                        <td>Type naturally without command prefixes</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Meta-Harness</strong></td>
-                        <td><span class="badge badge-success">✅ Online</span></td>
-                        <td>Self-improving system with 18 guardrail types</td>
-                    </tr>
-                    <tr>
-                        <td><strong>LLM Mode Agent</strong></td>
-                        <td><span class="badge badge-success">✅ Implemented</span></td>
-                        <td>Autonomous planning and reflection</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Ralph-Wiggum Loop</strong></td>
-                        <td><span class="badge badge-success">✅ Active</span></td>
-                        <td>Self-recursive iteration engine</td>
-                    </tr>
-                    <tr>
-                        <td><strong>SOUL System</strong></td>
-                        <td><span class="badge badge-success">✅ Active</span></td>
-                        <td>User-editable personality via SOUL.md</td>
-                    </tr>
-                    <tr>
-                        <td><strong>Bubble Tea Operator TUI</strong></td>
-                        <td><span class="badge badge-success">✅ Active</span></td>
-                        <td>Tools-first coding/operator harness with TS bridge + Bubble Tea shell</td>
-                    </tr>
+                    <tr><td>M1</td><td>Code Validation</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M2</td><td>Type Safety</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M3</td><td>Test Verification</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M4</td><td>Schema Validation</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M5</td><td>Resource Limits</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M6</td><td>Code Style</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M7</td><td>Catastrophic Failure</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M8</td><td>Registry</td><td><span class="badge badge-success">Complete</span></td></tr>
                 </tbody>
             </table>
-        </section>
+        </div>
+        <div>
+            <h3>Extended Guardrails (M9-M18)</h3>
+            <table>
+                <thead><tr><th>ID</th><th>Guardrail</th><th>Status</th></tr></thead>
+                <tbody>
+                    <tr><td>M9</td><td>Semantic Validator</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M10</td><td>Runtime Health</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M11</td><td>Accessibility</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M12</td><td>Privacy</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M13</td><td>Fairness</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M14</td><td>Supply Chain</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M15</td><td>Resilience</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M16</td><td>Audit Trail</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M17</td><td>Explainability</td><td><span class="badge badge-success">Complete</span></td></tr>
+                    <tr><td>M18</td><td>Injection Prevention</td><td><span class="badge badge-success">Complete</span></td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
 
-        <section class="section">
-            <h2 class="section-title">🚀 Quick Start</h2>
-            <pre><code># Install dependencies
+<!-- Architecture Overview -->
+<section class="section">
+    <h2 class="section-title">Architecture Overview</h2>
+    <p class="section-subtitle">48 subsystems organized into functional layers.</p>
+
+    <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));">
+        <div class="card">
+            <h3>Core Loop</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/core/, src/llm/, src/config/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">RalphLoop engine, LLM client with provider adapters, configuration loading.</p>
+        </div>
+        <div class="card">
+            <h3>Generators</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/generators/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">11 domain generators with TierBasedGenerator base class.</p>
+        </div>
+        <div class="card">
+            <h3>Meta-Harness</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/harness/, src/guardrails/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Failure logging, pattern detection, self-improvement, M1-M18 guardrails.</p>
+        </div>
+        <div class="card">
+            <h3>Intelligence</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/brain/, src/compost/, src/evolution/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Artistic knowledge, Compost Mill, MAP-Elites, novelty archive.</p>
+        </div>
+        <div class="card">
+            <h3>Audio &amp; Music</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/audio/, src/music/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Audio analysis, pitch detection, Euclidean rhythms, Markov chains.</p>
+        </div>
+        <div class="card">
+            <h3>Aesthetics</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/aesthetic/, src/calibration/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Color theory, design tiers, multi-critic evaluation pipeline.</p>
+        </div>
+        <div class="card">
+            <h3>TUI</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/tui/, src/tui-bridge/, src/chat/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Bubble Tea bridge, interactive chat sessions.</p>
+        </div>
+        <div class="card">
+            <h3>Security &amp; Infra</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/security/, src/sandbox/, src/render/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">SSRF protection, rate limiting, rendering pipeline.</p>
+        </div>
+        <div class="card">
+            <h3>Task Ledger</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/ledger/, src/fs/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Self-hosting task corpus, runner, verifier, LiminalFS substrate.</p>
+        </div>
+        <div class="card">
+            <h3>Collaboration</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/collab/, src/swarm/, src/routing/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Multi-agent board, swarm generation, dual-model routing.</p>
+        </div>
+        <div class="card">
+            <h3>Learning</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/intuition/, src/learning/, src/embeddings/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Thompson Sampling, domain prototypes, local SBERT embeddings.</p>
+        </div>
+        <div class="card">
+            <h3>Plugins &amp; Quality</h3>
+            <p style="font-size:0.85rem;color:var(--text-secondary);">src/plugins/, src/quality/, src/fix/</p>
+            <p style="margin-top:0.5rem;font-size:0.85rem;">Plugin system, quality metrics, auto-fix with LLM.</p>
+        </div>
+    </div>
+    <p style="margin-top:1rem;"><a href="architecture.html" class="btn btn-secondary">Full Architecture Details</a></p>
+</section>
+
+<!-- Supported Providers -->
+<section class="section">
+    <h2 class="section-title">Supported Providers</h2>
+    <p class="section-subtitle">Model-agnostic — works with any OpenAI-compatible API or Anthropic.</p>
+    <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <div class="card" style="text-align:center;">
+            <h3>MiniMax</h3>
+            <span class="badge badge-success">Default</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>OpenAI</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Anthropic</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Google</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Ollama</h3>
+            <span class="badge badge-info">Local</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>OpenRouter</h3>
+            <span class="badge badge-info">Router</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>GLM / ZhipuAI</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+    </div>
+</section>
+
+<!-- Quick Start -->
+<section class="section">
+    <h2 class="section-title">Quick Start</h2>
+    <pre><code># Install
 pnpm install
 
-# Start the Bubble Tea coding/operator harness
-liminal tui
+# Configure (first time)
+liminal --configure
 
-# Or use the alias
-lim tui
+# Generate
+liminal --prompt "Create a calming blue particle system"
 
-# Bubble Tea is tools-first by default for non-creative input:
-# → "Fix the Tone.js validation"
-# → "Debug the harness startup flow"
-# → "Reduce wasted startup steps"
-#
-# Use creative-generation language only when you actually want art/music/code generation.</code></pre>
-        </section>
+# Chat-driven creative session
+liminal chat
 
-        <section class="section">
-            <h2 class="section-title">📁 Project Structure</h2>
-            <pre><code>liminal/
-├── src/
-│   ├── core/           # RalphLoop, GenerationOrchestrator
-│   ├── harness/        # Meta-Harness, Agents, Tools
-│   ├── tui/            # Legacy/secondary TUI surfaces
-│   ├── tui-bridge/     # Bubble Tea bridge + tools-first operator routing
-│   ├── llm/            # LLMClient, providers
-│   ├── generators/     # p5, Three.js, GLSL, etc.
-│   └── prompts/        # System prompts, templates
-├── docs/               # Documentation site
-├── harness-tasks/      # Self-improvement tasks (M1-M11)
-└── SOUL.md             # Assistant personality</code></pre>
-        </section>
-    </main>
+# Terminal UI (Bubble Tea — requires Go &gt;= 1.21)
+pnpm run tui</code></pre>
+</section>
 
-    <footer class="footer">
-        <p>Liminal AI Documentation • Version 1.0.0</p>
-        <p style="margin-top: 0.5rem;">
-            <a href="https://github.com/Pastorsimon1798/liminal">GitHub</a> •
-            <a href="IMPACT_REPORT.html">Impact Report</a>
-        </p>
-    </footer>
+<!-- Documentation Links -->
+<section class="section">
+    <h2 class="section-title">Documentation</h2>
+    <div class="card-grid">
+        <a href="architecture.html" class="card" style="text-decoration:none;">
+            <h3>Architecture</h3>
+            <p>System overview, data flow, subsystem details, and component reference.</p>
+        </a>
+        <a href="features.html" class="card" style="text-decoration:none;">
+            <h3>Features &amp; Guardrails</h3>
+            <p>Feature status, guardrail M1-M18 details, harness task system.</p>
+        </a>
+        <a href="cli-reference.html" class="card" style="text-decoration:none;">
+            <h3>CLI Reference</h3>
+            <p>All commands, flags, configuration, and environment variables.</p>
+        </a>
+        <a href="io-catalog.html" class="card" style="text-decoration:none;">
+            <h3>I/O Catalog</h3>
+            <p>Input/output formats, reference gallery, infrastructure map.</p>
+        </a>
+        <a href="soul-system.html" class="card" style="text-decoration:none;">
+            <h3>SOUL System</h3>
+            <p>Customizable personality, voice, and behavior configuration.</p>
+        </a>
+        <a href="https://github.com/Pastorsimon1798/liminal/blob/main/README.md" class="card" style="text-decoration:none;">
+            <h3>README</h3>
+            <p>GitHub landing page with quick start, architecture tree, and license.</p>
+        </a>
+    </div>
+</section>
+
+<!-- License -->
+<section class="section">
+    <div class="alert alert-info">
+        <strong>License:</strong> Business Source License 1.1 (BSL 1.1). Source available for non-commercial, educational, and personal use. Converts to MIT on April 15, 2029.
+    </div>
+</section>
+
+</div>
+
+<footer class="footer">
+    <p>Liminal &mdash; Creative Coding Agent &bull; <a href="https://github.com/Pastorsimon1798/liminal">GitHub</a> &bull; BSL 1.1 License</p>
+</footer>
+
 </body>
 </html>

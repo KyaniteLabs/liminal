@@ -3,201 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CLI Reference - Liminal Documentation</title>
+    <title>Liminal — CLI Reference</title>
     <link rel="stylesheet" href="styles/docs.css">
 </head>
 <body>
-    <nav class="navbar">
-        <a href="index.html" class="navbar-brand">
-            <span>🎨</span>
-            <h1>Liminal</h1>
-        </a>
-        <ul class="navbar-nav">
-            <li><a href="index.html">Home</a></li>
-            <li><a href="features.html">Features</a></li>
-            <li><a href="architecture.html">Architecture</a></li>
-            <li><a href="cli-reference.html" class="active">CLI</a></li>
-            <li><a href="soul-system.html">SOUL</a></li>
-            <li><a href="visual-bible.html">Visual Bible</a></li>
-        </ul>
-    </nav>
 
-    <div class="breadcrumbs">
+<nav class="navbar">
+    <a href="index.html" class="navbar-brand"><h1>Liminal</h1></a>
+    <div class="navbar-nav">
         <a href="index.html">Home</a>
-        <span>/</span>
-        <span>CLI Reference</span>
+        <a href="architecture.html">Architecture</a>
+        <a href="features.html">Features</a>
+        <a href="cli-reference.html" class="active">CLI</a>
+        <a href="io-catalog.html">I/O Catalog</a>
+        <a href="soul-system.html">SOUL</a>
+    </div>
+</nav>
+
+<div class="breadcrumbs">
+    <a href="index.html">Home</a> <span>/</span> CLI Reference
+</div>
+
+<section class="hero">
+    <h1>CLI Reference</h1>
+    <p>All commands, flags, and configuration options for the Liminal CLI.</p>
+</section>
+
+<div class="container">
+
+<!-- Core Commands -->
+<section class="section">
+    <h2 class="section-title">Commands</h2>
+    <table>
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><code>liminal -p "prompt"</code></td><td>Generate with a prompt</td></tr>
+            <tr><td><code>liminal -p "idea" -m 10 -o ./output</code></td><td>Custom iterations + output directory</td></tr>
+            <tr><td><code>liminal -p "idea" --use-swarm --swarm-mode hybrid</code></td><td>Swarm generation</td></tr>
+            <tr><td><code>liminal -p "ambient glitch" --mode live-music</code></td><td>Live music mode</td></tr>
+            <tr><td><code>liminal chat</code></td><td>Conversational creative session</td></tr>
+            <tr><td><code>liminal bubbletea</code></td><td>Full Bubble Tea TUI (requires pre-built Go binary)</td></tr>
+            <tr><td><code>pnpm run tui</code></td><td>Build + launch Bubble Tea TUI (auto-compiles Go)</td></tr>
+            <tr><td><code>liminal fix &lt;file|desc&gt;</code></td><td>Auto-fix code with LLM</td></tr>
+            <tr><td><code>liminal consolidate</code></td><td>Memory consolidation</td></tr>
+            <tr><td><code>liminal list</code></td><td>List saved sketches</td></tr>
+            <tr><td><code>liminal serve 3456</code></td><td>Preview server on port</td></tr>
+            <tr><td><code>liminal --configure</code></td><td>Interactive configuration setup</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Compost Mill -->
+<section class="section">
+    <h2 class="section-title">Compost Mill</h2>
+    <p class="section-subtitle">Creative material digestion pipeline.</p>
+    <table>
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><code>liminal compost add &lt;path&gt;</code></td><td>Feed material to the heap</td></tr>
+            <tr><td><code>liminal compost digest</code></td><td>Run full digestion pipeline (extract &rarr; shred &rarr; collide &rarr; score &rarr; promote)</td></tr>
+            <tr><td><code>liminal compost soup start</code></td><td>Start evolutionary soup on seeds</td></tr>
+            <tr><td><code>liminal compost soup stop</code></td><td>Stop the soup</td></tr>
+            <tr><td><code>liminal compost seeds list</code></td><td>Browse promoted creative seeds</td></tr>
+            <tr><td><code>liminal compost seeds show &lt;id&gt;</code></td><td>Show seed details</td></tr>
+            <tr><td><code>liminal compost status</code></td><td>Overview of heap, seeds, and soup</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Task Ledger -->
+<section class="section">
+    <h2 class="section-title">Task Ledger</h2>
+    <p class="section-subtitle">Self-hosting task system for structured improvements.</p>
+    <table>
+        <thead><tr><th>Command</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><code>liminal ledger list</code></td><td>List all tasks in the corpus</td></tr>
+            <tr><td><code>liminal ledger show &lt;id&gt;</code></td><td>Show task details and requirements</td></tr>
+            <tr><td><code>liminal ledger run &lt;id&gt;</code></td><td>Execute a task</td></tr>
+            <tr><td><code>liminal ledger verify &lt;id&gt;</code></td><td>Verify task result</td></tr>
+            <tr><td><code>liminal ledger status</code></td><td>Ledger overview and statistics</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Flags -->
+<section class="section">
+    <h2 class="section-title">Flags</h2>
+    <table>
+        <thead><tr><th>Flag</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><code>-p, --prompt &lt;text&gt;</code></td><td>Generation prompt</td></tr>
+            <tr><td><code>-m, --max-iterations &lt;n&gt;</code></td><td>Max iterations (default: 3)</td></tr>
+            <tr><td><code>-o, --output &lt;path&gt;</code></td><td>Output directory</td></tr>
+            <tr><td><code>--mode &lt;mode&gt;</code></td><td>Mode: <code>live-music</code></td></tr>
+            <tr><td><code>--use-swarm</code></td><td>Enable swarm generation</td></tr>
+            <tr><td><code>--swarm-mode &lt;mode&gt;</code></td><td>Swarm strategy: competitive, hybrid, ring, mesh</td></tr>
+            <tr><td><code>--voice</code></td><td>Use microphone for audio input</td></tr>
+            <tr><td><code>--voice-file &lt;path&gt;</code></td><td>Use audio file for input</td></tr>
+            <tr><td><code>--aesthetic &lt;preset&gt;</code></td><td>Guardrail preset: lenient, moderate, strict</td></tr>
+            <tr><td><code>--intuition</code></td><td>Enable intuition scoring dimension</td></tr>
+            <tr><td><code>-v, --verbose</code></td><td>Verbose output</td></tr>
+        </tbody>
+    </table>
+</section>
+
+<!-- Configuration -->
+<section class="section">
+    <h2 class="section-title">Configuration</h2>
+    <p class="section-subtitle">Two methods: config file or environment variables.</p>
+
+    <div class="two-col">
+        <div>
+            <h3>Config File</h3>
+            <p style="font-size:0.9rem;">Located at <code>~/.liminal/config.json</code>. Created via <code>liminal --configure</code>.</p>
+            <pre><code>{
+  "llm": {
+    "baseUrl": "https://api.minimaxi.chat/v1",
+    "model": "minimax/M2.7-0716",
+    "apiKey": "your-key"
+  }
+}</code></pre>
+        </div>
+        <div>
+            <h3>Environment Variables</h3>
+            <table>
+                <thead><tr><th>Variable</th><th>Description</th></tr></thead>
+                <tbody>
+                    <tr><td><code>LLM_API_KEY</code></td><td>API key for the provider</td></tr>
+                    <tr><td><code>LLM_MODEL</code></td><td>Model name (e.g. <code>minimax/M2.7-0716</code>)</td></tr>
+                    <tr><td><code>LLM_BASE_URL</code></td><td>API base URL</td></tr>
+                    <tr><td><code>LIMINAL_LLM_MODEL</code></td><td>Override model on the fly</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <main class="container">
-        <section class="section">
-            <h1 class="section-title">💻 CLI Reference</h1>
-            <p class="section-subtitle">Command-line interface for Liminal</p>
-        </section>
+    <h3 style="margin-top:1.5rem;">Supported Providers</h3>
+    <div class="card-grid" style="grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));">
+        <div class="card" style="text-align:center;">
+            <h3>MiniMax</h3>
+            <span class="badge badge-success">Default</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>OpenAI</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Anthropic</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Google</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>Ollama</h3>
+            <span class="badge badge-info">Local</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>OpenRouter</h3>
+            <span class="badge badge-info">Router</span>
+        </div>
+        <div class="card" style="text-align:center;">
+            <h3>GLM / ZhipuAI</h3>
+            <span class="badge badge-info">Supported</span>
+        </div>
+    </div>
+</section>
 
-        <section class="section">
-            <h2 class="section-title">🚀 Commands</h2>
-            
-            <h3 style="color: var(--accent-cyan);">liminal tui</h3>
-            <p>Launch the interactive Bubble Tea operator TUI via the GLM-backed bridge bootstrap script.</p>
-            <pre><code>$ liminal tui
+<!-- TUI Commands -->
+<section class="section">
+    <h2 class="section-title">TUI Slash Commands</h2>
+    <p class="section-subtitle">Interactive commands available in <code>liminal chat</code> and Bubble Tea TUI.</p>
+    <table>
+        <thead><tr><th>Command</th><th>Action</th></tr></thead>
+        <tbody>
+            <tr><td><code>/help</code></td><td>Show available commands</td></tr>
+            <tr><td><code>/status</code></td><td>System and harness status</td></tr>
+            <tr><td><code>/fix &lt;description&gt;</code></td><td>Auto-fix code with LLM</td></tr>
+            <tr><td><code>/evaluate &lt;file&gt;</code></td><td>Run evaluation on a file</td></tr>
+            <tr><td><code>/provider &lt;name&gt;</code></td><td>Switch LLM provider</td></tr>
+            <tr><td><code>/mode &lt;mode&gt;</code></td><td>Switch generation mode</td></tr>
+            <tr><td><code>/compost status</code></td><td>Compost Mill overview</td></tr>
+            <tr><td><code>/seeds list</code></td><td>Browse creative seeds</td></tr>
+            <tr><td><code>/ledger status</code></td><td>Task ledger overview</td></tr>
+            <tr><td><code>/consolidate</code></td><td>Run memory consolidation</td></tr>
+            <tr><td><code>/quit</code></td><td>Exit session</td></tr>
+        </tbody>
+    </table>
+</section>
 
-# Or use the shorthand alias:
-$ lim tui</code></pre>
-            <p style="margin-top: 1rem;">Inside the TUI, you can type naturally:</p>
-            <ul class="feature-list">
-                <li><code>"Fix the validation"</code> — Agent mode</li>
-                <li><code>"What's the status?"</code> — Command mode</li>
-                <li><code>"Tell me about p5.js"</code> — Chat mode</li>
-            </ul>
+<!-- npm Scripts -->
+<section class="section">
+    <h2 class="section-title">npm Scripts</h2>
+    <table>
+        <thead><tr><th>Script</th><th>Description</th></tr></thead>
+        <tbody>
+            <tr><td><code>pnpm run tui</code></td><td>Build + launch Bubble Tea TUI (auto-compiles Go)</td></tr>
+            <tr><td><code>pnpm run tui:bridge</code></td><td>Start bridge server only (no Go client)</td></tr>
+            <tr><td><code>pnpm test</code></td><td>Run test suite</td></tr>
+            <tr><td><code>pnpm run test:coverage</code></td><td>Run tests with coverage</td></tr>
+            <tr><td><code>pnpm run typecheck</code></td><td>TypeScript type checking</td></tr>
+            <tr><td><code>pnpm run lint</code></td><td>ESLint</td></tr>
+            <tr><td><code>pnpm run build</code></td><td>Compile TypeScript</td></tr>
+        </tbody>
+    </table>
+</section>
 
-            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">liminal --prompt "..."</h3>
-            <p>Generate art directly from the command line.</p>
-            <pre><code>$ liminal --prompt "Create a calming blue particle system"
-$ liminal --prompt "Generate a shader with Perlin noise" --domain glsl</code></pre>
+</div>
 
-            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">liminal serve</h3>
-            <p>Start the preview server for browser-based viewing.</p>
-            <pre><code>$ liminal serve
-# Server starts on http://localhost:3000</code></pre>
+<footer class="footer">
+    <p>Liminal &mdash; Creative Coding Agent &bull; <a href="https://github.com/Pastorsimon1798/liminal">GitHub</a> &bull; BSL 1.1 License</p>
+</footer>
 
-            <h3 style="color: var(--accent-purple); margin-top: 2rem;">Bubble Tea TUI (Go)</h3>
-            <p>Next-generation operator-grade terminal UI. The recommended entrypoint is <code>pnpm tui</code>, which builds the repo, starts the TS bridge, and launches Bubble Tea.</p>
-            <pre><code>$ cd bubbletea && go run .
-
-# Or with a custom bridge URL:
-$ LIMINAL_BRIDGE_URL=http://localhost:3000 go run .</code></pre>
-            <table style="margin-top: 1rem;">
-                <thead>
-                    <tr><th>Key</th><th>Action</th></tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>Enter</code></td><td>Submit input via bridge</td></tr>
-                    <tr><td><code>Tab</code></td><td>Switch focus between chat and operator column</td></tr>
-                    <tr><td><code>Ctrl+T</code></td><td>Toggle the live tool timeline panel</td></tr>
-                    <tr><td><code>Ctrl+A</code></td><td>Toggle the artifacts drawer</td></tr>
-                    <tr><td><code>Ctrl+Y</code></td><td>Copy the last assistant response to the clipboard and persist a fallback copy artifact</td></tr>
-                    <tr><td><code>?</code></td><td>Toggle the operator shortcuts/help drawer</td></tr>
-                    <tr><td><code>fn</code>+<code>↑</code> / <code>fn</code>+<code>↓</code></td><td>Page up/down in the chat viewport on Mac laptops</td></tr>
-                    <tr><td><code>y</code></td><td>Confirm pending action (ACTION mode)</td></tr>
-                    <tr><td><code>n</code></td><td>Cancel pending action (ACTION mode)</td></tr>
-                    <tr><td><code>q</code> / <code>Ctrl+C</code></td><td>Quit</td></tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section class="section" id="configuration">
-            <h2 class="section-title">⚙️ Configuration</h2>
-            
-            <h3 style="color: var(--accent-cyan);">Environment Variables</h3>
-            <p>Copy <code>.env.example</code> to <code>.env</code> and configure:</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Variable</th>
-                        <th>Description</th>
-                        <th>Default</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><code>LIMINAL_LLM_PROVIDER</code></td>
-                        <td>LLM provider (lmstudio, ollama, openai)</td>
-                        <td>lmstudio</td>
-                    </tr>
-                    <tr>
-                        <td><code>LIMINAL_LLM_BASE_URL</code></td>
-                        <td>Base URL for LLM API</td>
-                        <td>http://localhost:1234/v1</td>
-                    </tr>
-                    <tr>
-                        <td><code>LIMINAL_LLM_MODEL</code></td>
-                        <td>Model name to use</td>
-                        <td>qwen2.5-coder-7b-instruct</td>
-                    </tr>
-                    <tr>
-                        <td><code>OPENAI_API_KEY</code></td>
-                        <td>OpenAI API key (if using OpenAI)</td>
-                        <td>-</td>
-                    </tr>
-                    <tr>
-                        <td><code>LIMINAL_ALLOW_LOCALHOST_LLM</code></td>
-                        <td>Allow localhost connections</td>
-                        <td>true</td>
-                    </tr>
-                </tbody>
-            </table>
-
-            <h3 style="color: var(--accent-cyan); margin-top: 2rem;">Example .env</h3>
-            <pre><code># LM Studio (default)
-LIMINAL_LLM_PROVIDER=lmstudio
-LIMINAL_LLM_BASE_URL=http://localhost:1234/v1
-LIMINAL_LLM_MODEL=qwen2.5-coder-7b-instruct
-
-# Or Ollama
-LIMINAL_LLM_PROVIDER=ollama
-LIMINAL_LLM_BASE_URL=http://localhost:11434
-LIMINAL_LLM_MODEL=codellama:7b
-
-# Or OpenAI
-LIMINAL_LLM_PROVIDER=openai
-LIMINAL_LLM_MODEL=gpt-4
-OPENAI_API_KEY=sk-...</code></pre>
-        </section>
-
-        <section class="section">
-            <h2 class="section-title">🎮 TUI Commands</h2>
-            <p>When inside the TUI, you can use explicit commands with <code>/</code> prefix:</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Command</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>/status</code></td><td>Show harness status</td></tr>
-                    <tr><td><code>/tasks</code></td><td>List pending harness tasks</td></tr>
-                    <tr><td><code>/provider openrouter</code></td><td>Show the curated OpenRouter model list and current selection</td></tr>
-                    <tr><td><code>/provider openrouter &lt;alias-or-model&gt;</code></td><td>Switch the Bubble Tea bridge to a curated OpenRouter model and persist it</td></tr>
-                    <tr><td><code>/run &lt;task-id&gt;</code></td><td>Execute a task (e.g., <code>/run M1</code>)</td></tr>
-                    <tr><td><code>/preview &lt;file&gt;</code></td><td>Preview file (auto-routes)</td></tr>
-                    <tr><td><code>/play &lt;audio&gt;</code></td><td>Play audio file</td></tr>
-                    <tr><td><code>/stop</code></td><td>Stop audio playback</td></tr>
-                    <tr><td><code>/browser</code></td><td>Open browser preview</td></tr>
-                    <tr><td><code>/help</code></td><td>Show help</td></tr>
-                    <tr><td><code>/clear</code></td><td>Clear screen</td></tr>
-                    <tr><td><code>/exit</code></td><td>Quit TUI</td></tr>
-                </tbody>
-            </table>
-        </section>
-
-        <section class="section">
-            <h2 class="section-title">🔧 npm Scripts</h2>
-            <p>Available npm/pnpm scripts:</p>
-            
-            <table>
-                <thead>
-                    <tr>
-                        <th>Script</th>
-                        <th>Command</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr><td><code>build</code></td><td><code>tsc</code></td><td>Compile TypeScript</td></tr>
-                    <tr><td><code>test</code></td><td><code>vitest run</code></td><td>Run tests</td></tr>
-                    <tr><td><code>tui</code></td><td><code>npm run build && node scripts/start-bubbletea-tui.mjs</code></td><td>Launch Bubble Tea + bridge</td></tr>
-                    <tr><td><code>lint</code></td><td><code>eslint src/</code></td><td>Lint code</td></tr>
-                    <tr><td><code>typecheck</code></td><td><code>tsc --noEmit</code></td><td>Type check only</td></tr>
-                </tbody>
-            </table>
-        </section>
-    </main>
-
-    <footer class="footer">
-        <p>Liminal AI Documentation • <a href="index.html">← Back to Home</a></p>
-    </footer>
 </body>
 </html>

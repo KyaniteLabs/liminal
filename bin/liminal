@@ -1623,6 +1623,126 @@ else if (cmd === 'report' && cmdArgs[0] === 'garden') {
     liminalFs.close();
   }
 }
+else if (cmd === 'garden' && cmdArgs[0] === 'start') {
+  const mode = parsedArgs.mode || 'co-create';
+  if (!['assist', 'co-create', 'autopilot'].includes(mode)) {
+    console.error(`Error: Invalid mode "${mode}". Use assist, co-create, or autopilot.`);
+    process.exit(1);
+  }
+  const { AutonomousGardener } = await import('../dist/autonomy/AutonomousGardener.js');
+  const { LiminalFS } = await import('../dist/fs/index.js');
+  const { EmergenceHooks } = await import('../dist/emergence/index.js');
+
+  const liminalFs = LiminalFS.open(process.cwd());
+  const hooks = new EmergenceHooks(liminalFs);
+  const axes = ['order-chaos', 'sparse-dense', 'symmetry-asymmetry', 'smooth-bursty', 'static-evolving', 'harmonic-dissonant'];
+
+  const gardener = new AutonomousGardener({ mode, totalBudget: 100 });
+  console.log('');
+  console.log(`=== Garden Started (mode: ${mode}) ===`);
+  console.log(`  Budget: 100 units  Press Ctrl+C to stop`);
+  console.log('');
+
+  let cycleCount = 0;
+  gardener.start(
+    () => { const a = hooks.getArchive(); return a.getAllCells(); },
+    () => axes,
+    (result) => {
+      cycleCount++;
+      console.log(`  [Cycle ${result.cycle}] actions=${result.actions} health=${(result.health.healthScore * 100).toFixed(0)}% budget=${result.budgetRemaining}`);
+      if (result.stagnation.isStagnant) {
+        console.log(`    ⚠ Stagnation: ${(result.stagnation.severity * 100).toFixed(0)}%`);
+      }
+    },
+  );
+
+  process.on('SIGINT', () => {
+    gardener.stop();
+    liminalFs.close();
+    console.log('');
+    console.log(`  Garden stopped after ${cycleCount} cycles.`);
+    process.exit(0);
+  });
+}
+else if (cmd === 'garden' && cmdArgs[0] === 'stop') {
+  console.log('No garden running in this process. Use Ctrl+C on the running garden start process.');
+}
+else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
+  const candidateRef = parsedArgs.candidate;
+  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
+  const { CreativeRuntimeCandidateBuilder } = await import('../dist/release/CreativeRuntimeCandidateBuilder.js');
+  const { GardenPromotionGate } = await import('../dist/release/GardenPromotionGate.js');
+
+  const manifest = new PolicyChangeManifest();
+  const builder = new CreativeRuntimeCandidateBuilder();
+  const gate = new GardenPromotionGate();
+
+  const changes = manifest.getByStatus('promoted');
+  if (changes.length === 0) {
+    console.log('No promoted changes to ship.');
+    process.exit(0);
+  }
+
+  const candidate = builder.build(changes, candidateRef || 'garden-release');
+  const result = gate.check(candidate);
+
+  console.log('');
+  console.log('=== Ship Garden ===');
+  console.log(`  Candidate: ${candidate.id}`);
+  console.log(`  Changes: ${changes.length}`);
+  console.log(`  Validation: ${(candidate.validationScore * 100).toFixed(0)}%`);
+  console.log(`  Gate: ${result.passed ? 'PASSED' : 'BLOCKED'}`);
+
+  if (result.improvements.length > 0) {
+    console.log('  Improvements:');
+    for (const imp of result.improvements) console.log(`    + ${imp}`);
+  }
+  if (result.regressions.length > 0) {
+    console.log('  Regressions:');
+    for (const reg of result.regressions) console.log(`    - ${reg}`);
+  }
+  console.log('');
+}
+else if (cmd === 'ship' && cmdArgs[0] === 'rollback') {
+  const toRef = parsedArgs.to;
+  if (!toRef) {
+    console.error('Error: --to <releaseRef> is required');
+    process.exit(1);
+  }
+  const { PolicyChangeManifest } = await import('../dist/release/PolicyChangeManifest.js');
+  const { GardenRollbackController } = await import('../dist/release/GardenRollbackController.js');
+
+  const manifest = new PolicyChangeManifest();
+  const controller = new GardenRollbackController(manifest);
+
+  const rollbackResult = controller.rollback(toRef, 'Manual rollback');
+  console.log('');
+  console.log(`  Rollback ${rollbackResult.rolledBack ? 'succeeded' : 'failed'}: ${rollbackResult.reason}`);
+  console.log('');
+}
+else if (cmd === 'demo' && cmdArgs[0] === 'creative-codex') {
+  const { DemoScenarioRunner } = await import('../dist/product/DemoScenarioRunner.js');
+
+  const runner = new DemoScenarioRunner();
+  const result = runner.runCreativeCodex();
+
+  console.log('');
+  console.log('=== Creative Codex Demo ===');
+  console.log(`  Scenario: ${result.scenarioName}`);
+  console.log(`  Steps: ${result.totalSteps}  Passed: ${result.passed}  Duration: ${result.durationMs}ms`);
+  console.log('');
+
+  for (const step of result.steps) {
+    console.log(`  ${step.step}. ${step.label}`);
+    console.log(`     ${step.description}`);
+    const keys = Object.keys(step.data);
+    if (keys.length > 0) {
+      const summary = keys.map(k => `${k}=${JSON.stringify(step.data[k])}`).join(', ');
+      console.log(`     Data: ${summary}`);
+    }
+  }
+  console.log('');
+}
 else {
   console.error('Error: --prompt is required');
   console.error('');

@@ -175,7 +175,9 @@ export class AutonomousGardener {
     this.budgetRemaining -= cost;
     const scheduled = this.scheduler.schedule(affordable, activities, this.mode, health);
 
-    const totalActions = archivePlan.tasks.length + scheduled.length;
+    const archiveActionsExecuted = this.currentCycleActions.length;
+    const totalActions = archiveActionsExecuted + scheduled.length;
+    if (totalActions === 0) return null;
 
     return {
       cycle: this.cycleCount,

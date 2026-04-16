@@ -1741,7 +1741,9 @@ else if (cmd === 'ship' && cmdArgs[0] === 'garden') {
   // Readiness gate check
   const healthMonitor = new GardenHealthMonitor();
   const readinessBuilder = new LaunchSummaryBuilder();
-  const health = healthMonitor.measure([]);
+  const archive = hooks.getArchive();
+  const cells = archive.getAllCells();
+  const health = healthMonitor.measure(cells);
   const preCheckManifest = new PolicyChangeManifest();
   const preChanges = preCheckManifest.getByStatus('promoted');
   const emitter = new CreativeWeaknessEmitter();

@@ -137,11 +137,13 @@ describe('AutonomousGardener', () => {
     const gardener = new AutonomousGardener({ totalBudget: 25 });
     const cells = [makeCell('c1', makeEntry('e1', 0.6, 0.7))];
 
-    // Drain budget (each cycle with decisions costs 10 per action)
+    // Drain budget — each action costs 10, so 2 actions max (budget 25 → 5)
     for (let i = 0; i < 50; i++) gardener.cycle(cells, AXES);
     const result = gardener.cycle(cells, AXES);
     expect(result).toBeNull();
-    expect(gardener.getBudgetRemaining()).toBeLessThanOrEqual(0);
+    // Budget is properly managed (never goes negative), remainder is insufficient for any action
+    expect(gardener.getBudgetRemaining()).toBeGreaterThanOrEqual(0);
+    expect(gardener.getBudgetRemaining()).toBeLessThan(10);
   });
 
   it('starts and stops', async () => {

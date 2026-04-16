@@ -14,6 +14,8 @@ export { ActionProposer } from './ActionProposer.js';
 export type { ActionProposal } from './ActionProposer.js';
 export { LiminalCortex } from './LiminalCortex.js';
 export type { CortexEvent, LiminalCortexDeps } from './LiminalCortex.js';
+export { CortexSupervisor } from './CortexSupervisor.js';
+export { StuckDetector } from './StuckDetector.js';
 export type {
   CortexSnapshot,
   TaskPipelineSummary,

@@ -16,6 +16,9 @@ import { SkillRunner } from '../agent/SkillRunner.js';
 import { SkillCatalog } from '../agent/SkillCatalog.js';
 import { ReviewManager } from '../agent/ReviewManager.js';
 import { DiffRenderer } from '../agent/DiffRenderer.js';
+import { OnboardingWizard } from '../agent/OnboardingWizard.js';
+import { EnvironmentValidator } from '../agent/EnvironmentValidator.js';
+import { SessionResumer } from '../agent/SessionResumer.js';
 import { STUDIO_SYSTEM_PROMPT } from '../agent/StudioAgent.js';
 import { SessionGraph } from '../agent/SessionGraph.js';
 
@@ -90,6 +93,12 @@ export class TuiBridgeService {
   private reviewManager = new ReviewManager();
   // Diff renderer: unified diff between candidates
   private diffRenderer = new DiffRenderer();
+  // Onboarding wizard: provider setup
+  private onboardingWizard = new OnboardingWizard();
+  // Environment validator: diagnostics
+  private envValidator = new EnvironmentValidator();
+  // Session resumer: session history
+  private sessionResumer = new SessionResumer();
 
   constructor() {
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
@@ -134,7 +143,11 @@ export class TuiBridgeService {
     this.conversations.set(sessionId, conversation);
 
     // Initialize session graph for turn persistence
-    this.sessionGraphs.set(sessionId, new SessionGraph(sessionId));
+    const graph = new SessionGraph(sessionId);
+    this.sessionGraphs.set(sessionId, graph);
+
+    // Register with session resumer for /sessions command
+    this.sessionResumer.register(sessionId, graph);
 
     return this.sessions.create({
       sessionId,
@@ -241,6 +254,21 @@ export class TuiBridgeService {
         input.text.startsWith('/pin') || input.text.startsWith('/diff') ||
         input.text.trim() === '/candidates') {
       return this.handleReviewCommand(sessionId, input.text);
+    }
+
+    // Handle /setup: run onboarding wizard
+    if (input.text.trim() === '/setup') {
+      return this.handleSetupCommand(sessionId);
+    }
+
+    // Handle /diagnostics: run environment validation
+    if (input.text.trim() === '/diagnostics') {
+      return this.handleDiagnosticsCommand(sessionId);
+    }
+
+    // Handle /sessions: list session history
+    if (input.text.trim() === '/sessions') {
+      return this.handleSessionsCommand(sessionId);
     }
 
     // Studio routing: classify intent via IntentRouter with mode biasing
@@ -621,6 +649,105 @@ export class TuiBridgeService {
       this.emit(sessionId, { type: 'review.diff_ready', sessionId, candidateA: idA, candidateB: idB, diff: rendered });
       this.emitCommandResponse(sessionId, `Diff (${idA} vs ${idB}):\n${rendered}`);
       return { reviewRequired: false };
+    }
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /setup: run the onboarding wizard with step-by-step events.
+   */
+  private async handleSetupCommand(sessionId: string): Promise<{ reviewRequired: boolean }> {
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Running setup wizard...' });
+
+    // Emit each step as an onboarding.step event for TUI rendering
+    const onStep = (step: { id: string; title: string; status: string; value?: string }) => {
+      this.emit(sessionId, {
+        type: 'onboarding.step',
+        sessionId,
+        stepId: step.id,
+        title: step.title,
+        stepStatus: step.status,
+        value: step.value,
+      });
+    };
+
+    const wizard = this.onboardingWizard;
+    const result = await wizard.run();
+
+    // Emit step events for each completed/failed step
+    for (const step of result.steps) {
+      onStep(step);
+    }
+
+    // Emit completion event
+    this.emit(sessionId, {
+      type: 'onboarding.complete',
+      sessionId,
+      configWritten: result.configWritten,
+      configPath: result.configPath,
+    });
+
+    if (result.configWritten) {
+      this.emitCommandResponse(sessionId, `Setup complete. Config written to ${result.configPath}`);
+    } else {
+      const failed = result.steps.filter(s => s.status === 'failed').map(s => s.title);
+      this.emitCommandResponse(sessionId, `Setup incomplete. Issues: ${failed.join(', ')}`);
+    }
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /diagnostics: run environment validation checks.
+   */
+  private async handleDiagnosticsCommand(sessionId: string): Promise<{ reviewRequired: boolean }> {
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Running diagnostics...' });
+
+    const validator = this.envValidator;
+    const report = await validator.validate();
+
+    this.emit(sessionId, {
+      type: 'diagnostics.result',
+      sessionId,
+      checks: report.checks.map(c => ({ name: c.name, status: c.status, message: c.message })),
+      allPassed: report.allPassed,
+    });
+
+    const statusIcons: Record<string, string> = { pass: '✓', fail: '✗', warn: '⚠' };
+    const lines = report.checks.map(c => `  ${statusIcons[c.status] || '?'} ${c.name}: ${c.message}`);
+    const summary = report.allPassed ? 'All checks passed.' : 'Some checks failed or need attention.';
+    this.emitCommandResponse(sessionId, `Diagnostics:\n${lines.join('\n')}\n\n${summary}`);
+
+    return { reviewRequired: false };
+  }
+
+  /**
+   * Handle /sessions: list resumable sessions.
+   */
+  private handleSessionsCommand(sessionId: string): { reviewRequired: boolean } {
+    const sessions = this.sessionResumer.listSessions();
+
+    this.emit(sessionId, {
+      type: 'session.list',
+      sessionId,
+      sessions: sessions.map(s => ({
+        sessionId: s.sessionId,
+        turnCount: s.turnCount,
+        lastIntent: s.lastIntent,
+        updatedAt: s.updatedAt,
+      })),
+    });
+
+    if (sessions.length === 0) {
+      this.emitCommandResponse(sessionId, 'No sessions recorded yet.');
+    } else {
+      const lines = sessions.map(s => {
+        const turns = `${s.turnCount} turns`;
+        const intent = s.lastIntent ? ` — ${s.lastIntent.slice(0, 40)}` : '';
+        return `  ${s.sessionId.slice(0, 24).padEnd(26)} ${turns.padEnd(10)} ${s.updatedAt.slice(0, 19)}${intent}`;
+      });
+      this.emitCommandResponse(sessionId, `Sessions:\n${lines.join('\n')}`);
     }
 
     return { reviewRequired: false };

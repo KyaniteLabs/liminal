@@ -42,6 +42,15 @@ func (m Model) renderOperatorSurface(width int) string {
 	if m.DiffContent != "" {
 		panels = append(panels, m.renderDiffView(contentWidth))
 	}
+	if len(m.OnboardingSteps) > 0 {
+		panels = append(panels, m.renderOnboardingPanel(contentWidth))
+	}
+	if len(m.DiagnosticChecks) > 0 {
+		panels = append(panels, m.renderDiagnosticsPanel(contentWidth))
+	}
+	if len(m.SessionList) > 0 {
+		panels = append(panels, m.renderSessionList(contentWidth))
+	}
 	if m.HelpVisible {
 		panels = append(panels, m.renderHelpDrawer(contentWidth))
 	} else if len(m.ActivityLog) > 0 {
@@ -309,6 +318,9 @@ func (m Model) renderHelpDrawer(width int) string {
 			helpRow("Ctrl+R", "toggle review panel"),
 		helpRow("Ctrl+E", "toggle preview card"),
 		helpRow("Ctrl+Y", "copy last assistant response"),
+		helpRow("/setup", "run setup wizard"),
+		helpRow("/diagnostics", "run env checks"),
+		helpRow("/sessions", "list session history"),
 		helpRow("?", "toggle this help"),
 	}
 	return ui.HelpCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
@@ -516,6 +528,73 @@ func (m Model) renderDiffView(width int) string {
 		} else {
 			lines = append(lines, ui.PanelValueStyle.Render(trimmed))
 		}
+	}
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) renderOnboardingPanel(width int) string {
+	lines := []string{ui.PanelTitleStyle.Render("Setup Wizard")}
+	for _, step := range m.OnboardingSteps {
+		statusIcon := "…"
+		switch step.Status {
+		case "complete":
+			statusIcon = "✓"
+		case "failed":
+			statusIcon = "✗"
+		case "in_progress":
+			statusIcon = "⟳"
+		}
+		line := fmt.Sprintf("%s %s: %s", statusIcon, step.Title, step.Status)
+		if step.Value != "" {
+			line += " — " + trimToWidth(step.Value, width-20)
+		}
+		lines = append(lines, ui.TimelineStepStyle.Render(line))
+	}
+	if m.OnboardingComplete {
+		lines = append(lines, ui.GenerationValueStyle.Render("Config: "+m.OnboardingConfigPath))
+	}
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) renderDiagnosticsPanel(width int) string {
+	lines := []string{ui.PanelTitleStyle.Render("Diagnostics")}
+	for _, check := range m.DiagnosticChecks {
+		statusIcon := "⚠"
+		switch check.Status {
+		case "pass":
+			statusIcon = "✓"
+		case "fail":
+			statusIcon = "✗"
+		}
+		line := fmt.Sprintf("%s %s: %s", statusIcon, check.Name, trimToWidth(check.Message, width-12))
+		lines = append(lines, ui.TimelineStepStyle.Render(line))
+	}
+	summary := "All checks passed."
+	if !m.DiagnosticsAllPassed {
+		summary = "Some checks need attention."
+	}
+	lines = append(lines, ui.PanelMetaStyle.Render(summary))
+	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) renderSessionList(width int) string {
+	lines := []string{ui.PanelTitleStyle.Render("Sessions")}
+	if len(m.SessionList) == 0 {
+		lines = append(lines, ui.EmptyStateStyle.Render("No sessions recorded."))
+		return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+	}
+	start := 0
+	if len(m.SessionList) > 8 {
+		start = len(m.SessionList) - 8
+	}
+	for _, s := range m.SessionList[start:] {
+		turns := fmt.Sprintf("%d turns", s.TurnCount)
+		intent := ""
+		if s.LastIntent != "" {
+			intent = " — " + trimToWidth(s.LastIntent, width/2)
+		}
+		line := fmt.Sprintf("%s  %s  %s%s", trimToWidth(s.SessionID, 24), turns, trimToWidth(s.UpdatedAt, 19), intent)
+		lines = append(lines, ui.TimelineStepStyle.Render(line))
 	}
 	return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }

@@ -42,6 +42,14 @@ export type { ReviewCandidate, CandidateStatus } from './ReviewManager.js'
 export { DiffRenderer } from './DiffRenderer.js'
 export type { DiffLine, DiffResult } from './DiffRenderer.js'
 
+// Onboarding, diagnostics, session resume
+export { OnboardingWizard } from './OnboardingWizard.js'
+export type { OnboardingStep, OnboardingResult } from './OnboardingWizard.js'
+export { EnvironmentValidator } from './EnvironmentValidator.js'
+export type { DiagnosticCheck, DiagnosticReport } from './EnvironmentValidator.js'
+export { SessionResumer } from './SessionResumer.js'
+export type { SessionEntry } from './SessionResumer.js'
+
 // Response formatting
 export { ResponseComposer } from './ResponseComposer.js';
 

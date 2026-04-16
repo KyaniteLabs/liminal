@@ -117,6 +117,29 @@ type ReviewCandidate struct {
 	CreatedAt time.Time
 }
 
+// OnboardingStep tracks a setup wizard step.
+type OnboardingStep struct {
+	StepID string
+	Title  string
+	Status string // "pending" | "in_progress" | "complete" | "failed"
+	Value  string
+}
+
+// DiagnosticCheckEntry holds a single diagnostic result.
+type DiagnosticCheckEntry struct {
+	Name    string
+	Status  string // "pass" | "fail" | "warn"
+	Message string
+}
+
+// SessionListEntry holds a resumable session summary.
+type SessionListEntry struct {
+	SessionID  string
+	TurnCount  int
+	LastIntent string
+	UpdatedAt  string
+}
+
 // TaskCard holds the current agent objective and progress.
 type TaskCard struct {
 	Objective   string
@@ -181,6 +204,18 @@ type Model struct {
 	SelectedCandidate   int
 	DiffContent         string
 	FavoriteIDs         map[string]bool
+
+	// Onboarding state: step tracking
+	OnboardingSteps    []OnboardingStep
+	OnboardingComplete bool
+	OnboardingConfigPath string
+
+	// Diagnostics state: check results
+	DiagnosticChecks []DiagnosticCheckEntry
+	DiagnosticsAllPassed bool
+
+	// Session list state: resumable sessions
+	SessionList []SessionListEntry
 
 	// Generation telemetry
 	GenerationModel      string
@@ -690,6 +725,54 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			m.DiffContent = event.Diff
 			m.ReviewVisible = true
 			m.addActivity(fmt.Sprintf("Diff: %s vs %s", event.CandidateA, event.CandidateB))
+
+			// ── Onboarding events ──
+
+		case "onboarding.step":
+			m.OnboardingSteps = append(m.OnboardingSteps, OnboardingStep{
+				StepID: event.StepID,
+				Title:  event.Title,
+				Status: event.StepStatus,
+				Value:  event.Value,
+			})
+			m.addActivity(fmt.Sprintf("Setup: %s — %s", event.Title, event.StepStatus))
+
+		case "onboarding.complete":
+			m.OnboardingComplete = event.ConfigWritten
+			m.OnboardingConfigPath = event.ConfigPath
+			if event.ConfigWritten {
+				m.addActivity("Setup complete: " + event.ConfigPath)
+			} else {
+				m.addActivity("Setup incomplete")
+			}
+
+		// ── Diagnostics events ──
+
+		case "diagnostics.result":
+			m.DiagnosticChecks = make([]DiagnosticCheckEntry, 0, len(event.Checks))
+			for _, c := range event.Checks {
+				m.DiagnosticChecks = append(m.DiagnosticChecks, DiagnosticCheckEntry{
+					Name:    c.Name,
+					Status:  c.Status,
+					Message: c.Message,
+				})
+			}
+			m.DiagnosticsAllPassed = event.AllPassed
+			m.addActivity(fmt.Sprintf("Diagnostics: %d checks, passed=%v", len(event.Checks), event.AllPassed))
+
+		// ── Session list events ──
+
+		case "session.list":
+			m.SessionList = make([]SessionListEntry, 0, len(event.Sessions))
+			for _, s := range event.Sessions {
+				m.SessionList = append(m.SessionList, SessionListEntry{
+					SessionID:  s.SessionID,
+					TurnCount:  s.TurnCount,
+					LastIntent: s.LastIntent,
+					UpdatedAt:  s.UpdatedAt,
+				})
+			}
+			m.addActivity(fmt.Sprintf("Sessions: %d listed", len(event.Sessions)))
 	}
 }
 

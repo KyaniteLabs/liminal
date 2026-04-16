@@ -101,4 +101,10 @@ export type TuiBridgeEvent =
   | { type: 'review.candidate_rejected'; sessionId: string; candidateId: string }
   | { type: 'review.favorite_pinned'; sessionId: string; candidateId: string }
   | { type: 'review.diff_ready'; sessionId: string; candidateA: string; candidateB: string; diff: string }
+  // Onboarding and diagnostics
+  | { type: 'onboarding.step'; sessionId: string; stepId: string; title: string; stepStatus: string; value?: string }
+  | { type: 'onboarding.complete'; sessionId: string; configWritten: boolean; configPath: string }
+  | { type: 'diagnostics.result'; sessionId: string; checks: Array<{ name: string; status: string; message: string }>; allPassed: boolean }
+  // Session resume
+  | { type: 'session.list'; sessionId: string; sessions: Array<{ sessionId: string; turnCount: number; lastIntent?: string; updatedAt: string }> }
   | { type: 'error'; sessionId: string; message: string };

@@ -71,7 +71,7 @@ describe('ledger parseArgs', () => {
 
   it('returns "status" for empty args', () => {
     const result = parseArgs([]);
-    expect(result).toEqual({ command: 'status' });
+    expect(result).toEqual({ command: 'status', verbose: false });
   });
 
   it('strips leading "ledger" prefix', () => {
@@ -86,6 +86,11 @@ describe('ledger parseArgs', () => {
 
   it('returns "status" for unknown subcommand', () => {
     const result = parseArgs(['unknown']);
-    expect(result).toEqual({ command: 'status' });
+    expect(result).toEqual({ command: 'status', verbose: false });
+  });
+
+  it('returns "status" with verbose flag', () => {
+    const result = parseArgs(['status', '--verbose']);
+    expect(result).toEqual({ command: 'status', verbose: true });
   });
 });

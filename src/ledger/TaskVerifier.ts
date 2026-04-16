@@ -49,15 +49,22 @@ export class TaskVerifier {
     const [cmd, ...cmdArgs] = task.verifyCommand.split(' ');
 
     let testPassed = false;
+    let verifyStdout = '';
+    let verifyStderr = '';
     try {
-      execFileSync(cmd, cmdArgs, {
+      verifyStdout = execFileSync(cmd, cmdArgs, {
         timeout: 120000,
         encoding: 'utf-8',
         stdio: 'pipe',
       });
       testPassed = true;
-    } catch (_err: unknown) {
+    } catch (err: unknown) {
       testPassed = false;
+      if (err && typeof err === 'object') {
+        const execErr = err as { stdout?: string; stderr?: string };
+        verifyStdout = execErr.stdout ?? '';
+        verifyStderr = execErr.stderr ?? '';
+      }
     }
 
     const candidate: TaskCandidate = {
@@ -68,6 +75,8 @@ export class TaskVerifier {
       semanticScore: scoringResult.score,
       testPassed,
       evaluatedAt: new Date().toISOString(),
+      verifyStdout,
+      verifyStderr,
     };
 
     this.ledger.recordCandidate(candidate);

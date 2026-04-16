@@ -29,6 +29,11 @@ const TASK_PREFIX = 'task';
 export class TaskLedger {
   constructor(private fs: LiminalFS) {}
 
+  /** Expose the underlying LiminalFS for artifact storage. */
+  getFs(): LiminalFS {
+    return this.fs;
+  }
+
   // ─── Task CRUD ─────────────────────────────────────────────────
 
   /**

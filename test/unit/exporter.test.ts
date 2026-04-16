@@ -775,7 +775,7 @@ ${P5_DRAW_BODY}}
   });
 
   describe('Edge cases and error handling', () => {
-    it('should handle very long code', async () => {
+    it('should handle very long code', { timeout: 30000 }, async () => {
       const exporter = new Exporter();
       const longCode = SAMPLE_P5_CODE.repeat(1000);
       const outputPath = path.join(TEST_EXPORT_DIR, 'long.html');

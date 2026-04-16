@@ -163,6 +163,58 @@ describe('TaskVerifier', () => {
     expect(candidate.semanticScore).toBe(0.4);
   });
 
+  it('verify — captures stdout when execFileSync succeeds', async () => {
+    const task = makeTask();
+    const attempt = makeAttempt();
+    const code = 'export const ok = true;';
+
+    mockScore.mockResolvedValue({ score: 0.88, dimensions: {}, strategy: 'fast' });
+    mockExecFileSync.mockReturnValue('3 tests passed\n1 suite completed');
+
+    const candidate = await verifier.verify(task, attempt, code);
+
+    expect(candidate.testPassed).toBe(true);
+    expect(candidate.verifyStdout).toBe('3 tests passed\n1 suite completed');
+    expect(candidate.verifyStderr).toBe('');
+  });
+
+  it('verify — captures stdout and stderr when execFileSync fails with output', async () => {
+    const task = makeTask();
+    const attempt = makeAttempt();
+    const code = 'export const broken = true;';
+
+    mockScore.mockResolvedValue({ score: 0.5, dimensions: {}, strategy: 'fast' });
+    mockExecFileSync.mockImplementation(() => {
+      const err = new Error('Command failed: pnpm test');
+      (err as Error & { stdout: string; stderr: string }).stdout = 'FAIL src/api/fetch.test.ts > timeout';
+      (err as Error & { stdout: string; stderr: string }).stderr = 'Error: Test timeout after 5000ms';
+      throw err;
+    });
+
+    const candidate = await verifier.verify(task, attempt, code);
+
+    expect(candidate.testPassed).toBe(false);
+    expect(candidate.verifyStdout).toBe('FAIL src/api/fetch.test.ts > timeout');
+    expect(candidate.verifyStderr).toBe('Error: Test timeout after 5000ms');
+  });
+
+  it('verify — defaults stdout/stderr to empty string when error has no output properties', async () => {
+    const task = makeTask();
+    const attempt = makeAttempt();
+    const code = 'export const noOutput = true;';
+
+    mockScore.mockResolvedValue({ score: 0.3, dimensions: {}, strategy: 'fast' });
+    mockExecFileSync.mockImplementation(() => {
+      throw new Error('Process exited');
+    });
+
+    const candidate = await verifier.verify(task, attempt, code);
+
+    expect(candidate.testPassed).toBe(false);
+    expect(candidate.verifyStdout).toBe('');
+    expect(candidate.verifyStderr).toBe('');
+  });
+
   it('verify — rejects disallowed verifyCommand (command injection guard)', async () => {
     const task = makeTask({ verifyCommand: 'rm -rf /' });
     const attempt = makeAttempt();

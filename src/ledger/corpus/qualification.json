@@ -1,0 +1,99 @@
+[
+  {
+    "id": "Q001",
+    "title": "Add unit test for TaskVerifier metacharacter guard",
+    "description": "Create a unit test file at test/unit/ledger/TaskVerifier.guard.test.ts that tests the assertAllowedCommand() guard in TaskVerifier. Test cases: (1) allowed commands pass (pnpm test, pnpm build, npx vitest), (2) commands with shell metacharacters are blocked (e.g. 'pnpm test; rm -rf /', 'pnpm test && echo pwned'), (3) disallowed prefixes are blocked (e.g. 'npm test', 'bash script.sh'). Use vi.hoisted() for any mock factories. Assert specific error messages, not just 'throws'.",
+    "taskClass": "leaf",
+    "files": {
+      "allowlist": ["test/unit/ledger/*"],
+      "denylist": ["src/**"]
+    },
+    "verifyCommand": "pnpm vitest run test/unit/ledger/TaskVerifier.guard.test.ts --no-coverage",
+    "scoringCriteria": [
+      "Tests assert specific error message substrings",
+      "Covers all 3 categories: allowed, metachar blocked, prefix blocked",
+      "Uses vi.hoisted where needed",
+      "No toBeDefined/toBeTruthy as sole assertions"
+    ],
+    "lane": 1,
+    "maxAttempts": 3
+  },
+  {
+    "id": "Q002",
+    "title": "Add unit test for TaskRunner.buildPrompt",
+    "description": "Create a unit test file at test/unit/ledger/TaskRunner.prompt.test.ts that tests TaskRunner.buildPrompt(). This is a private method, so test via runTask by mocking RalphLoop.run. Verify the prompt includes: task title, description, ALLOWED/FORBIDDEN files section, and verify command. Use vi.hoisted() for mock factories. Assert exact substring matches in the generated prompt.",
+    "taskClass": "leaf",
+    "files": {
+      "allowlist": ["test/unit/ledger/*"],
+      "denylist": ["src/**"]
+    },
+    "verifyCommand": "pnpm vitest run test/unit/ledger/TaskRunner.prompt.test.ts --no-coverage",
+    "scoringCriteria": [
+      "Prompt contains task title",
+      "Prompt contains ALLOWED files",
+      "Prompt contains FORBIDDEN files",
+      "Prompt contains verify command",
+      "Mock uses correct contract shape"
+    ],
+    "lane": 1,
+    "maxAttempts": 3
+  },
+  {
+    "id": "Q003",
+    "title": "Wire ledger status subcommand to show attempt/candidate counts",
+    "description": "Enhance the 'status' CLI subcommand in src/ledger/cli.ts to also show per-task attempt counts and candidate counts alongside the existing summary. Add a --verbose flag that lists each task with its attempt count and latest candidate score. This wires the existing TaskLedger.loadAttempts() and loadCandidates() into the CLI output.",
+    "taskClass": "wiring",
+    "files": {
+      "allowlist": ["src/ledger/cli.ts", "src/ledger/types.ts"],
+      "denylist": ["src/core/**", "src/fs/**", "src/llm/**"]
+    },
+    "verifyCommand": "pnpm vitest run test/unit/ledger/ --no-coverage",
+    "scoringCriteria": [
+      "Status command shows attempt/candidate counts",
+      "--verbose flag lists per-task details",
+      "Backward compatible (no --verbose = current behavior)",
+      "TypeScript compiles clean"
+    ],
+    "lane": 2,
+    "maxAttempts": 3
+  },
+  {
+    "id": "Q004",
+    "title": "Improve TaskVerifier to record stdout/stderr from verify command",
+    "description": "Enhance TaskVerifier.verify() in src/ledger/TaskVerifier.ts to capture stdout and stderr from the execFileSync call and store them in the TaskCandidate. Add stdout and stderr optional fields to TaskCandidate in types.ts. This improves harness transparency by preserving test output as evidence alongside the pass/fail boolean.",
+    "taskClass": "harness-quality",
+    "files": {
+      "allowlist": ["src/ledger/TaskVerifier.ts", "src/ledger/types.ts"],
+      "denylist": ["src/core/**", "src/fs/**"]
+    },
+    "verifyCommand": "pnpm vitest run test/unit/ledger/ --no-coverage",
+    "scoringCriteria": [
+      "TaskCandidate has stdout/stderr fields",
+      "TaskVerifier captures both on success and failure",
+      "Existing tests still pass",
+      "TypeScript compiles clean"
+    ],
+    "lane": 2,
+    "maxAttempts": 3
+  },
+  {
+    "id": "Q005",
+    "title": "Add CLI integration test for load and list subcommands",
+    "description": "Create an integration test at test/integration/ledger-cli.test.ts that tests the full lifecycle: (1) load a task from JSON, (2) list tasks to verify it appears, (3) show task details, (4) accept a candidate, (5) verify status reflects the decision. Use real LiminalFS (tmpdir), real TaskLedger, and the actual parseArgs+execute functions. This tests the CLI dispatch end-to-end without mocking internals.",
+    "taskClass": "orchestrator",
+    "files": {
+      "allowlist": ["test/integration/ledger-cli.test.ts"],
+      "denylist": ["src/**"]
+    },
+    "verifyCommand": "pnpm vitest run test/integration/ledger-cli.test.ts --no-coverage",
+    "scoringCriteria": [
+      "Tests load, list, show, accept, status subcommands",
+      "Uses real LiminalFS (tmpdir, no mocks)",
+      "Exercises >=2 real modules together",
+      "Asserts specific values, not just defined",
+      "Cleans up tmpdir in afterEach"
+    ],
+    "lane": 3,
+    "maxAttempts": 3
+  }
+]

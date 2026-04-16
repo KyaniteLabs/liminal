@@ -234,6 +234,11 @@ export class LLMClient {
         model: ['HARNESS_MODEL', 'LLM_MODEL'],
         apiKey: ['HARNESS_API_KEY', 'LLM_API_KEY'],
       },
+      studio: {
+        baseUrl: ['STUDIO_BASE_URL', 'HARNESS_BASE_URL', 'LLM_BASE_URL'],
+        model: ['STUDIO_MODEL', 'HARNESS_MODEL', 'LLM_MODEL'],
+        apiKey: ['STUDIO_API_KEY', 'HARNESS_API_KEY', 'LLM_API_KEY'],
+      },
     };
     const sources = envMap[role];
     const baseUrl = sources.baseUrl.map(k => env(k)).find(Boolean);

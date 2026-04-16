@@ -112,6 +112,12 @@ func (m Model) renderHeader() string {
 	if strings.TrimSpace(m.ActiveSkill) != "" {
 		headerParts = append(headerParts, lipgloss.NewStyle().Foreground(ui.AccentOrange).Render("⚡ "+m.ActiveSkill))
 	}
+	if strings.TrimSpace(m.ActiveWorkspace) != "" {
+		headerParts = append(headerParts, lipgloss.NewStyle().Foreground(ui.AccentPurple).Render("▣ "+m.ActiveWorkspace))
+	}
+	if strings.TrimSpace(m.AutonomyLevel) != "" && m.AutonomyLevel != "assist" {
+		headerParts = append(headerParts, lipgloss.NewStyle().Foreground(ui.AccentGreen).Render("⚡ "+m.AutonomyLabel))
+	}
 	headerParts = append(headerParts, m.renderPhaseBadge(m.Task.Phase))
 	if m.Task.StepTotal > 0 {
 		headerParts = append(headerParts, ui.StatusPillStyle.Render(formatStepProgress(m.Task.StepCurrent, m.Task.StepTotal)))

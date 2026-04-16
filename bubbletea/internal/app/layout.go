@@ -321,6 +321,9 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("/setup", "run setup wizard"),
 		helpRow("/diagnostics", "run env checks"),
 		helpRow("/sessions", "list session history"),
+		helpRow("/workspace", "manage workspaces"),
+		helpRow("/report", "generate session report"),
+		helpRow("/autonomy", "set autonomy level"),
 		helpRow("?", "toggle this help"),
 	}
 	return ui.HelpCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))

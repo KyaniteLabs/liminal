@@ -217,6 +217,13 @@ type Model struct {
 	// Session list state: resumable sessions
 	SessionList []SessionListEntry
 
+	// Workspace state: active workspace name
+	ActiveWorkspace string
+
+	// Autonomy state: current autonomy level
+	AutonomyLevel string
+	AutonomyLabel string
+
 	// Generation telemetry
 	GenerationModel      string
 	GenerationDuration   int64 // ms
@@ -773,6 +780,31 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 				})
 			}
 			m.addActivity(fmt.Sprintf("Sessions: %d listed", len(event.Sessions)))
+
+		// ── Workspace events ──
+
+		case "workspace.created":
+			m.ActiveWorkspace = event.WorkspaceName
+			m.addActivity("Workspace created: " + event.WorkspaceName)
+
+		case "workspace.switched":
+			m.ActiveWorkspace = event.WorkspaceName
+			m.addActivity("Switched to: " + event.WorkspaceName)
+
+		case "workspace.list":
+			// Response handled in chat content; no model state change needed
+
+		// ── Report events ──
+
+		case "report.generated":
+			m.addActivity(fmt.Sprintf("Report: %s, %d turns", event.ReportFormat, event.TurnCount))
+
+		// ── Autonomy events ──
+
+		case "autonomy.changed":
+			m.AutonomyLevel = event.AutonomyLevel
+			m.AutonomyLabel = event.Label
+			m.addActivity("Autonomy: " + event.Label)
 	}
 }
 

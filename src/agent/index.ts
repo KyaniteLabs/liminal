@@ -50,6 +50,15 @@ export type { DiagnosticCheck, DiagnosticReport } from './EnvironmentValidator.j
 export { SessionResumer } from './SessionResumer.js'
 export type { SessionEntry } from './SessionResumer.js'
 
+// Reports, workspaces, autonomy
+export { ReportGenerator } from './ReportGenerator.js'
+export type { SessionReport } from './ReportGenerator.js'
+export { WorkspaceManager } from './WorkspaceManager.js'
+export type { WorkspaceConfig } from './WorkspaceManager.js'
+export { AutonomyController } from './AutonomyController.js'
+export type { AutonomyConfig } from './AutonomyController.js'
+export { AUTONOMY_LEVELS } from './AutonomyController.js'
+
 // Response formatting
 export { ResponseComposer } from './ResponseComposer.js';
 

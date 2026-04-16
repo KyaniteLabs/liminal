@@ -126,6 +126,18 @@ type Event struct {
 	// Session list event fields
 	Sessions []SessionEntry `json:"sessions,omitempty"`
 
+	// Workspace event fields
+	WorkspaceName string   `json:"workspaceName,omitempty"`
+	Workspaces    []string `json:"workspaces,omitempty"`
+
+	// Report event fields
+	ReportFormat string `json:"format,omitempty"`
+	TurnCount    int    `json:"turns,omitempty"`
+
+	// Autonomy event fields
+	AutonomyLevel       string `json:"level,omitempty"`
+	AutonomyDescription string `json:"description,omitempty"`
+
 	// Session turn event fields
 	TurnID      string   `json:"turnId,omitempty"`
 	Intent      string   `json:"intent,omitempty"`

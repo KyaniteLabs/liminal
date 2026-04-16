@@ -107,4 +107,12 @@ export type TuiBridgeEvent =
   | { type: 'diagnostics.result'; sessionId: string; checks: Array<{ name: string; status: string; message: string }>; allPassed: boolean }
   // Session resume
   | { type: 'session.list'; sessionId: string; sessions: Array<{ sessionId: string; turnCount: number; lastIntent?: string; updatedAt: string }> }
+  // Workspace events: workspace CRUD and switching
+  | { type: 'workspace.created'; sessionId: string; workspaceName: string }
+  | { type: 'workspace.switched'; sessionId: string; workspaceName: string }
+  | { type: 'workspace.list'; sessionId: string; workspaces: string[] }
+  // Report events: generated session reports
+  | { type: 'report.generated'; sessionId: string; format: string; content: string; turns: number; durationMs: number }
+  // Autonomy events: level changes
+  | { type: 'autonomy.changed'; sessionId: string; level: string; label: string; description: string }
   | { type: 'error'; sessionId: string; message: string };

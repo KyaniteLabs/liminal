@@ -7,6 +7,8 @@ const execFileAsync = promisify(execFile);
 
 export interface SearchCodeParams {
   query: string;
+  /** Backward-compatible alias used by the generic search tool. */
+  pattern?: string;
   repo?: string;
   filePattern?: string;
   maxResults?: number;
@@ -60,11 +62,11 @@ export class SearchCodeTool extends Tool {
 
   async execute(params: unknown): Promise<ToolResult<SearchCodeResult>> {
     const rawParams = params as Partial<SearchCodeParams> | null | undefined;
-    const queryValue = rawParams?.query;
+    const queryValue = rawParams?.query ?? rawParams?.pattern;
     if (typeof queryValue !== 'string' || queryValue.trim() === '') {
       return {
         success: false,
-        error: `searchCode requires params.query to be a non-empty string; received ${Array.isArray(queryValue) ? 'array' : typeof queryValue}. Use {"query":"package.json"} or another exact search query.`,
+        error: `searchCode requires params.query to be a non-empty string; received ${Array.isArray(queryValue) ? 'array' : typeof queryValue}. Use {"query":"package.json"} or {"pattern":"package.json"}.`,
       };
     }
 
@@ -74,7 +76,7 @@ export class SearchCodeTool extends Tool {
       maxResults = 10,
       contextLines = 0,
     } = rawParams ?? {};
-    const query = queryValue;
+    const query = queryValue.trim();
 
     try {
       const { stdout } = await this.runner(

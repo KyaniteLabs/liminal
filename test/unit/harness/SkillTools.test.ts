@@ -31,6 +31,17 @@ describe('ExecuteSkillTool', () => {
     expect(result.success).toBe(false);
     expect(result.error).toContain('missing-skill');
   });
+
+  it('returns an actionable hint when name is missing', async () => {
+    const tool = new ExecuteSkillTool([FIXTURES_ROOT]);
+
+    const result = await tool.execute({});
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('executeSkill requires params.name');
+    expect(result.error).toContain('cannot run shell commands');
+    expect(result.error).toContain('gitStatus');
+  });
 });
 
 describe('SearchCodeTool', () => {
@@ -38,12 +49,30 @@ describe('SearchCodeTool', () => {
     const runner = vi.fn(async () => ({ stdout: '{}', stderr: '' }));
     const tool = new SearchCodeTool(runner);
 
-    const result = await tool.execute({ pattern: 'package.json' });
+    const result = await tool.execute({});
 
     expect(result.success).toBe(false);
     expect(result.error).toContain('searchCode requires params.query');
     expect(result.error).toContain('{"query":"package.json"}');
+    expect(result.error).toContain('{"pattern":"package.json"}');
     expect(runner).not.toHaveBeenCalled();
+  });
+
+  it('accepts pattern as an alias for query', async () => {
+    const runner = vi.fn(async () => ({
+      stdout: JSON.stringify({ result_count: 1, results: [{ file: 'package.json', matches: [{ line: 1, text: 'package' }] }] }),
+      stderr: '',
+    }));
+    const tool = new SearchCodeTool(runner);
+
+    const result = await tool.execute({ pattern: 'package.json', repo: 'local/liminal-7a159bbb' });
+
+    expect(result.success).toBe(true);
+    expect(runner).toHaveBeenCalledWith(
+      'python3',
+      expect.arrayContaining(['local/liminal-7a159bbb', 'package.json']),
+      expect.any(Object),
+    );
   });
 
   it('returns parsed jmunch results from the runner', async () => {

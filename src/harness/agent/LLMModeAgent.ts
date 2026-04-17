@@ -703,7 +703,7 @@ When the task is complete and build passes, respond with tool "complete".`;
       }
       Logger.error('LLMModeAgent', failureReason);
 
-      const retryable = /rate limit|429|timeout|502|503|504|upstream|temporar/i.test(failureReason);
+      const retryable = /rate limit|429|529|overload|timeout|502|503|504|upstream|temporar/i.test(failureReason);
       if (retryable) {
         Logger.warn('LLMModeAgent', `Retrying transient planning failure once: ${failureReason}`);
         await new Promise(resolve => setTimeout(resolve, 750));

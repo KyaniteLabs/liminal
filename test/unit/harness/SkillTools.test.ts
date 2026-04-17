@@ -196,4 +196,37 @@ describe('RunFocusedTestsTool', () => {
       expect.any(Object),
     );
   });
+
+  it('runs go test from the bubbletea module for Bubble Tea targets', async () => {
+    const runner = vi.fn(async () => ({ stdout: 'ok', stderr: '' }));
+    const tool = new RunFocusedTestsTool(runner);
+
+    const result = await tool.execute({ path: 'bubbletea/internal/app/operator_surface_test.go' });
+
+    expect(result.success).toBe(true);
+    expect(runner).toHaveBeenCalledWith(
+      'go',
+      ['test', './internal/app'],
+      expect.objectContaining({ cwd: 'bubbletea' }),
+    );
+    expect(result.data?.command).toBe('go test ./internal/app');
+  });
+
+  it('passes an optional Go test name pattern with -run', async () => {
+    const runner = vi.fn(async () => ({ stdout: 'ok', stderr: '' }));
+    const tool = new RunFocusedTestsTool(runner);
+
+    const result = await tool.execute({
+      path: 'bubbletea/internal/app/operator_surface_test.go',
+      testNamePattern: 'TestOperatorSurface',
+    });
+
+    expect(result.success).toBe(true);
+    expect(runner).toHaveBeenCalledWith(
+      'go',
+      ['test', './internal/app', '-run', 'TestOperatorSurface'],
+      expect.objectContaining({ cwd: 'bubbletea' }),
+    );
+    expect(result.data?.command).toBe('go test ./internal/app -run TestOperatorSurface');
+  });
 });

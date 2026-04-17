@@ -367,7 +367,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           current: session.stepCount,
           total: maxSteps,
           stage: `planning step ${session.stepCount}`,
-          message: 'asking GLM for next tool call',
+          message: `asking ${this.llmClient.getConfig().model || 'model'} for next tool call`,
         });
 
         // Get LLM's plan

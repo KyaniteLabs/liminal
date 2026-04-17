@@ -119,6 +119,7 @@ vi.mock('../../src/harness/RunStateStore.js', () => ({
   },
 }));
 import { LLMModeAgent, createLLMModeAgent } from '../../src/harness/agent/LLMModeAgent.js';
+import eventBus, { EventTypes, type BusEvent } from '../../src/core/EventBus.js';
 import { rateLimiter } from '../../src/harness/tools/RateLimiter.js';
 import { Status } from '../../src/types/status.js';
 
@@ -205,6 +206,34 @@ describe('LLMModeAgent', () => {
     await agent.executeTask({ id: 'a', title: 'A', description: 'd', approved: true });
     await agent.executeTask({ id: 'b', title: 'B', description: 'd', approved: true });
     expect(agent.getAllSessions()).toHaveLength(2);
+  });
+
+  it('reports the active model name in planning progress', async () => {
+    const progressMessages: string[] = [];
+    const listener = (event: BusEvent) => {
+      if (event.type === EventTypes.PROCESS_PROGRESS && typeof event.data.message === 'string') {
+        progressMessages.push(event.data.message);
+      }
+    };
+    eventBus.onEvent(listener);
+    mockLLM.getConfig.mockReturnValue({ model: 'MiniMax-M2.7' });
+    queuePlans('{"tool":"complete","params":{},"thought":"done","expectedResult":"done"}');
+
+    try {
+      const agent = new LLMModeAgent(mockLLM as any);
+      await agent.executeTask({
+        id: 't-model-label',
+        title: 'Model label',
+        description: 'Report active model in progress text',
+        approved: true,
+        maxSteps: 1,
+      });
+    } finally {
+      eventBus.offEvent(listener);
+    }
+
+    expect(progressMessages).toContain('asking MiniMax-M2.7 for next tool call');
+    expect(progressMessages).not.toContain('asking GLM for next tool call');
   });
 
   // ── Task execution behavior ────────────────────────────────────────

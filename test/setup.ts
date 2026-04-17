@@ -25,6 +25,8 @@ function installQuietCanvasFallbacks(): void {
   Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
     configurable: true,
     writable: true,
+    // toDataURL is a method; return the minimal valid data URL without
+    // invoking jsdom's not-implemented logger.
     value: () => 'data:image/png;base64,',
   });
 }

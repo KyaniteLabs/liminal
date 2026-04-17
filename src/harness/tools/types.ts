@@ -46,8 +46,12 @@ export interface WriteFileResult {
 
 export interface ApplyEditParams {
   path: string;
-  oldString: string;
-  newString: string;
+  oldString?: string;
+  newString?: string;
+  /** Alias commonly emitted by model planners. */
+  search?: string;
+  /** Alias commonly emitted by model planners. */
+  replace?: string;
   createBackup?: boolean;
 }
 

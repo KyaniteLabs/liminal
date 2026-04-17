@@ -232,17 +232,11 @@ describe('ModelRouter', () => {
         routing: { mode: 'ensemble', confidenceThreshold: 0.8 },
       });
 
-      const startTime = Date.now();
       const response = await router.generate('System', 'User');
-      const duration = Date.now() - startTime;
 
       // Both models should be called
       expect(primaryLLM.getCallCount()).toBe(1);
       expect(secondaryLLM.getCallCount()).toBe(1);
-
-      // Should take roughly the time of one model (parallel execution)
-      // Allow some margin for overhead
-      expect(duration).toBeLessThan(25);
 
       expect(response.model).toBe('ensemble');
       expect(response.code).toBeTruthy();

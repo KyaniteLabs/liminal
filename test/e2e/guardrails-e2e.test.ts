@@ -138,7 +138,7 @@ describe('E2E Guardrails with Real LLM', () => {
       expect(result.passed).toBe(false);
       expect(result.blockingResults.length).toBeGreaterThan(0);
       expect(result.blockingResults[0].guardrailId).toContain('max-iterations');
-    });
+    }, E2E_TIMEOUT_MS);
 
     it('should detect resource exhaustion', async () => {
       // Create a resource limiter with strict limits
@@ -470,11 +470,11 @@ Output only the code, no explanation.`;
       }
 
       // Validate code structure
-      expect(generatedCode).toMatch(/function\s+setup\s*\(/);
+      expect(generatedCode).toMatch(/(?:function|void)\s+setup\s*\(/);
       expect(generatedCode).toMatch(/createCanvas\s*\(/);
       
       // Run in sandbox if code looks valid
-      if (generatedCode.includes('createCanvas') && generatedCode.includes('function setup')) {
+      if (generatedCode.includes('createCanvas') && /(?:function|void)\s+setup\s*\(/.test(generatedCode)) {
         const sandboxResult = await runInSandbox(generatedCode, { timeoutMs: 15000 });
         
         // Skip sandbox assertions if Chrome is unavailable

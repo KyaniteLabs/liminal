@@ -8,6 +8,11 @@
 
 import { beforeAll, afterAll, beforeEach } from 'vitest';
 
+const nativeFetch = globalThis.fetch?.bind(globalThis);
+if (nativeFetch) {
+  (globalThis as typeof globalThis & { __liminalNativeFetch?: typeof fetch }).__liminalNativeFetch = nativeFetch;
+}
+
 // Environment variables to isolate
 const LLM_ENV_KEYS = [
   'LIMINAL_LLM_PROVIDER',

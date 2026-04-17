@@ -223,19 +223,19 @@ type Model struct {
 	ActiveSkill string
 
 	// Review state: candidates, favorites, diff, visibility
-	ReviewCandidates    []ReviewCandidate
-	ReviewVisible       bool
-	SelectedCandidate   int
-	DiffContent         string
-	FavoriteIDs         map[string]bool
+	ReviewCandidates  []ReviewCandidate
+	ReviewVisible     bool
+	SelectedCandidate int
+	DiffContent       string
+	FavoriteIDs       map[string]bool
 
 	// Onboarding state: step tracking
-	OnboardingSteps    []OnboardingStep
-	OnboardingComplete bool
+	OnboardingSteps      []OnboardingStep
+	OnboardingComplete   bool
 	OnboardingConfigPath string
 
 	// Diagnostics state: check results
-	DiagnosticChecks []DiagnosticCheckEntry
+	DiagnosticChecks     []DiagnosticCheckEntry
 	DiagnosticsAllPassed bool
 
 	// Session list state: resumable sessions
@@ -268,13 +268,13 @@ type Model struct {
 	CortexGoals []bridge.CortexGoal
 
 	// Cortex loop state: background executive decisions
-	CortexTick      int
-	CortexDecisions []CortexDecision
-	CortexBudget      *CortexBudgetUsage
+	CortexTick         int
+	CortexDecisions    []CortexDecision
+	CortexBudget       *CortexBudgetUsage
 	CortexStuckWorkers []CortexStuckWorker
 
 	// Cortex dashboard state: toggled by Ctrl+X
-	CortexVisible bool
+	CortexVisible   bool
 	CortexDashboard string
 
 	// ── Operator surface state ──
@@ -321,16 +321,16 @@ type Model struct {
 
 // layoutMetrics holds computed layout dimensions for the two-column view.
 type layoutMetrics struct {
-	chatContentWidth      int
-	chatOuterWidth        int
-	chatViewportHeight    int
-	previewContentWidth   int
-	previewOuterWidth     int
-	previewViewHeight     int
-	operatorContentWidth  int
+	chatContentWidth       int
+	chatOuterWidth         int
+	chatViewportHeight     int
+	previewContentWidth    int
+	previewOuterWidth      int
+	previewViewHeight      int
+	operatorContentWidth   int
 	operatorViewportHeight int
-	paneContentHeight     int
-	bodyHeight            int
+	paneContentHeight      int
+	bodyHeight             int
 }
 
 const (
@@ -350,16 +350,16 @@ func (m Model) layoutMetrics() layoutMetrics {
 	operatorViewportHeight := max(paneContentHeight-2, 4)
 
 	return layoutMetrics{
-		chatContentWidth:      chatContentWidth,
-		chatOuterWidth:        chatOuterWidth,
-		chatViewportHeight:    chatViewportHeight,
-		previewContentWidth:   operatorContentWidth,
-		previewOuterWidth:     previewOuterWidth,
-		previewViewHeight:     operatorViewportHeight,
-		operatorContentWidth:  operatorContentWidth,
+		chatContentWidth:       chatContentWidth,
+		chatOuterWidth:         chatOuterWidth,
+		chatViewportHeight:     chatViewportHeight,
+		previewContentWidth:    operatorContentWidth,
+		previewOuterWidth:      previewOuterWidth,
+		previewViewHeight:      operatorViewportHeight,
+		operatorContentWidth:   operatorContentWidth,
 		operatorViewportHeight: operatorViewportHeight,
-		paneContentHeight:     paneContentHeight,
-		bodyHeight:            bodyHeight,
+		paneContentHeight:      paneContentHeight,
+		bodyHeight:             bodyHeight,
 	}
 }
 
@@ -657,7 +657,7 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			TurnID:      event.TurnID,
 			Intent:      event.Intent,
 			DelegatedTo: event.DelegatedTo,
-			DurationMs:  event.DurationMs,
+			DurationMs:  eventDurationMs(event),
 			Timestamp:   time.Now(),
 		}
 		m.SessionTurns = append(m.SessionTurns, turn)
@@ -693,8 +693,8 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 					m.TaskQueue[i].Status = "failed"
 				}
 				m.TaskQueue[i].CompletedAt = time.Now()
-				if event.DurationMs > 0 {
-					m.TaskQueue[i].DurationMs = event.DurationMs
+				if durationMs := eventDurationMs(event); durationMs > 0 {
+					m.TaskQueue[i].DurationMs = durationMs
 				}
 				break
 			}
@@ -728,123 +728,123 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		m.addActivity(fmt.Sprintf("Skill done: %s", event.SkillName))
 
 	case "skill.list":
+	// Response handled in chat content; no model state change needed
+
+	// ── Review events ──
+
+	case "review.candidate_added":
+		m.ReviewCandidates = append(m.ReviewCandidates, ReviewCandidate{
+			ID:        event.CandidateID,
+			Label:     event.Label,
+			Score:     event.Score,
+			Status:    "pending",
+			CreatedAt: time.Now(),
+		})
+		m.ReviewVisible = true
+		m.addActivity(fmt.Sprintf("Candidate: %s (score %.2f)", event.Label, event.Score))
+
+	case "review.candidate_accepted":
+		for i := range m.ReviewCandidates {
+			if m.ReviewCandidates[i].ID == event.CandidateID {
+				m.ReviewCandidates[i].Status = "accepted"
+				break
+			}
+		}
+		m.addActivity("Accepted: " + event.CandidateID)
+
+	case "review.candidate_rejected":
+		for i := range m.ReviewCandidates {
+			if m.ReviewCandidates[i].ID == event.CandidateID {
+				m.ReviewCandidates[i].Status = "rejected"
+				break
+			}
+		}
+		m.addActivity("Rejected: " + event.CandidateID)
+
+	case "review.favorite_pinned":
+		if m.FavoriteIDs == nil {
+			m.FavoriteIDs = make(map[string]bool)
+		}
+		m.FavoriteIDs[event.CandidateID] = true
+		m.addActivity("Pinned: " + event.CandidateID)
+
+	case "review.diff_ready":
+		m.DiffContent = event.Diff
+		m.ReviewVisible = true
+		m.addActivity(fmt.Sprintf("Diff: %s vs %s", event.CandidateA, event.CandidateB))
+
+		// ── Onboarding events ──
+
+	case "onboarding.step":
+		m.OnboardingSteps = append(m.OnboardingSteps, OnboardingStep{
+			StepID: event.StepID,
+			Title:  event.Title,
+			Status: event.StepStatus,
+			Value:  event.Value,
+		})
+		m.addActivity(fmt.Sprintf("Setup: %s — %s", event.Title, event.StepStatus))
+
+	case "onboarding.complete":
+		m.OnboardingComplete = event.ConfigWritten
+		m.OnboardingConfigPath = event.ConfigPath
+		if event.ConfigWritten {
+			m.addActivity("Setup complete: " + event.ConfigPath)
+		} else {
+			m.addActivity("Setup incomplete")
+		}
+
+	// ── Diagnostics events ──
+
+	case "diagnostics.result":
+		m.DiagnosticChecks = make([]DiagnosticCheckEntry, 0, len(event.Checks))
+		for _, c := range event.Checks {
+			m.DiagnosticChecks = append(m.DiagnosticChecks, DiagnosticCheckEntry{
+				Name:    c.Name,
+				Status:  c.Status,
+				Message: c.Message,
+			})
+		}
+		m.DiagnosticsAllPassed = event.AllPassed
+		m.addActivity(fmt.Sprintf("Diagnostics: %d checks, passed=%v", len(event.Checks), event.AllPassed))
+
+	// ── Session list events ──
+
+	case "session.list":
+		m.SessionList = make([]SessionListEntry, 0, len(event.Sessions))
+		for _, s := range event.Sessions {
+			m.SessionList = append(m.SessionList, SessionListEntry{
+				SessionID:  s.SessionID,
+				TurnCount:  s.TurnCount,
+				LastIntent: s.LastIntent,
+				UpdatedAt:  s.UpdatedAt,
+			})
+		}
+		m.addActivity(fmt.Sprintf("Sessions: %d listed", len(event.Sessions)))
+
+	// ── Workspace events ──
+
+	case "workspace.created":
+		m.ActiveWorkspace = event.WorkspaceName
+		m.addActivity("Workspace created: " + event.WorkspaceName)
+
+	case "workspace.switched":
+		m.ActiveWorkspace = event.WorkspaceName
+		m.addActivity("Switched to: " + event.WorkspaceName)
+
+	case "workspace.list":
 		// Response handled in chat content; no model state change needed
 
-		// ── Review events ──
+	// ── Report events ──
 
-		case "review.candidate_added":
-			m.ReviewCandidates = append(m.ReviewCandidates, ReviewCandidate{
-				ID:        event.CandidateID,
-				Label:     event.Label,
-				Score:     event.Score,
-				Status:    "pending",
-				CreatedAt: time.Now(),
-			})
-			m.ReviewVisible = true
-			m.addActivity(fmt.Sprintf("Candidate: %s (score %.2f)", event.Label, event.Score))
+	case "report.generated":
+		m.addActivity(fmt.Sprintf("Report: %s, %d turns", event.ReportFormat, event.TurnCount))
 
-		case "review.candidate_accepted":
-			for i := range m.ReviewCandidates {
-				if m.ReviewCandidates[i].ID == event.CandidateID {
-					m.ReviewCandidates[i].Status = "accepted"
-					break
-				}
-			}
-			m.addActivity("Accepted: " + event.CandidateID)
+	// ── Autonomy events ──
 
-		case "review.candidate_rejected":
-			for i := range m.ReviewCandidates {
-				if m.ReviewCandidates[i].ID == event.CandidateID {
-					m.ReviewCandidates[i].Status = "rejected"
-					break
-				}
-			}
-			m.addActivity("Rejected: " + event.CandidateID)
-
-		case "review.favorite_pinned":
-			if m.FavoriteIDs == nil {
-				m.FavoriteIDs = make(map[string]bool)
-			}
-			m.FavoriteIDs[event.CandidateID] = true
-			m.addActivity("Pinned: " + event.CandidateID)
-
-		case "review.diff_ready":
-			m.DiffContent = event.Diff
-			m.ReviewVisible = true
-			m.addActivity(fmt.Sprintf("Diff: %s vs %s", event.CandidateA, event.CandidateB))
-
-			// ── Onboarding events ──
-
-		case "onboarding.step":
-			m.OnboardingSteps = append(m.OnboardingSteps, OnboardingStep{
-				StepID: event.StepID,
-				Title:  event.Title,
-				Status: event.StepStatus,
-				Value:  event.Value,
-			})
-			m.addActivity(fmt.Sprintf("Setup: %s — %s", event.Title, event.StepStatus))
-
-		case "onboarding.complete":
-			m.OnboardingComplete = event.ConfigWritten
-			m.OnboardingConfigPath = event.ConfigPath
-			if event.ConfigWritten {
-				m.addActivity("Setup complete: " + event.ConfigPath)
-			} else {
-				m.addActivity("Setup incomplete")
-			}
-
-		// ── Diagnostics events ──
-
-		case "diagnostics.result":
-			m.DiagnosticChecks = make([]DiagnosticCheckEntry, 0, len(event.Checks))
-			for _, c := range event.Checks {
-				m.DiagnosticChecks = append(m.DiagnosticChecks, DiagnosticCheckEntry{
-					Name:    c.Name,
-					Status:  c.Status,
-					Message: c.Message,
-				})
-			}
-			m.DiagnosticsAllPassed = event.AllPassed
-			m.addActivity(fmt.Sprintf("Diagnostics: %d checks, passed=%v", len(event.Checks), event.AllPassed))
-
-		// ── Session list events ──
-
-		case "session.list":
-			m.SessionList = make([]SessionListEntry, 0, len(event.Sessions))
-			for _, s := range event.Sessions {
-				m.SessionList = append(m.SessionList, SessionListEntry{
-					SessionID:  s.SessionID,
-					TurnCount:  s.TurnCount,
-					LastIntent: s.LastIntent,
-					UpdatedAt:  s.UpdatedAt,
-				})
-			}
-			m.addActivity(fmt.Sprintf("Sessions: %d listed", len(event.Sessions)))
-
-		// ── Workspace events ──
-
-		case "workspace.created":
-			m.ActiveWorkspace = event.WorkspaceName
-			m.addActivity("Workspace created: " + event.WorkspaceName)
-
-		case "workspace.switched":
-			m.ActiveWorkspace = event.WorkspaceName
-			m.addActivity("Switched to: " + event.WorkspaceName)
-
-		case "workspace.list":
-			// Response handled in chat content; no model state change needed
-
-		// ── Report events ──
-
-		case "report.generated":
-			m.addActivity(fmt.Sprintf("Report: %s, %d turns", event.ReportFormat, event.TurnCount))
-
-		// ── Autonomy events ──
-
-		case "autonomy.changed":
-			m.AutonomyLevel = event.AutonomyLevel
-			m.AutonomyLabel = event.Label
-			m.addActivity("Autonomy: " + event.Label)
+	case "autonomy.changed":
+		m.AutonomyLevel = event.AutonomyLevel
+		m.AutonomyLabel = event.Label
+		m.addActivity("Autonomy: " + event.Label)
 
 		// ── Cortex events ──
 
@@ -955,6 +955,13 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		m.CortexVisible = true
 		m.addActivity("Cortex dashboard opened")
 	}
+}
+
+func eventDurationMs(event bridge.Event) int64 {
+	if event.DurationMs > 0 {
+		return event.DurationMs
+	}
+	return event.Duration
 }
 
 // addActivity appends an operator-facing log entry, bounded by MaxActivityLog.

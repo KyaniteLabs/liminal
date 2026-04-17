@@ -19,6 +19,8 @@ import http from 'http';
 // Helpers
 // ---------------------------------------------------------------------------
 
+const realFetch = globalThis.__liminalNativeFetch || globalThis.fetch.bind(globalThis);
+
 /**
  * Create a temp dir and return { dir, configPath, cleanup }.
  */
@@ -49,7 +51,7 @@ function startServer(app) {
  * JSON fetch helper — returns { status, headers, body }.
  */
 async function jsonFetch(url, options = {}) {
-  const res = await fetch(url, {
+  const res = await realFetch(url, {
     headers: { 'Content-Type': 'application/json', ...options.headers },
     method: options.method || 'GET',
     body: options.body !== undefined ? options.body : undefined,
@@ -58,6 +60,10 @@ async function jsonFetch(url, options = {}) {
   let body;
   try { body = JSON.parse(text); } catch { body = text; }
   return { status: res.status, headers: res.headers, body };
+}
+
+async function closeResponse(res) {
+  await res.body?.cancel().catch(() => {});
 }
 
 // ===========================================================================
@@ -271,7 +277,7 @@ describe('Security regression — Wave 3 preview isolation', () => {
     });
 
     // Fetch the preview page
-    const res = await fetch(`http://127.0.0.1:${port}/preview?version=99`);
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=99`);
     const html = await res.text();
 
     // The preview HTML must null out network APIs before running user code
@@ -287,7 +293,7 @@ describe('Security regression — Wave 3 preview isolation', () => {
   });
 
   it('preview response includes CSP header', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
     const csp = res.headers.get('Content-Security-Policy') || '';
 
     // CSP must block outbound connections and framing
@@ -299,7 +305,7 @@ describe('Security regression — Wave 3 preview isolation', () => {
   });
 
   it('preview response includes security headers', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
 
     expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
     expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
@@ -406,7 +412,7 @@ describe('Security regression — Wave 5 security headers', () => {
   }, 60000);
 
   it('preview page includes Permissions-Policy to disable device sensors', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
     const html = await res.text();
 
     // The HTML must include a meta tag disabling device sensors
@@ -416,7 +422,7 @@ describe('Security regression — Wave 5 security headers', () => {
   });
 
   it('API JSON responses have correct content type', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/api/config`);
+    const res = await realFetch(`http://127.0.0.1:${port}/api/config`);
     const ct = res.headers.get('Content-Type') || '';
     expect(ct).toContain('application/json');
   });
@@ -496,40 +502,56 @@ describe('Security regression — Wave 7 red team remediation', () => {
 
   // F5: SSE CSRF — reject cross-origin
   it('/api/events rejects SSE request with evil origin', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+    const res = await realFetch(`http://127.0.0.1:${port}/api/events`, {
       headers: { Accept: 'text/event-stream', Origin: 'http://evil.example.com' },
     });
-    expect(res.status).toBe(403);
+    try {
+      expect(res.status).toBe(403);
+    } finally {
+      await closeResponse(res);
+    }
   });
 
   // F5: SSE CSRF — allow localhost
   it('/api/events allows SSE with localhost origin', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+    const res = await realFetch(`http://127.0.0.1:${port}/api/events`, {
       headers: { Accept: 'text/event-stream', Origin: `http://localhost:${port}` },
     });
-    expect(res.status).toBe(200);
+    try {
+      expect(res.status).toBe(200);
+    } finally {
+      await closeResponse(res);
+    }
   });
 
   // F5: SSE CSRF — allow no origin
   it('/api/events allows SSE with no origin header', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+    const res = await realFetch(`http://127.0.0.1:${port}/api/events`, {
       headers: { Accept: 'text/event-stream' },
     });
-    expect(res.status).toBe(200);
+    try {
+      expect(res.status).toBe(200);
+    } finally {
+      await closeResponse(res);
+    }
   });
 
   // F11: SSE security headers
   it('/api/events includes X-Content-Type-Options and Referrer-Policy', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/api/events`, {
+    const res = await realFetch(`http://127.0.0.1:${port}/api/events`, {
       headers: { Accept: 'text/event-stream' },
     });
-    expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
-    expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
+    try {
+      expect(res.headers.get('X-Content-Type-Options')).toBe('nosniff');
+      expect(res.headers.get('Referrer-Policy')).toBe('no-referrer');
+    } finally {
+      await closeResponse(res);
+    }
   });
 
   // F15: SRI on p5 CDN
   it('preview includes SRI integrity on p5 script', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
     const html = await res.text();
     expect(html).toMatch(/integrity="sha384-/);
     expect(html).toContain('crossorigin="anonymous"');
@@ -537,7 +559,7 @@ describe('Security regression — Wave 7 red team remediation', () => {
 
   // F7: CSP upgrade-insecure-requests
   it('preview CSP includes upgrade-insecure-requests', async () => {
-    const res = await fetch(`http://127.0.0.1:${port}/preview?version=1`);
+    const res = await realFetch(`http://127.0.0.1:${port}/preview?version=1`);
     const csp = res.headers.get('Content-Security-Policy') || '';
     expect(csp).toContain('upgrade-insecure-requests');
   });

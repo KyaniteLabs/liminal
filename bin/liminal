@@ -28,7 +28,7 @@ for (let i = 0; i < args.length; i++) {
     flags.maxIterations = parseInt(args[++i]);
   } else if (arg === '--output' || arg === '-o') {
     flags.output = args[++i];
-  } else if (arg === '--input' || arg === '-i') {
+  } else if (arg === '--input' || arg === '-f') {
     flags.input = args[++i];
   } else if (arg === '--provider') {
     flags.provider = args[++i];
@@ -673,8 +673,6 @@ else if (cmd === 'composite') {
 
   const { Compositor } = await import('../dist/composite/Compositor.js');
   const { CompositionAnalyzer } = await import('../dist/composition/CompositionAnalyzer.js');
-  const { PromptEnhancer } = await import('../dist/composition/PromptEnhancer.js');
-
   try {
     const specJson = fs.readFileSync(specPath, 'utf-8');
     const spec = JSON.parse(specJson);
@@ -685,22 +683,19 @@ else if (cmd === 'composite') {
     console.log(`  Layers: ${spec.layers?.length ?? 0}`);
 
     const analyzer = new CompositionAnalyzer();
-    const enhancer = new PromptEnhancer();
+
+    // Map compositor layer types (video/image/audio) to composition domain hints
+    const typeToDomain = { video: 'p5', image: 'svg', audio: 'tone' };
 
     for (const layer of spec.layers ?? []) {
-      if (!layer.domain) continue;
-      const recommendations = await analyzer.analyze(`Generate ${layer.domain} visual`);
-      console.log(`  [${layer.domain}] confidence=${recommendations[0]?.confidence ?? 'n/a'} reason=${recommendations[0]?.reason ?? 'n/a'}`);
-
-      if (recommendations.length > 0) {
-        const enhanced = enhancer.enhance({
-          existingLayers: spec.layers.filter((l) => l !== layer).map((l) => ({ domain: l.domain })),
-          targetDomain: layer.domain,
-          integrationHints: { blendMode: layer.blendMode ?? 'normal' },
-        });
-        console.log(`    Enhanced prompt context: ${enhanced.context.slice(0, 80)}...`);
-      }
+      const domainHint = typeToDomain[layer.type] || layer.type;
+      const recommendations = await analyzer.analyze(`Generate ${domainHint} visual`);
+      console.log(`  [${layer.type} -> ${domainHint}] confidence=${recommendations[0]?.confidence ?? 'n/a'} reason=${recommendations[0]?.reason ?? 'n/a'}`);
     }
+
+    // Note: PromptEnhancer requires full composition Layer objects (with .type, .enabled,
+    // .metadata.prompt) which compositor stub layers don't provide. Skip enhancement here
+    // — it's available via the composition pipeline when layers are created through generators.
 
     const outputPath = flags.output;
     if (outputPath) {

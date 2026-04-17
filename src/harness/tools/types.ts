@@ -18,6 +18,8 @@ export interface ReadFileParams {
   path: string;
   maxLines?: number;
   offset?: number;
+  /** 1-based line number alias for offset; useful for models reading startLine/endLine metadata. */
+  startLine?: number;
   limit?: number;
 }
 

@@ -20,7 +20,7 @@ export class ReadFileTool extends Tool {
         duration: Date.now() - startTime,
       };
     }
-    const { maxLines = 1000, offset = 0, limit } = rawParams ?? {};
+    const { maxLines = 1000, offset, startLine: requestedStartLine, limit } = rawParams ?? {};
     
     try {
       // Security validation
@@ -47,7 +47,12 @@ export class ReadFileTool extends Tool {
       const content = await fs.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       const lineCount = lines.length;
-      const safeOffset = Math.max(0, offset);
+      const requestedOffset = typeof offset === 'number'
+        ? offset
+        : typeof requestedStartLine === 'number'
+          ? requestedStartLine - 1
+          : 0;
+      const safeOffset = Math.max(0, requestedOffset);
       const pageSize = Math.max(1, limit ?? maxLines);
       const page = lines.slice(safeOffset, safeOffset + pageSize);
       const startLine = lineCount === 0 ? 0 : Math.min(safeOffset + 1, lineCount);

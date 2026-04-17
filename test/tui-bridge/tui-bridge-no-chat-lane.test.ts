@@ -79,6 +79,10 @@ describe('Bubble Tea operator routing', () => {
 
     expect(result.reviewRequired).toBe(true);
     expect(executeTask).not.toHaveBeenCalled();
+    expect(service.getStatus(session.sessionId).pendingAction).toMatchObject({
+      prompt: 'hello, check the current repository',
+      route: 'engineering',
+    });
     expect(service.getStatus(session.sessionId).pendingAction?.description)
       .toContain('hello, check the current repository');
     expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('action.review_required');
@@ -94,6 +98,28 @@ describe('Bubble Tea operator routing', () => {
       type: 'session.turn',
       intent: 'engineering',
       delegatedTo: 'conveyor',
+    });
+  });
+
+  it('stores the full prompt and original route for creative review actions', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const prompt = 'generate a p5 sketch with a deliberately long description that must not be truncated before approval';
+
+    const result = await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: prompt,
+        clientIntent: 'chat',
+      },
+      fakeLlm() as never,
+    );
+
+    expect(result.reviewRequired).toBe(true);
+    expect(service.getStatus(session.sessionId).pendingAction).toMatchObject({
+      prompt,
+      route: 'creative',
     });
   });
 

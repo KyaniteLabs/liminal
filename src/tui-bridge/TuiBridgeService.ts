@@ -386,6 +386,8 @@ export class TuiBridgeService {
         id: `action-${Date.now()}`,
         title: input.text.slice(0, 60),
         description: input.text,
+        prompt: input.text,
+        route: 'operator',
         kind: 'llm',
         requiresConfirmation: true,
         createdAt: new Date().toISOString(),
@@ -481,6 +483,8 @@ export class TuiBridgeService {
             id: `action-${Date.now()}`,
             title: input.text.slice(0, 60),
             description: `Creative: ${input.text}`,
+            prompt: input.text,
+            route: 'creative',
             kind: 'llm',
             requiresConfirmation: true,
             createdAt: new Date().toISOString(),
@@ -508,6 +512,8 @@ export class TuiBridgeService {
             id: `action-${Date.now()}`,
             title: input.text.slice(0, 60),
             description: `Engineering: ${input.text}`,
+            prompt: input.text,
+            route: 'engineering',
             kind: 'structured',
             requiresConfirmation: true,
             createdAt: new Date().toISOString(),
@@ -535,6 +541,8 @@ export class TuiBridgeService {
             id: `action-${Date.now()}`,
             title: input.text.slice(0, 60),
             description: `Hybrid: ${input.text}`,
+            prompt: input.text,
+            route: 'hybrid',
             kind: 'llm',
             requiresConfirmation: true,
             createdAt: new Date().toISOString(),
@@ -562,6 +570,8 @@ export class TuiBridgeService {
             id: `action-${Date.now()}`,
             title: input.text.slice(0, 60),
             description: `Operator: ${input.text}`,
+            prompt: input.text,
+            route: 'engineering',
             kind: 'structured',
             requiresConfirmation: true,
             createdAt: new Date().toISOString(),
@@ -601,8 +611,9 @@ export class TuiBridgeService {
 
     if (!llm) return;
 
-    const approvedText = pendingAction.description.replace(/^(Operator|Engineering|Hybrid|Creative):\s*/i, '').trim();
+    const approvedText = (pendingAction.prompt ?? pendingAction.description.replace(/^(Operator|Engineering|Hybrid|Creative):\s*/i, '')).trim();
     if (!approvedText) return;
+    const route = pendingAction.route ?? this.inferPendingActionRoute(pendingAction.description);
 
     let conversation = this.conversations.get(sessionId);
     if (!conversation) {
@@ -613,14 +624,20 @@ export class TuiBridgeService {
 
     this.emit(sessionId, { type: 'response.started', sessionId });
     const routeStart = Date.now();
-    this.streamEngineeringTask(sessionId, approvedText, conversation, llm)
+    const runApproved = route === 'creative'
+      ? this.streamRalphGeneration(sessionId, approvedText, conversation, llm)
+      : route === 'hybrid'
+        ? this.streamHybridTask(sessionId, approvedText, conversation, llm)
+        : this.streamEngineeringTask(sessionId, approvedText, conversation, llm);
+
+    runApproved
       .then(() => {
         this.emit(sessionId, {
           type: 'session.turn',
           sessionId,
           turnId: `turn-${Date.now()}`,
-          intent: 'engineering',
-          delegatedTo: 'conveyor',
+          intent: route === 'creative' ? 'creative' : route === 'hybrid' ? 'hybrid' : 'engineering',
+          delegatedTo: route === 'creative' || route === 'hybrid' ? 'ralph-loop' : 'conveyor',
           durationMs: Date.now() - routeStart,
         });
       })
@@ -631,6 +648,12 @@ export class TuiBridgeService {
           message: err instanceof Error ? err.message : String(err),
         });
       });
+  }
+
+  private inferPendingActionRoute(description: string): NonNullable<TuiPendingAction['route']> {
+    if (/^Creative:/i.test(description)) return 'creative';
+    if (/^Hybrid:/i.test(description)) return 'hybrid';
+    return 'engineering';
   }
 
   cancelAction(sessionId: string, actionId: string): void {
@@ -755,6 +778,8 @@ export class TuiBridgeService {
         id: `skill-${skillName}-${Date.now()}`,
         title: `Skill: ${skillName}`,
         description: result.prompt.slice(0, 100),
+        prompt: result.prompt,
+        route: result.target === 'creative' ? 'creative' : result.target === 'engineering' ? 'engineering' : 'hybrid',
         kind: 'llm',
         requiresConfirmation: true,
         createdAt: new Date().toISOString(),

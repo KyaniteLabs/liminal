@@ -19,6 +19,8 @@ export interface TuiPendingAction {
   id: string;
   title: string;
   description: string;
+  prompt?: string;
+  route?: 'creative' | 'engineering' | 'hybrid' | 'operator';
   kind: 'structured' | 'llm';
   requiresConfirmation: true;
   createdAt: string;

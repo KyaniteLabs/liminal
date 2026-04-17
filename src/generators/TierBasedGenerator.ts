@@ -512,4 +512,26 @@ export abstract class TierBasedGenerator {
   wrapForGallery(_code: string): string {
     return _code;
   }
+
+  /**
+   * Enrich a prompt using a concept graph via nodeprompt's synthesizePrompt.
+   * Opt-in: call this when you have a concept graph to incorporate spatial prompt engineering.
+   */
+  async enrichWithConceptGraph(prompt: string, graphPath: string): Promise<string> {
+    const { readFileSync } = await import('node:fs');
+    const { synthesizePrompt } = await import('../nodeprompt/index.js');
+
+    const graphJson = readFileSync(graphPath, 'utf-8');
+    const graph = JSON.parse(graphJson);
+
+    if (!graph.nodes || !graph.edges || !graph.originalPrompt) {
+      throw new GenerationError(
+        `${this.constructor.name}: Graph JSON must contain { nodes, edges, originalPrompt }`,
+        this.domain,
+      );
+    }
+
+    return synthesizePrompt(prompt ?? graph.originalPrompt, graph.nodes, graph.edges);
+  }
 }
+

@@ -34,6 +34,18 @@ describe('ExecuteSkillTool', () => {
 });
 
 describe('SearchCodeTool', () => {
+  it('returns a recovery hint when query is missing', async () => {
+    const runner = vi.fn(async () => ({ stdout: '{}', stderr: '' }));
+    const tool = new SearchCodeTool(runner);
+
+    const result = await tool.execute({ pattern: 'package.json' });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('searchCode requires params.query');
+    expect(result.error).toContain('{"query":"package.json"}');
+    expect(runner).not.toHaveBeenCalled();
+  });
+
   it('returns parsed jmunch results from the runner', async () => {
     const runner = vi.fn(async () => ({
       stdout: JSON.stringify({ result_count: 1, results: [{ file: 'src/foo.ts', matches: [{ line: 4, text: 'needle' }] }] }),

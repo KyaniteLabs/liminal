@@ -11,7 +11,16 @@ export class ReadFileTool extends Tool {
   
   async execute(params: unknown): Promise<ToolResult<ReadFileResult>> {
     const startTime = Date.now();
-    const { path: filePath, maxLines = 1000, offset = 0, limit } = params as ReadFileParams;
+    const rawParams = params as Partial<ReadFileParams> | null | undefined;
+    const filePath = rawParams?.path;
+    if (typeof filePath !== 'string' || filePath.trim() === '') {
+      return {
+        success: false,
+        error: `readFile requires params.path to be a non-empty string; received ${Array.isArray(filePath) ? 'array' : typeof filePath}. Use {"path":"src/index.ts"} or another exact repository-relative file path.`,
+        duration: Date.now() - startTime,
+      };
+    }
+    const { maxLines = 1000, offset = 0, limit } = rawParams ?? {};
     
     try {
       // Security validation

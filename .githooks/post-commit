@@ -1,12 +1,23 @@
 #!/bin/bash
-# post-commit hook: Auto-push after every commit
-# Enforces CLAUDE.md Rule #1: "Always push after committing"
-# Warns on failure but never blocks.
+# post-commit hook: optional auto-push after every commit.
+#
+# Hidden pushes are unsafe in agent/worktree flows: they can publish temporary
+# session branches or half-recovered local state before the operator has checked
+# the branch. Keep the hook opt-in and print the explicit command instead.
 
 branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 
 # Skip detached HEAD (rebases, etc.)
 [ -z "$branch" ] && exit 0
+
+if [ "${LIMINAL_AUTO_PUSH_AFTER_COMMIT:-}" != "1" ]; then
+    echo ""
+    echo "  post-commit: auto-push skipped."
+    echo "  Run: git push -u origin $branch"
+    echo "  Set LIMINAL_AUTO_PUSH_AFTER_COMMIT=1 to re-enable automatic pushes."
+    echo ""
+    exit 0
+fi
 
 # Push with upstream tracking
 if git rev-parse --abbrev-ref "@{upstream}" >/dev/null 2>&1; then

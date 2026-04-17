@@ -40,4 +40,21 @@ describe('ReadFileTool', () => {
       await fs.rm(file, { force: true });
     }
   });
+
+  it('supports one-based startLine paging', async () => {
+    const tool = new ReadFileTool();
+    const file = path.join(process.cwd(), 'src', '__readfile_tool_startline_fixture__.txt');
+    await fs.writeFile(file, ['a', 'b', 'c', 'd', 'e'].join('\n'));
+
+    try {
+      const result = await tool.execute({ path: file, startLine: 3, limit: 2 });
+      expect(result.success).toBe(true);
+      expect(result.data?.content).toContain('c\nd');
+      expect(result.data?.startLine).toBe(3);
+      expect(result.data?.endLine).toBe(4);
+      expect(result.data?.truncated).toBe(true);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
 });

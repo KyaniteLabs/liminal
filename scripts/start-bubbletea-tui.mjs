@@ -5,6 +5,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { LLMClient } from '../dist/llm/LLMClient.js';
+import { eventBus } from '../dist/core/EventBus.js';
 import { applyBridgeProviderEnv, resolveBridgeProviderConfig } from '../dist/tui-bridge/BridgeLauncherConfig.js';
 import { TuiBridgeServer } from '../dist/tui-bridge/TuiBridgeServer.js';
 import { TuiBridgeService } from '../dist/tui-bridge/TuiBridgeService.js';
@@ -50,6 +51,7 @@ function routeBridgeConsoleToFile(logFile) {
 
 const providerConfig = resolveBridgeProviderConfig();
 applyBridgeProviderEnv(process.env, providerConfig);
+if (!bridgeOnly) eventBus.enableTuiMode();
 
 const llm = new LLMClient({
   role: 'harness',
@@ -94,6 +96,7 @@ if (!bridgeOnly) {
 async function shutdown() {
   if (child && !child.killed) child.kill('SIGTERM');
   await server.stop().catch(() => {});
+  if (!bridgeOnly) eventBus.disableTuiMode();
   bridgeLogStream?.end();
   process.exit(0);
 }

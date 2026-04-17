@@ -1562,6 +1562,7 @@ export class TuiBridgeService {
       if (event.source !== 'LLMModeAgent') return;
       if (event.type === EventTypes.PROCESS_START || event.type === EventTypes.PROCESS_PROGRESS) {
         const message = event.data.message || event.data.stage || 'working';
+        this.emitOperatorProgress(sessionId, event);
         this.emit(sessionId, { type: 'activity.updated', sessionId, message: String(message) });
         this.emitLiveNarration(sessionId, String(message));
       }
@@ -1620,6 +1621,59 @@ export class TuiBridgeService {
       eventBus.offEvent(listener);
       this.activeStreams.delete(sessionId);
     }
+  }
+
+  private emitOperatorProgress(sessionId: string, event: BusEvent): void {
+    const current = typeof event.data.current === 'number' ? event.data.current : undefined;
+    const total = typeof event.data.total === 'number' ? event.data.total : undefined;
+    const stage = typeof event.data.stage === 'string' ? event.data.stage : '';
+    const message = typeof event.data.message === 'string' ? event.data.message : stage;
+
+    if (current != null || total != null) {
+      this.emit(sessionId, {
+        type: 'phase.changed',
+        sessionId,
+        phase: this.phaseForProcessStage(stage),
+        stepCurrent: current,
+        stepTotal: total,
+        objective: message,
+      });
+    }
+
+    if (stage.startsWith('planned ')) {
+      const toolName = stage.slice('planned '.length).trim();
+      if (!toolName) return;
+      if (toolName === 'complete') return;
+      this.emit(sessionId, {
+        type: 'tool.started',
+        sessionId,
+        toolName,
+        thought: message.replace(new RegExp(`^${toolName}:\\s*`), ''),
+        stepNum: current,
+      });
+      return;
+    }
+
+    if (stage.startsWith('executed ')) {
+      const toolName = stage.slice('executed '.length).trim();
+      if (!toolName) return;
+      const failed = /\bfailed\b/i.test(message);
+      this.emit(sessionId, {
+        type: 'tool.completed',
+        sessionId,
+        toolName,
+        resultSummary: message,
+        success: !failed,
+        stepNum: current,
+      });
+    }
+  }
+
+  private phaseForProcessStage(stage: string): string {
+    if (stage.includes('verification') || stage.includes('typeCheck') || stage.includes('runBuild') || stage.includes('runTests')) return 'Verify';
+    if (stage.startsWith('executed ')) return 'Inspect';
+    if (stage.startsWith('planned ')) return 'Plan';
+    return 'Plan';
   }
 
   /**

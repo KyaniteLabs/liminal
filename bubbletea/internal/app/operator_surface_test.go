@@ -179,6 +179,62 @@ func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
 	}
 }
 
+func TestOperatorSurfaceShowsFinalReportBeforeToolTrace(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "Status:\nFiles changed:\n- bubbletea/internal/app/layout.go", Time: nowForTest()}}
+	m.ToolTimeline = []ToolStep{{StepNum: 1, ToolName: "readFile", Status: "success", Thought: "Inspect layout", ResultSummary: "loaded layout.go"}}
+
+	surface := m.renderOperatorSurface(56)
+	for _, want := range []string{"Final report", "Status: Success", "Files changed:", "Tool trace", "Inspect layout"} {
+		if !strings.Contains(surface, want) {
+			t.Fatalf("expected operator surface to contain %q\n%s", want, surface)
+		}
+	}
+	if strings.Index(surface, "Final report") > strings.Index(surface, "Tool trace") {
+		t.Fatalf("expected final report to render before tool trace\n%s", surface)
+	}
+}
+
+func TestOperatorRunStatusLabels(t *testing.T) {
+	t.Run("success", func(t *testing.T) {
+		m := readyOperatorModel(t)
+		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "done", Time: nowForTest()}}
+		if got := m.operatorRunStatus(); got != "Success" {
+			t.Fatalf("expected Success, got %q", got)
+		}
+	})
+
+	t.Run("partial", func(t *testing.T) {
+		m := readyOperatorModel(t)
+		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "draft", Time: nowForTest()}}
+		m.ToolTimeline = []ToolStep{{StepNum: 1, ToolName: "runTests", Status: "running"}}
+		if got := m.operatorRunStatus(); got != "Partial" {
+			t.Fatalf("expected Partial, got %q", got)
+		}
+	})
+
+	t.Run("failed", func(t *testing.T) {
+		m := readyOperatorModel(t)
+		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "attempted fix", Time: nowForTest()}}
+		m.VerificationJobs = []VerificationJob{{JobID: "job-1", Command: "go test ./...", Status: "fail"}}
+		if got := m.operatorRunStatus(); got != "Failed" {
+			t.Fatalf("expected Failed, got %q", got)
+		}
+	})
+
+	t.Run("needs review", func(t *testing.T) {
+		m := readyOperatorModel(t)
+		m.Mode = "ACTION"
+		m.PendingAction = &bridge.PendingAction{ID: "a1", Title: "Approve patch"}
+		panel := m.renderResultPanel(56)
+		for _, want := range []string{"Status: Needs review", "Review required before mutation"} {
+			if !strings.Contains(panel, want) {
+				t.Fatalf("expected result panel to contain %q\n%s", want, panel)
+			}
+		}
+	})
+}
+
 func TestWindowResizeKeepsTextareaWidthInSync(t *testing.T) {
 	m := NewModel("http://localhost:0")
 

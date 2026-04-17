@@ -3,7 +3,7 @@
  *
  * Typed product modes that bias StudioAgent routing.
  * Each mode shifts the delegation target for user inputs:
- *   ask    → force direct chat (conversational)
+ *   ask    → preserve intent; conversational input becomes inspection
  *   make   → bias toward creative generation (ralph-loop)
  *   remix  → force creative with remix signal
  *   improve → bias toward hybrid (creative + verification)
@@ -40,7 +40,7 @@ export interface ModeConfig {
 export const PRODUCT_MODES: Record<ProductMode, { label: string; description: string }> = {
   ask: {
     label: 'Ask',
-    description: 'Conversational Q&A — direct responses, no generation',
+    description: 'Operator Q&A — inspect through the harness instead of chat-only',
   },
   make: {
     label: 'Make',
@@ -75,7 +75,7 @@ export class ModeAwareRouter {
    *
    * The base router classifies via keywords first.
    * Then the active mode may override the intent:
-   *   ask    → forces 'direct' regardless of keywords
+   *   ask    → preserves detected intent; direct input becomes engineering inspection
    *   make   → upgrades 'direct' to 'creative'
    *   remix  → forces 'creative' with topic hint
    *   improve → forces 'hybrid'
@@ -88,11 +88,11 @@ export class ModeAwareRouter {
 
     switch (modeConfig.mode) {
       case 'ask':
-        // All inputs become direct conversation
+        if (base.intent !== 'direct') return base;
         return {
-          intent: 'direct',
-          confidence: 'high',
-          topic: base.topic,
+          intent: 'engineering',
+          confidence: 'medium',
+          topic: base.topic ?? 'inspect',
           input,
         };
 

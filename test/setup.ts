@@ -16,6 +16,10 @@ if (nativeFetch) {
 function installQuietCanvasFallbacks(): void {
   if (typeof HTMLCanvasElement === 'undefined') return;
 
+  function quietToDataURL(): string {
+    return 'data:image/png;base64,';
+  }
+
   Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
     configurable: true,
     writable: true,
@@ -27,7 +31,7 @@ function installQuietCanvasFallbacks(): void {
     writable: true,
     // toDataURL is a method; return the minimal valid data URL without
     // invoking jsdom's not-implemented logger.
-    value: () => 'data:image/png;base64,',
+    value: quietToDataURL,
   });
 }
 

@@ -17,6 +17,8 @@ import { LLMClient, LLMConfig } from '../../../src/llm/LLMClient.js';
 
 // Mock generator for testing
 class MockGenerator extends TierBasedGenerator {
+  static activeCount = 0;
+  static maxActiveCount = 0;
   private mockCode: string;
   private shouldFail: boolean;
   private delay: number;
@@ -34,37 +36,49 @@ class MockGenerator extends TierBasedGenerator {
     this.delay = delay;
   }
 
+  static resetConcurrency(): void {
+    MockGenerator.activeCount = 0;
+    MockGenerator.maxActiveCount = 0;
+  }
+
   async generateLayer(prompt: string): Promise<Layer> {
-    if (this.delay > 0) {
-      await new Promise((resolve) => setTimeout(resolve, this.delay));
-    }
+    MockGenerator.activeCount++;
+    MockGenerator.maxActiveCount = Math.max(MockGenerator.maxActiveCount, MockGenerator.activeCount);
 
-    if (this.shouldFail) {
-      throw new Error(`Mock ${this.domain} generation failed`);
-    }
+    try {
+      if (this.delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, this.delay));
+      }
 
-    return {
-      id: `layer_${this.domain}_${Date.now()}`,
-      type: this.domain as DomainType,
-      code: this.mockCode,
-      config: {
-        zIndex: 0,
-        blendMode: 'normal',
-        opacity: 1.0,
-        position: { x: 0, y: 0 },
-        scale: 1.0,
-        role: 'standalone',
-        transparentBackground: false,
-      },
-      metadata: {
-        prompt,
-        generator: 'MockGenerator',
-        model: 'mock-model',
-        generatedAt: new Date().toISOString(),
-      },
-      enabled: true,
-      locked: false,
-    };
+      if (this.shouldFail) {
+        throw new Error(`Mock ${this.domain} generation failed`);
+      }
+
+      return {
+        id: `layer_${this.domain}_${Date.now()}`,
+        type: this.domain as DomainType,
+        code: this.mockCode,
+        config: {
+          zIndex: 0,
+          blendMode: 'normal',
+          opacity: 1.0,
+          position: { x: 0, y: 0 },
+          scale: 1.0,
+          role: 'standalone',
+          transparentBackground: false,
+        },
+        metadata: {
+          prompt,
+          generator: 'MockGenerator',
+          model: 'mock-model',
+          generatedAt: new Date().toISOString(),
+        },
+        enabled: true,
+        locked: false,
+      };
+    } finally {
+      MockGenerator.activeCount--;
+    }
   }
 }
 
@@ -195,7 +209,7 @@ describe('LayerSequencer', () => {
 
   describe('generateParallel - Parallel Generation', () => {
     it('should generate independent domains in parallel', async () => {
-      const startTime = Date.now();
+      MockGenerator.resetConcurrency();
       const generators = new Map<DomainType, TierBasedGenerator>([
         ['p5', new MockGenerator('p5', '// P5', false, 50)],
         ['tone', new MockGenerator('tone', '// Tone', false, 50)],
@@ -209,11 +223,8 @@ describe('LayerSequencer', () => {
         { generators }
       );
 
-      const duration = Date.now() - startTime;
-
       expect(result.layers).toHaveLength(2);
-      // Parallel execution should be faster than sequential (100ms vs ~50ms)
-      expect(duration).toBeLessThan(100);
+      expect(MockGenerator.maxActiveCount).toBe(2);
     });
 
     it('should handle mix of success and failure in parallel generation', async () => {

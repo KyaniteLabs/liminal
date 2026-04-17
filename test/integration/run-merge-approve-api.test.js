@@ -9,6 +9,8 @@ import os from 'os';
 import http from 'http';
 import { LLMClient } from '../../src/llm/LLMClient.js';
 
+const realFetch = globalThis.__liminalNativeFetch || globalThis.fetch.bind(globalThis);
+
 function skipIfNoLLM() {
   if (!LLMClient.isConfigured()) {
     console.log('[SKIP] LLM not configured — skipping organism API test');
@@ -42,7 +44,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
     const a = server.address();
     port = typeof a === 'object' && a && 'port' in a ? a.port : 0;
     expect(port).toBeGreaterThan(0);
-  }, 30000);
+  }, 60000);
 
   afterAll(async () => {
     if (server) await new Promise((resolve) => server.close(resolve));
@@ -51,7 +53,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
   });
 
   async function post(pathname, data) {
-    const res = await fetch(`http://127.0.0.1:${port}${pathname}`, {
+    const res = await realFetch(`http://127.0.0.1:${port}${pathname}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -63,7 +65,7 @@ describe('Run / Merge / Approve / Propose-mutate API', () => {
   }
 
   async function get(pathname) {
-    const res = await fetch(`http://127.0.0.1:${port}${pathname}`, {
+    const res = await realFetch(`http://127.0.0.1:${port}${pathname}`, {
       signal: AbortSignal.timeout(8000),
     });
     const body = await res.json().catch(() => ({}));

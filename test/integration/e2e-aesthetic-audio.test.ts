@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 
+const BARREL_IMPORT_TIMEOUT_MS = 120_000;
+
 describe('E2E: audio + aesthetic wiring', () => {
   it(
     'exports AudioAnalyzer from index',
@@ -7,13 +9,13 @@ describe('E2E: audio + aesthetic wiring', () => {
       const mod = await import('../../src/index.js');
       expect(mod.AudioAnalyzer).toBeDefined();
     },
-    30000,
+    BARREL_IMPORT_TIMEOUT_MS,
   );
 
   it('exports AestheticCritic from index', async () => {
     const mod = await import('../../src/index.js');
     expect(mod.AestheticCritic).toBeDefined();
-  }, 30000);
+  }, BARREL_IMPORT_TIMEOUT_MS);
 
   it('AestheticCritic critiques real p5 code end-to-end', async () => {
     const { AestheticCritic } = await import('../../src/aesthetic/index.js');

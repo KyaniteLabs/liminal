@@ -214,6 +214,23 @@ func TestOperatorRunStatusLabels(t *testing.T) {
 		}
 	})
 
+	t.Run("final report success does not override failed verification", func(t *testing.T) {
+		m := readyOperatorModel(t)
+		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "Status: success\nVerdict: I think tests passed.", Time: nowForTest()}}
+		m.VerificationJobs = []VerificationJob{{JobID: "job-1", Command: "go test ./...", Status: "fail"}}
+		if got := m.operatorRunStatus(); got != "Failed" {
+			t.Fatalf("expected failed verification to stay authoritative, got %q", got)
+		}
+	})
+
+	t.Run("parses lowercase final status", func(t *testing.T) {
+		m := readyOperatorModel(t)
+		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "status: passed\nVerdict: ok", Time: nowForTest()}}
+		if got := m.operatorRunStatus(); got != "Success" {
+			t.Fatalf("expected lowercase status to parse as Success, got %q", got)
+		}
+	})
+
 	t.Run("partial", func(t *testing.T) {
 		m := readyOperatorModel(t)
 		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "draft", Time: nowForTest()}}

@@ -586,17 +586,51 @@ export class TuiBridgeService {
   }
 
   // eslint-disable-next-line @typescript-eslint/require-await
-  async confirmAction(sessionId: string, actionId: string): Promise<void> {
+  async confirmAction(sessionId: string, actionId: string, llm?: LLMClient): Promise<void> {
     const status = this.getStatus(sessionId);
     if (!status.pendingAction || status.pendingAction.id !== actionId) {
       throw new Error(`Pending action ${actionId} not found`);
     }
+    const pendingAction = status.pendingAction;
     this.sessions.update(sessionId, {
       mode: 'confirm',
       pendingAction: undefined,
       trust: { level: 'confirmed', label: 'Operator confirmed mutation' },
     });
     this.emit(sessionId, { type: 'action.confirmed', sessionId, actionId });
+
+    if (!llm) return;
+
+    const approvedText = pendingAction.description.replace(/^(Operator|Engineering|Hybrid|Creative):\s*/i, '').trim();
+    if (!approvedText) return;
+
+    let conversation = this.conversations.get(sessionId);
+    if (!conversation) {
+      conversation = new ConversationManager();
+      conversation.startNewSession();
+      this.conversations.set(sessionId, conversation);
+    }
+
+    this.emit(sessionId, { type: 'response.started', sessionId });
+    const routeStart = Date.now();
+    this.streamEngineeringTask(sessionId, approvedText, conversation, llm)
+      .then(() => {
+        this.emit(sessionId, {
+          type: 'session.turn',
+          sessionId,
+          turnId: `turn-${Date.now()}`,
+          intent: 'engineering',
+          delegatedTo: 'conveyor',
+          durationMs: Date.now() - routeStart,
+        });
+      })
+      .catch((err: unknown) => {
+        this.emit(sessionId, {
+          type: 'error',
+          sessionId,
+          message: err instanceof Error ? err.message : String(err),
+        });
+      });
   }
 
   cancelAction(sessionId: string, actionId: string): void {

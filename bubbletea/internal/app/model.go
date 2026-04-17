@@ -444,12 +444,26 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 	case "action.review_required":
 		m.Mode = "ACTION"
 		m.PendingAction = event.Action
+		if event.Action != nil {
+			content := fmt.Sprintf(
+				"Review required: %s\n\nPress y to approve, or n to cancel.",
+				event.Action.Title,
+			)
+			m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
+				Type:    "system",
+				Content: content,
+				Time:    time.Now(),
+			})
+			m.addActivity("Review required: Press y to approve, n to cancel")
+		}
 	case "action.confirmed":
 		m.Mode = "CONFIRM"
 		m.PendingAction = nil
+		m.addActivity("Approved: running operator task")
 	case "action.cancelled":
 		m.Mode = "CHAT"
 		m.PendingAction = nil
+		m.addActivity("Cancelled pending action")
 	case "mode.changed":
 		m.Mode = strings.ToUpper(event.Mode)
 	case "status.updated":

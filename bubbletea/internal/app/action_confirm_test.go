@@ -21,6 +21,12 @@ func TestApplyEventTracksActionAndConfirmModes(t *testing.T) {
 	if m.PendingAction == nil || m.PendingAction.ID != "a1" {
 		t.Fatalf("expected pending action a1, got %#v", m.PendingAction)
 	}
+	if len(m.ChatBlocks) == 0 || !strings.Contains(m.ChatBlocks[len(m.ChatBlocks)-1].Content, "Press y to approve") {
+		t.Fatalf("expected visible approve instruction in chat blocks, got %#v", m.ChatBlocks)
+	}
+	if len(m.ActivityLog) == 0 || !strings.Contains(m.ActivityLog[len(m.ActivityLog)-1].Message, "Press y to approve") {
+		t.Fatalf("expected visible approve instruction in activity log, got %#v", m.ActivityLog)
+	}
 
 	m.ApplyEvent(bridge.Event{Type: "action.confirmed", SessionID: "s1", ActionID: "a1"})
 	if m.Mode != "CONFIRM" {
@@ -136,5 +142,37 @@ func TestViewShowsReviewCardHintsInActionMode(t *testing.T) {
 	}
 	if !strings.Contains(view, "[n] cancel") {
 		t.Fatal("expected cancel hint in view")
+	}
+}
+
+func TestViewShowsReviewInstructionsInConversationPane(t *testing.T) {
+	m := NewModel("http://localhost:0")
+	m.Connected = true
+	m.Ready = true
+	m.Width = 120
+	m.Height = 32
+	metrics := m.layoutMetrics()
+	m.ChatViewport.Width = metrics.chatContentWidth
+	m.ChatViewport.Height = metrics.chatViewportHeight
+	m.PreviewViewport.Width = metrics.operatorContentWidth
+	m.PreviewViewport.Height = metrics.operatorViewportHeight
+
+	m.ApplyEvent(bridge.Event{
+		Type: "action.review_required",
+		Action: &bridge.PendingAction{
+			ID:                  "a1",
+			Title:               "Inspect repository",
+			Description:         "Inspect git status",
+			Kind:                "structured",
+			RequiresConfirmation: true,
+		},
+	})
+	m.refreshViewports()
+
+	view := m.View()
+	for _, want := range []string{"Review required", "Inspect repository", "Press y to approve", "n to cancel"} {
+		if !strings.Contains(view, want) {
+			t.Fatalf("expected view to contain %q\n%s", want, view)
+		}
 	}
 }

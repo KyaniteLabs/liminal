@@ -138,7 +138,7 @@ export class TuiBridgeServer {
       if (req.method === 'POST' && confirmMatch) {
         const sessionId = confirmMatch[1];
         const actionId = confirmMatch[2];
-        await this.bridge.confirmAction(sessionId, actionId);
+        await this.bridge.confirmAction(sessionId, actionId, this.llm);
         this.json(res, 200, { ok: true });
         return;
       }

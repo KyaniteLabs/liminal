@@ -62,6 +62,25 @@ function getApiKeyFromConfig(provider: string): string | undefined {
 
 export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
 
+const PLACEHOLDER_API_KEY_PATTERNS = [
+  /^YOUR[_-]/i,
+  /_HERE$/i,
+  /PLACEHOLDER/i,
+  /CHANGE[_-]?ME/i,
+  /^sk-your/i,
+  /^<.*>$/,
+] as const;
+
+export function isPlaceholderApiKey(value?: string): boolean {
+  const trimmed = value?.trim();
+  if (!trimmed) return true;
+  return PLACEHOLDER_API_KEY_PATTERNS.some(pattern => pattern.test(trimmed));
+}
+
+function firstUsableApiKey(...values: Array<string | undefined>): string | undefined {
+  return values.find(value => !isPlaceholderApiKey(value));
+}
+
 export interface ProviderConfig extends LLMConfig {
   provider: ProviderType;
   name: string;
@@ -164,21 +183,23 @@ function getProviderConfigInternal(
   const { respectGenericEnvOverrides = true } = options;
   const template = PROVIDER_TEMPLATES[provider];
   
-  // Get API key: env var first, then config file
+  // Get API key: environment first, then config file. Ignore obvious
+  // placeholders so copied example env vars cannot shadow real saved keys.
   let apiKey: string | undefined;
+  const fileApiKey = getApiKeyFromConfig(provider);
   switch (provider) {
     case 'minimax':
-      apiKey = process.env.MINIMAX_API_KEY;
+      apiKey = firstUsableApiKey(process.env.MINIMAX_API_KEY, fileApiKey);
       break;
     case 'glm':
-      apiKey = process.env.GLM_API_KEY;
+      apiKey = firstUsableApiKey(process.env.GLM_API_KEY, fileApiKey);
       break;
     case 'moonshot':
     case 'kimi':
-      apiKey = process.env.MOONSHOT_API_KEY || process.env.KIMI_API_KEY;
+      apiKey = firstUsableApiKey(process.env.MOONSHOT_API_KEY, process.env.KIMI_API_KEY, fileApiKey);
       break;
     case 'openrouter':
-      apiKey = process.env.OPENROUTER_API_KEY;
+      apiKey = firstUsableApiKey(process.env.OPENROUTER_API_KEY, fileApiKey);
       break;
     case 'ollama':
     case 'lmstudio':
@@ -186,12 +207,8 @@ function getProviderConfigInternal(
       apiKey = undefined;
       break;
     case 'custom':
-      apiKey = process.env.LIMINAL_LLM_API_KEY || process.env.OPENAI_API_KEY;
+      apiKey = firstUsableApiKey(process.env.LIMINAL_LLM_API_KEY, process.env.OPENAI_API_KEY, fileApiKey);
       break;
-  }
-  // Fallback: read apiKey from ~/.liminal/config.json providers.<name>.apiKey
-  if (!apiKey) {
-    apiKey = getApiKeyFromConfig(provider);
   }
   
   // Read baseUrl and model: env var → config file → template default
@@ -247,10 +264,10 @@ export function getActiveProvider(): ProviderType {
   }
 
   // Check for specific API keys
-  if (process.env.MINIMAX_API_KEY) return 'minimax';
-  if (process.env.GLM_API_KEY) return 'glm';
-  if (process.env.MOONSHOT_API_KEY) return 'moonshot';
-  if (process.env.OPENROUTER_API_KEY) return 'openrouter';
+  if (!isPlaceholderApiKey(process.env.MINIMAX_API_KEY)) return 'minimax';
+  if (!isPlaceholderApiKey(process.env.GLM_API_KEY)) return 'glm';
+  if (!isPlaceholderApiKey(process.env.MOONSHOT_API_KEY)) return 'moonshot';
+  if (!isPlaceholderApiKey(process.env.OPENROUTER_API_KEY)) return 'openrouter';
 
   // Default to Ollama (local)
   return 'ollama';
@@ -354,10 +371,12 @@ export function getHarnessProviderConfig(): LLMConfig | null {
   if (harnessBaseUrl && harnessModel) {
     // Use minimax API key if minimax endpoint
     const isMinimax = harnessBaseUrl.includes('minimax');
-    const apiKey = harnessApiKey || 
-      (isMinimax ? process.env.MINIMAX_API_KEY : undefined) ||
-      process.env.LIMINAL_LLM_API_KEY || 
-      process.env.OPENAI_API_KEY;
+    const apiKey = firstUsableApiKey(
+      harnessApiKey,
+      isMinimax ? process.env.MINIMAX_API_KEY : undefined,
+      process.env.LIMINAL_LLM_API_KEY,
+      process.env.OPENAI_API_KEY,
+    );
     
     return {
       baseUrl: harnessBaseUrl,

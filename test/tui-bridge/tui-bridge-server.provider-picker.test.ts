@@ -197,6 +197,61 @@ describe('TuiBridgeServer model picker', () => {
     }
   });
 
+
+  it('ignores placeholder configured keys when switching OpenAI models', async () => {
+    mockLoadConfig.mockResolvedValue({
+      isErr: () => false,
+      isOk: () => true,
+      value: {
+        defaultProvider: 'custom',
+        providers: {
+          custom: {
+            baseUrl: 'https://api.openai.com/v1',
+            model: 'gpt-5.4-mini',
+            apiKey: 'YOUR_OPENAI_API_KEY_HERE',
+          },
+        },
+      },
+    });
+    process.env.OPENAI_API_KEY = 'env-openai-key';
+
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const server = new TuiBridgeServer(service, {
+      host: '127.0.0.1',
+      port,
+      llm: {
+        getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4', apiKey: 'YOUR_OPENAI_API_KEY_HERE' }),
+      } as any,
+    });
+    await server.start();
+
+    try {
+      const createRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+      const session = await createRes.json() as { sessionId: string };
+
+      await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/input`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'chat', clientIntent: 'chat', text: '/model openai gpt-5.4-mini' }),
+      });
+
+      expect(mockLLMClientCtor).toHaveBeenCalledWith(expect.objectContaining({
+        baseUrl: 'https://api.openai.com/v1',
+        model: 'gpt-5.4-mini',
+        apiKey: 'env-openai-key',
+      }));
+      expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
+        providers: expect.objectContaining({
+          custom: expect.objectContaining({ apiKey: 'env-openai-key' }),
+        }),
+      }));
+    } finally {
+      delete process.env.OPENAI_API_KEY;
+      await server.stop();
+    }
+  });
+
   it('switches to local providers without requiring an API key', async () => {
     const port = await getFreePort();
     const service = new TuiBridgeService();

@@ -14,6 +14,8 @@ import {
   type ProviderType,
 } from '../../../src/harness/MultiProviderConfig.js';
 
+import fs from 'node:fs';
+import path from 'node:path';
 import os from 'node:os';
 
 // ---------------------------------------------------------------------------
@@ -211,6 +213,29 @@ describe('getProviderConfig', () => {
     const config = getProviderConfig('custom');
     expect(config!.apiKey).toBe('lim-key');
   });
+
+  it('ignores placeholder custom env keys and falls back to config file keys', () => {
+    const tempHome = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-provider-test-'));
+    fs.mkdirSync(path.join(tempHome, '.liminal'), { recursive: true });
+    fs.writeFileSync(path.join(tempHome, '.liminal', 'config.json'), JSON.stringify({
+      defaultProvider: 'custom',
+      providers: {
+        custom: {
+          baseUrl: 'https://api.openai.com/v1',
+          model: 'gpt-5.4',
+          apiKey: 'valid-config-key',
+        },
+      },
+    }));
+    homedirSpy.mockReturnValue(tempHome);
+    _resetConfigCache();
+    process.env.OPENAI_API_KEY = 'YOUR_OPENAI_API_KEY_HERE';
+
+    const config = getProviderConfig('custom');
+
+    expect(config!.apiKey).toBe('valid-config-key');
+  });
+
 });
 
 // ===========================================================================

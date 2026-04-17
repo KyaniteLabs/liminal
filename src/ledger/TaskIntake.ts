@@ -18,7 +18,7 @@ import type { TaskManifest, TaskClass, FileCoverage, SourceAnnotation } from './
 // ─── Configuration ──────────────────────────────────────────────────
 
 /** Modules deferred from task generation (GUI/TUI — per check-coverage-gaps.ts) */
-const DEFERRED_MODULES = ['src/gui/', 'src/tui/', 'src/tui-bridge/', 'src/nodeprompt/', 'src/chat/'];
+const DEFERRED_MODULES = ['src/gui/', 'src/tui/', 'src/tui-bridge/', 'src/chat/'];
 
 /** Directories excluded from annotation scanning (contains regex patterns that false-positive) */
 const ANNOTATION_EXCLUDE_DIRS = ['src/ledger/', 'src/test/', 'test/', 'dist/', 'node_modules/'];

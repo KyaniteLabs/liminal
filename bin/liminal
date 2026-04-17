@@ -28,6 +28,8 @@ for (let i = 0; i < args.length; i++) {
     flags.maxIterations = parseInt(args[++i]);
   } else if (arg === '--output' || arg === '-o') {
     flags.output = args[++i];
+  } else if (arg === '--input' || arg === '-f') {
+    flags.input = args[++i];
   } else if (arg === '--provider') {
     flags.provider = args[++i];
   } else if (arg === '--model') {
@@ -121,7 +123,7 @@ function printHelp() {
   console.log('  serve, s [port]             Start preview server (default: 3456)');
   console.log('  list, ls                    Show saved sketches');
   console.log('  compost <subcommand>        Compost Mill: add, digest, soup, seeds, status');
-  console.log('  composite                   Compose video layers from a JSON spec');
+  console.log('  composite                   Analyze composition spec and generate layer plan');
   console.log('  chat                        Start conversational creative coding mode');
   console.log('  git <subcommand>            Git integration: status, log, diff, branch, commit, init');
   console.log('  fix <file|description>      Auto-fix code issues with LLM assistance');
@@ -664,36 +666,46 @@ else if (cmd === 'list' || cmd === 'ls') {
 }
 else if (cmd === 'composite') {
   const specPath = flags.spec;
-  const outputPath = flags.output;
-
   if (!specPath) {
-    console.error('Error: --spec is required (path to composition JSON file)');
-    process.exit(1);
-  }
-  if (!outputPath) {
-    console.error('Error: --output is required (output video path)');
+    console.error('Usage: liminal composite --spec <spec.json> [--output <plan.json>]');
     process.exit(1);
   }
 
   const { Compositor } = await import('../dist/composite/Compositor.js');
-
+  const { CompositionAnalyzer } = await import('../dist/composition/CompositionAnalyzer.js');
   try {
     const specJson = fs.readFileSync(specPath, 'utf-8');
     const spec = JSON.parse(specJson);
-
     const compositor = new Compositor();
     compositor.validateSpec(spec);
 
-    console.log('🎬 Compositing video...');
-    console.log(`  Layers: ${spec.layers.length}`);
-    console.log(`  Resolution: ${spec.width}x${spec.height}`);
-    console.log(`  Duration: ${spec.duration}s @ ${spec.fps}fps`);
+    console.log('Composition Spec Analysis');
+    console.log(`  Layers: ${spec.layers?.length ?? 0}`);
 
-    await compositor.composite(spec, outputPath);
+    const analyzer = new CompositionAnalyzer();
 
-    console.log('✅ Composited video saved to: ' + outputPath);
+    // Map compositor layer types (video/image/audio) to composition domain hints
+    const typeToDomain = { video: 'p5', image: 'svg', audio: 'tone' };
+
+    for (const layer of spec.layers ?? []) {
+      const domainHint = typeToDomain[layer.type] || layer.type;
+      const recommendations = await analyzer.analyze(`Generate ${domainHint} visual`);
+      console.log(`  [${layer.type} -> ${domainHint}] confidence=${recommendations[0]?.confidence ?? 'n/a'} reason=${recommendations[0]?.reason ?? 'n/a'}`);
+    }
+
+    // Note: PromptEnhancer requires full composition Layer objects (with .type, .enabled,
+    // .metadata.prompt) which compositor stub layers don't provide. Skip enhancement here
+    // — it's available via the composition pipeline when layers are created through generators.
+
+    const outputPath = flags.output;
+    if (outputPath) {
+      const plan = { spec, analyzedAt: new Date().toISOString(), layers: spec.layers?.length ?? 0 };
+      fs.writeFileSync(outputPath, JSON.stringify(plan, null, 2));
+      console.log(`  Plan written to: ${outputPath}`);
+    }
+    console.log('Done.');
   } catch (err) {
-    console.error('❌ Compositing failed:', err.message);
+    console.error('Composite analysis failed:', err.message);
     process.exit(1);
   }
 }
@@ -1838,6 +1850,36 @@ else if (cmd === 'demo' && cmdArgs[0] === 'creative-codex') {
   }
   console.log('');
   process.exit(0);
+}
+else if (cmd === 'prompt' && cmdArgs[0] === 'synthesize') {
+  const inputPath = flags.input;
+  if (!inputPath) {
+    console.error('Usage: liminal prompt synthesize --input <graph.json> [--output <output.md>]');
+    process.exit(1);
+  }
+
+  const { synthesizePrompt } = await import('../dist/nodeprompt/index.js');
+
+  try {
+    const graphJson = fs.readFileSync(inputPath, 'utf-8');
+    const graph = JSON.parse(graphJson);
+    if (!graph.nodes || !graph.edges || !graph.originalPrompt) {
+      console.error('Graph JSON must contain: { nodes, edges, originalPrompt }');
+      process.exit(1);
+    }
+
+    const result = synthesizePrompt(graph.originalPrompt, graph.nodes, graph.edges);
+    const outputPath = flags.output;
+    if (outputPath) {
+      fs.writeFileSync(outputPath, result);
+      console.log(`Synthesized prompt written to: ${outputPath}`);
+    } else {
+      console.log(result);
+    }
+  } catch (err) {
+    console.error('Prompt synthesis failed:', err.message);
+    process.exit(1);
+  }
 }
 else {
   console.error('');

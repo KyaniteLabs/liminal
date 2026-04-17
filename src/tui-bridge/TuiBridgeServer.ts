@@ -5,6 +5,7 @@ import type { TuiInputRequest } from './types.js';
 import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.js';
 import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
 import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
+import { isPlaceholderApiKey } from '../harness/MultiProviderConfig.js';
 
 type ModelProviderKey = 'custom' | 'minimax' | 'glm' | 'lmstudio' | 'ollama' | 'openrouter' | 'kimi' | 'moonshot';
 
@@ -418,23 +419,24 @@ data: ${JSON.stringify(stored.event)}
   }
 
   private resolveApiKey(provider: ModelProviderKey, configuredKey?: string): string | undefined {
-    if (configuredKey) return configuredKey;
+    const firstUsable = (...values: Array<string | undefined>) =>
+      values.find(value => !isPlaceholderApiKey(value));
     const currentConfig = this.llm?.getConfig();
     const currentProvider = currentConfig?.baseUrl ? this.providerLabel(currentConfig.baseUrl) : undefined;
     const currentMatchesTarget = currentProvider === provider || (provider === 'custom' && currentProvider === 'openai');
     const current = currentMatchesTarget ? currentConfig?.apiKey : undefined;
     switch (provider) {
       case 'custom':
-        return current || process.env.OPENAI_API_KEY || process.env.LIMINAL_LLM_API_KEY || process.env.LLM_API_KEY;
+        return firstUsable(configuredKey, current, process.env.OPENAI_API_KEY, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
       case 'minimax':
-        return current || process.env.MINIMAX_API_KEY || process.env.LIMINAL_LLM_API_KEY || process.env.LLM_API_KEY;
+        return firstUsable(configuredKey, current, process.env.MINIMAX_API_KEY, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
       case 'glm':
-        return current || process.env.GLM_API_KEY || process.env.LIMINAL_LLM_API_KEY || process.env.LLM_API_KEY;
+        return firstUsable(configuredKey, current, process.env.GLM_API_KEY, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
       case 'openrouter':
-        return current || process.env.OPENROUTER_API_KEY;
+        return firstUsable(configuredKey, current, process.env.OPENROUTER_API_KEY);
       case 'kimi':
       case 'moonshot':
-        return current || process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY;
+        return firstUsable(configuredKey, current, process.env.KIMI_API_KEY, process.env.MOONSHOT_API_KEY);
       case 'lmstudio':
       case 'ollama':
         return undefined;

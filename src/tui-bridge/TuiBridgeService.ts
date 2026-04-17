@@ -557,9 +557,27 @@ export class TuiBridgeService {
 
       case 'direct':
       default:
-        logBridge('input.routed', { sessionId, route: 'studio.chat', confidence: classification.confidence });
-        this.streamChatResponse(sessionId, input.text, conversation, llm, STUDIO_SYSTEM_PROMPT)
-          .then(() => emitSessionTurn('llm-chat'))
+        if (this.autonomyController.requiresReview('engineering', sessionId)) {
+          const pendingAction: TuiPendingAction = {
+            id: `action-${Date.now()}`,
+            title: input.text.slice(0, 60),
+            description: `Operator: ${input.text}`,
+            kind: 'structured',
+            requiresConfirmation: true,
+            createdAt: new Date().toISOString(),
+          };
+          const status = this.sessions.update(sessionId, {
+            mode: 'action',
+            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — operator task needs review` },
+            pendingAction,
+          });
+          this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
+          this.emit(sessionId, { type: 'status.updated', sessionId, status });
+          return { reviewRequired: true };
+        }
+        logBridge('input.routed', { sessionId, route: 'studio.operator', confidence: classification.confidence });
+        this.streamEngineeringTask(sessionId, input.text, conversation, llm)
+          .then(() => emitSessionTurn('conveyor'))
           .catch(handleError);
         break;
     }

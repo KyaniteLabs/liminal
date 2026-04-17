@@ -27,26 +27,25 @@ describe('ModeAwareRouter', () => {
     const getMode = () => ({ mode: 'ask' as const });
     const router = new ModeAwareRouter(baseRouter, getMode);
 
-    it('forces direct intent for creative keywords', () => {
+    it('preserves creative keywords instead of forcing chat-only', () => {
       const result = router.classify('generate a beautiful p5 sketch');
-      expect(result.intent).toBe('direct');
+      expect(result.intent).toBe('creative');
     });
 
-    it('forces direct intent for engineering keywords', () => {
+    it('preserves engineering keywords instead of forcing chat-only', () => {
       const result = router.classify('fix the build error');
-      expect(result.intent).toBe('direct');
+      expect(result.intent).toBe('engineering');
     });
 
-    it('forces direct intent for hybrid keywords', () => {
+    it('preserves hybrid keywords instead of forcing chat-only', () => {
       const result = router.classify('improve the art quality');
-      expect(result.intent).toBe('direct');
+      expect(result.intent).toBe('hybrid');
     });
 
-    it('preserves topic from base classification', () => {
-      const result = router.classify('generate a p5 sketch');
-      expect(result.intent).toBe('direct');
-      // Topic should be preserved from the base creative classification
-      expect(result.confidence).toBe('high');
+    it('routes conversational input to engineering inspection', () => {
+      const result = router.classify('hello how are you');
+      expect(result.intent).toBe('engineering');
+      expect(result.confidence).toBe('medium');
     });
   });
 

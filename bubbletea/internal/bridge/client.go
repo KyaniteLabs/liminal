@@ -39,6 +39,8 @@ func (c *Client) CreateSession(ctx context.Context) (SessionStatus, error) {
 		return status, err
 	}
 	defer resp.Body.Close()
+	// The standalone bridge returns 201, while the GUI bridge compatibility
+	// route returns 200. Treat both as successful session creation.
 	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
 		return status, fmt.Errorf("create session returned status %d", resp.StatusCode)
 	}

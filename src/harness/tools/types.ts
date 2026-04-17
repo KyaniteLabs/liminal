@@ -89,7 +89,11 @@ export interface GitStatusParams {
 
 export interface GitStatusResult {
   branch: string;
+  commitSha: string;
+  shortSha: string;
   short: string;
+  clean: boolean;
+  root: string;
 }
 
 export interface LocalCheckpointParams {

@@ -284,6 +284,25 @@ describe('LLMModeAgent', () => {
     expect(session.lastPlanError).toBe('OpenAI upstream 502');
   });
 
+  it('treats MiniMax 529 overload as a retryable planning failure', async () => {
+    vi.mocked(rateLimiter.execute).mockResolvedValueOnce({
+      error: 'MiniMax API error 529: overloaded_error',
+    } as any);
+    mockComplete.mockResolvedValueOnce({ text: '{"tool":"complete","params":{},"thought":"done","expectedResult":"done"}' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-minimax-overload',
+      title: 'MiniMax overload',
+      description: 'desc',
+      approved: true,
+    });
+
+    expect(mockComplete).toHaveBeenCalledTimes(1);
+    expect(session.status).toBe(Status.SUCCESS);
+    expect(session.lastPlanError).toBeUndefined();
+  });
+
   it('executeTask sets FAILED when LLM response is unparseable', async () => {
     mockComplete.mockResolvedValue({ text: 'This is not JSON at all' });
     const agent = new LLMModeAgent(mockLLM as any);

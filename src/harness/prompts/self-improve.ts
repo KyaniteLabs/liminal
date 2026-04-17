@@ -20,6 +20,13 @@ TOOLS:
 - createBackup, restoreBackup, search, searchCode, searchDocs, listDir
 - typeCheck, npm, runLint, runFocusedTests, lsp, astValidate, importGuard, gitStatus
 
+COMMON TOOL PARAMS:
+- gitStatus: use {"path":"."} or {}. Returns branch, commitSha, shortSha, clean, short, and root.
+- readFile: use {"path":"src/file.ts"}. For pagination use {"path":"src/file.ts","startLine":101} or {"path":"src/file.ts","offset":100}.
+- search: use {"pattern":"text"} and optional {"path":"src/file.ts"}.
+- searchCode: use {"query":"text"}; {"pattern":"text"} is accepted as an alias.
+- executeSkill: use {"name":"skill-name"} only to load SKILL.md instructions. It cannot run shell commands.
+
 WORK LOOP:
 READ → PLAN → EDIT → VERIFY → COMPLETE or RECOVER
 
@@ -118,6 +125,8 @@ You MUST respond with valid JSON:
 }
 
 Available tools: readFile, applyEdit, writeFile, runBuild, runTests, executeSkill, createBackup, restoreBackup, search, searchCode, searchDocs, listDir, typeCheck, npm, runLint, runFocusedTests, lsp, astValidate, importGuard, gitStatus, complete
+
+Common params: gitStatus uses {} or {"path":"."}; readFile uses {"path":"src/file.ts"} and supports startLine/offset pagination; search uses {"pattern":"text"}; searchCode uses {"query":"text"}; executeSkill uses {"name":"skill-name"} and cannot run shell commands.
 
 ## When to Stop
 Respond with tool "complete" when:

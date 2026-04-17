@@ -21,12 +21,15 @@ export class ExecuteSkillTool extends Tool {
   }
 
   async execute(params: unknown): Promise<ToolResult<ExecuteSkillResult>> {
-    const { name } = params as ExecuteSkillParams;
-    if (!name) {
-      return { success: false, error: 'name is required' };
+    const { name } = (params || {}) as ExecuteSkillParams;
+    if (typeof name !== 'string' || name.trim() === '') {
+      return {
+        success: false,
+        error: 'executeSkill requires params.name to be a non-empty skill name, for example {"name":"karpathy-guidelines"}. This tool loads SKILL.md instructions; it cannot run shell commands. Use gitStatus for repository state, readFile/listDir/search/searchCode for inspection, or typeCheck/runBuild/runTests for verification.',
+      };
     }
 
-    const skill = await this.loader.loadSkill(name);
+    const skill = await this.loader.loadSkill(name.trim());
     if (!skill) {
       return { success: false, error: `Skill not found: ${name}` };
     }

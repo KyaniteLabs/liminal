@@ -92,4 +92,53 @@ describe('ReadFileTool', () => {
       await fs.rm(file, { force: true });
     }
   });
+
+  it('returns a targeted excerpt around the first matching pattern', async () => {
+    const tool = new ReadFileTool();
+    const file = path.join(process.cwd(), 'src', '__readfile_tool_pattern_fixture__.txt');
+    await fs.writeFile(file, ['zero', 'alpha', 'needle here', 'omega', 'needle again'].join('\n'));
+
+    try {
+      const result = await tool.execute({ path: file, pattern: 'needle', before: 1, after: 1 });
+      expect(result.success).toBe(true);
+      expect(result.data?.content).toContain('alpha\nneedle here\nomega');
+      expect(result.data?.startLine).toBe(2);
+      expect(result.data?.endLine).toBe(4);
+      expect(result.data?.matchLine).toBe(3);
+      expect(result.data?.additionalMatchesExist).toBe(true);
+      expect(result.data?.truncated).toBe(true);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+
+  it('accepts symbol as an alias for pattern', async () => {
+    const tool = new ReadFileTool();
+    const file = path.join(process.cwd(), 'src', '__readfile_tool_symbol_fixture__.txt');
+    await fs.writeFile(file, ['first', 'targetSymbol()', 'last'].join('\n'));
+
+    try {
+      const result = await tool.execute({ path: file, symbol: 'targetSymbol', before: 1, after: 0 });
+      expect(result.success).toBe(true);
+      expect(result.data?.content).toContain('first\ntargetSymbol()');
+      expect(result.data?.matchLine).toBe(2);
+      expect(result.data?.additionalMatchesExist).toBe(false);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+
+  it('fails cleanly when a requested pattern is not found', async () => {
+    const tool = new ReadFileTool();
+    const file = path.join(process.cwd(), 'src', '__readfile_tool_missing_pattern_fixture__.txt');
+    await fs.writeFile(file, ['alpha', 'beta'].join('\n'));
+
+    try {
+      const result = await tool.execute({ path: file, pattern: 'needle' });
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("Pattern 'needle' was not found");
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
 });

@@ -41,6 +41,13 @@ export class ReadFileTool extends Tool {
     const { offset, startLine: requestedStartLine } = rawParams ?? {};
     const maxLines = this.numericParam(rawParams?.maxLines, 1000);
     const limit = this.optionalNumericParam(rawParams?.limit);
+    const pattern = typeof rawParams?.pattern === 'string' && rawParams.pattern.trim() !== ''
+      ? rawParams.pattern
+      : typeof rawParams?.symbol === 'string' && rawParams.symbol.trim() !== ''
+        ? rawParams.symbol
+        : undefined;
+    const before = Math.max(0, this.optionalNumericParam(rawParams?.before) ?? 0);
+    const after = Math.max(0, this.optionalNumericParam(rawParams?.after) ?? 0);
     
     try {
       // Security validation
@@ -67,6 +74,43 @@ export class ReadFileTool extends Tool {
       const content = await fs.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       const lineCount = lines.length;
+
+      if (pattern) {
+        const matchIndex = lines.findIndex(line => line.includes(pattern));
+        if (matchIndex === -1) {
+          return {
+            success: false,
+            error: `Pattern '${pattern}' was not found in '${filePath}'`,
+            duration: Date.now() - startTime,
+          };
+        }
+
+        const additionalMatchesExist = lines.slice(matchIndex + 1).some(line => line.includes(pattern));
+        const excerptStart = Math.max(0, matchIndex - before);
+        const excerptEndExclusive = Math.min(lineCount, matchIndex + after + 1);
+        const excerpt = lines.slice(excerptStart, excerptEndExclusive).join('\n');
+        const startLine = lineCount === 0 ? 0 : excerptStart + 1;
+        const endLine = excerptEndExclusive;
+        const truncated = excerptStart > 0 || excerptEndExclusive < lineCount;
+        const prefix = excerptStart > 0 ? `... [truncated: ${excerptStart} lines before] ...\n` : '';
+        const suffix = excerptEndExclusive < lineCount ? `\n... [truncated: ${lineCount - excerptEndExclusive} more lines] ...` : '';
+
+        return {
+          success: true,
+          data: {
+            content: `${prefix}${excerpt}${suffix}`,
+            exists: true,
+            lineCount,
+            truncated,
+            startLine,
+            endLine,
+            matchLine: matchIndex + 1,
+            additionalMatchesExist,
+          },
+          duration: Date.now() - startTime,
+        };
+      }
+
       const numericOffset = this.optionalNumericParam(offset);
       const numericStartLine = this.optionalNumericParam(requestedStartLine);
       const requestedOffset = numericOffset ?? (numericStartLine != null ? numericStartLine - 1 : 0);
@@ -80,10 +124,10 @@ export class ReadFileTool extends Tool {
       let truncated = false;
       if (safeOffset > 0 || endLine < lineCount) {
         truncated = true;
-        const before = safeOffset;
-        const after = Math.max(0, lineCount - endLine);
-        const prefix = before > 0 ? `... [truncated: ${before} lines before] ...\n` : '';
-        const suffix = after > 0 ? `\n... [truncated: ${after} more lines] ...` : '';
+        const beforeCount = safeOffset;
+        const afterCount = Math.max(0, lineCount - endLine);
+        const prefix = beforeCount > 0 ? `... [truncated: ${beforeCount} lines before] ...\n` : '';
+        const suffix = afterCount > 0 ? `\n... [truncated: ${afterCount} more lines] ...` : '';
         truncatedContent = `${prefix}${truncatedContent}${suffix}`;
       }
       

@@ -27,7 +27,7 @@ export function detectProvider(config: ProviderConfig): ProviderName {
   if (baseUrl.includes('anthropic') || baseUrl.includes('api.anthropic')) return 'anthropic';
   if (baseUrl.includes('generativelanguage') || baseUrl.includes('googleapis')) return 'google';
   if (baseUrl.includes(':11434') || baseUrl.includes('ollama')) return 'ollama';
-  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel.cn')) return 'openai'; // ZhipuAI GLM — OpenAI-compatible
+  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel.cn')) return 'openai'; // Z.ai also has OpenAI-compatible endpoints.
   if (baseUrl.includes('moonshot.ai') || baseUrl.includes('moonshot.cn')) return 'openai'; // KimiCode — OpenAI-compatible
   if (baseUrl.includes('api.kimi.com/coding')) return 'anthropic'; // Kimi Code coding-agent endpoint — Anthropic Messages API
   if (baseUrl.includes('kimi.com')) return 'openai'; // Other Kimi endpoints — OpenAI-compatible

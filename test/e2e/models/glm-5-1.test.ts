@@ -7,7 +7,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { run } from '../../../src/index.js';
 
 const MODEL_CONFIG = {
-  baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+  baseUrl: 'https://api.z.ai/api/anthropic',
   model: 'glm-5.1',
 };
 

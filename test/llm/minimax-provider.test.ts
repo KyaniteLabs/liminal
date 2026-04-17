@@ -2,7 +2,7 @@
  * MiniMax Provider Tests
  *
  * Tests the MiniMax-specific provider implementation including:
- * - Correct URL handling (api.minimaxi.com not api.minimax.io)
+ * - OpenAI-compatible and Anthropic-compatible endpoint handling
  * - Response parsing
  * - Empty response handling
  * - Fallback to reasoning_content when content is empty
@@ -315,13 +315,13 @@ describe('MiniMaxProvider', () => {
 });
 
 describe('MiniMax URL Configuration', () => {
-  it('should use correct production URL (api.minimaxi.com)', () => {
-    // This test documents the correct MiniMax URL
-    // The codebase previously used api.minimax.io which was WRONG
-    const correctUrl = 'https://api.minimaxi.com/v1';
-    const wrongUrl = 'https://api.minimax.io/v1';
+  it('documents the preferred international Anthropic-compatible endpoint', () => {
+    const preferredInternationalUrl = 'https://api.minimax.io/anthropic';
+    const legacyOpenAiCompatibleUrl = 'https://api.minimax.io/v1';
+    const domesticOpenAiCompatibleUrl = 'https://api.minimaxi.com/v1';
 
-    expect(correctUrl).toContain('minimaxi'); // with 'i'
-    expect(wrongUrl).not.toContain('minimaxi'); // without 'i'
+    expect(preferredInternationalUrl).toContain('/anthropic');
+    expect(legacyOpenAiCompatibleUrl).toContain('api.minimax.io');
+    expect(domesticOpenAiCompatibleUrl).toContain('api.minimaxi.com');
   });
 });

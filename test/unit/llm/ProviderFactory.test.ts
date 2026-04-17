@@ -165,6 +165,14 @@ describe('detectProvider', () => {
     expect(detectProvider(config)).toBe('anthropic');
   });
 
+  it('detects Z.ai Anthropic-compatible coding endpoint as anthropic', () => {
+    const config = makeConfig({
+      baseUrl: 'https://api.z.ai/api/anthropic',
+      model: 'glm-5.1',
+    });
+    expect(detectProvider(config)).toBe('anthropic');
+  });
+
   it('detects openai from api.openai URL prefix', () => {
     const config = makeConfig({
       baseUrl: 'https://api.openai.com/v1/chat/completions',
@@ -295,4 +303,3 @@ describe('createProvider', () => {
     expect(provider.getConfig().model).toBe('gpt-4o');
   });
 });
-

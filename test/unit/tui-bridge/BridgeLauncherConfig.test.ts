@@ -43,7 +43,7 @@ describe('BridgeLauncherConfig', () => {
     const env: NodeJS.ProcessEnv = {};
     applyBridgeProviderEnv(env, {
       provider: 'glm',
-      baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+      baseUrl: 'https://api.z.ai/api/anthropic',
       model: 'glm-5.1',
       apiKey: 'glm-key',
     });

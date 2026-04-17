@@ -94,10 +94,10 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
   minimax: {
     provider: 'minimax',
     name: 'MiniMax',
-    description: 'MiniMax M2.7 and other models (Global Token Plan)',
-    baseUrl: 'https://api.minimax.io/v1',
+    description: 'MiniMax M2.7 and other models (Global Token Plan, Anthropic-compatible)',
+    baseUrl: 'https://api.minimax.io/anthropic',
     model: 'MiniMax-M2.7',
-    apiStyle: 'openai',
+    apiStyle: 'anthropic',
     temperature: 0.7,
     maxTokens: 16384,
   },
@@ -134,10 +134,10 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
   glm: {
     provider: 'glm',
     name: 'GLM',
-    description: 'GLM International Coding Plan API (GLM-5.1 flagship)',
-    baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+    description: 'GLM International Coding Plan API (GLM-5.1 flagship, Anthropic-compatible)',
+    baseUrl: 'https://api.z.ai/api/anthropic',
     model: 'glm-5.1',
-    apiStyle: 'openai',
+    apiStyle: 'anthropic',
     temperature: 0.7,
     maxTokens: 16384,
   },
@@ -369,11 +369,14 @@ export function getHarnessProviderConfig(): LLMConfig | null {
   
   // If harness-specific config exists, use it
   if (harnessBaseUrl && harnessModel) {
-    // Use minimax API key if minimax endpoint
+    // Use provider-specific API keys when harness endpoint is provider-scoped.
     const isMinimax = harnessBaseUrl.includes('minimax');
+    const isGlm = harnessBaseUrl.includes('z.ai') || harnessBaseUrl.includes('bigmodel') || harnessBaseUrl.includes('glm');
+    const apiStyle = harnessBaseUrl.includes('/anthropic') ? 'anthropic' : 'openai';
     const apiKey = firstUsableApiKey(
       harnessApiKey,
       isMinimax ? process.env.MINIMAX_API_KEY : undefined,
+      isGlm ? process.env.GLM_API_KEY : undefined,
       process.env.LIMINAL_LLM_API_KEY,
       process.env.OPENAI_API_KEY,
     );
@@ -384,7 +387,7 @@ export function getHarnessProviderConfig(): LLMConfig | null {
       apiKey,
       temperature: harnessTemp ? parseFloat(harnessTemp) : 0.2,
       maxTokens: harnessMaxTokens ? parseInt(harnessMaxTokens) : 4096,
-      apiStyle: 'openai',
+      apiStyle,
     };
   }
   

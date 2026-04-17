@@ -36,8 +36,8 @@ const PROVIDER_ALIASES: Record<string, ModelProviderKey> = {
 
 const PROVIDER_DEFAULTS: Record<ModelProviderKey, { baseUrl: string; model: string; label: string; requiresKey: boolean }> = {
   custom: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini', label: 'OpenAI', requiresKey: true },
-  minimax: { baseUrl: 'https://api.minimax.io/v1', model: 'MiniMax-M2.7', label: 'MiniMax', requiresKey: true },
-  glm: { baseUrl: 'https://api.z.ai/api/coding/paas/v4', model: 'glm-5.1', label: 'GLM', requiresKey: true },
+  minimax: { baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7', label: 'MiniMax', requiresKey: true },
+  glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5.1', label: 'GLM', requiresKey: true },
   lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model', label: 'LM Studio', requiresKey: false },
   ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2', label: 'Ollama', requiresKey: false },
   openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5.4-mini', label: 'OpenRouter', requiresKey: true },
@@ -314,7 +314,7 @@ data: ${JSON.stringify(stored.event)}
     config.providers = config.providers || {};
     config.providers[resolved.provider] = {
       ...providerConfig,
-      baseUrl: providerConfig.baseUrl || defaults.baseUrl,
+      baseUrl: this.resolveProviderBaseUrl(resolved.provider, providerConfig.baseUrl, defaults.baseUrl),
       model: resolved.model,
     };
     if (apiKey) config.providers[resolved.provider].apiKey = apiKey;
@@ -336,6 +336,23 @@ data: ${JSON.stringify(stored.event)}
     });
     this.bridge.emitCommandResponse(sessionId, `Switched model to ${resolved.label} (${resolved.model}) via ${PROVIDER_DEFAULTS[resolved.provider].label}`);
     return true;
+  }
+
+  private resolveProviderBaseUrl(provider: ModelProviderKey, configuredBaseUrl: string | undefined, defaultBaseUrl: string): string {
+    if (!configuredBaseUrl) return defaultBaseUrl;
+
+    const lower = configuredBaseUrl.toLowerCase().replace(/\/+$/, '');
+    if (provider === 'glm' && (
+      lower.includes('api.z.ai/api/coding/paas') ||
+      lower.includes('bigmodel.cn')
+    )) {
+      return defaultBaseUrl;
+    }
+    if (provider === 'minimax' && lower === 'https://api.minimax.io/v1') {
+      return defaultBaseUrl;
+    }
+
+    return configuredBaseUrl;
   }
 
   private async renderModelPicker(): Promise<string> {

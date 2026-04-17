@@ -212,7 +212,7 @@ export function detectProviderType(baseUrl: string, model?: string): ProviderTyp
   if (m.startsWith('deepseek-r1')) return 'ollama';
 
   // Default: OpenAI-compatible (covers LM Studio, vLLM, LocalAI, etc.)
-  // ZhipuAI GLM — OpenAI-compatible
+  // Z.ai also has OpenAI-compatible endpoints.
   if (url.includes('bigmodel.cn')) return 'openai';
   // Moonshot KimiCode — OpenAI-compatible
   if (url.includes('moonshot')) return 'openai';

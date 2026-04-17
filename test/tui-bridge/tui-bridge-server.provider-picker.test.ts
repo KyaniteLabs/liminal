@@ -297,6 +297,128 @@ describe('TuiBridgeServer model picker', () => {
     }
   });
 
+  it('switches GLM models to the Z.ai Anthropic-compatible endpoint', async () => {
+    mockLoadConfig.mockResolvedValue({
+      isErr: () => false,
+      isOk: () => true,
+      value: {
+        defaultProvider: 'custom',
+        providers: {
+          glm: {
+            baseUrl: 'https://api.z.ai/api/coding/paas/v4',
+            model: 'glm-5.1',
+            apiKey: 'glm-key',
+          },
+        },
+      },
+    });
+
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const server = new TuiBridgeServer(service, {
+      host: '127.0.0.1',
+      port,
+      llm: {
+        getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini' }),
+      } as any,
+    });
+    await server.start();
+
+    try {
+      const createRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+      const session = await createRes.json() as { sessionId: string };
+
+      await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/input`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'chat', clientIntent: 'chat', text: '/model glm glm-5.1' }),
+      });
+
+      expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
+        defaultProvider: 'glm',
+        providers: expect.objectContaining({
+          glm: expect.objectContaining({
+            baseUrl: 'https://api.z.ai/api/anthropic',
+            model: 'glm-5.1',
+            apiKey: 'glm-key',
+          }),
+        }),
+      }));
+      expect(mockLLMClientCtor).toHaveBeenCalledWith(expect.objectContaining({
+        baseUrl: 'https://api.z.ai/api/anthropic',
+        model: 'glm-5.1',
+        apiKey: 'glm-key',
+      }));
+      expect(service.getStatus(session.sessionId)).toMatchObject({
+        provider: 'glm',
+        model: 'glm-5.1',
+      });
+    } finally {
+      await server.stop();
+    }
+  });
+
+  it('switches MiniMax models to the Anthropic-compatible endpoint', async () => {
+    mockLoadConfig.mockResolvedValue({
+      isErr: () => false,
+      isOk: () => true,
+      value: {
+        defaultProvider: 'custom',
+        providers: {
+          minimax: {
+            baseUrl: 'https://api.minimax.io/v1',
+            model: 'MiniMax-M2.7',
+            apiKey: 'minimax-key',
+          },
+        },
+      },
+    });
+
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const server = new TuiBridgeServer(service, {
+      host: '127.0.0.1',
+      port,
+      llm: {
+        getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini' }),
+      } as any,
+    });
+    await server.start();
+
+    try {
+      const createRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+      const session = await createRes.json() as { sessionId: string };
+
+      await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/input`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'chat', clientIntent: 'chat', text: '/model minimax m27' }),
+      });
+
+      expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
+        defaultProvider: 'minimax',
+        providers: expect.objectContaining({
+          minimax: expect.objectContaining({
+            baseUrl: 'https://api.minimax.io/anthropic',
+            model: 'MiniMax-M2.7',
+            apiKey: 'minimax-key',
+          }),
+        }),
+      }));
+      expect(mockLLMClientCtor).toHaveBeenCalledWith(expect.objectContaining({
+        baseUrl: 'https://api.minimax.io/anthropic',
+        model: 'MiniMax-M2.7',
+        apiKey: 'minimax-key',
+      }));
+      expect(service.getStatus(session.sessionId)).toMatchObject({
+        provider: 'minimax',
+        model: 'MiniMax-M2.7',
+      });
+    } finally {
+      await server.stop();
+    }
+  });
+
   it('switches by numbered picker choice', async () => {
     const port = await getFreePort();
     const service = new TuiBridgeService();

@@ -84,6 +84,10 @@ describe('detectProviderFromUrl', () => {
     expect(detectProviderFromUrl('https://open.bigmodel.cn/api/paas/v4')).toBe('glm');
   });
 
+  it('detects GLM from the Z.ai Anthropic-compatible endpoint', () => {
+    expect(detectProviderFromUrl('https://api.z.ai/api/anthropic')).toBe('glm');
+  });
+
   it('detects GLM from "glm" substring', () => {
     expect(detectProviderFromUrl('https://glm.example.com/v1')).toBe('glm');
   });
@@ -163,9 +167,20 @@ describe('getProviderConfig', () => {
     expect(config).not.toBeNull();
     expect(config!.provider).toBe('minimax');
     expect(config!.apiKey).toBe('mm-key');
-    expect(config!.baseUrl).toBe('https://api.minimax.io/v1');
+    expect(config!.baseUrl).toBe('https://api.minimax.io/anthropic');
     expect(config!.model).toBe('MiniMax-M2.7');
-    expect(config!.apiStyle).toBe('openai');
+    expect(config!.apiStyle).toBe('anthropic');
+  });
+
+  it('returns GLM config on the Z.ai Anthropic-compatible endpoint', () => {
+    process.env.GLM_API_KEY = 'glm-key';
+    const config = getProviderConfig('glm');
+    expect(config).not.toBeNull();
+    expect(config!.provider).toBe('glm');
+    expect(config!.apiKey).toBe('glm-key');
+    expect(config!.baseUrl).toBe('https://api.z.ai/api/anthropic');
+    expect(config!.model).toBe('glm-5.1');
+    expect(config!.apiStyle).toBe('anthropic');
   });
 
   it('returns undefined apiKey for local providers (ollama)', () => {
@@ -423,6 +438,30 @@ describe('getHarnessProviderConfig', () => {
     expect(config!.model).toBe('MiniMax-M2.7');
     expect(config!.apiKey).toBe('harness-key');
     expect(config!.apiStyle).toBe('openai');
+  });
+
+  it('uses GLM_API_KEY and Anthropic style for Z.ai harness Anthropic endpoint', () => {
+    process.env.LIMINAL_HARNESS_BASE_URL = 'https://api.z.ai/api/anthropic';
+    process.env.LIMINAL_HARNESS_MODEL = 'glm-5.1';
+    process.env.GLM_API_KEY = 'glm-key';
+
+    const config = getHarnessProviderConfig();
+    expect(config).not.toBeNull();
+    expect(config!.baseUrl).toBe('https://api.z.ai/api/anthropic');
+    expect(config!.model).toBe('glm-5.1');
+    expect(config!.apiKey).toBe('glm-key');
+    expect(config!.apiStyle).toBe('anthropic');
+  });
+
+  it('uses Anthropic style for MiniMax harness Anthropic endpoint', () => {
+    process.env.LIMINAL_HARNESS_BASE_URL = 'https://api.minimax.io/anthropic';
+    process.env.LIMINAL_HARNESS_MODEL = 'MiniMax-M2.7';
+    process.env.MINIMAX_API_KEY = 'mm-key';
+
+    const config = getHarnessProviderConfig();
+    expect(config).not.toBeNull();
+    expect(config!.apiKey).toBe('mm-key');
+    expect(config!.apiStyle).toBe('anthropic');
   });
 
   it('uses harness temperature override when LIMINAL_HARNESS_TEMPERATURE is set', () => {

@@ -96,9 +96,6 @@ func (m Model) operatorRunStatus() string {
 	if strings.TrimSpace(m.ActiveResponse) != "" {
 		return "In progress"
 	}
-	if status, ok := finalReportStatus(m.lastAssistantResponse()); ok {
-		return status
-	}
 	for _, job := range m.VerificationJobs {
 		if job.Status == "fail" {
 			return "Failed"
@@ -106,6 +103,9 @@ func (m Model) operatorRunStatus() string {
 		if job.Status == "running" {
 			return "Partial"
 		}
+	}
+	if status, ok := finalReportStatus(m.lastAssistantResponse()); ok {
+		return status
 	}
 	for _, step := range m.ToolTimeline {
 		if step.Status == "failed" {
@@ -131,7 +131,7 @@ func finalReportStatus(response string) (string, bool) {
 		if !strings.HasPrefix(lower, "status:") {
 			continue
 		}
-		value := strings.TrimSpace(strings.TrimPrefix(trimmed, trimmed[:len("Status:")]))
+		value := strings.TrimSpace(trimmed[len("status:"):])
 		switch strings.ToLower(value) {
 		case "success", "succeeded", "pass", "passed":
 			return "Success", true

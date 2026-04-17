@@ -76,8 +76,14 @@ const { TuiBridgeService } = await import('../../src/tui-bridge/TuiBridgeService
 
 function fakeLlm() {
   return {
-    getConfig: () => ({ model: 'test-model' }),
+    getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'test-model' }),
   };
+}
+
+function expectLiveContext(description: string): void {
+  expect(description).toContain('Live Bubble Tea session context:');
+  expect(description).toContain('runtime.provider: openai');
+  expect(description).toContain('runtime.model: test-model');
 }
 
 async function waitFor<T>(read: () => T | undefined): Promise<T> {
@@ -125,6 +131,7 @@ describe('Bubble Tea operator routing', () => {
       .find(event => event.type === 'session.turn'));
 
     expect(executeTask).toHaveBeenCalledOnce();
+    expectLiveContext(executeTask.mock.calls[0][0].description);
     expect(turn).toMatchObject({
       type: 'session.turn',
       intent: 'engineering',
@@ -242,6 +249,7 @@ describe('Bubble Tea operator routing', () => {
       .find(event => event.type === 'session.turn'));
 
     expect(executeTask).toHaveBeenCalledOnce();
+    expectLiveContext(executeTask.mock.calls[0][0].description);
     expect(turn).toMatchObject({
       type: 'session.turn',
       intent: 'direct',

@@ -1581,6 +1581,7 @@ export class TuiBridgeService {
 
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
+    const liveTaskDescription = this.withLiveSessionContext(sessionId, userText, config);
     const maxSteps = Number(process.env.LIMINAL_TUI_AGENT_MAX_STEPS || 20);
     const agent = createLLMModeAgent(llm);
     const taskId = `studio-eng-${Date.now()}`;
@@ -1613,7 +1614,7 @@ export class TuiBridgeService {
       const session = await agent.executeTask({
         id: taskId,
         title: `Studio engineering: ${userText.slice(0, 60)}`,
-        description: userText,
+        description: liveTaskDescription,
         maxSteps,
         approved: true,
       });
@@ -1652,6 +1653,44 @@ export class TuiBridgeService {
       eventBus.offEvent(listener);
       this.activeStreams.delete(sessionId);
     }
+  }
+
+  private withLiveSessionContext(
+    sessionId: string,
+    userText: string,
+    config: ReturnType<LLMClient['getConfig']>,
+  ): string {
+    const status = this.getStatus(sessionId);
+    const runtimeProvider = config.baseUrl
+      ? this.providerLabelFromBaseUrl(config.baseUrl)
+      : status.provider || 'unknown';
+    const runtimeModel = config.model || status.model || 'unknown';
+    const lines = [
+      userText,
+      '',
+      'Live Bubble Tea session context:',
+      `- sessionId: ${sessionId}`,
+      `- status.provider: ${status.provider || 'unknown'}`,
+      `- status.model: ${status.model || 'unknown'}`,
+      `- runtime.provider: ${runtimeProvider}`,
+      `- runtime.model: ${runtimeModel}`,
+      `- runtime.baseUrl: ${config.baseUrl || 'unknown'}`,
+      '',
+      'Treat this context as live bridge-provided evidence for the current TUI session provider/model.',
+    ];
+    return lines.join('\n');
+  }
+
+  private providerLabelFromBaseUrl(baseUrl: string): string {
+    const lower = baseUrl.toLowerCase();
+    if (lower.includes('api.openai.com')) return 'openai';
+    if (lower.includes('z.ai') || lower.includes('bigmodel') || lower.includes('glm')) return 'glm';
+    if (lower.includes('minimax')) return 'minimax';
+    if (lower.includes('openrouter')) return 'openrouter';
+    if (lower.includes('api.kimi.com') || lower.includes('moonshot')) return 'kimi';
+    if (lower.includes('localhost:11434') || lower.includes('127.0.0.1:11434')) return 'ollama';
+    if (lower.includes('localhost') || lower.includes('127.0.0.1')) return 'lmstudio';
+    return 'unknown';
   }
 
   private emitOperatorProgress(sessionId: string, event: BusEvent): void {

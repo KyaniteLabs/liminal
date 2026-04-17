@@ -95,7 +95,8 @@ describe('TuiBridgeServer model picker', () => {
       const events = service.getEvents(session.sessionId);
       const committed = events.find((event) => event.type === 'response.committed') as any;
       expect(committed.content).toContain('Model picker:');
-      expect(committed.content).toContain('/model <number>');
+      expect(committed.content).toContain('/model NUMBER');
+      expect(committed.content).not.toContain('<number>');
       expect(committed.content).toContain('OpenAI');
       expect(committed.content).toContain('MiniMax');
       expect(committed.content).toContain('claude');

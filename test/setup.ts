@@ -17,7 +17,7 @@ function installQuietCanvasFallbacks(): void {
   if (typeof HTMLCanvasElement === 'undefined') return;
 
   function quietToDataURL(): string {
-    return 'data:image/png;base64,';
+    return null as unknown as string;
   }
 
   Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
@@ -29,8 +29,8 @@ function installQuietCanvasFallbacks(): void {
   Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
     configurable: true,
     writable: true,
-    // toDataURL is a method; return the minimal valid data URL without
-    // invoking jsdom's not-implemented logger.
+    // toDataURL is unsupported in jsdom without canvas. Preserve that null
+    // behavior without invoking jsdom's not-implemented logger.
     value: quietToDataURL,
   });
 }

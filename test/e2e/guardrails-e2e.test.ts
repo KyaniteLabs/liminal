@@ -52,7 +52,10 @@ async function isLLMAvailable(): Promise<boolean> {
     const client = new LLMClient();
     await client.generate('test', { model: 'test', temperature: 0 });
     return true;
-  } catch (error) {
+  } catch {
+    // A failed probe means the real generation assertion would fail too.
+    // Treat configured-but-unusable local/cloud LLMs as unavailable so this
+    // optional e2e path skips instead of producing a false suite failure.
     return false;
   }
 }

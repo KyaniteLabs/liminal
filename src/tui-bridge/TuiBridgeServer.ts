@@ -342,10 +342,7 @@ data: ${JSON.stringify(stored.event)}
     if (!configuredBaseUrl) return defaultBaseUrl;
 
     const lower = configuredBaseUrl.toLowerCase().replace(/\/+$/, '');
-    if (provider === 'glm' && (
-      lower.includes('api.z.ai/api/coding/paas') ||
-      lower.includes('bigmodel.cn')
-    )) {
+    if (provider === 'glm' && lower.includes('api.z.ai/api/coding/paas')) {
       return defaultBaseUrl;
     }
     if (provider === 'minimax' && lower === 'https://api.minimax.io/v1') {

@@ -13,6 +13,24 @@ if (nativeFetch) {
   (globalThis as typeof globalThis & { __liminalNativeFetch?: typeof fetch }).__liminalNativeFetch = nativeFetch;
 }
 
+function installQuietCanvasFallbacks(): void {
+  if (typeof HTMLCanvasElement === 'undefined') return;
+
+  Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+    configurable: true,
+    writable: true,
+    value: () => null,
+  });
+
+  Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
+    configurable: true,
+    writable: true,
+    value: () => 'data:image/png;base64,',
+  });
+}
+
+installQuietCanvasFallbacks();
+
 // Environment variables to isolate
 const LLM_ENV_KEYS = [
   'LIMINAL_LLM_PROVIDER',
@@ -61,6 +79,8 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  installQuietCanvasFallbacks();
+
   // Ensure test environment is set
   process.env.NODE_ENV = 'test';
   process.env.VITEST = 'true';

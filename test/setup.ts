@@ -13,6 +13,30 @@ if (nativeFetch) {
   (globalThis as typeof globalThis & { __liminalNativeFetch?: typeof fetch }).__liminalNativeFetch = nativeFetch;
 }
 
+function installQuietCanvasFallbacks(): void {
+  if (typeof HTMLCanvasElement === 'undefined') return;
+
+  function quietToDataURL(): string {
+    return null as unknown as string;
+  }
+
+  Object.defineProperty(HTMLCanvasElement.prototype, 'getContext', {
+    configurable: true,
+    writable: true,
+    value: () => null,
+  });
+
+  Object.defineProperty(HTMLCanvasElement.prototype, 'toDataURL', {
+    configurable: true,
+    writable: true,
+    // toDataURL is unsupported in jsdom without canvas. Preserve that null
+    // behavior without invoking jsdom's not-implemented logger.
+    value: quietToDataURL,
+  });
+}
+
+installQuietCanvasFallbacks();
+
 // Environment variables to isolate
 const LLM_ENV_KEYS = [
   'LIMINAL_LLM_PROVIDER',
@@ -61,6 +85,8 @@ beforeAll(() => {
 });
 
 beforeEach(() => {
+  installQuietCanvasFallbacks();
+
   // Ensure test environment is set
   process.env.NODE_ENV = 'test';
   process.env.VITEST = 'true';

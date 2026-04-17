@@ -72,6 +72,7 @@ function mockStdinIsTTY(value: boolean | undefined) {
 
 describe('captureMicAudio', () => {
   let restoreStdin: (() => void) | null = null;
+  let stdoutWriteSpy: ReturnType<typeof vi.spyOn> | null = null;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -79,10 +80,13 @@ describe('captureMicAudio', () => {
     _stdinOnListener = null;
     mockFfmpegProcess.kill.mockClear();
     restoreStdin?.();
+    stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
   });
 
   afterEach(() => {
     restoreStdin?.();
+    stdoutWriteSpy?.mockRestore();
+    stdoutWriteSpy = null;
   });
 
   it('returns Float32Array when ffmpeg exits with code 0', async () => {

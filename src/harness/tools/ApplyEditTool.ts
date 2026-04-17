@@ -15,9 +15,27 @@ export class ApplyEditTool extends Tool {
   
   async execute(params: unknown): Promise<ToolResult<ApplyEditResult>> {
     const startTime = Date.now();
-    const { path: filePath, oldString, newString, createBackup: shouldBackup = true } = params as ApplyEditParams;
+    const rawParams = (params || {}) as ApplyEditParams;
+    const {
+      path: filePath,
+      oldString: rawOldString,
+      newString: rawNewString,
+      search,
+      replace,
+      createBackup: shouldBackup = true,
+    } = rawParams;
+    const oldString = rawOldString ?? search;
+    const newString = rawNewString ?? replace;
     
     try {
+      if (typeof filePath !== 'string' || filePath.trim() === '') {
+        return {
+          success: false,
+          error: 'applyEdit requires params.path to be a non-empty string.',
+          duration: Date.now() - startTime,
+        };
+      }
+
       // Security validation
       if (!this.validatePath(filePath)) {
         return {
@@ -28,10 +46,18 @@ export class ApplyEditTool extends Tool {
       }
       
       // Validate parameters
-      if (!oldString) {
+      if (typeof oldString !== 'string' || oldString === '') {
         return {
           success: false,
-          error: 'oldString is required',
+          error: 'applyEdit requires params.oldString or params.search to be a non-empty string.',
+          duration: Date.now() - startTime,
+        };
+      }
+
+      if (typeof newString !== 'string') {
+        return {
+          success: false,
+          error: 'applyEdit requires params.newString or params.replace to be a string.',
           duration: Date.now() - startTime,
         };
       }

@@ -309,6 +309,64 @@ func TestFooterExplainsMultilineShortcut(t *testing.T) {
 	}
 }
 
+func TestChatViewportSupportsPageScrollWhileInputFocused(t *testing.T) {
+	m := readyOperatorModel(t)
+	for i := 0; i < 80; i++ {
+		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{Type: "assistant", Content: "line", Time: nowForTest()})
+	}
+	m.refreshViewports()
+	m.ChatViewport.GotoBottom()
+	bottomOffset := m.ChatViewport.YOffset
+
+	updated, _ := m.Update(tea.KeyMsg{Type: tea.KeyPgUp})
+	m = updated.(Model)
+
+	if m.ChatViewport.YOffset >= bottomOffset {
+		t.Fatalf("expected page up to scroll chat viewport (before=%d after=%d)", bottomOffset, m.ChatViewport.YOffset)
+	}
+}
+
+func TestRefreshViewportsPreservesManualChatScroll(t *testing.T) {
+	m := readyOperatorModel(t)
+	for i := 0; i < 80; i++ {
+		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{Type: "assistant", Content: "line", Time: nowForTest()})
+	}
+	m.refreshViewports()
+	m.ChatViewport.GotoBottom()
+	m.ChatViewport.PageUp()
+	manualOffset := m.ChatViewport.YOffset
+
+	m.ApplyEvent(bridge.Event{Type: "response.delta", SessionID: "s1", Delta: "new streaming text"})
+	m.refreshViewports()
+
+	if m.ChatViewport.YOffset != manualOffset {
+		t.Fatalf("expected refresh to preserve manual scroll offset %d, got %d", manualOffset, m.ChatViewport.YOffset)
+	}
+}
+
+func TestMouseWheelScrollsPaneUnderCursor(t *testing.T) {
+	m := readyOperatorModel(t)
+	updated, _ := m.Update(tea.WindowSizeMsg{Width: 120, Height: 16})
+	m = updated.(Model)
+	m.HelpVisible = true
+	m.refreshViewports()
+	metrics := m.layoutMetrics()
+
+	updated, _ = m.Update(tea.MouseMsg{
+		X:      metrics.chatOuterWidth + 2,
+		Y:      headerHeight + 2,
+		Button: tea.MouseButtonWheelDown,
+	})
+	m = updated.(Model)
+
+	if m.FocusPane != FocusPreview {
+		t.Fatalf("expected mouse wheel over operator pane to focus operator pane, got %v", m.FocusPane)
+	}
+	if m.PreviewViewport.YOffset == 0 {
+		t.Fatal("expected mouse wheel to scroll operator viewport down")
+	}
+}
+
 func TestNewModelUsesLiminalTextareaStyles(t *testing.T) {
 	m := NewModel("http://localhost:0")
 

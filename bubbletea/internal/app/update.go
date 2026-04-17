@@ -108,10 +108,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !m.Ready {
 			m.ChatViewport = viewport.New(metrics.chatContentWidth, metrics.chatViewportHeight)
 			m.ChatViewport.Style = chatViewportStyle()
+			m.ChatViewport.MouseWheelEnabled = true
+			m.ChatViewport.MouseWheelDelta = 4
 			m.ChatViewport.SetContent("Welcome to Liminal. Type a message to begin.")
 
 			m.PreviewViewport = viewport.New(metrics.operatorContentWidth, metrics.operatorViewportHeight)
 			m.PreviewViewport.Style = previewViewportStyle()
+			m.PreviewViewport.MouseWheelEnabled = true
+			m.PreviewViewport.MouseWheelDelta = 4
 			m.PreviewViewport.SetContent(m.renderOperatorSurface(metrics.operatorContentWidth))
 
 			m.TextInput.SetWidth(metrics.chatContentWidth)
@@ -152,6 +156,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.ApplyEvent(msg.event)
 		m.refreshViewports()
 		return m, nil
+
+	case tea.MouseMsg:
+		cmd := m.handleMouse(msg)
+		return m, cmd
 
 	case streamDoneMsg:
 		// Stream ended normally — restart it
@@ -231,6 +239,21 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		// If textinput is focused and it's a regular key, pass to textinput first
 		if m.FocusPane == FocusChat {
+			switch msg.String() {
+			case "pgup":
+				m.ChatViewport.PageUp()
+				return m, nil
+			case "pgdown":
+				m.ChatViewport.PageDown()
+				return m, nil
+			case "home":
+				m.ChatViewport.GotoTop()
+				return m, nil
+			case "end":
+				m.ChatViewport.GotoBottom()
+				return m, nil
+			}
+
 			if msg.Type == tea.KeyEnter {
 				if msg.Alt {
 					var cmd tea.Cmd
@@ -345,11 +368,47 @@ func (m *Model) refreshViewports() {
 	}
 
 	// Rebuild chat content
+	wasAtBottom := m.ChatViewport.AtBottom()
 	chatContent := m.renderChatContent()
 	m.ChatViewport.SetContent(chatContent)
-	m.ChatViewport.GotoBottom()
+	if wasAtBottom {
+		m.ChatViewport.GotoBottom()
+	}
 
 	m.PreviewViewport.SetContent(m.renderOperatorSurface(m.PreviewViewport.Width))
+}
+
+func (m *Model) handleMouse(msg tea.MouseMsg) tea.Cmd {
+	if !m.Ready {
+		return nil
+	}
+
+	mouse := tea.MouseEvent(msg)
+	metrics := m.layoutMetrics()
+	if mouse.X < metrics.chatOuterWidth {
+		m.FocusPane = FocusChat
+		m.TextInput.Focus()
+		if mouse.IsWheel() {
+			scrollViewportForMouse(&m.ChatViewport, mouse)
+		}
+		return nil
+	}
+
+	m.FocusPane = FocusPreview
+	m.TextInput.Blur()
+	if mouse.IsWheel() {
+		scrollViewportForMouse(&m.PreviewViewport, mouse)
+	}
+	return nil
+}
+
+func scrollViewportForMouse(vp *viewport.Model, mouse tea.MouseEvent) {
+	switch mouse.Button {
+	case tea.MouseButtonWheelUp:
+		vp.ScrollUp(vp.MouseWheelDelta)
+	case tea.MouseButtonWheelDown:
+		vp.ScrollDown(vp.MouseWheelDelta)
+	}
 }
 
 // ── Input parsing ──

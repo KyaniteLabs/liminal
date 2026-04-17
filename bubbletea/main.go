@@ -15,7 +15,7 @@ func main() {
 	}
 
 	model := app.NewModel(bridgeURL)
-	program := tea.NewProgram(model, tea.WithAltScreen())
+	program := tea.NewProgram(model, tea.WithAltScreen(), tea.WithMouseCellMotion(), tea.WithFPS(30))
 
 	// Pass program reference to model so SSE goroutines can send events
 	app.GlobalProgram = program

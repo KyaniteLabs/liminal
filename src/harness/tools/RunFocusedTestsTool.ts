@@ -44,6 +44,11 @@ export class RunFocusedTestsTool extends Tool {
       };
     }
 
+    const mixedTargetError = this.getMixedTargetError(targets);
+    if (mixedTargetError) {
+      return { success: false, error: mixedTargetError };
+    }
+
     const execution = this.buildExecution(targets, rawParams);
 
     try {
@@ -68,8 +73,8 @@ export class RunFocusedTestsTool extends Tool {
   private buildExecution(targets: string[], params: RunFocusedTestsParams | null | undefined) {
     const goTestPattern = this.normalizeGoTestPattern(params);
     if (this.isGoTarget(targets)) {
-      const packagePath = this.resolveGoPackagePath(targets[0]!);
-      const args = ['test', packagePath];
+      const packagePaths = Array.from(new Set(targets.map(target => this.resolveGoPackagePath(target))));
+      const args = ['test', ...packagePaths];
       if (goTestPattern) args.push('-run', goTestPattern);
       return {
         command: 'go',
@@ -89,7 +94,17 @@ export class RunFocusedTestsTool extends Tool {
   }
 
   private isGoTarget(targets: string[]): boolean {
-    return targets.some(target => target.startsWith('bubbletea/') || target.endsWith('.go'));
+    return targets.some(target => this.isSingleGoTarget(target));
+  }
+
+  private isSingleGoTarget(target: string): boolean {
+    return target.startsWith('bubbletea/') || target.endsWith('.go');
+  }
+
+  private getMixedTargetError(targets: string[]): string | null {
+    const goTargets = targets.filter(target => this.isSingleGoTarget(target));
+    if (goTargets.length === 0 || goTargets.length === targets.length) return null;
+    return 'runFocusedTests cannot mix Bubble Tea Go targets with Vitest targets in one call. Run Go and JS/TS focused tests separately.';
   }
 
   private resolveGoPackagePath(target: string): string {

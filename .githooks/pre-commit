@@ -58,7 +58,10 @@ CHANGED_SRC=$(git diff --cached --name-only | grep "^src/.*\.ts$" | head -10)
 if [ -n "$CHANGED_SRC" ]; then
     echo "🧪 Running tests for changed source files..."
     # vitest --changed runs only tests affected by changed files
-    npx vitest run --changed --reporter=verbose --retry=2 --testTimeout=10000 2>&1 | tail -5
+    # Keep hook verification non-mutating. Without --coverage=false, Vitest can
+    # auto-update coverage thresholds in vitest.config.ts after the commit
+    # snapshot, leaving source changes stranded and config dirty.
+    npx vitest run --changed --coverage=false --reporter=verbose --retry=2 --testTimeout=10000 2>&1 | tail -5
     VITEST_EXIT=${PIPESTATUS[0]}
     if [ $VITEST_EXIT -ne 0 ]; then
         if [ "${AGENT_SESSION:-}" = "1" ]; then

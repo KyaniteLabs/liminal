@@ -229,4 +229,41 @@ describe('RunFocusedTestsTool', () => {
     );
     expect(result.data?.command).toBe('go test ./internal/app -run TestOperatorSurface');
   });
+
+  it('runs every unique Bubble Tea package for multiple Go targets', async () => {
+    const runner = vi.fn(async () => ({ stdout: 'ok', stderr: '' }));
+    const tool = new RunFocusedTestsTool(runner);
+
+    const result = await tool.execute({
+      targets: [
+        'bubbletea/internal/app/operator_surface_test.go',
+        'bubbletea/internal/app/model_queue_test.go',
+        'bubbletea/internal/bridge/client_test.go',
+      ],
+    });
+
+    expect(result.success).toBe(true);
+    expect(runner).toHaveBeenCalledWith(
+      'go',
+      ['test', './internal/app', './internal/bridge'],
+      expect.objectContaining({ cwd: 'bubbletea' }),
+    );
+    expect(result.data?.command).toBe('go test ./internal/app ./internal/bridge');
+  });
+
+  it('rejects mixed Go and Vitest targets instead of ignoring one side', async () => {
+    const runner = vi.fn(async () => ({ stdout: 'ok', stderr: '' }));
+    const tool = new RunFocusedTestsTool(runner);
+
+    const result = await tool.execute({
+      targets: [
+        'bubbletea/internal/app/operator_surface_test.go',
+        'test/unit/harness/SkillTools.test.ts',
+      ],
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('cannot mix Bubble Tea Go targets with Vitest targets');
+    expect(runner).not.toHaveBeenCalled();
+  });
 });

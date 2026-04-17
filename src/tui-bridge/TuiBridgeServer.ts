@@ -6,6 +6,62 @@ import { loadConfig, saveConfig, type UserConfig } from '../config/ConfigLoader.
 import { resolveOpenRouterModelAlias, OPENROUTER_MODEL_CATALOG } from './OpenRouterModelCatalog.js';
 import { LLMClient as RuntimeLLMClient } from '../llm/LLMClient.js';
 
+type ModelProviderKey = 'custom' | 'minimax' | 'glm' | 'lmstudio' | 'ollama' | 'openrouter' | 'kimi' | 'moonshot';
+
+interface ModelChoice {
+  provider: ModelProviderKey;
+  label: string;
+  model: string;
+  aliases: string[];
+}
+
+const PROVIDER_ALIASES: Record<string, ModelProviderKey> = {
+  openai: 'custom',
+  gpt: 'custom',
+  custom: 'custom',
+  minimax: 'minimax',
+  mini: 'minimax',
+  glm: 'glm',
+  z: 'glm',
+  lmstudio: 'lmstudio',
+  lm: 'lmstudio',
+  local: 'lmstudio',
+  ollama: 'ollama',
+  openrouter: 'openrouter',
+  or: 'openrouter',
+  kimi: 'kimi',
+  moonshot: 'moonshot',
+};
+
+const PROVIDER_DEFAULTS: Record<ModelProviderKey, { baseUrl: string; model: string; label: string; requiresKey: boolean }> = {
+  custom: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini', label: 'OpenAI', requiresKey: true },
+  minimax: { baseUrl: 'https://api.minimax.io/v1', model: 'MiniMax-M2.7', label: 'MiniMax', requiresKey: true },
+  glm: { baseUrl: 'https://api.z.ai/api/coding/paas/v4', model: 'glm-5.1', label: 'GLM', requiresKey: true },
+  lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model', label: 'LM Studio', requiresKey: false },
+  ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2', label: 'Ollama', requiresKey: false },
+  openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5.4-mini', label: 'OpenRouter', requiresKey: true },
+  kimi: { baseUrl: 'https://api.kimi.com/coding/v1', model: 'k2p5', label: 'Kimi', requiresKey: true },
+  moonshot: { baseUrl: 'https://api.moonshot.ai/v1', model: 'kimi-k2.5', label: 'Moonshot', requiresKey: true },
+};
+
+const MODEL_CHOICES: ModelChoice[] = [
+  { provider: 'custom', label: 'GPT-5.4 mini', model: 'gpt-5.4-mini', aliases: ['gpt-5.4-mini', 'gpt54mini', '5.4-mini', 'mini'] },
+  { provider: 'custom', label: 'GPT-5.4', model: 'gpt-5.4', aliases: ['gpt-5.4', 'gpt54', '5.4'] },
+  { provider: 'custom', label: 'GPT-5.4 nano', model: 'gpt-5.4-nano', aliases: ['gpt-5.4-nano', 'gpt54nano', 'nano'] },
+  { provider: 'minimax', label: 'MiniMax M2.7', model: 'MiniMax-M2.7', aliases: ['m27', 'm2.7', 'minimax-m27'] },
+  { provider: 'minimax', label: 'MiniMax M2.5', model: 'MiniMax-M2.5', aliases: ['m25', 'm2.5', 'minimax-m25'] },
+  { provider: 'glm', label: 'GLM 5.1', model: 'glm-5.1', aliases: ['glm-5.1', 'glm51'] },
+  { provider: 'lmstudio', label: 'LM Studio local', model: 'local-model', aliases: ['local', 'lmstudio'] },
+  { provider: 'ollama', label: 'Ollama llama3.2', model: 'llama3.2', aliases: ['llama3.2', 'ollama'] },
+  { provider: 'kimi', label: 'Kimi K2P5', model: 'k2p5', aliases: ['k2p5', 'kimi'] },
+  ...OPENROUTER_MODEL_CATALOG.map((entry): ModelChoice => ({
+    provider: 'openrouter',
+    label: entry.label,
+    model: entry.model,
+    aliases: [entry.alias, entry.model],
+  })),
+];
+
 const ALLOWED_ORIGINS: readonly string[] = [
   'http://localhost:3000',
   'http://localhost:4200',
@@ -123,7 +179,7 @@ export class TuiBridgeServer {
         const sessionId = inputMatch[1];
         const body = await this.readBody(req);
         const input: TuiInputRequest = JSON.parse(body);
-        if (await this.handleOpenRouterPicker(sessionId, input)) {
+        if (await this.handleModelPicker(sessionId, input)) {
           this.json(res, 200, { reviewRequired: false });
           return;
         }
@@ -205,6 +261,7 @@ data: ${JSON.stringify(stored.event)}
 
   private providerLabel(baseUrl: string): string {
     const lower = baseUrl.toLowerCase();
+    if (lower.includes('api.openai.com')) return 'openai';
     if (lower.includes('z.ai') || lower.includes('bigmodel') || lower.includes('glm')) return 'glm';
     if (lower.includes('minimax')) return 'minimax';
     if (lower.includes('openrouter')) return 'openrouter';
@@ -218,66 +275,170 @@ data: ${JSON.stringify(stored.event)}
     res.end(JSON.stringify(body));
   }
 
-  private async handleOpenRouterPicker(sessionId: string, input: TuiInputRequest): Promise<boolean> {
+  private async handleModelPicker(sessionId: string, input: TuiInputRequest): Promise<boolean> {
     const text = input.text.trim();
-    if (!text.startsWith('/provider openrouter')) return false;
+    if (!text.startsWith('/model') && !text.startsWith('/provider')) return false;
 
-    const parts = text.split(/\s+/).slice(2);
+    const words = text.split(/\s+/);
+    const isProviderCommand = words[0] === '/provider';
+    const parts = words.slice(1);
+    if (isProviderCommand && parts[0] === 'openrouter') {
+      parts.shift();
+    }
     if (parts.length === 0) {
-      const current = this.llm?.getConfig().model;
-      const lines = ['OpenRouter models:'];
-      for (const entry of OPENROUTER_MODEL_CATALOG) {
-        const marker = entry.model === current ? ' (current)' : '';
-        lines.push(`- ${entry.alias.padEnd(12)} ${entry.model}${marker}`);
-      }
-      this.bridge.emitCommandResponse(sessionId, lines.join('\n'));
+      this.bridge.emitCommandResponse(sessionId, await this.renderModelPicker());
       return true;
     }
 
-    const selection = parts.join(' ');
-    const alias = resolveOpenRouterModelAlias(selection);
-    const model = alias?.model || selection;
-    const label = alias?.label || selection;
+    const resolved = await this.resolveModelSelection(parts);
+    if (!resolved) {
+      this.bridge.emitCommandResponse(sessionId, `Unknown model selection: ${parts.join(' ')}\n\n${await this.renderModelPicker()}`);
+      return true;
+    }
 
     const loaded = await loadConfig();
     const config = loaded.isErr()
-      ? ({ defaultProvider: 'openrouter', providers: {} } as UserConfig)
+      ? ({ defaultProvider: resolved.provider, providers: {} } as UserConfig)
       : (loaded.value as UserConfig);
+    const providerConfig = config.providers?.[resolved.provider] ?? {};
+    const defaults = PROVIDER_DEFAULTS[resolved.provider];
 
-    const apiKey = config.providers?.openrouter?.apiKey
-      || this.llm?.getConfig().apiKey
-      || process.env.OPENROUTER_API_KEY;
-    if (!apiKey) {
-      this.bridge.emitCommandResponse(sessionId, 'OpenRouter API key not found. Set it in ~/.liminal/config.json or OPENROUTER_API_KEY before switching models.');
+    const apiKey = this.resolveApiKey(resolved.provider, providerConfig.apiKey);
+    if (defaults.requiresKey && !apiKey) {
+      this.bridge.emitCommandResponse(sessionId, `${defaults.label} API key not found. Set providers.${resolved.provider}.apiKey in ~/.liminal/config.json before switching.`);
       return true;
     }
 
-    config.defaultProvider = 'openrouter';
+    config.defaultProvider = resolved.provider;
     config.providers = config.providers || {};
-    config.providers.openrouter = {
-      ...config.providers.openrouter,
-      baseUrl: 'https://openrouter.ai/api/v1',
-      model,
-      apiKey,
+    config.providers[resolved.provider] = {
+      ...providerConfig,
+      baseUrl: providerConfig.baseUrl || defaults.baseUrl,
+      model: resolved.model,
     };
+    if (apiKey) config.providers[resolved.provider].apiKey = apiKey;
     await saveConfig(config);
 
     this.llm = new RuntimeLLMClient({
       role: 'harness',
-      baseUrl: config.providers.openrouter.baseUrl,
-      model,
+      baseUrl: config.providers[resolved.provider].baseUrl,
+      model: resolved.model,
       apiKey,
       temperature: 0.5,
       maxTokens: 4096,
     });
 
     this.bridge.updateStatus(sessionId, {
-      provider: 'openrouter',
-      model,
-      activeTask: `Provider switched to ${label}`,
+      provider: resolved.provider === 'custom' ? 'openai' : resolved.provider,
+      model: resolved.model,
+      activeTask: `Model switched to ${resolved.label}`,
     });
-    this.bridge.emitCommandResponse(sessionId, `Switched OpenRouter model to ${label} (${model})`);
+    this.bridge.emitCommandResponse(sessionId, `Switched model to ${resolved.label} (${resolved.model}) via ${PROVIDER_DEFAULTS[resolved.provider].label}`);
     return true;
+  }
+
+  private async renderModelPicker(): Promise<string> {
+    const loaded = await loadConfig();
+    const config = loaded.isErr() ? undefined : (loaded.value as UserConfig);
+    const currentConfig = this.llm?.getConfig();
+    const currentModel = currentConfig?.model;
+    const currentProvider = currentConfig?.baseUrl ? this.providerLabel(currentConfig.baseUrl) : config?.defaultProvider;
+    const lines = [
+      'Model picker:',
+      `Current: ${currentProvider || 'unknown'}/${currentModel || 'unknown'}`,
+      '',
+      'Type /model <number>, /model <provider>, or /model <provider> <model>',
+      '',
+    ];
+    MODEL_CHOICES.forEach((choice, index) => {
+      const marker = choice.model === currentModel ? ' (current)' : '';
+      lines.push(`${String(index + 1).padStart(2, ' ')}. ${PROVIDER_DEFAULTS[choice.provider].label.padEnd(10)} ${choice.label.padEnd(18)} ${choice.model}${marker}`);
+    });
+    lines.push('');
+    lines.push('Examples: /model 1, /model openai gpt-5.4-mini, /model lmstudio, /model ollama llama3.2, /model minimax m27');
+    return lines.join('\n');
+  }
+
+  private async resolveModelSelection(parts: string[]): Promise<ModelChoice | null> {
+    const first = parts[0]?.toLowerCase();
+    const numericChoice = Number(first);
+    if (Number.isInteger(numericChoice) && numericChoice >= 1 && numericChoice <= MODEL_CHOICES.length) {
+      return MODEL_CHOICES[numericChoice - 1];
+    }
+
+    const provider = PROVIDER_ALIASES[first] ?? (first as ModelProviderKey);
+    if (!PROVIDER_DEFAULTS[provider]) {
+      return this.resolveChoiceByAlias(parts.join(' '));
+    }
+
+    const selection = parts.slice(1).join(' ').trim();
+    if (!selection) {
+      const loaded = await loadConfig();
+      const config = loaded.isErr() ? undefined : (loaded.value as UserConfig);
+      const configuredModel = config?.providers?.[provider]?.model;
+      return {
+        provider,
+        label: configuredModel || PROVIDER_DEFAULTS[provider].model,
+        model: configuredModel || PROVIDER_DEFAULTS[provider].model,
+        aliases: [],
+      };
+    }
+
+    if (provider === 'openrouter') {
+      const openRouterAlias = resolveOpenRouterModelAlias(selection);
+      if (openRouterAlias) {
+        return {
+          provider,
+          label: openRouterAlias.label,
+          model: openRouterAlias.model,
+          aliases: [openRouterAlias.alias],
+        };
+      }
+    }
+
+    const providerChoice = MODEL_CHOICES.find((choice) =>
+      choice.provider === provider &&
+      (choice.model.toLowerCase() === selection.toLowerCase() ||
+        choice.aliases.some((alias) => alias.toLowerCase() === selection.toLowerCase())),
+    );
+    return providerChoice ?? {
+      provider,
+      label: selection,
+      model: selection,
+      aliases: [],
+    };
+  }
+
+  private resolveChoiceByAlias(selection: string): ModelChoice | null {
+    const normalized = selection.toLowerCase().trim();
+    return MODEL_CHOICES.find((choice) =>
+      choice.model.toLowerCase() === normalized ||
+      choice.aliases.some((alias) => alias.toLowerCase() === normalized),
+    ) ?? null;
+  }
+
+  private resolveApiKey(provider: ModelProviderKey, configuredKey?: string): string | undefined {
+    if (configuredKey) return configuredKey;
+    const currentConfig = this.llm?.getConfig();
+    const currentProvider = currentConfig?.baseUrl ? this.providerLabel(currentConfig.baseUrl) : undefined;
+    const currentMatchesTarget = currentProvider === provider || (provider === 'custom' && currentProvider === 'openai');
+    const current = currentMatchesTarget ? currentConfig?.apiKey : undefined;
+    switch (provider) {
+      case 'custom':
+        return current || process.env.OPENAI_API_KEY || process.env.LIMINAL_LLM_API_KEY || process.env.LLM_API_KEY;
+      case 'minimax':
+        return current || process.env.MINIMAX_API_KEY || process.env.LIMINAL_LLM_API_KEY || process.env.LLM_API_KEY;
+      case 'glm':
+        return current || process.env.GLM_API_KEY || process.env.LIMINAL_LLM_API_KEY || process.env.LLM_API_KEY;
+      case 'openrouter':
+        return current || process.env.OPENROUTER_API_KEY;
+      case 'kimi':
+      case 'moonshot':
+        return current || process.env.KIMI_API_KEY || process.env.MOONSHOT_API_KEY;
+      case 'lmstudio':
+      case 'ollama':
+        return undefined;
+    }
   }
 
   private readBody(req: IncomingMessage): Promise<string> {

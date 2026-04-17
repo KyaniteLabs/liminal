@@ -347,7 +347,7 @@ data: ${JSON.stringify(stored.event)}
       'Model picker:',
       `Current: ${currentProvider || 'unknown'}/${currentModel || 'unknown'}`,
       '',
-      'Type /model <number>, /model <provider>, or /model <provider> <model>',
+      'Type /model NUMBER, /model PROVIDER, or /model PROVIDER MODEL',
       '',
     ];
     MODEL_CHOICES.forEach((choice, index) => {

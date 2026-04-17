@@ -2,39 +2,70 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { Status } from '../../src/types/status.js';
 
 const { executeTask } = vi.hoisted(() => ({
-  executeTask: vi.fn(async (task: { id: string; title: string }) => ({
-    task,
-    messages: [
-      {
-        role: 'assistant',
-        content: '',
-        toolCall: {
-          tool: 'gitStatus',
-          thought: 'Inspect the repository status',
-          params: {},
-          expectedResult: 'Git status summary',
+  executeTask: vi.fn(async (task: { id: string; title: string }) => {
+    const { eventBus, EventTypes } = await import('../../src/core/EventBus.js');
+    eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+      process: 'agent-task',
+      current: 1,
+      total: 20,
+      stage: 'planned gitStatus',
+      message: 'gitStatus: Inspect repository state',
+    });
+    eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+      process: 'agent-task',
+      current: 1,
+      total: 20,
+      stage: 'executed gitStatus',
+      message: 'gitStatus succeeded',
+    });
+    eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+      process: 'agent-task',
+      current: 2,
+      total: 20,
+      stage: 'executed runBuild',
+      message: 'runBuild succeeded',
+    });
+    eventBus.emit(EventTypes.PROCESS_PROGRESS, 'LLMModeAgent', {
+      process: 'agent-task',
+      current: 3,
+      total: 20,
+      stage: 'planned complete',
+      message: 'complete: done',
+    });
+    return {
+      task,
+      messages: [
+        {
+          role: 'assistant',
+          content: '',
+          toolCall: {
+            tool: 'gitStatus',
+            thought: 'Inspect the repository status',
+            params: {},
+            expectedResult: 'Git status summary',
+          },
         },
-      },
-      {
-        role: 'tool',
-        content: '',
-        toolResult: { success: true, data: { status: 'clean' } },
-      },
-    ],
-    status: Status.SUCCESS,
-    startTime: new Date(0).toISOString(),
-    endTime: new Date(10).toISOString(),
-    stepCount: 1,
-    backups: [],
-    successfulInspectionCalls: 1,
-    modifiedExtensions: new Set<string>(),
-    exploredPaths: new Set<string>(),
-    mutatedFiles: new Set<string>(),
-    activeFocusIndex: 0,
-    focusInspectionBudgetRemaining: 0,
-    focusStatus: 'rejected',
-    focusAdjacentFileUsed: false,
-  })),
+        {
+          role: 'tool',
+          content: '',
+          toolResult: { success: true, data: { status: 'clean' } },
+        },
+      ],
+      status: Status.SUCCESS,
+      startTime: new Date(0).toISOString(),
+      endTime: new Date(10).toISOString(),
+      stepCount: 1,
+      backups: [],
+      successfulInspectionCalls: 1,
+      modifiedExtensions: new Set<string>(),
+      exploredPaths: new Set<string>(),
+      mutatedFiles: new Set<string>(),
+      activeFocusIndex: 0,
+      focusInspectionBudgetRemaining: 0,
+      focusStatus: 'rejected',
+      focusAdjacentFileUsed: false,
+    };
+  }),
 }));
 
 vi.mock('../../src/harness/agent/index.js', () => ({
@@ -153,5 +184,15 @@ describe('Bubble Tea operator routing', () => {
       delegatedTo: 'conveyor',
     });
     expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('task.queued');
+    expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('tool.started');
+    expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('tool.completed');
+    expect(service.getEvents(session.sessionId)
+      .filter(event => event.type === 'tool.started')
+      .map(event => event.toolName)).not.toContain('complete');
+    expect(service.getEvents(session.sessionId)).toContainEqual(expect.objectContaining({
+      type: 'phase.changed',
+      phase: 'Verify',
+      stepCurrent: 2,
+    }));
   });
 });

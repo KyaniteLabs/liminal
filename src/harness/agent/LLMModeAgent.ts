@@ -878,15 +878,25 @@ When the task is complete and build passes, respond with tool "complete".`;
     if (!trimmed) return null;
 
     const hasMutation = session.backups.length > 0;
-    if (!hasMutation) return null;
+    const completionLike = /(?:task\s+complete|inspection\s+is\s+complete|diagnostic\s+(?:is\s+)?complete|returning\s+(?:the\s+)?final\s+(?:diagnostic\s+)?report|final\s+report|fix\s+is\s+complete|providing\s+final\s+report|all\s+\d*\s*tests?\s+pass|tests?\s+pass(?:ed)?|done\b)/i.test(trimmed);
+    if (!completionLike) return null;
+
+    if (!hasMutation) {
+      const readOnlyDiagnostic = /(?:read-only|do not modify|do not edit|no file changes|without modifying files)/i.test(session.task.description);
+      if (!readOnlyDiagnostic || !this.hasConcreteSuccessfulInspection(session)) return null;
+      return {
+        thought: trimmed.slice(0, 400),
+        tool: 'complete',
+        params: {},
+        expectedResult: 'Finish the read-only inspection task',
+      };
+    }
 
     const buildPassed = this.hasSuccessfulTool(session, 'runBuild');
     if (!buildPassed) return null;
 
     const testsPassed = this.hasSuccessfulTool(session, 'runTests');
-    const completionLike = /(?:task\s+complete|fix\s+is\s+complete|providing\s+final\s+report|all\s+\d*\s*tests?\s+pass|tests?\s+pass(?:ed)?|done\b)/i.test(trimmed);
 
-    if (!completionLike) return null;
     if (!testsPassed && !/tests?\s+pass(?:ed)?/i.test(trimmed)) return null;
 
     return {

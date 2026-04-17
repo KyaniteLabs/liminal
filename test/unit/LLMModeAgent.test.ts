@@ -692,6 +692,45 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('treats read-only diagnostic plain-text reports as complete after successful inspection', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"src/harness/agent/LLMModeAgent.ts"},"thought":"inspect"}' })
+      .mockResolvedValueOnce({ text: 'Inspection is complete. I found the parse site, the existing implicit-completion fallback, and the smallest safe recovery/test recommendation. Returning the final diagnostic report only, with no file changes.' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'studio-eng-readonly-diagnostic',
+      title: 'Read-only diagnostic',
+      description: 'Read-only diagnostic: investigate non-JSON planning failures. Do not modify files.',
+      approved: true,
+      maxSteps: 4,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalled();
+    expect(mockApplyEdit.execute).not.toHaveBeenCalled();
+    expect(session.status).toBe(Status.SUCCESS);
+  });
+
+  it('does not treat mutation tasks with verification wording as read-only implicit completion', async () => {
+    mockComplete
+      .mockResolvedValueOnce({ text: '{"tool":"readFile","params":{"path":"src/harness/agent/LLMModeAgent.ts"},"thought":"inspect"}' })
+      .mockResolvedValueOnce({ text: 'Inspection is complete. Final report: the implementation should be changed and verification targets are visible.' });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'studio-eng-mutation-diagnostic',
+      title: 'Mutation diagnostic',
+      description: 'Improve the implementation. Verification targets: run focused tests after edits.',
+      approved: true,
+      maxSteps: 3,
+    });
+
+    expect(mockReadFile.execute).toHaveBeenCalled();
+    expect(mockApplyEdit.execute).not.toHaveBeenCalled();
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.lastPlanError).toBe('Failed to parse LLM response');
+  });
+
   it('does not classify zero-inspection bounded startup failures as bounded-no-change success', async () => {
     mockComplete.mockResolvedValue({
       text: '{"thought":"startup failed before a useful tool plan existed","expectedResult":"recover later"}',

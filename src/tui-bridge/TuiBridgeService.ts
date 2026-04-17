@@ -62,10 +62,33 @@ const SELF_IMPROVEMENT_KEYWORDS = [
   'test', 'dogfood', 'repo', 'codebase', 'generator hardening',
 ];
 
+const OPERATOR_INSPECTION_PATTERNS = [
+  /\bread-only\b/,
+  /\bdo not modify\b/,
+  /\bdo not create files?\b/,
+  /\bdo not commit\b/,
+  /\bdo not push\b/,
+  /\buse tool calls only\b/,
+  /\btelemetry-friendly\b/,
+  /\bdogfood checkpoint\b/,
+  /\brepository state\b/,
+  /\bprovider\/model truth\b/,
+  /\btool schema recovery\b/,
+];
+
 /** Check if input indicates repo/harness repair rather than creative generation. */
 export function isSelfImprovementRequest(text: string): boolean {
   const lower = text.toLowerCase();
   return SELF_IMPROVEMENT_KEYWORDS.some(kw => lower.includes(kw));
+}
+
+/** Check if input is an operator inspection/checkpoint, not creative generation. */
+export function isOperatorInspectionRequest(text: string): boolean {
+  const lower = text.toLowerCase();
+  const matchCount = OPERATOR_INSPECTION_PATTERNS
+    .filter(pattern => pattern.test(lower))
+    .length;
+  return matchCount >= 2;
 }
 
 /** Check if input indicates creative generation intent */
@@ -367,7 +390,15 @@ export class TuiBridgeService {
     // Studio routing: classify intent via IntentRouter with mode biasing
     const modeConfig = this.modeRegistry.getMode(sessionId);
     const classifier = new ModeAwareRouter(this.router, () => modeConfig);
-    const classification = classifier.classify(input.text);
+    const baseClassification = classifier.classify(input.text);
+    const classification = isOperatorInspectionRequest(input.text)
+      ? {
+          ...baseClassification,
+          intent: 'engineering' as const,
+          confidence: 'high' as const,
+          topic: baseClassification.topic ?? 'inspect',
+        }
+      : baseClassification;
 
     logBridge('input.received', {
       sessionId,

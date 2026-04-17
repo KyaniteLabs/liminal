@@ -154,6 +154,70 @@ describe('Bubble Tea operator routing', () => {
     });
   });
 
+  it('keeps creative routing when a prompt has only one operator-inspection phrase', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const prompt = 'read-only creative brief: create a p5 sketch with soft motion';
+
+    const result = await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: prompt,
+        clientIntent: 'chat',
+      },
+      fakeLlm() as never,
+    );
+
+    expect(result.reviewRequired).toBe(true);
+    expect(service.getStatus(session.sessionId).pendingAction).toMatchObject({
+      prompt,
+      route: 'creative',
+    });
+  });
+
+  it('routes read-only dogfood checkpoint prompts to engineering even when they mention create files', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const prompt = [
+      'Studio engineering dogfood checkpoint for marketing-readiness.',
+      'Read-only. Do not modify files. Do not create files. Do not commit. Do not push.',
+      'Use tool calls only.',
+      'Collect telemetry-friendly evidence for repository state and provider/model truth.',
+    ].join('\n\n');
+
+    const result = await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: prompt,
+        clientIntent: 'chat',
+      },
+      fakeLlm() as never,
+    );
+
+    expect(result.reviewRequired).toBe(true);
+    expect(executeTask).not.toHaveBeenCalled();
+    expect(service.getStatus(session.sessionId).pendingAction).toMatchObject({
+      prompt,
+      route: 'engineering',
+      kind: 'structured',
+    });
+
+    const pending = service.getStatus(session.sessionId).pendingAction!;
+    await service.confirmAction(session.sessionId, pending.id, fakeLlm() as never);
+
+    const turn = await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'session.turn'));
+
+    expect(executeTask).toHaveBeenCalledOnce();
+    expect(turn).toMatchObject({
+      type: 'session.turn',
+      intent: 'engineering',
+      delegatedTo: 'conveyor',
+    });
+  });
+
   it('routes ordinary text to the Meta-Harness tool lane after autopilot approval', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();

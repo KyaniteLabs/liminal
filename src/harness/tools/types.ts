@@ -21,6 +21,14 @@ export interface ReadFileParams {
   /** 1-based line number alias for offset; useful for models reading startLine/endLine metadata. */
   startLine?: number;
   limit?: number;
+  /** Return a targeted excerpt around the first matching line containing this text. */
+  pattern?: string;
+  /** Alias for pattern when the caller knows the symbol name to inspect. */
+  symbol?: string;
+  /** Number of lines to include before a pattern/symbol match. */
+  before?: number;
+  /** Number of lines to include after a pattern/symbol match. */
+  after?: number;
 }
 
 export interface ReadFileResult {
@@ -30,6 +38,8 @@ export interface ReadFileResult {
   truncated?: boolean;
   startLine?: number;
   endLine?: number;
+  matchLine?: number;
+  additionalMatchesExist?: boolean;
 }
 
 export interface WriteFileParams {

@@ -149,7 +149,8 @@ describe('RunFocusedTestsTool', () => {
     const result = await tool.execute({ targets: [] });
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain('targets');
+    expect(result.error).toContain('runFocusedTests requires');
+    expect(result.error).toContain('params.path');
   });
 
   it('runs vitest with the provided targets', async () => {
@@ -161,9 +162,38 @@ describe('RunFocusedTestsTool', () => {
     expect(result.success).toBe(true);
     expect(runner).toHaveBeenCalledWith(
       'npx',
-      ['vitest', 'run', 'test/unit/harness/SkillLoader.test.ts'],
+      ['vitest', 'run', 'test/unit/harness/SkillLoader.test.ts', '--coverage=false'],
       expect.any(Object),
     );
     expect(result.data?.command).toContain('vitest run');
+    expect(result.data?.command).toContain('--coverage=false');
+  });
+
+  it('accepts path as an alias for a single focused test target', async () => {
+    const runner = vi.fn(async () => ({ stdout: 'ok', stderr: '' }));
+    const tool = new RunFocusedTestsTool(runner);
+
+    const result = await tool.execute({ path: 'test/tui-bridge/tui-bridge-server.provider-picker.test.ts' });
+
+    expect(result.success).toBe(true);
+    expect(runner).toHaveBeenCalledWith(
+      'npx',
+      ['vitest', 'run', 'test/tui-bridge/tui-bridge-server.provider-picker.test.ts', '--coverage=false'],
+      expect.any(Object),
+    );
+  });
+
+  it('accepts pattern as an alias for a single focused test target', async () => {
+    const runner = vi.fn(async () => ({ stdout: 'ok', stderr: '' }));
+    const tool = new RunFocusedTestsTool(runner);
+
+    const result = await tool.execute({ pattern: 'provider-picker' });
+
+    expect(result.success).toBe(true);
+    expect(runner).toHaveBeenCalledWith(
+      'npx',
+      ['vitest', 'run', 'provider-picker', '--coverage=false'],
+      expect.any(Object),
+    );
   });
 });

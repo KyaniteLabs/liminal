@@ -204,6 +204,16 @@ func TestOperatorRunStatusLabels(t *testing.T) {
 		}
 	})
 
+	t.Run("final report success overrides failed supporting tool", func(t *testing.T) {
+		m := readyOperatorModel(t)
+		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "Status: success\nVerdict: Build passed cleanly.", Time: nowForTest()}}
+		m.ToolTimeline = []ToolStep{{StepNum: 10, ToolName: "typeCheck", Status: "failed", ResultSummary: "Rate limit exceeded"}}
+		panel := m.renderResultPanel(56)
+		if !strings.Contains(panel, "Status: Success") {
+			t.Fatalf("expected final report status to be Success\n%s", panel)
+		}
+	})
+
 	t.Run("partial", func(t *testing.T) {
 		m := readyOperatorModel(t)
 		m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "draft", Time: nowForTest()}}

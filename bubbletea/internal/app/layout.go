@@ -96,6 +96,9 @@ func (m Model) operatorRunStatus() string {
 	if strings.TrimSpace(m.ActiveResponse) != "" {
 		return "In progress"
 	}
+	if status, ok := finalReportStatus(m.lastAssistantResponse()); ok {
+		return status
+	}
 	for _, job := range m.VerificationJobs {
 		if job.Status == "fail" {
 			return "Failed"
@@ -116,6 +119,30 @@ func (m Model) operatorRunStatus() string {
 		return "Success"
 	}
 	return "Idle"
+}
+
+func finalReportStatus(response string) (string, bool) {
+	for _, line := range strings.Split(response, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		lower := strings.ToLower(trimmed)
+		if !strings.HasPrefix(lower, "status:") {
+			continue
+		}
+		value := strings.TrimSpace(strings.TrimPrefix(trimmed, trimmed[:len("Status:")]))
+		switch strings.ToLower(value) {
+		case "success", "succeeded", "pass", "passed":
+			return "Success", true
+		case "failed", "failure", "fail":
+			return "Failed", true
+		case "partial":
+			return "Partial", true
+		}
+		return "", false
+	}
+	return "", false
 }
 
 func (m Model) renderTaskCard(width int) string {
@@ -373,9 +400,9 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("Ctrl+T", "toggle timeline"),
 		helpRow("Ctrl+A", "toggle artifacts"),
 		helpRow("Ctrl+Q", "toggle task queue"),
-			helpRow("Ctrl+R", "toggle review panel"),
+		helpRow("Ctrl+R", "toggle review panel"),
 		helpRow("Ctrl+E", "toggle preview card"),
-			helpRow("Ctrl+X", "toggle cortex dashboard"),
+		helpRow("Ctrl+X", "toggle cortex dashboard"),
 		helpRow("Ctrl+Y", "copy last assistant response"),
 		helpRow("/setup", "run setup wizard"),
 		helpRow("/diagnostics", "run env checks"),
@@ -383,7 +410,7 @@ func (m Model) renderHelpDrawer(width int) string {
 		helpRow("/workspace", "manage workspaces"),
 		helpRow("/report", "generate session report"),
 		helpRow("/autonomy", "set autonomy level"),
-			helpRow("/cortex", "cortex dashboard"),
+		helpRow("/cortex", "cortex dashboard"),
 		helpRow("?", "toggle this help"),
 	}
 	return ui.HelpCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))

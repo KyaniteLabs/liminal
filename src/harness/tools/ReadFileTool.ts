@@ -8,6 +8,24 @@ import { Tool, type ToolResult, type ReadFileParams, type ReadFileResult } from 
 export class ReadFileTool extends Tool {
   readonly name = 'readFile';
   readonly description = 'Read the contents of a file';
+
+  private numericParam(value: unknown, fallback: number): number {
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return Math.trunc(parsed);
+    }
+    return fallback;
+  }
+
+  private optionalNumericParam(value: unknown): number | undefined {
+    if (typeof value === 'number' && Number.isFinite(value)) return Math.trunc(value);
+    if (typeof value === 'string' && value.trim() !== '') {
+      const parsed = Number(value);
+      if (Number.isFinite(parsed)) return Math.trunc(parsed);
+    }
+    return undefined;
+  }
   
   async execute(params: unknown): Promise<ToolResult<ReadFileResult>> {
     const startTime = Date.now();
@@ -20,7 +38,9 @@ export class ReadFileTool extends Tool {
         duration: Date.now() - startTime,
       };
     }
-    const { maxLines = 1000, offset, startLine: requestedStartLine, limit } = rawParams ?? {};
+    const { offset, startLine: requestedStartLine } = rawParams ?? {};
+    const maxLines = this.numericParam(rawParams?.maxLines, 1000);
+    const limit = this.optionalNumericParam(rawParams?.limit);
     
     try {
       // Security validation
@@ -47,11 +67,9 @@ export class ReadFileTool extends Tool {
       const content = await fs.readFile(filePath, 'utf-8');
       const lines = content.split('\n');
       const lineCount = lines.length;
-      const requestedOffset = typeof offset === 'number'
-        ? offset
-        : typeof requestedStartLine === 'number'
-          ? requestedStartLine - 1
-          : 0;
+      const numericOffset = this.optionalNumericParam(offset);
+      const numericStartLine = this.optionalNumericParam(requestedStartLine);
+      const requestedOffset = numericOffset ?? (numericStartLine != null ? numericStartLine - 1 : 0);
       const safeOffset = Math.max(0, requestedOffset);
       const pageSize = Math.max(1, limit ?? maxLines);
       const page = lines.slice(safeOffset, safeOffset + pageSize);

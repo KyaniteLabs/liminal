@@ -91,6 +91,7 @@ export interface GitStatusResult {
   branch: string;
   commitSha: string;
   shortSha: string;
+  hasHeadCommit: boolean;
   short: string;
   clean: boolean;
   root: string;

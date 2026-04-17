@@ -41,6 +41,41 @@ describe('ReadFileTool', () => {
     }
   });
 
+  it('supports numeric-string offset and limit paging', async () => {
+    const tool = new ReadFileTool();
+    const file = path.join(process.cwd(), 'src', '__readfile_tool_string_offset_fixture__.txt');
+    await fs.writeFile(file, ['a', 'b', 'c', 'd', 'e'].join('\n'));
+
+    try {
+      const result = await tool.execute({ path: file, offset: '2', limit: '2' });
+      expect(result.success).toBe(true);
+      expect(result.data?.content).toContain('c\nd');
+      expect(result.data?.startLine).toBe(3);
+      expect(result.data?.endLine).toBe(4);
+      expect(result.data?.truncated).toBe(true);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+
+  it('normalizes fractional numeric paging params to integer indices', async () => {
+    const tool = new ReadFileTool();
+    const file = path.join(process.cwd(), 'src', '__readfile_tool_fractional_offset_fixture__.txt');
+    await fs.writeFile(file, ['a', 'b', 'c', 'd', 'e'].join('\n'));
+
+    try {
+      const result = await tool.execute({ path: file, offset: '2.8', limit: '2.9' });
+      expect(result.success).toBe(true);
+      expect(result.data?.content).toContain('c\nd');
+      expect(result.data?.startLine).toBe(3);
+      expect(result.data?.endLine).toBe(4);
+      expect(Number.isInteger(result.data?.startLine)).toBe(true);
+      expect(Number.isInteger(result.data?.endLine)).toBe(true);
+    } finally {
+      await fs.rm(file, { force: true });
+    }
+  });
+
   it('supports one-based startLine paging', async () => {
     const tool = new ReadFileTool();
     const file = path.join(process.cwd(), 'src', '__readfile_tool_startline_fixture__.txt');

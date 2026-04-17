@@ -9,7 +9,7 @@
 
 Liminal is architecturally strong, but the latest remote state was not marketing-ready when this audit began. The primary Bubble Tea launch path contained committed merge-conflict markers in `scripts/start-bubbletea-tui.mjs`, full Vitest was red, and docs overstated readiness relative to current proof.
 
-The first branch slice fixed the launch-path syntax failure, restored Bubble Tea Go compilation, and added a regression test so launcher conflict markers are caught. This does not make Liminal launch-ready by itself. It changes the status from "primary launcher cannot parse" to "primary launcher has a focused proof gate."
+This branch fixed the launch-path syntax failure, restored Bubble Tea Go compilation, added a regression test so launcher conflict markers are caught, and stabilized the full Vitest run. This does not make Liminal launch-ready by itself. It changes the status from "primary launcher cannot parse and full suite is red" to "candidate branch has a green full-suite gate and an explicit remaining proof queue."
 
 ## Current Evidence
 
@@ -36,11 +36,17 @@ Focused branch verification after the first fix:
 - `cd bubbletea && go test ./...`: passed.
 - Bridge-only smoke on localhost `/health`: returned `{ "status": "ok", "bridge": "liminal-tui" }`.
 
+Branch verification after test-stability fixes:
+
+- `pnpm build`: passed.
+- `pnpm exec vitest run --coverage=false`: passed, 531 files passed, 9387 tests passed, 12 files skipped.
+- Remaining verification noise: jsdom prints missing `HTMLCanvasElement.getContext()` / `toDataURL()` messages and the audio path prints `Recording... Press ENTER to stop.` These are not failing tests, but they make proof logs less operator-friendly and should be cleaned up before marketing capture.
+
 ## What Would Get Yelled At
 
 - **False readiness drift:** older docs say the system is ready, but current full tests and launch path evidence contradicted that.
 - **Committed conflict markers:** this is a basic professional hygiene failure and especially damaging because it was in the marketing/operator launch path.
-- **Proof surfaces failing:** render/scoring, emergence hooks, guardrails, and audio/aesthetic tests are close to the public claims.
+- **Proof surfaces were brittle:** render/scoring, emergence hooks, guardrails, and audio/aesthetic tests are close to the public claims, so timeout-only failures and leaked global stubs needed to be treated as launch-readiness defects.
 - **Horizontal sprawl:** many domains, scripts, docs, and compatibility names exist at once, including stale Remotion/Revideo language.
 - **Unwired modules:** the orphan smoke check reports 28 likely-unwired files. Some may be false positives, but each needs an explicit disposition.
 - **Silent success risk:** `return null`, warning-only failures, and timeout-based tests make it too easy for a run to look successful without proof.
@@ -59,7 +65,7 @@ Focused branch verification after the first fix:
 P0 until disproven:
 
 1. Full Bubble Tea launch must work from `pnpm run tui` with the configured provider.
-2. Full proof-path tests must stop failing by timeout in core launch surfaces.
+2. Full proof-path tests must stay green in repeated runs, not just one lucky run.
 3. Three proof flows must produce persisted evidence: creative copilot, emergence garden, self-improvement.
 4. Documentation must stop saying "ready" where current evidence says "candidate."
 5. Any UI "success" state must include verification evidence or an explicit "unverified" label.
@@ -68,8 +74,8 @@ P1:
 
 1. Classify the 28 orphan smoke findings as `wire`, `future`, `test-only`, `false-positive`, or `delete`.
 2. Audit stale Remotion/Revideo naming and public docs before marketing.
-3. Replace long-running timeout tests with deterministic assertions or explicit environment skips.
-4. Add script syntax checks for launch-critical JavaScript entrypoints.
+3. Remove noisy jsdom canvas and recording prompts from automated verification output.
+4. Replace any remaining long-running timeout tests with deterministic assertions or explicit environment skips.
 
 ## Design And Color Theory Constraint
 
@@ -101,7 +107,7 @@ Implementation direction:
 ## Next Implementation Slices
 
 1. Make `pnpm run tui:bridge` and `pnpm run tui` reliable enough for manual recording.
-2. Fix or reclassify current full-suite failures by launch claim.
+2. Remove noisy test output so proof logs are readable for launch review.
 3. Create a machine-readable proof bundle shape for canonical demos.
 4. Generate the first honest marketing-readiness scorecard from actual runs.
 5. Draft a naming glossary after proof gates pass, not before.

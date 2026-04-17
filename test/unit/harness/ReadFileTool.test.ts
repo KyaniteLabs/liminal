@@ -4,6 +4,26 @@ import path from 'node:path';
 import { ReadFileTool } from '../../../src/harness/tools/ReadFileTool.js';
 
 describe('ReadFileTool', () => {
+  it('returns a recovery hint when path is missing', async () => {
+    const tool = new ReadFileTool();
+
+    const result = await tool.execute({});
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('readFile requires params.path');
+    expect(result.error).toContain('{"path":"src/index.ts"}');
+  });
+
+  it('returns a recovery hint when path is not a string', async () => {
+    const tool = new ReadFileTool();
+
+    const result = await tool.execute({ path: ['src/index.ts'] });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('readFile requires params.path');
+    expect(result.error).toContain('received array');
+  });
+
   it('supports offset and limit paging', async () => {
     const tool = new ReadFileTool();
     const file = path.join(process.cwd(), 'src', '__readfile_tool_fixture__.txt');

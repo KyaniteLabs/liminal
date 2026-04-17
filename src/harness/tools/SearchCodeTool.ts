@@ -59,17 +59,22 @@ export class SearchCodeTool extends Tool {
   }
 
   async execute(params: unknown): Promise<ToolResult<SearchCodeResult>> {
+    const rawParams = params as Partial<SearchCodeParams> | null | undefined;
+    const queryValue = rawParams?.query;
+    if (typeof queryValue !== 'string' || queryValue.trim() === '') {
+      return {
+        success: false,
+        error: `searchCode requires params.query to be a non-empty string; received ${Array.isArray(queryValue) ? 'array' : typeof queryValue}. Use {"query":"package.json"} or another exact search query.`,
+      };
+    }
+
     const {
-      query,
       repo = defaultJCodeRepo(),
       filePattern,
       maxResults = 10,
       contextLines = 0,
-    } = params as SearchCodeParams;
-
-    if (!query) {
-      return { success: false, error: 'query is required' };
-    }
+    } = rawParams ?? {};
+    const query = queryValue;
 
     try {
       const { stdout } = await this.runner(

@@ -9,6 +9,9 @@
 import { beforeAll, afterAll, beforeEach } from 'vitest';
 
 const nativeFetch = globalThis.fetch?.bind(globalThis);
+if (nativeFetch) {
+  (globalThis as typeof globalThis & { __liminalNativeFetch?: typeof fetch }).__liminalNativeFetch = nativeFetch;
+}
 
 // Environment variables to isolate
 const LLM_ENV_KEYS = [
@@ -40,10 +43,6 @@ const saved: Record<string, string | undefined> = {};
 let originalTestEnv: string | undefined;
 
 beforeAll(() => {
-  if (nativeFetch) {
-    (globalThis as typeof globalThis & { __liminalNativeFetch?: typeof fetch }).__liminalNativeFetch = nativeFetch;
-  }
-
   // Save and clear LLM environment variables
   for (const key of LLM_ENV_KEYS) {
     saved[key] = process.env[key];

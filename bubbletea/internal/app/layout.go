@@ -15,6 +15,9 @@ func (m Model) renderOperatorSurface(width int) string {
 	contentWidth := max(20, width)
 	panels := []string{m.renderTaskCard(contentWidth)}
 
+	if m.hasOperatorResult() {
+		panels = append(panels, m.renderResultPanel(contentWidth))
+	}
 	if m.CortexSnapshot != nil {
 		panels = append(panels, m.renderCortexStatus(contentWidth))
 	}
@@ -68,6 +71,51 @@ func (m Model) renderOperatorSurface(width int) string {
 	}
 
 	return lipgloss.JoinVertical(lipgloss.Left, panels...)
+}
+
+func (m Model) renderResultPanel(width int) string {
+	status := m.operatorRunStatus()
+	lines := []string{ui.PanelTitleStyle.Render("Final report"), ui.PanelMetaStyle.Render("Status: " + status)}
+	if m.PendingAction != nil {
+		lines = append(lines, ui.TaskHintStyle.Render("Review required before mutation: [y] confirm  [n] cancel"))
+	}
+	if result := strings.TrimSpace(m.lastAssistantResponse()); result != "" {
+		lines = append(lines, ui.PanelValueStyle.Render(previewSummary(result, 8, width-6)))
+	}
+	return ui.PreviewCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+}
+
+func (m Model) hasOperatorResult() bool {
+	return strings.TrimSpace(m.lastAssistantResponse()) != "" || m.PendingAction != nil || m.ActiveResponse != ""
+}
+
+func (m Model) operatorRunStatus() string {
+	if m.PendingAction != nil || m.Mode == "ACTION" {
+		return "Needs review"
+	}
+	if strings.TrimSpace(m.ActiveResponse) != "" {
+		return "In progress"
+	}
+	for _, job := range m.VerificationJobs {
+		if job.Status == "fail" {
+			return "Failed"
+		}
+		if job.Status == "running" {
+			return "Partial"
+		}
+	}
+	for _, step := range m.ToolTimeline {
+		if step.Status == "failed" {
+			return "Failed"
+		}
+		if step.Status == "running" {
+			return "Partial"
+		}
+	}
+	if strings.TrimSpace(m.lastAssistantResponse()) != "" {
+		return "Success"
+	}
+	return "Idle"
 }
 
 func (m Model) renderTaskCard(width int) string {
@@ -129,7 +177,7 @@ func (m Model) renderGenerationCard(width int) string {
 }
 
 func (m Model) renderToolTimeline(width int) string {
-	lines := []string{ui.PanelTitleStyle.Render("Timeline")}
+	lines := []string{ui.PanelTitleStyle.Render("Tool trace")}
 	if len(m.ToolTimeline) == 0 {
 		lines = append(lines, ui.EmptyStateStyle.Render("No tool activity yet."))
 		return ui.PanelStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))

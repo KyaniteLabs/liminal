@@ -4,6 +4,7 @@ import {
   TUI_SYSTEM_PROMPT,
   TuiBridgeService,
 } from '../../src/tui-bridge/TuiBridgeService.js';
+import type { LLMSession } from '../../src/harness/agent/index.js';
 
 describe('TuiBridgeService', () => {
   it('uses a meta-harness system prompt instead of creative-only identity', () => {
@@ -97,6 +98,136 @@ describe('TuiBridgeService', () => {
   });
 
   // ── StudioAgent Routing ──
+
+  describe('engineering response formatting', () => {
+    const makeSession = (overrides: Partial<LLMSession> = {}): LLMSession => ({
+      task: {
+        id: 'task-1',
+        title: 'Fix TUI formatting',
+        description: 'Make the final response answer-first',
+        approved: true,
+      },
+      messages: [
+        {
+          role: 'assistant',
+          content: '{}',
+          toolCall: {
+            thought: 'Inspect formatter',
+            tool: 'readFile',
+            params: { path: 'src/tui-bridge/TuiBridgeService.ts' },
+            expectedResult: 'See current formatting',
+          },
+        },
+        {
+          role: 'tool',
+          content: '{}',
+          toolResult: { success: true, data: { exists: true } },
+        },
+        {
+          role: 'assistant',
+          content: '{}',
+          toolCall: {
+            thought: 'Verify build',
+            tool: 'runBuild',
+            params: {},
+            expectedResult: 'Build passes',
+          },
+        },
+        {
+          role: 'tool',
+          content: '{}',
+          toolResult: { success: true, data: { ok: true } },
+        },
+      ],
+      status: 'success',
+      startTime: '2024-01-01T00:00:00.000Z',
+      endTime: '2024-01-01T00:00:02.000Z',
+      stepCount: 4,
+      backups: [],
+      successfulInspectionCalls: 1,
+      modifiedExtensions: new Set(['.ts']),
+      exploredPaths: new Set(['src/tui-bridge/TuiBridgeService.ts']),
+      mutatedFiles: new Set(['src/tui-bridge/TuiBridgeService.ts']),
+      activeFocusIndex: 0,
+      focusInspectionBudgetRemaining: 0,
+      focusStatus: 'committed',
+      focusAdjacentFileUsed: false,
+      ...overrides,
+    });
+
+    it('formats completed engineering sessions answer-first with required sections', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession());
+
+      expect(content.startsWith('Status: success')).toBe(true);
+      expect(content).toContain('Verdict:');
+      expect(content).toContain('Evidence:');
+      expect(content).toContain('Files changed:');
+      expect(content).toContain('Tests run:');
+      expect(content).toContain('Other verification:');
+      expect(content).toContain('Remaining risks:');
+      expect(content).toContain('Recommended next action:');
+      expect(content).toContain('Supporting tool trace:');
+      expect(content).not.toContain('# Meta-Harness Tool Run');
+      expect(content.indexOf('Supporting tool trace:')).toBeGreaterThan(content.indexOf('Recommended next action:'));
+    });
+
+    it('keeps metadata in evidence and separates changed files from build verification', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession());
+
+      expect(content).toContain('- Steps: 4');
+      expect(content).toContain('- Duration: 2000ms');
+      expect(content).toContain('- Tools used: readFile, runBuild');
+      expect(content).toContain('- src/tui-bridge/TuiBridgeService.ts');
+      expect(content).toContain('Tests run:\n- none recorded');
+      expect(content).toContain('Other verification:\n- runBuild');
+      expect(content).toContain('- runBuild');
+      expect(content).toContain('- readFile: Inspect formatter (ok)');
+    });
+
+    it('lists runFocusedTests as verification evidence', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession({
+        messages: [
+          {
+            role: 'assistant',
+            content: '{}',
+            toolCall: {
+              thought: 'Run focused tests',
+              tool: 'runFocusedTests',
+              params: { path: 'test/tui-bridge/tui-bridge-service.test.ts' },
+              expectedResult: 'Focused tests pass',
+            },
+          },
+          {
+            role: 'tool',
+            content: '{}',
+            toolResult: { success: true, data: { command: 'npx vitest run test/tui-bridge/tui-bridge-service.test.ts --coverage=false' } },
+          },
+        ],
+      }));
+
+      expect(content).toContain('Tests run:');
+      expect(content).toContain('- runFocusedTests');
+    });
+
+    it('preserves rolled_back as a distinct status', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession({ status: 'rolled_back' }));
+
+      expect(content.startsWith('Status: rolled_back')).toBe(true);
+      expect(content).not.toContain('Status: failed');
+    });
+
+    it('does not report touched files as final changes after rollback', () => {
+      const service = new TuiBridgeService();
+      const content = service['formatAgentSession'](makeSession({ status: 'rolled_back' }));
+
+      expect(content).toContain('Files changed:\n- none (rolled back 1 touched file)');
+      expect(content).not.toContain('Files changed:\n- src/tui-bridge/TuiBridgeService.ts');
+    });
+  });
 
   describe('StudioAgent routing', () => {
     it('emits session.turn event for direct input (no LLM)', async () => {

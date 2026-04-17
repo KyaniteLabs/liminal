@@ -1793,8 +1793,6 @@ export class TuiBridgeService {
     const toolLines = session.messages
       .filter((m) => m.toolCall)
       .map((m) => {
-        // Find the tool result that corresponds to this specific tool call.
-        // Tool results appear in session.messages after their respective assistant messages.
         const mIndex = session.messages.indexOf(m);
         const result = mIndex >= 0
           ? session.messages.slice(mIndex + 1).find((candidate) => candidate.role === 'tool' && candidate.toolResult)
@@ -1802,23 +1800,56 @@ export class TuiBridgeService {
         return `- ${m.toolCall?.tool}: ${m.toolCall?.thought}${result?.toolResult ? ` (${result.toolResult.success ? 'ok' : 'failed'})` : ''}`;
       })
       .slice(-12);
+    const touchedFiles = Array.from(session.mutatedFiles);
+    const filesChanged = session.status === 'rolled_back' ? [] : touchedFiles;
+    const rolledBackFiles = session.status === 'rolled_back' ? touchedFiles : [];
+    const testTools = new Set(['runTests', 'runFocusedTests']);
+    const otherVerificationTools = new Set(['typeCheck', 'runBuild']);
+    const testsRun = session.messages
+      .filter((m) => m.toolCall && testTools.has(m.toolCall.tool))
+      .map((m) => `- ${m.toolCall?.tool}`);
+    const otherVerificationRun = session.messages
+      .filter((m) => m.toolCall && otherVerificationTools.has(m.toolCall.tool))
+      .map((m) => `- ${m.toolCall?.tool}`);
+    const verdict = session.status === 'success'
+      ? 'The engineering run completed successfully.'
+      : session.status === 'failed' || session.status === 'rolled_back'
+        ? 'The engineering run did not complete successfully.'
+        : 'The engineering run completed with unresolved issues.';
+    const evidence = [
+      `- Task: ${session.task.title}`,
+      `- Steps: ${session.stepCount}`,
+      `- Duration: ${duration}ms`,
+      `- Tools used: ${this.agentToolsUsed(session).join(', ') || 'none'}`,
+    ];
 
     return [
-      `# Meta-Harness Tool Run`,
-      ``,
       `Status: ${session.status}`,
-      `Task: ${session.task.title}`,
-      `Steps: ${session.stepCount}`,
-      `Duration: ${duration}ms`,
-      `Tools used: ${this.agentToolsUsed(session).join(', ') || 'none'}`,
-      ``,
-      `## Tool trace`,
-      toolLines.length > 0 ? toolLines.join('\n') : '- no tool calls recorded',
-      ``,
-      `## Notes`,
+      `Verdict:`,
+      verdict,
+      `Evidence:`,
+      evidence.join('\n'),
+      `Files changed:`,
+      filesChanged.length > 0
+        ? filesChanged.map((file) => `- ${file}`).join('\n')
+        : rolledBackFiles.length > 0
+          ? `- none (rolled back ${rolledBackFiles.length} touched file${rolledBackFiles.length === 1 ? '' : 's'})`
+          : '- none',
+      `Tests run:`,
+      testsRun.length > 0 ? testsRun.join('\n') : '- none recorded',
+      `Other verification:`,
+      otherVerificationRun.length > 0 ? otherVerificationRun.join('\n') : '- none recorded',
+      `Remaining risks:`,
       session.status === 'success'
-        ? 'The harness agent reported completion.'
-        : 'The harness agent did not report success. Check .omx/logs/bubbletea-bridge.log and working tree diff before trusting changes.',
+        ? '- Low: trust generated changes only after reviewing the diff and verification output.'
+        : '- The run did not report full success; inspect logs and working tree changes before trusting results.',
+      `Recommended next action:`,
+      session.status === 'success'
+        ? '- Review the diff and merge if the changes match intent.'
+        : '- Inspect the failure, rerun verification, and continue from the most relevant file.',
+      '',
+      `Supporting tool trace:`,
+      toolLines.length > 0 ? toolLines.join('\n') : '- no tool calls recorded',
     ].join('\n');
   }
 

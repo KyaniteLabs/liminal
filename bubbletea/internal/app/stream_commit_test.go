@@ -32,3 +32,17 @@ func TestApplyEventSeparatesActiveResponseFromCommittedHistory(t *testing.T) {
 		t.Fatalf("expected chat block type assistant, got %q", m.ChatBlocks[0].Type)
 	}
 }
+
+func TestMetaHarnessReportDoesNotOpenCodePreview(t *testing.T) {
+	m := NewModel("http://localhost:0")
+	report := "# Meta-Harness Tool Run\n\nStatus: failed\nTools used: readFile, gitStatus"
+
+	m.ApplyEvent(bridge.Event{Type: "response.committed", SessionID: "s1", Content: report})
+
+	if len(m.ChatBlocks) != 1 || m.ChatBlocks[0].Content != report {
+		t.Fatalf("expected report committed to conversation, got %#v", m.ChatBlocks)
+	}
+	if m.PreviewType == "code" || m.PreviewContent == report {
+		t.Fatalf("expected Meta-Harness report to stay out of code preview, got type=%q content=%q", m.PreviewType, m.PreviewContent)
+	}
+}

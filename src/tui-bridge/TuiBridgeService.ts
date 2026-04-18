@@ -673,10 +673,12 @@ export class TuiBridgeService {
         });
       })
       .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Task failed: ${message}` });
         this.emit(sessionId, {
           type: 'error',
           sessionId,
-          message: err instanceof Error ? err.message : String(err),
+          message,
         });
       });
   }
@@ -1477,6 +1479,12 @@ export class TuiBridgeService {
           model: result.model || modelName,
         }),
       });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logBridge('generation.failed', { sessionId, model: modelName, message });
+      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Generation failed: ${message}` });
+      this.emit(sessionId, { type: 'error', sessionId, message });
+      throw err;
     } finally {
       this.activeStreams.delete(sessionId);
     }

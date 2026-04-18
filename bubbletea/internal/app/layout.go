@@ -79,6 +79,9 @@ func (m Model) renderResultPanel(width int) string {
 	if m.PendingAction != nil {
 		lines = append(lines, ui.TaskHintStyle.Render("Review required before mutation: [y] confirm  [n] cancel"))
 	}
+	if strings.TrimSpace(m.LastError) != "" {
+		lines = append(lines, ui.TimelineFailedStyle.Render("Last error: "+trimToWidth(m.LastError, width-18)))
+	}
 	if summary := extractVerdict(m.lastAssistantResponse(), min(width-6, 60)); summary != "" {
 		lines = append(lines, ui.PanelValueStyle.Render(summary))
 	}
@@ -91,12 +94,15 @@ func (m Model) renderResultPanel(width int) string {
 }
 
 func (m Model) hasOperatorResult() bool {
-	return strings.TrimSpace(m.lastAssistantResponse()) != "" || m.PendingAction != nil || m.ActiveResponse != ""
+	return strings.TrimSpace(m.lastAssistantResponse()) != "" || m.PendingAction != nil || m.ActiveResponse != "" || strings.TrimSpace(m.LastError) != ""
 }
 
 func (m Model) operatorRunStatus() string {
 	if m.PendingAction != nil || m.Mode == "ACTION" {
 		return "Needs review"
+	}
+	if strings.TrimSpace(m.LastError) != "" {
+		return "Failed"
 	}
 	if strings.TrimSpace(m.ActiveResponse) != "" {
 		return "In progress"

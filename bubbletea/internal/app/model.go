@@ -315,6 +315,7 @@ type Model struct {
 	Connected    bool
 	Reconnecting bool
 	Err          string
+	LastError    string
 
 	// Glamour markdown renderer
 	Renderer *glamour.TermRenderer
@@ -488,11 +489,15 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		}
 	case "error":
 		m.IsStreaming = false
+		m.Err = event.Message
+		m.LastError = event.Message
+		m.Task.Objective = "Failed: " + event.Message
 		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
 			Type:    "error",
 			Content: event.Message,
 			Time:    time.Now(),
 		})
+		m.addActivity("Error: " + event.Message)
 		m.ActiveResponse = ""
 	case "preview.started":
 		m.PreviewType = event.PreviewType

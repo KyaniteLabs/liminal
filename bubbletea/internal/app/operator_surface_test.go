@@ -2,6 +2,7 @@ package app
 
 import (
 	"errors"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -145,6 +146,11 @@ func nowForTest() time.Time {
 	return time.Unix(1710000000, 0)
 }
 
+func visibleText(s string) string {
+	ansi := regexp.MustCompile(`\x1b\[[0-9;]*m`)
+	return ansi.ReplaceAllString(s, "")
+}
+
 func TestTaskCardShowsProgressPercentage(t *testing.T) {
 	m := readyOperatorModel(t)
 	m.Task = TaskCard{
@@ -181,17 +187,53 @@ func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
 
 func TestOperatorSurfaceShowsFinalReportBeforeToolTrace(t *testing.T) {
 	m := readyOperatorModel(t)
-	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "Status:\nFiles changed:\n- bubbletea/internal/app/layout.go", Time: nowForTest()}}
+	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "Status: success\nVerdict:\nThe result panel is compact.\nFiles changed:\n- bubbletea/internal/app/layout.go", Time: nowForTest()}}
 	m.ToolTimeline = []ToolStep{{StepNum: 1, ToolName: "readFile", Status: "success", Thought: "Inspect layout", ResultSummary: "loaded layout.go"}}
 
 	surface := m.renderOperatorSurface(56)
-	for _, want := range []string{"Final report", "Status: Success", "Files changed:", "Tool trace", "Inspect layout"} {
+	for _, want := range []string{"Final report", "Status: Success", "The result panel is compact.", "Tool trace", "Inspect layout"} {
 		if !strings.Contains(surface, want) {
 			t.Fatalf("expected operator surface to contain %q\n%s", want, surface)
 		}
 	}
 	if strings.Index(surface, "Final report") > strings.Index(surface, "Tool trace") {
-		t.Fatalf("expected final report to render before tool trace\n%s", surface)
+		t.Fatalf("expected result panel to render before tool trace\n%s", surface)
+	}
+	// Verify the full answer body is NOT duplicated in the right column
+	if strings.Contains(surface, "- bubbletea/internal/app/layout.go") {
+		t.Fatalf("expected operator surface NOT to contain full answer body (file list), but it did\n%s", surface)
+	}
+}
+
+func TestConversationRetainsFullFinalAnswerWhenOperatorPanelIsCompact(t *testing.T) {
+	m := readyOperatorModel(t)
+	answer := "Status: success\nVerdict:\nThe result panel is compact.\nFiles changed:\n- bubbletea/internal/app/layout.go"
+	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: answer, Time: nowForTest()}}
+
+	chat := visibleText(m.renderChatContent())
+	for _, want := range []string{"The result panel is compact.", "bubbletea/internal/app/layout.go"} {
+		if !strings.Contains(chat, want) {
+			t.Fatalf("expected conversation to retain %q\n%s", want, chat)
+		}
+	}
+}
+
+func TestResultPanelShowsFailedToolNamesWithoutLongTrace(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "Status: success\nVerdict: Compact summary", Time: nowForTest()}}
+	m.ToolTimeline = []ToolStep{
+		{StepNum: 1, ToolName: "readFile", Status: "success", ResultSummary: "loaded layout.go"},
+		{StepNum: 2, ToolName: "runTests", Status: "failed", ResultSummary: "very long failure text that belongs in the tool trace, not the result panel"},
+	}
+
+	panel := m.renderResultPanel(56)
+	for _, want := range []string{"Status: Success", "Compact summary", "Failed: runTests"} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("expected result panel to contain %q\n%s", want, panel)
+		}
+	}
+	if strings.Contains(panel, "very long failure text") {
+		t.Fatalf("expected result panel not to duplicate long tool trace\n%s", panel)
 	}
 }
 

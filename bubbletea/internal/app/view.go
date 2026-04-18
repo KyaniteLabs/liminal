@@ -6,6 +6,7 @@ import (
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/ui"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/muesli/reflow/wordwrap"
 )
 
 func (m Model) View() string {
@@ -174,8 +175,8 @@ func (m Model) renderFooter() string {
 			ui.KeyStyle.Render("Ctrl+T") + ui.HintStyle.Render(":timeline"),
 			ui.KeyStyle.Render("Ctrl+A") + ui.HintStyle.Render(":artifacts"),
 			ui.KeyStyle.Render("Ctrl+Q") + ui.HintStyle.Render(":queue"),
-				ui.KeyStyle.Render("Ctrl+R") + ui.HintStyle.Render(":review"),
-				ui.KeyStyle.Render("Ctrl+X") + ui.HintStyle.Render(":cortex"),
+			ui.KeyStyle.Render("Ctrl+R") + ui.HintStyle.Render(":review"),
+			ui.KeyStyle.Render("Ctrl+X") + ui.HintStyle.Render(":cortex"),
 			ui.KeyStyle.Render("Ctrl+Y") + ui.HintStyle.Render(":copy"),
 			ui.KeyStyle.Render("?") + ui.HintStyle.Render(":help"),
 		}
@@ -270,8 +271,11 @@ func (m Model) renderChatContent() string {
 	if m.ActiveResponse != "" {
 		sb.WriteString(ui.AssistantMsgStyle.Render("◆"))
 		sb.WriteString("\n")
-		rendered := m.renderMarkdown(m.ActiveResponse)
-		sb.WriteString(rendered)
+		if m.IsStreaming {
+			sb.WriteString(m.renderStreamingText(m.ActiveResponse))
+		} else {
+			sb.WriteString(m.renderMarkdown(m.ActiveResponse))
+		}
 		if m.CurrentIteration > 0 {
 			scoreStr := fmt.Sprintf("%.2f", m.GenerationScore)
 			iterStr := fmt.Sprintf("%d", m.CurrentIteration)
@@ -282,8 +286,8 @@ func (m Model) renderChatContent() string {
 				Foreground(ui.AccentGreen).
 				Render("▌ iter:" + iterStr + " score:" + scoreStr)
 			sb.WriteString(progress)
-		} else {
-			sb.WriteString(ui.StreamingStyle.Render("▌"))
+		} else if m.IsStreaming {
+			sb.WriteString(ui.StreamingStyle.Render(" ▌"))
 		}
 	}
 
@@ -320,6 +324,21 @@ func (m Model) renderPreviewContent() string {
 	default:
 		return m.renderMarkdown(m.PreviewContent)
 	}
+}
+
+// renderStreamingText renders active streaming content in a lightweight readable
+// form without invoking the expensive glamour markdown renderer. This keeps the
+// UI responsive during long streaming runs.
+func (m Model) renderStreamingText(content string) string {
+	if content == "" {
+		return ""
+	}
+	text := strings.TrimSpace(content)
+	wrapWidth := 80
+	if m.ChatViewport.Width > 0 {
+		wrapWidth = max(m.ChatViewport.Width-2, 40)
+	}
+	return wordwrap.String(text, wrapWidth) + "\n"
 }
 
 func (m Model) renderMarkdown(content string) string {

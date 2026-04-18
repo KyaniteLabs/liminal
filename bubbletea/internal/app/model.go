@@ -200,6 +200,7 @@ type Model struct {
 	// Chat state
 	ChatBlocks     []ChatBlock
 	ActiveResponse string
+	IsStreaming    bool
 	Input          string
 
 	// Preview state
@@ -422,12 +423,15 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 	switch event.Type {
 	case "response.started":
 		m.ActiveResponse = ""
+		m.IsStreaming = true
 		m.addActivity("Response started")
 	case "response.delta":
 		m.ActiveResponse += event.Delta
 	case "response.completed":
 		m.ActiveResponse = event.Content
+		m.IsStreaming = false
 	case "response.committed":
+		m.IsStreaming = false
 		// Add assistant block to chat history
 		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
 			Type:    "assistant",
@@ -483,6 +487,7 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			m.TrustLabel = event.Trust.Label
 		}
 	case "error":
+		m.IsStreaming = false
 		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
 			Type:    "error",
 			Content: event.Message,

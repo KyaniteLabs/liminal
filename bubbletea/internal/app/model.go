@@ -528,6 +528,10 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		if event.Duration > 0 {
 			m.GenerationDuration = event.Duration
 		}
+	case "activity.updated":
+		if strings.TrimSpace(event.Message) != "" {
+			m.addActivity(event.Message)
+		}
 	case "swarm.round":
 		m.SwarmRound = event.Round
 		m.SwarmTotalRounds = event.TotalRounds

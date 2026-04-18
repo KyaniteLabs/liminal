@@ -79,8 +79,13 @@ func (m Model) renderResultPanel(width int) string {
 	if m.PendingAction != nil {
 		lines = append(lines, ui.TaskHintStyle.Render("Review required before mutation: [y] confirm  [n] cancel"))
 	}
-	if result := strings.TrimSpace(m.lastAssistantResponse()); result != "" {
-		lines = append(lines, ui.PanelValueStyle.Render(previewSummary(result, 8, width-6)))
+	if summary := extractVerdict(m.lastAssistantResponse(), min(width-6, 60)); summary != "" {
+		lines = append(lines, ui.PanelValueStyle.Render(summary))
+	}
+
+	failedTools := m.failedToolNames()
+	if len(failedTools) > 0 {
+		lines = append(lines, ui.TimelineFailedStyle.Render("Failed: "+strings.Join(failedTools, ", ")))
 	}
 	return ui.PreviewCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
@@ -373,7 +378,7 @@ func (m Model) renderPreviewCard(width int) string {
 		previewType = "output"
 	}
 	lines = append(lines, ui.PanelMetaStyle.Render("Type: "+previewType))
-	lines = append(lines, ui.PreviewContentStyle.Render(previewSummary(m.PreviewContent, 4, width-8)))
+	lines = append(lines, ui.PreviewContentStyle.Render(previewSummary(m.PreviewContent, 2, width-8)))
 	return ui.PreviewCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
@@ -477,6 +482,54 @@ func fileStatusToken(status string) string {
 	default:
 		return ui.FileModifiedStyle.Render("M")
 	}
+}
+
+func extractVerdict(content string, width int) string {
+	skipNextEmptyHeading := false
+	for _, line := range strings.Split(content, "\n") {
+		trimmed := strings.TrimSpace(line)
+		if trimmed == "" {
+			continue
+		}
+		lower := strings.ToLower(trimmed)
+		if strings.HasPrefix(lower, "status:") ||
+			strings.HasPrefix(lower, "evidence:") ||
+			strings.HasPrefix(lower, "files changed") ||
+			strings.HasPrefix(lower, "tests run") ||
+			strings.HasPrefix(lower, "other verification") ||
+			strings.HasPrefix(lower, "remaining risks") ||
+			strings.HasPrefix(lower, "recommended next action") ||
+			strings.HasPrefix(lower, "supporting tool trace") ||
+			strings.HasPrefix(lower, "-") {
+			continue
+		}
+		if strings.HasPrefix(lower, "verdict:") {
+			after := strings.TrimSpace(trimmed[len("verdict:"):])
+			if after != "" {
+				return trimToWidth(after, width)
+			}
+			skipNextEmptyHeading = true
+			continue
+		}
+		if skipNextEmptyHeading {
+			return trimToWidth(trimmed, width)
+		}
+		return trimToWidth(trimmed, width)
+	}
+	return ""
+}
+
+// failedToolNames returns deduplicated names of failed tools from the timeline.
+func (m Model) failedToolNames() []string {
+	seen := make(map[string]bool)
+	var names []string
+	for _, step := range m.ToolTimeline {
+		if step.Status == "failed" && !seen[step.ToolName] {
+			seen[step.ToolName] = true
+			names = append(names, step.ToolName)
+		}
+	}
+	return names
 }
 
 func previewSummary(content string, maxLines, width int) string {

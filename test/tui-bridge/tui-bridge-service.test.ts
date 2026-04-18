@@ -20,6 +20,12 @@ describe('TuiBridgeService', () => {
     expect(isGenerationRequest(prompt)).toBe(false);
   });
 
+  it('routes Bubble Tea panel cleanup prompts away from creative Ralph generation', () => {
+    const prompt = 'make the Bubble Tea right-column panels less duplicative';
+
+    expect(isGenerationRequest(prompt)).toBe(false);
+  });
+
   it('still routes explicit creative prompts to generation', () => {
     expect(isGenerationRequest('create a p5 shader sketch')).toBe(true);
   });

@@ -35,6 +35,16 @@ describe('IntentRouter', () => {
       expect(result.intent).toBe('creative');
     });
 
+    it('keeps creative comic panel prompts on the creative lane', () => {
+      const result = router.classify('create a comic panel with neon lighting');
+      expect(result.intent).toBe('creative');
+    });
+
+    it('keeps creative music bridge prompts on the creative lane', () => {
+      const result = router.classify('create a bridge between two melodies');
+      expect(result.intent).toBe('creative');
+    });
+
     it('extracts topic from creative requests', () => {
       const result = router.classify('generate a p5 seed explorer');
       expect(result.intent).toBe('creative');
@@ -68,6 +78,16 @@ describe('IntentRouter', () => {
 
     it('classifies "wire up the ledger status command" as engineering', () => {
       const result = router.classify('wire up the ledger status command');
+      expect(result.intent).toBe('engineering');
+    });
+
+    it('classifies Bubble Tea UI work as engineering even with creative verbs', () => {
+      const result = router.classify('make the Bubble Tea right-column operator surface less duplicative');
+      expect(result.intent).toBe('engineering');
+    });
+
+    it('classifies TUI panel cleanup as engineering, not RalphLoop creative generation', () => {
+      const result = router.classify('create a cleaner TUI final report panel without duplicate transcript content');
       expect(result.intent).toBe('engineering');
     });
   });

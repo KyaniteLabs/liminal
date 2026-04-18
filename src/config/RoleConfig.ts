@@ -20,6 +20,7 @@ import { Logger } from '../utils/Logger.js';
 import type { ModelCapabilities } from '../llm/CapabilityRegistry.js';
 import type { ThinkingConfig } from '../llm/ProviderTypes.js';
 import { getEffectiveConfig } from './ConfigLoader.js';
+import { selectApiKeyForEndpoint } from './ProviderKeyResolver.js';
 
 // ── Types ──
 
@@ -151,22 +152,22 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
     generator: {
       baseUrl: ['LLM_BASE_URL'],
       model: ['LLM_MODEL'],
-      apiKey: ['LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
+      apiKey: ['LLM_API_KEY'],
     },
     evaluator: {
       baseUrl: ['EVALUATOR_BASE_URL', 'LLM_BASE_URL'],
       model: ['EVALUATOR_MODEL', 'LLM_MODEL'],
-      apiKey: ['EVALUATOR_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
+      apiKey: ['EVALUATOR_API_KEY', 'LLM_API_KEY'],
     },
     harness: {
       baseUrl: ['HARNESS_BASE_URL', 'LLM_BASE_URL'],
       model: ['HARNESS_MODEL', 'LLM_MODEL'],
-      apiKey: ['HARNESS_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
+      apiKey: ['HARNESS_API_KEY', 'LLM_API_KEY'],
     },
     studio: {
       baseUrl: ['STUDIO_BASE_URL', 'HARNESS_BASE_URL', 'LLM_BASE_URL'],
       model: ['STUDIO_MODEL', 'HARNESS_MODEL', 'LLM_MODEL'],
-      apiKey: ['STUDIO_API_KEY', 'HARNESS_API_KEY', 'LLM_API_KEY', 'OPENAI_API_KEY', 'GLM_API_KEY', 'MOONSHOT_API_KEY', 'MINIMAX_API_KEY'],
+      apiKey: ['STUDIO_API_KEY', 'HARNESS_API_KEY', 'LLM_API_KEY'],
     },
   };
 
@@ -177,11 +178,12 @@ function resolveRole(role: ModelRole, fileConfig: RoleConfigFile | null): Resolv
   const model = fileRole?.model
     || envSources.model.map(k => env(k)).find(Boolean)
     || 'unknown';
+  const provider = fileRole?.provider || detectProviderType(baseUrl, model);
   const apiKey = fileRole?.apiKey
-    || envSources.apiKey.map(k => process.env[k] || env(k)).find(Boolean);
+    || selectApiKeyForEndpoint(baseUrl, model, envSources.apiKey);
 
   return {
-    provider: fileRole?.provider || detectProviderType(baseUrl, model),
+    provider,
     baseUrl,
     apiKey,
     model,

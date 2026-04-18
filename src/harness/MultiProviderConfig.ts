@@ -21,6 +21,7 @@ import type { LLMConfig } from '../llm/LLMClient.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import os from 'node:os';
+import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
 
 /** Read defaultProvider from ~/.liminal/config.json (sync, cached) */
 let _cachedDefault: string | null = null;
@@ -182,6 +183,10 @@ function getProviderConfigInternal(
 ): ProviderConfig | null {
   const { respectGenericEnvOverrides = true } = options;
   const template = PROVIDER_TEMPLATES[provider];
+  const fileProviders = loadConfigFile();
+  const fileProvider = fileProviders?.[provider];
+  const baseUrl = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_BASE_URL : undefined) || fileProvider?.baseUrl || template.baseUrl;
+  const model = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_MODEL : undefined) || fileProvider?.model || template.model;
   
   // Get API key: environment first, then config file. Ignore obvious
   // placeholders so copied example env vars cannot shadow real saved keys.
@@ -207,15 +212,9 @@ function getProviderConfigInternal(
       apiKey = undefined;
       break;
     case 'custom':
-      apiKey = firstUsableApiKey(process.env.LIMINAL_LLM_API_KEY, process.env.OPENAI_API_KEY, fileApiKey);
+      apiKey = firstUsableApiKey(selectApiKeyForEndpoint(baseUrl, model, ['LLM_API_KEY', 'OPENAI_API_KEY']), fileApiKey);
       break;
   }
-  
-  // Read baseUrl and model: env var → config file → template default
-  const fileProviders = loadConfigFile();
-  const fileProvider = fileProviders?.[provider];
-  const baseUrl = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_BASE_URL : undefined) || fileProvider?.baseUrl || template.baseUrl;
-  const model = (respectGenericEnvOverrides ? process.env.LIMINAL_LLM_MODEL : undefined) || fileProvider?.model || template.model;
   
   return {
     ...template,

@@ -206,7 +206,7 @@ describe('P5Validator', () => {
       expect(result.errors).toContain('HTML-wrapped p5.js must include p5.js CDN');
     });
 
-    it('should reject incomplete HTML-wrapped p5.js documents', () => {
+    it('should allow HTML-wrapped p5.js documents without explicit closing body/html tags', () => {
       const code = `<!DOCTYPE html>
 <html>
 <head>
@@ -220,8 +220,8 @@ describe('P5Validator', () => {
   </script>`;
 
       const result = P5Validator.validate(code);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain('HTML-wrapped p5.js must include closing </body> and </html> tags');
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
     it('should validate p5.js with instance mode', () => {

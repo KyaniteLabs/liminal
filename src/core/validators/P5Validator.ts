@@ -115,10 +115,6 @@ export class P5Validator {
   private static validateHTMLWrapped(code: string): string[] {
     const errors: string[] = [];
 
-    if (!/<\/body>\s*<\/html>\s*$/i.test(code)) {
-      errors.push('HTML-wrapped p5.js must include closing </body> and </html> tags');
-    }
-
     // HTML-wrapped p5 must include p5 CDN
     if (!/p5\.js|p5\.min\.js/.test(code)) {
       errors.push('HTML-wrapped p5.js must include p5.js CDN');

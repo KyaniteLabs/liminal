@@ -252,6 +252,20 @@ func TestResultPanelShowsLastError(t *testing.T) {
 	}
 }
 
+func TestPreviewCardRendersImageInline(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.PreviewType = "image"
+	m.PreviewContent = "not-valid-base64"
+
+	panel := m.renderPreviewCard(72)
+	if !strings.Contains(panel, "Type: image") {
+		t.Fatalf("expected image preview type\n%s", panel)
+	}
+	if !strings.Contains(panel, "image decode error") {
+		t.Fatalf("expected inline image render attempt\n%s", panel)
+	}
+}
+
 func TestOperatorRunStatusLabels(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		m := readyOperatorModel(t)

@@ -384,7 +384,11 @@ func (m Model) renderPreviewCard(width int) string {
 		previewType = "output"
 	}
 	lines = append(lines, ui.PanelMetaStyle.Render("Type: "+previewType))
-	lines = append(lines, ui.PreviewContentStyle.Render(previewSummary(m.PreviewContent, 2, width-8)))
+	if previewType == "image" {
+		lines = append(lines, RenderImageFromBase64(m.PreviewContent, min(width-8, 96)))
+	} else {
+		lines = append(lines, ui.PreviewContentStyle.Render(previewSummary(m.PreviewContent, 2, width-8)))
+	}
 	return ui.PreviewCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 

@@ -653,6 +653,50 @@ describe('LLMModeAgent', () => {
     expect(session.status).toBe(Status.SUCCESS);
   });
 
+  it('keeps artifact completion blocked after a failed writeFile', async () => {
+    mockWriteFile.execute.mockResolvedValueOnce({ success: false, error: 'Path not allowed' });
+    queuePlans(
+      '{"tool":"writeFile","params":{"path":".omx/proof/operator-trust-proof-20260418.md","content":"proof"},"thought":"write proof artifact","expectedResult":"artifact exists"}',
+      '{"tool":"complete","params":{},"thought":"artifact was attempted","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-artifact-failed-write',
+      title: 'Artifact failed write',
+      description: 'Create .omx/proof/operator-trust-proof-20260418.md. Do not report success unless .omx/proof/operator-trust-proof-20260418.md was created or overwritten.',
+      approved: true,
+      maxSteps: 2,
+    });
+
+    expect(mockWriteFile.execute).toHaveBeenCalled();
+    expect(Array.from(session.mutatedFiles)).toEqual([]);
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.messages.some((message) =>
+      message.role === 'tool' && message.content.includes('Artifact gate: create or overwrite .omx/proof/operator-trust-proof-20260418.md with writeFile'),
+    )).toBe(true);
+  });
+
+  it('detects backtick-quoted artifact paths in completion gates', async () => {
+    queuePlans(
+      '{"tool":"complete","params":{},"thought":"I will create the quoted artifact now","expectedResult":"done"}',
+    );
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 'tui-self-artifact-quoted-gate',
+      title: 'Quoted artifact gate',
+      description: 'Do not report success unless `.omx/proof/quoted-proof.md` was created.',
+      approved: true,
+      maxSteps: 1,
+    });
+
+    expect(session.messages.some((message) =>
+      message.role === 'tool' && message.content.includes('Artifact gate: create or overwrite .omx/proof/quoted-proof.md with writeFile'),
+    )).toBe(true);
+    expect(session.status).toBe(Status.FAILED);
+  });
+
   it('auto-completes when the required verification target succeeds after mutation', async () => {
     queuePlans(
       '{"tool":"applyEdit","params":{"path":"src/runtime-core/SelfImprovementRuntime.ts","search":"x","replace":"y"},"thought":"edit","expectedResult":"changed"}',

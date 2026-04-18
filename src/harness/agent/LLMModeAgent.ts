@@ -149,6 +149,8 @@ export interface LLMSession {
   exploredPaths: Set<string>;
   /** Files that were mutated (applyEdit/writeFile) during this session */
   mutatedFiles: Set<string>;
+  /** Files that were successfully mutated (applyEdit/writeFile) during this session */
+  successfulMutatedFiles: Set<string>;
   /** Last verification result (build/test) for resume context */
   lastVerification?: import('../RunStateStore.js').VerificationState;
   /** Deterministic exit reason for bounded runs (e.g. 'bounded-inspection', 'bounded-no-change') */
@@ -230,6 +232,7 @@ export class LLMModeAgent {
       modifiedExtensions: new Set(),
       exploredPaths: new Set(),
       mutatedFiles: new Set(),
+      successfulMutatedFiles: new Set(),
       activeFocusIndex: 0,
       focusInspectionBudgetRemaining: 0,
       focusStatus: 'rejected',
@@ -1201,11 +1204,13 @@ When the task is complete and build passes, respond with tool "complete".`;
           case 'writeFile': {
             // Track file extension for language-aware verification
             this.trackModifiedExtension(params.path as string);
-            // Track mutated file for resume context
-            if (params.path && typeof params.path === 'string') {
+            const writeResult = await writeFileTool.execute(params);
+            // Track mutated file for resume context only after a successful write.
+            if (writeResult.success && params.path && typeof params.path === 'string') {
               this.currentSession?.mutatedFiles.add(params.path);
+              this.currentSession?.successfulMutatedFiles.add(params.path);
             }
-            return writeFileTool.execute(params);
+            return writeResult;
           }
           
           case 'applyEdit': {
@@ -1216,11 +1221,13 @@ When the task is complete and build passes, respond with tool "complete".`;
             }
             // Track file extension for language-aware verification
             this.trackModifiedExtension(params.path as string);
-            // Track mutated file for resume context
-            if (params.path && typeof params.path === 'string') {
+            const editResult = await applyEditTool.execute(params);
+            // Track mutated file for resume context only after a successful edit.
+            if (editResult.success && params.path && typeof params.path === 'string') {
               this.currentSession?.mutatedFiles.add(params.path);
+              this.currentSession?.successfulMutatedFiles.add(params.path);
             }
-            return applyEditTool.execute(params);
+            return editResult;
           }
           
           case 'runBuild': {
@@ -1392,7 +1399,7 @@ When the task is complete and build passes, respond with tool "complete".`;
 
   private getRequiredArtifactPath(session: LLMSession): string | null {
     const description = session.task.description;
-    const explicitGate = /Do not report success unless\s+([^\s`]+\.md)\s+was created(?:\s+or\s+overwritten)?/i.exec(description);
+    const explicitGate = /Do not report success unless\s+`?([^\s`]+\.md)`?\s+was created(?:\s+or\s+overwritten)?/i.exec(description);
     if (explicitGate?.[1]) return explicitGate[1].trim();
 
     const artifactLine = /(?:artifact|Artifact)\s+(?:at|path):?\s*`?([^\s`]+\.md)`?/i.exec(description);
@@ -1402,7 +1409,7 @@ When the task is complete and build passes, respond with tool "complete".`;
   private getArtifactGateError(session: LLMSession): string | null {
     const artifactPath = this.getRequiredArtifactPath(session);
     if (!artifactPath) return null;
-    if (session.mutatedFiles.has(artifactPath)) return null;
+    if (session.successfulMutatedFiles.has(artifactPath)) return null;
     return `Artifact gate: create or overwrite ${artifactPath} with writeFile before completing this task.`;
   }
 
@@ -1432,6 +1439,7 @@ When the task is complete and build passes, respond with tool "complete".`;
     }
     for (const file of existingRunState.mutatedFiles) {
       session.mutatedFiles.add(file);
+      session.successfulMutatedFiles.add(file);
     }
     if (existingRunState.lastVerification) {
       session.lastVerification = existingRunState.lastVerification;

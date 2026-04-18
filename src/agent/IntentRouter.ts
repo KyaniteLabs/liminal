@@ -40,6 +40,13 @@ const DEFAULT_KEYWORDS: IntentKeywords = {
   ],
 };
 
+const INTERNAL_ENGINEERING_SURFACES = [
+  'bubble tea', 'bubbletea', 'tui', 'operator surface', 'right-column',
+  'right column', 'final report panel', 'tool trace panel', 'conversation pane',
+  'tui panel', 'tui viewport', 'bubble tea scroll', 'bubbletea scroll',
+  'tui scroll', 'tui bridge', 'provider config', 'bridge launcher config',
+];
+
 // ── Router ──
 
 export class IntentRouter {
@@ -71,6 +78,7 @@ export class IntentRouter {
     const hybridHits = this.countHits(normalized, this.keywords.hybrid);
     const creativeHits = this.countHits(normalized, this.keywords.creative);
     const engineeringHits = this.countHits(normalized, this.keywords.engineering);
+    const internalSurfaceHits = this.countHits(normalized, INTERNAL_ENGINEERING_SURFACES);
 
     const hitCategories = [
       hybridHits > 0,
@@ -91,8 +99,25 @@ export class IntentRouter {
     }
 
     if (creativeHits > 0 && engineeringHits > 0) {
+      if (internalSurfaceHits > 0) {
+        return {
+          intent: 'engineering',
+          confidence: 'medium',
+          topic: this.extractTopic(normalized),
+          input,
+        };
+      }
       return {
         intent: 'hybrid',
+        confidence: 'medium',
+        topic: this.extractTopic(normalized),
+        input,
+      };
+    }
+
+    if (creativeHits > 0 && internalSurfaceHits > 0) {
+      return {
+        intent: 'engineering',
         confidence: 'medium',
         topic: this.extractTopic(normalized),
         input,

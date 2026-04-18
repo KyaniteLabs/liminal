@@ -57,13 +57,14 @@ const AVAILABLE_TOOL_NAMES = [
   'lsp',
   'astValidate',
   'importGuard',
+  'gitStatus',
   'createBackup',
   'restoreBackup',
 ] as const;
 
 function unknownToolMessage(toolName: string): string {
   const shellHint = ['execute', 'bash', 'shell', 'runCommand', 'terminal'].includes(toolName)
-    ? ' There is no generic shell/execute tool; use readFile/listDir/search/searchCode for inspection and runBuild/typeCheck/runTests/runFocusedTests/runLint/npm for verification.'
+    ? ' There is no generic shell/execute tool; use gitStatus for repo state, readFile/listDir/search/searchCode for inspection and runBuild/typeCheck/runTests/runFocusedTests/runLint/npm for verification.'
     : '';
   return `Unknown tool: ${toolName}.${shellHint} Available tools: ${AVAILABLE_TOOL_NAMES.join(', ')}`;
 }

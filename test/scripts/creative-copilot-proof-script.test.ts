@@ -1,0 +1,26 @@
+import { describe, expect, it } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const repoRoot = path.resolve(__dirname, '../..');
+const scriptPath = path.join(repoRoot, 'scripts', 'proof', 'creative-copilot-proof.ts');
+
+describe('creative copilot proof script', () => {
+  it('persists reports, artifacts, screenshot previews, and issue evidence', () => {
+    const source = readFileSync(scriptPath, 'utf8');
+
+    expect(source).toContain("path.join('.omx', 'proof', 'creative-copilot')");
+    expect(source).toContain('report.json');
+    expect(source).toContain('report.md');
+    expect(source).toContain('renderScreenshot');
+    expect(source).toContain("spec.previewKind !== 'blocked'");
+    expect(source).toContain('validateScreenshotVisible');
+    expect(source).toContain('Preview runtime error');
+    expect(source).toContain("previewKind: 'image'");
+    expect(source).toContain('issues:');
+    expect(source).toContain('getProviderConfig');
+    expect(source).toContain('P5GeneratorV2');
+  });
+});

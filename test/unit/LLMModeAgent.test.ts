@@ -1480,6 +1480,23 @@ describe('LLMModeAgent', () => {
     expect(mockRunFocusedTests.execute).toHaveBeenCalled();
   });
 
+  it('explains shell-like unknown tools with allowed alternatives', async () => {
+    const agent = new LLMModeAgent(mockLLM as any);
+
+    const result = await (agent as any).executeTool({
+      tool: 'execute',
+      params: { command: 'git log -3 --oneline' },
+      thought: 'try a shell command',
+    });
+
+    expect(result.success).toBe(false);
+    expect(result.error).toContain('Unknown tool: execute');
+    expect(result.error).toContain('There is no generic shell/execute tool');
+    expect(result.error).toContain('gitStatus');
+    expect(result.error).toContain('runBuild');
+    expect(result.error).toContain('Available tools');
+  });
+
   // ── Edge cases ─────────────────────────────────────────────────────
   it('handles fileHint in task description', async () => {
     mockComplete.mockResolvedValue({ text: 'not json' });

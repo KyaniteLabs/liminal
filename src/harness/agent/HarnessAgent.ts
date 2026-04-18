@@ -39,6 +39,35 @@ import {
 } from '../tools/index.js';
 import type { ToolResult } from '../tools/types.js';
 
+const AVAILABLE_TOOL_NAMES = [
+  'readFile',
+  'applyEdit',
+  'writeFile',
+  'runBuild',
+  'runTests',
+  'executeSkill',
+  'search',
+  'searchCode',
+  'searchDocs',
+  'listDir',
+  'typeCheck',
+  'npm',
+  'runLint',
+  'runFocusedTests',
+  'lsp',
+  'astValidate',
+  'importGuard',
+  'createBackup',
+  'restoreBackup',
+] as const;
+
+function unknownToolMessage(toolName: string): string {
+  const shellHint = ['execute', 'bash', 'shell', 'runCommand', 'terminal'].includes(toolName)
+    ? ' There is no generic shell/execute tool; use readFile/listDir/search/searchCode for inspection and runBuild/typeCheck/runTests/runFocusedTests/runLint/npm for verification.'
+    : '';
+  return `Unknown tool: ${toolName}.${shellHint} Available tools: ${AVAILABLE_TOOL_NAMES.join(', ')}`;
+}
+
 export interface AgentTask {
   id: string;
   title: string;
@@ -292,7 +321,7 @@ export class HarnessAgent {
       // Get the tool instance
       const tool = this.getToolInstance(toolName);
       if (!tool) {
-        return { success: false, error: `Unknown tool: ${toolName}` };
+        return { success: false, error: unknownToolMessage(toolName) };
       }
       
       // Wrap with telemetry

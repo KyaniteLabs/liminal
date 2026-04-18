@@ -26,6 +26,7 @@ COMMON TOOL PARAMS:
 - search: use {"pattern":"text"} and optional {"path":"src/file.ts"}.
 - searchCode: use {"query":"text"}; {"pattern":"text"} is accepted as an alias.
 - executeSkill: use {"name":"skill-name"} only to load SKILL.md instructions. It cannot run shell commands.
+- No shell tool exists: never use "execute", "bash", "shell", "runCommand", or "terminal". For repository state use gitStatus; for verification use runBuild/typeCheck/runTests/runFocusedTests/runLint/npm; for inspection use readFile/listDir/search/searchCode.
 
 WORK LOOP:
 READ → PLAN → EDIT → VERIFY → COMPLETE or RECOVER
@@ -126,7 +127,7 @@ You MUST respond with valid JSON:
 
 Available tools: readFile, applyEdit, writeFile, runBuild, runTests, executeSkill, createBackup, restoreBackup, search, searchCode, searchDocs, listDir, typeCheck, npm, runLint, runFocusedTests, lsp, astValidate, importGuard, gitStatus, complete
 
-Common params: gitStatus uses {} or {"path":"."}; readFile uses {"path":"src/file.ts"} and supports startLine/offset pagination; search uses {"pattern":"text"}; searchCode uses {"query":"text"}; executeSkill uses {"name":"skill-name"} and cannot run shell commands.
+Common params: gitStatus uses {} or {"path":"."}; readFile uses {"path":"src/file.ts"} and supports startLine/offset pagination; search uses {"pattern":"text"}; searchCode uses {"query":"text"}; executeSkill uses {"name":"skill-name"} and cannot run shell commands. There is no generic execute/shell/bash tool.
 
 ## When to Stop
 Respond with tool "complete" when:

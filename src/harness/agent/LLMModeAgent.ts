@@ -54,6 +54,37 @@ import {
   type RunState,
 } from '../RunStateStore.js';
 
+const AVAILABLE_TOOL_NAMES = [
+  'readFile',
+  'applyEdit',
+  'writeFile',
+  'runBuild',
+  'runTests',
+  'executeSkill',
+  'createBackup',
+  'restoreBackup',
+  'search',
+  'searchCode',
+  'searchDocs',
+  'listDir',
+  'typeCheck',
+  'npm',
+  'runLint',
+  'runFocusedTests',
+  'lsp',
+  'astValidate',
+  'importGuard',
+  'gitStatus',
+  'complete',
+] as const;
+
+function unknownToolMessage(tool: string): string {
+  const shellHint = ['execute', 'bash', 'shell', 'runCommand', 'terminal'].includes(tool)
+    ? ' There is no generic shell/execute tool; use gitStatus for repo state, readFile/listDir/search/searchCode for inspection, and runBuild/typeCheck/runTests/runFocusedTests/runLint/npm for verification.'
+    : '';
+  return `Unknown tool: ${tool}.${shellHint} Available tools: ${AVAILABLE_TOOL_NAMES.join(', ')}`;
+}
+
 export interface LLMTask {
   id: string;
   title: string;
@@ -1253,7 +1284,7 @@ When the task is complete and build passes, respond with tool "complete".`;
             return gitStatusTool.execute(params);
 
           default:
-            return { success: false, error: `Unknown tool: ${tool}` };
+            return { success: false, error: unknownToolMessage(tool) };
         }
       }
     );

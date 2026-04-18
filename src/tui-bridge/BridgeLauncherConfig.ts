@@ -64,10 +64,8 @@ export function applyBridgeProviderEnv(
   if (!config.apiKey) return;
 
   const auth: Record<string, string> = {
-    LLM_API_KEY: config.apiKey,
     HARNESS_API_KEY: config.apiKey,
     EVALUATOR_API_KEY: config.apiKey,
-    LIMINAL_LLM_API_KEY: config.apiKey,
     LIMINAL_HARNESS_API_KEY: config.apiKey,
     LIMINAL_EVALUATOR_API_KEY: config.apiKey,
   };
@@ -78,6 +76,7 @@ export function applyBridgeProviderEnv(
 
   if (config.provider === 'glm') env.GLM_API_KEY = config.apiKey;
   if (config.provider === 'minimax') env.MINIMAX_API_KEY = config.apiKey;
+  if (config.provider === 'custom') env.OPENAI_API_KEY = config.apiKey;
   if (config.provider === 'openrouter') env.OPENROUTER_API_KEY = config.apiKey;
   if (config.provider === 'moonshot' || config.provider === 'kimi') {
     env.MOONSHOT_API_KEY = config.apiKey;

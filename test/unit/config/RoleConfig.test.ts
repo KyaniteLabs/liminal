@@ -165,6 +165,41 @@ describe('loadRoleConfig with env vars', () => {
     expect(config.harness.apiKey).toBe('harness-specific-key');
   });
 
+  it('does not use MINIMAX_API_KEY for OpenAI harness endpoints', async () => {
+    vi.stubEnv('LIMINAL_HARNESS_BASE_URL', 'https://api.openai.com/v1');
+    vi.stubEnv('LIMINAL_HARNESS_MODEL', 'gpt-5.4');
+    vi.stubEnv('MINIMAX_API_KEY', 'minimax-key');
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    expect(config.harness.provider).toBe('openai');
+    expect(config.harness.apiKey).toBeUndefined();
+  });
+
+  it('uses role-specific key for OpenAI harness endpoints when provider key is absent', async () => {
+    vi.stubEnv('LIMINAL_HARNESS_BASE_URL', 'https://api.openai.com/v1');
+    vi.stubEnv('LIMINAL_HARNESS_MODEL', 'gpt-5.4');
+    vi.stubEnv('LIMINAL_HARNESS_API_KEY', 'harness-openai-key');
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    expect(config.harness.provider).toBe('openai');
+    expect(config.harness.apiKey).toBe('harness-openai-key');
+  });
+
+  it('uses GLM_API_KEY for Z.ai Anthropic harness endpoint over generic keys', async () => {
+    vi.stubEnv('LIMINAL_HARNESS_BASE_URL', 'https://api.z.ai/api/anthropic');
+    vi.stubEnv('LIMINAL_HARNESS_MODEL', 'glm-5.1');
+    vi.stubEnv('GLM_API_KEY', 'glm-key');
+    vi.stubEnv('MINIMAX_API_KEY', 'minimax-key');
+    vi.stubEnv('LIMINAL_LLM_API_KEY', 'generic-key');
+
+    const config = await loadRoleConfig('/tmp/nonexistent-liminal-test');
+
+    expect(config.harness.provider).toBe('anthropic');
+    expect(config.harness.apiKey).toBe('glm-key');
+  });
+
   it('evaluator uses evaluator-specific env vars', async () => {
     vi.stubEnv('LIMINAL_EVALUATOR_BASE_URL', 'http://eval-host:7070/v1');
     vi.stubEnv('LIMINAL_EVALUATOR_MODEL', 'test-eval-model');

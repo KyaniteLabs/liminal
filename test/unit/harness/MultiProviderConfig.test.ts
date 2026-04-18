@@ -361,6 +361,28 @@ describe('getActiveProviderConfig', () => {
     expect(config!.apiKey).toBe('mm-key');
   });
 
+  it('does not pair OpenAI endpoint with MINIMAX_API_KEY', () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'https://api.openai.com/v1';
+    process.env.LIMINAL_LLM_MODEL = 'gpt-5.4';
+    process.env.MINIMAX_API_KEY = 'minimax-key';
+
+    const config = getActiveProviderConfig();
+
+    expect(config!.baseUrl).toBe('https://api.openai.com/v1');
+    expect(config!.apiKey).toBeUndefined();
+  });
+
+  it('uses OPENAI_API_KEY for OpenAI endpoint instead of generic provider key', () => {
+    process.env.LIMINAL_LLM_BASE_URL = 'https://api.openai.com/v1';
+    process.env.LIMINAL_LLM_MODEL = 'gpt-5.4';
+    process.env.MINIMAX_API_KEY = 'minimax-key';
+    process.env.OPENAI_API_KEY = 'openai-key';
+
+    const config = getActiveProviderConfig();
+
+    expect(config!.apiKey).toBe('openai-key');
+  });
+
   it('returns null when provider config is somehow missing', () => {
     // getActiveProviderConfig internally calls getActiveProvider then getProviderConfig.
     // The only null-return path is if getProviderConfig returns null, which currently

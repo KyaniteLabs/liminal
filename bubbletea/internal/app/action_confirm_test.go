@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/Pastorsimon1798/liminal/bubbletea/internal/bridge"
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func TestApplyEventTracksActionAndConfirmModes(t *testing.T) {
@@ -58,6 +59,37 @@ func TestConfirmActionSendsBridgeRequest(t *testing.T) {
 	cmd := m.ConfirmPendingAction()
 	if cmd == nil {
 		t.Fatal("expected cmd from ConfirmPendingAction")
+	}
+	msg := cmd()
+	if _, ok := msg.(actionConfirmedMsg); !ok {
+		t.Fatalf("expected actionConfirmedMsg, got %T", msg)
+	}
+	if !confirmCalled {
+		t.Fatal("expected confirm endpoint to be called")
+	}
+}
+
+func TestConfirmKeyUsesPendingActionEvenWhenModeIsStale(t *testing.T) {
+	confirmCalled := false
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/tui/session/s1/actions/a1/confirm" && r.Method == http.MethodPost {
+			confirmCalled = true
+			fmt.Fprint(w, `{"ok":true}`)
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	defer server.Close()
+
+	m := NewModel(server.URL)
+	m.Connected = true
+	m.SessionID = "s1"
+	m.Mode = "IDLE"
+	m.PendingAction = &bridge.PendingAction{ID: "a1", Title: "Approve task", Kind: "llm", RequiresConfirmation: true}
+
+	_, cmd := m.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}})
+	if cmd == nil {
+		t.Fatal("expected confirm command when pending action exists")
 	}
 	msg := cmd()
 	if _, ok := msg.(actionConfirmedMsg); !ok {
@@ -160,10 +192,10 @@ func TestViewShowsReviewInstructionsInConversationPane(t *testing.T) {
 	m.ApplyEvent(bridge.Event{
 		Type: "action.review_required",
 		Action: &bridge.PendingAction{
-			ID:                  "a1",
-			Title:               "Inspect repository",
-			Description:         "Inspect git status",
-			Kind:                "structured",
+			ID:                   "a1",
+			Title:                "Inspect repository",
+			Description:          "Inspect git status",
+			Kind:                 "structured",
 			RequiresConfirmation: true,
 		},
 	})

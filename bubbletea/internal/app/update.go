@@ -300,7 +300,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 
 			case "y":
-				if m.Mode == "ACTION" {
+				if m.PendingAction != nil {
 					if cmd := m.ConfirmPendingAction(); cmd != nil {
 						return m, cmd
 					}
@@ -311,7 +311,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, cmd
 
 			case "n":
-				if m.Mode == "ACTION" {
+				if m.PendingAction != nil {
 					if cmd := m.CancelPendingAction(); cmd != nil {
 						return m, cmd
 					}

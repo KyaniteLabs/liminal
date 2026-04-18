@@ -284,6 +284,30 @@ describe('P5Validator', () => {
       expect(result.valid).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
+
+    it('should allow standard p5 shape mode constants', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+        }
+
+        function draw() {
+          beginShape(TRIANGLE_STRIP);
+          vertex(30, 75);
+          vertex(40, 20);
+          vertex(50, 75);
+          vertex(60, 20);
+          endShape();
+          beginShape(POINTS);
+          vertex(100, 100);
+          endShape();
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
   });
 
   describe('getMinSize', () => {

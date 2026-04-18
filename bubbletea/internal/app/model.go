@@ -1063,7 +1063,7 @@ func (m Model) StatusLines() []string {
 
 // ConfirmPendingAction sends a confirm request to the bridge.
 func (m Model) ConfirmPendingAction() tea.Cmd {
-	if m.Mode != "ACTION" || m.PendingAction == nil || !m.Connected {
+	if m.PendingAction == nil || !m.Connected {
 		return nil
 	}
 	actionID := m.PendingAction.ID
@@ -1080,7 +1080,7 @@ func (m Model) ConfirmPendingAction() tea.Cmd {
 
 // CancelPendingAction sends a cancel request to the bridge.
 func (m Model) CancelPendingAction() tea.Cmd {
-	if m.Mode != "ACTION" || m.PendingAction == nil || !m.Connected {
+	if m.PendingAction == nil || !m.Connected {
 		return nil
 	}
 	actionID := m.PendingAction.ID

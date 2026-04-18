@@ -4,16 +4,17 @@
  * Tests all 9 domains with GLM-5.1 model
  */
 
-import { LLMClient } from '../dist/llm/LLMClient.js';
-import { P5GeneratorV2 } from '../dist/generators/p5/P5GeneratorV2.js';
-import { ShaderGenerator } from '../dist/generators/glsl/ShaderGenerator.js';
-import { ThreeGenerator } from '../dist/generators/three/ThreeGenerator.js';
-import { StrudelGenerator } from '../dist/generators/strudel/StrudelGenerator.js';
-import { HydraGenerator } from '../dist/generators/hydra/HydraGenerator.js';
-import { ToneGenerator } from '../dist/generators/tone/ToneGenerator.js';
-import { RemotionGenerator } from '../dist/generators/remotion/RemotionGenerator.js';
-import { HTMLWebGenerator } from '../dist/generators/html/HTMLWebGenerator.js';
-import { ASCIIArtGenerator } from '../dist/generators/ascii/ASCIIArtGenerator.js';
+import { LLMClient } from '../src/llm/LLMClient.js';
+import { P5GeneratorV2 } from '../src/generators/p5/P5GeneratorV2.js';
+import { ShaderGenerator } from '../src/generators/glsl/ShaderGenerator.js';
+import { ThreeGenerator } from '../src/generators/three/ThreeGenerator.js';
+import { StrudelGenerator } from '../src/generators/strudel/StrudelGenerator.js';
+import { HydraGenerator } from '../src/generators/hydra/HydraGenerator.js';
+import { ToneGenerator } from '../src/generators/tone/ToneGenerator.js';
+import { RemotionGenerator } from '../src/generators/remotion/RemotionGenerator.js';
+import { HTMLWebGenerator } from '../src/generators/html/HTMLWebGenerator.js';
+import { ASCIIArtGenerator } from '../src/generators/ascii/ASCIIArtGenerator.js';
+import { PROVIDER_TEMPLATES } from '../src/harness/MultiProviderConfig.js';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -33,12 +34,39 @@ const DOMAINS = [
   { name: 'ascii', prompt: 'Create mountain ASCII art', Generator: ASCIIArtGenerator },
 ];
 
-const GLM_CONFIG = {
+function loadGlmApiKey(): string | undefined {
+  if (process.env.GLM_API_KEY) return process.env.GLM_API_KEY;
+
+  const configPath = path.join(process.env.HOME ?? '', '.liminal', 'config.json');
+  if (!fs.existsSync(configPath)) return undefined;
+
+  try {
+    const parsed = JSON.parse(fs.readFileSync(configPath, 'utf8')) as {
+      providers?: { glm?: { apiKey?: string } };
+    };
+    return parsed.providers?.glm?.apiKey;
+  } catch {
+    return undefined;
+  }
+}
+
+function getGlmConfig() {
+  const template = PROVIDER_TEMPLATES.glm;
+  const apiKey = loadGlmApiKey();
+
+  if (!apiKey) {
+    throw new Error('GLM_API_KEY not set and no providers.glm.apiKey found in ~/.liminal/config.json');
+  }
+
+  return {
   name: 'glm-5.1',
-  baseUrl: 'https://api.z.ai/api/coding/paas/v4',
-  model: 'glm-5.1',
-  apiKey: '1d4eebaada2e4da59ef1a9aa11375d18.GayzeS6a4nuoBVFj',
-};
+    baseUrl: template.baseUrl,
+    model: template.model,
+    apiKey,
+  };
+}
+
+type GlmConfig = ReturnType<typeof getGlmConfig>;
 
 interface Result {
   domain: string;
@@ -48,7 +76,7 @@ interface Result {
   error?: string;
 }
 
-async function runTest(domain: typeof DOMAINS[0]): Promise<Result> {
+async function runTest(domain: typeof DOMAINS[0], glmConfig: GlmConfig): Promise<Result> {
   const start = Date.now();
   const outputPath = `landing-live/glm-${domain.name}-glm-5.1.html`;
   
@@ -57,9 +85,9 @@ async function runTest(domain: typeof DOMAINS[0]): Promise<Result> {
   try {
     const llm = new LLMClient({
       role: 'generator',
-      baseUrl: GLM_CONFIG.baseUrl,
-      model: GLM_CONFIG.model,
-      apiKey: GLM_CONFIG.apiKey,
+      baseUrl: glmConfig.baseUrl,
+      model: glmConfig.model,
+      apiKey: glmConfig.apiKey,
       temperature: 0.7,
       maxTokens: 4096,
     });
@@ -71,19 +99,21 @@ async function runTest(domain: typeof DOMAINS[0]): Promise<Result> {
     fs.writeFileSync(path.join(PROJECT_ROOT, outputPath), code);
     console.log(`  ✅ ${domain.name} (${duration}ms) → ${outputPath}`);
     
-    return { domain: domain.name, model: GLM_CONFIG.name, success: true, duration };
+    return { domain: domain.name, model: glmConfig.name, success: true, duration };
   } catch (error) {
     const duration = Date.now() - start;
     const errorMsg = error instanceof Error ? error.message : String(error);
     console.log(`  ❌ ${domain.name} (${duration}ms): ${errorMsg.slice(0, 100)}`);
-    return { domain: domain.name, model: GLM_CONFIG.name, success: false, duration, error: errorMsg };
+    return { domain: domain.name, model: glmConfig.name, success: false, duration, error: errorMsg };
   }
 }
 
 async function main() {
+  const glmConfig = getGlmConfig();
+
   console.log('🌟 GLM CLOUD PROVIDER DOGFOOD\n');
-  console.log(`Model: ${GLM_CONFIG.model}`);
-  console.log(`Base URL: ${GLM_CONFIG.baseUrl}`);
+  console.log(`Model: ${glmConfig.model}`);
+  console.log(`Base URL: ${glmConfig.baseUrl}`);
   console.log(`Domains: ${DOMAINS.length}\n`);
 
   const landingDir = path.join(PROJECT_ROOT, 'landing-live');
@@ -94,7 +124,7 @@ async function main() {
 
   // Run tests sequentially to avoid rate limits
   for (const domain of DOMAINS) {
-    const result = await runTest(domain);
+    const result = await runTest(domain, glmConfig);
     results.push(result);
   }
 
@@ -106,7 +136,7 @@ async function main() {
   const report = {
     timestamp: new Date().toISOString(),
     provider: 'glm',
-    model: GLM_CONFIG.model,
+    model: glmConfig.model,
     total: results.length,
     success,
     failed,
@@ -134,4 +164,7 @@ async function main() {
   }
 }
 
-main().catch(console.error);
+main().catch(error => {
+  console.error(error);
+  process.exit(1);
+});

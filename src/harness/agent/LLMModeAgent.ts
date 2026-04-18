@@ -427,9 +427,9 @@ When the task is complete and build passes, respond with tool "complete".`;
 
         // Check for completion
         if (toolCall.tool === 'complete') {
-          const verificationGateError = this.getVerificationGateError(session);
-          if (verificationGateError) {
-            const gateResult: ToolResult = { success: false, error: verificationGateError };
+          const completionGateError = this.getCompletionGateError(session);
+          if (completionGateError) {
+            const gateResult: ToolResult = { success: false, error: completionGateError };
             session.messages.push({
               role: 'tool',
               content: JSON.stringify(gateResult),
@@ -440,7 +440,7 @@ When the task is complete and build passes, respond with tool "complete".`;
               current: session.stepCount,
               total: maxSteps,
               stage: 'executed complete',
-              message: `complete failed: ${verificationGateError.slice(0, 100)}`,
+              message: `complete failed: ${completionGateError.slice(0, 100)}`,
             });
             continue;
           }
@@ -1384,6 +1384,26 @@ When the task is complete and build passes, respond with tool "complete".`;
     const target = this.getRequiredVerificationTarget(session.task);
     if (!target) return null;
     return `Verification gate: run ${target.tool}${target.pattern ? ` (${target.pattern})` : ''} before completing this task.`;
+  }
+
+  private getCompletionGateError(session: LLMSession): string | null {
+    return this.getArtifactGateError(session) || this.getVerificationGateError(session);
+  }
+
+  private getRequiredArtifactPath(session: LLMSession): string | null {
+    const description = session.task.description;
+    const explicitGate = /Do not report success unless\s+([^\s`]+\.md)\s+was created(?:\s+or\s+overwritten)?/i.exec(description);
+    if (explicitGate?.[1]) return explicitGate[1].trim();
+
+    const artifactLine = /(?:artifact|Artifact)\s+(?:at|path):?\s*`?([^\s`]+\.md)`?/i.exec(description);
+    return artifactLine?.[1]?.trim() || null;
+  }
+
+  private getArtifactGateError(session: LLMSession): string | null {
+    const artifactPath = this.getRequiredArtifactPath(session);
+    if (!artifactPath) return null;
+    if (session.mutatedFiles.has(artifactPath)) return null;
+    return `Artifact gate: create or overwrite ${artifactPath} with writeFile before completing this task.`;
   }
 
   /**

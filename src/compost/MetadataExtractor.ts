@@ -117,6 +117,10 @@ export class MetadataExtractor {
    * Returns null if sharp is not installed or extraction fails.
    */
   private static async extractImageDimensions(filePath: string): Promise<{ width: number; height: number } | null> {
+    if (!await this.hasImageSignature(filePath)) {
+      return null;
+    }
+
     const sharp = await getSharp();
     if (!sharp || typeof sharp !== 'function') {
       return null;
@@ -132,6 +136,26 @@ export class MetadataExtractor {
     } catch (err) {
       Logger.warn('MetadataExtractor', `Failed to extract image dimensions from ${filePath}:`, err);
       return null;
+    }
+  }
+
+  private static async hasImageSignature(filePath: string): Promise<boolean> {
+    const ext = filePath.split('.').pop()?.toLowerCase() ?? '';
+    const handle = await fs.open(filePath, 'r');
+    try {
+      const buffer = Buffer.alloc(16);
+      const { bytesRead } = await handle.read(buffer, 0, buffer.length, 0);
+      const head = buffer.subarray(0, bytesRead);
+      if (ext === 'jpg' || ext === 'jpeg') return head.length >= 3 && head[0] === 0xff && head[1] === 0xd8 && head[2] === 0xff;
+      if (ext === 'png') return head.subarray(0, 8).equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
+      if (ext === 'gif') return head.subarray(0, 6).toString('ascii') === 'GIF87a' || head.subarray(0, 6).toString('ascii') === 'GIF89a';
+      if (ext === 'webp') return head.subarray(0, 4).toString('ascii') === 'RIFF' && head.subarray(8, 12).toString('ascii') === 'WEBP';
+      if (ext === 'bmp') return head.subarray(0, 2).toString('ascii') === 'BM';
+      if (ext === 'tiff') return head.subarray(0, 4).equals(Buffer.from([0x49, 0x49, 0x2a, 0x00])) || head.subarray(0, 4).equals(Buffer.from([0x4d, 0x4d, 0x00, 0x2a]));
+      if (ext === 'svg') return head.toString('utf8').trimStart().startsWith('<');
+      return true;
+    } finally {
+      await handle.close();
     }
   }
 

@@ -25,6 +25,7 @@ import { BaseProvider } from './providers/BaseProvider.js';
 import type { ProviderRequest, ProviderResponse } from './ProviderTypes.js';
 import type { ModelRole, ResolvedRoleConfig, RoleConfigFile } from '../config/RoleConfig.js';
 import { loadRoleConfig, getFallbacks } from '../config/RoleConfig.js';
+import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
 
 export interface LLMConfig {
   /** Base URL for the LLM API (OpenAI-compatible) */
@@ -182,10 +183,12 @@ export class LLMClient {
 
     const baseUrl = config?.baseUrl || roleBaseUrl || env('LLM_BASE_URL') || SERVICE_DEFAULTS.LOCAL_LLM_URL;
 
+    const model = config?.model || roleModel || env('LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL;
+
     this.config = {
       baseUrl,
-      apiKey: config?.apiKey ?? roleApiKey ?? env('LLM_API_KEY') ?? process.env.OPENAI_API_KEY ?? process.env.MINIMAX_API_KEY,
-      model: config?.model || roleModel || env('LLM_MODEL') || SERVICE_DEFAULTS.DEFAULT_MODEL,
+      apiKey: config?.apiKey ?? roleApiKey ?? selectApiKeyForEndpoint(baseUrl, model, ['LLM_API_KEY']),
+      model,
       temperature: config?.temperature ?? roleTemperature ?? 0.7,
       maxTokens: config?.maxTokens ?? roleMaxTokens ?? 4096,
       role: this.role,
@@ -243,7 +246,7 @@ export class LLMClient {
     const sources = envMap[role];
     const baseUrl = sources.baseUrl.map(k => env(k)).find(Boolean);
     const model = sources.model.map(k => env(k)).find(Boolean);
-    const apiKey = sources.apiKey.map(k => process.env[k] || env(k)).find(Boolean);
+    const apiKey = selectApiKeyForEndpoint(baseUrl || '', model, sources.apiKey);
 
     if (baseUrl || model) {
       return {

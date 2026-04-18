@@ -218,6 +218,8 @@ describe('LLMClient constructor and config', () => {
     delete process.env.LIMINAL_LLM_API_KEY;
     delete process.env.LIMINAL_LLM_MODEL;
     delete process.env.OPENAI_API_KEY;
+    delete process.env.GLM_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
   });
 
   afterEach(() => {
@@ -226,6 +228,8 @@ describe('LLMClient constructor and config', () => {
     delete process.env.LIMINAL_LLM_API_KEY;
     delete process.env.LIMINAL_LLM_MODEL;
     delete process.env.OPENAI_API_KEY;
+    delete process.env.GLM_API_KEY;
+    delete process.env.MINIMAX_API_KEY;
   });
 
   it('creates client with minimal config using defaults', () => {
@@ -303,10 +307,30 @@ describe('LLMClient constructor and config', () => {
   it('reads OPENAI_API_KEY as fallback for apiKey', () => {
     process.env.OPENAI_API_KEY = 'openai-key-789';
 
-    const client = new LLMClient();
+    const client = new LLMClient({ baseUrl: 'https://api.openai.com/v1' });
     const config = client.getConfig();
 
     expect(config.apiKey).toBe('openai-key-789');
+  });
+
+  it('does not use MINIMAX_API_KEY for OpenAI endpoints', () => {
+    process.env.MINIMAX_API_KEY = 'minimax-key';
+
+    const client = new LLMClient({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4' });
+    const config = client.getConfig();
+
+    expect(config.apiKey).toBeUndefined();
+  });
+
+  it('uses GLM_API_KEY for the Z.ai Anthropic endpoint instead of generic MiniMax keys', () => {
+    process.env.GLM_API_KEY = 'glm-key';
+    process.env.MINIMAX_API_KEY = 'minimax-key';
+    process.env.LIMINAL_LLM_API_KEY = 'generic-minimax-key';
+
+    const client = new LLMClient({ baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5.1' });
+    const config = client.getConfig();
+
+    expect(config.apiKey).toBe('glm-key');
   });
 
   it('explicit config takes priority over environment variables', () => {

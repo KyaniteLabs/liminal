@@ -50,6 +50,22 @@ describe('BridgeLauncherConfig', () => {
 
     expect(env.GLM_API_KEY).toBe('glm-key');
     expect(env.LIMINAL_HARNESS_API_KEY).toBe('glm-key');
+    expect(env.LLM_API_KEY).toBeUndefined();
+    expect(env.LIMINAL_LLM_API_KEY).toBeUndefined();
+  });
+
+  it('exports config-file OpenAI keys only as OpenAI-specific env', () => {
+    const env: NodeJS.ProcessEnv = {};
+    applyBridgeProviderEnv(env, {
+      provider: 'custom',
+      baseUrl: 'https://api.openai.com/v1',
+      model: 'gpt-5.4',
+      apiKey: 'openai-key',
+    });
+
+    expect(env.OPENAI_API_KEY).toBe('openai-key');
+    expect(env.LLM_API_KEY).toBeUndefined();
+    expect(env.LIMINAL_LLM_API_KEY).toBeUndefined();
   });
 
   afterAll(() => {

@@ -80,8 +80,9 @@ export class GoogleProvider extends BaseProvider {
       if (req.toolResults && req.toolResults.length > 0) {
         const contents = body.contents as Array<Record<string, unknown>>;
         for (const tr of req.toolResults) {
-          contents.push({ role: 'model', parts: [{ functionCall: { name: 'tool', args: {} } }] });
-          contents.push({ role: 'user', parts: [{ functionResponse: { name: 'tool', response: { result: tr.result } } }] });
+          const name = tr.toolCall?.name || 'tool';
+          contents.push({ role: 'model', parts: [{ functionCall: { name, args: this.parseToolArgs(tr.toolCall?.arguments) } }] });
+          contents.push({ role: 'user', parts: [{ functionResponse: { name, response: { result: tr.result } } }] });
         }
       }
 
@@ -165,6 +166,18 @@ export class GoogleProvider extends BaseProvider {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return err(new LLMError(message, this.name, undefined, true));
+    }
+  }
+
+  private parseToolArgs(raw?: string): Record<string, unknown> {
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed as Record<string, unknown>
+        : {};
+    } catch {
+      return {};
     }
   }
 

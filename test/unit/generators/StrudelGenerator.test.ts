@@ -60,12 +60,12 @@ describe('StrudelGenerator', () => {
     expect(info.domain).toBe('strudel');
   });
 
-  it('wrapForGallery produces HTML with Strudel REPL import', () => {
+  it('wrapForGallery produces display-only HTML without loading the REPL runtime', () => {
     const gen = new StrudelGenerator();
     const wrapped = gen.wrapForGallery('s("bd sd")');
-    expect(wrapped).toContain('@strudel/repl');
     expect(wrapped).toContain('<!DOCTYPE html>');
     expect(wrapped).toContain('s("bd sd")');
+    expect(wrapped).not.toContain('@strudel/repl');
   });
 
   it('wrapForGallery includes display-only message', () => {

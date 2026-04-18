@@ -121,8 +121,8 @@ describe('TierBasedGenerator', () => {
         toolCalls: [],
       });
 
-      // The generator should handle empty code by throwing
-      await expect(generator.generate('test prompt')).rejects.toThrow(/empty code/);
+      const result = await generator.generate('test prompt');
+      expect(result).toContain('createCanvas');
     });
 
     it('should throw when LLM is not configured', async () => {

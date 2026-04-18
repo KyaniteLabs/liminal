@@ -429,15 +429,15 @@ describe('TierBasedGenerator (expanded)', () => {
   // undefined, and the extraction branch (line 219) is never triggered.
   // All empty-code cases go straight to the "empty code" throw on line 229.
   describe('thinking extraction from empty code', () => {
-    it('throws empty code when toolResult has thinking but it is not copied to response', async () => {
+    it('recovers code from toolResult thinking when content is empty', async () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: '',
         thinking: 'Let me think...\n```javascript\nfunction setup() { createCanvas(400, 400); }\n```',
       }));
 
       const gen = new TestGenerator('p5', mockLLM);
-      // thinking is not copied to LLMResponse, so extraction is never attempted
-      await expect(gen.generate('test')).rejects.toThrow('empty code');
+      const result = await gen.generate('test');
+      expect(result).toContain('function setup()');
     });
 
     it('throws when code is empty and toolResult has non-extractable thinking', async () => {
@@ -445,6 +445,7 @@ describe('TierBasedGenerator (expanded)', () => {
         content: '',
         thinking: 'Just some reasoning text without code blocks or patterns',
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({ content: '' }));
 
       const gen = new TestGenerator('p5', mockLLM);
       await expect(gen.generate('test')).rejects.toThrow('empty code');
@@ -455,12 +456,13 @@ describe('TierBasedGenerator (expanded)', () => {
         content: '',
         thinking: '',
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({ content: '' }));
 
       const gen = new TestGenerator('p5', mockLLM);
       await expect(gen.generate('test')).rejects.toThrow('empty code');
     });
 
-    it('throws when toolResult has code-like thinking but thinking not on response', async () => {
+    it('recovers code-like thinking lines without fences', async () => {
       const thinkingLines = [
         'I will create a canvas',
         'function setup() {',
@@ -474,8 +476,8 @@ describe('TierBasedGenerator (expanded)', () => {
       }));
 
       const gen = new TestGenerator('p5', mockLLM);
-      // thinking not copied to response, so extraction not attempted
-      await expect(gen.generate('test')).rejects.toThrow('empty code');
+      const result = await gen.generate('test');
+      expect(result).toContain('createCanvas(400, 400)');
     });
 
     it('throws when toolResult thinking has empty code fences', async () => {
@@ -483,6 +485,7 @@ describe('TierBasedGenerator (expanded)', () => {
         content: '',
         thinking: '```\n\n```',
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({ content: '' }));
 
       const gen = new TestGenerator('p5', mockLLM);
       await expect(gen.generate('test')).rejects.toThrow('empty code');
@@ -547,6 +550,9 @@ describe('TierBasedGenerator (expanded)', () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: 'INVALID recovery attempt',
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'INVALID direct recovery attempt',
+      }));
 
       mockHarnessClassifyFailure.mockReturnValue({
         failureClass: 'wrong_domain',
@@ -561,6 +567,9 @@ describe('TierBasedGenerator (expanded)', () => {
     it('throws when repair prompt is null (no recovery attempted)', async () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: 'INVALID code',
+      }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'INVALID direct recovery attempt',
       }));
 
       mockHarnessClassifyFailure.mockReturnValue({
@@ -581,6 +590,9 @@ describe('TierBasedGenerator (expanded)', () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: 'x',
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'INVALID direct recovery attempt',
+      }));
 
       mockHarnessClassifyFailure.mockReturnValue({
         failureClass: 'too_short',
@@ -595,6 +607,9 @@ describe('TierBasedGenerator (expanded)', () => {
     it('throws when recovery code is empty', async () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: 'INVALID code',
+      }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: '',
       }));
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: '',
@@ -677,8 +692,7 @@ describe('TierBasedGenerator (expanded)', () => {
 
       expect(response.code).toBe('function draw() { ellipse(50, 50, 80, 80); }');
       expect(response.success).toBe(true);
-      // thinking is not copied from toolResult to LLMResponse (source gap)
-      expect(response.thinking).toBeUndefined();
+      expect(response.thinking).toBe('Drawing a circle at center');
     });
   });
 
@@ -698,8 +712,7 @@ describe('TierBasedGenerator (expanded)', () => {
       expect(layer.metadata.prompt).toBe('create canvas');
       expect(layer.metadata.generator).toBe('TestGenerator');
       expect(layer.metadata.model).toBe('gpt-4o');
-      // thinking is not copied from toolResult to LLMResponse
-      expect(layer.metadata.thinking).toBeUndefined();
+      expect(layer.metadata.thinking).toBe('canvas setup');
       expect(layer.metadata.validation?.passed).toBe(true);
       expect(layer.enabled).toBe(true);
       expect(layer.locked).toBe(false);
@@ -916,6 +929,7 @@ describe('TierBasedGenerator (expanded)', () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
         content: '   \n\t  \n  ',
       }));
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({ content: '' }));
 
       const gen = new TestGenerator('p5', mockLLM);
       await expect(gen.generate('test')).rejects.toThrow('empty code');
@@ -967,6 +981,9 @@ describe('TierBasedGenerator (expanded)', () => {
       mockHarnessBuildRepairPrompt.mockReturnValue('');
 
       const gen = new NoErrorGenerator('p5', mockLLM);
+      mockGenerateWithToolLoop.mockResolvedValueOnce(makeToolResult({
+        content: 'FAILNOERROR direct recovery',
+      }));
       // validateOutput returns { valid: false } (no error property)
       // Line 259 throws `${name}: ${validated.error}` => "NoErrorGenerator: undefined"
       await expect(gen.generate('test')).rejects.toThrow('NoErrorGenerator: undefined');

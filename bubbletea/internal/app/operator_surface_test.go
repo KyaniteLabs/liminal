@@ -237,6 +237,35 @@ func TestResultPanelShowsFailedToolNamesWithoutLongTrace(t *testing.T) {
 	}
 }
 
+func TestResultPanelShowsLastError(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ApplyEvent(bridge.Event{Type: "error", SessionID: "s1", Message: "all generation candidates failed: p5 validation failed"})
+
+	panel := m.renderResultPanel(72)
+	for _, want := range []string{"Status: Failed", "Last error:", "all generation candidates failed"} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("expected result panel to contain %q\n%s", want, panel)
+		}
+	}
+	if len(m.ActivityLog) == 0 || !strings.Contains(m.ActivityLog[len(m.ActivityLog)-1].Message, "Error:") {
+		t.Fatalf("expected error to be added to activity log, got %#v", m.ActivityLog)
+	}
+}
+
+func TestPreviewCardRendersImageInline(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.PreviewType = "image"
+	m.PreviewContent = "not-valid-base64"
+
+	panel := m.renderPreviewCard(72)
+	if !strings.Contains(panel, "Type: image") {
+		t.Fatalf("expected image preview type\n%s", panel)
+	}
+	if !strings.Contains(panel, "image decode error") {
+		t.Fatalf("expected inline image render attempt\n%s", panel)
+	}
+}
+
 func TestOperatorRunStatusLabels(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		m := readyOperatorModel(t)

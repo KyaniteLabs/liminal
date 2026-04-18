@@ -72,6 +72,9 @@ export class RevideoValidator {
     if (/\b(useFrame|useCurrentFrame|React\.FC)\b/.test(code)) {
       errors.push('Revideo code must not use React/Remotion hooks like useFrame/useCurrentFrame or React.FC');
     }
+    if (/\bcreateCanvas\b|function\s+setup\s*\(|function\s+draw\s*\(|\bp5\b|p5\.js/i.test(code)) {
+      errors.push('Revideo code must not use p5.js APIs such as createCanvas, setup(), or draw()');
+    }
     const importMatches = code.matchAll(/import\s+.*?\s+from\s+['"]@revideo\/core['"]/g);
     for (const match of importMatches) {
       const namedImports = match[0].match(/\{([^}]+)\}/);

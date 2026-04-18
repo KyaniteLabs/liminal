@@ -15,7 +15,7 @@
 import { generatorRegistry, GeneratorEntry } from './GeneratorRegistry.js';
 import { ShaderGenerator } from './glsl/ShaderGenerator.js';
 import { ThreeGenerator } from './three/ThreeGenerator.js';
-import { RemotionGenerator } from './remotion/RemotionGenerator.js';
+import { RevideoGenerator } from './revideo/RevideoGenerator.js';
 import { P5GeneratorV2 } from './p5/P5GeneratorV2.js';
 import { HTMLWebGenerator } from './html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from './ascii/ASCIIArtGenerator.js';
@@ -170,11 +170,11 @@ const threeEntry: GeneratorEntry = {
 const revideoEntry: GeneratorEntry = {
   name: 'revideo',
   canHandle: (prompt: string) => {
-    const gen = new RemotionGenerator();
+    const gen = new RevideoGenerator();
     return gen.canHandle(prompt);
   },
   generate: async (prompt: string) => {
-    const gen = new RemotionGenerator();
+    const gen = new RevideoGenerator();
     return gen.generate(prompt);
   },
 };

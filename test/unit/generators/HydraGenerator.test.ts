@@ -74,7 +74,9 @@ describe('HydraGenerator', () => {
     const gen = new HydraGenerator();
     const wrapped = gen.wrapForGallery('noise().out(o0)');
     expect(wrapped).toContain('<canvas id="c">');
-    expect(wrapped).toContain('hydra.module.js');
+    expect(wrapped).toContain('hydra-synth.js');
+    expect(wrapped).toContain('new Hydra');
+    expect(wrapped).not.toContain('type="module"');
   });
 
   it('sanitizeCode appends .out(o0) when missing render', async () => {

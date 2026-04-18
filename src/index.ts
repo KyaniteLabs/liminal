@@ -615,6 +615,7 @@ export { HydraGenerator } from './generators/hydra/HydraGenerator.js';
 export { StrudelGenerator } from './generators/strudel/StrudelGenerator.js';
 export { ToneGenerator } from './generators/tone/ToneGenerator.js';
 export { RemotionGenerator } from './generators/remotion/RemotionGenerator.js';
+export { RevideoGenerator } from './generators/revideo/RevideoGenerator.js';
 export { HTMLWebGenerator } from './generators/html/HTMLWebGenerator.js';
 export { ASCIIArtGenerator } from './generators/ascii/ASCIIArtGenerator.js';
 export { TextGenerativeGenerator } from './generators/textgen/TextGenerativeGenerator.js';

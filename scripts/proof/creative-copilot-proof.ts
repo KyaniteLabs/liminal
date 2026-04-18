@@ -122,7 +122,7 @@ async function renderScreenshot(htmlPath: string, screenshotPath: string): Promi
     page.on('pageerror', err => runtimeErrors.push(err.message));
     await page.setViewport({ width: 960, height: 640 });
     await page.goto(pathToFileURL(path.resolve(htmlPath)).href, { waitUntil: 'load', timeout: 30000 });
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 3000));
     if (runtimeErrors.length > 0) {
       throw new Error(`Preview runtime error: ${runtimeErrors.slice(0, 3).join(' | ')}`);
     }

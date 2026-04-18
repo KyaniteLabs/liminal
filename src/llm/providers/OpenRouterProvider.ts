@@ -110,7 +110,18 @@ export class OpenRouterProvider extends BaseProvider {
       // Tool results from previous calls
       if (req.toolResults && req.toolResults.length > 0) {
         for (const tr of req.toolResults) {
-          (body.messages as Array<Record<string, unknown>>).push({ role: 'assistant', content: '', tool_calls: [{ id: tr.toolCallId, type: 'function', function: { name: 'tool', arguments: '{}' } }] });
+          (body.messages as Array<Record<string, unknown>>).push({
+            role: 'assistant',
+            content: '',
+            tool_calls: [{
+              id: tr.toolCallId,
+              type: 'function',
+              function: {
+                name: tr.toolCall?.name || 'tool',
+                arguments: tr.toolCall?.arguments || '{}',
+              },
+            }],
+          });
           (body.messages as Array<Record<string, unknown>>).push({ role: 'tool', content: tr.result, tool_call_id: tr.toolCallId });
         }
       }

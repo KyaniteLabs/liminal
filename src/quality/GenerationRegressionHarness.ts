@@ -10,7 +10,7 @@ import { HydraGenerator } from '../generators/hydra/HydraGenerator.js';
 import { ToneGenerator } from '../generators/tone/ToneGenerator.js';
 import { HTMLWebGenerator } from '../generators/html/HTMLWebGenerator.js';
 import { ASCIIArtGenerator } from '../generators/ascii/ASCIIArtGenerator.js';
-import { RemotionGenerator } from '../generators/remotion/RemotionGenerator.js';
+import { RevideoGenerator } from '../generators/revideo/RevideoGenerator.js';
 
 export type RegressionDomain =
   | 'p5'
@@ -138,7 +138,7 @@ async function createGenerator(domain: RegressionDomain, llm: LLMClient) {
     case 'ascii':
       return new ASCIIArtGenerator(llm);
     case 'revideo':
-      return new RemotionGenerator(llm);
+      return new RevideoGenerator(llm);
   }
 }
 

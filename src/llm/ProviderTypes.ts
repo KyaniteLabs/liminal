@@ -32,6 +32,8 @@ export interface ToolResultMessage {
   toolCallId: string;
   result: string;
   isError?: boolean;
+  /** Original model-requested tool call, needed to continue native tool conversations. */
+  toolCall?: ToolCallResult;
 }
 
 export interface ProviderRequest {

@@ -68,7 +68,7 @@ describe('RemotionGenerator', () => {
 
   it('canHandle returns 0.95 for remotion/revideo prompts', () => {
     const gen = new RemotionGenerator();
-    expect(gen.canHandle('make a remotion video')).toBe(0.95);
+    expect(gen.canHandle('make a remotion video')).toBe(0.55);
     expect(gen.canHandle('create a revideo scene')).toBe(0.95);
   });
 

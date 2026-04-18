@@ -77,7 +77,12 @@ export class AnthropicProvider extends BaseProvider {
         (body.messages as Array<{ role: string; content: unknown }>).push({
           role: 'assistant',
           content: (req.tools && req.tools.length > 0)
-            ? req.toolResults.map(tr => ({ type: 'tool_use' as const, id: tr.toolCallId, name: 'tool', input: {} }))
+            ? req.toolResults.map(tr => ({
+                type: 'tool_use' as const,
+                id: tr.toolCallId,
+                name: tr.toolCall?.name || 'tool',
+                input: this.parseToolInput(tr.toolCall?.arguments),
+              }))
             : [],
         });
         (body.messages as Array<{ role: string; content: unknown }>).push({
@@ -149,6 +154,18 @@ export class AnthropicProvider extends BaseProvider {
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       return err(new LLMError(message, this.name, undefined, true));
+    }
+  }
+
+  private parseToolInput(raw?: string): Record<string, unknown> {
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed as Record<string, unknown>
+        : {};
+    } catch {
+      return {};
     }
   }
 

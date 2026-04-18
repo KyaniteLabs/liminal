@@ -109,14 +109,6 @@ export class StrudelGenerator extends TierBasedGenerator {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Strudel</title>
-<script type="module">
-import { repl } from 'https://unpkg.com/@strudel/repl@1.1.0';
-const { evaluate } = repl({
-  core: { getCurrentTime: () => 0 },
-  AudioProvider: () => ({ destination: { _isNode: true } }),
-});
-window._strudel_evaluate = evaluate;
-</script>
 <style>
 body{background:#1a1a2e;color:#eee;font-family:monospace;min-height:100vh;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 pre{font-size:clamp(10px,2vw,18px);line-height:1.4;white-space:pre-wrap;max-width:90vw}

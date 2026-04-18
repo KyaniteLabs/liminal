@@ -209,9 +209,10 @@ export abstract class TierBasedGenerator {
     });
 
     let response: LLMResponse = {
-      code: toolResult.content,
+      code: this.normalizeGeneratedContent(toolResult.content),
       success: toolResult.success,
       error: toolResult.error,
+      thinking: this.extractToolThinking(toolResult),
     };
 
     // Try to extract code from thinking if code is empty but thinking has content
@@ -226,7 +227,17 @@ export abstract class TierBasedGenerator {
 
       // Still empty after extraction attempt
       if (!response.code || response.code.trim() === '') {
-        throw new GenerationError(`${this.constructor.name}: LLM returned empty code`, this.domain);
+        const directResponse = await this.retryWithoutGeneratorTools(
+          prompt,
+          systemPrompt,
+          userPrompt,
+          options?.signal
+        );
+        if (directResponse) {
+          response = directResponse;
+        } else {
+          throw new GenerationError(`${this.constructor.name}: LLM returned empty code`, this.domain);
+        }
       }
     }
 
@@ -244,7 +255,7 @@ export abstract class TierBasedGenerator {
     const validated = this.validateOutput(response.code);
     if (!validated.valid) {
       // Attempt one recovery round using harness-guided repair prompt
-      const recoveryResult = await this.attemptRecovery(
+      let recoveryResult = await this.attemptRecovery(
         prompt,
         response.code,
         validated.error ?? 'Validation failed',
@@ -253,11 +264,23 @@ export abstract class TierBasedGenerator {
         options?.signal
       );
 
+      if (!recoveryResult) {
+        recoveryResult = await this.attemptDirectValidationRecovery(
+          prompt,
+          response.code,
+          validated.error ?? 'Validation failed',
+          systemPrompt,
+          userPrompt,
+          options?.signal
+        );
+      }
+
       if (recoveryResult) {
         response = recoveryResult;
       } else {
         throw new GenerationError(`${this.constructor.name}: ${validated.error}`, this.domain, {
           validationError: validated.error,
+          generatedCode: response.code,
         });
       }
     }
@@ -313,6 +336,62 @@ export abstract class TierBasedGenerator {
     return parts.join('\n\n');
   }
 
+  private async retryWithoutGeneratorTools(
+    originalPrompt: string,
+    systemPrompt: string,
+    userPrompt: string,
+    signal?: AbortSignal
+  ): Promise<LLMResponse | null> {
+    Logger.warn('TierBasedGenerator', `${this.domain} tool loop returned empty code; retrying once without tools`);
+    const directResult = await this.llm.generateWithToolLoop({
+      systemPrompt,
+      userPrompt: [
+        userPrompt,
+        '',
+        'The previous tool-assisted attempt returned no final code.',
+        `Generate the final ${this.domain} artifact for the original request now.`,
+        'Return only the runnable output. Do not include markdown fences, explanations, or tool calls.',
+        `Original request: ${originalPrompt}`,
+      ].join('\n'),
+      tools: [],
+      toolExecutor: () => Promise.resolve(''),
+      maxIterations: 1,
+      signal,
+    });
+    if (!directResult) return null;
+    const code = this.normalizeGeneratedContent(directResult.content ?? '').trim();
+    if (!code) return null;
+    return {
+      code,
+      explanation: directResult.content,
+      success: true,
+      error: directResult.error,
+      isComplete: this.isStructurallyComplete(code),
+    };
+  }
+
+  private extractToolThinking(toolResult: unknown): string | undefined {
+    if (!toolResult || typeof toolResult !== 'object') return undefined;
+    const maybeThinking = (toolResult as { thinking?: unknown; reasoning?: unknown }).thinking
+      ?? (toolResult as { thinking?: unknown; reasoning?: unknown }).reasoning;
+    return typeof maybeThinking === 'string' && maybeThinking.trim() ? maybeThinking : undefined;
+  }
+
+  private normalizeGeneratedContent(content: string): string {
+    let clean = (content ?? '').replace(/<think\b[^>]*>[\s\S]*?<\/think>/gi, '');
+    const markdownMatch = clean.match(/```(?:\w+)?\n([\s\S]*?)```/);
+    if (markdownMatch) clean = markdownMatch[1].trim();
+    return clean.trim();
+  }
+
+  private isStructurallyComplete(code: string): boolean {
+    const openBraces = (code.match(/\{/g) || []).length;
+    const closeBraces = (code.match(/\}/g) || []).length;
+    const openParens = (code.match(/\(/g) || []).length;
+    const closeParens = (code.match(/\)/g) || []).length;
+    return openBraces <= closeBraces && openParens <= closeParens;
+  }
+
   /**
    * Attempt one recovery generation using harness-guided repair prompt.
    * Returns the corrected LLMResponse, or null if recovery also fails.
@@ -354,7 +433,7 @@ export abstract class TierBasedGenerator {
       signal,
     });
 
-    const recoveryCode = recoveryResult.content.trim();
+    const recoveryCode = this.normalizeGeneratedContent(recoveryResult.content).trim();
 
     if (!recoveryCode || recoveryCode.length < 10) return null;
 
@@ -370,6 +449,40 @@ export abstract class TierBasedGenerator {
       success: true,
       error: undefined,
     };
+  }
+
+  private async attemptDirectValidationRecovery(
+    originalPrompt: string,
+    failedCode: string,
+    errorMessage: string,
+    systemPrompt: string,
+    userPrompt: string,
+    signal?: AbortSignal
+  ): Promise<LLMResponse | null> {
+    Logger.info('TierBasedGenerator', `Attempting direct validation recovery: ${errorMessage}`);
+    const directResult = await this.retryWithoutGeneratorTools(
+      originalPrompt,
+      systemPrompt,
+      [
+        userPrompt,
+        '',
+        'The previous output failed validation.',
+        `Validation error: ${errorMessage}`,
+        'Regenerate the entire artifact from scratch, correcting the validation error.',
+        'Return only the final source code/artifact.',
+        '',
+        'Previous failed output:',
+        failedCode.slice(0, 4000),
+      ].join('\n'),
+      signal
+    );
+    if (!directResult) return null;
+    const revalidated = this.validateOutput(directResult.code);
+    if (!revalidated.valid) {
+      Logger.info('TierBasedGenerator', `Direct validation recovery failed: ${revalidated.error}`);
+      return null;
+    }
+    return directResult;
   }
 
   /**
@@ -534,4 +647,3 @@ export abstract class TierBasedGenerator {
     return synthesizePrompt(prompt ?? graph.originalPrompt, graph.nodes, graph.edges);
   }
 }
-

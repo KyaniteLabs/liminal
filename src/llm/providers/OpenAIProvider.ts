@@ -118,6 +118,18 @@ export class OpenAIProvider extends BaseProvider {
         const messages = body.messages as Array<Record<string, unknown>>;
         for (const tr of req.toolResults) {
           messages.push({
+            role: 'assistant',
+            content: '',
+            tool_calls: [{
+              id: tr.toolCallId,
+              type: 'function',
+              function: {
+                name: tr.toolCall?.name || 'tool',
+                arguments: tr.toolCall?.arguments || '{}',
+              },
+            }],
+          });
+          messages.push({
             role: 'tool',
             tool_call_id: tr.toolCallId,
             content: tr.result,

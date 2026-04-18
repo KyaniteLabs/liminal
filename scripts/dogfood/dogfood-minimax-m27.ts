@@ -8,10 +8,11 @@
  * ONE TEST AT A TIME - foreground execution only
  */
 
-import { run } from '../src/index.js';
+import { run } from '../../src/index.js';
 import fs from 'fs';
 import path from 'path';
-import { RuntimeHealthMonitor } from '../src/guardrails/RuntimeHealthMonitor.js';
+import { RuntimeHealthMonitor } from '../../src/guardrails/RuntimeHealthMonitor.js';
+import { PROVIDER_TEMPLATES } from '../../src/harness/MultiProviderConfig.js';
 
 // Stress test prompts for each domain
 const STRESS_TESTS = [
@@ -207,21 +208,22 @@ async function main() {
   console.log(`Output: ${OUTPUT_DIR}`);
   console.log('='.repeat(70));
   
-  // Clear telemetry file
-  fs.mkdirSync(path.dirname(TELEMETRY_FILE), { recursive: true });
-  fs.writeFileSync(TELEMETRY_FILE, '');
-  
   // Verify Minimax API key
   if (!process.env.MINIMAX_API_KEY) {
     console.error('\n❌ MINIMAX_API_KEY not set in environment!');
     process.exit(1);
   }
+
+  // Clear telemetry file only after provider configuration is available.
+  fs.mkdirSync(path.dirname(TELEMETRY_FILE), { recursive: true });
+  fs.writeFileSync(TELEMETRY_FILE, '');
   
   // Set Minimax configuration
+  const minimaxConfig = PROVIDER_TEMPLATES.minimax;
   process.env.LIMINAL_LLM_PROVIDER = 'minimax';
-  process.env.LIMINAL_LLM_MODEL = 'MiniMax-M2.7';
+  process.env.LIMINAL_LLM_MODEL = minimaxConfig.model;
   process.env.LIMINAL_LLM_API_KEY = process.env.MINIMAX_API_KEY;
-  process.env.LIMINAL_LLM_BASE_URL = 'https://api.minimaxi.chat/v1';
+  process.env.LIMINAL_LLM_BASE_URL = minimaxConfig.baseUrl;
   
   console.log('\n📡 Configuration:');
   console.log(`   Provider: ${process.env.LIMINAL_LLM_PROVIDER}`);

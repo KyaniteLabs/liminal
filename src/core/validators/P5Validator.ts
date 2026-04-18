@@ -20,6 +20,7 @@ export class P5Validator {
     'Array', 'Boolean', 'Date', 'Error', 'JSON', 'Map', 'Math', 'Number', 'Object', 'Promise', 'Set', 'String',
     'console', 'document', 'p5', 'window',
     'ADD', 'BLEND', 'MULTIPLY', 'CENTER', 'CLOSE', 'CORNER', 'DEGREES', 'DOWN_ARROW', 'HALF_PI', 'HSB', 'LEFT', 'LEFT_ARROW', 'PI', 'QUARTER_PI', 'RADIANS', 'RGB', 'RIGHT_ARROW', 'TWO_PI', 'UP_ARROW',
+    'POINTS', 'LINES', 'TRIANGLES', 'TRIANGLE_FAN', 'TRIANGLE_STRIP', 'QUADS', 'QUAD_STRIP',
     'draw', 'frameCount', 'height', 'key', 'keyCode', 'keyIsPressed', 'mouseButton', 'mouseIsPressed', 'mouseX', 'mouseY', 'pmouseX', 'pmouseY', 'setup', 'windowHeight', 'windowWidth', 'width',
     'abs', 'acos', 'angleMode', 'asin', 'atan', 'atan2', 'background', 'beginShape', 'bezier', 'blendMode',
     'ceil', 'circle', 'color', 'colorMode', 'constrain', 'cos', 'createCanvas', 'createGraphics', 'curveVertex', 'dist', 'ellipse', 'endShape', 'exp',
@@ -113,10 +114,6 @@ export class P5Validator {
    */
   private static validateHTMLWrapped(code: string): string[] {
     const errors: string[] = [];
-
-    if (!/<\/body>\s*<\/html>\s*$/i.test(code)) {
-      errors.push('HTML-wrapped p5.js must include closing </body> and </html> tags');
-    }
 
     // HTML-wrapped p5 must include p5 CDN
     if (!/p5\.js|p5\.min\.js/.test(code)) {

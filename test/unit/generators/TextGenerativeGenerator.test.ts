@@ -223,6 +223,13 @@ describe('TextGenerativeGenerator', () => {
         success: true,
         error: undefined,
       });
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: '',
+        iterations: 1,
+        toolCallsMade: 0,
+        success: true,
+        error: undefined,
+      });
       const gen = new TextGenerativeGenerator();
       await expect(gen.generate('empty')).rejects.toThrow('LLM returned empty code');
     });
@@ -230,6 +237,13 @@ describe('TextGenerativeGenerator', () => {
     it('rejects whitespace-only output', async () => {
       mockGenerateWithToolLoop.mockResolvedValueOnce({
         content: '   \n   \n   ',
+        iterations: 1,
+        toolCallsMade: 0,
+        success: true,
+        error: undefined,
+      });
+      mockGenerateWithToolLoop.mockResolvedValueOnce({
+        content: '',
         iterations: 1,
         toolCallsMade: 0,
         success: true,

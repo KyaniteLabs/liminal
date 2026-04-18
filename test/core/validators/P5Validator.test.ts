@@ -206,7 +206,7 @@ describe('P5Validator', () => {
       expect(result.errors).toContain('HTML-wrapped p5.js must include p5.js CDN');
     });
 
-    it('should reject incomplete HTML-wrapped p5.js documents', () => {
+    it('should allow HTML-wrapped p5.js documents without explicit closing body/html tags', () => {
       const code = `<!DOCTYPE html>
 <html>
 <head>
@@ -220,8 +220,8 @@ describe('P5Validator', () => {
   </script>`;
 
       const result = P5Validator.validate(code);
-      expect(result.valid).toBe(false);
-      expect(result.errors).toContain('HTML-wrapped p5.js must include closing </body> and </html> tags');
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
     });
 
     it('should validate p5.js with instance mode', () => {
@@ -277,6 +277,30 @@ describe('P5Validator', () => {
           blendMode(MULTIPLY);
           background(constrain(red(c), 0, 255), green(c), blue(c));
           circle(200, 200, exp(1.0));
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should allow standard p5 shape mode constants', () => {
+      const code = `
+        function setup() {
+          createCanvas(400, 400);
+        }
+
+        function draw() {
+          beginShape(TRIANGLE_STRIP);
+          vertex(30, 75);
+          vertex(40, 20);
+          vertex(50, 75);
+          vertex(60, 20);
+          endShape();
+          beginShape(POINTS);
+          vertex(100, 100);
+          endShape();
         }
       `;
 

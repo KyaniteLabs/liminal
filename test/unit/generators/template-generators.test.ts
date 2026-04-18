@@ -42,16 +42,18 @@ describe('HydraGenerator', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('accepts code with src()', () => {
+    it('rejects src-only feedback with no visible generated source', () => {
       const gen = new HydraGenerator();
       const result = gen.validateOutput('src(o0).out(o0)');
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('visible source');
     });
 
-    it('accepts code with render()', () => {
+    it('rejects render-only code with no visible generated source', () => {
       const gen = new HydraGenerator();
       const result = gen.validateOutput('render(o0)');
-      expect(result.valid).toBe(true);
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('visible source');
     });
   });
 

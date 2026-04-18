@@ -315,6 +315,7 @@ type Model struct {
 	Connected    bool
 	Reconnecting bool
 	Err          string
+	LastError    string
 
 	// Glamour markdown renderer
 	Renderer *glamour.TermRenderer
@@ -488,11 +489,15 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 		}
 	case "error":
 		m.IsStreaming = false
+		m.Err = event.Message
+		m.LastError = event.Message
+		m.Task.Objective = "Failed: " + event.Message
 		m.ChatBlocks = append(m.ChatBlocks, ChatBlock{
 			Type:    "error",
 			Content: event.Message,
 			Time:    time.Now(),
 		})
+		m.addActivity("Error: " + event.Message)
 		m.ActiveResponse = ""
 	case "preview.started":
 		m.PreviewType = event.PreviewType
@@ -1063,7 +1068,7 @@ func (m Model) StatusLines() []string {
 
 // ConfirmPendingAction sends a confirm request to the bridge.
 func (m Model) ConfirmPendingAction() tea.Cmd {
-	if m.Mode != "ACTION" || m.PendingAction == nil || !m.Connected {
+	if m.PendingAction == nil || !m.Connected {
 		return nil
 	}
 	actionID := m.PendingAction.ID
@@ -1080,7 +1085,7 @@ func (m Model) ConfirmPendingAction() tea.Cmd {
 
 // CancelPendingAction sends a cancel request to the bridge.
 func (m Model) CancelPendingAction() tea.Cmd {
-	if m.Mode != "ACTION" || m.PendingAction == nil || !m.Connected {
+	if m.PendingAction == nil || !m.Connected {
 		return nil
 	}
 	actionID := m.PendingAction.ID

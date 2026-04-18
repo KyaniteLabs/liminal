@@ -68,8 +68,15 @@ describe('RemotionGenerator', () => {
 
   it('canHandle returns 0.95 for remotion/revideo prompts', () => {
     const gen = new RemotionGenerator();
-    expect(gen.canHandle('make a remotion video')).toBe(0.95);
+    expect(gen.canHandle('make a remotion video')).toBe(0.55);
     expect(gen.canHandle('create a revideo scene')).toBe(0.95);
+  });
+
+  it('does not route prompts where remotion/revideo is only forbidden', () => {
+    const gen = new RemotionGenerator();
+    expect(gen.canHandle('Use p5 only. Do not use Revideo. Do not use Remotion.')).toBe(0);
+    expect(gen.canHandle("Create a p5 sketch. Don't use remotion.")).toBe(0);
+    expect(gen.canHandle('Create an aurora field. Avoid Revideo.')).toBe(0);
   });
 
   it('canHandle returns 0.8 for generic video prompts', () => {

@@ -160,6 +160,29 @@ export class LLMClient {
     }
   }
 
+  private extractToolCodeCandidate(args: Record<string, unknown>, toolResult: string): string | null {
+    if (typeof args.code !== 'string' || args.code.trim().length === 0) return null;
+    try {
+      const parsed = JSON.parse(toolResult);
+      if (
+        parsed &&
+        typeof parsed === 'object' &&
+        ((parsed as { valid?: unknown }).valid === false ||
+          (parsed as { success?: unknown }).success === false ||
+          (parsed as { ok?: unknown }).ok === false)
+      ) {
+        return null;
+      }
+    } catch {
+      if (/\b(error|invalid|failed|failure)\b/i.test(toolResult)) return null;
+    }
+    return args.code;
+  }
+
+  private contentOrToolCodeCandidate(content: string, fallbackCode: string | null): string {
+    return content && content.trim().length > 0 ? content : fallbackCode || '';
+  }
+
   constructor(config?: Partial<LLMConfig>) {
     this.role = config?.role;
 
@@ -1005,6 +1028,7 @@ export class LLMClient {
     let toolResults: import('./ProviderTypes.js').ToolResultMessage[] | undefined;
     let iterations = 0;
     let toolCallsMade = 0;
+    let lastToolCodeCandidate: string | null = null;
     const conversationMessages: { role: string; content: string }[] = [];
 
     for (let i = 0; i < maxIterations; i++) {
@@ -1020,10 +1044,21 @@ export class LLMClient {
       });
 
       if (!result.success) {
-        return { content: result.content || '', iterations, toolCallsMade, success: false, error: result.error };
+        return {
+          content: this.contentOrToolCodeCandidate(result.content || '', lastToolCodeCandidate),
+          iterations,
+          toolCallsMade,
+          success: false,
+          error: result.error,
+        };
       }
       if (!result.toolCalls || result.toolCalls.length === 0 || result.finishReason === 'stop') {
-        return { content: result.content, iterations, toolCallsMade, success: true };
+        return {
+          content: this.contentOrToolCodeCandidate(result.content, lastToolCodeCandidate),
+          iterations,
+          toolCallsMade,
+          success: true,
+        };
       }
 
       toolResults = [];
@@ -1044,12 +1079,13 @@ export class LLMClient {
         try {
           const args = this.parseToolArguments(tc.arguments, tc.name);
           const toolResult = await options.toolExecutor(tc.name, args);
-          toolResults.push({ toolCallId: tc.id, result: toolResult });
+          lastToolCodeCandidate = this.extractToolCodeCandidate(args, toolResult) ?? lastToolCodeCandidate;
+          toolResults.push({ toolCallId: tc.id, result: toolResult, toolCall: tc });
           conversationMessages.push({ role: 'assistant', content: `Called ${tc.name}(${tc.arguments})` });
           conversationMessages.push({ role: 'tool', content: toolResult });
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
-          toolResults.push({ toolCallId: tc.id, result: errMsg, isError: true });
+          toolResults.push({ toolCallId: tc.id, result: errMsg, isError: true, toolCall: tc });
         }
       }
     }
@@ -1062,7 +1098,13 @@ export class LLMClient {
       temperature: options.temperature,
       signal: options.signal,
     });
-    return { content: lastResult.content || '', iterations, toolCallsMade, success: lastResult.success, error: 'Max iterations reached' };
+    return {
+      content: this.contentOrToolCodeCandidate(lastResult.content || '', lastToolCodeCandidate),
+      iterations,
+      toolCallsMade,
+      success: lastResult.success || !!lastToolCodeCandidate,
+      error: lastToolCodeCandidate ? undefined : 'Max iterations reached',
+    };
   }
 
   /**

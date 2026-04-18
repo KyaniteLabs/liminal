@@ -15,6 +15,11 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    const preprocessorError = this.validatePreprocessorDirectives(code);
+    if (preprocessorError) {
+      return { valid: false, error: preprocessorError };
+    }
+
     if (this.isTruncated(code)) {
       if (!code.includes('void main') && !code.includes('gl_FragColor')) {
         return {
@@ -25,6 +30,22 @@ export class ShaderGenerator extends TierBasedGenerator {
       Logger.warn('ShaderGenerator', 'Code may be truncated, attempting to use anyway');
     }
     return { valid: true };
+  }
+
+  private validatePreprocessorDirectives(code: string): string | null {
+    let depth = 0;
+    for (const line of code.split('\n')) {
+      const trimmed = line.trim();
+      if (/^#\s*(if|ifdef|ifndef)\b/.test(trimmed)) {
+        depth++;
+      } else if (/^#\s*(else|elif)\b/.test(trimmed)) {
+        if (depth === 0) return `Orphan GLSL preprocessor directive: ${trimmed}`;
+      } else if (/^#\s*endif\b/.test(trimmed)) {
+        if (depth === 0) return `Orphan GLSL preprocessor directive: ${trimmed}`;
+        depth--;
+      }
+    }
+    return depth > 0 ? 'Unclosed GLSL preprocessor conditional' : null;
   }
 
   private isTruncated(code: string): boolean {
@@ -47,7 +68,19 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   wrapForGallery(code: string): string {
-    const escapedCode = code.replace(/`/g, '`');
+    const hasPrecision = /\bprecision\s+(lowp|mediump|highp)\s+float\s*;/.test(code);
+    const hasTime = /\buniform\s+float\s+u_time\s*;/.test(code);
+    const hasResolution = /\buniform\s+vec2\s+u_resolution\s*;/.test(code);
+    const hasMain = /\bvoid\s+main\s*\(/.test(code);
+    const hasMainImage = /\bvoid\s+mainImage\s*\(/.test(code);
+    const shaderSource = [
+      hasPrecision ? '' : 'precision mediump float;',
+      hasTime ? '' : 'uniform float u_time;',
+      hasResolution ? '' : 'uniform vec2 u_resolution;',
+      code,
+      hasMainImage && !hasMain ? 'void main(){mainImage(gl_FragColor,gl_FragCoord.xy);}' : '',
+    ].filter(Boolean).join('\n');
+    const encodedShader = JSON.stringify(shaderSource);
     const harness = '<!DOCTYPE html>\n' +
       '<html>\n' +
       '<head>\n' +
@@ -68,11 +101,11 @@ export class ShaderGenerator extends TierBasedGenerator {
       'function resize(){canvas.width=innerWidth;canvas.height=innerHeight;gl&&gl.viewport(0,0,canvas.width,canvas.height)}\n' +
       'addEventListener("resize",resize);resize();\n' +
       'const vs="attribute vec2 a_pos;void main(){gl_Position=vec4(a_pos,0,1);}";\n' +
-      'const fs="precision mediump float;\\n"+"' + escapedCode + '"+"\\nuniform float u_time;\\nuniform vec2 u_resolution;\\nvoid main(){mainImage(gl_FragColor,gl_FragCoord.xy);}";\n' +
-      'function createShader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))console.error(gl.getShaderInfoLog(s));return s;}\n' +
+      'const fs=' + encodedShader + ';\n' +
+      'function createShader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){throw new Error(gl.getShaderInfoLog(s)||"shader compile failed")}return s;}\n' +
       'const v=createShader(gl.VERTEX_SHADER,vs);\n' +
       'const f=createShader(gl.FRAGMENT_SHADER,fs);\n' +
-      'const prog=gl.createProgram();gl.attachShader(prog,v);gl.attachShader(prog,f);gl.linkProgram(prog);gl.useProgram(prog);\n' +
+      'const prog=gl.createProgram();gl.attachShader(prog,v);gl.attachShader(prog,f);gl.linkProgram(prog);if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){throw new Error(gl.getProgramInfoLog(prog)||"shader link failed")}gl.useProgram(prog);\n' +
       'const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);\n' +
       'const loc=gl.getAttribLocation(prog,"a_pos");gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,2,gl.FLOAT,false,0,0);\n' +
       'const uTime=gl.getUniformLocation(prog,"u_time");\n' +

@@ -8,14 +8,40 @@ export class HydraGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: HydraGeneratorOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
+    const hydraPrompt = [
+      'Generate Hydra-synth code only.',
+      'Use visible generated sources: osc(), noise(), shape(), voronoi(), gradient(), or solid().',
+      'Do not use camera or screen input: no s0.initCam(), no s0.initScreen(), no src(s0).',
+      'The patch must render in a headless browser preview without webcam, screen capture, microphone, or user permissions.',
+      '',
+      `User request: ${prompt}`,
+    ].join('\n');
+    const code = await super.generate(hydraPrompt, options);
     return this.sanitizeCode(code);
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    if (/^\s*[-*]\s|\*\*|```|✅|ready to paste|Hydra editor|—/im.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra output must be raw executable Hydra code only, not markdown or prose explanation',
+      };
+    }
     // Basic Hydra validation - must have Hydra-specific syntax
     if (!/\b(osc|shape|noise|voronoi|src|render|out)\b/.test(code)) {
       return { valid: false, error: 'No Hydra syntax found' };
+    }
+    if (/\bs0\.init(?:Cam|Screen)\s*\(/.test(code) || /\bsrc\s*\(\s*s0\s*\)/.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra preview must not depend on camera or screen input (s0.initCam, s0.initScreen, or src(s0)); use generated visual sources so headless previews are visible',
+      };
+    }
+    if (!/\b(osc|shape|noise|voronoi|gradient|solid)\s*\(/.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra preview must include a visible source such as osc(), noise(), shape(), voronoi(), gradient(), or solid(); screen-only src(s0) patches render blank in headless proof',
+      };
     }
     return { valid: true };
   }
@@ -48,6 +74,7 @@ export class HydraGenerator extends TierBasedGenerator {
       
       // Skip empty lines at start
       if (trimmed === '' && !foundCode) continue;
+      if (/^[-*]\s/.test(trimmed) || /\*\*|✅|ready to paste|Hydra editor|—/.test(trimmed)) continue;
       
       // Keep lines that:
       // 1. Are comments (start with //)
@@ -102,10 +129,9 @@ canvas{display:block;width:100vw;height:100vh}
 </head>
 <body>
 <canvas id="c"></canvas>
-<script type="module">
-import{hydra}from'https://unpkg.com/hydra-synth@1.3.10/dist/hydra.module.js';
-window._hydra=hydra;
-const h=new hydra({canvas:document.getElementById('c'),width:innerWidth,height:innerHeight});
+<script src="https://cdn.jsdelivr.net/npm/hydra-synth@1.3.10/dist/hydra-synth.js"></script>
+<script>
+const h=new Hydra({canvas:document.getElementById('c'),detectAudio:false,width:innerWidth,height:innerHeight});
 ${code}
 </script>
 </body>

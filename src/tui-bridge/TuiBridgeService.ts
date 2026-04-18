@@ -1,4 +1,6 @@
 import { Logger } from '../utils/Logger.js';
+import fs from 'node:fs/promises';
+import path from 'node:path';
 import { TuiEventStream } from './TuiEventStream.js';
 import { TuiSessionStore } from './TuiSessionStore.js';
 import { ConversationManager } from '../chat/ConversationManager.js';
@@ -30,6 +32,7 @@ import { LiminalCortex } from '../cortex/LiminalCortex.js';
 import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
+import { HTMLWrapper } from '../utils/htmlWrapper.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -673,10 +676,12 @@ export class TuiBridgeService {
         });
       })
       .catch((err: unknown) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Task failed: ${message}` });
         this.emit(sessionId, {
           type: 'error',
           sessionId,
-          message: err instanceof Error ? err.message : String(err),
+          message,
         });
       });
   }
@@ -1442,6 +1447,8 @@ export class TuiBridgeService {
           this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
         }
 
+        await this.emitP5PreviewArtifacts(sessionId, result.code);
+
         // Record in conversation
         conversation['recordMessage']('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
 
@@ -1477,6 +1484,12 @@ export class TuiBridgeService {
           model: result.model || modelName,
         }),
       });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      logBridge('generation.failed', { sessionId, model: modelName, message });
+      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Generation failed: ${message}` });
+      this.emit(sessionId, { type: 'error', sessionId, message });
+      throw err;
     } finally {
       this.activeStreams.delete(sessionId);
     }
@@ -1691,6 +1704,63 @@ export class TuiBridgeService {
     if (lower.includes('localhost:11434') || lower.includes('127.0.0.1:11434')) return 'ollama';
     if (lower.includes('localhost') || lower.includes('127.0.0.1')) return 'lmstudio';
     return 'unknown';
+  }
+
+  private async emitP5PreviewArtifacts(sessionId: string, code: string): Promise<void> {
+    const safeSessionId = sessionId.replace(/[^a-zA-Z0-9_-]/g, '-');
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const dir = path.join(process.cwd(), '.omx', 'proof', 'live-previews');
+    const htmlPath = path.join(dir, `p5-${safeSessionId}-${stamp}.html`);
+    const pngPath = path.join(dir, `p5-${safeSessionId}-${stamp}.png`);
+
+    await fs.mkdir(dir, { recursive: true });
+    const html = this.toPreviewHtml(code);
+    await fs.writeFile(htmlPath, html, 'utf8');
+    this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: 'p5 HTML preview', artifactPath: htmlPath });
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview artifact: ${htmlPath}` });
+
+    try {
+      await this.renderHtmlScreenshot(htmlPath, pngPath);
+      const png = await fs.readFile(pngPath);
+      const b64 = png.toString('base64');
+      this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: 'p5 preview image', artifactPath: pngPath });
+      this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'image' });
+      this.emit(sessionId, { type: 'preview.content', sessionId, content: b64, previewType: 'image' });
+      this.emit(sessionId, { type: 'preview.completed', sessionId, content: b64, previewType: 'image', imageUrl: pngPath });
+      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Inline preview image: ${pngPath}` });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview render failed: ${message}` });
+      this.emit(sessionId, { type: 'error', sessionId, message: `Preview render failed: ${message}` });
+    }
+  }
+
+  private toPreviewHtml(code: string): string {
+    const trimmed = code.trim();
+    if (/^(?:<!DOCTYPE\s+html|<html\b)/i.test(trimmed)) {
+      return trimmed;
+    }
+    return HTMLWrapper.wrap(trimmed, { domain: 'p5', title: 'Liminal p5 Preview' });
+  }
+
+  private async renderHtmlScreenshot(htmlPath: string, pngPath: string): Promise<void> {
+    const { default: puppeteer } = await import('puppeteer');
+    const browser = await puppeteer.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    let page: Awaited<ReturnType<typeof browser.newPage>> | null = null;
+    try {
+      page = await browser.newPage();
+      await page.setViewport({ width: 960, height: 640 });
+      await page.goto(`file://${htmlPath}`, { waitUntil: 'load', timeout: 30000 });
+      await page.waitForSelector('canvas', { timeout: 10000 });
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      await page.screenshot({ path: pngPath, type: 'png' });
+    } finally {
+      if (page) await page.close().catch(() => undefined);
+      await browser.close().catch(() => undefined);
+    }
   }
 
   private emitOperatorProgress(sessionId: string, event: BusEvent): void {

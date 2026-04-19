@@ -266,6 +266,29 @@ func TestPreviewCardRendersImageInline(t *testing.T) {
 	}
 }
 
+func TestPreviewCardRendersAudioReactivityInOperatorPanel(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.PreviewType = "music"
+	m.PreviewContent = "RMS: 0.42\nPeak: 0.81\nbrightnessDriven: true\nrippleScaleDriven: true"
+
+	panel := m.renderPreviewCard(72)
+	for _, want := range []string{"Type: music", "RMS:", "Peak:", "brightnessDriven", "rippleScaleDriven"} {
+		if !strings.Contains(panel, want) {
+			t.Fatalf("expected audio reactive preview panel to contain %q\n%s", want, panel)
+		}
+	}
+}
+
+func TestCodeBlockDoesNotRenderInlinePreviewBadge(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ChatBlocks = []ChatBlock{{Type: "code", Content: "function setup() {}", Preview: "base64"}}
+
+	chat := visibleText(m.renderChatContent())
+	if strings.Contains(chat, "Preview") {
+		t.Fatalf("expected preview affordance to stay out of chat transcript\n%s", chat)
+	}
+}
+
 func TestOperatorRunStatusLabels(t *testing.T) {
 	t.Run("success", func(t *testing.T) {
 		m := readyOperatorModel(t)

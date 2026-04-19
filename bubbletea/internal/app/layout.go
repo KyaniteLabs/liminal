@@ -386,6 +386,8 @@ func (m Model) renderPreviewCard(width int) string {
 	lines = append(lines, ui.PanelMetaStyle.Render("Type: "+previewType))
 	if previewType == "image" {
 		lines = append(lines, RenderImageFromBase64(m.PreviewContent, min(width-8, 96)))
+	} else if previewType == "music" || previewType == "audio" || previewType == "mic" {
+		lines = append(lines, m.renderAudioReactivePreview(width))
 	} else {
 		lines = append(lines, ui.PreviewContentStyle.Render(previewSummary(m.PreviewContent, 2, width-8)))
 	}
@@ -555,6 +557,45 @@ func previewSummary(content string, maxLines, width int) string {
 		lines[i] = trimToWidth(line, width)
 	}
 	return strings.Join(lines, "\n")
+}
+
+func parsePreviewMetric(line string) float64 {
+	parts := strings.FieldsFunc(line, func(r rune) bool {
+		return r == ':' || r == '=' || r == ' '
+	})
+	for _, part := range parts {
+		var value float64
+		if _, err := fmt.Sscanf(part, "%f", &value); err == nil {
+			if value < 0 {
+				return 0
+			}
+			if value > 1 {
+				return 1
+			}
+			return value
+		}
+	}
+	return 0
+}
+
+func metricLabel(line string) string {
+	if idx := strings.IndexAny(line, ":= "); idx >= 0 {
+		return strings.TrimSpace(line[:idx])
+	}
+	return strings.TrimSpace(line)
+}
+
+func metricValue(line string) string {
+	for _, sep := range []string{":", "="} {
+		if idx := strings.Index(line, sep); idx >= 0 {
+			return strings.TrimSpace(line[idx+1:])
+		}
+	}
+	fields := strings.Fields(line)
+	if len(fields) > 1 {
+		return strings.Join(fields[1:], " ")
+	}
+	return ""
 }
 
 func trimToWidth(value string, width int) string {

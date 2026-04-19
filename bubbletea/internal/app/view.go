@@ -253,9 +253,6 @@ func (m Model) renderChatContent() string {
 		case "code":
 			rendered := m.renderMarkdown("```javascript\n" + block.Content + "\n```")
 			sb.WriteString(rendered)
-			if block.Preview != "" {
-				sb.WriteString(ui.PreviewBadgeStyle.Render(" ▶ Preview"))
-			}
 			sb.WriteString("\n\n")
 
 		case "error":
@@ -324,6 +321,29 @@ func (m Model) renderPreviewContent() string {
 	default:
 		return m.renderMarkdown(m.PreviewContent)
 	}
+}
+
+func (m Model) renderAudioReactivePreview(width int) string {
+	lines := []string{}
+	for _, raw := range strings.Split(m.PreviewContent, "\n") {
+		line := strings.TrimSpace(raw)
+		if line == "" {
+			continue
+		}
+		lower := strings.ToLower(line)
+		if strings.HasPrefix(lower, "rms") || strings.HasPrefix(lower, "peak") || strings.HasPrefix(lower, "level") {
+			value := parsePreviewMetric(line)
+			bar := renderGradientProgressBar(max(width-10, 16), value, string(ui.AccentGreen), string(ui.AccentCyan))
+			lines = append(lines, ui.PanelLabelStyle.Render(metricLabel(line))+": "+ui.PanelValueStyle.Render(metricValue(line)))
+			lines = append(lines, bar)
+			continue
+		}
+		lines = append(lines, ui.PreviewContentStyle.Render(trimToWidth(line, width-6)))
+	}
+	if len(lines) == 0 {
+		lines = append(lines, ui.EmptyStateStyle.Render("Waiting for microphone levels."))
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, lines...)
 }
 
 // renderStreamingText renders active streaming content in a lightweight readable

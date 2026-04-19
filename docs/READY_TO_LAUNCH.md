@@ -1,6 +1,10 @@
-# 🚀 READY TO LAUNCH
+# Launch Candidate Preflight
 
-**Complete Pre-Flight Package for Liminal Meta-Harness**
+> Current status: historical preflight artifact, not a live launch-readiness claim.
+> For current evidence and blockers, use `.omx/proof/launch-readiness-scorecard-2026-04-19.md`.
+> As of 2026-04-19, Liminal is a launch candidate with proof slices complete, but full launch readiness still depends on the remaining manual/live gates and documentation truth pass.
+
+**Historical pre-flight package for Liminal Meta-Harness**
 
 ---
 
@@ -190,23 +194,32 @@ EMERGENCY: Ctrl+C
 
 ---
 
-## 🎉 You're Ready
+## Candidate Status
 
-Everything is in place:
+This historical checklist shows the harness activation path, but it is not sufficient by itself to claim launch readiness. Current proof evidence must be checked first:
+
+- `.omx/proof/launch-readiness-scorecard-2026-04-19.md`
+- `.omx/proof/operator-trust-proof-2026-04-19.md`
+- `.omx/proof/audio-input/`
+- `.omx/proof/creative-copilot/`
+- `.omx/proof/emergence-garden/`
+- `.omx/proof/self-improvement/`
+
+Historically, this package expected:
 - ✅ Code written and tested
 - ✅ Wiring verified
 - ✅ Documentation complete
 - ✅ Safety systems active
 - ✅ Audit tools ready
 
-**Choose your audit method, verify, then run:**
+Before launch/demo use, choose your audit method, verify current proof gates, then run:
 
 ```bash
 npm run tui
 /run M1
 ```
 
-**Good luck! The harness is ready for activation. 🚀**
+**Good luck. Treat this as an activation checklist, not a final launch certificate.**
 
 ---
 

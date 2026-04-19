@@ -1,13 +1,17 @@
 # Verification Report: All Systems Online
 
 **Date:** 2026-04-07  
-**Status:** ✅ ALL SYSTEMS VERIFIED
+**Status:** Historical snapshot — superseded by current launch scorecard
+
+> This file records a point-in-time subsystem verification from 2026-04-07.
+> It is not the current launch-readiness source of truth. For current status,
+> use `.omx/proof/launch-readiness-scorecard-2026-04-19.md`.
 
 ---
 
 ## Summary
 
-All 21 Liminal subsystems have been verified and are operational. The system is fully wired and ready for production use.
+At the time of this snapshot, 21 Liminal subsystems were verified as operational. This does not imply current production readiness; newer launch proof gates distinguish proven slices, paused media surfaces, manual gates, and remaining blockers.
 
 | Metric | Result | Status |
 |--------|--------|--------|

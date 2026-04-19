@@ -5,6 +5,10 @@
 **Repository:** liminal-ai v2.1.0  
 **Branch:** agent-work-1775272239 (based on main @ 51730bb)
 
+> Historical snapshot: this report is useful background, but it is not the
+> current launch-readiness source of truth. For current evidence and blockers,
+> use `.omx/proof/launch-readiness-scorecard-2026-04-19.md`.
+
 ---
 
 ## Executive Summary
@@ -19,7 +23,7 @@
 | **LLM Providers** | 6 providers supported, 4 local/2 cloud | ⚠️ Config Required |
 | **Test Pass Rate** | ~94% (15 failures in 260+ tests) | ⚠️ Minor Issues |
 
-**Overall Readiness: 85% - READY FOR PRODUCTION DOG FOOD TESTING**
+**Historical readiness estimate:** 85% for production dogfood testing at the time of this audit. Current readiness must be judged from the live proof scorecard.
 
 ---
 

@@ -4,6 +4,10 @@
 **Branch:** claude/testing-check-t0WYV (based on main @ 82dd498)  
 **Auditor:** Claude Code agent (worktree: liminal-testing-wt)
 
+> Historical snapshot: this report is not the current launch-readiness source
+> of truth. For current proof evidence and remaining blockers, use
+> `.omx/proof/launch-readiness-scorecard-2026-04-19.md`.
+
 ---
 
 ## Executive Summary
@@ -20,7 +24,7 @@
 | Config System | ✅ PASS | Defaults to LM Studio at localhost:1234 |
 | Env Requirements | ⚠️ ACTION NEEDED | LLM backend must be running before use |
 
-**Overall: READY FOR MANUAL USER TESTING** — with one prerequisite (LLM backend).
+**Historical estimate:** ready for manual user testing with one prerequisite at the time of this audit. Current manual/demo readiness must be checked against the live proof scorecard.
 
 ---
 

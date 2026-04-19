@@ -96,7 +96,14 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
    * @throws {GenerationError} If LLM returns invalid or empty output
    */
   async generate(prompt: string, options?: TextGenOptions): Promise<string> {
-    const raw = await super.generate(prompt, options);
+    const textPrompt = [
+      prompt,
+      '',
+      'Return text art only: concrete poetry, word arrangement, typography, or ASCII-poem text.',
+      'Do not return HTML, SVG, CSS, JavaScript, markdown fences, placeholder comments, or DOM structure.',
+      'Use plain text lines that can be shown inside a <pre> element.',
+    ].join('\n');
+    const raw = await super.generate(textPrompt, options);
     const validation = this.validateOutput(raw);
     if (!validation.valid) {
       throw new Error(validation.error);

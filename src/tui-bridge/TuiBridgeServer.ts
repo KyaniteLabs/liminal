@@ -68,7 +68,27 @@ const ALLOWED_ORIGINS: readonly string[] = [
   'http://localhost:4200',
   'http://localhost:5173',
   'http://127.0.0.1:3000',
+  'http://127.0.0.1:4200',
+  'http://127.0.0.1:5173',
 ];
+
+const MIC_PREVIEW_HTML = String.raw`<!doctype html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Liminal Mic Preview</title>
+<style>body{margin:0;background:#07090f;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}main{max-width:720px;margin:0 auto;padding:28px}button{border:1px solid #59e1ff;background:#11131a;color:#e5e7eb;border-radius:6px;padding:10px 14px;font:inherit;cursor:pointer;margin-right:8px}.meter{height:24px;background:#11131a;border:1px solid #334155;border-radius:6px;overflow:hidden;margin:16px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,#58c777,#59e1ff,#f2b84b)}pre{white-space:pre-wrap;background:#11131a;border:1px solid #334155;border-radius:6px;padding:12px}.hint{color:#f2b84b}</style>
+</head>
+<body><main><h1>Liminal Mic Preview</h1><p class="hint">Click Start, speak or hum, then watch the Bubble Tea right-hand operator panel.</p><button id="start">Start recording</button><button id="stop" disabled>Stop</button><div class="meter"><div id="bar" class="bar"></div></div><pre id="out">idle</pre></main>
+<script>
+let stream,ctx,analyser,timeData,freqData,raf,frames=[];
+const bar=document.getElementById('bar'),out=document.getElementById('out');
+function rms(values){let s=0;for(const v of values){const x=(v-128)/128;s+=x*x}return Math.sqrt(s/values.length)}
+function centroid(freq){let sum=0,weighted=0;for(let i=0;i<freq.length;i++){sum+=freq[i];weighted+=freq[i]*i}return sum?weighted/sum/freq.length:0}
+async function send(content, done=false){await fetch(location.pathname+'/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,done})}).catch(()=>{})}
+function content(final=false){const vals=frames.map(f=>f.rms);const peak=vals.length?Math.max(...vals):0;const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;const range=vals.length?peak-Math.min(...vals):0;const cent=frames.length?frames.reduce((a,b)=>a+b.centroid,0)/frames.length:0;return ['RMS: '+avg.toFixed(3),'Peak: '+peak.toFixed(3),'Range: '+range.toFixed(3),'Centroid: '+cent.toFixed(3),'brightnessDriven: true','rippleScaleDriven: true','particleSpeedDriven: true','typographyScaleDriven: true', final?'Status: stopped':'Status: recording'].join('\n')}
+function tick(){analyser.getByteTimeDomainData(timeData);analyser.getByteFrequencyData(freqData);const level=rms(timeData);frames.push({rms:level,centroid:centroid(freqData)});if(frames.length>1200)frames.shift();bar.style.width=Math.min(100,level*260)+'%';const c=content(false);out.textContent=c;send(c,false);raf=requestAnimationFrame(tick)}
+document.getElementById('start').onclick=async()=>{stream=await navigator.mediaDevices.getUserMedia({audio:true});ctx=new AudioContext();analyser=ctx.createAnalyser();analyser.fftSize=2048;timeData=new Uint8Array(analyser.fftSize);freqData=new Uint8Array(analyser.frequencyBinCount);ctx.createMediaStreamSource(stream).connect(analyser);frames=[];document.getElementById('start').disabled=true;document.getElementById('stop').disabled=false;tick()};
+document.getElementById('stop').onclick=()=>{cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());ctx?.close();document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;const c=content(true);out.textContent=c;send(c,true)};
+</script></body></html>`;
 
 interface BridgeServerOptions {
   port?: number;
@@ -180,6 +200,10 @@ export class TuiBridgeServer {
         const sessionId = inputMatch[1];
         const body = await this.readBody(req);
         const input: TuiInputRequest = JSON.parse(body);
+        if (this.handleMicPreviewCommand(sessionId, input)) {
+          this.json(res, 200, { reviewRequired: false });
+          return;
+        }
         if (await this.handleModelPicker(sessionId, input)) {
           this.json(res, 200, { reviewRequired: false });
           return;
@@ -206,6 +230,26 @@ export class TuiBridgeServer {
         const sessionId = cancelMatch[1];
         const actionId = cancelMatch[2];
         this.bridge.cancelAction(sessionId, actionId);
+        this.json(res, 200, { ok: true });
+        return;
+      }
+
+      const micPageMatch = path.match(/^\/api\/tui\/session\/([^/]+)\/mic-preview$/);
+      if (req.method === 'GET' && micPageMatch) {
+        this.bridge.getStatus(micPageMatch[1]);
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(MIC_PREVIEW_HTML);
+        return;
+      }
+
+      const micUpdateMatch = path.match(/^\/api\/tui\/session\/([^/]+)\/mic-preview\/update$/);
+      if (req.method === 'POST' && micUpdateMatch) {
+        const sessionId = micUpdateMatch[1];
+        this.bridge.getStatus(sessionId);
+        const body = await this.readBody(req);
+        const payload = JSON.parse(body) as { content?: string; done?: boolean };
+        const content = payload.content || '';
+        this.bridge.publishEvent(sessionId, { type: payload.done ? 'preview.completed' : 'preview.content', content, previewType: 'music' } as any);
         this.json(res, 200, { ok: true });
         return;
       }
@@ -274,6 +318,27 @@ data: ${JSON.stringify(stored.event)}
   private json(res: ServerResponse, status: number, body: unknown): void {
     res.writeHead(status, { 'Content-Type': 'application/json' });
     res.end(JSON.stringify(body));
+  }
+
+  private handleMicPreviewCommand(sessionId: string, input: TuiInputRequest): boolean {
+    const text = input.text.trim();
+    if (text !== '/mic' && text !== '/mic-preview') return false;
+
+    const url = `${this.address}/api/tui/session/${sessionId}/mic-preview`;
+    const content = [
+      'Mic preview controls',
+      'Start recording in browser: ' + url,
+      'RMS: 0',
+      'Peak: 0',
+      'brightnessDriven: true',
+      'rippleScaleDriven: true',
+      'particleSpeedDriven: true',
+      'typographyScaleDriven: true',
+    ].join('\n');
+    this.bridge.publishEvent(sessionId, { type: 'preview.started', previewType: 'music' } as any);
+    this.bridge.publishEvent(sessionId, { type: 'preview.content', content, previewType: 'music' } as any);
+    this.bridge.emitCommandResponse(sessionId, `Mic preview opened: ${url}\nPress Ctrl+E to watch the operator panel.`);
+    return true;
   }
 
   private async handleModelPicker(sessionId: string, input: TuiInputRequest): Promise<boolean> {

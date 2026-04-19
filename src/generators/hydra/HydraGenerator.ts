@@ -13,7 +13,7 @@ export class HydraGenerator extends TierBasedGenerator {
       'Use visible generated sources: osc(), noise(), shape(), voronoi(), gradient(), or solid().',
       'Do not use camera or screen input: no s0.initCam(), no s0.initScreen(), no src(s0).',
       'Use hydra-synth 1.3 runtime-safe method names: saturate(), brightness(), kaleid().',
-      'Never use saturation(), feedback(), kaleidoscope(), colorShift(), post(), screen(), output(), s0 chains, s0.osc()/s0.noise(), or chained source methods like .osc().',
+      'Never use saturation(), feedback(), kaleidoscope(), colorShift(), post(), screen(), output(), s0 chains, s0.osc()/s0.noise(), initFBOTriangle(), or chained source methods like .osc().',
       'For image-proof visibility, include explicit .color(...) or .colorama(...) on the rendered chain.',
       'Use numeric color values like .color(0.95, 0.61, 0.62); do not pass osc(), noise(), or other sources into color().',
       'Use numeric transform values like .brightness(1.2); do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
@@ -65,7 +65,7 @@ export class HydraGenerator extends TierBasedGenerator {
     if (/\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
       return { valid: false, error: 'Hydra output uses source functions as chained methods; use .add(osc(...)), .blend(noise(...)), or start a new source chain' };
     }
-    const unsupportedMethods = ['saturation', 'feedback', 'kaleidoscope', 'colorShift', 'post', 'screen', 'output'];
+    const unsupportedMethods = ['saturation', 'feedback', 'kaleidoscope', 'colorShift', 'post', 'screen', 'output', 'initFBOTriangle'];
     for (const method of unsupportedMethods) {
       if (new RegExp(`\\.${method}\\s*\\(`).test(code)) {
         return { valid: false, error: `Hydra output uses unsupported method .${method}(); use hydra-synth 1.3 runtime-safe APIs` };
@@ -125,6 +125,10 @@ export class HydraGenerator extends TierBasedGenerator {
     
     // Strip HTML-style comments
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
+
+    // Strip hallucinated initFBOTriangle calls (not in hydra-synth 1.3 public API)
+    clean = clean.replace(/\bs\d*\.initFBOTriangle\s*\(\s*\)\s*;?\s*/g, '');
+    clean = clean.replace(/\binitFBOTriangle\s*\(\s*\)\s*;?\s*/g, '');
 
     const inlineHydraSnippets = [...clean.matchAll(/`([^`\n]*(?:osc|noise|shape|voronoi|gradient|solid)[^`]*)`/g)]
       .map(match => match[1].trim())

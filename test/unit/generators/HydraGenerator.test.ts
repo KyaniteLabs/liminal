@@ -49,6 +49,12 @@ vi.mock('../../../src/harness/MetaHarnessIntegration.js', () => ({
 
 import { HydraGenerator } from '../../../src/generators/hydra/HydraGenerator.js';
 
+class TestableHydraGenerator extends HydraGenerator {
+  validateForTest(code: string) {
+    return this.validateOutput(code);
+  }
+}
+
 describe('HydraGenerator', () => {
   beforeEach(() => {
     mockToolLoop.mockClear();
@@ -79,9 +85,22 @@ describe('HydraGenerator', () => {
     expect(wrapped).not.toContain('type="module"');
   });
 
+  it('rejects hydra image proof code without explicit color output', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(0.1, 0.2, 0.3).saturate(3).brightness(1.2).out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('explicit color()');
+  });
+
+  it('accepts hydra image proof code with explicit color output', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1).color(1, 0.2, 0.8).kaleid(4).out()');
+    expect(result.valid).toBe(true);
+  });
+
   it('sanitizeCode appends .out(o0) when missing render', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(10, 0.1, 1.0)',
+      content: 'osc(10, 0.1, 1.0).color(1, 0.2, 0.8)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -91,7 +110,7 @@ describe('HydraGenerator', () => {
 
   it('sanitizeCode appends render when multiple outputs exist', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(10).out(o0)\nshape(4).out(o1)',
+      content: 'osc(10).color(1, 0.2, 0.8).out(o0)\nshape(4).color(0.1, 1, 0.7).out(o1)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();

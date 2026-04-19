@@ -44,7 +44,7 @@ export class P5GeneratorV2 extends TierBasedGenerator {
       };
     }
 
-    if (/\{[\s\n]*\.\.\.[\s\n]*\}/.test(code) || /\.\.\.\s*(?:\/\/|$)/m.test(code)) {
+    if (/\{[\s\n]*(?:\.\.\.|\u2026)[\s\n]*\}/.test(code) || /(?:\.\.\.|\u2026)\s*(?:\/\/|$)/m.test(code)) {
       return {
         valid: false,
         error: 'Generated code contains placeholder ellipses; return complete executable p5.js',

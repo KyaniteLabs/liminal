@@ -146,7 +146,11 @@ export class HydraGenerator extends TierBasedGenerator {
     clean = clean.replace(/\.screen\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
     clean = clean.replace(/\.output\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
     clean = clean.replace(/\bs0\.(osc|noise|shape|voronoi|gradient|solid)\s*\(/g, '$1(');
-    
+    // Catch remaining s0.anyMethod() patterns that the specific regex above missed
+    clean = clean.replace(/\bs0\.([a-zA-Z_$][\w$]*)\s*\(/g, '$1(');
+    // Strip bare s0 references used as chain roots (e.g. s0.out(o0))
+    clean = clean.replace(/\bs0\s*\./g, '');
+
     // Only filter out lines that are pure explanation (no code patterns at all)
     const lines = clean.split('\n');
     const codeLines: string[] = [];

@@ -80,8 +80,8 @@ export class ShaderGenerator extends TierBasedGenerator {
   wrapForGallery(code: string): string {
     code = this.sanitizeShaderCode(code);
     const hasPrecision = /\bprecision\s+(lowp|mediump|highp)\s+float\s*;/.test(code);
-    const hasTime = /\buniform\s+float\s+u_time\s*;/.test(code);
-    const hasResolution = /\buniform\s+vec2\s+u_resolution\s*;/.test(code);
+    const hasTime = /\buniform\s+float\s+(u_time|iTime)\s*;/.test(code);
+    const hasResolution = /\buniform\s+vec2\s+(u_resolution|iResolution)\s*;/.test(code);
     const hasMain = /\bvoid\s+main\s*\(/.test(code);
     const hasMainImage = /\bvoid\s+mainImage\s*\(/.test(code);
     const shaderSource = [

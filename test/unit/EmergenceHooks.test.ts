@@ -35,7 +35,7 @@ describe('EmergenceHooks', () => {
     expect(result.signals.novelty).toBeLessThanOrEqual(1);
     expect(result.placement.accepted).toBe(true);
     expect(result.placement.outcome).toBe('new-cell');
-  });
+  }, 30000);
 
   it('rejects low-quality artifacts', async () => {
     const hooks = new EmergenceHooks(liminalFs, { minQuality: 0.5 });

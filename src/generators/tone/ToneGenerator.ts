@@ -62,7 +62,8 @@ export class ToneGenerator extends TierBasedGenerator {
    */
   wrapForGallery(code: string): string {
     const escaped = code.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    const scriptCode = code.replace(/<\/script/gi, '<\\/script');
+    const encodedCode = JSON.stringify(code).replace(/</g, '\\u003c');
+    const canExecute = this.isPlainToneScript(code);
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -84,19 +85,24 @@ pre{font-size:clamp(9px,1.5vw,14px);line-height:1.5;white-space:pre-wrap;max-wid
 <button id="playBtn">Play Tone.js patch</button>
 <p id="status" class="msg">Click Play to start audio.</p>
 <pre>${escaped}</pre>
+<script id="toneCode" type="application/json" data-executable="${canExecute}">${encodedCode}</script>
 <script>
 const statusEl=document.getElementById('status');
-try {
-${scriptCode}
-} catch (error) {
-  statusEl.textContent='Setup error: '+(error&&error.message?error.message:String(error));
-  statusEl.className='err';
-}
+const codeEl=document.getElementById('toneCode');
+const generatedCode=JSON.parse(codeEl.textContent||'""');
+const canExecuteGeneratedCode=codeEl.dataset.executable==='true';
 async function startTonePatch(){
   try {
     await Tone.start();
-    if (typeof play === 'function') {
-      await play();
+    if (!canExecuteGeneratedCode) {
+      statusEl.textContent='Generated full HTML/module artifact is preserved below; playback requires extracting its Tone.js script.';
+      statusEl.className='err';
+      return;
+    }
+    const runGenerated=new Function('Tone', generatedCode+"\\nreturn typeof play === 'function' ? play : null;");
+    const maybePlay=runGenerated(Tone);
+    if (typeof maybePlay === 'function') {
+      await maybePlay();
     } else if (Tone.Transport && Tone.Transport.state !== 'started') {
       Tone.Transport.start();
     }
@@ -111,5 +117,10 @@ document.getElementById('playBtn').addEventListener('click', startTonePatch);
 </script>
 </body>
 </html>`;
+  }
+
+  private isPlainToneScript(code: string): boolean {
+    return !/<(?:!doctype|html|head|body|script|iframe|object|embed)\b/i.test(code)
+      && !/^\s*(import|export)\s/m.test(code);
   }
 }

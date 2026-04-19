@@ -90,6 +90,16 @@ describe('ToneGenerator', () => {
     expect(wrapped).toContain('Play Tone.js patch');
     expect(wrapped).toContain('Tone.start');
     expect(wrapped).toContain('Tone.Synth');
+    expect(wrapped).toContain('data-executable="true"');
+    expect(wrapped).not.toContain('try {\nconst s = new Tone.Synth();');
+  });
+
+  it('wrapForGallery preserves full HTML without injecting it as executable script', () => {
+    const gen = new ToneGenerator();
+    const wrapped = gen.wrapForGallery('<!DOCTYPE html><script type="module">new Tone.Synth()</script>');
+    expect(wrapped).toContain('data-executable="false"');
+    expect(wrapped).toContain('Generated full HTML/module artifact is preserved below');
+    expect(wrapped).toContain('&lt;!DOCTYPE html&gt;');
   });
 
   it('wrapForGallery escapes HTML entities for &, <, >', () => {

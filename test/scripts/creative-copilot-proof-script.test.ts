@@ -20,6 +20,7 @@ describe('creative copilot proof script', () => {
     expect(source).toContain('audio-external');
     expect(source).toContain('video-code');
     expect(source).toContain('KineticGenerator');
+    expect(source).not.toMatch(/if \(spec\.previewKind === 'video-code'\) \{\s*return/s);
     expect(source).toContain('validateScreenshotVisible');
     expect(source).toContain('Preview runtime error');
     expect(source).toContain("previewKind: 'image'");

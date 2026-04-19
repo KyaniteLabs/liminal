@@ -94,7 +94,7 @@ export class ShaderGenerator extends TierBasedGenerator {
     const usesGlsl300 = /^\s*#version\s+300\s+es/m.test(shaderSource);
     const encodedShader = JSON.stringify(shaderSource);
     const vertexShader = usesGlsl300
-      ? '#version 300 es\\nin vec2 a_pos;out vec2 v_uv;void main(){v_uv=a_pos*0.5+0.5;gl_Position=vec4(a_pos,0,1);}'
+      ? '#version 300 es\nin vec2 a_pos;out vec2 v_uv;void main(){v_uv=a_pos*0.5+0.5;gl_Position=vec4(a_pos,0,1);}'
       : 'attribute vec2 a_pos;void main(){gl_Position=vec4(a_pos,0,1);}';
     const harness = '<!DOCTYPE html>\n' +
       '<html>\n' +

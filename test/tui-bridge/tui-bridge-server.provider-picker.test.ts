@@ -556,7 +556,7 @@ describe('TuiBridgeServer model picker', () => {
       expect(events.some((event) => event.type === 'preview.started' && (event as any).previewType === 'music')).toBe(true);
       expect(events.some((event) => event.type === 'preview.completed' && (event as any).content.includes('RMS: 0.42'))).toBe(true);
       const committed = events.find((event) => event.type === 'response.committed') as any;
-      expect(committed.content).toContain('Mic preview opened:');
+      expect(committed.content).toContain('Mic recorder opened in browser:');
     } finally {
       await server.stop();
     }

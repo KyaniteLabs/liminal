@@ -337,7 +337,11 @@ data: ${JSON.stringify(stored.event)}
     ].join('\n');
     this.bridge.publishEvent(sessionId, { type: 'preview.started', previewType: 'music' } as any);
     this.bridge.publishEvent(sessionId, { type: 'preview.content', content, previewType: 'music' } as any);
-    this.bridge.emitCommandResponse(sessionId, `Mic preview opened: ${url}\nPress Ctrl+E to watch the operator panel.`);
+    void import('open')
+      .then(({ default: open }) => open(url))
+      .then(() => this.bridge.publishEvent(sessionId, { type: 'activity.updated', message: 'Opened microphone recorder in browser' } as any))
+      .catch((error) => this.bridge.publishEvent(sessionId, { type: 'activity.updated', message: `Open browser manually: ${url} (${error instanceof Error ? error.message : String(error)})` } as any));
+    this.bridge.emitCommandResponse(sessionId, `Mic recorder opened in browser: ${url}\nPress Ctrl+E to watch the operator panel.`);
     return true;
   }
 

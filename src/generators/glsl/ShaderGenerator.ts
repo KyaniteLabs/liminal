@@ -135,7 +135,7 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   private sanitizeShaderCode(code: string): string {
-    const htmlShader = code.match(/const\s+(?:fsSource|fragSrc)\s*=\s*`([\s\S]*?)`/);
+    const htmlShader = code.match(/const\s+(?:fsSource|fragSrc|fs)\s*=\s*`([\s\S]*?)`/);
     if (htmlShader?.[1]) {
       return htmlShader[1].trim();
     }

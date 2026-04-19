@@ -72,7 +72,7 @@ function getMeydaSync(): MeydaModule | null {
     meydaLoaded = true;
     return MeydaSync;
   } catch (err) {
-    Logger.warn('AudioExtractor', 'Meyda not available. Audio features will return defaults. Install with: npm install meyda');
+    Logger.warn('AudioExtractor', 'Meyda not available. Using lightweight built-in audio feature fallback. Install with: npm install meyda for richer features.');
     return null;
   }
 }
@@ -104,6 +104,42 @@ const FEATURES = [
   'perceptualSharpness',
 ] as const;
 
+function extractFallbackFeatures(buffer: Float32Array): AudioFeatures {
+  if (buffer.length < 2) return { ...DEFAULTS, chroma: new Float32Array(12) };
+
+  let sumSquares = 0;
+  let zeroCrossings = 0;
+  let absSum = 0;
+  for (let i = 0; i < buffer.length; i++) {
+    const value = buffer[i];
+    sumSquares += value * value;
+    absSum += Math.abs(value);
+    if (i > 0 && Math.sign(value) !== Math.sign(buffer[i - 1])) zeroCrossings++;
+  }
+
+  const rms = Math.sqrt(sumSquares / buffer.length);
+  const energy = sumSquares;
+  const zcr = zeroCrossings / (buffer.length - 1);
+  const spectralCentroid = zcr * 22_050;
+  const loudness = rms > 0 ? 20 * Math.log10(rms) : -100;
+  const spectralFlatness = rms > 0 ? Math.min(1, absSum / buffer.length / rms) : 0;
+  const chroma = new Float32Array(12);
+  if (rms > 0) chroma[0] = rms;
+
+  return {
+    rms,
+    energy,
+    spectralCentroid,
+    spectralFlatness,
+    zcr,
+    mfcc: [],
+    loudness,
+    spectralFlux: 0,
+    chroma,
+    perceptualSharpness: Math.min(1, spectralCentroid / 8000),
+  };
+}
+
 /**
  * Extract audio features from a mono Float32Array sample buffer using Meyda.
  *
@@ -114,7 +150,7 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
   if (buffer.length < 2) return { ...DEFAULTS, chroma: new Float32Array(12) };
 
   const M = getMeydaSync();
-  if (!M) return { ...DEFAULTS, chroma: new Float32Array(12) };
+  if (!M) return extractFallbackFeatures(buffer);
 
   try {
     // Meyda requires bufferSize to match the input buffer length
@@ -163,7 +199,7 @@ export function extractFeatures(buffer: Float32Array): AudioFeatures {
       perceptualSharpness: extractNumber(result.perceptualSharpness),
     };
   } catch (err) {
-    Logger.warn('AudioExtractor', 'Feature extraction failed, returning defaults:', err instanceof Error ? err.message : err);
-    return { ...DEFAULTS, chroma: new Float32Array(12) };
+    Logger.warn('AudioExtractor', 'Feature extraction failed, using lightweight fallback:', err instanceof Error ? err.message : err);
+    return extractFallbackFeatures(buffer);
   }
 }

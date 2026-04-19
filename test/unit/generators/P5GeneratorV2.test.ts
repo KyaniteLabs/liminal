@@ -207,4 +207,15 @@ describe('P5GeneratorV2', () => {
       expect(typeof info.budget).toBe('number');
     });
   });
+
+  describe('wrapForGallery', () => {
+    it('returns fenced full HTML as HTML instead of nesting it inside a script tag', () => {
+      const gen = new P5GeneratorV2();
+      const html = '<!DOCTYPE html><html><body><script>function setup(){createCanvas(10,10);}</script></body></html>';
+      const wrapped = gen.wrapForGallery(['```html', html, '```'].join('\n'));
+
+      expect(wrapped).toBe(html);
+      expect(wrapped).not.toContain('<script>\n<!DOCTYPE html>');
+    });
+  });
 });

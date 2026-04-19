@@ -79,7 +79,7 @@ interface ProofReport {
 }
 
 const DOMAIN_SPECS: DomainSpec[] = [
-  { domain: 'p5', artifactExtension: 'js', previewKind: 'image', generator: P5GeneratorV2, prompt: 'Create an interactive cybernetic koi pond at night with glowing koi fish, ripples following the mouse, neon lily pads, and drifting fireflies. Use p5 only.' },
+  { domain: 'p5', artifactExtension: 'js', previewKind: 'image', generator: P5GeneratorV2, prompt: 'Create an interactive cybernetic koi pond at night with glowing koi fish, ripples following the mouse, neon lily pads, and drifting fireflies. Return concise raw p5.js sketch code only, no HTML document, no markdown fences, keep under 180 lines.' },
   { domain: 'shader', artifactExtension: 'js', previewKind: 'image', generator: ShaderGenerator, prompt: 'Create a GLSL fragment shader with bioluminescent waves and slow domain-warped color fields.' },
   { domain: 'three', artifactExtension: 'js', previewKind: 'image', generator: ThreeGenerator, prompt: 'Create a Three.js scene with a glowing crystalline garden, orbiting camera, and floating particles.' },
   { domain: 'kinetic', artifactExtension: 'html', previewKind: 'image', generator: KineticGenerator, prompt: 'Create a CSS-only kinetic artwork: abstract animated typography and shapes, no landing page, no marketing copy, no JavaScript, just expressive motion.' },
@@ -113,6 +113,7 @@ function parseArgs() {
       : domainsArg.split(',').map(v => v.trim()).filter(Boolean) as DomainName[],
     dryRun: args.includes('--dry'),
     outputRoot: get('out') || path.join('.omx', 'proof', 'creative-copilot'),
+    maxTokens: Number(get('max-tokens') || 4096),
   };
 }
 
@@ -470,7 +471,7 @@ async function main() {
     process.exit(1);
   }
 
-  const llm = new LLMClient({ baseUrl: providerConfig?.baseUrl || '', model, apiKey: providerConfig?.apiKey, temperature: 0.7, maxTokens: 4096 });
+  const llm = new LLMClient({ baseUrl: providerConfig?.baseUrl || '', model, apiKey: providerConfig?.apiKey, temperature: 0.7, maxTokens: options.maxTokens });
   const specs = options.domains.map(domain => DOMAIN_SPECS.find(spec => spec.domain === domain)).filter(Boolean) as DomainSpec[];
   const results: DomainResult[] = [];
   for (const spec of specs) {

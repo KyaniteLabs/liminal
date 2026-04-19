@@ -63,6 +63,15 @@ export class P5GeneratorV2 extends TierBasedGenerator {
    * Injects p5.js CDN and creates a self-contained sketch harness.
    */
   wrapForGallery(code: string): string {
+    const cleaned = code
+      .replace(/^```(?:html|javascript|js)?\n?/i, '')
+      .replace(/\n?```$/i, '')
+      .trim();
+
+    if (/<!DOCTYPE\s+html/i.test(cleaned) || /<html\b/i.test(cleaned)) {
+      return cleaned;
+    }
+
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -78,7 +87,7 @@ canvas{display:block}
 </head>
 <body>
 <script>
-${code}
+${cleaned}
 </script>
 </body>
 </html>`;

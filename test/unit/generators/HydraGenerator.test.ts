@@ -200,6 +200,16 @@ describe('HydraGenerator', () => {
     expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()');
   });
 
+  it('combines a final inline hydra snippet with trailing out call', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: '`osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)`\n.out(o0)',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('extract hydra trailing out');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)');
+  });
+
   it('repairs invalid s0 source methods from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: 's0.osc(4, 0.1, 1.0).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',

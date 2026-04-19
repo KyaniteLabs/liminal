@@ -142,6 +142,17 @@ describe('P5GeneratorV2', () => {
       expect(result).toContain('PRIMARY = color(243, 155, 159);');
     });
 
+    it('extracts fenced p5 code from explanatory output', async () => {
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerate.mockResolvedValue({
+        code: 'Reasoning first\n```javascript\nfunction setup() { createCanvas(400, 400); }\nfunction draw() { background(0); }\n```',
+        success: true,
+      });
+      const gen = new P5GeneratorV2();
+      const result = await gen.generate('draw with reasoning');
+      expect(result).toBe('function setup() { createCanvas(400, 400); }\nfunction draw() { background(0); }');
+    });
+
     it('accepts code with bare setup() call', async () => {
       mockIsConfigured.mockReturnValue(true);
       const bareSetupCode = 'setup(); function draw() {}';

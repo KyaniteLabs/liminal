@@ -4,11 +4,12 @@ const GRACE_PERIOD_MS = 5_000;
 
 /** Platform-specific ffmpeg input arguments. */
 function getFfmpegArgs(platform: string): string[] {
+  const deviceOverride = process.env.LIMINAL_MIC_DEVICE;
   if (platform === 'darwin') {
-    return ['-f', 'avfoundation', '-i', ':0'];
+    return ['-f', 'avfoundation', '-i', deviceOverride || ':0'];
   }
   if (platform === 'linux') {
-    return ['-f', 'alsa', '-i', 'default'];
+    return ['-f', 'alsa', '-i', deviceOverride || 'default'];
   }
   throw new Error(
     `--voice is not supported on platform "${platform}". Supported platforms: macOS, Linux.`

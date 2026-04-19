@@ -185,6 +185,10 @@ function nativePendingNote(kind: PreviewKind): string | null {
   return null;
 }
 
+function isEmptyGenerationFailure(reason: string): boolean {
+  return /empty (?:code|output)|returned empty code|returned empty output/i.test(reason);
+}
+
 function promptWithColorTheory(prompt: string): string {
   return [
     prompt,
@@ -222,7 +226,7 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
     const generator = new spec.generator(llm);
     const notes: string[] = [];
     let code: string;
-    let generationAttempts = 1;
+    let generationAttempts = 0;
     let previewAttempts = 0;
     const generateWithTimeout = async (prompt: string): Promise<string> => {
       const controller = new AbortController();
@@ -241,19 +245,38 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
         if (timeout) clearTimeout(timeout);
       }
     };
+    const generateWithEmptyRetry = async (prompt: string, label: string): Promise<string> => {
+      const maxEmptyGenerationAttempts = 3;
+      for (let attempt = 1; attempt <= maxEmptyGenerationAttempts; attempt++) {
+        generationAttempts++;
+        try {
+          const generated = await generateWithTimeout(prompt);
+          if (!generated || generated.trim().length === 0) {
+            throw new Error('Generator returned empty output');
+          }
+          return generated;
+        } catch (err) {
+          const reason = err instanceof Error ? err.message : String(err);
+          if (!isEmptyGenerationFailure(reason) || attempt === maxEmptyGenerationAttempts) {
+            throw err;
+          }
+          notes.push(`${label} empty response retry ${attempt}/${maxEmptyGenerationAttempts}: ${reason}`);
+        }
+      }
+      throw new Error('Generator returned empty output');
+    };
 
     try {
-      code = await generateWithTimeout(promptWithColorTheory(spec.prompt));
+      code = await generateWithEmptyRetry(promptWithColorTheory(spec.prompt), 'Initial generation');
     } catch (firstErr) {
       const reason = firstErr instanceof Error ? firstErr.message : String(firstErr);
-      generationAttempts++;
-      code = await generateWithTimeout([
+      code = await generateWithEmptyRetry([
         promptWithColorTheory(spec.prompt),
         '',
         `Previous generation failed validation: ${reason}`,
         `Regenerate a valid ${spec.domain} artifact that directly fixes that failure.`,
         'Return only the final artifact. Do not include prose or markdown fences.',
-      ].join('\n'));
+      ].join('\n'), 'Generation recovery');
       notes.push(`Recovered after generation retry: ${reason}`);
     }
 
@@ -265,15 +288,13 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
     let status: Status = 'pass';
     let screenshotWritten = false;
     const retryPreview = async (reason: string): Promise<string | null> => {
-      generationAttempts++;
-      const retryCode = await generateWithTimeout([
+      const retryCode = await generateWithEmptyRetry([
         promptWithColorTheory(spec.prompt),
         '',
         `Previous preview failed: ${reason}`,
         'Regenerate the artifact so the preview is visibly nonblank in a headless browser screenshot.',
         'Use bright visible output and avoid black-only frames.',
-      ].join('\n'));
-      if (!retryCode || retryCode.trim().length === 0) return 'Preview retry returned empty output.';
+      ].join('\n'), 'Preview recovery');
       code = retryCode;
       await fs.writeFile(artifactPath, code, 'utf8');
       html = wrapArtifact(spec, code);

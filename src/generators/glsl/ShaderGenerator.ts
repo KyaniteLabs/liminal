@@ -135,17 +135,23 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   private sanitizeShaderCode(code: string): string {
+    // Try fenced extraction first — handles both normal and backslash-escaped fences
+    const fencedShader = code.match(/\\?`{3}(?:glsl|frag|fragment|shader)?\s*\n?([\s\S]*?)\\?`{3}/i);
+    if (fencedShader?.[1]) {
+      let extracted = fencedShader[1].trim();
+      // Unescape any backslash-newline sequences left in the extracted GLSL
+      extracted = extracted.replace(/\\n/g, '\n');
+      return extracted;
+    }
     const htmlShader = code.match(/const\s+(?:fsSource|fragSrc|fs)\s*=\s*`([\s\S]*?)`/);
     if (htmlShader?.[1]) {
       return htmlShader[1].trim();
     }
-    const fencedShader = code.match(/```(?:glsl|frag|fragment|shader)?\s*\n?([\s\S]*?)```/i);
-    if (fencedShader?.[1]) {
-      return fencedShader[1].trim();
-    }
+    // Fallback: strip fences and unescape
     return code
-      .replace(/^```(?:glsl|frag|fragment|shader)?\s*\n?/i, '')
-      .replace(/\n?```\s*$/i, '')
+      .replace(/^\\?`{3}(?:glsl|frag|fragment|shader)?\s*\n?/i, '')
+      .replace(/\\?`{3}\s*$/i, '')
+      .replace(/\\n/g, '\n')
       .trim();
   }
 }

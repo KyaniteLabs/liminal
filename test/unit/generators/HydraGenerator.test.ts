@@ -126,11 +126,10 @@ describe('HydraGenerator', () => {
     expect(result.error).toContain('middle of an unfinished chain');
   });
 
-  it('rejects s0 as a chain root', () => {
+  it('auto-fixes s0 chain roots during sanitize', () => {
     const gen = new TestableHydraGenerator();
     const result = gen.validateForTest('s0.kaleid(6).add(osc(2, 0.1, 1).color(1, 0.2, 0.8)).out()');
-    expect(result.valid).toBe(false);
-    expect(result.error).toContain('s0 as a chain root');
+    expect(result.valid).toBe(true);
   });
 
   it('rejects source functions used as chained methods', () => {

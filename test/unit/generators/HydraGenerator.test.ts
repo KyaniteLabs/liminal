@@ -118,6 +118,18 @@ describe('HydraGenerator', () => {
     expect(result).toContain('render(o0)');
   });
 
+  it('repairs leading source dots and screen-to-out chains from local model output', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: '.solid(0.05, 0.13, 0.19).color(1, 0.2, 0.8).screen();\n.out(o0)',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('repair hydra chain');
+    expect(result).toContain('solid(0.05, 0.13, 0.19)');
+    expect(result).toContain('.out(o0)');
+    expect(result).not.toContain('.screen()');
+  });
+
   it('returns empty string for empty code', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: '',

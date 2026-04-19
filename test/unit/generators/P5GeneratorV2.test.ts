@@ -129,6 +129,19 @@ describe('P5GeneratorV2', () => {
       expect(result).toBe(VALID_P5_CODE);
     });
 
+    it('quotes bare hex color constants from local model output', async () => {
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerate.mockResolvedValue({
+        code: 'const BG=#0d2031; let PRIMARY = color(243, 155, 159); function setup() { createCanvas(400, 400); background(BG); }',
+        success: true,
+      });
+      const gen = new P5GeneratorV2();
+      const result = await gen.generate('draw with launch palette');
+      expect(result).toContain("const BG='#0d2031';");
+      expect(result).toContain('let PRIMARY;');
+      expect(result).toContain('PRIMARY = color(243, 155, 159);');
+    });
+
     it('accepts code with bare setup() call', async () => {
       mockIsConfigured.mockReturnValue(true);
       const bareSetupCode = 'setup(); function draw() {}';

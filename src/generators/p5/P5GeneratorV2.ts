@@ -23,13 +23,15 @@ export class P5GeneratorV2 extends TierBasedGenerator {
       Logger.info('P5GeneratorV2', 'Sound detected in prompt, will include audio guidance');
     }
     
-    return super.generate(prompt, options);
+    const code = await super.generate(prompt, options);
+    return this.sanitizeP5Code(code);
   }
 
   /**
    * P5-specific validation
    */
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    code = this.sanitizeP5Code(code);
     // Check for required p5 functions
     const hasSetup = code.includes('function setup()') || code.includes('setup()');
     // Note: draw() is optional for static sketches
@@ -63,6 +65,25 @@ export class P5GeneratorV2 extends TierBasedGenerator {
   private promptSuggestsSound(lowerPrompt: string): boolean {
     const soundKeywords = ['sound', 'audio', 'music', 'beep', 'tone'];
     return soundKeywords.some((kw) => lowerPrompt.includes(kw));
+  }
+
+  private sanitizeP5Code(code: string): string {
+    let clean = code.replace(/(=\s*)#([0-9a-fA-F]{3,8})\b/g, "$1'#$2'");
+    const setupColorAssignments: string[] = [];
+    clean = clean.replace(
+      /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*color\(([^;]+)\);/g,
+      (_match, name: string, args: string) => {
+        setupColorAssignments.push(`${name} = color(${args});`);
+        return `let ${name};`;
+      }
+    );
+    if (setupColorAssignments.length > 0) {
+      clean = clean.replace(
+        /(createCanvas\s*\([^;]*\)\s*;?)/,
+        `$1\n  ${setupColorAssignments.join('\n  ')}`
+      );
+    }
+    return clean;
   }
 
   /**

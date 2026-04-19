@@ -522,4 +522,44 @@ describe('TuiBridgeServer model picker', () => {
       await server.stop();
     }
   });
+  it('opens mic preview command and streams updates to preview events', async () => {
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const server = new TuiBridgeServer(service, {
+      host: '127.0.0.1',
+      port,
+      llm: { getConfig: () => ({ baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7' }) } as any,
+    });
+    await server.start();
+
+    try {
+      const createRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+      const session = await createRes.json() as { sessionId: string };
+
+      await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/input`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'chat', clientIntent: 'chat', text: '/mic' }),
+      });
+
+      const page = await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/mic-preview`);
+      expect(page.status).toBe(200);
+      expect(await page.text()).toContain('Start recording');
+
+      await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/mic-preview/update`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: 'RMS: 0.42\nPeak: 0.81\nbrightnessDriven: true', done: true }),
+      });
+
+      const events = service.getEvents(session.sessionId);
+      expect(events.some((event) => event.type === 'preview.started' && (event as any).previewType === 'music')).toBe(true);
+      expect(events.some((event) => event.type === 'preview.completed' && (event as any).content.includes('RMS: 0.42'))).toBe(true);
+      const committed = events.find((event) => event.type === 'response.committed') as any;
+      expect(committed.content).toContain('Mic preview opened:');
+    } finally {
+      await server.stop();
+    }
+  });
+
 });

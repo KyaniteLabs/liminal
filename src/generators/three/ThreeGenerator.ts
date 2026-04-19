@@ -13,6 +13,7 @@ export class ThreeGenerator extends TierBasedGenerator {
     const threePrompt = [
       prompt,
       '',
+      'Return raw Three.js scene code only. Do not return a full HTML document.',
       'Use only the core Three.js module. Do not import OrbitControls or examples modules.',
       'Animate the camera manually with sin/cos in the render loop instead of using controls.',
     ].join('\n');
@@ -24,6 +25,13 @@ export class ThreeGenerator extends TierBasedGenerator {
    * Three.js-specific validation
    */
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    if (/<!DOCTYPE\s+html/i.test(code) || /<html[\s>]/i.test(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output must be raw scene JavaScript, not a full HTML document',
+      };
+    }
+
     code = this.sanitizeThreeCode(code);
     // Three.js code should reference THREE
     const hasThree = code.includes('THREE') || 
@@ -93,9 +101,17 @@ ${code}
   }
 
   private sanitizeThreeCode(code: string): string {
+    const htmlScript = code.match(/<script[^>]*type=["']module["'][^>]*>([\s\S]*?)<\/script>/i)
+      || code.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
+    if (htmlScript?.[1] && /\bTHREE\b/.test(htmlScript[1])) {
+      return htmlScript[1]
+        .replace(/^\s*import\s+.*?\bTHREE\b.*?from\s+['"][^'"]+['"];?\s*$/gm, '')
+        .trim();
+    }
     return code
       .replace(/^```(?:html|javascript|js)?\s*\n?/i, '')
       .replace(/\n?```\s*$/i, '')
+      .replace(/^\s*import\s+.*?\bTHREE\b.*?from\s+['"][^'"]+['"];?\s*$/gm, '')
       .trim();
   }
 }

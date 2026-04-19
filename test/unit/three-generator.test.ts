@@ -8,12 +8,12 @@ vi.mock('../../src/llm/LLMClient.js', () => {
     const prompt = user.toLowerCase();
     if (prompt.includes('terrain') || prompt.includes('wireframe')) {
       return Promise.resolve({
-        code: '<!DOCTYPE html>\n<html><head>\n<script type="importmap">\n{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }\n</script>\n</head><body>\n<script type="module">\nimport * as THREE from "three";\nconst scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nconst geometry = new THREE.PlaneGeometry(10, 10, 50, 50);\nconst material = new THREE.MeshBasicMaterial({ wireframe: true });\nconst mesh = new THREE.Mesh(geometry, material);\nscene.add(mesh);\nrenderer.render(scene, new THREE.PerspectiveCamera());\n</script></body></html>',
+        code: 'const scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nconst geometry = new THREE.PlaneGeometry(10, 10, 50, 50);\nconst material = new THREE.MeshBasicMaterial({ wireframe: true });\nconst mesh = new THREE.Mesh(geometry, material);\nscene.add(mesh);\nrenderer.render(scene, new THREE.PerspectiveCamera());',
         success: true,
       });
     }
     return Promise.resolve({
-      code: '<!DOCTYPE html>\n<html><head>\n<script type="importmap">\n{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }\n</script>\n</head><body>\n<script type="module">\nimport * as THREE from "three";\nconst scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nconst geometry = new THREE.BufferGeometry();\nconst material = new THREE.PointsMaterial();\nconst points = new THREE.Points(geometry, material);\nscene.add(points);\nrenderer.render(scene, new THREE.PerspectiveCamera());\n</script></body></html>',
+      code: 'const scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nconst geometry = new THREE.BufferGeometry();\nconst material = new THREE.PointsMaterial();\nconst points = new THREE.Points(geometry, material);\nscene.add(points);\nrenderer.render(scene, new THREE.PerspectiveCamera());',
       success: true,
     });
   });
@@ -37,15 +37,15 @@ class TestableThreeGenerator extends ThreeGenerator {
 }
 
 describe('ThreeGenerator', () => {
-  it('generate() returns valid Three.js HTML', async () => {
+  it('generate() returns raw Three.js scene code', async () => {
     const gen = new ThreeGenerator();
     const code = await gen.generate('3D particle galaxy with orbiting lights');
-    expect(code).toContain('<!DOCTYPE html>');
-    expect(code).toContain('three');
-    expect(code).toContain('importmap');
+    expect(code).toContain('THREE.Scene');
+    expect(code).not.toContain('<!DOCTYPE html>');
+    expect(code).not.toContain('importmap');
   });
 
-  it('generate() returns valid Three.js HTML via LLM mock', async () => {
+  it('generate() returns valid Three.js scene code via LLM mock', async () => {
     const gen = new ThreeGenerator();
     const code = await gen.generate('procedural geometry');
     expect(code).toContain('THREE.Scene');
@@ -65,7 +65,7 @@ describe('ThreeGenerator', () => {
 </html>`;
     const result = gen.testValidateOutput(nested);
     expect(result.valid).toBe(false);
-    expect(result.error).toContain('must not embed a second HTML document');
+    expect(result.error).toContain('raw scene JavaScript');
   });
 
   it('generate() selects different templates based on keywords', async () => {
@@ -75,11 +75,13 @@ describe('ThreeGenerator', () => {
     expect(galaxy).not.toBe(terrain);
   });
 
-  it('wrapForGallery passes through complete HTML without nesting a second document', () => {
+  it('wrapForGallery normalizes complete HTML without nesting a second document', () => {
     const gen = new ThreeGenerator();
     const html = `<!DOCTYPE html><html><head><title>Scene</title></head><body><script>const scene = new THREE.Scene();</script></body></html>`;
     const wrapped = gen.wrapForGallery(html);
-    expect(wrapped).toBe(html);
+    expect(wrapped).toContain('<!DOCTYPE html>');
+    expect(wrapped).toContain('const scene = new THREE.Scene();');
+    expect(wrapped).not.toContain('<script>const scene = new THREE.Scene();</script></body></html>');
   });
 
   it('wrapForGallery still wraps raw Three scene code in a gallery harness', () => {

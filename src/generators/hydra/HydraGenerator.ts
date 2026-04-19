@@ -28,6 +28,12 @@ export class HydraGenerator extends TierBasedGenerator {
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    if (/\bs0\.init(?:Cam|Screen)\s*\(/.test(code) || /\bsrc\s*\(\s*s0\s*\)/.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra preview must not depend on camera or screen input (s0.initCam, s0.initScreen, or src(s0)); use generated visual sources so headless previews are visible',
+      };
+    }
     code = this.sanitizeCode(code);
     if (/^\s*[-*]\s|\*\*|```|✅|ready to paste|Hydra editor|—/im.test(code)) {
       return {
@@ -35,15 +41,8 @@ export class HydraGenerator extends TierBasedGenerator {
         error: 'Hydra output must be raw executable Hydra code only, not markdown or prose explanation',
       };
     }
-    // Basic Hydra validation - must have Hydra-specific syntax
     if (!/\b(osc|shape|noise|voronoi|src|render|out)\b/.test(code)) {
       return { valid: false, error: 'No Hydra syntax found' };
-    }
-    if (/\bs0\.init(?:Cam|Screen)\s*\(/.test(code) || /\bsrc\s*\(\s*s0\s*\)/.test(code)) {
-      return {
-        valid: false,
-        error: 'Hydra preview must not depend on camera or screen input (s0.initCam, s0.initScreen, or src(s0)); use generated visual sources so headless previews are visible',
-      };
     }
     if (/\bs0\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
       return { valid: false, error: 'Hydra output uses invalid s0 source methods; use osc(), noise(), shape(), voronoi(), gradient(), or solid() directly' };

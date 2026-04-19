@@ -119,6 +119,13 @@ describe('HydraGenerator', () => {
     expect(result.error).toContain('s0 as a chain root');
   });
 
+  it('rejects source functions used as chained methods', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1.0).osc().kaleid(4).color(1, 0.2, 0.8).out(o0)');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('source functions as chained methods');
+  });
+
   it('rejects source functions inside scalar transform arguments', () => {
     const gen = new TestableHydraGenerator();
     const result = gen.validateForTest('osc(4, 0.1, 1).color(1, 0.2, 0.8).brightness(osc(1, 0.05, 0.4)).out()');

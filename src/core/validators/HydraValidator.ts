@@ -98,6 +98,9 @@ export class HydraValidator {
     if (/\bs0\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
       errors.push('Hydra code contains invalid s0 source method - use osc(), noise(), shape(), voronoi(), gradient(), or solid() directly');
     }
+    if (/\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
+      errors.push('Hydra code contains invalid chained source method - use .add(osc(...)), .blend(noise(...)), or start a new source chain');
+    }
 
     return errors;
   }

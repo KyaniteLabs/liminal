@@ -112,6 +112,12 @@ src(s0).modulate(osc(5, 0.1)).out()
       expect(result.errors).toContain('Hydra code contains invalid s0 source method - use osc(), noise(), shape(), voronoi(), gradient(), or solid() directly');
     });
 
+    it('should reject source functions used as chained methods', () => {
+      const result = HydraValidator.validate('osc(4, 0.1, 1).osc().color(1, 0.2, 0.8).out()');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Hydra code contains invalid chained source method - use .add(osc(...)), .blend(noise(...)), or start a new source chain');
+    });
+
     it('should validate complex Hydra composition', () => {
       const code = `
 osc(60, 0.1, 0.8)

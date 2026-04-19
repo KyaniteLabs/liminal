@@ -78,6 +78,7 @@ describe('captureMicAudio', () => {
     vi.clearAllMocks();
     clearCloseListeners();
     _stdinOnListener = null;
+    delete process.env.LIMINAL_MIC_DEVICE;
     mockFfmpegProcess.kill.mockClear();
     restoreStdin?.();
     stdoutWriteSpy = vi.spyOn(process.stdout, 'write').mockImplementation(() => true);
@@ -150,5 +151,23 @@ describe('captureMicAudio', () => {
     await expect(resultPromise).rejects.toThrow(
       'ffmpeg exited with code 2. Check that your microphone is connected and accessible.'
     );
+  });
+
+  it('passes LIMINAL_MIC_DEVICE override to ffmpeg on macOS', async () => {
+    restoreStdin = mockStdinIsTTY(true);
+    process.env.LIMINAL_MIC_DEVICE = ':1';
+    const platformSpy = vi.spyOn(process, 'platform', 'get').mockReturnValue('darwin');
+
+    const resultPromise = captureMicAudio();
+    _stdinOnListener?.(Buffer.from('\n'));
+    simulateFfmpegClose(0);
+    await resultPromise;
+
+    expect((await import('child_process')).spawn).toHaveBeenCalledWith(
+      'ffmpeg',
+      expect.arrayContaining(['-f', 'avfoundation', '-i', ':1']),
+      expect.any(Object),
+    );
+    platformSpy.mockRestore();
   });
 });

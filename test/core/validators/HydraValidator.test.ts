@@ -91,11 +91,12 @@ src(s0).modulate(osc(5, 0.1)).out()
     });
 
     it('should reject runtime-unsupported hydra method aliases', () => {
-      const result = HydraValidator.validate('osc(2).saturation(1.2).feedback(0.9).kaleidoscope(8).out()');
+      const result = HydraValidator.validate('osc(2).saturation(1.2).feedback(0.9).kaleidoscope(8).screen().out()');
       expect(result.valid).toBe(false);
       expect(result.errors).toContain('Hydra code contains invalid method: .saturation( - use math functions differently in Hydra');
       expect(result.errors).toContain('Hydra code contains invalid method: .feedback( - use math functions differently in Hydra');
       expect(result.errors).toContain('Hydra code contains invalid method: .kaleidoscope( - use math functions differently in Hydra');
+      expect(result.errors).toContain('Hydra code contains invalid method: .screen( - use math functions differently in Hydra');
     });
 
     it('should reject p5-style loop calls', () => {

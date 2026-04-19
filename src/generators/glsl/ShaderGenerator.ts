@@ -11,10 +11,12 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
-    return super.generate(prompt, options);
+    const code = await super.generate(prompt, options);
+    return this.sanitizeShaderCode(code);
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    code = this.sanitizeShaderCode(code);
     const preprocessorError = this.validatePreprocessorDirectives(code);
     if (preprocessorError) {
       return { valid: false, error: preprocessorError };
@@ -68,6 +70,7 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   wrapForGallery(code: string): string {
+    code = this.sanitizeShaderCode(code);
     const hasPrecision = /\bprecision\s+(lowp|mediump|highp)\s+float\s*;/.test(code);
     const hasTime = /\buniform\s+float\s+u_time\s*;/.test(code);
     const hasResolution = /\buniform\s+vec2\s+u_resolution\s*;/.test(code);
@@ -117,5 +120,16 @@ export class ShaderGenerator extends TierBasedGenerator {
       '</body>\n' +
       '</html>';
     return harness;
+  }
+
+  private sanitizeShaderCode(code: string): string {
+    const htmlShader = code.match(/const\s+fsSource\s*=\s*`([\s\S]*?)`/);
+    if (htmlShader?.[1]) {
+      return htmlShader[1].trim();
+    }
+    return code
+      .replace(/^```(?:glsl|frag|fragment|shader)?\s*\n?/i, '')
+      .replace(/\n?```\s*$/i, '')
+      .trim();
   }
 }

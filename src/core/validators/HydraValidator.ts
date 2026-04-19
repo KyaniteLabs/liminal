@@ -78,6 +78,7 @@ export class HydraValidator {
       '.kaleidoscope(',
       '.colorShift(',
       '.post(',
+      '.screen(',
     ];
     for (const method of invalidMethods) {
       if (code.includes(method)) {

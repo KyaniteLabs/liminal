@@ -49,6 +49,12 @@ vi.mock('../../../src/harness/tools/generator-tools.js', () => ({
 
 import { ThreeGenerator } from '../../../src/generators/three/ThreeGenerator.js';
 
+class TestableThreeGenerator extends ThreeGenerator {
+  validateForTest(code: string) {
+    return this.validateOutput(code);
+  }
+}
+
 describe('ThreeGenerator', () => {
   beforeEach(() => {
     mockToolLoop.mockClear();
@@ -81,6 +87,20 @@ describe('ThreeGenerator', () => {
     const html = '<html><body>scene</body></html>';
     const wrapped = gen.wrapForGallery(html);
     expect(wrapped).toBe(html);
+  });
+
+  it('wrapForGallery strips fenced full HTML before detection', () => {
+    const gen = new ThreeGenerator();
+    const html = '```html\n<!DOCTYPE html><html><body><script>new THREE.Scene()</script></body></html>\n```';
+    const wrapped = gen.wrapForGallery(html);
+    expect(wrapped).toBe('<!DOCTYPE html><html><body><script>new THREE.Scene()</script></body></html>');
+  });
+
+  it('rejects OrbitControls example imports for proof stability', () => {
+    const gen = new TestableThreeGenerator();
+    const result = gen.validateForTest("import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js'; new THREE.Scene();");
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('OrbitControls');
   });
 
   it('generates code via super.generate', async () => {

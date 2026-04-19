@@ -18,6 +18,22 @@ describe('ShaderGenerator', () => {
     expect(wrapped).toContain('void main()');
   });
 
+  it('strips markdown GLSL fences before wrapping', () => {
+    const gen = new ShaderGenerator();
+    const wrapped = gen.wrapForGallery('```glsl\nvoid main() { gl_FragColor = vec4(1.0); }\n```');
+
+    expect(wrapped).not.toContain('```glsl');
+    expect(wrapped).toContain('void main()');
+  });
+
+  it('extracts fragment shader source from full HTML output', () => {
+    const gen = new ShaderGenerator();
+    const wrapped = gen.wrapForGallery('html\n<!DOCTYPE html><script>const fsSource = `void main() { gl_FragColor = vec4(1.0); }`;</script>');
+
+    expect(wrapped).not.toContain('<!DOCTYPE html><script>');
+    expect(wrapped).toContain('void main()');
+  });
+
   it('wraps mainImage shaders with a WebGL main entrypoint', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('void mainImage(out vec4 fragColor, in vec2 fragCoord) { fragColor = vec4(1.0); }');

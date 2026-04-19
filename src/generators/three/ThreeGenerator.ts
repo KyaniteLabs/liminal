@@ -10,13 +10,21 @@ export class ThreeGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: TierBasedGeneratorOptions): Promise<string> {
-    return super.generate(prompt, options);
+    const threePrompt = [
+      prompt,
+      '',
+      'Use only the core Three.js module. Do not import OrbitControls or examples modules.',
+      'Animate the camera manually with sin/cos in the render loop instead of using controls.',
+    ].join('\n');
+    const code = await super.generate(threePrompt, options);
+    return this.sanitizeThreeCode(code);
   }
 
   /**
    * Three.js-specific validation
    */
   protected validateOutput(code: string): { valid: boolean; error?: string } {
+    code = this.sanitizeThreeCode(code);
     // Three.js code should reference THREE
     const hasThree = code.includes('THREE') || 
                      code.includes('import * as THREE') ||
@@ -27,6 +35,13 @@ export class ThreeGenerator extends TierBasedGenerator {
       return {
         valid: false,
         error: 'Generated code does not appear to use Three.js',
+      };
+    }
+
+    if (/\bOrbitControls\b/.test(code) || /examples\/jsm\//.test(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output must not import OrbitControls or examples modules; animate the camera manually',
       };
     }
 
@@ -47,6 +62,7 @@ export class ThreeGenerator extends TierBasedGenerator {
    * Injects Three.js CDN and creates a self-contained scene harness.
    */
   wrapForGallery(code: string): string {
+    code = this.sanitizeThreeCode(code);
     const trimmed = code.trim();
     if (/^<!DOCTYPE\s+html/i.test(trimmed) || /^<html[\s>]/i.test(trimmed)) {
       return code;
@@ -74,5 +90,12 @@ ${code}
 </script>
 </body>
 </html>`;
+  }
+
+  private sanitizeThreeCode(code: string): string {
+    return code
+      .replace(/^```(?:html|javascript|js)?\s*\n?/i, '')
+      .replace(/\n?```\s*$/i, '')
+      .trim();
   }
 }

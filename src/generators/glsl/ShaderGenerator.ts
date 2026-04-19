@@ -22,6 +22,14 @@ export class ShaderGenerator extends TierBasedGenerator {
       return { valid: false, error: preprocessorError };
     }
 
+    if (/\.\.\./.test(code) || /\/\/\s*\.\.\./.test(code)) {
+      return { valid: false, error: 'Generated shader contains placeholder ellipses; return complete executable GLSL' };
+    }
+
+    if (/\bvec4\s*\(\s*color\b/.test(code) && !/\b(?:vec[234]|float)\s+color\b/.test(code)) {
+      return { valid: false, error: 'Generated shader references color without declaring it' };
+    }
+
     if (this.isTruncated(code)) {
       if (!code.includes('void main') && !code.includes('gl_FragColor')) {
         return {
@@ -83,7 +91,11 @@ export class ShaderGenerator extends TierBasedGenerator {
       code,
       hasMainImage && !hasMain ? 'void main(){mainImage(gl_FragColor,gl_FragCoord.xy);}' : '',
     ].filter(Boolean).join('\n');
+    const usesGlsl300 = /^\s*#version\s+300\s+es/m.test(shaderSource);
     const encodedShader = JSON.stringify(shaderSource);
+    const vertexShader = usesGlsl300
+      ? '#version 300 es\\nin vec2 a_pos;out vec2 v_uv;void main(){v_uv=a_pos*0.5+0.5;gl_Position=vec4(a_pos,0,1);}'
+      : 'attribute vec2 a_pos;void main(){gl_Position=vec4(a_pos,0,1);}';
     const harness = '<!DOCTYPE html>\n' +
       '<html>\n' +
       '<head>\n' +
@@ -103,7 +115,7 @@ export class ShaderGenerator extends TierBasedGenerator {
       'const gl=canvas.getContext("webgl2")||canvas.getContext("webgl");\n' +
       'function resize(){canvas.width=innerWidth;canvas.height=innerHeight;gl&&gl.viewport(0,0,canvas.width,canvas.height)}\n' +
       'addEventListener("resize",resize);resize();\n' +
-      'const vs="attribute vec2 a_pos;void main(){gl_Position=vec4(a_pos,0,1);}";\n' +
+      'const vs=' + JSON.stringify(vertexShader) + ';\n' +
       'const fs=' + encodedShader + ';\n' +
       'function createShader(type,src){const s=gl.createShader(type);gl.shaderSource(s,src);gl.compileShader(s);if(!gl.getShaderParameter(s,gl.COMPILE_STATUS)){throw new Error(gl.getShaderInfoLog(s)||"shader compile failed")}return s;}\n' +
       'const v=createShader(gl.VERTEX_SHADER,vs);\n' +
@@ -126,6 +138,10 @@ export class ShaderGenerator extends TierBasedGenerator {
     const htmlShader = code.match(/const\s+fsSource\s*=\s*`([\s\S]*?)`/);
     if (htmlShader?.[1]) {
       return htmlShader[1].trim();
+    }
+    const fencedShader = code.match(/```(?:glsl|frag|fragment|shader)?\s*\n?([\s\S]*?)```/i);
+    if (fencedShader?.[1]) {
+      return fencedShader[1].trim();
     }
     return code
       .replace(/^```(?:glsl|frag|fragment|shader)?\s*\n?/i, '')

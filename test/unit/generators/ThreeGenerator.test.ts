@@ -75,11 +75,14 @@ describe('ThreeGenerator', () => {
     expect(wrapped).toContain('import*as THREE');
   });
 
-  it('wrapForGallery returns existing DOCTYPE HTML unchanged', () => {
+  it('wrapForGallery extracts script from existing DOCTYPE HTML with Three code', () => {
     const gen = new ThreeGenerator();
     const html = '<!DOCTYPE html><html><body><script>THREE.Scene()</script></body></html>';
     const wrapped = gen.wrapForGallery(html);
-    expect(wrapped).toBe(html);
+    expect(wrapped).toContain('<!DOCTYPE html>');
+    expect(wrapped).toContain('import*as THREE');
+    expect(wrapped).toContain('THREE.Scene()');
+    expect(wrapped).not.toContain('<script>THREE.Scene()</script></body></html>');
   });
 
   it('wrapForGallery detects <html> tag and returns unchanged', () => {
@@ -91,9 +94,17 @@ describe('ThreeGenerator', () => {
 
   it('wrapForGallery strips fenced full HTML before detection', () => {
     const gen = new ThreeGenerator();
-    const html = '```html\n<!DOCTYPE html><html><body><script>new THREE.Scene()</script></body></html>\n```';
+    const html = '```html\n<!DOCTYPE html><html><body>scene</body></html>\n```';
     const wrapped = gen.wrapForGallery(html);
-    expect(wrapped).toBe('<!DOCTYPE html><html><body><script>new THREE.Scene()</script></body></html>');
+    expect(wrapped).toBe('<!DOCTYPE html><html><body>scene</body></html>');
+  });
+
+  it('wrapForGallery removes duplicate Three imports from extracted HTML scripts', () => {
+    const gen = new ThreeGenerator();
+    const html = '<!DOCTYPE html><html><body><script type="module">import * as THREE from "three";\nconst scene = new THREE.Scene();</script></body></html>';
+    const wrapped = gen.wrapForGallery(html);
+    expect(wrapped).toContain('const scene = new THREE.Scene();');
+    expect(wrapped).not.toContain('import * as THREE from "three";');
   });
 
   it('rejects OrbitControls example imports for proof stability', () => {
@@ -101,6 +112,13 @@ describe('ThreeGenerator', () => {
     const result = gen.validateForTest("import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js'; new THREE.Scene();");
     expect(result.valid).toBe(false);
     expect(result.error).toContain('OrbitControls');
+  });
+
+  it('rejects full HTML documents during generation validation', () => {
+    const gen = new TestableThreeGenerator();
+    const result = gen.validateForTest('<!DOCTYPE html><html><body><script>new THREE.Scene()</script></body></html>');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('raw scene JavaScript');
   });
 
   it('generates code via super.generate', async () => {
@@ -111,5 +129,6 @@ describe('ThreeGenerator', () => {
     const gen = new ThreeGenerator();
     const result = await gen.generate('create a 3D scene');
     expect(result).toContain('THREE');
+    expect(result).not.toContain('import * as THREE');
   });
 });

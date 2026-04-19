@@ -91,7 +91,7 @@ const DOMAIN_SPECS: DomainSpec[] = [
   { domain: 'revideo', artifactExtension: 'js', previewKind: 'video-code', generator: RevideoGenerator, prompt: 'Create a Revideo kinetic title scene for “Nocturnal Pond” with glowing text and slow reveal.' },
 ];
 
-const GENERATION_TIMEOUT_MS = 120_000;
+const DEFAULT_GENERATION_TIMEOUT_MS = 120_000;
 const PROOF_COLOR_THEORY = createColorTheoryPalette({
   seed: '#2563eb',
   harmonyMode: 'split-complementary',
@@ -114,6 +114,7 @@ function parseArgs() {
     dryRun: args.includes('--dry'),
     outputRoot: get('out') || path.join('.omx', 'proof', 'creative-copilot'),
     maxTokens: Number(get('max-tokens') || 4096),
+    generationTimeoutMs: Number(get('timeout-ms') || DEFAULT_GENERATION_TIMEOUT_MS),
   };
 }
 
@@ -194,7 +195,7 @@ function promptWithColorTheory(prompt: string): string {
   ].join('\n');
 }
 
-async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provider: string, model: string, dryRun: boolean): Promise<DomainResult> {
+async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provider: string, model: string, dryRun: boolean, generationTimeoutMs: number): Promise<DomainResult> {
   const started = Date.now();
   const base = slug(spec.domain);
   const artifactPath = path.join(outDir, `${base}.${spec.artifactExtension}`);
@@ -232,8 +233,8 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
           new Promise<string>((_, reject) => {
             timeout = setTimeout(() => {
               controller.abort();
-              reject(new Error(`Generation timed out after ${GENERATION_TIMEOUT_MS / 1000}s`));
-            }, GENERATION_TIMEOUT_MS);
+              reject(new Error(`Generation timed out after ${generationTimeoutMs / 1000}s`));
+            }, generationTimeoutMs);
           }),
         ]);
       } finally {
@@ -476,7 +477,7 @@ async function main() {
   const results: DomainResult[] = [];
   for (const spec of specs) {
     console.log(`Running ${spec.domain}...`);
-    const result = await runDomain(spec, llm, outDir, providerName, model, options.dryRun);
+    const result = await runDomain(spec, llm, outDir, providerName, model, options.dryRun, options.generationTimeoutMs);
     results.push(result);
     console.log(`${spec.domain}: ${result.status}${result.error ? ` - ${result.error}` : ''}`);
   }

@@ -147,6 +147,16 @@ describe('P5GeneratorV2', () => {
       const gen = new P5GeneratorV2();
       await expect(gen.generate('test')).rejects.toThrow('missing required setup()');
     });
+
+    it('rejects placeholder ellipsis classes before preview rendering', async () => {
+      mockIsConfigured.mockReturnValue(true);
+      mockGenerate.mockResolvedValue({
+        code: 'function setup() { createCanvas(400, 400); } class Koi { ... }',
+        success: true,
+      });
+      const gen = new P5GeneratorV2();
+      await expect(gen.generate('test')).rejects.toThrow('placeholder ellipses');
+    });
   });
 
   // ---------------------------------------------------------------------------

@@ -29,6 +29,7 @@ describe('creative copilot proof script', () => {
     expect(source).toContain('colorTheoryGuidance');
     expect(source).toContain('Launch color theory guidance');
     expect(source).toContain('max-tokens');
+    expect(source).toContain('timeout-ms');
     expect(source).toContain('issues:');
     expect(source).toContain('getProviderConfig');
     expect(source).toContain('P5GeneratorV2');

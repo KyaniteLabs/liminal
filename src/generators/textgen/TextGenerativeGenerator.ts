@@ -122,6 +122,12 @@ export class TextGenerativeGenerator extends TierBasedGenerator {
       return { valid: false, error: 'Empty output' };
     }
 
+    if (/<\/?(?:!doctype|html|head|body|script|style|div|canvas|svg|path|textpath|defs)\b/i.test(stripped) ||
+        /\/\*\s*CSS here\s*\*\//i.test(stripped) ||
+        /\/\/\s*JS here/i.test(stripped)) {
+      return { valid: false, error: 'Output appears to be HTML/code placeholder, not text art' };
+    }
+
     // Check for remaining code-like patterns after stripping fences
     if (/\bfunction\b/.test(stripped) || /\bclass\b/.test(stripped) ||
         /\bconst\b.*[=;]/.test(stripped) || /\blet\b.*[=;]/.test(stripped) ||

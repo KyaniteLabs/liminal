@@ -79,6 +79,7 @@ export class HydraValidator {
       '.colorShift(',
       '.post(',
       '.screen(',
+      '.output(',
     ];
     for (const method of invalidMethods) {
       if (code.includes(method)) {
@@ -93,6 +94,9 @@ export class HydraValidator {
     }
     if (/\bloop\s*\(/.test(code)) {
       errors.push('Hydra code contains invalid function: loop() - use Hydra chains and .out(), not p5-style loop control');
+    }
+    if (/\bs0\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
+      errors.push('Hydra code contains invalid s0 source method - use osc(), noise(), shape(), voronoi(), gradient(), or solid() directly');
     }
 
     return errors;

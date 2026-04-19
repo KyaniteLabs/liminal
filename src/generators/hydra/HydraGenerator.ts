@@ -13,8 +13,10 @@ export class HydraGenerator extends TierBasedGenerator {
       'Use visible generated sources: osc(), noise(), shape(), voronoi(), gradient(), or solid().',
       'Do not use camera or screen input: no s0.initCam(), no s0.initScreen(), no src(s0).',
       'Use hydra-synth 1.3 runtime-safe method names: saturate(), brightness(), kaleid().',
-      'Never use saturation(), feedback(), kaleidoscope(), colorShift(), post(), or screen().',
+      'Never use saturation(), feedback(), kaleidoscope(), colorShift(), post(), screen(), output(), s0 chains, or s0.osc()/s0.noise().',
       'For image-proof visibility, include explicit .color(...) or .colorama(...) on the rendered chain.',
+      'Use numeric color values like .color(0.95, 0.61, 0.62); do not pass osc(), noise(), or other sources into color().',
+      'Use numeric transform values like .brightness(1.2); do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
       'Use visible numeric source rates such as osc(4, 0.1, 1.0), noise(3, 0.2), or voronoi(5, 0.3, 0.2); avoid all-near-zero source values.',
       'The patch must render in a headless browser preview without webcam, screen capture, microphone, or user permissions.',
       '',
@@ -42,7 +44,16 @@ export class HydraGenerator extends TierBasedGenerator {
         error: 'Hydra preview must not depend on camera or screen input (s0.initCam, s0.initScreen, or src(s0)); use generated visual sources so headless previews are visible',
       };
     }
-    const unsupportedMethods = ['saturation', 'feedback', 'kaleidoscope', 'colorShift', 'post', 'screen'];
+    if (/\bs0\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
+      return { valid: false, error: 'Hydra output uses invalid s0 source methods; use osc(), noise(), shape(), voronoi(), gradient(), or solid() directly' };
+    }
+    if (/\bs0\.[A-Za-z_][\w$]*\s*\(/.test(code)) {
+      return { valid: false, error: 'Hydra output must not use s0 as a chain root; start with generated sources such as osc(), noise(), or solid()' };
+    }
+    if (/\b(?:osc|noise|shape|voronoi|gradient|solid)\s*\([^)]*\)\s*\n\s*(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
+      return { valid: false, error: 'Hydra output has adjacent bare source calls; combine sources with .add(), .blend(), .mult(), or separate .out() chains' };
+    }
+    const unsupportedMethods = ['saturation', 'feedback', 'kaleidoscope', 'colorShift', 'post', 'screen', 'output'];
     for (const method of unsupportedMethods) {
       if (new RegExp(`\\.${method}\\s*\\(`).test(code)) {
         return { valid: false, error: `Hydra output uses unsupported method .${method}(); use hydra-synth 1.3 runtime-safe APIs` };
@@ -61,6 +72,18 @@ export class HydraGenerator extends TierBasedGenerator {
       return {
         valid: false,
         error: 'Hydra image proof must include explicit color(), colorama(), or solid() output so headless screenshots are visibly nonblank',
+      };
+    }
+    if (/\.color\s*\([^)]*\b(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra image proof must use numeric color() arguments; source functions inside color() can render blank',
+      };
+    }
+    if (/\.(?:brightness|saturate|scale|rotate|kaleid)\s*\([^)]*\b(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra image proof must use numeric transform arguments; source functions inside scalar transforms can render blank',
       };
     }
     return { valid: true };
@@ -88,6 +111,8 @@ export class HydraGenerator extends TierBasedGenerator {
     // unsupported screen chain with a fresh ".out(...)" statement.
     clean = clean.replace(/(^|\n)(\s*)\.(solid|osc|noise|shape|voronoi|gradient|src)\s*\(/g, '$1$2$3(');
     clean = clean.replace(/\.screen\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
+    clean = clean.replace(/\.output\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
+    clean = clean.replace(/\bs0\.(osc|noise|shape|voronoi|gradient|solid)\s*\(/g, '$1(');
     
     // Only filter out lines that are pure explanation (no code patterns at all)
     const lines = clean.split('\n');

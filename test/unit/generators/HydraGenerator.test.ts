@@ -98,6 +98,34 @@ describe('HydraGenerator', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('rejects source functions inside color arguments', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1).color(osc(0.03, 0.8, 1), osc(0.04, 0.5, 1), osc(0.05, 0.9, 1)).out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('numeric color() arguments');
+  });
+
+  it('rejects adjacent bare source calls that render blank', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1.0)\nvoronoi(5, 0.3, 0.2)\n.kaleid(4).color(1, 0.2, 0.8).out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('adjacent bare source calls');
+  });
+
+  it('rejects s0 as a chain root', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('s0.kaleid(6).add(osc(2, 0.1, 1).color(1, 0.2, 0.8)).out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('s0 as a chain root');
+  });
+
+  it('rejects source functions inside scalar transform arguments', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1).color(1, 0.2, 0.8).brightness(osc(1, 0.05, 0.4)).out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('numeric transform arguments');
+  });
+
   it('sanitizeCode appends .out(o0) when missing render', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: 'osc(10, 0.1, 1.0).color(1, 0.2, 0.8)',
@@ -128,6 +156,28 @@ describe('HydraGenerator', () => {
     expect(result).toContain('solid(0.05, 0.13, 0.19)');
     expect(result).toContain('.out(o0)');
     expect(result).not.toContain('.screen()');
+  });
+
+  it('repairs output-to-out chains from local model output', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 'osc(4, 0.1, 1).color(1, 0.2, 0.8).output();\n.out(o0)',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('repair hydra output chain');
+    expect(result).toContain('.out(o0)');
+    expect(result).not.toContain('.output()');
+  });
+
+  it('repairs invalid s0 source methods from local model output', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 's0.osc(4, 0.1, 1.0).color(1, 0.2, 0.8).out(o0)',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('repair s0 source');
+    expect(result).toContain('osc(4, 0.1, 1.0)');
+    expect(result).not.toContain('s0.osc');
   });
 
   it('returns empty string for empty code', async () => {

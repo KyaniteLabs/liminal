@@ -52,6 +52,12 @@ vi.mock('../../../src/harness/MetaHarnessIntegration.js', () => ({
 
 import { TextGenerativeGenerator } from '../../../src/generators/textgen/TextGenerativeGenerator.js';
 
+class TestableTextGenerativeGenerator extends TextGenerativeGenerator {
+  validateForTest(code: string) {
+    return this.validateOutput(code);
+  }
+}
+
 describe('TextGenerativeGenerator', () => {
   beforeEach(() => {
     mockGenerate.mockReset();
@@ -107,6 +113,20 @@ describe('TextGenerativeGenerator', () => {
       const gen = new TextGenerativeGenerator();
       const result = await gen.generate('text art');
       expect(result).toBe('actual line one\nactual line two');
+    });
+
+    it('rejects placeholder HTML instead of text art', () => {
+      const gen = new TestableTextGenerativeGenerator();
+      const result = gen.validateForTest('<!DOCTYPE html><html><body><div id="pond"></div><script>// JS here</script></body></html>');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('HTML/code placeholder');
+    });
+
+    it('rejects SVG markup instead of text art', () => {
+      const gen = new TestableTextGenerativeGenerator();
+      const result = gen.validateForTest('<svg viewBox="0 0 800 800"><path id="ring1" d="M 400 350"></path></svg>');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('HTML/code placeholder');
     });
 
     it('applies maxLines constraint from options', async () => {

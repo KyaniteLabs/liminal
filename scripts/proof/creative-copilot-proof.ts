@@ -216,22 +216,6 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
     };
   }
 
-  if (spec.previewKind === 'video-code') {
-    return {
-      domain: spec.domain,
-      status: 'blocked',
-      previewKind: spec.previewKind,
-      prompt: promptWithColorTheory(spec.prompt),
-      colorTheoryGuidance: PROOF_COLOR_THEORY.guidance,
-      generationAttempts: 0,
-      previewAttempts: 0,
-      provider,
-      model,
-      durationMs: Date.now() - started,
-      notes: ['Native Revideo render proof is pending. Code generation is not counted as video proof.'],
-    };
-  }
-
   try {
     const generator = new spec.generator(llm);
     const notes: string[] = [];
@@ -299,6 +283,7 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
 
     const pendingNote = nativePendingNote(spec.previewKind);
     if (pendingNote) notes.push(pendingNote);
+    if (spec.previewKind === 'video-code') status = 'blocked';
 
     if (shouldRenderScreenshot(spec.previewKind)) {
       try {

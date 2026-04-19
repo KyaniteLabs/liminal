@@ -74,6 +74,7 @@ ${failedCode}
 
 Regenerate a complete CSS-kinetic artwork:
 - include <!DOCTYPE html>, <html>, <head>, and <body>
+- include visible elements inside <body> such as div/span/svg elements
 - include at least one CSS @keyframes block
 - use animation: ... infinite on visible elements
 - do not include JavaScript or <script>
@@ -85,7 +86,25 @@ Regenerate a complete CSS-kinetic artwork:
     if (!validation.valid) {
       return { valid: false, error: validation.errors.join('; ') };
     }
+    if (!this.hasVisibleBodyContent(code)) {
+      return {
+        valid: false,
+        error: 'Kinetic HTML must include visible elements inside <body>, not just CSS',
+      };
+    }
     return { valid: true };
+  }
+
+  private hasVisibleBodyContent(code: string): boolean {
+    const bodyMatch = code.match(/<body\b[^>]*>([\s\S]*?)<\/body>/i);
+    const body = bodyMatch?.[1] ?? code;
+    const visibleElementPattern = /<(div|span|section|article|main|p|h[1-6]|svg|canvas|ul|ol|li)\b[^>]*>/i;
+    return visibleElementPattern.test(
+      body
+        .replace(/<style\b[\s\S]*?<\/style>/gi, '')
+        .replace(/<script\b[\s\S]*?<\/script>/gi, '')
+        .replace(/<!--[\s\S]*?-->/g, '')
+    );
   }
 
   private normalizeKineticHtml(code: string): string {

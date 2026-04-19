@@ -71,7 +71,8 @@ describe('StrudelGenerator', () => {
   it('wrapForGallery includes display-only message', () => {
     const gen = new StrudelGenerator();
     const wrapped = gen.wrapForGallery('s("kick")');
-    expect(wrapped).toContain('audio not available in iframe');
+    expect(wrapped).toContain('Open in Strudel');
+    expect(wrapped).toContain('Native audio proof is pending');
   });
 
   it('sanitizeCode strips markdown fences', async () => {

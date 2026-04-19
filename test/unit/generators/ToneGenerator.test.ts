@@ -83,11 +83,12 @@ describe('ToneGenerator', () => {
     expect(result).toContain('Tone');
   });
 
-  it('wrapForGallery produces display-only HTML', () => {
+  it('wrapForGallery produces playable Tone.js HTML', () => {
     const gen = new ToneGenerator();
     const wrapped = gen.wrapForGallery('const s = new Tone.Synth();');
     expect(wrapped).toContain('<!DOCTYPE html>');
-    expect(wrapped).toContain('audio not available in iframe');
+    expect(wrapped).toContain('Play Tone.js patch');
+    expect(wrapped).toContain('Tone.start');
     expect(wrapped).toContain('Tone.Synth');
   });
 

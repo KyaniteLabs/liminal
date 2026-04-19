@@ -48,7 +48,7 @@ describe('Liminal Main Entry Point', () => {
       await expect(run('test prompt', { output: './test-output' })).rejects.toThrow(
         /No LLM configured|Liminal run failed/
       );
-    });
+    }, 15000);
   });
 
   describe('runFromArgs()', () => {

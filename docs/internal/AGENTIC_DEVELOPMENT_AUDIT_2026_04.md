@@ -79,7 +79,7 @@ P1:
 
 ## Design And Color Theory Constraint
 
-Liminal has a music theory engine. It should also have a design/color theory engine, but it must not encode proprietary artist styles or scrape living artists' work into prompts.
+Liminal has a music theory engine. It must also have a design/color theory engine for launch, but it must not encode proprietary artist styles or scrape living artists' work into prompts.
 
 Allowed source material:
 
@@ -99,7 +99,7 @@ Disallowed source material:
 
 Implementation direction:
 
-- Add a `DesignTheoryEngine` or similarly scoped module later, parallel in spirit to the music theory engine.
+- Add a `ColorTheoryEngine` / `DesignTheoryEngine` launch-scope module parallel in spirit to the music theory engine.
 - Keep it principle-based, source-attributed, and testable.
 - Expose neutral vocabulary to generators and evaluators: palette harmony, contrast, hierarchy, visual rhythm, spatial balance, density, and accessibility.
 - Defer broad component renaming until after launch proof gates are stable.

@@ -100,9 +100,11 @@ export class StrudelGenerator extends TierBasedGenerator {
 
   /**
    * Wrap Strudel code for gallery iframe display.
-   * Uses Strudel REPL embed with audio-enabled harness.
+   * Shows the pattern and links to the Strudel editor for hearable playback.
    */
   wrapForGallery(code: string): string {
+    const escaped = code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const editorUrl = `https://strudel.cc/?code=${encodeURIComponent(code)}`;
     return `<!DOCTYPE html>
 <html>
 <head>
@@ -112,11 +114,13 @@ export class StrudelGenerator extends TierBasedGenerator {
 <style>
 body{background:#1a1a2e;color:#eee;font-family:monospace;min-height:100vh;margin:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
 pre{font-size:clamp(10px,2vw,18px);line-height:1.4;white-space:pre-wrap;max-width:90vw}
+a{color:#67e8f9;margin-top:18px}
 </style>
 </head>
 <body>
-<pre id="code">${code.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}</pre>
-<p style="color:#888;font-size:12px;margin-top:20px">Strudel pattern — audio not available in iframe</p>
+<pre id="code">${escaped}</pre>
+<a href="${editorUrl}" target="_blank" rel="noopener noreferrer">Open in Strudel to hear this pattern</a>
+<p style="color:#888;font-size:12px;margin-top:20px">Native audio proof is pending; this page preserves the generated pattern and provides a playback path.</p>
 </body>
 </html>`;
   }

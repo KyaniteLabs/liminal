@@ -18,17 +18,18 @@ import { getProviderConfig, type ProviderType } from '../../src/harness/MultiPro
 import { P5GeneratorV2 } from '../../src/generators/p5/P5GeneratorV2.js';
 import { ShaderGenerator } from '../../src/generators/glsl/ShaderGenerator.js';
 import { ThreeGenerator } from '../../src/generators/three/ThreeGenerator.js';
-import { HTMLWebGenerator } from '../../src/generators/html/HTMLWebGenerator.js';
+import { KineticGenerator } from '../../src/generators/kinetic/KineticGenerator.js';
 import { ASCIIArtGenerator } from '../../src/generators/ascii/ASCIIArtGenerator.js';
 import { TextGenerativeGenerator } from '../../src/generators/textgen/TextGenerativeGenerator.js';
 import { StrudelGenerator } from '../../src/generators/strudel/StrudelGenerator.js';
 import { HydraGenerator } from '../../src/generators/hydra/HydraGenerator.js';
 import { ToneGenerator } from '../../src/generators/tone/ToneGenerator.js';
 import { RevideoGenerator } from '../../src/generators/revideo/RevideoGenerator.js';
+import { createColorTheoryPalette, type ColorTheoryPalette } from '../../src/aesthetic/ColorTheoryEngine.js';
 
-type DomainName = 'p5' | 'shader' | 'three' | 'html' | 'ascii' | 'textgen' | 'strudel' | 'hydra' | 'tone' | 'revideo';
+type DomainName = 'p5' | 'shader' | 'three' | 'kinetic' | 'ascii' | 'textgen' | 'strudel' | 'hydra' | 'tone' | 'revideo';
 type Status = 'pass' | 'fail' | 'blocked';
-type PreviewKind = 'image' | 'inline-text' | 'code-display' | 'blocked';
+type PreviewKind = 'image' | 'inline-text' | 'code-display' | 'audio-playable' | 'audio-external' | 'video-code' | 'blocked';
 
 interface DomainSpec {
   domain: DomainName;
@@ -36,7 +37,7 @@ interface DomainSpec {
   artifactExtension: 'js' | 'html' | 'txt';
   previewKind: PreviewKind;
   generator: new (llm?: LLMClient | Partial<LLMConfig>) => {
-    generate(prompt: string): Promise<string> | string;
+    generate(prompt: string, options?: unknown): Promise<string> | string;
     wrapForGallery?: (code: string) => string;
   };
 }
@@ -45,6 +46,10 @@ interface DomainResult {
   domain: DomainName;
   status: Status;
   previewKind: PreviewKind;
+  prompt?: string;
+  colorTheoryGuidance?: string;
+  generationAttempts?: number;
+  previewAttempts?: number;
   provider: string;
   model: string;
   artifactPath?: string;
@@ -61,6 +66,7 @@ interface ProofReport {
   model: string;
   dryRun: boolean;
   outputDir: string;
+  colorTheory: ColorTheoryPalette;
   summary: { total: number; passed: number; failed: number; blocked: number };
   results: DomainResult[];
   issues: Array<{
@@ -76,14 +82,22 @@ const DOMAIN_SPECS: DomainSpec[] = [
   { domain: 'p5', artifactExtension: 'js', previewKind: 'image', generator: P5GeneratorV2, prompt: 'Create an interactive cybernetic koi pond at night with glowing koi fish, ripples following the mouse, neon lily pads, and drifting fireflies. Use p5 only.' },
   { domain: 'shader', artifactExtension: 'js', previewKind: 'image', generator: ShaderGenerator, prompt: 'Create a GLSL fragment shader with bioluminescent waves and slow domain-warped color fields.' },
   { domain: 'three', artifactExtension: 'js', previewKind: 'image', generator: ThreeGenerator, prompt: 'Create a Three.js scene with a glowing crystalline garden, orbiting camera, and floating particles.' },
-  { domain: 'html', artifactExtension: 'html', previewKind: 'image', generator: HTMLWebGenerator, prompt: 'Create a polished one-page interactive gallery card for a generative artwork, with tasteful motion and responsive layout.' },
+  { domain: 'kinetic', artifactExtension: 'html', previewKind: 'image', generator: KineticGenerator, prompt: 'Create a CSS-only kinetic artwork: abstract animated typography and shapes, no landing page, no marketing copy, no JavaScript, just expressive motion.' },
   { domain: 'hydra', artifactExtension: 'js', previewKind: 'image', generator: HydraGenerator, prompt: 'Create a Hydra video-synth patch with neon feedback, kaleidoscope geometry, and slow color drift. Use bright visible generated sources only.' },
   { domain: 'ascii', artifactExtension: 'txt', previewKind: 'inline-text', generator: ASCIIArtGenerator, prompt: 'Create ASCII art of a moonlit koi pond with glowing water and fireflies.' },
   { domain: 'textgen', artifactExtension: 'txt', previewKind: 'inline-text', generator: TextGenerativeGenerator, prompt: 'Create a concrete poem shaped like ripples in a nocturnal koi pond.' },
-  { domain: 'strudel', artifactExtension: 'js', previewKind: 'code-display', generator: StrudelGenerator, prompt: 'Create a Strudel pattern for a nocturnal koi pond: soft bells, water-like delay, and slow pulse.' },
-  { domain: 'tone', artifactExtension: 'js', previewKind: 'code-display', generator: ToneGenerator, prompt: 'Create a Tone.js ambient patch with slow bell-like notes, filtered shimmer, delay, and reverb.' },
-  { domain: 'revideo', artifactExtension: 'js', previewKind: 'code-display', generator: RevideoGenerator, prompt: 'Create a Revideo kinetic title scene for “Nocturnal Pond” with glowing text and slow reveal.' },
+  { domain: 'strudel', artifactExtension: 'js', previewKind: 'audio-external', generator: StrudelGenerator, prompt: 'Create a Strudel pattern for a nocturnal koi pond: soft bells, water-like delay, and slow pulse.' },
+  { domain: 'tone', artifactExtension: 'js', previewKind: 'audio-playable', generator: ToneGenerator, prompt: 'Create a Tone.js ambient patch with slow bell-like notes, filtered shimmer, delay, and reverb.' },
+  { domain: 'revideo', artifactExtension: 'js', previewKind: 'video-code', generator: RevideoGenerator, prompt: 'Create a Revideo kinetic title scene for “Nocturnal Pond” with glowing text and slow reveal.' },
 ];
+
+const GENERATION_TIMEOUT_MS = 120_000;
+const PROOF_COLOR_THEORY = createColorTheoryPalette({
+  seed: '#2563eb',
+  harmonyMode: 'split-complementary',
+  temperatureBalance: 'cool',
+  contrastTarget: 4.5,
+});
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -158,6 +172,27 @@ function wrapArtifact(spec: DomainSpec, code: string): string {
 </html>`;
 }
 
+function shouldRenderScreenshot(kind: PreviewKind): boolean {
+  return kind === 'image' || kind === 'inline-text';
+}
+
+function nativePendingNote(kind: PreviewKind): string | null {
+  if (kind === 'audio-playable') return 'Playable Tone.js HTML artifact saved; click Play in the HTML page to hear it.';
+  if (kind === 'audio-external') return 'Native Strudel audio capture pending; saved pattern with external playback link.';
+  if (kind === 'video-code') return 'Native rendered video/still proof pending; saved generated Revideo code only.';
+  return null;
+}
+
+function promptWithColorTheory(prompt: string): string {
+  return [
+    prompt,
+    '',
+    'Launch color theory guidance:',
+    PROOF_COLOR_THEORY.guidance,
+    'Apply this palette as a principle-based design system, not as a brand or artist imitation.',
+  ].join('\n');
+}
+
 async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provider: string, model: string, dryRun: boolean): Promise<DomainResult> {
   const started = Date.now();
   const base = slug(spec.domain);
@@ -166,19 +201,68 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
   const screenshotPath = path.join(outDir, `${base}.png`);
 
   if (dryRun) {
-    return { domain: spec.domain, status: 'blocked', previewKind: spec.previewKind, provider, model, durationMs: 0, notes: ['Dry run: no provider call made.'] };
+    return {
+      domain: spec.domain,
+      status: 'blocked',
+      previewKind: spec.previewKind,
+      prompt: promptWithColorTheory(spec.prompt),
+      colorTheoryGuidance: PROOF_COLOR_THEORY.guidance,
+      generationAttempts: 0,
+      previewAttempts: 0,
+      provider,
+      model,
+      durationMs: 0,
+      notes: ['Dry run: no provider call made.'],
+    };
+  }
+
+  if (spec.previewKind === 'video-code') {
+    return {
+      domain: spec.domain,
+      status: 'blocked',
+      previewKind: spec.previewKind,
+      prompt: promptWithColorTheory(spec.prompt),
+      colorTheoryGuidance: PROOF_COLOR_THEORY.guidance,
+      generationAttempts: 0,
+      previewAttempts: 0,
+      provider,
+      model,
+      durationMs: Date.now() - started,
+      notes: ['Native Revideo render proof is pending. Code generation is not counted as video proof.'],
+    };
   }
 
   try {
     const generator = new spec.generator(llm);
     const notes: string[] = [];
     let code: string;
+    let generationAttempts = 1;
+    let previewAttempts = 0;
+    const generateWithTimeout = async (prompt: string): Promise<string> => {
+      const controller = new AbortController();
+      let timeout: ReturnType<typeof setTimeout> | undefined;
+      try {
+        return await Promise.race([
+          Promise.resolve(generator.generate(prompt, { signal: controller.signal })),
+          new Promise<string>((_, reject) => {
+            timeout = setTimeout(() => {
+              controller.abort();
+              reject(new Error(`Generation timed out after ${GENERATION_TIMEOUT_MS / 1000}s`));
+            }, GENERATION_TIMEOUT_MS);
+          }),
+        ]);
+      } finally {
+        if (timeout) clearTimeout(timeout);
+      }
+    };
+
     try {
-      code = await generator.generate(spec.prompt);
+      code = await generateWithTimeout(promptWithColorTheory(spec.prompt));
     } catch (firstErr) {
       const reason = firstErr instanceof Error ? firstErr.message : String(firstErr);
-      code = await generator.generate([
-        spec.prompt,
+      generationAttempts++;
+      code = await generateWithTimeout([
+        promptWithColorTheory(spec.prompt),
         '',
         `Previous generation failed validation: ${reason}`,
         `Regenerate a valid ${spec.domain} artifact that directly fixes that failure.`,
@@ -195,8 +279,9 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
     let status: Status = 'pass';
     let screenshotWritten = false;
     const retryPreview = async (reason: string): Promise<string | null> => {
-      const retryCode = await generator.generate([
-        spec.prompt,
+      generationAttempts++;
+      const retryCode = await generateWithTimeout([
+        promptWithColorTheory(spec.prompt),
         '',
         `Previous preview failed: ${reason}`,
         'Regenerate the artifact so the preview is visibly nonblank in a headless browser screenshot.',
@@ -207,12 +292,17 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
       await fs.writeFile(artifactPath, code, 'utf8');
       html = wrapArtifact(spec, code);
       await fs.writeFile(htmlPath, html, 'utf8');
+      previewAttempts++;
       await renderScreenshot(htmlPath, screenshotPath);
       return validateScreenshotVisible(screenshotPath);
     };
 
-    if (spec.previewKind !== 'blocked') {
+    const pendingNote = nativePendingNote(spec.previewKind);
+    if (pendingNote) notes.push(pendingNote);
+
+    if (shouldRenderScreenshot(spec.previewKind)) {
       try {
+        previewAttempts++;
         await renderScreenshot(htmlPath, screenshotPath);
         screenshotWritten = true;
         const blankReason = await validateScreenshotVisible(screenshotPath);
@@ -249,7 +339,22 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
       }
     }
 
-    return { domain: spec.domain, status, previewKind: spec.previewKind, provider, model, artifactPath, htmlPath, screenshotPath: screenshotWritten ? screenshotPath : undefined, durationMs: Date.now() - started, notes: notes.length > 0 ? notes : undefined };
+    return {
+      domain: spec.domain,
+      status,
+      previewKind: spec.previewKind,
+      prompt: promptWithColorTheory(spec.prompt),
+      colorTheoryGuidance: PROOF_COLOR_THEORY.guidance,
+      generationAttempts,
+      previewAttempts,
+      provider,
+      model,
+      artifactPath,
+      htmlPath,
+      screenshotPath: screenshotWritten ? screenshotPath : undefined,
+      durationMs: Date.now() - started,
+      notes: notes.length > 0 ? notes : undefined,
+    };
   } catch (err) {
     const context = err && typeof err === 'object' && 'context' in err ? (err as { context?: Record<string, unknown> }).context : undefined;
     const generatedCode = typeof context?.generatedCode === 'string' ? context.generatedCode : '';
@@ -270,7 +375,21 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
         notes.push(`Failed-output preview render failed: ${previewErr instanceof Error ? previewErr.message : String(previewErr)}`);
       }
     }
-    return { domain: spec.domain, status: 'fail', previewKind: spec.previewKind, provider, model, artifactPath, htmlPath: generatedCode.trim() ? htmlPath : undefined, screenshotPath: screenshotWritten ? screenshotPath : undefined, durationMs: Date.now() - started, error: err instanceof Error ? err.message : String(err), notes: notes.length > 0 ? notes : undefined };
+    return {
+      domain: spec.domain,
+      status: 'fail',
+      previewKind: spec.previewKind,
+      prompt: promptWithColorTheory(spec.prompt),
+      colorTheoryGuidance: PROOF_COLOR_THEORY.guidance,
+      provider,
+      model,
+      artifactPath,
+      htmlPath: generatedCode.trim() ? htmlPath : undefined,
+      screenshotPath: screenshotWritten ? screenshotPath : undefined,
+      durationMs: Date.now() - started,
+      error: err instanceof Error ? err.message : String(err),
+      notes: notes.length > 0 ? notes : undefined,
+    };
   }
 }
 
@@ -295,12 +414,26 @@ function markdownReport(report: ProofReport): string {
     `Model: ${report.model}`,
     `Dry run: ${report.dryRun}`,
     `Output dir: ${report.outputDir}`,
+    `Color theory: ${report.colorTheory.harmonyMode} / ${report.colorTheory.temperatureBalance} / ${report.colorTheory.colors.map(color => `${color.role} ${color.hex}`).join(', ')}`,
     '',
     `Summary: ${report.summary.passed} pass, ${report.summary.failed} fail, ${report.summary.blocked} blocked / ${report.summary.total} total`,
     '',
-    '| Domain | Status | Preview | Artifact | Screenshot | Error |',
-    '| --- | --- | --- | --- | --- | --- |',
-    ...report.results.map(result => [result.domain, result.status, result.previewKind, result.artifactPath || '', result.screenshotPath || '', result.error || result.notes?.join('; ') || ''].map(cell => String(cell).replace(/\|/g, '\\|')).join(' | ')).map(row => `| ${row} |`),
+    '| Domain | Status | Preview | Gen attempts | Preview attempts | Artifact | Screenshot | Error |',
+    '| --- | --- | --- | --- | --- | --- | --- | --- |',
+    ...report.results.map(result => [
+      result.domain,
+      result.status,
+      result.previewKind,
+      result.generationAttempts ?? '',
+      result.previewAttempts ?? '',
+      result.artifactPath || '',
+      result.screenshotPath || '',
+      result.error || result.notes?.join('; ') || '',
+    ].map(cell => String(cell).replace(/\|/g, '\\|')).join(' | ')).map(row => `| ${row} |`),
+    '',
+    '## Color Theory Guidance',
+    '',
+    report.colorTheory.guidance,
     '',
     '## Issues',
     '',
@@ -319,7 +452,32 @@ async function main() {
   await fs.mkdir(outDir, { recursive: true });
 
   if (!providerConfig?.apiKey && !['lmstudio', 'ollama'].includes(providerName)) {
-    const report: ProofReport = { generatedAt: new Date().toISOString(), provider: providerName, model, dryRun: options.dryRun, outputDir: outDir, summary: { total: options.domains.length, passed: 0, failed: 0, blocked: options.domains.length }, results: options.domains.map(domain => ({ domain, status: 'blocked', previewKind: DOMAIN_SPECS.find(spec => spec.domain === domain)?.previewKind || 'blocked', provider: providerName, model, durationMs: 0, error: `Provider ${providerName} is not configured` })), issues: [] };
+    const report: ProofReport = {
+      generatedAt: new Date().toISOString(),
+      provider: providerName,
+      model,
+      dryRun: options.dryRun,
+      outputDir: outDir,
+      colorTheory: PROOF_COLOR_THEORY,
+      summary: { total: options.domains.length, passed: 0, failed: 0, blocked: options.domains.length },
+      results: options.domains.map(domain => {
+        const spec = DOMAIN_SPECS.find(item => item.domain === domain);
+        return {
+          domain,
+          status: 'blocked',
+          previewKind: spec?.previewKind || 'blocked',
+          prompt: spec ? promptWithColorTheory(spec.prompt) : undefined,
+          colorTheoryGuidance: PROOF_COLOR_THEORY.guidance,
+          generationAttempts: 0,
+          previewAttempts: 0,
+          provider: providerName,
+          model,
+          durationMs: 0,
+          error: `Provider ${providerName} is not configured`,
+        };
+      }),
+      issues: [],
+    };
     report.issues = report.results.map(issueFor).filter(Boolean) as ProofReport['issues'];
     await writeJson(path.join(outDir, 'report.json'), report);
     await fs.writeFile(path.join(outDir, 'report.md'), markdownReport(report), 'utf8');
@@ -337,7 +495,7 @@ async function main() {
     console.log(`${spec.domain}: ${result.status}${result.error ? ` - ${result.error}` : ''}`);
   }
 
-  const report: ProofReport = { generatedAt: new Date().toISOString(), provider: providerName, model, dryRun: options.dryRun, outputDir: outDir, summary: { total: results.length, passed: results.filter(r => r.status === 'pass').length, failed: results.filter(r => r.status === 'fail').length, blocked: results.filter(r => r.status === 'blocked').length }, results, issues: results.map(issueFor).filter(Boolean) as ProofReport['issues'] };
+  const report: ProofReport = { generatedAt: new Date().toISOString(), provider: providerName, model, dryRun: options.dryRun, outputDir: outDir, colorTheory: PROOF_COLOR_THEORY, summary: { total: results.length, passed: results.filter(r => r.status === 'pass').length, failed: results.filter(r => r.status === 'fail').length, blocked: results.filter(r => r.status === 'blocked').length }, results, issues: results.map(issueFor).filter(Boolean) as ProofReport['issues'] };
   await writeJson(path.join(outDir, 'report.json'), report);
   await fs.writeFile(path.join(outDir, 'report.md'), markdownReport(report), 'utf8');
   console.log(`Report: ${path.join(outDir, 'report.md')}`);

@@ -87,15 +87,22 @@ describe('HydraGenerator', () => {
 
   it('rejects hydra image proof code without explicit color output', () => {
     const gen = new TestableHydraGenerator();
-    const result = gen.validateForTest('osc(0.1, 0.2, 0.3).saturate(3).brightness(1.2).out()');
+    const result = gen.validateForTest('osc(0.1, 0.2, 0.3).add(noise(3, 0.2)).saturate(3).brightness(1.2).out()');
     expect(result.valid).toBe(false);
     expect(result.error).toContain('explicit color()');
   });
 
   it('accepts hydra image proof code with explicit color output', () => {
     const gen = new TestableHydraGenerator();
-    const result = gen.validateForTest('osc(4, 0.1, 1).color(1, 0.2, 0.8).kaleid(4).out()');
+    const result = gen.validateForTest('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).kaleid(4).out()');
     expect(result.valid).toBe(true);
+  });
+
+  it('rejects single-source hydra image proof code', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1).color(1, 0.2, 0.8).kaleid(4).out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('combine at least two generated visual sources');
   });
 
   it('rejects source functions inside color arguments', () => {
@@ -110,6 +117,13 @@ describe('HydraGenerator', () => {
     const result = gen.validateForTest('osc(4, 0.1, 1.0)\nvoronoi(5, 0.3, 0.2)\n.kaleid(4).color(1, 0.2, 0.8).out()');
     expect(result.valid).toBe(false);
     expect(result.error).toContain('adjacent bare source calls');
+  });
+
+  it('rejects a new bare source inserted in an unfinished chain', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('osc(4, 0.1, 1.0)\n.brightness(1.2)\nosc(0.05, 0.05, 0.05)\n.out()');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('middle of an unfinished chain');
   });
 
   it('rejects s0 as a chain root', () => {
@@ -135,7 +149,7 @@ describe('HydraGenerator', () => {
 
   it('sanitizeCode appends .out(o0) when missing render', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(10, 0.1, 1.0).color(1, 0.2, 0.8)',
+      content: 'osc(10, 0.1, 1.0).add(noise(3, 0.2)).color(1, 0.2, 0.8)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -155,7 +169,7 @@ describe('HydraGenerator', () => {
 
   it('repairs leading source dots and screen-to-out chains from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: '.solid(0.05, 0.13, 0.19).color(1, 0.2, 0.8).screen();\n.out(o0)',
+      content: '.solid(0.05, 0.13, 0.19).add(noise(3, 0.2)).color(1, 0.2, 0.8).screen();\n.out(o0)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -167,7 +181,7 @@ describe('HydraGenerator', () => {
 
   it('repairs output-to-out chains from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'osc(4, 0.1, 1).color(1, 0.2, 0.8).output();\n.out(o0)',
+      content: 'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).output();\n.out(o0)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();
@@ -176,9 +190,19 @@ describe('HydraGenerator', () => {
     expect(result).not.toContain('.output()');
   });
 
+  it('extracts the final inline hydra snippet from explanatory output', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: '`osc(4, 0.1, 1)` creates a waveform.\nUse `osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()`',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('extract hydra');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()');
+  });
+
   it('repairs invalid s0 source methods from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 's0.osc(4, 0.1, 1.0).color(1, 0.2, 0.8).out(o0)',
+      content: 's0.osc(4, 0.1, 1.0).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0)',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new HydraGenerator();

@@ -70,7 +70,7 @@ describe('ShaderGenerator', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('#version 300 es\nprecision highp float;\nin vec2 v_uv;out vec4 fragColor;void main(){fragColor=vec4(v_uv,0.0,1.0);}');
 
-    expect(wrapped).toContain('#version 300 es\\\\nin vec2 a_pos;out vec2 v_uv;');
+    expect(wrapped).toContain('#version 300 es\\nin vec2 a_pos;out vec2 v_uv;');
   });
 
   it('rejects orphan GLSL preprocessor directives', () => {

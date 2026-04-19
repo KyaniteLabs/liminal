@@ -132,6 +132,12 @@ export class HydraGenerator extends TierBasedGenerator {
       .filter(snippet => snippet.includes('.out(') || snippet.includes('.out()'));
     if (inlineHydraSnippets.length > 0) {
       clean = inlineHydraSnippets[inlineHydraSnippets.length - 1];
+    } else {
+      const sourceSnippets = [...clean.matchAll(/`([^`\n]*(?:osc|noise|shape|voronoi|gradient|solid)[^`]*)`/g)]
+        .map(match => match[1].trim());
+      if (sourceSnippets.length > 0 && /\.out\s*\(/.test(clean)) {
+        clean = `${sourceSnippets[sourceSnippets.length - 1]}\n.out(o0)`;
+      }
     }
 
     // Local models sometimes start a chain with ".solid(...)" or end an

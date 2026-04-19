@@ -68,7 +68,13 @@ export class P5GeneratorV2 extends TierBasedGenerator {
   }
 
   private sanitizeP5Code(code: string): string {
-    let clean = code.replace(/(=\s*)#([0-9a-fA-F]{3,8})\b/g, "$1'#$2'");
+    let clean = code;
+    const fencedSketch = clean.match(/```(?:javascript|js)?\s*\n?([\s\S]*?)```/i);
+    if (fencedSketch?.[1] && /function\s+setup\s*\(/.test(fencedSketch[1])) {
+      clean = fencedSketch[1];
+    }
+
+    clean = clean.replace(/(=\s*)#([0-9a-fA-F]{3,8})\b/g, "$1'#$2'");
     const setupColorAssignments: string[] = [];
     clean = clean.replace(
       /\b(?:const|let|var)\s+([A-Za-z_$][\w$]*)\s*=\s*color\(([^;]+)\);/g,

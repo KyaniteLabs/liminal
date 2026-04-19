@@ -50,6 +50,15 @@ describe('ShaderGenerator', () => {
     expect(wrapped).toContain('void main()');
   });
 
+  it('extracts fragment shader source from compact fs HTML output', () => {
+    const gen = new ShaderGenerator();
+    const wrapped = gen.wrapForGallery('html\n<!DOCTYPE html><script>const fs = `#version 300 es\nprecision highp float;\nout vec4 fragColor;void main(){fragColor=vec4(1.0);}`;</script>');
+
+    expect(wrapped).not.toContain('<!DOCTYPE html><script>');
+    expect(wrapped).toContain('#version 300 es');
+    expect(wrapped).toContain('out vec4 fragColor');
+  });
+
   it('wraps mainImage shaders with a WebGL main entrypoint', () => {
     const gen = new ShaderGenerator();
     const wrapped = gen.wrapForGallery('void mainImage(out vec4 fragColor, in vec2 fragCoord) { fragColor = vec4(1.0); }');

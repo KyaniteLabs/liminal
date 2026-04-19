@@ -13,9 +13,16 @@ export class ThreeGenerator extends TierBasedGenerator {
     const threePrompt = [
       prompt,
       '',
-      'Return raw Three.js scene code only. Do not return a full HTML document.',
+      'Return complete executable raw Three.js scene code only. Do not return a full HTML document.',
+      'Do not return prose, design notes, markdown, excerpts, or partial snippets.',
+      'Begin immediately with executable code such as const scene = new THREE.Scene();.',
+      'Keep the scene concise: under 140 lines of JavaScript.',
+      'The output must include THREE.Scene, THREE.WebGLRenderer, visible geometry/materials, and requestAnimationFrame or renderer.render.',
+      'Do not include import statements; the gallery wrapper imports THREE.',
       'Use only the core Three.js module. Do not import OrbitControls or examples modules.',
       'Animate the camera manually with sin/cos in the render loop instead of using controls.',
+      'Do not use ellipses, TODO comments, placeholder comments, or phrases like setup renderer, crystals, particles, or animation loop without implementing them.',
+      'Include visible geometry, lights, camera, renderer setup, and a requestAnimationFrame render loop.',
     ].join('\n');
     const code = await super.generate(threePrompt, options);
     return this.sanitizeThreeCode(code);
@@ -46,10 +53,31 @@ export class ThreeGenerator extends TierBasedGenerator {
       };
     }
 
+    if (this.isLikelyTruncated(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output appears incomplete or truncated',
+      };
+    }
+
     if (/\bOrbitControls\b/.test(code) || /examples\/jsm\//.test(code)) {
       return {
         valid: false,
         error: 'Generated Three.js output must not import OrbitControls or examples modules; animate the camera manually',
+      };
+    }
+
+    if (/\.\.\.|TODO|setup renderer|animation loop|\/\/\s*(?:Crystals|Particles)\s*$/im.test(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output contains placeholder comments instead of complete scene code',
+      };
+    }
+
+    if (!/\brequestAnimationFrame\s*\(/.test(code) && !/\brenderer\.render\s*\(/.test(code)) {
+      return {
+        valid: false,
+        error: 'Generated Three.js output must include a render loop or renderer.render call',
       };
     }
 
@@ -101,6 +129,11 @@ ${code}
   }
 
   private sanitizeThreeCode(code: string): string {
+    const fencedScript = code.match(/```(?:javascript|js)?\s*\n?([\s\S]*?)```/i);
+    if (fencedScript?.[1] && /\bTHREE\b/.test(fencedScript[1])) {
+      code = fencedScript[1];
+    }
+
     const htmlScript = code.match(/<script[^>]*type=["']module["'][^>]*>([\s\S]*?)<\/script>/i)
       || code.match(/<script[^>]*>([\s\S]*?)<\/script>/i);
     if (htmlScript?.[1] && /\bTHREE\b/.test(htmlScript[1])) {
@@ -113,5 +146,17 @@ ${code}
       .replace(/\n?```\s*$/i, '')
       .replace(/^\s*import\s+.*?\bTHREE\b.*?from\s+['"][^'"]+['"];?\s*$/gm, '')
       .trim();
+  }
+
+  private isLikelyTruncated(code: string): boolean {
+    const stripped = code.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '');
+    const openBraces = (stripped.match(/\{/g) || []).length;
+    const closeBraces = (stripped.match(/\}/g) || []).length;
+    const openParens = (stripped.match(/\(/g) || []).length;
+    const closeParens = (stripped.match(/\)/g) || []).length;
+    if (openBraces !== closeBraces || openParens !== closeParens) return true;
+    const trimmed = stripped.trim();
+    if (/\bTHREE\.[A-Za-z_][\w$]*$/.test(trimmed)) return true;
+    return false;
   }
 }

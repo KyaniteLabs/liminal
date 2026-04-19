@@ -18,6 +18,7 @@ export class HydraGenerator extends TierBasedGenerator {
       'Use numeric color values like .color(0.95, 0.61, 0.62); do not pass osc(), noise(), or other sources into color().',
       'Use numeric transform values like .brightness(1.2); do not pass osc(), noise(), or other sources into brightness(), saturate(), scale(), rotate(), or kaleid().',
       'Use visible numeric source rates such as osc(4, 0.1, 1.0), noise(3, 0.2), or voronoi(5, 0.3, 0.2); avoid all-near-zero source values.',
+      'For screenshot proof, combine at least two generated visual sources with .add(), .blend(), .mult(), .modulate(), or .diff().',
       'The patch must render in a headless browser preview without webcam, screen capture, microphone, or user permissions.',
       '',
       `User request: ${prompt}`,
@@ -53,6 +54,15 @@ export class HydraGenerator extends TierBasedGenerator {
     if (/\b(?:osc|noise|shape|voronoi|gradient|solid)\s*\([^)]*\)\s*\n\s*(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
       return { valid: false, error: 'Hydra output has adjacent bare source calls; combine sources with .add(), .blend(), .mult(), or separate .out() chains' };
     }
+    const sourceLines = code.split('\n').map(line => line.trim()).filter(Boolean);
+    for (let i = 1; i < sourceLines.length; i++) {
+      if (/^(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(sourceLines[i])) {
+        const previous = sourceLines[i - 1];
+        if (!/\.out\s*\(|render\s*\(/.test(previous)) {
+          return { valid: false, error: 'Hydra output starts a new source in the middle of an unfinished chain; combine it with .add(), .blend(), or finish the prior chain with .out()' };
+        }
+      }
+    }
     if (/\.(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
       return { valid: false, error: 'Hydra output uses source functions as chained methods; use .add(osc(...)), .blend(noise(...)), or start a new source chain' };
     }
@@ -69,6 +79,13 @@ export class HydraGenerator extends TierBasedGenerator {
       return {
         valid: false,
         error: 'Hydra preview must include a visible source such as osc(), noise(), shape(), voronoi(), gradient(), or solid(); screen-only src(s0) patches render blank in headless proof',
+      };
+    }
+    const sourceCount = (code.match(/\b(?:osc|shape|noise|voronoi|gradient|solid)\s*\(/g) || []).length;
+    if (sourceCount < 2 && !/\.(?:add|blend|mult|modulate|diff)\s*\(/.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra image proof must combine at least two generated visual sources so screenshots are visibly nonblank',
       };
     }
     if (!/\.(?:color|colorama)\s*\(/.test(code) && !/\bsolid\s*\(/.test(code)) {
@@ -109,6 +126,13 @@ export class HydraGenerator extends TierBasedGenerator {
     
     // Strip HTML-style comments
     clean = clean.replace(/<!--[\s\S]*?-->/g, '');
+
+    const inlineHydraSnippets = [...clean.matchAll(/`([^`\n]*(?:osc|noise|shape|voronoi|gradient|solid)[^`]*)`/g)]
+      .map(match => match[1].trim())
+      .filter(snippet => snippet.includes('.out(') || snippet.includes('.out()'));
+    if (inlineHydraSnippets.length > 0) {
+      clean = inlineHydraSnippets[inlineHydraSnippets.length - 1];
+    }
 
     // Local models sometimes start a chain with ".solid(...)" or end an
     // unsupported screen chain with a fresh ".out(...)" statement.

@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const { mockToolLoop, mockGetConfig } = vi.hoisted(() => ({
   mockToolLoop: vi.fn().mockResolvedValue({
-    content: 'const scene = new THREE.Scene();',
+    content: 'const scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nrenderer.render(scene, new THREE.PerspectiveCamera());',
     iterations: 1,
     toolCallsMade: 0,
     success: true,
@@ -107,6 +107,20 @@ describe('ThreeGenerator', () => {
     expect(wrapped).not.toContain('import * as THREE from "three";');
   });
 
+  it('extracts fenced Three scene code from explanatory output', () => {
+    const gen = new ThreeGenerator();
+    const wrapped = gen.wrapForGallery(`Here is the scene:
+\`\`\`javascript
+import * as THREE from "three";
+const scene = new THREE.Scene();
+const renderer = new THREE.WebGLRenderer();
+renderer.render(scene, new THREE.PerspectiveCamera());
+\`\`\``);
+    expect(wrapped).toContain('const scene = new THREE.Scene();');
+    expect(wrapped).not.toContain('Here is the scene');
+    expect(wrapped).not.toContain('import * as THREE from "three";');
+  });
+
   it('rejects OrbitControls example imports for proof stability', () => {
     const gen = new TestableThreeGenerator();
     const result = gen.validateForTest("import { OrbitControls } from 'https://unpkg.com/three/examples/jsm/controls/OrbitControls.js'; new THREE.Scene();");
@@ -121,9 +135,23 @@ describe('ThreeGenerator', () => {
     expect(result.error).toContain('raw scene JavaScript');
   });
 
+  it('rejects truncated Three.js output before preview', () => {
+    const gen = new TestableThreeGenerator();
+    const result = gen.validateForTest('const scene = new THREE.Scene();\nconst mat = new THREE.PointsMaterial({\n  blending: THREE.Add');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('incomplete or truncated');
+  });
+
+  it('rejects placeholder comments instead of complete scene code', () => {
+    const gen = new TestableThreeGenerator();
+    const result = gen.validateForTest('const scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\n// ... setup renderer ...\n// Crystals\n// Animation loop');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('placeholder comments');
+  });
+
   it('generates code via super.generate', async () => {
     mockToolLoop.mockResolvedValueOnce({
-      content: 'import * as THREE from "three";\nnew THREE.Scene();',
+      content: 'import * as THREE from "three";\nconst scene = new THREE.Scene();\nconst renderer = new THREE.WebGLRenderer();\nrenderer.render(scene, new THREE.PerspectiveCamera());',
       iterations: 1, toolCallsMade: 0, success: true,
     });
     const gen = new ThreeGenerator();

@@ -66,7 +66,19 @@ export class HydraValidator {
     const errors: string[] = [];
 
     // Check for invalid method chains
-    const invalidMethods = ['.sin(', '.cos(', '.tan(', '.sqrt(', '.abs(', '.pow('];
+    const invalidMethods = [
+      '.sin(',
+      '.cos(',
+      '.tan(',
+      '.sqrt(',
+      '.abs(',
+      '.pow(',
+      '.saturation(',
+      '.feedback(',
+      '.kaleidoscope(',
+      '.colorShift(',
+      '.post(',
+    ];
     for (const method of invalidMethods) {
       if (code.includes(method)) {
         errors.push(`Hydra code contains invalid method: ${method} - use math functions differently in Hydra`);
@@ -77,6 +89,9 @@ export class HydraValidator {
     const outCalls = (code.match(/\.out\(/g) || []).length;
     if (outCalls === 0) {
       errors.push('Hydra code must have at least one .out() call');
+    }
+    if (/\bloop\s*\(/.test(code)) {
+      errors.push('Hydra code contains invalid function: loop() - use Hydra chains and .out(), not p5-style loop control');
     }
 
     return errors;
@@ -97,7 +112,7 @@ export class HydraValidator {
     // Valid Hydra transform/modulation functions
     const validTransforms = new Set([
       'color', 'colorama', 'invert', 'contrast', 'brightness', 'luma',
-      'thresh', 'posterize', 'saturate', 'hue', 'colorShift',
+      'thresh', 'posterize', 'saturate', 'hue',
       'rotate', 'scale', 'scrollX', 'scrollY', 'repeat', 'repeatX', 'repeatY',
       'kaleid', 'pixelate', 'modulate', 'modulateHue',
       'blend', 'add', 'sub', 'layer', 'mask', 'mult',

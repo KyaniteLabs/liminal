@@ -12,6 +12,10 @@ export class HydraGenerator extends TierBasedGenerator {
       'Generate Hydra-synth code only.',
       'Use visible generated sources: osc(), noise(), shape(), voronoi(), gradient(), or solid().',
       'Do not use camera or screen input: no s0.initCam(), no s0.initScreen(), no src(s0).',
+      'Use hydra-synth 1.3 runtime-safe method names: saturate(), brightness(), kaleid().',
+      'Never use saturation(), feedback(), kaleidoscope(), colorShift(), or post().',
+      'For image-proof visibility, include explicit .color(...) or .colorama(...) on the rendered chain.',
+      'Use visible numeric source rates such as osc(4, 0.1, 1.0), noise(3, 0.2), or voronoi(5, 0.3, 0.2); avoid all-near-zero source values.',
       'The patch must render in a headless browser preview without webcam, screen capture, microphone, or user permissions.',
       '',
       `User request: ${prompt}`,
@@ -37,10 +41,25 @@ export class HydraGenerator extends TierBasedGenerator {
         error: 'Hydra preview must not depend on camera or screen input (s0.initCam, s0.initScreen, or src(s0)); use generated visual sources so headless previews are visible',
       };
     }
+    const unsupportedMethods = ['saturation', 'feedback', 'kaleidoscope', 'colorShift', 'post'];
+    for (const method of unsupportedMethods) {
+      if (new RegExp(`\\.${method}\\s*\\(`).test(code)) {
+        return { valid: false, error: `Hydra output uses unsupported method .${method}(); use hydra-synth 1.3 runtime-safe APIs` };
+      }
+    }
+    if (/\bloop\s*\(/.test(code)) {
+      return { valid: false, error: 'Hydra output uses unsupported loop(); use Hydra chaining and .out() only' };
+    }
     if (!/\b(osc|shape|noise|voronoi|gradient|solid)\s*\(/.test(code)) {
       return {
         valid: false,
         error: 'Hydra preview must include a visible source such as osc(), noise(), shape(), voronoi(), gradient(), or solid(); screen-only src(s0) patches render blank in headless proof',
+      };
+    }
+    if (!/\.(?:color|colorama)\s*\(/.test(code) && !/\bsolid\s*\(/.test(code)) {
+      return {
+        valid: false,
+        error: 'Hydra image proof must include explicit color(), colorama(), or solid() output so headless screenshots are visibly nonblank',
       };
     }
     return { valid: true };

@@ -13,7 +13,7 @@ describe('HydraGenerator', () => {
   describe('validateOutput', () => {
     it('validates code requiring osc, shape, noise, voronoi, src, render, or out', () => {
       const gen = new HydraGenerator();
-      const result = gen.validateOutput('osc(10).out(o0)');
+      const result = gen.validateOutput('osc(10).color(1, 0.2, 0.8).out(o0)');
       expect(result.valid).toBe(true);
     });
 
@@ -26,19 +26,19 @@ describe('HydraGenerator', () => {
 
     it('accepts code with shape()', () => {
       const gen = new HydraGenerator();
-      const result = gen.validateOutput('shape(4).out(o0)');
+      const result = gen.validateOutput('shape(4).color(1, 0.2, 0.8).out(o0)');
       expect(result.valid).toBe(true);
     });
 
     it('accepts code with noise()', () => {
       const gen = new HydraGenerator();
-      const result = gen.validateOutput('noise(3).out(o0)');
+      const result = gen.validateOutput('noise(3).color(0.2, 1, 0.8).out(o0)');
       expect(result.valid).toBe(true);
     });
 
     it('accepts code with voronoi()', () => {
       const gen = new HydraGenerator();
-      const result = gen.validateOutput('voronoi(5).out(o0)');
+      const result = gen.validateOutput('voronoi(5).color(0.8, 0.2, 1).out(o0)');
       expect(result.valid).toBe(true);
     });
 

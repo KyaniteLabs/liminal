@@ -90,6 +90,20 @@ src(s0).modulate(osc(5, 0.1)).out()
       expect(result.errors).toContain('Hydra code contains invalid method: .cos( - use math functions differently in Hydra');
     });
 
+    it('should reject runtime-unsupported hydra method aliases', () => {
+      const result = HydraValidator.validate('osc(2).saturation(1.2).feedback(0.9).kaleidoscope(8).out()');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Hydra code contains invalid method: .saturation( - use math functions differently in Hydra');
+      expect(result.errors).toContain('Hydra code contains invalid method: .feedback( - use math functions differently in Hydra');
+      expect(result.errors).toContain('Hydra code contains invalid method: .kaleidoscope( - use math functions differently in Hydra');
+    });
+
+    it('should reject p5-style loop calls', () => {
+      const result = HydraValidator.validate('osc(2).out(); loop()');
+      expect(result.valid).toBe(false);
+      expect(result.errors).toContain('Hydra code contains invalid function: loop() - use Hydra chains and .out(), not p5-style loop control');
+    });
+
     it('should validate complex Hydra composition', () => {
       const code = `
 osc(60, 0.1, 0.8)

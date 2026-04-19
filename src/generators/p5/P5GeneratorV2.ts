@@ -72,6 +72,11 @@ export class P5GeneratorV2 extends TierBasedGenerator {
     const fencedSketch = clean.match(/```(?:javascript|js)?\s*\n?([\s\S]*?)```/i);
     if (fencedSketch?.[1] && /function\s+setup\s*\(/.test(fencedSketch[1])) {
       clean = fencedSketch[1];
+    } else {
+      const unclosedFenceSketch = clean.match(/```(?:javascript|js)?\s*\n?([\s\S]*)/i);
+      if (unclosedFenceSketch?.[1] && /function\s+setup\s*\(/.test(unclosedFenceSketch[1])) {
+        clean = unclosedFenceSketch[1];
+      }
     }
 
     clean = clean.replace(/(=\s*)#([0-9a-fA-F]{3,8})\b/g, "$1'#$2'");

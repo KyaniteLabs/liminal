@@ -75,19 +75,23 @@ const ALLOWED_ORIGINS: readonly string[] = [
 const MIC_PREVIEW_HTML = String.raw`<!doctype html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Liminal Mic Preview</title>
-<style>body{margin:0;background:#07090f;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}main{max-width:720px;margin:0 auto;padding:28px}button{border:1px solid #59e1ff;background:#11131a;color:#e5e7eb;border-radius:6px;padding:10px 14px;font:inherit;cursor:pointer;margin-right:8px}.meter{height:24px;background:#11131a;border:1px solid #334155;border-radius:6px;overflow:hidden;margin:16px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,#58c777,#59e1ff,#f2b84b)}pre{white-space:pre-wrap;background:#11131a;border:1px solid #334155;border-radius:6px;padding:12px}.hint{color:#f2b84b}</style>
+<style>body{margin:0;background:#07090f;color:#e5e7eb;font-family:Inter,system-ui,sans-serif}main{max-width:940px;margin:0 auto;padding:28px}button{border:1px solid #59e1ff;background:#11131a;color:#e5e7eb;border-radius:6px;padding:10px 14px;font:inherit;cursor:pointer;margin-right:8px}.meter{height:24px;background:#11131a;border:1px solid #334155;border-radius:6px;overflow:hidden;margin:16px 0}.bar{height:100%;width:0;background:linear-gradient(90deg,#58c777,#59e1ff,#f2b84b)}canvas{display:block;width:100%;height:auto;aspect-ratio:16/9;border:1px solid #334155;border-radius:8px;background:#05070f;margin:16px 0}pre{white-space:pre-wrap;background:#11131a;border:1px solid #334155;border-radius:6px;padding:12px}.hint{color:#f2b84b}</style>
 </head>
-<body><main><h1>Liminal Mic Preview</h1><p class="hint">Click Start, speak or hum, then watch the Bubble Tea right-hand operator panel.</p><button id="start">Start recording</button><button id="stop" disabled>Stop</button><div class="meter"><div id="bar" class="bar"></div></div><pre id="out">idle</pre></main>
+<body><main><h1>Liminal Mic Preview</h1><p class="hint">Click Start, speak or hum. The generated pond scene is the output; Bubble Tea receives these visual frames in the right-hand panel.</p><button id="start">Start recording</button><button id="stop" disabled>Stop</button><div class="meter"><div id="bar" class="bar"></div></div><canvas id="scene" width="960" height="540"></canvas><pre id="out">idle</pre></main>
 <script>
-let stream,ctx,analyser,timeData,freqData,raf,frames=[];
-const bar=document.getElementById('bar'),out=document.getElementById('out');
+let stream,ctx,analyser,timeData,freqData,raf,frames=[],lastSent=0;
+const bar=document.getElementById('bar'),out=document.getElementById('out'),canvas=document.getElementById('scene'),drawCtx=canvas.getContext('2d');
+const glyphs=['moon','water','signal','voice','ripple'];
 function rms(values){let s=0;for(const v of values){const x=(v-128)/128;s+=x*x}return Math.sqrt(s/values.length)}
 function centroid(freq){let sum=0,weighted=0;for(let i=0;i<freq.length;i++){sum+=freq[i];weighted+=freq[i]*i}return sum?weighted/sum/freq.length:0}
-async function send(content, done=false){await fetch(location.pathname+'/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,done})}).catch(()=>{})}
-function content(final=false){const vals=frames.map(f=>f.rms);const peak=vals.length?Math.max(...vals):0;const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;const range=vals.length?peak-Math.min(...vals):0;const cent=frames.length?frames.reduce((a,b)=>a+b.centroid,0)/frames.length:0;return ['RMS: '+avg.toFixed(3),'Peak: '+peak.toFixed(3),'Range: '+range.toFixed(3),'Centroid: '+cent.toFixed(3),'brightnessDriven: true','rippleScaleDriven: true','particleSpeedDriven: true','typographyScaleDriven: true', final?'Status: stopped':'Status: recording'].join('\n')}
-function tick(){analyser.getByteTimeDomainData(timeData);analyser.getByteFrequencyData(freqData);const level=rms(timeData);frames.push({rms:level,centroid:centroid(freqData)});if(frames.length>1200)frames.shift();bar.style.width=Math.min(100,level*260)+'%';const c=content(false);out.textContent=c;send(c,false);raf=requestAnimationFrame(tick)}
+async function send(content, done=false, imageBase64){await fetch(location.pathname+'/update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({content,done,imageBase64})}).catch(()=>{})}
+function content(final=false){const vals=frames.map(f=>f.rms);const peak=vals.length?Math.max(...vals):0;const avg=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:0;const range=vals.length?peak-Math.min(...vals):0;const cent=frames.length?frames.reduce((a,b)=>a+b.centroid,0)/frames.length:0;return ['RMS: '+avg.toFixed(3),'Peak: '+peak.toFixed(3),'Range: '+range.toFixed(3),'Centroid: '+cent.toFixed(3),'Output: nocturnal kinetic pond','Visual: water ripples + fireflies + moon text','brightnessDriven: true','rippleScaleDriven: true','particleSpeedDriven: true','typographyScaleDriven: true', final?'Status: stopped':'Status: recording'].join('\n')}
+function drawOutput(level,cent){const w=canvas.width,h=canvas.height,t=performance.now()/1000;drawCtx.fillStyle='rgb('+(5+Math.floor(level*70))+','+(7+Math.floor(level*85))+','+(15+Math.floor(level*130))+')';drawCtx.fillRect(0,0,w,h);const sky=drawCtx.createLinearGradient(0,0,0,h);sky.addColorStop(0,'rgba(13,32,49,1)');sky.addColorStop(1,'rgba(2,4,10,1)');drawCtx.fillStyle=sky;drawCtx.globalAlpha=.55+level*.35;drawCtx.fillRect(0,0,w,h);drawCtx.globalAlpha=1;const glow=drawCtx.createRadialGradient(w/2,h*.66,12,w/2,h*.66,w*.78);glow.addColorStop(0,'rgba(89,225,255,'+(.18+level*.62)+')');glow.addColorStop(1,'rgba(5,7,15,0)');drawCtx.fillStyle=glow;drawCtx.fillRect(0,0,w,h);drawCtx.fillStyle='rgba(248,250,252,'+(.72+level*.25)+')';drawCtx.beginPath();drawCtx.arc(w*.80,h*.18,40+level*34,0,Math.PI*2);drawCtx.fill();drawCtx.strokeStyle='rgba(199,207,249,'+(.17+level*.7)+')';drawCtx.lineWidth=1+level*9;for(let i=0;i<14;i++){drawCtx.beginPath();drawCtx.ellipse(w/2,h*.65,75+i*36+level*170,15+i*5+level*42,Math.sin(t*.5+cent)*.23,0,Math.PI*2);drawCtx.stroke()}for(let i=0;i<110;i++){const a=t*(.22+level*3.2)+i*.41;const r=62+(i%32)*9+level*180;const x=w/2+Math.cos(a)*r;const y=h/2+Math.sin(a*1.65+t*.2)*(r*.34+level*95);const g=drawCtx.createRadialGradient(x,y,0,x,y,7+level*46);g.addColorStop(0,i%4?'#59e1ff':'#f2b84b');g.addColorStop(1,'rgba(0,0,0,0)');drawCtx.fillStyle=g;drawCtx.beginPath();drawCtx.arc(x,y,7+level*27,0,Math.PI*2);drawCtx.fill()}drawCtx.font='700 '+Math.round(26+level*70)+'px Georgia';drawCtx.textAlign='center';drawCtx.fillStyle='rgba(248,250,252,'+(.45+level*.55)+')';drawCtx.shadowBlur=18+level*80;drawCtx.shadowColor='#59e1ff';drawCtx.fillText('VOICE -> WATER',w/2,h*.80);drawCtx.shadowBlur=0;drawCtx.font='18px ui-monospace, Menlo, monospace';drawCtx.fillStyle='rgba(229,222,77,'+(.28+level*.5)+')';for(let i=0;i<glyphs.length;i++){drawCtx.fillText(glyphs[i],w*.15+i*w*.17,h*.90+Math.sin(t+i)*8)}}
+function frameImage(){return canvas.toDataURL('image/png').split(',')[1]}
+function tick(){analyser.getByteTimeDomainData(timeData);analyser.getByteFrequencyData(freqData);const level=rms(timeData);const cent=centroid(freqData);frames.push({rms:level,centroid:cent});if(frames.length>1200)frames.shift();bar.style.width=Math.min(100,level*260)+'%';drawOutput(level,cent);const c=content(false);out.textContent=c;if(performance.now()-lastSent>650){lastSent=performance.now();send(c,false,frameImage())}raf=requestAnimationFrame(tick)}
+drawOutput(0,0);
 document.getElementById('start').onclick=async()=>{stream=await navigator.mediaDevices.getUserMedia({audio:true});ctx=new AudioContext();analyser=ctx.createAnalyser();analyser.fftSize=2048;timeData=new Uint8Array(analyser.fftSize);freqData=new Uint8Array(analyser.frequencyBinCount);ctx.createMediaStreamSource(stream).connect(analyser);frames=[];document.getElementById('start').disabled=true;document.getElementById('stop').disabled=false;tick()};
-document.getElementById('stop').onclick=()=>{cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());ctx?.close();document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;const c=content(true);out.textContent=c;send(c,true)};
+document.getElementById('stop').onclick=()=>{cancelAnimationFrame(raf);stream?.getTracks().forEach(t=>t.stop());ctx?.close();document.getElementById('start').disabled=false;document.getElementById('stop').disabled=true;const c=content(true);out.textContent=c;send(c,true,frameImage())};
 </script></body></html>`;
 
 interface BridgeServerOptions {
@@ -247,9 +251,13 @@ export class TuiBridgeServer {
         const sessionId = micUpdateMatch[1];
         this.bridge.getStatus(sessionId);
         const body = await this.readBody(req);
-        const payload = JSON.parse(body) as { content?: string; done?: boolean };
+        const payload = JSON.parse(body) as { content?: string; done?: boolean; imageBase64?: string };
         const content = payload.content || '';
-        this.bridge.publishEvent(sessionId, { type: payload.done ? 'preview.completed' : 'preview.content', content, previewType: 'music' } as any);
+        if (payload.imageBase64) {
+          this.bridge.publishEvent(sessionId, { type: payload.done ? 'preview.completed' : 'preview.content', content: payload.imageBase64, previewType: 'image' } as any);
+        } else {
+          this.bridge.publishEvent(sessionId, { type: payload.done ? 'preview.completed' : 'preview.content', content, previewType: 'music' } as any);
+        }
         this.json(res, 200, { ok: true });
         return;
       }
@@ -328,6 +336,7 @@ data: ${JSON.stringify(stored.event)}
     const content = [
       'Mic preview controls',
       'Start recording in browser: ' + url,
+      'Output: nocturnal kinetic pond',
       'RMS: 0',
       'Peak: 0',
       'brightnessDriven: true',

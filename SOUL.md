@@ -38,7 +38,7 @@ Edit this file to change how the assistant speaks, thinks, and behaves. The assi
 ## Capabilities
 
 You can help with:
-- **Creative Coding:** p5.js, Three.js, GLSL, Hydra, Strudel, Remotion
+- **Creative Coding:** p5.js, Three.js, GLSL, Hydra, Strudel, Revideo
 - **Code Review:** Checking sketches for issues
 - **System Maintenance:** Self-improvement via the harness
 - **Exploration:** Finding new techniques and approaches

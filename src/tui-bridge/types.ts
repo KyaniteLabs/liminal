@@ -80,7 +80,7 @@ export type TuiBridgeEvent =
   | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string }
   | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string }
   | { type: 'phase.changed'; sessionId: string; phase: string; stepCurrent?: number; stepTotal?: number; activeFile?: string; objective?: string }
-  | { type: 'tool.started'; sessionId: string; toolName: string; thought?: string; argsSummary?: string; stepNum?: number }
+  | { type: 'tool.started'; sessionId: string; toolName: string; thought?: string; displayLabel?: string; argsSummary?: string; stepNum?: number }
   | { type: 'tool.completed'; sessionId: string; toolName: string; resultSummary?: string; success?: boolean; stepNum?: number }
   | { type: 'files.changed'; sessionId: string; files: TuiFileChange[] }
   | { type: 'verification.started'; sessionId: string; command: string; jobId: string }

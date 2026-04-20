@@ -1,9 +1,12 @@
 # Liminal Architecture Quick Reference
 
-**Generated:** 2026-04-01  
-**Version:** 2.0 - Production Ready  
-**Tests:** 1741 passing, 0 failures  
-**Status:** All Systems Operational
+**Generated:** 2026-04-01
+**Version:** 2.0 - Release Candidate
+**Tests:** 1741 passing, 0 failures
+**Status:** Operational (launch candidate — see .omx/proof/ for evidence)
+
+> This is a point-in-time architecture reference, not a launch-readiness declaration.
+> For current launch status, see `.omx/proof/launch-readiness-scorecard-2026-04-19.md`.
 
 ---
 
@@ -326,4 +329,4 @@ npm test
 
 ---
 
-**All systems operational. Ready for production.**
+**All systems operational. Launch candidate — not yet declared production-ready.**

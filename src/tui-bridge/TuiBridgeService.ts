@@ -1784,11 +1784,14 @@ export class TuiBridgeService {
       const toolName = stage.slice('planned '.length).trim();
       if (!toolName) return;
       if (toolName === 'complete') return;
+      const thought = (typeof event.data.thought === 'string' && event.data.thought)
+        || message.replace(new RegExp(`^${toolName}:\\s*`), '');
       this.emit(sessionId, {
         type: 'tool.started',
         sessionId,
         toolName,
-        thought: message.replace(new RegExp(`^${toolName}:\\s*`), ''),
+        thought,
+        displayLabel: thought || toolName,
         stepNum: current,
       });
       return;

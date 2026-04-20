@@ -1,4 +1,4 @@
-# Verification Report: All Systems Online
+# Verification Report: All Systems Online (Historical 2026-04-07)
 
 **Date:** 2026-04-07  
 **Status:** Historical snapshot — superseded by current launch scorecard
@@ -135,9 +135,9 @@ Duration:    59.05s
 
 ## Conclusion
 
-**All Systems Status: ONLINE ✅**
+**All Systems Status: ONLINE ✅ (Historical — see launch scorecard for current status)**
 
-The Liminal system is fully operational with:
+The Liminal system was fully operational at snapshot date with:
 - ✅ 21 subsystems verified
 - ✅ 346 test files passing
 - ✅ All generators wired to harness

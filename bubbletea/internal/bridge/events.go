@@ -120,6 +120,7 @@ type Event struct {
 	// Operator surface event fields
 	ToolName     string       `json:"toolName,omitempty"`
 	Thought      string       `json:"thought,omitempty"`
+	DisplayLabel string       `json:"displayLabel,omitempty"`
 	ArgsSummary  string       `json:"argsSummary,omitempty"`
 	StepNum      int          `json:"stepNum,omitempty"`
 	ResultSummary string      `json:"resultSummary,omitempty"`

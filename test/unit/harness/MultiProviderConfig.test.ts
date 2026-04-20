@@ -275,8 +275,8 @@ describe('isProviderConfigured', () => {
     expect(isProviderConfigured('minimax')).toBe(true);
   });
 
-  it('returns false for glm without GLM_API_KEY', () => {
-    expect(isProviderConfigured('glm')).toBe(false);
+  it('returns true for glm without GLM_API_KEY (local provider)', () => {
+    expect(isProviderConfigured('glm')).toBe(true);
   });
 
   it('returns true for glm with GLM_API_KEY set', () => {
@@ -313,7 +313,7 @@ describe('listConfiguredProviders', () => {
     expect(providers).toContain('ollama');
     expect(providers).toContain('lmstudio');
     expect(providers).not.toContain('minimax');
-    expect(providers).not.toContain('glm');
+    expect(providers).toContain('glm');
     expect(providers).not.toContain('openrouter');
     expect(providers).not.toContain('custom');
   });

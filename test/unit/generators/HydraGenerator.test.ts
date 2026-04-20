@@ -130,12 +130,15 @@ describe('HydraGenerator', () => {
     const gen = new TestableHydraGenerator();
     const result = gen.validateForTest('s0.kaleid(6).add(osc(2, 0.1, 1).color(1, 0.2, 0.8)).out()');
     expect(result.valid).toBe(true);
+<<<<<<< Updated upstream
   });
 
   it('strips hallucinated initFBOTriangle calls during sanitize', () => {
     const gen = new TestableHydraGenerator();
     const result = gen.validateForTest('initFBOTriangle();\ns1.initFBOTriangle();\nosc(4, 0.1, 1).color(1, 0.2, 0.8).kaleid(4).out(o0)\nnoise(3, 0.2).color(0.9, 0.87, 0.3).blend(osc(2, 0.05, 1)).out(o1)\nrender(o0)');
     expect(result.valid).toBe(true);
+=======
+>>>>>>> Stashed changes
   });
 
   it('rejects source functions used as chained methods', () => {

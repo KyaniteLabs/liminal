@@ -37,6 +37,34 @@ function installQuietCanvasFallbacks(): void {
 
 installQuietCanvasFallbacks();
 
+function installQuietAudioFallbacks(): void {
+  if (typeof (globalThis as any).AudioContext === 'undefined') {
+    (globalThis as any).AudioContext = class QuietAudioContext {
+      close() { return Promise.resolve(); }
+      createGain() { return { gain: { value: 0 }, connect: () => {}, disconnect: () => {} }; }
+      createOscillator() { return { connect: () => {}, start: () => {}, stop: () => {}, disconnect: () => {} }; }
+      createAnalyser() { return { connect: () => {}, disconnect: () => {} }; }
+      get destination() { return {}; }
+      get currentTime() { return 0; }
+      get sampleRate() { return 44100; }
+      get state() { return 'running'; }
+      resume() { return Promise.resolve(); }
+    };
+  }
+  if (typeof (globalThis as any).OfflineAudioContext === 'undefined') {
+    (globalThis as any).OfflineAudioContext = class QuietOfflineAudioContext {
+      constructor(_channels?: number, _length?: number, _sampleRate?: number) {}
+      startRendering() { return Promise.resolve({ getChannelData: () => new Float32Array(0) } as any); }
+      createGain() { return { gain: { value: 0 }, connect: () => {}, disconnect: () => {} }; }
+      get destination() { return {}; }
+      get currentTime() { return 0; }
+      get sampleRate() { return 44100; }
+    };
+  }
+}
+
+installQuietAudioFallbacks();
+
 // Environment variables to isolate
 const LLM_ENV_KEYS = [
   'LIMINAL_LLM_PROVIDER',
@@ -86,6 +114,7 @@ beforeAll(() => {
 
 beforeEach(() => {
   installQuietCanvasFallbacks();
+  installQuietAudioFallbacks();
 
   // Ensure test environment is set
   process.env.NODE_ENV = 'test';

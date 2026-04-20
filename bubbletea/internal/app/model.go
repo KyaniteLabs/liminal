@@ -50,6 +50,7 @@ type ToolStep struct {
 	StepNum       int
 	ToolName      string
 	Thought       string // Sanitized operator-safe rationale
+	DisplayLabel  string // Operator-facing label (thought or tool name)
 	ArgsSummary   string // Short summary of arguments
 	Status        string // "running" | "success" | "failed"
 	ResultSummary string
@@ -554,6 +555,7 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			StepNum:     event.StepNum,
 			ToolName:    event.ToolName,
 			Thought:     event.Thought,
+			DisplayLabel: event.DisplayLabel,
 			ArgsSummary: event.ArgsSummary,
 			Status:      "running",
 			StartedAt:   time.Now(),

@@ -169,7 +169,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('dual output');
-    expect(result).toContain('render(o0)');
+    expect(result).toContain('render()');
   });
 
   it('repairs leading source dots and screen-to-out chains from local model output', async () => {

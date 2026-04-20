@@ -363,7 +363,7 @@ describe('TuiBridgeService', () => {
         expect(completed?.type === 'response.completed' && completed.content).toContain('chunked');
       });
 
-      it('emits error event when LLM returns empty response', async () => {
+      it('emits error event and no session.turn when LLM returns empty response', async () => {
         const service = new TuiBridgeService();
         const session = service.createSession();
         const llm = mockLlm({ code: '', explanation: '' });
@@ -379,6 +379,9 @@ describe('TuiBridgeService', () => {
         const events = service.getEvents(session.sessionId);
         const errorEvent = events.find(e => e.type === 'error');
         expect(errorEvent).toMatchObject({ type: 'error', message: 'Empty response from LLM' });
+        // P1 fix: empty response must NOT emit a successful session.turn
+        const turnEvent = events.find(e => e.type === 'session.turn');
+        expect(turnEvent).toBeUndefined();
       });
 
       it('emits session.turn with llm-chat delegation', async () => {
@@ -401,6 +404,35 @@ describe('TuiBridgeService', () => {
           intent: 'direct',
           delegatedTo: 'llm-chat',
         });
+      });
+
+      it('includes conversation history in LLM prompt for multi-turn context', async () => {
+        const service = new TuiBridgeService();
+        const session = service.createSession();
+        const llm = mockLlm({ code: 'Second response' });
+
+        // First turn
+        await service.submitInput(session.sessionId, {
+          mode: 'chat',
+          text: 'first message',
+          clientIntent: 'chat',
+        }, llm as never);
+        await new Promise(r => setTimeout(r, 50));
+
+        // Second turn — should include first turn in context
+        await service.submitInput(session.sessionId, {
+          mode: 'chat',
+          text: 'second message',
+          clientIntent: 'chat',
+        }, llm as never);
+        await new Promise(r => setTimeout(r, 50));
+
+        // The generate call for the second turn should have received context
+        const generateCalls = llm.generate.mock.calls;
+        expect(generateCalls.length).toBe(2);
+        const secondCallPrompt = generateCalls[1][1] as string;
+        expect(secondCallPrompt).toContain('first message');
+        expect(secondCallPrompt).toContain('user: second message');
       });
     });
   });

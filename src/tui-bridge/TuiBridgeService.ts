@@ -1355,16 +1355,27 @@ export class TuiBridgeService {
     logBridge('direct.started', { sessionId, model: modelName, chars: userText.length });
 
     try {
-      const response = await llm.generate(STUDIO_SYSTEM_PROMPT, userText, controller.signal);
+      // Build conversation context from history (same pattern as streamChatResponse)
+      const history = conversation['sessionHistory']?.find(
+        (s: { sessionId: string }) => s.sessionId === conversation['currentSession']?.id
+      );
+      const messages = history?.messages || [];
+      let conversationContext = '';
+      if (messages.length > 1) {
+        const contextMessages = messages.slice(0, -1);
+        conversationContext = contextMessages
+          .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
+          .join('\n\n') + '\n\n';
+      }
+      const fullPrompt = conversationContext
+        ? `${conversationContext}user: ${userText}`
+        : userText;
+
+      const response = await llm.generate(STUDIO_SYSTEM_PROMPT, fullPrompt, controller.signal);
 
       const content = response.code || response.explanation || '';
       if (!content) {
-        this.emit(sessionId, {
-          type: 'error',
-          sessionId,
-          message: 'Empty response from LLM',
-        });
-        return;
+        throw new Error('Empty response from LLM');
       }
 
       const chunks = this.chunkString(content, 50);

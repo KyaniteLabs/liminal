@@ -1,140 +1,108 @@
-/**
- * DiffRenderer tests — LCS-based unified diff
- */
 import { describe, it, expect } from 'vitest';
 import { DiffRenderer } from '../../../src/agent/DiffRenderer.js';
 
 describe('DiffRenderer', () => {
-  describe('diff()', () => {
-    it('returns identical for same text', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('hello\nworld', 'hello\nworld');
+  const renderer = new DiffRenderer();
+
+  describe('diff', () => {
+    it('marks identical inputs as identical', () => {
+      const result = renderer.diff('hello\nworld', 'hello\nworld');
       expect(result.identical).toBe(true);
       expect(result.added).toBe(0);
       expect(result.removed).toBe(0);
     });
 
     it('detects added lines', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('line1\nline2', 'line1\nline2\nline3');
+      const result = renderer.diff('a\nb', 'a\nb\nc');
+      expect(result.identical).toBe(false);
       expect(result.added).toBe(1);
       expect(result.removed).toBe(0);
-      expect(result.identical).toBe(false);
-      const addedLines = result.lines.filter(l => l.type === 'added');
-      expect(addedLines[0].content).toBe('line3');
+      expect(result.lines[result.lines.length - 1]).toEqual({ type: 'added', content: 'c' });
     });
 
     it('detects removed lines', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('line1\nline2\nline3', 'line1\nline3');
+      const result = renderer.diff('a\nb\nc', 'a\nb');
+      expect(result.removed).toBe(1);
       expect(result.added).toBe(0);
-      expect(result.removed).toBe(1);
-      const removedLines = result.lines.filter(l => l.type === 'removed');
-      expect(removedLines[0].content).toBe('line2');
+      expect(result.lines[result.lines.length - 1]).toEqual({ type: 'removed', content: 'c' });
     });
 
-    it('detects mixed additions and removals', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('a\nb\nc', 'a\nx\nc');
+    it('detects changed lines as remove + add', () => {
+      const result = renderer.diff('a\nold\nc', 'a\nnew\nc');
+      expect(result.removed).toBe(1);
       expect(result.added).toBe(1);
+    });
+
+    it('handles empty old text (all added)', () => {
+      // ''.split('\n') → [''] so LCS diffs [''] vs ['a','b']: 1 removed + 2 added
+      const result = renderer.diff('', 'a\nb');
+      expect(result.added).toBe(2);
       expect(result.removed).toBe(1);
     });
 
-    it('handles empty old text', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('', 'new content');
-      // ''.split('\n') → [''], so LCS treats as replacing empty line with content
-      expect(result.identical).toBe(false);
-      expect(result.lines.length).toBeGreaterThanOrEqual(1);
-      const addedContent = result.lines.filter(l => l.type === 'added').map(l => l.content);
-      expect(addedContent).toContain('new content');
+    it('handles empty new text (all removed)', () => {
+      // reverse: ['a','b'] vs [''] → 2 removed + 1 added
+      const result = renderer.diff('a\nb', '');
+      expect(result.removed).toBe(2);
+      expect(result.added).toBe(1);
     });
 
-    it('handles empty new text', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('old content', '');
-      expect(result.identical).toBe(false);
-      expect(result.lines.length).toBeGreaterThanOrEqual(1);
-      const removedContent = result.lines.filter(l => l.type === 'removed').map(l => l.content);
-      expect(removedContent).toContain('old content');
-    });
-
-    it('handles both empty', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('', '');
-      // ''.split('\n') → [''], so LCS matches one empty line as unchanged
+    it('handles both empty strings', () => {
+      const result = renderer.diff('', '');
       expect(result.identical).toBe(true);
-      expect(result.added).toBe(0);
-      expect(result.removed).toBe(0);
+      expect(result.lines).toHaveLength(1); // single empty line
+    });
+
+    it('preserves unchanged lines', () => {
+      const result = renderer.diff('a\nb\nc', 'a\nx\nc');
+      const unchanged = result.lines.filter(l => l.type === 'unchanged');
+      expect(unchanged).toHaveLength(2);
     });
   });
 
-  describe('render()', () => {
-    it('returns "(no differences)" for identical content', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('same', 'same');
-      expect(dr.render(result)).toBe('(no differences)');
+  describe('render', () => {
+    it('renders identical inputs as "(no differences)"', () => {
+      const result = renderer.diff('same', 'same');
+      expect(renderer.render(result)).toBe('(no differences)');
     });
 
-    it('prefixes added lines with +', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('a', 'a\nb');
-      const rendered = dr.render(result);
-      expect(rendered).toContain('+ b');
+    it('prefixes added lines with "+ "', () => {
+      const result = renderer.diff('', 'new line');
+      const rendered = renderer.render(result);
+      expect(rendered).toContain('+ new line');
     });
 
-    it('prefixes removed lines with -', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('a\nb', 'a');
-      const rendered = dr.render(result);
-      expect(rendered).toContain('- b');
+    it('prefixes removed lines with "- "', () => {
+      const result = renderer.diff('old line', '');
+      const rendered = renderer.render(result);
+      expect(rendered).toContain('- old line');
     });
 
-    it('prefixes unchanged lines with spaces', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('a\nb', 'a\nc');
-      const rendered = dr.render(result);
+    it('prefixes unchanged lines with two spaces', () => {
+      const result = renderer.diff('kept\nchanged', 'kept\nnew');
+      const rendered = renderer.render(result);
+      expect(rendered).toContain('  kept');
+    });
+
+    it('renders a multi-line diff correctly', () => {
+      const result = renderer.diff('a\nb\nc', 'a\nx\nc');
+      const rendered = renderer.render(result);
       expect(rendered).toContain('  a');
-    });
-
-    it('renders full diff output', () => {
-      const dr = new DiffRenderer();
-      const result = dr.diff('line1\nline2\nline3', 'line1\nchanged\nline3');
-      const rendered = dr.render(result);
-      expect(rendered).toContain('  line1');
-      expect(rendered).toContain('- line2');
-      expect(rendered).toContain('+ changed');
-      expect(rendered).toContain('  line3');
+      expect(rendered).toContain('- b');
+      expect(rendered).toContain('+ x');
+      expect(rendered).toContain('  c');
     });
   });
 
-  describe('size guard', () => {
-    it('falls back to sequential diff for large inputs', () => {
-      const dr = new DiffRenderer();
-      // Generate inputs exceeding MAX_LCS_LINES (5000)
-      const oldLines = Array.from({ length: 5001 }, (_, i) => `old-${i}`);
-      const newLines = Array.from({ length: 5001 }, (_, i) => `new-${i}`);
-      const oldText = oldLines.join('\n');
-      const newText = newLines.join('\n');
-
-      const result = dr.diff(oldText, newText);
-      // Should not hang or crash; should produce meaningful output
+  describe('large input fallback', () => {
+    it('uses sequential diff for inputs exceeding MAX_LCS_LINES', () => {
+      // Generate large inputs (6000 lines each, exceeding MAX_LCS_LINES=5000)
+      const oldLines = Array.from({ length: 6000 }, (_, i) => `line ${i}`);
+      const newLines = Array.from({ length: 6000 }, (_, i) => i === 3000 ? 'CHANGED' : `line ${i}`);
+      const result = renderer.diff(oldLines.join('\n'), newLines.join('\n'));
       expect(result.identical).toBe(false);
-      expect(result.lines.length).toBeGreaterThan(0);
-      // Sequential diff marks first differing line as removed+added
-      expect(result.removed).toBeGreaterThanOrEqual(1);
-      expect(result.added).toBeGreaterThanOrEqual(1);
-    });
-
-    it('still uses LCS for inputs within limit', () => {
-      const dr = new DiffRenderer();
-      // Small input — should use full LCS
-      const result = dr.diff('a\nb\nc', 'a\nx\nc');
-      // LCS correctly identifies only 'b' removed, 'x' added
       expect(result.added).toBe(1);
       expect(result.removed).toBe(1);
-      const addedLine = result.lines.find(l => l.type === 'added');
-      expect(addedLine?.content).toBe('x');
     });
   });
 });

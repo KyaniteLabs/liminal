@@ -1,124 +1,104 @@
-/**
- * ProductMode tests — ModeAwareRouter biasing behavior
- */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ModeAwareRouter, PRODUCT_MODES } from '../../../src/agent/ProductMode.js';
-import type { ModeConfig } from '../../../src/agent/ProductMode.js';
-import { IntentRouter } from '../../../src/agent/IntentRouter.js';
+import type { IntentRouter } from '../../../src/agent/IntentRouter.js';
+import type { IntentClassification } from '../../../src/agent/types.js';
+
+function mockRouter(classification: IntentClassification): IntentRouter {
+  return { classify: vi.fn().mockReturnValue(classification) } as unknown as IntentRouter;
+}
 
 describe('ModeAwareRouter', () => {
-  const baseRouter = new IntentRouter();
+  const directClass = { intent: 'direct' as const, confidence: 'low' as const, input: 'hello' };
+  const creativeClass = { intent: 'creative' as const, confidence: 'high' as const, topic: 'art', input: 'make art' };
+  const engineeringClass = { intent: 'engineering' as const, confidence: 'medium' as const, topic: 'fix', input: 'fix the bug' };
 
-  describe('no active mode', () => {
-    it('passes through base classification unchanged', () => {
-      const router = new ModeAwareRouter(baseRouter, () => undefined);
-      const result = router.classify('generate a p5 sketch');
-      expect(result.intent).toBe('creative');
-    });
-
-    it('returns direct for conversational input', () => {
-      const router = new ModeAwareRouter(baseRouter, () => undefined);
-      const result = router.classify('hello how are you');
-      expect(result.intent).toBe('direct');
-    });
+  it('returns base classification when no mode is active', () => {
+    const router = new ModeAwareRouter(
+      mockRouter(directClass),
+      () => undefined,
+    );
+    expect(router.classify('hello')).toEqual(directClass);
   });
 
   describe('ask mode', () => {
     const getMode = () => ({ mode: 'ask' as const });
-    const router = new ModeAwareRouter(baseRouter, getMode);
 
-    it('preserves creative keywords instead of forcing chat-only', () => {
-      const result = router.classify('generate a beautiful p5 sketch');
+    it('upgrades direct intent to engineering for inspection', () => {
+      const router = new ModeAwareRouter(mockRouter(directClass), getMode);
+      const result = router.classify('hello');
+      expect(result.intent).toBe('engineering');
+      expect(result.topic).toBe('inspect');
+    });
+
+    it('preserves non-direct intents', () => {
+      const router = new ModeAwareRouter(mockRouter(creativeClass), getMode);
+      const result = router.classify('make art');
       expect(result.intent).toBe('creative');
-    });
-
-    it('preserves engineering keywords instead of forcing chat-only', () => {
-      const result = router.classify('fix the build error');
-      expect(result.intent).toBe('engineering');
-    });
-
-    it('preserves hybrid keywords instead of forcing chat-only', () => {
-      const result = router.classify('improve the art quality');
-      expect(result.intent).toBe('hybrid');
-    });
-
-    it('routes conversational input to engineering inspection', () => {
-      const result = router.classify('hello how are you');
-      expect(result.intent).toBe('engineering');
-      expect(result.confidence).toBe('medium');
     });
   });
 
   describe('make mode', () => {
     const getMode = () => ({ mode: 'make' as const });
-    const router = new ModeAwareRouter(baseRouter, getMode);
 
-    it('upgrades direct input to creative', () => {
-      const result = router.classify('hello how are you');
+    it('upgrades direct intent to creative', () => {
+      const router = new ModeAwareRouter(mockRouter(directClass), getMode);
+      const result = router.classify('hello');
       expect(result.intent).toBe('creative');
-      expect(result.confidence).toBe('medium');
+      expect(result.topic).toBe('generate');
     });
 
-    it('preserves creative classification', () => {
-      const result = router.classify('generate a p5 sketch');
-      expect(result.intent).toBe('creative');
-    });
-
-    it('preserves engineering classification', () => {
-      const result = router.classify('fix the build error');
+    it('preserves non-direct intents', () => {
+      const router = new ModeAwareRouter(mockRouter(engineeringClass), getMode);
+      const result = router.classify('fix the bug');
       expect(result.intent).toBe('engineering');
     });
   });
 
   describe('remix mode', () => {
     const getMode = () => ({ mode: 'remix' as const });
-    const router = new ModeAwareRouter(baseRouter, getMode);
 
-    it('forces creative intent for any input', () => {
-      const result = router.classify('fix the build error');
+    it('forces creative intent with remix topic', () => {
+      const router = new ModeAwareRouter(mockRouter(directClass), getMode);
+      const result = router.classify('hello');
       expect(result.intent).toBe('creative');
-    });
-
-    it('adds remix topic hint when no topic detected', () => {
-      const result = router.classify('something random');
-      expect(result.intent).toBe('creative');
+      expect(result.confidence).toBe('high');
       expect(result.topic).toBe('remix');
     });
 
-    it('preserves detected topic', () => {
-      const result = router.classify('generate a p5 sketch');
+    it('preserves existing topic when base router already classified one', () => {
+      const router = new ModeAwareRouter(mockRouter(creativeClass), getMode);
+      const result = router.classify('make art');
       expect(result.intent).toBe('creative');
-      expect(result.topic).toBeDefined();
+      expect(result.topic).toBe('art');
     });
   });
 
   describe('improve mode', () => {
     const getMode = () => ({ mode: 'improve' as const });
-    const router = new ModeAwareRouter(baseRouter, getMode);
 
-    it('forces hybrid intent for any input', () => {
-      const result = router.classify('hello how are you');
+    it('forces hybrid intent for quality improvement', () => {
+      const router = new ModeAwareRouter(mockRouter(directClass), getMode);
+      const result = router.classify('hello');
       expect(result.intent).toBe('hybrid');
+      expect(result.confidence).toBe('high');
+      expect(result.topic).toBe('improve');
     });
 
-    it('forces hybrid even for creative keywords', () => {
-      const result = router.classify('generate a p5 sketch');
+    it('overrides any base classification to hybrid', () => {
+      const router = new ModeAwareRouter(mockRouter(creativeClass), getMode);
+      const result = router.classify('make art');
       expect(result.intent).toBe('hybrid');
     });
   });
 });
 
-describe('PRODUCT_MODES', () => {
-  it('has all four modes', () => {
-    expect(Object.keys(PRODUCT_MODES)).toEqual(['ask', 'make', 'remix', 'improve']);
-  });
-
-  it('each mode has label and description', () => {
-    for (const [key, info] of Object.entries(PRODUCT_MODES)) {
-      expect(info.label).toBeTruthy();
-      expect(info.description).toBeTruthy();
-      expect(typeof info.label).toBe('string');
-      expect(typeof info.description).toBe('string');
+describe('PRODUCT_MODES constant', () => {
+  it('has all four modes with labels and descriptions', () => {
+    const modes = Object.keys(PRODUCT_MODES);
+    expect(modes).toEqual(['ask', 'make', 'remix', 'improve']);
+    for (const mode of modes) {
+      expect(PRODUCT_MODES[mode as keyof typeof PRODUCT_MODES].label.length).toBeGreaterThan(0);
+      expect(PRODUCT_MODES[mode as keyof typeof PRODUCT_MODES].description.length).toBeGreaterThan(0);
     }
   });
 });

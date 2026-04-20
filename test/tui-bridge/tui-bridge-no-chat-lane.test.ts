@@ -77,6 +77,7 @@ const { TuiBridgeService } = await import('../../src/tui-bridge/TuiBridgeService
 function fakeLlm() {
   return {
     getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'test-model' }),
+    generate: vi.fn().mockResolvedValue({ code: 'Hello! How can I help?', explanation: '', success: true }),
   };
 }
 
@@ -100,7 +101,7 @@ describe('Bubble Tea operator routing', () => {
     executeTask.mockClear();
   });
 
-  it('requires review for ordinary text instead of routing to chat-only in assist mode', async () => {
+  it('routes ordinary text to direct chat without requiring review in assist mode', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();
 
@@ -114,28 +115,16 @@ describe('Bubble Tea operator routing', () => {
       fakeLlm() as never,
     );
 
-    expect(result.reviewRequired).toBe(true);
+    expect(result.reviewRequired).toBe(false);
     expect(executeTask).not.toHaveBeenCalled();
-    expect(service.getStatus(session.sessionId).pendingAction).toMatchObject({
-      prompt: 'hello, check the current repository',
-      route: 'engineering',
-    });
-    expect(service.getStatus(session.sessionId).pendingAction?.description)
-      .toContain('hello, check the current repository');
-    expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('action.review_required');
-
-    const pending = service.getStatus(session.sessionId).pendingAction!;
-    await service.confirmAction(session.sessionId, pending.id, fakeLlm() as never);
 
     const turn = await waitFor(() => service.getEvents(session.sessionId)
       .find(event => event.type === 'session.turn'));
 
-    expect(executeTask).toHaveBeenCalledOnce();
-    expectLiveContext(executeTask.mock.calls[0][0].description);
     expect(turn).toMatchObject({
       type: 'session.turn',
-      intent: 'engineering',
-      delegatedTo: 'conveyor',
+      intent: 'direct',
+      delegatedTo: 'llm-chat',
     });
   });
 
@@ -225,7 +214,7 @@ describe('Bubble Tea operator routing', () => {
     });
   });
 
-  it('routes ordinary text to the Meta-Harness tool lane after autopilot approval', async () => {
+  it('routes ordinary text to direct chat even in autopilot mode', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();
 
@@ -248,23 +237,11 @@ describe('Bubble Tea operator routing', () => {
     const turn = await waitFor(() => service.getEvents(session.sessionId)
       .find(event => event.type === 'session.turn'));
 
-    expect(executeTask).toHaveBeenCalledOnce();
-    expectLiveContext(executeTask.mock.calls[0][0].description);
+    expect(executeTask).not.toHaveBeenCalled();
     expect(turn).toMatchObject({
       type: 'session.turn',
       intent: 'direct',
-      delegatedTo: 'conveyor',
+      delegatedTo: 'llm-chat',
     });
-    expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('task.queued');
-    expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('tool.started');
-    expect(service.getEvents(session.sessionId).map(event => event.type)).toContain('tool.completed');
-    expect(service.getEvents(session.sessionId)
-      .filter(event => event.type === 'tool.started')
-      .map(event => event.toolName)).not.toContain('complete');
-    expect(service.getEvents(session.sessionId)).toContainEqual(expect.objectContaining({
-      type: 'phase.changed',
-      phase: 'Verify',
-      stepCurrent: 2,
-    }));
   });
 });

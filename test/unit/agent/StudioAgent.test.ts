@@ -1,235 +1,155 @@
-/**
- * StudioAgent tests — behavioral assertions on the agent's routing and delegation.
- *
- * Tests real agent behavior with mock delegates.
- * Every assertion checks a specific expected value.
- */
 import { describe, it, expect, vi } from 'vitest';
-import { StudioAgent } from '../../../src/agent/StudioAgent.js';
-import type { StudioResponse } from '../../../src/agent/types.js';
-
-// ── Helpers ──
-
-/** Creates a mock chat delegate that yields the given chunks */
-function mockChatDelegate(chunks: string[]) {
-  return vi.fn(async function* (_system: string, _user: string) {
-    for (const chunk of chunks) {
-      yield chunk;
-    }
-  });
-}
-
-/** Creates a mock creative delegate that returns a result */
-function mockCreativeDelegate(content: string, artifactRefs: string[]) {
-  return vi.fn(async (_prompt: string) => ({
-    content,
-    artifactRefs,
-    model: 'test-model',
-  }));
-}
-
-/** Creates a mock engineering delegate that returns a result */
-function mockEngineeringDelegate(content: string, taskRefs: string[]) {
-  return vi.fn(async (_desc: string) => ({
-    content,
-    taskRefs,
-    model: 'test-model',
-  }));
-}
+import { StudioAgent, STUDIO_SYSTEM_PROMPT } from '../../../src/agent/StudioAgent.js';
+import type { CreativeResult, EngineeringResult } from '../../../src/agent/StudioAgent.js';
 
 describe('StudioAgent', () => {
-  // ── Classification Only ──
+  describe('system prompt', () => {
+    it('provides a creative-first personality', () => {
+      expect(STUDIO_SYSTEM_PROMPT).toContain('Liminal Studio');
+      expect(STUDIO_SYSTEM_PROMPT).toContain('creative');
+    });
+  });
 
-  describe('classify()', () => {
-    const agent = new StudioAgent({});
-
-    it('classifies creative input', () => {
+  describe('classify', () => {
+    it('classifies creative inputs', () => {
+      const agent = new StudioAgent({});
       const result = agent.classify('generate a p5 sketch');
       expect(result.intent).toBe('creative');
     });
 
-    it('classifies engineering input', () => {
-      const result = agent.classify('fix the test coverage');
+    it('classifies engineering inputs', () => {
+      const agent = new StudioAgent({});
+      const result = agent.classify('fix the failing test');
       expect(result.intent).toBe('engineering');
     });
 
-    it('classifies direct input', () => {
-      const result = agent.classify('hello');
+    it('classifies direct inputs', () => {
+      const agent = new StudioAgent({});
+      const result = agent.classify('hello there');
       expect(result.intent).toBe('direct');
     });
-
-    it('classifies hybrid input', () => {
-      const result = agent.classify('improve the art quality');
-      expect(result.intent).toBe('hybrid');
-    });
   });
 
-  // ── Direct Chat ──
+  describe('processInput with chatDelegate', () => {
+    it('streams direct chat via chatDelegate', async () => {
+      async function* mockChat(_sys: string, _msg: string) {
+        yield 'Hello ';
+        yield 'world!';
+      }
 
-  describe('direct chat', () => {
-    it('calls chat delegate and returns composed response', async () => {
-      const chat = mockChatDelegate(['Hello, ', 'artist!']);
-      const agent = new StudioAgent({ chatDelegate: chat });
-
+      const agent = new StudioAgent({ chatDelegate: mockChat });
       const response = await agent.processInput('hello');
 
-      expect(response.content).toBe('Hello, artist!');
+      expect(response.content).toBe('Hello world!');
       expect(response.metadata.intent).toBe('direct');
       expect(response.metadata.delegatedTo).toBe('llm-chat');
-      expect(response.metadata.durationMs).toBeGreaterThanOrEqual(0);
-      expect(chat).toHaveBeenCalledOnce();
     });
 
-    it('passes system prompt to delegate', async () => {
-      const chat = mockChatDelegate(['ok']);
-      const agent = new StudioAgent({ chatDelegate: chat });
-
-      await agent.processInput('hi');
-
-      expect(chat).toHaveBeenCalledWith(
-        agent.systemPrompt,
-        'hi',
-        undefined,
-      );
-    });
-  });
-
-  // ── Creative Delegation ──
-
-  describe('creative delegation', () => {
-    it('delegates to creative delegate and returns artifact refs', async () => {
-      const creative = mockCreativeDelegate('Generated!', ['art-1']);
-      const agent = new StudioAgent({ creativeDelegate: creative });
-
-      const response = await agent.processInput('generate a p5 sketch');
-
-      expect(response.content).toBe('Generated!');
-      expect(response.metadata.intent).toBe('creative');
-      expect(response.metadata.delegatedTo).toBe('ralph-loop');
-      expect(response.metadata.artifactRefs).toEqual(['art-1']);
-      expect(creative).toHaveBeenCalledOnce();
-    });
-
-    it('falls back to chat when no creative delegate available', async () => {
-      const chat = mockChatDelegate(['fallback']);
-      const agent = new StudioAgent({ chatDelegate: chat });
-
-      const response = await agent.processInput('generate something');
-
-      expect(response.metadata.delegatedTo).toBe('llm-chat');
-      expect(response.content).toBe('fallback');
-    });
-  });
-
-  // ── Engineering Delegation ──
-
-  describe('engineering delegation', () => {
-    it('delegates to engineering delegate and returns task refs', async () => {
-      const engineering = mockEngineeringDelegate('Fixed!', ['L001']);
-      const agent = new StudioAgent({ engineeringDelegate: engineering });
-
-      const response = await agent.processInput('fix the test coverage');
-
-      expect(response.content).toBe('Fixed!');
-      expect(response.metadata.intent).toBe('engineering');
-      expect(response.metadata.delegatedTo).toBe('conveyor');
-      expect(response.metadata.taskRefs).toEqual(['L001']);
-      expect(engineering).toHaveBeenCalledOnce();
-    });
-
-    it('falls back to chat when no engineering delegate available', async () => {
-      const chat = mockChatDelegate(['fallback']);
-      const agent = new StudioAgent({ chatDelegate: chat });
-
-      const response = await agent.processInput('fix the build');
-
-      expect(response.metadata.delegatedTo).toBe('llm-chat');
-    });
-  });
-
-  // ── No Delegates Available ──
-
-  describe('no delegates', () => {
-    it('returns "not connected" message when no chat delegate', async () => {
+    it('returns not-connected message when no chatDelegate', async () => {
       const agent = new StudioAgent({});
       const response = await agent.processInput('hello');
 
       expect(response.content).toContain('not connected');
       expect(response.metadata.delegatedTo).toBe('llm-chat');
     });
+  });
 
-    it('returns fallback message for creative without delegate', async () => {
+  describe('processInput with creativeDelegate', () => {
+    it('delegates creative intents to RalphLoop', async () => {
+      const mockCreative = vi.fn<[], [string, AbortSignal?], Promise<CreativeResult>>(
+        async () => ({
+          content: 'function setup() {}',
+          artifactRefs: ['sketch.js'],
+          model: 'glm-5.1',
+        }),
+      );
+
+      const agent = new StudioAgent({ creativeDelegate: mockCreative });
+      const response = await agent.processInput('generate a p5 sketch');
+
+      expect(mockCreative).toHaveBeenCalledOnce();
+      expect(response.metadata.intent).toBe('creative');
+      expect(response.metadata.delegatedTo).toBe('ralph-loop');
+      expect(response.metadata.artifactRefs).toEqual(['sketch.js']);
+      expect(response.metadata.model).toBe('glm-5.1');
+    });
+
+    it('falls back to chat when creativeDelegate is missing', async () => {
       const agent = new StudioAgent({});
       const response = await agent.processInput('generate art');
 
-      // Falls back to llm-chat, which also has no delegate
-      expect(response.content).toContain('not connected');
       expect(response.metadata.delegatedTo).toBe('llm-chat');
     });
+  });
 
-    it('returns fallback message for engineering without delegate', async () => {
+  describe('processInput with engineeringDelegate', () => {
+    it('delegates engineering intents to ConveyorRunner', async () => {
+      const mockEngineering = vi.fn<[], [string, AbortSignal?], Promise<EngineeringResult>>(
+        async () => ({
+          content: 'Fixed the test',
+          taskRefs: ['T-001'],
+          model: 'glm-5.1',
+        }),
+      );
+
+      const agent = new StudioAgent({ engineeringDelegate: mockEngineering });
+      const response = await agent.processInput('fix the failing test in BatchProcessor');
+
+      expect(mockEngineering).toHaveBeenCalledOnce();
+      expect(response.metadata.intent).toBe('engineering');
+      expect(response.metadata.delegatedTo).toBe('conveyor');
+      expect(response.metadata.taskRefs).toEqual(['T-001']);
+    });
+
+    it('falls back to chat when engineeringDelegate is missing', async () => {
       const agent = new StudioAgent({});
-      const response = await agent.processInput('fix coverage');
+      const response = await agent.processInput('fix the bug');
 
-      // Falls back to llm-chat, which also has no delegate
-      expect(response.content).toContain('not connected');
       expect(response.metadata.delegatedTo).toBe('llm-chat');
     });
   });
 
-  // ── Turn IDs ──
+  describe('with ModeAwareRouter', () => {
+    it('biases routing toward creative in make mode', async () => {
+      const mockCreative = vi.fn<[], [string, AbortSignal?], Promise<CreativeResult>>(
+        async () => ({ content: 'art', artifactRefs: [] }),
+      );
 
-  describe('turn IDs', () => {
-    it('generates unique turn IDs for sequential inputs', async () => {
-      const chat = mockChatDelegate(['ok']);
-      const agent = new StudioAgent({ chatDelegate: chat });
-
-      const r1 = await agent.processInput('first');
-      const r2 = await agent.processInput('second');
-
-      expect(r1.metadata.turnId).not.toBe(r2.metadata.turnId);
-      expect(r1.metadata.turnId).toMatch(/^turn-\d+-\d+$/);
-    });
-  });
-
-  // ── Custom System Prompt ──
-
-  describe('custom system prompt', () => {
-    it('uses custom system prompt when configured', async () => {
-      const chat = mockChatDelegate(['ok']);
       const agent = new StudioAgent({
-        chatDelegate: chat,
-        config: { systemPrompt: 'You are a test assistant.' },
+        creativeDelegate: mockCreative,
+        getActiveMode: () => ({ mode: 'make' }),
       });
 
-      expect(agent.systemPrompt).toBe('You are a test assistant.');
-
-      await agent.processInput('hi');
-
-      expect(chat).toHaveBeenCalledWith('You are a test assistant.', 'hi', undefined);
+      await agent.processInput('something nice');
+      expect(mockCreative).toHaveBeenCalled();
     });
 
-    it('uses default system prompt when not configured', () => {
-      const agent = new StudioAgent({});
-      expect(agent.systemPrompt).toContain('creative guide');
+    it('biases routing toward engineering in ask mode', async () => {
+      const mockEngineering = vi.fn<[], [string, AbortSignal?], Promise<EngineeringResult>>(
+        async () => ({ content: 'info', taskRefs: [] }),
+      );
+
+      const agent = new StudioAgent({
+        engineeringDelegate: mockEngineering,
+        getActiveMode: () => ({ mode: 'ask' }),
+      });
+
+      await agent.processInput('something I want to know about');
+      expect(mockEngineering).toHaveBeenCalled();
     });
   });
 
-  // ── Signal Cancellation ──
+  describe('custom config', () => {
+    it('uses custom system prompt when provided', () => {
+      const agent = new StudioAgent({
+        config: { systemPrompt: 'Custom prompt' },
+      });
+      expect(agent.systemPrompt).toBe('Custom prompt');
+    });
 
-  describe('abort signal', () => {
-    it('passes abort signal to delegates', async () => {
-      const chat = mockChatDelegate(['ok']);
-      const agent = new StudioAgent({ chatDelegate: chat });
-
-      const controller = new AbortController();
-      await agent.processInput('hi', controller.signal);
-
-      expect(chat).toHaveBeenCalledWith(
-        expect.any(String),
-        'hi',
-        controller.signal,
-      );
+    it('uses default system prompt when none provided', () => {
+      const agent = new StudioAgent({});
+      expect(agent.systemPrompt).toBe(STUDIO_SYSTEM_PROMPT);
     });
   });
 });

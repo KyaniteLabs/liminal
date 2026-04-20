@@ -1,121 +1,92 @@
-/**
- * SkillRunner tests — skill template resolution and delegation routing
- */
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { SkillRunner } from '../../../src/agent/SkillRunner.js';
 import type { LoadedSkill } from '../../../src/harness/skills/SkillLoader.js';
 
-function makeSkill(overrides: Partial<LoadedSkill> = {}): LoadedSkill {
-  return {
-    name: 'test-skill',
-    description: 'A test skill',
-    content: 'Generate {{input}} with date {{date}}',
-    path: '/test/SKILL.md',
-    directory: '/test',
-    source: 'repo',
-    mode: 'make',
-    profile: 'creative',
-    ...overrides,
-  };
+function mockSkillLoader(skill: LoadedSkill | null) {
+  return { loadSkill: vi.fn().mockResolvedValue(skill) } as any;
 }
 
 describe('SkillRunner', () => {
-  describe('resolve()', () => {
-    it('resolves a skill and expands template variables', async () => {
-      const mockSkill = makeSkill();
-      const runner = new SkillRunner({
-        loadSkill: async () => mockSkill,
-        listSkills: async () => [mockSkill],
-      } as any);
+  const makeSkill = (overrides: Partial<LoadedSkill> = {}): LoadedSkill => ({
+    name: 'test-skill',
+    content: 'Hello {{input}}, today is {{date}}',
+    mode: 'ask',
+    profile: 'creative',
+    ...overrides,
+  });
 
-      const result = await runner.resolve('test-skill', { input: 'ocean waves' });
+  it('returns null when skill is not found', async () => {
+    const runner = new SkillRunner(mockSkillLoader(null));
+    const result = await runner.resolve('nonexistent');
+    expect(result).toBeNull();
+  });
 
-      expect(result).not.toBeNull();
-      expect(result!.skillName).toBe('test-skill');
-      expect(result!.prompt).toContain('ocean waves');
-      expect(result!.prompt).toMatch(/\d{4}-\d{2}-\d{2}/); // date
-      expect(result!.target).toBe('creative');
-    });
+  it('expands {{input}} and {{date}} template variables', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill()));
+    const result = await runner.resolve('test-skill', { input: 'world' });
+    expect(result).not.toBeNull();
+    expect(result!.prompt).toContain('world');
+    expect(result!.prompt).toMatch(/\d{4}-\d{2}-\d{2}/);
+  });
 
-    it('returns null for unknown skill', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => null,
-        listSkills: async () => [],
-      } as any);
+  it('returns the skill name in the result', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill()));
+    const result = await runner.resolve('test-skill');
+    expect(result!.skillName).toBe('test-skill');
+  });
 
-      const result = await runner.resolve('nonexistent');
-      expect(result).toBeNull();
-    });
+  it('routes to creative for make mode skills', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ mode: 'make' })));
+    const result = await runner.resolve('test-skill');
+    expect(result!.target).toBe('creative');
+  });
 
-    it('routes creative mode skills to creative target', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => makeSkill({ mode: 'make', profile: 'creative' }),
-        listSkills: async () => [],
-      } as any);
+  it('routes to creative for remix mode skills', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ mode: 'remix' })));
+    const result = await runner.resolve('test-skill');
+    expect(result!.target).toBe('creative');
+  });
 
-      const result = await runner.resolve('test-skill');
-      expect(result!.target).toBe('creative');
-    });
+  it('routes to creative for creative profile skills', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ mode: 'ask', profile: 'creative' })));
+    const result = await runner.resolve('test-skill');
+    expect(result!.target).toBe('creative');
+  });
 
-    it('routes remix mode to creative target', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => makeSkill({ mode: 'remix' }),
-        listSkills: async () => [],
-      } as any);
+  it('routes to engineering for improve mode with engineering profile', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ mode: 'improve', profile: 'engineering' })));
+    const result = await runner.resolve('test-skill');
+    expect(result!.target).toBe('engineering');
+  });
 
-      const result = await runner.resolve('test-skill');
-      expect(result!.target).toBe('creative');
-    });
+  it('routes to engineering for engineering profile skills', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ mode: 'ask', profile: 'engineering' })));
+    const result = await runner.resolve('test-skill');
+    expect(result!.target).toBe('engineering');
+  });
 
-    it('routes improve mode to engineering target', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => makeSkill({ mode: 'improve', profile: 'engineering' }),
-        listSkills: async () => [],
-      } as any);
+  it('routes to chat as default', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ mode: 'ask', profile: 'hybrid' })));
+    const result = await runner.resolve('test-skill');
+    expect(result!.target).toBe('chat');
+  });
 
-      const result = await runner.resolve('test-skill');
-      expect(result!.target).toBe('engineering');
-    });
+  it('expands custom user variables', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ content: 'Language: {{lang}}, Style: {{style}}' })));
+    const result = await runner.resolve('test-skill', { lang: 'GLSL', style: 'minimal' });
+    expect(result!.prompt).toBe('Language: GLSL, Style: minimal');
+  });
 
-    it('routes ask mode to chat target', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => makeSkill({ mode: 'ask', profile: undefined }),
-        listSkills: async () => [],
-      } as any);
+  it('leaves unknown template variables unexpanded', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill({ content: 'Hello {{unknown}}' })));
+    const result = await runner.resolve('test-skill');
+    expect(result!.prompt).toBe('Hello {{unknown}}');
+  });
 
-      const result = await runner.resolve('test-skill');
-      expect(result!.target).toBe('chat');
-    });
-
-    it('defaults to chat target when no mode/profile set', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => makeSkill({ mode: undefined, profile: undefined }),
-        listSkills: async () => [],
-      } as any);
-
-      const result = await runner.resolve('test-skill');
-      expect(result!.target).toBe('chat');
-    });
-
-    it('preserves unmatched template variables', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => makeSkill({ content: 'Hello {{unknown}} and {{input}}' }),
-        listSkills: async () => [],
-      } as any);
-
-      const result = await runner.resolve('test-skill', { input: 'world' });
-      expect(result!.prompt).toContain('{{unknown}}');
-      expect(result!.prompt).toContain('world');
-    });
-
-    it('tracks resolution duration', async () => {
-      const runner = new SkillRunner({
-        loadSkill: async () => makeSkill(),
-        listSkills: async () => [],
-      } as any);
-
-      const result = await runner.resolve('test-skill');
-      expect(result!.durationMs).toBeGreaterThanOrEqual(0);
-    });
+  it('reports duration in the result', async () => {
+    const runner = new SkillRunner(mockSkillLoader(makeSkill()));
+    const result = await runner.resolve('test-skill');
+    expect(typeof result!.durationMs).toBe('number');
+    expect(result!.durationMs).toBeGreaterThanOrEqual(0);
   });
 });

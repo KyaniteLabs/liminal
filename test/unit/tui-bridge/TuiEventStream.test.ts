@@ -72,4 +72,31 @@ describe('TuiEventStream', () => {
     stream.emit('s1', makeEvent('a'));
     expect(listener).not.toHaveBeenCalled();
   });
+
+  it('unsubscribe cleans up empty listener set', () => {
+    const listener = vi.fn();
+    const unsub = stream.subscribe('s1', listener);
+    unsub();
+    // Re-subscribe should still work (verifies the Set was deleted, not corrupted)
+    const listener2 = vi.fn();
+    stream.subscribe('s1', listener2);
+    stream.emit('s1', makeEvent('x'));
+    expect(listener2).toHaveBeenCalledTimes(1);
+  });
+
+  it('unsubscribe cleans up empty idListener set', () => {
+    const idListener = vi.fn();
+    const unsub = stream.subscribeWithId('s1', idListener);
+    unsub();
+    // Re-subscribe should still work
+    const idListener2 = vi.fn();
+    stream.subscribeWithId('s1', idListener2);
+    stream.emit('s1', makeEvent('y'));
+    expect(idListener2).toHaveBeenCalledTimes(1);
+  });
+
+  it('getEventsSince returns empty for unknown session', () => {
+    const result = stream.getEventsSince('nonexistent', 0);
+    expect(result).toEqual([]);
+  });
 });

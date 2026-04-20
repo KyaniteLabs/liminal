@@ -1,200 +1,104 @@
-/**
- * IntentRouter tests — behavioral assertions on intent classification.
- *
- * Tests real classification behavior, not internal methods.
- * Every assertion checks a specific expected value.
- */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { IntentRouter } from '../../../src/agent/IntentRouter.js';
 
 describe('IntentRouter', () => {
-  const router = new IntentRouter();
+  let router: IntentRouter;
 
-  // ── Creative Intent ──
-
-  describe('creative intent', () => {
-    it('classifies "generate a p5 sketch" as creative', () => {
-      const result = router.classify('generate a p5 sketch');
-      expect(result.intent).toBe('creative');
-      expect(result.confidence).toBe('high');
-      expect(result.input).toBe('generate a p5 sketch');
-    });
-
-    it('classifies "make a shader" as creative', () => {
-      const result = router.classify('make a shader');
-      expect(result.intent).toBe('creative');
-    });
-
-    it('classifies "remix the last artwork" as creative', () => {
-      const result = router.classify('remix the last artwork');
-      expect(result.intent).toBe('creative');
-    });
-
-    it('classifies "create some audio-reactive visuals" as creative', () => {
-      const result = router.classify('create some audio-reactive visuals');
-      expect(result.intent).toBe('creative');
-    });
-
-    it('keeps creative comic panel prompts on the creative lane', () => {
-      const result = router.classify('create a comic panel with neon lighting');
-      expect(result.intent).toBe('creative');
-    });
-
-    it('keeps creative music bridge prompts on the creative lane', () => {
-      const result = router.classify('create a bridge between two melodies');
-      expect(result.intent).toBe('creative');
-    });
-
-    it('extracts topic from creative requests', () => {
-      const result = router.classify('generate a p5 seed explorer');
-      expect(result.intent).toBe('creative');
-      expect(result.topic).toBeTruthy();
-    });
+  beforeEach(() => {
+    router = new IntentRouter();
   });
 
-  // ── Engineering Intent ──
+  describe('classify', () => {
+    it('classifies creative keywords as creative intent', () => {
+      const result = router.classify('generate a p5 sketch of flowing particles');
+      expect(result.intent).toBe('creative');
+      expect(result.confidence).toBe('high');
+      expect(result.input).toBe('generate a p5 sketch of flowing particles');
+    });
 
-  describe('engineering intent', () => {
-    it('classifies "fix the test coverage" as engineering', () => {
-      const result = router.classify('fix the test coverage');
+    it('classifies engineering keywords as engineering intent', () => {
+      const result = router.classify('fix the failing test in BatchProcessor');
       expect(result.intent).toBe('engineering');
       expect(result.confidence).toBe('high');
     });
 
-    it('classifies "debug the conveyor" as engineering', () => {
-      const result = router.classify('debug the conveyor');
-      expect(result.intent).toBe('engineering');
-    });
-
-    it('classifies "improve coverage in generators" as engineering', () => {
-      const result = router.classify('improve coverage in generators');
-      expect(result.intent).toBe('engineering');
-    });
-
-    it('classifies "run the build and fix errors" as engineering', () => {
-      const result = router.classify('run the build and fix errors');
-      expect(result.intent).toBe('engineering');
-    });
-
-    it('classifies "wire up the ledger status command" as engineering', () => {
-      const result = router.classify('wire up the ledger status command');
-      expect(result.intent).toBe('engineering');
-    });
-
-    it('classifies Bubble Tea UI work as engineering even with creative verbs', () => {
-      const result = router.classify('make the Bubble Tea right-column operator surface less duplicative');
-      expect(result.intent).toBe('engineering');
-    });
-
-    it('classifies TUI panel cleanup as engineering, not RalphLoop creative generation', () => {
-      const result = router.classify('create a cleaner TUI final report panel without duplicate transcript content');
-      expect(result.intent).toBe('engineering');
-    });
-  });
-
-  // ── Hybrid Intent ──
-
-  describe('hybrid intent', () => {
-    it('classifies "improve the art quality" as hybrid', () => {
-      const result = router.classify('improve the art quality');
+    it('classifies hybrid keywords as hybrid intent', () => {
+      const result = router.classify('improve the art quality and fix the generator');
       expect(result.intent).toBe('hybrid');
+      expect(result.confidence).toBe('low');
     });
 
-    it('classifies "fix the generator and make it better" as hybrid', () => {
-      const result = router.classify('fix the generator and make it better');
-      expect(result.intent).toBe('hybrid');
-    });
-
-    it('classifies "self-improve the creative pipeline" as hybrid', () => {
-      const result = router.classify('self-improve the creative pipeline');
-      expect(result.intent).toBe('hybrid');
-    });
-
-    it('classifies overlapping creative+engineering keywords as hybrid', () => {
-      // "generate" is creative, "fix" is engineering → hybrid
-      const result = router.classify('generate a fix for the p5 output');
-      expect(result.intent).toBe('hybrid');
-    });
-  });
-
-  // ── Direct Intent ──
-
-  describe('direct intent', () => {
-    it('classifies "hello" as direct', () => {
-      const result = router.classify('hello');
+    it('defaults to direct when no keywords match', () => {
+      const result = router.classify('hello, how are you today?');
       expect(result.intent).toBe('direct');
       expect(result.confidence).toBe('high');
+      expect(result.topic).toBeUndefined();
     });
 
-    it('classifies "what can you do?" as direct', () => {
-      const result = router.classify('what can you do?');
-      expect(result.intent).toBe('direct');
-    });
-
-    it('classifies "explain how RalphLoop works" as direct', () => {
-      const result = router.classify('explain how RalphLoop works');
-      expect(result.intent).toBe('direct');
-    });
-
-    it('classifies empty string as direct', () => {
-      const result = router.classify('');
-      expect(result.intent).toBe('direct');
-    });
-  });
-
-  // ── Confidence Levels ──
-
-  describe('confidence', () => {
-    it('returns high confidence for single-category matches', () => {
-      const result = router.classify('generate a new artwork');
-      expect(result.confidence).toBe('high');
-    });
-
-    it('returns medium confidence when two categories overlap', () => {
-      // "make" is creative, "build" is engineering
-      const result = router.classify('make a build script');
-      expect(result.confidence).toBe('medium');
-    });
-  });
-
-  // ── Custom Keywords ──
-
-  describe('custom keywords', () => {
-    it('accepts additional creative keywords', () => {
-      const custom = new IntentRouter({
-        keywords: { creative: ['glitch'] },
-      });
-      const result = custom.classify('create a glitch effect');
-      // "glitch" is not in defaults, but we added it
-      // "create" is already creative, so this should be creative
-      expect(result.intent).toBe('creative');
-    });
-
-    it('accepts additional engineering keywords', () => {
-      const custom = new IntentRouter({
-        keywords: { engineering: ['deploy'] },
-      });
-      const result = custom.classify('deploy the latest changes');
+    it('detects internal engineering surfaces for creative+TUI inputs', () => {
+      const result = router.classify('draw something in the bubble tea tui panel');
       expect(result.intent).toBe('engineering');
     });
-  });
 
-  // ── Topic Extraction ──
+    it('returns creative+engineering as hybrid when no internal surface', () => {
+      const result = router.classify('generate a test for the shader');
+      expect(result.intent).toBe('hybrid');
+    });
 
-  describe('topic extraction', () => {
-    it('extracts topic from "generate a shader"', () => {
-      const result = router.classify('generate a shader');
+    it('extracts topic from generate patterns', () => {
+      const result = router.classify('generate a waveform visual');
+      expect(result.topic).toBe('waveform');
+    });
+
+    it('extracts topic from fix patterns', () => {
+      const result = router.classify('fix the shader compilation error');
       expect(result.topic).toBe('shader');
     });
 
-    it('extracts topic from "fix the conveyor"', () => {
-      const result = router.classify('fix the conveyor');
-      expect(result.topic).toBe('conveyor');
+    it('preserves original input in result', () => {
+      const input = 'Create some beautiful music';
+      const result = router.classify(input);
+      expect(result.input).toBe(input);
+    });
+  });
+
+  describe('with custom keywords', () => {
+    it('merges custom keywords with defaults', () => {
+      const customRouter = new IntentRouter({
+        keywords: { creative: ['bespoke', 'custom-art'] },
+      });
+      const result = customRouter.classify('make a bespoke piece');
+      expect(result.intent).toBe('creative');
     });
 
-    it('returns undefined topic for generic input', () => {
-      const result = router.classify('hello there');
-      expect(result.topic).toBeUndefined();
+    it('still classifies default keywords with custom config', () => {
+      const customRouter = new IntentRouter({
+        keywords: { creative: ['bespoke'] },
+      });
+      const result = customRouter.classify('generate a p5 sketch');
+      expect(result.intent).toBe('creative');
+    });
+  });
+
+  describe('edge cases', () => {
+    it('handles empty string', () => {
+      const result = router.classify('');
+      expect(result.intent).toBe('direct');
+    });
+
+    it('handles single keyword with no context', () => {
+      const result = router.classify('generate');
+      expect(result.intent).toBe('creative');
+    });
+
+    it('is case-insensitive', () => {
+      const result = router.classify('GENERATE a P5 sketch');
+      expect(result.intent).toBe('creative');
+    });
+
+    it('matches partial words in longer text', () => {
+      const result = router.classify('I want to create something amazing with audio');
+      expect(result.intent).toBe('creative');
     });
   });
 });

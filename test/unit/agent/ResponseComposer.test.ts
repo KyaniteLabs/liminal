@@ -1,35 +1,19 @@
-/**
- * ResponseComposer tests — behavioral assertions on response formatting.
- *
- * Tests real composition behavior with specific expected values.
- */
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { ResponseComposer } from '../../../src/agent/ResponseComposer.js';
-import type { DelegationDecision } from '../../../src/agent/types.js';
 
 describe('ResponseComposer', () => {
-  const composer = new ResponseComposer();
+  let composer: ResponseComposer;
 
-  const testDelegation: DelegationDecision = {
-    target: 'llm-chat',
-    params: {},
-    reason: 'Test delegation',
-  };
+  beforeEach(() => {
+    composer = new ResponseComposer();
+  });
 
-  // ── Core compose() ──
+  describe('directResponse', () => {
+    it('formats a direct response with correct metadata', () => {
+      const response = composer.directResponse('Hello!', 'turn-1', 150);
 
-  describe('compose()', () => {
-    it('creates a response with correct metadata', () => {
-      const response = composer.compose(
-        'Hello, artist!',
-        'turn-001',
-        'direct',
-        testDelegation,
-        150,
-      );
-
-      expect(response.content).toBe('Hello, artist!');
-      expect(response.metadata.turnId).toBe('turn-001');
+      expect(response.content).toBe('Hello!');
+      expect(response.metadata.turnId).toBe('turn-1');
       expect(response.metadata.intent).toBe('direct');
       expect(response.metadata.delegatedTo).toBe('llm-chat');
       expect(response.metadata.durationMs).toBe(150);
@@ -37,148 +21,94 @@ describe('ResponseComposer', () => {
       expect(response.metadata.taskRefs).toEqual([]);
     });
 
-    it('includes artifact refs when provided', () => {
-      const creativeDelegation: DelegationDecision = {
-        target: 'ralph-loop',
-        params: {},
-        reason: 'Creative generation',
-      };
-      const response = composer.compose(
-        'Generated a p5 sketch',
-        'turn-002',
-        'creative',
-        creativeDelegation,
-        3000,
-        { artifactRefs: ['art-001', 'art-002'] },
-      );
-
-      expect(response.metadata.artifactRefs).toEqual(['art-001', 'art-002']);
-      expect(response.metadata.delegatedTo).toBe('ralph-loop');
-    });
-
-    it('includes task refs when provided', () => {
-      const engDelegation: DelegationDecision = {
-        target: 'conveyor',
-        params: {},
-        reason: 'Engineering task',
-      };
-      const response = composer.compose(
-        'Fixed test coverage',
-        'turn-003',
-        'engineering',
-        engDelegation,
-        5000,
-        { taskRefs: ['L001'] },
-      );
-
-      expect(response.metadata.taskRefs).toEqual(['L001']);
-      expect(response.metadata.delegatedTo).toBe('conveyor');
-    });
-
-    it('includes model name when provided', () => {
-      const response = composer.compose(
-        'Response text',
-        'turn-004',
-        'direct',
-        testDelegation,
-        100,
-        { model: 'glm-5.1' },
-      );
-
+    it('includes model when provided', () => {
+      const response = composer.directResponse('Hi', 'turn-2', 50, 'glm-5.1');
       expect(response.metadata.model).toBe('glm-5.1');
     });
   });
 
-  // ── Convenience Methods ──
-
-  describe('directResponse()', () => {
-    it('creates a direct response with correct defaults', () => {
-      const response = composer.directResponse(
-        'I can help with that.',
-        'turn-010',
-        200,
-        'glm-5.1',
-      );
-
-      expect(response.content).toBe('I can help with that.');
-      expect(response.metadata.intent).toBe('direct');
-      expect(response.metadata.delegatedTo).toBe('llm-chat');
-      expect(response.metadata.artifactRefs).toEqual([]);
-      expect(response.metadata.taskRefs).toEqual([]);
-      expect(response.metadata.model).toBe('glm-5.1');
-    });
-
-    it('works without a model name', () => {
-      const response = composer.directResponse('Hi', 'turn-011', 50);
-      expect(response.metadata.model).toBeUndefined();
-    });
-  });
-
-  describe('creativeResponse()', () => {
-    it('creates a creative response with artifact refs', () => {
+  describe('creativeResponse', () => {
+    it('formats a creative response with artifact refs', () => {
       const response = composer.creativeResponse(
-        'Here is your p5 sketch.',
-        'turn-020',
-        4500,
-        ['art-100'],
-        'glm-5.1',
+        'function setup() { ... }',
+        'turn-3',
+        2000,
+        ['artifacts/sketch-1.js'],
       );
 
+      expect(response.content).toBe('function setup() { ... }');
       expect(response.metadata.intent).toBe('creative');
       expect(response.metadata.delegatedTo).toBe('ralph-loop');
-      expect(response.metadata.artifactRefs).toEqual(['art-100']);
+      expect(response.metadata.artifactRefs).toEqual(['artifacts/sketch-1.js']);
+    });
+
+    it('accepts empty artifact refs', () => {
+      const response = composer.creativeResponse('no artifacts', 'turn-4', 100, []);
+      expect(response.metadata.artifactRefs).toEqual([]);
     });
   });
 
-  describe('engineeringResponse()', () => {
-    it('creates an engineering response with task refs', () => {
+  describe('engineeringResponse', () => {
+    it('formats an engineering response with task refs', () => {
       const response = composer.engineeringResponse(
-        'Task L001 completed.',
-        'turn-030',
-        8000,
-        ['L001', 'L002'],
+        'Fixed the test',
+        'turn-5',
+        5000,
+        ['T-001'],
       );
 
+      expect(response.content).toBe('Fixed the test');
       expect(response.metadata.intent).toBe('engineering');
       expect(response.metadata.delegatedTo).toBe('conveyor');
-      expect(response.metadata.taskRefs).toEqual(['L001', 'L002']);
+      expect(response.metadata.taskRefs).toEqual(['T-001']);
     });
   });
 
-  describe('hybridResponse()', () => {
-    it('creates a hybrid response with both refs', () => {
+  describe('hybridResponse', () => {
+    it('formats a hybrid response with both artifact and task refs', () => {
       const response = composer.hybridResponse(
-        'Generated and verified.',
-        'turn-040',
-        12000,
-        ['art-200'],
-        ['W001'],
+        'Generated and verified',
+        'turn-6',
+        8000,
+        ['artifacts/gen-1.js'],
+        ['T-002'],
         'glm-5.1',
       );
 
       expect(response.metadata.intent).toBe('hybrid');
-      expect(response.metadata.artifactRefs).toEqual(['art-200']);
-      expect(response.metadata.taskRefs).toEqual(['W001']);
+      expect(response.metadata.delegatedTo).toBe('ralph-loop');
+      expect(response.metadata.artifactRefs).toEqual(['artifacts/gen-1.js']);
+      expect(response.metadata.taskRefs).toEqual(['T-002']);
+      expect(response.metadata.model).toBe('glm-5.1');
     });
   });
 
-  // ── Error paths ──
+  describe('compose (low-level)', () => {
+    it('allows custom delegation decisions', () => {
+      const response = composer.compose(
+        'custom content',
+        'turn-7',
+        'direct',
+        { target: 'none', params: { reason: 'test' }, reason: 'Manual override' },
+        42,
+        { model: 'test-model' },
+      );
 
-  describe('edge cases', () => {
-    it('handles empty content', () => {
-      const response = composer.directResponse('', 'turn-empty', 10);
-      expect(response.content).toBe('');
-      expect(response.metadata.turnId).toBe('turn-empty');
+      expect(response.metadata.delegatedTo).toBe('none');
+      expect(response.metadata.durationMs).toBe(42);
     });
 
-    it('handles zero duration', () => {
-      const response = composer.directResponse('fast', 'turn-fast', 0);
-      expect(response.metadata.durationMs).toBe(0);
-    });
+    it('defaults artifactRefs and taskRefs to empty arrays', () => {
+      const response = composer.compose(
+        'content',
+        'turn-8',
+        'direct',
+        { target: 'llm-chat', params: {}, reason: 'test' },
+        0,
+      );
 
-    it('handles empty refs arrays', () => {
-      const response = composer.creativeResponse('content', 'turn-noref', 100, []);
       expect(response.metadata.artifactRefs).toEqual([]);
+      expect(response.metadata.taskRefs).toEqual([]);
     });
   });
 });

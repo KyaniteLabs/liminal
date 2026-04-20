@@ -599,29 +599,9 @@ export class TuiBridgeService {
 
       case 'direct':
       default:
-        if (this.autonomyController.requiresReview('engineering', sessionId)) {
-          const pendingAction: TuiPendingAction = {
-            id: `action-${Date.now()}`,
-            title: input.text.slice(0, 60),
-            description: `Operator: ${input.text}`,
-            prompt: input.text,
-            route: 'engineering',
-            kind: 'structured',
-            requiresConfirmation: true,
-            createdAt: new Date().toISOString(),
-          };
-          const status = this.sessions.update(sessionId, {
-            mode: 'action',
-            trust: { level: 'review-required', label: `Autonomy: ${this.autonomyController.getConfig(sessionId).label} — operator task needs review` },
-            pendingAction,
-          });
-          this.emit(sessionId, { type: 'action.review_required', sessionId, action: pendingAction });
-          this.emit(sessionId, { type: 'status.updated', sessionId, status });
-          return { reviewRequired: true };
-        }
-        logBridge('input.routed', { sessionId, route: 'studio.operator', confidence: classification.confidence });
-        this.streamEngineeringTask(sessionId, input.text, conversation, llm)
-          .then(() => emitSessionTurn('conveyor'))
+        logBridge('input.routed', { sessionId, route: 'studio.direct', confidence: classification.confidence });
+        this.streamDirectChat(sessionId, input.text, conversation, llm)
+          .then(() => emitSessionTurn('llm-chat'))
           .catch(handleError);
         break;
     }
@@ -1353,6 +1333,84 @@ export class TuiBridgeService {
     });
     this.emitCommandResponse(sessionId, dashboard);
     return { reviewRequired: false };
+  }
+
+  /**
+   * Stream a direct chat response from the LLM.
+   * Uses STUDIO_SYSTEM_PROMPT for the creative-first persona.
+   * No autonomy gating — direct chat is read-only.
+   */
+  private async streamDirectChat(
+    sessionId: string,
+    userText: string,
+    conversation: ConversationManager,
+    llm: LLMClient,
+  ): Promise<void> {
+    const controller = new AbortController();
+    this.activeStreams.set(sessionId, controller);
+
+    const config = llm.getConfig();
+    const modelName = config.model || 'unknown';
+    const startTime = Date.now();
+    logBridge('direct.started', { sessionId, model: modelName, chars: userText.length });
+
+    try {
+      // Build conversation context from history (same pattern as streamChatResponse)
+      const history = conversation['sessionHistory']?.find(
+        (s: { sessionId: string }) => s.sessionId === conversation['currentSession']?.id
+      );
+      const messages = history?.messages || [];
+      let conversationContext = '';
+      if (messages.length > 1) {
+        const contextMessages = messages.slice(0, -1);
+        conversationContext = contextMessages
+          .map((m: { role: string; content: string }) => `${m.role}: ${m.content}`)
+          .join('\n\n') + '\n\n';
+      }
+      const fullPrompt = conversationContext
+        ? `${conversationContext}user: ${userText}`
+        : userText;
+
+      const response = await llm.generate(STUDIO_SYSTEM_PROMPT, fullPrompt, controller.signal);
+
+      const content = response.code || response.explanation || '';
+      if (!content) {
+        throw new Error('Empty response from LLM');
+      }
+
+      const chunks = this.chunkString(content, 50);
+      let fullContent = '';
+      for (const chunk of chunks) {
+        fullContent += chunk;
+        this.emit(sessionId, { type: 'response.delta', sessionId, delta: chunk });
+        await new Promise(r => setTimeout(r, 10));
+      }
+
+      this.emit(sessionId, { type: 'response.completed', sessionId, content: fullContent });
+      this.emit(sessionId, { type: 'response.committed', sessionId, content: fullContent });
+      conversation['recordMessage']('assistant', fullContent);
+
+      this.emit(sessionId, {
+        type: 'response.metadata',
+        sessionId,
+        model: modelName,
+        duration: Date.now() - startTime,
+      });
+
+      this.emit(sessionId, {
+        type: 'status.updated',
+        sessionId,
+        status: this.sessions.update(sessionId, {
+          mode: 'chat',
+          activeTask: 'Direct chat',
+          model: modelName,
+        }),
+      });
+
+      logBridge('direct.completed', { sessionId, model: modelName, duration: Date.now() - startTime });
+    } finally {
+      this.activeStreams.delete(sessionId);
+    }
   }
 
   /**

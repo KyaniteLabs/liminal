@@ -7,15 +7,36 @@ import { Request, Response } from 'express';
 import { Logger } from '../utils/Logger.js';
 import { logRateLimitViolation } from './SecurityLogger.js';
 
+/**
+ * Safe parseInt with validation for NaN and reasonable ranges
+ */
+function safeParseInt(value: string, min: number, max: number, fallback: number): number {
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed)) {
+    Logger.warn('RateLimiter', `Invalid parseInt result for value "${value}", using fallback ${fallback}`);
+    return fallback;
+  }
+  if (parsed < min || parsed > max) {
+    Logger.warn('RateLimiter', `Parsed value ${parsed} outside range [${min}, ${max}], using fallback ${fallback}`);
+    return fallback;
+  }
+  return parsed;
+}
+
 // Parse environment variables with defaults
 const getWindowMs = (envVar: string, defaultMinutes: number): number => {
   const val = process.env[envVar];
-  return val ? parseInt(val, 10) * 60 * 1000 : defaultMinutes * 60 * 1000;
+  if (!val) return defaultMinutes * 60 * 1000;
+  // Allow range: 1 minute to 24 hours
+  const minutes = safeParseInt(val, 1, 1440, defaultMinutes);
+  return minutes * 60 * 1000;
 };
 
 const getMaxRequests = (envVar: string, defaultMax: number): number => {
   const val = process.env[envVar];
-  return val ? parseInt(val, 10) : defaultMax;
+  if (!val) return defaultMax;
+  // Allow range: 1 to 10000 requests
+  return safeParseInt(val, 1, 10000, defaultMax);
 };
 
 /**

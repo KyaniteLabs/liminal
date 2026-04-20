@@ -297,4 +297,68 @@ describe('BatchProcessor', () => {
       expect(jobs[0].result).toBe(30);
     });
   });
+
+  // ── Edge cases ──────────────────────────────────────────────────────
+
+  describe('edge cases', () => {
+    it('retryAttempts=0 — single attempt, no retries', async () => {
+      let attempts = 0;
+      const b = new BatchProcessor<string, number>(
+        { maxConcurrency: 1, retryAttempts: 0, retryDelayMs: 0 },
+        async () => { attempts++; throw new Error('fail'); },
+      );
+      b.submit('no-retry');
+      const jobs = await b.process();
+      expect(attempts).toBe(1);
+      expect(jobs[0].status).toBe(Status.FAILED);
+      expect(jobs[0].error).toBe('fail');
+    });
+
+    it('handles sync throw in non-async processor function', async () => {
+      const b = new BatchProcessor<string, number>(
+        { maxConcurrency: 1, retryAttempts: 0, retryDelayMs: 0 },
+        // Non-async function that throws synchronously
+        (input) => { throw new Error(`sync: ${input}`); },
+      );
+      b.submit('sync-throw');
+      const jobs = await b.process();
+      expect(jobs[0].status).toBe(Status.FAILED);
+      expect(jobs[0].error).toBe('sync: sync-throw');
+    });
+
+    it('handles undefined result from processor', async () => {
+      const b = new BatchProcessor<string, number | undefined>(
+        { maxConcurrency: 1, retryAttempts: 0, retryDelayMs: 0 },
+        async () => undefined,
+      );
+      b.submit('undef');
+      const jobs = await b.process();
+      expect(jobs[0].status).toBe(Status.COMPLETED);
+      expect(jobs[0].result).toBeUndefined();
+    });
+
+    it('handles large number of jobs', async () => {
+      const b = new BatchProcessor<string, number>(
+        { maxConcurrency: 4, retryAttempts: 0, retryDelayMs: 0 },
+        async (s) => s.length,
+      );
+      for (let i = 0; i < 100; i++) {
+        b.submit(`job-${i}`);
+      }
+      const jobs = await b.process();
+      expect(jobs).toHaveLength(100);
+      expect(jobs.every(j => j.status === Status.COMPLETED)).toBe(true);
+    });
+
+    it('submit after process completes — new job is independent', async () => {
+      bp.submit('first');
+      const first = await bp.process();
+      expect(first).toHaveLength(1);
+
+      bp.submit('second');
+      const second = await bp.process();
+      expect(second).toHaveLength(2); // queue retains completed + new pending
+      expect(second.find(j => j.input === 'second')!.status).toBe(Status.COMPLETED);
+    });
+  });
 });

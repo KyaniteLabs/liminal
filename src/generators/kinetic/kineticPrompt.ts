@@ -14,10 +14,14 @@ CORE PRINCIPLES:
 4. No JavaScript, no script tags
 5. No nav, no footer, no SaaS landing page chrome
 
+CRITICAL: The <body> MUST contain visible div or svg elements that the CSS animations target.
+A <style> block alone with no elements in <body> is WRONG.
+Example body: <body><div class="scene">...nested divs...</div></body>
+
 OUTPUT FORMAT:
 - Start directly with <!DOCTYPE html>
-- Include a <style> block with @keyframes
-- Include <body> with div/svg visual elements
+- Include a <style> block with @keyframes in <head>
+- Include <body> with div/svg visual elements that have class attributes matching the CSS
 - No markdown fences, no explanations`;
 
 export function buildKineticPrompt(spec: string): string {

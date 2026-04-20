@@ -197,7 +197,7 @@ function getProviderConfigInternal(
       apiKey = firstUsableApiKey(process.env.MINIMAX_API_KEY, fileApiKey);
       break;
     case 'glm':
-      apiKey = firstUsableApiKey(process.env.GLM_API_KEY, fileApiKey);
+      apiKey = firstUsableApiKey(process.env.GLM_API_KEY, process.env.ANTHROPIC_AUTH_TOKEN, fileApiKey);
       break;
     case 'moonshot':
     case 'kimi':

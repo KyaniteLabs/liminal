@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   isGenerationRequest,
   TUI_SYSTEM_PROMPT,
@@ -323,6 +323,85 @@ describe('TuiBridgeService', () => {
       if (turnEvent && turnEvent.type === 'session.turn') {
         expect(turnEvent.turnId).toMatch(/^turn-\d+$/);
       }
+    });
+
+    describe('direct chat streaming', () => {
+      function mockLlm(response: { code?: string; explanation?: string } = {}) {
+        return {
+          getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-4' }),
+          generate: vi.fn().mockResolvedValue({
+            code: response.code ?? 'Hello! How can I help?',
+            explanation: response.explanation ?? '',
+            success: true,
+          }),
+        };
+      }
+
+      it('streams direct chat response with delta events', async () => {
+        const service = new TuiBridgeService();
+        const session = service.createSession();
+        const llm = mockLlm({ code: 'This is a long response that will be chunked into multiple delta events for streaming' });
+
+        await service.submitInput(session.sessionId, {
+          mode: 'chat',
+          text: 'hello',
+          clientIntent: 'chat',
+        }, llm as never);
+
+        // Wait for async streamDirectChat to complete
+        await new Promise(r => setTimeout(r, 100));
+
+        const events = service.getEvents(session.sessionId);
+        const types = events.map(e => e.type);
+        expect(types).toContain('response.started');
+        expect(types).toContain('response.delta');
+        expect(types).toContain('response.completed');
+        expect(types).toContain('response.committed');
+        expect(types).toContain('response.metadata');
+
+        const completed = events.find(e => e.type === 'response.completed');
+        expect(completed?.type === 'response.completed' && completed.content).toContain('chunked');
+      });
+
+      it('emits error event when LLM returns empty response', async () => {
+        const service = new TuiBridgeService();
+        const session = service.createSession();
+        const llm = mockLlm({ code: '', explanation: '' });
+
+        await service.submitInput(session.sessionId, {
+          mode: 'chat',
+          text: 'hello',
+          clientIntent: 'chat',
+        }, llm as never);
+
+        await new Promise(r => setTimeout(r, 50));
+
+        const events = service.getEvents(session.sessionId);
+        const errorEvent = events.find(e => e.type === 'error');
+        expect(errorEvent).toMatchObject({ type: 'error', message: 'Empty response from LLM' });
+      });
+
+      it('emits session.turn with llm-chat delegation', async () => {
+        const service = new TuiBridgeService();
+        const session = service.createSession();
+        const llm = mockLlm();
+
+        await service.submitInput(session.sessionId, {
+          mode: 'chat',
+          text: 'hello',
+          clientIntent: 'chat',
+        }, llm as never);
+
+        // Wait for async streamDirectChat to complete
+        await new Promise(r => setTimeout(r, 50));
+
+        const turnEvent = service.getEvents(session.sessionId).find(e => e.type === 'session.turn');
+        expect(turnEvent).toMatchObject({
+          type: 'session.turn',
+          intent: 'direct',
+          delegatedTo: 'llm-chat',
+        });
+      });
     });
   });
 });

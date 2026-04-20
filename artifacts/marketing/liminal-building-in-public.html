@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liminal — Building in Public Strategy</title>
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface-2: #1a1a25;
+    --text: #e8e8f0;
+    --text-dim: #8a8aa3;
+    --accent: #00f0c8;
+    --accent-2: #ff0055;
+    --accent-3: #f0e800;
+    --border: #252535;
+    --code-bg: #0d0d14;
+    --pass: #00f0c8;
+    --fail: #ff0055;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+  }
+  h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    color: var(--text-dim);
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+  }
+  h2 {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 3rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--accent);
+  }
+  h3 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 2rem 0 0.75rem;
+    color: var(--text);
+  }
+  h4 {
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.5rem;
+    color: var(--accent-3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  p { margin-bottom: 1rem; }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .toc {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+  .toc h3 { margin-top: 0; color: var(--accent); }
+  .toc ul { list-style: none; }
+  .toc li { margin: 0.4rem 0; }
+  .toc a { color: var(--text-dim); }
+  .toc a:hover { color: var(--accent); }
+  .tweet {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    position: relative;
+  }
+  .tweet-num {
+    position: absolute;
+    top: -10px;
+    left: 16px;
+    background: var(--accent-2);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .tweet p { margin-bottom: 0.75rem; }
+  .tweet p:last-child { margin-bottom: 0; }
+  .attachment {
+    background: var(--surface-2);
+    border-left: 3px solid var(--accent);
+    padding: 0.75rem 1rem;
+    border-radius: 0 8px 8px 0;
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-top: 0.75rem;
+  }
+  .script-box {
+    background: var(--code-bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.9rem;
+    white-space: pre-wrap;
+    overflow-x: auto;
+  }
+  .highlight { color: var(--accent); font-weight: 600; }
+  .highlight-fail { color: var(--fail); font-weight: 600; }
+  .highlight-warn { color: var(--accent-3); font-weight: 600; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 0.6rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  tr:hover { background: var(--surface); }
+  .tag {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    margin-right: 0.4rem;
+  }
+  .tag-pass { background: rgba(0,240,200,0.15); color: var(--pass); }
+  .tag-fail { background: rgba(255,0,85,0.15); color: var(--fail); }
+  .tag-warn { background: rgba(240,232,0,0.15); color: var(--accent-3); }
+  .checklist {
+    list-style: none;
+  }
+  .checklist li {
+    padding: 0.4rem 0;
+    padding-left: 1.5rem;
+    position: relative;
+  }
+  .checklist li::before {
+    content: "☐";
+    position: absolute;
+    left: 0;
+    color: var(--text-dim);
+  }
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+  }
+  .card h4 { margin-top: 0; }
+  .stat-bar {
+    display: flex;
+    gap: 1rem;
+    margin: 1.5rem 0;
+    flex-wrap: wrap;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem 1.5rem;
+    text-align: center;
+    flex: 1;
+    min-width: 120px;
+  }
+  .stat-value {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 2rem 0;
+  }
+  .cta-box {
+    background: linear-gradient(135deg, rgba(0,240,200,0.1), rgba(255,0,85,0.1));
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  .cta-box h3 { margin-top: 0; color: var(--text); }
+  code {
+    background: var(--surface-2);
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-family: 'SF Mono', Monaco, monospace;
+    font-size: 0.85em;
+  }
+  .time-slot {
+    color: var(--accent-3);
+    font-weight: 600;
+    font-size: 0.85rem;
+  }
+  .platform-tag {
+    display: inline-block;
+    background: var(--surface-2);
+    padding: 1px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    margin-right: 0.5rem;
+    color: var(--text-dim);
+  }
+  @media (max-width: 600px) {
+    h1 { font-size: 1.8rem; }
+    body { padding: 1rem; }
+    .stat-value { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>Liminal</h1>
+<p class="subtitle">Building in Public — Strategy, Scripts & Launch Playbook</p>
+
+<div class="stat-bar">
+  <div class="stat">
+    <div class="stat-value">2,496</div>
+    <div class="stat-label">Tests Run</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">0.77</div>
+    <div class="stat-label">Avg Score</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">10</div>
+    <div class="stat-label">Models</div>
+  </div>
+  <div class="stat">
+    <div class="stat-value">9</div>
+    <div class="stat-label">Domains</div>
+  </div>
+</div>
+
+<div class="toc">
+  <h3>Contents</h3>
+  <ul>
+    <li><a href="#narrative">Core Narrative: The Honest Loop</a></li>
+    <li><a href="#pillars">Content Pillars</a></li>
+    <li><a href="#platforms">Platform Strategy</a></li>
+    <li><a href="#thread">Script 1: Launch Thread (Ready to Post)</a></li>
+    <li><a href="#video">Script 2: TikTok/Reels "Prompt to Output"</a></li>
+    <li><a href="#failure">Script 3: "The Hall of Shame"</a></li>
+    <li><a href="#comparison">Script 4: Model Hunger Games</a></li>
+    <li><a href="#deepdive">Script 5: YouTube Technical Deep Dive</a></li>
+    <li><a href="#live">Script 6: Live Generation Stream</a></li>
+    <li><a href="#calendar">Week 1 Content Calendar</a></li>
+    <li><a href="#checklist">Launch Day Checklist</a></li>
+    <li><a href="#assets">Visual Asset Inventory</a></li>
+    <li><a href="#replies">Emergency Replies</a></li>
+  </ul>
+</div>
+
+<h2 id="narrative">Core Narrative: The Honest Loop</h2>
+
+<p>Most founders "build in public" by talking about what they <em>will</em> build. You have thousands of tests with real pass/fail data, a landing page that says <strong>"no cherry-picking,"</strong> and a meta-harness that learns from failures.</p>
+
+<p>Your narrative is not <em>"look at my perfect product."</em> It's <strong>"watch a creative coding agent learn to stop breaking."</strong></p>
+
+<h4>The Arc</h4>
+<p><span class="highlight">WOW</span> → <span class="highlight-warn">WAIT</span> → <span class="highlight">WHY</span> → <span class="highlight">HOW</span> → <span class="highlight">WHAT'S NEXT</span></p>
+
+<table>
+  <tr><th>Phase</th><th>Emotion</th><th>Content</th></tr>
+  <tr><td><strong>WOW</strong></td><td>Awe</td><td>15-60s clips of generated art/music</td></tr>
+  <tr><td><strong>WAIT</strong></td><td>Skepticism</td><td>"But does it actually work?" — dogfood dashboard</td></tr>
+  <tr><td><strong>WHY</strong></td><td>Curiosity</td><td>The meta-harness: why it fails, how it learns</td></tr>
+  <tr><td><strong>HOW</strong></td><td>Understanding</td><td>Technical deep-dives, model comparison</td></tr>
+  <tr><td><strong>WHAT'S NEXT</strong></td><td>Anticipation</td><td>Roadmap, community challenges, live gen</td></tr>
+</table>
+
+<p><strong>Never skip WAIT.</strong> The failures are your credibility. The landing page says 0.77 average — lean into that.</p>
+
+<h2 id="pillars">Content Pillars</h2>
+
+<div class="card-grid">
+  <div class="card">
+    <h4>"It Actually Runs"</h4>
+    <p>Show generated code executing. Not screenshots of code — the <em>result</em>. Fast cuts between prompt → terminal → browser → art.</p>
+    <span class="tag tag-pass">TikTok/Reels</span>
+  </div>
+  <div class="card">
+    <h4>"The Hall of Shame"</h4>
+    <p>Show failures. Broken shaders. Tone.js that sounds like dial-up. Then show the meta-harness detecting the pattern and fixing it.</p>
+    <span class="tag tag-fail">Twitter/YouTube</span>
+  </div>
+  <div class="card">
+    <h4>"Model Hunger Games"</h4>
+    <p>Same prompt, 5 models, wildly different results. Gemma vs Phi-4 vs Qwen vs Granite-350M. Pass/fail rates, time, code size.</p>
+    <span class="tag tag-warn">Threads/Blog</span>
+  </div>
+  <div class="card">
+    <h4>"Meta-Harness Eats Its Young"</h4>
+    <p>How the system observes failures, detects patterns, and adapts prompts/routing without human intervention.</p>
+    <span class="tag tag-pass">Hacker News</span>
+  </div>
+  <div class="card">
+    <h4>"Prompt → Anything"</h4>
+    <p>One sentence becomes a GLSL shader, a music loop, a 3D scene, a video composition. Show the breadth.</p>
+    <span class="tag tag-warn">Instagram/TikTok</span>
+  </div>
+</div>
+
+<h2 id="platforms">Platform Strategy</h2>
+
+<table>
+  <tr><th>Platform</th><th>Freq</th><th>Format</th><th>Best Time (PT)</th></tr>
+  <tr><td><strong>Twitter/X</strong></td><td>2-3x/day launch, 1x/day steady</td><td>Threads, videos, single tweets</td><td>8am, 12pm, 5pm</td></tr>
+  <tr><td><strong>TikTok/Reels</strong></td><td>1-2x/day</td><td>15-30s prompt→output</td><td>12pm, 7pm</td></tr>
+  <tr><td><strong>LinkedIn</strong></td><td>2x/week</td><td>Carousels, text posts</td><td>8am, 12pm</td></tr>
+  <tr><td><strong>YouTube</strong></td><td>1x/week</td><td>5-10min deep dives</td><td>Any</td></tr>
+</table>
+
+<h2 id="thread">Script 1: Launch Thread (Post This)</h2>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 1</div>
+  <p>I built an AI agent that generates p5.js sketches, GLSL shaders, Three.js scenes, generative music, and video compositions.</p>
+  <p>I've run 2,496 tests across 10 models.</p>
+  <p>Here's the honest truth about how often it breaks:</p>
+  <div class="attachment">📎 Attach: landing page hero crop — "LIMINAL" + stats bar</div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 2</div>
+  <p>The landing page says "real outputs, honest scores, no cherry-picking."</p>
+  <p>I mean it.</p>
+  <p>Every piece of art on the site was generated by an LLM and scored by an automated evaluator. I didn't hand-pick the good ones.</p>
+  <div class="attachment">📎 Attach: gallery with PASS/FAIL cards</div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 3</div>
+  <p>Some results are beautiful.</p>
+  <p>This bioluminescent jellyfish scene was generated from a single sentence prompt. p5.js. No human touch-ups.</p>
+  <div class="attachment">📎 Attach: <code>artifacts/screenshots/tests/test-jellyfish.png</code></div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 4</div>
+  <p>Some results are... less beautiful.</p>
+  <p>This Remotion video composition failed 3 out of 3 times. The model kept generating React components that weren't valid Remotion code.</p>
+  <p>The meta-harness noticed. It now routes Remotion prompts to models with better React component performance.</p>
+  <div class="attachment">📎 Attach: Remotion FAIL card from gallery stats</div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 5</div>
+  <p>The average score across all tests? 0.77.</p>
+  <p>Not 0.99. Not perfect. 0.77.</p>
+  <p>That's because I score on:<br>— Does the code run?<br>— Does it match the prompt?<br>— Is it visually/aurally coherent?<br>— No manual fixes allowed</p>
+  <div class="attachment">📎 Attach: landing page "Real Dogfood Statistics" section</div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 6</div>
+  <p>Model comparison is wild.</p>
+  <p>Same prompt: "neon cyberpunk city with flying cars"</p>
+  <p>• MiniMax-M2.7: 0.85 (detailed, atmospheric)<br>• Granite-350M: 0.28 (lines drawn, cars missing)<br>• Gemma 4: 0.72 (good composition, fewer cars)</p>
+  <p>The harness learns which models excel at which domains.</p>
+  <div class="attachment">📎 Attach: <code>artifacts/screenshots/tests/test-neon.png</code></div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 7</div>
+  <p>The system doesn't just generate — it improves itself.</p>
+  <p>When a pattern of failures emerges (e.g., "all Three.js outputs are missing lights"), the meta-harness:</p>
+  <p>1. Detects the pattern<br>2. Updates the generator prompt<br>3. Re-runs validation<br>4. Only then marks it resolved</p>
+  <div class="attachment">📎 Attach: <code>src/harness/</code> architecture diagram or directory screenshot</div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 8</div>
+  <p>9 creative domains. 10+ LLM providers. Local and cloud.</p>
+  <p>p5.js | GLSL | Three.js | Hydra | Strudel | Tone.js | Remotion | HTML | ASCII</p>
+  <p>Each has its own generator, validator, and scoring rubric.</p>
+  <div class="attachment">📎 Attach: collage of 4 outputs (jellyfish, crystal, ocean, neon)</div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 9</div>
+  <p>Why build this?</p>
+  <p>I wanted a creative coding partner that:<br>— Understands color theory, music theory, and composition<br>— Runs locally (LM Studio, Ollama) or in the cloud<br>— Gets better the more it fails<br>— Never says "that's impossible"</p>
+  <div class="attachment">📎 Attach: Bubble Tea TUI screenshot or CLI in action</div>
+</div>
+
+<div class="tweet">
+  <div class="tweet-num">Tweet 10</div>
+  <p>The landing page is live. Every example is real. Every score is honest.</p>
+  <p>Try it: [your link]</p>
+  <p>Or just reply with a prompt and I'll generate something for you.</p>
+  <p>I'll show the score too. Even if it's bad.</p>
+  <div class="attachment">📎 Attach: full landing page screenshot</div>
+</div>
+
+<div class="cta-box">
+  <h3>Reply Template (Pin This)</h3>
+  <p>Drop a prompt below and I'll generate it live.<br><br>
+  I'll post:<br>
+  — The output<br>
+  — The score<br>
+  — Which model generated it<br>
+  — How long it took<br><br>
+  No filters. Let's see what breaks.</p>
+</div>
+
+<h2 id="video">Script 2: "Prompt to Output" (TikTok/Reels)</h2>
+
+<p><strong>Length:</strong> 15-30s | <strong>Audio:</strong> Use a Strudel/Tone.js output as background track</p>
+
+<div class="script-box">[0:00-0:03] <span class="highlight">Hook</span> — Text on black:
+"I told an AI to make bioluminescent jellyfish..."
+
+[0:03-0:05] <span class="highlight">Typing</span> — Terminal:
+liminal -p "bioluminescent jellyfish drifting in 
+           the deep ocean with glowing tendrils"
+
+[0:05-0:08] <span class="highlight">Processing</span> — Fast-forward terminal:
+Generating... Validating... Scoring...
+(code scrolling rapidly)
+
+[0:08-0:12] <span class="highlight">The Reveal</span> — Browser opens:
+Jellyfish appear. Slow, beautiful drift. Glow.
+
+[0:12-0:15] <span class="highlight">The Score</span> — Text overlay:
+Score: 0.89 | p5.js | MiniMax-M2.7 | 47 seconds
+
+[0:15-0:18] <span class="highlight-fail">The Twist</span> — Cut to different output:
+Same prompt, Granite-350M:
+(show simpler, lower-quality version)
+Score: 0.31
+
+[0:18-0:22] <span class="highlight">The Lesson</span> — Text:
+"The harness learns which models match which prompts."
+Show routing diagram.
+
+[0:22-0:25] <span class="highlight-warn">CTA</span> — Text:
+"Reply with a prompt. I'll generate it live."</div>
+
+<h2 id="failure">Script 3: "The Hall of Shame"</h2>
+
+<p><strong>Purpose:</strong> Build trust by showing failures. <strong>Length:</strong> 60-90s</p>
+
+<div class="script-box">[0:00-0:05] <span class="highlight">Hook</span>
+"Everyone shows AI successes. Let me show you what 
+failure looks like when you're generating creative 
+code at scale."
+
+[0:05-0:15] <span class="highlight">The Data</span>
+Show dogfood dashboard.
+"2,496 tests. 1,847 passed. 649 failed. 
+That's a 74% pass rate."
+
+[0:15-0:25] <span class="highlight-fail">Failure 1: Remotion</span>
+Show 0/3 Remotion results.
+"Remotion video: total failure. The model generated 
+React components, but none of them were valid 
+Remotion compositions. Just... broken JSX."
+
+[0:25-0:35] <span class="highlight-fail">Failure 2: ASCII Art</span>
+Show ASCII output with invalid characters.
+"ASCII art: the model kept using Unicode box-drawing 
+characters. That's not ASCII. The validator caught it."
+
+[0:35-0:45] <span class="highlight-fail">Failure 3: Three.js</span>
+Show Three.js scene that's just a gray cube.
+"Three.js 'crystal cave' prompt: the model forgot 
+to add lights. Just a black screen with invisible 
+geometry. Classic."
+
+[0:45-0:60] <span class="highlight">The Fix</span>
+"But here's the thing — the meta-harness logs every 
+failure with metadata. After 50 similar Three.js 
+lighting failures, it injected 'add ambient and 
+directional lights' into the prompt template. 
+Next batch: 89% pass rate."
+
+[0:60-0:75] <span class="highlight">The Philosophy</span>
+"I could hide the failures. Show only the 0.89-score 
+jellyfish. But then you'd never trust the score. 
+Real outputs. Honest scores. No cherry-picking. 
+That's the only way this works."
+
+[0:75-0:90] <span class="highlight-warn">CTA</span>
+"What domain should I stress-test next? Reply with 
+your worst nightmare prompt."</div>
+
+<h2 id="comparison">Script 4: Model Hunger Games (Carousel)</h2>
+
+<p><strong>Format:</strong> LinkedIn carousel or Twitter thread. <strong>Prompt:</strong> "Neon cyberpunk city with flying cars and rain"</p>
+
+<table>
+  <tr><th>Model</th><th>Score</th><th>Time</th><th>Notes</th></tr>
+  <tr><td><strong>MiniMax-M2.7</strong></td><td><span class="highlight">0.85</span></td><td>47s</td><td>Detailed buildings, animated rain, 4 distinct flying cars</td></tr>
+  <tr><td><strong>Gemma 4</strong></td><td><span class="highlight">0.72</span></td><td>52s</td><td>Good atmosphere, fewer cars, simpler buildings</td></tr>
+  <tr><td><strong>Phi-4</strong></td><td><span class="highlight-warn">0.61</span></td><td>38s</td><td>Fast but sparse. Cars are colored rectangles. Rain is lines.</td></tr>
+  <tr><td><strong>Qwen 3.5</strong></td><td><span class="highlight-warn">0.54</span></td><td>41s</td><td>Tried too hard. Overcomplicated code, some syntax errors.</td></tr>
+  <tr><td><strong>Granite-350M</strong></td><td><span class="highlight-fail">0.28</span></td><td>12s</td><td>Abstract lines. No recognizable city. But 12 seconds!</td></tr>
+</table>
+
+<p><strong>The Insight:</strong> There is no "best" model. There is only "best model for this domain at this complexity." The harness learns the mapping so you don't have to guess.</p>
+
+<h2 id="deepdive">Script 5: YouTube Technical Deep Dive</h2>
+
+<p><strong>Length:</strong> 8-12 min | <strong>Goal:</strong> Attract contributors, establish credibility</p>
+
+<div class="script-box">[0:00-0:30] <span class="highlight">Intro</span>
+"I'm going to show you how I built a self-improving 
+creative coding agent. Not the marketing version — 
+the actual architecture, the actual failures, and 
+the actual fixes."
+
+[0:30-2:00] <span class="highlight">The Problem</span>
+"Most AI coding tools generate text. I wanted to 
+generate experiences — p5.js animations, GLSL shaders, 
+generative music, 3D scenes. But creative code is 
+harder than business logic because 'correct' is 
+subjective."
+
+[2:00-4:00] <span class="highlight">The Architecture</span>
+Walk through the flow:
+1. User prompt → domain detection
+2. Model router → picks best model from history
+3. Generator → produces code + thinking trace
+4. Validator → runs code, checks crashes + prompt match
+5. Scorer → 0-1 score based on rubric
+6. Meta-harness → detects patterns, updates prompts
+
+[4:00-6:00] <span class="highlight">The Dogfood Pipeline</span>
+"I don't trust my own judgment. So I built a pipeline 
+that runs hundreds of tests automatically."
+Show the campaign JSON, report generation, gallery.
+
+[6:00-8:00] <span class="highlight">Case Study: Three.js Lighting</span>
+Batch 1: 3/10 fail — "scene is black"
+PatternDetector: "Missing lights in 70% of failures"
+HarnessUpdater: Injects lighting requirements
+Batch 2: 9/10 pass
+Show before/after outputs.
+
+[8:00-10:00] <span class="highlight">The Model Matrix</span>
+MiniMax: best for complex visuals, slowest
+Gemma: best balance of speed/quality
+Granite-350M: surprisingly good for simple p5, lightning fast
+Local models: viable for simple domains, completely private
+
+[10:00-12:00] <span class="highlight">CTA</span>
+"The code isn't fully open yet, but the landing page 
+is live with real outputs. If you're into creative 
+coding, AI, or building self-improving systems, 
+follow along. I post the failures too."</div>
+
+<h2 id="live">Script 6: Live Generation Stream</h2>
+
+<p><strong>Format:</strong> Twitter Spaces / Twitch / YouTube Live | <strong>Duration:</strong> 30-60 min</p>
+
+<div class="script-box"><span class="highlight">Setup:</span>
+- Screen share: terminal + browser side by side
+- Chat visible
+- Background audio: ambient Strudel loop
+
+<span class="highlight">Flow:</span>
+1. Intro (5 min): "No editing. If it fails, you see it fail."
+2. Prompt 1 (10 min): Pick from chat. Generate. Show score. Discuss.
+3. Prompt 2 (10 min): Harder prompt. Maybe it fails. Debug live.
+4. The Comparison (15 min): Same prompt, 2-3 models. Compare live.
+5. Q&A (15 min): Answer technical questions. Show code if asked.
+6. Outro (5 min): "All outputs added to gallery with your username."
+
+<span class="highlight-fail">Pro tip:</span> When something fails, that's the best 
+content. Don't rush to fix it. Explain WHY it failed, 
+check the harness logs, show the pattern detection.</div>
+
+<h2 id="calendar">Week 1 Content Calendar</h2>
+
+<table>
+  <tr><th>Day</th><th>Time (PT)</th><th>Platform</th><th>Content</th></tr>
+  <tr><td rowspan="5"><strong>Mon</strong><br>Launch</td><td>8:00am</td><td>Twitter</td><td>Launch Thread (10 tweets)</td></tr>
+  <tr><td>8:30am</td><td>TikTok</td><td>Jellyfish generation video</td></tr>
+  <tr><td>9:00am</td><td>Instagram</td><td>Same video</td></tr>
+  <tr><td>12:00pm</td><td>Twitter</td><td>Reply with prompt challenge</td></tr>
+  <tr><td>5:00pm</td><td>LinkedIn</td><td>"What 2,496 tests taught me"</td></tr>
+  <tr><td rowspan="4"><strong>Tue</strong></td><td>8:00am</td><td>Twitter</td><td>Thread: How meta-harness works</td></tr>
+  <tr><td>12:00pm</td><td>Twitter</td><td>"Worst failure this week"</td></tr>
+  <tr><td>3:00pm</td><td>TikTok</td><td>Same prompt, 2 models split</td></tr>
+  <tr><td>6:00pm</td><td>Twitter</td><td>Reply to community prompts</td></tr>
+  <tr><td rowspan="3"><strong>Wed</strong></td><td>8:00am</td><td>Twitter</td><td>"9 domains, 1 sentence each"</td></tr>
+  <tr><td>1:00pm</td><td>Twitter</td><td>"Can it run locally? Yes."</td></tr>
+  <tr><td>4:00pm</td><td>TikTok</td><td>Generate music from prompt</td></tr>
+  <tr><td rowspan="4"><strong>Thu</strong></td><td>8:00am</td><td>Twitter</td><td>"Why Remotion fails" thread</td></tr>
+  <tr><td>11:00am</td><td>LinkedIn</td><td>"The dogfood methodology"</td></tr>
+  <tr><td>2:00pm</td><td>Twitter</td><td>Score reveal: mediocre output</td></tr>
+  <tr><td>5:00pm</td><td>YouTube</td><td>Short: Model Hunger Games</td></tr>
+  <tr><td rowspan="4"><strong>Fri</strong><br>Failure Fri</td><td>8:00am</td><td>Twitter</td><td>"3 worst outputs this week"</td></tr>
+  <tr><td>10:00am</td><td>TikTok</td><td>"When AI code breaks" comp</td></tr>
+  <tr><td>1:00pm</td><td>Twitter</td><td>"How the harness fixed them"</td></tr>
+  <tr><td>4:00pm</td><td>Twitter</td><td>Poll: next domain to test?</td></tr>
+  <tr><td rowspan="3"><strong>Sat</strong></td><td>10:00am</td><td>Twitter</td><td>Best community prompts</td></tr>
+  <tr><td>12:00pm</td><td>TikTok</td><td>Generating YOUR prompts live</td></tr>
+  <tr><td>3:00pm</td><td>Twitter</td><td>Behind the scenes: dogfood</td></tr>
+  <tr><td rowspan="2"><strong>Sun</strong></td><td>10:00am</td><td>Twitter</td><td>Weekly recap thread</td></tr>
+  <tr><td>Rest</td><td>—</td><td>Batch create Week 2 content</td></tr>
+</table>
+
+<h2 id="checklist">Launch Day Checklist</h2>
+
+<h4>Morning (8-9am PT)</h4>
+<ul class="checklist">
+  <li>Post Tweet 1 of launch thread</li>
+  <li>Post Tweets 2-3 over next 30 min</li>
+  <li>Pin Tweet 1 after thread completes</li>
+  <li>Reply with prompt challenge</li>
+  <li>Post TikTok jellyfish video</li>
+  <li>Cross-post to Instagram</li>
+  <li>Update bio: "Building Liminal — real outputs, honest scores, no cherry-picking."</li>
+</ul>
+
+<h4>Midday (12-1pm PT)</h4>
+<ul class="checklist">
+  <li>Monitor replies — respond within 30 min</li>
+  <li>Generate 3-5 community prompts live</li>
+  <li>Screenshot outputs for later content</li>
+  <li>Post Tweet 6 (model comparison)</li>
+</ul>
+
+<h4>Afternoon (3-5pm PT)</h4>
+<ul class="checklist">
+  <li>Post LinkedIn carousel</li>
+  <li>Post remaining tweets (7-10)</li>
+  <li>Verify landing page analytics tracking</li>
+  <li>Screenshot best community generations</li>
+</ul>
+
+<h4>Evening (6-8pm PT)</h4>
+<ul class="checklist">
+  <li>Twitter Spaces or AMA session</li>
+  <li>Schedule Failure Friday post</li>
+  <li>Plan Week 2 content</li>
+</ul>
+
+<h2 id="assets">Visual Asset Inventory</h2>
+
+<p>These files already exist in your repo. Just use them.</p>
+
+<table>
+  <tr><th>Asset</th><th>File Path</th><th>Use For</th></tr>
+  <tr><td>Jellyfish</td><td><code>artifacts/screenshots/tests/test-jellyfish.png</code></td><td>Hero content, TikTok hook</td></tr>
+  <tr><td>Crystal 3D</td><td><code>artifacts/screenshots/tests/test-crystal.png</code></td><td>Three.js demos</td></tr>
+  <tr><td>Ocean</td><td><code>artifacts/screenshots/tests/test-ocean.png</code></td><td>p5.js / chill content</td></tr>
+  <tr><td>Neon City</td><td><code>artifacts/screenshots/tests/test-neon.png</code></td><td>Cyberpunk / comparisons</td></tr>
+  <tr><td>Plasma</td><td><code>artifacts/screenshots/tests/test-plasma.png</code></td><td>GLSL demos</td></tr>
+  <tr><td>Landing Page</td><td><code>artifacts/screenshots/landing/landing-final.png</code></td><td>Credibility proof</td></tr>
+  <tr><td>Gallery Stats</td><td><code>artifacts/screenshots/gallery/index-gallery-stats.png</code></td><td>Data posts</td></tr>
+  <tr><td>Dogfood Reports</td><td><code>dogfood-campaign-*/report.json</code></td><td>Thread data, screenshots</td></tr>
+  <tr><td>Live HTML</td><td><code>artifacts/landing-live/b-*.html</code></td><td>Interactive demos</td></tr>
+</table>
+
+<h2 id="replies">Emergency Replies</h2>
+
+<table>
+  <tr><th>Question</th><th>Reply</th></tr>
+  <tr><td>"Is it open source?"</td><td>Not yet — the evaluation framework and dogfood pipeline will be open-sourced first. The full agent comes later. Follow for updates.</td></tr>
+  <tr><td>"How much does it cost?"</td><td>You bring your own API keys (OpenAI, Anthropic, etc.) or run local models for free via Ollama/LM Studio.</td></tr>
+  <tr><td>"Can I try it?"</td><td>[Landing page link]. Or reply with a prompt and I'll generate it for you live.</td></tr>
+  <tr><td>"What's the business model?"</td><td>Right now there isn't one. I'm building the thing I wish existed. If enough people want it, we'll figure that out together.</td></tr>
+  <tr><td>"This is just vibe coding"</td><td>Vibe coding doesn't validate its own output. Liminal runs the generated code, scores it against a rubric, and feeds failures back into the system. It's vibe coding with accountability.</td></tr>
+</table>
+
+<div class="divider"></div>
+
+<div class="cta-box">
+  <h3>What Makes This Work</h3>
+  <p><strong>1. Honesty is differentiation.</strong> Everyone else cherry-picks. You literally built "no cherry-picking" into the product.</p>
+  <p><strong>2. Data is content.</strong> The dogfood pipeline generates infinite storytelling material.</p>
+  <p><strong>3. Visuals are shareable.</strong> p5.js and GLSL outputs are inherently beautiful.</p>
+  <p><strong>4. Failure is engaging.</strong> Watching something break, then watching the system learn why, is more compelling than perfection.</p>
+  <p><strong>5. You're both roles.</strong> The creative coder AND the engineer who built the evaluation pipeline. That duality is rare.</p>
+</div>
+
+<p style="text-align:center; color:var(--text-dim); margin-top:3rem; font-size:0.9rem;">
+  <em>Ready. Open this HTML anytime. Copy. Paste. Post.</em>
+</p>
+
+</body>
+</html>

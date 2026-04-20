@@ -426,6 +426,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           total: maxSteps,
           stage: `planned ${toolCall.tool}`,
           message: `${toolCall.tool}: ${toolCall.thought}`,
+          thought: toolCall.thought,
         });
 
         // Check for completion
@@ -472,6 +473,7 @@ When the task is complete and build passes, respond with tool "complete".`;
           total: maxSteps,
           stage: `executed ${toolCall.tool}`,
           message: this.formatToolProgressMessage(toolCall.tool, result),
+          thought: toolCall.thought,
         });
         
         // Record tool result

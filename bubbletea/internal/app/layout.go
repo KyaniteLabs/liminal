@@ -227,12 +227,18 @@ func (m Model) renderToolTimeline(width int) string {
 	}
 	for _, step := range m.ToolTimeline[start:] {
 		status := timelineStatusToken(step.Status)
-		primary := fmt.Sprintf("#%d %s %s", step.StepNum, status, step.ToolName)
+		// Use thought as primary label when running, fallback to tool name
+		displayName := step.ToolName
+		if step.Status == "running" && step.Thought != "" {
+			displayName = shortThought(step.Thought)
+		}
+		primary := fmt.Sprintf("#%d %s %s", step.StepNum, status, displayName)
 		if step.ArgsSummary != "" && step.Status == "running" {
 			primary += " " + step.ArgsSummary
 		}
 		lines = append(lines, ui.TimelineStepStyle.Render(primary))
-		if step.Thought != "" {
+		// Show full thought as secondary line when not already used as primary
+		if step.Thought != "" && !(step.Status == "running") {
 			lines = append(lines, ui.TimelineThoughtStyle.Render("  ↳ "+trimToWidth(step.Thought, width-8)))
 		}
 		if step.ResultSummary != "" {
@@ -608,6 +614,29 @@ func trimToWidth(value string, width int) string {
 		return value
 	}
 	return string(runes[:max(0, width-1)]) + "…"
+}
+
+// shortThought returns the first sentence of a thought, capped at maxLen chars.
+func shortThought(thought string) string {
+	thought = strings.TrimSpace(thought)
+	if thought == "" {
+		return ""
+	}
+	// Find first sentence boundary
+	cut := len(thought)
+	for _, sep := range []string{". ", "! ", "? "} {
+		if i := strings.Index(thought, sep); i >= 0 && i+1 < cut {
+			cut = i + 1
+		}
+	}
+	thought = strings.TrimSpace(thought[:cut])
+	// Truncate to maxLen
+	const maxLen = 60
+	runes := []rune(thought)
+	if len(runes) > maxLen {
+		return string(runes[:maxLen-1]) + "\u2026"
+	}
+	return thought
 }
 
 func formatRelativeTime(ts time.Time) string {

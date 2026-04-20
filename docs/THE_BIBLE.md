@@ -9,7 +9,7 @@
 
 ## Executive Summary
 
-Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Remotion/Hydra), and more. The system features:
+Liminal is a creative coding agent with self-improving capabilities. It generates p5.js sketches, GLSL shaders, Three.js scenes, music (Tone.js/Strudel), video (Revideo/Hydra), and more. The system features:
 
 - **28 Documented Systems** across core runtime, operator surfaces, and support infrastructure
 - **18 Guardrails** (M1-M18 implemented)
@@ -149,7 +149,7 @@ Failures:   0 critical
 **Bucket B - Generator LLM Mocks:**
 - `test/unit/shader-generator.test.ts` - Added vi.mock for LLMClient with GLSL responses
 - `test/unit/three-generator.test.ts` - Added vi.mock for LLMClient with Three.js HTML responses
-- `test/unit/generators/RemotionGenerator.test.ts` - Added vi.mock for LLMClient with Remotion JSX
+- `test/unit/generators/RevideoGenerator.test.ts` - Added vi.mock for LLMClient with Revideo JSX
 - `test/generators/p5-generator.test.js` - Added vi.mock for LLMClient, made all 40+ tests async
 
 **Bucket C - Ralph-loop + Misc:**
@@ -207,7 +207,7 @@ Failures:   0 critical
 │  │  ├── HydraGenerator         - Video synthesis                       │    │
 │  │  ├── StrudelGenerator       - Live coding music                    │    │
 │  │  ├── ToneGenerator          - Web Audio API                        │    │
-│  │  ├── RemotionGenerator      - Video components                     │    │
+│  │  ├── RevideoGenerator       - Video components                     │    │
 │  │  ├── HTMLWebGenerator       - Web pages                            │    │
 │  │  └── ASCIIArtGenerator      - ASCII art                            │    │
 │  └─────────────────────────────────────────────────────────────────────┘    │
@@ -363,7 +363,7 @@ Failures:   0 critical
 | HydraGenerator | Video | `hydra/HydraGenerator.ts` | Hydra syntax validation |
 | StrudelGenerator | Music | `strudel/StrudelGenerator.ts` | Pattern validation |
 | ToneGenerator | Audio | `tone/ToneGenerator.ts` | Synth validation |
-| RemotionGenerator | Video | `remotion/RemotionGenerator.ts` | React component validation |
+| RevideoGenerator | Video | `revideo/RevideoGenerator.ts` | Video composition validation |
 | HTMLWebGenerator | Web | `html/HTMLWebGenerator.ts` | HTML structure validation |
 | ASCIIArtGenerator | ASCII | `ascii/ASCIIArtGenerator.ts` | Character validation |
 
@@ -832,7 +832,7 @@ export { RalphLoop, type LoopOptions, type LoopResult };
 export { TierBasedGenerator, type TierBasedGeneratorOptions };
 export { P5GeneratorV2, type P5GeneratorV2Options };
 export { ShaderGenerator, ThreeGenerator, HydraGenerator };
-export { StrudelGenerator, ToneGenerator, RemotionGenerator };
+export { StrudelGenerator, ToneGenerator, RevideoGenerator };
 export { HTMLWebGenerator, ASCIIArtGenerator };
 
 // Model Tiers
@@ -1152,4 +1152,4 @@ const recorder = new CanvasRecorder({ fps: 30, duration: 5 });
 await recorder.record(code, 'p5', 'output.mp4');
 ```
 
-**Status:** Active - Uses Remotion for video rendering.
+**Status:** Active - Uses Revideo for video rendering (native render paused).

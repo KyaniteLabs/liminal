@@ -73,7 +73,7 @@ See [Architecture & Philosophy](./docs/ARCHITECTURE_AND_PHILOSOPHY.md) for the s
 | Directory | Purpose |
 |-----------|---------|
 | `src/core/` | Loop engine, validation, domain detection, LIR |
-| `src/generators/` | p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Remotion, HTML, ASCII, Kinetic, TextGen |
+| `src/generators/` | p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen |
 | `src/harness/` | Meta-harness: failure logging, pattern detection, self-improvement, tools |
 | `src/llm/` | LLM client, provider adapters, circuit breaker, capability registry |
 | `src/brain/` | Artistic knowledge, prompt enhancement, creative preferences |

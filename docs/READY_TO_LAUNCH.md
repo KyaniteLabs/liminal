@@ -235,4 +235,4 @@ npm run tui
 
 ---
 
-**Launch when ready. The system is go.** 🚀
+**Launch gates pending. Verify proof gates before go.**

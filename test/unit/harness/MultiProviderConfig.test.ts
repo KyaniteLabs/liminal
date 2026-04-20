@@ -39,6 +39,7 @@ const KEYS_PRESERVED = [
   'LIMINAL_HARNESS_TIMEOUT',
   'LIMINAL_HARNESS_MAX_RETRIES',
   'LIMINAL_HARNESS_CONTEXT_WINDOW',
+  'ANTHROPIC_AUTH_TOKEN',
 ] as const;
 
 let savedEnv: Record<string, string | undefined>;

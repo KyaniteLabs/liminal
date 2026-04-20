@@ -50,7 +50,7 @@ Each iteration, Liminal:
 
 **Key capabilities:**
 
-- **11 generators** — p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Remotion, HTML, ASCII, Kinetic, TextGen
+- **11 generators** — p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen
 - **Multi-agent critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
 - **Compost Mill** — Digests past work into reusable creative seeds that improve every generation
 - **Self-improving harness** — Observes failures, detects patterns, applies targeted fixes

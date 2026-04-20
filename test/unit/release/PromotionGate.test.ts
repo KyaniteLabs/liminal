@@ -166,5 +166,44 @@ describe('PromotionGate', () => {
       // unknown-case baseline is not in current results — no regression
       expect(result.regressions).toHaveLength(0);
     });
+
+    it('handles NaN score — does not crash', () => {
+      const gate = new PromotionGate();
+      const result = gate.check(makeSuiteResult([
+        makeCaseResult('nan-case', NaN, 0.7),
+      ]));
+
+      // NaN >= 0.7 is false, so it fails
+      expect(result.passed).toBe(false);
+      expect(result.failures).toHaveLength(1);
+    });
+
+    it('handles Infinity score — always passes threshold', () => {
+      const gate = new PromotionGate();
+      const result = gate.check(makeSuiteResult([
+        makeCaseResult('inf-case', Infinity, 0.7),
+      ]));
+
+      expect(result.passed).toBe(true);
+      expect(result.metrics.passed).toBe(1);
+    });
+
+    it('handles zero minScore — any positive score passes', () => {
+      const gate = new PromotionGate({ minAverageScore: 0 });
+      const result = gate.check(makeSuiteResult([
+        makeCaseResult('zero-min', 0.001, 0),
+      ]));
+
+      expect(result.passed).toBe(true);
+    });
+
+    it('handles negative score with zero minScore', () => {
+      const gate = new PromotionGate({ minAverageScore: -1 });
+      const result = gate.check(makeSuiteResult([
+        makeCaseResult('neg-score', -0.5, 0),
+      ]));
+
+      expect(result.passed).toBe(false);
+    });
   });
 });

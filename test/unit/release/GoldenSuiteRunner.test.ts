@@ -149,5 +149,53 @@ describe('GoldenSuiteRunner', () => {
       expect(result.aggregate.suitePassed).toBe(true);
       expect(result.aggregate.averageScore).toBe(0);
     });
+
+    it('handles single case with minScore=0 — always passes', async () => {
+      const runner = new GoldenSuiteRunner();
+      (runner as any).fabric = createMockFabricRunner(0.01);
+
+      const suite = makeSuite([{ id: 'easy', minScore: 0 }]);
+      const result = await runner.run(suite);
+
+      expect(result.aggregate.passed).toBe(1);
+      expect(result.aggregate.suitePassed).toBe(true);
+      expect(result.caseResults[0].margin).toBe(0.01);
+    });
+
+    it('times out when evaluation exceeds timeoutMs', async () => {
+      const runner = new GoldenSuiteRunner({ timeoutMs: 50 });
+      (runner as any).fabric = {
+        evaluate: async () => new Promise(resolve => setTimeout(resolve, 5000)),
+      };
+
+      const suite = makeSuite([{ id: 'timeout-case', minScore: 0.7 }]);
+      await expect(runner.run(suite)).rejects.toThrow('timed out');
+    });
+
+    it('records durationMs even for failing cases', async () => {
+      const runner = new GoldenSuiteRunner();
+      (runner as any).fabric = createMockFabricRunner(0.3);
+
+      const suite = makeSuite([{ id: 'fail', minScore: 0.9 }]);
+      const result = await runner.run(suite);
+
+      expect(result.aggregate.suitePassed).toBe(false);
+      expect(result.durationMs).toBeGreaterThanOrEqual(0);
+      expect(result.timestamp).toBeTruthy();
+    });
+
+    it('populates fabricResults for each case', async () => {
+      const runner = new GoldenSuiteRunner();
+      (runner as any).fabric = createMockFabricRunner(0.8);
+
+      const suite = makeSuite([
+        { id: 'c1', minScore: 0.7 },
+        { id: 'c2', minScore: 0.7 },
+      ]);
+      const result = await runner.run(suite);
+
+      expect(result.fabricResults).toHaveLength(2);
+      expect(result.fabricResults[0].judgment.score).toBe(0.8);
+    });
   });
 });

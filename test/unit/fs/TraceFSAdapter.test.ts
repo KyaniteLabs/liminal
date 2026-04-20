@@ -100,4 +100,30 @@ describe('TraceFSAdapter', () => {
     expect(parsed.source).toBe('gemini');
     expect(parsed.linkedAt).toBeDefined();
   });
+
+  // ── Edge cases ──────────────────────────────────────────────────────
+
+  it('linkReasoningTrace — handles special characters in traceId', () => {
+    const result = adapter.linkReasoningTrace('trace-with-emoji-🎉', 'run/special');
+
+    expect(result.traceId).toBe('trace-with-emoji-🎉');
+    const content = fs.readArtifact(result.artifactRefs[0]);
+    const parsed = JSON.parse(content?.toString('utf-8') ?? '{}');
+    expect(parsed.traceId).toBe('trace-with-emoji-🎉');
+  });
+
+  it('linkReasoningTrace — overwrites existing trace with same ID', () => {
+    adapter.linkReasoningTrace('dup-trace', 'run-1');
+    adapter.linkReasoningTrace('dup-trace', 'run-2');
+
+    const readBack = fs.readRef('trace/dup-trace');
+    expect(readBack).not.toBeNull();
+  });
+
+  it('readArtifact returns null for invalid ref', () => {
+    const result = adapter.linkReasoningTrace('valid-trace', 'run-1');
+    const badRef = { ...result.artifactRefs[0], hash: 'deadbeef' };
+    const content = fs.readArtifact(badRef);
+    expect(content).toBeNull();
+  });
 });

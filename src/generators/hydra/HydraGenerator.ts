@@ -154,6 +154,78 @@ export class HydraGenerator extends TierBasedGenerator {
     // Strip bare s0 references used as chain roots (e.g. s0.out(o0))
     clean = clean.replace(/\bs0\s*\./g, '');
 
+    // Models sometimes assign sources to named variables: a0 = osc(...), b0 = noise(...)
+    // Hydra doesn't support this — convert to inline source references.
+    // Multi-pass: collect source assignments, then derived assignments, inline all.
+    const allVarMap = new Map<string, string>();
+
+    // Pass 1: source-based assignments (osc/noise/shape/etc.)
+    const sourceVarRegex = /^(?:var\s+)?([a-zA-Z_]\w*)\s*=\s*((?:osc|noise|shape|voronoi|gradient|solid)\s*\([\s\S]*?(?:\.(?:kaleid|rotate|color|saturate|brightness|scale|scroll|modulate|pixelate|speed|blend|add|mult|diff|colorama)\s*\([^)]*\))*\s*;?\s*)$/gm;
+    let srcMatch: RegExpExecArray | null;
+    while ((srcMatch = sourceVarRegex.exec(clean)) !== null) {
+      allVarMap.set(srcMatch[1], srcMatch[2].replace(/;\s*$/, '').trim());
+    }
+
+    // Pass 2: derived assignments (varName = otherVar.method(...))
+    const derivedVarRegex = /^(?:var\s+)?([a-zA-Z_]\w*)\s*=\s*((?:[a-zA-Z_]\w*)\s*\.(?:modulate|blend|add|mult|diff|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\([\s\S]*?\s*;\s*)$/gm;
+    let drvMatch: RegExpExecArray | null;
+    while ((drvMatch = derivedVarRegex.exec(clean)) !== null) {
+      if (!allVarMap.has(drvMatch[1])) {
+        allVarMap.set(drvMatch[1], drvMatch[2].replace(/;\s*$/, '').trim());
+      }
+    }
+
+    // Iteratively inline variable references (handles chains like a→b→c)
+    for (let pass = 0; pass < 8 && allVarMap.size > 0; pass++) {
+      let changed = false;
+      for (const [varName] of allVarMap) {
+        for (const [otherName, otherExpr] of allVarMap) {
+          if (otherName === varName) continue;
+          const current = allVarMap.get(varName)!;
+          const refRegex = new RegExp(`\\b${otherName}\\b`, 'g');
+          const expanded = current.replace(refRegex, otherExpr);
+          if (expanded !== current) {
+            allVarMap.set(varName, expanded);
+            changed = true;
+          }
+        }
+      }
+      if (!changed) break;
+    }
+
+    // Remove assignment lines and inline remaining references
+    if (allVarMap.size > 0) {
+      const varNames = [...allVarMap.keys()].join('|');
+      const assignLineRegex = new RegExp(`^\\s*(?:var\\s+)?(${varNames})\\s*=\\s*[\\s\\S]*?;?\\s*$`, 'gm');
+      clean = clean.replace(assignLineRegex, '');
+
+      for (const [varName, expr] of allVarMap) {
+        const refRegex = new RegExp(`\\b${varName}\\b`, 'g');
+        clean = clean.replace(refRegex, expr);
+      }
+    }
+
+    // Fix orphaned method chains: lines starting with .add/.blend/.mult/.diff
+    // that have no base expression. Glue them to the previous non-empty line.
+    const chainMethods = /^(add|blend|mult|diff|modulate|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\(/;
+    const fixLines = clean.split('\n');
+    for (let i = 1; i < fixLines.length; i++) {
+      const trimmed = fixLines[i].trim();
+      if (chainMethods.test(trimmed)) {
+        // Find the last non-empty, non-comment line above
+        let j = i - 1;
+        while (j >= 0 && fixLines[j].trim() === '') j--;
+        if (j >= 0) {
+          // Remove trailing semicolons from the base, then append the method
+          const base = fixLines[j].replace(/;\s*$/, '');
+          const method = trimmed.replace(/^/, '.');
+          fixLines[j] = `${base}\n  ${method}`;
+          fixLines[i] = '';
+        }
+      }
+    }
+    clean = fixLines.join('\n');
+
     // Only filter out lines that are pure explanation (no code patterns at all)
     const lines = clean.split('\n');
     const codeLines: string[] = [];
@@ -192,9 +264,15 @@ export class HydraGenerator extends TierBasedGenerator {
     }
     
     // Ensure there's a render call if multiple outputs
-    if (clean.includes('.out(o1)') || clean.includes('.out(o2)') || clean.includes('.out(o3)')) {
+    const hasMultipleOutputs = clean.includes('.out(o1)') || clean.includes('.out(o2)') || clean.includes('.out(o3)');
+    if (hasMultipleOutputs) {
       if (!clean.includes('render(')) {
-        clean += '\nrender(o0)';
+        clean += '\nrender()';
+      } else {
+        // render(o0) with multiple outputs often shows a blank/minimal buffer;
+        // use render() (no args) so every output is composited in the headless preview
+        clean = clean.replace(/render\s*\(\s*o0\s*\)/g, 'render()');
+        clean = clean.replace(/render\s*\(\s*all\s*\)/g, 'render()');
       }
     }
     

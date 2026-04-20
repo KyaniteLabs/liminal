@@ -106,11 +106,11 @@ describe('HydraGenerator', () => {
       expect(sanitized.match(/\.out\(o0\)/g)).toHaveLength(1);
     });
 
-    it('adds render(o0) for multiple outputs', () => {
+    it('adds render() for multiple outputs', () => {
       const gen = new HydraGenerator();
       const code = 'osc(10).out(o0)\nosc(20).out(o1)';
       const sanitized = (gen as any).sanitizeCode(code);
-      expect(sanitized).toContain('render(o0)');
+      expect(sanitized).toContain('render()');
     });
 
     it('does not add render() when only one output', () => {

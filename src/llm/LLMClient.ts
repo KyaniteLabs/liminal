@@ -1029,13 +1029,12 @@ export class LLMClient {
     let iterations = 0;
     let toolCallsMade = 0;
     let lastToolCodeCandidate: string | null = null;
-    const conversationMessages: { role: string; content: string }[] = [];
 
     for (let i = 0; i < maxIterations; i++) {
       iterations++;
       const result = await this.generateWithTools({
         systemPrompt: options.systemPrompt,
-        userPrompt: i === 0 ? options.userPrompt : JSON.stringify(conversationMessages),
+        userPrompt: i === 0 ? options.userPrompt : `Tool results received. Continue generating the artifact for: ${options.userPrompt}`,
         tools: options.tools,
         toolResults,
         maxTokens: options.maxTokens,
@@ -1081,8 +1080,6 @@ export class LLMClient {
           const toolResult = await options.toolExecutor(tc.name, args);
           lastToolCodeCandidate = this.extractToolCodeCandidate(args, toolResult) ?? lastToolCodeCandidate;
           toolResults.push({ toolCallId: tc.id, result: toolResult, toolCall: tc });
-          conversationMessages.push({ role: 'assistant', content: `Called ${tc.name}(${tc.arguments})` });
-          conversationMessages.push({ role: 'tool', content: toolResult });
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
           toolResults.push({ toolCallId: tc.id, result: errMsg, isError: true, toolCall: tc });
@@ -1092,7 +1089,7 @@ export class LLMClient {
 
     const lastResult = await this.generateWithTools({
       systemPrompt: options.systemPrompt,
-      userPrompt: JSON.stringify(conversationMessages),
+      userPrompt: `Tool calls completed. Now output the final artifact for: ${options.userPrompt}`,
       tools: [],
       maxTokens: options.maxTokens,
       temperature: options.temperature,

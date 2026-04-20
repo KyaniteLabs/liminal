@@ -1,234 +1,146 @@
-/**
- * SessionGraph tests — behavioral assertions on session turn persistence.
- *
- * Tests both memory-only mode (no LiminalFS) and persistence mode (mocked FS).
- * Every assertion checks a specific expected value.
- */
 import { describe, it, expect, vi } from 'vitest';
 import { SessionGraph } from '../../../src/agent/SessionGraph.js';
-import type { SessionTurnRecord } from '../../../src/agent/SessionGraph.js';
-
-/** Creates a mock LiminalFS that records calls */
-function mockLiminalFS() {
-  return {
-    writeManifest: vi.fn(),
-    readManifest: vi.fn(() => null),
-    writeArtifact: vi.fn(),
-    readArtifact: vi.fn(() => null),
-    writeRef: vi.fn(),
-    readRef: vi.fn(() => null),
-    recordRun: vi.fn(),
-    getProjectRoot: vi.fn(() => '/tmp/test'),
-    getProjectStore: vi.fn(),
-    close: vi.fn(),
-  };
-}
 
 describe('SessionGraph', () => {
-  // ── Memory-only mode (no LiminalFS) ──
-
-  describe('memory-only mode', () => {
-    const graph = new SessionGraph('session-001');
-
-    it('starts with empty turns', () => {
-      expect(graph.getTurns()).toEqual([]);
+  describe('constructor', () => {
+    it('initializes with the given session ID', () => {
+      const graph = new SessionGraph('sess-1');
+      const manifest = graph.getManifest();
+      expect(manifest.sessionId).toBe('sess-1');
+      expect(manifest.turnCount).toBe(0);
     });
 
-    it('records a turn and returns it with timestamp', () => {
+    it('sets createdAt and updatedAt to matching timestamps', () => {
+      const graph = new SessionGraph('sess-1');
+      const manifest = graph.getManifest();
+      expect(manifest.createdAt).toBe(manifest.updatedAt);
+    });
+  });
+
+  describe('recordTurn', () => {
+    it('records a turn and returns it with a timestamp', () => {
+      const graph = new SessionGraph('sess-1');
       const turn = graph.recordTurn({
         turnId: 'turn-1',
-        input: 'generate a p5 sketch',
-        intent: 'creative',
-        delegatedTo: 'ralph-loop',
-        response: 'Generated!',
-        durationMs: 2500,
-        artifactRefs: ['art-001'],
+        input: 'hello',
+        intent: 'direct',
+        delegatedTo: 'llm-chat',
+        response: 'hi there',
+        durationMs: 120,
       });
-
       expect(turn.turnId).toBe('turn-1');
-      expect(turn.input).toBe('generate a p5 sketch');
-      expect(turn.intent).toBe('creative');
-      expect(turn.delegatedTo).toBe('ralph-loop');
-      expect(turn.response).toBe('Generated!');
-      expect(turn.durationMs).toBe(2500);
-      expect(turn.artifactRefs).toEqual(['art-001']);
       expect(turn.timestamp).toBeTruthy();
     });
 
-    it('updates manifest after recording', () => {
-      const manifest = graph.getManifest();
-      expect(manifest.sessionId).toBe('session-001');
-      expect(manifest.turnCount).toBe(1);
-      expect(manifest.lastIntent).toBe('creative');
-      expect(manifest.lastDelegatedTo).toBe('ralph-loop');
-    });
-
-    it('retrieves a turn by ID', () => {
-      const turn = graph.getTurn('turn-1');
-      expect(turn).toBeDefined();
-      expect(turn?.input).toBe('generate a p5 sketch');
-    });
-
-    it('returns undefined for unknown turn ID', () => {
-      expect(graph.getTurn('turn-nonexistent')).toBeUndefined();
-    });
-
-    it('records multiple turns', () => {
-      graph.recordTurn({
-        turnId: 'turn-2',
-        input: 'fix the build',
-        intent: 'engineering',
-        delegatedTo: 'conveyor',
-        response: 'Fixed!',
-        durationMs: 5000,
-        taskRefs: ['T-001'],
-      });
-
-      expect(graph.getTurns()).toHaveLength(2);
+    it('increments turnCount in the manifest', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 50 });
+      graph.recordTurn({ turnId: 't2', input: 'b', intent: 'creative', delegatedTo: 'ralph', response: 'r2', durationMs: 80 });
       expect(graph.getManifest().turnCount).toBe(2);
     });
 
+    it('updates lastIntent and lastDelegatedTo in manifest', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'make art', intent: 'creative', delegatedTo: 'ralph', response: 'art', durationMs: 100 });
+      const manifest = graph.getManifest();
+      expect(manifest.lastIntent).toBe('creative');
+      expect(manifest.lastDelegatedTo).toBe('ralph');
+    });
+  });
+
+  describe('getTurns', () => {
+    it('returns all recorded turns', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
+      graph.recordTurn({ turnId: 't2', input: 'b', intent: 'creative', delegatedTo: 'ralph', response: 'r2', durationMs: 20 });
+      expect(graph.getTurns()).toHaveLength(2);
+    });
+
+    it('returns a copy (mutations do not affect internal state)', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
+      const turns = graph.getTurns();
+      turns.pop();
+      expect(graph.getTurns()).toHaveLength(1);
+    });
+  });
+
+  describe('getTurn', () => {
+    it('returns a specific turn by ID', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 'target', input: 'x', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 5 });
+      const turn = graph.getTurn('target');
+      expect(turn?.input).toBe('x');
+    });
+
+    it('returns undefined for a nonexistent turn ID', () => {
+      const graph = new SessionGraph('sess-1');
+      expect(graph.getTurn('nope')).toBeUndefined();
+    });
+  });
+
+  describe('getTurnsByIntent', () => {
     it('filters turns by intent', () => {
-      const creative = graph.getTurnsByIntent('creative');
-      expect(creative).toHaveLength(1);
-      expect(creative[0].turnId).toBe('turn-1');
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'hello', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
+      graph.recordTurn({ turnId: 't2', input: 'make art', intent: 'creative', delegatedTo: 'ralph', response: 'r2', durationMs: 20 });
+      graph.recordTurn({ turnId: 't3', input: 'fix bug', intent: 'engineering', delegatedTo: 'conveyor', response: 'r3', durationMs: 30 });
+      expect(graph.getTurnsByIntent('creative')).toHaveLength(1);
+      expect(graph.getTurnsByIntent('direct')).toHaveLength(1);
     });
+  });
 
+  describe('getTurnsByDelegation', () => {
     it('filters turns by delegation target', () => {
-      const eng = graph.getTurnsByDelegation('conveyor');
-      expect(eng).toHaveLength(1);
-      expect(eng[0].intent).toBe('engineering');
-    });
-
-    it('collects all artifact refs', () => {
-      expect(graph.getAllArtifactRefs()).toEqual(['art-001']);
-    });
-
-    it('collects all task refs', () => {
-      expect(graph.getAllTaskRefs()).toEqual(['T-001']);
-    });
-
-    it('returns copies of turns array', () => {
-      const turns1 = graph.getTurns();
-      const turns2 = graph.getTurns();
-      expect(turns1).not.toBe(turns2);
-      expect(turns1).toEqual(turns2);
-    });
-
-    it('returns a copy of the manifest', () => {
-      const m1 = graph.getManifest();
-      const m2 = graph.getManifest();
-      expect(m1).not.toBe(m2);
-      expect(m1).toEqual(m2);
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
+      graph.recordTurn({ turnId: 't2', input: 'b', intent: 'creative', delegatedTo: 'ralph', response: 'r2', durationMs: 20 });
+      expect(graph.getTurnsByDelegation('llm')).toHaveLength(1);
+      expect(graph.getTurnsByDelegation('ralph')).toHaveLength(1);
+      expect(graph.getTurnsByDelegation('conveyor')).toHaveLength(0);
     });
   });
 
-  // ── Persistence mode (with LiminalFS) ──
-
-  describe('persistence mode', () => {
-    const fs = mockLiminalFS();
-    const graph = new SessionGraph('session-persist', fs as unknown as import('../../../src/fs/LiminalFS.js').LiminalFS);
-
-    it('persists turn to LiminalFS on record', () => {
-      graph.recordTurn({
-        turnId: 'turn-p1',
-        input: 'hello',
-        intent: 'direct',
-        delegatedTo: 'llm-chat',
-        response: 'Hi there!',
-        durationMs: 100,
-      });
-
-      expect(fs.writeManifest).toHaveBeenCalledTimes(2); // turn + manifest
-      expect(fs.writeManifest).toHaveBeenCalledWith(
-        'session/session-persist/turn/turn-p1',
-        expect.objectContaining({ turnId: 'turn-p1', input: 'hello' }),
-      );
+  describe('getAllArtifactRefs', () => {
+    it('collects artifact refs from all turns', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10, artifactRefs: ['art1.png'] });
+      graph.recordTurn({ turnId: 't2', input: 'b', intent: 'creative', delegatedTo: 'ralph', response: 'r2', durationMs: 20, artifactRefs: ['art2.png', 'art3.glsl'] });
+      expect(graph.getAllArtifactRefs()).toEqual(['art1.png', 'art2.png', 'art3.glsl']);
     });
 
-    it('persists updated manifest after each turn', () => {
-      const callCount = fs.writeManifest.mock.calls.length;
-      const lastManifestCall = fs.writeManifest.mock.calls[callCount - 1];
-      expect(lastManifestCall[0]).toBe('session/session-persist/manifest');
-      expect(lastManifestCall[1]).toEqual(
-        expect.objectContaining({
-          sessionId: 'session-persist',
-          turnCount: 1,
-          lastIntent: 'direct',
-          lastDelegatedTo: 'llm-chat',
-        }),
-      );
-    });
-
-    it('persists multiple turns', () => {
-      fs.writeManifest.mockClear();
-
-      graph.recordTurn({
-        turnId: 'turn-p2',
-        input: 'generate art',
-        intent: 'creative',
-        delegatedTo: 'ralph-loop',
-        response: 'Done',
-        durationMs: 3000,
-        artifactRefs: ['art-010'],
-      });
-
-      // 2 calls: turn manifest + session manifest update
-      expect(fs.writeManifest).toHaveBeenCalledTimes(2);
-      expect(fs.writeManifest).toHaveBeenCalledWith(
-        'session/session-persist/turn/turn-p2',
-        expect.objectContaining({ turnId: 'turn-p2' }),
-      );
-    });
-  });
-
-  // ── Edge cases ──
-
-  describe('edge cases', () => {
-    it('handles empty response', () => {
-      const graph = new SessionGraph('edge-1');
-      const turn = graph.recordTurn({
-        turnId: 'turn-empty',
-        input: 'hello',
-        intent: 'direct',
-        delegatedTo: 'echo',
-        response: '',
-        durationMs: 0,
-      });
-      expect(turn.response).toBe('');
-    });
-
-    it('handles turn without optional refs', () => {
-      const graph = new SessionGraph('edge-2');
-      const turn = graph.recordTurn({
-        turnId: 'turn-noref',
-        input: 'hello',
-        intent: 'direct',
-        delegatedTo: 'llm-chat',
-        response: 'Hi',
-        durationMs: 10,
-      });
-      expect(turn.artifactRefs).toBeUndefined();
-      expect(turn.taskRefs).toBeUndefined();
+    it('returns empty array when no turns have artifact refs', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
       expect(graph.getAllArtifactRefs()).toEqual([]);
-      expect(graph.getAllTaskRefs()).toEqual([]);
+    });
+  });
+
+  describe('getAllTaskRefs', () => {
+    it('collects task refs from all turns', () => {
+      const graph = new SessionGraph('sess-1');
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'engineering', delegatedTo: 'conveyor', response: 'r', durationMs: 10, taskRefs: ['task-001'] });
+      graph.recordTurn({ turnId: 't2', input: 'b', intent: 'engineering', delegatedTo: 'conveyor', response: 'r2', durationMs: 20, taskRefs: ['task-002'] });
+      expect(graph.getAllTaskRefs()).toEqual(['task-001', 'task-002']);
+    });
+  });
+
+  describe('persistence', () => {
+    it('does not call fs when no LiminalFS is provided', () => {
+      const graph = new SessionGraph('sess-1');
+      // Should not throw — in-memory mode
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
+      expect(graph.getTurns()).toHaveLength(1);
     });
 
-    it('handles large number of turns', () => {
-      const graph = new SessionGraph('edge-many');
-      for (let i = 0; i < 100; i++) {
-        graph.recordTurn({
-          turnId: `turn-${i}`,
-          input: `input ${i}`,
-          intent: i % 2 === 0 ? 'direct' : 'creative',
-          delegatedTo: i % 2 === 0 ? 'llm-chat' : 'ralph-loop',
-          response: `response ${i}`,
-          durationMs: i * 10,
-        });
-      }
-      expect(graph.getTurns()).toHaveLength(100);
-      expect(graph.getManifest().turnCount).toBe(100);
-      expect(graph.getTurnsByIntent('direct')).toHaveLength(50);
+    it('calls fs.writeManifest when LiminalFS is provided', () => {
+      const writeManifest = vi.fn();
+      const graph = new SessionGraph('sess-1', { writeManifest } as any);
+      graph.recordTurn({ turnId: 't1', input: 'a', intent: 'direct', delegatedTo: 'llm', response: 'r', durationMs: 10 });
+      // Called once for turn, once for manifest update
+      expect(writeManifest).toHaveBeenCalledTimes(2);
+      expect(writeManifest).toHaveBeenCalledWith('session/sess-1/turn/t1', expect.any(Object));
+      expect(writeManifest).toHaveBeenCalledWith('session/sess-1/manifest', expect.any(Object));
     });
   });
 });

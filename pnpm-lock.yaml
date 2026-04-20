@@ -9,7 +9,7 @@ overrides:
   flatted: 3.4.2
   picomatch: 4.0.4
   brace-expansion: 2.0.3
-  lodash: 4.18.0
+  lodash: 4.17.21
   cookie: 0.7.0
   path-to-regexp: 8.4.0
 
@@ -69,8 +69,8 @@ importers:
         specifier: 'link:'
         version: 'link:'
       lodash:
-        specifier: 4.18.0
-        version: 4.18.0
+        specifier: 4.17.21
+        version: 4.17.21
       neverthrow:
         specifier: ^8.2.0
         version: 8.2.0
@@ -2286,9 +2286,8 @@ packages:
   lodash.merge@4.6.2:
     resolution: {integrity: sha512-0KpjqXRVvrYyCsX1swR/XTK0va6VQkQM6MNo7PqW77ByjAhoARA8EfrP1N4+KlKj8YS0ZUCtRT/YUuhyYDujIQ==}
 
-  lodash@4.18.0:
-    resolution: {integrity: sha512-l1mfj2atMqndAHI3ls7XqPxEjV2J9ZkcNyHpoZA3r2T1LLwDB69jgkMWh71YKwhBbK0G2f4WSn05ahmQXVxupA==}
-    deprecated: Bad release. Please use lodash@4.17.21 instead.
+  lodash@4.17.21:
+    resolution: {integrity: sha512-v2kDEe57lecTulaDIuNTPy3Ry4gLGJ6Z1O3vE1krgXZNrsQ+LFTGHVxVjcXPs17LhbZVGedAJv8XZ1tvj5FvSg==}
 
   long@4.0.0:
     resolution: {integrity: sha512-XsP+KhQif4bjX1kbuSiySJFNAehNxgLb6hPRGJ9QsUr8ajHkuXGdrHmFUTUUXhDwVX2R5bY4JNZEwbUiMhV+MA==}
@@ -4329,7 +4328,7 @@ snapshots:
       graceful-fs: 4.2.11
       is-stream: 2.0.1
       lazystream: 1.0.1
-      lodash: 4.18.0
+      lodash: 4.17.21
       normalize-path: 3.0.0
       readable-stream: 4.7.0
 
@@ -5497,7 +5496,7 @@ snapshots:
 
   lodash.merge@4.6.2: {}
 
-  lodash@4.18.0: {}
+  lodash@4.17.21: {}
 
   long@4.0.0: {}
 

@@ -130,19 +130,19 @@ describe('UrlValidator', () => {
         .resolves.toBeUndefined();
     });
 
-    it('should log degraded SSRF protection when DNS lookup fails', async () => {
-      const spy = vi.spyOn(SecurityLogger, 'logSSRFResolutionDegraded');
+    it('should fail closed and log SSRF attempt when DNS lookup fails', async () => {
+      const spy = vi.spyOn(SecurityLogger, 'logSSRFAttempt');
       const failingLookup = async (): Promise<{ address: string; family: number }> => {
         throw new Error('getaddrinfo ENOTFOUND api.example.com');
       };
 
       await expect(validateUrl('https://api.example.com/v1', {}, failingLookup))
-        .resolves.toBeUndefined();
+        .rejects.toThrow('DNS lookup failed for api.example.com - potential SSRF attack');
 
       expect(spy).toHaveBeenCalledWith('https://api.example.com/v1', {
         details: {
           hostname: 'api.example.com',
-          reason: 'getaddrinfo ENOTFOUND api.example.com',
+          reason: 'dns_lookup_failed: getaddrinfo ENOTFOUND api.example.com',
         },
       });
     });

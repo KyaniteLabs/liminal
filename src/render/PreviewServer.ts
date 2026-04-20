@@ -151,12 +151,12 @@ export class PreviewServer {
 
     // SECURITY: CSRF_SECRET is required in production, no fallback
     const csrfSecret = process.env.CSRF_SECRET;
-    if (!csrfSecret) {
+    if (!isTestEnv && !csrfSecret) {
       throw new Error('CSRF_SECRET environment variable is required');
     }
 
     const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
-      getSecret: () => csrfSecret,
+      getSecret: () => csrfSecret || (isTestEnv ? 'test-secret' : ''),
       getSessionIdentifier: () => 'liminal-preview',
       cookieName: 'x-csrf-token',
       cookieOptions: {

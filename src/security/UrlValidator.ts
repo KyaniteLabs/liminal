@@ -4,7 +4,7 @@
  */
 
 import { lookup as defaultDnsLookup } from 'dns/promises';
-import { logSSRFAttempt, logSSRFResolutionDegraded } from './SecurityLogger.js';
+import { logSSRFAttempt } from './SecurityLogger.js';
 
 export type DnsLookupFn = typeof defaultDnsLookup;
 

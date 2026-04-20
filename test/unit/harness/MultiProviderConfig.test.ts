@@ -39,6 +39,7 @@ const KEYS_PRESERVED = [
   'LIMINAL_HARNESS_TIMEOUT',
   'LIMINAL_HARNESS_MAX_RETRIES',
   'LIMINAL_HARNESS_CONTEXT_WINDOW',
+  'ANTHROPIC_AUTH_TOKEN',
 ] as const;
 
 let savedEnv: Record<string, string | undefined>;
@@ -275,8 +276,8 @@ describe('isProviderConfigured', () => {
     expect(isProviderConfigured('minimax')).toBe(true);
   });
 
-  it('returns true for glm without GLM_API_KEY (local provider)', () => {
-    expect(isProviderConfigured('glm')).toBe(true);
+  it('returns false for glm without GLM_API_KEY', () => {
+    expect(isProviderConfigured('glm')).toBe(false);
   });
 
   it('returns true for glm with GLM_API_KEY set', () => {
@@ -313,7 +314,7 @@ describe('listConfiguredProviders', () => {
     expect(providers).toContain('ollama');
     expect(providers).toContain('lmstudio');
     expect(providers).not.toContain('minimax');
-    expect(providers).toContain('glm');
+    expect(providers).not.toContain('glm');
     expect(providers).not.toContain('openrouter');
     expect(providers).not.toContain('custom');
   });

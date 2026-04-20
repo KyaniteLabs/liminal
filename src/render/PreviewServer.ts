@@ -128,9 +128,18 @@ export class PreviewServer {
       xssFilter: true,  // X-XSS-Protection (legacy)
     }));
 
-    // CSP report endpoint
+    // CSP report endpoint - sanitize logs to prevent info disclosure
     this.app.post('/api/csp-report', express.json({ type: 'application/csp-report' }), (req, res) => {
-      Logger.warn('PreviewServer', '[CSP Violation]', req.body);
+      const report = req.body?.['csp-report'];
+      if (report) {
+        // Only log non-sensitive CSP report fields
+        const sanitized = {
+          'document-uri': report['document-uri'],
+          'violated-directive': report['violated-directive'],
+          'blocked-uri': report['blocked-uri'],
+        };
+        Logger.warn('PreviewServer', '[CSP Violation]', sanitized);
+      }
       res.status(204).send();
     });
 
@@ -142,12 +151,12 @@ export class PreviewServer {
 
     // SECURITY: CSRF_SECRET is required in production, no fallback
     const csrfSecret = process.env.CSRF_SECRET;
-    if (!isTestEnv && !csrfSecret) {
+    if (!csrfSecret) {
       throw new Error('CSRF_SECRET environment variable is required');
     }
 
     const { generateCsrfToken, doubleCsrfProtection } = doubleCsrf({
-      getSecret: () => csrfSecret || 'test-secret',
+      getSecret: () => csrfSecret,
       getSessionIdentifier: () => 'liminal-preview',
       cookieName: 'x-csrf-token',
       cookieOptions: {

@@ -83,19 +83,21 @@ export async function validateUrl(
   }
 
   // SECURITY: Resolve hostname to IP and validate (prevents DNS rebinding)
+  // Fail closed: DNS lookup failures are treated as potential SSRF attempts
   let resolvedIP: string | undefined;
   try {
     const lookupResult = await dnsLookup(hostname);
     resolvedIP = lookupResult.address;
   } catch (error) {
-    // If lookup fails, continue with hostname checks (may be a non-DNS hostname),
-    // but emit an explicit signal that DNS rebinding protection is degraded.
-    logSSRFResolutionDegraded(urlString, {
+    // SECURITY: Fail closed when DNS lookup fails - do not continue with degraded protection
+    const reason = error instanceof Error ? error.message : String(error);
+    logSSRFAttempt(urlString, {
       details: {
         hostname,
-        reason: error instanceof Error ? error.message : String(error),
+        reason: `dns_lookup_failed: ${reason}`,
       },
     });
+    throw new SSRFError(`DNS lookup failed for ${hostname} - potential SSRF attack`);
   }
 
   // Check resolved IP against private IP rules — allow localhost to resolve to

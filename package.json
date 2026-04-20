@@ -99,7 +99,7 @@
     "helmet": "^8.1.0",
     "ink": "^5.2.1",
     "liminal-ai": "link:",
-    "lodash": "4.18.1",
+    "lodash": "4.17.21",
     "neverthrow": "^8.2.0",
     "open": "^11.0.0",
     "p5": "^1.11.12",
@@ -145,7 +145,7 @@
       "flatted": "3.4.2",
       "picomatch": "4.0.4",
       "brace-expansion": "2.0.3",
-      "lodash": "4.18.0",
+      "lodash": "4.17.21",
       "cookie": "0.7.0",
       "path-to-regexp": "8.4.0"
     }

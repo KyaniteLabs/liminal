@@ -187,6 +187,24 @@ describe('OpenAIProvider', () => {
     expect(body.messages[1].content).toBe('Make art');
   });
 
+  it('sends image inputs as OpenAI multimodal content parts', async () => {
+    mockFetchResponse({
+      choices: [{ message: { content: 'ok' } }],
+      model: 'gpt-4o',
+    });
+
+    await provider.generate(makeRequest({
+      userPrompt: 'Judge this render',
+      imageInputs: [{ mimeType: 'image/png', dataBase64: 'abc123', width: 2, height: 2 }],
+    }));
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.messages[1].content).toEqual([
+      { type: 'text', text: 'Judge this render' },
+      { type: 'image_url', image_url: { url: 'data:image/png;base64,abc123' } },
+    ]);
+  });
+
   it('adds reasoning_effort for thinking-capable models', async () => {
     mockCapabilities.thinking = true;
     mockCapabilities.thinkingStyle = 'effort_level';
@@ -303,6 +321,24 @@ describe('AnthropicProvider', () => {
     expect(body.system).toBe('You are creative');
     // Anthropic puts user in messages, not system
     expect(body.messages).toEqual([{ role: 'user', content: 'Write a p5.js sketch.' }]);
+  });
+
+  it('sends image inputs as Anthropic image blocks', async () => {
+    mockFetchResponse({
+      content: [{ type: 'text', text: 'ok' }],
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    await provider.generate(makeRequest({
+      userPrompt: 'Judge this render',
+      imageInputs: [{ mimeType: 'image/png', dataBase64: 'abc123' }],
+    }));
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.messages[0].content).toEqual([
+      { type: 'text', text: 'Judge this render' },
+      { type: 'image', source: { type: 'base64', media_type: 'image/png', data: 'abc123' } },
+    ]);
   });
 
   it('parses content blocks correctly', async () => {
@@ -612,6 +648,24 @@ describe('GoogleProvider', () => {
     expect(body.systemInstruction).toEqual({ parts: [{ text: 'Be artistic' }] });
   });
 
+  it('sends image inputs as Gemini inlineData parts', async () => {
+    mockFetchResponse({
+      candidates: [{ content: { parts: [{ text: 'ok' }] } }],
+      modelVersion: 'gemini-2.5-pro',
+    });
+
+    await provider.generate(makeRequest({
+      userPrompt: 'Judge this render',
+      imageInputs: [{ mimeType: 'image/png', dataBase64: 'abc123' }],
+    }));
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.contents[0].parts).toEqual([
+      { text: 'Judge this render' },
+      { inlineData: { mimeType: 'image/png', data: 'abc123' } },
+    ]);
+  });
+
   it('separates thinking blocks from content blocks', async () => {
     mockFetchResponse({
       candidates: [{
@@ -762,6 +816,24 @@ describe('MiniMaxProvider', () => {
 
     const [, options] = mockFetch.mock.calls[0];
     expect(options.headers['Authorization']).toBe('Bearer minimax-key-789');
+  });
+
+  it('sends image inputs as OpenAI-compatible multimodal content parts', async () => {
+    mockFetchResponse({
+      choices: [{ message: { content: 'ok' } }],
+      model: 'MiniMax-M2.7',
+    });
+
+    await provider.generate(makeRequest({
+      userPrompt: 'Judge this render',
+      imageInputs: [{ mimeType: 'image/png', dataBase64: 'abc123' }],
+    }));
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.messages[1].content).toEqual([
+      { type: 'text', text: 'Judge this render' },
+      { type: 'image_url', image_url: { url: 'data:image/png;base64,abc123' } },
+    ]);
   });
 
   it('parses normal response correctly', async () => {

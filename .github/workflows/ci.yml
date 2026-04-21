@@ -23,6 +23,10 @@ jobs:
           echo "Node: $(node --version)"
           echo "pnpm: $(pnpm --version)"
       - run: pnpm install --frozen-lockfile
+      - name: Security audit
+        run: pnpm audit --audit-level moderate
+      - name: Orphan source check
+        run: pnpm check:orphans
       - run: pnpm lint
       - run: pnpm build
       - name: Prompt surface audit

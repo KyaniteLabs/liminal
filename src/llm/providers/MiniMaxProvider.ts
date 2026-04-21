@@ -33,6 +33,34 @@ import { parseOpenAIStream, parseAnthropicStream } from '../StreamParser.js';
 import { Logger } from '../../utils/Logger.js';
 import { LLMError } from '../errors.js';
 
+function buildOpenAIUserContent(req: ProviderRequest): unknown {
+  if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
+  return [
+    { type: 'text', text: req.userPrompt },
+    ...req.imageInputs.map(image => ({
+      type: 'image_url',
+      image_url: {
+        url: `data:${image.mimeType};base64,${image.dataBase64}`,
+      },
+    })),
+  ];
+}
+
+function buildAnthropicUserContent(req: ProviderRequest): unknown {
+  if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
+  return [
+    { type: 'text', text: req.userPrompt },
+    ...req.imageInputs.map(image => ({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: image.mimeType,
+        data: image.dataBase64,
+      },
+    })),
+  ];
+}
+
 export class MiniMaxProvider extends BaseProvider {
   readonly name = 'minimax';
 
@@ -79,7 +107,7 @@ export class MiniMaxProvider extends BaseProvider {
       model: this.config.model,
       messages: [
         { role: 'system', content: req.systemPrompt },
-        { role: 'user', content: req.userPrompt },
+        { role: 'user', content: buildOpenAIUserContent(req) },
       ],
       temperature: req.temperature ?? this.config.temperature ?? 0.7,
     };
@@ -252,7 +280,7 @@ export class MiniMaxProvider extends BaseProvider {
       model: this.config.model,
       max_tokens: req.maxTokens ?? this.config.maxTokens ?? 4096,
       messages: [
-        { role: 'user', content: req.userPrompt },
+        { role: 'user', content: buildAnthropicUserContent(req) },
       ],
     };
 

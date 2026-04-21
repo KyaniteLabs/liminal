@@ -19,7 +19,7 @@ const { mockCreativeEvaluatorAssess, mockAestheticCriticInstance, mockHeuristicS
   const criticInstance = { critique: vi.fn(), setLLMClient: vi.fn() };
   const scoreOutput = vi.fn();
   const quickScoreFn = vi.fn();
-  const llmInstance = { generate: vi.fn(), generateWithToolLoop: vi.fn() };
+  const llmInstance = { generate: vi.fn(), generateWithImages: vi.fn(), generateWithToolLoop: vi.fn() };
   const warn = vi.fn();
   return {
     mockCreativeEvaluatorAssess: assess,
@@ -65,6 +65,7 @@ vi.mock('../../../src/llm/LLMClient.js', () => {
   return {
     LLMClient: vi.fn(function (this: any, _config?: any) {
       this.generate = mockLLMClientInstance.generate;
+      this.generateWithImages = mockLLMClientInstance.generateWithImages;
       this.generateWithToolLoop = mockLLMClientInstance.generateWithToolLoop;
       return this;
     }),
@@ -971,6 +972,45 @@ describe('ScoringEngine', () => {
       expect(result.score).toBe(0.85);
       expect(result.confidence).toBe(0.9);
       expect(result.failureClass).toBe('none');
+    });
+
+    it('sends screenshot payload through the multimodal evaluator path', async () => {
+      mockLLMClientInstance.generateWithImages.mockResolvedValue({
+        code: '{"score":0.9,"confidence":0.95,"reasoning":"Visible output matches the brief"}',
+        success: true,
+      });
+      const fakeLLM = new (await import('../../../src/llm/LLMClient.js')).LLMClient({ role: 'evaluator' });
+      const result = await scoreRenderedEvidence(
+        {
+          timingMs: 200,
+          infraUnavailable: false,
+          candidateFailure: false,
+          screenshotRef: 'screenshot',
+          screenshot: {
+            mimeType: 'image/png',
+            dataBase64: 'iVBORw0KGgo=',
+            width: 2,
+            height: 2,
+          },
+        },
+        'function setup() {}',
+        'make a visible sketch',
+        fakeLLM,
+      );
+
+      expect(result.score).toBe(0.9);
+      expect(mockLLMClientInstance.generate).not.toHaveBeenCalled();
+      expect(mockLLMClientInstance.generateWithImages).toHaveBeenCalledWith(
+        expect.stringContaining('visible rendered artifact first'),
+        expect.stringContaining('Screenshot: attached image/png 2x2'),
+        [{
+          mimeType: 'image/png',
+          dataBase64: 'iVBORw0KGgo=',
+          width: 2,
+          height: 2,
+          label: 'rendered-artifact',
+        }],
+      );
     });
 
     it('parses repairAdvice from LLM response when present', async () => {

@@ -118,6 +118,7 @@ export class Renderer {
         throw new Error(`No canvas element found. The sketch may have failed to initialize.${this.formatDiagnostics(pageErrors, consoleErrors)}`);
       }
 
+      await fs.mkdir(outputDir, { recursive: true });
       await canvas.screenshot({
         path: outputPath,
         type: ext === '.png' ? 'png' : 'jpeg',

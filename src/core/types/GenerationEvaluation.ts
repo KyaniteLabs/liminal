@@ -1,5 +1,11 @@
 export interface RenderEvidence {
   screenshotRef?: string;
+  screenshot?: {
+    mimeType: string;
+    dataBase64: string;
+    width?: number;
+    height?: number;
+  };
   logRef?: string;
   timingMs: number;
   infraUnavailable: boolean;

@@ -22,9 +22,17 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: ASCIIOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
     const width = options?.width || 40;
     const height = options?.height || 20;
+    const asciiPrompt = [
+      'Generate ASCII art only.',
+      `Use exactly ${height} lines and at most ${width} columns per line.`,
+      'Use only plain ASCII characters: spaces, letters, digits, and symbols such as .,:;-=+*#%/\\|_~()[]{}<>.',
+      'Do not use Unicode symbols, markdown fences, explanations, captions, or prose.',
+      '',
+      `User request: ${prompt}`,
+    ].join('\n');
+    const code = await super.generate(asciiPrompt, { ...options, useGeneratorTools: false });
     return this.formatASCII(code, width, height);
   }
 

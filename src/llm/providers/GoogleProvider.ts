@@ -20,6 +20,19 @@ import { CapabilityRegistry } from '../CapabilityRegistry.js';
 import { TIMEOUT_DEFAULT_MS } from '../../constants/limits.js';
 import { LLMError } from '../errors.js';
 
+function buildGeminiUserParts(req: ProviderRequest): Array<Record<string, unknown>> {
+  const parts: Array<Record<string, unknown>> = [{ text: req.userPrompt }];
+  for (const image of req.imageInputs ?? []) {
+    parts.push({
+      inlineData: {
+        mimeType: image.mimeType,
+        data: image.dataBase64,
+      },
+    });
+  }
+  return parts;
+}
+
 export class GoogleProvider extends BaseProvider {
   readonly name = 'google';
 
@@ -52,7 +65,7 @@ export class GoogleProvider extends BaseProvider {
         contents: [
           {
             role: 'user',
-            parts: [{ text: req.userPrompt }],
+            parts: buildGeminiUserParts(req),
           },
         ],
         generationConfig,

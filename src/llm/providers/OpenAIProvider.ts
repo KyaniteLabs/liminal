@@ -20,6 +20,19 @@ import { parseOpenAIStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
 import { Logger } from '../../utils/Logger.js';
 
+function buildOpenAIUserContent(req: ProviderRequest): unknown {
+  if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
+  return [
+    { type: 'text', text: req.userPrompt },
+    ...req.imageInputs.map(image => ({
+      type: 'image_url',
+      image_url: {
+        url: `data:${image.mimeType};base64,${image.dataBase64}`,
+      },
+    })),
+  ];
+}
+
 function normalizeMessageContent(content: unknown): string {
   if (typeof content === 'string') return content;
   if (Array.isArray(content)) {
@@ -86,7 +99,7 @@ export class OpenAIProvider extends BaseProvider {
         model: this.config.model,
         messages: [
           { role: 'system', content: req.systemPrompt },
-          { role: 'user', content: req.userPrompt },
+          { role: 'user', content: buildOpenAIUserContent(req) },
         ],
         temperature: req.temperature ?? this.config.temperature,
       };

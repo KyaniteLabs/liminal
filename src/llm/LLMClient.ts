@@ -22,7 +22,7 @@ import { Provider } from '../types/providers.js';
 // ── Provider system imports ──
 import { createProvider } from './ProviderFactory.js';
 import { BaseProvider } from './providers/BaseProvider.js';
-import type { ProviderRequest, ProviderResponse } from './ProviderTypes.js';
+import type { ProviderImageInput, ProviderRequest, ProviderResponse } from './ProviderTypes.js';
 import type { ModelRole, ResolvedRoleConfig, RoleConfigFile } from '../config/RoleConfig.js';
 import { loadRoleConfig, getFallbacks } from '../config/RoleConfig.js';
 import { selectApiKeyForEndpoint } from '../config/ProviderKeyResolver.js';
@@ -619,7 +619,13 @@ export class LLMClient {
    * Generate code from prompts
    * Universal interface - works with any provider via ProviderFactory
    */
-  async generate(systemPrompt: string, userPrompt: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {
+  async generate(
+    systemPrompt: string,
+    userPrompt: string,
+    signal?: AbortSignal,
+    bypassCache?: boolean,
+    imageInputs?: ProviderImageInput[],
+  ): Promise<LLMResponse> {
     const llmStartTime = Date.now();
 
     // Auto-detect model on first use (for local endpoints like LM Studio)
@@ -628,7 +634,8 @@ export class LLMClient {
 
     try {
       // Check cache
-      const cached = bypassCache ? null : this.cache.get(systemPrompt, userPrompt);
+      const hasImages = !!(imageInputs && imageInputs.length > 0);
+      const cached = bypassCache || hasImages ? null : this.cache.get(systemPrompt, userPrompt);
       if (cached) {
         return { code: cached, success: true, fromCache: true };
       }
@@ -650,6 +657,7 @@ export class LLMClient {
             temperature: this.config.temperature,
             maxTokens: this.config.maxTokens,
             signal,
+            imageInputs,
           };
 
         const genResult = await provider.generate(req);
@@ -679,6 +687,7 @@ export class LLMClient {
           temperature: this.config.temperature,
           maxTokens: this.config.maxTokens,
           signal,
+          imageInputs,
         };
 
         const fallbackFailures: string[] = [];
@@ -705,7 +714,7 @@ export class LLMClient {
       });
 
       // Write to cache on success
-      if (result.success && result.code && !bypassCache) {
+      if (result.success && result.code && !bypassCache && !hasImages) {
         this.cache.set(systemPrompt, userPrompt, result.code);
       }
 
@@ -752,6 +761,16 @@ export class LLMClient {
         duration: Date.now() - llmStartTime,
       });
     }
+  }
+
+  async generateWithImages(
+    systemPrompt: string,
+    userPrompt: string,
+    imageInputs: ProviderImageInput[],
+    signal?: AbortSignal,
+    bypassCache = true,
+  ): Promise<LLMResponse> {
+    return this.generate(systemPrompt, userPrompt, signal, bypassCache, imageInputs);
   }
 
   async generateP5Sketch(prompt: string, context?: string, signal?: AbortSignal, bypassCache?: boolean): Promise<LLMResponse> {

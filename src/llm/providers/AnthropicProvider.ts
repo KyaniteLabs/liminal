@@ -21,6 +21,21 @@ import { extractAnthropicThinking } from '../ThinkingNormalizer.js';
 import { parseAnthropicStream } from '../StreamParser.js';
 import { LLMError } from '../errors.js';
 
+function buildAnthropicUserContent(req: ProviderRequest): unknown {
+  if (!req.imageInputs || req.imageInputs.length === 0) return req.userPrompt;
+  return [
+    { type: 'text', text: req.userPrompt },
+    ...req.imageInputs.map(image => ({
+      type: 'image',
+      source: {
+        type: 'base64',
+        media_type: image.mimeType,
+        data: image.dataBase64,
+      },
+    })),
+  ];
+}
+
 export class AnthropicProvider extends BaseProvider {
   readonly name = 'anthropic';
 
@@ -43,7 +58,7 @@ export class AnthropicProvider extends BaseProvider {
         model: this.config.model,
         max_tokens: req.maxTokens ?? this.config.maxTokens ?? 4096,
         messages: [
-          { role: 'user', content: req.userPrompt },
+          { role: 'user', content: buildAnthropicUserContent(req) },
         ],
       };
 

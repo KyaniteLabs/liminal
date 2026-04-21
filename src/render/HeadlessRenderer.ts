@@ -357,6 +357,14 @@ export class HeadlessRenderer {
       infraUnavailable,
       candidateFailure,
       screenshotRef: result.screenshot?.success ? 'screenshot' : undefined,
+      screenshot: result.screenshot?.success
+        ? {
+            mimeType: 'image/png',
+            dataBase64: result.screenshot.buffer.toString('base64'),
+            width: result.screenshot.width,
+            height: result.screenshot.height,
+          }
+        : undefined,
       logRef: result.logs.length > 0 ? 'logs' : undefined,
     };
   }

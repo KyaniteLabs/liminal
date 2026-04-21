@@ -36,6 +36,14 @@ export interface ToolResultMessage {
   toolCall?: ToolCallResult;
 }
 
+export interface ProviderImageInput {
+  mimeType: string;
+  dataBase64: string;
+  width?: number;
+  height?: number;
+  label?: string;
+}
+
 export interface ProviderRequest {
   systemPrompt: string;
   userPrompt: string;
@@ -47,6 +55,8 @@ export interface ProviderRequest {
   tools?: ToolDefinition[];
   /** Tool results from previous calls (multi-turn tool use) */
   toolResults?: ToolResultMessage[];
+  /** Images attached to the user prompt for multimodal-capable evaluators/providers. */
+  imageInputs?: ProviderImageInput[];
 }
 
 // ── Response ──

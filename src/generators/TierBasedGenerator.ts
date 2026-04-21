@@ -26,6 +26,8 @@ export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;
   bypassCache?: boolean;
   contextBudget?: number;
+  /** Disable generic generator tool loop for non-code domains that validate directly. */
+  useGeneratorTools?: boolean;
   /** Layer role hint — influences prompt and created Layer config */
   layerRole?: LayerRole;
   /** Whether this layer should render with a transparent background */
@@ -199,21 +201,27 @@ export abstract class TierBasedGenerator {
       ? (builtPrompt.combined || builtPrompt.user)
       : builtPrompt.user;
 
-    const toolResult = await this.llm.generateWithToolLoop({
-      systemPrompt,
-      userPrompt,
-      tools: GENERATOR_TOOLS,
-      toolExecutor: createGeneratorToolExecutor(this.domain),
-      maxIterations: 3,
-      signal: options?.signal,
-    });
+    let response: LLMResponse;
+    if (options?.useGeneratorTools === false) {
+      response = await this.llm.generate(systemPrompt, userPrompt, options.signal, options.bypassCache);
+      response.code = this.normalizeGeneratedContent(response.code);
+    } else {
+      const toolResult = await this.llm.generateWithToolLoop({
+        systemPrompt,
+        userPrompt,
+        tools: GENERATOR_TOOLS,
+        toolExecutor: createGeneratorToolExecutor(this.domain),
+        maxIterations: 3,
+        signal: options?.signal,
+      });
 
-    let response: LLMResponse = {
-      code: this.normalizeGeneratedContent(toolResult.content),
-      success: toolResult.success,
-      error: toolResult.error,
-      thinking: this.extractToolThinking(toolResult),
-    };
+      response = {
+        code: this.normalizeGeneratedContent(toolResult.content),
+        success: toolResult.success,
+        error: toolResult.error,
+        thinking: this.extractToolThinking(toolResult),
+      };
+    }
 
     // Try to extract code from thinking if code is empty but thinking has content
     if (!response.code || response.code.trim() === '') {

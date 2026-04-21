@@ -659,12 +659,28 @@ Return ONLY a JSON object with this exact structure:
     "constraint": "<one-sentence boundary condition>"
   }
 }
-Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omit repairAdvice or set it to null.`;
+Include repairAdvice only when score is below 0.7. If score is 0.7 or above, omit repairAdvice or set it to null.
+If an image is attached, evaluate the visible rendered artifact first and use the code only to diagnose repair advice.`;
 
-  const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms`;
+  const screenshotNote = evidence.screenshot
+    ? `\nScreenshot: attached ${evidence.screenshot.mimeType}${evidence.screenshot.width && evidence.screenshot.height ? ` ${evidence.screenshot.width}x${evidence.screenshot.height}` : ''}`
+    : '\nScreenshot: not available; evaluate from code and timing only.';
+  const userPrompt = `Brief: ${brief}\nCode:\n${code}\nTiming: ${evidence.timingMs}ms${screenshotNote}`;
 
   try {
-    const response = await llm.generate(systemPrompt, userPrompt);
+    const response = evidence.screenshot
+      ? await llm.generateWithImages(
+          systemPrompt,
+          userPrompt,
+          [{
+            mimeType: evidence.screenshot.mimeType,
+            dataBase64: evidence.screenshot.dataBase64,
+            width: evidence.screenshot.width,
+            height: evidence.screenshot.height,
+            label: 'rendered-artifact',
+          }],
+        )
+      : await llm.generate(systemPrompt, userPrompt);
     const jsonMatch = response.code.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       return {

@@ -844,8 +844,9 @@ else if (cmd === 'studio') {
     console.log('  Note: Bubble Tea TUI not built — bridge-only mode (HTTP API active)');
     console.log('  Build TUI: cd bubbletea && go build -o ../dist/bubbletea .');
     console.log('');
-    process.on('SIGINT', async () => { await server.stop(); process.exit(0); });
-    process.on('SIGTERM', async () => { await server.stop(); process.exit(0); });
+    const shutdown = async () => { try { await server.stop(); } catch { /* already closing */ } process.exit(0); };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
   } else {
     const tui = spawn(binPath, [], {
       env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
@@ -939,8 +940,9 @@ else if (cmd === 'bubbletea') {
     console.log('  Note: Bubble Tea TUI not built — bridge-only mode (HTTP API active)');
     console.log('  Build TUI: cd bubbletea && go build -o ../dist/bubbletea .');
     console.log('');
-    process.on('SIGINT', async () => { await server.stop(); process.exit(0); });
-    process.on('SIGTERM', async () => { await server.stop(); process.exit(0); });
+    const shutdown = async () => { try { await server.stop(); } catch { /* already closing */ } process.exit(0); };
+    process.once('SIGINT', shutdown);
+    process.once('SIGTERM', shutdown);
   } else {
     const tui = spawn(binPath, [], {
       env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },

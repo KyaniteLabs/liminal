@@ -136,4 +136,6 @@ export type TuiBridgeEvent =
   | { type: 'cortex.lease_expired'; sessionId: string; tickNumber: number; data: Record<string, unknown> }
   // Cortex dashboard: formatted explainability report from /cortex command
   | { type: 'cortex.dashboard'; sessionId: string; content: string }
+  // Gardener events: autonomous taste/dream/emergence cycle results
+  | { type: 'gardener.cycle'; sessionId: string; cycle: number; mode: string; actions: number; budgetRemaining: number; taskBreakdown?: { fresh: number; replay: number; dream: number }; health: unknown }
   | { type: 'error'; sessionId: string; message: string };

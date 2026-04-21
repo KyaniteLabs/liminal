@@ -138,8 +138,8 @@ export class HeadlessRenderer {
           if (existsSync(candidate)) return candidate;
         }
       }
-    } catch {
-      // scan failed — fall through
+    } catch (err) {
+      Logger.debug('HeadlessRenderer', 'Browser path scan failed:', err);
     }
     return undefined;
   }

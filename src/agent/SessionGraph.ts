@@ -122,12 +122,14 @@ export class SessionGraph {
   // ── Persistence ──
 
   private persistTurn(turn: SessionTurnRecord): void {
+    if (!this.fs) return;
     const name = `session/${this.sessionId}/turn/${turn.turnId}`;
-    this.fs!.writeManifest(name, turn as unknown as Record<string, unknown>);
+    this.fs.writeManifest(name, turn as unknown as Record<string, unknown>);
   }
 
   private persistManifest(): void {
+    if (!this.fs) return;
     const name = `session/${this.sessionId}/manifest`;
-    this.fs!.writeManifest(name, this.manifest as unknown as Record<string, unknown>);
+    this.fs.writeManifest(name, this.manifest as unknown as Record<string, unknown>);
   }
 }

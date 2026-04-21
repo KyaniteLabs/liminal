@@ -57,18 +57,18 @@ export class GardenHealthMonitor {
 
     // Average lineage depth
     const avgLineageDepth = occupied.length > 0
-      ? occupied.reduce((sum, c) => sum + (c.elite!.lineage.parentIds.length + 1), 0) / occupied.length
+      ? occupied.reduce((sum, c) => sum + ((c.elite?.lineage.parentIds.length ?? -1) + 1), 0) / occupied.length
       : 0;
 
     // Average fertility
     const fertilityYield = occupied.length > 0
-      ? occupied.reduce((sum, c) => sum + c.elite!.signals.fertility, 0) / occupied.length
+      ? occupied.reduce((sum, c) => sum + (c.elite?.signals.fertility ?? 0), 0) / occupied.length
       : 0;
 
     // Taste alignment
     let tasteAlignment = 0;
     if (tasteAlignedIds && tasteAlignedIds.size > 0 && occupied.length > 0) {
-      const aligned = occupied.filter(c => tasteAlignedIds.has(c.elite!.id)).length;
+      const aligned = occupied.filter(c => c.elite && tasteAlignedIds.has(c.elite.id)).length;
       tasteAlignment = aligned / occupied.length;
     }
 

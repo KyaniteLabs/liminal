@@ -116,7 +116,8 @@ export class TestFailureDetector {
   private static fileExists(filePath: string): boolean {
     try {
       return existsSync(filePath);
-    } catch {
+    } catch (err) {
+      Logger.debug('TestFailureDetector', `existsSync failed for ${filePath}:`, err);
       return false;
     }
   }

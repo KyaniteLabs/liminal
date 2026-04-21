@@ -129,12 +129,13 @@ export const EventTypes = {
   LLM_REQUEST: 'llm:request',
   LLM_RESPONSE: 'llm:response',
   COMPOST_STAGE: 'compost:stage',
-  COMPOST_COLLISION: 'compost:collision',
+  COMPOST_COLLISION: 'compost:collision',   // TuiDebugger handles — no emitter wired yet
   COMPOST_SCORE: 'compost:score',
   COMPOST_SEED: 'compost:seed',
   LOOP_ITERATION: 'loop:iteration',
   LOOP_EVALUATION: 'loop:evaluation',
   SWARM_ROUND: 'swarm:round',
+  // Planned but not yet emitted — no producer wired:
   RENDER_SCREENSHOT: 'render:screenshot',
   EXPORT_PROGRESS: 'export:progress',
   GIT_COMMIT: 'git:commit',

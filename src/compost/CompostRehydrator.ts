@@ -86,8 +86,8 @@ export class CompostRehydrator {
     // Also try cross-domain pairs
     const domains = [...byDomain.keys()];
     if (domains.length >= 2) {
-      const topA = byDomain.get(domains[0])!.slice(0, 2);
-      const topB = byDomain.get(domains[1])!.slice(0, 2);
+      const topA = byDomain.get(domains[0])?.slice(0, 2) ?? [];
+      const topB = byDomain.get(domains[1])?.slice(0, 2) ?? [];
       const crossContent = this.mergeFragments([...topA, ...topB]);
       candidates.push({
         content: crossContent,

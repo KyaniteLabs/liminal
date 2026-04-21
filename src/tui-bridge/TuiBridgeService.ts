@@ -228,10 +228,12 @@ export class TuiBridgeService {
             budgetRemaining: result.budgetRemaining,
             taskBreakdown: result.taskBreakdown,
             health: result.health,
-          } as any);
+          });
         }
       },
-    );
+    ).catch((err) => {
+      Logger.warn('TuiBridgeService', 'Gardener background cycle failed:', err);
+    });
 
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
     // External consumers (Bubble Tea client, gallery) receive these via SSE
@@ -1193,7 +1195,8 @@ export class TuiBridgeService {
       try {
         const fs = LiminalFS.open(process.cwd());
         this.goalStore = new GoalStore(fs);
-      } catch {
+      } catch (err) {
+        Logger.debug('TuiBridgeService', 'GoalStore unavailable — LiminalFS could not be opened:', err);
         return null;
       }
     }

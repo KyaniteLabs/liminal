@@ -214,7 +214,7 @@ export class TuiBridgeService {
     // recombination, and emergence evaluation in the background. Uses empty
     // archive getters initially; the gardener handles empty state gracefully.
     this.gardener = new AutonomousGardener(TuiBridgeService.GARDENER_CONFIG);
-    this.gardener.start(
+    void this.gardener.start(
       () => [],   // Archive cells — populated by emergence pipeline at runtime
       () => [],   // Descriptor axes — populated by emergence pipeline at runtime
       (result: GardenerCycleResult) => {

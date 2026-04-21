@@ -31,6 +31,7 @@ import { GoalStore } from '../cortex/GoalStore.js';
 import { LiminalCortex } from '../cortex/LiminalCortex.js';
 import { CortexExplainer } from '../cortex/CortexExplainer.js';
 import type { CortexConfig } from '../cortex/types.js';
+import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
 
@@ -146,6 +147,20 @@ export class TuiBridgeService {
   private goalStore: GoalStore | null = null;
   // Cortex loop: background executive that fuses perception + goals into actions
   private cortexLoop: LiminalCortex | null = null;
+  // Autonomous gardener: coordinates taste learning, dream recombination, emergence cycles
+  private gardener: AutonomousGardener | null = null;
+  /** Default Gardener configuration */
+  private static readonly GARDENER_CONFIG = {
+    mode: 'co-create' as const,
+    totalBudget: 100,
+    stagnationWindow: 10,
+    explorationFraction: 0.3,
+    replayRatio: 0.4,
+    maxConsecutiveReplay: 3,
+    maxArchiveTasks: 10,
+    replayBiasStrength: 0.7,
+    minTasteScore: 0.5,
+  };
   /** Default Cortex configuration */
   private static readonly CORTEX_CONFIG: CortexConfig = {
     loopIntervalMs: 30000,   // 30s tick
@@ -194,6 +209,29 @@ export class TuiBridgeService {
       },
     });
     this.cortexLoop.start();
+
+    // Start the Autonomous Gardener — coordinates taste learning, dream
+    // recombination, and emergence evaluation in the background. Uses empty
+    // archive getters initially; the gardener handles empty state gracefully.
+    this.gardener = new AutonomousGardener(TuiBridgeService.GARDENER_CONFIG);
+    void this.gardener.start(
+      () => [],   // Archive cells — populated by emergence pipeline at runtime
+      () => [],   // Descriptor axes — populated by emergence pipeline at runtime
+      (result: GardenerCycleResult) => {
+        for (const sid of this.sessions.list()) {
+          this.stream.emitEphemeral(sid, {
+            type: 'gardener.cycle',
+            sessionId: sid,
+            cycle: result.cycle,
+            mode: result.mode,
+            actions: result.actions,
+            budgetRemaining: result.budgetRemaining,
+            taskBreakdown: result.taskBreakdown,
+            health: result.health,
+          } as any);
+        }
+      },
+    );
 
     // Wire SWARM_ROUND events from the EventBus to all active TUI sessions.
     // External consumers (Bubble Tea client, gallery) receive these via SSE
@@ -2025,6 +2063,10 @@ export class TuiBridgeService {
   }
   /** Stop cortex broadcast timer, loop, and perception bus. Call on shutdown. */
   destroy(): void {
+    if (this.gardener) {
+      this.gardener.stop();
+      this.gardener = null;
+    }
     if (this.cortexBroadcastTimer !== null) {
       clearInterval(this.cortexBroadcastTimer);
       this.cortexBroadcastTimer = null;

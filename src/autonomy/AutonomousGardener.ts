@@ -15,8 +15,10 @@ import type { GardenHealthMetrics } from './GardenHealthMonitor.js';
 import { ArchiveTaskPlanner } from './ArchiveTaskPlanner.js';
 import { PromisingStateSelector } from './PromisingStateSelector.js';
 import { ReplayBudgetPolicy } from './ReplayBudgetPolicy.js';
+import { ReplayBiasPolicy } from '../learning/ReplayBiasPolicy.js';
+import type { TasteModelWeights } from '../learning/TasteModelTrainer.js';
 import { DreamPlanner } from '../dreaming/DreamPlanner.js';
-import { RecombinationEngine } from '../dreaming/RecombinationEngine.js';
+import { RecombinationEngine, type RecombinationResult } from '../dreaming/RecombinationEngine.js';
 
 export interface GardenerCycleResult {
   cycle: number;
@@ -31,6 +33,10 @@ export interface GardenerCycleResult {
   plannedTasks?: number;
   /** Promising states selected for replay */
   promisingStates?: number;
+  /** Dream recombination results from this cycle */
+  dreamResults?: RecombinationResult[];
+  /** Number of taste-aligned entries in this cycle */
+  tasteAlignedCount?: number;
 }
 
 export interface AutonomousGardenerConfig {
@@ -48,6 +54,10 @@ export interface AutonomousGardenerConfig {
   maxConsecutiveReplay?: number;
   /** Max archive tasks per cycle (default: 10) */
   maxArchiveTasks?: number;
+  /** Taste bias strength for replay selection (0–1, default: 0.7) */
+  replayBiasStrength?: number;
+  /** Minimum taste score for priority replay (default: 0.5) */
+  minTasteScore?: number;
 }
 
 export class AutonomousGardener {
@@ -58,6 +68,7 @@ export class AutonomousGardener {
   private readonly archiveTaskPlanner: ArchiveTaskPlanner;
   private readonly promisingStateSelector: PromisingStateSelector;
   private readonly replayBudgetPolicy: ReplayBudgetPolicy;
+  private readonly replayBiasPolicy: ReplayBiasPolicy;
   private readonly dreamPlanner: DreamPlanner;
   private readonly recombinationEngine: RecombinationEngine;
   private readonly mode: GardenMode;
@@ -80,6 +91,10 @@ export class AutonomousGardener {
     this.replayBudgetPolicy = new ReplayBudgetPolicy({
       replayRatio: config.replayRatio,
       maxConsecutiveReplay: config.maxConsecutiveReplay,
+    });
+    this.replayBiasPolicy = new ReplayBiasPolicy({
+      biasStrength: config.replayBiasStrength,
+      minTasteScore: config.minTasteScore,
     });
     this.dreamPlanner = new DreamPlanner();
     this.recombinationEngine = new RecombinationEngine();
@@ -122,7 +137,13 @@ export class AutonomousGardener {
     let replayCount = 0;
     let dreamCount = 0;
     let promisingStatesCount = 0;
+    let tasteAlignedCount = 0;
+    const dreamResults: RecombinationResult[] = [];
     const budgetPerAction = 10;
+
+    const elites = cells
+      .map(c => c.elite)
+      .filter((e): e is NonNullable<typeof e> => e !== undefined);
 
     for (let i = 0; i < archivePlan.tasks.length; i++) {
       if (this.budgetRemaining < budgetPerAction) break;
@@ -144,24 +165,29 @@ export class AutonomousGardener {
         const dreamPlan = this.dreamPlanner.plan(cells, axes);
         for (const dt of dreamPlan.tasks) {
           if (dt.sources.length >= 2) {
-            this.recombinationEngine.recombine(
+            const result = this.recombinationEngine.recombine(
               { id: dt.sources[0].id, descriptor: dt.sources[0].descriptor },
               { id: dt.sources[1].id, descriptor: dt.sources[1].descriptor },
             );
+            dreamResults.push(result);
           }
         }
       } else {
-        // Replay/branch tasks: select promising states
+        // Replay/branch tasks: use taste-biased selection when model is loaded,
+        // fall back to PromisingStateSelector otherwise
         replayCount++;
-        const elites = cells
-          .map(c => c.elite)
-          .filter((e): e is NonNullable<typeof e> => e !== undefined);
-        const promising = this.promisingStateSelector.select(
-          elites,
-          preferenceCounts ?? new Map(),
-          3,
-        );
-        promisingStatesCount += promising.length;
+        if (this.replayBiasPolicy.isModelLoaded()) {
+          const tasteSelected = this.replayBiasPolicy.selectForReplay(elites, 3);
+          promisingStatesCount += tasteSelected.length;
+          tasteAlignedCount += tasteSelected.filter(e => this.replayBiasPolicy.isTasteAligned(e)).length;
+        } else {
+          const promising = this.promisingStateSelector.select(
+            elites,
+            preferenceCounts ?? new Map(),
+            3,
+          );
+          promisingStatesCount += promising.length;
+        }
       }
     }
 
@@ -189,6 +215,8 @@ export class AutonomousGardener {
       taskBreakdown: { fresh: freshCount, replay: replayCount, dream: dreamCount },
       plannedTasks: archivePlan.tasks.length,
       promisingStates: promisingStatesCount,
+      dreamResults: dreamResults.length > 0 ? dreamResults : undefined,
+      tasteAlignedCount,
     };
   }
 
@@ -256,5 +284,21 @@ export class AutonomousGardener {
 
   getPolicy(): GardenPolicy {
     return this.policy;
+  }
+
+  /**
+   * Load a trained taste model for replay bias.
+   * Once loaded, replay selection uses taste scores to prioritize
+   * artifacts aligned with user preferences.
+   */
+  loadTasteModel(weights: TasteModelWeights): void {
+    this.replayBiasPolicy.loadModel(weights);
+  }
+
+  /**
+   * Check whether a taste model is loaded and active.
+   */
+  isTasteModelLoaded(): boolean {
+    return this.replayBiasPolicy.isModelLoaded();
   }
 }

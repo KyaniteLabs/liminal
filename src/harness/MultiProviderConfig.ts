@@ -3,10 +3,13 @@
  * 
  * Supports:
  * - MiniMax (cloud)
+ * - OpenAI (cloud)
  * - LM Studio (local)
  * - Ollama (local/cloud)
  * - OpenRouter (cloud)
  * - GLM International Coding Plan API (cloud)
+ * - Moonshot/Kimi (cloud)
+ * - Custom OpenAI-compatible endpoints
  * 
  * Environment variables:
  * - LIMINAL_LLM_BASE_URL - Default base URL
@@ -14,7 +17,9 @@
  * - LIMINAL_LLM_API_KEY - Default API key
  * - MINIMAX_API_KEY - MiniMax specific
  * - GLM_API_KEY - GLM specific
+ * - OPENAI_API_KEY - OpenAI specific
  * - OPENROUTER_API_KEY - OpenRouter specific
+ * - MOONSHOT_API_KEY / KIMI_API_KEY - Moonshot/Kimi specific
  */
 
 import type { LLMConfig } from '../llm/LLMClient.js';

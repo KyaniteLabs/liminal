@@ -5,9 +5,9 @@
 
 > A creative coding agent that generates art, music, and shaders through iterative LLM-powered evolution.
 
-<!-- TODO: Add demo GIF showing a generation session in the terminal -->
-
 Liminal is a model-agnostic creative coding system. You give it a prompt — "a calming blue particle system" or "glitch techno beats with feedback loops" — and it generates, evaluates, and iteratively improves p5.js sketches, GLSL shaders, Three.js scenes, Strudel live-coding music, Hydra visuals, and more. It works with any OpenAI-compatible API, Ollama, LM Studio, or Anthropic.
+
+Liminal Studio provides a chat-first terminal UI ("Codex for creative generative art") with a background executive (LiminalCortex) that continuously improves the system. An Autonomous Gardener manages taste learning, dream recombinations, and emergence evaluation.
 
 ---
 
@@ -31,8 +31,11 @@ liminal --prompt "Create a calming blue particle system"
 # Chat-driven creative session
 liminal chat
 
-# Terminal UI (Bubble Tea — requires Go >= 1.21)
-pnpm run tui
+# Studio — chat-first TUI with background executive
+liminal studio
+
+# Full Bubble Tea TUI (requires Go >= 1.21)
+liminal bubbletea
 ```
 
 ---
@@ -57,6 +60,11 @@ Each iteration, Liminal:
 - **Music theory engine** — Euclidean rhythms, Markov chains, scales, chord progressions
 - **Voice/audio pipeline** — Maps audio features to visual parameters in real time
 - **Aesthetic guardrails** — Color harmony, layout, typography, and sound quality critics
+- **Liminal Studio** — Chat-first TUI agent with intent routing, autonomy modes (assist/co-create/autopilot), and streaming responses
+- **LiminalCortex** — Background executive that perceives system events, manages goals, and proposes improvements
+- **Emergence evaluation** — Novelty scoring, temporal structure analysis, perturbation probes, weighted ensemble critic
+- **Taste learning + dreaming** — Preference-informed generation, cross-modal dream recombinations, motif rehydration
+- **Autonomous Gardener** — Background creative steward that manages taste, dreaming, and emergence automatically
 - **Model-agnostic** — Works with any provider: MiniMax, OpenAI, Anthropic, Ollama, LM Studio, OpenRouter, GLM
 - **Circuit breaker** — Automatic provider failover with smart routing
 
@@ -70,6 +78,8 @@ Each iteration, Liminal:
 | **Swarm** | `--use-swarm` | Multiple personas generate in parallel, vote on best |
 | **Deep Collab** | `--routing-mode` | Dual-model routing (fast + powerful) |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code |
+| **Studio** | `liminal studio` | Chat-first TUI with autonomy modes |
+| **Cortex** | (in Studio) | Background executive manages goals and improvements |
 
 ---
 
@@ -83,9 +93,16 @@ liminal -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
 liminal -p "ambient glitch set" --mode live-music  # Music mode
 
 # Interactive
+liminal studio                                      # Studio TUI (chat-first agent)
 liminal chat                                        # Conversational creative session
 liminal bubbletea                                   # Full Bubble Tea TUI
-liminal tui                                         # Legacy TUI mode
+
+# Emergence + Evaluation
+liminal emergence score <file>                      # Score emergence dimensions
+liminal emergence probe <file>                      # Run perturbation probes
+liminal report provenance <file>                    # Trace creative lineage
+liminal report archive                              # Archive overview
+liminal report garden                               # Autonomous Gardener status
 
 # Compost Mill — creative material digestion
 liminal compost add <path>                          # Feed material to heap
@@ -151,7 +168,7 @@ src/
 ├── harness/        Meta-harness: failure logging, pattern detection, self-improvement
 ├── llm/            LLM client, provider adapters, circuit breaker
 ├── brain/          Artistic knowledge, prompt enhancement, creative preferences
-├── compost/        Compost Mill pipeline (digest, collide, score, promote)
+├── compost/        Compost Mill pipeline (digest, collide, score, promote, rehydrate)
 ├── evolution/      MAP-Elites, novelty archive, cross-domain crossover
 ├── music/          Theory engine, Euclidean rhythms, Markov chains
 ├── audio/          Audio analysis, pitch detection, visual mapping
@@ -161,11 +178,23 @@ src/
 ├── chat/           Interview-driven creative sessions
 ├── collab/         Multi-agent board, swarm, deep collaboration
 ├── config/         Configuration loading, role-based model selection
-├── tui/            Terminal UI
+├── agent/          StudioAgent — intent routing, autonomy modes, response composition
+├── cortex/         LiminalCortex — background executive, perception bus, goal management
+├── emergence/      Emergence evaluation — novelty, temporal structure, perturbation probes
+├── learning/       Taste learning — preference dataset, model training, runtime scoring
+├── dreaming/       Dream recombinations — queue planning, cross-modal transfer
+├── autonomy/       Autonomous Gardener — garden health, stagnation detection, policies
+├── evaluation/     Evaluation fabric — hybrid judges, holdout critics, scoring engines
+├── tui/            Terminal UI utilities, text sanitization, preview safety
 ├── tui-bridge/     HTTP/SSE bridge for Bubble Tea runtime
 ├── render/         Rendering pipeline
 ├── security/       SSRF protection, rate limiting, sandbox
-└── plugins/        Plugin system
+├── sandbox/        Sandboxed code execution
+├── embeddings/     Local embedding service (SBERT)
+├── quality/        Quality gates and checks
+├── product/        Product mode definitions and registry
+├── plugins/        Plugin system
+└── export/         Output export (files, galleries)
 ```
 
 ---

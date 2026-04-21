@@ -14,6 +14,7 @@
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { resolve, join, relative } from 'node:path';
 import type { TaskManifest, TaskClass, FileCoverage, SourceAnnotation } from './types.js';
+import { Logger } from '../utils/Logger.js';
 
 // ─── Configuration ──────────────────────────────────────────────────
 
@@ -78,7 +79,7 @@ export class TaskIntake {
   loadCoverage(): FileCoverage[] {
     const coveragePath = resolve(this.rootDir, this.options.coveragePath ?? 'coverage/vitest-result.json');
     if (!existsSync(coveragePath)) {
-      console.warn(`  WARN: Coverage file not found at ${coveragePath}. Run 'pnpm vitest run --coverage --reporter=json --outputFile=coverage/vitest-result.json' first.`);
+      Logger.warn('TaskIntake', `Coverage file not found at ${coveragePath}. Run 'pnpm vitest run --coverage --reporter=json --outputFile=coverage/vitest-result.json' first.`);
       return [];
     }
 

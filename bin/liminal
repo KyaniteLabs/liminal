@@ -841,27 +841,28 @@ else if (cmd === 'studio') {
 
   const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
   if (!fs.existsSync(binPath)) {
-    console.error('Bubble Tea binary not found at ' + binPath);
-    console.error('Build it first: cd bubbletea && go build -o ../dist/bubbletea .');
-    await server.stop();
-    process.exit(1);
+    console.log('  Note: Bubble Tea TUI not built — bridge-only mode (HTTP API active)');
+    console.log('  Build TUI: cd bubbletea && go build -o ../dist/bubbletea .');
+    console.log('');
+    process.on('SIGINT', async () => { await server.stop(); process.exit(0); });
+    process.on('SIGTERM', async () => { await server.stop(); process.exit(0); });
+  } else {
+    const tui = spawn(binPath, [], {
+      env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
+      stdio: 'inherit',
+    });
+
+    tui.on('exit', async (code) => {
+      await server.stop();
+      process.exit(code ?? 0);
+    });
+
+    tui.on('error', async (err) => {
+      console.error('Failed to launch Studio TUI:', err.message);
+      await server.stop();
+      process.exit(1);
+    });
   }
-
-  const tui = spawn(binPath, [], {
-    env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
-    stdio: 'inherit',
-  });
-
-  tui.on('exit', async (code) => {
-    await server.stop();
-    process.exit(code ?? 0);
-  });
-
-  tui.on('error', async (err) => {
-    console.error('Failed to launch Studio TUI:', err.message);
-    await server.stop();
-    process.exit(1);
-  });
 }
 else if (cmd === 'quality') {
   const subCmd = cmdArgs[0];
@@ -935,28 +936,28 @@ else if (cmd === 'bubbletea') {
   // Find the Bubble Tea binary
   const binPath = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'dist', 'bubbletea');
   if (!fs.existsSync(binPath)) {
-    console.error('Bubble Tea binary not found at ' + binPath);
-    console.error('Build it first: cd bubbletea && go build -o ../dist/bubbletea .');
-    await server.stop();
-    process.exit(1);
+    console.log('  Note: Bubble Tea TUI not built — bridge-only mode (HTTP API active)');
+    console.log('  Build TUI: cd bubbletea && go build -o ../dist/bubbletea .');
+    console.log('');
+    process.on('SIGINT', async () => { await server.stop(); process.exit(0); });
+    process.on('SIGTERM', async () => { await server.stop(); process.exit(0); });
+  } else {
+    const tui = spawn(binPath, [], {
+      env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
+      stdio: 'inherit',
+    });
+
+    tui.on('exit', async (code) => {
+      await server.stop();
+      process.exit(code ?? 0);
+    });
+
+    tui.on('error', async (err) => {
+      console.error('Failed to launch Bubble Tea:', err.message);
+      await server.stop();
+      process.exit(1);
+    });
   }
-
-  // Launch the Go TUI — it connects back to our bridge server
-  const tui = spawn(binPath, [], {
-    env: { ...process.env, LIMINAL_BRIDGE_URL: `http://localhost:${port}` },
-    stdio: 'inherit',
-  });
-
-  tui.on('exit', async (code) => {
-    await server.stop();
-    process.exit(code ?? 0);
-  });
-
-  tui.on('error', async (err) => {
-    console.error('Failed to launch Bubble Tea:', err.message);
-    await server.stop();
-    process.exit(1);
-  });
 }
 else if (cmd === 'fix') {
   // Fix command - auto-fix code issues with LLM assistance

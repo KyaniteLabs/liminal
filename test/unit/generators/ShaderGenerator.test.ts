@@ -96,4 +96,13 @@ describe('ShaderGenerator', () => {
     expect(result.valid).toBe(false);
     expect(result.error).toContain('references color');
   });
+
+  it('injects a missing fbm helper when generated shader calls fbm', () => {
+    const gen = new ShaderGenerator();
+    const wrapped = gen.wrapForGallery('precision mediump float;\nvoid main(){ float f = fbm(gl_FragCoord.xy); gl_FragColor=vec4(vec3(f),1.0); }');
+
+    expect(wrapped).toContain('float fbm(vec2 p)');
+    expect(wrapped).toContain('float noise(vec2 p)');
+    expect(wrapped).toContain('float f = fbm(gl_FragCoord.xy);');
+  });
 });

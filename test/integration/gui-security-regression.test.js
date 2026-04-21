@@ -579,18 +579,25 @@ describe('Security regression — Wave 7 red team remediation', () => {
     await fs.rm(galleryDir, { recursive: true, force: true }).catch(() => {});
   });
 
-  // F12: localhost opt-in default
-  it('LLMClient blocks localhost when LIMINAL_ALLOW_LOCALHOST_LLM is unset', async () => {
+  // F12: explicit local LLM providers are allowed without an extra env escape hatch
+  it('LLMClient allows known local LLM endpoints when LIMINAL_ALLOW_LOCALHOST_LLM is unset', async () => {
     const { LLMClient } = await import('../../dist/llm/LLMClient.js');
     const saved = process.env.LIMINAL_ALLOW_LOCALHOST_LLM;
+    const savedFetch = globalThis.fetch;
     delete process.env.LIMINAL_ALLOW_LOCALHOST_LLM;
     try {
+      globalThis.fetch = async () => {
+        throw new Error('local backend unavailable');
+      };
       const client = new LLMClient({ baseUrl: 'http://localhost:11434/v1', model: 'test' });
       const result = await client.complete({ prompt: 'hi', systemPrompt: 'test' });
-      // Implementation returns { success: false, error: ... } instead of throwing
-      expect(result.success).toBe(false);
-      expect(result.error).toMatch(/SSRF|localhost|private IP/i);
+      // No server is required for this regression: the important assertion is
+      // that localhost reaches the provider/transport layer instead of SSRF.
+      if (!result.success) {
+        expect(result.error).not.toMatch(/SSRF|localhost|private IP/i);
+      }
     } finally {
+      globalThis.fetch = savedFetch;
       if (saved !== undefined) process.env.LIMINAL_ALLOW_LOCALHOST_LLM = saved;
     }
   });

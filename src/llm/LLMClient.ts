@@ -467,9 +467,11 @@ export class LLMClient {
   /** Get or create the provider instance (async for DNS-based SSRF validation) */
   private async getProvider(): Promise<BaseProvider> {
     if (!this.provider) {
-      // SSRF validation on base URL before creating provider
-      // Default: localhost NOT allowed. Set LIMINAL_ALLOW_LOCALHOST_LLM=true to enable.
-      const allowLocalhost = process.env.LIMINAL_ALLOW_LOCALHOST_LLM === 'true';
+      // SSRF validation on base URL before creating provider.
+      // Local LLM providers are explicit first-class provider endpoints; keep
+      // arbitrary private IPs gated, but do not make LM Studio/Ollama require
+      // an extra env escape hatch for normal localhost use.
+      const allowLocalhost = process.env.LIMINAL_ALLOW_LOCALHOST_LLM === 'true' || this.isKnownLocalLlmEndpoint();
       const allowPrivateIPs = process.env.LIMINAL_ALLOW_PRIVATE_IP_LLM === 'true';
       const allowedHosts = getAllowedHostsFromEnv();
 
@@ -493,6 +495,19 @@ export class LLMClient {
       });
     }
     return this.provider;
+  }
+
+  private isKnownLocalLlmEndpoint(): boolean {
+    let hostname = '';
+    try {
+      hostname = new URL(this.config.baseUrl).hostname.toLowerCase();
+    } catch {
+      return false;
+    }
+    const isLoopback = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1';
+    if (!isLoopback) return false;
+    const provider = this.detectProvider();
+    return provider === Provider.LMSTUDIO || provider === Provider.OLLAMA;
   }
 
   /** Detect provider name from baseUrl or model for logging */

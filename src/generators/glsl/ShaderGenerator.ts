@@ -141,17 +141,57 @@ export class ShaderGenerator extends TierBasedGenerator {
       let extracted = fencedShader[1].trim();
       // Unescape any backslash-newline sequences left in the extracted GLSL
       extracted = extracted.replace(/\\n/g, '\n');
-      return extracted;
+      return this.injectCommonHelpers(extracted);
     }
     const htmlShader = code.match(/const\s+(?:fsSource|fragSrc|fs)\s*=\s*`([\s\S]*?)`/);
     if (htmlShader?.[1]) {
-      return htmlShader[1].trim();
+      return this.injectCommonHelpers(htmlShader[1].trim());
     }
     // Fallback: strip fences and unescape
-    return code
+    const cleaned = code
       .replace(/^\\?`{3}(?:glsl|frag|fragment|shader)?\s*\n?/i, '')
       .replace(/\\?`{3}\s*$/i, '')
       .replace(/\\n/g, '\n')
       .trim();
+    return this.injectCommonHelpers(cleaned);
+  }
+
+  private injectCommonHelpers(code: string): string {
+    const usesFbm = /\bfbm\s*\(/.test(code);
+    const definesFbm = /\b(?:float|vec[234])\s+fbm\s*\(/.test(code);
+    if (!usesFbm || definesFbm) return code;
+
+    const helper = [
+      'float hash(vec2 p) {',
+      '  p = fract(p * vec2(123.34, 345.45));',
+      '  p += dot(p, p + 34.345);',
+      '  return fract(p.x * p.y);',
+      '}',
+      'float noise(vec2 p) {',
+      '  vec2 i = floor(p);',
+      '  vec2 f = fract(p);',
+      '  vec2 u = f * f * (3.0 - 2.0 * f);',
+      '  return mix(mix(hash(i + vec2(0.0, 0.0)), hash(i + vec2(1.0, 0.0)), u.x),',
+      '             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);',
+      '}',
+      'float fbm(vec2 p) {',
+      '  float value = 0.0;',
+      '  float amplitude = 0.5;',
+      '  for (int i = 0; i < 5; i++) {',
+      '    value += amplitude * noise(p);',
+      '    p *= 2.0;',
+      '    amplitude *= 0.5;',
+      '  }',
+      '  return value;',
+      '}',
+      '',
+    ].join('\n');
+
+    const precisionMatch = code.match(/^\s*precision\s+(?:lowp|mediump|highp)\s+float\s*;\s*/m);
+    if (precisionMatch?.index !== undefined) {
+      const insertAt = precisionMatch.index + precisionMatch[0].length;
+      return `${code.slice(0, insertAt)}\n${helper}${code.slice(insertAt)}`;
+    }
+    return `${helper}${code}`;
   }
 }

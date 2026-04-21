@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { mkdtempSync, rmSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { RalphLoop } from '../../../src/core/RalphLoop.js';
@@ -23,6 +23,11 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
     originalApiKey = process.env.OPENAI_API_KEY;
     process.env.OPENAI_API_KEY = 'fake-api-key-for-tests';
     originalCwd = process.cwd;
+    mkdirSync(join(projectRoot, 'config'), { recursive: true });
+    writeFileSync(
+      join(projectRoot, 'config', 'liminal.json'),
+      JSON.stringify({ llm: { provider: 'lmstudio', baseUrl: 'http://localhost:1234/v1', model: 'test-model' } }),
+    );
     process.cwd = () => projectRoot;
 
     generateSpy = vi.spyOn(LLMClient.prototype, 'generateWithToolLoop').mockResolvedValue({
@@ -65,6 +70,7 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
       project: 'test-project',
       maxIterations: 1,
       minQualityScore: 0,
+      evalMode: 'legacy',
       galleryDir,
       git: { enabled: false },
     });

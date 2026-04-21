@@ -161,6 +161,7 @@ export class HydraGenerator extends TierBasedGenerator {
     clean = clean.replace(/(^|\n)(\s*)\.(solid|osc|noise|shape|voronoi|gradient|src)\s*\(/g, '$1$2$3(');
     clean = clean.replace(/\.screen\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
     clean = clean.replace(/\.output\s*\(\s*\)\s*;\s*\n\s*\.out\s*\(/g, '.out(');
+    clean = clean.replace(/\.draw\s*\(\s*\)\s*;?/g, '.out(o0)');
     clean = clean.replace(/\bs0\.(osc|noise|shape|voronoi|gradient|solid)\s*\(/g, '$1(');
     // Catch remaining s0.anyMethod() patterns that the specific regex above missed
     clean = clean.replace(/\bs0\.([a-zA-Z_$][\w$]*)\s*\(/g, '$1(');
@@ -256,6 +257,14 @@ export class HydraGenerator extends TierBasedGenerator {
       }
     }
     clean = fixLines.join('\n');
+
+    const writtenOutputs = new Set<string>();
+    for (const match of clean.matchAll(/\.out\s*\(\s*(o[0-3])?\s*\)/g)) {
+      writtenOutputs.add(match[1] || 'o0');
+    }
+    clean = clean.replace(/\bsrc\s*\(\s*(o[0-3])\s*\)/g, (match, output: string) =>
+      writtenOutputs.has(output) ? match : 'osc(4, 0.1, 1.0)',
+    );
 
     // Only filter out lines that are pure explanation (no code patterns at all)
     const lines = clean.split('\n');

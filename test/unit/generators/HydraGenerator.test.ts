@@ -167,8 +167,8 @@ describe('HydraGenerator', () => {
       'solid(0.05, 0.13, 0.19).add(o1).blend(o2).diff(o3).out(o0);',
     ].join('\n'));
     expect(sanitized).toContain('.add(src(o1))');
-    expect(sanitized).toContain('.blend(src(o2))');
-    expect(sanitized).toContain('.diff(src(o3))');
+    expect(sanitized).toContain('.blend(osc(4, 0.1, 1.0))');
+    expect(sanitized).toContain('.diff(osc(4, 0.1, 1.0))');
     expect(sanitized).toContain('.out(o1)');
   });
 

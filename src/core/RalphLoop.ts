@@ -1122,6 +1122,14 @@ export class RalphLoop {
         ContextAccumulation.save(iterationContext);
         normalizedOptions.onIteration?.(iterationContext);
         finalScore = evaluation.score;
+        let persistedCurrentIteration = false;
+
+        // Persist before any break gate below. High-quality first iterations can
+        // stop immediately, but they still need gallery and run artifacts.
+        previousCode = currentCode;
+        await persistence.saveIteration(iteration, currentCode);
+        await persistence.saveMergeStep(iteration);
+        persistedCurrentIteration = true;
 
         // Quality gate: break if score below minimum threshold (after giving it a chance)
         // Only apply quality gate after at least 2 iterations to allow initial attempts
@@ -1256,11 +1264,14 @@ export class RalphLoop {
         }
 
         // Store previous code before saving current iteration
-        previousCode = currentCode;
+        if (!persistedCurrentIteration) {
+          previousCode = currentCode;
 
-        // Persist to gallery
-        await persistence.saveIteration(iteration, currentCode);
-        await persistence.saveMergeStep(iteration);
+          // Persist to gallery
+          await persistence.saveIteration(iteration, currentCode);
+          await persistence.saveMergeStep(iteration);
+          persistedCurrentIteration = true;
+        }
 
         // Git: auto-commit iteration (agent manages this behind the scenes)
         await gitIntegration.commitIteration({

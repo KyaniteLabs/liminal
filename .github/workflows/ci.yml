@@ -25,6 +25,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm build
+      - name: Prompt surface audit
+        run: npx tsx scripts/ci/check-prompt-surface.ts
       - run: pnpm test:ci:fast
       - name: Test quality check
         run: pnpm test:quality

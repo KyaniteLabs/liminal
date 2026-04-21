@@ -132,6 +132,13 @@ describe('HydraGenerator', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('rejects executable camera input before s0 chain repair can hide it', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('s0.initCam();\nsrc(s0).add(osc(4, 0.1, 1).color(1, 0.2, 0.8)).out(o0)');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('must not depend on camera or screen input');
+  });
+
   it('strips hallucinated initFBOTriangle calls during sanitize', () => {
     const gen = new TestableHydraGenerator();
     const result = gen.validateForTest('initFBOTriangle();\ns1.initFBOTriangle();\nosc(4, 0.1, 1).color(1, 0.2, 0.8).kaleid(4).out(o0)\nnoise(3, 0.2).color(0.9, 0.87, 0.3).blend(osc(2, 0.05, 1)).out(o1)\nrender(o0)');
@@ -207,6 +214,16 @@ describe('HydraGenerator', () => {
     expect(gen.validateForTest(sanitized).valid).toBe(true);
   });
 
+  it('collapses repeated source-call tails from provider corruption', () => {
+    const gen = new TestableHydraGenerator();
+    const sanitized = (gen as any).sanitizeCode(
+      'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).blend(noise(2, 0.3, 0.2)(2, 0.3, 0.2)(2, 0.3, 0.2), 0.5)).color(0.37, 0.92, 0.95).out(o0)',
+    );
+    expect(sanitized).toContain('noise(2, 0.3, 0.2), 0.5');
+    expect(sanitized).not.toContain(')(2, 0.3, 0.2)');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
   it('normalizes const source assignments that shadow Hydra functions', () => {
     const gen = new TestableHydraGenerator();
     const code = [
@@ -259,6 +276,28 @@ describe('HydraGenerator', () => {
     expect(result).toContain('render()');
   });
 
+  it('sanitizeCode appends render for single-output headless visibility', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 'solid(0.05, 0.13, 0.19).add(osc(4, 0.1, 1.0).color(0.95, 0.61, 0.62)).blend(voronoi(5, 0.3, 0.2).color(0.37, 0.92, 0.95)).out(o0)',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('single output');
+    expect(result).toContain('.out(o0)');
+    expect(result).toContain('render()');
+  });
+
+  it('sanitizeCode appends render for repeated default output chains', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: 'osc(1, 0.1, 1.0).add(noise(2, 0.3)).color(0.95, 0.61, 0.62).out();\nosc(3, 0.2, 1.0).mult(shape(1, 0.5)).color(0.37, 0.93, 0.95).out();',
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('two default outputs');
+    expect(result.match(/\.out\(/g)?.length).toBe(2);
+    expect(result).toContain('render()');
+  });
+
   it('repairs leading source dots and screen-to-out chains from local model output', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: '.solid(0.05, 0.13, 0.19).add(noise(3, 0.2)).color(1, 0.2, 0.8).screen();\n.out(o0)',
@@ -289,7 +328,21 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender()');
+  });
+
+  it('does not treat forbidden camera strings in prose as generated code', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: [
+        'Thinking Process:',
+        '* Do not use `s0.initCam()`, `s0.initScreen()`, or `src(s0)`.',
+        'Final code: `osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()`',
+      ].join('\n'),
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('extract hydra despite prose constraints');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()\nrender()');
   });
 
   it('combines a final inline hydra snippet with trailing out call', async () => {
@@ -299,7 +352,7 @@ describe('HydraGenerator', () => {
     });
     const gen = new HydraGenerator();
     const result = await gen.generate('extract hydra trailing out');
-    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)\n.out(o0)\nrender()');
   });
 
   it('repairs invalid s0 source methods from local model output', async () => {

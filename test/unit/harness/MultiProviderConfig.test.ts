@@ -81,6 +81,15 @@ describe('detectProviderFromUrl', () => {
     expect(detectProviderFromUrl('https://openrouter.ai/api/v1')).toBe('openrouter');
   });
 
+  it('detects OpenAI from the official OpenAI endpoint', () => {
+    expect(detectProviderFromUrl('https://api.openai.com/v1')).toBe('openai');
+  });
+
+  it('does not classify custom OpenAI-compatible paths as OpenAI', () => {
+    expect(detectProviderFromUrl('http://localhost:4000/openai/v1')).toBe('custom');
+    expect(detectProviderFromUrl('https://proxy.example.com/openai/v1')).toBe('custom');
+  });
+
   it('detects GLM from "bigmodel" substring', () => {
     expect(detectProviderFromUrl('https://open.bigmodel.cn/api/paas/v4')).toBe('glm');
   });
@@ -139,6 +148,11 @@ describe('getActiveProvider', () => {
     expect(getActiveProvider()).toBe('openrouter');
   });
 
+  it('picks openai when OPENAI_API_KEY is set (no base URL)', () => {
+    process.env.OPENAI_API_KEY = 'oai-key';
+    expect(getActiveProvider()).toBe('openai');
+  });
+
   it('honors LIMINAL_LLM_PROVIDER when base URL is not set', () => {
     process.env.LIMINAL_LLM_PROVIDER = 'glm';
     expect(getActiveProvider()).toBe('glm');
@@ -182,6 +196,16 @@ describe('getProviderConfig', () => {
     expect(config!.baseUrl).toBe('https://api.z.ai/api/anthropic');
     expect(config!.model).toBe('glm-5.1');
     expect(config!.apiStyle).toBe('anthropic');
+  });
+
+  it('returns OpenAI config with OPENAI_API_KEY', () => {
+    process.env.OPENAI_API_KEY = 'oai-key';
+    const config = getProviderConfig('openai' as ProviderType);
+    expect(config).not.toBeNull();
+    expect(config!.provider).toBe('openai');
+    expect(config!.apiKey).toBe('oai-key');
+    expect(config!.baseUrl).toBe('https://api.openai.com/v1');
+    expect(config!.apiStyle).toBe('openai');
   });
 
   it('returns undefined apiKey for local providers (ollama)', () => {
@@ -294,6 +318,11 @@ describe('isProviderConfigured', () => {
     expect(isProviderConfigured('openrouter')).toBe(true);
   });
 
+  it('returns true for openai with OPENAI_API_KEY set', () => {
+    process.env.OPENAI_API_KEY = 'key';
+    expect(isProviderConfigured('openai' as ProviderType)).toBe(true);
+  });
+
   it('returns false for custom without any API key', () => {
     expect(isProviderConfigured('custom')).toBe(false);
   });
@@ -330,11 +359,12 @@ describe('listConfiguredProviders', () => {
     process.env.GLM_API_KEY = 'k2';
     process.env.OPENROUTER_API_KEY = 'k3';
     process.env.LIMINAL_LLM_API_KEY = 'k4';
+    process.env.OPENAI_API_KEY = 'k5';
     const providers = listConfiguredProviders();
     expect(providers).toEqual(
-      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openrouter', 'glm', 'custom']),
+      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openai', 'openrouter', 'glm', 'custom']),
     );
-    expect(providers).toHaveLength(6);
+    expect(providers).toHaveLength(7);
   });
 });
 
@@ -539,11 +569,11 @@ describe('getHarnessProviderConfig', () => {
 // ===========================================================================
 
 describe('PROVIDER_TEMPLATES', () => {
-  it('contains all eight provider types (incl. kimi)', () => {
+  it('contains all nine provider types (incl. openai and kimi)', () => {
     const keys = Object.keys(PROVIDER_TEMPLATES) as ProviderType[];
-    expect(keys).toHaveLength(8);
+    expect(keys).toHaveLength(9);
     expect(keys).toEqual(
-      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openrouter', 'glm', 'moonshot', 'kimi', 'custom']),
+      expect.arrayContaining(['minimax', 'lmstudio', 'ollama', 'openai', 'openrouter', 'glm', 'moonshot', 'kimi', 'custom']),
     );
   });
 

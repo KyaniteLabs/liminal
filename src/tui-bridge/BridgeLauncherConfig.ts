@@ -10,6 +10,7 @@ export interface BridgeProviderConfig {
 const API_KEY_REQUIRED_PROVIDERS = new Set<ProviderType>([
   'minimax',
   'glm',
+  'openai',
   'openrouter',
   'moonshot',
   'kimi',
@@ -76,6 +77,7 @@ export function applyBridgeProviderEnv(
 
   if (config.provider === 'glm') env.GLM_API_KEY = config.apiKey;
   if (config.provider === 'minimax') env.MINIMAX_API_KEY = config.apiKey;
+  if (config.provider === 'openai') env.OPENAI_API_KEY = config.apiKey;
   if (config.provider === 'custom') env.OPENAI_API_KEY = config.apiKey;
   if (config.provider === 'openrouter') env.OPENROUTER_API_KEY = config.apiKey;
   if (config.provider === 'moonshot' || config.provider === 'kimi') {

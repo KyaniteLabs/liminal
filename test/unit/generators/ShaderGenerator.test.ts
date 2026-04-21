@@ -105,4 +105,28 @@ describe('ShaderGenerator', () => {
     expect(wrapped).toContain('float noise(vec2 p)');
     expect(wrapped).toContain('float f = fbm(gl_FragCoord.xy);');
   });
+
+  it('repairs local-model palette helpers that take float but use vec2 p', () => {
+    const gen = new ExposedShaderGenerator();
+    const code = [
+      'precision highp float;',
+      'uniform vec2 u_resolution;',
+      'float noise(vec2 p){ return p.x; }',
+      'vec3 palette(float t) {',
+      '  float n = noise(p * 0.5);',
+      '  return vec3(n);',
+      '}',
+      'void main(){',
+      '  vec2 p = gl_FragCoord.xy / u_resolution.xy;',
+      '  vec3 col = palette(p);',
+      '  gl_FragColor = vec4(col, 1.0);',
+      '}',
+    ].join('\n');
+
+    const sanitized = (gen as any).sanitizeShaderCode(code);
+
+    expect(sanitized).toContain('vec3 palette(vec2 p)');
+    expect(sanitized).toContain('vec3 col = palette(p);');
+    expect(gen.validate(sanitized).valid).toBe(true);
+  });
 });

@@ -3,10 +3,13 @@
  * 
  * Supports:
  * - MiniMax (cloud)
+ * - OpenAI (cloud)
  * - LM Studio (local)
  * - Ollama (local/cloud)
  * - OpenRouter (cloud)
  * - GLM International Coding Plan API (cloud)
+ * - Moonshot/Kimi (cloud)
+ * - Custom OpenAI-compatible endpoints
  * 
  * Environment variables:
  * - LIMINAL_LLM_BASE_URL - Default base URL
@@ -14,7 +17,9 @@
  * - LIMINAL_LLM_API_KEY - Default API key
  * - MINIMAX_API_KEY - MiniMax specific
  * - GLM_API_KEY - GLM specific
+ * - OPENAI_API_KEY - OpenAI specific
  * - OPENROUTER_API_KEY - OpenRouter specific
+ * - MOONSHOT_API_KEY / KIMI_API_KEY - Moonshot/Kimi specific
  */
 
 import type { LLMConfig } from '../llm/LLMClient.js';
@@ -61,7 +66,7 @@ function getApiKeyFromConfig(provider: string): string | undefined {
   return providers?.[provider]?.apiKey;
 }
 
-export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
+export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openai' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
 
 const PLACEHOLDER_API_KEY_PATTERNS = [
   /^YOUR[_-]/i,
@@ -119,6 +124,16 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     baseUrl: 'http://localhost:11434',
     model: 'llama3.2',
     apiStyle: 'ollama',
+    temperature: 0.7,
+    maxTokens: 16384,
+  },
+  openai: {
+    provider: 'openai',
+    name: 'OpenAI',
+    description: 'OpenAI API (OpenAI-compatible chat completions)',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.4',
+    apiStyle: 'openai',
     temperature: 0.7,
     maxTokens: 16384,
   },
@@ -206,6 +221,9 @@ function getProviderConfigInternal(
     case 'openrouter':
       apiKey = firstUsableApiKey(process.env.OPENROUTER_API_KEY, fileApiKey);
       break;
+    case 'openai':
+      apiKey = firstUsableApiKey(selectApiKeyForEndpoint(baseUrl, model, ['LLM_API_KEY', 'OPENAI_API_KEY']), fileApiKey);
+      break;
     case 'ollama':
     case 'lmstudio':
       // Local providers don't need API keys
@@ -232,13 +250,22 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
  * Detect provider from base URL
  */
 export function detectProviderFromUrl(baseUrl: string): ProviderType {
-  if (baseUrl.includes('minimax')) return 'minimax';
-  if (baseUrl.includes('openrouter')) return 'openrouter';
-  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
-  if (baseUrl.includes('kimi.com')) return 'kimi';
-  if (baseUrl.includes('moonshot')) return 'moonshot';
-  if (baseUrl.includes('localhost:1234')) return 'lmstudio';
-  if (baseUrl.includes('localhost:11434')) return 'ollama';
+  const normalized = baseUrl.toLowerCase();
+  let host = '';
+  try {
+    host = new URL(normalized).hostname;
+  } catch {
+    host = '';
+  }
+
+  if (normalized.includes('minimax')) return 'minimax';
+  if (normalized.includes('openrouter')) return 'openrouter';
+  if (host === 'api.openai.com') return 'openai';
+  if (normalized.includes('z.ai') || normalized.includes('bigmodel') || normalized.includes('glm')) return 'glm';
+  if (normalized.includes('kimi.com')) return 'kimi';
+  if (normalized.includes('moonshot')) return 'moonshot';
+  if (normalized.includes('localhost:1234')) return 'lmstudio';
+  if (normalized.includes('localhost:11434')) return 'ollama';
   return 'custom';
 }
 
@@ -267,6 +294,7 @@ export function getActiveProvider(): ProviderType {
   if (!isPlaceholderApiKey(process.env.GLM_API_KEY)) return 'glm';
   if (!isPlaceholderApiKey(process.env.MOONSHOT_API_KEY)) return 'moonshot';
   if (!isPlaceholderApiKey(process.env.OPENROUTER_API_KEY)) return 'openrouter';
+  if (!isPlaceholderApiKey(process.env.OPENAI_API_KEY)) return 'openai';
 
   // Default to Ollama (local)
   return 'ollama';

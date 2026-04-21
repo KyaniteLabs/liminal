@@ -48,16 +48,14 @@ describe('Provider string characterization', () => {
   
   it('should match ProviderType type definition', () => {
     // From MultiProviderConfig.ts:
-    // type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'custom';
-    
+    // type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openai' | 'openrouter' | 'glm' | 'custom';
+
     const providerTypeValues = [
-      'minimax', 'lmstudio', 'ollama', 'openrouter', 'glm', 'custom'
+      'minimax', 'lmstudio', 'ollama', 'openai', 'openrouter', 'glm', 'custom'
     ];
-    
-    // Note: 'openai' is used in ConfigLoader but not in MultiProviderConfig's ProviderType
-    // This discrepancy needs to be preserved/addressed during migration
-    expect(providerTypeValues).not.toContain('openai');
-    expect(providerTypeValues).toHaveLength(6);
+
+    expect(providerTypeValues).toContain('openai');
+    expect(providerTypeValues).toHaveLength(7);
   });
   
   it('should document files with magic provider strings', () => {

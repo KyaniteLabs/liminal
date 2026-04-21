@@ -112,7 +112,7 @@ vi.mock('../../../src/agent/SessionGraph.js', () => ({
 }));
 
 vi.mock('../../../src/utils/Logger.js', () => ({
-  Logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn() },
+  Logger: { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() },
 }));
 
 vi.mock('../../../src/harness/agent/index.js', () => ({

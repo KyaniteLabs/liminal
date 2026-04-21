@@ -132,6 +132,13 @@ describe('HydraGenerator', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('rejects executable camera input before s0 chain repair can hide it', () => {
+    const gen = new TestableHydraGenerator();
+    const result = gen.validateForTest('s0.initCam();\nsrc(s0).add(osc(4, 0.1, 1).color(1, 0.2, 0.8)).out(o0)');
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('must not depend on camera or screen input');
+  });
+
   it('strips hallucinated initFBOTriangle calls during sanitize', () => {
     const gen = new TestableHydraGenerator();
     const result = gen.validateForTest('initFBOTriangle();\ns1.initFBOTriangle();\nosc(4, 0.1, 1).color(1, 0.2, 0.8).kaleid(4).out(o0)\nnoise(3, 0.2).color(0.9, 0.87, 0.3).blend(osc(2, 0.05, 1)).out(o1)\nrender(o0)');

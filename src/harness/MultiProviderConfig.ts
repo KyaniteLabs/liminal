@@ -250,14 +250,22 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
  * Detect provider from base URL
  */
 export function detectProviderFromUrl(baseUrl: string): ProviderType {
-  if (baseUrl.includes('minimax')) return 'minimax';
-  if (baseUrl.includes('openrouter')) return 'openrouter';
-  if (baseUrl.includes('api.openai.com') || baseUrl.includes('openai')) return 'openai';
-  if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
-  if (baseUrl.includes('kimi.com')) return 'kimi';
-  if (baseUrl.includes('moonshot')) return 'moonshot';
-  if (baseUrl.includes('localhost:1234')) return 'lmstudio';
-  if (baseUrl.includes('localhost:11434')) return 'ollama';
+  const normalized = baseUrl.toLowerCase();
+  let host = '';
+  try {
+    host = new URL(normalized).hostname;
+  } catch {
+    host = '';
+  }
+
+  if (normalized.includes('minimax')) return 'minimax';
+  if (normalized.includes('openrouter')) return 'openrouter';
+  if (host === 'api.openai.com') return 'openai';
+  if (normalized.includes('z.ai') || normalized.includes('bigmodel') || normalized.includes('glm')) return 'glm';
+  if (normalized.includes('kimi.com')) return 'kimi';
+  if (normalized.includes('moonshot')) return 'moonshot';
+  if (normalized.includes('localhost:1234')) return 'lmstudio';
+  if (normalized.includes('localhost:11434')) return 'ollama';
   return 'custom';
 }
 

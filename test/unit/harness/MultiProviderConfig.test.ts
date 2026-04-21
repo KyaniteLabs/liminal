@@ -85,6 +85,11 @@ describe('detectProviderFromUrl', () => {
     expect(detectProviderFromUrl('https://api.openai.com/v1')).toBe('openai');
   });
 
+  it('does not classify custom OpenAI-compatible paths as OpenAI', () => {
+    expect(detectProviderFromUrl('http://localhost:4000/openai/v1')).toBe('custom');
+    expect(detectProviderFromUrl('https://proxy.example.com/openai/v1')).toBe('custom');
+  });
+
   it('detects GLM from "bigmodel" substring', () => {
     expect(detectProviderFromUrl('https://open.bigmodel.cn/api/paas/v4')).toBe('glm');
   });

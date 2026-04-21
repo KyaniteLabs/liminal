@@ -157,6 +157,7 @@ export class ShaderGenerator extends TierBasedGenerator {
   }
 
   private injectCommonHelpers(code: string): string {
+    code = this.repairCommonLocalModelIssues(code);
     const usesFbm = /\bfbm\s*\(/.test(code);
     const definesFbm = /\b(?:float|vec[234])\s+fbm\s*\(/.test(code);
     if (!usesFbm || definesFbm) return code;
@@ -193,5 +194,13 @@ export class ShaderGenerator extends TierBasedGenerator {
       return `${code.slice(0, insertAt)}\n${helper}${code.slice(insertAt)}`;
     }
     return `${helper}${code}`;
+  }
+
+  private repairCommonLocalModelIssues(code: string): string {
+    const hasPaletteVec2Call = /\bpalette\s*\(\s*p\s*\)/.test(code);
+    const paletteBodyUsesP = /\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)\s*\{[\s\S]*?\bp\b[\s\S]*?\}/.test(code);
+    if (!hasPaletteVec2Call || !paletteBodyUsesP) return code;
+
+    return code.replace(/\bvec3\s+palette\s*\(\s*float\s+\w+\s*\)/, 'vec3 palette(vec2 p)');
   }
 }

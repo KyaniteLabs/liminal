@@ -142,6 +142,7 @@ export class HydraGenerator extends TierBasedGenerator {
     clean = clean.replace(/([,(]\s*)s(\d+)(\s*[,)\]])/g, (_match, prefix: string, index: string, suffix: string) => `${prefix}src(${outputBufferFor(index)})${suffix}`);
     clean = clean.replace(/\.(add|blend|mult|diff|modulate)\s*\(\s*o([0-3])/g, '.$1(src(o$2)');
     clean = clean.replace(/\bsrc\s*\(\s*((?:osc|noise|shape|voronoi|gradient|solid)\s*\([^)]*\))\s*\)/g, '$1');
+    clean = this.collapseRepeatedSourceCallTails(clean);
 
     const inlineHydraSnippets = [...clean.matchAll(/`([^`\n]*(?:osc|noise|shape|voronoi|gradient|solid)[^`]*)`/g)]
       .map(match => match[1].trim())
@@ -302,21 +303,33 @@ export class HydraGenerator extends TierBasedGenerator {
     if (hasVisibleSource && !clean.includes('.out(') && !clean.includes('render(')) {
       clean += '\n.out(o0)';
     }
-    
-    // Ensure there's a render call if multiple outputs
-    const hasMultipleOutputs = clean.includes('.out(o1)') || clean.includes('.out(o2)') || clean.includes('.out(o3)');
-    if (hasMultipleOutputs) {
+
+    // Headless Hydra screenshots are reliably visible when the patch explicitly
+    // asks the runtime to render its output set. render(o0) can stay black in
+    // Chromium even when o0 has been written, so normalize to render().
+    if (/\.out\s*\(/.test(clean)) {
       if (!clean.includes('render(')) {
         clean += '\nrender()';
       } else {
-        // render(o0) with multiple outputs often shows a blank/minimal buffer;
-        // use render() (no args) so every output is composited in the headless preview
         clean = clean.replace(/render\s*\(\s*o0\s*\)/g, 'render()');
         clean = clean.replace(/render\s*\(\s*all\s*\)/g, 'render()');
       }
     }
     
     return clean.trim();
+  }
+
+  private collapseRepeatedSourceCallTails(code: string): string {
+    let clean = code;
+    let previous: string;
+    do {
+      previous = clean;
+      clean = clean.replace(
+        /\b(osc|noise|shape|voronoi|gradient|solid)\(([^()\n]*)\)\s*\([^()\n]*\)/g,
+        '$1($2)',
+      );
+    } while (clean !== previous);
+    return clean;
   }
 
   /**

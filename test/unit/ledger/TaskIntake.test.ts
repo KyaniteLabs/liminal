@@ -207,6 +207,30 @@ describe('TaskIntake', () => {
       const specs = intake.generateSpecs(coverage, []);
       expect(specs[0].lane).toBe(1);
     });
+
+    it('classifies small low-coverage files as leaf', () => {
+      const intake = new TaskIntake({ rootDir: tempDir });
+      const coverage = [{ path: 'src/small.ts', statementPct: 10, branchPct: 0, functionPct: 0, statementTotal: 30 }];
+      const specs = intake.generateSpecs(coverage, []);
+      expect(specs[0].taskClass).toBe('leaf');
+    });
+
+    it('deduplicates annotations against coverage files', () => {
+      const intake = new TaskIntake({ rootDir: tempDir });
+      const coverage = [{ path: 'src/feature.ts', statementPct: 25, branchPct: 10, functionPct: 30, statementTotal: 80 }];
+      const annotations = [{ file: 'src/feature.ts', line: 10, kind: 'TODO' as const, text: 'add retry logic for transient failures' }];
+      const specs = intake.generateSpecs(coverage, annotations);
+      // Coverage task present, annotation skipped (same file)
+      expect(specs).toHaveLength(1);
+      expect(specs[0].taskClass).toBe('wiring');
+    });
+
+    it('skips deferred module annotations', () => {
+      const intake = new TaskIntake({ rootDir: tempDir });
+      const annotations = [{ file: 'src/gui/Button.ts', line: 5, kind: 'FIXME' as const, text: 'this rendering logic needs a fix for dark mode' }];
+      const specs = intake.generateSpecs([], annotations);
+      expect(specs).toHaveLength(0);
+    });
   });
 
   describe('run (integration)', () => {

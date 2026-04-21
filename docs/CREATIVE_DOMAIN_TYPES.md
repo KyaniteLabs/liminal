@@ -11,7 +11,12 @@ Type-first creative ideation, inspired by SEED.
 | **Scene** | Three.js | Deep | 3D worlds, spatial experiences | `.html` (self-contained) |
 | **Pattern** | Strudel | Standard | Live coding, algorithmic music | `.txt` (Strudel REPL) |
 | **Visuals** | Hydra | Tight | Video feedback, live performance | `.js` (Hydra syntax) |
-| **Video** | Remotion | Deep | Animated content, motion graphics | `.tsx` + video render |
+| **Synth** | Tone.js | Standard | Web Audio synthesis, instruments | `.js` |
+| **Motion** | Revideo | Deep | Programmatic video, motion graphics | `.ts` + video render |
+| **Page** | HTML | Tight | Full web pages, interactive content | `.html` |
+| **Glyph** | ASCII | Tight | Terminal art, text visualization | `.txt` or `.js` |
+| **Kinetic** | Kinetic Typography | Standard | Animated text, motion type | `.html` + CSS |
+| **Prose** | TextGen | Standard | Creative writing, poetry, prompts | `.txt` |
 
 ## Proposed Expansions
 

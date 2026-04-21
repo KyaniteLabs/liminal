@@ -10,7 +10,7 @@ This directory documents the unique, innovative features of Liminal.
 
 **What it does**: Captures LLM reasoning traces, analyzes them with two questions ("WHERE DID IT GO WRONG?" / "HOW CAN I COMMUNICATE BETTER?"), and adapts the system.
 
-**Status**: ✅ **FULLY IMPLEMENTED** - All 9 generators use this
+**Status**: ✅ **FULLY IMPLEMENTED** - All 11 generators use this
 
 **Unique Aspects**:
 - Generator thinking and harness thinking are **kept separate**
@@ -55,7 +55,7 @@ Both features embody:
 
 | Component | Status |
 |-----------|--------|
-| All 9 generators | ✅ Wired |
+| All 11 generators | ✅ Wired |
 | Thinking extraction | ✅ `LLMClient.ts` |
 | Code recovery | ✅ `TierBasedGenerator.ts` |
 | Generator thinking storage | ✅ `ThinkingSeparation.ts` |

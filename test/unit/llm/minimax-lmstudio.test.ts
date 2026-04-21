@@ -310,4 +310,88 @@ describe('MiniMaxProvider dual-mode', () => {
     expect(capturedHeaders['Authorization']).toBe('Bearer test-key-123');
     expect(capturedHeaders['x-api-key']).toBeUndefined();
   });
+
+  it('sends tools and tool-result continuations in Anthropic mode', async () => {
+    let capturedBody: any;
+    const stub = (_url: any, options: any) => {
+      capturedBody = JSON.parse(options.body);
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          content: [{ type: 'tool_use', id: 'toolu_1', name: 'submit_code', input: { code: 'const x = 1;' } }],
+          model: 'MiniMax-M2.7',
+        }),
+      } as Response);
+    };
+    global.fetch = stub as any;
+
+    const provider = new MiniMaxProvider({
+      baseUrl: 'https://api.minimax.io/anthropic',
+      model: 'MiniMax-M2.7',
+      apiKey: 'test-key',
+    });
+
+    const first = await provider.generate({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+      tools: [{
+        name: 'submit_code',
+        description: 'submit final code',
+        parameters: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] },
+      }],
+    });
+
+    expect(first.isOk()).toBe(true);
+    expect(first.value.toolCalls?.[0]).toEqual({
+      id: 'toolu_1',
+      name: 'submit_code',
+      arguments: '{"code":"const x = 1;"}',
+    });
+    expect(capturedBody.tools[0]).toEqual({
+      name: 'submit_code',
+      description: 'submit final code',
+      input_schema: { type: 'object', properties: { code: { type: 'string' } }, required: ['code'] },
+    });
+
+    const responseStub = (_url: any, options: any) => {
+      capturedBody = JSON.parse(options.body);
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({
+          content: [{ type: 'text', text: 'done' }],
+          model: 'MiniMax-M2.7',
+        }),
+      } as Response);
+    };
+    global.fetch = responseStub as any;
+
+    await provider.generate({
+      systemPrompt: 'sys',
+      userPrompt: 'final',
+      tools: [],
+      toolResults: [{
+        toolCallId: 'toolu_1',
+        result: '{"ok":true}',
+        toolCall: { id: 'toolu_1', name: 'submit_code', arguments: JSON.stringify({ code: 'const x = 1;' }) },
+      }],
+    });
+
+    expect(capturedBody.messages[1]).toEqual({
+      role: 'assistant',
+      content: [{
+        type: 'tool_use',
+        id: 'toolu_1',
+        name: 'submit_code',
+        input: { code: 'const x = 1;' },
+      }],
+    });
+    expect(capturedBody.messages[2]).toEqual({
+      role: 'user',
+      content: [{
+        type: 'tool_result',
+        tool_use_id: 'toolu_1',
+        content: '{"ok":true}',
+      }],
+    });
+  });
 });

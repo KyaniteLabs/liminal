@@ -26,6 +26,8 @@ export interface TierBasedGeneratorOptions {
   signal?: AbortSignal;
   bypassCache?: boolean;
   contextBudget?: number;
+  /** Optional per-call generation token cap for small/text domains. */
+  maxTokens?: number;
   /** Disable generic generator tool loop for non-code domains that validate directly. */
   useGeneratorTools?: boolean;
   /** Layer role hint — influences prompt and created Layer config */
@@ -203,8 +205,18 @@ export abstract class TierBasedGenerator {
 
     let response: LLMResponse;
     if (options?.useGeneratorTools === false) {
-      response = await this.llm.generate(systemPrompt, userPrompt, options.signal, options.bypassCache);
-      response.code = this.normalizeGeneratedContent(response.code);
+      const direct = await this.llm.complete({
+        systemPrompt,
+        prompt: userPrompt,
+        maxTokens: options.maxTokens,
+        temperature: this.llm.getConfig().temperature,
+        signal: options.signal,
+      });
+      response = {
+        code: this.normalizeGeneratedContent(direct.text),
+        success: direct.success,
+        error: direct.error,
+      };
     } else {
       const toolResult = await this.llm.generateWithToolLoop({
         systemPrompt,
@@ -212,6 +224,7 @@ export abstract class TierBasedGenerator {
         tools: GENERATOR_TOOLS,
         toolExecutor: createGeneratorToolExecutor(this.domain),
         maxIterations: 3,
+        maxTokens: options?.maxTokens,
         signal: options?.signal,
       });
 

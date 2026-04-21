@@ -53,7 +53,9 @@ export class HydraGenerator extends TierBasedGenerator {
     if (/\b(?:osc|noise|shape|voronoi|gradient|solid)\s*\([^)]*\)\s*\n\s*(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(code)) {
       return { valid: false, error: 'Hydra output has adjacent bare source calls; combine sources with .add(), .blend(), .mult(), or separate .out() chains' };
     }
-    const sourceLines = code.split('\n').map(line => line.trim()).filter(Boolean);
+    const sourceLines = code.split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('//'));
     for (let i = 1; i < sourceLines.length; i++) {
       if (/^(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(sourceLines[i])) {
         const previous = sourceLines[i - 1];
@@ -129,6 +131,17 @@ export class HydraGenerator extends TierBasedGenerator {
     // Strip hallucinated initFBOTriangle calls (not in hydra-synth 1.3 public API)
     clean = clean.replace(/\bs\d*\.initFBOTriangle\s*\(\s*\)\s*;?\s*/g, '');
     clean = clean.replace(/\binitFBOTriangle\s*\(\s*\)\s*;?\s*/g, '');
+    const outputBufferFor = (index: string) => `o${Math.min(Number(index), 3)}`;
+
+    // Some providers confuse source buffers s1/s2/s3 with output buffers o1/o2/o3.
+    // Normalize these into Hydra's output-buffer contract.
+    clean = clean.replace(/^\s*s\d+\.init\s*\(\s*\)\s*;?\s*$/gm, '');
+    clean = clean.replace(/\bo([4-9]\d*)\b/g, (_match, index: string) => outputBufferFor(index));
+    clean = clean.replace(/\.out\s*\(\s*s(\d+)\s*\)/g, (_match, index: string) => `.out(${outputBufferFor(index)})`);
+    clean = clean.replace(/\bs(\d+)\s*\n\s*\./g, (_match, index: string) => `src(${outputBufferFor(index)})\n  .`);
+    clean = clean.replace(/([,(]\s*)s(\d+)(\s*[,)\]])/g, (_match, prefix: string, index: string, suffix: string) => `${prefix}src(${outputBufferFor(index)})${suffix}`);
+    clean = clean.replace(/\.(add|blend|mult|diff|modulate)\s*\(\s*o([0-3])/g, '.$1(src(o$2)');
+    clean = clean.replace(/\bsrc\s*\(\s*((?:osc|noise|shape|voronoi|gradient|solid)\s*\([^)]*\))\s*\)/g, '$1');
 
     const inlineHydraSnippets = [...clean.matchAll(/`([^`\n]*(?:osc|noise|shape|voronoi|gradient|solid)[^`]*)`/g)]
       .map(match => match[1].trim())
@@ -154,20 +167,33 @@ export class HydraGenerator extends TierBasedGenerator {
     // Strip bare s0 references used as chain roots (e.g. s0.out(o0))
     clean = clean.replace(/\bs0\s*\./g, '');
 
+    // Avoid shadowing Hydra source function names with variables, e.g.
+    // `const noise = noise(...)` makes later calls crash in the browser.
+    const sourceNames = ['osc', 'noise', 'shape', 'voronoi', 'gradient', 'solid'];
+    for (const sourceName of sourceNames) {
+      const alias = `${sourceName}Layer`;
+      const declarationRegex = new RegExp(`\\b(const|let|var)\\s+${sourceName}\\s*=`, 'g');
+      if (declarationRegex.test(clean)) {
+        clean = clean.replace(declarationRegex, `$1 ${alias} =`);
+        const referenceRegex = new RegExp(`([,(]\\s*)${sourceName}(\\s*[,)\\]])`, 'g');
+        clean = clean.replace(referenceRegex, `$1${alias}$2`);
+      }
+    }
+
     // Models sometimes assign sources to named variables: a0 = osc(...), b0 = noise(...)
     // Hydra doesn't support this — convert to inline source references.
     // Multi-pass: collect source assignments, then derived assignments, inline all.
     const allVarMap = new Map<string, string>();
 
     // Pass 1: source-based assignments (osc/noise/shape/etc.)
-    const sourceVarRegex = /^(?:var\s+)?([a-zA-Z_]\w*)\s*=\s*((?:osc|noise|shape|voronoi|gradient|solid)\s*\([\s\S]*?(?:\.(?:kaleid|rotate|color|saturate|brightness|scale|scroll|modulate|pixelate|speed|blend|add|mult|diff|colorama)\s*\([^)]*\))*\s*;?\s*)$/gm;
+    const sourceVarRegex = /^(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*((?:osc|noise|shape|voronoi|gradient|solid)\s*\([\s\S]*?(?:\.(?:kaleid|rotate|color|saturate|brightness|scale|scroll|modulate|pixelate|speed|blend|add|mult|diff|colorama)\s*\([^)]*\))*\s*;?\s*)$/gm;
     let srcMatch: RegExpExecArray | null;
     while ((srcMatch = sourceVarRegex.exec(clean)) !== null) {
       allVarMap.set(srcMatch[1], srcMatch[2].replace(/;\s*$/, '').trim());
     }
 
     // Pass 2: derived assignments (varName = otherVar.method(...))
-    const derivedVarRegex = /^(?:var\s+)?([a-zA-Z_]\w*)\s*=\s*((?:[a-zA-Z_]\w*)\s*\.(?:modulate|blend|add|mult|diff|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\([\s\S]*?\s*;\s*)$/gm;
+    const derivedVarRegex = /^(?:(?:const|let|var)\s+)?([a-zA-Z_]\w*)\s*=\s*((?:[a-zA-Z_]\w*)\s*\.(?:modulate|blend|add|mult|diff|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\([\s\S]*?\s*;\s*)$/gm;
     let drvMatch: RegExpExecArray | null;
     while ((drvMatch = derivedVarRegex.exec(clean)) !== null) {
       if (!allVarMap.has(drvMatch[1])) {
@@ -196,7 +222,7 @@ export class HydraGenerator extends TierBasedGenerator {
     // Remove assignment lines and inline remaining references
     if (allVarMap.size > 0) {
       const varNames = [...allVarMap.keys()].join('|');
-      const assignLineRegex = new RegExp(`^\\s*(?:var\\s+)?(${varNames})\\s*=\\s*[\\s\\S]*?;?\\s*$`, 'gm');
+      const assignLineRegex = new RegExp(`^\\s*(?:(?:const|let|var)\\s+)?(${varNames})\\s*=\\s*[\\s\\S]*?;?\\s*$`, 'gm');
       clean = clean.replace(assignLineRegex, '');
 
       for (const [varName, expr] of allVarMap) {
@@ -207,7 +233,7 @@ export class HydraGenerator extends TierBasedGenerator {
 
     // Fix orphaned method chains: lines starting with .add/.blend/.mult/.diff
     // that have no base expression. Glue them to the previous non-empty line.
-    const chainMethods = /^(add|blend|mult|diff|modulate|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\(/;
+    const chainMethods = /^\.?(add|blend|mult|diff|modulate|color|colorama|saturate|brightness|scale|rotate|kaleid|scroll|pixelate)\s*\(/;
     const fixLines = clean.split('\n');
     for (let i = 1; i < fixLines.length; i++) {
       const trimmed = fixLines[i].trim();
@@ -216,9 +242,14 @@ export class HydraGenerator extends TierBasedGenerator {
         let j = i - 1;
         while (j >= 0 && fixLines[j].trim() === '') j--;
         if (j >= 0) {
+          const previous = fixLines[j].trim();
+          if (previous.startsWith('//') || /\.out\s*\(|render\s*\(/.test(previous)) {
+            fixLines[i] = '';
+            continue;
+          }
           // Remove trailing semicolons from the base, then append the method
           const base = fixLines[j].replace(/;\s*$/, '');
-          const method = trimmed.replace(/^/, '.');
+          const method = trimmed.startsWith('.') ? trimmed : trimmed.replace(/^/, '.');
           fixLines[j] = `${base}\n  ${method}`;
           fixLines[i] = '';
         }

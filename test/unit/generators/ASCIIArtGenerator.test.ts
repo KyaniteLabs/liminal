@@ -10,6 +10,9 @@ const { mockGenerate } = vi.hoisted(() => ({
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generate = mockGenerate;
+    complete = vi.fn().mockImplementation(() =>
+      mockGenerate().then((r: any) => ({ text: r.code, success: r.success, error: r.error }))
+    );
     generateWithToolLoop = vi.fn().mockImplementation(() =>
       mockGenerate().then((r: any) => ({ content: r.code, toolCalls: [], success: r.success }))
     );

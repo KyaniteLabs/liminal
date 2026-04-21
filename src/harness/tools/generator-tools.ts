@@ -35,6 +35,18 @@ export const GENERATOR_TOOLS: ToolDefinition[] = [
       required: ['code', 'domain'],
     },
   },
+  {
+    name: 'submit_code',
+    description: 'Submit the final generated artifact/source code once it is ready. Use this when the artifact is complete.',
+    parameters: {
+      type: 'object',
+      properties: {
+        code: { type: 'string', description: 'The complete final artifact or source code' },
+        language: { type: 'string', description: 'Optional language/domain label' },
+      },
+      required: ['code'],
+    },
+  },
 ];
 
 export const EVALUATOR_TOOLS: ToolDefinition[] = GENERATOR_TOOLS;
@@ -57,6 +69,8 @@ export function createGeneratorToolExecutor(domain: string): (name: string, args
           });
           return JSON.stringify(result);
         }
+        case 'submit_code':
+          return JSON.stringify({ ok: true, submitted: true });
         default:
           return JSON.stringify({ error: `Unknown tool: ${name}` });
       }

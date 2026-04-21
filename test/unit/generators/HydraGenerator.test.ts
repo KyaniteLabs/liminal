@@ -138,6 +138,93 @@ describe('HydraGenerator', () => {
     expect(result.valid).toBe(true);
   });
 
+  it('normalizes provider-confused sN buffers into Hydra output buffers', () => {
+    const gen = new TestableHydraGenerator();
+    const code = [
+      's0.init()',
+      'shape(6, 0.35, 0.5).color(1, 0.2, 0.8).out(s1)',
+      'osc(3.5, 0.12, 1.2).add(s1, 0.6).out(s2)',
+      'noise(2.8, 0.25).modulate(s4, 0.4).out(s3)',
+      's3',
+      '  .modulate(s4, 0.4)',
+      '  .add(osc(4, 0.1, 1).color(0.2, 1, 0.8))',
+      '  .out()',
+    ].join('\n');
+
+    const sanitized = (gen as any).sanitizeCode(code);
+    expect(sanitized).not.toContain('s0.init');
+    expect(sanitized).toContain('.out(o1)');
+    expect(sanitized).toContain('.add(src(o1), 0.6)');
+    expect(sanitized).toContain('.modulate(src(o3), 0.4)');
+    expect(sanitized).toContain('src(o3)');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
+  it('normalizes bare output buffers used as source arguments', () => {
+    const gen = new TestableHydraGenerator();
+    const sanitized = (gen as any).sanitizeCode([
+      'osc(4, 0.1, 1).color(1, 0.2, 0.8).out(o1);',
+      'solid(0.05, 0.13, 0.19).add(o1).blend(o2).diff(o3).out(o0);',
+    ].join('\n'));
+    expect(sanitized).toContain('.add(src(o1))');
+    expect(sanitized).toContain('.blend(src(o2))');
+    expect(sanitized).toContain('.diff(src(o3))');
+    expect(sanitized).toContain('.out(o1)');
+  });
+
+  it('caps out-of-range output buffers to Hydra supported outputs', () => {
+    const gen = new TestableHydraGenerator();
+    const sanitized = (gen as any).sanitizeCode([
+      'osc(4, 0.1, 1).color(1, 0.2, 0.8).out(o3);',
+      'src(o3).out(o4);',
+      'render(o4);',
+    ].join('\n'));
+    expect(sanitized).not.toContain('o4');
+    expect(sanitized).toContain('src(o3).out(o3)');
+    expect(sanitized).toContain('render(o3)');
+  });
+
+  it('drops orphaned method fragments after completed output chains', () => {
+    const gen = new TestableHydraGenerator();
+    const sanitized = (gen as any).sanitizeCode([
+      'solid(0.05, 0.13, 0.19).out();',
+      '.kaleid(8)',
+      '.color(1, 0.2, 0.8)',
+      'osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out(o0);',
+    ].join('\n'));
+    expect(sanitized).not.toContain('\n.kaleid');
+    expect(sanitized).not.toContain('\n.color');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
+  it('normalizes src(source()) misuse into direct source chains', () => {
+    const gen = new TestableHydraGenerator();
+    const sanitized = (gen as any).sanitizeCode(
+      'src(osc(6, 0.15, 1.2)).add(shape(5, 0.6, 1.0)).color(1, 0.2, 0.8).out(o0);',
+    );
+    expect(sanitized).toContain('osc(6, 0.15, 1.2)');
+    expect(sanitized).not.toContain('src(osc');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
+  it('normalizes const source assignments that shadow Hydra functions', () => {
+    const gen = new TestableHydraGenerator();
+    const code = [
+      'const osc1 = osc(4, 0.1, 1).color(1, 0.2, 0.8);',
+      'const noise = noise(3, 0.2).color(0.2, 1, 0.8);',
+      'const voron = voronoi(5, 0.3, 0.2).color(0.8, 0.7, 0.2);',
+      'const combined = osc1.blend(noise).add(voron);',
+      'combined.kaleid(4).out(o0);',
+    ].join('\n');
+
+    const sanitized = (gen as any).sanitizeCode(code);
+    expect(sanitized).not.toContain('const noise =');
+    expect(sanitized).not.toContain('blend(noise)');
+    expect(sanitized).toContain('blend(noise(');
+    expect(sanitized).toContain('voronoi(');
+    expect(gen.validateForTest(sanitized).valid).toBe(true);
+  });
+
   it('rejects source functions used as chained methods', () => {
     const gen = new TestableHydraGenerator();
     const result = gen.validateForTest('osc(4, 0.1, 1.0).osc().kaleid(4).color(1, 0.2, 0.8).out(o0)');

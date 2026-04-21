@@ -32,7 +32,7 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
       '',
       `User request: ${prompt}`,
     ].join('\n');
-    const code = await super.generate(asciiPrompt, { ...options, useGeneratorTools: false });
+    const code = await super.generate(asciiPrompt, { ...options, maxTokens: options?.maxTokens ?? 800, useGeneratorTools: false });
     return this.formatASCII(code, width, height);
   }
 

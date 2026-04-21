@@ -187,4 +187,117 @@ describe('generateWithToolLoop — submit_code extraction', () => {
     expect(executor).toHaveBeenCalledTimes(1);
     expect(executor).toHaveBeenCalledWith('validate_syntax', { code: 'const x = 1;' });
   });
+
+  it('preserves content returned alongside tool calls when the final provider turn is empty', async () => {
+    const artifact = 'function setup() { createCanvas(400, 400); }';
+    const executor = vi.fn().mockResolvedValue('{"valid":true}');
+
+    vi.spyOn(client, 'generateWithTools' as any)
+      .mockResolvedValueOnce({
+        content: artifact,
+        toolCalls: [
+          {
+            id: 'call_1',
+            name: 'validate_syntax',
+            arguments: JSON.stringify({ code: artifact }),
+          },
+        ],
+        finishReason: 'tool_calls',
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [],
+        finishReason: 'stop',
+        success: false,
+        error: 'empty final turn',
+      });
+
+    const result = await client.generateWithToolLoop({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+      tools: [],
+      toolExecutor: executor,
+      maxIterations: 1,
+    });
+
+    expect(result.content).toBe(artifact);
+    expect(result.success).toBe(true);
+    expect(result.error).toBeUndefined();
+  });
+
+  it('returns validated code arguments when the final provider turn is empty', async () => {
+    const artifact = 'const sketch = "ok";';
+
+    vi.spyOn(client, 'generateWithTools' as any)
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [
+          {
+            id: 'call_1',
+            name: 'validate_syntax',
+            arguments: JSON.stringify({ code: artifact }),
+          },
+        ],
+        finishReason: 'tool_calls',
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [],
+        finishReason: 'stop',
+        success: false,
+        error: 'empty final turn',
+      });
+
+    const result = await client.generateWithToolLoop({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+      tools: [],
+      toolExecutor: async () => '{"valid":true}',
+      maxIterations: 1,
+    });
+
+    expect(result.content).toBe(artifact);
+    expect(result.success).toBe(true);
+  });
+
+  it('passes accumulated tool results into the forced final artifact turn', async () => {
+    const artifact = 'const x = 1;';
+    const spy = vi.spyOn(client, 'generateWithTools' as any)
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [
+          {
+            id: 'call_1',
+            name: 'validate_syntax',
+            arguments: JSON.stringify({ code: artifact }),
+          },
+        ],
+        finishReason: 'tool_calls',
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        content: '',
+        toolCalls: [],
+        finishReason: 'stop',
+        success: false,
+      });
+
+    await client.generateWithToolLoop({
+      systemPrompt: 'sys',
+      userPrompt: 'usr',
+      tools: [],
+      toolExecutor: async () => '{"valid":true}',
+      maxIterations: 1,
+    });
+
+    expect(spy.mock.calls[1][0].toolResults).toEqual([
+      expect.objectContaining({
+        toolCallId: 'call_1',
+        result: '{"valid":true}',
+        toolCall: expect.objectContaining({ name: 'validate_syntax' }),
+      }),
+    ]);
+  });
 });

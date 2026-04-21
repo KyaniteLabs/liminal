@@ -91,14 +91,12 @@ export class AnthropicProvider extends BaseProvider {
         }));
         (body.messages as Array<{ role: string; content: unknown }>).push({
           role: 'assistant',
-          content: (req.tools && req.tools.length > 0)
-            ? req.toolResults.map(tr => ({
-                type: 'tool_use' as const,
-                id: tr.toolCallId,
-                name: tr.toolCall?.name || 'tool',
-                input: this.parseToolInput(tr.toolCall?.arguments),
-              }))
-            : [],
+          content: req.toolResults.map(tr => ({
+            type: 'tool_use' as const,
+            id: tr.toolCallId,
+            name: tr.toolCall?.name || 'tool',
+            input: this.parseToolInput(tr.toolCall?.arguments),
+          })),
         });
         (body.messages as Array<{ role: string; content: unknown }>).push({
           role: 'user',

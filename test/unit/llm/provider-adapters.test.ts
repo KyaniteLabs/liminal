@@ -341,6 +341,44 @@ describe('AnthropicProvider', () => {
     ]);
   });
 
+  it('reconstructs Anthropic tool_use blocks when continuing with tool results and no new tools', async () => {
+    mockFetchResponse({
+      content: [{ type: 'text', text: 'ok' }],
+      model: 'claude-sonnet-4-20250514',
+    });
+
+    await provider.generate(makeRequest({
+      toolResults: [{
+        toolCallId: 'toolu_1',
+        result: '{"valid":true}',
+        toolCall: {
+          id: 'toolu_1',
+          name: 'validate_syntax',
+          arguments: JSON.stringify({ code: 'const x = 1;' }),
+        },
+      }],
+    }));
+
+    const body = JSON.parse(mockFetch.mock.calls[0][1].body);
+    expect(body.messages[1]).toEqual({
+      role: 'assistant',
+      content: [{
+        type: 'tool_use',
+        id: 'toolu_1',
+        name: 'validate_syntax',
+        input: { code: 'const x = 1;' },
+      }],
+    });
+    expect(body.messages[2]).toEqual({
+      role: 'user',
+      content: [{
+        type: 'tool_result',
+        tool_use_id: 'toolu_1',
+        content: '{"valid":true}',
+      }],
+    });
+  });
+
   it('parses content blocks correctly', async () => {
     mockFetchResponse({
       content: [

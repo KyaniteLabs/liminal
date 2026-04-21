@@ -304,6 +304,35 @@ export class MiniMaxProvider extends BaseProvider {
       };
     }
 
+    if (req.tools && req.tools.length > 0) {
+      body.tools = req.tools.map(t => ({
+        name: t.name,
+        description: t.description,
+        input_schema: t.parameters as Record<string, unknown>,
+      }));
+    }
+
+    if (req.toolResults && req.toolResults.length > 0) {
+      const toolContent = req.toolResults.map(tr => ({
+        type: 'tool_result',
+        tool_use_id: tr.toolCallId,
+        content: tr.result,
+      }));
+      (body.messages as Array<{ role: string; content: unknown }>).push({
+        role: 'assistant',
+        content: req.toolResults.map(tr => ({
+          type: 'tool_use' as const,
+          id: tr.toolCallId,
+          name: tr.toolCall?.name || 'tool',
+          input: this.parseToolInput(tr.toolCall?.arguments),
+        })),
+      });
+      (body.messages as Array<{ role: string; content: unknown }>).push({
+        role: 'user',
+        content: toolContent,
+      });
+    }
+
     const signal = req.signal || AbortSignal.timeout(this.config.timeout || 300000);
 
     Logger.debug('MiniMaxProvider', `Anthropic-mode request to ${url} with model ${this.config.model}`);
@@ -332,9 +361,16 @@ export class MiniMaxProvider extends BaseProvider {
 
       // Extract thinking from content blocks (same as AnthropicProvider)
       const thinking = extractAnthropicThinking(data);
-      const contentBlocks = data.content as Array<{ type: string; text?: string }> | undefined;
+      const contentBlocks = data.content as Array<{ type: string; text?: string; id?: string; name?: string; input?: unknown }> | undefined;
       const textBlocks = contentBlocks?.filter(b => b.type === 'text') || [];
       const content = textBlocks.map(b => b.text || '').join('');
+      const toolUseBlocks = contentBlocks?.filter(b => b.type === 'tool_use') || [];
+      const toolCalls = toolUseBlocks.map(b => ({
+        id: b.id || '',
+        name: b.name || '',
+        arguments: typeof b.input === 'string' ? b.input : JSON.stringify(b.input || {}),
+      }));
+      const finishReason = toolCalls.length > 0 ? 'tool_calls' as const : 'stop' as const;
 
       const usage = data.usage as { input_tokens?: number; output_tokens?: number } | undefined;
 
@@ -342,11 +378,13 @@ export class MiniMaxProvider extends BaseProvider {
         content,
         thinking: thinking.source !== 'none' ? thinking : undefined,
         model: data.model || this.config.model,
-        success: content.length > 0,
+        success: content.length > 0 || toolCalls.length > 0,
         usage: usage ? {
           inputTokens: usage.input_tokens || 0,
           outputTokens: usage.output_tokens || 0,
         } : undefined,
+        toolCalls: toolCalls.length > 0 ? toolCalls : undefined,
+        finishReason,
       });
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Unknown error';
@@ -357,6 +395,18 @@ export class MiniMaxProvider extends BaseProvider {
         undefined,
         true,
       ));
+    }
+  }
+
+  private parseToolInput(raw?: string): Record<string, unknown> {
+    if (!raw) return {};
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+        ? parsed as Record<string, unknown>
+        : {};
+    } catch {
+      return {};
     }
   }
 

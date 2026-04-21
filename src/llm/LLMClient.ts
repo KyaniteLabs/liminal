@@ -1047,7 +1047,7 @@ export class LLMClient {
     let toolResults: import('./ProviderTypes.js').ToolResultMessage[] | undefined;
     let iterations = 0;
     let toolCallsMade = 0;
-    let lastToolCodeCandidate: string | null = null;
+    let lastArtifactCandidate: string | null = null;
 
     for (let i = 0; i < maxIterations; i++) {
       iterations++;
@@ -1061,18 +1061,22 @@ export class LLMClient {
         signal: options.signal,
       });
 
+      if (result.content && result.content.trim().length > 0) {
+        lastArtifactCandidate = result.content;
+      }
+
       if (!result.success) {
         return {
-          content: this.contentOrToolCodeCandidate(result.content || '', lastToolCodeCandidate),
+          content: this.contentOrToolCodeCandidate(result.content || '', lastArtifactCandidate),
           iterations,
           toolCallsMade,
-          success: false,
-          error: result.error,
+          success: !!lastArtifactCandidate,
+          error: lastArtifactCandidate ? undefined : result.error,
         };
       }
       if (!result.toolCalls || result.toolCalls.length === 0 || result.finishReason === 'stop') {
         return {
-          content: this.contentOrToolCodeCandidate(result.content, lastToolCodeCandidate),
+          content: this.contentOrToolCodeCandidate(result.content, lastArtifactCandidate),
           iterations,
           toolCallsMade,
           success: true,
@@ -1097,7 +1101,7 @@ export class LLMClient {
         try {
           const args = this.parseToolArguments(tc.arguments, tc.name);
           const toolResult = await options.toolExecutor(tc.name, args);
-          lastToolCodeCandidate = this.extractToolCodeCandidate(args, toolResult) ?? lastToolCodeCandidate;
+          lastArtifactCandidate = this.extractToolCodeCandidate(args, toolResult) ?? lastArtifactCandidate;
           toolResults.push({ toolCallId: tc.id, result: toolResult, toolCall: tc });
         } catch (err) {
           const errMsg = err instanceof Error ? err.message : String(err);
@@ -1110,16 +1114,17 @@ export class LLMClient {
       systemPrompt: options.systemPrompt,
       userPrompt: `Tool calls completed. Now output the final artifact for: ${options.userPrompt}`,
       tools: [],
+      toolResults,
       maxTokens: options.maxTokens,
       temperature: options.temperature,
       signal: options.signal,
     });
     return {
-      content: this.contentOrToolCodeCandidate(lastResult.content || '', lastToolCodeCandidate),
+      content: this.contentOrToolCodeCandidate(lastResult.content || '', lastArtifactCandidate),
       iterations,
       toolCallsMade,
-      success: lastResult.success || !!lastToolCodeCandidate,
-      error: lastToolCodeCandidate ? undefined : 'Max iterations reached',
+      success: lastResult.success || !!lastArtifactCandidate,
+      error: lastArtifactCandidate ? undefined : 'Max iterations reached',
     };
   }
 

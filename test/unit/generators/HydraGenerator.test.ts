@@ -292,6 +292,20 @@ describe('HydraGenerator', () => {
     expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()');
   });
 
+  it('does not treat forbidden camera strings in prose as generated code', async () => {
+    mockToolLoop.mockResolvedValueOnce({
+      content: [
+        'Thinking Process:',
+        '* Do not use `s0.initCam()`, `s0.initScreen()`, or `src(s0)`.',
+        'Final code: `osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()`',
+      ].join('\n'),
+      iterations: 1, toolCallsMade: 0, success: true,
+    });
+    const gen = new HydraGenerator();
+    const result = await gen.generate('extract hydra despite prose constraints');
+    expect(result).toBe('osc(4, 0.1, 1).add(noise(3, 0.2)).color(1, 0.2, 0.8).out()');
+  });
+
   it('combines a final inline hydra snippet with trailing out call', async () => {
     mockToolLoop.mockResolvedValueOnce({
       content: '`osc(4, 0.1, 1).add(noise(3, 0.2)).mult(voronoi(5, 0.3, 0.2)).color(1, 0.2, 0.8)`\n.out(o0)',

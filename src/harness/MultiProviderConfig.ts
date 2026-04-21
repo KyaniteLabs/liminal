@@ -61,7 +61,7 @@ function getApiKeyFromConfig(provider: string): string | undefined {
   return providers?.[provider]?.apiKey;
 }
 
-export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
+export type ProviderType = 'minimax' | 'lmstudio' | 'ollama' | 'openai' | 'openrouter' | 'glm' | 'moonshot' | 'kimi' | 'custom';
 
 const PLACEHOLDER_API_KEY_PATTERNS = [
   /^YOUR[_-]/i,
@@ -119,6 +119,16 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
     baseUrl: 'http://localhost:11434',
     model: 'llama3.2',
     apiStyle: 'ollama',
+    temperature: 0.7,
+    maxTokens: 16384,
+  },
+  openai: {
+    provider: 'openai',
+    name: 'OpenAI',
+    description: 'OpenAI API (OpenAI-compatible chat completions)',
+    baseUrl: 'https://api.openai.com/v1',
+    model: 'gpt-5.4',
+    apiStyle: 'openai',
     temperature: 0.7,
     maxTokens: 16384,
   },
@@ -206,6 +216,9 @@ function getProviderConfigInternal(
     case 'openrouter':
       apiKey = firstUsableApiKey(process.env.OPENROUTER_API_KEY, fileApiKey);
       break;
+    case 'openai':
+      apiKey = firstUsableApiKey(selectApiKeyForEndpoint(baseUrl, model, ['LLM_API_KEY', 'OPENAI_API_KEY']), fileApiKey);
+      break;
     case 'ollama':
     case 'lmstudio':
       // Local providers don't need API keys
@@ -234,6 +247,7 @@ export function getProviderConfig(provider: ProviderType): ProviderConfig | null
 export function detectProviderFromUrl(baseUrl: string): ProviderType {
   if (baseUrl.includes('minimax')) return 'minimax';
   if (baseUrl.includes('openrouter')) return 'openrouter';
+  if (baseUrl.includes('api.openai.com') || baseUrl.includes('openai')) return 'openai';
   if (baseUrl.includes('z.ai') || baseUrl.includes('bigmodel') || baseUrl.includes('glm')) return 'glm';
   if (baseUrl.includes('kimi.com')) return 'kimi';
   if (baseUrl.includes('moonshot')) return 'moonshot';
@@ -267,6 +281,7 @@ export function getActiveProvider(): ProviderType {
   if (!isPlaceholderApiKey(process.env.GLM_API_KEY)) return 'glm';
   if (!isPlaceholderApiKey(process.env.MOONSHOT_API_KEY)) return 'moonshot';
   if (!isPlaceholderApiKey(process.env.OPENROUTER_API_KEY)) return 'openrouter';
+  if (!isPlaceholderApiKey(process.env.OPENAI_API_KEY)) return 'openai';
 
   // Default to Ollama (local)
   return 'ollama';

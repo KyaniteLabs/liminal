@@ -23,6 +23,7 @@ import { StrudelGenerator } from './strudel/StrudelGenerator.js';
 import { HydraGenerator } from './hydra/HydraGenerator.js';
 import { ToneGenerator } from './tone/ToneGenerator.js';
 import { TextGenerativeGenerator } from './textgen/TextGenerativeGenerator.js';
+import { SVGGenerator } from './svg/SVGGenerator.js';
 import { pluginLoader } from '../plugins/PluginLoader.js';
 import { Logger } from '../utils/Logger.js';
 
@@ -58,6 +59,15 @@ const htmlConfidence = (prompt: string): number => {
   if (/\bhtml\b|\bcss\b|\bweb\s+(component|page|widget)/.test(lower)) return 0.90;
   if (/web\s*page|website|css\s*design/.test(lower)) return 0.75;
   if (/web\s*dev|ui\s*component|form|spa/.test(lower)) return 0.65;
+  return 0;
+};
+
+/** Confidence for SVG/vector asset patterns */
+const svgConfidence = (prompt: string): number => {
+  const lower = prompt.toLowerCase();
+  if (/\bsvg\b|scalable\s+vector|vector\s+(logo|icon|diagram|art|asset)/.test(lower)) return 0.95;
+  if (/\b(logo|icon|diagram|flowchart|laser|cutfile|cut\s*file|cnc|toolpath|sticker|decal)\b/.test(lower)) return 0.85;
+  if (/\bvector\b|\billustration\b.*\bpaths?\b/.test(lower)) return 0.75;
   return 0;
 };
 
@@ -192,6 +202,15 @@ const htmlEntry: GeneratorEntry = {
   },
 };
 
+const svgEntry: GeneratorEntry = {
+  name: 'svg',
+  canHandle: svgConfidence,
+  generate: async (prompt: string) => {
+    const gen = new SVGGenerator();
+    return gen.generate(prompt);
+  },
+};
+
 const asciiEntry: GeneratorEntry = {
   name: 'ascii',
   canHandle: asciiConfidence,
@@ -295,6 +314,7 @@ function registerStaticGenerators(): void {
   generatorRegistry.register(shaderEntry);
   generatorRegistry.register(threeEntry);
   generatorRegistry.register(revideoEntry);
+  generatorRegistry.register(svgEntry);
   generatorRegistry.register(htmlEntry);
   generatorRegistry.register(asciiEntry);
   generatorRegistry.register(textgenEntry);  // textgen before strudel for priority
@@ -331,6 +351,7 @@ export async function registerAllGenerators(): Promise<void> {
 export {
   shaderConfidence,
   threeConfidence,
+  svgConfidence,
   htmlConfidence,
   asciiConfidence,
   textgenConfidence,

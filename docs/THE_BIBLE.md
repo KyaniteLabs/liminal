@@ -361,6 +361,7 @@ Failures:   0 critical
 | ShaderGenerator | GLSL | `glsl/ShaderGenerator.ts` | Truncation detection, main() validation |
 | ThreeGenerator | Three.js | `three/ThreeGenerator.ts` | Scene/camera validation |
 | HydraGenerator | Video | `hydra/HydraGenerator.ts` | Hydra syntax validation |
+| SVGGenerator | SVG/vector | `svg/SVGGenerator.ts` | Mode profiles, sanitizer, viewBox/geometry validation |
 | StrudelGenerator | Music | `strudel/StrudelGenerator.ts` | Pattern validation |
 | ToneGenerator | Audio | `tone/ToneGenerator.ts` | Synth validation |
 | RevideoGenerator | Video | `revideo/RevideoGenerator.ts` | Video composition validation |

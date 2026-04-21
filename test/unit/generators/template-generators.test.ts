@@ -113,11 +113,11 @@ describe('HydraGenerator', () => {
       expect(sanitized).toContain('render()');
     });
 
-    it('does not add render() when only one output', () => {
+    it('adds render() for one output so headless previews are visible', () => {
       const gen = new HydraGenerator();
       const code = 'osc(10).out(o0)';
       const sanitized = (gen as any).sanitizeCode(code);
-      expect(sanitized).not.toContain('render(');
+      expect(sanitized).toContain('render()');
     });
   });
 });

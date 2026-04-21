@@ -19,13 +19,11 @@ Self-improvement: Taste Learning → Dream Recombination → Emergence Evaluatio
 | 4 | Full Pipeline | COMPLETE | CLI, compost, TUI — physical output deferred |
 | 5-8 | Infrastructure | COMPLETE | CI/CD, security, TUI migration, harness |
 | 9 | Self-Hosting Ledger | COMPLETE | `src/ledger/` (TaskLedger, TaskRunner, TaskVerifier) |
-| 10 | (skipped) | — | — |
-| 11 | StudioAgent | COMPLETE | `src/agent/`, `src/tui-bridge/`, Bubble Tea Go TUI |
-| 12 | (skipped) | — | — |
-| 13 | LiminalCortex | COMPLETE | `src/cortex/` (PerceptionBus, GoalStore, PriorityAllocator) |
-| 14 | Emergence Evaluation | COMPLETE | `src/emergence/` (NoveltyIndex, PerturbationProbe, EmergenceCritic) |
-| 15 | Taste + Dreaming | COMPLETE | `src/learning/`, `src/dreaming/`, `src/compost/` (Rehydrator) |
-| 16 | Autonomous Gardener | COMPLETE | `src/autonomy/` (Gardener, GardenHealth, StagnationDetector) |
+| 10 | StudioAgent | COMPLETE | `src/agent/`, `src/tui-bridge/`, Bubble Tea Go TUI |
+| 11 | LiminalCortex | COMPLETE | `src/cortex/` (PerceptionBus, GoalStore, PriorityAllocator) |
+| 12 | Emergence Evaluation | COMPLETE | `src/emergence/` (NoveltyIndex, PerturbationProbe, EmergenceCritic) |
+| 13 | Taste + Dreaming | COMPLETE | `src/learning/`, `src/dreaming/`, `src/compost/` (Rehydrator) |
+| 14 | Autonomous Gardener | COMPLETE | `src/autonomy/` (Gardener, GardenHealth, StagnationDetector) |
 
 ---
 
@@ -183,7 +181,7 @@ const brief = await seedIdeator.ideate("Kid A vibes");
 
 ## Next Actions
 
-See phase status summary above. All phases through 16 are complete. Future work:
+See phase status summary above. All 14 phases are complete. Future work:
 
 1. **Physical output** (potential future feature) — SVG/G-code for pen plotters and CNC machines
 2. **Networked sessions** — collaborative creative sessions
@@ -208,7 +206,7 @@ See phase status summary above. All phases through 16 are complete. Future work:
 
 ---
 
-## Phase 11: StudioAgent — Chat-First TUI (COMPLETE — Apr 7, 2026)
+## Phase 10: StudioAgent — Chat-First TUI (COMPLETE — Apr 7, 2026)
 
 **Goal**: "Codex for creative generative art" — a terminal-native creative agent you talk to.
 
@@ -234,7 +232,7 @@ The bridge runs standalone without the Go binary (bridge-only mode), enabling HT
 
 ---
 
-## Phase 13: LiminalCortex — Background Executive (COMPLETE — Apr 16, 2026)
+## Phase 11: LiminalCortex — Background Executive (COMPLETE — Apr 16, 2026)
 
 **Goal**: Background agent that perceives system events, manages goals, and proposes improvements autonomously.
 
@@ -255,7 +253,7 @@ The bridge runs standalone without the Go binary (bridge-only mode), enabling HT
 
 ---
 
-## Phase 14: Emergence Evaluation Layer (COMPLETE — Apr 16, 2026)
+## Phase 12: Emergence Evaluation Layer (COMPLETE — Apr 16, 2026)
 
 **Goal**: Measure whether creative output is genuinely novel and structurally interesting.
 
@@ -273,7 +271,7 @@ The bridge runs standalone without the Go binary (bridge-only mode), enabling HT
 
 ---
 
-## Phase 15: Taste Learning, Dreaming, and Garden Policies (COMPLETE — Apr 16, 2026)
+## Phase 13: Taste Learning, Dreaming, and Garden Policies (COMPLETE — Apr 16, 2026)
 
 **Goal**: Close the loop between user preferences and generation quality. Enable offline creative exploration.
 
@@ -300,7 +298,7 @@ The bridge runs standalone without the Go binary (bridge-only mode), enabling HT
 
 ---
 
-## Phase 16: Autonomous Gardener (COMPLETE — Apr 16, 2026)
+## Phase 14: Autonomous Gardener (COMPLETE — Apr 16, 2026)
 
 **Goal**: Background creative steward that manages taste, dreaming, and emergence without user intervention.
 

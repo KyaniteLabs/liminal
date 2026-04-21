@@ -170,6 +170,84 @@ describe('AutonomousGardener', () => {
     expect(gardener.getScheduler()).toBeInstanceOf(GardenScheduler);
     expect(gardener.getPolicy()).toBeInstanceOf(GardenPolicy);
   });
+
+  it('loadTasteModel wires replay bias', () => {
+    const gardener = new AutonomousGardener({ mode: 'co-create', totalBudget: 200 });
+    expect(gardener.isTasteModelLoaded()).toBe(false);
+
+    gardener.loadTasteModel({
+      axisWeights: [0.7, 0.3],
+      qualityWeight: 0.4,
+      trainedAt: new Date().toISOString(),
+      pairCount: 10,
+      trainingAgreement: 0.8,
+    });
+    expect(gardener.isTasteModelLoaded()).toBe(true);
+  });
+
+  it('cycle returns dreamResults when dream tasks execute', () => {
+    const gardener = new AutonomousGardener({ mode: 'autopilot', totalBudget: 200 });
+    // Need at least 2 cells with elites so DreamPlanner can pair them
+    const cell1 = makeCell('c1', makeEntry('e1', 0.8, 0.7));
+    const cell2 = makeCell('c2', makeEntry('e2', 0.6, 0.5));
+    const cells = [cell1, cell2];
+
+    // Run multiple cycles to increase chance of dream-recombination
+    let foundDreamResults = false;
+    for (let i = 0; i < 20; i++) {
+      const result = gardener.cycle(cells, AXES);
+      if (!result) break;
+      if (result.dreamResults && result.dreamResults.length > 0) {
+        foundDreamResults = true;
+        // Verify result structure
+        for (const dr of result.dreamResults) {
+          expect(dr.descriptor).toBeInstanceOf(Array);
+          expect(dr.parentIds).toHaveLength(2);
+          expect(typeof dr.noveltyScore).toBe('number');
+        }
+        break;
+      }
+    }
+    // With 20 cycles, at least one should produce dream results
+    expect(foundDreamResults).toBe(true);
+  });
+
+  it('cycle uses taste-biased replay when model is loaded', () => {
+    const gardener = new AutonomousGardener({ mode: 'co-create', totalBudget: 200 });
+    const cells = [
+      makeCell('c1', makeEntry('e1', 0.8, 0.7)),
+      makeCell('c2', makeEntry('e2', 0.5, 0.3)),
+    ];
+
+    gardener.loadTasteModel({
+      axisWeights: [0.7, 0.3],
+      qualityWeight: 0.4,
+      trainedAt: new Date().toISOString(),
+      pairCount: 10,
+      trainingAgreement: 0.8,
+    });
+
+    let sawTasteAligned = false;
+    for (let i = 0; i < 20; i++) {
+      const result = gardener.cycle(cells, AXES);
+      if (!result) break;
+      if ((result.tasteAlignedCount ?? 0) > 0) {
+        sawTasteAligned = true;
+        break;
+      }
+    }
+    expect(sawTasteAligned).toBe(true);
+  });
+
+  it('cycle falls back to PromisingStateSelector without taste model', () => {
+    const gardener = new AutonomousGardener({ mode: 'co-create', totalBudget: 200 });
+    const cells = [makeCell('c1', makeEntry('e1', 0.8, 0.7))];
+
+    const result = gardener.cycle(cells, AXES);
+    expect(result).not.toBeNull();
+    // Without taste model, tasteAlignedCount should be 0
+    expect(result!.tasteAlignedCount).toBe(0);
+  });
 });
 
 // ── CreativeWeaknessEmitter ──

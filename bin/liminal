@@ -1722,7 +1722,12 @@ else if (cmd === 'garden' && cmdArgs[0] === 'start') {
     () => axes,
     (result) => {
       cycleCount++;
-      console.log(`  [Cycle ${result.cycle}] actions=${result.actions} health=${(result.health.healthScore * 100).toFixed(0)}% budget=${result.budgetRemaining}`);
+      const breakdown = result.taskBreakdown;
+      const parts = [`actions=${result.actions}`, `health=${(result.health.healthScore * 100).toFixed(0)}%`, `budget=${result.budgetRemaining}`];
+      if (breakdown) parts.push(`fresh=${breakdown.fresh} replay=${breakdown.replay} dream=${breakdown.dream}`);
+      if (result.dreamResults?.length) parts.push(`dreamDescs=${result.dreamResults.length}`);
+      if (result.tasteAlignedCount) parts.push(`tasteAligned=${result.tasteAlignedCount}`);
+      console.log(`  [Cycle ${result.cycle}] ${parts.join(' ')}`);
       if (result.stagnation.isStagnant) {
         console.log(`    ⚠ Stagnation: ${(result.stagnation.severity * 100).toFixed(0)}%`);
       }

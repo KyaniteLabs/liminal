@@ -2,7 +2,7 @@
  * Phase 16 Tests — Autonomous Gardener, Self-Improvement, Product Surface
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { AutonomousGardener } from '../../src/autonomy/AutonomousGardener.js';
 import { GardenScheduler, type GardenMode } from '../../src/autonomy/GardenScheduler.js';
 import { LoopMixPolicy } from '../../src/autonomy/LoopMixPolicy.js';
@@ -170,6 +170,85 @@ describe('AutonomousGardener', () => {
     expect(gardener.getScheduler()).toBeInstanceOf(GardenScheduler);
     expect(gardener.getPolicy()).toBeInstanceOf(GardenPolicy);
   });
+
+  it('loadTasteModel wires replay bias', () => {
+    const gardener = new AutonomousGardener({ mode: 'co-create', totalBudget: 200 });
+    expect(gardener.isTasteModelLoaded()).toBe(false);
+
+    gardener.loadTasteModel({
+      axisWeights: [0.7, 0.3],
+      qualityWeight: 0.4,
+      trainedAt: new Date().toISOString(),
+      pairCount: 10,
+      trainingAgreement: 0.8,
+    });
+    expect(gardener.isTasteModelLoaded()).toBe(true);
+  });
+
+  it('cycle returns dreamResults when dream tasks execute', () => {
+    // Force ReplayBudgetPolicy to select dream-recombination by controlling Math.random.
+    // decideNextTask picks from freshTypes[dream-recombination] when random >= 0.5
+    const spy = vi.spyOn(Math, 'random').mockReturnValue(0.99);
+    try {
+      const gardener = new AutonomousGardener({ mode: 'autopilot', totalBudget: 200 });
+      const cell1 = makeCell('c1', makeEntry('e1', 0.8, 0.7));
+      const cell2 = makeCell('c2', makeEntry('e2', 0.6, 0.5));
+      const cells = [cell1, cell2];
+
+      const result = gardener.cycle(cells, AXES);
+      expect(result).not.toBeNull();
+      expect(result!.dreamResults).toBeDefined();
+      expect(result!.dreamResults!.length).toBeGreaterThan(0);
+      for (const dr of result!.dreamResults!) {
+        expect(dr.descriptor).toBeInstanceOf(Array);
+        expect(dr.parentIds).toHaveLength(2);
+        expect(typeof dr.noveltyScore).toBe('number');
+      }
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('cycle uses taste-biased replay when model is loaded', () => {
+    // Force ReplayBudgetPolicy into the replay branch:
+    //   random < replayRatio (0.6) → replay, then floor(random*3) selects type
+    // First call: 0.1 < 0.6 → enter replay branch
+    // Second call: 0.0 → floor(0.0*3)=0 → 'replay-promising'
+    const callValues = [0.1, 0.0];
+    const spy = vi.spyOn(Math, 'random').mockImplementation(() => callValues.shift() ?? 0);
+    try {
+      const gardener = new AutonomousGardener({ mode: 'co-create', totalBudget: 200 });
+      const cells = [
+        makeCell('c1', makeEntry('e1', 0.8, 0.7)),
+        makeCell('c2', makeEntry('e2', 0.5, 0.3)),
+      ];
+
+      gardener.loadTasteModel({
+        axisWeights: [0.7, 0.3],
+        qualityWeight: 0.4,
+        trainedAt: new Date().toISOString(),
+        pairCount: 10,
+        trainingAgreement: 0.8,
+      });
+
+      const result = gardener.cycle(cells, AXES);
+      expect(result).not.toBeNull();
+      // With taste model loaded, replay goes through ReplayBiasPolicy.selectForReplay
+      expect(result!.taskBreakdown!.replay).toBeGreaterThanOrEqual(1);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it('cycle falls back to PromisingStateSelector without taste model', () => {
+    const gardener = new AutonomousGardener({ mode: 'co-create', totalBudget: 200 });
+    const cells = [makeCell('c1', makeEntry('e1', 0.8, 0.7))];
+
+    const result = gardener.cycle(cells, AXES);
+    expect(result).not.toBeNull();
+    // Without taste model, tasteAlignedCount should be 0
+    expect(result!.tasteAlignedCount).toBe(0);
+  });
 });
 
 // ── CreativeWeaknessEmitter ──
@@ -243,10 +322,10 @@ describe('PolicyExperimentRunner', () => {
       { id: 'treat', kind: 'loop-mix', label: 'treatment', config: { exploration: 0.5 } },
     );
 
-    // Record enough samples
+    // Record samples with deterministic values — treatment consistently outperforms control
     for (let i = 0; i < 5; i++) {
-      runner.recordResult(expId, 'ctrl', 'quality', 0.5 + Math.random() * 0.1);
-      runner.recordResult(expId, 'treat', 'quality', 0.6 + Math.random() * 0.1);
+      runner.recordResult(expId, 'ctrl', 'quality', 0.5);
+      runner.recordResult(expId, 'treat', 'quality', 0.7);
     }
 
     const outcome = runner.evaluate(expId);

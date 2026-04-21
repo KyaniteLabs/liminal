@@ -694,6 +694,16 @@ export type {
 
 // Constants
 export { SERVICE_DEFAULTS } from './constants.js';
+export {
+  OPENAI_RECOMMENDED_MODELS_BY_ROLE,
+  OPENAI_SMALL_ROLE_POLICY,
+  OPENAI_SMALL_ROLE_POLICY_EVIDENCE,
+  getOpenAIRolePolicy,
+  getRecommendedOpenAIModelsForRole,
+  isOpenAIModelRecommendedForRole,
+  type OpenAIRolePolicyEntry,
+  type OpenAIRolePolicyStatus,
+} from './config/OpenAIRolePolicy.js';
 
 // HTML Web Generator & ASCII Art Generator types (classes exported above with tier-based generators)
 export type { HTMLGeneratorOptions } from './generators/html/HTMLWebGenerator.js';

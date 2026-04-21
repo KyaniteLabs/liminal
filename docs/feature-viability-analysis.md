@@ -1,7 +1,7 @@
 # Liminal — Feature Viability Analysis
 
-**Date:** 2026-04-06
-**Status:** Draft
+**Date:** 2026-04-06 (updated 2026-04-21)
+**Status:** Active reference
 **Classification:** Internal — Proprietary
 **Author:** Generated from deep codebase exploration + market research
 
@@ -9,13 +9,13 @@
 
 ## A. Executive Summary
 
-Liminal is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Remotion, ASCII, generative text), quality scoring, evolutionary optimization, and cross-domain composition into a single system.
+Liminal is a creative coding engine that combines iterative LLM generation, multi-domain code output (p5.js, Three.js, GLSL, Hydra, Strudel, Tone.js, Revideo, HTML, ASCII, Kinetic Typography, generative text — 11 domains total), quality scoring, evolutionary optimization, and cross-domain composition into a single system. Three interfaces: CLI, Studio (chat-first TUI agent), and Bubble Tea TUI.
 
 ### Top 3 Opportunities
 
 1. **Creative Coding SaaS** ($10-30/mo) — The fastest path to revenue. Most of the pipeline works today. Target: creative coders, artists, educators.
 2. **API / Engine Licensing** ($0.01-0.10/generation) — Let other tools embed Liminal's generation brain. High-value, low-volume.
-3. **Programmatic Video Studio** ($50-500/video) — Marketing teams need video at scale. Liminal has Remotion + narrative pipeline.
+3. **Programmatic Video Studio** ($50-500/video) — Marketing teams need video at scale. Liminal has Revideo + narrative pipeline.
 
 ### Top 3 Risks
 
@@ -25,9 +25,9 @@ Liminal is a creative coding engine that combines iterative LLM generation, mult
 
 ### The Bottom Line
 
-Liminal's strongest asset is **integration breadth** — 9 creative domains working end-to-end with iterative generation, evolutionary optimization, and cross-domain composition. No single component is algorithmically novel, but the orchestration is real engineering that would take 6-12 months to replicate from scratch. The **IntuitionEngine** (Thompson Sampling + CreativeWorldModel + DreamEngine + ProceduralTier) is the most commercially interesting subsystem because it gets smarter with usage — a potential data flywheel.
+Liminal's strongest asset is **integration breadth** — 11 creative domains working end-to-end with iterative generation, evolutionary optimization, and cross-domain composition. No single component is algorithmically novel, but the orchestration is real engineering that would take 6-12 months to replicate from scratch. The **Autonomous Gardener** (TasteModelTrainer + DreamPlanner + EmergenceCritic + StagnationDetector) is the most commercially interesting subsystem because it gets smarter with usage — a potential data flywheel.
 
-**Recommendation:** Proprietary license, start with SaaS + API, invest in closing the meta-harness feedback loop and validating quality scoring against human judgment.
+**Recommendation:** Proprietary license, start with SaaS + API, invest in validating quality scoring against human judgment.
 
 ---
 
@@ -37,43 +37,49 @@ Liminal's strongest asset is **integration breadth** — 9 creative domains work
 
 | Capability | Maturity | Commercial Value |
 |---|---|---|
-| Multi-domain code generation (9 domains) | Production | High — nobody else does this breadth |
+| Multi-domain code generation (11 domains) | Production | High — nobody else does this breadth |
 | Iterative refinement (RalphLoop) | Production | Medium — standard optimization loop, but well-orchestrated |
-| IntuitionEngine (model selection + learning) | Production | High — gets smarter with usage, potential flywheel |
+| Autonomous Gardener (taste + dream + emergence) | Production | High — gets smarter with usage, potential flywheel |
 | Audio → visual mapping pipeline | Production | Medium — functional but standard DSP techniques |
-| Composition engine (multi-layer) | Production | Medium — 9 adapters with cross-layer state |
+| Composition engine (multi-layer) | Production | Medium — 11 adapters with cross-layer state |
 | Compost mill (creative memory) | Production | Low — collision strategies are trivial, LLM does real work |
 | Export pipeline (HTML, JS, ZIP, MP4, GIF, WebM) | Production | Medium — solid plumbing |
 | Preview server + gallery | Production | Medium — foundation for SaaS UI |
 | Embedding-based semantic search | Production | Low — standard SBERT, no domain-specific training |
+| StudioAgent (chat-first TUI) | Production | High — "Codex for creative generative art" |
+| LiminalCortex (background executive) | Production | Medium — autonomous improvement while user creates |
+| Emergence evaluation (novelty + perturbation) | Production | Medium — measures genuine novelty, not just correctness |
+| Taste learning (margin-based SGD) | Production | Medium — closes user preference loop without ML framework |
 
 ### What Liminal Does NOT Do Well
 
-| Gap | Impact | Fix Effort |
+| Gap | Impact | Status |
 |---|---|---|
-| Quality scoring is regex heuristics, not validated | High — users will notice bad outputs passing gates | Medium (collect human ratings, retrain) |
-| Meta-harness is open-loop (logs but doesn't auto-adapt) | High — missing the most valuable feedback mechanism | Medium (auto-prompt rewriting + model routing) |
-| No RLHF or preference learning pipeline | High — no data flywheel from user feedback | High (needs infrastructure) |
-| No web UI (CLI only) | Critical — most users won't install a CLI tool | High (full frontend) |
-| No auth, rate limiting, or multi-tenancy | Critical — can't serve multiple users | Medium |
-| Evolutionary algorithms are placeholder-grade | Medium — IGA is not a real GA, MetaMode is simulated | Medium |
-| Cross-domain crossover is hand-coded, not learned | Medium — brittle mappings, doesn't generalize | Medium |
-| LIR is standard AST metadata, not creative semantics | Low — marginal improvement over regex | Low priority |
+| Quality scoring is regex heuristics, not validated | High — users will notice bad outputs passing gates | Partially addressed: CreativeBoard multi-perspective evaluation, EmergenceCritic measures novelty |
+| Meta-harness is open-loop (logs but doesn't auto-adapt) | High — missing the most valuable feedback mechanism | **Closed:** Thinking-Trace Feedback Loop, MetaHarnessIntegration, ModelBehaviorPatterns |
+| No RLHF or preference learning pipeline | High — no data flywheel from user feedback | **Closed:** TasteModelTrainer with margin-based SGD, PreferenceDatasetBuilder, ReplayBiasPolicy |
+| No web UI (CLI only) | Critical — most users won't install a CLI tool | Partially addressed: StudioAgent (chat-first TUI), Bubble Tea Go TUI. Full web UI still needed for SaaS. |
+| No auth, rate limiting, or multi-tenancy | Critical — can't serve multiple users | Open — still needed for SaaS |
+| Evolutionary algorithms are placeholder-grade | Medium — IGA is not a real GA, MetaMode is simulated | Partially addressed: DreamPlanner + RecombinationEngine + CrossModalTransfer |
+| Cross-domain crossover is hand-coded, not learned | Medium — brittle mappings, doesn't generalize | **Closed:** CrossModalTransfer maps techniques between domains |
+| LIR is standard AST metadata, not creative semantics | Low — marginal improvement over regex | Feature-flagged, opt-in |
 
-### The IntuitionEngine — Hidden Gem
+### The Autonomous Gardener — Hidden Gem
 
-The most commercially interesting subsystem. Located in `src/intuition/`:
+The most commercially interesting subsystem. Located in `src/autonomy/`, `src/learning/`, `src/dreaming/`, `src/emergence/`:
 
-- **ThompsonSampler** — Bayesian bandit for model/strategy selection. Gets more confident with each generation.
-- **CreativeWorldModel** — K-NN quality predictor from code behavior vectors. Learns what good output looks like per domain.
-- **DreamEngine** — Offline exploration during idle time. Runs simulated generations to discover better strategies without user-facing cost.
-- **SleepScheduler** — Determines when to dream based on activity patterns.
-- **ProceduralTier** — Caches high-confidence decisions. When a domain+model+strategy combo consistently scores well, it skips full evaluation.
-- **ForgettingCurve** — Ebbinghaus-inspired decay. Old, low-quality memories fade. Recent, high-quality ones are reinforced.
-- **MemoryBudget** — Enforces capacity limits across all stores.
-- **MemoryConsolidator** — Compresses raw episodes into reusable patterns.
+- **AutonomousGardener** — Top-level orchestrator managing taste, dreams, and emergence. Three autonomy modes: assist, co-create, autopilot.
+- **TasteModelTrainer** — Margin-based SGD on pairwise preferences. No ML framework required. Learns what the user considers "good."
+- **PreferenceDatasetBuilder** — Collects (prompt, output, score, user_signal) tuples from every generation.
+- **DreamPlanner + RecombinationEngine** — Offline exploration during idle time. Selects parent pairs by complementary strengths, recombines into novel candidates.
+- **CrossModalTransfer** — Maps techniques between domains (visual → musical → code).
+- **EmergenceCritic** — Weighted ensemble across 6 dimensions (novelty, structure, temporal, resilience, fertility, aesthetic).
+- **NoveltyIndex** — kNN scoring against feature archive. Outputs with few near-neighbors score higher novelty.
+- **PerturbationProbe** — Seeded perturbations with resilience measurement.
+- **StagnationDetector** — Identifies when the system produces diminishing returns.
+- **GardenHealthMonitor** — Tracks creative diversity, seed freshness, compost health.
 
-**Why this matters commercially:** This is a learning system that improves with every generation. The more people use Liminal, the better the model selection and quality prediction becomes. This is a genuine data flywheel — accumulated usage data makes the product better for everyone, which attracts more users, which generates more data. This is the strongest argument for proprietary licensing.
+**Why this matters commercially:** This is a learning system that improves with every generation. The more people use Liminal, the better the taste model and quality prediction becomes. This is a genuine data flywheel — accumulated usage data makes the product better for everyone, which attracts more users, which generates more data. This is the strongest argument for proprietary licensing.
 
 ### Infrastructure Cost Per Output Type
 
@@ -87,7 +93,7 @@ The most commercially interesting subsystem. Located in `src/intuition/`:
 | PNG screenshot | LLM + Puppeteer | ~$0.02-0.06 | 5-20s |
 | JPEG screenshot | LLM + Puppeteer | ~$0.02-0.06 | 5-20s |
 | MP4 video (canvas) | LLM + Puppeteer + FFmpeg | ~$0.05-0.30 | 30-120s |
-| MP4 video (Remotion) | LLM + Remotion + Chrome | ~$0.10-0.50 | 30-180s |
+| MP4 video (Revideo) | LLM + Revideo + Chrome | ~$0.10-0.50 | 30-180s |
 | WebM / GIF | LLM + FFmpeg | ~$0.05-0.30 | 20-90s |
 | ZIP archive | LLM + archiver | ~$0.02-0.06 | 5-15s |
 | Scores (visual/audio) | Already-rendered buffers | ~$0.001 | <1s |
@@ -132,17 +138,17 @@ The most commercially interesting subsystem. Located in `src/intuition/`:
 | After Effects | $22/mo | Adobe subscription | Liminal generates; AE composites manually |
 | Resolume | $400-1000 | One-time license | Liminal generates content; Resolume performs live |
 | Unity | $0-2040/yr | Subscription + revenue share | Different market (games vs generative art) |
-| Remotion | Free (OSS) | Open source + consulting | Liminal uses Remotion as rendering backend |
+| Remotion | Free (OSS) | Open source + consulting | Liminal uses Revideo as rendering backend (Remotion deprecated) |
 
 ### The Gap Nobody Fills
 
 **Nobody combines all of these in one tool:**
 1. Iterative LLM generation with quality gates
-2. Multi-domain creative code output (9 domains)
-3. Automated quality scoring (visual + audio)
+2. Multi-domain creative code output (11 domains)
+3. Automated quality scoring (visual + audio + emergence + novelty)
 4. Cross-domain composition (music + visuals + interaction)
 5. Evolutionary optimization (MAP-Elites, novelty search)
-6. Learning from usage (IntuitionEngine, Thompson Sampling)
+6. Learning from usage (TasteModel, DreamEngine, EmergenceCritic)
 
 The closest workflow today: Claude/ChatGPT for generation → paste into p5.js editor → manually iterate → export. No scoring, no multi-domain, no learning, no composition.
 
@@ -157,7 +163,7 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 #### 1. Creative Coding SaaS
 
-> Web app: type a prompt → get iterative creative code across 9 domains → gallery → export.
+> Web app: type a prompt → get iterative creative code across 11 domains → gallery → export.
 
 | Dimension | Score | Notes |
 |---|---|---|
@@ -254,7 +260,7 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 #### 8. Creative Intelligence Platform
 
-> The IntuitionEngine as a standalone product. Thompson Sampling + World Model + Dream Engine for any creative AI pipeline.
+> The Autonomous Gardener as a standalone product. TasteModelTrainer + DreamEngine + EmergenceCritic for any creative AI pipeline.
 
 | Dimension | Score | Notes |
 |---|---|---|
@@ -266,11 +272,11 @@ The closest workflow today: Claude/ChatGPT for generation → paste into p5.js e
 
 #### 9. Programmatic Video Studio
 
-> Full Remotion-based video production pipeline for marketing teams. Prompt → script → storyboard → rendered video.
+> Full Revideo-based video production pipeline for marketing teams. Prompt → script → storyboard → rendered video.
 
 | Dimension | Score | Notes |
 |---|---|---|
-| Technical Feasibility | 3 | Remotion generator works. Narrative pipeline exists. Orchestration needs work. |
+| Technical Feasibility | 3 | Revideo generator works. Narrative pipeline exists. Orchestration needs work. |
 | Market Demand | 4 | Every marketing team needs video content at scale. |
 | Revenue Potential | 5 | $50-500/video. $500-5000/mo subscription. Highest revenue potential. |
 | Competitive Moat | 2 | Video generation is crowded (Runway, Synthesia, Bannerbear, Creatomate). |
@@ -338,7 +344,7 @@ Liminal integrates a significant number of external libraries. Each has its own 
 | `commander` | MIT | CLI parsing | License notice |
 | `ink` | MIT | Terminal UI | License notice |
 | `react` | MIT | UI framework | License notice |
-| `remotion` | MIT | Programmatic video | License notice (Remotion itself is MIT) |
+| `remotion` | MIT | Programmatic video | Deprecated — replaced by Revideo. License notice still required. |
 | `playwright` | Apache-2.0 | Headless browser | License notice |
 | `puppeteer` | Apache-2.0 | Headless browser | License notice |
 
@@ -430,18 +436,18 @@ Liminal integrates a significant number of external libraries. Each has its own 
 4. **Landing page** — Value proposition, examples, pricing tiers.
 5. **Beta launch** — Free tier to 100 users. Collect feedback, calibrate quality.
 
-### Phase 2: Close the Feedback Loops (Months 3-6)
+### Phase 2: Close the Feedback Loops (Months 3-6) — MOSTLY COMPLETE
 
-1. **Close meta-harness loop** — Auto-adapt prompts from failure insights. Auto-route models based on Thompson Sampling.
-2. **Validate quality scoring** — Collect human ratings from beta users. Retrain scoring heuristics on real preferences.
-3. **Build data flywheel** — Every user's rating improves the model for everyone. This is the moat.
-4. **Extract IntuitionEngine** — Document, package, and offer as standalone API.
+1. **Close meta-harness loop** — DONE. Thinking-Trace Feedback Loop + MetaHarnessIntegration + ModelBehaviorPatterns.
+2. **Validate quality scoring** — Partially done. EmergenceCritic + CreativeBoard + NoveltyIndex operational. Human rating collection still needed.
+3. **Build data flywheel** — DONE. TasteModelTrainer + PreferenceDatasetBuilder + ReplayBiasPolicy + DreamPlanner.
+4. **Extract Autonomous Gardener** — NOT YET. Document, package, and offer as standalone API.
 
 ### Phase 3: Expand Revenue (Months 6-12)
 
 1. **Launch API / Engine Licensing** — Enterprise tier, documentation, SDKs.
 2. **Education tier** — Curriculum, tutorials, institutional licensing.
-3. **Programmatic video** — Marketing team product. Remotion-based pipeline.
+3. **Programmatic video** — Marketing team product. Revideo-based pipeline.
 4. **Embeddable widgets** — JS snippets for websites. CDN + sandboxing.
 
 ---

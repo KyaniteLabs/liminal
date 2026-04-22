@@ -8,6 +8,7 @@ import {
 import { CuratorMode } from './components/CuratorMode';
 import { ActivityDashboard } from './components/ActivityDashboard';
 import { CompostVisualizer } from './components/CompostVisualizer';
+import { OperatorCockpit } from './components/OperatorCockpit';
 import { useEventStream } from './components/activity/hooks';
 
 // State types
@@ -474,6 +475,15 @@ export default function App() {
         </button>
         <button
           type="button"
+          className={`atelier-tab${activeTab === 'cockpit' ? ' atelier-tab--active' : ''}`}
+          role="tab"
+          aria-selected={activeTab === 'cockpit'}
+          onClick={() => dispatchLive(switchToLiveOrganismView('cockpit'))}
+        >
+          Cockpit
+        </button>
+        <button
+          type="button"
           className={`atelier-tab${activeTab === 'live' ? ' atelier-tab--active' : ''}`}
           role="tab"
           aria-selected={activeTab === 'live'}
@@ -854,6 +864,10 @@ export default function App() {
 
       {activeTab === 'activity' && (
         <ActivityDashboard />
+      )}
+
+      {activeTab === 'cockpit' && (
+        <OperatorCockpit />
       )}
 
       {activeTab === 'compost' && (

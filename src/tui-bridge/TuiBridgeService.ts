@@ -1513,6 +1513,8 @@ export class TuiBridgeService {
                 type: 'generation.candidate.generated',
                 sessionId,
                 domain,
+                attempt: attempt + 1,
+                attemptTotal: domainPlan.length,
                 iteration: iterationContext.iteration,
                 candidateCount: 3,
                 codeSize: iterationContext.code.length,

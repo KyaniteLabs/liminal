@@ -191,6 +191,12 @@ func (m Model) renderTaskCard(width int) string {
 
 func (m Model) renderGenerationCard(width int) string {
 	ratio := generationProgressPercent(m.CurrentIteration, m.GenerationIterations)
+	if ratio == 0 && m.GenerationAttemptTotal > 0 {
+		ratio = generationProgressPercent(max(m.GenerationAttemptCurrent-1, 0), m.GenerationAttemptTotal)
+		if m.GenerationAttemptCurrent > 0 {
+			ratio += 0.04
+		}
+	}
 	bar := renderGradientProgressBar(max(width-10, 16), ratio, string(ui.AccentGreen), string(ui.AccentPurple))
 
 	lines := []string{
@@ -204,6 +210,9 @@ func (m Model) renderGenerationCard(width int) string {
 	if m.GenerationAttemptCurrent > 0 || m.ActiveGenerationDomain != "" {
 		attempt := formatStepProgress(m.GenerationAttemptCurrent, m.GenerationAttemptTotal)
 		lines = append(lines, ui.PanelLabelStyle.Render("Attempt:")+" "+ui.GenerationValueStyle.Render(strings.TrimPrefix(attempt, "Step:"))+" "+ui.GenerationMetaStyle.Render(m.ActiveGenerationDomain))
+	}
+	if m.CurrentIteration == 0 && m.ActiveGenerationDomain != "" {
+		lines = append(lines, ui.PanelLabelStyle.Render("State:")+" "+ui.GenerationValueStyle.Render("Waiting for candidates"))
 	}
 
 	if m.GenerationModel != "" {
@@ -680,7 +689,13 @@ func formatRelativeTime(ts time.Time) string {
 var _ = formatRelativeTime
 
 func (m Model) hasGenerationTelemetry() bool {
-	return m.CurrentIteration > 0 || m.GenerationIterations > 0 || m.GenerationScore > 0 || strings.TrimSpace(m.GenerationModel) != ""
+	return m.CurrentIteration > 0 ||
+		m.GenerationIterations > 0 ||
+		m.GenerationScore > 0 ||
+		strings.TrimSpace(m.GenerationModel) != "" ||
+		strings.TrimSpace(m.ActiveGenerationDomain) != "" ||
+		len(m.GenerationDomainPlan) > 0 ||
+		len(m.GenerationAttempts) > 0
 }
 
 func taskProgressPercent(current, total int) float64 {

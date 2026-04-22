@@ -517,6 +517,7 @@ export default function App() {
     ? 'Connecting'
     : runStatus === 'running' ? 'Running' : 'Run';
   const bridgeSummary = bridge.summary;
+  const bridgePreview = bridge.preview;
 
   const handleWorkbenchRun = () => {
     if (activeMode.id === 'generate') {
@@ -534,6 +535,19 @@ export default function App() {
     <div className="liminal-stage-frame">
       {previewUrl ? (
         <iframe title="Live preview" src={previewUrl} sandbox="allow-scripts" />
+      ) : bridgePreview?.type === 'image' && bridgePreview.src ? (
+        <figure className="liminal-stage-preview">
+          <img
+            src={bridgePreview.src}
+            alt="Generated preview"
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
+          />
+          <figcaption>{bridgePreview.label}</figcaption>
+        </figure>
+      ) : bridgePreview?.type === 'code' ? (
+        <pre className="liminal-stage-code">{bridgePreview.code}</pre>
       ) : (
         <div className="liminal-stage-empty">
           <span>Stage</span>

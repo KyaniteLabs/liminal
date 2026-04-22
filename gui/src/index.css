@@ -278,6 +278,44 @@ body::before {
   border: 0;
 }
 
+.liminal-stage-preview {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  background: #05070a;
+}
+
+.liminal-stage-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.liminal-stage-preview figcaption {
+  padding: 8px 10px;
+  color: var(--liminal-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  border-top: 1px solid var(--liminal-line);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-stage-code {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  color: var(--liminal-text);
+  background: #05070a;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
 .liminal-stage-empty {
   height: 100%;
   display: grid;

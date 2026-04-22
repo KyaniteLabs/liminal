@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { summarizeWorkbenchBridge, type WorkbenchBridgeEvent } from './workbenchTelemetry';
+import { latestBridgePreview, summarizeWorkbenchBridge, type WorkbenchBridgeEvent } from './workbenchTelemetry';
 
 export type BridgeSessionStatus = {
   sessionId: string;
@@ -113,6 +113,7 @@ export function useTuiBridgeSession() {
   }
 
   const summary = useMemo(() => summarizeWorkbenchBridge(events, now), [events, now]);
+  const preview = useMemo(() => latestBridgePreview(events), [events]);
 
   return {
     session,
@@ -120,6 +121,7 @@ export function useTuiBridgeSession() {
     error,
     submitting,
     summary,
+    preview,
     createSession,
     submitPrompt,
     confirmPending,

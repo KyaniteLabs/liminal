@@ -4,18 +4,12 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { PreviewServer } from '../../src/render/PreviewServer.js';
 import { LiminalFS } from '../../src/fs/LiminalFS.js';
-import { createServer } from 'http';
-import { AddressInfo } from 'net';
 
-async function getFreePort(): Promise<number> {
-  return new Promise((resolve, reject) => {
-    const server = createServer();
-    server.listen(0, () => {
-      const port = (server.address() as AddressInfo).port;
-      server.close(() => resolve(port));
-    });
-    server.on('error', reject);
-  });
+async function startOnEphemeralPort(server: PreviewServer): Promise<number> {
+  await server.start(0);
+  const port = server.getPort();
+  if (!port) throw new Error('PreviewServer did not expose an ephemeral port');
+  return port;
 }
 
 describe('PreviewServer LiminalFS endpoints', () => {
@@ -58,8 +52,7 @@ describe('PreviewServer LiminalFS endpoints', () => {
     fs.writeRef('gallery/demo/v2', ref2);
     fs.close();
 
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo`);
     expect(res.status).toBe(200);
@@ -82,8 +75,7 @@ describe('PreviewServer LiminalFS endpoints', () => {
     fs.writeRef('gallery/organism-demo/v1', ref);
     fs.close();
 
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/organism-demo`);
     expect(res.status).toBe(200);
@@ -106,8 +98,7 @@ describe('PreviewServer LiminalFS endpoints', () => {
     fs.writeRef('gallery/demo/v3', ref);
     fs.close();
 
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/3`);
     expect(res.status).toBe(200);
@@ -116,8 +107,7 @@ describe('PreviewServer LiminalFS endpoints', () => {
   });
 
   it('GET /api/liminal/gallery/:project/:version returns 404 for missing version', async () => {
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/99`);
     expect(res.status).toBe(404);
@@ -126,40 +116,35 @@ describe('PreviewServer LiminalFS endpoints', () => {
   // ── Security tests ──
 
   it('rejects path traversal in project name', async () => {
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/..%2Fsecret`);
     expect(res.status).toBe(400);
   });
 
   it('rejects slash in project name', async () => {
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/a%2Fb`);
     expect(res.status).toBe(400);
   });
 
   it('rejects non-numeric version', async () => {
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/abc`);
     expect(res.status).toBe(400);
   });
 
   it('rejects negative version', async () => {
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/demo/-1`);
     expect(res.status).toBe(400);
   });
 
   it('returns empty iterations for nonexistent project', async () => {
-    const port = await getFreePort();
-    await server.start(port);
+    const port = await startOnEphemeralPort(server);
 
     const res = await fetch(`http://localhost:${port}/api/liminal/gallery/nonexistent`);
     expect(res.status).toBe(200);

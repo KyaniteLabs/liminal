@@ -16,6 +16,13 @@ export interface WorkbenchBridgeSummary {
   progressPercent: number;
 }
 
+export interface WorkbenchPreview {
+  type: 'image' | 'code';
+  src?: string;
+  code?: string;
+  label: string;
+}
+
 export function summarizeWorkbenchBridge(
   events: WorkbenchBridgeEvent[],
   now = Date.now(),
@@ -34,4 +41,27 @@ export function summarizeWorkbenchBridge(
     timelineSecondary: `${derived.elapsedLabel} elapsed · ${derived.etaLabel}`,
     progressPercent: derived.progressPercent,
   };
+}
+
+export function latestBridgePreview(events: WorkbenchBridgeEvent[]): WorkbenchPreview | null {
+  for (let index = events.length - 1; index >= 0; index--) {
+    const event = events[index];
+    if (event.type !== 'preview.completed') continue;
+    if (event.previewType === 'image' && typeof event.content === 'string') {
+      return {
+        type: 'image',
+        src: `data:image/png;base64,${event.content}`,
+        label: typeof event.imageUrl === 'string' ? event.imageUrl : 'Generated preview image',
+      };
+    }
+    if (event.previewType === 'code' && typeof event.content === 'string') {
+      return {
+        type: 'code',
+        code: String(event.content),
+        label: 'Generated code preview',
+      };
+    }
+  }
+
+  return null;
 }

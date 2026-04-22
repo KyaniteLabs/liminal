@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
+import { latestBridgePreview, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
 
 describe('workbenchTelemetry', () => {
   it('summarizes bridge generation progress for the workbench shell', () => {
@@ -16,5 +16,26 @@ describe('workbenchTelemetry', () => {
     expect(summary.stageTitle).toBe('waiting on model');
     expect(summary.timelinePrimary).toBe('three');
     expect(summary.timelineSecondary).toContain('up to');
+  });
+
+  it('extracts the latest image preview as a browser-renderable data URL', () => {
+    const preview = latestBridgePreview([
+      { type: 'preview.completed', previewType: 'code', content: 'function setup() {}' },
+      { type: 'preview.completed', previewType: 'image', content: 'ZmFrZS1wbmc=', imageUrl: '/tmp/render.png' },
+    ]);
+
+    expect(preview?.type).toBe('image');
+    expect(preview?.src).toBe('data:image/png;base64,ZmFrZS1wbmc=');
+    expect(preview?.label).toBe('/tmp/render.png');
+  });
+
+  it('uses the newest preview event instead of an older image preview', () => {
+    const preview = latestBridgePreview([
+      { type: 'preview.completed', previewType: 'image', content: 'b2xkLWltYWdl', imageUrl: '/tmp/old.png' },
+      { type: 'preview.completed', previewType: 'code', content: 'function setup() {}' },
+    ]);
+
+    expect(preview?.type).toBe('code');
+    expect(preview?.code).toContain('function setup');
   });
 });

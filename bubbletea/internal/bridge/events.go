@@ -6,12 +6,12 @@ type TrustState struct {
 }
 
 type PendingAction struct {
-	ID                  string `json:"id"`
-	Title               string `json:"title"`
-	Description         string `json:"description"`
-	Kind                string `json:"kind"`
+	ID                   string `json:"id"`
+	Title                string `json:"title"`
+	Description          string `json:"description"`
+	Kind                 string `json:"kind"`
 	RequiresConfirmation bool   `json:"requiresConfirmation"`
-	CreatedAt           string `json:"createdAt"`
+	CreatedAt            string `json:"createdAt"`
 }
 
 type SessionStatus struct {
@@ -34,16 +34,16 @@ type FileChange struct {
 // DiagnosticCheck represents a single diagnostic result.
 type DiagnosticCheck struct {
 	Name    string `json:"name"`
-	Status  string `json:"status"`  // "pass" | "fail" | "warn"
+	Status  string `json:"status"` // "pass" | "fail" | "warn"
 	Message string `json:"message"`
 }
 
 // SessionEntry represents a resumable session summary.
 type SessionEntry struct {
-	SessionID   string `json:"sessionId"`
-	TurnCount   int    `json:"turnCount"`
-	LastIntent  string `json:"lastIntent,omitempty"`
-	UpdatedAt   string `json:"updatedAt"`
+	SessionID  string `json:"sessionId"`
+	TurnCount  int    `json:"turnCount"`
+	LastIntent string `json:"lastIntent,omitempty"`
+	UpdatedAt  string `json:"updatedAt"`
 }
 
 // CortexTaskPipeline holds task pipeline metrics from the perception bus.
@@ -73,23 +73,24 @@ type CortexScoreTrend struct {
 
 // CortexSnapshotData holds the full perception snapshot emitted by CortexPerceptionBus.
 type CortexSnapshotData struct {
-	Timestamp       string            `json:"timestamp"`
+	Timestamp       string             `json:"timestamp"`
 	TaskPipeline    CortexTaskPipeline `json:"taskPipeline"`
-	LLMHealth       CortexLLMHealth   `json:"llmHealth"`
-	ScoreTrend      CortexScoreTrend  `json:"scoreTrend"`
-	EventsProcessed int               `json:"eventsProcessed"`
+	LLMHealth       CortexLLMHealth    `json:"llmHealth"`
+	ScoreTrend      CortexScoreTrend   `json:"scoreTrend"`
+	EventsProcessed int                `json:"eventsProcessed"`
 }
 
 // Event is the universal SSE event envelope for TUI → Bubble Tea communication.
 type Event struct {
-	Type      string         `json:"type"`
-	SessionID string         `json:"sessionId"`
-	Delta     string         `json:"delta,omitempty"`
-	Content   string         `json:"content,omitempty"`
-	Mode      string         `json:"mode,omitempty"`
-	ActionID  string         `json:"actionId,omitempty"`
-	Action    *PendingAction `json:"action,omitempty"`
-	Status    *SessionStatus `json:"status,omitempty"`
+	Type        string         `json:"type"`
+	SessionID   string         `json:"sessionId"`
+	Delta       string         `json:"delta,omitempty"`
+	Content     string         `json:"content,omitempty"`
+	Code        string         `json:"code,omitempty"`
+	Mode        string         `json:"mode,omitempty"`
+	ActionID    string         `json:"actionId,omitempty"`
+	Action      *PendingAction `json:"action,omitempty"`
+	Status      *SessionStatus `json:"status,omitempty"`
 	Message     string         `json:"message,omitempty"`
 	Label       string         `json:"label,omitempty"`
 	Trust       *TrustState    `json:"trust,omitempty"`
@@ -97,8 +98,15 @@ type Event struct {
 	ImageUrl    string         `json:"imageUrl,omitempty"`
 
 	// Event fields for generation.iteration
-	Iteration int     `json:"iteration,omitempty"`
-	Score     float64 `json:"score,omitempty"`
+	Iteration      int      `json:"iteration,omitempty"`
+	Score          float64  `json:"score,omitempty"`
+	Domain         string   `json:"domain,omitempty"`
+	Domains        []string `json:"domains,omitempty"`
+	Attempt        int      `json:"attempt,omitempty"`
+	AttemptTotal   int      `json:"attemptTotal,omitempty"`
+	CandidateCount int      `json:"candidateCount,omitempty"`
+	CodeSize       int      `json:"codeSize,omitempty"`
+	ErrorText      string   `json:"error,omitempty"`
 
 	// Event fields for generation.complete
 	Iterations int     `json:"iterations,omitempty"`
@@ -108,51 +116,51 @@ type Event struct {
 	Reason     string  `json:"reason,omitempty"`
 
 	// Event fields for swarm.round
-	Round          int    `json:"round,omitempty"`
-	TotalRounds    int    `json:"totalRounds,omitempty"`
-	VocabularySize int    `json:"vocabularySize,omitempty"`
-	Winner         string `json:"winner,omitempty"`
-	Converged      bool   `json:"converged,omitempty"`
+	Round          int            `json:"round,omitempty"`
+	TotalRounds    int            `json:"totalRounds,omitempty"`
+	VocabularySize int            `json:"vocabularySize,omitempty"`
+	Winner         string         `json:"winner,omitempty"`
+	Converged      bool           `json:"converged,omitempty"`
 	Outputs        map[string]any `json:"outputs,omitempty"`
 	Votes          map[string]any `json:"votes,omitempty"`
-	Timestamp      int64  `json:"timestamp,omitempty"`
+	Timestamp      int64          `json:"timestamp,omitempty"`
 
 	// Operator surface event fields
-	ToolName     string       `json:"toolName,omitempty"`
-	Thought      string       `json:"thought,omitempty"`
-	DisplayLabel string       `json:"displayLabel,omitempty"`
-	ArgsSummary  string       `json:"argsSummary,omitempty"`
-	StepNum      int          `json:"stepNum,omitempty"`
-	ResultSummary string      `json:"resultSummary,omitempty"`
-	Success      bool         `json:"success,omitempty"`
-	Phase        string       `json:"phase,omitempty"`
-	StepCurrent  int          `json:"stepCurrent,omitempty"`
-	StepTotal    int          `json:"stepTotal,omitempty"`
-	ActiveFile   string       `json:"activeFile,omitempty"`
-	Objective    string       `json:"objective,omitempty"`
-	Files        []FileChange `json:"files,omitempty"`
-	Command      string       `json:"command,omitempty"`
-	OutputTail   string       `json:"outputTail,omitempty"`
-	JobID        string       `json:"jobId,omitempty"`
-	ArtifactLabel string      `json:"artifactLabel,omitempty"`
-	ArtifactPath  string      `json:"artifactPath,omitempty"`
+	ToolName      string       `json:"toolName,omitempty"`
+	Thought       string       `json:"thought,omitempty"`
+	DisplayLabel  string       `json:"displayLabel,omitempty"`
+	ArgsSummary   string       `json:"argsSummary,omitempty"`
+	StepNum       int          `json:"stepNum,omitempty"`
+	ResultSummary string       `json:"resultSummary,omitempty"`
+	Success       bool         `json:"success,omitempty"`
+	Phase         string       `json:"phase,omitempty"`
+	StepCurrent   int          `json:"stepCurrent,omitempty"`
+	StepTotal     int          `json:"stepTotal,omitempty"`
+	ActiveFile    string       `json:"activeFile,omitempty"`
+	Objective     string       `json:"objective,omitempty"`
+	Files         []FileChange `json:"files,omitempty"`
+	Command       string       `json:"command,omitempty"`
+	OutputTail    string       `json:"outputTail,omitempty"`
+	JobID         string       `json:"jobId,omitempty"`
+	ArtifactLabel string       `json:"artifactLabel,omitempty"`
+	ArtifactPath  string       `json:"artifactPath,omitempty"`
 
 	// Skill event fields
 	SkillName string `json:"skillName,omitempty"`
 
 	// Review event fields
-	CandidateID string  `json:"candidateId,omitempty"`
-	CandidateA string   `json:"candidateA,omitempty"`
-	CandidateB string   `json:"candidateB,omitempty"`
-	Diff       string   `json:"diff,omitempty"`
+	CandidateID string `json:"candidateId,omitempty"`
+	CandidateA  string `json:"candidateA,omitempty"`
+	CandidateB  string `json:"candidateB,omitempty"`
+	Diff        string `json:"diff,omitempty"`
 
 	// Onboarding event fields
-	StepID       string `json:"stepId,omitempty"`
-	Title        string `json:"title,omitempty"`
-	Value        string `json:"value,omitempty"`
-	StepStatus   string `json:"stepStatus,omitempty"` // onboarding/diagnostic step status string
-	ConfigWritten bool  `json:"configWritten,omitempty"`
-	ConfigPath   string `json:"configPath,omitempty"`
+	StepID        string `json:"stepId,omitempty"`
+	Title         string `json:"title,omitempty"`
+	Value         string `json:"value,omitempty"`
+	StepStatus    string `json:"stepStatus,omitempty"` // onboarding/diagnostic step status string
+	ConfigWritten bool   `json:"configWritten,omitempty"`
+	ConfigPath    string `json:"configPath,omitempty"`
 
 	// Diagnostics event fields
 	Checks    []DiagnosticCheck `json:"checks,omitempty"`
@@ -194,8 +202,8 @@ type Event struct {
 	Goals    []CortexGoal `json:"goals,omitempty"`
 
 	// Cortex loop event fields
-	TickNumber int              `json:"tickNumber,omitempty"`
-	Data       map[string]any   `json:"data,omitempty"`
+	TickNumber int            `json:"tickNumber,omitempty"`
+	Data       map[string]any `json:"data,omitempty"`
 }
 
 // CortexGoal represents a user-defined goal for the Cortex system.
@@ -211,8 +219,8 @@ type CortexGoal struct {
 
 // CortexStuckWorker represents a stuck process detected by the Cortex supervisor.
 type CortexStuckWorker struct {
-	ProcessName      string `json:"processName"`
-	DurationMs       int    `json:"durationMs"`
-	ThresholdMs      int    `json:"thresholdMs"`
+	ProcessName       string `json:"processName"`
+	DurationMs        int    `json:"durationMs"`
+	ThresholdMs       int    `json:"thresholdMs"`
 	SuggestedRecovery string `json:"suggestedRecovery"`
 }

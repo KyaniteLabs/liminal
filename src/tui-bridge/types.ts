@@ -77,6 +77,10 @@ export type TuiBridgeEvent =
   | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }
   // Generation telemetry: emitted during RalphLoop generation
+  | { type: 'generation.domain_plan'; sessionId: string; domains: string[] }
+  | { type: 'generation.attempt.started'; sessionId: string; domain: string; attempt: number; attemptTotal: number }
+  | { type: 'generation.attempt.failed'; sessionId: string; domain: string; attempt: number; attemptTotal: number; error: string }
+  | { type: 'generation.candidate.generated'; sessionId: string; domain: string; attempt: number; attemptTotal: number; iteration: number; candidateCount?: number; codeSize?: number }
   | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string }
   | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string }
   | { type: 'phase.changed'; sessionId: string; phase: string; stepCurrent?: number; stepTotal?: number; activeFile?: string; objective?: string }

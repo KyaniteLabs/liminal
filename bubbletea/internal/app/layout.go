@@ -198,6 +198,14 @@ func (m Model) renderGenerationCard(width int) string {
 		bar,
 	}
 
+	if len(m.GenerationDomainPlan) > 0 {
+		lines = append(lines, ui.PanelLabelStyle.Render("Plan:")+" "+ui.GenerationMetaStyle.Render(trimToWidth(strings.Join(m.GenerationDomainPlan, " → "), width-8)))
+	}
+	if m.GenerationAttemptCurrent > 0 || m.ActiveGenerationDomain != "" {
+		attempt := formatStepProgress(m.GenerationAttemptCurrent, m.GenerationAttemptTotal)
+		lines = append(lines, ui.PanelLabelStyle.Render("Attempt:")+" "+ui.GenerationValueStyle.Render(strings.TrimPrefix(attempt, "Step:"))+" "+ui.GenerationMetaStyle.Render(m.ActiveGenerationDomain))
+	}
+
 	if m.GenerationModel != "" {
 		lines = append(lines, ui.PanelLabelStyle.Render("Model:")+" "+ui.GenerationValueStyle.Render(m.GenerationModel))
 	}
@@ -209,6 +217,29 @@ func (m Model) renderGenerationCard(width int) string {
 	}
 	if strings.TrimSpace(m.GenerationReason) != "" {
 		lines = append(lines, ui.GenerationMetaStyle.Render(trimToWidth(m.GenerationReason, width-6)))
+	}
+	if len(m.GenerationAttempts) > 0 {
+		lines = append(lines, ui.PanelLabelStyle.Render("Attempts"))
+		start := 0
+		if len(m.GenerationAttempts) > 4 {
+			start = len(m.GenerationAttempts) - 4
+		}
+		for _, attempt := range m.GenerationAttempts[start:] {
+			label := fmt.Sprintf("%d/%d %s %s", attempt.Attempt, attempt.AttemptTotal, attempt.Domain, attempt.Status)
+			if attempt.Iteration > 0 {
+				label += fmt.Sprintf(" iter:%d", attempt.Iteration)
+			}
+			if attempt.Score > 0 {
+				label += fmt.Sprintf(" score:%.2f", attempt.Score)
+			}
+			if attempt.CodeSize > 0 {
+				label += fmt.Sprintf(" %db", attempt.CodeSize)
+			}
+			if attempt.Error != "" {
+				label += " " + attempt.Error
+			}
+			lines = append(lines, ui.GenerationMetaStyle.Render(trimToWidth(label, width-6)))
+		}
 	}
 
 	return ui.GenerationCardStyle.Width(width).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))

@@ -1480,6 +1480,7 @@ export class TuiBridgeService {
       });
 
       const domainPlan = buildCreativeDomainPlan(userText);
+      this.emit(sessionId, { type: 'generation.domain_plan', sessionId, domains: domainPlan });
       let result: Awaited<ReturnType<typeof RalphLoop.run>> | undefined;
       let activeDomain = domainPlan[0];
       let lastError: unknown;
@@ -1489,6 +1490,7 @@ export class TuiBridgeService {
         activeDomain = domain;
         const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0);
         const attemptLabel = `${attempt + 1}/${domainPlan.length}: ${domain}`;
+        this.emit(sessionId, { type: 'generation.attempt.started', sessionId, domain, attempt: attempt + 1, attemptTotal: domainPlan.length });
         this.emit(sessionId, {
           type: 'activity.updated',
           sessionId,
@@ -1507,6 +1509,16 @@ export class TuiBridgeService {
               });
             },
             onIteration: (iterationContext) => {
+              this.emit(sessionId, {
+                type: 'generation.candidate.generated',
+                sessionId,
+                domain,
+                attempt: attempt + 1,
+                attemptTotal: domainPlan.length,
+                iteration: iterationContext.iteration,
+                candidateCount: 3,
+                codeSize: iterationContext.code.length,
+              });
               // Step 3: Emit generation.iteration telemetry
               this.emit(sessionId, {
                 type: 'generation.iteration',
@@ -1531,6 +1543,7 @@ export class TuiBridgeService {
         } catch (err) {
           lastError = err;
           const message = err instanceof Error ? err.message : String(err);
+          this.emit(sessionId, { type: 'generation.attempt.failed', sessionId, domain, attempt: attempt + 1, attemptTotal: domainPlan.length, error: message });
           this.emit(sessionId, {
             type: 'activity.updated',
             sessionId,

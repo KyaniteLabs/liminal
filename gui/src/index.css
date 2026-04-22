@@ -75,6 +75,282 @@ body::before {
 
 #root { position: relative; z-index: 1; min-height: 100vh; }
 
+/* ── Liminal Studio Workbench ───────────────────────────────── */
+
+.liminal-workbench {
+  min-height: 100vh;
+  display: grid;
+  grid-template-areas:
+    "command command command"
+    "rail stage inspector"
+    "rail timeline inspector"
+    "rail legacy inspector";
+  grid-template-columns: minmax(168px, 0.16fr) minmax(0, 1fr) minmax(260px, 0.28fr);
+  grid-template-rows: auto minmax(360px, 52vh) auto minmax(0, auto);
+  gap: 12px;
+  padding: 14px;
+  background: var(--liminal-bg-void);
+}
+
+.liminal-commandbar {
+  grid-area: command;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(260px, 1fr) auto;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 78px;
+  padding: 12px;
+  background: var(--liminal-surface-1);
+  border: 1px solid var(--liminal-line);
+  border-radius: var(--atelier-radius);
+}
+
+.liminal-brand {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.liminal-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  color: var(--liminal-bg-void);
+  background: var(--liminal-cyan);
+  font-weight: 700;
+}
+
+.liminal-brand h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.liminal-brand p {
+  margin: 4px 0 0;
+  color: var(--liminal-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liminal-command {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.liminal-command span,
+.liminal-inspector__header span,
+.liminal-rail-meta span {
+  color: var(--liminal-muted);
+  font-size: 0.75rem;
+}
+
+.liminal-command textarea {
+  width: 100%;
+  min-height: 46px;
+  resize: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--liminal-line);
+  background: var(--liminal-surface-2);
+  color: var(--liminal-text);
+  font: inherit;
+}
+
+.liminal-command textarea:focus {
+  outline: 2px solid var(--liminal-cyan-dim);
+  border-color: var(--liminal-cyan);
+}
+
+.liminal-run-button {
+  min-width: 112px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--liminal-cyan);
+  color: var(--liminal-bg-void);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.liminal-run-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.liminal-left-rail,
+.liminal-stage,
+.liminal-inspector,
+.liminal-timeline,
+.liminal-legacy-panel {
+  border: 1px solid var(--liminal-line);
+  border-radius: var(--atelier-radius);
+  background: var(--liminal-surface-1);
+}
+
+.liminal-left-rail {
+  grid-area: rail;
+  padding: 10px;
+}
+
+.liminal-left-rail nav {
+  display: grid;
+  gap: 6px;
+}
+
+.liminal-rail-button {
+  width: 100%;
+  min-height: 36px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--liminal-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.liminal-rail-button--active {
+  color: var(--liminal-text);
+  border-color: var(--liminal-line-strong);
+  background: var(--liminal-surface-3);
+}
+
+.liminal-left-rail__content {
+  margin-top: 16px;
+}
+
+.liminal-rail-meta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.liminal-stage {
+  grid-area: stage;
+  min-width: 0;
+  overflow: hidden;
+  background: #05070a;
+}
+
+.liminal-stage-frame,
+.liminal-stage-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.liminal-stage-empty {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--liminal-muted);
+  background:
+    linear-gradient(rgba(89, 225, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 92, 255, 0.08) 1px, transparent 1px),
+    #05070a;
+  background-size: 28px 28px;
+}
+
+.liminal-stage-empty strong {
+  color: var(--liminal-text);
+  font-size: clamp(1.8rem, 4vw, 4rem);
+  line-height: 1;
+}
+
+.liminal-stage-empty small {
+  font-family: var(--font-mono);
+}
+
+.liminal-inspector {
+  grid-area: inspector;
+  padding: 12px;
+}
+
+.liminal-inspector__header {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.liminal-inspector__header small {
+  color: var(--liminal-orchid);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liminal-inspector-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.liminal-inspector-grid > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--liminal-surface-2);
+}
+
+.liminal-inspector-grid span {
+  color: var(--liminal-muted);
+  font-size: 0.75rem;
+}
+
+.liminal-inspector-grid strong {
+  color: var(--liminal-text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.liminal-timeline {
+  grid-area: timeline;
+  padding: 10px 12px;
+}
+
+.liminal-timeline-row {
+  display: grid;
+  grid-template-columns: 120px 160px 1fr;
+  gap: 12px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.liminal-timeline-row span {
+  color: var(--liminal-cyan);
+}
+
+.liminal-timeline-row strong {
+  color: var(--liminal-text);
+}
+
+.liminal-timeline-row small {
+  color: var(--liminal-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-legacy-panel {
+  grid-area: legacy;
+  padding: 12px;
+  min-width: 0;
+}
+
 @keyframes atelier-scroll-code {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
@@ -428,6 +704,38 @@ body::before {
 
 /* Mobile (< 640px) */
 @media (max-width: 639px) {
+  .liminal-workbench {
+    grid-template-areas:
+      "command"
+      "stage"
+      "timeline"
+      "inspector"
+      "rail"
+      "legacy";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(280px, 44vh) auto auto auto auto;
+    padding: 10px;
+  }
+
+  .liminal-commandbar {
+    grid-template-columns: 1fr;
+  }
+
+  .liminal-left-rail nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .liminal-rail-button {
+    text-align: center;
+    padding: 0 6px;
+    font-size: 0.78rem;
+  }
+
+  .liminal-timeline-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
   .atelier-tabs {
     flex-wrap: wrap;
     gap: 4px;
@@ -452,6 +760,17 @@ body::before {
 
 /* Tablet (640–1023px) */
 @media (min-width: 640px) and (max-width: 1023px) {
+  .liminal-workbench {
+    grid-template-areas:
+      "command command"
+      "rail stage"
+      "rail timeline"
+      "rail inspector"
+      "legacy legacy";
+    grid-template-columns: 150px minmax(0, 1fr);
+    grid-template-rows: auto minmax(340px, 46vh) auto auto auto;
+  }
+
   .atelier-title {
     font-size: 1.5rem;
   }

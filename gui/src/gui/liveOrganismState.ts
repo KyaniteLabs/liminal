@@ -12,7 +12,7 @@ export interface LiveOrganismState {
 }
 
 export const INITIAL_LIVE_ORGANISM_STATE: LiveOrganismState = {
-  activeTab: 'config',
+  activeTab: 'create',
   previewUrl: null,
   runError: null,
 };

@@ -127,6 +127,20 @@ describe('BridgeLauncherConfig', () => {
     expect(JSON.stringify(summary)).not.toContain('vision-key');
   });
 
+  it('marks GPT-5 evaluators as vision-capable', () => {
+    const summary = summarizeBridgeRuntime({
+      LIMINAL_LLM_PROVIDER: 'glm',
+      LIMINAL_LLM_BASE_URL: 'https://api.z.ai/api/anthropic',
+      LIMINAL_LLM_MODEL: 'glm-4.5-air',
+      LIMINAL_EVALUATOR_BASE_URL: 'https://api.openai.com/v1',
+      LIMINAL_EVALUATOR_MODEL: 'gpt-5.4-mini',
+    });
+
+    expect(summary.roles.evaluator.provider).toBe('openai');
+    expect(summary.roles.evaluator.multimodal).toBe('yes');
+    expect(summary.evaluation.multimodal).toBe('yes');
+  });
+
   it('applies persisted evaluator role config from ~/.liminal/config.json', () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-role-config-'));
     homedirSpy.mockReturnValue(home);

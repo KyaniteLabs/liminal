@@ -6,19 +6,17 @@
 
 import open from 'open';
 import path from 'node:path';
+import fs from 'node:fs/promises';
 import { PreviewServer } from '../../render/PreviewServer.js';
-import { Exporter } from '../../export/Exporter.js';
+import { HTMLWrapper, type Domain } from '../../utils/htmlWrapper.js';
 import { validateBrowserPreviewPath } from './previewSafety.js';
 
 export class BrowserLauncher {
   private previewServer?: PreviewServer;
-  private exporter: Exporter;
   private currentPort: number = 3456;
   private lastPreviewUrl?: string;
 
-  constructor() {
-    this.exporter = new Exporter();
-  }
+  constructor() {}
 
   /**
    * Start PreviewServer if not running
@@ -30,6 +28,7 @@ export class BrowserLauncher {
       });
       
       await this.previewServer.start();
+      this.currentPort = this.previewServer.getPort() ?? this.currentPort;
     }
     
     return this.currentPort;
@@ -50,16 +49,11 @@ export class BrowserLauncher {
    */
   async previewCode(code: string, type: 'p5' | 'glsl' | 'three' | 'hydra' | 'strudel' | 'tone' | 'html' | 'ascii'): Promise<string> {
     const port = await this.ensureServer();
-    
-    // Generate temporary HTML file
-    void this.generatePreviewHTML(code, type);  // Placeholder for future use
-    
-    // Export to temp file
-    const tempPath = path.join(process.cwd(), '.liminal', 'preview', `preview-${Date.now()}.html`);
-    await this.exporter.exportHTML(code, tempPath);
+    const html = this.generatePreviewHTML(code, type);
+    this.previewServer?.serveSketch(html);
     
     // Open in browser
-    const url = `http://localhost:${port}/preview/${path.basename(tempPath)}`;
+    const url = `http://localhost:${port}/preview`;
     await open(url);
     
     this.lastPreviewUrl = url;
@@ -76,7 +70,16 @@ export class BrowserLauncher {
     }
 
     const port = await this.ensureServer();
-    const url = `http://localhost:${port}/preview/${path.basename(filePath)}`;
+    const ext = path.extname(filePath).toLowerCase();
+    if (['.png', '.jpg', '.jpeg', '.gif', '.bmp', '.webp'].includes(ext)) {
+      await open(filePath);
+      this.lastPreviewUrl = filePath;
+      return filePath;
+    }
+
+    const content = await fs.readFile(filePath, 'utf-8');
+    this.previewServer?.serveSketch(ext === '.svg' ? this.wrapSvgForPreview(content) : content);
+    const url = `http://localhost:${port}/preview`;
     await open(url);
     
     this.lastPreviewUrl = url;
@@ -97,10 +100,25 @@ export class BrowserLauncher {
   /**
    * Generate preview HTML based on type
    */
-  private generatePreviewHTML(code: string, _type: string): string {
-    // This would generate appropriate HTML wrapper
-    // Similar to what PreviewServer already does
-    return code;
+  private generatePreviewHTML(code: string, type: 'p5' | 'glsl' | 'three' | 'hydra' | 'strudel' | 'tone' | 'html' | 'ascii'): string {
+    const domain: Domain = type === 'glsl' ? 'shader' : type;
+    const includeP5Sound = domain === 'p5' && /p5\.sound|loadSound|createAudio|userStartAudio|getAudioContext/i.test(code);
+    return HTMLWrapper.wrap(code, { domain, title: `${type} Preview`, includeP5Sound });
+  }
+
+  private wrapSvgForPreview(svg: string): string {
+    return `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SVG Preview</title>
+<style>html,body{margin:0;min-height:100%;display:grid;place-items:center;background:#f8fafc}svg{max-width:96vw;max-height:96vh}</style>
+</head>
+<body>
+${svg}
+</body>
+</html>`;
   }
 
   /**

@@ -21,6 +21,11 @@ describe('Security Headers', () => {
     expect(response.headers.get('content-security-policy')).toBeTruthy();
   });
 
+  it('allows the Three.js module CDN used by preview wrappers', async () => {
+    const response = await fetch(`http://localhost:${TEST_PORT}/`);
+    expect(response.headers.get('content-security-policy')).toContain('https://unpkg.com');
+  });
+
   it('should include X-Frame-Options: DENY header', async () => {
     const response = await fetch(`http://localhost:${TEST_PORT}/`);
     expect(response.headers.get('x-frame-options')).toBe('DENY');

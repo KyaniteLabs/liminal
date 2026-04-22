@@ -39,6 +39,9 @@ export class ThreeWrapper {
     if (code.includes('<!DOCTYPE html>') && code.includes('</html>')) {
       return code;
     }
+
+    const hasThreeImport = /\bimport\b[\s\S]*?\bfrom\s+['"](?:three|https:\/\/(?:unpkg\.com|cdn\.jsdelivr\.net)\/(?:npm\/)?three)/m.test(code);
+    const moduleCode = hasThreeImport ? code : `import * as THREE from 'three';\n${code}`;
     
     return `<!DOCTYPE html>
 <html lang="en">
@@ -62,7 +65,7 @@ export class ThreeWrapper {
     }
     </script>
     <script type="module">
-${code}
+${moduleCode}
     </script>
 </body>
 </html>`;

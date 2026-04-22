@@ -35,6 +35,14 @@ describe('ThreeWrapper', () => {
       expect(result).toContain(code);
     });
 
+    it('does not inject a duplicate THREE binding when code already imports from a CDN', () => {
+      const code = 'import * as THREE from "https://unpkg.com/three@0.160.0/build/three.module.js";\nconst scene = new THREE.Scene();';
+      const result = ThreeWrapper.wrap(code);
+
+      expect(result.match(/import \* as THREE/g)).toHaveLength(1);
+      expect(result).toContain('https://unpkg.com/three@0.160.0/build/three.module.js');
+    });
+
     it('uses default title', () => {
       const code = 'const scene = new THREE.Scene();';
       const result = ThreeWrapper.wrap(code);

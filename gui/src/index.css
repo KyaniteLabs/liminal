@@ -204,6 +204,11 @@ body::before {
   gap: 6px;
 }
 
+.liminal-rail-group {
+  display: grid;
+  gap: 6px;
+}
+
 .liminal-rail-button {
   width: 100%;
   min-height: 36px;
@@ -221,6 +226,30 @@ body::before {
   color: var(--liminal-text);
   border-color: var(--liminal-line-strong);
   background: var(--liminal-surface-3);
+}
+
+.liminal-subnav {
+  display: grid;
+  gap: 4px;
+  padding-left: 10px;
+}
+
+.liminal-subnav-button {
+  min-height: 28px;
+  text-align: left;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--liminal-dim);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.liminal-subnav-button--active {
+  color: var(--liminal-cyan);
+  background: rgba(89, 225, 255, 0.08);
 }
 
 .liminal-left-rail__content {

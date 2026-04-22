@@ -3,8 +3,10 @@ import type { WorkbenchMode, WorkbenchModeId } from '../gui/workbenchState';
 
 interface WorkbenchShellProps {
   activeMode: WorkbenchModeId;
+  activeTab: string;
   modes: WorkbenchMode[];
   onModeChange: (mode: WorkbenchMode) => void;
+  onTabChange: (tab: string) => void;
   prompt: string;
   onPromptChange: (value: string) => void;
   onRun: () => void;
@@ -21,8 +23,10 @@ interface WorkbenchShellProps {
 
 export function WorkbenchShell({
   activeMode,
+  activeTab,
   modes,
   onModeChange,
+  onTabChange,
   prompt,
   onPromptChange,
   onRun,
@@ -63,14 +67,29 @@ export function WorkbenchShell({
       <aside className="liminal-left-rail">
         <nav aria-label="Workbench modes">
           {modes.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              className={mode.id === activeMode ? 'liminal-rail-button liminal-rail-button--active' : 'liminal-rail-button'}
-              onClick={() => onModeChange(mode)}
-            >
-              {mode.label}
-            </button>
+            <div key={mode.id} className="liminal-rail-group">
+              <button
+                type="button"
+                className={mode.id === activeMode ? 'liminal-rail-button liminal-rail-button--active' : 'liminal-rail-button'}
+                onClick={() => onModeChange(mode)}
+              >
+                {mode.label}
+              </button>
+              {mode.id === activeMode && mode.legacyTabs.length > 1 && (
+                <div className="liminal-subnav">
+                  {mode.legacyTabs.map((tab) => (
+                    <button
+                      key={tab}
+                      type="button"
+                      className={tab === activeTab ? 'liminal-subnav-button liminal-subnav-button--active' : 'liminal-subnav-button'}
+                      onClick={() => onTabChange(tab)}
+                    >
+                      {formatLegacyTab(tab)}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
         <div className="liminal-left-rail__content">{leftSlot}</div>
@@ -97,4 +116,18 @@ export function WorkbenchShell({
       </main>
     </div>
   );
+}
+
+function formatLegacyTab(tab: string): string {
+  const labels: Record<string, string> = {
+    create: 'Create',
+    cockpit: 'Cockpit',
+    liveMusic: 'Music',
+    live: 'Live',
+    curator: 'Curator',
+    compost: 'Compost',
+    activity: 'Activity',
+    config: 'Config',
+  };
+  return labels[tab] ?? tab;
 }

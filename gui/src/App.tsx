@@ -514,7 +514,7 @@ export default function App() {
   const stageSlot = (
     <div className="liminal-stage-frame">
       {previewUrl ? (
-        <iframe title="Live preview" src={previewUrl} />
+        <iframe title="Live preview" src={previewUrl} sandbox="allow-scripts" />
       ) : (
         <div className="liminal-stage-empty">
           <span>Stage</span>
@@ -577,8 +577,10 @@ export default function App() {
   return (
     <WorkbenchShell
       activeMode={activeMode.id}
+      activeTab={activeTab}
       modes={WORKBENCH_MODES}
       onModeChange={handleWorkbenchModeChange}
+      onTabChange={(tab) => dispatchLive(switchToLiveOrganismView(tab as GuiTab))}
       prompt={createPrompt}
       onPromptChange={setCreatePrompt}
       onRun={handleCreateRun}

@@ -10,6 +10,8 @@ import { loadConfig, loadProjectConfig, getEffectiveConfig, saveConfig } from '.
 import { Gallery } from '../dist/gallery/Gallery.js';
 import { eventBus } from '../dist/core/EventBus.js';
 import { TuiBridgeService } from '../dist/tui-bridge/TuiBridgeService.js';
+import { applyBridgeProviderEnv, resolveBridgeProviderConfig } from '../dist/tui-bridge/BridgeLauncherConfig.js';
+import { LLMClient } from '../dist/llm/LLMClient.js';
 import { logSecurityEvent } from '../dist/security/SecurityLogger.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -61,6 +63,24 @@ const previewStore = new Map();
 const tuiBridge = new TuiBridgeService();
 
 const P5_CDN = 'https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js';
+
+function resolveGuiBridgeProvider() {
+  const providerConfig = resolveBridgeProviderConfig();
+  applyBridgeProviderEnv(process.env, providerConfig);
+  return providerConfig;
+}
+
+function createGuiBridgeLLM() {
+  const providerConfig = resolveGuiBridgeProvider();
+  return new LLMClient({
+    role: 'harness',
+    baseUrl: providerConfig.baseUrl,
+    model: providerConfig.model,
+    apiKey: providerConfig.apiKey,
+    temperature: 0.5,
+    maxTokens: 4096,
+  });
+}
 
 // F5: CSRF protection on SSE endpoints
 function validateSSEOrigin(req, res, next) {
@@ -143,7 +163,11 @@ export function createApp(configPath, port = 5174) {
 
   app.post('/api/tui/session', (_req, res) => {
     try {
-      const status = tuiBridge.createSession();
+      const providerConfig = resolveGuiBridgeProvider();
+      const status = tuiBridge.createSession({
+        provider: providerConfig.provider,
+        model: providerConfig.model,
+      });
       res.status(200).json(status);
     } catch (err) {
       res.status(500).json({ error: err.message || String(err) });
@@ -164,7 +188,7 @@ export function createApp(configPath, port = 5174) {
         mode: req.body?.mode || 'chat',
         text: req.body?.text || '',
         clientIntent: req.body?.clientIntent,
-      });
+      }, createGuiBridgeLLM());
       res.status(200).json(result);
     } catch (err) {
       res.status(400).json({ error: err.message || String(err) });
@@ -173,7 +197,7 @@ export function createApp(configPath, port = 5174) {
 
   app.post('/api/tui/session/:id/actions/:actionId/confirm', async (req, res) => {
     try {
-      await tuiBridge.confirmAction(req.params.id, req.params.actionId);
+      await tuiBridge.confirmAction(req.params.id, req.params.actionId, createGuiBridgeLLM());
       res.status(200).json({ ok: true });
     } catch (err) {
       res.status(400).json({ error: err.message || String(err) });

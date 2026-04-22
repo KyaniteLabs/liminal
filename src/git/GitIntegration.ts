@@ -30,6 +30,7 @@ export class GitIntegration {
   private compostBridge?: CompostBridge;
   private originalBranch: string | null = null;
   private runBranch: string | null = null;
+  private stashedBeforeRun = false;
   private lock = new AsyncLock();
 
   constructor(config: Partial<GitConfig>, compostBridge?: CompostBridge) {
@@ -79,6 +80,7 @@ export class GitIntegration {
         ? `agent:${sessionId}:stash before run ${name}`
         : `liminal: auto-stash before run ${name}`;
       await this.git.stash(stashMsg);
+      this.stashedBeforeRun = true;
       Logger.info('GitIntegration', 'Stashed uncommitted changes before run');
     }
 
@@ -216,7 +218,27 @@ export class GitIntegration {
         Logger.info('GitIntegration', 'Committed final changes before restoring branch');
       }
 
-      // Clean up session-scoped stashes for this agent session
+      // Restore original branch
+      if (this.originalBranch) {
+        await this.git.checkout(this.originalBranch);
+        Logger.info('GitIntegration', `Restored branch: ${this.originalBranch}`);
+      }
+
+      // Restore only the stash this run created. Never pop arbitrary existing
+      // stashes; old unrelated stashes can contain conflicts from other lanes.
+      if (this.stashedBeforeRun) {
+        try {
+          await this.git.stashPop();
+          Logger.info('GitIntegration', 'Restored stashed changes');
+        } catch (stashPopError) {
+          Logger.warn(
+            'GitIntegration',
+            `Failed to restore run stash: ${stashPopError instanceof Error ? stashPopError.message : String(stashPopError)}`,
+          );
+        }
+      }
+
+      // Clean up leftover session-scoped stashes for this agent session
       if (sessionId) {
         try {
           const allStashes = await this.git.stashListFull();
@@ -231,28 +253,13 @@ export class GitIntegration {
         }
       }
 
-      // Restore original branch
-      if (this.originalBranch) {
-        await this.git.checkout(this.originalBranch);
-        Logger.info('GitIntegration', `Restored branch: ${this.originalBranch}`);
-      }
-
-      // Pop stash if we had one (legacy — non-session stashes)
-      try {
-        const stashes = await this.git.stashList();
-        if (stashes.length > 0) {
-          await this.git.stashPop();
-          Logger.info('GitIntegration', 'Restored stashed changes');
-        }
-      } catch {
-        // Stash pop can fail if stash is empty — safe to ignore
-      }
-
       Logger.info('GitIntegration', `Run ended: ${reason}`);
     } catch (error) {
       Logger.error('GitIntegration', `Failed to end run: ${error instanceof Error ? error.message : error}`);
     } finally {
       this.runBranch = null;
+      this.originalBranch = null;
+      this.stashedBeforeRun = false;
     }
     });
   }

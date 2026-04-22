@@ -149,7 +149,7 @@ function validateSSEOrigin(req, res, next) {
 }
 
 /**
- * @param {string} [configPath] - Override path to ~/.atelier/config.json (e.g. for tests)
+ * @param {string} [configPath] - Override path to ~/.liminal/config.json (e.g. for tests)
  * @param {number} [port] - Backend port (for preview URL in response)
  * @returns {import('express').Express}
  */
@@ -210,6 +210,7 @@ export function createApp(configPath, port = 5174) {
   });
 
   const getConfigPath = () =>
+    // ATELIER_CONFIG_PATH is legacy compatibility for pre-Liminal installs.
     configPath || process.env.LIMINAL_CONFIG_PATH || process.env.ATELIER_CONFIG_PATH || path.join(process.env.HOME || '', '.liminal', 'config.json');
 
   const backendOrigin = `http://localhost:${port}`;

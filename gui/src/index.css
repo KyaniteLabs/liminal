@@ -1,29 +1,52 @@
-@import url('https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,400&family=Outfit:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
 
 :root {
-  --atelier-bg: #0d0c0f;
-  --atelier-surface: #16141a;
-  --atelier-surface-raised: #1e1c24;
-  --atelier-border: rgba(212, 160, 84, 0.15);
-  --atelier-border-strong: rgba(212, 160, 84, 0.35);
-  --atelier-text: #f0ebe3;
-  --atelier-text-muted: #8b8496;
-  --atelier-text-dim: #5c5666;
-  --atelier-accent: #d4a054;
-  --atelier-accent-hover: #e0b068;
-  --atelier-accent-dim: rgba(212, 160, 84, 0.25);
-  --atelier-success: #5a9b6e;
-  --atelier-success-bg: rgba(90, 155, 110, 0.12);
-  --atelier-error: #c75d5d;
-  --atelier-error-bg: rgba(199, 93, 93, 0.12);
-  --atelier-warn: #c9a227;
-  --atelier-warn-bg: rgba(201, 162, 39, 0.12);
-  --atelier-music: #6b9fd4;
-  --atelier-visual: #c77bb0;
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Outfit', system-ui, sans-serif;
+  --liminal-bg-void: #07090d;
+  --liminal-bg-shell: #0d1118;
+  --liminal-surface-1: #121720;
+  --liminal-surface-2: #191f2b;
+  --liminal-surface-3: #222a39;
+  --liminal-line: rgba(145, 161, 190, 0.18);
+  --liminal-line-strong: rgba(145, 161, 190, 0.34);
+  --liminal-text: #eef3ff;
+  --liminal-muted: #9aa7bd;
+  --liminal-dim: #667286;
+  --liminal-cyan: #59e1ff;
+  --liminal-cyan-hover: #8eeaff;
+  --liminal-cyan-dim: rgba(89, 225, 255, 0.2);
+  --liminal-violet: #8f5cff;
+  --liminal-orchid: #c26bff;
+  --liminal-green: #58c777;
+  --liminal-green-bg: rgba(88, 199, 119, 0.13);
+  --liminal-red: #d95763;
+  --liminal-red-bg: rgba(217, 87, 99, 0.13);
+  --liminal-amber: #f2b84b;
+  --liminal-amber-bg: rgba(242, 184, 75, 0.13);
+
+  /* Legacy class compatibility during the workbench migration. */
+  --atelier-bg: var(--liminal-bg-void);
+  --atelier-surface: var(--liminal-surface-1);
+  --atelier-surface-raised: var(--liminal-surface-2);
+  --atelier-border: var(--liminal-line);
+  --atelier-border-strong: var(--liminal-line-strong);
+  --atelier-text: var(--liminal-text);
+  --atelier-text-muted: var(--liminal-muted);
+  --atelier-text-dim: var(--liminal-dim);
+  --atelier-accent: var(--liminal-cyan);
+  --atelier-accent-hover: var(--liminal-cyan-hover);
+  --atelier-accent-dim: var(--liminal-cyan-dim);
+  --atelier-success: var(--liminal-green);
+  --atelier-success-bg: var(--liminal-green-bg);
+  --atelier-error: var(--liminal-red);
+  --atelier-error-bg: var(--liminal-red-bg);
+  --atelier-warn: var(--liminal-amber);
+  --atelier-warn-bg: var(--liminal-amber-bg);
+  --atelier-music: var(--liminal-cyan);
+  --atelier-visual: var(--liminal-orchid);
+  --font-display: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --atelier-radius: 10px;
+  --atelier-radius: 8px;
   --atelier-radius-sm: 6px;
   --atelier-space: 20px;
   --atelier-space-sm: 12px;
@@ -45,14 +68,317 @@ body::before {
   content: '';
   position: fixed;
   inset: 0;
-  background:
-    radial-gradient(ellipse 120% 60% at 50% -20%, rgba(212, 160, 84, 0.06), transparent),
-    var(--atelier-bg);
+  background: var(--liminal-bg-shell);
   pointer-events: none;
   z-index: 0;
 }
 
 #root { position: relative; z-index: 1; min-height: 100vh; }
+
+/* ── Liminal Studio Workbench ───────────────────────────────── */
+
+.liminal-workbench {
+  min-height: 100vh;
+  display: grid;
+  grid-template-areas:
+    "command command command"
+    "rail stage inspector"
+    "rail timeline inspector"
+    "rail legacy inspector";
+  grid-template-columns: minmax(168px, 0.16fr) minmax(0, 1fr) minmax(260px, 0.28fr);
+  grid-template-rows: auto minmax(360px, 52vh) auto minmax(0, auto);
+  gap: 12px;
+  padding: 14px;
+  background: var(--liminal-bg-void);
+}
+
+.liminal-commandbar {
+  grid-area: command;
+  display: grid;
+  grid-template-columns: minmax(180px, 240px) minmax(260px, 1fr) auto;
+  align-items: stretch;
+  gap: 12px;
+  min-height: 78px;
+  padding: 12px;
+  background: var(--liminal-surface-1);
+  border: 1px solid var(--liminal-line);
+  border-radius: var(--atelier-radius);
+}
+
+.liminal-brand {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  align-items: center;
+  gap: 10px;
+}
+
+.liminal-brand__mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  aspect-ratio: 1;
+  border-radius: 8px;
+  color: var(--liminal-bg-void);
+  background: var(--liminal-cyan);
+  font-weight: 700;
+}
+
+.liminal-brand h1 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.liminal-brand p {
+  margin: 4px 0 0;
+  color: var(--liminal-muted);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liminal-command {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+}
+
+.liminal-command span,
+.liminal-inspector__header span,
+.liminal-rail-meta span {
+  color: var(--liminal-muted);
+  font-size: 0.75rem;
+}
+
+.liminal-command textarea {
+  width: 100%;
+  min-height: 46px;
+  resize: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--liminal-line);
+  background: var(--liminal-surface-2);
+  color: var(--liminal-text);
+  font: inherit;
+}
+
+.liminal-command textarea:focus {
+  outline: 2px solid var(--liminal-cyan-dim);
+  border-color: var(--liminal-cyan);
+}
+
+.liminal-run-button {
+  min-width: 112px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--liminal-cyan);
+  color: var(--liminal-bg-void);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.liminal-run-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.liminal-left-rail,
+.liminal-stage,
+.liminal-inspector,
+.liminal-timeline,
+.liminal-legacy-panel {
+  border: 1px solid var(--liminal-line);
+  border-radius: var(--atelier-radius);
+  background: var(--liminal-surface-1);
+}
+
+.liminal-left-rail {
+  grid-area: rail;
+  padding: 10px;
+}
+
+.liminal-left-rail nav {
+  display: grid;
+  gap: 6px;
+}
+
+.liminal-rail-group {
+  display: grid;
+  gap: 6px;
+}
+
+.liminal-rail-button {
+  width: 100%;
+  min-height: 36px;
+  text-align: left;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 0 10px;
+  background: transparent;
+  color: var(--liminal-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.liminal-rail-button--active {
+  color: var(--liminal-text);
+  border-color: var(--liminal-line-strong);
+  background: var(--liminal-surface-3);
+}
+
+.liminal-subnav {
+  display: grid;
+  gap: 4px;
+  padding-left: 10px;
+}
+
+.liminal-subnav-button {
+  min-height: 28px;
+  text-align: left;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 8px;
+  background: transparent;
+  color: var(--liminal-dim);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.liminal-subnav-button--active {
+  color: var(--liminal-cyan);
+  background: rgba(89, 225, 255, 0.08);
+}
+
+.liminal-left-rail__content {
+  margin-top: 16px;
+}
+
+.liminal-rail-meta {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.liminal-stage {
+  grid-area: stage;
+  min-width: 0;
+  overflow: hidden;
+  background: #05070a;
+}
+
+.liminal-stage-frame,
+.liminal-stage-frame iframe {
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.liminal-stage-empty {
+  height: 100%;
+  display: grid;
+  place-content: center;
+  gap: 8px;
+  text-align: center;
+  color: var(--liminal-muted);
+  background:
+    linear-gradient(rgba(89, 225, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(143, 92, 255, 0.08) 1px, transparent 1px),
+    #05070a;
+  background-size: 28px 28px;
+}
+
+.liminal-stage-empty strong {
+  color: var(--liminal-text);
+  font-size: clamp(1.8rem, 4vw, 4rem);
+  line-height: 1;
+}
+
+.liminal-stage-empty small {
+  font-family: var(--font-mono);
+}
+
+.liminal-inspector {
+  grid-area: inspector;
+  padding: 12px;
+}
+
+.liminal-inspector__header {
+  display: grid;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.liminal-inspector__header small {
+  color: var(--liminal-orchid);
+  font-family: var(--font-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.liminal-inspector-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.liminal-inspector-grid > div {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--liminal-surface-2);
+}
+
+.liminal-inspector-grid span {
+  color: var(--liminal-muted);
+  font-size: 0.75rem;
+}
+
+.liminal-inspector-grid strong {
+  color: var(--liminal-text);
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  overflow-wrap: anywhere;
+}
+
+.liminal-timeline {
+  grid-area: timeline;
+  padding: 10px 12px;
+}
+
+.liminal-timeline-row {
+  display: grid;
+  grid-template-columns: 120px 160px 1fr;
+  gap: 12px;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+}
+
+.liminal-timeline-row span {
+  color: var(--liminal-cyan);
+}
+
+.liminal-timeline-row strong {
+  color: var(--liminal-text);
+}
+
+.liminal-timeline-row small {
+  color: var(--liminal-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-legacy-panel {
+  grid-area: legacy;
+  padding: 12px;
+  min-width: 0;
+}
 
 @keyframes atelier-scroll-code {
   0% { transform: translateX(0); }
@@ -75,7 +401,7 @@ body::before {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: 1.75rem;
-  letter-spacing: -0.02em;
+  letter-spacing: 0;
   color: var(--atelier-text);
   margin: 0;
 }
@@ -85,7 +411,7 @@ body::before {
   font-weight: 600;
   font-size: 0.8125rem;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0;
   color: var(--atelier-text-muted);
   margin: 0 0 var(--atelier-space-sm);
 }
@@ -407,6 +733,38 @@ body::before {
 
 /* Mobile (< 640px) */
 @media (max-width: 639px) {
+  .liminal-workbench {
+    grid-template-areas:
+      "command"
+      "stage"
+      "timeline"
+      "inspector"
+      "rail"
+      "legacy";
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(280px, 44vh) auto auto auto auto;
+    padding: 10px;
+  }
+
+  .liminal-commandbar {
+    grid-template-columns: 1fr;
+  }
+
+  .liminal-left-rail nav {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  .liminal-rail-button {
+    text-align: center;
+    padding: 0 6px;
+    font-size: 0.78rem;
+  }
+
+  .liminal-timeline-row {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
   .atelier-tabs {
     flex-wrap: wrap;
     gap: 4px;
@@ -431,6 +789,17 @@ body::before {
 
 /* Tablet (640–1023px) */
 @media (min-width: 640px) and (max-width: 1023px) {
+  .liminal-workbench {
+    grid-template-areas:
+      "command command"
+      "rail stage"
+      "rail timeline"
+      "rail inspector"
+      "legacy legacy";
+    grid-template-columns: 150px minmax(0, 1fr);
+    grid-template-rows: auto minmax(340px, 46vh) auto auto auto;
+  }
+
   .atelier-title {
     font-size: 1.5rem;
   }

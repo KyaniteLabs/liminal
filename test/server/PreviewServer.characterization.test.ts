@@ -6,18 +6,17 @@
  */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { PreviewServer } from '../../src/render/PreviewServer.js';
-import { createServer } from 'http';
+import { createServer, Server } from 'http';
 import { AddressInfo } from 'net';
 
-// Helper to get a free port
-async function getFreePort(): Promise<number> {
+async function listenOnEphemeralPort(): Promise<{ holder: Server; port: number }> {
   return new Promise((resolve, reject) => {
-    const server = createServer();
-    server.listen(0, () => {
-      const port = (server.address() as AddressInfo).port;
-      server.close(() => resolve(port));
+    const holder = createServer();
+    holder.listen(0, () => {
+      const port = (holder.address() as AddressInfo).port;
+      resolve({ holder, port });
     });
-    server.on('error', reject);
+    holder.on('error', reject);
   });
 }
 
@@ -38,8 +37,7 @@ describe('PreviewServer Characterization', () => {
 
   describe('start()', () => {
     it('should return a promise that resolves to true when server starts', async () => {
-      const port = await getFreePort();
-      const result = await server.start(port);
+      const result = await server.start(0);
       expect(result).toBe(true);
     });
 
@@ -58,28 +56,22 @@ describe('PreviewServer Characterization', () => {
     });
 
     it('should throw error when starting server twice', async () => {
-      const port = await getFreePort();
-      await server.start(port);
-      await expect(server.start(port)).rejects.toThrow('Server is already running');
+      await server.start(0);
+      await expect(server.start(0)).rejects.toThrow('Server is already running');
     });
 
     it('should reject with EADDRINUSE when port is already in use', async () => {
-      const port = await getFreePort();
-      const server1 = new PreviewServer();
-      const server2 = new PreviewServer();
-      
-      await server1.start(port);
-      
+      const { holder, port } = await listenOnEphemeralPort();
+
       try {
-        await expect(server2.start(port)).rejects.toThrow(`Port ${port} is already in use`);
+        await expect(server.start(port)).rejects.toThrow(`Port ${port} is already in use`);
       } finally {
-        await server1.stop();
+        await new Promise<void>((resolve) => holder.close(() => resolve()));
       }
     });
 
     it('should use any available port when specified', async () => {
-      const port = await getFreePort();
-      const result = await server.start(port);
+      const result = await server.start(0);
       expect(result).toBe(true);
     });
   });
@@ -91,18 +83,15 @@ describe('PreviewServer Characterization', () => {
     });
 
     it('should return true when stopping a running server', async () => {
-      const port = await getFreePort();
-      await server.start(port);
+      await server.start(0);
       const result = await server.stop();
       expect(result).toBe(true);
     });
 
     it('should allow restarting after stop', async () => {
-      const port1 = await getFreePort();
-      const port2 = await getFreePort();
-      await server.start(port1);
+      await server.start(0);
       await server.stop();
-      const result = await server.start(port2);
+      const result = await server.start(0);
       expect(result).toBe(true);
     });
   });

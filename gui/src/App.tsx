@@ -4,12 +4,15 @@ import {
   INITIAL_LIVE_ORGANISM_STATE,
   switchToLiveOrganismView,
   setPreviewRunResult,
+  type GuiTab,
 } from './gui/liveOrganismState';
 import { CuratorMode } from './components/CuratorMode';
 import { ActivityDashboard } from './components/ActivityDashboard';
 import { CompostVisualizer } from './components/CompostVisualizer';
 import { OperatorCockpit } from './components/OperatorCockpit';
+import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
+import { getWorkbenchMode, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 
 // State types
 interface MergeProposal {
@@ -499,6 +502,70 @@ export default function App() {
     setEvaluatorModel(preset.evaluatorModel || preset.model);
   };
 
+  const activeMode = getWorkbenchMode(activeTab);
+  const providerLabel = `${provider || 'unknown'} / ${model || 'unknown'}`;
+  const evaluatorLabel = `${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
+  const runLabel = runStatus === 'running' ? 'Running' : 'Run';
+
+  const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
+    dispatchLive(switchToLiveOrganismView(mode.legacyTabs[0] as GuiTab));
+  };
+
+  const stageSlot = (
+    <div className="liminal-stage-frame">
+      {previewUrl ? (
+        <iframe title="Live preview" src={previewUrl} sandbox="allow-scripts" />
+      ) : (
+        <div className="liminal-stage-empty">
+          <span>Stage</span>
+          <strong>{runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
+          <small>{createMode === 'organism' ? 'Strudel + Hydra' : createMode}</small>
+        </div>
+      )}
+    </div>
+  );
+
+  const inspectorSlot = (
+    <div className="liminal-inspector-grid">
+      <div>
+        <span>Generator</span>
+        <strong>{providerLabel}</strong>
+      </div>
+      <div>
+        <span>Evaluator</span>
+        <strong>{evaluatorLabel}</strong>
+      </div>
+      <div>
+        <span>Quality Gate</span>
+        <strong>{minQualityScore.toFixed(1)}</strong>
+      </div>
+      <div>
+        <span>Iterations</span>
+        <strong>{createMaxIterations}</strong>
+      </div>
+      <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => dispatchLive(switchToLiveOrganismView('config'))}>
+        Settings
+      </button>
+    </div>
+  );
+
+  const timelineSlot = (
+    <div className="liminal-timeline-row">
+      <span>{runStatus || 'idle'}</span>
+      <strong>{runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
+      <small>{createRunError || runError || selectedProject || 'No artifact selected'}</small>
+    </div>
+  );
+
+  const leftSlot = (
+    <div className="liminal-rail-meta">
+      <span>Projects</span>
+      <strong>{projects.length}</strong>
+      <span>Artifacts</span>
+      <strong>{iterations.length}</strong>
+    </div>
+  );
+
   if (loading) {
     return (
       <div style={{ padding: 48, textAlign: 'center', color: 'var(--atelier-text-muted)', fontFamily: 'var(--font-body)' }}>
@@ -508,86 +575,24 @@ export default function App() {
   }
 
   return (
-    <div style={{ padding: '32px 24px', maxWidth: 920, margin: '0 auto' }}>
-      <a href="#main-content" className="atelier-skip-link">Skip to content</a>
-      <h1 className="atelier-title" style={{ marginBottom: 8 }}>Liminal</h1>
-      <p style={{ margin: '0 0 24px', color: 'var(--atelier-text-muted)', fontSize: 15 }}>Creative coding studio — generate, merge, and evolve sketches.</p>
-      <nav className="atelier-tabs" role="tablist" aria-label="Main sections">
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'config' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'config'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('config'))}
-        >
-          Config
-        </button>
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'create' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'create'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('create'))}
-        >
-          Create
-        </button>
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'cockpit' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'cockpit'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('cockpit'))}
-        >
-          Cockpit
-        </button>
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'live' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'live'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('live'))}
-        >
-          Live organism
-        </button>
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'liveMusic' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'liveMusic'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('liveMusic'))}
-        >
-          Live Music
-        </button>
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'curator' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'curator'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('curator'))}
-        >
-          Curator
-        </button>
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'activity' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'activity'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('activity'))}
-        >
-          Activity
-        </button>
-        <button
-          type="button"
-          className={`atelier-tab${activeTab === 'compost' ? ' atelier-tab--active' : ''}`}
-          role="tab"
-          aria-selected={activeTab === 'compost'}
-          onClick={() => dispatchLive(switchToLiveOrganismView('compost'))}
-        >
-          Compost
-        </button>
-      </nav>
-
-      <main id="main-content">
+    <WorkbenchShell
+      activeMode={activeMode.id}
+      activeTab={activeTab}
+      modes={WORKBENCH_MODES}
+      onModeChange={handleWorkbenchModeChange}
+      onTabChange={(tab) => dispatchLive(switchToLiveOrganismView(tab as GuiTab))}
+      prompt={createPrompt}
+      onPromptChange={setCreatePrompt}
+      onRun={handleCreateRun}
+      runDisabled={runStatus === 'running' || !createPrompt.trim()}
+      runLabel={runLabel}
+      providerLabel={providerLabel}
+      evaluatorLabel={evaluatorLabel}
+      stageSlot={stageSlot}
+      inspectorSlot={inspectorSlot}
+      timelineSlot={timelineSlot}
+      leftSlot={leftSlot}
+    >
       {activeTab === 'config' && (
         <form id="atelier-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="atelier-panel" style={{ maxWidth: 560 }} autoComplete="off">
           {error && (
@@ -1108,7 +1113,6 @@ export default function App() {
           )}
         </div>
       )}
-      </main>
-    </div>
+    </WorkbenchShell>
   );
 }

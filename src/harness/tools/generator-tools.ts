@@ -9,8 +9,25 @@
 import type { ToolDefinition } from '../../llm/ProviderTypes.js';
 import { astValidatorTool } from './ASTValidatorTool.js';
 import { importGuardTool } from './ImportGuardTool.js';
+import { searchToolCatalog } from './ToolCatalogTool.js';
+
+const GENERATOR_EXECUTABLE_TOOL_NAMES = ['validate_syntax', 'check_imports', 'submit_code'] as const;
 
 export const GENERATOR_TOOLS: ToolDefinition[] = [
+  {
+    name: 'search_tools',
+    description: 'Search the local tool catalog for the best available validation, repair, submission, or inspection tools. Deterministic and cheap; does not call another model.',
+    parameters: {
+      type: 'object',
+      properties: {
+        query: { type: 'string', description: 'Natural-language description of the capability needed' },
+        domain: { type: 'string', description: 'Optional creative domain: p5, three, glsl, hydra, strudel, tone, html, svg' },
+        phase: { type: 'string', description: 'Optional phase: inspect, validate, recover, verify, evaluate, render, general' },
+        maxResults: { type: 'number', description: 'Maximum tools to return, default 5, max 10' },
+      },
+      required: ['query'],
+    },
+  },
   {
     name: 'validate_syntax',
     description: 'Validate JavaScript/TypeScript syntax of generated code. Returns pass/fail with error details.',
@@ -66,6 +83,16 @@ export function createGeneratorToolExecutor(domain: string): (name: string, args
           const result = await importGuardTool.execute({
             code: args.code as string,
             domain: (args.domain as string) || domain,
+          });
+          return JSON.stringify(result);
+        }
+        case 'search_tools': {
+          const result = searchToolCatalog({
+            query: args.query as string,
+            domain: (args.domain as string | undefined) || domain,
+            phase: args.phase as string | undefined,
+            maxResults: args.maxResults as number | undefined,
+            allowedTools: [...GENERATOR_EXECUTABLE_TOOL_NAMES],
           });
           return JSON.stringify(result);
         }

@@ -34,6 +34,7 @@ import {
   lspTool,
   astValidatorTool,
   importGuardTool,
+  toolCatalogTool,
   createBackupTool,
   restoreBackupTool,
 } from '../tools/index.js';
@@ -57,6 +58,7 @@ const AVAILABLE_TOOL_NAMES = [
   'lsp',
   'astValidate',
   'importGuard',
+  'searchTools',
   'gitStatus',
   'createBackup',
   'restoreBackup',
@@ -368,6 +370,7 @@ export class HarnessAgent {
       case 'lsp': return lspTool;
       case 'astValidate': return astValidatorTool;
       case 'importGuard': return importGuardTool;
+      case 'searchTools': return toolCatalogTool;
       case 'createBackup': return createBackupTool;
       case 'restoreBackup': return restoreBackupTool;
       default: return null;

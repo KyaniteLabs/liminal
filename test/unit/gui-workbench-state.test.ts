@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getWorkbenchMode, WORKBENCH_MODES } from '../../gui/src/gui/workbenchState';
+import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES } from '../../gui/src/gui/workbenchState';
 
 describe('workbenchState', () => {
   it('maps old tabs into unified workbench modes', () => {
@@ -18,5 +18,13 @@ describe('workbenchState', () => {
       'observe',
       'settings',
     ]);
+  });
+
+  it('keeps primary generate out of the legacy panel while preserving migration panels', () => {
+    expect(shouldRenderLegacyPanel('create')).toBe(false);
+    expect(shouldRenderLegacyPanel('cockpit')).toBe(true);
+    expect(shouldRenderLegacyPanel('liveMusic')).toBe(true);
+    expect(shouldRenderLegacyPanel('curator')).toBe(true);
+    expect(shouldRenderLegacyPanel('config')).toBe(true);
   });
 });

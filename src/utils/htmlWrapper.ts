@@ -40,7 +40,7 @@ export class HTMLWrapper {
     '<meta http-equiv="X-Frame-Options" content="DENY">',
     '<meta http-equiv="X-Content-Type-Options" content="nosniff">',
     '<meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin">',
-    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'self\' \'unsafe-inline\' cdnjs.cloudflare.com cdn.jsdelivr.net unpkg.com; style-src \'unsafe-inline\'; img-src \'self\' blob:; connect-src \'none\'; font-src \'self\';">',
+    '<meta http-equiv="Content-Security-Policy" content="default-src \'none\'; script-src \'self\' \'unsafe-inline\' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com; style-src \'unsafe-inline\'; img-src \'self\' blob:; connect-src \'none\'; font-src \'self\';">',
   ];
 
   private static injectSecurityHeaders(html: string): string {

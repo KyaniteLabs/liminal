@@ -92,6 +92,7 @@ export class PreviewServer {
             "'unsafe-inline'",  // Required for inline p5.js sketches
             "https://cdnjs.cloudflare.com",  // p5.js CDN
             "https://cdn.jsdelivr.net",      // Three.js CDN
+            "https://unpkg.com",             // Three.js / music preview CDNs
           ],
           styleSrc: [
             "'self'",

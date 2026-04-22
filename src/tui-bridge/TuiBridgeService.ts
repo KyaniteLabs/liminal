@@ -34,6 +34,7 @@ import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
+import { buildCreativeDomainPlan, previewDomainForCode } from './CreativeDomainRouting.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -1478,31 +1479,70 @@ export class TuiBridgeService {
         message: 'Starting generation...',
       });
 
-      // Run RalphLoop with telemetry callbacks
-      const result = await RalphLoop.run(userText, {
-        chatMode: true,
-        onThought: (thought: string) => {
+      const domainPlan = buildCreativeDomainPlan(userText);
+      let result: Awaited<ReturnType<typeof RalphLoop.run>> | undefined;
+      let activeDomain = domainPlan[0];
+      let lastError: unknown;
+
+      for (let attempt = 0; attempt < domainPlan.length; attempt++) {
+        const domain = domainPlan[attempt];
+        activeDomain = domain;
+        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0);
+        const attemptLabel = `${attempt + 1}/${domainPlan.length}: ${domain}`;
+        this.emit(sessionId, {
+          type: 'activity.updated',
+          sessionId,
+          message: `Generation attempt ${attemptLabel}`,
+        });
+
+        try {
+          // Run RalphLoop with telemetry callbacks
+          const attemptResult = await RalphLoop.run(attemptPrompt, {
+            chatMode: true,
+            onThought: (thought: string) => {
+              this.emit(sessionId, {
+                type: 'activity.updated',
+                sessionId,
+                message: thought,
+              });
+            },
+            onIteration: (iterationContext) => {
+              // Step 3: Emit generation.iteration telemetry
+              this.emit(sessionId, {
+                type: 'generation.iteration',
+                sessionId,
+                iteration: iterationContext.iteration,
+                score: iterationContext.evaluation.score,
+                code: iterationContext.code,
+              });
+            },
+            maxIterations: 10,
+            timeoutMinutes: 5,
+            collabDomain: domain,
+            numCandidates: 3,
+            tolerateErrors: true,
+            signal: controller.signal,
+          });
+          if (!attemptResult.code?.trim()) {
+            throw new Error('Generation produced no code');
+          }
+          result = attemptResult;
+          break;
+        } catch (err) {
+          lastError = err;
+          const message = err instanceof Error ? err.message : String(err);
           this.emit(sessionId, {
             type: 'activity.updated',
             sessionId,
-            message: thought,
+            message: `Generation attempt ${attemptLabel} failed: ${message}`,
           });
-        },
-        onIteration: (iterationContext) => {
-          // Step 3: Emit generation.iteration telemetry
-          this.emit(sessionId, {
-            type: 'generation.iteration',
-            sessionId,
-            iteration: iterationContext.iteration,
-            score: iterationContext.evaluation.score,
-            code: iterationContext.code,
-          });
-        },
-        maxIterations: 10,
-        timeoutMinutes: 5,
-        collabDomain: Domain.P5,
-        signal: controller.signal,
-      });
+          if (controller.signal.aborted) throw err;
+        }
+      }
+
+      if (!result) {
+        throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'All generation attempts failed'));
+      }
 
       // Stream the final code as response deltas
       if (result.code) {
@@ -1546,7 +1586,7 @@ export class TuiBridgeService {
           this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
         }
 
-        await this.emitP5PreviewArtifacts(sessionId, result.code);
+        await this.emitPreviewArtifacts(sessionId, result.code, activeDomain);
 
         // Record in conversation
         conversation['recordMessage']('assistant', `Generated code (${result.iterations} iterations, score: ${result.finalScore.toFixed(2)}):\n\n${result.code}`);
@@ -1805,24 +1845,41 @@ export class TuiBridgeService {
     return 'unknown';
   }
 
-  private async emitP5PreviewArtifacts(sessionId: string, code: string): Promise<void> {
+  private promptForCreativeDomain(userText: string, domain: Domain, fallback: boolean): string {
+    const prefix = fallback
+      ? `Previous generation route failed. Retry the original request as ${domain}.`
+      : `Target creative domain: ${domain}.`;
+    const domainInstruction = domain === Domain.THREE
+      ? 'Return raw Three.js scene code only. Do not return SVG, p5, prose, or markdown.'
+      : domain === Domain.P5
+        ? 'Return raw p5.js sketch code only. Do not return SVG, Three.js, prose, or markdown.'
+        : domain === Domain.GLSL || domain === Domain.SHADER || domain === Domain.WEBGL
+          ? 'Return raw GLSL fragment shader code only. Do not return SVG, p5, prose, or markdown.'
+          : domain === Domain.HYDRA
+            ? 'Return raw Hydra video-synth code only. Do not return SVG, p5, prose, or markdown.'
+            : `Return raw ${domain} artifact code only. Do not return SVG unless the target domain is SVG.`;
+    return [userText, '', prefix, domainInstruction].join('\n');
+  }
+
+  private async emitPreviewArtifacts(sessionId: string, code: string, requestedDomain: Domain): Promise<void> {
     const safeSessionId = sessionId.replace(/[^a-zA-Z0-9_-]/g, '-');
     const stamp = new Date().toISOString().replace(/[:.]/g, '-');
     const dir = path.join(process.cwd(), '.omx', 'proof', 'live-previews');
-    const htmlPath = path.join(dir, `p5-${safeSessionId}-${stamp}.html`);
-    const pngPath = path.join(dir, `p5-${safeSessionId}-${stamp}.png`);
+    const previewDomain = previewDomainForCode(code, requestedDomain);
+    const htmlPath = path.join(dir, `${previewDomain}-${safeSessionId}-${stamp}.html`);
+    const pngPath = path.join(dir, `${previewDomain}-${safeSessionId}-${stamp}.png`);
 
     await fs.mkdir(dir, { recursive: true });
-    const html = this.toPreviewHtml(code);
+    const html = this.toPreviewHtml(code, previewDomain);
     await fs.writeFile(htmlPath, html, 'utf8');
-    this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: 'p5 HTML preview', artifactPath: htmlPath });
+    this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} HTML preview`, artifactPath: htmlPath });
     this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview artifact: ${htmlPath}` });
 
     try {
-      await this.renderHtmlScreenshot(htmlPath, pngPath);
+      await this.renderHtmlScreenshot(htmlPath, pngPath, previewDomain);
       const png = await fs.readFile(pngPath);
       const b64 = png.toString('base64');
-      this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: 'p5 preview image', artifactPath: pngPath });
+      this.emit(sessionId, { type: 'artifact.found', sessionId, artifactLabel: `${previewDomain} preview image`, artifactPath: pngPath });
       this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'image' });
       this.emit(sessionId, { type: 'preview.content', sessionId, content: b64, previewType: 'image' });
       this.emit(sessionId, { type: 'preview.completed', sessionId, content: b64, previewType: 'image', imageUrl: pngPath });
@@ -1834,15 +1891,15 @@ export class TuiBridgeService {
     }
   }
 
-  private toPreviewHtml(code: string): string {
+  private toPreviewHtml(code: string, previewDomain: import('../utils/htmlWrapper.js').Domain): string {
     const trimmed = code.trim();
     if (/^(?:<!DOCTYPE\s+html|<html\b)/i.test(trimmed)) {
       return trimmed;
     }
-    return HTMLWrapper.wrap(trimmed, { domain: 'p5', title: 'Liminal p5 Preview' });
+    return HTMLWrapper.wrap(trimmed, { domain: previewDomain, title: `Liminal ${previewDomain} Preview` });
   }
 
-  private async renderHtmlScreenshot(htmlPath: string, pngPath: string): Promise<void> {
+  private async renderHtmlScreenshot(htmlPath: string, pngPath: string, previewDomain: string): Promise<void> {
     const { default: puppeteer } = await import('puppeteer');
     const browser = await puppeteer.launch({
       headless: true,
@@ -1853,7 +1910,9 @@ export class TuiBridgeService {
       page = await browser.newPage();
       await page.setViewport({ width: 960, height: 640 });
       await page.goto(`file://${htmlPath}`, { waitUntil: 'load', timeout: 30000 });
-      await page.waitForSelector('canvas', { timeout: 10000 });
+      if (['p5', 'three', 'shader', 'hydra'].includes(previewDomain)) {
+        await page.waitForSelector('canvas', { timeout: 10000 });
+      }
       await new Promise(resolve => setTimeout(resolve, 1000));
       await page.screenshot({ path: pngPath, type: 'png' });
     } finally {

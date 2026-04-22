@@ -127,6 +127,34 @@ for (let p of particles) {
       const result = CodeValidator.validate(code, 'p5');
       expect(result.valid).toBe(true);
     });
+
+    it('accepts common p5 globals used by generated sketches', () => {
+      const code = `
+function setup() {
+  createCanvas(400, 400);
+  textAlign(RIGHT, CENTER);
+  pixelDensity(1);
+}
+
+function draw() {
+  background(0);
+  loadPixels();
+  for (let i = 0; i < pixels.length; i += 4) {
+    pixels[i] = 255;
+    pixels[i + 1] = 100;
+    pixels[i + 2] = 180;
+    pixels[i + 3] = 255;
+  }
+  updatePixels();
+  drawingContext.shadowBlur = 12;
+  drawingContext.shadowColor = 'hotpink';
+  fill(255);
+  text('wild prompt', width - 20, height / 2);
+}`;
+
+      const result = CodeValidator.validate(code, 'p5');
+      expect(result.valid).toBe(true);
+    });
   });
 
   describe('GLSL structural validation', () => {

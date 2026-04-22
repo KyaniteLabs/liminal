@@ -91,6 +91,13 @@ describe('SVGValidator', () => {
     expect(result.error).toContain('unsafe');
   });
 
+  it('rejects remote paint-server URLs in vector attributes', () => {
+    const result = validateSVG('<svg viewBox="0 0 100 100"><rect width="100" height="100" fill="url(https://example.com/pattern.svg#p)"/></svg>');
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('unsafe');
+  });
+
   it('rejects SVGs without visible vector geometry', () => {
     const result = validateSVG('<svg viewBox="0 0 100 100"><defs><linearGradient id="g"/></defs></svg>');
 
@@ -152,5 +159,13 @@ describe('SVGGenerator', () => {
       expect(prompt).toContain(`Mode: ${mode}`);
       expect(prompt).toContain(SVG_MODE_PROFILES[mode].label);
     }
+  });
+
+  it('does not allow filters in prompts for gradient-only modes', () => {
+    const gen = new TestableSVGGenerator();
+    const prompt = (gen as any).buildSVGPrompt('make a logo', { mode: 'logo' });
+
+    expect(prompt).toContain('Gradients may be used');
+    expect(prompt).toContain('Do not use filters');
   });
 });

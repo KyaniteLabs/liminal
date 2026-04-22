@@ -13,6 +13,7 @@ export interface SVGValidationResult {
 
 const VISIBLE_ELEMENT_RE = /<(path|rect|circle|ellipse|line|polyline|polygon|text)\b/i;
 const CONNECTOR_RE = /<(line|polyline)\b|<path\b[^>]*\bmarker-end\s*=|<path\b[^>]*\bd\s*=\s*["'][^"']*[ML][^"']*/i;
+const EXTERNAL_PAINT_SERVER_RE = /\burl\(\s*["']?\s*(?!#)[^)]+\)/i;
 
 function parseViewBox(svg: string): [number, number, number, number] | null {
   const match = svg.match(/\bviewBox\s*=\s*["']\s*([+-]?\d*\.?\d+)\s+([+-]?\d*\.?\d+)\s+([+-]?\d*\.?\d+)\s+([+-]?\d*\.?\d+)\s*["']/i);
@@ -36,7 +37,8 @@ function countColors(svg: string): number {
 }
 
 function hasUnsafeRawContent(raw: string): boolean {
-  return /<script\b|<foreignObject\b|<iframe\b|<object\b|<embed\b|<image\b|\son[a-z]+\s*=|\s(?:href|xlink:href|src)\s*=\s*["']?\s*(?:javascript:|https?:|\/\/|data:)|\sstyle\s*=\s*["'][^"']*(?:javascript:|@import|expression\s*\()/i.test(raw);
+  return /<script\b|<foreignObject\b|<iframe\b|<object\b|<embed\b|<image\b|\son[a-z]+\s*=|\s(?:href|xlink:href|src)\s*=\s*["']?\s*(?:javascript:|https?:|\/\/|data:)|\sstyle\s*=\s*["'][^"']*(?:javascript:|@import|expression\s*\()/i.test(raw)
+    || EXTERNAL_PAINT_SERVER_RE.test(raw);
 }
 
 export function validateSVG(input: string, options: SVGValidationOptions = {}): SVGValidationResult {

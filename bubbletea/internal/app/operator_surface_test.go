@@ -188,6 +188,19 @@ func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
 	}
 }
 
+func TestOperatorSurfaceShowsGenerationBeforeFirstCandidate(t *testing.T) {
+	m := readyOperatorModel(t)
+	m.ApplyEvent(bridge.Event{Type: "generation.domain_plan", Domains: []string{"three", "p5", "hydra"}})
+	m.ApplyEvent(bridge.Event{Type: "generation.attempt.started", Domain: "three", Attempt: 1, AttemptTotal: 3})
+
+	surface := m.renderOperatorSurface(56)
+	for _, want := range []string{"Generation", "Plan:", "Attempt:", "1/3", "three", "Waiting"} {
+		if !strings.Contains(surface, want) {
+			t.Fatalf("expected operator surface to contain %q before first candidate\n%s", want, surface)
+		}
+	}
+}
+
 func TestOperatorSurfaceShowsFinalReportBeforeToolTrace(t *testing.T) {
 	m := readyOperatorModel(t)
 	m.ChatBlocks = []ChatBlock{{Type: "assistant", Content: "Status: success\nVerdict:\nThe result panel is compact.\nFiles changed:\n- bubbletea/internal/app/layout.go", Time: nowForTest()}}

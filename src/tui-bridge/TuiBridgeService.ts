@@ -269,7 +269,7 @@ export class TuiBridgeService {
     });
   }
 
-  createSession(patch: Partial<Pick<TuiSessionStatus, 'provider' | 'model'>> = {}): TuiSessionStatus {
+  createSession(patch: Partial<Pick<TuiSessionStatus, 'provider' | 'model' | 'roles' | 'evaluation'>> = {}): TuiSessionStatus {
     const sessionId = `tui-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     // Initialize conversation manager for this session
@@ -289,6 +289,8 @@ export class TuiBridgeService {
       mode: 'chat',
       provider: patch.provider,
       model: patch.model,
+      roles: patch.roles,
+      evaluation: patch.evaluation,
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
   }
@@ -1469,6 +1471,9 @@ export class TuiBridgeService {
 
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
+    const timeoutMinutes = 5;
+    const candidateCount = 3;
+    const generationStartedAt = Date.now();
     logBridge('generation.started', { sessionId, model: modelName, chars: userText.length });
 
     try {
@@ -1480,17 +1485,34 @@ export class TuiBridgeService {
       });
 
       const domainPlan = buildCreativeDomainPlan(userText);
-      this.emit(sessionId, { type: 'generation.domain_plan', sessionId, domains: domainPlan });
+      this.emit(sessionId, {
+        type: 'generation.domain_plan',
+        sessionId,
+        domains: domainPlan,
+        startedAt: new Date(generationStartedAt).toISOString(),
+        timeoutMinutes,
+        candidateCount,
+      });
       let result: Awaited<ReturnType<typeof RalphLoop.run>> | undefined;
       let activeDomain = domainPlan[0];
       let lastError: unknown;
 
       for (let attempt = 0; attempt < domainPlan.length; attempt++) {
+        const attemptStartedAt = Date.now();
         const domain = domainPlan[attempt];
         activeDomain = domain;
         const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0);
         const attemptLabel = `${attempt + 1}/${domainPlan.length}: ${domain}`;
-        this.emit(sessionId, { type: 'generation.attempt.started', sessionId, domain, attempt: attempt + 1, attemptTotal: domainPlan.length });
+        this.emit(sessionId, {
+          type: 'generation.attempt.started',
+          sessionId,
+          domain,
+          attempt: attempt + 1,
+          attemptTotal: domainPlan.length,
+          startedAt: new Date(attemptStartedAt).toISOString(),
+          timeoutMinutes,
+          candidateCount,
+        });
         this.emit(sessionId, {
           type: 'activity.updated',
           sessionId,
@@ -1516,8 +1538,9 @@ export class TuiBridgeService {
                 attempt: attempt + 1,
                 attemptTotal: domainPlan.length,
                 iteration: iterationContext.iteration,
-                candidateCount: 3,
+                candidateCount,
                 codeSize: iterationContext.code.length,
+                duration: Date.now() - attemptStartedAt,
               });
               // Step 3: Emit generation.iteration telemetry
               this.emit(sessionId, {
@@ -1529,9 +1552,9 @@ export class TuiBridgeService {
               });
             },
             maxIterations: 10,
-            timeoutMinutes: 5,
+            timeoutMinutes,
             collabDomain: domain,
-            numCandidates: 3,
+            numCandidates: candidateCount,
             tolerateErrors: true,
             signal: controller.signal,
           });
@@ -1543,7 +1566,15 @@ export class TuiBridgeService {
         } catch (err) {
           lastError = err;
           const message = err instanceof Error ? err.message : String(err);
-          this.emit(sessionId, { type: 'generation.attempt.failed', sessionId, domain, attempt: attempt + 1, attemptTotal: domainPlan.length, error: message });
+          this.emit(sessionId, {
+            type: 'generation.attempt.failed',
+            sessionId,
+            domain,
+            attempt: attempt + 1,
+            attemptTotal: domainPlan.length,
+            error: message,
+            duration: Date.now() - attemptStartedAt,
+          });
           this.emit(sessionId, {
             type: 'activity.updated',
             sessionId,

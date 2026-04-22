@@ -10,7 +10,7 @@ import { loadConfig, loadProjectConfig, getEffectiveConfig, saveConfig } from '.
 import { Gallery } from '../dist/gallery/Gallery.js';
 import { eventBus } from '../dist/core/EventBus.js';
 import { TuiBridgeService } from '../dist/tui-bridge/TuiBridgeService.js';
-import { applyBridgeProviderEnv, resolveBridgeProviderConfig } from '../dist/tui-bridge/BridgeLauncherConfig.js';
+import { applyBridgeProviderEnv, resolveBridgeProviderConfig, summarizeBridgeRuntime } from '../dist/tui-bridge/BridgeLauncherConfig.js';
 import { LLMClient } from '../dist/llm/LLMClient.js';
 import { logSecurityEvent } from '../dist/security/SecurityLogger.js';
 
@@ -167,6 +167,7 @@ export function createApp(configPath, port = 5174) {
       const status = tuiBridge.createSession({
         provider: providerConfig.provider,
         model: providerConfig.model,
+        ...summarizeBridgeRuntime(process.env),
       });
       res.status(200).json(status);
     } catch (err) {

@@ -1,5 +1,6 @@
 import type { CortexGoal, CortexSnapshot } from '../cortex/types.js';
 import type { ActionProposal } from '../cortex/ActionProposer.js';
+import type { BridgeRoleName, BridgeRoleStatus, BridgeVisionSupport } from './BridgeLauncherConfig.js';
 
 export type TuiMode = 'chat' | 'inspect' | 'action' | 'confirm';
 
@@ -31,6 +32,13 @@ export interface TuiSessionStatus {
   mode: TuiMode;
   provider?: string;
   model?: string;
+  roles?: Record<BridgeRoleName, BridgeRoleStatus>;
+  evaluation?: {
+    renderedEvidence: boolean;
+    screenshotInput: boolean;
+    multimodal: BridgeVisionSupport;
+    note: string;
+  };
   trust: TuiTrustState;
   activeTask?: string;
   pendingAction?: TuiPendingAction;
@@ -77,10 +85,10 @@ export type TuiBridgeEvent =
   | { type: 'preview.content'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music' }
   | { type: 'preview.completed'; sessionId: string; content: string; previewType: 'code' | 'image' | 'html' | 'music'; imageUrl?: string }
   // Generation telemetry: emitted during RalphLoop generation
-  | { type: 'generation.domain_plan'; sessionId: string; domains: string[] }
-  | { type: 'generation.attempt.started'; sessionId: string; domain: string; attempt: number; attemptTotal: number }
-  | { type: 'generation.attempt.failed'; sessionId: string; domain: string; attempt: number; attemptTotal: number; error: string }
-  | { type: 'generation.candidate.generated'; sessionId: string; domain: string; attempt: number; attemptTotal: number; iteration: number; candidateCount?: number; codeSize?: number }
+  | { type: 'generation.domain_plan'; sessionId: string; domains: string[]; startedAt?: string; timeoutMinutes?: number; candidateCount?: number }
+  | { type: 'generation.attempt.started'; sessionId: string; domain: string; attempt: number; attemptTotal: number; startedAt?: string; timeoutMinutes?: number; candidateCount?: number }
+  | { type: 'generation.attempt.failed'; sessionId: string; domain: string; attempt: number; attemptTotal: number; error: string; duration?: number }
+  | { type: 'generation.candidate.generated'; sessionId: string; domain: string; attempt: number; attemptTotal: number; iteration: number; candidateCount?: number; codeSize?: number; duration?: number }
   | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string }
   | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string }
   | { type: 'phase.changed'; sessionId: string; phase: string; stepCurrent?: number; stepTotal?: number; activeFile?: string; objective?: string }

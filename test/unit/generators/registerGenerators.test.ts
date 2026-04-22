@@ -33,6 +33,7 @@ import {
   textgenConfidence,
   strudelConfidence,
   hydraConfidence,
+  svgConfidence,
   toneConfidence,
   p5Confidence,
 } from '../../../src/generators/registerGenerators.js';
@@ -99,6 +100,19 @@ describe('registerGenerators', () => {
 
       it('returns 0 for unrelated prompts', () => {
         expect(htmlConfidence('draw a circle')).toBe(0);
+      });
+    });
+
+    describe('svgConfidence', () => {
+      it('routes explicit SVG/vector business asset prompts to SVG', () => {
+        expect(svgConfidence('svg icon')).toBe(0.95);
+        expect(svgConfidence('vector logo asset')).toBe(0.95);
+        expect(svgConfidence('laser cutfile for acrylic')).toBe(0.85);
+        expect(svgConfidence('cnc toolpath')).toBe(0.85);
+      });
+
+      it('returns 0 for unrelated prompts', () => {
+        expect(svgConfidence('draw a circle in p5')).toBe(0);
       });
     });
 
@@ -201,7 +215,7 @@ describe('registerGenerators', () => {
       await registerAllGenerators();
 
       // Should register all static generators
-      expect(mockRegister).toHaveBeenCalledTimes(10);
+      expect(mockRegister).toHaveBeenCalledTimes(11);
     });
 
     it('registers p5 with explicit-signal routing instead of always-on fallback confidence', async () => {

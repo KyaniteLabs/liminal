@@ -21,20 +21,21 @@ import { ThreeGenerator } from '../../src/generators/three/ThreeGenerator.js';
 import { KineticGenerator } from '../../src/generators/kinetic/KineticGenerator.js';
 import { ASCIIArtGenerator } from '../../src/generators/ascii/ASCIIArtGenerator.js';
 import { TextGenerativeGenerator } from '../../src/generators/textgen/TextGenerativeGenerator.js';
+import { SVGGenerator } from '../../src/generators/svg/SVGGenerator.js';
 import { StrudelGenerator } from '../../src/generators/strudel/StrudelGenerator.js';
 import { HydraGenerator } from '../../src/generators/hydra/HydraGenerator.js';
 import { ToneGenerator } from '../../src/generators/tone/ToneGenerator.js';
 import { RevideoGenerator } from '../../src/generators/revideo/RevideoGenerator.js';
 import { createColorTheoryPalette, type ColorTheoryPalette } from '../../src/aesthetic/ColorTheoryEngine.js';
 
-type DomainName = 'p5' | 'shader' | 'three' | 'kinetic' | 'ascii' | 'textgen' | 'strudel' | 'hydra' | 'tone' | 'revideo';
+type DomainName = 'p5' | 'shader' | 'three' | 'kinetic' | 'svg' | 'ascii' | 'textgen' | 'strudel' | 'hydra' | 'tone' | 'revideo';
 type Status = 'pass' | 'fail' | 'blocked';
 type PreviewKind = 'image' | 'inline-text' | 'code-display' | 'audio-playable' | 'audio-external' | 'video-code' | 'blocked';
 
 interface DomainSpec {
   domain: DomainName;
   prompt: string;
-  artifactExtension: 'js' | 'html' | 'txt';
+  artifactExtension: 'js' | 'html' | 'svg' | 'txt';
   previewKind: PreviewKind;
   generator: new (llm?: LLMClient | Partial<LLMConfig>) => {
     generate(prompt: string, options?: unknown): Promise<string> | string;
@@ -83,6 +84,7 @@ const DOMAIN_SPECS: DomainSpec[] = [
   { domain: 'shader', artifactExtension: 'js', previewKind: 'image', generator: ShaderGenerator, prompt: 'Create a GLSL fragment shader with bioluminescent waves and slow domain-warped color fields.' },
   { domain: 'three', artifactExtension: 'js', previewKind: 'image', generator: ThreeGenerator, prompt: 'Create a Three.js scene with a glowing crystalline garden, orbiting camera, and floating particles.' },
   { domain: 'kinetic', artifactExtension: 'html', previewKind: 'image', generator: KineticGenerator, prompt: 'Create a CSS-only kinetic artwork: abstract animated typography and shapes, no landing page, no marketing copy, no JavaScript, just expressive motion.' },
+  { domain: 'svg', artifactExtension: 'svg', previewKind: 'image', generator: SVGGenerator, prompt: 'Create a self-contained SVG vector asset for a launch-ready icon/diagram hybrid: clean geometry, readable labels, and safe inline vector markup only.' },
   { domain: 'hydra', artifactExtension: 'js', previewKind: 'image', generator: HydraGenerator, prompt: 'Create a Hydra video-synth patch with neon feedback, kaleidoscope geometry, and slow color drift. Use bright visible generated sources only.' },
   { domain: 'ascii', artifactExtension: 'txt', previewKind: 'inline-text', generator: ASCIIArtGenerator, prompt: 'Create ASCII art of a moonlit koi pond with glowing water and fireflies.' },
   { domain: 'textgen', artifactExtension: 'txt', previewKind: 'inline-text', generator: TextGenerativeGenerator, prompt: 'Create a concrete poem shaped like ripples in a nocturnal koi pond.' },

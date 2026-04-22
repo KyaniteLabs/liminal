@@ -612,6 +612,15 @@ export { P5GeneratorV2, type P5GeneratorV2Options } from './generators/p5/P5Gene
 export { ShaderGenerator } from './generators/glsl/ShaderGenerator.js';
 export { ThreeGenerator } from './generators/three/ThreeGenerator.js';
 export { HydraGenerator } from './generators/hydra/HydraGenerator.js';
+export { SVGGenerator } from './generators/svg/SVGGenerator.js';
+export {
+  SVG_MODE_PROFILES,
+  inferSVGMode,
+  type SVGMode,
+  type SVGModeProfile,
+} from './generators/svg/SVGModeProfiles.js';
+export { sanitizeSVG } from './generators/svg/SVGSanitizer.js';
+export { validateSVG, type SVGValidationOptions, type SVGValidationResult } from './generators/svg/SVGValidator.js';
 export { StrudelGenerator } from './generators/strudel/StrudelGenerator.js';
 export { ToneGenerator } from './generators/tone/ToneGenerator.js';
 export { RemotionGenerator } from './generators/remotion/RemotionGenerator.js';
@@ -709,6 +718,7 @@ export {
 export type { HTMLGeneratorOptions } from './generators/html/HTMLWebGenerator.js';
 export type { ASCIIOptions, ASCIIStyle } from './generators/ascii/ASCIIArtGenerator.js';
 export type { TextGenOptions, TextGenForm, TextGenStyle } from './generators/textgen/TextGenerativeGenerator.js';
+export type { SVGGeneratorOptions } from './generators/svg/SVGGenerator.js';
 // Note: ShaderGenerator, ThreeGenerator, HTMLWebGenerator, ASCIIArtGenerator, TextGenerativeGenerator exported below with TierBasedGenerator
 
 export { LiminalFS } from './fs/index.js';

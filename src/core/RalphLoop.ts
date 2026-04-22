@@ -80,6 +80,13 @@ void getEvalMode;
 void getRepairMode;
 void 0 as unknown as GenerationEvaluation;
 
+function extractScoringReasoning(result: { report?: unknown }): string | undefined {
+  const report = result.report;
+  if (!report || typeof report !== 'object') return undefined;
+  const reasoning = (report as { reasoning?: unknown }).reasoning;
+  return typeof reasoning === 'string' && reasoning.trim() ? reasoning : undefined;
+}
+
 export class RalphLoop {
   /**
    * Run the Ralph-Wiggum Loop
@@ -475,6 +482,7 @@ export class RalphLoop {
                         code: code,
                         error: `Validation failed: ${validation.errors.join('; ')}`,
                         duration: Date.now() - startTime,
+                        thinking,
                       });
                     }
                     // Skip this candidate - don't add to candidates list
@@ -590,6 +598,7 @@ export class RalphLoop {
                       repairAdvice: quickEvaluation.issues?.[0]
                         ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
                         : undefined,
+                      reasoning: extractScoringReasoning(quickEvaluation),
                     };
                     candidate.score = quickEvaluation.score;
                     candidate.issues = quickEvaluation.issues ?? [];
@@ -622,6 +631,7 @@ export class RalphLoop {
                         repairAdvice: quickEvaluation.issues?.[0]
                           ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
                           : undefined,
+                        reasoning: extractScoringReasoning(quickEvaluation),
                       };
                       candidate.score = quickEvaluation.score;
                       candidate.issues = quickEvaluation.issues ?? [];
@@ -644,6 +654,7 @@ export class RalphLoop {
                     repairAdvice: quickEvaluation.issues?.[0]
                       ? { issue: quickEvaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
                       : undefined,
+                    reasoning: extractScoringReasoning(quickEvaluation),
                   };
                   candidate.score = quickEvaluation.score;
                   candidate.issues = quickEvaluation.issues ?? [];
@@ -718,7 +729,7 @@ export class RalphLoop {
         // Evaluate quality
         // If we already evaluated multiple candidates, use the best candidate's score
         // Otherwise, run evaluation for the single candidate
-        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice };
+        let evaluation: { score: number; issues?: string[]; dimensions?: Record<string, number>; repairAdvice?: ConcreteRepairAdvice; evaluatorReasoning?: string; report?: unknown };
         let lirContext: LIREvaluationContext | undefined;
 
         // Handle case where all candidates failed validation
@@ -733,6 +744,7 @@ export class RalphLoop {
             issues: winner?.issues ?? [],
             dimensions: {},
             repairAdvice: winner?.genEval?.repairAdvice,
+            evaluatorReasoning: winner?.genEval?.reasoning,
           };
           if (normalizedOptions.chatMode) {
             normalizedOptions.onThought?.(`Using pre-evaluated score: ${evaluation.score.toFixed(2)}`);
@@ -817,6 +829,7 @@ export class RalphLoop {
                   issues: genEval.repairAdvice ? [genEval.repairAdvice.issue] : [],
                   dimensions: {},
                   repairAdvice: genEval.repairAdvice,
+                  evaluatorReasoning: genEval.reasoning,
                 };
               }
             }
@@ -851,6 +864,7 @@ export class RalphLoop {
               repairAdvice: evaluation.repairAdvice ?? (evaluation.issues && evaluation.issues.length > 0
                 ? { issue: evaluation.issues[0], fix: 'Address the reported issue and regenerate.', constraint: 'Return a complete, runnable artifact.' }
                 : undefined),
+              reasoning: evaluation.evaluatorReasoning ?? extractScoringReasoning(evaluation),
             };
             const repairPacket = harness.buildRepairPacket(genEval, repairHistory);
 
@@ -1118,6 +1132,10 @@ export class RalphLoop {
           maxIterations: normalizedOptions.maxIterations,
           selectedCandidateIndex: candidates.length > 0 ? (candidates[winnerIndex]?.index ?? winnerIndex) : 0,
           numCandidatesGenerated: numCandidates,
+          generatorThinking: lastThinking,
+          generatorModel: lastModel,
+          evaluatorReasoning: evaluation.evaluatorReasoning ?? extractScoringReasoning(evaluation),
+          evaluatorRepairAdvice: evaluation.repairAdvice,
         };
         ContextAccumulation.save(iterationContext);
         normalizedOptions.onIteration?.(iterationContext);

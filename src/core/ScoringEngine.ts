@@ -713,6 +713,7 @@ If an image is attached, evaluate the visible rendered artifact first and use th
       confidence,
       failureClass: 'none',
       repairAdvice,
+      reasoning: typeof parsed.reasoning === 'string' ? parsed.reasoning : undefined,
     };
   } catch (error) {
     Logger.warn('ScoringEngine', 'Rendered evidence LLM scoring failed:', error instanceof Error ? error.message : error);

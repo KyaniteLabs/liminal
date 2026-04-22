@@ -34,7 +34,9 @@ import type { CortexConfig } from '../cortex/types.js';
 import { AutonomousGardener, type GardenerCycleResult } from '../autonomy/AutonomousGardener.js';
 import { LiminalFS } from '../fs/LiminalFS.js';
 import { HTMLWrapper } from '../utils/htmlWrapper.js';
+import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativeDomainPlan, previewDomainForCode } from './CreativeDomainRouting.js';
+import { summarizeReasoningTrace } from './TraceSummarizer.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -108,6 +110,15 @@ export function isGenerationRequest(text: string): boolean {
 
 function logBridge(event: string, fields: Record<string, unknown>): void {
   Logger.info('TuiBridgeService', `${event} ${JSON.stringify(fields)}`);
+}
+
+interface CreativeIntentBrief {
+  userRequest: string;
+  requirements: string[];
+  missingDetails: string[];
+  questions: string[];
+  shouldClarify: boolean;
+  reason: string;
 }
 
 export class TuiBridgeService {
@@ -554,6 +565,22 @@ export class TuiBridgeService {
     // Autonomy gating: check if the action kind requires review at current level
     switch (classification.intent) {
       case 'creative': {
+        const intentBrief = this.buildCreativeIntentBrief(input.text);
+        this.emitIntentBrief(sessionId, intentBrief);
+        this.emitReasoningTrace(sessionId, {
+          phase: 'analysis',
+          thought: intentBrief.shouldClarify
+            ? 'Prompt is underspecified; asking for missing requirements before generation.'
+            : 'Prompt has enough concrete intent to prepare generation.',
+          detail: intentBrief.requirements.join(' | '),
+          source: 'harness',
+        });
+        if (intentBrief.shouldClarify) {
+          this.emitCreativeClarification(sessionId, intentBrief, conversation);
+          emitSessionTurn('clarification', intentBrief.questions.join('\n'));
+          break;
+        }
+
         const actionKind = 'creative' as const;
         if (this.autonomyController.requiresReview(actionKind, sessionId)) {
           const pendingAction: TuiPendingAction = {
@@ -576,7 +603,7 @@ export class TuiBridgeService {
           return { reviewRequired: true };
         }
         logBridge('input.routed', { sessionId, route: 'studio.creative', confidence: classification.confidence });
-        this.streamRalphGeneration(sessionId, input.text, conversation, llm)
+        this.streamRalphGeneration(sessionId, input.text, conversation, llm, input)
           .then(() => emitSessionTurn('ralph-loop'))
           .catch(handleError);
         break;
@@ -1465,15 +1492,18 @@ export class TuiBridgeService {
     userText: string,
     conversation: ConversationManager,
     llm: LLMClient,
+    options: Pick<TuiInputRequest, 'maxIterations' | 'candidateCount' | 'timeoutMinutes'> = {},
   ): Promise<void> {
     const controller = new AbortController();
     this.activeStreams.set(sessionId, controller);
 
     const config = llm.getConfig();
     const modelName = config.model || 'unknown';
-    const timeoutMinutes = 5;
-    const candidateCount = 3;
+    const timeoutMinutes = Math.min(10, Math.max(1, Number(options.timeoutMinutes) || 3));
+    const candidateCount = Math.min(3, Math.max(1, Number(options.candidateCount) || 1));
+    const maxIterations = Math.min(10, Math.max(1, Number(options.maxIterations) || 5));
     const generationStartedAt = Date.now();
+    const intentBrief = this.buildCreativeIntentBrief(userText);
     logBridge('generation.started', { sessionId, model: modelName, chars: userText.length });
 
     try {
@@ -1481,10 +1511,44 @@ export class TuiBridgeService {
       this.emit(sessionId, {
         type: 'activity.updated',
         sessionId,
-        message: 'Starting generation...',
+        message: 'Reading prompt and extracting requirements...',
+      });
+      this.emitIntentBrief(sessionId, intentBrief);
+      this.emitReasoningTrace(sessionId, {
+        phase: 'analysis',
+        thought: 'Extracted concrete requirements and missing details before spending model time.',
+        detail: intentBrief.requirements.join(' | '),
+        model: modelName,
+        source: 'harness',
+      });
+      this.emit(sessionId, {
+        type: 'activity.updated',
+        sessionId,
+        message: `Intent brief: ${intentBrief.requirements.slice(0, 2).join(' | ')}`,
       });
 
+      if (intentBrief.shouldClarify) {
+        this.emitCreativeClarification(sessionId, intentBrief, conversation);
+        logBridge('generation.clarification_needed', { sessionId, reason: intentBrief.reason });
+        return;
+      }
+
       const domainPlan = buildCreativeDomainPlan(userText);
+      this.emitReasoningTrace(sessionId, {
+        phase: 'domain-routing',
+        thought: `Routing through ${domainPlan.length} possible domain path(s): ${domainPlan.join(' -> ')}.`,
+        detail: `Fast preview defaults: ${candidateCount} candidate(s), ${maxIterations} max iteration(s), ${timeoutMinutes}m per attempt.`,
+        model: modelName,
+        source: 'harness',
+      });
+      this.emit(sessionId, {
+        type: 'tool.started',
+        sessionId,
+        toolName: 'domain-router',
+        displayLabel: 'Choosing creative domain route',
+        argsSummary: `request="${intentBrief.userRequest.slice(0, 120)}"`,
+        stepNum: 1,
+      });
       this.emit(sessionId, {
         type: 'generation.domain_plan',
         sessionId,
@@ -1492,6 +1556,14 @@ export class TuiBridgeService {
         startedAt: new Date(generationStartedAt).toISOString(),
         timeoutMinutes,
         candidateCount,
+      });
+      this.emit(sessionId, {
+        type: 'tool.completed',
+        sessionId,
+        toolName: 'domain-router',
+        resultSummary: `Plan: ${domainPlan.join(' -> ')}`,
+        success: true,
+        stepNum: 1,
       });
       let result: Awaited<ReturnType<typeof RalphLoop.run>> | undefined;
       let activeDomain = domainPlan[0];
@@ -1501,7 +1573,7 @@ export class TuiBridgeService {
         const attemptStartedAt = Date.now();
         const domain = domainPlan[attempt];
         activeDomain = domain;
-        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0);
+        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief);
         const attemptLabel = `${attempt + 1}/${domainPlan.length}: ${domain}`;
         this.emit(sessionId, {
           type: 'generation.attempt.started',
@@ -1516,7 +1588,22 @@ export class TuiBridgeService {
         this.emit(sessionId, {
           type: 'activity.updated',
           sessionId,
-          message: `Generation attempt ${attemptLabel}`,
+          message: `Calling generator for attempt ${attemptLabel}; waiting for up to ${timeoutMinutes}m.`,
+        });
+        this.emitReasoningTrace(sessionId, {
+          phase: 'generation',
+          thought: `Calling ${modelName} to produce ${candidateCount} ${domain} candidate(s).`,
+          detail: `Attempt ${attempt + 1}/${domainPlan.length}; explicit requirements remain in the prompt.`,
+          model: modelName,
+          source: 'harness',
+        });
+        this.emit(sessionId, {
+          type: 'tool.started',
+          sessionId,
+          toolName: 'generator',
+          displayLabel: `Generating ${candidateCount} ${domain} candidates`,
+          argsSummary: `attempt ${attempt + 1}/${domainPlan.length}; model=${modelName}`,
+          stepNum: attempt + 2,
         });
 
         try {
@@ -1550,8 +1637,27 @@ export class TuiBridgeService {
                 score: iterationContext.evaluation.score,
                 code: iterationContext.code,
               });
+              this.emitReasoningTrace(sessionId, {
+                source: 'evaluator',
+                phase: 'evaluation',
+                thought: `Evaluator scored iteration ${iterationContext.iteration} at ${iterationContext.evaluation.score.toFixed(2)}.`,
+                detail: iterationContext.evaluatorReasoning
+                  ? summarizeReasoningTrace(iterationContext.evaluatorReasoning, 'evaluator').summary
+                  : String(iterationContext.evaluatorRepairAdvice?.issue || `Generated ${iterationContext.code.length} bytes for ${domain}.`),
+                model: modelName,
+              });
+              if (iterationContext.generatorThinking) {
+                const summary = summarizeReasoningTrace(iterationContext.generatorThinking, 'generator');
+                this.emitReasoningTrace(sessionId, {
+                  source: 'generator',
+                  phase: 'generator-thinking',
+                  thought: summary.summary,
+                  detail: summary.details.join(' | ') || iterationContext.generatorThinking.slice(0, 600),
+                  model: iterationContext.generatorModel || modelName,
+                });
+              }
             },
-            maxIterations: 10,
+            maxIterations,
             timeoutMinutes,
             collabDomain: domain,
             numCandidates: candidateCount,
@@ -1561,6 +1667,14 @@ export class TuiBridgeService {
           if (!attemptResult.code?.trim()) {
             throw new Error('Generation produced no code');
           }
+          this.emit(sessionId, {
+            type: 'tool.completed',
+            sessionId,
+            toolName: 'generator',
+            resultSummary: `${domain} candidate accepted (${attemptResult.code.length} bytes, score ${attemptResult.finalScore.toFixed(2)})`,
+            success: true,
+            stepNum: attempt + 2,
+          });
           result = attemptResult;
           break;
         } catch (err) {
@@ -1579,6 +1693,14 @@ export class TuiBridgeService {
             type: 'activity.updated',
             sessionId,
             message: `Generation attempt ${attemptLabel} failed: ${message}`,
+          });
+          this.emit(sessionId, {
+            type: 'tool.completed',
+            sessionId,
+            toolName: 'generator',
+            resultSummary: message,
+            success: false,
+            stepNum: attempt + 2,
           });
           if (controller.signal.aborted) throw err;
         }
@@ -1889,7 +2011,112 @@ export class TuiBridgeService {
     return 'unknown';
   }
 
-  private promptForCreativeDomain(userText: string, domain: Domain, fallback: boolean): string {
+  private buildCreativeIntentBrief(userText: string): CreativeIntentBrief {
+    const userRequest = this.extractUserPrompt(userText);
+    const detector = new AmbiguityDetector();
+    const issues = detector.detect(userRequest);
+    const words = userRequest.split(/\s+/).filter(Boolean);
+    const lower = userRequest.toLowerCase();
+    const hasColor = /\b(red|orange|yellow|green|blue|purple|violet|pink|white|black|gold|silver|cyan|magenta|monochrome|neon|pastel)\b/.test(lower);
+    const hasMotion = /\b(dance|dancing|move|moving|rotate|spinning|pulse|breath|breathes|breathing|flow|grow|morph|animate|animated|kinetic)\b/.test(lower);
+    const hasStyle = /\b(glass|metal|organic|alien|soft|hard|minimal|detailed|surreal|realistic|abstract|luminous|dark|bright|noir|retro|cyberpunk)\b/.test(lower);
+    const hasSubject = /\b(flower|alien|portrait|landscape|creature|city|planet|logo|icon|diagram|shader|scene|pattern|organism)\b/.test(lower) || words.length >= 6;
+    const highIssues = issues.filter((issue) => (
+      issue.severity === 'high' &&
+      !(issue.type === 'missing_context' && (words.length >= 10 || hasSubject))
+    ));
+    const requirements = [
+      `Primary request: ${userRequest}`,
+      hasSubject ? 'Preserve the named subject and objects from the prompt.' : 'User has not named a concrete subject yet.',
+      hasColor ? 'Preserve explicit color and palette cues.' : 'No explicit palette was provided.',
+      hasMotion ? 'Preserve explicit motion or behavior cues.' : 'No explicit motion/behavior was provided.',
+      hasStyle ? 'Preserve explicit style/material/mood cues.' : 'No explicit style/material/mood was provided.',
+    ];
+    const missingDetails = [
+      !hasSubject ? 'subject' : '',
+      !hasColor ? 'palette' : '',
+      !hasMotion ? 'motion' : '',
+      !hasStyle ? 'style/material' : '',
+    ].filter(Boolean);
+    const questions = [
+      ...highIssues.map((issue) => issue.suggestedQuestion),
+      !hasSubject ? 'What is the main subject or object that must be recognizable?' : '',
+      !hasColor ? 'What palette or color mood should dominate?' : '',
+      !hasMotion ? 'Should it be still, looping, breathing, dancing, morphing, or interactive?' : '',
+      !hasStyle ? 'What material or aesthetic should it feel like?' : '',
+    ].filter(Boolean).slice(0, 4);
+    const shouldClarify = highIssues.length > 0 || words.length < 4 || (!hasSubject && missingDetails.length >= 3);
+    const reason = highIssues[0]?.description || (words.length < 4 ? 'Prompt is too short to preserve intent reliably.' : 'Prompt is missing core creative requirements.');
+
+    return {
+      userRequest,
+      requirements,
+      missingDetails,
+      questions,
+      shouldClarify,
+      reason,
+    };
+  }
+
+  private emitIntentBrief(sessionId: string, intentBrief: CreativeIntentBrief): void {
+    this.emit(sessionId, {
+      type: 'generation.intent_brief',
+      sessionId,
+      userRequest: intentBrief.userRequest,
+      requirements: intentBrief.requirements,
+      missingDetails: intentBrief.missingDetails,
+      questions: intentBrief.questions,
+      willClarify: intentBrief.shouldClarify,
+    });
+  }
+
+  private emitReasoningTrace(
+    sessionId: string,
+    trace: { phase: string; thought: string; model?: string; detail?: string; source?: 'harness' | 'generator' | 'evaluator' },
+  ): void {
+    this.emit(sessionId, {
+      type: 'generation.reasoning_trace',
+      sessionId,
+      ...trace,
+    });
+  }
+
+  private emitCreativeClarification(
+    sessionId: string,
+    intentBrief: CreativeIntentBrief,
+    conversation: ConversationManager,
+  ): void {
+    const content = [
+      'I need to clarify this before generating so I do not guess wrong.',
+      '',
+      ...intentBrief.questions.map((question, index) => `${index + 1}. ${question}`),
+    ].join('\n');
+    this.emit(sessionId, {
+      type: 'generation.clarification_needed',
+      sessionId,
+      questions: intentBrief.questions,
+      reason: intentBrief.reason,
+    });
+    this.emit(sessionId, { type: 'response.delta', sessionId, delta: content });
+    this.emit(sessionId, { type: 'response.completed', sessionId, content });
+    this.emit(sessionId, { type: 'response.committed', sessionId, content });
+    conversation['recordMessage']('assistant', content);
+    this.emit(sessionId, {
+      type: 'status.updated',
+      sessionId,
+      status: this.sessions.update(sessionId, {
+        mode: 'chat',
+        activeTask: 'Clarifying generation intent',
+      }),
+    });
+  }
+
+  private extractUserPrompt(userText: string): string {
+    const match = userText.match(/(?:^|\n)User prompt:\s*([\s\S]+)$/i);
+    return (match?.[1] ?? userText).trim();
+  }
+
+  private promptForCreativeDomain(userText: string, domain: Domain, fallback: boolean, intentBrief?: CreativeIntentBrief): string {
     const prefix = fallback
       ? `Previous generation route failed. Retry the original request as ${domain}.`
       : `Target creative domain: ${domain}.`;
@@ -1902,7 +2129,17 @@ export class TuiBridgeService {
           : domain === Domain.HYDRA
             ? 'Return raw Hydra video-synth code only. Do not return SVG, p5, prose, or markdown.'
             : `Return raw ${domain} artifact code only. Do not return SVG unless the target domain is SVG.`;
-    return [userText, '', prefix, domainInstruction].join('\n');
+    const briefLines = intentBrief
+      ? [
+          'Intent brief:',
+          `- User request: ${intentBrief.userRequest}`,
+          ...intentBrief.requirements.map((requirement) => `- ${requirement}`),
+          intentBrief.missingDetails.length > 0
+            ? `- Unknown details: ${intentBrief.missingDetails.join(', ')}. Make conservative choices, but do not ignore explicit requirements.`
+            : '- Unknown details: none significant.',
+        ]
+      : [];
+    return [userText, '', ...briefLines, '', prefix, domainInstruction].join('\n');
   }
 
   private async emitPreviewArtifacts(sessionId: string, code: string, requestedDomain: Domain): Promise<void> {

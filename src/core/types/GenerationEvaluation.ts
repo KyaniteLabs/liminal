@@ -23,4 +23,5 @@ export interface GenerationEvaluation {
   confidence: number;
   failureClass: 'none' | 'render' | 'validator' | 'scorer' | 'infra';
   repairAdvice?: ConcreteRepairAdvice;
+  reasoning?: string;
 }

@@ -118,6 +118,18 @@ type ReviewCandidate struct {
 	CreatedAt time.Time
 }
 
+type GenerationAttempt struct {
+	Attempt      int
+	AttemptTotal int
+	Domain       string
+	Status       string
+	Error        string
+	Iteration    int
+	Score        float64
+	CodeSize     int
+	UpdatedAt    time.Time
+}
+
 // OnboardingStep tracks a setup wizard step.
 type OnboardingStep struct {
 	StepID string
@@ -251,12 +263,17 @@ type Model struct {
 	AutonomyLabel string
 
 	// Generation telemetry
-	GenerationModel      string
-	GenerationDuration   int64 // ms
-	GenerationIterations int
-	GenerationScore      float64
-	GenerationReason     string
-	CurrentIteration     int
+	GenerationModel          string
+	GenerationDuration       int64 // ms
+	GenerationIterations     int
+	GenerationScore          float64
+	GenerationReason         string
+	CurrentIteration         int
+	GenerationDomainPlan     []string
+	GenerationAttempts       []GenerationAttempt
+	ActiveGenerationDomain   string
+	GenerationAttemptCurrent int
+	GenerationAttemptTotal   int
 
 	// Swarm round telemetry
 	SwarmRound          int
@@ -518,6 +535,7 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 	case "generation.iteration":
 		m.CurrentIteration = event.Iteration
 		m.GenerationScore = event.Score
+		m.recordGenerationAttempt(event.Domain, event.Attempt, event.AttemptTotal, "validated", "", event.Iteration, event.Score, len(event.Code))
 	case "generation.complete":
 		m.GenerationIterations = event.Iterations
 		m.GenerationScore = event.FinalScore
@@ -532,6 +550,26 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 			Content: summary,
 			Time:    time.Now(),
 		})
+	case "generation.domain_plan":
+		m.GenerationDomainPlan = append([]string(nil), event.Domains...)
+		m.GenerationAttemptTotal = len(event.Domains)
+		m.addActivity("Domain plan: " + strings.Join(event.Domains, " → "))
+	case "generation.attempt.started":
+		m.ActiveGenerationDomain = event.Domain
+		m.GenerationAttemptCurrent = event.Attempt
+		m.GenerationAttemptTotal = event.AttemptTotal
+		m.recordGenerationAttempt(event.Domain, event.Attempt, event.AttemptTotal, "running", "", 0, 0, 0)
+		m.addActivity(fmt.Sprintf("Attempt %d/%d: %s", event.Attempt, event.AttemptTotal, event.Domain))
+	case "generation.attempt.failed":
+		m.ActiveGenerationDomain = event.Domain
+		m.GenerationAttemptCurrent = event.Attempt
+		m.GenerationAttemptTotal = event.AttemptTotal
+		m.GenerationReason = event.ErrorText
+		m.recordGenerationAttempt(event.Domain, event.Attempt, event.AttemptTotal, "failed", event.ErrorText, 0, 0, 0)
+		m.addActivity(fmt.Sprintf("Attempt %d/%d failed: %s", event.Attempt, event.AttemptTotal, event.Domain))
+	case "generation.candidate.generated":
+		m.ActiveGenerationDomain = event.Domain
+		m.recordGenerationAttempt(event.Domain, event.Attempt, event.AttemptTotal, "candidate", "", event.Iteration, event.Score, event.CodeSize)
 	case "response.metadata":
 		if event.Model != "" {
 			m.ModelName = event.Model
@@ -552,13 +590,13 @@ func (m *Model) ApplyEvent(event bridge.Event) {
 
 	case "tool.started":
 		step := ToolStep{
-			StepNum:     event.StepNum,
-			ToolName:    event.ToolName,
-			Thought:     event.Thought,
+			StepNum:      event.StepNum,
+			ToolName:     event.ToolName,
+			Thought:      event.Thought,
 			DisplayLabel: event.DisplayLabel,
-			ArgsSummary: event.ArgsSummary,
-			Status:      "running",
-			StartedAt:   time.Now(),
+			ArgsSummary:  event.ArgsSummary,
+			Status:       "running",
+			StartedAt:    time.Now(),
 		}
 		m.ToolTimeline = append(m.ToolTimeline, step)
 		if len(m.ToolTimeline) > MaxTimelineEntries {
@@ -992,6 +1030,57 @@ func eventDurationMs(event bridge.Event) int64 {
 		return event.DurationMs
 	}
 	return event.Duration
+}
+
+func (m *Model) recordGenerationAttempt(domain string, attempt int, attemptTotal int, status string, errorMessage string, iteration int, score float64, codeSize int) {
+	if domain == "" && len(m.GenerationDomainPlan) > 0 && attempt > 0 && attempt <= len(m.GenerationDomainPlan) {
+		domain = m.GenerationDomainPlan[attempt-1]
+	}
+	if domain == "" {
+		domain = m.ActiveGenerationDomain
+	}
+	if attempt <= 0 {
+		attempt = m.GenerationAttemptCurrent
+	}
+	if attemptTotal <= 0 {
+		attemptTotal = m.GenerationAttemptTotal
+	}
+	if attempt <= 0 {
+		attempt = len(m.GenerationAttempts) + 1
+	}
+
+	entry := GenerationAttempt{
+		Attempt:      attempt,
+		AttemptTotal: attemptTotal,
+		Domain:       domain,
+		Status:       status,
+		Error:        errorMessage,
+		Iteration:    iteration,
+		Score:        score,
+		CodeSize:     codeSize,
+		UpdatedAt:    time.Now(),
+	}
+
+	for i := range m.GenerationAttempts {
+		if m.GenerationAttempts[i].Attempt == attempt && m.GenerationAttempts[i].Domain == domain {
+			if m.GenerationAttempts[i].Iteration > entry.Iteration {
+				entry.Iteration = m.GenerationAttempts[i].Iteration
+			}
+			if m.GenerationAttempts[i].Score > entry.Score {
+				entry.Score = m.GenerationAttempts[i].Score
+			}
+			if m.GenerationAttempts[i].CodeSize > entry.CodeSize {
+				entry.CodeSize = m.GenerationAttempts[i].CodeSize
+			}
+			m.GenerationAttempts[i] = entry
+			return
+		}
+	}
+
+	m.GenerationAttempts = append(m.GenerationAttempts, entry)
+	if len(m.GenerationAttempts) > 12 {
+		m.GenerationAttempts = m.GenerationAttempts[len(m.GenerationAttempts)-12:]
+	}
 }
 
 // addActivity appends an operator-facing log entry, bounded by MaxActivityLog.

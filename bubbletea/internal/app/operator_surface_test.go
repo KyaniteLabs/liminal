@@ -170,6 +170,9 @@ func TestTaskCardShowsProgressPercentage(t *testing.T) {
 
 func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
 	m := readyOperatorModel(t)
+	m.ApplyEvent(bridge.Event{Type: "generation.domain_plan", Domains: []string{"three", "p5", "hydra"}})
+	m.ApplyEvent(bridge.Event{Type: "generation.attempt.started", Domain: "three", Attempt: 1, AttemptTotal: 3})
+	m.ApplyEvent(bridge.Event{Type: "generation.candidate.generated", Domain: "three", Attempt: 1, AttemptTotal: 3, Iteration: 1, CandidateCount: 3, CodeSize: 2048})
 	m.CurrentIteration = 2
 	m.GenerationIterations = 4
 	m.GenerationScore = 0.82
@@ -178,7 +181,7 @@ func TestOperatorSurfaceRendersGenerationProgressCard(t *testing.T) {
 	m.GenerationDuration = 4200
 
 	surface := m.renderOperatorSurface(56)
-	for _, want := range []string{"Generation", "50%", "glm-5.1", "0.82"} {
+	for _, want := range []string{"Generation", "50%", "glm-5.1", "0.82", "Plan:", "three", "Attempt:", "1/3", "2048b"} {
 		if !strings.Contains(surface, want) {
 			t.Fatalf("expected operator surface to contain %q\n%s", want, surface)
 		}

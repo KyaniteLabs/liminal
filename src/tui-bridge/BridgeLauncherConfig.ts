@@ -199,7 +199,7 @@ function inferVisionSupport(provider: string, model: string): BridgeVisionSuppor
   if (lower.includes('glm') || lower.includes('minimax') || lower.includes('kimi') || lower.includes('moonshot')) {
     return 'no';
   }
-  if (lower.includes('gemini') || lower.includes('gpt-4o') || lower.includes('claude') || lower.includes('vision') || lower.includes('-vl')) {
+  if (lower.includes('gemini') || lower.includes('gpt-5') || lower.includes('gpt-4o') || lower.includes('claude') || lower.includes('vision') || lower.includes('-vl')) {
     return 'yes';
   }
   return 'unknown';

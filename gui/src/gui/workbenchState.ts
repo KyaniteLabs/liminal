@@ -17,3 +17,7 @@ export const WORKBENCH_MODES: WorkbenchMode[] = [
 export function getWorkbenchMode(tab: string): WorkbenchMode {
   return WORKBENCH_MODES.find((mode) => mode.legacyTabs.includes(tab)) ?? WORKBENCH_MODES[0];
 }
+
+export function shouldRenderLegacyPanel(tab: string): boolean {
+  return tab !== 'create';
+}

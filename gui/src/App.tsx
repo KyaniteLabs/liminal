@@ -12,7 +12,7 @@ import { CompostVisualizer } from './components/CompostVisualizer';
 import { OperatorCockpit } from './components/OperatorCockpit';
 import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
-import { getWorkbenchMode, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
+import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 
 // State types
 interface MergeProposal {
@@ -543,6 +543,52 @@ export default function App() {
         <span>Iterations</span>
         <strong>{createMaxIterations}</strong>
       </div>
+      {activeTab === 'create' && (
+        <div className="liminal-control-panel">
+          <label>
+            <span>Max iterations</span>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              value={createMaxIterations}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCreateMaxIterations(Number(event.target.value))}
+            />
+          </label>
+          <label>
+            <span>Run mode</span>
+            <select
+              value={createMode}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setCreateMode(event.target.value)}
+            >
+              <option value="p5">p5</option>
+              <option value="organism">organism</option>
+            </select>
+          </label>
+          {createMode === 'organism' && (
+            <div className="liminal-control-row">
+              <label>
+                <span>BPM</span>
+                <input
+                  type="number"
+                  min={60}
+                  max={240}
+                  value={createTraits.bpm || 120}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCreateTraits((current) => ({ ...current, bpm: Number(event.target.value) }))}
+                />
+              </label>
+              <label>
+                <span>Palette</span>
+                <input
+                  type="text"
+                  value={createTraits.palette || ''}
+                  onChange={(event: React.ChangeEvent<HTMLInputElement>) => setCreateTraits((current) => ({ ...current, palette: event.target.value }))}
+                />
+              </label>
+            </div>
+          )}
+        </div>
+      )}
       <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => dispatchLive(switchToLiveOrganismView('config'))}>
         Settings
       </button>
@@ -593,6 +639,8 @@ export default function App() {
       timelineSlot={timelineSlot}
       leftSlot={leftSlot}
     >
+      {shouldRenderLegacyPanel(activeTab) && (
+      <>
       {activeTab === 'config' && (
         <form id="atelier-config-form" onSubmit={(e: React.FormEvent) => e.preventDefault()} className="atelier-panel" style={{ maxWidth: 560 }} autoComplete="off">
           {error && (
@@ -1112,6 +1160,8 @@ export default function App() {
             <p style={{ color: 'var(--atelier-text-muted)', fontSize: 14 }}>Select a project and iteration, then click Run preview to see the live sketch.</p>
           )}
         </div>
+      )}
+      </>
       )}
     </WorkbenchShell>
   );

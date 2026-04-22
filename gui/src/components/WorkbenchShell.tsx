@@ -18,7 +18,7 @@ interface WorkbenchShellProps {
   inspectorSlot: React.ReactNode;
   timelineSlot: React.ReactNode;
   leftSlot: React.ReactNode;
-  children: React.ReactNode;
+  children?: React.ReactNode;
 }
 
 export function WorkbenchShell({
@@ -111,9 +111,11 @@ export function WorkbenchShell({
         {timelineSlot}
       </section>
 
-      <main id="main-content" className="liminal-legacy-panel">
-        {children}
-      </main>
+      {children ? (
+        <main id="main-content" className="liminal-legacy-panel">
+          {children}
+        </main>
+      ) : null}
     </div>
   );
 }

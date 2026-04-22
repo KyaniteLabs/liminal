@@ -211,6 +211,23 @@ describe('GenerationOrchestrator', () => {
       expect(mockGenerate).toHaveBeenCalledWith('used with context');
     });
 
+    it('dispatches against the enriched prompt so fallback domain instructions can steer routing', async () => {
+      const mockGenerate = vi.fn(async () => 'three-code');
+      (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue({
+        entry: { name: 'three', generate: mockGenerate },
+        confidence: 0.95,
+      });
+      const options = makeOptions();
+      const orchestrator = new GenerationOrchestrator(options, gallery, null);
+
+      await orchestrator.generate(
+        'original request\n\nFallback domain: three\nReturn Three.js scene code.',
+        'original request',
+      );
+
+      expect(generatorRegistry.dispatch).toHaveBeenCalledWith(expect.stringContaining('Fallback domain: three'));
+    });
+
     it('uses usedPrompt for LLM generator entries', async () => {
       const mockGenerate = vi.fn(async () => ({ code: 'llm-code', thinking: 'thoughts' }));
       (generatorRegistry.dispatch as ReturnType<typeof vi.fn>).mockReturnValue({

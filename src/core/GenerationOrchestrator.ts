@@ -107,11 +107,11 @@ export class GenerationOrchestrator {
    */
   async generate(
     usedPrompt: string,
-    loadedPrompt: string,
+    _loadedPrompt: string,
     bypassCache?: boolean
   ): Promise<GenerationResult> {
     await registerAllGenerators();
-    const dispatched = generatorRegistry.dispatch(loadedPrompt);
+    const dispatched = generatorRegistry.dispatch(usedPrompt);
 
     if (this.options.useSwarm) {
       return this.generateWithSwarm(usedPrompt);

@@ -16,13 +16,15 @@ import { ok, err } from 'neverthrow';
 
 // ── Mocks ──
 const { mockIsRepo, mockCurrentBranch, mockStatus, mockStash, mockStashList,
-        mockStashPop, mockCheckoutBranch, mockCheckout, mockAdd, mockCommit,
+        mockStashListFull, mockStashDrop, mockStashPop, mockCheckoutBranch, mockCheckout, mockAdd, mockCommit,
         mockAddAllAndCommit, mockPush, mockLog } = vi.hoisted(() => ({
   mockIsRepo: vi.fn(),
   mockCurrentBranch: vi.fn(),
   mockStatus: vi.fn(),
   mockStash: vi.fn(),
   mockStashList: vi.fn(),
+  mockStashListFull: vi.fn(),
+  mockStashDrop: vi.fn(),
   mockStashPop: vi.fn(),
   mockCheckoutBranch: vi.fn(),
   mockCheckout: vi.fn(),
@@ -40,6 +42,8 @@ vi.mock('../../src/git/GitService.js', () => ({
     status = mockStatus;
     stash = mockStash;
     stashList = mockStashList;
+    stashListFull = mockStashListFull;
+    stashDrop = mockStashDrop;
     stashPop = mockStashPop;
     branch = mockCheckoutBranch;
     checkout = mockCheckout;
@@ -264,6 +268,42 @@ describe('GitIntegration', () => {
       await integration.endRun('max iterations');
 
       expect(mockAddAllAndCommit).toHaveBeenCalled();
+    });
+
+    it('does not pop unrelated existing stashes when this run did not stash', async () => {
+      mockIsRepo.mockResolvedValue(true);
+      mockCurrentBranch.mockResolvedValue('main');
+      mockStatus.mockResolvedValue(ok({ isClean: () => true }));
+      mockCheckoutBranch.mockResolvedValue({ name: 'liminal/test' });
+      mockLog.mockResolvedValue([]);
+      await integration.startRun('clean-run');
+
+      mockStatus.mockResolvedValue(ok({ isClean: () => true }));
+      mockCheckout.mockResolvedValue(undefined);
+      mockStashList.mockResolvedValue(['unrelated old stash']);
+
+      await integration.endRun('quality achieved');
+
+      expect(mockStashPop).not.toHaveBeenCalled();
+    });
+
+    it('pops a stash only when startRun created one for this run', async () => {
+      mockIsRepo.mockResolvedValue(true);
+      mockCurrentBranch.mockResolvedValue('main');
+      mockStatus.mockResolvedValue(ok({ isClean: () => false }));
+      mockStash.mockResolvedValue(undefined);
+      mockCheckoutBranch.mockResolvedValue({ name: 'liminal/test' });
+      mockLog.mockResolvedValue([]);
+      await integration.startRun('dirty-run');
+
+      mockStatus.mockResolvedValue(ok({ isClean: () => true }));
+      mockCheckout.mockResolvedValue(undefined);
+      mockStashPop.mockResolvedValue(undefined);
+
+      await integration.endRun('quality achieved');
+
+      expect(mockStash).toHaveBeenCalled();
+      expect(mockStashPop).toHaveBeenCalledTimes(1);
     });
   });
 

@@ -25,7 +25,18 @@ import { selectApiKeyForEndpoint } from './ProviderKeyResolver.js';
 // ── Types ──
 
 export type ModelRole = 'generator' | 'evaluator' | 'harness' | 'studio';
-export type ProviderType = 'openai' | 'anthropic' | 'ollama' | 'openrouter' | 'google' | 'minimax';
+export type ProviderType =
+  | 'openai'
+  | 'anthropic'
+  | 'ollama'
+  | 'openrouter'
+  | 'google'
+  | 'minimax'
+  | 'glm'
+  | 'lmstudio'
+  | 'kimi'
+  | 'moonshot'
+  | 'custom';
 
 export interface RoleProviderConfig {
   /** Provider type — auto-detected from baseUrl if omitted */

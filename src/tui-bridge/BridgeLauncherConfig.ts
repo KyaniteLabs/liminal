@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { getActiveProvider, getProviderConfig, type ProviderType } from '../harness/MultiProviderConfig.js';
 
 export interface BridgeProviderConfig {
@@ -28,6 +31,13 @@ export interface BridgeRuntimeSummary {
     multimodal: BridgeVisionSupport;
     note: string;
   };
+}
+
+interface PersistedBridgeRoleConfig {
+  provider?: string;
+  baseUrl?: string;
+  model?: string;
+  apiKey?: string;
 }
 
 const API_KEY_REQUIRED_PROVIDERS = new Set<ProviderType>([
@@ -64,6 +74,11 @@ export function applyBridgeProviderEnv(
   env: NodeJS.ProcessEnv,
   config: BridgeProviderConfig,
 ): void {
+  const explicitRoleEnv = {
+    generator: hasAnyEnv(env, ['LLM_BASE_URL', 'LLM_MODEL', 'LIMINAL_LLM_BASE_URL', 'LIMINAL_LLM_MODEL']),
+    harness: hasAnyEnv(env, ['HARNESS_BASE_URL', 'HARNESS_MODEL', 'LIMINAL_HARNESS_BASE_URL', 'LIMINAL_HARNESS_MODEL']),
+    evaluator: hasAnyEnv(env, ['EVALUATOR_BASE_URL', 'EVALUATOR_MODEL', 'LIMINAL_EVALUATOR_BASE_URL', 'LIMINAL_EVALUATOR_MODEL']),
+  };
   const setDefault = (key: string, value: string): void => {
     if (!env[key]) env[key] = value;
   };
@@ -96,27 +111,26 @@ export function applyBridgeProviderEnv(
     setDefault(key, value);
   }
 
-  if (!config.apiKey) return;
+  if (config.apiKey) {
+    const auth: Record<string, string> = {
+      HARNESS_API_KEY: config.apiKey,
+      EVALUATOR_API_KEY: config.apiKey,
+      LIMINAL_HARNESS_API_KEY: config.apiKey,
+      LIMINAL_EVALUATOR_API_KEY: config.apiKey,
+    };
 
-  const auth: Record<string, string> = {
-    HARNESS_API_KEY: config.apiKey,
-    EVALUATOR_API_KEY: config.apiKey,
-    LIMINAL_HARNESS_API_KEY: config.apiKey,
-    LIMINAL_EVALUATOR_API_KEY: config.apiKey,
-  };
+    for (const [key, value] of Object.entries(auth)) {
+      setDefault(key, value);
+    }
 
-  for (const [key, value] of Object.entries(auth)) {
-    setDefault(key, value);
+    applyProviderApiKey(env, config.provider, config.apiKey, true);
   }
 
-  if (config.provider === 'glm') env.GLM_API_KEY = config.apiKey;
-  if (config.provider === 'minimax') env.MINIMAX_API_KEY = config.apiKey;
-  if (config.provider === 'openai') env.OPENAI_API_KEY = config.apiKey;
-  if (config.provider === 'custom') env.OPENAI_API_KEY = config.apiKey;
-  if (config.provider === 'openrouter') env.OPENROUTER_API_KEY = config.apiKey;
-  if (config.provider === 'moonshot' || config.provider === 'kimi') {
-    env.MOONSHOT_API_KEY = config.apiKey;
-    if (config.provider === 'kimi') env.KIMI_API_KEY = config.apiKey;
+  const persistedRoles = loadPersistedBridgeRoles();
+  for (const role of ['generator', 'harness', 'evaluator'] as const) {
+    const roleConfig = persistedRoles[role];
+    if (!roleConfig || explicitRoleEnv[role]) continue;
+    applyRoleEnv(env, role, roleConfig, true);
   }
 }
 
@@ -199,5 +213,59 @@ function rolePurpose(role: BridgeRoleName): string {
       return 'Runs bridge orchestration, repair prompts, and operator actions.';
     case 'evaluator':
       return 'Scores rendered evidence and produces repair advice.';
+  }
+}
+
+function hasAnyEnv(env: NodeJS.ProcessEnv, keys: string[]): boolean {
+  return keys.some((key) => Boolean(env[key]));
+}
+
+function loadPersistedBridgeRoles(): Partial<Record<BridgeRoleName, PersistedBridgeRoleConfig>> {
+  try {
+    const configPath = process.env.LIMINAL_CONFIG_PATH || path.join(os.homedir(), '.liminal', 'config.json');
+    const parsed = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as {
+      roles?: Partial<Record<BridgeRoleName, PersistedBridgeRoleConfig>>;
+    };
+    return parsed.roles ?? {};
+  } catch {
+    return {};
+  }
+}
+
+function applyRoleEnv(
+  env: NodeJS.ProcessEnv,
+  role: BridgeRoleName,
+  config: PersistedBridgeRoleConfig,
+  overwrite: boolean,
+): void {
+  const prefix = role === 'generator' ? 'LLM' : role.toUpperCase();
+  const liminalPrefix = role === 'generator' ? 'LIMINAL_LLM' : `LIMINAL_${role.toUpperCase()}`;
+  setEnvValue(env, `${prefix}_BASE_URL`, config.baseUrl, overwrite);
+  setEnvValue(env, `${prefix}_MODEL`, config.model, overwrite);
+  setEnvValue(env, `${liminalPrefix}_BASE_URL`, config.baseUrl, overwrite);
+  setEnvValue(env, `${liminalPrefix}_MODEL`, config.model, overwrite);
+  if (role === 'generator') {
+    setEnvValue(env, 'LLM_PROVIDER', config.provider, overwrite);
+    setEnvValue(env, 'LIMINAL_LLM_PROVIDER', config.provider, overwrite);
+  }
+  setEnvValue(env, `${prefix}_API_KEY`, config.apiKey, overwrite);
+  setEnvValue(env, `${liminalPrefix}_API_KEY`, config.apiKey, overwrite);
+}
+
+function setEnvValue(env: NodeJS.ProcessEnv, key: string, value: string | undefined, overwrite: boolean): void {
+  if (!value) return;
+  if (overwrite || !env[key]) env[key] = value;
+}
+
+function applyProviderApiKey(env: NodeJS.ProcessEnv, provider: string, apiKey: string | undefined, overwrite: boolean): void {
+  if (!apiKey) return;
+  const set = (key: string) => setEnvValue(env, key, apiKey, overwrite);
+  if (provider === 'glm') set('GLM_API_KEY');
+  if (provider === 'minimax') set('MINIMAX_API_KEY');
+  if (provider === 'openai' || provider === 'custom') set('OPENAI_API_KEY');
+  if (provider === 'openrouter') set('OPENROUTER_API_KEY');
+  if (provider === 'moonshot' || provider === 'kimi') {
+    set('MOONSHOT_API_KEY');
+    if (provider === 'kimi') set('KIMI_API_KEY');
   }
 }

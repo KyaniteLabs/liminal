@@ -5,7 +5,7 @@ import { env } from '../utils/env.js';
 import { Logger } from '../utils/Logger.js';
 import { SERVICE_DEFAULTS } from '../constants.js';
 import { loadRoleConfig } from './RoleConfig.js';
-import type { ModelRole, ResolvedRoleConfig } from './RoleConfig.js';
+import type { ModelRole, ResolvedRoleConfig, RoleProviderConfig } from './RoleConfig.js';
 import { Result, ok, err as reject } from 'neverthrow';
 import { PersistenceError } from '../errors/PersistenceError.js';
 
@@ -21,6 +21,8 @@ export interface UserConfig {
       apiKey?: string;
     };
   };
+  /** Optional role-specific model configuration for generator/evaluator/harness. */
+  roles?: Partial<Record<ModelRole, RoleProviderConfig>>;
   /** Optional loop options (GUI / user prefs) */
   loop?: {
     maxIterations?: number;

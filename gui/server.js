@@ -23,6 +23,7 @@ const DEFAULTS = {
   creative: { minQualityScore: 0.7 },
   galleryPath: 'gallery',
 };
+const STORED_SECRET_SENTINEL = '(stored)';
 
 /**
  * Validate a gallery path to prevent path traversal attacks.
@@ -71,15 +72,67 @@ function resolveGuiBridgeProvider() {
 }
 
 function createGuiBridgeLLM() {
-  const providerConfig = resolveGuiBridgeProvider();
+  resolveGuiBridgeProvider();
   return new LLMClient({
     role: 'harness',
-    baseUrl: providerConfig.baseUrl,
-    model: providerConfig.model,
-    apiKey: providerConfig.apiKey,
     temperature: 0.5,
     maxTokens: 4096,
   });
+}
+
+function unwrapConfigResult(result) {
+  return result && typeof result.match === 'function'
+    ? result.match((config) => config, () => null)
+    : result;
+}
+
+function sanitizeRoles(roles = {}) {
+  return Object.fromEntries(Object.entries(roles).map(([role, cfg]) => [role, {
+    provider: cfg?.provider,
+    baseUrl: cfg?.baseUrl,
+    model: cfg?.model,
+    apiKeyStored: Boolean(cfg?.apiKey),
+  }]));
+}
+
+function mergeProviderConfigs(existing = {}, incoming = {}) {
+  const merged = { ...existing };
+  for (const [name, cfg] of Object.entries(incoming)) {
+    const previous = existing[name] || {};
+    merged[name] = {
+      ...previous,
+      ...cfg,
+      apiKey: resolveSecretValue(cfg?.apiKey, previous.apiKey, cfg, previous),
+    };
+  }
+  return merged;
+}
+
+function mergeRoleConfigs(existing = {}, incoming = {}) {
+  const merged = { ...existing };
+  for (const [role, cfg] of Object.entries(incoming)) {
+    const previous = existing[role] || {};
+    merged[role] = {
+      ...previous,
+      ...cfg,
+      apiKey: resolveSecretValue(cfg?.apiKey, previous.apiKey, cfg, previous),
+    };
+  }
+  return merged;
+}
+
+function resolveSecretValue(incoming, existing, incomingConfig = {}, existingConfig = {}) {
+  if (incoming === STORED_SECRET_SENTINEL || incoming === undefined) {
+    return isSameSecretTarget(incomingConfig, existingConfig) ? existing : undefined;
+  }
+  if (typeof incoming === 'string' && incoming.trim() === '') return undefined;
+  return incoming;
+}
+
+function isSameSecretTarget(incoming = {}, existing = {}) {
+  if (incoming.provider && existing.provider && incoming.provider !== existing.provider) return false;
+  if (incoming.baseUrl && existing.baseUrl && incoming.baseUrl !== existing.baseUrl) return false;
+  return true;
 }
 
 // F5: CSRF protection on SSE endpoints
@@ -244,8 +297,8 @@ export function createApp(configPath, port = 5174) {
   app.get('/api/config', async (_req, res) => {
     try {
       const cfgPath = getConfigPath();
-      const userConfig = await loadConfig(cfgPath);
-      const projectConfig = await loadProjectConfig(process.cwd());
+      const userConfig = unwrapConfigResult(await loadConfig(cfgPath));
+      const projectConfig = unwrapConfigResult(await loadProjectConfig(process.cwd()));
       const effective = await getEffectiveConfig(cfgPath, process.cwd());
 
       const loop = {
@@ -267,6 +320,7 @@ export function createApp(configPath, port = 5174) {
         loop,
         creative,
         galleryPath,
+        roles: sanitizeRoles(userConfig?.roles || {}),
       });
     } catch (err) {
       res.status(500).json({ error: err.message });
@@ -310,14 +364,16 @@ export function createApp(configPath, port = 5174) {
     try {
       const cfgPath = getConfigPath();
       const body = req.body || {};
-      const existing = await loadConfig(cfgPath);
+      const existing = unwrapConfigResult(await loadConfig(cfgPath));
 
       const defaultProvider = body.defaultProvider ?? existing?.defaultProvider ?? 'lmstudio';
-      const providers = { ...(existing?.providers || {}), ...(body.providers || {}) };
+      const providers = mergeProviderConfigs(existing?.providers || {}, body.providers || {});
+      const roles = mergeRoleConfigs(existing?.roles || {}, body.roles || {});
 
       const config = {
         defaultProvider,
         providers,
+        roles,
         loop: body.loop ?? existing?.loop,
         creative: body.creative ?? existing?.creative,
         galleryPath: body.galleryPath ?? existing?.galleryPath,

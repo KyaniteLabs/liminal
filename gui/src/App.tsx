@@ -58,6 +58,12 @@ interface ConfigResponse {
     model?: string;
     apiKeyStored?: boolean;
   };
+  roles?: Record<string, {
+    provider?: string;
+    baseUrl?: string;
+    model?: string;
+    apiKeyStored?: boolean;
+  }>;
   loop?: {
     maxIterations?: number;
     timeoutMinutes?: number;
@@ -69,6 +75,19 @@ interface ConfigResponse {
 }
 
 const API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASEURL) ? import.meta.env.VITE_API_BASEURL : '/api';
+const STORED_SECRET_SENTINEL = '(stored)';
+const PROVIDER_OPTIONS = ['lmstudio', 'minimax', 'glm', 'openai', 'openrouter', 'ollama', 'kimi', 'moonshot', 'custom'];
+const PROVIDER_PRESETS: Record<string, { baseUrl: string; model: string; evaluatorModel?: string }> = {
+  lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model' },
+  minimax: { baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7' },
+  glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5.1' },
+  openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4', evaluatorModel: 'gpt-4o' },
+  openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5.4-mini', evaluatorModel: 'google/gemini-2.5-flash' },
+  ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2' },
+  kimi: { baseUrl: 'https://api.kimi.com/coding/v1', model: 'k2p5' },
+  moonshot: { baseUrl: 'https://api.moonshot.ai/v1', model: 'kimi-k2.5' },
+  custom: { baseUrl: 'http://localhost:8000/v1', model: 'custom-model' },
+};
 
 // Base64 for Strudel embed URL hash (UTF-8 safe)
 function base64UrlCode(str: string): string {
@@ -130,6 +149,10 @@ export default function App() {
   const [baseUrl, setBaseUrl] = useState<string>('');
   const [model, setModel] = useState<string>('local-model');
   const [apiKey, setApiKey] = useState<string>('');
+  const [evaluatorProvider, setEvaluatorProvider] = useState<string>('openrouter');
+  const [evaluatorBaseUrl, setEvaluatorBaseUrl] = useState<string>('https://openrouter.ai/api/v1');
+  const [evaluatorModel, setEvaluatorModel] = useState<string>('google/gemini-2.5-flash');
+  const [evaluatorApiKey, setEvaluatorApiKey] = useState<string>('');
   const [maxIterations, setMaxIterations] = useState<number>(20);
   const [timeoutMinutes, setTimeoutMinutes] = useState<number>(30);
   const [minQualityScore, setMinQualityScore] = useState<number>(0.7);
@@ -147,7 +170,12 @@ export default function App() {
         setProvider(data.effective?.provider ?? 'lmstudio');
         setBaseUrl(data.effective?.baseUrl ?? '');
         setModel(data.effective?.model ?? 'local-model');
-        setApiKey(data.effective?.apiKeyStored ? '(stored)' : '');
+        setApiKey(data.effective?.apiKeyStored ? STORED_SECRET_SENTINEL : '');
+        const evaluator = data.roles?.evaluator;
+        setEvaluatorProvider(evaluator?.provider ?? 'openrouter');
+        setEvaluatorBaseUrl(evaluator?.baseUrl ?? 'https://openrouter.ai/api/v1');
+        setEvaluatorModel(evaluator?.model ?? 'google/gemini-2.5-flash');
+        setEvaluatorApiKey(evaluator?.apiKeyStored ? STORED_SECRET_SENTINEL : '');
         setMaxIterations(data.loop?.maxIterations ?? 20);
         setTimeoutMinutes(data.loop?.timeoutMinutes ?? 30);
         setMinQualityScore(data.creative?.minQualityScore ?? 0.7);
@@ -422,6 +450,20 @@ export default function App() {
             apiKey: apiKey || undefined,
           },
         },
+        roles: {
+          generator: {
+            provider: providerName,
+            baseUrl: baseUrl || undefined,
+            model: model || undefined,
+            apiKey: apiKey || undefined,
+          },
+          evaluator: {
+            provider: evaluatorProvider || undefined,
+            baseUrl: evaluatorBaseUrl || undefined,
+            model: evaluatorModel || undefined,
+            apiKey: evaluatorApiKey || undefined,
+          },
+        },
         loop: { maxIterations, timeoutMinutes },
         creative: { minQualityScore },
         galleryPath: galleryPath || 'gallery',
@@ -439,6 +481,22 @@ export default function App() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const chooseProvider = (nextProvider: string) => {
+    setProvider(nextProvider);
+    const preset = PROVIDER_PRESETS[nextProvider];
+    if (!preset) return;
+    setBaseUrl(preset.baseUrl);
+    setModel(preset.model);
+  };
+
+  const chooseEvaluatorProvider = (nextProvider: string) => {
+    setEvaluatorProvider(nextProvider);
+    const preset = PROVIDER_PRESETS[nextProvider];
+    if (!preset) return;
+    setEvaluatorBaseUrl(preset.baseUrl);
+    setEvaluatorModel(preset.evaluatorModel || preset.model);
   };
 
   if (loading) {
@@ -540,20 +598,16 @@ export default function App() {
           )}
 
           <section style={{ marginBottom: 24 }}>
-            <h2 className="atelier-heading">LLM</h2>
+            <h2 className="atelier-heading">Generator</h2>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <label>
             <span className="atelier-label">Provider</span>
             <select
               value={provider}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setProvider(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => chooseProvider(e.target.value)}
               className="atelier-select"
             >
-              <option value="lmstudio">lmstudio</option>
-              <option value="minimax">minimax</option>
-              <option value="ollama">ollama</option>
-              <option value="openai">openai</option>
-              <option value="hybrid">hybrid</option>
+              {PROVIDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
             </select>
           </label>
           <label>
@@ -590,6 +644,53 @@ export default function App() {
           <p style={{ fontSize: 12, color: 'var(--atelier-text-muted)', marginTop: 4, lineHeight: 1.4 }}>
             Keys are stored locally in ~/.liminal/config.json. Never sent to the frontend after saving.
           </p>
+        </div>
+      </section>
+
+      <section style={{ marginBottom: 24 }}>
+        <h2 className="atelier-heading">Evaluator</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <label>
+            <span className="atelier-label">Provider</span>
+            <select
+              value={evaluatorProvider}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => chooseEvaluatorProvider(e.target.value)}
+              className="atelier-select"
+            >
+              {PROVIDER_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
+          <label>
+            <span className="atelier-label">Base URL</span>
+            <input
+              type="url"
+              value={evaluatorBaseUrl}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEvaluatorBaseUrl(e.target.value)}
+              placeholder="https://…"
+              className="atelier-input"
+            />
+          </label>
+          <label>
+            <span className="atelier-label">Model</span>
+            <input
+              type="text"
+              value={evaluatorModel}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEvaluatorModel(e.target.value)}
+              className="atelier-input"
+            />
+          </label>
+          <label>
+            <span className="atelier-label">API key (masked)</span>
+            <input
+              type="password"
+              form="atelier-config-form"
+              value={evaluatorApiKey}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setEvaluatorApiKey(e.target.value)}
+              placeholder="••••••••"
+              autoComplete="off"
+              className="atelier-input"
+            />
+          </label>
         </div>
       </section>
 

@@ -118,9 +118,31 @@ describe('saveConfig', () => {
     const config = { defaultProvider: 'ollama', providers: { ollama: {} } };
     await saveConfig(config, '/tmp/nested/path/config.json');
 
-    const writtenContent = mockWriteFile.mock.calls[0][1] as string;
+    const writtenContent = mockWriteFile.mock.calls.at(-1)?.[1] as string;
     expect(writtenContent).toContain('  "defaultProvider"');
     expect(writtenContent).toContain('  "providers"');
+  });
+
+  it('serializes role-specific evaluator config', async () => {
+    const config = {
+      defaultProvider: 'glm',
+      providers: {
+        glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5.1' },
+      },
+      roles: {
+        evaluator: {
+          provider: 'openrouter',
+          baseUrl: 'https://openrouter.ai/api/v1',
+          model: 'google/gemini-2.5-flash',
+          apiKey: 'vision-key',
+        },
+      },
+    };
+    await saveConfig(config, '/tmp/role-config.json');
+
+    const writtenContent = mockWriteFile.mock.calls.at(-1)?.[1] as string;
+    expect(writtenContent).toContain('"evaluator"');
+    expect(writtenContent).toContain('"google/gemini-2.5-flash"');
   });
 });
 

@@ -5,6 +5,20 @@ export type BridgeSessionStatus = {
   sessionId: string;
   provider?: string;
   model?: string;
+  roles?: Record<string, {
+    role: string;
+    provider: string;
+    model: string;
+    source: string;
+    multimodal: 'yes' | 'no' | 'unknown';
+    purpose: string;
+  }>;
+  evaluation?: {
+    renderedEvidence: boolean;
+    screenshotInput: boolean;
+    multimodal: 'yes' | 'no' | 'unknown';
+    note: string;
+  };
   pendingAction?: { id: string; title: string };
 };
 

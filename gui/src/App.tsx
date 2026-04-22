@@ -505,8 +505,14 @@ export default function App() {
   };
 
   const activeMode = getWorkbenchMode(activeTab);
-  const providerLabel = `${provider || 'unknown'} / ${model || 'unknown'}`;
-  const evaluatorLabel = `${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
+  const liveGenerator = bridge.session?.roles?.generator;
+  const liveEvaluator = bridge.session?.roles?.evaluator;
+  const providerLabel = liveGenerator
+    ? `${liveGenerator.provider || 'unknown'} / ${liveGenerator.model || 'unknown'}`
+    : `${provider || 'unknown'} / ${model || 'unknown'}`;
+  const evaluatorLabel = liveEvaluator
+    ? `${liveEvaluator.provider || 'unknown'} / ${liveEvaluator.model || 'unknown'}`
+    : `${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
   const runLabel = activeMode.id === 'generate' && !bridge.session
     ? 'Connecting'
     : runStatus === 'running' ? 'Running' : 'Run';
@@ -547,6 +553,7 @@ export default function App() {
       <div>
         <span>Evaluator</span>
         <strong>{evaluatorLabel}</strong>
+        {liveEvaluator && <small>Vision: {liveEvaluator.multimodal}</small>}
       </div>
       <div>
         <span>Quality Gate</span>

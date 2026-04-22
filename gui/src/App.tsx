@@ -13,6 +13,7 @@ import { OperatorCockpit } from './components/OperatorCockpit';
 import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
+import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 
 // State types
 interface MergeProposal {
@@ -111,6 +112,7 @@ export default function App() {
   const [liveState, dispatchLive] = useReducer(liveOrganismReducer, INITIAL_LIVE_ORGANISM_STATE);
   const { activeTab, previewUrl, runError } = liveState;
   const { events: compostEvents, connected: compostConnected } = useEventStream();
+  const bridge = useTuiBridgeSession();
 
   const [config, setConfig] = useState<ConfigResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -505,7 +507,18 @@ export default function App() {
   const activeMode = getWorkbenchMode(activeTab);
   const providerLabel = `${provider || 'unknown'} / ${model || 'unknown'}`;
   const evaluatorLabel = `${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
-  const runLabel = runStatus === 'running' ? 'Running' : 'Run';
+  const runLabel = activeMode.id === 'generate' && !bridge.session
+    ? 'Connecting'
+    : runStatus === 'running' ? 'Running' : 'Run';
+  const bridgeSummary = bridge.summary;
+
+  const handleWorkbenchRun = () => {
+    if (activeMode.id === 'generate') {
+      void bridge.submitPrompt(createPrompt);
+      return;
+    }
+    void handleCreateRun();
+  };
 
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
     dispatchLive(switchToLiveOrganismView(mode.legacyTabs[0] as GuiTab));
@@ -518,8 +531,8 @@ export default function App() {
       ) : (
         <div className="liminal-stage-empty">
           <span>Stage</span>
-          <strong>{runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
-          <small>{createMode === 'organism' ? 'Strudel + Hydra' : createMode}</small>
+          <strong>{bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
+          <small>{bridgeSummary.active ? bridgeSummary.stageSubtitle : createMode === 'organism' ? 'Strudel + Hydra' : createMode}</small>
         </div>
       )}
     </div>
@@ -545,6 +558,12 @@ export default function App() {
       </div>
       {activeTab === 'create' && (
         <div className="liminal-control-panel">
+          {bridge.error && <div className="atelier-alert atelier-alert--error">{bridge.error}</div>}
+          {bridge.session?.pendingAction && (
+            <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void bridge.confirmPending()}>
+              Confirm: {bridge.session.pendingAction.title}
+            </button>
+          )}
           <label>
             <span>Max iterations</span>
             <input
@@ -597,9 +616,9 @@ export default function App() {
 
   const timelineSlot = (
     <div className="liminal-timeline-row">
-      <span>{runStatus || 'idle'}</span>
-      <strong>{runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
-      <small>{createRunError || runError || selectedProject || 'No artifact selected'}</small>
+      <span>{bridgeSummary.active ? bridgeSummary.timelineStatus : runStatus || 'idle'}</span>
+      <strong>{bridgeSummary.active ? bridgeSummary.timelinePrimary : runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
+      <small>{bridgeSummary.active ? bridgeSummary.timelineSecondary : createRunError || bridge.error || runError || selectedProject || 'No artifact selected'}</small>
     </div>
   );
 
@@ -629,9 +648,9 @@ export default function App() {
       onTabChange={(tab) => dispatchLive(switchToLiveOrganismView(tab as GuiTab))}
       prompt={createPrompt}
       onPromptChange={setCreatePrompt}
-      onRun={handleCreateRun}
-      runDisabled={runStatus === 'running' || !createPrompt.trim()}
-      runLabel={runLabel}
+      onRun={handleWorkbenchRun}
+      runDisabled={bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (activeMode.id === 'generate' && !bridge.session)}
+      runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
       providerLabel={providerLabel}
       evaluatorLabel={evaluatorLabel}
       stageSlot={stageSlot}

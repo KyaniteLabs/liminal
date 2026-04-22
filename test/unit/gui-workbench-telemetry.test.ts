@@ -18,6 +18,56 @@ describe('workbenchTelemetry', () => {
     expect(summary.timelineSecondary).toContain('up to');
   });
 
+  it('surfaces intent brief and tool activity in the default timeline summary', () => {
+    const summary = summarizeWorkbenchBridge([
+      {
+        type: 'generation.intent_brief',
+        userRequest: 'make a purple alien dancing on a 4d flower',
+        requirements: ['Primary request: make a purple alien dancing on a 4d flower'],
+        missingDetails: [],
+        questions: [],
+        willClarify: false,
+      },
+      {
+        type: 'tool.started',
+        toolName: 'generator',
+        displayLabel: 'Generating 3 svg candidates',
+      },
+      {
+        type: 'generation.reasoning_trace',
+        source: 'generator',
+        phase: 'generator-thinking',
+        thought: 'The selected generator focused on the flower form.',
+      },
+    ]);
+
+    expect(summary.recentActivity.map((item) => item.label)).toEqual(['Intent brief', 'generator', 'generator Reasoning: generator-thinking']);
+    expect(summary.recentActivity[0].detail).toContain('purple alien');
+    expect(summary.timelineSecondary).toContain('The selected generator focused');
+  });
+
+  it('marks clarification requests as active work instead of silently generating', () => {
+    const summary = summarizeWorkbenchBridge([
+      {
+        type: 'generation.intent_brief',
+        userRequest: 'make it cooler',
+        requirements: ['Primary request: make it cooler'],
+        missingDetails: ['subject'],
+        questions: ['What should be cooler?'],
+        willClarify: true,
+      },
+      {
+        type: 'generation.clarification_needed',
+        questions: ['What should be cooler?'],
+        reason: 'Prompt is vague.',
+      },
+    ]);
+
+    expect(summary.recentActivity.at(-1)?.status).toBe('needs-input');
+    expect(summary.recentActivity.at(-1)?.detail).toContain('What should be cooler');
+    expect(summary.phase).toBe('clarifying intent');
+  });
+
   it('extracts the latest image preview as a browser-renderable data URL', () => {
     const preview = latestBridgePreview([
       { type: 'preview.completed', previewType: 'code', content: 'function setup() {}' },

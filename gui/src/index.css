@@ -169,6 +169,50 @@ body::before {
   border-color: var(--liminal-cyan);
 }
 
+.liminal-command-actions {
+  display: grid;
+  grid-template-columns: minmax(96px, auto) minmax(112px, auto);
+  gap: 8px;
+  align-items: stretch;
+}
+
+.liminal-audio-input {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.liminal-audio-input small {
+  color: var(--liminal-muted);
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.liminal-audio-button {
+  min-width: 96px;
+  border: 1px solid var(--liminal-cyan-dim);
+  border-radius: 8px;
+  background: var(--liminal-surface-2);
+  color: var(--liminal-cyan);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.liminal-audio-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.liminal-audio-button--recording {
+  border-color: #fca5a5;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.45);
+}
+
 .liminal-run-button {
   min-width: 112px;
   border: 0;
@@ -276,6 +320,19 @@ body::before {
   width: 100%;
   height: 100%;
   border: 0;
+}
+
+.liminal-stage-frame {
+  position: relative;
+}
+
+.liminal-sync-overlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  mix-blend-mode: screen;
 }
 
 .liminal-stage-preview {
@@ -439,6 +496,51 @@ body::before {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.liminal-timeline-events {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.liminal-timeline-event {
+  min-width: 0;
+  border: 1px solid var(--liminal-line);
+  border-radius: 6px;
+  background: rgba(18, 26, 38, 0.78);
+  padding: 7px 8px;
+  font-family: var(--font-mono);
+}
+
+.liminal-timeline-event span {
+  display: block;
+  color: var(--liminal-cyan);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.liminal-timeline-event small {
+  display: block;
+  margin-top: 3px;
+  color: var(--liminal-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-timeline-event--ok span {
+  color: #86efac;
+}
+
+.liminal-timeline-event--failed span,
+.liminal-timeline-event--needs-input span {
+  color: #fca5a5;
+}
+
+.liminal-timeline-event--running span {
+  color: #facc15;
 }
 
 .liminal-legacy-panel {
@@ -830,6 +932,10 @@ body::before {
   .liminal-timeline-row {
     grid-template-columns: 1fr;
     gap: 4px;
+  }
+
+  .liminal-timeline-events {
+    grid-template-columns: 1fr;
   }
 
   .atelier-tabs {

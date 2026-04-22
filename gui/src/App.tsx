@@ -12,6 +12,15 @@ import { CompostVisualizer } from './components/CompostVisualizer';
 import { OperatorCockpit } from './components/OperatorCockpit';
 import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
+import {
+  buildWorkbenchPrompt,
+  CREATE_MODE_OPTIONS,
+  getCreateModeOption,
+  requiresBridgeSession,
+  usesOrganismApi,
+  type CreateModeId,
+} from './gui/createModes';
+import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 
@@ -54,6 +63,8 @@ interface GuiIteration {
   id?: number;
   timestamp?: number;
 }
+
+type MicStatus = 'idle' | 'recording' | 'ready' | 'error';
 
 interface ConfigResponse {
   effective?: {
@@ -136,7 +147,7 @@ export default function App() {
   // Create (run loop): prompt, run status, result
   const [createPrompt, setCreatePrompt] = useState<string>('');
   const [createMaxIterations, setCreateMaxIterations] = useState<number>(5);
-  const [createMode, setCreateMode] = useState<string>('p5');
+  const [createMode, setCreateMode] = useState<CreateModeId>('auto');
   const [createTraits, setCreateTraits] = useState<CreateTraits>({ bpm: 120, palette: '' });
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
@@ -148,6 +159,17 @@ export default function App() {
   const [visualsCode, setVisualsCode] = useState<string>('');
   const [liveMusicLoading, setLiveMusicLoading] = useState<LiveMusicLoading>({ music: false, visuals: false });
   const hydraContainerRef = useRef<HTMLDivElement>(null);
+  const [micStatus, setMicStatus] = useState<MicStatus>('idle');
+  const [micError, setMicError] = useState<string | null>(null);
+  const micFramesRef = useRef<AudioSyncFrame[]>([]);
+  const micStartPendingRef = useRef<boolean>(false);
+  const micActiveRef = useRef<boolean>(false);
+  const micStreamRef = useRef<MediaStream | null>(null);
+  const micContextRef = useRef<AudioContext | null>(null);
+  const micAnalyserRef = useRef<AnalyserNode | null>(null);
+  const micRafRef = useRef<number | null>(null);
+  const micLastFrameAtRef = useRef<number>(0);
+  const syncCanvasRef = useRef<HTMLCanvasElement>(null);
 
   // Form state: effective + loop + creative + galleryPath; on save we build userConfig
   const [provider, setProvider] = useState<string>('lmstudio');
@@ -274,6 +296,160 @@ export default function App() {
     return () => { while (el.firstChild) el.removeChild(el.firstChild); };
   }, [visualsCode, activeTab]);
 
+  useEffect(() => () => {
+    stopMicCapture(false);
+  }, []);
+
+  function frameRms(values: Uint8Array): number {
+    let sum = 0;
+    for (const value of values) {
+      const normalized = (value - 128) / 128;
+      sum += normalized * normalized;
+    }
+    return Math.sqrt(sum / values.length);
+  }
+
+  function frameCentroid(values: Uint8Array): number {
+    let total = 0;
+    let weighted = 0;
+    for (let index = 0; index < values.length; index++) {
+      total += values[index];
+      weighted += values[index] * index;
+    }
+    return total ? weighted / total / values.length : 0;
+  }
+
+  function drawSyncOverlay(rms: number, centroid: number, timestamp: number) {
+    const canvas = syncCanvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const scale = window.devicePixelRatio || 1;
+    const width = Math.max(1, Math.floor(rect.width * scale));
+    const height = Math.max(1, Math.floor(rect.height * scale));
+    if (canvas.width !== width || canvas.height !== height) {
+      canvas.width = width;
+      canvas.height = height;
+    }
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.clearRect(0, 0, width, height);
+    ctx.save();
+    ctx.scale(scale, scale);
+    ctx.globalCompositeOperation = 'screen';
+    const viewWidth = rect.width;
+    const viewHeight = rect.height;
+    const hue = Math.round(190 + centroid * 170) % 360;
+    const pulse = Math.max(0.03, Math.min(1, rms * 4));
+    const t = timestamp / 1000;
+
+    for (let index = 0; index < 5; index++) {
+      const radius = 40 + index * 58 + pulse * 150 + Math.sin(t * 2 + index) * 16;
+      ctx.beginPath();
+      ctx.strokeStyle = `hsla(${(hue + index * 24) % 360}, 95%, 68%, ${0.15 + pulse * 0.28})`;
+      ctx.lineWidth = 1 + pulse * 8;
+      ctx.ellipse(viewWidth / 2, viewHeight / 2, radius * 1.55, radius * 0.55, Math.sin(t + index) * 0.2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+
+    for (let index = 0; index < 42; index++) {
+      const angle = index * 0.73 + t * (0.6 + pulse * 2.2);
+      const radius = 36 + (index % 14) * 22 + pulse * 120;
+      const x = viewWidth / 2 + Math.cos(angle) * radius;
+      const y = viewHeight / 2 + Math.sin(angle * 1.7) * radius * 0.45;
+      ctx.beginPath();
+      ctx.fillStyle = `hsla(${(hue + index * 11) % 360}, 100%, 72%, ${0.18 + pulse * 0.55})`;
+      ctx.arc(x, y, 2 + pulse * 12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.restore();
+  }
+
+  async function startMicCapture() {
+    if (micStartPendingRef.current) return;
+    if (micStatus === 'recording' || micActiveRef.current) {
+      stopMicCapture(true);
+      return;
+    }
+    setMicError(null);
+    if (!hasSyncTarget) {
+      setMicStatus('error');
+      setMicError('Design an artifact first, then sync voice to it.');
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setMicStatus('error');
+      setMicError('Browser microphone input is unavailable.');
+      return;
+    }
+    micStartPendingRef.current = true;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext;
+      const audioContext = new AudioContextCtor();
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 2048;
+      audioContext.createMediaStreamSource(stream).connect(analyser);
+      micStreamRef.current = stream;
+      micContextRef.current = audioContext;
+      micAnalyserRef.current = analyser;
+      micFramesRef.current = [];
+      micLastFrameAtRef.current = 0;
+      micActiveRef.current = true;
+      setMicStatus('recording');
+      setMessage('Syncing voice to the current stage object. Click Stop Sync to freeze it.');
+
+      const timeData = new Uint8Array(analyser.fftSize);
+      const frequencyData = new Uint8Array(analyser.frequencyBinCount);
+      const tick = (timestamp: number) => {
+        const currentAnalyser = micAnalyserRef.current;
+        if (!currentAnalyser) return;
+        if (timestamp - micLastFrameAtRef.current >= 33) {
+          currentAnalyser.getByteTimeDomainData(timeData);
+          currentAnalyser.getByteFrequencyData(frequencyData);
+          const frame = {
+            rms: frameRms(timeData),
+            centroid: frameCentroid(frequencyData),
+          };
+          micFramesRef.current.push(frame);
+          drawSyncOverlay(frame.rms, frame.centroid, timestamp);
+          micLastFrameAtRef.current = timestamp;
+        }
+        micRafRef.current = window.requestAnimationFrame(tick);
+      };
+      micRafRef.current = window.requestAnimationFrame(tick);
+    } catch (err) {
+      setMicStatus('error');
+      setMicError(err instanceof Error ? err.message : 'Microphone permission failed.');
+    } finally {
+      micStartPendingRef.current = false;
+    }
+  }
+
+  function stopMicCapture(commitPrompt = true) {
+    micStartPendingRef.current = false;
+    micActiveRef.current = false;
+    if (micRafRef.current != null) window.cancelAnimationFrame(micRafRef.current);
+    micRafRef.current = null;
+    micStreamRef.current?.getTracks().forEach((track) => track.stop());
+    micStreamRef.current = null;
+    void micContextRef.current?.close?.();
+    micContextRef.current = null;
+    micAnalyserRef.current = null;
+
+    if (!commitPrompt) return;
+    const frames = micFramesRef.current;
+    if (frames.length === 0) {
+      setMicStatus('error');
+      setMicError('No microphone frames were captured.');
+      return;
+    }
+    const summary = summarizeAudioSync(frames);
+    setMicStatus('ready');
+    setMicError(null);
+    setMessage(`Voice sync applied to current stage: ${summary.label}.`);
+  }
+
   const handleRunInPreview = async () => {
     const iteration = iterations[selectedIterationIndex];
     const code = iteration?.code ?? '';
@@ -375,6 +551,14 @@ export default function App() {
   const handleCreateRun = async () => {
     const prompt = createPrompt.trim();
     if (!prompt) return;
+    if (!usesOrganismApi(createMode)) {
+      await bridge.submitPrompt(buildWorkbenchPrompt(createMode, prompt), {
+        maxIterations: createMaxIterations,
+        candidateCount: 1,
+        timeoutMinutes: 3,
+      });
+      return;
+    }
     setRunStatus('running');
     setCreateRunError(null);
     setRunResult(null);
@@ -385,8 +569,8 @@ export default function App() {
         body: JSON.stringify({
           prompt,
           maxIterations: createMaxIterations,
-          mode: createMode,
-          traits: createMode === 'organism' ? createTraits : undefined,
+          mode: 'organism',
+          traits: createTraits,
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -513,15 +697,26 @@ export default function App() {
   const evaluatorLabel = liveEvaluator
     ? `${liveEvaluator.provider || 'unknown'} / ${liveEvaluator.model || 'unknown'}`
     : `${evaluatorProvider || 'unknown'} / ${evaluatorModel || 'unknown'}`;
-  const runLabel = activeMode.id === 'generate' && !bridge.session
+  const runNeedsBridgeSession = activeMode.id === 'generate' && requiresBridgeSession(createMode);
+  const runLabel = runNeedsBridgeSession && !bridge.session
     ? 'Connecting'
     : runStatus === 'running' ? 'Running' : 'Run';
   const bridgeSummary = bridge.summary;
   const bridgePreview = bridge.preview;
+  const hasSyncTarget = Boolean(previewUrl || bridgePreview);
+  const createModeOption = getCreateModeOption(createMode);
 
   const handleWorkbenchRun = () => {
     if (activeMode.id === 'generate') {
-      void bridge.submitPrompt(createPrompt);
+      if (usesOrganismApi(createMode)) {
+        void handleCreateRun();
+        return;
+      }
+      void bridge.submitPrompt(buildWorkbenchPrompt(createMode, createPrompt), {
+        maxIterations: createMaxIterations,
+        candidateCount: 1,
+        timeoutMinutes: 3,
+      });
       return;
     }
     void handleCreateRun();
@@ -552,9 +747,10 @@ export default function App() {
         <div className="liminal-stage-empty">
           <span>Stage</span>
           <strong>{bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
-          <small>{bridgeSummary.active ? bridgeSummary.stageSubtitle : createMode === 'organism' ? 'Strudel + Hydra' : createMode}</small>
+          <small>{bridgeSummary.active ? bridgeSummary.stageSubtitle : createModeOption.stageLabel}</small>
         </div>
       )}
+      {hasSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
     </div>
   );
 
@@ -599,13 +795,14 @@ export default function App() {
             <span>Run mode</span>
             <select
               value={createMode}
-              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setCreateMode(event.target.value)}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setCreateMode(event.target.value as CreateModeId)}
             >
-              <option value="p5">p5</option>
-              <option value="organism">organism</option>
+              {CREATE_MODE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
             </select>
           </label>
-          {createMode === 'organism' && (
+          {usesOrganismApi(createMode) && (
             <div className="liminal-control-row">
               <label>
                 <span>BPM</span>
@@ -636,10 +833,22 @@ export default function App() {
   );
 
   const timelineSlot = (
-    <div className="liminal-timeline-row">
-      <span>{bridgeSummary.active ? bridgeSummary.timelineStatus : runStatus || 'idle'}</span>
-      <strong>{bridgeSummary.active ? bridgeSummary.timelinePrimary : runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
-      <small>{bridgeSummary.active ? bridgeSummary.timelineSecondary : createRunError || bridge.error || runError || selectedProject || 'No artifact selected'}</small>
+    <div>
+      <div className="liminal-timeline-row">
+        <span>{bridgeSummary.active ? bridgeSummary.timelineStatus : runStatus || 'idle'}</span>
+        <strong>{bridgeSummary.active ? bridgeSummary.timelinePrimary : runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
+        <small>{bridgeSummary.active ? bridgeSummary.timelineSecondary : createRunError || bridge.error || runError || selectedProject || 'No artifact selected'}</small>
+      </div>
+      {bridgeSummary.recentActivity.length > 0 && (
+        <div className="liminal-timeline-events">
+          {bridgeSummary.recentActivity.map((item, index) => (
+            <div className={`liminal-timeline-event liminal-timeline-event--${item.status || 'info'}`} key={`${item.label}-${index}`}>
+              <span>{item.label}</span>
+              <small>{item.detail}</small>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 
@@ -649,6 +858,20 @@ export default function App() {
       <strong>{projects.length}</strong>
       <span>Artifacts</span>
       <strong>{iterations.length}</strong>
+    </div>
+  );
+
+  const audioSlot = (
+    <div className="liminal-audio-input">
+      <button
+        type="button"
+        className={micStatus === 'recording' ? 'liminal-audio-button liminal-audio-button--recording' : 'liminal-audio-button'}
+        disabled={!hasSyncTarget && micStatus !== 'recording'}
+        onClick={() => void startMicCapture()}
+      >
+        {micStatus === 'recording' ? 'Stop Sync' : 'Sync'}
+      </button>
+      <small>{micError || (micStatus === 'recording' ? 'voice driving stage' : micStatus === 'ready' ? 'voice sync applied' : hasSyncTarget ? 'stage voice sync' : 'design first')}</small>
     </div>
   );
 
@@ -670,8 +893,9 @@ export default function App() {
       prompt={createPrompt}
       onPromptChange={setCreatePrompt}
       onRun={handleWorkbenchRun}
-      runDisabled={bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (activeMode.id === 'generate' && !bridge.session)}
+      runDisabled={bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
+      audioSlot={audioSlot}
       providerLabel={providerLabel}
       evaluatorLabel={evaluatorLabel}
       stageSlot={stageSlot}
@@ -884,15 +1108,16 @@ export default function App() {
             <span className="atelier-label" style={{ marginRight: 8 }}>Run mode</span>
             <select
               value={createMode}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCreateMode(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCreateMode(e.target.value as CreateModeId)}
               className="atelier-select"
               style={{ width: 'auto', minWidth: 200 }}
             >
-              <option value="p5">p5</option>
-              <option value="organism">organism (Strudel + Hydra)</option>
+              {CREATE_MODE_OPTIONS.map((option) => (
+                <option key={option.id} value={option.id}>{option.label}</option>
+              ))}
             </select>
           </label>
-          {createMode === 'organism' && (
+          {usesOrganismApi(createMode) && (
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
               <label>
                 <span className="atelier-label" style={{ marginRight: 4 }}>BPM</span>

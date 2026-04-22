@@ -169,6 +169,12 @@ export interface IterationContext {
   selectedCandidateIndex?: number;
   /** Best-of-N: total number of candidates generated this iteration */
   numCandidatesGenerated?: number;
+  /** Summary/source trace from the selected generator candidate */
+  generatorThinking?: string;
+  generatorModel?: string;
+  /** Summary/source trace from evaluator scoring */
+  evaluatorReasoning?: string;
+  evaluatorRepairAdvice?: import('./types/GenerationEvaluation.js').ConcreteRepairAdvice;
   /** Git integration configuration */
   git?: import('../git/types.js').GitConfig;
 }

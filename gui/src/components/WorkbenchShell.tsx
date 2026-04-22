@@ -12,6 +12,7 @@ interface WorkbenchShellProps {
   onRun: () => void;
   runDisabled: boolean;
   runLabel: string;
+  audioSlot?: React.ReactNode;
   providerLabel: string;
   evaluatorLabel: string;
   stageSlot: React.ReactNode;
@@ -32,6 +33,7 @@ export function WorkbenchShell({
   onRun,
   runDisabled,
   runLabel,
+  audioSlot,
   providerLabel,
   evaluatorLabel,
   stageSlot,
@@ -59,9 +61,12 @@ export function WorkbenchShell({
             placeholder="Describe the visual, instrument, behavior, or system to generate"
           />
         </label>
-        <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled}>
-          {runLabel}
-        </button>
+        <div className="liminal-command-actions">
+          {audioSlot}
+          <button className="liminal-run-button" type="button" onClick={onRun} disabled={runDisabled}>
+            {runLabel}
+          </button>
+        </div>
       </header>
 
       <aside className="liminal-left-rail">

@@ -85,7 +85,10 @@ export function useTuiBridgeSession() {
     if (res.ok) setSession(data);
   }, [session?.sessionId]);
 
-  async function submitPrompt(text: string) {
+  async function submitPrompt(
+    text: string,
+    options: { maxIterations?: number; candidateCount?: number; timeoutMinutes?: number } = {},
+  ) {
     if (!session || !text.trim()) return;
     setSubmitting(true);
     setError(null);
@@ -93,7 +96,7 @@ export function useTuiBridgeSession() {
       const res = await fetch(`${API}/tui/session/${session.sessionId}/input`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text, mode: 'chat' }),
+        body: JSON.stringify({ text, mode: 'chat', ...options }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) setError(data.error || res.statusText);

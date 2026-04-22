@@ -21,6 +21,17 @@ type BridgeEvent = {
   error?: string;
   startedAt?: string;
   timeoutMinutes?: number;
+  requirements?: string[];
+  questions?: string[];
+  willClarify?: boolean;
+  phase?: string;
+  thought?: string;
+  source?: string;
+  toolName?: string;
+  displayLabel?: string;
+  argsSummary?: string;
+  resultSummary?: string;
+  success?: boolean;
   receivedAt?: number;
   action?: { id: string; title: string };
 };
@@ -256,6 +267,29 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
 
   for (const event of events) {
     if (event.type === 'activity.updated' && event.message) latestMessage = event.message;
+    if (event.type === 'generation.intent_brief') {
+      phase = event.willClarify ? 'clarifying intent' : 'briefing';
+      latestMessage = Array.isArray(event.requirements) && event.requirements[0]
+        ? String(event.requirements[0])
+        : latestMessage;
+    }
+    if (event.type === 'generation.clarification_needed') {
+      phase = 'clarifying intent';
+      latestMessage = Array.isArray(event.questions) && event.questions[0]
+        ? String(event.questions[0])
+        : event.reason || latestMessage;
+    }
+    if (event.type === 'generation.reasoning_trace') {
+      phase = String(event.phase || 'reasoning');
+      latestMessage = String(event.thought || latestMessage);
+    }
+    if (event.type === 'tool.started') {
+      phase = String(event.toolName || 'tool');
+      latestMessage = String(event.displayLabel || event.argsSummary || latestMessage);
+    }
+    if (event.type === 'tool.completed') {
+      latestMessage = String(event.resultSummary || latestMessage);
+    }
     if (event.type === 'generation.domain_plan') {
       generationStartedAt = readEventTime(event) || generationStartedAt;
       timeoutMinutes = event.timeoutMinutes || timeoutMinutes;

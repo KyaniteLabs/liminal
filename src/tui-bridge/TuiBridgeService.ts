@@ -1513,13 +1513,22 @@ export class TuiBridgeService {
     this.activeStreams.set(sessionId, controller);
 
     const config = llm.getConfig();
-    const modelName = config.model || 'unknown';
+    const sessionStatus = this.sessions.get(sessionId);
+    const harnessModelName = sessionStatus?.roles?.harness?.model || config.model || 'unknown';
+    const generatorModelName = sessionStatus?.roles?.generator?.model || harnessModelName;
+    const evaluatorModelName = sessionStatus?.roles?.evaluator?.model || harnessModelName;
     const timeoutMinutes = Math.min(10, Math.max(1, Number(options.timeoutMinutes) || 3));
     const candidateCount = Math.min(3, Math.max(1, Number(options.candidateCount) || 1));
     const maxIterations = Math.min(10, Math.max(1, Number(options.maxIterations) || 5));
     const generationStartedAt = Date.now();
     const intentBrief = this.buildCreativeIntentBrief(userText);
-    logBridge('generation.started', { sessionId, model: modelName, chars: userText.length });
+    logBridge('generation.started', {
+      sessionId,
+      harnessModel: harnessModelName,
+      generatorModel: generatorModelName,
+      evaluatorModel: evaluatorModelName,
+      chars: userText.length,
+    });
 
     try {
       // Emit initial activity
@@ -1533,7 +1542,7 @@ export class TuiBridgeService {
         phase: 'analysis',
         thought: 'Extracted concrete requirements and missing details before spending model time.',
         detail: intentBrief.requirements.join(' | '),
-        model: modelName,
+        model: harnessModelName,
         source: 'harness',
       });
       this.emit(sessionId, {
@@ -1553,7 +1562,7 @@ export class TuiBridgeService {
         phase: 'domain-routing',
         thought: `Routing through ${domainPlan.length} possible domain path(s): ${domainPlan.join(' -> ')}.`,
         detail: `Fast preview defaults: ${candidateCount} candidate(s), ${maxIterations} max iteration(s), ${timeoutMinutes}m per attempt.`,
-        model: modelName,
+        model: harnessModelName,
         source: 'harness',
       });
       this.emit(sessionId, {
@@ -1607,9 +1616,9 @@ export class TuiBridgeService {
         });
         this.emitReasoningTrace(sessionId, {
           phase: 'generation',
-          thought: `Calling ${modelName} to produce ${candidateCount} ${domain} candidate(s).`,
+          thought: `Calling ${generatorModelName} to produce ${candidateCount} ${domain} candidate(s).`,
           detail: `Attempt ${attempt + 1}/${domainPlan.length}; explicit requirements remain in the prompt.`,
-          model: modelName,
+          model: generatorModelName,
           source: 'harness',
         });
         this.emit(sessionId, {
@@ -1617,7 +1626,7 @@ export class TuiBridgeService {
           sessionId,
           toolName: 'generator',
           displayLabel: `Generating ${candidateCount} ${domain} candidates`,
-          argsSummary: `attempt ${attempt + 1}/${domainPlan.length}; model=${modelName}`,
+          argsSummary: `attempt ${attempt + 1}/${domainPlan.length}; model=${generatorModelName}`,
           stepNum: attempt + 2,
         });
 
@@ -1659,7 +1668,7 @@ export class TuiBridgeService {
                 detail: iterationContext.evaluatorReasoning
                   ? summarizeReasoningTrace(iterationContext.evaluatorReasoning, 'evaluator').summary
                   : String(iterationContext.evaluatorRepairAdvice?.issue || `Generated ${iterationContext.code.length} bytes for ${domain}.`),
-                model: modelName,
+                model: evaluatorModelName,
               });
               if (iterationContext.generatorThinking) {
                 const summary = summarizeReasoningTrace(iterationContext.generatorThinking, 'generator');
@@ -1668,7 +1677,7 @@ export class TuiBridgeService {
                   phase: 'generator-thinking',
                   thought: summary.summary,
                   detail: summary.details.join(' | ') || iterationContext.generatorThinking.slice(0, 600),
-                  model: iterationContext.generatorModel || modelName,
+                  model: iterationContext.generatorModel || generatorModelName,
                 });
               }
             },
@@ -1747,7 +1756,7 @@ export class TuiBridgeService {
           iterations: result.iterations,
           finalScore: result.finalScore,
           duration: result.duration,
-          model: result.model || modelName,
+          model: result.model || generatorModelName,
           reason: result.reason,
         });
 
@@ -1755,7 +1764,7 @@ export class TuiBridgeService {
         this.emit(sessionId, {
           type: 'response.metadata',
           sessionId,
-          model: result.model || modelName,
+          model: result.model || generatorModelName,
           duration: result.duration,
         });
 
@@ -1789,7 +1798,7 @@ export class TuiBridgeService {
       }
       logBridge('generation.completed', {
         sessionId,
-        model: result.model || modelName,
+        model: result.model || generatorModelName,
         iterations: result.iterations,
         score: result.finalScore,
         duration: result.duration,
@@ -1801,12 +1810,12 @@ export class TuiBridgeService {
         status: this.sessions.update(sessionId, {
           mode: 'chat',
           activeTask: result.reason.slice(0, 60),
-          model: result.model || modelName,
+          model: result.model || generatorModelName,
         }),
       });
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      logBridge('generation.failed', { sessionId, model: modelName, message });
+      logBridge('generation.failed', { sessionId, generatorModel: generatorModelName, message });
       this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Generation failed: ${message}` });
       this.emit(sessionId, { type: 'error', sessionId, message });
       throw err;

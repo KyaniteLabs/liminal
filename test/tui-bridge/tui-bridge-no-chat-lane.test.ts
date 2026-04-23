@@ -172,6 +172,38 @@ describe('Bubble Tea operator routing', () => {
     });
   });
 
+  it('routes workbench creative prompts to generation without magic verbs or repo tools', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const prompt = 'icebergs dancing in the sky';
+
+    const result = await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: prompt,
+        clientIntent: 'creative',
+        maxIterations: 1,
+        candidateCount: 1,
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    expect(result.reviewRequired).toBe(false);
+    expect(executeTask).not.toHaveBeenCalled();
+
+    const intent = await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.intent_brief'));
+
+    expect(intent).toMatchObject({
+      type: 'generation.intent_brief',
+      userRequest: prompt,
+    });
+    expect(service.getEvents(session.sessionId)
+      .some(event => event.type === 'tool.started' && ['gitStatus', 'listDir', 'readFile', 'searchCode', 'searchDocs'].includes(String((event as any).toolName)))).toBe(false);
+  });
+
   it('routes read-only dogfood checkpoint prompts to engineering even when they mention create files', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();

@@ -47,7 +47,7 @@ export interface TuiSessionStatus {
 export interface TuiInputRequest {
   mode: TuiMode;
   text: string;
-  clientIntent?: 'chat' | 'inspect' | 'action';
+  clientIntent?: 'chat' | 'inspect' | 'action' | 'creative';
   maxIterations?: number;
   candidateCount?: number;
   timeoutMinutes?: number;

@@ -559,6 +559,7 @@ export default function App() {
     if (!prompt) return;
     if (!usesOrganismApi(createMode)) {
       await bridge.submitPrompt(buildWorkbenchPrompt(createMode, prompt), {
+        clientIntent: 'creative',
         maxIterations: createMaxIterations,
         candidateCount: 1,
         timeoutMinutes: 3,
@@ -722,6 +723,7 @@ export default function App() {
         return;
       }
       void bridge.submitPrompt(buildWorkbenchPrompt(createMode, createPrompt), {
+        clientIntent: 'creative',
         maxIterations: createMaxIterations,
         candidateCount: 1,
         timeoutMinutes: 3,

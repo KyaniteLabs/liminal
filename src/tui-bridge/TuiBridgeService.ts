@@ -448,7 +448,14 @@ export class TuiBridgeService {
     const modeConfig = this.modeRegistry.getMode(sessionId);
     const classifier = new ModeAwareRouter(this.router, () => modeConfig);
     const baseClassification = classifier.classify(input.text);
-    const classification = isOperatorInspectionRequest(input.text)
+    const classification = input.clientIntent === 'creative'
+      ? {
+          ...baseClassification,
+          intent: 'creative' as const,
+          confidence: 'high' as const,
+          topic: baseClassification.topic ?? 'generate',
+        }
+      : isOperatorInspectionRequest(input.text)
       ? {
           ...baseClassification,
           intent: 'engineering' as const,
@@ -578,6 +585,14 @@ export class TuiBridgeService {
         if (intentBrief.shouldClarify) {
           this.emitCreativeClarification(sessionId, intentBrief, conversation);
           emitSessionTurn('clarification', intentBrief.questions.join('\n'));
+          break;
+        }
+
+        if (input.clientIntent === 'creative') {
+          logBridge('input.routed', { sessionId, route: 'workbench.creative', confidence: classification.confidence });
+          this.streamRalphGeneration(sessionId, input.text, conversation, llm, input)
+            .then(() => emitSessionTurn('ralph-loop'))
+            .catch(handleError);
           break;
         }
 

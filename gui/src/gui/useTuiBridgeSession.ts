@@ -87,7 +87,7 @@ export function useTuiBridgeSession() {
 
   async function submitPrompt(
     text: string,
-    options: { maxIterations?: number; candidateCount?: number; timeoutMinutes?: number } = {},
+    options: { maxIterations?: number; candidateCount?: number; timeoutMinutes?: number; clientIntent?: 'creative' | 'chat' | 'inspect' | 'action' } = {},
   ) {
     if (!session || !text.trim()) return;
     setSubmitting(true);

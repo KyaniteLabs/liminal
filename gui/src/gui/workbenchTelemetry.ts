@@ -130,3 +130,18 @@ export function latestBridgePreview(events: WorkbenchBridgeEvent[]): WorkbenchPr
 
   return null;
 }
+
+export function latestBridgeCodePreview(events: WorkbenchBridgeEvent[]): WorkbenchPreview | null {
+  for (let index = events.length - 1; index >= 0; index--) {
+    const event = events[index];
+    if (event.type === 'preview.completed' && event.previewType === 'code' && typeof event.content === 'string') {
+      return {
+        type: 'code',
+        code: String(event.content),
+        label: 'Generated live code',
+      };
+    }
+  }
+
+  return null;
+}

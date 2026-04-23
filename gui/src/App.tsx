@@ -21,6 +21,7 @@ import {
   type CreateModeId,
 } from './gui/createModes';
 import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
+import { buildSyncPreviewHtml } from './gui/syncPreview';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 
@@ -170,6 +171,7 @@ export default function App() {
   const micRafRef = useRef<number | null>(null);
   const micLastFrameAtRef = useRef<number>(0);
   const syncCanvasRef = useRef<HTMLCanvasElement>(null);
+  const syncFrameRef = useRef<HTMLIFrameElement>(null);
 
   // Form state: effective + loop + creative + galleryPath; on save we build userConfig
   const [provider, setProvider] = useState<string>('lmstudio');
@@ -412,6 +414,10 @@ export default function App() {
             centroid: frameCentroid(frequencyData),
           };
           micFramesRef.current.push(frame);
+          syncFrameRef.current?.contentWindow?.postMessage({
+            type: 'liminal-audio-frame',
+            frame,
+          }, '*');
           drawSyncOverlay(frame.rms, frame.centroid, timestamp);
           micLastFrameAtRef.current = timestamp;
         }
@@ -703,7 +709,10 @@ export default function App() {
     : runStatus === 'running' ? 'Running' : 'Run';
   const bridgeSummary = bridge.summary;
   const bridgePreview = bridge.preview;
-  const hasSyncTarget = Boolean(previewUrl || bridgePreview);
+  const bridgeCodePreview = bridge.codePreview;
+  const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
+  const hasDirectSyncTarget = Boolean(syncPreviewHtml);
+  const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
   const createModeOption = getCreateModeOption(createMode);
 
   const handleWorkbenchRun = () => {
@@ -730,6 +739,13 @@ export default function App() {
     <div className="liminal-stage-frame">
       {previewUrl ? (
         <iframe title="Live preview" src={previewUrl} sandbox="allow-scripts" />
+      ) : syncPreviewHtml ? (
+        <iframe
+          ref={syncFrameRef}
+          title="Syncable generated stage"
+          srcDoc={syncPreviewHtml}
+          sandbox="allow-scripts"
+        />
       ) : bridgePreview?.type === 'image' && bridgePreview.src ? (
         <figure className="liminal-stage-preview">
           <img
@@ -750,7 +766,7 @@ export default function App() {
           <small>{bridgeSummary.active ? bridgeSummary.stageSubtitle : createModeOption.stageLabel}</small>
         </div>
       )}
-      {hasSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
+      {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
     </div>
   );
 
@@ -871,7 +887,7 @@ export default function App() {
       >
         {micStatus === 'recording' ? 'Stop Sync' : 'Sync'}
       </button>
-      <small>{micError || (micStatus === 'recording' ? 'voice driving stage' : micStatus === 'ready' ? 'voice sync applied' : hasSyncTarget ? 'stage voice sync' : 'design first')}</small>
+      <small>{micError || (micStatus === 'recording' ? (hasDirectSyncTarget ? 'voice driving object' : 'voice driving overlay') : micStatus === 'ready' ? 'voice sync applied' : hasSyncTarget ? (hasDirectSyncTarget ? 'direct object sync' : 'overlay sync') : 'design first')}</small>
     </div>
   );
 

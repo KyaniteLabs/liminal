@@ -68,6 +68,47 @@ describe('workbenchTelemetry', () => {
     expect(summary.phase).toBe('clarifying intent');
   });
 
+  it('surfaces stage timing receipts after a draft run completes', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.domain_plan', domains: ['three'], startedAt: '2026-04-22T12:00:00.000Z', timeoutMinutes: 1, candidateCount: 1, executionMode: 'draft' },
+      { type: 'generation.attempt.started', domain: 'three', attempt: 1, attemptTotal: 1, startedAt: '2026-04-22T12:00:05.000Z', timeoutMinutes: 1, candidateCount: 1, executionMode: 'draft' },
+      { type: 'preview.completed', previewType: 'code', content: 'function setup() {}', receivedAt: Date.parse('2026-04-22T12:00:09.000Z') },
+      { type: 'generation.complete', finalScore: 0, duration: 9000, model: 'qwen', reason: 'draft artifact ready (unscored)', qualityState: 'unscored', executionMode: 'draft', receivedAt: Date.parse('2026-04-22T12:00:09.000Z') },
+    ]);
+
+    expect(summary.recentActivity.at(-1)?.label).toBe('Draft ready');
+    expect(summary.stageTimings).toEqual([
+      { label: 'Plan', durationLabel: '5s' },
+      { label: 'Generate', durationLabel: '4s' },
+    ]);
+  });
+
+  it('surfaces prove-mode generation, evaluation, and render timings separately', () => {
+    const summary = summarizeWorkbenchBridge([
+      { type: 'generation.domain_plan', domains: ['three'], startedAt: '2026-04-22T12:00:00.000Z', timeoutMinutes: 3, candidateCount: 1, executionMode: 'prove' },
+      { type: 'generation.attempt.started', domain: 'three', attempt: 1, attemptTotal: 1, startedAt: '2026-04-22T12:00:02.000Z', timeoutMinutes: 3, candidateCount: 1, executionMode: 'prove' },
+      {
+        type: 'generation.iteration',
+        iteration: 1,
+        score: 0.84,
+        code: 'function setup() {}',
+        stageTimings: [
+          { label: 'Generate', durationMs: 1800 },
+          { label: 'Evaluate', durationMs: 700 },
+        ],
+      },
+      { type: 'generation.complete', finalScore: 0.84, duration: 2500, model: 'qwen', reason: 'accepted', qualityState: 'scored', executionMode: 'prove', receivedAt: Date.parse('2026-04-22T12:00:05.000Z') },
+      { type: 'preview.completed', previewType: 'image', content: 'ZmFrZQ==', imageUrl: '/tmp/render.png', receivedAt: Date.parse('2026-04-22T12:00:06.200Z') },
+    ]);
+
+    expect(summary.stageTimings).toEqual([
+      { label: 'Plan', durationLabel: '2s' },
+      { label: 'Generate', durationLabel: '1.8s' },
+      { label: 'Evaluate', durationLabel: '700ms' },
+      { label: 'Render', durationLabel: '1.2s' },
+    ]);
+  });
+
   it('extracts the latest image preview as a browser-renderable data URL', () => {
     const preview = latestBridgePreview([
       { type: 'preview.completed', previewType: 'code', content: 'function setup() {}' },

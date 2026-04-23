@@ -615,6 +615,10 @@ describe('RalphLoop — comprehensive', () => {
 
       expect(iterations.length).toBe(1);
       expect(iterations[0].evaluation.score).toBe(0.92);
+      expect(iterations[0].stageTimings).toEqual([
+        expect.objectContaining({ label: 'Generate', durationMs: expect.any(Number) }),
+        expect.objectContaining({ label: 'Evaluate', durationMs: expect.any(Number) }),
+      ]);
     });
   });
 

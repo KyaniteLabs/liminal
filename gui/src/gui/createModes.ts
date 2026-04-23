@@ -13,6 +13,8 @@ export type CreateModeId =
   | 'revideo'
   | 'organism';
 
+export type WorkbenchExecutionMode = 'draft' | 'prove';
+
 export interface CreateModeOption {
   id: CreateModeId;
   label: string;
@@ -53,4 +55,22 @@ export function usesOrganismApi(mode: CreateModeId): boolean {
 
 export function requiresBridgeSession(mode: CreateModeId): boolean {
   return !usesOrganismApi(mode);
+}
+
+export function buildWorkbenchRunOptions(executionMode: WorkbenchExecutionMode, maxIterations: number) {
+  if (executionMode === 'draft') {
+    return {
+      executionMode: 'draft' as const,
+      maxIterations: 1,
+      candidateCount: 1,
+      timeoutMinutes: 1,
+    };
+  }
+
+  return {
+    executionMode: 'prove' as const,
+    maxIterations,
+    candidateCount: 1,
+    timeoutMinutes: 3,
+  };
 }

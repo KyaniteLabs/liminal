@@ -175,6 +175,8 @@ export interface IterationContext {
   /** Summary/source trace from evaluator scoring */
   evaluatorReasoning?: string;
   evaluatorRepairAdvice?: import('./types/GenerationEvaluation.js').ConcreteRepairAdvice;
+  /** Timing receipts for the major phases of this iteration */
+  stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }>;
   /** Git integration configuration */
   git?: import('../git/types.js').GitConfig;
 }

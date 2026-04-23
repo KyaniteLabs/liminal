@@ -20,6 +20,7 @@ export interface IterationContext {
   evaluation: { score: number; issues: string[]; [key: string]: unknown };
   timestamp: string;
   maxIterations?: number;
+  stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }>;
 }
 
 export type State = IterationContext;

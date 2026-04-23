@@ -18,9 +18,12 @@ type BridgeEvent = {
   duration?: number;
   finalScore?: number;
   reason?: string;
+  qualityState?: 'scored' | 'unscored';
   error?: string;
   startedAt?: string;
   timeoutMinutes?: number;
+  executionMode?: 'draft' | 'prove';
+  stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }>;
   requirements?: string[];
   questions?: string[];
   willClarify?: boolean;
@@ -260,9 +263,13 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
   let attemptTotal = plan.length;
   let timeoutMinutes = planEvent?.timeoutMinutes || 5;
   let candidateCount = planEvent?.candidateCount || 3;
+  let executionMode = planEvent?.executionMode || 'prove';
   let generationStartedAt = readEventTime(planEvent);
   let activeAttemptStartedAt = 0;
+  let previewCompletedAt = 0;
+  let generationCompletedAt = 0;
   let completedDuration = 0;
+  let latestIterationStageTimings: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> = [];
   const artifacts: Array<{ label: string; path: string }> = [];
 
   for (const event of events) {
@@ -294,6 +301,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       generationStartedAt = readEventTime(event) || generationStartedAt;
       timeoutMinutes = event.timeoutMinutes || timeoutMinutes;
       candidateCount = event.candidateCount || candidateCount;
+      executionMode = event.executionMode || executionMode;
       phase = 'planning';
     }
     if (event.type === 'generation.attempt.started') {
@@ -304,6 +312,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       activeAttemptStartedAt = readEventTime(event) || activeAttemptStartedAt;
       timeoutMinutes = event.timeoutMinutes || timeoutMinutes;
       candidateCount = event.candidateCount || candidateCount;
+      executionMode = event.executionMode || executionMode;
       attempts.set(`${event.attempt}-${event.domain}`, {
         attempt: event.attempt || 0,
         total: event.attemptTotal || 0,
@@ -319,6 +328,9 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       const key = `${event.attempt || 0}-${event.domain}`;
       const previous = attempts.get(key);
       if (previous) attempts.set(key, { ...previous, status: 'candidate', detail: `${event.codeSize || 0} bytes` });
+    }
+    if (event.type === 'generation.iteration' && Array.isArray(event.stageTimings)) {
+      latestIterationStageTimings = event.stageTimings.filter((timing) => typeof timing?.durationMs === 'number');
     }
     if (event.type === 'generation.attempt.failed') {
       phase = 'fallback';
@@ -336,10 +348,18 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       phase = 'artifact';
       artifacts.push({ label: event.artifactLabel || 'artifact', path: event.artifactPath });
     }
-    if (event.type === 'preview.completed') phase = 'previewed';
+    if (event.type === 'preview.completed') {
+      phase = 'previewed';
+      previewCompletedAt = readEventTime(event) || previewCompletedAt;
+    }
     if (event.type === 'generation.complete') {
       phase = 'complete';
       completedDuration = event.duration || 0;
+      executionMode = event.executionMode || executionMode;
+      generationCompletedAt = readEventTime(event) || generationCompletedAt;
+      if (event.qualityState === 'unscored') {
+        latestMessage = event.reason || latestMessage;
+      }
     }
   }
 
@@ -355,10 +375,27 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
       : 0;
   const remainingMs = phase === 'complete' ? 0 : Math.max(0, boundedTotalMs - spentMs);
   const activeWork = activeDomain
-    ? `Waiting for ${candidateCount} candidates in ${activeDomain}`
+    ? executionMode === 'draft'
+      ? `Drafting first preview in ${activeDomain}`
+      : `Waiting for ${candidateCount} candidates in ${activeDomain}`
     : plan.length
       ? `Planning ${plan.length} domain attempts`
       : 'Idle';
+  const stageTimings: Array<{ label: string; durationLabel: string }> = [];
+  const renderEndAt = previewCompletedAt || generationCompletedAt;
+  if (generationStartedAt && activeAttemptStartedAt > generationStartedAt) {
+    stageTimings.push({ label: 'Plan', durationLabel: formatDuration(activeAttemptStartedAt - generationStartedAt) });
+  }
+  if (latestIterationStageTimings.length > 0) {
+    for (const timing of latestIterationStageTimings) {
+      stageTimings.push({ label: timing.label, durationLabel: formatDuration(timing.durationMs) });
+    }
+  } else if (activeAttemptStartedAt && renderEndAt > activeAttemptStartedAt) {
+    stageTimings.push({ label: 'Generate', durationLabel: formatDuration(renderEndAt - activeAttemptStartedAt) });
+  }
+  if (generationCompletedAt && previewCompletedAt > generationCompletedAt) {
+    stageTimings.push({ label: 'Render', durationLabel: formatDuration(previewCompletedAt - generationCompletedAt) });
+  }
 
   return {
     plan,
@@ -371,6 +408,7 @@ export function deriveCockpit(events: BridgeEvent[], now = Date.now()) {
     progressPercent,
     activeWork,
     artifacts: artifacts.slice(-8),
+    stageTimings,
   };
 }
 
@@ -382,7 +420,10 @@ function readEventTime(event?: BridgeEvent): number {
 }
 
 function formatDuration(ms: number): string {
-  const totalSeconds = Math.max(0, Math.round(ms / 1000));
+  const safeMs = Math.max(0, ms);
+  if (safeMs < 1000) return `${Math.round(safeMs)}ms`;
+  if (safeMs < 10_000) return `${(safeMs / 1000).toFixed(1).replace(/\.0$/, '')}s`;
+  const totalSeconds = Math.round(safeMs / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   if (minutes <= 0) return `${seconds}s`;

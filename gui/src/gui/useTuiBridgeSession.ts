@@ -87,7 +87,13 @@ export function useTuiBridgeSession() {
 
   async function submitPrompt(
     text: string,
-    options: { maxIterations?: number; candidateCount?: number; timeoutMinutes?: number; clientIntent?: 'creative' | 'chat' | 'inspect' | 'action' } = {},
+    options: {
+      maxIterations?: number;
+      candidateCount?: number;
+      timeoutMinutes?: number;
+      clientIntent?: 'creative' | 'chat' | 'inspect' | 'action';
+      executionMode?: 'draft' | 'prove';
+    } = {},
   ) {
     if (!session || !text.trim()) return;
     setSubmitting(true);
@@ -115,6 +121,15 @@ export function useTuiBridgeSession() {
     await refreshStatus();
   }
 
+  async function cancelCurrent() {
+    if (!session?.sessionId) return;
+    setError(null);
+    const res = await fetch(`${API}/tui/session/${session.sessionId}/cancel`, { method: 'POST' });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) setError(data.error || res.statusText);
+    await refreshStatus();
+  }
+
   const summary = useMemo(() => summarizeWorkbenchBridge(events, now), [events, now]);
   const preview = useMemo(() => latestBridgePreview(events), [events]);
   const codePreview = useMemo(() => latestBridgeCodePreview(events), [events]);
@@ -130,5 +145,6 @@ export function useTuiBridgeSession() {
     createSession,
     submitPrompt,
     confirmPending,
+    cancelCurrent,
   };
 }

@@ -68,8 +68,36 @@ const { executeTask } = vi.hoisted(() => ({
   }),
 }));
 
+const { ralphRun } = vi.hoisted(() => ({
+  ralphRun: vi.fn(async (_prompt: string, options?: { onIteration?: (context: unknown) => void }) => {
+    options?.onIteration?.({
+      iteration: 1,
+      prompt: _prompt,
+      usedPrompt: _prompt,
+      code: 'function setup() { createCanvas(100, 100); }',
+      evaluation: { score: 0.82, issues: [] },
+      timestamp: new Date(0).toISOString(),
+      generatorThinking: 'I chose drifting shapes and aurora colors for the p5 scene.',
+      evaluatorReasoning: 'The visual output matches the prompt and has coherent motion.',
+    });
+    return {
+      code: 'function setup() { createCanvas(100, 100); }',
+      iterations: 1,
+      completed: true,
+      reason: 'accepted',
+      timestamp: new Date(0).toISOString(),
+      duration: 10,
+      finalScore: 0.82,
+    };
+  }),
+}));
+
 vi.mock('../../src/harness/agent/index.js', () => ({
   createLLMModeAgent: () => ({ executeTask }),
+}));
+
+vi.mock('../../src/core/RalphLoop.js', () => ({
+  RalphLoop: { run: ralphRun },
 }));
 
 const { TuiBridgeService } = await import('../../src/tui-bridge/TuiBridgeService.js');
@@ -99,6 +127,7 @@ async function waitFor<T>(read: () => T | undefined): Promise<T> {
 describe('Bubble Tea operator routing', () => {
   beforeEach(() => {
     executeTask.mockClear();
+    ralphRun.mockClear();
   });
 
   it('routes ordinary text to direct chat without requiring review in assist mode', async () => {
@@ -202,6 +231,71 @@ describe('Bubble Tea operator routing', () => {
     });
     expect(service.getEvents(session.sessionId)
       .some(event => event.type === 'tool.started' && ['gitStatus', 'listDir', 'readFile', 'searchCode', 'searchDocs'].includes(String((event as any).toolName)))).toBe(false);
+  });
+
+  it('labels creative telemetry with generator and evaluator role models, not the harness model', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession({
+      roles: {
+        generator: {
+          role: 'generator',
+          provider: 'lmstudio',
+          baseUrl: 'http://localhost:1234/v1',
+          model: 'qwen3.6-35b-a3b',
+          source: 'active-provider',
+          multimodal: 'unknown',
+          purpose: 'Writes the creative code candidates.',
+        },
+        harness: {
+          role: 'harness',
+          provider: 'openai',
+          baseUrl: 'https://api.openai.com/v1',
+          model: 'gpt-5.4',
+          source: 'role-env',
+          multimodal: 'yes',
+          purpose: 'Runs bridge orchestration.',
+        },
+        evaluator: {
+          role: 'evaluator',
+          provider: 'openai',
+          baseUrl: 'https://api.openai.com/v1',
+          model: 'gpt-5.4-mini',
+          source: 'role-env',
+          multimodal: 'yes',
+          purpose: 'Scores rendered evidence.',
+        },
+      },
+    });
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'make a p5 animation of icebergs dancing in the sky with aurora colors, slow drifting motion, and a dark ocean horizon',
+        clientIntent: 'creative',
+        maxIterations: 1,
+        candidateCount: 1,
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    const generationTrace = await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.reasoning_trace' && event.phase === 'generation'));
+    const generatorTrace = await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.reasoning_trace' && event.source === 'generator'));
+    const evaluatorTrace = await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.reasoning_trace' && event.source === 'evaluator'));
+
+    expect(generationTrace).toMatchObject({
+      model: 'qwen3.6-35b-a3b',
+      thought: expect.stringContaining('qwen3.6-35b-a3b'),
+    });
+    expect(generatorTrace).toMatchObject({ model: 'qwen3.6-35b-a3b' });
+    expect(evaluatorTrace).toMatchObject({ model: 'gpt-5.4-mini' });
+    expect(service.getEvents(session.sessionId)
+      .filter(event => event.type === 'generation.reasoning_trace' && ['generation', 'generator-thinking', 'evaluation'].includes(event.phase))
+      .some(event => event.model === 'gpt-5.4')).toBe(false);
   });
 
   it('routes read-only dogfood checkpoint prompts to engineering even when they mention create files', async () => {

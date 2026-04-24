@@ -279,6 +279,7 @@ describe('Bubble Tea operator routing', () => {
     expect(result.reviewRequired).toBe(false);
     expect(ralphRun).not.toHaveBeenCalled();
     expect(draftGenerate).toHaveBeenCalledOnce();
+    expect(draftGenerate).toHaveBeenCalledWith(expect.any(String), expect.any(String), true, expect.objectContaining({ aborted: false }));
 
     const completion = await waitFor(() => service.getEvents(session.sessionId)
       .find(event => event.type === 'generation.complete'));

@@ -1945,7 +1945,7 @@ export class TuiBridgeService {
             new Gallery('gallery'),
             null,
           );
-          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true);
+          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, controller.signal);
           generationPromise.catch(() => undefined);
           const attemptResult = await this.awaitDraftAttempt(generationPromise, controller.signal, timeoutMinutes);
           if (!attemptResult) {

@@ -837,18 +837,6 @@ export default function App() {
               ))}
             </select>
           </label>
-          <label style={{ display: 'block', marginBottom: 12 }}>
-            <span className="atelier-label" style={{ marginRight: 8 }}>Execution</span>
-            <select
-              value={createExecutionMode}
-              onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setCreateExecutionMode(e.target.value as WorkbenchExecutionMode)}
-              className="atelier-select"
-              style={{ width: 'auto', minWidth: 200 }}
-            >
-              <option value="draft">Draft</option>
-              <option value="prove">Prove</option>
-            </select>
-          </label>
           {usesOrganismApi(createMode) && (
             <div className="liminal-control-row">
               <label>

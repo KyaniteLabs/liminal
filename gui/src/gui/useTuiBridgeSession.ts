@@ -124,10 +124,14 @@ export function useTuiBridgeSession() {
   async function cancelCurrent() {
     if (!session?.sessionId) return;
     setError(null);
-    const res = await fetch(`${API}/tui/session/${session.sessionId}/cancel`, { method: 'POST' });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) setError(data.error || res.statusText);
-    await refreshStatus();
+    try {
+      const res = await fetch(`${API}/tui/session/${session.sessionId}/cancel`, { method: 'POST' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) setError(data.error || res.statusText);
+      await refreshStatus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
   }
 
   const summary = useMemo(() => summarizeWorkbenchBridge(events, now), [events, now]);

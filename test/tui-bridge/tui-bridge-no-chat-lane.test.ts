@@ -255,8 +255,38 @@ describe('Bubble Tea operator routing', () => {
       type: 'generation.intent_brief',
       userRequest: prompt,
     });
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+    expect(draftGenerate).toHaveBeenCalledOnce();
+    expect(service.getEvents(session.sessionId)
+      .some(event => event.type === 'generation.clarification_needed')).toBe(false);
     expect(service.getEvents(session.sessionId)
       .some(event => event.type === 'tool.started' && ['gitStatus', 'listDir', 'readFile', 'searchCode', 'searchDocs'].includes(String((event as any).toolName)))).toBe(false);
+  });
+
+  it('drafts concrete one-object prompts instead of asking what the subject is', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'icebergs',
+        clientIntent: 'creative',
+        maxIterations: 1,
+        candidateCount: 1,
+        timeoutMinutes: 1,
+      },
+      fakeLlm() as never,
+    );
+
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+
+    expect(draftGenerate).toHaveBeenCalledOnce();
+    expect(service.getEvents(session.sessionId)
+      .some(event => event.type === 'generation.clarification_needed')).toBe(false);
   });
 
   it('defaults workbench creative runs to the draft lane without invoking RalphLoop', async () => {

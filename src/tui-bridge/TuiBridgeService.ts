@@ -2302,7 +2302,17 @@ export class TuiBridgeService {
     const hasColor = /\b(red|orange|yellow|green|blue|purple|violet|pink|white|black|gold|silver|cyan|magenta|monochrome|neon|pastel)\b/.test(lower);
     const hasMotion = /\b(dance|dancing|move|moving|rotate|spinning|pulse|breath|breathes|breathing|flow|grow|morph|animate|animated|kinetic)\b/.test(lower);
     const hasStyle = /\b(glass|metal|organic|alien|soft|hard|minimal|detailed|surreal|realistic|abstract|luminous|dark|bright|noir|retro|cyberpunk)\b/.test(lower);
-    const hasSubject = /\b(flower|alien|portrait|landscape|creature|city|planet|logo|icon|diagram|shader|scene|pattern|organism)\b/.test(lower) || words.length >= 6;
+    const subjectStopWords = new Set([
+      'a', 'an', 'and', 'are', 'as', 'at', 'be', 'by', 'create', 'draw', 'for', 'from', 'generate',
+      'in', 'into', 'make', 'of', 'on', 'or', 'sketch', 'the', 'to', 'with',
+    ]);
+    const vagueSubjectWords = new Set(['better', 'cooler', 'interesting', 'it', 'nice', 'nicer', 'something', 'stuff', 'that', 'things', 'this']);
+    const hasNamedVisualObject = /\b(aurora|bird|boat|building|butterfly|castle|city|cloud|comet|creature|crystal|diagram|dragon|fish|flower|forest|galaxy|iceberg|icebergs|icon|island|landscape|logo|machine|moon|mountain|ocean|organism|pattern|planet|portrait|river|robot|scene|shader|ship|sky|star|stars|storm|tree|wave|waves)\b/.test(lower);
+    const hasConcreteNounHint = words.some((word) => {
+      const cleaned = word.replace(/[^a-zA-Z]/g, '').toLowerCase();
+      return cleaned.length >= 4 && !subjectStopWords.has(cleaned) && !vagueSubjectWords.has(cleaned);
+    });
+    const hasSubject = hasNamedVisualObject || hasConcreteNounHint;
     const highIssues = issues.filter((issue) => (
       issue.severity === 'high' &&
       !(issue.type === 'missing_context' && (words.length >= 10 || hasSubject))
@@ -2327,8 +2337,8 @@ export class TuiBridgeService {
       !hasMotion ? 'Should it be still, looping, breathing, dancing, morphing, or interactive?' : '',
       !hasStyle ? 'What material or aesthetic should it feel like?' : '',
     ].filter(Boolean).slice(0, 4);
-    const shouldClarify = highIssues.length > 0 || words.length < 4 || (!hasSubject && missingDetails.length >= 3);
-    const reason = highIssues[0]?.description || (words.length < 4 ? 'Prompt is too short to preserve intent reliably.' : 'Prompt is missing core creative requirements.');
+    const shouldClarify = highIssues.length > 0 || (!hasSubject && (words.length < 3 || (!hasColor && !hasMotion && !hasStyle)));
+    const reason = highIssues[0]?.description || (words.length < 3 ? 'Prompt is too short to preserve intent reliably.' : 'Prompt is missing a concrete subject.');
 
     return {
       userRequest,

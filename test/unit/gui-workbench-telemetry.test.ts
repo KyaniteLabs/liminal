@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { latestBridgePreview, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
+import { latestBridgePreview, summarizeImproveLane, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
 
 describe('workbenchTelemetry', () => {
   it('summarizes bridge generation progress for the workbench shell', () => {
@@ -128,5 +128,31 @@ describe('workbenchTelemetry', () => {
 
     expect(preview?.type).toBe('code');
     expect(preview?.code).toContain('function setup');
+  });
+
+  it('summarizes self-healing improvement proposal events for the Improve lane', () => {
+    const lane = summarizeImproveLane([
+      {
+        type: 'self_healing.proposal',
+        runType: 'improve',
+        proposalId: 'improve-preview-latency',
+        title: 'Reduce preview time',
+        category: 'performance optimization',
+        score: 88,
+        confidence: 'high',
+        risk: 'low',
+        measurableTarget: 'Reduce time to preview below 10s',
+        expectedVerification: ['pnpm test -- gui-workbench-telemetry'],
+      },
+    ]);
+
+    expect(lane.heading).toBe('Improve');
+    expect(lane.proposals).toHaveLength(1);
+    expect(lane.proposals[0]).toEqual(expect.objectContaining({
+      id: 'improve-preview-latency',
+      category: 'performance optimization',
+      score: 88,
+      measurableTarget: 'Reduce time to preview below 10s',
+    }));
   });
 });

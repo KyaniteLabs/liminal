@@ -6,6 +6,7 @@ describe('workbenchState', () => {
     expect(getWorkbenchMode('create').id).toBe('generate');
     expect(getWorkbenchMode('cockpit').id).toBe('generate');
     expect(getWorkbenchMode('liveMusic').id).toBe('generate');
+    expect(getWorkbenchMode('improve').id).toBe('improve');
     expect(getWorkbenchMode('live').id).toBe('review');
     expect(getWorkbenchMode('curator').id).toBe('review');
     expect(getWorkbenchMode('compost').id).toBe('evolve');
@@ -13,6 +14,7 @@ describe('workbenchState', () => {
     expect(getWorkbenchMode('config').id).toBe('settings');
     expect(WORKBENCH_MODES.map((mode) => mode.id)).toEqual([
       'generate',
+      'improve',
       'review',
       'evolve',
       'observe',
@@ -24,6 +26,7 @@ describe('workbenchState', () => {
     expect(shouldRenderLegacyPanel('create')).toBe(false);
     expect(shouldRenderLegacyPanel('cockpit')).toBe(true);
     expect(shouldRenderLegacyPanel('liveMusic')).toBe(true);
+    expect(shouldRenderLegacyPanel('improve')).toBe(false);
     expect(shouldRenderLegacyPanel('curator')).toBe(true);
     expect(shouldRenderLegacyPanel('config')).toBe(true);
   });

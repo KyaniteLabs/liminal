@@ -17,14 +17,14 @@ Users curate rather than micromanage: they control visibility (what the agent se
 Liminal has three primary interfaces:
 
 1. **CLI** (`liminal -p "..."`, `liminal chat`, `liminal fix`, etc.) — the original interface for generation, compost, ledger, and utilities.
-2. **Studio** (`liminal studio`) — a chat-first TUI agent built on Bubble Tea (Go) + HTTP/SSE bridge. The bridge (`TuiBridgeService`) runs standalone without the Go binary, enabling HTTP clients to use it directly. Intent routing classifies user input as `direct` (simple chat), `generate` (creative generation), or `agent` (structured workflows).
-3. **Bubble Tea TUI** (`liminal bubbletea`) — the full Go-based terminal UI with 50+ event handlers, streaming responses, and Ctrl+X Cortex panel.
+2. **Studio** (`liminal studio`) — the GUI-first workbench. It starts the GUI backend plus browser app, uses the HTTP/SSE bridge for streamed generation and preview events, and exposes an Improve lane for repair, hardening, and optimization proposals.
+3. **Bubble Tea TUI** (`liminal bubbletea`) — the Go-based terminal operator cockpit with 50+ event handlers, streaming responses, and Ctrl+X Cortex panel.
 
 CLI and programmatic API remain available for automation and integration.
 
 ## Self-improvement feedback loop (updated 2026-03-21)
 
-Liminal now implements a complete closed-loop self-improvement cycle:
+Liminal has closed-loop creative feedback systems plus a guarded self-healing loop. The self-healing loop has three modes: `repair` for failing behavior, `harden` for blind spots on a mostly green system, and `improve` for evidence-backed optimizations on a fully green system. In v1, self-written changes are reviewable and verification-gated rather than auto-merged.
 
 ```
 Generate → Evaluate → Store (archive + compost + MAP-Elites + novelty)
@@ -208,4 +208,3 @@ Key architectural decisions:
 - **Stochastic task selection**: `ReplayBudgetPolicy` uses `Math.random()` to mix between fresh exploration, dream recombination, and taste-biased replay — preventing the system from converging on any single strategy.
 - **Garden health monitoring**: `GardenHealthMonitor` tracks creative diversity, seed freshness, and compost health, alerting when intervention is needed.
 - **Stagnation detection**: `StagnationDetector` identifies when the system is producing diminishing returns and triggers perturbation or niche exploration.
-

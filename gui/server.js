@@ -13,6 +13,7 @@ import { TuiBridgeService } from '../dist/tui-bridge/TuiBridgeService.js';
 import { applyBridgeProviderEnv, resolveBridgeProviderConfig, summarizeBridgeRuntime } from '../dist/tui-bridge/BridgeLauncherConfig.js';
 import { LLMClient } from '../dist/llm/LLMClient.js';
 import { logSecurityEvent } from '../dist/security/SecurityLogger.js';
+import { collectRepositoryOpportunityEvidence, scanGreenSystemOpportunities } from '../dist/improvement/OpportunityScanner.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const cwd = process.cwd();
@@ -334,6 +335,15 @@ export function createApp(configPath, port = 5174) {
       });
     } catch (err) {
       res.status(500).json({ error: err.message });
+    }
+  });
+
+  app.get('/api/improve/scan', (_req, res) => {
+    try {
+      const evidence = collectRepositoryOpportunityEvidence(process.cwd());
+      res.status(200).json(scanGreenSystemOpportunities(evidence));
+    } catch (err) {
+      res.status(500).json({ error: err.message || String(err) });
     }
   });
 

@@ -16,6 +16,7 @@ import type { SwarmConfig, SwarmMode } from '../swarm/types.js';
 import type { SwarmOptions } from '../types/options/SwarmOptions.js';
 import { type DebugOptions, normalizeDebugOptions } from '../types/options/DebugOptions.js';
 import { type RenderOptions, normalizeRenderOptions } from '../types/options/RenderOptions.js';
+import type { EvalMode } from '../config/FeatureFlags.js';
 import type { Suggestion } from '../chat/types.js';
 import type { GuidanceEngine } from '../chat/GuidanceEngine.js';
 
@@ -142,6 +143,8 @@ export interface LoopOptions {
   useRenderScoring?: boolean;
   /** Options for render-based scoring pipeline */
   renderScoringOptions?: import('../render/RenderAndScorePipeline.js').PipelineOptions;
+  /** Override the evaluation mode for this run; defaults to LIMINAL_EVAL_MODE. */
+  evalMode?: EvalMode;
 }
 
 export interface LoopResult {
@@ -219,6 +222,7 @@ export interface NormalizedLoopOptions extends LoopOptions {
   debug: Required<DebugOptions>;
   render: Required<NonNullable<RenderOptions>>;
   git?: import('../git/types.js').GitConfig;
+  evalMode?: EvalMode;
 }
 
 /**
@@ -292,6 +296,7 @@ export function normalizeOptions(options: LoopOptions | null): NormalizedLoopOpt
     swarmDiversify: options?.swarmDiversify ?? false,
     useRenderScoring: options?.useRenderScoring ?? false,
     renderScoringOptions: options?.renderScoringOptions ?? {},
+    evalMode: options?.evalMode,
     git: options?.git ?? undefined,
   };
 }

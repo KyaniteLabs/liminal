@@ -25,6 +25,22 @@ export interface WorkbenchPreview {
   label: string;
 }
 
+export interface ImproveLaneProposal {
+  id: string;
+  title: string;
+  category: string;
+  score: number;
+  confidence: string;
+  risk: string;
+  measurableTarget: string;
+  expectedVerification: string[];
+}
+
+export interface ImproveLaneSummary {
+  heading: 'Improve';
+  proposals: ImproveLaneProposal[];
+}
+
 export function summarizeWorkbenchBridge(
   events: WorkbenchBridgeEvent[],
   now = Date.now(),
@@ -149,4 +165,28 @@ export function latestBridgeCodePreview(events: WorkbenchBridgeEvent[]): Workben
   }
 
   return null;
+}
+
+export function summarizeImproveLane(events: WorkbenchBridgeEvent[]): ImproveLaneSummary {
+  const proposals = events
+    .filter((event) => event.type === 'self_healing.proposal')
+    .map((event) => ({
+      id: String(event.proposalId || event.id || ''),
+      title: String(event.title || 'Improvement proposal'),
+      category: String(event.category || 'reliability hardening'),
+      score: Number(event.score || 0),
+      confidence: String(event.confidence || 'medium'),
+      risk: String(event.risk || 'medium'),
+      measurableTarget: String(event.measurableTarget || ''),
+      expectedVerification: Array.isArray(event.expectedVerification)
+        ? event.expectedVerification.map(String)
+        : [],
+    }))
+    .filter((proposal) => proposal.id.length > 0)
+    .sort((a, b) => b.score - a.score);
+
+  return {
+    heading: 'Improve',
+    proposals,
+  };
 }

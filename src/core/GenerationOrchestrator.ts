@@ -136,7 +136,12 @@ export class GenerationOrchestrator {
     }
 
     if (dispatched) {
-      const result = await dispatched.entry.generate(usedPrompt, { bypassCache, signal });
+      const generatorParams = bypassCache !== undefined || signal
+        ? { bypassCache, signal }
+        : undefined;
+      const result = generatorParams
+        ? await dispatched.entry.generate(usedPrompt, generatorParams)
+        : await dispatched.entry.generate(usedPrompt);
       throwIfAborted(signal);
       return normalizeGeneratorResult(result);
     }

@@ -259,7 +259,7 @@ describe('Bubble Tea operator routing', () => {
       .some(event => event.type === 'tool.started' && ['gitStatus', 'listDir', 'readFile', 'searchCode', 'searchDocs'].includes(String((event as any).toolName)))).toBe(false);
   });
 
-  it('uses the draft lane for fast workbench runs without invoking RalphLoop', async () => {
+  it('defaults workbench creative runs to the draft lane without invoking RalphLoop', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession();
 
@@ -269,7 +269,6 @@ describe('Bubble Tea operator routing', () => {
         mode: 'chat',
         text: 'glass flowers orbiting inside a black hole',
         clientIntent: 'creative',
-        executionMode: 'draft',
         maxIterations: 5,
         candidateCount: 1,
         timeoutMinutes: 3,
@@ -314,6 +313,12 @@ describe('Bubble Tea operator routing', () => {
     );
 
     service.cancelRun(session.sessionId);
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find((event) => event.type === 'activity.updated' && String((event as any).message).includes('Generation stopped')));
+
+    expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
+    expect(service.getEvents(session.sessionId).some((event) => event.type === 'activity.updated' && String((event as any).message).includes('Generation stopped'))).toBe(true);
+
     pendingDraft.resolve({
       needsClarification: false,
       code: 'function setup() { createCanvas(100, 100); }',
@@ -323,7 +328,6 @@ describe('Bubble Tea operator routing', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
-    expect(service.getEvents(session.sessionId).some((event) => event.type === 'activity.updated' && String((event as any).message).includes('Generation stopped'))).toBe(true);
   });
 
   it('labels creative telemetry with generator and evaluator role models, not the harness model', async () => {
@@ -366,6 +370,7 @@ describe('Bubble Tea operator routing', () => {
         mode: 'chat',
         text: 'make a p5 animation of icebergs dancing in the sky with aurora colors, slow drifting motion, and a dark ocean horizon',
         clientIntent: 'creative',
+        executionMode: 'prove',
         maxIterations: 1,
         candidateCount: 1,
         timeoutMinutes: 1,

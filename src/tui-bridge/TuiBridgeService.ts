@@ -593,11 +593,12 @@ export class TuiBridgeService {
 
         if (input.clientIntent === 'creative') {
           logBridge('input.routed', { sessionId, route: 'workbench.creative', confidence: classification.confidence });
-          const runCreative = input.executionMode === 'draft'
+          const executionMode = input.executionMode ?? 'draft';
+          const runCreative = executionMode === 'draft'
             ? this.streamDraftGeneration(sessionId, input.text, conversation, llm, input)
             : this.streamRalphGeneration(sessionId, input.text, conversation, llm, input);
           runCreative
-            .then(() => emitSessionTurn(input.executionMode === 'draft' ? 'draft-generator' : 'ralph-loop'))
+            .then(() => emitSessionTurn(executionMode === 'draft' ? 'draft-generator' : 'ralph-loop'))
             .catch(handleError);
           break;
         }
@@ -1944,7 +1945,13 @@ export class TuiBridgeService {
             new Gallery('gallery'),
             null,
           );
-          const attemptResult = await orchestrator.generate(attemptPrompt, attemptPrompt, true);
+          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true);
+          generationPromise.catch(() => undefined);
+          const attemptResult = await this.awaitDraftAttempt(generationPromise, controller.signal, timeoutMinutes);
+          if (!attemptResult) {
+            this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
+            return;
+          }
           if (attemptResult.needsClarification) {
             const clarificationBrief: CreativeIntentBrief = {
               userRequest: intentBrief.userRequest,
@@ -2041,6 +2048,32 @@ export class TuiBridgeService {
       });
     } finally {
       this.activeStreams.delete(sessionId);
+    }
+  }
+
+  private async awaitDraftAttempt<T>(
+    generationPromise: Promise<T>,
+    signal: AbortSignal,
+    timeoutMinutes: number,
+  ): Promise<T | undefined> {
+    if (signal.aborted) return undefined;
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let removeAbortListener = () => {};
+    const interruptPromise = new Promise<undefined>((resolve, reject) => {
+      const onAbort = () => resolve(undefined);
+      signal.addEventListener('abort', onAbort, { once: true });
+      removeAbortListener = () => signal.removeEventListener('abort', onAbort);
+      timeoutId = setTimeout(() => {
+        reject(new Error(`Draft generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`));
+      }, timeoutMinutes * 60_000);
+    });
+
+    try {
+      return await Promise.race([generationPromise, interruptPromise]);
+    } finally {
+      removeAbortListener();
+      if (timeoutId) clearTimeout(timeoutId);
     }
   }
 

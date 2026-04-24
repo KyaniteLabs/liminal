@@ -131,6 +131,7 @@ export function useTuiBridgeSession() {
       await refreshStatus();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      await refreshStatus().catch(() => undefined);
     }
   }
 

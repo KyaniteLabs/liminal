@@ -1946,7 +1946,12 @@ export class TuiBridgeService {
             null,
           );
           const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, controller.signal);
-          generationPromise.catch(() => undefined);
+          generationPromise.catch((err) => {
+            if (!controller.signal.aborted) {
+              const message = err instanceof Error ? err.message : String(err);
+              logBridge('generation.draft.background_failed', { sessionId, generatorModel: generatorModelName, message });
+            }
+          });
           const attemptResult = await this.awaitDraftAttempt(generationPromise, controller.signal, timeoutMinutes);
           if (!attemptResult) {
             this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });

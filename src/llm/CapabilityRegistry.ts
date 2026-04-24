@@ -60,6 +60,7 @@ const MODEL_CAPABILITIES: Record<string, Partial<ModelCapabilities>> = {
   // ZhipuAI GLM (International Coding Plan — api.z.ai)
   // GLM-5.x: 205K context, flagship reasoning models rivaling Claude Opus
   // GLM-5-Turbo: optimized for agent/coding workflows, 200K context
+  'glm-5v-turbo*':      { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 200000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'glm-5.1*':           { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 205000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'glm-5-turbo*':       { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 200000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },
   'glm-5*':             { thinking: true, streaming: true, jsonMode: true, toolUse: true, maxContextTokens: 205000, thinkingStyle: 'reasoning_content', streamingStyle: 'sse' },

@@ -187,14 +187,14 @@ describe('getProviderConfig', () => {
     expect(config!.apiStyle).toBe('anthropic');
   });
 
-  it('returns GLM config on the Z.ai Anthropic-compatible endpoint', () => {
+  it('returns GLM-5v config on the Z.ai Anthropic-compatible endpoint', () => {
     process.env.GLM_API_KEY = 'glm-key';
     const config = getProviderConfig('glm');
     expect(config).not.toBeNull();
     expect(config!.provider).toBe('glm');
     expect(config!.apiKey).toBe('glm-key');
     expect(config!.baseUrl).toBe('https://api.z.ai/api/anthropic');
-    expect(config!.model).toBe('glm-5.1');
+    expect(config!.model).toBe('GLM-5v-turbo');
     expect(config!.apiStyle).toBe('anthropic');
   });
 

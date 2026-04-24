@@ -99,6 +99,7 @@ describe('TuiBridgeServer model picker', () => {
       expect(committed.content).not.toContain('<number>');
       expect(committed.content).toContain('OpenAI');
       expect(committed.content).toContain('MiniMax');
+      expect(committed.content).toContain('GLM-5v-turbo');
       expect(committed.content).toContain('claude');
       expect(committed.content).toContain('(current)');
     } finally {
@@ -354,6 +355,113 @@ describe('TuiBridgeServer model picker', () => {
         model: 'glm-5.1',
       });
     } finally {
+      await server.stop();
+    }
+  });
+
+  it('uses GLM-5v-turbo as the GLM default model', async () => {
+    mockLoadConfig.mockResolvedValue({
+      isErr: () => false,
+      isOk: () => true,
+      value: {
+        defaultProvider: 'custom',
+        providers: {
+          glm: {
+            baseUrl: 'https://api.z.ai/api/anthropic',
+            apiKey: 'glm-key',
+          },
+        },
+      },
+    });
+
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const server = new TuiBridgeServer(service, {
+      host: '127.0.0.1',
+      port,
+      llm: {
+        getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini' }),
+      } as any,
+    });
+    await server.start();
+
+    try {
+      const createRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+      const session = await createRes.json() as { sessionId: string };
+
+      await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/input`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'chat', clientIntent: 'chat', text: '/model glm' }),
+      });
+
+      expect(mockSaveConfig).toHaveBeenCalledWith(expect.objectContaining({
+        defaultProvider: 'glm',
+        providers: expect.objectContaining({
+          glm: expect.objectContaining({
+            baseUrl: 'https://api.z.ai/api/anthropic',
+            model: 'GLM-5v-turbo',
+            apiKey: 'glm-key',
+          }),
+        }),
+      }));
+      expect(mockLLMClientCtor).toHaveBeenCalledWith(expect.objectContaining({
+        baseUrl: 'https://api.z.ai/api/anthropic',
+        model: 'GLM-5v-turbo',
+        apiKey: 'glm-key',
+      }));
+      expect(service.getStatus(session.sessionId)).toMatchObject({
+        provider: 'glm',
+        model: 'GLM-5v-turbo',
+      });
+    } finally {
+      await server.stop();
+    }
+  });
+
+  it('can switch GLM through the Anthropic-compatible auth token', async () => {
+    process.env.ANTHROPIC_AUTH_TOKEN = 'glm-anthropic-token';
+    mockLoadConfig.mockResolvedValue({
+      isErr: () => false,
+      isOk: () => true,
+      value: {
+        defaultProvider: 'custom',
+        providers: {},
+      },
+    });
+
+    const port = await getFreePort();
+    const service = new TuiBridgeService();
+    const server = new TuiBridgeServer(service, {
+      host: '127.0.0.1',
+      port,
+      llm: {
+        getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini' }),
+      } as any,
+    });
+    await server.start();
+
+    try {
+      const createRes = await fetch(`http://127.0.0.1:${port}/api/tui/session`, { method: 'POST' });
+      const session = await createRes.json() as { sessionId: string };
+
+      await fetch(`http://127.0.0.1:${port}/api/tui/session/${session.sessionId}/input`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mode: 'chat', clientIntent: 'chat', text: '/model glm 5v' }),
+      });
+
+      expect(mockLLMClientCtor).toHaveBeenCalledWith(expect.objectContaining({
+        baseUrl: 'https://api.z.ai/api/anthropic',
+        model: 'GLM-5v-turbo',
+        apiKey: 'glm-anthropic-token',
+      }));
+      expect(service.getStatus(session.sessionId)).toMatchObject({
+        provider: 'glm',
+        model: 'GLM-5v-turbo',
+      });
+    } finally {
+      delete process.env.ANTHROPIC_AUTH_TOKEN;
       await server.stop();
     }
   });

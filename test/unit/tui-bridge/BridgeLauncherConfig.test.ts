@@ -141,6 +141,20 @@ describe('BridgeLauncherConfig', () => {
     expect(summary.evaluation.multimodal).toBe('yes');
   });
 
+  it('marks GLM-5v-turbo evaluators as vision-capable through the GLM provider', () => {
+    const summary = summarizeBridgeRuntime({
+      LIMINAL_LLM_PROVIDER: 'glm',
+      LIMINAL_LLM_BASE_URL: 'https://api.z.ai/api/anthropic',
+      LIMINAL_LLM_MODEL: 'GLM-5v-turbo',
+      LIMINAL_EVALUATOR_BASE_URL: 'https://api.z.ai/api/anthropic',
+      LIMINAL_EVALUATOR_MODEL: 'GLM-5v-turbo',
+    });
+
+    expect(summary.roles.evaluator.provider).toBe('glm');
+    expect(summary.roles.evaluator.multimodal).toBe('yes');
+    expect(summary.evaluation.multimodal).toBe('yes');
+  });
+
   it('applies persisted evaluator role config from ~/.liminal/config.json', () => {
     const home = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-role-config-'));
     homedirSpy.mockReturnValue(home);

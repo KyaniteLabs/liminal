@@ -29,6 +29,13 @@ describe('TuiBridgeService creative domain routing', () => {
     expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.TONE);
   });
 
+  it('routes explicit Hydra video synth prompts to Hydra before generic Tone synth handling', () => {
+    const prompt = 'Create a Hydra video synth sketch. User prompt: make a hydra visual of icebergs dancing in the sky.';
+
+    expect(inferCreativeDomain(prompt)).toBe(Domain.HYDRA);
+    expect(buildCreativeDomainPlan(prompt)[0]).toBe(Domain.HYDRA);
+  });
+
   it('chooses preview domain from actual output code over requested fallback domain', () => {
     const threeCode = 'const scene = new THREE.Scene(); const renderer = new THREE.WebGLRenderer(); renderer.render(scene, new THREE.PerspectiveCamera());';
 

@@ -37,7 +37,7 @@ const PROVIDER_ALIASES: Record<string, ModelProviderKey> = {
 const PROVIDER_DEFAULTS: Record<ModelProviderKey, { baseUrl: string; model: string; label: string; requiresKey: boolean }> = {
   custom: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4-mini', label: 'OpenAI', requiresKey: true },
   minimax: { baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7', label: 'MiniMax', requiresKey: true },
-  glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5.1', label: 'GLM', requiresKey: true },
+  glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'GLM-5v-turbo', label: 'GLM', requiresKey: true },
   lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model', label: 'LM Studio', requiresKey: false },
   ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2', label: 'Ollama', requiresKey: false },
   openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5.4-mini', label: 'OpenRouter', requiresKey: true },
@@ -51,6 +51,7 @@ const MODEL_CHOICES: ModelChoice[] = [
   { provider: 'custom', label: 'GPT-5.4 nano', model: 'gpt-5.4-nano', aliases: ['gpt-5.4-nano', 'gpt54nano', 'nano'] },
   { provider: 'minimax', label: 'MiniMax M2.7', model: 'MiniMax-M2.7', aliases: ['m27', 'm2.7', 'minimax-m27'] },
   { provider: 'minimax', label: 'MiniMax M2.5', model: 'MiniMax-M2.5', aliases: ['m25', 'm2.5', 'minimax-m25'] },
+  { provider: 'glm', label: 'GLM 5V Turbo', model: 'GLM-5v-turbo', aliases: ['glm-5v-turbo', 'glm5v', '5v', 'glm-vision'] },
   { provider: 'glm', label: 'GLM 5.1', model: 'glm-5.1', aliases: ['glm-5.1', 'glm51'] },
   { provider: 'lmstudio', label: 'LM Studio local', model: 'local-model', aliases: ['local', 'lmstudio'] },
   { provider: 'ollama', label: 'Ollama llama3.2', model: 'llama3.2', aliases: ['llama3.2', 'ollama'] },
@@ -452,7 +453,7 @@ data: ${JSON.stringify(stored.event)}
       lines.push(`${String(index + 1).padStart(2, ' ')}. ${PROVIDER_DEFAULTS[choice.provider].label.padEnd(10)} ${choice.label.padEnd(18)} ${choice.model}${marker}`);
     });
     lines.push('');
-    lines.push('Examples: /model 1, /model openai gpt-5.4-mini, /model lmstudio, /model ollama llama3.2, /model minimax m27');
+    lines.push('Examples: /model 1, /model glm 5v, /model openai gpt-5.4-mini, /model lmstudio, /model ollama llama3.2, /model minimax m27');
     return lines.join('\n');
   }
 
@@ -527,7 +528,7 @@ data: ${JSON.stringify(stored.event)}
       case 'minimax':
         return firstUsable(configuredKey, current, process.env.MINIMAX_API_KEY, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
       case 'glm':
-        return firstUsable(configuredKey, current, process.env.GLM_API_KEY, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
+        return firstUsable(configuredKey, current, process.env.GLM_API_KEY, process.env.ANTHROPIC_AUTH_TOKEN, process.env.LIMINAL_LLM_API_KEY, process.env.LLM_API_KEY);
       case 'openrouter':
         return firstUsable(configuredKey, current, process.env.OPENROUTER_API_KEY);
       case 'kimi':

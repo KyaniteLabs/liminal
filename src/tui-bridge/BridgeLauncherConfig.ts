@@ -196,6 +196,9 @@ function inferProvider(baseUrl: string, model: string): string {
 
 function inferVisionSupport(provider: string, model: string): BridgeVisionSupport {
   const lower = `${provider} ${model}`.toLowerCase();
+  if (lower.includes('glm-5v') || lower.includes('glm 5v')) {
+    return 'yes';
+  }
   if (lower.includes('glm') || lower.includes('minimax') || lower.includes('kimi') || lower.includes('moonshot')) {
     return 'no';
   }

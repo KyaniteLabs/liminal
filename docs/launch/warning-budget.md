@@ -2,6 +2,8 @@
 
 Current budget target: zero launch-blocking lint errors, explicit ownership for warnings.
 
+Public-demo disposition: demo-mitigated. The launch blocker is lint errors, not tracked warnings; warnings remain owned hardening debt and must not be described as fully cleaned up.
+
 Current observed warning classes:
 
 | Rule | Count | Owner | Launch Disposition |

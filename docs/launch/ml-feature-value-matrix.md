@@ -2,6 +2,8 @@
 
 Marketing rule: only `proven` features can be claimed as working product value without an experimental qualifier.
 
+Public-demo disposition: demo-mitigated. The UI and proof receipts may show experimental ML labels, but the recording must not narrate experimental features as proven product value.
+
 | Feature | Launch Label | Baseline | Enabled Behavior | Metric | Proof |
 | --- | --- | --- | --- | --- | --- |
 | Taste learning | experimental | creative ranking without preference replay | preference replay and taste alignment | agreement beats baseline | `pnpm test -- TasteModelRuntime PreferenceDatasetBuilder` |

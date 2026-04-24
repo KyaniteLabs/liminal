@@ -377,7 +377,7 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
     'custom': 'custom',
   };
 
-  const provider = providerMap[providerName] || 'custom';
+  const provider = providerMap[providerName] || 'lmstudio';
 
   const fileProviderConfig = fileConfig?.providers?.[providerName] || {};
   const projectLlm = projectConfig?.llm || {};

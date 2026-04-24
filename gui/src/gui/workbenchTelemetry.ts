@@ -14,8 +14,18 @@ export interface WorkbenchBridgeSummary {
   timelinePrimary: string;
   timelineSecondary: string;
   progressPercent: number;
+  processSteps: WorkbenchProcessStep[];
   recentActivity: Array<{ label: string; detail: string; status?: string }>;
   stageTimings: Array<{ label: string; durationLabel: string }>;
+}
+
+export type WorkbenchProcessStatus = 'pending' | 'active' | 'done' | 'needs-input' | 'failed';
+
+export interface WorkbenchProcessStep {
+  id: string;
+  label: string;
+  detail: string;
+  status: WorkbenchProcessStatus;
 }
 
 export interface WorkbenchPreview {
@@ -52,7 +62,9 @@ export function summarizeWorkbenchBridge(
 ): WorkbenchBridgeSummary {
   const derived = deriveCockpit(events as any, now);
   const phase = String(derived.phase || 'idle');
-  const active = !['idle', 'complete', 'previewed'].includes(phase);
+  const processSteps = summarizeProcessSteps(events, phase);
+  const readyDone = processSteps.some((step) => step.id === 'ready' && step.status === 'done');
+  const active = !readyDone && !['idle', 'complete', 'previewed'].includes(phase);
 
   return {
     active,
@@ -63,9 +75,58 @@ export function summarizeWorkbenchBridge(
     timelinePrimary: derived.activeDomain || derived.plan[0] || 'Generate',
     timelineSecondary: derived.latestMessage || `${derived.elapsedLabel} elapsed · ${derived.etaLabel}`,
     progressPercent: derived.progressPercent,
+    processSteps,
     recentActivity: summarizeRecentActivity(events),
     stageTimings: derived.stageTimings ?? [],
   };
+}
+
+function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): WorkbenchProcessStep[] {
+  const hasIntent = events.some((event) => event.type === 'generation.intent_brief');
+  const hasClarification = latestClarificationRequest(events) !== null;
+  const hasPlan = events.some((event) => event.type === 'generation.domain_plan');
+  const hasAttempt = events.some((event) => event.type === 'generation.attempt.started');
+  const hasCandidate = events.some((event) => event.type === 'generation.candidate.generated' || event.type === 'generation.iteration');
+  const hasPreview = events.some((event) => event.type === 'preview.completed');
+  const hasComplete = events.some((event) => event.type === 'generation.complete');
+  const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');
+  const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
+  const attemptEvent = [...events].reverse().find((event) => event.type === 'generation.attempt.started');
+  const domains = Array.isArray(planEvent?.domains) ? planEvent.domains.map(String).join(' -> ') : 'waiting for route';
+  const attemptLabel = attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
+
+  return [
+    {
+      id: 'intent',
+      label: 'Intent',
+      detail: hasClarification ? 'needs answer' : hasIntent ? 'brief captured' : 'waiting for prompt',
+      status: hasClarification ? 'needs-input' : hasIntent || hasPlan || hasAttempt || hasComplete ? 'done' : phase === 'idle' ? 'pending' : 'active',
+    },
+    {
+      id: 'route',
+      label: 'Route',
+      detail: domains,
+      status: hasPlan || hasAttempt || hasComplete ? 'done' : hasIntent && !hasClarification ? 'active' : 'pending',
+    },
+    {
+      id: 'draft',
+      label: 'Draft',
+      detail: hasAttempt ? attemptLabel : 'model not called yet',
+      status: hasError ? 'failed' : hasCandidate || hasPreview || hasComplete ? 'done' : hasAttempt ? 'active' : 'pending',
+    },
+    {
+      id: 'preview',
+      label: 'Preview',
+      detail: hasPreview ? 'artifact mounted' : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
+      status: hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
+    },
+    {
+      id: 'ready',
+      label: 'Ready',
+      detail: hasComplete ? 'run completed' : 'not ready yet',
+      status: hasComplete ? 'done' : hasError ? 'failed' : 'pending',
+    },
+  ];
 }
 
 function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label: string; detail: string; status?: string }> {

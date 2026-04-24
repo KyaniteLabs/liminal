@@ -16,6 +16,13 @@ describe('workbenchTelemetry', () => {
     expect(summary.stageTitle).toBe('waiting on model');
     expect(summary.timelinePrimary).toBe('three');
     expect(summary.timelineSecondary).toContain('up to');
+    expect(summary.processSteps.map((step) => [step.id, step.status])).toEqual([
+      ['intent', 'done'],
+      ['route', 'done'],
+      ['draft', 'active'],
+      ['preview', 'pending'],
+      ['ready', 'pending'],
+    ]);
   });
 
   it('surfaces intent brief and tool activity in the default timeline summary', () => {
@@ -66,6 +73,11 @@ describe('workbenchTelemetry', () => {
     expect(summary.recentActivity.at(-1)?.status).toBe('needs-input');
     expect(summary.recentActivity.at(-1)?.detail).toContain('What should be cooler');
     expect(summary.phase).toBe('clarifying intent');
+    expect(summary.processSteps[0]).toMatchObject({
+      id: 'intent',
+      status: 'needs-input',
+      detail: 'needs answer',
+    });
   });
 
   it('keeps the latest unresolved clarification available for the workbench form', () => {
@@ -113,10 +125,12 @@ describe('workbenchTelemetry', () => {
     ]);
 
     expect(summary.recentActivity.at(-1)?.label).toBe('Draft ready');
+    expect(summary.active).toBe(false);
     expect(summary.stageTimings).toEqual([
       { label: 'Plan', durationLabel: '5s' },
       { label: 'Generate', durationLabel: '4s' },
     ]);
+    expect(summary.processSteps.map((step) => step.status)).toEqual(['done', 'done', 'done', 'done', 'done']);
   });
 
   it('surfaces prove-mode generation, evaluation, and render timings separately', () => {

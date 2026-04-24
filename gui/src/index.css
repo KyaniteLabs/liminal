@@ -387,6 +387,20 @@ body::before {
   background-size: 28px 28px;
 }
 
+.liminal-stage-empty--active {
+  animation: liminal-grid-drift 8s linear infinite;
+}
+
+.liminal-stage-pulse {
+  width: 86px;
+  height: 86px;
+  justify-self: center;
+  border: 1px solid rgba(89, 225, 255, 0.42);
+  border-radius: 50%;
+  box-shadow: 0 0 24px rgba(89, 225, 255, 0.2), inset 0 0 18px rgba(143, 92, 255, 0.2);
+  animation: liminal-stage-breathe 1.8s ease-in-out infinite;
+}
+
 .liminal-stage-empty strong {
   color: var(--liminal-text);
   font-size: clamp(1.8rem, 4vw, 4rem);
@@ -395,6 +409,72 @@ body::before {
 
 .liminal-stage-empty small {
   font-family: var(--font-mono);
+}
+
+.liminal-stage-process {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 7px;
+  pointer-events: none;
+}
+
+.liminal-stage-process__step {
+  min-width: 0;
+  border: 1px solid rgba(43, 58, 78, 0.9);
+  border-radius: 6px;
+  background: rgba(6, 11, 19, 0.78);
+  padding: 7px 8px;
+  font-family: var(--font-mono);
+  box-shadow: 0 8px 26px rgba(0, 0, 0, 0.18);
+}
+
+.liminal-stage-process__step span,
+.liminal-stage-process__step small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-stage-process__step span {
+  color: var(--liminal-muted);
+  font-size: 0.62rem;
+  text-transform: uppercase;
+}
+
+.liminal-stage-process__step small {
+  margin-top: 3px;
+  color: var(--liminal-text);
+  font-size: 0.68rem;
+}
+
+.liminal-stage-process__step--active {
+  border-color: rgba(89, 225, 255, 0.82);
+  background: rgba(10, 34, 48, 0.82);
+  animation: liminal-active-card 1.4s ease-in-out infinite;
+}
+
+.liminal-stage-process__step--active span,
+.liminal-stage-process__step--done span {
+  color: var(--liminal-cyan);
+}
+
+.liminal-stage-process__step--done {
+  border-color: rgba(134, 239, 172, 0.38);
+}
+
+.liminal-stage-process__step--failed,
+.liminal-stage-process__step--needs-input {
+  border-color: rgba(252, 165, 165, 0.6);
+}
+
+.liminal-stage-process__step--failed span,
+.liminal-stage-process__step--needs-input span {
+  color: #fca5a5;
 }
 
 .liminal-improve-lane {
@@ -584,6 +664,81 @@ body::before {
   white-space: nowrap;
 }
 
+.liminal-process-meter {
+  margin-top: 9px;
+}
+
+.liminal-process-meter__track {
+  position: relative;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(43, 58, 78, 0.88);
+}
+
+.liminal-process-meter__fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--liminal-cyan), #8f5cff, #86efac);
+  box-shadow: 0 0 16px rgba(89, 225, 255, 0.42);
+  transition: width 220ms ease;
+}
+
+.liminal-process-rail {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.liminal-process-step {
+  min-width: 0;
+  border: 1px solid var(--liminal-line);
+  border-radius: 6px;
+  background: rgba(18, 26, 38, 0.68);
+  padding: 7px 8px;
+  font-family: var(--font-mono);
+}
+
+.liminal-process-step span,
+.liminal-process-step small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-process-step span {
+  color: var(--liminal-muted);
+  font-size: 0.66rem;
+  text-transform: uppercase;
+}
+
+.liminal-process-step small {
+  margin-top: 3px;
+  color: var(--liminal-muted);
+  font-size: 0.7rem;
+}
+
+.liminal-process-step--active {
+  border-color: rgba(89, 225, 255, 0.85);
+  background: rgba(10, 34, 48, 0.74);
+  animation: liminal-active-card 1.4s ease-in-out infinite;
+}
+
+.liminal-process-step--active span {
+  color: var(--liminal-cyan);
+}
+
+.liminal-process-step--done span {
+  color: #86efac;
+}
+
+.liminal-process-step--failed span,
+.liminal-process-step--needs-input span {
+  color: #fca5a5;
+}
+
 .liminal-timeline-events {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -627,6 +782,10 @@ body::before {
 
 .liminal-timeline-event--running span {
   color: #facc15;
+}
+
+.liminal-timeline-event--running {
+  animation: liminal-active-card 1.4s ease-in-out infinite;
 }
 
 .liminal-clarification {
@@ -694,6 +853,79 @@ body::before {
   opacity: 0.45;
 }
 
+.liminal-draft-actions {
+  display: grid;
+  grid-template-columns: minmax(190px, 0.75fr) minmax(260px, 1fr) repeat(3, auto);
+  gap: 10px;
+  align-items: end;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(134, 239, 172, 0.42);
+  border-radius: 6px;
+  background: rgba(15, 31, 26, 0.78);
+}
+
+.liminal-draft-actions span,
+.liminal-draft-actions small {
+  display: block;
+  font-family: var(--font-mono);
+}
+
+.liminal-draft-actions span {
+  color: #86efac;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.liminal-draft-actions strong {
+  display: block;
+  margin-top: 3px;
+  color: var(--liminal-text);
+  font-size: 0.86rem;
+}
+
+.liminal-draft-actions small {
+  margin-top: 3px;
+  color: var(--liminal-muted);
+  font-size: 0.7rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-draft-actions input {
+  min-width: 0;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--liminal-line);
+  border-radius: 6px;
+  background: rgba(8, 13, 22, 0.86);
+  color: var(--liminal-text);
+  font: 0.86rem var(--font-body);
+}
+
+.liminal-draft-actions button {
+  min-height: 42px;
+  padding: 0 14px;
+  border: 1px solid rgba(134, 239, 172, 0.34);
+  border-radius: 6px;
+  background: rgba(134, 239, 172, 0.14);
+  color: var(--liminal-text);
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.liminal-draft-actions button[type="submit"] {
+  background: #86efac;
+  color: #06110a;
+}
+
+.liminal-draft-actions button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 .liminal-legacy-panel {
   grid-area: legacy;
   padding: 12px;
@@ -703,6 +935,21 @@ body::before {
 @keyframes atelier-scroll-code {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
+}
+
+@keyframes liminal-grid-drift {
+  from { background-position: 0 0, 0 0, 0 0; }
+  to { background-position: 28px 28px, -28px 28px, 0 0; }
+}
+
+@keyframes liminal-stage-breathe {
+  0%, 100% { transform: scale(0.92); opacity: 0.58; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+@keyframes liminal-active-card {
+  0%, 100% { box-shadow: 0 0 0 rgba(89, 225, 255, 0); }
+  50% { box-shadow: 0 0 18px rgba(89, 225, 255, 0.24); }
 }
 
 .atelier-panel {
@@ -1089,7 +1336,23 @@ body::before {
     grid-template-columns: 1fr;
   }
 
+  .liminal-process-rail,
+  .liminal-stage-process {
+    grid-template-columns: 1fr;
+  }
+
+  .liminal-stage-process {
+    position: static;
+    padding: 10px;
+    background: #05070a;
+  }
+
   .liminal-clarification {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .liminal-draft-actions {
     grid-template-columns: 1fr;
     align-items: stretch;
   }

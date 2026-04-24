@@ -176,6 +176,7 @@ export default function App() {
   const [createExecutionMode, setCreateExecutionMode] = useState<WorkbenchExecutionMode>('draft');
   const [createTraits, setCreateTraits] = useState<CreateTraits>({ bpm: 120, palette: '' });
   const [clarificationAnswer, setClarificationAnswer] = useState<string>('');
+  const [draftAdjustment, setDraftAdjustment] = useState<string>('');
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [createRunError, setCreateRunError] = useState<string | null>(null);
@@ -762,6 +763,7 @@ export default function App() {
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
   const createModeOption = getCreateModeOption(createMode);
+  const draftReady = activeMode.id === 'generate' && !bridgeSummary.active && bridgeSummary.processSteps.some((step) => step.id === 'ready' && step.status === 'done');
 
   const handleWorkbenchRun = () => {
     if (activeMode.id === 'improve') {
@@ -793,6 +795,27 @@ export default function App() {
       clientIntent: 'creative',
       ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
     });
+  };
+
+  const submitDraftFollowup = (instruction: string, executionMode: WorkbenchExecutionMode) => {
+    const basePrompt = createPrompt.trim() || 'Continue the current draft.';
+    const codeContext = bridgeCodePreview?.code
+      ? `\n\nCurrent draft code excerpt:\n${bridgeCodePreview.code.slice(0, 5000)}`
+      : '';
+    const followupPrompt = `${basePrompt}\n\n${instruction}${codeContext}`;
+    setCreatePrompt(followupPrompt);
+    setCreateExecutionMode(executionMode);
+    setDraftAdjustment('');
+    void bridge.submitPrompt(buildWorkbenchPrompt(createMode, followupPrompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptions(executionMode, createMaxIterations),
+    });
+  };
+
+  const handleDraftAdjustment = () => {
+    const adjustment = draftAdjustment.trim();
+    if (!adjustment) return;
+    submitDraftFollowup(`Adjust the current draft: ${adjustment}`, 'draft');
   };
 
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
@@ -853,10 +876,21 @@ export default function App() {
       ) : bridgePreview?.type === 'code' ? (
         <pre className="liminal-stage-code">{bridgePreview.code}</pre>
       ) : (
-        <div className="liminal-stage-empty">
+        <div className={bridgeSummary.active ? 'liminal-stage-empty liminal-stage-empty--active' : 'liminal-stage-empty'}>
+          {bridgeSummary.active && <i className="liminal-stage-pulse" aria-hidden="true" />}
           <span>Stage</span>
           <strong>{bridgeSummary.active ? bridgeSummary.stageTitle : runStatus === 'running' ? 'Generating' : 'Ready'}</strong>
           <small>{bridgeSummary.active ? bridgeSummary.stageSubtitle : createModeOption.stageLabel}</small>
+        </div>
+      )}
+      {(bridgeSummary.active || bridgeSummary.processSteps.some((step) => step.status === 'done')) && (
+        <div className="liminal-stage-process" aria-label="Generation process">
+          {bridgeSummary.processSteps.map((step) => (
+            <div className={`liminal-stage-process__step liminal-stage-process__step--${step.status}`} key={step.id}>
+              <span>{step.label}</span>
+              <small>{step.detail}</small>
+            </div>
+          ))}
         </div>
       )}
       {hasSyncTarget && !hasDirectSyncTarget && <canvas ref={syncCanvasRef} className="liminal-sync-overlay" aria-hidden="true" />}
@@ -968,6 +1002,21 @@ export default function App() {
         <strong>{activeMode.id === 'improve' ? `proposals ${improveReport?.proposals.length ?? 0}` : bridgeSummary.active ? bridgeSummary.timelinePrimary : runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
         <small>{activeMode.id === 'improve' ? improveError || improveReport?.summary || 'No scan yet' : bridgeSummary.active ? bridgeSummary.timelineSecondary : createRunError || bridge.error || runError || selectedProject || 'No artifact selected'}</small>
       </div>
+      {activeMode.id === 'generate' && (
+        <div className="liminal-process-meter" aria-label={`Generation progress ${Math.round(bridgeSummary.progressPercent * 100)} percent`}>
+          <div className="liminal-process-meter__track">
+            <div className="liminal-process-meter__fill" style={{ width: `${Math.max(3, Math.round(bridgeSummary.progressPercent * 100))}%` }} />
+          </div>
+          <div className="liminal-process-rail">
+            {bridgeSummary.processSteps.map((step) => (
+              <div className={`liminal-process-step liminal-process-step--${step.status}`} key={step.id}>
+                <span>{step.label}</span>
+                <small>{step.detail}</small>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
       {bridgeSummary.recentActivity.length > 0 && (
         <div className="liminal-timeline-events">
           {bridgeSummary.recentActivity.map((item, index) => (
@@ -999,6 +1048,44 @@ export default function App() {
           />
           <button type="submit" disabled={bridge.submitting || !clarificationAnswer.trim()}>
             Answer and draft
+          </button>
+        </form>
+      )}
+      {activeMode.id === 'generate' && draftReady && !clarificationRequest && (
+        <form
+          className="liminal-draft-actions"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleDraftAdjustment();
+          }}
+        >
+          <div>
+            <span>Draft ready</span>
+            <strong>Adjust direction</strong>
+            <small>{bridgePreview?.label || bridgeCodePreview?.label || 'first artifact mounted'}</small>
+          </div>
+          <input
+            type="text"
+            value={draftAdjustment}
+            onChange={(event) => setDraftAdjustment(event.target.value)}
+            placeholder="Make it darker, slower, bigger, stranger..."
+          />
+          <button type="submit" disabled={bridge.submitting || !draftAdjustment.trim()}>
+            Revise draft
+          </button>
+          <button
+            type="button"
+            onClick={() => submitDraftFollowup('Make a fresh draft variation with a different composition while preserving the core idea.', 'draft')}
+            disabled={bridge.submitting}
+          >
+            New draft
+          </button>
+          <button
+            type="button"
+            onClick={() => submitDraftFollowup('Polish and prove this direction with scoring, repair, and preview evidence.', 'prove')}
+            disabled={bridge.submitting}
+          >
+            Prove
           </button>
         </form>
       )}

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { latestBridgePreview, summarizeImproveLane, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
+import { latestBridgePreview, latestClarificationRequest, summarizeImproveLane, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
 
 describe('workbenchTelemetry', () => {
   it('summarizes bridge generation progress for the workbench shell', () => {
@@ -66,6 +66,42 @@ describe('workbenchTelemetry', () => {
     expect(summary.recentActivity.at(-1)?.status).toBe('needs-input');
     expect(summary.recentActivity.at(-1)?.detail).toContain('What should be cooler');
     expect(summary.phase).toBe('clarifying intent');
+  });
+
+  it('keeps the latest unresolved clarification available for the workbench form', () => {
+    const request = latestClarificationRequest([
+      {
+        type: 'generation.intent_brief',
+        userRequest: 'icebergs',
+        requirements: ['Primary request: icebergs'],
+        missingDetails: ['subject'],
+        questions: ['What is the main subject?'],
+        willClarify: true,
+      },
+      {
+        type: 'generation.clarification_needed',
+        questions: ['What is the main subject?'],
+        reason: 'Prompt is vague.',
+      },
+    ]);
+
+    expect(request).toEqual({
+      question: 'What is the main subject?',
+      reason: 'Prompt is vague.',
+    });
+  });
+
+  it('clears clarification once generation has moved on', () => {
+    const request = latestClarificationRequest([
+      {
+        type: 'generation.clarification_needed',
+        questions: ['What is the main subject?'],
+        reason: 'Prompt is vague.',
+      },
+      { type: 'generation.domain_plan', domains: ['three'] },
+    ]);
+
+    expect(request).toBeNull();
   });
 
   it('surfaces stage timing receipts after a draft run completes', () => {

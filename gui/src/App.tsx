@@ -25,6 +25,7 @@ import {
 import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
 import { buildSyncPreviewHtml } from './gui/syncPreview';
 import { getWorkbenchMode, shouldRenderLegacyPanel, WORKBENCH_MODES, type WorkbenchMode } from './gui/workbenchState';
+import { latestClarificationRequest } from './gui/workbenchTelemetry';
 import { useTuiBridgeSession } from './gui/useTuiBridgeSession';
 
 // State types
@@ -174,6 +175,7 @@ export default function App() {
   const [createMode, setCreateMode] = useState<CreateModeId>('auto');
   const [createExecutionMode, setCreateExecutionMode] = useState<WorkbenchExecutionMode>('draft');
   const [createTraits, setCreateTraits] = useState<CreateTraits>({ bpm: 120, palette: '' });
+  const [clarificationAnswer, setClarificationAnswer] = useState<string>('');
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [createRunError, setCreateRunError] = useState<string | null>(null);
@@ -755,6 +757,7 @@ export default function App() {
   const bridgeSummary = bridge.summary;
   const bridgePreview = bridge.preview;
   const bridgeCodePreview = bridge.codePreview;
+  const clarificationRequest = activeMode.id === 'generate' ? latestClarificationRequest(bridge.events) : null;
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
@@ -777,6 +780,19 @@ export default function App() {
       return;
     }
     void handleCreateRun();
+  };
+
+  const handleClarificationSubmit = () => {
+    const answer = clarificationAnswer.trim();
+    if (!answer) return;
+    const prompt = createPrompt.trim();
+    const clarifiedPrompt = prompt ? `${prompt}\n\nClarification answer: ${answer}` : answer;
+    setCreatePrompt(clarifiedPrompt);
+    setClarificationAnswer('');
+    void bridge.submitPrompt(buildWorkbenchPrompt(createMode, clarifiedPrompt), {
+      clientIntent: 'creative',
+      ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
+    });
   };
 
   const handleWorkbenchModeChange = (mode: WorkbenchMode) => {
@@ -961,6 +977,30 @@ export default function App() {
             </div>
           ))}
         </div>
+      )}
+      {activeMode.id === 'generate' && clarificationRequest && (
+        <form
+          className="liminal-clarification"
+          onSubmit={(event) => {
+            event.preventDefault();
+            handleClarificationSubmit();
+          }}
+        >
+          <div>
+            <span>Answer needed</span>
+            <strong>{clarificationRequest.question}</strong>
+            <small>{clarificationRequest.reason}</small>
+          </div>
+          <input
+            type="text"
+            value={clarificationAnswer}
+            onChange={(event) => setClarificationAnswer(event.target.value)}
+            placeholder="Example: a glowing iceberg city with blue glass, slow drifting fog"
+          />
+          <button type="submit" disabled={bridge.submitting || !clarificationAnswer.trim()}>
+            Answer and draft
+          </button>
+        </form>
       )}
       {bridgeSummary.stageTimings.length > 0 && (
         <div className="liminal-timeline-events">

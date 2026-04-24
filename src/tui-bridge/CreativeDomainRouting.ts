@@ -12,8 +12,9 @@ export function inferCreativeDomain(prompt: string): Domain {
   }
   if (/\bshader\b|\bglsl\b|\bfragment\b|\bray\s*march\b|\bsdf\b/.test(lower)) return Domain.GLSL;
   if (/\bstrudel\b|\btidal\b|\blive\s*coding\s*music\b/.test(lower)) return Domain.STRUDEL;
+  if (/\bhydra\b|\bvideo\s*synth\b|\bkaleid\b/.test(lower)) return Domain.HYDRA;
   if (/\btone\.?js\b|\btonejs\b|\bweb\s*audio\b|\bsynth\b|\bdrone\b|\bsequencer\b/.test(lower)) return Domain.TONE;
-  if (/\bhydra\b|\bvideo\s*synth\b|\bkaleid\b|\boscillator\b/.test(lower)) return Domain.HYDRA;
+  if (/\boscillator\b/.test(lower)) return Domain.HYDRA;
   if (/\bascii\b|\btext\s*art\b/.test(lower)) return Domain.ASCII;
   if (/\bsvg\b|\bvector\b|\blogo\b|\bicon\b|\bdiagram\b|\bcutfile\b|\bcnc\b|\bsticker\b/.test(lower)) return Domain.GENERIC;
   return Domain.P5;

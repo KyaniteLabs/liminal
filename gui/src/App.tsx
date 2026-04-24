@@ -16,6 +16,7 @@ import {
   buildWorkbenchRunOptions,
   buildWorkbenchPrompt,
   CREATE_MODE_OPTIONS,
+  detectPromptCreateMode,
   getCreateModeOption,
   requiresBridgeSession,
   usesOrganismApi,
@@ -120,7 +121,7 @@ const PROVIDER_OPTIONS = ['lmstudio', 'minimax', 'glm', 'openai', 'openrouter', 
 const PROVIDER_PRESETS: Record<string, { baseUrl: string; model: string; evaluatorModel?: string }> = {
   lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model' },
   minimax: { baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7' },
-  glm: { baseUrl: 'https://api.z.ai/api/paas/v4', model: 'glm-4.5-air' },
+  glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'GLM-5v-turbo', evaluatorModel: 'GLM-5v-turbo' },
   openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4', evaluatorModel: 'gpt-4o' },
   openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5.4-mini', evaluatorModel: 'google/gemini-2.5-flash' },
   ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2' },
@@ -587,8 +588,9 @@ export default function App() {
   const handleCreateRun = async () => {
     const prompt = createPrompt.trim();
     if (!prompt) return;
-    if (!usesOrganismApi(createMode)) {
-      await bridge.submitPrompt(buildWorkbenchPrompt(createMode, prompt), {
+    const currentMode = detectPromptCreateMode(prompt) ?? createMode;
+    if (!usesOrganismApi(currentMode)) {
+      await bridge.submitPrompt(buildWorkbenchPrompt(currentMode, prompt), {
         clientIntent: 'creative',
         ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
       });
@@ -762,7 +764,11 @@ export default function App() {
   const syncPreviewHtml = bridgeCodePreview?.code ? buildSyncPreviewHtml(bridgeCodePreview.code) : '';
   const hasDirectSyncTarget = Boolean(syncPreviewHtml);
   const hasSyncTarget = Boolean(previewUrl || bridgePreview || hasDirectSyncTarget);
-  const createModeOption = getCreateModeOption(createMode);
+  const promptCreateMode = detectPromptCreateMode(createPrompt);
+  const effectiveCreateMode = promptCreateMode ?? createMode;
+  const createModeOption = getCreateModeOption(effectiveCreateMode);
+  const selectedCreateModeOption = getCreateModeOption(createMode);
+  const promptOverridesMode = Boolean(promptCreateMode && promptCreateMode !== createMode);
   const draftReady = activeMode.id === 'generate' && !bridgeSummary.active && bridgeSummary.processSteps.some((step) => step.id === 'ready' && step.status === 'done');
 
   const handleWorkbenchRun = () => {
@@ -771,11 +777,11 @@ export default function App() {
       return;
     }
     if (activeMode.id === 'generate') {
-      if (usesOrganismApi(createMode)) {
+      if (usesOrganismApi(effectiveCreateMode)) {
         void handleCreateRun();
         return;
       }
-      void bridge.submitPrompt(buildWorkbenchPrompt(createMode, createPrompt), {
+      void bridge.submitPrompt(buildWorkbenchPrompt(effectiveCreateMode, createPrompt), {
         clientIntent: 'creative',
         ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
       });
@@ -791,7 +797,8 @@ export default function App() {
     const clarifiedPrompt = prompt ? `${prompt}\n\nClarification answer: ${answer}` : answer;
     setCreatePrompt(clarifiedPrompt);
     setClarificationAnswer('');
-    void bridge.submitPrompt(buildWorkbenchPrompt(createMode, clarifiedPrompt), {
+    const clarifiedMode = detectPromptCreateMode(clarifiedPrompt) ?? createMode;
+    void bridge.submitPrompt(buildWorkbenchPrompt(clarifiedMode, clarifiedPrompt), {
       clientIntent: 'creative',
       ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
     });
@@ -803,10 +810,11 @@ export default function App() {
       ? `\n\nCurrent draft code excerpt:\n${bridgeCodePreview.code.slice(0, 5000)}`
       : '';
     const followupPrompt = `${basePrompt}\n\n${instruction}${codeContext}`;
+    const followupMode = detectPromptCreateMode(followupPrompt) ?? createMode;
     setCreatePrompt(followupPrompt);
     setCreateExecutionMode(executionMode);
     setDraftAdjustment('');
-    void bridge.submitPrompt(buildWorkbenchPrompt(createMode, followupPrompt), {
+    void bridge.submitPrompt(buildWorkbenchPrompt(followupMode, followupPrompt), {
       clientIntent: 'creative',
       ...buildWorkbenchRunOptions(executionMode, createMaxIterations),
     });
@@ -964,8 +972,13 @@ export default function App() {
                 <option key={option.id} value={option.id}>{option.label}</option>
               ))}
             </select>
+            <small>
+              {promptOverridesMode
+                ? `Prompt says ${createModeOption.label}; using it instead of ${selectedCreateModeOption.label}.`
+                : `Default target: ${createModeOption.stageLabel}. Explicit prompt words override this.`}
+            </small>
           </label>
-          {usesOrganismApi(createMode) && (
+          {usesOrganismApi(effectiveCreateMode) && (
             <div className="liminal-control-row">
               <label>
                 <span>BPM</span>
@@ -1377,8 +1390,13 @@ export default function App() {
                 <option key={option.id} value={option.id}>{option.label}</option>
               ))}
             </select>
+            <small className="atelier-help" style={{ display: 'block', marginTop: 4 }}>
+              {promptOverridesMode
+                ? `Prompt says ${createModeOption.label}; using it instead of ${selectedCreateModeOption.label}.`
+                : `Default target: ${createModeOption.stageLabel}. Explicit prompt words override this.`}
+            </small>
           </label>
-          {usesOrganismApi(createMode) && (
+          {usesOrganismApi(effectiveCreateMode) && (
             <div style={{ display: 'flex', gap: 12, marginBottom: 16, flexWrap: 'wrap' }}>
               <label>
                 <span className="atelier-label" style={{ marginRight: 4 }}>BPM</span>

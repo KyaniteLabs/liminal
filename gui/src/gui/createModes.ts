@@ -42,9 +42,24 @@ export function getCreateModeOption(mode: string): CreateModeOption {
   return CREATE_MODE_OPTIONS.find((option) => option.id === mode) ?? CREATE_MODE_OPTIONS[0];
 }
 
+export function detectPromptCreateMode(prompt: string): CreateModeId | null {
+  const lower = prompt.toLowerCase();
+  if (/\bhydra\b|\bvideo synth\b/.test(lower)) return 'hydra';
+  if (/\btone(?:\.js)?\b|\bweb audio\b|\bsynth\b/.test(lower)) return 'tone';
+  if (/\bstrudel\b|\blive coding\b/.test(lower)) return 'strudel';
+  if (/\bthree(?:\.js)?\b|\b3d\b|\bwebgl scene\b/.test(lower)) return 'three';
+  if (/\bglsl\b|\bfragment shader\b|\bshader\b/.test(lower)) return 'glsl';
+  if (/\bsvg\b|\bvector\b/.test(lower)) return 'svg';
+  if (/\bp5(?:\.js)?\b|\bcreative coding sketch\b/.test(lower)) return 'p5';
+  if (/\bhtml\b|\bcss\b/.test(lower)) return 'html';
+  if (/\bascii\b/.test(lower)) return 'ascii';
+  return null;
+}
+
 export function buildWorkbenchPrompt(mode: CreateModeId, prompt: string): string {
   const trimmed = prompt.trim();
-  const option = getCreateModeOption(mode);
+  const promptMode = detectPromptCreateMode(trimmed);
+  const option = getCreateModeOption(promptMode ?? mode);
   if (!trimmed || !option.promptHint) return trimmed;
   return `${option.promptHint}\n\nUser prompt: ${trimmed}`;
 }

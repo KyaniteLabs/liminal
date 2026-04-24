@@ -150,9 +150,9 @@ export const PROVIDER_TEMPLATES: Record<ProviderType, Omit<ProviderConfig, 'apiK
   glm: {
     provider: 'glm',
     name: 'GLM',
-    description: 'GLM International Coding Plan API (GLM-5.1 flagship, Anthropic-compatible)',
+    description: 'GLM International API (GLM-5v-turbo multimodal, Anthropic-compatible)',
     baseUrl: 'https://api.z.ai/api/anthropic',
-    model: 'glm-5.1',
+    model: 'GLM-5v-turbo',
     apiStyle: 'anthropic',
     temperature: 0.7,
     maxTokens: 16384,

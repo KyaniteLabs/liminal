@@ -3,6 +3,7 @@ import {
   buildWorkbenchPrompt,
   buildWorkbenchRunOptions,
   CREATE_MODE_OPTIONS,
+  detectPromptCreateMode,
   getCreateModeOption,
   requiresBridgeSession,
   usesOrganismApi,
@@ -33,6 +34,14 @@ describe('createModes', () => {
     expect(buildWorkbenchPrompt('three', 'make a flower')).toContain('Three.js 3D scene');
     expect(buildWorkbenchPrompt('svg', 'make a flower')).toContain('raw SVG vector asset');
     expect(buildWorkbenchPrompt('glsl', 'make a flower')).toContain('GLSL fragment shader');
+  });
+
+  it('lets explicit prompt domain override a stale selected mode hint', () => {
+    const prompt = buildWorkbenchPrompt('tone', 'make a hydra visual of icebergs dancing in the sky');
+
+    expect(prompt).toContain('Hydra video synth');
+    expect(prompt).not.toContain('Tone.js audio');
+    expect(detectPromptCreateMode('make a hydra visual')).toBe('hydra');
   });
 
   it('keeps organism as the dedicated paired music and visual API mode', () => {

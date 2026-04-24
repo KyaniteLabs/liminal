@@ -92,12 +92,27 @@ const { ralphRun } = vi.hoisted(() => ({
   }),
 }));
 
+const { draftGenerate } = vi.hoisted(() => ({
+  draftGenerate: vi.fn(async () => ({
+    needsClarification: false,
+    code: 'function setup() { createCanvas(120, 120); background(12); }',
+    thinking: 'Drafted a fast p5 preview with immediate visible output.',
+    model: 'qwen3.6-35b-a3b',
+  })),
+}));
+
 vi.mock('../../src/harness/agent/index.js', () => ({
   createLLMModeAgent: () => ({ executeTask }),
 }));
 
 vi.mock('../../src/core/RalphLoop.js', () => ({
   RalphLoop: { run: ralphRun },
+}));
+
+vi.mock('../../src/core/GenerationOrchestrator.js', () => ({
+  GenerationOrchestrator: class {
+    generate = draftGenerate;
+  },
 }));
 
 const { TuiBridgeService } = await import('../../src/tui-bridge/TuiBridgeService.js');
@@ -107,6 +122,16 @@ function fakeLlm() {
     getConfig: () => ({ baseUrl: 'https://api.openai.com/v1', model: 'test-model' }),
     generate: vi.fn().mockResolvedValue({ code: 'Hello! How can I help?', explanation: '', success: true }),
   };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
 }
 
 function expectLiveContext(description: string): void {
@@ -128,6 +153,7 @@ describe('Bubble Tea operator routing', () => {
   beforeEach(() => {
     executeTask.mockClear();
     ralphRun.mockClear();
+    draftGenerate.mockClear();
   });
 
   it('routes ordinary text to direct chat without requiring review in assist mode', async () => {
@@ -233,6 +259,78 @@ describe('Bubble Tea operator routing', () => {
       .some(event => event.type === 'tool.started' && ['gitStatus', 'listDir', 'readFile', 'searchCode', 'searchDocs'].includes(String((event as any).toolName)))).toBe(false);
   });
 
+  it('defaults workbench creative runs to the draft lane without invoking RalphLoop', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+
+    const result = await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'glass flowers orbiting inside a black hole',
+        clientIntent: 'creative',
+        maxIterations: 5,
+        candidateCount: 1,
+        timeoutMinutes: 3,
+      },
+      fakeLlm() as never,
+    );
+
+    expect(result.reviewRequired).toBe(false);
+    expect(ralphRun).not.toHaveBeenCalled();
+    expect(draftGenerate).toHaveBeenCalledOnce();
+    expect(draftGenerate).toHaveBeenCalledWith(expect.any(String), expect.any(String), true, expect.objectContaining({ aborted: false }));
+
+    const completion = await waitFor(() => service.getEvents(session.sessionId)
+      .find(event => event.type === 'generation.complete'));
+    expect(completion).toMatchObject({
+      type: 'generation.complete',
+      reason: 'draft artifact ready (unscored)',
+      qualityState: 'unscored',
+      executionMode: 'draft',
+    });
+  });
+
+  it('cancels an in-flight draft run before it can complete', async () => {
+    const service = new TuiBridgeService();
+    const session = service.createSession();
+    const pendingDraft = deferred<{
+      needsClarification: false;
+      code: string;
+      thinking: string;
+      model: string;
+    }>();
+    draftGenerate.mockImplementationOnce(() => pendingDraft.promise);
+
+    await service.submitInput(
+      session.sessionId,
+      {
+        mode: 'chat',
+        text: 'slow aurora cathedral',
+        clientIntent: 'creative',
+        executionMode: 'draft',
+      },
+      fakeLlm() as never,
+    );
+
+    service.cancelRun(session.sessionId);
+    await waitFor(() => service.getEvents(session.sessionId)
+      .find((event) => event.type === 'activity.updated' && String((event as any).message).includes('Generation stopped')));
+
+    expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
+    expect(service.getEvents(session.sessionId).some((event) => event.type === 'activity.updated' && String((event as any).message).includes('Generation stopped'))).toBe(true);
+
+    pendingDraft.resolve({
+      needsClarification: false,
+      code: 'function setup() { createCanvas(100, 100); }',
+      thinking: 'late draft',
+      model: 'qwen3.6-35b-a3b',
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(service.getEvents(session.sessionId).some((event) => event.type === 'generation.complete')).toBe(false);
+  });
+
   it('labels creative telemetry with generator and evaluator role models, not the harness model', async () => {
     const service = new TuiBridgeService();
     const session = service.createSession({
@@ -273,6 +371,7 @@ describe('Bubble Tea operator routing', () => {
         mode: 'chat',
         text: 'make a p5 animation of icebergs dancing in the sky with aurora colors, slow drifting motion, and a dark ocean horizon',
         clientIntent: 'creative',
+        executionMode: 'prove',
         maxIterations: 1,
         candidateCount: 1,
         timeoutMinutes: 1,

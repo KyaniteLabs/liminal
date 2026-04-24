@@ -506,6 +506,15 @@ describe('getEffectiveConfig provider mappings', () => {
     expect(config.provider).toBe('lmstudio');
   });
 
+  it.each(['glm', 'openrouter', 'moonshot', 'kimi', 'custom'] as const)(
+    'preserves named provider %s',
+    async (providerName) => {
+      process.env.LIMINAL_LLM_PROVIDER = providerName;
+      const config = await getEffectiveConfig();
+      expect(config.provider).toBe(providerName);
+    },
+  );
+
   it('uses lmstudio as default when no provider specified', async () => {
     const config = await getEffectiveConfig();
     expect(config.provider).toBe('lmstudio');

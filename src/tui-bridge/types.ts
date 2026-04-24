@@ -48,6 +48,7 @@ export interface TuiInputRequest {
   mode: TuiMode;
   text: string;
   clientIntent?: 'chat' | 'inspect' | 'action' | 'creative';
+  executionMode?: 'draft' | 'prove';
   maxIterations?: number;
   candidateCount?: number;
   timeoutMinutes?: number;
@@ -91,12 +92,12 @@ export type TuiBridgeEvent =
   | { type: 'generation.intent_brief'; sessionId: string; userRequest: string; requirements: string[]; missingDetails: string[]; questions: string[]; willClarify: boolean }
   | { type: 'generation.clarification_needed'; sessionId: string; questions: string[]; reason: string }
   | { type: 'generation.reasoning_trace'; sessionId: string; phase: string; thought: string; model?: string; detail?: string; source?: 'harness' | 'generator' | 'evaluator' }
-  | { type: 'generation.domain_plan'; sessionId: string; domains: string[]; startedAt?: string; timeoutMinutes?: number; candidateCount?: number }
-  | { type: 'generation.attempt.started'; sessionId: string; domain: string; attempt: number; attemptTotal: number; startedAt?: string; timeoutMinutes?: number; candidateCount?: number }
+  | { type: 'generation.domain_plan'; sessionId: string; domains: string[]; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove' }
+  | { type: 'generation.attempt.started'; sessionId: string; domain: string; attempt: number; attemptTotal: number; startedAt?: string; timeoutMinutes?: number; candidateCount?: number; executionMode?: 'draft' | 'prove' }
   | { type: 'generation.attempt.failed'; sessionId: string; domain: string; attempt: number; attemptTotal: number; error: string; duration?: number }
   | { type: 'generation.candidate.generated'; sessionId: string; domain: string; attempt: number; attemptTotal: number; iteration: number; candidateCount?: number; codeSize?: number; duration?: number }
-  | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string }
-  | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string }
+  | { type: 'generation.iteration'; sessionId: string; iteration: number; score: number; code: string; stageTimings?: Array<{ label: 'Generate' | 'Evaluate'; durationMs: number }> }
+  | { type: 'generation.complete'; sessionId: string; iterations: number; finalScore: number; duration: number; model: string; reason: string; qualityState?: 'scored' | 'unscored'; executionMode?: 'draft' | 'prove' }
   | { type: 'phase.changed'; sessionId: string; phase: string; stepCurrent?: number; stepTotal?: number; activeFile?: string; objective?: string }
   | { type: 'tool.started'; sessionId: string; toolName: string; thought?: string; displayLabel?: string; argsSummary?: string; stepNum?: number }
   | { type: 'tool.completed'; sessionId: string; toolName: string; resultSummary?: string; success?: boolean; stepNum?: number }

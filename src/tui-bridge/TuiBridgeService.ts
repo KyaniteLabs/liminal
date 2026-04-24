@@ -37,6 +37,9 @@ import { HTMLWrapper } from '../utils/htmlWrapper.js';
 import { AmbiguityDetector } from '../core/AmbiguityDetector.js';
 import { buildCreativeDomainPlan, previewDomainForCode } from './CreativeDomainRouting.js';
 import { summarizeReasoningTrace } from './TraceSummarizer.js';
+import { normalizeOptions } from '../core/LoopConfig.js';
+import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
+import { Gallery } from '../gallery/Gallery.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -590,8 +593,12 @@ export class TuiBridgeService {
 
         if (input.clientIntent === 'creative') {
           logBridge('input.routed', { sessionId, route: 'workbench.creative', confidence: classification.confidence });
-          this.streamRalphGeneration(sessionId, input.text, conversation, llm, input)
-            .then(() => emitSessionTurn('ralph-loop'))
+          const executionMode = input.executionMode ?? 'draft';
+          const runCreative = executionMode === 'draft'
+            ? this.streamDraftGeneration(sessionId, input.text, conversation, llm, input)
+            : this.streamRalphGeneration(sessionId, input.text, conversation, llm, input);
+          runCreative
+            .then(() => emitSessionTurn(executionMode === 'draft' ? 'draft-generator' : 'ralph-loop'))
             .catch(handleError);
           break;
         }
@@ -768,6 +775,23 @@ export class TuiBridgeService {
       trust: { level: 'untrusted', label: 'Generated code is untrusted by default' },
     });
     this.emit(sessionId, { type: 'action.cancelled', sessionId, actionId });
+  }
+
+  cancelRun(sessionId: string): void {
+    this.cancelStream(sessionId);
+    const status = this.sessions.get(sessionId);
+    if (!status) {
+      throw new Error(`Unknown TUI session: ${sessionId}`);
+    }
+    this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
+    this.emit(sessionId, {
+      type: 'status.updated',
+      sessionId,
+      status: this.sessions.update(sessionId, {
+        mode: 'chat',
+        activeTask: 'Generation stopped',
+      }),
+    });
   }
 
   /**
@@ -1580,6 +1604,7 @@ export class TuiBridgeService {
         startedAt: new Date(generationStartedAt).toISOString(),
         timeoutMinutes,
         candidateCount,
+        executionMode: 'prove',
       });
       this.emit(sessionId, {
         type: 'tool.completed',
@@ -1608,6 +1633,7 @@ export class TuiBridgeService {
           startedAt: new Date(attemptStartedAt).toISOString(),
           timeoutMinutes,
           candidateCount,
+          executionMode: 'prove',
         });
         this.emit(sessionId, {
           type: 'activity.updated',
@@ -1660,6 +1686,7 @@ export class TuiBridgeService {
                 iteration: iterationContext.iteration,
                 score: iterationContext.evaluation.score,
                 code: iterationContext.code,
+                stageTimings: iterationContext.stageTimings,
               });
               this.emitReasoningTrace(sessionId, {
                 source: 'evaluator',
@@ -1690,6 +1717,10 @@ export class TuiBridgeService {
           });
           if (!attemptResult.code?.trim()) {
             throw new Error('Generation produced no code');
+          }
+          if (controller.signal.aborted) {
+            this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
+            return;
           }
           this.emit(sessionId, {
             type: 'tool.completed',
@@ -1758,6 +1789,8 @@ export class TuiBridgeService {
           duration: result.duration,
           model: result.model || generatorModelName,
           reason: result.reason,
+          qualityState: 'scored',
+          executionMode: 'prove',
         });
 
         // Step 4: Emit response.metadata for chat responses
@@ -1821,6 +1854,231 @@ export class TuiBridgeService {
       throw err;
     } finally {
       this.activeStreams.delete(sessionId);
+    }
+  }
+
+  /**
+   * Stream a chat response with conversation history and telemetry
+   */
+  private async streamDraftGeneration(
+    sessionId: string,
+    userText: string,
+    conversation: ConversationManager,
+    llm: LLMClient,
+    options: Pick<TuiInputRequest, 'maxIterations' | 'candidateCount' | 'timeoutMinutes'> = {},
+  ): Promise<void> {
+    const controller = new AbortController();
+    this.activeStreams.set(sessionId, controller);
+
+    const config = llm.getConfig();
+    const sessionStatus = this.sessions.get(sessionId);
+    const harnessModelName = sessionStatus?.roles?.harness?.model || config.model || 'unknown';
+    const generatorModelName = sessionStatus?.roles?.generator?.model || harnessModelName;
+    const timeoutMinutes = Math.min(3, Math.max(1, Number(options.timeoutMinutes) || 1));
+    const candidateCount = 1;
+    const generationStartedAt = Date.now();
+    const intentBrief = this.buildCreativeIntentBrief(userText);
+
+    try {
+      this.emit(sessionId, {
+        type: 'activity.updated',
+        sessionId,
+        message: 'Draft mode: generating a first artifact before scoring.',
+      });
+      this.emitIntentBrief(sessionId, intentBrief);
+      this.emitReasoningTrace(sessionId, {
+        phase: 'analysis',
+        thought: 'Draft mode is prioritizing the first visible artifact and skipping the proof loop.',
+        detail: intentBrief.requirements.join(' | '),
+        model: harnessModelName,
+        source: 'harness',
+      });
+
+      if (intentBrief.shouldClarify) {
+        this.emitCreativeClarification(sessionId, intentBrief, conversation);
+        return;
+      }
+
+      const domainPlan = buildCreativeDomainPlan(userText);
+      this.emit(sessionId, {
+        type: 'generation.domain_plan',
+        sessionId,
+        domains: domainPlan,
+        startedAt: new Date(generationStartedAt).toISOString(),
+        timeoutMinutes,
+        candidateCount,
+        executionMode: 'draft',
+      });
+
+      let result: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
+      let activeDomain = domainPlan[0];
+      let lastError: unknown;
+
+      for (let attempt = 0; attempt < domainPlan.length; attempt++) {
+        const attemptStartedAt = Date.now();
+        const domain = domainPlan[attempt];
+        activeDomain = domain;
+        const attemptPrompt = this.promptForCreativeDomain(userText, domain, attempt > 0, intentBrief);
+
+        this.emit(sessionId, {
+          type: 'generation.attempt.started',
+          sessionId,
+          domain,
+          attempt: attempt + 1,
+          attemptTotal: domainPlan.length,
+          startedAt: new Date(attemptStartedAt).toISOString(),
+          timeoutMinutes,
+          candidateCount,
+          executionMode: 'draft',
+        });
+        this.emitReasoningTrace(sessionId, {
+          phase: 'generation',
+          thought: `Calling ${generatorModelName} for a fast ${domain} draft.`,
+          detail: 'Draft mode skips evaluator scoring and repair so preview can appear immediately.',
+          model: generatorModelName,
+          source: 'harness',
+        });
+
+        try {
+          const orchestrator = new GenerationOrchestrator(
+            normalizeOptions({ collabDomain: domain }),
+            new Gallery('gallery'),
+            null,
+          );
+          const generationPromise = orchestrator.generate(attemptPrompt, attemptPrompt, true, controller.signal);
+          generationPromise.catch((err) => {
+            if (!controller.signal.aborted) {
+              const message = err instanceof Error ? err.message : String(err);
+              logBridge('generation.draft.background_failed', { sessionId, generatorModel: generatorModelName, message });
+            }
+          });
+          const attemptResult = await this.awaitDraftAttempt(generationPromise, controller.signal, timeoutMinutes);
+          if (!attemptResult) {
+            this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
+            return;
+          }
+          if (attemptResult.needsClarification) {
+            const clarificationBrief: CreativeIntentBrief = {
+              userRequest: intentBrief.userRequest,
+              requirements: intentBrief.requirements,
+              missingDetails: intentBrief.missingDetails,
+              questions: attemptResult.clarifyingQuestions.map((question) => question.question),
+              shouldClarify: true,
+              reason: `Draft generation needs clarification for ${domain}.`,
+            };
+            this.emitCreativeClarification(sessionId, clarificationBrief, conversation);
+            return;
+          }
+          if (!attemptResult.code?.trim()) {
+            throw new Error('Draft generation produced no code');
+          }
+          if (controller.signal.aborted) {
+            this.emit(sessionId, { type: 'activity.updated', sessionId, message: 'Generation stopped by operator.' });
+            return;
+          }
+          if (attemptResult.thinking) {
+            const summary = summarizeReasoningTrace(attemptResult.thinking, 'generator');
+            this.emitReasoningTrace(sessionId, {
+              source: 'generator',
+              phase: 'generator-thinking',
+              thought: summary.summary,
+              detail: summary.details.join(' | ') || attemptResult.thinking.slice(0, 600),
+              model: attemptResult.model || generatorModelName,
+            });
+          }
+          result = attemptResult;
+          break;
+        } catch (err) {
+          lastError = err;
+          const message = err instanceof Error ? err.message : String(err);
+          this.emit(sessionId, {
+            type: 'generation.attempt.failed',
+            sessionId,
+            domain,
+            attempt: attempt + 1,
+            attemptTotal: domainPlan.length,
+            error: message,
+            duration: Date.now() - attemptStartedAt,
+          });
+          if (controller.signal.aborted) throw err;
+        }
+      }
+
+      if (!result || result.needsClarification) {
+        throw lastError instanceof Error ? lastError : new Error(String(lastError ?? 'All draft generation attempts failed'));
+      }
+
+      this.emit(sessionId, { type: 'response.delta', sessionId, delta: result.code });
+      this.emit(sessionId, { type: 'response.completed', sessionId, content: result.code });
+      this.emit(sessionId, { type: 'response.committed', sessionId, content: result.code });
+      this.emit(sessionId, {
+        type: 'response.metadata',
+        sessionId,
+        model: result.model || generatorModelName,
+        duration: Date.now() - generationStartedAt,
+      });
+
+      const codeContent = this.extractCodeContent(result.code);
+      if (codeContent) {
+        this.emit(sessionId, { type: 'preview.started', sessionId, previewType: 'code' });
+        this.emit(sessionId, { type: 'preview.content', sessionId, content: codeContent, previewType: 'code' });
+        this.emit(sessionId, { type: 'preview.completed', sessionId, content: codeContent, previewType: 'code' });
+      }
+
+      conversation['recordMessage']('assistant', `Draft artifact ready:\n\n${result.code}`);
+      this.emit(sessionId, {
+        type: 'generation.complete',
+        sessionId,
+        iterations: 1,
+        finalScore: 0,
+        duration: Date.now() - generationStartedAt,
+        model: result.model || generatorModelName,
+        reason: 'draft artifact ready (unscored)',
+        qualityState: 'unscored',
+        executionMode: 'draft',
+      });
+      this.emit(sessionId, {
+        type: 'status.updated',
+        sessionId,
+        status: this.sessions.update(sessionId, {
+          mode: 'chat',
+          activeTask: 'Draft artifact ready',
+          model: result.model || generatorModelName,
+        }),
+      });
+
+      void this.emitPreviewArtifacts(sessionId, result.code, activeDomain).catch((err) => {
+        const message = err instanceof Error ? err.message : String(err);
+        this.emit(sessionId, { type: 'activity.updated', sessionId, message: `Preview render failed: ${message}` });
+      });
+    } finally {
+      this.activeStreams.delete(sessionId);
+    }
+  }
+
+  private async awaitDraftAttempt<T>(
+    generationPromise: Promise<T>,
+    signal: AbortSignal,
+    timeoutMinutes: number,
+  ): Promise<T | undefined> {
+    if (signal.aborted) return undefined;
+
+    let timeoutId: ReturnType<typeof setTimeout> | undefined;
+    let removeAbortListener = () => {};
+    const interruptPromise = new Promise<undefined>((resolve, reject) => {
+      const onAbort = () => resolve(undefined);
+      signal.addEventListener('abort', onAbort, { once: true });
+      removeAbortListener = () => signal.removeEventListener('abort', onAbort);
+      timeoutId = setTimeout(() => {
+        reject(new Error(`Draft generation timed out after ${timeoutMinutes} minute${timeoutMinutes === 1 ? '' : 's'}`));
+      }, timeoutMinutes * 60_000);
+    });
+
+    try {
+      return await Promise.race([generationPromise, interruptPromise]);
+    } finally {
+      removeAbortListener();
+      if (timeoutId) clearTimeout(timeoutId);
     }
   }
 

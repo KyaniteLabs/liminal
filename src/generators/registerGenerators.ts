@@ -162,18 +162,18 @@ const p5Confidence = (prompt: string): number => {
 const shaderEntry: GeneratorEntry = {
   name: 'shader',
   canHandle: shaderConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new ShaderGenerator();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 
 const threeEntry: GeneratorEntry = {
   name: 'three',
   canHandle: threeConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new ThreeGenerator();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 
@@ -183,21 +183,22 @@ const revideoEntry: GeneratorEntry = {
     const gen = new RevideoGenerator();
     return gen.canHandle(prompt);
   },
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new RevideoGenerator();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 
 const htmlEntry: GeneratorEntry = {
   name: 'html',
   canHandle: htmlConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new HTMLWebGenerator();
     return gen.generate(prompt, {
       responsive: true,
       includeAnimations: true,
-      darkMode: true
+      darkMode: true,
+      ...params,
     });
   },
 };
@@ -205,21 +206,22 @@ const htmlEntry: GeneratorEntry = {
 const svgEntry: GeneratorEntry = {
   name: 'svg',
   canHandle: svgConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new SVGGenerator();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 
 const asciiEntry: GeneratorEntry = {
   name: 'ascii',
   canHandle: asciiConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new ASCIIArtGenerator();
     return gen.generate(prompt, {
       style: 'abstract',
       width: 60,
-      height: 30
+      height: 30,
+      ...params,
     });
   },
 };
@@ -227,27 +229,27 @@ const asciiEntry: GeneratorEntry = {
 const strudelEntry: GeneratorEntry = {
   name: 'strudel',
   canHandle: strudelConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new StrudelGenerator();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 
 const hydraEntry: GeneratorEntry = {
   name: 'hydra',
   canHandle: hydraConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new HydraGenerator();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 
 const toneEntry: GeneratorEntry = {
   name: 'tone',
   canHandle: toneConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new ToneGenerator();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 
@@ -260,7 +262,7 @@ const toneEntry: GeneratorEntry = {
 const textgenEntry: GeneratorEntry = {
   name: 'textgen',
   canHandle: textgenConfidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new TextGenerativeGenerator();
     return gen.generate(prompt, {
       form: 'freeform',
@@ -268,6 +270,7 @@ const textgenEntry: GeneratorEntry = {
       maxLines: 30,
       maxWidth: 60,
       unicode: true,
+      ...params,
     });
   },
 };
@@ -275,9 +278,9 @@ const textgenEntry: GeneratorEntry = {
 const p5Entry: GeneratorEntry = {
   name: 'p5',
   canHandle: p5Confidence,
-  generate: async (prompt: string) => {
+  generate: async (prompt: string, params?: Record<string, unknown>) => {
     const gen = new P5GeneratorV2();
-    return gen.generate(prompt);
+    return gen.generate(prompt, params);
   },
 };
 

@@ -157,7 +157,7 @@ export interface ProjectConfig {
 
 export interface EffectiveConfig {
   /** @deprecated Provider is no longer used - baseUrl determines the endpoint */
-  provider?: 'ollama' | 'openai' | 'minimax' | 'lmstudio' | 'hybrid';
+  provider?: 'ollama' | 'openai' | 'minimax' | 'lmstudio' | 'hybrid' | 'glm' | 'openrouter' | 'moonshot' | 'kimi' | 'custom';
   baseUrl?: string;
   model: string;
   apiKey?: string;
@@ -362,7 +362,7 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
   const providerName = env('LLM_PROVIDER') || projectProvider || fileConfig?.defaultProvider || 'lmstudio';
 
   // Map provider names (including legacy aliases) to canonical types
-  const providerMap: Record<string, 'ollama' | 'openai' | 'minimax' | 'lmstudio' | 'hybrid'> = {
+  const providerMap: Record<string, NonNullable<EffectiveConfig['provider']>> = {
     'lmstudio': 'lmstudio',
     'inception': 'lmstudio',  // Legacy alias — inception used same OpenAI-compatible format
     'ollama': 'ollama',
@@ -370,6 +370,11 @@ export async function getEffectiveConfig(configPath?: string, projectConfigPath?
     'anthropic': 'openai',   // Legacy alias — removed provider, route to openai as closest match
     'minimax': 'minimax',
     'hybrid': 'hybrid',
+    'glm': 'glm',
+    'openrouter': 'openrouter',
+    'moonshot': 'moonshot',
+    'kimi': 'kimi',
+    'custom': 'custom',
   };
 
   const provider = providerMap[providerName] || 'lmstudio';

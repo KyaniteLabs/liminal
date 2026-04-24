@@ -15,6 +15,7 @@ export interface WorkbenchBridgeSummary {
   timelineSecondary: string;
   progressPercent: number;
   recentActivity: Array<{ label: string; detail: string; status?: string }>;
+  stageTimings: Array<{ label: string; durationLabel: string }>;
 }
 
 export interface WorkbenchPreview {
@@ -42,6 +43,7 @@ export function summarizeWorkbenchBridge(
     timelineSecondary: derived.latestMessage || `${derived.elapsedLabel} elapsed · ${derived.etaLabel}`,
     progressPercent: derived.progressPercent,
     recentActivity: summarizeRecentActivity(events),
+    stageTimings: derived.stageTimings ?? [],
   };
 }
 
@@ -102,6 +104,9 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
         return { label: 'Preview', detail: event.previewType === 'image' ? String(event.imageUrl || 'inline image rendered') : `${event.previewType} ready`, status: 'ok' };
       }
       if (event.type === 'generation.complete') {
+        if (event.qualityState === 'unscored') {
+          return { label: 'Draft ready', detail: String(event.reason || 'Preview ready without scoring'), status: 'ok' };
+        }
         return { label: 'Complete', detail: `Score ${event.finalScore ?? 'n/a'} in ${event.duration ?? 0}ms`, status: 'ok' };
       }
       return { label: 'Error', detail: String(event.message || 'unknown error'), status: 'failed' };

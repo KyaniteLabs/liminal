@@ -13,12 +13,14 @@ import { OperatorCockpit } from './components/OperatorCockpit';
 import { WorkbenchShell } from './components/WorkbenchShell';
 import { useEventStream } from './components/activity/hooks';
 import {
+  buildWorkbenchRunOptions,
   buildWorkbenchPrompt,
   CREATE_MODE_OPTIONS,
   getCreateModeOption,
   requiresBridgeSession,
   usesOrganismApi,
   type CreateModeId,
+  type WorkbenchExecutionMode,
 } from './gui/createModes';
 import { summarizeAudioSync, type AudioSyncFrame } from './gui/audioSync';
 import { buildSyncPreviewHtml } from './gui/syncPreview';
@@ -96,7 +98,7 @@ const PROVIDER_OPTIONS = ['lmstudio', 'minimax', 'glm', 'openai', 'openrouter', 
 const PROVIDER_PRESETS: Record<string, { baseUrl: string; model: string; evaluatorModel?: string }> = {
   lmstudio: { baseUrl: 'http://localhost:1234/v1', model: 'local-model' },
   minimax: { baseUrl: 'https://api.minimax.io/anthropic', model: 'MiniMax-M2.7' },
-  glm: { baseUrl: 'https://api.z.ai/api/anthropic', model: 'glm-5.1' },
+  glm: { baseUrl: 'https://api.z.ai/api/paas/v4', model: 'glm-4.5-air' },
   openai: { baseUrl: 'https://api.openai.com/v1', model: 'gpt-5.4', evaluatorModel: 'gpt-4o' },
   openrouter: { baseUrl: 'https://openrouter.ai/api/v1', model: 'openai/gpt-5.4-mini', evaluatorModel: 'google/gemini-2.5-flash' },
   ollama: { baseUrl: 'http://localhost:11434', model: 'llama3.2' },
@@ -149,6 +151,7 @@ export default function App() {
   const [createPrompt, setCreatePrompt] = useState<string>('');
   const [createMaxIterations, setCreateMaxIterations] = useState<number>(5);
   const [createMode, setCreateMode] = useState<CreateModeId>('auto');
+  const [createExecutionMode, setCreateExecutionMode] = useState<WorkbenchExecutionMode>('draft');
   const [createTraits, setCreateTraits] = useState<CreateTraits>({ bpm: 120, palette: '' });
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
@@ -560,9 +563,7 @@ export default function App() {
     if (!usesOrganismApi(createMode)) {
       await bridge.submitPrompt(buildWorkbenchPrompt(createMode, prompt), {
         clientIntent: 'creative',
-        maxIterations: createMaxIterations,
-        candidateCount: 1,
-        timeoutMinutes: 3,
+        ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
       });
       return;
     }
@@ -707,7 +708,9 @@ export default function App() {
   const runNeedsBridgeSession = activeMode.id === 'generate' && requiresBridgeSession(createMode);
   const runLabel = runNeedsBridgeSession && !bridge.session
     ? 'Connecting'
-    : runStatus === 'running' ? 'Running' : 'Run';
+    : bridge.submitting || runStatus === 'running'
+      ? createExecutionMode === 'draft' ? 'Drafting' : 'Proving'
+      : createExecutionMode === 'draft' ? 'Draft' : 'Prove';
   const bridgeSummary = bridge.summary;
   const bridgePreview = bridge.preview;
   const bridgeCodePreview = bridge.codePreview;
@@ -724,9 +727,7 @@ export default function App() {
       }
       void bridge.submitPrompt(buildWorkbenchPrompt(createMode, createPrompt), {
         clientIntent: 'creative',
-        maxIterations: createMaxIterations,
-        candidateCount: 1,
-        timeoutMinutes: 3,
+        ...buildWorkbenchRunOptions(createExecutionMode, createMaxIterations),
       });
       return;
     }
@@ -799,6 +800,22 @@ export default function App() {
               Confirm: {bridge.session.pendingAction.title}
             </button>
           )}
+          {bridgeSummary.active && (
+            <button type="button" className="atelier-btn atelier-btn--secondary" onClick={() => void bridge.cancelCurrent()}>
+              Stop
+            </button>
+          )}
+          <label>
+            <span>Execution</span>
+            <select
+              value={createExecutionMode}
+              onChange={(event: React.ChangeEvent<HTMLSelectElement>) => setCreateExecutionMode(event.target.value as WorkbenchExecutionMode)}
+            >
+              <option value="draft">Draft</option>
+              <option value="prove">Prove</option>
+            </select>
+            <small>{createExecutionMode === 'draft' ? 'Fast first artifact with immediate preview.' : 'Runs scoring, repair, and proof telemetry.'}</small>
+          </label>
           <label>
             <span>Max iterations</span>
             <input
@@ -863,6 +880,16 @@ export default function App() {
             <div className={`liminal-timeline-event liminal-timeline-event--${item.status || 'info'}`} key={`${item.label}-${index}`}>
               <span>{item.label}</span>
               <small>{item.detail}</small>
+            </div>
+          ))}
+        </div>
+      )}
+      {bridgeSummary.stageTimings.length > 0 && (
+        <div className="liminal-timeline-events">
+          {bridgeSummary.stageTimings.map((item) => (
+            <div className="liminal-timeline-event liminal-timeline-event--ok" key={`${item.label}-${item.durationLabel}`}>
+              <span>{item.label}</span>
+              <small>{item.durationLabel}</small>
             </div>
           ))}
         </div>
@@ -1168,7 +1195,7 @@ export default function App() {
             disabled={runStatus === 'running' || !createPrompt.trim()}
             className="atelier-btn atelier-btn--primary"
           >
-            {runStatus === 'running' ? 'Running…' : 'Run'}
+            {runStatus === 'running' ? (createExecutionMode === 'draft' ? 'Drafting…' : 'Proving…') : (createExecutionMode === 'draft' ? 'Draft' : 'Prove')}
           </button>
           {runStatus === 'done' && runResult && (
             <div className="atelier-alert atelier-alert--success" style={{ marginTop: 16 }}>

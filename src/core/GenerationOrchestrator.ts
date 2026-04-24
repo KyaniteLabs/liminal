@@ -29,6 +29,12 @@ import type { ClarifyResult, GenerationSuccess } from './clarify.js';
 
 type DispatchResult = { entry: GeneratorEntry; confidence: number } | null;
 
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new Error('Generation aborted');
+  }
+}
+
 /**
  * Union type for all generate() return values.
  * Backward-compatible: existing callers reading .code still work via GenerationSuccess.
@@ -108,22 +114,35 @@ export class GenerationOrchestrator {
   async generate(
     usedPrompt: string,
     _loadedPrompt: string,
-    bypassCache?: boolean
+    bypassCache?: boolean,
+    signal?: AbortSignal,
   ): Promise<GenerationResult> {
+    throwIfAborted(signal);
     await registerAllGenerators();
+    throwIfAborted(signal);
     const dispatched = generatorRegistry.dispatch(usedPrompt);
 
     if (this.options.useSwarm) {
-      return this.generateWithSwarm(usedPrompt);
+      const result = await this.generateWithSwarm(usedPrompt);
+      throwIfAborted(signal);
+      return result;
     }
 
     // Consolidated collaboration path - all collaboration goes through CollaborationEngine
     if (this.options.useDeepCollab || this.options.useCollab) {
-      return this.generateWithCollaboration(usedPrompt, dispatched);
+      const result = await this.generateWithCollaboration(usedPrompt, dispatched);
+      throwIfAborted(signal);
+      return result;
     }
 
     if (dispatched) {
-      const result = await dispatched.entry.generate(usedPrompt);
+      const generatorParams = bypassCache !== undefined || signal
+        ? { bypassCache, signal }
+        : undefined;
+      const result = generatorParams
+        ? await dispatched.entry.generate(usedPrompt, generatorParams)
+        : await dispatched.entry.generate(usedPrompt);
+      throwIfAborted(signal);
       return normalizeGeneratorResult(result);
     }
 
@@ -150,7 +169,8 @@ export class GenerationOrchestrator {
     const { P5GeneratorLLM } = await import('../generators/p5/P5GeneratorLLM.js');
     const config = await getEffectiveConfig(undefined, process.cwd());
     const generator = new P5GeneratorLLM(config.baseUrl ? { baseUrl: config.baseUrl, model: config.model, apiKey: config.apiKey, role: 'generator' } : undefined, { bypassCache });
-    const result = await generator.generate(usedPrompt, { bypassCache });
+    const result = await generator.generate(usedPrompt, { bypassCache, signal });
+    throwIfAborted(signal);
     return normalizeGeneratorResult(result);
   }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildWorkbenchPrompt,
+  buildWorkbenchRunOptions,
   CREATE_MODE_OPTIONS,
   getCreateModeOption,
   requiresBridgeSession,
@@ -42,5 +43,21 @@ describe('createModes', () => {
     }
     expect(requiresBridgeSession('organism')).toBe(false);
     expect(getCreateModeOption('missing').id).toBe('auto');
+  });
+
+  it('builds fast draft run options separately from the slower prove path', () => {
+    expect(buildWorkbenchRunOptions('draft', 7)).toEqual({
+      executionMode: 'draft',
+      maxIterations: 1,
+      candidateCount: 1,
+      timeoutMinutes: 1,
+    });
+
+    expect(buildWorkbenchRunOptions('prove', 7)).toEqual({
+      executionMode: 'prove',
+      maxIterations: 7,
+      candidateCount: 1,
+      timeoutMinutes: 3,
+    });
   });
 });

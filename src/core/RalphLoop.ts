@@ -339,6 +339,8 @@ export class RalphLoop {
       }
 
       iteration++;
+      let generationDurationMs = 0;
+      let evaluationDurationMs = 0;
 
       try {
         // Emit thoughts during generation for chat display
@@ -410,6 +412,7 @@ export class RalphLoop {
           normalizedOptions.onThought?.(`Generating ${adjustedNumCandidates} candidate(s)...`);
         }
 
+        const generationPhaseStartedAt = Date.now();
         // Best-of-N: Generate multiple candidates with bounded parallelism
         let numCandidates = adjustedNumCandidates;
         const candidates: Array<{ code: string; score: number; issues: string[]; index: number; thinking?: string; model?: string; genEval?: GenerationEvaluation }> = [];
@@ -693,6 +696,7 @@ export class RalphLoop {
           lastThinking = bestCandidate.thinking;
           lastModel = bestCandidate.model;
         }
+        generationDurationMs = Math.max(0, Date.now() - generationPhaseStartedAt);
 
         // Check code completeness (structural - braces, parens balanced)
         const isComplete = RalphLoop.isCodeComplete(currentCode);
@@ -726,6 +730,7 @@ export class RalphLoop {
           normalizedOptions.onThought?.(`Generated ${currentCode.length} characters of code (iteration ${iteration})`);
         }
 
+        const evaluationPhaseStartedAt = Date.now();
         // Evaluate quality
         // If we already evaluated multiple candidates, use the best candidate's score
         // Otherwise, run evaluation for the single candidate
@@ -977,6 +982,7 @@ export class RalphLoop {
             }
           }
         }
+        evaluationDurationMs = Math.max(0, Date.now() - evaluationPhaseStartedAt);
 
         // Record evaluation for repeated-failure detection
         repairHistory.push({
@@ -1136,6 +1142,10 @@ export class RalphLoop {
           generatorModel: lastModel,
           evaluatorReasoning: evaluation.evaluatorReasoning ?? extractScoringReasoning(evaluation),
           evaluatorRepairAdvice: evaluation.repairAdvice,
+          stageTimings: [
+            { label: 'Generate', durationMs: generationDurationMs },
+            { label: 'Evaluate', durationMs: evaluationDurationMs },
+          ],
         };
         ContextAccumulation.save(iterationContext);
         normalizedOptions.onIteration?.(iterationContext);

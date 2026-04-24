@@ -268,6 +268,15 @@ export function createApp(configPath, port = 5174) {
     }
   });
 
+  app.post('/api/tui/session/:id/cancel', (req, res) => {
+    try {
+      tuiBridge.cancelRun(req.params.id);
+      res.status(200).json({ ok: true });
+    } catch (err) {
+      res.status(400).json({ error: err.message || String(err) });
+    }
+  });
+
   app.get('/api/tui/session/:id/events', validateSSEOrigin, (req, res) => {
     try {
       const sessionId = req.params.id;

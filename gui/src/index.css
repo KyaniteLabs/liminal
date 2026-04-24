@@ -397,6 +397,92 @@ body::before {
   font-family: var(--font-mono);
 }
 
+.liminal-improve-lane {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+}
+
+.liminal-improve-lane__header {
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+  font-family: var(--font-mono);
+}
+
+.liminal-improve-lane__header span {
+  color: var(--liminal-cyan);
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+
+.liminal-improve-lane__header strong {
+  color: var(--liminal-text);
+}
+
+.liminal-improve-lane__header small {
+  color: var(--liminal-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liminal-improve-proposals {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  overflow: auto;
+}
+
+.liminal-improve-proposal {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  gap: 8px 12px;
+  padding: 12px;
+  border: 1px solid var(--liminal-line);
+  border-radius: 8px;
+  background: rgba(18, 26, 38, 0.78);
+}
+
+.liminal-improve-proposal span {
+  display: block;
+  color: var(--liminal-cyan);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.liminal-improve-proposal strong {
+  color: var(--liminal-text);
+}
+
+.liminal-improve-proposal b {
+  display: grid;
+  place-items: center;
+  min-height: 36px;
+  border-radius: 7px;
+  background: var(--liminal-surface-3);
+  color: var(--liminal-cyan);
+  font-family: var(--font-mono);
+}
+
+.liminal-improve-proposal p,
+.liminal-improve-proposal small {
+  grid-column: 1 / -1;
+  margin: 0;
+  color: var(--liminal-muted);
+}
+
+.liminal-improve-proposal small {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
 .liminal-inspector {
   grid-area: inspector;
   padding: 12px;

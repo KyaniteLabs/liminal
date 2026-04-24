@@ -318,7 +318,7 @@ export class RalphLoop {
     // DF3 Phase 2: repair history for repeated-failure detection
     const repairHistory: GenerationEvaluation[] = [];
 
-    const evalMode = getEvalMode();
+    const evalMode = normalizedOptions.evalMode ?? getEvalMode();
 
     // Main loop
     try {

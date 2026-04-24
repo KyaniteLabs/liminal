@@ -7,7 +7,7 @@
 
 Liminal is a model-agnostic creative coding system. You give it a prompt — "a calming blue particle system" or "glitch techno beats with feedback loops" — and it generates, evaluates, and iteratively improves p5.js sketches, GLSL shaders, Three.js scenes, Strudel live-coding music, Hydra visuals, and more. It works with any OpenAI-compatible API, Ollama, LM Studio, or Anthropic.
 
-Liminal Studio provides a chat-first terminal UI ("Codex for creative generative art") with a background executive (LiminalCortex) that continuously improves the system. An Autonomous Gardener manages taste learning, dream recombinations, and emergence evaluation.
+Liminal Studio is the GUI-first creative workbench for live preview, streamed generation phases, and reviewable self-healing proposals. The self-healing loop has three jobs: repair failing behavior, harden green systems by finding blind spots, and propose measurable improvements or optimizations when the current gates are already green. Bubble Tea remains the terminal operator cockpit.
 
 ---
 
@@ -31,11 +31,14 @@ liminal --prompt "Create a calming blue particle system"
 # Chat-driven creative session
 liminal chat
 
-# Studio — chat-first TUI with background executive
+# Studio — GUI workbench with live preview
 liminal studio
 
-# Full Bubble Tea TUI (requires Go >= 1.21)
+# Bubble Tea operator cockpit (requires Go >= 1.21)
 liminal bubbletea
+
+# Read-only self-healing opportunity scan
+liminal improve scan
 ```
 
 ---
@@ -56,11 +59,11 @@ Each iteration, Liminal:
 - **11 generators** — p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen
 - **Multi-agent critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
 - **Compost Mill** — Digests past work into reusable creative seeds that improve every generation
-- **Self-improving harness** — Observes failures, detects patterns, applies targeted fixes
+- **Self-healing harness** — Observes failures, detects patterns, and proposes repair, hardening, and optimization work with verification targets
 - **Music theory engine** — Euclidean rhythms, Markov chains, scales, chord progressions
 - **Voice/audio pipeline** — Maps audio features to visual parameters in real time
 - **Aesthetic guardrails** — Color harmony, layout, typography, and sound quality critics
-- **Liminal Studio** — Chat-first TUI agent with intent routing, autonomy modes (assist/co-create/autopilot), and streaming responses
+- **Liminal Studio** — GUI workbench with live preview, provider/model visibility, streamed phases, artifacts, and an Improve lane
 - **LiminalCortex** — Background executive that perceives system events, manages goals, and proposes improvements
 - **Emergence evaluation** — Novelty scoring, temporal structure analysis, perturbation probes, weighted ensemble critic
 - **Taste learning + dreaming** — Preference-informed generation, cross-modal dream recombinations, motif rehydration
@@ -78,7 +81,7 @@ Each iteration, Liminal:
 | **Swarm** | `--use-swarm` | Multiple personas generate in parallel, vote on best |
 | **Deep Collab** | `--routing-mode` | Dual-model routing (fast + powerful) |
 | **Live Music** | `--mode live-music` | Generate Strudel + Hydra code |
-| **Studio** | `liminal studio` | Chat-first TUI with autonomy modes |
+| **Studio** | `liminal studio` | GUI workbench with live preview and Improve lane |
 | **Cortex** | (in Studio) | Background executive manages goals and improvements |
 
 ---
@@ -93,9 +96,11 @@ liminal -p "idea" --use-swarm --swarm-mode hybrid  # Swarm generation
 liminal -p "ambient glitch set" --mode live-music  # Music mode
 
 # Interactive
-liminal studio                                      # Studio TUI (chat-first agent)
+liminal studio                                      # GUI workbench
 liminal chat                                        # Conversational creative session
-liminal bubbletea                                   # Full Bubble Tea TUI
+liminal bubbletea                                   # Bubble Tea operator cockpit
+liminal improve scan                                # Read-only repair/hardening/optimization proposals
+liminal improve run <proposal-id>                   # Run one proposal from an isolated worktree
 
 # Emergence + Evaluation
 liminal emergence score <file>                      # Score emergence dimensions

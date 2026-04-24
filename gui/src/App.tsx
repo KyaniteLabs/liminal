@@ -92,6 +92,27 @@ interface ConfigResponse {
   galleryPath?: string;
 }
 
+interface ImproveProposal {
+  id: string;
+  title: string;
+  category: string;
+  score: number;
+  evidence: string[];
+  measurableTarget: string;
+  expectedVerification: string[];
+}
+
+interface ImproveReport {
+  runType: string;
+  summary: string;
+  proposals: ImproveProposal[];
+  mlFeatures: Array<{
+    id: string;
+    launchLabel: string;
+    proofCommand: string;
+  }>;
+}
+
 const API = (typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_BASEURL) ? import.meta.env.VITE_API_BASEURL : '/api';
 const STORED_SECRET_SENTINEL = '(stored)';
 const PROVIDER_OPTIONS = ['lmstudio', 'minimax', 'glm', 'openai', 'openrouter', 'ollama', 'kimi', 'moonshot', 'custom'];
@@ -156,6 +177,9 @@ export default function App() {
   const [runStatus, setRunStatus] = useState<string>('');
   const [runResult, setRunResult] = useState<RunResult | null>(null);
   const [createRunError, setCreateRunError] = useState<string | null>(null);
+  const [improveReport, setImproveReport] = useState<ImproveReport | null>(null);
+  const [improveLoading, setImproveLoading] = useState<boolean>(false);
+  const [improveError, setImproveError] = useState<string | null>(null);
 
   // Live Music: generated code
   const [liveMusicPrompt, setLiveMusicPrompt] = useState<string>('ambient glitch');
@@ -696,6 +720,21 @@ export default function App() {
     setEvaluatorModel(preset.evaluatorModel || preset.model);
   };
 
+  const scanImproveOpportunities = async () => {
+    setImproveLoading(true);
+    setImproveError(null);
+    try {
+      const res = await fetch(`${API}/improve/scan`);
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || res.statusText);
+      setImproveReport(data);
+    } catch (err) {
+      setImproveError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImproveLoading(false);
+    }
+  };
+
   const activeMode = getWorkbenchMode(activeTab);
   const liveGenerator = bridge.session?.roles?.generator;
   const liveEvaluator = bridge.session?.roles?.evaluator;
@@ -708,6 +747,8 @@ export default function App() {
   const runNeedsBridgeSession = activeMode.id === 'generate' && requiresBridgeSession(createMode);
   const runLabel = runNeedsBridgeSession && !bridge.session
     ? 'Connecting'
+    : activeMode.id === 'improve'
+      ? improveLoading ? 'Scanning' : 'Scan'
     : bridge.submitting || runStatus === 'running'
       ? createExecutionMode === 'draft' ? 'Drafting' : 'Proving'
       : createExecutionMode === 'draft' ? 'Draft' : 'Prove';
@@ -720,6 +761,10 @@ export default function App() {
   const createModeOption = getCreateModeOption(createMode);
 
   const handleWorkbenchRun = () => {
+    if (activeMode.id === 'improve') {
+      void scanImproveOpportunities();
+      return;
+    }
     if (activeMode.id === 'generate') {
       if (usesOrganismApi(createMode)) {
         void handleCreateRun();
@@ -738,7 +783,36 @@ export default function App() {
     dispatchLive(switchToLiveOrganismView(mode.legacyTabs[0] as GuiTab));
   };
 
-  const stageSlot = (
+  const improveSlot = (
+    <div className="liminal-improve-lane">
+      <div className="liminal-improve-lane__header">
+        <span>{improveReport?.runType || 'improve'}</span>
+        <strong>{improveLoading ? 'Scanning system' : `${improveReport?.proposals.length ?? 0} proposals`}</strong>
+        <small>{improveError || improveReport?.summary || 'Green systems can still improve.'}</small>
+      </div>
+      <div className="liminal-improve-proposals">
+        {improveError && <div className="atelier-alert atelier-alert--error">{improveError}</div>}
+        {!improveError && !improveReport && !improveLoading && (
+          <button type="button" className="atelier-btn atelier-btn--primary" onClick={() => void scanImproveOpportunities()}>
+            Scan opportunities
+          </button>
+        )}
+        {improveReport?.proposals.map((proposal) => (
+          <article className="liminal-improve-proposal" key={proposal.id}>
+            <div>
+              <span>{proposal.category}</span>
+              <strong>{proposal.title}</strong>
+            </div>
+            <b>{proposal.score}</b>
+            <p>{proposal.measurableTarget}</p>
+            <small>{proposal.expectedVerification.join(' && ')}</small>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+
+  const stageSlot = activeMode.id === 'improve' ? improveSlot : (
     <div className="liminal-stage-frame">
       {previewUrl ? (
         <iframe title="Live preview" src={previewUrl} sandbox="allow-scripts" />
@@ -783,6 +857,10 @@ export default function App() {
         <span>Evaluator</span>
         <strong>{evaluatorLabel}</strong>
         {liveEvaluator && <small>Vision: {liveEvaluator.multimodal}</small>}
+      </div>
+      <div>
+        <span>Loop</span>
+        <strong>{activeMode.id === 'improve' ? 'improve' : bridgeSummary.phase}</strong>
       </div>
       <div>
         <span>Quality Gate</span>
@@ -870,9 +948,9 @@ export default function App() {
   const timelineSlot = (
     <div>
       <div className="liminal-timeline-row">
-        <span>{bridgeSummary.active ? bridgeSummary.timelineStatus : runStatus || 'idle'}</span>
-        <strong>{bridgeSummary.active ? bridgeSummary.timelinePrimary : runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
-        <small>{bridgeSummary.active ? bridgeSummary.timelineSecondary : createRunError || bridge.error || runError || selectedProject || 'No artifact selected'}</small>
+        <span>{activeMode.id === 'improve' ? (improveLoading ? 'scanning' : improveReport?.runType || 'ready') : bridgeSummary.active ? bridgeSummary.timelineStatus : runStatus || 'idle'}</span>
+        <strong>{activeMode.id === 'improve' ? `proposals ${improveReport?.proposals.length ?? 0}` : bridgeSummary.active ? bridgeSummary.timelinePrimary : runResult?.result ? `score ${runResult.result.finalScore?.toFixed(2)}` : activeMode.label}</strong>
+        <small>{activeMode.id === 'improve' ? improveError || improveReport?.summary || 'No scan yet' : bridgeSummary.active ? bridgeSummary.timelineSecondary : createRunError || bridge.error || runError || selectedProject || 'No artifact selected'}</small>
       </div>
       {bridgeSummary.recentActivity.length > 0 && (
         <div className="liminal-timeline-events">
@@ -899,10 +977,21 @@ export default function App() {
 
   const leftSlot = (
     <div className="liminal-rail-meta">
+      {activeMode.id === 'improve' ? (
+        <>
+          <span>Proposals</span>
+          <strong>{improveReport?.proposals.length ?? 0}</strong>
+          <span>ML labels</span>
+          <strong>{improveReport?.mlFeatures.length ?? 0}</strong>
+        </>
+      ) : (
+        <>
       <span>Projects</span>
       <strong>{projects.length}</strong>
       <span>Artifacts</span>
       <strong>{iterations.length}</strong>
+        </>
+      )}
     </div>
   );
 
@@ -938,7 +1027,7 @@ export default function App() {
       prompt={createPrompt}
       onPromptChange={setCreatePrompt}
       onRun={handleWorkbenchRun}
-      runDisabled={bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
+      runDisabled={activeMode.id === 'improve' ? improveLoading : bridge.submitting || runStatus === 'running' || !createPrompt.trim() || (runNeedsBridgeSession && !bridge.session)}
       runLabel={bridge.submitting ? 'Sending' : bridge.session?.pendingAction ? 'Review' : runLabel}
       audioSlot={audioSlot}
       providerLabel={providerLabel}

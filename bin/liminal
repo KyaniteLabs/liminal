@@ -755,6 +755,7 @@ else if (cmd === 'list' || cmd === 'ls') {
   } else {
     console.log('  (none yet)');
   }
+  process.exit(0);
 }
 else if (cmd === 'composite') {
   const specPath = flags.spec;
@@ -796,6 +797,7 @@ else if (cmd === 'composite') {
       console.log(`  Plan written to: ${outputPath}`);
     }
     console.log('Done.');
+    process.exit(0);
   } catch (err) {
     console.error('Composite analysis failed:', err.message);
     process.exit(1);
@@ -809,7 +811,9 @@ else if (cmd === 'chat') {
   });
 }
 else if (cmd === 'git') {
-  handleGitCommand(cmdArgs[0], cmdArgs.slice(1)).catch(err => {
+  handleGitCommand(cmdArgs[0], cmdArgs.slice(1)).then(() => {
+    process.exit(0);
+  }).catch(err => {
     console.error('Git error:', err.message);
     process.exit(1);
   });
@@ -1208,6 +1212,7 @@ else if (cmd === 'ledger') {
   try {
     const action = parseArgs(cmdArgs);
     await execute(action, taskLedger);
+    process.exit(0);
   } finally {
     liminalFs.close();
   }
@@ -1295,6 +1300,7 @@ else if (cmd === 'archive') {
   } finally {
     liminalFs.close();
   }
+  process.exit(0);
 }
 else if (cmd === 'preferences') {
   const { PreferenceEventLogger } = await import('../dist/learning/PreferenceEventLogger.js');
@@ -1352,6 +1358,7 @@ else if (cmd === 'preferences') {
     console.error('Usage: liminal preferences <export|stats> [--session <id>]');
     process.exit(1);
   }
+  process.exit(0);
 }
 else if (cmd === 'emergence') {
   const subCmd = cmdArgs[0];
@@ -1419,6 +1426,7 @@ else if (cmd === 'emergence') {
     console.error('Usage: liminal emergence <score|probe> <text-or-file-path>');
     process.exit(1);
   }
+  process.exit(0);
 }
 else if (cmd === 'report' && cmdArgs[0] === 'provenance') {
   const { ProvenanceNarrativeBuilder } = await import('../dist/reporting/index.js');
@@ -1500,6 +1508,7 @@ else if (cmd === 'report' && cmdArgs[0] === 'archive') {
   } finally {
     liminalFs.close();
   }
+  process.exit(0);
 }
 else if (cmd === 'taste' && cmdArgs[0] === 'train') {
   const { PreferenceDatasetBuilder, TasteModelTrainer } = await import('../dist/learning/index.js');
@@ -1540,6 +1549,7 @@ else if (cmd === 'taste' && cmdArgs[0] === 'train') {
   } finally {
     liminalFs.close();
   }
+  process.exit(0);
 }
 else if (cmd === 'taste' && cmdArgs[0] === 'eval') {
   const { PreferenceDatasetBuilder, TasteModelTrainer, TasteModelEvaluator } = await import('../dist/learning/index.js');
@@ -1617,6 +1627,7 @@ else if (cmd === 'dream' && cmdArgs[0] === 'run') {
   } finally {
     liminalFs.close();
   }
+  process.exit(0);
 }
 else if (cmd === 'garden' && cmdArgs[0] === 'status') {
   const { GardenPolicy } = await import('../dist/autonomy/GardenPolicy.js');
@@ -1654,6 +1665,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'status') {
   } finally {
     liminalFs.close();
   }
+  process.exit(0);
 }
 else if (cmd === 'garden' && cmdArgs[0] === 'rebalance') {
   const { NicheQuotaPolicy } = await import('../dist/autonomy/NicheQuotaPolicy.js');
@@ -1683,6 +1695,7 @@ else if (cmd === 'garden' && cmdArgs[0] === 'rebalance') {
   } finally {
     liminalFs.close();
   }
+  process.exit(0);
 }
 else if (cmd === 'report' && cmdArgs[0] === 'garden') {
   const { GardenHealthMonitor } = await import('../dist/autonomy/GardenHealthMonitor.js');
@@ -1731,6 +1744,7 @@ else if (cmd === 'report' && cmdArgs[0] === 'garden') {
   } finally {
     liminalFs.close();
   }
+  process.exit(0);
 }
 else if (cmd === 'report' && cmdArgs[0] === 'readiness') {
   const { LaunchSummaryBuilder } = await import('../dist/reporting/index.js');
@@ -1961,6 +1975,7 @@ else if (cmd === 'prompt' && cmdArgs[0] === 'synthesize') {
     } else {
       console.log(result);
     }
+    process.exit(0);
   } catch (err) {
     console.error('Prompt synthesis failed:', err.message);
     process.exit(1);

@@ -25,6 +25,11 @@ export interface WorkbenchPreview {
   label: string;
 }
 
+export interface WorkbenchClarificationRequest {
+  question: string;
+  reason: string;
+}
+
 export interface ImproveLaneProposal {
   id: string;
   title: string;
@@ -160,6 +165,32 @@ export function latestBridgeCodePreview(events: WorkbenchBridgeEvent[]): Workben
         type: 'code',
         code: String(event.content),
         label: 'Generated live code',
+      };
+    }
+  }
+
+  return null;
+}
+
+export function latestClarificationRequest(events: WorkbenchBridgeEvent[]): WorkbenchClarificationRequest | null {
+  for (let index = events.length - 1; index >= 0; index--) {
+    const event = events[index];
+    if ([
+      'generation.domain_plan',
+      'generation.attempt.started',
+      'generation.candidate.generated',
+      'preview.completed',
+      'generation.complete',
+      'error',
+    ].includes(String(event.type))) {
+      return null;
+    }
+
+    if (event.type === 'generation.clarification_needed') {
+      const questions = Array.isArray(event.questions) ? event.questions : [];
+      return {
+        question: String(questions[0] || event.reason || 'What should Liminal generate?'),
+        reason: String(event.reason || 'More detail is needed before generation.'),
       };
     }
   }

@@ -61,34 +61,34 @@ Explicit rejections:
 
 ## Test Status
 
-**Date:** 2026-04-11
+**Date:** 2026-04-24
 
 | Category | Before | After |
 |----------|--------|-------|
 | Security Issues | 10 | 0 ✅ |
 | Dogfood Pass Rate | 0% | 30.4% ✅ |
-| Test Coverage | 30% | 60%+ ✅ |
+| Test Coverage | 30% | ~79% ✅ |
 | Type Errors | 48 | 0 ✅ |
 
 | Component | Status | Coverage |
 |-----------|--------|----------|
-| Unit Tests | ✅ Passing | ~180 tests |
-| Integration Tests | ✅ Passing | ~50 tests |
-| E2E Tests | ✅ Passing | ~30 tests |
-| Dog Food Tests | ✅ Ready | 9 domains × 6 models |
+| Unit Tests | ✅ Passing | ~8,500 tests |
+| Integration Tests | ✅ Passing | ~900 tests |
+| E2E Tests | ✅ Passing | ~400 tests |
+| Dog Food Tests | ✅ Ready | 11+ domains × 6+ models |
 | HTML Security | ✅ Fixed | 7/7 tests passing |
 | Preview Server | ✅ Fixed | 28/28 tests passing |
 
 ```
-Test Files: ~250
-Tests:      ~260 passing
+Test Files: ~630
+Tests:      ~9,900 passing
 Failures:   0 critical
 ```
 
 ### Running Tests
-- Unit Tests: Run with `npm test -- --run` (requires `--run` flag to avoid timeout)
-- Dog Food Tests: Run with `npm run dogfood` or via TUI `/dogfood` command
-- Note: Tests frequently timeout on first run without `--run` flag
+- Unit Tests: Run with `pnpm test` or `pnpm run test:ci:fast`
+- Dog Food Tests: Run with `pnpm run dogfood` or via TUI `/dogfood` command
+- Full suite: `pnpm run test:ci:slow`
 
 ### Remediation Progress (Forensic Audit Fixes)
 
@@ -809,7 +809,7 @@ liminal/
 │   ├── swarm/              # Swarm mode
 │   ├── tui/                # Terminal UI
 │   └── utils/              # Utilities
-├── test/                   # Test suite (1741 tests)
+├── test/                   # Test suite (~9,900 tests)
 ├── docs/                   # Documentation (THE BIBLE)
 ├── landing-live/           # Public dogfood gallery and recovered April 6 showcase assets
 │   └── recovered-dogfood/  # Stable repo-owned iframe assets copied out of transient worktrees

@@ -1,9 +1,11 @@
 # Liminal Architecture Quick Reference
 
+> ⚠️ **OUTDATED — 2026-04-01 Snapshot.** This document is retained for historical context. For current system status, run the test suite (`pnpm test`) and see `.omx/proof/` for latest evidence.
+
 **Generated:** 2026-04-01
 **Version:** 2.0 - Release Candidate
-**Tests:** 1741 passing, 0 failures
-**Status:** Operational (launch candidate — see .omx/proof/ for evidence)
+**Tests:** ~9,900 passing, 0 failures (as of 2026-04-24)
+**Status:** Operational
 
 > This is a point-in-time architecture reference, not a launch-readiness declaration.
 > For current launch status, see `.omx/proof/launch-readiness-scorecard-2026-04-19.md`.
@@ -25,8 +27,8 @@
 ## Test Status: ✅ ALL PASSING
 
 ```
-Test Files: 132
-Tests:      1741 passing
+Test Files: ~630
+Tests:      ~9,900 passing
 Failures:   0
 ```
 
@@ -62,7 +64,7 @@ Failures:   0
 │  ├── FailureLogger 🟢         (Persistent to ~/.liminal/failures/) │
 │  ├── PatternDetector 🟢                                            │
 │  ├── HarnessUpdater 🟡        (Creates tasks, no auto-exec)        │
-│  ├── HarnessAgent 🟢          (7 tools, rollback)                  │
+│  ├── HarnessAgent 🟢          (21 tools, rollback)                 │
 │  ├── HarnessMemory 🟢         (NEW: Persistent memory)             │
 │  ├── ValidationGuard 🟢                                            │
 │  └── RateLimiter 🟢                                                │
@@ -229,7 +231,7 @@ liminal/
 │   │   ├── FailureLogger.ts
 │   │   ├── PatternDetector.ts
 │   │   ├── HarnessUpdater.ts
-│   │   └── agent/       # HarnessAgent with 7 tools
+│   │   └── agent/       # HarnessAgent with 21 tools
 │   ├── learning/        # Quality/Novelty archives
 │   ├── llm/             # LLM infrastructure
 │   │   ├── LLMClient.ts
@@ -243,7 +245,7 @@ liminal/
 │   ├── swarm/           # Swarm mode
 │   ├── tui/             # Terminal UI
 │   └── utils/           # Utilities
-├── test/                # 224 test files, 1741 tests
+├── test/                # ~630 test files, ~9,900 tests
 ├── docs/                # Documentation
 │   ├── THE_BIBLE.md     ← COMPLETE SYSTEM REFERENCE
 │   ├── ARCHITECTURE_QUICKREF.md
@@ -319,7 +321,7 @@ npm test
 |----------|--------|-------|
 | Source Files | 🟢 | 262 |
 | Test Files | 🟢 | 224 |
-| Tests Passing | 🟢 | 1741 |
+| Tests Passing | 🟢 | ~9,900 |
 | Tests Failing | 🟢 | 0 |
 | Guardrails M1-M8 | 🟢 | 8/8 |
 | Guardrails M9-M11 | 🟢 | 3/3 |

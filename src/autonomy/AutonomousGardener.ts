@@ -76,6 +76,7 @@ export class AutonomousGardener {
   private cycleCount = 0;
   private active = false;
   private abortController: AbortController | null = null;
+  private stopped = false;
   /** Tracks actions within a cycle for replay budget gating */
   private currentCycleActions: Array<{ type: CreativeTaskType }> = [];
 
@@ -229,6 +230,7 @@ export class AutonomousGardener {
     onCycle?: (result: GardenerCycleResult) => void,
     getPreferenceCounts?: () => Map<string, { positive: number; negative: number }>,
   ): Promise<void> {
+    if (this.stopped) return;
     this.active = true;
     this.abortController = new AbortController();
 
@@ -258,6 +260,7 @@ export class AutonomousGardener {
    * Stop the autonomous gardener.
    */
   stop(): void {
+    this.stopped = true;
     this.active = false;
     this.abortController?.abort();
   }

@@ -109,8 +109,9 @@ export class CodeParser {
       true, // setParentNodes
     );
 
-    // Check for parse errors
-    const diagnostics = (sourceFile as any).parseDiagnostics;
+    // Check for parse errors (parseDiagnostics is an internal TS API)
+    // @ts-expect-error — accessing internal compiler API
+    const diagnostics = sourceFile.parseDiagnostics as ts.Diagnostic[] | undefined;
     if (diagnostics && diagnostics.length > 0) {
       const error = diagnostics[0] as ts.Diagnostic;
       const line = error.start !== undefined

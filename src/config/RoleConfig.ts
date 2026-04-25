@@ -121,7 +121,7 @@ export async function loadRoleConfig(projectDir?: string): Promise<Record<ModelR
   let merged = mergeConfigs(fileConfig, projectConfig);
 
   // Fallback: UserConfig shape (defaultProvider/providers) → single role from effective config
-  if (!merged?.roles && (fileConfig as any)?.defaultProvider) {
+  if (!merged?.roles && 'defaultProvider' in (fileConfig as unknown as Record<string, unknown>)) {
     const effective = await getEffectiveConfig();
     if (effective.baseUrl || effective.model) {
       merged = {

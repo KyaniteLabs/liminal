@@ -259,9 +259,17 @@ export class TuiBridgeServer {
         const payload = JSON.parse(body) as { content?: string; done?: boolean; imageBase64?: string };
         const content = payload.content || '';
         if (payload.imageBase64) {
-          this.bridge.publishEvent(sessionId, { type: payload.done ? 'preview.completed' : 'preview.content', content: payload.imageBase64, previewType: 'image' } as any);
+          if (payload.done) {
+            this.bridge.publishEvent<'preview.completed'>(sessionId, { type: 'preview.completed', content: payload.imageBase64, previewType: 'image' });
+          } else {
+            this.bridge.publishEvent<'preview.content'>(sessionId, { type: 'preview.content', content: payload.imageBase64, previewType: 'image' });
+          }
         } else {
-          this.bridge.publishEvent(sessionId, { type: payload.done ? 'preview.completed' : 'preview.content', content, previewType: 'music' } as any);
+          if (payload.done) {
+            this.bridge.publishEvent<'preview.completed'>(sessionId, { type: 'preview.completed', content, previewType: 'music' });
+          } else {
+            this.bridge.publishEvent<'preview.content'>(sessionId, { type: 'preview.content', content, previewType: 'music' });
+          }
         }
         this.json(res, 200, { ok: true });
         return;
@@ -349,12 +357,12 @@ data: ${JSON.stringify(stored.event)}
       'particleSpeedDriven: true',
       'typographyScaleDriven: true',
     ].join('\n');
-    this.bridge.publishEvent(sessionId, { type: 'preview.started', previewType: 'music' } as any);
-    this.bridge.publishEvent(sessionId, { type: 'preview.content', content, previewType: 'music' } as any);
+    this.bridge.publishEvent<'preview.started'>(sessionId, { type: 'preview.started', previewType: 'music' });
+    this.bridge.publishEvent<'preview.content'>(sessionId, { type: 'preview.content', content, previewType: 'music' });
     void import('open')
       .then(({ default: open }) => open(url))
-      .then(() => this.bridge.publishEvent(sessionId, { type: 'activity.updated', message: 'Opened microphone recorder in browser' } as any))
-      .catch((error) => this.bridge.publishEvent(sessionId, { type: 'activity.updated', message: `Open browser manually: ${url} (${error instanceof Error ? error.message : String(error)})` } as any));
+      .then(() => this.bridge.publishEvent<'activity.updated'>(sessionId, { type: 'activity.updated', message: 'Opened microphone recorder in browser' }))
+      .catch((error) => this.bridge.publishEvent<'activity.updated'>(sessionId, { type: 'activity.updated', message: `Open browser manually: ${url} (${error instanceof Error ? error.message : String(error)})` }));
     this.bridge.emitCommandResponse(sessionId, `Mic recorder opened in browser: ${url}\nPress Ctrl+E to watch the operator panel.`);
     return true;
   }

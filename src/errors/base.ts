@@ -11,11 +11,8 @@ export class LiminalError extends Error {
     public context?: Record<string, unknown>,
     opts?: { cause?: Error; retryable?: boolean },
   ) {
-    super(message);
+    super(message, opts?.cause ? { cause: opts.cause } : undefined);
     this.name = this.constructor.name;
     this.retryable = opts?.retryable ?? false;
-    if (opts?.cause) {
-      (this as any).cause = opts.cause;
-    }
   }
 }

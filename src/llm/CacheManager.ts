@@ -103,4 +103,8 @@ export class CacheManager {
   get size(): number {
     return this.cache.size;
   }
+
+  get enabled(): boolean {
+    return this.options.enabled;
+  }
 }

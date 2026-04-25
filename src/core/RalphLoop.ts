@@ -58,6 +58,8 @@ import {
 } from './LoopConfig.js';
 import { GeneratedCodeParser } from './lir/GeneratedCodeParser.js';
 import type { LIREvaluationContext } from '../aesthetic/types.js';
+import type { VisualMappingParams } from '../audio/types.js';
+import type { LLMClientLike } from '../aesthetic/critics/LLMJudgeCritic.js';
 import { buildContextForInjection } from './ContextBuilder.js';
 import { enhancePrompt } from './PromptEnhancer.js';
 import { GenerationOrchestrator } from './GenerationOrchestrator.js';
@@ -480,7 +482,7 @@ export class RalphLoop {
                       await metaHarness.onGenerationComplete({
                         success: false,
                         model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-                        domain: normalizedOptions.collabDomain || 'p5',
+                        domain: normalizedOptions.collabDomain as unknown as import('../chat/types.js').Domain,
                         prompt: prompt,
                         code: code,
                         error: `Validation failed: ${validation.errors.join('; ')}`,
@@ -560,7 +562,7 @@ export class RalphLoop {
                     if (lirTokens.length > 0) {
                       lirContext = {
                         lirTokens,
-                        visualIntent: normalizedOptions.visualMappingParams as any,
+                        visualIntent: normalizedOptions.visualMappingParams as unknown as VisualMappingParams,
                         lirEnabled: true,
                       };
                     }
@@ -768,7 +770,7 @@ export class RalphLoop {
               if (lirTokens.length > 0) {
                 lirContext = {
                   lirTokens,
-                  visualIntent: normalizedOptions.visualMappingParams as any,
+                  visualIntent: normalizedOptions.visualMappingParams as unknown as VisualMappingParams,
                   lirEnabled: true,
                 };
               }
@@ -896,7 +898,7 @@ export class RalphLoop {
                       if (lirTokens.length > 0) {
                         repairLirContext = {
                           lirTokens,
-                          visualIntent: normalizedOptions.visualMappingParams as any,
+                          visualIntent: normalizedOptions.visualMappingParams as unknown as VisualMappingParams,
                           lirEnabled: true,
                         };
                       }
@@ -1002,14 +1004,14 @@ export class RalphLoop {
             // Wire LLM client for dual-path evaluation (LLM-as-Judge + heuristic)
             try {
               const llmForCritic = new LLMClient({ role: 'evaluator' });
-              critic.setLLMClient(llmForCritic as any);
+              critic.setLLMClient(llmForCritic as unknown as LLMClientLike);
             } catch (err) {
               Logger.debug('RalphLoop', 'LLM client creation for AestheticCritic failed, heuristic-only path will be used:', err);
               // LLM client creation failed — heuristic-only path will be used
             }
             const aestheticReport = critic.critique(
               currentCode,
-              normalizedOptions.aestheticConfig as any,
+              normalizedOptions.aestheticConfig as unknown as Partial<import('../aesthetic/types.js').CriticConfig>,
               lirContext,  // Pass LIR context for structured evaluation
             );
 
@@ -1261,7 +1263,7 @@ export class RalphLoop {
 
         // Guidance: check for proactive suggestions
         if (normalizedOptions.guidanceEngine && normalizedOptions.chatMode) {
-          const guidance = normalizedOptions.guidanceEngine as any;
+          const guidance = normalizedOptions.guidanceEngine;
           // Update iteration tracking for guidance
           if (guidance.updateIteration) {
             guidance.updateIteration(iteration, evaluation.score);
@@ -1269,10 +1271,12 @@ export class RalphLoop {
           // Get and emit suggestions
           const suggestions = guidance.suggestNextAction({
             prompt: loadedPrompt,
-            domain: normalizedOptions.collabDomain || 'p5',
+            domain: normalizedOptions.collabDomain as unknown as import('../chat/types.js').Domain,
             techniques: [],
             constraints: [],
             references: [],
+            iteration,
+            currentScore: evaluation.score,
           });
           for (const suggestion of suggestions) {
             normalizedOptions.onSuggestion?.(suggestion);
@@ -1397,7 +1401,7 @@ export class RalphLoop {
           await metaHarness.onGenerationComplete({
             success: false,
             model: normalizedOptions.useSwarm ? 'swarm' : 'local',
-            domain: normalizedOptions.collabDomain || 'p5',
+            domain: normalizedOptions.collabDomain || Domain.P5,
             prompt: prompt,
             error: formatError('RalphLoop', error),
             duration: Date.now() - startTime,

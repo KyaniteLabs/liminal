@@ -209,7 +209,7 @@ export class TuiBridgeService {
       perceptionBus: this.cortexBus,
       goalStore: {
         getActiveGoals: () => this.getGoalStore()?.getActiveGoals() ?? [],
-      } as any,
+      },
       config: TuiBridgeService.CORTEX_CONFIG,
       onEvent: (evt) => {
         // Broadcast cortex loop events to all active sessions
@@ -219,7 +219,7 @@ export class TuiBridgeService {
             sessionId: sid,
             tickNumber: evt.tickNumber,
             data: evt.data,
-          } as any);
+          } as Extract<TuiBridgeEvent, { type: typeof evt.type }>);
         }
       },
     });
@@ -2684,7 +2684,10 @@ export class TuiBridgeService {
    * Used by the Bubble Tea operator-surface tests and by future explicit
    * operator instrumentation publishers.
    */
-  publishEvent(sessionId: string, event: Omit<TuiBridgeEvent, 'sessionId'>): void {
+  publishEvent<T extends TuiBridgeEvent['type']>(
+    sessionId: string,
+    event: Omit<Extract<TuiBridgeEvent, { type: T }>, 'sessionId'>,
+  ): void {
     this.emit(sessionId, { ...event, sessionId } as TuiBridgeEvent);
   }
 

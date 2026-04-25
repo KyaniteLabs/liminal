@@ -21,24 +21,33 @@ const EXTENSION_LANGUAGES: Record<string, string> = {
   glsl: 'glsl', frag: 'glsl', vert: 'glsl',
 };
 
+interface SharpModule {
+  (input: string): { metadata(): Promise<{ width?: number; height?: number }> };
+}
+
+interface MusicMetadataModule {
+  parseFile(filePath: string): Promise<{ format: { duration?: number; sampleRate?: number; bitrate?: number } }>;
+}
+
 /** Lazy-loaded sharp module */
-let sharpModule: unknown = null;
-let sharpLoading: Promise<unknown> | null = null;
+let sharpModule: SharpModule | null = null;
+let sharpLoading: Promise<SharpModule | null> | null = null;
 
 /** Lazy-loaded music-metadata module */
-let musicMetadataModule: unknown = null;
-let musicMetadataLoading: Promise<unknown> | null = null;
+let musicMetadataModule: MusicMetadataModule | null = null;
+let musicMetadataLoading: Promise<MusicMetadataModule | null> | null = null;
 
 /**
  * Dynamically import sharp for image processing.
  * Returns null if not installed.
  */
-async function getSharp(): Promise<unknown> {
+async function getSharp(): Promise<SharpModule | null> {
   if (sharpModule) return sharpModule;
   if (sharpLoading) return sharpLoading;
   sharpLoading = import('sharp')
     .then(mod => {
-      sharpModule = (mod && typeof mod === 'object' && 'default' in mod) ? mod.default : mod;
+      const resolved = (mod && typeof mod === 'object' && 'default' in mod) ? (mod as Record<string, unknown>).default : mod;
+      sharpModule = typeof resolved === 'function' ? (resolved as SharpModule) : null;
       return sharpModule;
     })
     .catch((err) => {
@@ -52,13 +61,15 @@ async function getSharp(): Promise<unknown> {
  * Dynamically import music-metadata for audio processing.
  * Returns null if not installed.
  */
-async function getMusicMetadata(): Promise<unknown> {
+async function getMusicMetadata(): Promise<MusicMetadataModule | null> {
   if (musicMetadataModule) return musicMetadataModule;
   if (musicMetadataLoading) return musicMetadataLoading;
   musicMetadataLoading = import('music-metadata')
     .then(mod => {
-      musicMetadataModule = mod;
-      return mod;
+      musicMetadataModule = mod && typeof mod === 'object' && 'parseFile' in mod
+        ? (mod as unknown as MusicMetadataModule)
+        : null;
+      return musicMetadataModule;
     })
     .catch((err) => {
       Logger.debug('MetadataExtractor', 'Failed to load music-metadata module:', err);
@@ -127,8 +138,7 @@ export class MetadataExtractor {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const metadata = await (sharp(filePath) as any).metadata();
+      const metadata = await sharp(filePath).metadata();
       return {
         width: metadata?.width ?? 0,
         height: metadata?.height ?? 0,
@@ -170,13 +180,12 @@ export class MetadataExtractor {
     }
 
     try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const metadata = await (mm as any).parseFile(filePath);
-      const format = metadata?.format;
+      const metadata = await mm.parseFile(filePath);
+      const format = metadata.format;
       return {
-        duration: format?.duration ?? 0,
-        sampleRate: format?.sampleRate,
-        bitrate: format?.bitrate,
+        duration: format.duration ?? 0,
+        sampleRate: format.sampleRate,
+        bitrate: format.bitrate,
       };
     } catch (err) {
       Logger.warn('MetadataExtractor', `Failed to extract audio metadata from ${filePath}:`, err);

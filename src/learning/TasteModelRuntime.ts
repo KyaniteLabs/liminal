@@ -28,7 +28,7 @@ export class TasteModelRuntime {
   /**
    * Score a single artifact using the loaded taste model.
    */
-  score(entry: ArchiveEntry): number {
+  score(entry: Pick<ArchiveEntry, 'descriptor' | 'qualityScore'>): number {
     if (!this.weights) return entry.qualityScore;
 
     const descValues = entry.descriptor.values.map(v => v.value);

@@ -256,10 +256,8 @@ export class ToneAdapter implements LayerAdapter {
       instance.transport.stop();
       // Dispose synths if they have dispose method
       instance.synths.forEach(synth => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((synth as any).dispose) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (synth as any).dispose();
+        if ('dispose' in synth && typeof (synth as { dispose: () => void }).dispose === 'function') {
+          (synth as { dispose: () => void }).dispose();
         }
       });
       this.instances.delete(layer.id);

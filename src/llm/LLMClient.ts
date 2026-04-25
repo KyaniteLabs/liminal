@@ -548,8 +548,8 @@ export class LLMClient {
   /** Get cache statistics */
   getCacheStats(): { size: number; enabled: boolean } {
     return {
-      size: (this.cache as any).cache?.size ?? 0,
-      enabled: (this.cache as any).options?.enabled ?? true
+      size: this.cache.size,
+      enabled: this.cache.enabled,
     };
   }
 

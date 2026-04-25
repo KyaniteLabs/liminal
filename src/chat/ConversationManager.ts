@@ -216,7 +216,7 @@ export class ConversationManager {
       guidanceEngine: this.guidance,
 
       // Domain and collaboration
-      collabDomain: brief.domain as any,
+      collabDomain: brief.domain as import('../types/domains.js').Domain,
 
       // Iteration settings
       maxIterations,

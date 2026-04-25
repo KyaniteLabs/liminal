@@ -17,7 +17,7 @@ export class AestheticStrategy implements ScoringStrategy {
     try {
       const { LLMClient } = await import('../llm/LLMClient.js');
       const llm = new LLMClient({ role: 'evaluator' });
-      this.critic.setLLMClient(llm as any);
+      this.critic.setLLMClient(llm as unknown as import('./critics/LLMJudgeCritic.js').LLMClientLike);
       this.llmWired = true;
     } catch (err) {
       Logger.warn('AestheticStrategy', 'LLM wiring failed, using heuristic-only:', err instanceof Error ? err.message : err);

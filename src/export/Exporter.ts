@@ -273,7 +273,7 @@ export class Exporter {
       await renderer.renderToVideo({ projectDir, outputPath, fps, width, height });
     } else {
       const recorder = new CanvasRecorder({ fps, duration, width, height });
-      await recorder.record(code, domain as any, outputPath);
+      await recorder.record(code, domain as import('../types/domains.js').Domain, outputPath);
     }
   }
 

@@ -67,15 +67,13 @@ export class TasteModelEvaluator {
 
     for (const pair of testPairs) {
       const predW = runtime.score({
-        id: pair.winner.id,
-        descriptor: { values: pair.winner.descriptor.map((v, i) => ({ axis: `axis-${i}` as 'order-chaos', value: v })), source: 'eval', extractedAt: '' },
+        descriptor: { values: pair.winner.descriptor.map((v) => ({ axis: 'order-chaos' as const, value: v })), source: 'eval', extractedAt: '' },
         qualityScore: pair.winner.quality,
-      } as any);
+      });
       const predL = runtime.score({
-        id: pair.loser.id,
-        descriptor: { values: pair.loser.descriptor.map((v, i) => ({ axis: `axis-${i}` as 'order-chaos', value: v })), source: 'eval', extractedAt: '' },
+        descriptor: { values: pair.loser.descriptor.map((v) => ({ axis: 'order-chaos' as const, value: v })), source: 'eval', extractedAt: '' },
         qualityScore: pair.loser.quality,
-      } as any);
+      });
 
       if (predW >= predL) modelCorrect++;
 

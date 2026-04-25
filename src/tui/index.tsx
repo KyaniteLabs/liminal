@@ -220,7 +220,7 @@ const App = ({ initialGallery }: { initialGallery: GalleryEntry[] }) => {
           viewer.addEvent({
             phase: update.phaseName || 'general',
             model: update.model || 'unknown',
-            eventType: eventType as any,
+            eventType: eventType as import('../ui/TransparencyViewer.js').EventType,
             title: update.action || `${update.model} - ${update.phaseName}`,
             content: update.output || '',
             metadata: {},

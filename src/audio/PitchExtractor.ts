@@ -1,6 +1,7 @@
 import type { PitchData } from './types.js';
 import { frequencyToMidi, frequencyToNoteName, clampFrequency } from './PitchUtils.js';
 import { Logger } from '../utils/Logger.js';
+import { createRequire } from 'module';
 
 /**
  * pitchfinder YIN detector — loaded lazily to avoid top-level side-effects.
@@ -13,8 +14,6 @@ function getYinDetector(
 ): (buffer: Float32Array) => number | null {
   if (yinDetector && lastSampleRate === sampleRate) return yinDetector;
 
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const { createRequire } = require('module') as any;
   const req = createRequire(import.meta.url);
   const pitchfinder = req('pitchfinder');
   yinDetector = pitchfinder.YIN({ sampleRate, threshold: 0.2 });

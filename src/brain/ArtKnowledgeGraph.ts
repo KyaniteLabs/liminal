@@ -219,7 +219,7 @@ export class ArtKnowledgeGraph {
       const concept = this.concepts.get(id);
       if (concept) {
         concept.domain = conceptData.domain;
-        (concept as any).keywords = conceptData.keywords;
+        concept.keywords = conceptData.keywords;
       }
 
       // Track by type for relationship creation

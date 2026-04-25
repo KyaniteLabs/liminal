@@ -124,14 +124,14 @@ export class CanvasRecorder {
     }
     // Accept 'shader' domain; also handle any non-Domain string that looks like GLSL
     if (domain === Domain.SHADER) {
-      return HTMLWrapper.wrap(code, { domain: 'shader' as any });
+      return HTMLWrapper.wrap(code, { domain: Domain.SHADER });
     }
     if (domain === Domain.THREE) {
       // Three.js code may already be complete HTML
       if (code.trim().startsWith('<!DOCTYPE') || code.trim().startsWith('<html')) {
         return code;
       }
-      return HTMLWrapper.wrap(code, { domain: 'three' as any });
+      return HTMLWrapper.wrap(code, { domain: Domain.THREE });
     }
     // Default: wrap as p5
     return HTMLWrapper.wrap(code);

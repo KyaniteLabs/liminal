@@ -102,7 +102,7 @@ export const commands: Record<string, Command> = {
         const current = metaHarness.getStatus()?.activeProvider || 'unknown';
         const lines = ['Providers:'];
         for (const [key, tmpl] of Object.entries(PROVIDER_TEMPLATES)) {
-          const isConfigured = configured.includes(key as any);
+          const isConfigured = configured.includes(key as import('../harness/MultiProviderConfig.js').ProviderType);
           const isCurrent = key === current;
           const marker = isCurrent ? ' ← active' : '';
           const status = isConfigured ? '✅' : '⚪';
@@ -117,7 +117,7 @@ export const commands: Record<string, Command> = {
       // /provider <name> — switch to a known provider
       const template = PROVIDER_TEMPLATES[args[0] as keyof typeof PROVIDER_TEMPLATES];
       if (template) {
-        const config = getProviderConfig(args[0] as any);
+        const config = getProviderConfig(args[0] as import('../harness/MultiProviderConfig.js').ProviderType);
         if (!config?.apiKey && args[0] !== 'ollama' && args[0] !== 'lmstudio') {
           return `⚠️  ${template.name} not configured. Set the API key first:\n  export ${args[0].toUpperCase()}_API_KEY=your-key`;
         }

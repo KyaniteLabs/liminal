@@ -48,7 +48,7 @@ export class HybridJudge {
   async judge(candidate: EvaluationCandidate): Promise<HybridJudgment> {
     const scoringInput: ScoringInput = {
       output: candidate.code,
-      domain: candidate.domain as any,
+      domain: candidate.domain as import('../types/domains.js').Domain,
       prompt: candidate.prompt,
       previousOutputs: candidate.previousOutputs,
     };
@@ -85,7 +85,7 @@ export class HybridJudge {
   async judgeCodeOnly(candidate: EvaluationCandidate): Promise<HybridJudgment> {
     const scoringInput: ScoringInput = {
       output: candidate.code,
-      domain: candidate.domain as any,
+      domain: candidate.domain as import('../types/domains.js').Domain,
       prompt: candidate.prompt,
       previousOutputs: candidate.previousOutputs,
     };

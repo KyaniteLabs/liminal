@@ -76,7 +76,7 @@ export class GitService {
       hash: result.commit,
       date: new Date().toISOString(),
       message,
-      author: (result as any).author ?? 'liminal',
+      author: result.author?.name ?? 'liminal',
     };
   }
 

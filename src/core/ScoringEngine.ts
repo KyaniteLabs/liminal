@@ -280,7 +280,7 @@ class AestheticStrategy implements ScoringStrategy {
     try {
       const { LLMClient } = await import('../llm/LLMClient.js');
       const llm = new LLMClient({ role: 'evaluator' });
-      this.critic.setLLMClient(llm as any);
+      this.critic.setLLMClient(llm as unknown as import('../aesthetic/critics/LLMJudgeCritic.js').LLMClientLike);
       this.llmWired = true;
     } catch (err) {
       Logger.warn('ScoringEngine', 'Failed to wire LLM for dual-path evaluation:', err);

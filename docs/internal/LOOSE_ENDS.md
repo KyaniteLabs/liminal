@@ -133,7 +133,7 @@
 
 ### Month 2-3: Quality
 7. Remove deprecated code
-8. Fix type safety issues
+8. ~~Fix type safety issues~~ ✅ **COMPLETE** — all `as any` casts removed from `src/` (#358)
 9. Enable CI tests where possible
 
 ### Quarter 2: Features

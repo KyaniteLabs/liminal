@@ -252,7 +252,7 @@ if (candidates.length === 0) {
 | Issue | File | Count | Evidence |
 |-------|------|-------|----------|
 | Non-null assertions | `CollisionEngine.ts` | 9 | `byDomain.get(dom)!.push()` |
-| `as any` casts | Multiple | 25+ | Type safety bypasses |
+| `as any` casts | Multiple | 25+ | Type safety bypasses — **RESOLVED in #358** |
 | `as unknown as` | `EventBus.ts` | 3 | No runtime validation |
 | JSON.parse() no validation | `PromptHistory.ts` | 3 | Direct cast after parse |
 | TUI props as `any` | `tui/index.tsx` | 9 | No type checking |
@@ -396,7 +396,7 @@ See CRITICAL findings above plus:
 
 **High:**
 - 9 non-null assertions in CollisionEngine.ts
-- 25+ `as any` casts
+- ~~25+ `as any` casts~~ — **RESOLVED** (#358, 2026-04-24): all `as any` casts eliminated from `src/` across 23 files
 - 3 `as unknown as` patterns
 - JSON.parse without validation
 

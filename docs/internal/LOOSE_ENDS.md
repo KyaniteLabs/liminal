@@ -11,7 +11,7 @@
 ### 1. Security Hardening
 | Issue | Location | Impact | Fix |
 |-------|----------|--------|-----|
-| 19 bare catch blocks | `src/llm/`, `src/core/`, `src/tui/`, `src/chat/` | Silent failures, lost errors | Add error logging/handling |
+| ~78 bare catch blocks | `src/llm/`, `src/core/`, `src/tui/`, `src/chat/` | Silent failures, lost errors | Add error logging/handling |
 | 195 console.log statements | Throughout `src/` | Potential log injection, noise | Replace with structured logger |
 | SSRF validation incomplete | `src/security/UrlValidator.ts` | Could allow internal network access | Harden IP range checks |
 | No CSRF protection in dev | `test/security/csrf-protection.test.ts:8` | Test disabled | Implement for production |
@@ -116,15 +116,15 @@
 | Medium priority | 8 | Stable |
 | Low priority | 4 | Stable |
 | Test skips | 8 | Stable |
-| Console logs | 195 | Needs cleanup |
-| Bare catch blocks | 19 | Needs fixing |
+| Console logs | ~160 | Needs cleanup |
+| Bare catch blocks | ~78 | Needs fixing |
 
 ---
 
 ## 🎯 Recommended Priority Order
 
 ### Week 1-2: Security
-1. Fix bare catch blocks (19 locations)
+1. Fix bare catch blocks (~78 locations)
 2. Reduce console.log statements (195 → ~20)
 3. Harden SSRF validation
 
@@ -137,9 +137,8 @@
 9. Enable CI tests where possible
 
 ### Quarter 2: Features
-10. Implement M14-M17
-11. Real audio/video extraction
-12. Hardware MIDI/OSC
+10. Real audio/video extraction
+11. Hardware MIDI/OSC
 
 ---
 

@@ -81,6 +81,18 @@ export function summarizeWorkbenchBridge(
   };
 }
 
+function summarizeCognitiveReceipt(events: WorkbenchBridgeEvent[]): string {
+  const receipt = [...events].reverse().find((event) => event.type === 'generation.cognitive_receipt');
+  const receipts = Array.isArray(receipt?.receipts) ? receipt.receipts : [];
+  if (receipts.length === 0) return 'waiting for organism receipts';
+  return receipts
+    .map((item) => {
+      const record = item as { organ?: unknown; status?: unknown };
+      return `${String(record.organ || 'organ')}:${String(record.status || 'unknown')}`;
+    })
+    .join(', ');
+}
+
 function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): WorkbenchProcessStep[] {
   const hasIntent = events.some((event) => event.type === 'generation.intent_brief');
   const hasClarification = latestClarificationRequest(events) !== null;
@@ -89,11 +101,13 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
   const hasCandidate = events.some((event) => event.type === 'generation.candidate.generated' || event.type === 'generation.iteration');
   const hasPreview = events.some((event) => event.type === 'preview.completed');
   const hasComplete = events.some((event) => event.type === 'generation.complete');
+  const hasCognitiveReceipt = events.some((event) => event.type === 'generation.cognitive_receipt');
   const hasError = events.some((event) => event.type === 'error' || event.type === 'generation.attempt.failed');
   const planEvent = [...events].reverse().find((event) => event.type === 'generation.domain_plan');
   const attemptEvent = [...events].reverse().find((event) => event.type === 'generation.attempt.started');
   const domains = Array.isArray(planEvent?.domains) ? planEvent.domains.map(String).join(' -> ') : 'waiting for route';
   const attemptLabel = attemptEvent ? `attempt ${attemptEvent.attempt || 1}/${attemptEvent.attemptTotal || 1}` : 'waiting for model';
+  const cognitiveDetail = summarizeCognitiveReceipt(events);
 
   return [
     {
@@ -120,6 +134,12 @@ function summarizeProcessSteps(events: WorkbenchBridgeEvent[], phase: string): W
       detail: hasPreview ? 'artifact mounted' : hasCandidate || hasComplete ? 'rendering receipt' : 'waiting for artifact',
       status: hasPreview ? 'done' : hasCandidate || hasComplete ? 'active' : 'pending',
     },
+    ...(hasCognitiveReceipt ? [{
+      id: 'cognition',
+      label: 'Cognition',
+      detail: cognitiveDetail,
+      status: hasComplete ? 'done' : hasError ? 'failed' : 'active',
+    } as WorkbenchProcessStep] : []),
     {
       id: 'ready',
       label: 'Ready',
@@ -144,6 +164,7 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       'activity.updated',
       'preview.completed',
       'generation.complete',
+      'generation.cognitive_receipt',
       'error',
     ].includes(String(event.type)))
     .slice(-6)
@@ -184,6 +205,9 @@ function summarizeRecentActivity(events: WorkbenchBridgeEvent[]): Array<{ label:
       }
       if (event.type === 'preview.completed') {
         return { label: 'Preview', detail: event.previewType === 'image' ? String(event.imageUrl || 'inline image rendered') : `${event.previewType} ready`, status: 'ok' };
+      }
+      if (event.type === 'generation.cognitive_receipt') {
+        return { label: 'Cognitive receipt', detail: summarizeCognitiveReceipt([event]), status: 'ok' };
       }
       if (event.type === 'generation.complete') {
         if (event.qualityState === 'unscored') {
@@ -242,6 +266,7 @@ export function latestClarificationRequest(events: WorkbenchBridgeEvent[]): Work
       'generation.candidate.generated',
       'preview.completed',
       'generation.complete',
+      'generation.cognitive_receipt',
       'error',
     ].includes(String(event.type))) {
       return null;

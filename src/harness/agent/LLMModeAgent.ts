@@ -126,6 +126,22 @@ export interface ToolCall {
   expectedResult: string;
 }
 
+interface PlanningLLMResult {
+  text?: string;
+  failure?: string;
+}
+
+interface PlanningLLMResponse {
+  text?: string;
+  success?: boolean;
+  error?: string;
+  provider?: string;
+  model?: string;
+  statusCode?: number;
+  retryable?: boolean;
+  body?: unknown;
+}
+
 export interface AgentMessage {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
@@ -185,6 +201,8 @@ export interface LLMSession {
  */
 export class LLMModeAgent {
   private static readonly PREFLIGHT_EXCERPT_LIMIT = 8000;
+  private static readonly PLANNING_MESSAGE_LIMIT = 12000;
+  private static readonly PLANNING_PROMPT_BUDGET = 30000;
   private llmClient: LLMClient;
   private sessions: Map<string, LLMSession> = new Map();
   private currentSession?: LLMSession;
@@ -695,7 +713,7 @@ When the task is complete and build passes, respond with tool "complete".`;
    * Get LLM's planned tool call
    */
   private async getLLMPlan(session: LLMSession): Promise<ToolCall | null> {
-    const rateLimitResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async () => {
+    const rateLimitResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async (): Promise<PlanningLLMResult> => {
       const systemPrompt = session.messages.find(m => m.role === 'system')?.content || getSelfImprovePrompt();
       // Build conversation context
       let messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = session.messages
@@ -713,6 +731,7 @@ When the task is complete and build passes, respond with tool "complete".`;
         Logger.debug('LLMModeAgent', `Compacted conversation from ${session.messages.length} to ${messages.length} messages`);
       }
 
+      messages = this.budgetPlanningMessages(messages);
       const conversation = messages.map(m => `${m.role}: ${m.content}`).join('\n\n---\n\n');
 
       // Call LLM
@@ -721,19 +740,19 @@ When the task is complete and build passes, respond with tool "complete".`;
         prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',
         maxTokens: 2000,
         temperature: 0.2, // Low temperature for deterministic tool calls
-      });
+      }) as PlanningLLMResponse;
 
       if (response.success === false) {
-        throw new Error(response.error || 'LLM call failed before producing a response');
+        return { failure: this.formatPlanningFailure(response) };
       }
 
-      return response.text;
+      return { text: response.text ?? '' };
     });
 
-    if (!rateLimitResult.result) {
+    if (!rateLimitResult.result?.text) {
       const failureReason = rateLimitResult.rateLimited
         ? (rateLimitResult.error || 'Rate limit hit for LLM call')
-        : (rateLimitResult.error || 'LLM call failed before producing a response');
+        : (rateLimitResult.result?.failure || rateLimitResult.error || 'LLM call failed before producing a response');
       if (this.currentSession) {
         this.currentSession.lastPlanError = failureReason;
       }
@@ -743,7 +762,7 @@ When the task is complete and build passes, respond with tool "complete".`;
       if (retryable) {
         Logger.warn('LLMModeAgent', `Retrying transient planning failure once: ${failureReason}`);
         await new Promise(resolve => setTimeout(resolve, 750));
-        const retryResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async () => {
+        const retryResult = await rateLimiter.execute(this.llmRateLimitOperation(session), async (): Promise<PlanningLLMResult> => {
           const systemPrompt = session.messages.find(m => m.role === 'system')?.content || getSelfImprovePrompt();
           let messages: Array<{ role: 'system' | 'user' | 'assistant'; content: string }> = session.messages
             .filter(m => m.role !== 'system')
@@ -756,23 +775,24 @@ When the task is complete and build passes, respond with tool "complete".`;
           if (this.compactor.needsCompaction(messages)) {
             messages = await this.compactor.compact(messages);
           }
+          messages = this.budgetPlanningMessages(messages);
           const conversation = messages.map(m => `${m.role}: ${m.content}`).join('\n\n---\n\n');
           const response = await this.llmClient.complete({
             systemPrompt,
             prompt: conversation + '\n\nWhat is your next tool call? Respond with JSON only.',
             maxTokens: 2000,
             temperature: 0.2,
-          });
+          }) as PlanningLLMResponse;
           if (response.success === false) {
-            throw new Error(response.error || 'LLM call failed before producing a response');
+            return { failure: this.formatPlanningFailure(response) };
           }
-          return response.text;
+          return { text: response.text ?? '' };
         });
-        if (retryResult.result) {
+        if (retryResult.result?.text) {
           if (this.currentSession) this.currentSession.lastPlanError = undefined;
           rateLimitResult.result = retryResult.result;
         } else {
-          const retryReason = retryResult.error || failureReason;
+          const retryReason = retryResult.result?.failure || retryResult.error || failureReason;
           if (this.currentSession) this.currentSession.lastPlanError = retryReason;
           return null;
         }
@@ -789,7 +809,7 @@ When the task is complete and build passes, respond with tool "complete".`;
     try {
       // rateLimiter.execute() wraps the return in { result: T }, so the text is
       // in rateLimitResult.result (which is the string returned from fn above).
-      let text = String(rateLimitResult.result);
+      let text = String(rateLimitResult.result.text);
 
       // Strip <think/>, <thinkContent/>, and similar reasoning wrappers
       // Models like MiniMax M2.7 wrap reasoning in these tags before the JSON
@@ -861,8 +881,57 @@ When the task is complete and build passes, respond with tool "complete".`;
         this.currentSession.lastPlanError = `Failed to parse LLM response: ${String(e)}`;
       }
       Logger.error('LLMModeAgent', `Failed to parse LLM response: ${e}`);
-      Logger.error('LLMModeAgent', `Raw response: ${rateLimitResult.result}`);
+      Logger.error('LLMModeAgent', `Raw response: ${rateLimitResult.result.text}`);
       return null;
+    }
+  }
+
+  private budgetPlanningMessages<T extends { role: 'system' | 'user' | 'assistant'; content: string }>(messages: T[]): T[] {
+    let remaining = LLMModeAgent.PLANNING_PROMPT_BUDGET;
+    const omitted = '[omitted planning context: prompt budget exhausted; newest context preserved; use readFile/search for needed detail]';
+    const budgeted = messages.map(message => ({ ...message, content: omitted }));
+
+    for (let index = messages.length - 1; index >= 0; index--) {
+      if (remaining <= 0) break;
+
+      const limit = Math.min(LLMModeAgent.PLANNING_MESSAGE_LIMIT, remaining);
+      const preserve = index === 0 ? 'head' : 'tail';
+      const content = this.truncatePlanningContent(messages[index].content, limit, preserve);
+      remaining -= content.length;
+      budgeted[index] = { ...messages[index], content };
+    }
+
+    return budgeted;
+  }
+
+  private truncatePlanningContent(content: string, limit: number, preserve: 'head' | 'tail' = 'head'): string {
+    if (content.length <= limit) return content;
+    const omitted = content.length - limit;
+    const marker = `\n... [truncated planning context: ${omitted} chars omitted; use readFile/search for missing detail]`;
+    if (limit <= marker.length) return marker.slice(0, limit);
+    const keep = limit - marker.length;
+    if (preserve === 'tail') return `${marker}\n${content.slice(content.length - keep)}`;
+    return `${content.slice(0, keep)}${marker}`;
+  }
+
+  private formatPlanningFailure(response: PlanningLLMResponse): string {
+    const fields = [
+      response.error || 'LLM call failed before producing a response',
+      response.provider ? `provider=${response.provider}` : undefined,
+      response.model ? `model=${response.model}` : undefined,
+      typeof response.statusCode === 'number' ? `status=${response.statusCode}` : undefined,
+      typeof response.retryable === 'boolean' ? `retryable=${response.retryable}` : undefined,
+      response.body !== undefined ? `body=${this.safeStringify(response.body)}` : undefined,
+    ].filter((field): field is string => Boolean(field));
+    return fields.join(' | ');
+  }
+
+  private safeStringify(value: unknown): string {
+    if (typeof value === 'string') return value.slice(0, 1000);
+    try {
+      return JSON.stringify(value).slice(0, 1000);
+    } catch {
+      return String(value).slice(0, 1000);
     }
   }
 

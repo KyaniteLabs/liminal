@@ -40,6 +40,7 @@ import { summarizeReasoningTrace } from './TraceSummarizer.js';
 import { normalizeOptions } from '../core/LoopConfig.js';
 import { GenerationOrchestrator } from '../core/GenerationOrchestrator.js';
 import { Gallery } from '../gallery/Gallery.js';
+import { PostGenerationCognitiveWriter } from './PostGenerationCognitiveWriter.js';
 
 export const TUI_SYSTEM_PROMPT = `You are Liminal's Meta-Harness operator interface.
 
@@ -164,6 +165,8 @@ export class TuiBridgeService {
   private cortexLoop: LiminalCortex | null = null;
   // Autonomous gardener: coordinates taste learning, dream recombination, emergence cycles
   private gardener: AutonomousGardener | null = null;
+  // Cognitive write-back: memory, compost, and dreaming receipts for Studio generation
+  private cognitiveWriter: PostGenerationCognitiveWriter;
   /** Default Gardener configuration */
   private static readonly GARDENER_CONFIG = {
     mode: 'co-create' as const,
@@ -189,7 +192,8 @@ export class TuiBridgeService {
   /** Handle for the cortex broadcast interval (stored for cleanup) */
   private cortexBroadcastTimer: ReturnType<typeof setInterval> | null = null;
 
-  constructor() {
+  constructor(options: { cognitiveWriter?: PostGenerationCognitiveWriter } = {}) {
+    this.cognitiveWriter = options.cognitiveWriter ?? new PostGenerationCognitiveWriter();
     // Start the Cortex perception bus
     this.cortexBus.start();
     // Broadcast cortex snapshots to all active sessions periodically
@@ -1582,6 +1586,11 @@ export class TuiBridgeService {
       }
 
       const domainPlan = buildCreativeDomainPlan(userText);
+      const memoryReceipts = await this.cognitiveWriter.prepareGeneration({
+        sessionId,
+        userText,
+        domain: domainPlan[0],
+      });
       this.emitReasoningTrace(sessionId, {
         phase: 'domain-routing',
         thought: `Routing through ${domainPlan.length} possible domain path(s): ${domainPlan.join(' -> ')}.`,
@@ -1605,6 +1614,19 @@ export class TuiBridgeService {
         timeoutMinutes,
         candidateCount,
         executionMode: 'prove',
+      });
+      this.emit(sessionId, {
+        type: 'generation.cognitive_receipt',
+        sessionId,
+        loop: 'creative',
+        receipts: [
+          { organ: 'perception', status: 'observed', detail: `Captured ${intentBrief.requirements.length} requirement(s) from the prompt.` },
+          { organ: 'intuition', status: 'observed', detail: `Selected route ${domainPlan.join(' -> ')} from prompt and selector context.` },
+          ...memoryReceipts,
+          { organ: 'compost', status: 'pending', detail: 'Compost write-back will run after a candidate is generated.' },
+          { organ: 'dreaming', status: 'pending', detail: 'Dream recombination is a follow-up loop, not run during this foreground generation.' },
+          { organ: 'evaluation', status: 'pending', detail: 'Evaluator receipt will update after candidate generation.' },
+        ],
       });
       this.emit(sessionId, {
         type: 'tool.completed',
@@ -1792,6 +1814,29 @@ export class TuiBridgeService {
           qualityState: 'scored',
           executionMode: 'prove',
         });
+        const writeBack = await this.cognitiveWriter.writeBackGeneration({
+          sessionId,
+          userText,
+          domain: activeDomain,
+          code: result.code,
+          finalScore: result.finalScore,
+          iterations: result.iterations,
+          model: result.model || generatorModelName,
+          reason: result.reason,
+          executionMode: 'prove',
+        });
+        this.emit(sessionId, {
+          type: 'generation.cognitive_receipt',
+          sessionId,
+          loop: 'creative',
+          receipts: [
+            { organ: 'perception', status: 'observed', detail: 'Prompt and generated artifact were captured in the session transcript.' },
+            { organ: 'intuition', status: 'observed', detail: `Route completed through ${activeDomain}.` },
+            { organ: 'evaluation', status: 'observed', detail: `Scored ${result.finalScore.toFixed(2)} over ${result.iterations} iteration(s).` },
+            { organ: 'immune-truth', status: 'observed', detail: 'Generation used scored output and explicit preview/artifact events; no silent fallback artifact was emitted.' },
+            ...writeBack.receipts,
+          ],
+        });
 
         // Step 4: Emit response.metadata for chat responses
         this.emit(sessionId, {
@@ -1900,6 +1945,11 @@ export class TuiBridgeService {
       }
 
       const domainPlan = buildCreativeDomainPlan(userText);
+      const memoryReceiptsPromise = this.cognitiveWriter.prepareGeneration({
+        sessionId,
+        userText,
+        domain: domainPlan[0],
+      });
       this.emit(sessionId, {
         type: 'generation.domain_plan',
         sessionId,
@@ -1908,6 +1958,19 @@ export class TuiBridgeService {
         timeoutMinutes,
         candidateCount,
         executionMode: 'draft',
+      });
+      void memoryReceiptsPromise.then((memoryReceipts) => {
+        this.emit(sessionId, {
+          type: 'generation.cognitive_receipt',
+          sessionId,
+          loop: 'creative',
+          receipts: [
+            { organ: 'perception', status: 'observed', detail: `Captured ${intentBrief.requirements.length} requirement(s) from the prompt.` },
+            { organ: 'intuition', status: 'observed', detail: `Draft route selected ${domainPlan.join(' -> ')}.` },
+            ...memoryReceipts,
+            { organ: 'evaluation', status: 'pending', detail: 'Draft mode skips scoring until a prove run is requested.' },
+          ],
+        });
       });
 
       let result: Awaited<ReturnType<GenerationOrchestrator['generate']>> | undefined;
@@ -2036,6 +2099,29 @@ export class TuiBridgeService {
         reason: 'draft artifact ready (unscored)',
         qualityState: 'unscored',
         executionMode: 'draft',
+      });
+      const writeBack = await this.cognitiveWriter.writeBackGeneration({
+        sessionId,
+        userText,
+        domain: activeDomain,
+        code: result.code,
+        finalScore: 0,
+        iterations: 1,
+        model: result.model || generatorModelName,
+        reason: 'draft artifact ready (unscored)',
+        executionMode: 'draft',
+      });
+      this.emit(sessionId, {
+        type: 'generation.cognitive_receipt',
+        sessionId,
+        loop: 'creative',
+        receipts: [
+          { organ: 'perception', status: 'observed', detail: 'Prompt and draft artifact were captured in the session transcript.' },
+          { organ: 'intuition', status: 'observed', detail: `Draft route completed through ${activeDomain}.` },
+          { organ: 'evaluation', status: 'unavailable', detail: 'Draft mode intentionally did not run evaluator scoring.' },
+          { organ: 'immune-truth', status: 'observed', detail: 'Draft artifact is labeled unscored instead of presented as proven output.' },
+          ...writeBack.receipts,
+        ],
       });
       this.emit(sessionId, {
         type: 'status.updated',

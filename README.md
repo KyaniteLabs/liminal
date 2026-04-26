@@ -4,6 +4,8 @@
 [![License: BSL 1.1](https://img.shields.io/badge/License-BSL%201.1-blue.svg)](./LICENSE)
 
 > A creative coding agent that generates art, music, and shaders through iterative LLM-powered evolution.
+>
+> **Finish-line contract:** Liminal is a creative cognitive system, not a narrowed proof wedge. See [docs/FINISH_LINE.md](docs/FINISH_LINE.md) for the domain, cognitive-organ, self-improvement, and model-assimilation contract.
 
 Liminal is a model-agnostic creative coding system. You give it a prompt — "a calming blue particle system" or "glitch techno beats with feedback loops" — and it generates, evaluates, and iteratively improves p5.js sketches, GLSL shaders, Three.js scenes, Strudel live-coding music, Hydra visuals, and more. It works with any OpenAI-compatible API, Ollama, LM Studio, or Anthropic.
 
@@ -56,7 +58,7 @@ Each iteration, Liminal:
 
 **Key capabilities:**
 
-- **11 generators** — p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen
+- **12 creative domains** — SVG, p5.js, GLSL, Three.js, Strudel, Hydra, Tone.js, Revideo, HTML, ASCII, Kinetic, TextGen
 - **Multi-agent critique** — 3-agent board (Minimalist / Expressionist / Technician) deliberates on output
 - **Compost Mill** — Digests past work into reusable creative seeds that improve every generation
 - **Self-healing harness** — Observes failures, detects patterns, and proposes repair, hardening, and optimization work with verification targets
@@ -69,6 +71,7 @@ Each iteration, Liminal:
 - **Taste learning + dreaming** — Preference-informed generation, cross-modal dream recombinations, motif rehydration
 - **Autonomous Gardener** — Background creative steward that manages taste, dreaming, and emergence automatically
 - **Model-agnostic** — Works with any provider: MiniMax, OpenAI, Anthropic, Ollama, LM Studio, OpenRouter, GLM
+- **Model Assimilation Protocol** — Auditions new models by role/domain before promotion; see [docs/MODEL_ASSIMILATION_PROTOCOL.md](docs/MODEL_ASSIMILATION_PROTOCOL.md)
 - **Circuit breaker** — Automatic provider failover with smart routing
 
 ---
@@ -108,6 +111,10 @@ liminal emergence probe <file>                      # Run perturbation probes
 liminal report provenance <file>                    # Trace creative lineage
 liminal report archive                              # Archive overview
 liminal report garden                               # Autonomous Gardener status
+liminal report cognition                            # Creative body + cognitive architecture atlas
+pnpm proof:cognitive-loop -- --out=.omx/proof/cognitive-loop-dev
+pnpm proof:cognitive-loop -- --live --out=.omx/proof/cognitive-loop-live-dev
+pnpm proof:model-assimilation -- --out=.omx/proof/model-assimilation-dev
 
 # Compost Mill — creative material digestion
 liminal compost add <path>                          # Feed material to heap

@@ -65,7 +65,7 @@ Proof slices may be narrow. Product scope must not silently shrink.
 
 ## Finish-Line Gates
 
-1. `liminal studio` shows a creative session with cognitive-loop receipts.
+1. `liminal studio` shows a creative session with cognitive-loop receipts, including honest memory retrieval plus post-generation memory, compost, and dream-queue write-back.
 2. `node bin/liminal report cognition` lists every creative domain and cognitive organ.
 3. A proof bundle shows creative memory influencing a later generation.
 4. A self-improvement run fixes or improves one real weakness in an isolated worktree with verification.

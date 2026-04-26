@@ -47,7 +47,7 @@ Liminal V1 is not a four-generator proof. It is a creative cognitive system with
 
 1. Studio receipts: show intent, route, generation, preview/export, evaluation, memory/compost note, and domain maturity. **Partially executed:** Studio generation now retrieves prior domain memory before generation and writes completed artifacts into HarnessMemory, the compost heap, and DreamQueue receipts.
 2. Live cognitive-loop proof: upgrade deterministic proof to optional `--live` mode with exact provider failures and no fallback artifacts.
-3. Self-improvement repair: bound the Bubble Tea/Studio first planning prompt and preserve structured provider errors.
+3. Self-improvement repair: bound the Bubble Tea/Studio first planning prompt and preserve structured provider errors. **Partially executed:** `LLMModeAgent` now caps planning context before `complete()` calls and keeps provider/model/status/retry/body metadata in planning diagnostics.
 4. Model assimilation runner: audition models by role/domain and persist promotion/demotion evidence. **Partially executed:** `pnpm proof:model-assimilation` now emits a deterministic `liminal-model-assimilation-v1` report with role/domain assignments and fallback provenance.
 5. Domain gates: raise SVG/p5 first, then GLSL/Hydra/Three, then Tone/Strudel/Revideo, then remaining domains.
 

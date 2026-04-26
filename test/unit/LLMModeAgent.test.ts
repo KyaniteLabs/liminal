@@ -254,6 +254,60 @@ describe('LLMModeAgent', () => {
     expect(userMsg!.content).toContain('Fix the bug');
   });
 
+  it('bounds the first planning prompt instead of sending oversized task context', async () => {
+    const hugeDescription = `Fix Bubble Tea planning.\n${'oversized-context '.repeat(7000)}TAIL_SHOULD_BE_TRUNCATED`;
+    mockReadFile.execute.mockResolvedValue({
+      success: true,
+      data: { content: 'preflight '.repeat(4000) },
+    });
+    queuePlans('{"tool":"complete","params":{},"thought":"bounded","expectedResult":"done"}');
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    await agent.executeTask({
+      id: 'tui-self-bounded-prompt',
+      title: 'Bound prompt',
+      description: hugeDescription,
+      approved: true,
+      workingSet: ['src/tui-bridge/TuiBridgeService.ts'],
+      primaryFiles: ['src/tui-bridge/TuiBridgeService.ts'],
+      maxSteps: 1,
+    });
+
+    const prompt = mockComplete.mock.calls[0][0].prompt as string;
+    expect(prompt.length).toBeLessThanOrEqual(32000);
+    expect(prompt).toContain('truncated planning context');
+    expect(prompt).not.toContain('TAIL_SHOULD_BE_TRUNCATED');
+  });
+
+  it('preserves structured provider failure details in planning diagnostics', async () => {
+    mockComplete.mockResolvedValue({
+      text: '',
+      success: false,
+      error: 'upstream rejected request',
+      provider: 'openai',
+      model: 'gpt-5.4-mini',
+      statusCode: 429,
+      retryable: true,
+      body: { error: { type: 'rate_limit', message: 'quota exceeded' } },
+    });
+
+    const agent = new LLMModeAgent(mockLLM as any);
+    const session = await agent.executeTask({
+      id: 't-provider-error',
+      title: 'Provider error',
+      description: 'Expose structured provider error',
+      approved: true,
+      maxSteps: 1,
+    });
+
+    expect(session.status).toBe(Status.FAILED);
+    expect(session.lastPlanError).toContain('provider=openai');
+    expect(session.lastPlanError).toContain('model=gpt-5.4-mini');
+    expect(session.lastPlanError).toContain('status=429');
+    expect(session.lastPlanError).toContain('retryable=true');
+    expect(session.lastPlanError).toContain('quota exceeded');
+  });
+
   it('executeTask rejects unapproved tasks before any LLM call runs', async () => {
     const agent = new LLMModeAgent(mockLLM as any);
 

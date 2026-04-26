@@ -888,26 +888,29 @@ When the task is complete and build passes, respond with tool "complete".`;
 
   private budgetPlanningMessages<T extends { role: 'system' | 'user' | 'assistant'; content: string }>(messages: T[]): T[] {
     let remaining = LLMModeAgent.PLANNING_PROMPT_BUDGET;
-    return messages.map((message) => {
-      if (remaining <= 0) {
-        return {
-          ...message,
-          content: '[omitted planning context: prompt budget exhausted; use readFile/search for needed detail]',
-        };
-      }
+    const omitted = '[omitted planning context: prompt budget exhausted; newest context preserved; use readFile/search for needed detail]';
+    const budgeted = messages.map(message => ({ ...message, content: omitted }));
+
+    for (let index = messages.length - 1; index >= 0; index--) {
+      if (remaining <= 0) break;
 
       const limit = Math.min(LLMModeAgent.PLANNING_MESSAGE_LIMIT, remaining);
-      const content = this.truncatePlanningContent(message.content, limit);
+      const preserve = index === 0 ? 'head' : 'tail';
+      const content = this.truncatePlanningContent(messages[index].content, limit, preserve);
       remaining -= content.length;
-      return { ...message, content };
-    });
+      budgeted[index] = { ...messages[index], content };
+    }
+
+    return budgeted;
   }
 
-  private truncatePlanningContent(content: string, limit: number): string {
+  private truncatePlanningContent(content: string, limit: number, preserve: 'head' | 'tail' = 'head'): string {
     if (content.length <= limit) return content;
     const omitted = content.length - limit;
     const marker = `\n... [truncated planning context: ${omitted} chars omitted; use readFile/search for missing detail]`;
-    const keep = Math.max(0, limit - marker.length);
+    if (limit <= marker.length) return marker.slice(0, limit);
+    const keep = limit - marker.length;
+    if (preserve === 'tail') return `${marker}\n${content.slice(content.length - keep)}`;
     return `${content.slice(0, keep)}${marker}`;
   }
 

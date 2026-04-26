@@ -14,7 +14,8 @@ import path from 'node:path';
 type Mode = 'fixture' | 'live';
 type Decision = 'promote' | 'hold' | 'demote';
 type Role = 'generator' | 'evaluator' | 'harness';
-type Domain = 'svg' | 'p5' | 'glsl' | 'hydra' | 'three' | 'tone' | 'strudel' | 'revideo';
+const domains = ['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo', 'html', 'ascii', 'kinetic', 'textgen'] as const;
+type Domain = typeof domains[number];
 
 interface CandidateEvidence {
   model: string;
@@ -54,9 +55,9 @@ const baselinePolicy = {
 };
 
 const baselines: Record<Role, Partial<Record<Domain, number>>> = {
-  generator: { svg: 0.76, p5: 0.74, glsl: 0.70, hydra: 0.68, three: 0.72, tone: 0.70, strudel: 0.69, revideo: 0.66 },
-  evaluator: { svg: 0.74, p5: 0.72, glsl: 0.71, hydra: 0.68, three: 0.70, tone: 0.66, strudel: 0.65, revideo: 0.63 },
-  harness: { svg: 0.73, p5: 0.73, glsl: 0.72, hydra: 0.70, three: 0.72, tone: 0.67, strudel: 0.66, revideo: 0.64 },
+  generator: { svg: 0.76, p5: 0.74, glsl: 0.70, hydra: 0.68, three: 0.72, tone: 0.70, strudel: 0.69, revideo: 0.66, html: 0.72, ascii: 0.62, kinetic: 0.61, textgen: 0.65 },
+  evaluator: { svg: 0.74, p5: 0.72, glsl: 0.71, hydra: 0.68, three: 0.70, tone: 0.66, strudel: 0.65, revideo: 0.63, html: 0.70, ascii: 0.60, kinetic: 0.59, textgen: 0.64 },
+  harness: { svg: 0.73, p5: 0.73, glsl: 0.72, hydra: 0.70, three: 0.72, tone: 0.67, strudel: 0.66, revideo: 0.64, html: 0.71, ascii: 0.61, kinetic: 0.60, textgen: 0.65 },
 };
 
 const fixtureCandidates: CandidateEvidence[] = [
@@ -65,9 +66,9 @@ const fixtureCandidates: CandidateEvidence[] = [
     provider: 'openai',
     notes: ['cloud-first DF candidate', 'strong structured outputs', 'good default for visible creative routing'],
     scores: {
-      generator: { svg: 0.86, p5: 0.83, glsl: 0.78, hydra: 0.75, three: 0.80, tone: 0.72, strudel: 0.71, revideo: 0.70 },
-      evaluator: { svg: 0.82, p5: 0.79, glsl: 0.76, hydra: 0.73, three: 0.78, tone: 0.70, strudel: 0.69, revideo: 0.68 },
-      harness: { svg: 0.84, p5: 0.83, glsl: 0.80, hydra: 0.78, three: 0.82, tone: 0.75, strudel: 0.74, revideo: 0.73 },
+      generator: { svg: 0.86, p5: 0.83, glsl: 0.78, hydra: 0.75, three: 0.80, tone: 0.72, strudel: 0.71, revideo: 0.70, html: 0.81, ascii: 0.68, kinetic: 0.67, textgen: 0.72 },
+      evaluator: { svg: 0.82, p5: 0.79, glsl: 0.76, hydra: 0.73, three: 0.78, tone: 0.70, strudel: 0.69, revideo: 0.68, html: 0.77, ascii: 0.66, kinetic: 0.65, textgen: 0.71 },
+      harness: { svg: 0.84, p5: 0.83, glsl: 0.80, hydra: 0.78, three: 0.82, tone: 0.75, strudel: 0.74, revideo: 0.73, html: 0.80, ascii: 0.69, kinetic: 0.68, textgen: 0.73 },
     },
   },
   {
@@ -75,9 +76,9 @@ const fixtureCandidates: CandidateEvidence[] = [
     provider: 'openai',
     notes: ['low-cost routing candidate', 'best for quick drafts and classification', 'not enough evidence for primary prove loops'],
     scores: {
-      generator: { svg: 0.78, p5: 0.77, glsl: 0.69, hydra: 0.67, three: 0.70, tone: 0.68, strudel: 0.67, revideo: 0.64 },
-      evaluator: { svg: 0.73, p5: 0.72, glsl: 0.68, hydra: 0.66, three: 0.69, tone: 0.65, strudel: 0.64, revideo: 0.62 },
-      harness: { svg: 0.76, p5: 0.75, glsl: 0.72, hydra: 0.70, three: 0.72, tone: 0.68, strudel: 0.67, revideo: 0.65 },
+      generator: { svg: 0.78, p5: 0.77, glsl: 0.69, hydra: 0.67, three: 0.70, tone: 0.68, strudel: 0.67, revideo: 0.64, html: 0.72, ascii: 0.63, kinetic: 0.62, textgen: 0.66 },
+      evaluator: { svg: 0.73, p5: 0.72, glsl: 0.68, hydra: 0.66, three: 0.69, tone: 0.65, strudel: 0.64, revideo: 0.62, html: 0.70, ascii: 0.60, kinetic: 0.59, textgen: 0.64 },
+      harness: { svg: 0.76, p5: 0.75, glsl: 0.72, hydra: 0.70, three: 0.72, tone: 0.68, strudel: 0.67, revideo: 0.65, html: 0.72, ascii: 0.61, kinetic: 0.60, textgen: 0.66 },
     },
   },
   {
@@ -85,9 +86,9 @@ const fixtureCandidates: CandidateEvidence[] = [
     provider: 'glm',
     notes: ['cloud-first alternate provider', 'useful fallback diversity', 'needs provenance because provider behavior differs'],
     scores: {
-      generator: { svg: 0.80, p5: 0.78, glsl: 0.74, hydra: 0.73, three: 0.75, tone: 0.71, strudel: 0.70, revideo: 0.68 },
-      evaluator: { svg: 0.78, p5: 0.76, glsl: 0.75, hydra: 0.72, three: 0.75, tone: 0.69, strudel: 0.68, revideo: 0.67 },
-      harness: { svg: 0.79, p5: 0.78, glsl: 0.76, hydra: 0.74, three: 0.77, tone: 0.71, strudel: 0.70, revideo: 0.69 },
+      generator: { svg: 0.80, p5: 0.78, glsl: 0.74, hydra: 0.73, three: 0.75, tone: 0.71, strudel: 0.70, revideo: 0.68, html: 0.76, ascii: 0.66, kinetic: 0.65, textgen: 0.69 },
+      evaluator: { svg: 0.78, p5: 0.76, glsl: 0.75, hydra: 0.72, three: 0.75, tone: 0.69, strudel: 0.68, revideo: 0.67, html: 0.74, ascii: 0.64, kinetic: 0.63, textgen: 0.68 },
+      harness: { svg: 0.79, p5: 0.78, glsl: 0.76, hydra: 0.74, three: 0.77, tone: 0.71, strudel: 0.70, revideo: 0.69, html: 0.75, ascii: 0.65, kinetic: 0.64, textgen: 0.69 },
     },
   },
 ];
@@ -130,7 +131,6 @@ function bestCandidate(role: Role, domain: Domain, candidates: CandidateEvidence
 
 function buildReport(mode: Mode): ModelAssimilationReport {
   const roles: Role[] = ['generator', 'evaluator', 'harness'];
-  const domains: Domain[] = ['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo'];
   const recommendedAssignments = roles.flatMap(role => domains.map(domain => bestCandidate(role, domain, fixtureCandidates)));
   const fallbackProvenance = recommendedAssignments.map(item => {
     const fallback = fixtureCandidates

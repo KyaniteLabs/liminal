@@ -279,6 +279,25 @@ describe('LLMModeAgent', () => {
     expect(prompt).not.toContain('TAIL_SHOULD_BE_TRUNCATED');
   });
 
+  it('preserves newest planning context when enforcing the prompt budget', () => {
+    const agent = new LLMModeAgent(mockLLM as any) as unknown as {
+      budgetPlanningMessages(messages: Array<{ role: 'user' | 'assistant'; content: string }>): Array<{ role: 'user' | 'assistant'; content: string }>;
+    };
+
+    const budgeted = agent.budgetPlanningMessages([
+      { role: 'user', content: `old task context ${'old-context '.repeat(5000)}OLD_TAIL_SHOULD_DROP` },
+      { role: 'assistant', content: `middle tool output ${'middle-output '.repeat(3000)}MIDDLE_TAIL_MAY_DROP` },
+      { role: 'assistant', content: `newer tool output ${'newer-output '.repeat(3000)}NEWER_TAIL_SHOULD_STAY` },
+      { role: 'user', content: `newest user correction ${'latest-context '.repeat(5000)}LATEST_TOOL_SIGNAL` },
+    ]);
+    const prompt = budgeted.map(message => `${message.role}: ${message.content}`).join('\n---\n');
+
+    expect(prompt.length).toBeLessThanOrEqual(31000);
+    expect(prompt).toContain('newest context preserved');
+    expect(prompt).toContain('LATEST_TOOL_SIGNAL');
+    expect(prompt).not.toContain('OLD_TAIL_SHOULD_DROP');
+  });
+
   it('preserves structured provider failure details in planning diagnostics', async () => {
     mockComplete.mockResolvedValue({
       text: '',

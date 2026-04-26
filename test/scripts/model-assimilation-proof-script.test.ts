@@ -47,11 +47,21 @@ describe('model-assimilation proof script', () => {
       'gpt-5.4-nano',
       'glm-4.5-air',
     ]));
+    const finishLineDomains = ['svg', 'p5', 'glsl', 'hydra', 'three', 'tone', 'strudel', 'revideo', 'html', 'ascii', 'kinetic', 'textgen'];
+    expect(new Set(report.recommendedAssignments.map(item => item.domain))).toEqual(new Set(finishLineDomains));
+    expect(report.recommendedAssignments).toHaveLength(finishLineDomains.length * 3);
+    expect(report.fallbackProvenance).toHaveLength(finishLineDomains.length * 3);
     expect(report.recommendedAssignments).toEqual(expect.arrayContaining([
       expect.objectContaining({ role: 'generator', domain: 'svg', decision: 'promote' }),
       expect.objectContaining({ role: 'generator', domain: 'tone', decision: 'hold' }),
+      expect.objectContaining({ role: 'generator', domain: 'html' }),
+      expect.objectContaining({ role: 'evaluator', domain: 'ascii' }),
+      expect.objectContaining({ role: 'harness', domain: 'kinetic' }),
+      expect.objectContaining({ role: 'generator', domain: 'textgen' }),
     ]));
-    expect(report.fallbackProvenance.find(item => item.role === 'generator' && item.domain === 'svg')?.chain.length).toBeGreaterThan(1);
+    for (const domain of finishLineDomains) {
+      expect(report.fallbackProvenance.find(item => item.role === 'generator' && item.domain === domain)?.chain.length).toBeGreaterThan(1);
+    }
     expect(markdown).toContain('## Recommended Assignments');
     expect(markdown).toContain('gpt-5.4-mini');
   });

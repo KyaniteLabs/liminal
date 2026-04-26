@@ -1607,6 +1607,19 @@ export class TuiBridgeService {
         executionMode: 'prove',
       });
       this.emit(sessionId, {
+        type: 'generation.cognitive_receipt',
+        sessionId,
+        loop: 'creative',
+        receipts: [
+          { organ: 'perception', status: 'observed', detail: `Captured ${intentBrief.requirements.length} requirement(s) from the prompt.` },
+          { organ: 'intuition', status: 'observed', detail: `Selected route ${domainPlan.join(' -> ')} from prompt and selector context.` },
+          { organ: 'memory', status: 'pending', detail: 'Studio memory retrieval is not yet attached to this generation path.' },
+          { organ: 'compost', status: 'pending', detail: 'Compost seeds are not yet attached to this generation path.' },
+          { organ: 'dreaming', status: 'pending', detail: 'Dream recombination is a follow-up loop, not run during this foreground generation.' },
+          { organ: 'evaluation', status: 'pending', detail: 'Evaluator receipt will update after candidate generation.' },
+        ],
+      });
+      this.emit(sessionId, {
         type: 'tool.completed',
         sessionId,
         toolName: 'domain-router',
@@ -1791,6 +1804,19 @@ export class TuiBridgeService {
           reason: result.reason,
           qualityState: 'scored',
           executionMode: 'prove',
+        });
+        this.emit(sessionId, {
+          type: 'generation.cognitive_receipt',
+          sessionId,
+          loop: 'creative',
+          receipts: [
+            { organ: 'perception', status: 'observed', detail: 'Prompt and generated artifact were captured in the session transcript.' },
+            { organ: 'intuition', status: 'observed', detail: `Route completed through ${activeDomain}.` },
+            { organ: 'evaluation', status: 'observed', detail: `Scored ${result.finalScore.toFixed(2)} over ${result.iterations} iteration(s).` },
+            { organ: 'immune-truth', status: 'observed', detail: 'Generation used scored output and explicit preview/artifact events; no silent fallback artifact was emitted.' },
+            { organ: 'memory', status: 'pending', detail: 'Taste/memory write-back remains a finish-line follow-up.' },
+            { organ: 'compost', status: 'pending', detail: 'Compost write-back remains a finish-line follow-up.' },
+          ],
         });
 
         // Step 4: Emit response.metadata for chat responses

@@ -140,6 +140,7 @@ function printHelp() {
   console.log('  quality <subcommand>       Quality gate: run, gate');
   console.log('  archive <subcommand>      Archive: inspect, lineage, branch, list');
   console.log('  preferences <subcommand>  Preferences: export, stats');
+  console.log('  report cognition           Show creative body and cognitive architecture atlas');
   console.log('');
   console.log('OPTIONS:');
   console.log('  --prompt, -p <text>         Prompt for generation');
@@ -279,6 +280,16 @@ if (cmd === 'improve') {
 
   console.error('Usage: liminal improve <scan|run>');
   process.exit(1);
+}
+
+
+if (cmd === 'report' && cmdArgs[0] === 'cognition') {
+  const { CognitiveArchitectureAtlas } = await import('../dist/reporting/index.js');
+  const atlas = new CognitiveArchitectureAtlas();
+  console.log('');
+  console.log(atlas.format(atlas.build()));
+  console.log('');
+  process.exit(0);
 }
 
 const [

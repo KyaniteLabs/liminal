@@ -14,6 +14,11 @@ describe('cognitive loop proof script', () => {
     const source = readFileSync(scriptPath, 'utf8');
     expect(source).toContain("path.join('.omx', 'proof', 'cognitive-loop')");
     expect(source).toContain('deterministic');
+    expect(source).toContain('live-writer');
+    expect(source).toContain('--live');
+    expect(source).toContain('PostGenerationCognitiveWriter');
+    expect(source).toContain('ProofMemoryStore');
+    expect(source).toContain('ProofCompostSink');
     expect(source).toContain('perception');
     expect(source).toContain('memory');
     expect(source).toContain('compost');
@@ -23,6 +28,8 @@ describe('cognitive loop proof script', () => {
     expect(source).toContain('nextRunInfluence');
     expect(source).toContain('report.json');
     expect(source).toContain('report.md');
+    expect(source).toContain('writeBackGeneration');
+    expect(source).toContain('prepareGeneration');
   });
 
   it('exposes the proof through package scripts', () => {

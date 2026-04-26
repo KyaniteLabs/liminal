@@ -2,24 +2,43 @@
 /**
  * Cognitive loop proof runner.
  *
- * Deterministic proof that Liminal's intended organism loop can produce receipts
- * for perception, memory, compost, dreaming, intuition, evaluation, and next-run
- * influence without cloud/provider variability. Live proof should extend this,
- * not replace it.
+ * Default mode is deterministic so CI can prove the intended organism loop
+ * without cloud/provider variability. `--live` extends the proof through the
+ * real post-generation cognitive writer path so Studio write-back into memory,
+ * compost, and dreaming stays executable instead of becoming architecture prose.
  */
 
 import fs from 'node:fs/promises';
 import path from 'node:path';
+import { PostGenerationCognitiveWriter, type CognitiveOrganReceipt } from '../../src/tui-bridge/PostGenerationCognitiveWriter.js';
+import { DreamQueue } from '../../src/dreaming/DreamQueue.js';
 
 type OrganId = 'perception' | 'memory' | 'compost' | 'dreaming' | 'intuition' | 'evaluation';
+type ProofMode = 'deterministic' | 'live-writer';
 
+interface CliOptions { outputRoot: string; mode: ProofMode }
 interface OrganReceipt { organ: OrganId; evidence: string }
 interface CognitiveIteration { id: string; prompt: string; artifactPath: string; receipts: OrganReceipt[]; nextRunInfluence: string[]; score: number }
+interface ProofEpisode { id: string; type: 'generation'; timestamp: string; domain?: string; prompt?: string; code?: string; score?: number; comment?: string; tags?: string[] }
+interface LiveIteration { id: string; prompt: string; artifactPath: string; episodeId?: string; prepareReceipts: CognitiveOrganReceipt[]; writeBackReceipts: CognitiveOrganReceipt[]; syntheticReceipts: OrganReceipt[]; score: number }
 
-const outputRoot = process.argv.find(arg => arg.startsWith('--out='))?.slice('--out='.length) || path.join('.omx', 'proof', 'cognitive-loop');
-const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-const outDir = path.join(outputRoot, timestamp);
 const basePrompt = 'Create a sparse moonlit vector pond with remembered blue-green geometry and one readable signal word.';
+
+function parseArgs(argv = process.argv.slice(2)): CliOptions {
+  let outputRoot = path.join('.omx', 'proof', 'cognitive-loop');
+  let mode: ProofMode = 'deterministic';
+  for (let index = 0; index < argv.length; index++) {
+    const arg = argv[index];
+    if (arg === '--live' || arg === '--mode=live' || arg === '--mode=live-writer') mode = 'live-writer';
+    if (arg === '--out' && argv[index + 1]) outputRoot = argv[++index];
+    else if (arg.startsWith('--out=')) outputRoot = arg.slice('--out='.length);
+  }
+  return { outputRoot, mode };
+}
+
+function timestampedOutDir(outputRoot: string): string {
+  return path.join(outputRoot, new Date().toISOString().replace(/[:.]/g, '-'));
+}
 
 function artifact(iteration: number, influences: string[]): string {
   const accent = iteration === 1 ? '#67e8f9' : '#d9f99d';
@@ -55,12 +74,68 @@ function evaluate(svg: string, influences: string[]): { receipt: OrganReceipt; s
   return { receipt: { organ: 'evaluation', evidence: `checked moon=${hasMoon} readableSignal=${hasReadableSignal} nextRunInfluence=${hasInfluence}` }, score };
 }
 
-async function writeJson(filePath: string, value: unknown): Promise<void> { await fs.writeFile(filePath, JSON.stringify(value, null, 2) + '\n', 'utf8'); }
-function markdown(iterations: CognitiveIteration[]): string {
+async function writeJson(filePath: string, value: unknown): Promise<void> {
+  await fs.mkdir(path.dirname(filePath), { recursive: true });
+  await fs.writeFile(filePath, JSON.stringify(value, null, 2) + '\n', 'utf8');
+}
+
+function deterministicMarkdown(iterations: CognitiveIteration[], outDir: string): string {
   return ['# Cognitive Loop Proof Report', '', `Generated: ${new Date().toISOString()}`, 'Mode: deterministic', `Output dir: ${outDir}`, '', '| Iteration | Score | Next-run influence | Artifact |', '| --- | --- | --- | --- |', ...iterations.map(item => `| ${item.id} | ${item.score.toFixed(2)} | ${item.nextRunInfluence.join('; ') || 'seed only'} | ${item.artifactPath} |`), '', '## Organ Receipts', '', ...iterations.flatMap(item => [`### ${item.id}`, '', ...item.receipts.map(receipt => `- ${receipt.organ}: ${receipt.evidence}`), ''])].join('\n');
 }
 
-async function run(): Promise<void> {
+function liveMarkdown(iterations: LiveIteration[], outDir: string, dreamStatus: ReturnType<DreamQueue['getStatus']>): string {
+  return ['# Live Cognitive Writer Proof Report', '', `Generated: ${new Date().toISOString()}`, 'Mode: live-writer', `Output dir: ${outDir}`, '', '| Iteration | Score | Episode | Artifact |', '| --- | --- | --- | --- |', ...iterations.map(item => `| ${item.id} | ${item.score.toFixed(2)} | ${item.episodeId ?? 'none'} | ${item.artifactPath} |`), '', `Dream queue: ${dreamStatus.queued} queued, ${dreamStatus.running} running, ${dreamStatus.completed} completed, ${dreamStatus.failed} failed`, '', '## Receipts', '', ...iterations.flatMap(item => [`### ${item.id}`, '', ...item.syntheticReceipts.map(receipt => `- ${receipt.organ}: ${receipt.evidence}`), ...item.prepareReceipts.map(receipt => `- prepare/${receipt.organ} (${receipt.status}): ${receipt.detail}`), ...item.writeBackReceipts.map(receipt => `- write-back/${receipt.organ} (${receipt.status}): ${receipt.detail}`), ''])].join('\n');
+}
+
+class ProofMemoryStore {
+  private episodes: ProofEpisode[] = [];
+
+  constructor(private readonly filePath: string) {}
+
+  async initialize(): Promise<void> {
+    try {
+      const parsed = JSON.parse(await fs.readFile(this.filePath, 'utf8')) as { episodes?: ProofEpisode[] };
+      this.episodes = Array.isArray(parsed.episodes) ? parsed.episodes : [];
+    } catch {
+      this.episodes = [];
+    }
+  }
+
+  getRelevantEpisodesByDomain(_query: string, domain: string, k = 3): Promise<ProofEpisode[]> {
+    return Promise.resolve(this.episodes.filter(episode => episode.domain === domain).slice(-k));
+  }
+
+  recordEpisode(episode: Omit<ProofEpisode, 'id' | 'timestamp'>): string {
+    const id = `proof-episode-${String(this.episodes.length + 1).padStart(3, '0')}`;
+    this.episodes.push({ ...episode, id, timestamp: new Date().toISOString() });
+    return id;
+  }
+
+  async save(): Promise<{ isErr(): boolean; error?: { message?: string } }> {
+    await fs.mkdir(path.dirname(this.filePath), { recursive: true });
+    await writeJson(this.filePath, { episodes: this.episodes });
+    return { isErr: () => false };
+  }
+}
+
+class ProofCompostSink {
+  readonly addedPaths: string[] = [];
+
+  constructor(private readonly heapDir: string) {}
+
+  async add(inputPaths: string[]): Promise<void> {
+    await fs.mkdir(this.heapDir, { recursive: true });
+    for (const inputPath of inputPaths) {
+      const fileName = `${String(this.addedPaths.length + 1).padStart(3, '0')}-${path.basename(inputPath)}`;
+      const destination = path.join(this.heapDir, fileName);
+      await fs.copyFile(inputPath, destination);
+      this.addedPaths.push(destination);
+    }
+    await writeJson(path.join(this.heapDir, 'manifest.json'), { addedPaths: this.addedPaths });
+  }
+}
+
+async function runDeterministic(outDir: string): Promise<boolean> {
   await fs.mkdir(outDir, { recursive: true });
   const iterations: CognitiveIteration[] = [];
   for (let index = 1; index <= 2; index++) {
@@ -77,10 +152,70 @@ async function run(): Promise<void> {
     iterations.push(item);
     await writeJson(path.join(outDir, id, 'receipts.json'), item);
   }
-  const report = { generatedAt: new Date().toISOString(), mode: 'deterministic', outputDir: outDir, prompt: basePrompt, passed: iterations.length === 2 && iterations[1].nextRunInfluence.length > 0 && iterations.every(item => item.receipts.length === 6 && item.score >= 0.6), iterations };
+  const passed = iterations.length === 2 && iterations[1].nextRunInfluence.length > 0 && iterations.every(item => item.receipts.length === 6 && item.score >= 0.6);
+  const report = { generatedAt: new Date().toISOString(), mode: 'deterministic', outputDir: outDir, prompt: basePrompt, passed, iterations };
   await writeJson(path.join(outDir, 'report.json'), report);
-  await fs.writeFile(path.join(outDir, 'report.md'), markdown(iterations), 'utf8');
+  await fs.writeFile(path.join(outDir, 'report.md'), deterministicMarkdown(iterations, outDir), 'utf8');
   console.log(path.join(outDir, 'report.md'));
-  process.exit(report.passed ? 0 : 1);
+  return passed;
 }
+
+async function runLiveWriter(outDir: string): Promise<boolean> {
+  await fs.mkdir(outDir, { recursive: true });
+  const memory = new ProofMemoryStore(path.join(outDir, 'memory', 'episodes.json'));
+  const compostSink = new ProofCompostSink(path.join(outDir, 'compost-heap'));
+  const dreamQueue = new DreamQueue({ maxQueueSize: 10 });
+  const writer = new PostGenerationCognitiveWriter({ memory, compost: compostSink, dreamQueue, artifactRoot: path.join(outDir, 'artifacts') });
+  const iterations: LiveIteration[] = [];
+
+  for (let index = 1; index <= 2; index++) {
+    const id = `iteration-${String(index).padStart(3, '0')}`;
+    const prompt = index === 1 ? basePrompt : `${basePrompt} Retrieve prior memory and make the remembered change visible.`;
+    const influences = index === 1 ? [] : ['reuse sparse composition', 'increase green contrast', 'make memory signal explicit'];
+    const prepareReceipts = await writer.prepareGeneration({ sessionId: 'live-cognitive-proof', userText: prompt, domain: 'svg' });
+    const svg = artifact(index, influences);
+    const evaluation = evaluate(svg, influences);
+    const writeBack = await writer.writeBackGeneration({
+      sessionId: 'live-cognitive-proof',
+      userText: prompt,
+      domain: 'svg',
+      code: svg,
+      finalScore: evaluation.score,
+      iterations: index,
+      model: 'proof-local-writer',
+      reason: 'Integrated cognitive proof run',
+      executionMode: 'prove',
+    });
+    iterations.push({
+      id,
+      prompt,
+      artifactPath: writeBack.artifactPath,
+      episodeId: writeBack.episodeId,
+      prepareReceipts,
+      writeBackReceipts: writeBack.receipts,
+      syntheticReceipts: [perceive(index, prompt), intuit(influences), evaluation.receipt],
+      score: evaluation.score,
+    });
+    await writeJson(path.join(outDir, id, 'receipts.json'), iterations.at(-1));
+  }
+
+  const dreamStatus = dreamQueue.getStatus();
+  const allArtifactsExist = (await Promise.all(iterations.map(item => fs.access(item.artifactPath).then(() => true, () => false)))).every(Boolean);
+  const secondPrepareUsedMemory = iterations[1].prepareReceipts.some(receipt => receipt.organ === 'memory' && receipt.status === 'observed' && receipt.detail.includes('1 relevant prior generation'));
+  const allWriteBackObserved = iterations.every(item => ['memory', 'compost', 'dreaming'].every(organ => item.writeBackReceipts.some(receipt => receipt.organ === organ && receipt.status === 'observed')));
+  const passed = allArtifactsExist && secondPrepareUsedMemory && allWriteBackObserved && dreamStatus.queued >= 2;
+  const report = { generatedAt: new Date().toISOString(), mode: 'live-writer', outputDir: outDir, prompt: basePrompt, passed, dreamStatus, compostHeap: compostSink.addedPaths, iterations };
+  await writeJson(path.join(outDir, 'report.json'), report);
+  await fs.writeFile(path.join(outDir, 'report.md'), liveMarkdown(iterations, outDir, dreamStatus), 'utf8');
+  console.log(path.join(outDir, 'report.md'));
+  return passed;
+}
+
+async function run(): Promise<void> {
+  const options = parseArgs();
+  const outDir = timestampedOutDir(options.outputRoot);
+  const passed = options.mode === 'live-writer' ? await runLiveWriter(outDir) : await runDeterministic(outDir);
+  process.exit(passed ? 0 : 1);
+}
+
 run().catch(error => { console.error(error); process.exit(1); });

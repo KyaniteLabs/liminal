@@ -67,7 +67,7 @@ Proof slices may be narrow. Product scope must not silently shrink.
 
 1. `liminal studio` shows a creative session with cognitive-loop receipts, including honest memory retrieval plus post-generation memory, compost, and dream-queue write-back.
 2. `node bin/liminal report cognition` lists every creative domain and cognitive organ.
-3. A proof bundle shows creative memory influencing a later generation.
+3. A proof bundle shows creative memory influencing a later generation; the live writer proof must also show Studio's post-generation memory, compost, and dream-queue write-back receipts.
 4. A self-improvement run fixes or improves one real weakness in an isolated worktree with verification.
 5. A model-assimilation report can audition and assign a new model by evidence.
 6. No domain or organ is silently omitted from launch truth.

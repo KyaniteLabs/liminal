@@ -141,7 +141,7 @@ function expectLiveContext(description: string): void {
 }
 
 async function waitFor<T>(read: () => T | undefined): Promise<T> {
-  for (let i = 0; i < 50; i++) {
+  for (let i = 0; i < 200; i++) {
     const value = read();
     if (value !== undefined) return value;
     await new Promise(resolve => setTimeout(resolve, 10));

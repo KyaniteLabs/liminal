@@ -112,6 +112,8 @@ liminal report provenance <file>                    # Trace creative lineage
 liminal report archive                              # Archive overview
 liminal report garden                               # Autonomous Gardener status
 liminal report cognition                            # Creative body + cognitive architecture atlas
+pnpm proof:cognitive-loop -- --out=.omx/proof/cognitive-loop-dev
+pnpm proof:model-assimilation -- --out=.omx/proof/model-assimilation-dev
 
 # Compost Mill — creative material digestion
 liminal compost add <path>                          # Feed material to heap

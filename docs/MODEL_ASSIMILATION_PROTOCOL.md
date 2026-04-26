@@ -35,3 +35,16 @@ The finish line requires a reproducible model-assimilation report that can say:
 > This model is now the preferred generator/evaluator/planner/repair/dreamer for this role/domain because these artifacts and checks beat the prior route.
 
 Until then, a model can be configured, but it is not assimilated.
+
+## Reproducible Report Command
+
+Run:
+
+```bash
+pnpm proof:model-assimilation -- --out=.omx/proof/model-assimilation-dev
+```
+
+The default report is deterministic fixture evidence. It proves the assignment,
+promotion/demotion, and fallback-provenance contract without claiming live
+provider quality. Future live auditions should populate the same
+`liminal-model-assimilation-v1` report shape with real artifact-backed runs.

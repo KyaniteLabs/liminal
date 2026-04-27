@@ -377,6 +377,38 @@ const reverb = new Tone.FakeReverb();
       expect(result.valid).toBe(false);
       expect(result.errors[0]).toContain('Invalid class');
     });
+
+    it('should validate complete HTML-wrapped Tone.js from CDN output', () => {
+      const code = `html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ambient Drone Synthesizer</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+  <button id="start">Start</button>
+  <script>
+    const reverb = new Tone.Reverb(4).toDestination();
+    const delay = new Tone.FeedbackDelay("8n", 0.4).connect(reverb);
+    const synth = new Tone.PolySynth(Tone.Synth).connect(delay);
+    const loop = new Tone.Loop((time) => {
+      synth.triggerAttackRelease(["C3", "G3", "D4"], "2n", time);
+    }, "1m").start(0);
+    document.getElementById('start').addEventListener('click', async () => {
+      await Tone.start();
+      Tone.Transport.start();
+    });
+  </script>
+</body>
+</html>`;
+      const result = CodeValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.cleanedCode).toContain('<!DOCTYPE html>');
+      expect(result.cleanedCode).not.toMatch(/^html\s*$/m);
+    });
   });
 
   describe('Remotion structural validation', () => {
@@ -503,6 +535,35 @@ export default function MyComp() {
       expect(result.valid).toBe(true);
     });
 
+    it('should preserve raw ASCII art that starts with punctuation', () => {
+      const code = `.  *  .    *    .   *   .
+       *       ___     *
+    .     *   /   \\    .
+   *   .     /     \\      .
+        __/         \\__
+====/==================\\========
+   /|  |   .   *  . |  \\
+  / |  |  .  *   .  |   \\
+ /  |  |    .    .   |    \\
+~~~~~~  ~~~~~~~~~~~~  ~~~~~`;
+
+      const result = CodeValidator.validate(code, 'ascii');
+      expect(result.valid).toBe(true);
+      expect(result.cleanedCode).toContain('___');
+      expect(result.cleanedCode).toContain('~~~~~~');
+    });
+
+    it('should not preserve ASCII-looking reasoning as raw art', () => {
+      const code = `We need to output ASCII art of a mountain landscape.
+- Exactly 30 lines.
+Let's design a simple mountain scene.
+Allowed characters are plain ASCII.`;
+
+      const result = CodeValidator.validate(code, 'ascii');
+      expect(result.valid).toBe(false);
+      expect(result.cleanedCode).not.toContain('We need');
+    });
+
     it('should reject ASCII art with Unicode', () => {
       const code = `/* ASCII Art with Unicode */
 +------+------+
@@ -524,6 +585,25 @@ export default function MyComp() {
       `;
       const result = CodeValidator.validate(code, 'ascii');
       expect(result.valid).toBe(false);
+    });
+  });
+
+  describe('domain detection precedence', () => {
+    it('does not classify multi-line Hydra chains as ASCII art', () => {
+      const code = `osc(4, 0.1, 1)
+.add(noise(3, 0.2))
+.blend(voronoi(5, 0.3, 0.2))
+.color(1, 0.2, 0.8)
+.kaleid(6)
+.rotate(0.2)
+.scale(1.05)
+.scrollX(0.05)
+.scrollY(-0.03)
+.out(o0)
+render()`;
+
+      expect(CodeValidator.detectDomain(code)).toBe('hydra');
+      expect(CodeValidator.validate(code).valid).toBe(true);
     });
   });
 
@@ -608,6 +688,43 @@ function setup() {
 }`;
       const result = CodeValidator.validate(code);
       expect(result.valid).toBe(true);
+    });
+
+    it('should auto-detect Shadertoy mainImage shaders as GLSL instead of p5', () => {
+      const code = `precision mediump float;
+uniform float iTime;
+uniform vec2 iResolution;
+
+void mainImage(out vec4 fragColor, in vec2 fragCoord) {
+  vec2 uv = fragCoord / iResolution.xy;
+  float wave = sin(uv.x * 12.0 + iTime) * 0.5 + 0.5;
+  fragColor = vec4(mix(vec3(0.1, 0.2, 0.9), vec3(1.0, 0.4, 0.2), wave), 1.0);
+}`;
+      const result = CodeValidator.validate(code);
+      expect(CodeValidator.detectDomain(code)).toBe('shader');
+      expect(result.valid).toBe(true);
+      expect(result.errors.join('\n')).not.toContain('p5.js');
+    });
+
+    it('should validate HTML-wrapped WebGL shaders without parsing wrapper JavaScript as GLSL', () => {
+      const code = `<!DOCTYPE html>
+<html><body><canvas id="c"></canvas><script>
+const canvas = document.getElementById('c');
+const gl = canvas.getContext('webgl');
+const fsSource = \`precision mediump float;
+uniform float u_time;
+uniform vec2 u_resolution;
+void main(){
+  vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+  gl_FragColor = vec4(mix(vec3(0.1,0.2,0.9), vec3(1.0,0.3,0.6), sin(u_time + uv.x)), 1.0);
+}\`;
+function render(){ requestAnimationFrame(render); }
+</script></body></html>`;
+
+      const result = CodeValidator.validate(code);
+      expect(CodeValidator.detectDomain(code)).toBe('shader');
+      expect(result.valid).toBe(true);
+      expect(result.errors.join('\n')).not.toContain('Undefined function');
     });
   });
 
@@ -696,7 +813,7 @@ function setup() {
 
     it('should get minimum sizes for all domains', () => {
       expect(CodeValidator.getMinSize('p5')).toBe(120);
-      expect(CodeValidator.getMinSize('shader')).toBe(800);
+      expect(CodeValidator.getMinSize('shader')).toBe(300);
       expect(CodeValidator.getMinSize('three')).toBe(800);
       expect(CodeValidator.getMinSize('strudel')).toBe(100);
       expect(CodeValidator.getMinSize('hydra')).toBe(150);

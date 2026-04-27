@@ -348,7 +348,8 @@ export class GenericWrapper {
   }
 
   private static wrapShader(code: string): string {
-    const safeCode = code.replace(/\u003c\/script\u003e/gi, '<\\/script>');
+    const normalizedCode = this.normalizeShaderForWebGL1(code);
+    const safeCode = normalizedCode.replace(/\u003c\/script\u003e/gi, '<\\/script>');
     return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -445,6 +446,24 @@ export class GenericWrapper {
     </script>
 </body>
 </html>`;
+  }
+
+  private static normalizeShaderForWebGL1(code: string): string {
+    let normalized = code
+      .replace(/\biTime\b/g, 'u_time')
+      .replace(/\biResolution\b/g, 'u_resolution');
+
+    if (/^\s*#version\s+300\s+es\b/m.test(normalized)) {
+      const outVar = normalized.match(/\bout\s+vec4\s+([A-Za-z_$][\w$]*)\s*;/)?.[1];
+      normalized = normalized
+        .replace(/^\s*#version\s+300\s+es\s*/m, '')
+        .replace(/\bout\s+vec4\s+[A-Za-z_$][\w$]*\s*;\s*/g, '');
+      if (outVar) {
+        normalized = normalized.replace(new RegExp(`\\b${outVar}\\b`, 'g'), 'gl_FragColor');
+      }
+    }
+
+    return normalized;
   }
 
   private static wrapRemotion(code: string, _showPreview = false): string {

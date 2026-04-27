@@ -145,6 +145,73 @@ describe('GLSLValidator', () => {
       expect(result.errors.filter(e => e.includes('Undefined function')).length).toBe(0);
     });
 
+    it('should not treat prose inside comments as undefined GLSL calls', () => {
+      const code = `
+        #version 120
+        precision mediump float;
+        uniform float time;
+        uniform vec2 resolution;
+
+        void main() {
+          // Normalized pixel coordinates (0 to 1)
+          vec2 uv = gl_FragCoord.xy / resolution.xy;
+          float plasma = sin(uv.x * 10.0 + time);
+          vec3 color = vec3(
+            sin(plasma * 3.14159),
+            sin(plasma * 3.14159 + 2.09),
+            sin(plasma * 3.14159 + 4.19)
+          );
+          gl_FragColor = vec4(color, 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors.filter(e => e.includes('coordinates'))).toHaveLength(0);
+      expect(result.errors).not.toContain('GLSL shader should use noise functions or multiple colors for complexity');
+    });
+
+    it('accepts compact Shadertoy-style aliases when the shader is still runnable', () => {
+      const code = `
+        #version 300 es
+        precision highp float;
+
+        uniform float iTime;
+        uniform vec2 iResolution;
+        out vec4 fragColor;
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / iResolution.xy;
+          float v = sin(uv.x * 10.0 + iTime)
+                  + sin(uv.y * 10.0 + iTime)
+                  + sin(length(uv - 0.5) * 15.0 - iTime);
+          vec3 col = 0.5 + 0.5 * cos(v + vec3(0.0, 2.0, 4.0));
+          fragColor = vec4(col, 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('accepts animated shaders that mix multiple vec3 color constructors inline', () => {
+      const code = `
+        precision mediump float;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          float wave = sin((uv.x + uv.y) * 12.0 + u_time) * 0.5 + 0.5;
+          gl_FragColor = vec4(mix(vec3(0.1, 0.2, 0.9), vec3(1.0, 0.3, 0.6), wave), 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors).not.toContain('GLSL shader should use noise functions or multiple colors for complexity');
+    });
+
     it('should detect invalid % operator', () => {
       const code = `
         void main() {
@@ -215,8 +282,8 @@ describe('GLSLValidator', () => {
   });
 
   describe('getMinSize', () => {
-    it('should return 800 bytes as minimum size', () => {
-      expect(GLSLValidator.getMinSize()).toBe(800);
+    it('should return the compact runnable shader minimum size', () => {
+      expect(GLSLValidator.getMinSize()).toBe(300);
     });
   });
 });

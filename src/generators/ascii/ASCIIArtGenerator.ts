@@ -25,15 +25,36 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
     const width = options?.width || 40;
     const height = options?.height || 20;
     const asciiPrompt = [
-      'Generate ASCII art only.',
-      `Use exactly ${height} lines and at most ${width} columns per line.`,
+      'Generate raw ASCII art only.',
+      `Draw the requested scene in up to ${height} visible rows and at most ${width} columns per row.`,
+      'The renderer will crop or pad the final size; do not explain or count rows.',
       'Use only plain ASCII characters: spaces, letters, digits, and symbols such as .,:;-=+*#%/\\|_~()[]{}<>.',
       'Do not use Unicode symbols, markdown fences, explanations, captions, or prose.',
       '',
       `User request: ${prompt}`,
     ].join('\n');
-    const code = await super.generate(asciiPrompt, { ...options, maxTokens: options?.maxTokens ?? 800, useGeneratorTools: false });
-    return this.formatASCII(code, width, height);
+    let code: string;
+    try {
+      code = await super.generate(asciiPrompt, { ...options, maxTokens: options?.maxTokens ?? 2200, useGeneratorTools: false });
+    } catch (error) {
+      const recovered = await this.retryAsciiDirect(prompt, width, height, options);
+      if (recovered) return recovered;
+      throw error;
+    }
+    const recoveredFromText = this.recoverASCIIFromModelText(code, width, height);
+    if (recoveredFromText) {
+      const recoveredFormatted = this.formatASCII(recoveredFromText, width, height);
+      if (!this.needsRetry(recoveredFormatted, height)) {
+        return recoveredFormatted;
+      }
+    }
+
+    const formatted = this.formatASCII(code, width, height);
+    if (this.needsRetry(formatted, height)) {
+      const recovered = await this.retryAsciiDirect(prompt, width, height, options);
+      if (recovered) return recovered;
+    }
+    return formatted;
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -60,6 +81,85 @@ export class ASCIIArtGenerator extends TierBasedGenerator {
     }
     
     return cleanLines.join('\n');
+  }
+
+  private async retryAsciiDirect(
+    prompt: string,
+    width: number,
+    height: number,
+    options?: ASCIIOptions
+  ): Promise<string | null> {
+    const direct = await this.llm.complete({
+      systemPrompt: 'You create raw ASCII art. Output only the final ASCII art; no prose, no markdown.',
+      prompt: [
+        `Draw this as ASCII art: ${prompt}`,
+        `Use 4 to ${height} visible rows and at most ${width} columns per row.`,
+        'Use only plain ASCII characters.',
+        'Do not count rows, describe constraints, or explain your process.',
+        'If any hidden reasoning is emitted, include candidate rows as Line1: "...", Line2: "...", etc.',
+      ].join('\n'),
+      maxTokens: options?.maxTokens ?? 2200,
+      temperature: this.llm.getConfig().temperature,
+      signal: options?.signal,
+    });
+    if (!direct.success || !direct.text) return null;
+
+    const raw = this.recoverASCIIFromModelText(direct.text, width, height);
+    if (!raw) return null;
+    const formatted = this.formatASCII(raw, width, height);
+    return this.validateOutput(formatted).valid && !this.needsRetry(formatted, height) ? formatted : null;
+  }
+
+  private recoverASCIIFromModelText(text: string, width: number, height: number): string | null {
+    const quotedLines: string[] = [];
+    const linePattern = /Line\s*\d+\s*:\s*"((?:\\.|[^"])*)"/gi;
+    for (const match of text.matchAll(linePattern)) {
+      try {
+        quotedLines.push(JSON.parse(`"${match[1]}"`) as string);
+      } catch {
+        quotedLines.push(match[1].replace(/\\\\/g, '\\'));
+      }
+    }
+    const quotedArtLines = quotedLines.filter(line => this.looksLikeAsciiArtLine(line, width));
+    if (quotedArtLines.length >= Math.max(2, Math.min(height, 4))) {
+      return quotedArtLines.slice(-height).join('\n');
+    }
+
+    const withoutThink = text.replace(/<\/?think[^>]*>/gi, '');
+    const candidateLines = withoutThink
+      .split('\n')
+      .map(line => line.replace(/^\s*(?:Line\s*)?\d+\s*:\s*/i, '').replace(/^["'`]|["'`]$/g, ''))
+      .filter(line => this.looksLikeAsciiArtLine(line, width))
+      .filter(line => !/[{};=]/.test(line))
+      .filter(line => (line.match(/[A-Za-z]/g) ?? []).length <= Math.max(8, width * 0.35));
+
+    return candidateLines.length >= 2 ? candidateLines.slice(-height).join('\n') : null;
+  }
+
+  private looksLikeAsciiArtLine(line: string, width: number): boolean {
+    if (line.length === 0 || line.length > width) return false;
+    const artChars = line.match(/[/\\|_~^*#%+=.-]/g) ?? [];
+    if (artChars.length < 2) return false;
+    const letters = line.match(/[A-Za-z]/g) ?? [];
+    return letters.length <= Math.max(8, artChars.length * 2);
+  }
+
+  private isSparseASCII(code: string, targetHeight: number): boolean {
+    const nonEmptyLines = code.split('\n').filter(line => line.trim().length > 0);
+    return nonEmptyLines.length < Math.min(targetHeight, 8);
+  }
+
+  private isProseHeavyASCII(code: string): boolean {
+    const contentLines = code.split('\n').filter(line => line.trim().length > 0);
+    if (contentLines.length === 0) return true;
+    const proseLines = contentLines.filter(line =>
+      /\b(?:need|require|instruction|exactly|columns|unicode|markdown|prose|think|let's|should|avoid|allowed|characters)\b/i.test(line)
+    );
+    return proseLines.length >= 2;
+  }
+
+  private needsRetry(code: string, targetHeight: number): boolean {
+    return this.isSparseASCII(code, targetHeight) || this.isProseHeavyASCII(code);
   }
 
   /**

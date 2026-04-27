@@ -347,6 +347,10 @@ describe('hydraConfidence', () => {
     expect(hydraConfidence('three.js scene')).toBe(0);
   });
 
+  it('does not override explicit GLSL shader prompts', () => {
+    expect(hydraConfidence('GLSL fragment shader plasma waves with hydra-like visual synthesis context')).toBe(0);
+  });
+
   it('returns 0 for empty string', () => {
     expect(hydraConfidence('')).toBe(0);
   });

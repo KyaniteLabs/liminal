@@ -252,7 +252,8 @@ export abstract class TierBasedGenerator {
           prompt,
           systemPrompt,
           userPrompt,
-          options?.signal
+          options?.signal,
+          options?.maxTokens
         );
         if (directResponse) {
           response = directResponse;
@@ -361,12 +362,18 @@ export abstract class TierBasedGenerator {
     originalPrompt: string,
     systemPrompt: string,
     userPrompt: string,
-    signal?: AbortSignal
+    signal?: AbortSignal,
+    maxTokens?: number
   ): Promise<LLMResponse | null> {
+    if (typeof this.llm.complete !== 'function') {
+      Logger.warn('TierBasedGenerator', `${this.domain} LLM client does not support direct completion retry`);
+      return null;
+    }
+
     Logger.warn('TierBasedGenerator', `${this.domain} tool loop returned empty code; retrying once without tools`);
-    const directResult = await this.llm.generateWithToolLoop({
+    const directResult = await this.llm.complete({
       systemPrompt,
-      userPrompt: [
+      prompt: [
         userPrompt,
         '',
         'The previous tool-assisted attempt returned no final code.',
@@ -374,17 +381,15 @@ export abstract class TierBasedGenerator {
         'Return only the runnable output. Do not include markdown fences, explanations, or tool calls.',
         `Original request: ${originalPrompt}`,
       ].join('\n'),
-      tools: [],
-      toolExecutor: () => Promise.resolve(''),
-      maxIterations: 1,
+      maxTokens,
       signal,
     });
     if (!directResult) return null;
-    const code = this.normalizeGeneratedContent(directResult.content ?? '').trim();
+    const code = this.normalizeGeneratedContent(directResult.text ?? '').trim();
     if (!code) return null;
     return {
       code,
-      explanation: directResult.content,
+      explanation: directResult.text,
       success: true,
       error: directResult.error,
       isComplete: this.isStructurallyComplete(code),

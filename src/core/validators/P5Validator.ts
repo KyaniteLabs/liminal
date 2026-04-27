@@ -25,6 +25,7 @@ export class P5Validator {
     'abs', 'acos', 'angleMode', 'asin', 'atan', 'atan2', 'background', 'beginShape', 'bezier', 'blendMode',
     'bezierVertex', 'ceil', 'circle', 'color', 'colorMode', 'constrain', 'cos', 'createCanvas', 'createGraphics', 'curveVertex', 'dist', 'ellipse', 'endShape', 'exp',
     'fill', 'floor', 'frameRate', 'image', 'lerp', 'line', 'map', 'max', 'min', 'noFill', 'noise', 'noLoop',
+    'createVector',
     'loadPixels', 'noStroke', 'pixelDensity', 'pop', 'pow', 'push', 'random', 'rect', 'red', 'green', 'blue', 'lerpColor',
     'resizeCanvas', 'rotate', 'round', 'sin', 'sqrt',
     'stroke', 'strokeWeight', 'text', 'textAlign', 'textFont', 'textSize', 'translate', 'triangle', 'updatePixels', 'vertex',

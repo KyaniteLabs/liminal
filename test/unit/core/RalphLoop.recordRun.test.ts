@@ -7,6 +7,7 @@ import { LLMClient } from '../../../src/llm/LLMClient.js';
 import { ScoringEngine } from '../../../src/core/ScoringEngine.js';
 import { LiminalFS } from '../../../src/fs/LiminalFS.js';
 import { LoopPersistence } from '../../../src/core/LoopPersistence.js';
+import { generatorRegistry } from '../../../src/generators/GeneratorRegistry.js';
 
 describe('RalphLoop recordRun LiminalFS integration', () => {
   let projectRoot: string;
@@ -29,6 +30,7 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
       JSON.stringify({ llm: { provider: 'lmstudio', baseUrl: 'http://localhost:1234/v1', model: 'test-model' } }),
     );
     process.cwd = () => projectRoot;
+    generatorRegistry.clear();
 
     generateSpy = vi.spyOn(LLMClient.prototype, 'generateWithToolLoop').mockResolvedValue({
       content: 'function setup() { createCanvas(400, 400); noLoop(); frameRate(30); } function draw() { background(220); fill(255, 0, 0); circle(200, 200, 50); }',
@@ -55,6 +57,7 @@ describe('RalphLoop recordRun LiminalFS integration', () => {
 
   afterEach(() => {
     RalphLoop.reset();
+    generatorRegistry.clear();
     generateSpy.mockRestore();
     scoreSpy.mockRestore();
     saveIterationSpy.mockRestore();

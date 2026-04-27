@@ -210,6 +210,27 @@ describe('GenericWrapper', () => {
       
       expect(result).toContain('<\\/script>');
     });
+
+    it('normalizes GLSL 300 and Shadertoy aliases for the browser wrapper', () => {
+      const code = `#version 300 es
+precision highp float;
+uniform float iTime;
+uniform vec2 iResolution;
+out vec4 fragColor;
+void main() {
+  vec2 uv = gl_FragCoord.xy / iResolution.xy;
+  fragColor = vec4(vec3(sin(iTime + uv.x)), 1.0);
+}`;
+      const result = GenericWrapper.wrap(code, { domain: 'shader' });
+
+      expect(result).not.toContain('#version 300 es');
+      expect(result).not.toContain('out vec4 fragColor');
+      expect(result).not.toContain('iTime');
+      expect(result).not.toContain('iResolution');
+      expect(result).toContain('uniform float u_time');
+      expect(result).toContain('uniform vec2 u_resolution');
+      expect(result).toContain('gl_FragColor = vec4');
+    });
   });
 
   describe('wrap - Remotion', () => {

@@ -16,8 +16,14 @@ export class StrudelGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: StrudelGeneratorOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
-    return this.sanitizeCode(code);
+    try {
+      const code = await super.generate(prompt, options);
+      return this.sanitizeCode(code);
+    } catch (error) {
+      const direct = await this.retryStrudelDirect(prompt, options);
+      if (direct) return direct;
+      throw error;
+    }
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -96,6 +102,45 @@ export class StrudelGenerator extends TierBasedGenerator {
     clean = codeLines.join('\n');
     
     return clean.trim();
+  }
+
+  private async retryStrudelDirect(prompt: string, options?: StrudelGeneratorOptions): Promise<string | null> {
+    const result = await this.llm.complete({
+      systemPrompt: 'You write Strudel live-coding music patterns. Output only runnable Strudel code.',
+      prompt: [
+        `Create a Strudel pattern for: ${prompt}`,
+        `Use bpm ${options?.bpm ?? 120} unless the prompt implies another tempo.`,
+        'Return 3 to 8 compact lines.',
+        'Include at least one s("bd ...") or note("...") pattern and call .out() or use $: lines.',
+        'No markdown fences, prose, HTML, or hidden reasoning in the final answer.',
+      ].join('\n'),
+      maxTokens: options?.maxTokens ?? 1200,
+      temperature: this.llm.getConfig().temperature,
+      signal: options?.signal,
+    });
+    if (!result.success || !result.text) return null;
+
+    const clean = this.sanitizeCode(this.recoverStrudelFromModelText(result.text) ?? result.text);
+    return this.validateOutput(clean).valid ? clean : null;
+  }
+
+  private recoverStrudelFromModelText(text: string): string | null {
+    const fenced = text.match(/```(?:javascript|js|strudel)?\s*\n([\s\S]*?)```/i)?.[1];
+    if (fenced && this.validateOutput(this.sanitizeCode(fenced)).valid) {
+      return fenced;
+    }
+
+    const lines = text
+      .replace(/<\/?think[^>]*>/gi, '')
+      .split('\n')
+      .map(line => line.trim().replace(/^\s*(?:Line\s*)?\d+\s*:\s*/i, ''))
+      .filter(line => line.length > 0)
+      .filter(line => !/^[-*]\s+[A-Za-z]/.test(line))
+      .filter(line => /\$:\s*|\b(?:s|sound|note|stack|bpm|setcps|setcpm|hush)\s*\(|\.(?:fast|slow|gain|room|delay|pan|cutoff|decay|attack|sustain|release|out)\s*\(/.test(line));
+
+    return lines.some(line => /\b(?:s|sound|note)\s*\(/.test(line))
+      ? lines.join('\n')
+      : null;
   }
 
   /**

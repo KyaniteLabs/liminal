@@ -23,8 +23,14 @@ export class HydraGenerator extends TierBasedGenerator {
       '',
       `User request: ${prompt}`,
     ].join('\n');
-    const code = await super.generate(hydraPrompt, options);
-    return this.sanitizeCode(code);
+    try {
+      const code = await super.generate(hydraPrompt, options);
+      return this.sanitizeCode(code);
+    } catch (error) {
+      const direct = await this.retryHydraDirect(prompt, options);
+      if (direct) return direct;
+      throw error;
+    }
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
@@ -317,6 +323,45 @@ export class HydraGenerator extends TierBasedGenerator {
     }
     
     return clean.trim();
+  }
+
+  private async retryHydraDirect(prompt: string, options?: HydraGeneratorOptions): Promise<string | null> {
+    const result = await this.llm.complete({
+      systemPrompt: 'You write Hydra-synth 1.3 patches. Output only raw executable Hydra code.',
+      prompt: [
+        `Create a visible Hydra patch for: ${prompt}`,
+        'Use one complete chain that combines at least two generated sources.',
+        'Safe shape: osc(...).add(noise(...)).color(...).kaleid(...).out(o0); render();',
+        'Use numeric arguments only inside color(), brightness(), saturate(), scale(), rotate(), and kaleid().',
+        'No camera/screen input, no prose, no markdown, no separate unfinished source chains.',
+      ].join('\n'),
+      maxTokens: options?.maxTokens ?? 1400,
+      temperature: this.llm.getConfig().temperature,
+      signal: options?.signal,
+    });
+    if (!result.success || !result.text) return null;
+    const raw = this.recoverHydraFromModelText(result.text) ?? result.text;
+    const clean = this.sanitizeCode(raw);
+    return this.validateOutput(clean).valid ? clean : null;
+  }
+
+  private recoverHydraFromModelText(text: string): string | null {
+    const snippets = [...text.matchAll(/`([^`]*(?:osc|noise|shape|voronoi|gradient|solid)[^`]*)`/g)]
+      .map(match => match[1].trim())
+      .filter(snippet => /\.out\s*\(/.test(snippet));
+    if (snippets.length > 0) return snippets[snippets.length - 1];
+
+    const lines = text
+      .replace(/<\/?think[^>]*>/gi, '')
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0)
+      .filter(line => !/^[-*]\s+[A-Za-z]/.test(line))
+      .filter(line => /\b(?:osc|noise|shape|voronoi|gradient|solid|render)\s*\(|^\.(?:add|blend|mult|diff|modulate|color|colorama|saturate|brightness|scale|rotate|kaleid|out)\s*\(/.test(line));
+
+    return lines.some(line => /\b(?:osc|noise|shape|voronoi|gradient|solid)\s*\(/.test(line))
+      ? lines.join('\n')
+      : null;
   }
 
   private collapseRepeatedSourceCallTails(code: string): string {

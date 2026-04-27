@@ -169,6 +169,10 @@ describe('registerGenerators', () => {
       it('returns 0 for unrelated prompts', () => {
         expect(hydraConfidence('draw a circle')).toBe(0);
       });
+
+      it('does not override explicit GLSL shader prompts when compost context mentions hydra', () => {
+        expect(hydraConfidence('GLSL fragment shader plasma waves with hydra-like visual synthesis context')).toBe(0);
+      });
     });
 
     describe('toneConfidence', () => {

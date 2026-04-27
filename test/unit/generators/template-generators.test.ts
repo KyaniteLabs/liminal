@@ -314,14 +314,15 @@ describe('HTMLWebGenerator', () => {
   describe('validateOutput', () => {
     it('validates correct HTML output with DOCTYPE', () => {
       const gen = new HTMLWebGenerator();
-      const result = gen.validateOutput('<!DOCTYPE html><html><body>Hello</body></html>');
+      const result = gen.validateOutput('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Demo</title></head><body>Hello</body></html>');
       expect(result.valid).toBe(true);
     });
 
-    it('accepts HTML starting with <html tag', () => {
+    it('rejects HTML documents missing DOCTYPE', () => {
       const gen = new HTMLWebGenerator();
-      const result = gen.validateOutput('<html><body>Hello</body></html>');
-      expect(result.valid).toBe(true);
+      const result = gen.validateOutput('<html><head><meta charset="UTF-8"><title>Demo</title></head><body>Hello</body></html>');
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('DOCTYPE');
     });
 
     it('rejects non-HTML output', () => {
@@ -384,9 +385,9 @@ describe('ToneGenerator', () => {
       expect(result.valid).toBe(true);
     });
 
-    it('validates with lowercase tone reference', () => {
+    it('validates with the Tone global API', () => {
       const gen = new ToneGenerator();
-      const result = gen.validateOutput('const s = new tone.Synth();toDestination();');
+      const result = gen.validateOutput('const s = new Tone.Synth().toDestination();');
       expect(result.valid).toBe(true);
     });
 

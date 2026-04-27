@@ -161,7 +161,9 @@ class NoErrorGenerator extends TierBasedGenerator {
 // ── Helpers ────────────────────────────────────────────────────────────
 function makeToolResult(overrides: Partial<{ content: string; success: boolean; thinking: string; toolCalls: unknown[] }> = {}) {
   return {
-    content: overrides.content ?? 'function setup() { createCanvas(400, 400); }',
+    content: Object.prototype.hasOwnProperty.call(overrides, 'content')
+      ? overrides.content
+      : 'function setup() { createCanvas(400, 400); }',
     success: overrides.success ?? true,
     thinking: overrides.thinking ?? '',
     toolCalls: overrides.toolCalls ?? [],
@@ -189,10 +191,31 @@ describe('TierBasedGenerator (expanded)', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    mockGenerateWithToolLoop.mockReset();
+    mockGetConfig.mockReset();
+    mockIsConfigured.mockReset();
+    mockGetEffectiveConfig.mockReset();
+    mockLoadContext.mockReset();
+    mockPromptBuilderBuild.mockReset();
+    mockDetectModelTier.mockReset();
+    mockTrimContext.mockReset();
+    mockHarnessPrepare.mockReset();
+    mockHarnessClassifyFailure.mockReset();
+    mockHarnessBuildRepairPrompt.mockReset();
+    mockHarnessRecordSuccess.mockReset();
+    mockMemoryGetSuccessful.mockReset();
+    mockMemoryGetRecent.mockReset();
+    mockMemoryRecordEpisode.mockReset();
+    mockMetaHarnessOnGen.mockReset();
     mockGetConfig.mockReturnValue({ model: 'gpt-4o', baseUrl: 'http://test', role: 'generator' as const });
     mockIsConfigured.mockReturnValue(true);
+    mockLoadContext.mockResolvedValue({});
+    mockPromptBuilderBuild.mockReturnValue({ system: 'sys', user: 'usr', combined: 'combined' });
     mockDetectModelTier.mockReturnValue('flagship');
+    mockTrimContext.mockReturnValue('trimmed');
     mockHarnessPrepare.mockReturnValue(defaultHarnessContext());
+    mockMemoryGetSuccessful.mockReturnValue([]);
+    mockMemoryGetRecent.mockReturnValue([]);
     mockLLM = makeLLM();
   });
 

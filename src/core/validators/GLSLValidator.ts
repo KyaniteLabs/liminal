@@ -60,11 +60,14 @@ export class GLSLValidator {
    */
   private static validateQuality(code: string): string[] {
     const errors: string[] = [];
+    const uncommented = this.stripComments(code);
 
     // Check for complexity - simple gradients are not enough
-    const hasNoise = /noise|hash|fbm|snoise|voronoi/.test(code);
-    const hasAnimation = /u_time|time/.test(code);
-    const hasMultipleColors = /vec3\([^)]+,[^)]+,[^)]+\)/.test(code);
+    const hasNoise = /noise|hash|fbm|snoise|voronoi/.test(uncommented);
+    const hasAnimation = /\b(?:u_time|time|iTime)\b/.test(uncommented);
+    const vec3Constructors = (uncommented.match(/\bvec3\s*\(/g) ?? []).length;
+    const hasMultipleColors = vec3Constructors >= 2 ||
+      /vec3\s+\w+\s*=[\s\S]*vec3\s*\([\s\S]*?,[\s\S]*?,[\s\S]*?\)/.test(uncommented);
 
     if (!hasNoise && !hasMultipleColors) {
       errors.push('GLSL shader should use noise functions or multiple colors for complexity');
@@ -81,7 +84,7 @@ export class GLSLValidator {
    */
   private static validateGLSLSemantics(code: string): string[] {
     const errors: string[] = [];
-    const trimmed = code.trim();
+    const trimmed = this.stripComments(code).trim();
 
     // Extract all function definitions
     const functionDefs = new Set<string>();
@@ -177,6 +180,12 @@ export class GLSLValidator {
     return errors;
   }
 
+  private static stripComments(code: string): string {
+    return code
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+  }
+
   /**
    * Validate HTML-wrapped GLSL
    */
@@ -194,6 +203,6 @@ export class GLSLValidator {
    * Get minimum size requirement for GLSL code
    */
   static getMinSize(): number {
-    return 800; // GLSL needs uniforms, main/mainImage, and enough shader logic
+    return 300; // GLSL can be compact while still runnable and visually non-trivial
   }
 }

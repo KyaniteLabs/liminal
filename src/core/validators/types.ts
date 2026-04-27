@@ -45,6 +45,8 @@ export const REASONING_PATTERNS: RegExp[] = [
   /^#{1,3}\s/,
   /^I'll\s+(use|make|add|create|ensure|include|apply|build|implement|draw|generate)/i,
   /^I need to/i,
+  /^We need\b/i,
+  /^Let's\b/i,
 ];
 
 // -----------------------------------------------------------------------------

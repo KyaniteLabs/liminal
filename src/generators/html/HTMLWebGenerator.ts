@@ -6,6 +6,7 @@
  */
 
 import { TierBasedGenerator, type TierBasedGeneratorOptions } from '../TierBasedGenerator.js';
+import { HTMLValidator } from '../../core/validators/HTMLValidator.js';
 
 export interface HTMLGeneratorOptions extends TierBasedGeneratorOptions {
   title?: string;
@@ -20,16 +21,29 @@ export class HTMLWebGenerator extends TierBasedGenerator {
   }
 
   async generate(prompt: string, options?: HTMLGeneratorOptions): Promise<string> {
-    const code = await super.generate(prompt, options);
+    const htmlPrompt = [
+      'Generate a complete single-file HTML document.',
+      'Start with <!DOCTYPE html> and include <html>, <head>, <body>, and all closing tags.',
+      'Keep it compact enough to finish in one response; no markdown fences or prose.',
+      '',
+      `User request: ${prompt}`,
+    ].join('\n');
+    const code = await super.generate(htmlPrompt, { ...options, maxTokens: options?.maxTokens ?? 8192 });
     return this.extractHTML(code);
   }
 
   protected validateOutput(code: string): { valid: boolean; error?: string } {
-    // Must be valid HTML
-    if (!code.includes('<!DOCTYPE html>') && !code.includes('<html')) {
+    let html: string;
+    try {
+      html = this.extractHTML(code);
+    } catch {
       return { valid: false, error: 'Generated code is not valid HTML' };
     }
-    return { valid: true };
+
+    const result = HTMLValidator.validate(html);
+    return result.valid
+      ? { valid: true }
+      : { valid: false, error: result.errors.join('; ') };
   }
 
   private extractHTML(code: string): string {

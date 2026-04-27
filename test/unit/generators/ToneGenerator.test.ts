@@ -1,10 +1,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-const { mockToolLoop, mockGetConfig } = vi.hoisted(() => ({
+const { mockToolLoop, mockComplete, mockGetConfig } = vi.hoisted(() => ({
   mockToolLoop: vi.fn().mockResolvedValue({
     content: 'const synth = new Tone.Synth().toDestination();',
     iterations: 1,
     toolCallsMade: 0,
+    success: true,
+  }),
+  mockComplete: vi.fn().mockResolvedValue({
+    text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tone.js Patch</title><script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script></head><body><button id="start">Start</button><script>document.getElementById("start").onclick=async()=>{await Tone.start();new Tone.Synth().toDestination().triggerAttackRelease("C4","8n");};</script></body></html>',
     success: true,
   }),
   mockGetConfig: vi.fn().mockReturnValue({ model: 'test-model', baseUrl: 'http://localhost:1234/v1' }),
@@ -13,6 +17,7 @@ const { mockToolLoop, mockGetConfig } = vi.hoisted(() => ({
 vi.mock('../../../src/llm/LLMClient.js', () => {
   class MockLLMClient {
     generateWithToolLoop = mockToolLoop;
+    complete = mockComplete;
     getConfig = mockGetConfig;
   }
   (MockLLMClient as any).isConfigured = vi.fn().mockReturnValue(true);
@@ -52,6 +57,7 @@ import { ToneGenerator } from '../../../src/generators/tone/ToneGenerator.js';
 describe('ToneGenerator', () => {
   beforeEach(() => {
     mockToolLoop.mockClear();
+    mockComplete.mockClear();
   });
 
   it('constructs with tone domain', () => {
@@ -81,6 +87,29 @@ describe('ToneGenerator', () => {
     // The sanitizer strips content between think tags but the regex needs </think format
     // With malformed think tags, the content passes through
     expect(result).toContain('Tone');
+  });
+
+  it('validateOutput rejects truncated Tone.js HTML before export wrapping', () => {
+    const gen = new ToneGenerator();
+    const result = gen.validateOutput(`html
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Tone</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+  <script>const synth = new Tone.Synth().toDestination();</script>`);
+
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain('closing </html>');
+  });
+
+  it('requests a larger token budget for full Tone.js pages', async () => {
+    const gen = new ToneGenerator();
+    await gen.generate('ambient drone');
+    expect(mockToolLoop).toHaveBeenCalledWith(expect.objectContaining({ maxTokens: 8192 }));
   });
 
   it('wrapForGallery produces playable Tone.js HTML', () => {
@@ -114,5 +143,35 @@ describe('ToneGenerator', () => {
     const gen = new ToneGenerator();
     const wrapped = gen.wrapForGallery('');
     expect(wrapped).toContain('<!DOCTYPE html>');
+  });
+
+  it('falls back to strict complete HTML when generation returns an invalid Tone fragment', async () => {
+    mockToolLoop
+      .mockResolvedValueOnce({
+        content: 'html\n<html><body><script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script><button>Start</button></body></html>',
+        iterations: 1,
+        toolCallsMade: 0,
+        success: true,
+      })
+      .mockResolvedValueOnce({
+        content: 'html\n<html><body><script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script></body></html>',
+        iterations: 1,
+        toolCallsMade: 0,
+        success: true,
+      });
+    mockComplete
+      .mockResolvedValueOnce({ text: 'Still thinking about the patch.', success: true })
+      .mockResolvedValueOnce({
+        text: '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Tone.js Patch</title><script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script></head><body><button id="start">Start</button><script>document.getElementById("start").onclick=async()=>{await Tone.start();new Tone.Synth().toDestination().triggerAttackRelease("C4","8n");};</script></body></html>',
+        success: true,
+      });
+
+    const gen = new ToneGenerator();
+    const result = await gen.generate('drone');
+
+    expect(result).toContain('<!DOCTYPE html>');
+    expect(result).toContain('<head>');
+    expect(result).toContain('Tone.Synth');
+    expect(mockComplete).toHaveBeenCalledTimes(2);
   });
 });

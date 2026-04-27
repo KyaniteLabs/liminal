@@ -56,6 +56,32 @@ describe('P5Validator', () => {
       expect(result.errors).toHaveLength(0);
     });
 
+    it('should allow common p5 vector helpers in raw global-mode sketches', () => {
+      const code = `
+        let particles = [];
+
+        function setup() {
+          createCanvas(windowWidth, windowHeight);
+          particles.push({
+            pos: createVector(random(width), random(height)),
+            vel: p5.Vector.fromAngle(random(TWO_PI))
+          });
+        }
+
+        function draw() {
+          background(0);
+          for (const particle of particles) {
+            particle.pos.add(particle.vel);
+            circle(particle.pos.x, particle.pos.y, 4);
+          }
+        }
+      `;
+
+      const result = P5Validator.validate(code);
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
     it('should validate valid raw p5.js with createCanvas only', () => {
       const code = `
         createCanvas(400, 400);

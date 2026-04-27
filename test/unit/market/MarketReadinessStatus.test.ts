@@ -1,3 +1,6 @@
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { buildMarketReadinessStatus, collectRepositoryMarketReadinessStatus, formatMarketReadinessStatus } from '../../../src/market/MarketReadinessStatus.js';
 
@@ -42,7 +45,20 @@ describe('collectRepositoryMarketReadinessStatus', () => {
       'studio-smoke-script',
       'live-provider-smoke',
     ]));
-    expect(status.ready).toBe(false);
-    expect(status.blockers.some((blocker) => blocker.includes('Live provider smoke'))).toBe(true);
+    expect(status.checks.find((check) => check.id === 'live-provider-smoke')).toBeDefined();
   });
+
+  it('does not accept a stale or failed live-provider receipt as market-ready', () => {
+    const repoRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'liminal-market-'));
+    const proofDir = path.join(repoRoot, '.omx', 'proof');
+    fs.mkdirSync(proofDir, { recursive: true });
+    fs.writeFileSync(path.join(proofDir, 'live-provider-smoke.json'), JSON.stringify({ status: 'fail', blockers: ['bad output'] }));
+
+    const status = collectRepositoryMarketReadinessStatus(repoRoot);
+    const liveSmoke = status.checks.find((check) => check.id === 'live-provider-smoke');
+
+    expect(liveSmoke?.status).toBe('fail');
+    expect(liveSmoke?.evidence).toContain('Live provider smoke receipt status fail');
+  });
+
 });

@@ -81,12 +81,41 @@ function liveProviderSmokeCheck(repoRoot: string): MarketReadinessCheck {
     path.join(repoRoot, '.omx', 'proof', 'market-readiness-live-smoke.json'),
   ];
   const found = candidates.find((filePath) => fs.existsSync(filePath));
-  return {
-    id: 'live-provider-smoke',
-    label: 'Live provider smoke',
-    status: found ? 'pass' : 'fail',
-    evidence: found ? `Found ${path.relative(repoRoot, found)}` : 'No current live provider smoke receipt found',
-  };
+  if (!found) {
+    return {
+      id: 'live-provider-smoke',
+      label: 'Live provider smoke',
+      status: 'fail',
+      evidence: 'No current live provider smoke receipt found',
+    };
+  }
+
+  try {
+    const receipt = JSON.parse(fs.readFileSync(found, 'utf8')) as { status?: unknown; generatedAt?: unknown };
+    if (receipt.status === 'pass') {
+      const generatedAt = typeof receipt.generatedAt === 'string' ? ` (${receipt.generatedAt})` : '';
+      return {
+        id: 'live-provider-smoke',
+        label: 'Live provider smoke',
+        status: 'pass',
+        evidence: `Found passing ${path.relative(repoRoot, found)}${generatedAt}`,
+      };
+    }
+    return {
+      id: 'live-provider-smoke',
+      label: 'Live provider smoke',
+      status: 'fail',
+      evidence: `Live provider smoke receipt status ${String(receipt.status ?? 'unknown')}`,
+    };
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : String(error);
+    return {
+      id: 'live-provider-smoke',
+      label: 'Live provider smoke',
+      status: 'fail',
+      evidence: `Live provider smoke receipt is unreadable: ${reason}`,
+    };
+  }
 }
 
 function read(filePath: string): string {

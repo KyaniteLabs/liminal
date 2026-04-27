@@ -183,7 +183,7 @@ function shouldRenderScreenshot(kind: PreviewKind): boolean {
 function nativePendingNote(kind: PreviewKind): string | null {
   if (kind === 'audio-playable') return 'Playable Tone.js HTML artifact saved; click Play in the HTML page to hear it.';
   if (kind === 'audio-external') return 'Native Strudel audio capture pending; saved pattern with external playback link.';
-  if (kind === 'video-code') return 'Native rendered video/still proof pending; saved generated Revideo code only.';
+  if (kind === 'video-code') return 'Revideo code artifact saved; native rendered video/still proof pending.';
   return null;
 }
 
@@ -308,8 +308,6 @@ async function runDomain(spec: DomainSpec, llm: LLMClient, outDir: string, provi
 
     const pendingNote = nativePendingNote(spec.previewKind);
     if (pendingNote) notes.push(pendingNote);
-    if (spec.previewKind === 'video-code') status = 'blocked';
-
     if (shouldRenderScreenshot(spec.previewKind)) {
       try {
         previewAttempts++;

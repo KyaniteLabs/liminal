@@ -23,7 +23,8 @@ describe('creative copilot proof script', () => {
     expect(source).toContain('SVGGenerator');
     expect(source).toContain("domain: 'svg'");
     expect(source).toContain("artifactExtension: 'svg'");
-    expect(source).not.toMatch(/if \(spec\.previewKind === 'video-code'\) \{\s*return/s);
+    expect(source).not.toContain("if (spec.previewKind === 'video-code') status = 'blocked';");
+    expect(source).toContain('Revideo code artifact saved; native rendered video/still proof pending.');
     expect(source).toContain('validateScreenshotVisible');
     expect(source).toContain('Preview runtime error');
     expect(source).toContain("previewKind: 'image'");

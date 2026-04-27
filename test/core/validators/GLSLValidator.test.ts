@@ -212,6 +212,36 @@ describe('GLSLValidator', () => {
       expect(result.errors).not.toContain('GLSL shader should use noise functions or multiple colors for complexity');
     });
 
+
+    it('allows helper functions to use uv when uv is an explicit vec2 parameter', () => {
+      const code = `
+        precision highp float;
+        uniform float u_time;
+        uniform vec2 u_resolution;
+
+        float noise(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
+
+        vec2 domainWarp(vec2 uv, float t) {
+          float n = noise(uv + t);
+          return uv + vec2(n) * 0.2;
+        }
+
+        float waveLayer(vec2 uv, float t) {
+          return sin(uv.x * 4.0 + t) + cos(uv.y * 3.0 - t);
+        }
+
+        void main() {
+          vec2 uv = gl_FragCoord.xy / u_resolution.xy;
+          vec2 warped = domainWarp(uv, u_time);
+          float wave = waveLayer(warped, u_time);
+          gl_FragColor = vec4(vec3(wave * 0.5 + 0.5), 1.0);
+        }
+      `;
+
+      const result = GLSLValidator.validate(code);
+      expect(result.errors.filter(e => e.includes('references uv without receiving or declaring it'))).toHaveLength(0);
+    });
+
     it('should detect invalid % operator', () => {
       const code = `
         void main() {

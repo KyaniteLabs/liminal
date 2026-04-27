@@ -138,9 +138,11 @@ export class GLSLValidator {
       errors.push('GLSL: texture2D() used but no sampler2D uniform declared');
     }
 
-    for (const match of trimmed.matchAll(/\b(?:float|vec2|vec3|vec4)\s+(\w+)\s*\([^)]*\)\s*\{([\s\S]*?)\}/g)) {
-      const [, funcName, body] = match;
-      if (funcName !== 'mainImage' && funcName !== 'main' && /\buv\b/.test(body) && !/\bvec2\s+uv\b/.test(body)) {
+    for (const match of trimmed.matchAll(/\b(?:float|vec2|vec3|vec4)\s+(\w+)\s*\(([^)]*)\)\s*\{([\s\S]*?)\}/g)) {
+      const [, funcName, params, body] = match;
+      const receivesUv = /\bvec2\s+uv\b/.test(params);
+      const declaresUv = /\bvec2\s+uv\b/.test(body);
+      if (funcName !== 'mainImage' && funcName !== 'main' && /\buv\b/.test(body) && !receivesUv && !declaresUv) {
         errors.push(`GLSL: helper function '${funcName}' references uv without receiving or declaring it`);
       }
     }

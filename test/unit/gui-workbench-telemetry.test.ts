@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { latestBridgePreview, latestClarificationRequest, summarizeImproveLane, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
+import { latestBridgePreview, latestClarificationRequest, latestCognitiveReceipt, summarizeImproveLane, summarizeWorkbenchBridge } from '../../gui/src/gui/workbenchTelemetry';
 
 describe('workbenchTelemetry', () => {
   it('summarizes bridge generation progress for the workbench shell', () => {
@@ -205,4 +205,26 @@ describe('workbenchTelemetry', () => {
       measurableTarget: 'Reduce time to preview below 10s',
     }));
   });
+
+  it('extracts detailed cognitive receipt cards for what Liminal learned', () => {
+    const receipt = latestCognitiveReceipt([
+      {
+        type: 'generation.cognitive_receipt',
+        loop: 'creative',
+        receipts: [
+          { organ: 'memory', status: 'observed', detail: 'Stored generation episode ep-123 for future retrieval.' },
+          { organ: 'compost', status: 'observed', detail: 'Added generated artifact to compost heap.' },
+          { organ: 'dreaming', status: 'pending', detail: 'Dream queue is full; no recombination task was queued.' },
+        ],
+      },
+    ]);
+
+    expect(receipt?.heading).toBe('What Liminal learned');
+    expect(receipt?.items).toEqual([
+      { organ: 'memory', status: 'observed', detail: 'Stored generation episode ep-123 for future retrieval.' },
+      { organ: 'compost', status: 'observed', detail: 'Added generated artifact to compost heap.' },
+      { organ: 'dreaming', status: 'pending', detail: 'Dream queue is full; no recombination task was queued.' },
+    ]);
+  });
+
 });
